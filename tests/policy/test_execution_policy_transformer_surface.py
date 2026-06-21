@@ -316,8 +316,8 @@ class ExecutionPolicyTransformerSurfaceTests(unittest.TestCase):
       "scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json",
       train_config={
         "hyperparameters": {
-          "a7_event_policy_margin_coef": 0.35,
-          "a7_event_policy_projection_margin_coef": 0.15,
+          "event_policy_margin_coef": 0.35,
+          "event_policy_projection_margin_coef": 0.15,
         }
       },
     )
@@ -371,43 +371,43 @@ class ExecutionPolicyTransformerSurfaceTests(unittest.TestCase):
       )
     )
 
-  def test_initialize_hmoe_from_shared_action_head_zeroes_m3_stopping_head(self) -> None:
+  def test_initialize_hmoe_from_shared_action_head_zeroes_stopping_head(self) -> None:
     policy = self._make_air_combat_hybrid_policy(
-      m3_stopping_head_lr_scale=5.0,
-      m3_stopping_head_norm_enabled=True,
+      stopping_head_lr_scale=5.0,
+      stopping_head_norm_enabled=True,
     )
-    assert policy.m3_stopping_head is not None
-    assert policy.m3_stopping_norm is not None
+    assert policy.stopping_head is not None
+    assert policy.stopping_norm is not None
     with th.no_grad():
-      policy.m3_stopping_head.weight.fill_(1.0)
-      policy.m3_stopping_head.bias.fill_(1.0)
-      policy.m3_stopping_norm.weight.fill_(2.0)
-      policy.m3_stopping_norm.bias.fill_(3.0)
+      policy.stopping_head.weight.fill_(1.0)
+      policy.stopping_head.bias.fill_(1.0)
+      policy.stopping_norm.weight.fill_(2.0)
+      policy.stopping_norm.bias.fill_(3.0)
 
     policy.initialize_hmoe_from_shared_action_head()
 
     self.assertTrue(
       th.allclose(
-        policy.m3_stopping_head.weight.detach(),
-        th.zeros_like(policy.m3_stopping_head.weight),
+        policy.stopping_head.weight.detach(),
+        th.zeros_like(policy.stopping_head.weight),
       )
     )
     self.assertTrue(
       th.allclose(
-        policy.m3_stopping_head.bias.detach(),
-        th.zeros_like(policy.m3_stopping_head.bias),
+        policy.stopping_head.bias.detach(),
+        th.zeros_like(policy.stopping_head.bias),
       )
     )
     self.assertTrue(
       th.allclose(
-        policy.m3_stopping_norm.weight.detach(),
-        th.ones_like(policy.m3_stopping_norm.weight),
+        policy.stopping_norm.weight.detach(),
+        th.ones_like(policy.stopping_norm.weight),
       )
     )
     self.assertTrue(
       th.allclose(
-        policy.m3_stopping_norm.bias.detach(),
-        th.zeros_like(policy.m3_stopping_norm.bias),
+        policy.stopping_norm.bias.detach(),
+        th.zeros_like(policy.stopping_norm.bias),
       )
     )
 

@@ -78,12 +78,12 @@ def _summarize_episode(
     pending_assessment_release_count = int(
         sum(int(row.get("c2_roe_pending_assessment_release_count", 0) or 0) for row in rows)
     )
-    a5_rejection_reason_counts = Counter(
+    rejection_reason_counts = Counter(
         str(row.get("fire_once_rejected_reason", "") or "unspecified")
         for row in rows
         if int(row.get("step", 0)) > 0 and int(row.get("fire_once_rejected", 0) or 0) > 0
     )
-    a5_engagement_state_counts = Counter(
+    engagement_state_counts = Counter(
         str(row.get("engagement_state", "") or "unknown")
         for row in rows
         if int(row.get("step", 0)) > 0 and str(row.get("engagement_state", "") or "") != ""
@@ -150,7 +150,7 @@ def _summarize_episode(
         )
     )
 
-    def a6_open_window(row: dict[str, Any]) -> bool:
+    def open_window(row: dict[str, Any]) -> bool:
         return (
             int(row.get("step", 0)) > 0
             and str(row.get("engagement_state", "") or "") == "AuthorizedReady"
@@ -170,7 +170,7 @@ def _summarize_episode(
     legal_window_age = 0
     for row in rows:
         step = int(row.get("step", 0))
-        if a6_open_window(row):
+        if open_window(row):
             legal_window_age += 1
         else:
             legal_window_age = 0
@@ -194,8 +194,8 @@ def _summarize_episode(
         except Exception:
             return 0
 
-    def a7_quality_window(row: dict[str, Any]) -> bool:
-        if not a6_open_window(row):
+    def quality_window(row: dict[str, Any]) -> bool:
+        if not open_window(row):
             return False
         step = int(row.get("step", 0))
         if legal_window_age_by_step.get(step, 0) < min_window_age_steps:
@@ -217,14 +217,14 @@ def _summarize_episode(
                 return False
         return True
 
-    def a7_prewindow(row: dict[str, Any]) -> bool:
-        return a6_open_window(row) and not a7_quality_window(row)
+    def prewindow(row: dict[str, Any]) -> bool:
+        return open_window(row) and not quality_window(row)
 
-    def m3_boundary_cross(row: dict[str, Any]) -> bool:
-        return int(row.get("policy_m3_boundary_cross", 0) or 0) > 0
+    def boundary_cross(row: dict[str, Any]) -> bool:
+        return int(row.get("policy_boundary_cross", 0) or 0) > 0
 
-    def m3_window_classifier_boundary_cross(row: dict[str, Any]) -> bool:
-        return int(row.get("policy_m3_window_classifier_boundary_cross", 0) or 0) > 0
+    def window_classifier_boundary_cross(row: dict[str, Any]) -> bool:
+        return int(row.get("policy_window_classifier_boundary_cross", 0) or 0) > 0
 
     def row_sign_frac(key: str, predicate, *, positive: bool) -> float:
         values = []
@@ -420,180 +420,180 @@ def _summarize_episode(
         "policy_event_prob_fire_once_mean": row_stat("policy_event_prob_fire_once", np.mean),
         "policy_event_prob_fire_once_max": row_stat("policy_event_prob_fire_once", np.max),
         "policy_event_logit_fire_once_max": row_stat("policy_event_logit_fire_once", np.max),
-        "policy_m3_stopping_head_enabled": row_stat(
-            "policy_m3_stopping_head_enabled",
+        "policy_stopping_head_enabled": row_stat(
+            "policy_stopping_head_enabled",
             np.max,
             default=0.0,
         ),
-        "policy_m3_stop_logit_mean": row_stat("policy_m3_stop_logit", np.mean, default=0.0),
-        "policy_m3_stop_logit_max": row_stat("policy_m3_stop_logit", np.max, default=0.0),
-        "policy_m3_stop_prob_mean": row_stat("policy_m3_stop_prob", np.mean, default=0.0),
-        "policy_m3_stop_prob_max": row_stat("policy_m3_stop_prob", np.max, default=0.0),
-        "policy_m3_boundary_cross_count": count_rows(m3_boundary_cross),
-        "policy_m3_first_boundary_cross_step": first_step(
-            lambda row: int(row.get("step", 0)) > 0 and m3_boundary_cross(row)
+        "policy_stop_logit_mean": row_stat("policy_stop_logit", np.mean, default=0.0),
+        "policy_stop_logit_max": row_stat("policy_stop_logit", np.max, default=0.0),
+        "policy_stop_prob_mean": row_stat("policy_stop_prob", np.mean, default=0.0),
+        "policy_stop_prob_max": row_stat("policy_stop_prob", np.max, default=0.0),
+        "policy_boundary_cross_count": count_rows(boundary_cross),
+        "policy_first_boundary_cross_step": first_step(
+            lambda row: int(row.get("step", 0)) > 0 and boundary_cross(row)
         ),
-        "policy_m3_window_classifier_head_enabled": row_stat(
-            "policy_m3_window_classifier_enabled",
+        "policy_window_classifier_head_enabled": row_stat(
+            "policy_window_classifier_enabled",
             np.max,
             default=0.0,
         ),
-        "policy_m3_window_classifier_logit_mean": row_stat(
-            "policy_m3_window_classifier_logit",
+        "policy_window_classifier_logit_mean": row_stat(
+            "policy_window_classifier_logit",
             np.mean,
             default=0.0,
         ),
-        "policy_m3_window_classifier_logit_max": row_stat(
-            "policy_m3_window_classifier_logit",
+        "policy_window_classifier_logit_max": row_stat(
+            "policy_window_classifier_logit",
             np.max,
             default=0.0,
         ),
-        "policy_m3_window_classifier_prob_mean": row_stat(
-            "policy_m3_window_classifier_prob",
+        "policy_window_classifier_prob_mean": row_stat(
+            "policy_window_classifier_prob",
             np.mean,
             default=0.0,
         ),
-        "policy_m3_window_classifier_prob_max": row_stat(
-            "policy_m3_window_classifier_prob",
+        "policy_window_classifier_prob_max": row_stat(
+            "policy_window_classifier_prob",
             np.max,
             default=0.0,
         ),
-        "policy_m3_window_classifier_boundary_cross_count": count_rows(
-            m3_window_classifier_boundary_cross
+        "policy_window_classifier_boundary_cross_count": count_rows(
+            window_classifier_boundary_cross
         ),
-        "policy_m3_window_classifier_first_boundary_cross_step": first_step(
-            lambda row: int(row.get("step", 0)) > 0 and m3_window_classifier_boundary_cross(row)
+        "policy_window_classifier_first_boundary_cross_step": first_step(
+            lambda row: int(row.get("step", 0)) > 0 and window_classifier_boundary_cross(row)
         ),
-        "a6_event_logit_delta_mean_open": row_stat(
-            "policy_event_logit_delta", np.mean, default=0.0, predicate=a6_open_window
+        "event_logit_delta_mean_open": row_stat(
+            "policy_event_logit_delta", np.mean, default=0.0, predicate=open_window
         ),
-        "a6_event_fire_prob_mean_open": row_stat(
+        "event_fire_prob_mean_open": row_stat(
             "policy_event_prob_fire_once_unmasked",
             np.mean,
             default=0.0,
-            predicate=a6_open_window,
+            predicate=open_window,
         ),
-        "a6_event_fire_prob_max_open": row_stat(
+        "event_fire_prob_max_open": row_stat(
             "policy_event_prob_fire_once_unmasked",
             np.max,
             default=0.0,
-            predicate=a6_open_window,
+            predicate=open_window,
         ),
-        "a6_open_window_step_count": int(sum(1 for row in rows if a6_open_window(row))),
-        "a7_prewindow_step_count": int(
-            sum(1 for row in rows if int(row.get("step", 0)) > 0 and a7_prewindow(row))
+        "open_window_step_count": int(sum(1 for row in rows if open_window(row))),
+        "prewindow_step_count": int(
+            sum(1 for row in rows if int(row.get("step", 0)) > 0 and prewindow(row))
         ),
-        "a7_quality_window_step_count": int(
-            sum(1 for row in rows if int(row.get("step", 0)) > 0 and a7_quality_window(row))
+        "quality_window_step_count": int(
+            sum(1 for row in rows if int(row.get("step", 0)) > 0 and quality_window(row))
         ),
-        "a7_prewindow_event_fire_prob_cum": row_cumulative_prob(
+        "prewindow_event_fire_prob_cum": row_cumulative_prob(
             "policy_event_prob_fire_once_unmasked",
-            a7_prewindow,
+            prewindow,
         ),
-        "a7_prewindow_event_fire_prob_mean": row_stat(
-            "policy_event_prob_fire_once_unmasked",
-            np.mean,
-            default=0.0,
-            predicate=a7_prewindow,
-        ),
-        "a7_quality_window_event_fire_prob_mean": row_stat(
+        "prewindow_event_fire_prob_mean": row_stat(
             "policy_event_prob_fire_once_unmasked",
             np.mean,
             default=0.0,
-            predicate=a7_quality_window,
+            predicate=prewindow,
         ),
-        "a7_prewindow_m3_stop_prob_cum": row_cumulative_prob(
-            "policy_m3_stop_prob",
-            a7_prewindow,
-        ),
-        "a7_prewindow_m3_stop_prob_mean": row_stat(
-            "policy_m3_stop_prob",
+        "quality_window_event_fire_prob_mean": row_stat(
+            "policy_event_prob_fire_once_unmasked",
             np.mean,
             default=0.0,
-            predicate=a7_prewindow,
+            predicate=quality_window,
         ),
-        "a7_quality_window_m3_stop_prob_mean": row_stat(
-            "policy_m3_stop_prob",
+        "prewindow_stop_prob_cum": row_cumulative_prob(
+            "policy_stop_prob",
+            prewindow,
+        ),
+        "prewindow_stop_prob_mean": row_stat(
+            "policy_stop_prob",
             np.mean,
             default=0.0,
-            predicate=a7_quality_window,
+            predicate=prewindow,
         ),
-        "a7_prewindow_m3_boundary_cross_count": count_rows(
-            lambda row: a7_prewindow(row) and m3_boundary_cross(row)
+        "quality_window_stop_prob_mean": row_stat(
+            "policy_stop_prob",
+            np.mean,
+            default=0.0,
+            predicate=quality_window,
         ),
-        "a7_quality_window_m3_boundary_cross_count": count_rows(
-            lambda row: a7_quality_window(row) and m3_boundary_cross(row)
+        "prewindow_boundary_cross_count": count_rows(
+            lambda row: prewindow(row) and boundary_cross(row)
         ),
-        "a7_first_quality_window_m3_boundary_cross_step": first_step(
+        "quality_window_boundary_cross_count": count_rows(
+            lambda row: quality_window(row) and boundary_cross(row)
+        ),
+        "first_quality_window_boundary_cross_step": first_step(
             lambda row: int(row.get("step", 0)) > 0
-            and a7_quality_window(row)
-            and m3_boundary_cross(row)
+            and quality_window(row)
+            and boundary_cross(row)
         ),
-        "a7_prewindow_m3_window_classifier_prob_mean": row_stat(
-            "policy_m3_window_classifier_prob",
+        "prewindow_window_classifier_prob_mean": row_stat(
+            "policy_window_classifier_prob",
             np.mean,
             default=0.0,
-            predicate=a7_prewindow,
+            predicate=prewindow,
         ),
-        "a7_quality_window_m3_window_classifier_prob_mean": row_stat(
-            "policy_m3_window_classifier_prob",
+        "quality_window_window_classifier_prob_mean": row_stat(
+            "policy_window_classifier_prob",
             np.mean,
             default=0.0,
-            predicate=a7_quality_window,
+            predicate=quality_window,
         ),
-        "a7_prewindow_m3_window_classifier_logit_mean": row_stat(
-            "policy_m3_window_classifier_logit",
+        "prewindow_window_classifier_logit_mean": row_stat(
+            "policy_window_classifier_logit",
             np.mean,
             default=0.0,
-            predicate=a7_prewindow,
+            predicate=prewindow,
         ),
-        "a7_quality_window_m3_window_classifier_logit_mean": row_stat(
-            "policy_m3_window_classifier_logit",
+        "quality_window_window_classifier_logit_mean": row_stat(
+            "policy_window_classifier_logit",
             np.mean,
             default=0.0,
-            predicate=a7_quality_window,
+            predicate=quality_window,
         ),
-        "a7_prewindow_m3_window_classifier_boundary_cross_count": count_rows(
-            lambda row: a7_prewindow(row) and m3_window_classifier_boundary_cross(row)
+        "prewindow_window_classifier_boundary_cross_count": count_rows(
+            lambda row: prewindow(row) and window_classifier_boundary_cross(row)
         ),
-        "a7_quality_window_m3_window_classifier_boundary_cross_count": count_rows(
-            lambda row: a7_quality_window(row) and m3_window_classifier_boundary_cross(row)
+        "quality_window_window_classifier_boundary_cross_count": count_rows(
+            lambda row: quality_window(row) and window_classifier_boundary_cross(row)
         ),
-        "a7_first_quality_window_m3_window_classifier_boundary_cross_step": first_step(
+        "first_quality_window_window_classifier_boundary_cross_step": first_step(
             lambda row: int(row.get("step", 0)) > 0
-            and a7_quality_window(row)
-            and m3_window_classifier_boundary_cross(row)
+            and quality_window(row)
+            and window_classifier_boundary_cross(row)
         ),
-        "a7_event_credit_advantage_mean_prewindow": row_stat(
+        "event_credit_advantage_mean_prewindow": row_stat(
             "policy_event_advantage",
             np.mean,
             default=0.0,
-            predicate=a7_prewindow,
+            predicate=prewindow,
         ),
-        "a7_event_credit_advantage_positive_frac_prewindow": row_sign_frac(
+        "event_credit_advantage_positive_frac_prewindow": row_sign_frac(
             "policy_event_advantage",
-            a7_prewindow,
+            prewindow,
             positive=True,
         ),
-        "a7_event_credit_advantage_negative_frac_prewindow": row_sign_frac(
+        "event_credit_advantage_negative_frac_prewindow": row_sign_frac(
             "policy_event_advantage",
-            a7_prewindow,
+            prewindow,
             positive=False,
         ),
-        "a7_event_credit_advantage_mean_quality": row_stat(
+        "event_credit_advantage_mean_quality": row_stat(
             "policy_event_advantage",
             np.mean,
             default=0.0,
-            predicate=a7_quality_window,
+            predicate=quality_window,
         ),
-        "a7_event_credit_advantage_positive_frac_quality": row_sign_frac(
+        "event_credit_advantage_positive_frac_quality": row_sign_frac(
             "policy_event_advantage",
-            a7_quality_window,
+            quality_window,
             positive=True,
         ),
-        "a7_event_credit_advantage_negative_frac_quality": row_sign_frac(
+        "event_credit_advantage_negative_frac_quality": row_sign_frac(
             "policy_event_advantage",
-            a7_quality_window,
+            quality_window,
             positive=False,
         ),
         "policy_event_mode_fire_once_count": int(
@@ -676,8 +676,8 @@ def _summarize_episode(
                 if int(row.get("step", 0)) > 0
             )
         ),
-        "fire_once_rejected_reason_counts": dict(sorted(a5_rejection_reason_counts.items())),
-        "engagement_state_counts": dict(sorted(a5_engagement_state_counts.items())),
+        "fire_once_rejected_reason_counts": dict(sorted(rejection_reason_counts.items())),
+        "engagement_state_counts": dict(sorted(engagement_state_counts.items())),
         "release_count": int(sum(int(row.get("missile_release", 0)) for row in rows)),
         "authorized_release_count": int(authorized_release_count),
         "unauthorized_release_count": int(unauthorized_release_count),

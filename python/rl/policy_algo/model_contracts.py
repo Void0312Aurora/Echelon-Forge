@@ -158,17 +158,17 @@ def _expectation_label(gate: ConfigGate) -> str:
     return gate.expectation.value
 
 
-M3S2_WINDOW_CLASSIFIER_CONTRACT = ModelMechanismContract(
+WINDOW_CLASSIFIER_CONTRACT = ModelMechanismContract(
     mechanism_id="m3s2.window_classifier_event_adapter",
     role=MechanismRole.ADAPTER_COUPLED,
     owner=(
-        "python/rl/policy_algo/policies.py::m3_window_classifier_head + "
-        "python/rl/policy_algo/ppo_adaptive_kl.py::m3s2_window_classifier"
+        "python/rl/policy_algo/policies.py::window_classifier_head + "
+        "python/rl/policy_algo/ppo_adaptive_kl.py::event_window_window_classifier"
     ),
     activation_paths=(
-        ("hyperparameters", "policy_kwargs", "hybrid_event_use_m3_window_classifier_head"),
-        ("hyperparameters", "policy_kwargs", "m3_window_classifier_head_lr_scale"),
-        ("hyperparameters", "m3s2_window_classifier_coef"),
+        ("hyperparameters", "policy_kwargs", "hybrid_event_use_window_classifier_head"),
+        ("hyperparameters", "policy_kwargs", "window_classifier_head_lr_scale"),
+        ("hyperparameters", "window_classifier_coef"),
     ),
     fault_stages=(
         FaultStage.OBSERVATION,
@@ -190,7 +190,7 @@ M3S2_WINDOW_CLASSIFIER_CONTRACT = ModelMechanismContract(
     normalization_population=SupportPopulation.EXECUTION_SUPPORT,
     loss_owner="M3-S2 window-classifier auxiliary side update",
     adapter_coupling=(
-        "hybrid_event_use_m3_window_classifier_head rewrites hold/fire logits "
+        "hybrid_event_use_window_classifier_head rewrites hold/fire logits "
         "before _HybridActionDistribution; classifier adapter takes precedence over "
         "the M3 stopping adapter when both are enabled."
     ),
@@ -218,63 +218,63 @@ M3S2_WINDOW_CLASSIFIER_CONTRACT = ModelMechanismContract(
             expected="air_combat_hybrid_v1",
         ),
         ConfigGate(
-            ("hyperparameters", "policy_kwargs", "hybrid_event_use_m3_window_classifier_head"),
+            ("hyperparameters", "policy_kwargs", "hybrid_event_use_window_classifier_head"),
             ConfigExpectation.REQUIRED_TRUE,
             "An adapter-coupled classifier must explicitly enter the executable event path.",
         ),
         ConfigGate(
-            ("hyperparameters", "policy_kwargs", "m3_window_classifier_head_lr_scale"),
+            ("hyperparameters", "policy_kwargs", "window_classifier_head_lr_scale"),
             ConfigExpectation.POSITIVE_NUMBER,
             "The executable classifier branch must have a trainable head.",
         ),
         ConfigGate(
-            ("hyperparameters", "policy_kwargs", "m3_window_classifier_head_norm_enabled"),
+            ("hyperparameters", "policy_kwargs", "window_classifier_head_norm_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "The current executable classifier contract uses per-sample LayerNorm.",
         ),
         ConfigGate(
-            ("hyperparameters", "policy_kwargs", "m3_window_classifier_event_adapter_detach"),
+            ("hyperparameters", "policy_kwargs", "window_classifier_event_adapter_detach"),
             ConfigExpectation.REQUIRED_TRUE,
             "PPO action gradients must not self-imitation-train the supervised classifier adapter.",
         ),
         ConfigGate(
-            ("hyperparameters", "policy_kwargs", "m3_window_classifier_input_standardization_enabled"),
+            ("hyperparameters", "policy_kwargs", "window_classifier_input_standardization_enabled"),
             ConfigExpectation.REQUIRED_FALSE,
             "Mutable population standardization is held after the execution-support mismatch diagnosis.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_window_classifier_coef"),
+            ("hyperparameters", "window_classifier_coef"),
             ConfigExpectation.POSITIVE_NUMBER,
             "The classifier adapter needs an owned auxiliary objective.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_window_classifier_detach_latent"),
+            ("hyperparameters", "window_classifier_detach_latent"),
             ConfigExpectation.REQUIRED_TRUE,
             "The current classifier repair isolates classifier fitting from actor-latent drift.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_window_classifier_dedicated_optimizer_enabled"),
+            ("hyperparameters", "window_classifier_dedicated_optimizer_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "The classifier update must not reuse PPO Adam state.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_window_classifier_replay_enabled"),
+            ("hyperparameters", "window_classifier_replay_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "Replay is part of the current classifier support contract and must be explicit.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_window_classifier_replay_storage"),
+            ("hyperparameters", "window_classifier_replay_storage"),
             ConfigExpectation.EQUALS,
             "Observation replay is required so samples pass through the current actor latent.",
             expected="observation",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_event_window_support_preserving_collect_enabled"),
+            ("hyperparameters", "event_window_support_preserving_collect_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "Support-preserving collection remains a diagnostic guard for one-shot support collapse.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_event_window_support_preserving_hold_quality_enabled"),
+            ("hyperparameters", "event_window_support_preserving_hold_quality_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "Quality-window rows must be preserved for classifier fault localization.",
         ),
@@ -282,15 +282,15 @@ M3S2_WINDOW_CLASSIFIER_CONTRACT = ModelMechanismContract(
 )
 
 
-M3S2_DIRECT_FIRE_BOUNDARY_CONTRACT = ModelMechanismContract(
+DIRECT_FIRE_BOUNDARY_CONTRACT = ModelMechanismContract(
     mechanism_id="m3s2.direct_fire_boundary_event_head",
     role=MechanismRole.EXECUTABLE,
     owner=(
         "python/rl/policy_algo/policies.py::hybrid_event_head + "
-        "python/rl/policy_algo/ppo_adaptive_kl.py::m3s2_fire_boundary"
+        "python/rl/policy_algo/ppo_adaptive_kl.py::fire_boundary"
     ),
     activation_paths=(
-        ("hyperparameters", "m3s2_fire_boundary_coef"),
+        ("hyperparameters", "fire_boundary_coef"),
     ),
     fault_stages=(
         FaultStage.OBSERVATION,
@@ -343,37 +343,37 @@ M3S2_DIRECT_FIRE_BOUNDARY_CONTRACT = ModelMechanismContract(
             "The executable fire boundary must have a trainable hybrid_event_head.",
         ),
         ConfigGate(
-            ("hyperparameters", "policy_kwargs", "hybrid_event_use_m3_stopping_head"),
+            ("hyperparameters", "policy_kwargs", "hybrid_event_use_stopping_head"),
             ConfigExpectation.REQUIRED_FALSE,
             "Direct fire boundary owns executable hold/fire logits and must not be overridden by stopping adapter.",
         ),
         ConfigGate(
-            ("hyperparameters", "policy_kwargs", "hybrid_event_use_m3_window_classifier_head"),
+            ("hyperparameters", "policy_kwargs", "hybrid_event_use_window_classifier_head"),
             ConfigExpectation.REQUIRED_FALSE,
             "Direct fire boundary owns executable hold/fire logits and must not be overridden by classifier adapter.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_fire_boundary_coef"),
+            ("hyperparameters", "fire_boundary_coef"),
             ConfigExpectation.POSITIVE_NUMBER,
             "The direct fire boundary needs an owned auxiliary objective.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_fire_boundary_separate_update_enabled"),
+            ("hyperparameters", "fire_boundary_separate_update_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "The direct fire boundary update must stay isolated from PPO actor/value updates.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_fire_boundary_dedicated_optimizer_enabled"),
+            ("hyperparameters", "fire_boundary_dedicated_optimizer_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "The direct fire boundary must not reuse PPO Adam state.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_fire_boundary_support_preserving_collect_enabled"),
+            ("hyperparameters", "fire_boundary_support_preserving_collect_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "Support-preserving collection must keep legal rows visible for boundary fitting.",
         ),
         ConfigGate(
-            ("hyperparameters", "m3s2_fire_boundary_support_preserving_hold_quality_enabled"),
+            ("hyperparameters", "fire_boundary_support_preserving_hold_quality_enabled"),
             ConfigExpectation.REQUIRED_TRUE,
             "Quality-window rows must be preserved until the boundary is verified.",
         ),
@@ -382,8 +382,8 @@ M3S2_DIRECT_FIRE_BOUNDARY_CONTRACT = ModelMechanismContract(
 
 
 MODEL_MECHANISM_CONTRACTS: tuple[ModelMechanismContract, ...] = (
-    M3S2_WINDOW_CLASSIFIER_CONTRACT,
-    M3S2_DIRECT_FIRE_BOUNDARY_CONTRACT,
+    WINDOW_CLASSIFIER_CONTRACT,
+    DIRECT_FIRE_BOUNDARY_CONTRACT,
 )
 
 

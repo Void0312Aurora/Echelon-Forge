@@ -18,7 +18,7 @@ from gymnasium import spaces
 from stable_baselines3.common.buffers import RolloutBuffer
 
 from .first_event_hazard import (
-    A6_FIRST_EVENT_SOURCE_CURRICULUM,
+    FIRST_EVENT_SOURCE_CURRICULUM,
     FirstEventHazardLabels,
     build_first_event_hazard_labels,
     compute_first_event_hazard_loss,
@@ -28,34 +28,34 @@ from .first_event_hazard import (
 from python.mission_obs_taxonomy import mission_observation_has_field
 
 from ._adaptive_kl_support import (
-    _A7FirstEventRolloutRow,
+    _FirstEventRolloutRow,
     _TrainEpochStats,
     _air_combat_c2_roe_mode_from_dim,
     _mission_column,
 )
 
 
-class _A6FirstEventMixin:
-    def _a6_first_event_enabled(self) -> bool:
+class _FirstEventMixin:
+    def _first_event_enabled(self) -> bool:
         return bool(
-            self.a6_first_event_hazard_coef > 0.0
-            or self.a6_first_event_curriculum_coef > 0.0
-            or self.a6_first_event_censored_survival_weight > 0.0
-            or self.a6_first_event_deadline_weight > 0.0
+            self.first_event_hazard_coef > 0.0
+            or self.first_event_curriculum_coef > 0.0
+            or self.first_event_censored_survival_weight > 0.0
+            or self.first_event_deadline_weight > 0.0
         )
 
     @staticmethod
-    def _a6_first_event_bool(value: Any) -> bool:
+    def _first_event_bool(value: Any) -> bool:
         if isinstance(value, str):
             return value.strip().lower() in {"1", "true", "yes", "on"}
         return bool(value)
 
     @classmethod
-    def _a6_first_event_fire_mask_from_info(cls, info: Any) -> bool:
+    def _first_event_fire_mask_from_info(cls, info: Any) -> bool:
         if not isinstance(info, dict):
             return False
         if "fire_mask" in info:
-            return cls._a6_first_event_bool(info.get("fire_mask"))
+            return cls._first_event_bool(info.get("fire_mask"))
         event_mask = info.get("event_action_mask", None)
         if th.is_tensor(event_mask):
             values = event_mask.detach().cpu().reshape(-1).tolist()
@@ -66,11 +66,11 @@ class _A6FirstEventMixin:
         else:
             values = []
         if len(values) >= 2:
-            return cls._a6_first_event_bool(values[1])
+            return cls._first_event_bool(values[1])
         return False
 
     @staticmethod
-    def _a6_first_event_policy_fire_mask_from_obs(obs: Any, n_envs: int) -> list[bool] | None:
+    def _first_event_policy_fire_mask_from_obs(obs: Any, n_envs: int) -> list[bool] | None:
         if not isinstance(obs, dict):
             return None
         mission = obs.get("mission")
@@ -147,7 +147,7 @@ class _A6FirstEventMixin:
         return [bool(value) for value in fire_mask.detach().cpu().reshape(-1).tolist()]
 
     @staticmethod
-    def _a6_first_event_policy_launch_window_from_obs(
+    def _first_event_policy_launch_window_from_obs(
         obs: Any,
         n_envs: int,
         *,
@@ -230,20 +230,20 @@ class _A6FirstEventMixin:
             return None
         return [bool(value) for value in per_env.detach().cpu().reshape(-1).tolist()]
 
-    def _a6_first_event_launch_window_from_policy_obs(
+    def _first_event_launch_window_from_policy_obs(
         self, obs: Any, n_envs: int
     ) -> list[bool] | None:
-        if not self.a6_first_event_launch_window_enabled:
+        if not self.first_event_launch_window_enabled:
             return None
-        return self._a6_first_event_policy_launch_window_from_obs(
+        return self._first_event_policy_launch_window_from_obs(
             obs,
             n_envs,
-            min_range_m=float(self.a6_first_event_launch_window_min_range_m),
-            max_range_m=float(self.a6_first_event_launch_window_max_range_m),
-            max_track_age_s=float(self.a6_first_event_launch_window_max_track_age_s),
+            min_range_m=float(self.first_event_launch_window_min_range_m),
+            max_range_m=float(self.first_event_launch_window_max_range_m),
+            max_track_age_s=float(self.first_event_launch_window_max_track_age_s),
         )
 
-    def _build_a6_first_event_labels_from_rollout_infos(
+    def _build_first_event_labels_from_rollout_infos(
         self,
         *,
         engagement_state: list[str],
@@ -252,7 +252,7 @@ class _A6FirstEventMixin:
         episode_id: list[int],
         launch_window_open: list[bool] | None = None,
     ):
-        use_a6_targets = self._a6_first_event_enabled()
+        use_targets = self._first_event_enabled()
         return build_first_event_hazard_labels(
             engagement_state=engagement_state,
             fire_mask=fire_mask,
@@ -260,61 +260,61 @@ class _A6FirstEventMixin:
             episode_id=episode_id,
             launch_window_open=launch_window_open,
             launch_window_min_window_age_steps=int(
-                self.a6_first_event_launch_window_min_window_age_steps
+                self.first_event_launch_window_min_window_age_steps
             ),
             launch_window_prewindow_hold_weight=(
-                float(self.a6_first_event_launch_window_prewindow_hold_weight)
-                if use_a6_targets
-                else float(self.a7_event_credit_prewindow_hold_weight)
+                float(self.first_event_launch_window_prewindow_hold_weight)
+                if use_targets
+                else float(self.event_credit_prewindow_hold_weight)
             ),
             launch_window_early_accept_weight=(
-                float(self.a6_first_event_launch_window_early_accept_weight)
-                if use_a6_targets
-                else float(self.a7_event_credit_early_accept_weight)
+                float(self.first_event_launch_window_early_accept_weight)
+                if use_targets
+                else float(self.event_credit_early_accept_weight)
             ),
             curriculum_weight=(
-                float(self._current_a6_first_event_curriculum_coef())
-                if use_a6_targets
-                else float(self.a7_event_credit_curriculum_coef)
+                float(self._current_first_event_curriculum_coef())
+                if use_targets
+                else float(self.event_credit_curriculum_coef)
             ),
             curriculum_min_window_age_steps=(
-                int(self.a6_first_event_curriculum_min_window_age_steps)
-                if use_a6_targets
-                else int(self.a7_event_credit_curriculum_min_window_age_steps)
+                int(self.first_event_curriculum_min_window_age_steps)
+                if use_targets
+                else int(self.event_credit_curriculum_min_window_age_steps)
             ),
             curriculum_blocked_episode_ids=getattr(
                 self,
-                "_a6_first_event_curriculum_seeded_episode_ids",
+                "_first_event_curriculum_seeded_episode_ids",
                 set(),
             ),
             censored_survival_weight=(
-                float(self.a6_first_event_censored_survival_weight)
-                if use_a6_targets
-                else float(self.a7_event_credit_censored_survival_weight)
+                float(self.first_event_censored_survival_weight)
+                if use_targets
+                else float(self.event_credit_censored_survival_weight)
             ),
             deadline_weight=(
-                float(self.a6_first_event_deadline_weight)
-                if use_a6_targets
-                else float(self.a7_event_credit_deadline_weight)
+                float(self.first_event_deadline_weight)
+                if use_targets
+                else float(self.event_credit_deadline_weight)
             ),
             deadline_min_window_age_steps=(
-                int(self.a6_first_event_deadline_min_window_age_steps)
-                if use_a6_targets
-                else int(self.a7_event_credit_deadline_min_window_age_steps)
+                int(self.first_event_deadline_min_window_age_steps)
+                if use_targets
+                else int(self.event_credit_deadline_min_window_age_steps)
             ),
             shadow_quality_after_early_accept=bool(
-                not use_a6_targets and self.a7_event_credit_shadow_quality_weight > 0.0
+                not use_targets and self.event_credit_shadow_quality_weight > 0.0
             ),
             shadow_quality_positive_weight=(
-                0.0 if use_a6_targets else float(self.a7_event_credit_shadow_quality_weight)
+                0.0 if use_targets else float(self.event_credit_shadow_quality_weight)
             ),
             legal_open_quality_weight=(
-                0.0 if use_a6_targets else float(self.a7_event_credit_legal_open_quality_weight)
+                0.0 if use_targets else float(self.event_credit_legal_open_quality_weight)
             ),
             legal_open_quality_min_window_age_steps=(
                 1
-                if use_a6_targets
-                else int(self.a7_event_credit_legal_open_quality_min_window_age_steps)
+                if use_targets
+                else int(self.event_credit_legal_open_quality_min_window_age_steps)
             ),
             device=self.device,
         )
@@ -340,26 +340,26 @@ class _A6FirstEventMixin:
             had_accepted=labels.had_accepted[start:end],
         )
 
-    def _record_a6_first_event_curriculum_seeds(self, labels, episode_id: list[int]) -> None:
-        seeded = getattr(self, "_a6_first_event_curriculum_seeded_episode_ids", None)
+    def _record_first_event_curriculum_seeds(self, labels, episode_id: list[int]) -> None:
+        seeded = getattr(self, "_first_event_curriculum_seeded_episode_ids", None)
         if seeded is None:
             seeded = set()
-            self._a6_first_event_curriculum_seeded_episode_ids = seeded
+            self._first_event_curriculum_seeded_episode_ids = seeded
         sources = labels.source.detach().cpu().reshape(-1).tolist()
         targets = labels.target.detach().cpu().reshape(-1).tolist()
         for idx, source in enumerate(sources):
-            if int(source) == A6_FIRST_EVENT_SOURCE_CURRICULUM and float(targets[idx]) > 0.5:
+            if int(source) == FIRST_EVENT_SOURCE_CURRICULUM and float(targets[idx]) > 0.5:
                 seeded.add(int(episode_id[idx]))
 
-    def _current_a6_first_event_curriculum_coef(self) -> float:
+    def _current_first_event_curriculum_coef(self) -> float:
         return current_first_event_curriculum_coef(
-            self.a6_first_event_curriculum_coef,
+            self.first_event_curriculum_coef,
             float(self._current_progress_remaining),
-            decay_completed_fraction=float(self.a6_first_event_curriculum_decay_fraction),
+            decay_completed_fraction=float(self.first_event_curriculum_decay_fraction),
         )
 
     def _first_event_hazard_loss(self, rollout_data):
-        if not self._a6_first_event_enabled():
+        if not self._first_event_enabled():
             return None
         batch = first_event_hazard_batch_from_rollout_data(rollout_data)
         if batch is None:
@@ -378,10 +378,10 @@ class _A6FirstEventMixin:
             target.to(device=event_logit_delta.device),
             active.to(device=event_logit_delta.device),
             weight.to(device=event_logit_delta.device),
-            coef=float(self.a6_first_event_hazard_coef),
+            coef=float(self.first_event_hazard_coef),
         )
 
-    def _attach_a6_first_event_labels_to_rollout_buffer(
+    def _attach_first_event_labels_to_rollout_buffer(
         self,
         rollout_buffer: RolloutBuffer,
         *,
@@ -394,10 +394,10 @@ class _A6FirstEventMixin:
     ) -> FirstEventHazardLabels | None:
         if not self._first_event_label_collection_enabled():
             return None
-        setter = getattr(rollout_buffer, "set_a6_first_event_labels", None)
+        setter = getattr(rollout_buffer, "set_first_event_labels", None)
         if not callable(setter):
             return None
-        use_cross_rollout = self._a7_cross_rollout_first_event_enabled(launch_window_open)
+        use_cross_rollout = self._cross_rollout_first_event_enabled(launch_window_open)
         local_labels = None
         current_rows_by_env = None
         prefix_count = 0
@@ -405,7 +405,7 @@ class _A6FirstEventMixin:
         if use_cross_rollout:
             assert launch_window_open is not None
             labels, local_labels, current_rows_by_env, prefix_count = (
-                self._a7_build_cross_rollout_first_event_labels(
+                self._build_cross_rollout_first_event_labels(
                     engagement_state=engagement_state,
                     fire_mask=fire_mask,
                     fire_once_accepted=fire_once_accepted,
@@ -415,8 +415,8 @@ class _A6FirstEventMixin:
                 )
             )
         else:
-            self._reset_a7_cross_rollout_first_event_stats()
-            labels = self._build_a6_first_event_labels_from_rollout_infos(
+            self._reset_cross_rollout_first_event_stats()
+            labels = self._build_first_event_labels_from_rollout_infos(
                 engagement_state=engagement_state,
                 fire_mask=fire_mask,
                 fire_once_accepted=fire_once_accepted,
@@ -425,37 +425,37 @@ class _A6FirstEventMixin:
             )
         setter(labels)
         if use_cross_rollout and local_labels is not None and current_rows_by_env is not None:
-            history = self._update_a7_first_event_rollout_history(
+            history = self._update_first_event_rollout_history(
                 current_rows_by_env=current_rows_by_env,
                 n_envs=n_envs,
                 env_episode_id_after_rollout=env_episode_id_after_rollout,
             )
-            self._record_a7_cross_rollout_first_event_stats(
+            self._record_cross_rollout_first_event_stats(
                 labels=labels,
                 local_labels=local_labels,
                 history=history,
                 prefix_count=prefix_count,
             )
-        self._record_a6_first_event_curriculum_seeds(labels, episode_id)
+        self._record_first_event_curriculum_seeds(labels, episode_id)
         return labels
 
 
-    def _record_a6_first_event_logs(self, epoch_stats: "_TrainEpochStats") -> None:
+    def _record_first_event_logs(self, epoch_stats: "_TrainEpochStats") -> None:
         self.logger.record(
             "a6/hazard_loss",
             float(np.mean(epoch_stats.first_event_hazard_losses)) if epoch_stats.first_event_hazard_losses else 0.0,
         )
-        self.logger.record("a6/hazard_coef", float(self.a6_first_event_hazard_coef))
+        self.logger.record("a6/hazard_coef", float(self.first_event_hazard_coef))
         self.logger.record(
-            "a6/curriculum_coef", float(self._current_a6_first_event_curriculum_coef())
+            "a6/curriculum_coef", float(self._current_first_event_curriculum_coef())
         )
-        self.logger.record("a6/deadline_weight", float(self.a6_first_event_deadline_weight))
+        self.logger.record("a6/deadline_weight", float(self.first_event_deadline_weight))
         self.logger.record(
-            "a6/launch_window_enabled", float(self.a6_first_event_launch_window_enabled)
+            "a6/launch_window_enabled", float(self.first_event_launch_window_enabled)
         )
         self.logger.record(
             "a6/launch_window_prewindow_hold_weight",
-            float(self.a6_first_event_launch_window_prewindow_hold_weight),
+            float(self.first_event_launch_window_prewindow_hold_weight),
         )
         self.logger.record(
             "a6/active_count_mean",
@@ -473,4 +473,4 @@ class _A6FirstEventMixin:
 
 
 # Suppress unused-import warnings for symbols re-exported transitively.
-_ = (spaces, _A7FirstEventRolloutRow)
+_ = (spaces, _FirstEventRolloutRow)

@@ -21,15 +21,15 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from python.rl.policy_algo.first_event_hazard import (
-    A6_FIRST_EVENT_SOURCE_ACCEPTED,
-    A6_FIRST_EVENT_SOURCE_CENSORED,
-    A6_FIRST_EVENT_SOURCE_CURRICULUM,
-    A6_FIRST_EVENT_SOURCE_DEADLINE,
-    A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
-    A6_FIRST_EVENT_SOURCE_INACTIVE,
-    A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
-    A6_FIRST_EVENT_SOURCE_PREWINDOW,
-    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+    FIRST_EVENT_SOURCE_ACCEPTED,
+    FIRST_EVENT_SOURCE_CENSORED,
+    FIRST_EVENT_SOURCE_CURRICULUM,
+    FIRST_EVENT_SOURCE_DEADLINE,
+    FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+    FIRST_EVENT_SOURCE_INACTIVE,
+    FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
+    FIRST_EVENT_SOURCE_PREWINDOW,
+    FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     FirstEventHazardLabels,
     build_first_event_hazard_labels,
     compute_first_event_credit_loss,
@@ -51,24 +51,24 @@ DEFAULT_TRAIN_CONFIG = resolve_repo_path(
     "training",
     "active",
     "air_combat",
-    "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json",
+    "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json",
 )
 DEFAULT_MODEL = resolve_repo_path(
     "experiments_tmp",
-    "a7_state_completed_opportunity_32k_20260604_r1",
+    "state_completed_opportunity_32k_20260604_r1",
     "final_model.zip",
 )
 
 SOURCE_NAMES = {
-    A6_FIRST_EVENT_SOURCE_INACTIVE: "inactive",
-    A6_FIRST_EVENT_SOURCE_ACCEPTED: "accepted",
-    A6_FIRST_EVENT_SOURCE_CURRICULUM: "curriculum",
-    A6_FIRST_EVENT_SOURCE_CENSORED: "censored",
-    A6_FIRST_EVENT_SOURCE_DEADLINE: "deadline",
-    A6_FIRST_EVENT_SOURCE_PREWINDOW: "prewindow",
-    A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED: "early_accepted",
-    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY: "shadow_quality",
-    A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY: "legal_open_quality",
+    FIRST_EVENT_SOURCE_INACTIVE: "inactive",
+    FIRST_EVENT_SOURCE_ACCEPTED: "accepted",
+    FIRST_EVENT_SOURCE_CURRICULUM: "curriculum",
+    FIRST_EVENT_SOURCE_CENSORED: "censored",
+    FIRST_EVENT_SOURCE_DEADLINE: "deadline",
+    FIRST_EVENT_SOURCE_PREWINDOW: "prewindow",
+    FIRST_EVENT_SOURCE_EARLY_ACCEPTED: "early_accepted",
+    FIRST_EVENT_SOURCE_SHADOW_QUALITY: "shadow_quality",
+    FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY: "legal_open_quality",
 }
 
 
@@ -130,7 +130,7 @@ def _slice_obs(obs: dict[str, th.Tensor], indices: th.Tensor, device: th.device)
 
 
 def _policy_fire_mask_from_obs(obs_tensor: dict[str, th.Tensor], n_envs: int) -> list[bool] | None:
-    return AdaptiveKLPPO._a6_first_event_policy_fire_mask_from_obs(obs_tensor, n_envs)
+    return AdaptiveKLPPO._first_event_policy_fire_mask_from_obs(obs_tensor, n_envs)
 
 
 def _policy_launch_window_from_obs(
@@ -139,13 +139,13 @@ def _policy_launch_window_from_obs(
     *,
     hyper: dict[str, Any],
 ) -> list[bool] | None:
-    return AdaptiveKLPPO._a6_first_event_policy_launch_window_from_obs(
+    return AdaptiveKLPPO._first_event_policy_launch_window_from_obs(
         obs_tensor,
         n_envs,
-        min_range_m=_finite_float(hyper.get("a6_first_event_launch_window_min_range_m", 0.0), 0.0),
-        max_range_m=_finite_float(hyper.get("a6_first_event_launch_window_max_range_m", 0.0), 0.0),
+        min_range_m=_finite_float(hyper.get("first_event_launch_window_min_range_m", 0.0), 0.0),
+        max_range_m=_finite_float(hyper.get("first_event_launch_window_max_range_m", 0.0), 0.0),
         max_track_age_s=_finite_float(
-            hyper.get("a6_first_event_launch_window_max_track_age_s", float("inf")),
+            hyper.get("first_event_launch_window_max_track_age_s", float("inf")),
             float("inf"),
         ),
     )
@@ -216,14 +216,14 @@ def collect_fixed_batch(
                 mask_open = (
                     bool(policy_fire_mask[0])
                     if policy_fire_mask is not None and len(policy_fire_mask) >= 1
-                    else AdaptiveKLPPO._a6_first_event_fire_mask_from_info(row)
+                    else AdaptiveKLPPO._first_event_fire_mask_from_info(row)
                 )
                 launch_open = (
                     bool(policy_launch_window[0])
                     if policy_launch_window is not None and len(policy_launch_window) >= 1
                     else bool(mask_open)
                 )
-                accepted = AdaptiveKLPPO._a6_first_event_bool(row.get("fire_once_accepted", False))
+                accepted = AdaptiveKLPPO._first_event_bool(row.get("fire_once_accepted", False))
 
                 obs_items.append(obs_tensor)
                 engagement_state.append("AuthorizedReady" if mask_open else str(row.get("engagement_state", "") or ""))
@@ -252,19 +252,19 @@ def collect_fixed_batch(
         fire_mask=fire_mask,
         fire_once_accepted=fire_once_accepted,
         episode_id=episode_id,
-        launch_window_open=launch_window_open if bool(hyper.get("a6_first_event_launch_window_enabled", False)) else None,
-        launch_window_min_window_age_steps=int(hyper.get("a6_first_event_launch_window_min_window_age_steps", 1)),
-        launch_window_prewindow_hold_weight=_finite_float(hyper.get("a7_event_credit_prewindow_hold_weight", 0.0), 0.0),
-        launch_window_early_accept_weight=_finite_float(hyper.get("a7_event_credit_early_accept_weight", 1.0), 1.0),
-        curriculum_weight=_finite_float(hyper.get("a7_event_credit_curriculum_coef", 0.0), 0.0),
-        curriculum_min_window_age_steps=int(hyper.get("a7_event_credit_curriculum_min_window_age_steps", 32)),
-        censored_survival_weight=_finite_float(hyper.get("a7_event_credit_censored_survival_weight", 0.0), 0.0),
-        deadline_weight=_finite_float(hyper.get("a7_event_credit_deadline_weight", 0.0), 0.0),
-        deadline_min_window_age_steps=int(hyper.get("a7_event_credit_deadline_min_window_age_steps", 96)),
-        shadow_quality_after_early_accept=bool(_finite_float(hyper.get("a7_event_credit_shadow_quality_weight", 0.0), 0.0) > 0.0),
-        shadow_quality_positive_weight=_finite_float(hyper.get("a7_event_credit_shadow_quality_weight", 0.0), 0.0),
-        legal_open_quality_weight=_finite_float(hyper.get("a7_event_credit_legal_open_quality_weight", 0.0), 0.0),
-        legal_open_quality_min_window_age_steps=int(hyper.get("a7_event_credit_legal_open_quality_min_window_age_steps", 1)),
+        launch_window_open=launch_window_open if bool(hyper.get("first_event_launch_window_enabled", False)) else None,
+        launch_window_min_window_age_steps=int(hyper.get("first_event_launch_window_min_window_age_steps", 1)),
+        launch_window_prewindow_hold_weight=_finite_float(hyper.get("event_credit_prewindow_hold_weight", 0.0), 0.0),
+        launch_window_early_accept_weight=_finite_float(hyper.get("event_credit_early_accept_weight", 1.0), 1.0),
+        curriculum_weight=_finite_float(hyper.get("event_credit_curriculum_coef", 0.0), 0.0),
+        curriculum_min_window_age_steps=int(hyper.get("event_credit_curriculum_min_window_age_steps", 32)),
+        censored_survival_weight=_finite_float(hyper.get("event_credit_censored_survival_weight", 0.0), 0.0),
+        deadline_weight=_finite_float(hyper.get("event_credit_deadline_weight", 0.0), 0.0),
+        deadline_min_window_age_steps=int(hyper.get("event_credit_deadline_min_window_age_steps", 96)),
+        shadow_quality_after_early_accept=bool(_finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0) > 0.0),
+        shadow_quality_positive_weight=_finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0),
+        legal_open_quality_weight=_finite_float(hyper.get("event_credit_legal_open_quality_weight", 0.0), 0.0),
+        legal_open_quality_min_window_age_steps=int(hyper.get("event_credit_legal_open_quality_min_window_age_steps", 1)),
         device="cpu",
     )
     source_counts = Counter(int(value) for value in labels.source.detach().cpu().reshape(-1).tolist())
@@ -366,7 +366,7 @@ def evaluate_credit_head(policy, obs: dict[str, th.Tensor], labels: FirstEventHa
     stats.update(_subset_stats("negative", active & (target <= 0.5), target, weight, advantage))
     for source_id, source_name in SOURCE_NAMES.items():
         stats.update(_subset_stats(f"source_{source_name}", active & (source == int(source_id)), target, weight, advantage))
-    legal_positive = active & (source == int(A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY)) & (target > 0.5)
+    legal_positive = active & (source == int(FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY)) & (target > 0.5)
     stats.update(_subset_stats("legal_open_quality_positive", legal_positive, target, weight, advantage))
     return stats
 
@@ -492,8 +492,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             steps=int(args.fit_steps),
             batch_size=int(args.fit_batch_size),
             learning_rate=float(args.fit_lr),
-            positive_mass_cap=_finite_float(hyper.get("a7_event_credit_positive_mass_cap", 1.0), 1.0),
-            negative_mass_cap=_finite_float(hyper.get("a7_event_credit_negative_mass_cap", 1.0), 1.0),
+            positive_mass_cap=_finite_float(hyper.get("event_credit_positive_mass_cap", 1.0), 1.0),
+            negative_mass_cap=_finite_float(hyper.get("event_credit_negative_mass_cap", 1.0), 1.0),
             log_every=int(args.log_every),
         )
         after = evaluate_credit_head(fit_model.policy, obs, labels, batch_size=int(args.eval_batch_size))

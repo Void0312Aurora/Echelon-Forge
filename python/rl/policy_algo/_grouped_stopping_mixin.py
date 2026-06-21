@@ -14,37 +14,37 @@ import numpy as np
 import torch as th
 from stable_baselines3.common.buffers import RolloutBuffer
 
-from .m3s1_grouped_stopping import (
-    M3S1_CENSOR_EARLY_EVENT_PREFIX,
-    M3S1_CENSOR_NONE,
-    M3S1_CENSOR_TIMEOUT,
-    M3S1_ROUTE_ON_POLICY,
-    M3S1GroupedStoppingEvidence,
-    M3S1GroupedStoppingLoss,
-    compute_m3s1_grouped_stopping_loss,
+from .grouped_stopping import (
+    CENSOR_EARLY_EVENT_PREFIX,
+    CENSOR_NONE,
+    CENSOR_TIMEOUT,
+    ROUTE_ON_POLICY,
+    GroupedStoppingEvidence,
+    GroupedStoppingLoss,
+    compute_grouped_stopping_loss,
 )
 
 from ._adaptive_kl_support import (
-    _M3S1GroupedStoppingDiagnostics,
-    _M3S1GroupedStoppingSidecar,
-    _M3S1GroupedStoppingSidecarGroup,
+    _GroupedStoppingDiagnostics,
+    _GroupedStoppingSidecar,
+    _GroupedStoppingSidecarGroup,
 )
 
 
-class _M3S1GroupedStoppingMixin:
-    def _m3s1_grouped_stopping_enabled(self) -> bool:
-        return bool(float(getattr(self, "m3s1_grouped_stopping_coef", 0.0)) > 0.0)
+class _GroupedStoppingMixin:
+    def _grouped_stopping_enabled(self) -> bool:
+        return bool(float(getattr(self, "grouped_stopping_coef", 0.0)) > 0.0)
 
-    def _m3s1_grouped_stopping_sidecar_enabled(self) -> bool:
+    def _grouped_stopping_sidecar_enabled(self) -> bool:
         return bool(
-            self._m3s1_grouped_stopping_enabled()
-            or self._m3s2_event_window_enabled()
-            or self._m3s2_fire_boundary_enabled()
-            or self._m3s2_window_classifier_enabled()
+            self._grouped_stopping_enabled()
+            or self._event_window_enabled()
+            or self._fire_boundary_enabled()
+            or self._window_classifier_enabled()
         )
 
     @staticmethod
-    def _m3s1_rollout_observation_snapshot(rollout_buffer: RolloutBuffer) -> dict[str, Any] | None:
+    def _rollout_observation_snapshot(rollout_buffer: RolloutBuffer) -> dict[str, Any] | None:
         observations = getattr(rollout_buffer, "observations", None)
         if not isinstance(observations, dict):
             return None
@@ -56,7 +56,7 @@ class _M3S1GroupedStoppingMixin:
                 snapshot[str(key)] = np.array(value, copy=True)
         return snapshot
 
-    def _build_m3s1_grouped_stopping_sidecar(
+    def _build_grouped_stopping_sidecar(
         self,
         rollout_buffer: RolloutBuffer,
         *,
@@ -64,8 +64,8 @@ class _M3S1GroupedStoppingMixin:
         fire_once_accepted: list[bool],
         episode_id: list[int],
         launch_window_open: list[bool],
-    ) -> _M3S1GroupedStoppingSidecar | None:
-        if not self._m3s1_grouped_stopping_sidecar_enabled():
+    ) -> _GroupedStoppingSidecar | None:
+        if not self._grouped_stopping_sidecar_enabled():
             return None
         n_envs = max(1, int(getattr(rollout_buffer, "n_envs", 1)))
         count = len(fire_mask)
@@ -76,7 +76,7 @@ class _M3S1GroupedStoppingMixin:
         if count <= 0 or count % n_envs != 0:
             return None
 
-        observations = self._m3s1_rollout_observation_snapshot(rollout_buffer)
+        observations = self._rollout_observation_snapshot(rollout_buffer)
         if observations is None:
             return None
 
@@ -88,8 +88,8 @@ class _M3S1GroupedStoppingMixin:
                 ordered_episodes.append(episode)
                 seen_episodes.add(episode)
 
-        launch_min_age = max(1, int(self.a6_first_event_launch_window_min_window_age_steps))
-        groups: list[_M3S1GroupedStoppingSidecarGroup] = []
+        launch_min_age = max(1, int(self.first_event_launch_window_min_window_age_steps))
+        groups: list[_GroupedStoppingSidecarGroup] = []
         group_counter = 0
         accepted_event_count = 0
         one_shot_violation_count = 0
@@ -130,17 +130,17 @@ class _M3S1GroupedStoppingMixin:
 
             accepted_positions = [idx for idx, value in enumerate(accepted) if bool(value)]
             if accepted_positions and not bool(quality[int(accepted_positions[0])]):
-                censoring_kind = M3S1_CENSOR_EARLY_EVENT_PREFIX
+                censoring_kind = CENSOR_EARLY_EVENT_PREFIX
                 censor_step = int(group_flat_indices[int(accepted_positions[0])] // n_envs)
             elif accepted_positions:
-                censoring_kind = M3S1_CENSOR_NONE
+                censoring_kind = CENSOR_NONE
                 censor_step = int(group_flat_indices[int(accepted_positions[0])] // n_envs)
             else:
-                censoring_kind = M3S1_CENSOR_TIMEOUT
+                censoring_kind = CENSOR_TIMEOUT
                 censor_step = None
 
             groups.append(
-                _M3S1GroupedStoppingSidecarGroup(
+                _GroupedStoppingSidecarGroup(
                     group_id=f"{episode}:{group_counter}",
                     episode_id=int(episode),
                     row_indices=tuple(group_flat_indices),
@@ -156,7 +156,7 @@ class _M3S1GroupedStoppingMixin:
             )
             group_counter += 1
 
-        return _M3S1GroupedStoppingSidecar(
+        return _GroupedStoppingSidecar(
             groups=tuple(groups),
             observations=observations,
             accepted_event_count=int(accepted_event_count),
@@ -164,10 +164,10 @@ class _M3S1GroupedStoppingMixin:
             closed_mask_accepted_event_count=int(closed_mask_accepted_event_count),
         )
 
-    def _m3s1_observations_for_group(
+    def _observations_for_group(
         self,
-        sidecar: _M3S1GroupedStoppingSidecar,
-        group: _M3S1GroupedStoppingSidecarGroup,
+        sidecar: _GroupedStoppingSidecar,
+        group: _GroupedStoppingSidecarGroup,
     ) -> dict[str, th.Tensor]:
         observations: dict[str, th.Tensor] = {}
         for key, source in sidecar.observations.items():
@@ -183,12 +183,12 @@ class _M3S1GroupedStoppingMixin:
         return observations
 
     @staticmethod
-    def _m3s1_extend_float_values(values: list[float], tensor: th.Tensor) -> None:
+    def _extend_float_values(values: list[float], tensor: th.Tensor) -> None:
         values.extend(float(value) for value in tensor.detach().cpu().reshape(-1).tolist())
 
     @staticmethod
-    def _m3s1_group_order(
-        group: _M3S1GroupedStoppingSidecarGroup, *, device: th.device
+    def _group_order(
+        group: _GroupedStoppingSidecarGroup, *, device: th.device
     ) -> th.Tensor:
         env_indices = th.as_tensor(group.env_indices, device=device).reshape(-1).to(dtype=th.long)
         step_indices = th.as_tensor(group.step_indices, device=device).reshape(-1).to(dtype=th.long)
@@ -197,7 +197,7 @@ class _M3S1GroupedStoppingMixin:
         env_stride = max(1, int(env_indices.max().detach().cpu().item()) + 1)
         return th.argsort(step_indices * env_stride + env_indices)
 
-    def _m3s1_event_logit_delta_diagnostic(self, obs: dict[str, th.Tensor]) -> th.Tensor | None:
+    def _event_logit_delta_diagnostic(self, obs: dict[str, th.Tensor]) -> th.Tensor | None:
         distribution_getter = getattr(self.policy, "get_distribution", None)
         if not callable(distribution_getter):
             return None
@@ -211,13 +211,13 @@ class _M3S1GroupedStoppingMixin:
                 return None
             return logit_delta.reshape(-1).detach()
 
-    def _m3s1_group_diagnostic_masks(
+    def _group_diagnostic_masks(
         self,
-        group: _M3S1GroupedStoppingSidecarGroup,
+        group: _GroupedStoppingSidecarGroup,
         logits: th.Tensor,
     ) -> tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, th.Tensor]:
         device = logits.device
-        order = self._m3s1_group_order(group, device=device)
+        order = self._group_order(group, device=device)
         legal = th.as_tensor(group.legal_mask, device=device).reshape(-1).to(dtype=th.bool)
         quality = th.as_tensor(group.quality_mask, device=device).reshape(-1).to(dtype=th.bool)
         row_indices = th.as_tensor(group.row_indices, device=device).reshape(-1).to(dtype=th.long)
@@ -225,7 +225,7 @@ class _M3S1GroupedStoppingMixin:
         support = th.ones_like(legal, dtype=th.bool)
         if group.support_horizon is not None:
             support = support & (row_indices <= int(group.support_horizon))
-        if group.censor_step is not None and group.censoring_kind != M3S1_CENSOR_EARLY_EVENT_PREFIX:
+        if group.censor_step is not None and group.censoring_kind != CENSOR_EARLY_EVENT_PREFIX:
             support = support & (step_indices <= int(group.censor_step))
 
         logits = logits[order]
@@ -248,22 +248,22 @@ class _M3S1GroupedStoppingMixin:
         return logits[support], supported_legal, desirable, prewindow, no_window
 
     @staticmethod
-    def _m3s1_mean(values: list[float]) -> float:
+    def _mean(values: list[float]) -> float:
         return float(sum(values) / len(values)) if values else 0.0
 
-    def _m3s1_grouped_stopping_auxiliary_update(self) -> M3S1GroupedStoppingLoss | None:
-        self._m3s1_last_grouped_stopping_grad_norm = 0.0
-        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics()
-        if not self._m3s1_grouped_stopping_enabled():
+    def _grouped_stopping_auxiliary_update(self) -> GroupedStoppingLoss | None:
+        self._last_grouped_stopping_grad_norm = 0.0
+        self._last_grouped_stopping_diagnostics = _GroupedStoppingDiagnostics()
+        if not self._grouped_stopping_enabled():
             return None
-        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+        sidecar = getattr(self, "_grouped_stopping_sidecar", None)
         if sidecar is None or not sidecar.groups:
             return None
-        stopping_getter = getattr(self.policy, "get_m3_stopping_logits", None)
+        stopping_getter = getattr(self.policy, "get_stopping_logits", None)
         if not callable(stopping_getter):
             return None
 
-        evidence: list[M3S1GroupedStoppingEvidence] = []
+        evidence: list[GroupedStoppingEvidence] = []
         stop_logit_values: list[float] = []
         stop_logit_desirable_values: list[float] = []
         stop_logit_prewindow_values: list[float] = []
@@ -272,10 +272,10 @@ class _M3S1GroupedStoppingMixin:
         event_logit_delta_values: list[float] = []
         closed_mask_row_count = 0
         for group in sidecar.groups:
-            obs = self._m3s1_observations_for_group(sidecar, group)
+            obs = self._observations_for_group(sidecar, group)
             stopping_logits = stopping_getter(
                 obs,
-                detach_latent=bool(self.m3s1_grouped_stopping_detach_latent),
+                detach_latent=bool(self.grouped_stopping_detach_latent),
             )
             if stopping_logits is None:
                 return None
@@ -283,23 +283,23 @@ class _M3S1GroupedStoppingMixin:
                 raise ValueError("M3-S1 stopping logits must match grouped sidecar rows")
             flat_logits = stopping_logits.reshape(-1)
             supported_logits, supported_legal, desirable, prewindow, no_window = (
-                self._m3s1_group_diagnostic_masks(group, flat_logits)
+                self._group_diagnostic_masks(group, flat_logits)
             )
             closed_mask = ~supported_legal
-            self._m3s1_extend_float_values(stop_logit_values, supported_logits)
-            self._m3s1_extend_float_values(stop_logit_desirable_values, supported_logits[desirable])
-            self._m3s1_extend_float_values(stop_logit_prewindow_values, supported_logits[prewindow])
-            self._m3s1_extend_float_values(stop_logit_no_window_values, supported_logits[no_window])
-            self._m3s1_extend_float_values(
+            self._extend_float_values(stop_logit_values, supported_logits)
+            self._extend_float_values(stop_logit_desirable_values, supported_logits[desirable])
+            self._extend_float_values(stop_logit_prewindow_values, supported_logits[prewindow])
+            self._extend_float_values(stop_logit_no_window_values, supported_logits[no_window])
+            self._extend_float_values(
                 stop_logit_closed_mask_values, supported_logits[closed_mask]
             )
             closed_mask_row_count += int(closed_mask.sum().detach().cpu().item())
 
-            event_logit_delta = self._m3s1_event_logit_delta_diagnostic(obs)
+            event_logit_delta = self._event_logit_delta_diagnostic(obs)
             if event_logit_delta is not None and int(event_logit_delta.numel()) == int(
                 flat_logits.numel()
             ):
-                order = self._m3s1_group_order(group, device=event_logit_delta.device)
+                order = self._group_order(group, device=event_logit_delta.device)
                 supported = th.ones(
                     (int(event_logit_delta.numel()),),
                     dtype=th.bool,
@@ -319,18 +319,18 @@ class _M3S1GroupedStoppingMixin:
                     supported = supported & (row_indices <= int(group.support_horizon))
                 if (
                     group.censor_step is not None
-                    and group.censoring_kind != M3S1_CENSOR_EARLY_EVENT_PREFIX
+                    and group.censoring_kind != CENSOR_EARLY_EVENT_PREFIX
                 ):
                     supported = supported & (step_indices <= int(group.censor_step))
-                self._m3s1_extend_float_values(
+                self._extend_float_values(
                     event_logit_delta_values,
                     event_logit_delta[order][supported[order]],
                 )
             evidence.append(
-                M3S1GroupedStoppingEvidence(
+                GroupedStoppingEvidence(
                     group_id=group.group_id,
                     episode_id=group.episode_id,
-                    route_source=M3S1_ROUTE_ON_POLICY,
+                    route_source=ROUTE_ON_POLICY,
                     row_indices=group.row_indices,
                     step_indices=group.step_indices,
                     env_indices=group.env_indices,
@@ -344,13 +344,13 @@ class _M3S1GroupedStoppingMixin:
                 )
             )
 
-        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics(
-            stop_logit_mean=self._m3s1_mean(stop_logit_values),
-            stop_logit_desirable_mean=self._m3s1_mean(stop_logit_desirable_values),
-            stop_logit_prewindow_mean=self._m3s1_mean(stop_logit_prewindow_values),
-            stop_logit_no_window_mean=self._m3s1_mean(stop_logit_no_window_values),
-            stop_logit_closed_mask_mean=self._m3s1_mean(stop_logit_closed_mask_values),
-            event_logit_delta_diagnostic_mean=self._m3s1_mean(event_logit_delta_values),
+        self._last_grouped_stopping_diagnostics = _GroupedStoppingDiagnostics(
+            stop_logit_mean=self._mean(stop_logit_values),
+            stop_logit_desirable_mean=self._mean(stop_logit_desirable_values),
+            stop_logit_prewindow_mean=self._mean(stop_logit_prewindow_values),
+            stop_logit_no_window_mean=self._mean(stop_logit_no_window_values),
+            stop_logit_closed_mask_mean=self._mean(stop_logit_closed_mask_values),
+            event_logit_delta_diagnostic_mean=self._mean(event_logit_delta_values),
             stop_logit_count=len(stop_logit_values),
             stop_logit_desirable_count=len(stop_logit_desirable_values),
             stop_logit_prewindow_count=len(stop_logit_prewindow_values),
@@ -359,16 +359,16 @@ class _M3S1GroupedStoppingMixin:
             event_logit_delta_diagnostic_count=len(event_logit_delta_values),
         )
 
-        grouped_loss = compute_m3s1_grouped_stopping_loss(
+        grouped_loss = compute_grouped_stopping_loss(
             evidence,
-            coef=float(self.m3s1_grouped_stopping_coef),
-            early_mass_coef=float(self.m3s1_grouped_stopping_early_mass_coef),
-            early_mass_budget=float(self.m3s1_grouped_stopping_early_mass_budget),
-            prefix_early_mass_budget=self.m3s1_grouped_stopping_prefix_early_mass_budget,
-            no_event_coef=float(self.m3s1_grouped_stopping_no_event_coef),
-            boundary_threshold=float(self.m3s1_grouped_stopping_boundary_threshold),
+            coef=float(self.grouped_stopping_coef),
+            early_mass_coef=float(self.grouped_stopping_early_mass_coef),
+            early_mass_budget=float(self.grouped_stopping_early_mass_budget),
+            prefix_early_mass_budget=self.grouped_stopping_prefix_early_mass_budget,
+            no_event_coef=float(self.grouped_stopping_no_event_coef),
+            boundary_threshold=float(self.grouped_stopping_boundary_threshold),
         )
-        self._m3s1_last_grouped_stopping_loss = grouped_loss
+        self._last_grouped_stopping_loss = grouped_loss
         if (
             grouped_loss.loss.requires_grad
             and float(grouped_loss.loss.detach().cpu().item()) != 0.0
@@ -379,7 +379,7 @@ class _M3S1GroupedStoppingMixin:
             grad_norm_tensor = th.nn.utils.clip_grad_norm_(
                 self.policy.parameters(), self.max_grad_norm
             )
-            self._m3s1_last_grouped_stopping_grad_norm = float(
+            self._last_grouped_stopping_grad_norm = float(
                 grad_norm_tensor.detach().cpu().item()
             )
             self.policy.optimizer.step()
@@ -387,15 +387,15 @@ class _M3S1GroupedStoppingMixin:
         return grouped_loss
 
 
-    def _record_m3s1_grouped_stopping_logs(self, m3s1_grouped_stopping_loss) -> None:
-        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+    def _record_grouped_stopping_logs(self, grouped_stopping_loss) -> None:
+        sidecar = getattr(self, "_grouped_stopping_sidecar", None)
         stats = (
-            m3s1_grouped_stopping_loss.stats if m3s1_grouped_stopping_loss is not None else None
+            grouped_stopping_loss.stats if grouped_stopping_loss is not None else None
         )
         diagnostics = getattr(
             self,
-            "_m3s1_last_grouped_stopping_diagnostics",
-            _M3S1GroupedStoppingDiagnostics(),
+            "_last_grouped_stopping_diagnostics",
+            _GroupedStoppingDiagnostics(),
         )
         active_row_count = float(stats.active_row_count) if stats else 0.0
         boundary_cross_count = float(stats.boundary_cross_count) if stats else 0.0
@@ -406,25 +406,25 @@ class _M3S1GroupedStoppingMixin:
             float(stats.closed_mask_stop_attempt_count) if stats else 0.0
         )
         closed_mask_row_count = float(diagnostics.closed_mask_row_count)
-        self.logger.record("m3s1/grouped_stopping_coef", float(self.m3s1_grouped_stopping_coef))
+        self.logger.record("m3s1/grouped_stopping_coef", float(self.grouped_stopping_coef))
         self.logger.record(
             "m3s1/grouped_stopping_loss",
             (
-                float(m3s1_grouped_stopping_loss.loss.detach().cpu().item())
-                if m3s1_grouped_stopping_loss is not None
+                float(grouped_stopping_loss.loss.detach().cpu().item())
+                if grouped_stopping_loss is not None
                 else 0.0
             ),
         )
         self.logger.record(
             "m3s1/grouped_stopping_unscaled_loss",
             (
-                float(m3s1_grouped_stopping_loss.unscaled_loss.detach().cpu().item())
-                if m3s1_grouped_stopping_loss is not None
+                float(grouped_stopping_loss.unscaled_loss.detach().cpu().item())
+                if grouped_stopping_loss is not None
                 else 0.0
             ),
         )
         self.logger.record(
-            "m3s1/grouped_stopping_grad_norm", float(self._m3s1_last_grouped_stopping_grad_norm)
+            "m3s1/grouped_stopping_grad_norm", float(self._last_grouped_stopping_grad_norm)
         )
         self.logger.record(
             "m3s1/grouped_sidecar_group_count", float(len(sidecar.groups)) if sidecar else 0.0
@@ -542,7 +542,7 @@ class _M3S1GroupedStoppingMixin:
         )
         self.logger.record(
             "m3s1/grouped_stopping_detach_latent",
-            float(self.m3s1_grouped_stopping_detach_latent),
+            float(self.grouped_stopping_detach_latent),
         )
 
 

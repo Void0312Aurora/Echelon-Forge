@@ -66,21 +66,21 @@ STAGE1_C2_ROE_TEMPORAL_LAUNCH_WINDOW_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR
   / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json"
 )
-STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG = (
+STAGE1_C2_ROE_TEMPORAL_EVENT_CREDIT_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR
-  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json"
+  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_shaped_world_batch_probe_v1.json"
 )
-STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG = (
+STAGE1_C2_ROE_TEMPORAL_STATE_COMPLETED_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR
-  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json"
+  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json"
 )
-STAGE1_C2_ROE_TEMPORAL_M3S1_GROUPED_STOPPING_CONFIG = (
+STAGE1_C2_ROE_TEMPORAL_GROUPED_STOPPING_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR
-  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json"
+  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json"
 )
-STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG = (
+STAGE1_C2_ROE_TEMPORAL_EVENT_WINDOW_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR
-  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json"
+  / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json"
 )
 F16_SCRIPTED_RED_SCENARIO = (
   REPO_ROOT
@@ -380,7 +380,7 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertIn(STAGE1_C2_ROE_CONFIG, c2_roe_configs)
     self.assertIn(STAGE1_C2_ROE_TEMPORAL_CONFIG, c2_roe_configs)
     self.assertIn(STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG, c2_roe_configs)
-    self.assertIn(STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG, c2_roe_configs)
+    self.assertIn(STAGE1_C2_ROE_TEMPORAL_EVENT_CREDIT_CONFIG, c2_roe_configs)
     self.assertIn(STAGE1_C2_ROE_SCENARIO, c2_roe_scenarios)
 
     cfg = _load_json(STAGE1_C2_ROE_CONFIG)
@@ -460,7 +460,7 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)
     self.assertEqual(scenario.get("entities", [])[1].get("ammo", {}).get("missiles_remaining"), 0)
 
-  def test_stage1_c2_roe_deadline_bootstrap_probe_keeps_a6_rescope_separate(self) -> None:
+  def test_stage1_c2_roe_deadline_bootstrap_probe_keeps_rescope_separate(self) -> None:
     baseline = _load_json(STAGE1_C2_ROE_TEMPORAL_CONFIG)
     deadline = _load_json(STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG)
 
@@ -475,17 +475,17 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
 
     base_hyper = dict(baseline.get("hyperparameters", {}))
     deadline_hyper = dict(deadline.get("hyperparameters", {}))
-    for key in ("a6_first_event_hazard_coef", "a6_first_event_curriculum_coef"):
+    for key in ("first_event_hazard_coef", "first_event_curriculum_coef"):
       base_hyper.pop(key, None)
       deadline_hyper.pop(key, None)
-    deadline_weight = deadline_hyper.pop("a6_first_event_deadline_weight", None)
-    deadline_min_age = deadline_hyper.pop("a6_first_event_deadline_min_window_age_steps", None)
-    base_hyper.pop("a6_first_event_curriculum_decay_fraction", None)
-    base_hyper.pop("a6_first_event_curriculum_min_window_age_steps", None)
+    deadline_weight = deadline_hyper.pop("first_event_deadline_weight", None)
+    deadline_min_age = deadline_hyper.pop("first_event_deadline_min_window_age_steps", None)
+    base_hyper.pop("first_event_curriculum_decay_fraction", None)
+    base_hyper.pop("first_event_curriculum_min_window_age_steps", None)
     self.assertEqual(deadline_hyper, base_hyper)
     self.assertGreater(float(deadline_weight), 0.0)
     self.assertEqual(int(deadline_min_age), 64)
-    self.assertEqual(float(deadline.get("hyperparameters", {}).get("a6_first_event_curriculum_coef", 0.0)), 0.0)
+    self.assertEqual(float(deadline.get("hyperparameters", {}).get("first_event_curriculum_coef", 0.0)), 0.0)
 
   def test_stage1_c2_roe_event_head_probe_is_separate_from_deadline_baseline(self) -> None:
     deadline = _load_json(STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG)
@@ -529,76 +529,76 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     launch_knobs = {
       key: launch_hyper.pop(key, None)
       for key in (
-        "a6_first_event_launch_window_enabled",
-        "a6_first_event_launch_window_min_range_m",
-        "a6_first_event_launch_window_max_range_m",
-        "a6_first_event_launch_window_max_track_age_s",
-        "a6_first_event_launch_window_min_window_age_steps",
-        "a6_first_event_launch_window_prewindow_hold_weight",
-        "a6_first_event_launch_window_early_accept_weight",
+        "first_event_launch_window_enabled",
+        "first_event_launch_window_min_range_m",
+        "first_event_launch_window_max_range_m",
+        "first_event_launch_window_max_track_age_s",
+        "first_event_launch_window_min_window_age_steps",
+        "first_event_launch_window_prewindow_hold_weight",
+        "first_event_launch_window_early_accept_weight",
       )
     }
     self.assertEqual(launch_hyper, event_hyper)
-    self.assertTrue(bool(launch_knobs["a6_first_event_launch_window_enabled"]))
-    self.assertGreater(float(launch_knobs["a6_first_event_launch_window_min_range_m"]), 0.0)
-    self.assertGreater(float(launch_knobs["a6_first_event_launch_window_max_range_m"]), 0.0)
-    self.assertGreater(float(launch_knobs["a6_first_event_launch_window_prewindow_hold_weight"]), 0.0)
+    self.assertTrue(bool(launch_knobs["first_event_launch_window_enabled"]))
+    self.assertGreater(float(launch_knobs["first_event_launch_window_min_range_m"]), 0.0)
+    self.assertGreater(float(launch_knobs["first_event_launch_window_max_range_m"]), 0.0)
+    self.assertGreater(float(launch_knobs["first_event_launch_window_prewindow_hold_weight"]), 0.0)
 
-  def test_stage1_c2_roe_a7_event_credit_probe_is_separate_from_a6_launch_window_baseline(self) -> None:
+  def test_stage1_c2_roe_event_credit_probe_is_separate_from_launch_window_baseline(self) -> None:
     launch_window = _load_json(STAGE1_C2_ROE_TEMPORAL_LAUNCH_WINDOW_CONFIG)
-    a7_credit = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG)
+    credit = _load_json(STAGE1_C2_ROE_TEMPORAL_EVENT_CREDIT_CONFIG)
 
     for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
-      self.assertEqual(a7_credit.get(key), launch_window.get(key), key)
-    self.assertEqual(a7_credit.get("runtime"), launch_window.get("runtime"))
-    self.assertEqual(a7_credit.get("env"), launch_window.get("env"))
-    self.assertEqual(a7_credit.get("early_stop"), launch_window.get("early_stop"))
-    self.assertEqual(a7_credit.get("diagnostics"), launch_window.get("diagnostics"))
-    self.assertEqual(a7_credit.get("hmoe"), launch_window.get("hmoe"))
-    self.assertEqual(a7_credit.get("wrappers"), launch_window.get("wrappers"))
+      self.assertEqual(credit.get(key), launch_window.get(key), key)
+    self.assertEqual(credit.get("runtime"), launch_window.get("runtime"))
+    self.assertEqual(credit.get("env"), launch_window.get("env"))
+    self.assertEqual(credit.get("early_stop"), launch_window.get("early_stop"))
+    self.assertEqual(credit.get("diagnostics"), launch_window.get("diagnostics"))
+    self.assertEqual(credit.get("hmoe"), launch_window.get("hmoe"))
+    self.assertEqual(credit.get("wrappers"), launch_window.get("wrappers"))
 
     launch_hyper = dict(launch_window.get("hyperparameters", {}))
-    a7_hyper = dict(a7_credit.get("hyperparameters", {}))
+    event_credit_hyper = dict(credit.get("hyperparameters", {}))
     launch_policy_kwargs = dict(launch_hyper.pop("policy_kwargs", {}))
-    a7_policy_kwargs = dict(a7_hyper.pop("policy_kwargs", {}))
+    event_credit_policy_kwargs = dict(event_credit_hyper.pop("policy_kwargs", {}))
     self.assertEqual(float(launch_policy_kwargs.get("hybrid_event_credit_head_lr_scale", 0.0)), 0.0)
-    self.assertAlmostEqual(float(a7_policy_kwargs.pop("hybrid_event_credit_head_lr_scale", 0.0)), 6.0, places=6)
-    self.assertEqual(a7_policy_kwargs, launch_policy_kwargs)
+    self.assertAlmostEqual(float(event_credit_policy_kwargs.pop("hybrid_event_credit_head_lr_scale", 0.0)), 6.0, places=6)
+    self.assertEqual(event_credit_policy_kwargs, launch_policy_kwargs)
 
     for key in (
-      "a6_first_event_launch_window_enabled",
-      "a6_first_event_launch_window_min_range_m",
-      "a6_first_event_launch_window_max_range_m",
-      "a6_first_event_launch_window_max_track_age_s",
-      "a6_first_event_launch_window_min_window_age_steps",
+      "first_event_launch_window_enabled",
+      "first_event_launch_window_min_range_m",
+      "first_event_launch_window_max_range_m",
+      "first_event_launch_window_max_track_age_s",
+      "first_event_launch_window_min_window_age_steps",
     ):
-      self.assertEqual(a7_hyper.get(key), launch_hyper.get(key), key)
-    self.assertEqual(float(a7_hyper.get("a6_first_event_hazard_coef", -1.0)), 0.0)
-    self.assertEqual(float(a7_hyper.get("a6_first_event_deadline_weight", -1.0)), 0.0)
-    self.assertGreater(float(launch_hyper.get("a6_first_event_hazard_coef", 0.0)), 0.0)
-    self.assertGreater(float(launch_hyper.get("a6_first_event_deadline_weight", 0.0)), 0.0)
-    self.assertGreater(float(a7_hyper.get("a7_event_credit_value_coef", 0.0)), 0.0)
-    self.assertEqual(float(a7_hyper.get("a7_event_credit_delta_align_coef", -1.0)), 0.0)
-    self.assertTrue(bool(a7_hyper.get("a7_event_credit_delta_align_positive_only")))
-    self.assertGreater(float(a7_hyper.get("a7_event_credit_deadline_weight", 0.0)), 0.0)
-    self.assertGreater(float(a7_hyper.get("a7_event_credit_shadow_quality_weight", 0.0)), 0.0)
-    self.assertGreater(float(a7_hyper.get("a7_event_credit_legal_open_quality_weight", 0.0)), 0.0)
-    self.assertGreater(int(a7_hyper.get("a7_event_credit_legal_open_quality_min_window_age_steps", 0)), 1)
-    self.assertTrue(bool(a7_hyper.get("a7_event_credit_legal_projection_enabled")))
-    self.assertGreater(float(a7_hyper.get("a7_event_credit_projection_value_coef", 0.0)), 0.0)
-    self.assertEqual(float(a7_hyper.get("a7_event_credit_projection_delta_align_coef", -1.0)), 0.0)
-    self.assertTrue(bool(a7_hyper.get("a7_event_credit_separate_update_enabled")))
-    self.assertGreater(float(a7_hyper.get("a7_event_credit_separate_update_max_grad_norm", 0.0)), 0.0)
-    self.assertGreater(float(a7_hyper.get("a7_event_policy_margin_coef", 0.0)), 0.0)
-    self.assertGreater(float(a7_hyper.get("a7_event_policy_margin", 0.0)), 0.0)
-    self.assertGreater(float(a7_hyper.get("a7_event_policy_projection_margin_coef", 0.0)), 0.0)
-    self.assertTrue(bool(a7_hyper.get("a7_event_policy_separate_update_enabled")))
-    self.assertGreater(float(a7_hyper.get("a7_event_policy_separate_update_max_grad_norm", 0.0)), 0.0)
-    self.assertGreater(int(a7_hyper.get("a7_event_policy_separate_update_steps", 0)), 1)
+      self.assertEqual(event_credit_hyper.get(key), launch_hyper.get(key), key)
+    self.assertEqual(float(event_credit_hyper.get("first_event_hazard_coef", -1.0)), 0.0)
+    self.assertEqual(float(event_credit_hyper.get("first_event_deadline_weight", -1.0)), 0.0)
+    self.assertGreater(float(launch_hyper.get("first_event_hazard_coef", 0.0)), 0.0)
+    self.assertGreater(float(launch_hyper.get("first_event_deadline_weight", 0.0)), 0.0)
+    self.assertGreater(float(event_credit_hyper.get("event_credit_value_coef", 0.0)), 0.0)
+    self.assertEqual(float(event_credit_hyper.get("event_credit_delta_align_coef", -1.0)), 0.0)
+    self.assertTrue(bool(event_credit_hyper.get("event_credit_delta_align_positive_only")))
+    self.assertGreater(float(event_credit_hyper.get("event_credit_deadline_weight", 0.0)), 0.0)
+    self.assertGreater(float(event_credit_hyper.get("event_credit_shadow_quality_weight", 0.0)), 0.0)
+    self.assertGreater(float(event_credit_hyper.get("event_credit_legal_open_quality_weight", 0.0)), 0.0)
+    self.assertGreater(int(event_credit_hyper.get("event_credit_legal_open_quality_min_window_age_steps", 0)), 1)
+    self.assertTrue(bool(event_credit_hyper.get("event_credit_legal_projection_enabled")))
+    self.assertGreater(float(event_credit_hyper.get("event_credit_projection_value_coef", 0.0)), 0.0)
+    self.assertEqual(float(event_credit_hyper.get("event_credit_projection_delta_align_coef", -1.0)), 0.0)
+    self.assertTrue(bool(event_credit_hyper.get("event_credit_separate_update_enabled")))
+    self.assertGreater(float(event_credit_hyper.get("event_credit_separate_update_max_grad_norm", 0.0)), 0.0)
+    self.assertGreater(float(event_credit_hyper.get("event_policy_margin_coef", 0.0)), 0.0)
+    self.assertGreater(float(event_credit_hyper.get("event_policy_margin", 0.0)), 0.0)
+    self.assertGreater(float(event_credit_hyper.get("event_policy_projection_margin_coef", 0.0)), 0.0)
+    self.assertTrue(bool(event_credit_hyper.get("event_policy_separate_update_enabled")))
+    self.assertGreater(float(event_credit_hyper.get("event_policy_separate_update_max_grad_norm", 0.0)), 0.0)
+    self.assertGreater(int(event_credit_hyper.get("event_policy_separate_update_steps", 0)), 1)
 
-  def test_stage1_c2_roe_a7_state_completed_probe_changes_only_mission_obs_mode(self) -> None:
-    baseline = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG)
-    state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG)
+  def test_stage1_c2_roe_state_completed_probe_changes_only_mission_obs_mode(self) -> None:
+    baseline = _load_json(STAGE1_C2_ROE_TEMPORAL_EVENT_CREDIT_CONFIG)
+    state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_STATE_COMPLETED_CONFIG)
 
     for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
       self.assertEqual(state_completed.get(key), baseline.get(key), key)
@@ -615,9 +615,9 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertEqual(baseline_env.pop("mission_obs_mode"), "air_combat_c2_roe_v1")
     self.assertEqual(env, baseline_env)
 
-  def test_stage1_m3s1_grouped_stopping_probe_extends_state_completed_config_only(self) -> None:
-    state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG)
-    m3s1 = _load_json(STAGE1_C2_ROE_TEMPORAL_M3S1_GROUPED_STOPPING_CONFIG)
+  def test_stage1_grouped_stopping_probe_extends_state_completed_config_only(self) -> None:
+    state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_STATE_COMPLETED_CONFIG)
+    m3s1 = _load_json(STAGE1_C2_ROE_TEMPORAL_GROUPED_STOPPING_CONFIG)
 
     for key in ("agent_layer", "algo", "policy", "n_envs"):
       self.assertEqual(m3s1.get(key), state_completed.get(key), key)
@@ -631,33 +631,33 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertEqual(m3s1.get("wrappers"), state_completed.get("wrappers"))
 
     state_hyper = dict(state_completed.get("hyperparameters", {}))
-    m3_hyper = dict(m3s1.get("hyperparameters", {}))
+    stopping_hyper = dict(m3s1.get("hyperparameters", {}))
     state_policy_kwargs = dict(state_hyper.pop("policy_kwargs", {}))
-    m3_policy_kwargs = dict(m3_hyper.pop("policy_kwargs", {}))
-    self.assertAlmostEqual(float(m3_policy_kwargs.pop("m3_stopping_head_lr_scale", 0.0)), 5.0, places=6)
-    self.assertNotIn("m3_stopping_head_lr_scale", state_policy_kwargs)
-    self.assertEqual(m3_policy_kwargs, state_policy_kwargs)
+    stopping_policy_kwargs = dict(stopping_hyper.pop("policy_kwargs", {}))
+    self.assertAlmostEqual(float(stopping_policy_kwargs.pop("stopping_head_lr_scale", 0.0)), 5.0, places=6)
+    self.assertNotIn("stopping_head_lr_scale", state_policy_kwargs)
+    self.assertEqual(stopping_policy_kwargs, state_policy_kwargs)
 
-    m3_knobs = {
-      key: m3_hyper.pop(key, None)
+    knobs = {
+      key: stopping_hyper.pop(key, None)
       for key in (
-        "m3s1_grouped_stopping_coef",
-        "m3s1_grouped_stopping_early_mass_coef",
-        "m3s1_grouped_stopping_early_mass_budget",
-        "m3s1_grouped_stopping_no_event_coef",
-        "m3s1_grouped_stopping_boundary_threshold",
-        "m3s1_grouped_stopping_detach_latent",
+        "grouped_stopping_coef",
+        "grouped_stopping_early_mass_coef",
+        "grouped_stopping_early_mass_budget",
+        "grouped_stopping_no_event_coef",
+        "grouped_stopping_boundary_threshold",
+        "grouped_stopping_detach_latent",
       )
     }
-    self.assertEqual(m3_hyper, state_hyper)
-    self.assertAlmostEqual(float(m3_knobs["m3s1_grouped_stopping_coef"]), 1.0, places=6)
-    self.assertAlmostEqual(float(m3_knobs["m3s1_grouped_stopping_early_mass_budget"]), 0.05, places=6)
-    self.assertAlmostEqual(float(m3_knobs["m3s1_grouped_stopping_boundary_threshold"]), 0.0, places=6)
-    self.assertFalse(bool(m3_knobs["m3s1_grouped_stopping_detach_latent"]))
+    self.assertEqual(stopping_hyper, state_hyper)
+    self.assertAlmostEqual(float(knobs["grouped_stopping_coef"]), 1.0, places=6)
+    self.assertAlmostEqual(float(knobs["grouped_stopping_early_mass_budget"]), 0.05, places=6)
+    self.assertAlmostEqual(float(knobs["grouped_stopping_boundary_threshold"]), 0.0, places=6)
+    self.assertFalse(bool(knobs["grouped_stopping_detach_latent"]))
 
-  def test_stage1_m3s2_event_window_probe_extends_state_completed_config_only(self) -> None:
-    state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG)
-    m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG)
+  def test_stage1_event_window_probe_extends_state_completed_config_only(self) -> None:
+    state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_STATE_COMPLETED_CONFIG)
+    m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_EVENT_WINDOW_CONFIG)
 
     for key in ("agent_layer", "algo", "policy", "n_envs"):
       self.assertEqual(m3s2.get(key), state_completed.get(key), key)
@@ -671,45 +671,45 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertEqual(m3s2.get("wrappers"), state_completed.get("wrappers"))
 
     state_hyper = dict(state_completed.get("hyperparameters", {}))
-    m3_hyper = dict(m3s2.get("hyperparameters", {}))
+    stopping_hyper = dict(m3s2.get("hyperparameters", {}))
     state_policy_kwargs = dict(state_hyper.pop("policy_kwargs", {}))
-    m3_policy_kwargs = dict(m3_hyper.pop("policy_kwargs", {}))
-    self.assertFalse(bool(m3_policy_kwargs.pop("hybrid_event_use_m3_stopping_head", True)))
-    self.assertFalse(bool(m3_policy_kwargs.pop("hybrid_event_use_m3_window_classifier_head", True)))
-    self.assertEqual(m3_policy_kwargs, state_policy_kwargs)
+    stopping_policy_kwargs = dict(stopping_hyper.pop("policy_kwargs", {}))
+    self.assertFalse(bool(stopping_policy_kwargs.pop("hybrid_event_use_stopping_head", True)))
+    self.assertFalse(bool(stopping_policy_kwargs.pop("hybrid_event_use_window_classifier_head", True)))
+    self.assertEqual(stopping_policy_kwargs, state_policy_kwargs)
 
-    m3_knobs = {
-      key: m3_hyper.pop(key, None)
+    knobs = {
+      key: stopping_hyper.pop(key, None)
       for key in (
-        "m3s2_fire_boundary_coef",
-        "m3s2_fire_boundary_negative_logit_ceiling_coef",
-        "m3s2_fire_boundary_negative_logit_ceiling",
-        "m3s2_fire_boundary_positive_logit_floor_coef",
-        "m3s2_fire_boundary_positive_logit_floor",
-        "m3s2_fire_boundary_separate_update_enabled",
-        "m3s2_fire_boundary_dedicated_optimizer_enabled",
-        "m3s2_fire_boundary_separate_update_steps",
-        "m3s2_fire_boundary_max_grad_norm",
-        "m3s2_fire_boundary_support_preserving_collect_enabled",
-        "m3s2_fire_boundary_support_preserving_hold_quality_enabled",
+        "fire_boundary_coef",
+        "fire_boundary_negative_logit_ceiling_coef",
+        "fire_boundary_negative_logit_ceiling",
+        "fire_boundary_positive_logit_floor_coef",
+        "fire_boundary_positive_logit_floor",
+        "fire_boundary_separate_update_enabled",
+        "fire_boundary_dedicated_optimizer_enabled",
+        "fire_boundary_separate_update_steps",
+        "fire_boundary_max_grad_norm",
+        "fire_boundary_support_preserving_collect_enabled",
+        "fire_boundary_support_preserving_hold_quality_enabled",
       )
     }
-    self.assertEqual(m3_hyper, state_hyper)
-    self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_coef"]), 20.0, places=6)
-    self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_negative_logit_ceiling_coef"]), 5.0, places=6)
-    self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_negative_logit_ceiling"]), -2.0, places=6)
-    self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_positive_logit_floor_coef"]), 5.0, places=6)
-    self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_positive_logit_floor"]), 2.0, places=6)
-    self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_separate_update_enabled"]))
-    self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_dedicated_optimizer_enabled"]))
-    self.assertEqual(int(m3_knobs["m3s2_fire_boundary_separate_update_steps"]), 32)
-    self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_max_grad_norm"]), 5.0, places=6)
-    self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_support_preserving_collect_enabled"]))
-    self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_support_preserving_hold_quality_enabled"]))
+    self.assertEqual(stopping_hyper, state_hyper)
+    self.assertAlmostEqual(float(knobs["fire_boundary_coef"]), 20.0, places=6)
+    self.assertAlmostEqual(float(knobs["fire_boundary_negative_logit_ceiling_coef"]), 5.0, places=6)
+    self.assertAlmostEqual(float(knobs["fire_boundary_negative_logit_ceiling"]), -2.0, places=6)
+    self.assertAlmostEqual(float(knobs["fire_boundary_positive_logit_floor_coef"]), 5.0, places=6)
+    self.assertAlmostEqual(float(knobs["fire_boundary_positive_logit_floor"]), 2.0, places=6)
+    self.assertTrue(bool(knobs["fire_boundary_separate_update_enabled"]))
+    self.assertTrue(bool(knobs["fire_boundary_dedicated_optimizer_enabled"]))
+    self.assertEqual(int(knobs["fire_boundary_separate_update_steps"]), 32)
+    self.assertAlmostEqual(float(knobs["fire_boundary_max_grad_norm"]), 5.0, places=6)
+    self.assertTrue(bool(knobs["fire_boundary_support_preserving_collect_enabled"]))
+    self.assertTrue(bool(knobs["fire_boundary_support_preserving_hold_quality_enabled"]))
     self.assertEqual(_violation_dicts(m3s2), [])
 
-  def test_stage1_m3s2_model_contract_names_fault_localization_gates(self) -> None:
-    m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG)
+  def test_stage1_model_contract_names_fault_localization_gates(self) -> None:
+    m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_EVENT_WINDOW_CONFIG)
     contracts = active_model_contracts_for_config(m3s2)
 
     self.assertEqual([contract.mechanism_id for contract in contracts], ["m3s2.direct_fire_boundary_event_head"])
@@ -721,17 +721,17 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertIn(FaultStage.EVALUATION, contract.required_probe_stages)
     self.assertIn("executable fire boundary", contract.held_boundary)
 
-  def test_stage1_m3s2_contract_blocks_adapter_override(self) -> None:
-    m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG)
+  def test_stage1_contract_blocks_adapter_override(self) -> None:
+    m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_EVENT_WINDOW_CONFIG)
     policy_kwargs = m3s2["hyperparameters"]["policy_kwargs"]
-    policy_kwargs["hybrid_event_use_m3_window_classifier_head"] = True
+    policy_kwargs["hybrid_event_use_window_classifier_head"] = True
 
     violations = _violation_dicts(m3s2)
 
     self.assertIn(
       {
         "mechanism_id": "m3s2.direct_fire_boundary_event_head",
-        "path": "hyperparameters.policy_kwargs.hybrid_event_use_m3_window_classifier_head",
+        "path": "hyperparameters.policy_kwargs.hybrid_event_use_window_classifier_head",
         "expected": "false",
         "actual": True,
         "reason": "Direct fire boundary owns executable hold/fire logits and must not be overridden by classifier adapter.",
@@ -858,23 +858,23 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
         STAGE1_C2_ROE_SCENARIO,
       ),
       (
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
-        STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG,
+        "c2_roe_hybrid_temporal_event_credit_launch_window_shaped",
+        STAGE1_C2_ROE_TEMPORAL_EVENT_CREDIT_CONFIG,
         STAGE1_C2_ROE_SCENARIO,
       ),
       (
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
-        STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG,
+        "c2_roe_hybrid_temporal_event_credit_launch_window_state_completed",
+        STAGE1_C2_ROE_TEMPORAL_STATE_COMPLETED_CONFIG,
         STAGE1_C2_ROE_SCENARIO,
       ),
       (
-        "c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed",
-        STAGE1_C2_ROE_TEMPORAL_M3S1_GROUPED_STOPPING_CONFIG,
+        "c2_roe_hybrid_temporal_grouped_stopping_state_completed",
+        STAGE1_C2_ROE_TEMPORAL_GROUPED_STOPPING_CONFIG,
         STAGE1_C2_ROE_SCENARIO,
       ),
       (
-        "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
-        STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG,
+        "c2_roe_hybrid_temporal_event_window_state_completed",
+        STAGE1_C2_ROE_TEMPORAL_EVENT_WINDOW_CONFIG,
         STAGE1_C2_ROE_SCENARIO,
       ),
     ]
@@ -916,10 +916,10 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
         "c2_roe_hybrid_temporal_deadline_shaped",
         "c2_roe_hybrid_temporal_event_head_shaped",
         "c2_roe_hybrid_temporal_launch_window_shaped",
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
-        "c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed",
-        "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
+        "c2_roe_hybrid_temporal_event_credit_launch_window_shaped",
+        "c2_roe_hybrid_temporal_event_credit_launch_window_state_completed",
+        "c2_roe_hybrid_temporal_grouped_stopping_state_completed",
+        "c2_roe_hybrid_temporal_event_window_state_completed",
       }:
         self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
       if label in {
@@ -930,10 +930,10 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
         "c2_roe_hybrid_temporal_deadline_shaped",
         "c2_roe_hybrid_temporal_event_head_shaped",
         "c2_roe_hybrid_temporal_launch_window_shaped",
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
-        "c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed",
-        "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
+        "c2_roe_hybrid_temporal_event_credit_launch_window_shaped",
+        "c2_roe_hybrid_temporal_event_credit_launch_window_state_completed",
+        "c2_roe_hybrid_temporal_grouped_stopping_state_completed",
+        "c2_roe_hybrid_temporal_event_window_state_completed",
       }:
         self.assertIn("temporal_history_len=16", proc.stdout)
       if label in {
@@ -942,13 +942,13 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
         "c2_roe_hybrid_temporal_deadline_shaped",
         "c2_roe_hybrid_temporal_event_head_shaped",
         "c2_roe_hybrid_temporal_launch_window_shaped",
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
+        "c2_roe_hybrid_temporal_event_credit_launch_window_shaped",
       }:
         self.assertIn("mission_obs_mode=air_combat_c2_roe_v1", proc.stdout)
       if label in {
-        "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
-        "c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed",
-        "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
+        "c2_roe_hybrid_temporal_event_credit_launch_window_state_completed",
+        "c2_roe_hybrid_temporal_grouped_stopping_state_completed",
+        "c2_roe_hybrid_temporal_event_window_state_completed",
       }:
         self.assertIn("mission_obs_mode=air_combat_c2_roe_v2", proc.stdout)
       if label in {"f16_tg_p7_target_geometry_proxy", "f16_tg_p7_target_geometry_proxy_32k"}:

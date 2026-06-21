@@ -12,18 +12,18 @@ ensure_repo_imports()
 from gym_envs.universal_env_parts import make_action_space
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.rl.policy_algo.first_event_hazard import (
-  A6_FIRST_EVENT_FIELD_ACTIVE,
-  A6_FIRST_EVENT_FIELD_TARGET,
-  A6_FIRST_EVENT_FIELD_WEIGHT,
-  A6_FIRST_EVENT_SOURCE_ACCEPTED,
-  A6_FIRST_EVENT_SOURCE_CENSORED,
-  A6_FIRST_EVENT_SOURCE_CURRICULUM,
-  A6_FIRST_EVENT_SOURCE_DEADLINE,
-  A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
-  A6_FIRST_EVENT_SOURCE_INACTIVE,
-  A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
-  A6_FIRST_EVENT_SOURCE_PREWINDOW,
-  A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+  FIRST_EVENT_FIELD_ACTIVE,
+  FIRST_EVENT_FIELD_TARGET,
+  FIRST_EVENT_FIELD_WEIGHT,
+  FIRST_EVENT_SOURCE_ACCEPTED,
+  FIRST_EVENT_SOURCE_CENSORED,
+  FIRST_EVENT_SOURCE_CURRICULUM,
+  FIRST_EVENT_SOURCE_DEADLINE,
+  FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+  FIRST_EVENT_SOURCE_INACTIVE,
+  FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
+  FIRST_EVENT_SOURCE_PREWINDOW,
+  FIRST_EVENT_SOURCE_SHADOW_QUALITY,
   build_first_event_hazard_labels,
   compute_first_event_credit_loss,
   compute_first_event_hazard_loss,
@@ -71,9 +71,9 @@ class FirstEventTimingContractTests(unittest.TestCase):
 
     self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 1, 0, 0, 0, 0], dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 1, 0, 0, 0, 0], dtype=th.float32)))
-    self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_ACCEPTED, dtype=th.long)))
+    self.assertTrue(th.equal(labels.source[:3], th.full((3,), FIRST_EVENT_SOURCE_ACCEPTED, dtype=th.long)))
     self.assertEqual(int(labels.source[4]), 0)
-    self.assertEqual(int(labels.source[5]), A6_FIRST_EVENT_SOURCE_CENSORED)
+    self.assertEqual(int(labels.source[5]), FIRST_EVENT_SOURCE_CENSORED)
     self.assertTrue(th.all(labels.weight[5:] == 0.0))
 
   def test_censored_windows_do_not_create_default_full_window_negatives(self) -> None:
@@ -86,8 +86,8 @@ class FirstEventTimingContractTests(unittest.TestCase):
 
     self.assertTrue(th.all(labels.active == th.zeros_like(labels.active)))
     self.assertTrue(th.all(labels.weight == th.zeros_like(labels.weight)))
-    self.assertEqual(int(labels.source[0]), A6_FIRST_EVENT_SOURCE_CENSORED)
-    self.assertEqual(int(labels.source[1]), A6_FIRST_EVENT_SOURCE_CENSORED)
+    self.assertEqual(int(labels.source[0]), FIRST_EVENT_SOURCE_CENSORED)
+    self.assertEqual(int(labels.source[1]), FIRST_EVENT_SOURCE_CENSORED)
     self.assertEqual(int(labels.source[3]), 0)
 
   def test_curriculum_creates_one_positive_seed_per_episode_inside_authorized_open_window(self) -> None:
@@ -103,7 +103,7 @@ class FirstEventTimingContractTests(unittest.TestCase):
     )
 
     curriculum_positive = (
-      (labels.source == A6_FIRST_EVENT_SOURCE_CURRICULUM)
+      (labels.source == FIRST_EVENT_SOURCE_CURRICULUM)
       & (labels.target > 0.5)
       & (labels.weight > 0.0)
     )
@@ -126,7 +126,7 @@ class FirstEventTimingContractTests(unittest.TestCase):
     self.assertTrue(th.equal(labels.active, th.tensor([0, 0, 0, 1, 1, 1, 0], dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 0, 1, 1, 1, 0], dtype=th.float32)))
     self.assertTrue(th.allclose(labels.weight, th.tensor([0, 0, 0, 0.25, 0.25, 0.25, 0], dtype=th.float32)))
-    self.assertTrue(th.equal(labels.source[3:6], th.full((3,), A6_FIRST_EVENT_SOURCE_DEADLINE, dtype=th.long)))
+    self.assertTrue(th.equal(labels.source[3:6], th.full((3,), FIRST_EVENT_SOURCE_DEADLINE, dtype=th.long)))
     self.assertEqual(int(labels.source[6]), 0)
 
   def test_launch_window_gate_marks_prewindow_hold_and_delays_deadline_positive(self) -> None:
@@ -145,8 +145,8 @@ class FirstEventTimingContractTests(unittest.TestCase):
     self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 1, 1, 1, 1], dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 0, 1, 1, 1], dtype=th.float32)))
     self.assertTrue(th.allclose(labels.weight, th.tensor([0.2, 0.2, 0.2, 0.5, 0.5, 0.5])))
-    self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_PREWINDOW, dtype=th.long)))
-    self.assertTrue(th.equal(labels.source[3:], th.full((3,), A6_FIRST_EVENT_SOURCE_DEADLINE, dtype=th.long)))
+    self.assertTrue(th.equal(labels.source[:3], th.full((3,), FIRST_EVENT_SOURCE_PREWINDOW, dtype=th.long)))
+    self.assertTrue(th.equal(labels.source[3:], th.full((3,), FIRST_EVENT_SOURCE_DEADLINE, dtype=th.long)))
 
   def test_legal_open_quality_credit_marks_no_release_quality_rows_before_deadline(self) -> None:
     labels = build_first_event_hazard_labels(
@@ -166,9 +166,9 @@ class FirstEventTimingContractTests(unittest.TestCase):
     self.assertTrue(th.equal(labels.active, th.ones((6,), dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 0, 1, 1, 1], dtype=th.float32)))
     self.assertTrue(th.allclose(labels.weight, th.tensor([0.2, 0.2, 0.2, 0.75, 0.75, 0.75])))
-    self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_PREWINDOW, dtype=th.long)))
+    self.assertTrue(th.equal(labels.source[:3], th.full((3,), FIRST_EVENT_SOURCE_PREWINDOW, dtype=th.long)))
     self.assertTrue(
-      th.equal(labels.source[3:], th.full((3,), A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY, dtype=th.long))
+      th.equal(labels.source[3:], th.full((3,), FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY, dtype=th.long))
     )
 
   def test_legal_open_quality_credit_requires_launch_window_evidence(self) -> None:
@@ -182,7 +182,7 @@ class FirstEventTimingContractTests(unittest.TestCase):
 
     self.assertTrue(th.all(labels.active == th.zeros_like(labels.active)))
     self.assertTrue(th.all(labels.weight == th.zeros_like(labels.weight)))
-    self.assertTrue(th.all(labels.source == A6_FIRST_EVENT_SOURCE_CENSORED))
+    self.assertTrue(th.all(labels.source == FIRST_EVENT_SOURCE_CENSORED))
 
   def test_launch_window_gate_treats_early_accepted_release_as_negative(self) -> None:
     labels = build_first_event_hazard_labels(
@@ -198,8 +198,8 @@ class FirstEventTimingContractTests(unittest.TestCase):
     self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 0, 0], dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.zeros(4)))
     self.assertTrue(th.allclose(labels.weight, th.tensor([0.25, 0.75, 0.0, 0.0])))
-    self.assertEqual(int(labels.source[0]), A6_FIRST_EVENT_SOURCE_PREWINDOW)
-    self.assertEqual(int(labels.source[1]), A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED)
+    self.assertEqual(int(labels.source[0]), FIRST_EVENT_SOURCE_PREWINDOW)
+    self.assertEqual(int(labels.source[1]), FIRST_EVENT_SOURCE_EARLY_ACCEPTED)
     self.assertTrue(th.equal(labels.had_accepted[:2], th.tensor([1, 1], dtype=th.bool)))
 
   def test_shadow_quality_repair_adds_post_early_positive_credit_without_reopening_fire_mask(self) -> None:
@@ -227,9 +227,9 @@ class FirstEventTimingContractTests(unittest.TestCase):
     self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 0, 1, 1, 1], dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 0, 1, 1, 1], dtype=th.float32)))
     self.assertTrue(th.allclose(labels.weight, th.tensor([0.25, 0.75, 0.0, 0.5, 0.5, 0.5])))
-    self.assertEqual(int(labels.source[0]), A6_FIRST_EVENT_SOURCE_PREWINDOW)
-    self.assertEqual(int(labels.source[1]), A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED)
-    self.assertTrue(th.equal(labels.source[3:], th.full((3,), A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)))
+    self.assertEqual(int(labels.source[0]), FIRST_EVENT_SOURCE_PREWINDOW)
+    self.assertEqual(int(labels.source[1]), FIRST_EVENT_SOURCE_EARLY_ACCEPTED)
+    self.assertTrue(th.equal(labels.source[3:], th.full((3,), FIRST_EVENT_SOURCE_SHADOW_QUALITY)))
     self.assertTrue(th.equal(labels.window_id[[0, 1, 3, 4, 5]], th.zeros((5,), dtype=th.long)))
     self.assertTrue(th.all(labels.window_id[2] < 0))
     self.assertTrue(th.equal(labels.had_accepted[[0, 1, 3, 4, 5]], th.ones((5,), dtype=th.bool)))
@@ -249,7 +249,7 @@ class FirstEventTimingContractTests(unittest.TestCase):
 
     self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 0, 0], dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.zeros(4)))
-    self.assertTrue(th.all(labels.source[2:] == A6_FIRST_EVENT_SOURCE_INACTIVE))
+    self.assertTrue(th.all(labels.source[2:] == FIRST_EVENT_SOURCE_INACTIVE))
 
   def test_launch_window_gate_keeps_accepted_positive_inside_quality_window(self) -> None:
     labels = build_first_event_hazard_labels(
@@ -265,7 +265,7 @@ class FirstEventTimingContractTests(unittest.TestCase):
     self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 1, 0], dtype=th.bool)))
     self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 1, 0], dtype=th.float32)))
     self.assertTrue(th.allclose(labels.weight, th.tensor([1.0, 1.0, 1.0, 0.0])))
-    self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_ACCEPTED)))
+    self.assertTrue(th.equal(labels.source[:3], th.full((3,), FIRST_EVENT_SOURCE_ACCEPTED)))
 
   def test_curriculum_schedule_is_zero_after_first_quarter_training(self) -> None:
     self.assertAlmostEqual(
@@ -303,9 +303,9 @@ class FirstEventTimingContractTests(unittest.TestCase):
     class _RolloutData:
       observations = {"mission": th.zeros((2, 20), dtype=th.float32)}
 
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_ACTIVE, th.tensor([1, 0], dtype=th.float32))
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_TARGET, th.tensor([1, 0], dtype=th.float32))
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WEIGHT, th.tensor([0.5, 0.0], dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_ACTIVE, th.tensor([1, 0], dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_TARGET, th.tensor([1, 0], dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_WEIGHT, th.tensor([0.5, 0.0], dtype=th.float32))
 
     batch = first_event_hazard_batch_from_rollout_data(_RolloutData)
 

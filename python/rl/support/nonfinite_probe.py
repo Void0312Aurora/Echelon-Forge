@@ -438,54 +438,54 @@ class NonFiniteTrainingProbe:
     def _patch_algo(self, model) -> None:
         tracer = self.recorder
 
-        def reset_m3s1_grouped_stopping_state(algo) -> None:
-            if not hasattr(algo, "_m3s1_grouped_stopping_sidecar"):
+        def reset_grouped_stopping_state(algo) -> None:
+            if not hasattr(algo, "_grouped_stopping_sidecar"):
                 return
-            algo._m3s1_grouped_stopping_sidecar = None
-            algo._m3s1_last_grouped_stopping_loss = None
-            algo._m3s1_last_grouped_stopping_grad_norm = 0.0
-            if hasattr(algo, "_m3s2_last_event_window_loss"):
-                algo._m3s2_last_event_window_loss = None
-                algo._m3s2_last_event_window_grad_norm = 0.0
-            if hasattr(algo, "_m3s2_last_window_classifier_loss"):
-                algo._m3s2_last_window_classifier_loss = None
-                algo._m3s2_last_window_classifier_grad_norm = 0.0
-            if hasattr(algo, "_m3s2_last_fire_boundary_loss"):
-                algo._m3s2_last_fire_boundary_loss = None
-                algo._m3s2_last_fire_boundary_grad_norm = 0.0
-            diagnostics = getattr(algo, "_m3s1_last_grouped_stopping_diagnostics", None)
+            algo._grouped_stopping_sidecar = None
+            algo._last_grouped_stopping_loss = None
+            algo._last_grouped_stopping_grad_norm = 0.0
+            if hasattr(algo, "_last_event_window_loss"):
+                algo._last_event_window_loss = None
+                algo._last_event_window_grad_norm = 0.0
+            if hasattr(algo, "_last_window_classifier_loss"):
+                algo._last_window_classifier_loss = None
+                algo._last_window_classifier_grad_norm = 0.0
+            if hasattr(algo, "_last_fire_boundary_loss"):
+                algo._last_fire_boundary_loss = None
+                algo._last_fire_boundary_grad_norm = 0.0
+            diagnostics = getattr(algo, "_last_grouped_stopping_diagnostics", None)
             if diagnostics is not None:
                 try:
-                    algo._m3s1_last_grouped_stopping_diagnostics = type(diagnostics)()
+                    algo._last_grouped_stopping_diagnostics = type(diagnostics)()
                 except Exception:
                     pass
-            diagnostics = getattr(algo, "_m3s2_last_event_window_diagnostics", None)
+            diagnostics = getattr(algo, "_last_event_window_diagnostics", None)
             if diagnostics is not None:
                 try:
-                    algo._m3s2_last_event_window_diagnostics = type(diagnostics)()
+                    algo._last_event_window_diagnostics = type(diagnostics)()
                 except Exception:
                     pass
 
-        def m3s1_grouped_stopping_enabled(algo) -> bool:
-            enabled = getattr(algo, "_m3s1_grouped_stopping_enabled", None)
+        def grouped_stopping_enabled(algo) -> bool:
+            enabled = getattr(algo, "_grouped_stopping_enabled", None)
             return bool(callable(enabled) and enabled())
 
-        def m3s1_grouped_stopping_sidecar_enabled(algo) -> bool:
-            enabled = getattr(algo, "_m3s1_grouped_stopping_sidecar_enabled", None)
+        def grouped_stopping_sidecar_enabled(algo) -> bool:
+            enabled = getattr(algo, "_grouped_stopping_sidecar_enabled", None)
             if callable(enabled):
                 return bool(enabled())
-            return bool(m3s1_grouped_stopping_enabled(algo))
+            return bool(grouped_stopping_enabled(algo))
 
-        def m3s2_event_window_enabled(algo) -> bool:
-            enabled = getattr(algo, "_m3s2_event_window_enabled", None)
+        def event_window_enabled(algo) -> bool:
+            enabled = getattr(algo, "_event_window_enabled", None)
             return bool(callable(enabled) and enabled())
 
-        def m3s2_window_classifier_enabled(algo) -> bool:
-            enabled = getattr(algo, "_m3s2_window_classifier_enabled", None)
+        def window_classifier_enabled(algo) -> bool:
+            enabled = getattr(algo, "_window_classifier_enabled", None)
             return bool(callable(enabled) and enabled())
 
-        def m3s2_fire_boundary_enabled(algo) -> bool:
-            enabled = getattr(algo, "_m3s2_fire_boundary_enabled", None)
+        def fire_boundary_enabled(algo) -> bool:
+            enabled = getattr(algo, "_fire_boundary_enabled", None)
             return bool(callable(enabled) and enabled())
 
         def traced_collect_rollouts(self, env, callback, rollout_buffer, n_rollout_steps: int) -> bool:
@@ -497,39 +497,39 @@ class NonFiniteTrainingProbe:
 
             n_steps = 0
             rollout_buffer.reset()
-            reset_m3s1_grouped_stopping_state(self)
-            self._m3s2_support_preserving_collect_hold_count = 0
-            self._m3s2_support_preserving_collect_candidate_count = 0
-            self._m3s2_support_preserving_collect_quality_count = 0
+            reset_grouped_stopping_state(self)
+            self._support_preserving_collect_hold_count = 0
+            self._support_preserving_collect_candidate_count = 0
+            self._support_preserving_collect_quality_count = 0
             if self.use_sde:
                 self.policy.reset_noise(env.num_envs)
 
             callback.on_rollout_start()
             first_event_label_collection_enabled = getattr(self, "_first_event_label_collection_enabled", None)
             if callable(first_event_label_collection_enabled):
-                collect_a6_first_event = bool(first_event_label_collection_enabled())
+                collect_first_event = bool(first_event_label_collection_enabled())
             else:
-                collect_a6_first_event = bool(getattr(self, "_a6_first_event_enabled", lambda: False)())
-            collect_a6_first_event = bool(
-                collect_a6_first_event
-                and getattr(rollout_buffer, "supports_a6_first_event_labels", False)
+                collect_first_event = bool(getattr(self, "_first_event_enabled", lambda: False)())
+            collect_first_event = bool(
+                collect_first_event
+                and getattr(rollout_buffer, "supports_first_event_labels", False)
             )
-            a6_engagement_state: list[str] = []
-            a6_fire_mask: list[bool] = []
-            a6_fire_once_accepted: list[bool] = []
-            a6_episode_id: list[int] = []
-            a6_launch_window_open: list[bool] = []
-            existing_a6_episode_id = getattr(self, "_a6_first_event_env_episode_id", None)
+            engagement_state: list[str] = []
+            fire_mask: list[bool] = []
+            fire_once_accepted: list[bool] = []
+            episode_id: list[int] = []
+            launch_window_open: list[bool] = []
+            existing_episode_id = getattr(self, "_first_event_env_episode_id", None)
             if (
-                collect_a6_first_event
-                and isinstance(existing_a6_episode_id, np.ndarray)
-                and int(existing_a6_episode_id.size) == int(env.num_envs)
+                collect_first_event
+                and isinstance(existing_episode_id, np.ndarray)
+                and int(existing_episode_id.size) == int(env.num_envs)
             ):
-                a6_env_episode_id = existing_a6_episode_id.astype(np.int64, copy=True)
+                env_episode_id = existing_episode_id.astype(np.int64, copy=True)
             else:
-                a6_env_episode_id = np.arange(env.num_envs, dtype=np.int64)
-            if collect_a6_first_event and not hasattr(self, "_a6_first_event_curriculum_seeded_episode_ids"):
-                self._a6_first_event_curriculum_seeded_episode_ids = set()
+                env_episode_id = np.arange(env.num_envs, dtype=np.int64)
+            if collect_first_event and not hasattr(self, "_first_event_curriculum_seeded_episode_ids"):
+                self._first_event_curriculum_seeded_episode_ids = set()
 
             while n_steps < n_rollout_steps:
                 tracer.set_context(
@@ -552,21 +552,21 @@ class NonFiniteTrainingProbe:
                     tracer.check("rollout.actions_tensor", actions_tensor)
                     tracer.check("rollout.values", values)
                     tracer.check("rollout.log_probs", log_probs)
-                a6_policy_fire_mask = None
-                a6_policy_launch_window = None
-                if collect_a6_first_event:
-                    policy_mask_fn = getattr(self, "_a6_first_event_policy_fire_mask_from_obs", None)
+                policy_fire_mask = None
+                policy_launch_window = None
+                if collect_first_event:
+                    policy_mask_fn = getattr(self, "_first_event_policy_fire_mask_from_obs", None)
                     if callable(policy_mask_fn):
-                        a6_policy_fire_mask = policy_mask_fn(obs_tensor, env.num_envs)
-                    launch_window_fn = getattr(self, "_a6_first_event_launch_window_from_policy_obs", None)
+                        policy_fire_mask = policy_mask_fn(obs_tensor, env.num_envs)
+                    launch_window_fn = getattr(self, "_first_event_launch_window_from_policy_obs", None)
                     if callable(launch_window_fn):
-                        a6_policy_launch_window = launch_window_fn(obs_tensor, env.num_envs)
-                support_mask_fn = getattr(self, "_m3s2_support_preserving_collect_masks", None)
-                apply_support_fn = getattr(self, "_m3s2_apply_support_preserving_collect_actions", None)
+                        policy_launch_window = launch_window_fn(obs_tensor, env.num_envs)
+                support_mask_fn = getattr(self, "_support_preserving_collect_masks", None)
+                apply_support_fn = getattr(self, "_apply_support_preserving_collect_actions", None)
                 if callable(support_mask_fn) and callable(apply_support_fn):
                     support_hold_mask = support_mask_fn(
-                        fire_mask=a6_policy_fire_mask,
-                        launch_window_open=a6_policy_launch_window,
+                        fire_mask=policy_fire_mask,
+                        launch_window_open=policy_launch_window,
                         n_envs=env.num_envs,
                     )
                     actions_tensor, log_probs = apply_support_fn(
@@ -598,33 +598,33 @@ class NonFiniteTrainingProbe:
                     tracer.check("rollout.new_obs", new_obs)
 
                 self.num_timesteps += env.num_envs
-                if collect_a6_first_event:
-                    fire_mask_from_info = getattr(self, "_a6_first_event_fire_mask_from_info", None)
-                    bool_from_info = getattr(self, "_a6_first_event_bool", None)
+                if collect_first_event:
+                    fire_mask_from_info = getattr(self, "_first_event_fire_mask_from_info", None)
+                    bool_from_info = getattr(self, "_first_event_bool", None)
                     for env_idx, info in enumerate(infos):
                         row = info if isinstance(info, dict) else {}
-                        if a6_policy_fire_mask is not None and env_idx < len(a6_policy_fire_mask):
-                            policy_window_open = bool(a6_policy_fire_mask[env_idx])
+                        if policy_fire_mask is not None and env_idx < len(policy_fire_mask):
+                            policy_window_open = bool(policy_fire_mask[env_idx])
                         elif callable(fire_mask_from_info):
                             policy_window_open = bool(fire_mask_from_info(row))
                         else:
                             policy_window_open = bool(row.get("fire_mask", False))
-                        a6_engagement_state.append(
+                        engagement_state.append(
                             "AuthorizedReady" if policy_window_open else str(row.get("engagement_state", "") or "")
                         )
                         if callable(fire_mask_from_info):
-                            a6_fire_mask.append(bool(policy_window_open))
+                            fire_mask.append(bool(policy_window_open))
                         else:
-                            a6_fire_mask.append(bool(policy_window_open))
+                            fire_mask.append(bool(policy_window_open))
                         if callable(bool_from_info):
-                            a6_fire_once_accepted.append(bool(bool_from_info(row.get("fire_once_accepted", False))))
+                            fire_once_accepted.append(bool(bool_from_info(row.get("fire_once_accepted", False))))
                         else:
-                            a6_fire_once_accepted.append(bool(row.get("fire_once_accepted", False)))
-                        a6_episode_id.append(int(a6_env_episode_id[env_idx]))
-                        if a6_policy_launch_window is not None and env_idx < len(a6_policy_launch_window):
-                            a6_launch_window_open.append(bool(a6_policy_launch_window[env_idx]))
+                            fire_once_accepted.append(bool(row.get("fire_once_accepted", False)))
+                        episode_id.append(int(env_episode_id[env_idx]))
+                        if policy_launch_window is not None and env_idx < len(policy_launch_window):
+                            launch_window_open.append(bool(policy_launch_window[env_idx]))
                         else:
-                            a6_launch_window_open.append(bool(policy_window_open))
+                            launch_window_open.append(bool(policy_window_open))
                 callback.update_locals(locals())
                 if not callback.on_step():
                     return False
@@ -656,11 +656,11 @@ class NonFiniteTrainingProbe:
                 )
                 self._last_obs = new_obs
                 self._last_episode_starts = dones
-                if collect_a6_first_event:
+                if collect_first_event:
                     for env_idx, done in enumerate(dones):
                         if bool(done):
-                            a6_env_episode_id[env_idx] += env.num_envs
-                            ages = getattr(self, "_m3s2_support_preserving_collect_legal_open_age", None)
+                            env_episode_id[env_idx] += env.num_envs
+                            ages = getattr(self, "_support_preserving_collect_legal_open_age", None)
                             if isinstance(ages, np.ndarray) and int(ages.size) == int(env.num_envs):
                                 ages[int(env_idx)] = 0
 
@@ -668,43 +668,43 @@ class NonFiniteTrainingProbe:
                 values = self.policy.predict_values(self._get_policy_obs_tensor(env, new_obs))
                 tracer.check("rollout.last_values", values)
 
-            if collect_a6_first_event:
-                self._a6_first_event_env_episode_id = a6_env_episode_id
-                attach_a6 = getattr(self, "_attach_a6_first_event_labels_to_rollout_buffer", None)
+            if collect_first_event:
+                self._first_event_env_episode_id = env_episode_id
+                attach_a6 = getattr(self, "_attach_first_event_labels_to_rollout_buffer", None)
                 if callable(attach_a6):
                     attach_a6(
                         rollout_buffer,
-                        engagement_state=a6_engagement_state,
-                        fire_mask=a6_fire_mask,
-                        fire_once_accepted=a6_fire_once_accepted,
-                        episode_id=a6_episode_id,
+                        engagement_state=engagement_state,
+                        fire_mask=fire_mask,
+                        fire_once_accepted=fire_once_accepted,
+                        episode_id=episode_id,
                         launch_window_open=(
-                            a6_launch_window_open
-                            if bool(getattr(self, "a6_first_event_launch_window_enabled", False))
+                            launch_window_open
+                            if bool(getattr(self, "first_event_launch_window_enabled", False))
                             else None
                         ),
-                        env_episode_id_after_rollout=a6_env_episode_id,
+                        env_episode_id_after_rollout=env_episode_id,
                     )
                     for field in (
-                        "a6_first_event_active",
-                        "a6_first_event_target",
-                        "a6_first_event_weight",
+                        "first_event_active",
+                        "first_event_target",
+                        "first_event_weight",
                     ):
                         if hasattr(rollout_buffer, field):
                             tracer.check(f"rollout.buffer.{field}", getattr(rollout_buffer, field))
-                build_m3_sidecar = getattr(self, "_build_m3s1_grouped_stopping_sidecar", None)
-                if callable(build_m3_sidecar) and m3s1_grouped_stopping_sidecar_enabled(self):
-                    self._m3s1_grouped_stopping_sidecar = build_m3_sidecar(
+                build_sidecar = getattr(self, "_build_grouped_stopping_sidecar", None)
+                if callable(build_sidecar) and grouped_stopping_sidecar_enabled(self):
+                    self._grouped_stopping_sidecar = build_sidecar(
                         rollout_buffer,
-                        fire_mask=a6_fire_mask,
-                        fire_once_accepted=a6_fire_once_accepted,
-                        episode_id=a6_episode_id,
-                        launch_window_open=a6_launch_window_open,
+                        fire_mask=fire_mask,
+                        fire_once_accepted=fire_once_accepted,
+                        episode_id=episode_id,
+                        launch_window_open=launch_window_open,
                     )
-                    sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+                    sidecar = getattr(self, "_grouped_stopping_sidecar", None)
                     if sidecar is not None:
                         tracer.check(
-                            "rollout.m3s1_grouped_sidecar_group_count",
+                            "rollout.grouped_sidecar_group_count",
                             np.asarray([float(len(sidecar.groups))], dtype=np.float32),
                         )
             rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
@@ -773,9 +773,9 @@ class NonFiniteTrainingProbe:
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
-            m3s2_event_window_loss = None
-            m3s2_fire_boundary_loss = None
-            m3s1_grouped_stopping_loss = None
+            event_window_loss = None
+            fire_boundary_loss = None
+            grouped_stopping_loss = None
 
             tracer.check_named_tensors("train.params.start", _parameter_payload(self.policy))
 
@@ -801,9 +801,9 @@ class NonFiniteTrainingProbe:
                     tracer.check("train.rollout_data.advantages", rollout_data.advantages)
                     tracer.check("train.rollout_data.returns", rollout_data.returns)
                     for field in (
-                        "a6_first_event_active",
-                        "a6_first_event_target",
-                        "a6_first_event_weight",
+                        "first_event_active",
+                        "first_event_target",
+                        "first_event_weight",
                     ):
                         if hasattr(rollout_data, field):
                             tracer.check(f"train.rollout_data.{field}", getattr(rollout_data, field))
@@ -886,20 +886,20 @@ class NonFiniteTrainingProbe:
                     if callable(first_event_hazard_fn):
                         first_event_hazard_loss = first_event_hazard_fn(rollout_data)
                     if first_event_hazard_loss is not None:
-                        tracer.check("train.a6_first_event_hazard_loss", first_event_hazard_loss.loss)
+                        tracer.check("train.first_event_hazard_loss", first_event_hazard_loss.loss)
                         first_event_hazard_losses.append(float(first_event_hazard_loss.loss.detach().cpu()))
                         first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
                         first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
                         loss = loss + first_event_hazard_loss.loss
                     separate_credit_loss = None
                     separate_credit_grad_norm = 0.0
-                    if bool(getattr(self, "a7_event_credit_separate_update_enabled", False)):
+                    if bool(getattr(self, "event_credit_separate_update_enabled", False)):
                         separate_update_fn = getattr(self, "_first_event_credit_separate_value_update", None)
                         if callable(separate_update_fn):
                             separate_credit_loss, separate_credit_grad_norm = separate_update_fn(rollout_data)
                         if separate_credit_loss is not None:
                             tracer.check(
-                                "train.a7_first_event_credit_separate_value_loss",
+                                "train.first_event_credit_separate_value_loss",
                                 separate_credit_loss.value_loss,
                             )
                             first_event_credit_separate_update_grad_norms.append(
@@ -912,10 +912,10 @@ class NonFiniteTrainingProbe:
                         first_event_credit_loss = first_event_credit_fn(
                             rollout_data,
                             value_coef=0.0
-                            if bool(getattr(self, "a7_event_credit_separate_update_enabled", False))
+                            if bool(getattr(self, "event_credit_separate_update_enabled", False))
                             else None,
                             projection_value_coef=0.0
-                            if bool(getattr(self, "a7_event_credit_separate_update_enabled", False))
+                            if bool(getattr(self, "event_credit_separate_update_enabled", False))
                             else None,
                         )
                     if first_event_credit_loss is not None:
@@ -924,13 +924,13 @@ class NonFiniteTrainingProbe:
                         if separate_credit_loss is not None:
                             total_credit_loss = total_credit_loss + separate_credit_loss.loss.detach()
                             value_credit_loss = separate_credit_loss.value_loss
-                        tracer.check("train.a7_first_event_credit_loss", first_event_credit_loss.loss)
+                        tracer.check("train.first_event_credit_loss", first_event_credit_loss.loss)
                         tracer.check(
-                            "train.a7_first_event_credit_value_loss",
+                            "train.first_event_credit_value_loss",
                             value_credit_loss,
                         )
                         tracer.check(
-                            "train.a7_first_event_credit_delta_align_loss",
+                            "train.first_event_credit_delta_align_loss",
                             first_event_credit_loss.delta_align_loss,
                         )
                         first_event_credit_losses.append(float(total_credit_loss.detach().cpu()))
@@ -1061,96 +1061,96 @@ class NonFiniteTrainingProbe:
                 if not continue_training:
                     break
 
-            m3s2_window_classifier_loss = None
-            classifier_update_fn = getattr(self, "_m3s2_window_classifier_auxiliary_update", None)
+            window_classifier_loss = None
+            classifier_update_fn = getattr(self, "_window_classifier_auxiliary_update", None)
             if callable(classifier_update_fn):
-                m3s2_window_classifier_loss = classifier_update_fn()
-                if m3s2_window_classifier_loss is not None:
+                window_classifier_loss = classifier_update_fn()
+                if window_classifier_loss is not None:
                     tracer.check(
-                        "train.m3s2_window_classifier_loss",
-                        m3s2_window_classifier_loss.loss,
+                        "train.window_classifier_loss",
+                        window_classifier_loss.loss,
                     )
                     tracer.check(
-                        "train.m3s2_window_classifier_unscaled_loss",
-                        m3s2_window_classifier_loss.unscaled_loss,
+                        "train.window_classifier_unscaled_loss",
+                        window_classifier_loss.unscaled_loss,
                     )
                     tracer.check(
-                        "train.m3s2_window_classifier_grad_norm",
+                        "train.window_classifier_grad_norm",
                         np.asarray(
-                            [float(getattr(self, "_m3s2_last_window_classifier_grad_norm", 0.0))],
+                            [float(getattr(self, "_last_window_classifier_grad_norm", 0.0))],
                             dtype=np.float32,
                         ),
                     )
                     tracer.check_named_tensors(
-                        "train.params.post_m3s2_window_classifier_update",
+                        "train.params.post_window_classifier_update",
                         _parameter_payload(self.policy),
                     )
 
-            fire_boundary_update_fn = getattr(self, "_m3s2_fire_boundary_auxiliary_update", None)
+            fire_boundary_update_fn = getattr(self, "_fire_boundary_auxiliary_update", None)
             if callable(fire_boundary_update_fn):
-                m3s2_fire_boundary_loss = fire_boundary_update_fn()
-                if m3s2_fire_boundary_loss is not None:
+                fire_boundary_loss = fire_boundary_update_fn()
+                if fire_boundary_loss is not None:
                     tracer.check(
-                        "train.m3s2_fire_boundary_loss",
-                        m3s2_fire_boundary_loss.loss,
+                        "train.fire_boundary_loss",
+                        fire_boundary_loss.loss,
                     )
                     tracer.check(
-                        "train.m3s2_fire_boundary_unscaled_loss",
-                        m3s2_fire_boundary_loss.unscaled_loss,
+                        "train.fire_boundary_unscaled_loss",
+                        fire_boundary_loss.unscaled_loss,
                     )
                     tracer.check(
-                        "train.m3s2_fire_boundary_grad_norm",
+                        "train.fire_boundary_grad_norm",
                         np.asarray(
-                            [float(getattr(self, "_m3s2_last_fire_boundary_grad_norm", 0.0))],
+                            [float(getattr(self, "_last_fire_boundary_grad_norm", 0.0))],
                             dtype=np.float32,
                         ),
                     )
                     tracer.check_named_tensors(
-                        "train.params.post_m3s2_fire_boundary_update",
+                        "train.params.post_fire_boundary_update",
                         _parameter_payload(self.policy),
                     )
 
-            m3s2_update_fn = getattr(self, "_m3s2_event_window_auxiliary_update", None)
-            if callable(m3s2_update_fn):
-                m3s2_event_window_loss = m3s2_update_fn()
-                if m3s2_event_window_loss is not None:
+            event_window_update_fn = getattr(self, "_event_window_auxiliary_update", None)
+            if callable(event_window_update_fn):
+                event_window_loss = event_window_update_fn()
+                if event_window_loss is not None:
                     tracer.check(
-                        "train.m3s2_event_window_loss",
-                        m3s2_event_window_loss.loss,
+                        "train.event_window_loss",
+                        event_window_loss.loss,
                     )
                     tracer.check(
-                        "train.m3s2_event_window_unscaled_loss",
-                        m3s2_event_window_loss.unscaled_loss,
+                        "train.event_window_unscaled_loss",
+                        event_window_loss.unscaled_loss,
                     )
                     tracer.check(
-                        "train.m3s2_event_window_grad_norm",
+                        "train.event_window_grad_norm",
                         np.asarray(
-                            [float(getattr(self, "_m3s2_last_event_window_grad_norm", 0.0))],
+                            [float(getattr(self, "_last_event_window_grad_norm", 0.0))],
                             dtype=np.float32,
                         ),
                     )
-                    tracer.check_named_tensors("train.params.post_m3s2_update", _parameter_payload(self.policy))
+                    tracer.check_named_tensors("train.params.post_event_window_update", _parameter_payload(self.policy))
 
-            m3s1_update_fn = getattr(self, "_m3s1_grouped_stopping_auxiliary_update", None)
-            if callable(m3s1_update_fn):
-                m3s1_grouped_stopping_loss = m3s1_update_fn()
-                if m3s1_grouped_stopping_loss is not None:
+            grouped_stopping_update_fn = getattr(self, "_grouped_stopping_auxiliary_update", None)
+            if callable(grouped_stopping_update_fn):
+                grouped_stopping_loss = grouped_stopping_update_fn()
+                if grouped_stopping_loss is not None:
                     tracer.check(
-                        "train.m3s1_grouped_stopping_loss",
-                        m3s1_grouped_stopping_loss.loss,
+                        "train.grouped_stopping_loss",
+                        grouped_stopping_loss.loss,
                     )
                     tracer.check(
-                        "train.m3s1_grouped_stopping_unscaled_loss",
-                        m3s1_grouped_stopping_loss.unscaled_loss,
+                        "train.grouped_stopping_unscaled_loss",
+                        grouped_stopping_loss.unscaled_loss,
                     )
                     tracer.check(
-                        "train.m3s1_grouped_stopping_grad_norm",
+                        "train.grouped_stopping_grad_norm",
                         np.asarray(
-                            [float(getattr(self, "_m3s1_last_grouped_stopping_grad_norm", 0.0))],
+                            [float(getattr(self, "_last_grouped_stopping_grad_norm", 0.0))],
                             dtype=np.float32,
                         ),
                     )
-                    tracer.check_named_tensors("train.params.post_m3s1_update", _parameter_payload(self.policy))
+                    tracer.check_named_tensors("train.params.post_grouped_stopping_update", _parameter_payload(self.policy))
 
             explained_var = self._to_numpy_flat(self.rollout_buffer.values)
             explained_ret = self._to_numpy_flat(self.rollout_buffer.returns)
@@ -1187,27 +1187,27 @@ class NonFiniteTrainingProbe:
                     float(getattr(self, "action_mean_regularization_coef", 0.0)),
                 )
             if (
-                float(getattr(self, "a6_first_event_hazard_coef", 0.0)) > 0.0
-                or float(getattr(self, "a6_first_event_curriculum_coef", 0.0)) > 0.0
-                or float(getattr(self, "a6_first_event_deadline_weight", 0.0)) > 0.0
-                or float(getattr(self, "a6_first_event_censored_survival_weight", 0.0)) > 0.0
+                float(getattr(self, "first_event_hazard_coef", 0.0)) > 0.0
+                or float(getattr(self, "first_event_curriculum_coef", 0.0)) > 0.0
+                or float(getattr(self, "first_event_deadline_weight", 0.0)) > 0.0
+                or float(getattr(self, "first_event_censored_survival_weight", 0.0)) > 0.0
             ):
-                curriculum_coef_fn = getattr(self, "_current_a6_first_event_curriculum_coef", None)
+                curriculum_coef_fn = getattr(self, "_current_first_event_curriculum_coef", None)
                 curriculum_coef = float(curriculum_coef_fn()) if callable(curriculum_coef_fn) else 0.0
                 self.logger.record(
                     "a6/hazard_loss",
                     float(np.mean(first_event_hazard_losses)) if first_event_hazard_losses else 0.0,
                 )
-                self.logger.record("a6/hazard_coef", float(getattr(self, "a6_first_event_hazard_coef", 0.0)))
+                self.logger.record("a6/hazard_coef", float(getattr(self, "first_event_hazard_coef", 0.0)))
                 self.logger.record("a6/curriculum_coef", curriculum_coef)
-                self.logger.record("a6/deadline_weight", float(getattr(self, "a6_first_event_deadline_weight", 0.0)))
+                self.logger.record("a6/deadline_weight", float(getattr(self, "first_event_deadline_weight", 0.0)))
                 self.logger.record(
                     "a6/launch_window_enabled",
-                    float(bool(getattr(self, "a6_first_event_launch_window_enabled", False))),
+                    float(bool(getattr(self, "first_event_launch_window_enabled", False))),
                 )
                 self.logger.record(
                     "a6/launch_window_prewindow_hold_weight",
-                    float(getattr(self, "a6_first_event_launch_window_prewindow_hold_weight", 0.0)),
+                    float(getattr(self, "first_event_launch_window_prewindow_hold_weight", 0.0)),
                 )
                 self.logger.record(
                     "a6/active_count_mean",
@@ -1219,15 +1219,15 @@ class NonFiniteTrainingProbe:
                     if first_event_hazard_positive_fracs
                     else 0.0,
                 )
-            if m3s2_window_classifier_enabled(self):
-                classifier_loss = m3s2_window_classifier_loss or getattr(
+            if window_classifier_enabled(self):
+                classifier_loss = window_classifier_loss or getattr(
                     self,
-                    "_m3s2_last_window_classifier_loss",
+                    "_last_window_classifier_loss",
                     None,
                 )
                 self.logger.record(
                     "m3s2/window_classifier_coef",
-                    float(getattr(self, "m3s2_window_classifier_coef", 0.0)),
+                    float(getattr(self, "window_classifier_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/window_classifier_loss",
@@ -1255,7 +1255,7 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "m3s2/window_classifier_grad_norm",
-                    float(getattr(self, "_m3s2_last_window_classifier_grad_norm", 0.0)),
+                    float(getattr(self, "_last_window_classifier_grad_norm", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/window_classifier_active_count",
@@ -1283,11 +1283,11 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "m3s2/window_classifier_replay_enabled",
-                    float(getattr(self, "m3s2_window_classifier_replay_enabled", False)),
+                    float(getattr(self, "window_classifier_replay_enabled", False)),
                 )
                 self.logger.record(
                     "m3s2/window_classifier_replay_storage_observation",
-                    float(getattr(self, "m3s2_window_classifier_replay_storage", "latent") == "observation"),
+                    float(getattr(self, "window_classifier_replay_storage", "latent") == "observation"),
                 )
                 self.logger.record(
                     "m3s2/window_classifier_replay_used",
@@ -1309,10 +1309,10 @@ class NonFiniteTrainingProbe:
                         else 0.0
                     ),
                 )
-            if m3s2_fire_boundary_enabled(self):
-                fire_boundary_loss = m3s2_fire_boundary_loss or getattr(
+            if fire_boundary_enabled(self):
+                fire_boundary_loss = fire_boundary_loss or getattr(
                     self,
-                    "_m3s2_last_fire_boundary_loss",
+                    "_last_fire_boundary_loss",
                     None,
                 )
                 active_count = float(getattr(fire_boundary_loss, "active_count", 0.0)) if fire_boundary_loss else 0.0
@@ -1326,7 +1326,7 @@ class NonFiniteTrainingProbe:
                     if fire_boundary_loss
                     else 0.0
                 )
-                self.logger.record("m3s2/fb_coef", float(getattr(self, "m3s2_fire_boundary_coef", 0.0)))
+                self.logger.record("m3s2/fb_coef", float(getattr(self, "fire_boundary_coef", 0.0)))
                 self.logger.record(
                     "m3s2/fb_loss",
                     (
@@ -1369,7 +1369,7 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "m3s2/fb_grad_norm",
-                    float(getattr(self, "_m3s2_last_fire_boundary_grad_norm", 0.0)),
+                    float(getattr(self, "_last_fire_boundary_grad_norm", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/fb_group_count",
@@ -1452,48 +1452,48 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "m3s2/fb_separate_update_enabled",
-                    float(bool(getattr(self, "m3s2_fire_boundary_separate_update_enabled", False))),
+                    float(bool(getattr(self, "fire_boundary_separate_update_enabled", False))),
                 )
                 self.logger.record(
                     "m3s2/fb_dedicated_optimizer_enabled",
-                    float(bool(getattr(self, "m3s2_fire_boundary_dedicated_optimizer_enabled", False))),
+                    float(bool(getattr(self, "fire_boundary_dedicated_optimizer_enabled", False))),
                 )
                 self.logger.record(
                     "m3s2/fb_separate_update_steps",
-                    int(getattr(self, "m3s2_fire_boundary_separate_update_steps", 1)),
+                    int(getattr(self, "fire_boundary_separate_update_steps", 1)),
                 )
                 self.logger.record(
                     "m3s2/fb_neg_ceiling_coef",
-                    float(getattr(self, "m3s2_fire_boundary_negative_logit_ceiling_coef", 0.0)),
+                    float(getattr(self, "fire_boundary_negative_logit_ceiling_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/fb_neg_ceiling",
-                    float(getattr(self, "m3s2_fire_boundary_negative_logit_ceiling", 0.0)),
+                    float(getattr(self, "fire_boundary_negative_logit_ceiling", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/fb_pos_floor_coef",
-                    float(getattr(self, "m3s2_fire_boundary_positive_logit_floor_coef", 0.0)),
+                    float(getattr(self, "fire_boundary_positive_logit_floor_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/fb_pos_floor",
-                    float(getattr(self, "m3s2_fire_boundary_positive_logit_floor", 0.0)),
+                    float(getattr(self, "fire_boundary_positive_logit_floor", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/fb_support_collect_enabled",
-                    float(bool(getattr(self, "m3s2_fire_boundary_support_preserving_collect_enabled", False))),
+                    float(bool(getattr(self, "fire_boundary_support_preserving_collect_enabled", False))),
                 )
                 self.logger.record(
                     "m3s2/fb_support_hold_quality_enabled",
-                    float(bool(getattr(self, "m3s2_fire_boundary_support_preserving_hold_quality_enabled", False))),
+                    float(bool(getattr(self, "fire_boundary_support_preserving_hold_quality_enabled", False))),
                 )
-            if m3s2_event_window_enabled(self):
-                sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+            if event_window_enabled(self):
+                sidecar = getattr(self, "_grouped_stopping_sidecar", None)
                 stats = (
-                    m3s2_event_window_loss.stats
-                    if m3s2_event_window_loss is not None
+                    event_window_loss.stats
+                    if event_window_loss is not None
                     else None
                 )
-                diagnostics = getattr(self, "_m3s2_last_event_window_diagnostics", None)
+                diagnostics = getattr(self, "_last_event_window_diagnostics", None)
 
                 def stat_value(name: str) -> float:
                     return float(getattr(stats, name, 0.0)) if stats is not None else 0.0
@@ -1508,27 +1508,27 @@ class NonFiniteTrainingProbe:
                 closed_mask_row_count = diag_value("closed_mask_row_count")
                 self.logger.record(
                     "m3s2/event_window_coef",
-                    float(getattr(self, "m3s2_event_window_coef", 0.0)),
+                    float(getattr(self, "event_window_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/event_window_loss",
                     (
-                        float(m3s2_event_window_loss.loss.detach().cpu().item())
-                        if m3s2_event_window_loss is not None
+                        float(event_window_loss.loss.detach().cpu().item())
+                        if event_window_loss is not None
                         else 0.0
                     ),
                 )
                 self.logger.record(
                     "m3s2/event_window_unscaled_loss",
                     (
-                        float(m3s2_event_window_loss.unscaled_loss.detach().cpu().item())
-                        if m3s2_event_window_loss is not None
+                        float(event_window_loss.unscaled_loss.detach().cpu().item())
+                        if event_window_loss is not None
                         else 0.0
                     ),
                 )
                 self.logger.record(
                     "m3s2/event_window_grad_norm",
-                    float(getattr(self, "_m3s2_last_event_window_grad_norm", 0.0)),
+                    float(getattr(self, "_last_event_window_grad_norm", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/grouped_sidecar_group_count",
@@ -1638,117 +1638,117 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "m3s2/event_window_separate_update_enabled",
-                    float(bool(getattr(self, "m3s2_event_window_separate_update_enabled", False))),
+                    float(bool(getattr(self, "event_window_separate_update_enabled", False))),
                 )
                 self.logger.record(
                     "m3s2/event_window_dedicated_optimizer_enabled",
-                    float(bool(getattr(self, "m3s2_event_window_dedicated_optimizer_enabled", False))),
+                    float(bool(getattr(self, "event_window_dedicated_optimizer_enabled", False))),
                 )
                 self.logger.record(
                     "m3s2/event_window_use_stopping_head",
-                    float(bool(getattr(self, "m3s2_event_window_use_stopping_head", False))),
+                    float(bool(getattr(self, "event_window_use_stopping_head", False))),
                 )
                 self.logger.record(
                     "m3s2/event_window_separate_update_steps",
-                    int(getattr(self, "m3s2_event_window_separate_update_steps", 1)),
+                    int(getattr(self, "event_window_separate_update_steps", 1)),
                 )
                 self.logger.record(
                     "m3s2/event_window_delay_coef",
-                    float(getattr(self, "m3s2_event_window_delay_coef", 0.0)),
+                    float(getattr(self, "event_window_delay_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/event_window_deadline_coef",
-                    float(getattr(self, "m3s2_event_window_deadline_coef", 0.0)),
+                    float(getattr(self, "event_window_deadline_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/event_window_deadline_steps",
-                    int(getattr(self, "m3s2_event_window_deadline_steps", 0)),
+                    int(getattr(self, "event_window_deadline_steps", 0)),
                 )
                 self.logger.record(
                     "m3s2/event_window_early_survival_coef",
-                    float(getattr(self, "m3s2_event_window_early_survival_coef", 0.0)),
+                    float(getattr(self, "event_window_early_survival_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_q_boundary_coef",
-                    float(getattr(self, "m3s2_event_window_quality_boundary_coef", 0.0)),
+                    float(getattr(self, "event_window_quality_boundary_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_q_boundary_logit",
-                    float(getattr(self, "m3s2_event_window_quality_boundary_logit", 0.0)),
+                    float(getattr(self, "event_window_quality_boundary_logit", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_contrast_coef",
-                    float(getattr(self, "m3s2_event_window_contrastive_margin_coef", 0.0)),
+                    float(getattr(self, "event_window_contrastive_margin_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_contrast_margin",
-                    float(getattr(self, "m3s2_event_window_contrastive_margin", 0.0)),
+                    float(getattr(self, "event_window_contrastive_margin", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_balanced_bce_coef",
-                    float(getattr(self, "m3s2_event_window_balanced_bce_coef", 0.0)),
+                    float(getattr(self, "event_window_balanced_bce_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_prewindow_hazard_scale_coef",
-                    float(getattr(self, "m3s2_event_window_prewindow_hazard_scale_coef", 0.0)),
+                    float(getattr(self, "event_window_prewindow_hazard_scale_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_prewindow_hazard_target",
-                    float(getattr(self, "m3s2_event_window_prewindow_hazard_target", 0.0)),
+                    float(getattr(self, "event_window_prewindow_hazard_target", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_quality_hazard_target_coef",
-                    float(getattr(self, "m3s2_event_window_quality_hazard_target_coef", 0.0)),
+                    float(getattr(self, "event_window_quality_hazard_target_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_quality_hazard_target",
-                    float(getattr(self, "m3s2_event_window_quality_hazard_target", 0.0)),
+                    float(getattr(self, "event_window_quality_hazard_target", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_prewindow_logit_ceiling_coef",
-                    float(getattr(self, "m3s2_event_window_prewindow_logit_ceiling_coef", 0.0)),
+                    float(getattr(self, "event_window_prewindow_logit_ceiling_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_prewindow_logit_ceiling",
-                    float(getattr(self, "m3s2_event_window_prewindow_logit_ceiling", 0.0)),
+                    float(getattr(self, "event_window_prewindow_logit_ceiling", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_quality_logit_floor_coef",
-                    float(getattr(self, "m3s2_event_window_quality_logit_floor_coef", 0.0)),
+                    float(getattr(self, "event_window_quality_logit_floor_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s2/ew_quality_logit_floor",
-                    float(getattr(self, "m3s2_event_window_quality_logit_floor", 0.0)),
+                    float(getattr(self, "event_window_quality_logit_floor", 0.0)),
                 )
-                support_enabled = getattr(self, "_m3s2_support_preserving_collect_enabled", None)
+                support_enabled = getattr(self, "_support_preserving_collect_enabled", None)
                 self.logger.record(
                     "m3s2/support_preserving_collect_enabled",
                     float(callable(support_enabled) and support_enabled()),
                 )
                 self.logger.record(
                     "m3s2/support_preserving_hold_quality_enabled",
-                    float(getattr(self, "m3s2_event_window_support_preserving_hold_quality_enabled", False)),
+                    float(getattr(self, "event_window_support_preserving_hold_quality_enabled", False)),
                 )
                 self.logger.record(
                     "m3s2/support_preserving_hold_count",
-                    float(getattr(self, "_m3s2_support_preserving_collect_hold_count", 0)),
+                    float(getattr(self, "_support_preserving_collect_hold_count", 0)),
                 )
                 self.logger.record(
                     "m3s2/support_preserving_candidate_count",
-                    float(getattr(self, "_m3s2_support_preserving_collect_candidate_count", 0)),
+                    float(getattr(self, "_support_preserving_collect_candidate_count", 0)),
                 )
                 self.logger.record(
                     "m3s2/support_preserving_quality_count",
-                    float(getattr(self, "_m3s2_support_preserving_collect_quality_count", 0)),
+                    float(getattr(self, "_support_preserving_collect_quality_count", 0)),
                 )
-            if m3s1_grouped_stopping_enabled(self):
-                sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+            if grouped_stopping_enabled(self):
+                sidecar = getattr(self, "_grouped_stopping_sidecar", None)
                 stats = (
-                    m3s1_grouped_stopping_loss.stats
-                    if m3s1_grouped_stopping_loss is not None
+                    grouped_stopping_loss.stats
+                    if grouped_stopping_loss is not None
                     else None
                 )
-                diagnostics = getattr(self, "_m3s1_last_grouped_stopping_diagnostics", None)
+                diagnostics = getattr(self, "_last_grouped_stopping_diagnostics", None)
 
                 def stat_value(name: str) -> float:
                     return float(getattr(stats, name, 0.0)) if stats is not None else 0.0
@@ -1763,27 +1763,27 @@ class NonFiniteTrainingProbe:
                 closed_mask_row_count = diag_value("closed_mask_row_count")
                 self.logger.record(
                     "m3s1/grouped_stopping_coef",
-                    float(getattr(self, "m3s1_grouped_stopping_coef", 0.0)),
+                    float(getattr(self, "grouped_stopping_coef", 0.0)),
                 )
                 self.logger.record(
                     "m3s1/grouped_stopping_loss",
                     (
-                        float(m3s1_grouped_stopping_loss.loss.detach().cpu().item())
-                        if m3s1_grouped_stopping_loss is not None
+                        float(grouped_stopping_loss.loss.detach().cpu().item())
+                        if grouped_stopping_loss is not None
                         else 0.0
                     ),
                 )
                 self.logger.record(
                     "m3s1/grouped_stopping_unscaled_loss",
                     (
-                        float(m3s1_grouped_stopping_loss.unscaled_loss.detach().cpu().item())
-                        if m3s1_grouped_stopping_loss is not None
+                        float(grouped_stopping_loss.unscaled_loss.detach().cpu().item())
+                        if grouped_stopping_loss is not None
                         else 0.0
                     ),
                 )
                 self.logger.record(
                     "m3s1/grouped_stopping_grad_norm",
-                    float(getattr(self, "_m3s1_last_grouped_stopping_grad_norm", 0.0)),
+                    float(getattr(self, "_last_grouped_stopping_grad_norm", 0.0)),
                 )
                 self.logger.record(
                     "m3s1/grouped_sidecar_group_count",
@@ -1864,9 +1864,9 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "m3s1/grouped_stopping_detach_latent",
-                    float(bool(getattr(self, "m3s1_grouped_stopping_detach_latent", False))),
+                    float(bool(getattr(self, "grouped_stopping_detach_latent", False))),
                 )
-            if bool(getattr(self, "_a7_event_credit_enabled", lambda: False)()):
+            if bool(getattr(self, "_event_credit_enabled", lambda: False)()):
                 self.logger.record(
                     "a7/event_credit_loss",
                     float(np.mean(first_event_credit_losses)) if first_event_credit_losses else 0.0,
@@ -1885,23 +1885,23 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "a7/event_credit_value_coef",
-                    float(getattr(self, "a7_event_credit_value_coef", 0.0)),
+                    float(getattr(self, "event_credit_value_coef", 0.0)),
                 )
                 self.logger.record(
                     "a7/event_credit_delta_align_coef",
-                    float(getattr(self, "a7_event_credit_delta_align_coef", 0.0)),
+                    float(getattr(self, "event_credit_delta_align_coef", 0.0)),
                 )
                 self.logger.record(
                     "a7/event_credit_delta_align_positive_only",
-                    float(bool(getattr(self, "a7_event_credit_delta_align_positive_only", False))),
+                    float(bool(getattr(self, "event_credit_delta_align_positive_only", False))),
                 )
                 self.logger.record(
                     "a7/evc_separate_update_enabled",
-                    float(bool(getattr(self, "a7_event_credit_separate_update_enabled", False))),
+                    float(bool(getattr(self, "event_credit_separate_update_enabled", False))),
                 )
                 self.logger.record(
                     "a7/evc_separate_update_max_grad_norm",
-                    float(getattr(self, "a7_event_credit_separate_update_max_grad_norm", 0.0)),
+                    float(getattr(self, "event_credit_separate_update_max_grad_norm", 0.0)),
                 )
                 self.logger.record(
                     "a7/evc_separate_update_count_mean",
@@ -1921,35 +1921,35 @@ class NonFiniteTrainingProbe:
                 )
                 self.logger.record(
                     "a7/evc_cross_rollout_context_rows",
-                    float(getattr(self, "_a7_cross_rollout_last_context_row_count", 0)),
+                    float(getattr(self, "_cross_rollout_last_context_row_count", 0)),
                 )
                 self.logger.record(
                     "a7/evc_carried_shadow_pending_envs",
-                    float(getattr(self, "_a7_cross_rollout_last_carried_shadow_pending_envs", 0)),
+                    float(getattr(self, "_cross_rollout_last_carried_shadow_pending_envs", 0)),
                 )
                 self.logger.record(
                     "a7/evc_carried_shadow_positive_count_mean",
-                    float(getattr(self, "_a7_cross_rollout_last_carried_shadow_positive_count", 0)),
+                    float(getattr(self, "_cross_rollout_last_carried_shadow_positive_count", 0)),
                 )
                 self.logger.record(
                     "a7/evc_cross_rollout_first_event_count_mean",
-                    float(getattr(self, "_a7_cross_rollout_last_first_event_count", 0)),
+                    float(getattr(self, "_cross_rollout_last_first_event_count", 0)),
                 )
                 self.logger.record(
                     "a7/event_credit_legal_open_quality_weight",
-                    float(getattr(self, "a7_event_credit_legal_open_quality_weight", 0.0)),
+                    float(getattr(self, "event_credit_legal_open_quality_weight", 0.0)),
                 )
                 self.logger.record(
                     "a7/evc_proj_enabled",
-                    float(bool(getattr(self, "a7_event_credit_legal_projection_enabled", False))),
+                    float(bool(getattr(self, "event_credit_legal_projection_enabled", False))),
                 )
                 self.logger.record(
                     "a7/evc_proj_value_coef",
-                    float(getattr(self, "a7_event_credit_projection_value_coef", 0.0)),
+                    float(getattr(self, "event_credit_projection_value_coef", 0.0)),
                 )
                 self.logger.record(
                     "a7/evc_proj_delta_coef",
-                    float(getattr(self, "a7_event_credit_projection_delta_align_coef", 0.0)),
+                    float(getattr(self, "event_credit_projection_delta_align_coef", 0.0)),
                 )
                 self.logger.record(
                     "a7/event_credit_active_count_mean",

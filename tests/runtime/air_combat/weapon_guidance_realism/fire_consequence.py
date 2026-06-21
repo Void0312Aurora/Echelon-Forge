@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from python.testing.runtime import configure_sim_log_level
 
-from .a8_mq9_aim120 import (
+from .mq9_aim120 import (
   _assert_component_row_exposes_public_failure_modes,
   _assert_mq9_event_is_non_authoritative,
   _component_rows_by_name,
@@ -59,8 +59,8 @@ def _mq9_fire_consequence_state_after_local_hit(
   }
 
 
-class A8FireConsequenceRuntimeMixin:
-  def test_a8_mq9_aim120_left_wing_fuel_hit_grows_fire_and_secondary_damage_through_runtime_path(
+class FireConsequenceRuntimeMixin:
+  def test_mq9_aim120_left_wing_fuel_hit_grows_fire_and_secondary_damage_through_runtime_path(
     self,
   ) -> None:
     state = _mq9_fire_consequence_state_after_local_hit((-0.4, -4.8, 0.0))
@@ -105,7 +105,7 @@ class A8FireConsequenceRuntimeMixin:
     self.assertLess(after_overlay["avionics"], hit_overlay["avionics"] - 0.02)
     self.assertLess(after_overlay["crew"], hit_overlay["crew"] - 0.01)
 
-  def test_a8_mq9_aim120_rear_engine_hit_seeds_engine_fire_zone_and_propulsion_consequence(
+  def test_mq9_aim120_rear_engine_hit_seeds_engine_fire_zone_and_propulsion_consequence(
     self,
   ) -> None:
     state = _mq9_fire_consequence_state_after_local_hit((-4.4, 0.0, 0.0))

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from python.testing.runtime import configure_sim_log_level
 
-from .a8_mq9_aim120 import _assert_mq9_event_is_non_authoritative
+from .mq9_aim120 import _assert_mq9_event_is_non_authoritative
 from .helpers import *
 
 
@@ -389,8 +389,8 @@ def _fuselage_fuel_fire_terminal_trace(*, max_steps: int = 60_000) -> dict[str, 
   }
 
 
-class A8AeroConsumerRuntimeMixin:
-  def test_a8_wing_control_damage_reaches_neutral_aero_response_with_mobility_verdict(
+class AeroConsumerRuntimeMixin:
+  def test_wing_control_damage_reaches_neutral_aero_response_with_mobility_verdict(
     self,
   ) -> None:
     baseline_inst, baseline_overlay, _baseline_report = (
@@ -418,7 +418,7 @@ class A8AeroConsumerRuntimeMixin:
     self.assertGreater(roll_delta_deg, 5.0)
     self.assertGreater(beta_delta_deg, 2.0)
 
-  def test_a8_mq9_aim120_right_aileron_damage_changes_roll_response_through_aero_path(
+  def test_mq9_aim120_right_aileron_damage_changes_roll_response_through_aero_path(
     self,
   ) -> None:
     baseline_inst, baseline_overlay, _baseline_effect, _baseline_report, baseline_active = (
@@ -458,7 +458,7 @@ class A8AeroConsumerRuntimeMixin:
     self.assertGreater(beta_delta_deg, 2.0)
     self.assertGreater(speed_delta_mps, 2.0)
 
-  def test_a8_mq9_aim120_right_aileron_damage_long_run_remains_observable_with_degraded_control(
+  def test_mq9_aim120_right_aileron_damage_long_run_remains_observable_with_degraded_control(
     self,
   ) -> None:
     baseline_inst, baseline_overlay, _baseline_effect, _baseline_report, baseline_active = (

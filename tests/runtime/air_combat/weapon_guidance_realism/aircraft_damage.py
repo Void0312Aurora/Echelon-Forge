@@ -247,7 +247,7 @@ class AircraftDamageRuntimeMixin:
             float(flight_before.fuel_leak_rate_kg_s),
           )
 
-  def test_a8_mq9_wing_spar_default_failure_modes_route_to_structural_entries(self) -> None:
+  def test_mq9_wing_spar_default_failure_modes_route_to_structural_entries(self) -> None:
     overlay, _, event = _profiled_local_hit_overlay_for_target(
       "MQ-9_Reaper",
       "continuous_rod",

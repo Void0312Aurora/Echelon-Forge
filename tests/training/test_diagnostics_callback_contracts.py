@@ -12,8 +12,8 @@ ensure_repo_imports()
 from python.training_callbacks import CMODiagnosticsCallback # noqa: E402
 from python.training.diagnostics import ( # noqa: E402
   TrainingEventDiagnosticsWindow,
-  record_a5_event_info_diagnostics,
-  record_a6_first_event_info_diagnostics,
+  record_event_info_diagnostics,
+  record_first_event_info_diagnostics,
   record_action_diagnostics,
   record_basic_step_diagnostics,
   record_hmoe_policy_diagnostics,
@@ -265,7 +265,7 @@ class TrainingDiagnosticsCallbackTests(unittest.TestCase):
       logger.records["diag/pi_wsel_s0_p_mean"],
     )
 
-  def test_records_a5_event_info_rates_from_infos(self) -> None:
+  def test_records_event_info_rates_from_infos(self) -> None:
     cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)
     logger = _DummyLogger()
     cb.model = _DummyModel(logger)
@@ -302,25 +302,25 @@ class TrainingDiagnosticsCallbackTests(unittest.TestCase):
 
     self.assertTrue(cb._on_step())
 
-    self.assertAlmostEqual(logger.records["diag/a5_event_info_count"], 2.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_fire_mask_open_frac"], 0.5, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_fire_once_requested_count"], 2.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_fire_once_accepted_count"], 1.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_fire_once_rejected_count"], 1.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_post_launch_suppressed_count"], 1.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_reject_reason_pending_assessment_count"], 1.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_state_authorizedready_frac"], 0.5, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_state_firedassess_frac"], 0.5, places=6)
+    self.assertAlmostEqual(logger.records["diag/event_info_count"], 2.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/fire_mask_open_frac"], 0.5, places=6)
+    self.assertAlmostEqual(logger.records["diag/fire_once_requested_count"], 2.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/fire_once_accepted_count"], 1.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/fire_once_rejected_count"], 1.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/post_launch_suppressed_count"], 1.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/reject_reason_pending_assessment_count"], 1.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/state_authorizedready_frac"], 0.5, places=6)
+    self.assertAlmostEqual(logger.records["diag/state_firedassess_frac"], 0.5, places=6)
     self.assertAlmostEqual(
-      logger.records["diag/a5_mask_component_fire_mask_not_pending_assessment_open_frac"],
+      logger.records["diag/mask_component_fire_mask_not_pending_assessment_open_frac"],
       0.0,
       places=6,
     )
 
-  def test_a5_event_info_helper_records_rates_from_infos(self) -> None:
+  def test_event_info_helper_records_rates_from_infos(self) -> None:
     logger = _DummyLogger()
 
-    record_a5_event_info_diagnostics(
+    record_event_info_diagnostics(
       logger=logger,
       infos=[
         {
@@ -345,14 +345,14 @@ class TrainingDiagnosticsCallbackTests(unittest.TestCase):
       ],
     )
 
-    self.assertAlmostEqual(logger.records["diag/a5_event_info_count"], 2.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_fire_mask_open_frac"], 0.5, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_fire_once_requested_frac"], 1.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_fire_once_rejected_frac"], 0.5, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_reject_reason_pending_assessment_count"], 1.0, places=6)
-    self.assertAlmostEqual(logger.records["diag/a5_state_authorizedready_frac"], 0.5, places=6)
+    self.assertAlmostEqual(logger.records["diag/event_info_count"], 2.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/fire_mask_open_frac"], 0.5, places=6)
+    self.assertAlmostEqual(logger.records["diag/fire_once_requested_frac"], 1.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/fire_once_rejected_frac"], 0.5, places=6)
+    self.assertAlmostEqual(logger.records["diag/reject_reason_pending_assessment_count"], 1.0, places=6)
+    self.assertAlmostEqual(logger.records["diag/state_authorizedready_frac"], 0.5, places=6)
     self.assertAlmostEqual(
-      logger.records["diag/a5_mask_component_fire_mask_not_pending_assessment_open_frac"],
+      logger.records["diag/mask_component_fire_mask_not_pending_assessment_open_frac"],
       0.0,
       places=6,
     )
@@ -514,16 +514,16 @@ class _EventTimingDummyLogger:
 
 
 class _EventTimingDummyModel:
-  a6_first_event_hazard_coef = 0.2
-  a6_first_event_curriculum_coef = 0.1
-  a6_first_event_deadline_weight = 0.4
-  a6_first_event_launch_window_enabled = True
-  a6_first_event_launch_window_prewindow_hold_weight = 0.3
+  first_event_hazard_coef = 0.2
+  first_event_curriculum_coef = 0.1
+  first_event_deadline_weight = 0.4
+  first_event_launch_window_enabled = True
+  first_event_launch_window_prewindow_hold_weight = 0.3
 
   def __init__(self, logger: _EventTimingDummyLogger) -> None:
     self.logger = logger
 
-  def _current_a6_first_event_curriculum_coef(self) -> float:
+  def _current_first_event_curriculum_coef(self) -> float:
     return 0.075
 
 
@@ -593,7 +593,7 @@ class _CreditValueDummyHybridPolicy:
 
 
 class EventTimingDiagnosticsCallbackTests(unittest.TestCase):
-  def test_records_a6_open_window_event_delta_and_probability(self) -> None:
+  def test_records_open_window_event_delta_and_probability(self) -> None:
     cb = CMODiagnosticsCallback(log_every_timesteps=1)
     logger = _EventTimingDummyLogger()
     model = _EventTimingDummyModel(logger)
@@ -608,7 +608,7 @@ class EventTimingDiagnosticsCallbackTests(unittest.TestCase):
     self.assertAlmostEqual(logger.records["a6/event_fire_prob_max_open"], 0.8807970, places=6)
     self.assertAlmostEqual(logger.records["diag/pi_wsel_mode_mean"], 1.0, places=6)
 
-  def test_records_a6_stable_zeros_when_window_is_closed(self) -> None:
+  def test_records_stable_zeros_when_window_is_closed(self) -> None:
     cb = CMODiagnosticsCallback(log_every_timesteps=1)
     logger = _EventTimingDummyLogger()
     model = _EventTimingDummyModel(logger)
@@ -622,7 +622,7 @@ class EventTimingDiagnosticsCallbackTests(unittest.TestCase):
     self.assertAlmostEqual(logger.records["a6/event_fire_prob_mean_open"], 0.0, places=6)
     self.assertAlmostEqual(logger.records["a6/event_fire_prob_max_open"], 0.0, places=6)
 
-  def test_records_a7_credit_advantage_signs_and_prewindow_cumulative_hazard(self) -> None:
+  def test_records_credit_advantage_signs_and_prewindow_cumulative_hazard(self) -> None:
     cb = CMODiagnosticsCallback(log_every_timesteps=1)
     logger = _EventTimingDummyLogger()
     model = _EventTimingDummyModel(logger)
@@ -632,9 +632,9 @@ class EventTimingDiagnosticsCallbackTests(unittest.TestCase):
     cb._record_policy_distribution_diagnostics(
       {
         "instruments": [[0.0] * 42, [0.0] * 42],
-        "a6_first_event_active": [1.0, 1.0],
-        "a6_first_event_target": [0.0, 1.0],
-        "a6_first_event_source": [5, 4],
+        "first_event_active": [1.0, 1.0],
+        "first_event_target": [0.0, 1.0],
+        "first_event_source": [5, 4],
       }
     )
 
@@ -651,55 +651,55 @@ class EventTimingDiagnosticsCallbackTests(unittest.TestCase):
     self.assertAlmostEqual(logger.records["a7/prewindow_step_count"], 1.0, places=6)
     self.assertAlmostEqual(logger.records["a7/prewindow_event_fire_prob_cum"], prewindow_prob, places=6)
 
-  def test_records_a6_label_counts_from_infos(self) -> None:
+  def test_records_label_counts_from_infos(self) -> None:
     logger = _EventTimingDummyLogger()
     model = _EventTimingDummyModel(logger)
 
-    record_a6_first_event_info_diagnostics(
+    record_first_event_info_diagnostics(
       model=model,
       logger=logger,
       infos=[
         {
-          "a6_first_event_active": 1,
-          "a6_first_event_target": 0,
-          "a6_first_event_weight": 0.5,
-          "a6_first_event_source": "curriculum",
-          "a6_first_event_window_id": 7,
+          "first_event_active": 1,
+          "first_event_target": 0,
+          "first_event_weight": 0.5,
+          "first_event_source": "curriculum",
+          "first_event_window_id": 7,
         },
         {
-          "a6_first_event_active": 1,
-          "a6_first_event_target": 1,
-          "a6_first_event_weight": 0.5,
-          "a6_first_event_source": "curriculum",
-          "a6_first_event_window_id": 7,
+          "first_event_active": 1,
+          "first_event_target": 1,
+          "first_event_weight": 0.5,
+          "first_event_source": "curriculum",
+          "first_event_window_id": 7,
         },
         {
-          "a6_first_event_active": 0,
-          "a6_first_event_target": 0,
-          "a6_first_event_weight": 0,
-          "a6_first_event_source": "censored",
-          "a6_first_event_window_id": 8,
+          "first_event_active": 0,
+          "first_event_target": 0,
+          "first_event_weight": 0,
+          "first_event_source": "censored",
+          "first_event_window_id": 8,
         },
         {
-          "a6_first_event_active": 1,
-          "a6_first_event_target": 1,
-          "a6_first_event_weight": 0.4,
-          "a6_first_event_source": "deadline",
-          "a6_first_event_window_id": 8,
+          "first_event_active": 1,
+          "first_event_target": 1,
+          "first_event_weight": 0.4,
+          "first_event_source": "deadline",
+          "first_event_window_id": 8,
         },
         {
-          "a6_first_event_active": 1,
-          "a6_first_event_target": 0,
-          "a6_first_event_weight": 0.3,
-          "a6_first_event_source": "prewindow",
-          "a6_first_event_window_id": 9,
+          "first_event_active": 1,
+          "first_event_target": 0,
+          "first_event_weight": 0.3,
+          "first_event_source": "prewindow",
+          "first_event_window_id": 9,
         },
         {
-          "a6_first_event_active": 1,
-          "a6_first_event_target": 0,
-          "a6_first_event_weight": 1.0,
-          "a6_first_event_source": "early_accepted",
-          "a6_first_event_window_id": 9,
+          "first_event_active": 1,
+          "first_event_target": 0,
+          "first_event_weight": 1.0,
+          "first_event_source": "early_accepted",
+          "first_event_window_id": 9,
         },
       ],
     )
@@ -719,12 +719,12 @@ class EventTimingDiagnosticsCallbackTests(unittest.TestCase):
     self.assertAlmostEqual(logger.records["a6/early_accepted_count"], 1.0, places=6)
     self.assertAlmostEqual(logger.records["a6/censored_window_count"], 1.0, places=6)
 
-  def test_records_a6_label_stable_zeros_when_enabled_but_absent(self) -> None:
+  def test_records_label_stable_zeros_when_enabled_but_absent(self) -> None:
     cb = CMODiagnosticsCallback(log_every_timesteps=1)
     logger = _EventTimingDummyLogger()
     cb.model = _EventTimingDummyModel(logger)
 
-    cb._record_a6_first_event_info_diagnostics([{}])
+    cb._record_first_event_info_diagnostics([{}])
 
     self.assertAlmostEqual(logger.records["a6/hazard_coef"], 0.2, places=6)
     self.assertAlmostEqual(logger.records["a6/curriculum_coef"], 0.075, places=6)

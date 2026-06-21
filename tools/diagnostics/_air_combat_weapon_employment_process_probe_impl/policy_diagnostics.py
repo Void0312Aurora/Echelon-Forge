@@ -209,73 +209,73 @@ def _distribution_policy_diagnostics(distribution: Any) -> dict[str, float]:
     return out
 
 
-def _m3_stopping_policy_diagnostics(policy: Any, obs_tensor: Any) -> dict[str, float]:
+def _stopping_policy_diagnostics(policy: Any, obs_tensor: Any) -> dict[str, float]:
     out: dict[str, float] = {}
-    get_m3_stopping = getattr(policy, "get_m3_stopping", None)
-    if not callable(get_m3_stopping):
+    get_stopping = getattr(policy, "get_stopping", None)
+    if not callable(get_stopping):
         return out
-    out["policy_m3_stopping_head_probe_available"] = 1.0
+    out["policy_stopping_head_probe_available"] = 1.0
     try:
-        stopping = get_m3_stopping(obs_tensor, detach_latent=True)
+        stopping = get_stopping(obs_tensor, detach_latent=True)
     except TypeError:
         try:
-            stopping = get_m3_stopping(obs_tensor)
+            stopping = get_stopping(obs_tensor)
         except Exception:
             return out
     except Exception:
         return out
     if stopping is None:
-        out["policy_m3_stopping_head_enabled"] = 0.0
+        out["policy_stopping_head_enabled"] = 0.0
         return out
 
-    out["policy_m3_stopping_head_enabled"] = 1.0
+    out["policy_stopping_head_enabled"] = 1.0
     logit_tensor = getattr(stopping, "stopping_logit", getattr(stopping, "hazard_logit", None))
     hazard_tensor = getattr(stopping, "hazard", None)
     if logit_tensor is not None:
         try:
             logits = logit_tensor.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
             if logits.size > 0:
-                out["policy_m3_stop_logit"] = float(logits[0])
-                out["policy_m3_boundary_cross"] = float(logits[0] >= 0.0)
+                out["policy_stop_logit"] = float(logits[0])
+                out["policy_boundary_cross"] = float(logits[0] >= 0.0)
         except Exception:
             pass
     if hazard_tensor is not None:
         try:
             hazards = hazard_tensor.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
             if hazards.size > 0:
-                out["policy_m3_stop_prob"] = float(hazards[0])
+                out["policy_stop_prob"] = float(hazards[0])
         except Exception:
             pass
     return out
 
 
-def _m3_window_classifier_policy_diagnostics(policy: Any, obs_tensor: Any) -> dict[str, float]:
+def _window_classifier_policy_diagnostics(policy: Any, obs_tensor: Any) -> dict[str, float]:
     out: dict[str, float] = {}
-    get_m3_window_logits = getattr(policy, "get_m3_window_logits", None)
-    if not callable(get_m3_window_logits):
+    get_window_logits = getattr(policy, "get_window_logits", None)
+    if not callable(get_window_logits):
         return out
-    out["policy_m3_window_classifier_probe_available"] = 1.0
+    out["policy_window_classifier_probe_available"] = 1.0
     try:
-        logits_tensor = get_m3_window_logits(obs_tensor, detach_latent=True)
+        logits_tensor = get_window_logits(obs_tensor, detach_latent=True)
     except TypeError:
         try:
-            logits_tensor = get_m3_window_logits(obs_tensor)
+            logits_tensor = get_window_logits(obs_tensor)
         except Exception:
             return out
     except Exception:
         return out
     if logits_tensor is None:
-        out["policy_m3_window_classifier_enabled"] = 0.0
+        out["policy_window_classifier_enabled"] = 0.0
         return out
 
-    out["policy_m3_window_classifier_enabled"] = 1.0
+    out["policy_window_classifier_enabled"] = 1.0
     try:
         logits = logits_tensor.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
         if logits.size > 0:
             logit = float(logits[0])
-            out["policy_m3_window_classifier_logit"] = logit
-            out["policy_m3_window_classifier_boundary_cross"] = float(logit >= 0.0)
-            out["policy_m3_window_classifier_prob"] = float(
+            out["policy_window_classifier_logit"] = logit
+            out["policy_window_classifier_boundary_cross"] = float(logit >= 0.0)
+            out["policy_window_classifier_prob"] = float(
                 1.0 / (1.0 + np.exp(-np.clip(logit, -60.0, 60.0)))
             )
     except Exception:
@@ -304,8 +304,8 @@ def _model_policy_diagnostics(model: Any, obs: dict[str, Any]) -> dict[str, floa
         return {}
     diagnostics = _distribution_policy_diagnostics(distribution)
     with th.no_grad():
-        diagnostics.update(_m3_stopping_policy_diagnostics(policy, obs_tensor))
-        diagnostics.update(_m3_window_classifier_policy_diagnostics(policy, obs_tensor))
+        diagnostics.update(_stopping_policy_diagnostics(policy, obs_tensor))
+        diagnostics.update(_window_classifier_policy_diagnostics(policy, obs_tensor))
     return diagnostics
 
 

@@ -7,19 +7,19 @@ from typing import Any, Mapping, Sequence
 import torch as th
 
 
-M3S1_ROUTE_ON_POLICY = "on_policy"
-M3S1_ROUTE_FORCED_HOLD_PROBE = "forced_hold_probe"
-M3S1_ROUTE_COUNTERFACTUAL_REPLAY = "counterfactual_replay"
+ROUTE_ON_POLICY = "on_policy"
+ROUTE_FORCED_HOLD_PROBE = "forced_hold_probe"
+ROUTE_COUNTERFACTUAL_REPLAY = "counterfactual_replay"
 
-M3S1_CENSOR_NONE = "none"
-M3S1_CENSOR_EARLY_EVENT_PREFIX = "early_event_prefix"
-M3S1_CENSOR_FORCED_HOLD = "forced_hold"
-M3S1_CENSOR_TIMEOUT = "timeout"
-M3S1_CENSOR_UNSUPPORTED = "unsupported"
+CENSOR_NONE = "none"
+CENSOR_EARLY_EVENT_PREFIX = "early_event_prefix"
+CENSOR_FORCED_HOLD = "forced_hold"
+CENSOR_TIMEOUT = "timeout"
+CENSOR_UNSUPPORTED = "unsupported"
 
 
 @dataclass(frozen=True)
-class M3S1GroupedStoppingEvidence:
+class GroupedStoppingEvidence:
     """One ordered M3-S1 survival/stopping group.
 
     `support_horizon`, when present, is interpreted as the last supported
@@ -38,14 +38,14 @@ class M3S1GroupedStoppingEvidence:
     stopping_logits: th.Tensor
     accepted_event: Sequence[bool] | th.Tensor | None = None
     forced_hold: Sequence[bool] | th.Tensor | bool | None = None
-    censoring_kind: str = M3S1_CENSOR_NONE
+    censoring_kind: str = CENSOR_NONE
     censor_step: int | None = None
     support_horizon: int | None = None
     metadata: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
-class M3S1GroupedStoppingStats:
+class GroupedStoppingStats:
     group_count: int
     active_group_count: int
     skipped_group_count: int
@@ -85,14 +85,14 @@ class M3S1GroupedStoppingStats:
 
 
 @dataclass(frozen=True)
-class M3S1GroupedStoppingLoss:
+class GroupedStoppingLoss:
     loss: th.Tensor
     unscaled_loss: th.Tensor
-    stats: M3S1GroupedStoppingStats
+    stats: GroupedStoppingStats
 
 
-def compute_m3s1_grouped_stopping_loss(
-    groups: Sequence[M3S1GroupedStoppingEvidence],
+def compute_grouped_stopping_loss(
+    groups: Sequence[GroupedStoppingEvidence],
     *,
     coef: float = 1.0,
     early_mass_coef: float = 1.0,
@@ -118,7 +118,7 @@ def compute_m3s1_grouped_stopping_loss(
     window_quality_logit_floor: float = 2.0,
     eps: float = 1.0e-8,
     boundary_threshold: float = 0.0,
-) -> M3S1GroupedStoppingLoss:
+) -> GroupedStoppingLoss:
     """Compute the P2 grouped stopping objective over complete groups.
 
     The objective is intentionally group-preserving: each group builds
@@ -171,7 +171,7 @@ def compute_m3s1_grouped_stopping_loss(
     for group in groups:
         prepared = _prepare_group(group)
         row_count += int(prepared.logits.numel())
-        if prepared.censoring_kind == M3S1_CENSOR_UNSUPPORTED:
+        if prepared.censoring_kind == CENSOR_UNSUPPORTED:
             unsupported_group_count += 1
             skipped_group_count += 1
             continue
@@ -201,7 +201,7 @@ def compute_m3s1_grouped_stopping_loss(
             continue
         active_group_count += 1
 
-        if prepared.censoring_kind == M3S1_CENSOR_EARLY_EVENT_PREFIX:
+        if prepared.censoring_kind == CENSOR_EARLY_EVENT_PREFIX:
             early_prefix_group_count += 1
             tau_pos = _first_tau_position(supported_steps, supported_accepted, prepared.censor_step)
             before_tau = th.arange(supported_count, device=supported_logits.device) < tau_pos
@@ -238,7 +238,7 @@ def compute_m3s1_grouped_stopping_loss(
             lambda_values.append(lambda_mean)
             continue
 
-        if prepared.censoring_kind in (M3S1_CENSOR_FORCED_HOLD, M3S1_CENSOR_TIMEOUT):
+        if prepared.censoring_kind in (CENSOR_FORCED_HOLD, CENSOR_TIMEOUT):
             right_censor_group_count += 1
 
         executable_quality = supported_quality & supported_legal
@@ -326,7 +326,7 @@ def compute_m3s1_grouped_stopping_loss(
         unscaled = zero_base
     loss = float(coef) * unscaled if float(coef) > 0.0 else zero_base
     loss_values = [float(value.detach().cpu().item()) for value in group_losses]
-    stats = M3S1GroupedStoppingStats(
+    stats = GroupedStoppingStats(
         group_count=group_count,
         active_group_count=active_group_count,
         skipped_group_count=skipped_group_count,
@@ -364,7 +364,7 @@ def compute_m3s1_grouped_stopping_loss(
         mean_loss=_mean(loss_values),
         max_group_loss=max(loss_values) if loss_values else 0.0,
     )
-    return M3S1GroupedStoppingLoss(loss=loss, unscaled_loss=unscaled.detach(), stats=stats)
+    return GroupedStoppingLoss(loss=loss, unscaled_loss=unscaled.detach(), stats=stats)
 
 
 @dataclass(frozen=True)
@@ -381,7 +381,7 @@ class _PreparedGroup:
     censor_step: int | None
 
 
-def _prepare_group(group: M3S1GroupedStoppingEvidence) -> _PreparedGroup:
+def _prepare_group(group: GroupedStoppingEvidence) -> _PreparedGroup:
     logits = group.stopping_logits.reshape(-1)
     if not th.is_floating_point(logits):
         logits = logits.to(dtype=th.float32)
@@ -413,7 +413,7 @@ def _prepare_group(group: M3S1GroupedStoppingEvidence) -> _PreparedGroup:
     support_mask = th.ones_like(legal_mask, dtype=th.bool)
     if group.support_horizon is not None:
         support_mask = support_mask & (row_indices <= int(group.support_horizon))
-    if group.censor_step is not None and group.censoring_kind != M3S1_CENSOR_EARLY_EVENT_PREFIX:
+    if group.censor_step is not None and group.censoring_kind != CENSOR_EARLY_EVENT_PREFIX:
         support_mask = support_mask & (step_indices <= int(group.censor_step))
 
     if int(logits.numel()) > 0:
@@ -733,7 +733,7 @@ def _as_bool_tensor(values: Sequence[bool] | th.Tensor, *, device: th.device) ->
     return th.as_tensor(values, device=device).reshape(-1).to(dtype=th.bool)
 
 
-def _zero_like_group_logits(groups: Sequence[M3S1GroupedStoppingEvidence]) -> th.Tensor:
+def _zero_like_group_logits(groups: Sequence[GroupedStoppingEvidence]) -> th.Tensor:
     for group in groups:
         logits = group.stopping_logits
         if th.is_tensor(logits):

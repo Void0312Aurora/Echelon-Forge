@@ -23,8 +23,8 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from python.rl.policy_algo.first_event_hazard import (  # noqa: E402
-    A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
-    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+    FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
+    FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     FirstEventCreditLoss,
     FirstEventHazardLabels,
     build_first_event_hazard_labels,
@@ -171,7 +171,7 @@ def _compute_credit_loss_parts(
     delta_getter = getattr(distribution, "fire_event_logit_delta", None)
     event_delta = delta_getter() if callable(delta_getter) else None
     source = labels["source"]
-    delta_align_active = source != int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
+    delta_align_active = source != int(FIRST_EVENT_SOURCE_SHADOW_QUALITY)
     base_loss = compute_first_event_credit_loss(
         q_values,
         labels["target"],
@@ -181,22 +181,22 @@ def _compute_credit_loss_parts(
         window_id=labels["window_id"],
         value_coef=float(value_coef),
         delta_align_coef=float(delta_align_coef),
-        delta_align_clip=_finite_float(hyper.get("a7_event_credit_delta_align_clip", 4.0), 4.0),
+        delta_align_clip=_finite_float(hyper.get("event_credit_delta_align_clip", 4.0), 4.0),
         delta_align_active=delta_align_active,
-        positive_mass_cap=_finite_float(hyper.get("a7_event_credit_positive_mass_cap", 1.0), 1.0),
-        negative_mass_cap=_finite_float(hyper.get("a7_event_credit_negative_mass_cap", 1.0), 1.0),
+        positive_mass_cap=_finite_float(hyper.get("event_credit_positive_mass_cap", 1.0), 1.0),
+        negative_mass_cap=_finite_float(hyper.get("event_credit_negative_mass_cap", 1.0), 1.0),
     )
     if not bool(include_projection):
         return base_loss
-    if not bool(hyper.get("a7_event_credit_legal_projection_enabled", False)):
+    if not bool(hyper.get("event_credit_legal_projection_enabled", False)):
         return base_loss
-    projection_value_coef = _finite_float(hyper.get("a7_event_credit_projection_value_coef", 0.0), 0.0)
-    projection_delta_coef = _finite_float(hyper.get("a7_event_credit_projection_delta_align_coef", 0.0), 0.0)
+    projection_value_coef = _finite_float(hyper.get("event_credit_projection_value_coef", 0.0), 0.0)
+    projection_delta_coef = _finite_float(hyper.get("event_credit_projection_delta_align_coef", 0.0), 0.0)
     if projection_value_coef <= 0.0 and projection_delta_coef <= 0.0:
         return base_loss
 
     shadow_active = labels["active"].reshape(-1).to(dtype=th.bool) & (
-        source.reshape(-1).long() == int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
+        source.reshape(-1).long() == int(FIRST_EVENT_SOURCE_SHADOW_QUALITY)
     )
     projection = project_air_combat_c2_roe_legal_open_observations(obs, shadow_active)
     if projection is None:
@@ -238,10 +238,10 @@ def _compute_credit_loss_parts(
         window_id=labels["window_id"].to(device=projected_q_values.device),
         value_coef=float(projection_value_coef) if float(value_coef) > 0.0 else 0.0,
         delta_align_coef=float(projection_delta_coef) if float(delta_align_coef) > 0.0 else 0.0,
-        delta_align_clip=_finite_float(hyper.get("a7_event_credit_delta_align_clip", 4.0), 4.0),
+        delta_align_clip=_finite_float(hyper.get("event_credit_delta_align_clip", 4.0), 4.0),
         delta_align_active=projected_active.to(device=projected_q_values.device),
-        positive_mass_cap=_finite_float(hyper.get("a7_event_credit_positive_mass_cap", 1.0), 1.0),
-        negative_mass_cap=_finite_float(hyper.get("a7_event_credit_negative_mass_cap", 1.0), 1.0),
+        positive_mass_cap=_finite_float(hyper.get("event_credit_positive_mass_cap", 1.0), 1.0),
+        negative_mass_cap=_finite_float(hyper.get("event_credit_negative_mass_cap", 1.0), 1.0),
     )
     combined_active = int(base_loss.active_count) + int(projection_loss.active_count)
     combined_positive = int(base_loss.positive_count) + int(projection_loss.positive_count)
@@ -319,36 +319,36 @@ def _loss_for_kind(
     online_batch: OnlineRolloutBatch | None,
     indices: th.Tensor,
 ) -> tuple[th.Tensor, dict[str, Any]]:
-    if kind == "a7_value":
+    if kind == "value":
         loss_obj = _compute_credit_loss_parts(
             policy,
             obs,
             labels,
             hyper,
-            value_coef=_finite_float(hyper.get("a7_event_credit_value_coef", 0.0), 0.0),
+            value_coef=_finite_float(hyper.get("event_credit_value_coef", 0.0), 0.0),
             delta_align_coef=0.0,
             include_projection=include_projection,
         )
         return loss_obj.loss, _credit_loss_meta(loss_obj)
-    if kind == "a7_delta":
+    if kind == "delta":
         loss_obj = _compute_credit_loss_parts(
             policy,
             obs,
             labels,
             hyper,
             value_coef=0.0,
-            delta_align_coef=_finite_float(hyper.get("a7_event_credit_delta_align_coef", 0.0), 0.0),
+            delta_align_coef=_finite_float(hyper.get("event_credit_delta_align_coef", 0.0), 0.0),
             include_projection=include_projection,
         )
         return loss_obj.loss, _credit_loss_meta(loss_obj)
-    if kind == "a7_combined":
+    if kind == "combined":
         loss_obj = _compute_credit_loss_parts(
             policy,
             obs,
             labels,
             hyper,
-            value_coef=_finite_float(hyper.get("a7_event_credit_value_coef", 0.0), 0.0),
-            delta_align_coef=_finite_float(hyper.get("a7_event_credit_delta_align_coef", 0.0), 0.0),
+            value_coef=_finite_float(hyper.get("event_credit_value_coef", 0.0), 0.0),
+            delta_align_coef=_finite_float(hyper.get("event_credit_delta_align_coef", 0.0), 0.0),
             include_projection=include_projection,
         )
         return loss_obj.loss, _credit_loss_meta(loss_obj)
@@ -365,12 +365,12 @@ def _loss_for_kind(
             obs,
             labels,
             hyper,
-            value_coef=_finite_float(hyper.get("a7_event_credit_value_coef", 0.0), 0.0),
-            delta_align_coef=_finite_float(hyper.get("a7_event_credit_delta_align_coef", 0.0), 0.0),
+            value_coef=_finite_float(hyper.get("event_credit_value_coef", 0.0), 0.0),
+            delta_align_coef=_finite_float(hyper.get("event_credit_delta_align_coef", 0.0), 0.0),
             include_projection=include_projection,
         )
         meta = dict(ppo_meta)
-        meta.update({f"a7_{key}": value for key, value in _credit_loss_meta(credit_loss).items()})
+        meta.update({f"{key}": value for key, value in _credit_loss_meta(credit_loss).items()})
         return ppo_loss + credit_loss.loss, meta
     raise ValueError(f"unknown loss kind: {kind}")
 
@@ -463,7 +463,7 @@ def _select_indices(labels: FirstEventHazardLabels, count: int, batch_size: int,
     source = labels.source.detach().cpu().reshape(-1).long()
     target = labels.target.detach().cpu().reshape(-1).float()
     legal_positive = active & (weight > 0.0) & (target > 0.5) & (
-        source == int(A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY)
+        source == int(FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY)
     )
     active_negative = active & (weight > 0.0) & (target <= 0.5)
     selected: list[int] = []
@@ -528,7 +528,7 @@ def _event_policy_stats(policy, obs: dict[str, th.Tensor], labels: FirstEventHaz
     active = labels.active.detach().cpu().reshape(-1).to(dtype=th.bool)
     weight = labels.weight.detach().cpu().reshape(-1).float()
     legal_positive = active & (weight > 0.0) & (target > 0.5) & (
-        source == int(A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY)
+        source == int(FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY)
     )
 
     def masked(name: str, mask: th.Tensor) -> dict[str, Any]:
@@ -707,14 +707,14 @@ def collect_online_rollout_batch(
                 mask_open = (
                     bool(policy_fire_mask[0])
                     if policy_fire_mask is not None and len(policy_fire_mask) >= 1
-                    else AdaptiveKLPPO._a6_first_event_fire_mask_from_info(row)
+                    else AdaptiveKLPPO._first_event_fire_mask_from_info(row)
                 )
                 launch_open = (
                     bool(policy_launch_window[0])
                     if policy_launch_window is not None and len(policy_launch_window) >= 1
                     else bool(mask_open)
                 )
-                accepted = AdaptiveKLPPO._a6_first_event_bool(row.get("fire_once_accepted", False))
+                accepted = AdaptiveKLPPO._first_event_bool(row.get("fire_once_accepted", False))
 
                 obs_items.append(obs_tensor_cpu)
                 actions.append(action)
@@ -767,19 +767,19 @@ def collect_online_rollout_batch(
         fire_mask=fire_mask,
         fire_once_accepted=fire_once_accepted,
         episode_id=episode_id,
-        launch_window_open=launch_window_open if bool(hyper.get("a6_first_event_launch_window_enabled", False)) else None,
-        launch_window_min_window_age_steps=int(hyper.get("a6_first_event_launch_window_min_window_age_steps", 1)),
-        launch_window_prewindow_hold_weight=_finite_float(hyper.get("a7_event_credit_prewindow_hold_weight", 0.0), 0.0),
-        launch_window_early_accept_weight=_finite_float(hyper.get("a7_event_credit_early_accept_weight", 1.0), 1.0),
-        curriculum_weight=_finite_float(hyper.get("a7_event_credit_curriculum_coef", 0.0), 0.0),
-        curriculum_min_window_age_steps=int(hyper.get("a7_event_credit_curriculum_min_window_age_steps", 32)),
-        censored_survival_weight=_finite_float(hyper.get("a7_event_credit_censored_survival_weight", 0.0), 0.0),
-        deadline_weight=_finite_float(hyper.get("a7_event_credit_deadline_weight", 0.0), 0.0),
-        deadline_min_window_age_steps=int(hyper.get("a7_event_credit_deadline_min_window_age_steps", 96)),
-        shadow_quality_after_early_accept=bool(_finite_float(hyper.get("a7_event_credit_shadow_quality_weight", 0.0), 0.0) > 0.0),
-        shadow_quality_positive_weight=_finite_float(hyper.get("a7_event_credit_shadow_quality_weight", 0.0), 0.0),
-        legal_open_quality_weight=_finite_float(hyper.get("a7_event_credit_legal_open_quality_weight", 0.0), 0.0),
-        legal_open_quality_min_window_age_steps=int(hyper.get("a7_event_credit_legal_open_quality_min_window_age_steps", 1)),
+        launch_window_open=launch_window_open if bool(hyper.get("first_event_launch_window_enabled", False)) else None,
+        launch_window_min_window_age_steps=int(hyper.get("first_event_launch_window_min_window_age_steps", 1)),
+        launch_window_prewindow_hold_weight=_finite_float(hyper.get("event_credit_prewindow_hold_weight", 0.0), 0.0),
+        launch_window_early_accept_weight=_finite_float(hyper.get("event_credit_early_accept_weight", 1.0), 1.0),
+        curriculum_weight=_finite_float(hyper.get("event_credit_curriculum_coef", 0.0), 0.0),
+        curriculum_min_window_age_steps=int(hyper.get("event_credit_curriculum_min_window_age_steps", 32)),
+        censored_survival_weight=_finite_float(hyper.get("event_credit_censored_survival_weight", 0.0), 0.0),
+        deadline_weight=_finite_float(hyper.get("event_credit_deadline_weight", 0.0), 0.0),
+        deadline_min_window_age_steps=int(hyper.get("event_credit_deadline_min_window_age_steps", 96)),
+        shadow_quality_after_early_accept=bool(_finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0) > 0.0),
+        shadow_quality_positive_weight=_finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0),
+        legal_open_quality_weight=_finite_float(hyper.get("event_credit_legal_open_quality_weight", 0.0), 0.0),
+        legal_open_quality_min_window_age_steps=int(hyper.get("event_credit_legal_open_quality_min_window_age_steps", 1)),
         device="cpu",
     )
     meta = {
@@ -821,15 +821,15 @@ def _strip_vectors(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def _add_cosines(entries: list[dict[str, Any]]) -> dict[str, Any]:
     by_kind = {str(entry["kind"]): entry for entry in entries}
     out: dict[str, Any] = {}
-    baseline = by_kind.get("a7_value")
+    baseline = by_kind.get("value")
     if baseline is None:
         return out
-    for other_name in ("a7_delta", "a7_combined", "ppo", "ppo_plus_a7"):
+    for other_name in ("delta", "combined", "ppo", "ppo_plus_a7"):
         other = by_kind.get(other_name)
         if other is None:
             continue
         for group_name in ("credit_head", "event_head", "actor_mlp", "shared_mlp", "features", "all"):
-            out[f"{other_name}_vs_a7_value/{group_name}"] = _cosine(
+            out[f"{other_name}_vs_value/{group_name}"] = _cosine(
                 baseline["_vectors"].get(group_name, th.zeros((0,), dtype=th.float64)),
                 other["_vectors"].get(group_name, th.zeros((0,), dtype=th.float64)),
             )
@@ -885,7 +885,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         online_batch_labels = _labels_to_device(online_batch.labels, device, online_indices)
 
     _with_training_state(model.policy, True)
-    fixed_kinds = ["a7_value", "a7_delta", "a7_combined"]
+    fixed_kinds = ["value", "delta", "combined"]
     fixed_gradient_entries = [
         _gradient_stats_for_loss(
             model.policy,
@@ -904,7 +904,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     online_gradient_entries: list[dict[str, Any]] = []
     online_gradient_cosines: dict[str, Any] = {}
     if online_batch is not None:
-        online_kinds = ["a7_value", "a7_delta", "a7_combined", "ppo", "ppo_plus_a7"]
+        online_kinds = ["value", "delta", "combined", "ppo", "ppo_plus_a7"]
         online_gradient_entries = [
             _gradient_stats_for_loss(
                 model.policy,
@@ -1020,7 +1020,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--online_episodes", type=int, default=4)
     parser.add_argument("--online_max_steps", type=int, default=640)
     parser.add_argument("--online_stochastic", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--update_kinds", default="a7_value,a7_combined,ppo_plus_a7")
+    parser.add_argument("--update_kinds", default="value,combined,ppo_plus_a7")
     parser.add_argument("--update_steps", type=int, default=8)
     parser.add_argument("--json_out", default="")
     return parser

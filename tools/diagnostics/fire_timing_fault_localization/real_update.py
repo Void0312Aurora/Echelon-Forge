@@ -20,12 +20,12 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from python.rl.policy_algo.m3s1_grouped_stopping import (  # noqa: E402
-    M3S1_CENSOR_EARLY_EVENT_PREFIX,
-    M3S1_CENSOR_NONE,
-    M3S1_CENSOR_TIMEOUT,
-    M3S1GroupedStoppingEvidence,
-    compute_m3s1_grouped_stopping_loss,
+from python.rl.policy_algo.grouped_stopping import (  # noqa: E402
+    CENSOR_EARLY_EVENT_PREFIX,
+    CENSOR_NONE,
+    CENSOR_TIMEOUT,
+    GroupedStoppingEvidence,
+    compute_grouped_stopping_loss,
 )
 from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     _concat_obs,
@@ -54,18 +54,18 @@ DEFAULT_TRAIN_CONFIG = resolve_repo_path(
     "training",
     "active",
     "air_combat",
-    "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json",
+    "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json",
 )
 DEFAULT_MODEL = resolve_repo_path(
     "experiments_tmp",
-    "m3s2_support_preserve_8k_20260606_r2",
+    "support_preserve_8k_20260606_r2",
     "final_model.zip",
 )
 
 
 PARAM_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("event_head", ("hybrid_event_head.",)),
-    ("m3_stopping_head", ("m3_stopping_norm.", "m3_stopping_head.")),
+    ("stopping_head", ("stopping_norm.", "stopping_head.")),
     ("action_net", ("action_net.",)),
     ("actor_mlp", ("mlp_extractor.policy_net.",)),
     ("shared_mlp", ("mlp_extractor.shared_net.",)),
@@ -138,9 +138,9 @@ def _selected_params(model: Any, scope: str) -> list[tuple[str, th.nn.Parameter]
     scope = str(scope)
     selected: list[tuple[str, th.nn.Parameter]] = []
     current_params = set()
-    getter = getattr(model, "_m3s2_event_window_parameters", None)
+    getter = getattr(model, "_event_window_parameters", None)
     if not callable(getter):
-        getter = getattr(model, "_a7_event_policy_margin_parameters", None)
+        getter = getattr(model, "_event_policy_margin_parameters", None)
     if callable(getter):
         current_params = {id(param) for param in getter()}
     for name, param in model.policy.named_parameters():
@@ -152,8 +152,8 @@ def _selected_params(model: Any, scope: str) -> list[tuple[str, th.nn.Parameter]
             include = id(param) in current_params
         elif scope == "event_head":
             include = group == "event_head"
-        elif scope == "m3_stopping_head":
-            include = group == "m3_stopping_head"
+        elif scope == "stopping_head":
+            include = group == "stopping_head"
         elif scope == "current_plus_features":
             include = id(param) in current_params or group == "features"
         elif scope == "actor_all":
@@ -211,13 +211,13 @@ def _build_groups_from_rows(
                 break
         accepted_positions = [idx for idx, value in enumerate(accepted) if bool(value)]
         if accepted_positions and not bool(quality[int(accepted_positions[0])]):
-            censoring_kind = M3S1_CENSOR_EARLY_EVENT_PREFIX
+            censoring_kind = CENSOR_EARLY_EVENT_PREFIX
             censor_step = int(row_indices[int(accepted_positions[0])])
         elif accepted_positions:
-            censoring_kind = M3S1_CENSOR_NONE
+            censoring_kind = CENSOR_NONE
             censor_step = int(row_indices[int(accepted_positions[0])])
         else:
-            censoring_kind = M3S1_CENSOR_TIMEOUT
+            censoring_kind = CENSOR_TIMEOUT
             censor_step = None
         groups.append(
             RealM3S2Group(
@@ -236,7 +236,7 @@ def _build_groups_from_rows(
     return groups
 
 
-def collect_real_m3s2_batch(
+def collect_real_batch(
     *,
     model: Any,
     scenario: str,
@@ -306,7 +306,7 @@ def collect_real_m3s2_batch(
         fire_once_accepted=fire_once_accepted,
         episode_id=episode_ids,
         launch_window_open=launch_window_open,
-        launch_min_age=int(hyper.get("a6_first_event_launch_window_min_window_age_steps", 1)),
+        launch_min_age=int(hyper.get("first_event_launch_window_min_window_age_steps", 1)),
     )
     quality_rows = sum(sum(1 for value in group.quality_mask if bool(value)) for group in groups)
     legal_rows = sum(sum(1 for value in group.legal_mask if bool(value)) for group in groups)
@@ -320,7 +320,7 @@ def collect_real_m3s2_batch(
         "legal_rows": int(legal_rows),
         "quality_rows": int(quality_rows),
         "accepted_count": int(sum(1 for value in fire_once_accepted if bool(value))),
-        "launch_min_age": int(hyper.get("a6_first_event_launch_window_min_window_age_steps", 1)),
+        "launch_min_age": int(hyper.get("first_event_launch_window_min_window_age_steps", 1)),
     }
     return _concat_obs(obs_items), groups, meta
 
@@ -330,9 +330,9 @@ def _group_obs(obs: dict[str, th.Tensor], group: RealM3S2Group, device: th.devic
     return _slice_obs(obs, indices, device)
 
 
-def _m3s2_loss_from_real_groups(policy: Any, obs: dict[str, th.Tensor], groups: Sequence[RealM3S2Group], hyper: dict[str, Any]):
+def _loss_from_real_groups(policy: Any, obs: dict[str, th.Tensor], groups: Sequence[RealM3S2Group], hyper: dict[str, Any]):
     device = th.device(policy.device)
-    evidence: list[M3S1GroupedStoppingEvidence] = []
+    evidence: list[GroupedStoppingEvidence] = []
     for group in groups:
         dist = policy.get_distribution(_group_obs(obs, group, device))
         getter = getattr(dist, "fire_event_logit_delta", None)
@@ -342,7 +342,7 @@ def _m3s2_loss_from_real_groups(policy: Any, obs: dict[str, th.Tensor], groups: 
         if logits is None:
             raise RuntimeError("fire_event_logit_delta returned None")
         evidence.append(
-            M3S1GroupedStoppingEvidence(
+            GroupedStoppingEvidence(
                 group_id=group.group_id,
                 episode_id=group.episode_id,
                 route_source="real_fixed_probe",
@@ -358,37 +358,37 @@ def _m3s2_loss_from_real_groups(policy: Any, obs: dict[str, th.Tensor], groups: 
                 support_horizon=group.support_horizon,
             )
         )
-    return compute_m3s1_grouped_stopping_loss(
+    return compute_grouped_stopping_loss(
         evidence,
-        coef=float(hyper.get("m3s2_event_window_coef", 1.0)),
-        early_mass_coef=float(hyper.get("m3s2_event_window_early_mass_coef", 1.0)),
-        early_mass_budget=float(hyper.get("m3s2_event_window_early_mass_budget", 0.05)),
-        early_survival_coef=float(hyper.get("m3s2_event_window_early_survival_coef", 0.0)),
-        no_event_coef=float(hyper.get("m3s2_event_window_no_event_coef", 1.0)),
-        window_delay_coef=float(hyper.get("m3s2_event_window_delay_coef", 0.0)),
-        window_deadline_coef=float(hyper.get("m3s2_event_window_deadline_coef", 0.0)),
-        window_deadline_steps=int(hyper.get("m3s2_event_window_deadline_steps", 0)),
-        window_quality_boundary_coef=float(hyper.get("m3s2_event_window_quality_boundary_coef", 0.0)),
-        window_quality_boundary_logit=float(hyper.get("m3s2_event_window_quality_boundary_logit", 0.0)),
-        window_contrastive_margin_coef=float(hyper.get("m3s2_event_window_contrastive_margin_coef", 0.0)),
-        window_contrastive_margin=float(hyper.get("m3s2_event_window_contrastive_margin", 0.0)),
-        window_balanced_bce_coef=float(hyper.get("m3s2_event_window_balanced_bce_coef", 0.0)),
+        coef=float(hyper.get("event_window_coef", 1.0)),
+        early_mass_coef=float(hyper.get("event_window_early_mass_coef", 1.0)),
+        early_mass_budget=float(hyper.get("event_window_early_mass_budget", 0.05)),
+        early_survival_coef=float(hyper.get("event_window_early_survival_coef", 0.0)),
+        no_event_coef=float(hyper.get("event_window_no_event_coef", 1.0)),
+        window_delay_coef=float(hyper.get("event_window_delay_coef", 0.0)),
+        window_deadline_coef=float(hyper.get("event_window_deadline_coef", 0.0)),
+        window_deadline_steps=int(hyper.get("event_window_deadline_steps", 0)),
+        window_quality_boundary_coef=float(hyper.get("event_window_quality_boundary_coef", 0.0)),
+        window_quality_boundary_logit=float(hyper.get("event_window_quality_boundary_logit", 0.0)),
+        window_contrastive_margin_coef=float(hyper.get("event_window_contrastive_margin_coef", 0.0)),
+        window_contrastive_margin=float(hyper.get("event_window_contrastive_margin", 0.0)),
+        window_balanced_bce_coef=float(hyper.get("event_window_balanced_bce_coef", 0.0)),
         window_prewindow_hazard_scale_coef=float(
-            hyper.get("m3s2_event_window_prewindow_hazard_scale_coef", 0.0)
+            hyper.get("event_window_prewindow_hazard_scale_coef", 0.0)
         ),
-        window_prewindow_hazard_target=float(hyper.get("m3s2_event_window_prewindow_hazard_target", 0.0)),
+        window_prewindow_hazard_target=float(hyper.get("event_window_prewindow_hazard_target", 0.0)),
         window_quality_hazard_target_coef=float(
-            hyper.get("m3s2_event_window_quality_hazard_target_coef", 0.0)
+            hyper.get("event_window_quality_hazard_target_coef", 0.0)
         ),
-        window_quality_hazard_target=float(hyper.get("m3s2_event_window_quality_hazard_target", 0.5)),
+        window_quality_hazard_target=float(hyper.get("event_window_quality_hazard_target", 0.5)),
         window_prewindow_logit_ceiling_coef=float(
-            hyper.get("m3s2_event_window_prewindow_logit_ceiling_coef", 0.0)
+            hyper.get("event_window_prewindow_logit_ceiling_coef", 0.0)
         ),
-        window_prewindow_logit_ceiling=float(hyper.get("m3s2_event_window_prewindow_logit_ceiling", -2.0)),
+        window_prewindow_logit_ceiling=float(hyper.get("event_window_prewindow_logit_ceiling", -2.0)),
         window_quality_logit_floor_coef=float(
-            hyper.get("m3s2_event_window_quality_logit_floor_coef", 0.0)
+            hyper.get("event_window_quality_logit_floor_coef", 0.0)
         ),
-        window_quality_logit_floor=float(hyper.get("m3s2_event_window_quality_logit_floor", 2.0)),
+        window_quality_logit_floor=float(hyper.get("event_window_quality_logit_floor", 2.0)),
         boundary_threshold=0.0,
     )
 
@@ -451,7 +451,7 @@ def summarize_real_logits(policy: Any, obs: dict[str, th.Tensor], groups: Sequen
     quality_all = th.cat(quality_chunks)
     prewindow = legal_all & ~quality_all
     out = {
-        "loss": float(_m3s2_loss_from_real_groups(policy, obs, groups, hyper).loss.detach().cpu().item()),
+        "loss": float(_loss_from_real_groups(policy, obs, groups, hyper).loss.detach().cpu().item()),
     }
     out.update(_masked_stats("all", logits_all, th.ones_like(legal_all, dtype=th.bool)))
     out.update(_masked_stats("legal", logits_all, legal_all))
@@ -503,7 +503,7 @@ def run_update_scope(
     loss_trace: list[dict[str, Any]] = []
     for step in range(1, int(update_steps) + 1):
         model.policy.optimizer.zero_grad(set_to_none=True)
-        loss_obj = _m3s2_loss_from_real_groups(model.policy, obs, groups, hyper)
+        loss_obj = _loss_from_real_groups(model.policy, obs, groups, hyper)
         loss_obj.loss.backward()
         for param in model.policy.parameters():
             if id(param) not in selected_ids:
@@ -575,7 +575,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     hyper = _hyper(train_config)
     _apply_loss_overrides(hyper, args)
     collector_model = load_sb3_policy(model_path, algo=str(args.algo), device=str(args.device))
-    obs, groups, collection = collect_real_m3s2_batch(
+    obs, groups, collection = collect_real_batch(
         model=collector_model,
         scenario=scenario,
         train_config=train_config,
@@ -591,7 +591,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     del base_model
 
     learning_rate = float(args.learning_rate) if args.learning_rate is not None else _finite_float(hyper.get("learning_rate", 3.0e-5), 3.0e-5)
-    max_grad_norm = float(args.max_grad_norm) if args.max_grad_norm is not None else _finite_float(hyper.get("m3s2_event_window_max_grad_norm", 2.0), 2.0)
+    max_grad_norm = float(args.max_grad_norm) if args.max_grad_norm is not None else _finite_float(hyper.get("event_window_max_grad_norm", 2.0), 2.0)
     scopes = [scope.strip() for scope in str(args.scopes).split(",") if scope.strip()]
     updates = [
         run_update_scope(
@@ -635,27 +635,27 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
 
 def _apply_loss_overrides(hyper: dict[str, Any], args: argparse.Namespace) -> None:
     overrides = {
-        "m3s2_event_window_coef": getattr(args, "event_window_coef", None),
-        "m3s2_event_window_early_mass_coef": getattr(args, "early_mass_coef", None),
-        "m3s2_event_window_early_mass_budget": getattr(args, "early_mass_budget", None),
-        "m3s2_event_window_early_survival_coef": getattr(args, "early_survival_coef", None),
-        "m3s2_event_window_no_event_coef": getattr(args, "no_event_coef", None),
-        "m3s2_event_window_delay_coef": getattr(args, "delay_coef", None),
-        "m3s2_event_window_deadline_coef": getattr(args, "deadline_coef", None),
-        "m3s2_event_window_deadline_steps": getattr(args, "deadline_steps", None),
-        "m3s2_event_window_quality_boundary_coef": getattr(args, "quality_boundary_coef", None),
-        "m3s2_event_window_quality_boundary_logit": getattr(args, "quality_boundary_logit", None),
-        "m3s2_event_window_contrastive_margin_coef": getattr(args, "contrastive_margin_coef", None),
-        "m3s2_event_window_contrastive_margin": getattr(args, "contrastive_margin", None),
-        "m3s2_event_window_balanced_bce_coef": getattr(args, "balanced_bce_coef", None),
-        "m3s2_event_window_prewindow_hazard_scale_coef": getattr(args, "prewindow_hazard_scale_coef", None),
-        "m3s2_event_window_prewindow_hazard_target": getattr(args, "prewindow_hazard_target", None),
-        "m3s2_event_window_quality_hazard_target_coef": getattr(args, "quality_hazard_target_coef", None),
-        "m3s2_event_window_quality_hazard_target": getattr(args, "quality_hazard_target", None),
-        "m3s2_event_window_prewindow_logit_ceiling_coef": getattr(args, "prewindow_logit_ceiling_coef", None),
-        "m3s2_event_window_prewindow_logit_ceiling": getattr(args, "prewindow_logit_ceiling", None),
-        "m3s2_event_window_quality_logit_floor_coef": getattr(args, "quality_logit_floor_coef", None),
-        "m3s2_event_window_quality_logit_floor": getattr(args, "quality_logit_floor", None),
+        "event_window_coef": getattr(args, "event_window_coef", None),
+        "event_window_early_mass_coef": getattr(args, "early_mass_coef", None),
+        "event_window_early_mass_budget": getattr(args, "early_mass_budget", None),
+        "event_window_early_survival_coef": getattr(args, "early_survival_coef", None),
+        "event_window_no_event_coef": getattr(args, "no_event_coef", None),
+        "event_window_delay_coef": getattr(args, "delay_coef", None),
+        "event_window_deadline_coef": getattr(args, "deadline_coef", None),
+        "event_window_deadline_steps": getattr(args, "deadline_steps", None),
+        "event_window_quality_boundary_coef": getattr(args, "quality_boundary_coef", None),
+        "event_window_quality_boundary_logit": getattr(args, "quality_boundary_logit", None),
+        "event_window_contrastive_margin_coef": getattr(args, "contrastive_margin_coef", None),
+        "event_window_contrastive_margin": getattr(args, "contrastive_margin", None),
+        "event_window_balanced_bce_coef": getattr(args, "balanced_bce_coef", None),
+        "event_window_prewindow_hazard_scale_coef": getattr(args, "prewindow_hazard_scale_coef", None),
+        "event_window_prewindow_hazard_target": getattr(args, "prewindow_hazard_target", None),
+        "event_window_quality_hazard_target_coef": getattr(args, "quality_hazard_target_coef", None),
+        "event_window_quality_hazard_target": getattr(args, "quality_hazard_target", None),
+        "event_window_prewindow_logit_ceiling_coef": getattr(args, "prewindow_logit_ceiling_coef", None),
+        "event_window_prewindow_logit_ceiling": getattr(args, "prewindow_logit_ceiling", None),
+        "event_window_quality_logit_floor_coef": getattr(args, "quality_logit_floor_coef", None),
+        "event_window_quality_logit_floor": getattr(args, "quality_logit_floor", None),
     }
     for key, value in overrides.items():
         if value is not None:

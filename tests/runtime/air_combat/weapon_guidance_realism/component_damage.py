@@ -1160,8 +1160,8 @@ class ComponentDamageRuntimeMixin:
     self.assertGreater(cooling["ignition_source"], baseline["ignition_source"])
     self.assertGreater(cooling["fire"], baseline["fire"])
 
-  def test_a8_explicit_part_failure_modes_route_to_existing_aircraft_entries(self) -> None:
-    target_name = "F-16C_A8_ExplicitPartFailureModes_Test"
+  def test_explicit_part_failure_modes_route_to_existing_aircraft_entries(self) -> None:
+    target_name = "F-16C_ExplicitPartFailureModes_Test"
     with open(
       resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
       "r",
@@ -1176,7 +1176,7 @@ class ComponentDamageRuntimeMixin:
       if "wings" in systems and "flight_control" in systems:
         hitbox["components"] = [
           {
-            "name": "a8_explicit_failure_payload",
+            "name": "explicit_failure_payload",
             "system": "auxiliary_payload",
             "offset": [-0.8, 2.8, 0.0],
             "size": [1.2, 1.0, 0.25],
@@ -1189,7 +1189,7 @@ class ComponentDamageRuntimeMixin:
               "continuous_rod": 1.0,
               "hit_to_kill": 1.0,
             },
-            "redundancy_group_id": "a8_explicit_failure_payload",
+            "redundancy_group_id": "explicit_failure_payload",
             "redundancy_group": 0.0,
             "redundancy_weight": 1.0,
             "failure_mode_weights": {
@@ -1212,7 +1212,7 @@ class ComponentDamageRuntimeMixin:
       overrides=[unit],
     )
 
-    self.assertEqual(str(event.component_primary_name), "a8_explicit_failure_payload")
+    self.assertEqual(str(event.component_primary_name), "explicit_failure_payload")
     self.assertEqual(str(event.component_primary_system), "auxiliary_payload")
     self.assertGreater(int(event.component_failure_count), 0)
     component_rows = list(event.component_mechanism_load_rows)

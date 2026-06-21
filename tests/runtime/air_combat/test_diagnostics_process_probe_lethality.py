@@ -369,7 +369,7 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
     )
 
   def test_event_info_columns_copy_runtime_event_contract_fields(self) -> None:
-    columns = probe._a5_event_info_columns(
+    columns = probe._event_info_columns(
       {
         "engagement_state": "FiredAssess",
         "fire_mask": 0,

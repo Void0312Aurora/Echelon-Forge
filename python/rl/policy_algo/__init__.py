@@ -1,7 +1,7 @@
 """Policy/algorithm subdomain package."""
 
 from .device_dict_rollout_buffer import DeviceDictRolloutBuffer
-from .first_event_rollout_buffer import A6FirstEventDeviceDictRolloutBuffer, A6FirstEventDictRolloutBuffer
+from .first_event_rollout_buffer import FirstEventDeviceDictRolloutBuffer, FirstEventDictRolloutBuffer
 from .first_event_hazard import (
     FirstEventHazardLabels,
     FirstEventHazardLoss,
@@ -28,8 +28,8 @@ from .ppo_adaptive_kl import AdaptiveKLPPO
 
 __all__ = [
     "AdaptiveKLPPO",
-    "A6FirstEventDeviceDictRolloutBuffer",
-    "A6FirstEventDictRolloutBuffer",
+    "FirstEventDeviceDictRolloutBuffer",
+    "FirstEventDictRolloutBuffer",
     "DEFAULT_FAMILY_SUBEXPERT_COUNTS",
     "DEFAULT_SUBEXPERT_NAMES",
     "DeviceDictRolloutBuffer",

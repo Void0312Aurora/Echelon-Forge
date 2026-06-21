@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from python.testing.runtime import configure_sim_log_level
 
-from .a8_mq9_aim120 import (
+from .mq9_aim120 import (
   _assert_component_row_exposes_public_failure_modes,
   _assert_mq9_event_is_non_authoritative,
   _component_rows_by_name,
@@ -70,8 +70,8 @@ def _mq9_platform_state_after_optional_data_link_hit(
   return state
 
 
-class A8SensorDataLinkConsumerRuntimeMixin:
-  def test_a8_mq9_aim120_data_link_hit_continues_into_platform_mission_sensor_runtime_path(
+class SensorDataLinkConsumerRuntimeMixin:
+  def test_mq9_aim120_data_link_hit_continues_into_platform_mission_sensor_runtime_path(
     self,
   ) -> None:
     baseline = _mq9_platform_state_after_optional_data_link_hit(damaged=False)

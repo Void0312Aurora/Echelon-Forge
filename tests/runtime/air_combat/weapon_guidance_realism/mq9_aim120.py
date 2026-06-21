@@ -269,7 +269,7 @@ def _assert_component_row_exposes_public_failure_modes(
   return modes
 
 
-def _a8_engine_tuned_f16_override() -> dict:
+def _engine_tuned_f16_override() -> dict:
   with open(
     resolve_repo_path(
       "examples",
@@ -283,7 +283,7 @@ def _a8_engine_tuned_f16_override() -> dict:
     encoding="utf-8",
   ) as handle:
     unit = json.load(handle)
-  unit["name"] = "F-16C_A8_EngineTuned"
+  unit["name"] = "F-16C_EngineTuned"
   unit["engine_tuning"] = {
     "enabled": True,
     "mil_thrust_n": 76310.0,
@@ -297,8 +297,8 @@ def _a8_engine_tuned_f16_override() -> dict:
   return unit
 
 
-class A8Mq9Aim120ValidationRuntimeMixin:
-  def test_a8_mq9_aim120_near_range_live_chain_records_launch_effect_damage(
+class Mq9Aim120ValidationRuntimeMixin:
+  def test_mq9_aim120_near_range_live_chain_records_launch_effect_damage(
     self,
   ) -> None:
     sim, _shooter_id, target_id, missile_id, result, missile_runtime = (
@@ -354,7 +354,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
       self.assertAlmostEqual(overlay[field], 1.0, delta=1.0e-6, msg=field)
     self.assertAlmostEqual(overlay["fuel_leak"], 0.0, delta=1.0e-6)
 
-  def test_a8_mq9_aim120_longer_range_live_chain_is_auditable_without_lethality_claim(
+  def test_mq9_aim120_longer_range_live_chain_is_auditable_without_lethality_claim(
     self,
   ) -> None:
     sim, _shooter_id, target_id, _missile_id, result, missile_runtime = (
@@ -396,7 +396,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     for field in ("flight_control", "propulsion", "fuel", "avionics"):
       self.assertAlmostEqual(overlay[field], 1.0, delta=1.0e-6, msg=field)
 
-  def test_a8_mq9_aim120_right_aileron_and_flap_control_hits_are_fixed_component_cases(
+  def test_mq9_aim120_right_aileron_and_flap_control_hits_are_fixed_component_cases(
     self,
   ) -> None:
     cases = [
@@ -446,7 +446,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
         for field in case["rises"]:
           self.assertGreater(after[field], before[field], field)
 
-  def test_a8_mq9_aim120_data_link_and_power_distribution_hits_degrade_mission_path_without_crash(
+  def test_mq9_aim120_data_link_and_power_distribution_hits_degrade_mission_path_without_crash(
     self,
   ) -> None:
     cases = [
@@ -482,7 +482,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
         for field in case["drops"]:
           self.assertLess(after[field], before[field], field)
 
-  def test_a8_mq9_aim120_center_fuel_hit_continues_into_leak_and_mass_runtime_path(
+  def test_mq9_aim120_center_fuel_hit_continues_into_leak_and_mass_runtime_path(
     self,
   ) -> None:
     baseline = _mq9_fuel_mass_state_after_optional_center_fuel_hit(damaged=False)
@@ -536,12 +536,12 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertAlmostEqual(damaged["after_mass"][1], damaged["after_fuel"][0], delta=1.0e-6)
     self.assertAlmostEqual(damaged["after_mass"][3], damaged["after_mass"][5], delta=1.0e-6)
 
-  def test_a8_ground_contact_lifecycle_keeps_safe_runway_contact_observable(
+  def test_ground_contact_lifecycle_keeps_safe_runway_contact_observable(
     self,
   ) -> None:
     sim = _kernel_with_unit_overrides([])
     sim.clear_zones()
-    sim.add_zone("a8_runway", 0.0, 0.0, 200.0, 2000.0, 0.0, 0)
+    sim.add_zone("runway", 0.0, 0.0, 200.0, 2000.0, 0.0, 0)
     target_id = int(
       sim.spawn_unit(
         ef_py.Side.Red,
@@ -568,7 +568,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertFalse(bool(state["gear_collapsed"]))
     self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], [40.0, 40.0])
 
-  def test_a8_ground_contact_lifecycle_records_crashed_wreck_without_disappearance(
+  def test_ground_contact_lifecycle_records_crashed_wreck_without_disappearance(
     self,
   ) -> None:
     sim = _kernel_with_unit_overrides([])
@@ -600,7 +600,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertGreater(float(state["impact_severity"]), 1.0)
     self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], [40.0, 40.0])
 
-  def test_a8_ground_contact_lifecycle_does_not_turn_low_speed_contact_into_crash(
+  def test_ground_contact_lifecycle_does_not_turn_low_speed_contact_into_crash(
     self,
   ) -> None:
     sim = _kernel_with_unit_overrides([])
@@ -631,7 +631,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertLess(float(state["impact_severity"]), 1.0)
     self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], [40.0, 40.0])
 
-  def test_a8_mq9_aim120_explicit_non_authority_guard_for_fixture_and_events(
+  def test_mq9_aim120_explicit_non_authority_guard_for_fixture_and_events(
     self,
   ) -> None:
     with open(
@@ -670,7 +670,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     _before, _after, effect, _report = _profiled_mq9_aim120_hit((-4.4, 0.0, 0.0))
     _assert_mq9_event_is_non_authoritative(self, effect)
 
-  def test_a8_mq9_aim120_public_failure_mode_rows_are_non_authoritative(self) -> None:
+  def test_mq9_aim120_public_failure_mode_rows_are_non_authoritative(self) -> None:
     _before, _after, effect, report = _profiled_mq9_aim120_hit((-0.4, 8.0, 0.0))
     self.assertEqual(str(effect.component_primary_name), "right_aileron_servo")
     self.assertEqual(str(effect.component_primary_system), "flight_control")
@@ -690,11 +690,11 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     )
     self.assertNotIn("fuel_leak", modes)
 
-  def test_a8_engine_damage_scales_actual_thrust_with_explicit_engine_tuning(self) -> None:
-    sim = _kernel_with_unit_overrides([_a8_engine_tuned_f16_override()])
+  def test_engine_damage_scales_actual_thrust_with_explicit_engine_tuning(self) -> None:
+    sim = _kernel_with_unit_overrides([_engine_tuned_f16_override()])
     attacker_id, target_id = _spawn_attacker_and_named_target(
       sim,
-      "F-16C_A8_EngineTuned",
+      "F-16C_EngineTuned",
     )
     pilot = ef_py.PilotAction()
     pilot.active = True

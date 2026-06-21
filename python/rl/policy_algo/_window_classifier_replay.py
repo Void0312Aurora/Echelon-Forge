@@ -14,7 +14,7 @@ import torch as th
 
 
 @dataclass
-class _M3S2WindowClassifierReplay:
+class _WindowClassifierReplay:
     capacity: int
     storage: str = "latent"
     positives: th.Tensor | None = None

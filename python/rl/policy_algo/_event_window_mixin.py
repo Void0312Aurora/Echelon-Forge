@@ -3,7 +3,7 @@
 Holds the M3-S2 auxiliary losses (event-window, fire-boundary, window
 classifier) plus the support-preserving collect plumbing that gates on the A6
 launch-window config. All three M3-S2 losses consume the M3-S1 grouped-stopping
-sidecar built by ``_M3S1GroupedStoppingMixin``.
+sidecar built by ``_GroupedStoppingMixin``.
 """
 
 from __future__ import annotations
@@ -15,77 +15,77 @@ import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
 
-from .m3s1_grouped_stopping import (
-    M3S1_CENSOR_EARLY_EVENT_PREFIX,
-    M3S1_ROUTE_ON_POLICY,
-    M3S1GroupedStoppingEvidence,
-    M3S1GroupedStoppingLoss,
-    compute_m3s1_grouped_stopping_loss,
+from .grouped_stopping import (
+    CENSOR_EARLY_EVENT_PREFIX,
+    ROUTE_ON_POLICY,
+    GroupedStoppingEvidence,
+    GroupedStoppingLoss,
+    compute_grouped_stopping_loss,
 )
 
 from ._adaptive_kl_support import (
-    _M3S1GroupedStoppingDiagnostics,
-    _M3S2FireBoundaryLoss,
-    _M3S2WindowClassifierLoss,
+    _GroupedStoppingDiagnostics,
+    _FireBoundaryLoss,
+    _WindowClassifierLoss,
 )
-from ._m3s2_window_classifier_replay import _M3S2WindowClassifierReplay
+from ._window_classifier_replay import _WindowClassifierReplay
 
 
-class _M3S2EventWindowMixin:
-    def _m3s2_event_window_enabled(self) -> bool:
-        return bool(float(getattr(self, "m3s2_event_window_coef", 0.0)) > 0.0)
+class _EventWindowMixin:
+    def _event_window_enabled(self) -> bool:
+        return bool(float(getattr(self, "event_window_coef", 0.0)) > 0.0)
 
-    def _m3s2_fire_boundary_enabled(self) -> bool:
-        return bool(float(getattr(self, "m3s2_fire_boundary_coef", 0.0)) > 0.0)
+    def _fire_boundary_enabled(self) -> bool:
+        return bool(float(getattr(self, "fire_boundary_coef", 0.0)) > 0.0)
 
-    def _m3s2_window_classifier_enabled(self) -> bool:
-        return bool(float(getattr(self, "m3s2_window_classifier_coef", 0.0)) > 0.0)
+    def _window_classifier_enabled(self) -> bool:
+        return bool(float(getattr(self, "window_classifier_coef", 0.0)) > 0.0)
 
-    def _m3s2_support_preserving_collect_enabled(self) -> bool:
+    def _support_preserving_collect_enabled(self) -> bool:
         return bool(
             (
                 (
-                    (self._m3s2_event_window_enabled() or self._m3s2_window_classifier_enabled())
-                    and self.m3s2_event_window_support_preserving_collect_enabled
+                    (self._event_window_enabled() or self._window_classifier_enabled())
+                    and self.event_window_support_preserving_collect_enabled
                 )
                 or (
-                    self._m3s2_fire_boundary_enabled()
-                    and self.m3s2_fire_boundary_support_preserving_collect_enabled
+                    self._fire_boundary_enabled()
+                    and self.fire_boundary_support_preserving_collect_enabled
                 )
             )
-            and self.a6_first_event_launch_window_enabled
+            and self.first_event_launch_window_enabled
         )
 
-    def _m3s2_support_preserving_hold_quality_enabled(self) -> bool:
+    def _support_preserving_hold_quality_enabled(self) -> bool:
         return bool(
-            self.m3s2_event_window_support_preserving_hold_quality_enabled
+            self.event_window_support_preserving_hold_quality_enabled
             or (
-                self._m3s2_fire_boundary_enabled()
-                and self.m3s2_fire_boundary_support_preserving_hold_quality_enabled
+                self._fire_boundary_enabled()
+                and self.fire_boundary_support_preserving_hold_quality_enabled
             )
         )
 
-    def _m3s2_support_preserving_collect_masks(
+    def _support_preserving_collect_masks(
         self,
         *,
         fire_mask: list[bool] | None,
         launch_window_open: list[bool] | None,
         n_envs: int,
     ) -> list[bool]:
-        if not self._m3s2_support_preserving_collect_enabled():
+        if not self._support_preserving_collect_enabled():
             return [False] * int(n_envs)
         if fire_mask is None or launch_window_open is None:
             return [False] * int(n_envs)
         if len(fire_mask) < int(n_envs) or len(launch_window_open) < int(n_envs):
             return [False] * int(n_envs)
 
-        ages = getattr(self, "_m3s2_support_preserving_collect_legal_open_age", None)
+        ages = getattr(self, "_support_preserving_collect_legal_open_age", None)
         if not isinstance(ages, np.ndarray) or int(ages.size) != int(n_envs):
             ages = np.zeros((int(n_envs),), dtype=np.int64)
         else:
             ages = ages.astype(np.int64, copy=True)
 
-        min_age = max(1, int(self.a6_first_event_launch_window_min_window_age_steps))
+        min_age = max(1, int(self.first_event_launch_window_min_window_age_steps))
         hold_mask: list[bool] = []
         candidate_count = 0
         quality_count = 0
@@ -99,21 +99,21 @@ class _M3S2EventWindowMixin:
             quality_open = bool(legal_open and launch_open and int(ages[env_idx]) >= min_age)
             hold = bool(
                 legal_open
-                and (not quality_open or self._m3s2_support_preserving_hold_quality_enabled())
+                and (not quality_open or self._support_preserving_hold_quality_enabled())
             )
             hold_mask.append(hold)
             candidate_count += int(legal_open)
             quality_count += int(quality_open)
 
-        self._m3s2_support_preserving_collect_legal_open_age = ages
-        self._m3s2_support_preserving_collect_hold_count += int(
+        self._support_preserving_collect_legal_open_age = ages
+        self._support_preserving_collect_hold_count += int(
             sum(1 for value in hold_mask if value)
         )
-        self._m3s2_support_preserving_collect_candidate_count += int(candidate_count)
-        self._m3s2_support_preserving_collect_quality_count += int(quality_count)
+        self._support_preserving_collect_candidate_count += int(candidate_count)
+        self._support_preserving_collect_quality_count += int(quality_count)
         return hold_mask
 
-    def _m3s2_apply_support_preserving_collect_actions(
+    def _apply_support_preserving_collect_actions(
         self,
         obs_tensor: Any,
         actions_tensor: th.Tensor,
@@ -138,22 +138,22 @@ class _M3S2EventWindowMixin:
         distribution = self.policy.get_distribution(obs_tensor)
         return modified_actions, distribution.log_prob(modified_actions)
 
-    def _m3s2_event_window_loss_from_sidecar(self) -> M3S1GroupedStoppingLoss | None:
-        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+    def _event_window_loss_from_sidecar(self) -> GroupedStoppingLoss | None:
+        sidecar = getattr(self, "_grouped_stopping_sidecar", None)
         if sidecar is None or not sidecar.groups:
-            self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
+            self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
             return None
-        use_stopping_head = bool(getattr(self, "m3s2_event_window_use_stopping_head", False))
+        use_stopping_head = bool(getattr(self, "event_window_use_stopping_head", False))
         distribution_getter = getattr(self.policy, "get_distribution", None)
-        stopping_getter = getattr(self.policy, "get_m3_stopping_logits", None)
+        stopping_getter = getattr(self.policy, "get_stopping_logits", None)
         if use_stopping_head and not callable(stopping_getter):
-            self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
+            self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
             return None
         if not use_stopping_head and not callable(distribution_getter):
-            self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
+            self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
             return None
 
-        evidence: list[M3S1GroupedStoppingEvidence] = []
+        evidence: list[GroupedStoppingEvidence] = []
         event_logit_values: list[float] = []
         event_logit_desirable_values: list[float] = []
         event_logit_prewindow_values: list[float] = []
@@ -161,7 +161,7 @@ class _M3S2EventWindowMixin:
         event_logit_closed_mask_values: list[float] = []
         closed_mask_row_count = 0
         for group in sidecar.groups:
-            obs = self._m3s1_observations_for_group(sidecar, group)
+            obs = self._observations_for_group(sidecar, group)
             if use_stopping_head:
                 assert callable(stopping_getter)
                 event_logit_delta = stopping_getter(obs, detach_latent=False)
@@ -170,40 +170,40 @@ class _M3S2EventWindowMixin:
                 distribution = distribution_getter(obs)
                 logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
                 if not callable(logit_delta_getter):
-                    self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
+                    self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
                     return None
                 event_logit_delta = logit_delta_getter()
             if event_logit_delta is None:
-                self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
+                self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
                 return None
             if int(event_logit_delta.reshape(-1).numel()) != len(group.row_indices):
                 raise ValueError("M3-S2 event window logits must match grouped sidecar rows")
 
             flat_logits = event_logit_delta.reshape(-1)
             supported_logits, supported_legal, desirable, prewindow, no_window = (
-                self._m3s1_group_diagnostic_masks(group, flat_logits)
+                self._group_diagnostic_masks(group, flat_logits)
             )
             closed_mask = ~supported_legal
-            self._m3s1_extend_float_values(event_logit_values, supported_logits)
-            self._m3s1_extend_float_values(
+            self._extend_float_values(event_logit_values, supported_logits)
+            self._extend_float_values(
                 event_logit_desirable_values, supported_logits[desirable]
             )
-            self._m3s1_extend_float_values(
+            self._extend_float_values(
                 event_logit_prewindow_values, supported_logits[prewindow]
             )
-            self._m3s1_extend_float_values(
+            self._extend_float_values(
                 event_logit_no_window_values, supported_logits[no_window]
             )
-            self._m3s1_extend_float_values(
+            self._extend_float_values(
                 event_logit_closed_mask_values, supported_logits[closed_mask]
             )
             closed_mask_row_count += int(closed_mask.sum().detach().cpu().item())
 
             evidence.append(
-                M3S1GroupedStoppingEvidence(
+                GroupedStoppingEvidence(
                     group_id=group.group_id,
                     episode_id=group.episode_id,
-                    route_source=M3S1_ROUTE_ON_POLICY,
+                    route_source=ROUTE_ON_POLICY,
                     row_indices=group.row_indices,
                     step_indices=group.step_indices,
                     env_indices=group.env_indices,
@@ -217,13 +217,13 @@ class _M3S2EventWindowMixin:
                 )
             )
 
-        self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics(
-            stop_logit_mean=self._m3s1_mean(event_logit_values),
-            stop_logit_desirable_mean=self._m3s1_mean(event_logit_desirable_values),
-            stop_logit_prewindow_mean=self._m3s1_mean(event_logit_prewindow_values),
-            stop_logit_no_window_mean=self._m3s1_mean(event_logit_no_window_values),
-            stop_logit_closed_mask_mean=self._m3s1_mean(event_logit_closed_mask_values),
-            event_logit_delta_diagnostic_mean=self._m3s1_mean(event_logit_values),
+        self._last_event_window_diagnostics = _GroupedStoppingDiagnostics(
+            stop_logit_mean=self._mean(event_logit_values),
+            stop_logit_desirable_mean=self._mean(event_logit_desirable_values),
+            stop_logit_prewindow_mean=self._mean(event_logit_prewindow_values),
+            stop_logit_no_window_mean=self._mean(event_logit_no_window_values),
+            stop_logit_closed_mask_mean=self._mean(event_logit_closed_mask_values),
+            event_logit_delta_diagnostic_mean=self._mean(event_logit_values),
             stop_logit_count=len(event_logit_values),
             stop_logit_desirable_count=len(event_logit_desirable_values),
             stop_logit_prewindow_count=len(event_logit_prewindow_values),
@@ -232,43 +232,43 @@ class _M3S2EventWindowMixin:
             event_logit_delta_diagnostic_count=len(event_logit_values),
         )
 
-        return compute_m3s1_grouped_stopping_loss(
+        return compute_grouped_stopping_loss(
             evidence,
-            coef=float(self.m3s2_event_window_coef),
-            early_mass_coef=float(self.m3s2_event_window_early_mass_coef),
-            early_mass_budget=float(self.m3s2_event_window_early_mass_budget),
-            early_survival_coef=float(self.m3s2_event_window_early_survival_coef),
-            no_event_coef=float(self.m3s2_event_window_no_event_coef),
-            window_delay_coef=float(self.m3s2_event_window_delay_coef),
-            window_deadline_coef=float(self.m3s2_event_window_deadline_coef),
-            window_deadline_steps=int(self.m3s2_event_window_deadline_steps),
-            window_quality_boundary_coef=float(self.m3s2_event_window_quality_boundary_coef),
-            window_quality_boundary_logit=float(self.m3s2_event_window_quality_boundary_logit),
-            window_contrastive_margin_coef=float(self.m3s2_event_window_contrastive_margin_coef),
-            window_contrastive_margin=float(self.m3s2_event_window_contrastive_margin),
-            window_balanced_bce_coef=float(self.m3s2_event_window_balanced_bce_coef),
+            coef=float(self.event_window_coef),
+            early_mass_coef=float(self.event_window_early_mass_coef),
+            early_mass_budget=float(self.event_window_early_mass_budget),
+            early_survival_coef=float(self.event_window_early_survival_coef),
+            no_event_coef=float(self.event_window_no_event_coef),
+            window_delay_coef=float(self.event_window_delay_coef),
+            window_deadline_coef=float(self.event_window_deadline_coef),
+            window_deadline_steps=int(self.event_window_deadline_steps),
+            window_quality_boundary_coef=float(self.event_window_quality_boundary_coef),
+            window_quality_boundary_logit=float(self.event_window_quality_boundary_logit),
+            window_contrastive_margin_coef=float(self.event_window_contrastive_margin_coef),
+            window_contrastive_margin=float(self.event_window_contrastive_margin),
+            window_balanced_bce_coef=float(self.event_window_balanced_bce_coef),
             window_prewindow_hazard_scale_coef=float(
-                self.m3s2_event_window_prewindow_hazard_scale_coef
+                self.event_window_prewindow_hazard_scale_coef
             ),
-            window_prewindow_hazard_target=float(self.m3s2_event_window_prewindow_hazard_target),
+            window_prewindow_hazard_target=float(self.event_window_prewindow_hazard_target),
             window_quality_hazard_target_coef=float(
-                self.m3s2_event_window_quality_hazard_target_coef
+                self.event_window_quality_hazard_target_coef
             ),
-            window_quality_hazard_target=float(self.m3s2_event_window_quality_hazard_target),
+            window_quality_hazard_target=float(self.event_window_quality_hazard_target),
             window_prewindow_logit_ceiling_coef=float(
-                self.m3s2_event_window_prewindow_logit_ceiling_coef
+                self.event_window_prewindow_logit_ceiling_coef
             ),
-            window_prewindow_logit_ceiling=float(self.m3s2_event_window_prewindow_logit_ceiling),
-            window_quality_logit_floor_coef=float(self.m3s2_event_window_quality_logit_floor_coef),
-            window_quality_logit_floor=float(self.m3s2_event_window_quality_logit_floor),
+            window_prewindow_logit_ceiling=float(self.event_window_prewindow_logit_ceiling),
+            window_quality_logit_floor_coef=float(self.event_window_quality_logit_floor_coef),
+            window_quality_logit_floor=float(self.event_window_quality_logit_floor),
             boundary_threshold=0.0,
         )
 
-    def _m3s2_event_window_dedicated_optimizer(
+    def _event_window_dedicated_optimizer(
         self,
         selected_ids: set[int],
     ) -> th.optim.Optimizer | None:
-        if not self.m3s2_event_window_dedicated_optimizer_enabled:
+        if not self.event_window_dedicated_optimizer_enabled:
             return None
         param_groups: list[dict[str, Any]] = []
         for group in self.policy.optimizer.param_groups:
@@ -291,49 +291,49 @@ class _M3S2EventWindowMixin:
         except TypeError:
             return th.optim.Adam(param_groups)
 
-    def _m3s2_event_window_parameters(self) -> list[th.nn.Parameter]:
-        if bool(getattr(self, "m3s2_event_window_use_stopping_head", False)):
+    def _event_window_parameters(self) -> list[th.nn.Parameter]:
+        if bool(getattr(self, "event_window_use_stopping_head", False)):
             selected: list[th.nn.Parameter] = []
-            stopping_norm = getattr(self.policy, "m3_stopping_norm", None)
+            stopping_norm = getattr(self.policy, "stopping_norm", None)
             if stopping_norm is not None:
                 selected.extend(
                     param for param in stopping_norm.parameters() if param.requires_grad
                 )
-            stopping_head = getattr(self.policy, "m3_stopping_head", None)
+            stopping_head = getattr(self.policy, "stopping_head", None)
             if stopping_head is not None:
                 selected.extend(
                     param for param in stopping_head.parameters() if param.requires_grad
                 )
             if selected:
                 return selected
-        return self._a7_event_policy_margin_parameters()
+        return self._event_policy_margin_parameters()
 
-    def _m3s2_event_window_auxiliary_update(self) -> M3S1GroupedStoppingLoss | None:
-        self._m3s2_last_event_window_loss = None
-        self._m3s2_last_event_window_grad_norm = 0.0
-        self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
-        if not self._m3s2_event_window_enabled():
+    def _event_window_auxiliary_update(self) -> GroupedStoppingLoss | None:
+        self._last_event_window_loss = None
+        self._last_event_window_grad_norm = 0.0
+        self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
+        if not self._event_window_enabled():
             return None
 
         selected_params = (
-            self._m3s2_event_window_parameters()
-            if self.m3s2_event_window_separate_update_enabled
+            self._event_window_parameters()
+            if self.event_window_separate_update_enabled
             else [param for param in self.policy.parameters() if param.requires_grad]
         )
         if not selected_params:
             return None
         selected_ids = {id(param) for param in selected_params}
-        aux_optimizer = self._m3s2_event_window_dedicated_optimizer(selected_ids)
+        aux_optimizer = self._event_window_dedicated_optimizer(selected_ids)
         optimizer = aux_optimizer if aux_optimizer is not None else self.policy.optimizer
 
-        last_loss: M3S1GroupedStoppingLoss | None = None
+        last_loss: GroupedStoppingLoss | None = None
         max_grad_norm_seen = 0.0
-        for _ in range(int(self.m3s2_event_window_separate_update_steps)):
-            event_window_loss = self._m3s2_event_window_loss_from_sidecar()
+        for _ in range(int(self.event_window_separate_update_steps)):
+            event_window_loss = self._event_window_loss_from_sidecar()
             if event_window_loss is None:
                 break
             last_loss = event_window_loss
-            self._m3s2_last_event_window_loss = event_window_loss
+            self._last_event_window_loss = event_window_loss
             if (
                 not event_window_loss.loss.requires_grad
                 or float(event_window_loss.loss.detach().cpu().item()) == 0.0
@@ -344,11 +344,11 @@ class _M3S2EventWindowMixin:
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
             event_window_loss.loss.backward()
-            if self.m3s2_event_window_separate_update_enabled:
+            if self.event_window_separate_update_enabled:
                 for param in self.policy.parameters():
                     if id(param) not in selected_ids:
                         param.grad = None
-            max_norm = float(self.m3s2_event_window_max_grad_norm)
+            max_norm = float(self.event_window_max_grad_norm)
             if max_norm > 0.0:
                 grad_norm_tensor = th.nn.utils.clip_grad_norm_(selected_params, max_norm)
                 grad_norm = float(grad_norm_tensor.detach().cpu().item())
@@ -359,20 +359,20 @@ class _M3S2EventWindowMixin:
             self.policy.optimizer.zero_grad(set_to_none=True)
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
-        self._m3s2_last_event_window_grad_norm = float(max_grad_norm_seen)
+        self._last_event_window_grad_norm = float(max_grad_norm_seen)
         return last_loss
 
     @staticmethod
-    def _m3s2_masked_float_mean(values: th.Tensor, mask: th.Tensor) -> float:
+    def _masked_float_mean(values: th.Tensor, mask: th.Tensor) -> float:
         if not bool(mask.any().detach().cpu().item()):
             return 0.0
         return float(values[mask].detach().mean().cpu().item())
 
-    def _m3s2_fire_boundary_logit_delta(
+    def _fire_boundary_logit_delta(
         self,
         obs: dict[str, th.Tensor],
     ) -> tuple[th.Tensor, th.Tensor | None] | None:
-        if self.m3s2_fire_boundary_separate_update_enabled:
+        if self.fire_boundary_separate_update_enabled:
             fast_delta_getter = getattr(
                 self.policy,
                 "get_hybrid_event_fire_boundary_deltas_for_head_update",
@@ -402,8 +402,8 @@ class _M3S2EventWindowMixin:
                 direct_head_delta = direct_delta_getter(obs, detach_latent=True)
         return event_logit_delta, direct_head_delta
 
-    def _m3s2_fire_boundary_loss_from_sidecar(self) -> _M3S2FireBoundaryLoss | None:
-        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+    def _fire_boundary_loss_from_sidecar(self) -> _FireBoundaryLoss | None:
+        sidecar = getattr(self, "_grouped_stopping_sidecar", None)
         if sidecar is None or not sidecar.groups:
             return None
 
@@ -412,8 +412,8 @@ class _M3S2EventWindowMixin:
         labels: list[th.Tensor] = []
         group_count = 0
         for group in sidecar.groups:
-            obs = self._m3s1_observations_for_group(sidecar, group)
-            boundary_deltas = self._m3s2_fire_boundary_logit_delta(obs)
+            obs = self._observations_for_group(sidecar, group)
+            boundary_deltas = self._fire_boundary_logit_delta(obs)
             if boundary_deltas is None:
                 return None
             event_logit_delta, direct_delta = boundary_deltas
@@ -422,7 +422,7 @@ class _M3S2EventWindowMixin:
                 raise ValueError("M3-S2 fire boundary logits must match grouped sidecar rows")
 
             supported_logits, supported_legal, desirable, _prewindow, _no_window = (
-                self._m3s1_group_diagnostic_masks(group, flat_logits)
+                self._group_diagnostic_masks(group, flat_logits)
             )
             active = supported_legal
             if not bool(active.any().detach().cpu().item()):
@@ -440,7 +440,7 @@ class _M3S2EventWindowMixin:
                     _direct_desirable,
                     _direct_pre,
                     _direct_none,
-                ) = self._m3s1_group_diagnostic_masks(group, direct_delta.reshape(-1))
+                ) = self._group_diagnostic_masks(group, direct_delta.reshape(-1))
                 direct_head_deltas.append(supported_direct[supported_direct_legal])
 
         if not executable_logits:
@@ -478,22 +478,22 @@ class _M3S2EventWindowMixin:
         negative_logit_ceiling_loss = zero
         if bool(negatives.any().detach().cpu().item()):
             negative_logit_ceiling_loss = F.relu(
-                logits[negatives] - float(self.m3s2_fire_boundary_negative_logit_ceiling)
+                logits[negatives] - float(self.fire_boundary_negative_logit_ceiling)
             ).mean()
 
         positive_logit_floor_loss = zero
         if bool(positives.any().detach().cpu().item()):
             positive_logit_floor_loss = F.relu(
-                float(self.m3s2_fire_boundary_positive_logit_floor) - logits[positives]
+                float(self.fire_boundary_positive_logit_floor) - logits[positives]
             ).mean()
 
         unscaled_loss = (
             balanced_bce_loss
-            + float(self.m3s2_fire_boundary_negative_logit_ceiling_coef)
+            + float(self.fire_boundary_negative_logit_ceiling_coef)
             * negative_logit_ceiling_loss
-            + float(self.m3s2_fire_boundary_positive_logit_floor_coef) * positive_logit_floor_loss
+            + float(self.fire_boundary_positive_logit_floor_coef) * positive_logit_floor_loss
         )
-        loss = float(self.m3s2_fire_boundary_coef) * unscaled_loss
+        loss = float(self.fire_boundary_coef) * unscaled_loss
 
         probs = th.sigmoid(logits.detach())
         detached_logits = logits.detach()
@@ -513,10 +513,10 @@ class _M3S2EventWindowMixin:
         if direct_head_deltas:
             direct_values = th.cat(direct_head_deltas, dim=0).reshape(-1)
             if int(direct_values.numel()) == int(positives.numel()):
-                direct_positive_mean = self._m3s2_masked_float_mean(direct_values, positives)
-                direct_negative_mean = self._m3s2_masked_float_mean(direct_values, negatives)
+                direct_positive_mean = self._masked_float_mean(direct_values, positives)
+                direct_negative_mean = self._masked_float_mean(direct_values, negatives)
 
-        return _M3S2FireBoundaryLoss(
+        return _FireBoundaryLoss(
             loss=loss,
             unscaled_loss=unscaled_loss,
             balanced_bce_loss=balanced_bce_loss,
@@ -526,10 +526,10 @@ class _M3S2EventWindowMixin:
             positive_count=positive_count,
             negative_count=negative_count,
             group_count=int(group_count),
-            executable_positive_logit_mean=self._m3s2_masked_float_mean(detached_logits, positives),
-            executable_negative_logit_mean=self._m3s2_masked_float_mean(detached_logits, negatives),
-            executable_positive_prob_mean=self._m3s2_masked_float_mean(probs, positives),
-            executable_negative_prob_mean=self._m3s2_masked_float_mean(probs, negatives),
+            executable_positive_logit_mean=self._masked_float_mean(detached_logits, positives),
+            executable_negative_logit_mean=self._masked_float_mean(detached_logits, negatives),
+            executable_positive_prob_mean=self._masked_float_mean(probs, positives),
+            executable_negative_prob_mean=self._masked_float_mean(probs, negatives),
             direct_head_positive_delta_mean=direct_positive_mean,
             direct_head_negative_delta_mean=direct_negative_mean,
             accuracy=accuracy,
@@ -537,11 +537,11 @@ class _M3S2EventWindowMixin:
             boundary_cross_in_window_count=boundary_cross_in_window_count,
         )
 
-    def _m3s2_fire_boundary_dedicated_optimizer(
+    def _fire_boundary_dedicated_optimizer(
         self,
         selected_ids: set[int],
     ) -> th.optim.Optimizer | None:
-        if not self.m3s2_fire_boundary_dedicated_optimizer_enabled:
+        if not self.fire_boundary_dedicated_optimizer_enabled:
             return None
         param_groups: list[dict[str, Any]] = []
         for group in self.policy.optimizer.param_groups:
@@ -564,37 +564,37 @@ class _M3S2EventWindowMixin:
         except TypeError:
             return th.optim.Adam(param_groups)
 
-    def _m3s2_fire_boundary_parameters(self) -> list[th.nn.Parameter]:
+    def _fire_boundary_parameters(self) -> list[th.nn.Parameter]:
         event_head = getattr(self.policy, "hybrid_event_head", None)
         if event_head is None:
             return []
         return [param for param in event_head.parameters() if param.requires_grad]
 
-    def _m3s2_fire_boundary_auxiliary_update(self) -> _M3S2FireBoundaryLoss | None:
-        self._m3s2_last_fire_boundary_loss = None
-        self._m3s2_last_fire_boundary_grad_norm = 0.0
-        if not self._m3s2_fire_boundary_enabled():
+    def _fire_boundary_auxiliary_update(self) -> _FireBoundaryLoss | None:
+        self._last_fire_boundary_loss = None
+        self._last_fire_boundary_grad_norm = 0.0
+        if not self._fire_boundary_enabled():
             return None
 
         selected_params = (
-            self._m3s2_fire_boundary_parameters()
-            if self.m3s2_fire_boundary_separate_update_enabled
+            self._fire_boundary_parameters()
+            if self.fire_boundary_separate_update_enabled
             else [param for param in self.policy.parameters() if param.requires_grad]
         )
         if not selected_params:
             return None
         selected_ids = {id(param) for param in selected_params}
-        aux_optimizer = self._m3s2_fire_boundary_dedicated_optimizer(selected_ids)
+        aux_optimizer = self._fire_boundary_dedicated_optimizer(selected_ids)
         optimizer = aux_optimizer if aux_optimizer is not None else self.policy.optimizer
 
-        last_loss: _M3S2FireBoundaryLoss | None = None
+        last_loss: _FireBoundaryLoss | None = None
         max_grad_norm_seen = 0.0
-        for _ in range(int(self.m3s2_fire_boundary_separate_update_steps)):
-            fire_boundary_loss = self._m3s2_fire_boundary_loss_from_sidecar()
+        for _ in range(int(self.fire_boundary_separate_update_steps)):
+            fire_boundary_loss = self._fire_boundary_loss_from_sidecar()
             if fire_boundary_loss is None:
                 break
             last_loss = fire_boundary_loss
-            self._m3s2_last_fire_boundary_loss = fire_boundary_loss
+            self._last_fire_boundary_loss = fire_boundary_loss
             if (
                 not fire_boundary_loss.loss.requires_grad
                 or float(fire_boundary_loss.loss.detach().cpu().item()) == 0.0
@@ -605,11 +605,11 @@ class _M3S2EventWindowMixin:
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
             fire_boundary_loss.loss.backward()
-            if self.m3s2_fire_boundary_separate_update_enabled:
+            if self.fire_boundary_separate_update_enabled:
                 for param in self.policy.parameters():
                     if id(param) not in selected_ids:
                         param.grad = None
-            max_norm = float(self.m3s2_fire_boundary_max_grad_norm)
+            max_norm = float(self.fire_boundary_max_grad_norm)
             if max_norm > 0.0:
                 grad_norm_tensor = th.nn.utils.clip_grad_norm_(selected_params, max_norm)
                 grad_norm = float(grad_norm_tensor.detach().cpu().item())
@@ -621,37 +621,37 @@ class _M3S2EventWindowMixin:
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
 
-        final_loss = self._m3s2_fire_boundary_loss_from_sidecar()
+        final_loss = self._fire_boundary_loss_from_sidecar()
         if final_loss is not None:
             last_loss = final_loss
-            self._m3s2_last_fire_boundary_loss = final_loss
-        self._m3s2_last_fire_boundary_grad_norm = float(max_grad_norm_seen)
+            self._last_fire_boundary_loss = final_loss
+        self._last_fire_boundary_grad_norm = float(max_grad_norm_seen)
         return last_loss
 
-    def _m3s2_window_classifier_parameters(self) -> list[th.nn.Parameter]:
+    def _window_classifier_parameters(self) -> list[th.nn.Parameter]:
         selected: list[th.nn.Parameter] = []
-        classifier_norm = getattr(self.policy, "m3_window_classifier_norm", None)
+        classifier_norm = getattr(self.policy, "window_classifier_norm", None)
         if classifier_norm is not None:
             selected.extend(param for param in classifier_norm.parameters() if param.requires_grad)
-        classifier_head = getattr(self.policy, "m3_window_classifier_head", None)
+        classifier_head = getattr(self.policy, "window_classifier_head", None)
         if classifier_head is not None:
             selected.extend(param for param in classifier_head.parameters() if param.requires_grad)
         return selected
 
-    def _m3s2_window_classifier_loss_from_sidecar(
+    def _window_classifier_loss_from_sidecar(
         self,
         *,
         update_replay: bool = True,
         refresh_standardization: bool = True,
-    ) -> _M3S2WindowClassifierLoss | None:
-        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+    ) -> _WindowClassifierLoss | None:
+        sidecar = getattr(self, "_grouped_stopping_sidecar", None)
         if sidecar is None or not sidecar.groups:
             return None
-        latent_getter = getattr(self.policy, "get_m3_window_latent", None)
-        logits_from_latent = getattr(self.policy, "get_m3_window_logits_from_latent", None)
+        latent_getter = getattr(self.policy, "get_window_latent", None)
+        logits_from_latent = getattr(self.policy, "get_window_logits_from_latent", None)
         standardization_updater = getattr(
             self.policy,
-            "update_m3_window_classifier_input_standardization",
+            "update_window_classifier_input_standardization",
             None,
         )
         if not callable(latent_getter) or not callable(logits_from_latent):
@@ -662,10 +662,10 @@ class _M3S2EventWindowMixin:
         active_observations: list[dict[str, th.Tensor]] = []
         group_count = 0
         for group in sidecar.groups:
-            obs = self._m3s1_observations_for_group(sidecar, group)
+            obs = self._observations_for_group(sidecar, group)
             latents = latent_getter(
                 obs,
-                detach_latent=bool(self.m3s2_window_classifier_detach_latent),
+                detach_latent=bool(self.window_classifier_detach_latent),
             )
             if latents is None:
                 return None
@@ -673,7 +673,7 @@ class _M3S2EventWindowMixin:
             if int(flat_latents.shape[0]) != len(group.row_indices):
                 raise ValueError("M3-S2 window classifier latents must match grouped sidecar rows")
             supported_latents, supported_legal, desirable, _prewindow, _no_window = (
-                self._m3s1_group_diagnostic_masks(group, flat_latents)
+                self._group_diagnostic_masks(group, flat_latents)
             )
             row_positions = th.arange(
                 len(group.row_indices), device=flat_latents.device, dtype=th.long
@@ -684,7 +684,7 @@ class _M3S2EventWindowMixin:
                 _desirable_for_pos,
                 _prewindow_for_pos,
                 _no_window_for_pos,
-            ) = self._m3s1_group_diagnostic_masks(group, row_positions)
+            ) = self._group_diagnostic_masks(group, row_positions)
             active = supported_legal
             if not bool(active.any().detach().cpu().item()):
                 continue
@@ -701,15 +701,15 @@ class _M3S2EventWindowMixin:
 
         latents = th.cat(active_latents, dim=0).reshape(-1, int(active_latents[0].shape[-1]))
         labels = th.cat(active_labels, dim=0).reshape(-1)
-        observations = self._m3s2_concat_observation_batches(active_observations)
-        replay = getattr(self, "_m3s2_window_classifier_replay", None)
-        replay_enabled = bool(self.m3s2_window_classifier_replay_enabled and replay is not None)
+        observations = self._concat_observation_batches(active_observations)
+        replay = getattr(self, "_window_classifier_replay", None)
+        replay_enabled = bool(self.window_classifier_replay_enabled and replay is not None)
         replay_used = False
-        if replay_enabled and isinstance(replay, _M3S2WindowClassifierReplay):
+        if replay_enabled and isinstance(replay, _WindowClassifierReplay):
             if update_replay:
                 replay.append(latents, labels, observations=observations)
             standardization_batch = replay.calibration_balanced(
-                max_rows=int(self.m3s2_window_classifier_replay_batch_size),
+                max_rows=int(self.window_classifier_replay_batch_size),
                 device=self.device,
                 dtype=latents.dtype,
             )
@@ -722,7 +722,7 @@ class _M3S2EventWindowMixin:
                 if isinstance(standardization_samples, dict):
                     standardization_latents = latent_getter(
                         standardization_samples,
-                        detach_latent=bool(self.m3s2_window_classifier_detach_latent),
+                        detach_latent=bool(self.window_classifier_detach_latent),
                     )
                     if standardization_latents is None:
                         return None
@@ -737,11 +737,11 @@ class _M3S2EventWindowMixin:
                     )
                 standardization_updater(standardization_latents)
             if replay.can_sample(
-                min_positive=int(self.m3s2_window_classifier_replay_min_positive),
-                min_negative=int(self.m3s2_window_classifier_replay_min_negative),
+                min_positive=int(self.window_classifier_replay_min_positive),
+                min_negative=int(self.window_classifier_replay_min_negative),
             ):
                 sampled = replay.sample_balanced(
-                    batch_size=int(self.m3s2_window_classifier_replay_batch_size),
+                    batch_size=int(self.window_classifier_replay_batch_size),
                     device=self.device,
                     dtype=latents.dtype,
                 )
@@ -750,7 +750,7 @@ class _M3S2EventWindowMixin:
                     if isinstance(replay_batch, dict):
                         sampled_latents = latent_getter(
                             replay_batch,
-                            detach_latent=bool(self.m3s2_window_classifier_detach_latent),
+                            detach_latent=bool(self.window_classifier_detach_latent),
                         )
                         if sampled_latents is None:
                             return None
@@ -795,22 +795,22 @@ class _M3S2EventWindowMixin:
         prewindow_logit_ceiling_loss = zero
         if bool(negatives.any().detach().cpu().item()):
             prewindow_logit_ceiling_loss = F.relu(
-                logits[negatives] - float(self.m3s2_window_classifier_prewindow_logit_ceiling)
+                logits[negatives] - float(self.window_classifier_prewindow_logit_ceiling)
             ).mean()
 
         quality_logit_floor_loss = zero
         if bool(positives.any().detach().cpu().item()):
             quality_logit_floor_loss = F.relu(
-                float(self.m3s2_window_classifier_quality_logit_floor) - logits[positives]
+                float(self.window_classifier_quality_logit_floor) - logits[positives]
             ).mean()
 
         unscaled_loss = (
             balanced_bce_loss
-            + float(self.m3s2_window_classifier_prewindow_logit_ceiling_coef)
+            + float(self.window_classifier_prewindow_logit_ceiling_coef)
             * prewindow_logit_ceiling_loss
-            + float(self.m3s2_window_classifier_quality_logit_floor_coef) * quality_logit_floor_loss
+            + float(self.window_classifier_quality_logit_floor_coef) * quality_logit_floor_loss
         )
-        loss = float(self.m3s2_window_classifier_coef) * unscaled_loss
+        loss = float(self.window_classifier_coef) * unscaled_loss
 
         probs = th.sigmoid(logits.detach())
         detached_logits = logits.detach()
@@ -826,7 +826,7 @@ class _M3S2EventWindowMixin:
                 return 0.0
             return float(values[mask].mean().detach().cpu().item())
 
-        return _M3S2WindowClassifierLoss(
+        return _WindowClassifierLoss(
             loss=loss,
             unscaled_loss=unscaled_loss,
             balanced_bce_loss=balanced_bce_loss,
@@ -844,18 +844,18 @@ class _M3S2EventWindowMixin:
             replay_enabled=replay_enabled,
             replay_used=replay_used,
             replay_positive_count=(
-                int(replay.positive_count) if isinstance(replay, _M3S2WindowClassifierReplay) else 0
+                int(replay.positive_count) if isinstance(replay, _WindowClassifierReplay) else 0
             ),
             replay_negative_count=(
-                int(replay.negative_count) if isinstance(replay, _M3S2WindowClassifierReplay) else 0
+                int(replay.negative_count) if isinstance(replay, _WindowClassifierReplay) else 0
             ),
         )
 
-    def _m3s2_window_classifier_dedicated_optimizer(
+    def _window_classifier_dedicated_optimizer(
         self,
         selected_ids: set[int],
     ) -> th.optim.Optimizer | None:
-        if not self.m3s2_window_classifier_dedicated_optimizer_enabled:
+        if not self.window_classifier_dedicated_optimizer_enabled:
             return None
         param_groups: list[dict[str, Any]] = []
         for group in self.policy.optimizer.param_groups:
@@ -879,7 +879,7 @@ class _M3S2EventWindowMixin:
             return th.optim.Adam(param_groups)
 
     @staticmethod
-    def _m3s2_concat_observation_batches(
+    def _concat_observation_batches(
         batches: list[dict[str, th.Tensor]],
     ) -> dict[str, th.Tensor] | None:
         if not batches:
@@ -890,24 +890,24 @@ class _M3S2EventWindowMixin:
                 raise ValueError("M3-S2 window classifier sidecar observation keys changed")
         return {key: th.cat([batch[key] for batch in batches], dim=0) for key in batches[0].keys()}
 
-    def _m3s2_window_classifier_auxiliary_update(self) -> _M3S2WindowClassifierLoss | None:
-        self._m3s2_last_window_classifier_loss = None
-        self._m3s2_last_window_classifier_grad_norm = 0.0
-        if not self._m3s2_window_classifier_enabled():
+    def _window_classifier_auxiliary_update(self) -> _WindowClassifierLoss | None:
+        self._last_window_classifier_loss = None
+        self._last_window_classifier_grad_norm = 0.0
+        if not self._window_classifier_enabled():
             return None
 
         selected_params = (
-            self._m3s2_window_classifier_parameters()
-            if self.m3s2_window_classifier_separate_update_enabled
+            self._window_classifier_parameters()
+            if self.window_classifier_separate_update_enabled
             else [param for param in self.policy.parameters() if param.requires_grad]
         )
         if not selected_params:
             return None
         selected_ids = {id(param) for param in selected_params}
-        aux_optimizer = self._m3s2_window_classifier_dedicated_optimizer(selected_ids)
+        aux_optimizer = self._window_classifier_dedicated_optimizer(selected_ids)
         optimizer = aux_optimizer if aux_optimizer is not None else self.policy.optimizer
 
-        last_loss: _M3S2WindowClassifierLoss | None = None
+        last_loss: _WindowClassifierLoss | None = None
         best_loss_value: float | None = None
         best_param_values: list[th.Tensor] | None = None
         max_grad_norm_seen = 0.0
@@ -920,22 +920,22 @@ class _M3S2EventWindowMixin:
                 for param, value in zip(selected_params, values):
                     param.copy_(value.to(device=param.device, dtype=param.dtype))
 
-        def _maybe_capture_best(candidate: _M3S2WindowClassifierLoss) -> None:
+        def _maybe_capture_best(candidate: _WindowClassifierLoss) -> None:
             nonlocal best_loss_value, best_param_values
             loss_value = float(candidate.unscaled_loss.detach().cpu().item())
             if best_loss_value is None or loss_value < best_loss_value:
                 best_loss_value = loss_value
                 best_param_values = _capture_selected_params()
 
-        for step_idx in range(int(self.m3s2_window_classifier_separate_update_steps)):
-            classifier_loss = self._m3s2_window_classifier_loss_from_sidecar(
+        for step_idx in range(int(self.window_classifier_separate_update_steps)):
+            classifier_loss = self._window_classifier_loss_from_sidecar(
                 update_replay=(step_idx == 0),
                 refresh_standardization=(step_idx == 0),
             )
             if classifier_loss is None:
                 break
             last_loss = classifier_loss
-            self._m3s2_last_window_classifier_loss = classifier_loss
+            self._last_window_classifier_loss = classifier_loss
             _maybe_capture_best(classifier_loss)
             if (
                 not classifier_loss.loss.requires_grad
@@ -947,11 +947,11 @@ class _M3S2EventWindowMixin:
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
             classifier_loss.loss.backward()
-            if self.m3s2_window_classifier_separate_update_enabled:
+            if self.window_classifier_separate_update_enabled:
                 for param in self.policy.parameters():
                     if id(param) not in selected_ids:
                         param.grad = None
-            max_norm = float(self.m3s2_window_classifier_max_grad_norm)
+            max_norm = float(self.window_classifier_max_grad_norm)
             if max_norm > 0.0:
                 grad_norm_tensor = th.nn.utils.clip_grad_norm_(selected_params, max_norm)
                 grad_norm = float(grad_norm_tensor.detach().cpu().item())
@@ -962,31 +962,31 @@ class _M3S2EventWindowMixin:
             self.policy.optimizer.zero_grad(set_to_none=True)
             if aux_optimizer is not None:
                 aux_optimizer.zero_grad(set_to_none=True)
-        final_post_step_loss = self._m3s2_window_classifier_loss_from_sidecar(
+        final_post_step_loss = self._window_classifier_loss_from_sidecar(
             update_replay=False,
             refresh_standardization=False,
         )
         if final_post_step_loss is not None:
             last_loss = final_post_step_loss
-            self._m3s2_last_window_classifier_loss = final_post_step_loss
+            self._last_window_classifier_loss = final_post_step_loss
             _maybe_capture_best(final_post_step_loss)
         if best_param_values is not None:
             _restore_selected_params(best_param_values)
-            restored_loss = self._m3s2_window_classifier_loss_from_sidecar(
+            restored_loss = self._window_classifier_loss_from_sidecar(
                 update_replay=False,
                 refresh_standardization=False,
             )
             if restored_loss is not None:
                 last_loss = restored_loss
-                self._m3s2_last_window_classifier_loss = restored_loss
-        self._m3s2_last_window_classifier_grad_norm = float(max_grad_norm_seen)
+                self._last_window_classifier_loss = restored_loss
+        self._last_window_classifier_grad_norm = float(max_grad_norm_seen)
         return last_loss
 
 
-    def _record_m3s2_window_classifier_logs(self, m3s2_window_classifier_loss) -> None:
-        classifier_loss = m3s2_window_classifier_loss or self._m3s2_last_window_classifier_loss
+    def _record_window_classifier_logs(self, window_classifier_loss) -> None:
+        classifier_loss = window_classifier_loss or self._last_window_classifier_loss
         self.logger.record(
-            "m3s2/window_classifier_coef", float(self.m3s2_window_classifier_coef)
+            "m3s2/window_classifier_coef", float(self.window_classifier_coef)
         )
         self.logger.record(
             "m3s2/window_classifier_loss",
@@ -1024,7 +1024,7 @@ class _M3S2EventWindowMixin:
         )
         self.logger.record(
             "m3s2/window_classifier_grad_norm",
-            float(self._m3s2_last_window_classifier_grad_norm),
+            float(self._last_window_classifier_grad_norm),
         )
         self.logger.record(
             "m3s2/window_classifier_group_count",
@@ -1064,29 +1064,29 @@ class _M3S2EventWindowMixin:
         )
         self.logger.record(
             "m3s2/window_classifier_prewindow_logit_ceiling_coef",
-            float(self.m3s2_window_classifier_prewindow_logit_ceiling_coef),
+            float(self.window_classifier_prewindow_logit_ceiling_coef),
         )
         self.logger.record(
             "m3s2/window_classifier_prewindow_logit_ceiling",
-            float(self.m3s2_window_classifier_prewindow_logit_ceiling),
+            float(self.window_classifier_prewindow_logit_ceiling),
         )
         self.logger.record(
             "m3s2/window_classifier_quality_logit_floor_coef",
-            float(self.m3s2_window_classifier_quality_logit_floor_coef),
+            float(self.window_classifier_quality_logit_floor_coef),
         )
         self.logger.record(
             "m3s2/window_classifier_quality_logit_floor",
-            float(self.m3s2_window_classifier_quality_logit_floor),
+            float(self.window_classifier_quality_logit_floor),
         )
         self.logger.record(
             "m3s2/window_classifier_detach_latent",
-            float(self.m3s2_window_classifier_detach_latent),
+            float(self.window_classifier_detach_latent),
         )
         self.logger.record(
             "m3s2/window_classifier_input_standardization_enabled",
             float(
                 getattr(
-                    self.policy, "_m3_window_classifier_input_standardization_enabled", False
+                    self.policy, "_window_classifier_input_standardization_enabled", False
                 )
             ),
         )
@@ -1094,13 +1094,13 @@ class _M3S2EventWindowMixin:
             "m3s2/window_classifier_input_standardization_momentum",
             float(
                 getattr(
-                    self.policy, "_m3_window_classifier_input_standardization_momentum", 0.0
+                    self.policy, "_window_classifier_input_standardization_momentum", 0.0
                 )
             ),
         )
         initialized = getattr(
             self.policy,
-            "m3_window_classifier_input_standardization_initialized",
+            "window_classifier_input_standardization_initialized",
             None,
         )
         self.logger.record(
@@ -1109,23 +1109,23 @@ class _M3S2EventWindowMixin:
         )
         self.logger.record(
             "m3s2/window_classifier_separate_update_enabled",
-            float(self.m3s2_window_classifier_separate_update_enabled),
+            float(self.window_classifier_separate_update_enabled),
         )
         self.logger.record(
             "m3s2/window_classifier_dedicated_optimizer_enabled",
-            float(self.m3s2_window_classifier_dedicated_optimizer_enabled),
+            float(self.window_classifier_dedicated_optimizer_enabled),
         )
         self.logger.record(
             "m3s2/window_classifier_separate_update_steps",
-            int(self.m3s2_window_classifier_separate_update_steps),
+            int(self.window_classifier_separate_update_steps),
         )
         self.logger.record(
             "m3s2/window_classifier_replay_enabled",
-            float(self.m3s2_window_classifier_replay_enabled),
+            float(self.window_classifier_replay_enabled),
         )
         self.logger.record(
             "m3s2/window_classifier_replay_storage_observation",
-            float(self.m3s2_window_classifier_replay_storage == "observation"),
+            float(self.window_classifier_replay_storage == "observation"),
         )
         self.logger.record(
             "m3s2/window_classifier_replay_used",
@@ -1145,11 +1145,11 @@ class _M3S2EventWindowMixin:
         )
         self.logger.record(
             "m3s2/window_classifier_replay_batch_size",
-            int(self.m3s2_window_classifier_replay_batch_size),
+            int(self.window_classifier_replay_batch_size),
         )
 
-    def _record_m3s2_fire_boundary_logs(self, m3s2_fire_boundary_loss) -> None:
-        fire_boundary_loss = m3s2_fire_boundary_loss or self._m3s2_last_fire_boundary_loss
+    def _record_fire_boundary_logs(self, fire_boundary_loss) -> None:
+        fire_boundary_loss = fire_boundary_loss or self._last_fire_boundary_loss
         active_count = (
             float(fire_boundary_loss.active_count) if fire_boundary_loss is not None else 0.0
         )
@@ -1163,7 +1163,7 @@ class _M3S2EventWindowMixin:
             if fire_boundary_loss is not None
             else 0.0
         )
-        self.logger.record("m3s2/fb_coef", float(self.m3s2_fire_boundary_coef))
+        self.logger.record("m3s2/fb_coef", float(self.fire_boundary_coef))
         self.logger.record(
             "m3s2/fb_loss",
             (
@@ -1204,7 +1204,7 @@ class _M3S2EventWindowMixin:
                 else 0.0
             ),
         )
-        self.logger.record("m3s2/fb_grad_norm", float(self._m3s2_last_fire_boundary_grad_norm))
+        self.logger.record("m3s2/fb_grad_norm", float(self._last_fire_boundary_grad_norm))
         self.logger.record(
             "m3s2/fb_group_count",
             float(fire_boundary_loss.group_count) if fire_boundary_loss is not None else 0.0,
@@ -1286,48 +1286,48 @@ class _M3S2EventWindowMixin:
         )
         self.logger.record(
             "m3s2/fb_separate_update_enabled",
-            float(self.m3s2_fire_boundary_separate_update_enabled),
+            float(self.fire_boundary_separate_update_enabled),
         )
         self.logger.record(
             "m3s2/fb_dedicated_optimizer_enabled",
-            float(self.m3s2_fire_boundary_dedicated_optimizer_enabled),
+            float(self.fire_boundary_dedicated_optimizer_enabled),
         )
         self.logger.record(
             "m3s2/fb_separate_update_steps",
-            int(self.m3s2_fire_boundary_separate_update_steps),
+            int(self.fire_boundary_separate_update_steps),
         )
         self.logger.record(
             "m3s2/fb_neg_ceiling_coef",
-            float(self.m3s2_fire_boundary_negative_logit_ceiling_coef),
+            float(self.fire_boundary_negative_logit_ceiling_coef),
         )
         self.logger.record(
             "m3s2/fb_neg_ceiling",
-            float(self.m3s2_fire_boundary_negative_logit_ceiling),
+            float(self.fire_boundary_negative_logit_ceiling),
         )
         self.logger.record(
             "m3s2/fb_pos_floor_coef",
-            float(self.m3s2_fire_boundary_positive_logit_floor_coef),
+            float(self.fire_boundary_positive_logit_floor_coef),
         )
         self.logger.record(
             "m3s2/fb_pos_floor",
-            float(self.m3s2_fire_boundary_positive_logit_floor),
+            float(self.fire_boundary_positive_logit_floor),
         )
         self.logger.record(
             "m3s2/fb_support_collect_enabled",
-            float(self.m3s2_fire_boundary_support_preserving_collect_enabled),
+            float(self.fire_boundary_support_preserving_collect_enabled),
         )
         self.logger.record(
             "m3s2/fb_support_hold_quality_enabled",
-            float(self.m3s2_fire_boundary_support_preserving_hold_quality_enabled),
+            float(self.fire_boundary_support_preserving_hold_quality_enabled),
         )
 
-    def _record_m3s2_event_window_logs(self, m3s2_event_window_loss) -> None:
-        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
-        stats = m3s2_event_window_loss.stats if m3s2_event_window_loss is not None else None
+    def _record_event_window_logs(self, event_window_loss) -> None:
+        sidecar = getattr(self, "_grouped_stopping_sidecar", None)
+        stats = event_window_loss.stats if event_window_loss is not None else None
         diagnostics = getattr(
             self,
-            "_m3s2_last_event_window_diagnostics",
-            _M3S1GroupedStoppingDiagnostics(),
+            "_last_event_window_diagnostics",
+            _GroupedStoppingDiagnostics(),
         )
         active_row_count = float(stats.active_row_count) if stats else 0.0
         boundary_cross_count = float(stats.boundary_cross_count) if stats else 0.0
@@ -1338,25 +1338,25 @@ class _M3S2EventWindowMixin:
             float(stats.closed_mask_stop_attempt_count) if stats else 0.0
         )
         closed_mask_row_count = float(diagnostics.closed_mask_row_count)
-        self.logger.record("m3s2/event_window_coef", float(self.m3s2_event_window_coef))
+        self.logger.record("m3s2/event_window_coef", float(self.event_window_coef))
         self.logger.record(
             "m3s2/event_window_loss",
             (
-                float(m3s2_event_window_loss.loss.detach().cpu().item())
-                if m3s2_event_window_loss is not None
+                float(event_window_loss.loss.detach().cpu().item())
+                if event_window_loss is not None
                 else 0.0
             ),
         )
         self.logger.record(
             "m3s2/event_window_unscaled_loss",
             (
-                float(m3s2_event_window_loss.unscaled_loss.detach().cpu().item())
-                if m3s2_event_window_loss is not None
+                float(event_window_loss.unscaled_loss.detach().cpu().item())
+                if event_window_loss is not None
                 else 0.0
             ),
         )
         self.logger.record(
-            "m3s2/event_window_grad_norm", float(self._m3s2_last_event_window_grad_norm)
+            "m3s2/event_window_grad_norm", float(self._last_event_window_grad_norm)
         )
         self.logger.record(
             "m3s2/grouped_sidecar_group_count", float(len(sidecar.groups)) if sidecar else 0.0
@@ -1525,106 +1525,106 @@ class _M3S2EventWindowMixin:
         )
         self.logger.record(
             "m3s2/event_window_separate_update_enabled",
-            float(self.m3s2_event_window_separate_update_enabled),
+            float(self.event_window_separate_update_enabled),
         )
         self.logger.record(
             "m3s2/event_window_dedicated_optimizer_enabled",
-            float(self.m3s2_event_window_dedicated_optimizer_enabled),
+            float(self.event_window_dedicated_optimizer_enabled),
         )
         self.logger.record(
             "m3s2/event_window_use_stopping_head",
-            float(self.m3s2_event_window_use_stopping_head),
+            float(self.event_window_use_stopping_head),
         )
         self.logger.record(
             "m3s2/event_window_separate_update_steps",
-            int(self.m3s2_event_window_separate_update_steps),
+            int(self.event_window_separate_update_steps),
         )
         self.logger.record(
-            "m3s2/event_window_delay_coef", float(self.m3s2_event_window_delay_coef)
+            "m3s2/event_window_delay_coef", float(self.event_window_delay_coef)
         )
         self.logger.record(
-            "m3s2/event_window_deadline_coef", float(self.m3s2_event_window_deadline_coef)
+            "m3s2/event_window_deadline_coef", float(self.event_window_deadline_coef)
         )
         self.logger.record(
-            "m3s2/event_window_deadline_steps", int(self.m3s2_event_window_deadline_steps)
+            "m3s2/event_window_deadline_steps", int(self.event_window_deadline_steps)
         )
         self.logger.record(
             "m3s2/event_window_early_survival_coef",
-            float(self.m3s2_event_window_early_survival_coef),
+            float(self.event_window_early_survival_coef),
         )
         self.logger.record(
             "m3s2/ew_q_boundary_coef",
-            float(self.m3s2_event_window_quality_boundary_coef),
+            float(self.event_window_quality_boundary_coef),
         )
         self.logger.record(
             "m3s2/ew_q_boundary_logit",
-            float(self.m3s2_event_window_quality_boundary_logit),
+            float(self.event_window_quality_boundary_logit),
         )
         self.logger.record(
             "m3s2/ew_contrast_coef",
-            float(self.m3s2_event_window_contrastive_margin_coef),
+            float(self.event_window_contrastive_margin_coef),
         )
         self.logger.record(
             "m3s2/ew_contrast_margin",
-            float(self.m3s2_event_window_contrastive_margin),
+            float(self.event_window_contrastive_margin),
         )
         self.logger.record(
             "m3s2/ew_balanced_bce_coef",
-            float(self.m3s2_event_window_balanced_bce_coef),
+            float(self.event_window_balanced_bce_coef),
         )
         self.logger.record(
             "m3s2/ew_prewindow_hazard_scale_coef",
-            float(self.m3s2_event_window_prewindow_hazard_scale_coef),
+            float(self.event_window_prewindow_hazard_scale_coef),
         )
         self.logger.record(
             "m3s2/ew_prewindow_hazard_target",
-            float(self.m3s2_event_window_prewindow_hazard_target),
+            float(self.event_window_prewindow_hazard_target),
         )
         self.logger.record(
             "m3s2/ew_quality_hazard_target_coef",
-            float(self.m3s2_event_window_quality_hazard_target_coef),
+            float(self.event_window_quality_hazard_target_coef),
         )
         self.logger.record(
             "m3s2/ew_quality_hazard_target",
-            float(self.m3s2_event_window_quality_hazard_target),
+            float(self.event_window_quality_hazard_target),
         )
         self.logger.record(
             "m3s2/ew_prewindow_logit_ceiling_coef",
-            float(self.m3s2_event_window_prewindow_logit_ceiling_coef),
+            float(self.event_window_prewindow_logit_ceiling_coef),
         )
         self.logger.record(
             "m3s2/ew_prewindow_logit_ceiling",
-            float(self.m3s2_event_window_prewindow_logit_ceiling),
+            float(self.event_window_prewindow_logit_ceiling),
         )
         self.logger.record(
             "m3s2/ew_quality_logit_floor_coef",
-            float(self.m3s2_event_window_quality_logit_floor_coef),
+            float(self.event_window_quality_logit_floor_coef),
         )
         self.logger.record(
             "m3s2/ew_quality_logit_floor",
-            float(self.m3s2_event_window_quality_logit_floor),
+            float(self.event_window_quality_logit_floor),
         )
         self.logger.record(
             "m3s2/support_preserving_collect_enabled",
-            float(self._m3s2_support_preserving_collect_enabled()),
+            float(self._support_preserving_collect_enabled()),
         )
         self.logger.record(
             "m3s2/support_preserving_hold_quality_enabled",
-            float(self.m3s2_event_window_support_preserving_hold_quality_enabled),
+            float(self.event_window_support_preserving_hold_quality_enabled),
         )
         self.logger.record(
             "m3s2/support_preserving_hold_count",
-            float(self._m3s2_support_preserving_collect_hold_count),
+            float(self._support_preserving_collect_hold_count),
         )
         self.logger.record(
             "m3s2/support_preserving_candidate_count",
-            float(self._m3s2_support_preserving_collect_candidate_count),
+            float(self._support_preserving_collect_candidate_count),
         )
         self.logger.record(
             "m3s2/support_preserving_quality_count",
-            float(self._m3s2_support_preserving_collect_quality_count),
+            float(self._support_preserving_collect_quality_count),
         )
 
 
 
-_ = (Any, M3S1_CENSOR_EARLY_EVENT_PREFIX)  # suppress unused-import
+_ = (Any, CENSOR_EARLY_EVENT_PREFIX)  # suppress unused-import

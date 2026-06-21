@@ -33,7 +33,7 @@ DEFAULT_TRAIN_CONFIG = resolve_repo_path(
     "training",
     "active",
     "air_combat",
-    "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json",
+    "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json",
 )
 
 

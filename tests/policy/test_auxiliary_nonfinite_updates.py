@@ -17,18 +17,18 @@ ensure_repo_imports()
 from gym_envs.universal_env_parts import make_action_space
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.rl.policy_algo.first_event_hazard import (
-  A6_FIRST_EVENT_FIELD_ACTIVE,
-  A6_FIRST_EVENT_FIELD_SOURCE,
-  A6_FIRST_EVENT_FIELD_TARGET,
-  A6_FIRST_EVENT_FIELD_WEIGHT,
-  A6_FIRST_EVENT_FIELD_WINDOW_ID,
-  A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
-  A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+  FIRST_EVENT_FIELD_ACTIVE,
+  FIRST_EVENT_FIELD_SOURCE,
+  FIRST_EVENT_FIELD_TARGET,
+  FIRST_EVENT_FIELD_WEIGHT,
+  FIRST_EVENT_FIELD_WINDOW_ID,
+  FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
+  FIRST_EVENT_SOURCE_SHADOW_QUALITY,
   FirstEventCreditLoss,
   FirstEventHazardLabels,
 )
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO, _M3S2WindowClassifierReplay
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO, _WindowClassifierReplay
 from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import configure
@@ -241,54 +241,54 @@ def _grad_norm(params) -> float:
 
 
 class _FirstEventLabelBuffer:
-  supports_a6_first_event_labels = True
+  supports_first_event_labels = True
 
   def __init__(self, buffer_size: int, n_envs: int = 1) -> None:
     self.buffer_size = int(buffer_size)
     self.n_envs = int(n_envs)
     self.labels: FirstEventHazardLabels | None = None
 
-  def set_a6_first_event_labels(self, labels: FirstEventHazardLabels) -> None:
+  def set_first_event_labels(self, labels: FirstEventHazardLabels) -> None:
     self.labels = labels
 
 
 class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
-  def _make_a7_first_event_label_model(self) -> AdaptiveKLPPO:
+  def _make_first_event_label_model(self) -> AdaptiveKLPPO:
     model = object.__new__(AdaptiveKLPPO)
     model.device = th.device("cpu")
-    model.a6_first_event_hazard_coef = 0.0
-    model.a6_first_event_curriculum_coef = 0.0
-    model.a6_first_event_censored_survival_weight = 0.0
-    model.a6_first_event_deadline_weight = 0.0
-    model.a6_first_event_launch_window_enabled = True
-    model.a6_first_event_launch_window_min_window_age_steps = 32
-    model.a6_first_event_deadline_min_window_age_steps = 96
-    model.a6_first_event_launch_window_prewindow_hold_weight = 0.0
-    model.a6_first_event_launch_window_early_accept_weight = 0.0
-    model.a6_first_event_curriculum_min_window_age_steps = 32
-    model.a7_event_credit_value_coef = 0.5
-    model.a7_event_credit_delta_align_coef = 0.0
-    model.a7_event_credit_projection_value_coef = 0.0
-    model.a7_event_credit_projection_delta_align_coef = 0.0
-    model.a7_event_credit_prewindow_hold_weight = 0.25
-    model.a7_event_credit_early_accept_weight = 0.75
-    model.a7_event_credit_curriculum_coef = 0.0
-    model.a7_event_credit_curriculum_min_window_age_steps = 32
-    model.a7_event_credit_censored_survival_weight = 0.0
-    model.a7_event_credit_deadline_weight = 0.0
-    model.a7_event_credit_deadline_min_window_age_steps = 96
-    model.a7_event_credit_shadow_quality_weight = 0.5
-    model.a7_event_credit_legal_open_quality_weight = 0.0
-    model.a7_event_credit_legal_open_quality_min_window_age_steps = 1
-    model.a7_event_policy_margin_coef = 0.0
-    model.a7_event_policy_margin = 2.0
-    model.a7_event_policy_projection_margin_coef = 0.0
-    model.a7_event_policy_separate_update_enabled = False
-    model.a7_event_policy_separate_update_max_grad_norm = 0.5
-    model.a7_event_policy_separate_update_steps = 1
+    model.first_event_hazard_coef = 0.0
+    model.first_event_curriculum_coef = 0.0
+    model.first_event_censored_survival_weight = 0.0
+    model.first_event_deadline_weight = 0.0
+    model.first_event_launch_window_enabled = True
+    model.first_event_launch_window_min_window_age_steps = 32
+    model.first_event_deadline_min_window_age_steps = 96
+    model.first_event_launch_window_prewindow_hold_weight = 0.0
+    model.first_event_launch_window_early_accept_weight = 0.0
+    model.first_event_curriculum_min_window_age_steps = 32
+    model.event_credit_value_coef = 0.5
+    model.event_credit_delta_align_coef = 0.0
+    model.event_credit_projection_value_coef = 0.0
+    model.event_credit_projection_delta_align_coef = 0.0
+    model.event_credit_prewindow_hold_weight = 0.25
+    model.event_credit_early_accept_weight = 0.75
+    model.event_credit_curriculum_coef = 0.0
+    model.event_credit_curriculum_min_window_age_steps = 32
+    model.event_credit_censored_survival_weight = 0.0
+    model.event_credit_deadline_weight = 0.0
+    model.event_credit_deadline_min_window_age_steps = 96
+    model.event_credit_shadow_quality_weight = 0.5
+    model.event_credit_legal_open_quality_weight = 0.0
+    model.event_credit_legal_open_quality_min_window_age_steps = 1
+    model.event_policy_margin_coef = 0.0
+    model.event_policy_margin = 2.0
+    model.event_policy_projection_margin_coef = 0.0
+    model.event_policy_separate_update_enabled = False
+    model.event_policy_separate_update_max_grad_norm = 0.5
+    model.event_policy_separate_update_steps = 1
     return model
 
-  def _make_a7_policy_margin_model(
+  def _make_policy_margin_model(
     self,
     *,
     separate_update: bool,
@@ -304,17 +304,17 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a7_event_credit_value_coef=0.0,
-      a7_event_credit_delta_align_coef=0.0,
-      a7_event_credit_legal_projection_enabled=True,
-      a7_event_credit_positive_mass_cap=1.0,
-      a7_event_credit_negative_mass_cap=1.0,
-      a7_event_policy_margin_coef=0.35,
-      a7_event_policy_margin=2.0,
-      a7_event_policy_projection_margin_coef=0.15,
-      a7_event_policy_separate_update_enabled=separate_update,
-      a7_event_policy_separate_update_max_grad_norm=0.5,
-      a7_event_policy_separate_update_steps=1,
+      event_credit_value_coef=0.0,
+      event_credit_delta_align_coef=0.0,
+      event_credit_legal_projection_enabled=True,
+      event_credit_positive_mass_cap=1.0,
+      event_credit_negative_mass_cap=1.0,
+      event_policy_margin_coef=0.35,
+      event_policy_margin=2.0,
+      event_policy_projection_margin_coef=0.15,
+      event_policy_separate_update_enabled=separate_update,
+      event_policy_separate_update_max_grad_norm=0.5,
+      event_policy_separate_update_steps=1,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -328,7 +328,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       model.policy.action_net.weight[11].fill_(-0.01)
     return model, env
 
-  def _a7_shadow_projection_rollout_data(self, model: AdaptiveKLPPO, env: DummyVecEnv):
+  def _shadow_projection_rollout_data(self, model: AdaptiveKLPPO, env: DummyVecEnv):
     obs = env.reset()
     obs_t = {
       key: th.as_tensor(value, device=model.device)
@@ -340,7 +340,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     weight = th.ones((batch_size,), dtype=th.float32, device=model.device)
     source = th.full(
       (batch_size,),
-      int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY),
+      int(FIRST_EVENT_SOURCE_SHADOW_QUALITY),
       dtype=th.long,
       device=model.device,
     )
@@ -348,15 +348,15 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     return SimpleNamespace(
       observations=obs_t,
       **{
-        A6_FIRST_EVENT_FIELD_ACTIVE: active,
-        A6_FIRST_EVENT_FIELD_TARGET: target,
-        A6_FIRST_EVENT_FIELD_WEIGHT: weight,
-        A6_FIRST_EVENT_FIELD_SOURCE: source,
-        A6_FIRST_EVENT_FIELD_WINDOW_ID: window_id,
+        FIRST_EVENT_FIELD_ACTIVE: active,
+        FIRST_EVENT_FIELD_TARGET: target,
+        FIRST_EVENT_FIELD_WEIGHT: weight,
+        FIRST_EVENT_FIELD_SOURCE: source,
+        FIRST_EVENT_FIELD_WINDOW_ID: window_id,
       },
     )
 
-  def test_nonfinite_probe_preserves_m3s2_event_window_training_path(self) -> None:
+  def test_nonfinite_probe_preserves_event_window_training_path(self) -> None:
     env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -368,24 +368,24 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a6_first_event_launch_window_enabled=True,
-      a6_first_event_launch_window_min_range_m=1.0,
-      a6_first_event_launch_window_max_range_m=2000.0,
-      a6_first_event_launch_window_max_track_age_s=10.0,
-      m3s2_event_window_coef=1.0,
-      m3s2_event_window_early_mass_coef=0.5,
-      m3s2_event_window_early_mass_budget=0.05,
-      m3s2_event_window_delay_coef=0.25,
-      m3s2_event_window_deadline_coef=0.25,
-      m3s2_event_window_deadline_steps=2,
-      m3s2_event_window_quality_boundary_coef=1.0,
-      m3s2_event_window_quality_boundary_logit=0.0,
-      m3s2_event_window_contrastive_margin_coef=1.0,
-      m3s2_event_window_contrastive_margin=1.5,
-      m3s2_event_window_separate_update_enabled=True,
-      m3s2_event_window_dedicated_optimizer_enabled=True,
-      m3s2_event_window_separate_update_steps=2,
-      m3s2_event_window_max_grad_norm=2.0,
+      first_event_launch_window_enabled=True,
+      first_event_launch_window_min_range_m=1.0,
+      first_event_launch_window_max_range_m=2000.0,
+      first_event_launch_window_max_track_age_s=10.0,
+      event_window_coef=1.0,
+      event_window_early_mass_coef=0.5,
+      event_window_early_mass_budget=0.05,
+      event_window_delay_coef=0.25,
+      event_window_deadline_coef=0.25,
+      event_window_deadline_steps=2,
+      event_window_quality_boundary_coef=1.0,
+      event_window_quality_boundary_logit=0.0,
+      event_window_contrastive_margin_coef=1.0,
+      event_window_contrastive_margin=1.5,
+      event_window_separate_update_enabled=True,
+      event_window_dedicated_optimizer_enabled=True,
+      event_window_separate_update_steps=2,
+      event_window_max_grad_norm=2.0,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -394,7 +394,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     )
     model.set_logger(configure(format_strings=[]))
     probe = NonFiniteTrainingProbe(
-      report_path=f"{gettempdir()}/m3s2_nonfinite_probe_regression.json",
+      report_path=f"{gettempdir()}/event_window_nonfinite_probe_regression.json",
       history_limit=32,
       enabled=True,
     )
@@ -414,7 +414,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       n_rollout_steps=model.n_steps,
     )
     self.assertTrue(ok)
-    sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+    sidecar = getattr(model, "_grouped_stopping_sidecar", None)
     self.assertIsNotNone(sidecar)
     assert sidecar is not None
     self.assertEqual(len(sidecar.groups), 1)
@@ -441,7 +441,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     self.assertIn("m3s2/q_pre_margin", logged)
     self.assertIn("m3s2/q_pre_margin_loss", logged)
 
-  def test_m3s2_fire_boundary_update_only_writes_executable_event_head(self) -> None:
+  def test_fire_boundary_update_only_writes_executable_event_head(self) -> None:
     env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -453,27 +453,27 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a6_first_event_launch_window_enabled=True,
-      a6_first_event_launch_window_min_range_m=1.0,
-      a6_first_event_launch_window_max_range_m=2000.0,
-      a6_first_event_launch_window_max_track_age_s=10.0,
-      m3s2_fire_boundary_coef=20.0,
-      m3s2_fire_boundary_negative_logit_ceiling_coef=4.0,
-      m3s2_fire_boundary_negative_logit_ceiling=-1.0,
-      m3s2_fire_boundary_positive_logit_floor_coef=4.0,
-      m3s2_fire_boundary_positive_logit_floor=1.0,
-      m3s2_fire_boundary_separate_update_enabled=True,
-      m3s2_fire_boundary_dedicated_optimizer_enabled=True,
-      m3s2_fire_boundary_separate_update_steps=96,
-      m3s2_fire_boundary_max_grad_norm=10.0,
-      m3s2_fire_boundary_support_preserving_collect_enabled=True,
-      m3s2_fire_boundary_support_preserving_hold_quality_enabled=True,
+      first_event_launch_window_enabled=True,
+      first_event_launch_window_min_range_m=1.0,
+      first_event_launch_window_max_range_m=2000.0,
+      first_event_launch_window_max_track_age_s=10.0,
+      fire_boundary_coef=20.0,
+      fire_boundary_negative_logit_ceiling_coef=4.0,
+      fire_boundary_negative_logit_ceiling=-1.0,
+      fire_boundary_positive_logit_floor_coef=4.0,
+      fire_boundary_positive_logit_floor=1.0,
+      fire_boundary_separate_update_enabled=True,
+      fire_boundary_dedicated_optimizer_enabled=True,
+      fire_boundary_separate_update_steps=96,
+      fire_boundary_max_grad_norm=10.0,
+      fire_boundary_support_preserving_collect_enabled=True,
+      fire_boundary_support_preserving_hold_quality_enabled=True,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
         "hybrid_event_head_lr_scale": 10.0,
-        "hybrid_event_use_m3_stopping_head": False,
-        "hybrid_event_use_m3_window_classifier_head": False,
+        "hybrid_event_use_stopping_head": False,
+        "hybrid_event_use_window_classifier_head": False,
       },
     )
     model.set_logger(configure(format_strings=[]))
@@ -498,7 +498,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       n_rollout_steps=model.n_steps,
     )
     self.assertTrue(ok)
-    sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+    sidecar = getattr(model, "_grouped_stopping_sidecar", None)
     self.assertIsNotNone(sidecar)
     assert sidecar is not None
     self.assertEqual(len(sidecar.groups), 1)
@@ -506,7 +506,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     self.assertEqual(tuple(group.quality_mask), (False, False, True, True))
     self.assertEqual(tuple(group.accepted_event), (False, False, False, False))
 
-    obs = model._m3s1_observations_for_group(sidecar, group)
+    obs = model._observations_for_group(sidecar, group)
     with th.no_grad():
       before_delta = model.policy.get_distribution(obs).fire_event_logit_delta()
     self.assertIsNotNone(before_delta)
@@ -524,7 +524,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
 
     object.__setattr__(model.policy, "get_distribution", _fail_get_distribution)
     try:
-      fire_boundary_loss = model._m3s2_fire_boundary_auxiliary_update()
+      fire_boundary_loss = model._fire_boundary_auxiliary_update()
     finally:
       object.__setattr__(model.policy, "get_distribution", original_get_distribution)
 
@@ -532,7 +532,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     assert fire_boundary_loss is not None
     self.assertEqual(fire_boundary_loss.positive_count, 2)
     self.assertEqual(fire_boundary_loss.negative_count, 2)
-    self.assertGreater(float(model._m3s2_last_fire_boundary_grad_norm), 0.0)
+    self.assertGreater(float(model._last_fire_boundary_grad_norm), 0.0)
     self.assertGreater(fire_boundary_loss.executable_positive_logit_mean, 0.0)
     self.assertLess(fire_boundary_loss.executable_negative_logit_mean, 0.0)
     with th.no_grad():
@@ -555,7 +555,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
         self.assertFalse(changed, name)
     self.assertTrue(event_head_changed)
 
-  def test_nonfinite_probe_traced_train_runs_m3s2_fire_boundary_update(self) -> None:
+  def test_nonfinite_probe_traced_train_runs_fire_boundary_update(self) -> None:
     env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -567,32 +567,32 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a6_first_event_launch_window_enabled=True,
-      a6_first_event_launch_window_min_range_m=1.0,
-      a6_first_event_launch_window_max_range_m=2000.0,
-      a6_first_event_launch_window_max_track_age_s=10.0,
-      m3s2_fire_boundary_coef=20.0,
-      m3s2_fire_boundary_negative_logit_ceiling_coef=4.0,
-      m3s2_fire_boundary_negative_logit_ceiling=-1.0,
-      m3s2_fire_boundary_positive_logit_floor_coef=4.0,
-      m3s2_fire_boundary_positive_logit_floor=1.0,
-      m3s2_fire_boundary_separate_update_enabled=True,
-      m3s2_fire_boundary_dedicated_optimizer_enabled=True,
-      m3s2_fire_boundary_separate_update_steps=4,
-      m3s2_fire_boundary_max_grad_norm=10.0,
-      m3s2_fire_boundary_support_preserving_collect_enabled=True,
-      m3s2_fire_boundary_support_preserving_hold_quality_enabled=True,
+      first_event_launch_window_enabled=True,
+      first_event_launch_window_min_range_m=1.0,
+      first_event_launch_window_max_range_m=2000.0,
+      first_event_launch_window_max_track_age_s=10.0,
+      fire_boundary_coef=20.0,
+      fire_boundary_negative_logit_ceiling_coef=4.0,
+      fire_boundary_negative_logit_ceiling=-1.0,
+      fire_boundary_positive_logit_floor_coef=4.0,
+      fire_boundary_positive_logit_floor=1.0,
+      fire_boundary_separate_update_enabled=True,
+      fire_boundary_dedicated_optimizer_enabled=True,
+      fire_boundary_separate_update_steps=4,
+      fire_boundary_max_grad_norm=10.0,
+      fire_boundary_support_preserving_collect_enabled=True,
+      fire_boundary_support_preserving_hold_quality_enabled=True,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
         "hybrid_event_head_lr_scale": 10.0,
-        "hybrid_event_use_m3_stopping_head": False,
-        "hybrid_event_use_m3_window_classifier_head": False,
+        "hybrid_event_use_stopping_head": False,
+        "hybrid_event_use_window_classifier_head": False,
       },
     )
     model.set_logger(configure(format_strings=[]))
     probe = NonFiniteTrainingProbe(
-      report_path=f"{gettempdir()}/m3s2_fire_boundary_probe_test.json",
+      report_path=f"{gettempdir()}/fire_boundary_probe_test.json",
       history_limit=64,
     )
     probe.install(model)
@@ -620,12 +620,12 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
 
     model.train()
 
-    fire_boundary_loss = getattr(model, "_m3s2_last_fire_boundary_loss", None)
+    fire_boundary_loss = getattr(model, "_last_fire_boundary_loss", None)
     self.assertIsNotNone(fire_boundary_loss)
     assert fire_boundary_loss is not None
     self.assertEqual(fire_boundary_loss.positive_count, 2)
     self.assertEqual(fire_boundary_loss.negative_count, 2)
-    self.assertGreater(float(model._m3s2_last_fire_boundary_grad_norm), 0.0)
+    self.assertGreater(float(model._last_fire_boundary_grad_norm), 0.0)
     logged = model.logger.name_to_value
     self.assertEqual(float(logged["m3s2/fb_coef"]), 20.0)
     self.assertEqual(float(logged["m3s2/fb_active_count"]), 4.0)
@@ -633,7 +633,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     self.assertEqual(float(logged["m3s2/fb_negative_count"]), 2.0)
     self.assertGreater(float(logged["m3s2/fb_grad_norm"]), 0.0)
 
-  def test_a7_separate_credit_update_only_writes_credit_head(self) -> None:
+  def test_separate_credit_update_only_writes_credit_head(self) -> None:
     env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -645,11 +645,11 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a7_event_credit_value_coef=0.5,
-      a7_event_credit_curriculum_coef=0.5,
-      a7_event_credit_curriculum_min_window_age_steps=1,
-      a7_event_credit_separate_update_enabled=True,
-      a7_event_credit_separate_update_max_grad_norm=0.5,
+      event_credit_value_coef=0.5,
+      event_credit_curriculum_coef=0.5,
+      event_credit_curriculum_min_window_age_steps=1,
+      event_credit_separate_update_enabled=True,
+      event_credit_separate_update_max_grad_norm=0.5,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -693,9 +693,9 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
         self.assertFalse(changed, name)
     self.assertTrue(credit_changed)
 
-  def test_a7_policy_margin_loss_projects_shadow_rows_into_policy_path(self) -> None:
-    model, env = self._make_a7_policy_margin_model(separate_update=False)
-    rollout_data = self._a7_shadow_projection_rollout_data(model, env)
+  def test_policy_margin_loss_projects_shadow_rows_into_policy_path(self) -> None:
+    model, env = self._make_policy_margin_model(separate_update=False)
+    rollout_data = self._shadow_projection_rollout_data(model, env)
 
     margin_loss = model._first_event_policy_margin_loss(rollout_data)
     self.assertIsNotNone(margin_loss)
@@ -719,9 +719,9 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       places=8,
     )
 
-  def test_a7_separate_policy_margin_update_only_writes_event_policy_path(self) -> None:
-    model, env = self._make_a7_policy_margin_model(separate_update=True)
-    rollout_data = self._a7_shadow_projection_rollout_data(model, env)
+  def test_separate_policy_margin_update_only_writes_event_policy_path(self) -> None:
+    model, env = self._make_policy_margin_model(separate_update=True)
+    rollout_data = self._shadow_projection_rollout_data(model, env)
     before = {
       name: param.detach().clone()
       for name, param in model.policy.named_parameters()
@@ -742,7 +742,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
         self.assertFalse(changed, name)
     self.assertTrue(selected_changed)
 
-  def test_nonfinite_probe_preserves_a7_event_credit_training_path(self) -> None:
+  def test_nonfinite_probe_preserves_event_credit_training_path(self) -> None:
     env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -754,12 +754,12 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a7_event_credit_value_coef=0.5,
-      a7_event_credit_curriculum_coef=0.5,
-      a7_event_credit_curriculum_min_window_age_steps=1,
-      a7_event_credit_separate_update_enabled=True,
-      a7_event_credit_separate_update_max_grad_norm=0.5,
-      a7_event_credit_delta_align_positive_only=True,
+      event_credit_value_coef=0.5,
+      event_credit_curriculum_coef=0.5,
+      event_credit_curriculum_min_window_age_steps=1,
+      event_credit_separate_update_enabled=True,
+      event_credit_separate_update_max_grad_norm=0.5,
+      event_credit_delta_align_positive_only=True,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -768,7 +768,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     )
     model.set_logger(configure(format_strings=[]))
     probe = NonFiniteTrainingProbe(
-      report_path=f"{gettempdir()}/a7_nonfinite_probe_regression.json",
+      report_path=f"{gettempdir()}/event_credit_nonfinite_probe_regression.json",
       history_limit=32,
       enabled=True,
     )
@@ -790,8 +790,8 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     self.assertTrue(ok)
 
     rollout_data = next(model.rollout_buffer.get(model.n_steps))
-    self.assertEqual(int(getattr(rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE).sum().item()), 1)
-    self.assertEqual(int((getattr(rollout_data, A6_FIRST_EVENT_FIELD_TARGET) > 0.5).sum().item()), 1)
+    self.assertEqual(int(getattr(rollout_data, FIRST_EVENT_FIELD_ACTIVE).sum().item()), 1)
+    self.assertEqual(int((getattr(rollout_data, FIRST_EVENT_FIELD_TARGET) > 0.5).sum().item()), 1)
 
     assert model.policy.hybrid_event_credit_head is not None
     before = model.policy.hybrid_event_credit_head.bias.detach().clone()
@@ -805,7 +805,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     self.assertGreater(float(model.logger.name_to_value["a7/evc_separate_update_grad_norm_mean"]), 0.0)
     self.assertEqual(float(model.logger.name_to_value["a7/event_credit_delta_align_positive_only"]), 1.0)
 
-  def test_nonfinite_probe_records_a7_projection_credit_stats(self) -> None:
+  def test_nonfinite_probe_records_projection_credit_stats(self) -> None:
     env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -817,9 +817,9 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a7_event_credit_legal_projection_enabled=True,
-      a7_event_credit_projection_value_coef=0.5,
-      a7_event_credit_projection_delta_align_coef=0.25,
+      event_credit_legal_projection_enabled=True,
+      event_credit_projection_value_coef=0.5,
+      event_credit_projection_delta_align_coef=0.25,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -828,7 +828,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     )
     model.set_logger(configure(format_strings=[]))
     probe = NonFiniteTrainingProbe(
-      report_path=f"{gettempdir()}/a7_projection_nonfinite_probe_regression.json",
+      report_path=f"{gettempdir()}/projection_nonfinite_probe_regression.json",
       history_limit=32,
       enabled=True,
     )
@@ -904,7 +904,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     self.assertEqual(float(logged["a7/evc_src_shadow_positive_count_mean"]), 4.0)
     self.assertAlmostEqual(float(logged["a7/evc_src_legal_open_quality_advantage_mean"]), 0.4)
 
-  def test_a7_legal_open_quality_credit_aligns_event_logits_without_projection(self) -> None:
+  def test_legal_open_quality_credit_aligns_event_logits_without_projection(self) -> None:
     env = DummyVecEnv([_TinyA7LegalOpenHybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -916,11 +916,11 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a7_event_credit_value_coef=0.0,
-      a7_event_credit_delta_align_coef=0.5,
-      a7_event_credit_legal_projection_enabled=True,
-      a7_event_credit_projection_value_coef=0.5,
-      a7_event_credit_projection_delta_align_coef=0.5,
+      event_credit_value_coef=0.0,
+      event_credit_delta_align_coef=0.5,
+      event_credit_legal_projection_enabled=True,
+      event_credit_projection_value_coef=0.5,
+      event_credit_projection_delta_align_coef=0.5,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -941,15 +941,15 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     class _RolloutData:
       observations = obs
 
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_ACTIVE, th.ones((1,), dtype=th.float32))
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_TARGET, th.ones((1,), dtype=th.float32))
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WEIGHT, th.ones((1,), dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_ACTIVE, th.ones((1,), dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_TARGET, th.ones((1,), dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_WEIGHT, th.ones((1,), dtype=th.float32))
     setattr(
       _RolloutData,
-      A6_FIRST_EVENT_FIELD_SOURCE,
-      th.full((1,), A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY, dtype=th.long),
+      FIRST_EVENT_FIELD_SOURCE,
+      th.full((1,), FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY, dtype=th.long),
     )
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WINDOW_ID, th.zeros((1,), dtype=th.long))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_WINDOW_ID, th.zeros((1,), dtype=th.long))
 
     credit_loss = model._first_event_credit_loss(_RolloutData)
     self.assertIsNotNone(credit_loss)
@@ -968,7 +968,7 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
         event_grad += float(param.grad.detach().abs().sum().cpu().item())
     self.assertGreater(event_grad, 0.0)
 
-  def test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits(self) -> None:
+  def test_shadow_quality_projection_aligns_projected_legal_open_event_logits(self) -> None:
     env = DummyVecEnv([_TinyA7ProjectionHybridAirCombatEnv])
     model = AdaptiveKLPPO(
       HierarchicalMoEExecutionPolicy,
@@ -980,11 +980,11 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
       gamma=0.99,
       gae_lambda=0.95,
       normalize_advantage=False,
-      a7_event_credit_value_coef=0.0,
-      a7_event_credit_delta_align_coef=0.5,
-      a7_event_credit_legal_projection_enabled=True,
-      a7_event_credit_projection_value_coef=0.5,
-      a7_event_credit_projection_delta_align_coef=0.5,
+      event_credit_value_coef=0.0,
+      event_credit_delta_align_coef=0.5,
+      event_credit_legal_projection_enabled=True,
+      event_credit_projection_value_coef=0.5,
+      event_credit_projection_delta_align_coef=0.5,
       policy_kwargs={
         "net_arch": {"pi": [32], "vf": [32]},
         "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -1005,15 +1005,15 @@ class AuxiliaryM3NonfiniteUpdateTests(unittest.TestCase):
     class _RolloutData:
       observations = obs
 
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_ACTIVE, th.ones((1,), dtype=th.float32))
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_TARGET, th.ones((1,), dtype=th.float32))
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WEIGHT, th.ones((1,), dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_ACTIVE, th.ones((1,), dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_TARGET, th.ones((1,), dtype=th.float32))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_WEIGHT, th.ones((1,), dtype=th.float32))
     setattr(
       _RolloutData,
-      A6_FIRST_EVENT_FIELD_SOURCE,
-      th.full((1,), A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY, dtype=th.long),
+      FIRST_EVENT_FIELD_SOURCE,
+      th.full((1,), FIRST_EVENT_SOURCE_SHADOW_QUALITY, dtype=th.long),
     )
-    setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WINDOW_ID, th.zeros((1,), dtype=th.long))
+    setattr(_RolloutData, FIRST_EVENT_FIELD_WINDOW_ID, th.zeros((1,), dtype=th.long))
 
     credit_loss = model._first_event_credit_loss(_RolloutData)
     self.assertIsNotNone(credit_loss)

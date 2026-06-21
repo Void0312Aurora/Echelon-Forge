@@ -9,11 +9,11 @@ PPO loop:
 * **M3-S2** event-window / fire-boundary / window-classifier losses.
 
 Each subdomain is implemented as a mixin module under this package
-(``_a6_first_event_mixin`` etc.); ``AdaptiveKLPPO`` composes them and keeps
+(``_first_event_mixin`` etc.); ``AdaptiveKLPPO`` composes them and keeps
 only the core PPO loop, KL control, rollout plumbing, and the per-subdomain
 logging that is interleaved with the core training step. The dataclasses and
 the window-classifier replay buffer live in ``_adaptive_kl_support`` /
-``_m3s2_window_classifier_replay`` and are re-exported from this module for
+``_window_classifier_replay`` and are re-exported from this module for
 backwards compatibility with existing test/diagnostic imports.
 """
 
@@ -38,38 +38,38 @@ from .first_event_hazard import (
     FirstEventPolicyMarginLoss,
 )
 from .first_event_rollout_buffer import (
-    A6FirstEventDeviceDictRolloutBuffer,
-    A6FirstEventDictRolloutBuffer,
+    FirstEventDeviceDictRolloutBuffer,
+    FirstEventDictRolloutBuffer,
 )
-from .m3s1_grouped_stopping import M3S1GroupedStoppingLoss
+from .grouped_stopping import GroupedStoppingLoss
 
 # Subdomain dataclasses, ROE helpers and the window-classifier replay buffer.
 # Re-exported here so legacy imports such as
-# ``from python.rl.policy_algo.ppo_adaptive_kl import _M3S2WindowClassifierReplay``
+# ``from python.rl.policy_algo.ppo_adaptive_kl import _WindowClassifierReplay``
 # keep working.
 from ._adaptive_kl_support import (  # noqa: F401  (re-export)
-    _A7FirstEventRolloutRow,
-    _M3S1GroupedStoppingDiagnostics,
-    _M3S1GroupedStoppingSidecar,
-    _M3S1GroupedStoppingSidecarGroup,
-    _M3S2FireBoundaryLoss,
-    _M3S2WindowClassifierLoss,
+    _FirstEventRolloutRow,
+    _GroupedStoppingDiagnostics,
+    _GroupedStoppingSidecar,
+    _GroupedStoppingSidecarGroup,
+    _FireBoundaryLoss,
+    _WindowClassifierLoss,
     _TrainEpochStats,
     _air_combat_c2_roe_mode_from_dim,
     _mission_column,
 )
-from ._m3s2_window_classifier_replay import _M3S2WindowClassifierReplay  # noqa: F401  (re-export)
-from ._a6_first_event_mixin import _A6FirstEventMixin
-from ._a7_event_credit_mixin import _A7EventCreditMixin
-from ._m3s1_grouped_stopping_mixin import _M3S1GroupedStoppingMixin
-from ._m3s2_event_window_mixin import _M3S2EventWindowMixin
+from ._window_classifier_replay import _WindowClassifierReplay  # noqa: F401  (re-export)
+from ._first_event_mixin import _FirstEventMixin
+from ._event_credit_mixin import _EventCreditMixin
+from ._grouped_stopping_mixin import _GroupedStoppingMixin
+from ._event_window_mixin import _EventWindowMixin
 
 
 class AdaptiveKLPPO(
-    _M3S2EventWindowMixin,
-    _M3S1GroupedStoppingMixin,
-    _A7EventCreditMixin,
-    _A6FirstEventMixin,
+    _EventWindowMixin,
+    _GroupedStoppingMixin,
+    _EventCreditMixin,
+    _FirstEventMixin,
     PPO,
 ):
     """
@@ -98,109 +98,109 @@ class AdaptiveKLPPO(
         boost_clip_on_low_kl: bool = False,
         action_mean_regularization_coef: float = 0.0,
         action_mean_regularization_target: Any = 0.0,
-        a6_first_event_hazard_coef: float = 0.0,
-        a6_first_event_curriculum_coef: float = 0.0,
-        a6_first_event_curriculum_decay_fraction: float = 0.25,
-        a6_first_event_curriculum_min_window_age_steps: int = 32,
-        a6_first_event_censored_survival_weight: float = 0.0,
-        a6_first_event_deadline_weight: float = 0.0,
-        a6_first_event_deadline_min_window_age_steps: int = 96,
-        a6_first_event_launch_window_enabled: bool = False,
-        a6_first_event_launch_window_min_range_m: float = 0.0,
-        a6_first_event_launch_window_max_range_m: float = 0.0,
-        a6_first_event_launch_window_max_track_age_s: float = 10.0,
-        a6_first_event_launch_window_min_window_age_steps: int = 1,
-        a6_first_event_launch_window_prewindow_hold_weight: float = 0.0,
-        a6_first_event_launch_window_early_accept_weight: float = 1.0,
-        a7_event_credit_value_coef: float = 0.0,
-        a7_event_credit_delta_align_coef: float = 0.0,
-        a7_event_credit_delta_align_clip: float = 4.0,
-        a7_event_credit_delta_align_positive_only: bool = False,
-        a7_event_credit_positive_mass_cap: float = 1.0,
-        a7_event_credit_negative_mass_cap: float = 1.0,
-        a7_event_credit_prewindow_hold_weight: float = 0.0,
-        a7_event_credit_early_accept_weight: float = 1.0,
-        a7_event_credit_curriculum_coef: float = 0.0,
-        a7_event_credit_curriculum_min_window_age_steps: int = 32,
-        a7_event_credit_censored_survival_weight: float = 0.0,
-        a7_event_credit_deadline_weight: float = 0.0,
-        a7_event_credit_deadline_min_window_age_steps: int = 96,
-        a7_event_credit_shadow_quality_weight: float = 1.0,
-        a7_event_credit_legal_open_quality_weight: float = 0.0,
-        a7_event_credit_legal_open_quality_min_window_age_steps: int = 1,
-        a7_event_credit_legal_projection_enabled: bool = False,
-        a7_event_credit_projection_value_coef: float = 0.0,
-        a7_event_credit_projection_delta_align_coef: float = 0.0,
-        a7_event_credit_separate_update_enabled: bool = False,
-        a7_event_credit_separate_update_max_grad_norm: float = 0.5,
-        a7_event_policy_margin_coef: float = 0.0,
-        a7_event_policy_margin: float = 2.0,
-        a7_event_policy_projection_margin_coef: float = 0.0,
-        a7_event_policy_separate_update_enabled: bool = False,
-        a7_event_policy_separate_update_max_grad_norm: float = 0.5,
-        a7_event_policy_separate_update_steps: int = 1,
-        m3s1_grouped_stopping_coef: float = 0.0,
-        m3s1_grouped_stopping_early_mass_coef: float = 1.0,
-        m3s1_grouped_stopping_early_mass_budget: float = 0.05,
-        m3s1_grouped_stopping_prefix_early_mass_budget: float | None = None,
-        m3s1_grouped_stopping_no_event_coef: float = 1.0,
-        m3s1_grouped_stopping_boundary_threshold: float = 0.0,
-        m3s1_grouped_stopping_detach_latent: bool = False,
-        m3s2_event_window_coef: float = 0.0,
-        m3s2_event_window_early_mass_coef: float = 1.0,
-        m3s2_event_window_early_mass_budget: float = 0.05,
-        m3s2_event_window_early_survival_coef: float = 0.0,
-        m3s2_event_window_no_event_coef: float = 1.0,
-        m3s2_event_window_delay_coef: float = 0.0,
-        m3s2_event_window_deadline_coef: float = 0.0,
-        m3s2_event_window_deadline_steps: int = 0,
-        m3s2_event_window_quality_boundary_coef: float = 0.0,
-        m3s2_event_window_quality_boundary_logit: float = 0.0,
-        m3s2_event_window_contrastive_margin_coef: float = 0.0,
-        m3s2_event_window_contrastive_margin: float = 0.0,
-        m3s2_event_window_balanced_bce_coef: float = 0.0,
-        m3s2_event_window_prewindow_hazard_scale_coef: float = 0.0,
-        m3s2_event_window_prewindow_hazard_target: float = 0.0,
-        m3s2_event_window_quality_hazard_target_coef: float = 0.0,
-        m3s2_event_window_quality_hazard_target: float = 0.5,
-        m3s2_event_window_prewindow_logit_ceiling_coef: float = 0.0,
-        m3s2_event_window_prewindow_logit_ceiling: float = -2.0,
-        m3s2_event_window_quality_logit_floor_coef: float = 0.0,
-        m3s2_event_window_quality_logit_floor: float = 2.0,
-        m3s2_event_window_use_stopping_head: bool = False,
-        m3s2_event_window_separate_update_enabled: bool = True,
-        m3s2_event_window_dedicated_optimizer_enabled: bool = False,
-        m3s2_event_window_separate_update_steps: int = 1,
-        m3s2_event_window_max_grad_norm: float = 2.0,
-        m3s2_event_window_support_preserving_collect_enabled: bool = False,
-        m3s2_event_window_support_preserving_hold_quality_enabled: bool = False,
-        m3s2_fire_boundary_coef: float = 0.0,
-        m3s2_fire_boundary_negative_logit_ceiling_coef: float = 0.0,
-        m3s2_fire_boundary_negative_logit_ceiling: float = -2.0,
-        m3s2_fire_boundary_positive_logit_floor_coef: float = 0.0,
-        m3s2_fire_boundary_positive_logit_floor: float = 2.0,
-        m3s2_fire_boundary_separate_update_enabled: bool = True,
-        m3s2_fire_boundary_dedicated_optimizer_enabled: bool = True,
-        m3s2_fire_boundary_separate_update_steps: int = 1,
-        m3s2_fire_boundary_max_grad_norm: float = 2.0,
-        m3s2_fire_boundary_support_preserving_collect_enabled: bool = False,
-        m3s2_fire_boundary_support_preserving_hold_quality_enabled: bool = False,
-        m3s2_window_classifier_coef: float = 0.0,
-        m3s2_window_classifier_prewindow_logit_ceiling_coef: float = 0.0,
-        m3s2_window_classifier_prewindow_logit_ceiling: float = -2.0,
-        m3s2_window_classifier_quality_logit_floor_coef: float = 0.0,
-        m3s2_window_classifier_quality_logit_floor: float = 2.0,
-        m3s2_window_classifier_detach_latent: bool = True,
-        m3s2_window_classifier_separate_update_enabled: bool = True,
-        m3s2_window_classifier_dedicated_optimizer_enabled: bool = True,
-        m3s2_window_classifier_separate_update_steps: int = 1,
-        m3s2_window_classifier_max_grad_norm: float = 2.0,
-        m3s2_window_classifier_replay_enabled: bool = False,
-        m3s2_window_classifier_replay_storage: str = "latent",
-        m3s2_window_classifier_replay_capacity: int = 4096,
-        m3s2_window_classifier_replay_batch_size: int = 1024,
-        m3s2_window_classifier_replay_min_positive: int = 1,
-        m3s2_window_classifier_replay_min_negative: int = 1,
+        first_event_hazard_coef: float = 0.0,
+        first_event_curriculum_coef: float = 0.0,
+        first_event_curriculum_decay_fraction: float = 0.25,
+        first_event_curriculum_min_window_age_steps: int = 32,
+        first_event_censored_survival_weight: float = 0.0,
+        first_event_deadline_weight: float = 0.0,
+        first_event_deadline_min_window_age_steps: int = 96,
+        first_event_launch_window_enabled: bool = False,
+        first_event_launch_window_min_range_m: float = 0.0,
+        first_event_launch_window_max_range_m: float = 0.0,
+        first_event_launch_window_max_track_age_s: float = 10.0,
+        first_event_launch_window_min_window_age_steps: int = 1,
+        first_event_launch_window_prewindow_hold_weight: float = 0.0,
+        first_event_launch_window_early_accept_weight: float = 1.0,
+        event_credit_value_coef: float = 0.0,
+        event_credit_delta_align_coef: float = 0.0,
+        event_credit_delta_align_clip: float = 4.0,
+        event_credit_delta_align_positive_only: bool = False,
+        event_credit_positive_mass_cap: float = 1.0,
+        event_credit_negative_mass_cap: float = 1.0,
+        event_credit_prewindow_hold_weight: float = 0.0,
+        event_credit_early_accept_weight: float = 1.0,
+        event_credit_curriculum_coef: float = 0.0,
+        event_credit_curriculum_min_window_age_steps: int = 32,
+        event_credit_censored_survival_weight: float = 0.0,
+        event_credit_deadline_weight: float = 0.0,
+        event_credit_deadline_min_window_age_steps: int = 96,
+        event_credit_shadow_quality_weight: float = 1.0,
+        event_credit_legal_open_quality_weight: float = 0.0,
+        event_credit_legal_open_quality_min_window_age_steps: int = 1,
+        event_credit_legal_projection_enabled: bool = False,
+        event_credit_projection_value_coef: float = 0.0,
+        event_credit_projection_delta_align_coef: float = 0.0,
+        event_credit_separate_update_enabled: bool = False,
+        event_credit_separate_update_max_grad_norm: float = 0.5,
+        event_policy_margin_coef: float = 0.0,
+        event_policy_margin: float = 2.0,
+        event_policy_projection_margin_coef: float = 0.0,
+        event_policy_separate_update_enabled: bool = False,
+        event_policy_separate_update_max_grad_norm: float = 0.5,
+        event_policy_separate_update_steps: int = 1,
+        grouped_stopping_coef: float = 0.0,
+        grouped_stopping_early_mass_coef: float = 1.0,
+        grouped_stopping_early_mass_budget: float = 0.05,
+        grouped_stopping_prefix_early_mass_budget: float | None = None,
+        grouped_stopping_no_event_coef: float = 1.0,
+        grouped_stopping_boundary_threshold: float = 0.0,
+        grouped_stopping_detach_latent: bool = False,
+        event_window_coef: float = 0.0,
+        event_window_early_mass_coef: float = 1.0,
+        event_window_early_mass_budget: float = 0.05,
+        event_window_early_survival_coef: float = 0.0,
+        event_window_no_event_coef: float = 1.0,
+        event_window_delay_coef: float = 0.0,
+        event_window_deadline_coef: float = 0.0,
+        event_window_deadline_steps: int = 0,
+        event_window_quality_boundary_coef: float = 0.0,
+        event_window_quality_boundary_logit: float = 0.0,
+        event_window_contrastive_margin_coef: float = 0.0,
+        event_window_contrastive_margin: float = 0.0,
+        event_window_balanced_bce_coef: float = 0.0,
+        event_window_prewindow_hazard_scale_coef: float = 0.0,
+        event_window_prewindow_hazard_target: float = 0.0,
+        event_window_quality_hazard_target_coef: float = 0.0,
+        event_window_quality_hazard_target: float = 0.5,
+        event_window_prewindow_logit_ceiling_coef: float = 0.0,
+        event_window_prewindow_logit_ceiling: float = -2.0,
+        event_window_quality_logit_floor_coef: float = 0.0,
+        event_window_quality_logit_floor: float = 2.0,
+        event_window_use_stopping_head: bool = False,
+        event_window_separate_update_enabled: bool = True,
+        event_window_dedicated_optimizer_enabled: bool = False,
+        event_window_separate_update_steps: int = 1,
+        event_window_max_grad_norm: float = 2.0,
+        event_window_support_preserving_collect_enabled: bool = False,
+        event_window_support_preserving_hold_quality_enabled: bool = False,
+        fire_boundary_coef: float = 0.0,
+        fire_boundary_negative_logit_ceiling_coef: float = 0.0,
+        fire_boundary_negative_logit_ceiling: float = -2.0,
+        fire_boundary_positive_logit_floor_coef: float = 0.0,
+        fire_boundary_positive_logit_floor: float = 2.0,
+        fire_boundary_separate_update_enabled: bool = True,
+        fire_boundary_dedicated_optimizer_enabled: bool = True,
+        fire_boundary_separate_update_steps: int = 1,
+        fire_boundary_max_grad_norm: float = 2.0,
+        fire_boundary_support_preserving_collect_enabled: bool = False,
+        fire_boundary_support_preserving_hold_quality_enabled: bool = False,
+        window_classifier_coef: float = 0.0,
+        window_classifier_prewindow_logit_ceiling_coef: float = 0.0,
+        window_classifier_prewindow_logit_ceiling: float = -2.0,
+        window_classifier_quality_logit_floor_coef: float = 0.0,
+        window_classifier_quality_logit_floor: float = 2.0,
+        window_classifier_detach_latent: bool = True,
+        window_classifier_separate_update_enabled: bool = True,
+        window_classifier_dedicated_optimizer_enabled: bool = True,
+        window_classifier_separate_update_steps: int = 1,
+        window_classifier_max_grad_norm: float = 2.0,
+        window_classifier_replay_enabled: bool = False,
+        window_classifier_replay_storage: str = "latent",
+        window_classifier_replay_capacity: int = 4096,
+        window_classifier_replay_batch_size: int = 1024,
+        window_classifier_replay_min_positive: int = 1,
+        window_classifier_replay_min_negative: int = 1,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -220,301 +220,301 @@ class AdaptiveKLPPO(
         self._low_kl_streak = 0
         self.action_mean_regularization_coef = float(max(0.0, action_mean_regularization_coef))
         self.action_mean_regularization_target = action_mean_regularization_target
-        self.a6_first_event_hazard_coef = float(max(0.0, a6_first_event_hazard_coef))
-        self.a6_first_event_curriculum_coef = float(max(0.0, a6_first_event_curriculum_coef))
-        self.a6_first_event_curriculum_decay_fraction = float(
-            max(0.0, a6_first_event_curriculum_decay_fraction)
+        self.first_event_hazard_coef = float(max(0.0, first_event_hazard_coef))
+        self.first_event_curriculum_coef = float(max(0.0, first_event_curriculum_coef))
+        self.first_event_curriculum_decay_fraction = float(
+            max(0.0, first_event_curriculum_decay_fraction)
         )
-        self.a6_first_event_curriculum_min_window_age_steps = max(
+        self.first_event_curriculum_min_window_age_steps = max(
             1,
-            int(a6_first_event_curriculum_min_window_age_steps),
+            int(first_event_curriculum_min_window_age_steps),
         )
-        self.a6_first_event_censored_survival_weight = float(
-            max(0.0, a6_first_event_censored_survival_weight)
+        self.first_event_censored_survival_weight = float(
+            max(0.0, first_event_censored_survival_weight)
         )
-        self.a6_first_event_deadline_weight = float(max(0.0, a6_first_event_deadline_weight))
-        self.a6_first_event_deadline_min_window_age_steps = max(
+        self.first_event_deadline_weight = float(max(0.0, first_event_deadline_weight))
+        self.first_event_deadline_min_window_age_steps = max(
             1,
-            int(a6_first_event_deadline_min_window_age_steps),
+            int(first_event_deadline_min_window_age_steps),
         )
-        self.a6_first_event_launch_window_enabled = bool(a6_first_event_launch_window_enabled)
-        self.a6_first_event_launch_window_min_range_m = float(
-            max(0.0, a6_first_event_launch_window_min_range_m)
+        self.first_event_launch_window_enabled = bool(first_event_launch_window_enabled)
+        self.first_event_launch_window_min_range_m = float(
+            max(0.0, first_event_launch_window_min_range_m)
         )
-        self.a6_first_event_launch_window_max_range_m = float(
-            max(0.0, a6_first_event_launch_window_max_range_m)
+        self.first_event_launch_window_max_range_m = float(
+            max(0.0, first_event_launch_window_max_range_m)
         )
-        self.a6_first_event_launch_window_max_track_age_s = float(
-            a6_first_event_launch_window_max_track_age_s
+        self.first_event_launch_window_max_track_age_s = float(
+            first_event_launch_window_max_track_age_s
         )
-        self.a6_first_event_launch_window_min_window_age_steps = max(
+        self.first_event_launch_window_min_window_age_steps = max(
             1,
-            int(a6_first_event_launch_window_min_window_age_steps),
+            int(first_event_launch_window_min_window_age_steps),
         )
-        self.a6_first_event_launch_window_prewindow_hold_weight = float(
-            max(0.0, a6_first_event_launch_window_prewindow_hold_weight)
+        self.first_event_launch_window_prewindow_hold_weight = float(
+            max(0.0, first_event_launch_window_prewindow_hold_weight)
         )
-        self.a6_first_event_launch_window_early_accept_weight = float(
-            max(0.0, a6_first_event_launch_window_early_accept_weight)
+        self.first_event_launch_window_early_accept_weight = float(
+            max(0.0, first_event_launch_window_early_accept_weight)
         )
-        self.a7_event_credit_value_coef = float(max(0.0, a7_event_credit_value_coef))
-        self.a7_event_credit_delta_align_coef = float(max(0.0, a7_event_credit_delta_align_coef))
-        self.a7_event_credit_delta_align_clip = float(max(0.0, a7_event_credit_delta_align_clip))
-        self.a7_event_credit_delta_align_positive_only = bool(
-            a7_event_credit_delta_align_positive_only
+        self.event_credit_value_coef = float(max(0.0, event_credit_value_coef))
+        self.event_credit_delta_align_coef = float(max(0.0, event_credit_delta_align_coef))
+        self.event_credit_delta_align_clip = float(max(0.0, event_credit_delta_align_clip))
+        self.event_credit_delta_align_positive_only = bool(
+            event_credit_delta_align_positive_only
         )
-        self.a7_event_credit_positive_mass_cap = float(max(0.0, a7_event_credit_positive_mass_cap))
-        self.a7_event_credit_negative_mass_cap = float(max(0.0, a7_event_credit_negative_mass_cap))
-        self.a7_event_credit_prewindow_hold_weight = float(
-            max(0.0, a7_event_credit_prewindow_hold_weight)
+        self.event_credit_positive_mass_cap = float(max(0.0, event_credit_positive_mass_cap))
+        self.event_credit_negative_mass_cap = float(max(0.0, event_credit_negative_mass_cap))
+        self.event_credit_prewindow_hold_weight = float(
+            max(0.0, event_credit_prewindow_hold_weight)
         )
-        self.a7_event_credit_early_accept_weight = float(
-            max(0.0, a7_event_credit_early_accept_weight)
+        self.event_credit_early_accept_weight = float(
+            max(0.0, event_credit_early_accept_weight)
         )
-        self.a7_event_credit_curriculum_coef = float(max(0.0, a7_event_credit_curriculum_coef))
-        self.a7_event_credit_curriculum_min_window_age_steps = max(
+        self.event_credit_curriculum_coef = float(max(0.0, event_credit_curriculum_coef))
+        self.event_credit_curriculum_min_window_age_steps = max(
             1,
-            int(a7_event_credit_curriculum_min_window_age_steps),
+            int(event_credit_curriculum_min_window_age_steps),
         )
-        self.a7_event_credit_censored_survival_weight = float(
-            max(0.0, a7_event_credit_censored_survival_weight)
+        self.event_credit_censored_survival_weight = float(
+            max(0.0, event_credit_censored_survival_weight)
         )
-        self.a7_event_credit_deadline_weight = float(max(0.0, a7_event_credit_deadline_weight))
-        self.a7_event_credit_deadline_min_window_age_steps = max(
+        self.event_credit_deadline_weight = float(max(0.0, event_credit_deadline_weight))
+        self.event_credit_deadline_min_window_age_steps = max(
             1,
-            int(a7_event_credit_deadline_min_window_age_steps),
+            int(event_credit_deadline_min_window_age_steps),
         )
-        self.a7_event_credit_shadow_quality_weight = float(
-            max(0.0, a7_event_credit_shadow_quality_weight)
+        self.event_credit_shadow_quality_weight = float(
+            max(0.0, event_credit_shadow_quality_weight)
         )
-        self.a7_event_credit_legal_open_quality_weight = float(
-            max(0.0, a7_event_credit_legal_open_quality_weight)
+        self.event_credit_legal_open_quality_weight = float(
+            max(0.0, event_credit_legal_open_quality_weight)
         )
-        self.a7_event_credit_legal_open_quality_min_window_age_steps = max(
+        self.event_credit_legal_open_quality_min_window_age_steps = max(
             1,
-            int(a7_event_credit_legal_open_quality_min_window_age_steps),
+            int(event_credit_legal_open_quality_min_window_age_steps),
         )
-        self.a7_event_credit_legal_projection_enabled = bool(
-            a7_event_credit_legal_projection_enabled
+        self.event_credit_legal_projection_enabled = bool(
+            event_credit_legal_projection_enabled
         )
-        self.a7_event_credit_projection_value_coef = float(
-            max(0.0, a7_event_credit_projection_value_coef)
+        self.event_credit_projection_value_coef = float(
+            max(0.0, event_credit_projection_value_coef)
         )
-        self.a7_event_credit_projection_delta_align_coef = float(
-            max(0.0, a7_event_credit_projection_delta_align_coef)
+        self.event_credit_projection_delta_align_coef = float(
+            max(0.0, event_credit_projection_delta_align_coef)
         )
-        self.a7_event_credit_separate_update_enabled = bool(a7_event_credit_separate_update_enabled)
-        self.a7_event_credit_separate_update_max_grad_norm = float(
-            max(0.0, a7_event_credit_separate_update_max_grad_norm)
+        self.event_credit_separate_update_enabled = bool(event_credit_separate_update_enabled)
+        self.event_credit_separate_update_max_grad_norm = float(
+            max(0.0, event_credit_separate_update_max_grad_norm)
         )
-        self.a7_event_policy_margin_coef = float(max(0.0, a7_event_policy_margin_coef))
-        self.a7_event_policy_margin = float(max(0.0, a7_event_policy_margin))
-        self.a7_event_policy_projection_margin_coef = float(
-            max(0.0, a7_event_policy_projection_margin_coef)
+        self.event_policy_margin_coef = float(max(0.0, event_policy_margin_coef))
+        self.event_policy_margin = float(max(0.0, event_policy_margin))
+        self.event_policy_projection_margin_coef = float(
+            max(0.0, event_policy_projection_margin_coef)
         )
-        self.a7_event_policy_separate_update_enabled = bool(a7_event_policy_separate_update_enabled)
-        self.a7_event_policy_separate_update_max_grad_norm = float(
-            max(0.0, a7_event_policy_separate_update_max_grad_norm)
+        self.event_policy_separate_update_enabled = bool(event_policy_separate_update_enabled)
+        self.event_policy_separate_update_max_grad_norm = float(
+            max(0.0, event_policy_separate_update_max_grad_norm)
         )
-        self.a7_event_policy_separate_update_steps = max(
-            1, int(a7_event_policy_separate_update_steps)
+        self.event_policy_separate_update_steps = max(
+            1, int(event_policy_separate_update_steps)
         )
-        self.m3s1_grouped_stopping_coef = float(max(0.0, m3s1_grouped_stopping_coef))
-        self.m3s1_grouped_stopping_early_mass_coef = float(
-            max(0.0, m3s1_grouped_stopping_early_mass_coef)
+        self.grouped_stopping_coef = float(max(0.0, grouped_stopping_coef))
+        self.grouped_stopping_early_mass_coef = float(
+            max(0.0, grouped_stopping_early_mass_coef)
         )
-        self.m3s1_grouped_stopping_early_mass_budget = float(
-            max(0.0, m3s1_grouped_stopping_early_mass_budget)
+        self.grouped_stopping_early_mass_budget = float(
+            max(0.0, grouped_stopping_early_mass_budget)
         )
-        self.m3s1_grouped_stopping_prefix_early_mass_budget = (
+        self.grouped_stopping_prefix_early_mass_budget = (
             None
-            if m3s1_grouped_stopping_prefix_early_mass_budget is None
-            else float(max(0.0, m3s1_grouped_stopping_prefix_early_mass_budget))
+            if grouped_stopping_prefix_early_mass_budget is None
+            else float(max(0.0, grouped_stopping_prefix_early_mass_budget))
         )
-        self.m3s1_grouped_stopping_no_event_coef = float(
-            max(0.0, m3s1_grouped_stopping_no_event_coef)
+        self.grouped_stopping_no_event_coef = float(
+            max(0.0, grouped_stopping_no_event_coef)
         )
-        self.m3s1_grouped_stopping_boundary_threshold = float(
-            m3s1_grouped_stopping_boundary_threshold
+        self.grouped_stopping_boundary_threshold = float(
+            grouped_stopping_boundary_threshold
         )
-        self.m3s1_grouped_stopping_detach_latent = bool(m3s1_grouped_stopping_detach_latent)
-        self.m3s2_event_window_coef = float(max(0.0, m3s2_event_window_coef))
-        self.m3s2_event_window_early_mass_coef = float(max(0.0, m3s2_event_window_early_mass_coef))
-        self.m3s2_event_window_early_mass_budget = float(
-            max(0.0, m3s2_event_window_early_mass_budget)
+        self.grouped_stopping_detach_latent = bool(grouped_stopping_detach_latent)
+        self.event_window_coef = float(max(0.0, event_window_coef))
+        self.event_window_early_mass_coef = float(max(0.0, event_window_early_mass_coef))
+        self.event_window_early_mass_budget = float(
+            max(0.0, event_window_early_mass_budget)
         )
-        self.m3s2_event_window_early_survival_coef = float(
-            max(0.0, m3s2_event_window_early_survival_coef)
+        self.event_window_early_survival_coef = float(
+            max(0.0, event_window_early_survival_coef)
         )
-        self.m3s2_event_window_no_event_coef = float(max(0.0, m3s2_event_window_no_event_coef))
-        self.m3s2_event_window_delay_coef = float(max(0.0, m3s2_event_window_delay_coef))
-        self.m3s2_event_window_deadline_coef = float(max(0.0, m3s2_event_window_deadline_coef))
-        self.m3s2_event_window_deadline_steps = max(0, int(m3s2_event_window_deadline_steps))
-        self.m3s2_event_window_quality_boundary_coef = float(
-            max(0.0, m3s2_event_window_quality_boundary_coef)
+        self.event_window_no_event_coef = float(max(0.0, event_window_no_event_coef))
+        self.event_window_delay_coef = float(max(0.0, event_window_delay_coef))
+        self.event_window_deadline_coef = float(max(0.0, event_window_deadline_coef))
+        self.event_window_deadline_steps = max(0, int(event_window_deadline_steps))
+        self.event_window_quality_boundary_coef = float(
+            max(0.0, event_window_quality_boundary_coef)
         )
-        self.m3s2_event_window_quality_boundary_logit = float(
-            m3s2_event_window_quality_boundary_logit
+        self.event_window_quality_boundary_logit = float(
+            event_window_quality_boundary_logit
         )
-        self.m3s2_event_window_contrastive_margin_coef = float(
-            max(0.0, m3s2_event_window_contrastive_margin_coef)
+        self.event_window_contrastive_margin_coef = float(
+            max(0.0, event_window_contrastive_margin_coef)
         )
-        self.m3s2_event_window_contrastive_margin = float(
-            max(0.0, m3s2_event_window_contrastive_margin)
+        self.event_window_contrastive_margin = float(
+            max(0.0, event_window_contrastive_margin)
         )
-        self.m3s2_event_window_balanced_bce_coef = float(
-            max(0.0, m3s2_event_window_balanced_bce_coef)
+        self.event_window_balanced_bce_coef = float(
+            max(0.0, event_window_balanced_bce_coef)
         )
-        self.m3s2_event_window_prewindow_hazard_scale_coef = float(
-            max(0.0, m3s2_event_window_prewindow_hazard_scale_coef)
+        self.event_window_prewindow_hazard_scale_coef = float(
+            max(0.0, event_window_prewindow_hazard_scale_coef)
         )
-        self.m3s2_event_window_prewindow_hazard_target = float(
-            max(0.0, m3s2_event_window_prewindow_hazard_target)
+        self.event_window_prewindow_hazard_target = float(
+            max(0.0, event_window_prewindow_hazard_target)
         )
-        self.m3s2_event_window_quality_hazard_target_coef = float(
-            max(0.0, m3s2_event_window_quality_hazard_target_coef)
+        self.event_window_quality_hazard_target_coef = float(
+            max(0.0, event_window_quality_hazard_target_coef)
         )
-        self.m3s2_event_window_quality_hazard_target = float(
-            max(0.0, min(1.0, m3s2_event_window_quality_hazard_target))
+        self.event_window_quality_hazard_target = float(
+            max(0.0, min(1.0, event_window_quality_hazard_target))
         )
-        self.m3s2_event_window_prewindow_logit_ceiling_coef = float(
-            max(0.0, m3s2_event_window_prewindow_logit_ceiling_coef)
+        self.event_window_prewindow_logit_ceiling_coef = float(
+            max(0.0, event_window_prewindow_logit_ceiling_coef)
         )
-        self.m3s2_event_window_prewindow_logit_ceiling = float(
-            m3s2_event_window_prewindow_logit_ceiling
+        self.event_window_prewindow_logit_ceiling = float(
+            event_window_prewindow_logit_ceiling
         )
-        self.m3s2_event_window_quality_logit_floor_coef = float(
-            max(0.0, m3s2_event_window_quality_logit_floor_coef)
+        self.event_window_quality_logit_floor_coef = float(
+            max(0.0, event_window_quality_logit_floor_coef)
         )
-        self.m3s2_event_window_quality_logit_floor = float(m3s2_event_window_quality_logit_floor)
-        self.m3s2_event_window_use_stopping_head = bool(m3s2_event_window_use_stopping_head)
-        self.m3s2_event_window_separate_update_enabled = bool(
-            m3s2_event_window_separate_update_enabled
+        self.event_window_quality_logit_floor = float(event_window_quality_logit_floor)
+        self.event_window_use_stopping_head = bool(event_window_use_stopping_head)
+        self.event_window_separate_update_enabled = bool(
+            event_window_separate_update_enabled
         )
-        self.m3s2_event_window_dedicated_optimizer_enabled = bool(
-            m3s2_event_window_dedicated_optimizer_enabled
+        self.event_window_dedicated_optimizer_enabled = bool(
+            event_window_dedicated_optimizer_enabled
         )
-        self.m3s2_event_window_separate_update_steps = max(
-            1, int(m3s2_event_window_separate_update_steps)
+        self.event_window_separate_update_steps = max(
+            1, int(event_window_separate_update_steps)
         )
-        self.m3s2_event_window_max_grad_norm = float(max(0.0, m3s2_event_window_max_grad_norm))
-        self.m3s2_event_window_support_preserving_collect_enabled = bool(
-            m3s2_event_window_support_preserving_collect_enabled
+        self.event_window_max_grad_norm = float(max(0.0, event_window_max_grad_norm))
+        self.event_window_support_preserving_collect_enabled = bool(
+            event_window_support_preserving_collect_enabled
         )
-        self.m3s2_event_window_support_preserving_hold_quality_enabled = bool(
-            m3s2_event_window_support_preserving_hold_quality_enabled
+        self.event_window_support_preserving_hold_quality_enabled = bool(
+            event_window_support_preserving_hold_quality_enabled
         )
-        self.m3s2_fire_boundary_coef = float(max(0.0, m3s2_fire_boundary_coef))
-        self.m3s2_fire_boundary_negative_logit_ceiling_coef = float(
-            max(0.0, m3s2_fire_boundary_negative_logit_ceiling_coef)
+        self.fire_boundary_coef = float(max(0.0, fire_boundary_coef))
+        self.fire_boundary_negative_logit_ceiling_coef = float(
+            max(0.0, fire_boundary_negative_logit_ceiling_coef)
         )
-        self.m3s2_fire_boundary_negative_logit_ceiling = float(
-            m3s2_fire_boundary_negative_logit_ceiling
+        self.fire_boundary_negative_logit_ceiling = float(
+            fire_boundary_negative_logit_ceiling
         )
-        self.m3s2_fire_boundary_positive_logit_floor_coef = float(
-            max(0.0, m3s2_fire_boundary_positive_logit_floor_coef)
+        self.fire_boundary_positive_logit_floor_coef = float(
+            max(0.0, fire_boundary_positive_logit_floor_coef)
         )
-        self.m3s2_fire_boundary_positive_logit_floor = float(
-            m3s2_fire_boundary_positive_logit_floor
+        self.fire_boundary_positive_logit_floor = float(
+            fire_boundary_positive_logit_floor
         )
-        self.m3s2_fire_boundary_separate_update_enabled = bool(
-            m3s2_fire_boundary_separate_update_enabled
+        self.fire_boundary_separate_update_enabled = bool(
+            fire_boundary_separate_update_enabled
         )
-        self.m3s2_fire_boundary_dedicated_optimizer_enabled = bool(
-            m3s2_fire_boundary_dedicated_optimizer_enabled
+        self.fire_boundary_dedicated_optimizer_enabled = bool(
+            fire_boundary_dedicated_optimizer_enabled
         )
-        self.m3s2_fire_boundary_separate_update_steps = max(
-            1, int(m3s2_fire_boundary_separate_update_steps)
+        self.fire_boundary_separate_update_steps = max(
+            1, int(fire_boundary_separate_update_steps)
         )
-        self.m3s2_fire_boundary_max_grad_norm = float(max(0.0, m3s2_fire_boundary_max_grad_norm))
-        self.m3s2_fire_boundary_support_preserving_collect_enabled = bool(
-            m3s2_fire_boundary_support_preserving_collect_enabled
+        self.fire_boundary_max_grad_norm = float(max(0.0, fire_boundary_max_grad_norm))
+        self.fire_boundary_support_preserving_collect_enabled = bool(
+            fire_boundary_support_preserving_collect_enabled
         )
-        self.m3s2_fire_boundary_support_preserving_hold_quality_enabled = bool(
-            m3s2_fire_boundary_support_preserving_hold_quality_enabled
+        self.fire_boundary_support_preserving_hold_quality_enabled = bool(
+            fire_boundary_support_preserving_hold_quality_enabled
         )
-        self.m3s2_window_classifier_coef = float(max(0.0, m3s2_window_classifier_coef))
-        self.m3s2_window_classifier_prewindow_logit_ceiling_coef = float(
-            max(0.0, m3s2_window_classifier_prewindow_logit_ceiling_coef)
+        self.window_classifier_coef = float(max(0.0, window_classifier_coef))
+        self.window_classifier_prewindow_logit_ceiling_coef = float(
+            max(0.0, window_classifier_prewindow_logit_ceiling_coef)
         )
-        self.m3s2_window_classifier_prewindow_logit_ceiling = float(
-            m3s2_window_classifier_prewindow_logit_ceiling
+        self.window_classifier_prewindow_logit_ceiling = float(
+            window_classifier_prewindow_logit_ceiling
         )
-        self.m3s2_window_classifier_quality_logit_floor_coef = float(
-            max(0.0, m3s2_window_classifier_quality_logit_floor_coef)
+        self.window_classifier_quality_logit_floor_coef = float(
+            max(0.0, window_classifier_quality_logit_floor_coef)
         )
-        self.m3s2_window_classifier_quality_logit_floor = float(
-            m3s2_window_classifier_quality_logit_floor
+        self.window_classifier_quality_logit_floor = float(
+            window_classifier_quality_logit_floor
         )
-        self.m3s2_window_classifier_detach_latent = bool(m3s2_window_classifier_detach_latent)
-        self.m3s2_window_classifier_separate_update_enabled = bool(
-            m3s2_window_classifier_separate_update_enabled
+        self.window_classifier_detach_latent = bool(window_classifier_detach_latent)
+        self.window_classifier_separate_update_enabled = bool(
+            window_classifier_separate_update_enabled
         )
-        self.m3s2_window_classifier_dedicated_optimizer_enabled = bool(
-            m3s2_window_classifier_dedicated_optimizer_enabled
+        self.window_classifier_dedicated_optimizer_enabled = bool(
+            window_classifier_dedicated_optimizer_enabled
         )
-        self.m3s2_window_classifier_separate_update_steps = max(
+        self.window_classifier_separate_update_steps = max(
             1,
-            int(m3s2_window_classifier_separate_update_steps),
+            int(window_classifier_separate_update_steps),
         )
-        self.m3s2_window_classifier_max_grad_norm = float(
-            max(0.0, m3s2_window_classifier_max_grad_norm)
+        self.window_classifier_max_grad_norm = float(
+            max(0.0, window_classifier_max_grad_norm)
         )
-        self.m3s2_window_classifier_replay_enabled = bool(m3s2_window_classifier_replay_enabled)
-        self.m3s2_window_classifier_replay_storage = str(
-            m3s2_window_classifier_replay_storage or "latent"
+        self.window_classifier_replay_enabled = bool(window_classifier_replay_enabled)
+        self.window_classifier_replay_storage = str(
+            window_classifier_replay_storage or "latent"
         ).lower()
-        if self.m3s2_window_classifier_replay_storage not in {"latent", "observation"}:
+        if self.window_classifier_replay_storage not in {"latent", "observation"}:
             raise ValueError(
-                "m3s2_window_classifier_replay_storage must be 'latent' or 'observation'"
+                "window_classifier_replay_storage must be 'latent' or 'observation'"
             )
-        self.m3s2_window_classifier_replay_capacity = max(
-            1, int(m3s2_window_classifier_replay_capacity)
+        self.window_classifier_replay_capacity = max(
+            1, int(window_classifier_replay_capacity)
         )
-        self.m3s2_window_classifier_replay_batch_size = max(
-            2, int(m3s2_window_classifier_replay_batch_size)
+        self.window_classifier_replay_batch_size = max(
+            2, int(window_classifier_replay_batch_size)
         )
-        self.m3s2_window_classifier_replay_min_positive = max(
+        self.window_classifier_replay_min_positive = max(
             1,
-            int(m3s2_window_classifier_replay_min_positive),
+            int(window_classifier_replay_min_positive),
         )
-        self.m3s2_window_classifier_replay_min_negative = max(
+        self.window_classifier_replay_min_negative = max(
             1,
-            int(m3s2_window_classifier_replay_min_negative),
+            int(window_classifier_replay_min_negative),
         )
-        self._m3s1_grouped_stopping_sidecar: _M3S1GroupedStoppingSidecar | None = None
-        self._m3s1_last_grouped_stopping_loss: M3S1GroupedStoppingLoss | None = None
-        self._m3s1_last_grouped_stopping_grad_norm = 0.0
-        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics()
-        self._m3s2_last_event_window_loss: M3S1GroupedStoppingLoss | None = None
-        self._m3s2_last_event_window_grad_norm = 0.0
-        self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
-        self._m3s2_last_fire_boundary_loss: _M3S2FireBoundaryLoss | None = None
-        self._m3s2_last_fire_boundary_grad_norm = 0.0
-        self._m3s2_last_window_classifier_loss: _M3S2WindowClassifierLoss | None = None
-        self._m3s2_last_window_classifier_grad_norm = 0.0
-        self._m3s2_window_classifier_replay = (
-            _M3S2WindowClassifierReplay(
-                capacity=self.m3s2_window_classifier_replay_capacity,
-                storage=self.m3s2_window_classifier_replay_storage,
+        self._grouped_stopping_sidecar: _GroupedStoppingSidecar | None = None
+        self._last_grouped_stopping_loss: GroupedStoppingLoss | None = None
+        self._last_grouped_stopping_grad_norm = 0.0
+        self._last_grouped_stopping_diagnostics = _GroupedStoppingDiagnostics()
+        self._last_event_window_loss: GroupedStoppingLoss | None = None
+        self._last_event_window_grad_norm = 0.0
+        self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
+        self._last_fire_boundary_loss: _FireBoundaryLoss | None = None
+        self._last_fire_boundary_grad_norm = 0.0
+        self._last_window_classifier_loss: _WindowClassifierLoss | None = None
+        self._last_window_classifier_grad_norm = 0.0
+        self._window_classifier_replay = (
+            _WindowClassifierReplay(
+                capacity=self.window_classifier_replay_capacity,
+                storage=self.window_classifier_replay_storage,
             )
-            if self.m3s2_window_classifier_replay_enabled
+            if self.window_classifier_replay_enabled
             else None
         )
-        self._m3s2_support_preserving_collect_legal_open_age: np.ndarray | None = None
-        self._m3s2_support_preserving_collect_hold_count = 0
-        self._m3s2_support_preserving_collect_candidate_count = 0
-        self._m3s2_support_preserving_collect_quality_count = 0
+        self._support_preserving_collect_legal_open_age: np.ndarray | None = None
+        self._support_preserving_collect_hold_count = 0
+        self._support_preserving_collect_candidate_count = 0
+        self._support_preserving_collect_quality_count = 0
         super().__init__(*args, **kwargs)
 
     def _first_event_label_collection_enabled(self) -> bool:
         return bool(
-            self._a6_first_event_enabled()
-            or self._a7_first_event_aux_enabled()
-            or self._m3s1_grouped_stopping_enabled()
-            or self._m3s2_event_window_enabled()
-            or self._m3s2_fire_boundary_enabled()
-            or self._m3s2_window_classifier_enabled()
+            self._first_event_enabled()
+            or self._first_event_aux_enabled()
+            or self._grouped_stopping_enabled()
+            or self._event_window_enabled()
+            or self._fire_boundary_enabled()
+            or self._window_classifier_enabled()
         )
 
     def _should_use_device_rollout_buffer(self) -> bool:
@@ -533,14 +533,14 @@ class AdaptiveKLPPO(
         if self.rollout_buffer_class is None:
             if self._should_use_device_rollout_buffer():
                 self.rollout_buffer_class = (
-                    A6FirstEventDeviceDictRolloutBuffer
+                    FirstEventDeviceDictRolloutBuffer
                     if self._first_event_label_collection_enabled()
                     else DeviceDictRolloutBuffer
                 )
             elif self._first_event_label_collection_enabled() and isinstance(
                 self.observation_space, spaces.Dict
             ):
-                self.rollout_buffer_class = A6FirstEventDictRolloutBuffer
+                self.rollout_buffer_class = FirstEventDictRolloutBuffer
         super()._setup_model()
 
     def _get_policy_obs_tensor(self, env: VecEnv, obs) -> th.Tensor | dict[str, th.Tensor]:
@@ -580,46 +580,46 @@ class AdaptiveKLPPO(
 
         n_steps = 0
         rollout_buffer.reset()
-        self._m3s1_grouped_stopping_sidecar = None
-        self._m3s1_last_grouped_stopping_loss = None
-        self._m3s1_last_grouped_stopping_grad_norm = 0.0
-        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics()
-        self._m3s2_last_event_window_loss = None
-        self._m3s2_last_event_window_grad_norm = 0.0
-        self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
-        self._m3s2_last_fire_boundary_loss = None
-        self._m3s2_last_fire_boundary_grad_norm = 0.0
-        self._m3s2_last_window_classifier_loss = None
-        self._m3s2_last_window_classifier_grad_norm = 0.0
-        self._m3s2_support_preserving_collect_hold_count = 0
-        self._m3s2_support_preserving_collect_candidate_count = 0
-        self._m3s2_support_preserving_collect_quality_count = 0
+        self._grouped_stopping_sidecar = None
+        self._last_grouped_stopping_loss = None
+        self._last_grouped_stopping_grad_norm = 0.0
+        self._last_grouped_stopping_diagnostics = _GroupedStoppingDiagnostics()
+        self._last_event_window_loss = None
+        self._last_event_window_grad_norm = 0.0
+        self._last_event_window_diagnostics = _GroupedStoppingDiagnostics()
+        self._last_fire_boundary_loss = None
+        self._last_fire_boundary_grad_norm = 0.0
+        self._last_window_classifier_loss = None
+        self._last_window_classifier_grad_norm = 0.0
+        self._support_preserving_collect_hold_count = 0
+        self._support_preserving_collect_candidate_count = 0
+        self._support_preserving_collect_quality_count = 0
         if self.use_sde:
             self.policy.reset_noise(env.num_envs)
 
         callback.on_rollout_start()
-        collect_a6_first_event = bool(
+        collect_first_event = bool(
             self._first_event_label_collection_enabled()
-            and getattr(rollout_buffer, "supports_a6_first_event_labels", False)
+            and getattr(rollout_buffer, "supports_first_event_labels", False)
         )
-        a6_engagement_state: list[str] = []
-        a6_fire_mask: list[bool] = []
-        a6_fire_once_accepted: list[bool] = []
-        a6_episode_id: list[int] = []
-        a6_launch_window_open: list[bool] = []
-        existing_a6_episode_id = getattr(self, "_a6_first_event_env_episode_id", None)
+        engagement_state: list[str] = []
+        fire_mask: list[bool] = []
+        fire_once_accepted: list[bool] = []
+        episode_id: list[int] = []
+        launch_window_open: list[bool] = []
+        existing_episode_id = getattr(self, "_first_event_env_episode_id", None)
         if (
-            collect_a6_first_event
-            and isinstance(existing_a6_episode_id, np.ndarray)
-            and int(existing_a6_episode_id.size) == int(env.num_envs)
+            collect_first_event
+            and isinstance(existing_episode_id, np.ndarray)
+            and int(existing_episode_id.size) == int(env.num_envs)
         ):
-            a6_env_episode_id = existing_a6_episode_id.astype(np.int64, copy=True)
+            env_episode_id = existing_episode_id.astype(np.int64, copy=True)
         else:
-            a6_env_episode_id = np.arange(env.num_envs, dtype=np.int64)
-        if collect_a6_first_event and not hasattr(
-            self, "_a6_first_event_curriculum_seeded_episode_ids"
+            env_episode_id = np.arange(env.num_envs, dtype=np.int64)
+        if collect_first_event and not hasattr(
+            self, "_first_event_curriculum_seeded_episode_ids"
         ):
-            self._a6_first_event_curriculum_seeded_episode_ids = set()
+            self._first_event_curriculum_seeded_episode_ids = set()
 
         while n_steps < n_rollout_steps:
             if self.use_sde and self.sde_sample_freq > 0 and n_steps % self.sde_sample_freq == 0:
@@ -628,26 +628,26 @@ class AdaptiveKLPPO(
             with th.no_grad():
                 obs_tensor = self._get_policy_obs_tensor(env, self._last_obs)
                 actions_tensor, values, log_probs = self.policy(obs_tensor)
-            a6_policy_fire_mask = (
-                self._a6_first_event_policy_fire_mask_from_obs(obs_tensor, env.num_envs)
-                if collect_a6_first_event
+            policy_fire_mask = (
+                self._first_event_policy_fire_mask_from_obs(obs_tensor, env.num_envs)
+                if collect_first_event
                 else None
             )
-            a6_policy_launch_window = (
-                self._a6_first_event_launch_window_from_policy_obs(obs_tensor, env.num_envs)
-                if collect_a6_first_event
+            policy_launch_window = (
+                self._first_event_launch_window_from_policy_obs(obs_tensor, env.num_envs)
+                if collect_first_event
                 else None
             )
-            m3s2_support_hold_mask = self._m3s2_support_preserving_collect_masks(
-                fire_mask=a6_policy_fire_mask,
-                launch_window_open=a6_policy_launch_window,
+            support_hold_mask = self._support_preserving_collect_masks(
+                fire_mask=policy_fire_mask,
+                launch_window_open=policy_launch_window,
                 n_envs=env.num_envs,
             )
-            actions_tensor, log_probs = self._m3s2_apply_support_preserving_collect_actions(
+            actions_tensor, log_probs = self._apply_support_preserving_collect_actions(
                 obs_tensor,
                 actions_tensor,
                 log_probs,
-                m3s2_support_hold_mask,
+                support_hold_mask,
             )
             actions = actions_tensor.detach().cpu().numpy()
 
@@ -663,29 +663,29 @@ class AdaptiveKLPPO(
             new_obs, rewards, dones, infos = env.step(clipped_actions)
             self.num_timesteps += env.num_envs
 
-            if collect_a6_first_event:
+            if collect_first_event:
                 for env_idx, info in enumerate(infos):
                     row = info if isinstance(info, dict) else {}
-                    if a6_policy_fire_mask is not None and env_idx < len(a6_policy_fire_mask):
-                        policy_window_open = bool(a6_policy_fire_mask[env_idx])
+                    if policy_fire_mask is not None and env_idx < len(policy_fire_mask):
+                        policy_window_open = bool(policy_fire_mask[env_idx])
                     else:
-                        policy_window_open = self._a6_first_event_fire_mask_from_info(row)
-                    a6_engagement_state.append(
+                        policy_window_open = self._first_event_fire_mask_from_info(row)
+                    engagement_state.append(
                         "AuthorizedReady"
                         if policy_window_open
                         else str(row.get("engagement_state", "") or "")
                     )
-                    a6_fire_mask.append(bool(policy_window_open))
-                    a6_fire_once_accepted.append(
-                        self._a6_first_event_bool(row.get("fire_once_accepted", False))
+                    fire_mask.append(bool(policy_window_open))
+                    fire_once_accepted.append(
+                        self._first_event_bool(row.get("fire_once_accepted", False))
                     )
-                    a6_episode_id.append(int(a6_env_episode_id[env_idx]))
-                    if a6_policy_launch_window is not None and env_idx < len(
-                        a6_policy_launch_window
+                    episode_id.append(int(env_episode_id[env_idx]))
+                    if policy_launch_window is not None and env_idx < len(
+                        policy_launch_window
                     ):
-                        a6_launch_window_open.append(bool(a6_policy_launch_window[env_idx]))
+                        launch_window_open.append(bool(policy_launch_window[env_idx]))
                     else:
-                        a6_launch_window_open.append(bool(policy_window_open))
+                        launch_window_open.append(bool(policy_window_open))
 
             callback.update_locals(locals())
             if not callback.on_step():
@@ -718,12 +718,12 @@ class AdaptiveKLPPO(
             )
             self._last_obs = new_obs  # type: ignore[assignment]
             self._last_episode_starts = dones
-            if collect_a6_first_event:
+            if collect_first_event:
                 for env_idx, done in enumerate(dones):
                     if bool(done):
-                        a6_env_episode_id[env_idx] += env.num_envs
+                        env_episode_id[env_idx] += env.num_envs
                         ages = getattr(
-                            self, "_m3s2_support_preserving_collect_legal_open_age", None
+                            self, "_support_preserving_collect_legal_open_age", None
                         )
                         if isinstance(ages, np.ndarray) and int(ages.size) == int(env.num_envs):
                             ages[int(env_idx)] = 0
@@ -731,26 +731,26 @@ class AdaptiveKLPPO(
         with th.no_grad():
             values = self.policy.predict_values(self._get_policy_obs_tensor(env, new_obs))  # type: ignore[arg-type]
 
-        if collect_a6_first_event:
-            self._a6_first_event_env_episode_id = a6_env_episode_id
-            self._attach_a6_first_event_labels_to_rollout_buffer(
+        if collect_first_event:
+            self._first_event_env_episode_id = env_episode_id
+            self._attach_first_event_labels_to_rollout_buffer(
                 rollout_buffer,
-                engagement_state=a6_engagement_state,
-                fire_mask=a6_fire_mask,
-                fire_once_accepted=a6_fire_once_accepted,
-                episode_id=a6_episode_id,
+                engagement_state=engagement_state,
+                fire_mask=fire_mask,
+                fire_once_accepted=fire_once_accepted,
+                episode_id=episode_id,
                 launch_window_open=(
-                    a6_launch_window_open if self.a6_first_event_launch_window_enabled else None
+                    launch_window_open if self.first_event_launch_window_enabled else None
                 ),
-                env_episode_id_after_rollout=a6_env_episode_id,
+                env_episode_id_after_rollout=env_episode_id,
             )
-            if self._m3s1_grouped_stopping_sidecar_enabled():
-                self._m3s1_grouped_stopping_sidecar = self._build_m3s1_grouped_stopping_sidecar(
+            if self._grouped_stopping_sidecar_enabled():
+                self._grouped_stopping_sidecar = self._build_grouped_stopping_sidecar(
                     rollout_buffer,
-                    fire_mask=a6_fire_mask,
-                    fire_once_accepted=a6_fire_once_accepted,
-                    episode_id=a6_episode_id,
-                    launch_window_open=a6_launch_window_open,
+                    fire_mask=fire_mask,
+                    fire_once_accepted=fire_once_accepted,
+                    episode_id=episode_id,
+                    launch_window_open=launch_window_open,
                 )
         rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
 
@@ -871,10 +871,10 @@ class AdaptiveKLPPO(
         # ``_record_*_logs`` mixin methods read from it.
         stats = _TrainEpochStats()
         continue_training = True
-        m3s2_window_classifier_loss: _M3S2WindowClassifierLoss | None = None
-        m3s2_fire_boundary_loss: _M3S2FireBoundaryLoss | None = None
-        m3s2_event_window_loss: M3S1GroupedStoppingLoss | None = None
-        m3s1_grouped_stopping_loss: M3S1GroupedStoppingLoss | None = None
+        window_classifier_loss: _WindowClassifierLoss | None = None
+        fire_boundary_loss: _FireBoundaryLoss | None = None
+        event_window_loss: GroupedStoppingLoss | None = None
+        grouped_stopping_loss: GroupedStoppingLoss | None = None
 
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
@@ -882,7 +882,7 @@ class AdaptiveKLPPO(
             for rollout_data in self.rollout_buffer.get(self.batch_size):
                 separate_policy_margin_loss, separate_policy_margin_grad_norm = (
                     self._first_event_policy_margin_separate_update(rollout_data)
-                    if self.a7_event_policy_separate_update_enabled
+                    if self.event_policy_separate_update_enabled
                     else (None, 0.0)
                 )
                 if separate_policy_margin_loss is not None:
@@ -968,7 +968,7 @@ class AdaptiveKLPPO(
                         float(first_event_hazard_loss.positive_frac)
                     )
                     loss = loss + first_event_hazard_loss.loss
-                if not self.a7_event_policy_separate_update_enabled:
+                if not self.event_policy_separate_update_enabled:
                     first_event_policy_margin_loss = self._first_event_policy_margin_loss(
                         rollout_data
                     )
@@ -977,7 +977,7 @@ class AdaptiveKLPPO(
                         loss = loss + first_event_policy_margin_loss.loss
                 separate_credit_loss, separate_credit_grad_norm = (
                     self._first_event_credit_separate_value_update(rollout_data)
-                    if self.a7_event_credit_separate_update_enabled
+                    if self.event_credit_separate_update_enabled
                     else (None, 0.0)
                 )
                 if separate_credit_loss is not None:
@@ -987,9 +987,9 @@ class AdaptiveKLPPO(
                     stats.first_event_credit_separate_update_counts.append(1)
                 first_event_credit_loss = self._first_event_credit_loss(
                     rollout_data,
-                    value_coef=0.0 if self.a7_event_credit_separate_update_enabled else None,
+                    value_coef=0.0 if self.event_credit_separate_update_enabled else None,
                     projection_value_coef=0.0
-                    if self.a7_event_credit_separate_update_enabled
+                    if self.event_credit_separate_update_enabled
                     else None,
                 )
                 if first_event_credit_loss is not None:
@@ -1030,10 +1030,10 @@ class AdaptiveKLPPO(
             if not continue_training:
                 break
 
-        m3s2_window_classifier_loss = self._m3s2_window_classifier_auxiliary_update()
-        m3s2_fire_boundary_loss = self._m3s2_fire_boundary_auxiliary_update()
-        m3s2_event_window_loss = self._m3s2_event_window_auxiliary_update()
-        m3s1_grouped_stopping_loss = self._m3s1_grouped_stopping_auxiliary_update()
+        window_classifier_loss = self._window_classifier_auxiliary_update()
+        fire_boundary_loss = self._fire_boundary_auxiliary_update()
+        event_window_loss = self._event_window_auxiliary_update()
+        grouped_stopping_loss = self._grouped_stopping_auxiliary_update()
 
         explained_var = explained_variance(
             self._to_numpy_flat(self.rollout_buffer.values),
@@ -1065,21 +1065,21 @@ class AdaptiveKLPPO(
             self.logger.record(
                 "train/action_mean_regularization_coef", float(self.action_mean_regularization_coef)
             )
-        if self._a6_first_event_enabled():
-            self._record_a6_first_event_logs(stats)
-        if self._m3s2_window_classifier_enabled():
-            self._record_m3s2_window_classifier_logs(m3s2_window_classifier_loss)
-        if self._m3s2_fire_boundary_enabled():
-            self._record_m3s2_fire_boundary_logs(m3s2_fire_boundary_loss)
-        if self._m3s2_event_window_enabled():
-            self._record_m3s2_event_window_logs(m3s2_event_window_loss)
-        if self._m3s1_grouped_stopping_enabled():
-            self._record_m3s1_grouped_stopping_logs(m3s1_grouped_stopping_loss)
-        if self._a7_event_credit_enabled():
-            self._record_a7_event_credit_logs(stats)
+        if self._first_event_enabled():
+            self._record_first_event_logs(stats)
+        if self._window_classifier_enabled():
+            self._record_window_classifier_logs(window_classifier_loss)
+        if self._fire_boundary_enabled():
+            self._record_fire_boundary_logs(fire_boundary_loss)
+        if self._event_window_enabled():
+            self._record_event_window_logs(event_window_loss)
+        if self._grouped_stopping_enabled():
+            self._record_grouped_stopping_logs(grouped_stopping_loss)
+        if self._event_credit_enabled():
+            self._record_event_credit_logs(stats)
 
-        if self._a7_event_policy_margin_enabled():
-            self._record_a7_event_policy_margin_logs(stats)
+        if self._event_policy_margin_enabled():
+            self._record_event_policy_margin_logs(stats)
 
         self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")
         self.logger.record("train/clip_range", float(clip_range))

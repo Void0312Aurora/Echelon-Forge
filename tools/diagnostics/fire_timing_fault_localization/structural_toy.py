@@ -19,9 +19,9 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.rl.policy_algo.m3s1_grouped_stopping import (  # noqa: E402
-    M3S1GroupedStoppingEvidence,
-    compute_m3s1_grouped_stopping_loss,
+from python.rl.policy_algo.grouped_stopping import (  # noqa: E402
+    GroupedStoppingEvidence,
+    compute_grouped_stopping_loss,
 )
 
 
@@ -46,9 +46,9 @@ class ToyProbeConfig:
     window_mass_gate: float
 
 
-def _build_group(logits: th.Tensor, *, prewindow_steps: int, quality_steps: int) -> M3S1GroupedStoppingEvidence:
+def _build_group(logits: th.Tensor, *, prewindow_steps: int, quality_steps: int) -> GroupedStoppingEvidence:
     total_steps = int(prewindow_steps) + int(quality_steps)
-    return M3S1GroupedStoppingEvidence(
+    return GroupedStoppingEvidence(
         group_id="toy-window",
         episode_id="toy-episode",
         route_source="structural_toy",
@@ -62,7 +62,7 @@ def _build_group(logits: th.Tensor, *, prewindow_steps: int, quality_steps: int)
 
 
 def _loss(logits: th.Tensor, config: ToyProbeConfig):
-    return compute_m3s1_grouped_stopping_loss(
+    return compute_grouped_stopping_loss(
         [_build_group(logits, prewindow_steps=config.prewindow_steps, quality_steps=config.quality_steps)],
         early_mass_coef=float(config.early_mass_coef),
         early_mass_budget=float(config.early_mass_budget),
