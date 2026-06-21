@@ -170,7 +170,7 @@ def build_probability_matrix_report(probe: dict[str, Any]) -> dict[str, Any]:
         "component_failure_probability "
         "(max across component mechanism load rows)"
       ),
-      "probability_source": "runtime component row component_failure_probability_source",
+      "probability_source": "runtime component response row failure_probability_source",
       "synthetic_component_failure_probability": True,
       "real_weapon_pk_authority": False,
       "deterministic_fuze_authority": False,

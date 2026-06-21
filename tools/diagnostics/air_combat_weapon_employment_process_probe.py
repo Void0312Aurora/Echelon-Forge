@@ -57,7 +57,6 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema i
 )
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_chain import (
     _append_unique_lethality_chain_rows,
-    _component_damage_sample_triggered,
     _effects_event_has_warhead_load,
     _lethality_chain_rows,
     _lethality_evidence_level,
@@ -65,12 +64,17 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethalit
     _parse_platform_damage_state_delta,
     _project_current_lethality_chain_rows,
 )
+from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_abstraction import (
+    _lethality_chain_decoupling_summary,
+    _lethality_chain_stage_abstractions,
+)
+from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_scalar_ledger import (
+    _lethality_chain_scalar_ledger,
+    _scalar_coupling_summary,
+)
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_rows import (
-    _component_mechanism_row_projection,
-    _component_mechanism_rows_by_effect_id,
     _lethality_base_row,
     _lethality_header_base_kwargs,
-    _match_component_mechanism_row,
 )
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_snapshot import (
     _lethality_chain_snapshot_columns,
@@ -150,9 +154,6 @@ __all__ = (
     "_build_env",
     "_c2_roe_event_columns",
     "_clamp_unit",
-    "_component_damage_sample_triggered",
-    "_component_mechanism_row_projection",
-    "_component_mechanism_rows_by_effect_id",
     "_controlled_consequence_bridge_record",
     "_damage_consequence_reward_columns",
     "_diagnostic_dcr_bridge_overrides",
@@ -169,13 +170,15 @@ __all__ = (
     "_legal_mask_fire_action",
     "_lethality_base_row",
     "_lethality_chain_rows",
+    "_lethality_chain_decoupling_summary",
+    "_lethality_chain_scalar_ledger",
     "_lethality_chain_snapshot_columns",
+    "_lethality_chain_stage_abstractions",
     "_lethality_evidence_level",
     "_lethality_header_base_kwargs",
     "_lethality_trace_indexes",
     "_m3_stopping_policy_diagnostics",
     "_m3_window_classifier_policy_diagnostics",
-    "_match_component_mechanism_row",
     "_mission_command_dict",
     "_model_action",
     "_model_policy_diagnostics",
@@ -185,6 +188,7 @@ __all__ = (
     "_project_current_lethality_chain_rows",
     "_range_gate_fire_action",
     "_reward_terms_prefix_total",
+    "_scalar_coupling_summary",
     "_snapshot_row",
     "_stable_json",
     "_summarize_episode",
@@ -416,6 +420,10 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             pass
 
     reasons = Counter(str(row.get("termination_reason", "")) for row in episode_summaries)
+    lethality_chain_stage_abstractions = _lethality_chain_stage_abstractions(
+        lethality_chain_rows
+    )
+    lethality_chain_scalar_ledger = _lethality_chain_scalar_ledger(lethality_chain_rows)
     payload = {
         "scenario": scenario_path,
         "train_config": os.path.abspath(args.train_config) if args.train_config else None,
@@ -430,6 +438,14 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "episodes": int(args.episodes),
         "rows": len(rows),
         "lethality_chain_rows": lethality_chain_rows,
+        "lethality_chain_stage_abstractions": lethality_chain_stage_abstractions,
+        "lethality_chain_decoupling_summary": _lethality_chain_decoupling_summary(
+            lethality_chain_stage_abstractions
+        ),
+        "lethality_chain_scalar_ledger": lethality_chain_scalar_ledger,
+        "lethality_chain_scalar_coupling_summary": _scalar_coupling_summary(
+            lethality_chain_scalar_ledger
+        ),
         "termination_reasons": dict(sorted(reasons.items())),
         "episode_summaries": episode_summaries,
         "controlled_consequence_bridge_records": [

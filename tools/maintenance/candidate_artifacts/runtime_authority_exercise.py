@@ -186,7 +186,22 @@ def _sample_stock_near_miss_event(
 
 def _component_rows_summary(event: object) -> list[dict[str, Any]]:
   rows: list[dict[str, Any]] = []
+  response_by_key = {
+    (
+      str(row.component_name),
+      str(row.component_system),
+      str(row.component_redundancy_group_id),
+    ): row
+    for row in list(getattr(event, "component_response_rows", []) or [])
+  }
   for row in event.component_mechanism_load_rows:
+    response = response_by_key.get(
+      (
+        str(row.component_name),
+        str(row.component_system),
+        str(row.component_redundancy_group_id),
+      )
+    )
     rows.append(
       {
         "component_name": str(row.component_name),
@@ -195,10 +210,14 @@ def _component_rows_summary(event: object) -> list[dict[str, Any]]:
         "direct_hit": bool(row.direct_hit),
         "distance_m": float(row.distance_m),
         "effect_scale": float(row.effect_scale),
-        "component_threshold_scale": float(row.component_threshold_scale),
-        "component_failure_probability": float(row.component_failure_probability),
-        "component_failure_probability_source": str(
-          row.component_failure_probability_source
+        "component_threshold_scale": (
+          float(response.threshold_scale) if response is not None else 1.0
+        ),
+        "component_failure_probability": (
+          float(response.failure_probability) if response is not None else 0.0
+        ),
+        "component_failure_probability_source": (
+          str(response.failure_probability_source) if response is not None else "none"
         ),
         "mechanism_fragment_areal_density_per_m2": float(
           row.mechanism_fragment_areal_density_per_m2

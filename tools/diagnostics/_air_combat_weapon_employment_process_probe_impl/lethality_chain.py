@@ -2,25 +2,19 @@
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
 from tools.diagnostics import lethality_chain_contract as chain_contract
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
     LETHALITY_CHAIN_SCHEMA_VERSION,
-    _clamp_unit,
     _entity_id,
     _event_id,
     _finite_float,
-    _positive_finite,
     _stable_json,
 )
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_rows import (
-    _component_mechanism_row_projection,
-    _component_mechanism_rows_by_effect_id,
     _lethality_base_row,
     _lethality_header_base_kwargs,
-    _match_component_mechanism_row,
 )
 
 
@@ -50,31 +44,6 @@ def _effects_event_has_warhead_load(effect: Any) -> bool:
         "warhead_spatial_hit_estimate",
     )
     return any(_finite_float(getattr(effect, field, 0.0), 0.0) > 0.0 for field in load_fields)
-
-
-def _component_damage_sample_triggered(row: Any) -> bool:
-    probability = _finite_float(getattr(row, "component_failure_probability", float("nan")))
-    sample = _finite_float(getattr(row, "component_failure_sample", float("nan")))
-    if not math.isfinite(probability) or not math.isfinite(sample):
-        return False
-    if probability <= 0.0 or sample < 0.0 or sample > 1.0:
-        return False
-    if not str(getattr(row, "component_name", "") or ""):
-        return False
-    if not str(getattr(row, "component_system", "") or ""):
-        return False
-    load_fields = (
-        "effect_scale",
-        "mechanism_fragment_energy_j",
-        "mechanism_fragment_areal_density_per_m2",
-        "mechanism_penetration_margin",
-        "mechanism_blast_overpressure_kpa",
-        "mechanism_blast_impulse_kpa_ms",
-        "mechanism_rod_cut_margin",
-    )
-    return any(_positive_finite(getattr(row, field, 0.0)) for field in load_fields) and (
-        sample <= _clamp_unit(probability)
-    )
 
 
 def _parse_platform_damage_state_delta(value: Any) -> dict[str, float]:
@@ -137,7 +106,6 @@ def _lethality_chain_rows(
     engagement_events: Any,
 ) -> list[dict[str, Any]]:
     trace_by_effect, trace_by_damage = _lethality_trace_indexes(engagement_events)
-    component_rows_by_effect_id = _component_mechanism_rows_by_effect_id(engagement_events)
     effect_by_id = {
         _event_id(effect, "event_id"): effect
         for effect in list(getattr(engagement_events, "effects_events", []) or [])
@@ -369,11 +337,6 @@ def _lethality_chain_rows(
         row = _lethality_base_row(**base_kwargs)
         component_name = str(getattr(component_event, "component_name", "") or "")
         component_system = str(getattr(component_event, "component_system", "") or "")
-        source_mechanism_row = _match_component_mechanism_row(
-            component_rows_by_effect_id.get(int(base_kwargs["parent_event_id"]), []),
-            component_name=component_name,
-            component_system=component_system,
-        )
         row.update(
             {
                 "component_hit_count": 1,
@@ -385,6 +348,27 @@ def _lethality_chain_rows(
                 ),
                 "component_effect_scale": _finite_float(
                     getattr(component_event, "effect_scale", float("nan"))
+                ),
+                "component_spatial_intersection_fraction": _finite_float(
+                    getattr(component_event, "spatial_intersection_fraction", float("nan"))
+                ),
+                "component_pattern_weight": _finite_float(
+                    getattr(component_event, "pattern_weight", float("nan"))
+                ),
+                "component_orientation_weight": _finite_float(
+                    getattr(component_event, "orientation_weight", float("nan"))
+                ),
+                "component_receiver_exposure_fraction": _finite_float(
+                    getattr(component_event, "receiver_exposure_fraction", float("nan"))
+                ),
+                "component_armor_transmission": _finite_float(
+                    getattr(component_event, "armor_transmission", float("nan"))
+                ),
+                "component_sampling_confidence": _finite_float(
+                    getattr(component_event, "sampling_confidence", float("nan"))
+                ),
+                "component_load_intensity_scale": _finite_float(
+                    getattr(component_event, "load_intensity_scale", float("nan"))
                 ),
                 "component_load_source": str(getattr(component_event, "load_source", "") or ""),
                 "fragment_energy_j": _finite_float(
@@ -413,8 +397,6 @@ def _lethality_chain_rows(
                 ),
             }
         )
-        if source_mechanism_row is not None:
-            row.update(_component_mechanism_row_projection(source_mechanism_row))
         rows.append(row)
         standard_component_keys.add(
             (int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0))
@@ -800,53 +782,6 @@ def _lethality_chain_rows(
                 )
             component.update({"component_hit_count": int(component_hit_count)})
             rows.append(component)
-
-        if has_warhead_load and fallback_key not in standard_component_damage_keys:
-            triggered_rows = [
-                item
-                for item in list(getattr(effect, "component_mechanism_load_rows", []) or [])
-                if _component_damage_sample_triggered(item)
-            ]
-            if triggered_rows:
-                damage_source = triggered_rows[0]
-                component_damage = _lethality_base_row(
-                    stage=chain_contract.STAGE_COMPONENT_DAMAGE,
-                    **base_kwargs,
-                )
-                component_damage.update(
-                    {
-                        "status": "sampled",
-                        "reason": "transitional_component_damage_projection",
-                        "component_hit_count": int(len(triggered_rows)),
-                        "component_name": str(getattr(damage_source, "component_name", "") or ""),
-                        "component_system": str(
-                            getattr(damage_source, "component_system", "") or ""
-                        ),
-                        "component_integrity_before": _finite_float(
-                            getattr(damage_source, "component_integrity_before", float("nan"))
-                        ),
-                        "component_integrity_after": _finite_float(
-                            getattr(damage_source, "component_integrity_after", float("nan"))
-                        ),
-                        "component_failure_mode": str(
-                            getattr(damage_source, "component_failure_primary_mode", "") or ""
-                        ),
-                        "component_failure_severity": _finite_float(
-                            getattr(
-                                damage_source,
-                                "component_failure_primary_mode_severity",
-                                float("nan"),
-                            )
-                        ),
-                        "component_failure_probability": _finite_float(
-                            getattr(damage_source, "component_failure_probability", float("nan"))
-                        ),
-                        "component_failure_sample": _finite_float(
-                            getattr(damage_source, "component_failure_sample", float("nan"))
-                        ),
-                    }
-                )
-                rows.append(component_damage)
 
     for report in list(getattr(engagement_events, "damage_reports", []) or []):
         report_id = _event_id(report, "report_id")

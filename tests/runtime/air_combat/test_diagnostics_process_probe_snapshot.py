@@ -227,12 +227,6 @@ def _effect_component_damage_row(*, sample: float = 0.21) -> SimpleNamespace:
     mechanism_rod_cut_margin=0.0,
     mechanism_penetration_margin=0.25,
     mechanism_surface_incidence_cos=0.9,
-    component_integrity_before=1.0,
-    component_integrity_after=0.68,
-    component_failure_primary_mode="cut",
-    component_failure_primary_mode_severity=0.74,
-    component_failure_probability=0.82,
-    component_failure_sample=sample,
   )
 
 
@@ -405,11 +399,46 @@ class DiagnosticsProcessProbeSnapshotTests(unittest.TestCase):
         )
 
         self.assertIn("lethality_chain_rows", payload)
+        self.assertIn("lethality_chain_stage_abstractions", payload)
+        self.assertIn("lethality_chain_decoupling_summary", payload)
+        self.assertIn("lethality_chain_scalar_ledger", payload)
+        self.assertIn("lethality_chain_scalar_coupling_summary", payload)
         chain_stages = {str(row.get("stage", "")) for row in payload["lethality_chain_rows"]}
         self.assertIn("nearest_approach", chain_stages)
         self.assertIn("fuze", chain_stages)
-        self.assertIn("component_damage", chain_stages)
+        self.assertNotIn("component_damage", chain_stages)
         self.assertIn("platform_consequence", chain_stages)
+        abstraction_stages = {
+          str(row.get("abstraction_stage", ""))
+          for row in payload["lethality_chain_stage_abstractions"]
+        }
+        self.assertIn("approach", abstraction_stages)
+        self.assertIn("fuze_decision", abstraction_stages)
+        self.assertIn("warhead_load_field", abstraction_stages)
+        self.assertIn("component_response", abstraction_stages)
+        self.assertIn("consequence_projection", abstraction_stages)
+        decoupling_summary = payload["lethality_chain_decoupling_summary"]
+        self.assertFalse(decoupling_summary["authority_boundary"]["calibration_authority"])
+        self.assertEqual(decoupling_summary["chain_count"], 1)
+        self.assertGreaterEqual(decoupling_summary["abstraction_count"], 5)
+        scalar_summary = payload["lethality_chain_scalar_coupling_summary"]
+        self.assertFalse(scalar_summary["authority_boundary"]["calibration_authority"])
+        scalar_by_id = {
+          str(row.get("scalar_id", "")): row
+          for row in payload["lethality_chain_scalar_ledger"]
+        }
+        self.assertIn("approach.miss_distance_m", scalar_by_id)
+        self.assertIn(
+          "range_geometry_reused_across_stages",
+          scalar_by_id["approach.miss_distance_m"]["coupling_flags"],
+        )
+        self.assertGreaterEqual(
+          scalar_summary["coupling_flag_counts"].get(
+            "range_geometry_reused_across_stages",
+            0,
+          ),
+          1,
+        )
         self.assertEqual(
           payload["episode_summaries"][0]["lethality_chain_row_count"],
           len(payload["lethality_chain_rows"]),

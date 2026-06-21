@@ -226,12 +226,6 @@ def _effect_component_damage_row(*, sample: float = 0.21) -> SimpleNamespace:
     mechanism_rod_cut_margin=0.0,
     mechanism_penetration_margin=0.25,
     mechanism_surface_incidence_cos=0.9,
-    component_integrity_before=1.0,
-    component_integrity_after=0.68,
-    component_failure_primary_mode="cut",
-    component_failure_primary_mode_severity=0.74,
-    component_failure_probability=0.82,
-    component_failure_sample=sample,
   )
 
 
@@ -367,7 +361,7 @@ class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
     self.assertAlmostEqual(deltas["sensor_capability_delta"], -0.35, places=6)
     self.assertAlmostEqual(deltas["survivability_margin_delta"], -0.1, places=6)
 
-  def test_component_load_rows_recover_candidate_failure_probability_from_effect_rows(self) -> None:
+  def test_component_load_rows_remain_load_only_without_damage_event(self) -> None:
     events = _dummy_lethality_events()
     events.effects_events[0].component_mechanism_load_rows = [
       _effect_component_damage_row(sample=0.91)
@@ -383,13 +377,13 @@ class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
     )
 
     component_load = next(row for row in rows if row["stage"] == "component_load")
-    self.assertAlmostEqual(component_load["component_failure_probability"], 0.82, places=6)
-    self.assertAlmostEqual(component_load["component_failure_sample"], 0.91, places=6)
-    self.assertAlmostEqual(component_load["component_integrity_before"], 1.0, places=6)
-    self.assertAlmostEqual(component_load["component_integrity_after"], 0.68, places=6)
-    self.assertEqual(component_load["component_failure_mode"], "cut")
+    self.assertTrue(math.isnan(component_load["component_failure_probability"]))
+    self.assertTrue(math.isnan(component_load["component_failure_sample"]))
+    self.assertTrue(math.isnan(component_load["component_integrity_before"]))
+    self.assertTrue(math.isnan(component_load["component_integrity_after"]))
+    self.assertEqual(component_load["component_failure_mode"], "")
 
-  def test_lethality_chain_snapshot_reports_candidate_probability_without_damage_event(self) -> None:
+  def test_lethality_chain_snapshot_omits_response_probability_without_damage_event(self) -> None:
     events = _dummy_lethality_events()
     events.effects_events[0].component_mechanism_load_rows = [
       _effect_component_damage_row(sample=0.91)
@@ -411,16 +405,8 @@ class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
       "right_aileron_actuator",
     )
     self.assertEqual(snapshot["lethality_chain_component_damage_name"], "")
-    self.assertAlmostEqual(
-      snapshot["lethality_chain_component_failure_probability"],
-      0.82,
-      places=6,
-    )
-    self.assertAlmostEqual(
-      snapshot["lethality_chain_component_failure_sample"],
-      0.91,
-      places=6,
-    )
+    self.assertTrue(math.isnan(snapshot["lethality_chain_component_failure_probability"]))
+    self.assertTrue(math.isnan(snapshot["lethality_chain_component_failure_sample"]))
 
   def test_episode_summary_preserves_candidate_component_identity_from_chain_snapshot(self) -> None:
     events = _dummy_lethality_events()
@@ -447,7 +433,114 @@ class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
     self.assertEqual(summary["lethality_chain_component_name"], "right_aileron_actuator")
     self.assertEqual(summary["lethality_chain_component_system"], "flight_control")
     self.assertEqual(summary["lethality_chain_component_damage_count"], 0)
-    self.assertAlmostEqual(summary["lethality_chain_component_failure_sample"], 0.91, places=6)
+    self.assertTrue(math.isnan(summary["lethality_chain_component_failure_sample"]))
+
+  def test_lethality_chain_stage_abstractions_surface_decoupling_flags(self) -> None:
+    events = _dummy_lethality_events()
+    events.effects_events[0].component_mechanism_load_rows = [
+      _effect_component_damage_row(sample=0.91)
+    ]
+    events.fuze_evaluation_events = [_standard_fuze_event(triggered=True)]
+    events.warhead_mechanism_events = [_standard_warhead_event()]
+    events.spatial_coverage_events = [_standard_spatial_event()]
+    events.component_load_events = [_standard_component_load_event()]
+    events.component_damage_events = [_standard_component_damage_event()]
+
+    rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+    abstractions = probe._lethality_chain_stage_abstractions(rows)
+    summary = probe._lethality_chain_decoupling_summary(abstractions)
+
+    stages = {str(row["abstraction_stage"]): row for row in abstractions}
+    self.assertEqual(
+      set(stages),
+      {
+        "approach",
+        "fuze_decision",
+        "warhead_load_field",
+        "component_response",
+        "consequence_projection",
+      },
+    )
+    self.assertAlmostEqual(
+      stages["approach"]["observed"]["miss_distance_m"],
+      12.5,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      stages["fuze_decision"]["observed"]["detonation_probability"],
+      0.98,
+      places=6,
+    )
+    self.assertEqual(
+      stages["warhead_load_field"]["observed"]["component_load_source"],
+      "direct_component_hit",
+    )
+    self.assertIn(
+      "component_load_uses_composite_effect_scale",
+      stages["warhead_load_field"]["coupling_flags"],
+    )
+    self.assertAlmostEqual(
+      stages["component_response"]["observed"]["failure_probability"],
+      0.82,
+      places=6,
+    )
+    self.assertEqual(stages["component_response"]["coupling_flags"], [])
+    self.assertFalse(summary["authority_boundary"]["runtime_parameter_retuning"])
+    self.assertEqual(summary["chain_count"], 1)
+    self.assertEqual(summary["present_stage_counts"]["warhead_load_field"], 1)
+    self.assertNotIn(
+      "component_load_row_contains_response_probability",
+      summary["coupling_flag_counts"],
+    )
+
+  def test_lethality_chain_scalar_ledger_splits_owner_and_consumer_coupling(
+    self,
+  ) -> None:
+    events = _dummy_lethality_events()
+    events.effects_events[0].component_mechanism_load_rows = [
+      _effect_component_damage_row(sample=0.91)
+    ]
+    events.fuze_evaluation_events = [_standard_fuze_event(triggered=True)]
+    events.warhead_mechanism_events = [_standard_warhead_event()]
+    events.spatial_coverage_events = [_standard_spatial_event()]
+    events.component_load_events = [_standard_component_load_event()]
+    events.component_damage_events = [_standard_component_damage_event()]
+
+    rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+    ledger = probe._lethality_chain_scalar_ledger(rows)
+    summary = probe._scalar_coupling_summary(ledger)
+    scalar_by_id = {str(row["scalar_id"]): row for row in ledger}
+
+    effect_scale = scalar_by_id["component_load.effect_scale"]
+    self.assertEqual(effect_scale["current_owner_stage"], "warhead_load_field")
+    self.assertEqual(effect_scale["intended_owner_stage"], "warhead_load_field")
+    self.assertIn(
+      "composite_effect_scale_crosses_stage_boundary",
+      effect_scale["coupling_flags"],
+    )
+    self.assertNotIn(
+      "component_load.effect_scale",
+      summary["cross_owner_scalar_ids"],
+    )
+
+    self.assertNotIn("component_load.component_failure_probability", scalar_by_id)
+    response_probability = scalar_by_id["component_response.failure_probability"]
+    self.assertEqual(response_probability["current_owner_stage"], "component_response")
+    self.assertEqual(response_probability["intended_owner_stage"], "component_response")
+    self.assertEqual(response_probability["coupling_flags"], [])
+    self.assertNotIn("component_load.component_failure_probability", summary["cross_owner_scalar_ids"])
+    self.assertNotIn("response_probability_in_load_row", summary["coupling_flag_counts"])
+    self.assertFalse(summary["authority_boundary"]["calibration_authority"])
 
   def test_episode_summary_final_state_ignores_vecenv_auto_reset_row(self) -> None:
     summary = probe._summarize_episode(
