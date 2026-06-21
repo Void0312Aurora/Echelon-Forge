@@ -221,7 +221,7 @@ std::string aircraft_damage_state_delta_string(const EngagementDamageStateSnapsh
     return std::string(state);
 }
 
-bool has_component_identity(const ComponentMechanismLoadRow &row) {
+bool has_component_identity(const ComponentResponseRow &row) {
     return !row.component_name.empty() && !row.component_system.empty();
 }
 
@@ -234,20 +234,20 @@ bool has_positive_component_load(const ComponentMechanismLoadRow &row) {
            positive_finite(row.mechanism_rod_cut_margin);
 }
 
-bool has_material_component_integrity_drop(const ComponentMechanismLoadRow &row) {
-    if (!std::isfinite(row.component_integrity_before) ||
-        !std::isfinite(row.component_integrity_after)) {
+bool has_material_component_integrity_drop(const ComponentResponseRow &row) {
+    if (!std::isfinite(row.integrity_before) || !std::isfinite(row.integrity_after)) {
         return false;
     }
-    return row.component_integrity_before - row.component_integrity_after >= 0.01;
+    return row.integrity_before - row.integrity_after >= 0.01;
 }
 
-bool is_component_damage_candidate(const ComponentMechanismLoadRow &row) {
-    return has_component_identity(row) && has_positive_component_load(row) &&
-           has_material_component_integrity_drop(row) &&
-           positive_finite(row.component_failure_probability) &&
-           finite_unit_interval(row.component_failure_sample) &&
-           row.component_failure_sample <= clamp_unit_interval(row.component_failure_probability);
+bool is_component_damage_candidate(const ComponentResponseRow &response,
+                                   const ComponentMechanismLoadRow *load) {
+    return load && has_component_identity(response) && has_positive_component_load(*load) &&
+           has_material_component_integrity_drop(response) &&
+           positive_finite(response.failure_probability) &&
+           finite_unit_interval(response.failure_sample) &&
+           response.failure_sample <= clamp_unit_interval(response.failure_probability);
 }
 
 std::string loss_state_to_string(PlatformLossState state) {
@@ -819,8 +819,11 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
             .event = std::move(spatial_event),
         });
 
+        std::vector<std::uint64_t> component_load_event_ids;
+        component_load_event_ids.reserve(effects.component_mechanism_load_rows.size());
         for (const ComponentMechanismLoadRow &row : effects.component_mechanism_load_rows) {
             if (row.component_name.empty() && row.component_system.empty()) {
+                component_load_event_ids.push_back(0);
                 continue;
             }
             ComponentLoadEvent component_event{};
@@ -833,6 +836,14 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
             component_event.direct_hit = row.direct_hit;
             component_event.distance_m = row.distance_m;
             component_event.effect_scale = row.effect_scale;
+            component_event.spatial_intersection_fraction =
+                effects.warhead_spatial_hit_fraction;
+            component_event.pattern_weight = effects.warhead_spatial_pattern_scale;
+            component_event.orientation_weight = effects.warhead_orientation_pattern_scale;
+            component_event.receiver_exposure_fraction = effects.mechanism_exposure_scale;
+            component_event.armor_transmission = effects.mechanism_armor_scale;
+            component_event.sampling_confidence = effects.confidence;
+            component_event.load_intensity_scale = effects.mechanism_effect_scale;
             component_event.fragment_energy_j = row.mechanism_fragment_energy_j;
             component_event.fragment_density_per_m2 = row.mechanism_fragment_areal_density_per_m2;
             component_event.penetration_margin = row.mechanism_penetration_margin;
@@ -851,7 +862,16 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
                 .parent_event_id = effects_event_id,
                 .event = std::move(component_event),
             });
-            if (!is_component_damage_candidate(row)) {
+            component_load_event_ids.push_back(component_load_event_id);
+        }
+
+        for (const ComponentResponseRow &response : effects.component_response_rows) {
+            const std::uint32_t source_row_index = response.source_row_index;
+            const ComponentMechanismLoadRow *source_load =
+                source_row_index < effects.component_mechanism_load_rows.size()
+                    ? &effects.component_mechanism_load_rows[source_row_index]
+                    : nullptr;
+            if (!is_component_damage_candidate(response, source_load)) {
                 continue;
             }
 
@@ -859,19 +879,24 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
             damage_event.header.source_time_s = event_time_s;
             damage_event.header.confidence = effects.confidence;
             damage_event.header.reason = "generic_research_component_damage_candidate";
-            damage_event.component_name = row.component_name;
-            damage_event.component_system = row.component_system;
-            damage_event.component_redundancy_group_id = row.component_redundancy_group_id;
-            damage_event.failure_mode = row.component_failure_primary_mode.empty()
+            damage_event.component_name = response.component_name;
+            damage_event.component_system = response.component_system;
+            damage_event.component_redundancy_group_id =
+                response.component_redundancy_group_id;
+            damage_event.failure_mode = response.failure_mode.empty()
                                             ? "none"
-                                            : row.component_failure_primary_mode;
+                                            : response.failure_mode;
             damage_event.failure_severity =
-                clamp_unit_interval(row.component_failure_primary_mode_severity);
+                clamp_unit_interval(response.failure_severity);
             damage_event.failure_probability =
-                clamp_unit_interval(row.component_failure_probability);
-            damage_event.failure_sample = row.component_failure_sample;
-            damage_event.integrity_before = clamp_unit_interval(row.component_integrity_before);
-            damage_event.integrity_after = clamp_unit_interval(row.component_integrity_after);
+                clamp_unit_interval(response.failure_probability);
+            damage_event.failure_sample = response.failure_sample;
+            damage_event.integrity_before = clamp_unit_interval(response.integrity_before);
+            damage_event.integrity_after = clamp_unit_interval(response.integrity_after);
+            const std::uint64_t component_load_event_id =
+                source_row_index < component_load_event_ids.size()
+                    ? component_load_event_ids[source_row_index]
+                    : 0;
             (void)record_component_damage_event({
                 .munition_entity_id = munition_entity_id,
                 .target_id = target_id,

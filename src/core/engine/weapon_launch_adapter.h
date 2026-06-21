@@ -142,6 +142,7 @@ struct EffectsEventSnapshot {
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
     std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows;
+    std::vector<ComponentResponseRow> component_response_rows;
     std::string component_primary_name;
     std::string component_primary_system;
     double component_primary_redundancy_group = 0.0;
@@ -385,6 +386,7 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot &snapshot) {
         .component_failure_count = snapshot.component_failure_count,
         .component_hit_count = snapshot.component_hit_count,
         .component_mechanism_load_rows = snapshot.component_mechanism_load_rows,
+        .component_response_rows = snapshot.component_response_rows,
         .component_primary_name = snapshot.component_primary_name,
         .component_primary_system = snapshot.component_primary_system,
         .component_primary_redundancy_group = snapshot.component_primary_redundancy_group,

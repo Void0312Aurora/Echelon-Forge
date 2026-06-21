@@ -385,6 +385,15 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("direct_hit", &ComponentLoadEvent::direct_hit)
         .def_rw("distance_m", &ComponentLoadEvent::distance_m)
         .def_rw("effect_scale", &ComponentLoadEvent::effect_scale)
+        .def_rw("spatial_intersection_fraction",
+                &ComponentLoadEvent::spatial_intersection_fraction)
+        .def_rw("pattern_weight", &ComponentLoadEvent::pattern_weight)
+        .def_rw("orientation_weight", &ComponentLoadEvent::orientation_weight)
+        .def_rw("receiver_exposure_fraction",
+                &ComponentLoadEvent::receiver_exposure_fraction)
+        .def_rw("armor_transmission", &ComponentLoadEvent::armor_transmission)
+        .def_rw("sampling_confidence", &ComponentLoadEvent::sampling_confidence)
+        .def_rw("load_intensity_scale", &ComponentLoadEvent::load_intensity_scale)
         .def_rw("fragment_energy_j", &ComponentLoadEvent::fragment_energy_j)
         .def_rw("fragment_density_per_m2", &ComponentLoadEvent::fragment_density_per_m2)
         .def_rw("penetration_margin", &ComponentLoadEvent::penetration_margin)
@@ -555,7 +564,6 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("direct_hit", &ComponentMechanismLoadRow::direct_hit)
         .def_rw("distance_m", &ComponentMechanismLoadRow::distance_m)
         .def_rw("effect_scale", &ComponentMechanismLoadRow::effect_scale)
-        .def_rw("component_threshold_scale", &ComponentMechanismLoadRow::component_threshold_scale)
         .def_rw("component_dependency_propagation_count",
                 &ComponentMechanismLoadRow::component_dependency_propagation_count)
         .def_rw("component_dependency_target_system",
@@ -576,59 +584,6 @@ void bind_runtime(nb::module_ &m) {
                 &ComponentMechanismLoadRow::component_dependency_effective_scale)
         .def_rw("component_dependency_propagated",
                 &ComponentMechanismLoadRow::component_dependency_propagated)
-        .def_rw("component_failure_probability",
-                &ComponentMechanismLoadRow::component_failure_probability)
-        .def_rw("component_failure_probability_source",
-                &ComponentMechanismLoadRow::component_failure_probability_source)
-        .def_rw("component_failure_probability_calibrated",
-                &ComponentMechanismLoadRow::component_failure_probability_calibrated)
-        .def_rw("component_failure_probability_evidence_dataset_ref",
-                &ComponentMechanismLoadRow::component_failure_probability_evidence_dataset_ref)
-        .def_rw("component_failure_probability_evidence_row_id",
-                &ComponentMechanismLoadRow::component_failure_probability_evidence_row_id)
-        .def_rw("component_failure_probability_evidence_source_ref",
-                &ComponentMechanismLoadRow::component_failure_probability_evidence_source_ref)
-        .def_rw("component_failure_probability_evidence_provenance",
-                &ComponentMechanismLoadRow::component_failure_probability_evidence_provenance)
-        .def_rw("component_failure_sample", &ComponentMechanismLoadRow::component_failure_sample)
-        .def_rw("component_failure_probability_authority",
-                &ComponentMechanismLoadRow::component_failure_probability_authority)
-        .def_rw("component_failure_probability_component_specific",
-                &ComponentMechanismLoadRow::component_failure_probability_component_specific)
-        .def_rw("component_failure_probability_weapon_family",
-                &ComponentMechanismLoadRow::component_failure_probability_weapon_family)
-        .def_rw("component_failure_probability_aspect_bucket",
-                &ComponentMechanismLoadRow::component_failure_probability_aspect_bucket)
-        .def_rw("component_failure_probability_closure_bucket",
-                &ComponentMechanismLoadRow::component_failure_probability_closure_bucket)
-        .def_rw("component_failure_probability_miss_distance_bucket",
-                &ComponentMechanismLoadRow::component_failure_probability_miss_distance_bucket)
-        .def_rw("component_failure_probability_evidence_component_name",
-                &ComponentMechanismLoadRow::component_failure_probability_evidence_component_name)
-        .def_rw("component_failure_probability_evidence_component_system",
-                &ComponentMechanismLoadRow::component_failure_probability_evidence_component_system)
-        .def_rw("component_failure_probability_evidence_component_redundancy_group_id",
-                &ComponentMechanismLoadRow::
-                    component_failure_probability_evidence_component_redundancy_group_id)
-        .def_rw("component_failure_primary_mode",
-                &ComponentMechanismLoadRow::component_failure_primary_mode)
-        .def_rw("component_failure_primary_mode_severity",
-                &ComponentMechanismLoadRow::component_failure_primary_mode_severity)
-        .def_rw("component_failure_mode_names",
-                &ComponentMechanismLoadRow::component_failure_mode_names)
-        .def_rw("component_failure_mode_severities",
-                &ComponentMechanismLoadRow::component_failure_mode_severities)
-        .def_rw("component_failure_mode_source",
-                &ComponentMechanismLoadRow::component_failure_mode_source)
-        .def_rw("component_failure_mode_authority",
-                &ComponentMechanismLoadRow::component_failure_mode_authority)
-        .def_rw("component_integrity_before",
-                &ComponentMechanismLoadRow::component_integrity_before)
-        .def_rw("component_integrity_after", &ComponentMechanismLoadRow::component_integrity_after)
-        .def_rw("component_redundancy_group_availability_before",
-                &ComponentMechanismLoadRow::component_redundancy_group_availability_before)
-        .def_rw("component_redundancy_group_availability_after",
-                &ComponentMechanismLoadRow::component_redundancy_group_availability_after)
         .def_rw("mechanism_fragment_energy_j",
                 &ComponentMechanismLoadRow::mechanism_fragment_energy_j)
         .def_rw("mechanism_fragment_areal_density_per_m2",
@@ -644,6 +599,62 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("mechanism_rod_cut_margin", &ComponentMechanismLoadRow::mechanism_rod_cut_margin)
         .def_rw("mechanism_surface_incidence_cos",
                 &ComponentMechanismLoadRow::mechanism_surface_incidence_cos);
+
+    nb::class_<ComponentResponseRow>(m, "ComponentResponseRow")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &ComponentResponseRow::owner_stage)
+        .def_rw("source_current_owner_stage", &ComponentResponseRow::source_current_owner_stage)
+        .def_rw("source_row_index", &ComponentResponseRow::source_row_index)
+        .def_rw("component_name", &ComponentResponseRow::component_name)
+        .def_rw("component_system", &ComponentResponseRow::component_system)
+        .def_rw("component_redundancy_group_id",
+                &ComponentResponseRow::component_redundancy_group_id)
+        .def_rw("threshold_scale", &ComponentResponseRow::threshold_scale)
+        .def_rw("failure_probability", &ComponentResponseRow::failure_probability)
+        .def_rw("failure_sample", &ComponentResponseRow::failure_sample)
+        .def_rw("failure_probability_source",
+                &ComponentResponseRow::failure_probability_source)
+        .def_rw("failure_probability_calibrated",
+                &ComponentResponseRow::failure_probability_calibrated)
+        .def_rw("failure_probability_evidence_dataset_ref",
+                &ComponentResponseRow::failure_probability_evidence_dataset_ref)
+        .def_rw("failure_probability_evidence_row_id",
+                &ComponentResponseRow::failure_probability_evidence_row_id)
+        .def_rw("failure_probability_evidence_source_ref",
+                &ComponentResponseRow::failure_probability_evidence_source_ref)
+        .def_rw("failure_probability_evidence_provenance",
+                &ComponentResponseRow::failure_probability_evidence_provenance)
+        .def_rw("failure_probability_authority",
+                &ComponentResponseRow::failure_probability_authority)
+        .def_rw("failure_probability_component_specific",
+                &ComponentResponseRow::failure_probability_component_specific)
+        .def_rw("failure_probability_weapon_family",
+                &ComponentResponseRow::failure_probability_weapon_family)
+        .def_rw("failure_probability_aspect_bucket",
+                &ComponentResponseRow::failure_probability_aspect_bucket)
+        .def_rw("failure_probability_closure_bucket",
+                &ComponentResponseRow::failure_probability_closure_bucket)
+        .def_rw("failure_probability_miss_distance_bucket",
+                &ComponentResponseRow::failure_probability_miss_distance_bucket)
+        .def_rw("failure_probability_evidence_component_name",
+                &ComponentResponseRow::failure_probability_evidence_component_name)
+        .def_rw("failure_probability_evidence_component_system",
+                &ComponentResponseRow::failure_probability_evidence_component_system)
+        .def_rw("failure_probability_evidence_component_redundancy_group_id",
+                &ComponentResponseRow::
+                    failure_probability_evidence_component_redundancy_group_id)
+        .def_rw("failure_mode", &ComponentResponseRow::failure_mode)
+        .def_rw("failure_severity", &ComponentResponseRow::failure_severity)
+        .def_rw("failure_mode_names", &ComponentResponseRow::failure_mode_names)
+        .def_rw("failure_mode_severities", &ComponentResponseRow::failure_mode_severities)
+        .def_rw("failure_mode_source", &ComponentResponseRow::failure_mode_source)
+        .def_rw("failure_mode_authority", &ComponentResponseRow::failure_mode_authority)
+        .def_rw("integrity_before", &ComponentResponseRow::integrity_before)
+        .def_rw("integrity_after", &ComponentResponseRow::integrity_after)
+        .def_rw("redundancy_group_availability_before",
+                &ComponentResponseRow::redundancy_group_availability_before)
+        .def_rw("redundancy_group_availability_after",
+                &ComponentResponseRow::redundancy_group_availability_after);
 
     nb::class_<EffectsEvent>(m, "EffectsEvent")
         .def(nb::init<>())
@@ -738,6 +749,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("component_failure_count", &EffectsEvent::component_failure_count)
         .def_rw("component_hit_count", &EffectsEvent::component_hit_count)
         .def_rw("component_mechanism_load_rows", &EffectsEvent::component_mechanism_load_rows)
+        .def_rw("component_response_rows", &EffectsEvent::component_response_rows)
         .def_rw("component_primary_name", &EffectsEvent::component_primary_name)
         .def_rw("component_primary_system", &EffectsEvent::component_primary_system)
         .def_rw("component_primary_redundancy_group",
@@ -823,6 +835,206 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("air_system_spatial_scales", &EffectsEvent::air_system_spatial_scales)
         .def_rw("vulnerability_scale_trace", &EffectsEvent::vulnerability_scale_trace)
         .def_rw("producer_node_id", &EffectsEvent::producer_node_id);
+
+    nb::class_<KillChainApproachFact>(m, "KillChainApproachFact")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &KillChainApproachFact::owner_stage)
+        .def_rw("closest_distance_m", &KillChainApproachFact::closest_distance_m)
+        .def_rw("closest_point_local_forward_m",
+                &KillChainApproachFact::closest_point_local_forward_m)
+        .def_rw("closest_point_local_right_m",
+                &KillChainApproachFact::closest_point_local_right_m)
+        .def_rw("closest_point_local_up_m", &KillChainApproachFact::closest_point_local_up_m)
+        .def_rw("closure_mps", &KillChainApproachFact::closure_mps)
+        .def_rw("nearest_approach_time_s", &KillChainApproachFact::nearest_approach_time_s);
+
+    nb::class_<KillChainFuzeDecision>(m, "KillChainFuzeDecision")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &KillChainFuzeDecision::owner_stage)
+        .def_rw("fuze_type", &KillChainFuzeDecision::fuze_type)
+        .def_rw("detonated", &KillChainFuzeDecision::detonated)
+        .def_rw("outcome_state", &KillChainFuzeDecision::outcome_state)
+        .def_rw("detonation_time_s", &KillChainFuzeDecision::detonation_time_s)
+        .def_rw("detonation_probability", &KillChainFuzeDecision::detonation_probability)
+        .def_rw("fuze_quality", &KillChainFuzeDecision::fuze_quality)
+        .def_rw("sensor_opportunity_score", &KillChainFuzeDecision::sensor_opportunity_score)
+        .def_rw("terminal_track_valid", &KillChainFuzeDecision::terminal_track_valid)
+        .def_rw("target_detected", &KillChainFuzeDecision::target_detected)
+        .def_rw("target_detection_confidence",
+                &KillChainFuzeDecision::target_detection_confidence)
+        .def_rw("target_detection_threshold", &KillChainFuzeDecision::target_detection_threshold)
+        .def_rw("detonation_point_source", &KillChainFuzeDecision::detonation_point_source);
+
+    nb::class_<KillChainComponentLoadFact>(m, "KillChainComponentLoadFact")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &KillChainComponentLoadFact::owner_stage)
+        .def_rw("component_name", &KillChainComponentLoadFact::component_name)
+        .def_rw("component_system", &KillChainComponentLoadFact::component_system)
+        .def_rw("component_redundancy_group_id",
+                &KillChainComponentLoadFact::component_redundancy_group_id)
+        .def_rw("direct_hit", &KillChainComponentLoadFact::direct_hit)
+        .def_rw("distance_m", &KillChainComponentLoadFact::distance_m)
+        .def_rw("effect_scale", &KillChainComponentLoadFact::effect_scale)
+        .def_rw("spatial_intersection_fraction",
+                &KillChainComponentLoadFact::spatial_intersection_fraction)
+        .def_rw("pattern_weight", &KillChainComponentLoadFact::pattern_weight)
+        .def_rw("orientation_weight", &KillChainComponentLoadFact::orientation_weight)
+        .def_rw("receiver_exposure_fraction",
+                &KillChainComponentLoadFact::receiver_exposure_fraction)
+        .def_rw("armor_transmission", &KillChainComponentLoadFact::armor_transmission)
+        .def_rw("sampling_confidence", &KillChainComponentLoadFact::sampling_confidence)
+        .def_rw("load_intensity_scale", &KillChainComponentLoadFact::load_intensity_scale)
+        .def_rw("fragment_energy_j", &KillChainComponentLoadFact::fragment_energy_j)
+        .def_rw("fragment_areal_density_per_m2",
+                &KillChainComponentLoadFact::fragment_areal_density_per_m2)
+        .def_rw("penetration_margin", &KillChainComponentLoadFact::penetration_margin)
+        .def_rw("blast_overpressure_kpa", &KillChainComponentLoadFact::blast_overpressure_kpa)
+        .def_rw("blast_impulse_kpa_ms", &KillChainComponentLoadFact::blast_impulse_kpa_ms)
+        .def_rw("blast_scaled_distance_m_kg13",
+                &KillChainComponentLoadFact::blast_scaled_distance_m_kg13)
+        .def_rw("rod_cut_margin", &KillChainComponentLoadFact::rod_cut_margin)
+        .def_rw("surface_incidence_cos", &KillChainComponentLoadFact::surface_incidence_cos);
+
+    nb::class_<KillChainWarheadLoadField>(m, "KillChainWarheadLoadField")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &KillChainWarheadLoadField::owner_stage)
+        .def_rw("effect_family", &KillChainWarheadLoadField::effect_family)
+        .def_rw("warhead_mass_kg", &KillChainWarheadLoadField::warhead_mass_kg)
+        .def_rw("lethal_radius_m", &KillChainWarheadLoadField::lethal_radius_m)
+        .def_rw("spatial_effect_scale", &KillChainWarheadLoadField::spatial_effect_scale)
+        .def_rw("armor_transmission", &KillChainWarheadLoadField::armor_transmission)
+        .def_rw("receiver_exposure_fraction",
+                &KillChainWarheadLoadField::receiver_exposure_fraction)
+        .def_rw("mechanism_effect_scale", &KillChainWarheadLoadField::mechanism_effect_scale)
+        .def_rw("projected_hitbox_count", &KillChainWarheadLoadField::projected_hitbox_count)
+        .def_rw("spatial_sample_count", &KillChainWarheadLoadField::spatial_sample_count)
+        .def_rw("spatial_hit_estimate", &KillChainWarheadLoadField::spatial_hit_estimate)
+        .def_rw("spatial_hit_fraction", &KillChainWarheadLoadField::spatial_hit_fraction)
+        .def_rw("spatial_energy_scale", &KillChainWarheadLoadField::spatial_energy_scale)
+        .def_rw("spatial_pattern_scale", &KillChainWarheadLoadField::spatial_pattern_scale)
+        .def_rw("orientation_pattern_scale",
+                &KillChainWarheadLoadField::orientation_pattern_scale)
+        .def_rw("fragment_energy_j", &KillChainWarheadLoadField::fragment_energy_j)
+        .def_rw("fragment_areal_density_per_m2",
+                &KillChainWarheadLoadField::fragment_areal_density_per_m2)
+        .def_rw("penetration_margin", &KillChainWarheadLoadField::penetration_margin)
+        .def_rw("blast_overpressure_kpa", &KillChainWarheadLoadField::blast_overpressure_kpa)
+        .def_rw("blast_impulse_kpa_ms", &KillChainWarheadLoadField::blast_impulse_kpa_ms)
+        .def_rw("blast_scaled_distance_m_kg13",
+                &KillChainWarheadLoadField::blast_scaled_distance_m_kg13)
+        .def_rw("rod_cut_margin", &KillChainWarheadLoadField::rod_cut_margin)
+        .def_rw("surface_incidence_cos", &KillChainWarheadLoadField::surface_incidence_cos)
+        .def_rw("component_loads", &KillChainWarheadLoadField::component_loads);
+
+    nb::class_<KillChainTargetSusceptibility>(m, "KillChainTargetSusceptibility")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &KillChainTargetSusceptibility::owner_stage)
+        .def_rw("vulnerability_profile_present",
+                &KillChainTargetSusceptibility::vulnerability_profile_present)
+        .def_rw("vulnerability_profile_synthetic",
+                &KillChainTargetSusceptibility::vulnerability_profile_synthetic)
+        .def_rw("calibrated_evidence", &KillChainTargetSusceptibility::calibrated_evidence)
+        .def_rw("pk_authority", &KillChainTargetSusceptibility::pk_authority)
+        .def_rw("deterministic_fuze_authority",
+                &KillChainTargetSusceptibility::deterministic_fuze_authority)
+        .def_rw("calibration_status", &KillChainTargetSusceptibility::calibration_status)
+        .def_rw("aspect_bucket", &KillChainTargetSusceptibility::aspect_bucket)
+        .def_rw("family_scale", &KillChainTargetSusceptibility::family_scale)
+        .def_rw("aspect_scale", &KillChainTargetSusceptibility::aspect_scale)
+        .def_rw("closure_scale", &KillChainTargetSusceptibility::closure_scale)
+        .def_rw("miss_distance_scale", &KillChainTargetSusceptibility::miss_distance_scale)
+        .def_rw("effect_scale", &KillChainTargetSusceptibility::effect_scale);
+
+    nb::class_<KillChainComponentResponseFact>(m, "KillChainComponentResponseFact")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &KillChainComponentResponseFact::owner_stage)
+        .def_rw("source_current_owner_stage",
+                &KillChainComponentResponseFact::source_current_owner_stage)
+        .def_rw("source_row_index", &KillChainComponentResponseFact::source_row_index)
+        .def_rw("component_name", &KillChainComponentResponseFact::component_name)
+        .def_rw("component_system", &KillChainComponentResponseFact::component_system)
+        .def_rw("component_redundancy_group_id",
+                &KillChainComponentResponseFact::component_redundancy_group_id)
+        .def_rw("threshold_scale", &KillChainComponentResponseFact::threshold_scale)
+        .def_rw("failure_probability", &KillChainComponentResponseFact::failure_probability)
+        .def_rw("failure_sample", &KillChainComponentResponseFact::failure_sample)
+        .def_rw("failure_probability_source",
+                &KillChainComponentResponseFact::failure_probability_source)
+        .def_rw("failure_probability_calibrated",
+                &KillChainComponentResponseFact::failure_probability_calibrated)
+        .def_rw("failure_probability_evidence_dataset_ref",
+                &KillChainComponentResponseFact::failure_probability_evidence_dataset_ref)
+        .def_rw("failure_probability_evidence_row_id",
+                &KillChainComponentResponseFact::failure_probability_evidence_row_id)
+        .def_rw("failure_probability_evidence_source_ref",
+                &KillChainComponentResponseFact::failure_probability_evidence_source_ref)
+        .def_rw("failure_probability_evidence_provenance",
+                &KillChainComponentResponseFact::failure_probability_evidence_provenance)
+        .def_rw("failure_probability_authority",
+                &KillChainComponentResponseFact::failure_probability_authority)
+        .def_rw("failure_probability_component_specific",
+                &KillChainComponentResponseFact::failure_probability_component_specific)
+        .def_rw("failure_probability_weapon_family",
+                &KillChainComponentResponseFact::failure_probability_weapon_family)
+        .def_rw("failure_probability_aspect_bucket",
+                &KillChainComponentResponseFact::failure_probability_aspect_bucket)
+        .def_rw("failure_probability_closure_bucket",
+                &KillChainComponentResponseFact::failure_probability_closure_bucket)
+        .def_rw("failure_probability_miss_distance_bucket",
+                &KillChainComponentResponseFact::failure_probability_miss_distance_bucket)
+        .def_rw("failure_mode", &KillChainComponentResponseFact::failure_mode)
+        .def_rw("failure_severity", &KillChainComponentResponseFact::failure_severity)
+        .def_rw("failure_mode_names", &KillChainComponentResponseFact::failure_mode_names)
+        .def_rw("failure_mode_severities",
+                &KillChainComponentResponseFact::failure_mode_severities)
+        .def_rw("failure_mode_source", &KillChainComponentResponseFact::failure_mode_source)
+        .def_rw("failure_mode_authority", &KillChainComponentResponseFact::failure_mode_authority)
+        .def_rw("integrity_before", &KillChainComponentResponseFact::integrity_before)
+        .def_rw("integrity_after", &KillChainComponentResponseFact::integrity_after)
+        .def_rw("redundancy_group_availability_before",
+                &KillChainComponentResponseFact::redundancy_group_availability_before)
+        .def_rw("redundancy_group_availability_after",
+                &KillChainComponentResponseFact::redundancy_group_availability_after);
+
+    nb::class_<KillChainConsequenceProjection>(m, "KillChainConsequenceProjection")
+        .def(nb::init<>())
+        .def_rw("owner_stage", &KillChainConsequenceProjection::owner_stage)
+        .def_rw("outcome_state", &KillChainConsequenceProjection::outcome_state)
+        .def_rw("component_hit_count", &KillChainConsequenceProjection::component_hit_count)
+        .def_rw("component_failure_count",
+                &KillChainConsequenceProjection::component_failure_count)
+        .def_rw("primary_component_name",
+                &KillChainConsequenceProjection::primary_component_name)
+        .def_rw("primary_component_system",
+                &KillChainConsequenceProjection::primary_component_system)
+        .def_rw("primary_component_integrity",
+                &KillChainConsequenceProjection::primary_component_integrity)
+        .def_rw("redundancy_group_availability",
+                &KillChainConsequenceProjection::redundancy_group_availability)
+        .def_rw("air_system_hit_flags", &KillChainConsequenceProjection::air_system_hit_flags)
+        .def_rw("air_system_spatial_scales",
+                &KillChainConsequenceProjection::air_system_spatial_scales)
+        .def_rw("vulnerability_scale_trace",
+                &KillChainConsequenceProjection::vulnerability_scale_trace);
+
+    nb::class_<KillChainRuntimeFacade>(m, "KillChainRuntimeFacade")
+        .def(nb::init<>())
+        .def_rw("schema_version", &KillChainRuntimeFacade::schema_version)
+        .def_rw("schema_name", &KillChainRuntimeFacade::schema_name)
+        .def_rw("runtime_dto_authority", &KillChainRuntimeFacade::runtime_dto_authority)
+        .def_rw("runtime_parameter_retuning",
+                &KillChainRuntimeFacade::runtime_parameter_retuning)
+        .def_rw("calibration_authority", &KillChainRuntimeFacade::calibration_authority)
+        .def_rw("real_world_pk", &KillChainRuntimeFacade::real_world_pk)
+        .def_rw("approach_fact", &KillChainRuntimeFacade::approach_fact)
+        .def_rw("fuze_decision", &KillChainRuntimeFacade::fuze_decision)
+        .def_rw("warhead_load_field", &KillChainRuntimeFacade::warhead_load_field)
+        .def_rw("target_susceptibility", &KillChainRuntimeFacade::target_susceptibility)
+        .def_rw("component_responses", &KillChainRuntimeFacade::component_responses)
+        .def_rw("consequence_projection", &KillChainRuntimeFacade::consequence_projection);
+
+    m.def("make_kill_chain_runtime_facade", &make_kill_chain_runtime_facade,
+          nb::arg("effects"));
 
     nb::class_<DamageReport>(m, "DamageReport")
         .def(nb::init<>())

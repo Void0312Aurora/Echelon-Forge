@@ -47,6 +47,7 @@ struct EffectsResult {
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
     std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows;
+    std::vector<ComponentResponseRow> component_response_rows;
     std::string component_primary_name;
     std::string component_primary_system;
     double component_primary_redundancy_group = 0.0;

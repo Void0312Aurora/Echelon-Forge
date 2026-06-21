@@ -1028,7 +1028,6 @@ inline void register_damage_system_common(flecs::world &ecs) {
                                     : p[i].roll;
 
                     Missile effective = m[i];
-                    effective.damage = effective.damage * (0.6 + 0.4 * m[i].fuze_quality);
                     EngagementDamageStateSnapshot before{};
                     const bool can_record_damage =
                         recorder_ref && recorder_ref->recorder != nullptr;

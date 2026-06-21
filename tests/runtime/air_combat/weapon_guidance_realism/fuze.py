@@ -496,6 +496,66 @@ class FuzeRuntimeMixin:
     self.assertNotEqual(str(effects.outcome_state), "fuze_no_detonation")
     self.assertAlmostEqual(float(effects.confidence), 1.0, delta=1.0e-9)
 
+  def test_legacy_fuze_quality_damage_multiplier_surface_is_removed(self) -> None:
+    sim = _make_baseline_kernel(seed=2026062114)
+    sim.set_time_step(0.02)
+
+    profile = ef_py.FuzeProfile()
+    profile.type = "radar_proximity"
+    profile.trigger_radius_m = 35.0
+    profile.delay_s = 0.08
+    profile.reliability = 1.0
+    profile.trigger_logic = "nearest_approach"
+    profile.synthetic = False
+    profile.provenance = "test_fuze_quality_damage_default_disabled"
+
+    tuning = sim.get_missile_tuning()
+    self.assertFalse(hasattr(tuning, "fuze_quality_damage_multiplier_policy"))
+    tuning.fuze_profile = profile
+    tuning.has_fuze_profile = True
+    sim.set_missile_tuning(tuning)
+
+    blue_id, red_id = _spawn_geometry_pair(
+      sim,
+      red_x=13000.0,
+      red_y=9000.0,
+      red_heading=270.0,
+      red_vx=-260.0,
+      red_vy=0.0,
+    )
+    missile_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(missile_id, 0)
+    runtime = _missile_runtime(sim, missile_id)
+    self.assertNotIn("apply_fuze_quality_damage_multiplier", runtime)
+
+    for step_idx in range(3600):
+      if not sim.is_unit_active(missile_id):
+        break
+      _set_contacts(
+        sim,
+        missile_id,
+        [
+          _relative_detection_from_truth(
+            sim,
+            missile_id,
+            red_id,
+            timestamp=step_idx * sim.get_time_step(),
+            local_sensor_hit=True,
+          )
+        ],
+      )
+      sim.step()
+
+    events = sim.export_recent_engagement_events()
+    self.assertEqual(len(events.effects_events), 1)
+    effects = events.effects_events[-1]
+    self.assertFalse(hasattr(effects, "fuze_quality_damage_multiplier_applied"))
+    self.assertFalse(hasattr(effects, "fuze_quality_damage_multiplier"))
+    self.assertFalse(hasattr(effects, "warhead_damage_scalar_before_fuze_quality"))
+    self.assertFalse(hasattr(effects, "warhead_damage_scalar_after_fuze_quality"))
+    self.assertEqual(str(effects.trigger_type), "proximity_fuze")
+    self.assertNotEqual(str(effects.outcome_state), "unknown")
+
   def test_proximity_fuze_sensor_window_arms_with_terminal_track(self) -> None:
     sim = _make_baseline_kernel()
     sim.set_time_step(0.02)
