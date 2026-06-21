@@ -279,12 +279,6 @@ def _effect_component_damage_row(*, sample: float = 0.21) -> SimpleNamespace:
     mechanism_rod_cut_margin=0.0,
     mechanism_penetration_margin=0.25,
     mechanism_surface_incidence_cos=0.9,
-    component_integrity_before=1.0,
-    component_integrity_after=0.68,
-    component_failure_primary_mode="cut",
-    component_failure_primary_mode_severity=0.74,
-    component_failure_probability=0.82,
-    component_failure_sample=sample,
   )
 
 
@@ -411,11 +405,13 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
     self.assertEqual(columns["fire_mask_not_pending_assessment"], 0)
 
   def test_lethality_chain_rows_project_effect_and_damage_into_standard_stages(self) -> None:
+    events = _dummy_lethality_events()
+    events.component_damage_events = [_standard_component_damage_event()]
     rows = probe._lethality_chain_rows(
       episode=7,
       step=12,
       sim_time_s=4.5,
-      engagement_events=_dummy_lethality_events(),
+      engagement_events=events,
     )
 
     self.assertEqual(probe.LETHALITY_CHAIN_SCHEMA_VERSION, 9)
@@ -460,8 +456,8 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
     self.assertEqual(spatial["spatial_sample_count"], 240)
 
     component_damage = next(row for row in rows if row["stage"] == "component_damage")
-    self.assertEqual(component_damage["source_event_kind"], "EffectsEvent")
-    self.assertEqual(component_damage["reason"], "transitional_component_damage_projection")
+    self.assertEqual(component_damage["source_event_kind"], "ComponentDamageEvent")
+    self.assertEqual(component_damage["reason"], "generic_research_component_damage_candidate")
     self.assertEqual(component_damage["component_hit_count"], 1)
     self.assertEqual(component_damage["component_name"], "right_aileron_actuator")
     self.assertEqual(component_damage["component_system"], "flight_control")
@@ -607,7 +603,10 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       engagement_events=events,
     )
 
-    self.assertEqual([row["stage"] for row in rows], list(probe.LETHALITY_CHAIN_STAGES))
+    expected_stages = [
+      stage for stage in probe.LETHALITY_CHAIN_STAGES if stage != "component_damage"
+    ]
+    self.assertEqual([row["stage"] for row in rows], expected_stages)
     nearest_rows = [row for row in rows if row["stage"] == "nearest_approach"]
     fuze_rows = [row for row in rows if row["stage"] == "fuze"]
     self.assertEqual(len(nearest_rows), 1)
@@ -893,7 +892,7 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       "component_load": "ComponentLoadEvent",
       "component_damage": "ComponentDamageEvent",
     }
-    for stage in ("warhead_mechanism", "spatial_coverage", "component_load", "component_damage"):
+    for stage in ("warhead_mechanism", "spatial_coverage", "component_load"):
       stage_rows = [row for row in rows if row["stage"] == stage]
       self.assertEqual(
         [(row["chain_id"], row["source_event_kind"]) for row in stage_rows],
@@ -905,6 +904,11 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
           for row in stage_rows
         )
       )
+    damage_rows = [row for row in rows if row["stage"] == "component_damage"]
+    self.assertEqual(
+      [(row["chain_id"], row["source_event_kind"]) for row in damage_rows],
+      [(301, "ComponentDamageEvent")],
+    )
 
     warhead_302 = next(
       row
@@ -921,19 +925,15 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       for row in rows
       if row["stage"] == "component_load" and row["chain_id"] == 302
     )
-    component_damage_302 = next(
-      row
-      for row in rows
-      if row["stage"] == "component_damage" and row["chain_id"] == 302
-    )
     self.assertEqual(warhead_302["source_event_kind"], "EffectsEvent")
     self.assertAlmostEqual(warhead_302["fragment_density_per_m2"], 11.0, places=6)
     self.assertEqual(spatial_302["source_event_kind"], "EffectsEvent")
     self.assertEqual(spatial_302["projected_hitbox_count"], 2)
     self.assertEqual(component_302["source_event_kind"], "EffectsEvent")
     self.assertEqual(component_302["component_hit_count"], 3)
-    self.assertEqual(component_damage_302["source_event_kind"], "EffectsEvent")
-    self.assertEqual(component_damage_302["component_hit_count"], 1)
+    self.assertFalse(
+      any(row["stage"] == "component_damage" and row["chain_id"] == 302 for row in rows)
+    )
 
   def test_untriggered_component_failure_sample_does_not_create_damage_stage(self) -> None:
     events = _dummy_lethality_events()

@@ -28,6 +28,15 @@ def _assert_fields_present(body: str, fields: tuple[str, ...]) -> None:
   assert not missing, f"missing fields: {', '.join(missing)}"
 
 
+def _assert_fields_absent(body: str, fields: tuple[str, ...]) -> None:
+  present = [
+    field
+    for field in fields
+    if re.search(rf"\b{re.escape(field)}\b", body) is not None
+  ]
+  assert not present, f"unexpected fields: {', '.join(present)}"
+
+
 def test_engagement_contract_header_exists_at_stable_runtime_contract_path() -> None:
   assert ENGAGEMENT_HEADER.is_file()
 
@@ -168,6 +177,13 @@ def test_engagement_contract_header_exposes_mlf1b_lethality_chain_surface() -> N
       "direct_hit",
       "distance_m",
       "effect_scale",
+      "spatial_intersection_fraction",
+      "pattern_weight",
+      "orientation_weight",
+      "receiver_exposure_fraction",
+      "armor_transmission",
+      "sampling_confidence",
+      "load_intensity_scale",
       "load_source",
     ),
     "ComponentDamageEvent": (
@@ -232,6 +248,7 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
   header = _header_text()
 
   component_mechanism_load_row = _struct_body(header, "ComponentMechanismLoadRow")
+  component_response_row = _struct_body(header, "ComponentResponseRow")
   lifecycle_packet = _struct_body(header, "MunitionLifecyclePacket")
   effects_event = _struct_body(header, "EffectsEvent")
   damage_report = _struct_body(header, "DamageReport")
@@ -239,30 +256,12 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
   _assert_fields_present(
     component_mechanism_load_row,
     (
-      "component_failure_probability",
-      "component_failure_probability_aspect_bucket",
-      "component_failure_probability_authority",
-      "component_failure_probability_source",
-      "component_failure_probability_calibrated",
-      "component_failure_probability_closure_bucket",
-      "component_failure_probability_component_specific",
-      "component_failure_probability_evidence_dataset_ref",
-      "component_failure_probability_evidence_component_name",
-      "component_failure_probability_evidence_component_system",
-      "component_failure_probability_evidence_component_redundancy_group_id",
-      "component_failure_probability_miss_distance_bucket",
-      "component_failure_probability_evidence_row_id",
-      "component_failure_probability_evidence_source_ref",
-      "component_failure_probability_evidence_provenance",
-      "component_failure_sample",
-      "component_failure_probability_weapon_family",
       "component_name",
       "component_system",
       "component_redundancy_group_id",
       "direct_hit",
       "distance_m",
       "effect_scale",
-      "component_threshold_scale",
       "component_dependency_propagation_count",
       "component_dependency_target_system",
       "component_dependency_edge_type",
@@ -282,6 +281,58 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
       "mechanism_rod_cut_margin",
       "mechanism_surface_incidence_cos",
     ),
+  )
+  _assert_fields_absent(
+    component_mechanism_load_row,
+    (
+      "component_threshold_scale",
+      "component_failure_probability",
+      "component_failure_probability_source",
+      "component_failure_probability_calibrated",
+      "component_failure_sample",
+      "component_failure_primary_mode",
+      "component_failure_primary_mode_severity",
+      "component_integrity_before",
+      "component_integrity_after",
+      "component_redundancy_group_availability_before",
+      "component_redundancy_group_availability_after",
+    ),
+  )
+  _assert_fields_present(
+    component_response_row,
+    (
+      "owner_stage",
+      "source_current_owner_stage",
+      "source_row_index",
+      "component_name",
+      "component_system",
+      "component_redundancy_group_id",
+      "threshold_scale",
+      "failure_probability",
+      "failure_sample",
+      "failure_probability_source",
+      "failure_probability_calibrated",
+      "failure_probability_evidence_dataset_ref",
+      "failure_probability_evidence_row_id",
+      "failure_probability_evidence_source_ref",
+      "failure_probability_evidence_provenance",
+      "failure_probability_authority",
+      "failure_probability_component_specific",
+      "failure_mode",
+      "failure_severity",
+      "failure_mode_names",
+      "failure_mode_severities",
+      "failure_mode_source",
+      "failure_mode_authority",
+      "integrity_before",
+      "integrity_after",
+      "redundancy_group_availability_before",
+      "redundancy_group_availability_after",
+    ),
+  )
+  _assert_fields_absent(
+    component_response_row,
+    ("facade_owner_projected", "runtime_owner_migrated"),
   )
   _assert_fields_present(
     lifecycle_packet,
@@ -377,6 +428,7 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
       "component_failure_count",
       "component_hit_count",
       "component_mechanism_load_rows",
+      "component_response_rows",
       "component_primary_name",
       "component_primary_system",
       "component_primary_redundancy_group",
@@ -430,6 +482,15 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
       "vulnerability_scale_trace",
     ),
   )
+  _assert_fields_absent(
+    effects_event,
+    (
+      "fuze_quality_damage_multiplier_applied",
+      "fuze_quality_damage_multiplier",
+      "warhead_damage_scalar_before_fuze_quality",
+      "warhead_damage_scalar_after_fuze_quality",
+    ),
+  )
   _assert_fields_present(
     damage_report,
     (
@@ -451,3 +512,92 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
       "report_time_s",
     ),
   )
+
+
+def test_engagement_contract_header_exposes_kill_chain_runtime_facade_boundary() -> None:
+  header = _header_text()
+
+  expected_struct_fields = {
+    "KillChainApproachFact": (
+      "owner_stage",
+      "closest_distance_m",
+      "closest_point_local_forward_m",
+      "closest_point_local_right_m",
+      "closest_point_local_up_m",
+      "closure_mps",
+      "nearest_approach_time_s",
+    ),
+    "KillChainFuzeDecision": (
+      "owner_stage",
+      "fuze_type",
+      "detonated",
+      "outcome_state",
+      "detonation_probability",
+      "fuze_quality",
+    ),
+    "KillChainWarheadLoadField": (
+      "owner_stage",
+      "effect_family",
+      "spatial_effect_scale",
+      "armor_transmission",
+      "receiver_exposure_fraction",
+      "mechanism_effect_scale",
+      "component_loads",
+    ),
+    "KillChainTargetSusceptibility": (
+      "owner_stage",
+      "vulnerability_profile_present",
+      "calibrated_evidence",
+      "pk_authority",
+      "deterministic_fuze_authority",
+      "calibration_status",
+      "effect_scale",
+    ),
+    "KillChainComponentResponseFact": (
+      "owner_stage",
+      "source_current_owner_stage",
+      "source_row_index",
+      "threshold_scale",
+      "failure_probability",
+      "failure_sample",
+      "failure_probability_evidence_dataset_ref",
+      "failure_probability_evidence_component_name",
+      "failure_probability_evidence_component_system",
+      "failure_probability_evidence_component_redundancy_group_id",
+      "failure_mode",
+      "failure_mode_names",
+      "integrity_before",
+      "integrity_after",
+      "redundancy_group_availability_before",
+      "redundancy_group_availability_after",
+    ),
+    "KillChainConsequenceProjection": (
+      "owner_stage",
+      "outcome_state",
+      "component_hit_count",
+      "component_failure_count",
+      "primary_component_name",
+      "redundancy_group_availability",
+      "vulnerability_scale_trace",
+    ),
+    "KillChainRuntimeFacade": (
+      "schema_name",
+      "runtime_dto_authority",
+      "runtime_parameter_retuning",
+      "calibration_authority",
+      "real_world_pk",
+      "approach_fact",
+      "fuze_decision",
+      "warhead_load_field",
+      "target_susceptibility",
+      "component_responses",
+      "consequence_projection",
+    ),
+  }
+
+  for struct_name, fields in expected_struct_fields.items():
+    _assert_fields_present(_struct_body(header, struct_name), fields)
+
+  assert "make_kill_chain_runtime_facade(const EffectsEvent &effects)" in header
+  assert "component_load_row_compatibility_projection" not in header
+  assert "fuze_quality_damage_multiplier" not in header

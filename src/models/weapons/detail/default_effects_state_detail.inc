@@ -83,6 +83,7 @@ struct DefaultEffectsScratch {
     std::uint32_t projected_hitbox_count = 0;
     std::uint32_t component_hit_count = 0;
     std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows;
+    std::vector<ComponentResponseRow> component_response_rows;
     std::string component_primary_name;
     std::string component_primary_system;
     double component_primary_redundancy_group = 0.0;
@@ -106,6 +107,7 @@ ComponentMechanismLoadRow make_default_effects_component_mechanism_load_row(
     double distance_m,
     const WarheadMechanismLoadEvidence& mechanism_load
 ) {
+    (void)component_scale;
     ComponentMechanismLoadRow row{};
     row.component_name = component.name.empty() ? component.system : component.name;
     row.component_system = component.system;
@@ -113,7 +115,6 @@ ComponentMechanismLoadRow make_default_effects_component_mechanism_load_row(
     row.direct_hit = direct_hit;
     row.distance_m = std::max(0.0, distance_m);
     row.effect_scale = effect_scale;
-    row.component_threshold_scale = component_scale;
     row.mechanism_fragment_energy_j = mechanism_load.fragment_energy_j;
     row.mechanism_fragment_areal_density_per_m2 =
         mechanism_load.fragment_areal_density_per_m2;
@@ -157,6 +158,21 @@ ComponentMechanismLoadRow* record_default_effects_component_hit(
         scratch.component_primary_mechanism_load = mechanism_load;
     }
     return &row;
+}
+
+std::uint32_t default_effects_component_load_row_index(
+    const DefaultEffectsScratch& scratch,
+    const ComponentMechanismLoadRow* row
+) {
+    if (!row || scratch.component_mechanism_load_rows.empty()) {
+        return 0;
+    }
+    const ComponentMechanismLoadRow* begin = scratch.component_mechanism_load_rows.data();
+    const ComponentMechanismLoadRow* end = begin + scratch.component_mechanism_load_rows.size();
+    if (row < begin || row >= end) {
+        return 0;
+    }
+    return static_cast<std::uint32_t>(row - begin);
 }
 
 void record_default_effects_warhead_spatial_sample(

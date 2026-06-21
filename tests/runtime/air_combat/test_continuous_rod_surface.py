@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from tests.runtime.air_combat.weapon_guidance_realism.helpers import (
   _DB_PATH,
+  _component_response_row_by_name,
   _drive_missile_with_truth_track,
   _make_baseline_kernel,
   _spawn_geometry_pair,
@@ -455,17 +456,12 @@ def _assert_component_damage_events_match_failed_rows(
 ) -> None:
   damages = list(case.events.component_damage_events)
   assert damages
-  rows_by_name = {str(row.component_name): row for row in case.source_rows}
   for damage in damages:
-    row = rows_by_name[str(damage.component_name)]
-    assert float(row.component_failure_sample) <= float(
-      row.component_failure_probability
-    )
-    assert float(damage.failure_probability) == float(
-      row.component_failure_probability
-    )
-    assert float(damage.failure_sample) == float(row.component_failure_sample)
-    assert float(damage.integrity_after) == float(row.component_integrity_after)
+    row = _component_response_row_by_name(case.effects, str(damage.component_name))
+    assert float(row.failure_sample) <= float(row.failure_probability)
+    assert float(damage.failure_probability) == float(row.failure_probability)
+    assert float(damage.failure_sample) == float(row.failure_sample)
+    assert float(damage.integrity_after) == float(row.integrity_after)
   if allow_structural_breakup:
     _assert_detached_part_lifecycle_and_no_training_events(case)
   else:

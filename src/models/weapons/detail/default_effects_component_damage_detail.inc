@@ -123,28 +123,28 @@ struct PartFailureModeAssessment {
 };
 
 void populate_component_failure_mode_row(
-    ComponentMechanismLoadRow& row,
+    ComponentResponseRow& row,
     const PartFailureModeAssessment& assessment
 ) {
-    row.component_failure_primary_mode =
+    row.failure_mode =
         assessment.primary_mode.empty() ? "none" : assessment.primary_mode;
-    row.component_failure_primary_mode_severity =
+    row.failure_severity =
         std::clamp(assessment.primary_severity, 0.0, 1.0);
-    row.component_failure_mode_names.clear();
-    row.component_failure_mode_severities.clear();
-    row.component_failure_mode_names.reserve(assessment.entries.size());
-    row.component_failure_mode_severities.reserve(assessment.entries.size());
+    row.failure_mode_names.clear();
+    row.failure_mode_severities.clear();
+    row.failure_mode_names.reserve(assessment.entries.size());
+    row.failure_mode_severities.reserve(assessment.entries.size());
     for (const auto& entry : assessment.entries) {
-        row.component_failure_mode_names.push_back(entry.mode);
-        row.component_failure_mode_severities.push_back(
+        row.failure_mode_names.push_back(entry.mode);
+        row.failure_mode_severities.push_back(
             std::clamp(entry.severity, 0.0, 1.0));
     }
-    row.component_failure_mode_source = assessment.entries.empty()
+    row.failure_mode_source = assessment.entries.empty()
         ? "none"
         : (assessment.explicit_weights
             ? "component_failure_mode_weights"
             : "synthetic_inferred_part_failure_modes");
-    row.component_failure_mode_authority = false;
+    row.failure_mode_authority = false;
 }
 
 double inferred_part_failure_mode_weight(

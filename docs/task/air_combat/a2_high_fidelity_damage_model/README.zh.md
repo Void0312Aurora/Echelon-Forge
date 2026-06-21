@@ -18,6 +18,44 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
   F-16C 外壳区域、部件绑定、距离诊断、精细几何代理、表面/内部 receiver
   先验和跨区 split receiver handoff 证据。它不声明真实 F-16 工程几何、
   默认 runtime replacement、训练收益、结构解体、残骸、Pk 或具体弹种杀伤结论。
+- [kill_chain_guidance_lethality_calibration_20260621.zh.md](kill_chain_guidance_lethality_calibration_20260621.zh.md)：
+  8 km / 30 度 AIM-120C 制导与近炸杀伤校准问题的保留研究记录，拆分当前工程
+  代理行为、真实弹种/目标权威边界和建议的有界 follow-on 验收门。
+- [kill_chain_mechanism_decoupling_analysis_20260621.zh.md](kill_chain_mechanism_decoupling_analysis_20260621.zh.md)：
+  已完成的杀伤链机制抽象与解耦分析，把 approach、fuze decision、
+  warhead load field、component response 和 consequence projection 五段、
+  只读诊断证据、P2 runtime facade、P3 默认关闭、P4 named load factors、P5
+  response owner rows 和后续 P6 校准边界收口到同一入口。
+- [kill_chain_decoupling_stage_abstraction_slice_20260621.zh.md](kill_chain_decoupling_stage_abstraction_slice_20260621.zh.md)：
+  首个只读实现切片，在现有 lethality-chain rows 上增加 stage abstractions
+  和 coupling-flag summary，不改 runtime 参数。
+- [kill_chain_decoupling_probe_results_20260621.zh.md](kill_chain_decoupling_probe_results_20260621.zh.md)：
+  可复用解耦诊断工具和 baseline 结果，覆盖 8 km / 30 度 AIM-120C 偏置场景
+  与 blast-fragmentation 近炸距离 sweep，并通过五段视图报告。
+- [kill_chain_scalar_coupling_ledger_20260621.zh.md](kill_chain_scalar_coupling_ledger_20260621.zh.md)：
+  标量 producer / owner / consumer 账本切片，在调 runtime 参数或进入校准门之前，
+  先标出 owner 泄漏和跨阶段复合标量消费。
+- [kill_chain_effect_scale_decomposition_probe_20260621.zh.md](kill_chain_effect_scale_decomposition_probe_20260621.zh.md)：
+  P1/P4 诊断切片，暴露 aggregate `effect_scale` 背后的 spatial、armor/exposure、
+  threshold 和 vulnerability 因子；当前 P4 named load factors 已进入 runtime surface，
+  但不改默认杀伤参数。
+- [kill_chain_component_load_factor_view_20260621.zh.md](kill_chain_component_load_factor_view_20260621.zh.md)：
+  P1-b/P4 诊断切片，增加逐部件 load-factor rows 和 residual proxy，用于继续拆解
+  `component_load.effect_scale`；runtime named factors 已落地，但不改杀伤参数。
+- [kill_chain_component_response_boundary_20260621.zh.md](kill_chain_component_response_boundary_20260621.zh.md)：
+  P5 response owner 边界切片，确认 load row 只保留载荷/机制字段，response row
+  承载概率、sample、failure mode 和 integrity。
+- [kill_chain_decoupled_facade_20260621.zh.md](kill_chain_decoupled_facade_20260621.zh.md)：
+  P2 历史只读诊断 facade 前置切片，把当前证据投影成 ApproachFact / FuzeDecision /
+  WarheadLoadField / ComponentResponse / ConsequenceProjection 形状。
+- [kill_chain_runtime_facade_slice_20260621.zh.md](kill_chain_runtime_facade_slice_20260621.zh.md)：
+  P2/P5 runtime facade 清理切片，让 probe 从 runtime DTO-backed 结构读取
+  component load named factors 与 component response owner rows。
+- [kill_chain_fuze_damage_policy_slice_20260621.zh.md](kill_chain_fuze_damage_policy_slice_20260621.zh.md)：
+  P3 清理切片，旧引信质量伤害倍率入口已从 runtime / DTO / binding / diagnostics 删除。
+- [kill_chain_calibration_admission_gate_20260621.zh.md](kill_chain_calibration_admission_gate_20260621.zh.md)：
+  P6 校准 admission 机器门切片，把 fuze、warhead、target response 和 consequence
+  四类校准拆成互斥 layer admission；当前因缺少外部 evidence 而 fail-closed。
 
 ## 已归档 / 已注册入口
 

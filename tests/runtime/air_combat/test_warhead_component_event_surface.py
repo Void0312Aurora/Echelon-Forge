@@ -56,6 +56,11 @@ def _assert_projection_component_loads_match_effect_rows(
     if str(row.component_name) or str(row.component_system)
   ]
   rows_by_component = {_projection_component_key(row): row for row in source_rows}
+  responses_by_component = {
+    _projection_component_key(row): row
+    for row in effects.component_response_rows
+    if str(row.component_name) or str(row.component_system)
+  }
 
   assert source_rows
   assert len(rows_by_component) == len(source_rows)
@@ -90,9 +95,10 @@ def _assert_projection_component_loads_match_effect_rows(
     )
     assert not hasattr(load, "component_failure_probability")
     assert not hasattr(load, "failure_probability")
-    assert not bool(row.component_failure_probability_authority)
-    assert not bool(row.component_failure_probability_calibrated)
-    assert not bool(row.component_failure_probability_component_specific)
+    response = responses_by_component[key]
+    assert not bool(response.failure_probability_authority)
+    assert not bool(response.failure_probability_calibrated)
+    assert not bool(response.failure_probability_component_specific)
 
 
 def _assert_projection_no_destroy_or_real_parameter_claims(
@@ -788,15 +794,13 @@ def _has_positive_load(row: object) -> bool:
   )
 
 
-def _is_component_damage_source_row(row: object) -> bool:
+def _is_component_damage_source_response(row: object) -> bool:
   return (
     bool(str(row.component_name))
     and bool(str(row.component_system))
-    and _has_positive_load(row)
-    and _positive(row.component_failure_probability)
-    and _valid_sample(row.component_failure_sample)
-    and float(row.component_failure_sample)
-    <= _clamp_unit(row.component_failure_probability)
+    and _positive(row.failure_probability)
+    and _valid_sample(row.failure_sample)
+    and float(row.failure_sample) <= _clamp_unit(row.failure_probability)
   )
 
 
@@ -858,8 +862,8 @@ def test_sampled_failure_exports_same_chain_component_damage_events() -> None:
   effects = events.effects_events[0]
   source_rows = [
     row
-    for row in effects.component_mechanism_load_rows
-    if _is_component_damage_source_row(row)
+    for row in effects.component_response_rows
+    if _is_component_damage_source_response(row)
   ]
   component_loads = list(events.component_load_events)
   component_damage_events = list(events.component_damage_events)
@@ -894,24 +898,20 @@ def test_sampled_failure_exports_same_chain_component_damage_events() -> None:
     assert str(damage_event.component_redundancy_group_id) == str(
       row.component_redundancy_group_id
     )
-    assert str(damage_event.failure_mode) == str(row.component_failure_primary_mode)
-    assert float(damage_event.failure_severity) == _clamp_unit(
-      row.component_failure_primary_mode_severity
-    )
+    assert str(damage_event.failure_mode) == str(row.failure_mode)
+    assert float(damage_event.failure_severity) == _clamp_unit(row.failure_severity)
     assert 0.0 < float(damage_event.failure_probability) <= 1.0
-    assert float(damage_event.failure_probability) == _clamp_unit(
-      row.component_failure_probability
-    )
+    assert float(damage_event.failure_probability) == _clamp_unit(row.failure_probability)
     assert 0.0 <= float(damage_event.failure_sample) <= 1.0
-    assert float(damage_event.failure_sample) == float(row.component_failure_sample)
-    assert 0.0 <= float(row.component_integrity_after) <= 1.0
-    assert 0.0 <= float(row.component_integrity_before) <= 1.0
-    assert float(row.component_integrity_before) > float(row.component_integrity_after)
-    assert float(damage_event.integrity_before) == float(row.component_integrity_before)
-    assert float(damage_event.integrity_after) == float(row.component_integrity_after)
+    assert float(damage_event.failure_sample) == float(row.failure_sample)
+    assert 0.0 <= float(row.integrity_after) <= 1.0
+    assert 0.0 <= float(row.integrity_before) <= 1.0
+    assert float(row.integrity_before) > float(row.integrity_after)
+    assert float(damage_event.integrity_before) == float(row.integrity_before)
+    assert float(damage_event.integrity_after) == float(row.integrity_after)
     assert float(damage_event.integrity_before) > float(damage_event.integrity_after)
-    assert 0.0 <= float(row.component_redundancy_group_availability_after) <= 1.0
-    assert 0.0 <= float(row.component_redundancy_group_availability_before) <= 1.0
+    assert 0.0 <= float(row.redundancy_group_availability_after) <= 1.0
+    assert 0.0 <= float(row.redundancy_group_availability_before) <= 1.0
 
   damage_report = events.damage_reports[0]
   _assert_platform_consequence_matches_damage_report(events, effects, damage_report)
@@ -1021,11 +1021,11 @@ def test_component_damage_python_binding_exposes_event_fields() -> None:
   event.failure_probability = 0.25
   event.failure_sample = 0.75
 
-  row = ef_py.ComponentMechanismLoadRow()
-  row.component_integrity_before = 1.0
-  row.component_integrity_after = 0.72
-  row.component_redundancy_group_availability_before = 1.0
-  row.component_redundancy_group_availability_after = 0.86
+  row = ef_py.ComponentResponseRow()
+  row.integrity_before = 1.0
+  row.integrity_after = 0.72
+  row.redundancy_group_availability_before = 1.0
+  row.redundancy_group_availability_after = 0.86
 
   events = ef_py.RecentEngagementEvents()
   events.component_damage_events = [event]
@@ -1042,7 +1042,7 @@ def test_component_damage_python_binding_exposes_event_fields() -> None:
   assert float(events.component_damage_events[0].failure_severity) == 0.5
   assert float(events.component_damage_events[0].failure_probability) == 0.25
   assert float(events.component_damage_events[0].failure_sample) == 0.75
-  assert float(row.component_integrity_before) == 1.0
-  assert float(row.component_integrity_after) == 0.72
-  assert float(row.component_redundancy_group_availability_before) == 1.0
-  assert float(row.component_redundancy_group_availability_after) == 0.86
+  assert float(row.integrity_before) == 1.0
+  assert float(row.integrity_after) == 0.72
+  assert float(row.redundancy_group_availability_before) == 1.0
+  assert float(row.redundancy_group_availability_after) == 0.86

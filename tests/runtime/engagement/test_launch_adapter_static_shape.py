@@ -29,6 +29,15 @@ def _assert_fields_present(body: str, fields: tuple[str, ...]) -> None:
   assert not missing, f"missing fields: {', '.join(missing)}"
 
 
+def _assert_fields_absent(body: str, fields: tuple[str, ...]) -> None:
+  present = [
+    field
+    for field in fields
+    if re.search(rf"\b{re.escape(field)}\b", body) is not None
+  ]
+  assert not present, f"unexpected fields: {', '.join(present)}"
+
+
 def _assert_cpp_fragment(text: str, fragment: str) -> None:
   normalized_text = re.sub(r"\s+", " ", text)
   normalized_fragment = re.sub(r"\s+", " ", fragment)
@@ -211,6 +220,7 @@ def test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_con
       "component_failure_count",
       "component_hit_count",
       "component_mechanism_load_rows",
+      "component_response_rows",
       "component_primary_name",
       "component_primary_system",
       "component_primary_redundancy_group",
@@ -262,6 +272,15 @@ def test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_con
       "air_system_hit_flags",
       "air_system_spatial_scales",
       "vulnerability_scale_trace",
+    ),
+  )
+  _assert_fields_absent(
+    effects_snapshot,
+    (
+      "fuze_quality_damage_multiplier_applied",
+      "fuze_quality_damage_multiplier",
+      "warhead_damage_scalar_before_fuze_quality",
+      "warhead_damage_scalar_after_fuze_quality",
     ),
   )
   _assert_fields_present(

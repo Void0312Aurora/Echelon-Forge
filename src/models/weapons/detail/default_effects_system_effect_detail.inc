@@ -170,40 +170,47 @@ void sample_default_effects_component_failure(
         system,
         component);
     const double failure_sample = rand_uniform01(scratch.component_rng_state);
+    ComponentResponseRow* response_row = nullptr;
     if (component_row) {
-        populate_component_failure_mode_row(*component_row, part_failure_modes);
-        component_row->component_failure_probability = failure_probability;
-        component_row->component_failure_probability_source =
-            failure_probability_source;
-        component_row->component_failure_probability_calibrated =
-            failure_probability_calibrated;
-        component_row->component_failure_probability_evidence_dataset_ref =
+        ComponentResponseRow response{};
+        response.source_current_owner_stage = "component_response_row";
+        response.source_row_index =
+            default_effects_component_load_row_index(scratch, component_row);
+        response.component_name = component_row->component_name;
+        response.component_system = component_row->component_system;
+        response.component_redundancy_group_id =
+            component_row->component_redundancy_group_id;
+        response.threshold_scale = component_scale;
+        response.failure_probability = failure_probability;
+        response.failure_sample = failure_sample;
+        response.failure_probability_source = failure_probability_source;
+        response.failure_probability_calibrated = failure_probability_calibrated;
+        response.failure_probability_evidence_dataset_ref =
             failure_probability_evidence_dataset_ref;
-        component_row->component_failure_probability_evidence_row_id =
+        response.failure_probability_evidence_row_id =
             failure_probability_evidence_row_id;
-        component_row->component_failure_probability_evidence_source_ref =
+        response.failure_probability_evidence_source_ref =
             failure_probability_evidence_source_ref;
-        component_row->component_failure_probability_evidence_provenance =
+        response.failure_probability_evidence_provenance =
             failure_probability_evidence_provenance;
-        component_row->component_failure_sample = failure_sample;
-        component_row->component_failure_probability_authority =
+        response.failure_probability_authority =
             failure_probability_source == "vulnerability_evidence_row";
-        component_row->component_failure_probability_component_specific =
+        response.failure_probability_component_specific =
             failure_probability_component_specific;
-        component_row->component_failure_probability_weapon_family =
-            failure_family;
-        component_row->component_failure_probability_aspect_bucket =
-            failure_aspect_bucket;
-        component_row->component_failure_probability_closure_bucket =
-            failure_closure_bucket;
-        component_row->component_failure_probability_miss_distance_bucket =
+        response.failure_probability_weapon_family = failure_family;
+        response.failure_probability_aspect_bucket = failure_aspect_bucket;
+        response.failure_probability_closure_bucket = failure_closure_bucket;
+        response.failure_probability_miss_distance_bucket =
             failure_miss_distance_bucket;
-        component_row->component_failure_probability_evidence_component_name =
+        response.failure_probability_evidence_component_name =
             failure_probability_evidence_component_name;
-        component_row->component_failure_probability_evidence_component_system =
+        response.failure_probability_evidence_component_system =
             failure_probability_evidence_component_system;
-        component_row->component_failure_probability_evidence_component_redundancy_group_id =
+        response.failure_probability_evidence_component_redundancy_group_id =
             failure_probability_evidence_component_redundancy_group_id;
+        populate_component_failure_mode_row(response, part_failure_modes);
+        scratch.component_response_rows.push_back(std::move(response));
+        response_row = &scratch.component_response_rows.back();
     }
 
     if (!scratch.sampled_component_failure_probability_seen ||
@@ -235,14 +242,12 @@ void sample_default_effects_component_failure(
                 mechanism_scale * resolved_component_scale,
                 context.component_damage,
                 &context.sys_health);
-        if (component_row) {
-            component_row->component_integrity_before =
-                component_sample.integrity_before;
-            component_row->component_integrity_after =
-                component_sample.integrity_after;
-            component_row->component_redundancy_group_availability_before =
+        if (response_row) {
+            response_row->integrity_before = component_sample.integrity_before;
+            response_row->integrity_after = component_sample.integrity_after;
+            response_row->redundancy_group_availability_before =
                 component_sample.group_availability_before;
-            component_row->component_redundancy_group_availability_after =
+            response_row->redundancy_group_availability_after =
                 component_sample.group_availability_after;
         }
         const bool persist_expected_structural_rod_mode =

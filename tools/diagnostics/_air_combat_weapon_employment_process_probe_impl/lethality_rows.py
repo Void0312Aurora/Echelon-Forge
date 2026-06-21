@@ -9,7 +9,6 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema i
     LETHALITY_CHAIN_SCHEMA_VERSION,
     _entity_id,
     _event_id,
-    _finite_float,
 )
 
 
@@ -104,6 +103,13 @@ def _lethality_base_row(
         "component_direct_hit": 0,
         "component_distance_m": float("nan"),
         "component_effect_scale": float("nan"),
+        "component_spatial_intersection_fraction": float("nan"),
+        "component_pattern_weight": float("nan"),
+        "component_orientation_weight": float("nan"),
+        "component_receiver_exposure_fraction": float("nan"),
+        "component_armor_transmission": float("nan"),
+        "component_sampling_confidence": float("nan"),
+        "component_load_intensity_scale": float("nan"),
         "component_load_source": "",
         "component_integrity_before": float("nan"),
         "component_integrity_after": float("nan"),
@@ -193,51 +199,3 @@ def _lethality_header_base_kwargs(
         "reason": str(getattr(header, "reason", "") or ""),
         "status": str(getattr(header, "status", "") or "observed"),
     }
-
-
-def _component_mechanism_row_projection(row: Any) -> dict[str, Any]:
-    return {
-        "component_integrity_before": _finite_float(
-            getattr(row, "component_integrity_before", float("nan"))
-        ),
-        "component_integrity_after": _finite_float(
-            getattr(row, "component_integrity_after", float("nan"))
-        ),
-        "component_failure_mode": str(getattr(row, "component_failure_primary_mode", "") or ""),
-        "component_failure_severity": _finite_float(
-            getattr(row, "component_failure_primary_mode_severity", float("nan"))
-        ),
-        "component_failure_probability": _finite_float(
-            getattr(row, "component_failure_probability", float("nan"))
-        ),
-        "component_failure_sample": _finite_float(
-            getattr(row, "component_failure_sample", float("nan"))
-        ),
-    }
-
-
-def _component_mechanism_rows_by_effect_id(engagement_events: Any) -> dict[int, list[Any]]:
-    rows_by_effect_id: dict[int, list[Any]] = {}
-    for effect in list(getattr(engagement_events, "effects_events", []) or []):
-        effect_id = _event_id(effect, "event_id")
-        if effect_id <= 0:
-            continue
-        rows_by_effect_id[effect_id] = list(
-            getattr(effect, "component_mechanism_load_rows", []) or []
-        )
-    return rows_by_effect_id
-
-
-def _match_component_mechanism_row(
-    candidates: list[Any],
-    *,
-    component_name: str,
-    component_system: str,
-) -> Any | None:
-    for row in candidates:
-        if (
-            str(getattr(row, "component_name", "") or "") == component_name
-            and str(getattr(row, "component_system", "") or "") == component_system
-        ):
-            return row
-    return None

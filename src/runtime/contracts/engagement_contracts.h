@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -45,6 +46,21 @@ inline constexpr std::array<std::string_view, 6> kLethalityChainTerminalNegative
     kLethalityReasonMissOutsideTriggerRadius, kLethalityReasonOutsideSensorWindow,
     kLethalityReasonTargetNotDetected,        kLethalityReasonMissileTimeout,
 };
+
+inline constexpr std::array<std::string_view, 3> kLethalityChainPositiveDetonationOutcomes = {
+    "damage_applied",
+    "detonated_no_effect",
+    "hit",
+};
+
+inline bool is_lethality_chain_positive_detonation_outcome(std::string_view outcome_state) {
+    for (const std::string_view positive_outcome : kLethalityChainPositiveDetonationOutcomes) {
+        if (outcome_state == positive_outcome) {
+            return true;
+        }
+    }
+    return false;
+}
 
 inline constexpr std::string_view kLethalityObservationModeSampledRuntime = "sampled_runtime";
 inline constexpr std::string_view kLethalityObservationModeExpectedProjection =
@@ -155,6 +171,13 @@ struct ComponentLoadEvent {
     bool direct_hit = false;
     double distance_m = 0.0;
     double effect_scale = 0.0;
+    double spatial_intersection_fraction = 0.0;
+    double pattern_weight = 1.0;
+    double orientation_weight = 1.0;
+    double receiver_exposure_fraction = 1.0;
+    double armor_transmission = 1.0;
+    double sampling_confidence = 1.0;
+    double load_intensity_scale = 1.0;
     double fragment_energy_j = 0.0;
     double fragment_density_per_m2 = 0.0;
     double penetration_margin = 0.0;
@@ -251,7 +274,6 @@ struct ComponentMechanismLoadRow {
     bool direct_hit = false;
     double distance_m = 0.0;
     double effect_scale = 0.0;
-    double component_threshold_scale = 1.0;
     std::uint32_t component_dependency_propagation_count = 0;
     std::string component_dependency_target_system;
     std::string component_dependency_edge_type = "none";
@@ -262,33 +284,6 @@ struct ComponentMechanismLoadRow {
     double component_dependency_source_availability = 1.0;
     double component_dependency_effective_scale = 0.0;
     bool component_dependency_propagated = false;
-    double component_failure_probability = 0.0;
-    std::string component_failure_probability_source = "none";
-    bool component_failure_probability_calibrated = false;
-    std::string component_failure_probability_evidence_dataset_ref;
-    std::string component_failure_probability_evidence_row_id;
-    std::string component_failure_probability_evidence_source_ref;
-    std::string component_failure_probability_evidence_provenance;
-    double component_failure_sample = 1.0;
-    bool component_failure_probability_authority = false;
-    bool component_failure_probability_component_specific = false;
-    std::string component_failure_probability_weapon_family = "unknown";
-    std::string component_failure_probability_aspect_bucket = "unknown";
-    std::string component_failure_probability_closure_bucket = "unknown";
-    std::string component_failure_probability_miss_distance_bucket = "unknown";
-    std::string component_failure_probability_evidence_component_name;
-    std::string component_failure_probability_evidence_component_system;
-    std::string component_failure_probability_evidence_component_redundancy_group_id;
-    std::string component_failure_primary_mode = "none";
-    double component_failure_primary_mode_severity = 0.0;
-    std::vector<std::string> component_failure_mode_names;
-    std::vector<double> component_failure_mode_severities;
-    std::string component_failure_mode_source = "none";
-    bool component_failure_mode_authority = false;
-    double component_integrity_before = 1.0;
-    double component_integrity_after = 1.0;
-    double component_redundancy_group_availability_before = 1.0;
-    double component_redundancy_group_availability_after = 1.0;
     double mechanism_fragment_energy_j = 0.0;
     double mechanism_fragment_areal_density_per_m2 = 0.0;
     double mechanism_penetration_margin = 0.0;
@@ -297,6 +292,43 @@ struct ComponentMechanismLoadRow {
     double mechanism_blast_scaled_distance_m_kg13 = 0.0;
     double mechanism_rod_cut_margin = 0.0;
     double mechanism_surface_incidence_cos = 0.0;
+};
+
+struct ComponentResponseRow {
+    std::string owner_stage = "component_response";
+    std::string source_current_owner_stage = "component_response_row";
+    std::uint32_t source_row_index = 0;
+    std::string component_name;
+    std::string component_system;
+    std::string component_redundancy_group_id;
+    double threshold_scale = 1.0;
+    double failure_probability = 0.0;
+    double failure_sample = 1.0;
+    std::string failure_probability_source = "none";
+    bool failure_probability_calibrated = false;
+    std::string failure_probability_evidence_dataset_ref;
+    std::string failure_probability_evidence_row_id;
+    std::string failure_probability_evidence_source_ref;
+    std::string failure_probability_evidence_provenance;
+    bool failure_probability_authority = false;
+    bool failure_probability_component_specific = false;
+    std::string failure_probability_weapon_family = "unknown";
+    std::string failure_probability_aspect_bucket = "unknown";
+    std::string failure_probability_closure_bucket = "unknown";
+    std::string failure_probability_miss_distance_bucket = "unknown";
+    std::string failure_probability_evidence_component_name;
+    std::string failure_probability_evidence_component_system;
+    std::string failure_probability_evidence_component_redundancy_group_id;
+    std::string failure_mode = "none";
+    double failure_severity = 0.0;
+    std::vector<std::string> failure_mode_names;
+    std::vector<double> failure_mode_severities;
+    std::string failure_mode_source = "none";
+    bool failure_mode_authority = false;
+    double integrity_before = 1.0;
+    double integrity_after = 1.0;
+    double redundancy_group_availability_before = 1.0;
+    double redundancy_group_availability_after = 1.0;
 };
 
 struct TrackPacket {
@@ -449,6 +481,7 @@ struct EffectsEvent {
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
     std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows;
+    std::vector<ComponentResponseRow> component_response_rows;
     std::string component_primary_name;
     std::string component_primary_system;
     double component_primary_redundancy_group = 0.0;
@@ -502,6 +535,320 @@ struct EffectsEvent {
     std::string vulnerability_scale_trace;
     std::string producer_node_id;
 };
+
+struct KillChainApproachFact {
+    std::string owner_stage = "approach";
+    double closest_distance_m = 0.0;
+    double closest_point_local_forward_m = 0.0;
+    double closest_point_local_right_m = 0.0;
+    double closest_point_local_up_m = 0.0;
+    double closure_mps = 0.0;
+    double nearest_approach_time_s = 0.0;
+};
+
+struct KillChainFuzeDecision {
+    std::string owner_stage = "fuze_decision";
+    std::string fuze_type = "unknown";
+    bool detonated = false;
+    std::string outcome_state = "unknown";
+    double detonation_time_s = 0.0;
+    double detonation_probability = 0.0;
+    double fuze_quality = 0.0;
+    double sensor_opportunity_score = 0.0;
+    bool terminal_track_valid = false;
+    bool target_detected = false;
+    double target_detection_confidence = 0.0;
+    double target_detection_threshold = 0.0;
+    std::string detonation_point_source = "unknown";
+};
+
+struct KillChainComponentLoadFact {
+    std::string owner_stage = "warhead_load_field";
+    std::string component_name;
+    std::string component_system;
+    std::string component_redundancy_group_id;
+    bool direct_hit = false;
+    double distance_m = 0.0;
+    double effect_scale = 0.0;
+    double spatial_intersection_fraction = 0.0;
+    double pattern_weight = 1.0;
+    double orientation_weight = 1.0;
+    double receiver_exposure_fraction = 1.0;
+    double armor_transmission = 1.0;
+    double sampling_confidence = 1.0;
+    double load_intensity_scale = 1.0;
+    double fragment_energy_j = 0.0;
+    double fragment_areal_density_per_m2 = 0.0;
+    double penetration_margin = 0.0;
+    double blast_overpressure_kpa = 0.0;
+    double blast_impulse_kpa_ms = 0.0;
+    double blast_scaled_distance_m_kg13 = 0.0;
+    double rod_cut_margin = 0.0;
+    double surface_incidence_cos = 0.0;
+};
+
+struct KillChainWarheadLoadField {
+    std::string owner_stage = "warhead_load_field";
+    std::string effect_family = "unknown";
+    double warhead_mass_kg = 0.0;
+    double lethal_radius_m = 0.0;
+    double spatial_effect_scale = 0.0;
+    double armor_transmission = 1.0;
+    double receiver_exposure_fraction = 1.0;
+    double mechanism_effect_scale = 1.0;
+    std::uint32_t projected_hitbox_count = 0;
+    std::uint32_t spatial_sample_count = 0;
+    double spatial_hit_estimate = 0.0;
+    double spatial_hit_fraction = 0.0;
+    double spatial_energy_scale = 1.0;
+    double spatial_pattern_scale = 1.0;
+    double orientation_pattern_scale = 1.0;
+    double fragment_energy_j = 0.0;
+    double fragment_areal_density_per_m2 = 0.0;
+    double penetration_margin = 0.0;
+    double blast_overpressure_kpa = 0.0;
+    double blast_impulse_kpa_ms = 0.0;
+    double blast_scaled_distance_m_kg13 = 0.0;
+    double rod_cut_margin = 0.0;
+    double surface_incidence_cos = 0.0;
+    std::vector<KillChainComponentLoadFact> component_loads;
+};
+
+struct KillChainTargetSusceptibility {
+    std::string owner_stage = "target_susceptibility";
+    bool vulnerability_profile_present = false;
+    bool vulnerability_profile_synthetic = true;
+    bool calibrated_evidence = false;
+    bool pk_authority = false;
+    bool deterministic_fuze_authority = false;
+    std::string calibration_status = "none";
+    std::string aspect_bucket = "unknown";
+    double family_scale = 1.0;
+    double aspect_scale = 1.0;
+    double closure_scale = 1.0;
+    double miss_distance_scale = 1.0;
+    double effect_scale = 1.0;
+};
+
+struct KillChainComponentResponseFact {
+    std::string owner_stage = "component_response";
+    std::string source_current_owner_stage = "component_response_row";
+    std::uint32_t source_row_index = 0;
+    std::string component_name;
+    std::string component_system;
+    std::string component_redundancy_group_id;
+    double threshold_scale = 1.0;
+    double failure_probability = 0.0;
+    double failure_sample = 1.0;
+    std::string failure_probability_source = "none";
+    bool failure_probability_calibrated = false;
+    std::string failure_probability_evidence_dataset_ref;
+    std::string failure_probability_evidence_row_id;
+    std::string failure_probability_evidence_source_ref;
+    std::string failure_probability_evidence_provenance;
+    bool failure_probability_authority = false;
+    bool failure_probability_component_specific = false;
+    std::string failure_probability_weapon_family = "unknown";
+    std::string failure_probability_aspect_bucket = "unknown";
+    std::string failure_probability_closure_bucket = "unknown";
+    std::string failure_probability_miss_distance_bucket = "unknown";
+    std::string failure_probability_evidence_component_name;
+    std::string failure_probability_evidence_component_system;
+    std::string failure_probability_evidence_component_redundancy_group_id;
+    std::string failure_mode = "none";
+    double failure_severity = 0.0;
+    std::vector<std::string> failure_mode_names;
+    std::vector<double> failure_mode_severities;
+    std::string failure_mode_source = "none";
+    bool failure_mode_authority = false;
+    double integrity_before = 1.0;
+    double integrity_after = 1.0;
+    double redundancy_group_availability_before = 1.0;
+    double redundancy_group_availability_after = 1.0;
+};
+
+struct KillChainConsequenceProjection {
+    std::string owner_stage = "consequence_projection";
+    std::string outcome_state = "unknown";
+    std::uint32_t component_hit_count = 0;
+    std::uint32_t component_failure_count = 0;
+    std::string primary_component_name;
+    std::string primary_component_system;
+    double primary_component_integrity = 1.0;
+    double redundancy_group_availability = 1.0;
+    std::string air_system_hit_flags;
+    std::string air_system_spatial_scales;
+    std::string vulnerability_scale_trace;
+};
+
+struct KillChainRuntimeFacade {
+    std::uint32_t schema_version = 1;
+    std::string schema_name = "a2.kill_chain_runtime_facade.v1";
+    bool runtime_dto_authority = true;
+    bool runtime_parameter_retuning = false;
+    bool calibration_authority = false;
+    bool real_world_pk = false;
+    KillChainApproachFact approach_fact{};
+    KillChainFuzeDecision fuze_decision{};
+    KillChainWarheadLoadField warhead_load_field{};
+    KillChainTargetSusceptibility target_susceptibility{};
+    std::vector<KillChainComponentResponseFact> component_responses;
+    KillChainConsequenceProjection consequence_projection{};
+};
+
+inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent &effects) {
+    KillChainRuntimeFacade facade{};
+
+    facade.approach_fact.closest_distance_m = effects.miss_distance_m;
+    facade.approach_fact.closest_point_local_forward_m = effects.detonation_local_forward_m;
+    facade.approach_fact.closest_point_local_right_m = effects.detonation_local_right_m;
+    facade.approach_fact.closest_point_local_up_m = effects.detonation_local_up_m;
+    facade.approach_fact.closure_mps = effects.closure_mps;
+    facade.approach_fact.nearest_approach_time_s = effects.nearest_approach_time_s;
+
+    facade.fuze_decision.fuze_type = effects.fuze_type;
+    facade.fuze_decision.detonated =
+        is_lethality_chain_positive_detonation_outcome(effects.outcome_state);
+    facade.fuze_decision.outcome_state = effects.outcome_state;
+    facade.fuze_decision.detonation_time_s = effects.detonation_time_s;
+    facade.fuze_decision.detonation_probability = effects.confidence;
+    facade.fuze_decision.fuze_quality = effects.quality;
+    facade.fuze_decision.sensor_opportunity_score = effects.fuze_sensor_opportunity_score;
+    facade.fuze_decision.terminal_track_valid = effects.fuze_terminal_track_valid;
+    facade.fuze_decision.target_detected = effects.fuze_target_detected;
+    facade.fuze_decision.target_detection_confidence = effects.fuze_target_detection_confidence;
+    facade.fuze_decision.target_detection_threshold = effects.fuze_target_detection_threshold;
+    facade.fuze_decision.detonation_point_source = effects.detonation_point_source;
+
+    facade.warhead_load_field.effect_family = effects.effect_family;
+    facade.warhead_load_field.warhead_mass_kg = effects.warhead_mass_kg;
+    facade.warhead_load_field.lethal_radius_m = effects.warhead_lethal_radius_m;
+    facade.warhead_load_field.spatial_effect_scale = effects.spatial_effect_scale;
+    facade.warhead_load_field.armor_transmission = effects.mechanism_armor_scale;
+    facade.warhead_load_field.receiver_exposure_fraction = effects.mechanism_exposure_scale;
+    facade.warhead_load_field.mechanism_effect_scale = effects.mechanism_effect_scale;
+    facade.warhead_load_field.projected_hitbox_count = effects.projected_hitbox_count;
+    facade.warhead_load_field.spatial_sample_count = effects.warhead_spatial_sample_count;
+    facade.warhead_load_field.spatial_hit_estimate = effects.warhead_spatial_hit_estimate;
+    facade.warhead_load_field.spatial_hit_fraction = effects.warhead_spatial_hit_fraction;
+    facade.warhead_load_field.spatial_energy_scale = effects.warhead_spatial_energy_scale;
+    facade.warhead_load_field.spatial_pattern_scale = effects.warhead_spatial_pattern_scale;
+    facade.warhead_load_field.orientation_pattern_scale = effects.warhead_orientation_pattern_scale;
+    facade.warhead_load_field.fragment_energy_j = effects.mechanism_fragment_energy_j;
+    facade.warhead_load_field.fragment_areal_density_per_m2 =
+        effects.mechanism_fragment_areal_density_per_m2;
+    facade.warhead_load_field.penetration_margin = effects.mechanism_penetration_margin;
+    facade.warhead_load_field.blast_overpressure_kpa = effects.mechanism_blast_overpressure_kpa;
+    facade.warhead_load_field.blast_impulse_kpa_ms = effects.mechanism_blast_impulse_kpa_ms;
+    facade.warhead_load_field.blast_scaled_distance_m_kg13 =
+        effects.mechanism_blast_scaled_distance_m_kg13;
+    facade.warhead_load_field.rod_cut_margin = effects.mechanism_rod_cut_margin;
+    facade.warhead_load_field.surface_incidence_cos = effects.mechanism_surface_incidence_cos;
+
+    facade.target_susceptibility.vulnerability_profile_present =
+        effects.vulnerability_profile_present;
+    facade.target_susceptibility.vulnerability_profile_synthetic =
+        effects.vulnerability_profile_synthetic;
+    facade.target_susceptibility.calibrated_evidence = effects.vulnerability_calibrated_evidence;
+    facade.target_susceptibility.pk_authority = effects.vulnerability_pk_authority;
+    facade.target_susceptibility.deterministic_fuze_authority =
+        effects.vulnerability_deterministic_fuze_authority;
+    facade.target_susceptibility.calibration_status = effects.vulnerability_calibration_status;
+    facade.target_susceptibility.aspect_bucket = effects.vulnerability_aspect_bucket;
+    facade.target_susceptibility.family_scale = effects.vulnerability_family_scale;
+    facade.target_susceptibility.aspect_scale = effects.vulnerability_aspect_scale;
+    facade.target_susceptibility.closure_scale = effects.vulnerability_closure_scale;
+    facade.target_susceptibility.miss_distance_scale = effects.vulnerability_miss_distance_scale;
+    facade.target_susceptibility.effect_scale = effects.vulnerability_effect_scale;
+
+    facade.warhead_load_field.component_loads.reserve(effects.component_mechanism_load_rows.size());
+    facade.component_responses.reserve(effects.component_response_rows.size());
+    for (const ComponentMechanismLoadRow &row : effects.component_mechanism_load_rows) {
+        KillChainComponentLoadFact load{};
+        load.component_name = row.component_name;
+        load.component_system = row.component_system;
+        load.component_redundancy_group_id = row.component_redundancy_group_id;
+        load.direct_hit = row.direct_hit;
+        load.distance_m = row.distance_m;
+        load.effect_scale = row.effect_scale;
+        load.spatial_intersection_fraction = effects.warhead_spatial_hit_fraction;
+        load.pattern_weight = effects.warhead_spatial_pattern_scale;
+        load.orientation_weight = effects.warhead_orientation_pattern_scale;
+        load.receiver_exposure_fraction = effects.mechanism_exposure_scale;
+        load.armor_transmission = effects.mechanism_armor_scale;
+        load.sampling_confidence = effects.confidence;
+        load.load_intensity_scale = effects.mechanism_effect_scale;
+        load.fragment_energy_j = row.mechanism_fragment_energy_j;
+        load.fragment_areal_density_per_m2 = row.mechanism_fragment_areal_density_per_m2;
+        load.penetration_margin = row.mechanism_penetration_margin;
+        load.blast_overpressure_kpa = row.mechanism_blast_overpressure_kpa;
+        load.blast_impulse_kpa_ms = row.mechanism_blast_impulse_kpa_ms;
+        load.blast_scaled_distance_m_kg13 = row.mechanism_blast_scaled_distance_m_kg13;
+        load.rod_cut_margin = row.mechanism_rod_cut_margin;
+        load.surface_incidence_cos = row.mechanism_surface_incidence_cos;
+        facade.warhead_load_field.component_loads.push_back(load);
+    }
+
+    for (const ComponentResponseRow &row : effects.component_response_rows) {
+        KillChainComponentResponseFact response{};
+        response.source_current_owner_stage = row.source_current_owner_stage;
+        response.source_row_index = row.source_row_index;
+        response.component_name = row.component_name;
+        response.component_system = row.component_system;
+        response.component_redundancy_group_id = row.component_redundancy_group_id;
+        response.threshold_scale = row.threshold_scale;
+        response.failure_probability = row.failure_probability;
+        response.failure_sample = row.failure_sample;
+        response.failure_probability_source = row.failure_probability_source;
+        response.failure_probability_calibrated = row.failure_probability_calibrated;
+        response.failure_probability_evidence_dataset_ref =
+            row.failure_probability_evidence_dataset_ref;
+        response.failure_probability_evidence_row_id = row.failure_probability_evidence_row_id;
+        response.failure_probability_evidence_source_ref =
+            row.failure_probability_evidence_source_ref;
+        response.failure_probability_evidence_provenance =
+            row.failure_probability_evidence_provenance;
+        response.failure_probability_authority = row.failure_probability_authority;
+        response.failure_probability_component_specific =
+            row.failure_probability_component_specific;
+        response.failure_probability_weapon_family = row.failure_probability_weapon_family;
+        response.failure_probability_aspect_bucket = row.failure_probability_aspect_bucket;
+        response.failure_probability_closure_bucket = row.failure_probability_closure_bucket;
+        response.failure_probability_miss_distance_bucket =
+            row.failure_probability_miss_distance_bucket;
+        response.failure_probability_evidence_component_name =
+            row.failure_probability_evidence_component_name;
+        response.failure_probability_evidence_component_system =
+            row.failure_probability_evidence_component_system;
+        response.failure_probability_evidence_component_redundancy_group_id =
+            row.failure_probability_evidence_component_redundancy_group_id;
+        response.failure_mode = row.failure_mode;
+        response.failure_severity = row.failure_severity;
+        response.failure_mode_names = row.failure_mode_names;
+        response.failure_mode_severities = row.failure_mode_severities;
+        response.failure_mode_source = row.failure_mode_source;
+        response.failure_mode_authority = row.failure_mode_authority;
+        response.integrity_before = row.integrity_before;
+        response.integrity_after = row.integrity_after;
+        response.redundancy_group_availability_before = row.redundancy_group_availability_before;
+        response.redundancy_group_availability_after = row.redundancy_group_availability_after;
+        facade.component_responses.push_back(response);
+    }
+
+    facade.consequence_projection.outcome_state = effects.outcome_state;
+    facade.consequence_projection.component_hit_count = effects.component_hit_count;
+    facade.consequence_projection.component_failure_count = effects.component_failure_count;
+    facade.consequence_projection.primary_component_name = effects.component_primary_name;
+    facade.consequence_projection.primary_component_system = effects.component_primary_system;
+    facade.consequence_projection.primary_component_integrity = effects.component_primary_integrity;
+    facade.consequence_projection.redundancy_group_availability =
+        effects.component_redundancy_group_availability;
+    facade.consequence_projection.air_system_hit_flags = effects.air_system_hit_flags;
+    facade.consequence_projection.air_system_spatial_scales = effects.air_system_spatial_scales;
+    facade.consequence_projection.vulnerability_scale_trace = effects.vulnerability_scale_trace;
+
+    return facade;
+}
 
 struct DamageReport {
     std::uint64_t report_id = 0;

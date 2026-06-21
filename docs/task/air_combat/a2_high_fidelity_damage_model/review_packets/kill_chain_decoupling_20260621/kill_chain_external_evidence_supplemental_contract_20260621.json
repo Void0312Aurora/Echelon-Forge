@@ -1,0 +1,171 @@
+{
+  "schema_version": "a2.kill_chain_calibration_supplemental_evidence_contract.v1",
+  "status": "template_only_not_evidence",
+  "purpose": "Supplemental P6 authority evidence contract for fields outside MLF-10 v1 manifest records",
+  "record_schema_version": "a2.kill_chain_supplemental_authority_evidence.v1",
+  "contract_record_count": 2,
+  "layer_contracts": [
+    {
+      "layer_id": "fuze_data",
+      "owner_stage": "fuze_decision",
+      "allowed_parameter_scope": "reliability, detection window, delay, detonation probability",
+      "required_evidence": "fuze profile evidence with no warhead-load or response-curve edits",
+      "supplemental_contract_authority_fields": [
+        "deterministic_fuze_authority"
+      ]
+    },
+    {
+      "layer_id": "consequence_data",
+      "owner_stage": "consequence_projection",
+      "allowed_parameter_scope": "component-failure to platform loss/reward mapping",
+      "required_evidence": "consequence mapping evidence with fixed upstream component responses",
+      "supplemental_contract_authority_fields": [
+        "pk_authority"
+      ]
+    }
+  ],
+  "contract_records": [
+    {
+      "schema_version": "a2.kill_chain_supplemental_authority_evidence.v1",
+      "evidence_id": "REPLACE-WITH-STABLE-ID-fuze_data",
+      "layer_id": "fuze_data",
+      "owner_stage": "fuze_decision",
+      "authority_field": "deterministic_fuze_authority",
+      "authority_scope": "fuze_decision_model_only",
+      "source_kind": "external_authority_package",
+      "source_ref": "REPLACE-WITH-STABLE-URL-OR-ARTIFACT-REF",
+      "provenance": "REPLACE-WITH-ACQUISITION-GENERATION-RETENTION-TRANSFORMATION-SUMMARY",
+      "rights_status": "release_grade_admitted",
+      "source_gate_status": "passed",
+      "validation_status": "passed",
+      "scope": {
+        "target_type": "REPLACE-WITH-EXACT-TARGET-TYPE-OR-CONSEQUENCE-SCOPE",
+        "weapon_family": "REPLACE-WITH-EXACT-WEAPON-FAMILY",
+        "mechanism_family": "REPLACE-WITH-EXACT-MECHANISM-FAMILY",
+        "aspect_bucket": "REPLACE-WITH-EXACT-ASPECT-BUCKET",
+        "closure_bucket": "REPLACE-WITH-EXACT-CLOSURE-BUCKET",
+        "miss_distance_bucket": "REPLACE-WITH-EXACT-MISS-DISTANCE-BUCKET",
+        "decision_scope": "REPLACE-WITH-FUZE-OR-CONSEQUENCE-DECISION-SCOPE"
+      },
+      "population": {
+        "identity": "REPLACE-WITH-POPULATION-IDENTITY",
+        "denominator_name": "REPLACE-WITH-NAMED-DENOMINATOR",
+        "sample_count": "REPLACE-WITH-POSITIVE-INTEGER",
+        "filters": "REPLACE-WITH-EXPLICIT-FILTERS",
+        "independence_assumption": "REPLACE-WITH-INDEPENDENCE-ASSUMPTION"
+      },
+      "uncertainty": {
+        "method": "REPLACE-WITH-UNCERTAINTY-METHOD",
+        "coverage": "REPLACE-WITH-COVERAGE-STATEMENT",
+        "residuals": []
+      },
+      "independent_review": {
+        "status": "passed",
+        "reviewer_ref": "REPLACE-WITH-STABLE-REVIEWER-SIGNOFF-REF"
+      },
+      "stage_delta_requirements": {
+        "target_stage_id": "fuze_decision",
+        "frozen_stage_ids": [
+          "approach",
+          "warhead_load_field",
+          "component_response",
+          "consequence_projection"
+        ],
+        "reject_if_changed_stage_ids": [
+          "approach",
+          "warhead_load_field",
+          "component_response",
+          "consequence_projection"
+        ],
+        "before_after_stage_report_required": true,
+        "delta_guard_schema_version": "a2.kill_chain_calibration_delta_guard.v1"
+      },
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": []
+    },
+    {
+      "schema_version": "a2.kill_chain_supplemental_authority_evidence.v1",
+      "evidence_id": "REPLACE-WITH-STABLE-ID-consequence_data",
+      "layer_id": "consequence_data",
+      "owner_stage": "consequence_projection",
+      "authority_field": "pk_authority",
+      "authority_scope": "simulation_consequence_projection_only",
+      "source_kind": "external_authority_package",
+      "source_ref": "REPLACE-WITH-STABLE-URL-OR-ARTIFACT-REF",
+      "provenance": "REPLACE-WITH-ACQUISITION-GENERATION-RETENTION-TRANSFORMATION-SUMMARY",
+      "rights_status": "release_grade_admitted",
+      "source_gate_status": "passed",
+      "validation_status": "passed",
+      "scope": {
+        "target_type": "REPLACE-WITH-EXACT-TARGET-TYPE-OR-CONSEQUENCE-SCOPE",
+        "weapon_family": "REPLACE-WITH-EXACT-WEAPON-FAMILY",
+        "mechanism_family": "REPLACE-WITH-EXACT-MECHANISM-FAMILY",
+        "aspect_bucket": "REPLACE-WITH-EXACT-ASPECT-BUCKET",
+        "closure_bucket": "REPLACE-WITH-EXACT-CLOSURE-BUCKET",
+        "miss_distance_bucket": "REPLACE-WITH-EXACT-MISS-DISTANCE-BUCKET",
+        "decision_scope": "REPLACE-WITH-FUZE-OR-CONSEQUENCE-DECISION-SCOPE"
+      },
+      "population": {
+        "identity": "REPLACE-WITH-POPULATION-IDENTITY",
+        "denominator_name": "REPLACE-WITH-NAMED-DENOMINATOR",
+        "sample_count": "REPLACE-WITH-POSITIVE-INTEGER",
+        "filters": "REPLACE-WITH-EXPLICIT-FILTERS",
+        "independence_assumption": "REPLACE-WITH-INDEPENDENCE-ASSUMPTION"
+      },
+      "uncertainty": {
+        "method": "REPLACE-WITH-UNCERTAINTY-METHOD",
+        "coverage": "REPLACE-WITH-COVERAGE-STATEMENT",
+        "residuals": []
+      },
+      "independent_review": {
+        "status": "passed",
+        "reviewer_ref": "REPLACE-WITH-STABLE-REVIEWER-SIGNOFF-REF"
+      },
+      "stage_delta_requirements": {
+        "target_stage_id": "consequence_projection",
+        "frozen_stage_ids": [
+          "approach",
+          "fuze_decision",
+          "warhead_load_field",
+          "component_response"
+        ],
+        "reject_if_changed_stage_ids": [
+          "approach",
+          "fuze_decision",
+          "warhead_load_field",
+          "component_response"
+        ],
+        "before_after_stage_report_required": true,
+        "delta_guard_schema_version": "a2.kill_chain_calibration_delta_guard.v1"
+      },
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": []
+    }
+  ],
+  "next_commands": {
+    "check_contract_or_record": "./.venv/bin/python tools/diagnostics/kill_chain_decoupling_probe.py --external-evidence-supplemental-contract-check <contract_or_record.json> --output <contract_check.json>",
+    "full_report_after_authority_admission": "./.venv/bin/python tools/diagnostics/kill_chain_decoupling_probe.py --external-evidence-report <admission_report.json> --output <kill_chain_report.json>",
+    "delta_guard_after_layer_update": "./.venv/bin/python tools/diagnostics/kill_chain_decoupling_probe.py --delta-guard-before <before.json> --delta-guard-after <after.json> --delta-guard-layer <layer_id> --output <delta_guard.json>"
+  },
+  "authority_boundary": {
+    "runtime_parameter_retuning": false,
+    "default_database_modified": false,
+    "real_world_pk": false,
+    "deterministic_fuze_authority": false,
+    "calibration_authority": false
+  }
+}

@@ -2,25 +2,19 @@
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
 from tools.diagnostics import lethality_chain_contract as chain_contract
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
     LETHALITY_CHAIN_SCHEMA_VERSION,
-    _clamp_unit,
     _entity_id,
     _event_id,
     _finite_float,
-    _positive_finite,
     _stable_json,
 )
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_rows import (
-    _component_mechanism_row_projection,
-    _component_mechanism_rows_by_effect_id,
     _lethality_base_row,
     _lethality_header_base_kwargs,
-    _match_component_mechanism_row,
 )
 
 
@@ -50,31 +44,6 @@ def _effects_event_has_warhead_load(effect: Any) -> bool:
         "warhead_spatial_hit_estimate",
     )
     return any(_finite_float(getattr(effect, field, 0.0), 0.0) > 0.0 for field in load_fields)
-
-
-def _component_damage_sample_triggered(row: Any) -> bool:
-    probability = _finite_float(getattr(row, "component_failure_probability", float("nan")))
-    sample = _finite_float(getattr(row, "component_failure_sample", float("nan")))
-    if not math.isfinite(probability) or not math.isfinite(sample):
-        return False
-    if probability <= 0.0 or sample < 0.0 or sample > 1.0:
-        return False
-    if not str(getattr(row, "component_name", "") or ""):
-        return False
-    if not str(getattr(row, "component_system", "") or ""):
-        return False
-    load_fields = (
-        "effect_scale",
-        "mechanism_fragment_energy_j",
-        "mechanism_fragment_areal_density_per_m2",
-        "mechanism_penetration_margin",
-        "mechanism_blast_overpressure_kpa",
-        "mechanism_blast_impulse_kpa_ms",
-        "mechanism_rod_cut_margin",
-    )
-    return any(_positive_finite(getattr(row, field, 0.0)) for field in load_fields) and (
-        sample <= _clamp_unit(probability)
-    )
 
 
 def _parse_platform_damage_state_delta(value: Any) -> dict[str, float]:
@@ -129,6 +98,178 @@ def _lethality_trace_indexes(engagement_events: Any) -> tuple[dict[int, Any], di
     return trace_by_effect, trace_by_damage
 
 
+def _int_value(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return int(default)
+
+
+def _lethality_component_response_rows(
+    *,
+    episode: int,
+    step: int,
+    sim_time_s: float,
+    engagement_events: Any,
+) -> list[dict[str, Any]]:
+    trace_by_effect, _trace_by_damage = _lethality_trace_indexes(engagement_events)
+    rows: list[dict[str, Any]] = []
+    for effect in list(getattr(engagement_events, "effects_events", []) or []):
+        response_rows = list(getattr(effect, "component_response_rows", []) or [])
+        if not response_rows:
+            continue
+        effect_id = _event_id(effect, "event_id")
+        trace = trace_by_effect.get(effect_id)
+        chain_id = _event_id(trace, "chain_id") if trace is not None else effect_id
+        munition_id = _entity_id(getattr(trace, "munition", None)) if trace is not None else 0
+        if munition_id <= 0:
+            munition_id = _entity_id(getattr(effect, "munition", None))
+        target_id = _entity_id(getattr(effect, "target", None))
+        load_rows = list(getattr(effect, "component_mechanism_load_rows", []) or [])
+        for index, response in enumerate(response_rows):
+            source_row_index = _int_value(getattr(response, "source_row_index", index), index)
+            source_load = (
+                load_rows[source_row_index]
+                if 0 <= source_row_index < len(load_rows)
+                else None
+            )
+            row = {
+                "schema_version": "component_response_fact.v1",
+                "episode": int(episode),
+                "step": int(step),
+                "sim_time_s": float(sim_time_s),
+                "chain_id": int(chain_id),
+                "event_id": int(effect_id),
+                "parent_event_id": (
+                    _event_id(trace, "launch_event_id") if trace is not None else 0
+                ),
+                "stage": "component_response",
+                "status": "evaluated",
+                "reason": "effects_event_component_response_row",
+                "source_event_kind": "ComponentResponseRow",
+                "source_event_id": int(effect_id),
+                "source_row_index": int(source_row_index),
+                "munition_id": int(munition_id),
+                "target_id": int(target_id),
+                "evidence_level": _lethality_evidence_level(effect),
+                "observation_mode": chain_contract.OBSERVATION_MODE_SAMPLED_RUNTIME,
+                "consumer_visibility": (
+                    chain_contract.CONSUMER_VISIBILITY_DIAGNOSTICS_AND_TRAINING
+                ),
+                "component_name": str(getattr(response, "component_name", "") or ""),
+                "component_system": str(getattr(response, "component_system", "") or ""),
+                "component_redundancy_group_id": str(
+                    getattr(response, "component_redundancy_group_id", "") or ""
+                ),
+                "threshold_scale": _finite_float(
+                    getattr(response, "threshold_scale", float("nan"))
+                ),
+                "failure_probability": _finite_float(
+                    getattr(response, "failure_probability", float("nan"))
+                ),
+                "failure_sample": _finite_float(
+                    getattr(response, "failure_sample", float("nan"))
+                ),
+                "failure_probability_source": str(
+                    getattr(response, "failure_probability_source", "") or ""
+                ),
+                "failure_probability_calibrated": int(
+                    bool(getattr(response, "failure_probability_calibrated", False))
+                ),
+                "failure_probability_evidence_dataset_ref": str(
+                    getattr(response, "failure_probability_evidence_dataset_ref", "") or ""
+                ),
+                "failure_probability_evidence_row_id": str(
+                    getattr(response, "failure_probability_evidence_row_id", "") or ""
+                ),
+                "failure_probability_evidence_source_ref": str(
+                    getattr(response, "failure_probability_evidence_source_ref", "") or ""
+                ),
+                "failure_probability_evidence_provenance": str(
+                    getattr(response, "failure_probability_evidence_provenance", "") or ""
+                ),
+                "failure_probability_authority": int(
+                    bool(getattr(response, "failure_probability_authority", False))
+                ),
+                "failure_probability_component_specific": int(
+                    bool(getattr(response, "failure_probability_component_specific", False))
+                ),
+                "failure_probability_weapon_family": str(
+                    getattr(response, "failure_probability_weapon_family", "") or ""
+                ),
+                "failure_probability_aspect_bucket": str(
+                    getattr(response, "failure_probability_aspect_bucket", "") or ""
+                ),
+                "failure_probability_closure_bucket": str(
+                    getattr(response, "failure_probability_closure_bucket", "") or ""
+                ),
+                "failure_probability_miss_distance_bucket": str(
+                    getattr(response, "failure_probability_miss_distance_bucket", "") or ""
+                ),
+                "failure_probability_evidence_component_name": str(
+                    getattr(response, "failure_probability_evidence_component_name", "") or ""
+                ),
+                "failure_probability_evidence_component_system": str(
+                    getattr(response, "failure_probability_evidence_component_system", "") or ""
+                ),
+                "failure_probability_evidence_component_redundancy_group_id": str(
+                    getattr(
+                        response,
+                        "failure_probability_evidence_component_redundancy_group_id",
+                        "",
+                    )
+                    or ""
+                ),
+                "failure_mode": str(getattr(response, "failure_mode", "") or ""),
+                "failure_severity": _finite_float(
+                    getattr(response, "failure_severity", float("nan"))
+                ),
+                "failure_mode_source": str(
+                    getattr(response, "failure_mode_source", "") or ""
+                ),
+                "failure_mode_authority": int(
+                    bool(getattr(response, "failure_mode_authority", False))
+                ),
+                "integrity_before": _finite_float(
+                    getattr(response, "integrity_before", float("nan"))
+                ),
+                "integrity_after": _finite_float(
+                    getattr(response, "integrity_after", float("nan"))
+                ),
+                "redundancy_group_availability_before": _finite_float(
+                    getattr(response, "redundancy_group_availability_before", float("nan"))
+                ),
+                "redundancy_group_availability_after": _finite_float(
+                    getattr(response, "redundancy_group_availability_after", float("nan"))
+                ),
+            }
+            if source_load is not None:
+                row.update(
+                    {
+                        "source_load_component_name": str(
+                            getattr(source_load, "component_name", "") or ""
+                        ),
+                        "source_load_component_system": str(
+                            getattr(source_load, "component_system", "") or ""
+                        ),
+                        "source_load_component_redundancy_group_id": str(
+                            getattr(source_load, "component_redundancy_group_id", "") or ""
+                        ),
+                        "source_load_direct_hit": int(
+                            bool(getattr(source_load, "direct_hit", False))
+                        ),
+                        "source_load_distance_m": _finite_float(
+                            getattr(source_load, "distance_m", float("nan"))
+                        ),
+                        "source_load_effect_scale": _finite_float(
+                            getattr(source_load, "effect_scale", float("nan"))
+                        ),
+                    }
+                )
+            rows.append(row)
+    return rows
+
+
 def _lethality_chain_rows(
     *,
     episode: int,
@@ -137,7 +278,6 @@ def _lethality_chain_rows(
     engagement_events: Any,
 ) -> list[dict[str, Any]]:
     trace_by_effect, trace_by_damage = _lethality_trace_indexes(engagement_events)
-    component_rows_by_effect_id = _component_mechanism_rows_by_effect_id(engagement_events)
     effect_by_id = {
         _event_id(effect, "event_id"): effect
         for effect in list(getattr(engagement_events, "effects_events", []) or [])
@@ -369,11 +509,6 @@ def _lethality_chain_rows(
         row = _lethality_base_row(**base_kwargs)
         component_name = str(getattr(component_event, "component_name", "") or "")
         component_system = str(getattr(component_event, "component_system", "") or "")
-        source_mechanism_row = _match_component_mechanism_row(
-            component_rows_by_effect_id.get(int(base_kwargs["parent_event_id"]), []),
-            component_name=component_name,
-            component_system=component_system,
-        )
         row.update(
             {
                 "component_hit_count": 1,
@@ -385,6 +520,27 @@ def _lethality_chain_rows(
                 ),
                 "component_effect_scale": _finite_float(
                     getattr(component_event, "effect_scale", float("nan"))
+                ),
+                "component_spatial_intersection_fraction": _finite_float(
+                    getattr(component_event, "spatial_intersection_fraction", float("nan"))
+                ),
+                "component_pattern_weight": _finite_float(
+                    getattr(component_event, "pattern_weight", float("nan"))
+                ),
+                "component_orientation_weight": _finite_float(
+                    getattr(component_event, "orientation_weight", float("nan"))
+                ),
+                "component_receiver_exposure_fraction": _finite_float(
+                    getattr(component_event, "receiver_exposure_fraction", float("nan"))
+                ),
+                "component_armor_transmission": _finite_float(
+                    getattr(component_event, "armor_transmission", float("nan"))
+                ),
+                "component_sampling_confidence": _finite_float(
+                    getattr(component_event, "sampling_confidence", float("nan"))
+                ),
+                "component_load_intensity_scale": _finite_float(
+                    getattr(component_event, "load_intensity_scale", float("nan"))
                 ),
                 "component_load_source": str(getattr(component_event, "load_source", "") or ""),
                 "fragment_energy_j": _finite_float(
@@ -413,8 +569,6 @@ def _lethality_chain_rows(
                 ),
             }
         )
-        if source_mechanism_row is not None:
-            row.update(_component_mechanism_row_projection(source_mechanism_row))
         rows.append(row)
         standard_component_keys.add(
             (int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0))
@@ -801,53 +955,6 @@ def _lethality_chain_rows(
             component.update({"component_hit_count": int(component_hit_count)})
             rows.append(component)
 
-        if has_warhead_load and fallback_key not in standard_component_damage_keys:
-            triggered_rows = [
-                item
-                for item in list(getattr(effect, "component_mechanism_load_rows", []) or [])
-                if _component_damage_sample_triggered(item)
-            ]
-            if triggered_rows:
-                damage_source = triggered_rows[0]
-                component_damage = _lethality_base_row(
-                    stage=chain_contract.STAGE_COMPONENT_DAMAGE,
-                    **base_kwargs,
-                )
-                component_damage.update(
-                    {
-                        "status": "sampled",
-                        "reason": "transitional_component_damage_projection",
-                        "component_hit_count": int(len(triggered_rows)),
-                        "component_name": str(getattr(damage_source, "component_name", "") or ""),
-                        "component_system": str(
-                            getattr(damage_source, "component_system", "") or ""
-                        ),
-                        "component_integrity_before": _finite_float(
-                            getattr(damage_source, "component_integrity_before", float("nan"))
-                        ),
-                        "component_integrity_after": _finite_float(
-                            getattr(damage_source, "component_integrity_after", float("nan"))
-                        ),
-                        "component_failure_mode": str(
-                            getattr(damage_source, "component_failure_primary_mode", "") or ""
-                        ),
-                        "component_failure_severity": _finite_float(
-                            getattr(
-                                damage_source,
-                                "component_failure_primary_mode_severity",
-                                float("nan"),
-                            )
-                        ),
-                        "component_failure_probability": _finite_float(
-                            getattr(damage_source, "component_failure_probability", float("nan"))
-                        ),
-                        "component_failure_sample": _finite_float(
-                            getattr(damage_source, "component_failure_sample", float("nan"))
-                        ),
-                    }
-                )
-                rows.append(component_damage)
-
     for report in list(getattr(engagement_events, "damage_reports", []) or []):
         report_id = _event_id(report, "report_id")
         source_event_id = _event_id(report, "source_event_id")
@@ -980,6 +1087,25 @@ def _append_unique_lethality_chain_rows(
         out.append(dict(row))
 
 
+def _append_unique_lethality_component_response_rows(
+    out: list[dict[str, Any]],
+    seen: set[tuple[int, int, int, int, int]],
+    rows: list[dict[str, Any]],
+) -> None:
+    for row in rows:
+        key = (
+            int(row.get("episode", 0) or 0),
+            int(row.get("chain_id", 0) or 0),
+            int(row.get("event_id", 0) or 0),
+            int(row.get("source_event_id", 0) or 0),
+            int(row.get("source_row_index", 0) or 0),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(dict(row))
+
+
 def _project_current_lethality_chain_rows(
     *, episode: int, step: int, sim_time_s: float, sim: Any
 ) -> list[dict[str, Any]]:
@@ -988,6 +1114,21 @@ def _project_current_lethality_chain_rows(
     except Exception:
         return []
     return _lethality_chain_rows(
+        episode=int(episode),
+        step=int(step),
+        sim_time_s=float(sim_time_s),
+        engagement_events=engagement_events,
+    )
+
+
+def _project_current_lethality_component_response_rows(
+    *, episode: int, step: int, sim_time_s: float, sim: Any
+) -> list[dict[str, Any]]:
+    try:
+        engagement_events = sim.export_recent_engagement_events()
+    except Exception:
+        return []
+    return _lethality_component_response_rows(
         episode=int(episode),
         step=int(step),
         sim_time_s=float(sim_time_s),

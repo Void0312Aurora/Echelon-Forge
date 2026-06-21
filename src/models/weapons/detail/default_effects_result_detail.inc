@@ -143,6 +143,7 @@ void populate_default_effects_result(
     result.component_failure_count = scratch.component_failure_count;
     result.component_hit_count = scratch.component_hit_count;
     result.component_mechanism_load_rows = scratch.component_mechanism_load_rows;
+    result.component_response_rows = scratch.component_response_rows;
     result.component_primary_name = scratch.component_primary_name;
     result.component_primary_system = scratch.component_primary_system;
     result.component_primary_redundancy_group =

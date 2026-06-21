@@ -206,7 +206,25 @@ def _as_float(value: object) -> float:
   return float(value)
 
 
-def _row_summary(row: object) -> dict[str, Any]:
+def _response_for_load_row(effect: object, load_row: object) -> object | None:
+  load_key = (
+    str(load_row.component_name),
+    str(load_row.component_system),
+    str(load_row.component_redundancy_group_id),
+  )
+  for response in getattr(effect, "component_response_rows", []) or []:
+    response_key = (
+      str(response.component_name),
+      str(response.component_system),
+      str(response.component_redundancy_group_id),
+    )
+    if response_key == load_key:
+      return response
+  return None
+
+
+def _row_summary(effect: object, row: object) -> dict[str, Any]:
+  response = _response_for_load_row(effect, row)
   return {
     "component_name": str(row.component_name),
     "component_system": str(row.component_system),
@@ -214,9 +232,15 @@ def _row_summary(row: object) -> dict[str, Any]:
     "direct_hit": bool(row.direct_hit),
     "distance_m": _as_float(row.distance_m),
     "effect_scale": _as_float(row.effect_scale),
-    "component_failure_probability": _as_float(row.component_failure_probability),
-    "component_failure_probability_source": str(row.component_failure_probability_source),
-    "component_failure_sample": _as_float(row.component_failure_sample),
+    "component_failure_probability": (
+      _as_float(response.failure_probability) if response is not None else 0.0
+    ),
+    "component_failure_probability_source": (
+      str(response.failure_probability_source) if response is not None else "none"
+    ),
+    "component_failure_sample": (
+      _as_float(response.failure_sample) if response is not None else 1.0
+    ),
     "mechanism_fragment_energy_j": _as_float(row.mechanism_fragment_energy_j),
     "mechanism_fragment_areal_density_per_m2": _as_float(
       row.mechanism_fragment_areal_density_per_m2
@@ -294,7 +318,7 @@ def _run_trace_event(
   if len(events.effects_events) != 1:
     raise RuntimeError("expected exactly one effects event")
   effect = events.effects_events[0]
-  rows = [_row_summary(row) for row in effect.component_mechanism_load_rows]
+  rows = [_row_summary(effect, row) for row in effect.component_mechanism_load_rows]
   loads = [_component_load_summary(load) for load in events.component_load_events]
   damages = [
     _component_damage_summary(damage) for damage in events.component_damage_events

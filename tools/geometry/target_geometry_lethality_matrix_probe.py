@@ -318,7 +318,25 @@ def _parse_bool_map(text: object) -> dict[str, bool]:
   return values
 
 
-def _row_summary(row: object) -> dict[str, Any]:
+def _response_for_load_row(effect: object, load_row: object) -> object | None:
+  load_key = (
+    _str_attr(load_row, "component_name"),
+    _str_attr(load_row, "component_system"),
+    _str_attr(load_row, "component_redundancy_group_id"),
+  )
+  for response in getattr(effect, "component_response_rows", []) or []:
+    response_key = (
+      _str_attr(response, "component_name"),
+      _str_attr(response, "component_system"),
+      _str_attr(response, "component_redundancy_group_id"),
+    )
+    if response_key == load_key:
+      return response
+  return None
+
+
+def _row_summary(effect: object, row: object) -> dict[str, Any]:
+  response = _response_for_load_row(effect, row)
   return {
     "component_name": _str_attr(row, "component_name"),
     "component_system": _str_attr(row, "component_system"),
@@ -328,8 +346,10 @@ def _row_summary(row: object) -> dict[str, Any]:
     "direct_hit": _bool_attr(row, "direct_hit"),
     "distance_m": _float_attr(row, "distance_m"),
     "effect_scale": _float_attr(row, "effect_scale"),
-    "component_failure_probability": _float_attr(
-      row, "component_failure_probability"
+    "component_failure_probability": (
+      _float_attr(response, "failure_probability")
+      if response is not None
+      else 0.0
     ),
     "mechanism_fragment_energy_j": _float_attr(
       row, "mechanism_fragment_energy_j"
@@ -565,7 +585,7 @@ def _event_summary(
     raise RuntimeError("expected exactly one effects event")
   effect = events.effects_events[0]
   rows = [
-    _row_summary(row)
+    _row_summary(effect, row)
     for row in effect.component_mechanism_load_rows
     if _str_attr(row, "component_name") or _str_attr(row, "component_system")
   ]
@@ -642,7 +662,7 @@ def _event_summary(
       effect, "component_failure_probability"
     ),
     "component_failure_probability_event_aggregation": (
-      "max_probability_across_component_mechanism_load_rows"
+      "max_probability_across_component_response_rows"
     ),
     "component_failure_probability_source": _str_attr(
       effect, "component_failure_probability_source"

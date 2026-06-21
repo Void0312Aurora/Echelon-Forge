@@ -47,6 +47,7 @@ inline void apply_effects_result_fields(EffectsEvent &effects, const EffectsResu
     effects.component_failure_count = result.component_failure_count;
     effects.component_hit_count = result.component_hit_count;
     effects.component_mechanism_load_rows = result.component_mechanism_load_rows;
+    effects.component_response_rows = result.component_response_rows;
     effects.component_primary_name = result.component_primary_name;
     effects.component_primary_system = result.component_primary_system;
     effects.component_primary_redundancy_group = result.component_primary_redundancy_group;
