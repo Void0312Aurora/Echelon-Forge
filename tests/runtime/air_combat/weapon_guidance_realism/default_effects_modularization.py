@@ -136,14 +136,15 @@ class DefaultEffectsModularizationRuntimeMixin:
     self.assertEqual(str(row.component_system), "flight_control")
     self.assertTrue(bool(row.direct_hit))
     self.assertAlmostEqual(float(row.distance_m), 0.0, delta=1.0e-6)
-    self.assertEqual(str(row.component_failure_probability_source), "synthetic_sigmoid")
+    response = _component_response_for_load_row(event, row)
+    self.assertEqual(str(response.failure_probability_source), "synthetic_sigmoid")
     self.assertAlmostEqual(
-      float(row.component_failure_probability),
+      float(response.failure_probability),
       float(event.component_failure_probability),
       delta=1.0e-12,
     )
     self.assertAlmostEqual(
-      float(row.component_failure_sample),
+      float(response.failure_sample),
       float(event.component_failure_sample),
       delta=1.0e-12,
     )
@@ -182,10 +183,11 @@ class DefaultEffectsModularizationRuntimeMixin:
     self.assertTrue(bool(row.direct_hit))
     self.assertAlmostEqual(float(row.distance_m), 0.0, delta=1.0e-6)
     self.assertGreater(float(row.effect_scale), 0.0)
-    self.assertEqual(str(row.component_failure_probability_source), "synthetic_sigmoid")
-    self.assertGreater(float(row.component_failure_probability), 0.0)
-    self.assertGreaterEqual(float(row.component_failure_sample), 0.0)
-    self.assertLessEqual(float(row.component_failure_sample), 1.0)
+    response = _component_response_for_load_row(event, row)
+    self.assertEqual(str(response.failure_probability_source), "synthetic_sigmoid")
+    self.assertGreater(float(response.failure_probability), 0.0)
+    self.assertGreaterEqual(float(response.failure_sample), 0.0)
+    self.assertLessEqual(float(response.failure_sample), 1.0)
 
   def test_dfm_p4_direct_hit_without_component_uses_protected_system_fallback(self) -> None:
     target_name = "F-16C_A2_DFM_P4_ProtectedFallback_Test"
@@ -256,13 +258,15 @@ class DefaultEffectsModularizationRuntimeMixin:
       self.assertFalse(bool(row.direct_hit))
       self.assertGreater(float(row.distance_m), 0.0)
       self.assertGreater(float(row.effect_scale), 0.0)
-      self.assertEqual(str(row.component_failure_probability_source), "synthetic_sigmoid")
+      response = _component_response_for_load_row(event, row)
+      self.assertEqual(str(response.failure_probability_source), "synthetic_sigmoid")
+    right_aileron_response = _component_response_row_by_name(event, "right_aileron_actuator")
     self.assertGreaterEqual(
-      float(rows["right_aileron_actuator"].component_failure_sample),
+      float(right_aileron_response.failure_sample),
       0.0,
     )
     self.assertLessEqual(
-      float(rows["right_aileron_actuator"].component_failure_sample),
+      float(right_aileron_response.failure_sample),
       1.0,
     )
     self.assertGreater(
@@ -300,14 +304,15 @@ class DefaultEffectsModularizationRuntimeMixin:
     self.assertEqual(str(row.component_name), "right_aileron_actuator")
     self.assertFalse(bool(row.direct_hit))
     self.assertGreater(float(row.distance_m), 0.0)
-    self.assertGreaterEqual(float(row.component_failure_sample), 0.0)
-    self.assertLessEqual(float(row.component_failure_sample), 1.0)
+    response = _component_response_for_load_row(event, row)
+    self.assertGreaterEqual(float(response.failure_sample), 0.0)
+    self.assertLessEqual(float(response.failure_sample), 1.0)
     self.assertAlmostEqual(
       float(row.effect_scale),
       float(event.spatial_effect_scale),
       delta=1.0e-12,
     )
-    self.assertEqual(str(row.component_failure_probability_source), "synthetic_sigmoid")
+    self.assertEqual(str(response.failure_probability_source), "synthetic_sigmoid")
     self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
     self.assertLess(float(report.system_health_delta), 0.0)
     self.assertFalse(bool(report.destroyed))

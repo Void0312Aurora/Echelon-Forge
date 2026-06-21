@@ -115,6 +115,40 @@ def _set_contacts(sim: ef_py.SimulationKernel, entity_id: int, contacts: list[ef
   sim.set_contact_list(int(entity_id), contacts)
 
 
+def _component_response_rows(event: object) -> list[object]:
+  return list(getattr(event, "component_response_rows", []) or [])
+
+
+def _component_response_row_by_name(
+  event: object,
+  component_name: str,
+  *,
+  component_system: str | None = None,
+) -> object:
+  matches = [
+    row
+    for row in _component_response_rows(event)
+    if str(getattr(row, "component_name", "") or "") == str(component_name)
+    and (
+      component_system is None
+      or str(getattr(row, "component_system", "") or "") == str(component_system)
+    )
+  ]
+  if len(matches) != 1:
+    raise AssertionError(
+      f"expected one component response row for {component_name}, got {len(matches)}"
+    )
+  return matches[0]
+
+
+def _component_response_for_load_row(event: object, load_row: object) -> object:
+  return _component_response_row_by_name(
+    event,
+    str(getattr(load_row, "component_name", "") or ""),
+    component_system=str(getattr(load_row, "component_system", "") or ""),
+  )
+
+
 def _select_weapon_station(sim: ef_py.SimulationKernel, entity_id: int, station_id: int) -> None:
   pilot = ef_py.PilotAction()
   pilot.active = True

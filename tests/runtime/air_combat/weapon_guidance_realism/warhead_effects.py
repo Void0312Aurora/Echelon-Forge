@@ -160,10 +160,11 @@ class WarheadEffectsRuntimeMixin:
     assert primary_row is not None
     self.assertEqual(str(primary_row.component_system), str(effects.component_primary_system))
     self.assertTrue(bool(primary_row.direct_hit))
-    self.assertGreater(float(primary_row.component_failure_probability), 0.0)
-    self.assertEqual(str(primary_row.component_failure_probability_source), "synthetic_sigmoid")
-    self.assertFalse(bool(primary_row.component_failure_probability_authority))
-    self.assertEqual(str(primary_row.component_failure_probability_weapon_family), "blast_fragmentation")
+    primary_response = _component_response_for_load_row(effects, primary_row)
+    self.assertGreater(float(primary_response.failure_probability), 0.0)
+    self.assertEqual(str(primary_response.failure_probability_source), "synthetic_sigmoid")
+    self.assertFalse(bool(primary_response.failure_probability_authority))
+    self.assertEqual(str(primary_response.failure_probability_weapon_family), "blast_fragmentation")
     self.assertGreater(float(primary_row.mechanism_fragment_energy_j), 0.0)
     self.assertGreater(float(primary_row.mechanism_blast_overpressure_kpa), 0.0)
     self.assertGreater(int(primary_row.component_dependency_propagation_count), 0)
@@ -849,28 +850,29 @@ class WarheadEffectsRuntimeMixin:
     self.assertTrue(bool(frag_primary_row.direct_hit))
     self.assertAlmostEqual(float(frag_primary_row.distance_m), 0.0, delta=1.0e-6)
     self.assertGreater(float(frag_primary_row.effect_scale), 0.0)
-    self.assertGreater(float(frag_primary_row.component_threshold_scale), 0.0)
-    self.assertGreater(float(frag_primary_row.component_failure_probability), 0.0)
+    frag_primary_response = _component_response_for_load_row(frag_event, frag_primary_row)
+    self.assertGreater(float(frag_primary_response.threshold_scale), 0.0)
+    self.assertGreater(float(frag_primary_response.failure_probability), 0.0)
     self.assertEqual(
-      str(frag_primary_row.component_failure_probability_source),
+      str(frag_primary_response.failure_probability_source),
       "synthetic_sigmoid",
     )
-    self.assertFalse(bool(frag_primary_row.component_failure_probability_calibrated))
+    self.assertFalse(bool(frag_primary_response.failure_probability_calibrated))
     self.assertEqual(
-      str(frag_primary_row.component_failure_probability_evidence_dataset_ref),
+      str(frag_primary_response.failure_probability_evidence_dataset_ref),
       "",
     )
-    self.assertGreaterEqual(float(frag_primary_row.component_failure_sample), 0.0)
-    self.assertLessEqual(float(frag_primary_row.component_failure_sample), 1.0)
-    self.assertFalse(bool(frag_primary_row.component_failure_probability_authority))
+    self.assertGreaterEqual(float(frag_primary_response.failure_sample), 0.0)
+    self.assertLessEqual(float(frag_primary_response.failure_sample), 1.0)
+    self.assertFalse(bool(frag_primary_response.failure_probability_authority))
     self.assertEqual(
-      str(frag_primary_row.component_failure_probability_weapon_family),
+      str(frag_primary_response.failure_probability_weapon_family),
       "blast_fragmentation",
     )
-    self.assertEqual(str(frag_primary_row.component_failure_probability_aspect_bucket), "beam")
-    self.assertEqual(str(frag_primary_row.component_failure_probability_closure_bucket), "high")
+    self.assertEqual(str(frag_primary_response.failure_probability_aspect_bucket), "beam")
+    self.assertEqual(str(frag_primary_response.failure_probability_closure_bucket), "high")
     self.assertEqual(
-      str(frag_primary_row.component_failure_probability_miss_distance_bucket),
+      str(frag_primary_response.failure_probability_miss_distance_bucket),
       "direct_hit",
     )
     self.assertGreater(float(frag_event.component_primary_mechanism_fragment_energy_j), 0.0)

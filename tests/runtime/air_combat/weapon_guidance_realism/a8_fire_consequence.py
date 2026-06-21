@@ -82,7 +82,7 @@ class A8FireConsequenceRuntimeMixin:
     self.assertIn("left_wing_fuel_cell", rows_by_name)
     modes = _assert_component_row_exposes_public_failure_modes(
       self,
-      rows_by_name["left_wing_fuel_cell"],
+      _component_response_for_load_row(effect, rows_by_name["left_wing_fuel_cell"]),
       expected_any={"puncture", "fuel_leak", "fire_source"},
     )
     self.assertIn("fuel_leak", modes)
@@ -127,7 +127,7 @@ class A8FireConsequenceRuntimeMixin:
     self.assertIn("rear_engine_block", rows_by_name)
     modes = _assert_component_row_exposes_public_failure_modes(
       self,
-      rows_by_name["rear_engine_block"],
+      _component_response_for_load_row(effect, rows_by_name["rear_engine_block"]),
       expected_any={"puncture", "cut", "blast_deformation", "fire_source"},
     )
     self.assertIn("fire_source", modes)

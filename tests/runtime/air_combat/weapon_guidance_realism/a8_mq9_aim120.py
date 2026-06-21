@@ -224,33 +224,33 @@ def _component_rows_by_name(event: object) -> dict[str, object]:
   return {str(row.component_name): row for row in event.component_mechanism_load_rows}
 
 
-def _failure_modes_by_name(row: object) -> dict[str, float]:
+def _failure_modes_by_name(response: object) -> dict[str, float]:
   return {
     str(name): float(severity)
     for name, severity in zip(
-      row.component_failure_mode_names,
-      row.component_failure_mode_severities,
+      response.failure_mode_names,
+      response.failure_mode_severities,
     )
   }
 
 
 def _assert_component_row_exposes_public_failure_modes(
   testcase: unittest.TestCase,
-  row: object,
+  response: object,
   *,
   expected_any: set[str],
 ) -> dict[str, float]:
-  modes = _failure_modes_by_name(row)
+  modes = _failure_modes_by_name(response)
   testcase.assertEqual(
     len(modes),
-    len(list(row.component_failure_mode_names)),
+    len(list(response.failure_mode_names)),
     "mode names must stay one-to-one with severities",
   )
   testcase.assertGreater(len(modes), 0)
-  testcase.assertIn(str(row.component_failure_primary_mode), modes)
+  testcase.assertIn(str(response.failure_mode), modes)
   testcase.assertAlmostEqual(
-    float(row.component_failure_primary_mode_severity),
-    modes[str(row.component_failure_primary_mode)],
+    float(response.failure_severity),
+    modes[str(response.failure_mode)],
     delta=1.0e-12,
   )
   testcase.assertGreater(
@@ -259,10 +259,10 @@ def _assert_component_row_exposes_public_failure_modes(
     f"expected at least one of {sorted(expected_any)} in {sorted(modes)}",
   )
   testcase.assertEqual(
-    str(row.component_failure_mode_source),
+    str(response.failure_mode_source),
     "synthetic_inferred_part_failure_modes",
   )
-  testcase.assertFalse(bool(row.component_failure_mode_authority))
+  testcase.assertFalse(bool(response.failure_mode_authority))
   for mode, severity in modes.items():
     testcase.assertGreater(severity, 0.0, mode)
     testcase.assertLessEqual(severity, 1.0, mode)
@@ -428,7 +428,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
         self.assertIn(case["component"], rows_by_name)
         _assert_component_row_exposes_public_failure_modes(
           self,
-          rows_by_name[case["component"]],
+          _component_response_for_load_row(effect, rows_by_name[case["component"]]),
           expected_any={
             "cut",
             "blast_deformation",
@@ -508,7 +508,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertIn("center_fuel_cell", rows_by_name)
     modes = _assert_component_row_exposes_public_failure_modes(
       self,
-      rows_by_name["center_fuel_cell"],
+      _component_response_for_load_row(effect, rows_by_name["center_fuel_cell"]),
       expected_any={"puncture", "fuel_leak", "fire_source"},
     )
     self.assertIn("fuel_leak", modes)
@@ -681,7 +681,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertIn("right_aileron_servo", rows_by_name)
     modes = _assert_component_row_exposes_public_failure_modes(
       self,
-      rows_by_name["right_aileron_servo"],
+      _component_response_for_load_row(effect, rows_by_name["right_aileron_servo"]),
       expected_any={
         "cut",
         "blast_deformation",

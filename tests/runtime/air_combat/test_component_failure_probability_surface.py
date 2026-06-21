@@ -20,10 +20,26 @@ def _component_rows(event: object) -> list[object]:
   return rows
 
 
+def _component_response_rows(event: object) -> list[object]:
+  rows = list(event.component_response_rows)
+  assert rows
+  return rows
+
+
 def _row_for_component(event: object, component_name: str) -> object:
   matches = [
     row
     for row in _component_rows(event)
+    if str(row.component_name) == component_name
+  ]
+  assert len(matches) == 1
+  return matches[0]
+
+
+def _response_for_component(event: object, component_name: str) -> object:
+  matches = [
+    row
+    for row in _component_response_rows(event)
     if str(row.component_name) == component_name
   ]
   assert len(matches) == 1
@@ -37,11 +53,11 @@ def _assert_synthetic_probability(event: object) -> None:
   assert str(event.component_failure_probability_evidence_row_id) == ""
   assert not bool(event.vulnerability_pk_authority)
   assert not bool(event.vulnerability_deterministic_fuze_authority)
-  for row in _component_rows(event):
-    assert str(row.component_failure_probability_source) == "synthetic_sigmoid"
-    assert not bool(row.component_failure_probability_authority)
-    assert not bool(row.component_failure_probability_calibrated)
-    assert str(row.component_failure_probability_evidence_row_id) == ""
+  for row in _component_response_rows(event):
+    assert str(row.failure_probability_source) == "synthetic_sigmoid"
+    assert not bool(row.failure_probability_authority)
+    assert not bool(row.failure_probability_calibrated)
+    assert str(row.failure_probability_evidence_row_id) == ""
 
 
 def _seeded_profiled_local_event_with_velocity(
@@ -487,17 +503,17 @@ def test_mlf5c_authorized_component_specific_rows_override_generic_baseline() ->
     "fixture://mlf5c/right-aileron"
   )
 
-  row = _row_for_component(event, "right_aileron_actuator")
-  assert float(row.component_failure_probability) == 0.73
-  assert bool(row.component_failure_probability_authority)
-  assert bool(row.component_failure_probability_component_specific)
-  assert str(row.component_failure_probability_evidence_component_name) == (
+  row = _response_for_component(event, "right_aileron_actuator")
+  assert float(row.failure_probability) == 0.73
+  assert bool(row.failure_probability_authority)
+  assert bool(row.failure_probability_component_specific)
+  assert str(row.failure_probability_evidence_component_name) == (
     "right_aileron_actuator"
   )
-  assert str(row.component_failure_probability_evidence_component_system) == (
+  assert str(row.failure_probability_evidence_component_system) == (
     "flight_control"
   )
-  assert str(row.component_failure_probability_evidence_component_redundancy_group_id) == (
+  assert str(row.failure_probability_evidence_component_redundancy_group_id) == (
     "lateral_flight_control_actuators"
   )
 

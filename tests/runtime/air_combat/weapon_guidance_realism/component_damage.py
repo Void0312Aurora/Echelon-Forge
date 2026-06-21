@@ -1220,13 +1220,14 @@ class ComponentDamageRuntimeMixin:
     row = component_rows[0]
     self.assertGreater(float(row.mechanism_rod_cut_margin), 0.0)
     self.assertGreater(float(row.mechanism_penetration_margin), 0.0)
-    self.assertEqual(str(row.component_failure_mode_source), "component_failure_mode_weights")
-    self.assertFalse(bool(row.component_failure_mode_authority))
+    response = _component_response_for_load_row(event, row)
+    self.assertEqual(str(response.failure_mode_source), "component_failure_mode_weights")
+    self.assertFalse(bool(response.failure_mode_authority))
     modes = {
       str(name): float(severity)
       for name, severity in zip(
-        row.component_failure_mode_names,
-        row.component_failure_mode_severities,
+        response.failure_mode_names,
+        response.failure_mode_severities,
       )
     }
     self.assertEqual(
@@ -1239,10 +1240,10 @@ class ComponentDamageRuntimeMixin:
         "fire_source",
       },
     )
-    self.assertIn(str(row.component_failure_primary_mode), modes)
+    self.assertIn(str(response.failure_mode), modes)
     self.assertAlmostEqual(
-      float(row.component_failure_primary_mode_severity),
-      modes[str(row.component_failure_primary_mode)],
+      float(response.failure_severity),
+      modes[str(response.failure_mode)],
       delta=1.0e-12,
     )
     for mode, severity in modes.items():
@@ -1636,9 +1637,11 @@ class ComponentDamageRuntimeMixin:
     self.assertGreaterEqual(int(high_event.component_hit_count), 1)
     high_row = list(high_event.component_mechanism_load_rows)[0]
     low_row = list(low_event.component_mechanism_load_rows)[0]
+    high_response = _component_response_for_load_row(high_event, high_row)
+    low_response = _component_response_for_load_row(low_event, low_row)
     self.assertLess(
-      float(high_row.component_integrity_after),
-      float(low_row.component_integrity_after),
+      float(high_response.integrity_after),
+      float(low_response.integrity_after),
     )
     self.assertLess(
       high_energy_overlay["flight_control"],

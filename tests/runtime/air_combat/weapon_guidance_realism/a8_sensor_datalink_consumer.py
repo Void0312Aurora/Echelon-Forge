@@ -97,7 +97,7 @@ class A8SensorDataLinkConsumerRuntimeMixin:
     self.assertIn("data_link_transceiver", rows_by_name)
     modes = _assert_component_row_exposes_public_failure_modes(
       self,
-      rows_by_name["data_link_transceiver"],
+      _component_response_for_load_row(effect, rows_by_name["data_link_transceiver"]),
       expected_any={"data_loss", "blast_deformation", "puncture"},
     )
     self.assertIn("data_loss", modes)
