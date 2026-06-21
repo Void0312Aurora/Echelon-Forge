@@ -28,7 +28,7 @@ class MissileDynamicsRuntimeMixin:
     self.assertAlmostEqual(float(mass_state[5]), 80.0, delta=1.0e-6)
 
     runtime = sim.debug_get_missile_runtime_state(missile_id)
-    self.assertTrue(bool(runtime["p0_runtime_initialized"]))
+    self.assertTrue(bool(runtime["runtime_initialized"]))
     self.assertTrue(bool(runtime["seeker_has_valid_track"]))
     self.assertTrue(bool(runtime["seeker_has_range"]))
     self.assertEqual(int(runtime["seeker_mode"]), 0)

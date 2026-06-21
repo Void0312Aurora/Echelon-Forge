@@ -308,7 +308,7 @@ inline ParityBudgetRecord make_cpu_exact_reference_budget() {
                 .diagnostics_result = "report_only",
                 .quarantine_required = true,
             },
-        .acceptance_gate = "maintained_cpu_reference_existing_wp6_baseline",
+        .acceptance_gate = "maintained_cpu_reference_existing_baseline",
         .change_reason = "initial maintained exact reference budget",
     };
 }
@@ -495,7 +495,7 @@ inline ParityBudgetRecord make_gpu_exact_unmaintained_candidate_budget() {
                 .quarantine_required = true,
             },
         .acceptance_gate =
-            "future_wp6_accelerated_exact_promotion_review_with_replay_evidence",
+            "future_accelerated_exact_promotion_review_with_replay_evidence",
         .change_reason =
             "initial unmaintained candidate budget; no exact GPU acceptance claimed",
     };
@@ -603,7 +603,7 @@ inline ParityBudgetRecord make_resident_state_unmaintained_candidate_budget() {
                 .quarantine_required = true,
             },
         .acceptance_gate =
-            "future_wp6_resident_state_promotion_review_with_ownership_sync_and_replay_evidence",
+            "future_resident_state_promotion_review_with_ownership_sync_and_replay_evidence",
         .change_reason =
             "initial unmaintained resident-state candidate budget; host/backend split not yet accepted as maintained",
     };
@@ -694,13 +694,13 @@ inline ParityBudgetRecord make_shadow_compare_unmaintained_candidate_budget() {
                 .diagnostics_result = "report_only",
                 .quarantine_required = false,
             },
-        .acceptance_gate = "future_wp6_shadow_compare_review_before_any_maintained_claim",
+        .acceptance_gate = "future_shadow_compare_review_before_any_maintained_claim",
         .change_reason =
             "initial unmaintained shadow-compare placeholder; no shadow capability acceptance claimed",
     };
 }
 
-inline const std::vector<ParityBudgetRecord>& wp13_parity_budget_registry_seed() {
+inline const std::vector<ParityBudgetRecord>& parity_budget_registry_seed() {
     static const std::vector<ParityBudgetRecord> registry = {
         make_cpu_exact_reference_budget(),
         make_gpu_helpers_diagnostics_only_budget(),
@@ -712,7 +712,7 @@ inline const std::vector<ParityBudgetRecord>& wp13_parity_budget_registry_seed()
 }
 
 inline const ParityBudgetRecord* find_parity_budget_record(std::string_view budget_id) {
-    const auto& registry = wp13_parity_budget_registry_seed();
+    const auto& registry = parity_budget_registry_seed();
     const auto it = std::find_if(
         registry.begin(),
         registry.end(),
@@ -763,8 +763,8 @@ inline ParityBudgetValidationResult validate_profile_owned_parity_budget(
     return result;
 }
 
-inline std::optional<ParityBudgetValidationResult> validate_wp13_parity_budget_registry_seed() {
-    const auto& registry = wp13_parity_budget_registry_seed();
+inline std::optional<ParityBudgetValidationResult> validate_parity_budget_registry_seed() {
+    const auto& registry = parity_budget_registry_seed();
     if (registry.empty()) {
         ParityBudgetValidationResult result{};
         result.reject(std::string(kParityBudgetRejectionMetadataIncomplete));

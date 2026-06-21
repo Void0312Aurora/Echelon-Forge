@@ -324,7 +324,7 @@ class GpuRuntimeBindingTests(unittest.TestCase):
       self.assertTrue(hasattr(admission, field), msg=f"missing RuntimeFidelityAdmission.{field}")
     self.assertTrue(bool(admission.admitted))
     self.assertEqual(admission.selected_provider_family, "reference_cpu")
-    self.assertEqual(admission.selected_stage_node_id, "p10.observation_export.v1")
+    self.assertEqual(admission.selected_stage_node_id, "observation_export.v1")
 
   def test_runtime_facade_fidelity_binding_rejects_gpu_claim_without_fallback(self) -> None:
     facade = ef_py.RuntimeFacade(1)

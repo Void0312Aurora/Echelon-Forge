@@ -177,7 +177,7 @@ inline RuntimeWindowCadence runtime_window_make_cadence(
 }
 
 inline RuntimeWindowCadenceConfig
-runtime_window_default_wp17_selected_slice_cadence_config() {
+runtime_window_default_selected_slice_cadence_config() {
     RuntimeWindowCadenceConfig config{};
     config.window_duration_s = 0.1;
     config.domains = {
@@ -262,7 +262,7 @@ inline RuntimeWindowCadenceConfig normalize_runtime_window_cadence_config(
 ) {
     RuntimeWindowCadenceConfig config = request.cadence_config;
     const RuntimeWindowCadenceConfig defaults =
-        runtime_window_default_wp17_selected_slice_cadence_config();
+        runtime_window_default_selected_slice_cadence_config();
 
     if (!runtime_window_has_finite_time(config.window_duration_s) ||
         config.window_duration_s <= 0.0) {

@@ -106,7 +106,7 @@ def test_wp15_valid_counterfactual_request_is_admitted_as_metadata_only() -> Non
         "maintained_facade_export";
       request.replay_envelope.event_order_ref.event_id = "event:17";
       request.replay_envelope.event_order_ref.producer_node_id =
-        "p10.observation_export.v1";
+        "observation_export.v1";
       request.replay_envelope.facade_provenance_ref.packet_ref = "obs:17";
 
       request.branch_point.branch_point_id =
@@ -320,7 +320,7 @@ def test_wp15_counterfactual_request_rejects_raw_mutation_and_invalid_authority_
         "maintained_facade_export";
       request.replay_envelope.event_order_ref.event_id = "event:1";
       request.replay_envelope.event_order_ref.producer_node_id =
-        "p10.observation_export.v1";
+        "observation_export.v1";
       request.replay_envelope.facade_provenance_ref.packet_ref = "obs:1";
 
       request.branch_point.branch_point_id =
@@ -457,7 +457,7 @@ def test_wp15_counterfactual_request_surfaces_restore_unsupported_without_claimi
         "maintained_facade_export";
       request.replay_envelope.event_order_ref.event_id = "event:19";
       request.replay_envelope.event_order_ref.producer_node_id =
-        "p10.observation_export.v1";
+        "observation_export.v1";
       request.replay_envelope.facade_provenance_ref.packet_ref = "obs:19";
 
       request.branch_point.branch_point_id =
@@ -565,7 +565,7 @@ def test_wp15_counterfactual_request_rejects_invalid_refs_without_promoting_supp
         "maintained_facade_export";
       request.replay_envelope.event_order_ref.event_id = "event:23";
       request.replay_envelope.event_order_ref.producer_node_id =
-        "p10.observation_export.v1";
+        "observation_export.v1";
       request.replay_envelope.facade_provenance_ref.packet_ref = "obs:23";
 
       request.branch_point.branch_point_id =

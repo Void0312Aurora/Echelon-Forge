@@ -166,7 +166,7 @@ inline void runtime_window_append_control_cadence_trace(
         RuntimeWindowCadenceTraceRecord record{};
         record.domain = control->domain;
         record.tick = tick;
-        record.node_id = "p7.fire_control_launch.v1";
+        record.node_id = "fire_control_launch.v1";
         record.barrier_id = control->barrier_id;
         record.cadence_merge_policy = control->merge_policy;
         record.clock_domain = "event_driven_or_fire_control_cadence";
@@ -291,7 +291,7 @@ inline void runtime_window_append_physics_cadence_trace(
         RuntimeWindowCadenceTraceRecord record{};
         record.domain = physics->domain;
         record.tick = tick;
-        record.node_id = "p9.effects_damage.v1";
+        record.node_id = "effects_damage.v1";
         record.barrier_id = physics->barrier_id;
         record.clock_domain = "event_driven_effects_resolution";
         record.clock_merge_policy = "enqueue_event";
@@ -302,23 +302,23 @@ inline void runtime_window_append_physics_cadence_trace(
             record.decision = "triggered";
             record.decision_reason =
                 "physics cadence advanced inside the selected 100ms window";
-            record.source = "p7.fire_control_launch.v1";
+            record.source = "fire_control_launch.v1";
         } else if (upstream_rejected) {
             record.decision = "rejected";
             record.decision_reason =
                 "physics cadence failed closed with the rejected upstream trigger";
-            record.source = "p7.fire_control_launch.v1";
+            record.source = "fire_control_launch.v1";
         } else if (upstream_deferred) {
             record.decision = "deferred";
             record.decision_reason =
                 "physics cadence deferred because the upstream trigger is in another window";
-            record.source = "p7.fire_control_launch.v1";
+            record.source = "fire_control_launch.v1";
             record.deferred = true;
         } else if (upstream_expired) {
             record.decision = "expired";
             record.decision_reason =
                 "physics cadence dropped because the upstream trigger had already expired";
-            record.source = "p7.fire_control_launch.v1";
+            record.source = "fire_control_launch.v1";
             record.expired = true;
         } else {
             record.decision = "skipped";
@@ -349,7 +349,7 @@ inline void runtime_window_append_export_cadence_trace(
     RuntimeWindowCadenceTraceRecord record{};
     record.domain = export_cadence->domain;
     record.tick = 0U;
-    record.node_id = "p10.observation_export.v1";
+    record.node_id = "observation_export.v1";
     record.barrier_id = export_cadence->barrier_id;
     record.clock_domain = "window_export";
     record.clock_merge_policy = "nested_slot";

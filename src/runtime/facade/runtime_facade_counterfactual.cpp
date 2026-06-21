@@ -133,7 +133,7 @@ replay_envelope_from_experiment_request(const RuntimeExperimentRequest &request)
             ReplayEventOrderRef{
                 .sort_key = std::string(kDeterministicReplayEventOrderSortKey),
                 .event_id = branch_request.branch_point_id,
-                .producer_node_id = "p10.observation_export.v1",
+                .producer_node_id = "observation_export.v1",
             },
         .facade_provenance_ref =
             ReplayFacadeProvenanceRef{
@@ -163,14 +163,14 @@ runtime_experiment_capability_refs(const RuntimeExperimentRequest &request) {
     if (!request.capability_refs.empty()) {
         return request.capability_refs;
     }
-    return {"capability_bundle:runtime_facade.wp21"};
+    return {"capability_bundle:runtime_facade.counterfactual"};
 }
 
 std::vector<std::string>
 runtime_experiment_generated_input_evidence_refs(const RuntimeExperimentRequest &request) {
     std::vector<std::string> refs = request.generated_input_evidence_refs;
     if (refs.empty()) {
-        refs.push_back(request.generation_ref.empty() ? "generated_input:runtime_facade.wp21"
+        refs.push_back(request.generation_ref.empty() ? "generated_input:runtime_facade.counterfactual"
                                                       : request.generation_ref);
     }
     return refs;
@@ -185,12 +185,12 @@ scenario_generation_metadata_from_experiment_request(
     metadata.authoritative_state_mutation_allowed = false;
     metadata.request.request_id =
         request.generated_input_ref.empty()
-            ? (request.generation_ref.empty() ? "scenario-gen:runtime_facade.wp21"
+            ? (request.generation_ref.empty() ? "scenario-gen:runtime_facade.counterfactual"
                                               : request.generation_ref)
             : request.generated_input_ref;
     metadata.request.request_version = "1";
     metadata.request.contract_version =
-        std::string(kScenarioGenerationContractVersionWp15RequestV1);
+        std::string(kScenarioGenerationContractVersionRequestV1);
     metadata.request.generation_kind = request.generated_input_kind.empty()
                                            ? std::string(kScenarioGenerationKindScenarioVariation)
                                            : request.generated_input_kind;
@@ -198,13 +198,13 @@ scenario_generation_metadata_from_experiment_request(
                                   ? std::string(kScenarioGenerationSourceCounterfactualBranch)
                                   : request.generated_input_source;
     metadata.request.generator_version = request.generated_input_generator_version.empty()
-                                             ? "RuntimeFacade.run_counterfactual_experiment.wp21"
+                                             ? "RuntimeFacade.run_counterfactual_experiment.counterfactual"
                                              : request.generated_input_generator_version;
     metadata.request.has_deterministic_seed = true;
     metadata.request.deterministic_seed = request.branch_request.deterministic_seed;
     metadata.request.baseline_scenario_ref =
         request.generated_input_baseline_scenario_ref.empty()
-            ? (request.setup_ref.empty() ? "scenario:runtime_facade.wp21" : request.setup_ref)
+            ? (request.setup_ref.empty() ? "scenario:runtime_facade.counterfactual" : request.setup_ref)
             : request.generated_input_baseline_scenario_ref;
     metadata.request.replay_envelope_ref = request.branch_request.replay_envelope_id;
     metadata.request.branch_point_ref = request.branch_request.branch_point_id;
@@ -386,7 +386,7 @@ std::string runtime_counterfactual_restore_boundary_for_snapshot(
                 .event_id = snapshot.worldline_id.empty() ? "event:facade"
                                                           : "event:" + snapshot.worldline_id,
                 .producer_node_id = snapshot.selected_stage_node_id.empty()
-                                        ? "p10.observation_export.v1"
+                                        ? "observation_export.v1"
                                         : snapshot.selected_stage_node_id,
             },
         .facade_provenance_ref =
@@ -826,7 +826,7 @@ RuntimeFacade::run_counterfactual_experiment(const RuntimeExperimentRequest &req
 
     const auto record = runtime::counterfactual::make_experiment_evidence_bridge_record(
         admission, replay_envelope, generated_input,
-        request.experiment_run_id.empty() ? "experiment_run:runtime_facade.wp21"
+        request.experiment_run_id.empty() ? "experiment_run:runtime_facade.counterfactual"
                                           : request.experiment_run_id,
         request.comparison_id.empty() ? result.branch_result.comparison.comparison_id
                                       : request.comparison_id,

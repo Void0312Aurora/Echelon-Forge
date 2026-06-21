@@ -473,30 +473,30 @@ class RuntimeFacadeCounterfactualTests(unittest.TestCase):
     facade = ef_py.RuntimeFacade(1)
     request = ef_py.RuntimeExperimentRequest()
     request.branch_request = _build_counterfactual_branch_request()
-    request.experiment_run_id = "experiment_run:wp21:e"
-    request.comparison_id = "comparison:wp21:e"
-    request.setup_ref = "scenario:baseline:wp21:e"
-    request.generation_ref = "scenario-gen:runtime:wp21:e"
-    request.generated_input_ref = "scenario-gen:req:wp21:e"
-    request.generated_input_baseline_scenario_ref = "scenario:baseline:wp21:e"
-    request.capability_refs = ["capability_bundle:runtime_facade.wp21"]
-    request.generated_input_evidence_refs = ["evidence:generation:wp21:e"]
-    request.evidence_refs = ["evidence:experiment:wp21:e"]
+    request.experiment_run_id = "experiment_run:counterfactual:e"
+    request.comparison_id = "comparison:counterfactual:e"
+    request.setup_ref = "scenario:baseline:counterfactual:e"
+    request.generation_ref = "scenario-gen:runtime:counterfactual:e"
+    request.generated_input_ref = "scenario-gen:req:counterfactual:e"
+    request.generated_input_baseline_scenario_ref = "scenario:baseline:counterfactual:e"
+    request.capability_refs = ["capability_bundle:runtime_facade.counterfactual"]
+    request.generated_input_evidence_refs = ["evidence:generation:counterfactual:e"]
+    request.evidence_refs = ["evidence:experiment:counterfactual:e"]
 
     parent_step = ef_py.RuntimeExperimentStepRequest()
     parent_step.state = _build_route_state(1)
     parent_step.request = _build_route_request(1)
-    parent_step.observation_ref = "profile_obs:parent:wp21:e"
-    parent_step.profile_ref = "profile:parent:wp21:e"
+    parent_step.observation_ref = "profile_obs:parent:counterfactual:e"
+    parent_step.profile_ref = "profile:parent:counterfactual:e"
     parent_step.claim_scope = "comparative"
-    parent_step.evidence_refs = ["evidence:parent-step:wp21:e"]
+    parent_step.evidence_refs = ["evidence:parent-step:counterfactual:e"]
     branch_step = ef_py.RuntimeExperimentStepRequest()
     branch_step.state = _build_route_state(1)
     branch_step.request = _build_route_request(1)
-    branch_step.observation_ref = "profile_obs:branch:wp21:e"
-    branch_step.profile_ref = "profile:branch:wp21:e"
+    branch_step.observation_ref = "profile_obs:branch:counterfactual:e"
+    branch_step.profile_ref = "profile:branch:counterfactual:e"
     branch_step.claim_scope = "comparative"
-    branch_step.evidence_refs = ["evidence:branch-step:wp21:e"]
+    branch_step.evidence_refs = ["evidence:branch-step:counterfactual:e"]
     request.parent_step_requests = [parent_step]
     request.branch_step_requests = [branch_step]
     request.trace_ids = [9001]
@@ -510,19 +510,19 @@ class RuntimeFacadeCounterfactualTests(unittest.TestCase):
     self.assertFalse(bool(result.ancestry.evidence_bridge_fail_closed))
     self.assertEqual(result.ancestry.replay_envelope_ref, "replay:wp17f:0001")
     self.assertEqual(result.ancestry.branch_point_ref, "branch_point:wp17f:0001")
-    self.assertEqual(result.ancestry.generated_input_ref, "scenario-gen:req:wp21:e")
+    self.assertEqual(result.ancestry.generated_input_ref, "scenario-gen:req:counterfactual:e")
     self.assertEqual(result.ancestry.backend_profile_ref, "cpu_exact.reference")
     self.assertEqual(result.ancestry.fidelity_profile_ref, "exact_evaluation")
     self.assertIn(
-      "capability_bundle:runtime_facade.wp21",
+      "capability_bundle:runtime_facade.counterfactual",
       list(result.ancestry.capability_refs),
     )
     self.assertIn(
-      "profile_obs:parent:wp21:e",
+      "profile_obs:parent:counterfactual:e",
       list(result.ancestry.profile_observation_refs),
     )
     self.assertIn(
-      "profile_obs:branch:wp21:e",
+      "profile_obs:branch:counterfactual:e",
       list(result.ancestry.profile_observation_refs),
     )
     self.assertTrue(list(result.parent_step_result.rewards))

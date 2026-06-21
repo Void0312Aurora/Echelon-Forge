@@ -28,7 +28,7 @@ def test_same_window_edge_validation_passes_for_declared_stage_family_edge() -> 
       using namespace runtime::scheduler;
       const std::vector<StageNodeManifest> registry = {
         StageNodeManifest{
-          .node_id = "p7.same_window_launch.v1",
+          .node_id = "same_window_launch.v1",
           .semantic_stage = {"P7 FireControlLaunch"},
           .owner_module = "tests",
           .input_packets = {"LaunchRequest"},
@@ -48,7 +48,7 @@ def test_same_window_edge_validation_passes_for_declared_stage_family_edge() -> 
           .adapter_projection_allowed = false,
         },
         StageNodeManifest{
-          .node_id = "p10.same_window_export.v1",
+          .node_id = "same_window_export.v1",
           .semantic_stage = {"P10 ObservationExport"},
           .owner_module = "tests",
           .input_packets = {"LaunchEvent"},
@@ -73,8 +73,8 @@ def test_same_window_edge_validation_passes_for_declared_stage_family_edge() -> 
         validate_schedule_construction_same_window_edges(
           registry,
           {SameWindowEdge{
-            .producer_node_id = "p7.same_window_launch.v1",
-            .consumer_node_id = "p10.same_window_export.v1",
+            .producer_node_id = "same_window_launch.v1",
+            .consumer_node_id = "same_window_export.v1",
           }}
         );
 

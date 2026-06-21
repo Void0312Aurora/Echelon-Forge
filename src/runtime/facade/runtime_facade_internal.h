@@ -47,15 +47,15 @@ inline bool valid_runtime_world_index(const WorldBatchRuntime &runtime, std::uin
     return world_index < runtime.world_count();
 }
 
-inline constexpr std::string_view kWp10ObservationExportNodeId = "p10.observation_export.v1";
-inline constexpr std::string_view kWp10LaunchNodeId = "p7.fire_control_launch.v1";
-inline constexpr std::string_view kWp10EffectsDamageNodeId = "p9.effects_damage.v1";
-inline constexpr std::string_view kWp10ExportBarrierId = "export";
-inline constexpr std::string_view kWp10ExportBarrierDetail = "maintained_facade_export";
-inline constexpr std::uint64_t kWp10ExportBarrierSequence = 1;
-inline constexpr std::string_view kWp11ObservationPacketIdPrefix = "obs:";
-inline constexpr std::string_view kWp11EngagementPacketIdPrefix = "eng:";
-inline constexpr std::string_view kWp11DiagnosticsPacketIdPrefix = "diag:";
+inline constexpr std::string_view kObservationExportNodeId = "observation_export.v1";
+inline constexpr std::string_view kLaunchNodeId = "fire_control_launch.v1";
+inline constexpr std::string_view kEffectsDamageNodeId = "effects_damage.v1";
+inline constexpr std::string_view kExportBarrierId = "export";
+inline constexpr std::string_view kExportBarrierDetail = "maintained_facade_export";
+inline constexpr std::uint64_t kExportBarrierSequence = 1;
+inline constexpr std::string_view kObservationPacketIdPrefix = "obs:";
+inline constexpr std::string_view kEngagementPacketIdPrefix = "eng:";
+inline constexpr std::string_view kDiagnosticsPacketIdPrefix = "diag:";
 inline constexpr std::string_view kMaintainedBaselineBackendProfileId = "cpu_exact.reference";
 inline constexpr std::string_view kMaintainedBaselineParityBudgetRef =
     "parity_budget.cpu_exact.reference.v1";

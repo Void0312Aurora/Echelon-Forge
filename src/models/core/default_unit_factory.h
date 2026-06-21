@@ -1068,7 +1068,7 @@ class DefaultUnitFactory : public IUnitFactory {
                     ? def.missile_tuning.warhead_profile
                     : make_synthetic_warhead_profile(missile_runtime.damage,
                                                      missile_runtime.fuse_distance);
-            missile_runtime.p0_runtime_initialized = true;
+            missile_runtime.runtime_initialized = true;
             missile_runtime.seeker_has_valid_track = false;
             missile_runtime.seeker_has_range = false;
             missile_runtime.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);

@@ -116,16 +116,16 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
       pass
 
 
-def test_runtime_facade_exposes_wp10_window_loop_api() -> None:
+def test_runtime_facade_exposes_window_loop_api() -> None:
   header = _repo_text("src", "runtime", "facade", "runtime_facade.h")
   source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
 
   assert '#include "runtime/facade/runtime_window_coordinator.h"' in source
-  assert "RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);" in header
+  assert "RuntimeWindowResult run_window(const RuntimeWindowRequest& request);" in header
 
   body = _method_body(
     source,
-    "RuntimeWindowResult RuntimeFacade::run_wp10_window",
+    "RuntimeWindowResult RuntimeFacade::run_window",
   )
   assert "return execute_runtime_window(" in body
   assert "set_pilot_actions_batch(assignments)" in body
@@ -325,7 +325,7 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
               packet.barrier_sequence = 4;
               packet.barrier_detail = "maintained_facade_export";
               packet.source_time_s = 10.0;
-              packet.producer_node_id = "p10.observation_export.v1";
+              packet.producer_node_id = "observation_export.v1";
               packet.packet_provenance.information_state_layer = "TrackState";
               packet.packet_provenance.source_label = "track_state_packet";
               packet.packet_provenance.maintained_status = "maintained";
@@ -344,18 +344,18 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                 .event_id = 701,
                 .accepted = true,
                 .event_time_s = 10.0,
-                .producer_node_id = "p7.fire_control_launch.v1",
+                .producer_node_id = "fire_control_launch.v1",
               });
               packet.effects_events.push_back(EffectsEvent{
                 .event_id = 702,
                 .detonation_time_s = 10.0,
-                .producer_node_id = "p9.effects_damage.v1",
+                .producer_node_id = "effects_damage.v1",
               });
               packet.damage_reports.push_back(DamageReport{
                 .report_id = 703,
                 .source_event_id = 702,
                 .report_time_s = 10.0,
-                .producer_node_id = "p9.effects_damage.v1",
+                .producer_node_id = "effects_damage.v1",
               });
               packet.diagnostics_traces.push_back(DiagnosticsTrace{
                 .trace_id = 77,
@@ -364,8 +364,8 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                 .barrier_id = "export",
                 .barrier_detail = "maintained_facade_export",
                 .source_time_s = 10.0,
-                .source_node_id = "p7.fire_control_launch.v1",
-                .export_node_id = "p10.observation_export.v1",
+                .source_node_id = "fire_control_launch.v1",
+                .export_node_id = "observation_export.v1",
               });
               return packet;
             },
@@ -438,21 +438,21 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p7.fire_control_launch.v1";
+          return record.node_id == "fire_control_launch.v1";
         }
       );
       const auto p9 = std::find_if(
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p9.effects_damage.v1";
+          return record.node_id == "effects_damage.v1";
         }
       );
       const auto p10 = std::find_if(
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p10.observation_export.v1";
+          return record.node_id == "observation_export.v1";
         }
       );
       if (p7 == result.executed_nodes.end() ||
@@ -506,7 +506,7 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
         return 1;
       }
       if (p9->execution_state != "executed" ||
-        p9->trigger_source != "p7.fire_control_launch.v1:fire_control_and_launch" ||
+        p9->trigger_source != "fire_control_launch.v1:fire_control_and_launch" ||
         p9->decision_barrier_id != "window_commit" ||
         p9->clock_merge_policy != "enqueue_event" ||
         p9->barrier_order.size() != 2 ||
@@ -551,7 +551,7 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
         result.engagement_packet.snapshot_version != 11 ||
         result.engagement_packet.barrier_id != "export" ||
         result.engagement_packet.barrier_detail != "maintained_facade_export" ||
-        result.engagement_packet.producer_node_id != "p10.observation_export.v1" ||
+        result.engagement_packet.producer_node_id != "observation_export.v1" ||
         result.engagement_packet.packet_provenance.information_state_layer != "TrackState" ||
         result.engagement_packet.packet_provenance.source_label != "track_state_packet" ||
         result.engagement_packet.packet_provenance.maintained_status != "maintained" ||
@@ -559,14 +559,14 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
         result.engagement_packet.diagnostics_provenance.source_label != "world_truth_diagnostics" ||
         result.engagement_packet.diagnostics_provenance.maintained_status != "diagnostics_only" ||
         result.engagement_packet.launch_events.size() != 1 ||
-        result.engagement_packet.launch_events[0].producer_node_id != "p7.fire_control_launch.v1" ||
+        result.engagement_packet.launch_events[0].producer_node_id != "fire_control_launch.v1" ||
         result.engagement_packet.effects_events.size() != 1 ||
-        result.engagement_packet.effects_events[0].producer_node_id != "p9.effects_damage.v1" ||
+        result.engagement_packet.effects_events[0].producer_node_id != "effects_damage.v1" ||
         result.engagement_packet.damage_reports.size() != 1 ||
-        result.engagement_packet.damage_reports[0].producer_node_id != "p9.effects_damage.v1" ||
+        result.engagement_packet.damage_reports[0].producer_node_id != "effects_damage.v1" ||
         result.engagement_packet.diagnostics_traces.size() != 1 ||
-        result.engagement_packet.diagnostics_traces[0].source_node_id != "p7.fire_control_launch.v1" ||
-        result.engagement_packet.diagnostics_traces[0].export_node_id != "p10.observation_export.v1" ||
+        result.engagement_packet.diagnostics_traces[0].source_node_id != "fire_control_launch.v1" ||
+        result.engagement_packet.diagnostics_traces[0].export_node_id != "observation_export.v1" ||
         result.diagnostics_traces.size() != 1 ||
         result.context.current_barrier_id != "export") {
         std::cerr << "export products drifted\n";
@@ -616,21 +616,21 @@ def test_runtime_window_coordinator_skips_and_rejects_nodes_with_clock_domain_ev
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p7.fire_control_launch.v1";
+          return record.node_id == "fire_control_launch.v1";
         }
       );
       const auto p9 = std::find_if(
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p9.effects_damage.v1";
+          return record.node_id == "effects_damage.v1";
         }
       );
       const auto p10 = std::find_if(
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p10.observation_export.v1";
+          return record.node_id == "observation_export.v1";
         }
       );
       if (p7 == result.executed_nodes.end() ||
@@ -735,14 +735,14 @@ def test_runtime_window_coordinator_rejects_independent_domain_without_determini
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p7.fire_control_launch.v1";
+          return record.node_id == "fire_control_launch.v1";
         }
       );
       const auto p9 = std::find_if(
         result.executed_nodes.begin(),
         result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p9.effects_damage.v1";
+          return record.node_id == "effects_damage.v1";
         }
       );
       if (p7 == result.executed_nodes.end() || p9 == result.executed_nodes.end()) {
@@ -756,7 +756,7 @@ def test_runtime_window_coordinator_rejects_independent_domain_without_determini
         return 1;
       }
       if (p9->execution_state != "rejected" ||
-        p9->trigger_source != "p7.fire_control_launch.v1:rejected_upstream_trigger") {
+        p9->trigger_source != "fire_control_launch.v1:rejected_upstream_trigger") {
         std::cerr << "downstream rejection evidence drifted\n";
         return 1;
       }
@@ -921,7 +921,7 @@ def test_runtime_window_coordinator_records_hold_last_and_interpolate_evidence_w
         interpolate_result.executed_nodes.begin(),
         interpolate_result.executed_nodes.end(),
         [](const RuntimeWindowNodeExecutionRecord& record) {
-          return record.node_id == "p7.fire_control_launch.v1";
+          return record.node_id == "fire_control_launch.v1";
         }
       );
       if (p7 == interpolate_result.executed_nodes.end() ||

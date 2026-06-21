@@ -405,12 +405,12 @@ GuidanceResolvedTuning resolve_tuning(flecs::entity missile_entity, const Missil
 
 void initialize_runtime_state(flecs::entity missile_entity, Missile &missile,
                               const Velocity &velocity, double current_time) {
-    if (missile.shared_launch_initialized && missile.p0_runtime_initialized) {
+    if (missile.shared_launch_initialized && missile.runtime_initialized) {
         ensure_mass_state_initialized(missile_entity, MissileGuidanceDefaults::kReferenceAreaM2);
         return;
     }
 
-    missile.p0_runtime_initialized = true;
+    missile.runtime_initialized = true;
     if (!missile.shared_launch_initialized) {
         missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
         missile.track_memory_timeout_s = nonnegative_or(

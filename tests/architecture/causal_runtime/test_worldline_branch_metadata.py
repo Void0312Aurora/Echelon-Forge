@@ -73,7 +73,7 @@ def test_wp15_valid_worldline_branch_metadata_fixture_is_bounded_restore_capable
       envelope.barrier_ref.barrier_sequence = 3;
       envelope.barrier_ref.barrier_detail = "maintained_facade_export";
       envelope.event_order_ref.event_id = "event:7";
-      envelope.event_order_ref.producer_node_id = "p10.observation_export.v1";
+      envelope.event_order_ref.producer_node_id = "observation_export.v1";
       envelope.facade_provenance_ref.packet_ref = "obs:7";
       return envelope;
     }
@@ -360,7 +360,7 @@ def test_wp15_worldline_branch_metadata_ancestry_mismatch_fails_closed() -> None
       envelope.barrier_ref.barrier_id = "window_commit";
       envelope.barrier_ref.barrier_detail = "maintained_facade_export";
       envelope.event_order_ref.event_id = "event:11";
-      envelope.event_order_ref.producer_node_id = "p10.observation_export.v1";
+      envelope.event_order_ref.producer_node_id = "observation_export.v1";
       envelope.facade_provenance_ref.packet_ref = "obs:11";
       return envelope;
     }

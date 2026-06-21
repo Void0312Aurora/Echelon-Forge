@@ -200,7 +200,7 @@ struct ScenarioGenerationRequestMetadata {
     std::string request_id;
     std::string request_version = "1";
     std::string contract_version =
-        std::string(kScenarioGenerationContractVersionWp15RequestV1);
+        std::string(kScenarioGenerationContractVersionRequestV1);
     std::string generation_kind;
     std::string source;
     std::string generator_version;

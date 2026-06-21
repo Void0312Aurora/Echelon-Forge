@@ -33,12 +33,12 @@ inline constexpr std::string_view kReplayEnvelopeRejectionMissingFacadeProvenanc
 inline constexpr std::string_view kReplayEnvelopeRejectionInvalidFacadeProvenanceLabel =
     "replay_facade_provenance_label_invalid";
 inline constexpr std::string_view kReplayEnvelopeRejectionRestoreUnsupportedBoundary =
-    "snapshot_restore_unsupported_for_wp15a";
+    "snapshot_restore_unsupported";
 inline constexpr std::string_view kReplayEnvelopeRejectionRestoreClaimUnsupported =
-    "snapshot_restore_claim_not_supported_for_wp15a";
+    "snapshot_restore_claim_not_supported";
 inline constexpr std::string_view
     kReplayEnvelopeRejectionRestoreBoundaryInvalid =
-        "snapshot_restore_boundary_not_supported_for_wp21b";
+        "snapshot_restore_boundary_not_supported";
 
 inline constexpr std::string_view kBranchPointRejectionMissingBranchPointId =
     "branch_point_id_required";
@@ -121,13 +121,13 @@ inline constexpr std::string_view
         "worldline_branch_support_state_invalid";
 inline constexpr std::string_view
     kWorldlineBranchRejectionRestoreUnsupportedBoundary =
-        "worldline_branch_restore_unsupported_for_wp15b";
+        "worldline_branch_restore_unsupported";
 inline constexpr std::string_view
     kWorldlineBranchRejectionRestoreClaimUnsupported =
-        "worldline_branch_restore_claim_not_supported_for_wp15b";
+        "worldline_branch_restore_claim_not_supported";
 inline constexpr std::string_view
     kWorldlineBranchRejectionRestoreBoundaryInvalid =
-        "worldline_branch_restore_boundary_not_supported_for_wp21b";
+        "worldline_branch_restore_boundary_not_supported";
 
 inline constexpr std::string_view kCounterfactualAdmissionStateAdmitted =
     "admitted";
@@ -234,14 +234,14 @@ inline constexpr std::string_view
         "counterfactual_raw_authoritative_state_mutation_forbidden";
 inline constexpr std::string_view
     kCounterfactualRequestRejectionRestoreUnsupportedBoundary =
-        "counterfactual_snapshot_restore_unsupported_for_wp15c";
+        "counterfactual_snapshot_restore_unsupported";
 
 inline constexpr std::string_view
     kScenarioGenerationArtifactKindRequestMetadata =
         "scenario_generation_request_metadata";
 inline constexpr std::string_view
-    kScenarioGenerationContractVersionWp15RequestV1 =
-        "wp15.scenario_generation_request.v1";
+    kScenarioGenerationContractVersionRequestV1 =
+        "scenario_generation_request.v1";
 inline constexpr std::string_view kScenarioGenerationKindScenarioVariation =
     "scenario_variation";
 inline constexpr std::string_view kScenarioGenerationKindAdversaryPlacement =

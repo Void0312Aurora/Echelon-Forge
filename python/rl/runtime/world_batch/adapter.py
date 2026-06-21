@@ -84,7 +84,7 @@ class RuntimeFacadeAdapterCapabilities:
 def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAdapterCapabilities:
     return RuntimeFacadeAdapterCapabilities(
         has_runtime_window_api=bool(
-            hasattr(facade, "run_wp10_window")
+            hasattr(facade, "run_window")
             and hasattr(ef_py, "RuntimeWindowRequest")
             and hasattr(ef_py, "RuntimeWindowActionRequest")
             and hasattr(ef_py, "AgentRole")
@@ -498,10 +498,10 @@ class RuntimeFacadeAdapter:
                 )
             request.action_requests = [action_request]
 
-        result = self.facade.run_wp10_window(request)
+        result = self.facade.run_window(request)
         return self._store_window_evidence(
             result,
-            cadence_reason="selected_slice_cadence_trace_runtime_window_wp17c",
+            cadence_reason="selected_slice_cadence_trace_runtime_window",
             uses_compat_fallback=False,
         )
 

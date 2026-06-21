@@ -96,9 +96,9 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(
           [str(getattr(record, "node_id", "") or "") for record in evidence.executed_nodes],
           [
-            "p7.fire_control_launch.v1",
-            "p9.effects_damage.v1",
-            "p10.observation_export.v1",
+            "fire_control_launch.v1",
+            "effects_damage.v1",
+            "observation_export.v1",
           ],
         )
         self.assertAlmostEqual(
@@ -155,7 +155,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(
           info["runtime_window_evidence"]["cadence_reason"],
-          "selected_slice_cadence_trace_runtime_window_wp17c",
+          "selected_slice_cadence_trace_runtime_window",
         )
       finally:
         runtime.close()
@@ -178,7 +178,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
         runtime.access.supports_runtime_window_api = lambda: False # type: ignore[method-assign]
         _obs, _reset_info = runtime.reset(seed=9)
         action = np.zeros((17,), dtype=np.float32)
-        with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
+        with self.assertRaisesRegex(RuntimeError, "run_window\\(\\) is required"):
           runtime.step(action)
         runtime.access.supports_runtime_window_api = original_supports # type: ignore[method-assign]
       finally:
@@ -310,7 +310,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
         self.assertIn("runtime_window_evidence", info)
         self.assertEqual(
           info["runtime_window_evidence"]["cadence_reason"],
-          "selected_slice_cadence_trace_runtime_window_wp17c",
+          "selected_slice_cadence_trace_runtime_window",
         )
         self.assertFalse(bool(info["runtime_window_evidence"]["uses_compat_fallback"]))
         self.assertEqual(
@@ -344,7 +344,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
         original_supports = group.access.supports_runtime_window_api
         group.access.supports_runtime_window_api = lambda: False # type: ignore[method-assign]
         try:
-          with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
+          with self.assertRaisesRegex(RuntimeError, "run_window\\(\\) is required"):
             group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
         finally:
           group.access.supports_runtime_window_api = original_supports # type: ignore[method-assign]
@@ -375,7 +375,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
         original_supports = group.access.supports_runtime_window_api
         group.access.supports_runtime_window_api = lambda: False # type: ignore[method-assign]
         try:
-          with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
+          with self.assertRaisesRegex(RuntimeError, "run_window\\(\\) is required"):
             group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
         finally:
           group.access.supports_runtime_window_api = original_supports # type: ignore[method-assign]

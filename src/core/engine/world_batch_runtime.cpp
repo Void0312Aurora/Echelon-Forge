@@ -746,7 +746,7 @@ std::vector<LaunchEvent> WorldBatchRuntime::apply_launch_requests_batch(
             event.request_id = request.request_id;
             event.event_id = request.request_id;
             event.event_time_s = request.requested_time_s;
-            event.producer_node_id = "p7.fire_control_launch.v1";
+            event.producer_node_id = "fire_control_launch.v1";
             event.selected_launcher = request.station_id;
             event.selected_munition = request.requested_munition_family.empty()
                 ? "missile"

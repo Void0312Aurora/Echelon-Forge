@@ -1208,7 +1208,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["fuze_target_detection_threshold"] = missile->fuze_target_detection_threshold;
                 out["fuze_detonation_point_source"] = missile->fuze_detonation_point_source;
                 out["fuze_mechanism_coverage_score"] = missile->fuze_mechanism_coverage_score;
-                out["p0_runtime_initialized"] = missile->p0_runtime_initialized;
+                out["runtime_initialized"] = missile->runtime_initialized;
                 out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
                 out["seeker_has_range"] = missile->seeker_has_range;
                 out["seeker_mode"] = missile->seeker_mode;

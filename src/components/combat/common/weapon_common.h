@@ -152,7 +152,7 @@ struct Missile {
     double fuze_mechanism_coverage_score = 0.0;
 
     // P0 seeker / guidance runtime state.
-    bool p0_runtime_initialized = false;
+    bool runtime_initialized = false;
     bool seeker_has_valid_track = false;
     bool seeker_has_range = true;
     int seeker_mode = 0; // 0=Track, 1=Memory, 2=Terminal/ballistic
@@ -305,7 +305,7 @@ inline void sync_missile_mass_properties(const Mass &mass, MassProperties &prope
 inline void initialize_missile_launch_runtime(Missile &missile,
                                               const MissileSharedLaunchRuntimeState &state) {
     missile.shared_launch_initialized = true;
-    missile.p0_runtime_initialized = true;
+    missile.runtime_initialized = true;
     missile.seeker_has_valid_track = state.seeker_has_valid_track;
     missile.seeker_has_range = state.seeker_has_range;
     missile.seeker_mode = state.seeker_mode;

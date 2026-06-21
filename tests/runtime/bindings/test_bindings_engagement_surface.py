@@ -33,7 +33,7 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   packet.barrier_sequence = 4
   packet.barrier_detail = "maintained_facade_export"
   packet.source_time_s = 10.0
-  packet.producer_node_id = "p10.observation_export.v1"
+  packet.producer_node_id = "observation_export.v1"
   packet.refs = [_engagement_ref(shooter_id)]
   packet.trace_ids = [77, 78]
   packet.packet_provenance.information_state_layer = "TrackState"
@@ -52,7 +52,7 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   launch.event_time_s = 10.0
   launch.spawned_munition = _engagement_ref(missile_id)
   launch.has_spawned_munition = True
-  launch.producer_node_id = "p7.fire_control_launch.v1"
+  launch.producer_node_id = "fire_control_launch.v1"
   packet.launch_events = [launch]
 
   effect = ef_py.EffectsEvent()
@@ -151,7 +151,7 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   effect.mechanism_blast_overpressure_kpa = 18.0
   effect.mechanism_blast_impulse_kpa_ms = 44.0
   effect.mechanism_surface_incidence_cos = 0.67
-  effect.producer_node_id = "p9.effects_damage.v1"
+  effect.producer_node_id = "effects_damage.v1"
   packet.effects_events = [effect]
 
   report = ef_py.DamageReport()
@@ -159,7 +159,7 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   report.target = _engagement_ref(target_id)
   report.source_event_id = effect.event_id
   report.report_time_s = 10.2
-  report.producer_node_id = "p9.effects_damage.v1"
+  report.producer_node_id = "effects_damage.v1"
   packet.damage_reports = [report]
 
   launch_trace = ef_py.DiagnosticsTrace()
@@ -170,8 +170,8 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   launch_trace.barrier_id = "export"
   launch_trace.barrier_detail = "maintained_facade_export"
   launch_trace.source_time_s = 10.0
-  launch_trace.source_node_id = "p7.fire_control_launch.v1"
-  launch_trace.export_node_id = "p10.observation_export.v1"
+  launch_trace.source_node_id = "fire_control_launch.v1"
+  launch_trace.export_node_id = "observation_export.v1"
 
   damage_trace = ef_py.DiagnosticsTrace()
   damage_trace.trace_id = 78
@@ -183,8 +183,8 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   damage_trace.barrier_id = "export"
   damage_trace.barrier_detail = "maintained_facade_export"
   damage_trace.source_time_s = 10.2
-  damage_trace.source_node_id = "p9.effects_damage.v1"
-  damage_trace.export_node_id = "p10.observation_export.v1"
+  damage_trace.source_node_id = "effects_damage.v1"
+  damage_trace.export_node_id = "observation_export.v1"
   packet.diagnostics_traces = [launch_trace, damage_trace]
   return packet, shooter_id, target_id, missile_id
 
@@ -940,7 +940,7 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
 
     self.assertEqual(packet.barrier_id, "export")
     self.assertEqual(packet.barrier_detail, "maintained_facade_export")
-    self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
+    self.assertEqual(packet.producer_node_id, "observation_export.v1")
     self.assertEqual(packet.packet_provenance.information_state_layer, "TrackState")
     self.assertEqual(packet.packet_provenance.source_label, "track_state_packet")
     self.assertEqual(packet.packet_provenance.maintained_status, "maintained")
@@ -970,14 +970,14 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     )
     self.assertTrue(
       any(
-        event.producer_node_id == "p7.fire_control_launch.v1"
+        event.producer_node_id == "fire_control_launch.v1"
         and int(event.spawned_munition.entity_id) == missile_id
         for event in packet.launch_events
       )
     )
     self.assertTrue(
       any(
-        event.producer_node_id == "p9.effects_damage.v1"
+        event.producer_node_id == "effects_damage.v1"
         and int(event.target.entity_id) == target_id
         for event in packet.effects_events
       )
@@ -985,7 +985,7 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     damage_event = next(
       event
       for event in packet.effects_events
-      if event.producer_node_id == "p9.effects_damage.v1"
+      if event.producer_node_id == "effects_damage.v1"
       and int(event.target.entity_id) == target_id
     )
     component_rows = list(damage_event.component_mechanism_load_rows)
@@ -1095,22 +1095,22 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     self.assertAlmostEqual(float(component_rows[0].mechanism_surface_incidence_cos), 0.67)
     self.assertTrue(
       any(
-        report.producer_node_id == "p9.effects_damage.v1"
+        report.producer_node_id == "effects_damage.v1"
         and int(report.target.entity_id) == target_id
         for report in packet.damage_reports
       )
     )
     self.assertTrue(
       any(
-        trace.source_node_id == "p7.fire_control_launch.v1"
-        and trace.export_node_id == "p10.observation_export.v1"
+        trace.source_node_id == "fire_control_launch.v1"
+        and trace.export_node_id == "observation_export.v1"
         for trace in packet.diagnostics_traces
       )
     )
     self.assertTrue(
       any(
-        trace.source_node_id == "p9.effects_damage.v1"
-        and trace.export_node_id == "p10.observation_export.v1"
+        trace.source_node_id == "effects_damage.v1"
+        and trace.export_node_id == "observation_export.v1"
         for trace in packet.diagnostics_traces
       )
     )
@@ -1297,7 +1297,7 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     self.assertEqual(packet.barrier_id, "export")
     self.assertEqual(int(packet.barrier_sequence), 1)
     self.assertEqual(packet.barrier_detail, "maintained_facade_export")
-    self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
+    self.assertEqual(packet.producer_node_id, "observation_export.v1")
 
   def test_runtime_facade_exposes_dedicated_diagnostics_trace_export(self) -> None:
     facade = ef_py.RuntimeFacade(1)

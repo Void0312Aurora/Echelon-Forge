@@ -358,7 +358,7 @@ def test_registry_seed_validates_cleanly_and_keeps_single_maintained_budget() ->
 
     int main() {
       using namespace runtime::parity;
-      const auto result = validate_wp13_parity_budget_registry_seed();
+      const auto result = validate_parity_budget_registry_seed();
       if (result.has_value()) {
         std::cerr << "registry seed should validate cleanly\n";
         for (const auto& error : result->errors) {

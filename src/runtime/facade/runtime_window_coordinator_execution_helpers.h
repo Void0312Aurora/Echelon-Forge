@@ -60,7 +60,7 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_fire_control_launch_recor
         runtime_window_preferred_cadence_trace_record(
             cadence_trace,
             kRuntimeWindowCadenceDomainControl,
-            "p7.fire_control_launch.v1"
+            "fire_control_launch.v1"
         );
     if (control_it != nullptr) {
         record.execution_state =
@@ -214,7 +214,7 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
         runtime_window_preferred_cadence_trace_record(
             cadence_trace,
             kRuntimeWindowCadenceDomainPhysics,
-            "p9.effects_damage.v1"
+            "effects_damage.v1"
         );
     if (physics_it != nullptr) {
         record.execution_state =
@@ -250,7 +250,7 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
         record.decision_reason =
             "maintained effects/damage cadence triggered by the fire-control launch chain";
         record.trigger_source =
-            "p7.fire_control_launch.v1:fire_control_and_launch";
+            "fire_control_launch.v1:fire_control_and_launch";
         record.clock_merge_policy = "enqueue_event";
         record.source_snapshot_version =
             fire_control_record.source_snapshot_version;
@@ -263,7 +263,7 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
         record.decision_reason =
             "maintained effects/damage cadence rejected because upstream fire-control trigger failed closed";
         record.trigger_source =
-            "p7.fire_control_launch.v1:rejected_upstream_trigger";
+            "fire_control_launch.v1:rejected_upstream_trigger";
         record.clock_merge_policy = "reject_on_ambiguous_order";
         record.source_snapshot_version =
             fire_control_record.source_snapshot_version;
@@ -276,7 +276,7 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
         record.decision_reason =
             "maintained effects/damage cadence deferred with the upstream fire-control trigger";
         record.trigger_source =
-            "p7.fire_control_launch.v1:deferred_upstream_trigger";
+            "fire_control_launch.v1:deferred_upstream_trigger";
         record.clock_merge_policy = "defer_to_next_window";
         record.source_snapshot_version =
             fire_control_record.source_snapshot_version;
@@ -289,7 +289,7 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
         record.decision_reason =
             "maintained effects/damage cadence expired with the upstream fire-control trigger";
         record.trigger_source =
-            "p7.fire_control_launch.v1:expired_upstream_trigger";
+            "fire_control_launch.v1:expired_upstream_trigger";
         record.clock_merge_policy = "drop";
         record.source_snapshot_version =
             fire_control_record.source_snapshot_version;
@@ -326,7 +326,7 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_observation_export_record
         runtime_window_preferred_cadence_trace_record(
             cadence_trace,
             kRuntimeWindowCadenceDomainExport,
-            "p10.observation_export.v1"
+            "observation_export.v1"
         );
     if (export_it != nullptr) {
         record.execution_state =

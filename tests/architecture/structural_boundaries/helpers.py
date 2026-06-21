@@ -410,14 +410,14 @@ COUNTERFACTUAL_CONSTANT_ALLOWLIST = {
 WINDOW_COORDINATOR_MAIN_MARKERS = {
   "classify_runtime_window_inputs(",
   "execute_runtime_window(",
-  "enumerate_wp10_maintained_stage_node_manifests()",
+  "enumerate_maintained_stage_node_manifests()",
 }
 
 WINDOW_COORDINATOR_HELPER_MARKERS = {
   "kRuntimeWindowBarrierInputInjection",
   "kRuntimeWindowBarrierWindowCommit",
   "kRuntimeWindowBarrierExport",
-  "runtime_window_default_wp17_selected_slice_cadence_config()",
+  "runtime_window_default_selected_slice_cadence_config()",
   "runtime_window_has_selected_barrier_order(",
 }
 

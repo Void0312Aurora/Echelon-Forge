@@ -150,7 +150,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
             )
         if window_evidence is None:
             raise RuntimeError(
-                "RuntimeFacade.run_wp10_window() is required by single-world training consumers"
+                "RuntimeFacade.run_window() is required by single-world training consumers"
             )
         else:
             batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
@@ -160,7 +160,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
             inst_list = list(getattr(observation_packet, "instrument_states", []) or [])
             if not truth_list or not inst_list:
                 raise RuntimeError(
-                    "RuntimeFacade.run_wp10_window() did not return the maintained observation packet payload "
+                    "RuntimeFacade.run_window() did not return the maintained observation packet payload "
                     "required by single-world training consumers"
                 )
             truth = truth_list[0]
@@ -253,7 +253,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
                 "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
             }
         else:
-            raise RuntimeError("RuntimeFacade.run_wp10_window() is required by single-world info builders")
+            raise RuntimeError("RuntimeFacade.run_window() is required by single-world info builders")
         if collect_timing:
             info["timing"] = {
                 "action_prepare_ms": float(action_prepare_ms),

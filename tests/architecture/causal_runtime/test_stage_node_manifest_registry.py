@@ -11,11 +11,11 @@ def _compile_and_run(source: str):
   return compile_cpp_snippet(source, binary_prefix="causal_stage_node_manifest")
 
 
-def test_wp10_stage_node_manifest_registry_header_exists_in_runtime_contracts() -> None:
+def test_stage_node_manifest_registry_header_exists_in_runtime_contracts() -> None:
   assert HEADER.is_file()
 
 
-def test_wp10_registry_seed_spells_out_required_fields_for_each_maintained_node() -> None:
+def test_registry_seed_spells_out_required_fields_for_each_maintained_node() -> None:
   header_text = HEADER.read_text(encoding="utf-8")
   required_fields = [
     ".semantic_stage =",
@@ -36,9 +36,9 @@ def test_wp10_registry_seed_spells_out_required_fields_for_each_maintained_node(
     ".adapter_projection_allowed =",
   ]
   for node_id in (
-    "p7.fire_control_launch.v1",
-    "p9.effects_damage.v1",
-    "p10.observation_export.v1",
+    "fire_control_launch.v1",
+    "effects_damage.v1",
+    "observation_export.v1",
   ):
     marker = f'.node_id = "{node_id}"'
     assert marker in header_text, f"missing registry seed for {node_id}"
@@ -47,7 +47,7 @@ def test_wp10_registry_seed_spells_out_required_fields_for_each_maintained_node(
       assert field in block, f"{node_id} missing {field}"
 
 
-def test_wp10_registry_seed_enumerates_required_maintained_node_ids() -> None:
+def test_registry_seed_enumerates_required_maintained_node_ids() -> None:
   source = textwrap.dedent(
     r"""
     #include <iostream>
@@ -56,16 +56,16 @@ def test_wp10_registry_seed_enumerates_required_maintained_node_ids() -> None:
 
     int main() {
       using namespace runtime::scheduler;
-      const auto manifests = enumerate_wp10_maintained_stage_node_manifests();
+      const auto manifests = enumerate_maintained_stage_node_manifests();
       std::vector<std::string> ids;
       for (const auto* manifest : manifests) {
         ids.push_back(manifest->node_id);
       }
 
       for (const auto& expected : {
-           std::string("p7.fire_control_launch.v1"),
-           std::string("p9.effects_damage.v1"),
-           std::string("p10.observation_export.v1"),
+           std::string("fire_control_launch.v1"),
+           std::string("effects_damage.v1"),
+           std::string("observation_export.v1"),
          }) {
         if (std::find(ids.begin(), ids.end(), expected) == ids.end()) {
           std::cerr << "missing maintained node: " << expected << "\n";
@@ -86,7 +86,7 @@ def test_wp10_registry_seed_enumerates_required_maintained_node_ids() -> None:
   assert result.returncode == 0, result.stderr + result.stdout
 
 
-def test_wp10_registry_seed_validates_cleanly_and_keeps_clock_domain_advisory() -> None:
+def test_registry_seed_validates_cleanly_and_keeps_clock_domain_advisory() -> None:
   source = textwrap.dedent(
     r"""
     #include <iostream>
@@ -94,12 +94,12 @@ def test_wp10_registry_seed_validates_cleanly_and_keeps_clock_domain_advisory() 
 
     int main() {
       using namespace runtime::scheduler;
-      if (!kWp10ClockDomainAdvisoryOnly) {
+      if (!kClockDomainAdvisoryOnly) {
         std::cerr << "clock domain flag drifted\n";
         return 1;
       }
 
-      const auto result = validate_wp10_stage_node_manifest_registry_seed();
+      const auto result = validate_stage_node_manifest_registry_seed();
       if (result.has_value()) {
         std::cerr << "registry should validate cleanly\n";
         for (const auto& error : result->errors) {
@@ -214,9 +214,9 @@ def test_adapter_projection_and_diagnostics_nodes_are_not_maintained_scheduler_t
     int main() {
       using namespace runtime::scheduler;
       const auto* adapter_projection =
-        find_stage_node_manifest("p7.launch_request_adapter_projection.v1");
+        find_stage_node_manifest("launch_request_adapter_projection.v1");
       const auto* diagnostics =
-        find_stage_node_manifest("p10.observation_trace_diagnostics.v1");
+        find_stage_node_manifest("observation_trace_diagnostics.v1");
 
       if (adapter_projection == nullptr || diagnostics == nullptr) {
         std::cerr << "missing non-maintained registry entries\n";
@@ -231,7 +231,7 @@ def test_adapter_projection_and_diagnostics_nodes_are_not_maintained_scheduler_t
         return 1;
       }
 
-      const auto manifests = enumerate_wp10_maintained_stage_node_manifests();
+      const auto manifests = enumerate_maintained_stage_node_manifests();
       for (const auto* manifest : manifests) {
         if (manifest->node_id == adapter_projection->node_id ||
           manifest->node_id == diagnostics->node_id) {
@@ -247,7 +247,7 @@ def test_adapter_projection_and_diagnostics_nodes_are_not_maintained_scheduler_t
   assert result.returncode == 0, result.stderr + result.stdout
 
 
-def test_wp17_selected_slice_strict_helper_does_not_change_wp10_maintained_count() -> None:
+def test_selected_slice_strict_helper_does_not_change_maintained_count() -> None:
   source = textwrap.dedent(
     r"""
     #include <iostream>
@@ -256,8 +256,8 @@ def test_wp17_selected_slice_strict_helper_does_not_change_wp10_maintained_count
 
     int main() {
       using namespace runtime::scheduler;
-      const auto maintained = enumerate_wp10_maintained_stage_node_manifests();
-      const auto selected = enumerate_wp17_selected_slice_strict_clock_domain_manifests();
+      const auto maintained = enumerate_maintained_stage_node_manifests();
+      const auto selected = enumerate_selected_slice_strict_clock_domain_manifests();
 
       if (maintained.size() != 3) {
         std::cerr << "wp10 maintained count drifted\n";
@@ -272,7 +272,7 @@ def test_wp17_selected_slice_strict_helper_does_not_change_wp10_maintained_count
           std::cerr << "null selected-slice manifest\n";
           return 1;
         }
-        if (!is_wp17_selected_slice_strict_clock_domain_node(*manifest)) {
+        if (!is_selected_slice_strict_clock_domain_node(*manifest)) {
           std::cerr << "helper returned a non-selected node\n";
           return 1;
         }
@@ -293,7 +293,7 @@ def test_event_emitting_nodes_declare_event_family_and_diagnostics_obligations()
 
     int main() {
       using namespace runtime::scheduler;
-      for (const auto* manifest : enumerate_wp10_maintained_stage_node_manifests()) {
+      for (const auto* manifest : enumerate_maintained_stage_node_manifests()) {
         if (!declares_event_like_outputs(*manifest)) {
           continue;
         }

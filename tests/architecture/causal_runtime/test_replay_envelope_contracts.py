@@ -80,7 +80,7 @@ def test_wp15_valid_replay_envelope_and_branch_point_fixture_validate_cleanly() 
       envelope.barrier_ref.barrier_sequence = 9;
       envelope.barrier_ref.barrier_detail = "maintained_facade_export";
       envelope.event_order_ref.event_id = "event:0009";
-      envelope.event_order_ref.producer_node_id = "p10.observation_export.v1";
+      envelope.event_order_ref.producer_node_id = "observation_export.v1";
       envelope.facade_provenance_ref.packet_ref = "obs:128";
       envelope.facade_provenance_ref.packet_kind = "ObservationBatchPacket";
 
@@ -155,7 +155,7 @@ def test_wp15_branch_point_identity_is_stable_and_tied_to_replay_boundary_refs()
       envelope.barrier_ref.barrier_id = "window_commit";
       envelope.barrier_ref.barrier_detail = "maintained_facade_export";
       envelope.event_order_ref.event_id = "event:7";
-      envelope.event_order_ref.producer_node_id = "p10.observation_export.v1";
+      envelope.event_order_ref.producer_node_id = "observation_export.v1";
       envelope.facade_provenance_ref.packet_ref = "obs:7";
 
       const std::string expected =
@@ -211,7 +211,7 @@ def test_wp15_restore_support_is_bounded_to_host_owned_facade_state_only() -> No
       envelope.barrier_ref.barrier_id = "window_commit";
       envelope.barrier_ref.barrier_detail = "maintained_facade_export";
       envelope.event_order_ref.event_id = "event:11";
-      envelope.event_order_ref.producer_node_id = "p10.observation_export.v1";
+      envelope.event_order_ref.producer_node_id = "observation_export.v1";
       envelope.facade_provenance_ref.packet_ref = "obs:11";
 
       const auto support = validate_replay_envelope_for_snapshot_restore(envelope);
@@ -330,7 +330,7 @@ def test_wp15_invalid_facade_provenance_label_and_missing_event_order_are_reject
       envelope.snapshot_ref.snapshot_version_ref = "global:101";
       envelope.barrier_ref.barrier_id = "window_commit";
       envelope.barrier_ref.barrier_detail = "maintained_facade_export";
-      envelope.event_order_ref.producer_node_id = "p10.observation_export.v1";
+      envelope.event_order_ref.producer_node_id = "observation_export.v1";
       envelope.facade_provenance_ref.packet_ref = "obs:101";
       envelope.facade_provenance_ref.information_state_source.source_label =
         "not_a_wp11_label";

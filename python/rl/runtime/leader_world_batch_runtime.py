@@ -487,7 +487,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                 inst_items = list(getattr(observation_packet, "instrument_states", []) or [])
                 if not truth_items or not inst_items:
                     raise RuntimeError(
-                        "RuntimeFacade.run_wp10_window() did not return the maintained observation packet payload "
+                        "RuntimeFacade.run_window() did not return the maintained observation packet payload "
                         "required by leader runtime consumers"
                     )
                 window_evidence_by_env[int(env_idx)] = window_evidence
@@ -501,7 +501,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
 
         if not window_evidence_by_env:
             raise RuntimeError(
-                "RuntimeFacade.run_wp10_window() is required by leader runtime consumers"
+                "RuntimeFacade.run_window() is required by leader runtime consumers"
             )
 
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
@@ -561,7 +561,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             if window_evidence is not None:
                 info["runtime_window_evidence"] = self._runtime_window_evidence_info(window_evidence)
             else:
-                raise RuntimeError("RuntimeFacade.run_wp10_window() is required by leader info builders")
+                raise RuntimeError("RuntimeFacade.run_window() is required by leader info builders")
             if collect_timing:
                 info_build_ms += (time.perf_counter() - info_t0) * 1000.0
             out.append((obs, float(reward), bool(terminated), bool(truncated), info))

@@ -9,8 +9,8 @@ from stable_baselines3.common.callbacks import BaseCallback
 from python.training.diagnostics import (
     TrainingEventDiagnosticsWindow,
     action_array_for_diagnostics,
-    record_a5_event_info_diagnostics,
-    record_a6_first_event_info_diagnostics,
+    record_event_info_diagnostics,
+    record_first_event_info_diagnostics,
     record_action_diagnostics,
     record_basic_step_diagnostics,
     record_hmoe_policy_diagnostics,
@@ -142,15 +142,15 @@ class CMODiagnosticsCallback(BaseCallback):
             log_every_timesteps=int(self.log_every_timesteps),
         )
 
-    def _record_a6_first_event_info_diagnostics(self, infos: Any) -> None:
-        record_a6_first_event_info_diagnostics(
+    def _record_first_event_info_diagnostics(self, infos: Any) -> None:
+        record_first_event_info_diagnostics(
             model=getattr(self, "model", None),
             logger=self.logger,
             infos=infos,
         )
 
-    def _record_a5_event_info_diagnostics(self, infos: Any) -> None:
-        record_a5_event_info_diagnostics(logger=self.logger, infos=infos)
+    def _record_event_info_diagnostics(self, infos: Any) -> None:
+        record_event_info_diagnostics(logger=self.logger, infos=infos)
 
     def _record_event_diagnostics(self) -> None:
         self._event_diagnostics.record_and_reset(logger=self.logger)
@@ -199,8 +199,8 @@ class CMODiagnosticsCallback(BaseCallback):
         self._record_action_diagnostics(actions_for_log)
 
         if isinstance(infos, (list, tuple)) and infos:
-            self._record_a5_event_info_diagnostics(infos)
-            self._record_a6_first_event_info_diagnostics(infos)
+            self._record_event_info_diagnostics(infos)
+            self._record_first_event_info_diagnostics(infos)
             self._record_step_reward_diagnostics(list(infos))
             self._record_runway_gear_diagnostics(infos)
 

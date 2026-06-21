@@ -13,7 +13,7 @@ import ef_py # noqa: E402
 _DB_PATH = resolve_repo_path("examples", "config", "database")
 
 
-def test_wp17_air_spawn_uses_type_name_resolution_chain_materialization() -> None:
+def test_air_spawn_uses_type_name_resolution_chain_materialization() -> None:
   sim = ef_py.SimulationKernel()
   assert sim.load_database(_DB_PATH)
   entity_id = int(

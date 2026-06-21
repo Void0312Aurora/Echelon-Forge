@@ -1070,7 +1070,7 @@ class WorldBatchVecEnvCommandChainTests(unittest.TestCase):
       def __init__(self) -> None:
         self.requests: list[Any] = []
 
-      def run_wp10_window(self, request):
+      def run_window(self, request):
         self.requests.append(request)
         result = ef_py.RuntimeWindowResult()
         result.observation_packet = ef_py.ObservationBatchPacket()
@@ -1106,7 +1106,7 @@ class WorldBatchVecEnvCommandChainTests(unittest.TestCase):
       def __init__(self) -> None:
         self.requests: list[Any] = []
 
-      def run_wp10_window(self, request):
+      def run_window(self, request):
         self.requests.append(request)
         result = ef_py.RuntimeWindowResult()
         result.observation_packet = ef_py.ObservationBatchPacket()
@@ -1137,7 +1137,7 @@ class WorldBatchVecEnvCommandChainTests(unittest.TestCase):
     adapter = vec_env_module._RuntimeFacadeAdapter(1)
 
     class _FacadeWindow:
-      def run_wp10_window(self, request):
+      def run_window(self, request):
         raise AssertionError("authorization should fail before runtime window execution")
 
     adapter.facade = _FacadeWindow() # type: ignore[assignment]

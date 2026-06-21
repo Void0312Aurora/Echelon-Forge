@@ -108,7 +108,7 @@ def test_wp15_valid_experiment_evidence_bridge_links_admission_generated_input_a
         "maintained_facade_export";
       request.replay_envelope.event_order_ref.event_id = "event:17";
       request.replay_envelope.event_order_ref.producer_node_id =
-        "p10.observation_export.v1";
+        "observation_export.v1";
       request.replay_envelope.facade_provenance_ref.packet_ref = "obs:17";
 
       request.branch_point.branch_point_id =
@@ -169,7 +169,7 @@ def test_wp15_valid_experiment_evidence_bridge_links_admission_generated_input_a
       artifact.request.request_id = "scenario-gen:req-bridge-001";
       artifact.request.request_version = "1";
       artifact.request.contract_version =
-        std::string(kScenarioGenerationContractVersionWp15RequestV1);
+        std::string(kScenarioGenerationContractVersionRequestV1);
       artifact.request.generation_kind =
         std::string(kScenarioGenerationKindAdversaryPlacement);
       artifact.request.source =
@@ -465,7 +465,7 @@ def test_wp15_experiment_evidence_bridge_rejects_generated_input_mismatch_and_mu
       envelope.barrier_ref.barrier_id = "window_commit";
       envelope.barrier_ref.barrier_detail = "maintained_facade_export";
       envelope.event_order_ref.event_id = "event:22";
-      envelope.event_order_ref.producer_node_id = "p10.observation_export.v1";
+      envelope.event_order_ref.producer_node_id = "observation_export.v1";
       envelope.facade_provenance_ref.packet_ref = "obs:22";
       return envelope;
     }
@@ -479,7 +479,7 @@ def test_wp15_experiment_evidence_bridge_rejects_generated_input_mismatch_and_mu
       artifact.request.request_id = "scenario-gen:req:mismatch";
       artifact.request.request_version = "1";
       artifact.request.contract_version =
-        std::string(kScenarioGenerationContractVersionWp15RequestV1);
+        std::string(kScenarioGenerationContractVersionRequestV1);
       artifact.request.generation_kind =
         std::string(kScenarioGenerationKindScenarioVariation);
       artifact.request.source =

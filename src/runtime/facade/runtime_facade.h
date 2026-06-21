@@ -135,7 +135,7 @@ public:
     TaskingBatchPacket export_tasking_packet(const TaskingBatchRequest& request) const;
     EngagementEventPacket export_engagement_event_packet(const EngagementBatchRequest& request) const;
     std::vector<DiagnosticsTrace> export_diagnostics_traces(const EngagementBatchRequest& request) const;
-    RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);
+    RuntimeWindowResult run_window(const RuntimeWindowRequest& request);
 
 private:
     bool counterfactual_world_index_valid(std::uint64_t world_index) const noexcept;

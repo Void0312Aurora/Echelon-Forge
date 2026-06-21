@@ -25,8 +25,8 @@ inline constexpr std::string_view kRuntimeWindowCadenceDomainPolicy = "policy";
 inline constexpr std::string_view kRuntimeWindowCadenceDomainControl = "control";
 inline constexpr std::string_view kRuntimeWindowCadenceDomainPhysics = "physics";
 inline constexpr std::string_view kRuntimeWindowCadenceDomainExport = "export";
-// Maintained-slice lineage stays anchored to enumerate_wp10_maintained_stage_node_manifests()
-// even though WP17 narrows execution to enumerate_wp17_selected_slice_strict_clock_domain_manifests().
+// Maintained-slice lineage stays anchored to enumerate_maintained_stage_node_manifests()
+// even though WP17 narrows execution to enumerate_selected_slice_strict_clock_domain_manifests().
 
 struct RuntimeWindowCoordinatorCallbacks {
     std::function<void(const std::vector<WorldPilotActionAssignment>&)>
@@ -300,11 +300,11 @@ inline RuntimeWindowResult execute_runtime_window(
     }
 
     const auto manifests =
-        runtime::scheduler::enumerate_wp17_selected_slice_strict_clock_domain_manifests();
+        runtime::scheduler::enumerate_selected_slice_strict_clock_domain_manifests();
     result.executed_nodes.reserve(manifests.size());
 
     const auto* fire_control_manifest =
-        runtime::scheduler::find_stage_node_manifest("p7.fire_control_launch.v1");
+        runtime::scheduler::find_stage_node_manifest("fire_control_launch.v1");
     if (fire_control_manifest != nullptr) {
         result.executed_nodes.push_back(runtime_window_fire_control_launch_record(
             *fire_control_manifest,
@@ -314,7 +314,7 @@ inline RuntimeWindowResult execute_runtime_window(
     }
 
     const auto* effects_damage_manifest =
-        runtime::scheduler::find_stage_node_manifest("p9.effects_damage.v1");
+        runtime::scheduler::find_stage_node_manifest("effects_damage.v1");
     if (effects_damage_manifest != nullptr && !result.executed_nodes.empty()) {
         result.executed_nodes.push_back(runtime_window_effects_damage_record(
             *effects_damage_manifest,
@@ -357,7 +357,7 @@ inline RuntimeWindowResult execute_runtime_window(
     );
 
     const auto* export_manifest =
-        runtime::scheduler::find_stage_node_manifest("p10.observation_export.v1");
+        runtime::scheduler::find_stage_node_manifest("observation_export.v1");
     RuntimeWindowNodeExecutionRecord export_record{};
     bool export_record_present = false;
     if (export_manifest != nullptr) {

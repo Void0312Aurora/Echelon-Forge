@@ -118,7 +118,7 @@ class ControlSurfaceMechanismTests(unittest.TestCase):
             "sustained pitch stick must produce a nonzero elevator deflection",
         )
 
-    def test_m3_actuator_lag_makes_deflection_gradual_not_instant(self) -> None:
+    def test_actuator_lag_makes_deflection_gradual_not_instant(self) -> None:
         sim, agent_id = _spawn()
         pa = _pilot(throttle=0.8, stick_pitch=1.0)  # full step demand
 
