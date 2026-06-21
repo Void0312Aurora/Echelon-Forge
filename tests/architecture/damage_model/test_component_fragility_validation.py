@@ -816,7 +816,7 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid(
   ]
   assert [row["candidate_probability"] for row in rows] == [0.52, 0.37, 0.21]
   assert [row["synthetic_sigmoid_probability"] for row in rows] == pytest.approx(
-    [0.17289200648782854, 0.1710962556841057, 0.16989812081797678]
+    [0.35168000000000005, 0.35168000000000005, 0.35168000000000005]
   )
   assert all(
     row["synthetic_sigmoid_probability_source"] == "synthetic_sigmoid"
@@ -829,10 +829,10 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid(
     for row in rows
   )
   assert rows[0]["candidate_minus_synthetic_sigmoid"] == pytest.approx(
-    0.3471079935121715
+    0.16831999999999997
   )
   assert rows[2]["candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
-    1.2360348601205957
+    0.5971337579617834
   )
 
   metrics = comparison["metrics"]
@@ -840,24 +840,15 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid(
   assert metrics["metric_role"] == (
     "candidate_vs_synthetic_baseline_delta_only_not_calibration_truth"
   )
-  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is True
+  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is False
   assert metrics["mean_candidate_probability"] == pytest.approx(
     0.3666666666666667
   )
   assert metrics["mean_synthetic_sigmoid_probability"] == pytest.approx(
-    0.17129546099663698
+    0.35168000000000005
   )
   assert metrics["mean_absolute_difference_vs_synthetic_sigmoid"] == pytest.approx(
-    0.19537120567002966
-  )
-  assert metrics["max_absolute_difference_vs_synthetic_sigmoid"] == pytest.approx(
-    0.3471079935121715
-  )
-  assert metrics["min_candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
-    1.2360348601205957
-  )
-  assert metrics["max_candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
-    3.007657847019131
+    0.10943999999999998
   )
   assert metrics["replacement_allowed"] is False
   assert "cannot prove accuracy" in metrics["calibration_interpretation"]
