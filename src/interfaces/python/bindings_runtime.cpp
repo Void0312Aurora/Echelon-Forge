@@ -385,12 +385,10 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("direct_hit", &ComponentLoadEvent::direct_hit)
         .def_rw("distance_m", &ComponentLoadEvent::distance_m)
         .def_rw("effect_scale", &ComponentLoadEvent::effect_scale)
-        .def_rw("spatial_intersection_fraction",
-                &ComponentLoadEvent::spatial_intersection_fraction)
+        .def_rw("spatial_intersection_fraction", &ComponentLoadEvent::spatial_intersection_fraction)
         .def_rw("pattern_weight", &ComponentLoadEvent::pattern_weight)
         .def_rw("orientation_weight", &ComponentLoadEvent::orientation_weight)
-        .def_rw("receiver_exposure_fraction",
-                &ComponentLoadEvent::receiver_exposure_fraction)
+        .def_rw("receiver_exposure_fraction", &ComponentLoadEvent::receiver_exposure_fraction)
         .def_rw("armor_transmission", &ComponentLoadEvent::armor_transmission)
         .def_rw("sampling_confidence", &ComponentLoadEvent::sampling_confidence)
         .def_rw("load_intensity_scale", &ComponentLoadEvent::load_intensity_scale)
@@ -612,8 +610,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("threshold_scale", &ComponentResponseRow::threshold_scale)
         .def_rw("failure_probability", &ComponentResponseRow::failure_probability)
         .def_rw("failure_sample", &ComponentResponseRow::failure_sample)
-        .def_rw("failure_probability_source",
-                &ComponentResponseRow::failure_probability_source)
+        .def_rw("failure_probability_source", &ComponentResponseRow::failure_probability_source)
         .def_rw("failure_probability_calibrated",
                 &ComponentResponseRow::failure_probability_calibrated)
         .def_rw("failure_probability_evidence_dataset_ref",
@@ -641,8 +638,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("failure_probability_evidence_component_system",
                 &ComponentResponseRow::failure_probability_evidence_component_system)
         .def_rw("failure_probability_evidence_component_redundancy_group_id",
-                &ComponentResponseRow::
-                    failure_probability_evidence_component_redundancy_group_id)
+                &ComponentResponseRow::failure_probability_evidence_component_redundancy_group_id)
         .def_rw("failure_mode", &ComponentResponseRow::failure_mode)
         .def_rw("failure_severity", &ComponentResponseRow::failure_severity)
         .def_rw("failure_mode_names", &ComponentResponseRow::failure_mode_names)
@@ -842,8 +838,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("closest_distance_m", &KillChainApproachFact::closest_distance_m)
         .def_rw("closest_point_local_forward_m",
                 &KillChainApproachFact::closest_point_local_forward_m)
-        .def_rw("closest_point_local_right_m",
-                &KillChainApproachFact::closest_point_local_right_m)
+        .def_rw("closest_point_local_right_m", &KillChainApproachFact::closest_point_local_right_m)
         .def_rw("closest_point_local_up_m", &KillChainApproachFact::closest_point_local_up_m)
         .def_rw("closure_mps", &KillChainApproachFact::closure_mps)
         .def_rw("nearest_approach_time_s", &KillChainApproachFact::nearest_approach_time_s);
@@ -860,8 +855,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("sensor_opportunity_score", &KillChainFuzeDecision::sensor_opportunity_score)
         .def_rw("terminal_track_valid", &KillChainFuzeDecision::terminal_track_valid)
         .def_rw("target_detected", &KillChainFuzeDecision::target_detected)
-        .def_rw("target_detection_confidence",
-                &KillChainFuzeDecision::target_detection_confidence)
+        .def_rw("target_detection_confidence", &KillChainFuzeDecision::target_detection_confidence)
         .def_rw("target_detection_threshold", &KillChainFuzeDecision::target_detection_threshold)
         .def_rw("detonation_point_source", &KillChainFuzeDecision::detonation_point_source);
 
@@ -912,8 +906,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("spatial_hit_fraction", &KillChainWarheadLoadField::spatial_hit_fraction)
         .def_rw("spatial_energy_scale", &KillChainWarheadLoadField::spatial_energy_scale)
         .def_rw("spatial_pattern_scale", &KillChainWarheadLoadField::spatial_pattern_scale)
-        .def_rw("orientation_pattern_scale",
-                &KillChainWarheadLoadField::orientation_pattern_scale)
+        .def_rw("orientation_pattern_scale", &KillChainWarheadLoadField::orientation_pattern_scale)
         .def_rw("fragment_energy_j", &KillChainWarheadLoadField::fragment_energy_j)
         .def_rw("fragment_areal_density_per_m2",
                 &KillChainWarheadLoadField::fragment_areal_density_per_m2)
@@ -982,11 +975,17 @@ void bind_runtime(nb::module_ &m) {
                 &KillChainComponentResponseFact::failure_probability_closure_bucket)
         .def_rw("failure_probability_miss_distance_bucket",
                 &KillChainComponentResponseFact::failure_probability_miss_distance_bucket)
+        .def_rw("failure_probability_evidence_component_name",
+                &KillChainComponentResponseFact::failure_probability_evidence_component_name)
+        .def_rw("failure_probability_evidence_component_system",
+                &KillChainComponentResponseFact::failure_probability_evidence_component_system)
+        .def_rw("failure_probability_evidence_component_redundancy_group_id",
+                &KillChainComponentResponseFact::
+                    failure_probability_evidence_component_redundancy_group_id)
         .def_rw("failure_mode", &KillChainComponentResponseFact::failure_mode)
         .def_rw("failure_severity", &KillChainComponentResponseFact::failure_severity)
         .def_rw("failure_mode_names", &KillChainComponentResponseFact::failure_mode_names)
-        .def_rw("failure_mode_severities",
-                &KillChainComponentResponseFact::failure_mode_severities)
+        .def_rw("failure_mode_severities", &KillChainComponentResponseFact::failure_mode_severities)
         .def_rw("failure_mode_source", &KillChainComponentResponseFact::failure_mode_source)
         .def_rw("failure_mode_authority", &KillChainComponentResponseFact::failure_mode_authority)
         .def_rw("integrity_before", &KillChainComponentResponseFact::integrity_before)
@@ -1001,10 +1000,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("owner_stage", &KillChainConsequenceProjection::owner_stage)
         .def_rw("outcome_state", &KillChainConsequenceProjection::outcome_state)
         .def_rw("component_hit_count", &KillChainConsequenceProjection::component_hit_count)
-        .def_rw("component_failure_count",
-                &KillChainConsequenceProjection::component_failure_count)
-        .def_rw("primary_component_name",
-                &KillChainConsequenceProjection::primary_component_name)
+        .def_rw("component_failure_count", &KillChainConsequenceProjection::component_failure_count)
+        .def_rw("primary_component_name", &KillChainConsequenceProjection::primary_component_name)
         .def_rw("primary_component_system",
                 &KillChainConsequenceProjection::primary_component_system)
         .def_rw("primary_component_integrity",
@@ -1022,8 +1019,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("schema_version", &KillChainRuntimeFacade::schema_version)
         .def_rw("schema_name", &KillChainRuntimeFacade::schema_name)
         .def_rw("runtime_dto_authority", &KillChainRuntimeFacade::runtime_dto_authority)
-        .def_rw("runtime_parameter_retuning",
-                &KillChainRuntimeFacade::runtime_parameter_retuning)
+        .def_rw("runtime_parameter_retuning", &KillChainRuntimeFacade::runtime_parameter_retuning)
         .def_rw("calibration_authority", &KillChainRuntimeFacade::calibration_authority)
         .def_rw("real_world_pk", &KillChainRuntimeFacade::real_world_pk)
         .def_rw("approach_fact", &KillChainRuntimeFacade::approach_fact)
@@ -1033,8 +1029,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("component_responses", &KillChainRuntimeFacade::component_responses)
         .def_rw("consequence_projection", &KillChainRuntimeFacade::consequence_projection);
 
-    m.def("make_kill_chain_runtime_facade", &make_kill_chain_runtime_facade,
-          nb::arg("effects"));
+    m.def("make_kill_chain_runtime_facade", &make_kill_chain_runtime_facade, nb::arg("effects"));
 
     nb::class_<DamageReport>(m, "DamageReport")
         .def(nb::init<>())

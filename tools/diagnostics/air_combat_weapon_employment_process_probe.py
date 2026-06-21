@@ -56,12 +56,15 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema i
     _weapon_select_id,
 )
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_chain import (
+    _append_unique_lethality_component_response_rows,
     _append_unique_lethality_chain_rows,
     _effects_event_has_warhead_load,
     _lethality_chain_rows,
+    _lethality_component_response_rows,
     _lethality_evidence_level,
     _lethality_trace_indexes,
     _parse_platform_damage_state_delta,
+    _project_current_lethality_component_response_rows,
     _project_current_lethality_chain_rows,
 )
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_abstraction import (
@@ -146,6 +149,7 @@ __all__ = (
     "_a5_event_info_columns",
     "_a7_launch_window_config_from_train_config",
     "_action_columns_for_mode",
+    "_append_unique_lethality_component_response_rows",
     "_append_unique_lethality_chain_rows",
     "_apply_diagnostic_dcr_bridge",
     "_base_action",
@@ -174,6 +178,7 @@ __all__ = (
     "_lethality_chain_scalar_ledger",
     "_lethality_chain_snapshot_columns",
     "_lethality_chain_stage_abstractions",
+    "_lethality_component_response_rows",
     "_lethality_evidence_level",
     "_lethality_header_base_kwargs",
     "_lethality_trace_indexes",
@@ -185,6 +190,7 @@ __all__ = (
     "_parse_platform_damage_state_delta",
     "_policy_c2_context",
     "_positive_finite",
+    "_project_current_lethality_component_response_rows",
     "_project_current_lethality_chain_rows",
     "_range_gate_fire_action",
     "_reward_terms_prefix_total",
@@ -272,6 +278,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     lethality_chain_rows: list[dict[str, Any]] = []
     lethality_chain_seen: set[tuple[int, int, int, str, str, int]] = set()
+    lethality_component_response_rows: list[dict[str, Any]] = []
+    lethality_component_response_seen: set[tuple[int, int, int, int, int]] = set()
     episode_summaries: list[dict[str, Any]] = []
     try:
         for ep in range(int(args.episodes)):
@@ -322,6 +330,19 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 lethality_chain_rows, lethality_chain_seen, initial_chain_rows
             )
             _append_unique_lethality_chain_rows(ep_chain_rows, set(), initial_chain_rows)
+            initial_component_response_rows = (
+                _project_current_lethality_component_response_rows(
+                    episode=ep,
+                    step=0,
+                    sim_time_s=float(initial_row.get("sim_time_s", 0.0)),
+                    sim=base_env.sim,
+                )
+            )
+            _append_unique_lethality_component_response_rows(
+                lethality_component_response_rows,
+                lethality_component_response_seen,
+                initial_component_response_rows,
+            )
             for step in range(1, max_steps + 1):
                 policy_diagnostics: dict[str, Any] = {}
                 if args.mode == "forced_fire":
@@ -402,6 +423,19 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                     for existing in ep_chain_rows
                 }
                 _append_unique_lethality_chain_rows(ep_chain_rows, ep_seen, current_chain_rows)
+                current_component_response_rows = (
+                    _project_current_lethality_component_response_rows(
+                        episode=ep,
+                        step=step,
+                        sim_time_s=float(row.get("sim_time_s", 0.0)),
+                        sim=base_env.sim,
+                    )
+                )
+                _append_unique_lethality_component_response_rows(
+                    lethality_component_response_rows,
+                    lethality_component_response_seen,
+                    current_component_response_rows,
+                )
                 prev_missiles = int(row.get("missiles_remaining", prev_missiles))
                 release_count_so_far += int(row.get("missile_release_delta", 0) or 0)
                 if bool(terminated or truncated):
@@ -421,9 +455,13 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
 
     reasons = Counter(str(row.get("termination_reason", "")) for row in episode_summaries)
     lethality_chain_stage_abstractions = _lethality_chain_stage_abstractions(
-        lethality_chain_rows
+        lethality_chain_rows,
+        component_response_rows=lethality_component_response_rows,
     )
-    lethality_chain_scalar_ledger = _lethality_chain_scalar_ledger(lethality_chain_rows)
+    lethality_chain_scalar_ledger = _lethality_chain_scalar_ledger(
+        lethality_chain_rows,
+        component_response_rows=lethality_component_response_rows,
+    )
     payload = {
         "scenario": scenario_path,
         "train_config": os.path.abspath(args.train_config) if args.train_config else None,
@@ -438,6 +476,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "episodes": int(args.episodes),
         "rows": len(rows),
         "lethality_chain_rows": lethality_chain_rows,
+        "lethality_component_response_rows": lethality_component_response_rows,
         "lethality_chain_stage_abstractions": lethality_chain_stage_abstractions,
         "lethality_chain_decoupling_summary": _lethality_chain_decoupling_summary(
             lethality_chain_stage_abstractions

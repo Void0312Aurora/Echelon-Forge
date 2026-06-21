@@ -47,6 +47,21 @@ inline constexpr std::array<std::string_view, 6> kLethalityChainTerminalNegative
     kLethalityReasonTargetNotDetected,        kLethalityReasonMissileTimeout,
 };
 
+inline constexpr std::array<std::string_view, 3> kLethalityChainPositiveDetonationOutcomes = {
+    "damage_applied",
+    "detonated_no_effect",
+    "hit",
+};
+
+inline bool is_lethality_chain_positive_detonation_outcome(std::string_view outcome_state) {
+    for (const std::string_view positive_outcome : kLethalityChainPositiveDetonationOutcomes) {
+        if (outcome_state == positive_outcome) {
+            return true;
+        }
+    }
+    return false;
+}
+
 inline constexpr std::string_view kLethalityObservationModeSampledRuntime = "sampled_runtime";
 inline constexpr std::string_view kLethalityObservationModeExpectedProjection =
     "expected_projection";
@@ -637,6 +652,9 @@ struct KillChainComponentResponseFact {
     std::string failure_probability_aspect_bucket = "unknown";
     std::string failure_probability_closure_bucket = "unknown";
     std::string failure_probability_miss_distance_bucket = "unknown";
+    std::string failure_probability_evidence_component_name;
+    std::string failure_probability_evidence_component_system;
+    std::string failure_probability_evidence_component_redundancy_group_id;
     std::string failure_mode = "none";
     double failure_severity = 0.0;
     std::vector<std::string> failure_mode_names;
@@ -689,7 +707,8 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
     facade.approach_fact.nearest_approach_time_s = effects.nearest_approach_time_s;
 
     facade.fuze_decision.fuze_type = effects.fuze_type;
-    facade.fuze_decision.detonated = effects.outcome_state != "fuze_no_detonation";
+    facade.fuze_decision.detonated =
+        is_lethality_chain_positive_detonation_outcome(effects.outcome_state);
     facade.fuze_decision.outcome_state = effects.outcome_state;
     facade.fuze_decision.detonation_time_s = effects.detonation_time_s;
     facade.fuze_decision.detonation_probability = effects.confidence;
@@ -714,8 +733,7 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
     facade.warhead_load_field.spatial_hit_fraction = effects.warhead_spatial_hit_fraction;
     facade.warhead_load_field.spatial_energy_scale = effects.warhead_spatial_energy_scale;
     facade.warhead_load_field.spatial_pattern_scale = effects.warhead_spatial_pattern_scale;
-    facade.warhead_load_field.orientation_pattern_scale =
-        effects.warhead_orientation_pattern_scale;
+    facade.warhead_load_field.orientation_pattern_scale = effects.warhead_orientation_pattern_scale;
     facade.warhead_load_field.fragment_energy_j = effects.mechanism_fragment_energy_j;
     facade.warhead_load_field.fragment_areal_density_per_m2 =
         effects.mechanism_fragment_areal_density_per_m2;
@@ -740,12 +758,10 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
     facade.target_susceptibility.family_scale = effects.vulnerability_family_scale;
     facade.target_susceptibility.aspect_scale = effects.vulnerability_aspect_scale;
     facade.target_susceptibility.closure_scale = effects.vulnerability_closure_scale;
-    facade.target_susceptibility.miss_distance_scale =
-        effects.vulnerability_miss_distance_scale;
+    facade.target_susceptibility.miss_distance_scale = effects.vulnerability_miss_distance_scale;
     facade.target_susceptibility.effect_scale = effects.vulnerability_effect_scale;
 
-    facade.warhead_load_field.component_loads.reserve(
-        effects.component_mechanism_load_rows.size());
+    facade.warhead_load_field.component_loads.reserve(effects.component_mechanism_load_rows.size());
     facade.component_responses.reserve(effects.component_response_rows.size());
     for (const ComponentMechanismLoadRow &row : effects.component_mechanism_load_rows) {
         KillChainComponentLoadFact load{};
@@ -771,7 +787,6 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
         load.rod_cut_margin = row.mechanism_rod_cut_margin;
         load.surface_incidence_cos = row.mechanism_surface_incidence_cos;
         facade.warhead_load_field.component_loads.push_back(load);
-
     }
 
     for (const ComponentResponseRow &row : effects.component_response_rows) {
@@ -801,6 +816,12 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
         response.failure_probability_closure_bucket = row.failure_probability_closure_bucket;
         response.failure_probability_miss_distance_bucket =
             row.failure_probability_miss_distance_bucket;
+        response.failure_probability_evidence_component_name =
+            row.failure_probability_evidence_component_name;
+        response.failure_probability_evidence_component_system =
+            row.failure_probability_evidence_component_system;
+        response.failure_probability_evidence_component_redundancy_group_id =
+            row.failure_probability_evidence_component_redundancy_group_id;
         response.failure_mode = row.failure_mode;
         response.failure_severity = row.failure_severity;
         response.failure_mode_names = row.failure_mode_names;
@@ -809,8 +830,7 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
         response.failure_mode_authority = row.failure_mode_authority;
         response.integrity_before = row.integrity_before;
         response.integrity_after = row.integrity_after;
-        response.redundancy_group_availability_before =
-            row.redundancy_group_availability_before;
+        response.redundancy_group_availability_before = row.redundancy_group_availability_before;
         response.redundancy_group_availability_after = row.redundancy_group_availability_after;
         facade.component_responses.push_back(response);
     }
@@ -820,14 +840,12 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
     facade.consequence_projection.component_failure_count = effects.component_failure_count;
     facade.consequence_projection.primary_component_name = effects.component_primary_name;
     facade.consequence_projection.primary_component_system = effects.component_primary_system;
-    facade.consequence_projection.primary_component_integrity =
-        effects.component_primary_integrity;
+    facade.consequence_projection.primary_component_integrity = effects.component_primary_integrity;
     facade.consequence_projection.redundancy_group_availability =
         effects.component_redundancy_group_availability;
     facade.consequence_projection.air_system_hit_flags = effects.air_system_hit_flags;
     facade.consequence_projection.air_system_spatial_scales = effects.air_system_spatial_scales;
-    facade.consequence_projection.vulnerability_scale_trace =
-        effects.vulnerability_scale_trace;
+    facade.consequence_projection.vulnerability_scale_trace = effects.vulnerability_scale_trace;
 
     return facade;
 }

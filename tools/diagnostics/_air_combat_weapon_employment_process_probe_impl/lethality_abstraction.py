@@ -257,33 +257,105 @@ def _load_abstraction(chain_rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _component_response_abstraction(chain_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    return _component_response_abstraction_from_rows(chain_rows, [])
+
+
+def _component_response_abstraction_from_rows(
+    chain_rows: list[dict[str, Any]],
+    component_response_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
     damage = _latest_row(chain_rows, chain_contract.STAGE_COMPONENT_DAMAGE)
-    source_rows = [damage] if damage is not None else []
+    source_rows = list(component_response_rows) if component_response_rows else []
+    if not source_rows and damage is not None:
+        source_rows = [damage]
     out = _base_abstraction(
         chain_rows=chain_rows,
         abstraction_stage=ABSTRACTION_COMPONENT_RESPONSE,
         owner="component_response",
         source_rows=source_rows,
     )
-    source = damage
+    source = source_rows[-1] if source_rows else None
     observed = out["observed"]
     if source:
         _put_if_text(observed, "component_name", source.get("component_name"))
         _put_if_text(observed, "component_system", source.get("component_system"))
+        _put_if_text(
+            observed,
+            "component_redundancy_group_id",
+            source.get("component_redundancy_group_id"),
+        )
+        _put_if_int(observed, "source_row_index", source.get("source_row_index"))
         _put_if_finite(
             observed,
             "failure_probability",
-            source.get("component_failure_probability"),
+            source.get("failure_probability", source.get("component_failure_probability")),
         )
-        _put_if_finite(observed, "failure_sample", source.get("component_failure_sample"))
-        _put_if_text(observed, "failure_mode", source.get("component_failure_mode"))
+        _put_if_finite(
+            observed,
+            "failure_sample",
+            source.get("failure_sample", source.get("component_failure_sample")),
+        )
+        _put_if_text(
+            observed,
+            "failure_probability_source",
+            source.get("failure_probability_source"),
+        )
+        _put_if_int(
+            observed,
+            "failure_probability_calibrated",
+            source.get("failure_probability_calibrated"),
+        )
+        _put_if_text(
+            observed,
+            "failure_probability_evidence_component_name",
+            source.get("failure_probability_evidence_component_name"),
+        )
+        _put_if_text(
+            observed,
+            "failure_probability_evidence_component_system",
+            source.get("failure_probability_evidence_component_system"),
+        )
+        _put_if_text(
+            observed,
+            "failure_probability_evidence_component_redundancy_group_id",
+            source.get("failure_probability_evidence_component_redundancy_group_id"),
+        )
+        _put_if_finite(
+            observed,
+            "source_load_effect_scale",
+            source.get("source_load_effect_scale"),
+        )
+        _put_if_finite(
+            observed,
+            "source_load_distance_m",
+            source.get("source_load_distance_m"),
+        )
+        _put_if_text(
+            observed,
+            "source_load_component_name",
+            source.get("source_load_component_name"),
+        )
+        _put_if_text(
+            observed,
+            "source_load_component_system",
+            source.get("source_load_component_system"),
+        )
+        _put_if_text(
+            observed,
+            "failure_mode",
+            source.get("failure_mode", source.get("component_failure_mode")),
+        )
         _put_if_finite(
             observed,
             "failure_severity",
-            source.get("component_failure_severity"),
+            source.get("failure_severity", source.get("component_failure_severity")),
         )
-        before = _finite_or_none(source.get("component_integrity_before"))
-        after = _finite_or_none(source.get("component_integrity_after"))
+        before = _finite_or_none(
+            source.get("integrity_before", source.get("component_integrity_before"))
+        )
+        after = _finite_or_none(
+            source.get("integrity_after", source.get("component_integrity_after"))
+        )
         if before is not None:
             observed["integrity_before"] = before
         if after is not None:
@@ -348,7 +420,10 @@ def _consequence_abstraction(chain_rows: list[dict[str, Any]]) -> dict[str, Any]
     return out
 
 
-def _lethality_chain_stage_abstractions(chain_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _lethality_chain_stage_abstractions(
+    chain_rows: list[dict[str, Any]],
+    component_response_rows: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     rows_by_chain: dict[tuple[int, int], list[dict[str, Any]]] = {}
     for row in chain_rows:
         chain_id = int(row.get("chain_id", 0) or 0)
@@ -357,15 +432,24 @@ def _lethality_chain_stage_abstractions(chain_rows: list[dict[str, Any]]) -> lis
         episode = int(row.get("episode", 0) or 0)
         rows_by_chain.setdefault((episode, chain_id), []).append(row)
 
+    response_rows_by_chain: dict[tuple[int, int], list[dict[str, Any]]] = {}
+    for row in list(component_response_rows or []):
+        chain_id = int(row.get("chain_id", 0) or 0)
+        if chain_id <= 0:
+            continue
+        episode = int(row.get("episode", 0) or 0)
+        response_rows_by_chain.setdefault((episode, chain_id), []).append(row)
+
     abstractions: list[dict[str, Any]] = []
-    for key in sorted(rows_by_chain):
-        chain = rows_by_chain[key]
+    for key in sorted(set(rows_by_chain) | set(response_rows_by_chain)):
+        chain = rows_by_chain.get(key, [])
+        response_rows = response_rows_by_chain.get(key, [])
         abstractions.extend(
             (
                 _approach_abstraction(chain),
                 _fuze_abstraction(chain),
                 _load_abstraction(chain),
-                _component_response_abstraction(chain),
+                _component_response_abstraction_from_rows(chain, response_rows),
                 _consequence_abstraction(chain),
             )
         )

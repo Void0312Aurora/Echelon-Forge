@@ -836,8 +836,7 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
             component_event.direct_hit = row.direct_hit;
             component_event.distance_m = row.distance_m;
             component_event.effect_scale = row.effect_scale;
-            component_event.spatial_intersection_fraction =
-                effects.warhead_spatial_hit_fraction;
+            component_event.spatial_intersection_fraction = effects.warhead_spatial_hit_fraction;
             component_event.pattern_weight = effects.warhead_spatial_pattern_scale;
             component_event.orientation_weight = effects.warhead_orientation_pattern_scale;
             component_event.receiver_exposure_fraction = effects.mechanism_exposure_scale;
@@ -881,15 +880,11 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
             damage_event.header.reason = "generic_research_component_damage_candidate";
             damage_event.component_name = response.component_name;
             damage_event.component_system = response.component_system;
-            damage_event.component_redundancy_group_id =
-                response.component_redundancy_group_id;
-            damage_event.failure_mode = response.failure_mode.empty()
-                                            ? "none"
-                                            : response.failure_mode;
-            damage_event.failure_severity =
-                clamp_unit_interval(response.failure_severity);
-            damage_event.failure_probability =
-                clamp_unit_interval(response.failure_probability);
+            damage_event.component_redundancy_group_id = response.component_redundancy_group_id;
+            damage_event.failure_mode =
+                response.failure_mode.empty() ? "none" : response.failure_mode;
+            damage_event.failure_severity = clamp_unit_interval(response.failure_severity);
+            damage_event.failure_probability = clamp_unit_interval(response.failure_probability);
             damage_event.failure_sample = response.failure_sample;
             damage_event.integrity_before = clamp_unit_interval(response.integrity_before);
             damage_event.integrity_after = clamp_unit_interval(response.integrity_after);

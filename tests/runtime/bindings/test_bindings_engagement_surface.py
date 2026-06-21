@@ -728,6 +728,11 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     component_response.failure_sample = 0.21
     component_response.failure_probability_source = "vulnerability_evidence_row"
     component_response.failure_probability_calibrated = True
+    component_response.failure_probability_evidence_component_name = "left_wing_fuel_cell"
+    component_response.failure_probability_evidence_component_system = "fuel"
+    component_response.failure_probability_evidence_component_redundancy_group_id = (
+      "wing_fuel_cells"
+    )
     component_response.failure_mode = "leak"
     component_response.failure_severity = 0.64
     component_response.integrity_before = 1.0
@@ -772,9 +777,44 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     self.assertNotIn("facade_owner_projected", public_fields(response))
     self.assertNotIn("runtime_owner_migrated", public_fields(response))
     self.assertAlmostEqual(response.failure_probability, 0.37)
+    self.assertEqual(
+      response.failure_probability_evidence_component_name,
+      "left_wing_fuel_cell",
+    )
+    self.assertEqual(response.failure_probability_evidence_component_system, "fuel")
+    self.assertEqual(
+      response.failure_probability_evidence_component_redundancy_group_id,
+      "wing_fuel_cells",
+    )
     self.assertEqual(response.failure_mode, "leak")
     self.assertEqual(facade.consequence_projection.owner_stage, "consequence_projection")
     self.assertEqual(facade.consequence_projection.outcome_state, "damage_applied")
+
+  def test_kill_chain_runtime_facade_detonation_flag_uses_positive_outcomes(self) -> None:
+    for outcome in (
+      "damage_applied",
+      "detonated_no_effect",
+      "hit",
+    ):
+      effect = ef_py.EffectsEvent()
+      effect.outcome_state = outcome
+      facade = ef_py.make_kill_chain_runtime_facade(effect)
+      self.assertTrue(facade.fuze_decision.detonated, outcome)
+
+    for outcome in (
+      "fuze_no_detonation",
+      "fuze_no_terminal_track",
+      "miss_outside_trigger_radius",
+      "outside_sensor_window",
+      "target_not_detected",
+      "missile_timeout",
+      "unknown",
+      "rejected",
+    ):
+      effect = ef_py.EffectsEvent()
+      effect.outcome_state = outcome
+      facade = ef_py.make_kill_chain_runtime_facade(effect)
+      self.assertFalse(facade.fuze_decision.detonated, outcome)
 
   def test_diagnostics_trace_public_fields_match_expected_binding_surface(self) -> None:
     self.assertTupleEqual(

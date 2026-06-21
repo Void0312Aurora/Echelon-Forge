@@ -127,7 +127,10 @@ def _parse_effect_scale_from_trace(trace: str) -> float | None:
     return _finite_or_none(match.group(1))
 
 
-def _chain_scalar_ledger(chain_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _chain_scalar_ledger(
+    chain_rows: list[dict[str, Any]],
+    component_response_rows: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     nearest = _latest_row(chain_rows, chain_contract.STAGE_NEAREST_APPROACH)
     fuze = _latest_row(chain_rows, chain_contract.STAGE_FUZE)
     warhead = _latest_row(chain_rows, chain_contract.STAGE_WARHEAD_MECHANISM)
@@ -345,23 +348,55 @@ def _chain_scalar_ledger(chain_rows: list[dict[str, Any]]) -> list[dict[str, Any
             migration_hint="use named load factors before retuning opaque component_load.effect_scale",
             calibration_ready=False,
         )
-    response_source = component_damage
-    _add_numeric_entry(
-        out,
-        row=response_source,
-        field="component_failure_probability",
-        scalar_id="component_response.failure_probability",
-        current_owner_stage="component_response",
-        intended_owner_stage="component_response",
-        semantic_role="component failure probability",
-        consumer_fields=["component_response.sampled_failure", "consequence_projection.system_delta"],
-        coupling_flags=[],
-        migration_hint="make this the only probability-producing stage",
-        calibration_ready=True,
-    )
-    if response_source is not None:
-        before = _finite_or_none(response_source.get("component_integrity_before"))
-        after = _finite_or_none(response_source.get("component_integrity_after"))
+    response_sources = list(component_response_rows or [])
+    if not response_sources and component_damage is not None:
+        response_sources = [component_damage]
+    for response_source in response_sources:
+        _add_numeric_entry(
+            out,
+            row=response_source,
+            field="failure_probability",
+            scalar_id="component_response.failure_probability",
+            current_owner_stage="component_response",
+            intended_owner_stage="component_response",
+            semantic_role="component failure probability",
+            consumer_fields=[
+                "component_response.sampled_failure",
+                "consequence_projection.system_delta",
+            ],
+            coupling_flags=[],
+            migration_hint="make this the only probability-producing stage",
+            calibration_ready=True,
+        )
+        if "failure_probability" not in response_source:
+            _add_numeric_entry(
+                out,
+                row=response_source,
+                field="component_failure_probability",
+                scalar_id="component_response.failure_probability",
+                current_owner_stage="component_response",
+                intended_owner_stage="component_response",
+                semantic_role="component failure probability",
+                consumer_fields=[
+                    "component_response.sampled_failure",
+                    "consequence_projection.system_delta",
+                ],
+                coupling_flags=[],
+                migration_hint="make this the only probability-producing stage",
+                calibration_ready=True,
+            )
+        before = _finite_or_none(
+            response_source.get(
+                "integrity_before",
+                response_source.get("component_integrity_before"),
+            )
+        )
+        after = _finite_or_none(
+            response_source.get(
+                "integrity_after",
+                response_source.get("component_integrity_after"),
+            )
+        )
         if before is not None and after is not None:
             out.append(
                 _entry(
@@ -370,7 +405,9 @@ def _chain_scalar_ledger(chain_rows: list[dict[str, Any]]) -> list[dict[str, Any
                     scalar_id="component_response.integrity_delta",
                     current_owner_stage="component_response",
                     intended_owner_stage="component_response",
-                    producer_stage=str(response_source.get("stage", "component_response") or ""),
+                    producer_stage=str(
+                        response_source.get("stage", "component_response") or ""
+                    ),
                     producer_field="component_integrity_after-before",
                     observed_value=after - before,
                     semantic_role="component integrity state change",
@@ -424,10 +461,20 @@ def _chain_scalar_ledger(chain_rows: list[dict[str, Any]]) -> list[dict[str, Any
     return out
 
 
-def _lethality_chain_scalar_ledger(chain_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _lethality_chain_scalar_ledger(
+    chain_rows: list[dict[str, Any]],
+    component_response_rows: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     ledger: list[dict[str, Any]] = []
-    for key in sorted(_rows_by_chain(chain_rows)):
-        ledger.extend(_chain_scalar_ledger(_rows_by_chain(chain_rows)[key]))
+    rows_by_chain = _rows_by_chain(chain_rows)
+    response_rows_by_chain = _rows_by_chain(list(component_response_rows or []))
+    for key in sorted(set(rows_by_chain) | set(response_rows_by_chain)):
+        ledger.extend(
+            _chain_scalar_ledger(
+                rows_by_chain.get(key, []),
+                component_response_rows=response_rows_by_chain.get(key, []),
+            )
+        )
     return ledger
 
 

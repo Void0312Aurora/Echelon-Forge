@@ -229,6 +229,32 @@ def _effect_component_damage_row(*, sample: float = 0.21) -> SimpleNamespace:
   )
 
 
+def _effect_component_response_row(*, sample: float = 0.91) -> SimpleNamespace:
+  return SimpleNamespace(
+    source_current_owner_stage="component_response_row",
+    source_row_index=0,
+    component_name="right_aileron_actuator",
+    component_system="flight_control",
+    component_redundancy_group_id="flight_control:right_aileron",
+    threshold_scale=1.05,
+    failure_probability=0.82,
+    failure_sample=sample,
+    failure_probability_source="vulnerability_evidence_row",
+    failure_probability_calibrated=True,
+    failure_probability_evidence_component_name="right_aileron_actuator",
+    failure_probability_evidence_component_system="flight_control",
+    failure_probability_evidence_component_redundancy_group_id=(
+      "flight_control:right_aileron"
+    ),
+    failure_mode="cut",
+    failure_severity=0.74,
+    integrity_before=1.0,
+    integrity_after=1.0 if sample > 0.82 else 0.68,
+    redundancy_group_availability_before=1.0,
+    redundancy_group_availability_after=1.0,
+  )
+
+
 def _standard_platform_consequence_event() -> SimpleNamespace:
   return SimpleNamespace(
     header=_header(
@@ -497,6 +523,72 @@ class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
       "component_load_row_contains_response_probability",
       summary["coupling_flag_counts"],
     )
+
+  def test_component_response_abstraction_uses_response_rows_without_sampled_damage(
+    self,
+  ) -> None:
+    events = _dummy_lethality_events()
+    events.effects_events[0].component_mechanism_load_rows = [
+      _effect_component_damage_row(sample=0.91)
+    ]
+    events.effects_events[0].component_response_rows = [
+      _effect_component_response_row(sample=0.91)
+    ]
+    events.component_load_events = [_standard_component_load_event()]
+    events.component_damage_events = []
+
+    rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+    response_rows = probe._lethality_component_response_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+    abstractions = probe._lethality_chain_stage_abstractions(
+      rows,
+      component_response_rows=response_rows,
+    )
+    ledger = probe._lethality_chain_scalar_ledger(
+      rows,
+      component_response_rows=response_rows,
+    )
+
+    self.assertNotIn("component_damage", {str(row["stage"]) for row in rows})
+    self.assertEqual(len(response_rows), 1)
+    response = response_rows[0]
+    self.assertEqual(response["source_event_kind"], "ComponentResponseRow")
+    self.assertEqual(response["source_row_index"], 0)
+    self.assertAlmostEqual(response["source_load_effect_scale"], 0.83, places=6)
+
+    component_response = next(
+      row for row in abstractions if row["abstraction_stage"] == "component_response"
+    )
+    self.assertEqual(component_response["present"], 1)
+    self.assertEqual(
+      component_response["source_event_kinds"],
+      ["ComponentResponseRow"],
+    )
+    observed = component_response["observed"]
+    self.assertAlmostEqual(observed["failure_probability"], 0.82, places=6)
+    self.assertAlmostEqual(observed["failure_sample"], 0.91, places=6)
+    self.assertEqual(observed["source_row_index"], 0)
+    self.assertEqual(
+      observed["failure_probability_evidence_component_name"],
+      "right_aileron_actuator",
+    )
+    self.assertAlmostEqual(observed["source_load_effect_scale"], 0.83, places=6)
+    self.assertAlmostEqual(observed["integrity_delta"], 0.0, places=6)
+
+    scalar_by_id = {str(row["scalar_id"]): row for row in ledger}
+    response_probability = scalar_by_id["component_response.failure_probability"]
+    self.assertEqual(response_probability["producer_stage"], "component_response")
+    self.assertAlmostEqual(response_probability["observed_value"], 0.82, places=6)
+    self.assertNotIn("response_probability_in_load_row", response_probability["coupling_flags"])
 
   def test_lethality_chain_scalar_ledger_splits_owner_and_consumer_coupling(
     self,

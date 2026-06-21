@@ -98,6 +98,178 @@ def _lethality_trace_indexes(engagement_events: Any) -> tuple[dict[int, Any], di
     return trace_by_effect, trace_by_damage
 
 
+def _int_value(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return int(default)
+
+
+def _lethality_component_response_rows(
+    *,
+    episode: int,
+    step: int,
+    sim_time_s: float,
+    engagement_events: Any,
+) -> list[dict[str, Any]]:
+    trace_by_effect, _trace_by_damage = _lethality_trace_indexes(engagement_events)
+    rows: list[dict[str, Any]] = []
+    for effect in list(getattr(engagement_events, "effects_events", []) or []):
+        response_rows = list(getattr(effect, "component_response_rows", []) or [])
+        if not response_rows:
+            continue
+        effect_id = _event_id(effect, "event_id")
+        trace = trace_by_effect.get(effect_id)
+        chain_id = _event_id(trace, "chain_id") if trace is not None else effect_id
+        munition_id = _entity_id(getattr(trace, "munition", None)) if trace is not None else 0
+        if munition_id <= 0:
+            munition_id = _entity_id(getattr(effect, "munition", None))
+        target_id = _entity_id(getattr(effect, "target", None))
+        load_rows = list(getattr(effect, "component_mechanism_load_rows", []) or [])
+        for index, response in enumerate(response_rows):
+            source_row_index = _int_value(getattr(response, "source_row_index", index), index)
+            source_load = (
+                load_rows[source_row_index]
+                if 0 <= source_row_index < len(load_rows)
+                else None
+            )
+            row = {
+                "schema_version": "component_response_fact.v1",
+                "episode": int(episode),
+                "step": int(step),
+                "sim_time_s": float(sim_time_s),
+                "chain_id": int(chain_id),
+                "event_id": int(effect_id),
+                "parent_event_id": (
+                    _event_id(trace, "launch_event_id") if trace is not None else 0
+                ),
+                "stage": "component_response",
+                "status": "evaluated",
+                "reason": "effects_event_component_response_row",
+                "source_event_kind": "ComponentResponseRow",
+                "source_event_id": int(effect_id),
+                "source_row_index": int(source_row_index),
+                "munition_id": int(munition_id),
+                "target_id": int(target_id),
+                "evidence_level": _lethality_evidence_level(effect),
+                "observation_mode": chain_contract.OBSERVATION_MODE_SAMPLED_RUNTIME,
+                "consumer_visibility": (
+                    chain_contract.CONSUMER_VISIBILITY_DIAGNOSTICS_AND_TRAINING
+                ),
+                "component_name": str(getattr(response, "component_name", "") or ""),
+                "component_system": str(getattr(response, "component_system", "") or ""),
+                "component_redundancy_group_id": str(
+                    getattr(response, "component_redundancy_group_id", "") or ""
+                ),
+                "threshold_scale": _finite_float(
+                    getattr(response, "threshold_scale", float("nan"))
+                ),
+                "failure_probability": _finite_float(
+                    getattr(response, "failure_probability", float("nan"))
+                ),
+                "failure_sample": _finite_float(
+                    getattr(response, "failure_sample", float("nan"))
+                ),
+                "failure_probability_source": str(
+                    getattr(response, "failure_probability_source", "") or ""
+                ),
+                "failure_probability_calibrated": int(
+                    bool(getattr(response, "failure_probability_calibrated", False))
+                ),
+                "failure_probability_evidence_dataset_ref": str(
+                    getattr(response, "failure_probability_evidence_dataset_ref", "") or ""
+                ),
+                "failure_probability_evidence_row_id": str(
+                    getattr(response, "failure_probability_evidence_row_id", "") or ""
+                ),
+                "failure_probability_evidence_source_ref": str(
+                    getattr(response, "failure_probability_evidence_source_ref", "") or ""
+                ),
+                "failure_probability_evidence_provenance": str(
+                    getattr(response, "failure_probability_evidence_provenance", "") or ""
+                ),
+                "failure_probability_authority": int(
+                    bool(getattr(response, "failure_probability_authority", False))
+                ),
+                "failure_probability_component_specific": int(
+                    bool(getattr(response, "failure_probability_component_specific", False))
+                ),
+                "failure_probability_weapon_family": str(
+                    getattr(response, "failure_probability_weapon_family", "") or ""
+                ),
+                "failure_probability_aspect_bucket": str(
+                    getattr(response, "failure_probability_aspect_bucket", "") or ""
+                ),
+                "failure_probability_closure_bucket": str(
+                    getattr(response, "failure_probability_closure_bucket", "") or ""
+                ),
+                "failure_probability_miss_distance_bucket": str(
+                    getattr(response, "failure_probability_miss_distance_bucket", "") or ""
+                ),
+                "failure_probability_evidence_component_name": str(
+                    getattr(response, "failure_probability_evidence_component_name", "") or ""
+                ),
+                "failure_probability_evidence_component_system": str(
+                    getattr(response, "failure_probability_evidence_component_system", "") or ""
+                ),
+                "failure_probability_evidence_component_redundancy_group_id": str(
+                    getattr(
+                        response,
+                        "failure_probability_evidence_component_redundancy_group_id",
+                        "",
+                    )
+                    or ""
+                ),
+                "failure_mode": str(getattr(response, "failure_mode", "") or ""),
+                "failure_severity": _finite_float(
+                    getattr(response, "failure_severity", float("nan"))
+                ),
+                "failure_mode_source": str(
+                    getattr(response, "failure_mode_source", "") or ""
+                ),
+                "failure_mode_authority": int(
+                    bool(getattr(response, "failure_mode_authority", False))
+                ),
+                "integrity_before": _finite_float(
+                    getattr(response, "integrity_before", float("nan"))
+                ),
+                "integrity_after": _finite_float(
+                    getattr(response, "integrity_after", float("nan"))
+                ),
+                "redundancy_group_availability_before": _finite_float(
+                    getattr(response, "redundancy_group_availability_before", float("nan"))
+                ),
+                "redundancy_group_availability_after": _finite_float(
+                    getattr(response, "redundancy_group_availability_after", float("nan"))
+                ),
+            }
+            if source_load is not None:
+                row.update(
+                    {
+                        "source_load_component_name": str(
+                            getattr(source_load, "component_name", "") or ""
+                        ),
+                        "source_load_component_system": str(
+                            getattr(source_load, "component_system", "") or ""
+                        ),
+                        "source_load_component_redundancy_group_id": str(
+                            getattr(source_load, "component_redundancy_group_id", "") or ""
+                        ),
+                        "source_load_direct_hit": int(
+                            bool(getattr(source_load, "direct_hit", False))
+                        ),
+                        "source_load_distance_m": _finite_float(
+                            getattr(source_load, "distance_m", float("nan"))
+                        ),
+                        "source_load_effect_scale": _finite_float(
+                            getattr(source_load, "effect_scale", float("nan"))
+                        ),
+                    }
+                )
+            rows.append(row)
+    return rows
+
+
 def _lethality_chain_rows(
     *,
     episode: int,
@@ -915,6 +1087,25 @@ def _append_unique_lethality_chain_rows(
         out.append(dict(row))
 
 
+def _append_unique_lethality_component_response_rows(
+    out: list[dict[str, Any]],
+    seen: set[tuple[int, int, int, int, int]],
+    rows: list[dict[str, Any]],
+) -> None:
+    for row in rows:
+        key = (
+            int(row.get("episode", 0) or 0),
+            int(row.get("chain_id", 0) or 0),
+            int(row.get("event_id", 0) or 0),
+            int(row.get("source_event_id", 0) or 0),
+            int(row.get("source_row_index", 0) or 0),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(dict(row))
+
+
 def _project_current_lethality_chain_rows(
     *, episode: int, step: int, sim_time_s: float, sim: Any
 ) -> list[dict[str, Any]]:
@@ -923,6 +1114,21 @@ def _project_current_lethality_chain_rows(
     except Exception:
         return []
     return _lethality_chain_rows(
+        episode=int(episode),
+        step=int(step),
+        sim_time_s=float(sim_time_s),
+        engagement_events=engagement_events,
+    )
+
+
+def _project_current_lethality_component_response_rows(
+    *, episode: int, step: int, sim_time_s: float, sim: Any
+) -> list[dict[str, Any]]:
+    try:
+        engagement_events = sim.export_recent_engagement_events()
+    except Exception:
+        return []
+    return _lethality_component_response_rows(
         episode=int(episode),
         step=int(step),
         sim_time_s=float(sim_time_s),
