@@ -4,6 +4,9 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -17,10 +20,31 @@ from tools.maintenance.scope_provenance import ( # noqa: E402
 )
 
 
-def test_target_geometry_scope_closeout_closes_stage_b_witness_only() -> None:
-  artifact = target_geometry_gate.generate_res003_target_geometry_closeout_gate(
+@pytest.fixture(scope="module")
+def target_geometry_closeout_artifact() -> dict[str, Any]:
+  return target_geometry_gate.generate_res003_target_geometry_closeout_gate(
     repo_root=REPO_ROOT
   )
+
+
+@pytest.fixture(scope="module")
+def warhead_family_closeout_artifact() -> dict[str, Any]:
+  return warhead_scope_gate.generate_res004_warhead_scope_closeout_gate(
+    repo_root=REPO_ROOT
+  )
+
+
+@pytest.fixture(scope="module")
+def row_provenance_artifact() -> dict[str, Any]:
+  return row_provenance_gate.generate_geometry_warhead_row_provenance_gate(
+    repo_root=REPO_ROOT
+  )
+
+
+def test_target_geometry_scope_closeout_records_stage_b_identity(
+  target_geometry_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = target_geometry_closeout_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -35,7 +59,13 @@ def test_target_geometry_scope_closeout_closes_stage_b_witness_only() -> None:
   )
   assert artifact["missing_evidence"] == []
 
+
+def test_target_geometry_scope_closeout_consumes_required_evidence(
+  target_geometry_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = target_geometry_closeout_artifact
   evidence = {row["evidence_id"]: row for row in artifact["consumed_evidence"]}
+
   assert set(evidence) == {
     "residual_register",
     "target_geometry_assumptions",
@@ -49,7 +79,13 @@ def test_target_geometry_scope_closeout_closes_stage_b_witness_only() -> None:
     assert row["content_hash"] == f"sha256:{row['content_sha256']}"
     assert row["size_bytes"] > 0
 
+
+def test_target_geometry_scope_closeout_bounds_stage_b_assumptions(
+  target_geometry_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = target_geometry_closeout_artifact
   assumption = artifact["stage_b_assumption_review"]
+
   assert assumption["status"] == "stage_b_assumption_surface_bounded"
   assert assumption["used_by_stage_b_geometry_items"] == [
     "outer_bbox",
@@ -77,7 +113,13 @@ def test_target_geometry_scope_closeout_closes_stage_b_witness_only() -> None:
   ] == "unsupported"
   assert all(row["pass"] for row in assumption["checks"])
 
+
+def test_target_geometry_scope_closeout_preserves_review_interlocks(
+  target_geometry_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = target_geometry_closeout_artifact
   provenance = artifact["provenance_interlock"]
+
   assert provenance["status"] == "row_provenance_interlock_preserved"
   assert provenance["upstream_res003_status"]["author_side_subslice_ready"] is True
   assert provenance["upstream_res003_status"]["release_grade"] is False
@@ -94,7 +136,13 @@ def test_target_geometry_scope_closeout_closes_stage_b_witness_only() -> None:
   )
   assert all(row["pass"] for row in stage_b["checks"])
 
+
+def test_target_geometry_scope_closeout_blocks_global_release_authority(
+  target_geometry_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = target_geometry_closeout_artifact
   res003 = artifact["residual_closeout_decisions"]["RES-003"]
+
   assert res003["stage_b_effect_scale_witness_geometry"] == (
     "closed_narrow_non_authoritative"
   )
@@ -228,10 +276,10 @@ def test_target_geometry_scope_closeout_cli_writes_retained_json_and_doc(
   )
 
 
-def test_warhead_family_scope_closeout_closes_stage_b_family_scope_only() -> None:
-  artifact = warhead_scope_gate.generate_res004_warhead_scope_closeout_gate(
-    repo_root=REPO_ROOT
-  )
+def test_warhead_family_scope_closeout_records_stage_b_identity(
+  warhead_family_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = warhead_family_closeout_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -246,7 +294,13 @@ def test_warhead_family_scope_closeout_closes_stage_b_family_scope_only() -> Non
   )
   assert artifact["missing_evidence"] == []
 
+
+def test_warhead_family_scope_closeout_consumes_required_evidence(
+  warhead_family_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = warhead_family_closeout_artifact
   evidence = {row["evidence_id"]: row for row in artifact["consumed_evidence"]}
+
   assert set(evidence) == {
     "residual_register",
     "warhead_scope_and_sensitivity",
@@ -261,7 +315,13 @@ def test_warhead_family_scope_closeout_closes_stage_b_family_scope_only() -> Non
     assert row["content_hash"] == f"sha256:{row['content_sha256']}"
     assert row["size_bytes"] > 0
 
+
+def test_warhead_family_scope_closeout_bounds_stage_b_scope(
+  warhead_family_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = warhead_family_closeout_artifact
   scope = artifact["stage_b_scope_review"]
+
   assert scope["status"] == "stage_b_warhead_family_scope_surface_bounded"
   assert scope["weapon_class"] == "AIM-120C-class"
   assert scope["weapon_family"] == "blast_fragmentation"
@@ -290,7 +350,13 @@ def test_warhead_family_scope_closeout_closes_stage_b_family_scope_only() -> Non
   assert rows["WAR-007"]["consumed_by_surrogate"] == "no"
   assert rows["WAR-007"]["third_party_candidates"].startswith("rejected:")
 
+
+def test_warhead_family_scope_closeout_records_source_pin_boundary(
+  warhead_family_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = warhead_family_closeout_artifact
   source_pin = artifact["source_pin_review"]
+
   assert source_pin["status"] == "source_pin_boundary_bounded"
   assert source_pin["res004_pin_ids"] == [
     "PIN-AIM120-001",
@@ -304,7 +370,13 @@ def test_warhead_family_scope_closeout_closes_stage_b_family_scope_only() -> Non
   assert all(source_pin["source_presence"].values())
   assert all(row["pass"] for row in source_pin["checks"])
 
+
+def test_warhead_family_scope_closeout_preserves_provenance_and_mechanism_interlocks(
+  warhead_family_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = warhead_family_closeout_artifact
   provenance = artifact["provenance_interlock"]
+
   assert provenance["status"] == "row_provenance_interlock_preserved"
   assert provenance["upstream_res004_status"]["author_side_subslice_ready"] is True
   assert provenance["upstream_res004_status"]["release_grade"] is False
@@ -320,7 +392,13 @@ def test_warhead_family_scope_closeout_closes_stage_b_family_scope_only() -> Non
   )
   assert all(row["pass"] for row in mechanism["checks"])
 
+
+def test_warhead_family_scope_closeout_blocks_release_authority(
+  warhead_family_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = warhead_family_closeout_artifact
   res004 = artifact["residual_closeout_decisions"]["RES-004"]
+
   assert res004["stage_b_effect_scale_warhead_family_scope"] == (
     "closed_narrow_non_authoritative"
   )
@@ -466,8 +544,10 @@ def test_warhead_family_scope_closeout_cli_writes_retained_json_and_doc(
 
 
 # Row provenance keeps scope closeout bounded and non-authoritative.
-def test_geometry_warhead_row_provenance_blocks_current_scope() -> None:
-  artifact = row_provenance_gate.generate_geometry_warhead_row_provenance_gate(repo_root=REPO_ROOT)
+def test_geometry_warhead_row_provenance_records_blocked_candidate_identity(
+  row_provenance_artifact: dict[str, Any],
+) -> None:
+  artifact = row_provenance_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -483,10 +563,16 @@ def test_geometry_warhead_row_provenance_blocks_current_scope() -> None:
   assert artifact["decision"]["closed_residual_ids_by_this_gate"] == []
   assert artifact["decision"]["blocking_residual_ids"] == ["RES-003", "RES-004"]
 
+
+def test_geometry_warhead_row_provenance_consumes_required_inputs(
+  row_provenance_artifact: dict[str, Any],
+) -> None:
+  artifact = row_provenance_artifact
   assert artifact["missing_inputs"] == []
   required_inputs = {
     row["input_id"]: row for row in artifact["consumed_inputs"] if row["required"]
   }
+
   assert set(required_inputs) == {
     "subagent_usage_policy",
     "residual_register",
@@ -502,7 +588,13 @@ def test_geometry_warhead_row_provenance_blocks_current_scope() -> None:
     assert row["content_hash"] == f"sha256:{row['sha256']}"
     assert row["size_bytes"] > 0
 
+
+def test_geometry_warhead_row_provenance_blocks_residual_statuses(
+  row_provenance_artifact: dict[str, Any],
+) -> None:
+  artifact = row_provenance_artifact
   residual_status = artifact["residual_status"]
+
   assert residual_status["RES-003"]["status"] == "blocked_row_level_bounds_missing"
   assert residual_status["RES-003"]["register"]["register_status"] == (
     "research_closed_stage_b_witness_geometry_bookkeeping_authority_blocked_global_geometry"
@@ -514,6 +606,12 @@ def test_geometry_warhead_row_provenance_blocks_current_scope() -> None:
   )
   assert residual_status["RES-004"]["closed_by_this_gate"] is False
 
+
+def test_geometry_warhead_row_provenance_records_gate_checks(
+  row_provenance_artifact: dict[str, Any],
+) -> None:
+  artifact = row_provenance_artifact
+
   assert [check["check_id"] for check in artifact["gate_checks"]] == [
     "ROWWAR-RES003-001",
     "ROWWAR-RES003-002",
@@ -522,7 +620,13 @@ def test_geometry_warhead_row_provenance_blocks_current_scope() -> None:
   ]
   assert not any(check["release_grade_satisfied"] for check in artifact["gate_checks"])
 
+
+def test_geometry_warhead_row_provenance_records_res003_row_blockers(
+  row_provenance_artifact: dict[str, Any],
+) -> None:
+  artifact = row_provenance_artifact
   res003_rows = artifact["gate_checks"][0]["evidence"]["row_findings"]
+
   assert {row["geometry_item"] for row in res003_rows} >= {
     "outer_bbox",
     "beam_witness_panel",
@@ -543,7 +647,13 @@ def test_geometry_warhead_row_provenance_blocks_current_scope() -> None:
     if row["geometry_item"] == "beam_witness_panel"
   } == {"repo_authored_witness_geometry_lacks_true_3d_exposure_bounds"}
 
+
+def test_geometry_warhead_row_provenance_records_res004_row_blockers(
+  row_provenance_artifact: dict[str, Any],
+) -> None:
+  artifact = row_provenance_artifact
   res004_rows = artifact["gate_checks"][2]["evidence"]["row_findings"]
+
   assert {row["assumption_id"] for row in res004_rows} >= {
     "WAR-001",
     "WAR-002",

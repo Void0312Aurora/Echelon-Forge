@@ -15,6 +15,10 @@
     under `air_combat/`, `bindings/`, `core/`, `engagement/`, `execution/`,
     `facade/`, `ground/`, `link/`, `mission/`, `multi_agent/`, `naval/`, and
     `navigation/`.
+  - `air_combat/weapon_guidance_realism/` intentionally uses five
+    `test_*.py` unittest wrappers around capability mixins. See
+    `runtime/air_combat/weapon_guidance_realism/README.md` before changing its
+    collection pattern or promoting it into a suite.
 - `architecture/`
   - Source/documentation guardrails and governance checks that intentionally
     stay separate from runtime behavior tests.
@@ -186,6 +190,33 @@ suite, C++ CTest smoke target, and the maintained JSON contract smoke suite.
 If a smoke path is moved during a refactor, update
 `tests/smoke/ci_smoke_suite.json` first. CI and top-level documentation should
 reference the suite runner instead of duplicating individual test-file paths.
+
+## Test System Audit
+
+Use the audit runner before broad test-suite cleanup or promotion work:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/audit_test_system.py --format markdown --limit 30
+```
+
+The audit excludes `archive`/`Archive` paths and reports active pytest files,
+JSON contracts, smoke-suite membership, hidden mixin tests, source-scan guards,
+and oversized or literal-heavy tests. Treat the report as triage input:
+
+- `oversized_file`, `oversized_test_item`, `assert_heavy`, and `literal_heavy`
+  usually point to snapshot-style tests that should be converted to smaller
+  invariant checks or data contracts.
+- `source_scan_guard` belongs in architecture or governance tiers unless a
+  small node-ID smoke subset is explicitly promoted.
+- `hidden_mixin_tests` and `mixin_wrapper_file` are allowed only when the wrapper
+  makes collection clearer than direct test modules; otherwise prefer semantic
+  `test_*.py` files with local helpers.
+  `tests/runtime/air_combat/weapon_guidance_realism/` is the current documented
+  exception and remains local/focused until its package-level run is green.
+- `not_smoke_gated` is not automatically a defect. It means the file should be
+  deliberately assigned to smoke, focused, local, manual, or contract coverage
+  before being treated as maintained gate evidence.
 
 ## Architecture Suite Governance
 

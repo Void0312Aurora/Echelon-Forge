@@ -30,6 +30,10 @@
 
 ## 测试系统评估
 
+- [测试系统治理](test_system_governance/README.zh.md)：已验收的治理切片，用于审计、
+  精简和分层活跃非归档 pytest 与 JSON contract 面；剩余 blocker 由
+  [测试系统残余治理](../issues/test_system_residual_governance/README.zh.md)
+  保留追踪。([English](test_system_governance/README.md))
 - [测试系统评估与意图矩阵 2026-06-01](test_system_evaluation_20260601.zh.md)
 - [Architecture Damage-Model 测试功能矩阵 2026-06-10](architecture_damage_model_test_script_survival_table_20260610.zh.md)
 - [Architecture 测试系统治理收口 2026-06-10](architecture_test_system_governance_closeout_20260610.zh.md)

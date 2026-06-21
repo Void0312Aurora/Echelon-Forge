@@ -47,3 +47,11 @@ Architecture guard promotion should add files or node IDs to
 release-package generation, retained-artifact verification, and source-admission
 workflows are local/manual by default until a cheap smoke-safe subset is split
 out and listed explicitly.
+
+## Current Local Residuals
+
+`tests/runtime/air_combat/weapon_guidance_realism/` is a documented local/focused
+runtime-realism surface. It uses wrapper modules around capability mixins and is
+not listed in the smoke suite. Do not promote the directory wholesale while its
+package-level pytest run is failing; split smoke-safe node IDs only after the
+runtime expectations are reconciled.

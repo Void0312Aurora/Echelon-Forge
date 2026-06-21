@@ -4,7 +4,9 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
+import pytest
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
@@ -15,8 +17,24 @@ from tools.maintenance.release_governance import (  # noqa: E402
 )
 
 
-def test_effect_scale_release_readiness_gate_current_repo_is_blocked() -> None:
-  artifact = effect_scale_release_readiness.generate_stage_b_release_readiness_gate(repo_root=REPO_ROOT)
+@pytest.fixture(scope="module")
+def effect_scale_readiness_artifact() -> dict[str, Any]:
+  return effect_scale_release_readiness.generate_stage_b_release_readiness_gate(
+    repo_root=REPO_ROOT
+  )
+
+
+@pytest.fixture(scope="module")
+def effect_scale_closeout_artifact() -> dict[str, Any]:
+  return effect_scale_release_closeout.generate_stage_b_release_closeout(
+    repo_root=REPO_ROOT
+  )
+
+
+def test_effect_scale_release_readiness_gate_records_blocked_decision(
+  effect_scale_readiness_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_readiness_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -39,6 +57,12 @@ def test_effect_scale_release_readiness_gate_current_repo_is_blocked() -> None:
   assert release["release_target"] == "effect_scale_authority_only"
   assert release["stage_c_component_probability_release_included"] is False
   assert release["stock_runtime_authority_granted"] is False
+
+
+def test_effect_scale_release_readiness_gate_records_scope_and_conditions(
+  effect_scale_readiness_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_readiness_artifact
 
   scope = artifact["scope"]
   assert scope["target_type"] == "F-16C_Block50"
@@ -70,6 +94,14 @@ def test_effect_scale_release_readiness_gate_current_repo_is_blocked() -> None:
     "BLOCK-011",
     "BLOCK-012",
   ]
+
+
+def test_effect_scale_release_readiness_gate_records_blocking_evidence(
+  effect_scale_readiness_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_readiness_artifact
+  blockers = artifact["blocking_conditions"]
+
   assert artifact["blocking_residual_ids"] == [
     "RES-010",
     "RES-002",
@@ -104,6 +136,12 @@ def test_effect_scale_release_readiness_gate_current_repo_is_blocked() -> None:
   assert any("independent benchmark/input separation review remains authority-blocked" in row["summary"] for row in blockers)
   assert any("uncertainty coverage and independent closeout remain authority-blocked" in row["summary"] for row in blockers)
   assert any("stock runtime authority remains explicitly closed" in row["summary"] for row in blockers)
+
+
+def test_effect_scale_release_readiness_gate_records_provenance_boundaries(
+  effect_scale_readiness_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_readiness_artifact
 
   retained = artifact["retained_artifact_pack_summary"]
   assert retained["status"] == "author_retained_candidate_artifacts_only"
@@ -161,8 +199,10 @@ def test_effect_scale_release_readiness_gate_cli_writes_json(
   assert artifact["blocking_conditions"][0]["blocker_id"] == "BLOCK-001"
 
 
-def test_effect_scale_release_closeout_preserves_blocked_release() -> None:
-  artifact = effect_scale_release_closeout.generate_stage_b_release_closeout(repo_root=REPO_ROOT)
+def test_effect_scale_release_closeout_records_blocked_decision(
+  effect_scale_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_closeout_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -191,6 +231,12 @@ def test_effect_scale_release_closeout_preserves_blocked_release() -> None:
   assert release["stage_c_component_probability_release_included"] is False
   assert release["stock_runtime_authority_granted"] is False
 
+
+def test_effect_scale_release_closeout_records_validation_execution(
+  effect_scale_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_closeout_artifact
+
   run_manifest = artifact["validation_run_manifest"]
   assert run_manifest["run_id"] == "STAGE-B-ES-RUN-20260531-001"
   assert run_manifest["run_status"] == "author_side_executed_non_authoritative"
@@ -212,6 +258,12 @@ def test_effect_scale_release_closeout_preserves_blocked_release() -> None:
   assert len(execution["criteria_results"]) == 18
   assert all(row["pass"] for row in execution["criteria_results"])
   assert len(execution["artifact_hashes"]) == 3
+
+
+def test_effect_scale_release_closeout_records_residual_gate_results(
+  effect_scale_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_closeout_artifact
 
   residuals = {
     row["residual_id"]: row
@@ -241,6 +293,12 @@ def test_effect_scale_release_closeout_preserves_blocked_release() -> None:
   )
   assert all(row["author_side_closeout_complete"] is True for row in residuals.values())
   assert all(row["release_blocked"] is True for row in residuals.values())
+
+
+def test_effect_scale_release_closeout_records_scope_closeout_outputs(
+  effect_scale_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_closeout_artifact
 
   near_miss = artifact["near_miss_bucket_closeout"]
   assert near_miss["author_side_closeout_complete"] is True
@@ -278,6 +336,12 @@ def test_effect_scale_release_closeout_preserves_blocked_release() -> None:
   assert bm005["audit_outcome"] == "candidate_hygiene_only_not_independent_validation"
   assert independence["review_dependency_trace"][0]["owner"] == "independent_reviewer"
   assert independence["review_dependency_trace"][0]["status"] == "missing"
+
+
+def test_effect_scale_release_closeout_records_remaining_dependencies_and_guards(
+  effect_scale_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = effect_scale_closeout_artifact
 
   dependencies = {
     row["dependency"]: row

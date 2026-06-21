@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from tests.architecture.damage_model.helpers import (
   assert_authority_guards_false,
   assert_hex64,
@@ -79,12 +81,37 @@ def _assert_hash_ref_label_only(payload: dict[str, Any]) -> None:
   assert_no_keys_anywhere(payload, forbidden_raw_keys)
 
 
-def test_benchmark_recalculation_gate_retains_hash_only_candidate_path(
-  tmp_path: Path,
-) -> None:
-  artifact = recalculation_gate.generate_res006_beco_recalculation_admission_gate(
-    retained_dir=tmp_path
+@pytest.fixture(scope="module")
+def recalculation_gate_artifact(
+  tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Any]:
+  return recalculation_gate.generate_res006_beco_recalculation_admission_gate(
+    retained_dir=tmp_path_factory.mktemp("recalculation_gate")
   )
+
+
+@pytest.fixture(scope="module")
+def lineage_tolerance_packet_artifact(
+  tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Any]:
+  return lineage_packet.generate_res006_beco_lineage_tolerance_review_packet(
+    retained_dir=tmp_path_factory.mktemp("lineage_tolerance") / "retained"
+  )
+
+
+@pytest.fixture(scope="module")
+def replacement_tolerance_gate_artifact(
+  tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Any]:
+  return replacement_gate.generate_res006_beco_replacement_tolerance_admission_gate(
+    retained_dir=tmp_path_factory.mktemp("replacement_tolerance")
+  )
+
+
+def test_benchmark_recalculation_gate_records_fail_closed_identity(
+  recalculation_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = recalculation_gate_artifact
 
   assert artifact["schema_version"] == (
     "a2.res006_beco_recalculation_admission_gate.v1"
@@ -106,7 +133,13 @@ def test_benchmark_recalculation_gate_retains_hash_only_candidate_path(
   )
   assert source_rights["selected_comparison_hashes_admitted_by_policy"] is False
 
+
+def test_benchmark_recalculation_gate_blocks_res006_admission(
+  recalculation_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = recalculation_gate_artifact
   decision = artifact["admission_decision"]
+
   assert decision["residual_id"] == "RES-006"
   assert decision["decision"] == "res006_remains_blocked_fail_closed"
   assert decision["res006_narrowly_closed"] is False
@@ -116,7 +149,13 @@ def test_benchmark_recalculation_gate_retains_hash_only_candidate_path(
   assert decision["replacement_anchor_set_admitted"] is False
   assert decision["closed_residual_ids_by_this_gate"] == []
 
+
+def test_benchmark_recalculation_gate_retains_cached_hash_anchors(
+  recalculation_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = recalculation_gate_artifact
   cached = artifact["cached_anchor_summary"]
+
   assert cached["cached_hash_anchor_count"] == 9
   assert cached["all_selected_cached_hashes_present"] is True
   assert cached["spreadsheet_calculation_executed"] is False
@@ -127,6 +166,11 @@ def test_benchmark_recalculation_gate_retains_hash_only_candidate_path(
     assert row["raw_value_disclosed"] is False
     assert row["formula_text_disclosed"] is False
 
+
+def test_benchmark_recalculation_gate_records_spreadsheet_execution_path(
+  recalculation_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = recalculation_gate_artifact
   tooling = artifact["tooling_detection"]
   beco = artifact["beco_recalculation_gate"]
   replacement = artifact["replacement_path"]
@@ -176,6 +220,11 @@ def test_benchmark_recalculation_gate_retains_hash_only_candidate_path(
     )
     assert replacement["status"] == "replacement_anchor_set_not_available_fail_closed"
 
+
+def test_benchmark_recalculation_gate_omits_raw_recalculation_payloads(
+  recalculation_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = recalculation_gate_artifact
   _assert_recalculation_hash_only(artifact)
 
 
@@ -298,12 +347,10 @@ def test_benchmark_recalculation_cli_writes_gate_anchor_set_and_manifest(
   _assert_recalculation_hash_only(anchor_set)
 
 
-def test_benchmark_lineage_tolerance_packet_is_fail_closed_and_machine_readable(
-  tmp_path: Path,
+def test_benchmark_lineage_tolerance_packet_records_fail_closed_identity(
+  lineage_tolerance_packet_artifact: dict[str, Any],
 ) -> None:
-  artifact = lineage_packet.generate_res006_beco_lineage_tolerance_review_packet(
-    retained_dir=tmp_path / "retained"
-  )
+  artifact = lineage_tolerance_packet_artifact
 
   assert artifact["schema_version"] == (
     "a2.res006_beco_lineage_tolerance_review_candidate_packet.v1"
@@ -345,7 +392,13 @@ def test_benchmark_lineage_tolerance_packet_is_fail_closed_and_machine_readable(
   assert guards["replacement_anchor_authority_granted"] is False
   assert guards["cached_anchor_replacement_authority_granted"] is False
 
+
+def test_benchmark_lineage_tolerance_packet_summarizes_hash_mismatch(
+  lineage_tolerance_packet_artifact: dict[str, Any],
+) -> None:
+  artifact = lineage_tolerance_packet_artifact
   summary = artifact["cached_vs_recalculated_summary"]
+
   assert summary["counts_and_comparison_ids_only"] is True
   assert summary["status"] == "cached_vs_recalculated_hash_mismatch_fail_closed"
   assert summary["topology"] == "zero_match_all_selected_comparison_ids_mismatched"
@@ -372,9 +425,15 @@ def test_benchmark_lineage_tolerance_packet_is_fail_closed_and_machine_readable(
   assert summary["individual_row_hashes_retained_in_this_packet"] is False
   assert "hash_only_comparison_rows" not in summary
 
+
+def test_benchmark_lineage_tolerance_packet_keeps_anchor_sources_hash_only(
+  lineage_tolerance_packet_artifact: dict[str, Any],
+) -> None:
+  artifact = lineage_tolerance_packet_artifact
   sources = artifact["anchor_source_summary"]
   cached = sources["cached_anchor_source"]
   recalculated = sources["recalculated_anchor_source"]
+
   assert cached["selected_output_hash_count"] == 9
   assert recalculated["selected_output_hash_count"] == 9
   assert_hex64(cached["selected_output_set_sha256"])
@@ -384,7 +443,13 @@ def test_benchmark_lineage_tolerance_packet_is_fail_closed_and_machine_readable(
   assert cached["anchor_rows_retained_in_this_packet"] is False
   assert recalculated["anchor_rows_retained_in_this_packet"] is False
 
+
+def test_benchmark_lineage_tolerance_packet_requires_missing_signoffs(
+  lineage_tolerance_packet_artifact: dict[str, Any],
+) -> None:
+  artifact = lineage_tolerance_packet_artifact
   signoffs = artifact["lineage_tolerance_required_signoffs"]
+
   assert [item["signoff_id"] for item in signoffs] == [
     "independent_lineage_review_signoff",
     "allowed_output_policy_signoff",
@@ -402,7 +467,13 @@ def test_benchmark_lineage_tolerance_packet_is_fail_closed_and_machine_readable(
     "replacement_anchor_signoff",
   ]
 
+
+def test_benchmark_lineage_tolerance_packet_blocks_admission(
+  lineage_tolerance_packet_artifact: dict[str, Any],
+) -> None:
+  artifact = lineage_tolerance_packet_artifact
   decision_inputs = artifact["lineage_tolerance_decision_inputs"]
+
   assert decision_inputs["lineage"]["local_recalculation_gate_present"] is True
   assert decision_inputs["lineage"]["spreadsheet_execution_attempted"] is True
   assert decision_inputs["lineage"]["independent_lineage_review_present"] is False
@@ -426,6 +497,11 @@ def test_benchmark_lineage_tolerance_packet_is_fail_closed_and_machine_readable(
   assert decision["benchmark_consumed_for_release"] is False
   assert decision["raw_selected_values_retained"] is False
 
+
+def test_benchmark_lineage_tolerance_packet_omits_raw_outputs(
+  lineage_tolerance_packet_artifact: dict[str, Any],
+) -> None:
+  artifact = lineage_tolerance_packet_artifact
   _assert_no_raw_or_row_level_outputs(artifact)
 
 
@@ -533,12 +609,10 @@ def test_benchmark_lineage_tolerance_cli_writes_packet_and_manifest(
   _assert_no_raw_or_row_level_outputs(manifest)
 
 
-def test_benchmark_replacement_tolerance_packet_fails_closed_with_missing_signoffs(
-  tmp_path: Path,
+def test_benchmark_replacement_tolerance_gate_records_fail_closed_identity(
+  replacement_tolerance_gate_artifact: dict[str, Any],
 ) -> None:
-  artifact = replacement_gate.generate_res006_beco_replacement_tolerance_admission_gate(
-    retained_dir=tmp_path
-  )
+  artifact = replacement_tolerance_gate_artifact
 
   assert artifact["schema_version"] == (
     "a2.res006_beco_replacement_tolerance_admission_gate.v1"
@@ -572,7 +646,13 @@ def test_benchmark_replacement_tolerance_packet_fails_closed_with_missing_signof
   for ref in refs:
     assert_hex64(ref["sha256"])
 
+
+def test_benchmark_replacement_tolerance_gate_records_source_policy_and_mismatch(
+  replacement_tolerance_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = replacement_tolerance_gate_artifact
   source_rights = artifact["source_rights_output_policy_summary"]
+
   assert source_rights["allowed_output_policy_status"] == (
     "release_candidate_fail_closed_policy_frozen"
   )
@@ -598,7 +678,13 @@ def test_benchmark_replacement_tolerance_packet_fails_closed_with_missing_signof
     assert row["raw_value_disclosed"] is False
     assert row["formula_text_disclosed"] is False
 
+
+def test_benchmark_replacement_tolerance_gate_requires_missing_signoffs(
+  replacement_tolerance_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = replacement_tolerance_gate_artifact
   replacement = artifact["replacement_candidate_summary"]
+
   assert replacement["candidate_replacement_anchor_set_retained"] is True
   assert replacement["replacement_anchor_set_admitted"] is False
   assert replacement["replacement_anchor_signoff_present"] is False
@@ -622,7 +708,13 @@ def test_benchmark_replacement_tolerance_packet_fails_closed_with_missing_signof
     "replacement_anchor_signoff",
   ]
 
+
+def test_benchmark_replacement_tolerance_gate_blocks_admission(
+  replacement_tolerance_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = replacement_tolerance_gate_artifact
   decision = artifact["admission_decision"]
+
   assert decision["decision"] == "res006_remains_blocked_fail_closed"
   assert decision["status"] == "blocked_fail_closed"
   assert decision["residual_closed"] is False
@@ -634,6 +726,11 @@ def test_benchmark_replacement_tolerance_packet_fails_closed_with_missing_signof
   assert decision["benchmark_consumed_for_release"] is False
   assert decision["raw_selected_values_retained"] is False
 
+
+def test_benchmark_replacement_tolerance_gate_uses_hash_ref_label_only_payload(
+  replacement_tolerance_gate_artifact: dict[str, Any],
+) -> None:
+  artifact = replacement_tolerance_gate_artifact
   _assert_hash_ref_label_only(artifact)
 
 

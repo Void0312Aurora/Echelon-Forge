@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
+import pytest
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, read_json
 from tests.architecture.damage_model.helpers import run_maintenance_cli
 
@@ -11,13 +13,20 @@ ensure_repo_root_on_sys_path()
 from tools.maintenance.release_governance import provenance_identity_review as review_gate  # noqa: E402
 
 
-def test_provenance_identity_review_gate_current_repo_is_blocked(
-  tmp_path: Path,
-) -> None:
-  artifact = review_gate.generate_provenance_identity_review_gate(
+@pytest.fixture(scope="module")
+def provenance_identity_review_artifact(
+  tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Any]:
+  return review_gate.generate_provenance_identity_review_gate(
     repo_root=REPO_ROOT,
-    retained_review_dir=tmp_path,
+    retained_review_dir=tmp_path_factory.mktemp("provenance_identity_review"),
   )
+
+
+def test_provenance_identity_review_gate_records_blocked_identity(
+  provenance_identity_review_artifact: dict[str, Any],
+) -> None:
+  artifact = provenance_identity_review_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -45,20 +54,26 @@ def test_provenance_identity_review_gate_current_repo_is_blocked(
   assert decision["retained_review_artifact_included"] is True
   assert decision["retained_source_payload_pack_included"] is True
 
-  source_payload_consumption = artifact["source_payload_pack_consumption"]
-  assert source_payload_consumption["manifest_source"] == (
+  source_payload = artifact["source_payload_pack_consumption"]
+  assert source_payload["manifest_source"] == (
     "canonical_source_payload_pack"
   )
-  assert source_payload_consumption["payload_retention_satisfied"] is True
-  assert source_payload_consumption["retained_payload_count"] == 3
-  assert source_payload_consumption["required_payload_count"] == 3
-  assert source_payload_consumption["rights_review_blocked"] is True
-  assert source_payload_consumption["allowed_output_policy_blocked"] is True
-  assert source_payload_consumption["benchmark_consumption_review_blocked"] is True
-  assert source_payload_consumption["independent_review_signoff_blocked"] is True
-  assert source_payload_consumption["authority_release_included"] is False
+  assert source_payload["payload_retention_satisfied"] is True
+  assert source_payload["retained_payload_count"] == 3
+  assert source_payload["required_payload_count"] == 3
+  assert source_payload["rights_review_blocked"] is True
+  assert source_payload["allowed_output_policy_blocked"] is True
+  assert source_payload["benchmark_consumption_review_blocked"] is True
+  assert source_payload["independent_review_signoff_blocked"] is True
+  assert source_payload["authority_release_included"] is False
 
-  assert [row["check_id"] for row in artifact["review_checks"]] == [
+
+def test_provenance_identity_review_gate_records_review_check_contract(
+  provenance_identity_review_artifact: dict[str, Any],
+) -> None:
+  checks = provenance_identity_review_artifact["review_checks"]
+
+  assert [row["check_id"] for row in checks] == [
     "REVIEW-RES001-001",
     "REVIEW-RES001-002",
     "REVIEW-RES001-003",
@@ -68,7 +83,7 @@ def test_provenance_identity_review_gate_current_repo_is_blocked(
     "REVIEW-RES002-003",
     "REVIEW-RES001-002-001",
   ]
-  assert [row["review_surface"] for row in artifact["review_checks"]] == [
+  assert [row["review_surface"] for row in checks] == [
     "retained_source_artifact_pack",
     "allowed_output_policy",
     "benchmark_consumption_trace",
@@ -78,7 +93,7 @@ def test_provenance_identity_review_gate_current_repo_is_blocked(
     "retained_identity_surface",
     "independent_review_signoff",
   ]
-  assert [row["release_grade_satisfied"] for row in artifact["review_checks"]] == [
+  assert [row["release_grade_satisfied"] for row in checks] == [
     False,
     False,
     False,
@@ -89,7 +104,13 @@ def test_provenance_identity_review_gate_current_repo_is_blocked(
     False,
   ]
 
+
+def test_provenance_identity_review_gate_records_source_and_policy_evidence(
+  provenance_identity_review_artifact: dict[str, Any],
+) -> None:
+  artifact = provenance_identity_review_artifact
   retained_source = artifact["review_checks"][0]
+
   assert retained_source["author_side_satisfied"] is True
   assert retained_source["status"] == "author_side_closed_release_grade_blocked"
   assert retained_source["observed_evidence"]["verified_source_artifact_ids"] == [
@@ -133,7 +154,13 @@ def test_provenance_identity_review_gate_current_repo_is_blocked(
   )
   assert allowed_output["observed_evidence"]["missing_forbidden_outputs"] == []
 
+
+def test_provenance_identity_review_gate_records_benchmark_comparison_evidence(
+  provenance_identity_review_artifact: dict[str, Any],
+) -> None:
+  artifact = provenance_identity_review_artifact
   benchmark = artifact["review_checks"][2]
+
   assert benchmark["author_side_satisfied"] is True
   assert benchmark["observed_evidence"]["explicit_non_consumed_artifact_ids"] == [
     "PIN-BFM-001",
@@ -160,7 +187,13 @@ def test_provenance_identity_review_gate_current_repo_is_blocked(
   ] is True
   assert comparison["observed_evidence"]["candidate_result_artifact_hash_count"] == 8
 
+
+def test_provenance_identity_review_gate_records_identity_validation_and_signoff(
+  provenance_identity_review_artifact: dict[str, Any],
+) -> None:
+  artifact = provenance_identity_review_artifact
   identity = artifact["review_checks"][4]
+
   assert identity["author_side_satisfied"] is True
   identity_evidence = identity["observed_evidence"]
   assert identity_evidence["worktree_state"] == (
@@ -188,6 +221,12 @@ def test_provenance_identity_review_gate_current_repo_is_blocked(
   assert signoff["author_side_satisfied"] is False
   assert signoff["observed_evidence"]["signoff_manifest_exists"] is False
   assert signoff["observed_evidence"]["reviewer_signoff_status"] == "missing"
+
+
+def test_provenance_identity_review_gate_records_residual_trace_and_guards(
+  provenance_identity_review_artifact: dict[str, Any],
+) -> None:
+  artifact = provenance_identity_review_artifact
 
   assert artifact["residual_condition_trace"] == [
     {
