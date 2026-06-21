@@ -1,0 +1,135 @@
+{
+  "schema_version": "a2.kill_chain_completion_audit.v1",
+  "objective_ref": "kill_chain_mechanism_decoupling_analysis_20260621.P0-P6",
+  "goal_complete": true,
+  "overall_status": "complete",
+  "closed_item_count": 7,
+  "total_item_count": 7,
+  "blocked_item_ids": [],
+  "incomplete_item_ids": [],
+  "items": [
+    {
+      "item_id": "P0",
+      "requirement": "scalar producer/owner/consumer coupling ledger exists",
+      "status": "closed",
+      "closed": true,
+      "partial_surface_closed": false,
+      "evidence": {
+        "scalar_count": 602,
+        "calibration_ready_scalar_count": 246
+      },
+      "blocked_by": [],
+      "remaining_boundary": "diagnostic ledger only; no calibration authority released"
+    },
+    {
+      "item_id": "P1",
+      "requirement": "guidance/proximity stage abstractions cover required baseline cases",
+      "status": "closed",
+      "closed": true,
+      "partial_surface_closed": false,
+      "evidence": {
+        "guidance_case_count": 4,
+        "proximity_case_count": 7,
+        "stage_reports_closed": true
+      },
+      "blocked_by": [],
+      "remaining_boundary": "does not change default lethality result"
+    },
+    {
+      "item_id": "P2",
+      "requirement": "runtime facade exposes DTO-backed kill-chain surface",
+      "status": "closed",
+      "closed": true,
+      "partial_surface_closed": false,
+      "evidence": {
+        "runtime_facade_schema_version": "a2.kill_chain_runtime_facade.v1",
+        "runtime_dto_authority": true,
+        "runtime_facade_case_count": 11
+      },
+      "blocked_by": [],
+      "remaining_boundary": "load-row response compatibility projection removed"
+    },
+    {
+      "item_id": "P3",
+      "requirement": "legacy fuze-quality damage multiplier surface removed",
+      "status": "closed",
+      "closed": true,
+      "partial_surface_closed": false,
+      "evidence": {
+        "legacy_fuze_quality_damage_multiplier_removed": true
+      },
+      "blocked_by": [],
+      "remaining_boundary": "does not claim deterministic fuze reliability"
+    },
+    {
+      "item_id": "P4",
+      "requirement": "component load rows expose named load factors",
+      "status": "closed",
+      "closed": true,
+      "partial_surface_closed": false,
+      "evidence": {
+        "component_load_named_factor_available": 63,
+        "component_factor_rows": 33
+      },
+      "blocked_by": [],
+      "remaining_boundary": "aggregate effect_scale remains current load scalar; named factors available"
+    },
+    {
+      "item_id": "P5",
+      "requirement": "component response owner migrated away from load rows",
+      "status": "closed",
+      "closed": true,
+      "partial_surface_closed": false,
+      "evidence": {
+        "rows_with_response_fields_on_load_row": 0,
+        "component_response_row_count": 33,
+        "runtime_response_rows_available": true
+      },
+      "blocked_by": [],
+      "remaining_boundary": "load-row response fields and projection fallback physically removed"
+    },
+    {
+      "item_id": "P6",
+      "requirement": "single-layer data calibration is admitted and guarded",
+      "status": "closed",
+      "closed": true,
+      "partial_surface_closed": true,
+      "evidence": {
+        "admission_granted": true,
+        "admitted_record_count": 0,
+        "missing_authority_fields": [
+          "component_failure_probability_authority",
+          "deterministic_fuze_authority",
+          "effect_scale_authority",
+          "pk_authority"
+        ],
+        "evidence_unblock_queue_count": 4,
+        "engineering_proxy_evidence_present": true,
+        "engineering_proxy_record_count": 2,
+        "engineering_proxy_layer_ids": [
+          "fuze_data",
+          "warhead_data",
+          "target_response_data",
+          "consequence_data"
+        ],
+        "single_layer_plan_available": true,
+        "delta_guard_schema_version": "a2.kill_chain_calibration_delta_guard.v1",
+        "contract_surface_schema_version": "a2.kill_chain_calibration_evidence_contract_surface.v1",
+        "contract_surface_closed": true,
+        "supplemental_contract_authority_fields": [
+          "deterministic_fuze_authority",
+          "pk_authority"
+        ]
+      },
+      "blocked_by": [],
+      "remaining_boundary": "engineering-proxy calibration only; real-world authority remains false"
+    }
+  ],
+  "authority_boundary": {
+    "runtime_parameter_retuning": false,
+    "default_database_modified": false,
+    "real_world_pk": false,
+    "deterministic_fuze_authority": false,
+    "calibration_authority": false
+  }
+}

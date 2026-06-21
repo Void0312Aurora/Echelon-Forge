@@ -23,6 +23,60 @@ A2 follow-on surface does not flatten into a long list of completed projects.
   split receiver handoff evidence. It does not claim true F-16 engineering
   geometry, default runtime replacement, training benefit, structural breakup,
   debris/wreck, Pk, or weapon-specific lethality.
+- [kill_chain_guidance_lethality_calibration_20260621.zh.md](kill_chain_guidance_lethality_calibration_20260621.zh.md):
+  retained Chinese research note for the 8 km / 30 deg AIM-120C guidance and
+  near-fuze lethality calibration question. It separates current engineering
+  proxy behavior from any real weapon/target authority and recommends a bounded
+  follow-on gate.
+- [kill_chain_mechanism_decoupling_analysis_20260621.zh.md](kill_chain_mechanism_decoupling_analysis_20260621.zh.md):
+  completed retained Chinese mechanism analysis for decoupling the kill chain
+  into approach, fuze decision, warhead load field, component response, and
+  consequence projection. It now links the read-only diagnostic evidence and
+  the P2 runtime facade, P3 default-off policy, P4 named load factors, P5
+  response owner rows, and bounded P6 calibration boundary.
+- [kill_chain_decoupling_stage_abstraction_slice_20260621.zh.md](kill_chain_decoupling_stage_abstraction_slice_20260621.zh.md):
+  retained Chinese implementation note for the first read-only process-probe
+  diagnostic slice. It adds stage abstractions and coupling-flag summaries on
+  top of existing lethality-chain rows without retuning runtime parameters.
+- [kill_chain_decoupling_probe_results_20260621.zh.md](kill_chain_decoupling_probe_results_20260621.zh.md):
+  retained Chinese baseline report for the reusable decoupling probe that runs
+  the 8 km / 30 deg AIM-120C offset cases and a blast-fragmentation proximity
+  sweep through the five-stage diagnostic view.
+- [kill_chain_scalar_coupling_ledger_20260621.zh.md](kill_chain_scalar_coupling_ledger_20260621.zh.md):
+  retained Chinese implementation note for the scalar producer/owner/consumer
+  ledger. It identifies owner leaks and cross-stage scalar consumption before
+  any runtime retuning or calibration admission.
+- [kill_chain_effect_scale_decomposition_probe_20260621.zh.md](kill_chain_effect_scale_decomposition_probe_20260621.zh.md):
+  retained Chinese P1 diagnostic slice that exposes existing spatial,
+  armor/exposure, threshold, and vulnerability factors behind aggregate
+  `effect_scale`; the current P4 runtime surface also exposes named load
+  factors without changing default lethality parameters.
+- [kill_chain_component_load_factor_view_20260621.zh.md](kill_chain_component_load_factor_view_20260621.zh.md):
+  retained Chinese P1-b diagnostic slice that adds per-component load-factor
+  rows and residual proxies for `component_load.effect_scale`; runtime named
+  factors are now available without changing lethality parameters.
+- [kill_chain_component_response_boundary_20260621.zh.md](kill_chain_component_response_boundary_20260621.zh.md):
+  retained Chinese P5 response-owner boundary slice that classifies
+  per-component load-only, compatibility-coupled, and response fields, and
+  records the `rows_with_response_fields_on_load_row=0` runtime-owner migration
+  result.
+- [kill_chain_decoupled_facade_20260621.zh.md](kill_chain_decoupled_facade_20260621.zh.md):
+  retained Chinese P2 historical diagnostic-facade precursor that projects the
+  current evidence into ApproachFact/FuzeDecision/WarheadLoadField/
+  ComponentResponse/ConsequenceProjection-shaped structures.
+- [kill_chain_runtime_facade_slice_20260621.zh.md](kill_chain_runtime_facade_slice_20260621.zh.md):
+  Chinese P2/P5 runtime-facade cleanup slice. The probe now reads
+  component-load named factors and component-response owner rows from the
+  runtime DTO-backed structure.
+- [kill_chain_fuze_damage_policy_slice_20260621.zh.md](kill_chain_fuze_damage_policy_slice_20260621.zh.md):
+  Chinese P3 cleanup slice. The legacy `fuze_quality -> effective.damage`
+  multiplier surface has been removed from runtime, DTO, bindings, and
+  diagnostics.
+- [kill_chain_calibration_admission_gate_20260621.zh.md](kill_chain_calibration_admission_gate_20260621.zh.md):
+  retained Chinese P6 calibration-admission gate slice. It splits fuze,
+  warhead, target-response, and consequence calibration into mutually exclusive
+  layer admissions and currently fails closed because external evidence is
+  missing.
 
 ## Archived / Registered Entries
 

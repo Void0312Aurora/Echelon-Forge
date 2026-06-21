@@ -1,0 +1,202 @@
+{
+  "schema_version": "a2.kill_chain_calibration_evidence_template_check.v1",
+  "status": "blocked_or_template_only",
+  "source_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
+  "input_schema_version": "mlf10.calibration_evidence_manifest.v1",
+  "ready_for_mlf10_audit": false,
+  "record_count": 7,
+  "authority_candidate_record_count": 4,
+  "ready_record_count": 0,
+  "blocked_record_count": 4,
+  "blocked_by": [
+    "blocking_residuals_open",
+    "independent_review_not_passed",
+    "independent_reviewer_ref_missing",
+    "population_fields_invalid",
+    "rights_not_release_grade_admitted",
+    "source_gate_not_passed",
+    "uncertainty_coverage_missing",
+    "uncertainty_method_missing",
+    "uncertainty_residuals_open",
+    "validation_not_passed"
+  ],
+  "records": [
+    {
+      "record_index": 0,
+      "evidence_id": "MLF10-CURRENT-MLF6-STRUCTURAL-PROXY",
+      "authority_candidate": false,
+      "requested_authority_fields": [],
+      "forbidden_authority_fields": [],
+      "ready_for_mlf10_audit": false,
+      "blocked_by": [],
+      "warnings": [
+        "no_authority_requested"
+      ],
+      "missing_required_fields": [],
+      "placeholder_paths": [],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": null,
+      "malformed_authority_fields": [],
+      "missing_non_claims": []
+    },
+    {
+      "record_index": 1,
+      "evidence_id": "MLF10-CURRENT-MLF9-SYNTHETIC-TRENDS",
+      "authority_candidate": false,
+      "requested_authority_fields": [],
+      "forbidden_authority_fields": [],
+      "ready_for_mlf10_audit": false,
+      "blocked_by": [],
+      "warnings": [
+        "no_authority_requested"
+      ],
+      "missing_required_fields": [],
+      "placeholder_paths": [],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": null,
+      "malformed_authority_fields": [],
+      "missing_non_claims": []
+    },
+    {
+      "record_index": 2,
+      "evidence_id": "MLF10-CURRENT-STAGE-B-EFFECT-SCALE",
+      "authority_candidate": true,
+      "requested_authority_fields": [
+        "effect_scale_authority"
+      ],
+      "forbidden_authority_fields": [],
+      "ready_for_mlf10_audit": false,
+      "blocked_by": [
+        "blocking_residuals_open",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "warnings": [],
+      "missing_required_fields": [],
+      "placeholder_paths": [],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": true,
+      "malformed_authority_fields": [],
+      "missing_non_claims": []
+    },
+    {
+      "record_index": 3,
+      "evidence_id": "MLF10-CURRENT-STAGE-C-COMPONENT-PROBABILITY",
+      "authority_candidate": true,
+      "requested_authority_fields": [
+        "component_failure_probability_authority"
+      ],
+      "forbidden_authority_fields": [],
+      "ready_for_mlf10_audit": false,
+      "blocked_by": [
+        "blocking_residuals_open",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "warnings": [],
+      "missing_required_fields": [],
+      "placeholder_paths": [],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": true,
+      "malformed_authority_fields": [],
+      "missing_non_claims": []
+    },
+    {
+      "record_index": 4,
+      "evidence_id": "MLF10-CURRENT-TP21-SELECTED-DEBRIS",
+      "authority_candidate": true,
+      "requested_authority_fields": [
+        "component_failure_probability_authority"
+      ],
+      "forbidden_authority_fields": [],
+      "ready_for_mlf10_audit": false,
+      "blocked_by": [
+        "blocking_residuals_open",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "population_fields_invalid",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_coverage_missing",
+        "uncertainty_method_missing",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "warnings": [],
+      "missing_required_fields": [],
+      "placeholder_paths": [],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": false,
+      "malformed_authority_fields": [],
+      "missing_non_claims": []
+    },
+    {
+      "record_index": 5,
+      "evidence_id": "MLF10-CURRENT-BECO-RECALCULATED-BLAST",
+      "authority_candidate": true,
+      "requested_authority_fields": [
+        "effect_scale_authority"
+      ],
+      "forbidden_authority_fields": [],
+      "ready_for_mlf10_audit": false,
+      "blocked_by": [
+        "blocking_residuals_open",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "warnings": [],
+      "missing_required_fields": [],
+      "placeholder_paths": [],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": true,
+      "malformed_authority_fields": [],
+      "missing_non_claims": []
+    },
+    {
+      "record_index": 6,
+      "evidence_id": "MLF10-CURRENT-REJECTED-SOURCE-CATEGORY",
+      "authority_candidate": false,
+      "requested_authority_fields": [],
+      "forbidden_authority_fields": [],
+      "ready_for_mlf10_audit": false,
+      "blocked_by": [],
+      "warnings": [
+        "no_authority_requested"
+      ],
+      "missing_required_fields": [],
+      "placeholder_paths": [],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": null,
+      "malformed_authority_fields": [],
+      "missing_non_claims": []
+    }
+  ],
+  "non_record_layer_notes": [],
+  "next_action": "replace placeholders, close blockers, and keep forbidden authorities in separate contracts",
+  "authority_boundary": {
+    "runtime_parameter_retuning": false,
+    "default_database_modified": false,
+    "real_world_pk": false,
+    "deterministic_fuze_authority": false,
+    "calibration_authority": false
+  }
+}

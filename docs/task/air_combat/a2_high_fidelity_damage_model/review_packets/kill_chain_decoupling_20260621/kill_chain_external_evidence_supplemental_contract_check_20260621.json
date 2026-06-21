@@ -1,0 +1,98 @@
+{
+  "schema_version": "a2.kill_chain_calibration_supplemental_evidence_contract_check.v1",
+  "status": "blocked_or_template_only",
+  "source_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_decoupling_20260621/kill_chain_external_evidence_supplemental_contract_20260621.json",
+  "input_schema_version": "a2.kill_chain_calibration_supplemental_evidence_contract.v1",
+  "ready_for_authority_admission": false,
+  "record_count": 2,
+  "ready_record_count": 0,
+  "blocked_record_count": 2,
+  "blocked_by": [
+    "placeholder_values_present",
+    "population_fields_invalid"
+  ],
+  "records": [
+    {
+      "record_index": 0,
+      "evidence_id": "REPLACE-WITH-STABLE-ID-fuze_data",
+      "layer_id": "fuze_data",
+      "owner_stage": "fuze_decision",
+      "authority_field": "deterministic_fuze_authority",
+      "ready_for_authority_admission": false,
+      "blocked_by": [
+        "placeholder_values_present",
+        "population_fields_invalid"
+      ],
+      "missing_required_fields": [],
+      "placeholder_paths": [
+        "$.evidence_id",
+        "$.source_ref",
+        "$.provenance",
+        "$.scope.target_type",
+        "$.scope.weapon_family",
+        "$.scope.mechanism_family",
+        "$.scope.aspect_bucket",
+        "$.scope.closure_bucket",
+        "$.scope.miss_distance_bucket",
+        "$.scope.decision_scope",
+        "$.population.identity",
+        "$.population.denominator_name",
+        "$.population.sample_count",
+        "$.population.filters",
+        "$.population.independence_assumption",
+        "$.uncertainty.method",
+        "$.uncertainty.coverage",
+        "$.independent_review.reviewer_ref"
+      ],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": false,
+      "missing_non_claims": []
+    },
+    {
+      "record_index": 1,
+      "evidence_id": "REPLACE-WITH-STABLE-ID-consequence_data",
+      "layer_id": "consequence_data",
+      "owner_stage": "consequence_projection",
+      "authority_field": "pk_authority",
+      "ready_for_authority_admission": false,
+      "blocked_by": [
+        "placeholder_values_present",
+        "population_fields_invalid"
+      ],
+      "missing_required_fields": [],
+      "placeholder_paths": [
+        "$.evidence_id",
+        "$.source_ref",
+        "$.provenance",
+        "$.scope.target_type",
+        "$.scope.weapon_family",
+        "$.scope.mechanism_family",
+        "$.scope.aspect_bucket",
+        "$.scope.closure_bucket",
+        "$.scope.miss_distance_bucket",
+        "$.scope.decision_scope",
+        "$.population.identity",
+        "$.population.denominator_name",
+        "$.population.sample_count",
+        "$.population.filters",
+        "$.population.independence_assumption",
+        "$.uncertainty.method",
+        "$.uncertainty.coverage",
+        "$.independent_review.reviewer_ref"
+      ],
+      "missing_scope_fields": [],
+      "missing_population_fields": [],
+      "sample_count_valid": false,
+      "missing_non_claims": []
+    }
+  ],
+  "next_action": "replace placeholders, close blockers, and rerun this supplemental contract check",
+  "authority_boundary": {
+    "runtime_parameter_retuning": false,
+    "default_database_modified": false,
+    "real_world_pk": false,
+    "deterministic_fuze_authority": false,
+    "calibration_authority": false
+  }
+}
