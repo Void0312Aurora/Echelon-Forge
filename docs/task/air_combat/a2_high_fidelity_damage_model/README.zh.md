@@ -1,6 +1,6 @@
 # A2 高真实度空战毁伤模型
 
-状态：`2026-06-20` active follow-on 索引 + 本地 archive 注册表。已封存的
+状态：`2026-06-23` active follow-on 索引 + 本地 archive 注册表。已封存的
 A2 基础 research/candidate 包仍保留在外层空战归档：
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.zh.md)。
 已完成或失效的本地 MLF follow-on 已物理移动到本目录
@@ -21,6 +21,15 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
 - [kill_chain_guidance_lethality_calibration_20260621.zh.md](kill_chain_guidance_lethality_calibration_20260621.zh.md)：
   8 km / 30 度 AIM-120C 制导与近炸杀伤校准问题的保留研究记录，拆分当前工程
   代理行为、真实弹种/目标权威边界和建议的有界 follow-on 验收门。
+- [kill_chain_expectation_standardization/README.zh.md](kill_chain_expectation_standardization/README.zh.md)：
+  accepted / retained task-local docs-only 标准化 follow-on，在重调 runtime 参数前定义 AIM-120C-like
+  工程代理的杀伤链期望合同、距离 x 偏置角 heatmap、采样密度估算、P3 指标映射和
+  P4 harness plan。当前 P0-P5 均为 pass；P5 决策为保留 task-local docs-only
+  standard，本轮不写入 `docs/standards`；P5 后已启动 initial before-report
+  harness wrapper，已生成匀速目标 `78` case anchor before report、逐部件
+  `component_detail` 共享投影保留、reviewable heatmap 可视化、first-review-stage
+  归因和 component-response 局部诊断；KCES 不重新维护部件归因规则；仍不声明
+  真实武器、真实目标、确定性引信、Pk 或校准 authority。
 - [kill_chain_mechanism_decoupling_analysis_20260621.zh.md](kill_chain_mechanism_decoupling_analysis_20260621.zh.md)：
   已完成的杀伤链机制抽象与解耦分析，把 approach、fuze decision、
   warhead load field、component response 和 consequence projection 五段、

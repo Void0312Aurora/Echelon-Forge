@@ -1,6 +1,6 @@
 # A2 High-Fidelity Damage Model
 
-Status: `2026-06-20` active follow-on index plus local archive registry. The
+Status: `2026-06-23` active follow-on index plus local archive registry. The
 sealed base A2 research/candidate package remains in the outer air-combat
 archive:
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.md).
@@ -28,6 +28,19 @@ A2 follow-on surface does not flatten into a long list of completed projects.
   near-fuze lethality calibration question. It separates current engineering
   proxy behavior from any real weapon/target authority and recommends a bounded
   follow-on gate.
+- [kill_chain_expectation_standardization/README.md](kill_chain_expectation_standardization/README.md):
+  accepted / retained task-local docs-only standardization follow-on that defines an AIM-120C-like
+  engineering-proxy kill-chain expectation contract, range x offset-angle
+  heatmap, sampling-density estimate, P3 metric mapping, and P4 harness plan
+  before runtime retuning. P0-P5 are pass; P5 keeps it as a task-local
+  docs-only standard and does not write into `docs/standards` in this batch. It
+  now has a post-P5 initial before-report harness wrapper and a full
+  constant-velocity `78` case anchor before report with per-component
+  `component_detail` retention through the shared projection helper, reviewable
+  heatmap visualization, first-review-stage attribution, and component-response
+  local diagnosis. KCES does not maintain its own component-attribution rules,
+  and still refuses real weapon, real target, deterministic-fuze, Pk, or
+  calibration authority.
 - [kill_chain_mechanism_decoupling_analysis_20260621.zh.md](kill_chain_mechanism_decoupling_analysis_20260621.zh.md):
   completed retained Chinese mechanism analysis for decoupling the kill chain
   into approach, fuze decision, warhead load field, component response, and
