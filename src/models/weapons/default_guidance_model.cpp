@@ -781,6 +781,10 @@ void reset_guidance_mechanism_profile_diagnostics(MissileGuidanceMechanismProfil
     profile.capture_accel_y_mps2 = 0.0;
     profile.capture_accel_z_mps2 = 0.0;
     profile.capture_accel_mps2 = 0.0;
+    profile.capture_lateral_error = 0.0;
+    profile.capture_base_range_factor = 0.0;
+    profile.capture_terminal_weight = 0.0;
+    profile.capture_raw_accel_mps2 = 0.0;
     profile.pn_accel_x_mps2 = 0.0;
     profile.pn_accel_y_mps2 = 0.0;
     profile.pn_accel_z_mps2 = 0.0;
@@ -958,7 +962,10 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
     const double filtered_closing_speed_mps = std::max(0.0, missile.filtered_closing_speed_mps);
     const double nav_gain = missile.nav_gain > 0.0 ? missile.nav_gain : 3.0;
     const double apn_gain = std::clamp(missile.apn_target_accel_gain, 0.0, 2.0);
-    const double lead_terminal_fraction =
+    const double lead_terminal_fraction = missile_guidance::lead_blend_range_fraction(
+        range_m, MissileGuidanceDefaults::kLeadBlendTerminalRangeM, 0.20,
+        profile.capture_lead_blend_mode);
+    const double apn_terminal_fraction =
         std::clamp(MissileGuidanceDefaults::kLeadBlendTerminalRangeM / range_m, 0.20, 1.0);
 
     Vec3 target_pos = {0.0, 0.0, 0.0};
@@ -1017,11 +1024,19 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
             missile_guidance::project_lateral(guidance_los_world, velocity_dir);
         const Vec3 los_lateral_dir = missile_guidance::normalize(los_lateral);
         const double lateral_error = std::clamp(missile_guidance::norm(los_lateral), 0.0, 1.0);
-        const double terminal_weight =
-            std::clamp(MissileGuidanceDefaults::kTerminalCaptureRangeM / range_m, 0.25, 2.5);
+        const double base_range_factor = missile_guidance::capture_base_range_factor(
+            speed_mps, range_m, MissileGuidanceDefaults::kTerminalCaptureRangeM,
+            profile.capture_base_range_mode);
+        const double terminal_weight = missile_guidance::capture_terminal_weight(
+            range_m, MissileGuidanceDefaults::kTerminalCaptureRangeM, 0.25, 2.5,
+            profile.capture_terminal_weight_mode);
         const double capture_mag = MissileGuidanceDefaults::kCaptureGain * terminal_weight *
-                                   (speed_mps * speed_mps / range_m) * lateral_error;
+                                   base_range_factor * lateral_error;
         capture_world = los_lateral_dir * capture_mag;
+        profile.capture_lateral_error = lateral_error;
+        profile.capture_base_range_factor = base_range_factor;
+        profile.capture_terminal_weight = terminal_weight;
+        profile.capture_raw_accel_mps2 = capture_mag;
     }
 
     Vec3 pn_world = {0.0, 0.0, 0.0};
@@ -1074,7 +1089,7 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
     if (profile.apn_mode == MissileGuidanceMechanismProfile::kApnOn) {
         if (target_kinematics_available) {
             apn_world = missile_guidance::project_lateral(target_accel, velocity_dir) *
-                        (apn_gain * lead_terminal_fraction);
+                        (apn_gain * apn_terminal_fraction);
         } else if (apn_gain > 0.0 && missile.apn_rate_history_valid && dt > 1.0e-6) {
             const double raw_bearing_accel_rad_s2 =
                 (missile.bearing_rate_deg_s - missile.prev_bearing_rate_deg_s) / dt * M_PI / 180.0;
@@ -1087,7 +1102,7 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
             missile.filtered_elevation_accel_rad_s2 = missile_guidance::exp_smooth(
                 missile.filtered_elevation_accel_rad_s2, raw_elevation_accel_rad_s2, tau_s, dt);
             const double apn_scale = MissileGuidanceDefaults::kPnGainScale * nav_gain * apn_gain *
-                                     lead_terminal_fraction;
+                                     apn_terminal_fraction;
             const Math::Vector3 apn_body_world = Math::body_to_world(
                 {0.0, -apn_scale * range_m * missile.filtered_bearing_accel_rad_s2,
                  apn_scale * range_m * missile.filtered_elevation_accel_rad_s2},
@@ -1398,15 +1413,20 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 }
             }
 
-            const Vec3 los_lateral =
-                missile_guidance::project_lateral(guidance_los_world, velocity_dir);
-            const Vec3 los_lateral_dir = missile_guidance::normalize(los_lateral);
-            const double lateral_error = std::clamp(missile_guidance::norm(los_lateral), 0.0, 1.0);
-            const double terminal_weight =
-                std::clamp(MissileGuidanceDefaults::kTerminalCaptureRangeM / range_m, 0.25, 2.5);
-
-            const double capture_mag = MissileGuidanceDefaults::kCaptureGain * terminal_weight *
-                                       (speed_mps * speed_mps / range_m) * lateral_error;
+            Vec3 capture_world = {0.0, 0.0, 0.0};
+            if (missile.capture_guidance_mode ==
+                static_cast<int>(MissileCaptureGuidanceMode::LegacyPursuit)) {
+                const Vec3 los_lateral =
+                    missile_guidance::project_lateral(guidance_los_world, velocity_dir);
+                const Vec3 los_lateral_dir = missile_guidance::normalize(los_lateral);
+                const double lateral_error =
+                    std::clamp(missile_guidance::norm(los_lateral), 0.0, 1.0);
+                const double terminal_weight = std::clamp(
+                    MissileGuidanceDefaults::kTerminalCaptureRangeM / range_m, 0.25, 2.5);
+                const double capture_mag = MissileGuidanceDefaults::kCaptureGain * terminal_weight *
+                                           (speed_mps * speed_mps / range_m) * lateral_error;
+                capture_world = los_lateral_dir * capture_mag;
+            }
 
             Vec3 pn_world = {0.0, 0.0, 0.0};
             if (missile.pn_los_rate_source ==
@@ -1431,7 +1451,7 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 pn_world = {pn_body_world.x, pn_body_world.y, pn_body_world.z};
             }
 
-            commanded_accel = (los_lateral_dir * capture_mag) + pn_world;
+            commanded_accel = capture_world + pn_world;
 
             const double apn_limit = tuning.max_lateral_g * kGravity *
                                      MissileGuidanceDefaults::kApnAccelLimitFraction *

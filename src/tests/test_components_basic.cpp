@@ -368,6 +368,7 @@ TEST_SUITE("components_basic") {
   "guidance": {
     "pn_los_rate_source": "world_los_history",
     "target_kinematics_estimator": "world_cv",
+    "capture_guidance_mode": "disabled",
     "target_tracker_alpha": 0.20,
     "target_tracker_beta": 0.02
   }
@@ -382,6 +383,8 @@ TEST_SUITE("components_basic") {
               static_cast<int>(MissilePnLosRateSource::WorldLosHistory));
         CHECK(definitions[0].missile_tuning.target_kinematics_estimator ==
               static_cast<int>(MissileTargetKinematicsEstimator::WorldCv));
+        CHECK(definitions[0].missile_tuning.capture_guidance_mode ==
+              static_cast<int>(MissileCaptureGuidanceMode::Disabled));
         CHECK(definitions[0].missile_tuning.target_tracker_alpha == doctest::Approx(0.20));
         CHECK(definitions[0].missile_tuning.target_tracker_beta == doctest::Approx(0.02));
         std::filesystem::remove(valid_path);
@@ -402,6 +405,7 @@ TEST_SUITE("components_basic") {
         REQUIRE(definitions.size() == 1);
         CHECK(definitions[0].missile_tuning.pn_los_rate_source == -1);
         CHECK(definitions[0].missile_tuning.target_kinematics_estimator == -1);
+        CHECK(definitions[0].missile_tuning.capture_guidance_mode == -1);
         std::filesystem::remove(default_path);
 
         const std::filesystem::path invalid_path =
@@ -438,6 +442,23 @@ TEST_SUITE("components_basic") {
             load_unit_definitions_json(invalid_estimator_path.string(), definitions, &error));
         CHECK(error.find("Unknown target_kinematics_estimator") != std::string::npos);
         std::filesystem::remove(invalid_estimator_path);
+
+        const std::filesystem::path invalid_capture_path =
+            std::filesystem::temp_directory_path() / "ef_missile_capture_mode_invalid.json";
+        {
+            std::ofstream file(invalid_capture_path);
+            file << R"json({
+  "name": "Capture_Mode_Invalid_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
+  "guidance": {"capture_guidance_mode": "magic_pursuit"}
+})json";
+        }
+        definitions.clear();
+        error.clear();
+        CHECK_FALSE(load_unit_definitions_json(invalid_capture_path.string(), definitions, &error));
+        CHECK(error.find("Unknown capture_guidance_mode") != std::string::npos);
+        std::filesystem::remove(invalid_capture_path);
     }
 
 } // TEST_SUITE components_basic

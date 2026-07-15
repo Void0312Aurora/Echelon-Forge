@@ -1075,6 +1075,12 @@ class DefaultUnitFactory : public IUnitFactory {
                             static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
                     ? static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
                     : MissileGuidanceDefaults::kDefaultTargetKinematicsEstimator;
+            missile_runtime.capture_guidance_mode =
+                def.has_missile_tuning &&
+                        def.missile_tuning.capture_guidance_mode ==
+                            static_cast<int>(MissileCaptureGuidanceMode::Disabled)
+                    ? static_cast<int>(MissileCaptureGuidanceMode::Disabled)
+                    : MissileGuidanceDefaults::kDefaultCaptureGuidanceMode;
             missile_runtime.target_tracker_alpha =
                 def.has_missile_tuning && std::isfinite(def.missile_tuning.target_tracker_alpha)
                     ? std::clamp(def.missile_tuning.target_tracker_alpha, 0.0, 1.0)

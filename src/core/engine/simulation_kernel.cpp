@@ -165,6 +165,11 @@ void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
             static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)) {
         throw std::invalid_argument("target_kinematics_estimator must be -1, 0, or 1");
     }
+    if (tuning.capture_guidance_mode < -1 ||
+        tuning.capture_guidance_mode >
+            static_cast<int>(MissileCaptureGuidanceMode::LegacyPursuit)) {
+        throw std::invalid_argument("capture_guidance_mode must be -1, 0, or 1");
+    }
     if (std::isfinite(tuning.target_tracker_alpha) &&
         (tuning.target_tracker_alpha < 0.0 || tuning.target_tracker_alpha > 1.0)) {
         throw std::invalid_argument("target_tracker_alpha must be in [0, 1]");

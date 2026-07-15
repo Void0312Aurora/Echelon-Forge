@@ -76,6 +76,7 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
     "autopilot_order",
     "autopilot_tau_s",
     "bearing_filter_tau_s",
+    "capture_guidance_mode",
     "elevation_filter_tau_s",
     "guidance_update_period_s",
     "max_accel_response_g_per_s",
@@ -90,6 +91,9 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
 )
 GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {
   "capture_mode": 1,
+  "capture_base_range_mode": 0,
+  "capture_terminal_weight_mode": 0,
+  "capture_lead_blend_mode": 0,
   "pn_mode": 0,
   "lead_mode": 2,
   "kinematics_source": 0,
@@ -97,6 +101,9 @@ GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {
 }
 GUIDANCE_MECHANISM_PROFILE_RANGES = {
   "capture_mode": (0, 1),
+  "capture_base_range_mode": (0, 1),
+  "capture_terminal_weight_mode": (0, 2),
+  "capture_lead_blend_mode": (0, 2),
   "pn_mode": (0, 3),
   "lead_mode": (0, 2),
   "kinematics_source": (0, 1),
@@ -279,7 +286,12 @@ def _apply_guidance_tuning_overrides(
     if not hasattr(tuning, field):
       raise ValueError(f"runtime MissileTuning lacks field: {field}")
     value: float | int
-    if field in {"autopilot_order", "pn_los_rate_source", "target_kinematics_estimator"}:
+    if field in {
+      "autopilot_order",
+      "capture_guidance_mode",
+      "pn_los_rate_source",
+      "target_kinematics_estimator",
+    }:
       value = int(raw_value)
     else:
       value = float(raw_value)
@@ -485,6 +497,15 @@ def _guidance_runtime_trace_sample(
     "guidance_mechanism_capture_mode": int(
       runtime.get("guidance_mechanism_capture_mode", 1) or 0
     ),
+    "guidance_capture_base_range_mode": int(
+      runtime.get("guidance_capture_base_range_mode", 0) or 0
+    ),
+    "guidance_capture_terminal_weight_mode": int(
+      runtime.get("guidance_capture_terminal_weight_mode", 0) or 0
+    ),
+    "guidance_capture_lead_blend_mode": int(
+      runtime.get("guidance_capture_lead_blend_mode", 0) or 0
+    ),
     "guidance_mechanism_pn_mode": int(
       runtime.get("guidance_mechanism_pn_mode", 0) or 0
     ),
@@ -504,6 +525,18 @@ def _guidance_runtime_trace_sample(
     "guidance_capture_accel_xyz_mps2": list(capture),
     "guidance_capture_accel_mps2": _finite_float(
       runtime.get("guidance_capture_accel_mps2", 0.0), 0.0
+    ),
+    "guidance_capture_lateral_error": _finite_float(
+      runtime.get("guidance_capture_lateral_error", 0.0), 0.0
+    ),
+    "guidance_capture_base_range_factor": _finite_float(
+      runtime.get("guidance_capture_base_range_factor", 0.0), 0.0
+    ),
+    "guidance_capture_terminal_weight": _finite_float(
+      runtime.get("guidance_capture_terminal_weight", 0.0), 0.0
+    ),
+    "guidance_capture_raw_accel_mps2": _finite_float(
+      runtime.get("guidance_capture_raw_accel_mps2", 0.0), 0.0
     ),
     "guidance_pn_accel_xyz_mps2": list(pn),
     "guidance_pn_accel_mps2": _finite_float(
@@ -3603,6 +3636,9 @@ def run_guidance_case(
       applied_guidance_mechanism_profile["lead_mode"],
       applied_guidance_mechanism_profile["kinematics_source"],
       applied_guidance_mechanism_profile["apn_mode"],
+      applied_guidance_mechanism_profile["capture_base_range_mode"],
+      applied_guidance_mechanism_profile["capture_terminal_weight_mode"],
+      applied_guidance_mechanism_profile["capture_lead_blend_mode"],
     )
   missile_runtime_projection = _runtime_projection_profile(
     dict(sim.debug_get_missile_runtime_state(missile_id))

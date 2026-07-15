@@ -1,0 +1,21 @@
+absolute_effect_m,case_group,contrast_m,contrast_rho_fuze,effect_id,formula,offset_deg,range_km
+1.9762310239623058,N30,1.9762310239623058,0.13174873493082037,range_interaction,P1 - P4 - P5 + P6,30.0,4.0
+0.0,N30,0.0,0.0,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),30.0,4.0
+3.081211604798656,M45,3.081211604798656,0.20541410698657708,range_interaction,P1 - P4 - P5 + P6,45.0,4.0
+0.0,M45,0.0,0.0,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),45.0,4.0
+2.2539956727794523,N30,2.2539956727794523,0.1502663781852968,range_interaction,P1 - P4 - P5 + P6,30.0,6.0
+0.0,N30,0.0,0.0,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),30.0,6.0
+3.7565861788389867,M45,3.7565861788389867,0.2504390785892658,range_interaction,P1 - P4 - P5 + P6,45.0,6.0
+0.0,M45,0.0,0.0,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),45.0,6.0
+2.5400671771343366,N30,2.5400671771343366,0.16933781180895577,range_interaction,P1 - P4 - P5 + P6,30.0,8.0
+0.0,N30,0.0,0.0,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),30.0,8.0
+4.412734700919711,M45,4.412734700919711,0.2941823133946474,range_interaction,P1 - P4 - P5 + P6,45.0,8.0
+0.0,M45,0.0,0.0,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),45.0,8.0
+76.77836553083986,stress60,76.77836553083986,5.118557702055991,range_interaction,P1 - P4 - P5 + P6,60.0,8.0
+0.0,stress60,0.0,0.0,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),60.0,8.0
+341.6411256237599,O_near,341.6411256237599,22.77607504158399,range_interaction,P1 - P4 - P5 + P6,60.0,10.0
+2.2253248674264086,O_near,2.2253248674264086,0.14835499116176057,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),60.0,10.0
+6.957628883309646,O_near,6.957628883309646,0.46384192555397635,range_interaction,P1 - P4 - P5 + P6,45.0,12.0
+0.052730615120250235,O_near,-0.052730615120250235,-0.0035153743413500155,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),45.0,12.0
+4.372539817832224,O_far,4.372539817832224,0.29150265452214824,range_interaction,P1 - P4 - P5 + P6,30.0,16.0
+0.003557173674545666,O_far,0.003557173674545666,0.00023714491163637775,lead_x_terminal_interaction,(P1 - P3) - (P4 - P8),30.0,16.0

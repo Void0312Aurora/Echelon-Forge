@@ -188,6 +188,7 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.guidance_update_period_s) ||
            std::isfinite(tuning.max_flight_time_s) || std::isfinite(tuning.nav_gain) ||
            tuning.pn_los_rate_source >= 0 || tuning.target_kinematics_estimator >= 0 ||
+           tuning.capture_guidance_mode >= 0 ||
            std::isfinite(tuning.target_tracker_alpha) ||
            std::isfinite(tuning.target_tracker_beta) ||
            std::isfinite(tuning.sensor_max_range) || std::isfinite(tuning.sensor_fov_deg) ||
@@ -246,6 +247,7 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.nav_gain = src.nav_gain;
     out.pn_los_rate_source = src.pn_los_rate_source;
     out.target_kinematics_estimator = src.target_kinematics_estimator;
+    out.capture_guidance_mode = src.capture_guidance_mode;
     out.target_tracker_alpha = src.target_tracker_alpha;
     out.target_tracker_beta = src.target_tracker_beta;
     out.apn_target_accel_gain = src.apn_target_accel_gain;
@@ -317,6 +319,8 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (overlay.pn_los_rate_source >= 0) base->pn_los_rate_source = overlay.pn_los_rate_source;
     if (overlay.target_kinematics_estimator >= 0)
         base->target_kinematics_estimator = overlay.target_kinematics_estimator;
+    if (overlay.capture_guidance_mode >= 0)
+        base->capture_guidance_mode = overlay.capture_guidance_mode;
     if (std::isfinite(overlay.target_tracker_alpha))
         base->target_tracker_alpha = overlay.target_tracker_alpha;
     if (std::isfinite(overlay.target_tracker_beta))
@@ -680,6 +684,11 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
                 static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
             ? static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
             : MissileGuidanceDefaults::kDefaultTargetKinematicsEstimator;
+    const int missile_capture_guidance_mode =
+        resolved_tuning.capture_guidance_mode ==
+                static_cast<int>(MissileCaptureGuidanceMode::Disabled)
+            ? static_cast<int>(MissileCaptureGuidanceMode::Disabled)
+            : MissileGuidanceDefaults::kDefaultCaptureGuidanceMode;
     const double missile_target_tracker_alpha = std::clamp(
         finite_or_default(resolved_tuning.target_tracker_alpha,
                           MissileGuidanceDefaults::kWorldCvTrackerAlpha),
@@ -800,6 +809,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.nav_gain = missile_nav_gain;
     missile.pn_los_rate_source = missile_pn_los_rate_source;
     missile.target_kinematics_estimator = missile_target_kinematics_estimator;
+    missile.capture_guidance_mode = missile_capture_guidance_mode;
     missile.target_tracker_alpha = missile_target_tracker_alpha;
     missile.target_tracker_beta = missile_target_tracker_beta;
     missile.apn_target_accel_gain = missile_apn_target_accel_gain;

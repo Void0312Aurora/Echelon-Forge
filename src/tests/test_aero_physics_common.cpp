@@ -114,4 +114,50 @@ TEST_SUITE("missile_guidance_coordinates") {
               doctest::Approx(0.0).epsilon(1.0e-12));
     }
 
+    TEST_CASE("capture range factors expose the current double inverse-range schedule") {
+        constexpr double speed_mps = 900.0;
+        constexpr double reference_range_m = 6000.0;
+        for (const double range_m : {4000.0, 6000.0, 16000.0}) {
+            const double base = missile_guidance::capture_base_range_factor(
+                speed_mps, range_m, reference_range_m, 0);
+            const double terminal = missile_guidance::capture_terminal_weight(
+                range_m, reference_range_m, 0.25, 2.5, 0);
+            CHECK(base * terminal ==
+                  doctest::Approx(speed_mps * speed_mps * reference_range_m /
+                                  (range_m * range_m)));
+            CHECK(terminal == doctest::Approx(missile_guidance::capture_terminal_weight(
+                                  range_m, reference_range_m, 0.25, 2.5, 2)));
+        }
+    }
+
+    TEST_CASE("capture clamp breakpoints are continuous and explicit") {
+        constexpr double reference_range_m = 6000.0;
+        CHECK(missile_guidance::capture_terminal_weight(2400.0, reference_range_m, 0.25, 2.5,
+                                                        0) == doctest::Approx(2.5));
+        CHECK(missile_guidance::capture_terminal_weight(24000.0, reference_range_m, 0.25, 2.5,
+                                                        0) == doctest::Approx(0.25));
+        CHECK(missile_guidance::capture_terminal_weight(2399.999, reference_range_m, 0.25, 2.5,
+                                                        0) == doctest::Approx(2.5));
+        CHECK(missile_guidance::capture_terminal_weight(24000.001, reference_range_m, 0.25, 2.5,
+                                                        0) == doctest::Approx(0.25));
+        CHECK(missile_guidance::capture_terminal_weight(10000.0, reference_range_m, 0.25, 2.5,
+                                                        1) == doctest::Approx(1.0));
+    }
+
+    TEST_CASE("reference-range and lead schedule modes remove only their named shaping") {
+        constexpr double speed_mps = 900.0;
+        constexpr double reference_range_m = 6000.0;
+        const double near_base = missile_guidance::capture_base_range_factor(
+            speed_mps, 4000.0, reference_range_m, 1);
+        const double far_base = missile_guidance::capture_base_range_factor(
+            speed_mps, 16000.0, reference_range_m, 1);
+        CHECK(near_base == doctest::Approx(far_base));
+        CHECK(missile_guidance::lead_blend_range_fraction(16000.0, 8000.0, 0.2, 1) ==
+              doctest::Approx(1.0));
+        CHECK(missile_guidance::lead_blend_range_fraction(4000.0, 8000.0, 0.2, 2) ==
+              doctest::Approx(0.0));
+        CHECK(missile_guidance::lead_blend_range_fraction(16000.0, 8000.0, 0.2, 0) ==
+              doctest::Approx(0.5));
+    }
+
 } // TEST_SUITE("missile_guidance_coordinates")

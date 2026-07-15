@@ -380,6 +380,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("nav_gain", &MissileTuning::nav_gain)
         .def_rw("pn_los_rate_source", &MissileTuning::pn_los_rate_source)
         .def_rw("target_kinematics_estimator", &MissileTuning::target_kinematics_estimator)
+        .def_rw("capture_guidance_mode", &MissileTuning::capture_guidance_mode)
         .def_rw("target_tracker_alpha", &MissileTuning::target_tracker_alpha)
         .def_rw("target_tracker_beta", &MissileTuning::target_tracker_beta)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
@@ -1169,6 +1170,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["nav_gain"] = missile->nav_gain;
                 out["pn_los_rate_source"] = missile->pn_los_rate_source;
                 out["target_kinematics_estimator"] = missile->target_kinematics_estimator;
+                out["capture_guidance_mode"] = missile->capture_guidance_mode;
                 out["target_tracker_alpha"] = missile->target_tracker_alpha;
                 out["target_tracker_beta"] = missile->target_tracker_beta;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
@@ -1299,6 +1301,12 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                     mechanism_profile && mechanism_profile->active;
                 if (mechanism_profile) {
                     out["guidance_mechanism_capture_mode"] = mechanism_profile->capture_mode;
+                    out["guidance_capture_base_range_mode"] =
+                        mechanism_profile->capture_base_range_mode;
+                    out["guidance_capture_terminal_weight_mode"] =
+                        mechanism_profile->capture_terminal_weight_mode;
+                    out["guidance_capture_lead_blend_mode"] =
+                        mechanism_profile->capture_lead_blend_mode;
                     out["guidance_mechanism_pn_mode"] = mechanism_profile->pn_mode;
                     out["guidance_mechanism_lead_mode"] = mechanism_profile->lead_mode;
                     out["guidance_mechanism_kinematics_source"] =
@@ -1311,6 +1319,14 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                     out["guidance_capture_accel_y_mps2"] = mechanism_profile->capture_accel_y_mps2;
                     out["guidance_capture_accel_z_mps2"] = mechanism_profile->capture_accel_z_mps2;
                     out["guidance_capture_accel_mps2"] = mechanism_profile->capture_accel_mps2;
+                    out["guidance_capture_lateral_error"] =
+                        mechanism_profile->capture_lateral_error;
+                    out["guidance_capture_base_range_factor"] =
+                        mechanism_profile->capture_base_range_factor;
+                    out["guidance_capture_terminal_weight"] =
+                        mechanism_profile->capture_terminal_weight;
+                    out["guidance_capture_raw_accel_mps2"] =
+                        mechanism_profile->capture_raw_accel_mps2;
                     out["guidance_pn_accel_x_mps2"] = mechanism_profile->pn_accel_x_mps2;
                     out["guidance_pn_accel_y_mps2"] = mechanism_profile->pn_accel_y_mps2;
                     out["guidance_pn_accel_z_mps2"] = mechanism_profile->pn_accel_z_mps2;
@@ -1472,7 +1488,8 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
         .def(
             "set_missile_guidance_mechanism_profile",
             [](SimulationKernel &self, uint64_t entity_id, int capture_mode, int pn_mode,
-               int lead_mode, int kinematics_source, int apn_mode) {
+               int lead_mode, int kinematics_source, int apn_mode, int capture_base_range_mode,
+               int capture_terminal_weight_mode, int capture_lead_blend_mode) {
                 auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
                 const Missile *missile = e.is_valid() ? e.get<Missile>() : nullptr;
                 if (!missile) {
@@ -1504,9 +1521,31 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
                     apn_mode > MissileGuidanceMechanismProfile::kApnOn) {
                     throw std::invalid_argument("apn_mode must be 0 or 1");
                 }
+                if (capture_base_range_mode <
+                        MissileGuidanceMechanismProfile::kCaptureBaseInverseRange ||
+                    capture_base_range_mode >
+                        MissileGuidanceMechanismProfile::kCaptureBaseReferenceRange) {
+                    throw std::invalid_argument("capture_base_range_mode must be 0 or 1");
+                }
+                if (capture_terminal_weight_mode <
+                        MissileGuidanceMechanismProfile::kCaptureTerminalCurrentClamped ||
+                    capture_terminal_weight_mode >
+                        MissileGuidanceMechanismProfile::kCaptureTerminalReciprocalUnclamped) {
+                    throw std::invalid_argument(
+                        "capture_terminal_weight_mode must be in [0, 2]");
+                }
+                if (capture_lead_blend_mode <
+                        MissileGuidanceMechanismProfile::kCaptureLeadCurrentSchedule ||
+                    capture_lead_blend_mode >
+                        MissileGuidanceMechanismProfile::kCaptureLeadOff) {
+                    throw std::invalid_argument("capture_lead_blend_mode must be in [0, 2]");
+                }
                 MissileGuidanceMechanismProfile profile;
                 profile.active = true;
                 profile.capture_mode = capture_mode;
+                profile.capture_base_range_mode = capture_base_range_mode;
+                profile.capture_terminal_weight_mode = capture_terminal_weight_mode;
+                profile.capture_lead_blend_mode = capture_lead_blend_mode;
                 profile.pn_mode = pn_mode;
                 profile.lead_mode = lead_mode;
                 profile.kinematics_source = kinematics_source;
@@ -1515,7 +1554,10 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             },
             "Attach a diagnostics-only exact guidance mechanism profile before first update",
             nb::arg("entity_id"), nb::arg("capture_mode"), nb::arg("pn_mode"), nb::arg("lead_mode"),
-            nb::arg("kinematics_source"), nb::arg("apn_mode"))
+            nb::arg("kinematics_source"), nb::arg("apn_mode"),
+            nb::arg("capture_base_range_mode") = 0,
+            nb::arg("capture_terminal_weight_mode") = 0,
+            nb::arg("capture_lead_blend_mode") = 0)
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"))
         .def("get_missile_tuning", &SimulationKernel::get_missile_tuning, nb::rv_policy::copy,
