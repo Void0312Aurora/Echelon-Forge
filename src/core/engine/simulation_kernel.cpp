@@ -9,11 +9,13 @@
 #include "core/interfaces/guidance_model.h"
 #include "core/interfaces/sensor_model.h"
 #include "core/interfaces/unit_factory.h"
+#include "models/weapons/missile_guidance_types.h"
 #include "runtime/providers/default_simulation_provider_catalog.h"
 
 #include <spdlog/spdlog.h>
 
 #include <cmath>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 
@@ -92,6 +94,24 @@ bool SimulationKernel::load_unit_definitions(const std::string &path, std::strin
 void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     auto composition_lock = acquire_composition_operation();
     ensure_active("set_missile_tuning");
+    if (tuning.pn_los_rate_source < -1 ||
+        tuning.pn_los_rate_source >
+            static_cast<int>(MissilePnLosRateSource::WorldLosHistory)) {
+        throw std::invalid_argument("pn_los_rate_source must be -1, 0, or 1");
+    }
+    if (tuning.target_kinematics_estimator < -1 ||
+        tuning.target_kinematics_estimator >
+            static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)) {
+        throw std::invalid_argument("target_kinematics_estimator must be -1, 0, or 1");
+    }
+    if (std::isfinite(tuning.target_tracker_alpha) &&
+        (tuning.target_tracker_alpha < 0.0 || tuning.target_tracker_alpha > 1.0)) {
+        throw std::invalid_argument("target_tracker_alpha must be in [0, 1]");
+    }
+    if (std::isfinite(tuning.target_tracker_beta) &&
+        (tuning.target_tracker_beta < 0.0 || tuning.target_tracker_beta > 2.0)) {
+        throw std::invalid_argument("target_tracker_beta must be in [0, 2]");
+    }
     missile_tuning_ = tuning;
     world_state_mutated_ = true;
 }

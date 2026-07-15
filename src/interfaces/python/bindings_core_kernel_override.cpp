@@ -13,6 +13,21 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
              "Override the ContactList for a unit or missile", nb::arg("entity_id"),
              nb::arg("detections"))
         .def(
+            "debug_set_contact_list_preserve_timestamps",
+            [](SimulationKernel &self, uint64_t entity_id,
+               const std::vector<Detection> &detections) {
+                auto entity_lease =
+                    diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                auto e = entity_lease.entity;
+                if (!e.is_valid()) {
+                    throw std::invalid_argument(
+                        "Invalid entity ID for debug_set_contact_list_preserve_timestamps");
+                }
+                e.set<ContactList>({detections});
+            },
+            "Diagnostics-only ContactList override that preserves authored timestamps",
+            nb::arg("entity_id"), nb::arg("detections"))
+        .def(
             "debug_set_unit_truth_state",
             [](SimulationKernel &self, uint64_t entity_id, double x_m, double y_m, double z_m,
                double heading_deg, double pitch_deg, double roll_deg, double vx_mps, double vy_mps,

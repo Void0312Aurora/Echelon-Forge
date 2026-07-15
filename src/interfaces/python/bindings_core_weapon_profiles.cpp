@@ -45,6 +45,10 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("guidance_update_period_s", &MissileTuning::guidance_update_period_s)
         .def_rw("max_flight_time_s", &MissileTuning::max_flight_time_s)
         .def_rw("nav_gain", &MissileTuning::nav_gain)
+        .def_rw("pn_los_rate_source", &MissileTuning::pn_los_rate_source)
+        .def_rw("target_kinematics_estimator", &MissileTuning::target_kinematics_estimator)
+        .def_rw("target_tracker_alpha", &MissileTuning::target_tracker_alpha)
+        .def_rw("target_tracker_beta", &MissileTuning::target_tracker_beta)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
         .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
         .def_prop_rw(

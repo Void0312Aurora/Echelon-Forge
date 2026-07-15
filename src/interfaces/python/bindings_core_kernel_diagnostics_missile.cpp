@@ -73,6 +73,10 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["last_guidance_time_s"] = missile->last_guidance_time;
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
+                out["pn_los_rate_source"] = missile->pn_los_rate_source;
+                out["target_kinematics_estimator"] = missile->target_kinematics_estimator;
+                out["target_tracker_alpha"] = missile->target_tracker_alpha;
+                out["target_tracker_beta"] = missile->target_tracker_beta;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
                 out["autopilot_order"] = missile->autopilot_order;
                 out["autopilot_damping"] = missile->autopilot_damping;
@@ -142,6 +146,28 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["target_track_ax_mps2"] = missile->target_track_ax_mps2;
                 out["target_track_ay_mps2"] = missile->target_track_ay_mps2;
                 out["target_track_az_mps2"] = missile->target_track_az_mps2;
+                out["target_measurement_timestamp_s"] =
+                    missile->world_cv_target_tracker.last_measurement_time_s;
+                out["target_measurement_age_s"] = missile->target_measurement_age_s;
+                out["target_measurement_fresh"] = missile->target_measurement_fresh;
+                out["target_measurement_rejected_nonmonotonic"] =
+                    missile->target_measurement_rejected_nonmonotonic;
+                out["target_duplicate_measurement_count"] =
+                    missile->target_duplicate_measurement_count;
+                out["target_estimator_update_dt_s"] = missile->target_estimator_update_dt_s;
+                out["target_estimator_sample_count"] =
+                    missile->world_cv_target_tracker.accepted_measurement_count;
+                out["target_velocity_valid"] = missile->world_cv_target_tracker.velocity_valid;
+                out["target_measurement_x_m"] = missile->target_measurement_x_m;
+                out["target_measurement_y_m"] = missile->target_measurement_y_m;
+                out["target_measurement_z_m"] = missile->target_measurement_z_m;
+                out["target_prediction_x_m"] = missile->target_prediction_x_m;
+                out["target_prediction_y_m"] = missile->target_prediction_y_m;
+                out["target_prediction_z_m"] = missile->target_prediction_z_m;
+                out["target_residual_x_m"] = missile->target_residual_x_m;
+                out["target_residual_y_m"] = missile->target_residual_y_m;
+                out["target_residual_z_m"] = missile->target_residual_z_m;
+                out["target_residual_norm_m"] = missile->target_residual_norm_m;
                 out["guidance_lead_time_s"] = missile->guidance_lead_time_s;
                 out["guidance_lead_blend"] = missile->guidance_lead_blend;
                 out["guidance_apn_lateral_accel_mps2"] = missile->guidance_apn_lateral_accel_mps2;

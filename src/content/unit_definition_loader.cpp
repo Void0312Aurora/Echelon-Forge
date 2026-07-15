@@ -212,6 +212,33 @@ bool parse_pn_los_rate_source(const nlohmann::json &src, int *out_source, std::s
     return false;
 }
 
+bool parse_target_kinematics_estimator(const nlohmann::json &src, int *out_estimator,
+                                       std::string *error) {
+    if (!out_estimator || !src.is_object() || !src.contains("target_kinematics_estimator")) {
+        return true;
+    }
+    const auto &value = src["target_kinematics_estimator"];
+    if (!value.is_string()) {
+        if (error) *error = "target_kinematics_estimator must be a string";
+        return false;
+    }
+    const std::string name = value.get<std::string>();
+    if (name == "legacy_polar_difference") {
+        *out_estimator =
+            static_cast<int>(MissileTargetKinematicsEstimator::LegacyPolarDifference);
+        return true;
+    }
+    if (name == "world_cv") {
+        *out_estimator = static_cast<int>(MissileTargetKinematicsEstimator::WorldCv);
+        return true;
+    }
+    if (error) {
+        *error = "Unknown target_kinematics_estimator: " + name +
+                 "; expected legacy_polar_difference or world_cv";
+    }
+    return false;
+}
+
 NavalWeaponType parse_naval_weapon_type(const std::string &type_str) {
     if (type_str == "vls_sam") return NavalWeaponType::VlsSam;
     if (type_str == "gun_5in") return NavalWeaponType::DeckGun;
@@ -373,6 +400,11 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
 #define EF_MISSILE_TUNING_VECTOR_FIELD(cpp_type, name, default_value)                              \
     parse_vector(#name, &tuning.name);
 #include "content/detail/missile_tuning_fields.inc"
+    // These tracker gains were added after the X-macro list was frozen; keep
+    // them explicit so the established field-list contract remains stable.
+    tuning.target_tracker_alpha =
+        src.value("target_tracker_alpha", tuning.target_tracker_alpha);
+    tuning.target_tracker_beta = src.value("target_tracker_beta", tuning.target_tracker_beta);
 
     *out_tuning = tuning;
 }
@@ -1330,6 +1362,10 @@ void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
         if (!parse_pn_los_rate_source(entry, &missile_tuning.pn_los_rate_source, error)) {
             return false;
         }
+        if (!parse_target_kinematics_estimator(
+                entry, &missile_tuning.target_kinematics_estimator, error)) {
+            return false;
+        }
         parse_missile_tuning_json_fields(entry, &missile_tuning);
 
         if (entry.contains("missile_tuning") && entry["missile_tuning"].is_object()) {
@@ -1337,11 +1373,19 @@ void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefin
                                           &missile_tuning.pn_los_rate_source, error)) {
                 return false;
             }
+            if (!parse_target_kinematics_estimator(
+                    entry["missile_tuning"], &missile_tuning.target_kinematics_estimator, error)) {
+                return false;
+            }
             parse_missile_tuning_json_fields(entry["missile_tuning"], &missile_tuning);
         }
         if (entry.contains("guidance") && entry["guidance"].is_object()) {
             const auto &guidance = entry["guidance"];
             if (!parse_pn_los_rate_source(guidance, &missile_tuning.pn_los_rate_source, error)) {
+                return false;
+            }
+            if (!parse_target_kinematics_estimator(
+                    guidance, &missile_tuning.target_kinematics_estimator, error)) {
                 return false;
             }
             parse_missile_tuning_json_fields(guidance, &missile_tuning);
