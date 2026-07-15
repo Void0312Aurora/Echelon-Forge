@@ -13,8 +13,8 @@ Boundary: standards planning supplement / engineering-proxy diagnostics only.
 - Variant: `REV-RUNTIME-PROJECTION`
 - Target motion layer: `nonmaneuvering_constant_velocity`
 - Selected rows: `78`
-- Envelope status counts: `{'boundary_observation': 21, 'guidance_or_model_residual': 4, 'satisfied': 53}`
-- Owner-stage counts: `{'launch_window': 21, 'launch_window -> guidance_approach': 4, 'negative_control_satisfied': 34, 'no_review_pressure': 19}`
+- Envelope status counts: `{'boundary_observation': 25, 'satisfied': 53}`
+- Owner-stage counts: `{'launch_window': 25, 'negative_control_satisfied': 34, 'no_review_pressure': 19}`
 
 ## Artifacts
 
@@ -24,10 +24,7 @@ Boundary: standards planning supplement / engineering-proxy diagnostics only.
 
 ## Review Rows
 
-- `kces_anchor_grid_cv_4km_m45deg`: status=`guidance_or_model_residual`, owner=`launch_window -> guidance_approach`, launch=`N`, effect=`outside_effect`, response=`no_component_response`, p_max=`None`, delta_abs=`0.0`
-- `kces_anchor_grid_cv_4km_p45deg`: status=`guidance_or_model_residual`, owner=`launch_window -> guidance_approach`, launch=`N`, effect=`outside_effect`, response=`no_component_response`, p_max=`None`, delta_abs=`0.0`
-- `kces_anchor_grid_cv_6km_m45deg`: status=`guidance_or_model_residual`, owner=`launch_window -> guidance_approach`, launch=`N`, effect=`outside_effect`, response=`no_component_response`, p_max=`None`, delta_abs=`0.0`
-- `kces_anchor_grid_cv_6km_p45deg`: status=`guidance_or_model_residual`, owner=`launch_window -> guidance_approach`, launch=`N`, effect=`outside_effect`, response=`no_component_response`, p_max=`None`, delta_abs=`0.0`
+- No non-satisfied envelope rows were selected.
 
 ## Interpretation
 

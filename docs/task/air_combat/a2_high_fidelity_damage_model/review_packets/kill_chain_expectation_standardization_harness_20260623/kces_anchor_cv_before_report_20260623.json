@@ -115,7 +115,7 @@
       "range_m": 4000.0,
       "offset_deg": 45.0,
       "signed_bearing_deg": -45.0,
-      "launch_class": "N",
+      "launch_class": "M",
       "runtime_supported": true,
       "skip_reason": ""
     },
@@ -131,7 +131,7 @@
       "range_m": 4000.0,
       "offset_deg": 45.0,
       "signed_bearing_deg": 45.0,
-      "launch_class": "N",
+      "launch_class": "M",
       "runtime_supported": true,
       "skip_reason": ""
     },
@@ -323,7 +323,7 @@
       "range_m": 6000.0,
       "offset_deg": 45.0,
       "signed_bearing_deg": -45.0,
-      "launch_class": "N",
+      "launch_class": "M",
       "runtime_supported": true,
       "skip_reason": ""
     },
@@ -339,7 +339,7 @@
       "range_m": 6000.0,
       "offset_deg": 45.0,
       "signed_bearing_deg": 45.0,
-      "launch_class": "N",
+      "launch_class": "M",
       "runtime_supported": true,
       "skip_reason": ""
     },
@@ -5752,7 +5752,7 @@
         "range_km": 4.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": -45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -5763,7 +5763,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4958821510618132,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -5840,7 +5840,7 @@
         "range_km": 4.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": -45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -5851,7 +5851,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4958821510618132,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -5928,7 +5928,7 @@
         "range_km": 4.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": -45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -5939,7 +5939,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4958821510618132,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -6016,7 +6016,7 @@
         "range_km": 4.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": 45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -6027,7 +6027,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4958840663799733,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -6104,7 +6104,7 @@
         "range_km": 4.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": 45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -6115,7 +6115,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4958840663799733,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -6192,7 +6192,7 @@
         "range_km": 4.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": 45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -6203,7 +6203,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4958840663799733,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -12328,7 +12328,7 @@
         "range_km": 6.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": -45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -12339,7 +12339,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.473400700835904,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -12416,7 +12416,7 @@
         "range_km": 6.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": -45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -12427,7 +12427,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.473400700835904,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -12504,7 +12504,7 @@
         "range_km": 6.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": -45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -12515,7 +12515,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.473400700835904,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -12592,7 +12592,7 @@
         "range_km": 6.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": 45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -12603,7 +12603,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4734021545218676,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -12680,7 +12680,7 @@
         "range_km": 6.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": 45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -12691,7 +12691,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4734021545218676,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -12768,7 +12768,7 @@
         "range_km": 6.0,
         "offset_deg": 45.0,
         "signed_bearing_deg": 45.0,
-        "launch_class": "N"
+        "launch_class": "M"
       },
       "run_status": "generated",
       "guidance_approach": {
@@ -12779,7 +12779,7 @@
         "R_fuze_m": 15.0,
         "rho_fuze": 1.4734021545218676,
         "entered_R_fuze": false,
-        "guidance_expectation_status": "guidance_or_model_residual"
+        "guidance_expectation_status": "observed_marginal"
       },
       "fuze_decision": {
         "fuze_triggered": false,
@@ -37586,14 +37586,13 @@
     "unsupported_case_count": 0,
     "heatmap_row_count": 234,
     "launch_class_counts": {
-      "M": 21,
-      "N": 23,
+      "M": 25,
+      "N": 19,
       "O": 34
     },
     "guidance_expectation_status_counts": {
-      "guidance_or_model_residual": 12,
       "negative_control_satisfied": 102,
-      "observed_marginal": 63,
+      "observed_marginal": 75,
       "satisfied": 57
     },
     "effect_band_counts": {

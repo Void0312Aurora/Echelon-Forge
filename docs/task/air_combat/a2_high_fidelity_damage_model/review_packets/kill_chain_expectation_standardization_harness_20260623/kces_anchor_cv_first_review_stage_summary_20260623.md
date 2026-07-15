@@ -12,8 +12,8 @@ Boundary: engineering-proxy diagnostics only.
 - Variant: `REV-RUNTIME-PROJECTION`
 - Target motion layer: `nonmaneuvering_constant_velocity`
 - Selected rows: `78`
-- Stage counts: `{'guidance_approach': 4, 'marginal_observation': 21, 'negative_control_satisfied': 34, 'no_review_pressure': 19}`
-- Priority counts: `{'high': 4, 'low': 21, 'none': 53}`
+- Stage counts: `{'marginal_observation': 25, 'negative_control_satisfied': 34, 'no_review_pressure': 19}`
+- Priority counts: `{'low': 25, 'none': 53}`
 
 ## Artifacts
 
@@ -25,11 +25,7 @@ Boundary: engineering-proxy diagnostics only.
 
 ## Review Focus
 
-- Guidance / launch-window residual cells:
-  - `kces_anchor_grid_cv_4km_m45deg`: range_km=`4.0`, signed_bearing_deg=`-45.0`, rho_fuze=`1.4958821510618132`
-  - `kces_anchor_grid_cv_4km_p45deg`: range_km=`4.0`, signed_bearing_deg=`45.0`, rho_fuze=`1.4958840663799733`
-  - `kces_anchor_grid_cv_6km_m45deg`: range_km=`6.0`, signed_bearing_deg=`-45.0`, rho_fuze=`1.473400700835904`
-  - `kces_anchor_grid_cv_6km_p45deg`: range_km=`6.0`, signed_bearing_deg=`45.0`, rho_fuze=`1.4734021545218676`
+- No guidance / launch-window residual cells were selected.
 - No component-response review cells were selected.
 
 ## Interpretation

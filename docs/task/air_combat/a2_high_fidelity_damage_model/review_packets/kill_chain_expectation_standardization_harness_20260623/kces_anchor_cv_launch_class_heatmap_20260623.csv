@@ -1,6 +1,6 @@
 range_km,-90,-75,-60,-45,-30,-15,0,15,30,45,60,75,90
-4,O,M,M,N,N,N,N,N,N,N,M,M,O
-6,O,O,M,N,N,N,N,N,N,N,M,O,O
+4,O,M,M,M,N,N,N,N,N,M,M,M,O
+6,O,O,M,M,N,N,N,N,N,M,M,O,O
 8,O,O,M,M,N,N,N,N,N,M,M,O,O
 10,O,O,O,M,M,N,N,N,M,M,O,O,O
 12,O,O,O,O,M,M,N,M,M,O,O,O,O
