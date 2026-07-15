@@ -117,6 +117,8 @@ AIM-120C 性能声明。
   [第四阶段结论](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md)
 - 受约束制导标量校准：
   [第五阶段结论](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md)
+- 第四/第五阶段校准热图证据：
+  [热图与图示结论](../review_packets/kill_chain_guidance_calibration_visualization_20260715/kill_chain_guidance_calibration_visualization_summary_20260715.md)
 - P0-P5 本身只产出文档和合同语言。P5 后的 initial harness implementation 新增只读
   diagnostic wrapper、测试、heatmap 可视化、首阶段复核归因和 component-response
   report-level local diagnosis；后续 envelope audit 把 standards-layer v0 期望

@@ -123,6 +123,8 @@ Out of scope:
   [stage-4 conclusions](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md)
 - Constrained guidance-scalar calibration:
   [stage-5 conclusions](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md)
+- Stage-4/5 guidance-calibration heatmap evidence:
+  [heatmaps and visual conclusions](../review_packets/kill_chain_guidance_calibration_visualization_20260715/kill_chain_guidance_calibration_visualization_summary_20260715.md)
 - P0-P5 themselves produce documentation and contract language only. The
   post-P5 initial harness implementation adds a read-only diagnostic wrapper,
   tests, heatmap visualization, first-review-stage attribution, and

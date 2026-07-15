@@ -154,6 +154,7 @@ Chinese companion:
 | Exact guidance mechanism ablation | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md) | Exact controls, vector closure, world PN, track/truth-CV, and positive/negative controls are complete; this is diagnostic closure, not production mechanism admission. |
 | Corrected-mechanism continuous envelope | pass | [stage-4 conclusions](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md) | The three-seed CV engineering envelope passes; this is not maneuver-target, real-range, or Pk authority. |
 | Constrained guidance-scalar calibration | pass / default promotion held | [stage-5 conclusions](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md) | `nav_gain=4` retained; the complete candidate lacks maneuver/APN admission for default release. |
+| Calibration heatmap evidence | pass | [heatmaps and visual conclusions](../review_packets/kill_chain_guidance_calibration_visualization_20260715/kill_chain_guidance_calibration_visualization_summary_20260715.md) | Read-only rendering of stage-4/5 evidence; no rerun, smoothing, or additional release authority. |
 
 ## Residual Register
 

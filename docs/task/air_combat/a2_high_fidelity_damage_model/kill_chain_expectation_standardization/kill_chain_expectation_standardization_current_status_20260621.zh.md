@@ -127,6 +127,7 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 | 制导机制严格消融 | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md) | 精确开关、向量闭合、世界系 PN、track/truth-CV 和正负控制已完成；这是诊断闭合，不是生产机制准入。 |
 | 修正机制连续包络 | pass | [第四阶段结论](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md) | 匀速工程域三种子包络通过；不是机动目标、真实射程或 Pk 权威。 |
 | 制导标量约束校准 | pass / default promotion held | [第五阶段结论](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md) | `nav_gain=4` retained；完整候选尚未获得机动/APN 默认发布准入。 |
+| 校准热图证据 | pass | [热图与图示结论](../review_packets/kill_chain_guidance_calibration_visualization_20260715/kill_chain_guidance_calibration_visualization_summary_20260715.md) | 只读渲染第四/第五阶段证据；未重跑、未平滑，也不新增发布权威。 |
 
 ## 残余登记
 
