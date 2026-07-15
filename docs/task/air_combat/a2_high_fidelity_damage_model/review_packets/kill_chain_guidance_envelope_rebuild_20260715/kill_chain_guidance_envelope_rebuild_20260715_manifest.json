@@ -1,0 +1,214 @@
+{
+  "schema_version": "a2.kill_chain_guidance_envelope_manifest.v1",
+  "generated_at_utc": "2026-07-15T13:49:41.232921+00:00",
+  "report_schema_version": "a2.kill_chain_guidance_envelope_rebuild.v1",
+  "tool": {
+    "path": "tools/diagnostics/kill_chain_guidance_envelope_rebuild.py",
+    "sha256": "19bad6d517120ac8f8f936905f8ae92cbfab00c9296c0db10f56147cc9cc2d8b"
+  },
+  "git": {
+    "head": "0146b23d7869ffe7d7de02f5e1995a6648e6061e",
+    "branch": "codex/kill-chain-calibration-five-stage",
+    "worktree_porcelain": "M src/components/combat/common/weapon_common.h\n M src/interfaces/python/bindings_core.cpp\n M src/models/weapons/default_guidance_model.cpp\n M src/tests/test_components_basic.cpp\n M tests/tools/test_kill_chain_guidance_exact_mechanism_ablation.py\n M tools/diagnostics/kill_chain_decoupling_probe.py\n?? docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/\n?? tests/tools/test_kill_chain_guidance_envelope_rebuild.py\n?? tools/diagnostics/kill_chain_guidance_envelope_rebuild.py"
+  },
+  "runtime": {
+    "ef_py_path": "/tmp/cmo-five-stage-build/ef_py.cpython-313-x86_64-linux-gnu.so",
+    "ef_py_sha256": "6c254447f9116a49a829cd697fe715b7d4b402ebbe804268fdf1f2f963c34ecc",
+    "database_path": "/tmp/cmo-five-stage/examples/config/database",
+    "aim120_definition_path": "examples/config/database/weapons/air_to_air/aim_120c.json",
+    "aim120_definition_sha256": "d285332b7cd6e1f56173cdfe0ca0904be1a8a2245bfa88bf16947c29498b85d2"
+  },
+  "run_contract": {
+    "production_candidate_tuning": {
+      "pn_los_rate_source": 1,
+      "target_kinematics_estimator": 1,
+      "target_tracker_alpha": 0.2,
+      "target_tracker_beta": 0.02,
+      "capture_guidance_mode": 0,
+      "nav_gain": 4.0,
+      "max_lateral_g": 35.0,
+      "apn_target_accel_gain": 0.5
+    },
+    "diagnostics_mechanism_profile": null,
+    "target_motion": "truth constant velocity at 250 m/s",
+    "sampling": {
+      "run_scope": "formal_full_grid",
+      "main_ranges_km": [
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0,
+        10.0,
+        11.0,
+        12.0,
+        13.0,
+        14.0,
+        15.0,
+        16.0
+      ],
+      "main_angles_deg": [
+        0.0,
+        5.0,
+        10.0,
+        15.0,
+        20.0,
+        25.0,
+        30.0,
+        35.0,
+        40.0,
+        45.0,
+        50.0,
+        55.0,
+        60.0,
+        65.0,
+        70.0,
+        75.0,
+        80.0,
+        85.0,
+        90.0
+      ],
+      "main_range_step_km": 1.0,
+      "main_angle_step_deg": 5.0,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
+      "angle_zero_signed_run_policy": "run once",
+      "nonzero_angle_signed_run_policy": "run both plus and minus bearings",
+      "refinement_enabled": true,
+      "refinement_range_step_km": 0.5,
+      "refinement_angle_step_deg": 2.5,
+      "refinement_selection": "main-grid 4-neighbor robust-state change edge, or any run with abs(rho_fuze - 1) <= 0.25",
+      "postprocessing_smoothing": false
+    },
+    "R_fuze_m": 15.0,
+    "postprocessing_smoothing": false
+  },
+  "counts": {
+    "main_cell_count": 247,
+    "main_run_count": 1443,
+    "expected_main_run_count": 1443,
+    "state_change_edge_count": 16,
+    "refinement_cell_count": 105,
+    "refinement_run_count": 630,
+    "expected_refinement_run_count": 630,
+    "main_robust_state_counts": {
+      "robust_hit": 162,
+      "robust_miss": 85
+    },
+    "main_reclassified_launch_class_counts": {
+      "M": 32,
+      "N": 146,
+      "O": 69
+    },
+    "old_label_transition_counts": {
+      "M->M": 3,
+      "M->N": 9,
+      "M->O": 1,
+      "N->N": 12,
+      "O->M": 3,
+      "O->N": 3,
+      "O->O": 11
+    }
+  },
+  "audit": {
+    "max_mirror_abs_difference_m": 0.00011414674918341916,
+    "max_seed_spread_m": 0.0,
+    "mirror_entry_classification_consistent": true,
+    "max_capture_component_g": 0.0,
+    "max_preclamp_command_g": 128.1846647406908,
+    "max_postclamp_command_g": 35.00000000000001,
+    "max_guidance_saturation_fraction": 0.5216216216216216,
+    "max_achieved_lateral_g": 34.99999999999999,
+    "diagnostics_profile_attached_run_count": 0,
+    "runtime_observation_missing_run_count": 0,
+    "runtime_diagnostic_missing_run_count": 0,
+    "resolved_runtime_mismatch_run_count": 0,
+    "data_integrity_gates": {
+      "main_grid_run_count_complete": true,
+      "refinement_run_count_complete": true,
+      "formal_grid_uses_exact_three_required_unique_seeds": true,
+      "no_diagnostics_profile_attached": true,
+      "guidance_runtime_observed_for_every_run": true,
+      "production_acceleration_diagnostics_observed_for_every_run": true,
+      "resolved_runtime_matches_candidate_contract": true,
+      "capture_component_zero_within_1e_12_g": true,
+      "postclamp_command_not_above_35g": true,
+      "achieved_lateral_acceleration_not_above_35g": true,
+      "mirror_entry_classification_consistent": true,
+      "mirror_nearest_distance_within_1e_3_m": true,
+      "seed_nearest_distance_spread_within_1e_3_m": true,
+      "all_old_anchor_cells_compared_when_full_grid": true
+    },
+    "data_integrity_passed": true,
+    "stage4_gates": {
+      "main_grid_run_count_complete": true,
+      "refinement_run_count_complete": true,
+      "formal_grid_uses_exact_three_required_unique_seeds": true,
+      "no_diagnostics_profile_attached": true,
+      "guidance_runtime_observed_for_every_run": true,
+      "production_acceleration_diagnostics_observed_for_every_run": true,
+      "resolved_runtime_matches_candidate_contract": true,
+      "capture_component_zero_within_1e_12_g": true,
+      "postclamp_command_not_above_35g": true,
+      "achieved_lateral_acceleration_not_above_35g": true,
+      "mirror_entry_classification_consistent": true,
+      "mirror_nearest_distance_within_1e_3_m": true,
+      "seed_nearest_distance_spread_within_1e_3_m": true,
+      "all_old_anchor_cells_compared_when_full_grid": true,
+      "angle_axis_has_no_robust_miss_to_hit_reversal": true,
+      "each_angle_has_at_most_one_robust_hit_range_interval": true,
+      "robust_hit_region_has_no_internal_hole": true,
+      "robust_hit_region_has_at_most_one_connected_component": true
+    },
+    "stage4_gate_values_passed": true,
+    "formal_full_grid": true,
+    "stage4_passed": true
+  },
+  "artifacts": {
+    "report_json": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+      "sha256": "72fd560589732f4e0bf6de3c23c1091e10428e17b00d62d01c705dd8c23306be",
+      "bytes": 3530470
+    },
+    "runs_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_runs.csv",
+      "sha256": "dc43dc370c37ec2514b6f54ab3d859a72dc272ecbfacedf072831ea2298e96b5",
+      "bytes": 1072856
+    },
+    "cells_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_cells.csv",
+      "sha256": "db1163f81789a9e33f77686c80c7f1e4ba242275f7c2f71a3ec7169600a7eafe",
+      "bytes": 146186
+    },
+    "theta_fuze_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_theta_fuze.csv",
+      "sha256": "07b7ac5cd354ef22b2d5777901630184cc8c412d97db9520db220772cb7aa0d3",
+      "bytes": 1619
+    },
+    "range_boundaries_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_range_boundaries.csv",
+      "sha256": "94af0682c17e6a31ea178229854a10d3902fb1d12812fe4e335dd25f2dae1852",
+      "bytes": 2052
+    },
+    "old_label_differences_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_old_label_differences.csv",
+      "sha256": "2099b71597d7580ddfc36ae1e358d61297fad5080be70d0634f76e6ef09fd862",
+      "bytes": 3308
+    },
+    "conclusions_zh_md": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md",
+      "sha256": "66cb4ab7ba43b5ad1b36c6c16c0dd520db5c2ef6db091b713438e5ab4e18b2a9",
+      "bytes": 3291
+    }
+  },
+  "authority_boundary": {
+    "runtime_parameter_retuning": false,
+    "real_weapon_or_target_authority": false,
+    "real_world_pk": false,
+    "interpretation": "engineering CV launch-envelope evidence only"
+  }
+}

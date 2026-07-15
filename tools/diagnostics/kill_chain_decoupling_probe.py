@@ -3640,13 +3640,31 @@ def run_guidance_case(
       applied_guidance_mechanism_profile["capture_terminal_weight_mode"],
       applied_guidance_mechanism_profile["capture_lead_blend_mode"],
     )
-  missile_runtime_projection = _runtime_projection_profile(
-    dict(sim.debug_get_missile_runtime_state(missile_id))
-  )
+  initial_missile_runtime = dict(sim.debug_get_missile_runtime_state(missile_id))
+  missile_runtime_projection = _runtime_projection_profile(initial_missile_runtime)
+  resolved_guidance_runtime = {
+    key: initial_missile_runtime.get(key)
+    for key in (
+      "nav_gain",
+      "pn_los_rate_source",
+      "target_kinematics_estimator",
+      "capture_guidance_mode",
+      "target_tracker_alpha",
+      "target_tracker_beta",
+      "apn_target_accel_gain",
+      "guidance_max_lateral_g",
+    )
+  }
 
   dt = float(sim.get_time_step())
   min_truth_distance_m = math.inf
   max_achieved_lateral_g = 0.0
+  max_capture_component_g = 0.0
+  max_preclamp_command_g = 0.0
+  max_postclamp_command_g = 0.0
+  guidance_runtime_observation_count = 0
+  guidance_runtime_missing_acceleration_diagnostics_count = 0
+  guidance_saturated_sample_count = 0
   guidance_runtime_trace: list[dict[str, Any]] = []
   trace_stride = max(1, int(guidance_trace_stride))
   step_idx = 0
@@ -3701,6 +3719,24 @@ def run_guidance_case(
         max_achieved_lateral_g,
         _finite_float(runtime.get("achieved_lateral_accel_mps2", 0.0), 0.0) / 9.80665,
       )
+      guidance_runtime_observation_count += 1
+      acceleration_diagnostic_fields = (
+        "guidance_capture_accel_mps2",
+        "guidance_preclamp_accel_mps2",
+        "guidance_postclamp_accel_mps2",
+      )
+      if all(field in runtime for field in acceleration_diagnostic_fields):
+        capture_g = _finite_float(runtime["guidance_capture_accel_mps2"], 0.0) / 9.80665
+        preclamp_g = _finite_float(runtime["guidance_preclamp_accel_mps2"], 0.0) / 9.80665
+        postclamp_g = _finite_float(runtime["guidance_postclamp_accel_mps2"], 0.0) / 9.80665
+        max_capture_component_g = max(max_capture_component_g, capture_g)
+        max_preclamp_command_g = max(max_preclamp_command_g, preclamp_g)
+        max_postclamp_command_g = max(max_postclamp_command_g, postclamp_g)
+        resolved_limit_g = _finite_float(runtime.get("guidance_max_lateral_g", 0.0), 0.0)
+        if resolved_limit_g > 0.0 and preclamp_g > resolved_limit_g + 1.0e-9:
+          guidance_saturated_sample_count += 1
+      else:
+        guidance_runtime_missing_acceleration_diagnostics_count += 1
       if collect_guidance_runtime_trace and step_idx % trace_stride == 0:
         missile_pos = tuple(float(value) for value in sim.get_unit_position(missile_id))
         target_pos = tuple(float(value) for value in sim.get_unit_position(red_id))
@@ -3762,6 +3798,7 @@ def run_guidance_case(
     },
     "missile_id": int(missile_id),
     "missile_runtime_projection": missile_runtime_projection,
+    "resolved_guidance_runtime": resolved_guidance_runtime,
     "target_id": int(red_id),
     "target_active": bool(sim.is_unit_active(red_id)),
     "missile_active": bool(sim.is_unit_active(missile_id)),
@@ -3777,6 +3814,19 @@ def run_guidance_case(
       "expected_detonation_probability",
     ),
     "max_achieved_lateral_g": max_achieved_lateral_g,
+    "max_capture_component_g": max_capture_component_g,
+    "max_preclamp_command_g": max_preclamp_command_g,
+    "max_postclamp_command_g": max_postclamp_command_g,
+    "guidance_runtime_observation_count": guidance_runtime_observation_count,
+    "guidance_runtime_missing_acceleration_diagnostics_count": (
+      guidance_runtime_missing_acceleration_diagnostics_count
+    ),
+    "guidance_saturated_sample_count": guidance_saturated_sample_count,
+    "guidance_saturation_fraction": (
+      guidance_saturated_sample_count / guidance_runtime_observation_count
+      if guidance_runtime_observation_count > 0
+      else 0.0
+    ),
     "effect": effect_summary,
     "runtime_facade": runtime_facade,
     "component_load_factor_rows": component_load_factor_rows,

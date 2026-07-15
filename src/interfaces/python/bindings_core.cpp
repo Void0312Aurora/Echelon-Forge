@@ -1268,6 +1268,28 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["guidance_lead_time_s"] = missile->guidance_lead_time_s;
                 out["guidance_lead_blend"] = missile->guidance_lead_blend;
                 out["guidance_apn_lateral_accel_mps2"] = missile->guidance_apn_lateral_accel_mps2;
+                const MissileGuidanceAccelerationDiagnostics &guidance_accel =
+                    missile->guidance_acceleration_diagnostics;
+                out["guidance_capture_accel_x_mps2"] = guidance_accel.capture.x_mps2;
+                out["guidance_capture_accel_y_mps2"] = guidance_accel.capture.y_mps2;
+                out["guidance_capture_accel_z_mps2"] = guidance_accel.capture.z_mps2;
+                out["guidance_capture_accel_mps2"] = guidance_accel.capture.magnitude_mps2;
+                out["guidance_pn_accel_x_mps2"] = guidance_accel.pn.x_mps2;
+                out["guidance_pn_accel_y_mps2"] = guidance_accel.pn.y_mps2;
+                out["guidance_pn_accel_z_mps2"] = guidance_accel.pn.z_mps2;
+                out["guidance_pn_accel_mps2"] = guidance_accel.pn.magnitude_mps2;
+                out["guidance_apn_accel_x_mps2"] = guidance_accel.apn.x_mps2;
+                out["guidance_apn_accel_y_mps2"] = guidance_accel.apn.y_mps2;
+                out["guidance_apn_accel_z_mps2"] = guidance_accel.apn.z_mps2;
+                out["guidance_apn_accel_mps2"] = guidance_accel.apn.magnitude_mps2;
+                out["guidance_preclamp_accel_x_mps2"] = guidance_accel.preclamp.x_mps2;
+                out["guidance_preclamp_accel_y_mps2"] = guidance_accel.preclamp.y_mps2;
+                out["guidance_preclamp_accel_z_mps2"] = guidance_accel.preclamp.z_mps2;
+                out["guidance_preclamp_accel_mps2"] = guidance_accel.preclamp.magnitude_mps2;
+                out["guidance_postclamp_accel_x_mps2"] = guidance_accel.postclamp.x_mps2;
+                out["guidance_postclamp_accel_y_mps2"] = guidance_accel.postclamp.y_mps2;
+                out["guidance_postclamp_accel_z_mps2"] = guidance_accel.postclamp.z_mps2;
+                out["guidance_postclamp_accel_mps2"] = guidance_accel.postclamp.magnitude_mps2;
                 out["current_speed_mps"] = missile->current_speed_mps;
                 out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
                 out["achieved_lateral_accel_mps2"] = missile->achieved_lateral_accel_mps2;
@@ -1315,10 +1337,6 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                     out["guidance_target_kinematics_source_used"] =
                         mechanism_profile->target_kinematics_source_used;
                     out["guidance_pn_source_used"] = mechanism_profile->pn_source_used;
-                    out["guidance_capture_accel_x_mps2"] = mechanism_profile->capture_accel_x_mps2;
-                    out["guidance_capture_accel_y_mps2"] = mechanism_profile->capture_accel_y_mps2;
-                    out["guidance_capture_accel_z_mps2"] = mechanism_profile->capture_accel_z_mps2;
-                    out["guidance_capture_accel_mps2"] = mechanism_profile->capture_accel_mps2;
                     out["guidance_capture_lateral_error"] =
                         mechanism_profile->capture_lateral_error;
                     out["guidance_capture_base_range_factor"] =
@@ -1327,27 +1345,6 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                         mechanism_profile->capture_terminal_weight;
                     out["guidance_capture_raw_accel_mps2"] =
                         mechanism_profile->capture_raw_accel_mps2;
-                    out["guidance_pn_accel_x_mps2"] = mechanism_profile->pn_accel_x_mps2;
-                    out["guidance_pn_accel_y_mps2"] = mechanism_profile->pn_accel_y_mps2;
-                    out["guidance_pn_accel_z_mps2"] = mechanism_profile->pn_accel_z_mps2;
-                    out["guidance_pn_accel_mps2"] = mechanism_profile->pn_accel_mps2;
-                    out["guidance_apn_accel_x_mps2"] = mechanism_profile->apn_accel_x_mps2;
-                    out["guidance_apn_accel_y_mps2"] = mechanism_profile->apn_accel_y_mps2;
-                    out["guidance_apn_accel_z_mps2"] = mechanism_profile->apn_accel_z_mps2;
-                    out["guidance_preclamp_accel_x_mps2"] =
-                        mechanism_profile->preclamp_accel_x_mps2;
-                    out["guidance_preclamp_accel_y_mps2"] =
-                        mechanism_profile->preclamp_accel_y_mps2;
-                    out["guidance_preclamp_accel_z_mps2"] =
-                        mechanism_profile->preclamp_accel_z_mps2;
-                    out["guidance_preclamp_accel_mps2"] = mechanism_profile->preclamp_accel_mps2;
-                    out["guidance_postclamp_accel_x_mps2"] =
-                        mechanism_profile->postclamp_accel_x_mps2;
-                    out["guidance_postclamp_accel_y_mps2"] =
-                        mechanism_profile->postclamp_accel_y_mps2;
-                    out["guidance_postclamp_accel_z_mps2"] =
-                        mechanism_profile->postclamp_accel_z_mps2;
-                    out["guidance_postclamp_accel_mps2"] = mechanism_profile->postclamp_accel_mps2;
                     out["guidance_los_rate_x_rad_s"] = mechanism_profile->los_rate_x_rad_s;
                     out["guidance_los_rate_y_rad_s"] = mechanism_profile->los_rate_y_rad_s;
                     out["guidance_los_rate_z_rad_s"] = mechanism_profile->los_rate_z_rad_s;

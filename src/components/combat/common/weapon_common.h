@@ -80,6 +80,31 @@ inline std::string fuze_profile_type(const FuzeProfile &profile) {
     return profile.type.empty() ? "proximity" : profile.type;
 }
 
+struct MissileGuidanceAccelerationVectorDiagnostics {
+    double x_mps2 = 0.0;
+    double y_mps2 = 0.0;
+    double z_mps2 = 0.0;
+    double magnitude_mps2 = 0.0;
+};
+
+struct MissileGuidanceAccelerationDiagnostics {
+    MissileGuidanceAccelerationVectorDiagnostics capture{};
+    MissileGuidanceAccelerationVectorDiagnostics pn{};
+    MissileGuidanceAccelerationVectorDiagnostics apn{};
+    MissileGuidanceAccelerationVectorDiagnostics preclamp{};
+    MissileGuidanceAccelerationVectorDiagnostics postclamp{};
+};
+
+inline MissileGuidanceAccelerationVectorDiagnostics
+make_missile_guidance_acceleration_diagnostics(const Math::Vector3 &value) {
+    return {
+        value.x,
+        value.y,
+        value.z,
+        std::sqrt(value.x * value.x + value.y * value.y + value.z * value.z),
+    };
+}
+
 // Shared missile component used by common guidance/effects surfaces. Its
 // seeker/guidance runtime remains air-shaped and should not be read as a
 // complete cross-domain weapon model.
@@ -236,6 +261,7 @@ struct Missile {
     double guidance_lead_time_s = 0.0;
     double guidance_lead_blend = 0.0;
     double guidance_apn_lateral_accel_mps2 = 0.0;
+    MissileGuidanceAccelerationDiagnostics guidance_acceleration_diagnostics{};
     double autopilot_filter_state_mps2 = 0.0;
     double autopilot_rate_state_mps3 = 0.0;
     double autopilot_actuator_state_mps2 = 0.0;

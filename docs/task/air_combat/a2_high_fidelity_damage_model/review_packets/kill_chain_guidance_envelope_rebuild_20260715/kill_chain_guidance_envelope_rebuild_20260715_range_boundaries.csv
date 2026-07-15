@@ -1,0 +1,25 @@
+boundary_status,maximum_robust_hit_range_km,minimum_robust_hit_range_km,mixed_ranges_km,offset_deg,robust_hit_interval_count,robust_hit_intervals_km,sampled_range_count
+single_hit_interval,16.0,4.0,[],0.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],5.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],10.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],15.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],20.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],25.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],30.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],35.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],40.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,16.0,4.0,[],45.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",13
+single_hit_interval,4.5,4.0,[],47.5,1,"[{""maximum_range_km"": 4.5, ""minimum_range_km"": 4.0}]",2
+single_hit_interval,16.0,4.0,[],50.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",14
+single_hit_interval,16.0,4.0,[],52.5,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.0}]",12
+single_hit_interval,16.0,4.5,[],55.0,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 4.5}]",19
+single_hit_interval,16.0,5.5,[],57.5,1,"[{""maximum_range_km"": 16.0, ""minimum_range_km"": 5.5}]",25
+single_hit_interval,14.0,8.0,[],60.0,1,"[{""maximum_range_km"": 14.0, ""minimum_range_km"": 8.0}]",25
+no_robust_hit,,,[],62.5,0,[],24
+no_robust_hit,,,[],65.0,0,[],21
+no_robust_hit,,,[],67.5,0,[],15
+no_robust_hit,,,[],70.0,0,[],13
+no_robust_hit,,,[],75.0,0,[],13
+no_robust_hit,,,[],80.0,0,[],13
+no_robust_hit,,,[],85.0,0,[],13
+no_robust_hit,,,[],90.0,0,[],13

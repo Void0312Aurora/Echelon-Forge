@@ -336,6 +336,23 @@ TEST_SUITE("components_basic") {
         CHECK(h.max_hp == doctest::Approx(0.0));
     }
 
+    TEST_CASE("missile production guidance acceleration diagnostics are explicit and zero safe") {
+        Missile missile{};
+        const auto &diagnostics = missile.guidance_acceleration_diagnostics;
+        CHECK(diagnostics.capture.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.pn.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.apn.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.preclamp.magnitude_mps2 == doctest::Approx(0.0));
+        CHECK(diagnostics.postclamp.magnitude_mps2 == doctest::Approx(0.0));
+
+        const auto vector =
+            make_missile_guidance_acceleration_diagnostics(Math::Vector3{3.0, -4.0, 12.0});
+        CHECK(vector.x_mps2 == doctest::Approx(3.0));
+        CHECK(vector.y_mps2 == doctest::Approx(-4.0));
+        CHECK(vector.z_mps2 == doctest::Approx(12.0));
+        CHECK(vector.magnitude_mps2 == doctest::Approx(13.0));
+    }
+
     // --- Dynamics / Transform --------------------------------------------------
 
     TEST_CASE("transform_default_is_origin") {
