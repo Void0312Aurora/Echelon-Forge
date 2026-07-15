@@ -1,0 +1,7 @@
+range_km,-90,-75,-60,-45,-30,-15,0,15,30,45,60,75,90
+4,satisfied,boundary_observation,boundary_observation,guidance_or_model_residual,satisfied,satisfied,satisfied,satisfied,satisfied,guidance_or_model_residual,boundary_observation,boundary_observation,satisfied
+6,satisfied,satisfied,boundary_observation,guidance_or_model_residual,satisfied,satisfied,satisfied,satisfied,satisfied,guidance_or_model_residual,boundary_observation,satisfied,satisfied
+8,satisfied,satisfied,boundary_observation,boundary_observation,satisfied,satisfied,satisfied,satisfied,satisfied,boundary_observation,boundary_observation,satisfied,satisfied
+10,satisfied,satisfied,satisfied,boundary_observation,boundary_observation,satisfied,satisfied,satisfied,boundary_observation,boundary_observation,satisfied,satisfied,satisfied
+12,satisfied,satisfied,satisfied,satisfied,boundary_observation,boundary_observation,satisfied,boundary_observation,boundary_observation,satisfied,satisfied,satisfied,satisfied
+16,satisfied,satisfied,satisfied,satisfied,satisfied,boundary_observation,boundary_observation,boundary_observation,satisfied,satisfied,satisfied,satisfied,satisfied
