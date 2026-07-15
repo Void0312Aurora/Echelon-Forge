@@ -1,0 +1,2935 @@
+{
+  "schema_version": "a2.kill_chain_guidance_scalar_calibration.v1",
+  "status": "scalar_calibration_completed_retained_baseline",
+  "generated_at_utc": "2026-07-15T14:38:52.543699+00:00",
+  "stage4_source": {
+    "path": "/tmp/cmo-five-stage/docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+    "schema_version": "a2.kill_chain_guidance_envelope_rebuild.v1",
+    "status": "continuous_launch_envelope_rebuilt",
+    "stage4_passed": true
+  },
+  "identifiability": [
+    {
+      "parameter": "nav_gain",
+      "stage5_status": "evaluated_OFAT",
+      "reason": "remaining scalar with observable CV trajectory effect"
+    },
+    {
+      "parameter": "capture_guidance_scalars",
+      "stage5_status": "excluded",
+      "reason": "stage 3 selected capture_guidance_mode=disabled"
+    },
+    {
+      "parameter": "apn_target_accel_gain",
+      "stage5_status": "excluded_frozen_at_0.5",
+      "reason": "truth target acceleration is zero in the CV experiment"
+    },
+    {
+      "parameter": "target_tracker_alpha_beta",
+      "stage5_status": "excluded_frozen_at_0.20_0.02",
+      "reason": "estimated and frozen in stage 2; joint retuning would confound mechanisms"
+    },
+    {
+      "parameter": "max_lateral_g",
+      "stage5_status": "constraint_frozen_at_35",
+      "reason": "safety and runtime constraint, not an objective scalar"
+    }
+  ],
+  "frozen_production_mechanism_tuning": {
+    "pn_los_rate_source": 1,
+    "target_kinematics_estimator": 1,
+    "target_tracker_alpha": 0.2,
+    "target_tracker_beta": 0.02,
+    "capture_guidance_mode": 0,
+    "max_lateral_g": 35.0,
+    "apn_target_accel_gain": 0.5
+  },
+  "evaluated_scalar": {
+    "name": "nav_gain",
+    "method": "one_factor_at_a_time",
+    "baseline": 4.0,
+    "candidates": [
+      3.5,
+      3.75,
+      4.0,
+      4.25,
+      4.5
+    ]
+  },
+  "sampling": {
+    "ranges_km": [
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      16.0
+    ],
+    "angles_deg": [
+      0.0,
+      5.0,
+      10.0,
+      15.0,
+      20.0,
+      25.0,
+      30.0,
+      35.0,
+      40.0,
+      45.0,
+      50.0,
+      55.0,
+      60.0,
+      65.0,
+      70.0,
+      75.0,
+      80.0,
+      85.0,
+      90.0
+    ],
+    "main_cell_count": 247,
+    "holdout_policy": "midpoint between adjacent stage-4 range and angle samples",
+    "holdout_enabled": true,
+    "holdout_ranges_km": [
+      4.5,
+      5.5,
+      6.5,
+      7.5,
+      8.5,
+      9.5,
+      10.5,
+      11.5,
+      12.5,
+      13.5,
+      14.5,
+      15.5
+    ],
+    "holdout_angles_deg": [
+      2.5,
+      7.5,
+      12.5,
+      17.5,
+      22.5,
+      27.5,
+      32.5,
+      37.5,
+      42.5,
+      47.5,
+      52.5,
+      57.5,
+      62.5,
+      67.5,
+      72.5,
+      77.5,
+      82.5,
+      87.5
+    ],
+    "holdout_cell_count": 216,
+    "seeds": [
+      20260621,
+      20260622,
+      20260623
+    ],
+    "signed_bearing_policy": "zero once; nonzero plus and minus",
+    "M_policy": "observed and reported, never a binary optimization pressure",
+    "holdout_policy_role": "observed and reported, never counted as material benefit"
+  },
+  "selection_policy": {
+    "hard_constraints": "stage-4 N stays robust hit; O stays robust miss",
+    "topology": "one connected robust-hit band, no angular reversal, range multi-island, or internal hole",
+    "mirror_tolerance_m": 0.001,
+    "seed_spread_tolerance_m": 0.001,
+    "max_lateral_g": 35.0,
+    "regression_allowances": {
+      "N_rho_max": 0.05,
+      "N_rho_mean": 0.01,
+      "guidance_saturation_fraction_p95": 0.02,
+      "theta_fuze_max_displacement_deg": 2.5,
+      "minimum_range_boundary_max_displacement_km": 0.5,
+      "maximum_range_boundary_max_displacement_km": 0.5
+    },
+    "material_improvement_thresholds": {
+      "N_rho_mean": 0.05,
+      "guidance_saturation_fraction_p95": 0.05
+    },
+    "non_objectives": [
+      "holdout robust-hit count",
+      "M hit/miss transition",
+      "larger O-cell miss distance"
+    ],
+    "fallback": "retain nav_gain=4 when no non-baseline candidate has clear net benefit"
+  },
+  "formal_scope": true,
+  "candidate_summaries": [
+    {
+      "candidate_id": "nav_gain_3p5",
+      "nav_gain": 3.5,
+      "evaluated_scalar": "nav_gain",
+      "hard_gate_passed": true,
+      "gates": {
+        "main_run_count_complete": true,
+        "holdout_run_count_complete": true,
+        "stage4_N_cells_remain_robust_hit": true,
+        "stage4_O_cells_remain_robust_miss": true,
+        "no_diagnostics_profile_attached": true,
+        "guidance_runtime_observed_for_every_run": true,
+        "production_acceleration_diagnostics_observed_for_every_run": true,
+        "resolved_runtime_matches_candidate_contract": true,
+        "capture_component_zero_within_1e_12_g": true,
+        "postclamp_command_not_above_35g": true,
+        "achieved_lateral_acceleration_not_above_35g": true,
+        "mirror_nearest_distance_within_1e_3_m": true,
+        "seed_nearest_distance_spread_within_1e_3_m": true,
+        "main_grid_single_hit_band": true,
+        "holdout_grid_single_hit_band": true
+      },
+      "audit": {
+        "max_mirror_abs_difference_m": 0.00011414674918341916,
+        "max_seed_spread_m": 0.0,
+        "max_capture_component_g": 0.0,
+        "max_postclamp_command_g": 35.00000000000001,
+        "max_achieved_lateral_g": 34.99999999999999,
+        "max_guidance_saturation_fraction": 0.5091863517060368,
+        "N_violation_count": 0,
+        "O_violation_count": 0,
+        "N_violations": [],
+        "O_violations": []
+      },
+      "metrics": {
+        "N_cell_count": 146,
+        "O_cell_count": 69,
+        "M_cell_count": 32,
+        "N_rho_mean": 9.424550389359997e-05,
+        "N_rho_max": 0.00029172806154027537,
+        "O_rho_mean": 600.735310851492,
+        "O_rho_min": 129.8401344971852,
+        "M_observed_transition_counts": {
+          "M->robust_hit": 8,
+          "M->robust_miss": 24
+        },
+        "main_robust_state_counts": {
+          "robust_hit": 154,
+          "robust_miss": 93
+        },
+        "holdout_robust_state_counts": {
+          "robust_hit": 134,
+          "robust_miss": 82
+        },
+        "holdout_robust_hit_count": 134,
+        "holdout_cell_count": 216,
+        "max_guidance_saturation_fraction": 0.5091863517060368,
+        "guidance_saturation_fraction_p95": 0.2358974358974359
+      },
+      "main_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 0.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 5.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 10.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 15.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 20.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 25.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 30.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 35.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 40.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 45.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 50.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 55.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 6.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 60.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 65.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 70.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 75.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 80.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 85.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 90.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          154
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "holdout_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 2.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 7.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 12.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 17.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 22.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 27.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 32.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 37.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 42.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 47.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 52.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 57.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 8.5,
+                "maximum_range_km": 9.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 62.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 67.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 72.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 77.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 82.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 87.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          134
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "main_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.0": 50.0,
+          "5.0": 50.0,
+          "6.0": 55.0,
+          "7.0": 55.0,
+          "8.0": 55.0,
+          "9.0": 55.0,
+          "10.0": 55.0,
+          "11.0": 55.0,
+          "12.0": 55.0,
+          "13.0": 55.0,
+          "14.0": 55.0,
+          "15.0": 55.0,
+          "16.0": 55.0
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "0.0": 4.0,
+          "5.0": 4.0,
+          "10.0": 4.0,
+          "15.0": 4.0,
+          "20.0": 4.0,
+          "25.0": 4.0,
+          "30.0": 4.0,
+          "35.0": 4.0,
+          "40.0": 4.0,
+          "45.0": 4.0,
+          "50.0": 4.0,
+          "55.0": 6.0,
+          "60.0": null,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "0.0": 16.0,
+          "5.0": 16.0,
+          "10.0": 16.0,
+          "15.0": 16.0,
+          "20.0": 16.0,
+          "25.0": 16.0,
+          "30.0": 16.0,
+          "35.0": 16.0,
+          "40.0": 16.0,
+          "45.0": 16.0,
+          "50.0": 16.0,
+          "55.0": 16.0,
+          "60.0": null,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        }
+      },
+      "holdout_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.5": 52.5,
+          "5.5": 52.5,
+          "6.5": 52.5,
+          "7.5": 52.5,
+          "8.5": 57.5,
+          "9.5": 57.5,
+          "10.5": 52.5,
+          "11.5": 52.5,
+          "12.5": 52.5,
+          "13.5": 52.5,
+          "14.5": 52.5,
+          "15.5": 52.5
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "2.5": 4.5,
+          "7.5": 4.5,
+          "12.5": 4.5,
+          "17.5": 4.5,
+          "22.5": 4.5,
+          "27.5": 4.5,
+          "32.5": 4.5,
+          "37.5": 4.5,
+          "42.5": 4.5,
+          "47.5": 4.5,
+          "52.5": 4.5,
+          "57.5": 8.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "2.5": 15.5,
+          "7.5": 15.5,
+          "12.5": 15.5,
+          "17.5": 15.5,
+          "22.5": 15.5,
+          "27.5": 15.5,
+          "32.5": 15.5,
+          "37.5": 15.5,
+          "42.5": 15.5,
+          "47.5": 15.5,
+          "52.5": 15.5,
+          "57.5": 9.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        }
+      }
+    },
+    {
+      "candidate_id": "nav_gain_3p75",
+      "nav_gain": 3.75,
+      "evaluated_scalar": "nav_gain",
+      "hard_gate_passed": true,
+      "gates": {
+        "main_run_count_complete": true,
+        "holdout_run_count_complete": true,
+        "stage4_N_cells_remain_robust_hit": true,
+        "stage4_O_cells_remain_robust_miss": true,
+        "no_diagnostics_profile_attached": true,
+        "guidance_runtime_observed_for_every_run": true,
+        "production_acceleration_diagnostics_observed_for_every_run": true,
+        "resolved_runtime_matches_candidate_contract": true,
+        "capture_component_zero_within_1e_12_g": true,
+        "postclamp_command_not_above_35g": true,
+        "achieved_lateral_acceleration_not_above_35g": true,
+        "mirror_nearest_distance_within_1e_3_m": true,
+        "seed_nearest_distance_spread_within_1e_3_m": true,
+        "main_grid_single_hit_band": true,
+        "holdout_grid_single_hit_band": true
+      },
+      "audit": {
+        "max_mirror_abs_difference_m": 0.00011414674918341916,
+        "max_seed_spread_m": 0.0,
+        "max_capture_component_g": 0.0,
+        "max_postclamp_command_g": 35.00000000000001,
+        "max_achieved_lateral_g": 34.99999999999999,
+        "max_guidance_saturation_fraction": 0.49393939393939396,
+        "N_violation_count": 0,
+        "O_violation_count": 0,
+        "N_violations": [],
+        "O_violations": []
+      },
+      "metrics": {
+        "N_cell_count": 146,
+        "O_cell_count": 69,
+        "M_cell_count": 32,
+        "N_rho_mean": 9.268388038845068e-05,
+        "N_rho_max": 0.0001571475484128011,
+        "O_rho_mean": 592.1752579749524,
+        "O_rho_min": 121.54133561571176,
+        "M_observed_transition_counts": {
+          "M->robust_hit": 9,
+          "M->robust_miss": 23
+        },
+        "main_robust_state_counts": {
+          "robust_hit": 155,
+          "robust_miss": 92
+        },
+        "holdout_robust_state_counts": {
+          "robust_hit": 142,
+          "robust_miss": 74
+        },
+        "holdout_robust_hit_count": 142,
+        "holdout_cell_count": 216,
+        "max_guidance_saturation_fraction": 0.49393939393939396,
+        "guidance_saturation_fraction_p95": 0.24912280701754386
+      },
+      "main_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 0.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 5.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 10.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 15.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 20.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 25.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 30.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 35.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 40.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 45.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 50.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 55.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 5.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 60.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 65.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 70.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 75.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 80.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 85.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 90.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          155
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "holdout_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 2.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 7.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 12.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 17.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 22.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 27.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 32.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 37.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 42.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 47.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 52.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 57.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 6.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 62.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 67.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 72.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 77.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 82.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 87.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          142
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "main_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.0": 50.0,
+          "5.0": 55.0,
+          "6.0": 55.0,
+          "7.0": 55.0,
+          "8.0": 55.0,
+          "9.0": 55.0,
+          "10.0": 55.0,
+          "11.0": 55.0,
+          "12.0": 55.0,
+          "13.0": 55.0,
+          "14.0": 55.0,
+          "15.0": 55.0,
+          "16.0": 55.0
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "0.0": 4.0,
+          "5.0": 4.0,
+          "10.0": 4.0,
+          "15.0": 4.0,
+          "20.0": 4.0,
+          "25.0": 4.0,
+          "30.0": 4.0,
+          "35.0": 4.0,
+          "40.0": 4.0,
+          "45.0": 4.0,
+          "50.0": 4.0,
+          "55.0": 5.0,
+          "60.0": null,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "0.0": 16.0,
+          "5.0": 16.0,
+          "10.0": 16.0,
+          "15.0": 16.0,
+          "20.0": 16.0,
+          "25.0": 16.0,
+          "30.0": 16.0,
+          "35.0": 16.0,
+          "40.0": 16.0,
+          "45.0": 16.0,
+          "50.0": 16.0,
+          "55.0": 16.0,
+          "60.0": null,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        }
+      },
+      "holdout_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.5": 52.5,
+          "5.5": 52.5,
+          "6.5": 57.5,
+          "7.5": 57.5,
+          "8.5": 57.5,
+          "9.5": 57.5,
+          "10.5": 57.5,
+          "11.5": 57.5,
+          "12.5": 57.5,
+          "13.5": 57.5,
+          "14.5": 57.5,
+          "15.5": 57.5
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "2.5": 4.5,
+          "7.5": 4.5,
+          "12.5": 4.5,
+          "17.5": 4.5,
+          "22.5": 4.5,
+          "27.5": 4.5,
+          "32.5": 4.5,
+          "37.5": 4.5,
+          "42.5": 4.5,
+          "47.5": 4.5,
+          "52.5": 4.5,
+          "57.5": 6.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "2.5": 15.5,
+          "7.5": 15.5,
+          "12.5": 15.5,
+          "17.5": 15.5,
+          "22.5": 15.5,
+          "27.5": 15.5,
+          "32.5": 15.5,
+          "37.5": 15.5,
+          "42.5": 15.5,
+          "47.5": 15.5,
+          "52.5": 15.5,
+          "57.5": 15.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        }
+      }
+    },
+    {
+      "candidate_id": "nav_gain_4",
+      "nav_gain": 4.0,
+      "evaluated_scalar": "nav_gain",
+      "hard_gate_passed": true,
+      "gates": {
+        "main_run_count_complete": true,
+        "holdout_run_count_complete": true,
+        "stage4_N_cells_remain_robust_hit": true,
+        "stage4_O_cells_remain_robust_miss": true,
+        "no_diagnostics_profile_attached": true,
+        "guidance_runtime_observed_for_every_run": true,
+        "production_acceleration_diagnostics_observed_for_every_run": true,
+        "resolved_runtime_matches_candidate_contract": true,
+        "capture_component_zero_within_1e_12_g": true,
+        "postclamp_command_not_above_35g": true,
+        "achieved_lateral_acceleration_not_above_35g": true,
+        "mirror_nearest_distance_within_1e_3_m": true,
+        "seed_nearest_distance_spread_within_1e_3_m": true,
+        "main_grid_single_hit_band": true,
+        "holdout_grid_single_hit_band": true
+      },
+      "audit": {
+        "max_mirror_abs_difference_m": 0.00011414674918341916,
+        "max_seed_spread_m": 0.0,
+        "max_capture_component_g": 0.0,
+        "max_postclamp_command_g": 35.00000000000001,
+        "max_achieved_lateral_g": 34.99999999999999,
+        "max_guidance_saturation_fraction": 0.5014836795252225,
+        "N_violation_count": 0,
+        "O_violation_count": 0,
+        "N_violations": [],
+        "O_violations": []
+      },
+      "metrics": {
+        "N_cell_count": 146,
+        "O_cell_count": 69,
+        "M_cell_count": 32,
+        "N_rho_mean": 9.223357490030554e-05,
+        "N_rho_max": 0.00013560091052814872,
+        "O_rho_mean": 582.9767419493481,
+        "O_rho_min": 114.33086865671537,
+        "M_observed_transition_counts": {
+          "M->robust_hit": 16,
+          "M->robust_miss": 16
+        },
+        "main_robust_state_counts": {
+          "robust_hit": 162,
+          "robust_miss": 85
+        },
+        "holdout_robust_state_counts": {
+          "robust_hit": 143,
+          "robust_miss": 73
+        },
+        "holdout_robust_hit_count": 143,
+        "holdout_cell_count": 216,
+        "max_guidance_saturation_fraction": 0.5014836795252225,
+        "guidance_saturation_fraction_p95": 0.2644628099173554
+      },
+      "main_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 0.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 5.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 10.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 15.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 20.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 25.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 30.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 35.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 40.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 45.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 50.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 55.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 5.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 60.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 8.0,
+                "maximum_range_km": 14.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 65.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 70.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 75.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 80.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 85.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 90.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          162
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "holdout_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 2.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 7.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 12.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 17.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 22.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 27.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 32.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 37.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 42.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 47.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 52.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 57.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 5.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 62.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 67.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 72.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 77.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 82.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 87.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          143
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "main_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.0": 50.0,
+          "5.0": 55.0,
+          "6.0": 55.0,
+          "7.0": 55.0,
+          "8.0": 60.0,
+          "9.0": 60.0,
+          "10.0": 60.0,
+          "11.0": 60.0,
+          "12.0": 60.0,
+          "13.0": 60.0,
+          "14.0": 60.0,
+          "15.0": 55.0,
+          "16.0": 55.0
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "0.0": 4.0,
+          "5.0": 4.0,
+          "10.0": 4.0,
+          "15.0": 4.0,
+          "20.0": 4.0,
+          "25.0": 4.0,
+          "30.0": 4.0,
+          "35.0": 4.0,
+          "40.0": 4.0,
+          "45.0": 4.0,
+          "50.0": 4.0,
+          "55.0": 5.0,
+          "60.0": 8.0,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "0.0": 16.0,
+          "5.0": 16.0,
+          "10.0": 16.0,
+          "15.0": 16.0,
+          "20.0": 16.0,
+          "25.0": 16.0,
+          "30.0": 16.0,
+          "35.0": 16.0,
+          "40.0": 16.0,
+          "45.0": 16.0,
+          "50.0": 16.0,
+          "55.0": 16.0,
+          "60.0": 14.0,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        }
+      },
+      "holdout_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.5": 52.5,
+          "5.5": 57.5,
+          "6.5": 57.5,
+          "7.5": 57.5,
+          "8.5": 57.5,
+          "9.5": 57.5,
+          "10.5": 57.5,
+          "11.5": 57.5,
+          "12.5": 57.5,
+          "13.5": 57.5,
+          "14.5": 57.5,
+          "15.5": 57.5
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "2.5": 4.5,
+          "7.5": 4.5,
+          "12.5": 4.5,
+          "17.5": 4.5,
+          "22.5": 4.5,
+          "27.5": 4.5,
+          "32.5": 4.5,
+          "37.5": 4.5,
+          "42.5": 4.5,
+          "47.5": 4.5,
+          "52.5": 4.5,
+          "57.5": 5.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "2.5": 15.5,
+          "7.5": 15.5,
+          "12.5": 15.5,
+          "17.5": 15.5,
+          "22.5": 15.5,
+          "27.5": 15.5,
+          "32.5": 15.5,
+          "37.5": 15.5,
+          "42.5": 15.5,
+          "47.5": 15.5,
+          "52.5": 15.5,
+          "57.5": 15.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        }
+      }
+    },
+    {
+      "candidate_id": "nav_gain_4p25",
+      "nav_gain": 4.25,
+      "evaluated_scalar": "nav_gain",
+      "hard_gate_passed": true,
+      "gates": {
+        "main_run_count_complete": true,
+        "holdout_run_count_complete": true,
+        "stage4_N_cells_remain_robust_hit": true,
+        "stage4_O_cells_remain_robust_miss": true,
+        "no_diagnostics_profile_attached": true,
+        "guidance_runtime_observed_for_every_run": true,
+        "production_acceleration_diagnostics_observed_for_every_run": true,
+        "resolved_runtime_matches_candidate_contract": true,
+        "capture_component_zero_within_1e_12_g": true,
+        "postclamp_command_not_above_35g": true,
+        "achieved_lateral_acceleration_not_above_35g": true,
+        "mirror_nearest_distance_within_1e_3_m": true,
+        "seed_nearest_distance_spread_within_1e_3_m": true,
+        "main_grid_single_hit_band": true,
+        "holdout_grid_single_hit_band": true
+      },
+      "audit": {
+        "max_mirror_abs_difference_m": 0.00011414674918341916,
+        "max_seed_spread_m": 0.0,
+        "max_capture_component_g": 0.0,
+        "max_postclamp_command_g": 35.00000000000001,
+        "max_achieved_lateral_g": 34.99999999999999,
+        "max_guidance_saturation_fraction": 0.5130434782608696,
+        "N_violation_count": 0,
+        "O_violation_count": 0,
+        "N_violations": [],
+        "O_violations": []
+      },
+      "metrics": {
+        "N_cell_count": 146,
+        "O_cell_count": 69,
+        "M_cell_count": 32,
+        "N_rho_mean": 9.169571441818207e-05,
+        "N_rho_max": 9.515695697192733e-05,
+        "O_rho_mean": 573.2212443349937,
+        "O_rho_min": 107.31234443792428,
+        "M_observed_transition_counts": {
+          "M->robust_hit": 19,
+          "M->robust_miss": 13
+        },
+        "main_robust_state_counts": {
+          "robust_hit": 165,
+          "robust_miss": 82
+        },
+        "holdout_robust_state_counts": {
+          "robust_hit": 143,
+          "robust_miss": 73
+        },
+        "holdout_robust_hit_count": 143,
+        "holdout_cell_count": 216,
+        "max_guidance_saturation_fraction": 0.5130434782608696,
+        "guidance_saturation_fraction_p95": 0.266173752310536
+      },
+      "main_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 0.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 5.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 10.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 15.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 20.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 25.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 30.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 35.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 40.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 45.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 50.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 55.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 5.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 60.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 7.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 65.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 70.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 75.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 80.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 85.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 90.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          165
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "holdout_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 2.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 7.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 12.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 17.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 22.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 27.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 32.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 37.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 42.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 47.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 52.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 57.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 5.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 62.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 67.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 72.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 77.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 82.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 87.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          143
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "main_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.0": 50.0,
+          "5.0": 55.0,
+          "6.0": 55.0,
+          "7.0": 60.0,
+          "8.0": 60.0,
+          "9.0": 60.0,
+          "10.0": 60.0,
+          "11.0": 60.0,
+          "12.0": 60.0,
+          "13.0": 60.0,
+          "14.0": 60.0,
+          "15.0": 60.0,
+          "16.0": 60.0
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "0.0": 4.0,
+          "5.0": 4.0,
+          "10.0": 4.0,
+          "15.0": 4.0,
+          "20.0": 4.0,
+          "25.0": 4.0,
+          "30.0": 4.0,
+          "35.0": 4.0,
+          "40.0": 4.0,
+          "45.0": 4.0,
+          "50.0": 4.0,
+          "55.0": 5.0,
+          "60.0": 7.0,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "0.0": 16.0,
+          "5.0": 16.0,
+          "10.0": 16.0,
+          "15.0": 16.0,
+          "20.0": 16.0,
+          "25.0": 16.0,
+          "30.0": 16.0,
+          "35.0": 16.0,
+          "40.0": 16.0,
+          "45.0": 16.0,
+          "50.0": 16.0,
+          "55.0": 16.0,
+          "60.0": 16.0,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        }
+      },
+      "holdout_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.5": 52.5,
+          "5.5": 57.5,
+          "6.5": 57.5,
+          "7.5": 57.5,
+          "8.5": 57.5,
+          "9.5": 57.5,
+          "10.5": 57.5,
+          "11.5": 57.5,
+          "12.5": 57.5,
+          "13.5": 57.5,
+          "14.5": 57.5,
+          "15.5": 57.5
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "2.5": 4.5,
+          "7.5": 4.5,
+          "12.5": 4.5,
+          "17.5": 4.5,
+          "22.5": 4.5,
+          "27.5": 4.5,
+          "32.5": 4.5,
+          "37.5": 4.5,
+          "42.5": 4.5,
+          "47.5": 4.5,
+          "52.5": 4.5,
+          "57.5": 5.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "2.5": 15.5,
+          "7.5": 15.5,
+          "12.5": 15.5,
+          "17.5": 15.5,
+          "22.5": 15.5,
+          "27.5": 15.5,
+          "32.5": 15.5,
+          "37.5": 15.5,
+          "42.5": 15.5,
+          "47.5": 15.5,
+          "52.5": 15.5,
+          "57.5": 15.5,
+          "62.5": null,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        }
+      }
+    },
+    {
+      "candidate_id": "nav_gain_4p5",
+      "nav_gain": 4.5,
+      "evaluated_scalar": "nav_gain",
+      "hard_gate_passed": true,
+      "gates": {
+        "main_run_count_complete": true,
+        "holdout_run_count_complete": true,
+        "stage4_N_cells_remain_robust_hit": true,
+        "stage4_O_cells_remain_robust_miss": true,
+        "no_diagnostics_profile_attached": true,
+        "guidance_runtime_observed_for_every_run": true,
+        "production_acceleration_diagnostics_observed_for_every_run": true,
+        "resolved_runtime_matches_candidate_contract": true,
+        "capture_component_zero_within_1e_12_g": true,
+        "postclamp_command_not_above_35g": true,
+        "achieved_lateral_acceleration_not_above_35g": true,
+        "mirror_nearest_distance_within_1e_3_m": true,
+        "seed_nearest_distance_spread_within_1e_3_m": true,
+        "main_grid_single_hit_band": true,
+        "holdout_grid_single_hit_band": true
+      },
+      "audit": {
+        "max_mirror_abs_difference_m": 0.00011414674918341916,
+        "max_seed_spread_m": 0.0,
+        "max_capture_component_g": 0.0,
+        "max_postclamp_command_g": 35.0,
+        "max_achieved_lateral_g": 34.99999999999999,
+        "max_guidance_saturation_fraction": 0.5198863636363636,
+        "N_violation_count": 0,
+        "O_violation_count": 0,
+        "N_violations": [],
+        "O_violations": []
+      },
+      "metrics": {
+        "N_cell_count": 146,
+        "O_cell_count": 69,
+        "M_cell_count": 32,
+        "N_rho_mean": 9.166183346503488e-05,
+        "N_rho_max": 9.519064840462469e-05,
+        "O_rho_mean": 562.9430497848068,
+        "O_rho_min": 100.84366403837967,
+        "M_observed_transition_counts": {
+          "M->robust_hit": 21,
+          "M->robust_miss": 11
+        },
+        "main_robust_state_counts": {
+          "robust_hit": 167,
+          "robust_miss": 80
+        },
+        "holdout_robust_state_counts": {
+          "robust_hit": 148,
+          "robust_miss": 68
+        },
+        "holdout_robust_hit_count": 148,
+        "holdout_cell_count": 216,
+        "max_guidance_saturation_fraction": 0.5198863636363636,
+        "guidance_saturation_fraction_p95": 0.2742616033755274
+      },
+      "main_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 0.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 5.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 10.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 15.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 20.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 25.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 30.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 35.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 40.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 45.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 50.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 55.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 60.0,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 6.0,
+                "maximum_range_km": 16.0
+              }
+            ]
+          },
+          {
+            "offset_deg": 65.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 70.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 75.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 80.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 85.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 90.0,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          167
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "holdout_topology_audit": {
+        "rectangular_grid_complete": true,
+        "angular_miss_to_hit_reversal_count": 0,
+        "angular_miss_to_hit_reversals": [],
+        "range_hit_interval_rows": [
+          {
+            "offset_deg": 2.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 7.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 12.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 17.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 22.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 27.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 32.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 37.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 42.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 47.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 52.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 4.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 57.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 5.5,
+                "maximum_range_km": 15.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 62.5,
+            "robust_hit_interval_count": 1,
+            "robust_hit_intervals_km": [
+              {
+                "minimum_range_km": 9.5,
+                "maximum_range_km": 13.5
+              }
+            ]
+          },
+          {
+            "offset_deg": 67.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 72.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 77.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 82.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          },
+          {
+            "offset_deg": 87.5,
+            "robust_hit_interval_count": 0,
+            "robust_hit_intervals_km": []
+          }
+        ],
+        "range_multi_interval_violation_count": 0,
+        "range_multi_interval_violations": [],
+        "robust_hit_component_count": 1,
+        "robust_hit_component_sizes": [
+          148
+        ],
+        "robust_hit_internal_hole_count": 0,
+        "robust_hit_internal_holes": [],
+        "single_hit_band_passed": true
+      },
+      "main_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.0": 55.0,
+          "5.0": 55.0,
+          "6.0": 60.0,
+          "7.0": 60.0,
+          "8.0": 60.0,
+          "9.0": 60.0,
+          "10.0": 60.0,
+          "11.0": 60.0,
+          "12.0": 60.0,
+          "13.0": 60.0,
+          "14.0": 60.0,
+          "15.0": 60.0,
+          "16.0": 60.0
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "0.0": 4.0,
+          "5.0": 4.0,
+          "10.0": 4.0,
+          "15.0": 4.0,
+          "20.0": 4.0,
+          "25.0": 4.0,
+          "30.0": 4.0,
+          "35.0": 4.0,
+          "40.0": 4.0,
+          "45.0": 4.0,
+          "50.0": 4.0,
+          "55.0": 4.0,
+          "60.0": 6.0,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "0.0": 16.0,
+          "5.0": 16.0,
+          "10.0": 16.0,
+          "15.0": 16.0,
+          "20.0": 16.0,
+          "25.0": 16.0,
+          "30.0": 16.0,
+          "35.0": 16.0,
+          "40.0": 16.0,
+          "45.0": 16.0,
+          "50.0": 16.0,
+          "55.0": 16.0,
+          "60.0": 16.0,
+          "65.0": null,
+          "70.0": null,
+          "75.0": null,
+          "80.0": null,
+          "85.0": null,
+          "90.0": null
+        }
+      },
+      "holdout_contour": {
+        "theta_fuze_robust_hit_max_deg_by_range": {
+          "4.5": 52.5,
+          "5.5": 57.5,
+          "6.5": 57.5,
+          "7.5": 57.5,
+          "8.5": 57.5,
+          "9.5": 62.5,
+          "10.5": 62.5,
+          "11.5": 62.5,
+          "12.5": 62.5,
+          "13.5": 62.5,
+          "14.5": 57.5,
+          "15.5": 57.5
+        },
+        "minimum_robust_hit_range_km_by_angle": {
+          "2.5": 4.5,
+          "7.5": 4.5,
+          "12.5": 4.5,
+          "17.5": 4.5,
+          "22.5": 4.5,
+          "27.5": 4.5,
+          "32.5": 4.5,
+          "37.5": 4.5,
+          "42.5": 4.5,
+          "47.5": 4.5,
+          "52.5": 4.5,
+          "57.5": 5.5,
+          "62.5": 9.5,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        },
+        "maximum_robust_hit_range_km_by_angle": {
+          "2.5": 15.5,
+          "7.5": 15.5,
+          "12.5": 15.5,
+          "17.5": 15.5,
+          "22.5": 15.5,
+          "27.5": 15.5,
+          "32.5": 15.5,
+          "37.5": 15.5,
+          "42.5": 15.5,
+          "47.5": 15.5,
+          "52.5": 15.5,
+          "57.5": 15.5,
+          "62.5": 13.5,
+          "67.5": null,
+          "72.5": null,
+          "77.5": null,
+          "82.5": null,
+          "87.5": null
+        }
+      }
+    }
+  ],
+  "comparisons_vs_baseline": [
+    {
+      "candidate_id": "nav_gain_3p5",
+      "nav_gain": 3.5,
+      "is_baseline": false,
+      "clear_net_benefit": false,
+      "regression_guards": {
+        "candidate_passes_all_hard_gates": true,
+        "N_rho_max_not_degraded_more_than_0_05": true,
+        "N_rho_mean_not_degraded_more_than_0_01": true,
+        "theta_fuze_max_displacement_within_2_5deg": false,
+        "minimum_range_boundary_displacement_within_0_5km": false,
+        "maximum_range_boundary_displacement_within_0_5km": false,
+        "saturation_fraction_p95_not_increased_more_than_0_02": true
+      },
+      "material_improvements": {
+        "N_rho_mean_improves_by_at_least_0_05": false,
+        "saturation_fraction_p95_improves_by_at_least_0_05": false
+      },
+      "deltas_vs_baseline": {
+        "N_rho_mean": 2.0119289932944327e-06,
+        "N_rho_max": 0.00015612715101212665,
+        "O_rho_min": 15.509265840469837,
+        "holdout_robust_hit_count": -9,
+        "guidance_saturation_fraction_p95": -0.028565374019919487,
+        "theta_fuze_max_displacement_deg": 5.0,
+        "minimum_range_boundary_max_displacement_km": null,
+        "maximum_range_boundary_max_displacement_km": null
+      },
+      "decision": "reject_or_no_material_gain"
+    },
+    {
+      "candidate_id": "nav_gain_3p75",
+      "nav_gain": 3.75,
+      "is_baseline": false,
+      "clear_net_benefit": false,
+      "regression_guards": {
+        "candidate_passes_all_hard_gates": true,
+        "N_rho_max_not_degraded_more_than_0_05": true,
+        "N_rho_mean_not_degraded_more_than_0_01": true,
+        "theta_fuze_max_displacement_within_2_5deg": false,
+        "minimum_range_boundary_displacement_within_0_5km": false,
+        "maximum_range_boundary_displacement_within_0_5km": false,
+        "saturation_fraction_p95_not_increased_more_than_0_02": true
+      },
+      "material_improvements": {
+        "N_rho_mean_improves_by_at_least_0_05": false,
+        "saturation_fraction_p95_improves_by_at_least_0_05": false
+      },
+      "deltas_vs_baseline": {
+        "N_rho_mean": 4.503054881451401e-07,
+        "N_rho_max": 2.154663788465238e-05,
+        "O_rho_min": 7.210466958996392,
+        "holdout_robust_hit_count": -1,
+        "guidance_saturation_fraction_p95": -0.015340002899811522,
+        "theta_fuze_max_displacement_deg": 5.0,
+        "minimum_range_boundary_max_displacement_km": null,
+        "maximum_range_boundary_max_displacement_km": null
+      },
+      "decision": "reject_or_no_material_gain"
+    },
+    {
+      "candidate_id": "nav_gain_4",
+      "nav_gain": 4.0,
+      "is_baseline": true,
+      "clear_net_benefit": false,
+      "regression_guards": {},
+      "material_improvements": {},
+      "deltas_vs_baseline": {},
+      "decision": "reference_baseline"
+    },
+    {
+      "candidate_id": "nav_gain_4p25",
+      "nav_gain": 4.25,
+      "is_baseline": false,
+      "clear_net_benefit": false,
+      "regression_guards": {
+        "candidate_passes_all_hard_gates": true,
+        "N_rho_max_not_degraded_more_than_0_05": true,
+        "N_rho_mean_not_degraded_more_than_0_01": true,
+        "theta_fuze_max_displacement_within_2_5deg": false,
+        "minimum_range_boundary_displacement_within_0_5km": false,
+        "maximum_range_boundary_displacement_within_0_5km": false,
+        "saturation_fraction_p95_not_increased_more_than_0_02": true
+      },
+      "material_improvements": {
+        "N_rho_mean_improves_by_at_least_0_05": false,
+        "saturation_fraction_p95_improves_by_at_least_0_05": false
+      },
+      "deltas_vs_baseline": {
+        "N_rho_mean": -5.378604821234737e-07,
+        "N_rho_max": -4.044395355622139e-05,
+        "O_rho_min": -7.018524218791086,
+        "holdout_robust_hit_count": 0,
+        "guidance_saturation_fraction_p95": 0.0017109423931806478,
+        "theta_fuze_max_displacement_deg": 5.0,
+        "minimum_range_boundary_max_displacement_km": 1.0,
+        "maximum_range_boundary_max_displacement_km": 2.0
+      },
+      "decision": "reject_or_no_material_gain"
+    },
+    {
+      "candidate_id": "nav_gain_4p5",
+      "nav_gain": 4.5,
+      "is_baseline": false,
+      "clear_net_benefit": false,
+      "regression_guards": {
+        "candidate_passes_all_hard_gates": true,
+        "N_rho_max_not_degraded_more_than_0_05": true,
+        "N_rho_mean_not_degraded_more_than_0_01": true,
+        "theta_fuze_max_displacement_within_2_5deg": false,
+        "minimum_range_boundary_displacement_within_0_5km": false,
+        "maximum_range_boundary_displacement_within_0_5km": false,
+        "saturation_fraction_p95_not_increased_more_than_0_02": true
+      },
+      "material_improvements": {
+        "N_rho_mean_improves_by_at_least_0_05": false,
+        "saturation_fraction_p95_improves_by_at_least_0_05": false
+      },
+      "deltas_vs_baseline": {
+        "N_rho_mean": -5.717414352706605e-07,
+        "N_rho_max": -4.041026212352403e-05,
+        "O_rho_min": -13.487204618335696,
+        "holdout_robust_hit_count": 5,
+        "guidance_saturation_fraction_p95": 0.009798793458172028,
+        "theta_fuze_max_displacement_deg": 5.0,
+        "minimum_range_boundary_max_displacement_km": null,
+        "maximum_range_boundary_max_displacement_km": null
+      },
+      "decision": "reject_or_no_material_gain"
+    }
+  ],
+  "selection": {
+    "selected_nav_gain": 4.0,
+    "decision": "retain_nav_gain_4_no_clear_net_benefit",
+    "clear_net_benefit_candidate_ids": [],
+    "selected_candidate_hard_gate_passed": true,
+    "scalar_selection_passed": true,
+    "formal_stage5_passed": true,
+    "default_promotion_ready": false,
+    "default_promotion_status": "held",
+    "default_promotion_hold_reasons": [
+      "stage-2 world_cv tracker reports acceleration_world_mps2 fixed at zero",
+      "stage-4 and stage-5 calibration authority covers only constant-velocity targets",
+      "maneuver-target and APN authority evidence is absent"
+    ]
+  },
+  "release_gate": {
+    "scalar_selection_and_default_promotion_are_separate_decisions": true,
+    "scalar_selection_passed": true,
+    "selected_nav_gain": 4.0,
+    "default_promotion_ready": false,
+    "status": "held_for_maneuver_and_APN_authority",
+    "required_next_evidence": [
+      "maneuver-target envelope with nonzero truth acceleration",
+      "tracker acceleration authority beyond fixed zero",
+      "APN gain identifiability and holdout validation"
+    ]
+  },
+  "runtime": {
+    "ef_py_artifact": "/tmp/cmo-five-stage-build/ef_py.cpython-313-x86_64-linux-gnu.so",
+    "database_path": "/tmp/cmo-five-stage/examples/config/database"
+  },
+  "limitations": [
+    "The calibration target is the deterministic engineering CV envelope, not real missile performance.",
+    "M cells and half-step holdout cells have no real-world truth label.",
+    "APN remains unidentifiable because truth target acceleration is zero.",
+    "A retained N=4 result means no tested value showed clear constrained net benefit, not that N=4 is universally optimal."
+  ],
+  "artifacts": {
+    "report_json": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json",
+    "candidate_summary_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_candidate_summary.csv",
+    "runs_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
+    "cells_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
+    "conclusions_zh_md": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md",
+    "manifest_json": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_manifest.json"
+  },
+  "raw_evidence": {
+    "runs_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
+    "cells_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
+    "storage_policy": "raw rows are retained in CSV and omitted from summary JSON",
+    "run_count": 13695,
+    "cell_count": 2315
+  }
+}

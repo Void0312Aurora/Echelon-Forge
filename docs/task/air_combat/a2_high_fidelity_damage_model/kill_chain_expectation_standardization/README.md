@@ -119,6 +119,10 @@ Out of scope:
   [kces_anchor_cv_response_diagnosis_summary_20260628.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md)
 - Constant-velocity anchor expectation-envelope audit:
   [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
+- Corrected-mechanism continuous envelope rebuild:
+  [stage-4 conclusions](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md)
+- Constrained guidance-scalar calibration:
+  [stage-5 conclusions](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md)
 - P0-P5 themselves produce documentation and contract language only. The
   post-P5 initial harness implementation adds a read-only diagnostic wrapper,
   tests, heatmap visualization, first-review-stage attribution, and
@@ -238,9 +242,21 @@ This subproject can be marked accepted only when:
   mild-maneuver cases in the complete `93`
   anchor-grid, the `572` recommended-main-grid, worker parallelism, and
   maneuvering-target runtime support remain incomplete.
-- P6 engineering-proxy guarded single-layer dry-run plans are admitted, while
-  runtime parameter retuning, descriptor edits, after reports, and full batch
-  execution remain held.
+- The subsequent five-stage guidance-mechanism sequence is now complete.
+  World LOS-history PN and the world-CV tracker are production-selectable;
+  capture ablation selected disabled. The corrected three-seed envelope ran
+  `1443` main-grid and `630` refined cases, yielding `N/M/O=146/32/69` with
+  mirror, seed, 35g, connectivity, and hole gates passing. Stage 5 then ran
+  `13695` OFAT/holdout cases over `nav_gain=3.5/3.75/4/4.25/4.5`; every
+  non-baseline value lacked material net benefit or exceeded contour-drift
+  limits, so `N=4` was retained. Scalar selection is complete, but default
+  promotion remains held because the world-CV tracker reports zero
+  acceleration and the evidence does not cover maneuver-target/APN authority;
+  the AIM-120 JSON remains unchanged.
+- P6 engineering-proxy guarded single-layer dry-run plans are admitted. The
+  constant-velocity candidate envelope/scalar batches are now complete, while
+  default runtime retuning, descriptor edits, real-world after reports, and
+  authority promotion remain held.
 
 ## Archive
 

@@ -44,9 +44,14 @@ A2 follow-on surface does not flatten into a long list of completed projects.
   The current tracked follow-on point is to emit the addendum's read-only
   quantized fields and the envelope's `envelope_cell_status` /
   `envelope_owner_stage` labels in future harness summaries if machine
-  consumption is needed. KCES does not maintain its own component-attribution
-  rules, and still refuses real weapon, real target, deterministic-fuze, Pk, or
-  calibration authority.
+  consumption is needed. The `2026-07-15` five-stage guidance-mechanism work
+  also completed world-frame PN, a world-frame CV tracker, capture-structure
+  ablation, a corrected continuous envelope, and a constrained `nav_gain`
+  sweep. It retained `N=4`; the complete candidate passes only in the
+  constant-velocity engineering domain, while AIM-120 default promotion remains
+  held for missing maneuver/APN evidence. KCES does not maintain its own
+  component-attribution rules, and still refuses real weapon, real target,
+  deterministic-fuze, Pk, or calibration authority.
 - [kill_chain_mechanism_decoupling_analysis_20260621.zh.md](kill_chain_mechanism_decoupling_analysis_20260621.zh.md):
   completed retained Chinese mechanism analysis for decoupling the kill chain
   into approach, fuze decision, warhead load field, component response, and

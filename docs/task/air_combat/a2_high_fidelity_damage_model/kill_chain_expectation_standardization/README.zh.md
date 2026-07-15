@@ -113,6 +113,10 @@ AIM-120C 性能声明。
   [kces_anchor_cv_response_diagnosis_summary_20260628.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md)
 - 匀速 anchor 期望包络审计入口：
   [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
+- 修正机制连续包络重建：
+  [第四阶段结论](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md)
+- 受约束制导标量校准：
+  [第五阶段结论](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md)
 - P0-P5 本身只产出文档和合同语言。P5 后的 initial harness implementation 新增只读
   diagnostic wrapper、测试、heatmap 可视化、首阶段复核归因和 component-response
   report-level local diagnosis；后续 envelope audit 把 standards-layer v0 期望
@@ -205,8 +209,17 @@ AIM-120C 性能声明。
   完整 `93` anchor-grid 中的
   `15` 个 mild-maneuver cases、`572` recommended-main-grid、并行 worker 和机动目标
   runtime 支持仍未完成。
-- P6 engineering-proxy guarded single-layer dry-run plans 已准入；runtime 参数重调、
-  descriptor 修改、after report 和完整批量执行仍保持 held。
+- 随后的五阶段制导机制工作已按顺序完成：世界系 LOS-history PN 和世界系 CV tracker
+  均已接入生产可选路径；capture 结构消融选择 disabled；修正后的三种子连续网格运行
+  `1443` 次主网格和 `630` 次边界加密，得到 `N/M/O=146/32/69`，镜像、seed、35g、
+  单连通和无孔洞门全部通过。第五阶段又执行 `13695` 次 OFAT/holdout 运行，比较
+  `nav_gain=3.5/3.75/4/4.25/4.5`；所有非基线候选均因无材料性净收益或轮廓位移
+  超限被拒绝，最终保留 `N=4`。该标量选择已完成，但默认发布仍 held：world-CV
+  tracker 的 acceleration 输出固定为零，当前证据没有覆盖机动目标/APN authority，
+  因而未修改 AIM-120 JSON。
+- P6 engineering-proxy guarded single-layer dry-run plans 已准入；匀速候选机制的
+  包络/标量批量执行现已完成，但默认 runtime 重调、descriptor 修改、真实世界
+  after report 和 authority promotion 仍保持 held。
 
 ## Archive
 

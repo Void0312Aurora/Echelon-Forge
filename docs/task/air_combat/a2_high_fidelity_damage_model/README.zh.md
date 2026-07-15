@@ -33,8 +33,11 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
   [空空杀伤链期望包络](../../../standards/air/kill_chain_expectation_envelope.zh.md)。
   当前可追踪 follow-on 点是：如果后续需要机器消费，应在 harness summary 中只读输出
   该补充定义的量化字段，以及包络定义的 `envelope_cell_status` /
-  `envelope_owner_stage` labels。KCES 不重新维护部件归因规则；仍不声明真实武器、
-  真实目标、确定性引信、Pk 或校准 authority。
+  `envelope_owner_stage` labels。`2026-07-15` 的五阶段制导机制工作已进一步完成
+  世界系 PN、世界系 CV tracker、capture 结构消融、修正后连续包络和受约束
+  `nav_gain` 扫描；最终保留 `N=4`，完整候选只在匀速工程域通过，AIM-120 默认
+  切换因机动目标/APN 证据缺失继续 held。KCES 不重新维护部件归因规则；仍不声明
+  真实武器、真实目标、确定性引信、Pk 或校准 authority。
 - [kill_chain_mechanism_decoupling_analysis_20260621.zh.md](kill_chain_mechanism_decoupling_analysis_20260621.zh.md)：
   已完成的杀伤链机制抽象与解耦分析，把 approach、fuze decision、
   warhead load field、component response 和 consequence projection 五段、

@@ -7,6 +7,8 @@ threshold addendum + 标准化 v0 期望包络 + 只读 expectation-envelope aud
 `R_effect_policy=independent_review_variable`；P2 场景矩阵为 pass；P3 指标映射为
 pass；P4 harness plan 为 pass；P5 标准提升决策为 pass。P6 已准入 engineering-proxy
 guarded single-layer dry-run plans；runtime 参数重调与真实世界 authority 继续 held。
+`2026-07-15` 五阶段制导机制/包络/标量工作已完成：`nav_gain=4` retained，完整候选
+默认发布因机动目标/APN 证据缺失保持 held。
 
 英文规范页：
 [kill_chain_expectation_standardization_current_status_20260621.md](kill_chain_expectation_standardization_current_status_20260621.md)
@@ -95,6 +97,15 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
   `6/8 km / 45 deg` 推入 `15 m`，同时把该 O 负控推到 `9.503 m`。因此当前
   N/M/O 窗口吸收了旧 PN frame、track 估计误差和 capture 窗口整形，不能再解释为
   纯参数结果。
+- 已按顺序完成后续五阶段机制校准。阶段1/2把世界系 LOS-history PN 和世界系 CV
+  tracker 接入生产可选路径；阶段3的 capture 结构消融选择 disabled。阶段4在完整
+  候选元组上执行 `1443` 次三种子主网格和 `630` 次边界加密，得到
+  `N/M/O=146/32/69`，最大镜像差 `0.000114 m`、seed spread `0 m`、capture `0 g`，
+  命中域单连通、无孔洞、无角度反转和多射程岛。阶段5又执行 `13695` 次
+  OFAT/half-step holdout，比较 `nav_gain=3.5/3.75/4/4.25/4.5`；低增益候选虽然
+  降低饱和 P95，但轮廓移动 `5 deg`，高增益候选外推边界且不降低饱和，最终保留
+  `N=4`。标量选择为 pass；默认发布为 held，因为 world-CV acceleration 固定为零，
+  机动目标/APN authority 尚未建立，AIM-120 JSON 未修改。
 - 已复核下游 runtime-projection response：`18` 个 `core/effective` rows 全部满足
   响应下限（`14` severe、`4` material）；`10` 个 outside-effect trace rows 均无
   sampled failure，并保持 `p_max<=0.008658`、`delta_abs<=0.006434`。
@@ -114,6 +125,8 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 | 标准化期望包络 v0 | pass | [docs/standards/air/kill_chain_expectation_envelope.zh.md](../../../../standards/air/kill_chain_expectation_envelope.zh.md) | 空中特化 planning supplement；不是当前 runtime contract，不修改 runtime 参数，也不授予 calibration authority。 |
 | Expectation-envelope audit 后处理器 | pass | [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) | 只读取既有 before report；envelope 字段尚未由 harness 内联输出。 |
 | 制导机制严格消融 | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md) | 精确开关、向量闭合、世界系 PN、track/truth-CV 和正负控制已完成；这是诊断闭合，不是生产机制准入。 |
+| 修正机制连续包络 | pass | [第四阶段结论](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md) | 匀速工程域三种子包络通过；不是机动目标、真实射程或 Pk 权威。 |
+| 制导标量约束校准 | pass / default promotion held | [第五阶段结论](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md) | `nav_gain=4` retained；完整候选尚未获得机动/APN 默认发布准入。 |
 
 ## 残余登记
 
@@ -125,19 +138,18 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 | Runtime projection 来源必须保持显式 | future harness maintenance | 保持 `REV-RUNTIME-PROJECTION` 绑定 `missile_runtime_projection.resolved_projection_radius_m`，并把 `REV-EQ-FUZE` 作为独立 sensitivity variant。 |
 | 并行 worker 和 retry 尚未实现 | future harness implementation | worker pool、失败 case retry 和 batch summary writer 落地。 |
 | 机动目标 runtime harness 尚未实现 | future harness implementation | `mild_maneuver` grid rows 不再标为 unsupported，并有对应 runtime facts。 |
-| 生产 PN frame 与 capture 窗口整形尚未重标定 | guidance runtime mechanism work | 先实现世界系 LOS-history PN 候选和坐标不变量，再消融 capture terminal weight/range scaling/lead blend，并在修正机制上重新生成 N/M/O envelope；禁止用 legacy 标签反向约束新机制。 |
+| 完整候选默认发布仍 held | guidance runtime mechanism work | 为机动目标建立非零加速度 tracker authority 和 APN 可识别性证据；随后以无 override、config-backed 模式重跑修正包络和标量门，再原子修改默认 selector。 |
 | 标准提升暂缓 | future standards promotion | 只有在 runtime/test/admission 证据验收后，才按 standards maintenance policy 重开。 |
 | 真实 authority 不可用 | future admission work | 未来 authority gate 准入具体字段；此前所有声明保持 engineering proxy。 |
 
 ## 推荐下一步
 
-1. 保持已收口 P0-P5 标准工作与新发现的制导机制残差相互独立；不要把
-   standards-layer envelope 当成 runtime contract。
-2. 保持生产默认暂不变化；把世界系 LOS-history PN 作为候选实现，并增加姿态变化不应
-   改变世界系 PN 输出的坐标不变量测试。
-3. 对 capture terminal weight、range scaling 和 lead blend 做下一轮严格消融，然后在
-   修正后的 PN/capture 组合上重新生成发射窗口；旧 `45 deg = M` 只保留为 legacy
-   runtime 描述，不能作为新机制的先验验收标签。
+1. 保持已收口 P0-P5 标准工作与五阶段 runtime 机制证据相互独立；不要把
+   standards-layer envelope 当成真实武器或默认 runtime authority。
+2. 保持 AIM-120 默认 selector 不变。下一工作不是继续调 `N`，而是为机动目标实现
+   可审计的非零加速度估计，或明确选择纯 PN/APN=0 后重新执行阶段4/5。
+3. 只有在机动/APN 门通过后，才把完整候选元组原子写入 JSON，并以无 override 的
+   config-backed 模式重跑连续包络；禁止只切 world PN/capture-off 而保留旧 tracker。
 
 ## 显式拒绝的过度声明
 

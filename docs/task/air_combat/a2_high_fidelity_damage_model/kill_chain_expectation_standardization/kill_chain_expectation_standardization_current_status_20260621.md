@@ -9,6 +9,9 @@ contract is pass with
 metric mapping is pass; P4 harness plan is pass; P5 standard promotion decision
 is pass. P6 admits engineering-proxy guarded single-layer dry-run plans, while
 runtime parameter retuning and real-world authority remain held.
+The `2026-07-15` five-stage guidance mechanism/envelope/scalar sequence is now
+complete: `nav_gain=4` is retained, while default promotion of the complete
+candidate remains held for missing maneuver-target/APN evidence.
 
 Chinese companion:
 [kill_chain_expectation_standardization_current_status_20260621.zh.md](kill_chain_expectation_standardization_current_status_20260621.zh.md)
@@ -116,6 +119,19 @@ Chinese companion:
   `9.503 m`. The current N/M/O window therefore incorporates legacy PN frame,
   track-estimation error, and capture window shaping; it is not purely a
   scalar-parameter result.
+- Completed the subsequent five-stage mechanism-calibration sequence in order.
+  Stages 1/2 made world LOS-history PN and the world-CV tracker
+  production-selectable; stage 3 selected capture disabled. Stage 4 ran `1443`
+  three-seed main-grid and `630` refined cases for the complete candidate,
+  yielding `N/M/O=146/32/69`, maximum mirror drift `0.000114 m`, zero seed
+  spread, zero capture, and a single connected hit region with no holes,
+  angular reversals, or range islands. Stage 5 ran `13695` OFAT/half-step
+  holdout cases over `nav_gain=3.5/3.75/4/4.25/4.5`. Lower gains reduced
+  saturation P95 but moved the contour by `5 deg`; higher gains expanded the
+  contour without reducing saturation. The result retains `N=4`. Scalar
+  selection passes, while default promotion remains held because world-CV
+  acceleration is fixed at zero and maneuver-target/APN authority is absent;
+  the AIM-120 JSON was not changed.
 - Rechecked the downstream runtime-projection response slice: all `18`
   `core/effective` rows satisfy their response floor (`14` severe, `4`
   material); the `10` outside-effect trace rows have no sampled failure and
@@ -136,6 +152,8 @@ Chinese companion:
 | Standardized expectation envelope v0 | pass | [docs/standards/air/kill_chain_expectation_envelope.md](../../../../standards/air/kill_chain_expectation_envelope.md) | Air-specialization planning supplement; not a current runtime contract, no runtime parameter changes, and no calibration authority. |
 | Expectation-envelope audit postprocessor | pass | [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) | Reads existing before report only; envelope fields are not yet emitted inline by the harness. |
 | Exact guidance mechanism ablation | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md) | Exact controls, vector closure, world PN, track/truth-CV, and positive/negative controls are complete; this is diagnostic closure, not production mechanism admission. |
+| Corrected-mechanism continuous envelope | pass | [stage-4 conclusions](../review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715_conclusions.zh.md) | The three-seed CV engineering envelope passes; this is not maneuver-target, real-range, or Pk authority. |
+| Constrained guidance-scalar calibration | pass / default promotion held | [stage-5 conclusions](../review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md) | `nav_gain=4` retained; the complete candidate lacks maneuver/APN admission for default release. |
 
 ## Residual Register
 
@@ -147,22 +165,22 @@ Chinese companion:
 | Runtime projection source must remain explicit | Future harness maintenance | Keep `REV-RUNTIME-PROJECTION` bound to `missile_runtime_projection.resolved_projection_radius_m` and keep `REV-EQ-FUZE` separate as a declared sensitivity variant. |
 | Worker parallelism and retry not implemented | Future harness implementation | Worker pool, failed-case retry, and batch summary writer exist. |
 | Maneuvering-target runtime harness not implemented | Future harness implementation | `mild_maneuver` grid rows are no longer marked unsupported and have runtime facts. |
-| Production PN frame and capture window shaping are not recalibrated | Guidance runtime mechanism work | Implement a world LOS-history PN candidate and coordinate invariants, ablate capture terminal weighting/range scaling/lead blend, then regenerate the N/M/O envelope on the corrected mechanism; do not constrain it with legacy labels. |
+| Complete-candidate default promotion remains held | Guidance runtime mechanism work | Establish nonzero acceleration-tracker authority and APN identifiability for maneuvering targets, then rerun the corrected envelope and scalar gates in config-backed no-override mode before atomically changing default selectors. |
 | Standards promotion held | Future standards promotion | Reopen under the standards maintenance policy only after accepted runtime/test/admission evidence exists. |
 | Real authority unavailable | Future admission work | A future authority gate admits specific fields; until then all claims remain engineering proxy. |
 
 ## Recommended Next Steps
 
-1. Keep the closed P0-P5 standards workstream separate from the new guidance
-   mechanism residual; do not treat the standards-layer envelope as a runtime
-   contract.
-2. Keep production defaults unchanged for now; implement world LOS-history PN
-   as a candidate and add a coordinate invariant that Transform-attitude
-   changes must not alter world-frame PN output.
-3. Run the next exact ablation on capture terminal weighting, range scaling,
-   and lead blend, then regenerate the launch window on the corrected PN/capture
-   combination. Retain `45 deg = M` only as a legacy-runtime description, not
-   as a prior acceptance label for the corrected mechanism.
+1. Keep the closed P0-P5 standards workstream separate from the five-stage
+   runtime-mechanism evidence; do not treat the standards-layer envelope as
+   real-weapon or default-runtime authority.
+2. Keep AIM-120 default selectors unchanged. The next work is not another `N`
+   sweep: implement auditable nonzero acceleration estimation for maneuvering
+   targets, or explicitly choose pure PN/APN=0 and rerun stages 4/5.
+3. Only after the maneuver/APN gate passes, atomically write the complete
+   candidate tuple and rerun the continuous envelope without overrides through
+   the config-backed path. Do not combine world PN/capture-off with the legacy
+   tracker as a partial release.
 
 ## Explicitly Refused Claims
 

@@ -1,0 +1,243 @@
+{
+  "schema_version": "a2.kill_chain_guidance_scalar_calibration_manifest.v1",
+  "generated_at_utc": "2026-07-15T14:38:52.543699+00:00",
+  "report_schema_version": "a2.kill_chain_guidance_scalar_calibration.v1",
+  "tool": {
+    "path": "tools/diagnostics/kill_chain_guidance_scalar_calibration.py",
+    "sha256": "afe65111c79b80945cfb0ee3b9a4da5242b149f7dc90579950dfc68f65904248"
+  },
+  "git": {
+    "head": "532d368aa35d325177c8cb4851f33e6759170482",
+    "branch": "codex/kill-chain-calibration-five-stage",
+    "worktree_porcelain": "?? docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/\n?? tests/tools/test_kill_chain_guidance_scalar_calibration.py\n?? tools/diagnostics/kill_chain_guidance_scalar_calibration.py"
+  },
+  "inputs": {
+    "stage4_report_path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_envelope_rebuild_20260715/kill_chain_guidance_envelope_rebuild_20260715.json",
+    "stage4_report_sha256": "72fd560589732f4e0bf6de3c23c1091e10428e17b00d62d01c705dd8c23306be",
+    "aim120_definition_path": "examples/config/database/weapons/air_to_air/aim_120c.json",
+    "aim120_definition_sha256": "d285332b7cd6e1f56173cdfe0ca0904be1a8a2245bfa88bf16947c29498b85d2"
+  },
+  "runtime": {
+    "ef_py_path": "/tmp/cmo-five-stage-build/ef_py.cpython-313-x86_64-linux-gnu.so",
+    "ef_py_sha256": "6c254447f9116a49a829cd697fe715b7d4b402ebbe804268fdf1f2f963c34ecc",
+    "database_path": "/tmp/cmo-five-stage/examples/config/database"
+  },
+  "run_contract": {
+    "identifiability": [
+      {
+        "parameter": "nav_gain",
+        "stage5_status": "evaluated_OFAT",
+        "reason": "remaining scalar with observable CV trajectory effect"
+      },
+      {
+        "parameter": "capture_guidance_scalars",
+        "stage5_status": "excluded",
+        "reason": "stage 3 selected capture_guidance_mode=disabled"
+      },
+      {
+        "parameter": "apn_target_accel_gain",
+        "stage5_status": "excluded_frozen_at_0.5",
+        "reason": "truth target acceleration is zero in the CV experiment"
+      },
+      {
+        "parameter": "target_tracker_alpha_beta",
+        "stage5_status": "excluded_frozen_at_0.20_0.02",
+        "reason": "estimated and frozen in stage 2; joint retuning would confound mechanisms"
+      },
+      {
+        "parameter": "max_lateral_g",
+        "stage5_status": "constraint_frozen_at_35",
+        "reason": "safety and runtime constraint, not an objective scalar"
+      }
+    ],
+    "evaluated_scalar": {
+      "name": "nav_gain",
+      "method": "one_factor_at_a_time",
+      "baseline": 4.0,
+      "candidates": [
+        3.5,
+        3.75,
+        4.0,
+        4.25,
+        4.5
+      ]
+    },
+    "frozen_production_mechanism_tuning": {
+      "pn_los_rate_source": 1,
+      "target_kinematics_estimator": 1,
+      "target_tracker_alpha": 0.2,
+      "target_tracker_beta": 0.02,
+      "capture_guidance_mode": 0,
+      "max_lateral_g": 35.0,
+      "apn_target_accel_gain": 0.5
+    },
+    "sampling": {
+      "ranges_km": [
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0,
+        10.0,
+        11.0,
+        12.0,
+        13.0,
+        14.0,
+        15.0,
+        16.0
+      ],
+      "angles_deg": [
+        0.0,
+        5.0,
+        10.0,
+        15.0,
+        20.0,
+        25.0,
+        30.0,
+        35.0,
+        40.0,
+        45.0,
+        50.0,
+        55.0,
+        60.0,
+        65.0,
+        70.0,
+        75.0,
+        80.0,
+        85.0,
+        90.0
+      ],
+      "main_cell_count": 247,
+      "holdout_policy": "midpoint between adjacent stage-4 range and angle samples",
+      "holdout_enabled": true,
+      "holdout_ranges_km": [
+        4.5,
+        5.5,
+        6.5,
+        7.5,
+        8.5,
+        9.5,
+        10.5,
+        11.5,
+        12.5,
+        13.5,
+        14.5,
+        15.5
+      ],
+      "holdout_angles_deg": [
+        2.5,
+        7.5,
+        12.5,
+        17.5,
+        22.5,
+        27.5,
+        32.5,
+        37.5,
+        42.5,
+        47.5,
+        52.5,
+        57.5,
+        62.5,
+        67.5,
+        72.5,
+        77.5,
+        82.5,
+        87.5
+      ],
+      "holdout_cell_count": 216,
+      "seeds": [
+        20260621,
+        20260622,
+        20260623
+      ],
+      "signed_bearing_policy": "zero once; nonzero plus and minus",
+      "M_policy": "observed and reported, never a binary optimization pressure",
+      "holdout_policy_role": "observed and reported, never counted as material benefit"
+    },
+    "selection_policy": {
+      "hard_constraints": "stage-4 N stays robust hit; O stays robust miss",
+      "topology": "one connected robust-hit band, no angular reversal, range multi-island, or internal hole",
+      "mirror_tolerance_m": 0.001,
+      "seed_spread_tolerance_m": 0.001,
+      "max_lateral_g": 35.0,
+      "regression_allowances": {
+        "N_rho_max": 0.05,
+        "N_rho_mean": 0.01,
+        "guidance_saturation_fraction_p95": 0.02,
+        "theta_fuze_max_displacement_deg": 2.5,
+        "minimum_range_boundary_max_displacement_km": 0.5,
+        "maximum_range_boundary_max_displacement_km": 0.5
+      },
+      "material_improvement_thresholds": {
+        "N_rho_mean": 0.05,
+        "guidance_saturation_fraction_p95": 0.05
+      },
+      "non_objectives": [
+        "holdout robust-hit count",
+        "M hit/miss transition",
+        "larger O-cell miss distance"
+      ],
+      "fallback": "retain nav_gain=4 when no non-baseline candidate has clear net benefit"
+    }
+  },
+  "selection": {
+    "selected_nav_gain": 4.0,
+    "decision": "retain_nav_gain_4_no_clear_net_benefit",
+    "clear_net_benefit_candidate_ids": [],
+    "selected_candidate_hard_gate_passed": true,
+    "scalar_selection_passed": true,
+    "formal_stage5_passed": true,
+    "default_promotion_ready": false,
+    "default_promotion_status": "held",
+    "default_promotion_hold_reasons": [
+      "stage-2 world_cv tracker reports acceleration_world_mps2 fixed at zero",
+      "stage-4 and stage-5 calibration authority covers only constant-velocity targets",
+      "maneuver-target and APN authority evidence is absent"
+    ]
+  },
+  "release_gate": {
+    "scalar_selection_and_default_promotion_are_separate_decisions": true,
+    "scalar_selection_passed": true,
+    "selected_nav_gain": 4.0,
+    "default_promotion_ready": false,
+    "status": "held_for_maneuver_and_APN_authority",
+    "required_next_evidence": [
+      "maneuver-target envelope with nonzero truth acceleration",
+      "tracker acceleration authority beyond fixed zero",
+      "APN gain identifiability and holdout validation"
+    ]
+  },
+  "artifacts": {
+    "report_json": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715.json",
+      "sha256": "a30486a6cd55d68d4e571f1f6a504e0149422b8daa5299208245e6a614cd0221",
+      "bytes": 85733
+    },
+    "candidate_summary_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_candidate_summary.csv",
+      "sha256": "6f128c215877ffd858a2046366a78866c46635428ea6a68a927025e9deb3afa8",
+      "bytes": 4403
+    },
+    "runs_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_runs.csv",
+      "sha256": "d6d0992161c2920c90085781f88d85827799c4e7dc904ad40ad167b9cae53a71",
+      "bytes": 6644568
+    },
+    "cells_csv": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_cells.csv",
+      "sha256": "b0d390a8a2028a7cba7dcb7150aa793c524edfe677d1160536a5d56f2b0efc68",
+      "bytes": 824439
+    },
+    "conclusions_zh_md": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_guidance_scalar_calibration_20260715/kill_chain_guidance_scalar_calibration_20260715_conclusions.zh.md",
+      "sha256": "0f86a5a21484b1c3f8e6300ff56bd564827d43141769f36f141e33c920449c48",
+      "bytes": 1844
+    }
+  },
+  "authority_boundary": {
+    "real_weapon_or_target_authority": false,
+    "real_world_pk": false,
+    "interpretation": "deterministic engineering CV scalar calibration only"
+  }
+}
