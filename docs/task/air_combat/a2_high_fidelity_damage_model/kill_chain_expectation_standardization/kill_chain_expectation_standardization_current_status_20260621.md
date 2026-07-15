@@ -104,6 +104,18 @@ Chinese companion:
   autopilot does not bring any `45 deg` cell inside `R_fuze`. The audit's zero
   nominal residual count is therefore classification closure, not guidance
   mechanism closure.
+- Completed the same-day
+  [exact mechanism ablation](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md):
+  `20` mirrored cases and `16` discrete profiles produced `320` runs with
+  `N=4`, `35 g`, and `APN=0.5` frozen and no epsilon gates. The all-enabled
+  profile is casewise identical to baseline; disabled-component, vector-sum,
+  total-clamp, and truth-CV invariants all pass. World LOS-history PN improves
+  the `4/6/8 km / 45 deg` cells to `16.736/16.472/17.034 m`, but also moves
+  `16 km / 30 deg` from `17.010 m` to `12.030 m`. Truth-CV moves the
+  `6/8 km / 45 deg` cells inside `15 m` while pushing that O control to
+  `9.503 m`. The current N/M/O window therefore incorporates legacy PN frame,
+  track-estimation error, and capture window shaping; it is not purely a
+  scalar-parameter result.
 - Rechecked the downstream runtime-projection response slice: all `18`
   `core/effective` rows satisfy their response floor (`14` severe, `4`
   material); the `10` outside-effect trace rows have no sampled failure and
@@ -123,7 +135,7 @@ Chinese companion:
 | Component-response quantization thresholds | pass | [kill_chain_component_response_quantization_20260705.md](kill_chain_component_response_quantization_20260705.md) | Task-local docs-only diagnostic bands; grants no component-failure, Pk, or deterministic-fuze authority. |
 | Standardized expectation envelope v0 | pass | [docs/standards/air/kill_chain_expectation_envelope.md](../../../../standards/air/kill_chain_expectation_envelope.md) | Air-specialization planning supplement; not a current runtime contract, no runtime parameter changes, and no calibration authority. |
 | Expectation-envelope audit postprocessor | pass | [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) | Reads existing before report only; envelope fields are not yet emitted inline by the harness. |
-| Guidance mechanism ablation | partial | [kill_chain_guidance_mechanism_ablation_conclusions_20260715.md](../review_packets/kill_chain_guidance_mechanism_ablation_20260715/kill_chain_guidance_mechanism_ablation_conclusions_20260715.md) | Mechanism-group attribution and structural controls exist; exact capture/PN/lead-acceleration switches and vector diagnostics remain open. |
+| Exact guidance mechanism ablation | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md) | Exact controls, vector closure, world PN, track/truth-CV, and positive/negative controls are complete; this is diagnostic closure, not production mechanism admission. |
 
 ## Residual Register
 
@@ -135,7 +147,7 @@ Chinese companion:
 | Runtime projection source must remain explicit | Future harness maintenance | Keep `REV-RUNTIME-PROJECTION` bound to `missile_runtime_projection.resolved_projection_radius_m` and keep `REV-EQ-FUZE` separate as a declared sensitivity variant. |
 | Worker parallelism and retry not implemented | Future harness implementation | Worker pool, failed-case retry, and batch summary writer exist. |
 | Maneuvering-target runtime harness not implemented | Future harness implementation | `mild_maneuver` grid rows are no longer marked unsupported and have runtime facts. |
-| `45 deg` guidance mechanism residual remains | Guidance runtime mechanism work | Freeze scalar values; compare world-vector LOS-rate PN, velocity-only lead, quadratic lead, and CV truth-kinematics oracle while preserving `30 deg` positives and `12 km / 45 deg`, `16 km / 30 deg` negative controls. |
+| Production PN frame and capture window shaping are not recalibrated | Guidance runtime mechanism work | Implement a world LOS-history PN candidate and coordinate invariants, ablate capture terminal weighting/range scaling/lead blend, then regenerate the N/M/O envelope on the corrected mechanism; do not constrain it with legacy labels. |
 | Standards promotion held | Future standards promotion | Reopen under the standards maintenance policy only after accepted runtime/test/admission evidence exists. |
 | Real authority unavailable | Future admission work | A future authority gate admits specific fields; until then all claims remain engineering proxy. |
 
@@ -144,12 +156,13 @@ Chinese companion:
 1. Keep the closed P0-P5 standards workstream separate from the new guidance
    mechanism residual; do not treat the standards-layer envelope as a runtime
    contract.
-2. Freeze `N=4`, `35 g`, and the current launch-window labels while running the
-   exact PN-frame and lead-acceleration ablations named above.
-3. Preserve the `45 deg = M` descriptive boundary, corrected 9 m
-   runtime-projection source, P6 frozen-stage guard, and authority boundary in
-   all before/after reports until a mechanism change passes positive and
-   negative controls.
+2. Keep production defaults unchanged for now; implement world LOS-history PN
+   as a candidate and add a coordinate invariant that Transform-attitude
+   changes must not alter world-frame PN output.
+3. Run the next exact ablation on capture terminal weighting, range scaling,
+   and lead blend, then regenerate the launch window on the corrected PN/capture
+   combination. Retain `45 deg = M` only as a legacy-runtime description, not
+   as a prior acceptance label for the corrected mechanism.
 
 ## Explicitly Refused Claims
 

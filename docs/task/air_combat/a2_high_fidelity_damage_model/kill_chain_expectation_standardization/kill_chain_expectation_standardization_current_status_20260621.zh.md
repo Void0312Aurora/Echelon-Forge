@@ -85,6 +85,16 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
   移除 track filter 虽改善 `45 deg`，却会击穿 `16 km / 30 deg` O 类负控；
   近瞬时标量 autopilot 也不能让任何 `45 deg` 单元进入 `R_fuze`。因此审计中的
   nominal residual 归零只是分类闭合，不是制导机制闭合。
+- 已完成同日的
+  [严格机制消融](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md)：
+  `20` 个镜像案例、`16` 个离散 profile 共 `320` 次运行，冻结 `N=4`、`35 g`、
+  `APN=0.5`，不再使用 epsilon 门控。all-enabled profile 与 baseline 最近距逐案
+  相同；禁用分量、向量和、总限幅及 truth-CV 不变量全部通过。世界系 LOS-history
+  PN 将 `4/6/8 km / 45 deg` 改善到 `16.736/16.472/17.034 m`，但也把
+  `16 km / 30 deg` 从 `17.010 m` 推到 `12.030 m`。truth-CV 进一步把
+  `6/8 km / 45 deg` 推入 `15 m`，同时把该 O 负控推到 `9.503 m`。因此当前
+  N/M/O 窗口吸收了旧 PN frame、track 估计误差和 capture 窗口整形，不能再解释为
+  纯参数结果。
 - 已复核下游 runtime-projection response：`18` 个 `core/effective` rows 全部满足
   响应下限（`14` severe、`4` material）；`10` 个 outside-effect trace rows 均无
   sampled failure，并保持 `p_max<=0.008658`、`delta_abs<=0.006434`。
@@ -103,7 +113,7 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 | 组件响应量化阈值 | pass | [kill_chain_component_response_quantization_20260705.zh.md](kill_chain_component_response_quantization_20260705.zh.md) | task-local docs-only 诊断分区；不授予 component-failure、Pk 或确定性引信权威。 |
 | 标准化期望包络 v0 | pass | [docs/standards/air/kill_chain_expectation_envelope.zh.md](../../../../standards/air/kill_chain_expectation_envelope.zh.md) | 空中特化 planning supplement；不是当前 runtime contract，不修改 runtime 参数，也不授予 calibration authority。 |
 | Expectation-envelope audit 后处理器 | pass | [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) | 只读取既有 before report；envelope 字段尚未由 harness 内联输出。 |
-| 制导机制消融 | partial | [kill_chain_guidance_mechanism_ablation_conclusions_20260715.zh.md](../review_packets/kill_chain_guidance_mechanism_ablation_20260715/kill_chain_guidance_mechanism_ablation_conclusions_20260715.zh.md) | 已有机制组归因和结构控制；严格的 capture/PN/lead-acceleration 开关及向量诊断仍未完成。 |
+| 制导机制严格消融 | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md) | 精确开关、向量闭合、世界系 PN、track/truth-CV 和正负控制已完成；这是诊断闭合，不是生产机制准入。 |
 
 ## 残余登记
 
@@ -115,7 +125,7 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 | Runtime projection 来源必须保持显式 | future harness maintenance | 保持 `REV-RUNTIME-PROJECTION` 绑定 `missile_runtime_projection.resolved_projection_radius_m`，并把 `REV-EQ-FUZE` 作为独立 sensitivity variant。 |
 | 并行 worker 和 retry 尚未实现 | future harness implementation | worker pool、失败 case retry 和 batch summary writer 落地。 |
 | 机动目标 runtime harness 尚未实现 | future harness implementation | `mild_maneuver` grid rows 不再标为 unsupported，并有对应 runtime facts。 |
-| `45 deg` 制导机制残差仍存在 | guidance runtime mechanism work | 冻结标量；比较世界系 LOS-rate 向量 PN、velocity-only lead、quadratic lead 和 CV truth-kinematics oracle，同时保持 `30 deg` 正样本以及 `12 km / 45 deg`、`16 km / 30 deg` 负控。 |
+| 生产 PN frame 与 capture 窗口整形尚未重标定 | guidance runtime mechanism work | 先实现世界系 LOS-history PN 候选和坐标不变量，再消融 capture terminal weight/range scaling/lead blend，并在修正机制上重新生成 N/M/O envelope；禁止用 legacy 标签反向约束新机制。 |
 | 标准提升暂缓 | future standards promotion | 只有在 runtime/test/admission 证据验收后，才按 standards maintenance policy 重开。 |
 | 真实 authority 不可用 | future admission work | 未来 authority gate 准入具体字段；此前所有声明保持 engineering proxy。 |
 
@@ -123,11 +133,11 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 
 1. 保持已收口 P0-P5 标准工作与新发现的制导机制残差相互独立；不要把
    standards-layer envelope 当成 runtime contract。
-2. 冻结 `N=4`、`35 g` 和当前发射窗口标签，执行上述严格 PN frame 与 lead
-   acceleration 消融。
-3. 在机制修改通过正负控制前，所有 before/after report 都保留 `45 deg = M` 描述性
-   边界、修正后的 9 m runtime-projection 来源、P6 frozen-stage guard 和 authority
-   boundary。
+2. 保持生产默认暂不变化；把世界系 LOS-history PN 作为候选实现，并增加姿态变化不应
+   改变世界系 PN 输出的坐标不变量测试。
+3. 对 capture terminal weight、range scaling 和 lead blend 做下一轮严格消融，然后在
+   修正后的 PN/capture 组合上重新生成发射窗口；旧 `45 deg = M` 只保留为 legacy
+   runtime 描述，不能作为新机制的先验验收标签。
 
 ## 显式拒绝的过度声明
 

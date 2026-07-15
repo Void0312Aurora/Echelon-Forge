@@ -223,9 +223,16 @@ This subproject can be marked accepted only when:
   improves `45 deg` misses but incorrectly moves the `16 km / 30 deg` O-class
   negative control inside `R_fuze`; a near-instant scalar autopilot is only a
   secondary improvement. Therefore “no nominal guidance residual” remains a
-  classification result, not mechanism closure. The current `45 deg -> M`
-  boundary is descriptive of the runtime while exact PN-frame and
-  velocity-only-versus-quadratic-lead ablations remain open.
+  classification result, not mechanism closure. A follow-on
+  [exact mechanism ablation](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md)
+  completed `320` exact-switch runs and vector-closure checks. World
+  LOS-history PN improves the core `45 deg` cells by about `5.6..7.4 m`, but
+  also moves `16 km / 30 deg` from `17.010 m` to `12.030 m`; truth-CV shows
+  that the track velocity chain contributes about `3.1..4.4 m` of core
+  residual. The current `45 deg -> M` boundary therefore describes the legacy
+  runtime only: the N/M/O window also contains PN-frame, track-estimation, and
+  capture-shaping effects, so the mechanism must be corrected before the
+  window is recalibrated.
   The
   `15`
   mild-maneuver cases in the complete `93`

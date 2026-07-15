@@ -195,8 +195,13 @@ AIM-120C 性能声明。
   30/45 deg` 核心单元只改变 `0.01..1.53 m`。移除 track filter 虽改善 `45 deg`
   miss，却会错误地把 `16 km / 30 deg` O 类负控推进 `R_fuze`；近瞬时标量
   autopilot 也只提供次要改善。因此“无 nominal guidance residual”仍只是分类结果，
-  不是机制闭合。当前 `45 deg -> M` 边界只描述现有 runtime，严格的 PN frame 和
-  velocity-only / quadratic lead 消融仍未完成。
+  不是机制闭合。后续
+  [严格机制消融](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md)
+  已完成 `320` 次精确开关运行和向量闭合验收。世界系 LOS-history PN 把核心
+  `45 deg` 改善约 `5.6..7.4 m`，但同时把 `16 km / 30 deg` 从 `17.010 m`
+  推到 `12.030 m`；truth-CV 又揭示 track 速度链约贡献 `3.1..4.4 m` 核心残差。
+  因此当前 `45 deg -> M` 只描述 legacy runtime，N/M/O 窗口还吸收了 PN frame、
+  track 估计和 capture 窗口整形，下一步必须先修机制、再重标定窗口。
   完整 `93` anchor-grid 中的
   `15` 个 mild-maneuver cases、`572` recommended-main-grid、并行 worker 和机动目标
   runtime 支持仍未完成。
