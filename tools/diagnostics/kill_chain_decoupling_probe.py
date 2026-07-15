@@ -41,6 +41,9 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethalit
 SCHEMA_VERSION = "a2.kill_chain_decoupling_probe.v1"
 FACADE_SCHEMA_VERSION = "a2.kill_chain_decoupled_facade.v1"
 RUNTIME_FACADE_SCHEMA_VERSION = "a2.kill_chain_runtime_facade.v1"
+RUNTIME_PROJECTION_PROFILE_SCHEMA_VERSION = (
+  "a2.kill_chain_runtime_projection_profile.v1"
+)
 CALIBRATION_ADMISSION_SCHEMA_VERSION = "a2.kill_chain_calibration_admission.v1"
 CALIBRATION_PLAN_SCHEMA_VERSION = "a2.kill_chain_single_layer_calibration_plan.v1"
 CALIBRATION_DELTA_GUARD_SCHEMA_VERSION = "a2.kill_chain_calibration_delta_guard.v1"
@@ -66,6 +69,14 @@ DEFAULT_GUIDANCE_CASES = (
   {"case_id": "aim120_8km_right_30deg", "range_m": 8000.0, "bearing_deg": 30.0},
 )
 DEFAULT_PROXIMITY_DISTANCES_M = (0.5, 2.0, 4.0, 8.0, 10.96, 12.0, 15.0)
+WARHEAD_SPATIAL_PROJECTION_DEFAULTS = {
+  "blast": (0.55, 1.0, 20.0),
+  "fragmentation": (0.45, 1.0, 18.0),
+  "blast_fragmentation": (0.45, 1.0, 18.0),
+  "continuous_rod": (0.32, 1.0, 11.0),
+  "hit_to_kill": (0.24, 1.0, 6.0),
+}
+DEFAULT_WARHEAD_SPATIAL_PROJECTION = (0.35, 1.0, 12.0)
 LOAD_ONLY_COMPONENT_FIELDS = (
   "direct_hit",
   "distance_m",
@@ -221,6 +232,70 @@ def _finite_float(value: Any, default: float = float("nan")) -> float:
 def _finite_or_none(value: Any) -> float | None:
   out = _finite_float(value)
   return out if math.isfinite(out) else None
+
+
+def _runtime_projection_profile(runtime_state: dict[str, Any]) -> dict[str, Any]:
+  family = str(runtime_state.get("warhead_family", "") or "blast_fragmentation")
+  default_fraction, default_min_radius, default_max_radius = (
+    WARHEAD_SPATIAL_PROJECTION_DEFAULTS.get(
+      family,
+      DEFAULT_WARHEAD_SPATIAL_PROJECTION,
+    )
+  )
+  lethal_radius_m = _finite_or_none(
+    runtime_state.get("warhead_lethal_radius_m")
+  )
+  fuse_distance_m = _finite_or_none(runtime_state.get("fuse_distance_m"))
+  authored_fraction = _finite_or_none(
+    runtime_state.get("warhead_projection_radius_fraction")
+  )
+  authored_min_radius = _finite_or_none(
+    runtime_state.get("warhead_projection_min_radius_m")
+  )
+  authored_max_radius = _finite_or_none(
+    runtime_state.get("warhead_projection_max_radius_m")
+  )
+  radius_fraction = min(
+    2.0,
+    max(0.05, authored_fraction if authored_fraction is not None else default_fraction),
+  )
+  min_radius_m = min(
+    100.0,
+    max(0.0, authored_min_radius if authored_min_radius is not None else default_min_radius),
+  )
+  max_radius_m = min(
+    100.0,
+    max(
+      min_radius_m,
+      authored_max_radius if authored_max_radius is not None else default_max_radius,
+    ),
+  )
+  resolved_radius_m = None
+  radius_input_m = lethal_radius_m if lethal_radius_m is not None else fuse_distance_m
+  if lethal_radius_m is not None:
+    radius_input_source = "warhead_lethal_radius_m"
+  elif fuse_distance_m is not None:
+    radius_input_source = "fuse_distance_m"
+  else:
+    radius_input_source = "unavailable"
+  if radius_input_m is not None:
+    resolved_radius_m = min(
+      max_radius_m,
+      max(min_radius_m, radius_input_m * radius_fraction),
+    )
+  return {
+    "schema_version": RUNTIME_PROJECTION_PROFILE_SCHEMA_VERSION,
+    "effect_family": family,
+    "lethal_radius_m": lethal_radius_m,
+    "fuse_distance_m": fuse_distance_m,
+    "radius_input_m": radius_input_m,
+    "radius_input_source": radius_input_source,
+    "projection_radius_fraction": radius_fraction,
+    "projection_min_radius_m": min_radius_m,
+    "projection_max_radius_m": max_radius_m,
+    "resolved_projection_radius_m": resolved_radius_m,
+    "source": "missile_runtime_state",
+  }
 
 
 def _int_attr(obj: Any, name: str, default: int = 0) -> int:
@@ -3204,6 +3279,9 @@ def run_guidance_case(
   missile_id = int(sim.fire_missile(blue_id, red_id))
   if missile_id <= 0:
     raise RuntimeError(f"missile launch failed for {case_id}")
+  missile_runtime_projection = _runtime_projection_profile(
+    dict(sim.debug_get_missile_runtime_state(missile_id))
+  )
 
   dt = float(sim.get_time_step())
   min_truth_distance_m = math.inf
@@ -3269,6 +3347,7 @@ def run_guidance_case(
     "bearing_deg": float(bearing_deg),
     "seed": int(seed),
     "missile_id": int(missile_id),
+    "missile_runtime_projection": missile_runtime_projection,
     "target_id": int(red_id),
     "target_active": bool(sim.is_unit_active(red_id)),
     "missile_active": bool(sim.is_unit_active(missile_id)),

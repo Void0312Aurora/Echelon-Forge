@@ -33,5 +33,5 @@ Boundary: engineering-proxy diagnostics only.
   - `kces_anchor_grid_cv_6km_m45deg`: range_km=`6.0`, signed_bearing_deg=`-45.0`, rho_fuze=`1.473400700835904`
   - `kces_anchor_grid_cv_6km_p45deg`: range_km=`6.0`, signed_bearing_deg=`45.0`, rho_fuze=`1.4734021545218676`
 - `8 km / +/-30 deg` selected rows:
-  - `kces_anchor_grid_cv_8km_m30deg`: nearest_distance_m=`10.963446301013404`, rho_fuze=`0.7308964200675603`, effect_band=`outer_effective`, max_failure_probability=`0.006350331908151525`
-  - `kces_anchor_grid_cv_8km_p30deg`: nearest_distance_m=`10.963479375176643`, rho_fuze=`0.7308986250117762`, effect_band=`outer_effective`, max_failure_probability=`0.0063555841366786684`
+  - `kces_anchor_grid_cv_8km_m30deg`: nearest_distance_m=`10.963446301013404`, rho_fuze=`0.7308964200675603`, effect_band=`outside_effect`, max_failure_probability=`0.006350331908151525`
+  - `kces_anchor_grid_cv_8km_p30deg`: nearest_distance_m=`10.963479375176643`, rho_fuze=`0.7308986250117762`, effect_band=`outside_effect`, max_failure_probability=`0.0063555841366786684`

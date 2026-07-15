@@ -131,3 +131,35 @@ def test_response_diagnosis_writes_probability_cliff_artifacts(tmp_path) -> None
   assert "engineering-proxy diagnostics only" in (
     tmp_path / "out" / "sample_response_diagnosis_summary_20260628.md"
   ).read_text(encoding="utf-8")
+
+
+def test_response_diagnosis_summary_handles_empty_candidate_set(tmp_path) -> None:
+  report = {
+    "schema_version": "a2.kill_chain_expectation_before_report.v1",
+    "heatmap_rows": [
+      _row(
+        case_id="baseline",
+        bearing=15.0,
+        sampled_failure_count=2,
+        strongest_load=0.9,
+        max_failure_probability=0.88,
+        component_response_band="sampled_failure_observed",
+      )
+    ],
+  }
+  input_path = tmp_path / "before.json"
+  input_path.write_text(json.dumps(report), encoding="utf-8")
+
+  manifest = diagnosis.generate_response_diagnosis(
+    input_path=input_path,
+    output_dir=tmp_path / "out",
+    prefix="sample",
+    date_stamp="20260628",
+  )
+
+  summary = (
+    tmp_path / "out" / "sample_response_diagnosis_summary_20260628.md"
+  ).read_text(encoding="utf-8")
+  assert manifest["candidate_row_count"] == 0
+  assert "No rows are currently attributed to `component_response`" in summary
+  assert "current six cells" not in summary

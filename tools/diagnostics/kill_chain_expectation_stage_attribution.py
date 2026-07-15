@@ -264,12 +264,33 @@ def _stage_attribution(row: dict[str, Any]) -> dict[str, Any]:
         response_signal=response_signal,
         load_signal=load_signal,
       )
-    if effect_band in {"outside_effect", "unclassified_missing_R_effect", ""}:
+    if effect_band == "outside_effect":
+      if response_signal == "sampled_failure_observed":
+        return _attribution(
+          row,
+          stage="warhead_load_field",
+          priority="medium",
+          reason="outside-effect nominal cell produced sampled component response",
+          response_signal=response_signal,
+          load_signal=load_signal,
+        )
+      return _attribution(
+        row,
+        stage="no_review_pressure",
+        priority="none",
+        reason=(
+          "nominal cell satisfied guidance/fuze and remained outside the selected "
+          "effective-load radius without sampled response"
+        ),
+        response_signal=response_signal,
+        load_signal=load_signal,
+      )
+    if effect_band in {"unclassified_missing_R_effect", ""}:
       return _attribution(
         row,
         stage="warhead_load_field",
         priority="medium",
-        reason="nominal cell detonated but lacks a declared effective load band",
+        reason="nominal cell detonated without declared effective-load metadata",
         response_signal=response_signal,
         load_signal=load_signal,
       )

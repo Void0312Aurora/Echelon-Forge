@@ -171,6 +171,19 @@ def test_guidance_case_generates_decoupled_stage_abstractions(tmp_path) -> None:
   assert case["case_type"] == "aim120_offset_guidance"
   assert float(case["range_m"]) == 8000.0
   assert float(case["bearing_deg"]) == 30.0
+  runtime_projection = case["missile_runtime_projection"]
+  assert (
+    runtime_projection["schema_version"]
+    == "a2.kill_chain_runtime_projection_profile.v1"
+  )
+  assert runtime_projection["effect_family"] == "blast_fragmentation"
+  assert runtime_projection["lethal_radius_m"] == 15.0
+  assert runtime_projection["radius_input_m"] == 15.0
+  assert runtime_projection["radius_input_source"] == "warhead_lethal_radius_m"
+  assert runtime_projection["projection_radius_fraction"] == 0.60
+  assert runtime_projection["projection_min_radius_m"] == 1.0
+  assert runtime_projection["projection_max_radius_m"] == 20.0
+  assert runtime_projection["resolved_projection_radius_m"] == 9.0
   runtime_facade = case["runtime_facade"]
   assert runtime_facade["schema_name"] == "a2.kill_chain_runtime_facade.v1"
   assert runtime_facade["runtime_dto_available"] is True

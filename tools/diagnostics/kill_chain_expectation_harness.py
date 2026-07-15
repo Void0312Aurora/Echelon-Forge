@@ -216,13 +216,13 @@ def _radius_for_variant(
   variant: str,
   *,
   r_fuze_m: float,
-  runtime_facade: dict[str, Any],
+  probe_case: dict[str, Any],
   declared_effect_radius_m: float | None,
 ) -> float | None:
   if variant == "REV-RUNTIME-PROJECTION":
     return _finite_or_none(
-      dict(runtime_facade.get("warhead_load_field", {}) or {}).get(
-        "lethal_radius_m"
+      dict(probe_case.get("missile_runtime_projection", {}) or {}).get(
+        "resolved_projection_radius_m"
       )
     )
   if variant == "REV-EQ-FUZE":
@@ -230,6 +230,16 @@ def _radius_for_variant(
   if variant == "REV-SMALLER-LOAD":
     return declared_effect_radius_m
   return None
+
+
+def _radius_source_for_variant(variant: str) -> str:
+  if variant == "REV-RUNTIME-PROJECTION":
+    return "missile_runtime_projection.resolved_projection_radius_m"
+  if variant == "REV-EQ-FUZE":
+    return "guidance_approach.R_fuze_m"
+  if variant == "REV-SMALLER-LOAD":
+    return "radius_policy.declared_effect_radius_m"
+  return "unknown_variant"
 
 
 def _guidance_expectation_status(
@@ -430,7 +440,7 @@ def _project_heatmap_rows(
     r_effect_m = _radius_for_variant(
       str(variant),
       r_fuze_m=r_fuze_m,
-      runtime_facade=runtime_facade,
+      probe_case=probe_case,
       declared_effect_radius_m=declared_effect_radius_m,
     )
     rho_effect_case = _safe_ratio(nearest_distance, r_effect_m)
@@ -438,6 +448,7 @@ def _project_heatmap_rows(
     row["warhead_load_field"] = {
       "R_effect_variant": str(variant),
       "R_effect_m": r_effect_m,
+      "R_effect_source": _radius_source_for_variant(str(variant)),
       "rho_effect_case": rho_effect_case,
       "effect_band": _effect_band(rho_effect_case),
       **load,

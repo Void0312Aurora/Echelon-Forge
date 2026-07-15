@@ -45,13 +45,11 @@ def test_before_report_smoke_projects_heatmap_rows() -> None:
   assert runtime_row["guidance_approach"]["guidance_expectation_status"] == "satisfied"
   assert runtime_row["guards"]["authority_boundary_status"] == "engineering_proxy_guarded"
   assert runtime_row["warhead_load_field"]["R_effect_variant"] == "REV-RUNTIME-PROJECTION"
-  assert runtime_row["warhead_load_field"]["effect_band"] in {
-    "core",
-    "effective",
-    "outer_effective",
-    "edge",
-    "outside_effect",
-  }
+  assert runtime_row["warhead_load_field"]["R_effect_m"] == 9.0
+  assert runtime_row["warhead_load_field"]["R_effect_source"] == (
+    "missile_runtime_projection.resolved_projection_radius_m"
+  )
+  assert runtime_row["warhead_load_field"]["effect_band"] == "outside_effect"
   detail = runtime_row["component_detail"]
   assert detail["schema_version"] == "a2.kill_chain_expectation_component_detail.v1"
   assert detail["R_effect_variant"] == "REV-RUNTIME-PROJECTION"

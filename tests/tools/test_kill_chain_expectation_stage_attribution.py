@@ -80,6 +80,19 @@ def test_stage_attribution_writes_review_artifacts(tmp_path) -> None:
         component_response_band="observed_probability_only",
       ),
       _row(
+        case_id="n_outside_effect",
+        range_km=8.0,
+        signed_bearing_deg=30.0,
+        launch_class="N",
+        guidance_status="satisfied",
+        entered_r_fuze=True,
+        detonated=True,
+        effect_band="outside_effect",
+        max_failure_probability=0.006,
+        sampled_failure_count=0,
+        component_response_band="observed_probability_only",
+      ),
+      _row(
         case_id="n_ok",
         range_km=4.0,
         signed_bearing_deg=0.0,
@@ -122,11 +135,12 @@ def test_stage_attribution_writes_review_artifacts(tmp_path) -> None:
     "component_response": 1,
     "guidance_approach": 1,
     "negative_control_satisfied": 1,
-    "no_review_pressure": 1,
+    "no_review_pressure": 2,
   }
   rows_by_id = {row["case_id"]: row for row in manifest["rows"]}
   assert rows_by_id["n_guidance"]["first_review_stage"] == "guidance_approach"
   assert rows_by_id["n_response"]["first_review_stage"] == "component_response"
+  assert rows_by_id["n_outside_effect"]["first_review_stage"] == "no_review_pressure"
   assert rows_by_id["n_ok"]["first_review_stage"] == "no_review_pressure"
 
   assert (tmp_path / "out" / "sample_first_review_stage_manifest_20260623.json").exists()

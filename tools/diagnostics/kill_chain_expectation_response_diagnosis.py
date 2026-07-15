@@ -629,21 +629,29 @@ def _summary_markdown(
       f"baseline=`{row['baseline_case_id']}`, "
       f"probability_ratio=`{row['max_probability_ratio_to_baseline']}`"
     )
-  lines.extend(
-    [
-      "",
-      "## Interpretation",
-      "",
-      "- All selected rows have guidance / fuze / case-level load facts, but no",
-      "  sampled component failure.",
-      "- The current six cells fall into a report-level probability cliff: the",
-      "  case-level `outer_effective` band maps to weak component load scale and",
-      "  very low max failure probability.",
-      "- When per-component details are present, `detail_projection_signal`",
-      "  separates a weak component-load projection from a response-curve-only",
-      "  explanation.",
-    ]
-  )
+  lines.extend(["", "## Interpretation", ""])
+  if rows:
+    lines.extend(
+      [
+        "- All selected rows have guidance / fuze / case-level load facts, but no",
+        "  sampled component failure.",
+        f"- The current `{len(rows)}` candidate rows require local load / response",
+        "  decomposition; use each row's diagnosis bucket instead of inferring a",
+        "  fixed candidate count or effect band.",
+        "- When per-component details are present, `detail_projection_signal`",
+        "  separates a weak component-load projection from a response-curve-only",
+        "  explanation.",
+      ]
+    )
+  else:
+    lines.extend(
+      [
+        "- No rows are currently attributed to `component_response` for the",
+        "  selected variant and target-motion layer.",
+        "- The empty candidate set is a valid diagnostic result; no local",
+        "  load / response residual is asserted by this artifact.",
+      ]
+    )
   return "\n".join(lines) + "\n"
 
 
