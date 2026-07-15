@@ -21,6 +21,8 @@ def test_anchor_grid_counts_and_classification() -> None:
   assert anchor["launch_class"] == "N"
   assert anchor["range_m"] == 8000.0
   assert anchor["signed_bearing_deg"] == 30.0
+  assert case_by_id["kces_anchor_grid_cv_4km_p45deg"]["launch_class"] == "M"
+  assert case_by_id["kces_anchor_grid_cv_6km_m45deg"]["launch_class"] == "M"
   assert case_by_id["kces_anchor_grid_cv_16km_p30deg"]["launch_class"] == "O"
 
 

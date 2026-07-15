@@ -68,8 +68,8 @@ First constant-velocity target heatmap:
 
 | range_km \ offset_deg | `0` | `15` | `30` | `45` | `60` | `75` | `90` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `4` | N | N | N | N | M | M | O |
-| `6` | N | N | N | N | M | O | O |
+| `4` | N | N | N | M | M | M | O |
+| `6` | N | N | N | M | M | O | O |
 | `8` | N | N | N | M | M | O | O |
 | `10` | N | N | M | M | O | O | O |
 | `12` | N | M | M | O | O | O | O |
@@ -86,6 +86,16 @@ It constrains topology:
   calibration target. Adjacent cells must preserve reasonable continuity.
 - `O` cells are negative controls. They should not gain load/component-response
   expectation through lethality retuning.
+
+The `2026-07-15` runtime main-grid and local-refinement review placed the
+`R_fuze=15 m` entry boundary near `36..38 deg` throughout `4..8 km` with the
+frozen `35 g`, `N=4`, `APN=0.5` engineering-proxy guidance. The `45 deg` cells
+remain at roughly `22..24 m`. A one-parameter sweep only forced those cells
+inside `R_fuze` by raising the navigation constant to about `10..12` or the
+lateral limit to about `50 g`. The `4/6 km x 45 deg` cells are therefore
+reclassified from `N` to `M`; this calibrates the launch-window oracle instead
+of imposing a large guidance retune to preserve the earlier hand-authored
+classification.
 
 First maneuvering-target sparse heatmap:
 
