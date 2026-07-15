@@ -115,21 +115,21 @@ docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_exp
 | --- | --- |
 | `case_count` | `78` |
 | `heatmap_row_count` | `234` |
-| `launch_class_counts` | `N=23`, `M=21`, `O=34` |
+| `launch_class_counts` | `N=19`, `M=25`, `O=34` |
 | runtime-row `N` satisfied | `19` |
-| runtime-row `N` guidance residual | `4` |
-| runtime-row `M` observed marginal | `21` |
+| runtime-row `N` guidance residual | `0` |
+| runtime-row `M` observed marginal | `25` |
 | runtime-row `O` negative-control satisfied | `34` |
 | authority boundary | `engineering_proxy_guarded` for all rows |
 
-`N` 类 residual cases：
+发射窗口校准 rows：
 
-| case_id | range_km | signed_bearing_deg | nearest_distance_m | rho_fuze |
-| --- | ---: | ---: | ---: | ---: |
-| `kces_anchor_grid_cv_4km_m45deg` | `4` | `-45` | `22.438232265927198` | `1.4958821510618132` |
-| `kces_anchor_grid_cv_4km_p45deg` | `4` | `45` | `22.4382609956996` | `1.4958840663799733` |
-| `kces_anchor_grid_cv_6km_m45deg` | `6` | `-45` | `22.10101051253856` | `1.473400700835904` |
-| `kces_anchor_grid_cv_6km_p45deg` | `6` | `45` | `22.101032317828015` | `1.4734021545218676` |
+| case_id | launch_class | nearest_distance_m | rho_fuze |
+| --- | --- | ---: | ---: |
+| `kces_anchor_grid_cv_4km_m45deg` | `M` | `22.438232265927198` | `1.4958821510618132` |
+| `kces_anchor_grid_cv_4km_p45deg` | `M` | `22.4382609956996` | `1.4958840663799733` |
+| `kces_anchor_grid_cv_6km_m45deg` | `M` | `22.10101051253856` | `1.473400700835904` |
+| `kces_anchor_grid_cv_6km_p45deg` | `M` | `22.101032317828015` | `1.4734021545218676` |
 
 `8 km / 30 deg` anchor：
 
@@ -141,8 +141,9 @@ docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_exp
 解释：
 
 - 当前匀速 anchor-grid 的 `O` negative controls 全部没有触发异常下游校准压力。
-- 主要制导 / 发射窗口错位不在 `8 km / 30 deg`，而在 `4 km / 45 deg`
-  和 `6 km / 45 deg` 这四个 `N` cells。
+- runtime 主网格与局部加密把 `4..8 km` 的 `15 m` 进入边界定位在约
+  `36..38 deg`。冻结 `35 g`、`N=4`、`APN=0.5` 代理后，`4/6 km +/-45 deg`
+  应归为 marginal；若强制 nominal，单参数扫掠需要约 `N=10..12` 或 `50 g`。
 - `8 km / 30 deg` 进入 `R_fuze`，但最近距超过修正后的 9 m runtime projection
   radius；其 trace response 因而属于满足要求的 outside-effect 观测，不是 load /
   response residual。
@@ -182,8 +183,8 @@ python tools/diagnostics/kill_chain_expectation_visualize.py \
 - `8 km / +/-30 deg` 在 max failure probability 图中为约 `0.006` 的低响应点，
   但它也位于修正后的 9 m runtime projection radius 外，因此在
   `REV-RUNTIME-PROJECTION` 下仍是满足要求的 negative-control 观测。
-- 四个 `N` residual cell 集中在 `4/6 km` 的 `+/-45 deg`，需要后续复核 P2
-  launch-window class 或当前制导模型。
+- `4/6 km +/-45 deg` 现在在图中为 `marg`，与实测近距方位边界一致，且未修改
+  runtime 制导参数。
 
 ## 首阶段复核归因
 
@@ -215,14 +216,13 @@ python tools/diagnostics/kill_chain_expectation_stage_attribution.py \
 
 | First review stage | Count | Meaning |
 | --- | ---: | --- |
-| `guidance_approach` | `4` | `N` cell 未进入 `R_fuze`，先复核发射窗口 / 制导模型。 |
 | `no_review_pressure` | `19` | `N` cell 已达到圈内响应下限，或只在 9 m runtime projection radius 外保留 trace response。 |
-| `marginal_observation` | `21` | `M` cell 只保留观测，不按失败处理。 |
+| `marginal_observation` | `25` | `M` cell 只保留观测，不按失败处理。 |
 | `negative_control_satisfied` | `34` | `O` cell 安静，negative control 通过。 |
 
 这使当前后续工作分叉更清楚：
 
-- `4/6 km +/-45 deg` 进入 `guidance_approach` high-priority 复核。
+- 修正 launch-window 后，anchor grid 已无 nominal guidance residual。
 - `4/6/8 km +/-30 deg` 位于修正后的 9 m runtime projection radius 外；其 trace
   response 在 `REV-RUNTIME-PROJECTION` 下不产生复核压力。
 - 没有 `negative_control_alert`，说明本轮 O 类单元没有给出异常校准压力。
@@ -267,6 +267,9 @@ python tools/diagnostics/kill_chain_expectation_response_diagnosis.py \
 
 - `REV-RUNTIME-PROJECTION` 下当前没有 row 归因到 `component_response`，因此本
   artifact 不再声明局部 load / response residual。
+- `18` 个 `core/effective` rows 全部满足响应下限，其中 `14` 个为
+  `severe_response`、`4` 个为 `material_response`；`10` 个 outside-effect trace rows
+  保持 `p_max<=0.008658`、`delta_abs<=0.006434`，且没有 sampled failure。
 - 仍可通过 `REV-EQ-FUZE` 把相同 rows 作为显式 radius-policy sensitivity 观察，
   但不得把该结果表述成当前 runtime projection。
 
@@ -300,16 +303,14 @@ python -m tools.diagnostics.kces.envelope_audit \
 
 | Envelope cell status | Count | Reading |
 | --- | ---: | --- |
-| `guidance_or_model_residual` | `4` | nominal `4/6 km +/-45 deg` cells 未进入 `R_fuze`；先复核 launch-window / guidance。 |
-| `boundary_observation` | `21` | 全部 marginal launch-window cells 继续作为观测保留。 |
-| `satisfied` | `53` | 其余 nominal 与 negative-control cells 未产生包络压力。 |
+| `boundary_observation` | `25` | 全部 marginal launch-window cells 继续作为观测保留。 |
+| `satisfied` | `53` | nominal 与 negative-control cells 未产生包络压力。 |
 
 Owner-stage 计数：
 
 | Owner stage | Count |
 | --- | ---: |
-| `launch_window` | `21` |
-| `launch_window -> guidance_approach` | `4` |
+| `launch_window` | `25` |
 | `negative_control_satisfied` | `34` |
 | `no_review_pressure` | `19` |
 
@@ -333,7 +334,8 @@ Owner-stage 计数：
 
 下一步建议：
 
-1. 对 `guidance_approach` 四个 cells 复核 P2 launch-window class 与当前制导模型。
+1. 保持已校准的 `4/6 km x 45 deg = M` 边界；除非独立 runtime-retuning 任务提供
+   新证据，否则冻结当前制导代理。
 2. 把 `REV-EQ-FUZE` 保持为离线 radius sensitivity，并确保
    `REV-RUNTIME-PROJECTION` 只读取发射时 runtime projection 快照。
 3. 再实现 worker 并行与失败 case retry。

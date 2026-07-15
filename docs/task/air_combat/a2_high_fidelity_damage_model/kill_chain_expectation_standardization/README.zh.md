@@ -152,16 +152,17 @@ AIM-120C 性能声明。
 - `P4` 已按 pass 收口，把 P3 report row schema 写成 harness plan，包含
   `32` worker pilot batch、`48-64` worker 上调条件、P6 delta guard 和 frozen-stage
   规则；`guidance_approach` 在本 harness 中保持只读诊断层。
-- `P5` 已按 pass 收口：本子项目内容保留为 accepted / retained task-local docs-only
-  standard；`docs/standards` 本轮不写入，未来只有在 runtime/test/admission 证据验收后
-  才重开 standards promotion。
+- `P5` 已按 pass 收口：原 P1-P4 workstream 继续 accepted / retained；后续 v0
+  expectation envelope 已注册到 `docs/standards/air` 作为 planning supplement，
+  仍不是 runtime contract，未来 runtime-contract promotion 仍需验收
+  runtime/test/admission 证据。
 - P5 后已启动 initial harness implementation：`tools/diagnostics/kill_chain_expectation_harness.py`
   可生成 `anchor-grid` case grid，并已生成完整匀速目标 `78` case before report；
   `tools/diagnostics/kill_chain_expectation_visualize.py` 已把该 before report 渲染为
   launch class、guidance status、`rho_fuze`、max failure probability 和 effect band
   五类 heatmap；`tools/diagnostics/kill_chain_expectation_stage_attribution.py`
-  已把当前 `78` rows 分成 `4` 个 `guidance_approach` 复核 cells、`19` 个
-  `no_review_pressure` cells、`21` 个 `marginal_observation` cells 和 `34` 个
+  已把当前 `78` rows 分成 `19` 个 `no_review_pressure` cells、`25` 个
+  `marginal_observation` cells 和 `34` 个
   `negative_control_satisfied` cells。runtime variant 现在读取发射时
   `missile_runtime_projection.resolved_projection_radius_m`：`15 m * 0.60 = 9 m`。
   因而 `4/6/8 km +/-30 deg` rows 属于 `outside_effect`，
@@ -179,10 +180,14 @@ AIM-120C 性能声明。
   response floor/ceiling、分布容忍度、连续性规则、cell status 和 owner-stage
   归因。只读
   [期望包络审计](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
-  已在修正审计优先级后把该包络应用到既有 `78` 个匀速 rows：`4` 个 cells 为
-  `guidance_or_model_residual`，`21` 个 cells 为 `boundary_observation`，`53` 个
-  cells 为 `satisfied`。launch / guidance 与 marginal 分类现在先于无关的 effect
-  metadata 检查执行。这只是后处理结果，不是重跑仿真、参数修改或校准 verdict。
+  已在修正审计优先级和发射窗口分类后把该包络应用到既有 `78` 个匀速 rows：
+  `25` 个 cells 为 `boundary_observation`，`53` 个 cells 为 `satisfied`，已无
+  nominal guidance residual。launch / guidance 与 marginal 分类现在先于无关的
+  effect metadata 检查执行。这只是后处理结果，不是重跑仿真、参数修改或真实世界
+  calibration verdict。`4/6 km +/-45 deg` 在 `4..8 km` 的 `15 m` 进入边界稳定落在
+  `36..38 deg` 后从 `N` 修正为 `M`；维持旧分类需要约 `N=10..12` 或 `50 g`。
+  `18` 个 runtime-projection `core/effective` rows 全部满足响应下限（`14` severe、
+  `4` material），`10` 个 outside-effect trace rows 均无 sampled failure。
   完整 `93` anchor-grid 中的
   `15` 个 mild-maneuver cases、`572` recommended-main-grid、并行 worker 和机动目标
   runtime 支持仍未完成。

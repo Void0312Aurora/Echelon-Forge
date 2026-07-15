@@ -123,21 +123,21 @@ Summary:
 | --- | --- |
 | `case_count` | `78` |
 | `heatmap_row_count` | `234` |
-| `launch_class_counts` | `N=23`, `M=21`, `O=34` |
+| `launch_class_counts` | `N=19`, `M=25`, `O=34` |
 | runtime-row `N` satisfied | `19` |
-| runtime-row `N` guidance residual | `4` |
-| runtime-row `M` observed marginal | `21` |
+| runtime-row `N` guidance residual | `0` |
+| runtime-row `M` observed marginal | `25` |
 | runtime-row `O` negative-control satisfied | `34` |
 | authority boundary | `engineering_proxy_guarded` for all rows |
 
-`N` residual cases:
+Launch-window calibration rows:
 
-| case_id | range_km | signed_bearing_deg | nearest_distance_m | rho_fuze |
-| --- | ---: | ---: | ---: | ---: |
-| `kces_anchor_grid_cv_4km_m45deg` | `4` | `-45` | `22.438232265927198` | `1.4958821510618132` |
-| `kces_anchor_grid_cv_4km_p45deg` | `4` | `45` | `22.4382609956996` | `1.4958840663799733` |
-| `kces_anchor_grid_cv_6km_m45deg` | `6` | `-45` | `22.10101051253856` | `1.473400700835904` |
-| `kces_anchor_grid_cv_6km_p45deg` | `6` | `45` | `22.101032317828015` | `1.4734021545218676` |
+| case_id | launch_class | nearest_distance_m | rho_fuze |
+| --- | --- | ---: | ---: |
+| `kces_anchor_grid_cv_4km_m45deg` | `M` | `22.438232265927198` | `1.4958821510618132` |
+| `kces_anchor_grid_cv_4km_p45deg` | `M` | `22.4382609956996` | `1.4958840663799733` |
+| `kces_anchor_grid_cv_6km_m45deg` | `M` | `22.10101051253856` | `1.473400700835904` |
+| `kces_anchor_grid_cv_6km_p45deg` | `M` | `22.101032317828015` | `1.4734021545218676` |
 
 `8 km / 30 deg` anchor:
 
@@ -150,8 +150,10 @@ Interpretation:
 
 - The current constant-velocity anchor-grid `O` negative controls do not create
   unexpected downstream calibration pressure.
-- The main guidance / launch-window mismatch is not at `8 km / 30 deg`; it is
-  at the four `N` cells `4 km / +/-45 deg` and `6 km / +/-45 deg`.
+- The runtime main-grid and local-refinement review places the `15 m` entry
+  boundary near `36..38 deg` throughout `4..8 km`. With the frozen `35 g`,
+  `N=4`, `APN=0.5` proxy, `4/6 km +/-45 deg` is marginal; forcing those cells
+  nominal requires roughly `N=10..12` or `50 g` in the one-parameter sweep.
 - The `8 km / 30 deg` case enters `R_fuze`, but its nearest distance exceeds the
   corrected 9 m runtime projection radius. Its trace response therefore stays a
   satisfied outside-effect observation rather than a load / response residual.
@@ -194,9 +196,8 @@ The figures show:
   heatmap, around `0.006`, but it is also outside the corrected 9 m runtime
   projection radius. It therefore remains a satisfied negative-control
   observation under `REV-RUNTIME-PROJECTION`.
-- The four `N` residual cells are concentrated at `4/6 km` and `+/-45 deg`,
-  which points to either P2 launch-window class review or current guidance
-  model review.
+- The `4/6 km +/-45 deg` cells now appear as `marg`, matching the measured
+  close-range bearing boundary without changing runtime guidance parameters.
 
 ## First-Review-Stage Attribution
 
@@ -229,14 +230,13 @@ Current attribution counts:
 
 | First review stage | Count | Meaning |
 | --- | ---: | --- |
-| `guidance_approach` | `4` | `N` cells did not enter `R_fuze`; review launch-window class / guidance first. |
 | `no_review_pressure` | `19` | `N` cells either reached an in-envelope response floor or remained trace-only outside the 9 m runtime projection radius. |
-| `marginal_observation` | `21` | `M` cells are preserved as observations, not failures. |
+| `marginal_observation` | `25` | `M` cells are preserved as observations, not failures. |
 | `negative_control_satisfied` | `34` | `O` cells stayed quiet. |
 
 This clarifies the follow-on split:
 
-- `4/6 km +/-45 deg` is a high-priority `guidance_approach` review.
+- No nominal guidance residual remains after the launch-window correction.
 - `4/6/8 km +/-30 deg` is outside the corrected 9 m runtime projection radius;
   its trace response creates no review pressure under `REV-RUNTIME-PROJECTION`.
 - There is no `negative_control_alert`; the current outside-envelope cells do
@@ -284,6 +284,10 @@ Interpretation:
 - No current row is attributed to `component_response` under
   `REV-RUNTIME-PROJECTION`, so this artifact asserts no local load / response
   residual.
+- All `18` `core/effective` rows satisfy the response floor: `14` are
+  `severe_response` and `4` are `material_response`. The `10` outside-effect
+  trace rows stay below `p_max=0.008658`, below `delta_abs=0.006434`, and have
+  no sampled failure.
 - The same rows may still be inspected through `REV-EQ-FUZE` as an explicit
   radius-policy sensitivity, but that result must not be presented as the
   current runtime projection.
@@ -319,16 +323,14 @@ Current envelope status counts:
 
 | Envelope cell status | Count | Reading |
 | --- | ---: | --- |
-| `guidance_or_model_residual` | `4` | Nominal `4/6 km +/-45 deg` cells miss `R_fuze`; review launch-window / guidance first. |
-| `boundary_observation` | `21` | All marginal launch-window cells remain observations. |
-| `satisfied` | `53` | Remaining nominal and negative-control cells create no envelope pressure. |
+| `boundary_observation` | `25` | All marginal launch-window cells remain observations. |
+| `satisfied` | `53` | Nominal and negative-control cells create no envelope pressure. |
 
 Owner-stage counts:
 
 | Owner stage | Count |
 | --- | ---: |
-| `launch_window` | `21` |
-| `launch_window -> guidance_approach` | `4` |
+| `launch_window` | `25` |
 | `negative_control_satisfied` | `34` |
 | `no_review_pressure` | `19` |
 
@@ -352,8 +354,8 @@ This slice does not perform:
 
 Recommended next steps:
 
-1. Review P2 launch-window class and the current guidance model for the four
-   `guidance_approach` cells.
+1. Keep the calibrated `4/6 km x 45 deg = M` boundary and preserve the frozen
+   guidance proxy unless a separate runtime-retuning task supplies evidence.
 2. Keep `REV-EQ-FUZE` as an offline radius sensitivity and preserve the
    launch-time runtime projection snapshot as the sole source for
    `REV-RUNTIME-PROJECTION`.

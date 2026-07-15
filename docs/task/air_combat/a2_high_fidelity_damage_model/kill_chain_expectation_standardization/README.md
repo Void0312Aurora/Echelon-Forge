@@ -179,8 +179,8 @@ This subproject can be marked accepted only when:
   has rendered that before report into launch class, guidance status,
   `rho_fuze`, max failure probability, and effect band heatmaps.
   `tools/diagnostics/kill_chain_expectation_stage_attribution.py` has split the
-  current `78` rows into `4` `guidance_approach` review cells, `19`
-  `no_review_pressure` cells, `21` `marginal_observation` cells, and `34`
+  current `78` rows into `19` `no_review_pressure` cells, `25`
+  `marginal_observation` cells, and `34`
   `negative_control_satisfied` cells. The runtime variant now reads the
   launch-time `missile_runtime_projection.resolved_projection_radius_m` value:
   `15 m * 0.60 = 9 m`. The `4/6/8 km +/-30 deg` rows are consequently
@@ -203,11 +203,18 @@ This subproject can be marked accepted only when:
   attribution. The read-only
   [expectation-envelope audit](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
   applied that envelope to the existing `78` constant-velocity rows after the
-  audit priority correction: `4` cells are `guidance_or_model_residual`, `21`
-  cells are `boundary_observation`, and `53` cells are `satisfied`. Launch /
+  audit priority correction and launch-window calibration: `25` cells are
+  `boundary_observation`, and `53` cells are `satisfied`; no nominal guidance
+  residual remains. Launch /
   guidance and marginal classifications are now evaluated before unrelated
   effect-metadata checks. It is a postprocessor result, not a simulation rerun,
-  parameter edit, or calibration verdict. The
+  parameter edit, or real-world calibration verdict. The `4/6 km +/-45 deg`
+  cells were reclassified from `N` to `M` after the measured `15 m` entry
+  boundary remained near `36..38 deg` across `4..8 km`; forcing the earlier
+  class required roughly `N=10..12` or `50 g`. The `18` runtime-projection
+  `core/effective` rows all satisfy the response floor (`14` severe, `4`
+  material), while the `10` outside-effect trace rows have no sampled failure.
+  The
   `15`
   mild-maneuver cases in the complete `93`
   anchor-grid, the `572` recommended-main-grid, worker parallelism, and

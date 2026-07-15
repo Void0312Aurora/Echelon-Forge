@@ -41,8 +41,8 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
   和 effect band 的 CSV/PNG/SVG 矩阵。
 - 已新增 first-review-stage attribution：
   [kces_anchor_cv_first_review_stage_summary_20260623.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_first_review_stage_summary_20260623.md)，
-  将当前匀速 anchor rows 分为 `4` 个 `guidance_approach` 复核 cells、`19` 个
-  `no_review_pressure` cells、`21` 个 `marginal_observation` cells 和 `34` 个
+  将当前匀速 anchor rows 分为 `19` 个 `no_review_pressure` cells、`25` 个
+  `marginal_observation` cells 和 `34` 个
   `negative_control_satisfied` cells。
 - 已新增 component-response local diagnosis：
   [kces_anchor_cv_response_diagnosis_summary_20260628.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md)，
@@ -70,9 +70,17 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 - 已新增只读 expectation-envelope audit：
   [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)，
   将 standards-layer envelope 应用到既有 `78` 个匀速 rows。launch/guidance 与
-  marginal 分类先于无关 effect-metadata 检查后，结果分布为 `4` 个
-  `guidance_or_model_residual`、`21` 个 `boundary_observation`、`53` 个
-  `satisfied`；这是后处理结果，不是重跑仿真、参数修改或校准 verdict。
+  marginal 分类先于无关 effect-metadata 检查、且近距 `45 deg` cells 校准为 `M`
+  后，结果分布为 `25` 个 `boundary_observation`、`53` 个 `satisfied`，已无
+  nominal guidance residual；这是后处理结果，不是重跑仿真、参数修改或真实世界
+  校准 verdict。
+- `2026-07-15` 已完成近距 launch-window oracle 校准：runtime
+  `4..16 km x 0..90 deg` 诊断网格和 `4..8 km x 35..45 deg` 局部加密把
+  `R_fuze=15 m` 近距进入边界定位在约 `36..38 deg`。`4/6 km x 45 deg` 现为 `M`；
+  维持旧 `N` 标签需要约 `N=10..12` 或 `50 g`，因此未执行 runtime 重调。
+- 已复核下游 runtime-projection response：`18` 个 `core/effective` rows 全部满足
+  响应下限（`14` severe、`4` material）；`10` 个 outside-effect trace rows 均无
+  sampled failure，并保持 `p_max<=0.008658`、`delta_abs<=0.006434`。
 
 ## 成熟度矩阵
 
@@ -96,7 +104,6 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 | 概率 / 完整度阈值已形成 task-local v0 附录，尚未实现为 harness 输出字段 | future harness implementation | 若需要机器消费，按附录输出 `component_response_quantized_band`、`component_response_sampled_failure_observed` 和 `component_response_expectation_status`。 |
 | 标准化期望包络已有只读后处理器，但 harness 尚未内联输出 | future harness implementation | 若需要在 harness report 内机器消费，从 before/after report 输出 `a2.kill_chain_expectation_envelope.v0` 字段，例如 `envelope_cell_status` 和 `envelope_owner_stage`。 |
 | 推荐主采样网格尚未执行 | future harness implementation | initial harness 已生成匀速目标 anchor before report 和 reviewable heatmaps；未来执行 recommended-main before heatmap report。 |
-| `N` 类局部制导 residual | future guidance / launch-window review | `4/6 km` 的 `+/-45 deg` 四个 `N` cells 未进入 `R_fuze`，需要复核 P2 launch class 或制导模型。 |
 | Runtime projection 来源必须保持显式 | future harness maintenance | 保持 `REV-RUNTIME-PROJECTION` 绑定 `missile_runtime_projection.resolved_projection_radius_m`，并把 `REV-EQ-FUZE` 作为独立 sensitivity variant。 |
 | 并行 worker 和 retry 尚未实现 | future harness implementation | worker pool、失败 case retry 和 batch summary writer 落地。 |
 | 机动目标 runtime harness 尚未实现 | future harness implementation | `mild_maneuver` grid rows 不再标为 unsupported，并有对应 runtime facts。 |
@@ -107,8 +114,8 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 
 1. 本 P0-P5 workstream 已收口；不要在本批次写入 runtime 变更，也不要把
    standards-layer envelope 当成 runtime contract。
-2. 把 `guidance_approach` 四个 cells 作为窗口 / 制导复核队列，并在后续所有
-   before/after report 中保留修正后的 9 m runtime-projection 来源。
+2. 在后续所有 before/after report 中保持已校准的 `4/6 km x 45 deg = M` 边界和
+   修正后的 9 m runtime-projection 来源。
 3. 在任何 after report、参数候选或 standards promotion 前，先保留 P6 frozen-stage
    guard 和 authority boundary。
 

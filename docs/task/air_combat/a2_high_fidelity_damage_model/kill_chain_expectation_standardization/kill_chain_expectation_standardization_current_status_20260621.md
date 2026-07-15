@@ -53,8 +53,8 @@ Chinese companion:
   max failure probability, and effect band CSV/PNG/SVG matrices.
 - Added first-review-stage attribution:
   [kces_anchor_cv_first_review_stage_summary_20260623.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_first_review_stage_summary_20260623.md),
-  splitting the current constant-velocity anchor rows into `4`
-  `guidance_approach` review cells, `19` `no_review_pressure` cells, `21`
+  splitting the current constant-velocity anchor rows into `19`
+  `no_review_pressure` cells, `25`
   `marginal_observation` cells, and `34` `negative_control_satisfied` cells.
 - Added component-response local diagnosis:
   [kces_anchor_cv_response_diagnosis_summary_20260628.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md),
@@ -85,10 +85,20 @@ Chinese companion:
   [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md),
   applying the standards-layer envelope to the existing `78` constant-velocity
   rows. After launch/guidance and marginal classifications were placed ahead of
-  unrelated effect-metadata checks, the status counts are `4`
-  `guidance_or_model_residual`, `21` `boundary_observation`, and `53`
-  `satisfied`; this is a postprocessor result, not a simulation rerun,
-  parameter edit, or calibration verdict.
+  unrelated effect-metadata checks and the close-range `45 deg` cells were
+  calibrated to `M`, the status counts are `25` `boundary_observation` and
+  `53` `satisfied`; no nominal guidance residual remains. This is a
+  postprocessor result, not a simulation rerun, parameter edit, or real-world
+  calibration verdict.
+- Calibrated the close-range launch-window oracle on `2026-07-15`: the runtime
+  `4..16 km x 0..90 deg` diagnostic grid and `4..8 km x 35..45 deg`
+  refinement place the `R_fuze=15 m` entry boundary near `36..38 deg` at close
+  range. The `4/6 km x 45 deg` cells are now `M`; preserving the former `N`
+  label required roughly `N=10..12` or `50 g`, so no runtime retune was taken.
+- Rechecked the downstream runtime-projection response slice: all `18`
+  `core/effective` rows satisfy their response floor (`14` severe, `4`
+  material); the `10` outside-effect trace rows have no sampled failure and
+  remain below `p_max=0.008658` and `delta_abs=0.006434`.
 
 ## Maturity Matrix
 
@@ -112,7 +122,6 @@ Chinese companion:
 | Probability / integrity thresholds now have a task-local v0 addendum but are not emitted by the harness yet | Future harness implementation | If machine consumption is needed, emit `component_response_quantized_band`, `component_response_sampled_failure_observed`, and `component_response_expectation_status` according to the addendum. |
 | Standardized expectation envelope is available through a read-only postprocessor but not emitted inline by the harness yet | Future harness implementation | If machine consumption is needed inside the harness report, emit `a2.kill_chain_expectation_envelope.v0` fields such as `envelope_cell_status` and `envelope_owner_stage` from the before/after report. |
 | Recommended main sampling grid not yet executed | Future harness implementation | The initial harness has generated the constant-velocity anchor before report and reviewable heatmaps; future execution produces the recommended-main before heatmap report. |
-| Local `N` guidance residuals | Future guidance / launch-window review | Four `N` cells at `4/6 km` and `+/-45 deg` do not enter `R_fuze`; review P2 launch class or the guidance model. |
 | Runtime projection source must remain explicit | Future harness maintenance | Keep `REV-RUNTIME-PROJECTION` bound to `missile_runtime_projection.resolved_projection_radius_m` and keep `REV-EQ-FUZE` separate as a declared sensitivity variant. |
 | Worker parallelism and retry not implemented | Future harness implementation | Worker pool, failed-case retry, and batch summary writer exist. |
 | Maneuvering-target runtime harness not implemented | Future harness implementation | `mild_maneuver` grid rows are no longer marked unsupported and have runtime facts. |
@@ -123,9 +132,8 @@ Chinese companion:
 
 1. This P0-P5 workstream is closed; do not write runtime changes or treat the
    standards-layer envelope as a runtime contract in this batch.
-2. Keep the four `guidance_approach` cells in the window / guidance review
-   queue, and preserve the corrected 9 m runtime-projection source in all future
-   before/after reports.
+2. Preserve the calibrated `4/6 km x 45 deg = M` boundary and the corrected
+   9 m runtime-projection source in all future before/after reports.
 3. Preserve the P6 frozen-stage guard and authority boundary before any after
    report, parameter candidate, or standards promotion.
 
