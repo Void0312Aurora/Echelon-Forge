@@ -132,4 +132,37 @@ inline Vec3 project_lateral(const Vec3& acceleration, const Vec3& velocity_dir) 
     return acceleration - velocity_dir * dot(acceleration, velocity_dir);
 }
 
+inline Vec3 world_los_angular_rate(const Vec3& previous_los, const Vec3& current_los,
+                                   double elapsed_s) {
+    const Vec3 previous = normalize(previous_los);
+    const Vec3 current = normalize(current_los);
+    if (elapsed_s <= 1.0e-6 || norm(previous) <= 1.0e-6 || norm(current) <= 1.0e-6) {
+        return {0.0, 0.0, 0.0};
+    }
+
+    const Vec3 rotation_axis = cross(previous, current);
+    const double sin_angle = norm(rotation_axis);
+    const double cos_angle = std::clamp(dot(previous, current), -1.0, 1.0);
+    if (sin_angle <= 1.0e-12) {
+        return {0.0, 0.0, 0.0};
+    }
+
+    const double angle_rad = std::atan2(sin_angle, cos_angle);
+    return rotation_axis * (angle_rad / (sin_angle * elapsed_s));
+}
+
+inline Vec3 transverse_pn_acceleration(const Vec3& los_angular_rate,
+                                       const Vec3& velocity_dir, double closing_speed_mps,
+                                       double nav_gain, double gain_scale) {
+    if (closing_speed_mps <= 0.0 || nav_gain <= 0.0 || gain_scale <= 0.0) {
+        return {0.0, 0.0, 0.0};
+    }
+    const Vec3 velocity_axis = normalize(velocity_dir);
+    if (norm(velocity_axis) <= 1.0e-6) {
+        return {0.0, 0.0, 0.0};
+    }
+    return project_lateral(cross(los_angular_rate, velocity_axis), velocity_axis) *
+           (gain_scale * nav_gain * closing_speed_mps);
+}
+
 }  // namespace missile_guidance

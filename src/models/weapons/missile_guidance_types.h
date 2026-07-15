@@ -6,7 +6,14 @@ enum class MissileSeekerMode {
     Ballistic = 2,
 };
 
+enum class MissilePnLosRateSource {
+    LegacyBodyRates = 0,
+    WorldLosHistory = 1,
+};
+
 struct MissileGuidanceDefaults {
+    static constexpr int kDefaultPnLosRateSource =
+        static_cast<int>(MissilePnLosRateSource::LegacyBodyRates);
     static constexpr double kTrackFilterTauS = 0.12;
     static constexpr double kTrackMemoryTimeoutS = 0.75;
     static constexpr double kBoostTimeS = 3.0;

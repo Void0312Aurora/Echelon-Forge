@@ -1177,6 +1177,8 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 missile.guidance_lead_blend = 0.0;
                 missile.guidance_apn_lateral_accel_mps2 = 0.0;
                 missile.terminal_seeker_active = terminal_seeker_is_active(missile);
+                missile.guidance_previous_world_los_valid = false;
+                missile.guidance_previous_world_los_time_s = -1.0;
                 if (mechanism_profile_active) {
                     reset_guidance_mechanism_profile_diagnostics(*mechanism_profile);
                     mechanism_profile->previous_world_los_valid = false;
@@ -1265,20 +1267,28 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 const double capture_mag = MissileGuidanceDefaults::kCaptureGain * terminal_weight *
                                            (speed_mps * speed_mps / range_m) * lateral_error;
 
-                const Math::Vector3 pn_body_world = Math::body_to_world(
-                    {
-                        0.0,
-                        -MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
-                            Math::to_radians(missile.bearing_rate_deg_s),
-                        MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
-                            Math::to_radians(missile.elevation_rate_deg_s),
-                    },
-                    transform);
-                const Vec3 pn_world = {
-                    pn_body_world.x,
-                    pn_body_world.y,
-                    pn_body_world.z,
-                };
+                Vec3 pn_world = {0.0, 0.0, 0.0};
+                if (missile.pn_los_rate_source ==
+                    static_cast<int>(MissilePnLosRateSource::WorldLosHistory)) {
+                    const Vec3 los_rate_world =
+                        world_los_rate_from_history(missile, los_world, current_time);
+                    pn_world = missile_guidance::transverse_pn_acceleration(
+                        los_rate_world, velocity_dir, closing_speed_mps, nav_gain,
+                        MissileGuidanceDefaults::kPnGainScale);
+                } else {
+                    missile.guidance_previous_world_los_valid = false;
+                    missile.guidance_previous_world_los_time_s = -1.0;
+                    const Math::Vector3 pn_body_world = Math::body_to_world(
+                        {
+                            0.0,
+                            -MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                                Math::to_radians(missile.bearing_rate_deg_s),
+                            MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                                Math::to_radians(missile.elevation_rate_deg_s),
+                        },
+                        transform);
+                    pn_world = {pn_body_world.x, pn_body_world.y, pn_body_world.z};
+                }
 
                 commanded_accel = (los_lateral_dir * capture_mag) + pn_world;
 
