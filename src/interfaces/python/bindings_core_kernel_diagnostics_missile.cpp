@@ -75,6 +75,7 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                 out["nav_gain"] = missile->nav_gain;
                 out["pn_los_rate_source"] = missile->pn_los_rate_source;
                 out["target_kinematics_estimator"] = missile->target_kinematics_estimator;
+                out["capture_guidance_mode"] = missile->capture_guidance_mode;
                 out["target_tracker_alpha"] = missile->target_tracker_alpha;
                 out["target_tracker_beta"] = missile->target_tracker_beta;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
@@ -207,6 +208,12 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     mechanism_profile && mechanism_profile->active;
                 if (mechanism_profile) {
                     out["guidance_mechanism_capture_mode"] = mechanism_profile->capture_mode;
+                    out["guidance_capture_base_range_mode"] =
+                        mechanism_profile->capture_base_range_mode;
+                    out["guidance_capture_terminal_weight_mode"] =
+                        mechanism_profile->capture_terminal_weight_mode;
+                    out["guidance_capture_lead_blend_mode"] =
+                        mechanism_profile->capture_lead_blend_mode;
                     out["guidance_mechanism_pn_mode"] = mechanism_profile->pn_mode;
                     out["guidance_mechanism_lead_mode"] = mechanism_profile->lead_mode;
                     out["guidance_mechanism_kinematics_source"] =
@@ -219,6 +226,14 @@ void bind_simulation_kernel_diagnostics_missile_runtime_surface(
                     out["guidance_capture_accel_y_mps2"] = mechanism_profile->capture_accel_y_mps2;
                     out["guidance_capture_accel_z_mps2"] = mechanism_profile->capture_accel_z_mps2;
                     out["guidance_capture_accel_mps2"] = mechanism_profile->capture_accel_mps2;
+                    out["guidance_capture_lateral_error"] =
+                        mechanism_profile->capture_lateral_error;
+                    out["guidance_capture_base_range_factor"] =
+                        mechanism_profile->capture_base_range_factor;
+                    out["guidance_capture_terminal_weight"] =
+                        mechanism_profile->capture_terminal_weight;
+                    out["guidance_capture_raw_accel_mps2"] =
+                        mechanism_profile->capture_raw_accel_mps2;
                     out["guidance_pn_accel_x_mps2"] = mechanism_profile->pn_accel_x_mps2;
                     out["guidance_pn_accel_y_mps2"] = mechanism_profile->pn_accel_y_mps2;
                     out["guidance_pn_accel_z_mps2"] = mechanism_profile->pn_accel_z_mps2;

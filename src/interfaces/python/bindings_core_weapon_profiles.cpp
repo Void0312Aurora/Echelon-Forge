@@ -47,6 +47,7 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("nav_gain", &MissileTuning::nav_gain)
         .def_rw("pn_los_rate_source", &MissileTuning::pn_los_rate_source)
         .def_rw("target_kinematics_estimator", &MissileTuning::target_kinematics_estimator)
+        .def_rw("capture_guidance_mode", &MissileTuning::capture_guidance_mode)
         .def_rw("target_tracker_alpha", &MissileTuning::target_tracker_alpha)
         .def_rw("target_tracker_beta", &MissileTuning::target_tracker_beta)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)

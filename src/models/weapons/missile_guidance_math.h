@@ -165,4 +165,36 @@ inline Vec3 transverse_pn_acceleration(const Vec3& los_angular_rate,
            (gain_scale * nav_gain * closing_speed_mps);
 }
 
+inline double capture_base_range_factor(double speed_mps, double range_m,
+                                        double reference_range_m, int mode) {
+    const double safe_range_m = std::max(1.0, range_m);
+    const double safe_reference_range_m = std::max(1.0, reference_range_m);
+    const double denominator_m = mode == 1 ? safe_reference_range_m : safe_range_m;
+    return speed_mps * speed_mps / denominator_m;
+}
+
+inline double capture_terminal_weight(double range_m, double reference_range_m,
+                                      double minimum_weight, double maximum_weight, int mode) {
+    if (mode == 1) {
+        return 1.0;
+    }
+    const double reciprocal = std::max(1.0, reference_range_m) / std::max(1.0, range_m);
+    if (mode == 2) {
+        return reciprocal;
+    }
+    return std::clamp(reciprocal, minimum_weight, maximum_weight);
+}
+
+inline double lead_blend_range_fraction(double range_m, double reference_range_m,
+                                        double minimum_fraction, int mode) {
+    if (mode == 1) {
+        return 1.0;
+    }
+    if (mode == 2) {
+        return 0.0;
+    }
+    return std::clamp(std::max(1.0, reference_range_m) / std::max(1.0, range_m),
+                      minimum_fraction, 1.0);
+}
+
 }  // namespace missile_guidance
