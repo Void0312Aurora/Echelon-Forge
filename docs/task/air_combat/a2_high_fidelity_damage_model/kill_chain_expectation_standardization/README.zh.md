@@ -188,6 +188,15 @@ AIM-120C 性能声明。
   `36..38 deg` 后从 `N` 修正为 `M`；维持旧分类需要约 `N=10..12` 或 `50 g`。
   `18` 个 runtime-projection `core/effective` rows 全部满足响应下限（`14` severe、
   `4` material），`10` 个 outside-effect trace rows 均无 sampled failure。
+  随后的 `2026-07-15`
+  [制导机制消融](../review_packets/kill_chain_guidance_mechanism_ablation_20260715/kill_chain_guidance_mechanism_ablation_conclusions_20260715.zh.md)
+  在 `20` 个左右镜像匀速案例和 `10` 个机制变体上运行了 `200` 次确定性仿真。
+  结果表明 lead 是主导必要机制，PN 同样必要，而 direct APN 对 `4/6/8 km x
+  30/45 deg` 核心单元只改变 `0.01..1.53 m`。移除 track filter 虽改善 `45 deg`
+  miss，却会错误地把 `16 km / 30 deg` O 类负控推进 `R_fuze`；近瞬时标量
+  autopilot 也只提供次要改善。因此“无 nominal guidance residual”仍只是分类结果，
+  不是机制闭合。当前 `45 deg -> M` 边界只描述现有 runtime，严格的 PN frame 和
+  velocity-only / quadratic lead 消融仍未完成。
   完整 `93` anchor-grid 中的
   `15` 个 mild-maneuver cases、`572` recommended-main-grid、并行 worker 和机动目标
   runtime 支持仍未完成。

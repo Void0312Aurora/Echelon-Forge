@@ -214,6 +214,18 @@ This subproject can be marked accepted only when:
   class required roughly `N=10..12` or `50 g`. The `18` runtime-projection
   `core/effective` rows all satisfy the response floor (`14` severe, `4`
   material), while the `10` outside-effect trace rows have no sampled failure.
+  A separate `2026-07-15`
+  [guidance mechanism ablation](../review_packets/kill_chain_guidance_mechanism_ablation_20260715/kill_chain_guidance_mechanism_ablation_conclusions_20260715.md)
+  then ran `200` deterministic simulations across `20` mirrored CV cases and
+  `10` mechanism variants. It shows that lead is the dominant necessary
+  mechanism, PN is also necessary, and direct APN changes the `4/6/8 km x
+  30/45 deg` core cells by only `0.01..1.53 m`. Removing track filtering
+  improves `45 deg` misses but incorrectly moves the `16 km / 30 deg` O-class
+  negative control inside `R_fuze`; a near-instant scalar autopilot is only a
+  secondary improvement. Therefore “no nominal guidance residual” remains a
+  classification result, not mechanism closure. The current `45 deg -> M`
+  boundary is descriptive of the runtime while exact PN-frame and
+  velocity-only-versus-quadratic-lead ablations remain open.
   The
   `15`
   mild-maneuver cases in the complete `93`
