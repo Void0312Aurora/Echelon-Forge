@@ -12,6 +12,7 @@
 #include <spdlog/spdlog.h>
 
 #include "components/basic/common.h"
+#include "components/combat/common/missile_guidance_mechanism_profile.h"
 #include "components/combat/common/weapon_common.h"
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
@@ -1261,6 +1262,58 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["seeker_activation_range_m"] = missile->seeker_activation_range_m;
                 out["midcourse_datalink_supported"] = missile->midcourse_datalink_supported;
                 out["terminal_seeker_active"] = missile->terminal_seeker_active;
+                const MissileGuidanceMechanismProfile *mechanism_profile =
+                    e.get<MissileGuidanceMechanismProfile>();
+                out["guidance_mechanism_profile_active"] =
+                    mechanism_profile && mechanism_profile->active;
+                if (mechanism_profile) {
+                    out["guidance_mechanism_capture_mode"] = mechanism_profile->capture_mode;
+                    out["guidance_mechanism_pn_mode"] = mechanism_profile->pn_mode;
+                    out["guidance_mechanism_lead_mode"] = mechanism_profile->lead_mode;
+                    out["guidance_mechanism_kinematics_source"] =
+                        mechanism_profile->kinematics_source;
+                    out["guidance_mechanism_apn_mode"] = mechanism_profile->apn_mode;
+                    out["guidance_target_kinematics_source_used"] =
+                        mechanism_profile->target_kinematics_source_used;
+                    out["guidance_pn_source_used"] = mechanism_profile->pn_source_used;
+                    out["guidance_capture_accel_x_mps2"] = mechanism_profile->capture_accel_x_mps2;
+                    out["guidance_capture_accel_y_mps2"] = mechanism_profile->capture_accel_y_mps2;
+                    out["guidance_capture_accel_z_mps2"] = mechanism_profile->capture_accel_z_mps2;
+                    out["guidance_capture_accel_mps2"] = mechanism_profile->capture_accel_mps2;
+                    out["guidance_pn_accel_x_mps2"] = mechanism_profile->pn_accel_x_mps2;
+                    out["guidance_pn_accel_y_mps2"] = mechanism_profile->pn_accel_y_mps2;
+                    out["guidance_pn_accel_z_mps2"] = mechanism_profile->pn_accel_z_mps2;
+                    out["guidance_pn_accel_mps2"] = mechanism_profile->pn_accel_mps2;
+                    out["guidance_apn_accel_x_mps2"] = mechanism_profile->apn_accel_x_mps2;
+                    out["guidance_apn_accel_y_mps2"] = mechanism_profile->apn_accel_y_mps2;
+                    out["guidance_apn_accel_z_mps2"] = mechanism_profile->apn_accel_z_mps2;
+                    out["guidance_preclamp_accel_x_mps2"] =
+                        mechanism_profile->preclamp_accel_x_mps2;
+                    out["guidance_preclamp_accel_y_mps2"] =
+                        mechanism_profile->preclamp_accel_y_mps2;
+                    out["guidance_preclamp_accel_z_mps2"] =
+                        mechanism_profile->preclamp_accel_z_mps2;
+                    out["guidance_preclamp_accel_mps2"] = mechanism_profile->preclamp_accel_mps2;
+                    out["guidance_postclamp_accel_x_mps2"] =
+                        mechanism_profile->postclamp_accel_x_mps2;
+                    out["guidance_postclamp_accel_y_mps2"] =
+                        mechanism_profile->postclamp_accel_y_mps2;
+                    out["guidance_postclamp_accel_z_mps2"] =
+                        mechanism_profile->postclamp_accel_z_mps2;
+                    out["guidance_postclamp_accel_mps2"] = mechanism_profile->postclamp_accel_mps2;
+                    out["guidance_los_rate_x_rad_s"] = mechanism_profile->los_rate_x_rad_s;
+                    out["guidance_los_rate_y_rad_s"] = mechanism_profile->los_rate_y_rad_s;
+                    out["guidance_los_rate_z_rad_s"] = mechanism_profile->los_rate_z_rad_s;
+                    out["guidance_los_rate_rad_s"] = mechanism_profile->los_rate_rad_s;
+                    out["guidance_closing_speed_used_mps"] =
+                        mechanism_profile->closing_speed_used_mps;
+                    out["guidance_achieved_accel_x_mps2"] =
+                        mechanism_profile->achieved_accel_x_mps2;
+                    out["guidance_achieved_accel_y_mps2"] =
+                        mechanism_profile->achieved_accel_y_mps2;
+                    out["guidance_achieved_accel_z_mps2"] =
+                        mechanism_profile->achieved_accel_z_mps2;
+                }
                 if (sensor) {
                     out["sensor_max_range_m"] = sensor->max_range;
                     out["sensor_fov_deg"] = sensor->fov_deg;
@@ -1372,6 +1425,53 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             nb::arg("entity_id"), nb::arg("x_m"), nb::arg("y_m"), nb::arg("z_m"),
             nb::arg("heading_deg"), nb::arg("pitch_deg"), nb::arg("roll_deg"), nb::arg("vx_mps"),
             nb::arg("vy_mps"), nb::arg("vz_mps"))
+        .def(
+            "set_missile_guidance_mechanism_profile",
+            [](SimulationKernel &self, uint64_t entity_id, int capture_mode, int pn_mode,
+               int lead_mode, int kinematics_source, int apn_mode) {
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                const Missile *missile = e.is_valid() ? e.get<Missile>() : nullptr;
+                if (!missile) {
+                    throw std::invalid_argument(
+                        "Invalid missile entity for set_missile_guidance_mechanism_profile");
+                }
+                if (missile->last_guidance_time >= 0.0) {
+                    throw std::invalid_argument("Missile guidance mechanism profile must be set "
+                                                "before the first guidance update");
+                }
+                if (capture_mode < MissileGuidanceMechanismProfile::kCaptureOff ||
+                    capture_mode > MissileGuidanceMechanismProfile::kCaptureOn) {
+                    throw std::invalid_argument("capture_mode must be 0 or 1");
+                }
+                if (pn_mode < MissileGuidanceMechanismProfile::kPnLegacyBodyRates ||
+                    pn_mode > MissileGuidanceMechanismProfile::kPnWorldTrackAnalytic) {
+                    throw std::invalid_argument("pn_mode must be in [0, 3]");
+                }
+                if (lead_mode < MissileGuidanceMechanismProfile::kLeadOff ||
+                    lead_mode > MissileGuidanceMechanismProfile::kLeadQuadratic) {
+                    throw std::invalid_argument("lead_mode must be in [0, 2]");
+                }
+                if (kinematics_source < MissileGuidanceMechanismProfile::kKinematicsTrack ||
+                    kinematics_source >
+                        MissileGuidanceMechanismProfile::kKinematicsTruthConstantVelocity) {
+                    throw std::invalid_argument("kinematics_source must be 0 or 1");
+                }
+                if (apn_mode < MissileGuidanceMechanismProfile::kApnOff ||
+                    apn_mode > MissileGuidanceMechanismProfile::kApnOn) {
+                    throw std::invalid_argument("apn_mode must be 0 or 1");
+                }
+                MissileGuidanceMechanismProfile profile;
+                profile.active = true;
+                profile.capture_mode = capture_mode;
+                profile.pn_mode = pn_mode;
+                profile.lead_mode = lead_mode;
+                profile.kinematics_source = kinematics_source;
+                profile.apn_mode = apn_mode;
+                e.set<MissileGuidanceMechanismProfile>(profile);
+            },
+            "Attach a diagnostics-only exact guidance mechanism profile before first update",
+            nb::arg("entity_id"), nb::arg("capture_mode"), nb::arg("pn_mode"), nb::arg("lead_mode"),
+            nb::arg("kinematics_source"), nb::arg("apn_mode"))
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"))
         .def("get_missile_tuning", &SimulationKernel::get_missile_tuning, nb::rv_policy::copy,

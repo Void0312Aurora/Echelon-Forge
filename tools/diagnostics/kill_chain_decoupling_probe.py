@@ -83,6 +83,20 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
     "range_filter_tau_s",
   }
 )
+GUIDANCE_MECHANISM_PROFILE_DEFAULTS = {
+  "capture_mode": 1,
+  "pn_mode": 0,
+  "lead_mode": 2,
+  "kinematics_source": 0,
+  "apn_mode": 1,
+}
+GUIDANCE_MECHANISM_PROFILE_RANGES = {
+  "capture_mode": (0, 1),
+  "pn_mode": (0, 3),
+  "lead_mode": (0, 2),
+  "kinematics_source": (0, 1),
+  "apn_mode": (0, 1),
+}
 DEFAULT_PROXIMITY_DISTANCES_M = (0.5, 2.0, 4.0, 8.0, 10.96, 12.0, 15.0)
 WARHEAD_SPATIAL_PROJECTION_DEFAULTS = {
   "blast": (0.55, 1.0, 20.0),
@@ -271,6 +285,28 @@ def _apply_guidance_tuning_overrides(
   return applied
 
 
+def _normalize_guidance_mechanism_profile(
+  profile: dict[str, int] | None,
+) -> dict[str, int] | None:
+  if profile is None:
+    return None
+  unknown = set(profile) - set(GUIDANCE_MECHANISM_PROFILE_DEFAULTS)
+  if unknown:
+    raise ValueError(f"unsupported guidance mechanism profile fields: {sorted(unknown)}")
+  normalized = dict(GUIDANCE_MECHANISM_PROFILE_DEFAULTS)
+  for field, raw_value in profile.items():
+    value = int(raw_value)
+    if isinstance(raw_value, float) and not raw_value.is_integer():
+      raise ValueError(f"guidance mechanism profile field must be an integer: {field}")
+    lower, upper = GUIDANCE_MECHANISM_PROFILE_RANGES[field]
+    if value < lower or value > upper:
+      raise ValueError(
+        f"guidance mechanism profile field {field} must be in [{lower}, {upper}]"
+      )
+    normalized[field] = value
+  return normalized
+
+
 def _guidance_runtime_trace_sample(
   runtime: dict[str, Any],
   *,
@@ -292,6 +328,32 @@ def _guidance_runtime_trace_sample(
     heading_error_deg -= 360.0
   while heading_error_deg < -180.0:
     heading_error_deg += 360.0
+  capture = tuple(
+    _finite_float(runtime.get(f"guidance_capture_accel_{axis}_mps2", 0.0), 0.0)
+    for axis in ("x", "y", "z")
+  )
+  pn = tuple(
+    _finite_float(runtime.get(f"guidance_pn_accel_{axis}_mps2", 0.0), 0.0)
+    for axis in ("x", "y", "z")
+  )
+  apn = tuple(
+    _finite_float(runtime.get(f"guidance_apn_accel_{axis}_mps2", 0.0), 0.0)
+    for axis in ("x", "y", "z")
+  )
+  preclamp = tuple(
+    _finite_float(runtime.get(f"guidance_preclamp_accel_{axis}_mps2", 0.0), 0.0)
+    for axis in ("x", "y", "z")
+  )
+  postclamp = tuple(
+    _finite_float(runtime.get(f"guidance_postclamp_accel_{axis}_mps2", 0.0), 0.0)
+    for axis in ("x", "y", "z")
+  )
+  component_sum_error = math.sqrt(
+    sum(
+      (preclamp[index] - capture[index] - pn[index] - apn[index]) ** 2
+      for index in range(3)
+    )
+  )
   return {
     "time_s": float(time_s),
     "truth_distance_m": float(truth_distance_m),
@@ -324,6 +386,60 @@ def _guidance_runtime_trace_sample(
     "target_kinematics_valid": bool(runtime.get("target_kinematics_valid")),
     "target_track_accel_mps2": math.sqrt(sum(value * value for value in target_accel)),
     "seeker_mode": int(runtime.get("seeker_mode", 0) or 0),
+    "guidance_mechanism_profile_active": bool(
+      runtime.get("guidance_mechanism_profile_active")
+    ),
+    "guidance_mechanism_capture_mode": int(
+      runtime.get("guidance_mechanism_capture_mode", 1) or 0
+    ),
+    "guidance_mechanism_pn_mode": int(
+      runtime.get("guidance_mechanism_pn_mode", 0) or 0
+    ),
+    "guidance_mechanism_lead_mode": int(
+      runtime.get("guidance_mechanism_lead_mode", 2) or 0
+    ),
+    "guidance_mechanism_kinematics_source": int(
+      runtime.get("guidance_mechanism_kinematics_source", 0) or 0
+    ),
+    "guidance_mechanism_apn_mode": int(
+      runtime.get("guidance_mechanism_apn_mode", 1) or 0
+    ),
+    "guidance_target_kinematics_source_used": int(
+      runtime.get("guidance_target_kinematics_source_used", 0) or 0
+    ),
+    "guidance_pn_source_used": int(runtime.get("guidance_pn_source_used", 0) or 0),
+    "guidance_capture_accel_xyz_mps2": list(capture),
+    "guidance_capture_accel_mps2": _finite_float(
+      runtime.get("guidance_capture_accel_mps2", 0.0), 0.0
+    ),
+    "guidance_pn_accel_xyz_mps2": list(pn),
+    "guidance_pn_accel_mps2": _finite_float(
+      runtime.get("guidance_pn_accel_mps2", 0.0), 0.0
+    ),
+    "guidance_apn_accel_xyz_mps2": list(apn),
+    "guidance_preclamp_accel_xyz_mps2": list(preclamp),
+    "guidance_preclamp_accel_mps2": _finite_float(
+      runtime.get("guidance_preclamp_accel_mps2", 0.0), 0.0
+    ),
+    "guidance_postclamp_accel_xyz_mps2": list(postclamp),
+    "guidance_postclamp_accel_mps2": _finite_float(
+      runtime.get("guidance_postclamp_accel_mps2", 0.0), 0.0
+    ),
+    "guidance_component_sum_error_mps2": component_sum_error,
+    "guidance_los_rate_xyz_rad_s": [
+      _finite_float(runtime.get(f"guidance_los_rate_{axis}_rad_s", 0.0), 0.0)
+      for axis in ("x", "y", "z")
+    ],
+    "guidance_los_rate_rad_s": _finite_float(
+      runtime.get("guidance_los_rate_rad_s", 0.0), 0.0
+    ),
+    "guidance_closing_speed_used_mps": _finite_float(
+      runtime.get("guidance_closing_speed_used_mps", 0.0), 0.0
+    ),
+    "guidance_achieved_accel_xyz_mps2": [
+      _finite_float(runtime.get(f"guidance_achieved_accel_{axis}_mps2", 0.0), 0.0)
+      for axis in ("x", "y", "z")
+    ],
   }
 
 
@@ -3342,6 +3458,7 @@ def run_guidance_case(
   seed: int = 20260621,
   max_steps: int = 4200,
   guidance_tuning_overrides: dict[str, float | int] | None = None,
+  guidance_mechanism_profile: dict[str, int] | None = None,
   collect_guidance_runtime_trace: bool = False,
   guidance_trace_stride: int = 1,
 ) -> dict[str, Any]:
@@ -3359,6 +3476,9 @@ def run_guidance_case(
   applied_guidance_tuning_overrides = _apply_guidance_tuning_overrides(
     tuning,
     guidance_tuning_overrides,
+  )
+  applied_guidance_mechanism_profile = _normalize_guidance_mechanism_profile(
+    guidance_mechanism_profile
   )
   sim.set_missile_tuning(tuning)
 
@@ -3379,6 +3499,15 @@ def run_guidance_case(
   missile_id = int(sim.fire_missile(blue_id, red_id))
   if missile_id <= 0:
     raise RuntimeError(f"missile launch failed for {case_id}")
+  if applied_guidance_mechanism_profile is not None:
+    sim.set_missile_guidance_mechanism_profile(
+      missile_id,
+      applied_guidance_mechanism_profile["capture_mode"],
+      applied_guidance_mechanism_profile["pn_mode"],
+      applied_guidance_mechanism_profile["lead_mode"],
+      applied_guidance_mechanism_profile["kinematics_source"],
+      applied_guidance_mechanism_profile["apn_mode"],
+    )
   missile_runtime_projection = _runtime_projection_profile(
     dict(sim.debug_get_missile_runtime_state(missile_id))
   )
@@ -3465,6 +3594,7 @@ def run_guidance_case(
     "bearing_deg": float(bearing_deg),
     "seed": int(seed),
     "guidance_tuning_overrides": applied_guidance_tuning_overrides,
+    "guidance_mechanism_profile": applied_guidance_mechanism_profile,
     "missile_id": int(missile_id),
     "missile_runtime_projection": missile_runtime_projection,
     "target_id": int(red_id),

@@ -140,7 +140,7 @@ def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot
 
 def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() -> None:
   names = _simulation_kernel_binding_names()
-  assert len(names) == 83, (
+  assert len(names) == 85, (
     "WP22-E first wave expects the broad SimulationKernel binding count to stay explicit; "
     "update this guard only with a deliberate allowlist reshaping change"
   )
