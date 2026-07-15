@@ -1,9 +1,10 @@
 # 杀伤链期望标准化
 
-状态：`2026-06-28` accepted / retained task-local docs-only standard + post-P5
-KCES harness diagnostics。本子项目
-先定义理想化杀伤链期望合同，再考虑 runtime 参数校准。它不声明真实 AIM-120C、
-F-16C、确定性引信或 Pk 权威。
+状态：`2026-07-06` accepted / retained expectation-standardization track +
+post-P5 KCES harness diagnostics、component-response 量化、standards-layer v0
+期望包络，以及基于既有匀速 before report 的只读 envelope audit。本子项目先定义
+理想化杀伤链期望合同，再考虑 runtime 参数校准。它不声明真实 AIM-120C、F-16C、
+确定性引信或 Pk 权威。
 
 语言：
 
@@ -47,7 +48,7 @@ AIM-120C 性能声明。
 | 制导 / 杀伤症状诊断 | retained | 父级 A2 目录下既有 8 km / 30 deg 记录 | 描述当前行为，不是期望标准。 |
 | 杀伤链阶段解耦 | retained / diagnostics implemented | 既有 facade、scalar ledger、named load factors 和 response-owner records | 支撑分阶段校准检查，但不决定理想结果。 |
 | 校准准入 | engineering proxy guarded | P6 gate 允许单层 engineering-proxy planning | 不授予真实世界权威或跨层调参。 |
-| 期望标准化 | accepted / retained task-local | 本子项目、P1-P5 closeout、post-P5 KCES harness diagnostics | docs-only 标准和只读诊断，不改 runtime 参数，不提升全局标准。 |
+| 期望标准化 | accepted / retained with standards planning supplement | 本子项目、P1-P5 closeout、post-P5 KCES harness diagnostics 和 standards-layer expectation envelope | 文档和只读诊断；不改 runtime 参数，不授予 calibration authority，也不授予真实世界权威。 |
 
 ## 范围
 
@@ -75,7 +76,7 @@ AIM-120C 性能声明。
 | `P2 Scenario Matrix` | 将合同转成距离 x 偏置角 heatmap 约束。 | P1 合同完成审阅。 | heatmap 拆分 nominal、marginal 和 outside-envelope cells，包含锚点网格、推荐主采样网格、机动 sparse grid、边界加密预算，并选择第一轮 `R_effect_variant` 评价集。 | pass |
 | `P3 Metric Mapping` | 把定性分区映射到可测报告字段。 | P2 矩阵存在。 | 指标引用 stage report 字段、`R_effect_variant` 派生规则、heatmap report row schema 和 guard 字段，但不选择 runtime 参数值。 | pass |
 | `P4 Calibration Harness Plan` | 把单层 calibration dry run 绑定到期望分区。 | P3 指标存在且 P6 guard 可用。 | 计划命名单层 before/after 检查、frozen-stage guard、artifact family、case-grid batch 和 worker pilot 策略。 | pass |
-| `P5 Standard Promotion Decision` | 判断稳定内容是否提升进 `docs/standards`。 | P1-P4 已审阅。 | 记录 retained task-local standard；本轮不写入 `docs/standards`。 | pass |
+| `P5 Standard Promotion Decision` | 判断稳定内容是否提升进 `docs/standards`。 | P1-P4 已审阅。 | 原 task-local workstream 继续 retained；后续 v0 期望包络已注册为空中特化 planning supplement，不是 runtime contract。 | pass |
 
 ## 任务簇
 
@@ -94,6 +95,10 @@ AIM-120C 性能声明。
   [kill_chain_scenario_expectation_matrix_20260622.zh.md](kill_chain_scenario_expectation_matrix_20260622.zh.md)
 - 指标映射和 heatmap report row schema：
   [kill_chain_metric_mapping_20260623.zh.md](kill_chain_metric_mapping_20260623.zh.md)
+- 组件响应量化阈值附录：
+  [kill_chain_component_response_quantization_20260705.zh.md](kill_chain_component_response_quantization_20260705.zh.md)
+- 标准化期望包络：
+  [空空杀伤链期望包络](../../../../standards/air/kill_chain_expectation_envelope.zh.md)
 - 校准 harness 计划：
   [kill_chain_calibration_harness_plan_20260623.zh.md](kill_chain_calibration_harness_plan_20260623.zh.md)
 - 标准提升决策：
@@ -106,12 +111,16 @@ AIM-120C 性能声明。
   [kces_anchor_cv_first_review_stage_summary_20260623.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_first_review_stage_summary_20260623.md)
 - 匀速 anchor component-response 局部诊断入口：
   [kces_anchor_cv_response_diagnosis_summary_20260628.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md)
+- 匀速 anchor 期望包络审计入口：
+  [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
 - P0-P5 本身只产出文档和合同语言。P5 后的 initial harness implementation 新增只读
   diagnostic wrapper、测试、heatmap 可视化、首阶段复核归因和 component-response
-  report-level local diagnosis；before report 现在还保留逐部件 `component_detail`
-  load/response 配对，但该配对由共享 `component_detail_projection.py` 从既有
-  runtime facade 只读投影而来，并由 response diagnosis 消费；它刻意不改 runtime
-  descriptor、默认参数、仿真行为或校准数据。
+  report-level local diagnosis；后续 envelope audit 把 standards-layer v0 期望
+  包络作为只读后处理器应用到既有 before report。before report 现在还保留逐部件
+  `component_detail` load/response 配对，但该配对由共享
+  `component_detail_projection.py` 从既有 runtime facade 只读投影而来，并由
+  response diagnosis 消费；它刻意不改 runtime descriptor、默认参数、仿真行为或
+  校准数据。
 
 ## 验收门
 
@@ -122,8 +131,9 @@ AIM-120C 性能声明。
 - 合同能通过已声明半径判断 10 m 量级 miss 属于核心、有效、边缘还是包线外，
   而不是凭空断言。
 - 后续校准能把每个期望映射到唯一杀伤链阶段，或显式标为跨阶段。
-- P5 已记录标准提升决策：当前保留为 task-local docs-only standard，不写入
-  `docs/standards`。
+- P5 已记录标准提升决策：原 P1-P4 workstream 继续 retained；后续 v0 期望包络
+  注册在 `docs/standards/air` 下作为 planning supplement，但不成为 runtime
+  contract。
 - 真实武器、真实目标、确定性引信和 Pk 权威仍保持拒绝，除非未来 admission gate
   显式授予。
 
@@ -150,24 +160,34 @@ AIM-120C 性能声明。
   `tools/diagnostics/kill_chain_expectation_visualize.py` 已把该 before report 渲染为
   launch class、guidance status、`rho_fuze`、max failure probability 和 effect band
   五类 heatmap；`tools/diagnostics/kill_chain_expectation_stage_attribution.py`
-  已把当前 `78` rows 分成 `4` 个 `guidance_approach` 复核 cells、`6` 个
-  `component_response` 复核 cells、`13` 个 `no_review_pressure` cells、`21` 个
-  `marginal_observation` cells 和 `34` 个 `negative_control_satisfied` cells。
-  `tools/diagnostics/kill_chain_expectation_response_diagnosis.py` 已将六个
-  `component_response` cells 全部归为 `outer_effect_low_component_load_probability_cliff`：
-  case-level `outer_effective` band 对应较弱 component load scale 和极低 response probability。
-  before report 现在通过共享投影保留
-  `a2.kill_chain_expectation_component_detail.v1`，六个
-  `component_response` cells 的 `detail_projection_signal` 均为
-  `all_component_rows_weak_load_low_response`。
-  `8 km / 30 deg` 当前进入 `R_fuze`，主要低杀伤现象落在
-  `component_response` 解释链；后续不是再“保留细节”或新建归因层，而是基于共享投影
-  输出继续分解 spatial projection、receiver exposure / armor / threshold 和
-  response curve。
+  已把当前 `78` rows 分成 `4` 个 `guidance_approach` 复核 cells、`19` 个
+  `no_review_pressure` cells、`21` 个 `marginal_observation` cells 和 `34` 个
+  `negative_control_satisfied` cells。runtime variant 现在读取发射时
+  `missile_runtime_projection.resolved_projection_radius_m`：`15 m * 0.60 = 9 m`。
+  因而 `4/6/8 km +/-30 deg` rows 属于 `outside_effect`，
+  `tools/diagnostics/kill_chain_expectation_response_diagnosis.py` 选出的
+  `component_response` candidates 为 `0`。before report 仍通过共享投影保留
+  `a2.kill_chain_expectation_component_detail.v1`，但这些细节不再构成当前
+  runtime-projection residual。
+  `2026-07-05` 已新增 post-P5
+  [组件响应量化阈值附录](kill_chain_component_response_quantization_20260705.zh.md)，
+  用 `p_max`、`delta_abs` 和独立 `sampled_failure_observed` 标记定义
+  `trace_response` 到 `severe_response` 的 task-local 诊断分区；该附录仍是
+  docs-only 标准完善，不授予 runtime calibration authority。`2026-07-06`
+  的 [标准化期望包络](../../../../standards/air/kill_chain_expectation_envelope.zh.md)
+  把 P1/P2/P3/addendum 注册为空中特化 planning supplement，覆盖人为定义输入、派生报告字段、
+  response floor/ceiling、分布容忍度、连续性规则、cell status 和 owner-stage
+  归因。只读
+  [期望包络审计](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
+  已在修正审计优先级后把该包络应用到既有 `78` 个匀速 rows：`4` 个 cells 为
+  `guidance_or_model_residual`，`21` 个 cells 为 `boundary_observation`，`53` 个
+  cells 为 `satisfied`。launch / guidance 与 marginal 分类现在先于无关的 effect
+  metadata 检查执行。这只是后处理结果，不是重跑仿真、参数修改或校准 verdict。
   完整 `93` anchor-grid 中的
   `15` 个 mild-maneuver cases、`572` recommended-main-grid、并行 worker 和机动目标
   runtime 支持仍未完成。
-- runtime 校准、descriptor 修改、after report 和完整批量执行仍保持 held。
+- P6 engineering-proxy guarded single-layer dry-run plans 已准入；runtime 参数重调、
+  descriptor 修改、after report 和完整批量执行仍保持 held。
 
 ## Archive
 

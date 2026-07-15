@@ -1,9 +1,11 @@
 # Kill-Chain Expectation Standardization
 
-Status: `2026-06-28` accepted / retained task-local docs-only standard plus
-post-P5 KCES harness diagnostics. This subproject defines idealized kill-chain
-expectation contracts before runtime parameter retuning. It does not claim real
-AIM-120C, F-16C, deterministic fuze, or Pk authority.
+Status: `2026-07-06` accepted / retained expectation-standardization track plus
+post-P5 KCES harness diagnostics, component-response quantization, a
+standards-layer v0 expectation envelope, and a read-only envelope audit over
+the existing constant-velocity before report. This subproject defines
+idealized kill-chain expectation contracts before runtime parameter retuning.
+It does not claim real AIM-120C, F-16C, deterministic fuze, or Pk authority.
 
 Language:
 
@@ -50,7 +52,7 @@ a real AIM-120C performance claim.
 | Guidance/lethality symptom diagnosis | retained | Existing 8 km / 30 deg reports under the parent A2 directory | Describes current behavior; it is not the expectation standard. |
 | Kill-chain stage decoupling | retained / implemented diagnostics | Existing facade, scalar ledger, named load factors, and response-owner records | Enables staged calibration checks; it does not choose idealized outcomes. |
 | Calibration admission | engineering proxy guarded | P6 gate allows single-layer engineering-proxy planning | Does not grant real-world authority or cross-layer retuning. |
-| Expectation standardization | accepted / retained task-local | This subproject, the P1-P5 closeout, and post-P5 KCES harness diagnostics | Docs-only standard plus read-only diagnostics; no runtime parameter changes and no global standards promotion. |
+| Expectation standardization | accepted / retained with standards planning supplement | This subproject, the P1-P5 closeout, post-P5 KCES harness diagnostics, and the standards-layer expectation envelope | Docs plus read-only diagnostics; no runtime parameter changes, no calibration authority, and no real-world authority. |
 
 ## Scope
 
@@ -80,7 +82,7 @@ Out of scope:
 | `P2 Scenario Matrix` | Convert the contract into a range x offset-angle heatmap constraint. | P1 contract reviewed. | Heatmap separates nominal, marginal, and outside-envelope cells, includes an anchor grid, recommended main sampling grid, maneuver sparse grid, boundary-refinement budget, and selects the first `R_effect_variant` evaluation set. | pass |
 | `P3 Metric Mapping` | Map ordinal bands to measurable report fields. | P2 matrix exists. | Metrics identify stage report fields, `R_effect_variant` derivation rules, heatmap report row schema, and guard fields without selecting runtime parameter values. | pass |
 | `P4 Calibration Harness Plan` | Bind single-layer calibration dry runs to expectation bands. | P3 metrics exist and P6 guard remains available. | Plan names layer-by-layer before/after checks, frozen-stage guards, artifact family, case-grid batches, and worker-pilot policy. | pass |
-| `P5 Standard Promotion Decision` | Decide whether stable pieces move into `docs/standards`. | P1-P4 reviewed. | Retained task-local standard is recorded; this batch does not write into `docs/standards`. | pass |
+| `P5 Standard Promotion Decision` | Decide whether stable pieces move into `docs/standards`. | P1-P4 reviewed. | The original task-local workstream is retained; the later v0 expectation envelope is registered as an air-specialization planning supplement, not as a runtime contract. | pass |
 
 ## Task Clusters
 
@@ -99,6 +101,10 @@ Out of scope:
   [kill_chain_scenario_expectation_matrix_20260622.md](kill_chain_scenario_expectation_matrix_20260622.md)
 - Metric mapping and heatmap report row schema:
   [kill_chain_metric_mapping_20260623.md](kill_chain_metric_mapping_20260623.md)
+- Component-response quantization threshold addendum:
+  [kill_chain_component_response_quantization_20260705.md](kill_chain_component_response_quantization_20260705.md)
+- Standardized expectation envelope:
+  [Air-To-Air Kill-Chain Expectation Envelope](../../../../standards/air/kill_chain_expectation_envelope.md)
 - Calibration harness plan:
   [kill_chain_calibration_harness_plan_20260623.md](kill_chain_calibration_harness_plan_20260623.md)
 - Standard promotion decision:
@@ -111,12 +117,16 @@ Out of scope:
   [kces_anchor_cv_first_review_stage_summary_20260623.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_first_review_stage_summary_20260623.md)
 - Constant-velocity anchor component-response local diagnosis:
   [kces_anchor_cv_response_diagnosis_summary_20260628.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md)
+- Constant-velocity anchor expectation-envelope audit:
+  [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
 - P0-P5 themselves produce documentation and contract language only. The
   post-P5 initial harness implementation adds a read-only diagnostic wrapper,
   tests, heatmap visualization, first-review-stage attribution, and
-  component-response report-level local diagnosis; the before report now also
-  preserves per-component `component_detail` load/response pairs through the
-  shared `component_detail_projection.py` read-only projection from the existing
+  component-response report-level local diagnosis; the later envelope audit
+  applies the standards-layer v0 expectation envelope to the existing before
+  report as a read-only postprocessor. The before report now also preserves
+  per-component `component_detail` load/response pairs through the shared
+  `component_detail_projection.py` read-only projection from the existing
   runtime facade, and response diagnosis consumes that projection. It
   intentionally leaves runtime descriptors, default parameters, simulation
   behavior, and calibration data unchanged.
@@ -132,8 +142,10 @@ This subproject can be marked accepted only when:
   or out of envelope by reference to a declared radius, not by assertion.
 - Follow-on calibration can map each expectation to exactly one kill-chain
   stage or explicitly mark it as cross-stage.
-- P5 has recorded the standard-promotion decision: this remains a task-local
-  docs-only standard and does not write into `docs/standards`.
+- P5 has recorded the standard-promotion decision: the original P1-P4
+  workstream remains retained, while the later v0 expectation envelope is
+  registered under `docs/standards/air` as a planning supplement and does not
+  become a runtime contract.
 - Real weapon, real target, deterministic fuze, and Pk authority remain refused
   unless a future admission gate explicitly grants them.
 
@@ -156,10 +168,10 @@ This subproject can be marked accepted only when:
   with a `32` worker pilot batch, `48-64` worker escalation criteria, P6 delta
   guard, and frozen-stage rules. `guidance_approach` remains read-only in this
   harness.
-- `P5` is closed as pass: this subproject remains an accepted / retained
-  task-local docs-only standard; this batch does not write into
-  `docs/standards`, and future standards promotion reopens only after accepted
-  runtime/test/admission evidence exists.
+- `P5` is closed as pass: this subproject remains accepted / retained; the
+  later standards-layer envelope is an air-specialization planning supplement
+  and future runtime-contract promotion still requires accepted
+  runtime/test/admission evidence.
 - Post-P5 initial harness implementation has started:
   `tools/diagnostics/kill_chain_expectation_harness.py` can generate the
   `anchor-grid` case grid and has generated the full constant-velocity `78`
@@ -167,29 +179,42 @@ This subproject can be marked accepted only when:
   has rendered that before report into launch class, guidance status,
   `rho_fuze`, max failure probability, and effect band heatmaps.
   `tools/diagnostics/kill_chain_expectation_stage_attribution.py` has split the
-  current `78` rows into `4` `guidance_approach` review cells, `6`
-  `component_response` review cells, `13` `no_review_pressure` cells, `21`
-  `marginal_observation` cells, and `34` `negative_control_satisfied` cells.
-  `tools/diagnostics/kill_chain_expectation_response_diagnosis.py` classifies all
-  six `component_response` cells as
-  `outer_effect_low_component_load_probability_cliff`: the case-level
-  `outer_effective` band maps to weak component load scale and very low
-  response probability.
-  The before report now preserves
+  current `78` rows into `4` `guidance_approach` review cells, `19`
+  `no_review_pressure` cells, `21` `marginal_observation` cells, and `34`
+  `negative_control_satisfied` cells. The runtime variant now reads the
+  launch-time `missile_runtime_projection.resolved_projection_radius_m` value:
+  `15 m * 0.60 = 9 m`. The `4/6/8 km +/-30 deg` rows are consequently
+  `outside_effect`, and
+  `tools/diagnostics/kill_chain_expectation_response_diagnosis.py` selects zero
+  `component_response` candidates. The before report still preserves
   `a2.kill_chain_expectation_component_detail.v1` through the shared
-  projection, and all six `component_response` cells have
-  `detail_projection_signal=all_component_rows_weak_load_low_response`.
-  The `8 km / 30 deg` case currently enters `R_fuze`, and its weak lethality
-  routes through the `component_response` explanation chain; follow-on work is
-  no longer detail retention or a new attribution layer, but factor
-  decomposition across spatial projection, receiver exposure / armor /
-  threshold, and response curve. The
+  projection, but those details no longer create a current runtime-projection
+  residual. On `2026-07-05`, the post-P5
+  [component-response quantization addendum](kill_chain_component_response_quantization_20260705.md)
+  added task-local diagnostic bands from `trace_response` through
+  `severe_response` using `p_max`, `delta_abs`, and an independent
+  `sampled_failure_observed` flag; it remains docs-only and grants no runtime
+  calibration authority. On `2026-07-06`, the
+  [standardized expectation envelope](../../../../standards/air/kill_chain_expectation_envelope.md)
+  registered the P1/P2/P3/addendum pieces as an air-specialization planning
+  supplement covering
+  human-defined inputs, derived report fields, response floors/ceilings,
+  distribution tolerances, continuity rules, cell statuses, and owner-stage
+  attribution. The read-only
+  [expectation-envelope audit](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md)
+  applied that envelope to the existing `78` constant-velocity rows after the
+  audit priority correction: `4` cells are `guidance_or_model_residual`, `21`
+  cells are `boundary_observation`, and `53` cells are `satisfied`. Launch /
+  guidance and marginal classifications are now evaluated before unrelated
+  effect-metadata checks. It is a postprocessor result, not a simulation rerun,
+  parameter edit, or calibration verdict. The
   `15`
   mild-maneuver cases in the complete `93`
   anchor-grid, the `572` recommended-main-grid, worker parallelism, and
   maneuvering-target runtime support remain incomplete.
-- Runtime calibration, descriptor edits, after reports, and full batch execution
-  remain held.
+- P6 engineering-proxy guarded single-layer dry-run plans are admitted, while
+  runtime parameter retuning, descriptor edits, after reports, and full batch
+  execution remain held.
 
 ## Archive
 

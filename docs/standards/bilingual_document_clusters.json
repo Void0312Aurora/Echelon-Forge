@@ -151,18 +151,18 @@
       "english": "docs/standards/README.md",
       "chinese": "docs/standards/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-06-10",
-      "english_hash": "03bff6b9c310d8652ee8e88b991e7236f5fb939446d862bc40977c30eb709772",
-      "chinese_hash": "42234c024e44f3b318a700895b870515fb0fb3f33c6556dd57b5975b6e1b8744"
+      "last_verified": "2026-07-06",
+      "english_hash": "beea46ce448ca04dbd8902a01b85025fd9257b8f7a2ed2ef6c85017244e0d9ae",
+      "chinese_hash": "d0476688c17554df86b41cf33b3cbfa92cf5975fc90ea0fac7e0384737543ce7"
     },
     {
       "pair_id": "standards/air/README",
       "english": "docs/standards/air/README.md",
       "chinese": "docs/standards/air/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-06-10",
-      "english_hash": "803943c065ed6162addfea442e5ef1b074b3eecd8dff1e681a856b39bd531eeb",
-      "chinese_hash": "5499f7d559b1eccf03212fac746da12887e59f036b5438845cd43acd43ca086c"
+      "last_verified": "2026-07-06",
+      "english_hash": "a27dd092430b2e56caa786dc7528ebecab3228b866cb7d04732a68c1a99eb936",
+      "chinese_hash": "a5a9dafb14831d4a615e75f14c6f3861835f3a14812cb186e9ea86a7b13b8fea"
     },
     {
       "pair_id": "standards/air/act",
@@ -181,6 +181,15 @@
       "last_verified": "2026-06-10",
       "english_hash": "69abb5f21a64f3fd9eca90d742fda5eaaadedb6df16f9ed4c509e4e53eef2375",
       "chinese_hash": "87c458f12ef25e7b9136d5bb6ddcf42e225e2d3b344d4405dca9c5fc22af21d2"
+    },
+    {
+      "pair_id": "standards/air/kill_chain_expectation_envelope",
+      "english": "docs/standards/air/kill_chain_expectation_envelope.md",
+      "chinese": "docs/standards/air/kill_chain_expectation_envelope.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-15",
+      "english_hash": "a32321b75bfbb7878152a1d9ccafb0fcbe9e0fcc97891faa673cb4bbfe667dd4",
+      "chinese_hash": "37543e3c50ee35bd7b3572b76538576f7e3a4e4785f0259f88c26cfe517a449c"
     },
     {
       "pair_id": "standards/air/obs",
@@ -403,9 +412,9 @@
       "english": "docs/standards/overview/document_alignment_map.md",
       "chinese": "docs/standards/overview/document_alignment_map.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-06-10",
-      "english_hash": "4b3a71c35353623f3f99e0ef5017665278b67744167222a91d88557d0805e4b4",
-      "chinese_hash": "c02eb880a296868de3e2f95f891955bef3616fac5605f2eac4bf83573e75eb56"
+      "last_verified": "2026-07-06",
+      "english_hash": "4efc1b998db1b38b061167d70680b29b2995413c68e553d178b5bcd92195a79e",
+      "chinese_hash": "0be4751d57d133b2a14bd28f652bf009f861e34855778aa7502ba58ff50461d0"
     },
     {
       "pair_id": "standards/planning/modularization_plan",

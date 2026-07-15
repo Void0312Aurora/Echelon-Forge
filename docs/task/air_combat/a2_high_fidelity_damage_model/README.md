@@ -1,6 +1,6 @@
 # A2 High-Fidelity Damage Model
 
-Status: `2026-06-23` active follow-on index plus local archive registry. The
+Status: `2026-07-15` active follow-on index plus local archive registry. The
 sealed base A2 research/candidate package remains in the outer air-combat
 archive:
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.md).
@@ -37,9 +37,15 @@ A2 follow-on surface does not flatten into a long list of completed projects.
   now has a post-P5 initial before-report harness wrapper and a full
   constant-velocity `78` case anchor before report with per-component
   `component_detail` retention through the shared projection helper, reviewable
-  heatmap visualization, first-review-stage attribution, and component-response
-  local diagnosis. KCES does not maintain its own component-attribution rules,
-  and still refuses real weapon, real target, deterministic-fuze, Pk, or
+  heatmap visualization, first-review-stage attribution, component-response
+  local diagnosis, a post-P5 docs-only component-response quantization addendum,
+  and a standards-layer air planning supplement for the v0 expectation envelope:
+  [Air-To-Air Kill-Chain Expectation Envelope](../../../standards/air/kill_chain_expectation_envelope.md).
+  The current tracked follow-on point is to emit the addendum's read-only
+  quantized fields and the envelope's `envelope_cell_status` /
+  `envelope_owner_stage` labels in future harness summaries if machine
+  consumption is needed. KCES does not maintain its own component-attribution
+  rules, and still refuses real weapon, real target, deterministic-fuze, Pk, or
   calibration authority.
 - [kill_chain_mechanism_decoupling_analysis_20260621.zh.md](kill_chain_mechanism_decoupling_analysis_20260621.zh.md):
   completed retained Chinese mechanism analysis for decoupling the kill chain
@@ -88,8 +94,10 @@ A2 follow-on surface does not flatten into a long list of completed projects.
 - [kill_chain_calibration_admission_gate_20260621.zh.md](kill_chain_calibration_admission_gate_20260621.zh.md):
   retained Chinese P6 calibration-admission gate slice. It splits fuze,
   warhead, target-response, and consequence calibration into mutually exclusive
-  layer admissions and currently fails closed because external evidence is
-  missing.
+  layer admissions. Repository engineering-proxy evidence currently admits
+  guarded single-layer dry-run plans for all four layers; real-world authority,
+  default-database retuning, deterministic-fuze, and Pk claims remain fail-closed
+  because no external authority record is admitted.
 
 ## Archived / Registered Entries
 

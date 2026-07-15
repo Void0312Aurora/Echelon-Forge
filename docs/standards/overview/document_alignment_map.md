@@ -86,12 +86,16 @@ These remain valid, but they are not project-wide common-core standards:
 - [Pilot Action Space Standard](../air/act.md)
 - [Air Mission Command Standard](../air/aim.md)
 - [Pilot Report Standard](../air/rep.md)
+- [Air-To-Air Kill-Chain Expectation Envelope](../air/kill_chain_expectation_envelope.md)
+  - active planning supplement, not a current runtime contract
 
 They own:
 
 - runway, approach, ILS, takeoff, recovery, sortie-phase semantics
 - air mission observation and execution-command specialization
 - air formation roles such as `wingman`, `element`, and `flight`
+- air-to-air kill-chain expectation-envelope labels used to review diagnostic
+  distributions before calibration work
 
 ### Naval Specialization
 

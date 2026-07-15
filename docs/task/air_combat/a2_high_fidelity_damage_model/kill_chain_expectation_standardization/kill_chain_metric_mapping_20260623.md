@@ -110,11 +110,24 @@ to carry `failure_probability`, `failure_sample`, `sampled_failure`,
 `integrity_delta`, `failure_mode`, and `failure_severity`. Probability and
 integrity thresholds move to P4 or follow-on admission work.
 
+Post-P5 addendum:
+[component-response quantization thresholds](kill_chain_component_response_quantization_20260705.md)
+now define task-local v0 diagnostic bands. This does not rewrite the historical
+P3 boundary; P3 remains a field mapping, and the addendum only supplies a
+reusable `component_response` quantization rule for future before/after reports.
+
+Standardized expectation envelope:
+[Air-To-Air Kill-Chain Expectation Envelope](../../../../standards/air/kill_chain_expectation_envelope.md)
+uses this P3 field mapping plus the post-P5 response bands to define
+standards-layer planning-supplement labels such as `envelope_cell_status` and
+`envelope_owner_stage`. The envelope is not a current runtime contract and does
+not grant calibration authority.
+
 ## R Effect Variant Mapping
 
 | Variant id | `R_effect_m` source | P3 status | Report requirement |
 | --- | --- | --- | --- |
-| `REV-RUNTIME-PROJECTION` | Current runtime projection proxy. Prefer `runtime_facade.warhead_load_field.lethal_radius_m`; if absent, P4 must provide `runtime_projection_radius_m`. | selected | Label `authority_level=runtime_projection_comparison`; not an idealized standard. |
+| `REV-RUNTIME-PROJECTION` | Current runtime spatial projection radius captured at missile launch as `missile_runtime_projection.resolved_projection_radius_m`. It is derived from the runtime warhead family, `lethal_radius_m`, `projection_radius_fraction`, and projection clamps; it is not the lethal radius itself. | selected | Emit `R_effect_source=missile_runtime_projection.resolved_projection_radius_m` and label `authority_level=runtime_projection_comparison`; not an idealized standard. |
 | `REV-EQ-FUZE` | `R_effect_m = R_fuze_m`. | selected | Sensitivity upper bound; reports must set `derived_from_fuze_radius=true`. |
 | `REV-SMALLER-LOAD` | P4 harness-declared `declared_effect_radius_m`, which must be `< R_fuze_m`. | selected but value-held | No default meter value; if absent, output `unclassified_missing_R_effect`. |
 | `REV-DECLARED-EFFECT` | Future review/admitted evidence row. | held | Not part of the current P3/P4 default calibration. |
@@ -133,7 +146,7 @@ Each P4 heatmap report row should include at least:
 | `launch_window` | `target_motion_layer`, `range_km`, `offset_deg`, `signed_bearing_deg`, `launch_class` |
 | `guidance_approach` | `nearest_distance_m`, `nearest_approach_time_s`, `closure_mps`, `max_achieved_lateral_g`, `R_fuze_m`, `rho_fuze`, `entered_R_fuze`, `guidance_expectation_status` |
 | `fuze_decision` | `fuze_triggered`, `fuze_reason`, `detonated`, `detonation_probability`, `fuze_quality`, `terminal_track_valid`, `target_detected`, `detonation_point_source` |
-| `warhead_load_field` | `R_effect_variant`, `R_effect_m`, `rho_effect_case`, `effect_band`, `component_load_row_count`, `strongest_component_effect_scale`, `weakest_component_effect_scale` |
+| `warhead_load_field` | `R_effect_variant`, `R_effect_m`, `R_effect_source`, `rho_effect_case`, `effect_band`, `component_load_row_count`, `strongest_component_effect_scale`, `weakest_component_effect_scale` |
 | `component_response` | `component_response_row_count`, `max_failure_probability`, `sampled_failure_count`, `min_integrity_delta`, `primary_failure_mode`, `component_response_band` |
 | `consequence_projection` | `outcome_state`, `component_hit_count`, `component_failure_count`, `primary_component_system`, `mission_kill`, `mobility_kill`, `sensor_kill`, `destroyed` |
 | `guards` | `scalar_owner_guard_status`, `unexpected_stage_delta`, `authority_boundary_status`, `runtime_parameter_retuning` |

@@ -1,11 +1,14 @@
 # Kill-Chain Expectation Standardization Current Status
 
-Status: `2026-06-28` accepted / retained task-local standard plus initial
-before-report harness implementation. P0 subproject boundary is pass; P1
-expectation contract is pass with
+Status: `2026-07-15` accepted / retained expectation-standardization track plus
+initial before-report harness implementation, a post-P5 component-response
+threshold addendum, a standardized v0 expectation envelope, and a read-only
+expectation-envelope audit. P0 subproject boundary is pass; P1 expectation
+contract is pass with
 `R_effect_policy=independent_review_variable`; P2 scenario matrix is pass; P3
 metric mapping is pass; P4 harness plan is pass; P5 standard promotion decision
-is pass; runtime calibration remains held.
+is pass. P6 admits engineering-proxy guarded single-layer dry-run plans, while
+runtime parameter retuning and real-world authority remain held.
 
 Chinese companion:
 [kill_chain_expectation_standardization_current_status_20260621.zh.md](kill_chain_expectation_standardization_current_status_20260621.zh.md)
@@ -37,9 +40,9 @@ Chinese companion:
 - Added and closed the P4 harness plan, binding the P3 report row schema to
   case-grid batches, artifact family, a `32` worker pilot, P6 delta guard, and
   frozen-stage rules.
-- Added and closed the P5 standard promotion decision: the P1-P4 content remains
-  a task-local docs-only standard, and this batch does not write into
-  `docs/standards`.
+- Added and closed the original P5 standard promotion decision: at that time
+  the P1-P4 content remained a task-local docs-only standard and did not write
+  into `docs/standards`.
 - Added the initial before-report harness:
   [kill_chain_harness_implementation_20260623.md](kill_chain_harness_implementation_20260623.md),
   with an `anchor-grid` case-grid generator, read-only decoupling-probe wrapper,
@@ -51,22 +54,41 @@ Chinese companion:
 - Added first-review-stage attribution:
   [kces_anchor_cv_first_review_stage_summary_20260623.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_first_review_stage_summary_20260623.md),
   splitting the current constant-velocity anchor rows into `4`
-  `guidance_approach` review cells, `6` `component_response` review cells,
-  `13` `no_review_pressure` cells, `21` `marginal_observation` cells, and
-  `34` `negative_control_satisfied` cells.
+  `guidance_approach` review cells, `19` `no_review_pressure` cells, `21`
+  `marginal_observation` cells, and `34` `negative_control_satisfied` cells.
 - Added component-response local diagnosis:
   [kces_anchor_cv_response_diagnosis_summary_20260628.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md),
-  classifying all six `component_response` cells as
-  `outer_effect_low_component_load_probability_cliff`, where the case-level
-  `outer_effective` band maps to weak component load scale and very low
-  response probability.
+  now selecting zero `component_response` candidates for
+  `REV-RUNTIME-PROJECTION` after the runtime spatial projection correction.
 - Integrated before-report `component_detail`:
   `a2.kill_chain_expectation_component_detail.v1` is now a shared
   `component_detail_projection.py` read-only projection from the existing
   runtime facade. Response diagnosis consumes that projection and no longer
-  reimplements lethality attribution inside KCES. All six `component_response`
-  cells have
-  `detail_projection_signal=all_component_rows_weak_load_low_response`.
+  reimplements lethality attribution inside KCES. The runtime variant now reads
+  `missile_runtime_projection.resolved_projection_radius_m=9.0`, not the 15 m
+  lethal radius.
+- Added a post-P5 component-response quantization threshold addendum:
+  [kill_chain_component_response_quantization_20260705.md](kill_chain_component_response_quantization_20260705.md),
+  defining `trace_response`, `weak_response`, `nontrivial_response`,
+  `material_response`, and `severe_response` from `p_max`, `delta_abs`, and an
+  independent `sampled_failure_observed` flag. The current `4/6/8 km +/-30 deg`
+  trace-response cells are `outside_effect` and satisfy the negative-control
+  ceiling under the corrected runtime projection.
+- Added a standardized v0 expectation envelope:
+  [Air-To-Air Kill-Chain Expectation Envelope](../../../../standards/air/kill_chain_expectation_envelope.md),
+  registering human-defined profile/grid/radius/band/tolerance inputs with
+  derived report fields, launch/guidance envelope rules, effect-to-response
+  floors and ceilings, distribution tolerances, continuity rules, cell status
+  labels, and owner-stage attribution as an air-specialization planning
+  supplement.
+- Added a read-only expectation-envelope audit:
+  [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md),
+  applying the standards-layer envelope to the existing `78` constant-velocity
+  rows. After launch/guidance and marginal classifications were placed ahead of
+  unrelated effect-metadata checks, the status counts are `4`
+  `guidance_or_model_residual`, `21` `boundary_observation`, and `53`
+  `satisfied`; this is a postprocessor result, not a simulation rerun,
+  parameter edit, or calibration verdict.
 
 ## Maturity Matrix
 
@@ -77,18 +99,21 @@ Chinese companion:
 | Scenario matrix | pass | [kill_chain_scenario_expectation_matrix_20260622.md](kill_chain_scenario_expectation_matrix_20260622.md) | Heatmap cells classified, sampling-density estimate added, and first `R_effect_variant` set selected; metric mapping is now closed by P3. |
 | Metric mapping | pass | [kill_chain_metric_mapping_20260623.md](kill_chain_metric_mapping_20260623.md) | Field contract exists; no runtime parameter value selected. |
 | Calibration harness plan | pass | [kill_chain_calibration_harness_plan_20260623.md](kill_chain_calibration_harness_plan_20260623.md) | Plan exists; no batch simulation or runtime retuning performed. |
-| Standard promotion decision | pass | [kill_chain_standard_promotion_decision_20260623.md](kill_chain_standard_promotion_decision_20260623.md) | Decision is retained task-local standard; this batch does not write into `docs/standards`. |
+| Standard promotion decision | pass | [kill_chain_standard_promotion_decision_20260623.md](kill_chain_standard_promotion_decision_20260623.md) | Original P1-P4 decision retained the task-local workstream; the later v0 envelope is a planning supplement, not a runtime contract. |
 | Harness initial implementation | partial | [kill_chain_harness_implementation_20260623.md](kill_chain_harness_implementation_20260623.md) | Full constant-velocity `78` case anchor before report, per-component `component_detail`, visualization heatmaps, first-review-stage attribution, and response local diagnosis exist; full `93` anchor/main grid, worker parallelism, and maneuver runtime support remain incomplete. |
+| Component-response quantization thresholds | pass | [kill_chain_component_response_quantization_20260705.md](kill_chain_component_response_quantization_20260705.md) | Task-local docs-only diagnostic bands; grants no component-failure, Pk, or deterministic-fuze authority. |
+| Standardized expectation envelope v0 | pass | [docs/standards/air/kill_chain_expectation_envelope.md](../../../../standards/air/kill_chain_expectation_envelope.md) | Air-specialization planning supplement; not a current runtime contract, no runtime parameter changes, and no calibration authority. |
+| Expectation-envelope audit postprocessor | pass | [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) | Reads existing before report only; envelope fields are not yet emitted inline by the harness. |
 
 ## Residual Register
 
 | Residual | Owner | Exit condition |
 | --- | --- | --- |
-| Probability / integrity thresholds remain unquantified | KCES-P4/future evidence | P4 or follow-on admission work justifies thresholds; P3 only carries report fields. |
+| Probability / integrity thresholds now have a task-local v0 addendum but are not emitted by the harness yet | Future harness implementation | If machine consumption is needed, emit `component_response_quantized_band`, `component_response_sampled_failure_observed`, and `component_response_expectation_status` according to the addendum. |
+| Standardized expectation envelope is available through a read-only postprocessor but not emitted inline by the harness yet | Future harness implementation | If machine consumption is needed inside the harness report, emit `a2.kill_chain_expectation_envelope.v0` fields such as `envelope_cell_status` and `envelope_owner_stage` from the before/after report. |
 | Recommended main sampling grid not yet executed | Future harness implementation | The initial harness has generated the constant-velocity anchor before report and reviewable heatmaps; future execution produces the recommended-main before heatmap report. |
-| `8 km / 30 deg` needs follow-on interpretation / calibration decision | Future factor decomposition | The before report shows `R_fuze` entry, first-review-stage attribution is `component_response`, and report-level diagnosis is `outer_effect_low_component_load_probability_cliff`; per-component load/response details are now preserved through the shared projection, so follow-on work should decompose the cliff cause into spatial projection, receiver exposure / armor / threshold, or response curve. |
 | Local `N` guidance residuals | Future guidance / launch-window review | Four `N` cells at `4/6 km` and `+/-45 deg` do not enter `R_fuze`; review P2 launch class or the guidance model. |
-| Local `N` low-response residuals | Future factor decomposition | Six `N` cells at `4/6/8 km` and `+/-30 deg` enter `R_fuze` and have outer-effective load bands, but no sampled response failure; same-range `15 deg` sampled-response baselines show max failure probability ratios of about `0.72%~0.98%`, and per-component `detail_projection_signal` is `all_component_rows_weak_load_low_response` for all six. |
+| Runtime projection source must remain explicit | Future harness maintenance | Keep `REV-RUNTIME-PROJECTION` bound to `missile_runtime_projection.resolved_projection_radius_m` and keep `REV-EQ-FUZE` separate as a declared sensitivity variant. |
 | Worker parallelism and retry not implemented | Future harness implementation | Worker pool, failed-case retry, and batch summary writer exist. |
 | Maneuvering-target runtime harness not implemented | Future harness implementation | `mild_maneuver` grid rows are no longer marked unsupported and have runtime facts. |
 | Standards promotion held | Future standards promotion | Reopen under the standards maintenance policy only after accepted runtime/test/admission evidence exists. |
@@ -96,12 +121,11 @@ Chinese companion:
 
 ## Recommended Next Steps
 
-1. This P0-P5 docs-only workstream is closed; do not write runtime or
-   `docs/standards` changes in this batch.
-2. Use the shared projection output for per-component `component_loads[]` /
-   `component_responses[]` details to decompose the response-cliff cause while
-   keeping the four `guidance_approach` cells in the window / guidance review
-   queue.
+1. This P0-P5 workstream is closed; do not write runtime changes or treat the
+   standards-layer envelope as a runtime contract in this batch.
+2. Keep the four `guidance_approach` cells in the window / guidance review
+   queue, and preserve the corrected 9 m runtime-projection source in all future
+   before/after reports.
 3. Preserve the P6 frozen-stage guard and authority boundary before any after
    report, parameter candidate, or standards promotion.
 

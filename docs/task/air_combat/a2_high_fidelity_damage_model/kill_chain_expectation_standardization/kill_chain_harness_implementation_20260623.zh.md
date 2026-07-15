@@ -1,7 +1,8 @@
 # 杀伤链期望 Harness 初始实现
 
-状态：`2026-06-23` initial executable before-report harness，用于
-[杀伤链期望标准化](README.zh.md) 的 future harness implementation 起点。
+状态：`2026-07-15` initial executable before-report harness，加上只读 diagnostic
+postprocessors，用于 [杀伤链期望标准化](README.zh.md) 的 future harness
+implementation 起点。
 
 英文规范页：
 [kill_chain_harness_implementation_20260623.md](kill_chain_harness_implementation_20260623.md)
@@ -18,6 +19,7 @@ python tools/diagnostics/kill_chain_expectation_harness.py --help
 
 ```bash
 python -m pytest tests/tools/test_kill_chain_expectation_harness.py -q
+python -m pytest tests/tools/test_kces_expectation_envelope_audit.py -q
 ```
 
 当前 schema：
@@ -31,6 +33,7 @@ python -m pytest tests/tools/test_kill_chain_expectation_harness.py -q
 | visualization manifest | `a2.kill_chain_expectation_visualization_manifest.v1` |
 | first-review-stage attribution | `a2.kill_chain_expectation_stage_attribution.v1` |
 | response local diagnosis | `a2.kill_chain_expectation_response_diagnosis.v2` |
+| expectation-envelope audit | `a2.kill_chain_expectation_envelope_audit.v1` |
 
 ## 已实现内容
 
@@ -54,6 +57,8 @@ python -m pytest tests/tools/test_kill_chain_expectation_harness.py -q
   若未提供 `--declared-effect-radius-m`，`REV-SMALLER-LOAD` 输出
   `unclassified_missing_R_effect`，不伪造米制半径。
 - CLI stdout 保持纯 JSON；native runtime 日志转到 stderr。
+- 通过 `tools.diagnostics.kces.envelope_audit` 把 standards-layer v0 期望包络作为
+  只读后处理器应用到既有 before report；base harness 尚未内联输出 envelope 字段。
 
 ## Smoke 结果
 
@@ -77,7 +82,10 @@ python tools/diagnostics/kill_chain_expectation_harness.py \
 | `rho_fuze` | `0.7308986250117762` |
 | `entered_R_fuze` | `true` |
 | `guidance_expectation_status` | `satisfied` |
-| `REV-RUNTIME-PROJECTION.effect_band` | `outer_effective` |
+| `REV-RUNTIME-PROJECTION.R_effect_m` | `9.0` |
+| `REV-RUNTIME-PROJECTION.R_effect_source` | `missile_runtime_projection.resolved_projection_radius_m` |
+| `REV-RUNTIME-PROJECTION.rho_effect_case` | `1.218164375019627` |
+| `REV-RUNTIME-PROJECTION.effect_band` | `outside_effect` |
 | `REV-EQ-FUZE.effect_band` | `outer_effective` |
 | `REV-SMALLER-LOAD.effect_band` | `unclassified_missing_R_effect` |
 | `max_failure_probability` | `0.0063555841366786684` |
@@ -87,10 +95,11 @@ python tools/diagnostics/kill_chain_expectation_harness.py \
 解释：
 
 - 该 smoke case 当前进入 `R_fuze`，因此不是“完全没有接近 / 没有引信事实”的失败。
-- 在 `REV-RUNTIME-PROJECTION` 与 `REV-EQ-FUZE` 下，case-level
-  `rho_effect_case` 落在 `outer_effective`；这只是报告分区，不是概率阈值或真实战斗部声明。
-- component response 仍显示为低概率观测；该结果支持后续 before heatmap 的
-  first-failed-stage 分析，但还不是校准结论。
+- `REV-RUNTIME-PROJECTION` 使用发射时 runtime 空间投影半径：
+  `15 m * 0.60 = 9 m`。因此该 case 属于 `outside_effect`；`REV-EQ-FUZE`
+  则仍是独立的 15 m sensitivity row，属于 `outer_effective`。
+- 当前 `outside_effect` negative-control 允许低概率 component response；该观测
+  不再构成 component-response 校准压力。
 
 ## 匀速 Anchor Before Report
 
@@ -126,16 +135,17 @@ docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_exp
 
 | case_id | nearest_distance_m | rho_fuze | `REV-RUNTIME-PROJECTION.effect_band` | max_failure_probability |
 | --- | ---: | ---: | --- | ---: |
-| `kces_anchor_grid_cv_8km_m30deg` | `10.963446301013404` | `0.7308964200675603` | `outer_effective` | `0.006350331908151525` |
-| `kces_anchor_grid_cv_8km_p30deg` | `10.963479375176643` | `0.7308986250117762` | `outer_effective` | `0.0063555841366786684` |
+| `kces_anchor_grid_cv_8km_m30deg` | `10.963446301013404` | `0.7308964200675603` | `outside_effect` | `0.006350331908151525` |
+| `kces_anchor_grid_cv_8km_p30deg` | `10.963479375176643` | `0.7308986250117762` | `outside_effect` | `0.0063555841366786684` |
 
 解释：
 
 - 当前匀速 anchor-grid 的 `O` negative controls 全部没有触发异常下游校准压力。
 - 主要制导 / 发射窗口错位不在 `8 km / 30 deg`，而在 `4 km / 45 deg`
   和 `6 km / 45 deg` 这四个 `N` cells。
-- `8 km / 30 deg` 当前进入 `R_fuze`，但 response 仍低；后续应把它归入
-  `warhead_load_field -> component_response` 解释链，而不是继续描述成没有制导接近事实。
+- `8 km / 30 deg` 进入 `R_fuze`，但最近距超过修正后的 9 m runtime projection
+  radius；其 trace response 因而属于满足要求的 outside-effect 观测，不是 load /
+  response residual。
 
 ## 匀速 Anchor 可视化
 
@@ -170,7 +180,8 @@ python tools/diagnostics/kill_chain_expectation_visualize.py \
 
 - `8 km / +/-30 deg` 在 guidance status 图中为 `sat`，不是当前主要制导 residual。
 - `8 km / +/-30 deg` 在 max failure probability 图中为约 `0.006` 的低响应点，
-  因此后续分析对象应是 `warhead_load_field -> component_response`。
+  但它也位于修正后的 9 m runtime projection radius 外，因此在
+  `REV-RUNTIME-PROJECTION` 下仍是满足要求的 negative-control 观测。
 - 四个 `N` residual cell 集中在 `4/6 km` 的 `+/-45 deg`，需要后续复核 P2
   launch-window class 或当前制导模型。
 
@@ -205,23 +216,22 @@ python tools/diagnostics/kill_chain_expectation_stage_attribution.py \
 | First review stage | Count | Meaning |
 | --- | ---: | --- |
 | `guidance_approach` | `4` | `N` cell 未进入 `R_fuze`，先复核发射窗口 / 制导模型。 |
-| `component_response` | `6` | `N` cell 已有 guidance / fuze / load facts，但 response 未采样到 failure。 |
-| `no_review_pressure` | `13` | `N` cell 已进入引信、触发、载荷和 sampled response。 |
+| `no_review_pressure` | `19` | `N` cell 已达到圈内响应下限，或只在 9 m runtime projection radius 外保留 trace response。 |
 | `marginal_observation` | `21` | `M` cell 只保留观测，不按失败处理。 |
 | `negative_control_satisfied` | `34` | `O` cell 安静，negative control 通过。 |
 
 这使当前后续工作分叉更清楚：
 
 - `4/6 km +/-45 deg` 进入 `guidance_approach` high-priority 复核。
-- `4/6/8 km +/-30 deg` 进入 `component_response` medium-priority 复核，其中包含
-  用户最初关注的 `8 km / 30 deg`。
+- `4/6/8 km +/-30 deg` 位于修正后的 9 m runtime projection radius 外；其 trace
+  response 在 `REV-RUNTIME-PROJECTION` 下不产生复核压力。
 - 没有 `negative_control_alert`，说明本轮 O 类单元没有给出异常校准压力。
 
 ## Component Response 局部诊断
 
-已对首阶段归因为 `component_response` 的六个 cells 生成 report-level local diagnosis。
-该诊断仍只读取 before report，不重跑仿真、不编辑参数、不声明真实 weapon / target /
-Pk authority。
+report-level local diagnosis 仍作为后处理器保留。修正 runtime projection 后，
+`REV-RUNTIME-PROJECTION` 下没有选出 `component_response` candidates。该诊断仍只读取
+before report，不重跑仿真、不编辑参数、不声明真实 weapon / target / Pk authority。
 
 生成工具：
 
@@ -247,47 +257,61 @@ python tools/diagnostics/kill_chain_expectation_response_diagnosis.py \
 
 当前诊断：
 
-| Diagnosis bucket | Count | Reading |
-| --- | ---: | --- |
-| `outer_effect_low_component_load_probability_cliff` | `6` | case-level `outer_effective` band 映射到较弱 component load scale 和极低 response probability。 |
-
-逐部件 projection signal：
-
-| Detail projection signal | Count | Reading |
-| --- | ---: | --- |
-| `all_component_rows_weak_load_low_response` | `6` | before report 中保留的逐部件 rows 全部同时表现为弱 load scale 和低 response probability。 |
-
-`8 km / +30 deg` 的保留细节：
-
-| Detail | Value |
-| --- | --- |
-| component detail rows | `4` |
-| strongest load component | `right_horizontal_tail_actuator_or_surface_component` / `flight_control` |
-| strongest load `effect_scale` | `0.11750353538707678` |
-| strongest load `rho_effect_component` | `0.40311860731986976` |
-| max-probability component | `right_aileron_actuator` / `flight_control` |
-| max component `failure_probability` | `0.0063555841366786684` |
-| max component `effect_scale` | `0.06955096109949216` |
-| sampled failure | `false` |
-
-对照同距离、同侧 `15 deg` sampled-response 基线后：
-
-- `4 km +/-30 deg` 的 max failure probability 约为 `15 deg` 基线的 `0.98%`，
-  strongest component load scale 约为基线的 `17.6%`。
-- `6 km +/-30 deg` 的 max failure probability 约为 `15 deg` 基线的 `0.83%`，
-  strongest component load scale 约为基线的 `14.4%`。
-- `8 km +/-30 deg` 的 max failure probability 约为 `15 deg` 基线的 `0.72%`，
-  strongest component load scale 约为基线的 `12.8%`。
+| Field | Value |
+| --- | ---: |
+| candidate rows | `0` |
+| baseline rows | `13` |
+| diagnosis buckets | `{}` |
 
 解释：
 
-- 六个 cells 都已有 guidance / fuze / case-level load facts，因此不应回退为制导失败。
-- 当前低响应更像 case-level `outer_effective` 到 component-level load / response
-  的概率断崖，而不是单纯随机采样未命中。
-- 当前 before report 通过共享投影保留逐部件 `component_loads[]` 和
-  `component_responses[]` 细节；下一步只需继续拆这些既有字段里的低响应原因：
-  warhead spatial projection、target receiver exposure / armor / threshold 或
-  response curve。
+- `REV-RUNTIME-PROJECTION` 下当前没有 row 归因到 `component_response`，因此本
+  artifact 不再声明局部 load / response residual。
+- 仍可通过 `REV-EQ-FUZE` 把相同 rows 作为显式 radius-policy sensitivity 观察，
+  但不得把该结果表述成当前 runtime projection。
+
+## 期望包络审计
+
+同一 before report 也已按 standards-layer v0 期望包络完成审计。该步骤仍是只读
+后处理器，不重跑仿真、不编辑参数，也不授予 calibration authority。
+
+生成工具：
+
+```bash
+python -m tools.diagnostics.kces.envelope_audit \
+  --input docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_before_report_20260623.json \
+  --output-dir docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623 \
+  --prefix kces_anchor_cv \
+  --variant REV-RUNTIME-PROJECTION \
+  --target-motion-layer nonmaneuvering_constant_velocity \
+  --date-stamp 20260706
+```
+
+产物入口：
+
+| Artifact | Path |
+| --- | --- |
+| summary | [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) |
+| manifest | [kces_anchor_cv_expectation_envelope_manifest_20260706.json](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_manifest_20260706.json) |
+| detail CSV | [kces_anchor_cv_expectation_envelope_detail_20260706.csv](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_detail_20260706.csv) |
+| matrix CSV | [kces_anchor_cv_expectation_envelope_matrix_20260706.csv](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_matrix_20260706.csv) |
+
+当前 envelope status 计数：
+
+| Envelope cell status | Count | Reading |
+| --- | ---: | --- |
+| `guidance_or_model_residual` | `4` | nominal `4/6 km +/-45 deg` cells 未进入 `R_fuze`；先复核 launch-window / guidance。 |
+| `boundary_observation` | `21` | 全部 marginal launch-window cells 继续作为观测保留。 |
+| `satisfied` | `53` | 其余 nominal 与 negative-control cells 未产生包络压力。 |
+
+Owner-stage 计数：
+
+| Owner stage | Count |
+| --- | ---: |
+| `launch_window` | `21` |
+| `launch_window -> guidance_approach` | `4` |
+| `negative_control_satisfied` | `34` |
+| `no_review_pressure` | `19` |
 
 ## 边界
 
@@ -302,17 +326,16 @@ python tools/diagnostics/kill_chain_expectation_response_diagnosis.py \
   仍未完成；
 - 并行 worker 调度；
 - 机动目标 runtime 支持；
-- standards promotion；
+- runtime-contract standards promotion；
 - 真实 AIM-120C / F-16C / deterministic fuze / Pk authority。
 
 ## 后续
 
 下一步建议：
 
-1. 基于共享投影输出中的逐部件 `component_loads[]` / `component_responses[]`
-   细节，继续拆分 response cliff 的原因：warhead spatial projection、
-   receiver exposure / armor / threshold，或 response curve。
-2. 对 `guidance_approach` 四个 cells 复核 P2 launch-window class 与当前制导模型。
+1. 对 `guidance_approach` 四个 cells 复核 P2 launch-window class 与当前制导模型。
+2. 把 `REV-EQ-FUZE` 保持为离线 radius sensitivity，并确保
+   `REV-RUNTIME-PROJECTION` 只读取发射时 runtime projection 快照。
 3. 再实现 worker 并行与失败 case retry。
 4. 补齐 `mild_maneuver` runtime 支持，使完整 `93` anchor-grid 不再含 unsupported rows。
 5. 在 anchor-grid 解释稳定后，再进入 `recommended-main-grid` pilot。

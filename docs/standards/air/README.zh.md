@@ -11,12 +11,13 @@ Language:
 
 ## 范围
 
-本目录负责四类接口切片：
+本目录负责四类维护中的接口切片和一个规划补充页：
 
 - 面向 air agent 的 mission/task observation 语义
 - 环境与 `PilotAction` 暴露的 pilot action 语义
 - 建立在 common core 之上的 air-specialized command/tasking 语义
 - air-specific 的 pilot reporting 扩展
+- 空空杀伤链期望包络 review 词汇，目前是 planning supplement，而不是 runtime contract
 
 它不负责：
 
@@ -40,13 +41,17 @@ Language:
 2. [飞行员动作合同](act.md)
 3. [空中任务命令与 tasking 合同](aim.md)
 4. [飞行员汇报合同](rep.md)
+5. [空空杀伤链期望包络](kill_chain_expectation_envelope.zh.md)
 
-这四份文档共同定义当前 air 接口在下列几层之间的边界：
+前四份文档共同定义当前 air 接口在下列几层之间的边界：
 
 - tasking/leader logic
 - mission command 与 mission observation runtime
 - pilot action 输入
 - pilot report 输出
+
+杀伤链期望包络是 planning supplement。它标准化空空诊断分布的 review labels 和 owner
+attribution，但不是 calibration result，也尚不是维护中的 runtime/test contract。
 
 ## 当前代码对齐点
 
@@ -75,9 +80,11 @@ Language:
 - runway、takeoff、approach、formation、slot、recovery 这类 air 术语留在这里
 - 先写“当前已经实现的合同”，未来扩展若未落地，应单独标注
 - 不要把 action 或 observation surface 写得比当前 runtime/test contract 更宽
+- planning supplement 必须显式标注 held runtime behavior，并引用稳定其词汇的任务证据
 
 ## 相关文档
 
 - [场景配置指南](../bridge/scenario_guide.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
 - [USAF 画像](../services/air_force.md)
+- [空空杀伤链期望包络](kill_chain_expectation_envelope.zh.md)

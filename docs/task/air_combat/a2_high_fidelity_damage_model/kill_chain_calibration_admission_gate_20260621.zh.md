@@ -177,11 +177,13 @@ admission gate 要求后续每次校准：
    `deterministic_fuze_authority` 或 `calibration_authority`。
 
 当前 probe 还输出 `single_layer_calibration_plan`。该字段不是调参执行器，而是 P6
-dry-run 合同：只有某个 layer 拿到 admitted authority field 后，才会为该 layer 生成
-单层计划，并列出 `frozen_stage_ids` / `reject_if_changed_stage_ids`。计划还绑定
+dry-run 合同：某个 layer 拿到 admitted authority field，或由当前 repository
+engineering-proxy evidence 以 `admission_source=engineering_proxy` 受控准入后，会为
+该 layer 生成单层计划，并列出 `frozen_stage_ids` / `reject_if_changed_stage_ids`。计划还绑定
 `a2.kill_chain_calibration_delta_guard.v1`；后续 before/after report 必须通过 delta
-guard，即目标 stage 有变化、冻结 stage 无变化。当前因为 admitted evidence 为零，
-`plans=[]`。
+guard，即目标 stage 有变化、冻结 stage 无变化。当前真实 authority 的 admitted
+record 仍为零，但 engineering-proxy evidence 已生成四个 dry-run plans；这些计划的
+`admitted_authority_fields=[]`，且不允许默认数据库修改或 runtime parameter retuning。
 
 delta guard 可通过 CLI 直接运行，不需要重新跑仿真：
 

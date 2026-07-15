@@ -107,11 +107,21 @@ rho_effect_component = component_loads[].distance_m / R_effect_m
 `failure_mode` 和 `failure_severity`。概率阈值和完整度分区进入 P4 或后续
 admission work。
 
+Post-P5 补充：[组件响应量化阈值附录](kill_chain_component_response_quantization_20260705.zh.md)
+现已定义 task-local v0 诊断分区。该附录不改写 P3 的历史边界；P3 仍只是字段映射，
+附录只为后续 before/after report 提供可复用的 `component_response` 量化口径。
+
+标准化期望包络：
+[空空杀伤链期望包络](../../../../standards/air/kill_chain_expectation_envelope.zh.md)
+使用本 P3 字段映射和 P5 后 response bands，定义 standards-layer planning-supplement
+labels，例如 `envelope_cell_status` 和 `envelope_owner_stage`。该包络不是当前
+runtime contract，也不授予 calibration authority。
+
 ## R_effect Variant 映射
 
 | Variant id | `R_effect_m` 来源 | P3 状态 | 报告要求 |
 | --- | --- | --- | --- |
-| `REV-RUNTIME-PROJECTION` | 当前 runtime projection proxy。优先读取 `runtime_facade.warhead_load_field.lethal_radius_m`；若缺失，P4 必须显式提供 `runtime_projection_radius_m`。 | selected | 标注 `authority_level=runtime_projection_comparison`，不得作为理想化标准。 |
+| `REV-RUNTIME-PROJECTION` | 导弹发射时快照中的当前 runtime 空间投影半径 `missile_runtime_projection.resolved_projection_radius_m`。该值由 runtime 战斗部族、`lethal_radius_m`、`projection_radius_fraction` 和投影 clamp 共同解析，不等于致死半径本身。 | selected | 输出 `R_effect_source=missile_runtime_projection.resolved_projection_radius_m`，并标注 `authority_level=runtime_projection_comparison`；不得作为理想化标准。 |
 | `REV-EQ-FUZE` | `R_effect_m = R_fuze_m`。 | selected | sensitivity 上界；报告必须标注 `derived_from_fuze_radius=true`。 |
 | `REV-SMALLER-LOAD` | P4 harness 显式声明的 `declared_effect_radius_m`，且必须满足 `< R_fuze_m`。 | selected but value-held | 没有默认米制值；若未声明，输出 `unclassified_missing_R_effect`。 |
 | `REV-DECLARED-EFFECT` | 未来 review/admitted evidence row。 | held | 不进入当前 P3/P4 默认校准。 |
@@ -129,7 +139,7 @@ P4 输出的每个 heatmap report row 至少应包含：
 | `launch_window` | `target_motion_layer`, `range_km`, `offset_deg`, `signed_bearing_deg`, `launch_class` |
 | `guidance_approach` | `nearest_distance_m`, `nearest_approach_time_s`, `closure_mps`, `max_achieved_lateral_g`, `R_fuze_m`, `rho_fuze`, `entered_R_fuze`, `guidance_expectation_status` |
 | `fuze_decision` | `fuze_triggered`, `fuze_reason`, `detonated`, `detonation_probability`, `fuze_quality`, `terminal_track_valid`, `target_detected`, `detonation_point_source` |
-| `warhead_load_field` | `R_effect_variant`, `R_effect_m`, `rho_effect_case`, `effect_band`, `component_load_row_count`, `strongest_component_effect_scale`, `weakest_component_effect_scale` |
+| `warhead_load_field` | `R_effect_variant`, `R_effect_m`, `R_effect_source`, `rho_effect_case`, `effect_band`, `component_load_row_count`, `strongest_component_effect_scale`, `weakest_component_effect_scale` |
 | `component_response` | `component_response_row_count`, `max_failure_probability`, `sampled_failure_count`, `min_integrity_delta`, `primary_failure_mode`, `component_response_band` |
 | `consequence_projection` | `outcome_state`, `component_hit_count`, `component_failure_count`, `primary_component_system`, `mission_kill`, `mobility_kill`, `sensor_kill`, `destroyed` |
 | `guards` | `scalar_owner_guard_status`, `unexpected_stage_delta`, `authority_boundary_status`, `runtime_parameter_retuning` |
