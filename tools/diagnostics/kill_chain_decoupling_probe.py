@@ -68,6 +68,21 @@ DEFAULT_GUIDANCE_CASES = (
   {"case_id": "aim120_8km_left_30deg", "range_m": 8000.0, "bearing_deg": -30.0},
   {"case_id": "aim120_8km_right_30deg", "range_m": 8000.0, "bearing_deg": 30.0},
 )
+GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
+  {
+    "apn_target_accel_gain",
+    "autopilot_damping",
+    "autopilot_order",
+    "autopilot_tau_s",
+    "bearing_filter_tau_s",
+    "elevation_filter_tau_s",
+    "guidance_update_period_s",
+    "max_accel_response_g_per_s",
+    "max_lateral_g",
+    "nav_gain",
+    "range_filter_tau_s",
+  }
+)
 DEFAULT_PROXIMITY_DISTANCES_M = (0.5, 2.0, 4.0, 8.0, 10.96, 12.0, 15.0)
 WARHEAD_SPATIAL_PROJECTION_DEFAULTS = {
   "blast": (0.55, 1.0, 20.0),
@@ -232,6 +247,84 @@ def _finite_float(value: Any, default: float = float("nan")) -> float:
 def _finite_or_none(value: Any) -> float | None:
   out = _finite_float(value)
   return out if math.isfinite(out) else None
+
+
+def _apply_guidance_tuning_overrides(
+  tuning: Any,
+  overrides: dict[str, float | int] | None,
+) -> dict[str, float | int]:
+  applied: dict[str, float | int] = {}
+  for field, raw_value in sorted(dict(overrides or {}).items()):
+    if field not in GUIDANCE_TUNING_OVERRIDE_FIELDS:
+      raise ValueError(f"unsupported guidance tuning override: {field}")
+    if not hasattr(tuning, field):
+      raise ValueError(f"runtime MissileTuning lacks field: {field}")
+    value: float | int
+    if field in {"autopilot_order"}:
+      value = int(raw_value)
+    else:
+      value = float(raw_value)
+      if not math.isfinite(value):
+        raise ValueError(f"guidance tuning override must be finite: {field}")
+    setattr(tuning, field, value)
+    applied[field] = value
+  return applied
+
+
+def _guidance_runtime_trace_sample(
+  runtime: dict[str, Any],
+  *,
+  time_s: float,
+  truth_distance_m: float,
+  transform_heading_deg: float,
+  velocity_heading_deg: float,
+) -> dict[str, Any]:
+  target_accel = (
+    _finite_float(runtime.get("target_track_ax_mps2", 0.0), 0.0),
+    _finite_float(runtime.get("target_track_ay_mps2", 0.0), 0.0),
+    _finite_float(runtime.get("target_track_az_mps2", 0.0), 0.0),
+  )
+  commanded = _finite_float(runtime.get("commanded_lateral_accel_mps2", 0.0), 0.0)
+  max_lateral_g = _finite_float(runtime.get("guidance_max_lateral_g", 0.0), 0.0)
+  max_lateral_accel = max(0.0, max_lateral_g * 9.80665)
+  heading_error_deg = velocity_heading_deg - transform_heading_deg
+  while heading_error_deg > 180.0:
+    heading_error_deg -= 360.0
+  while heading_error_deg < -180.0:
+    heading_error_deg += 360.0
+  return {
+    "time_s": float(time_s),
+    "truth_distance_m": float(truth_distance_m),
+    "transform_heading_deg": float(transform_heading_deg),
+    "velocity_heading_deg": float(velocity_heading_deg),
+    "heading_velocity_error_deg": float(heading_error_deg),
+    "filtered_range_m": _finite_or_none(runtime.get("filtered_range_m")),
+    "filtered_bearing_deg": _finite_or_none(runtime.get("filtered_bearing_deg")),
+    "filtered_elevation_deg": _finite_or_none(runtime.get("filtered_elevation_deg")),
+    "filtered_closing_speed_mps": _finite_or_none(
+      runtime.get("filtered_closing_speed_mps")
+    ),
+    "bearing_rate_deg_s": _finite_or_none(runtime.get("bearing_rate_deg_s")),
+    "elevation_rate_deg_s": _finite_or_none(runtime.get("elevation_rate_deg_s")),
+    "current_speed_mps": _finite_or_none(runtime.get("current_speed_mps")),
+    "commanded_lateral_accel_mps2": commanded,
+    "achieved_lateral_accel_mps2": _finite_float(
+      runtime.get("achieved_lateral_accel_mps2", 0.0),
+      0.0,
+    ),
+    "guidance_max_lateral_g": max_lateral_g,
+    "command_saturated": bool(
+      max_lateral_accel > 0.0 and commanded >= 0.995 * max_lateral_accel
+    ),
+    "guidance_lead_time_s": _finite_or_none(runtime.get("guidance_lead_time_s")),
+    "guidance_lead_blend": _finite_or_none(runtime.get("guidance_lead_blend")),
+    "guidance_apn_lateral_accel_mps2": _finite_or_none(
+      runtime.get("guidance_apn_lateral_accel_mps2")
+    ),
+    "target_kinematics_valid": bool(runtime.get("target_kinematics_valid")),
+    "target_track_accel_mps2": math.sqrt(sum(value * value for value in target_accel)),
+    "seeker_mode": int(runtime.get("seeker_mode", 0) or 0),
+  }
 
 
 def _runtime_projection_profile(runtime_state: dict[str, Any]) -> dict[str, Any]:
@@ -3248,6 +3341,9 @@ def run_guidance_case(
   bearing_deg: float,
   seed: int = 20260621,
   max_steps: int = 4200,
+  guidance_tuning_overrides: dict[str, float | int] | None = None,
+  collect_guidance_runtime_trace: bool = False,
+  guidance_trace_stride: int = 1,
 ) -> dict[str, Any]:
   sim = _make_kernel(database_path, seed=seed)
   tuning = ef_py.MissileTuning()
@@ -3260,6 +3356,10 @@ def run_guidance_case(
   tuning.max_flight_time_s = 45.0
   tuning.fuze_profile = _make_fuze_profile()
   tuning.has_fuze_profile = True
+  applied_guidance_tuning_overrides = _apply_guidance_tuning_overrides(
+    tuning,
+    guidance_tuning_overrides,
+  )
   sim.set_missile_tuning(tuning)
 
   bearing_rad = math.radians(float(bearing_deg))
@@ -3286,6 +3386,8 @@ def run_guidance_case(
   dt = float(sim.get_time_step())
   min_truth_distance_m = math.inf
   max_achieved_lateral_g = 0.0
+  guidance_runtime_trace: list[dict[str, Any]] = []
+  trace_stride = max(1, int(guidance_trace_stride))
   step_idx = 0
   time_s = 0.0
   for step_idx in range(int(max_steps)):
@@ -3310,11 +3412,27 @@ def run_guidance_case(
     )
     sim.step()
     if sim.is_unit_active(missile_id):
-      runtime = sim.debug_get_missile_runtime_state(missile_id)
+      runtime = dict(sim.debug_get_missile_runtime_state(missile_id))
       max_achieved_lateral_g = max(
         max_achieved_lateral_g,
         _finite_float(runtime.get("achieved_lateral_accel_mps2", 0.0), 0.0) / 9.80665,
       )
+      if collect_guidance_runtime_trace and step_idx % trace_stride == 0:
+        missile_pos = tuple(float(value) for value in sim.get_unit_position(missile_id))
+        target_pos = tuple(float(value) for value in sim.get_unit_position(red_id))
+        missile_velocity = tuple(float(value) for value in sim.get_unit_velocity(missile_id))
+        velocity_heading_deg = math.degrees(
+          math.atan2(missile_velocity[0], missile_velocity[1])
+        )
+        guidance_runtime_trace.append(
+          _guidance_runtime_trace_sample(
+            runtime,
+            time_s=(step_idx + 1) * dt,
+            truth_distance_m=math.dist(missile_pos, target_pos),
+            transform_heading_deg=float(sim.get_unit_heading(missile_id)),
+            velocity_heading_deg=velocity_heading_deg,
+          )
+        )
 
   events = sim.export_recent_engagement_events()
   effect = _last_or_none(getattr(events, "effects_events", []))
@@ -3340,12 +3458,13 @@ def run_guidance_case(
     component_load_factor_rows=component_load_factor_rows,
     runtime_facade=runtime_facade,
   )
-  return {
+  result = {
     "case_id": str(case_id),
     "case_type": "aim120_offset_guidance",
     "range_m": float(range_m),
     "bearing_deg": float(bearing_deg),
     "seed": int(seed),
+    "guidance_tuning_overrides": applied_guidance_tuning_overrides,
     "missile_id": int(missile_id),
     "missile_runtime_projection": missile_runtime_projection,
     "target_id": int(red_id),
@@ -3372,6 +3491,9 @@ def run_guidance_case(
     "decoupled_facade": decoupled_facade,
     **stage_diagnostics,
   }
+  if collect_guidance_runtime_trace:
+    result["guidance_runtime_trace"] = guidance_runtime_trace
+  return result
 
 
 def run_proximity_case(
