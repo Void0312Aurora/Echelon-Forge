@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <unordered_map>
 
+#include "models/weapons/missile_guidance_types.h"
+
 namespace fs = std::filesystem;
 
 namespace {
@@ -181,6 +183,31 @@ int parse_sensor_environment_domain_code(const std::string &domain_str) {
         return static_cast<int>(SensorEnvironmentDomain::Littoral);
     }
     return static_cast<int>(SensorEnvironmentDomain::Air);
+}
+
+bool parse_pn_los_rate_source(const nlohmann::json &src, int *out_source, std::string *error) {
+    if (!out_source || !src.is_object() || !src.contains("pn_los_rate_source")) {
+        return true;
+    }
+    const auto &value = src["pn_los_rate_source"];
+    if (!value.is_string()) {
+        if (error) *error = "pn_los_rate_source must be a string";
+        return false;
+    }
+    const std::string name = value.get<std::string>();
+    if (name == "legacy_body_rates") {
+        *out_source = static_cast<int>(MissilePnLosRateSource::LegacyBodyRates);
+        return true;
+    }
+    if (name == "world_los_history") {
+        *out_source = static_cast<int>(MissilePnLosRateSource::WorldLosHistory);
+        return true;
+    }
+    if (error) {
+        *error = "Unknown pn_los_rate_source: " + name +
+                 "; expected legacy_body_rates or world_los_history";
+    }
+    return false;
 }
 
 NavalWeaponType parse_naval_weapon_type(const std::string &type_str) {
@@ -1447,13 +1474,23 @@ bool parse_unit_json(
         missile_tuning.max_speed = def.flight_model.max_speed;
         missile_tuning.turn_rate = def.flight_model.max_turn_rate;
         missile_tuning.max_lateral_g = def.flight_model.max_g;
+        if (!parse_pn_los_rate_source(entry, &missile_tuning.pn_los_rate_source, error)) {
+            return false;
+        }
         parse_missile_tuning_json_fields(entry, &missile_tuning);
 
         if (entry.contains("missile_tuning") && entry["missile_tuning"].is_object()) {
+            if (!parse_pn_los_rate_source(entry["missile_tuning"],
+                                          &missile_tuning.pn_los_rate_source, error)) {
+                return false;
+            }
             parse_missile_tuning_json_fields(entry["missile_tuning"], &missile_tuning);
         }
         if (entry.contains("guidance") && entry["guidance"].is_object()) {
             const auto &guidance = entry["guidance"];
+            if (!parse_pn_los_rate_source(guidance, &missile_tuning.pn_los_rate_source, error)) {
+                return false;
+            }
             parse_missile_tuning_json_fields(guidance, &missile_tuning);
 
             const std::string guidance_type = guidance.value("type", "");

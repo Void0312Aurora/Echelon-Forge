@@ -80,6 +80,7 @@ GUIDANCE_TUNING_OVERRIDE_FIELDS = frozenset(
     "max_accel_response_g_per_s",
     "max_lateral_g",
     "nav_gain",
+    "pn_los_rate_source",
     "range_filter_tau_s",
   }
 )
@@ -274,7 +275,7 @@ def _apply_guidance_tuning_overrides(
     if not hasattr(tuning, field):
       raise ValueError(f"runtime MissileTuning lacks field: {field}")
     value: float | int
-    if field in {"autopilot_order"}:
+    if field in {"autopilot_order", "pn_los_rate_source"}:
       value = int(raw_value)
     else:
       value = float(raw_value)

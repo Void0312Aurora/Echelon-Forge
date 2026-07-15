@@ -378,6 +378,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("guidance_update_period_s", &MissileTuning::guidance_update_period_s)
         .def_rw("max_flight_time_s", &MissileTuning::max_flight_time_s)
         .def_rw("nav_gain", &MissileTuning::nav_gain)
+        .def_rw("pn_los_rate_source", &MissileTuning::pn_los_rate_source)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
         .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
         .def_rw("autopilot_order", &MissileTuning::autopilot_order)
@@ -1163,6 +1164,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["guidance_update_period_s"] = missile->guidance_update_period_s;
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
+                out["pn_los_rate_source"] = missile->pn_los_rate_source;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
                 out["autopilot_order"] = missile->autopilot_order;
                 out["autopilot_damping"] = missile->autopilot_damping;

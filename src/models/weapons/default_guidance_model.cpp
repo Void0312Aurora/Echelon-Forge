@@ -669,26 +669,35 @@ void reset_guidance_mechanism_profile_diagnostics(MissileGuidanceMechanismProfil
 
 Vec3 world_los_rate_from_history(MissileGuidanceMechanismProfile &profile, const Vec3 &los_world,
                                  double current_time) {
-    Vec3 los_rate = {0.0, 0.0, 0.0};
     const Vec3 previous_los = {profile.previous_world_los_x, profile.previous_world_los_y,
                                profile.previous_world_los_z};
     const double elapsed_s = current_time - profile.previous_world_los_time_s;
-    if (profile.previous_world_los_valid && elapsed_s > 1.0e-6 &&
-        missile_guidance::norm(previous_los) > 1.0e-6) {
-        const Vec3 cross_los = missile_guidance::cross(previous_los, los_world);
-        const double sin_angle = missile_guidance::norm(cross_los);
-        const double cos_angle =
-            std::clamp(missile_guidance::dot(previous_los, los_world), -1.0, 1.0);
-        if (sin_angle > 1.0e-12) {
-            const double angle_rad = std::atan2(sin_angle, cos_angle);
-            los_rate = cross_los * (angle_rad / (sin_angle * elapsed_s));
-        }
-    }
+    const Vec3 los_rate = profile.previous_world_los_valid
+                              ? missile_guidance::world_los_angular_rate(previous_los, los_world,
+                                                                         elapsed_s)
+                              : Vec3{0.0, 0.0, 0.0};
     profile.previous_world_los_x = los_world.x;
     profile.previous_world_los_y = los_world.y;
     profile.previous_world_los_z = los_world.z;
     profile.previous_world_los_time_s = current_time;
     profile.previous_world_los_valid = true;
+    return los_rate;
+}
+
+Vec3 world_los_rate_from_history(Missile &missile, const Vec3 &los_world, double current_time) {
+    const Vec3 previous_los = {missile.guidance_previous_world_los_x,
+                               missile.guidance_previous_world_los_y,
+                               missile.guidance_previous_world_los_z};
+    const double elapsed_s = current_time - missile.guidance_previous_world_los_time_s;
+    const Vec3 los_rate = missile.guidance_previous_world_los_valid
+                              ? missile_guidance::world_los_angular_rate(previous_los, los_world,
+                                                                         elapsed_s)
+                              : Vec3{0.0, 0.0, 0.0};
+    missile.guidance_previous_world_los_x = los_world.x;
+    missile.guidance_previous_world_los_y = los_world.y;
+    missile.guidance_previous_world_los_z = los_world.z;
+    missile.guidance_previous_world_los_time_s = current_time;
+    missile.guidance_previous_world_los_valid = true;
     return los_rate;
 }
 
@@ -901,8 +910,9 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
         profile.pn_source_used = 1;
     } else if (profile.pn_mode == MissileGuidanceMechanismProfile::kPnWorldLosHistory) {
         los_rate_world = world_los_rate_from_history(profile, los_world, current_time);
-        pn_world = missile_guidance::cross(los_rate_world, velocity_dir) *
-                   (MissileGuidanceDefaults::kPnGainScale * nav_gain * filtered_closing_speed_mps);
+        pn_world = missile_guidance::transverse_pn_acceleration(
+            los_rate_world, velocity_dir, filtered_closing_speed_mps, nav_gain,
+            MissileGuidanceDefaults::kPnGainScale);
         profile.pn_source_used = 2;
     } else if (profile.pn_mode == MissileGuidanceMechanismProfile::kPnWorldTrackAnalytic &&
                target_kinematics_available) {
@@ -1173,6 +1183,8 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 mechanism_profile->previous_world_los_valid = false;
                 mechanism_profile->previous_world_los_time_s = -1.0;
             }
+            missile.guidance_previous_world_los_valid = false;
+            missile.guidance_previous_world_los_time_s = -1.0;
         }
 
         Vec3 velocity_vec = missile_guidance::velocity_to_vec3(velocity);
@@ -1252,20 +1264,28 @@ class DefaultGuidanceModel : public IGuidanceModel {
             const double capture_mag = MissileGuidanceDefaults::kCaptureGain * terminal_weight *
                                        (speed_mps * speed_mps / range_m) * lateral_error;
 
-            const Math::Vector3 pn_body_world = Math::body_to_world(
-                {
-                    0.0,
-                    -MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
-                        Math::to_radians(missile.bearing_rate_deg_s),
-                    MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
-                        Math::to_radians(missile.elevation_rate_deg_s),
-                },
-                transform);
-            const Vec3 pn_world = {
-                pn_body_world.x,
-                pn_body_world.y,
-                pn_body_world.z,
-            };
+            Vec3 pn_world = {0.0, 0.0, 0.0};
+            if (missile.pn_los_rate_source ==
+                static_cast<int>(MissilePnLosRateSource::WorldLosHistory)) {
+                const Vec3 los_rate_world =
+                    world_los_rate_from_history(missile, los_world, current_time);
+                pn_world = missile_guidance::transverse_pn_acceleration(
+                    los_rate_world, velocity_dir, closing_speed_mps, nav_gain,
+                    MissileGuidanceDefaults::kPnGainScale);
+            } else {
+                missile.guidance_previous_world_los_valid = false;
+                missile.guidance_previous_world_los_time_s = -1.0;
+                const Math::Vector3 pn_body_world = Math::body_to_world(
+                    {
+                        0.0,
+                        -MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                            Math::to_radians(missile.bearing_rate_deg_s),
+                        MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                            Math::to_radians(missile.elevation_rate_deg_s),
+                    },
+                    transform);
+                pn_world = {pn_body_world.x, pn_body_world.y, pn_body_world.z};
+            }
 
             commanded_accel = (los_lateral_dir * capture_mag) + pn_world;
 

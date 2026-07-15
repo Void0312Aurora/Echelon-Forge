@@ -99,6 +99,9 @@ struct Missile {
     double nav_gain;                 // PN gain (dimensionless)
     bool active;                     // If false, missile is dead/inert
 
+    // Selectable production PN law. Legacy remains the default until a weapon profile opts in.
+    int pn_los_rate_source = 0; // 0=legacy body-frame rates, 1=world-frame LOS history
+
     // Deterministic RNG state for probabilistic hit/kill logic (seeded at launch).
     uint64_t rng_state = 0;
     bool shared_launch_initialized = false;
@@ -163,6 +166,11 @@ struct Missile {
     double filtered_closing_speed_mps = 0.0;
     double bearing_rate_deg_s = 0.0;
     double elevation_rate_deg_s = 0.0;
+    bool guidance_previous_world_los_valid = false;
+    double guidance_previous_world_los_x = 0.0;
+    double guidance_previous_world_los_y = 0.0;
+    double guidance_previous_world_los_z = 0.0;
+    double guidance_previous_world_los_time_s = -1.0;
     double last_track_time_s = -1.0;
     double track_memory_timeout_s = 0.75;
 

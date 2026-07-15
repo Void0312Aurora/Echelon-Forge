@@ -187,6 +187,7 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.guidance_delay_s) ||
            std::isfinite(tuning.guidance_update_period_s) ||
            std::isfinite(tuning.max_flight_time_s) || std::isfinite(tuning.nav_gain) ||
+           tuning.pn_los_rate_source >= 0 ||
            std::isfinite(tuning.sensor_max_range) || std::isfinite(tuning.sensor_fov_deg) ||
            std::isfinite(tuning.sensor_scan_period) ||
            std::isfinite(tuning.sensor_detection_prob) ||
@@ -241,6 +242,7 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.guidance_update_period_s = src.guidance_update_period_s;
     out.max_flight_time_s = src.max_flight_time_s;
     out.nav_gain = src.nav_gain;
+    out.pn_los_rate_source = src.pn_los_rate_source;
     out.apn_target_accel_gain = src.apn_target_accel_gain;
     out.sensor_max_range = src.sensor_max_range;
     out.sensor_fov_deg = src.sensor_fov_deg;
@@ -307,6 +309,7 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (std::isfinite(overlay.max_flight_time_s))
         base->max_flight_time_s = overlay.max_flight_time_s;
     if (std::isfinite(overlay.nav_gain)) base->nav_gain = overlay.nav_gain;
+    if (overlay.pn_los_rate_source >= 0) base->pn_los_rate_source = overlay.pn_los_rate_source;
     if (std::isfinite(overlay.apn_target_accel_gain))
         base->apn_target_accel_gain = overlay.apn_target_accel_gain;
     if (std::isfinite(overlay.sensor_max_range)) base->sensor_max_range = overlay.sensor_max_range;
@@ -656,6 +659,11 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     const double missile_max_flight_time =
         positive_or_default(resolved_tuning.max_flight_time_s, 15.0);
     const double missile_nav_gain = positive_or_default(resolved_tuning.nav_gain, 3.0);
+    const int missile_pn_los_rate_source =
+        resolved_tuning.pn_los_rate_source ==
+                static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
+            ? static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
+            : MissileGuidanceDefaults::kDefaultPnLosRateSource;
     const double missile_apn_target_accel_gain = nonnegative_or_default(
         resolved_tuning.apn_target_accel_gain, MissileGuidanceDefaults::kDefaultApnTargetAccelGain);
 
@@ -766,6 +774,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.launch_time = current_time;
     missile.max_flight_time_s = missile_max_flight_time;
     missile.nav_gain = missile_nav_gain;
+    missile.pn_los_rate_source = missile_pn_los_rate_source;
     missile.apn_target_accel_gain = missile_apn_target_accel_gain;
     missile.autopilot_order = nonnegative_or_default(resolved_tuning.autopilot_order, 1);
     missile.autopilot_damping = positive_or_default(resolved_tuning.autopilot_damping, 1.0);

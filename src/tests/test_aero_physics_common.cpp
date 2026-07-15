@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 
 #include "models/physics/aerodynamics_common.h"
+#include "models/weapons/missile_guidance_math.h"
 
 TEST_SUITE("aero_physics_common") {
 
@@ -45,3 +46,72 @@ TEST_SUITE("aero_physics_common") {
     }
 
 } // TEST_SUITE("aero_physics_common")
+
+TEST_SUITE("missile_guidance_coordinates") {
+
+    TEST_CASE("world LOS reconstruction is invariant to equivalent heading and bearing pairs") {
+        const missile_guidance::Vec3 expected = missile_guidance::normalize({0.6, 0.8, 0.1});
+        const double nav_bearing_deg =
+            std::atan2(expected.x, expected.y) * 180.0 / M_PI;
+        const double elevation_deg =
+            std::atan2(expected.z, std::hypot(expected.x, expected.y)) * 180.0 / M_PI;
+
+        for (const double heading_deg : {0.0, 73.0, -132.0}) {
+            const Transform transform{0.0, 0.0, 0.0, heading_deg, 0.0, 0.0};
+            const auto reconstructed = missile_guidance::world_los_from_relative_angles(
+                nav_bearing_deg - heading_deg, elevation_deg, transform);
+            CHECK(reconstructed.x == doctest::Approx(expected.x).epsilon(1.0e-12));
+            CHECK(reconstructed.y == doctest::Approx(expected.y).epsilon(1.0e-12));
+            CHECK(reconstructed.z == doctest::Approx(expected.z).epsilon(1.0e-12));
+        }
+    }
+
+    TEST_CASE("world LOS angular rate gives zero for radial motion") {
+        const missile_guidance::Vec3 los{0.0, 1.0, 0.0};
+        const auto rate = missile_guidance::world_los_angular_rate(los, los, 0.1);
+        CHECK(missile_guidance::norm(rate) == doctest::Approx(0.0));
+    }
+
+    TEST_CASE("world LOS history PN preserves ENU right left and elevation signs") {
+        constexpr double dt_s = 0.1;
+        constexpr double angle_rad = 0.01;
+        const missile_guidance::Vec3 forward{0.0, 1.0, 0.0};
+
+        const missile_guidance::Vec3 right_los{std::sin(angle_rad), std::cos(angle_rad), 0.0};
+        const auto right_rate =
+            missile_guidance::world_los_angular_rate(forward, right_los, dt_s);
+        const auto right_accel = missile_guidance::transverse_pn_acceleration(
+            right_rate, forward, 500.0, 4.0, 1.2);
+        CHECK(right_accel.x > 0.0);
+        CHECK(right_accel.y == doctest::Approx(0.0).epsilon(1.0e-12));
+
+        const missile_guidance::Vec3 left_los{-std::sin(angle_rad), std::cos(angle_rad), 0.0};
+        const auto left_rate =
+            missile_guidance::world_los_angular_rate(forward, left_los, dt_s);
+        const auto left_accel = missile_guidance::transverse_pn_acceleration(
+            left_rate, forward, 500.0, 4.0, 1.2);
+        CHECK(left_accel.x < 0.0);
+        CHECK(std::abs(left_accel.x) == doctest::Approx(std::abs(right_accel.x)));
+
+        const missile_guidance::Vec3 up_los{0.0, std::cos(angle_rad), std::sin(angle_rad)};
+        const auto up_rate = missile_guidance::world_los_angular_rate(forward, up_los, dt_s);
+        const auto up_accel = missile_guidance::transverse_pn_acceleration(
+            up_rate, forward, 500.0, 4.0, 1.2);
+        CHECK(up_accel.z > 0.0);
+    }
+
+    TEST_CASE("world LOS history PN is transverse to missile velocity") {
+        const missile_guidance::Vec3 previous =
+            missile_guidance::normalize({0.1, 0.98, 0.15});
+        const missile_guidance::Vec3 current =
+            missile_guidance::normalize({0.12, 0.96, 0.19});
+        const missile_guidance::Vec3 velocity_dir =
+            missile_guidance::normalize({0.2, 0.95, -0.1});
+        const auto rate = missile_guidance::world_los_angular_rate(previous, current, 0.05);
+        const auto acceleration = missile_guidance::transverse_pn_acceleration(
+            rate, velocity_dir, 600.0, 4.0, 1.2);
+        CHECK(missile_guidance::dot(acceleration, velocity_dir) ==
+              doctest::Approx(0.0).epsilon(1.0e-12));
+    }
+
+} // TEST_SUITE("missile_guidance_coordinates")

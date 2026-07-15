@@ -1063,6 +1063,12 @@ class DefaultUnitFactory : public IUnitFactory {
                                              def.missile_tuning.apn_target_accel_gain,
                                              MissileGuidanceDefaults::kDefaultApnTargetAccelGain)
                                        : MissileGuidanceDefaults::kDefaultApnTargetAccelGain;
+            missile_runtime.pn_los_rate_source =
+                def.has_missile_tuning &&
+                        def.missile_tuning.pn_los_rate_source ==
+                            static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
+                    ? static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
+                    : MissileGuidanceDefaults::kDefaultPnLosRateSource;
             missile_runtime.warhead_profile =
                 def.has_missile_tuning && def.missile_tuning.has_warhead_profile
                     ? def.missile_tuning.warhead_profile

@@ -17,6 +17,7 @@
 #include "content/unit_definition_loader.h"
 #include "components/tasking/task_order.h"
 #include "components/tasking/leader_intent.h"
+#include "models/weapons/missile_guidance_types.h"
 
 #include <doctest/doctest.h>
 
@@ -353,6 +354,62 @@ TEST_SUITE("components_basic") {
         // SimObject is a tag component — its existence is the only contract.
         SimObject so{};
         (void)so;
+    }
+
+    TEST_CASE("missile PN LOS-rate source parses strictly and preserves the unset default") {
+        const std::filesystem::path valid_path =
+            std::filesystem::temp_directory_path() / "ef_missile_pn_source_valid.json";
+        {
+            std::ofstream file(valid_path);
+            file << R"json({
+  "name": "PN_Source_Parse_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
+  "guidance": {"pn_los_rate_source": "world_los_history"}
+})json";
+        }
+
+        std::vector<UnitDefinition> definitions;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(valid_path.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        CHECK(definitions[0].missile_tuning.pn_los_rate_source ==
+              static_cast<int>(MissilePnLosRateSource::WorldLosHistory));
+        std::filesystem::remove(valid_path);
+
+        const std::filesystem::path default_path =
+            std::filesystem::temp_directory_path() / "ef_missile_pn_source_default.json";
+        {
+            std::ofstream file(default_path);
+            file << R"json({
+  "name": "PN_Source_Default_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0}
+})json";
+        }
+        definitions.clear();
+        error.clear();
+        REQUIRE(load_unit_definitions_json(default_path.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        CHECK(definitions[0].missile_tuning.pn_los_rate_source == -1);
+        std::filesystem::remove(default_path);
+
+        const std::filesystem::path invalid_path =
+            std::filesystem::temp_directory_path() / "ef_missile_pn_source_invalid.json";
+        {
+            std::ofstream file(invalid_path);
+            file << R"json({
+  "name": "PN_Source_Invalid_Test",
+  "type": "Missile",
+  "flight_model": {"max_speed": 1000.0, "max_g": 30.0, "max_turn_rate": 25.0},
+  "guidance": {"pn_los_rate_source": "truth_oracle"}
+})json";
+        }
+        definitions.clear();
+        error.clear();
+        CHECK_FALSE(load_unit_definitions_json(invalid_path.string(), definitions, &error));
+        CHECK(error.find("Unknown pn_los_rate_source") != std::string::npos);
+        std::filesystem::remove(invalid_path);
     }
 
 } // TEST_SUITE components_basic

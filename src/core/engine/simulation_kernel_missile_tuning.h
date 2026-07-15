@@ -17,6 +17,7 @@ struct MissileTuning {
     double guidance_update_period_s = std::numeric_limits<double>::quiet_NaN();
     double max_flight_time_s = std::numeric_limits<double>::quiet_NaN();
     double nav_gain = std::numeric_limits<double>::quiet_NaN();
+    int pn_los_rate_source = -1;
     double sensor_max_range = std::numeric_limits<double>::quiet_NaN();
     double sensor_fov_deg = std::numeric_limits<double>::quiet_NaN();
     double sensor_scan_period = std::numeric_limits<double>::quiet_NaN();
