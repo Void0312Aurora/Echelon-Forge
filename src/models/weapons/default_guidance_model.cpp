@@ -28,6 +28,12 @@ using missile_guidance::operator-;
 using missile_guidance::operator*;
 using missile_guidance::operator/;
 
+MissileGuidanceAccelerationVectorDiagnostics
+make_missile_guidance_acceleration_diagnostics(const Vec3 &value) {
+    return {value.x, value.y, value.z,
+            std::sqrt(value.x * value.x + value.y * value.y + value.z * value.z)};
+}
+
 constexpr double kGravity = 9.80665;
 constexpr double kBoostMinDurationS = 0.5;
 
@@ -1141,6 +1147,15 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
     const Vec3 commanded_accel =
         missile_guidance::project_lateral(capture_world + pn_world + apn_world, velocity_dir);
 
+    missile.guidance_acceleration_diagnostics.capture =
+        make_missile_guidance_acceleration_diagnostics(capture_world);
+    missile.guidance_acceleration_diagnostics.pn =
+        make_missile_guidance_acceleration_diagnostics(pn_world);
+    missile.guidance_acceleration_diagnostics.apn =
+        make_missile_guidance_acceleration_diagnostics(apn_world);
+    missile.guidance_acceleration_diagnostics.preclamp =
+        make_missile_guidance_acceleration_diagnostics(commanded_accel);
+
     profile.capture_accel_x_mps2 = capture_world.x;
     profile.capture_accel_y_mps2 = capture_world.y;
     profile.capture_accel_z_mps2 = capture_world.z;
@@ -1238,7 +1253,10 @@ class DefaultGuidanceModel : public IGuidanceModel {
   public:
     void update(flecs::world world, flecs::entity missile_entity, Velocity &velocity,
                 const Transform &transform, Missile &missile, double dt) override {
-        if (!missile.active) return;
+        if (!missile.active) {
+            missile.guidance_acceleration_diagnostics = {};
+            return;
+        }
 
         const ecs_world_info_t *info = ecs_get_world_info(world.c_ptr());
         double current_time = info ? (double)info->world_time_total : 0.0;
@@ -1260,6 +1278,7 @@ class DefaultGuidanceModel : public IGuidanceModel {
         const bool mechanism_profile_active = mechanism_profile && mechanism_profile->active;
         missile.track_memory_timeout_s = tuning.track_memory_timeout_s;
         missile.terminal_seeker_active = terminal_seeker_is_active(missile);
+        missile.guidance_acceleration_diagnostics = {};
 
         const double time_since_launch_s = current_time - missile.launch_time;
         const bool guidance_started = time_since_launch_s >= missile.guidance_delay_s;
@@ -1484,6 +1503,7 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 const double apn_limit = tuning.max_lateral_g * kGravity *
                                          MissileGuidanceDefaults::kApnAccelLimitFraction *
                                          std::min(1.0, std::max(0.25, apn_gain));
+                Vec3 apn_diagnostic = {0.0, 0.0, 0.0};
                 if (target_kinematics_available) {
                     const Vec3 target_accel = {missile.target_track_ax_mps2,
                                                missile.target_track_ay_mps2,
@@ -1494,6 +1514,7 @@ class DefaultGuidanceModel : public IGuidanceModel {
                     if (apn_mag > apn_limit && apn_mag > 1.0e-6) {
                         apn_world = missile_guidance::normalize(apn_world) * apn_limit;
                     }
+                    apn_diagnostic = missile_guidance::project_lateral(apn_world, velocity_dir);
                     missile.guidance_apn_lateral_accel_mps2 = missile_guidance::norm(apn_world);
                     commanded_accel = commanded_accel + apn_world;
                 } else if (apn_gain > 0.0 && missile.apn_rate_history_valid &&
@@ -1525,6 +1546,7 @@ class DefaultGuidanceModel : public IGuidanceModel {
                     if (apn_mag > apn_limit && apn_mag > 1.0e-6) {
                         apn_world = missile_guidance::normalize(apn_world) * apn_limit;
                     }
+                    apn_diagnostic = missile_guidance::project_lateral(apn_world, velocity_dir);
                     missile.guidance_apn_lateral_accel_mps2 = missile_guidance::norm(apn_world);
                     commanded_accel = commanded_accel + apn_world;
                 }
@@ -1533,6 +1555,17 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 missile.apn_rate_history_valid = true;
 
                 commanded_accel = missile_guidance::project_lateral(commanded_accel, velocity_dir);
+                missile.guidance_acceleration_diagnostics.capture =
+                    make_missile_guidance_acceleration_diagnostics(
+                        missile_guidance::project_lateral(capture_world, velocity_dir));
+                missile.guidance_acceleration_diagnostics.pn =
+                    make_missile_guidance_acceleration_diagnostics(
+                        missile_guidance::project_lateral(pn_world, velocity_dir));
+                missile.guidance_acceleration_diagnostics.apn =
+                    make_missile_guidance_acceleration_diagnostics(
+                        apn_diagnostic);
+                missile.guidance_acceleration_diagnostics.preclamp =
+                    make_missile_guidance_acceleration_diagnostics(commanded_accel);
             }
 
             missile.commanded_lateral_accel_mps2 = missile_guidance::norm(commanded_accel);
@@ -1541,6 +1574,8 @@ class DefaultGuidanceModel : public IGuidanceModel {
                 commanded_accel = missile_guidance::normalize(commanded_accel) * max_lateral_accel;
                 missile.commanded_lateral_accel_mps2 = max_lateral_accel;
             }
+            missile.guidance_acceleration_diagnostics.postclamp =
+                make_missile_guidance_acceleration_diagnostics(commanded_accel);
             if (mechanism_profile_active) {
                 mechanism_profile->postclamp_accel_x_mps2 = commanded_accel.x;
                 mechanism_profile->postclamp_accel_y_mps2 = commanded_accel.y;

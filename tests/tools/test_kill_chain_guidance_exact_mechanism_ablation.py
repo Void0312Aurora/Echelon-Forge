@@ -15,6 +15,9 @@ def test_mechanism_profile_normalization_is_discrete() -> None:
     "lead_mode": 2,
     "kinematics_source": 0,
     "apn_mode": 1,
+    "capture_base_range_mode": 0,
+    "capture_terminal_weight_mode": 0,
+    "capture_lead_blend_mode": 0,
   }
   assert probe._normalize_guidance_mechanism_profile(None) is None
   with pytest.raises(ValueError, match="unsupported guidance mechanism profile fields"):
