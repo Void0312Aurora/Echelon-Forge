@@ -11,9 +11,18 @@ enum class MissilePnLosRateSource {
     WorldLosHistory = 1,
 };
 
+enum class MissileTargetKinematicsEstimator {
+    LegacyPolarDifference = 0,
+    WorldCv = 1,
+};
+
 struct MissileGuidanceDefaults {
     static constexpr int kDefaultPnLosRateSource =
         static_cast<int>(MissilePnLosRateSource::LegacyBodyRates);
+    static constexpr int kDefaultTargetKinematicsEstimator =
+        static_cast<int>(MissileTargetKinematicsEstimator::LegacyPolarDifference);
+    static constexpr double kWorldCvTrackerAlpha = 0.20;
+    static constexpr double kWorldCvTrackerBeta = 0.02;
     static constexpr double kTrackFilterTauS = 0.12;
     static constexpr double kTrackMemoryTimeoutS = 0.75;
     static constexpr double kBoostTimeS = 3.0;

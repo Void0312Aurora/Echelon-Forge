@@ -1069,6 +1069,20 @@ class DefaultUnitFactory : public IUnitFactory {
                             static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
                     ? static_cast<int>(MissilePnLosRateSource::WorldLosHistory)
                     : MissileGuidanceDefaults::kDefaultPnLosRateSource;
+            missile_runtime.target_kinematics_estimator =
+                def.has_missile_tuning &&
+                        def.missile_tuning.target_kinematics_estimator ==
+                            static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
+                    ? static_cast<int>(MissileTargetKinematicsEstimator::WorldCv)
+                    : MissileGuidanceDefaults::kDefaultTargetKinematicsEstimator;
+            missile_runtime.target_tracker_alpha =
+                def.has_missile_tuning && std::isfinite(def.missile_tuning.target_tracker_alpha)
+                    ? std::clamp(def.missile_tuning.target_tracker_alpha, 0.0, 1.0)
+                    : MissileGuidanceDefaults::kWorldCvTrackerAlpha;
+            missile_runtime.target_tracker_beta =
+                def.has_missile_tuning && std::isfinite(def.missile_tuning.target_tracker_beta)
+                    ? std::clamp(def.missile_tuning.target_tracker_beta, 0.0, 2.0)
+                    : MissileGuidanceDefaults::kWorldCvTrackerBeta;
             missile_runtime.warhead_profile =
                 def.has_missile_tuning && def.missile_tuning.has_warhead_profile
                     ? def.missile_tuning.warhead_profile

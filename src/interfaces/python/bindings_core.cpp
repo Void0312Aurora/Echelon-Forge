@@ -379,6 +379,9 @@ void bind_core(nb::module_ &m) {
         .def_rw("max_flight_time_s", &MissileTuning::max_flight_time_s)
         .def_rw("nav_gain", &MissileTuning::nav_gain)
         .def_rw("pn_los_rate_source", &MissileTuning::pn_los_rate_source)
+        .def_rw("target_kinematics_estimator", &MissileTuning::target_kinematics_estimator)
+        .def_rw("target_tracker_alpha", &MissileTuning::target_tracker_alpha)
+        .def_rw("target_tracker_beta", &MissileTuning::target_tracker_beta)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
         .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
         .def_rw("autopilot_order", &MissileTuning::autopilot_order)
@@ -1165,6 +1168,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
                 out["pn_los_rate_source"] = missile->pn_los_rate_source;
+                out["target_kinematics_estimator"] = missile->target_kinematics_estimator;
+                out["target_tracker_alpha"] = missile->target_tracker_alpha;
+                out["target_tracker_beta"] = missile->target_tracker_beta;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
                 out["autopilot_order"] = missile->autopilot_order;
                 out["autopilot_damping"] = missile->autopilot_damping;
@@ -1234,6 +1240,29 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["target_track_ax_mps2"] = missile->target_track_ax_mps2;
                 out["target_track_ay_mps2"] = missile->target_track_ay_mps2;
                 out["target_track_az_mps2"] = missile->target_track_az_mps2;
+                out["target_measurement_timestamp_s"] =
+                    missile->world_cv_target_tracker.last_measurement_time_s;
+                out["target_measurement_age_s"] = missile->target_measurement_age_s;
+                out["target_measurement_fresh"] = missile->target_measurement_fresh;
+                out["target_measurement_rejected_nonmonotonic"] =
+                    missile->target_measurement_rejected_nonmonotonic;
+                out["target_duplicate_measurement_count"] =
+                    missile->target_duplicate_measurement_count;
+                out["target_estimator_update_dt_s"] = missile->target_estimator_update_dt_s;
+                out["target_estimator_sample_count"] =
+                    missile->world_cv_target_tracker.accepted_measurement_count;
+                out["target_velocity_valid"] =
+                    missile->world_cv_target_tracker.velocity_valid;
+                out["target_measurement_x_m"] = missile->target_measurement_x_m;
+                out["target_measurement_y_m"] = missile->target_measurement_y_m;
+                out["target_measurement_z_m"] = missile->target_measurement_z_m;
+                out["target_prediction_x_m"] = missile->target_prediction_x_m;
+                out["target_prediction_y_m"] = missile->target_prediction_y_m;
+                out["target_prediction_z_m"] = missile->target_prediction_z_m;
+                out["target_residual_x_m"] = missile->target_residual_x_m;
+                out["target_residual_y_m"] = missile->target_residual_y_m;
+                out["target_residual_z_m"] = missile->target_residual_z_m;
+                out["target_residual_norm_m"] = missile->target_residual_norm_m;
                 out["guidance_lead_time_s"] = missile->guidance_lead_time_s;
                 out["guidance_lead_blend"] = missile->guidance_lead_blend;
                 out["guidance_apn_lateral_accel_mps2"] = missile->guidance_apn_lateral_accel_mps2;
@@ -1408,6 +1437,19 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
         .def("set_contact_list", &SimulationKernel::set_contact_list,
              "Override the ContactList for a unit or missile", nb::arg("entity_id"),
              nb::arg("detections"))
+        .def(
+            "debug_set_contact_list_preserve_timestamps",
+            [](SimulationKernel &self, uint64_t entity_id,
+               const std::vector<Detection> &detections) {
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    throw std::invalid_argument(
+                        "Invalid entity ID for debug_set_contact_list_preserve_timestamps");
+                }
+                e.set<ContactList>({detections});
+            },
+            "Diagnostics-only ContactList override that preserves authored timestamps",
+            nb::arg("entity_id"), nb::arg("detections"))
         .def(
             "debug_set_unit_truth_state",
             [](SimulationKernel &self, uint64_t entity_id, double x_m, double y_m, double z_m,

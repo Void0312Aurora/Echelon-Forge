@@ -10,6 +10,7 @@
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 #include "models/weapons/kalman_seeker.h"
+#include "models/weapons/world_cv_alpha_beta_tracker.h"
 
 struct WarheadProfile {
     std::string family = "blast_fragmentation";
@@ -101,6 +102,9 @@ struct Missile {
 
     // Selectable production PN law. Legacy remains the default until a weapon profile opts in.
     int pn_los_rate_source = 0; // 0=legacy body-frame rates, 1=world-frame LOS history
+    int target_kinematics_estimator = 0; // 0=legacy polar difference, 1=world CV tracker
+    double target_tracker_alpha = std::numeric_limits<double>::quiet_NaN();
+    double target_tracker_beta = std::numeric_limits<double>::quiet_NaN();
 
     // Deterministic RNG state for probabilistic hit/kill logic (seeded at launch).
     uint64_t rng_state = 0;
@@ -212,6 +216,22 @@ struct Missile {
     double target_track_ax_mps2 = 0.0;
     double target_track_ay_mps2 = 0.0;
     double target_track_az_mps2 = 0.0;
+    missile_guidance::WorldCvAlphaBetaTrackerState world_cv_target_tracker{};
+    bool target_measurement_fresh = false;
+    bool target_measurement_rejected_nonmonotonic = false;
+    std::uint32_t target_duplicate_measurement_count = 0;
+    double target_measurement_age_s = std::numeric_limits<double>::infinity();
+    double target_estimator_update_dt_s = 0.0;
+    double target_measurement_x_m = std::numeric_limits<double>::quiet_NaN();
+    double target_measurement_y_m = std::numeric_limits<double>::quiet_NaN();
+    double target_measurement_z_m = std::numeric_limits<double>::quiet_NaN();
+    double target_prediction_x_m = std::numeric_limits<double>::quiet_NaN();
+    double target_prediction_y_m = std::numeric_limits<double>::quiet_NaN();
+    double target_prediction_z_m = std::numeric_limits<double>::quiet_NaN();
+    double target_residual_x_m = 0.0;
+    double target_residual_y_m = 0.0;
+    double target_residual_z_m = 0.0;
+    double target_residual_norm_m = 0.0;
     double guidance_lead_time_s = 0.0;
     double guidance_lead_blend = 0.0;
     double guidance_apn_lateral_accel_mps2 = 0.0;

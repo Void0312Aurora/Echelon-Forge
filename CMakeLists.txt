@@ -301,6 +301,7 @@ set(EF_TEST_SOURCES
     src/tests/test_simulation_kernel_smoke.cpp
     src/tests/test_components_basic.cpp
     src/tests/test_aero_physics_common.cpp
+    src/tests/test_world_cv_alpha_beta_tracker.cpp
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp

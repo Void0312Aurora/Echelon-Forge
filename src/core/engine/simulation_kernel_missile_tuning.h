@@ -18,6 +18,9 @@ struct MissileTuning {
     double max_flight_time_s = std::numeric_limits<double>::quiet_NaN();
     double nav_gain = std::numeric_limits<double>::quiet_NaN();
     int pn_los_rate_source = -1;
+    int target_kinematics_estimator = -1;
+    double target_tracker_alpha = std::numeric_limits<double>::quiet_NaN();
+    double target_tracker_beta = std::numeric_limits<double>::quiet_NaN();
     double sensor_max_range = std::numeric_limits<double>::quiet_NaN();
     double sensor_fov_deg = std::numeric_limits<double>::quiet_NaN();
     double sensor_scan_period = std::numeric_limits<double>::quiet_NaN();
