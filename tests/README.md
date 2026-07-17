@@ -53,7 +53,7 @@
 - `runners/`
   - Batch runners for grouped JSON contract suites.
 - `support/`
-  - Shared fakes and helper fixtures used by multiple Python tests.
+  - Shared paths, maintenance CLI runners, manifest assertions, fakes, and fixtures.
 - `contracts/`
   - Maintained JSON specs for contract-driven regressions, grouped by category.
   - Historical specs retained only for provenance belong under `archive/contracts/`, not this root.

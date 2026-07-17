@@ -5,16 +5,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tests.support.paths import REPO_ROOT, read_json, repo_path
 from tools.diagnostics import calibration_admission_audit as audit
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-CURRENT_MANIFEST = (
-    REPO_ROOT
-    / "docs/task/air_combat/a2_high_fidelity_damage_model"
-    / "archive"
-    / "missile_lethality_calibration_gates"
-    / "mlf10_calibration_evidence_manifest_20260619.json"
+CURRENT_MANIFEST = repo_path(
+    "docs/task/air_combat/a2_high_fidelity_damage_model",
+    "archive",
+    "missile_lethality_calibration_gates",
+    "mlf10_calibration_evidence_manifest_20260619.json",
 )
 
 
@@ -258,14 +257,14 @@ def test_cli_writes_retained_report(tmp_path: Path) -> None:
         check=True,
     )
 
-    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report = read_json(report_path)
     assert report["report_surface"] == "unit_test_retained_artifact"
     assert report["decision_counts"]["blocked"] == 1
     assert report["decision_counts"]["admitted"] == 0
 
 
 def test_current_repository_manifest_remains_fail_closed() -> None:
-    manifest = json.loads(CURRENT_MANIFEST.read_text(encoding="utf-8"))
+    manifest = read_json(CURRENT_MANIFEST)
 
     report = audit.audit_manifest(
         manifest,
