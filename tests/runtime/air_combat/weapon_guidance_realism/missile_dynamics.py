@@ -4,6 +4,69 @@ from .helpers import *
 
 
 class MissileDynamicsRuntimeMixin:
+  def test_guidance_delay_keeps_propulsion_fuel_and_velocity_dynamics_running(self) -> None:
+    sim = _make_kernel()
+    tuning = sim.get_missile_tuning()
+    tuning.guidance_delay_s = 1.0
+    tuning.guidance_update_period_s = 0.2
+    tuning.boost_time_s = 2.0
+    tuning.sustain_time_s = 0.0
+    sim.set_missile_tuning(tuning)
+
+    blue_id, red_id = _spawn_pair(sim)
+    _set_contacts(sim, blue_id, [_make_detection(red_id, range_m=30000.0, bearing_deg=0.0)])
+    missile_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(missile_id, 0)
+
+    before = sim.debug_get_missile_runtime_state(missile_id)
+    speed_before = _velocity_speed(sim, missile_id)
+    sim.step()
+    after = sim.debug_get_missile_runtime_state(missile_id)
+    speed_after = _velocity_speed(sim, missile_id)
+
+    self.assertAlmostEqual(float(after["last_guidance_time_s"]), -1.0, delta=1.0e-9)
+    self.assertLess(float(after["mass_fuel_kg"]), float(before["mass_fuel_kg"]))
+    self.assertGreater(speed_after, speed_before)
+
+  def test_guidance_period_holds_command_while_autopilot_and_fuel_continue(self) -> None:
+    sim = _make_kernel()
+    tuning = sim.get_missile_tuning()
+    tuning.guidance_delay_s = 0.0
+    tuning.guidance_update_period_s = 0.5
+    tuning.boost_time_s = 2.0
+    tuning.sustain_time_s = 0.0
+    tuning.autopilot_tau_s = 0.4
+    sim.set_missile_tuning(tuning)
+
+    blue_id, red_id = _spawn_pair(sim)
+    _set_contacts(sim, blue_id, [_make_detection(red_id, range_m=30000.0, bearing_deg=20.0)])
+    missile_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(missile_id, 0)
+
+    _set_contacts(
+      sim,
+      missile_id,
+      [_make_detection(red_id, range_m=29800.0, bearing_deg=20.0, timestamp=0.0)],
+    )
+    sim.step()
+    first = sim.debug_get_missile_runtime_state(missile_id)
+    self.assertGreater(float(first["commanded_lateral_accel_mps2"]), 0.0)
+    self.assertGreater(float(first["achieved_lateral_accel_mps2"]), 0.0)
+
+    sim.step()
+    second = sim.debug_get_missile_runtime_state(missile_id)
+
+    self.assertAlmostEqual(
+      float(second["last_guidance_time_s"]),
+      float(first["last_guidance_time_s"]),
+      delta=1.0e-9,
+    )
+    self.assertGreater(
+      float(second["achieved_lateral_accel_mps2"]),
+      float(first["achieved_lateral_accel_mps2"]),
+    )
+    self.assertLess(float(second["mass_fuel_kg"]), float(first["mass_fuel_kg"]))
+
   def test_launch_initializes_mass_and_runtime_state(self) -> None:
     sim = _make_kernel()
     tuning = sim.get_missile_tuning()
@@ -28,7 +91,7 @@ class MissileDynamicsRuntimeMixin:
     self.assertAlmostEqual(float(mass_state[5]), 80.0, delta=1.0e-6)
 
     runtime = sim.debug_get_missile_runtime_state(missile_id)
-    self.assertTrue(bool(runtime["p0_runtime_initialized"]))
+    self.assertTrue(bool(runtime["runtime_initialized"]))
     self.assertTrue(bool(runtime["seeker_has_valid_track"]))
     self.assertTrue(bool(runtime["seeker_has_range"]))
     self.assertEqual(int(runtime["seeker_mode"]), 0)

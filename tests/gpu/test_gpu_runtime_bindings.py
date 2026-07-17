@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import unittest
 
 import numpy as np
@@ -324,7 +325,7 @@ class GpuRuntimeBindingTests(unittest.TestCase):
       self.assertTrue(hasattr(admission, field), msg=f"missing RuntimeFidelityAdmission.{field}")
     self.assertTrue(bool(admission.admitted))
     self.assertEqual(admission.selected_provider_family, "reference_cpu")
-    self.assertEqual(admission.selected_stage_node_id, "p10.observation_export.v1")
+    self.assertEqual(admission.selected_stage_node_id, "observation_export.v1")
 
   def test_runtime_facade_fidelity_binding_rejects_gpu_claim_without_fallback(self) -> None:
     facade = ef_py.RuntimeFacade(1)
@@ -519,9 +520,82 @@ class GpuRuntimeBindingTests(unittest.TestCase):
     )
     self.assertEqual(tuple(tensor.shape), tuple(host_flat.shape))
     self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_flat, atol=1.0e-6))
+    del device_view
+    gc.collect()
+    mission_inputs.target_heading_deg = 123.0
+    second_inst, second_contacts, second_rwr, second_mission, _second_device_view = (
+      ef_py.compute_execution_observation_batch_export(
+        [inst, inst],
+        [truth, truth],
+        [mission_inputs, mission_inputs],
+        ils_batch,
+        10,
+        4,
+        True,
+      )
+    )
+    second_host_flat = np.concatenate(
+      [
+        np.asarray(second_inst, dtype=np.float32).reshape(2, -1),
+        np.asarray(second_contacts, dtype=np.float32).reshape(2, -1),
+        np.asarray(second_rwr, dtype=np.float32).reshape(2, -1),
+        np.asarray(second_mission, dtype=np.float32).reshape(2, -1),
+      ],
+      axis=1,
+    )
+    self.assertFalse(
+      np.allclose(second_host_flat, host_flat, atol=1.0e-6),
+      "the second export must change so the snapshot-retention assertion is meaningful",
+    )
+    self.assertTrue(
+      np.allclose(
+        tensor.detach().cpu().numpy(),
+        host_flat,
+        atol=1.0e-6,
+      ),
+      "an exported DLPack tensor must outlive its producer view and retain its snapshot",
+    )
     self._assert_gpu_helper_signals_do_not_promote_capabilities(
       ef_py.RuntimeFacade(1).capabilities()
     )
+
+  def test_visual_export_does_not_publish_device_view_for_non_batchable_scenes(self) -> None:
+    if not hasattr(ef_py, "compute_world_batch_visual_observation_batch_export"):
+      self.skipTest("world batch visual export binding is not available")
+
+    runtime = ef_py.WorldBatchRuntime(2)
+    self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
+    refs = []
+    for world_index, terrain in enumerate(("flat", "mountain")):
+      world = runtime.world_raw_quarantine(world_index)
+      world.set_terrain_type(terrain)
+      entity_id = world.spawn_unit(
+        ef_py.Side.Blue,
+        "F-16C_Block50",
+        0.0,
+        float(world_index * 100.0),
+        1200.0,
+        90.0,
+        0.0,
+        0.0,
+        190.0,
+        0.0,
+        0.0,
+      )
+      ref = ef_py.WorldEntityRef()
+      ref.world_index = int(world_index)
+      ref.entity_id = int(entity_id)
+      refs.append(ref)
+
+    visual_out, device_view = ef_py.compute_world_batch_visual_observation_batch_export(
+      runtime,
+      refs,
+      2,
+      True,
+    )
+
+    self.assertEqual(int(np.asarray(visual_out).shape[0]), 2)
+    self.assertIsNone(device_view)
 
   def test_execution_observation_batch_export_supports_nav_v2_formation_v1_shape(self) -> None:
     if not hasattr(ef_py, "compute_execution_observation_batch_export"):
@@ -681,6 +755,8 @@ class GpuRuntimeBindingTests(unittest.TestCase):
 
     self.assertIsNotNone(device_view)
     tensor = torch.from_dlpack(device_view)
+    del device_view
+    gc.collect()
     host_visual = np.asarray(visual_out, dtype=np.float32)
     self.assertEqual(tuple(tensor.shape), tuple(host_visual.shape))
     self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_visual, atol=1.0e-6))
@@ -743,6 +819,8 @@ class GpuRuntimeBindingTests(unittest.TestCase):
 
     self.assertIsNotNone(device_view)
     tensor = torch.from_dlpack(device_view)
+    del device_view
+    gc.collect()
     host_visual = np.asarray(visual_out, dtype=np.float32)
     self.assertEqual(tuple(tensor.shape), tuple(host_visual.shape))
     self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_visual, atol=1.0e-6))

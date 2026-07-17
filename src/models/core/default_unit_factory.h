@@ -1068,7 +1068,7 @@ class DefaultUnitFactory : public IUnitFactory {
                     ? def.missile_tuning.warhead_profile
                     : make_synthetic_warhead_profile(missile_runtime.damage,
                                                      missile_runtime.fuse_distance);
-            missile_runtime.p0_runtime_initialized = true;
+            missile_runtime.runtime_initialized = true;
             missile_runtime.seeker_has_valid_track = false;
             missile_runtime.seeker_has_range = false;
             missile_runtime.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
@@ -1086,6 +1086,9 @@ class DefaultUnitFactory : public IUnitFactory {
                     : MissileGuidanceDefaults::kTrackMemoryTimeoutS;
             missile_runtime.current_speed_mps = current_speed_mps;
             missile_runtime.commanded_lateral_accel_mps2 = 0.0;
+            missile_runtime.commanded_lateral_accel_x_mps2 = 0.0;
+            missile_runtime.commanded_lateral_accel_y_mps2 = 0.0;
+            missile_runtime.commanded_lateral_accel_z_mps2 = 0.0;
             missile_runtime.achieved_lateral_accel_mps2 = 0.0;
             missile_runtime.autopilot_filter_state_mps2 = 0.0;
             missile_runtime.autopilot_rate_state_mps3 = 0.0;

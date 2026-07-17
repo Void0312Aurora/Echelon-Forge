@@ -69,7 +69,7 @@ class WarheadEffectsRuntimeMixin:
     self.assertAlmostEqual(float(effects.fuze_trigger_radius_m), 35.0, delta=1.0e-6)
     self.assertTrue(bool(effects.fuze_profile_synthetic))
 
-  def test_a8_shot_effect_record_links_fuze_geometry_warhead_part_entry_and_consequence_hook(self) -> None:
+  def test_shot_effect_record_links_fuze_geometry_warhead_part_entry_and_consequence_hook(self) -> None:
     sim = ef_py.SimulationKernel()
     sim.reset(20260607)
     self.assertTrue(sim.load_database(_DB_PATH))

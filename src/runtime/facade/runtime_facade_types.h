@@ -161,7 +161,7 @@ struct RuntimeCounterfactualBranchRequest {
     std::string branch_worldline_id;
     std::string parent_worldline_id;
     std::string restore_barrier_id = "counterfactual_selected_slice";
-    std::string cadence_reason = "selected_slice_cadence_trace_runtime_window_wp17c";
+    std::string cadence_reason = "selected_slice_cadence_trace_runtime_window";
     double mutation_dx = 0.0;
     double mutation_dy = 0.0;
     double mutation_dz = 0.0;
@@ -230,7 +230,7 @@ struct RuntimeExperimentRequest {
     std::string generated_input_source =
         std::string(runtime::counterfactual::kScenarioGenerationSourceCounterfactualBranch);
     std::string generated_input_generator_version =
-        "RuntimeFacade.run_counterfactual_experiment.wp21";
+        "RuntimeFacade.run_counterfactual_experiment.counterfactual";
     std::string generated_input_baseline_scenario_ref;
     std::vector<std::string> generated_input_evidence_refs;
     std::vector<std::string> capability_refs;

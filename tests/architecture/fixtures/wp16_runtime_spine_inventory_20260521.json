@@ -10,19 +10,19 @@
   ],
   "selected_spine_slice": {
     "window_api": [
-      "RuntimeFacade::run_wp10_window",
+      "RuntimeFacade::run_window",
       "RuntimeFacade::export_observation_packet",
       "RuntimeFacade::export_engagement_event_packet",
       "RuntimeFacade::export_diagnostics_traces"
     ],
     "node_ids": [
-      "p7.fire_control_launch.v1",
-      "p9.effects_damage.v1",
-      "p10.observation_export.v1"
+      "fire_control_launch.v1",
+      "effects_damage.v1",
+      "observation_export.v1"
     ],
     "excluded_node_ids": [
-      "p7.launch_request_adapter_projection.v1",
-      "p10.observation_trace_diagnostics.v1"
+      "launch_request_adapter_projection.v1",
+      "observation_trace_diagnostics.v1"
     ],
     "barrier_ids": [
       "input_injection",
@@ -57,7 +57,7 @@
         "kRuntimeWindowBarrierInputInjection",
         "kRuntimeWindowBarrierWindowCommit",
         "kRuntimeWindowBarrierExport",
-        "enumerate_wp10_maintained_stage_node_manifests()"
+        "enumerate_maintained_stage_node_manifests()"
       ]
     },
     {
@@ -67,12 +67,12 @@
       "next_gate": "WP16-B Clock-Domain Enforcement And Merge Trace",
       "reason": "Authoritative registry already separates maintained scheduler truth from compatibility and diagnostics nodes.",
       "evidence_markers": [
-        "p7.fire_control_launch.v1",
-        "p9.effects_damage.v1",
-        "p10.observation_export.v1",
-        "p7.launch_request_adapter_projection.v1",
-        "p10.observation_trace_diagnostics.v1",
-        "enumerate_wp10_maintained_stage_node_manifests()"
+        "fire_control_launch.v1",
+        "effects_damage.v1",
+        "observation_export.v1",
+        "launch_request_adapter_projection.v1",
+        "observation_trace_diagnostics.v1",
+        "enumerate_maintained_stage_node_manifests()"
       ]
     },
     {
@@ -82,9 +82,9 @@
       "next_gate": "WP16-B Clock-Domain Enforcement And Merge Trace",
       "reason": "Focused test already proves admission, barrier ordering, and selected node/export clues on the maintained slice.",
       "evidence_markers": [
-        "test_runtime_facade_exposes_wp10_window_loop_api",
+        "test_runtime_facade_exposes_window_loop_api",
         "test_runtime_window_coordinator_classifies_requests_and_records_visibility",
-        "p10.observation_export.v1",
+        "observation_export.v1",
         "\"export\""
       ]
     },
@@ -108,7 +108,7 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Public facade exposes selected window/export/tasking APIs while keeping the raw runtime owner private.",
       "evidence_markers": [
-        "RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);",
+        "RuntimeWindowResult run_window(const RuntimeWindowRequest& request);",
         "TaskingBatchPacket export_tasking_packet(const TaskingBatchRequest& request) const;",
         "std::unique_ptr<WorldBatchRuntime> runtime_;"
       ]
@@ -120,9 +120,9 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Implementation contains the maintained export chain, but still mixes it with broad compatibility helpers and diagnostics shaping.",
       "evidence_markers": [
-        "RuntimeWindowResult RuntimeFacade::run_wp10_window",
+        "RuntimeWindowResult RuntimeFacade::run_window",
         "return execute_runtime_window(",
-        "kWp10ObservationExportNodeId",
+        "kObservationExportNodeId",
         "diagnostics_trace_surface_not_maintained_decision_path"
       ]
     },
@@ -193,11 +193,11 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Single-world execution wrapper now requires RuntimeFacade.run_wp10_window and reads maintained observation packets from the window result.",
+      "reason": "Single-world execution wrapper now requires RuntimeFacade.run_window and reads maintained observation packets from the window result.",
       "evidence_markers": [
         "run_maintained_window",
         "last_runtime_window_evidence",
-        "RuntimeFacade.run_wp10_window() is required by single-world training consumers"
+        "RuntimeFacade.run_window() is required by single-world training consumers"
       ]
     },
     {
@@ -281,11 +281,11 @@
       "classification": "diagnostics_only",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Assertions remain diagnostics-focused, but launch synthesis now uses the maintained RuntimeFacade.run_wp10_window path instead of the retired facade runtime escape hatch.",
+      "reason": "Assertions remain diagnostics-focused, but launch synthesis now uses the maintained RuntimeFacade.run_window path instead of the retired facade runtime escape hatch.",
       "evidence_markers": [
-        "facade.run_wp10_window",
+        "facade.run_window",
         "PilotActionAssignment",
-        "p10.observation_export.v1",
+        "observation_export.v1",
         "\"diagnostics_only\"",
         "diagnostics_trace_surface_not_maintained_decision_path"
       ]
@@ -298,8 +298,8 @@
       "reason": "Synthetic trace-chain contract check is diagnostics shaping, not maintained runtime-spine execution.",
       "evidence_markers": [
         "trace.barrier_id = \"export\"",
-        "trace.source_node_id = \"p7.fire_control_launch.v1\"",
-        "trace.export_node_id = \"p10.observation_export.v1\""
+        "trace.source_node_id = \"fire_control_launch.v1\"",
+        "trace.export_node_id = \"observation_export.v1\""
       ]
     },
     {
@@ -322,7 +322,7 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Scenario generation request validation fail-closes correctly, but it still has no maintained runtime-spine packet/barrier binding to the selected slice.",
       "evidence_markers": [
-        "SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION = \"wp15.scenario_generation_request.v1\"",
+        "SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION = \"scenario_generation_request.v1\"",
         "replay_envelope_ref",
         "branch_point_ref",
         "authoritative_state_mutation_allowed: bool = False"

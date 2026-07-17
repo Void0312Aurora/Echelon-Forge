@@ -588,7 +588,7 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
     )
 
 
-class M3S2ChainBreakpointProbeTests(unittest.TestCase):
+class ChainBreakpointProbeTests(unittest.TestCase):
   def test_model_event_hold_collector_preserves_model_action_except_fire_event(self) -> None:
     class DummyModel:
       def __init__(self) -> None:
@@ -679,30 +679,30 @@ class M3S2ChainBreakpointProbeTests(unittest.TestCase):
 
   def test_auto_adapter_head_prefers_executable_window_classifier(self) -> None:
     class DummyPolicy:
-      _hybrid_event_use_m3_window_classifier_head = True
-      _hybrid_event_use_m3_stopping_head = True
+      _hybrid_event_use_window_classifier_head = True
+      _hybrid_event_use_stopping_head = True
 
       def __init__(self) -> None:
-        self.m3_window_classifier_head = nn.Linear(2, 1)
-        self.m3_stopping_head = nn.Linear(2, 1)
+        self.window_classifier_head = nn.Linear(2, 1)
+        self.stopping_head = nn.Linear(2, 1)
 
     policy = DummyPolicy()
     source = nn.Linear(2, 1)
     with th.no_grad():
       source.weight.fill_(3.0)
       source.bias.fill_(1.0)
-      policy.m3_stopping_head.weight.fill_(-4.0)
-      policy.m3_stopping_head.bias.fill_(-2.0)
+      policy.stopping_head.weight.fill_(-4.0)
+      policy.stopping_head.bias.fill_(-2.0)
 
     head_kind = _resolve_adapter_head_kind(policy, "auto")
     _install_head(policy, source, head_kind=head_kind)
 
     self.assertEqual(head_kind, "window_classifier")
-    self.assertIs(_head_module(policy, head_kind), policy.m3_window_classifier_head)
-    self.assertTrue(th.allclose(policy.m3_window_classifier_head.weight, source.weight))
-    self.assertTrue(th.allclose(policy.m3_window_classifier_head.bias, source.bias))
-    self.assertTrue(th.all(policy.m3_stopping_head.weight == -4.0))
-    self.assertTrue(th.all(policy.m3_stopping_head.bias == -2.0))
+    self.assertIs(_head_module(policy, head_kind), policy.window_classifier_head)
+    self.assertTrue(th.allclose(policy.window_classifier_head.weight, source.weight))
+    self.assertTrue(th.allclose(policy.window_classifier_head.bias, source.bias))
+    self.assertTrue(th.all(policy.stopping_head.weight == -4.0))
+    self.assertTrue(th.all(policy.stopping_head.bias == -2.0))
 
   def test_fault_localization_reports_optimizer_breakpoint(self) -> None:
     summary = _fault_localization_summary(
@@ -720,7 +720,7 @@ class M3S2ChainBreakpointProbeTests(unittest.TestCase):
         "quality_boundary_count": 2,
         "quality_count": 2,
       },
-      trained_m3_head={
+      trained_head={
         "pass": False,
         "accuracy": 0.75,
         "prewindow_boundary_count": 1,
@@ -734,7 +734,7 @@ class M3S2ChainBreakpointProbeTests(unittest.TestCase):
         "event_mode_fire_quality_count": 2,
       },
       current_policy_pass=False,
-      first_breakpoint="m3_head_optimization_conditioning",
+      first_breakpoint="head_optimization_conditioning",
     )
 
     self.assertEqual(summary["first_failed_stage"], "optimizer")
@@ -742,7 +742,7 @@ class M3S2ChainBreakpointProbeTests(unittest.TestCase):
     stages = {stage["stage"]: stage for stage in summary["stages"]}
     self.assertFalse(bool(stages["optimizer"]["passed"]))
     self.assertFalse(bool(stages["loss_object"]["checked"]))
-    self.assertEqual(summary["legacy_first_breakpoint"], "m3_head_optimization_conditioning")
+    self.assertEqual(summary["legacy_first_breakpoint"], "head_optimization_conditioning")
 
   def test_fault_localization_reports_evaluation_breakpoint_after_local_chain_passes(self) -> None:
     summary = _fault_localization_summary(
@@ -760,7 +760,7 @@ class M3S2ChainBreakpointProbeTests(unittest.TestCase):
         "quality_boundary_count": 2,
         "quality_count": 2,
       },
-      trained_m3_head={
+      trained_head={
         "pass": True,
         "accuracy": 1.0,
         "prewindow_boundary_count": 0,
@@ -783,7 +783,7 @@ class M3S2ChainBreakpointProbeTests(unittest.TestCase):
     self.assertFalse(bool(stages["evaluation"]["passed"]))
 
 
-class M3S2RealUpdatePathProbeTests(unittest.TestCase):
+class RealUpdatePathProbeTests(unittest.TestCase):
   def test_build_groups_marks_quality_after_launch_and_min_age(self) -> None:
     groups = _build_groups_from_rows(
       fire_mask=[False, True, True, True, True],
@@ -812,7 +812,7 @@ class M3S2RealUpdatePathProbeTests(unittest.TestCase):
     self.assertEqual(groups[0].censoring_kind, "early_event_prefix")
 
 
-class M3S2StructuralToyProbeTests(unittest.TestCase):
+class StructuralToyProbeTests(unittest.TestCase):
   def _config(self, *, model: str, train_steps: int, learning_rate: float) -> ToyProbeConfig:
     return ToyProbeConfig(
       model=model,

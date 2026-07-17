@@ -25,14 +25,14 @@ from tools.diagnostics.fire_timing_fault_localization.real_update import (  # no
     DEFAULT_TRAIN_CONFIG,
     RealM3S2Group,
     _to_serializable,
-    collect_real_m3s2_batch,
+    collect_real_batch,
 )
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy  # noqa: E402
 
 
 DEFAULT_MODEL = resolve_repo_path(
     "experiments_tmp",
-    "m3s2_scale_separated_contract_8k_20260606_r1",
+    "scale_separated_contract_8k_20260606_r1",
     "final_model.zip",
 )
 
@@ -82,21 +82,21 @@ def _actor_latent(policy: Any, obs: dict[str, th.Tensor]) -> th.Tensor:
     return latent.detach()
 
 
-def _m3_stopping_head_input(policy: Any, latent: th.Tensor) -> th.Tensor:
-    normalizer = getattr(policy, "_m3_stopping_latent", None)
+def _stopping_head_input(policy: Any, latent: th.Tensor) -> th.Tensor:
+    normalizer = getattr(policy, "_stopping_latent", None)
     if callable(normalizer):
         return normalizer(latent)
-    norm = getattr(policy, "m3_stopping_norm", None)
+    norm = getattr(policy, "stopping_norm", None)
     if norm is None:
         return latent
     return norm(latent)
 
 
-def _m3_window_classifier_head_input(policy: Any, latent: th.Tensor) -> th.Tensor:
-    normalizer = getattr(policy, "_m3_window_classifier_latent", None)
+def _window_classifier_head_input(policy: Any, latent: th.Tensor) -> th.Tensor:
+    normalizer = getattr(policy, "_window_classifier_latent", None)
     if callable(normalizer):
         return normalizer(latent)
-    norm = getattr(policy, "m3_window_classifier_norm", None)
+    norm = getattr(policy, "window_classifier_norm", None)
     if norm is None:
         return latent
     return norm(latent)
@@ -104,48 +104,48 @@ def _m3_window_classifier_head_input(policy: Any, latent: th.Tensor) -> th.Tenso
 
 def _resolve_adapter_head_kind(policy: Any, requested: str = "auto") -> str:
     requested = str(requested or "auto").strip().lower()
-    if requested in {"window", "window_classifier", "m3_window_classifier"}:
+    if requested in {"window", "window_classifier", "stopping_window_classifier"}:
         return "window_classifier"
-    if requested in {"stopping", "m3_stopping"}:
+    if requested in {"stopping", "stopping"}:
         return "stopping"
     if requested != "auto":
         raise ValueError(f"unknown adapter head kind: {requested!r}")
     if (
-        bool(getattr(policy, "_hybrid_event_use_m3_window_classifier_head", False))
-        and getattr(policy, "m3_window_classifier_head", None) is not None
+        bool(getattr(policy, "_hybrid_event_use_window_classifier_head", False))
+        and getattr(policy, "window_classifier_head", None) is not None
     ):
         return "window_classifier"
     if (
-        bool(getattr(policy, "_hybrid_event_use_m3_stopping_head", False))
-        and getattr(policy, "m3_stopping_head", None) is not None
+        bool(getattr(policy, "_hybrid_event_use_stopping_head", False))
+        and getattr(policy, "stopping_head", None) is not None
     ):
         return "stopping"
-    if getattr(policy, "m3_window_classifier_head", None) is not None:
+    if getattr(policy, "window_classifier_head", None) is not None:
         return "window_classifier"
-    if getattr(policy, "m3_stopping_head", None) is not None:
+    if getattr(policy, "stopping_head", None) is not None:
         return "stopping"
     raise RuntimeError("policy has no M3 head available for adapter probing")
 
 
 def _head_module(policy: Any, head_kind: str) -> th.nn.Linear:
     if str(head_kind) == "window_classifier":
-        target = getattr(policy, "m3_window_classifier_head", None)
+        target = getattr(policy, "window_classifier_head", None)
         if target is None:
-            raise RuntimeError("policy has no m3_window_classifier_head")
+            raise RuntimeError("policy has no window_classifier_head")
         return target
     if str(head_kind) == "stopping":
-        target = getattr(policy, "m3_stopping_head", None)
+        target = getattr(policy, "stopping_head", None)
         if target is None:
-            raise RuntimeError("policy has no m3_stopping_head")
+            raise RuntimeError("policy has no stopping_head")
         return target
     raise ValueError(f"unknown M3 head kind: {head_kind!r}")
 
 
 def _head_input(policy: Any, latent: th.Tensor, head_kind: str) -> th.Tensor:
     if str(head_kind) == "window_classifier":
-        return _m3_window_classifier_head_input(policy, latent)
+        return _window_classifier_head_input(policy, latent)
     if str(head_kind) == "stopping":
-        return _m3_stopping_head_input(policy, latent)
+        return _stopping_head_input(policy, latent)
     raise ValueError(f"unknown M3 head kind: {head_kind!r}")
 
 
@@ -314,15 +314,15 @@ def _window_classifier_recalibration_summary(
 ) -> dict[str, Any]:
     if str(head_kind) != "window_classifier":
         return {"enabled": False, "reason": "adapter_head_is_not_window_classifier"}
-    latent_getter = getattr(policy, "get_m3_window_latent", None)
+    latent_getter = getattr(policy, "get_window_latent", None)
     standardization_updater = getattr(
         policy,
-        "update_m3_window_classifier_input_standardization",
+        "update_window_classifier_input_standardization",
         None,
     )
-    mean_buffer = getattr(policy, "m3_window_classifier_input_mean", None)
-    std_buffer = getattr(policy, "m3_window_classifier_input_std", None)
-    initialized = getattr(policy, "m3_window_classifier_input_standardization_initialized", None)
+    mean_buffer = getattr(policy, "window_classifier_input_mean", None)
+    std_buffer = getattr(policy, "window_classifier_input_std", None)
+    initialized = getattr(policy, "window_classifier_input_standardization_initialized", None)
     if (
         not callable(latent_getter)
         or not callable(standardization_updater)
@@ -346,7 +346,7 @@ def _window_classifier_recalibration_summary(
             raw_latent = latent_getter(obs_device, detach_latent=True)
             raw_latent = raw_latent.reshape(int(raw_latent.shape[0]), -1)
             eligible_latent = raw_latent[eligible]
-            base_getter = getattr(policy, "_m3_window_classifier_base_latent", None)
+            base_getter = getattr(policy, "_window_classifier_base_latent", None)
             base_latent = (
                 base_getter(eligible_latent).detach()
                 if callable(base_getter)
@@ -487,7 +487,7 @@ def _fault_localization_summary(
     *,
     label_contract: dict[str, Any],
     fresh_latent: dict[str, Any],
-    trained_m3_head: dict[str, Any],
+    trained_head: dict[str, Any],
     adapter_from_fresh: dict[str, Any],
     current_policy_pass: bool,
     first_breakpoint: str,
@@ -571,17 +571,17 @@ def _fault_localization_summary(
         ),
         FaultLocalizationResult(
             stage=FaultStage.OPTIMIZER,
-            passed=bool(trained_m3_head.get("pass", False)),
+            passed=bool(trained_head.get("pass", False)),
             verdict=(
                 "current M3 head can be trained on the fixed latent boundary"
-                if bool(trained_m3_head.get("pass", False))
+                if bool(trained_head.get("pass", False))
                 else "current M3 head optimization fails on the fixed latent boundary"
             ),
             evidence={
-                "accuracy": float(trained_m3_head.get("accuracy", 0.0)),
-                "prewindow_boundary_count": int(trained_m3_head.get("prewindow_boundary_count", 0)),
-                "quality_boundary_count": int(trained_m3_head.get("quality_boundary_count", 0)),
-                "quality_count": int(trained_m3_head.get("quality_count", 0)),
+                "accuracy": float(trained_head.get("accuracy", 0.0)),
+                "prewindow_boundary_count": int(trained_head.get("prewindow_boundary_count", 0)),
+                "quality_boundary_count": int(trained_head.get("quality_boundary_count", 0)),
+                "quality_count": int(trained_head.get("quality_count", 0)),
             },
         ),
         FaultLocalizationResult(
@@ -612,7 +612,7 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
     train_config = load_json_config(train_config_path)
     collector_model = load_sb3_policy(model_path, algo=str(args.algo), device=str(args.device))
     adapter_head_kind = _resolve_adapter_head_kind(collector_model.policy, str(args.adapter_head))
-    obs, groups, collection = collect_real_m3s2_batch(
+    obs, groups, collection = collect_real_batch(
         model=collector_model,
         scenario=scenario,
         train_config=train_config,
@@ -661,7 +661,7 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
         seed=int(args.seed),
         standardize=True,
     )
-    trained_head, trained_raw_head, trained_m3_head = _fit_linear_head(
+    trained_head, trained_raw_head, trained_head = _fit_linear_head(
         head_input,
         masks,
         steps=int(args.fit_steps),
@@ -671,7 +671,7 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
         init_head=initial_head,
     )
     fresh_latent["pass"] = _passes_window_classifier(fresh_latent, min_accuracy=float(args.min_accuracy))
-    trained_m3_head["pass"] = _passes_window_classifier(trained_m3_head, min_accuracy=float(args.min_accuracy))
+    trained_head["pass"] = _passes_window_classifier(trained_head, min_accuracy=float(args.min_accuracy))
 
     adapter_from_fresh = _adapter_summary_for_head(
         model_path=model_path,
@@ -706,8 +706,8 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
         first_breakpoint = "action_distribution_adapter"
     elif not edge_pass:
         first_breakpoint = "edge_trigger_transport"
-    elif not bool(trained_m3_head["pass"]):
-        first_breakpoint = "m3_head_optimization_conditioning"
+    elif not bool(trained_head["pass"]):
+        first_breakpoint = "head_optimization_conditioning"
     elif not current_policy_pass:
         first_breakpoint = "online_training_or_learned_parameter_contract"
     else:
@@ -716,7 +716,7 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
     fault_localization = _fault_localization_summary(
         label_contract=label_contract,
         fresh_latent=fresh_latent,
-        trained_m3_head=trained_m3_head,
+        trained_head=trained_head,
         adapter_from_fresh=adapter_from_fresh,
         current_policy_pass=current_policy_pass,
         first_breakpoint=first_breakpoint,
@@ -733,12 +733,12 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "collection": collection,
         "label_contract": label_contract,
         "current_policy_distribution": current_distribution,
-        "current_m3_head": current_head,
+        "current_head": current_head,
         "window_classifier_fixed_batch_recalibration": window_recalibration,
         "fresh_latent_linear_probe": fresh_latent,
-        "trained_m3_head_on_frozen_latent": trained_m3_head,
+        "trained_head_on_frozen_latent": trained_head,
         "adapter_after_folded_fresh_latent_head": adapter_from_fresh,
-        "adapter_after_direct_trained_m3_head": adapter_from_trained,
+        "adapter_after_direct_trained_head": adapter_from_trained,
         "edge_trigger_after_trained_head": {
             **edge_fresh,
             "pass": edge_pass,
@@ -746,7 +746,7 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "verdict": {
             "label_contract_pass": bool(label_contract["pass"]),
             "fresh_latent_linear_probe_pass": bool(fresh_latent["pass"]),
-            "trained_m3_head_on_frozen_latent_pass": bool(trained_m3_head["pass"]),
+            "trained_head_on_frozen_latent_pass": bool(trained_head["pass"]),
             "adapter_projection_pass": bool(adapter_pass),
             "edge_trigger_pass": bool(edge_pass),
             "current_policy_distribution_pass": bool(current_policy_pass),

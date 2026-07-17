@@ -85,12 +85,12 @@ def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_dom
         }
       );
 
-      if (kWp10ClockDomainAdvisoryOnly != true) {
+      if (kClockDomainAdvisoryOnly != true) {
         std::cerr << "global advisory flag should stay unchanged\n";
         return 1;
       }
       const auto selected =
-        enumerate_wp17_selected_slice_strict_clock_domain_manifests();
+        enumerate_selected_slice_strict_clock_domain_manifests();
       if (selected.size() != 3) {
         std::cerr << "selected-slice strict helper drifted\n";
         return 1;
@@ -110,9 +110,9 @@ def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_dom
         return 1;
       }
       for (const auto& expected : {
-           std::string("p7.fire_control_launch.v1"),
-           std::string("p9.effects_damage.v1"),
-           std::string("p10.observation_export.v1"),
+           std::string("fire_control_launch.v1"),
+           std::string("effects_damage.v1"),
+           std::string("observation_export.v1"),
          }) {
         const auto it = std::find_if(
           result.executed_nodes.begin(),
@@ -154,9 +154,9 @@ def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_dom
       }
 
       const auto* compatibility =
-        find_stage_node_manifest("p7.launch_request_adapter_projection.v1");
+        find_stage_node_manifest("launch_request_adapter_projection.v1");
       const auto* diagnostics =
-        find_stage_node_manifest("p10.observation_trace_diagnostics.v1");
+        find_stage_node_manifest("observation_trace_diagnostics.v1");
       if (compatibility == nullptr || diagnostics == nullptr) {
         std::cerr << "missing excluded sibling manifests\n";
         return 1;

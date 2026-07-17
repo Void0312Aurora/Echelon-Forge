@@ -454,7 +454,7 @@ def test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api() -
   facade_header = RUNTIME_FACADE_HEADER.read_text(encoding="utf-8")
   coordinator_header = RUNTIME_WINDOW_COORDINATOR.read_text(encoding="utf-8")
 
-  assert "RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);" in facade_header
+  assert "RuntimeWindowResult run_window(const RuntimeWindowRequest& request);" in facade_header
   assert "runtime_compatibility_quarantine" not in facade_header
   assert "MaintainedActionIntentInjectionAuthorizationResult" not in facade_header
   assert "authorize_maintained_decision_belief_action_intent_injection" not in facade_header

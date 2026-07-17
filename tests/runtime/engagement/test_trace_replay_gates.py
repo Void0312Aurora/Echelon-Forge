@@ -159,7 +159,7 @@ def _make_window_launch_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   )
   request.action_requests = [action_request]
 
-  packet = facade.run_wp10_window(request).engagement_packet
+  packet = facade.run_window(request).engagement_packet
   launch = next(event for event in packet.launch_events if int(event.spawned_munition.entity_id) > 0)
   return packet, shooter_id, target_id, int(launch.spawned_munition.entity_id)
 

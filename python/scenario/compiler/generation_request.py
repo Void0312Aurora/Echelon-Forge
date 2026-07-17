@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from .service import CompiledScenario
 
 
-SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION = "wp15.scenario_generation_request.v1"
+SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION = "scenario_generation_request.v1"
 
 SCENARIO_GENERATION_KINDS = (
     "scenario_variation",

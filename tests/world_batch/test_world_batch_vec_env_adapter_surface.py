@@ -426,6 +426,7 @@ class WorldBatchVecEnvAdapterSurfaceTests(unittest.TestCase):
     class FakeLoader:
       agent_id = 1
       primary_target_id = 2
+      scenario_data = {"domain": "air_combat"}
       _compiled_meta_cfg = {"combat_loss_penalty": -1500.0}
 
       def _add_breakdown_term(self, rb, name, value):
@@ -455,6 +456,65 @@ class WorldBatchVecEnvAdapterSurfaceTests(unittest.TestCase):
     self.assertEqual(float(reward), -1500.0)
     self.assertEqual(float(reward_terms.get("combat_loss_penalty", 0.0)), -1500.0)
     self.assertNotIn("crash_penalty", reward_terms)
+
+  def test_combat_terminal_override_isolated_from_non_air_combat_domains(self) -> None:
+    class FakeLoader:
+      agent_id = 1
+      primary_target_id = 2
+      _compiled_meta_cfg = {}
+
+      def _add_breakdown_term(self, rb, name, value):
+        rb[str(name)] = float(rb.get(str(name), 0.0)) + float(value)
+
+    class FakeSim:
+      def is_unit_active(self, entity_id):
+        return int(entity_id) == 1
+
+    for domain in ("naval", "ground"):
+      with self.subTest(domain=domain):
+        loader = FakeLoader()
+        loader.scenario_data = {"domain": domain, "tasking_profile": domain}
+        status = [0.0, 0.0, 0.0, 0.0]
+        reward_terms = {f"{domain}_progress": 12.0, "total": 12.0}
+        result = _apply_combat_terminal_override(
+          loader,
+          FakeSim(),
+          truth=object(),
+          reward=12.0,
+          terminated=False,
+          truncated=False,
+          status=status,
+          rb=reward_terms,
+        )
+
+        self.assertEqual(result, (12.0, False, False, status, reward_terms, None))
+
+  def test_world_batch_reset_clears_air_combat_event_action_state(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/inline_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+      vec_env = WorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=False,
+      )
+      try:
+        vec_env.reset()
+        loader = vec_env._handles[0].loader
+        loader._air_combat_event_action_engagement_state = "FiredAssess"
+        loader._air_combat_event_action_accepted_count = 1
+        loader._last_air_combat_event_action_info = {"engagement_state": "FiredAssess"}
+
+        vec_env.reset()
+
+        self.assertFalse(hasattr(loader, "_air_combat_event_action_engagement_state"))
+        self.assertFalse(hasattr(loader, "_air_combat_event_action_accepted_count"))
+        self.assertFalse(hasattr(loader, "_last_air_combat_event_action_info"))
+      finally:
+        vec_env.close()
 
   def test_world_batch_vec_env_supports_visual_observations(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:

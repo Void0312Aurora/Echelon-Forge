@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
@@ -55,9 +56,9 @@ EXPECTED_CLASSIFICATIONS = {
 }
 
 EXPECTED_SELECTED_NODES = [
-  "p7.fire_control_launch.v1",
-  "p9.effects_damage.v1",
-  "p10.observation_export.v1",
+  "fire_control_launch.v1",
+  "effects_damage.v1",
+  "observation_export.v1",
 ]
 EXPECTED_P9_LETHALITY_SUBSTAGES = [
   "P9.1 NearestApproach",
@@ -78,8 +79,8 @@ EXPECTED_P9_LETHALITY_OUTPUTS = [
   "PlatformConsequenceEvent",
 ]
 EXPECTED_EXCLUDED_NODES = [
-  "p7.launch_request_adapter_projection.v1",
-  "p10.observation_trace_diagnostics.v1",
+  "launch_request_adapter_projection.v1",
+  "observation_trace_diagnostics.v1",
 ]
 EXPECTED_SELECTED_BARRIERS = [
   "input_injection",
@@ -127,8 +128,12 @@ def test_fixture_entries_reference_real_files_and_code_markers() -> None:
     file_path = REPO_ROOT / path
     assert file_path.is_file(), f"missing inventory path: {path}"
     source = file_path.read_text(encoding="utf-8")
+    normalized_source = re.sub(r"\s+", " ", source.replace("&", " & "))
     for marker in entry["evidence_markers"]:
-      assert marker in source, f"{path} missing evidence marker: {marker}"
+      normalized_marker = re.sub(r"\s+", " ", marker.replace("&", " & "))
+      assert normalized_marker in normalized_source, (
+        f"{path} missing evidence marker: {marker}"
+      )
 
 
 def test_non_maintained_entries_have_owner_gate_reason_and_unknown_stays_non_maintained() -> None:
@@ -156,7 +161,7 @@ def test_selected_slice_matches_runtime_window_and_manifest_clues() -> None:
   assert selected["barrier_ids"] == EXPECTED_SELECTED_BARRIERS
   assert selected["reserved_barrier_ids"] == EXPECTED_RESERVED_BARRIERS
   assert selected["window_api"] == [
-    "RuntimeFacade::run_wp10_window",
+    "RuntimeFacade::run_window",
     "RuntimeFacade::export_observation_packet",
     "RuntimeFacade::export_engagement_event_packet",
     "RuntimeFacade::export_diagnostics_traces",
@@ -173,7 +178,7 @@ def test_selected_slice_matches_runtime_window_and_manifest_clues() -> None:
     REPO_ROOT / "src" / "runtime" / "contracts" / "stage_node_manifest_registry.h"
   ).read_text(encoding="utf-8")
 
-  assert "run_wp10_window" in runtime_facade_header
+  assert "run_window" in runtime_facade_header
   for barrier_id in EXPECTED_SELECTED_BARRIERS + EXPECTED_RESERVED_BARRIERS:
     assert barrier_id in runtime_window_source or barrier_id in runtime_window_helper_source
   for node_id in EXPECTED_SELECTED_NODES + EXPECTED_EXCLUDED_NODES:
@@ -281,7 +286,7 @@ def test_legacy_runtime_world_escape_hatch_is_retired_from_facade_paths() -> Non
     ]
     == "diagnostics_only"
   )
-  assert "RuntimeFacade::run_wp10_window" in _load_fixture()["selected_spine_slice"][
+  assert "RuntimeFacade::run_window" in _load_fixture()["selected_spine_slice"][
     "window_api"
   ]
   assert "runtime_compatibility_quarantine" not in facade_header
@@ -290,7 +295,7 @@ def test_legacy_runtime_world_escape_hatch_is_retired_from_facade_paths() -> Non
   assert "def _batch_target(self):" in adapter_source
   assert "self.facade.step_batch()" in adapter_source
   assert "facade.runtime_compatibility_quarantine()" not in diagnostics_test
-  assert "run_wp10_window" in diagnostics_test
+  assert "run_window" in diagnostics_test
 
 
 def test_diagnostics_and_unknown_paths_never_count_as_maintained() -> None:
@@ -327,7 +332,7 @@ def test_deprecated_candidates_have_replacement_clue_or_next_gate() -> None:
   ]
 
   assert deprecated_entries, "expected deprecated candidate coverage"
-  assert "RuntimeFacade::run_wp10_window" in replacement_clues
+  assert "RuntimeFacade::run_window" in replacement_clues
   assert "RuntimeFacade::export_observation_packet" in replacement_clues
 
   for entry in deprecated_entries:

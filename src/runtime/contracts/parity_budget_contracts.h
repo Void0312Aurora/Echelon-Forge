@@ -22,12 +22,9 @@ inline constexpr std::string_view kParityBudgetShadowCompareUnmaintainedCandidat
     "parity_budget.shadow_compare.unmaintained_candidate.v1";
 
 inline constexpr std::string_view kParityBudgetProfileClassReference = "reference";
-inline constexpr std::string_view kParityBudgetProfileClassAcceleratedExact =
-    "accelerated_exact";
-inline constexpr std::string_view kParityBudgetProfileClassResidentState =
-    "resident_state";
-inline constexpr std::string_view kParityBudgetProfileClassDiagnosticsOnly =
-    "diagnostics_only";
+inline constexpr std::string_view kParityBudgetProfileClassAcceleratedExact = "accelerated_exact";
+inline constexpr std::string_view kParityBudgetProfileClassResidentState = "resident_state";
+inline constexpr std::string_view kParityBudgetProfileClassDiagnosticsOnly = "diagnostics_only";
 inline constexpr std::string_view kParityBudgetProfileClassApproximate = "approximate";
 
 inline constexpr std::string_view kParityBudgetRejectionMissingBudgetRef =
@@ -110,22 +107,16 @@ struct ParityBudgetValidationResult {
 };
 
 inline bool is_blank(std::string_view value) {
-    return std::all_of(value.begin(), value.end(), [](unsigned char c) {
-        return std::isspace(c) != 0;
-    });
+    return std::all_of(value.begin(), value.end(),
+                       [](unsigned char c) { return std::isspace(c) != 0; });
 }
 
-inline bool contains_value(
-    const std::vector<std::string>& items,
-    std::string_view expected
-) {
+inline bool contains_value(const std::vector<std::string> &items, std::string_view expected) {
     return std::find(items.begin(), items.end(), expected) != items.end();
 }
 
-inline bool profile_class_compatible_with_parity_budget(
-    std::string_view profile_class,
-    std::string_view budget_profile_class
-) {
+inline bool profile_class_compatible_with_parity_budget(std::string_view profile_class,
+                                                        std::string_view budget_profile_class) {
     if (profile_class == budget_profile_class) {
         return true;
     }
@@ -133,36 +124,33 @@ inline bool profile_class_compatible_with_parity_budget(
     return false;
 }
 
-inline bool parity_budget_has_required_comparison_metadata(const ParityBudgetRecord& record) {
-    return !is_blank(record.event_order.mode) &&
-        !record.event_order.identity_fields.empty() &&
-        !is_blank(record.snapshot_versions.mode) &&
-        !record.snapshot_versions.identity_fields.empty() &&
-        !is_blank(record.observation_export.mode) &&
-        !record.observation_export.envelope_fields.empty() &&
-        !is_blank(record.observation_export.payload_policy) &&
-        !is_blank(record.diagnostics_trace.mode) &&
-        !record.diagnostics_trace.structured_fields.empty() &&
-        !is_blank(record.diagnostics_trace.prose_policy) &&
-        !record.sync_barriers.empty() &&
-        !is_blank(record.mismatch_policy.maintained_profile_result) &&
-        !is_blank(record.mismatch_policy.diagnostics_result);
+inline bool parity_budget_has_required_comparison_metadata(const ParityBudgetRecord &record) {
+    return !is_blank(record.event_order.mode) && !record.event_order.identity_fields.empty() &&
+           !is_blank(record.snapshot_versions.mode) &&
+           !record.snapshot_versions.identity_fields.empty() &&
+           !is_blank(record.observation_export.mode) &&
+           !record.observation_export.envelope_fields.empty() &&
+           !is_blank(record.observation_export.payload_policy) &&
+           !is_blank(record.diagnostics_trace.mode) &&
+           !record.diagnostics_trace.structured_fields.empty() &&
+           !is_blank(record.diagnostics_trace.prose_policy) && !record.sync_barriers.empty() &&
+           !is_blank(record.mismatch_policy.maintained_profile_result) &&
+           !is_blank(record.mismatch_policy.diagnostics_result);
 }
 
-inline bool parity_budget_has_acceptance_gate(const ParityBudgetRecord& record) {
+inline bool parity_budget_has_acceptance_gate(const ParityBudgetRecord &record) {
     return !is_blank(record.acceptance_gate);
 }
 
-inline bool parity_budget_is_maintained_baseline(const ParityBudgetRecord& record) {
+inline bool parity_budget_is_maintained_baseline(const ParityBudgetRecord &record) {
     return record.budget_id == kParityBudgetCpuExactReferenceV1 &&
-        record.backend_profile_id == "cpu_exact.reference" &&
-        record.profile_class == kParityBudgetProfileClassReference &&
-        record.budget_scope.maintained_status == "maintained_exact_baseline";
+           record.backend_profile_id == "cpu_exact.reference" &&
+           record.profile_class == kParityBudgetProfileClassReference &&
+           record.budget_scope.maintained_status == "maintained_exact_baseline";
 }
 
-inline ParityBudgetValidationResult validate_parity_budget_record_contract(
-    const ParityBudgetRecord& record
-) {
+inline ParityBudgetValidationResult
+validate_parity_budget_record_contract(const ParityBudgetRecord &record) {
     ParityBudgetValidationResult result{};
 
     if (is_blank(record.budget_id)) {
@@ -189,8 +177,7 @@ inline ParityBudgetValidationResult validate_parity_budget_record_contract(
     if (!parity_budget_has_required_comparison_metadata(record)) {
         result.add_error(
             "comparison domains must define event_order, snapshot_versions, "
-            "observation_export, diagnostics_trace, sync_barriers, and mismatch_policy"
-        );
+            "observation_export, diagnostics_trace, sync_barriers, and mismatch_policy");
     }
     if (record.diagnostics_requirements.empty()) {
         result.add_error("diagnostics_requirements is required");
@@ -212,8 +199,7 @@ inline ParityBudgetValidationResult validate_parity_budget_record_contract(
             result.rejection_reason =
                 std::string(kParityBudgetRejectionDiagnosticsOnlyNotMaintained);
         } else {
-            result.rejection_reason =
-                std::string(kParityBudgetRejectionCandidateNotMaintained);
+            result.rejection_reason = std::string(kParityBudgetRejectionCandidateNotMaintained);
         }
     }
     return result;
@@ -231,11 +217,12 @@ inline ParityBudgetRecord make_cpu_exact_reference_budget() {
                 .maintained_status = "maintained_exact_baseline",
                 .clock_domains = {"physics.fixed_tick", "sensor.scan_slot"},
                 .state_shards = {"scheduler", "physics", "track", "observation", "engagement"},
-                .output_families = {
-                    "observation_packet",
-                    "committed_snapshot",
-                    "diagnostics_trace",
-                },
+                .output_families =
+                    {
+                        "observation_packet",
+                        "committed_snapshot",
+                        "diagnostics_trace",
+                    },
                 .diagnostics_only_surfaces = {"human_readable_diagnostics_prose"},
             },
         .event_order =
@@ -247,14 +234,15 @@ inline ParityBudgetRecord make_cpu_exact_reference_budget() {
         .snapshot_versions =
             ParityBudgetComparisonDomain{
                 .mode = "exact_identity",
-                .identity_fields = {
-                    "world_id",
-                    "global_version",
-                    "barrier_id",
-                    "barrier_sequence",
-                    "shard_versions",
-                    "lineage",
-                },
+                .identity_fields =
+                    {
+                        "world_id",
+                        "global_version",
+                        "barrier_id",
+                        "barrier_sequence",
+                        "shard_versions",
+                        "lineage",
+                    },
                 .normalization = "exported_snapshot_version",
                 .allowed_drift = "none",
             },
@@ -267,40 +255,43 @@ inline ParityBudgetRecord make_cpu_exact_reference_budget() {
         .observation_export =
             ParityBudgetComparisonDomain{
                 .mode = "exact_envelope",
-                .envelope_fields = {
-                    "schema_version",
-                    "field_set",
-                    "visibility_label",
-                    "provenance",
-                    "source_snapshot_version",
-                },
+                .envelope_fields =
+                    {
+                        "schema_version",
+                        "field_set",
+                        "visibility_label",
+                        "provenance",
+                        "source_snapshot_version",
+                    },
                 .payload_policy = "inherit_numeric_state",
             },
         .diagnostics_trace =
             ParityBudgetComparisonDomain{
                 .mode = "exact_structured_ancestry",
-                .structured_fields = {
-                    "source_request_id",
-                    "event_id",
-                    "source_snapshot_version",
-                    "resulting_snapshot_version",
-                    "mismatch_code",
-                },
+                .structured_fields =
+                    {
+                        "source_request_id",
+                        "event_id",
+                        "source_snapshot_version",
+                        "resulting_snapshot_version",
+                        "mismatch_code",
+                    },
                 .prose_policy = "diagnostics_only",
             },
         .sync_barriers = {"input_injection", "tick_commit", "window_commit", "export"},
-        .diagnostics_requirements = {
-            "backend_profile_id",
-            "budget_id",
-            "budget_version",
-            "comparison_reference",
-            "source_snapshot_version",
-            "resulting_snapshot_version",
-            "sync_barrier_id",
-            "mismatch_domain",
-            "mismatch_code",
-            "mismatch_summary",
-        },
+        .diagnostics_requirements =
+            {
+                "backend_profile_id",
+                "budget_id",
+                "budget_version",
+                "comparison_reference",
+                "source_snapshot_version",
+                "resulting_snapshot_version",
+                "sync_barrier_id",
+                "mismatch_domain",
+                "mismatch_code",
+                "mismatch_summary",
+            },
         .mismatch_policy =
             ParityBudgetMismatchPolicy{
                 .maintained_profile_result = "fail",
@@ -308,7 +299,7 @@ inline ParityBudgetRecord make_cpu_exact_reference_budget() {
                 .diagnostics_result = "report_only",
                 .quarantine_required = true,
             },
-        .acceptance_gate = "maintained_cpu_reference_existing_wp6_baseline",
+        .acceptance_gate = "maintained_cpu_reference_existing_baseline",
         .change_reason = "initial maintained exact reference budget",
     };
 }
@@ -337,57 +328,62 @@ inline ParityBudgetRecord make_gpu_helpers_diagnostics_only_budget() {
         .snapshot_versions =
             ParityBudgetComparisonDomain{
                 .mode = "exact_identity_if_snapshot_link_is_reported",
-                .identity_fields = {
-                    "source_snapshot_version",
-                    "barrier_id",
-                    "barrier_sequence",
-                },
+                .identity_fields =
+                    {
+                        "source_snapshot_version",
+                        "barrier_id",
+                        "barrier_sequence",
+                    },
                 .normalization = "exported_snapshot_version",
                 .allowed_drift = "none",
             },
         .numeric_state =
             ParityBudgetComparisonDomain{
                 .mode = "diagnostics_only",
-                .tolerance_requirements = {
-                    "field_family_comparator_threshold_if_promoted",
-                },
+                .tolerance_requirements =
+                    {
+                        "field_family_comparator_threshold_if_promoted",
+                    },
             },
         .observation_export =
             ParityBudgetComparisonDomain{
                 .mode = "exact_if_present",
-                .envelope_fields = {
-                    "schema_version",
-                    "field_set",
-                    "visibility_label",
-                    "provenance",
-                    "source_snapshot_version",
-                },
+                .envelope_fields =
+                    {
+                        "schema_version",
+                        "field_set",
+                        "visibility_label",
+                        "provenance",
+                        "source_snapshot_version",
+                    },
                 .payload_policy = "inherit_numeric_state",
             },
         .diagnostics_trace =
             ParityBudgetComparisonDomain{
                 .mode = "exact_if_present",
-                .structured_fields = {
-                    "source_request_id",
-                    "event_id",
-                    "source_snapshot_version",
-                    "mismatch_code",
-                },
+                .structured_fields =
+                    {
+                        "source_request_id",
+                        "event_id",
+                        "source_snapshot_version",
+                        "mismatch_code",
+                    },
                 .prose_policy = "diagnostics_only",
             },
         .sync_barriers = {"export"},
-        .diagnostics_requirements = {
-            "backend_profile_id",
-            "budget_id",
-            "budget_version",
-            "comparison_reference",
-            "source_snapshot_version",
-            "export_barrier_id",
-            "helper_name",
-            "helper_build_or_feature_flag",
-            "diagnostics_label",
-            "mismatch_summary",
-        },
+        .diagnostics_requirements =
+            {
+                "backend_profile_id",
+                "budget_id",
+                "budget_version",
+                "comparison_reference",
+                "source_snapshot_version",
+                "export_barrier_id",
+                "helper_name",
+                "helper_build_or_feature_flag",
+                "diagnostics_label",
+                "mismatch_summary",
+            },
         .mismatch_policy =
             ParityBudgetMismatchPolicy{
                 .maintained_profile_result = "not_applicable",
@@ -412,15 +408,17 @@ inline ParityBudgetRecord make_gpu_exact_unmaintained_candidate_budget() {
                 .maintained_status = "unmaintained_candidate",
                 .clock_domains = {"physics.fixed_tick", "sensor.scan_slot"},
                 .state_shards = {"scheduler", "physics", "track", "observation", "engagement"},
-                .output_families = {
-                    "observation_packet",
-                    "committed_snapshot",
-                    "diagnostics_trace",
-                },
-                .diagnostics_only_surfaces = {
-                    "accelerator_kernel_notes",
-                    "human_readable_diagnostics_prose",
-                },
+                .output_families =
+                    {
+                        "observation_packet",
+                        "committed_snapshot",
+                        "diagnostics_trace",
+                    },
+                .diagnostics_only_surfaces =
+                    {
+                        "accelerator_kernel_notes",
+                        "human_readable_diagnostics_prose",
+                    },
             },
         .event_order =
             ParityBudgetComparisonDomain{
@@ -431,14 +429,15 @@ inline ParityBudgetRecord make_gpu_exact_unmaintained_candidate_budget() {
         .snapshot_versions =
             ParityBudgetComparisonDomain{
                 .mode = "exact_identity_required_for_promotion",
-                .identity_fields = {
-                    "world_id",
-                    "global_version",
-                    "barrier_id",
-                    "barrier_sequence",
-                    "shard_versions",
-                    "lineage",
-                },
+                .identity_fields =
+                    {
+                        "world_id",
+                        "global_version",
+                        "barrier_id",
+                        "barrier_sequence",
+                        "shard_versions",
+                        "lineage",
+                    },
                 .normalization = "exported_snapshot_version",
                 .allowed_drift = "none",
             },
@@ -451,42 +450,45 @@ inline ParityBudgetRecord make_gpu_exact_unmaintained_candidate_budget() {
         .observation_export =
             ParityBudgetComparisonDomain{
                 .mode = "exact_required_for_promotion",
-                .envelope_fields = {
-                    "schema_version",
-                    "field_set",
-                    "visibility_label",
-                    "provenance",
-                    "source_snapshot_version",
-                },
+                .envelope_fields =
+                    {
+                        "schema_version",
+                        "field_set",
+                        "visibility_label",
+                        "provenance",
+                        "source_snapshot_version",
+                    },
                 .payload_policy = "inherit_numeric_state",
             },
         .diagnostics_trace =
             ParityBudgetComparisonDomain{
                 .mode = "exact_required_for_promotion",
-                .structured_fields = {
-                    "source_request_id",
-                    "event_id",
-                    "source_snapshot_version",
-                    "resulting_snapshot_version",
-                    "mismatch_code",
-                },
+                .structured_fields =
+                    {
+                        "source_request_id",
+                        "event_id",
+                        "source_snapshot_version",
+                        "resulting_snapshot_version",
+                        "mismatch_code",
+                    },
                 .prose_policy = "diagnostics_only",
             },
         .sync_barriers = {"input_injection", "tick_commit", "window_commit", "export"},
-        .diagnostics_requirements = {
-            "backend_profile_id",
-            "budget_id",
-            "budget_version",
-            "comparison_reference",
-            "source_snapshot_version",
-            "resulting_snapshot_version",
-            "sync_barrier_id",
-            "accelerator_backend_id",
-            "accelerator_build_or_feature_flag",
-            "mismatch_domain",
-            "mismatch_code",
-            "mismatch_summary",
-        },
+        .diagnostics_requirements =
+            {
+                "backend_profile_id",
+                "budget_id",
+                "budget_version",
+                "comparison_reference",
+                "source_snapshot_version",
+                "resulting_snapshot_version",
+                "sync_barrier_id",
+                "accelerator_backend_id",
+                "accelerator_build_or_feature_flag",
+                "mismatch_domain",
+                "mismatch_code",
+                "mismatch_summary",
+            },
         .mismatch_policy =
             ParityBudgetMismatchPolicy{
                 .maintained_profile_result = "not_accepted",
@@ -494,10 +496,8 @@ inline ParityBudgetRecord make_gpu_exact_unmaintained_candidate_budget() {
                 .diagnostics_result = "report_only",
                 .quarantine_required = true,
             },
-        .acceptance_gate =
-            "future_wp6_accelerated_exact_promotion_review_with_replay_evidence",
-        .change_reason =
-            "initial unmaintained candidate budget; no exact GPU acceptance claimed",
+        .acceptance_gate = "future_accelerated_exact_promotion_review_with_replay_evidence",
+        .change_reason = "initial unmaintained candidate budget; no exact GPU acceptance claimed",
     };
 }
 
@@ -513,15 +513,17 @@ inline ParityBudgetRecord make_resident_state_unmaintained_candidate_budget() {
                 .maintained_status = "unmaintained_candidate",
                 .clock_domains = {"physics.fixed_tick", "sensor.scan_slot"},
                 .state_shards = {"observation", "physics_or_track_if_declared_by_future_profile"},
-                .output_families = {
-                    "observation_packet",
-                    "committed_snapshot",
-                    "diagnostics_trace",
-                },
-                .diagnostics_only_surfaces = {
-                    "unsynced_backend_local_state",
-                    "human_readable_diagnostics_prose",
-                },
+                .output_families =
+                    {
+                        "observation_packet",
+                        "committed_snapshot",
+                        "diagnostics_trace",
+                    },
+                .diagnostics_only_surfaces =
+                    {
+                        "unsynced_backend_local_state",
+                        "human_readable_diagnostics_prose",
+                    },
             },
         .event_order =
             ParityBudgetComparisonDomain{
@@ -532,14 +534,15 @@ inline ParityBudgetRecord make_resident_state_unmaintained_candidate_budget() {
         .snapshot_versions =
             ParityBudgetComparisonDomain{
                 .mode = "exact_identity_required_for_host_visible_exports",
-                .identity_fields = {
-                    "world_id",
-                    "global_version",
-                    "barrier_id",
-                    "barrier_sequence",
-                    "shard_versions",
-                    "lineage",
-                },
+                .identity_fields =
+                    {
+                        "world_id",
+                        "global_version",
+                        "barrier_id",
+                        "barrier_sequence",
+                        "shard_versions",
+                        "lineage",
+                    },
                 .normalization = "exported_snapshot_version",
                 .allowed_drift = "none",
             },
@@ -552,49 +555,53 @@ inline ParityBudgetRecord make_resident_state_unmaintained_candidate_budget() {
         .observation_export =
             ParityBudgetComparisonDomain{
                 .mode = "exact_for_host_visible_exports",
-                .envelope_fields = {
-                    "schema_version",
-                    "field_set",
-                    "visibility_label",
-                    "provenance",
-                    "source_snapshot_version",
-                },
+                .envelope_fields =
+                    {
+                        "schema_version",
+                        "field_set",
+                        "visibility_label",
+                        "provenance",
+                        "source_snapshot_version",
+                    },
                 .payload_policy = "inherit_numeric_state",
             },
         .diagnostics_trace =
             ParityBudgetComparisonDomain{
                 .mode = "exact_for_host_visible_exports",
-                .structured_fields = {
-                    "source_request_id",
-                    "event_id",
-                    "source_snapshot_version",
-                    "resulting_snapshot_version",
-                    "mismatch_code",
-                },
+                .structured_fields =
+                    {
+                        "source_request_id",
+                        "event_id",
+                        "source_snapshot_version",
+                        "resulting_snapshot_version",
+                        "mismatch_code",
+                    },
                 .prose_policy = "diagnostics_only",
             },
-        .sync_barriers = {
-            "input_injection",
-            "partial_sync_commit",
-            "window_commit",
-            "export",
-        },
-        .diagnostics_requirements = {
-            "backend_profile_id",
-            "budget_id",
-            "budget_version",
-            "comparison_reference",
-            "source_snapshot_version",
-            "resulting_snapshot_version",
-            "sync_barrier_id",
-            "host_state_owner",
-            "backend_state_owner",
-            "sync_policy",
-            "resident_state_scope",
-            "mismatch_domain",
-            "mismatch_code",
-            "mismatch_summary",
-        },
+        .sync_barriers =
+            {
+                "input_injection",
+                "partial_sync_commit",
+                "window_commit",
+                "export",
+            },
+        .diagnostics_requirements =
+            {
+                "backend_profile_id",
+                "budget_id",
+                "budget_version",
+                "comparison_reference",
+                "source_snapshot_version",
+                "resulting_snapshot_version",
+                "sync_barrier_id",
+                "host_state_owner",
+                "backend_state_owner",
+                "sync_policy",
+                "resident_state_scope",
+                "mismatch_domain",
+                "mismatch_code",
+                "mismatch_summary",
+            },
         .mismatch_policy =
             ParityBudgetMismatchPolicy{
                 .maintained_profile_result = "not_accepted",
@@ -603,9 +610,9 @@ inline ParityBudgetRecord make_resident_state_unmaintained_candidate_budget() {
                 .quarantine_required = true,
             },
         .acceptance_gate =
-            "future_wp6_resident_state_promotion_review_with_ownership_sync_and_replay_evidence",
-        .change_reason =
-            "initial unmaintained resident-state candidate budget; host/backend split not yet accepted as maintained",
+            "future_resident_state_promotion_review_with_ownership_sync_and_replay_evidence",
+        .change_reason = "initial unmaintained resident-state candidate budget; host/backend split "
+                         "not yet accepted as maintained",
     };
 }
 
@@ -622,11 +629,12 @@ inline ParityBudgetRecord make_shadow_compare_unmaintained_candidate_budget() {
                 .clock_domains = {"reference_clock_only"},
                 .state_shards = {},
                 .output_families = {"shadow_report", "mismatch_report", "diagnostics_trace"},
-                .diagnostics_only_surfaces = {
-                    "shadow_report",
-                    "mismatch_report",
-                    "human_readable_diagnostics_prose",
-                },
+                .diagnostics_only_surfaces =
+                    {
+                        "shadow_report",
+                        "mismatch_report",
+                        "human_readable_diagnostics_prose",
+                    },
             },
         .event_order =
             ParityBudgetComparisonDomain{
@@ -637,11 +645,12 @@ inline ParityBudgetRecord make_shadow_compare_unmaintained_candidate_budget() {
         .snapshot_versions =
             ParityBudgetComparisonDomain{
                 .mode = "exact_identity_for_reference_links",
-                .identity_fields = {
-                    "source_snapshot_version",
-                    "barrier_id",
-                    "barrier_sequence",
-                },
+                .identity_fields =
+                    {
+                        "source_snapshot_version",
+                        "barrier_id",
+                        "barrier_sequence",
+                    },
                 .normalization = "exported_snapshot_version",
                 .allowed_drift = "none",
             },
@@ -653,40 +662,43 @@ inline ParityBudgetRecord make_shadow_compare_unmaintained_candidate_budget() {
         .observation_export =
             ParityBudgetComparisonDomain{
                 .mode = "exact_if_exported",
-                .envelope_fields = {
-                    "schema_version",
-                    "field_set",
-                    "visibility_label",
-                    "provenance",
-                    "source_snapshot_version",
-                },
+                .envelope_fields =
+                    {
+                        "schema_version",
+                        "field_set",
+                        "visibility_label",
+                        "provenance",
+                        "source_snapshot_version",
+                    },
                 .payload_policy = "inherit_numeric_state",
             },
         .diagnostics_trace =
             ParityBudgetComparisonDomain{
                 .mode = "exact_for_shadow_report_ancestry",
-                .structured_fields = {
-                    "source_request_id",
-                    "event_id",
-                    "source_snapshot_version",
-                    "mismatch_code",
-                },
+                .structured_fields =
+                    {
+                        "source_request_id",
+                        "event_id",
+                        "source_snapshot_version",
+                        "mismatch_code",
+                    },
                 .prose_policy = "diagnostics_only",
             },
         .sync_barriers = {"reference_export", "shadow_report_export"},
-        .diagnostics_requirements = {
-            "backend_profile_id",
-            "budget_id",
-            "budget_version",
-            "comparison_reference",
-            "source_snapshot_version",
-            "shadow_run_id",
-            "compared_profile_id",
-            "sync_barrier_id",
-            "mismatch_domain",
-            "mismatch_code",
-            "mismatch_summary",
-        },
+        .diagnostics_requirements =
+            {
+                "backend_profile_id",
+                "budget_id",
+                "budget_version",
+                "comparison_reference",
+                "source_snapshot_version",
+                "shadow_run_id",
+                "compared_profile_id",
+                "sync_barrier_id",
+                "mismatch_domain",
+                "mismatch_code",
+                "mismatch_summary",
+            },
         .mismatch_policy =
             ParityBudgetMismatchPolicy{
                 .maintained_profile_result = "not_applicable",
@@ -694,13 +706,13 @@ inline ParityBudgetRecord make_shadow_compare_unmaintained_candidate_budget() {
                 .diagnostics_result = "report_only",
                 .quarantine_required = false,
             },
-        .acceptance_gate = "future_wp6_shadow_compare_review_before_any_maintained_claim",
-        .change_reason =
-            "initial unmaintained shadow-compare placeholder; no shadow capability acceptance claimed",
+        .acceptance_gate = "future_shadow_compare_review_before_any_maintained_claim",
+        .change_reason = "initial unmaintained shadow-compare placeholder; no shadow capability "
+                         "acceptance claimed",
     };
 }
 
-inline const std::vector<ParityBudgetRecord>& wp13_parity_budget_registry_seed() {
+inline const std::vector<ParityBudgetRecord> &parity_budget_registry_seed() {
     static const std::vector<ParityBudgetRecord> registry = {
         make_cpu_exact_reference_budget(),
         make_gpu_helpers_diagnostics_only_budget(),
@@ -711,23 +723,17 @@ inline const std::vector<ParityBudgetRecord>& wp13_parity_budget_registry_seed()
     return registry;
 }
 
-inline const ParityBudgetRecord* find_parity_budget_record(std::string_view budget_id) {
-    const auto& registry = wp13_parity_budget_registry_seed();
+inline const ParityBudgetRecord *find_parity_budget_record(std::string_view budget_id) {
+    const auto &registry = parity_budget_registry_seed();
     const auto it = std::find_if(
-        registry.begin(),
-        registry.end(),
-        [budget_id](const ParityBudgetRecord& record) {
-            return record.budget_id == budget_id;
-        }
-    );
+        registry.begin(), registry.end(),
+        [budget_id](const ParityBudgetRecord &record) { return record.budget_id == budget_id; });
     return it == registry.end() ? nullptr : &(*it);
 }
 
-inline ParityBudgetValidationResult validate_profile_owned_parity_budget(
-    std::string_view backend_profile_id,
-    std::string_view profile_class,
-    std::string_view budget_ref
-) {
+inline ParityBudgetValidationResult
+validate_profile_owned_parity_budget(std::string_view backend_profile_id,
+                                     std::string_view profile_class, std::string_view budget_ref) {
     ParityBudgetValidationResult result{};
 
     if (is_blank(budget_ref)) {
@@ -736,7 +742,7 @@ inline ParityBudgetValidationResult validate_profile_owned_parity_budget(
         return result;
     }
 
-    const ParityBudgetRecord* record = find_parity_budget_record(budget_ref);
+    const ParityBudgetRecord *record = find_parity_budget_record(budget_ref);
     if (record == nullptr) {
         result.reject(std::string(kParityBudgetRejectionUnknownBudgetRef));
         result.add_error("budget_ref was not found in the registry seed");
@@ -763,8 +769,8 @@ inline ParityBudgetValidationResult validate_profile_owned_parity_budget(
     return result;
 }
 
-inline std::optional<ParityBudgetValidationResult> validate_wp13_parity_budget_registry_seed() {
-    const auto& registry = wp13_parity_budget_registry_seed();
+inline std::optional<ParityBudgetValidationResult> validate_parity_budget_registry_seed() {
+    const auto &registry = parity_budget_registry_seed();
     if (registry.empty()) {
         ParityBudgetValidationResult result{};
         result.reject(std::string(kParityBudgetRejectionMetadataIncomplete));
@@ -776,7 +782,7 @@ inline std::optional<ParityBudgetValidationResult> validate_wp13_parity_budget_r
     seen_budget_ids.reserve(registry.size());
     std::vector<std::string> maintained_budget_ids;
 
-    for (const auto& record : registry) {
+    for (const auto &record : registry) {
         if (contains_value(seen_budget_ids, record.budget_id)) {
             ParityBudgetValidationResult result{};
             result.reject(std::string(kParityBudgetRejectionMetadataIncomplete));
@@ -801,12 +807,11 @@ inline std::optional<ParityBudgetValidationResult> validate_wp13_parity_budget_r
         ParityBudgetValidationResult result{};
         result.reject(std::string(kParityBudgetRejectionMetadataIncomplete));
         result.add_error(
-            "registry seed must keep only parity_budget.cpu_exact.reference.v1 as maintained"
-        );
+            "registry seed must keep only parity_budget.cpu_exact.reference.v1 as maintained");
         return result;
     }
 
     return std::nullopt;
 }
 
-}  // namespace runtime::parity
+} // namespace runtime::parity

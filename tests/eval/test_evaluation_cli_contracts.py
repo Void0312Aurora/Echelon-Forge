@@ -416,6 +416,7 @@ class PolicyExecutionEvalTests(unittest.TestCase):
 
   def test_eval_tools_do_not_construct_raw_universal_env(self) -> None:
     for rel_path in (
+      "evaluate.py",
       "tools/eval/eval_utils.py",
       "tools/eval/policy_execution_eval.py",
       "tools/eval/task_eval_driver.py",
@@ -425,6 +426,18 @@ class PolicyExecutionEvalTests(unittest.TestCase):
         self.assertNotIn("from gym_envs.universal_env import UniversalEnv", source)
         self.assertNotIn("UniversalEnv(", source)
         self.assertNotIn("make_universal_env_from_args", source)
+
+  def test_world_model_commands_do_not_construct_raw_universal_env(self) -> None:
+    for rel_path in (
+      "_world_model_train_impl/collect.py",
+      "_world_model_train_impl/online.py",
+      "_world_model_train_impl/rollout.py",
+    ):
+      with self.subTest(path=rel_path):
+        source = (REPO_ROOT / rel_path).read_text(encoding="utf-8")
+        self.assertNotIn("from gym_envs.universal_env import UniversalEnv", source)
+        self.assertNotIn("UniversalEnv(", source)
+        self.assertIn("build_world_model_execution_env", source)
 
   def test_load_sb3_policy_supports_historical_shared_and_hmoe_models(self) -> None:
     cases = [

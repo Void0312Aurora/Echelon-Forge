@@ -17,7 +17,7 @@ from _world_model_train_impl.common import (
     _unnormalize_action,
 )
 
-from gym_envs.universal_env import UniversalEnv
+from _world_model_train_impl.runtime_env import build_world_model_execution_env
 from python.world_model.networks import Actor, GRUActor
 from python.world_model.utils import DeviceConfig
 
@@ -105,8 +105,8 @@ def rollout_policy(args: argparse.Namespace) -> None:
         visual_mean_t = None
         visual_std_t = None
 
-    env = UniversalEnv(
-        args.scenario,
+    env = build_world_model_execution_env(
+        scenario_path=args.scenario,
         include_visual=bool(args.include_visual),
         include_proprio=bool(getattr(args, "include_proprio", False)),
         action_mode=str(args.action_mode),

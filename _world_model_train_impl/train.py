@@ -10,6 +10,10 @@ from datetime import datetime
 
 import torch
 
+from _world_model_train_impl.checkpoint import (
+    _checkpoint_tensor,
+    _load_actor_checkpoint,
+)
 from _world_model_train_impl.common import (
     _apply_preset,
     _build_world_model,
@@ -106,136 +110,18 @@ def train_world_model(args: argparse.Namespace) -> None:
         if bool(getattr(args, "reset_actor", False)):
             print(f"[train] reset actor weights (not loading from checkpoint): {ckpt_path}")
         elif "actor" in ckpt:
-            if str(cfg.actor_input) == ckpt_actor_input:
-                try:
-                    trainer.actor.load_state_dict(ckpt["actor"])
-                except RuntimeError:
-                    # Backward compatibility: allow extending *_sincos inputs by changing angle_deg_indices.
-                    # This only changes the actor feature representation (sin/cos channels), not the env.
-                    try:
-                        src = ckpt["actor"]
-                        dst = trainer.actor.state_dict()
-                        first_w = "net.net.0.weight"
-                        if first_w in src and first_w in dst:
-                            w_src = src[first_w]
-                            w_dst = dst[first_w]
-                            if (
-                                isinstance(w_src, torch.Tensor)
-                                and isinstance(w_dst, torch.Tensor)
-                                and w_src.ndim == 2
-                                and w_dst.ndim == 2
-                                and w_src.shape[0] == w_dst.shape[0]
-                                and w_dst.shape[1] >= w_src.shape[1]
-                            ):
-                                w_new = w_dst.clone()
-                                w_new.zero_()
-                                w_new[:, : w_src.shape[1]] = w_src
-                                dst[first_w] = w_new
-                                for k, v in src.items():
-                                    if k == first_w:
-                                        continue
-                                    if (
-                                        k in dst
-                                        and isinstance(v, torch.Tensor)
-                                        and dst[k].shape == v.shape
-                                    ):
-                                        dst[k] = v
-                                trainer.actor.load_state_dict(dst)
-                                print(
-                                    f"[train] padded actor weights: {ckpt_actor_input} "
-                                    f"(in={w_src.shape[1]} -> {w_dst.shape[1]})"
-                                )
-                            else:
-                                raise RuntimeError(
-                                    "Cannot pad actor weights: incompatible first-layer shapes"
-                                )
-                        else:
-                            raise RuntimeError("Cannot pad actor weights: missing first-layer key")
-                    except Exception:
-                        raise
-            else:
-                # Backward-compatible fine-tuning: allow extending the actor input with
-                # extra engineered-but-realism-safe features while reusing a stable base policy.
-                #
-                # Example: embed -> embed_sincos (append sin/cos features). We copy all matching
-                # parameters and pad the first linear layer with zeros for the new inputs, so the
-                # initial behavior is identical to the base policy.
-                if ckpt_actor_input == "embed" and str(cfg.actor_input) == "embed_sincos":
-                    try:
-                        src = ckpt["actor"]
-                        dst = trainer.actor.state_dict()
-                        first_w = "net.net.0.weight"
-                        if first_w in src and first_w in dst:
-                            w_src = src[first_w]
-                            w_dst = dst[first_w]
-                            if (
-                                isinstance(w_src, torch.Tensor)
-                                and isinstance(w_dst, torch.Tensor)
-                                and w_src.ndim == 2
-                                and w_dst.ndim == 2
-                                and w_src.shape[0] == w_dst.shape[0]
-                                and w_dst.shape[1] >= w_src.shape[1]
-                            ):
-                                w_new = w_dst.clone()
-                                w_new.zero_()
-                                w_new[:, : w_src.shape[1]] = w_src
-                                dst[first_w] = w_new
-                                # Copy remaining parameters when shapes match.
-                                for k, v in src.items():
-                                    if k == first_w:
-                                        continue
-                                    if (
-                                        k in dst
-                                        and isinstance(v, torch.Tensor)
-                                        and dst[k].shape == v.shape
-                                    ):
-                                        dst[k] = v
-                                trainer.actor.load_state_dict(dst)
-                                print(
-                                    f"[train] padded actor weights: {ckpt_actor_input} -> {cfg.actor_input} "
-                                    f"(in={w_src.shape[1]} -> {w_dst.shape[1]})"
-                                )
-                    except Exception:
-                        pass
-                if (
-                    ckpt_actor_input == "embed_sincos"
-                    and str(cfg.actor_input) == "embed_sincos_track"
-                ):
-                    try:
-                        src = ckpt["actor"]
-                        dst = trainer.actor.state_dict()
-                        first_w = "net.net.0.weight"
-                        if first_w in src and first_w in dst:
-                            w_src = src[first_w]
-                            w_dst = dst[first_w]
-                            if (
-                                isinstance(w_src, torch.Tensor)
-                                and isinstance(w_dst, torch.Tensor)
-                                and w_src.ndim == 2
-                                and w_dst.ndim == 2
-                                and w_src.shape[0] == w_dst.shape[0]
-                                and w_dst.shape[1] >= w_src.shape[1]
-                            ):
-                                w_new = w_dst.clone()
-                                w_new.zero_()
-                                w_new[:, : w_src.shape[1]] = w_src
-                                dst[first_w] = w_new
-                                for k, v in src.items():
-                                    if k == first_w:
-                                        continue
-                                    if (
-                                        k in dst
-                                        and isinstance(v, torch.Tensor)
-                                        and dst[k].shape == v.shape
-                                    ):
-                                        dst[k] = v
-                                trainer.actor.load_state_dict(dst)
-                                print(
-                                    f"[train] padded actor weights: {ckpt_actor_input} -> {cfg.actor_input} "
-                                    f"(in={w_src.shape[1]} -> {w_dst.shape[1]})"
-                                )
-                    except Exception:
-                        pass
+            _load_actor_checkpoint(
+                trainer.actor,
+                ckpt["actor"],
+                source_input=ckpt_actor_input,
+                target_input=str(cfg.actor_input),
+                source_angle_deg_indices=(
+                    ckpt_cfg.get("angle_deg_indices")
+                    if isinstance(ckpt_cfg, dict)
+                    else None
+                ),
+                target_angle_deg_indices=cfg.angle_deg_indices,
+            )
         if "value" in ckpt:
             trainer.value.load_state_dict(ckpt["value"])
         # IMPORTANT: The world model encoder is trained on normalized observations.
@@ -245,47 +131,33 @@ def train_world_model(args: argparse.Namespace) -> None:
         # Default behavior: reuse the checkpoint's normalization stats unless the user
         # explicitly requests a recomputation via --recompute_stats.
         if not bool(getattr(args, "recompute_stats", False)):
-            try:
-                obs_mean = ckpt.get("obs_mean", None)
-                obs_std = ckpt.get("obs_std", None)
-                if obs_mean is not None and obs_std is not None:
-                    obs_mean_t = torch.as_tensor(
-                        obs_mean, device=device, dtype=torch.float32
-                    ).reshape(-1)
-                    obs_std_t = torch.as_tensor(
-                        obs_std, device=device, dtype=torch.float32
-                    ).reshape(-1)
-                    if trainer.obs_mean is not None and trainer.obs_std is not None:
-                        if (
-                            obs_mean_t.shape == trainer.obs_mean.shape
-                            and obs_std_t.shape == trainer.obs_std.shape
-                        ):
-                            trainer.obs_mean = obs_mean_t
-                            trainer.obs_std = torch.maximum(
-                                obs_std_t, torch.as_tensor(cfg.obs_min_std, device=device)
-                            )
-
-                if dataset.spec.visual_shape is not None:
-                    visual_mean = ckpt.get("visual_mean", None)
-                    visual_std = ckpt.get("visual_std", None)
-                    if visual_mean is not None and visual_std is not None:
-                        visual_mean_t = torch.as_tensor(
-                            visual_mean, device=device, dtype=torch.float32
-                        ).reshape(-1)
-                        visual_std_t = torch.as_tensor(
-                            visual_std, device=device, dtype=torch.float32
-                        ).reshape(-1)
-                        if trainer.visual_mean is not None and trainer.visual_std is not None:
-                            if (
-                                visual_mean_t.shape == trainer.visual_mean.shape
-                                and visual_std_t.shape == trainer.visual_std.shape
-                            ):
-                                trainer.visual_mean = visual_mean_t
-                                trainer.visual_std = torch.maximum(
-                                    visual_std_t, torch.as_tensor(cfg.visual_min_std, device=device)
-                                )
-            except Exception:
-                pass
+            trainer.obs_mean = _checkpoint_tensor(
+                ckpt,
+                "obs_mean",
+                trainer.obs_mean,
+                device=device,
+            )
+            trainer.obs_std = _checkpoint_tensor(
+                ckpt,
+                "obs_std",
+                trainer.obs_std,
+                device=device,
+                minimum=cfg.obs_min_std,
+            )
+            if dataset.spec.visual_shape is not None:
+                trainer.visual_mean = _checkpoint_tensor(
+                    ckpt,
+                    "visual_mean",
+                    trainer.visual_mean,
+                    device=device,
+                )
+                trainer.visual_std = _checkpoint_tensor(
+                    ckpt,
+                    "visual_std",
+                    trainer.visual_std,
+                    device=device,
+                    minimum=cfg.visual_min_std,
+                )
         print(f"[train] loaded checkpoint {ckpt_path}")
 
     meta = {"time": datetime.now().isoformat(), "cfg": asdict(cfg), "dataset": args.dataset_dir}

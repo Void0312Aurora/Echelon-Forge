@@ -60,7 +60,7 @@ HYBRID_BINARY_POLICY_SIGNAL_NAMES = (
     "fire_weapon",
     "fire_gun",
 )
-A5_FIRE_MASK_COMPONENT_NAMES = (
+FIRE_MASK_COMPONENT_NAMES = (
     "fire_mask_c2_authorized",
     "fire_mask_target_present",
     "fire_mask_shot_budget_available",
@@ -276,7 +276,7 @@ def _damage_consequence_reward_columns(reward_terms: Any) -> dict[str, float]:
     }
 
 
-def _a7_launch_window_config_from_train_config(
+def _launch_window_config_from_train_config(
     train_config: dict[str, Any] | None,
 ) -> dict[str, float]:
     hyper = train_config.get("hyperparameters", {}) if isinstance(train_config, dict) else {}
@@ -284,17 +284,17 @@ def _a7_launch_window_config_from_train_config(
         hyper = {}
     return {
         "min_range_m": _finite_float(
-            hyper.get("a6_first_event_launch_window_min_range_m", 0.0), 0.0
+            hyper.get("first_event_launch_window_min_range_m", 0.0), 0.0
         ),
         "max_range_m": _finite_float(
-            hyper.get("a6_first_event_launch_window_max_range_m", 0.0), 0.0
+            hyper.get("first_event_launch_window_max_range_m", 0.0), 0.0
         ),
         "max_track_age_s": _finite_float(
-            hyper.get("a6_first_event_launch_window_max_track_age_s", float("inf")),
+            hyper.get("first_event_launch_window_max_track_age_s", float("inf")),
             float("inf"),
         ),
         "min_window_age_steps": _finite_float(
-            hyper.get("a6_first_event_launch_window_min_window_age_steps", 1),
+            hyper.get("first_event_launch_window_min_window_age_steps", 1),
             1.0,
         ),
     }
@@ -426,10 +426,10 @@ def _c2_roe_event_columns(
     }
 
 
-def _a5_event_info_columns(info: dict[str, Any] | None) -> dict[str, Any]:
+def _event_info_columns(info: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(info, dict):
         return {}
-    has_a5_field = any(
+    has_field = any(
         key in info
         for key in (
             "engagement_state",
@@ -444,7 +444,7 @@ def _a5_event_info_columns(info: dict[str, Any] | None) -> dict[str, Any]:
             "fire_mask_components",
         )
     )
-    if not has_a5_field:
+    if not has_field:
         return {}
 
     out: dict[str, Any] = {
@@ -486,7 +486,7 @@ def _a5_event_info_columns(info: dict[str, Any] | None) -> dict[str, Any]:
         str(key): int(_bool_int(value)) for key, value in sorted(component_map.items())
     }
     out["fire_mask_components_json"] = _stable_json(stable_components)
-    for name in A5_FIRE_MASK_COMPONENT_NAMES:
+    for name in FIRE_MASK_COMPONENT_NAMES:
         if name in stable_components:
             out[name] = int(stable_components[name])
     return out

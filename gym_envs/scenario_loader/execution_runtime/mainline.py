@@ -5,7 +5,10 @@ import numpy as np
 
 from python.rl.control.mission_defs import is_landing_command_code
 from gym_envs.scenario_loader.common import safe_json_dict_loads
-from gym_envs.scenario_loader.reward_runtime.air_combat import combat_entity_terminal_state
+from gym_envs.scenario_loader.reward_runtime.air_combat import (
+    air_combat_damage_terminal_enabled,
+    combat_entity_terminal_state,
+)
 
 _COMBAT_TERMINAL_EXCLUSIVE_TERMS = {
     "crash_penalty",
@@ -29,6 +32,9 @@ def _remove_reward_terms(reward: float, breakdown: dict | None, term_names: set[
 
 
 def _apply_combat_terminal_override(loader, sim, truth, reward, terminated, truncated, status, rb):
+    if not air_combat_damage_terminal_enabled(loader):
+        return reward, terminated, truncated, status, rb, None
+
     target_id = int(getattr(loader, "primary_target_id", 0) or 0)
     if target_id <= 0:
         return reward, terminated, truncated, status, rb, None

@@ -125,7 +125,7 @@ class EventHeadUpdateContractTests(unittest.TestCase):
     assert delta is not None
     return float(delta.detach().mean().cpu().item())
 
-  def test_a6_hazard_gradient_reaches_shared_and_hmoe_event_heads(self) -> None:
+  def test_hazard_gradient_reaches_shared_and_hmoe_event_heads(self) -> None:
     policy = self._make_policy(3.0e-5)
     obs = self._open_first_shot_obs()
 
@@ -155,7 +155,7 @@ class EventHeadUpdateContractTests(unittest.TestCase):
       policy.optimizer.step()
     return self._delta_mean(policy, obs) - before
 
-  def test_a6_current_short_train_lr_moves_event_delta_slowly(self) -> None:
+  def test_current_short_train_lr_moves_event_delta_slowly(self) -> None:
     current_lr_move = self._hazard_only_delta_move(3.0e-5, steps=8)
     ten_x_lr_move = self._hazard_only_delta_move(3.0e-4, steps=8)
 
@@ -163,7 +163,7 @@ class EventHeadUpdateContractTests(unittest.TestCase):
     self.assertLess(current_lr_move, 0.03)
     self.assertGreater(ten_x_lr_move, current_lr_move * 5.0)
 
-  def test_a6_event_head_lane_accelerates_delta_with_same_base_lr(self) -> None:
+  def test_event_head_lane_accelerates_delta_with_same_base_lr(self) -> None:
     baseline_move = self._hazard_only_delta_move(3.0e-5, steps=8)
 
     policy = self._make_policy(3.0e-5, hybrid_event_head_lr_scale=10.0)
@@ -184,7 +184,7 @@ class EventHeadUpdateContractTests(unittest.TestCase):
     self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
     self.assertGreater(float(stats["a6/event_head_delta_abs_mean"]), 0.0)
 
-  def test_a7_credit_value_loss_reaches_credit_head_without_event_logit_update(self) -> None:
+  def test_credit_value_loss_reaches_credit_head_without_event_logit_update(self) -> None:
     policy = self._make_policy(3.0e-5, hybrid_event_credit_head_lr_scale=10.0)
     obs = self._open_first_shot_obs()
     distribution = policy.get_distribution(obs)
@@ -210,7 +210,7 @@ class EventHeadUpdateContractTests(unittest.TestCase):
     self.assertIsNone(policy.action_net.bias.grad)
     self.assertIsNone(policy.hybrid_event_head)
 
-  def test_a7_delta_align_loss_reaches_event_logits_not_credit_head(self) -> None:
+  def test_delta_align_loss_reaches_event_logits_not_credit_head(self) -> None:
     policy = self._make_policy(
       3.0e-5,
       hybrid_event_head_lr_scale=10.0,
@@ -251,7 +251,7 @@ class EventHeadUpdateContractTests(unittest.TestCase):
     self.assertGreater(float(policy.action_net.bias.grad[9].detach().abs().cpu().item()), 0.0)
     self.assertGreater(float(policy.action_net.bias.grad[11].detach().abs().cpu().item()), 0.0)
 
-  def test_a7_policy_margin_loss_pushes_positive_up_and_negative_down(self) -> None:
+  def test_policy_margin_loss_pushes_positive_up_and_negative_down(self) -> None:
     delta = th.tensor([0.0, 0.0], dtype=th.float32, requires_grad=True)
     target = th.tensor([1.0, 0.0], dtype=th.float32)
     active = th.ones_like(target, dtype=th.bool)
@@ -272,7 +272,7 @@ class EventHeadUpdateContractTests(unittest.TestCase):
     self.assertLess(float(delta.grad[0].detach().cpu().item()), 0.0)
     self.assertGreater(float(delta.grad[1].detach().cpu().item()), 0.0)
 
-  def test_a7_policy_margin_loss_reaches_event_policy_path_not_credit_head(self) -> None:
+  def test_policy_margin_loss_reaches_event_policy_path_not_credit_head(self) -> None:
     policy = self._make_policy(
       3.0e-5,
       hybrid_event_head_lr_scale=10.0,

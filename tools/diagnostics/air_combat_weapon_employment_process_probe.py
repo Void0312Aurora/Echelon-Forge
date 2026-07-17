@@ -22,7 +22,7 @@ from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_w
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
-    A5_FIRE_MASK_COMPONENT_NAMES,
+    FIRE_MASK_COMPONENT_NAMES,
     ACTION_SIGNAL_NAMES,
     DEFAULT_SCENARIO,
     DEFAULT_TRAIN_CONFIG,
@@ -35,8 +35,8 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema i
     LETHALITY_CHAIN_STAGES,
     SELF_DAMAGE_CONSEQUENCE_REWARD_PREFIX,
     TARGET_DAMAGE_CONSEQUENCE_REWARD_PREFIX,
-    _a5_event_info_columns,
-    _a7_launch_window_config_from_train_config,
+    _event_info_columns,
+    _launch_window_config_from_train_config,
     _action_columns_for_mode,
     _bool_int,
     _c2_roe_event_columns,
@@ -92,8 +92,8 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.policy_d
     _distribution_policy_diagnostics,
     _forced_fire_action,
     _legal_fire_mask_open,
-    _m3_stopping_policy_diagnostics,
-    _m3_window_classifier_policy_diagnostics,
+    _stopping_policy_diagnostics,
+    _window_classifier_policy_diagnostics,
     _model_action,
     _model_policy_diagnostics,
     _policy_c2_context,
@@ -120,7 +120,7 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.summariz
 from tools.diagnostics import mlf9_statistical_trends
 
 __all__ = (
-    "A5_FIRE_MASK_COMPONENT_NAMES",
+    "FIRE_MASK_COMPONENT_NAMES",
     "ACTION_SIGNAL_NAMES",
     "DEFAULT_SCENARIO",
     "DEFAULT_TRAIN_CONFIG",
@@ -146,8 +146,8 @@ __all__ = (
     "_BatchSingleWorldProbeEnv",
     "_BatchSingleWorldProbeView",
     "_BatchSingleWorldSimProxy",
-    "_a5_event_info_columns",
-    "_a7_launch_window_config_from_train_config",
+    "_event_info_columns",
+    "_launch_window_config_from_train_config",
     "_action_columns_for_mode",
     "_append_unique_lethality_component_response_rows",
     "_append_unique_lethality_chain_rows",
@@ -182,8 +182,8 @@ __all__ = (
     "_lethality_evidence_level",
     "_lethality_header_base_kwargs",
     "_lethality_trace_indexes",
-    "_m3_stopping_policy_diagnostics",
-    "_m3_window_classifier_policy_diagnostics",
+    "_stopping_policy_diagnostics",
+    "_window_classifier_policy_diagnostics",
     "_mission_command_dict",
     "_model_action",
     "_model_policy_diagnostics",
@@ -262,7 +262,7 @@ def _legal_mask_fire_action(
 def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     scenario_path = os.path.abspath(args.scenario)
     train_config = load_json_config(os.path.abspath(args.train_config)) if args.train_config else {}
-    launch_window_config = _a7_launch_window_config_from_train_config(train_config)
+    launch_window_config = _launch_window_config_from_train_config(train_config)
     diagnostic_dcr_bridge_overrides = _diagnostic_dcr_bridge_overrides(args)
     model = None
     if args.mode == "model":

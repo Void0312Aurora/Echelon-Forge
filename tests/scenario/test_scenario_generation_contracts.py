@@ -31,7 +31,7 @@ from python.scenario.runtime import ( # noqa: E402
 
 def _metadata_request_sample_scenario() -> dict:
   return {
-    "scenario_name": "wp15_generation_surface_test",
+    "scenario_name": "generation_surface_test",
     "environment": {
       "time_step": 0.05,
       "max_steps": 8,
@@ -68,13 +68,13 @@ def _valid_metadata_request() -> ScenarioGenerationRequest:
     source="counterfactual_branch",
     generator_version="generator.v1.2.0",
     deterministic_seed=17,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     branch_point_ref="branch:barrier:3",
     capability_refs=("capability_bundle:blue_air_training",),
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
         provenance_label="baseline",
       ),
@@ -94,7 +94,7 @@ def _valid_metadata_request() -> ScenarioGenerationRequest:
 
 def _sample_scenario() -> dict:
   return {
-    "scenario_name": "wp21_generation_runtime_test",
+    "scenario_name": "generation_runtime_test",
     "environment": {
       "time_step": 0.05,
       "max_steps": 8,
@@ -146,13 +146,13 @@ def _sample_scenario() -> dict:
 
 def _request(seed: int) -> ScenarioGenerationRequest:
   return ScenarioGenerationRequest(
-    request_id="scenario-gen:wp21:req-001",
+    request_id="scenario-gen:counterfactual:req-001",
     request_version="2",
     generation_kind="scenario_variation",
     source="counterfactual_branch",
-    generator_version="generator.wp21.v1",
+    generator_version="generator.counterfactual.v1",
     deterministic_seed=seed,
-    baseline_scenario_ref="scenario:wp21_generation_runtime_test",
+    baseline_scenario_ref="scenario:generation_runtime_test",
     replay_envelope_ref="replay:baseline:21",
     branch_point_ref="branch:baseline:21",
     capability_refs=(
@@ -161,7 +161,7 @@ def _request(seed: int) -> ScenarioGenerationRequest:
     ),
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp21_generation_runtime_test",
+        ref_id="scenario:generation_runtime_test",
         evidence_kind="baseline_scenario",
         provenance_label="baseline",
       ),
@@ -219,7 +219,7 @@ def _intervention_specs() -> tuple[ScenarioGenerationInterventionSpec, ...]:
       intervention_id="cmd-variant-001",
       intervention_kind="command_variant",
       target_entity_ref="Blue_F16",
-      evidence_refs=("review_note:wp21-d",),
+      evidence_refs=("review_note:counterfactual-review",),
       payload={"command_field": "target_speed", "intent": "counterfactual_probe"},
       mutation_boundary=SCENARIO_GENERATION_INTERVENTION_MUTATION_BOUNDARY,
     ),
@@ -274,18 +274,18 @@ def test_wp15_generation_request_validates_and_exports_metadata_deterministicall
   assert request.to_metadata() == {
     "request_id": "scenario-gen:req-001",
     "request_version": "1",
-    "contract_version": "wp15.scenario_generation_request.v1",
+    "contract_version": "scenario_generation_request.v1",
     "generation_kind": "adversary_placement",
     "source": "counterfactual_branch",
     "generator_version": "generator.v1.2.0",
     "deterministic_seed": 17,
-    "baseline_scenario_ref": "scenario:wp15_generation_surface_test",
+    "baseline_scenario_ref": "scenario:generation_surface_test",
     "replay_envelope_ref": "replay:deterministic:17",
     "branch_point_ref": "branch:barrier:3",
     "capability_refs": ["capability_bundle:blue_air_training"],
     "evidence_refs": [
       {
-        "ref_id": "scenario:wp15_generation_surface_test",
+        "ref_id": "scenario:generation_surface_test",
         "evidence_kind": "baseline_scenario",
         "provenance_label": "baseline",
       },
@@ -310,11 +310,11 @@ def test_wp15_generation_request_rejects_missing_required_fields_fail_closed() -
     source="",
     generator_version="generator.v1.2.0",
     deterministic_seed=0,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -336,7 +336,7 @@ def test_wp15_generation_request_rejects_missing_required_fields_fail_closed() -
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -357,11 +357,11 @@ def test_wp15_generation_request_rejects_missing_required_fields_fail_closed() -
     source="curriculum_generation",
     generator_version="generator.v1.2.0",
     deterministic_seed=-1,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -380,11 +380,11 @@ def test_wp15_generation_request_rejects_missing_required_fields_fail_closed() -
     source="curriculum_generation",
     generator_version="",
     deterministic_seed=0,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -405,7 +405,7 @@ def test_wp15_generation_request_rejects_missing_required_fields_fail_closed() -
     source="curriculum_generation",
     generator_version="generator.v1.2.0",
     deterministic_seed=0,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(),
   )
@@ -422,10 +422,10 @@ def test_wp15_generation_request_rejects_missing_required_fields_fail_closed() -
     source="curriculum_generation",
     generator_version="generator.v1.2.0",
     deterministic_seed=0,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -445,11 +445,11 @@ def test_wp15_generation_request_rejects_unsupported_kind_source_and_evidence_ki
     source="counterfactual_branch",
     generator_version="generator.v1.2.0",
     deterministic_seed=2,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -465,11 +465,11 @@ def test_wp15_generation_request_rejects_unsupported_kind_source_and_evidence_ki
     source="runtime_mutation",
     generator_version="generator.v1.2.0",
     deterministic_seed=2,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -485,11 +485,11 @@ def test_wp15_generation_request_rejects_unsupported_kind_source_and_evidence_ki
     source="curriculum_generation",
     generator_version="generator.v1.2.0",
     deterministic_seed=2,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="unsupported_truth_claim",
       ),
     ),
@@ -508,11 +508,11 @@ def test_wp15_generation_request_rejects_unsupported_kind_source_and_evidence_ki
     source="curriculum_generation",
     generator_version="generator.v1.2.0",
     deterministic_seed=2,
-    baseline_scenario_ref="scenario:wp15_generation_surface_test",
+    baseline_scenario_ref="scenario:generation_surface_test",
     replay_envelope_ref="replay:deterministic:17",
     evidence_refs=(
       ScenarioGenerationEvidenceRef(
-        ref_id="scenario:wp15_generation_surface_test",
+        ref_id="scenario:generation_surface_test",
         evidence_kind="baseline_scenario",
       ),
     ),
@@ -529,7 +529,7 @@ def test_wp15_generation_request_rejects_unsupported_kind_source_and_evidence_ki
 def test_wp15_generation_request_artifact_stays_metadata_only_and_does_not_mutate_baseline() -> None:
   ScenarioCompiler.clear_cache()
   fd, scenario_path = tempfile.mkstemp(
-    prefix="wp15_generation_surface_",
+    prefix="generation_surface_",
     suffix=".json",
     dir=tempfile.gettempdir(),
   )
@@ -559,9 +559,9 @@ def test_wp15_generation_request_artifact_stays_metadata_only_and_does_not_mutat
 
     baseline_after = compiled.instantiate_runtime()
     assert baseline_after == baseline_before
-    assert compiled.merged_scenario_data["scenario_name"] == "wp15_generation_surface_test"
+    assert compiled.merged_scenario_data["scenario_name"] == "generation_surface_test"
     assert artifact.request.generator_version == "generator.v1.2.0"
-    assert artifact.request.evidence_refs[0].ref_id == "scenario:wp15_generation_surface_test"
+    assert artifact.request.evidence_refs[0].ref_id == "scenario:generation_surface_test"
     assert artifact.baseline_scenario_name == compiled.scenario_name
   finally:
     try:
@@ -695,7 +695,7 @@ def test_wp21_generation_runtime_compiles_and_feeds_setup_request_without_loader
     time_steps=[0.0 if layout.time_step_s is None else float(layout.time_step_s)],
   )
 
-  assert compiled.scenario_name == "wp21_generation_runtime_test"
+  assert compiled.scenario_name == "generation_runtime_test"
   assert (
     artifact.generated_scenario_data["meta"]["generated_interventions"][0]["mutation_boundary"]
     == "setup_admission_only"

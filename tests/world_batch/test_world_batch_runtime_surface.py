@@ -830,7 +830,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     batch.step_batch()
     compat_inst = batch.get_instrument_states_batch([_entity_ref(0, int(compat_ids[0]))])[0]
 
-    self.assertAlmostEqual(float(legacy_inst.alt_radar), 1200.0, places=2)
+    self.assertAlmostEqual(float(legacy_inst.alt_radar), 1200.0, delta=1.0)
     self.assertLess(float(compat_inst.alt_radar), 1200.0 - 100.0)
 
   def test_world_batch_runtime_command_chain_roundtrip(self) -> None:

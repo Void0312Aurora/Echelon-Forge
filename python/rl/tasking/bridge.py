@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import import_module
+import math
 from typing import Any
 
 import ef_py
@@ -17,6 +18,20 @@ TASKING_INSTRUMENT_READ_BLOCKER = (
     "`loader.get_policy_instrument_state(agent_id)` replacement for raw "
     "simulation instrument access."
 )
+
+
+def _positive_finite_time_step(value: Any, default: float = 0.05) -> float:
+    try:
+        fallback = float(default)
+    except Exception:
+        fallback = 0.05
+    if not math.isfinite(fallback) or fallback <= 0.0:
+        fallback = 0.05
+    try:
+        candidate = float(value)
+    except Exception:
+        return fallback
+    return candidate if math.isfinite(candidate) and candidate > 0.0 else fallback
 
 
 class _ProfileModuleProxy:
@@ -107,10 +122,10 @@ class LoaderOwnedRuntimeView:
             return default
 
     def read_time_step_s(self, default: float = 0.05) -> float:
-        try:
-            return max(float(default), float(self.call_optional("get_time_step", default=float(default))))
-        except Exception:
-            return float(default)
+        return _positive_finite_time_step(
+            self.call_optional("get_time_step", default=float(default)),
+            default,
+        )
 
     def sync_task_order(self, agent_id: Any, task_order: Any) -> None:
         if task_order is not None:
@@ -254,7 +269,7 @@ def mission_command_view(loader: Any) -> MissionCommandView:
 
 def resolve_loader_time_step(loader: Any, default: float = 0.05) -> float:
     if loader is None:
-        return float(default)
+        return _positive_finite_time_step(default, 0.05)
 
     for candidate in (
         getattr(loader, "_compiled_runtime_metadata", None),
@@ -271,7 +286,7 @@ def resolve_loader_time_step(loader: Any, default: float = 0.05) -> float:
             )
         try:
             if time_step_s is not None:
-                return max(float(default), float(time_step_s))
+                return _positive_finite_time_step(time_step_s, default)
         except Exception:
             pass
 
@@ -280,7 +295,7 @@ def resolve_loader_time_step(loader: Any, default: float = 0.05) -> float:
         env_cfg = scenario_data.get("environment", None)
         if isinstance(env_cfg, dict) and "time_step" in env_cfg:
             try:
-                return max(float(default), float(env_cfg["time_step"]))
+                return _positive_finite_time_step(env_cfg["time_step"], default)
             except Exception:
                 pass
 
@@ -288,7 +303,7 @@ def resolve_loader_time_step(loader: Any, default: float = 0.05) -> float:
     if runtime_view.supports("get_time_step"):
         return runtime_view.read_time_step_s(default=float(default))
 
-    return float(default)
+    return _positive_finite_time_step(default, 0.05)
 
 
 def _normalized_profile_name(profile_name: Any | None) -> str | None:

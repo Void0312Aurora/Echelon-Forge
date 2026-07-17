@@ -152,7 +152,7 @@ struct Missile {
     double fuze_mechanism_coverage_score = 0.0;
 
     // P0 seeker / guidance runtime state.
-    bool p0_runtime_initialized = false;
+    bool runtime_initialized = false;
     bool seeker_has_valid_track = false;
     bool seeker_has_range = true;
     int seeker_mode = 0; // 0=Track, 1=Memory, 2=Terminal/ballistic
@@ -168,6 +168,11 @@ struct Missile {
 
     double current_speed_mps = 0.0;
     double commanded_lateral_accel_mps2 = 0.0;
+    // World-frame guidance command held between discrete seeker/guidance
+    // updates so the autopilot and missile dynamics can run every simulation tick.
+    double commanded_lateral_accel_x_mps2 = 0.0;
+    double commanded_lateral_accel_y_mps2 = 0.0;
+    double commanded_lateral_accel_z_mps2 = 0.0;
     double achieved_lateral_accel_mps2 = 0.0;
     double burnout_time_s = -1.0;
     double boost_duration_s = std::numeric_limits<double>::quiet_NaN();
@@ -305,7 +310,7 @@ inline void sync_missile_mass_properties(const Mass &mass, MassProperties &prope
 inline void initialize_missile_launch_runtime(Missile &missile,
                                               const MissileSharedLaunchRuntimeState &state) {
     missile.shared_launch_initialized = true;
-    missile.p0_runtime_initialized = true;
+    missile.runtime_initialized = true;
     missile.seeker_has_valid_track = state.seeker_has_valid_track;
     missile.seeker_has_range = state.seeker_has_range;
     missile.seeker_mode = state.seeker_mode;
@@ -319,6 +324,9 @@ inline void initialize_missile_launch_runtime(Missile &missile,
     missile.track_memory_timeout_s = std::max(0.0, state.track_memory_timeout_s);
     missile.current_speed_mps = std::max(0.0, state.launch_speed_mps);
     missile.commanded_lateral_accel_mps2 = 0.0;
+    missile.commanded_lateral_accel_x_mps2 = 0.0;
+    missile.commanded_lateral_accel_y_mps2 = 0.0;
+    missile.commanded_lateral_accel_z_mps2 = 0.0;
     missile.achieved_lateral_accel_mps2 = 0.0;
     missile.autopilot_filter_state_mps2 = 0.0;
     missile.autopilot_rate_state_mps3 = 0.0;

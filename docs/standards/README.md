@@ -218,6 +218,9 @@ Current status mapping:
 
 Additional maintained supplements:
 
+- [air/kill_chain_expectation_envelope.md](air/kill_chain_expectation_envelope.md)
+  - active planning supplement for air-to-air kill-chain expectation-envelope
+    review labels; not a current runtime contract or calibration authority
 - [naval/ship_unit_references.md](naval/ship_unit_references.md)
   - reference-baseline supplement for first-batch naval units and public-source
     traceability

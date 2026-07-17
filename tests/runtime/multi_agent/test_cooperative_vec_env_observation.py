@@ -292,6 +292,17 @@ def _cooperative_takeoff_to_cruise_scenario() -> dict:
 
 
 class CooperativeVecEnvObservationTests(unittest.TestCase):
+  def test_cooperative_world_batch_rejects_unimplemented_air_combat_event_actions(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+
+    with self.assertRaisesRegex(ValueError, "event-action gate/finalization contract"):
+      CooperativeWorldBatchVecEnv(
+        scenario_path="unused.json",
+        n_envs=1,
+        action_mode="air_combat_hybrid_v1",
+      )
+
   def test_cooperative_world_batch_vec_env_compiled_observation_arrays_are_float32(self) -> None:
     if CooperativeWorldBatchVecEnv is None:
       self.skipTest("gymnasium is not available in the active interpreter")
@@ -425,6 +436,107 @@ class CooperativeVecEnvObservationTests(unittest.TestCase):
           self.assertAlmostEqual(float(infos[1]["world_success"]), 1.0, places=6)
           self.assertFalse(bool(infos[0]["shared_world_reset"]))
           self.assertFalse(bool(infos[1]["shared_world_reset"]))
+      finally:
+        vec_env.close()
+
+  def test_cooperative_world_failure_takes_precedence_over_simultaneous_timeout(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_cooperative_cruise_scenario(), f, ensure_ascii=True)
+
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=True,
+        action_mode="full",
+        mission_obs_mode="nav_v2_formation_v1",
+      )
+      try:
+        vec_env.seed(7)
+        vec_env.reset()
+        slot0 = vec_env._slots[0]
+        slot1 = vec_env._slots[1]
+        self.assertIsNotNone(slot0)
+        self.assertIsNotNone(slot1)
+        assert slot0 is not None
+        assert slot1 is not None
+
+        def _failed_slot(*_args, **_kwargs):
+          return -1.0, True, False, np.zeros((4,), dtype=np.float32)
+
+        def _timed_out_slot(*_args, **_kwargs):
+          return 0.0, False, True, np.zeros((4,), dtype=np.float32)
+
+        with unittest.mock.patch.object(
+          slot0.loader,
+          "compute_full_step",
+          side_effect=_failed_slot,
+        ), unittest.mock.patch.object(
+          slot1.loader,
+          "compute_full_step",
+          side_effect=_timed_out_slot,
+        ):
+          actions = np.zeros((2, 17), dtype=np.float32)
+          _obs, _rewards, dones, infos = vec_env.step(actions)
+
+        self.assertTrue(bool(np.all(dones)))
+        self.assertTrue(bool(infos[0]["world_failure"]))
+        self.assertTrue(bool(infos[0]["world_timeout"]))
+        self.assertFalse(bool(infos[0]["TimeLimit.truncated"]))
+        self.assertFalse(bool(infos[1]["TimeLimit.truncated"]))
+      finally:
+        vec_env.close()
+
+  def test_cooperative_world_pure_timeout_marks_all_slots_truncated(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_cooperative_cruise_scenario(), f, ensure_ascii=True)
+
+      vec_env = CooperativeWorldBatchVecEnv(
+        scenario_path=scenario_path,
+        n_envs=1,
+        include_visual=False,
+        include_proprio=True,
+        action_mode="full",
+        mission_obs_mode="nav_v2_formation_v1",
+      )
+      try:
+        vec_env.seed(7)
+        vec_env.reset()
+        slot0 = vec_env._slots[0]
+        slot1 = vec_env._slots[1]
+        self.assertIsNotNone(slot0)
+        self.assertIsNotNone(slot1)
+        assert slot0 is not None
+        assert slot1 is not None
+
+        def _timed_out_slot(*_args, **_kwargs):
+          return 0.0, False, True, np.zeros((4,), dtype=np.float32)
+
+        with unittest.mock.patch.object(
+          slot0.loader,
+          "compute_full_step",
+          side_effect=_timed_out_slot,
+        ), unittest.mock.patch.object(
+          slot1.loader,
+          "compute_full_step",
+          side_effect=_timed_out_slot,
+        ):
+          actions = np.zeros((2, 17), dtype=np.float32)
+          _obs, _rewards, dones, infos = vec_env.step(actions)
+
+        self.assertTrue(bool(np.all(dones)))
+        self.assertFalse(bool(infos[0]["world_failure"]))
+        self.assertTrue(bool(infos[0]["world_timeout"]))
+        self.assertTrue(bool(infos[0]["TimeLimit.truncated"]))
+        self.assertTrue(bool(infos[1]["TimeLimit.truncated"]))
       finally:
         vec_env.close()
 

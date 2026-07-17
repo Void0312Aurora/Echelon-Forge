@@ -358,6 +358,10 @@ def _signature_match(source: str, signature: str) -> re.Match[str]:
   return match
 
 
+def _normalized_cpp_source(source: str) -> str:
+  return re.sub(r"\s+", " ", source.replace("&", " & ")).strip()
+
+
 def _method_body(source: str, signature: str) -> str:
   start = _signature_match(source, signature).start()
   body_start = source.index("{", start)
@@ -406,7 +410,7 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
     self.assertTrue(bool(admission.baseline_exact_evaluation))
     self.assertEqual(admission.requested_provider_family, "reference_cpu")
     self.assertEqual(admission.selected_provider_family, "reference_cpu")
-    self.assertEqual(admission.selected_stage_node_id, "p10.observation_export.v1")
+    self.assertEqual(admission.selected_stage_node_id, "observation_export.v1")
     self.assertEqual(admission.rejection_reason, "")
     self.assertIn("RuntimeFacade.capabilities", list(admission.evidence_refs))
 
@@ -504,16 +508,21 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
   def test_runtime_facade_exports_read_only_engagement_snapshot_without_weapon_escape(self) -> None:
     facade_header = _repo_text("src", "runtime", "facade", "runtime_facade.h")
     facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
+    normalized_header = _normalized_cpp_source(facade_header)
 
     self.assertIn(
-      "EngagementEventPacket export_engagement_event_packet("
-      "const EngagementBatchRequest& request) const;",
-      facade_header,
+      _normalized_cpp_source(
+        "EngagementEventPacket export_engagement_event_packet("
+        "const EngagementBatchRequest& request) const;"
+      ),
+      normalized_header,
     )
     self.assertIn(
-      "std::vector<DiagnosticsTrace> export_diagnostics_traces("
-      "const EngagementBatchRequest& request) const;",
-      facade_header,
+      _normalized_cpp_source(
+        "std::vector<DiagnosticsTrace> export_diagnostics_traces("
+        "const EngagementBatchRequest& request) const;"
+      ),
+      normalized_header,
     )
 
     body = _method_body(
@@ -752,7 +761,7 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
 
     for provider_family in _RUNTIME_FIDELITY_PROVIDER_FAMILY_EXPECTATIONS.values():
       self.assertIn(provider_family, facade_source)
-    self.assertIn("p10.observation_export.v1", facade_source)
+    self.assertIn("observation_export.v1", facade_source)
 
   def test_runtime_capability_surface_declares_stable_backend_metadata_fields(self) -> None:
     header = _repo_text("src", "runtime", "facade", "runtime_facade_types.h")
@@ -776,7 +785,7 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
     self.assertEqual(result.rejection_reason, "")
     self.assertTrue(bool(result.fidelity_admission.admitted))
     self.assertEqual(result.fidelity_admission.selected_provider_family, "reference_cpu")
-    self.assertEqual(result.fidelity_admission.selected_stage_node_id, "p10.observation_export.v1")
+    self.assertEqual(result.fidelity_admission.selected_stage_node_id, "observation_export.v1")
     self.assertEqual(result.parent_snapshot.worldline_id, request.parent_worldline_id)
     self.assertEqual(result.parent_snapshot.parent_worldline_id, request.parent_worldline_id)
     self.assertEqual(result.parent_snapshot.deterministic_seed, request.deterministic_seed)

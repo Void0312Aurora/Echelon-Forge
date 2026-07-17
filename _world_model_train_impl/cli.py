@@ -296,6 +296,14 @@ def main() -> None:
     p_online.add_argument("--dataset_dir", required=True)
     p_online.add_argument("--run_dir", required=True)
     p_online.add_argument("--checkpoint", type=str, default=None)
+    p_online.add_argument(
+        "--reset_actor",
+        action="store_true",
+        help=(
+            "Do not load actor weights from --checkpoint; required when the actor "
+            "feature schema is intentionally changed."
+        ),
+    )
     p_online.add_argument("--steps", type=int, default=2000)
     p_online.add_argument("--seed", type=int, default=0)
     p_online.add_argument("--device", type=str, default="cuda")

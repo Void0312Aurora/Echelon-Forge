@@ -506,7 +506,7 @@ def _make_facade_window_launch() -> tuple[ef_py.RuntimeFacade, int, int, int]:
   )
   request.action_requests = [action_request]
 
-  result = facade.run_wp10_window(request)
+  result = facade.run_window(request)
   launch = next(
     event for event in result.engagement_packet.launch_events if int(event.spawned_munition.entity_id) > 0
   )

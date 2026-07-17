@@ -817,7 +817,7 @@ class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
     self.assertAlmostEqual(summary["authorized_window_policy_prob_fire_weapon_max"], 0.55, places=6)
     self.assertAlmostEqual(summary["authorized_window_policy_logit_fire_weapon_max"], 0.2, places=6)
 
-  def test_episode_summary_reports_a5_event_action_counts(self) -> None:
+  def test_episode_summary_reports_event_action_counts(self) -> None:
     def row(
       step: int,
       *,
@@ -1096,7 +1096,7 @@ class _DummyM3Policy:
   def get_distribution(self, _obs):
     return _DummyA6HybridDistribution()
 
-  def get_m3_stopping(self, _obs, *, detach_latent: bool = False):
+  def get_stopping(self, _obs, *, detach_latent: bool = False):
     logit = th.tensor([1.5], dtype=th.float32)
     return SimpleNamespace(
       stopping_logit=logit,
@@ -1114,9 +1114,9 @@ def _row(
   event_prob: float = 0.0,
   event_mode: int = 0,
   event_advantage: float = 0.0,
-  m3_stop_logit: float = 0.0,
-  m3_stop_prob: float = 0.0,
-  m3_boundary: int = 0,
+  stop_logit: float = 0.0,
+  stop_prob: float = 0.0,
+  boundary: int = 0,
   target_range_m: float | None = None,
   target_track_age_s: float = 1.0,
 ) -> dict:
@@ -1165,10 +1165,10 @@ def _row(
     "policy_event_q_hold": 0.0,
     "policy_event_q_fire_once": event_advantage,
     "policy_event_advantage": event_advantage,
-    "policy_m3_stop_logit": m3_stop_logit,
-    "policy_m3_stop_prob": m3_stop_prob,
-    "policy_m3_boundary_cross": m3_boundary,
-    "policy_m3_stopping_head_enabled": 1,
+    "policy_stop_logit": stop_logit,
+    "policy_stop_prob": stop_prob,
+    "policy_boundary_cross": boundary,
+    "policy_stopping_head_enabled": 1,
     "effects_event_count": 0,
     "damage_report_count": 0,
     "last_effect_miss_distance_m": math.nan,
@@ -1188,8 +1188,8 @@ def _row(
   }
 
 
-class A6EventValueProcessProbeTests(unittest.TestCase):
-  def test_distribution_diagnostics_include_a6_unmasked_event_delta(self) -> None:
+class EventValueProcessProbeTests(unittest.TestCase):
+  def test_distribution_diagnostics_include_unmasked_event_delta(self) -> None:
     diagnostics = probe._distribution_policy_diagnostics(_DummyA6HybridDistribution())
 
     self.assertAlmostEqual(diagnostics["policy_event_logit_delta"], 2.0, places=6)
@@ -1201,23 +1201,23 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
     self.assertAlmostEqual(diagnostics["policy_event_q_fire_once"], -0.5, places=6)
     self.assertAlmostEqual(diagnostics["policy_event_advantage"], -2.0, places=6)
 
-  def test_model_policy_diagnostics_include_m3_stopping_head_probe(self) -> None:
+  def test_model_policy_diagnostics_include_stopping_head_probe(self) -> None:
     diagnostics = probe._model_policy_diagnostics(
       SimpleNamespace(policy=_DummyM3Policy()),
       {"mission": th.zeros((1, 20), dtype=th.float32)},
     )
 
-    self.assertAlmostEqual(diagnostics["policy_m3_stop_logit"], 1.5, places=6)
+    self.assertAlmostEqual(diagnostics["policy_stop_logit"], 1.5, places=6)
     self.assertAlmostEqual(
-      diagnostics["policy_m3_stop_prob"],
+      diagnostics["policy_stop_prob"],
       float(th.sigmoid(th.tensor(1.5)).item()),
       places=6,
     )
-    self.assertEqual(int(diagnostics["policy_m3_boundary_cross"]), 1)
-    self.assertEqual(int(diagnostics["policy_m3_stopping_head_enabled"]), 1)
+    self.assertEqual(int(diagnostics["policy_boundary_cross"]), 1)
+    self.assertEqual(int(diagnostics["policy_stopping_head_enabled"]), 1)
     self.assertAlmostEqual(diagnostics["policy_event_logit_delta"], 2.0, places=6)
 
-  def test_episode_summary_reports_a6_open_window_event_metrics(self) -> None:
+  def test_episode_summary_reports_open_window_event_metrics(self) -> None:
     summary = probe._summarize_episode(
       [
         _row(0),
@@ -1227,10 +1227,10 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
       ]
     )
 
-    self.assertEqual(summary["a6_open_window_step_count"], 2)
-    self.assertAlmostEqual(summary["a6_event_logit_delta_mean_open"], 2.0, places=6)
-    self.assertAlmostEqual(summary["a6_event_fire_prob_mean_open"], 0.5, places=6)
-    self.assertAlmostEqual(summary["a6_event_fire_prob_max_open"], 0.75, places=6)
+    self.assertEqual(summary["open_window_step_count"], 2)
+    self.assertAlmostEqual(summary["event_logit_delta_mean_open"], 2.0, places=6)
+    self.assertAlmostEqual(summary["event_fire_prob_mean_open"], 0.5, places=6)
+    self.assertAlmostEqual(summary["event_fire_prob_max_open"], 0.75, places=6)
     self.assertEqual(summary["policy_event_mode_fire_once_count"], 2)
 
   def test_episode_summary_reports_first_release_geometry_snapshot(self) -> None:
@@ -1275,7 +1275,7 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
     self.assertAlmostEqual(summary["first_release_target_health"], 99.0, places=6)
     self.assertAlmostEqual(summary["first_release_blue_health"], 88.0, places=6)
 
-  def test_episode_summary_reports_a7_credit_signs_and_prewindow_cumulative_hazard(self) -> None:
+  def test_episode_summary_reports_credit_signs_and_prewindow_cumulative_hazard(self) -> None:
     summary = probe._summarize_episode(
       [
         _row(0),
@@ -1285,8 +1285,8 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
           mask=1,
           event_prob=0.1,
           event_advantage=-1.0,
-          m3_stop_logit=-2.0,
-          m3_stop_prob=0.1,
+          stop_logit=-2.0,
+          stop_prob=0.1,
         ),
         _row(
           2,
@@ -1294,8 +1294,8 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
           mask=1,
           event_prob=0.2,
           event_advantage=-2.0,
-          m3_stop_logit=-1.0,
-          m3_stop_prob=0.2,
+          stop_logit=-1.0,
+          stop_prob=0.2,
         ),
         _row(
           3,
@@ -1303,9 +1303,9 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
           mask=1,
           event_prob=0.6,
           event_advantage=1.0,
-          m3_stop_logit=0.5,
-          m3_stop_prob=0.6,
-          m3_boundary=1,
+          stop_logit=0.5,
+          stop_prob=0.6,
+          boundary=1,
         ),
         _row(
           4,
@@ -1313,9 +1313,9 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
           mask=1,
           event_prob=0.8,
           event_advantage=2.0,
-          m3_stop_logit=1.0,
-          m3_stop_prob=0.8,
-          m3_boundary=1,
+          stop_logit=1.0,
+          stop_prob=0.8,
+          boundary=1,
         ),
       ],
       launch_window_config={
@@ -1326,23 +1326,23 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
       },
     )
 
-    self.assertEqual(summary["a7_prewindow_step_count"], 2)
-    self.assertEqual(summary["a7_quality_window_step_count"], 2)
-    self.assertAlmostEqual(summary["a7_prewindow_event_fire_prob_cum"], 0.28, places=6)
-    self.assertAlmostEqual(summary["a7_prewindow_event_fire_prob_mean"], 0.15, places=6)
-    self.assertAlmostEqual(summary["a7_quality_window_event_fire_prob_mean"], 0.7, places=6)
-    self.assertAlmostEqual(summary["a7_prewindow_m3_stop_prob_cum"], 0.28, places=6)
-    self.assertAlmostEqual(summary["a7_prewindow_m3_stop_prob_mean"], 0.15, places=6)
-    self.assertAlmostEqual(summary["a7_quality_window_m3_stop_prob_mean"], 0.7, places=6)
-    self.assertEqual(summary["a7_prewindow_m3_boundary_cross_count"], 0)
-    self.assertEqual(summary["a7_quality_window_m3_boundary_cross_count"], 2)
-    self.assertEqual(summary["a7_first_quality_window_m3_boundary_cross_step"], 3)
-    self.assertEqual(summary["policy_m3_boundary_cross_count"], 2)
-    self.assertEqual(summary["policy_m3_first_boundary_cross_step"], 3)
-    self.assertAlmostEqual(summary["a7_event_credit_advantage_mean_prewindow"], -1.5, places=6)
-    self.assertAlmostEqual(summary["a7_event_credit_advantage_negative_frac_prewindow"], 1.0, places=6)
-    self.assertAlmostEqual(summary["a7_event_credit_advantage_mean_quality"], 1.5, places=6)
-    self.assertAlmostEqual(summary["a7_event_credit_advantage_positive_frac_quality"], 1.0, places=6)
+    self.assertEqual(summary["prewindow_step_count"], 2)
+    self.assertEqual(summary["quality_window_step_count"], 2)
+    self.assertAlmostEqual(summary["prewindow_event_fire_prob_cum"], 0.28, places=6)
+    self.assertAlmostEqual(summary["prewindow_event_fire_prob_mean"], 0.15, places=6)
+    self.assertAlmostEqual(summary["quality_window_event_fire_prob_mean"], 0.7, places=6)
+    self.assertAlmostEqual(summary["prewindow_stop_prob_cum"], 0.28, places=6)
+    self.assertAlmostEqual(summary["prewindow_stop_prob_mean"], 0.15, places=6)
+    self.assertAlmostEqual(summary["quality_window_stop_prob_mean"], 0.7, places=6)
+    self.assertEqual(summary["prewindow_boundary_cross_count"], 0)
+    self.assertEqual(summary["quality_window_boundary_cross_count"], 2)
+    self.assertEqual(summary["first_quality_window_boundary_cross_step"], 3)
+    self.assertEqual(summary["policy_boundary_cross_count"], 2)
+    self.assertEqual(summary["policy_first_boundary_cross_step"], 3)
+    self.assertAlmostEqual(summary["event_credit_advantage_mean_prewindow"], -1.5, places=6)
+    self.assertAlmostEqual(summary["event_credit_advantage_negative_frac_prewindow"], 1.0, places=6)
+    self.assertAlmostEqual(summary["event_credit_advantage_mean_quality"], 1.5, places=6)
+    self.assertAlmostEqual(summary["event_credit_advantage_positive_frac_quality"], 1.0, places=6)
 
 
 

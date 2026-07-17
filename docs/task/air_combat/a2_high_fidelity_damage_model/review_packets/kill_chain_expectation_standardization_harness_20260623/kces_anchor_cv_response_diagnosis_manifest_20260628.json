@@ -1,0 +1,32 @@
+{
+  "baseline_row_count": 13,
+  "boundary": {
+    "authority_level": "engineering_proxy_diagnostics_only",
+    "calibration_verdict": false,
+    "real_weapon_or_target_authority": false,
+    "runtime_parameter_retuning": false
+  },
+  "candidate_row_count": 0,
+  "date_stamp": "20260628",
+  "detail_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_detail_20260628.csv",
+  "detail_projection_signal_counts": {},
+  "diagnosis_bucket_counts": {},
+  "input_path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_before_report_20260623.json",
+  "manifest_path": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_manifest_20260628.json",
+  "matrix_csv": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_matrix_20260628.csv",
+  "output_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623",
+  "prefix": "kces_anchor_cv",
+  "rows": [],
+  "scatter_png": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_probability_scatter_20260628.png",
+  "scatter_svg": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_probability_scatter_20260628.svg",
+  "schema_version": "a2.kill_chain_expectation_response_diagnosis.v2",
+  "selected_row_count": 78,
+  "status": "generated",
+  "summary_markdown": "docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_response_diagnosis_summary_20260628.md",
+  "target_motion_layer": "nonmaneuvering_constant_velocity",
+  "thresholds": {
+    "low_response_probability": 0.05,
+    "weak_component_load": 0.25
+  },
+  "variant": "REV-RUNTIME-PROJECTION"
+}

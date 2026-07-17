@@ -194,19 +194,19 @@ void apply_export_packet_metadata(EngagementEventPacket *packet, std::uint64_t s
         return;
     }
     packet->snapshot_version = snapshot_version;
-    packet->barrier_id = std::string(kWp10ExportBarrierId);
-    packet->barrier_sequence = kWp10ExportBarrierSequence;
-    packet->barrier_detail = std::string(kWp10ExportBarrierDetail);
+    packet->barrier_id = std::string(kExportBarrierId);
+    packet->barrier_sequence = kExportBarrierSequence;
+    packet->barrier_detail = std::string(kExportBarrierDetail);
     packet->source_time_s = source_time_s;
-    if (find_stage_node_manifest(kWp10ObservationExportNodeId) != nullptr) {
-        packet->producer_node_id = std::string(kWp10ObservationExportNodeId);
+    if (find_stage_node_manifest(kObservationExportNodeId) != nullptr) {
+        packet->producer_node_id = std::string(kObservationExportNodeId);
     }
-    packet->packet_provenance.observation_packet_ids = {std::string(kWp11EngagementPacketIdPrefix) +
+    packet->packet_provenance.observation_packet_ids = {std::string(kEngagementPacketIdPrefix) +
                                                         std::to_string(snapshot_version)};
     packet->packet_provenance.source_observation_versions = {"track:" +
                                                              std::to_string(snapshot_version)};
     packet->diagnostics_provenance.observation_packet_ids = {
-        std::string(kWp11DiagnosticsPacketIdPrefix) + std::to_string(snapshot_version)};
+        std::string(kDiagnosticsPacketIdPrefix) + std::to_string(snapshot_version)};
     packet->diagnostics_provenance.source_observation_versions = {"diag:" +
                                                                   std::to_string(snapshot_version)};
     packet->diagnostics_provenance.diagnostics_reason =
@@ -219,14 +219,14 @@ void apply_export_trace_metadata(DiagnosticsTrace *trace, std::uint64_t snapshot
         return;
     }
     trace->source_snapshot_version = snapshot_version;
-    trace->barrier_id = std::string(kWp10ExportBarrierId);
-    trace->barrier_detail = std::string(kWp10ExportBarrierDetail);
+    trace->barrier_id = std::string(kExportBarrierId);
+    trace->barrier_detail = std::string(kExportBarrierDetail);
     trace->source_time_s = source_time_s;
     if (find_stage_node_manifest(source_node_id) != nullptr) {
         trace->source_node_id = std::string(source_node_id);
     }
-    if (find_stage_node_manifest(kWp10ObservationExportNodeId) != nullptr) {
-        trace->export_node_id = std::string(kWp10ObservationExportNodeId);
+    if (find_stage_node_manifest(kObservationExportNodeId) != nullptr) {
+        trace->export_node_id = std::string(kObservationExportNodeId);
     }
 }
 
@@ -235,18 +235,18 @@ void finalize_recent_event_metadata(EngagementEventPacket *packet) {
         return;
     }
     for (auto &event : packet->launch_events) {
-        ensure_manifest_node_id(event, &LaunchEvent::producer_node_id, kWp10LaunchNodeId);
+        ensure_manifest_node_id(event, &LaunchEvent::producer_node_id, kLaunchNodeId);
     }
     for (auto &event : packet->effects_events) {
-        ensure_manifest_node_id(event, &EffectsEvent::producer_node_id, kWp10EffectsDamageNodeId);
+        ensure_manifest_node_id(event, &EffectsEvent::producer_node_id, kEffectsDamageNodeId);
     }
     for (auto &report : packet->damage_reports) {
-        ensure_manifest_node_id(report, &DamageReport::producer_node_id, kWp10EffectsDamageNodeId);
+        ensure_manifest_node_id(report, &DamageReport::producer_node_id, kEffectsDamageNodeId);
     }
     for (auto &event : packet->platform_consequence_events) {
         if (event.header.producer_node_id.empty() &&
-            find_stage_node_manifest(kWp10EffectsDamageNodeId) != nullptr) {
-            event.header.producer_node_id = std::string(kWp10EffectsDamageNodeId);
+            find_stage_node_manifest(kEffectsDamageNodeId) != nullptr) {
+            event.header.producer_node_id = std::string(kEffectsDamageNodeId);
         }
     }
 }
@@ -265,7 +265,7 @@ void finalize_diagnostics_ancestry(EngagementEventPacket *packet) {
             if (match != packet->launch_events.end()) {
                 apply_export_trace_metadata(
                     &trace, packet->snapshot_version, match->event_time_s,
-                    match->producer_node_id.empty() ? kWp10LaunchNodeId : match->producer_node_id);
+                    match->producer_node_id.empty() ? kLaunchNodeId : match->producer_node_id);
                 continue;
             }
         }
@@ -278,7 +278,7 @@ void finalize_diagnostics_ancestry(EngagementEventPacket *packet) {
             if (match != packet->effects_events.end()) {
                 apply_export_trace_metadata(
                     &trace, packet->snapshot_version, match->detonation_time_s,
-                    match->producer_node_id.empty() ? kWp10EffectsDamageNodeId
+                    match->producer_node_id.empty() ? kEffectsDamageNodeId
                                                     : match->producer_node_id);
                 continue;
             }
@@ -292,7 +292,7 @@ void finalize_diagnostics_ancestry(EngagementEventPacket *packet) {
             if (match != packet->damage_reports.end()) {
                 apply_export_trace_metadata(&trace, packet->snapshot_version, match->report_time_s,
                                             match->producer_node_id.empty()
-                                                ? kWp10EffectsDamageNodeId
+                                                ? kEffectsDamageNodeId
                                                 : match->producer_node_id);
                 continue;
             }
@@ -302,7 +302,7 @@ void finalize_diagnostics_ancestry(EngagementEventPacket *packet) {
             trace.source_snapshot_version != 0 ? trace.source_snapshot_version
                                                : packet->snapshot_version,
             trace.source_time_s,
-            trace.source_node_id.empty() ? kWp10ObservationExportNodeId : trace.source_node_id);
+            trace.source_node_id.empty() ? kObservationExportNodeId : trace.source_node_id);
     }
 }
 
@@ -314,7 +314,7 @@ void apply_observation_packet_provenance(ObservationBatchPacket *packet) {
         std::string(kPolicyInformationStateAgentObservation);
     packet->provenance.source_label = std::string(kPolicySourceLabelFacadeObservationPacket);
     packet->provenance.maintained_status = std::string(kPolicyMaintainedStatusMaintained);
-    packet->provenance.observation_packet_ids = {std::string(kWp11ObservationPacketIdPrefix) +
+    packet->provenance.observation_packet_ids = {std::string(kObservationPacketIdPrefix) +
                                                  std::to_string(packet->snapshot_version)};
     packet->provenance.source_observation_versions = {"global:" +
                                                       std::to_string(packet->snapshot_version)};
@@ -371,11 +371,11 @@ DiagnosticsTrace diagnostics_trace_from_track_packet(std::uint64_t trace_id,
         .track_id = track.track_id,
         .observation_packet_version = observation_packet_version,
         .source_snapshot_version = track.snapshot_version,
-        .barrier_id = std::string(kWp10ExportBarrierId),
-        .barrier_detail = std::string(kWp10ExportBarrierDetail),
+        .barrier_id = std::string(kExportBarrierId),
+        .barrier_detail = std::string(kExportBarrierDetail),
         .source_time_s = track.source_time_s,
-        .source_node_id = std::string(kWp10ObservationExportNodeId),
-        .export_node_id = std::string(kWp10ObservationExportNodeId),
+        .source_node_id = std::string(kObservationExportNodeId),
+        .export_node_id = std::string(kObservationExportNodeId),
     };
 }
 
@@ -460,7 +460,7 @@ void append_recent_diagnostics_traces(std::vector<DiagnosticsTrace> &traces,
             if (match != recent.launch_events.end()) {
                 source_time_s = match->event_time_s;
             }
-            apply_export_trace_metadata(&copy, snapshot_version, source_time_s, kWp10LaunchNodeId);
+            apply_export_trace_metadata(&copy, snapshot_version, source_time_s, kLaunchNodeId);
         } else if (copy.effects_event_id != 0 || copy.damage_report_id != 0) {
             const auto effects_match =
                 std::find_if(recent.effects_events.begin(), recent.effects_events.end(),
@@ -478,13 +478,13 @@ void append_recent_diagnostics_traces(std::vector<DiagnosticsTrace> &traces,
                 source_time_s = damage_match->report_time_s;
             }
             apply_export_trace_metadata(&copy, snapshot_version, source_time_s,
-                                        kWp10EffectsDamageNodeId);
+                                        kEffectsDamageNodeId);
         } else {
             if (source_time_s == 0.0 && snapshot_version != 0) {
                 source_time_s = static_cast<double>(snapshot_version - 1);
             }
             apply_export_trace_metadata(&copy, snapshot_version, source_time_s,
-                                        kWp10ObservationExportNodeId);
+                                        kObservationExportNodeId);
         }
         traces.push_back(std::move(copy));
     }
@@ -721,7 +721,7 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
     return traces;
 }
 
-RuntimeWindowResult RuntimeFacade::run_wp10_window(const RuntimeWindowRequest &request) {
+RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &request) {
     return execute_runtime_window(
         request,
         RuntimeWindowCoordinatorCallbacks{
@@ -754,9 +754,9 @@ RuntimeFacade::export_engagement_event_packet(const EngagementBatchRequest &requ
     EngagementEventPacket packet{};
     packet.refs = request.refs;
     packet.trace_ids = request.trace_ids;
-    packet.barrier_id = std::string(kWp10ExportBarrierId);
-    packet.barrier_sequence = kWp10ExportBarrierSequence;
-    packet.barrier_detail = std::string(kWp10ExportBarrierDetail);
+    packet.barrier_id = std::string(kExportBarrierId);
+    packet.barrier_sequence = kExportBarrierSequence;
+    packet.barrier_detail = std::string(kExportBarrierDetail);
 
     std::vector<std::uint64_t> exported_world_indices;
     for (const auto &ref : request.refs) {

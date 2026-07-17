@@ -505,7 +505,7 @@ class _HybridEventCreditOutput:
 
 
 @dataclass(frozen=True)
-class _M3StoppingOutput:
+class _StoppingOutput:
     stopping_logit: th.Tensor
     hazard_logit: th.Tensor
     hazard: th.Tensor
@@ -536,16 +536,16 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hybrid_action_spec: Any | None = None,
         hybrid_event_head_lr_scale: float = 0.0,
         hybrid_event_credit_head_lr_scale: float = 0.0,
-        hybrid_event_use_m3_stopping_head: bool = False,
-        hybrid_event_use_m3_window_classifier_head: bool = False,
-        m3_stopping_head_lr_scale: float = 0.0,
-        m3_stopping_head_norm_enabled: bool = False,
-        m3_window_classifier_head_lr_scale: float = 0.0,
-        m3_window_classifier_head_norm_enabled: bool = False,
-        m3_window_classifier_event_adapter_detach: bool = True,
-        m3_window_classifier_input_standardization_enabled: bool = False,
-        m3_window_classifier_input_standardization_momentum: float = 1.0,
-        m3_window_classifier_input_standardization_eps: float = 1.0e-6,
+        hybrid_event_use_stopping_head: bool = False,
+        hybrid_event_use_window_classifier_head: bool = False,
+        stopping_head_lr_scale: float = 0.0,
+        stopping_head_norm_enabled: bool = False,
+        window_classifier_head_lr_scale: float = 0.0,
+        window_classifier_head_norm_enabled: bool = False,
+        window_classifier_event_adapter_detach: bool = True,
+        window_classifier_input_standardization_enabled: bool = False,
+        window_classifier_input_standardization_momentum: float = 1.0,
+        window_classifier_input_standardization_eps: float = 1.0e-6,
         **kwargs: Any,
     ):
         self._hmoe_family_subexpert_counts = tuple(int(max(1, v)) for v in family_subexpert_counts)
@@ -555,23 +555,23 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
         self._hybrid_event_head_lr_scale = float(max(0.0, hybrid_event_head_lr_scale))
         self._hybrid_event_credit_head_lr_scale = float(max(0.0, hybrid_event_credit_head_lr_scale))
-        self._hybrid_event_use_m3_stopping_head = bool(hybrid_event_use_m3_stopping_head)
-        self._hybrid_event_use_m3_window_classifier_head = bool(hybrid_event_use_m3_window_classifier_head)
-        self._m3_stopping_head_lr_scale = float(max(0.0, m3_stopping_head_lr_scale))
-        self._m3_stopping_head_norm_enabled = bool(m3_stopping_head_norm_enabled)
-        self._m3_window_classifier_head_lr_scale = float(max(0.0, m3_window_classifier_head_lr_scale))
-        self._m3_window_classifier_head_norm_enabled = bool(m3_window_classifier_head_norm_enabled)
-        self._m3_window_classifier_event_adapter_detach = bool(
-            m3_window_classifier_event_adapter_detach
+        self._hybrid_event_use_stopping_head = bool(hybrid_event_use_stopping_head)
+        self._hybrid_event_use_window_classifier_head = bool(hybrid_event_use_window_classifier_head)
+        self._stopping_head_lr_scale = float(max(0.0, stopping_head_lr_scale))
+        self._stopping_head_norm_enabled = bool(stopping_head_norm_enabled)
+        self._window_classifier_head_lr_scale = float(max(0.0, window_classifier_head_lr_scale))
+        self._window_classifier_head_norm_enabled = bool(window_classifier_head_norm_enabled)
+        self._window_classifier_event_adapter_detach = bool(
+            window_classifier_event_adapter_detach
         )
-        self._m3_window_classifier_input_standardization_enabled = bool(
-            m3_window_classifier_input_standardization_enabled
+        self._window_classifier_input_standardization_enabled = bool(
+            window_classifier_input_standardization_enabled
         )
-        self._m3_window_classifier_input_standardization_momentum = float(
-            min(1.0, max(0.0, m3_window_classifier_input_standardization_momentum))
+        self._window_classifier_input_standardization_momentum = float(
+            min(1.0, max(0.0, window_classifier_input_standardization_momentum))
         )
-        self._m3_window_classifier_input_standardization_eps = float(
-            max(1.0e-12, m3_window_classifier_input_standardization_eps)
+        self._window_classifier_input_standardization_eps = float(
+            max(1.0e-12, window_classifier_input_standardization_eps)
         )
         self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
@@ -580,10 +580,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hybrid_action_layout: _HybridActionLayout | None = None
         self.hybrid_event_head: nn.Linear | None = None
         self.hybrid_event_credit_head: nn.Linear | None = None
-        self.m3_stopping_norm: nn.LayerNorm | None = None
-        self.m3_stopping_head: nn.Linear | None = None
-        self.m3_window_classifier_norm: nn.LayerNorm | None = None
-        self.m3_window_classifier_head: nn.Linear | None = None
+        self.stopping_norm: nn.LayerNorm | None = None
+        self.stopping_head: nn.Linear | None = None
+        self.window_classifier_norm: nn.LayerNorm | None = None
+        self.window_classifier_head: nn.Linear | None = None
         if hybrid_action_spec is not None:
             kwargs["squash_output"] = False
         super().__init__(observation_space, action_space, lr_schedule, *args, **kwargs)
@@ -612,35 +612,35 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 self.hybrid_event_credit_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 2).to(self.device)
                 nn.init.zeros_(self.hybrid_event_credit_head.weight)
                 nn.init.zeros_(self.hybrid_event_credit_head.bias)
-        if self._m3_stopping_head_lr_scale > 0.0:
-            if self._m3_stopping_head_norm_enabled:
-                self.m3_stopping_norm = nn.LayerNorm(
+        if self._stopping_head_lr_scale > 0.0:
+            if self._stopping_head_norm_enabled:
+                self.stopping_norm = nn.LayerNorm(
                     int(self.mlp_extractor.latent_dim_pi),
                     elementwise_affine=True,
                 ).to(self.device)
-            self.m3_stopping_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 1).to(self.device)
-            nn.init.zeros_(self.m3_stopping_head.weight)
-            nn.init.zeros_(self.m3_stopping_head.bias)
-        if self._m3_window_classifier_head_lr_scale > 0.0:
+            self.stopping_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 1).to(self.device)
+            nn.init.zeros_(self.stopping_head.weight)
+            nn.init.zeros_(self.stopping_head.bias)
+        if self._window_classifier_head_lr_scale > 0.0:
             window_classifier_dim = int(self.mlp_extractor.latent_dim_pi)
-            if self._m3_window_classifier_head_norm_enabled:
-                self.m3_window_classifier_norm = nn.LayerNorm(
+            if self._window_classifier_head_norm_enabled:
+                self.window_classifier_norm = nn.LayerNorm(
                     window_classifier_dim,
                     elementwise_affine=True,
                 ).to(self.device)
-            self.m3_window_classifier_head = nn.Linear(window_classifier_dim, 1).to(self.device)
-            nn.init.zeros_(self.m3_window_classifier_head.weight)
-            nn.init.zeros_(self.m3_window_classifier_head.bias)
+            self.window_classifier_head = nn.Linear(window_classifier_dim, 1).to(self.device)
+            nn.init.zeros_(self.window_classifier_head.weight)
+            nn.init.zeros_(self.window_classifier_head.bias)
             self.register_buffer(
-                "m3_window_classifier_input_mean",
+                "window_classifier_input_mean",
                 th.zeros((window_classifier_dim,), dtype=th.float32, device=self.device),
             )
             self.register_buffer(
-                "m3_window_classifier_input_std",
+                "window_classifier_input_std",
                 th.ones((window_classifier_dim,), dtype=th.float32, device=self.device),
             )
             self.register_buffer(
-                "m3_window_classifier_input_standardization_initialized",
+                "window_classifier_input_standardization_initialized",
                 th.zeros((), dtype=th.float32, device=self.device),
             )
         self.hmoe_head_bank = _HMoEHeadBank(
@@ -664,25 +664,25 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hybrid_action_spec"] = self._hybrid_action_spec_config
         data["hybrid_event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
         data["hybrid_event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
-        data["hybrid_event_use_m3_stopping_head"] = bool(self._hybrid_event_use_m3_stopping_head)
-        data["hybrid_event_use_m3_window_classifier_head"] = bool(
-            self._hybrid_event_use_m3_window_classifier_head
+        data["hybrid_event_use_stopping_head"] = bool(self._hybrid_event_use_stopping_head)
+        data["hybrid_event_use_window_classifier_head"] = bool(
+            self._hybrid_event_use_window_classifier_head
         )
-        data["m3_stopping_head_lr_scale"] = float(self._m3_stopping_head_lr_scale)
-        data["m3_stopping_head_norm_enabled"] = bool(self._m3_stopping_head_norm_enabled)
-        data["m3_window_classifier_head_lr_scale"] = float(self._m3_window_classifier_head_lr_scale)
-        data["m3_window_classifier_head_norm_enabled"] = bool(self._m3_window_classifier_head_norm_enabled)
-        data["m3_window_classifier_event_adapter_detach"] = bool(
-            self._m3_window_classifier_event_adapter_detach
+        data["stopping_head_lr_scale"] = float(self._stopping_head_lr_scale)
+        data["stopping_head_norm_enabled"] = bool(self._stopping_head_norm_enabled)
+        data["window_classifier_head_lr_scale"] = float(self._window_classifier_head_lr_scale)
+        data["window_classifier_head_norm_enabled"] = bool(self._window_classifier_head_norm_enabled)
+        data["window_classifier_event_adapter_detach"] = bool(
+            self._window_classifier_event_adapter_detach
         )
-        data["m3_window_classifier_input_standardization_enabled"] = bool(
-            self._m3_window_classifier_input_standardization_enabled
+        data["window_classifier_input_standardization_enabled"] = bool(
+            self._window_classifier_input_standardization_enabled
         )
-        data["m3_window_classifier_input_standardization_momentum"] = float(
-            self._m3_window_classifier_input_standardization_momentum
+        data["window_classifier_input_standardization_momentum"] = float(
+            self._window_classifier_input_standardization_momentum
         )
-        data["m3_window_classifier_input_standardization_eps"] = float(
-            self._m3_window_classifier_input_standardization_eps
+        data["window_classifier_input_standardization_eps"] = float(
+            self._window_classifier_input_standardization_eps
         )
         return data
 
@@ -718,25 +718,25 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 self.hybrid_event_credit_head.weight.zero_()
                 if getattr(self.hybrid_event_credit_head, "bias", None) is not None:
                     self.hybrid_event_credit_head.bias.zero_()
-            if self.m3_stopping_head is not None:
-                self.m3_stopping_head.weight.zero_()
-                if getattr(self.m3_stopping_head, "bias", None) is not None:
-                    self.m3_stopping_head.bias.zero_()
-            if self.m3_stopping_norm is not None:
-                self.m3_stopping_norm.weight.fill_(1.0)
-                self.m3_stopping_norm.bias.zero_()
-            if self.m3_window_classifier_head is not None:
-                self.m3_window_classifier_head.weight.zero_()
-                if getattr(self.m3_window_classifier_head, "bias", None) is not None:
-                    self.m3_window_classifier_head.bias.zero_()
-            if self.m3_window_classifier_norm is not None:
-                self.m3_window_classifier_norm.weight.fill_(1.0)
-                self.m3_window_classifier_norm.bias.zero_()
-            mean = getattr(self, "m3_window_classifier_input_mean", None)
-            std = getattr(self, "m3_window_classifier_input_std", None)
+            if self.stopping_head is not None:
+                self.stopping_head.weight.zero_()
+                if getattr(self.stopping_head, "bias", None) is not None:
+                    self.stopping_head.bias.zero_()
+            if self.stopping_norm is not None:
+                self.stopping_norm.weight.fill_(1.0)
+                self.stopping_norm.bias.zero_()
+            if self.window_classifier_head is not None:
+                self.window_classifier_head.weight.zero_()
+                if getattr(self.window_classifier_head, "bias", None) is not None:
+                    self.window_classifier_head.bias.zero_()
+            if self.window_classifier_norm is not None:
+                self.window_classifier_norm.weight.fill_(1.0)
+                self.window_classifier_norm.bias.zero_()
+            mean = getattr(self, "window_classifier_input_mean", None)
+            std = getattr(self, "window_classifier_input_std", None)
             initialized = getattr(
                 self,
-                "m3_window_classifier_input_standardization_initialized",
+                "window_classifier_input_standardization_initialized",
                 None,
             )
             if mean is not None:
@@ -805,61 +805,61 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             stats["a7/ech_params/max_abs"] = float(
                 max(weight.abs().max().item(), bias.abs().max().item())
             )
-        if self.m3_stopping_head is None:
+        if self.stopping_head is None:
             stats["m3s1/stop_params/enabled"] = 0.0
-            stats["m3s1/stop_params/lr_scale"] = float(self._m3_stopping_head_lr_scale)
+            stats["m3s1/stop_params/lr_scale"] = float(self._stopping_head_lr_scale)
             stats["m3s1/stop_params/norm_enabled"] = 0.0
         else:
             stats["m3s1/stop_params/enabled"] = 1.0
-            stats["m3s1/stop_params/lr_scale"] = float(self._m3_stopping_head_lr_scale)
-            stats["m3s1/stop_params/norm_enabled"] = float(self.m3_stopping_norm is not None)
-            weight = self.m3_stopping_head.weight.detach()
-            bias = self.m3_stopping_head.bias.detach()
+            stats["m3s1/stop_params/lr_scale"] = float(self._stopping_head_lr_scale)
+            stats["m3s1/stop_params/norm_enabled"] = float(self.stopping_norm is not None)
+            weight = self.stopping_head.weight.detach()
+            bias = self.stopping_head.bias.detach()
             stats["m3s1/stop_params/weight_norm"] = float(weight.norm().item())
             stats["m3s1/stop_params/bias_norm"] = float(bias.norm().item())
             stats["m3s1/stop_params/max_abs"] = float(
                 max(weight.abs().max().item(), bias.abs().max().item())
             )
-            if self.m3_stopping_norm is not None:
-                norm_weight = self.m3_stopping_norm.weight.detach()
-                norm_bias = self.m3_stopping_norm.bias.detach()
+            if self.stopping_norm is not None:
+                norm_weight = self.stopping_norm.weight.detach()
+                norm_bias = self.stopping_norm.bias.detach()
                 stats["m3s1/stop_params/norm_weight_mean"] = float(norm_weight.mean().item())
                 stats["m3s1/stop_params/norm_bias_abs_mean"] = float(norm_bias.abs().mean().item())
-        if self.m3_window_classifier_head is None:
+        if self.window_classifier_head is None:
             stats["m3s2/wcls_params/enabled"] = 0.0
             stats["m3s2/wcls_params/lr_scale"] = float(
-                self._m3_window_classifier_head_lr_scale
+                self._window_classifier_head_lr_scale
             )
             stats["m3s2/wcls_params/norm_enabled"] = 0.0
         else:
             stats["m3s2/wcls_params/enabled"] = 1.0
             stats["m3s2/wcls_params/lr_scale"] = float(
-                self._m3_window_classifier_head_lr_scale
+                self._window_classifier_head_lr_scale
             )
             stats["m3s2/wcls_params/norm_enabled"] = float(
-                self.m3_window_classifier_norm is not None
+                self.window_classifier_norm is not None
             )
-            weight = self.m3_window_classifier_head.weight.detach()
-            bias = self.m3_window_classifier_head.bias.detach()
+            weight = self.window_classifier_head.weight.detach()
+            bias = self.window_classifier_head.bias.detach()
             stats["m3s2/wcls_params/weight_norm"] = float(weight.norm().item())
             stats["m3s2/wcls_params/bias_norm"] = float(bias.norm().item())
             stats["m3s2/wcls_params/max_abs"] = float(
                 max(weight.abs().max().item(), bias.abs().max().item())
             )
-            if self.m3_window_classifier_norm is not None:
-                norm_weight = self.m3_window_classifier_norm.weight.detach()
-                norm_bias = self.m3_window_classifier_norm.bias.detach()
+            if self.window_classifier_norm is not None:
+                norm_weight = self.window_classifier_norm.weight.detach()
+                norm_bias = self.window_classifier_norm.bias.detach()
                 stats["m3s2/wcls_params/norm_weight_mean"] = float(norm_weight.mean().item())
                 stats["m3s2/wcls_params/norm_bias_abs_mean"] = float(norm_bias.abs().mean().item())
             stats["m3s2/wcls_params/event_adapter_detach"] = float(
-                self._m3_window_classifier_event_adapter_detach
+                self._window_classifier_event_adapter_detach
             )
             stats["m3s2/wcls_params/input_standardization_enabled"] = float(
-                self._m3_window_classifier_input_standardization_enabled
+                self._window_classifier_input_standardization_enabled
             )
             initialized = getattr(
                 self,
-                "m3_window_classifier_input_standardization_initialized",
+                "window_classifier_input_standardization_initialized",
                 None,
             )
             stats["m3s2/wcls_params/input_standardization_initialized"] = (
@@ -876,15 +876,15 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             else []
         )
         stopping_params = []
-        if self.m3_stopping_norm is not None:
-            stopping_params.extend(self.m3_stopping_norm.parameters())
-        if self.m3_stopping_head is not None:
-            stopping_params.extend(self.m3_stopping_head.parameters())
+        if self.stopping_norm is not None:
+            stopping_params.extend(self.stopping_norm.parameters())
+        if self.stopping_head is not None:
+            stopping_params.extend(self.stopping_head.parameters())
         window_classifier_params = []
-        if self.m3_window_classifier_norm is not None:
-            window_classifier_params.extend(self.m3_window_classifier_norm.parameters())
-        if self.m3_window_classifier_head is not None:
-            window_classifier_params.extend(self.m3_window_classifier_head.parameters())
+        if self.window_classifier_norm is not None:
+            window_classifier_params.extend(self.window_classifier_norm.parameters())
+        if self.window_classifier_head is not None:
+            window_classifier_params.extend(self.window_classifier_head.parameters())
         hmoe_param_ids = {id(param) for param in hmoe_params}
         event_param_ids = {id(param) for param in event_params}
         credit_param_ids = {id(param) for param in credit_params}
@@ -921,16 +921,16 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             param_groups.append(
                 {
                     "params": stopping_params,
-                    "lr_scale": float(self._m3_stopping_head_lr_scale),
-                    "name": "m3_stopping_head",
+                    "lr_scale": float(self._stopping_head_lr_scale),
+                    "name": "stopping_head",
                 }
             )
         if window_classifier_params:
             param_groups.append(
                 {
                     "params": window_classifier_params,
-                    "lr_scale": float(self._m3_window_classifier_head_lr_scale),
-                    "name": "m3_window_classifier_head",
+                    "lr_scale": float(self._window_classifier_head_lr_scale),
+                    "name": "window_classifier_head",
                 }
             )
         if hmoe_params:
@@ -1030,8 +1030,8 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     def _apply_hybrid_event_head(self, mean_actions: th.Tensor, latent_pi: th.Tensor) -> th.Tensor:
         layout = self._hybrid_action_layout
         event_head = self.hybrid_event_head
-        stopping_head = self.m3_stopping_head
-        window_classifier_head = self.m3_window_classifier_head
+        stopping_head = self.stopping_head
+        window_classifier_head = self.window_classifier_head
         if layout is None:
             self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
             self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
@@ -1068,16 +1068,16 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
         self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
 
-        if self._hybrid_event_use_m3_window_classifier_head and window_classifier_head is not None:
-            if self._m3_window_classifier_event_adapter_detach:
+        if self._hybrid_event_use_window_classifier_head and window_classifier_head is not None:
+            if self._window_classifier_event_adapter_detach:
                 # The window head is a supervised contract head. It may control the event adapter,
                 # but PPO's action log-probability loss must not self-imitation-train it back toward hold.
                 with th.no_grad():
                     window_logits = window_classifier_head(
-                        self._m3_window_classifier_latent(latent_pi.detach())
+                        self._window_classifier_latent(latent_pi.detach())
                     ).reshape(-1)
             else:
-                window_logits = window_classifier_head(self._m3_window_classifier_latent(latent_pi)).reshape(-1)
+                window_logits = window_classifier_head(self._window_classifier_latent(latent_pi)).reshape(-1)
             midpoint = 0.5 * (adjusted[:, int(hold_index)] + adjusted[:, int(fire_index)])
             adjusted[:, int(hold_index)] = midpoint - 0.5 * window_logits
             adjusted[:, int(fire_index)] = midpoint + 0.5 * window_logits
@@ -1085,7 +1085,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 1.0
             self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_enabled"] = 1.0
             self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_detach"] = float(
-                self._m3_window_classifier_event_adapter_detach
+                self._window_classifier_event_adapter_detach
             )
             self._last_hmoe_route_stats["m3s2/event_adapter_logit_mean"] = float(window_detached.mean().item())
             self._last_hmoe_route_stats["m3s2/event_adapter_logit_abs_mean"] = float(
@@ -1094,8 +1094,8 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_logit_mean"] = float(
                 window_detached.mean().item()
             )
-        elif self._hybrid_event_use_m3_stopping_head and stopping_head is not None:
-            stopping_logits = stopping_head(self._m3_stopping_latent(latent_pi)).reshape(-1)
+        elif self._hybrid_event_use_stopping_head and stopping_head is not None:
+            stopping_logits = stopping_head(self._stopping_latent(latent_pi)).reshape(-1)
             midpoint = 0.5 * (adjusted[:, int(hold_index)] + adjusted[:, int(fire_index)])
             adjusted[:, int(hold_index)] = midpoint - 0.5 * stopping_logits
             adjusted[:, int(fire_index)] = midpoint + 0.5 * stopping_logits
@@ -1113,25 +1113,25 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             self._last_hmoe_route_stats["m3s2/window_classifier_event_adapter_enabled"] = 0.0
         return adjusted
 
-    def _m3_stopping_latent(self, latent_pi: th.Tensor) -> th.Tensor:
-        if self.m3_stopping_norm is None:
+    def _stopping_latent(self, latent_pi: th.Tensor) -> th.Tensor:
+        if self.stopping_norm is None:
             return latent_pi
-        return self.m3_stopping_norm(latent_pi)
+        return self.stopping_norm(latent_pi)
 
-    def _m3_window_classifier_base_latent(self, latent_pi: th.Tensor) -> th.Tensor:
-        if self.m3_window_classifier_norm is None:
+    def _window_classifier_base_latent(self, latent_pi: th.Tensor) -> th.Tensor:
+        if self.window_classifier_norm is None:
             return latent_pi
-        return self.m3_window_classifier_norm(latent_pi)
+        return self.window_classifier_norm(latent_pi)
 
-    def _m3_window_classifier_latent(self, latent_pi: th.Tensor) -> th.Tensor:
-        base = self._m3_window_classifier_base_latent(latent_pi)
-        if not self._m3_window_classifier_input_standardization_enabled:
+    def _window_classifier_latent(self, latent_pi: th.Tensor) -> th.Tensor:
+        base = self._window_classifier_base_latent(latent_pi)
+        if not self._window_classifier_input_standardization_enabled:
             return base
-        mean = getattr(self, "m3_window_classifier_input_mean", None)
-        std = getattr(self, "m3_window_classifier_input_std", None)
+        mean = getattr(self, "window_classifier_input_mean", None)
+        std = getattr(self, "window_classifier_input_std", None)
         initialized = getattr(
             self,
-            "m3_window_classifier_input_standardization_initialized",
+            "window_classifier_input_standardization_initialized",
             None,
         )
         if mean is None or std is None or initialized is None:
@@ -1142,17 +1142,17 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         std = std.to(device=base.device, dtype=base.dtype).reshape(1, -1)
         if int(mean.shape[1]) != int(base.shape[-1]) or int(std.shape[1]) != int(base.shape[-1]):
             return base
-        eps = float(self._m3_window_classifier_input_standardization_eps)
+        eps = float(self._window_classifier_input_standardization_eps)
         return (base - mean) / std.clamp_min(eps)
 
-    def update_m3_window_classifier_input_standardization(self, latent_pi: th.Tensor) -> bool:
-        if not self._m3_window_classifier_input_standardization_enabled:
+    def update_window_classifier_input_standardization(self, latent_pi: th.Tensor) -> bool:
+        if not self._window_classifier_input_standardization_enabled:
             return False
-        mean_buffer = getattr(self, "m3_window_classifier_input_mean", None)
-        std_buffer = getattr(self, "m3_window_classifier_input_std", None)
+        mean_buffer = getattr(self, "window_classifier_input_mean", None)
+        std_buffer = getattr(self, "window_classifier_input_std", None)
         initialized = getattr(
             self,
-            "m3_window_classifier_input_standardization_initialized",
+            "window_classifier_input_standardization_initialized",
             None,
         )
         if mean_buffer is None or std_buffer is None or initialized is None:
@@ -1163,13 +1163,13 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             flat = latent_pi.detach().reshape(int(latent_pi.shape[0]), -1)
             if int(flat.shape[0]) <= 0 or int(flat.shape[1]) != int(mean_buffer.numel()):
                 return False
-            base = self._m3_window_classifier_base_latent(flat).detach()
+            base = self._window_classifier_base_latent(flat).detach()
             batch_mean = base.mean(dim=0).to(device=mean_buffer.device, dtype=mean_buffer.dtype)
             batch_std = base.std(dim=0, unbiased=False).clamp_min(
-                float(self._m3_window_classifier_input_standardization_eps)
+                float(self._window_classifier_input_standardization_eps)
             )
             batch_std = batch_std.to(device=std_buffer.device, dtype=std_buffer.dtype)
-            momentum = float(self._m3_window_classifier_input_standardization_momentum)
+            momentum = float(self._window_classifier_input_standardization_momentum)
             if float(initialized.detach().cpu().item()) <= 0.5 or momentum >= 1.0:
                 mean_buffer.copy_(batch_mean)
                 std_buffer.copy_(batch_std)
@@ -1206,38 +1206,38 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._last_hmoe_route_stats["a7/event_credit_advantage_abs_mean"] = float(advantage.abs().mean().item())
         return values
 
-    def _compute_m3_stopping_logits(self, latent_pi: th.Tensor) -> th.Tensor | None:
-        stopping_head = self.m3_stopping_head
+    def _compute_stopping_logits(self, latent_pi: th.Tensor) -> th.Tensor | None:
+        stopping_head = self.stopping_head
         if stopping_head is None:
             self._last_hmoe_route_stats["m3s1/stopping_head_enabled"] = 0.0
-            self._last_hmoe_route_stats["m3s1/stopping_head_lr_scale"] = float(self._m3_stopping_head_lr_scale)
+            self._last_hmoe_route_stats["m3s1/stopping_head_lr_scale"] = float(self._stopping_head_lr_scale)
             return None
 
-        logits = stopping_head(self._m3_stopping_latent(latent_pi)).reshape(-1)
+        logits = stopping_head(self._stopping_latent(latent_pi)).reshape(-1)
         logits_detached = logits.detach()
         hazard_detached = th.sigmoid(logits_detached)
         self._last_hmoe_route_stats["m3s1/stopping_head_enabled"] = 1.0
-        self._last_hmoe_route_stats["m3s1/stopping_head_lr_scale"] = float(self._m3_stopping_head_lr_scale)
+        self._last_hmoe_route_stats["m3s1/stopping_head_lr_scale"] = float(self._stopping_head_lr_scale)
         self._last_hmoe_route_stats["m3s1/stop_logit_mean"] = float(logits_detached.mean().item())
         self._last_hmoe_route_stats["m3s1/stop_logit_abs_mean"] = float(logits_detached.abs().mean().item())
         self._last_hmoe_route_stats["m3s1/hazard_mean"] = float(hazard_detached.mean().item())
         return logits
 
-    def _compute_m3_window_logits(self, latent_pi: th.Tensor) -> th.Tensor | None:
-        classifier_head = self.m3_window_classifier_head
+    def _compute_window_logits(self, latent_pi: th.Tensor) -> th.Tensor | None:
+        classifier_head = self.window_classifier_head
         if classifier_head is None:
             self._last_hmoe_route_stats["m3s2/window_classifier_head_enabled"] = 0.0
             self._last_hmoe_route_stats["m3s2/window_classifier_head_lr_scale"] = float(
-                self._m3_window_classifier_head_lr_scale
+                self._window_classifier_head_lr_scale
             )
             return None
 
-        logits = classifier_head(self._m3_window_classifier_latent(latent_pi)).reshape(-1)
+        logits = classifier_head(self._window_classifier_latent(latent_pi)).reshape(-1)
         logits_detached = logits.detach()
         probability_detached = th.sigmoid(logits_detached)
         self._last_hmoe_route_stats["m3s2/window_classifier_head_enabled"] = 1.0
         self._last_hmoe_route_stats["m3s2/window_classifier_head_lr_scale"] = float(
-            self._m3_window_classifier_head_lr_scale
+            self._window_classifier_head_lr_scale
         )
         self._last_hmoe_route_stats["m3s2/window_classifier_logit_mean"] = float(logits_detached.mean().item())
         self._last_hmoe_route_stats["m3s2/window_classifier_logit_abs_mean"] = float(
@@ -1248,7 +1248,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         )
         return logits
 
-    def get_m3_stopping_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
+    def get_stopping_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
         if detach_latent:
             with th.no_grad():
                 features = super().extract_features(obs, self.pi_features_extractor)
@@ -1257,9 +1257,9 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         else:
             features = super().extract_features(obs, self.pi_features_extractor)
             latent_pi = self.mlp_extractor.forward_actor(features)
-        return self._compute_m3_stopping_logits(latent_pi)
+        return self._compute_stopping_logits(latent_pi)
 
-    def get_m3_window_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
+    def get_window_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
         if detach_latent:
             with th.no_grad():
                 features = super().extract_features(obs, self.pi_features_extractor)
@@ -1268,7 +1268,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         else:
             features = super().extract_features(obs, self.pi_features_extractor)
             latent_pi = self.mlp_extractor.forward_actor(features)
-        return self._compute_m3_window_logits(latent_pi)
+        return self._compute_window_logits(latent_pi)
 
     def get_hybrid_event_head_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
         layout = self._hybrid_action_layout
@@ -1314,7 +1314,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         fire_index = layout.event_fire_param_index
         if hold_index is None or fire_index is None or layout.event_action_index is None:
             return None
-        if self._hybrid_event_use_m3_stopping_head or self._hybrid_event_use_m3_window_classifier_head:
+        if self._hybrid_event_use_stopping_head or self._hybrid_event_use_window_classifier_head:
             return None
 
         with th.no_grad():
@@ -1334,7 +1334,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         executable_delta = executable_baseline_delta + direct_head_delta
         return executable_delta, direct_head_delta
 
-    def get_m3_window_latent(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor:
+    def get_window_latent(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor:
         if detach_latent:
             with th.no_grad():
                 features = super().extract_features(obs, self.pi_features_extractor)
@@ -1343,17 +1343,17 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         features = super().extract_features(obs, self.pi_features_extractor)
         return self.mlp_extractor.forward_actor(features)
 
-    def get_m3_window_logits_from_latent(self, latent_pi: th.Tensor) -> th.Tensor | None:
-        return self._compute_m3_window_logits(latent_pi)
+    def get_window_logits_from_latent(self, latent_pi: th.Tensor) -> th.Tensor | None:
+        return self._compute_window_logits(latent_pi)
 
-    def get_m3_stopping_hazard_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
-        return self.get_m3_stopping_logits(obs, detach_latent=detach_latent)
+    def get_stopping_hazard_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
+        return self.get_stopping_logits(obs, detach_latent=detach_latent)
 
-    def get_m3_stopping(self, obs: Any, *, detach_latent: bool = False) -> _M3StoppingOutput | None:
-        logits = self.get_m3_stopping_logits(obs, detach_latent=detach_latent)
+    def get_stopping(self, obs: Any, *, detach_latent: bool = False) -> _StoppingOutput | None:
+        logits = self.get_stopping_logits(obs, detach_latent=detach_latent)
         if logits is None:
             return None
-        return _M3StoppingOutput(
+        return _StoppingOutput(
             stopping_logit=logits,
             hazard_logit=logits,
             hazard=th.sigmoid(logits),

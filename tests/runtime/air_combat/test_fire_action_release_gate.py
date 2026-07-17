@@ -129,6 +129,30 @@ class AirCombatFireActionReleaseGateTests(unittest.TestCase):
     finally:
       env.close()
 
+  def test_world_batch_reset_after_fire_restores_authorized_ready_state(self) -> None:
+    env = self._make_env()
+    try:
+      env.seed(20260609)
+      env.reset()
+      _step_until_fire_mask(env, expected_mask=1)
+
+      first_info, _done = _step(env, _action(fire=True, tms_up=False))
+
+      self.assertTrue(bool(first_info["fire_once_accepted"]))
+      self.assertEqual(first_info["engagement_state"], "FiredAssess")
+      self.assertTrue(bool(first_info["release_executed"]))
+
+      env.reset()
+      self.assertEqual(_missiles_remaining(env), 4)
+
+      reset_ready_info = _step_until_fire_mask(env, expected_mask=1)
+
+      self.assertEqual(reset_ready_info["engagement_state"], "AuthorizedReady")
+      self.assertEqual(int(reset_ready_info["fire_mask_not_pending_assessment"]), 1)
+      self.assertEqual(reset_ready_info["fire_once_rejected_reason"], "")
+    finally:
+      env.close()
+
   def test_fire_once_derives_master_arm_for_authorized_event(self) -> None:
     env = self._make_env()
     try:

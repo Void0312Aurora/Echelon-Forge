@@ -169,8 +169,8 @@ def test_engagement_diagnostics_inside_export_are_piggyback_evidence_not_full_lo
   assert ".track_id = track.track_id" in diagnostics_body
   assert ".observation_packet_version = observation_packet_version" in diagnostics_body
   assert ".source_snapshot_version = track.snapshot_version" in diagnostics_body
-  assert '.barrier_id = std::string(kWp10ExportBarrierId)' in diagnostics_body
-  assert '.source_node_id = std::string(kWp10ObservationExportNodeId)' in diagnostics_body
+  assert '.barrier_id = std::string(kExportBarrierId)' in diagnostics_body
+  assert '.source_node_id = std::string(kObservationExportNodeId)' in diagnostics_body
   for non_track_link in ["launch_request_id", "launch_event_id", "effects_event_id", "damage_report_id"]:
     assert non_track_link not in diagnostics_body
 

@@ -588,6 +588,9 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
             return flecs::entity::null();
         }
         ammo->missiles_remaining -= 1;
+    } else {
+        spdlog::warn("Attacker {} has no missile inventory or weapon mount.", attacker_id);
+        return flecs::entity::null();
     }
     if (score) {
         score->missiles_fired += 1;

@@ -9,16 +9,16 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.rl.policy_algo.m3s1_grouped_stopping import (
-  M3S1_CENSOR_EARLY_EVENT_PREFIX,
-  M3S1_CENSOR_FORCED_HOLD,
-  M3S1_CENSOR_NONE,
-  M3S1_CENSOR_TIMEOUT,
-  M3S1_CENSOR_UNSUPPORTED,
-  M3S1_ROUTE_FORCED_HOLD_PROBE,
-  M3S1_ROUTE_ON_POLICY,
-  M3S1GroupedStoppingEvidence,
-  compute_m3s1_grouped_stopping_loss,
+from python.rl.policy_algo.grouped_stopping import (
+  CENSOR_EARLY_EVENT_PREFIX,
+  CENSOR_FORCED_HOLD,
+  CENSOR_NONE,
+  CENSOR_TIMEOUT,
+  CENSOR_UNSUPPORTED,
+  ROUTE_FORCED_HOLD_PROBE,
+  ROUTE_ON_POLICY,
+  GroupedStoppingEvidence,
+  compute_grouped_stopping_loss,
 )
 
 
@@ -29,13 +29,13 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
     *,
     legal_mask: list[bool],
     quality_mask: list[bool],
-    censoring_kind: str = M3S1_CENSOR_NONE,
+    censoring_kind: str = CENSOR_NONE,
     accepted_event: list[bool] | None = None,
     support_horizon: int | None = None,
-    route_source: str = M3S1_ROUTE_ON_POLICY,
-  ) -> M3S1GroupedStoppingEvidence:
+    route_source: str = ROUTE_ON_POLICY,
+  ) -> GroupedStoppingEvidence:
     count = int(logits.numel())
-    return M3S1GroupedStoppingEvidence(
+    return GroupedStoppingEvidence(
       group_id="g0",
       episode_id="ep0",
       route_source=route_source,
@@ -46,14 +46,14 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       quality_mask=quality_mask,
       stopping_logits=logits,
       accepted_event=accepted_event,
-      forced_hold=[route_source == M3S1_ROUTE_FORCED_HOLD_PROBE] * count,
+      forced_hold=[route_source == ROUTE_FORCED_HOLD_PROBE] * count,
       censoring_kind=censoring_kind,
       support_horizon=support_horizon,
     )
 
   def test_supported_window_uses_survival_event_mass_not_row_bce(self) -> None:
     logits = th.tensor([0.0, 0.0, 0.0], requires_grad=True)
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
@@ -83,7 +83,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
     low_early_logits = th.tensor([-8.0, 0.0, 0.0], requires_grad=True)
     high_early_logits = th.tensor([4.0, 0.0, 0.0], requires_grad=True)
 
-    low = compute_m3s1_grouped_stopping_loss(
+    low = compute_grouped_stopping_loss(
       [
         self._group(
           low_early_logits,
@@ -94,7 +94,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       early_mass_coef=0.0,
       early_survival_coef=5.0,
     )
-    high = compute_m3s1_grouped_stopping_loss(
+    high = compute_grouped_stopping_loss(
       [
         self._group(
           high_early_logits,
@@ -113,7 +113,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
     early_logits = th.tensor([4.0, -4.0, -4.0, -4.0], requires_grad=True)
     late_logits = th.tensor([-4.0, -4.0, -4.0, 4.0], requires_grad=True)
 
-    early = compute_m3s1_grouped_stopping_loss(
+    early = compute_grouped_stopping_loss(
       [
         self._group(
           early_logits,
@@ -124,7 +124,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       early_mass_coef=0.0,
       window_delay_coef=5.0,
     )
-    late = compute_m3s1_grouped_stopping_loss(
+    late = compute_grouped_stopping_loss(
       [
         self._group(
           late_logits,
@@ -144,7 +144,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
     on_time_logits = th.tensor([-4.0, 4.0, -4.0, -4.0], requires_grad=True)
     late_logits = th.tensor([-4.0, -4.0, -4.0, 4.0], requires_grad=True)
 
-    on_time = compute_m3s1_grouped_stopping_loss(
+    on_time = compute_grouped_stopping_loss(
       [
         self._group(
           on_time_logits,
@@ -156,7 +156,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       window_deadline_coef=2.0,
       window_deadline_steps=2,
     )
-    late = compute_m3s1_grouped_stopping_loss(
+    late = compute_grouped_stopping_loss(
       [
         self._group(
           late_logits,
@@ -177,7 +177,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
     bad_logits = th.tensor([1.0, -1.0, -1.0], requires_grad=True)
     good_logits = th.tensor([-1.0, 1.5, 1.0], requires_grad=True)
 
-    bad_base = compute_m3s1_grouped_stopping_loss(
+    bad_base = compute_grouped_stopping_loss(
       [
         self._group(
           bad_logits,
@@ -188,7 +188,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       early_mass_coef=0.0,
       window_contrastive_margin=2.0,
     )
-    bad_margin = compute_m3s1_grouped_stopping_loss(
+    bad_margin = compute_grouped_stopping_loss(
       [
         self._group(
           bad_logits,
@@ -200,7 +200,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       window_contrastive_margin_coef=3.0,
       window_contrastive_margin=2.0,
     )
-    good_base = compute_m3s1_grouped_stopping_loss(
+    good_base = compute_grouped_stopping_loss(
       [
         self._group(
           good_logits,
@@ -211,7 +211,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       early_mass_coef=0.0,
       window_contrastive_margin=2.0,
     )
-    good_margin = compute_m3s1_grouped_stopping_loss(
+    good_margin = compute_grouped_stopping_loss(
       [
         self._group(
           good_logits,
@@ -243,7 +243,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
     low_quality_logits = th.tensor([-3.0, -2.0, -4.0], requires_grad=True)
     high_quality_logits = th.tensor([-3.0, 0.5, -4.0], requires_grad=True)
 
-    low_base = compute_m3s1_grouped_stopping_loss(
+    low_base = compute_grouped_stopping_loss(
       [
         self._group(
           low_quality_logits,
@@ -254,7 +254,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       early_mass_coef=0.0,
       window_quality_boundary_logit=0.0,
     )
-    low_boundary = compute_m3s1_grouped_stopping_loss(
+    low_boundary = compute_grouped_stopping_loss(
       [
         self._group(
           low_quality_logits,
@@ -266,7 +266,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       window_quality_boundary_coef=2.0,
       window_quality_boundary_logit=0.0,
     )
-    high_base = compute_m3s1_grouped_stopping_loss(
+    high_base = compute_grouped_stopping_loss(
       [
         self._group(
           high_quality_logits,
@@ -277,7 +277,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       early_mass_coef=0.0,
       window_quality_boundary_logit=0.0,
     )
-    high_boundary = compute_m3s1_grouped_stopping_loss(
+    high_boundary = compute_grouped_stopping_loss(
       [
         self._group(
           high_quality_logits,
@@ -309,7 +309,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
     all_high = th.tensor([4.0, 4.0, 4.0], requires_grad=True)
     separated = th.tensor([-4.0, 4.0, 4.0], requires_grad=True)
 
-    bad = compute_m3s1_grouped_stopping_loss(
+    bad = compute_grouped_stopping_loss(
       [
         self._group(
           all_high,
@@ -320,7 +320,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       early_mass_coef=0.0,
       window_balanced_bce_coef=3.0,
     )
-    good = compute_m3s1_grouped_stopping_loss(
+    good = compute_grouped_stopping_loss(
       [
         self._group(
           separated,
@@ -337,7 +337,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_long_prewindow_keeps_survival_gradient_in_log_domain(self) -> None:
     logits = th.cat((th.zeros(800), th.full((100,), -8.0))).requires_grad_()
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
@@ -364,7 +364,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_scale_separated_contract_punishes_prewindow_scale_and_quality_anchor_separately(self) -> None:
     logits = th.cat((th.zeros(800), th.full((100,), -2.0))).requires_grad_()
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
@@ -393,7 +393,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_logit_calibration_contract_pushes_prewindow_down_and_quality_up(self) -> None:
     logits = th.tensor([0.0, -1.0, -1.0], requires_grad=True)
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
@@ -421,7 +421,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_legal_mask_blocks_hazard_but_counts_closed_boundary_attempts(self) -> None:
     logits = th.tensor([8.0, 8.0], requires_grad=True)
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
@@ -441,13 +441,13 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_no_window_timeout_uses_right_censor_no_event_mass(self) -> None:
     logits = th.tensor([0.0, 0.0], requires_grad=True)
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
           legal_mask=[True, True],
           quality_mask=[False, False],
-          censoring_kind=M3S1_CENSOR_TIMEOUT,
+          censoring_kind=CENSOR_TIMEOUT,
         )
       ]
     )
@@ -460,14 +460,14 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_early_event_prefix_does_not_train_unobserved_suffix(self) -> None:
     logits = th.tensor([0.0, 0.0, 8.0, 8.0], requires_grad=True)
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
           legal_mask=[True, True, True, True],
           quality_mask=[False, False, True, True],
           accepted_event=[False, True, False, False],
-          censoring_kind=M3S1_CENSOR_EARLY_EVENT_PREFIX,
+          censoring_kind=CENSOR_EARLY_EVENT_PREFIX,
         )
       ],
       early_mass_coef=0.0,
@@ -485,15 +485,15 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_support_horizon_chunks_by_complete_supported_prefix(self) -> None:
     logits = th.tensor([0.0, 0.0, 8.0], requires_grad=True)
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
           legal_mask=[True, True, True],
           quality_mask=[False, False, True],
           support_horizon=1,
-          censoring_kind=M3S1_CENSOR_FORCED_HOLD,
-          route_source=M3S1_ROUTE_FORCED_HOLD_PROBE,
+          censoring_kind=CENSOR_FORCED_HOLD,
+          route_source=ROUTE_FORCED_HOLD_PROBE,
         )
       ]
     )
@@ -505,7 +505,7 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
 
   def test_all_closed_mask_group_is_diagnostic_only(self) -> None:
     logits = th.tensor([8.0, 8.0], requires_grad=True)
-    result = compute_m3s1_grouped_stopping_loss(
+    result = compute_grouped_stopping_loss(
       [
         self._group(
           logits,
@@ -527,9 +527,9 @@ class GroupedStoppingLossContractTests(unittest.TestCase):
       th.tensor([0.0]),
       legal_mask=[True],
       quality_mask=[True],
-      censoring_kind=M3S1_CENSOR_UNSUPPORTED,
+      censoring_kind=CENSOR_UNSUPPORTED,
     )
-    result = compute_m3s1_grouped_stopping_loss([empty, unsupported])
+    result = compute_grouped_stopping_loss([empty, unsupported])
 
     self.assertEqual(float(result.loss.detach().item()), 0.0)
     self.assertEqual(result.stats.group_count, 2)

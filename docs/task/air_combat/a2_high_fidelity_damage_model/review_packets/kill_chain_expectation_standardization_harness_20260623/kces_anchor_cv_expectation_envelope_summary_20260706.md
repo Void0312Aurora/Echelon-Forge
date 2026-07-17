@@ -1,0 +1,36 @@
+# KCES Expectation Envelope Audit
+
+This report applies the standards-layer air-to-air kill-chain expectation
+envelope to existing KCES before-report rows. It is a read-only review
+artifact; it does not rerun simulation, edit parameters, or grant
+calibration authority.
+
+Boundary: standards planning supplement / engineering-proxy diagnostics only.
+
+## Source
+
+- Input: `docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_before_report_20260623.json`
+- Variant: `REV-RUNTIME-PROJECTION`
+- Target motion layer: `nonmaneuvering_constant_velocity`
+- Selected rows: `78`
+- Envelope status counts: `{'boundary_observation': 25, 'satisfied': 53}`
+- Owner-stage counts: `{'launch_window': 25, 'negative_control_satisfied': 34, 'no_review_pressure': 19}`
+
+## Artifacts
+
+- Manifest JSON: `kces_anchor_cv_expectation_envelope_manifest_20260706.json`
+- Detail CSV: `kces_anchor_cv_expectation_envelope_detail_20260706.csv`
+- Status matrix CSV: `kces_anchor_cv_expectation_envelope_matrix_20260706.csv`
+
+## Review Rows
+
+- No non-satisfied envelope rows were selected.
+
+## Interpretation
+
+- `guidance_or_model_residual` belongs to launch-window / guidance review.
+- `below_outer_effective_floor` means the cell entered the effect envelope
+  but only produced `trace_response`; it belongs to load / response factor
+  decomposition rather than direct guidance or fuze retuning.
+- `negative_control_pressure` means an outside or edge cell responded too
+  strongly for the envelope.

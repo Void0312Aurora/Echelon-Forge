@@ -67,9 +67,9 @@
     "lr_mult_max": 1.5,
     "low_kl_boost_patience": 6,
     "boost_lr_on_low_kl": false,
-    "a6_first_event_hazard_coef": 0.2,
-    "a6_first_event_curriculum_coef": 0.1,
-    "a6_first_event_curriculum_decay_fraction": 0.25,
+    "first_event_hazard_coef": 0.2,
+    "first_event_curriculum_coef": 0.1,
+    "first_event_curriculum_decay_fraction": 0.25,
     "device": "cuda",
     "policy_kwargs": {
       "features_extractor_class": "TransformerExtractor",

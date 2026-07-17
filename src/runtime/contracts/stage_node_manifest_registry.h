@@ -10,7 +10,7 @@
 
 namespace runtime::scheduler {
 
-inline constexpr bool kWp10ClockDomainAdvisoryOnly = true;
+inline constexpr bool kClockDomainAdvisoryOnly = true;
 
 inline constexpr std::string_view kReadSnapshotPolicyPreWindow = "pre_window";
 inline constexpr std::string_view kReadSnapshotPolicyPostInjection = "post_injection";
@@ -61,7 +61,7 @@ struct StageNodeManifestValidationResult {
     }
 };
 
-inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_seed();
+inline const std::vector<StageNodeManifest> &stage_node_manifest_registry_seed();
 
 inline bool is_blank(std::string_view value) {
     return std::all_of(value.begin(), value.end(),
@@ -95,17 +95,16 @@ inline bool is_maintained_scheduler_truth(const StageNodeManifest &manifest) {
            manifest.write_commit_policy != kWriteCommitPolicyDiagnosticOnly;
 }
 
-inline bool is_wp17_selected_slice_strict_clock_domain_node(const StageNodeManifest &manifest) {
-    return manifest.node_id == "p7.fire_control_launch.v1" ||
-           manifest.node_id == "p9.effects_damage.v1" ||
-           manifest.node_id == "p10.observation_export.v1";
+inline bool is_selected_slice_strict_clock_domain_node(const StageNodeManifest &manifest) {
+    return manifest.node_id == "fire_control_launch.v1" ||
+           manifest.node_id == "effects_damage.v1" || manifest.node_id == "observation_export.v1";
 }
 
 inline std::vector<const StageNodeManifest *>
-enumerate_wp17_selected_slice_strict_clock_domain_manifests() {
+enumerate_selected_slice_strict_clock_domain_manifests() {
     std::vector<const StageNodeManifest *> manifests;
-    for (const auto &manifest : wp10_stage_node_manifest_registry_seed()) {
-        if (is_wp17_selected_slice_strict_clock_domain_node(manifest)) {
+    for (const auto &manifest : stage_node_manifest_registry_seed()) {
+        if (is_selected_slice_strict_clock_domain_node(manifest)) {
             manifests.push_back(&manifest);
         }
     }
@@ -209,10 +208,10 @@ validate_stage_node_manifest_registry(const std::vector<StageNodeManifest> &regi
     return result;
 }
 
-inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_seed() {
+inline const std::vector<StageNodeManifest> &stage_node_manifest_registry_seed() {
     static const std::vector<StageNodeManifest> registry = {
         StageNodeManifest{
-            .node_id = "p7.fire_control_launch.v1",
+            .node_id = "fire_control_launch.v1",
             .semantic_stage = {"P7 FireControlLaunch"},
             .owner_module = "src/core/engine/simulation_kernel_weapon_api.cpp",
             .input_packets = {"LaunchRequest", "TrackPacket"},
@@ -239,7 +238,7 @@ inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_s
             .adapter_projection_allowed = false,
         },
         StageNodeManifest{
-            .node_id = "p9.effects_damage.v1",
+            .node_id = "effects_damage.v1",
             .semantic_stage =
                 {
                     "P9 EffectsDamage",
@@ -291,7 +290,7 @@ inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_s
             .adapter_projection_allowed = false,
         },
         StageNodeManifest{
-            .node_id = "p10.observation_export.v1",
+            .node_id = "observation_export.v1",
             .semantic_stage = {"P10 ObservationExport"},
             .owner_module = "src/runtime/facade/runtime_facade.cpp",
             .input_packets = {"LaunchEvent", "DamageReport", "PlatformConsequenceEvent",
@@ -319,7 +318,7 @@ inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_s
             .adapter_projection_allowed = false,
         },
         StageNodeManifest{
-            .node_id = "p7.launch_request_adapter_projection.v1",
+            .node_id = "launch_request_adapter_projection.v1",
             .semantic_stage = {"P7 FireControlLaunch"},
             .owner_module = "src/runtime/facade/runtime_facade.cpp",
             .input_packets = {"LaunchRequest"},
@@ -344,7 +343,7 @@ inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_s
             .adapter_projection_allowed = true,
         },
         StageNodeManifest{
-            .node_id = "p10.observation_trace_diagnostics.v1",
+            .node_id = "observation_trace_diagnostics.v1",
             .semantic_stage = {"P10 ObservationExport"},
             .owner_module = "src/runtime/facade/runtime_facade.cpp",
             .input_packets = {"DiagnosticsTrace"},
@@ -372,9 +371,9 @@ inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_s
     return registry;
 }
 
-inline std::vector<const StageNodeManifest *> enumerate_wp10_maintained_stage_node_manifests() {
+inline std::vector<const StageNodeManifest *> enumerate_maintained_stage_node_manifests() {
     std::vector<const StageNodeManifest *> manifests;
-    for (const auto &manifest : wp10_stage_node_manifest_registry_seed()) {
+    for (const auto &manifest : stage_node_manifest_registry_seed()) {
         if (is_maintained_scheduler_truth(manifest)) {
             manifests.push_back(&manifest);
         }
@@ -383,7 +382,7 @@ inline std::vector<const StageNodeManifest *> enumerate_wp10_maintained_stage_no
 }
 
 inline const StageNodeManifest *find_stage_node_manifest(std::string_view node_id) {
-    const auto &registry = wp10_stage_node_manifest_registry_seed();
+    const auto &registry = stage_node_manifest_registry_seed();
     const auto it = std::find_if(
         registry.begin(), registry.end(),
         [node_id](const StageNodeManifest &manifest) { return manifest.node_id == node_id; });
@@ -394,9 +393,9 @@ inline const StageNodeManifest *find_stage_node_manifest(std::string_view node_i
 }
 
 inline std::optional<StageNodeManifestValidationResult>
-validate_wp10_stage_node_manifest_registry_seed() {
+validate_stage_node_manifest_registry_seed() {
     const StageNodeManifestValidationResult result =
-        validate_stage_node_manifest_registry(wp10_stage_node_manifest_registry_seed());
+        validate_stage_node_manifest_registry(stage_node_manifest_registry_seed());
     if (result.valid) {
         return std::nullopt;
     }

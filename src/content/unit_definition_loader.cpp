@@ -1632,7 +1632,11 @@ bool load_file(const std::string &path, std::vector<UnitDefinition> &out_definit
 }
 
 VulnerabilityEvidenceDescriptorMap
-load_vulnerability_evidence_descriptors(const std::string &root_path) {
+load_vulnerability_evidence_descriptors(const std::string &root_path, bool *success,
+                                        std::string *error) {
+    if (success) {
+        *success = true;
+    }
     VulnerabilityEvidenceDescriptorMap descriptors;
     const fs::path base_path(root_path);
     if (!fs::is_directory(base_path)) {
@@ -1651,12 +1655,26 @@ load_vulnerability_evidence_descriptors(const std::string &root_path) {
         try {
             std::ifstream file(entry.path());
             if (!file.is_open()) {
-                continue;
+                if (success) {
+                    *success = false;
+                }
+                if (error) {
+                    *error = "Failed to open vulnerability evidence descriptor: " +
+                             entry.path().string();
+                }
+                return {};
             }
             nlohmann::json root;
             file >> root;
             if (!root.is_object()) {
-                continue;
+                if (success) {
+                    *success = false;
+                }
+                if (error) {
+                    *error = "Invalid vulnerability evidence descriptor object: " +
+                             entry.path().string();
+                }
+                return {};
             }
             VulnerabilityEvidenceDescriptor descriptor{};
             descriptor.dataset_id = root.value("dataset_id", "");
@@ -1790,12 +1808,26 @@ load_vulnerability_evidence_descriptors(const std::string &root_path) {
                 }
             }
             if (descriptor.dataset_id.empty() || descriptor.target_type.empty()) {
-                continue;
+                if (success) {
+                    *success = false;
+                }
+                if (error) {
+                    *error =
+                        "Vulnerability evidence descriptor requires dataset_id and target_type: " +
+                        entry.path().string();
+                }
+                return {};
             }
             descriptors[descriptor.dataset_id] = descriptor;
         } catch (const std::exception &ex) {
-            spdlog::warn("Failed to load vulnerability evidence descriptor {}: {}",
-                         entry.path().string(), ex.what());
+            if (success) {
+                *success = false;
+            }
+            if (error) {
+                *error = "Failed to load vulnerability evidence descriptor " +
+                         entry.path().string() + ": " + ex.what();
+            }
+            return {};
         }
     }
     return descriptors;
@@ -1803,27 +1835,47 @@ load_vulnerability_evidence_descriptors(const std::string &root_path) {
 
 bool load_unit_definitions_json(const std::string &path,
                                 std::vector<UnitDefinition> &out_definitions, std::string *error) {
-    if (fs::is_directory(path)) {
-        const fs::path vulnerability_evidence_dir =
-            fs::path(path) / "damage" / "vulnerability_evidence";
-        const VulnerabilityEvidenceDescriptorMap vulnerability_descriptors =
-            load_vulnerability_evidence_descriptors(path);
-        // Recursive scan
-        for (const auto &entry : fs::recursive_directory_iterator(path)) {
-            if (entry.is_regular_file() && entry.path().extension() == ".json") {
+    std::vector<UnitDefinition> loaded_definitions;
+    try {
+        if (fs::is_directory(path)) {
+            const fs::path vulnerability_evidence_dir =
+                fs::path(path) / "damage" / "vulnerability_evidence";
+            bool vulnerability_descriptors_loaded = true;
+            const VulnerabilityEvidenceDescriptorMap vulnerability_descriptors =
+                load_vulnerability_evidence_descriptors(path, &vulnerability_descriptors_loaded,
+                                                        error);
+            if (!vulnerability_descriptors_loaded) {
+                return false;
+            }
+
+            for (const auto &entry : fs::recursive_directory_iterator(path)) {
+                if (!entry.is_regular_file() || entry.path().extension() != ".json") {
+                    continue;
+                }
                 if (entry.path().parent_path() == vulnerability_evidence_dir) {
                     continue;
                 }
-                if (!load_file(entry.path().string(), out_definitions, error,
+                std::string file_error;
+                if (!load_file(entry.path().string(), loaded_definitions, &file_error,
                                &vulnerability_descriptors)) {
-                    spdlog::warn("Failed to load file {}: {}", entry.path().string(),
-                                 (error ? *error : "unknown"));
-                    // Continue loading others? For now, yes, just warn.
+                    if (error) {
+                        *error = "Failed to load file " + entry.path().string() + ": " +
+                                 (file_error.empty() ? "unknown error" : file_error);
+                    }
+                    return false;
                 }
             }
+        } else if (!load_file(path, loaded_definitions, error)) {
+            return false;
         }
-        return true;
-    } else {
-        return load_file(path, out_definitions, error);
+    } catch (const fs::filesystem_error &ex) {
+        if (error) {
+            *error = std::string("Failed to traverse unit definition path: ") + ex.what();
+        }
+        return false;
     }
+
+    out_definitions.insert(out_definitions.end(), loaded_definitions.begin(),
+                           loaded_definitions.end());
+    return true;
 }

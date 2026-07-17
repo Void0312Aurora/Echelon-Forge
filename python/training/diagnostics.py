@@ -6,15 +6,15 @@ from typing import Any
 import numpy as np
 
 from python.rl.policy_algo.first_event_hazard import (
-    A6_FIRST_EVENT_FIELD_ACTIVE,
-    A6_FIRST_EVENT_FIELD_SOURCE,
-    A6_FIRST_EVENT_FIELD_TARGET,
-    A6_FIRST_EVENT_SOURCE_ACCEPTED,
-    A6_FIRST_EVENT_SOURCE_CURRICULUM,
-    A6_FIRST_EVENT_SOURCE_DEADLINE,
-    A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
-    A6_FIRST_EVENT_SOURCE_PREWINDOW,
-    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+    FIRST_EVENT_FIELD_ACTIVE,
+    FIRST_EVENT_FIELD_SOURCE,
+    FIRST_EVENT_FIELD_TARGET,
+    FIRST_EVENT_SOURCE_ACCEPTED,
+    FIRST_EVENT_SOURCE_CURRICULUM,
+    FIRST_EVENT_SOURCE_DEADLINE,
+    FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+    FIRST_EVENT_SOURCE_PREWINDOW,
+    FIRST_EVENT_SOURCE_SHADOW_QUALITY,
 )
 
 
@@ -51,9 +51,9 @@ def _obs_field_array(obs: Any, key: str, *, length: int, dtype=np.float64) -> np
 
 
 def _first_event_label_masks_from_obs(obs: Any, length: int) -> dict[str, np.ndarray]:
-    active_arr = _obs_field_array(obs, A6_FIRST_EVENT_FIELD_ACTIVE, length=length)
-    target_arr = _obs_field_array(obs, A6_FIRST_EVENT_FIELD_TARGET, length=length)
-    source_arr = _obs_field_array(obs, A6_FIRST_EVENT_FIELD_SOURCE, length=length)
+    active_arr = _obs_field_array(obs, FIRST_EVENT_FIELD_ACTIVE, length=length)
+    target_arr = _obs_field_array(obs, FIRST_EVENT_FIELD_TARGET, length=length)
+    source_arr = _obs_field_array(obs, FIRST_EVENT_FIELD_SOURCE, length=length)
     if active_arr is None and target_arr is None and source_arr is None:
         return {}
 
@@ -66,17 +66,17 @@ def _first_event_label_masks_from_obs(obs: Any, length: int) -> dict[str, np.nda
         prewindow |= np.isin(
             source,
             (
-                A6_FIRST_EVENT_SOURCE_PREWINDOW,
-                A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+                FIRST_EVENT_SOURCE_PREWINDOW,
+                FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
             ),
         )
         quality |= np.isin(
             source,
             (
-                A6_FIRST_EVENT_SOURCE_ACCEPTED,
-                A6_FIRST_EVENT_SOURCE_CURRICULUM,
-                A6_FIRST_EVENT_SOURCE_DEADLINE,
-                A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+                FIRST_EVENT_SOURCE_ACCEPTED,
+                FIRST_EVENT_SOURCE_CURRICULUM,
+                FIRST_EVENT_SOURCE_DEADLINE,
+                FIRST_EVENT_SOURCE_SHADOW_QUALITY,
             ),
         )
 
@@ -360,25 +360,25 @@ def record_runway_gear_diagnostics(
         logger.record("diag/gear_stress_mean", float(np.asarray(gear_stress, dtype=np.float32).mean()))
 
 
-def record_a6_first_event_info_diagnostics(
+def record_first_event_info_diagnostics(
     *,
     model: Any,
     logger: Any,
     infos: Any,
 ) -> None:
-    hazard_coef = float(getattr(model, "a6_first_event_hazard_coef", 0.0) or 0.0)
-    curriculum_coef_fn = getattr(model, "_current_a6_first_event_curriculum_coef", None)
+    hazard_coef = float(getattr(model, "first_event_hazard_coef", 0.0) or 0.0)
+    curriculum_coef_fn = getattr(model, "_current_first_event_curriculum_coef", None)
     if callable(curriculum_coef_fn):
         try:
             curriculum_coef = float(curriculum_coef_fn())
         except Exception:
             curriculum_coef = 0.0
     else:
-        curriculum_coef = float(getattr(model, "a6_first_event_curriculum_coef", 0.0) or 0.0)
+        curriculum_coef = float(getattr(model, "first_event_curriculum_coef", 0.0) or 0.0)
 
-    deadline_weight = float(getattr(model, "a6_first_event_deadline_weight", 0.0) or 0.0)
-    launch_window_enabled = bool(getattr(model, "a6_first_event_launch_window_enabled", False))
-    prewindow_hold_weight = float(getattr(model, "a6_first_event_launch_window_prewindow_hold_weight", 0.0) or 0.0)
+    deadline_weight = float(getattr(model, "first_event_deadline_weight", 0.0) or 0.0)
+    launch_window_enabled = bool(getattr(model, "first_event_launch_window_enabled", False))
+    prewindow_hold_weight = float(getattr(model, "first_event_launch_window_prewindow_hold_weight", 0.0) or 0.0)
     has_model_knobs = (
         hazard_coef > 0.0
         or curriculum_coef > 0.0
@@ -386,24 +386,24 @@ def record_a6_first_event_info_diagnostics(
         or launch_window_enabled
         or prewindow_hold_weight > 0.0
     )
-    a6_infos = []
+    first_event_infos = []
     if isinstance(infos, (list, tuple)):
-        a6_infos = [
+        first_event_infos = [
             info
             for info in infos
             if isinstance(info, dict)
             and any(
                 key in info
                 for key in (
-                    "a6_first_event_active",
-                    "a6_first_event_target",
-                    "a6_first_event_weight",
-                    "a6_first_event_source",
-                    "a6_first_event_window_id",
+                    "first_event_active",
+                    "first_event_target",
+                    "first_event_weight",
+                    "first_event_source",
+                    "first_event_window_id",
                 )
             )
         ]
-    if not has_model_knobs and not a6_infos:
+    if not has_model_knobs and not first_event_infos:
         return
 
     logger.record("a6/hazard_coef", hazard_coef)
@@ -411,7 +411,7 @@ def record_a6_first_event_info_diagnostics(
     logger.record("a6/deadline_weight", deadline_weight)
     logger.record("a6/launch_window_enabled", float(launch_window_enabled))
     logger.record("a6/launch_window_prewindow_hold_weight", prewindow_hold_weight)
-    if not a6_infos:
+    if not first_event_infos:
         logger.record("a6/active_count", 0.0)
         logger.record("a6/active_frac", 0.0)
         logger.record("a6/target_positive_count", 0.0)
@@ -423,7 +423,7 @@ def record_a6_first_event_info_diagnostics(
         logger.record("a6/censored_window_count", 0.0)
         return
 
-    denom = float(len(a6_infos))
+    denom = float(len(first_event_infos))
     active_count = 0
     positive_count = 0
     curriculum_positive_count = 0
@@ -432,17 +432,17 @@ def record_a6_first_event_info_diagnostics(
     early_accepted_count = 0
     censored_window_ids: set[str] = set()
     censored_row_count = 0
-    for idx, info in enumerate(a6_infos):
-        active = _bool_int(info.get("a6_first_event_active", False))
+    for idx, info in enumerate(first_event_infos):
+        active = _bool_int(info.get("first_event_active", False))
         try:
-            target = float(info.get("a6_first_event_target", 0.0))
+            target = float(info.get("first_event_target", 0.0))
         except Exception:
             target = 0.0
         try:
-            weight = float(info.get("a6_first_event_weight", 1.0))
+            weight = float(info.get("first_event_weight", 1.0))
         except Exception:
             weight = 0.0
-        source = str(info.get("a6_first_event_source", "") or "").strip().lower()
+        source = str(info.get("first_event_source", "") or "").strip().lower()
         active_weighted = bool(active and weight > 0.0)
         if active_weighted:
             active_count += 1
@@ -458,7 +458,7 @@ def record_a6_first_event_info_diagnostics(
             early_accepted_count += 1
         if source in {"censored", "3"}:
             censored_row_count += 1
-            censored_window_ids.add(str(info.get("a6_first_event_window_id", idx)))
+            censored_window_ids.add(str(info.get("first_event_window_id", idx)))
 
     logger.record("a6/active_count", float(active_count))
     logger.record("a6/active_frac", float(active_count) / denom)
@@ -477,14 +477,14 @@ def record_a6_first_event_info_diagnostics(
     )
 
 
-def record_a5_event_info_diagnostics(
+def record_event_info_diagnostics(
     *,
     logger: Any,
     infos: Any,
 ) -> None:
     if not isinstance(infos, (list, tuple)):
         return
-    a5_infos = [
+    event_info_infos = [
         info
         for info in infos
         if isinstance(info, dict)
@@ -501,12 +501,12 @@ def record_a5_event_info_diagnostics(
             )
         )
     ]
-    if not a5_infos:
+    if not event_info_infos:
         return
-    denom = float(len(a5_infos))
+    denom = float(len(event_info_infos))
 
     def _sum_bool(key: str) -> int:
-        return int(sum(_bool_int(info.get(key, False)) for info in a5_infos))
+        return int(sum(_bool_int(info.get(key, False)) for info in event_info_infos))
 
     fire_mask_open = _sum_bool("fire_mask")
     requested = _sum_bool("fire_once_requested")
@@ -516,36 +516,36 @@ def record_a5_event_info_diagnostics(
     rejected = int(
         sum(
             1
-            for info in a5_infos
+            for info in event_info_infos
             if _bool_int(info.get("fire_once_requested", False))
             and not _bool_int(info.get("fire_once_accepted", False))
         )
     )
 
-    logger.record("diag/a5_event_info_count", float(len(a5_infos)))
-    logger.record("diag/a5_fire_mask_open_frac", float(fire_mask_open) / denom)
-    logger.record("diag/a5_fire_once_requested_count", float(requested))
-    logger.record("diag/a5_fire_once_requested_frac", float(requested) / denom)
-    logger.record("diag/a5_fire_once_accepted_count", float(accepted))
-    logger.record("diag/a5_fire_once_rejected_count", float(rejected))
-    logger.record("diag/a5_fire_once_rejected_frac", float(rejected) / denom)
-    logger.record("diag/a5_release_executed_count", float(executed))
-    logger.record("diag/a5_post_launch_suppressed_count", float(suppressed))
+    logger.record("diag/event_info_count", float(len(event_info_infos)))
+    logger.record("diag/fire_mask_open_frac", float(fire_mask_open) / denom)
+    logger.record("diag/fire_once_requested_count", float(requested))
+    logger.record("diag/fire_once_requested_frac", float(requested) / denom)
+    logger.record("diag/fire_once_accepted_count", float(accepted))
+    logger.record("diag/fire_once_rejected_count", float(rejected))
+    logger.record("diag/fire_once_rejected_frac", float(rejected) / denom)
+    logger.record("diag/release_executed_count", float(executed))
+    logger.record("diag/post_launch_suppressed_count", float(suppressed))
 
     reason_counts = Counter(
         str(info.get("fire_once_rejected_reason", "") or "unspecified")
-        for info in a5_infos
+        for info in event_info_infos
         if _bool_int(info.get("fire_once_requested", False)) and not _bool_int(info.get("fire_once_accepted", False))
     )
     for reason, count in sorted(reason_counts.items()):
-        logger.record(f"diag/a5_reject_reason_{normalize_diagnostic_key(reason)}_count", float(count))
+        logger.record(f"diag/reject_reason_{normalize_diagnostic_key(reason)}_count", float(count))
 
-    state_counts = Counter(str(info.get("engagement_state", "") or "unknown") for info in a5_infos)
+    state_counts = Counter(str(info.get("engagement_state", "") or "unknown") for info in event_info_infos)
     for state, count in sorted(state_counts.items()):
-        logger.record(f"diag/a5_state_{normalize_diagnostic_key(state)}_frac", float(count) / denom)
+        logger.record(f"diag/state_{normalize_diagnostic_key(state)}_frac", float(count) / denom)
 
     component_values: dict[str, list[float]] = defaultdict(list)
-    for info in a5_infos:
+    for info in event_info_infos:
         components = info.get("fire_mask_components", {})
         if not isinstance(components, dict):
             continue
@@ -554,7 +554,7 @@ def record_a5_event_info_diagnostics(
     for key, values in sorted(component_values.items()):
         if values:
             logger.record(
-                f"diag/a5_mask_component_{normalize_diagnostic_key(key)}_open_frac",
+                f"diag/mask_component_{normalize_diagnostic_key(key)}_open_frac",
                 float(np.asarray(values, dtype=np.float32).mean()),
             )
 
@@ -1473,8 +1473,8 @@ __all__ = [
     "action_array_for_diagnostics",
     "combat_action_columns",
     "normalize_diagnostic_key",
-    "record_a5_event_info_diagnostics",
-    "record_a6_first_event_info_diagnostics",
+    "record_event_info_diagnostics",
+    "record_first_event_info_diagnostics",
     "record_action_diagnostics",
     "record_basic_step_diagnostics",
     "record_hmoe_policy_diagnostics",

@@ -48,6 +48,29 @@ def _require_object_entries(
             )
 
 
+def _require_unique_entity_names(
+    entities: list[Any],
+    *,
+    context: str,
+    source_path: str,
+) -> None:
+    seen: dict[str, int] = {}
+    for index, value in enumerate(entities):
+        if not isinstance(value, dict):
+            continue
+        name = str(value.get("name", "") or "").strip()
+        if not name:
+            continue
+        previous_index = seen.get(name)
+        if previous_index is not None:
+            raise ValueError(
+                f"{context} contains duplicate entity name {name!r} at "
+                f"entities[{previous_index}] and entities[{index}]: "
+                f"{_format_source(source_path)}"
+            )
+        seen[name] = index
+
+
 def validate_scenario_compiler_shape(
     scenario_data: dict[str, Any],
     *,
@@ -81,6 +104,11 @@ def validate_scenario_compiler_shape(
         _require_object_entries(
             entities,
             "entities",
+            context=context,
+            source_path=source_path,
+        )
+        _require_unique_entity_names(
+            entities,
             context=context,
             source_path=source_path,
         )

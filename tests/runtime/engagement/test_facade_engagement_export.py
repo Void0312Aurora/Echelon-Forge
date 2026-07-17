@@ -37,6 +37,7 @@ def _spawn_request(
   heading: float,
   vy: float,
   is_agent: bool,
+  missiles_remaining: int | None = None,
 ) -> ef_py.WorldSpawnRequest:
   spawn = ef_py.WorldSpawnRequest()
   spawn.world_index = world_index
@@ -49,6 +50,10 @@ def _spawn_request(
   spawn.z = 1200.0
   spawn.heading = heading
   spawn.vy = vy
+  if missiles_remaining is not None:
+    spawn.ammo_override_enabled = True
+    spawn.missiles_remaining = int(missiles_remaining)
+    spawn.max_missiles = int(missiles_remaining)
   return spawn
 
 
@@ -77,6 +82,7 @@ def _make_tracked_facade_fixture() -> tuple[ef_py.RuntimeFacade, int, int]:
       heading=0.0,
       vy=180.0,
       is_agent=True,
+      missiles_remaining=4,
     ),
     _spawn_request(
       side=ef_py.Side.Red,
@@ -180,10 +186,10 @@ def _make_window_launch_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   )
   request.action_requests = [action_request]
 
-  result = facade.run_wp10_window(request)
+  result = facade.run_window(request)
   packet = result.engagement_packet
   launch = next(
-    event for event in packet.launch_events if event.producer_node_id == "p7.fire_control_launch.v1"
+    event for event in packet.launch_events if event.producer_node_id == "fire_control_launch.v1"
   )
   missile_id = int(launch.spawned_munition.entity_id)
   if missile_id <= 0:
@@ -192,14 +198,14 @@ def _make_window_launch_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
 
 
 class FacadeEngagementExportTests(unittest.TestCase):
-  def test_window_launch_export_proves_wp10_nodes_barriers_and_wp11_provenance_chain(self) -> None:
+  def test_window_launch_export_proves_nodes_barriers_and_wp11_provenance_chain(self) -> None:
     packet, _, _target_id, missile_id = _make_window_launch_packet()
 
     self.assertGreaterEqual(int(packet.snapshot_version), 1)
     self.assertEqual(packet.barrier_id, "export")
     self.assertEqual(int(packet.barrier_sequence), 1)
     self.assertEqual(packet.barrier_detail, "maintained_facade_export")
-    self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
+    self.assertEqual(packet.producer_node_id, "observation_export.v1")
     self.assertGreaterEqual(float(packet.source_time_s), 0.0)
 
     self.assertEqual(packet.packet_provenance.information_state_layer, "TrackState")
@@ -239,7 +245,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
     )
 
     launch = next(
-      event for event in packet.launch_events if event.producer_node_id == "p7.fire_control_launch.v1"
+      event for event in packet.launch_events if event.producer_node_id == "fire_control_launch.v1"
     )
     self.assertEqual(int(launch.spawned_munition.entity_id), missile_id)
 
@@ -247,8 +253,8 @@ class FacadeEngagementExportTests(unittest.TestCase):
       trace for trace in packet.diagnostics_traces if int(trace.launch_event_id) == int(launch.event_id)
     )
 
-    self.assertEqual(launch_trace.source_node_id, "p7.fire_control_launch.v1")
-    self.assertEqual(launch_trace.export_node_id, "p10.observation_export.v1")
+    self.assertEqual(launch_trace.source_node_id, "fire_control_launch.v1")
+    self.assertEqual(launch_trace.export_node_id, "observation_export.v1")
     self.assertEqual(launch_trace.barrier_id, "export")
     self.assertEqual(launch_trace.barrier_detail, "maintained_facade_export")
     self.assertEqual(int(launch_trace.source_snapshot_version), int(packet.snapshot_version))
@@ -275,7 +281,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
     self.assertEqual(packet.barrier_id, "export")
     self.assertEqual(int(packet.barrier_sequence), 1)
     self.assertEqual(packet.barrier_detail, "maintained_facade_export")
-    self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
+    self.assertEqual(packet.producer_node_id, "observation_export.v1")
     self.assertEqual(int(getattr(after, "missiles_remaining", -1)), missiles_before)
     self.assertEqual(list(packet.launch_requests), [])
     self.assertEqual(list(packet.launch_events), [])
@@ -300,8 +306,8 @@ class FacadeEngagementExportTests(unittest.TestCase):
     self.assertGreaterEqual(int(trace.source_snapshot_version), 1)
     self.assertEqual(trace.barrier_id, "export")
     self.assertEqual(trace.barrier_detail, "maintained_facade_export")
-    self.assertEqual(trace.source_node_id, "p10.observation_export.v1")
-    self.assertEqual(trace.export_node_id, "p10.observation_export.v1")
+    self.assertEqual(trace.source_node_id, "observation_export.v1")
+    self.assertEqual(trace.export_node_id, "observation_export.v1")
     self.assertGreaterEqual(float(trace.source_time_s), 0.0)
     self.assertEqual(int(trace.launch_request_id), 0)
     self.assertEqual(int(trace.launch_event_id), 0)
@@ -334,7 +340,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
     self.assertEqual(list(packet.damage_reports), [])
     self.assertEqual(list(packet.diagnostics_traces), [])
     self.assertEqual(packet.barrier_id, "export")
-    self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
+    self.assertEqual(packet.producer_node_id, "observation_export.v1")
 
   def test_dedicated_diagnostics_export_surface_does_not_require_engagement_packet(self) -> None:
     facade, blue_id, red_id = _make_tracked_facade_fixture()
@@ -353,7 +359,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
     self.assertTrue(all(int(trace.observation_packet_version) >= 1 for trace in traces))
     self.assertTrue(all(int(trace.source_snapshot_version) >= 1 for trace in traces))
     self.assertTrue(all(trace.barrier_id == "export" for trace in traces))
-    self.assertTrue(all(trace.export_node_id == "p10.observation_export.v1" for trace in traces))
+    self.assertTrue(all(trace.export_node_id == "observation_export.v1" for trace in traces))
     self.assertTrue(all(int(trace.launch_request_id) == 0 for trace in traces if int(trace.track_id) == red_id))
 
   def test_recent_live_events_are_retagged_with_requested_world_index(self) -> None:
@@ -374,6 +380,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
         heading=0.0,
         vy=250.0,
         is_agent=True,
+        missiles_remaining=4,
       ),
       _spawn_request(
         world_index=1,
@@ -435,13 +442,13 @@ class FacadeEngagementExportTests(unittest.TestCase):
     )
     window_request.action_requests = [action_request]
 
-    result = facade.run_wp10_window(window_request)
+    result = facade.run_window(window_request)
     packet = result.engagement_packet
     self.assertEqual(len(packet.launch_events), 1)
     missile_id = int(packet.launch_events[0].spawned_munition.entity_id)
     self.assertGreater(missile_id, 0)
 
-    self.assertEqual(packet.launch_events[0].producer_node_id, "p7.fire_control_launch.v1")
+    self.assertEqual(packet.launch_events[0].producer_node_id, "fire_control_launch.v1")
     self.assertEqual(int(packet.launch_events[0].spawned_munition.world_index), 1)
     self.assertEqual(int(packet.launch_events[0].spawned_munition.entity_id), missile_id)
     self.assertTrue(

@@ -13,12 +13,15 @@ that the current runtime, tests, and tasking bridge actually rely on.
 
 ## Scope
 
-This directory owns four interface slices:
+This directory owns four maintained interface slices and one planning
+supplement:
 
 - mission/task observation semantics exposed to air agents
 - pilot action semantics exposed by the environment and `PilotAction`
 - air-specialized command/tasking semantics layered on top of common core
 - air-specific pilot reporting extensions
+- air-to-air kill-chain expectation-envelope review vocabulary, currently as a
+  planning supplement rather than a runtime contract
 
 It does not own:
 
@@ -42,13 +45,19 @@ Read these files in order:
 2. [Pilot Action Contract](act.md)
 3. [Air Mission Command and Tasking Contract](aim.md)
 4. [Pilot Reporting Contract](rep.md)
+5. [Air-To-Air Kill-Chain Expectation Envelope](kill_chain_expectation_envelope.md)
 
-Together they define the maintained air interface between:
+The first four documents define the maintained air interface between:
 
 - tasking/leader logic
 - mission command and mission observation runtime
 - pilot action input
 - pilot report output
+
+The kill-chain expectation envelope is a planning supplement. It standardizes
+review labels and owner attribution for air-to-air diagnostic distributions, but
+it is not a calibration result and is not yet a maintained runtime/test
+contract.
 
 ## Current Code Alignment
 
@@ -83,9 +92,12 @@ That layering matters:
   separately if needed.
 - Do not describe the action or observation surface as broader than the current
   runtime/test contract.
+- Planning supplements must label held runtime behavior explicitly and cite the
+  task evidence that stabilizes the vocabulary.
 
 ## Related Documents
 
 - [Scenario Configuration Guide](../bridge/scenario_guide.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [USAF Profile](../services/air_force.md)
+- [Air-To-Air Kill-Chain Expectation Envelope](kill_chain_expectation_envelope.md)

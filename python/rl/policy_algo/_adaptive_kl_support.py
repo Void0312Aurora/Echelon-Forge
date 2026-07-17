@@ -4,7 +4,7 @@ Extracted from ``ppo_adaptive_kl.py`` so the per-subdomain mixin modules can
 import the frozen dataclasses they operate on without a circular dependency on
 the main algorithm module. These names are re-exported from
 ``ppo_adaptive_kl`` for backwards compatibility with existing test/tool
-imports (e.g. ``from python.rl.policy_algo.ppo_adaptive_kl import _M3S2WindowClassifierReplay``).
+imports (e.g. ``from python.rl.policy_algo.ppo_adaptive_kl import _WindowClassifierReplay``).
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ def _mission_column(mission: th.Tensor, mode: str, field_name: str) -> th.Tensor
 
 
 @dataclass(frozen=True)
-class _A7FirstEventRolloutRow:
+class _FirstEventRolloutRow:
     engagement_state: str
     fire_mask: bool
     fire_once_accepted: bool
@@ -53,7 +53,7 @@ class _A7FirstEventRolloutRow:
 
 
 @dataclass(frozen=True)
-class _M3S1GroupedStoppingSidecarGroup:
+class _GroupedStoppingSidecarGroup:
     group_id: int | str
     episode_id: int | str
     row_indices: tuple[int, ...]
@@ -68,8 +68,8 @@ class _M3S1GroupedStoppingSidecarGroup:
 
 
 @dataclass(frozen=True)
-class _M3S1GroupedStoppingSidecar:
-    groups: tuple[_M3S1GroupedStoppingSidecarGroup, ...]
+class _GroupedStoppingSidecar:
+    groups: tuple[_GroupedStoppingSidecarGroup, ...]
     observations: dict
     accepted_event_count: int = 0
     one_shot_violation_count: int = 0
@@ -77,7 +77,7 @@ class _M3S1GroupedStoppingSidecar:
 
 
 @dataclass(frozen=True)
-class _M3S1GroupedStoppingDiagnostics:
+class _GroupedStoppingDiagnostics:
     stop_logit_mean: float = 0.0
     stop_logit_desirable_mean: float = 0.0
     stop_logit_prewindow_mean: float = 0.0
@@ -93,7 +93,7 @@ class _M3S1GroupedStoppingDiagnostics:
 
 
 @dataclass(frozen=True)
-class _M3S2WindowClassifierLoss:
+class _WindowClassifierLoss:
     loss: th.Tensor
     unscaled_loss: th.Tensor
     balanced_bce_loss: th.Tensor
@@ -115,7 +115,7 @@ class _M3S2WindowClassifierLoss:
 
 
 @dataclass(frozen=True)
-class _M3S2FireBoundaryLoss:
+class _FireBoundaryLoss:
     loss: th.Tensor
     unscaled_loss: th.Tensor
     balanced_bce_loss: th.Tensor

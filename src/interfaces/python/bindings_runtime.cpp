@@ -2154,5 +2154,5 @@ void bind_runtime(nb::module_ &m) {
              nb::arg("request"))
         .def("export_diagnostics_traces", &RuntimeFacade::export_diagnostics_traces,
              nb::arg("request"))
-        .def("run_wp10_window", &RuntimeFacade::run_wp10_window, nb::arg("request"));
+        .def("run_window", &RuntimeFacade::run_window, nb::arg("request"));
 }

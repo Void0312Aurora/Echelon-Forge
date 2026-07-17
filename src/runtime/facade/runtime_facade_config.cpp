@@ -113,8 +113,8 @@ RuntimeFacade::admit_fidelity_request(const RuntimeFidelityRequest &request) con
 
     if (normalized.provider_family == kRuntimeFidelityProviderFamilyNone) {
         admission.selected_provider_family = std::string(kRuntimeFidelityProviderFamilyNone);
-        if (find_stage_node_manifest(kWp10ObservationExportNodeId) != nullptr) {
-            admission.selected_stage_node_id = std::string(kWp10ObservationExportNodeId);
+        if (find_stage_node_manifest(kObservationExportNodeId) != nullptr) {
+            admission.selected_stage_node_id = std::string(kObservationExportNodeId);
         }
         return admission;
     }
@@ -122,8 +122,8 @@ RuntimeFacade::admit_fidelity_request(const RuntimeFidelityRequest &request) con
     if (normalized.provider_family == kRuntimeFidelityProviderFamilyReferenceCpu) {
         admission.selected_provider_family =
             std::string(kRuntimeFidelityProviderFamilyReferenceCpu);
-        if (find_stage_node_manifest(kWp10ObservationExportNodeId) != nullptr) {
-            admission.selected_stage_node_id = std::string(kWp10ObservationExportNodeId);
+        if (find_stage_node_manifest(kObservationExportNodeId) != nullptr) {
+            admission.selected_stage_node_id = std::string(kObservationExportNodeId);
         }
         return admission;
     }

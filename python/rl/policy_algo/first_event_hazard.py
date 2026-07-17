@@ -7,32 +7,32 @@ import torch as th
 from torch.nn import functional as F
 
 
-A6_FIRST_EVENT_FIELD_ACTIVE = "a6_first_event_active"
-A6_FIRST_EVENT_FIELD_TARGET = "a6_first_event_target"
-A6_FIRST_EVENT_FIELD_WEIGHT = "a6_first_event_weight"
-A6_FIRST_EVENT_FIELD_SOURCE = "a6_first_event_source"
-A6_FIRST_EVENT_FIELD_WINDOW_AGE = "a6_first_event_window_age"
-A6_FIRST_EVENT_FIELD_WINDOW_ID = "a6_first_event_window_id"
-A6_FIRST_EVENT_FIELD_HAD_ACCEPTED = "a6_first_event_had_accepted"
-A6_FIRST_EVENT_FIELD_NAMES = (
-    A6_FIRST_EVENT_FIELD_ACTIVE,
-    A6_FIRST_EVENT_FIELD_TARGET,
-    A6_FIRST_EVENT_FIELD_WEIGHT,
-    A6_FIRST_EVENT_FIELD_SOURCE,
-    A6_FIRST_EVENT_FIELD_WINDOW_AGE,
-    A6_FIRST_EVENT_FIELD_WINDOW_ID,
-    A6_FIRST_EVENT_FIELD_HAD_ACCEPTED,
+FIRST_EVENT_FIELD_ACTIVE = "first_event_active"
+FIRST_EVENT_FIELD_TARGET = "first_event_target"
+FIRST_EVENT_FIELD_WEIGHT = "first_event_weight"
+FIRST_EVENT_FIELD_SOURCE = "first_event_source"
+FIRST_EVENT_FIELD_WINDOW_AGE = "first_event_window_age"
+FIRST_EVENT_FIELD_WINDOW_ID = "first_event_window_id"
+FIRST_EVENT_FIELD_HAD_ACCEPTED = "first_event_had_accepted"
+FIRST_EVENT_FIELD_NAMES = (
+    FIRST_EVENT_FIELD_ACTIVE,
+    FIRST_EVENT_FIELD_TARGET,
+    FIRST_EVENT_FIELD_WEIGHT,
+    FIRST_EVENT_FIELD_SOURCE,
+    FIRST_EVENT_FIELD_WINDOW_AGE,
+    FIRST_EVENT_FIELD_WINDOW_ID,
+    FIRST_EVENT_FIELD_HAD_ACCEPTED,
 )
 
-A6_FIRST_EVENT_SOURCE_INACTIVE = 0
-A6_FIRST_EVENT_SOURCE_ACCEPTED = 1
-A6_FIRST_EVENT_SOURCE_CURRICULUM = 2
-A6_FIRST_EVENT_SOURCE_CENSORED = 3
-A6_FIRST_EVENT_SOURCE_DEADLINE = 4
-A6_FIRST_EVENT_SOURCE_PREWINDOW = 5
-A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED = 6
-A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY = 7
-A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY = 8
+FIRST_EVENT_SOURCE_INACTIVE = 0
+FIRST_EVENT_SOURCE_ACCEPTED = 1
+FIRST_EVENT_SOURCE_CURRICULUM = 2
+FIRST_EVENT_SOURCE_CENSORED = 3
+FIRST_EVENT_SOURCE_DEADLINE = 4
+FIRST_EVENT_SOURCE_PREWINDOW = 5
+FIRST_EVENT_SOURCE_EARLY_ACCEPTED = 6
+FIRST_EVENT_SOURCE_SHADOW_QUALITY = 7
+FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY = 8
 
 
 @dataclass(frozen=True)
@@ -175,7 +175,7 @@ def build_first_event_hazard_labels(
     active = [False] * count
     target = [0.0] * count
     weight = [0.0] * count
-    source = [A6_FIRST_EVENT_SOURCE_INACTIVE] * count
+    source = [FIRST_EVENT_SOURCE_INACTIVE] * count
     window_age = [0.0] * count
     window_id = [-1] * count
     had_accepted = [False] * count
@@ -245,7 +245,7 @@ def build_first_event_hazard_labels(
                         active[step_idx] = True
                         target[step_idx] = 1.0 if pos == tau_pos else 0.0
                         weight[step_idx] = 1.0
-                        source[step_idx] = A6_FIRST_EVENT_SOURCE_ACCEPTED
+                        source[step_idx] = FIRST_EVENT_SOURCE_ACCEPTED
                         had_accepted[step_idx] = True
                 else:
                     for step_idx in window_indices[: tau_pos + 1]:
@@ -259,9 +259,9 @@ def build_first_event_hazard_labels(
                         target[step_idx] = 0.0
                         weight[step_idx] = negative_weight
                         source[step_idx] = (
-                            A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED
+                            FIRST_EVENT_SOURCE_EARLY_ACCEPTED
                             if step_is_accepted
-                            else A6_FIRST_EVENT_SOURCE_PREWINDOW
+                            else FIRST_EVENT_SOURCE_PREWINDOW
                         )
                         had_accepted[step_idx] = True
                     if shadow_quality_enabled and shadow_quality_weight > 0.0:
@@ -273,7 +273,7 @@ def build_first_event_hazard_labels(
                             active[future_idx] = True
                             target[future_idx] = 1.0
                             weight[future_idx] = shadow_quality_weight
-                            source[future_idx] = A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY
+                            source[future_idx] = FIRST_EVENT_SOURCE_SHADOW_QUALITY
                             window_age[future_idx] = future_age
                             window_id[future_idx] = current_window_id
                             had_accepted[future_idx] = True
@@ -281,13 +281,13 @@ def build_first_event_hazard_labels(
                 continue
 
             for pos, step_idx in enumerate(window_indices):
-                source[step_idx] = A6_FIRST_EVENT_SOURCE_CENSORED
+                source[step_idx] = FIRST_EVENT_SOURCE_CENSORED
                 if censored_weight > 0.0:
                     active[step_idx] = True
                     target[step_idx] = 0.0
                     weight[step_idx] = censored_weight
                 if launch_gate_enabled and not quality_open[pos]:
-                    source[step_idx] = A6_FIRST_EVENT_SOURCE_PREWINDOW
+                    source[step_idx] = FIRST_EVENT_SOURCE_PREWINDOW
                     if prewindow_hold_weight > 0.0:
                         active[step_idx] = True
                         target[step_idx] = 0.0
@@ -307,7 +307,7 @@ def build_first_event_hazard_labels(
                         active[step_idx] = True
                         target[step_idx] = 1.0 if pos == seed_pos else 0.0
                         weight[step_idx] = curriculum_weight
-                        source[step_idx] = A6_FIRST_EVENT_SOURCE_CURRICULUM
+                        source[step_idx] = FIRST_EVENT_SOURCE_CURRICULUM
                     curriculum_used = True
 
             if deadline_weight > 0.0:
@@ -319,7 +319,7 @@ def build_first_event_hazard_labels(
                     active[step_idx] = True
                     target[step_idx] = 1.0
                     weight[step_idx] = deadline_weight
-                    source[step_idx] = A6_FIRST_EVENT_SOURCE_DEADLINE
+                    source[step_idx] = FIRST_EVENT_SOURCE_DEADLINE
 
             if legal_open_quality_enabled:
                 for pos, step_idx in enumerate(window_indices):
@@ -330,7 +330,7 @@ def build_first_event_hazard_labels(
                     active[step_idx] = True
                     target[step_idx] = 1.0
                     weight[step_idx] = legal_open_quality_weight
-                    source[step_idx] = A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY
+                    source[step_idx] = FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY
 
     out_device = th.device(device) if device is not None else th.device("cpu")
     return FirstEventHazardLabels(
@@ -351,12 +351,12 @@ def first_event_hazard_batch_from_observations(obs: Any) -> tuple[th.Tensor, th.
 
 
 def first_event_hazard_batch_from_mapping(mapping: dict[str, Any]) -> tuple[th.Tensor, th.Tensor, th.Tensor] | None:
-    if A6_FIRST_EVENT_FIELD_ACTIVE not in mapping or A6_FIRST_EVENT_FIELD_TARGET not in mapping:
+    if FIRST_EVENT_FIELD_ACTIVE not in mapping or FIRST_EVENT_FIELD_TARGET not in mapping:
         return None
-    active = th.as_tensor(mapping[A6_FIRST_EVENT_FIELD_ACTIVE]).reshape(-1).to(dtype=th.bool)
-    target = th.as_tensor(mapping[A6_FIRST_EVENT_FIELD_TARGET]).reshape(-1).to(dtype=th.float32)
-    if A6_FIRST_EVENT_FIELD_WEIGHT in mapping:
-        weight = th.as_tensor(mapping[A6_FIRST_EVENT_FIELD_WEIGHT]).reshape(-1).to(dtype=th.float32)
+    active = th.as_tensor(mapping[FIRST_EVENT_FIELD_ACTIVE]).reshape(-1).to(dtype=th.bool)
+    target = th.as_tensor(mapping[FIRST_EVENT_FIELD_TARGET]).reshape(-1).to(dtype=th.float32)
+    if FIRST_EVENT_FIELD_WEIGHT in mapping:
+        weight = th.as_tensor(mapping[FIRST_EVENT_FIELD_WEIGHT]).reshape(-1).to(dtype=th.float32)
     else:
         weight = th.ones_like(target, dtype=th.float32)
     if not (int(active.numel()) == int(target.numel()) == int(weight.numel())):
@@ -365,13 +365,13 @@ def first_event_hazard_batch_from_mapping(mapping: dict[str, Any]) -> tuple[th.T
 
 
 def first_event_hazard_batch_from_rollout_data(rollout_data: Any) -> tuple[th.Tensor, th.Tensor, th.Tensor] | None:
-    if all(hasattr(rollout_data, field) for field in (A6_FIRST_EVENT_FIELD_ACTIVE, A6_FIRST_EVENT_FIELD_TARGET)):
+    if all(hasattr(rollout_data, field) for field in (FIRST_EVENT_FIELD_ACTIVE, FIRST_EVENT_FIELD_TARGET)):
         fields = {
-            A6_FIRST_EVENT_FIELD_ACTIVE: getattr(rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE),
-            A6_FIRST_EVENT_FIELD_TARGET: getattr(rollout_data, A6_FIRST_EVENT_FIELD_TARGET),
+            FIRST_EVENT_FIELD_ACTIVE: getattr(rollout_data, FIRST_EVENT_FIELD_ACTIVE),
+            FIRST_EVENT_FIELD_TARGET: getattr(rollout_data, FIRST_EVENT_FIELD_TARGET),
         }
-        if hasattr(rollout_data, A6_FIRST_EVENT_FIELD_WEIGHT):
-            fields[A6_FIRST_EVENT_FIELD_WEIGHT] = getattr(rollout_data, A6_FIRST_EVENT_FIELD_WEIGHT)
+        if hasattr(rollout_data, FIRST_EVENT_FIELD_WEIGHT):
+            fields[FIRST_EVENT_FIELD_WEIGHT] = getattr(rollout_data, FIRST_EVENT_FIELD_WEIGHT)
         return first_event_hazard_batch_from_mapping(fields)
     return None
 
@@ -384,15 +384,15 @@ def first_event_credit_batch_from_rollout_data(
         return None
     active, target, weight = batch
     window_id = (
-        th.as_tensor(getattr(rollout_data, A6_FIRST_EVENT_FIELD_WINDOW_ID)).reshape(-1).to(dtype=th.long)
-        if hasattr(rollout_data, A6_FIRST_EVENT_FIELD_WINDOW_ID)
+        th.as_tensor(getattr(rollout_data, FIRST_EVENT_FIELD_WINDOW_ID)).reshape(-1).to(dtype=th.long)
+        if hasattr(rollout_data, FIRST_EVENT_FIELD_WINDOW_ID)
         else None
     )
     if window_id is not None and int(window_id.numel()) != int(active.numel()):
         raise ValueError("A7 first-event credit window ids must match label length")
     source = (
-        th.as_tensor(getattr(rollout_data, A6_FIRST_EVENT_FIELD_SOURCE)).reshape(-1).to(dtype=th.long)
-        if hasattr(rollout_data, A6_FIRST_EVENT_FIELD_SOURCE)
+        th.as_tensor(getattr(rollout_data, FIRST_EVENT_FIELD_SOURCE)).reshape(-1).to(dtype=th.long)
+        if hasattr(rollout_data, FIRST_EVENT_FIELD_SOURCE)
         else None
     )
     if source is not None and int(source.numel()) != int(active.numel()):

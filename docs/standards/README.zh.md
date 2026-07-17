@@ -192,6 +192,9 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 
 额外维护中的补充页：
 
+- [air/kill_chain_expectation_envelope.md](air/kill_chain_expectation_envelope.zh.md)
+  - 空空杀伤链期望包络 review labels 的活跃规划补充页；不是当前 runtime contract，
+    也不授予 calibration authority
 - [naval/ship_unit_references.md](naval/ship_unit_references.md)
   - 第一批海军单位与公开来源可追溯性的参考基准补充页
 - [naval/obs.md](naval/obs.md)

@@ -86,12 +86,15 @@ Language:
 - [飞行员操作空间标准](../air/act.md)
 - [空中任务命令标准](../air/aim.md)
 - [飞行员汇报标准](../air/rep.md)
+- [空空杀伤链期望包络](../air/kill_chain_expectation_envelope.zh.md)
+  - active planning supplement，不是当前 runtime contract
 
 它们负责：
 
 - runway、approach、ILS、takeoff、recovery、sortie phase 等 air semantics
 - air mission observation 与 execution-command 的特化
 - `wingman`、`element`、`flight` 等空中编组语义
+- 校准工作前用于 review 诊断分布的空空杀伤链期望包络 labels
 
 ### 海军特化
 

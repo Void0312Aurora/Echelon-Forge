@@ -5,6 +5,8 @@ import json
 import os
 import sys
 
+import pytest
+
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if REPO_ROOT not in sys.path:
@@ -65,9 +67,6 @@ def test_runtime_build_dirs_prefers_artifacts_and_linux_order(tmp_path, monkeypa
 
   assert runtime.build_dirs(str(tmp_path)) == [
     str(tmp_path / "build-gpu"),
-    str(tmp_path / "build-workshop"),
-    str(tmp_path / "build"),
-    str(tmp_path / "build-facade-local"),
   ]
 
 
@@ -108,7 +107,7 @@ def test_runtime_build_dirs_keeps_windows_local_priority(tmp_path, monkeypatch) 
   ]
 
 
-def test_subprocess_pythonpath_uses_runtime_build_order(tmp_path, monkeypatch) -> None:
+def test_explicit_build_dir_requires_artifact_and_does_not_fall_back(tmp_path, monkeypatch) -> None:
   from tools.runners.run_contract_batches import _subprocess_pythonpath_parts
 
   runtime = importlib.import_module("python.testing.runtime")
@@ -120,8 +119,11 @@ def test_subprocess_pythonpath_uses_runtime_build_order(tmp_path, monkeypatch) -
   monkeypatch.setenv("CMO_BUILD_DIR", str(env_build))
   monkeypatch.setattr(runtime, "_is_windows", lambda: False)
 
+  with pytest.raises(RuntimeError, match="does not contain an ef_py artifact"):
+    _subprocess_pythonpath_parts(str(tmp_path))
+
+  (env_build / "ef_py.cpython-test.so").write_text("", encoding="utf-8")
   assert _subprocess_pythonpath_parts(str(tmp_path)) == [
-    str(fallback_build),
     str(env_build),
     str(tmp_path),
   ]

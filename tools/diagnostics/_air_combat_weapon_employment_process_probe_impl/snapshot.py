@@ -17,7 +17,7 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethalit
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.probe_env import _base_env
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
     ACTION_SIGNAL_NAMES,
-    _a5_event_info_columns,
+    _event_info_columns,
     _action_columns_for_mode,
     _c2_roe_event_columns,
     _damage_consequence_reward_columns,
@@ -225,7 +225,7 @@ def _snapshot_row(
             previous_release_count=int(prev_release_count or 0),
         )
     )
-    row.update(_a5_event_info_columns(info))
+    row.update(_event_info_columns(info))
     if isinstance(policy_diagnostics, dict):
         for key, value in policy_diagnostics.items():
             row[str(key)] = _finite_float(value)
