@@ -123,9 +123,7 @@ def test_wp24_universal_env_raw_kernel_constructor_path_is_removed() -> None:
   assert "python.runtime_compat" not in universal_env
   assert "def _raw_universal_env_removed_message():" in universal_env
   assert "raise RuntimeError(_raw_universal_env_removed_message())" in universal_env
-  assert universal_env.index("raise RuntimeError(_raw_universal_env_removed_message())") < universal_env.index(
-    "self.sim = ef_py.SimulationKernel()"
-  )
+  assert "self.sim = ef_py.SimulationKernel()" not in universal_env
   assert "ef_py.WorldBatchRuntime(" not in universal_env
   assert "WorldBatchVecEnv/RuntimeFacadeAdapter" in universal_env
 

@@ -1,55 +1,14 @@
 from __future__ import annotations
 
 import os
-import sys
 from typing import Any
 
 import numpy as np
 
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
+from python.runtime_bootstrap import configure_repo_imports
 
 
-def _has_ef_py_artifact(path: str) -> bool:
-    try:
-        names = os.listdir(path)
-    except OSError:
-        return False
-    return any(
-        name == "ef_py"
-        or (name.startswith("ef_py") and name.endswith((".so", ".pyd")))
-        for name in names
-    )
-
-
-if _ENV_BUILD_DIR:
-    _EXPLICIT_BUILD_DIR = (
-        _ENV_BUILD_DIR
-        if os.path.isabs(_ENV_BUILD_DIR)
-        else os.path.join(_REPO_ROOT, _ENV_BUILD_DIR)
-    )
-    _EXPLICIT_BUILD_DIR = os.path.abspath(_EXPLICIT_BUILD_DIR)
-    if not os.path.isdir(_EXPLICIT_BUILD_DIR):
-        raise RuntimeError(f"CMO_BUILD_DIR does not exist: {_EXPLICIT_BUILD_DIR}")
-    if not _has_ef_py_artifact(_EXPLICIT_BUILD_DIR):
-        raise RuntimeError(
-            "CMO_BUILD_DIR does not contain an ef_py artifact: "
-            f"{_EXPLICIT_BUILD_DIR}"
-        )
-    _BUILD_DIRS = [_EXPLICIT_BUILD_DIR]
-else:
-    _BUILD_DIRS = [
-        os.path.join(_REPO_ROOT, "build-workshop"),
-        os.path.join(_REPO_ROOT, "build-gpu"),
-        os.path.join(_REPO_ROOT, "build"),
-    ]
-
-for _build_dir in reversed(_BUILD_DIRS):
-    _build_dir = os.path.abspath(_build_dir)
-    if os.path.isdir(_build_dir) and _has_ef_py_artifact(_build_dir):
-        if _build_dir in sys.path:
-            sys.path.remove(_build_dir)
-        sys.path.insert(0, _build_dir)
+configure_repo_imports()
 
 import ef_py
 import torch
@@ -220,42 +179,3 @@ else:
                     "link": spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32),
                 }
             )
-
-        def _compute_teacher_baseline(self) -> dict[str, Any]:
-            loader = self.unwrapped.loader
-            try:
-                sim_time_s = float(self.unwrapped.steps) * float(self.unwrapped.sim.get_time_step())
-            except Exception:
-                sim_time_s = 0.0
-            inst_now, truth_now = self._current_execution_runtime_state()
-            self._teacher_manager.update(
-                loader,
-                sim_time_s=sim_time_s,
-                truth=truth_now,
-                inst=inst_now,
-                sync_to_kernel=not bool(getattr(self, "_defer_kernel_command_sync", False)),
-            )
-            baseline = self._snapshot_leader_state()
-            self._sync_bridge_from_loader()
-            return baseline
-
-        def _update_scripted_c2(self) -> dict[str, Any]:
-            loader = self.unwrapped.loader
-            try:
-                sim_time_s = float(self.unwrapped.steps) * float(self.unwrapped.sim.get_time_step())
-            except Exception:
-                sim_time_s = 0.0
-            inst_now, truth_now = self._current_execution_runtime_state()
-            try:
-                c2_info = self._c2_manager.update(
-                    loader,
-                    sim_time_s=sim_time_s,
-                    truth=truth_now,
-                    inst=inst_now,
-                    sync_to_kernel=not bool(getattr(self, "_defer_kernel_command_sync", False)),
-                )
-            except TypeError:
-                c2_info = self._c2_manager.update(loader, sim_time_s=sim_time_s)
-            self._last_c2_info = dict(c2_info or {})
-            self._sync_bridge_from_loader()
-            return self._last_c2_info

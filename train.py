@@ -9,53 +9,11 @@ from typing import Any
 
 import numpy as np
 
-# Prefer the locally built `ef_py` extension when present (avoids accidentally using a stale
-# site-packages wheel/so from the venv). `CMO_BUILD_DIR` can pin a specific build tree.
-_REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-_ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
+from python.runtime_bootstrap import configure_repo_imports
 
 
-def _has_ef_py_artifact(path: str) -> bool:
-    try:
-        names = os.listdir(path)
-    except OSError:
-        return False
-    return any(
-        name == "ef_py"
-        or (name.startswith("ef_py") and name.endswith((".so", ".pyd")))
-        for name in names
-    )
+configure_repo_imports()
 
-
-if _ENV_BUILD_DIR:
-    _EXPLICIT_BUILD_DIR = (
-        _ENV_BUILD_DIR
-        if os.path.isabs(_ENV_BUILD_DIR)
-        else os.path.join(_REPO_ROOT, _ENV_BUILD_DIR)
-    )
-    _EXPLICIT_BUILD_DIR = os.path.abspath(_EXPLICIT_BUILD_DIR)
-    if not os.path.isdir(_EXPLICIT_BUILD_DIR):
-        raise RuntimeError(f"CMO_BUILD_DIR does not exist: {_EXPLICIT_BUILD_DIR}")
-    if not _has_ef_py_artifact(_EXPLICIT_BUILD_DIR):
-        raise RuntimeError(
-            "CMO_BUILD_DIR does not contain an ef_py artifact: "
-            f"{_EXPLICIT_BUILD_DIR}"
-        )
-    _BUILD_DIR_NAMES = [_EXPLICIT_BUILD_DIR]
-else:
-    _BUILD_DIR_NAMES = ["build-workshop", "build-gpu", "build"]
-
-for _build_dir_name in _BUILD_DIR_NAMES:
-    _BUILD_DIR = _build_dir_name if os.path.isabs(_build_dir_name) else os.path.join(_REPO_ROOT, _build_dir_name)
-    if os.path.isdir(_BUILD_DIR) and _has_ef_py_artifact(_BUILD_DIR):
-        if _BUILD_DIR in sys.path:
-            sys.path.remove(_BUILD_DIR)
-        sys.path.insert(0, _BUILD_DIR)
-        if sys.path[0] == _BUILD_DIR:
-            break
-
-# Add local path
-sys.path.insert(0, _REPO_ROOT)
 from python.training import (
     build_train_arg_parser,
     prepare_training_bootstrap,

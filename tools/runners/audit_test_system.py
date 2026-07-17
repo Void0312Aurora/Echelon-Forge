@@ -14,6 +14,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
+from python.testing.suite_manifest import (
+  load_contract_suite_manifest,
+  load_pytest_suite_manifest,
+  pytest_entry_path,
+)
+
 DEFAULT_PYTEST_SMOKE_SUITE = Path("tests/smoke/ci_smoke_suite.json")
 DEFAULT_CONTRACT_SMOKE_SUITE = Path("tests/smoke/ci_contract_suite.json")
 
@@ -52,39 +58,21 @@ def _active_paths(paths: list[str]) -> list[str]:
   return [path for path in paths if not _is_archive_path(path)]
 
 
-def _load_json(path: Path) -> dict[str, Any]:
-  with path.open("r", encoding="utf-8") as f:
-    data = json.load(f)
-  if not isinstance(data, dict):
-    raise TypeError(f"expected JSON object at {path}")
-  return data
-
-
-def _entry_file(entry: str) -> str:
-  return str(entry).strip().partition("::")[0].replace("\\", "/")
-
-
 def _load_pytest_smoke_files(root: Path, suite_path: Path) -> tuple[set[str], int]:
   path = _repo_path(suite_path, root)
   if not path.exists():
     return set(), 0
-  suite = _load_json(path)
-  entries = suite.get("paths", [])
-  if not isinstance(entries, list):
-    raise TypeError(f"pytest suite {path} has non-list 'paths'")
-  files = {_entry_file(str(entry)) for entry in entries if isinstance(entry, str)}
-  return files, len(entries)
+  manifest = load_pytest_suite_manifest(path, root, allow_empty=True)
+  files = {pytest_entry_path(entry.raw) for entry in manifest.entries}
+  return files, len(manifest.entries)
 
 
 def _load_contract_smoke_specs(root: Path, suite_path: Path) -> set[str]:
   path = _repo_path(suite_path, root)
   if not path.exists():
     return set()
-  suite = _load_json(path)
-  raw_specs = suite.get("specs", suite.get("paths", []))
-  if not isinstance(raw_specs, list):
-    raise TypeError(f"contract suite {path} has non-list specs/paths")
-  return {str(spec).replace("\\", "/") for spec in raw_specs if isinstance(spec, str)}
+  manifest = load_contract_suite_manifest(path, root, allow_empty=True)
+  return {entry.raw.replace("\\", "/") for entry in manifest.entries}
 
 
 def _source_dir(path: str) -> str:

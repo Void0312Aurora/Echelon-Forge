@@ -3,41 +3,35 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
-from typing import Any
+
+
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+from python.testing.suite_manifest import (
+    load_contract_suite_manifest,
+    resolve_repo_or_abs,
+)
 
 
 def _resolve_repo_or_abs(path: str, repo_root: str) -> str:
-    raw = str(path).strip()
-    if not raw:
-        raise ValueError("contract suite path entries must be non-empty")
-    if os.path.isabs(raw):
-        return os.path.abspath(raw)
-    return os.path.abspath(os.path.join(repo_root, *raw.replace("\\", "/").split("/")))
+    return resolve_repo_or_abs(
+        path,
+        repo_root,
+        empty_message="contract suite path entries must be non-empty",
+    )
 
 
 def _load_suite_specs(path: str, repo_root: str) -> list[str]:
-    suite_path = _resolve_repo_or_abs(path, repo_root)
-    with open(suite_path, "r", encoding="utf-8") as handle:
-        suite: dict[str, Any] = json.load(handle)
-    if not isinstance(suite, dict):
-        raise TypeError(f"expected contract suite JSON object at {suite_path!r}")
-    raw_specs = suite.get("specs", suite.get("paths", []))
-    if not isinstance(raw_specs, list) or not raw_specs:
-        raise ValueError(f"contract suite {suite_path!r} has no non-empty 'specs' list")
-
-    specs: list[str] = []
-    for raw in raw_specs:
-        if not isinstance(raw, str):
-            raise TypeError("contract suite spec entries must be strings")
-        specs.append(_resolve_repo_or_abs(raw, repo_root))
-    return specs
+    manifest = load_contract_suite_manifest(path, repo_root)
+    return [entry.resolved for entry in manifest.entries]
 
 
 def main() -> int:
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    repo_root = REPO_ROOT
     if repo_root not in sys.path:
         sys.path.insert(0, repo_root)
 

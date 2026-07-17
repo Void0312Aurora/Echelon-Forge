@@ -333,72 +333,22 @@ def run_misc_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
         return True, "env config resolution contract passed"
 
     if check_kind == "takeoff_curriculum_auto_gear_agl":
-        try:
-            import gymnasium as gym
-        except ModuleNotFoundError as exc:
-            raise ContractSkipped("gymnasium not installed") from exc
         import numpy as np
         from types import SimpleNamespace
-        from gym_envs.universal_env import UniversalEnv
+        from gym_envs.universal_env import build_pilot_action
 
-        class _StubSim:
-            def __init__(self) -> None:
-                self._inst = SimpleNamespace(
-                    alt_baro=float(spec.get("alt_baro", 500.0)),
-                    alt_radar=float(spec.get("alt_radar", 0.0)),
-                    on_runway=True,
-                    gear_collapsed=False,
-                    gear_stress=0.0,
-                )
-                self.captured_action = None
-
-            def get_instrument_state(self, _agent_id):
-                return self._inst
-
-            def set_pilot_action(self, _agent_id, pilot_action):
-                self.captured_action = pilot_action
-
-            def step(self):
-                return None
-
-            def get_time_step(self):
-                return 0.05
-
-        class _StubLoader:
-            def update_behaviors(self, _t):
-                return None
-
-            def compute_full_step(self, _obs, _sim, _steps, _max_steps):
-                return 0.0, False, False, [0.0, 0.0, 0.0, 0.0]
-
-            def get_rewards_config(self):
-                return {}
-
-        env = object.__new__(UniversalEnv)
-        env.action_mode = "takeoff4"
-        env.action_space = gym.spaces.Box(
-            low=np.array([-1.0, -1.0, -1.0, 0.0], dtype=np.float32),
-            high=np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
-            dtype=np.float32,
+        inst_now = SimpleNamespace(
+            alt_baro=float(spec.get("alt_baro", 500.0)),
+            alt_radar=float(spec.get("alt_radar", 0.0)),
+            on_runway=True,
+            gear_collapsed=False,
+            gear_stress=0.0,
         )
-        env.sim = _StubSim()
-        env.loader = _StubLoader()
-        env.agent_id = 1
-        env.steps = 0
-        env.max_steps = 10
-        env._last_action = None
-        env._last_inst = None
-        env._last_truth = None
-        env._get_obs = lambda: {
-            "instruments": np.zeros((42,), dtype=np.float32),
-            "contacts": np.zeros((10, 5), dtype=np.float32),
-            "rwr": np.zeros((4, 4), dtype=np.float32),
-            "mission": np.zeros((4,), dtype=np.float32),
-        }
-        env.step(np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32))
-        pilot_action = env.sim.captured_action
-        if pilot_action is None:
-            return False, "pilot action was not sent to the sim"
+        pilot_action = build_pilot_action(
+            np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32),
+            action_mode="takeoff4",
+            inst_now=inst_now,
+        )
         if abs(float(pilot_action.gear_handle) - 1.0) > 1.0e-6:
             return False, f"gear retracted on-ground when baro alt was high: gear_handle={pilot_action.gear_handle}"
         return True, "takeoff curriculum auto-gear contract passed"

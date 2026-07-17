@@ -380,7 +380,9 @@ void bind_core(nb::module_ &m) {
         .def_rw("nav_gain", &MissileTuning::nav_gain)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
         .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
-        .def_rw("autopilot_order", &MissileTuning::autopilot_order)
+        .def_prop_rw(
+            "autopilot_order", [](const MissileTuning &self) { return self.autopilot_order; },
+            [](MissileTuning &self, int value) { self.set_autopilot_order_override(value); })
         .def_rw("mach_transonic_start", &MissileTuning::mach_transonic_start)
         .def_rw("mach_transonic_end", &MissileTuning::mach_transonic_end)
         .def_rw("cd0_power_on_ratio", &MissileTuning::cd0_power_on_ratio)
@@ -417,9 +419,19 @@ void bind_core(nb::module_ &m) {
         .def_rw("max_accel_response_g_per_s", &MissileTuning::max_accel_response_g_per_s)
         .def_rw("min_launch_range_m", &MissileTuning::min_launch_range_m)
         .def_rw("max_launch_off_boresight_deg", &MissileTuning::max_launch_off_boresight_deg)
-        .def_rw("lobl_required", &MissileTuning::lobl_required)
-        .def_rw("midcourse_datalink_supported", &MissileTuning::midcourse_datalink_supported)
-        .def_rw("use_kalman_seeker", &MissileTuning::use_kalman_seeker)
+        .def_prop_rw(
+            "lobl_required", [](const MissileTuning &self) { return self.lobl_required; },
+            [](MissileTuning &self, bool value) { self.set_lobl_required_override(value); })
+        .def_prop_rw("midcourse_datalink_supported",
+                     [](const MissileTuning &self) {
+                         return self.midcourse_datalink_supported;
+                     },
+                     [](MissileTuning &self, bool value) {
+                         self.set_midcourse_datalink_override(value);
+                     })
+        .def_prop_rw(
+            "use_kalman_seeker", [](const MissileTuning &self) { return self.use_kalman_seeker; },
+            [](MissileTuning &self, bool value) { self.set_kalman_seeker_override(value); })
         .def_rw("warhead_profile", &MissileTuning::warhead_profile)
         .def_rw("has_warhead_profile", &MissileTuning::has_warhead_profile)
         .def_rw("fuze_profile", &MissileTuning::fuze_profile)

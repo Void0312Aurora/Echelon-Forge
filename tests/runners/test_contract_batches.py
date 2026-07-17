@@ -57,7 +57,7 @@ def test_run_direct_specs_uses_contract_package_entrypoint(monkeypatch, capsys) 
 
 
 def test_runtime_build_dirs_prefers_artifacts_and_linux_order(tmp_path, monkeypatch) -> None:
-  runtime = importlib.import_module("python.testing.runtime")
+  runtime = importlib.import_module("python.runtime_bootstrap")
   monkeypatch.delenv("CMO_BUILD_DIR", raising=False)
   monkeypatch.setattr(runtime, "_is_windows", lambda: False)
 
@@ -71,7 +71,7 @@ def test_runtime_build_dirs_prefers_artifacts_and_linux_order(tmp_path, monkeypa
 
 
 def test_runtime_build_dirs_prefers_newest_linux_artifact(tmp_path, monkeypatch) -> None:
-  runtime = importlib.import_module("python.testing.runtime")
+  runtime = importlib.import_module("python.runtime_bootstrap")
   monkeypatch.delenv("CMO_BUILD_DIR", raising=False)
   monkeypatch.setattr(runtime, "_is_windows", lambda: False)
 
@@ -91,7 +91,7 @@ def test_runtime_build_dirs_prefers_newest_linux_artifact(tmp_path, monkeypatch)
 
 
 def test_runtime_build_dirs_keeps_windows_local_priority(tmp_path, monkeypatch) -> None:
-  runtime = importlib.import_module("python.testing.runtime")
+  runtime = importlib.import_module("python.runtime_bootstrap")
   monkeypatch.delenv("CMO_BUILD_DIR", raising=False)
   monkeypatch.setattr(runtime, "_is_windows", lambda: True)
 
@@ -110,7 +110,7 @@ def test_runtime_build_dirs_keeps_windows_local_priority(tmp_path, monkeypatch) 
 def test_explicit_build_dir_requires_artifact_and_does_not_fall_back(tmp_path, monkeypatch) -> None:
   from tools.runners.run_contract_batches import _subprocess_pythonpath_parts
 
-  runtime = importlib.import_module("python.testing.runtime")
+  runtime = importlib.import_module("python.runtime_bootstrap")
   env_build = tmp_path / "custom-build"
   fallback_build = tmp_path / "build"
   env_build.mkdir()

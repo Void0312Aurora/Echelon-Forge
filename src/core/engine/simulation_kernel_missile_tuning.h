@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -63,4 +64,50 @@ struct MissileTuning {
     bool has_warhead_profile = false;
     FuzeProfile fuze_profile{};
     bool has_fuze_profile = false;
+
+    // The public fields retain their historical defaults. This tail mask adds
+    // sparse-patch intent without replacing them with a larger optional DTO.
+    // Non-default direct C++ assignments remain explicit; callers that need to
+    // override with a default value use the setters below.
+    static constexpr std::uint8_t kLoblRequiredOverride = 1u << 0;
+    static constexpr std::uint8_t kMidcourseDatalinkOverride = 1u << 1;
+    static constexpr std::uint8_t kKalmanSeekerOverride = 1u << 2;
+    static constexpr std::uint8_t kAutopilotOrderOverride = 1u << 3;
+    std::uint8_t explicit_overrides = 0;
+
+    void set_autopilot_order_override(int value) noexcept {
+        autopilot_order = value;
+        explicit_overrides |= kAutopilotOrderOverride;
+    }
+
+    void set_lobl_required_override(bool value) noexcept {
+        lobl_required = value;
+        explicit_overrides |= kLoblRequiredOverride;
+    }
+
+    void set_midcourse_datalink_override(bool value) noexcept {
+        midcourse_datalink_supported = value;
+        explicit_overrides |= kMidcourseDatalinkOverride;
+    }
+
+    void set_kalman_seeker_override(bool value) noexcept {
+        use_kalman_seeker = value;
+        explicit_overrides |= kKalmanSeekerOverride;
+    }
+
+    bool has_autopilot_order_override() const noexcept {
+        return (explicit_overrides & kAutopilotOrderOverride) != 0;
+    }
+
+    bool has_lobl_required_override() const noexcept {
+        return (explicit_overrides & kLoblRequiredOverride) != 0;
+    }
+
+    bool has_midcourse_datalink_override() const noexcept {
+        return (explicit_overrides & kMidcourseDatalinkOverride) != 0;
+    }
+
+    bool has_kalman_seeker_override() const noexcept {
+        return (explicit_overrides & kKalmanSeekerOverride) != 0;
+    }
 };

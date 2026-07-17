@@ -103,6 +103,8 @@ struct MissileTuningDefinition {
     double max_lateral_g = std::numeric_limits<double>::quiet_NaN();
     double autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
     double autopilot_damping = std::numeric_limits<double>::quiet_NaN();
+    // Content definitions are complete values; runtime global tuning uses a
+    // separate negative sentinel so an untouched patch does not force order 1.
     int autopilot_order = 1;
     double max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
     double mach_transonic_start = std::numeric_limits<double>::quiet_NaN();
