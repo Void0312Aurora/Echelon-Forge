@@ -5,7 +5,6 @@ import sys
 from typing import Any
 
 import numpy as np
-import torch
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
@@ -53,6 +52,7 @@ for _build_dir in reversed(_BUILD_DIRS):
         sys.path.insert(0, _build_dir)
 
 import ef_py
+import torch
 
 try:
     import gymnasium as gym

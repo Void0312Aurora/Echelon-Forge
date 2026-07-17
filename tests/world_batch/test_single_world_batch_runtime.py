@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 import numpy as np
+from stable_baselines3.common.vec_env import DummyVecEnv
 
 from python.testing.runtime import ensure_repo_imports
 
@@ -17,6 +18,7 @@ import python.rl.runtime.leader_world_batch_runtime as leader_runtime_module # n
 import python.rl.runtime.single_world_batch_runtime as single_runtime_module # noqa: E402
 from _world_model_train_impl.runtime_env import build_world_model_execution_env # noqa: E402
 from evaluate import _build_evaluation_env # noqa: E402
+from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec # noqa: E402
 from python.rl.runtime.single_world_batch_runtime import ( # noqa: E402
   SingleWorldBatchExecutionRuntimeHandle,
   build_single_world_batch_execution_runtime,
@@ -114,6 +116,47 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
             self.assertIn("runtime_window_evidence", info)
           finally:
             runtime.close()
+
+  def test_multi_timescale_evaluation_env_is_sb3_dummy_vec_compatible(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/single_world_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+      wrapper_class, wrapper_kwargs = get_action_wrapper_spec({
+        "wrappers": {
+          "multi_timescale_action": {
+            "enabled": True,
+            "hold_steps": 2,
+          },
+        },
+      })
+      self.assertIs(wrapper_class, MultiTimescaleActionWrapper)
+
+      vec_env = DummyVecEnv([
+        lambda: _build_evaluation_env(
+          scenario_path,
+          {
+            "include_visual": False,
+            "include_proprio": False,
+            "action_mode": "full",
+          },
+          wrapper_class=wrapper_class,
+          wrapper_kwargs=wrapper_kwargs,
+          worker_threads=1,
+        ),
+      ])
+      try:
+        self.assertIsInstance(vec_env.envs[0], MultiTimescaleActionWrapper)
+        observation = vec_env.reset()
+        self.assertIsNotNone(observation)
+        action = np.zeros((1, *vec_env.action_space.shape), dtype=np.float32)
+        _obs, rewards, dones, infos = vec_env.step(action)
+        self.assertEqual(rewards.shape, (1,))
+        self.assertEqual(dones.shape, (1,))
+        self.assertEqual(len(infos), 1)
+      finally:
+        vec_env.close()
 
   def test_single_world_runtime_step_uses_runtime_window_evidence_when_facade_api_available(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:

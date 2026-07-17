@@ -1,11 +1,8 @@
 import argparse
+import json
 import os
 import sys
-import json
-import numpy as np
 import time
-from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 # Prefer locally built `ef_py` extension when present.
 _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -52,6 +49,10 @@ for _build_dir_name in _BUILD_DIR_NAMES:
 
 # Add local path for gym wrapper
 sys.path.insert(0, _REPO_ROOT)
+import numpy as np
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv
+
 from python.env_config import resolve_env_settings
 from python.training.cli import ACTION_MODE_CHOICES, MISSION_OBS_MODE_CHOICES
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
@@ -67,13 +68,14 @@ def _build_evaluation_env(
     wrapper_kwargs: dict | None = None,
     worker_threads: int | None = None,
 ):
-    return build_single_world_batch_execution_runtime(
+    runtime = build_single_world_batch_execution_runtime(
         scenario_path=os.path.abspath(scenario_path),
         env_settings=dict(env_settings),
         wrapper_class=wrapper_class,
         wrapper_kwargs=wrapper_kwargs,
         worker_threads=worker_threads,
     )
+    return runtime.policy_env
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Evaluation for CMO")
