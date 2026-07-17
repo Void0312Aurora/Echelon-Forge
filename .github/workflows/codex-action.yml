@@ -60,8 +60,8 @@ concurrency:
 
 env:
   CODEX_RESPONSES_API_ENDPOINT: https://cpa.void0312.com:8443/v1/responses
-  CODEX_MODEL: gpt-5.5
-  CODEX_EFFORT: xhigh
+  CODEX_MODEL: gpt-5.6-sol
+  CODEX_EFFORT: max
   CODEX_ARGS: '["--config","disable_response_storage=true","--config","model_providers.codex-action-responses-proxy.service_tier=\"standard\""]'
 
 jobs:
