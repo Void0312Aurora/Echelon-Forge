@@ -1,32 +1,19 @@
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import sys
 import uuid
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any
 
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-PYTHON_EXECUTABLE = sys.executable
-
-
-def repo_path(*parts: str | os.PathLike[str]) -> Path:
-  path = REPO_ROOT
-  for part in parts:
-    path /= part
-  return path
-
-
-def read_repo_text(*parts: str | os.PathLike[str]) -> str:
-  return repo_path(*parts).read_text(encoding="utf-8")
-
-
-def read_json(path: Path) -> Any:
-  return json.loads(path.read_text(encoding="utf-8"))
+from tests.support.paths import (
+  PYTHON_EXECUTABLE,
+  REPO_ROOT,
+  read_json,
+  read_repo_text,
+  repo_path,
+)
 
 
 def ensure_repo_root_on_sys_path() -> None:
