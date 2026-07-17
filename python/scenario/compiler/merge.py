@@ -46,8 +46,7 @@ def _compile_merged_scenario_data(
 
             full_path = os.path.abspath(os.path.join(project_root, str(rel_path)))
             if not os.path.exists(full_path):
-                warnings.append(f"Warning: Import file not found: {full_path}")
-                continue
+                raise FileNotFoundError(f"Scenario import file not found: {full_path}")
 
             with open(full_path, "r", encoding="utf-8") as handle:
                 prefab = json.load(handle)

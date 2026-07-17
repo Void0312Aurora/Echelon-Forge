@@ -9,16 +9,42 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 # Prefer locally built `ef_py` extension when present.
 _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-_BUILD_DIR_NAMES = []
 _ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
+
+
+def _has_ef_py_artifact(path: str) -> bool:
+    try:
+        names = os.listdir(path)
+    except OSError:
+        return False
+    return any(
+        name == "ef_py"
+        or (name.startswith("ef_py") and name.endswith((".so", ".pyd")))
+        for name in names
+    )
+
+
 if _ENV_BUILD_DIR:
-    _BUILD_DIR_NAMES.append(_ENV_BUILD_DIR)
-_BUILD_DIR_NAMES.extend(["build-workshop", "build-gpu", "build"])
+    _EXPLICIT_BUILD_DIR = (
+        _ENV_BUILD_DIR
+        if os.path.isabs(_ENV_BUILD_DIR)
+        else os.path.join(_REPO_ROOT, _ENV_BUILD_DIR)
+    )
+    _EXPLICIT_BUILD_DIR = os.path.abspath(_EXPLICIT_BUILD_DIR)
+    if not os.path.isdir(_EXPLICIT_BUILD_DIR):
+        raise RuntimeError(f"CMO_BUILD_DIR does not exist: {_EXPLICIT_BUILD_DIR}")
+    if not _has_ef_py_artifact(_EXPLICIT_BUILD_DIR):
+        raise RuntimeError(
+            "CMO_BUILD_DIR does not contain an ef_py artifact: "
+            f"{_EXPLICIT_BUILD_DIR}"
+        )
+    _BUILD_DIR_NAMES = [_EXPLICIT_BUILD_DIR]
+else:
+    _BUILD_DIR_NAMES = ["build-workshop", "build-gpu", "build"]
+
 for _build_dir_name in _BUILD_DIR_NAMES:
     _BUILD_DIR = _build_dir_name if os.path.isabs(_build_dir_name) else os.path.join(_REPO_ROOT, _build_dir_name)
-    if os.path.isdir(_BUILD_DIR) and any(
-        fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_BUILD_DIR)
-    ):
+    if os.path.isdir(_BUILD_DIR) and _has_ef_py_artifact(_BUILD_DIR):
         if _BUILD_DIR in sys.path:
             sys.path.remove(_BUILD_DIR)
         sys.path.insert(0, _BUILD_DIR)
@@ -26,11 +52,28 @@ for _build_dir_name in _BUILD_DIR_NAMES:
 
 # Add local path for gym wrapper
 sys.path.insert(0, _REPO_ROOT)
-from gym_envs.universal_env import UniversalEnv
 from python.env_config import resolve_env_settings
 from python.training.cli import ACTION_MODE_CHOICES, MISSION_OBS_MODE_CHOICES
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.control.wrappers import get_action_wrapper_spec
+from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
+
+
+def _build_evaluation_env(
+    scenario_path: str,
+    env_settings: dict,
+    *,
+    wrapper_class=None,
+    wrapper_kwargs: dict | None = None,
+    worker_threads: int | None = None,
+):
+    return build_single_world_batch_execution_runtime(
+        scenario_path=os.path.abspath(scenario_path),
+        env_settings=dict(env_settings),
+        wrapper_class=wrapper_class,
+        wrapper_kwargs=wrapper_kwargs,
+        worker_threads=worker_threads,
+    )
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Evaluation for CMO")
@@ -127,13 +170,18 @@ def main():
     
     # Create Env
     def make_env():
-        env = UniversalEnv(
-            scenario_path,
-            **env_settings,
+        runtime_cfg = (
+            train_config.get("runtime", {})
+            if isinstance(train_config, dict) and isinstance(train_config.get("runtime", {}), dict)
+            else {}
         )
-        if wrapper_class is not None:
-            env = wrapper_class(env, **(wrapper_kwargs or {}))
-        return env
+        return _build_evaluation_env(
+            scenario_path,
+            env_settings,
+            wrapper_class=wrapper_class,
+            wrapper_kwargs=wrapper_kwargs,
+            worker_threads=runtime_cfg.get("world_batch_threads"),
+        )
     
     vec_env = DummyVecEnv([make_env])
     

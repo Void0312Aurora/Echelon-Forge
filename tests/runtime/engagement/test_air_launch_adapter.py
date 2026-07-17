@@ -156,6 +156,58 @@ def _wait_for_track(
 
 
 class AirLaunchAdapterTests(unittest.TestCase):
+  def test_legacy_fire_missile_rejects_platform_without_inventory_or_weapon_mount(self) -> None:
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(_DB_PATH))
+
+    awacs_id = int(
+      sim.spawn_unit(
+        ef_py.Side.Blue,
+        "E-3_Sentry_AWACS",
+        0.0,
+        0.0,
+        3000.0,
+        0.0,
+        0.0,
+        0.0,
+        200.0,
+        0.0,
+        0.0,
+      )
+    )
+    target_id = int(
+      sim.spawn_unit(
+        ef_py.Side.Red,
+        "F-16C_Block50",
+        12000.0,
+        0.0,
+        3000.0,
+        180.0,
+        0.0,
+        0.0,
+        -200.0,
+        0.0,
+        0.0,
+      )
+    )
+    self.assertGreater(awacs_id, 0)
+    self.assertGreater(target_id, 0)
+
+    track = ef_py.Detection()
+    track.target_id = target_id
+    track.range = 12000.0
+    track.bearing = 0.0
+    track.elevation = 0.0
+    track.closing_speed = 400.0
+    track.signal_strength = 1.0
+    track.local_sensor_hit = True
+    sim.set_contact_list(awacs_id, [track])
+
+    missile_id = int(sim.fire_missile(awacs_id, target_id))
+
+    self.assertEqual(missile_id, 0)
+    self.assertEqual(len(sim.export_recent_engagement_events().launch_events), 0)
+
   def test_accepted_legacy_fire_missile_outcome_fits_launch_request_and_event_shape(self) -> None:
     sim, blue_id, red_id = _make_air_combat_fixture()
     target_track_id, request_time_s = _wait_for_track(sim, blue_id, red_id)

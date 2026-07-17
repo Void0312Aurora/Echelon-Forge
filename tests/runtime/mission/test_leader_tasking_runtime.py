@@ -37,6 +37,27 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
     self.assertAlmostEqual(resolve_loader_time_step(loader, default=0.05), 0.2, places=6)
     sim.get_time_step.assert_called_once_with()
 
+  def test_resolve_loader_time_step_preserves_positive_sub_default_value(self) -> None:
+    loader = SimpleNamespace(
+      sim=SimpleNamespace(get_time_step=Mock(return_value=0.02)),
+      scenario_data={},
+      _compiled_runtime_metadata=None,
+      _compiled_scenario=None,
+    )
+
+    self.assertAlmostEqual(resolve_loader_time_step(loader, default=0.05), 0.02, places=6)
+
+  def test_resolve_loader_time_step_rejects_nonfinite_or_nonpositive_value(self) -> None:
+    for value in (0.0, -0.1, float("nan"), float("inf")):
+      with self.subTest(value=value):
+        loader = SimpleNamespace(
+          sim=SimpleNamespace(get_time_step=Mock(return_value=value)),
+          scenario_data={},
+          _compiled_runtime_metadata=None,
+          _compiled_scenario=None,
+        )
+        self.assertAlmostEqual(resolve_loader_time_step(loader, default=0.05), 0.05, places=6)
+
   def test_sync_loader_mission_command_uses_loader_owned_runtime_view(self) -> None:
     sim = SimpleNamespace(set_mission_command=Mock())
     loader = SimpleNamespace(agent_id=9, sim=sim)

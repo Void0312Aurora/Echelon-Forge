@@ -6,11 +6,71 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from python.training import build_train_arg_parser, prepare_training_bootstrap
+from python.training import bootstrap as bootstrap_module
 
 
 class TrainingBootstrapContractTests(unittest.TestCase):
+  def test_experiment_layout_rejects_auto_resume_with_init_from(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      root = Path(tmpdir)
+      output_base = root / "runs"
+      exp_dir = output_base / "conflict_case"
+      interrupted = exp_dir / "checkpoints" / "interrupted_model.zip"
+      interrupted.parent.mkdir(parents=True)
+      interrupted.write_bytes(b"checkpoint")
+      scenario_path = root / "scenario.json"
+      train_config_path = root / "train.json"
+      init_path = root / "init.zip"
+      scenario_path.write_text("{}", encoding="utf-8")
+      train_config_path.write_text("{}", encoding="utf-8")
+      init_path.write_bytes(b"init")
+      args = SimpleNamespace(
+        resume_path=None,
+        init_from=str(init_path),
+        run_name="conflict_case",
+        output_base=str(output_base),
+      )
+
+      with redirect_stdout(io.StringIO()) as stdout:
+        layout = bootstrap_module._prepare_experiment_layout(
+          args,
+          str(scenario_path),
+          str(train_config_path),
+        )
+
+      self.assertIsNone(layout)
+      self.assertIsNone(args.resume_path)
+      self.assertIn("interrupted checkpoint", stdout.getvalue())
+
+  def test_experiment_layout_acquires_lock_before_writing_backups(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      root = Path(tmpdir)
+      scenario_path = root / "scenario.json"
+      train_config_path = root / "train.json"
+      scenario_path.write_text("{}", encoding="utf-8")
+      train_config_path.write_text("{}", encoding="utf-8")
+      args = SimpleNamespace(
+        resume_path=None,
+        init_from=None,
+        run_name="locked_case",
+        output_base=str(root / "runs"),
+      )
+
+      with patch.object(bootstrap_module, "acquire_experiment_lock", return_value=None):
+        with patch.object(bootstrap_module.shutil, "copy") as copy_file:
+          layout = bootstrap_module._prepare_experiment_layout(
+            args,
+            str(scenario_path),
+            str(train_config_path),
+          )
+
+      self.assertIsNone(layout)
+      copy_file.assert_not_called()
+
   def test_train_cli_accepts_air_combat_hybrid_action_override(self) -> None:
     parser = build_train_arg_parser()
     args = parser.parse_args(

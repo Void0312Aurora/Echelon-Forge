@@ -24,7 +24,7 @@ from _world_model_train_impl.common import (
 
 configure_repo_imports()
 
-from gym_envs.universal_env import UniversalEnv  # noqa: E402
+from _world_model_train_impl.runtime_env import build_world_model_execution_env  # noqa: E402
 from python.rl.control.scripted_stable_flight import ScriptedStableFlightController  # noqa: E402
 from python.rl.control.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action  # noqa: E402
 from python.world_model.features import (  # noqa: E402
@@ -42,8 +42,8 @@ def collect_dataset(args: argparse.Namespace) -> None:
     set_seed(int(args.seed))
     rng = np.random.default_rng(int(args.seed))
 
-    env = UniversalEnv(
-        args.scenario,
+    env = build_world_model_execution_env(
+        scenario_path=args.scenario,
         include_visual=bool(args.include_visual),
         include_proprio=bool(getattr(args, "include_proprio", False)),
         action_mode=str(args.action_mode),
@@ -369,13 +369,13 @@ def collect_dataset(args: argparse.Namespace) -> None:
         ):
             stable_ctrl = ScriptedStableFlightController(
                 action_dim=int(spec.action_dim),
-                dt=float(getattr(env.sim, "get_time_step", lambda: 0.05)()),
+                dt=float(env.get_time_step()),
             )
             stable_ctrl.reset(obs)
         if str(args.policy) in ("scripted_takeoff", "dagger_scripted_takeoff"):
             takeoff_ctrl = ScriptedTakeoffController(
                 action_dim=int(spec.action_dim),
-                dt=float(getattr(env.sim, "get_time_step", lambda: 0.05)()),
+                dt=float(env.get_time_step()),
             )
             takeoff_ctrl.reset(obs)
         done = False

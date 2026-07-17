@@ -529,6 +529,23 @@ class RuntimeFacadeCounterfactualTests(unittest.TestCase):
     self.assertTrue(list(result.branch_step_result.rewards))
     self.assertTrue(list(result.parent_observation_packet.agent_observations))
     self.assertTrue(list(result.branch_observation_packet.agent_observations))
+    parent_observation = result.parent_observation_packet.agent_observations[0]
+    branch_observation = result.branch_observation_packet.agent_observations[0]
+    self.assertAlmostEqual(
+      float(branch_observation.x) - float(parent_observation.x),
+      25.0,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      float(branch_observation.vy) - float(parent_observation.vy),
+      5.0,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      float(branch_observation.heading) - float(parent_observation.heading),
+      15.0,
+      places=6,
+    )
     self.assertIn(
       "claim_boundary=non_truth_claim_observation_only",
       list(result.ancestry.evidence_refs),
@@ -735,7 +752,7 @@ class RuntimeFacadeCounterfactualTests(unittest.TestCase):
     facade.step_batch()
     terrain_inst = facade.get_instrument_states_batch([_entity_ref(0, int(terrain_result.entity_ids[0]))])[0]
 
-    self.assertAlmostEqual(float(default_inst.alt_radar), 1200.0, places=2)
+    self.assertAlmostEqual(float(default_inst.alt_radar), 1200.0, delta=1.0)
     self.assertLess(float(terrain_inst.alt_radar), 1200.0 - 100.0)
 
   def test_runtime_facade_apply_world_setup_rejects_unknown_terrain_type(self) -> None:

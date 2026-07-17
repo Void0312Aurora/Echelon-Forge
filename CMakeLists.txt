@@ -38,15 +38,37 @@ include(FetchContent)
 FetchContent_Declare(
     flecs
     GIT_REPOSITORY https://github.com/SanderMertens/flecs.git
-    GIT_TAG        v4.0.0
+    GIT_TAG        eeb9eaa64243536c5d5c19279c9c305a52d0b9b3 # v4.0.0
+    SOURCE_SUBDIR  __cmo_no_upstream_cmake_project__
 )
 FetchContent_MakeAvailable(flecs)
+
+# Flecs publishes SDK-oriented install rules (headers, archives, and CMake
+# package metadata).  CMO only needs the runtime linked into its binaries, so
+# build the upstream amalgamation as a private static dependency instead of
+# adding the Flecs project to our install graph.  This keeps Python wheels
+# self-contained without turning them into Flecs development SDKs.
+add_library(ef_flecs STATIC "${flecs_SOURCE_DIR}/flecs.c")
+target_include_directories(ef_flecs SYSTEM PUBLIC
+    "${flecs_SOURCE_DIR}/include"
+)
+# The amalgamated flecs.c includes the upstream root flecs.h, which defines
+# flecs_STATIC itself.  Consumers use include/flecs.h and need the definition
+# propagated without redundantly defining it while compiling flecs.c.
+target_compile_definitions(ef_flecs INTERFACE flecs_STATIC)
+set_target_properties(ef_flecs PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (WIN32)
+    target_link_libraries(ef_flecs PUBLIC wsock32 ws2_32)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(ef_flecs PUBLIC Threads::Threads)
+endif()
+add_library(flecs::flecs ALIAS ef_flecs)
 
 # 2. spdlog (Logging)
 FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG        v1.13.0
+    GIT_TAG        7c02e204c92545f869e2f04edaab1f19fe8b19fd # v1.13.0
 )
 FetchContent_MakeAvailable(spdlog)
 
@@ -54,7 +76,7 @@ FetchContent_MakeAvailable(spdlog)
 FetchContent_Declare(
     nanobind
     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-    GIT_TAG        v1.9.2
+    GIT_TAG        80a30c8efb093b14f0e744bc7f6a9ef34beb3f7f # v1.9.2
 )
 FetchContent_MakeAvailable(nanobind)
 
@@ -62,7 +84,7 @@ FetchContent_MakeAvailable(nanobind)
 FetchContent_Declare(
     nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG        v3.11.3
+    GIT_TAG        9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03 # v3.11.3
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
@@ -287,14 +309,14 @@ target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE
 
 # --- Testing ---
 # 5. doctest (C++ unit test framework)
+include(CTest)
+if (BUILD_TESTING)
 FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG        v2.4.11
+    GIT_TAG        ae7a13539fb71f270b87eb2e874fbac80bc8dda2 # v2.4.11
 )
 FetchContent_MakeAvailable(doctest)
-
-enable_testing()
 
 set(EF_TEST_SOURCES
     src/tests/test_main.cpp
@@ -314,6 +336,7 @@ target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # CTest entries for all doctest suites plus focused structural-failure lanes.
 add_test(NAME ef_test_all COMMAND ef_test)
+set_tests_properties(ef_test_all PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_test(NAME structural_failure_state COMMAND ef_test --test-suite=structural_failure_state)
 add_test(NAME structural_failure_events COMMAND ef_test --test-suite=structural_failure_events)
 add_test(NAME structural_failure_break_modes COMMAND ef_test --test-suite=structural_failure_break_modes)
@@ -321,7 +344,8 @@ add_test(NAME structural_consequence COMMAND ef_test --test-suite=structural_con
 add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_damage_lifecycle)
 add_test(NAME world_batch_runtime COMMAND ef_test --test-suite=world_batch_runtime)
 add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
-set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+endif()
 
 set(EF_PROJECT_WARNING_TARGETS
     ef_core
@@ -347,3 +371,14 @@ endforeach()
 # Install the extension module
 install(TARGETS ef_py DESTINATION .)
 set_target_properties(ef_py PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+
+# Keep runtime-relative resource lookup working in installed wheels.  The
+# Python runtime resolves these paths from the wheel root, matching the source
+# checkout layout.
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/config" DESTINATION examples)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/examples/__init__.py" DESTINATION examples)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/agents" DESTINATION examples
+    PATTERN "__pycache__" EXCLUDE
+    PATTERN "*.pyc" EXCLUDE
+)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/scenarios" DESTINATION .)

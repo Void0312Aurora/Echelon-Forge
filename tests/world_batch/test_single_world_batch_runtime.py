@@ -15,7 +15,10 @@ import ef_py # noqa: E402
 
 import python.rl.runtime.leader_world_batch_runtime as leader_runtime_module # noqa: E402
 import python.rl.runtime.single_world_batch_runtime as single_runtime_module # noqa: E402
+from _world_model_train_impl.runtime_env import build_world_model_execution_env # noqa: E402
+from evaluate import _build_evaluation_env # noqa: E402
 from python.rl.runtime.single_world_batch_runtime import ( # noqa: E402
+  SingleWorldBatchExecutionRuntimeHandle,
   build_single_world_batch_execution_runtime,
 )
 
@@ -67,6 +70,51 @@ def _inline_single_world_scenario() -> dict:
 
 
 class SingleWorldBatchRuntimeTests(unittest.TestCase):
+  def test_maintained_evaluation_and_world_model_entry_envs_smoke(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/single_world_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+      factories = {
+        "evaluate": lambda: _build_evaluation_env(
+          scenario_path,
+          {
+            "include_visual": False,
+            "include_proprio": False,
+            "action_mode": "full",
+          },
+          worker_threads=1,
+        ),
+        "world_model": lambda: build_world_model_execution_env(
+          scenario_path=scenario_path,
+          include_visual=False,
+          include_proprio=False,
+          action_mode="full",
+        ),
+      }
+
+      for entry_name, factory in factories.items():
+        with self.subTest(entry=entry_name):
+          runtime = factory()
+          try:
+            self.assertIsInstance(runtime, SingleWorldBatchExecutionRuntimeHandle)
+            obs, _info = runtime.reset(seed=17)
+            self.assertIs(runtime.loader, runtime.unwrapped.loader)
+            self.assertIs(runtime.sim, runtime.unwrapped.sim)
+            self.assertEqual(runtime.agent_id, runtime.unwrapped.agent_id)
+            self.assertEqual(runtime.steps, 0)
+            self.assertGreater(runtime.max_steps, 0)
+            self.assertGreater(runtime.get_time_step(), 0.0)
+            self.assertIn("instruments", obs)
+            _obs, reward, _terminated, _truncated, info = runtime.step(
+              np.zeros((17,), dtype=np.float32)
+            )
+            self.assertTrue(np.isfinite(float(reward)))
+            self.assertIn("runtime_window_evidence", info)
+          finally:
+            runtime.close()
+
   def test_single_world_runtime_step_uses_runtime_window_evidence_when_facade_api_available(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_path = f"{tmpdir}/single_world_scenario.json"
@@ -158,6 +206,55 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
           "selected_slice_cadence_trace_runtime_window",
         )
       finally:
+        runtime.close()
+
+  def test_single_world_air_combat_hybrid_uses_event_action_contract(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario = _inline_single_world_scenario()
+      scenario["scenario_name"] = "air_combat_single_world_event_contract"
+      scenario["domain"] = "air_combat"
+      scenario_path = f"{tmpdir}/single_world_air_combat_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(scenario, f, ensure_ascii=True)
+
+      runtime = build_single_world_batch_execution_runtime(
+        scenario_path=scenario_path,
+        env_settings={
+          "include_visual": False,
+          "include_proprio": False,
+          "action_mode": "air_combat_hybrid_v1",
+        },
+      )
+      calls: list[str] = []
+      original_gate = single_runtime_module.apply_air_combat_event_action_gate
+      original_finalize = single_runtime_module.finalize_air_combat_event_action_info
+      original_add_info = single_runtime_module.add_air_combat_event_action_info
+
+      def _tracked_gate(*args, **kwargs):
+        calls.append("gate")
+        return original_gate(*args, **kwargs)
+
+      def _tracked_finalize(*args, **kwargs):
+        calls.append("finalize")
+        return original_finalize(*args, **kwargs)
+
+      def _tracked_add_info(*args, **kwargs):
+        calls.append("info")
+        return original_add_info(*args, **kwargs)
+
+      single_runtime_module.apply_air_combat_event_action_gate = _tracked_gate
+      single_runtime_module.finalize_air_combat_event_action_info = _tracked_finalize
+      single_runtime_module.add_air_combat_event_action_info = _tracked_add_info
+      try:
+        runtime.reset(seed=19)
+        action = np.zeros(runtime.action_space.shape, dtype=np.float32)
+        runtime.step(action)
+        self.assertEqual(calls, ["gate", "finalize", "info"])
+        self.assertEqual(runtime.loader._last_action_mode, "air_combat_hybrid_v1")
+      finally:
+        single_runtime_module.apply_air_combat_event_action_gate = original_gate
+        single_runtime_module.finalize_air_combat_event_action_info = original_finalize
+        single_runtime_module.add_air_combat_event_action_info = original_add_info
         runtime.close()
 
   def test_single_world_runtime_requires_runtime_window_api(self) -> None:

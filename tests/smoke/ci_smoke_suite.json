@@ -10,6 +10,7 @@
     "tests/architecture/runtime_facade/test_design_boundary_gates.py",
     "tests/architecture/build_system/test_cmake_target_readiness.py",
     "tests/runtime/core/test_env_config.py",
+    "tests/runtime/core/test_explicit_build_dir_fail_closed.py",
     "tests/runtime/core/test_kernel_observation_sanity.py",
     "tests/runtime/core/test_mass_component_boundary.py",
     "tests/runtime/core/test_runtime_teardown_stability.py",

@@ -12,7 +12,6 @@ jobs:
   coverage-baseline:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    continue-on-error: true
 
     steps:
       - name: Checkout

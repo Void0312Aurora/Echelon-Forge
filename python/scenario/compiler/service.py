@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import json
 import os
 from dataclasses import dataclass
@@ -182,6 +183,12 @@ class ScenarioCompiler:
             zone_count=len(zones),
             entity_count=len(entities),
         )
+
+
+# Cached compiled metadata may own nanobind-backed runtime DTOs.  Release the
+# cache while extension types are still alive instead of relying on arbitrary
+# interpreter module-destruction order.
+atexit.register(ScenarioCompiler.clear_cache)
 
 
 __all__ = [

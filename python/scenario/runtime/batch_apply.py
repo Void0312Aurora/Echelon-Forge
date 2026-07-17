@@ -20,7 +20,7 @@ from .models import (
     BatchWorldApplyBuffer,
     PreparedScenarioWorldContext,
     ScenarioWorldLayout,
-    _SIDE_MAP,
+    resolve_scenario_side,
 )
 from .randomization import _apply_spawn_randomization
 from .roster import _attach_active_roster_to_applied_world
@@ -240,7 +240,7 @@ def _load_compiled_scenario_batch_direct(
             req = spawn_items[spawn_cursor]
             spawn_cursor += 1
             req.world_index = int(world_index)
-            req.side = _SIDE_MAP.get(str(template.side_name), ef_py.Side.Neutral)
+            req.side = resolve_scenario_side(template.side_name)
             req.type_name = str(template.type_name)
             req.entity_name = str(template.entity_name)
             req.is_agent = bool(template.is_agent)

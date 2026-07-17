@@ -191,13 +191,19 @@ def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation
         f"missing {required!r}"
       )
 
-  assert "spawn_units_batch(const std::vector<WorldSpawnRequest>& requests)" in world_batch_source
+  assert re.search(
+    r"spawn_units_batch\(\s*const\s+std::vector<WorldSpawnRequest>\s*&\s*requests\s*\)",
+    world_batch_source,
+  )
   assert "std::uint64_t spawn_typed_platform_unit(" in world_batch_header, (
     "WP22 maintained typed setup promotion requires a batch-owned typed spawn helper "
     "instead of rematerializing maintained requests into WorldSpawnRequest"
   )
   assert "spawn_typed_platform_unit(" in world_batch_source
-  assert "const TypedPlatformSpawnRequest& request" in world_batch_source
+  assert re.search(
+    r"const\s+TypedPlatformSpawnRequest\s*&\s*request",
+    world_batch_source,
+  )
   assert "request.source_type_name" in world_batch_source
   assert "WorldSpawnRequest legacy" not in world_batch_source, (
     "The batch-owned maintained typed helper must not rebuild a WorldSpawnRequest"

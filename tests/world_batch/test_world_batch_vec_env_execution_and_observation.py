@@ -1393,6 +1393,21 @@ class WorldBatchVecEnvExecutionAndObservationTests(unittest.TestCase):
 
 
 class VecEnvAdapterTests(unittest.TestCase):
+  def test_shared_memory_vec_env_rejects_action_batch_size_mismatch(self) -> None:
+    vec_env = SharedMemorySubprocVecEnv(
+      [lambda env_id=i: CounterDictEnv(env_id) for i in range(2)],
+      start_method="forkserver",
+    )
+    try:
+      vec_env.reset()
+      for action_count in (1, 3):
+        with self.subTest(action_count=action_count):
+          with self.assertRaisesRegex(ValueError, "action batch size mismatch"):
+            vec_env.step_async(np.zeros((action_count, 1), dtype=np.float32))
+          self.assertFalse(vec_env.waiting)
+    finally:
+      vec_env.close()
+
   def test_returns_shared_observation_views(self):
     vec_env = SharedMemorySubprocVecEnv(
       [lambda env_id=i: CounterDictEnv(env_id) for i in range(2)],

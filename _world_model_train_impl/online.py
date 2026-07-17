@@ -9,6 +9,10 @@ from dataclasses import asdict
 import numpy as np
 import torch
 
+from _world_model_train_impl.checkpoint import (
+    _checkpoint_tensor,
+    _load_actor_checkpoint,
+)
 from _world_model_train_impl.common import (
     _apply_env_overrides,
     _apply_norm_clip,
@@ -26,7 +30,7 @@ from _world_model_train_impl.common import (
     _unnormalize_action,
 )
 
-from gym_envs.universal_env import UniversalEnv
+from _world_model_train_impl.runtime_env import build_world_model_execution_env
 from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
 from python.rl.control.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action
 from python.world_model.dreamer import DreamerConfig, DreamerTrainer
@@ -117,102 +121,58 @@ def online_train(args: argparse.Namespace) -> None:
         ckpt_actor_input = (
             str(ckpt_cfg.get("actor_input", "rssm")) if isinstance(ckpt_cfg, dict) else "rssm"
         )
-        if "actor" in ckpt and str(cfg.actor_input) == ckpt_actor_input:
-            try:
-                trainer.actor.load_state_dict(ckpt["actor"])
-            except RuntimeError:
-                try:
-                    src = ckpt["actor"]
-                    dst = trainer.actor.state_dict()
-                    first_w = "net.net.0.weight"
-                    if first_w in src and first_w in dst:
-                        w_src = src[first_w]
-                        w_dst = dst[first_w]
-                        if (
-                            isinstance(w_src, torch.Tensor)
-                            and isinstance(w_dst, torch.Tensor)
-                            and w_src.ndim == 2
-                            and w_dst.ndim == 2
-                            and w_src.shape[0] == w_dst.shape[0]
-                            and w_dst.shape[1] >= w_src.shape[1]
-                        ):
-                            w_new = w_dst.clone()
-                            w_new.zero_()
-                            w_new[:, : w_src.shape[1]] = w_src
-                            dst[first_w] = w_new
-                            for k, v in src.items():
-                                if k == first_w:
-                                    continue
-                                if (
-                                    k in dst
-                                    and isinstance(v, torch.Tensor)
-                                    and dst[k].shape == v.shape
-                                ):
-                                    dst[k] = v
-                            trainer.actor.load_state_dict(dst)
-                            print(
-                                f"[online] padded actor weights: {ckpt_actor_input} "
-                                f"(in={w_src.shape[1]} -> {w_dst.shape[1]})"
-                            )
-                        else:
-                            raise RuntimeError(
-                                "Cannot pad actor weights: incompatible first-layer shapes"
-                            )
-                    else:
-                        raise RuntimeError("Cannot pad actor weights: missing first-layer key")
-                except Exception:
-                    raise
+        if bool(getattr(args, "reset_actor", False)):
+            print(f"[online] reset actor weights (not loading from checkpoint): {ckpt_path}")
+        elif "actor" in ckpt:
+            _load_actor_checkpoint(
+                trainer.actor,
+                ckpt["actor"],
+                source_input=ckpt_actor_input,
+                target_input=str(cfg.actor_input),
+                source_angle_deg_indices=(
+                    ckpt_cfg.get("angle_deg_indices")
+                    if isinstance(ckpt_cfg, dict)
+                    else None
+                ),
+                target_angle_deg_indices=cfg.angle_deg_indices,
+            )
         if "value" in ckpt:
             trainer.value.load_state_dict(ckpt["value"])
         # See train_world_model(): keep checkpoint normalization stats by default, otherwise
         # the resumed encoder can become incompatible with the new dataset stats.
         if not bool(getattr(args, "recompute_stats", False)):
-            try:
-                obs_mean = ckpt.get("obs_mean", None)
-                obs_std = ckpt.get("obs_std", None)
-                if obs_mean is not None and obs_std is not None:
-                    obs_mean_t = torch.as_tensor(
-                        obs_mean, device=device, dtype=torch.float32
-                    ).reshape(-1)
-                    obs_std_t = torch.as_tensor(
-                        obs_std, device=device, dtype=torch.float32
-                    ).reshape(-1)
-                    if trainer.obs_mean is not None and trainer.obs_std is not None:
-                        if (
-                            obs_mean_t.shape == trainer.obs_mean.shape
-                            and obs_std_t.shape == trainer.obs_std.shape
-                        ):
-                            trainer.obs_mean = obs_mean_t
-                            trainer.obs_std = torch.maximum(
-                                obs_std_t, torch.as_tensor(cfg.obs_min_std, device=device)
-                            )
-
-                if dataset.spec.visual_shape is not None:
-                    visual_mean = ckpt.get("visual_mean", None)
-                    visual_std = ckpt.get("visual_std", None)
-                    if visual_mean is not None and visual_std is not None:
-                        visual_mean_t = torch.as_tensor(
-                            visual_mean, device=device, dtype=torch.float32
-                        ).reshape(-1)
-                        visual_std_t = torch.as_tensor(
-                            visual_std, device=device, dtype=torch.float32
-                        ).reshape(-1)
-                        if trainer.visual_mean is not None and trainer.visual_std is not None:
-                            if (
-                                visual_mean_t.shape == trainer.visual_mean.shape
-                                and visual_std_t.shape == trainer.visual_std.shape
-                            ):
-                                trainer.visual_mean = visual_mean_t
-                                trainer.visual_std = torch.maximum(
-                                    visual_std_t, torch.as_tensor(cfg.visual_min_std, device=device)
-                                )
-            except Exception:
-                pass
+            trainer.obs_mean = _checkpoint_tensor(
+                ckpt,
+                "obs_mean",
+                trainer.obs_mean,
+                device=device,
+            )
+            trainer.obs_std = _checkpoint_tensor(
+                ckpt,
+                "obs_std",
+                trainer.obs_std,
+                device=device,
+                minimum=cfg.obs_min_std,
+            )
+            if dataset.spec.visual_shape is not None:
+                trainer.visual_mean = _checkpoint_tensor(
+                    ckpt,
+                    "visual_mean",
+                    trainer.visual_mean,
+                    device=device,
+                )
+                trainer.visual_std = _checkpoint_tensor(
+                    ckpt,
+                    "visual_std",
+                    trainer.visual_std,
+                    device=device,
+                    minimum=cfg.visual_min_std,
+                )
         print(f"[online] loaded checkpoint {ckpt_path}")
 
     include_visual = dataset.spec.visual_shape is not None
-    env = UniversalEnv(
-        args.scenario,
+    env = build_world_model_execution_env(
+        scenario_path=args.scenario,
         include_visual=bool(include_visual),
         include_proprio=bool(getattr(args, "include_proprio", False)),
         action_mode=str(args.action_mode),
@@ -325,7 +285,7 @@ def online_train(args: argparse.Namespace) -> None:
         expert_ctrl = None
         if expert_labels != "none":
             try:
-                dt = float(env.sim.get_time_step())
+                dt = float(env.get_time_step())
             except Exception:
                 dt = 0.05
             if expert_labels == "scripted_takeoff":

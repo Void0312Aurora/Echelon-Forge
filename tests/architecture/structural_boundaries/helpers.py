@@ -512,9 +512,7 @@ EFFECTS_DAMAGE_RECORDER_SIGNATURE_PATTERN = re.compile(
   r"(?P<name>record_effects_damage_event(?:_legacy)?)\s*"
   r"\((?P<params>[^)]*)\)"
 )
-DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE = (
-  "EngagementEffectsDamageEventRecord build_debug_effects_damage_event_record("
-)
+DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE = "build_debug_effects_damage_event_record("
 DEBUG_DAMAGE_DTO_CALLER_SIGNATURES = (
   "bool SimulationKernel::debug_apply_proximity_hit(",
   "bool SimulationKernel::debug_apply_local_proximity_hit(",
@@ -524,6 +522,14 @@ DEBUG_DAMAGE_DTO_CALLER_SIGNATURES = (
 
 def _text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
+
+
+def _contains_cpp_marker(text: str, marker: str) -> bool:
+  def normalize(value: str) -> str:
+    token_spaced = re.sub(r"([&*])", r" \1 ", value)
+    return " ".join(token_spaced.split())
+
+  return normalize(marker) in normalize(text)
 
 
 def _maintained_source_texts() -> list[tuple[Path, str]]:
@@ -580,16 +586,22 @@ def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
   assert "build_debug_effects_damage_event_record(" in text, (
     "TM06 debug damage paths should build event DTOs through the named local helper"
   )
-  helper_block = _extract_function_block(text, DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE)
+  helper_signature = re.search(
+    r"EngagementEffectsDamageEventRecord\s+build_debug_effects_damage_event_record\(",
+    text,
+  )
+  assert helper_signature is not None
+  helper_block = _extract_function_block(text, helper_signature.group(0))
   assert "EngagementEffectsDamageEventRecord event_record{}" in helper_block
-  assert "EffectsEvent& effects = event_record.effects;" in helper_block
+  effects_alias_pattern = r"EffectsEvent\s*&\s*effects\s*=\s*event_record\.effects;"
+  assert re.search(effects_alias_pattern, helper_block)
   assert "engagement_events::apply_effects_result_fields(effects, input.effects_result);" in helper_block
   assert "return event_record;" in helper_block
   assert text.count("EngagementEffectsDamageEventRecord event_record{}") == 1, (
     "debug damage DTO default construction should stay centralized in "
     "build_debug_effects_damage_event_record"
   )
-  assert text.count("EffectsEvent& effects = event_record.effects;") == 1, (
+  assert len(re.findall(effects_alias_pattern, text)) == 1, (
     "debug EffectsEvent field population should not be duplicated in public debug methods"
   )
   assert text.count("engagement_events::apply_effects_result_fields(") == 1, (
@@ -606,7 +618,7 @@ def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
       < caller_block.index("impact.destruct();")
     )
     assert "EngagementEffectsDamageEventRecord event_record{}" not in caller_block
-    assert "EffectsEvent& effects = event_record.effects;" not in caller_block
+    assert not re.search(effects_alias_pattern, caller_block)
     assert "engagement_events::apply_effects_result_fields(" not in caller_block
 
 

@@ -10,6 +10,8 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   facade_cpp = runtime_facade_source_text()
   bindings_runtime = RUNTIME_BINDINGS.read_text(encoding="utf-8")
   runtime_header = WORLD_BATCH_RUNTIME_H.read_text(encoding="utf-8")
+  runtime_header_single_line = " ".join(runtime_header.split())
+  facade_header_single_line = " ".join(facade_header.split())
 
   assert "struct TaskOrderMaintainedBatchContract {" in contracts_text
   assert "struct WorldTaskOrderMaintainedAssignment {" in contracts_text
@@ -17,7 +19,10 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert "WorldTaskOrderCompatibilityAssignment" not in contracts_text
 
   assert "void set_task_orders_maintained_batch(" in runtime_header
-  assert "std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch(" in runtime_header
+  assert (
+    "std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch("
+    in runtime_header_single_line
+  )
   assert "void set_mission_commands_maintained_batch(" in runtime_header
   assert "std::vector<MissionCommandMaintainedBatchContract>" in runtime_header
   assert "get_mission_commands_maintained_batch(" in runtime_header
@@ -33,7 +38,10 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert "std::vector<TaskOrder> get_task_orders_compatibility_batch(" not in runtime_header
 
   assert "void set_task_orders_maintained_batch(" in facade_header
-  assert "std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch(" in facade_header
+  assert (
+    "std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch("
+    in facade_header_single_line
+  )
   assert "void set_mission_commands_maintained_batch(" in facade_header
   assert "get_mission_commands_maintained_batch(" in facade_header
   assert "void set_leader_intents_maintained_batch(" in facade_header

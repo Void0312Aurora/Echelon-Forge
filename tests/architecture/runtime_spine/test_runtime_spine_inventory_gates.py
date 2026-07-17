@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
@@ -127,8 +128,12 @@ def test_fixture_entries_reference_real_files_and_code_markers() -> None:
     file_path = REPO_ROOT / path
     assert file_path.is_file(), f"missing inventory path: {path}"
     source = file_path.read_text(encoding="utf-8")
+    normalized_source = re.sub(r"\s+", " ", source.replace("&", " & "))
     for marker in entry["evidence_markers"]:
-      assert marker in source, f"{path} missing evidence marker: {marker}"
+      normalized_marker = re.sub(r"\s+", " ", marker.replace("&", " & "))
+      assert normalized_marker in normalized_source, (
+        f"{path} missing evidence marker: {marker}"
+      )
 
 
 def test_non_maintained_entries_have_owner_gate_reason_and_unknown_stays_non_maintained() -> None:

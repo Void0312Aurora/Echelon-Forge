@@ -46,6 +46,13 @@ struct VisualExperimentStats {
     double total_ms = 0.0;
 };
 
+struct VisualBatchRenderExport {
+    std::vector<float> flat;
+    const void *device_ptr = nullptr;
+    std::size_t device_float_count = 0;
+    bool used_cuda = false;
+};
+
 struct VisibleObjectPacked {
     double x = 0.0;
     double y = 0.0;
@@ -71,46 +78,37 @@ struct VisualRenderRequest {
 };
 
 DeviceInfo probe_device();
-VisualTensorFootprint estimate_visual_tensor_footprint(
-    int height,
-    int width,
-    int env_count = 1,
-    int history_steps = 1
-);
+VisualTensorFootprint estimate_visual_tensor_footprint(int height, int width, int env_count = 1,
+                                                       int history_steps = 1);
 std::string format_bytes(std::size_t bytes);
 VisualExperimentStats last_visual_experiment_stats();
 
 std::vector<float> render_visual_reference_cpu_batch(
-    const std::vector<VisualRenderRequest>& requests,
-    const std::vector<std::vector<VisibleObjectPacked>>& objects_batch,
-    IEnvironmentModel* env
-);
+    const std::vector<VisualRenderRequest> &requests,
+    const std::vector<std::vector<VisibleObjectPacked>> &objects_batch, IEnvironmentModel *env);
 
-std::vector<float> render_visual_reference_cpu(
-    const VisualRenderRequest& request,
-    const std::vector<VisibleObjectPacked>& objects,
-    IEnvironmentModel* env
-);
+std::vector<float> render_visual_reference_cpu(const VisualRenderRequest &request,
+                                               const std::vector<VisibleObjectPacked> &objects,
+                                               IEnvironmentModel *env);
 
-std::vector<float> render_visual_experiment_batch(
-    const std::vector<VisualRenderRequest>& requests,
-    const std::vector<std::vector<VisibleObjectPacked>>& objects_batch,
-    IEnvironmentModel* env
-);
+std::vector<float>
+render_visual_experiment_batch(const std::vector<VisualRenderRequest> &requests,
+                               const std::vector<std::vector<VisibleObjectPacked>> &objects_batch,
+                               IEnvironmentModel *env);
+
+VisualBatchRenderExport render_visual_experiment_batch_export(
+    const std::vector<VisualRenderRequest> &requests,
+    const std::vector<std::vector<VisibleObjectPacked>> &objects_batch, IEnvironmentModel *env);
 
 bool render_visual_experiment_batch_device_resident(
-    const std::vector<VisualRenderRequest>& requests,
-    const std::vector<std::vector<VisibleObjectPacked>>& objects_batch,
-    IEnvironmentModel* env
-);
+    const std::vector<VisualRenderRequest> &requests,
+    const std::vector<std::vector<VisibleObjectPacked>> &objects_batch, IEnvironmentModel *env);
 
-const void* last_visual_output_device_ptr();
+const void *last_visual_output_device_ptr();
 std::size_t last_visual_output_float_count();
 
-std::vector<float> render_visual_experiment(
-    const VisualRenderRequest& request,
-    const std::vector<VisibleObjectPacked>& objects,
-    IEnvironmentModel* env
-);
+std::vector<float> render_visual_experiment(const VisualRenderRequest &request,
+                                            const std::vector<VisibleObjectPacked> &objects,
+                                            IEnvironmentModel *env);
 
-}  // namespace gpu
+} // namespace gpu

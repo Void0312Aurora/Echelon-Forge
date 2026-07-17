@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import math
 import os
@@ -234,6 +235,20 @@ class ScenarioCompilerTests(unittest.TestCase):
     scenario["entities"] = ["Blue_F16"]
 
     with self.assertRaisesRegex(ValueError, "entities\\[0\\] must be an object"):
+      ScenarioCompiler.compile_data(scenario)
+
+  def test_compile_data_rejects_duplicate_entity_names(self) -> None:
+    scenario = _sample_scenario()
+    scenario["entities"].append(copy.deepcopy(scenario["entities"][0]))
+
+    with self.assertRaisesRegex(ValueError, "duplicate entity name 'Blue_F16'"):
+      ScenarioCompiler.compile_data(scenario)
+
+  def test_compile_data_rejects_missing_import(self) -> None:
+    scenario = _sample_scenario()
+    scenario["imports"] = [{"file": "examples/config/prefabs/does_not_exist.json"}]
+
+    with self.assertRaisesRegex(FileNotFoundError, "Scenario import file not found"):
       ScenarioCompiler.compile_data(scenario)
 
   def test_compile_data_rejects_invalid_import_prefab_shape(self) -> None:

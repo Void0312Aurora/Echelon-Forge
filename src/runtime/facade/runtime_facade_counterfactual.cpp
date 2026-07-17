@@ -170,8 +170,9 @@ std::vector<std::string>
 runtime_experiment_generated_input_evidence_refs(const RuntimeExperimentRequest &request) {
     std::vector<std::string> refs = request.generated_input_evidence_refs;
     if (refs.empty()) {
-        refs.push_back(request.generation_ref.empty() ? "generated_input:runtime_facade.counterfactual"
-                                                      : request.generation_ref);
+        refs.push_back(request.generation_ref.empty()
+                           ? "generated_input:runtime_facade.counterfactual"
+                           : request.generation_ref);
     }
     return refs;
 }
@@ -189,22 +190,23 @@ scenario_generation_metadata_from_experiment_request(
                                               : request.generation_ref)
             : request.generated_input_ref;
     metadata.request.request_version = "1";
-    metadata.request.contract_version =
-        std::string(kScenarioGenerationContractVersionRequestV1);
+    metadata.request.contract_version = std::string(kScenarioGenerationContractVersionRequestV1);
     metadata.request.generation_kind = request.generated_input_kind.empty()
                                            ? std::string(kScenarioGenerationKindScenarioVariation)
                                            : request.generated_input_kind;
     metadata.request.source = request.generated_input_source.empty()
                                   ? std::string(kScenarioGenerationSourceCounterfactualBranch)
                                   : request.generated_input_source;
-    metadata.request.generator_version = request.generated_input_generator_version.empty()
-                                             ? "RuntimeFacade.run_counterfactual_experiment.counterfactual"
-                                             : request.generated_input_generator_version;
+    metadata.request.generator_version =
+        request.generated_input_generator_version.empty()
+            ? "RuntimeFacade.run_counterfactual_experiment.counterfactual"
+            : request.generated_input_generator_version;
     metadata.request.has_deterministic_seed = true;
     metadata.request.deterministic_seed = request.branch_request.deterministic_seed;
     metadata.request.baseline_scenario_ref =
         request.generated_input_baseline_scenario_ref.empty()
-            ? (request.setup_ref.empty() ? "scenario:runtime_facade.counterfactual" : request.setup_ref)
+            ? (request.setup_ref.empty() ? "scenario:runtime_facade.counterfactual"
+                                         : request.setup_ref)
             : request.generated_input_baseline_scenario_ref;
     metadata.request.replay_envelope_ref = request.branch_request.replay_envelope_id;
     metadata.request.branch_point_ref = request.branch_request.branch_point_id;
@@ -719,10 +721,36 @@ RuntimeFacade::run_counterfactual_experiment(const RuntimeExperimentRequest &req
         return result;
     }
 
+    const std::uint32_t seed =
+        request.branch_request.deterministic_seed == 0U
+            ? 0U
+            : static_cast<std::uint32_t>(request.branch_request.deterministic_seed & 0xffffffffULL);
+    const BatchWorldSetupRequest setup =
+        single_world_counterfactual_setup(request.branch_request.baseline_setup, seed);
+
     RuntimeFacade parent(1);
     RuntimeFacade branch(1);
-    parent.apply_world_setup(request.branch_request.baseline_setup);
-    branch.apply_world_setup(request.branch_request.baseline_setup);
+    const BatchWorldSetupResult parent_setup = parent.apply_world_setup(setup);
+    const BatchWorldSetupResult branch_setup = branch.apply_world_setup(setup);
+    const WorldEntityRef parent_ref{
+        .world_index = 0,
+        .entity_id =
+            counterfactual_spawned_entity_id(parent_setup, request.branch_request.entity_ref),
+    };
+    const WorldEntityRef branch_ref{
+        .world_index = 0,
+        .entity_id =
+            counterfactual_spawned_entity_id(branch_setup, request.branch_request.entity_ref),
+    };
+    if (parent_ref.entity_id == 0U || branch_ref.entity_id == 0U) {
+        result.rejection_reason = std::string(kRuntimeCounterfactualSetupMissingEntity);
+        return result;
+    }
+    if (!parent.restore_counterfactual_entity(parent_ref, result.branch_result.parent_snapshot) ||
+        !branch.restore_counterfactual_entity(branch_ref, result.branch_result.branch_snapshot)) {
+        result.rejection_reason = std::string(kRuntimeCounterfactualInvalidEntity);
+        return result;
+    }
 
     if (!request.parent_step_requests.empty()) {
         parent.clear_execution_episode_batch();
@@ -767,8 +795,8 @@ RuntimeFacade::run_counterfactual_experiment(const RuntimeExperimentRequest &req
             .refs =
                 {
                     WorldEntityRef{
-                        .world_index = result.branch_result.parent_snapshot.world_index,
-                        .entity_id = result.branch_result.parent_snapshot.entity_id,
+                        .world_index = parent_ref.world_index,
+                        .entity_id = parent_ref.entity_id,
                     },
                 },
         };
@@ -776,8 +804,8 @@ RuntimeFacade::run_counterfactual_experiment(const RuntimeExperimentRequest &req
             .refs =
                 {
                     WorldEntityRef{
-                        .world_index = result.branch_result.branch_snapshot.world_index,
-                        .entity_id = result.branch_result.branch_snapshot.entity_id,
+                        .world_index = branch_ref.world_index,
+                        .entity_id = branch_ref.entity_id,
                     },
                 },
         };
@@ -789,16 +817,16 @@ RuntimeFacade::run_counterfactual_experiment(const RuntimeExperimentRequest &req
         EngagementBatchRequest parent_trace_request{};
         parent_trace_request.refs = {
             EngagementEntityRef{
-                .world_index = result.branch_result.parent_snapshot.world_index,
-                .entity_id = result.branch_result.parent_snapshot.entity_id,
+                .world_index = parent_ref.world_index,
+                .entity_id = parent_ref.entity_id,
             },
         };
         parent_trace_request.trace_ids = request.trace_ids;
         EngagementBatchRequest branch_trace_request{};
         branch_trace_request.refs = {
             EngagementEntityRef{
-                .world_index = result.branch_result.branch_snapshot.world_index,
-                .entity_id = result.branch_result.branch_snapshot.entity_id,
+                .world_index = branch_ref.world_index,
+                .entity_id = branch_ref.entity_id,
             },
         };
         branch_trace_request.trace_ids = request.trace_ids;
