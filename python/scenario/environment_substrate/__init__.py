@@ -58,6 +58,12 @@ from .manifest import (
     EnvironmentRegionExtent,
     build_deterministic_environment_fixture,
 )
+from .importers import (
+    ARNIS_CMO_BUNDLE_CONTRACT_VERSION,
+    ARNIS_CMO_IMPORT_CONTRACT_VERSION,
+    ArnisEnvironmentImportResult,
+    import_arnis_environment_bundle,
+)
 from .projection import (
     EnvironmentProjectionEvidence,
     EnvironmentProjectionResult,
@@ -87,6 +93,8 @@ from .validation import (
 
 
 __all__ = [
+    "ARNIS_CMO_BUNDLE_CONTRACT_VERSION",
+    "ARNIS_CMO_IMPORT_CONTRACT_VERSION",
     "BEHAVIOR_PROPERTY_KEYS",
     "BRANCH_MEMBERSHIP_ROLES",
     "DEFAULT_BRANCH_IDS",
@@ -111,6 +119,7 @@ __all__ = [
     "WORLD_ZONE_DEFINITION_SURFACE_CODES",
     "EnvironmentBranchDescriptor",
     "EnvironmentBranchMembership",
+    "ArnisEnvironmentImportResult",
     "EnvironmentCatalogDescriptor",
     "EnvironmentCatalogValidationResult",
     "EnvironmentComponent",
@@ -149,6 +158,7 @@ __all__ = [
     "derive_environment_seed",
     "project_manifest_to_world_zone_projection",
     "ingest_projection_setup_payloads_into_scenario",
+    "import_arnis_environment_bundle",
     "validate_environment_catalog_admission",
     "validate_environment_catalog_descriptors",
     "validate_environment_generator_request",

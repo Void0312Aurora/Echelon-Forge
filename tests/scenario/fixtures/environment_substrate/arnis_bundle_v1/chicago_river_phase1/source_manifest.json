@@ -1,0 +1,80 @@
+{
+  "acquired_on": "2026-07-15",
+  "artifact_rights_boundary": {
+    "bundle_has_mixed_source_rights": true,
+    "repository_apache_license_relicenses_fixture_data": false,
+    "source_licenses_apply_per_artifact": true
+  },
+  "bbox_wgs84": {
+    "max_lat": 41.8895,
+    "max_lon": -87.6315,
+    "min_lat": 41.8865,
+    "min_lon": -87.6355
+  },
+  "fixture_id": "arnis-cmo-fixture:chicago-river-phase1",
+  "generator": {
+    "exporter_version": "cmo.phase1.v1",
+    "exporter_patch_id": "0001-cmo-continuous-bundle-export-v1",
+    "exporter_patch_sha256": "26536836d46aa7bc3e03da3449b4c52391f096527ab58f365d5dd4b96b9052ee",
+    "id": "arnis",
+    "install_id": "v3.0.0-cmo5",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/louis-e/arnis",
+    "upstream_revision": "af521c99124b5e07ecba018ea54f2ac47b6441d5",
+    "version": "3.0.0"
+  },
+  "manifest_version": "arnis_cmo_source_manifest.v1",
+  "regeneration": {
+    "frozen_files_are_byte_verifiable": true,
+    "network_regeneration_is_expected_to_be_byte_identical_indefinitely": false,
+    "reason": "OpenStreetMap, Overpass responses, provider datasets, and processing implementations may change over time."
+  },
+  "sources": [
+    {
+      "acquired_on": "2026-07-15",
+      "attribution": "© OpenStreetMap contributors",
+      "base_timestamp": "2026-07-15T11:02:51Z",
+      "byte_length": 758113,
+      "delivery_endpoint": "https://lz4.overpass-api.de/api/interpreter",
+      "derived_artifacts": [
+        "expected/vectors/roads.cmo.json",
+        "expected/vectors/buildings.cmo.json",
+        "expected/vectors/hydrology.cmo.json"
+      ],
+      "kind": "osm_json",
+      "license": "ODbL-1.0",
+      "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "path": "input/osm_extract_20260715.json",
+      "provider": "OpenStreetMap",
+      "sha256": "efe1b0d5045ae898b18fa5587df7e477849ef009eb2417c9437f7f2aa64bebd1"
+    },
+    {
+      "actual_provider_id": "usgs_3dep",
+      "contributing_source_units": {
+        "usgs_3dep": 2
+      },
+      "missing_source_units": 0,
+      "kind": "elevation",
+      "license": "public-domain-us-government-work",
+      "license_url": "https://www.usgs.gov/3d-elevation-program",
+      "provider": "USGS 3DEP",
+      "retained_artifact": "expected/rasters/elevation.f32le",
+      "transformation": "Arnis terrain filtering and ESA land-cover-aware repair, followed by direct pre-Minecraft metric export",
+      "vertical_datum": "source_provider_native_unspecified"
+    },
+    {
+      "acknowledgement": "© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
+      "kind": "landcover",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "provider": "ESA WorldCover",
+      "release": "2021 v200",
+      "retained_artifacts": [
+        "expected/rasters/landcover.u8",
+        "expected/rasters/elevation.f32le"
+      ],
+      "source_url": "https://esa-worldcover.org/en/data-access",
+      "transformation": "Arnis metric-grid resampling and categorical export before OSM block-raster repair"
+    }
+  ]
+}

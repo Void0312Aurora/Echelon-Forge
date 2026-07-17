@@ -1,13 +1,18 @@
 # 陆军 / 地面当前进展追踪
 
-状态：`2026-06-06` ground static command-authoring 加 accepted and closed
-environment-substrate G0 design/implementation line，已闭合到 G0-M metadata-only
-derived products。
+状态：更新至 `2026-07-15`；ground static command-authoring 与
+environment-substrate G0 design/implementation line 已闭合到 G0-M，并接受
+Arnis adapter 第一阶段静态环境 bundle follow-on。
 
 这是 `docs/task/ground/` 在 `2026-05-21` 开启 G0-G5 地面启动线之后的当前活跃追踪入口。它按基础设施、域语义和 RL/tasking 对接跟踪陆军/地面线。
 
 当前定位：
 
+- Arnis adapter 第一阶段已经接受：固定 OSM 输入经固定 continuous Arnis patch，
+  在 Minecraft 量化前生成 pre-scale 高程、categorical 地表覆盖及浮点道路、建筑和
+  水系 bundle，并 strict-import 为 CMO static manifest；elevation-anchor admission
+  与离线静态场景派生已解析 `509` 个矢量对象中的 `403` 个，其余 `106` 个缺少垂直
+  剖面的对象保持 held。这不是 runtime terrain setup 或地面机动能力释放。
 - `services/army` 是军种画像边界。
 - `ground` 是维护中的执行特化名称；`army` 和 `land` 是可接受别名，都会规范化为 `ground`。
 - G0-G4 已封存为 accepted tasking baseline。

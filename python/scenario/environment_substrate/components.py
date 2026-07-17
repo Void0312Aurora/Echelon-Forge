@@ -195,6 +195,12 @@ def default_component_registry() -> tuple[EnvironmentComponentDescriptor, ...]:
             minimum_realism_grade="G1",
         ),
         EnvironmentComponentDescriptor(
+            "elevation_anchor",
+            required_attributes=("mode", "resolved", "source"),
+            consumer_tags=("static_scene_geometry_metadata",),
+            minimum_realism_grade="G2",
+        ),
+        EnvironmentComponentDescriptor(
             "mobility_modifier",
             required_attributes=("actor_classes", "speed_multiplier"),
             consumer_tags=("movement_held",),
@@ -297,6 +303,7 @@ def default_branch_registry() -> tuple[EnvironmentBranchDescriptor, ...]:
     terrain_components = (
         "surface_material",
         "terrain_morphology",
+        "elevation_anchor",
         "mobility_modifier",
         "vegetation",
         "structure",
@@ -341,7 +348,12 @@ def default_branch_registry() -> tuple[EnvironmentBranchDescriptor, ...]:
         ),
         EnvironmentBranchDescriptor(
             "hydrology",
-            allowed_components=("hydrology", "surface_material", "mobility_modifier"),
+            allowed_components=(
+                "hydrology",
+                "surface_material",
+                "elevation_anchor",
+                "mobility_modifier",
+            ),
             projection_targets=("world_zone_definition", "manifest_only"),
             held_capabilities=("hydrology_effects", "movement"),
         ),
@@ -368,8 +380,12 @@ def default_layer_registry() -> tuple[EnvironmentLayerDescriptor, ...]:
         EnvironmentLayerDescriptor("built_structure", 50, branch_ids=("terrain",)),
         EnvironmentLayerDescriptor("infrastructure_network", 60, branch_ids=("terrain",)),
         EnvironmentLayerDescriptor("tactical_semantic", 70, branch_ids=("terrain",)),
-        EnvironmentLayerDescriptor("hazard_control_overlay", 80, branch_ids=("terrain", "dynamic_environment")),
-        EnvironmentLayerDescriptor("dynamic_state_overlay", 90, branch_ids=("dynamic_environment",)),
+        EnvironmentLayerDescriptor(
+            "hazard_control_overlay", 80, branch_ids=("terrain", "dynamic_environment")
+        ),
+        EnvironmentLayerDescriptor(
+            "dynamic_state_overlay", 90, branch_ids=("dynamic_environment",)
+        ),
     )
 
 

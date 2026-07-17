@@ -22,9 +22,7 @@ from .manifest import (
 )
 
 
-ENVIRONMENT_SUBSTRATE_CATALOG_CONTRACT_VERSION = (
-    "environment_substrate.g0_k.catalog.v1"
-)
+ENVIRONMENT_SUBSTRATE_CATALOG_CONTRACT_VERSION = "environment_substrate.g0_k.catalog.v1"
 
 DEFAULT_CATALOG_PROVENANCE_REQUIREMENTS = (
     "catalog_id",
@@ -58,6 +56,16 @@ def _normalized_unique_texts(values: Iterable[Any]) -> tuple[str, ...]:
 
 def _ids_are_unique(ids: list[str]) -> bool:
     return len(ids) == len(set(ids))
+
+
+def _provenance_value_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (tuple, list, dict, set)):
+        return bool(value)
+    return True
 
 
 @dataclass(frozen=True)
@@ -115,9 +123,7 @@ class EnvironmentCatalogDescriptor:
             elif isinstance(component, dict):
                 templates.append(EnvironmentComponent(**component))
             else:
-                raise TypeError(
-                    "component_templates entries must be EnvironmentComponent or dict"
-                )
+                raise TypeError("component_templates entries must be EnvironmentComponent or dict")
         object.__setattr__(self, "component_templates", tuple(templates))
         object.__setattr__(
             self,
@@ -260,9 +266,7 @@ def validate_environment_catalog_descriptors(
 
     for catalog in catalog_tuple:
         if not catalog.catalog_id:
-            failures.append(
-                ("environment_substrate_catalog_id_required", "catalog_id is required")
-            )
+            failures.append(("environment_substrate_catalog_id_required", "catalog_id is required"))
             break
         if not catalog.schema_version:
             failures.append(
@@ -360,9 +364,7 @@ def validate_environment_catalog_descriptors(
         if failures:
             break
 
-        unsupported_geometry = sorted(
-            set(catalog.geometry_types) - supported_geometry_types
-        )
+        unsupported_geometry = sorted(set(catalog.geometry_types) - supported_geometry_types)
         if unsupported_geometry:
             failures.append(
                 (
@@ -393,7 +395,9 @@ def validate_environment_catalog_descriptors(
             break
 
         template_families = [component.family for component in catalog.component_templates]
-        if not _ids_are_unique([component.component_id for component in catalog.component_templates]):
+        if not _ids_are_unique(
+            [component.component_id for component in catalog.component_templates]
+        ):
             failures.append(
                 (
                     "environment_substrate_duplicate_component",
@@ -424,7 +428,11 @@ def validate_environment_catalog_descriptors(
                 attr
                 for attr in descriptor.required_attributes
                 if attr not in component.attributes
-                or _normalized_text(component.attributes.get(attr)) == ""
+                or component.attributes.get(attr) is None
+                or (
+                    isinstance(component.attributes.get(attr), str)
+                    and not component.attributes[attr].strip()
+                )
             )
             if missing_attrs:
                 failures.append(
@@ -502,9 +510,7 @@ def validate_environment_catalog_admission(
                 )
             )
             break
-        catalog_branches = {
-            membership.branch_id for membership in catalog.branch_membership
-        }
+        catalog_branches = {membership.branch_id for membership in catalog.branch_membership}
         object_branches = {membership.branch_id for membership in item.branch_membership}
         unknown_branches = sorted(object_branches - catalog_branches)
         if unknown_branches:
@@ -525,9 +531,7 @@ def validate_environment_catalog_admission(
             )
             break
         item_component_families = {component.family for component in item.components}
-        missing_components = sorted(
-            set(catalog.required_components) - item_component_families
-        )
+        missing_components = sorted(set(catalog.required_components) - item_component_families)
         if missing_components:
             failures.append(
                 (
@@ -536,15 +540,53 @@ def validate_environment_catalog_admission(
                 )
             )
             break
-        allowed_components = set(catalog.required_components) | set(
-            catalog.optional_components
-        )
+        allowed_components = set(catalog.required_components) | set(catalog.optional_components)
         extra_components = sorted(item_component_families - allowed_components)
         if extra_components:
             failures.append(
                 (
                     "environment_substrate_catalog_branch_layer_mismatch",
                     f"object {item.object_id} has components not admitted by catalog {extra_components}",
+                )
+            )
+            break
+        missing_provenance = sorted(
+            key
+            for key in catalog.provenance_requirements
+            if not _provenance_value_present(item.provenance.get(key))
+        )
+        if missing_provenance:
+            failures.append(
+                (
+                    "environment_substrate_catalog_provenance_required",
+                    f"object {item.object_id} is missing catalog provenance {missing_provenance}",
+                )
+            )
+            break
+        if item.provenance.get("catalog_id") != item.catalog_ref:
+            failures.append(
+                (
+                    "environment_substrate_catalog_provenance_mismatch",
+                    f"object {item.object_id} catalog provenance does not match {item.catalog_ref}",
+                )
+            )
+            break
+        if item.provenance.get("catalog_schema_version") != catalog.schema_version:
+            failures.append(
+                (
+                    "environment_substrate_catalog_provenance_mismatch",
+                    f"object {item.object_id} catalog schema provenance does not match {catalog.schema_version}",
+                )
+            )
+            break
+        if (
+            item.provenance.get("generator_id") != manifest.generation.generator_id
+            or item.provenance.get("generator_version") != manifest.generation.generator_version
+        ):
+            failures.append(
+                (
+                    "environment_substrate_catalog_provenance_mismatch",
+                    f"object {item.object_id} generator provenance does not match manifest generation",
                 )
             )
             break

@@ -113,8 +113,7 @@ def validate_environment_manifest(
 
     extent = manifest.region_extent
     if not all(
-        _finite_number(value)
-        for value in (extent.min_x, extent.min_y, extent.max_x, extent.max_y)
+        _finite_number(value) for value in (extent.min_x, extent.min_y, extent.max_x, extent.max_y)
     ):
         failures.append(
             (
@@ -131,13 +130,9 @@ def validate_environment_manifest(
         )
 
     branch_ids = [branch.branch_id for branch in manifest.branch_registry]
-    component_families = [
-        component.family for component in manifest.component_registry
-    ]
+    component_families = [component.family for component in manifest.component_registry]
     layer_ids = [layer.layer_id for layer in manifest.layer_registry]
-    projection_profile_ids = [
-        profile.profile_id for profile in manifest.projection_profiles
-    ]
+    projection_profile_ids = [profile.profile_id for profile in manifest.projection_profiles]
 
     if not branch_ids:
         failures.append(
@@ -191,13 +186,9 @@ def validate_environment_manifest(
         )
 
     branch_map = {branch.branch_id: branch for branch in manifest.branch_registry}
-    component_map = {
-        component.family: component for component in manifest.component_registry
-    }
+    component_map = {component.family: component for component in manifest.component_registry}
     layer_map = {layer.layer_id: layer for layer in manifest.layer_registry}
-    profile_map = {
-        profile.profile_id: profile for profile in manifest.projection_profiles
-    }
+    profile_map = {profile.profile_id: profile for profile in manifest.projection_profiles}
 
     for branch in manifest.branch_registry:
         if not branch.branch_id:
@@ -208,9 +199,7 @@ def validate_environment_manifest(
                 )
             )
             break
-        unknown_components = sorted(
-            set(branch.allowed_components) - set(component_families)
-        )
+        unknown_components = sorted(set(branch.allowed_components) - set(component_families))
         if unknown_components:
             failures.append(
                 (
@@ -281,9 +270,7 @@ def validate_environment_manifest(
                 )
             )
             break
-        unknown_components = sorted(
-            set(profile.required_components) - set(component_families)
-        )
+        unknown_components = sorted(set(profile.required_components) - set(component_families))
         if unknown_components:
             failures.append(
                 (
@@ -447,7 +434,11 @@ def validate_environment_manifest(
                 attr
                 for attr in descriptor.required_attributes
                 if attr not in component.attributes
-                or _normalized_text(component.attributes.get(attr)) == ""
+                or component.attributes.get(attr) is None
+                or (
+                    isinstance(component.attributes.get(attr), str)
+                    and not component.attributes[attr].strip()
+                )
             )
             if missing_attrs:
                 failures.append(

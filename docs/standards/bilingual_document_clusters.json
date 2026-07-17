@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-10",
+  "generated_at": "2026-07-17",
   "root": "docs",
   "pairs": [
     {
@@ -547,9 +547,27 @@
       "english": "docs/task/ground/README.md",
       "chinese": "docs/task/ground/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-06-10",
-      "english_hash": "cb86fd65bbc7555108db8ce2a59006f1aa998303a891a59056eb7d18405961dc",
-      "chinese_hash": "4d506eacdc51450a8239fe29df50337d83e5de5431467619b8c9b12eaed937c2"
+      "last_verified": "2026-07-15",
+      "english_hash": "501ea0815619525ea35e507cbb0fb8c278628d59e3f3a776f7b8eb97663324f7",
+      "chinese_hash": "6ce06ec38730890282bc25579c78302255155358ac83861d28174f9c036c8123"
+    },
+    {
+      "pair_id": "task/ground/environment_substrate_arnis_adapter/README",
+      "english": "docs/task/ground/environment_substrate_arnis_adapter/README.md",
+      "chinese": "docs/task/ground/environment_substrate_arnis_adapter/README.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-15",
+      "english_hash": "e5f3d92ec19c070f8ad6554f4de0c23701e9e729eab6dc3d71543f0532fde596",
+      "chinese_hash": "062b77aed0667a8ef12f3c0b472ee55978c759df78d6046f34e0b71a15d1bb29"
+    },
+    {
+      "pair_id": "task/ground/environment_substrate_arnis_adapter/environment_substrate_arnis_phase1_acceptance_20260715",
+      "english": "docs/task/ground/environment_substrate_arnis_adapter/environment_substrate_arnis_phase1_acceptance_20260715.md",
+      "chinese": "docs/task/ground/environment_substrate_arnis_adapter/environment_substrate_arnis_phase1_acceptance_20260715.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-15",
+      "english_hash": "59b47a1c81a1de834830d6813f08a85fcca3ea896bcecd1130dbc5fb5c3eeea4",
+      "chinese_hash": "08bb56d300a6ed05c75457183aa1a8cdc0b8e74110340b9198fdfe23e4c7cdf7"
     },
     {
       "pair_id": "task/issues/README",
