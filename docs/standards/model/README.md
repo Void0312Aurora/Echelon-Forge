@@ -78,7 +78,7 @@ The maintained model standard currently maps to these implementation surfaces:
 - first-event rollout storage:
   [python/rl/policy_algo/first_event_rollout_buffer.py](../../../python/rl/policy_algo/first_event_rollout_buffer.py)
 - grouped stopping objective:
-  [python/rl/policy_algo/m3s1_grouped_stopping.py](../../../python/rl/policy_algo/m3s1_grouped_stopping.py)
+  [python/rl/policy_algo/grouped_stopping.py](../../../python/rl/policy_algo/grouped_stopping.py)
 - air-combat event-action runtime support:
   [gym_envs/universal_env_parts/air_combat_event_action.py](../../../gym_envs/universal_env_parts/air_combat_event_action.py)
   - owns the final A5 runtime gate after policy-visible support has shaped the

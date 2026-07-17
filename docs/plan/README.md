@@ -24,7 +24,8 @@ Language migration note:
 - [archive/](archive/README.md)
   - Closed routes, historical traceability materials, and bilingual migration record.
 
-- Earlier archived design materials are mainly located in [docs/Archive/](../Archive).
+- Earlier archived design materials remain under the legacy `docs/Archive/`
+  path. It is retained history, not a current plan entry surface.
 
 ## 2. Recommended Reading Order
 

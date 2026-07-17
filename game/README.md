@@ -41,7 +41,7 @@ powershell -File game/scripts/launch_arma_proxy.ps1 -Mode StubAndArma -ShowScrip
 
 See also:
 
-- [docs/README.md](/home/void0312/Workshop/CMO/game/docs/README.md)
-- [docs/echelon_proxy_backend_sync_v1.md](/home/void0312/Workshop/CMO/game/docs/echelon_proxy_backend_sync_v1.md)
-- [bridge/README.md](/home/void0312/Workshop/CMO/game/bridge/README.md)
-- [mod/@EchelonProxy/README.md](/home/void0312/Workshop/CMO/game/mod/@EchelonProxy/README.md)
+- [docs/README.md](docs/README.md)
+- [docs/echelon_proxy_backend_sync_v1.md](docs/echelon_proxy_backend_sync_v1.md)
+- [bridge/README.md](bridge/README.md)
+- [mod/@EchelonProxy/README.md](mod/@EchelonProxy/README.md)

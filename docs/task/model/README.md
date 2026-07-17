@@ -48,7 +48,7 @@ Start here:
 - [M2 Causal Transformer HMoE](m2_causal_transformer_hmoe/README.zh.md)
 - [M3 Optimal-Stopping Model Selection](m3_optimal_stopping_model_selection/README.md)
 - [M3-S1 Censored Optimal-Stopping Timing Contract](m3_s1_censored_optimal_stopping_timing_contract/README.md)
-- [M3-S2 Fire-Timing Learnability Audit](m3_s2_fire_timing_learnability_audit/README.md)
+- [M3-S2 Fire-Timing Learnability Audit](archive/m3_s2_fire_timing_learnability_audit/README.md)
   archived pointer; full package:
   [archive/m3_s2_fire_timing_learnability_audit](archive/m3_s2_fire_timing_learnability_audit/README.md)
 - Chinese companion:

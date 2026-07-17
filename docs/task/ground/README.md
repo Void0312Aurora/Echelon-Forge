@@ -161,7 +161,7 @@ without creating a new vertical runtime path.
 - Ground minimal task structure:
   [../../standards/ground/minimal_task_structure.md](../../standards/ground/minimal_task_structure.md)
 - Common/air/naval split (archived):
-  [../archive/common_air_naval/README.md](../archive/common_air_naval/README.md)
+  [../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md](../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md)
 
 ## Sealed / Archived Subproject Records
 
@@ -175,11 +175,11 @@ editing these accepted records in place.
 - Ground bootstrap plan:
   [archive/ground_domain_bootstrap_plan_20260521.md](archive/ground_domain_bootstrap_plan_20260521.md)
 - G0 boundary freeze:
-  [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
+  [g0_boundary_freeze/README.md](archive/g0_boundary_freeze/README.md)
 - G1 contract skeleton:
-  [g1_contract_skeleton/README.md](g1_contract_skeleton/README.md)
+  [g1_contract_skeleton/README.md](archive/g1_contract_skeleton/README.md)
 - G2 content/test seed:
-  [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
+  [g2_content_test_seed/README.md](archive/g2_content_test_seed/README.md)
 - G3 execution-surface design:
   [archive/g3_execution_surface_design/README.md](archive/g3_execution_surface_design/README.md)
 - G4 tasking runtime slice:

@@ -47,9 +47,9 @@ There are three primary authoritative entry points for this mainline:
 
 - [README.md](../../README.md)
   - The top-level project entry point, covering mainline capabilities, common commands, and repository-level boundaries.
-- [src/README.md](../../src/README.md)
+- [src/README.md](../../../src/README.md)
   - The layering boundaries and dependency directions inside `src/`.
-- [docs/plan/architecture/README.md](../plan/architecture/README.md)
+- [docs/plan/architecture/README.md](../../plan/architecture/README.md)
   - The current primary architecture track, layering freeze records, and performance / roadmap research.
 
 ## 2. Which Documents Are the Current Authoritative Entry Points
@@ -80,11 +80,11 @@ Documents that should not be treated as authoritative by default:
 
 Read these first:
 
-- [src/README.md](../../src/README.md)
-- [src/core/README.md](../../src/core/README.md)
-- [src/runtime/README.md](../../src/runtime/README.md)
-- [src/interfaces/README.md](../../src/interfaces/README.md)
-- [src/interfaces/python/README.md](../../src/interfaces/python/README.md)
+- [src/README.md](../../../src/README.md)
+- [src/core/README.md](../../../src/core/README.md)
+- [src/runtime/README.md](../../../src/runtime/README.md)
+- [src/interfaces/README.md](../../../src/interfaces/README.md)
+- [src/interfaces/python/README.md](../../../src/interfaces/python/README.md)
 
 ### `src/components/`
 
@@ -97,17 +97,17 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/components/README.md](../../src/components/README.md)
-- [src/components/domains/air/platform/README.md](../../src/components/domains/air/platform/README.md)
-- [src/components/command/README.md](../../src/components/command/README.md)
-- [src/components/command/common/README.md](../../src/components/command/common/README.md)
-- [src/components/domains/air/command/README.md](../../src/components/domains/air/command/README.md)
-- [src/components/domains/naval/command/README.md](../../src/components/domains/naval/command/README.md)
-- [src/components/domains/naval/platform/README.md](../../src/components/domains/naval/platform/README.md)
-- [src/components/tasking/README.md](../../src/components/tasking/README.md)
-- [src/components/tasking/common/README.md](../../src/components/tasking/common/README.md)
-- [src/components/domains/air/tasking/README.md](../../src/components/domains/air/tasking/README.md)
-- [src/components/domains/naval/tasking/README.md](../../src/components/domains/naval/tasking/README.md)
+- [src/components/README.md](../../../src/components/README.md)
+- [src/components/domains/air/platform/README.md](../../../src/components/domains/air/platform/README.md)
+- [src/components/command/README.md](../../../src/components/command/README.md)
+- [src/components/command/common/README.md](../../../src/components/command/common/README.md)
+- [src/components/domains/air/command/README.md](../../../src/components/domains/air/command/README.md)
+- [src/components/domains/naval/command/README.md](../../../src/components/domains/naval/command/README.md)
+- [src/components/domains/naval/platform/README.md](../../../src/components/domains/naval/platform/README.md)
+- [src/components/tasking/README.md](../../../src/components/tasking/README.md)
+- [src/components/tasking/common/README.md](../../../src/components/tasking/common/README.md)
+- [src/components/domains/air/tasking/README.md](../../../src/components/domains/air/tasking/README.md)
+- [src/components/domains/naval/tasking/README.md](../../../src/components/domains/naval/tasking/README.md)
 
 Typical questions:
 
@@ -126,14 +126,14 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/systems/README.md](../../src/systems/README.md)
-- [src/systems/core/README.md](../../src/systems/core/README.md)
-- [src/systems/domains/air/README.md](../../src/systems/domains/air/README.md)
-- [src/systems/physics/README.md](../../src/systems/physics/README.md)
-- [src/systems/combat/README.md](../../src/systems/combat/README.md)
-- [src/systems/systems/README.md](../../src/systems/systems/README.md)
-- [src/systems/domains/naval/README.md](../../src/systems/domains/naval/README.md)
-- [src/systems/visual/README.md](../../src/systems/visual/README.md)
+- [src/systems/README.md](../../../src/systems/README.md)
+- [src/systems/core/README.md](../../../src/systems/core/README.md)
+- [src/systems/domains/air/README.md](../../../src/systems/domains/air/README.md)
+- [src/systems/physics/README.md](../../../src/systems/physics/README.md)
+- [src/systems/combat/README.md](../../../src/systems/combat/README.md)
+- [src/systems/systems/README.md](../../../src/systems/systems/README.md)
+- [src/systems/domains/naval/README.md](../../../src/systems/domains/naval/README.md)
+- [src/systems/visual/README.md](../../../src/systems/visual/README.md)
 
 Typical questions:
 
@@ -151,12 +151,12 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/models/README.md](../../src/models/README.md)
-- [src/models/core/README.md](../../src/models/core/README.md)
-- [src/models/domains/air/README.md](../../src/models/domains/air/README.md)
-- [src/models/environment/README.md](../../src/models/environment/README.md)
-- [src/models/systems/README.md](../../src/models/systems/README.md)
-- [src/models/weapons/README.md](../../src/models/weapons/README.md)
+- [src/models/README.md](../../../src/models/README.md)
+- [src/models/core/README.md](../../../src/models/core/README.md)
+- [src/models/domains/air/README.md](../../../src/models/domains/air/README.md)
+- [src/models/environment/README.md](../../../src/models/environment/README.md)
+- [src/models/systems/README.md](../../../src/models/systems/README.md)
+- [src/models/weapons/README.md](../../../src/models/weapons/README.md)
 
 Typical questions:
 
@@ -174,7 +174,7 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/content/README.md](../../src/content/README.md)
+- [src/content/README.md](../../../src/content/README.md)
 
 ### `src/core/`
 
@@ -189,14 +189,14 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/core/README.md](../../src/core/README.md)
-- [src/core/engine/README.md](../../src/core/engine/README.md)
-- [src/core/geometry/README.md](../../src/core/geometry/README.md)
-- [src/core/mission/README.md](../../src/core/mission/README.md)
-- [src/core/mission/runtime/README.md](../../src/core/mission/runtime/README.md)
-- [src/core/mission/episode/README.md](../../src/core/mission/episode/README.md)
-- [src/core/mission/episode/detail/README.md](../../src/core/mission/episode/detail/README.md)
-- [src/core/interfaces/README.md](../../src/core/interfaces/README.md)
+- [src/core/README.md](../../../src/core/README.md)
+- [src/core/engine/README.md](../../../src/core/engine/README.md)
+- [src/core/geometry/README.md](../../../src/core/geometry/README.md)
+- [src/core/mission/README.md](../../../src/core/mission/README.md)
+- [src/core/mission/runtime/README.md](../../../src/core/mission/runtime/README.md)
+- [src/core/mission/episode/README.md](../../../src/core/mission/episode/README.md)
+- [src/core/mission/episode/detail/README.md](../../../src/core/mission/episode/detail/README.md)
+- [src/core/interfaces/README.md](../../../src/core/interfaces/README.md)
 
 Typical questions:
 
@@ -215,9 +215,9 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/runtime/README.md](../../src/runtime/README.md)
-- [src/runtime/contracts/README.md](../../src/runtime/contracts/README.md)
-- [src/runtime/facade/README.md](../../src/runtime/facade/README.md)
+- [src/runtime/README.md](../../../src/runtime/README.md)
+- [src/runtime/contracts/README.md](../../../src/runtime/contracts/README.md)
+- [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
 
 Typical questions:
 
@@ -234,8 +234,8 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/interfaces/README.md](../../src/interfaces/README.md)
-- [src/interfaces/python/README.md](../../src/interfaces/python/README.md)
+- [src/interfaces/README.md](../../../src/interfaces/README.md)
+- [src/interfaces/python/README.md](../../../src/interfaces/python/README.md)
 
 Typical questions:
 
@@ -252,8 +252,8 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/gpu/README.md](../../src/gpu/README.md)
-- [src/gpu/experimental/README.md](../../src/gpu/experimental/README.md)
+- [src/gpu/README.md](../../../src/gpu/README.md)
+- [src/gpu/experimental/README.md](../../../src/gpu/experimental/README.md)
 
 Typical questions:
 
@@ -269,9 +269,9 @@ Responsibilities:
 
 Boundary entry points:
 
-- [src/tools/README.md](../../src/tools/README.md)
-- [src/tools/experimental/README.md](../../src/tools/experimental/README.md)
-- [src/tools/experimental/gpu_phase0/README.md](../../src/tools/experimental/gpu_phase0/README.md)
+- [src/tools/README.md](../../../src/tools/README.md)
+- [src/tools/experimental/README.md](../../../src/tools/experimental/README.md)
+- [src/tools/experimental/gpu_phase0/README.md](../../../src/tools/experimental/gpu_phase0/README.md)
 
 ## 4. The `python/` Layer
 
@@ -279,8 +279,8 @@ Boundary entry points:
 
 Read these first:
 
-- [python/README.md](../../python/README.md)
-- [python/training/README.md](../../python/training/README.md)
+- [python/README.md](../../../python/README.md)
+- [python/training/README.md](../../../python/training/README.md)
 
 Current mainline subdomains:
 
@@ -305,12 +305,12 @@ Typical questions:
 
 Implementation entry points:
 
-- [python/scenario_compiler.py](../../python/scenario_compiler.py)
+- [python/scenario_compiler.py](../../../python/scenario_compiler.py)
   - Compatibility shim; the main implementation has moved to `python/scenario/compiler/`.
-- [python/scenario/runtime/](../../python/scenario/runtime)
+- [python/scenario/runtime/](../../../python/scenario/runtime)
   - Main scenario-runtime implementation. The older `python/scenario_runtime.py`
     shim is not present in the current checkout.
-- [python/testing/scenario_contract_runner.py](../../python/testing/scenario_contract_runner.py)
+- [python/testing/contracts/](../../../python/testing/contracts/)
   - Compatibility shim; the main implementation has moved to `python/testing/contracts/`.
 
 ## 5. The `gym_envs/` Layer
@@ -319,13 +319,13 @@ Implementation entry points:
 
 Read this first:
 
-- [gym_envs/README.md](../../gym_envs/README.md)
+- [gym_envs/README.md](../../../gym_envs/README.md)
 
 Primary entry points:
 
-- [gym_envs/universal_env.py](../../gym_envs/universal_env.py)
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
   - The execution-layer / single-process primary environment.
-- [gym_envs/leader_env.py](../../gym_envs/leader_env.py)
+- [gym_envs/leader_env.py](../../../gym_envs/leader_env.py)
   - The leader-layer environment.
 
 Key subdomains:
@@ -346,7 +346,7 @@ Typical questions:
 
 Read this first:
 
-- [tests/README.md](../../tests/README.md)
+- [tests/README.md](../../../tests/README.md)
 
 Current mainline test domains:
 
@@ -382,9 +382,9 @@ This is also the main evidence surface for whether a boundary is merely document
 
 Read these first:
 
-- [tools/README.md](../../tools/README.md)
-- [tools/diagnostics/README.md](../../tools/diagnostics/README.md)
-- [tools/maintenance/README.md](../../tools/maintenance/README.md)
+- [tools/README.md](../../../tools/README.md)
+- [tools/diagnostics/README.md](../../../tools/diagnostics/README.md)
+- [tools/maintenance/README.md](../../../tools/maintenance/README.md)
 
 Current mainline split:
 
@@ -401,10 +401,10 @@ Current mainline split:
 
 If you want to understand why the layers look this way, not just read directory README files, start with:
 
-1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../plan/architecture/architecture_and_performance_research_followup.zh.md)
-3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
-4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
+1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../../plan/architecture/architecture_and_performance_research_followup.zh.md)
+3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
+4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 These documents answer:
 
@@ -440,22 +440,22 @@ When entering the repository for the first time, read in this order:
 
 1. [README.md](../../README.md)
 2. [docs/README.md](../README.md)
-3. [src/README.md](../../src/README.md)
-4. [src/core/README.md](../../src/core/README.md)
-5. [src/runtime/README.md](../../src/runtime/README.md)
-6. [src/interfaces/python/README.md](../../src/interfaces/python/README.md)
-7. [python/README.md](../../python/README.md)
-8. [gym_envs/README.md](../../gym_envs/README.md)
-9. [tests/README.md](../../tests/README.md)
-10. [tools/README.md](../../tools/README.md)
+3. [src/README.md](../../../src/README.md)
+4. [src/core/README.md](../../../src/core/README.md)
+5. [src/runtime/README.md](../../../src/runtime/README.md)
+6. [src/interfaces/python/README.md](../../../src/interfaces/python/README.md)
+7. [python/README.md](../../../python/README.md)
+8. [gym_envs/README.md](../../../gym_envs/README.md)
+9. [tests/README.md](../../../tests/README.md)
+10. [tools/README.md](../../../tools/README.md)
 
 If you are mainly working on architecture or boundary questions, continue with:
 
-1. [docs/plan/architecture/README.md](../plan/architecture/README.md)
-2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-3. [src/runtime/facade/README.md](../../src/runtime/facade/README.md)
-4. [src/core/mission/README.md](../../src/core/mission/README.md)
-5. [tests/architecture/runtime_facade](../../tests/architecture/runtime_facade)
+1. [docs/plan/architecture/README.md](../../plan/architecture/README.md)
+2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+3. [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
+4. [src/core/mission/README.md](../../../src/core/mission/README.md)
+5. [tests/architecture/runtime_facade](../../../tests/architecture/runtime_facade)
 
 ## 11. Maintenance Notes
 

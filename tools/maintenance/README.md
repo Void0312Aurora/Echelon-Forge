@@ -141,6 +141,21 @@ Windows scope:
 - It intentionally runs beside `cmo_env.sh`; it should not replace the Linux
   CI workflow.
 
+Recommended maintained-document link audit:
+
+```bash
+python3 tools/maintenance/document_link_audit.py
+python3 tools/maintenance/document_link_audit.py --format json
+```
+
+The default command checks the root English/Chinese READMEs and the strict
+maintained documentation surface. Archive, scratch, results, and local review
+documents are excluded as source documents, while links from maintained pages
+into retained archives are still required to resolve. Use `--full-tree` to
+check every shared Markdown document outside those excluded source areas. Any
+missing target, repository escape, or machine-absolute local path exits
+non-zero.
+
 Recommended bilingual doc audit:
 
 ```bash
@@ -160,10 +175,13 @@ python3 tools/maintenance/translate_docs_batch.py audit --root docs \
   --full-tree
 ```
 
-If that audit looks noisy after a large doc sweep, refresh the registry first:
+After independently reconciling only the pairs changed by an iteration, refresh
+those records without resetting unrelated historical divergence:
 
 ```bash
-python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs \
+  --registry docs/standards/bilingual_document_clusters.json --write \
+  --pair README --pair standards/governance/document_lifecycle_policy
 ```
 
 The audit compares current file hashes against the registry baseline, so a
@@ -172,11 +190,15 @@ The maintained hash now ignores leading machine-generated draft markers and
 normalizes line endings, so Windows `CRLF` checkout noise should not turn the
 entire registry into false `diverged` results by itself.
 
-Generate or refresh the bilingual cluster registry baseline:
+Omitting `--pair` rebuilds the complete bilingual cluster registry baseline:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
 ```
+
+Use that full rewrite only after a full-surface bilingual review. It otherwise
+marks unrelated legacy divergence with new hashes even though those pairs were
+not reviewed.
 
 If you deliberately want a full-tree registry instead of the maintained
 surface registry:

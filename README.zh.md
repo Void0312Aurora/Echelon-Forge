@@ -202,7 +202,7 @@ interfaces/python
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
+- [docs/manual/reference/src_layer_map.zh.md](docs/manual/reference/src_layer_map.zh.md)
 - [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 ## 场景与训练配置
@@ -248,7 +248,8 @@ interfaces/python
 - `train.py`
   - 主要执行层、协同层和领导层训练入口点。
 - `world_model_train.py`
-  - 世界模型训练入口点；仍然是一个大型根脚本，尚未像 `train.py` 那样完全拆分。
+  - 世界模型训练的薄兼容入口；实现位于 `_world_model_train_impl/` 与
+    `python/world_model/`。
 - `evaluate.py`
   - 历史根评估器，作为兼容性/操作人员界面保留。
 - `tools/eval/*.py`
@@ -311,10 +312,10 @@ cmo_python -m pytest -q \
 
 ## 当前参考文档
 
-- [docs/manual/engine_capabilities.md](docs/manual/engine_capabilities.md)
-- [docs/manual/physics_engine_inventory.md](docs/manual/physics_engine_inventory.md)
-- [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
-- [docs/reference_artifacts.md](docs/reference_artifacts.md)
+- [docs/manual/reference/engine_capabilities.zh.md](docs/manual/reference/engine_capabilities.zh.md)
+- [docs/manual/reference/physics_engine_inventory.zh.md](docs/manual/reference/physics_engine_inventory.zh.md)
+- [docs/manual/reference/src_layer_map.zh.md](docs/manual/reference/src_layer_map.zh.md)
+- [docs/reference_artifacts.zh.md](docs/reference_artifacts.zh.md)
 
 ## 前瞻工作
 

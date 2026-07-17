@@ -216,6 +216,11 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
 - 标准变更若登记、刷新、保持 held 或退役实现合同，必须遵循
   [标准维护政策](governance/standards_maintenance_policy.zh.md)。
+- 文档类型、生命周期、README 边界、evidence 包、generated 输出、config 索引、
+  链接和 archive 转换必须遵循
+  [文档生命周期规范](governance/document_lifecycle_policy.zh.md)。
+- 全仓代码与文档精简按照
+  [仓库精简与整合路线图](../plan/repository_consolidation/README.zh.md)分轮执行。
 - 当工作被拆分给多个 subagent 或 worker 时，应遵循
   [Subagent 使用规范](governance/subagent_usage_policy.zh.md)。
 - 当 simulation-architecture WP 已完成实现但仍需要发布收口时，使用
@@ -225,6 +230,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 
 - [双语文档政策](governance/bilingual_documentation_policy.zh.md)
 - [双语文档簇](governance/bilingual_document_clusters.zh.md)
+- [文档生命周期规范](governance/document_lifecycle_policy.zh.md)
 - [标准维护政策](governance/standards_maintenance_policy.zh.md)
 - [发布与依赖政策](governance/release_and_dependency_policy.zh.md)
 - [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
@@ -237,3 +243,4 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - [场景配置指南](bridge/scenario_guide.zh.md)
 - [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.zh.md)
 - [模块化规划](planning/modularization_plan.zh.md)
+- [仓库精简与整合路线图](../plan/repository_consolidation/README.zh.md)

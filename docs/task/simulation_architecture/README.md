@@ -1124,8 +1124,8 @@ WP6 workstream map:
   [resident-state boundary rules](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md)
   plus capability-projection guards in
   [runtime facade layering tests](../../../tests/architecture/runtime_facade),
-  [runtime facade tests](../../../tests/runtime/facade/test_runtime_facade.py),
-  and [GPU runtime binding tests](../../../tests/test_gpu_runtime_bindings.py).
+  [runtime facade tests](../../../tests/runtime/facade/test_runtime_facade_core.py),
+  and [GPU runtime binding tests](../../../tests/gpu/test_gpu_runtime_bindings.py).
 - `WP6-D Integration And Index Sync`:
   [integration and index sync](archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md) and
   [acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md).

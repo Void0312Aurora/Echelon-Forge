@@ -94,7 +94,7 @@ Primary files:
 - [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
 - [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)
-- [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
+- [src/models/air/default_control_model.cpp](../../../src/models/domains/air/default_control_model.cpp)
 
 ### 3. Public API is too low-level
 
@@ -512,7 +512,7 @@ The important point is not the exact names. The important point is that:
 - `src/systems/physics/*`
 - `src/components/physics/*`
 - control-to-force and integration path in
-  [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
+  [src/models/air/default_control_model.cpp](../../../src/models/domains/air/default_control_model.cpp)
 - environment query contracts in
   [src/core/interfaces/environment_model.h](../../../src/core/interfaces/environment_model.h)
 

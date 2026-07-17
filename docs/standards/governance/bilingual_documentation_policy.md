@@ -56,11 +56,13 @@ This repo follows a layered maintenance model rather than treating the entire
 Tier A: strict bilingual maintained surface
 
 - root navigation: `docs/README.md`
+- agent-facing authority, prompts, and rules under `docs/agent/`
+- top-level forward navigation: `docs/forward/README.md`
+- retained-reference index: `docs/reference_artifacts.md`
 - authority and governance trees under `docs/standards/`
 - operator-facing manuals under `docs/manual/`
 - stable plan authority under:
   - `docs/plan/README.md`
-  - `docs/plan/documentation_bilingual_migration_plan_20260518.md`
   - `docs/plan/architecture/**`
   - `docs/plan/runtime_facade/**`
   - `docs/plan/cooperative/**`
@@ -151,8 +153,10 @@ Audit interpretation rule:
   verdict.
 - `docs/Archive/` and `docs/**/archive/` are outside the default maintained
   drift verdict, even if they retain mirrored bilingual files for traceability.
-- After a bulk doc sweep or directory move, regenerate the registry first with
-  `clusters --write`, then rerun `audit`.
+- After reviewing changed pairs, refresh only those pair records with repeated
+  `clusters --write --pair <pair_id>` arguments, then rerun `audit`.
+- A full `clusters --write` is allowed only after a full-surface bilingual
+  review; it must not be used to hide unrelated legacy divergence.
 - `needs-en-update` / `needs-zh-update` usually indicates one-sided follow-up
   work.
 - `diverged` means both sides changed relative to the recorded baseline and
@@ -229,5 +233,5 @@ acceptance bar:
 ## Related Docs
 
 - [docs/README.md](../../README.md)
-- [docs/plan/documentation_bilingual_migration_plan_20260518.md](../../plan/documentation_bilingual_migration_plan_20260518.md)
+- [Archived bilingual migration record](../../plan/archive/documentation_bilingual_migration_plan_20260518.md)
 - [document_alignment_map.md](../overview/document_alignment_map.md)

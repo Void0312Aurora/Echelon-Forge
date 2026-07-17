@@ -23,8 +23,6 @@ Language note:
   bilingual surface.
 - The policy lives in
   [docs/standards/governance/bilingual_documentation_policy.md](../standards/governance/bilingual_documentation_policy.md).
-- The rollout plan lives in
-  [docs/plan/documentation_bilingual_migration_plan_20260518.md](../plan/documentation_bilingual_migration_plan_20260518.md).
 
 Most files here are dated snapshots of a specific analysis, freeze plan,
 taskboard, checkpoint, or convergence pass. For the latest context in an area,
@@ -53,7 +51,7 @@ For lifecycle cleanup across this tree, see the
   `execution` / HMoE `1v1` path, staged `1v1` curriculum, and air-combat damage
   runtime. Use linked archive snapshots only for traceability; do not treat old
   air-combat snapshots as the whole-project center.
-- [common_air_naval/](archive/common_air_naval/README.md): `archived` —
+- [common_air_naval/](archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md): `archived` —
   WP0-WP8 complete (common/air/naval DTO split, profile dispatch seam,
   MissionCommand compatibility split). Residual naval runtime expansion and
   air-first helper migration continue via standalone task sheets.
@@ -91,7 +89,7 @@ For lifecycle cleanup across this tree, see the
 - [viz/](viz/README.md): `exploratory` / `active` visualization unified-entry
   surface. It is for display, asset registry, loader/session flow, and runtime
   inspection convenience, not realism or world-parameter authority.
-- [game/](game/README.md): `exploratory` external-game frontend integration.
+- [game/](../../game/README.md): `exploratory` external-game frontend integration.
   Start here for simulation-backed gameplay shells, the tracked Arma proxy
   workspace boundary, local-only frontend archive rules, or
   authoritative-backend proxy experiments.

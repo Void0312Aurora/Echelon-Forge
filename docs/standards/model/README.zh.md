@@ -69,7 +69,7 @@ of kill、effects-chain realism、health delta 或 damage/kill 验收声明。
 - first-event rollout storage：
   [python/rl/policy_algo/first_event_rollout_buffer.py](../../../python/rl/policy_algo/first_event_rollout_buffer.py)
 - grouped stopping objective：
-  [python/rl/policy_algo/m3s1_grouped_stopping.py](../../../python/rl/policy_algo/m3s1_grouped_stopping.py)
+  [python/rl/policy_algo/grouped_stopping.py](../../../python/rl/policy_algo/grouped_stopping.py)
 - air-combat event-action runtime support：
   [gym_envs/universal_env_parts/air_combat_event_action.py](../../../gym_envs/universal_env_parts/air_combat_event_action.py)
   - 在 policy-visible support 塑造 event distribution 之后，拥有最终 A5 runtime gate。

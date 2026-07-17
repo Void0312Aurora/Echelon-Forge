@@ -34,8 +34,8 @@ simulation architecture 等领域入口开始。
   早期地面 tasking/native-schema bootstrap 线。
 - [simulation_architecture 任务目录](../simulation_architecture/README.md):
   共享 runtime、contract、facade 与架构收口线。
-- [runtime 性能任务目录](../performance_runtime/README.zh.md):
-  当前 runtime 性能规划入口。
+- [保留的 runtime 性能规划历史](../archive/performance_runtime/README.zh.md):
+  只提供已归档的规划上下文，不是当前执行入口。
 
 ## 推荐起点
 

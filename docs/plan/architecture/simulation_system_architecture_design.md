@@ -683,7 +683,7 @@ This document does not delete the earlier plans. It repositions them:
   remains the source for performance route ordering and backend trade-offs.
 - [../runtime_facade/runtime_facade_contract_plan.md](../runtime_facade/runtime_facade_contract_plan.md)
   remains the facade contract input.
-- [../../task/common_air_naval/README.md](../../task/common_air_naval/README.md)
+- [../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md](../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md)
   remains the historical task line for the `common / air / naval` split.
 - [../../task/simulation_architecture/README.md](../../task/simulation_architecture/README.md)
   is the execution subproject for turning this architecture into scoped work.
@@ -714,7 +714,7 @@ This document does not delete the earlier plans. It repositions them:
   stay outside the simulation/policy/orchestration closure and focus on
   curriculum, evaluation, capability profiling, scenario generation, world-
   model interfaces, and learning evidence.
-- [../../task/review/temp-02_review_20260519.md](../../task/review/temp-02_review_20260519.md)
+- [../../task/review/archive/wp-superseded/architecture_plan_review_20260519.md](../../task/review/archive/wp-superseded/architecture_plan_review_20260519.md)
   is the source review that elevated this baseline from lifecycle plus DAG to
   SCAL, graph-of-graphs, information-state architecture, and simulation
   compiler positioning.

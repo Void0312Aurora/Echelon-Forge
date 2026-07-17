@@ -87,15 +87,15 @@ Archive decision:
 ### Archived In Place
 
 - `code_redundancy/`: the
-  [follow-up freeze](./code_redundancy/archive/code_redundancy_followup_freeze_20260516.md)
+  [follow-up freeze](./archive/code_redundancy/archive/code_redundancy_followup_freeze_20260516.md)
   says `WP-A / WP-B / WP-C` are all closed and no active implementation items
   remain. The area now has a root `README` and local `archive/` index; future
   work should start from a new freeze doc.
 - `diagnostics_eval/`: the
-  [diagnostics modularization](./diagnostics_eval/archive/diagnostics_modularization_20260515.md),
-  [eval entrypoint convergence](./diagnostics_eval/archive/eval_entrypoint_convergence_20260515.md),
+  [diagnostics modularization](./archive/diagnostics_eval/archive/diagnostics_modularization_20260515.md),
+  [eval entrypoint convergence](./archive/diagnostics_eval/archive/eval_entrypoint_convergence_20260515.md),
   and
-  [benchmark CLI convergence](./diagnostics_eval/archive/diagnostics_benchmark_cli_convergence_20260515.md)
+  [benchmark CLI convergence](./archive/diagnostics_eval/archive/diagnostics_benchmark_cli_convergence_20260515.md)
   all mark their phases completed. The area now has a root `README` and local
   `archive/` index.
 - `python_rl/`: these docs are convergence records for migrations that are

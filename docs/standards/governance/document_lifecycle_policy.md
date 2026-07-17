@@ -1,0 +1,257 @@
+# Document Lifecycle Policy
+
+Language:
+- English canonical: `document_lifecycle_policy.md`
+- Chinese companion: [document_lifecycle_policy.zh.md](document_lifecycle_policy.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/standards/governance/document_lifecycle_policy.md`
+Owner: `docs/standards/governance`
+Last verified: `2026-07-18`
+
+Status: `2026-07-18` authoritative policy for classifying, maintaining,
+reviewing, generating, and archiving repository documentation.
+
+## Purpose
+
+This policy gives every maintained document one content kind and one lifecycle
+state. It prevents current authority, historical records, generated output,
+configuration inputs, and retained evidence from being mixed in the same
+navigation surface without an explicit boundary.
+
+`maintained` and `archived` are lifecycle states, not peer directory types.
+A reference page can therefore be `kind: reference` and
+`lifecycle: maintained`, then later become `lifecycle: archived` without being
+misclassified as a different kind of document.
+
+This policy governs tracked repository documentation. Ignored, private, or
+local-only workspaces are outside its publication scope unless they are
+deliberately admitted into the tracked tree.
+
+## Classification Model
+
+### Document Kinds
+
+| Kind | Purpose | Normal location | Authority boundary |
+| --- | --- | --- | --- |
+| `standard` | Stable terminology, ownership, governance, and mandatory constraints | `docs/standards/` | Normative within its declared scope; it cannot overrule current code or executable evidence about implemented behavior. |
+| `plan` | Bounded architecture direction, sequencing, migration, and acceptance design | `docs/plan/` | Authorizes only the frozen or explicitly active scope it names. |
+| `task` | Current implementation work, status, residuals, and acceptance packages | `docs/task/` | Owns scoped execution status; it does not redefine cross-project terminology owned by standards. |
+| `reference` | Verified description of current structure, API, capability, or inventory | `docs/manual/reference/` or a component README | Descriptive authority only for the last-verified state. |
+| `howto` | Reproducible operator or maintainer procedure | `docs/manual/howto/` | Valid only for the named platform, prerequisites, and verified command path. |
+| `review` | Independent findings, risk assessment, acceptance decision, or rejection | currently `docs/task/review/` | Records a judgment. Action items must move to a task or issue; a review does not itself implement a change. |
+| `evidence` | Immutable retained inputs, measurements, manifests, figures, or acceptance proof | a local `evidence/` package beside the owning task | Supports a bounded claim only; it is not current behavior or policy authority. |
+| `generated` | Reproducible output produced from named tracked inputs | a local `generated/` directory | Never manually normative. The producer and inputs are authoritative. |
+| `config-index` | Human-readable index of canonical scenarios or configuration inputs | near the owning config surface or under `docs/` | Points to configuration truth; it must not duplicate the payload. |
+
+### Lifecycle States
+
+| Lifecycle | Meaning | Allowed use |
+| --- | --- | --- |
+| `draft` | Scope or content is not accepted. | Discussion and review only; not implementation authority. |
+| `maintained` | Current and intentionally updated with its owner. | Default current entry for the declared scope. |
+| `accepted` | A bounded result or review decision has passed its gate. | Stable evidence or closure record; new scope requires a new task or plan. |
+| `superseded` | Replaced by a named current document. | Transitional history until physically archived. |
+| `archived` | Historical and not current authority by default. | Provenance and route history only. |
+
+Do not use directory presence as a lifecycle claim. A local README must name
+the current entry, and every superseded document must name its replacement.
+
+## Required Metadata
+
+New documents and substantially rewritten maintained documents must place this
+block immediately after the title and language block:
+
+```text
+Document kind: `<kind>`
+Lifecycle: `<lifecycle>`
+Canonical: `<repo-relative path or self>`
+Owner: `<component, domain, or governance surface>`
+Last verified: `<YYYY-MM-DD>`
+```
+
+Additional requirements:
+
+- `plan` and `task`: scope, non-goals, acceptance evidence, and residuals;
+- `reference`: implementation sources and the verification boundary;
+- `howto`: prerequisites, platform assumptions, commands, and expected result;
+- `review`: reviewed revision, reviewer independence, findings, and verdict;
+- `evidence`: claim boundary, manifest, provenance, and retention reason;
+- `generated`: producer command, tracked inputs, and a do-not-edit marker;
+- `config-index`: canonical config/scenario paths and lifecycle category.
+
+Legacy documents do not need a repository-wide metadata rewrite in one commit.
+When a legacy document is promoted, moved, or substantially edited, it must be
+brought into compliance in that same change.
+
+## README Boundary
+
+A maintained README is an index, not an append-only project ledger. It should
+contain only:
+
+1. current purpose and lifecycle;
+2. current authoritative entry points;
+3. current status and accepted capability boundary;
+4. open residuals or explicitly held work;
+5. links to review, evidence, and archive indexes.
+
+Completed work-package narratives belong in a local `archive/README.md` or a
+bounded acceptance record. New or substantially rewritten maintained READMEs
+should remain at or below 200 lines. A README above 300 lines requires a
+documented `Size exception` explaining why an index split would be harmful.
+
+Do not copy the same status narrative into the root README, `docs/README`, a
+domain README, and a task packet. The narrowest maintained owner holds the
+detail; higher-level indexes provide one-line routing and maturity boundaries.
+
+## Naming And Placement
+
+- Stable maintained documents use `lower_snake_case.md` without a date.
+- Dated snapshots use `<topic>_<YYYYMMDD>.md`.
+- Reviews use `<scope>_review_<YYYYMMDD>.md` unless a stable local README owns
+  the review series.
+- Evidence packages use `evidence/<topic>_<YYYYMMDD>/` with `README.md` and
+  `manifest.json`.
+- `README.md` is reserved for directory navigation.
+- New archive directories use lowercase `archive/`.
+- Do not create `Archive/`, `archive/archive/`, or repeated lifecycle directory
+  components. Existing legacy paths are migrated only through a reviewed,
+  link-safe iteration.
+
+## Bilingual Rules
+
+English `.md` files are canonical and Chinese `.zh.md` files are companions.
+The detailed translation workflow remains in the
+[Bilingual Documentation Policy](bilingual_documentation_policy.md).
+
+Chinese companions are mandatory for:
+
+- root and major directory navigation READMEs;
+- standards and governance authority;
+- stable plan authority;
+- maintained reference and operator how-to pages;
+- task/domain README pages promoted as current entry surfaces.
+
+High-churn dated tasks, reviews, evidence notes, and generated output may remain
+English-only unless the local README promotes them into the strict bilingual
+surface. A required pair must be updated in the same iteration. If the pair
+diverges, English remains canonical, but the iteration cannot claim bilingual
+closure until the companion is reconciled.
+
+Registry hashes must be refreshed only for pairs reconciled in the current
+review scope. A whole-registry rewrite is not evidence that unrelated legacy
+divergence was reviewed. The current registry is rooted at `docs/`; changes to
+the repository-root README pair therefore require direct bilingual review until
+that pair is admitted to a machine-readable registry.
+
+## Link Rules
+
+- Use relative Markdown links for tracked repository targets.
+- Link to an explicit `README.md` when a documentation directory is the target.
+- Do not publish workstation paths such as drive-letter paths or `/home/...`.
+- A maintained document must not link to an ignored, private, or absent file as
+  though it were a tracked artifact.
+- If an artifact is intentionally external or no longer retained, write its
+  path as code and state the retention boundary instead of creating a broken
+  Markdown link.
+- English pages link to canonical English targets by default. Chinese entry
+  pages should link to a maintained Chinese companion when one exists.
+- Broken links in maintained entry surfaces are release-blocking. Archived
+  link defects are warnings unless they obscure the current replacement or an
+  evidence manifest.
+
+## Evidence Rules
+
+Evidence is retained only when it supports a named claim, acceptance gate,
+reproducibility boundary, or rights/provenance obligation. An evidence package
+must include:
+
+- a short README naming the supported claim and non-claims;
+- a machine-readable manifest;
+- creation date and producer;
+- input identities and hashes where practical;
+- output identities and hashes where practical;
+- retention reason and license/rights boundary;
+- the task, review, or standard that consumes it.
+
+Evidence is immutable after acceptance. Corrections create a new package and
+mark the old package superseded or archived. Do not delete evidence merely
+because it is old, and do not retain whole experiment directories when a small
+manifest and selected outputs prove the same bounded claim.
+
+## Generated-Document Rules
+
+Generated documents must begin with a visible notice containing:
+
+```text
+Generated by: <repo-relative tool and command>
+Inputs: <tracked paths or manifest>
+Do not edit manually.
+```
+
+Generated output must be reproducible in a clean workspace. If a result cannot
+be reproduced and is retained for a claim, classify it as evidence instead.
+Generated summaries may support navigation but cannot replace a maintained
+README, standard, review verdict, or acceptance decision.
+
+## Configuration Rules
+
+Canonical configuration payloads do not live under `docs/`:
+
+- scenarios remain under `scenarios/`;
+- training and runtime configuration remains under `examples/config/` or the
+  owning maintained config surface;
+- frozen and archived inputs retain their declared lifecycle where the config
+  system owns it.
+
+Documentation may contain a `config-index` that links to those files and states
+their purpose, lifecycle, compatibility boundary, and validation command. Do
+not paste full JSON payloads into Markdown or keep a second editable config copy
+inside a review or task packet.
+
+## Review And Archive Lifecycle
+
+A review must identify the exact revision or diff it inspected, remain
+independent from the implementation author for that iteration, and classify
+findings by behavior risk rather than prose preference. Once its actions are
+transferred or closed, the review becomes `accepted` or `archived` and must not
+remain presented as an active implementation queue.
+
+A document may enter `archive/` only when:
+
+1. a maintained replacement or parent README exists;
+2. current facts needed by maintainers have been promoted to that replacement;
+3. incoming maintained links have been updated;
+4. provenance and evidence consumers have been checked;
+5. the archive index records the reason and date.
+
+Archived files are immutable except for link repair, license/rights correction,
+or an explicit erratum. New work must not be appended to an archived packet.
+
+## Enforcement And Migration
+
+Every documentation iteration must run, at minimum:
+
+```bash
+git diff --check
+python tools/maintenance/translate_docs_batch.py audit --root docs \
+  --registry docs/standards/bilingual_document_clusters.json
+```
+
+It must also run the maintained link/document audit once that gate exists.
+Migration is incremental: first establish a compliant entry and replacement,
+then repair links, then move or remove redundant material. A large path move,
+archive collapse, evidence deletion, or bilingual rewrite requires its own
+reviewed iteration.
+
+Repository-wide consolidation sequencing is tracked in the
+[Repository Consolidation Plan](../../plan/repository_consolidation/README.md).
+
+## Related Documents
+
+- [Agent Document Authority Map](../../agent/rules/document_authority_map.md)
+- [Bilingual Documentation Policy](bilingual_documentation_policy.md)
+- [Standards Maintenance Policy](standards_maintenance_policy.md)
+- [Subproject Creation Standard](../../agent/rules/subproject_creation_standard.md)
+- [Repository Consolidation Plan](../../plan/repository_consolidation/README.md)

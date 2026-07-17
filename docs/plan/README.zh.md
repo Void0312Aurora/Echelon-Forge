@@ -25,7 +25,8 @@
 - [archive/](archive/README.md)
   - 已关闭路线、历史溯源材料与双语迁移记录。
 
-更早期的归档设计材料仍主要位于 [docs/Archive/](../Archive)。
+更早期的归档设计材料仍保留在旧路径 `docs/Archive/` 下；该目录只用于历史追溯，
+不是当前 plan 入口。
 
 ## 二、推荐阅读顺序
 

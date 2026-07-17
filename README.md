@@ -227,7 +227,7 @@ See also:
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
+- [docs/manual/reference/src_layer_map.md](docs/manual/reference/src_layer_map.md)
 - [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 ## Scenarios and Training Configs
@@ -274,8 +274,8 @@ Current root/operator entrypoints:
 - `train.py`
   - Main execution-layer, cooperative, and leader-layer training entrypoint.
 - `world_model_train.py`
-  - World-model training entrypoint; still a large root script and not yet
-    fully split like `train.py`.
+  - Thin world-model training compatibility entrypoint; implementation lives
+    under `_world_model_train_impl/` and `python/world_model/`.
 - `evaluate.py`
   - Historical root evaluator kept as a compatibility/operator surface.
 - `tools/eval/*.py`
@@ -341,9 +341,9 @@ Diagnostic and benchmark scripts are centered under
 
 ## Current Reference Documents
 
-- [docs/manual/engine_capabilities.md](docs/manual/engine_capabilities.md)
-- [docs/manual/physics_engine_inventory.md](docs/manual/physics_engine_inventory.md)
-- [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
+- [docs/manual/reference/engine_capabilities.md](docs/manual/reference/engine_capabilities.md)
+- [docs/manual/reference/physics_engine_inventory.md](docs/manual/reference/physics_engine_inventory.md)
+- [docs/manual/reference/src_layer_map.md](docs/manual/reference/src_layer_map.md)
 - [docs/reference_artifacts.md](docs/reference_artifacts.md)
 
 ## Forward Work

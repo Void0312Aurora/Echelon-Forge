@@ -84,7 +84,7 @@ English version:
 - [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
 - [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)
-- [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
+- [src/models/air/default_control_model.cpp](../../../src/models/domains/air/default_control_model.cpp)
 
 ### 3. 公共 API 过于底层
 
@@ -485,7 +485,7 @@ python/
 
 - `src/systems/physics/*`
 - `src/components/physics/*`
-- [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
+- [src/models/air/default_control_model.cpp](../../../src/models/domains/air/default_control_model.cpp)
   中从 control 到 force、再到 integration 的路径
 - [src/core/interfaces/environment_model.h](../../../src/core/interfaces/environment_model.h)
   中的 environment query 契约
