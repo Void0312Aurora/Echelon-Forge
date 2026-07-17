@@ -30,10 +30,8 @@ struct ReplayFacadeProvenanceRef {
     std::string packet_ref;
     std::string packet_kind = "ObservationBatchPacket";
     InformationStateSource information_state_source = make_information_state_source(
-        kPolicyInformationStateAgentObservation,
-        kPolicySourceLabelFacadeObservationPacket,
-        kPolicyMaintainedStatusMaintained
-    );
+        kPolicyInformationStateAgentObservation, kPolicySourceLabelFacadeObservationPacket,
+        kPolicyMaintainedStatusMaintained);
 };
 
 struct ReplayEnvelope {
@@ -49,8 +47,7 @@ struct ReplayEnvelope {
     ReplayEventOrderRef event_order_ref{};
     ReplayFacadeProvenanceRef facade_provenance_ref{};
     bool snapshot_restore_supported = false;
-    std::string restore_support_boundary =
-        std::string(kReplayRestoreSupportBoundaryUnsupported);
+    std::string restore_support_boundary = std::string(kReplayRestoreSupportBoundaryUnsupported);
 };
 
 struct BranchPoint {
@@ -61,8 +58,7 @@ struct BranchPoint {
     std::string event_order_ref;
     std::string facade_packet_ref;
     bool snapshot_restore_supported = false;
-    std::string restore_support_boundary =
-        std::string(kReplayRestoreSupportBoundaryUnsupported);
+    std::string restore_support_boundary = std::string(kReplayRestoreSupportBoundaryUnsupported);
 };
 
 struct WorldlineBranchMetadata {
@@ -73,22 +69,18 @@ struct WorldlineBranchMetadata {
     std::string replay_envelope_ref;
     std::string branch_reason;
     std::string intervention_intent;
-    std::string mutation_intent =
-        std::string(kWorldlineBranchMutationIntentMetadataOnly);
+    std::string mutation_intent = std::string(kWorldlineBranchMutationIntentMetadataOnly);
     bool metadata_only = true;
     bool requests_authoritative_state_mutation = false;
     std::string source_ref;
     std::string provenance_ref;
     InformationStateSource source_information_state = make_information_state_source(
-        kPolicyInformationStateDecisionBelief,
-        kPolicySourceLabelObservationDerivedBelief,
-        kPolicyMaintainedStatusDiagnosticsOnly
-    );
+        kPolicyInformationStateDecisionBelief, kPolicySourceLabelObservationDerivedBelief,
+        kPolicyMaintainedStatusDiagnosticsOnly);
     std::vector<std::string> evidence_refs;
     std::string support_state = std::string(kWorldlineBranchSupportStateMetadataOnly);
     bool snapshot_restore_supported = false;
-    std::string restore_support_boundary =
-        std::string(kReplayRestoreSupportBoundaryUnsupported);
+    std::string restore_support_boundary = std::string(kReplayRestoreSupportBoundaryUnsupported);
 };
 
 struct CounterfactualExperimentRequest {
@@ -103,10 +95,8 @@ struct CounterfactualExperimentRequest {
     std::string provenance_ref;
     AgentAuthorityScope authority_scope{};
     InformationStateSource authority_information_state = make_information_state_source(
-        kPolicyInformationStateDecisionBelief,
-        kPolicySourceLabelObservationDerivedBelief,
-        kPolicyMaintainedStatusMaintained
-    );
+        kPolicyInformationStateDecisionBelief, kPolicySourceLabelObservationDerivedBelief,
+        kPolicyMaintainedStatusMaintained);
     std::vector<std::string> authority_evidence_refs;
     std::string backend_profile_ref;
     std::string fidelity_profile_ref;
@@ -115,8 +105,7 @@ struct CounterfactualExperimentRequest {
     bool requests_executable_branch = false;
     bool requests_authoritative_state_mutation = false;
     bool snapshot_restore_supported = false;
-    std::string restore_support_boundary =
-        std::string(kReplayRestoreSupportBoundaryUnsupported);
+    std::string restore_support_boundary = std::string(kReplayRestoreSupportBoundaryUnsupported);
 };
 
 struct ReplayContractValidationResult {
@@ -146,8 +135,7 @@ struct ReplayRestoreSupportResult {
 struct WorldlineBranchSupportResult {
     bool supported = false;
     std::string child_worldline_id;
-    std::string support_state =
-        std::string(kWorldlineBranchSupportStateMetadataOnly);
+    std::string support_state = std::string(kWorldlineBranchSupportStateMetadataOnly);
     std::string rejection_reason;
 };
 
@@ -166,12 +154,9 @@ struct CounterfactualAdmissionResult {
     std::string backend_profile_ref;
     std::string fidelity_profile_ref;
     std::vector<std::string> capability_refs;
-    std::string admission_state =
-        std::string(kCounterfactualAdmissionStateRejected);
-    std::string worldline_support_state =
-        std::string(kWorldlineBranchSupportStateRejected);
-    std::string restore_support_boundary =
-        std::string(kReplayRestoreSupportBoundaryUnsupported);
+    std::string admission_state = std::string(kCounterfactualAdmissionStateRejected);
+    std::string worldline_support_state = std::string(kWorldlineBranchSupportStateRejected);
+    std::string restore_support_boundary = std::string(kReplayRestoreSupportBoundaryUnsupported);
     std::string rejection_reason;
     std::vector<std::string> errors;
     std::vector<std::string> evidence_refs;
@@ -185,9 +170,7 @@ struct CounterfactualAdmissionResult {
         }
     }
 
-    void add_error(std::string error) {
-        errors.push_back(std::move(error));
-    }
+    void add_error(std::string error) { errors.push_back(std::move(error)); }
 };
 
 struct ScenarioGenerationEvidenceMetadataRef {
@@ -199,8 +182,7 @@ struct ScenarioGenerationEvidenceMetadataRef {
 struct ScenarioGenerationRequestMetadata {
     std::string request_id;
     std::string request_version = "1";
-    std::string contract_version =
-        std::string(kScenarioGenerationContractVersionRequestV1);
+    std::string contract_version = std::string(kScenarioGenerationContractVersionRequestV1);
     std::string generation_kind;
     std::string source;
     std::string generator_version;
@@ -214,8 +196,7 @@ struct ScenarioGenerationRequestMetadata {
 };
 
 struct ScenarioGenerationArtifactMetadata {
-    std::string artifact_kind =
-        std::string(kScenarioGenerationArtifactKindRequestMetadata);
+    std::string artifact_kind = std::string(kScenarioGenerationArtifactKindRequestMetadata);
     bool authoritative_state_mutation_allowed = false;
     ScenarioGenerationRequestMetadata request{};
 };
@@ -223,10 +204,8 @@ struct ScenarioGenerationArtifactMetadata {
 struct ExperimentProfileObservationRef {
     std::string observation_ref;
     std::string profile_ref;
-    std::string status =
-        std::string(kExperimentProfileObservationStatusObserved);
-    std::string claim_scope =
-        std::string(kExperimentProfileClaimScopeDescriptive);
+    std::string status = std::string(kExperimentProfileObservationStatusObserved);
+    std::string claim_scope = std::string(kExperimentProfileClaimScopeDescriptive);
     bool truth_claim = false;
     bool promoted_to_support = false;
     std::vector<std::string> evidence_refs;
@@ -250,10 +229,8 @@ struct ExperimentEvidenceBridgeRecord {
     std::vector<std::string> evidence_refs;
     bool truth_claim = false;
     bool promoted_to_support = false;
-    std::string claim_boundary =
-        std::string(kExperimentEvidenceClaimBoundaryNonTruthClaim);
-    std::string promotion_state =
-        std::string(kExperimentEvidencePromotionStateNotPromoted);
+    std::string claim_boundary = std::string(kExperimentEvidenceClaimBoundaryNonTruthClaim);
+    std::string promotion_state = std::string(kExperimentEvidencePromotionStateNotPromoted);
 };
 
 struct ExperimentEvidenceBridgeValidationResult {
@@ -276,4 +253,4 @@ struct ExperimentEvidenceBridgeValidationResult {
     }
 };
 
-}  // namespace runtime::counterfactual
+} // namespace runtime::counterfactual

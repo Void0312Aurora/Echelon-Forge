@@ -358,6 +358,10 @@ def _signature_match(source: str, signature: str) -> re.Match[str]:
   return match
 
 
+def _normalized_cpp_source(source: str) -> str:
+  return re.sub(r"\s+", " ", source.replace("&", " & ")).strip()
+
+
 def _method_body(source: str, signature: str) -> str:
   start = _signature_match(source, signature).start()
   body_start = source.index("{", start)
@@ -504,16 +508,21 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
   def test_runtime_facade_exports_read_only_engagement_snapshot_without_weapon_escape(self) -> None:
     facade_header = _repo_text("src", "runtime", "facade", "runtime_facade.h")
     facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
+    normalized_header = _normalized_cpp_source(facade_header)
 
     self.assertIn(
-      "EngagementEventPacket export_engagement_event_packet("
-      "const EngagementBatchRequest& request) const;",
-      facade_header,
+      _normalized_cpp_source(
+        "EngagementEventPacket export_engagement_event_packet("
+        "const EngagementBatchRequest& request) const;"
+      ),
+      normalized_header,
     )
     self.assertIn(
-      "std::vector<DiagnosticsTrace> export_diagnostics_traces("
-      "const EngagementBatchRequest& request) const;",
-      facade_header,
+      _normalized_cpp_source(
+        "std::vector<DiagnosticsTrace> export_diagnostics_traces("
+        "const EngagementBatchRequest& request) const;"
+      ),
+      normalized_header,
     )
 
     body = _method_body(

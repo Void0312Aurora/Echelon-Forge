@@ -97,8 +97,7 @@ inline bool is_maintained_scheduler_truth(const StageNodeManifest &manifest) {
 
 inline bool is_selected_slice_strict_clock_domain_node(const StageNodeManifest &manifest) {
     return manifest.node_id == "fire_control_launch.v1" ||
-           manifest.node_id == "effects_damage.v1" ||
-           manifest.node_id == "observation_export.v1";
+           manifest.node_id == "effects_damage.v1" || manifest.node_id == "observation_export.v1";
 }
 
 inline std::vector<const StageNodeManifest *>
