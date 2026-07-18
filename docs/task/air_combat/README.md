@@ -93,23 +93,6 @@ still not accepted.
   narrow ground-contact lifecycle state with debris/residue objects deferred.
   It still does not add a direct crash rule, special MQ-9 kill rule, Pk claim,
   deterministic fuze claim, or stock AIM-120C lethality claim.
-- The flight control-surface model subproject is physically archived at
-  [archive/flight_control_surface_model_implemented_20260620/README.md](archive/flight_control_surface_model_implemented_20260620/README.md).
-  Platform-level FDM mechanism completion (not combat-specific): it closes the
-  broken `stick -> surface command -> actuator dynamics -> deflection ->
-  control moment` causal chain by adding a `ControlSurfaceState` physical
-  intermediary, an actuator-lag system, and control-effectiveness derivatives in
-  the aerodynamics moment model, so control authority emerges from the same
-  q_bar/Mach-scaled aero path as the rest of the moments and battle damage acts
-  on surface effectiveness rather than on a synthetic torque scale. Status:
-  `implemented / validation green` — the surface mechanism is wired, observable, and GREEN (4 mechanism
-  tests + 4 M5 damage-coupling doctests), the full flight-dynamics guard suite
-  passes 15/15 with no thresholds relaxed, and two control-loop bugs surfaced by
-  the physical actuator lag (a pitch PIO limit-cycle from over-hot rate gains and
-  an aileron-rudder-interconnect sign error) are fixed and regression-covered. It
-  does not claim calibrated F-16 control derivatives, control-derivative
-  authority, or quantitative handling-qualities authority.
-
 ## Active Follow-On Focus
 
 - tighten early-flight stability and action-surface protection for `1v1`

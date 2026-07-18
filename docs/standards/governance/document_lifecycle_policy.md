@@ -105,6 +105,10 @@ Do not copy the same status narrative into the root README, `docs/README`, a
 domain README, and a task packet. The narrowest maintained owner holds the
 detail; higher-level indexes provide one-line routing and maturity boundaries.
 
+Promoting or extracting task material into standards must not broaden the
+task's scope, acceptance state, schedule, or authority. The current task owner
+remains authoritative for task-specific state.
+
 ## Naming And Placement
 
 - Stable maintained documents use `lower_snake_case.md` without a date.

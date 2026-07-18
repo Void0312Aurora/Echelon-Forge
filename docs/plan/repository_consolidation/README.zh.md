@@ -40,7 +40,8 @@ claim。
    - 审阅前记录命令和结果。
 4. **独立审阅**
    - 派发一个没有编写该变更的独立 subagent；
-   - 对冻结 diff 检查行为损失、被删除功能、调用者存活、兼容、文档权威和测试充分性；
+   - 对冻结 diff 检查行为损失、被删除功能、调用者存活、兼容、文档权威、测试充分性，
+     以及是否重复已有 owner 或堆砌不必要的平行机制；
    - reviewer 只读，返回 blocking finding、non-blocking finding 和 verdict。
 5. **修复与复审**
    - 修复 blocking finding 并重跑受影响验证；
@@ -89,19 +90,18 @@ claim。
 | 迭代 | 状态 | Commit / 分支证据 | 范围与结果 | 验证 / 审阅证据 |
 | --- | --- | --- | --- | --- |
 | I1 Runtime 与测试基础设施整合 | `accepted` | `aaec45882173d57c679e3e7233a81980ee9d8fdc`，分支 `codex/redundancy-consolidation` | 修复 missile tuning 稀疏覆盖语义，删除不可达 `UniversalEnv` body，统一 `ef_py` runtime bootstrap 和 suite-manifest 解析，合并重复测试 helper。净变化为新增 1,413 行、删除 2,390 行。 | Focused regression 与 maintained smoke suite 通过；最终迭代收口记录为 `361 passed`、`41 subtests passed`。独立审阅在提交前未留下 unresolved blocking finding。 |
-| I2 文档生命周期与精简治理 | `accepted` | `codex/redundancy-consolidation` 上的本轮提交；精确 hash 在提交交接与下一轮登记更新中记录 | 建立生命周期与精简权威、唯一维护文档范围规则、严格链接审计、选择性双语登记刷新，并在不使用 baseline allowlist 的前提下完成链接安全修复。严格登记现覆盖 76 对文档。最终 diff 为 57 个文件、新增 1,960 行、删除 427 行。 | 默认审计检查 155 份文档和 2,592 个内部链接，零问题；治理聚焦测试 `15 passed`；maintained smoke 为 `371 passed`、`41 subtests passed`；Ruff 与 `git diff --check` 通过。登记结果为 70 对同步、6 对保留的既有分歧、1 个既有缺失英文 companion。`iteration2_independent_review` 发现两个 archive 权威 blocker，均已修复；最终 `bilingual_registry_audit` 复审没有遗留 blocker。 |
+| I2 文档生命周期与精简治理 | `accepted` | `c844bd900856682f18d6dc72fcb442b95e75c18a`，分支 `codex/redundancy-consolidation` | 建立生命周期与精简权威、唯一维护文档范围规则、严格链接审计、选择性双语登记刷新，并在不使用 baseline allowlist 的前提下完成链接安全修复。严格登记现覆盖 76 对文档。最终 diff 为 57 个文件、新增 1,960 行、删除 427 行。 | 默认审计检查 155 份文档和 2,592 个内部链接，零问题；治理聚焦测试 `15 passed`；maintained smoke 为 `371 passed`、`41 subtests passed`；Ruff 与 `git diff --check` 通过。登记结果为 70 对同步、6 对保留的既有分歧、1 个既有缺失英文 companion。`iteration2_independent_review` 发现两个 archive 权威 blocker，均已修复；最终 `bilingual_registry_audit` 复审没有遗留 blocker。 |
+| I3 文档去重与双语残余闭环 | `accepted` | 同一分支；commit 待收口建立 | 否决了为根 README 增建登记特例的方案；把重复的 realism-authority 标准压成复用既有 owner 的兼容路由对；删除 air-combat 上级索引复制的归档实现细节；补回缺失的 review 路由；刷新四个已有证据的旧 baseline。最终 diff 为 17 个文件、新增 184 行、删除 192 行（净删除 8 行）。 | 登记结果为 77/77 同步，无缺失 peer 或漂移；链接审计检查 156 份文档、2,590 个链接，零问题；治理聚焦测试 `25 passed`；maintained smoke 为 `372 passed`、`41 subtests passed`；Ruff 与 `git diff --check` 通过。独立审阅发现 authority 与 registry gate blocker，均已修复；最终复审以零 blocker 批准候选。 |
 
-### I2 保留的文档残余
+### I2 残余在 I3 的处置
 
-- 仓库根 `README.md` / `README.zh.md` 直接进行双语审阅，但当前登记表以
-  `docs/` 为根，尚未对该文档对进行哈希跟踪。
-- `docs/standards/foundation/realism_authority_boundary.zh.md` 仍缺少英文
-  canonical companion。
-- 六个既有文档对分歧被有意保留且未刷新：
-  `plan/cooperative/multi_agent_cooperative_training_foundation_and_performance_plan`、
-  `standards/model/policy_execution_architecture`、`standards/naval/obs`、
-  `task/air_combat/README`、`task/issues/README` 与 `task/review/README`。
-- 旧 archive 规范化和 evidence 压缩仍属于 P7，本轮治理迭代没有把它们混入。
+- 仓库根 README 对继续直接审阅；维护链接审计已经覆盖它，为一个特例新增第二套
+  registry 路径模型不具备收益。
+- 独立 realism-authority 内容改为路由到既有 gradient realism、source admission 与
+  lifecycle owner，不再重复规则。
+- 六个旧分歧通过四个有证据的 baseline 刷新、删除 air-combat 复制的归档细节，
+  以及补回 review 路由完成闭环。
+- 旧 archive 规范化和 evidence 压缩仍属于 P7，没有混入 I3。
 
 ## 未满足额外门槛时不得删除的表面
 
@@ -126,7 +126,7 @@ provenance，并证明更小的保留集合仍支撑同一有界 claim。
 - 除非用户明确改变分支策略，所有迭代都在 `codex/redundancy-consolidation`。
 - 一轮迭代对应一个完整提交。
 - 独立 reviewer 不得修改被审实现。
-- 审阅必须判断功能是否被消除，不能只看测试是否通过或代码是否缩短。
+- 审阅必须判断功能是否被消除、是否重复已有 owner，不能只看测试是否通过或代码是否缩短。
 - 窄测试通过不证明全仓兼容。
 - 若本轮发现实质不同的问题，记录为后续候选，不扩大当前 write set。
 - 存在未解决 blocking finding、必需验证失败或无法解释的删除时不得提交。

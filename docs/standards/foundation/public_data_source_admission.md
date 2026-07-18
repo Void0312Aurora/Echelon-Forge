@@ -143,6 +143,12 @@ A runtime authority gate must fail closed when any of the following are missing:
 - row-level `row_id`, `source_ref`, and provenance for consumable rows;
 - explicit per-authority grants.
 
+Every runtime authority release requires an accepted verdict from a reviewer
+who did not author the candidate. Author-side snapshots, result packs,
+self-acceptance, and review-readiness labels do not substitute for that review;
+until both independent review and source authority close, the claim remains
+`candidate` or `non-authoritative`.
+
 Authority is per field. A source that can support geometry does not thereby
 support vulnerability. A source that can support a benchmark does not thereby
 support Pk. A source that can support a method does not thereby support

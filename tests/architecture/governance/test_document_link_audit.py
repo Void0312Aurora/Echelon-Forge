@@ -115,6 +115,42 @@ def test_selective_cluster_refresh_rejects_unknown_pair(tmp_path: Path) -> None:
     )
 
 
+def test_repository_bilingual_registry_matches_the_maintained_surface() -> None:
+  docs_root = REPO_ROOT / "docs"
+  registry_path = docs_root / "standards/bilingual_document_clusters.json"
+  entries = json.loads(registry_path.read_text(encoding="utf-8"))["pairs"]
+  registered = {
+    entry["pair_id"]: entry
+    for entry in entries
+  }
+  records = translate_docs_batch.build_cluster_records(
+    docs_root,
+    include_local_only=False,
+    strict_bilingual_only=True,
+  )
+
+  assert len(entries) == len(registered)
+  assert set(registered) == {record["pair_id"] for record in records}
+  for record in records:
+    entry = registered[record["pair_id"]]
+    for language in ("english", "chinese"):
+      path = Path(record[language]).resolve()
+      assert path.is_file()
+      assert entry[language] == path.relative_to(REPO_ROOT).as_posix()
+      assert entry[f"{language}_hash"] == record[f"{language}_hash"]
+
+  for path in translate_docs_batch.filter_paths(
+    translate_docs_batch.iter_markdown(docs_root),
+    include_local_only=False,
+    root=docs_root,
+    strict_bilingual_only=True,
+  ):
+    if translate_docs_batch.has_lang_suffix(path, "zh"):
+      assert translate_docs_batch.plain_from_lang_suffix(path, "zh").exists()
+    elif translate_docs_batch.has_lang_suffix(path, "en"):
+      assert translate_docs_batch.plain_from_lang_suffix(path, "en").exists()
+
+
 def test_audit_accepts_relative_files_directories_fragments_and_external_links(tmp_path: Path) -> None:
   _write(tmp_path / "README.md", "[docs](docs/README.md)\n")
   _write(

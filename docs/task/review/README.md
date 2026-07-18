@@ -36,7 +36,7 @@ Status: active review record.
   [Test System Residual Governance](../issues/test_system_residual_governance/README.md).
   ([中文](test_system_governance/README.zh.md))
 - [Test System Evaluation And Intent Matrix 2026-06-01](test_system_evaluation_20260601.zh.md) (中文)
-- [Test Coverage And Redundancy Measurement 2026-06-20](test_coverage_measurement_20260620.zh.md) — 首次实测覆盖率：Python 65% 行、C++ 经 `ef_py` 集成真实约 52%（纠正 doctest-only 19% 误读），零参数化与 25% 非行为守卫的冗余信号。 (中文)
+- [Test Coverage And Redundancy Measurement 2026-06-20](test_coverage_measurement_20260620.zh.md) (中文)
 - [Architecture Damage-Model Test Capability Matrix 2026-06-10](architecture_damage_model_test_script_survival_table_20260610.zh.md) (中文)
 - [Architecture Test System Governance Closeout 2026-06-10](architecture_test_system_governance_closeout_20260610.zh.md) (中文)
 - [Tools Script Governance Matrix 2026-06-11](tools_script_governance_matrix_20260611.zh.md) (中文)

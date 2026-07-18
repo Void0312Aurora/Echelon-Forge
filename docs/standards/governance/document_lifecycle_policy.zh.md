@@ -96,6 +96,9 @@ Last verified: `<YYYY-MM-DD>`
 不要在根 README、`docs/README`、领域 README 和任务包中重复复制同一状态叙述。
 最窄的维护 owner 保存细节，上级索引只提供单行路由和成熟度边界。
 
+把任务材料提升或抽取到 standards 时，不得扩大任务范围、验收状态、时间表或
+authority。具体任务状态仍由当前任务 owner 的维护文档所有。
+
 ## 命名与位置
 
 - 稳定维护文档使用不带日期的 `lower_snake_case.md`。

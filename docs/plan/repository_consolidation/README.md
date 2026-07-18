@@ -45,7 +45,8 @@ Every iteration follows this sequence:
 4. **Independent review**
    - dispatch a separate subagent that did not author the change;
    - review the frozen diff for behavior loss, removed functionality, caller
-     survival, compatibility, documentation authority, and test adequacy;
+     survival, compatibility, documentation authority, test adequacy, and any
+     unnecessary parallel mechanism that duplicates an existing owner;
    - the reviewer is read-only and returns blocking findings, non-blocking
      findings, and a verdict.
 5. **Repair and re-review**
@@ -99,20 +100,21 @@ fresh source and caller audit when its iteration begins.
 | Iteration | Status | Commit / branch evidence | Scope and result | Validation / review evidence |
 | --- | --- | --- | --- | --- |
 | I1 Runtime and test infrastructure consolidation | `accepted` | `aaec45882173d57c679e3e7233a81980ee9d8fdc` on `codex/redundancy-consolidation` | Fixed sparse missile-tuning override semantics, removed the unreachable `UniversalEnv` body, centralized `ef_py` runtime bootstrap and suite-manifest parsing, and consolidated repeated test helpers. Net change: 1,413 insertions and 2,390 deletions. | Focused regressions and the maintained smoke suite passed (`361 passed`, `41 subtests passed` in the final iteration closeout). An independent review reported no unresolved blocking finding before commit. |
-| I2 Documentation lifecycle and consolidation governance | `accepted` | iteration commit on `codex/redundancy-consolidation`; exact hash is reported in the commit handoff and next register update | Added lifecycle and consolidation authority, one shared maintained-document scope, a strict link audit, selective bilingual-registry refresh, and link-safe repairs without a baseline allowlist. The strict registry now covers 76 pairs. Final diff: 57 files, 1,960 insertions, 427 deletions. | Default audit: 155 documents, 2,592 internal links, zero issues. Focused governance tests: `15 passed`; maintained smoke: `371 passed`, `41 subtests passed`; Ruff and `git diff --check` passed. Registry: 70 synced, 6 preserved legacy divergences, 1 legacy missing English companion. `iteration2_independent_review` found two archive-authority blockers; both were repaired. Final `bilingual_registry_audit` re-review left no unresolved blocker. |
+| I2 Documentation lifecycle and consolidation governance | `accepted` | `c844bd900856682f18d6dc72fcb442b95e75c18a` on `codex/redundancy-consolidation` | Added lifecycle and consolidation authority, one shared maintained-document scope, a strict link audit, selective bilingual-registry refresh, and link-safe repairs without a baseline allowlist. The strict registry now covers 76 pairs. Final diff: 57 files, 1,960 insertions, 427 deletions. | Default audit: 155 documents, 2,592 internal links, zero issues. Focused governance tests: `15 passed`; maintained smoke: `371 passed`, `41 subtests passed`; Ruff and `git diff --check` passed. Registry: 70 synced, 6 preserved legacy divergences, 1 legacy missing English companion. `iteration2_independent_review` found two archive-authority blockers; both were repaired. Final `bilingual_registry_audit` re-review left no unresolved blocker. |
+| I3 Documentation de-duplication and bilingual residual closure | `accepted` | same branch; commit pending closeout | Rejected a proposed root-README registry special case, compressed the duplicate realism-authority standard into a compatibility routing pair backed by existing owners, removed copied archive implementation detail from the air-combat index, restored the missing review route, and refreshed four verified legacy baselines. Final diff: 17 files, 184 insertions, 192 deletions (net -8). | Registry: 77/77 synced with zero missing peers or drift. Link audit: 156 documents, 2,590 links, zero issues. Focused governance: `25 passed`; maintained smoke: `372 passed`, `41 subtests passed`; Ruff and `git diff --check` passed. Independent review found authority and registry-gate blockers; both were repaired, and final re-review approved the candidate with zero blockers. |
 
-### I2 Retained Documentation Residuals
+### I2 Residual Disposition In I3
 
-- The repository-root `README.md` / `README.zh.md` pair is reviewed directly
-  but is not hash-tracked because the current registry is rooted at `docs/`.
-- `docs/standards/foundation/realism_authority_boundary.zh.md` still lacks its
-  English canonical peer.
-- Six pre-existing pair divergences remain deliberately unrefreshed:
-  `plan/cooperative/multi_agent_cooperative_training_foundation_and_performance_plan`,
-  `standards/model/policy_execution_architecture`, `standards/naval/obs`,
-  `task/air_combat/README`, `task/issues/README`, and `task/review/README`.
+- The repository-root README pair remains deliberately direct-reviewed. The
+  maintained link audit already covers it, so one special pair did not justify
+  a second registry path model.
+- The standalone realism-authority content now routes to the existing gradient
+  realism, source-admission, and lifecycle owners instead of duplicating them.
+- The six legacy divergences are closed by four evidence-backed baseline
+  refreshes, removal of copied air-combat archive detail, and restoration of
+  the missing review route.
 - Legacy archive normalization and evidence compaction remain P7 work and were
-  not folded into this governance iteration.
+  not folded into I3.
 
 ## Surfaces That Must Not Be Deleted Without Additional Gates
 
@@ -143,8 +145,8 @@ the same bounded claim.
   explicitly changes the branch strategy.
 - One iteration equals one coherent commit.
 - The independent reviewer must not edit the implementation under review.
-- Review must ask whether functionality was removed, not only whether tests
-  pass or code became shorter.
+- Review must ask whether functionality was removed and whether the change
+  duplicates an existing owner, not only whether tests pass or code is shorter.
 - Passing narrow tests does not prove repository-wide compatibility.
 - If an iteration discovers a materially different problem, record it as a
   later candidate instead of expanding the current write set.
