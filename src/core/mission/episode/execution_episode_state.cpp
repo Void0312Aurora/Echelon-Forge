@@ -20,23 +20,13 @@ bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs
     const auto rhs_ground_static_task =
         mission_command_ground_static_task_directive(rhs);
 
-    return lhs_core.cmd_heading_deg == rhs_core.cmd_heading_deg &&
-        lhs_core.cmd_altitude_m == rhs_core.cmd_altitude_m &&
-        lhs_core.cmd_speed_mps == rhs_core.cmd_speed_mps &&
-        lhs_core.command_code == rhs_core.command_code &&
-        lhs_core.route_ref_id == rhs_core.route_ref_id &&
+    return lhs_core == rhs_core &&
         lhs_stationing == rhs_stationing &&
         lhs_embarked_helo == rhs_embarked_helo &&
         lhs_ground_static_task == rhs_ground_static_task &&
         lhs_recovery == rhs_recovery &&
         lhs_takeoff == rhs_takeoff &&
-        lhs_formation == rhs_formation &&
-        lhs_core.roe_state == rhs_core.roe_state &&
-        lhs_core.engagement_authority_holder_id == rhs_core.engagement_authority_holder_id &&
-        lhs_core.engagement_authority_grantor_id == rhs_core.engagement_authority_grantor_id &&
-        lhs_core.assigned_target_id == rhs_core.assigned_target_id &&
-        lhs_core.authorization_to_fire == rhs_core.authorization_to_fire &&
-        lhs_core.active == rhs_core.active;
+        lhs_formation == rhs_formation;
 }
 
 bool spatial_route_waypoints_equal(const SpatialRouteWaypoint& lhs, const SpatialRouteWaypoint& rhs) {

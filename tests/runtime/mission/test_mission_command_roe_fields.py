@@ -17,6 +17,25 @@ from gym_envs.scenario_loader.runtime_state import apply_execution_episode_state
 
 
 class MissionCommandRoeFieldTests(unittest.TestCase):
+  def test_execution_episode_equivalence_tracks_all_shared_target_provenance(self) -> None:
+    changed_fields = {
+      "threat_state": 4,
+      "assigned_target_track_id": 5101,
+      "assigned_target_source_id": 6101,
+      "assigned_target_snapshot_time_s": 12.5,
+    }
+
+    for field_name, changed_value in changed_fields.items():
+      lhs = ef_py.ExecutionEpisodeState()
+      rhs = ef_py.ExecutionEpisodeState()
+      lhs.has_mission_command = True
+      rhs.has_mission_command = True
+
+      with self.subTest(field_name=field_name):
+        self.assertTrue(bool(ef_py.execution_episode_states_equivalent(lhs, rhs)))
+        setattr(rhs.mission_command, field_name, changed_value)
+        self.assertFalse(bool(ef_py.execution_episode_states_equivalent(lhs, rhs)))
+
   def test_python_bindings_expose_roe_and_engagement_authority_fields(self) -> None:
     cmd = ef_py.MissionCommand()
     cmd.roe_state = 2

@@ -607,28 +607,7 @@ inline void apply_mission_command_maintained_batch_contract_to_compatibility_she
     MissionCommandCompatibilityTransportShell& command,
     const MissionCommandMaintainedBatchContract& contract
 ) noexcept {
-    auto& core = mission_command_shared_core(command);
-    core.cmd_heading_deg = contract.shared_core.cmd_heading_deg;
-    core.cmd_altitude_m = contract.shared_core.cmd_altitude_m;
-    core.cmd_speed_mps = contract.shared_core.cmd_speed_mps;
-    core.command_code = contract.shared_core.command_code;
-    core.route_ref_id = contract.shared_core.route_ref_id;
-    core.roe_state = contract.shared_core.roe_state;
-    core.engagement_authority_holder_id =
-        contract.shared_core.engagement_authority_holder_id;
-    core.engagement_authority_grantor_id =
-        contract.shared_core.engagement_authority_grantor_id;
-    core.assigned_target_id = contract.shared_core.assigned_target_id;
-    core.threat_state = contract.shared_core.threat_state;
-    core.assigned_target_track_id =
-        contract.shared_core.assigned_target_track_id;
-    core.assigned_target_source_id =
-        contract.shared_core.assigned_target_source_id;
-    core.assigned_target_snapshot_time_s =
-        contract.shared_core.assigned_target_snapshot_time_s;
-    core.authorization_to_fire =
-        contract.shared_core.authorization_to_fire;
-    core.active = contract.shared_core.active;
+    mission_command_shared_core(command) = contract.shared_core;
 
     auto& air = mission_command_air_owner_slice(command);
     air.recovery_base_id = contract.air_recovery.recovery_base_id;

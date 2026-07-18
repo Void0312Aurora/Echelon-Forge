@@ -83,6 +83,10 @@ def test_wp22_command_and_tasking_headers_name_compatibility_shells_and_owner_sl
   for token in (
     "using MissionCommandCompatibilityTransportShell = MissionCommand;",
     "using MissionCommandSharedCoreOwnerSlice = MissionCommandCore;",
+    "using MissionCommandSharedCoreDirective = MissionCommandCore;",
+    "bool operator==(const MissionCommand &, const MissionCommand &) = delete;",
+    "bool operator==(const MissionCommand &, const MissionCommandCore &) = delete;",
+    "bool operator==(const MissionCommandCore &, const MissionCommand &) = delete;",
     "inline constexpr bool kMissionCommandCompatibilityTransportShell = true;",
     "inline constexpr bool kMissionCommandSharedCoreOwnedSurface = true;",
     "mission_command_shared_core(",
@@ -345,6 +349,9 @@ def test_wp24_command_chain_maintained_contracts_are_slice_based_and_shell_assig
   ):
     assert token in text
 
+  assert "mission_command_shared_core(command) = contract.shared_core;" in text
+  assert "core.cmd_heading_deg = contract.shared_core.cmd_heading_deg;" not in text
+
   for forbidden in (
     "MissionCommandCompatibilityTransportShell mission_command{};",
     "MissionCommandCompatibilityTransportShell command{};",
@@ -447,6 +454,17 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
     "mission_command_ground_static_task_directive(rhs)",
   ):
     assert token in state_text
+
+  assert "lhs_core == rhs_core" in state_text
+  for duplicated_field in (
+    "cmd_heading_deg",
+    "roe_state",
+    "threat_state",
+    "assigned_target_track_id",
+    "assigned_target_source_id",
+    "assigned_target_snapshot_time_s",
+  ):
+    assert f"lhs_core.{duplicated_field}" not in state_text
 
   codec_body = re.search(
     r"void write_mission_command_fields_to_json\(const MissionCommand& command, nlohmann::json\* mission_json\) \{(?P<body>.*?)\n\}",
@@ -602,8 +620,14 @@ def test_wp22_maintained_naval_consumers_use_owner_slice_directive_helpers() -> 
 def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_shapes() -> None:
   source = textwrap.dedent(
     r"""
+    #include <concepts>
     #include <type_traits>
     #include "runtime/contracts/world_batch_contracts.h"
+
+    template <typename Lhs, typename Rhs>
+    concept EqualityExpression = requires(const Lhs &lhs, const Rhs &rhs) {
+      { lhs == rhs } -> std::convertible_to<bool>;
+    };
 
     int main() {
       static_assert(kMissionCommandCompatibilityTransportShell);
@@ -627,6 +651,11 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
 
       static_assert(std::is_same_v<MissionCommandCompatibilityTransportShell, MissionCommand>);
       static_assert(std::is_same_v<MissionCommandSharedCoreOwnerSlice, MissionCommandCore>);
+      static_assert(std::is_same_v<MissionCommandSharedCoreDirective, MissionCommandCore>);
+      static_assert(std::equality_comparable<MissionCommandCore>);
+      static_assert(!std::equality_comparable<MissionCommand>);
+      static_assert(!EqualityExpression<MissionCommand, MissionCommandCore>);
+      static_assert(!EqualityExpression<MissionCommandCore, MissionCommand>);
       static_assert(std::is_same_v<TaskOrderCompatibilityTransportShell, TaskOrder>);
       static_assert(std::is_same_v<TaskOrderSharedCoreOwnerSlice, TaskOrderCore>);
       static_assert(std::is_same_v<TaskOrderSharedCoreDirective, TaskOrderCore>);
