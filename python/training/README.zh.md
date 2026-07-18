@@ -25,9 +25,16 @@
   - `train.py` 复用的 argparse 定义。
 - [bootstrap.py](bootstrap.py)
   - 路径校验、配置装载、实验目录准备、锁文件、seed / torch runtime 初始化。
+- [deps.py](deps.py)
+  - 训练入口使用的 SB3/torch/policy/vec-env 重量级依赖的延迟加载器，以及 `get_policy_kwargs`。
+- [action_bias.py](action_bias.py)
+  - 安全动作偏置初始化（`apply_safe_action_bias`、`apply_leader_action_bias`、`infer_full_action_safe_defaults`）与 HMoE 共享头 bootstrap（`maybe_initialize_hmoe_from_shared`）。`train.py` 为历史 `from train import ...` 调用方保留这些名字的 re-export。
+- [vec_env_factory.py](vec_env_factory.py)
+  - vec-env 后端选型（`resolve_vec_env_spec`）与按 agent layer 的 vec-env 构造 / 运行时摘要打印，供 `train.py` 调用。
 
 ## 边界
 
-- 这里可以放训练入口的参数解析、实验目录管理、运行时 bootstrap。
-- 不要把 SB3 算法、policy 结构、vec-env 细节重新搬进来。
+- 这里可以放训练入口的参数解析、实验目录管理、运行时 bootstrap，以及入口侧编排（依赖加载、动作偏置初始化、vec-env 构造接线）。
+- 算法、policy、vec-env 的*实现*仍留在 `python/rl/`；本包只负责选择、构造与摘要打印，不要把实现复制进来。
+- maintained-execution 的 `runtime.world_batch_vec_env=true` 守卫消息保留在 `train.py`（架构测试会扫描入口源码）。
 - `world_model_train.py` 的后续拆分不在这个子域当前阶段的范围内。

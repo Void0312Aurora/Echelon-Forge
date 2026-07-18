@@ -55,20 +55,20 @@ def _historical_policy_class_override(model_path: str):
     return None
 
 
-def load_sb3_policy(model_path: str, *, algo: str, device: str):
+def load_sb3_policy(model_path: str, *, algo: str, device: str, env: Any | None = None):
     load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
     algo_name = str(algo).strip()
     policy_class = _historical_policy_class_override(model_path)
     custom_objects = {"policy_class": policy_class} if policy_class is not None else None
     if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
         try:
-            return AdaptiveKLPPO.load(load_path, device=device, custom_objects=custom_objects)
+            return AdaptiveKLPPO.load(load_path, env=env, device=device, custom_objects=custom_objects)
         except Exception:
             if algo_name != "auto":
                 raise
     from stable_baselines3 import PPO
 
-    return PPO.load(load_path, device=device, custom_objects=custom_objects)
+    return PPO.load(load_path, env=env, device=device, custom_objects=custom_objects)
 
 
 def make_env_settings(train_config: dict[str, Any], args: argparse.Namespace, *, include_runtime_overrides: bool) -> dict[str, Any]:
