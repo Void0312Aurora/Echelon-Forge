@@ -60,7 +60,7 @@ The repo already has a real compiled core:
   [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - compiled execution helpers:
   [execution_step_runtime.cpp](../../../src/core/mission/runtime/execution_step_runtime.cpp)
-  [execution_frame_runtime.cpp](../../../src/core/mission/runtime/execution_frame_runtime.cpp)
+  [execution_frame_runtime.h](../../../src/core/mission/runtime/execution_frame_runtime.h)
   [execution_episode_runtime.cpp](../../../src/core/mission/runtime/execution_episode_runtime.cpp)
 - exact-state contract and experimental GPU backend:
   [exact_stage_inventory.cpp](../../../src/core/engine/exact_stage_inventory.cpp)

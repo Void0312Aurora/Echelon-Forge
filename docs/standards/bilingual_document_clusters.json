@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-18",
-      "english_hash": "bb5cc1c47182429c300378cbec524d17d241d765d984cb19d34b878bb8677e7b",
-      "chinese_hash": "4aad62baac87f9da639466451d58873dcac95193a2dda5edb607254c2e7ac07d"
+      "english_hash": "c6916efaf74bc5d8d3bfe1d09d95074f9593189814ffec4c223736ed3b9973ec",
+      "chinese_hash": "098bbe3512c359fff1c1afc8f22e4a4610a1bea6834b71dccf18463d5ad1e982"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -277,9 +277,9 @@
       "english": "docs/standards/bridge/runtime_workflow_and_contract_baseline.md",
       "chinese": "docs/standards/bridge/runtime_workflow_and_contract_baseline.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-06-10",
-      "english_hash": "777caef179ea7dc6a5ac87e6f530ee55cec8706c565a9cf3b77a3de33ea7a1d7",
-      "chinese_hash": "e10243c315fa88f0a073c23adaecc9672cd6cebf6c61b8a12220d509706f58fa"
+      "last_verified": "2026-07-18",
+      "english_hash": "51db33445c08fb1bc7582a516b8101f1ff2f7ea136de068731dadad7dea56a37",
+      "chinese_hash": "7c1d288636d4963b67877868da3580978b8f6d74fa3a5ad99000196bb4bbc137"
     },
     {
       "pair_id": "standards/bridge/scenario_guide",
