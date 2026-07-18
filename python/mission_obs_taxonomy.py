@@ -22,6 +22,11 @@ MISSION_OBS_MODE_CODE_BY_NAME = {
     MISSION_OBS_AIR_COMBAT_C2_ROE_V2: 8,
 }
 
+# Canonical mode ordering for user-facing surfaces (CLI choices, docs). The
+# order is the mode-code order above; derive from this tuple instead of
+# hand-writing mode lists elsewhere.
+MISSION_OBS_MODE_NAMES = tuple(MISSION_OBS_MODE_CODE_BY_NAME)
+
 _MISSION_OBS_BASIC_FIELDS = [
     "command_code",
     "target_heading_deg",

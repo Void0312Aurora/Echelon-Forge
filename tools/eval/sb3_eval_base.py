@@ -16,7 +16,13 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.env_config import resolve_env_settings
+from python.env_config import (
+    ACTION_MODES,
+    EXECUTION_STEP_RUNTIME_MODES,
+    FLIGHT_SHAPING_BACKENDS,
+    STEP_INFO_MODES,
+    resolve_env_settings,
+)
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
@@ -128,16 +134,21 @@ def add_common_sb3_eval_args(
         "--action_mode",
         type=str,
         default=None,
-        choices=["full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"],
+        choices=list(ACTION_MODES),
     )
     if include_runtime_overrides:
-        parser.add_argument("--execution_step_runtime_mode", type=str, default=None, choices=["compiled"])
-        parser.add_argument("--step_info_mode", type=str, default=None, choices=["full", "terminal", "off"])
+        parser.add_argument(
+            "--execution_step_runtime_mode",
+            type=str,
+            default=None,
+            choices=list(EXECUTION_STEP_RUNTIME_MODES),
+        )
+        parser.add_argument("--step_info_mode", type=str, default=None, choices=list(STEP_INFO_MODES))
         parser.add_argument(
             "--flight_shaping_backend",
             type=str,
             default=None,
-            choices=["auto", "compiled", "gpu_host"],
+            choices=list(FLIGHT_SHAPING_BACKENDS),
         )
     parser.add_argument("--json_out", default="", help="Optional JSON output path.")
 

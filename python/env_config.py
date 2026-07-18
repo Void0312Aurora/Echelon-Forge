@@ -5,10 +5,17 @@ from typing import Any
 from python.mission_obs_taxonomy import VALID_MISSION_OBS_MODES
 
 
-VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"}
-VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled"}
-VALID_STEP_INFO_MODES = {"full", "terminal", "off"}
-VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "compiled", "gpu_host"}
+# Canonical ordered mode surfaces. CLI choice lists and validation sets must
+# derive from these tuples instead of re-writing the literals.
+ACTION_MODES = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
+EXECUTION_STEP_RUNTIME_MODES = ("compiled",)
+STEP_INFO_MODES = ("full", "terminal", "off")
+FLIGHT_SHAPING_BACKENDS = ("auto", "compiled", "gpu_host")
+
+VALID_ACTION_MODES = frozenset(ACTION_MODES)
+VALID_EXECUTION_STEP_RUNTIME_MODES = frozenset(EXECUTION_STEP_RUNTIME_MODES)
+VALID_STEP_INFO_MODES = frozenset(STEP_INFO_MODES)
+VALID_FLIGHT_SHAPING_BACKENDS = frozenset(FLIGHT_SHAPING_BACKENDS)
 
 
 def _merge_config_value(

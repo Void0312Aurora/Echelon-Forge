@@ -4,10 +4,11 @@ import argparse
 
 import numpy as np
 
+from python.env_config import ACTION_MODES
 from python.testing.runtime import ensure_repo_imports
 
 
-ACTION_MODE_CHOICES = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
+ACTION_MODE_CHOICES = tuple(ACTION_MODES)
 
 
 def bootstrap_repo_imports() -> str:
