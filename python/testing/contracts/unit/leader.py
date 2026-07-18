@@ -5,6 +5,7 @@ import math
 import os
 from typing import Any
 
+from python.angles import bearing_between_deg
 from python.artifact_paths import resolve_artifact_path
 from python.testing.runtime import resolve_repo_path
 
@@ -136,9 +137,6 @@ def run_leader_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, st
                         raise
             return PPO.load(load_path, device="cpu")
 
-        def _bearing_deg(x0: float, y0: float, x1: float, y1: float) -> float:
-            return float((math.degrees(math.atan2(float(x1) - float(x0), float(y1) - float(y0))) + 360.0) % 360.0)
-
         def _task_block_ok(value: float, lo: float, hi: float) -> bool:
             if float(hi) > float(lo) + 1.0:
                 return bool(float(lo) - 1.0e-6 <= float(value) <= float(hi) + 1.0e-6)
@@ -176,7 +174,7 @@ def run_leader_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, st
             target_kind, target_x, target_y = _active_nav_target(loader, task)
             heading_err_deg = None
             if target_x is not None and target_y is not None:
-                desired_bearing = _bearing_deg(
+                desired_bearing = bearing_between_deg(
                     float(getattr(truth, "x", 0.0)),
                     float(getattr(truth, "y", 0.0)),
                     float(target_x),

@@ -6,6 +6,8 @@ import math
 from typing import Any
 
 import ef_py
+from python.angles import wrap_signed_deg
+from python.coercion import coerce_nonnegative_int
 from python.rl.tasking.bridge import (
     build_kernel_mission_command as _bridge_build_kernel_mission_command,
     get_policy_agent_observation,
@@ -33,16 +35,9 @@ from python.rl.control.mission_defs import (
     is_landing_command_code,
 )
 
-def _wrap_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
-
-
-def _coerce_nonnegative_int(raw_value: Any) -> int:
-    try:
-        value = int(raw_value)
-    except Exception:
-        return 0
-    return value if value >= 0 else 0
+# Local names preserved as thin aliases; semantics owned by python.angles/python.coercion.
+_wrap_deg = wrap_signed_deg
+_coerce_nonnegative_int = coerce_nonnegative_int
 
 
 def _coerce_positive_int(raw_value: Any) -> int:

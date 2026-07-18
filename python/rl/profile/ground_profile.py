@@ -4,6 +4,7 @@ from typing import Any
 
 import ef_py
 
+from python.coercion import coerce_nonnegative_int
 from python.rl.profile.common_core_base import coerce_positive_int, enum_or_default, enum_value, is_default_enum
 from python.rl.profile.common_core_defaults import (
     authority_scope_default,
@@ -313,12 +314,8 @@ def task_observation_codes(task: Any | None, *, fallback_phase_id: int = 0) -> t
     return primary, secondary, tertiary if tertiary > 0.0 else float(fallback_phase_id)
 
 
-def _coerce_nonnegative_int(raw_value: Any) -> int:
-    try:
-        value = int(raw_value)
-    except Exception:
-        return 0
-    return value if value >= 0 else 0
+# Local name preserved as a thin alias; semantics owned by python.coercion.
+_coerce_nonnegative_int = coerce_nonnegative_int
 
 
 def _mission_int_value(leader_intent: Any, mission_cmd: dict[str, Any], field_name: str, default: int = 0) -> int:

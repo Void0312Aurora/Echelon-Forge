@@ -18,6 +18,7 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
+from python.env_config import FLIGHT_SHAPING_BACKENDS
 from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
 REPO_ROOT = ensure_repo_imports()
@@ -290,7 +291,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--flight-shaping-backend",
-        choices=["case", "auto", "compiled", "gpu_host"],
+        # "case" is a benchmark-local sentinel; the real backend list derives from the owner.
+        choices=["case", *FLIGHT_SHAPING_BACKENDS],
         default="case",
         help="Override the benchmark case flight-shaping backend. Use 'case' to keep the built-in case default.",
     )

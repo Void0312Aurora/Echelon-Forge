@@ -4,9 +4,10 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from python.angles import wrap_signed_deg
 
-def wrap_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
+# Public name preserved as a thin alias; semantics owned by python.angles.
+wrap_deg = wrap_signed_deg
 
 
 def load_json_dict(path: str | None) -> dict[str, Any]:

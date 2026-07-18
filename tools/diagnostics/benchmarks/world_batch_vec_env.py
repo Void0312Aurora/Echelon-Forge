@@ -14,6 +14,7 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
+from python.env_config import ACTION_MODES, EXECUTION_STEP_RUNTIME_MODES, FLIGHT_SHAPING_BACKENDS
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
@@ -149,14 +150,14 @@ def main() -> int:
         "--batch-visual-backend",
         type=str,
         default="auto",
-        choices=["auto", "compiled", "gpu_host"],
+        choices=list(FLIGHT_SHAPING_BACKENDS),
         help="World-batch visual backend to request.",
     )
     parser.add_argument(
         "--batch-observation-backend",
         type=str,
         default="auto",
-        choices=["auto", "compiled", "gpu_host"],
+        choices=list(FLIGHT_SHAPING_BACKENDS),
         help="World-batch observation backend to request.",
     )
     parser.add_argument(
@@ -175,7 +176,9 @@ def main() -> int:
         "--action-mode",
         type=str,
         default="full",
-        choices=["full", "takeoff2", "takeoff4", "naval_station3"],
+        # Deliberately narrowed owner-derived subset: the random continuous
+        # action batches used here cannot drive the hybrid event-action mode.
+        choices=[mode for mode in ACTION_MODES if mode != "air_combat_hybrid_v1"],
         help="Action mode.",
     )
     parser.add_argument("--include-proprio", action="store_true", help="Include proprio in observations.")
@@ -187,13 +190,13 @@ def main() -> int:
     )
     parser.add_argument(
         "--execution-step-runtime-mode",
-        choices=["compiled"],
+        choices=list(EXECUTION_STEP_RUNTIME_MODES),
         default=None,
         help="Select the execution step runtime path inside ScenarioLoader.",
     )
     parser.add_argument(
         "--flight-shaping-backend",
-        choices=["auto", "compiled", "gpu_host"],
+        choices=list(FLIGHT_SHAPING_BACKENDS),
         default=None,
         help="Select the flight-shaping backend inside ScenarioLoader.",
     )

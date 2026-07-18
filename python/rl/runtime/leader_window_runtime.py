@@ -7,11 +7,12 @@ from typing import Any
 import numpy as np
 
 from gym_envs.leader_env_parts import leader_runtime_services
+from python.angles import wrap_signed_deg
 from .execution_runtime import coerce_timing_dict
 
 
-def _wrap_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
+# Local name preserved as a thin alias; semantics owned by python.angles.
+_wrap_deg = wrap_signed_deg
 
 
 @dataclass

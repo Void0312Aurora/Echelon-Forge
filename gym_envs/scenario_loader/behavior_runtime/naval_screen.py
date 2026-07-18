@@ -4,6 +4,7 @@ import math
 from typing import Any
 
 import ef_py
+from python.angles import heading_error_deg, wrap_heading_deg
 from python.rl.tasking.bridge import (
     has_mission_command_dict,
     loader_owned_runtime_view,
@@ -12,20 +13,16 @@ from python.rl.tasking.bridge import (
 )
 
 
-def _wrap_heading_deg(angle_deg: float) -> float:
-    return float(angle_deg % 360.0)
-
-
-def _heading_error_deg(target_deg: float, current_deg: float) -> float:
-    delta = _wrap_heading_deg(target_deg) - _wrap_heading_deg(current_deg)
-    while delta > 180.0:
-        delta -= 360.0
-    while delta < -180.0:
-        delta += 360.0
-    return float(delta)
+# Local names preserved as thin aliases; semantics owned by python.angles.
+_wrap_heading_deg = wrap_heading_deg
+_heading_error_deg = heading_error_deg
 
 
 def _bearing_deg(dx: float, dy: float, fallback_deg: float) -> float:
+    # Deliberate variant of python.angles.bearing_deg: keeps the
+    # degenerate-geometry fallback and this module's historical plain % 360.0
+    # wrap of the atan2 angle (bit-for-bit; the owner's (+360.0) % 360.0 form
+    # differs by ~1e-14 deg on positive angles).
     if abs(dx) < 1.0e-9 and abs(dy) < 1.0e-9:
         return _wrap_heading_deg(fallback_deg)
     return _wrap_heading_deg(math.degrees(math.atan2(dx, dy)))

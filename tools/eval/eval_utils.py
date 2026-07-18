@@ -4,6 +4,7 @@ import argparse
 
 import numpy as np
 
+from python.angles import wrap_signed_deg
 from python.env_config import ACTION_MODES
 from python.testing.runtime import ensure_repo_imports
 
@@ -108,5 +109,7 @@ def quantile_summary(xs: list[float], qs: list[float]) -> dict[str, float]:
 
 
 def wrap_deg(x: float) -> float:
-    y = (float(x) + 180.0) % 360.0 - 180.0
+    # Deliberate variant of python.angles.wrap_signed_deg: values within 1e-9
+    # of zero (including negative zero) are snapped to exactly 0.0.
+    y = wrap_signed_deg(x)
     return 0.0 if abs(y) < 1.0e-9 else y

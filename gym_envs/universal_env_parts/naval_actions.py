@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 
+from python.angles import wrap_heading_deg
 from python.rl.tasking.bridge import (
     has_mission_command_dict,
     mission_command_dict,
@@ -122,8 +123,8 @@ def build_naval_station_action_transport(action: np.ndarray) -> NavalStationActi
     )
 
 
-def _wrap_heading_deg(value: float) -> float:
-    return float(value % 360.0)
+# Local name preserved as a thin alias; semantics owned by python.angles.
+_wrap_heading_deg = wrap_heading_deg
 
 
 def _get_base(loader: Any, attr_name: str, value: float) -> float:

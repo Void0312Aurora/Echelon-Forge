@@ -6,6 +6,7 @@ import math
 import os
 from typing import Any
 
+from python.angles import bearing_deg, wrap_signed_deg
 from python.testing.runtime import resolve_repo_path
 
 from ..common import ContractSkipped
@@ -159,12 +160,6 @@ def run_misc_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
         return True, "replay expert-actions contract passed"
 
     if check_kind == "continuous_waypoint_template_geometry":
-        def _wrap_deg_local(angle_deg: float) -> float:
-            return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
-
-        def _bearing_deg(dx: float, dy: float) -> float:
-            return float((math.degrees(math.atan2(float(dx), float(dy))) + 360.0) % 360.0)
-
         def _turn_radius_m(speed_mps: float, bank_limit_deg: float) -> float:
             bank_rad = math.radians(max(1.0, min(80.0, float(bank_limit_deg))))
             tanb = math.tan(bank_rad)
@@ -196,14 +191,14 @@ def run_misc_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
                 for i in range(1, len(points)):
                     dx = points[i][0] - points[i - 1][0]
                     dy = points[i][1] - points[i - 1][1]
-                    legs.append((math.hypot(dx, dy), _bearing_deg(dx, dy)))
+                    legs.append((math.hypot(dx, dy), bearing_deg(dx, dy)))
                 final_track = float(legs[-1][1])
-                if abs(_wrap_deg_local(final_track - runway_heading_deg)) > float(spec.get("final_leg_alignment_max_deg", 15.0)):
+                if abs(wrap_signed_deg(final_track - runway_heading_deg)) > float(spec.get("final_leg_alignment_max_deg", 15.0)):
                     return False, f"{os.path.basename(path)} template {ti}: final leg track {final_track:.1f} not aligned with runway"
                 for wi in range(1, len(route)):
                     prev_leg_m, prev_track_deg = legs[wi - 1]
                     next_leg_m, next_track_deg = legs[wi]
-                    turn_abs_deg = abs(_wrap_deg_local(next_track_deg - prev_track_deg))
+                    turn_abs_deg = abs(wrap_signed_deg(next_track_deg - prev_track_deg))
                     if turn_abs_deg > float(spec.get("turn_abs_max_deg", 85.0)):
                         return False, f"{os.path.basename(path)} template {ti}: turn {wi} too sharp ({turn_abs_deg:.1f} deg)"
                     speed_mps = float(route[wi - 1].get("speed_mps", scenario["mission_command"]["target_speed"]))

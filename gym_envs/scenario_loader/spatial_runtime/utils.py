@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from python.angles import bearing_deg, wrap_signed_deg
 from python.rl.tasking.bridge import mission_command_view
 
 
@@ -61,12 +62,9 @@ def get_ils_observation(loader, x_m: float, y_m: float, alt_m: float):
     )
 
 
-def bearing_to_deg(dx: float, dy: float) -> float:
-    return float((math.degrees(math.atan2(float(dx), float(dy))) + 360.0) % 360.0)
-
-
-def wrap_angle_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
+# Thin aliases kept for API stability; the implementations are owned by python.angles.
+bearing_to_deg = bearing_deg
+wrap_angle_deg = wrap_signed_deg
 
 
 def instrument_scalar(inst, attr_name: str, index: int | None = None, default: float = float("nan")) -> float:

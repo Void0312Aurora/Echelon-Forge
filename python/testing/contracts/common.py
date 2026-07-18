@@ -7,6 +7,7 @@ import os
 import tempfile
 from typing import Any
 
+from python.angles import wrap_signed_deg
 from python.testing.runtime import resolve_repo_path
 
 class ContractSkipped(RuntimeError):
@@ -117,8 +118,8 @@ def _turn_budget_cost_m(turn_abs_deg: float, *, speed_mps: float, bank_limit_deg
     return float(radius_m) * math.radians(turn_abs_deg) * float(cost_scale)
 
 
-def _wrap_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
+# Local name preserved as a thin alias; semantics owned by python.angles.
+_wrap_deg = wrap_signed_deg
 
 
 def _check_optional_range(value: float, bounds: dict[str, Any], *, label: str) -> str | None:

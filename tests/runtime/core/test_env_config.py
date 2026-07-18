@@ -254,6 +254,14 @@ class ModeChoiceSurfaceParityTests(unittest.TestCase):
       self.assertEqual(frozenset(modes), valid)
       self.assertEqual(len(modes), len(valid), f"duplicate entries in {modes!r}")
 
+  def test_action_modes_pin_canonical_content_and_order(self) -> None:
+    # Content pin: adding/removing/renaming an action mode must be a reviewed
+    # owner change, and every derived surface follows this tuple.
+    expected = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
+    self.assertEqual(len(ACTION_MODES), 5)
+    for idx, name in enumerate(expected):
+      self.assertEqual(ACTION_MODES[idx], name)
+
   def test_mission_obs_mode_names_follow_mode_code_order(self) -> None:
     self.assertEqual(MISSION_OBS_MODE_NAMES, tuple(MISSION_OBS_MODE_CODE_BY_NAME))
     self.assertEqual(set(MISSION_OBS_MODE_NAMES), VALID_MISSION_OBS_MODES)
@@ -279,7 +287,11 @@ class ModeChoiceSurfaceParityTests(unittest.TestCase):
     self.assertIn("choices=list(EXECUTION_STEP_RUNTIME_MODES)", source)
     self.assertIn("choices=list(STEP_INFO_MODES)", source)
     self.assertIn("choices=list(FLIGHT_SHAPING_BACKENDS)", source)
-    self.assertNotIn('choices=["full"', source)
+    # Negative guard: a literal choice list starting with the first canonical
+    # entry of any owner tuple must not creep back in (either quote style).
+    for leading_entry in ("full", "auto", "compiled"):
+      self.assertNotIn(f'choices=["{leading_entry}"', source)
+      self.assertNotIn(f"choices=['{leading_entry}'", source)
 
 
 if __name__ == "__main__":

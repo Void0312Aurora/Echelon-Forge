@@ -3,6 +3,10 @@ from collections.abc import Iterator, Mapping
 
 import ef_py
 
+# Public name re-exported as-is; semantics owned by python.coercion.
+from python.coercion import coerce_nonnegative_int
+from python.env_config import VALID_EXECUTION_STEP_RUNTIME_MODES, VALID_FLIGHT_SHAPING_BACKENDS
+
 class _LazyEfEnumMap(Mapping[str, object]):
     def __init__(self, enum_owner_name: str, entries: dict[str, object]):
         self._enum_owner_name = str(enum_owner_name)
@@ -94,14 +98,6 @@ OBJECTIVE_DYNAMIC_TARGET_MAP = _LazyEfEnumMap(
 )
 
 
-def coerce_nonnegative_int(value, default: int = 0) -> int:
-    try:
-        out = int(value)
-    except Exception:
-        return int(default)
-    return out if out >= 0 else int(default)
-
-
 def formation_role_code_from_member(member) -> int:
     if member is None:
         return 0
@@ -122,8 +118,10 @@ def normalize_execution_step_runtime_mode(mode: str | None) -> str:
     normalized = str(mode).strip().lower()
     if normalized == "legacy":
         raise ValueError("execution_step_runtime_mode='legacy' has been removed from scenario runtime inputs")
-    if normalized in {"", "compiled"}:
+    if normalized == "":
         return "compiled"
+    if normalized in VALID_EXECUTION_STEP_RUNTIME_MODES:
+        return normalized
     raise ValueError(f"Unknown execution_step_runtime_mode: {mode!r}")
 
 
@@ -137,9 +135,9 @@ def normalize_flight_shaping_backend(backend: str | None) -> str:
     normalized = str(raw_backend).strip().lower()
     if normalized == "legacy":
         raise ValueError("flight_shaping_backend='legacy' has been removed from scenario runtime inputs")
-    if normalized in {"", "auto"}:
+    if normalized == "":
         return "auto"
-    if normalized in {"compiled", "gpu_host"}:
+    if normalized in VALID_FLIGHT_SHAPING_BACKENDS:
         return normalized
     raise ValueError(f"Unknown flight_shaping_backend: {raw_backend!r}")
 

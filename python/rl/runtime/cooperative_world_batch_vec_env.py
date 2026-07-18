@@ -40,6 +40,7 @@ from gym_envs.universal_env_parts import (
     temporal_history_enabled,
     validate_naval_action_mode_for_loader,
 )
+from python.env_config import VALID_FLIGHT_SHAPING_BACKENDS, VALID_STEP_INFO_MODES
 from python.rl.tasking.bridge import build_kernel_mission_command
 from python.rl.runtime.world_batch.command_chain_cache import (
     project_world_leader_intent_maintained_assignment,
@@ -169,7 +170,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self._action_wrapper_kwargs = dict(action_wrapper_kwargs or {})
         if self.execution_step_runtime_mode == "legacy":
             raise ValueError("execution_step_runtime_mode='legacy' has been removed from maintained VecEnv paths")
-        if self.step_info_mode not in ("full", "terminal", "off"):
+        if self.step_info_mode not in VALID_STEP_INFO_MODES:
             raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
 
         self._compiled_scenario = ScenarioCompiler.compile_path(self.scenario_path)
@@ -1386,6 +1387,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
 
 def _normalize_flight_shaping_backend(value: str | None) -> str:
     backend = "auto" if value is None else normalize_flight_shaping_backend(value)
-    if backend in ("auto", "compiled", "gpu_host"):
+    if backend in VALID_FLIGHT_SHAPING_BACKENDS:
         return backend
     raise ValueError(f"Unknown flight_shaping_backend: {value!r}")

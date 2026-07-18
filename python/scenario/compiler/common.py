@@ -8,6 +8,8 @@ from typing import Any
 
 import ef_py
 
+from python.coercion import coerce_nonnegative_int
+
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 _SCALAR_TYPES = (str, int, float, bool, type(None))
@@ -144,12 +146,8 @@ def _mtime_ns(path: str) -> int:
     return int(os.stat(path).st_mtime_ns)
 
 
-def _coerce_nonnegative_int(value: Any, default: int = 0) -> int:
-    try:
-        out = int(value)
-    except Exception:
-        return int(default)
-    return out if out >= 0 else int(default)
+# Private name preserved as a thin alias; semantics owned by python.coercion.
+_coerce_nonnegative_int = coerce_nonnegative_int
 
 
 def _normalize_waypoint_mode(mode_value: Any) -> str:

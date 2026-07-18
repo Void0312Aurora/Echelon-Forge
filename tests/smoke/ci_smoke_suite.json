@@ -16,6 +16,7 @@
     "tests/runtime/core/test_kernel_observation_sanity.py",
     "tests/runtime/core/test_mass_component_boundary.py",
     "tests/runtime/core/test_runtime_teardown_stability.py",
+    "tests/runtime/core/test_scalar_helper_owners.py",
     "tests/runtime/core/test_world_setup_facade_contracts.py",
     "tests/runtime/bindings/test_bindings_command_surface.py",
     "tests/runtime/bindings/test_bindings_policy_surface.py",

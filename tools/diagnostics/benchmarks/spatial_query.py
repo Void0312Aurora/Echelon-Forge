@@ -20,6 +20,7 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
+from python.angles import bearing_deg, wrap_signed_deg
 from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
 REPO_ROOT = ensure_repo_imports()
@@ -38,12 +39,9 @@ DEFAULT_LANDING_CONTRACT = resolve_repo_path(
 )
 
 
-def _bearing_to_deg(dx: float, dy: float) -> float:
-    return float((math.degrees(math.atan2(float(dx), float(dy))) + 360.0) % 360.0)
-
-
-def _wrap_angle_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
+# Local names preserved as thin aliases; semantics owned by python.angles.
+_bearing_to_deg = bearing_deg
+_wrap_angle_deg = wrap_signed_deg
 
 
 def _turn_lead_distance_m(turn_angle_deg: float, speed_mps: float, bank_limit_deg: float) -> float:
