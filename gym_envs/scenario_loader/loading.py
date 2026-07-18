@@ -1,6 +1,6 @@
 import numpy as np
 
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     ApproachRewardConfig,
     CompiledScenario,
     LNavRuntimeConfig,

@@ -23,7 +23,7 @@ os.chdir(REPO_ROOT)
 
 import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
-from python.scenario_compiler import ScenarioCompiler  # noqa: E402
+from python.scenario.compiler import ScenarioCompiler  # noqa: E402
 
 
 DATABASE_PATH = resolve_repo_path("examples", "config", "database")

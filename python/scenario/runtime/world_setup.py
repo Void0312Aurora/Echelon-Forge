@@ -4,7 +4,7 @@ from typing import Any
 
 import ef_py
 
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     DEFAULT_TERRAIN_TYPE,
     TERRAIN_TYPE_SOURCE_COMPATIBILITY,
     TERRAIN_TYPE_SOURCE_DEFAULT,

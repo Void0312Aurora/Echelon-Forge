@@ -55,7 +55,7 @@ from python.scenario.runtime import (
     build_compiled_world_layout,
     load_compiled_scenario_for_setup_target,
 )
-from python.scenario_compiler import ScenarioCompiler
+from python.scenario.compiler import ScenarioCompiler
 
 from .adapter import RuntimeFacadeAdapter
 from .command_chain_cache import (

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, fields
 from types import MappingProxyType
 from typing import Any
 
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     _build_lnav_runtime_config,
     _clone_runtime_mission_command,
     _clone_scenario_value,

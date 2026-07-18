@@ -1,4 +1,4 @@
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     _clone_scenario_value,
     cache_runtime_waypoint_cache,
     invalidate_runtime_waypoint_cache,

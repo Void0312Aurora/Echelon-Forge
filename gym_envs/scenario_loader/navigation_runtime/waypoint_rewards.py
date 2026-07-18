@@ -2,7 +2,7 @@ import math
 
 import ef_py
 
-from python.scenario_compiler import WaypointModeRewardConfig
+from python.scenario.compiler import WaypointModeRewardConfig
 
 from .guidance import (
     cfg_value_for_waypoint_mode,

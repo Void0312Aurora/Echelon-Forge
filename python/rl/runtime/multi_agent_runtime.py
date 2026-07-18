@@ -8,7 +8,7 @@ import numpy as np
 import ef_py
 
 from gym_envs.universal_env import build_pilot_action, build_universal_observation, normalize_action
-from python.scenario_compiler import _clone_runtime_mission_command
+from python.scenario.compiler import _clone_runtime_mission_command
 from python.scenario.runtime import AppliedScenarioRosterMember, active_roster_world_entity_refs
 
 

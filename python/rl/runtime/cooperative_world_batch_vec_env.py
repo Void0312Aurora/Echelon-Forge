@@ -81,7 +81,7 @@ from python.rl.runtime.world_batch import (
 )
 from python.rl.control.wrappers import MultiTimescaleActionController
 from python.rl.tasking.bridge import resolve_loader_time_step, resolve_tasking_profile, tasking_profile_for_loader
-from python.scenario_compiler import ScenarioCompiler
+from python.scenario.compiler import ScenarioCompiler
 from python.scenario.runtime import build_compiled_world_layout
 
 

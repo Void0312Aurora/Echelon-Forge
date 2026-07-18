@@ -4,7 +4,7 @@ import numpy as np
 
 from python.rl.control.mission_defs import is_landing_command_code
 from python.rl.tasking.bridge import has_mission_command_dict, mission_command_view, resolve_loader_time_step
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     _build_lnav_runtime_config,
     _clone_runtime_mission_command,
     _normalize_runtime_mission_command,

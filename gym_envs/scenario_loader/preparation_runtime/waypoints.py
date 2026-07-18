@@ -1,6 +1,6 @@
 import math
 
-from python.scenario_compiler import _clone_scenario_value, materialize_runtime_waypoint_cache
+from python.scenario.compiler import _clone_scenario_value, materialize_runtime_waypoint_cache
 
 from ..common import coerce_nonnegative_int
 

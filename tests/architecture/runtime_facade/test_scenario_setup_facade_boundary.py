@@ -77,6 +77,44 @@ def test_wp24_scenario_setup_default_path_uses_maintained_facade_target() -> Non
 def test_wp24_legacy_scenario_runtime_shim_is_removed_from_python_surface() -> None:
   assert not (REPO_ROOT / "python" / "scenario_runtime.py").exists()
 
+def test_maintained_python_paths_use_the_canonical_scenario_compiler_owner() -> None:
+  compatibility_facade = REPO_ROOT / "python" / "scenario_compiler.py"
+  violations: list[tuple[str, int, str]] = []
+  for path in _iter_non_test_python_paths():
+    if path == compatibility_facade:
+      continue
+    source = path.read_text(encoding="utf-8")
+    if "scenario_compiler" not in source:
+      continue
+    tree = ast.parse(source, filename=str(path))
+    for node in ast.walk(tree):
+      imports_compatibility_facade = (
+        isinstance(node, ast.Import)
+        and any(alias.name == "python.scenario_compiler" for alias in node.names)
+      ) or (
+        isinstance(node, ast.ImportFrom)
+        and (
+          node.module == "python.scenario_compiler"
+          or (
+            node.module == "python"
+            and any(alias.name == "scenario_compiler" for alias in node.names)
+          )
+        )
+      )
+      if imports_compatibility_facade:
+        violations.append(
+          (
+            path.relative_to(REPO_ROOT).as_posix(),
+            node.lineno,
+            ast.get_source_segment(source, node) or "",
+          )
+        )
+
+  assert not violations, (
+    "maintained callers must import python.scenario.compiler directly; "
+    f"compatibility facade imports found: {violations}"
+  )
+
 def test_wp24_maintained_python_paths_do_not_import_diagnostics_scenario_setup() -> None:
   violations: list[tuple[str, int, str]] = []
   for root in (REPO_ROOT / "python", REPO_ROOT / "gym_envs"):
