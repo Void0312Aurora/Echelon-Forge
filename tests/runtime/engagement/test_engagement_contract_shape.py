@@ -6,10 +6,24 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ENGAGEMENT_HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "engagement_contracts.h"
+EFFECTS_EVENT_FIELDS_INC = (
+  REPO_ROOT / "src" / "runtime" / "contracts" / "detail" / "effects_event_fields.inc"
+)
+EFFECTS_EVENT_FIELDS_INCLUDE_LINE = (
+  '#include "runtime/contracts/detail/effects_event_fields.inc"'
+)
 
 
 def _header_text() -> str:
-  return ENGAGEMENT_HEADER.read_text(encoding="utf-8")
+  header = ENGAGEMENT_HEADER.read_text(encoding="utf-8")
+  # The EffectsEvent field surface is owned by the X-macro list; expand the
+  # include textually so the shape assertions below keep pinning the exact
+  # field inventory of the contract struct.
+  assert EFFECTS_EVENT_FIELDS_INCLUDE_LINE in header
+  return header.replace(
+    EFFECTS_EVENT_FIELDS_INCLUDE_LINE,
+    EFFECTS_EVENT_FIELDS_INC.read_text(encoding="utf-8"),
+  )
 
 
 def _struct_body(header: str, struct_name: str) -> str:
