@@ -81,6 +81,59 @@ must produce link units that profiling and backend work can iterate on in
 isolation. Any measured-performance work item discovered during the program
 is routed to the exact-runtime line instead of widening this program.
 
+## Global Structure: Load-Bearing Invariants
+
+Local consolidation without a stated global structure risks manufacturing
+hub coupling ("shared" owners that everyone depends on). The program is
+therefore governed by six global invariants; a local work item that serves
+none of them is dropped by default.
+
+- **G1 Two worlds, one contract.** The system is exactly a Simulation World
+  (C++ owns truth and time) and an Experiment World (Python owns
+  composition: scenarios, training, evaluation, diagnostics). One boundary
+  contract exists between them (facade plus schema-generated DTO
+  vocabulary). The number of cross-boundary paths is an architecture
+  health metric and its target value is one.
+- **G2 One-way layer rings.** Python: contracts -> substrate -> domain
+  semantics -> experiment orchestration. C++: contracts -> engine ->
+  mission -> facade. Shared needs sink downward, never sideways.
+  Anti-hub clauses: neutral layers must be dependency-terminal, substrates
+  stage-local, owners single-purpose.
+- **G3 Monotone state-ownership topology.** Every piece of state has
+  exactly one owner, and ownership only migrates toward the kernel
+  (exact-runtime direction). The ownership map is a maintained artifact
+  (T0 census output), not folklore.
+- **G4 Information-state layering is the one cross-boundary semantic
+  invariant.** Every observation/reward consumer names its layer
+  (Truth/Sensed/Track/Picture/Observation/Belief); enforcement moves from
+  documentation to gates.
+- **G5 Extension is registration.** Domains, modes, probes, and configs
+  attach through declared sockets; an extension that requires editing
+  shared code is by definition a design defect.
+- **G6 Representations are projections of descriptions.** Cross-boundary
+  shapes are generated from schemas. This is the precondition for G4's
+  provenance-rich layering not collapsing into hand-written plumbing.
+
+## Baseline Critique And Proposed Amendments
+
+The SCAL baseline is adopted as target ontology with an explicit critique.
+Strengths: the information-state layering, the causal-temporal split with
+versioned feedback, and capability composition. Deficiencies this program
+records and routes: (1) the seven graphs are taxonomy without composition
+mechanics — only the temporal DAG has runtime reality; (2) intent is
+enforced by review culture instead of a small constructively-enforced
+kernel invariant set (G1-G6 are that compression); (3) the linear P0-P10
+vocabulary is in tension with multi-rate, event-driven sub-pipelines and
+must become stage contracts with declared sub-graphs; (4) the Learning
+face is shallow while the repository's churn concentrates exactly there;
+(5) an Experiment face is missing — scenario x config x seeds x curriculum
+x evaluation protocol has no first-class home, and the config-matrix
+sprawl is the direct symptom; (6) the rich epistemic ontology lacks a
+paired representation strategy, which G6 supplies. Amendment candidates
+(a: Experiment face; b: stage contracts with sub-graphs; c: kernel
+invariant list; d: representation-strategy section) are proposed to the
+baseline's own governance rather than edited into it by this program.
+
 ## Systemic Alignment: SCAL Conformance
 
 The engineering tracks below are necessary but not sufficient. The repository
