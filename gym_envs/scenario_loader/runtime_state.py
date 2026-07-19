@@ -9,12 +9,15 @@ from python.scenario.compiler import (
     cache_runtime_waypoint_cache,
     materialize_runtime_waypoint_cache,
 )
-from python.rl.tasking.bridge import (
-    build_kernel_mission_command,
+from python.tasking_contracts.bridge_views import (
     has_mission_command_dict,
     mission_command_dict,
     mission_command_view,
 )
+# `build_kernel_mission_command` stays python.rl-resident: it dispatches
+# through `tasking_profile_for_loader`, a genuine entanglement point with the
+# air/ground/naval profile modules (see I24 report).
+from python.rl.tasking.bridge import build_kernel_mission_command
 
 from .common import safe_json_dict_loads, stable_json_dumps
 

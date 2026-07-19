@@ -1,34 +1,25 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
 
 from gym_envs.leader_env_parts import leader_runtime_services
 from python.angles import wrap_signed_deg
+from python.tasking_contracts.leader_decision_state import LeaderDecisionState
 from .execution_runtime import coerce_timing_dict
 
 
 # Local name preserved as a thin alias; semantics owned by python.angles.
 _wrap_deg = wrap_signed_deg
 
-
-@dataclass
-class LeaderDecisionState:
-    mapping: Any
-    guard_info: dict[str, Any]
-    prev_mode: str
-    exec_reward: float = 0.0
-    terminated: bool = False
-    truncated: bool = False
-    last_info: dict[str, Any] = field(default_factory=dict)
-    decision_c2_transitioned: bool = False
-    decision_c2_transition_reason: str = ""
-    timing: dict[str, float] = field(default_factory=dict)
-    execution_step_count: int = 0
-    decision_started_at: float = 0.0
+# I24 (W2 critical period): `LeaderDecisionState` moved to
+# `python.tasking_contracts.leader_decision_state` (pure dataclass, no
+# dependency on this file's gym_envs entanglement) so `gym_envs.leader_env`
+# can use it without importing `python.rl`. Re-exported here for backward
+# compatibility; see the compat-shim assertIs test in
+# `tests/architecture/tasking_contracts/`.
 
 
 class LeaderWindowRuntimeAdapter:

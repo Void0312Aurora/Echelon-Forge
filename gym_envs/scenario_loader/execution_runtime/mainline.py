@@ -3,7 +3,7 @@ import math
 import ef_py
 import numpy as np
 
-from python.rl.control.mission_defs import is_landing_command_code
+from python.tasking_contracts.mission_defs import is_landing_command_code
 from gym_envs.scenario_loader.common import safe_json_dict_loads
 from gym_envs.scenario_loader.reward_runtime.air_combat import (
     air_combat_damage_terminal_enabled,

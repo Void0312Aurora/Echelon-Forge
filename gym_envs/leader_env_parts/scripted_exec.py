@@ -4,14 +4,14 @@ from typing import Any
 
 import numpy as np
 
-from python.rl.control.mission_defs import (
+from python.tasking_contracts.mission_defs import (
     COMMAND_CODE_LANDING,
     normalize_phase_name,
     scripted_mode_for_phase_name,
 )
-from python.rl.control.scripted_landing import ScriptedLandingController
-from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
-from python.rl.control.scripted_takeoff import ScriptedTakeoffController
+from python.tasking_contracts.scripted_landing import ScriptedLandingController
+from python.tasking_contracts.scripted_stable_flight import ScriptedStableFlightController
+from python.tasking_contracts.scripted_takeoff import ScriptedTakeoffController
 
 
 class ScriptedExecutiveController:

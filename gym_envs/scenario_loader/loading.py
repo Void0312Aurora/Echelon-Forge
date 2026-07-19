@@ -18,14 +18,17 @@ from python.scenario.runtime import (
     find_active_roster_member,
     prepare_scenario_world_layout,
 )
-from python.rl.tasking.bridge import (
+from python.tasking_contracts.bridge_views import (
     apply_loader_owned_world_layout_to_kernel,
     get_policy_agent_observation,
     get_policy_instrument_state,
     mission_command_dict,
     mission_command_view,
-    normalize_task_order_spec,
 )
+# `normalize_task_order_spec` stays python.rl-resident: it dispatches through
+# `tasking_profile_for_loader`, a genuine entanglement point with the
+# air/ground/naval profile modules (see I24 report).
+from python.rl.tasking.bridge import normalize_task_order_spec
 
 
 def get_active_roster_member(loader, *, entity_id=None, entity_name=None, role_code=None, formation_role_id=None):

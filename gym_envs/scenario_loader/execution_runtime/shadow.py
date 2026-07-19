@@ -1,6 +1,6 @@
 import ef_py
 import numpy as np
-from python.rl.tasking.bridge import resolve_loader_time_step
+from python.tasking_contracts.bridge_views import resolve_loader_time_step
 
 
 def build_execution_episode_controller_shadow_config(loader):

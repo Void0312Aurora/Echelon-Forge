@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 from python.angles import bearing_deg, wrap_signed_deg
-from python.rl.tasking.bridge import mission_command_view
+from python.tasking_contracts.bridge_views import mission_command_view
 
 
 def get_runway_local_frame(loader, x_m: float, y_m: float):

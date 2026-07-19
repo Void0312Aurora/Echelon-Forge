@@ -5,7 +5,10 @@ from typing import Any
 
 import numpy as np
 
-from python.rl.control.mission_defs import COMMAND_CODE_LANDING, normalize_phase_name
+from python.tasking_contracts.mission_defs import COMMAND_CODE_LANDING, normalize_phase_name
+# `task_observation_codes` stays python.rl-resident: it dispatches through
+# `tasking_profile_for_loader`, a genuine entanglement point with the
+# air/ground/naval profile modules (see I24 report).
 from python.rl.tasking.bridge import task_observation_codes
 
 from ..common import wrap_deg

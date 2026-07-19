@@ -25,12 +25,16 @@ from gym_envs.leader_env_parts import (
     LeaderRuntimeFacadeMixin,
 )
 from python.env_config import VALID_EXECUTION_STEP_RUNTIME_MODES
+from python.tasking_contracts.leader_decision_state import LeaderDecisionState
+# `make_rule_based_leader_phase_manager`/`make_scripted_c2_task_manager`/
+# `scripted_c2_task_manager_class` stay python.rl-resident: they dispatch to
+# the air/ground/naval profile modules, a genuine entanglement point (see I24
+# report).
 from python.rl.tasking.bridge import (
     make_rule_based_leader_phase_manager,
     make_scripted_c2_task_manager,
     scripted_c2_task_manager_class,
 )
-from python.rl.runtime.leader_window_runtime import LeaderDecisionState
 
 if gym is None:
     class LeaderTrainingEnv:  # pragma: no cover

@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from python.rl.tasking.bridge import mission_command_dict
+from python.tasking_contracts.bridge_views import mission_command_dict
 
 
 def _is_naval_profile(loader: Any) -> bool:

@@ -6,12 +6,14 @@ from typing import Any
 import numpy as np
 
 from python.angles import wrap_heading_deg
-from python.rl.tasking.bridge import (
+from python.tasking_contracts.bridge_views import (
     has_mission_command_dict,
     mission_command_dict,
-    resolve_tasking_profile,
-    tasking_profile_for_loader,
 )
+# `resolve_tasking_profile`/`tasking_profile_for_loader` stay python.rl-resident:
+# they dispatch to the air/ground/naval profile modules, a genuine
+# entanglement point (see I24 report).
+from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
 
 from .common import ef_py
 from .spaces import NAVAL_STATION3_ACTION_MODE

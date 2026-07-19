@@ -1,13 +1,16 @@
 import ef_py
 
-from python.rl.tasking.bridge import (
-    build_kernel_mission_command,
+from python.tasking_contracts.bridge_views import (
     has_mission_command_dict,
     loader_owned_runtime_view,
     mission_command_dict,
     resolve_loader_time_step,
     sync_loader_mission_command,
 )
+# `build_kernel_mission_command` stays python.rl-resident: it dispatches
+# through `tasking_profile_for_loader`, a genuine entanglement point with the
+# air/ground/naval profile modules (see I24 report).
+from python.rl.tasking.bridge import build_kernel_mission_command
 from .command_chain_owner import ensure_command_chain_owner
 from .naval_screen import apply_naval_screen_station_hold, compute_naval_screen_station_hold
 

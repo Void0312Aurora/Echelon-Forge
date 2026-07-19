@@ -13,7 +13,7 @@ from python.mission_obs_taxonomy import (
     mission_observation_uses_maintained_adapter,
 )
 from python.scenario.runtime import find_active_roster_member
-from python.rl.tasking.bridge import loader_owned_runtime_view, mission_command_view
+from python.tasking_contracts.bridge_views import loader_owned_runtime_view, mission_command_view
 
 from .common import formation_role_code_from_member
 

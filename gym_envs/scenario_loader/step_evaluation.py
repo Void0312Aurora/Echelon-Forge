@@ -2,8 +2,12 @@ import math
 
 import ef_py
 
-from python.rl.control.mission_defs import is_landing_command_code
-from python.rl.tasking.bridge import resolve_loader_time_step, resolve_tasking_profile, tasking_profile_for_loader
+from python.tasking_contracts.mission_defs import is_landing_command_code
+from python.tasking_contracts.bridge_views import resolve_loader_time_step
+# `resolve_tasking_profile`/`tasking_profile_for_loader` stay python.rl-resident:
+# they dispatch to the air/ground/naval profile modules, a genuine
+# entanglement point (see I24 report).
+from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
 
 from .mission_observation import build_mission_observation_runtime_inputs
 

@@ -6,6 +6,15 @@ from typing import Any, Callable
 
 import numpy as np
 
+from python.tasking_contracts.timing_utils import coerce_timing_dict
+
+# I24 (W2 critical period): `coerce_timing_dict` moved to
+# `python.tasking_contracts.timing_utils` (pure, no dependency on this
+# file's other runtime classes) so `gym_envs.leader_env_parts.runtime_facade`
+# can use it without importing `python.rl`. Re-exported here for backward
+# compatibility; see the compat-shim assertIs test in
+# `tests/architecture/tasking_contracts/`.
+
 
 def _normalize_runtime_action(action: Any) -> np.ndarray:
     return np.asarray(action, dtype=np.float32).reshape(-1)
@@ -21,18 +30,6 @@ def unwrap_nested_env(env: Any) -> Any:
             break
         current = next_env
     return current
-
-
-def coerce_timing_dict(raw: Any) -> dict[str, float]:
-    if not isinstance(raw, dict):
-        return {}
-    out: dict[str, float] = {}
-    for key, value in raw.items():
-        try:
-            out[str(key)] = float(value)
-        except Exception:
-            pass
-    return out
 
 
 def scale_timing_dict(raw: Any, scale: float) -> dict[str, float]:
