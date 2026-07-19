@@ -131,12 +131,12 @@ c：内核不变量清单；d：表示策略章节）提交给基线自身的治
 
 | 轨道 | 范围 | 主要目标 | 关键风险 |
 | --- | --- | --- | --- |
-| T0 SCAL 一致性 | 对维护运行时（loader、vec-env、facade 消费者）做阶段一致性普查；对每个观测/奖励消费者做信息状态层审计；缺口登记并逐项路由到 T1-T4 | 代码在结构上体现架构基线；无平行生命周期 | 普查需要判断力；缺口必须路由到轨道而非引发临时重写 |
-| T1 DTO 单源化收尾 | world-batch（约 211 字段）、engagement 余量（约 445 字段、29 类）、command/tasking 的 umbrella-slice-codec 家族、GPU packed 视图 | 把剩余约 2,400 条手工同步语句移入 schema 所有权 | 成员顺序即 ABI；JSON codec 别名；部分暴露视图 |
-| T2 运行时基座统一 | B-2 残余破环（包 init 懒化或派发依赖倒置，并修复 AST 门禁盲区）、`WorldBatchCore` 提取、execution/cooperative/leader 模式插件、adapter 与 single/leader 运行时收编 | 单一批处理基座，消除约 1,400 行重复，分层单向 | monkeypatch 缝；shared-memory 与 leader 特殊路径 |
-| T3 C++ 结构边界 | `ef_core` 拆分为 engine/mission/facade/content 链接单元并加 include 方向门禁；facade 结果投影去重；在 T1 验证 codec 逃生口后把 `unit_definition_loader` 表驱动化 | 强制层边界；loader 1,881 行手写映射入 schema 所有权 | 链接顺序与初始化；NaN 哨兵配置语义 |
+| T0 SCAL 一致性与基线修订 | 对维护运行时（loader、vec-env、facade 消费者）做阶段一致性普查；信息状态层审计并交付消费者的 G4 声明机制；跨界旁路路径盘点（G1）；三条当下可强制的组合规则（语义→因果的内容编译降低、因果→时序的读写集调度、信息→机构的 view spec）；起草修订候选 (a)-(d) 并提交架构工作线治理 | 代码在结构上体现（修订后的）基线；批判变成力学而非评论 | 普查需要判断力；缺口必须路由到轨道而非引发临时重写 |
+| T1 DTO 单源化收尾 | world-batch（约 211 字段）、engagement 余量（约 445 字段、29 类）、command/tasking 的 umbrella-slice-codec 家族、GPU packed 视图；engagement/command 的 schema 分组按修订 (b) 携带阶段契约与事件驱动子图元数据，不强塞线性阶段 | 把剩余约 2,400 条手工同步语句移入 schema 所有权；schema 词汇对齐 Semantic 面 packet 分类 | 成员顺序即 ABI；JSON codec 别名；部分暴露视图 |
+| T2 运行时基座统一 | B-2 残余破环（包 init 懒化或派发依赖倒置，并修复 AST 门禁盲区）、`WorldBatchCore` 提取且阶段边界跟随修订后的阶段契约模型、execution/cooperative/leader 模式插件（阶段局部的 Agency 适配器）、adapter 与 single/leader 运行时收编；交付回填基线 Learning 面的学习运行时架构说明（修订候选 (e)） | 阶段接缝即 WP4 迁移接缝的单一批处理基座；消除约 1,400 行重复；分层单向 | monkeypatch 缝；shared-memory 与 leader 特殊路径；插件接口必须从实测重复提取而非投机 |
+| T3 C++ 结构边界 | `ef_core` 拆分为 engine/mission/facade/content 链接单元并加 include 方向门禁；facade 结果投影去重；关闭 T0 盘点出的跨界旁路路径（G1：facade 成为唯一应用路径）；在 T1 验证 codec 逃生口后把 `unit_definition_loader` 表驱动化 | 强制层边界；跨界路径数收敛到一；loader 1,881 行手写映射入 schema 所有权 | 链接顺序与初始化；NaN 哨兵配置语义 |
 | T4 exact-runtime 对齐 | 支撑 WP4 热路径切流到 `WorldBatchRuntime`；退役被 C++ 所有权替代的 Python 逐步 builder；重冻 exact-runtime 计划文档 | Python 步进层变薄而非固化 | 迁移期双所有权漂移 |
-| T5 声明式配置收尾 | 训练配置 bases+deltas 生成器与新鲜度门禁（先做 24 文件空战矩阵）、opt-in 报告信封、第二批 argparse | 配置矩阵以 delta 维护而非拷贝 | docs 钉住的配置路径必须稳定 |
+| T5 实验空间定义与声明式配置 | 冻结类型化 Experiment 定义（场景引用×配置组合×种子×评估协议），对齐 Experiment 面修订 (a)；run 配置由之派生（先对 24 文件空战矩阵做 bases+deltas 生成与新鲜度门禁）；opt-in 报告信封；第二批 argparse | 存在一等公民的实验对象，run 配置皆为其派生；配置矩阵以 delta 维护 | docs 钉住的配置路径必须稳定；实验类型不得先于修订固化 |
 | T6 测试基建理性化 | 本机基线红修复（allowlist 路径分隔符匹配器、winsock harness 链接、GBK 探针解码、weapon-guidance 45 例环境失败）、权威表数据化重试、wrappers 契约簇 | 验证信噪比：本机预期红清零 | 基线修复不得掩盖真实回归 |
 | T7 终局残余审计 | 对计划全表面连续两轮干净审计；每个幸存重复分类为 intentional/held/uneconomic | 按整合计划停止条件实现可审计的完成 | 文本上不存在不等于证明；需调用者/行为审计 |
 
@@ -145,7 +145,10 @@ c：内核不变量清单；d：表示策略章节）提交给基线自身的治
 0. T0 普查是本计划的开局调研动作（连同三项配套调研：C++ episode
    controller 与 Python 步进逻辑之间的 WP4 接口考古、共享路径中 air
    具体性泄漏的域不对称盘点、command/content 家族的 schema 逃生口
-   普查）。其缺口登记在 T1-T4 关键期开始前重新冻结各期写集。
+   普查）。其缺口登记在 T1-T4 关键期开始前重新冻结各期写集。T0 起草
+   的基线修订必须经架构工作线治理、先于消费它们的各期落地：阶段契约
+   修订 (b) 先于 T1 engagement 家族与 T2 插件提取；Experiment 面修订
+   (a) 先于 T5 的实验类型冻结。
 1. T2.B-2（残余破环）先于更深的基座提取落地，使插件化从单向层图出发。
 2. T1 world-batch 家族先于 T3 的 facade 投影去重，后者消费生成的
    packet schema。
