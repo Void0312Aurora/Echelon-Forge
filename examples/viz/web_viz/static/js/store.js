@@ -48,6 +48,7 @@ export const vizState = {
     tacticalWorkspaceLayerState: new Map(),
 
     // --- Session / app status ---
+    socketConnected: false,
     vizScenarioList: [],
     vizProfileList: [],
     vizAssetRegistryList: [],
@@ -57,7 +58,7 @@ export const vizState = {
     currentProfileUiDefaults: null,
     appliedProfileUiDefaultsKey: '',
     currentAssetRegistry: { name: 'default', entries: [] },
-    sessionControlState: { loaded: false, ready: false, running: false, paused: false },
+    sessionControlState: { loaded: false, ready: false, running: false, paused: false, error: '' },
 
     // --- Layout ---
     layoutState: {

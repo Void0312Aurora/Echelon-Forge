@@ -69,6 +69,12 @@ def create_app(args: argparse.Namespace):
     socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
     manager = SessionManager(socketio, default_args=args)
 
+    def report_load_error(action: str, exc: Exception) -> None:
+        message = f"{action}: {type(exc).__name__}: {exc}"
+        print(f"[viz] {message}")
+        socketio.emit("viz_error", {"message": message})
+        manager.emit_status()
+
     @app.route("/")
     def index():
         return render_template("index.html")
@@ -104,13 +110,16 @@ def create_app(args: argparse.Namespace):
         if isinstance(data, dict):
             scenario = str(data.get("scenario", "")).strip()
             profile = str(data.get("profile", "")).strip()
-        if profile:
-            manager.load_profile(profile)
-            return
-        if not scenario:
-            return
-        manager.clear_profile_selection()
-        manager.load_session(scenario)
+        try:
+            if profile:
+                manager.load_profile(profile)
+                return
+            if not scenario:
+                return
+            manager.clear_profile_selection()
+            manager.load_session(scenario)
+        except Exception as exc:
+            report_load_error(f"load {profile or scenario}", exc)
 
     @socketio.on("viz_load_profile")
     def handle_viz_load_profile(data):
@@ -119,7 +128,10 @@ def create_app(args: argparse.Namespace):
             profile = str(data.get("profile", "")).strip()
         if not profile:
             return
-        manager.load_profile(profile)
+        try:
+            manager.load_profile(profile)
+        except Exception as exc:
+            report_load_error(f"load profile {profile}", exc)
 
     @socketio.on("viz_load_asset_registry")
     def handle_viz_load_asset_registry(data):
@@ -128,7 +140,10 @@ def create_app(args: argparse.Namespace):
             registry = str(data.get("asset_registry", "")).strip()
         if not registry:
             return
-        manager.load_asset_registry_only(registry)
+        try:
+            manager.load_asset_registry_only(registry)
+        except Exception as exc:
+            report_load_error(f"load asset registry {registry}", exc)
 
     @socketio.on("viz_stop_session")
     def handle_viz_stop_session():
@@ -142,21 +157,24 @@ def create_app(args: argparse.Namespace):
         if isinstance(data, dict):
             scenario = str(data.get("scenario", "")).strip()
             profile = str(data.get("profile", "")).strip()
-        if profile:
-            manager.load_profile(profile)
-            return
-        current_profile = manager.current_profile
-        if not scenario and isinstance(current_profile, dict):
-            profile_path = str(current_profile.get("path", "")).strip()
-            if profile_path:
-                manager.load_profile(profile_path)
+        try:
+            if profile:
+                manager.load_profile(profile)
                 return
-        if not scenario and current is not None:
-            scenario = current.scenario
-        if not scenario:
-            return
-        manager.clear_profile_selection()
-        manager.load_session(scenario)
+            current_profile = manager.current_profile
+            if not scenario and isinstance(current_profile, dict):
+                profile_path = str(current_profile.get("path", "")).strip()
+                if profile_path:
+                    manager.load_profile(profile_path)
+                    return
+            if not scenario and current is not None:
+                scenario = current.scenario
+            if not scenario:
+                return
+            manager.clear_profile_selection()
+            manager.load_session(scenario)
+        except Exception as exc:
+            report_load_error(f"reload {profile or scenario}", exc)
 
     @app.get("/api/viz/scenarios")
     def list_scenarios():

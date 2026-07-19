@@ -23,6 +23,8 @@ export const dom = {
     languageButton: getById('btn-language'),
     sessionLabel: getById('viz-session-label'),
     sessionLed: getById('session-led'),
+    errorBanner: getById('viz-error-banner'),
+    errorText: getById('viz-error-text'),
     profileSelect: getById('profile-select'),
     scenarioSelect: getById('scenario-select'),
     assetRegistrySelect: getById('asset-registry-select'),

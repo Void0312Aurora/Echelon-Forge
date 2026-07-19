@@ -401,6 +401,17 @@ button.primary:disabled {
     box-shadow: 0 0 8px rgba(255, 180, 84, 0.6);
 }
 
+.session-led[data-state="offline"] {
+    background: var(--red);
+    box-shadow: 0 0 9px rgba(255, 95, 102, 0.8);
+    animation: led-blink 500ms steps(2, start) infinite;
+}
+
+.session-led[data-state="error"] {
+    background: var(--red);
+    box-shadow: 0 0 9px rgba(255, 95, 102, 0.8);
+}
+
 @keyframes led-blink {
     50% { opacity: 0.35; }
 }
@@ -493,6 +504,60 @@ button.primary:disabled {
     color: #dff6ff;
     background: var(--accent-soft);
     box-shadow: inset 0 0 10px rgba(95, 216, 255, 0.12);
+}
+
+/* ------------------------------------------------------------
+   Error banner
+   ------------------------------------------------------------ */
+
+#viz-error-banner {
+    position: fixed;
+    top: calc(var(--viz-top-offset) + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(860px, calc(100vw - 48px));
+    padding: 8px 12px;
+    background: rgba(46, 9, 14, 0.92);
+    border: 1px solid rgba(255, 95, 102, 0.65);
+    border-left: 3px solid var(--red);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 95, 102, 0.18);
+    backdrop-filter: blur(8px);
+}
+
+#viz-error-banner[hidden] {
+    display: none;
+}
+
+.error-banner-tag {
+    flex: 0 0 auto;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--red);
+    white-space: nowrap;
+}
+
+#viz-error-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11.5px;
+    color: #ffd9db;
+    overflow-wrap: anywhere;
+    max-height: 64px;
+    overflow-y: auto;
+}
+
+#btn-error-dismiss {
+    flex: 0 0 auto;
+    border-color: rgba(255, 95, 102, 0.6);
+    color: #ffc7ca;
+    padding: 4px 9px;
+    font-size: 10.5px;
 }
 
 /* ------------------------------------------------------------

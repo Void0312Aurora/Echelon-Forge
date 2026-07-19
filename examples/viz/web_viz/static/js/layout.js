@@ -4,6 +4,7 @@
 import { dom } from './dom.js';
 import { vizState } from './store.js';
 import { drawTacticalView } from './tactical-map.js';
+import { saveUiPrefs } from './storage.js';
 
 function applyResponsiveDockDefaults() {
     if (vizState.dockUserTouched) return;
@@ -175,5 +176,6 @@ window.toggleVizDock = function (side) {
     if (vizState.mapOnlyMode) window.toggleMapOnlyMode(false);
     vizState.dockUserTouched = true;
     vizState.dockState[side] = !vizState.dockState[side];
+    saveUiPrefs({ dockState: { left: vizState.dockState.left, right: vizState.dockState.right } });
     refreshAutoLayout({ redraw: true });
 };

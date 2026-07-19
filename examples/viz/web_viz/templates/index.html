@@ -79,6 +79,12 @@
             </div>
         </div>
 
+        <div id="viz-error-banner" role="alert" hidden>
+            <span class="error-banner-tag" data-i18n="ui.error">SESSION ERROR</span>
+            <span id="viz-error-text"></span>
+            <button id="btn-error-dismiss" onclick="dismissVizError()" data-i18n="ui.dismiss">DISMISS</button>
+        </div>
+
         <aside id="left-dock" class="viz-dock viz-dock--left">
             <div class="dock-header">
                 <span data-i18n="ui.sessionSetup">SESSION SETUP</span>

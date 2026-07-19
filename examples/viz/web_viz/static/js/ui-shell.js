@@ -29,6 +29,18 @@ import { resolveAssetEntry } from './asset-registry.js';
 import { refreshAutoLayout } from './layout.js';
 import { requestTacticalDraw } from './tactical-map.js';
 import { renderer, controls } from './scene3d.js';
+import { saveUiPrefs } from './storage.js';
+
+export function persistWorkspacePrefs() {
+    const workspaceLayers = {};
+    vizState.tacticalWorkspaceLayerState.forEach((snapshot, workspaceId) => {
+        workspaceLayers[workspaceId] = { ...snapshot };
+    });
+    saveUiPrefs({
+        activeWorkspace: vizState.activeTacticalWorkspace,
+        workspaceLayers,
+    });
+}
 
 // --- Map-only mode ---
 export function updateMapOnlyControls() {
@@ -135,6 +147,7 @@ window.toggleTacticalLayer = function (layerName) {
     captureActiveWorkspaceLayers();
     updateTacticalLayerButtons();
     updateTacticalWorkspaceUI();
+    persistWorkspacePrefs();
     requestTacticalDraw();
 };
 
@@ -203,6 +216,7 @@ window.setTacticalWorkspace = function (workspaceId, options = {}) {
     updateTacticalLayerButtons();
     updateTacticalWorkspaceUI();
     updatePresentationModeUI();
+    persistWorkspacePrefs();
     requestTacticalDraw();
 };
 
@@ -243,11 +257,14 @@ export function updateLanguageUi() {
 
 window.toggleUiLanguage = function () {
     vizState.uiLanguage = vizState.uiLanguage === 'zh' ? 'en' : 'zh';
+    saveUiPrefs({ uiLanguage: vizState.uiLanguage });
     updateLanguageUi();
 };
 
 // --- Session label and run control ---
 function sessionLedState(control) {
+    if (!vizState.socketConnected) return 'offline';
+    if (control.error) return 'error';
     if (!control.loaded) return 'unloaded';
     if (control.paused) return 'paused';
     if (control.running) return 'running';
@@ -259,10 +276,11 @@ export function updateSessionLabelText() {
     if (!label) return;
     const control = vizState.sessionControlState;
     if (dom.sessionLed) dom.sessionLed.dataset.state = sessionLedState(control);
+    const offlinePrefix = vizState.socketConnected ? '' : `${i18n('ui.offline')} | `;
     if (!control.loaded) {
-        label.innerText = vizState.currentProfile
+        label.innerText = offlinePrefix + (vizState.currentProfile
             ? `${i18n('ui.unloaded')} | ${i18n('ui.profileSuffix')} ${vizState.currentProfile}`
-            : i18n('ui.unloaded');
+            : i18n('ui.unloaded'));
         return;
     }
     const stateKey = control.paused
@@ -273,7 +291,7 @@ export function updateSessionLabelText() {
                 ? 'ui.ready'
                 : 'ui.loading';
     const profileSuffix = vizState.currentProfile ? ` | ${i18n('ui.profileSuffix')} ${vizState.currentProfile}` : '';
-    label.innerText = `${i18n(stateKey)} | ${vizState.currentScenario || '--'}${profileSuffix}`;
+    label.innerText = `${offlinePrefix}${i18n(stateKey)} | ${vizState.currentScenario || '--'}${profileSuffix}`;
 }
 
 export function syncRunControl() {
@@ -442,6 +460,22 @@ export function setFocus(id) {
     renderUnitList();
 }
 window.setFocus = setFocus;
+
+// --- Error banner ---
+export function showErrorBanner(message) {
+    const text = String(message || '').trim();
+    if (!text || !dom.errorBanner) return;
+    dom.errorText.innerText = text;
+    dom.errorBanner.hidden = false;
+}
+
+export function clearErrorBanner() {
+    if (!dom.errorBanner) return;
+    dom.errorBanner.hidden = true;
+    dom.errorText.innerText = '';
+}
+
+window.dismissVizError = clearErrorBanner;
 
 // --- Telemetry and mission panels ---
 export function updateSimTimeDisplay(simTime) {

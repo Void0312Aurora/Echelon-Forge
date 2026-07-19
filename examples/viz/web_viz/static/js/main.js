@@ -2,7 +2,8 @@
 // the shared animation loop, then installs global input handlers.
 
 import { vizState } from './store.js';
-import { initTacticalLayers } from './layers.js';
+import { initTacticalLayers, tacticalLayerSnapshot } from './layers.js';
+import { tacticalWorkspaceDefinitions } from './symbology.js';
 import {
     initTacticalMapInteractions,
     maybeDrawTacticalView,
@@ -11,18 +12,42 @@ import {
 import { animateUnits, render3D, resize3D, updateCameraForFrame } from './scene3d.js';
 import { renderTacticalLayerControls, updateLanguageUi } from './ui-shell.js';
 import { initSession } from './session.js';
+import { loadUiPrefs } from './storage.js';
 
 // Expose shared state for DevTools debugging (read-only usage intended).
 window.vizDebug = { vizState };
 
 // --- Bootstrap ---
 initTacticalLayers();
+
+// Restore persisted display preferences before the first render. Profile
+// ui_defaults still win later because they are applied on top via
+// applyProfileUiDefaults once the app status arrives.
+const uiPrefs = loadUiPrefs();
+if (uiPrefs.uiLanguage === 'zh' || uiPrefs.uiLanguage === 'en') {
+    vizState.uiLanguage = uiPrefs.uiLanguage;
+}
+if (uiPrefs.dockState && typeof uiPrefs.dockState === 'object') {
+    vizState.dockState.left = !!uiPrefs.dockState.left;
+    vizState.dockState.right = !!uiPrefs.dockState.right;
+    vizState.dockUserTouched = true;
+}
+if (uiPrefs.workspaceLayers && typeof uiPrefs.workspaceLayers === 'object') {
+    for (const [workspaceId, snapshot] of Object.entries(uiPrefs.workspaceLayers)) {
+        if (!tacticalWorkspaceDefinitions[workspaceId] || typeof snapshot !== 'object') continue;
+        vizState.tacticalWorkspaceLayerState.set(workspaceId, tacticalLayerSnapshot(snapshot));
+    }
+}
+const startupWorkspace = tacticalWorkspaceDefinitions[uiPrefs.activeWorkspace]
+    ? uiPrefs.activeWorkspace
+    : 'cop';
+
 resizeTacticalCanvas();
 initTacticalMapInteractions();
 initSession();
 
 renderTacticalLayerControls();
-window.setTacticalWorkspace('cop', { skipCapture: true });
+window.setTacticalWorkspace(startupWorkspace, { skipCapture: true });
 updateLanguageUi();
 
 // --- Animation loop ---

@@ -32,12 +32,14 @@ import {
     updateUnit,
 } from './scene3d.js';
 import {
+    clearErrorBanner,
     renderAssetRegistryOptions,
     renderMissionStatus,
     renderProfileOptions,
     renderScenarioOptions,
     renderUnitList,
     resetTelemetryDisplay,
+    showErrorBanner,
     syncRunControl,
     updateFocusedTelemetry,
     updatePresentationModeUI,
@@ -149,13 +151,20 @@ window.stopCurrentSession = function () {
 export function updateSessionButtonState(appStatus) {
     const session = appStatus?.session || null;
     const loaded = !!appStatus?.loaded && !!session;
+    const sessionError = String(session?.error || '').trim();
     vizState.sessionReady = !!session?.ready;
     vizState.sessionControlState = {
         loaded,
         ready: !!session?.ready,
         running: !!session?.running,
         paused: !!session?.paused,
+        error: sessionError,
     };
+    if (sessionError) {
+        showErrorBanner(sessionError);
+    } else if (vizState.sessionControlState.ready) {
+        clearErrorBanner();
+    }
     vizState.currentScenario = loaded ? String(session.scenario || '') : '';
     if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'profile')) {
         vizState.currentProfile = String(appStatus?.profile?.path || '').trim();
@@ -269,6 +278,20 @@ export function applyProfileUiDefaults() {
 // --- Socket wiring ---
 export function initSession() {
     socket = io({ transports: ['websocket'] });
+
+    socket.on('connect', () => {
+        vizState.socketConnected = true;
+        updateSessionLabelText();
+    });
+
+    socket.on('disconnect', () => {
+        vizState.socketConnected = false;
+        updateSessionLabelText();
+    });
+
+    socket.on('viz_error', (data) => {
+        showErrorBanner(String(data?.message || ''));
+    });
 
     socket.on('map_setup', (data) => {
         const zones = Array.isArray(data?.zones) ? data.zones : [];

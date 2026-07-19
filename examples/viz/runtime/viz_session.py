@@ -807,6 +807,7 @@ class VizSession:
         self.map_data = None
         self.nav_data = None
         self.sim_speed = 1.0
+        self.last_error = ""
 
     def _release_runtime_resources(self) -> None:
         env = self.env
@@ -887,9 +888,30 @@ class VizSession:
             "ready": bool(self.ready),
             "stopped": bool(self.stop_requested),
             "speed": float(self.sim_speed),
+            "error": str(self.last_error),
         }
 
+    def report_error(self, message: str) -> None:
+        self.last_error = str(message)
+        try:
+            self.socketio.emit("viz_error", {"message": self.last_error, "scenario": str(self.scenario)})
+        except Exception:
+            pass
+        self._notify_status()
+
     def run_loop(self) -> None:
+        try:
+            self._run_loop_inner()
+        except Exception as exc:
+            import traceback
+
+            traceback.print_exc()
+            self.ready = False
+            self.simulation_running = False
+            self.simulation_paused = False
+            self.report_error(f"{type(exc).__name__}: {exc}")
+
+    def _run_loop_inner(self) -> None:
         args = self.args
         self.stop_requested = False
         train_config = _load_train_config_for_viz(getattr(args, "model", None), getattr(args, "train_config", None))
