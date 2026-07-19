@@ -182,6 +182,22 @@ its background reading:
 | T6 Test-infrastructure rationalization | Machine-baseline-red repairs (allowlist path-separator matcher, winsock harness link, GBK probe decoding, weapon-guidance 45-case environment failure), authority-table data extraction retry, wrappers contract cluster | Validation signal-to-noise: zero expected-red entries on this machine | Baseline repairs must not mask real regressions |
 | T7 Final residual audit | Two consecutive clean audit passes over the whole program surface; classify every survivor as intentional, held, or uneconomic | Auditable completion per the consolidation stop conditions | Textual absence is not proof; caller/behavior audit required |
 
+The following adaptation tracks are derived from taking the SCAL faces
+seriously: each names a face/graph whose code today is vocabulary plus
+scattered fragments without an owner. They change existing logic to fit the
+ontology rather than only deduplicating it.
+
+| Track | Scope | Primary target | Key risk |
+| --- | --- | --- | --- |
+| T8 Information-state architecture | Implement `ObservationViewSpec` as a real facade mechanism; apply the G4 layer-declaration mechanism (T0) to every observation/reward consumer; migrate the Python-owned observation adapters onto declared views; inventory and close truth leaks into policy paths | Every maintained consumer names its epistemic layer and reads through a declared view; god's-eye access becomes structurally impossible outside diagnostics | View plumbing must ride the T1 schema machinery or it recreates hand-written packet mass |
+| T9 Agency and doctrine architecture | Formalize the authority model (roles, scopes, delegation, arbitration) as a registered structure instead of scattered checks; make doctrine/ROE a declared `DoctrineFamily`; converge the command-chain seams begun in the tasking-contracts layer into the single Agency-graph entry | Who-may-command-whom is inspectable data with gates, not folklore in call sites | C2 semantics are research subject matter here; changes need domain-evidence review, not just parity |
+| T10 Evidence and replay spine | Unify trace ids, packet ancestry, snapshot versions, replay gates, and the worldline/counterfactual surfaces into one evidence architecture generated from the T1 event schemas | Any maintained run is replayable and comparable by construction (Evidence-graph promise made real) | Evidence surfaces are pinned by tests and retained artifacts; extension must be additive |
+| T11 Content compilation pipeline | Evolve scenario/unit content loading into the staged `P0 ContentCompile` model: typed setup packets, capability-bundle expansion behind `spawn_unit` compatibility, content schema validation as a compile stage; absorbs and supersedes the T3 loader item | New content and new domains enter through compiled, validated capability composition | Content JSON compatibility is a hard external surface; migration must be bundle-by-bundle with fixture parity |
+
+Registered but held: multi-rate clock domains and barrier scheduling (the
+Temporal-graph completion) stay gated behind exact-runtime WP4/WP5 progress
+and are not scheduled by this program.
+
 ## Sequencing And Dependencies
 
 0. T0's census is the program's opening research move (together with three
@@ -206,7 +222,12 @@ its background reading:
    next) and coordinates with the exact-runtime plan rather than this
    document.
 5. T6 baseline repairs may land at any point; earlier is better for gate
-   fidelity. T7 runs last, twice.
+   fidelity. T7 runs last, twice, and covers T8-T11 surfaces as well.
+6. The adaptation tracks consume earlier tracks' machinery: T8 needs the
+   T0 G4 mechanism and rides T1 observation/world-batch schemas; T9 follows
+   the T1 command family and the T2 plugin seams; T10 rides the T1
+   engagement schemas; T11 follows the T1 escape-hatch validation and
+   supersedes the T3 loader item when it starts.
 
 ## Non-Goals
 
