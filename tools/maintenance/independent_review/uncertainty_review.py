@@ -19,12 +19,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
 
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -47,37 +52,28 @@ DEFAULT_RETAINED_DIR = (
 )
 CV_THRESHOLD = 0.05
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
 
-
-def _file_sha256(path: Path) -> str:
-  return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def _payload_sha256(payload: dict[str, Any]) -> str:
   return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
-
 
 def _read_text(path: Path) -> str:
   if not path.is_file():
     return ""
   return path.read_text(encoding="utf-8")
 
-
 def _load_json(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
     return None
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _evidence_record(
   *,
@@ -96,7 +92,7 @@ def _evidence_record(
     "required_for": required_for,
   }
   if present:
-    record["content_sha256"] = _file_sha256(path)
+    record["content_sha256"] = _sha256_file(path)
   if payload is not None:
     record["schema_version"] = payload.get("schema_version", "")
     record["status"] = payload.get("status", "")
@@ -106,7 +102,6 @@ def _evidence_record(
     record["status"] = "missing"
   return record
 
-
 def _cv_row(metric: str, actual: float) -> dict[str, Any]:
   return {
     "metric": metric,
@@ -114,7 +109,6 @@ def _cv_row(metric: str, actual: float) -> dict[str, Any]:
     "threshold": f"<= {CV_THRESHOLD}",
     "pass": actual <= CV_THRESHOLD,
   }
-
 
 def _stage_b_review(
   *,
@@ -189,7 +183,6 @@ def _stage_b_review(
       "rerun this gate after independent review signoff is present",
     ],
   }
-
 
 def _stage_c_review(
   *,
@@ -268,7 +261,6 @@ def _stage_c_review(
     ],
   }
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -283,7 +275,6 @@ def _authority_guards() -> dict[str, bool]:
     "formal_validation_manifest_promoted": False,
     "hard_gate_pass_is_release": False,
   }
-
 
 def generate_uncertainty_review_gate(
   *,
@@ -476,7 +467,6 @@ def generate_uncertainty_review_gate(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   output_dir: Path = DEFAULT_RETAINED_DIR,
@@ -505,7 +495,7 @@ def write_retained_artifacts(
         "relative_path": _display_path(gate_path, repo_root),
         "schema_version": GATE_SCHEMA_VERSION,
         "status": artifact["status"],
-        "content_sha256": _file_sha256(gate_path),
+        "content_sha256": _sha256_file(gate_path),
         "payload_sha256": _payload_sha256(artifact),
         "size_bytes": gate_path.stat().st_size,
         "origin_class": "uncertainty_review_gate_record_only",
@@ -527,7 +517,6 @@ def write_retained_artifacts(
     "manifest": manifest,
     "paths": {"gate": gate_path, "manifest": manifest_path},
   }
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -563,7 +552,6 @@ def main(argv: list[str] | None = None) -> int:
       )
     )
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

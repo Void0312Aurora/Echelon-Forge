@@ -21,11 +21,17 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.colors import BoundaryNorm, ListedColormap  # noqa: E402
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.diagnostics.common import finite_float_or_none, write_json_output
 SCHEMA_VERSION = "a2.kill_chain_expectation_stage_attribution.v1"
 DEFAULT_VARIANT = "REV-RUNTIME-PROJECTION"
 DEFAULT_TARGET_MOTION_LAYER = "nonmaneuvering_constant_velocity"
@@ -70,7 +76,6 @@ STAGE_LABELS = {
   "negative_control_alert": "neg-alert",
 }
 
-
 def _nested_get(row: dict[str, Any], *path: str) -> Any:
   value: Any = row
   for part in path:
@@ -78,15 +83,6 @@ def _nested_get(row: dict[str, Any], *path: str) -> Any:
       return None
     value = value.get(part)
   return value
-
-
-def _finite_float(value: Any) -> float | None:
-  try:
-    out = float(value)
-  except Exception:
-    return None
-  return out if math.isfinite(out) else None
-
 
 def _bool_or_none(value: Any) -> bool | None:
   if value is None:
@@ -101,13 +97,11 @@ def _bool_or_none(value: Any) -> bool | None:
       return False
   return bool(value)
 
-
 def _int_or_zero(value: Any) -> int:
   try:
     return int(value)
   except Exception:
     return 0
-
 
 def _read_report(path: Path) -> dict[str, Any]:
   with path.open("r", encoding="utf-8") as handle:
@@ -116,13 +110,8 @@ def _read_report(path: Path) -> dict[str, Any]:
     raise TypeError(f"expected object JSON at {path}")
   return data
 
-
 def _write_json(path: Path, data: dict[str, Any]) -> None:
-  path.parent.mkdir(parents=True, exist_ok=True)
-  with path.open("w", encoding="utf-8") as handle:
-    json.dump(data, handle, indent=2, sort_keys=True, ensure_ascii=True)
-    handle.write("\n")
-
+  write_json_output(path, data, sort_keys=True, skip_empty_path=False)
 
 def _selected_rows(
   report: dict[str, Any],
@@ -144,7 +133,6 @@ def _selected_rows(
       rows.append(raw)
   return rows
 
-
 def _response_signal(row: dict[str, Any]) -> str:
   response_band = str(
     _nested_get(row, "component_response", "component_response_band") or ""
@@ -152,7 +140,7 @@ def _response_signal(row: dict[str, Any]) -> str:
   sampled_count = _int_or_zero(
     _nested_get(row, "component_response", "sampled_failure_count")
   )
-  max_probability = _finite_float(
+  max_probability = finite_float_or_none(
     _nested_get(row, "component_response", "max_failure_probability")
   )
   if sampled_count > 0 or response_band == "sampled_failure_observed":
@@ -165,10 +153,9 @@ def _response_signal(row: dict[str, Any]) -> str:
     return "probability_only_no_sampled_failure"
   return "no_response_signal"
 
-
 def _load_signal(row: dict[str, Any]) -> str:
   effect_band = str(_nested_get(row, "warhead_load_field", "effect_band") or "")
-  strongest = _finite_float(
+  strongest = finite_float_or_none(
     _nested_get(row, "warhead_load_field", "strongest_component_effect_scale")
   )
   if effect_band in {"core", "effective", "outer_effective", "edge"}:
@@ -178,7 +165,6 @@ def _load_signal(row: dict[str, Any]) -> str:
   if (strongest or 0.0) > 0.0:
     return "component_load_present_outside_case_band"
   return "no_load_signal"
-
 
 def _stage_attribution(row: dict[str, Any]) -> dict[str, Any]:
   run_status = str(row.get("run_status", "") or "")
@@ -328,7 +314,6 @@ def _stage_attribution(row: dict[str, Any]) -> dict[str, Any]:
     load_signal=load_signal,
   )
 
-
 def _attribution(
   row: dict[str, Any],
   *,
@@ -340,8 +325,8 @@ def _attribution(
 ) -> dict[str, Any]:
   return {
     "case_id": str(_nested_get(row, "identity", "case_id") or ""),
-    "range_km": _finite_float(_nested_get(row, "launch_window", "range_km")),
-    "signed_bearing_deg": _finite_float(
+    "range_km": finite_float_or_none(_nested_get(row, "launch_window", "range_km")),
+    "signed_bearing_deg": finite_float_or_none(
       _nested_get(row, "launch_window", "signed_bearing_deg")
     ),
     "launch_class": str(_nested_get(row, "launch_window", "launch_class") or ""),
@@ -354,14 +339,14 @@ def _attribution(
     "entered_R_fuze": _bool_or_none(
       _nested_get(row, "guidance_approach", "entered_R_fuze")
     ),
-    "rho_fuze": _finite_float(_nested_get(row, "guidance_approach", "rho_fuze")),
+    "rho_fuze": finite_float_or_none(_nested_get(row, "guidance_approach", "rho_fuze")),
     "detonated": _bool_or_none(_nested_get(row, "fuze_decision", "detonated")),
     "effect_band": str(_nested_get(row, "warhead_load_field", "effect_band") or ""),
-    "rho_effect_case": _finite_float(
+    "rho_effect_case": finite_float_or_none(
       _nested_get(row, "warhead_load_field", "rho_effect_case")
     ),
     "load_signal": str(load_signal),
-    "max_failure_probability": _finite_float(
+    "max_failure_probability": finite_float_or_none(
       _nested_get(row, "component_response", "max_failure_probability")
     ),
     "sampled_failure_count": _int_or_zero(
@@ -373,26 +358,24 @@ def _attribution(
     "response_signal": str(response_signal),
   }
 
-
 def _axis(rows: list[dict[str, Any]]) -> tuple[list[float], list[float]]:
   ranges = sorted(
     {
       value
-      for value in (_finite_float(item.get("range_km")) for item in rows)
+      for value in (finite_float_or_none(item.get("range_km")) for item in rows)
       if value is not None
     }
   )
   bearings = sorted(
     {
       value
-      for value in (_finite_float(item.get("signed_bearing_deg")) for item in rows)
+      for value in (finite_float_or_none(item.get("signed_bearing_deg")) for item in rows)
       if value is not None
     }
   )
   if not ranges or not bearings:
     raise ValueError("attribution rows do not contain range/bearing axes")
   return ranges, bearings
-
 
 def _write_csv(
   path: Path,
@@ -415,7 +398,6 @@ def _write_csv(
         row = by_cell.get((range_km, bearing))
         values.append("" if row is None else str(row["first_review_stage"]))
       writer.writerow([f"{range_km:g}", *values])
-
 
 def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -448,7 +430,6 @@ def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
     )
     writer.writeheader()
     writer.writerows(rows)
-
 
 def _plot_stage_heatmap(
   path_base: Path,
@@ -522,7 +503,6 @@ def _plot_stage_heatmap(
   plt.close(fig)
   return {"png": str(png_path), "svg": str(svg_path)}
 
-
 def _top_rows(rows: list[dict[str, Any]], *, stage: str) -> list[dict[str, Any]]:
   return sorted(
     [row for row in rows if row["first_review_stage"] == stage],
@@ -531,7 +511,6 @@ def _top_rows(rows: list[dict[str, Any]], *, stage: str) -> list[dict[str, Any]]
       float(row.get("signed_bearing_deg") or 0.0),
     ),
   )
-
 
 def _summary_markdown(
   *,
@@ -608,7 +587,6 @@ def _summary_markdown(
     ]
   )
   return "\n".join(lines) + "\n"
-
 
 def generate_stage_attribution(
   *,
@@ -689,7 +667,6 @@ def generate_stage_attribution(
   )
   return manifest
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Attribute KCES before-report rows to the first review stage."
@@ -722,7 +699,6 @@ def main(argv: list[str] | None = None) -> int:
   json.dump(manifest, sys.stdout, indent=2, sort_keys=True, ensure_ascii=True)
   sys.stdout.write("\n")
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

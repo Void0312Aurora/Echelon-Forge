@@ -16,11 +16,11 @@ from pathlib import Path
 
 
 if __package__ in (None, ""):
-  repo_root = Path(__file__).resolve().parents[2]
-  if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
-
-
+  _REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+  if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+  from python.runtime_bootstrap import ensure_repo_imports, repo_root
+  ensure_repo_imports()
 from tools.geometry.airframe_review import (
   airframe_constraint,
   component_binding,

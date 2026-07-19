@@ -17,10 +17,14 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+REPO_ROOT = Path(repo_root())
 from tools.maintenance.candidate_artifacts import effect_scale_result_pack as result_pack
 from tools.maintenance.candidate_artifacts import effect_scale_retained_pack as retained_pack
 from tools.maintenance.release_governance import package_provenance_identity as provenance_identity_gate

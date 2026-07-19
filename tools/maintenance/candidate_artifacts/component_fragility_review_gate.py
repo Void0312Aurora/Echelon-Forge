@@ -17,16 +17,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_text
 from tools.maintenance.candidate_artifacts import component_probability_review_readiness as readiness_gate # noqa: E402
 from tools.maintenance.candidate_artifacts import ( # noqa: E402
   component_fragility_validation_prep as prep,
 )
-
 
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -57,21 +62,15 @@ BENCHMARK_RETAINED_RELATIVE_DIR = (
   / "stage_c_fragility_benchmark_20260531"
 )
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
-def _sha256_text(payload: str) -> str:
-  return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
-
 
 def _blockers_for_residual(
   readiness_artifact: dict[str, Any], residual_id: str
@@ -82,13 +81,11 @@ def _blockers_for_residual(
     if row["residual_id"] == residual_id
   ]
 
-
 def _matrix_rows_by_id(prep_artifact: dict[str, Any]) -> dict[str, dict[str, Any]]:
   return {
     row["matrix_id"]: row
     for row in prep_artifact["fragility_validation_matrix"]
   }
-
 
 def _safe_json_load(path: Path) -> tuple[dict[str, Any] | None, str]:
   if not path.exists():
@@ -97,7 +94,6 @@ def _safe_json_load(path: Path) -> tuple[dict[str, Any] | None, str]:
     return json.loads(path.read_text(encoding="utf-8")), "loaded"
   except json.JSONDecodeError:
     return None, "invalid_json"
-
 
 def _manifest_artifact_by_id(
   manifest: dict[str, Any] | None,
@@ -110,12 +106,10 @@ def _manifest_artifact_by_id(
     if "artifact_id" in row
   }
 
-
 def _sha256_verified(path: Path, expected_sha256: str | None) -> bool:
   if not expected_sha256 or not path.exists():
     return False
   return _sha256_text(path.read_text(encoding="utf-8")) == expected_sha256
-
 
 def _retained_benchmark_artifact_review(
   *,
@@ -290,7 +284,6 @@ def _retained_benchmark_artifact_review(
     ),
   }
 
-
 def _fragility_matrix_review_rows(
   prep_artifact: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -374,7 +367,6 @@ def _fragility_matrix_review_rows(
     },
   ]
 
-
 def _baseline_replacement_review(
   prep_artifact: dict[str, Any],
   benchmark_artifact_review: dict[str, Any],
@@ -423,7 +415,6 @@ def _baseline_replacement_review(
     ],
   }
 
-
 def _formal_result_closeout_review(
   *,
   prep_artifact: dict[str, Any],
@@ -449,7 +440,6 @@ def _formal_result_closeout_review(
     ],
   }
 
-
 def _uncertainty_review(prep_artifact: dict[str, Any]) -> dict[str, Any]:
   probe = prep_artifact["author_side_uncertainty_probe"]
   return {
@@ -467,7 +457,6 @@ def _uncertainty_review(prep_artifact: dict[str, Any]) -> dict[str, Any]:
       "record reviewer-accepted confidence or coverage bounds before authority promotion",
     ],
   }
-
 
 def _independence_review(prep_artifact: dict[str, Any]) -> dict[str, Any]:
   trace = prep_artifact["independence_trace"]
@@ -492,7 +481,6 @@ def _independence_review(prep_artifact: dict[str, Any]) -> dict[str, Any]:
     ],
   }
 
-
 def _stage_b_interlock_review(prep_artifact: dict[str, Any]) -> dict[str, Any]:
   stage_b = prep_artifact["stage_b_dependency_interlock"]
   still_blocking = bool(
@@ -513,7 +501,6 @@ def _stage_b_interlock_review(prep_artifact: dict[str, Any]) -> dict[str, Any]:
       "rerun the Stage C fragility review gate after Stage B no longer reports blocked release status",
     ],
   }
-
 
 def _residual_gate_results(
   *,
@@ -657,7 +644,6 @@ def _residual_gate_results(
     )
   return rows
 
-
 def _retained_manifest(artifact: dict[str, Any], artifact_sha256: str) -> dict[str, Any]:
   guards = artifact["authority_guards"]
   benchmark_artifact_review = artifact["retained_benchmark_artifact_review"]
@@ -695,7 +681,6 @@ def _retained_manifest(artifact: dict[str, Any], artifact_sha256: str) -> dict[s
       "stage_b_dependency_interlock_review"
     ]["dependency_preserved_as_blocked"],
   }
-
 
 def generate_stage_c_fragility_review_gate(
   *,
@@ -796,7 +781,6 @@ def generate_stage_c_fragility_review_gate(
     ],
   }
 
-
 def write_retained_artifacts(
   artifact: dict[str, Any],
   retained_dir: Path,
@@ -810,7 +794,6 @@ def write_retained_artifacts(
   manifest_path = retained_dir / "manifest.json"
   manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
   return manifest
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -847,7 +830,6 @@ def main(argv: list[str] | None = None) -> int:
   if not wrote_output:
     print(payload)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

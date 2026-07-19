@@ -16,13 +16,18 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
 from tools.maintenance.external_signoff_evidence import intake_contract as contract # noqa: E402
-
 
 TEMPLATE_SCHEMA_VERSION = "a2.external_signoff_packet_template.v1"
 RETAINED_MANIFEST_SCHEMA_VERSION = (
@@ -37,24 +42,12 @@ RETAINED_MANIFEST_FILENAME = "manifest.json"
 PLACEHOLDER_DECISION = "REVIEWER_TO_FILL_ALLOWED_DECISION"
 PLACEHOLDER_SHA256 = "REVIEWER_TO_FILL_64_HEX_SHA256"
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: resolve ok but fallback path.as_posix() != str(path).
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()
   except ValueError:
     return path.as_posix()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
 
 def _load_json_optional(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
@@ -67,14 +60,12 @@ def _load_json_optional(path: Path) -> dict[str, Any] | None:
     return None
   return payload
 
-
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(
     json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
   )
-
 
 def _source_request_ref(path: Path, repo_root: Path) -> dict[str, Any]:
   ref: dict[str, Any] = {
@@ -98,13 +89,11 @@ def _source_request_ref(path: Path, repo_root: Path) -> dict[str, Any]:
   ref["status"] = payload.get("status", "")
   return ref
 
-
 def _current_required_signoff_ids(source_request_packet_path: Path) -> list[str]:
   intake_artifact = contract.generate_signoff_intake_contract(
     source_rights_signoff_request_packet_path=source_request_packet_path,
   )
   return list(intake_artifact["intake_contract_shape"]["required_signoff_ids"])
-
 
 def _reviewer_decision_placeholders(
   required_signoff_ids: list[str],
@@ -126,7 +115,6 @@ def _reviewer_decision_placeholders(
     }
     for signoff_id in required_signoff_ids
   ]
-
 
 def _external_packet_json_schema(
   *,
@@ -183,7 +171,6 @@ def _external_packet_json_schema(
       },
     },
   }
-
 
 def generate_external_signoff_packet_template(
   *,
@@ -249,7 +236,6 @@ def generate_external_signoff_packet_template(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -306,7 +292,6 @@ def write_retained_artifacts(
   template["retained_manifest_sha256"] = _sha256_file(manifest_path)
   return template
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description=(
@@ -340,7 +325,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, template)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

@@ -1,15 +1,12 @@
 from __future__ import annotations
 
+import contextlib
 import json
+import math
 import os
+import sys
+from collections.abc import Callable, Iterable
 from typing import Any
-
-from python.runtime_bootstrap import ensure_repo_imports
-
-
-ensure_repo_imports()
-
-import ef_py
 
 
 def load_json_config(path: str) -> dict[str, Any]:
@@ -20,14 +17,78 @@ def load_json_config(path: str) -> dict[str, Any]:
     return data
 
 
-def write_json_output(path: str, payload: dict[str, Any]) -> None:
-    if not path:
+def write_json_output(
+    path: str | os.PathLike[str],
+    payload: dict[str, Any],
+    *,
+    indent: int = 2,
+    sort_keys: bool = False,
+    ensure_ascii: bool = True,
+    allow_nan: bool = True,
+    skip_empty_path: bool = True,
+    transform: Callable[[Any], Any] | None = None,
+) -> None:
+    """Write JSON with parameterized dump options for diagnostics callers.
+
+    Defaults match the historical indent=2 / ensure_ascii=True / no sort_keys
+    shape used by most diagnostics writers, including skipping empty paths.
+    """
+
+    if skip_empty_path and not path:
         return
-    out_path = os.path.abspath(path)
+    out_path = os.path.abspath(os.fspath(path))
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    data: Any = transform(payload) if transform is not None else payload
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=True)
+        json.dump(
+            data,
+            f,
+            indent=indent,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+            allow_nan=allow_nan,
+        )
         f.write("\n")
+
+
+def finite_float(value: Any, default: float = float("nan")) -> float:
+    try:
+        out = float(value)
+    except Exception:
+        return float(default)
+    return out if math.isfinite(out) else float(default)
+
+
+def finite_float_or_none(value: Any) -> float | None:
+    try:
+        out = float(value)
+    except Exception:
+        return None
+    return out if math.isfinite(out) else None
+
+
+def mean_finite(values: Iterable[float]) -> float:
+    """Mean of finite values; empty/all-non-finite -> nan (fire_timing style)."""
+
+    finite = [float(value) for value in values if math.isfinite(float(value))]
+    if not finite:
+        return float("nan")
+    return float(sum(finite) / len(finite))
+
+
+@contextlib.contextmanager
+def native_stdout_to_stderr():
+    """Keep CLI stdout machine-readable while native runtime logs are emitted."""
+
+    sys.stdout.flush()
+    saved_stdout_fd = os.dup(1)
+    try:
+        os.dup2(2, 1)
+        yield
+    finally:
+        sys.stdout.flush()
+        os.dup2(saved_stdout_fd, 1)
+        os.close(saved_stdout_fd)
 
 
 def merge_timing_sums(acc: dict[str, float], timing: dict[str, float] | None, *, scale: float = 1.0) -> None:
@@ -48,7 +109,17 @@ def average_timing_sums(acc: dict[str, float], *, count: int) -> dict[str, float
     return {key: float(value) / denom for key, value in acc.items()}
 
 
+def _ef_py():
+    from python.runtime_bootstrap import ensure_repo_imports
+
+    ensure_repo_imports()
+    import ef_py
+
+    return ef_py
+
+
 def gpu_device_info_dict() -> dict[str, object]:
+    ef_py = _ef_py()
     if not hasattr(ef_py, "probe_gpu_device"):
         return {"binding_available": False}
     try:
@@ -75,6 +146,7 @@ def gpu_device_info_dict() -> dict[str, object]:
 
 
 def visual_runtime_stats_dict() -> dict[str, object]:
+    ef_py = _ef_py()
     if not hasattr(ef_py, "last_visual_experiment_stats"):
         return {"binding_available": False}
     try:
@@ -95,6 +167,7 @@ def visual_runtime_stats_dict() -> dict[str, object]:
 
 
 def flight_shaping_runtime_stats_dict() -> dict[str, object]:
+    ef_py = _ef_py()
     if not hasattr(ef_py, "last_flight_shaping_stats"):
         return {"binding_available": False}
     try:

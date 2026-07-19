@@ -53,6 +53,10 @@ def _sha256_file(path: Path) -> str:
   return digest.hexdigest()
 
 
+def _sha256_text(text: str) -> str:
+  return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def _display_path(path: Path, repo_root: Path) -> str:
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()

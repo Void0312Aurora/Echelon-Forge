@@ -19,8 +19,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -64,7 +73,6 @@ EXPECTED_STAGE_B_SOURCE_IDS = [
   "F16-TG-SRC-012",
 ]
 
-
 def _evidence_refs(package_dir: Path) -> dict[str, tuple[Path, bool, str]]:
   retained = package_dir / "retained_artifacts"
   return {
@@ -101,13 +109,12 @@ def _evidence_refs(package_dir: Path) -> dict[str, tuple[Path, bool, str]]:
     ),
   }
 
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
-
 
 def _doc_link(path: Path, doc_output: Path, repo_root: Path) -> str:
   try:
@@ -115,34 +122,24 @@ def _doc_link(path: Path, doc_output: Path, repo_root: Path) -> str:
   except ValueError:
     return _display_path(path, repo_root)
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
-
 
 def _sha256_bytes(data: bytes) -> str:
   return hashlib.sha256(data).hexdigest()
 
-
-def _sha256_file(path: Path) -> str:
-  return _sha256_bytes(path.read_bytes())
-
-
 def _payload_sha256(payload: dict[str, Any]) -> str:
   return _sha256_bytes(_canonical_json(payload).encode("utf-8"))
-
 
 def _read_text(path: Path) -> str:
   if not path.is_file():
     return ""
   return path.read_text(encoding="utf-8")
 
-
 def _load_json(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
     return None
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _evidence_record(
   *, evidence_id: str, path: Path, required: bool, role: str, repo_root: Path
@@ -169,14 +166,11 @@ def _evidence_record(
       record["status"] = payload.get("status", "")
   return record
 
-
 def _strip_cell(cell: str) -> str:
   return cell.strip().strip("`").strip()
 
-
 def _split_markdown_row(line: str) -> list[str]:
   return [_strip_cell(cell) for cell in line.strip().strip("|").split("|")]
-
 
 def _extract_field(text: str, field: str) -> str:
   for line in text.splitlines():
@@ -186,7 +180,6 @@ def _extract_field(text: str, field: str) -> str:
     if len(cells) >= 2 and cells[0] == field:
       return cells[1]
   return ""
-
 
 def _source_ids_from_cell(cell: str) -> list[str]:
   source_ids: list[str] = []
@@ -198,7 +191,6 @@ def _source_ids_from_cell(cell: str) -> list[str]:
     for suffix in match.group("suffixes").split("/"):
       source_ids.append(f"{prefix}{suffix}")
   return source_ids
-
 
 def _target_geometry_rows(text: str) -> dict[str, dict[str, Any]]:
   rows: dict[str, dict[str, Any]] = {}
@@ -225,7 +217,6 @@ def _target_geometry_rows(text: str) -> dict[str, dict[str, Any]]:
     }
   return rows
 
-
 def _residual_register_status(text: str, residual_id: str) -> dict[str, str]:
   for line in text.splitlines():
     if f"`{residual_id}`" not in line:
@@ -251,7 +242,6 @@ def _residual_register_status(text: str, residual_id: str) -> dict[str, str]:
     "register_status": "missing",
   }
 
-
 def _check(check_id: str, summary: str, passed: bool) -> dict[str, Any]:
   return {
     "check_id": check_id,
@@ -259,12 +249,10 @@ def _check(check_id: str, summary: str, passed: bool) -> dict[str, Any]:
     "pass": bool(passed),
   }
 
-
 def _all_authority_values_false(guards: dict[str, Any] | None) -> bool:
   if not guards:
     return False
   return not any(value is True for value in guards.values())
-
 
 def _authority_guards() -> dict[str, bool]:
   return {
@@ -294,7 +282,6 @@ def _authority_guards() -> dict[str, bool]:
     "replacement_allowed": False,
   }
 
-
 def _find_benchmark_row(payload: dict[str, Any], benchmark_id: str) -> dict[str, Any]:
   rows = payload.get("benchmark_input_independence_review", {}).get(
     "benchmark_independence_rows", []
@@ -303,7 +290,6 @@ def _find_benchmark_row(payload: dict[str, Any], benchmark_id: str) -> dict[str,
     if row.get("benchmark_id") == benchmark_id:
       return row
   return {}
-
 
 def _stage_b_assumption_review(target_text: str) -> dict[str, Any]:
   rows = _target_geometry_rows(target_text)
@@ -379,7 +365,6 @@ def _stage_b_assumption_review(target_text: str) -> dict[str, Any]:
     "checks": checks,
   }
 
-
 def _provenance_review(payload: dict[str, Any] | None) -> dict[str, Any]:
   payload = payload or {}
   res003 = payload.get("residual_status", {}).get("RES-003", {})
@@ -424,7 +409,6 @@ def _provenance_review(payload: dict[str, Any] | None) -> dict[str, Any]:
     "release_blockers_preserved": release_blockers,
     "checks": checks,
   }
-
 
 def _stage_b_review_interlock(
   *,
@@ -493,7 +477,6 @@ def _stage_b_review_interlock(
     "checks": checks,
   }
 
-
 def _minimum_gap_list(
   *, closeout_allowed: bool, failed_checks: list[dict[str, Any]], missing: list[dict[str, Any]]
 ) -> list[dict[str, str]]:
@@ -534,7 +517,6 @@ def _minimum_gap_list(
     for row in failed_checks
   )
   return gaps
-
 
 def generate_res003_target_geometry_closeout_gate(
   *,
@@ -678,7 +660,6 @@ def generate_res003_target_geometry_closeout_gate(
     ],
   }
 
-
 def _manifest_payload(
   *, artifact: dict[str, Any], output_dir: Path, repo_root: Path
 ) -> dict[str, Any]:
@@ -700,7 +681,6 @@ def _manifest_payload(
     "authority_guards": artifact["authority_guards"],
     "worker_identity": artifact["worker_identity"],
   }
-
 
 def _render_doc(
   *,
@@ -787,7 +767,6 @@ def _render_doc(
 {gap_rows}
 """
 
-
 def write_retained_outputs(
   *,
   artifact: dict[str, Any],
@@ -831,7 +810,6 @@ def write_retained_outputs(
     "closeout_decision": artifact["closeout_decision"],
   }
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Generate the RES-003 target geometry narrow closeout gate."
@@ -848,7 +826,6 @@ def main(argv: list[str] | None = None) -> int:
   )
   print(_canonical_json(summary))
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

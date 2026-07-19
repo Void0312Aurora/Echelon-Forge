@@ -10,6 +10,7 @@ stock/runtime, and component probability authority forbidden.
 
 from __future__ import annotations
 
+import sys
 import argparse
 import hashlib
 import json
@@ -18,8 +19,17 @@ import re
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -72,10 +82,8 @@ EXPECTED_RES004_PIN_IDS = [
   "PIN-AIM120-TPC-REJ",
 ]
 
-
 def _a2_root(repo_root: Path) -> Path:
   return repo_root / "docs" / "task" / "air_combat" / "archive" / "a2_high_fidelity_damage_model"
-
 
 def _evidence_refs(
   *, package_dir: Path, repo_root: Path
@@ -121,13 +129,12 @@ def _evidence_refs(
     ),
   }
 
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
-
 
 def _doc_link(path: Path, doc_output: Path, repo_root: Path) -> str:
   try:
@@ -135,30 +142,21 @@ def _doc_link(path: Path, doc_output: Path, repo_root: Path) -> str:
   except ValueError:
     return _display_path(path, repo_root)
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
 
-
 def _sha256_bytes(data: bytes) -> str:
   return hashlib.sha256(data).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  return _sha256_bytes(path.read_bytes())
-
 
 def _read_text(path: Path) -> str:
   if not path.is_file():
     return ""
   return path.read_text(encoding="utf-8")
 
-
 def _load_json(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
     return None
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _evidence_record(
   *, evidence_id: str, path: Path, required: bool, role: str, repo_root: Path
@@ -185,14 +183,11 @@ def _evidence_record(
       record["status"] = payload.get("status", "")
   return record
 
-
 def _strip_cell(cell: str) -> str:
   return cell.strip().strip("`").strip()
 
-
 def _split_markdown_row(line: str) -> list[str]:
   return [_strip_cell(cell) for cell in line.strip().strip("|").split("|")]
-
 
 def _extract_field(text: str, field: str) -> str:
   for line in text.splitlines():
@@ -202,7 +197,6 @@ def _extract_field(text: str, field: str) -> str:
     if len(cells) >= 2 and cells[0] == field:
       return cells[1]
   return ""
-
 
 def _source_ids_from_cell(cell: str) -> list[str]:
   source_ids: list[str] = []
@@ -215,7 +209,6 @@ def _source_ids_from_cell(cell: str) -> list[str]:
     for suffix in match.group("suffixes").split("/"):
       source_ids.append(f"{prefix}{suffix}")
   return source_ids
-
 
 def _warhead_rows(text: str) -> dict[str, dict[str, Any]]:
   rows: dict[str, dict[str, Any]] = {}
@@ -237,7 +230,6 @@ def _warhead_rows(text: str) -> dict[str, dict[str, Any]]:
     }
   return rows
 
-
 PIN_COLUMNS = [
   "artifact_id",
   "source_id",
@@ -253,7 +245,6 @@ PIN_COLUMNS = [
   "residuals",
 ]
 
-
 def _pin_rows(text: str, residual_id: str) -> dict[str, dict[str, str]]:
   rows: dict[str, dict[str, str]] = {}
   for line in text.splitlines():
@@ -266,7 +257,6 @@ def _pin_rows(text: str, residual_id: str) -> dict[str, dict[str, str]]:
       continue
     rows[cells[0]] = dict(zip(PIN_COLUMNS, cells[: len(PIN_COLUMNS)]))
   return rows
-
 
 def _residual_register_status(text: str, residual_id: str) -> dict[str, str]:
   for line in text.splitlines():
@@ -293,16 +283,13 @@ def _residual_register_status(text: str, residual_id: str) -> dict[str, str]:
     "register_status": "missing",
   }
 
-
 def _check(check_id: str, summary: str, passed: bool) -> dict[str, Any]:
   return {"check_id": check_id, "summary": summary, "pass": bool(passed)}
-
 
 def _all_authority_values_false(guards: dict[str, Any] | None) -> bool:
   if not guards:
     return False
   return not any(value is True for value in guards.values())
-
 
 def _authority_guards() -> dict[str, bool]:
   return {
@@ -333,7 +320,6 @@ def _authority_guards() -> dict[str, bool]:
     "hard_gate_pass_is_release": False,
     "replacement_allowed": False,
   }
-
 
 def _warhead_scope_review(warhead_text: str) -> dict[str, Any]:
   rows = _warhead_rows(warhead_text)
@@ -429,7 +415,6 @@ def _warhead_scope_review(warhead_text: str) -> dict[str, Any]:
     "checks": checks,
   }
 
-
 def _source_pin_review(*, pin_text: str, source_text: str) -> dict[str, Any]:
   pins = _pin_rows(pin_text, "RES-004")
   expected_pins_present = [pin for pin in EXPECTED_RES004_PIN_IDS if pin in pins]
@@ -503,7 +488,6 @@ def _source_pin_review(*, pin_text: str, source_text: str) -> dict[str, Any]:
     "checks": checks,
   }
 
-
 def _provenance_review(payload: dict[str, Any] | None) -> dict[str, Any]:
   payload = payload or {}
   res004 = payload.get("residual_status", {}).get("RES-004", {})
@@ -549,7 +533,6 @@ def _provenance_review(payload: dict[str, Any] | None) -> dict[str, Any]:
     "checks": checks,
   }
 
-
 def _mechanism_source_interlock(payload: dict[str, Any] | None) -> dict[str, Any]:
   payload = payload or {}
   results = payload.get("current_gate_results", {})
@@ -592,7 +575,6 @@ def _mechanism_source_interlock(payload: dict[str, Any] | None) -> dict[str, Any
     "closed_author_side_subitems": subitems,
     "checks": checks,
   }
-
 
 def _minimum_gap_list(
   *,
@@ -646,7 +628,6 @@ def _minimum_gap_list(
     for row in failed_checks
   )
   return gaps
-
 
 def generate_res004_warhead_scope_closeout_gate(
   *,
@@ -801,7 +782,6 @@ def generate_res004_warhead_scope_closeout_gate(
     ],
   }
 
-
 def _manifest_payload(
   *, artifact: dict[str, Any], output_dir: Path, repo_root: Path
 ) -> dict[str, Any]:
@@ -823,7 +803,6 @@ def _manifest_payload(
     "authority_guards": artifact["authority_guards"],
     "worker_identity": artifact["worker_identity"],
   }
-
 
 def _render_doc(
   *,
@@ -912,7 +891,6 @@ def _render_doc(
 {gap_rows}
 """
 
-
 def write_retained_outputs(
   *,
   artifact: dict[str, Any],
@@ -956,7 +934,6 @@ def write_retained_outputs(
     "closeout_decision": artifact["closeout_decision"],
   }
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Generate the RES-004 warhead scope narrow closeout gate."
@@ -973,7 +950,6 @@ def main(argv: list[str] | None = None) -> int:
   )
   print(_canonical_json(summary))
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

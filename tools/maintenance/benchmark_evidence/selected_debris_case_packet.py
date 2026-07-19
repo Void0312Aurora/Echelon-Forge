@@ -16,13 +16,18 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
-
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
 SCHEMA_VERSION = "a2.res005_tp21_selected_case_candidate_packet.v1"
@@ -57,36 +62,18 @@ SELECTED_CASE_ADMISSION_REVIEW_GATE_PATH = (
 PACKET_FILENAME = "res005_tp21_selected_case_candidate_packet.json"
 RETAINED_MANIFEST_FILENAME = "manifest.json"
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: resolve ok but fallback path.as_posix() != str(path).
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()
   except ValueError:
     return path.as_posix()
 
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
 def _load_json(path: Path) -> dict[str, Any]:
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -94,7 +81,6 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
   )
-
 
 def _artifact_ref(
   *,
@@ -115,7 +101,6 @@ def _artifact_ref(
     ref["status"] = payload.get("status", "")
   return ref
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "benchmark_consumption_authority_granted": False,
@@ -130,7 +115,6 @@ def _authority_guards() -> dict[str, bool]:
     "stock_descriptor_created": False,
   }
 
-
 def _tp21_source_artifact(source_manifest: dict[str, Any]) -> dict[str, Any]:
   for row in source_manifest.get("artifacts", []):
     if row.get("source_id") == "VPS-BFM-015":
@@ -139,7 +123,6 @@ def _tp21_source_artifact(source_manifest: dict[str, Any]) -> dict[str, Any]:
       return row
   return {}
 
-
 def _tp21_rights_row(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
   for row in source_rights_policy.get("payload_rights_inventory", []):
     if row.get("source_id") == "VPS-BFM-015":
@@ -147,7 +130,6 @@ def _tp21_rights_row(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
     if row.get("source_artifact_label") == "TP-21 PDF":
       return row
   return {}
-
 
 def _source_payload_summary(source_manifest: dict[str, Any]) -> dict[str, Any]:
   tp21 = _tp21_source_artifact(source_manifest)
@@ -168,7 +150,6 @@ def _source_payload_summary(source_manifest: dict[str, Any]) -> dict[str, Any]:
     ),
     "benchmark_consumption_status": tp21.get("benchmark_consumption_status", ""),
   }
-
 
 def _rights_summary(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
   allowed_policy = source_rights_policy.get("allowed_output_policy", {})
@@ -202,7 +183,6 @@ def _rights_summary(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
     ),
   }
 
-
 def _admission_evidence_state(
   admission_review_gate: dict[str, Any],
 ) -> dict[str, Any]:
@@ -230,7 +210,6 @@ def _admission_evidence_state(
     "release_grade_validated": bool(decision.get("release_grade_validated")),
   }
 
-
 def _present_missing_item(
   *,
   item_id: str,
@@ -247,7 +226,6 @@ def _present_missing_item(
     "current_status": "present" if present else "missing_fail_closed",
     "missing_reason": "" if present else missing_reason,
   }
-
 
 def _present_vs_missing(
   *,
@@ -312,7 +290,6 @@ def _present_vs_missing(
     ),
   ]
 
-
 def _selection_criteria(anchor_set: dict[str, Any]) -> dict[str, Any]:
   criteria_keys = anchor_set.get("controlled_criteria_keys", [])
   return {
@@ -326,7 +303,6 @@ def _selection_criteria(anchor_set: dict[str, Any]) -> dict[str, Any]:
     "criteria_are_not_raw_tp21_values": True,
     "criteria_are_not_calibration_authority": True,
   }
-
 
 def _candidate_locator_policy(evidence_state: dict[str, Any]) -> dict[str, Any]:
   return {
@@ -349,7 +325,6 @@ def _candidate_locator_policy(evidence_state: dict[str, Any]) -> dict[str, Any]:
       else "safe reviewer-selected TP-21 case locator label is absent"
     ),
   }
-
 
 def _hash_only_preimage_policy(
   *,
@@ -383,7 +358,6 @@ def _hash_only_preimage_policy(
     "source_numeric_values_retained": False,
     "benchmark_consumed_for_release": False,
   }
-
 
 def _input_refs(
   *,
@@ -436,7 +410,6 @@ def _input_refs(
       payload=admission_review_gate,
     ),
   ]
-
 
 def generate_selected_case_candidate_packet(
   *,
@@ -584,7 +557,6 @@ def generate_selected_case_candidate_packet(
     "packet_sha256": _sha256_text(_canonical_json(packet_core)),
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -639,7 +611,6 @@ def write_retained_artifacts(
   packet["retained_manifest_ref"] = _rel(manifest_path, repo_root)
   packet["retained_manifest_sha256"] = _sha256_file(manifest_path)
   return packet
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -702,7 +673,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, packet)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

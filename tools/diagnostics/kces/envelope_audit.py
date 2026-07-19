@@ -13,6 +13,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+
+from tools.diagnostics.common import finite_float_or_none, write_json_output
 
 SCHEMA_VERSION = "a2.kill_chain_expectation_envelope_audit.v1"
 ENVELOPE_SCHEMA_VERSION = "a2.kill_chain_expectation_envelope.v0"
@@ -34,7 +39,6 @@ EXPECTED_RESPONSE_FLOORS = {
   "outside_effect": "no_component_response",
 }
 
-
 def _nested_get(row: dict[str, Any], *path: str) -> Any:
   value: Any = row
   for part in path:
@@ -43,21 +47,11 @@ def _nested_get(row: dict[str, Any], *path: str) -> Any:
     value = value.get(part)
   return value
 
-
-def _finite_float(value: Any) -> float | None:
-  try:
-    out = float(value)
-  except Exception:
-    return None
-  return out if math.isfinite(out) else None
-
-
 def _int_or_zero(value: Any) -> int:
   try:
     return int(value)
   except Exception:
     return 0
-
 
 def _bool_or_none(value: Any) -> bool | None:
   if value is None:
@@ -72,10 +66,8 @@ def _bool_or_none(value: Any) -> bool | None:
       return False
   return bool(value)
 
-
 def _band_rank(value: str) -> int:
   return RESPONSE_ORDER.get(str(value), -1)
-
 
 def _read_report(path: Path) -> dict[str, Any]:
   with path.open("r", encoding="utf-8") as handle:
@@ -84,13 +76,8 @@ def _read_report(path: Path) -> dict[str, Any]:
     raise TypeError(f"expected object JSON at {path}")
   return data
 
-
 def _write_json(path: Path, data: dict[str, Any]) -> None:
-  path.parent.mkdir(parents=True, exist_ok=True)
-  with path.open("w", encoding="utf-8") as handle:
-    json.dump(data, handle, indent=2, sort_keys=True, ensure_ascii=True)
-    handle.write("\n")
-
+  write_json_output(path, data, sort_keys=True, skip_empty_path=False)
 
 def _selected_rows(
   report: dict[str, Any],
@@ -112,15 +99,14 @@ def _selected_rows(
       rows.append(raw)
   return rows
 
-
 def quantize_component_response(row: dict[str, Any]) -> dict[str, Any]:
   n_rows = _int_or_zero(
     _nested_get(row, "component_response", "component_response_row_count")
   )
-  p_max = _finite_float(
+  p_max = finite_float_or_none(
     _nested_get(row, "component_response", "max_failure_probability")
   )
-  min_delta = _finite_float(
+  min_delta = finite_float_or_none(
     _nested_get(row, "component_response", "min_integrity_delta")
   )
   delta_abs = max(0.0, -(min_delta or 0.0))
@@ -155,7 +141,6 @@ def quantize_component_response(row: dict[str, Any]) -> dict[str, Any]:
     "n_rows": n_rows,
   }
 
-
 def _component_response_expectation_status(
   *,
   effect_band: str,
@@ -184,10 +169,8 @@ def _component_response_expectation_status(
     return "below_outer_effective_floor"
   return "below_expected_floor"
 
-
 def _missing_guidance_metadata(row: dict[str, Any]) -> bool:
   return _nested_get(row, "guidance_approach", "R_fuze_m") is None
-
 
 def _missing_effect_metadata(row: dict[str, Any]) -> bool:
   variant = str(_nested_get(row, "warhead_load_field", "R_effect_variant") or "")
@@ -199,7 +182,6 @@ def _missing_effect_metadata(row: dict[str, Any]) -> bool:
   if _nested_get(row, "warhead_load_field", "R_effect_m") is None:
     return True
   return False
-
 
 def audit_row(row: dict[str, Any]) -> dict[str, Any]:
   launch_class = str(_nested_get(row, "launch_window", "launch_class") or "")
@@ -262,8 +244,8 @@ def audit_row(row: dict[str, Any]) -> dict[str, Any]:
     "target_motion_layer": str(
       _nested_get(row, "launch_window", "target_motion_layer") or ""
     ),
-    "range_km": _finite_float(_nested_get(row, "launch_window", "range_km")),
-    "signed_bearing_deg": _finite_float(
+    "range_km": finite_float_or_none(_nested_get(row, "launch_window", "range_km")),
+    "signed_bearing_deg": finite_float_or_none(
       _nested_get(row, "launch_window", "signed_bearing_deg")
     ),
     "launch_class": launch_class,
@@ -277,13 +259,13 @@ def audit_row(row: dict[str, Any]) -> dict[str, Any]:
       _nested_get(row, "guidance_approach", "guidance_expectation_status") or ""
     ),
     "entered_R_fuze": entered_r_fuze,
-    "rho_fuze": _finite_float(_nested_get(row, "guidance_approach", "rho_fuze")),
+    "rho_fuze": finite_float_or_none(_nested_get(row, "guidance_approach", "rho_fuze")),
     "detonated": _bool_or_none(_nested_get(row, "fuze_decision", "detonated")),
-    "R_effect_m": _finite_float(
+    "R_effect_m": finite_float_or_none(
       _nested_get(row, "warhead_load_field", "R_effect_m")
     ),
     "effect_band": effect_band,
-    "rho_effect_case": _finite_float(
+    "rho_effect_case": finite_float_or_none(
       _nested_get(row, "warhead_load_field", "rho_effect_case")
     ),
     "component_response_quantized_band": response_band,
@@ -299,24 +281,22 @@ def audit_row(row: dict[str, Any]) -> dict[str, Any]:
     "n_rows": quantized["n_rows"],
   }
 
-
 def _axis(rows: list[dict[str, Any]]) -> tuple[list[float], list[float]]:
   ranges = sorted(
     {
       value
-      for value in (_finite_float(item.get("range_km")) for item in rows)
+      for value in (finite_float_or_none(item.get("range_km")) for item in rows)
       if value is not None
     }
   )
   bearings = sorted(
     {
       value
-      for value in (_finite_float(item.get("signed_bearing_deg")) for item in rows)
+      for value in (finite_float_or_none(item.get("signed_bearing_deg")) for item in rows)
       if value is not None
     }
   )
   return ranges, bearings
-
 
 def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -354,7 +334,6 @@ def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
     writer.writeheader()
     writer.writerows(rows)
 
-
 def _write_matrix_csv(
   path: Path,
   *,
@@ -377,7 +356,6 @@ def _write_matrix_csv(
         values.append("" if row is None else str(row["envelope_cell_status"]))
       writer.writerow([f"{range_km:g}", *values])
 
-
 def _group_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
   by_launch = Counter(row["launch_class"] for row in rows)
   by_effect = Counter(row["effect_band"] for row in rows)
@@ -391,7 +369,6 @@ def _group_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     "envelope_cell_status_counts": dict(sorted(by_status.items())),
     "envelope_owner_stage_counts": dict(sorted(by_owner.items())),
   }
-
 
 def _summary_markdown(
   *,
@@ -459,7 +436,6 @@ def _summary_markdown(
   )
   return "\n".join(lines) + "\n"
 
-
 def generate_envelope_audit(
   *,
   input_path: Path,
@@ -526,7 +502,6 @@ def generate_envelope_audit(
   )
   return manifest
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Apply the KCES expectation envelope to a before report."
@@ -559,7 +534,6 @@ def main(argv: list[str] | None = None) -> int:
   json.dump(manifest, sys.stdout, indent=2, sort_keys=True, ensure_ascii=True)
   sys.stdout.write("\n")
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

@@ -18,16 +18,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 from tools.maintenance.release_governance import ( # noqa: E402
   provenance_closeout as closeout_gate,
   provenance_identity_review as review_gate,
 )
-
 
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -154,54 +159,32 @@ RELEASE_ALLOWED_OUTPUT_POLICY_STATUSES = {
   "independently_reviewed_release_grade",
 }
 
-
 def _read_text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
 
-
 def _read_text_if_exists(path: Path) -> str:
   return _read_text(path) if path.exists() else ""
-
 
 def _read_json_if_exists(path: Path) -> dict[str, Any] | None:
   if not path.exists():
     return None
   return json.loads(path.read_text(encoding="utf-8"))
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
 
-
 def _strip_cell(cell: str) -> str:
   return cell.strip().strip("`").strip()
 
-
 def _split_markdown_row(line: str) -> list[str]:
   return [_strip_cell(cell) for cell in line.strip().strip("|").split("|")]
-
 
 def _extract_field(text: str, field: str) -> str:
   for line in text.splitlines():
@@ -211,7 +194,6 @@ def _extract_field(text: str, field: str) -> str:
     if len(cells) >= 2 and cells[0] == field:
       return cells[1].strip()
   return ""
-
 
 def _parse_artifact_pin_rows(text: str) -> list[dict[str, str]]:
   rows: list[dict[str, str]] = []
@@ -224,7 +206,6 @@ def _parse_artifact_pin_rows(text: str) -> list[dict[str, str]]:
     rows.append(dict(zip(PIN_TABLE_COLUMNS, cells[: len(PIN_TABLE_COLUMNS)])))
   return rows
 
-
 def _verified_denix_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
   return [
     row
@@ -233,16 +214,13 @@ def _verified_denix_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     and "verified_candidate_artifact" in row["artifact_status"]
   ]
 
-
 def _slug(value: str) -> str:
   return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "artifact"
-
 
 def _payload_label_for_row(row: dict[str, str]) -> str:
   if row["artifact_id"] == "PIN-BFM-002":
     return "TP-21 PDF"
   return row["source_ref"]
-
 
 def _normal_payload_label(label: str) -> str:
   normalized = label.strip()
@@ -253,7 +231,6 @@ def _normal_payload_label(label: str) -> str:
   if "TP-21" in normalized or "tp-21" in normalized.lower():
     return "TP-21 PDF"
   return normalized
-
 
 def _source_artifact_requirements(
   verified_rows: list[dict[str, str]],
@@ -307,7 +284,6 @@ def _source_artifact_requirements(
       )
   return requirements
 
-
 def _metadata_for_requirement(requirement: dict[str, str]) -> dict[str, Any]:
   return PAYLOAD_METADATA.get(
     requirement["source_artifact_label"],
@@ -319,7 +295,6 @@ def _metadata_for_requirement(requirement: dict[str, str]) -> dict[str, Any]:
     },
   )
 
-
 def _target_payload_path(
   *,
   requirement: dict[str, str],
@@ -328,16 +303,13 @@ def _target_payload_path(
   metadata = _metadata_for_requirement(requirement)
   return output_dir / "payloads" / str(metadata["canonical_filename"])
 
-
 def _matches_search_hints(filename: str, hints: tuple[str, ...]) -> bool:
   lower = filename.lower()
   return any(hint.lower() in lower for hint in hints)
 
-
 def _matches_expected_suffix(path: Path, metadata: dict[str, Any]) -> bool:
   expected_suffix = Path(str(metadata["canonical_filename"])).suffix.lower()
   return not expected_suffix or path.suffix.lower() == expected_suffix
-
 
 def _iter_discovery_files(repo_root: Path) -> list[Path]:
   paths: list[Path] = []
@@ -351,7 +323,6 @@ def _iter_discovery_files(repo_root: Path) -> list[Path]:
     for filename in filenames:
       paths.append(current / filename)
   return paths
-
 
 def _discover_payload_candidates(
   *,
@@ -407,7 +378,6 @@ def _discover_payload_candidates(
     ),
   )
 
-
 def _copy_payload_if_available(
   *,
   requirement: dict[str, str],
@@ -434,7 +404,6 @@ def _copy_payload_if_available(
     return
   target_path.parent.mkdir(parents=True, exist_ok=True)
   shutil.copy2(source_path, target_path)
-
 
 def _payload_inventory_row(
   *,
@@ -491,7 +460,6 @@ def _payload_inventory_row(
     "available_candidates": candidates,
   }
 
-
 def _missing_payloads(inventory: list[dict[str, Any]]) -> list[dict[str, Any]]:
   missing: list[dict[str, Any]] = []
   for row in inventory:
@@ -524,7 +492,6 @@ def _missing_payloads(inventory: list[dict[str, Any]]) -> list[dict[str, Any]]:
     )
   return missing
 
-
 def _comparison_hash_hits(texts: list[str]) -> list[dict[str, str]]:
   hits: list[dict[str, str]] = []
   pattern = re.compile(
@@ -540,7 +507,6 @@ def _comparison_hash_hits(texts: list[str]) -> list[dict[str, str]]:
         }
       )
   return hits
-
 
 def _rights_allowed_output_policy_status(
   *,
@@ -621,7 +587,6 @@ def _rights_allowed_output_policy_status(
     ],
   }
 
-
 def _benchmark_consumption_trace(inventory: list[dict[str, Any]]) -> dict[str, Any]:
   explicit_non_consumed_artifact_ids = sorted(
     {
@@ -650,7 +615,6 @@ def _benchmark_consumption_trace(inventory: list[dict[str, Any]]) -> dict[str, A
       "the Stage B release path still records DENIX rows as not consumed."
     ),
   }
-
 
 def _comparison_output_hash_status(
   *,
@@ -736,7 +700,6 @@ def _comparison_output_hash_status(
     "comparison_output_release_grade_satisfied": False,
   }
 
-
 def _review_gate_summary(repo_root: Path) -> dict[str, Any]:
   artifact = review_gate.generate_provenance_identity_review_gate(
     repo_root=repo_root
@@ -758,7 +721,6 @@ def _review_gate_summary(repo_root: Path) -> dict[str, Any]:
     ],
   }
 
-
 def _non_authoritative_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -774,7 +736,6 @@ def _non_authoritative_guards() -> dict[str, bool]:
     "deterministic_fuze_authority": False,
   }
 
-
 def _status_for_inventory(inventory: list[dict[str, Any]]) -> str:
   retained_count = sum(1 for row in inventory if row["retained_for_pack"])
   if retained_count == 0:
@@ -782,7 +743,6 @@ def _status_for_inventory(inventory: list[dict[str, Any]]) -> str:
   if retained_count < len(inventory):
     return "partial_non_authoritative_source_payload_pack"
   return "partial_payloads_retained_release_review_blocked"
-
 
 def generate_source_payload_pack(
   *,
@@ -912,7 +872,6 @@ def generate_source_payload_pack(
     "authority_guards_all_false": not any(guards.values()),
   }
 
-
 def _source_artifact_pack_manifest(
   *,
   artifact: dict[str, Any],
@@ -990,7 +949,6 @@ def _source_artifact_pack_manifest(
   }
   return manifest
 
-
 def write_source_payload_pack(
   *,
   repo_root: Path = REPO_ROOT,
@@ -1064,7 +1022,6 @@ def write_source_payload_pack(
   )
   return artifact
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description=(
@@ -1112,7 +1069,6 @@ def main(argv: list[str] | None = None) -> int:
   else:
     print(text)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

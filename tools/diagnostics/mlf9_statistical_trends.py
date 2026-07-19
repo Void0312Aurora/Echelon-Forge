@@ -5,13 +5,18 @@ import argparse
 import json
 import math
 import os
+import sys
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from statistics import NormalDist
 from typing import Any
 
-from tools.diagnostics import lethality_chain_contract as chain_contract
+_REPO_ROOT_HINT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 
+from tools.diagnostics.common import finite_float
+from tools.diagnostics import lethality_chain_contract as chain_contract
 
 SCHEMA_VERSION = "mlf9.statistical_trends.v1"
 INTERVAL_METHOD = "wilson"
@@ -34,20 +39,10 @@ DENOMINATOR_FIELDS = (
     "platform_consequence_chain_count",
 )
 
-
-def _finite_float(value: Any, default: float = float("nan")) -> float:
-    try:
-        out = float(value)
-    except Exception:
-        return float(default)
-    return out if math.isfinite(out) else float(default)
-
-
 def _truthy(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "y", "on"}
     return bool(value)
-
 
 def _chain_id(row: dict[str, Any]) -> int:
     try:
@@ -55,13 +50,11 @@ def _chain_id(row: dict[str, Any]) -> int:
     except Exception:
         return 0
 
-
 def _episode(row: dict[str, Any]) -> int:
     try:
         return int(row.get("episode", 0) or 0)
     except Exception:
         return 0
-
 
 def normalize_group_by(group_by: str | Sequence[str] | None) -> tuple[str, ...]:
     if group_by is None:
@@ -74,13 +67,11 @@ def normalize_group_by(group_by: str | Sequence[str] | None) -> tuple[str, ...]:
         return DEFAULT_GROUP_BY
     return fields
 
-
 def validate_confidence_level(confidence_level: Any) -> float:
-    level = _finite_float(confidence_level)
+    level = finite_float(confidence_level)
     if not math.isfinite(level) or not (0.0 < level < 1.0):
         raise ValueError("confidence_level must be finite and satisfy 0 < level < 1")
     return level
-
 
 def parse_confidence_level(value: str) -> float:
     try:
@@ -88,11 +79,9 @@ def parse_confidence_level(value: str) -> float:
     except ValueError as exc:
         raise argparse.ArgumentTypeError(str(exc)) from exc
 
-
 def _confidence_z(confidence_level: float) -> float:
     level = validate_confidence_level(confidence_level)
     return NormalDist().inv_cdf((1.0 + level) / 2.0)
-
 
 def _wilson_interval(success_count: int, sample_count: int, z_score: float) -> tuple[float, float]:
     if sample_count <= 0:
@@ -105,9 +94,8 @@ def _wilson_interval(success_count: int, sample_count: int, z_score: float) -> t
     margin = z_score * math.sqrt((phat * (1.0 - phat) + z2 / (4.0 * n)) / n) / denominator
     return (max(0.0, center - margin), min(1.0, center + margin))
 
-
 def _miss_distance_bucket(value: Any) -> str:
-    distance = _finite_float(value)
+    distance = finite_float(value)
     if not math.isfinite(distance):
         return "unknown"
     if distance <= 0.0:
@@ -120,14 +108,12 @@ def _miss_distance_bucket(value: Any) -> str:
         return "mid_15_35m"
     return "far_gt_35m"
 
-
 def _first_nonempty(values: Iterable[Any]) -> str:
     for value in values:
         text = str(value or "")
         if text:
             return text
     return ""
-
 
 def _chain_record(chain_key: tuple[int, int], rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
     episode, chain_id = chain_key
@@ -144,9 +130,9 @@ def _chain_record(chain_key: tuple[int, int], rows: Sequence[dict[str, Any]]) ->
         row for row in rows if str(row.get("stage", "")) == chain_contract.STAGE_STRUCTURAL_BREAKUP
     ]
     miss_distances = [
-        _finite_float(row.get("miss_distance_m", float("nan")))
+        finite_float(row.get("miss_distance_m", float("nan")))
         for row in rows
-        if math.isfinite(_finite_float(row.get("miss_distance_m", float("nan"))))
+        if math.isfinite(finite_float(row.get("miss_distance_m", float("nan"))))
     ]
     miss_distance_m = min(miss_distances) if miss_distances else float("nan")
     fuze_negative = any(
@@ -203,7 +189,6 @@ def _chain_record(chain_key: tuple[int, int], rows: Sequence[dict[str, Any]]) ->
         "terminal_lifecycle": bool(terminal_lifecycle),
     }
 
-
 def chain_records(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     grouped: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
@@ -213,12 +198,10 @@ def chain_records(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
         grouped[(_episode(row), chain_id)].append(dict(row))
     return [_chain_record(chain_key, grouped[chain_key]) for chain_key in sorted(grouped)]
 
-
 def _group_key(record: dict[str, Any], group_by: Sequence[str]) -> tuple[tuple[str, str], ...]:
     if not group_by or tuple(group_by) == DEFAULT_GROUP_BY:
         return (("all", "all"),)
     return tuple((field, str(record.get(field, "") or "unknown")) for field in group_by)
-
 
 def _denominator_filter(name: str, record: dict[str, Any]) -> bool:
     if name == "chain_count":
@@ -234,7 +217,6 @@ def _denominator_filter(name: str, record: dict[str, Any]) -> bool:
     if name == "platform_consequence_chain_count":
         return bool(record.get("platform_consequence", False))
     raise ValueError(f"unknown denominator: {name}")
-
 
 def _rate_record(
     *,
@@ -255,7 +237,6 @@ def _rate_record(
         "ci_low": low,
         "ci_high": high,
     }
-
 
 def summarize_trends(
     rows: Sequence[dict[str, Any]],
@@ -343,7 +324,6 @@ def summarize_trends(
         },
     }
 
-
 def _load_rows(path: str) -> list[dict[str, Any]]:
     with open(path, "r", encoding="utf-8") as f:
         payload = json.load(f)
@@ -352,7 +332,6 @@ def _load_rows(path: str) -> list[dict[str, Any]]:
     if not isinstance(payload, list):
         raise ValueError("input JSON must be a row list or object with lethality_chain_rows")
     return [dict(row) for row in payload if isinstance(row, dict)]
-
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Summarize MLF-9 simulation trend rows.")
@@ -367,7 +346,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sample_source", default="explicit_rows")
     parser.add_argument("--report_surface", default="standalone_diagnostics_artifact")
     return parser
-
 
 def main() -> int:
     args = build_arg_parser().parse_args()
@@ -388,7 +366,6 @@ def main() -> int:
     else:
         print(text)
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

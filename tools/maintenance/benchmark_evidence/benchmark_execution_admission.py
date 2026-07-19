@@ -22,13 +22,18 @@ from typing import Any
 from zipfile import BadZipFile, ZipFile
 import xml.etree.ElementTree as ET
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
-
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
 SCHEMA_VERSION = "a2.res005006_benchmark_execution_admission_gate.v1"
@@ -73,37 +78,19 @@ PYTHON_TOOL_MODULES = {
 
 SPREADSHEET_EXECUTION_TIMEOUT_SECONDS = 90
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving; differs from manifest_integrity._display_path.
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return path.as_posix()
 
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
-
 
 def _command_result_hashes(result: subprocess.CompletedProcess[str]) -> dict[str, Any]:
   return {
@@ -113,7 +100,6 @@ def _command_result_hashes(result: subprocess.CompletedProcess[str]) -> dict[str
     "stdout_retained": False,
     "stderr_retained": False,
   }
-
 
 def _version_for_executable(path: str) -> dict[str, Any]:
   try:
@@ -135,7 +121,6 @@ def _version_for_executable(path: str) -> dict[str, Any]:
     "version_probe_returncode": result.returncode,
     "version_string": output[0] if output else "",
   }
-
 
 def detect_execution_tooling() -> dict[str, Any]:
   office_candidates: list[dict[str, Any]] = []
@@ -207,7 +192,6 @@ def detect_execution_tooling() -> dict[str, Any]:
     "network_fetch_attempted": False,
   }
 
-
 def _selected_hashes_from_workbook(
   *,
   workbook_path: Path,
@@ -262,7 +246,6 @@ def _selected_hashes_from_workbook(
       _canonical_json(selected_output_set)
     ),
   }
-
 
 def _attempt_libo_recalculation(
   *,
@@ -358,7 +341,6 @@ def _attempt_libo_recalculation(
       "executor": executable,
       "blocking_reason": f"headless spreadsheet execution failed: {type(exc).__name__}",
     }
-
 
 def _beco_execution_gate(
   *,
@@ -461,7 +443,6 @@ def _beco_execution_gate(
     "raw_values_retained": False,
   }
 
-
 def _tp21_admission_gate(mechanism_artifact: dict[str, Any]) -> dict[str, Any]:
   tp21 = mechanism_artifact["tp21_criteria_vocabulary"]
   selected = tp21.get("selected_debris_output_hashes", [])
@@ -490,7 +471,6 @@ def _tp21_admission_gate(mechanism_artifact: dict[str, Any]) -> dict[str, Any]:
     ),
   }
 
-
 def _tolerance_policy() -> dict[str, Any]:
   return {
     "policy_status": "fail_closed_exact_hash_policy_only",
@@ -510,7 +490,6 @@ def _tolerance_policy() -> dict[str, Any]:
     ),
   }
 
-
 def _non_authoritative_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -523,7 +502,6 @@ def _non_authoritative_guards() -> dict[str, bool]:
     "pk_authority_granted": False,
     "deterministic_fuze_authority_granted": False,
   }
-
 
 def generate_benchmark_execution_admission_gate(
   *,
@@ -635,7 +613,6 @@ def generate_benchmark_execution_admission_gate(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -676,7 +653,6 @@ def write_retained_artifacts(
   artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
   return artifact
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description=(
@@ -716,7 +692,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

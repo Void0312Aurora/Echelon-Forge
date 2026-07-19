@@ -12,19 +12,19 @@ from statistics import NormalDist
 from types import SimpleNamespace
 from typing import Any
 
-REPO_ROOT = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
+from tools.diagnostics.common import finite_float, mean_finite, write_json_output
 from tools.diagnostics import air_combat_weapon_employment_process_probe as process_probe  # noqa: E402
 from tools.diagnostics import lethality_chain_contract as chain_contract  # noqa: E402
-
 
 DEFAULT_SCENARIO = resolve_repo_path(
     "scenarios",
@@ -47,15 +47,6 @@ DEFAULT_OUTPUT_DIR = resolve_repo_path(
     "fire_timing_window_position_effect",
 )
 
-
-def _finite_float(value: Any, default: float = float("nan")) -> float:
-    try:
-        out = float(value)
-    except Exception:
-        return float(default)
-    return out if math.isfinite(out) else float(default)
-
-
 def _parse_delays(value: str) -> list[int]:
     delays: list[int] = []
     for item in str(value or "").split(","):
@@ -67,26 +58,16 @@ def _parse_delays(value: str) -> list[int]:
             delays.append(delay)
     return delays or [0]
 
-
-def _mean(values: list[float]) -> float:
-    finite = [float(value) for value in values if math.isfinite(float(value))]
-    if not finite:
-        return float("nan")
-    return float(sum(finite) / len(finite))
-
-
 def _finite_values(values: list[Any]) -> list[float]:
     return [
         value
-        for value in (_finite_float(item, float("nan")) for item in values)
+        for value in (finite_float(item, float("nan")) for item in values)
         if math.isfinite(value)
     ]
-
 
 def _confidence_z(confidence_level: float) -> float:
     level = min(0.999, max(0.5, float(confidence_level)))
     return float(NormalDist().inv_cdf(0.5 + level / 2.0))
-
 
 def _sample_std(values: list[float]) -> float:
     finite = _finite_values(values)
@@ -95,7 +76,6 @@ def _sample_std(values: list[float]) -> float:
     mean = sum(finite) / len(finite)
     variance = sum((value - mean) ** 2 for value in finite) / (len(finite) - 1)
     return float(math.sqrt(max(0.0, variance)))
-
 
 def _numeric_confidence_fields(
     prefix: str,
@@ -131,7 +111,6 @@ def _numeric_confidence_fields(
         ),
     }
 
-
 def _wilson_interval(success_count: int, sample_count: int, *, z_score: float) -> tuple[float, float]:
     if sample_count <= 0:
         return (float("nan"), float("nan"))
@@ -146,7 +125,6 @@ def _wilson_interval(success_count: int, sample_count: int, *, z_score: float) -
         / denom
     )
     return (float(max(0.0, center - margin)), float(min(1.0, center + margin)))
-
 
 def _binary_confidence_fields(
     prefix: str,
@@ -183,17 +161,14 @@ def _binary_confidence_fields(
         f"{prefix}_ci_width": float(ci_high - ci_low),
     }
 
-
 def _spread(values: list[float]) -> float:
     finite = [float(value) for value in values if math.isfinite(float(value))]
     if not finite:
         return 0.0
     return float(max(finite) - min(finite))
 
-
 def _count_true(records: list[dict[str, Any]], key: str) -> int:
     return int(sum(1 for record in records if bool(record.get(key, False))))
-
 
 def _bool_value(value: Any) -> bool:
     if isinstance(value, bool):
@@ -206,7 +181,6 @@ def _bool_value(value: Any) -> bool:
     if text in {"0", "false", "no", "n", "off", ""}:
         return False
     return False
-
 
 def _json_string_list(value: Any) -> list[str]:
     if isinstance(value, (list, tuple)):
@@ -222,13 +196,11 @@ def _json_string_list(value: Any) -> list[str]:
         return [str(item) for item in parsed if str(item)]
     return [item.strip() for item in text.split(",") if item.strip()]
 
-
 def _effective_detonation_observed(*, fuze_triggered: bool, stages_json: Any) -> bool:
     if fuze_triggered:
         return True
     stages = set(_json_string_list(stages_json))
     return bool(stages & chain_contract.EFFECTIVE_DETONATION_STAGES)
-
 
 def _effective_system_consequence_observed(
     *,
@@ -245,21 +217,18 @@ def _effective_system_consequence_observed(
         return True
     return math.isfinite(system_delta) and abs(system_delta) > 1.0e-9
 
-
 def _bounded_probability(value: float) -> float:
     if not math.isfinite(value):
         return float("nan")
     return float(min(1.0, max(0.0, value)))
 
-
 def _delta_from_before_after(explicit_delta: Any, before: float, after: float) -> float:
-    delta = _finite_float(explicit_delta, float("nan"))
+    delta = finite_float(explicit_delta, float("nan"))
     if math.isfinite(delta):
         return delta
     if math.isfinite(before) and math.isfinite(after):
         return float(after - before)
     return float("nan")
-
 
 def _component_sample_gate(probability: float, sample: float) -> str:
     bounded = _bounded_probability(probability)
@@ -271,7 +240,6 @@ def _component_sample_gate(probability: float, sample: float) -> str:
         return "sample_passed"
     return "sample_rejected"
 
-
 def _fuze_trigger_distance_ratio(miss_distance_m: float, trigger_radius_m: float) -> float:
     if not math.isfinite(miss_distance_m) or not math.isfinite(trigger_radius_m):
         return float("nan")
@@ -279,13 +247,11 @@ def _fuze_trigger_distance_ratio(miss_distance_m: float, trigger_radius_m: float
         return float("nan")
     return float(miss_distance_m / trigger_radius_m)
 
-
 def _fuze_trigger_quality(miss_distance_m: float, trigger_radius_m: float) -> float:
     ratio = _fuze_trigger_distance_ratio(miss_distance_m, trigger_radius_m)
     if not math.isfinite(ratio):
         return float("nan")
     return _bounded_probability(1.0 - ratio)
-
 
 def _fuze_sample_gate(probability: float, sample: float) -> str:
     bounded = _bounded_probability(probability)
@@ -296,7 +262,6 @@ def _fuze_sample_gate(probability: float, sample: float) -> str:
     if sample <= bounded:
         return "sample_passed"
     return "sample_rejected"
-
 
 def _fuze_gate_summary(
     *,
@@ -334,7 +299,6 @@ def _fuze_gate_summary(
         f"{sample_text}{reason_text}"
     )
 
-
 def _primary_damage_channel(
     *,
     component_damage_system: str,
@@ -348,7 +312,6 @@ def _primary_damage_channel(
     if effective_system_consequence:
         return "platform_consequence"
     return "none"
-
 
 def _capability_attribution(
     *,
@@ -371,7 +334,6 @@ def _capability_attribution(
     if not finite_negative:
         return "none"
     return min(finite_negative, key=lambda item: item[1])[0]
-
 
 def _damage_chain_outcome(
     *,
@@ -422,16 +384,13 @@ def _damage_chain_outcome(
         return "component_damage_below_platform_threshold"
     return "detonation_no_effective_damage"
 
-
 def _damage_chain_blocker(outcome: str) -> str:
     if outcome in {"destroyed", "mobility_kill", "sensor_kill", "mission_kill"}:
         return "kill_observed"
     return outcome
 
-
 def _format_float(value: float) -> str:
     return f"{value:.3f}" if math.isfinite(value) else "n/a"
-
 
 def _attribution_summary(
     *,
@@ -482,7 +441,6 @@ def _attribution_summary(
         capability_text = "no capability threshold pressure"
     return f"{outcome} via {component_label}/{system_label}; {sample_text}; {capability_text}"
 
-
 def _probe_namespace(args: argparse.Namespace, *, delay: int, seed: int) -> SimpleNamespace:
     return SimpleNamespace(
         scenario=str(args.scenario),
@@ -507,7 +465,6 @@ def _probe_namespace(args: argparse.Namespace, *, delay: int, seed: int) -> Simp
         diagnostic_dcr_bridge_self_reward=float(args.diagnostic_dcr_bridge_self_reward),
     )
 
-
 def _record_from_episode_summary(
     *,
     delay: int,
@@ -522,7 +479,7 @@ def _record_from_episode_summary(
     component_damage_count = int(
         episode_summary.get("lethality_chain_component_damage_count", 0) or 0
     )
-    system_health_delta = _finite_float(
+    system_health_delta = finite_float(
         episode_summary.get("lethality_chain_system_health_delta", float("nan"))
     )
     mission_kill = _bool_value(episode_summary.get("lethality_chain_mission_kill", False))
@@ -548,25 +505,25 @@ def _record_from_episode_summary(
         episode_summary.get("lethality_chain_fuze_failure_reason", "") or ""
     )
     fuze_type = str(episode_summary.get("lethality_chain_fuze_type", "") or "")
-    fuze_delay_s = _finite_float(
+    fuze_delay_s = finite_float(
         episode_summary.get("lethality_chain_fuze_delay_s", float("nan"))
     )
-    fuze_reliability = _finite_float(
+    fuze_reliability = finite_float(
         episode_summary.get("lethality_chain_fuze_reliability", float("nan"))
     )
-    fuze_sample = _finite_float(
+    fuze_sample = finite_float(
         episode_summary.get("lethality_chain_fuze_sample", float("nan"))
     )
-    fuze_expected_probability = _finite_float(
+    fuze_expected_probability = finite_float(
         episode_summary.get(
             "lethality_chain_fuze_expected_detonation_probability",
             float("nan"),
         )
     )
-    fuze_trigger_radius_m = _finite_float(
+    fuze_trigger_radius_m = finite_float(
         episode_summary.get("lethality_chain_fuze_trigger_radius_m", float("nan"))
     )
-    miss_distance_m = _finite_float(
+    miss_distance_m = finite_float(
         episode_summary.get("lethality_chain_miss_distance_m", float("nan"))
     )
     fuze_distance_ratio = _fuze_trigger_distance_ratio(
@@ -602,23 +559,23 @@ def _record_from_episode_summary(
     component_damage_system = str(
         episode_summary.get("lethality_chain_component_damage_system", "") or ""
     )
-    component_failure_probability = _finite_float(
+    component_failure_probability = finite_float(
         episode_summary.get(
             "lethality_chain_component_failure_probability",
             float("nan"),
         )
     )
-    component_failure_sample = _finite_float(
+    component_failure_sample = finite_float(
         episode_summary.get("lethality_chain_component_failure_sample", float("nan"))
     )
     component_sample_gate = _component_sample_gate(
         component_failure_probability,
         component_failure_sample,
     )
-    mission_capability_before = _finite_float(
+    mission_capability_before = finite_float(
         episode_summary.get("lethality_chain_mission_capability_before", float("nan"))
     )
-    mission_capability_after = _finite_float(
+    mission_capability_after = finite_float(
         episode_summary.get("lethality_chain_mission_capability_after", float("nan"))
     )
     mission_capability_delta = _delta_from_before_after(
@@ -626,10 +583,10 @@ def _record_from_episode_summary(
         mission_capability_before,
         mission_capability_after,
     )
-    mobility_capability_before = _finite_float(
+    mobility_capability_before = finite_float(
         episode_summary.get("lethality_chain_mobility_capability_before", float("nan"))
     )
-    mobility_capability_after = _finite_float(
+    mobility_capability_after = finite_float(
         episode_summary.get("lethality_chain_mobility_capability_after", float("nan"))
     )
     mobility_capability_delta = _delta_from_before_after(
@@ -637,10 +594,10 @@ def _record_from_episode_summary(
         mobility_capability_before,
         mobility_capability_after,
     )
-    sensor_capability_before = _finite_float(
+    sensor_capability_before = finite_float(
         episode_summary.get("lethality_chain_sensor_capability_before", float("nan"))
     )
-    sensor_capability_after = _finite_float(
+    sensor_capability_after = finite_float(
         episode_summary.get("lethality_chain_sensor_capability_after", float("nan"))
     )
     sensor_capability_delta = _delta_from_before_after(
@@ -648,10 +605,10 @@ def _record_from_episode_summary(
         sensor_capability_before,
         sensor_capability_after,
     )
-    survivability_margin_before = _finite_float(
+    survivability_margin_before = finite_float(
         episode_summary.get("lethality_chain_survivability_margin_before", float("nan"))
     )
-    survivability_margin_after = _finite_float(
+    survivability_margin_after = finite_float(
         episode_summary.get("lethality_chain_survivability_margin_after", float("nan"))
     )
     survivability_margin_delta = _delta_from_before_after(
@@ -712,16 +669,16 @@ def _record_from_episode_summary(
         "released": bool(release_count > 0),
         "release_count": release_count,
         "first_release_step": episode_summary.get("first_release_step"),
-        "first_release_sim_time_s": _finite_float(
+        "first_release_sim_time_s": finite_float(
             episode_summary.get("first_release_sim_time_s", float("nan"))
         ),
-        "first_release_target_range_geom_m": _finite_float(
+        "first_release_target_range_geom_m": finite_float(
             episode_summary.get("first_release_target_range_geom_m", float("nan"))
         ),
-        "first_release_target_range_track_m": _finite_float(
+        "first_release_target_range_track_m": finite_float(
             episode_summary.get("first_release_target_range_track_m", float("nan"))
         ),
-        "first_release_target_track_age_s": _finite_float(
+        "first_release_target_track_age_s": finite_float(
             episode_summary.get("first_release_target_track_age_s", float("nan"))
         ),
         "first_release_legal_window_age_steps": int(
@@ -730,13 +687,13 @@ def _record_from_episode_summary(
         "first_release_engagement_state": str(
             episode_summary.get("first_release_engagement_state", "") or ""
         ),
-        "total_reward": _finite_float(episode_summary.get("total_reward", float("nan"))),
-        "final_target_health": _finite_float(
+        "total_reward": finite_float(episode_summary.get("total_reward", float("nan"))),
+        "final_target_health": finite_float(
             episode_summary.get("final_target_health", float("nan"))
         ),
         "target_health_delta_from_release": (
-            _finite_float(episode_summary.get("final_target_health", float("nan")))
-            - _finite_float(episode_summary.get("first_release_target_health", float("nan")))
+            finite_float(episode_summary.get("final_target_health", float("nan")))
+            - finite_float(episode_summary.get("first_release_target_health", float("nan")))
         ),
         "effects_event_count": effects_event_count,
         "damage_report_count": int(episode_summary.get("damage_report_count", 0) or 0),
@@ -745,16 +702,16 @@ def _record_from_episode_summary(
         "first_damage_consequence_reward_step": episode_summary.get(
             "first_damage_consequence_reward_step"
         ),
-        "damage_consequence_reward_total": _finite_float(
+        "damage_consequence_reward_total": finite_float(
             episode_summary.get("damage_consequence_reward_total", 0.0),
             0.0,
         ),
-        "target_damage_consequence_reward_total": _finite_float(
+        "target_damage_consequence_reward_total": finite_float(
             episode_summary.get("target_damage_consequence_reward_total", 0.0),
             0.0,
         ),
         "lethality_chain_miss_distance_m": miss_distance_m,
-        "lethality_chain_closure_mps": _finite_float(
+        "lethality_chain_closure_mps": finite_float(
             episode_summary.get("lethality_chain_closure_mps", float("nan"))
         ),
         "lethality_chain_aspect_bucket": str(
@@ -806,18 +763,18 @@ def _record_from_episode_summary(
         "lethality_chain_component_failure_mode": str(
             episode_summary.get("lethality_chain_component_failure_mode", "") or ""
         ),
-        "lethality_chain_component_failure_severity": _finite_float(
+        "lethality_chain_component_failure_severity": finite_float(
             episode_summary.get("lethality_chain_component_failure_severity", float("nan"))
         ),
         "lethality_chain_component_failure_probability": component_failure_probability,
         "lethality_chain_component_failure_sample": component_failure_sample,
-        "lethality_chain_component_integrity_before": _finite_float(
+        "lethality_chain_component_integrity_before": finite_float(
             episode_summary.get("lethality_chain_component_integrity_before", float("nan"))
         ),
-        "lethality_chain_component_integrity_after": _finite_float(
+        "lethality_chain_component_integrity_after": finite_float(
             episode_summary.get("lethality_chain_component_integrity_after", float("nan"))
         ),
-        "lethality_chain_system_health_delta": _finite_float(
+        "lethality_chain_system_health_delta": finite_float(
             episode_summary.get("lethality_chain_system_health_delta", float("nan"))
         ),
         "lethality_chain_mission_capability_before": mission_capability_before,
@@ -832,13 +789,13 @@ def _record_from_episode_summary(
         "lethality_chain_survivability_margin_before": survivability_margin_before,
         "lethality_chain_survivability_margin_after": survivability_margin_after,
         "lethality_chain_survivability_margin_delta": survivability_margin_delta,
-        "lethality_chain_control_delta": _finite_float(
+        "lethality_chain_control_delta": finite_float(
             episode_summary.get("lethality_chain_control_delta", float("nan"))
         ),
-        "lethality_chain_engine_delta": _finite_float(
+        "lethality_chain_engine_delta": finite_float(
             episode_summary.get("lethality_chain_engine_delta", float("nan"))
         ),
-        "lethality_chain_fuel_leak_delta": _finite_float(
+        "lethality_chain_fuel_leak_delta": finite_float(
             episode_summary.get("lethality_chain_fuel_leak_delta", float("nan"))
         ),
         "lethality_chain_fire_state": str(
@@ -873,7 +830,6 @@ def _record_from_episode_summary(
         "payload_mode": str(payload.get("mode", "") or ""),
         "payload_seed": payload_seed,
     }
-
 
 def _summarize_delay(
     delay: int,
@@ -1078,21 +1034,21 @@ def _summarize_delay(
         "mission_kill_given_release_rate_ci_width",
     )
     for field in rate_width_fields:
-        if _finite_float(confidence_fields.get(field, float("nan"))) > float(rate_ci_width_epsilon):
+        if finite_float(confidence_fields.get(field, float("nan"))) > float(rate_ci_width_epsilon):
             confidence_flags.append(f"{field}_wide")
-    if _finite_float(confidence_fields.get("component_failure_probability_sem", float("nan"))) > float(
+    if finite_float(confidence_fields.get("component_failure_probability_sem", float("nan"))) > float(
         outcome_sem_epsilon
     ):
         confidence_flags.append("component_failure_probability_sem_high")
-    if _finite_float(confidence_fields.get("system_health_delta_sem", float("nan"))) > float(
+    if finite_float(confidence_fields.get("system_health_delta_sem", float("nan"))) > float(
         outcome_sem_epsilon
     ):
         confidence_flags.append("system_health_delta_sem_high")
-    if _finite_float(confidence_fields.get("mission_capability_delta_sem", float("nan"))) > float(
+    if finite_float(confidence_fields.get("mission_capability_delta_sem", float("nan"))) > float(
         outcome_sem_epsilon
     ):
         confidence_flags.append("mission_capability_delta_sem_high")
-    if _finite_float(confidence_fields.get("release_range_geom_m_sem", float("nan"))) > float(
+    if finite_float(confidence_fields.get("release_range_geom_m_sem", float("nan"))) > float(
         range_sem_epsilon_m
     ):
         confidence_flags.append("release_range_geom_m_sem_high")
@@ -1142,64 +1098,64 @@ def _summarize_delay(
         "destroyed_episode_count": destroyed_count,
         "destroyed_rate": rate(destroyed_count),
         "destroyed_given_release_rate": released_rate("lethality_chain_destroyed"),
-        "mean_first_release_step": _mean(
-            [_finite_float(record.get("first_release_step", float("nan"))) for record in released_records]
+        "mean_first_release_step": mean_finite(
+            [finite_float(record.get("first_release_step", float("nan"))) for record in released_records]
         ),
-        "mean_release_range_geom_m": _mean(
+        "mean_release_range_geom_m": mean_finite(
             [float(record["first_release_target_range_geom_m"]) for record in released_records]
         ),
-        "mean_release_range_track_m": _mean(
+        "mean_release_range_track_m": mean_finite(
             [float(record["first_release_target_range_track_m"]) for record in released_records]
         ),
-        "mean_release_window_age_steps": _mean(
+        "mean_release_window_age_steps": mean_finite(
             [
-                _finite_float(record.get("first_release_legal_window_age_steps", float("nan")))
+                finite_float(record.get("first_release_legal_window_age_steps", float("nan")))
                 for record in released_records
             ]
         ),
-        "mean_total_reward": _mean([float(record["total_reward"]) for record in records]),
-        "mean_final_target_health": _mean(
+        "mean_total_reward": mean_finite([float(record["total_reward"]) for record in records]),
+        "mean_final_target_health": mean_finite(
             [float(record["final_target_health"]) for record in records]
         ),
-        "mean_target_health_delta_from_release": _mean(
+        "mean_target_health_delta_from_release": mean_finite(
             [float(record["target_health_delta_from_release"]) for record in released_records]
         ),
-        "mean_damage_consequence_reward_total": _mean(
+        "mean_damage_consequence_reward_total": mean_finite(
             [float(record["damage_consequence_reward_total"]) for record in records]
         ),
-        "mean_target_damage_consequence_reward_total": _mean(
+        "mean_target_damage_consequence_reward_total": mean_finite(
             [float(record["target_damage_consequence_reward_total"]) for record in records]
         ),
-        "mean_miss_distance_m": _mean(
+        "mean_miss_distance_m": mean_finite(
             [float(record["lethality_chain_miss_distance_m"]) for record in records]
         ),
-        "mean_fuze_trigger_radius_m": _mean(
+        "mean_fuze_trigger_radius_m": mean_finite(
             [
-                _finite_float(record.get("lethality_chain_fuze_trigger_radius_m", float("nan")))
+                finite_float(record.get("lethality_chain_fuze_trigger_radius_m", float("nan")))
                 for record in records
             ]
         ),
-        "mean_fuze_distance_ratio": _mean(
+        "mean_fuze_distance_ratio": mean_finite(
             [
-                _finite_float(record.get("lethality_chain_fuze_distance_ratio", float("nan")))
+                finite_float(record.get("lethality_chain_fuze_distance_ratio", float("nan")))
                 for record in records
             ]
         ),
-        "mean_fuze_trigger_quality": _mean(
+        "mean_fuze_trigger_quality": mean_finite(
             [
-                _finite_float(record.get("lethality_chain_fuze_trigger_quality", float("nan")))
+                finite_float(record.get("lethality_chain_fuze_trigger_quality", float("nan")))
                 for record in records
             ]
         ),
-        "mean_fuze_sample": _mean(
+        "mean_fuze_sample": mean_finite(
             [
-                _finite_float(record.get("lethality_chain_fuze_sample", float("nan")))
+                finite_float(record.get("lethality_chain_fuze_sample", float("nan")))
                 for record in records
             ]
         ),
-        "mean_fuze_expected_detonation_probability": _mean(
+        "mean_fuze_expected_detonation_probability": mean_finite(
             [
-                _finite_float(
+                finite_float(
                     record.get(
                         "lethality_chain_fuze_expected_detonation_probability",
                         float("nan"),
@@ -1208,77 +1164,77 @@ def _summarize_delay(
                 for record in records
             ]
         ),
-        "mean_lethality_chain_row_count": _mean(
-            [_finite_float(record.get("lethality_chain_row_count", float("nan"))) for record in records]
+        "mean_lethality_chain_row_count": mean_finite(
+            [finite_float(record.get("lethality_chain_row_count", float("nan"))) for record in records]
         ),
-        "mean_closure_mps": _mean(
+        "mean_closure_mps": mean_finite(
             [float(record["lethality_chain_closure_mps"]) for record in records]
         ),
-        "mean_component_failure_probability": _mean(
+        "mean_component_failure_probability": mean_finite(
             [
                 float(record["lethality_chain_component_failure_probability"])
                 for record in records
             ]
         ),
-        "mean_component_failure_sample": _mean(
+        "mean_component_failure_sample": mean_finite(
             [float(record["lethality_chain_component_failure_sample"]) for record in records]
         ),
-        "mean_component_damage_count": _mean(
-            [_finite_float(record.get("lethality_chain_component_damage_count", float("nan"))) for record in records]
+        "mean_component_damage_count": mean_finite(
+            [finite_float(record.get("lethality_chain_component_damage_count", float("nan"))) for record in records]
         ),
-        "mean_component_integrity_delta": _mean(
+        "mean_component_integrity_delta": mean_finite(
             [
                 float(record["lethality_chain_component_integrity_after"])
                 - float(record["lethality_chain_component_integrity_before"])
                 for record in records
             ]
         ),
-        "mean_system_health_delta": _mean(
+        "mean_system_health_delta": mean_finite(
             [float(record["lethality_chain_system_health_delta"]) for record in records]
         ),
-        "mean_mission_capability_before": _mean(
+        "mean_mission_capability_before": mean_finite(
             [float(record["lethality_chain_mission_capability_before"]) for record in records]
         ),
-        "mean_mission_capability_after": _mean(
+        "mean_mission_capability_after": mean_finite(
             [float(record["lethality_chain_mission_capability_after"]) for record in records]
         ),
-        "mean_mission_capability_delta": _mean(
+        "mean_mission_capability_delta": mean_finite(
             [float(record["lethality_chain_mission_capability_delta"]) for record in records]
         ),
-        "mean_mobility_capability_before": _mean(
+        "mean_mobility_capability_before": mean_finite(
             [float(record["lethality_chain_mobility_capability_before"]) for record in records]
         ),
-        "mean_mobility_capability_after": _mean(
+        "mean_mobility_capability_after": mean_finite(
             [float(record["lethality_chain_mobility_capability_after"]) for record in records]
         ),
-        "mean_mobility_capability_delta": _mean(
+        "mean_mobility_capability_delta": mean_finite(
             [float(record["lethality_chain_mobility_capability_delta"]) for record in records]
         ),
-        "mean_sensor_capability_before": _mean(
+        "mean_sensor_capability_before": mean_finite(
             [float(record["lethality_chain_sensor_capability_before"]) for record in records]
         ),
-        "mean_sensor_capability_after": _mean(
+        "mean_sensor_capability_after": mean_finite(
             [float(record["lethality_chain_sensor_capability_after"]) for record in records]
         ),
-        "mean_sensor_capability_delta": _mean(
+        "mean_sensor_capability_delta": mean_finite(
             [float(record["lethality_chain_sensor_capability_delta"]) for record in records]
         ),
-        "mean_survivability_margin_before": _mean(
+        "mean_survivability_margin_before": mean_finite(
             [float(record["lethality_chain_survivability_margin_before"]) for record in records]
         ),
-        "mean_survivability_margin_after": _mean(
+        "mean_survivability_margin_after": mean_finite(
             [float(record["lethality_chain_survivability_margin_after"]) for record in records]
         ),
-        "mean_survivability_margin_delta": _mean(
+        "mean_survivability_margin_delta": mean_finite(
             [float(record["lethality_chain_survivability_margin_delta"]) for record in records]
         ),
-        "mean_control_delta": _mean(
+        "mean_control_delta": mean_finite(
             [float(record["lethality_chain_control_delta"]) for record in records]
         ),
-        "mean_engine_delta": _mean(
+        "mean_engine_delta": mean_finite(
             [float(record["lethality_chain_engine_delta"]) for record in records]
         ),
-        "mean_fuel_leak_delta": _mean(
+        "mean_fuel_leak_delta": mean_finite(
             [float(record["lethality_chain_fuel_leak_delta"]) for record in records]
         ),
         "loss_state_counts": dict(
@@ -1409,7 +1365,6 @@ def _summarize_delay(
     summary.update(confidence_fields)
     return summary
 
-
 def _sweep_verdict(
     delay_summaries: list[dict[str, Any]],
     *,
@@ -1426,62 +1381,62 @@ def _sweep_verdict(
         if int(row.get("release_episode_count", 0) or 0) > 0
     ]
     release_range_spread_m = _spread(
-        [_finite_float(row.get("mean_release_range_geom_m", float("nan"))) for row in released]
+        [finite_float(row.get("mean_release_range_geom_m", float("nan"))) for row in released]
     )
     reward_spread = _spread(
-        [_finite_float(row.get("mean_total_reward", float("nan"))) for row in released]
+        [finite_float(row.get("mean_total_reward", float("nan"))) for row in released]
     )
     final_health_spread = _spread(
-        [_finite_float(row.get("mean_final_target_health", float("nan"))) for row in released]
+        [finite_float(row.get("mean_final_target_health", float("nan"))) for row in released]
     )
     component_probability_spread = _spread(
         [
-            _finite_float(row.get("mean_component_failure_probability", float("nan")))
+            finite_float(row.get("mean_component_failure_probability", float("nan")))
             for row in released
         ]
     )
     system_health_delta_spread = _spread(
-        [_finite_float(row.get("mean_system_health_delta", float("nan"))) for row in released]
+        [finite_float(row.get("mean_system_health_delta", float("nan"))) for row in released]
     )
     miss_distance_spread_m = _spread(
-        [_finite_float(row.get("mean_miss_distance_m", float("nan"))) for row in released]
+        [finite_float(row.get("mean_miss_distance_m", float("nan"))) for row in released]
     )
     damage_reward_spread = _spread(
         [
-            _finite_float(row.get("mean_damage_consequence_reward_total", float("nan")))
+            finite_float(row.get("mean_damage_consequence_reward_total", float("nan")))
             for row in released
         ]
     )
     mission_kill_rate_spread = _spread(
-        [_finite_float(row.get("mission_kill_rate", float("nan"))) for row in released]
+        [finite_float(row.get("mission_kill_rate", float("nan"))) for row in released]
     )
     mission_kill_given_release_rate_spread = _spread(
         [
-            _finite_float(row.get("mission_kill_given_release_rate", float("nan")))
+            finite_float(row.get("mission_kill_given_release_rate", float("nan")))
             for row in released
         ]
     )
     effects_rate_spread = _spread(
-        [_finite_float(row.get("effects_rate", float("nan"))) for row in released]
+        [finite_float(row.get("effects_rate", float("nan"))) for row in released]
     )
     damage_rate_spread = _spread(
-        [_finite_float(row.get("damage_rate", float("nan"))) for row in released]
+        [finite_float(row.get("damage_rate", float("nan"))) for row in released]
     )
     effective_detonation_rate_spread = _spread(
         [
-            _finite_float(row.get("effective_detonation_rate", float("nan")))
+            finite_float(row.get("effective_detonation_rate", float("nan")))
             for row in released
         ]
     )
     effective_component_damage_rate_spread = _spread(
         [
-            _finite_float(row.get("effective_component_damage_rate", float("nan")))
+            finite_float(row.get("effective_component_damage_rate", float("nan")))
             for row in released
         ]
     )
     effective_system_consequence_rate_spread = _spread(
         [
-            _finite_float(row.get("effective_system_consequence_rate", float("nan")))
+            finite_float(row.get("effective_system_consequence_rate", float("nan")))
             for row in released
         ]
     )
@@ -1544,12 +1499,10 @@ def _sweep_verdict(
         ),
     }
 
-
 def _max_finite(rows: list[dict[str, Any]], key: str) -> float:
-    values = [_finite_float(row.get(key, float("nan"))) for row in rows]
+    values = [finite_float(row.get(key, float("nan"))) for row in rows]
     finite = [value for value in values if math.isfinite(value)]
     return float(max(finite)) if finite else float("nan")
-
 
 def _confidence_summary(
     delay_summaries: list[dict[str, Any]],
@@ -1575,16 +1528,16 @@ def _confidence_summary(
     mission_uncertain = [
         int(row.get("delay_steps", 0) or 0)
         for row in released_rows
-        if _finite_float(row.get("mission_kill_given_release_rate_ci_width", float("nan")))
+        if finite_float(row.get("mission_kill_given_release_rate_ci_width", float("nan")))
         > float(rate_ci_width_epsilon)
     ]
     consequence_uncertain = [
         int(row.get("delay_steps", 0) or 0)
         for row in released_rows
         if (
-            _finite_float(row.get("system_health_delta_sem", float("nan")))
+            finite_float(row.get("system_health_delta_sem", float("nan")))
             > float(outcome_sem_epsilon)
-            or _finite_float(row.get("mission_capability_delta_sem", float("nan")))
+            or finite_float(row.get("mission_capability_delta_sem", float("nan")))
             > float(outcome_sem_epsilon)
         )
     ]
@@ -1625,7 +1578,6 @@ def _confidence_summary(
             else "No delay crossed the configured seed-variance warning thresholds."
         ),
     }
-
 
 def run_sweep(args: argparse.Namespace) -> dict[str, Any]:
     delays = _parse_delays(str(args.delays))
@@ -1763,14 +1715,14 @@ def run_sweep(args: argparse.Namespace) -> dict[str, Any]:
         "cases": delay_payloads if bool(args.include_cases) else [],
     }
 
-
 def write_json(path: str, payload: dict[str, Any]) -> None:
-    out_path = os.path.abspath(path)
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(_json_safe(payload), f, indent=2, ensure_ascii=True, allow_nan=False)
-        f.write("\n")
-
+    write_json_output(
+        path,
+        payload,
+        allow_nan=False,
+        skip_empty_path=False,
+        transform=_json_safe,
+    )
 
 def _json_safe(value: Any) -> Any:
     if isinstance(value, float):
@@ -1780,7 +1732,6 @@ def _json_safe(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [_json_safe(item) for item in value]
     return value
-
 
 def write_csv(path: str, rows: list[dict[str, Any]]) -> None:
     if not rows:
@@ -1797,7 +1748,6 @@ def write_csv(path: str, rows: list[dict[str, Any]]) -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-
 def render_plot(path: str, payload: dict[str, Any]) -> None:
     try:
         import matplotlib.pyplot as plt
@@ -1807,14 +1757,14 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
     x = list(range(len(summaries)))
     x_labels = [str(int(row["delay_steps"])) for row in summaries]
     release_range_km = [
-        _finite_float(row.get("mean_release_range_geom_m", float("nan"))) / 1000.0
+        finite_float(row.get("mean_release_range_geom_m", float("nan"))) / 1000.0
         for row in summaries
     ]
     release_range_sem_km = [
-        _finite_float(row.get("release_range_geom_m_sem", float("nan"))) / 1000.0
+        finite_float(row.get("release_range_geom_m_sem", float("nan"))) / 1000.0
         for row in summaries
     ]
-    rewards = [_finite_float(row.get("mean_total_reward", float("nan"))) for row in summaries]
+    rewards = [finite_float(row.get("mean_total_reward", float("nan"))) for row in summaries]
     reward_baseline = next((value for value in rewards if math.isfinite(value)), float("nan"))
     reward_delta = [
         value - reward_baseline if math.isfinite(value) and math.isfinite(reward_baseline) else float("nan")
@@ -1825,10 +1775,10 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         for value in reward_delta
     ]
     miss_distance = [
-        _finite_float(row.get("mean_miss_distance_m", float("nan"))) for row in summaries
+        finite_float(row.get("mean_miss_distance_m", float("nan"))) for row in summaries
     ]
     hit_quality = [
-        _finite_float(row.get("mean_fuze_trigger_quality", float("nan")))
+        finite_float(row.get("mean_fuze_trigger_quality", float("nan")))
         for row in summaries
     ]
     for index, value in enumerate(hit_quality):
@@ -1841,53 +1791,53 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
             else float("nan")
         )
     system_damage_magnitude = [
-        max(0.0, -_finite_float(row.get("mean_system_health_delta", float("nan"))))
+        max(0.0, -finite_float(row.get("mean_system_health_delta", float("nan"))))
         for row in summaries
     ]
     system_damage_sem = [
-        _finite_float(row.get("system_health_delta_sem", float("nan")))
+        finite_float(row.get("system_health_delta_sem", float("nan")))
         for row in summaries
     ]
     mission_damage_magnitude = [
-        max(0.0, -_finite_float(row.get("mean_mission_capability_delta", float("nan"))))
+        max(0.0, -finite_float(row.get("mean_mission_capability_delta", float("nan"))))
         for row in summaries
     ]
     component_prob = [
-        _finite_float(row.get("mean_component_failure_probability", float("nan")))
+        finite_float(row.get("mean_component_failure_probability", float("nan")))
         for row in summaries
     ]
     component_prob_sem = [
-        _finite_float(row.get("component_failure_probability_sem", float("nan")))
+        finite_float(row.get("component_failure_probability_sem", float("nan")))
         for row in summaries
     ]
     fuze_expected = [
-        _finite_float(row.get("mean_fuze_expected_detonation_probability", float("nan")))
+        finite_float(row.get("mean_fuze_expected_detonation_probability", float("nan")))
         for row in summaries
     ]
     fuze_expected_sem = [
-        _finite_float(row.get("fuze_expected_detonation_probability_sem", float("nan")))
+        finite_float(row.get("fuze_expected_detonation_probability_sem", float("nan")))
         for row in summaries
     ]
     fuze_sample = [
-        _finite_float(row.get("mean_fuze_sample", float("nan"))) for row in summaries
+        finite_float(row.get("mean_fuze_sample", float("nan"))) for row in summaries
     ]
-    release = [_finite_float(row.get("release_rate", float("nan"))) for row in summaries]
+    release = [finite_float(row.get("release_rate", float("nan"))) for row in summaries]
     fuze_sample_pass = [
-        _finite_float(row.get("fuze_sample_pass_given_release_rate", float("nan")))
+        finite_float(row.get("fuze_sample_pass_given_release_rate", float("nan")))
         for row in summaries
     ]
     detonation = [
-        _finite_float(row.get("effective_detonation_given_release_rate", float("nan")))
+        finite_float(row.get("effective_detonation_given_release_rate", float("nan")))
         for row in summaries
     ]
     component_damage = [
-        _finite_float(
+        finite_float(
             row.get("effective_component_damage_given_release_rate", float("nan"))
         )
         for row in summaries
     ]
     mission_kill = [
-        _finite_float(row.get("mission_kill_given_release_rate", float("nan")))
+        finite_float(row.get("mission_kill_given_release_rate", float("nan")))
         for row in summaries
     ]
     fig, axes = plt.subplots(
@@ -1989,7 +1939,7 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
     )
     for row_index, row_values in enumerate(event_matrix):
         for col_index, value in enumerate(row_values):
-            finite_value = _finite_float(value, 0.0)
+            finite_value = finite_float(value, 0.0)
             axes[3].text(
                 col_index,
                 row_index,
@@ -2012,7 +1962,6 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     fig.savefig(out_path, dpi=180, bbox_inches="tight")
     plt.close(fig)
-
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Sweep oracle fire delays across launch-window positions.")
@@ -2072,10 +2021,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--plot_out", default="")
     return parser
 
-
 def _default_output_path(output_dir: str, filename: str) -> str:
     return os.path.join(os.path.abspath(output_dir), filename)
-
 
 def main() -> int:
     args = build_arg_parser().parse_args()
@@ -2101,7 +2048,6 @@ def main() -> int:
     write_json(json_out, payload)
     print(json.dumps(_json_safe(payload), indent=2, ensure_ascii=True, allow_nan=False))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

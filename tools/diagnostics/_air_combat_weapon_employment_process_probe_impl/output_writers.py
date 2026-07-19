@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import csv
-import json
 import os
 from typing import Any
 
-import numpy as np
+from tools.diagnostics.common import write_json_output
 
+import numpy as np
 
 def write_csv(path: str, rows: list[dict[str, Any]]) -> None:
     if not rows:
@@ -25,14 +25,8 @@ def write_csv(path: str, rows: list[dict[str, Any]]) -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-
 def write_json(path: str, payload: dict[str, Any]) -> None:
-    out_path = os.path.abspath(path)
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=True)
-        f.write("\n")
-
+    write_json_output(path, payload, skip_empty_path=False)
 
 def plot_rows(rows: list[dict[str, Any]], path: str) -> None:
     try:

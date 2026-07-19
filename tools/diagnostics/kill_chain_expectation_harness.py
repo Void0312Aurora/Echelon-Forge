@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import json
 import math
 import os
@@ -13,16 +12,16 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
-
-from python.runtime_bootstrap import ensure_repo_imports  # noqa: E402
-
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, repo_root  # noqa: E402
 
 ensure_repo_imports()
 
+REPO_ROOT = Path(repo_root())
+
+from tools.diagnostics.common import finite_float, native_stdout_to_stderr
 from tools.diagnostics import kill_chain_decoupling_probe as decoupling_probe  # noqa: E402
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.component_detail_projection import (  # noqa: E402
   COMPONENT_DETAIL_SCHEMA_VERSION,
@@ -31,7 +30,6 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.componen
   component_response_metrics,
   empty_component_detail,
 )
-
 
 SCHEMA_VERSION = "a2.kill_chain_expectation_before_report.v1"
 CASE_GRID_SCHEMA_VERSION = "a2.kill_chain_expectation_case_grid.v1"
@@ -60,19 +58,9 @@ MILD_MANEUVER_ANCHOR_CLASSES: dict[float, dict[float, str]] = {
   10.0: {0.0: "M", 30.0: "O", 60.0: "O"},
 }
 
-
-def _finite_float(value: Any, default: float = float("nan")) -> float:
-  try:
-    out = float(value)
-  except Exception:
-    return float(default)
-  return out if math.isfinite(out) else float(default)
-
-
 def _finite_or_none(value: Any) -> float | None:
-  out = _finite_float(value)
+  out = finite_float(value)
   return out if math.isfinite(out) else None
-
 
 def _safe_ratio(numerator: Any, denominator: Any) -> float | None:
   top = _finite_or_none(numerator)
@@ -81,11 +69,9 @@ def _safe_ratio(numerator: Any, denominator: Any) -> float | None:
     return None
   return float(top) / float(bottom)
 
-
 def _token(value: float) -> str:
   text = f"{float(value):g}"
   return text.replace("-", "m").replace(".", "p")
-
 
 def _signed_bearings(offset_deg: float) -> tuple[float, ...]:
   offset = float(offset_deg)
@@ -93,14 +79,12 @@ def _signed_bearings(offset_deg: float) -> tuple[float, ...]:
     return (0.0,)
   return (-offset, offset)
 
-
 def _motion_short_name(target_motion_layer: str) -> str:
   if target_motion_layer == "nonmaneuvering_constant_velocity":
     return "cv"
   if target_motion_layer == "mild_maneuver":
     return "mild"
   return str(target_motion_layer).replace("_", "-")
-
 
 def _case_id(
   *,
@@ -115,7 +99,6 @@ def _case_id(
     f"{_motion_short_name(target_motion_layer)}_"
     f"{_token(range_km)}km_{sign}{_token(abs(float(signed_bearing_deg)))}deg"
   )
-
 
 def _iter_anchor_cells(
   target_motion_layer: str,
@@ -132,10 +115,8 @@ def _iter_anchor_cells(
       cells.append((float(range_km), float(offset_deg), str(table[range_km][offset_deg])))
   return tuple(cells)
 
-
 def _parse_csv(value: str) -> tuple[str, ...]:
   return tuple(item.strip() for item in str(value).split(",") if item.strip())
-
 
 def generate_case_grid(
   *,
@@ -189,7 +170,6 @@ def generate_case_grid(
           return rows
   return rows
 
-
 def _effect_band(rho_effect: float | None) -> str:
   if rho_effect is None:
     return "unclassified_missing_R_effect"
@@ -203,14 +183,12 @@ def _effect_band(rho_effect: float | None) -> str:
     return "edge"
   return "outside_effect"
 
-
 def _stage_observed(case: dict[str, Any], stage: str) -> dict[str, Any]:
   for row in list(case.get("stage_abstractions", []) or []):
     if str(row.get("abstraction_stage", "") or "") == str(stage):
       value = row.get("observed", {})
       return dict(value) if isinstance(value, dict) else {}
   return {}
-
 
 def _radius_for_variant(
   variant: str,
@@ -231,7 +209,6 @@ def _radius_for_variant(
     return declared_effect_radius_m
   return None
 
-
 def _radius_source_for_variant(variant: str) -> str:
   if variant == "REV-RUNTIME-PROJECTION":
     return "missile_runtime_projection.resolved_projection_radius_m"
@@ -240,7 +217,6 @@ def _radius_source_for_variant(variant: str) -> str:
   if variant == "REV-SMALLER-LOAD":
     return "radius_policy.declared_effect_radius_m"
   return "unknown_variant"
-
 
 def _guidance_expectation_status(
   *,
@@ -267,7 +243,6 @@ def _guidance_expectation_status(
     return "negative_control_satisfied"
   return "unknown_launch_class"
 
-
 def _authority_boundary_status(report: dict[str, Any], runtime_facade: dict[str, Any]) -> str:
   authority = dict(report.get("authority_boundary", {}) or {})
   runtime_retuning = bool(runtime_facade.get("runtime_parameter_retuning")) or bool(
@@ -282,7 +257,6 @@ def _authority_boundary_status(report: dict[str, Any], runtime_facade: dict[str,
     return "authority_violation"
   return "engineering_proxy_guarded"
 
-
 def _scalar_guard_status(case: dict[str, Any]) -> str:
   load_summary = dict(case.get("component_load_factor_summary", {}) or {})
   if int(load_summary.get("rows_with_response_fields_on_load_row", 0) or 0) > 0:
@@ -291,7 +265,6 @@ def _scalar_guard_status(case: dict[str, Any]) -> str:
   if int(scalar_summary.get("scalar_count", 0) or 0) > 0:
     return "diagnostic_current"
   return "missing_scalar_ledger"
-
 
 def _project_heatmap_rows(
   *,
@@ -461,7 +434,6 @@ def _project_heatmap_rows(
     rows.append(row)
   return rows
 
-
 def _summarize(
   *,
   case_grid: list[dict[str, Any]],
@@ -497,7 +469,6 @@ def _summarize(
     "effect_band_counts": dict(sorted(effect_band_counts.items())),
     "authority_boundary_status_counts": dict(sorted(authority_counts.items())),
   }
-
 
 def generate_before_report(
   *,
@@ -600,20 +571,6 @@ def generate_before_report(
     report["raw_probe_report"] = probe_report
   return report
 
-
-@contextlib.contextmanager
-def _native_stdout_to_stderr():
-  sys.stdout.flush()
-  saved_stdout_fd = os.dup(1)
-  try:
-    os.dup2(2, 1)
-    yield
-  finally:
-    sys.stdout.flush()
-    os.dup2(saved_stdout_fd, 1)
-    os.close(saved_stdout_fd)
-
-
 def build_arg_parser() -> argparse.ArgumentParser:
   parser = argparse.ArgumentParser(
     description="Generate KCES case grids and before-report heatmap rows."
@@ -659,11 +616,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
   parser.add_argument("--output", default="", help="Optional JSON output path.")
   return parser
 
-
 def main(argv: list[str] | None = None) -> int:
   args = build_arg_parser().parse_args(argv)
   declared_effect_radius = _finite_or_none(args.declared_effect_radius_m)
-  with _native_stdout_to_stderr():
+  with native_stdout_to_stderr():
     report = generate_before_report(
       grid_tier=str(args.grid),
       target_motion_layers=_parse_csv(args.target_motion_layers),
@@ -687,7 +643,6 @@ def main(argv: list[str] | None = None) -> int:
       handle.write("\n")
   print(text)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

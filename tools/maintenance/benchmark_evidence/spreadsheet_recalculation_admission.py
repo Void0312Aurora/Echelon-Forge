@@ -16,16 +16,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 from tools.maintenance.benchmark_evidence import ( # noqa: E402
   benchmark_execution_admission as res005006_gate,
   comparison_hashes,
 )
-
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
 SCHEMA_VERSION = "a2.res006_beco_recalculation_admission_gate.v1"
@@ -51,43 +56,24 @@ ANCHOR_SET_FILENAME = "beco_recalculated_hash_anchor_set.json"
 RETAINED_MANIFEST_FILENAME = "manifest.json"
 SOURCE_RIGHTS_GATE_FILENAME = "source_rights_output_policy_gate.json"
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving; differs from manifest_integrity._display_path.
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return path.as_posix()
 
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
 
-
 def _load_json(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
     return None
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _authority_guards() -> dict[str, bool]:
   return {
@@ -103,7 +89,6 @@ def _authority_guards() -> dict[str, bool]:
     "benchmark_consumption_authority_granted": False,
     "replacement_anchor_authority_granted": False,
   }
-
 
 def _source_rights_summary(
   *,
@@ -136,7 +121,6 @@ def _source_rights_summary(
     "forbidden_copy_outputs": policy.get("forbidden_copy_outputs", []),
     "forbidden_consume_outputs": policy.get("forbidden_consume_outputs", []),
   }
-
 
 def _cached_anchor_summary(mechanism_artifact: dict[str, Any]) -> dict[str, Any]:
   beco = mechanism_artifact["beco_workbook"]
@@ -179,7 +163,6 @@ def _cached_anchor_summary(mechanism_artifact: dict[str, Any]) -> dict[str, Any]
     ),
     "cached_hashes": cached_hashes,
   }
-
 
 def _candidate_anchor_set(
   *,
@@ -254,7 +237,6 @@ def _candidate_anchor_set(
   payload["payload_sha256"] = _sha256_text(_canonical_json(comparable))
   return payload
 
-
 def _mismatch_lineage(
   *,
   beco_gate: dict[str, Any],
@@ -320,7 +302,6 @@ def _mismatch_lineage(
     "formula_text_retained": False,
   }
 
-
 def _replacement_path(
   *,
   anchor_set: dict[str, Any],
@@ -362,7 +343,6 @@ def _replacement_path(
       "replacement anchors are promoted in a separate retained artifact instead of mutating cached anchors in place",
     ],
   }
-
 
 def _admission_decision(
   *,
@@ -426,7 +406,6 @@ def _admission_decision(
     "closed_residual_ids_by_this_gate": ["RES-006"] if res006_closed else [],
     "remaining_blockers": blockers,
   }
-
 
 def generate_res006_beco_recalculation_admission_gate(
   *,
@@ -532,7 +511,6 @@ def generate_res006_beco_recalculation_admission_gate(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -597,7 +575,6 @@ def write_retained_artifacts(
   artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
   return artifact
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Generate the fail-closed RES-006 BEC-O recalculation admission gate."
@@ -641,7 +618,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

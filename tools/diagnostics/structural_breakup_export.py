@@ -4,10 +4,16 @@ import argparse
 import csv
 import json
 import os
+import sys
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any
 
+_REPO_ROOT_HINT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+
+from tools.diagnostics.common import write_json_output
 
 SCHEMA_VERSION = "mlf6.structural_breakup_export.v1"
 
@@ -41,13 +47,11 @@ ROW_FIELDS = (
     "cause_event_id",
 )
 
-
 def _as_int(value: Any) -> int:
     try:
         return int(value)
     except (TypeError, ValueError):
         return 0
-
 
 def _as_float(value: Any) -> float:
     try:
@@ -55,20 +59,16 @@ def _as_float(value: Any) -> float:
     except (TypeError, ValueError):
         return 0.0
 
-
 def _as_str(value: Any) -> str:
     if value is None:
         return ""
     return str(value)
 
-
 def _entity_id(ref: Any) -> int:
     return _as_int(getattr(ref, "entity_id", 0))
 
-
 def _world_index(ref: Any) -> int:
     return _as_int(getattr(ref, "world_index", 0))
-
 
 def _event_iter(source: Any) -> list[Any]:
     if source is None:
@@ -82,7 +82,6 @@ def _event_iter(source: Any) -> list[Any]:
     if isinstance(source, Iterable):
         return list(source)
     raise TypeError("source must be an event, event sequence, or object with structural_breakup_events")
-
 
 def structural_breakup_event_row(event: Any) -> dict[str, Any]:
     header = getattr(event, "header", None)
@@ -119,13 +118,11 @@ def structural_breakup_event_row(event: Any) -> dict[str, Any]:
         "cause_event_id": _as_int(getattr(event, "cause_event_id", 0)),
     }
 
-
 def structural_breakup_rows(source: Any, *, chain_id: int | None = None) -> list[dict[str, Any]]:
     rows = [structural_breakup_event_row(event) for event in _event_iter(source)]
     if chain_id is not None:
         rows = [row for row in rows if int(row["chain_id"]) == int(chain_id)]
     return sorted(rows, key=lambda row: (int(row["chain_id"]), int(row["event_id"])))
-
 
 def summarize_by_chain(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     grouped: dict[int, list[dict[str, Any]]] = defaultdict(list)
@@ -156,7 +153,6 @@ def summarize_by_chain(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         )
     return summaries
 
-
 def export_structural_breakup_events(
     source: Any,
     *,
@@ -184,7 +180,6 @@ def export_structural_breakup_events(
         },
     }
 
-
 def write_csv(path: str, rows: list[dict[str, Any]]) -> None:
     out_path = os.path.abspath(path)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
@@ -193,14 +188,8 @@ def write_csv(path: str, rows: list[dict[str, Any]]) -> None:
         writer.writeheader()
         writer.writerows({field: row.get(field, "") for field in ROW_FIELDS} for row in rows)
 
-
 def write_json(path: str, payload: dict[str, Any]) -> None:
-    out_path = os.path.abspath(path)
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=True)
-        f.write("\n")
-
+    write_json_output(path, payload, skip_empty_path=False)
 
 def run_export(
     source: Any,
@@ -218,7 +207,6 @@ def run_export(
         payload["json_out"] = os.path.abspath(json_out)
     return payload
 
-
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -232,13 +220,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--json_out", default="")
     return parser
 
-
 def main() -> int:
     args = build_arg_parser().parse_args()
     payload = run_export([], chain_id=args.chain_id, csv_out=args.csv_out, json_out=args.json_out)
     print(json.dumps(payload, indent=2, ensure_ascii=True))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -22,11 +22,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import configure_sim_log_level, resolve_repo_path, ensure_repo_imports, repo_root
 
-from python.runtime_bootstrap import configure_sim_log_level, resolve_repo_path
+ensure_repo_imports()
+REPO_ROOT = Path(repo_root())
 
 from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 

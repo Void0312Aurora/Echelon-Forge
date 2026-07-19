@@ -22,15 +22,20 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.colors import BoundaryNorm, ListedColormap  # noqa: E402
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.diagnostics.common import finite_float_or_none, write_json_output
 SCHEMA_VERSION = "a2.kill_chain_expectation_visualization_manifest.v1"
 DEFAULT_VARIANT = "REV-RUNTIME-PROJECTION"
 DEFAULT_TARGET_MOTION_LAYER = "nonmaneuvering_constant_velocity"
-
 
 @dataclass(frozen=True)
 class MetricSpec:
@@ -44,7 +49,6 @@ class MetricSpec:
   category_values: dict[str, int] | None = None
   category_colors: dict[str, str] | None = None
 
-
 def _nested_get(row: dict[str, Any], *path: str) -> Any:
   value: Any = row
   for part in path:
@@ -53,17 +57,8 @@ def _nested_get(row: dict[str, Any], *path: str) -> Any:
     value = value.get(part)
   return value
 
-
-def _finite_float(value: Any) -> float | None:
-  try:
-    out = float(value)
-  except Exception:
-    return None
-  return out if math.isfinite(out) else None
-
-
 def _compact_float(value: Any) -> str:
-  out = _finite_float(value)
+  out = finite_float_or_none(value)
   if out is None:
     return ""
   if abs(out) >= 100.0:
@@ -73,7 +68,6 @@ def _compact_float(value: Any) -> str:
   if abs(out) >= 1.0:
     return f"{out:.2f}"
   return f"{out:.3f}"
-
 
 def _short_status(value: Any) -> str:
   text = str(value or "")
@@ -87,7 +81,6 @@ def _short_status(value: Any) -> str:
     "not_run": "not-run",
   }.get(text, text[:9])
 
-
 def _short_effect_band(value: Any) -> str:
   text = str(value or "")
   return {
@@ -99,7 +92,6 @@ def _short_effect_band(value: Any) -> str:
     "unclassified_missing_R_effect": "missing",
     "not_evaluated": "n/a",
   }.get(text, text[:9])
-
 
 METRICS: tuple[MetricSpec, ...] = (
   MetricSpec(
@@ -193,7 +185,6 @@ METRICS: tuple[MetricSpec, ...] = (
   ),
 )
 
-
 def _read_report(path: Path) -> dict[str, Any]:
   with path.open("r", encoding="utf-8") as handle:
     data = json.load(handle)
@@ -201,13 +192,8 @@ def _read_report(path: Path) -> dict[str, Any]:
     raise TypeError(f"expected object JSON at {path}")
   return data
 
-
 def _write_json(path: Path, data: dict[str, Any]) -> None:
-  path.parent.mkdir(parents=True, exist_ok=True)
-  with path.open("w", encoding="utf-8") as handle:
-    json.dump(data, handle, indent=2, sort_keys=True, ensure_ascii=True)
-    handle.write("\n")
-
+  write_json_output(path, data, sort_keys=True, skip_empty_path=False)
 
 def _selected_rows(
   report: dict[str, Any],
@@ -229,13 +215,12 @@ def _selected_rows(
       rows.append(raw)
   return rows
 
-
 def _matrix_axes(rows: list[dict[str, Any]]) -> tuple[list[float], list[float]]:
   ranges = sorted(
     {
       float(value)
       for value in (
-        _finite_float(_nested_get(row, "launch_window", "range_km"))
+        finite_float_or_none(_nested_get(row, "launch_window", "range_km"))
         for row in rows
       )
       if value is not None
@@ -245,7 +230,7 @@ def _matrix_axes(rows: list[dict[str, Any]]) -> tuple[list[float], list[float]]:
     {
       float(value)
       for value in (
-        _finite_float(_nested_get(row, "launch_window", "signed_bearing_deg"))
+        finite_float_or_none(_nested_get(row, "launch_window", "signed_bearing_deg"))
         for row in rows
       )
       if value is not None
@@ -254,7 +239,6 @@ def _matrix_axes(rows: list[dict[str, Any]]) -> tuple[list[float], list[float]]:
   if not ranges or not bearings:
     raise ValueError("selected rows do not contain range/bearing axes")
   return ranges, bearings
-
 
 def _make_metric_matrix(
   rows: list[dict[str, Any]],
@@ -265,8 +249,8 @@ def _make_metric_matrix(
 ) -> tuple[np.ndarray, list[list[str]], list[list[str]]]:
   by_cell: dict[tuple[float, float], dict[str, Any]] = {}
   for row in rows:
-    range_km = _finite_float(_nested_get(row, "launch_window", "range_km"))
-    bearing_deg = _finite_float(
+    range_km = finite_float_or_none(_nested_get(row, "launch_window", "range_km"))
+    bearing_deg = finite_float_or_none(
       _nested_get(row, "launch_window", "signed_bearing_deg")
     )
     if range_km is None or bearing_deg is None:
@@ -286,7 +270,7 @@ def _make_metric_matrix(
       raw_text[r_index][b_index] = "" if value is None else str(value)
       annotations[r_index][b_index] = spec.annotation_formatter(value)
       if spec.numeric:
-        numeric = _finite_float(value)
+        numeric = finite_float_or_none(value)
         if numeric is not None:
           matrix[r_index, b_index] = numeric
       else:
@@ -294,7 +278,6 @@ def _make_metric_matrix(
         if str(value) in spec.category_values:
           matrix[r_index, b_index] = float(spec.category_values[str(value)])
   return matrix, annotations, raw_text
-
 
 def _write_matrix_csv(
   path: Path,
@@ -309,7 +292,6 @@ def _write_matrix_csv(
     writer.writerow(["range_km"] + [f"{bearing:g}" for bearing in bearings])
     for range_km, values in zip(ranges, raw_text, strict=True):
       writer.writerow([f"{range_km:g}", *values])
-
 
 def _plot_matrix(
   base_path: Path,
@@ -395,7 +377,6 @@ def _plot_matrix(
   plt.close(fig)
   return {"png": str(png_path), "svg": str(svg_path)}
 
-
 def _summary_lines(
   *,
   input_path: Path,
@@ -424,9 +405,9 @@ def _summary_lines(
   anchor_rows = [
     row
     for row in rows
-    if _finite_float(_nested_get(row, "launch_window", "range_km")) == 8.0
+    if finite_float_or_none(_nested_get(row, "launch_window", "range_km")) == 8.0
     and abs(
-      (_finite_float(_nested_get(row, "launch_window", "signed_bearing_deg")) or 0.0)
+      (finite_float_or_none(_nested_get(row, "launch_window", "signed_bearing_deg")) or 0.0)
     )
     == 30.0
   ]
@@ -479,7 +460,7 @@ def _summary_lines(
     for row in sorted(
       anchor_rows,
       key=lambda item: float(
-        _finite_float(_nested_get(item, "launch_window", "signed_bearing_deg"))
+        finite_float_or_none(_nested_get(item, "launch_window", "signed_bearing_deg"))
         or 0.0
       ),
     ):
@@ -494,7 +475,6 @@ def _summary_lines(
         f"max_failure_probability=`{max_p}`"
       )
   return lines
-
 
 def generate_visualizations(
   *,
@@ -581,7 +561,6 @@ def generate_visualizations(
   _write_json(manifest_path, manifest)
   return manifest
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Render KCES before-report heatmap rows to CSV, PNG, and SVG matrices."
@@ -615,7 +594,6 @@ def main(argv: list[str] | None = None) -> int:
   json.dump(manifest, sys.stdout, indent=2, sort_keys=True, ensure_ascii=True)
   sys.stdout.write("\n")
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

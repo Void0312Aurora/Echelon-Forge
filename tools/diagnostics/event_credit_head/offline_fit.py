@@ -12,13 +12,19 @@ from typing import Any
 import numpy as np
 import torch as th
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
+
+from tools.diagnostics.common import finite_float
+
+# Compatibility re-export for real_update / online_update callers.
+_finite_float = finite_float
 
 from python.rl.policy_algo.first_event_hazard import (
     FIRST_EVENT_SOURCE_ACCEPTED,
@@ -37,7 +43,6 @@ from python.rl.policy_algo.first_event_hazard import (
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from tools.diagnostics.air_combat_weapon_employment_process_probe import _base_action, _base_env, _build_env
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
-
 
 DEFAULT_SCENARIO = resolve_repo_path(
     "scenarios",
@@ -71,19 +76,9 @@ SOURCE_NAMES = {
     FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY: "legal_open_quality",
 }
 
-
 def _hyper(train_config: dict[str, Any]) -> dict[str, Any]:
     value = train_config.get("hyperparameters", {})
     return value if isinstance(value, dict) else {}
-
-
-def _finite_float(value: Any, default: float = 0.0) -> float:
-    try:
-        out = float(value)
-    except Exception:
-        return float(default)
-    return out if math.isfinite(out) else float(default)
-
 
 def _to_serializable(value: Any) -> Any:
     if isinstance(value, np.generic):
@@ -100,7 +95,6 @@ def _to_serializable(value: Any) -> Any:
         return None
     return value
 
-
 def _obs_to_cpu(policy, obs: Any) -> dict[str, th.Tensor]:
     obs_tensor, _vectorized = policy.obs_to_tensor(obs)
     if not isinstance(obs_tensor, dict):
@@ -109,7 +103,6 @@ def _obs_to_cpu(policy, obs: Any) -> dict[str, th.Tensor]:
         str(key): th.as_tensor(value).detach().to(device="cpu")
         for key, value in obs_tensor.items()
     }
-
 
 def _concat_obs(items: list[dict[str, th.Tensor]]) -> dict[str, th.Tensor]:
     if not items:
@@ -120,7 +113,6 @@ def _concat_obs(items: list[dict[str, th.Tensor]]) -> dict[str, th.Tensor]:
         out[key] = th.cat([item[key] for item in items], dim=0)
     return out
 
-
 def _slice_obs(obs: dict[str, th.Tensor], indices: th.Tensor, device: th.device) -> dict[str, th.Tensor]:
     cpu_indices = indices.detach().to(device="cpu", dtype=th.long)
     return {
@@ -128,10 +120,8 @@ def _slice_obs(obs: dict[str, th.Tensor], indices: th.Tensor, device: th.device)
         for key, value in obs.items()
     }
 
-
 def _policy_fire_mask_from_obs(obs_tensor: dict[str, th.Tensor], n_envs: int) -> list[bool] | None:
     return AdaptiveKLPPO._first_event_policy_fire_mask_from_obs(obs_tensor, n_envs)
-
 
 def _policy_launch_window_from_obs(
     obs_tensor: dict[str, th.Tensor],
@@ -142,19 +132,17 @@ def _policy_launch_window_from_obs(
     return AdaptiveKLPPO._first_event_policy_launch_window_from_obs(
         obs_tensor,
         n_envs,
-        min_range_m=_finite_float(hyper.get("first_event_launch_window_min_range_m", 0.0), 0.0),
-        max_range_m=_finite_float(hyper.get("first_event_launch_window_max_range_m", 0.0), 0.0),
-        max_track_age_s=_finite_float(
+        min_range_m=finite_float(hyper.get("first_event_launch_window_min_range_m", 0.0), 0.0),
+        max_range_m=finite_float(hyper.get("first_event_launch_window_max_range_m", 0.0), 0.0),
+        max_track_age_s=finite_float(
             hyper.get("first_event_launch_window_max_track_age_s", float("inf")),
             float("inf"),
         ),
     )
 
-
 def _model_action(model: Any, obs: Any, *, deterministic: bool) -> np.ndarray:
     action, _state = model.predict(obs, deterministic=bool(deterministic))
     return np.asarray(action, dtype=np.float32).reshape(-1)
-
 
 def _hold_action(env) -> np.ndarray:
     base = _base_env(env)
@@ -169,7 +157,6 @@ def _hold_action(env) -> np.ndarray:
         action[columns["master_arm"]] = 1.0
         action[columns["fire_weapon"]] = 0.0
     return action
-
 
 def collect_fixed_batch(
     *,
@@ -254,16 +241,16 @@ def collect_fixed_batch(
         episode_id=episode_id,
         launch_window_open=launch_window_open if bool(hyper.get("first_event_launch_window_enabled", False)) else None,
         launch_window_min_window_age_steps=int(hyper.get("first_event_launch_window_min_window_age_steps", 1)),
-        launch_window_prewindow_hold_weight=_finite_float(hyper.get("event_credit_prewindow_hold_weight", 0.0), 0.0),
-        launch_window_early_accept_weight=_finite_float(hyper.get("event_credit_early_accept_weight", 1.0), 1.0),
-        curriculum_weight=_finite_float(hyper.get("event_credit_curriculum_coef", 0.0), 0.0),
+        launch_window_prewindow_hold_weight=finite_float(hyper.get("event_credit_prewindow_hold_weight", 0.0), 0.0),
+        launch_window_early_accept_weight=finite_float(hyper.get("event_credit_early_accept_weight", 1.0), 1.0),
+        curriculum_weight=finite_float(hyper.get("event_credit_curriculum_coef", 0.0), 0.0),
         curriculum_min_window_age_steps=int(hyper.get("event_credit_curriculum_min_window_age_steps", 32)),
-        censored_survival_weight=_finite_float(hyper.get("event_credit_censored_survival_weight", 0.0), 0.0),
-        deadline_weight=_finite_float(hyper.get("event_credit_deadline_weight", 0.0), 0.0),
+        censored_survival_weight=finite_float(hyper.get("event_credit_censored_survival_weight", 0.0), 0.0),
+        deadline_weight=finite_float(hyper.get("event_credit_deadline_weight", 0.0), 0.0),
         deadline_min_window_age_steps=int(hyper.get("event_credit_deadline_min_window_age_steps", 96)),
-        shadow_quality_after_early_accept=bool(_finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0) > 0.0),
-        shadow_quality_positive_weight=_finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0),
-        legal_open_quality_weight=_finite_float(hyper.get("event_credit_legal_open_quality_weight", 0.0), 0.0),
+        shadow_quality_after_early_accept=bool(finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0) > 0.0),
+        shadow_quality_positive_weight=finite_float(hyper.get("event_credit_shadow_quality_weight", 0.0), 0.0),
+        legal_open_quality_weight=finite_float(hyper.get("event_credit_legal_open_quality_weight", 0.0), 0.0),
         legal_open_quality_min_window_age_steps=int(hyper.get("event_credit_legal_open_quality_min_window_age_steps", 1)),
         device="cpu",
     )
@@ -285,7 +272,6 @@ def collect_fixed_batch(
     }
     return _concat_obs(obs_items), labels, meta
 
-
 def _labels_to_device(labels: FirstEventHazardLabels, device: th.device, indices: th.Tensor | None = None) -> dict[str, th.Tensor]:
     cpu_indices = indices.detach().to(device="cpu", dtype=th.long) if indices is not None else None
 
@@ -306,7 +292,6 @@ def _labels_to_device(labels: FirstEventHazardLabels, device: th.device, indices
         "window_id": take(labels.window_id, th.long),
     }
 
-
 def _advantage_vector(policy, obs: dict[str, th.Tensor], *, batch_size: int) -> th.Tensor:
     device = th.device(policy.device)
     count = int(next(iter(obs.values())).shape[0])
@@ -325,7 +310,6 @@ def _advantage_vector(policy, obs: dict[str, th.Tensor], *, batch_size: int) -> 
                 raise RuntimeError("fire_event_q_values returned None")
             values.append((q_values[:, 1] - q_values[:, 0]).detach().to(device="cpu"))
     return th.cat(values, dim=0).reshape(-1)
-
 
 def _subset_stats(name: str, mask: th.Tensor, target: th.Tensor, weight: th.Tensor, advantage: th.Tensor) -> dict[str, Any]:
     selected = mask.reshape(-1).to(dtype=th.bool)
@@ -353,7 +337,6 @@ def _subset_stats(name: str, mask: th.Tensor, target: th.Tensor, weight: th.Tens
         f"{name}_advantage_negative_frac": float((adv < 0.0).float().mean().item()),
     }
 
-
 def evaluate_credit_head(policy, obs: dict[str, th.Tensor], labels: FirstEventHazardLabels, *, batch_size: int) -> dict[str, Any]:
     advantage = _advantage_vector(policy, obs, batch_size=batch_size)
     target = labels.target.detach().cpu().reshape(-1).float()
@@ -370,7 +353,6 @@ def evaluate_credit_head(policy, obs: dict[str, th.Tensor], labels: FirstEventHa
     stats.update(_subset_stats("legal_open_quality_positive", legal_positive, target, weight, advantage))
     return stats
 
-
 def _trainable_param_names(policy, scope: str) -> list[str]:
     names: list[str] = []
     for name, param in policy.named_parameters():
@@ -384,7 +366,6 @@ def _trainable_param_names(policy, scope: str) -> list[str]:
     if not names:
         raise RuntimeError(f"no trainable parameters selected for scope {scope!r}")
     return names
-
 
 def fit_credit_head(
     policy,
@@ -456,7 +437,6 @@ def fit_credit_head(
         "loss_trace": losses,
     }
 
-
 def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     scenario = os.path.abspath(args.scenario)
     train_config_path = os.path.abspath(args.train_config)
@@ -492,8 +472,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             steps=int(args.fit_steps),
             batch_size=int(args.fit_batch_size),
             learning_rate=float(args.fit_lr),
-            positive_mass_cap=_finite_float(hyper.get("event_credit_positive_mass_cap", 1.0), 1.0),
-            negative_mass_cap=_finite_float(hyper.get("event_credit_negative_mass_cap", 1.0), 1.0),
+            positive_mass_cap=finite_float(hyper.get("event_credit_positive_mass_cap", 1.0), 1.0),
+            negative_mass_cap=finite_float(hyper.get("event_credit_negative_mass_cap", 1.0), 1.0),
             log_every=int(args.log_every),
         )
         after = evaluate_credit_head(fit_model.policy, obs, labels, batch_size=int(args.eval_batch_size))
@@ -520,7 +500,6 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             f.write("\n")
     return payload
 
-
 def evaluate_label_summary(labels: FirstEventHazardLabels) -> dict[str, Any]:
     active = labels.active.detach().cpu().reshape(-1).bool()
     target = labels.target.detach().cpu().reshape(-1).float()
@@ -544,7 +523,6 @@ def evaluate_label_summary(labels: FirstEventHazardLabels) -> dict[str, Any]:
         out[f"source_{source_name}_weight_sum"] = float(weight[mask].sum().item()) if int(mask.sum().item()) > 0 else 0.0
     return out
 
-
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Offline supervised fit probe for the first-event credit head.")
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
@@ -566,13 +544,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--json_out", default="")
     return parser
 
-
 def main() -> int:
     args = build_arg_parser().parse_args()
     payload = run_probe(args)
     print(json.dumps(_to_serializable(payload), indent=2, ensure_ascii=True))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

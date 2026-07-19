@@ -18,12 +18,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
 
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -48,7 +53,6 @@ DEFAULT_RETAINED_DIR = (
   / "retained_artifacts"
   / "res011012_independent_review_closeout_20260531"
 )
-
 
 EVIDENCE_REFS = {
   "stage_b_independent_review_gate": (
@@ -93,35 +97,26 @@ EVIDENCE_REFS = {
   ),
 }
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
 
-
-def _file_sha256(path: Path) -> str:
-  return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def _payload_sha256(payload: dict[str, Any]) -> str:
   return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
-
 
 def _load_json(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
     return None
   return json.loads(path.read_text(encoding="utf-8"))
 
-
 def _retained_path(package_dir: Path, rel: str) -> Path:
   return package_dir / "retained_artifacts" / rel
-
 
 def _authority_guards() -> dict[str, bool]:
   return {
@@ -145,12 +140,10 @@ def _authority_guards() -> dict[str, bool]:
     "replacement_allowed": False,
   }
 
-
 def _guard_has_no_true_values(guards: dict[str, Any] | None) -> bool:
   if not guards:
     return False
   return not any(value is True for value in guards.values())
-
 
 def _evidence_record(
   *,
@@ -167,7 +160,7 @@ def _evidence_record(
     "required_for": required_for,
   }
   if path.is_file():
-    record["content_sha256"] = _file_sha256(path)
+    record["content_sha256"] = _sha256_file(path)
   if payload is None:
     record["status"] = "missing"
   else:
@@ -175,14 +168,12 @@ def _evidence_record(
     record["status"] = payload.get("status", "")
   return record
 
-
 def _check(check_id: str, summary: str, passed: bool) -> dict[str, Any]:
   return {
     "check_id": check_id,
     "summary": summary,
     "pass": bool(passed),
   }
-
 
 def _missing_evidence(consumed_evidence: list[dict[str, Any]]) -> list[dict[str, str]]:
   return [
@@ -194,7 +185,6 @@ def _missing_evidence(consumed_evidence: list[dict[str, Any]]) -> list[dict[str,
     for row in consumed_evidence
     if not row["present"]
   ]
-
 
 def _artifact_map(
   *,
@@ -233,7 +223,6 @@ def _artifact_map(
       )
     )
   return payloads, consumed
-
 
 def _stage_b_closeout(payloads: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
   independent = payloads["stage_b_independent_review_gate"] or {}
@@ -350,7 +339,6 @@ def _stage_b_closeout(payloads: dict[str, dict[str, Any] | None]) -> dict[str, A
     ],
   }
 
-
 def _stage_c_closeout(payloads: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
   fragility_review = payloads["stage_c_fragility_review_gate"] or {}
   fragility_prep = payloads["stage_c_fragility_validation_prep"] or {}
@@ -458,7 +446,6 @@ def _stage_c_closeout(payloads: dict[str, dict[str, Any] | None]) -> dict[str, A
     "checks": checks,
   }
 
-
 def _provenance_interlock(payloads: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
   provenance = payloads["provenance_identity_review_gate"] or {}
   geometry = payloads["geometry_warhead_row_provenance_gate"] or {}
@@ -521,7 +508,6 @@ def _provenance_interlock(payloads: dict[str, dict[str, Any] | None]) -> dict[st
     ],
     "checks": checks,
   }
-
 
 def generate_res011012_independent_review_closeout_gate(
   *,
@@ -628,7 +614,6 @@ def generate_res011012_independent_review_closeout_gate(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   output_dir: Path = DEFAULT_RETAINED_DIR,
@@ -657,7 +642,7 @@ def write_retained_artifacts(
         "relative_path": _display_path(gate_path, repo_root),
         "schema_version": GATE_SCHEMA_VERSION,
         "status": gate["status"],
-        "content_sha256": _file_sha256(gate_path),
+        "content_sha256": _sha256_file(gate_path),
         "payload_sha256": _payload_sha256(gate),
         "size_bytes": gate_path.stat().st_size,
         "origin_class": "project_internal_independent_review_closeout_gate",
@@ -683,7 +668,6 @@ def write_retained_artifacts(
     "manifest": manifest,
     "paths": {"gate": gate_path, "manifest": manifest_path},
   }
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -721,7 +705,6 @@ def main(argv: list[str] | None = None) -> int:
       )
     )
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

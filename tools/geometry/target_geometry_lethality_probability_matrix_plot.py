@@ -11,11 +11,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import resolve_repo_path, ensure_repo_imports, repo_root
 
-from python.runtime_bootstrap import resolve_repo_path
+ensure_repo_imports()
+REPO_ROOT = Path(repo_root())
 
 
 SCHEMA_VERSION = "a2.target_geometry_lethality_probability_matrix.v1"
@@ -53,6 +55,7 @@ MATRIX_COLUMNS = (
 
 
 def _relative_path(path: Path) -> str:
+  # Kept local: str(resolve.relative_to); differs from manifest_integrity._display_path (as_posix/fallback).
   return str(path.resolve().relative_to(REPO_ROOT))
 
 

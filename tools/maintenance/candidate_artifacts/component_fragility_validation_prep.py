@@ -17,10 +17,14 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+REPO_ROOT = Path(repo_root())
 from tools.maintenance.candidate_artifacts import component_probability_result_pack as result_pack # noqa: E402
 from tools.maintenance.candidate_artifacts import component_probability_review_readiness as review_gate # noqa: E402
 from tools.maintenance.candidate_artifacts import component_probability_surface_probe as surface_probe # noqa: E402

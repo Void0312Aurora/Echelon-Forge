@@ -17,15 +17,20 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 from tools.maintenance.external_signoff_evidence import ( # noqa: E402
   intake_contract,
 )
-
 
 PACKAGE_ID = intake_contract.PACKAGE_ID
 SCHEMA_VERSION = "a2.blastfrag_signoff_admission_preflight.v1"
@@ -43,32 +48,15 @@ DEFAULT_RETAINED_DIR = (
 PREFLIGHT_FILENAME = "signoff_admission_preflight_packet.json"
 RETAINED_MANIFEST_FILENAME = "manifest.json"
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: resolve ok but fallback path.as_posix() != str(path).
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()
   except ValueError:
     return path.as_posix()
 
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -76,7 +64,6 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
   )
-
 
 def _load_json_optional(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
@@ -88,7 +75,6 @@ def _load_json_optional(path: Path) -> dict[str, Any] | None:
   if not isinstance(payload, dict):
     return None
   return payload
-
 
 def _input_ref(
   *,
@@ -122,7 +108,6 @@ def _input_ref(
   ref["status"] = payload.get("status", "")
   return ref
 
-
 def _candidate_packet_ref(
   *,
   candidate_signoff_packet_path: Path | None,
@@ -145,14 +130,12 @@ def _candidate_packet_ref(
     ref["status"] = "external_signoff_packet_loaded_for_shape_check_only"
   return ref
 
-
 def _contract_required_signoff_ids(contract_payload: dict[str, Any] | None) -> list[str]:
   shape = (contract_payload or {}).get("intake_contract_shape", {})
   required_ids = shape.get("required_signoff_ids", [])
   if not isinstance(required_ids, list):
     return []
   return [signoff_id for signoff_id in required_ids if isinstance(signoff_id, str)]
-
 
 def _contract_state(
   *,
@@ -253,7 +236,6 @@ def _contract_state(
     "blockers": blockers,
   }
 
-
 def _shape_blockers(shape_result: dict[str, Any]) -> list[dict[str, str]]:
   if not shape_result.get("candidate_packet_supplied"):
     return [
@@ -278,7 +260,6 @@ def _shape_blockers(shape_result: dict[str, Any]) -> list[dict[str, str]]:
     )
   return blockers
 
-
 def _admission_paths(ready_for_admission_gate: bool) -> list[dict[str, Any]]:
   return [
     {
@@ -298,7 +279,6 @@ def _admission_paths(ready_for_admission_gate: bool) -> list[dict[str, Any]]:
       "residual_closed_by_this_preflight": False,
     },
   ]
-
 
 def generate_signoff_admission_preflight(
   *,
@@ -430,7 +410,6 @@ def generate_signoff_admission_preflight(
     ),
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -495,7 +474,6 @@ def write_retained_artifacts(
   artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
   return artifact
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description=(
@@ -535,7 +513,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

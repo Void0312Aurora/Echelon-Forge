@@ -11,16 +11,16 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
-
-from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path, repo_root, configure_sim_log_level
 from tools.geometry import target_geometry_lethality_matrix_probe as matrix_probe
 
 
 ensure_repo_imports()
 
+REPO_ROOT = Path(repo_root())
 import ef_py  # noqa: E402
 
 
@@ -131,15 +131,14 @@ TRACE_CASES: tuple[dict[str, Any], ...] = tuple(
 
 
 def _relative_path(path: Path) -> str:
+  # Kept local: str(resolve.relative_to); differs from manifest_integrity._display_path (as_posix/fallback).
   return str(path.resolve().relative_to(REPO_ROOT))
 
 
 def _configure_runtime_log_level() -> None:
+  # Preserve setdefault('error') semantics; owner applies level to ef_py.
   os.environ.setdefault("CMO_SIM_LOG_LEVEL", "error")
-  try:
-    ef_py.set_log_level(str(os.environ["CMO_SIM_LOG_LEVEL"]))
-  except Exception:
-    pass
+  configure_sim_log_level(str(os.environ["CMO_SIM_LOG_LEVEL"]))
 
 
 def _load_unit(database_path: Path) -> dict[str, Any]:

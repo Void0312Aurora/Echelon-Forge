@@ -12,10 +12,11 @@ import threading
 from dataclasses import dataclass
 from typing import Any
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 from python.runtime_bootstrap import ensure_repo_imports
 
 
