@@ -245,3 +245,4 @@ and are not scheduled by this program.
 - [Exact Runtime Refactor Plan](../exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [Document Lifecycle Policy](../../standards/governance/document_lifecycle_policy.md)
 - [Agent Document Authority Map](../../agent/rules/document_authority_map.md)
+- [SCAL Conformance Census (2026-07-20)](scal_conformance_census_20260720.md) (T0 output; violation register and amendment basis)

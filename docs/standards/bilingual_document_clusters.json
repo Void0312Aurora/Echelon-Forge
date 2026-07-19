@@ -133,9 +133,9 @@
       "english": "docs/plan/architecture/simulation_system_architecture_design.md",
       "chinese": "docs/plan/architecture/simulation_system_architecture_design.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-07-18",
-      "english_hash": "902e16fedc10b41ecfa57f89a50d68bf2f628ff5fabda21daf38959b979b8d5b",
-      "chinese_hash": "45268586e6ba29f9fd41a049344ea08798a0aca1d431944c81c1937b2f27ddbe"
+      "last_verified": "2026-07-20",
+      "english_hash": "09d1be09479103d11f2407c3c940f335acee3bc0a22f1a4e582c1a9ebdbeea86",
+      "chinese_hash": "c378ce1f208d26c6d554668cc0d11002125e9274bcf419c3391b4ad5ae3410bd"
     },
     {
       "pair_id": "plan/architecture/system_layering_and_engine_encapsulation_plan",
@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-20",
-      "english_hash": "b939ed78f99fe278b8b1de6c30a251b668ecfaa702cb3d43a1cfbc7a9f738d14",
-      "chinese_hash": "21711bcc194e000fe2397dbdd251bf19fb4ae02aca437896dfa441661c27592d"
+      "english_hash": "e8dd412fbfe9aab7352aa3df31241e489b576164bbb180a58e94d775feb8f018",
+      "chinese_hash": "9a9746f36ff3959259cd6451face23e127da1040c5aa90edccb04671e36c1b2e"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -206,8 +206,17 @@
       "chinese": "docs/plan/unified_architecture_program/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-20",
-      "english_hash": "9007fc5f0749b2c01e2f47088c788cc682c7fb19af01efbfbdfc2e4affe82dc1",
-      "chinese_hash": "f8f65a6760c4d6bb51fbf52a5904ed0727609c5f07d62de95e5599f60e784885"
+      "english_hash": "c41e60416ed1654adf098b8f0cb305be77200d76e4e90a23ae8204ac03a85688",
+      "chinese_hash": "a16a3072bdb505300f4be37dff5a8a7393be06b14c2bfa366149006778d2f7bf"
+    },
+    {
+      "pair_id": "plan/unified_architecture_program/scal_conformance_census_20260720",
+      "english": "docs/plan/unified_architecture_program/scal_conformance_census_20260720.md",
+      "chinese": "docs/plan/unified_architecture_program/scal_conformance_census_20260720.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-20",
+      "english_hash": "171c86003ff90493e163cc13bafa1ab976879fbaf119ad255c8c65ddf744bdf8",
+      "chinese_hash": "ee80f6b0688a078cd668966183e97cd20f30f5fe16c8525a0ce1e1a71e114d45"
     },
     {
       "pair_id": "reference_artifacts",

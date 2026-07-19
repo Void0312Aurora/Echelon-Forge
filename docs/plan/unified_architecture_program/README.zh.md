@@ -190,3 +190,4 @@ exact-runtime WP4/WP5 进展为门，不由本计划排期。
 - [exact runtime 重构计划](../exact_runtime/cpp_exact_runtime_refactor_plan.zh.md)
 - [文档生命周期政策](../../standards/governance/document_lifecycle_policy.zh.md)
 - [Agent 文档权威地图](../../agent/rules/document_authority_map.zh.md)
+- [SCAL 一致性普查（2026-07-20）](scal_conformance_census_20260720.zh.md)（T0 产出；违例登记与修订依据）
