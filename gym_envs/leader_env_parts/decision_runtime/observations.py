@@ -6,16 +6,15 @@ from typing import Any
 import numpy as np
 
 from python.tasking_contracts.mission_defs import COMMAND_CODE_LANDING, normalize_phase_name
-# `task_observation_codes` stays python.rl-resident: it dispatches through
-# `tasking_profile_for_loader`, a genuine entanglement point with the
-# air/ground/naval profile modules (see I24 report).
-from python.rl.tasking.bridge import task_observation_codes
 
 from ..common import wrap_deg
 from .commands import fuel_margin_state
 
 
 def build_observation(env: Any) -> dict[str, np.ndarray]:
+    # Deferred: `task_observation_codes` stays python.rl-resident (profile dispatch).
+    from python.rl.tasking.bridge import task_observation_codes
+
     loader = env.unwrapped.loader
     inst, truth = env._current_execution_runtime_state()
     if inst is None or truth is None:

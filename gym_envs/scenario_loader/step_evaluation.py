@@ -4,10 +4,6 @@ import ef_py
 
 from python.tasking_contracts.mission_defs import is_landing_command_code
 from python.tasking_contracts.bridge_views import resolve_loader_time_step
-# `resolve_tasking_profile`/`tasking_profile_for_loader` stay python.rl-resident:
-# they dispatch to the air/ground/naval profile modules, a genuine
-# entanglement point (see I24 report).
-from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
 
 from .mission_observation import build_mission_observation_runtime_inputs
 
@@ -177,6 +173,9 @@ def build_step_evaluation_inputs(
         cmd_code = 0
     landing_mode = str(loader.mission_cmd.get("landing_mode", "")).strip().lower()
     is_landing_task = bool(is_landing_command_code(cmd_code) or landing_mode)
+    # Deferred: profile dispatch stays python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
+
     naval_runtime_profile = tasking_profile_for_loader(loader) is resolve_tasking_profile("naval")
     runway_surface_phase = bool(on_ground) if is_landing_task else bool(preliftoff)
     on_runway_task = bool(on_paved) if runway_surface_phase else False

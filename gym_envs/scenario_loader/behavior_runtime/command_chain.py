@@ -7,10 +7,6 @@ from python.tasking_contracts.bridge_views import (
     resolve_loader_time_step,
     sync_loader_mission_command,
 )
-# `build_kernel_mission_command` stays python.rl-resident: it dispatches
-# through `tasking_profile_for_loader`, a genuine entanglement point with the
-# air/ground/naval profile modules (see I24 report).
-from python.rl.tasking.bridge import build_kernel_mission_command
 from .command_chain_owner import ensure_command_chain_owner
 from .naval_screen import apply_naval_screen_station_hold, compute_naval_screen_station_hold
 
@@ -78,6 +74,9 @@ def sync_kernel_mission_command(loader) -> None:
     except Exception:
         pass
     try:
+        # Deferred: `build_kernel_mission_command` stays python.rl-resident (profile dispatch).
+        from python.rl.tasking.bridge import build_kernel_mission_command
+
         cmd = build_kernel_mission_command(loader)
         _apply_dynamic_naval_screen_command_overrides(loader, cmd)
         sync_loader_mission_command(loader, cmd)
@@ -150,6 +149,9 @@ def update_command_chain(loader, sim_time: float, *, truth=None, inst=None, sync
     _apply_naval_screen_runtime_state(loader, truth=truth)
     if sync_to_kernel:
         try:
+            # Deferred: `build_kernel_mission_command` stays python.rl-resident (profile dispatch).
+            from python.rl.tasking.bridge import build_kernel_mission_command
+
             cmd = build_kernel_mission_command(loader)
             _apply_dynamic_naval_screen_command_overrides(loader, cmd)
             sync_loader_mission_command(loader, cmd)

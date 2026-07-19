@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
-
 from .common import ef_py
 
 _NAVAL_INSTRUMENT_KEEP_INDICES = (
@@ -172,6 +170,9 @@ def build_universal_observation(
             miss_vec = loader.get_mission_observation(mission_obs_mode, truth=truth, inst=inst)
     else:
         miss_vec = loader.get_mission_observation(mission_obs_mode, truth=truth, inst=inst)
+
+    # Deferred: profile dispatch stays python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
 
     policy_inst_vec = (
         naval_policy_instruments(inst_vec)

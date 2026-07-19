@@ -7,7 +7,6 @@ import torch
 from stable_baselines3 import PPO
 
 from python.artifact_paths import resolve_artifact_path
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 
 
 def load_policy(model_path: str, algo_name: str = "auto", device: str = "cpu"):
@@ -15,6 +14,12 @@ def load_policy(model_path: str, algo_name: str = "auto", device: str = "cpu"):
     load_path = resolved_path[:-4] if str(resolved_path).endswith(".zip") else str(resolved_path)
     algo_norm = str(algo_name or "auto").strip()
     if algo_norm in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+        # Deferred: AdaptiveKLPPO lives in python.rl.policy_algo (algorithm
+        # entanglement). Kept OUTSIDE the try so an ImportError surfaces
+        # immediately (pre-I27 semantics); only runtime load failures fall
+        # back to plain PPO under algo="auto".
+        from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+
         try:
             return AdaptiveKLPPO.load(load_path, device=device)
         except Exception:

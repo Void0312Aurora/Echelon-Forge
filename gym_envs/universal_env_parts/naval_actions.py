@@ -10,11 +10,6 @@ from python.tasking_contracts.bridge_views import (
     has_mission_command_dict,
     mission_command_dict,
 )
-# `resolve_tasking_profile`/`tasking_profile_for_loader` stay python.rl-resident:
-# they dispatch to the air/ground/naval profile modules, a genuine
-# entanglement point (see I24 report).
-from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
-
 from .common import ef_py
 from .spaces import NAVAL_STATION3_ACTION_MODE
 
@@ -75,6 +70,9 @@ def is_naval_station_action_mode(action_mode: str) -> bool:
 
 
 def validate_naval_action_mode_for_loader(loader: Any, action_mode: str) -> None:
+    # Deferred: profile dispatch stays python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
+
     if tasking_profile_for_loader(loader) is not resolve_tasking_profile("naval"):
         return
     if is_naval_station_action_mode(action_mode):

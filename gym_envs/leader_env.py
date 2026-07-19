@@ -26,15 +26,6 @@ from gym_envs.leader_env_parts import (
 )
 from python.env_config import VALID_EXECUTION_STEP_RUNTIME_MODES
 from python.tasking_contracts.leader_decision_state import LeaderDecisionState
-# `make_rule_based_leader_phase_manager`/`make_scripted_c2_task_manager`/
-# `scripted_c2_task_manager_class` stay python.rl-resident: they dispatch to
-# the air/ground/naval profile modules, a genuine entanglement point (see I24
-# report).
-from python.rl.tasking.bridge import (
-    make_rule_based_leader_phase_manager,
-    make_scripted_c2_task_manager,
-    scripted_c2_task_manager_class,
-)
 
 if gym is None:
     class LeaderTrainingEnv:  # pragma: no cover
@@ -44,7 +35,6 @@ if gym is None:
                 "Install it (e.g. `pip install gymnasium`) to run leader-layer training."
             )
 else:
-    ScriptedC2TaskManager = scripted_c2_task_manager_class()
 
     class LeaderTrainingEnv(LeaderRuntimeFacadeMixin, gym.Env):
         """
@@ -150,6 +140,12 @@ else:
             )
             self._exec_policy = self._build_execution_policy()
             tasking_loader = getattr(self.unwrapped, "loader", None)
+            # Deferred: profile-dispatch factories stay python.rl-resident (see I24/I27).
+            from python.rl.tasking.bridge import (
+                make_rule_based_leader_phase_manager,
+                make_scripted_c2_task_manager,
+            )
+
             self._teacher_manager = make_rule_based_leader_phase_manager(tasking_loader)
             self._c2_manager = make_scripted_c2_task_manager(tasking_loader)
             self._bridge = LeaderCommandBridge()

@@ -3,9 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from python.rl.tasking.bridge import make_rule_based_leader_phase_manager
-
-
 COMMAND_CHAIN_OWNER_ATTRS = frozenset(
     {
         "_leader_phase_manager",
@@ -32,6 +29,9 @@ class CommandChainOwner:
         self._naval_screen_use_direct_command = False
 
     def reset(self, loader: Any | None = None) -> None:
+        # Deferred: profile-dispatch factory stays python.rl-resident (see I24/I27).
+        from python.rl.tasking.bridge import make_rule_based_leader_phase_manager
+
         self._leader_phase_manager = make_rule_based_leader_phase_manager(loader)
         self.reset_naval_screen_state()
 
