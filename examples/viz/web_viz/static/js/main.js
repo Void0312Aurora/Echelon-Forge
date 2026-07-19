@@ -12,6 +12,9 @@ import { animateUnits, render3D, resize3D, updateCameraForFrame } from './scene3
 import { renderTacticalLayerControls, updateLanguageUi } from './ui-shell.js';
 import { initSession } from './session.js';
 
+// Expose shared state for DevTools debugging (read-only usage intended).
+window.vizDebug = { vizState };
+
 // --- Bootstrap ---
 initTacticalLayers();
 resizeTacticalCanvas();

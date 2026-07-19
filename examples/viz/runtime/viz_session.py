@@ -1818,13 +1818,21 @@ class VizSession:
                     type_name = str(ent_cfg.get("type", "")).strip()
                     type_name_upper = type_name.upper()
                     name_upper = str(name).upper()
-                    is_aircraft = (
-                        "F-16" in type_name_upper
-                        or "F16" in type_name_upper
-                        or "AIRCRAFT" in type_name_upper
-                        or "F-16" in name_upper
-                        or "F16" in name_upper
-                        or "AIRCRAFT" in name_upper
+                    aircraft_tokens = (
+                        "F-16",
+                        "F16",
+                        "AIRCRAFT",
+                        "MQ-9",
+                        "MQ9",
+                        "REAPER",
+                        "UAV",
+                        "DRONE",
+                        "SHAHED",
+                        "GERAN",
+                    )
+                    is_aircraft = any(
+                        token in type_name_upper or token in name_upper
+                        for token in aircraft_tokens
                     )
                     is_ship = (
                         "DDG-51" in type_name_upper

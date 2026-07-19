@@ -242,6 +242,18 @@ function ensureRegistryAssetLoaded(entry) {
         root.rotation.y = yawDeg * (Math.PI / 180.0);
         const wrapper = new THREE.Group();
         wrapper.add(root);
+        // Many third-party GLTF assets carry an arbitrary origin. Re-center
+        // air/missile models on their bounding-box center so the visual sits
+        // exactly on the unit's logical position (trail end, chase target).
+        // Ships keep their authored origin: their waterline alignment is
+        // handled via waterline_offset_m instead.
+        if (String(entry?.match?.unit_type || '').trim() !== 'Ship') {
+            const bounds = new THREE.Box3().setFromObject(wrapper);
+            if (!bounds.isEmpty()) {
+                const center = bounds.getCenter(new THREE.Vector3());
+                root.position.sub(center);
+            }
+        }
         assetModelCache.set(assetPath, { status: 'ready', model: wrapper });
         console.log(`Asset Loaded: ${assetPath}`);
     }, undefined, (error) => {
