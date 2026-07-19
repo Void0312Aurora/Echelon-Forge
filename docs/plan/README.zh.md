@@ -22,6 +22,10 @@
   - 协同训练与协同执行管线主线文档。
 - [exact_runtime/README.md](exact_runtime/README.md)
   - exact runtime / GPU 主线的候选专项计划、检查清单与阶段冻结记录。
+- [repository_consolidation/README.zh.md](repository_consolidation/README.zh.md)
+  - 活跃整合工作线：迭代协议、候选路由与单一迭代台账。
+- [unified_architecture_program/README.zh.md](unified_architecture_program/README.zh.md)
+  - 活跃的架构统一路线图（DTO 单源化、运行时基座、C++ 边界、声明式配置）；迭代落入整合台账。
 - [archive/](archive/README.md)
   - 已关闭路线、历史溯源材料与双语迁移记录。
 

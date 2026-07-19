@@ -23,6 +23,7 @@ STRICT_PLAN_SUBTREES = {
   "cooperative",
   "repository_consolidation",
   "runtime_facade",
+  "unified_architecture_program",
 }
 STRICT_TASK_SECOND_LEVEL_READMES = {"flight_dynamics"}
 
