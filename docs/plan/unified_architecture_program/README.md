@@ -39,6 +39,48 @@ compatibility, and bounded capability claims remain absolute constraints.
   (`tools/maintenance/dto_schema/generate.py --check`) and, where behavior
   could drift, embedded-reference parity tests in the I8/I19 style.
 
+## Design Principles
+
+The program optimizes for long-horizon maintainability over short-term line
+counts. Concretely:
+
+1. **Prefer systems over patches.** A schema, generator, registry, or
+   substrate that owns a whole class of change is preferred over one-off
+   deduplication, even when its upfront line cost is higher. Net line
+   increases are acceptable when they buy a single owner (the I18/I20
+   precedent) and must be recorded honestly in the ledger.
+2. **Every consolidation ships its extension contract.** A track item is
+   not complete until the next consumer's path is documented and gated:
+   how the next DTO field, domain slice, training line, probe, or config
+   variant plugs in through registered extension points rather than by
+   copying an existing implementation.
+3. **Domain symmetry is an extension socket, not dead weight.** The thin
+   naval/ground slices mirror the air slice deliberately. T1 command-family
+   and T3 loader work must formalize per-domain registration (schema
+   groups, profile adapters, taxonomy entries) so a future domain attaches
+   by registration, not by editing air-specific code.
+4. **Build so the C++ takeover shrinks Python.** Nothing in the Python
+   substrate may ossify logic that the exact-runtime mainline (WP4/WP5)
+   is scheduled to own; generated builders and plugins must be deletable
+   per family once C++ ownership lands.
+5. **Reversibility and audit.** Generated artifacts stay in-tree with
+   freshness gates; every architectural move keeps a compatibility shell
+   until the final residual audit retires it deliberately.
+
+## Performance Boundary
+
+Performance optimization itself stays owned by the exact-runtime mainline
+([plan](../exact_runtime/cpp_exact_runtime_refactor_plan.md)) and the
+architecture/performance research line; it is intentionally not a track of
+this program. The program delivers performance *enablers* and must not
+foreclose them: the DTO schema layer must be able to emit alternative
+layouts (for example SoA or packed device views for the future
+`ExactStateStore`) from the same field source; substrate unification must
+leave exactly one hot stepping loop to optimize; and the T3 target split
+must produce link units that profiling and backend work can iterate on in
+isolation. Any measured-performance work item discovered during the program
+is routed to the exact-runtime line instead of widening this program.
+
 ## Program Tracks
 
 | Track | Scope | Primary target | Key risk |
