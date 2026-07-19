@@ -28,7 +28,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.release_governance import provenance_closeout as release_closeout_gate # noqa: E402
 from tools.maintenance.candidate_artifacts import effect_scale_retained_pack as stage_b_retained # noqa: E402
 from tools.maintenance.candidate_artifacts import component_probability_retained_pack as stage_c_retained # noqa: E402
@@ -1247,8 +1251,8 @@ def write_retained_review_artifact(
     retained_review_dir=retained_review_dir,
   )
   artifact_path = retained_review_dir / REVIEW_ARTIFACT_FILENAME
-  artifact_text = _canonical_json(artifact) + "\n"
-  artifact_path.write_text(artifact_text, encoding="utf-8")
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact)
+  artifact_content_sha256 = _sha256_text(_canonical_json(artifact))
   source_payload_consumption = artifact["source_payload_pack_consumption"]
 
   manifest = {
@@ -1292,8 +1296,8 @@ def write_retained_review_artifact(
         "filename": REVIEW_ARTIFACT_FILENAME,
         "relative_path": _display_path(artifact_path, repo_root),
         "schema_version": REVIEW_GATE_SCHEMA_VERSION,
-        "sha256": _sha256_file(artifact_path),
-        "content_sha256": _sha256_text(artifact_text.rstrip("\n")),
+        "sha256": artifact_sha256,
+        "content_sha256": artifact_content_sha256,
         "status": artifact["status"],
         "allowed_claim": (
           "release-review blocker surface for RES-001/RES-002 is retained"
@@ -1309,9 +1313,9 @@ def write_retained_review_artifact(
     "non_authoritative_guards": _non_authoritative_guards(),
   }
   manifest_path = retained_review_dir / REVIEW_MANIFEST_FILENAME
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest)
   manifest["manifest_relative_path"] = _display_path(manifest_path, repo_root)
-  manifest["manifest_sha256"] = _sha256_file(manifest_path)
+  manifest["manifest_sha256"] = manifest_sha256
   manifest["retained_artifact_count"] = len(manifest["artifacts"])
   manifest["all_artifacts_exist"] = artifact_path.exists()
   return manifest

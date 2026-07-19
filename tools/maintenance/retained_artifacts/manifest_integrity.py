@@ -57,6 +57,22 @@ def _sha256_text(text: str) -> str:
   return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def write_and_hash_json(
+  path: Path,
+  payload: dict[str, Any],
+  *,
+  ensure_ascii: bool = True,
+  indent: int = 2,
+  sort_keys: bool = True,
+  encoding: str = "utf-8",
+) -> str:
+  """Write *payload* as JSON with trailing newline and return the sha256 of the written file."""
+  path.parent.mkdir(parents=True, exist_ok=True)
+  text = json.dumps(payload, ensure_ascii=ensure_ascii, indent=indent, sort_keys=sort_keys) + "\n"
+  path.write_text(text, encoding=encoding)
+  return _sha256_file(path)
+
+
 def _display_path(path: Path, repo_root: Path) -> str:
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()

@@ -27,7 +27,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_text,
+  write_and_hash_json,
+)
 
 from tools.maintenance.candidate_artifacts import component_probability_surface_probe as surface_probe # noqa: E402
 from tools.maintenance.candidate_artifacts import ( # noqa: E402
@@ -621,24 +624,20 @@ def write_retained_artifacts(
   artifact: dict[str, Any],
   retained_dir: Path,
 ) -> dict[str, Any]:
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
-  artifact_payload = _canonical_json(artifact) + "\n"
   artifact_path = retained_dir / "stage_c_fragility_benchmark.json"
-  artifact_path.write_text(artifact_payload, encoding="utf-8")
+  write_and_hash_json(artifact_path, artifact)
 
   comparison = _comparison_artifact(artifact)
-  comparison_payload = _canonical_json(comparison) + "\n"
   comparison_path = retained_dir / "candidate_vs_synthetic_sigmoid_comparison.json"
-  comparison_path.write_text(comparison_payload, encoding="utf-8")
+  write_and_hash_json(comparison_path, comparison)
 
   manifest = _retained_manifest(
     artifact=artifact,
-    artifact_sha256=_sha256_text(artifact_payload),
-    comparison_sha256=_sha256_text(comparison_payload),
+    artifact_sha256=_sha256_text(_canonical_json(artifact) + "\n"),
+    comparison_sha256=_sha256_text(_canonical_json(comparison) + "\n"),
   )
   manifest_path = retained_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  write_and_hash_json(manifest_path, manifest)
   manifest["manifest_path"] = _display_path(manifest_path, REPO_ROOT)
   return manifest
 

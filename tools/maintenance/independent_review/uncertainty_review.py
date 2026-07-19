@@ -29,7 +29,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -477,10 +480,8 @@ def write_retained_artifacts(
     repo_root=repo_root,
     package_dir=package_dir,
   )
-  output_dir.mkdir(parents=True, exist_ok=True)
   gate_path = output_dir / "uncertainty_review_gate.json"
-  gate_payload = _canonical_json(artifact) + "\n"
-  gate_path.write_text(gate_payload, encoding="utf-8")
+  gate_content_sha256 = write_and_hash_json(gate_path, artifact)
   manifest = {
     "package_id": PACKAGE_ID,
     "schema_version": MANIFEST_SCHEMA_VERSION,
@@ -495,7 +496,7 @@ def write_retained_artifacts(
         "relative_path": _display_path(gate_path, repo_root),
         "schema_version": GATE_SCHEMA_VERSION,
         "status": artifact["status"],
-        "content_sha256": _sha256_file(gate_path),
+        "content_sha256": gate_content_sha256,
         "payload_sha256": _payload_sha256(artifact),
         "size_bytes": gate_path.stat().st_size,
         "origin_class": "uncertainty_review_gate_record_only",
@@ -511,7 +512,7 @@ def write_retained_artifacts(
     "authority_guards": _authority_guards(),
   }
   manifest_path = output_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  write_and_hash_json(manifest_path, manifest)
   return {
     "gate": artifact,
     "manifest": manifest,

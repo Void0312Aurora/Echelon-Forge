@@ -32,7 +32,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
@@ -626,10 +630,8 @@ def write_retained_artifacts(
     source_payload_pack_dir=source_payload_pack_dir,
     attempt_spreadsheet_execution=attempt_spreadsheet_execution,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
   artifact_path = retained_dir / GATE_FILENAME
-  _write_json(artifact_path, artifact)
-  artifact_sha256 = _sha256_file(artifact_path)
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact, ensure_ascii=False)
   manifest = {
     "schema_version": RETAINED_MANIFEST_SCHEMA_VERSION,
     "package_id": PACKAGE_ID,
@@ -648,9 +650,9 @@ def write_retained_artifacts(
     "non_authoritative_guards": artifact["non_authoritative_guards"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
   artifact["retained_artifact_sha256"] = artifact_sha256
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
 
 def main(argv: list[str] | None = None) -> int:

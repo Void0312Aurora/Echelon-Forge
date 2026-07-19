@@ -30,7 +30,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 from tools.maintenance.candidate_artifacts import scope_boundary_probe as boundary_probe
 
 PACKAGE_ID = (
@@ -725,19 +728,16 @@ def write_retained_artifacts(
     repo_root=repo_root,
     package_dir=package_dir,
   )
-  output_dir.mkdir(parents=True, exist_ok=True)
   artifact_paths = {
     "scope_bucket_independent_review_gate": output_dir
     / "scope_bucket_independent_review_gate.json",
     "scope_boundary_probe_rerun": output_dir / "scope_boundary_probe_rerun.json",
   }
-  artifact_paths["scope_bucket_independent_review_gate"].write_text(
-    _canonical_json(gate) + "\n",
-    encoding="utf-8",
+  write_and_hash_json(
+    artifact_paths["scope_bucket_independent_review_gate"], gate,
   )
-  artifact_paths["scope_boundary_probe_rerun"].write_text(
-    _canonical_json(probe) + "\n",
-    encoding="utf-8",
+  write_and_hash_json(
+    artifact_paths["scope_boundary_probe_rerun"], probe,
   )
 
   manifest = {
@@ -789,7 +789,7 @@ def write_retained_artifacts(
     "authority_guards": _authority_guards(),
   }
   manifest_path = output_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  write_and_hash_json(manifest_path, manifest)
   return {
     "gate": gate,
     "probe": probe,

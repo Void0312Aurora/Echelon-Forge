@@ -29,7 +29,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -774,17 +777,14 @@ def write_retained_outputs(
   doc_output: Path = DEFAULT_DOC_OUTPUT,
   repo_root: Path = REPO_ROOT,
 ) -> dict[str, Any]:
-  output_dir.mkdir(parents=True, exist_ok=True)
   gate_path = output_dir / "res003_target_geometry_closeout_gate.json"
-  gate_path.write_text(_canonical_json(artifact) + "\n", encoding="utf-8")
-  gate_sha256 = _sha256_file(gate_path)
+  gate_sha256 = write_and_hash_json(gate_path, artifact, ensure_ascii=False)
 
   manifest = _manifest_payload(
     artifact=artifact, output_dir=output_dir, repo_root=repo_root
   )
   manifest_path = output_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
-  manifest_sha256 = _sha256_file(manifest_path)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   doc_output.parent.mkdir(parents=True, exist_ok=True)
   doc_output.write_text(

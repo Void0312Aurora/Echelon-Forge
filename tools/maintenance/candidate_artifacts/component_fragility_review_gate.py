@@ -27,7 +27,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.candidate_artifacts import component_probability_review_readiness as readiness_gate # noqa: E402
 from tools.maintenance.candidate_artifacts import ( # noqa: E402
   component_fragility_validation_prep as prep,
@@ -785,14 +788,14 @@ def write_retained_artifacts(
   artifact: dict[str, Any],
   retained_dir: Path,
 ) -> dict[str, Any]:
-  retained_dir.mkdir(parents=True, exist_ok=True)
-  artifact_payload = _canonical_json(artifact)
   artifact_path = retained_dir / "stage_c_fragility_review_gate.json"
-  artifact_path.write_text(artifact_payload + "\n", encoding="utf-8")
+  write_and_hash_json(artifact_path, artifact)
 
-  manifest = _retained_manifest(artifact, _sha256_text(artifact_payload + "\n"))
+  manifest = _retained_manifest(
+    artifact, _sha256_text(_canonical_json(artifact) + "\n"),
+  )
   manifest_path = retained_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  write_and_hash_json(manifest_path, manifest)
   return manifest
 
 def main(argv: list[str] | None = None) -> int:

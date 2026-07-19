@@ -29,7 +29,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -783,16 +786,14 @@ def write_retained_artifacts(
     repo_root=repo_root, retained_dir=retained_dir, doc_output=doc_output
   )
   gate = generate_geometry_warhead_row_provenance_gate(repo_root=repo_root)
-  _write_json(gate_path, gate)
-  gate_sha = _sha256_file(gate_path)
+  gate_sha = write_and_hash_json(gate_path, gate, ensure_ascii=False)
   manifest = _manifest(
     gate_path=gate_path,
     gate_sha256=gate_sha,
     gate=gate,
     repo_root=repo_root,
   )
-  _write_json(manifest_path, manifest)
-  manifest_sha = _sha256_file(manifest_path)
+  manifest_sha = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
   doc_path.parent.mkdir(parents=True, exist_ok=True)
   doc_path.write_text(
     _validation_doc(

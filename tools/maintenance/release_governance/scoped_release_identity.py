@@ -28,7 +28,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -624,8 +628,8 @@ def write_retained_scoped_identity_artifact(
   retained_output_dir.mkdir(parents=True, exist_ok=True)
   artifact = generate_res002_scoped_release_identity_gate(repo_root=repo_root)
   artifact_path = retained_output_dir / GATE_FILENAME
-  artifact_text = _canonical_json(artifact) + "\n"
-  artifact_path.write_text(artifact_text, encoding="utf-8")
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact)
+  artifact_content_sha256 = _sha256_text(_canonical_json(artifact))
 
   manifest = {
     "package_id": PACKAGE_ID,
@@ -654,8 +658,8 @@ def write_retained_scoped_identity_artifact(
         "filename": GATE_FILENAME,
         "relative_path": _display_path(artifact_path, repo_root),
         "schema_version": SCOPED_GATE_SCHEMA_VERSION,
-        "sha256": _sha256_file(artifact_path),
-        "content_sha256": _sha256_text(artifact_text.rstrip("\n")),
+        "sha256": artifact_sha256,
+        "content_sha256": artifact_content_sha256,
         "status": artifact["status"],
         "allowed_claim": (
           "bounded RES-002 scoped package identity surface is retained"
@@ -669,10 +673,9 @@ def write_retained_scoped_identity_artifact(
     ],
   }
   manifest_path = retained_output_dir / MANIFEST_FILENAME
-  manifest_text = _canonical_json(manifest) + "\n"
-  manifest_path.write_text(manifest_text, encoding="utf-8")
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest)
   manifest["manifest_relative_path"] = _display_path(manifest_path, repo_root)
-  manifest["manifest_sha256"] = _sha256_file(manifest_path)
+  manifest["manifest_sha256"] = manifest_sha256
   manifest["retained_artifact_count"] = len(manifest["artifacts"])
   manifest["all_artifacts_exist"] = artifact_path.exists()
   return manifest

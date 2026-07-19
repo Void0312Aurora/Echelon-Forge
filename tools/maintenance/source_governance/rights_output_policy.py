@@ -31,7 +31,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -648,7 +652,7 @@ def write_retained_source_rights_output_policy_gate(
   )
   artifact_path = output_dir / RIGHTS_POLICY_ARTIFACT_FILENAME
   artifact_text = _canonical_json(artifact) + "\n"
-  artifact_path.write_text(artifact_text, encoding="utf-8")
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact)
 
   manifest = _retained_manifest(
     artifact=artifact,
@@ -659,12 +663,11 @@ def write_retained_source_rights_output_policy_gate(
     output_dir=output_dir,
   )
   manifest_path = output_dir / RETAINED_MANIFEST_FILENAME
-  manifest_text = _canonical_json(manifest) + "\n"
-  manifest_path.write_text(manifest_text, encoding="utf-8")
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest)
 
-  artifact["source_rights_output_policy_gate_sha256"] = _sha256_file(artifact_path)
+  artifact["source_rights_output_policy_gate_sha256"] = artifact_sha256
   artifact["retained_manifest_ref"] = _display_path(manifest_path, repo_root)
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
 
 def main(argv: list[str] | None = None) -> int:

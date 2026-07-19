@@ -26,7 +26,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 from tools.maintenance.external_signoff_evidence import intake_contract as contract # noqa: E402
 
 TEMPLATE_SCHEMA_VERSION = "a2.external_signoff_packet_template.v1"
@@ -249,11 +252,8 @@ def write_retained_artifacts(
     retained_dir=retained_dir,
     source_rights_signoff_request_packet_path=source_rights_signoff_request_packet_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   template_path = retained_dir / TEMPLATE_FILENAME
-  _write_json(template_path, template)
-  template_sha256 = _sha256_file(template_path)
+  template_sha256 = write_and_hash_json(template_path, template, ensure_ascii=False)
   template_artifact = {
     "artifact_key": "external_signoff_packet_template",
     "filename": TEMPLATE_FILENAME,
@@ -284,12 +284,12 @@ def write_retained_artifacts(
     "retained_manifest_integrity_expected": "clean_for_single_manifest",
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   template["retained_artifact_ref"] = _rel(template_path, repo_root)
   template["retained_artifact_sha256"] = template_sha256
   template["retained_manifest_ref"] = _rel(manifest_path, repo_root)
-  template["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  template["retained_manifest_sha256"] = manifest_sha256
   return template
 
 def main(argv: list[str] | None = None) -> int:

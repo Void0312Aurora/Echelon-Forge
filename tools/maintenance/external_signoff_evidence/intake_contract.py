@@ -26,7 +26,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.external_signoff_evidence import signoff_request # noqa: E402
 
 PACKAGE_ID = signoff_request.PACKAGE_ID
@@ -559,11 +563,8 @@ def write_retained_artifacts(
     source_rights_signoff_request_packet_path=source_rights_signoff_request_packet_path,
     candidate_signoff_packet_path=candidate_signoff_packet_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   contract_path = retained_dir / CONTRACT_FILENAME
-  _write_json(contract_path, artifact)
-  contract_sha256 = _sha256_file(contract_path)
+  contract_sha256 = write_and_hash_json(contract_path, artifact, ensure_ascii=False)
   contract_artifact = {
     "artifact_key": "signoff_intake_contract",
     "filename": CONTRACT_FILENAME,
@@ -599,12 +600,12 @@ def write_retained_artifacts(
     "authority_guards_all_false": artifact["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   artifact["retained_artifact_ref"] = _rel(contract_path, repo_root)
   artifact["retained_artifact_sha256"] = contract_sha256
   artifact["retained_manifest_ref"] = _rel(manifest_path, repo_root)
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
 
 def main(argv: list[str] | None = None) -> int:

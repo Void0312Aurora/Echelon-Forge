@@ -26,7 +26,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.benchmark_evidence import ( # noqa: E402
   benchmark_execution_admission as res005006_gate,
   comparison_hashes,
@@ -526,11 +530,10 @@ def write_retained_artifacts(
     source_rights_output_policy_dir=source_rights_output_policy_dir,
     attempt_spreadsheet_execution=attempt_spreadsheet_execution,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   anchor_path = retained_dir / ANCHOR_SET_FILENAME
-  _write_json(anchor_path, artifact["candidate_replacement_anchor_set"])
-  anchor_sha256 = _sha256_file(anchor_path)
+  anchor_sha256 = write_and_hash_json(
+    anchor_path, artifact["candidate_replacement_anchor_set"], ensure_ascii=False,
+  )
   artifact["candidate_replacement_anchor_set_artifact"] = {
     "filename": ANCHOR_SET_FILENAME,
     "relative_path": _rel(anchor_path, repo_root),
@@ -539,8 +542,7 @@ def write_retained_artifacts(
   }
 
   gate_path = retained_dir / GATE_FILENAME
-  _write_json(gate_path, artifact)
-  gate_sha256 = _sha256_file(gate_path)
+  gate_sha256 = write_and_hash_json(gate_path, artifact, ensure_ascii=False)
 
   manifest = {
     "schema_version": RETAINED_MANIFEST_SCHEMA_VERSION,
@@ -568,11 +570,11 @@ def write_retained_artifacts(
     "authority_guards_all_false": artifact["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   artifact["retained_artifact_sha256"] = gate_sha256
   artifact["retained_anchor_set_sha256"] = anchor_sha256
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
 
 def main(argv: list[str] | None = None) -> int:

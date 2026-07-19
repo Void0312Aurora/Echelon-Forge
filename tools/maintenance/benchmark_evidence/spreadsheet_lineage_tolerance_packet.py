@@ -26,7 +26,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
@@ -872,11 +875,8 @@ def write_retained_artifacts(
     source_rights_output_policy_gate_path=source_rights_output_policy_gate_path,
     replacement_tolerance_gate_path=replacement_tolerance_gate_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   packet_path = retained_dir / PACKET_FILENAME
-  _write_json(packet_path, packet)
-  packet_sha256 = _sha256_file(packet_path)
+  packet_sha256 = write_and_hash_json(packet_path, packet, ensure_ascii=False)
   packet_artifact = {
     "artifact_key": "res006_beco_lineage_tolerance_review_candidate_packet",
     "filename": PACKET_FILENAME,
@@ -912,10 +912,10 @@ def write_retained_artifacts(
     "authority_guards_all_false": packet["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   packet["retained_artifact_sha256"] = packet_sha256
-  packet["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  packet["retained_manifest_sha256"] = manifest_sha256
   return packet
 
 def main(argv: list[str] | None = None) -> int:

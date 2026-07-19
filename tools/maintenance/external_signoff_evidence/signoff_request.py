@@ -26,7 +26,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -722,11 +726,8 @@ def write_retained_artifacts(
     res005_selected_case_gate_path=res005_selected_case_gate_path,
     res006_replacement_tolerance_gate_path=res006_replacement_tolerance_gate_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   packet_path = retained_dir / PACKET_FILENAME
-  _write_json(packet_path, artifact)
-  packet_sha256 = _sha256_file(packet_path)
+  packet_sha256 = write_and_hash_json(packet_path, artifact, ensure_ascii=False)
   packet_artifact = {
     "artifact_key": "source_rights_signoff_request_packet",
     "filename": PACKET_FILENAME,
@@ -757,12 +758,12 @@ def write_retained_artifacts(
     "authority_guards_all_false": artifact["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   artifact["retained_artifact_ref"] = _rel(packet_path, repo_root)
   artifact["retained_artifact_sha256"] = packet_sha256
   artifact["retained_manifest_ref"] = _rel(manifest_path, repo_root)
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
 
 def main(argv: list[str] | None = None) -> int:
