@@ -317,28 +317,72 @@ function corridorMesh(positions, material) {
     return new THREE.Mesh(geometry, material);
 }
 
-function buildRoadsGroup(roads) {
+// Per-class lift keeps overlapping carriageways, service roads, and paths
+// from z-fighting where OSM stacks parallel ways on the same ground.
+function roadLiftM(highwayType) {
+    const key = String(highwayType || '').toLowerCase();
+    if (/^(motorway|trunk|primary|secondary|tertiary)/.test(key)) return 0.45;
+    if (/^(footway|path|steps|pedestrian|cycleway)/.test(key)) return 0.28;
+    return 0.36;
+}
+
+// Continuous ribbon along the centerline: averaged-direction normals join
+// segments without wedge gaps, and the deck height comes from the rendered
+// terrain sampler so roads follow the exact surface the 3D mesh shows.
+function pushRoadRibbon(target, part, halfWidth, lift, sampleHeight) {
+    const count = part.length;
+    if (count < 2) return;
+    const left = new Array(count);
+    const right = new Array(count);
+    for (let i = 0; i < count; i += 1) {
+        const prev = part[Math.max(0, i - 1)];
+        const next = part[Math.min(count - 1, i + 1)];
+        let dirX = Number(next[0]) - Number(prev[0]);
+        let dirY = Number(next[1]) - Number(prev[1]);
+        const len = Math.hypot(dirX, dirY) || 1.0;
+        dirX /= len;
+        dirY /= len;
+        const x = Number(part[i][0]);
+        const y = Number(part[i][1]);
+        // Cross-section stays level at the centerline height, like a graded
+        // roadbed; the sampler pins it to the rendered terrain basis.
+        const sampled = sampleHeight ? sampleHeight(x, y) : null;
+        const z = (Number.isFinite(sampled) ? sampled : Number(part[i][2]) || 0) + lift;
+        left[i] = [x - dirY * halfWidth, y + dirX * halfWidth, z];
+        right[i] = [x + dirY * halfWidth, y - dirX * halfWidth, z];
+    }
+    for (let i = 0; i + 1 < count; i += 1) {
+        for (const p of [left[i], right[i], right[i + 1]]) {
+            target.push(p[0], p[2], -p[1]);
+        }
+        for (const p of [left[i], right[i + 1], left[i + 1]]) {
+            target.push(p[0], p[2], -p[1]);
+        }
+    }
+}
+
+function buildRoadsGroup(roads, sampleHeight) {
     const group = new THREE.Group();
     const roadPositions = [];
     const bridgePositions = [];
-    const linePoints = [];
     for (const road of roads || []) {
-        const isBridge = road.kind === 'bridge_deck';
-        const corridor = Array.isArray(road.corridor) ? road.corridor : [];
-        if (corridor.length > 0) {
-            const target = isBridge ? bridgePositions : roadPositions;
-            // Bridges get extra lift so decks stay clear of the water surface.
-            const lift = isBridge ? 0.6 : 0.25;
+        if (road.kind === 'bridge_deck') {
+            // Bridge decks keep the backend abutment-interpolated elevations;
+            // they must not be re-draped onto the terrain below.
+            const corridor = Array.isArray(road.corridor) ? road.corridor : [];
             for (const polygon of corridor) {
                 if (Array.isArray(polygon) && polygon.length >= 3) {
-                    pushCorridorTriangles(target, polygon, lift);
+                    pushCorridorTriangles(bridgePositions, polygon, 0.6);
                 }
             }
             continue;
         }
-        // Fallback for entries without corridor polygons: draped centerline.
+        const halfWidth = Math.max(0.5, Number(road.width_m || 2) * 0.5);
+        const lift = roadLiftM(road.highway_type);
         for (const part of road.parts || []) {
-            if (Array.isArray(part) && part.length >= 2) linePoints.push(part);
+            if (Array.isArray(part) && part.length >= 2) {
+                pushRoadRibbon(roadPositions, part, halfWidth, lift, sampleHeight);
+            }
         }
     }
     if (roadPositions.length > 0) {
@@ -352,17 +396,6 @@ function buildRoadsGroup(roads) {
             color: 0x9fb8b8,
             side: THREE.DoubleSide,
         })));
-    }
-    if (linePoints.length > 0) {
-        const material = new THREE.LineBasicMaterial({ color: 0xbfb287, transparent: true, opacity: 0.75 });
-        for (const part of linePoints) {
-            const points = part.map((p) => new THREE.Vector3(
-                Number(p[0]),
-                (Number(p[2]) || 0) + 0.4,
-                -Number(p[1]),
-            ));
-            group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material));
-        }
     }
     return group;
 }
@@ -407,7 +440,7 @@ export function buildSceneGeometry3D(payload, helpers) {
         if (mesh) sceneGeometryGroup.add(mesh);
     }
     sceneGeometryGroup.add(buildWaterGroup(payload.water));
-    sceneGeometryGroup.add(buildRoadsGroup(payload.roads));
+    sceneGeometryGroup.add(buildRoadsGroup(payload.roads, helpers.sampleTerrainHeightM));
     sceneGeometryGroup.add(buildBuildingsMesh(payload.buildings));
     const extent = payload.region_extent || {};
     const spanX = Math.abs(Number(extent.max_x) - Number(extent.min_x)) || 0;

@@ -102,6 +102,32 @@ export function terrainCellColor(terrain, row, col) {
     return heightColor(Math.max(0, Math.min(1, t)));
 }
 
+// Bilinear height sample against the transported terrain grid, in world
+// meters. Returns null outside the grid. Used to pin draped geometry to the
+// rendered 3D terrain so both use the same interpolation basis.
+export function sampleTerrainHeightM(x, y) {
+    const terrain = payload?.terrain;
+    if (!terrain || !Array.isArray(terrain.heights)) return null;
+    const fx = (x - Number(terrain.origin_x)) / Number(terrain.step_x);
+    const fy = (y - Number(terrain.origin_y)) / Number(terrain.step_y);
+    const cols = Number(terrain.cols);
+    const rows = Number(terrain.rows);
+    if (!(fx >= 0) || !(fy >= 0) || fx > cols - 1 || fy > rows - 1) return null;
+    const c0 = Math.min(cols - 1, Math.floor(fx));
+    const r0 = Math.min(rows - 1, Math.floor(fy));
+    const c1 = Math.min(cols - 1, c0 + 1);
+    const r1 = Math.min(rows - 1, r0 + 1);
+    const tx = fx - c0;
+    const ty = fy - r0;
+    const h = terrain.heights;
+    return (
+        h[r0][c0] * (1 - tx) * (1 - ty)
+        + h[r0][c1] * tx * (1 - ty)
+        + h[r1][c0] * (1 - tx) * ty
+        + h[r1][c1] * tx * ty
+    );
+}
+
 export function terrainShade(terrain, row, col) {
     const heights = terrain.heights;
     const rows = terrain.rows;
@@ -194,7 +220,11 @@ export function ensureSceneGeometry(available) {
             if (!body || typeof body !== 'object' || !body.terrain) return;
             payload = body;
             await buildTerrainBitmap();
-            buildSceneGeometry3D(payload, { terrainCellColor, terrainShade });
+            buildSceneGeometry3D(payload, {
+                terrainCellColor,
+                terrainShade,
+                sampleTerrainHeightM,
+            });
             requestTacticalDraw();
         } catch (err) {
             console.warn('scene geometry fetch failed', err);
