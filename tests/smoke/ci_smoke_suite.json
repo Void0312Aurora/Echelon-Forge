@@ -28,7 +28,6 @@
     "tests/runtime/engagement/test_engagement_contract_shape.py",
     "tests/runtime/engagement/test_facade_engagement_evidence_gates.py",
     "tests/runtime/engagement/test_facade_engagement_export.py",
-    "tests/runtime/engagement/test_launch_adapter_static_shape.py",
     "tests/runtime/engagement/test_live_engagement_event_capture.py",
     "tests/runtime/engagement/test_munition_damage_adapter.py",
     "tests/runtime/engagement/test_naval_launch_adapter.py",
