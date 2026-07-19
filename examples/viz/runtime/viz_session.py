@@ -1777,6 +1777,19 @@ class VizSession:
                 scenario_entities_cfg = {}
                 try:
                     loader_scenario_data = getattr(sim_env.loader, "scenario_data", None)
+                    loader_has_entities = (
+                        isinstance(loader_scenario_data, dict)
+                        and isinstance(loader_scenario_data.get("entities"), list)
+                        and len(loader_scenario_data.get("entities")) > 0
+                    )
+                    if not loader_has_entities:
+                        # World-batch loaders keep an empty scenario dict on the
+                        # compatibility shim; fall back to the scenario file so
+                        # the viz still gets side/type metadata for units.
+                        scenario_path = str(getattr(args, "scenario", "") or "")
+                        if scenario_path and os.path.isfile(scenario_path):
+                            with open(scenario_path, "r", encoding="utf-8") as fh:
+                                loader_scenario_data = json.load(fh)
                     if isinstance(loader_scenario_data, dict):
                         raw_entities_cfg = loader_scenario_data.get("entities", [])
                         if isinstance(raw_entities_cfg, list):
@@ -1794,7 +1807,13 @@ class VizSession:
                         return None
 
                     pos = sim_env.sim.get_unit_position(eid)
-                    hdg = sim_env.sim.get_unit_heading(eid)
+                    try:
+                        hdg = sim_env.sim.get_unit_heading(eid)
+                    except AttributeError:
+                        # World-batch adapter shims expose observations but not
+                        # the legacy per-unit heading accessor.
+                        obs_now = sim_env.sim.get_agent_observation(eid)
+                        hdg = float(getattr(obs_now, "heading", 0.0) or 0.0)
                     ent_cfg = scenario_entities_cfg.get(str(name), {})
                     type_name = str(ent_cfg.get("type", "")).strip()
                     type_name_upper = type_name.upper()
