@@ -35,6 +35,11 @@ from python.rl.policy_algo.first_event_projection import (  # noqa: E402
     project_air_combat_c2_roe_legal_open_observations,
 )
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
+from tools.diagnostics.common import (  # noqa: E402
+    EpisodeEnd,
+    EpisodeStepTransition,
+    collect_episode_steps,
+)
 from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_SCENARIO,
@@ -53,7 +58,7 @@ from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     evaluate_credit_head,
     evaluate_label_summary,
 )
-from tools.diagnostics.air_combat_weapon_employment_process_probe import _base_env, _build_env  # noqa: E402
+from tools.diagnostics.air_combat_weapon_employment_process_probe import _build_env  # noqa: E402
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy  # noqa: E402
 
 
@@ -685,70 +690,116 @@ def collect_online_rollout_batch(
     fire_once_accepted: list[bool] = []
     launch_window_open: list[bool] = []
     episode_id: list[int] = []
-    episode_lengths: list[int] = []
     release_steps: list[int] = []
     accepted_steps: list[int] = []
     fire_open_steps = 0
     launch_open_steps = 0
-    try:
-        for ep in range(int(episodes)):
-            obs, _info = env.reset(seed=int(seed) + int(ep))
-            base_env = _base_env(env)
-            ep_max_steps = int(max_steps) if int(max_steps) > 0 else int(getattr(base_env, "max_steps", 0) or 1200)
-            ep_rewards: list[float] = []
-            ep_values: list[float] = []
-            terminal_or_truncated = False
-            for step in range(1, ep_max_steps + 1):
-                obs_tensor_cpu = _obs_to_cpu(policy, obs)
-                policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor_cpu, 1)
-                policy_launch_window = _policy_launch_window_from_obs(obs_tensor_cpu, 1, hyper=hyper)
-                action, value, log_prob = _policy_step(policy, obs, deterministic=not bool(stochastic))
-                new_obs, reward, terminated, truncated, info = env.step(action)
-                row = info if isinstance(info, dict) else {}
-                mask_open = (
-                    bool(policy_fire_mask[0])
-                    if policy_fire_mask is not None and len(policy_fire_mask) >= 1
-                    else AdaptiveKLPPO._first_event_fire_mask_from_info(row)
-                )
-                launch_open = (
-                    bool(policy_launch_window[0])
-                    if policy_launch_window is not None and len(policy_launch_window) >= 1
-                    else bool(mask_open)
-                )
-                accepted = AdaptiveKLPPO._first_event_bool(row.get("fire_once_accepted", False))
 
-                obs_items.append(obs_tensor_cpu)
-                actions.append(action)
-                values.append(float(value))
-                log_probs.append(float(log_prob))
-                ep_rewards.append(float(reward))
-                ep_values.append(float(value))
-                engagement_state.append("AuthorizedReady" if mask_open else str(row.get("engagement_state", "") or ""))
-                fire_mask.append(bool(mask_open))
-                launch_window_open.append(bool(launch_open))
-                fire_once_accepted.append(bool(accepted))
-                episode_id.append(int(ep))
-                fire_open_steps += int(bool(mask_open))
-                launch_open_steps += int(bool(launch_open))
-                if accepted:
-                    accepted_steps.append(int(step))
-                if int(row.get("missile_release_delta", row.get("missile_release", 0)) or 0) > 0:
-                    release_steps.append(int(step))
+    def start_episode(
+        _episode: int,
+        _observation: Any,
+    ) -> tuple[list[float], list[float]]:
+        return [], []
 
-                obs = new_obs
-                if bool(terminated or truncated):
-                    terminal_or_truncated = True
-                    break
-            rewards_by_episode.append(ep_rewards)
-            values_by_episode.append(ep_values)
-            episode_lengths.append(int(len(ep_rewards)))
-            terminated_flags.append(bool(terminal_or_truncated))
-            bootstrap_values.append(0.0 if terminal_or_truncated else _policy_value(policy, obs))
-    finally:
-        try:
-            env.close()
-        except Exception:
-            pass
+    def prepare_step(
+        _episode: int,
+        _step: int,
+        observation: Any,
+        _episode_state: tuple[list[float], list[float]],
+    ) -> tuple[np.ndarray, tuple[Any, ...]]:
+        obs_tensor_cpu = _obs_to_cpu(policy, observation)
+        policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor_cpu, 1)
+        policy_launch_window = _policy_launch_window_from_obs(
+            obs_tensor_cpu,
+            1,
+            hyper=hyper,
+        )
+        action, value, log_prob = _policy_step(
+            policy,
+            observation,
+            deterministic=not bool(stochastic),
+        )
+        return action, (
+            obs_tensor_cpu,
+            policy_fire_mask,
+            policy_launch_window,
+            value,
+            log_prob,
+        )
+
+    def append_step(
+        transition: EpisodeStepTransition,
+        episode_state: tuple[list[float], list[float]],
+    ) -> None:
+        nonlocal fire_open_steps, launch_open_steps
+
+        (
+            obs_tensor_cpu,
+            policy_fire_mask,
+            policy_launch_window,
+            value,
+            log_prob,
+        ) = transition.context
+        row = transition.info if isinstance(transition.info, dict) else {}
+        mask_open = (
+            bool(policy_fire_mask[0])
+            if policy_fire_mask is not None and len(policy_fire_mask) >= 1
+            else AdaptiveKLPPO._first_event_fire_mask_from_info(row)
+        )
+        launch_open = (
+            bool(policy_launch_window[0])
+            if policy_launch_window is not None and len(policy_launch_window) >= 1
+            else bool(mask_open)
+        )
+        accepted = AdaptiveKLPPO._first_event_bool(row.get("fire_once_accepted", False))
+        ep_rewards, ep_values = episode_state
+
+        obs_items.append(obs_tensor_cpu)
+        actions.append(transition.action)
+        values.append(float(value))
+        log_probs.append(float(log_prob))
+        ep_rewards.append(float(transition.reward))
+        ep_values.append(float(value))
+        engagement_state.append(
+            "AuthorizedReady"
+            if mask_open
+            else str(row.get("engagement_state", "") or "")
+        )
+        fire_mask.append(bool(mask_open))
+        launch_window_open.append(bool(launch_open))
+        fire_once_accepted.append(bool(accepted))
+        episode_id.append(int(transition.episode))
+        fire_open_steps += int(bool(mask_open))
+        launch_open_steps += int(bool(launch_open))
+        if accepted:
+            accepted_steps.append(int(transition.step))
+        if int(row.get("missile_release_delta", row.get("missile_release", 0)) or 0) > 0:
+            release_steps.append(int(transition.step))
+
+    def finish_episode(
+        episode_end: EpisodeEnd,
+        episode_state: tuple[list[float], list[float]],
+    ) -> None:
+        ep_rewards, ep_values = episode_state
+        rewards_by_episode.append(ep_rewards)
+        values_by_episode.append(ep_values)
+        terminated_flags.append(bool(episode_end.done))
+        bootstrap_values.append(
+            0.0
+            if episode_end.done
+            else _policy_value(policy, episode_end.final_observation)
+        )
+
+    episode_lengths = collect_episode_steps(
+        env,
+        episodes=int(episodes),
+        max_steps=int(max_steps),
+        seed=int(seed),
+        prepare_step=prepare_step,
+        on_step=append_step,
+        on_episode_start=start_episode,
+        on_episode_end=finish_episode,
+    )
 
     advantages: list[float] = []
     returns: list[float] = []

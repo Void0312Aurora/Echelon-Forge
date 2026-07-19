@@ -21,7 +21,11 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from tools.diagnostics.common import finite_float
+from tools.diagnostics.common import (
+    EpisodeStepTransition,
+    collect_episode_steps,
+    finite_float,
+)
 
 # Compatibility re-export for real_update / online_update callers.
 _finite_float = finite_float
@@ -177,62 +181,71 @@ def collect_fixed_batch(
     fire_once_accepted: list[bool] = []
     launch_window_open: list[bool] = []
     episode_id: list[int] = []
-    episode_lengths: list[int] = []
     accepted_steps: list[int] = []
     fire_open_steps = 0
     launch_open_steps = 0
-    try:
-        for ep in range(int(episodes)):
-            obs, _info = env.reset(seed=int(seed) + int(ep))
-            steps_this_ep = 0
-            base_env = _base_env(env)
-            ep_max_steps = int(max_steps) if int(max_steps) > 0 else int(getattr(base_env, "max_steps", 0) or 1200)
-            for step in range(1, ep_max_steps + 1):
-                obs_tensor = _obs_to_cpu(model.policy, obs)
-                policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor, 1)
-                policy_launch_window = _policy_launch_window_from_obs(obs_tensor, 1, hyper=hyper)
-                if str(collector_action) == "model":
-                    action = _model_action(model, obs, deterministic=not bool(stochastic))
-                elif str(collector_action) == "hold":
-                    action = _hold_action(env)
-                else:
-                    raise ValueError(f"unknown collector action: {collector_action}")
 
-                new_obs, _reward, terminated, truncated, info = env.step(action)
-                row = info if isinstance(info, dict) else {}
-                mask_open = (
-                    bool(policy_fire_mask[0])
-                    if policy_fire_mask is not None and len(policy_fire_mask) >= 1
-                    else AdaptiveKLPPO._first_event_fire_mask_from_info(row)
-                )
-                launch_open = (
-                    bool(policy_launch_window[0])
-                    if policy_launch_window is not None and len(policy_launch_window) >= 1
-                    else bool(mask_open)
-                )
-                accepted = AdaptiveKLPPO._first_event_bool(row.get("fire_once_accepted", False))
+    def prepare_step(
+        _episode: int,
+        _step: int,
+        observation: Any,
+        _episode_state: Any,
+    ) -> tuple[np.ndarray, tuple[dict[str, th.Tensor], list[bool] | None, list[bool] | None]]:
+        obs_tensor = _obs_to_cpu(model.policy, observation)
+        policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor, 1)
+        policy_launch_window = _policy_launch_window_from_obs(obs_tensor, 1, hyper=hyper)
+        if str(collector_action) == "model":
+            action = _model_action(
+                model,
+                observation,
+                deterministic=not bool(stochastic),
+            )
+        elif str(collector_action) == "hold":
+            action = _hold_action(env)
+        else:
+            raise ValueError(f"unknown collector action: {collector_action}")
+        return action, (obs_tensor, policy_fire_mask, policy_launch_window)
 
-                obs_items.append(obs_tensor)
-                engagement_state.append("AuthorizedReady" if mask_open else str(row.get("engagement_state", "") or ""))
-                fire_mask.append(bool(mask_open))
-                launch_window_open.append(bool(launch_open))
-                fire_once_accepted.append(bool(accepted))
-                episode_id.append(int(ep))
-                fire_open_steps += int(bool(mask_open))
-                launch_open_steps += int(bool(launch_open))
-                if accepted:
-                    accepted_steps.append(int(step))
+    def append_step(transition: EpisodeStepTransition, _episode_state: Any) -> None:
+        nonlocal fire_open_steps, launch_open_steps
 
-                obs = new_obs
-                steps_this_ep += 1
-                if bool(terminated or truncated):
-                    break
-            episode_lengths.append(int(steps_this_ep))
-    finally:
-        try:
-            env.close()
-        except Exception:
-            pass
+        obs_tensor, policy_fire_mask, policy_launch_window = transition.context
+        row = transition.info if isinstance(transition.info, dict) else {}
+        mask_open = (
+            bool(policy_fire_mask[0])
+            if policy_fire_mask is not None and len(policy_fire_mask) >= 1
+            else AdaptiveKLPPO._first_event_fire_mask_from_info(row)
+        )
+        launch_open = (
+            bool(policy_launch_window[0])
+            if policy_launch_window is not None and len(policy_launch_window) >= 1
+            else bool(mask_open)
+        )
+        accepted = AdaptiveKLPPO._first_event_bool(row.get("fire_once_accepted", False))
+
+        obs_items.append(obs_tensor)
+        engagement_state.append(
+            "AuthorizedReady"
+            if mask_open
+            else str(row.get("engagement_state", "") or "")
+        )
+        fire_mask.append(bool(mask_open))
+        launch_window_open.append(bool(launch_open))
+        fire_once_accepted.append(bool(accepted))
+        episode_id.append(int(transition.episode))
+        fire_open_steps += int(bool(mask_open))
+        launch_open_steps += int(bool(launch_open))
+        if accepted:
+            accepted_steps.append(int(transition.step))
+
+    episode_lengths = collect_episode_steps(
+        env,
+        episodes=int(episodes),
+        max_steps=int(max_steps),
+        seed=int(seed),
+        prepare_step=prepare_step,
+        on_step=append_step,
+    )
 
     labels = build_first_event_hazard_labels(
         engagement_state=engagement_state,

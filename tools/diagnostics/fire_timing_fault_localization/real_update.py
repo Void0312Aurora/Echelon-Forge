@@ -28,6 +28,10 @@ from python.rl.policy_algo.grouped_stopping import (  # noqa: E402
     GroupedStoppingEvidence,
     compute_grouped_stopping_loss,
 )
+from tools.diagnostics.common import (  # noqa: E402
+    EpisodeStepTransition,
+    collect_episode_steps,
+)
 from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     _concat_obs,
     _finite_float,
@@ -39,7 +43,7 @@ from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     _slice_obs,
     _to_serializable,
 )
-from tools.diagnostics.air_combat_weapon_employment_process_probe import _base_env, _build_env  # noqa: E402
+from tools.diagnostics.air_combat_weapon_employment_process_probe import _build_env  # noqa: E402
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy  # noqa: E402
 
 
@@ -255,52 +259,53 @@ def collect_real_batch(
     launch_window_open: list[bool] = []
     fire_once_accepted: list[bool] = []
     episode_ids: list[int] = []
-    episode_lengths: list[int] = []
-    try:
-        for ep in range(int(episodes)):
-            obs, _info = env.reset(seed=int(seed) + int(ep))
-            base_env = _base_env(env)
-            ep_max_steps = int(max_steps) if int(max_steps) > 0 else int(getattr(base_env, "max_steps", 0) or 1200)
-            steps_this_ep = 0
-            for _step in range(1, ep_max_steps + 1):
-                obs_tensor = _obs_to_cpu(model.policy, obs)
-                policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor, 1)
-                policy_launch_window = _policy_launch_window_from_obs(obs_tensor, 1, hyper=hyper)
-                action = _collector_action_for_m3s2(
-                    model,
-                    env,
-                    obs,
-                    collector_action=str(collector_action),
-                    stochastic=bool(stochastic),
-                )
-                new_obs, _reward, terminated, truncated, info = env.step(action)
-                row = info if isinstance(info, dict) else {}
-                mask_open = (
-                    bool(policy_fire_mask[0])
-                    if policy_fire_mask is not None and len(policy_fire_mask) >= 1
-                    else bool(row.get("fire_mask", row.get("authorization_to_fire", False)))
-                )
-                launch_open = (
-                    bool(policy_launch_window[0])
-                    if policy_launch_window is not None and len(policy_launch_window) >= 1
-                    else bool(mask_open)
-                )
-                accepted = bool(row.get("fire_once_accepted", False))
-                obs_items.append(obs_tensor)
-                fire_mask.append(bool(mask_open))
-                launch_window_open.append(bool(launch_open))
-                fire_once_accepted.append(bool(accepted))
-                episode_ids.append(int(ep))
-                steps_this_ep += 1
-                obs = new_obs
-                if bool(terminated or truncated):
-                    break
-            episode_lengths.append(int(steps_this_ep))
-    finally:
-        try:
-            env.close()
-        except Exception:
-            pass
+
+    def prepare_step(
+        _episode: int,
+        _step: int,
+        observation: Any,
+        _episode_state: Any,
+    ) -> tuple[np.ndarray, tuple[dict[str, th.Tensor], list[bool] | None, list[bool] | None]]:
+        obs_tensor = _obs_to_cpu(model.policy, observation)
+        policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor, 1)
+        policy_launch_window = _policy_launch_window_from_obs(obs_tensor, 1, hyper=hyper)
+        action = _collector_action_for_m3s2(
+            model,
+            env,
+            observation,
+            collector_action=str(collector_action),
+            stochastic=bool(stochastic),
+        )
+        return action, (obs_tensor, policy_fire_mask, policy_launch_window)
+
+    def append_step(transition: EpisodeStepTransition, _episode_state: Any) -> None:
+        obs_tensor, policy_fire_mask, policy_launch_window = transition.context
+        row = transition.info if isinstance(transition.info, dict) else {}
+        mask_open = (
+            bool(policy_fire_mask[0])
+            if policy_fire_mask is not None and len(policy_fire_mask) >= 1
+            else bool(row.get("fire_mask", row.get("authorization_to_fire", False)))
+        )
+        launch_open = (
+            bool(policy_launch_window[0])
+            if policy_launch_window is not None and len(policy_launch_window) >= 1
+            else bool(mask_open)
+        )
+        accepted = bool(row.get("fire_once_accepted", False))
+        obs_items.append(obs_tensor)
+        fire_mask.append(bool(mask_open))
+        launch_window_open.append(bool(launch_open))
+        fire_once_accepted.append(bool(accepted))
+        episode_ids.append(int(transition.episode))
+
+    episode_lengths = collect_episode_steps(
+        env,
+        episodes=int(episodes),
+        max_steps=int(max_steps),
+        seed=int(seed),
+        prepare_step=prepare_step,
+        on_step=append_step,
+    )
 
     groups = _build_groups_from_rows(
         fire_mask=fire_mask,

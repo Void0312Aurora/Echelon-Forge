@@ -20,6 +20,9 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
+from python.rl.runtime.single_world_batch_runtime import (
+    build_single_world_batch_execution_runtime,
+)
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
@@ -120,6 +123,8 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.summariz
 )
 from tools.diagnostics import mlf9_statistical_trends
 
+_CANONICAL_WORLD_BATCH_VEC_ENV = WorldBatchVecEnv
+
 __all__ = (
     "FIRE_MASK_COMPONENT_NAMES",
     "ACTION_SIGNAL_NAMES",
@@ -216,24 +221,42 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
             "air-combat process diagnostics only supports maintained WorldBatchVecEnv "
             f"or MultiTimescaleActionWrapper controller configs; got {wrapper_class!r}"
         )
-    vec_env = WorldBatchVecEnv(
-        scenario_path=os.path.abspath(scenario_path),
-        n_envs=1,
-        include_visual=bool(env_cfg.get("include_visual", False)),
-        include_proprio=bool(env_cfg.get("include_proprio", True)),
-        action_mode=str(env_cfg.get("action_mode", "full")),
-        mission_obs_mode=str(env_cfg.get("mission_obs_mode", "basic")),
-        visual_downsample=int(env_cfg.get("visual_downsample", 1)),
-        visual_update_interval=int(env_cfg.get("visual_update_interval", 1)),
-        temporal_history_len=int(env_cfg.get("temporal_history_len", 1)),
-        execution_step_runtime_mode=str(env_cfg.get("execution_step_runtime_mode", "compiled")),
-        flight_shaping_backend=str(env_cfg.get("flight_shaping_backend", "compiled")),
-        step_info_mode="full",
-        worker_threads=1,
-        action_wrapper_kwargs=dict(wrapper_kwargs or {})
-        if wrapper_class is MultiTimescaleActionWrapper
-        else None,
-    )
+    env_settings = {
+        "include_visual": bool(env_cfg.get("include_visual", False)),
+        "include_proprio": bool(env_cfg.get("include_proprio", True)),
+        "action_mode": str(env_cfg.get("action_mode", "full")),
+        "mission_obs_mode": str(env_cfg.get("mission_obs_mode", "basic")),
+        "visual_downsample": int(env_cfg.get("visual_downsample", 1)),
+        "visual_update_interval": int(env_cfg.get("visual_update_interval", 1)),
+        "temporal_history_len": int(env_cfg.get("temporal_history_len", 1)),
+        "execution_step_runtime_mode": str(
+            env_cfg.get("execution_step_runtime_mode", "compiled")
+        ),
+        "flight_shaping_backend": str(
+            env_cfg.get("flight_shaping_backend", "compiled")
+        ),
+        "step_info_mode": "full",
+        "action_wrapper_kwargs": (
+            dict(wrapper_kwargs or {})
+            if wrapper_class is MultiTimescaleActionWrapper
+            else None
+        ),
+    }
+    if WorldBatchVecEnv is not _CANONICAL_WORLD_BATCH_VEC_ENV:
+        # Preserve the diagnostics module's constructor override seam.
+        vec_env = WorldBatchVecEnv(
+            scenario_path=os.path.abspath(scenario_path),
+            n_envs=1,
+            worker_threads=1,
+            **env_settings,
+        )
+    else:
+        runtime = build_single_world_batch_execution_runtime(
+            scenario_path=os.path.abspath(scenario_path),
+            env_settings=env_settings,
+            worker_threads=1,
+        )
+        vec_env = runtime.world_vec
     return _BatchSingleWorldProbeEnv(vec_env)
 
 

@@ -6,6 +6,7 @@ import math
 import os
 import sys
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -107,6 +108,132 @@ def average_timing_sums(acc: dict[str, float], *, count: int) -> dict[str, float
         return {}
     denom = float(count)
     return {key: float(value) / denom for key, value in acc.items()}
+
+
+@dataclass(frozen=True)
+class EpisodeStepTransition:
+    episode: int
+    step: int
+    observation: Any
+    next_observation: Any
+    action: Any
+    reward: Any
+    terminated: bool
+    truncated: bool
+    info: Any
+    context: Any
+
+    @property
+    def done(self) -> bool:
+        return bool(self.terminated or self.truncated)
+
+
+@dataclass(frozen=True)
+class EpisodeEnd:
+    episode: int
+    steps: int
+    final_observation: Any
+    terminated: bool
+    truncated: bool
+
+    @property
+    def done(self) -> bool:
+        return bool(self.terminated or self.truncated)
+
+
+def collect_episode_steps(
+    env: Any,
+    *,
+    episodes: int,
+    max_steps: int,
+    seed: int,
+    prepare_step: Callable[[int, int, Any, Any], tuple[Any, Any]],
+    on_step: Callable[[EpisodeStepTransition, Any], None],
+    fallback_max_steps: Callable[[Any], int] | None = None,
+    on_episode_start: Callable[[int, Any], Any] | None = None,
+    on_episode_end: Callable[[EpisodeEnd, Any], None] | None = None,
+) -> list[int]:
+    """Run the shared reset/step/termination/close shell for diagnostics collectors.
+
+    Callers retain all domain-specific state. ``prepare_step`` returns the action
+    plus arbitrary context that is delivered with the post-step transition.
+    ``on_episode_end`` is the hook for terminal handling such as value bootstrap.
+    """
+
+    episode_lengths: list[int] = []
+    try:
+        for episode in range(int(episodes)):
+            observation, _reset_info = env.reset(seed=int(seed) + int(episode))
+            requested_max_steps = int(max_steps)
+            if requested_max_steps > 0:
+                episode_max_steps = requested_max_steps
+            else:
+                if fallback_max_steps is not None:
+                    configured_max_steps = fallback_max_steps(env)
+                else:
+                    configured_max_steps = getattr(
+                        getattr(env, "unwrapped", env),
+                        "max_steps",
+                        0,
+                    )
+                episode_max_steps = int(configured_max_steps or 1200)
+            episode_state = (
+                on_episode_start(int(episode), observation)
+                if on_episode_start is not None
+                else None
+            )
+            steps = 0
+            terminated = False
+            truncated = False
+            for step in range(1, episode_max_steps + 1):
+                action, context = prepare_step(
+                    int(episode),
+                    int(step),
+                    observation,
+                    episode_state,
+                )
+                next_observation, reward, terminated_raw, truncated_raw, info = env.step(
+                    action
+                )
+                terminated = bool(terminated_raw)
+                truncated = bool(truncated_raw)
+                on_step(
+                    EpisodeStepTransition(
+                        episode=int(episode),
+                        step=int(step),
+                        observation=observation,
+                        next_observation=next_observation,
+                        action=action,
+                        reward=reward,
+                        terminated=terminated,
+                        truncated=truncated,
+                        info=info,
+                        context=context,
+                    ),
+                    episode_state,
+                )
+                observation = next_observation
+                steps += 1
+                if bool(terminated or truncated):
+                    break
+            episode_lengths.append(int(steps))
+            if on_episode_end is not None:
+                on_episode_end(
+                    EpisodeEnd(
+                        episode=int(episode),
+                        steps=int(steps),
+                        final_observation=observation,
+                        terminated=bool(terminated),
+                        truncated=bool(truncated),
+                    ),
+                    episode_state,
+                )
+    finally:
+        try:
+            env.close()
+        except Exception:
+            pass
+    return episode_lengths
 
 
 def _ef_py():
