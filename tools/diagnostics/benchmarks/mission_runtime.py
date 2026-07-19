@@ -14,7 +14,7 @@ if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
 from python.angles import wrap_signed_deg
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)

@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
-from python.testing.runtime import resolve_repo_path
+from python.runtime_bootstrap import resolve_repo_path
 
 
 SCHEMA_VERSION = "a2.target_geometry_proxy_independent_variable_heatmap.v1"

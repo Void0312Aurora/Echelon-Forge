@@ -19,7 +19,7 @@ if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
 from python.env_config import FLIGHT_SHAPING_BACKENDS
-from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)

@@ -6,7 +6,7 @@ import numpy as np
 
 from python.angles import wrap_signed_deg
 from python.env_config import ACTION_MODES
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ACTION_MODE_CHOICES = tuple(ACTION_MODES)

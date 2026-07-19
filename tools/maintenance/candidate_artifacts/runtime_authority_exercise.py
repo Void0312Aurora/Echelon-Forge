@@ -26,7 +26,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
-from python.testing.runtime import configure_sim_log_level, resolve_repo_path
+from python.runtime_bootstrap import configure_sim_log_level, resolve_repo_path
 
 from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 

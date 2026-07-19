@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from typing import Any
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()

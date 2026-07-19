@@ -7,7 +7,7 @@ import os
 from typing import Any
 
 from python.angles import bearing_deg, wrap_signed_deg
-from python.testing.runtime import resolve_repo_path
+from python.runtime_bootstrap import resolve_repo_path
 
 from ..common import ContractSkipped
 

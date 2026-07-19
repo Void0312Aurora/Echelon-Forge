@@ -4,7 +4,7 @@ import json
 import os
 from typing import Any
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()

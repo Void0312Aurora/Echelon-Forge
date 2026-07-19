@@ -19,7 +19,7 @@ if REPO_ROOT not in sys.path:
 
 from gym_envs.leader_env import LeaderTrainingEnv  # noqa: E402
 from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
-from python.testing.runtime import configure_sim_log_level  # noqa: E402
+from python.runtime_bootstrap import configure_sim_log_level  # noqa: E402
 from tools.diagnostics.common import average_timing_sums, merge_timing_sums  # noqa: E402
 
 

@@ -4,7 +4,7 @@ import json
 import tempfile
 import unittest
 
-from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
 
 configure_sim_log_level("error")

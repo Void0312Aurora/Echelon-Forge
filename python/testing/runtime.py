@@ -1,6 +1,7 @@
-"""Compatibility imports for the canonical runtime bootstrap.
+"""Archive-only compatibility facade for the canonical runtime bootstrap.
 
-New production code should import :mod:`python.runtime_bootstrap` directly.
+Maintained code must import :mod:`python.runtime_bootstrap` directly.
+This module re-exports its public surface for archive callers only.
 """
 
 from python.runtime_bootstrap import (

@@ -7,7 +7,7 @@ from typing import Any
 
 from python.angles import bearing_between_deg
 from python.artifact_paths import resolve_artifact_path
-from python.testing.runtime import resolve_repo_path
+from python.runtime_bootstrap import resolve_repo_path
 
 from ..common import (
     ContractSkipped,

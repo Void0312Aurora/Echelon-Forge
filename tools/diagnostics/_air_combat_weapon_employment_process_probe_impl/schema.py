@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 
 from gym_envs.scenario_loader.reward_runtime.air_combat import classify_air_combat_c2_roe_event
-from python.testing.runtime import resolve_repo_path
+from python.runtime_bootstrap import resolve_repo_path
 from tools.diagnostics import lethality_chain_contract as chain_contract
 
 DEFAULT_SCENARIO = resolve_repo_path(

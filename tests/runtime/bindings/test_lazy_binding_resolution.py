@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from python.testing.runtime import build_dir, ensure_repo_imports
+from python.runtime_bootstrap import build_dir, ensure_repo_imports
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

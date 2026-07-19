@@ -4,7 +4,7 @@ import json
 import math
 import os
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 from .common import (
     _check_optional_range,

@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()

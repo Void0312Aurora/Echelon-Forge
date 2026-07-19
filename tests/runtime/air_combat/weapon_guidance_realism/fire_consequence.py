@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from python.testing.runtime import configure_sim_log_level
+from python.runtime_bootstrap import configure_sim_log_level
 
 from .mq9_aim120 import (
   _assert_component_row_exposes_public_failure_modes,

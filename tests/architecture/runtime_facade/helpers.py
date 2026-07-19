@@ -4,7 +4,7 @@ import ast
 from dataclasses import dataclass, fields
 from pathlib import Path
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()

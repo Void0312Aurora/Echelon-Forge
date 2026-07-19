@@ -4,7 +4,7 @@ import math
 import unittest
 from dataclasses import dataclass
 
-from python.testing.runtime import configure_sim_log_level, resolve_repo_path
+from python.runtime_bootstrap import configure_sim_log_level, resolve_repo_path
 
 
 configure_sim_log_level("error")

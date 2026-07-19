@@ -6,7 +6,7 @@ import json
 import unittest
 from types import SimpleNamespace
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()

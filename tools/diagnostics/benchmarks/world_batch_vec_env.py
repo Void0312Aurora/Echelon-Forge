@@ -16,7 +16,7 @@ if _REPO_ROOT_HINT not in sys.path:
 
 from python.env_config import ACTION_MODES, EXECUTION_STEP_RUNTIME_MODES, FLIGHT_SHAPING_BACKENDS
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
-from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)

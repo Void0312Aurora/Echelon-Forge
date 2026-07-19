@@ -25,7 +25,7 @@ import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
 
-from python.testing.runtime import configure_sim_log_level, ensure_repo_imports
+from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports
 
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()

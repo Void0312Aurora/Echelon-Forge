@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from textwrap import dedent
 
-from python.testing.runtime import build_dir, resolve_repo_path
+from python.runtime_bootstrap import build_dir, resolve_repo_path
 
 
 _REPO_ROOT = resolve_repo_path()
@@ -61,7 +61,7 @@ def _guards_prelude() -> str:
     import json
     import os
     import sys
-    from python.testing.runtime import configure_sim_log_level
+    from python.runtime_bootstrap import configure_sim_log_level
     configure_sim_log_level("error")
     import ef_py
     from gym_envs.scenario_loader import ScenarioLoader
@@ -583,7 +583,7 @@ def _tuning_prelude(db_path: str) -> str:
     import json
     import os
     import sys
-    from python.testing.runtime import configure_sim_log_level
+    from python.runtime_bootstrap import configure_sim_log_level
 
     configure_sim_log_level("error")
 

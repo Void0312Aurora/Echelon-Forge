@@ -7,7 +7,7 @@ import numpy as np
 import torch as th
 from gymnasium import spaces
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
 
