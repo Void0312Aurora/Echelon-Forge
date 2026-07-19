@@ -132,38 +132,19 @@ void bind_episode(nb::module_& m) {
         .def("query_ils", &CompiledScenarioGeometry::query_ils, nb::arg("x_m"), nb::arg("y_m"), nb::arg("alt_m"), nb::arg("threshold_crossing_height_m") = 0.0)
         .def("query_route_guidance", &CompiledScenarioGeometry::query_route_guidance, nb::arg("options"));
 
-    nb::class_<MissionNavInputs>(m, "MissionNavInputs")
-        .def(nb::init<>())
-        .def_rw("own_altitude_m", &MissionNavInputs::own_altitude_m)
-        .def_rw("truth_heading_deg", &MissionNavInputs::truth_heading_deg)
-        .def_rw("truth_speed_mps", &MissionNavInputs::truth_speed_mps)
-        .def_rw("inst_heading_deg", &MissionNavInputs::inst_heading_deg)
-        .def_rw("inst_ground_track_deg", &MissionNavInputs::inst_ground_track_deg)
-        .def_rw("inst_ias_mps", &MissionNavInputs::inst_ias_mps)
-        .def_rw("waypoint_altitude_m", &MissionNavInputs::waypoint_altitude_m)
-        .def_rw("cdi_full_scale_m", &MissionNavInputs::cdi_full_scale_m);
+    nb::class_<MissionNavInputs> nav_inputs_class(m, "MissionNavInputs");
+    nav_inputs_class
+        .def(nb::init<>());
+#define EF_NAV_INPUT(type, name, default_value) \
+    nav_inputs_class.def_rw(#name, &MissionNavInputs::name);
+#include "core/mission/runtime/detail/mission_nav_inputs.inc"
 
-    nb::class_<MissionNavProducts>(m, "MissionNavProducts")
-        .def(nb::init<>())
-        .def_ro("valid", &MissionNavProducts::valid)
-        .def_ro("active_wp_idx", &MissionNavProducts::active_wp_idx)
-        .def_ro("total_wps", &MissionNavProducts::total_wps)
-        .def_ro("selected_steerpoint", &MissionNavProducts::selected_steerpoint)
-        .def_ro("steerpoint_mode_code", &MissionNavProducts::steerpoint_mode_code)
-        .def_ro("dist_m", &MissionNavProducts::dist_m)
-        .def_ro("xtk_m", &MissionNavProducts::xtk_m)
-        .def_ro("dtg_m", &MissionNavProducts::dtg_m)
-        .def_ro("direct_bearing_deg", &MissionNavProducts::direct_bearing_deg)
-        .def_ro("desired_leg_track_deg", &MissionNavProducts::desired_leg_track_deg)
-        .def_ro("bearing_rel_deg", &MissionNavProducts::bearing_rel_deg)
-        .def_ro("altitude_delta_m", &MissionNavProducts::altitude_delta_m)
-        .def_ro("cdi_norm", &MissionNavProducts::cdi_norm)
-        .def_ro("track_angle_error_deg", &MissionNavProducts::track_angle_error_deg)
-        .def_ro("next_turn_deg", &MissionNavProducts::next_turn_deg)
-        .def_ro("distance_to_turn_m", &MissionNavProducts::distance_to_turn_m)
-        .def_ro("own_heading_deg", &MissionNavProducts::own_heading_deg)
-        .def_ro("ground_track_deg", &MissionNavProducts::ground_track_deg)
-        .def_ro("reference_speed_mps", &MissionNavProducts::reference_speed_mps);
+    nb::class_<MissionNavProducts> nav_products_class(m, "MissionNavProducts");
+    nav_products_class
+        .def(nb::init<>());
+#define EF_NAV_PRODUCT(type, name, default_value) \
+    nav_products_class.def_ro(#name, &MissionNavProducts::name);
+#include "core/mission/runtime/detail/mission_nav_products.inc"
 
     nb::class_<MissionObservationInputs>(m, "MissionObservationInputs")
         .def(nb::init<>())
@@ -208,19 +189,12 @@ void bind_episode(nb::module_& m) {
         .def_rw("runway_width_margin_m", &StepInfoInputs::runway_width_margin_m)
         .def_rw("runway_length_margin_m", &StepInfoInputs::runway_length_margin_m);
 
-    nb::class_<StepInfoProducts>(m, "StepInfoProducts")
-        .def(nb::init<>())
-        .def_ro("valid", &StepInfoProducts::valid)
-        .def_ro("on_runway", &StepInfoProducts::on_runway)
-        .def_ro("gear_collapsed", &StepInfoProducts::gear_collapsed)
-        .def_ro("gear_stress", &StepInfoProducts::gear_stress)
-        .def_ro("on_ground", &StepInfoProducts::on_ground)
-        .def_ro("airborne", &StepInfoProducts::airborne)
-        .def_ro("preliftoff", &StepInfoProducts::preliftoff)
-        .def_ro("has_runway_frame", &StepInfoProducts::has_runway_frame)
-        .def_ro("on_runway_geom", &StepInfoProducts::on_runway_geom)
-        .def_ro("runway_cross_m", &StepInfoProducts::runway_cross_m)
-        .def_ro("runway_along_m", &StepInfoProducts::runway_along_m);
+    nb::class_<StepInfoProducts> step_info_products_class(m, "StepInfoProducts");
+    step_info_products_class
+        .def(nb::init<>());
+#define EF_STEP_INFO_PRODUCT(type, name, default_value) \
+    step_info_products_class.def_ro(#name, &StepInfoProducts::name);
+#include "core/mission/runtime/detail/step_info_products.inc"
 
     m.def("resolve_ground_track_deg", &resolve_ground_track_deg, nb::arg("fallback_heading_deg"), nb::arg("inst_ground_track_deg"));
     m.def("compute_ground_track_error_deg", &compute_ground_track_error_deg, nb::arg("target_heading_deg"), nb::arg("fallback_heading_deg"), nb::arg("inst_ground_track_deg"));
@@ -229,112 +203,33 @@ void bind_episode(nb::module_& m) {
     m.def("compute_mission_observation", &compute_mission_observation, nb::arg("inputs"));
     m.def("compute_step_info_runtime", &compute_step_info_runtime, nb::arg("inputs"));
 
-    nb::class_<WaypointRewardInputs>(m, "WaypointRewardInputs")
-        .def(nb::init<>())
-        .def_rw("valid", &WaypointRewardInputs::valid)
-        .def_rw("waypoint_index", &WaypointRewardInputs::waypoint_index)
-        .def_rw("waypoint_count", &WaypointRewardInputs::waypoint_count)
-        .def_rw("is_flyover", &WaypointRewardInputs::is_flyover)
-        .def_rw("has_guidance", &WaypointRewardInputs::has_guidance)
-        .def_rw("passed_fix", &WaypointRewardInputs::passed_fix)
-        .def_rw("dist_m", &WaypointRewardInputs::dist_m)
-        .def_rw("xtk_m", &WaypointRewardInputs::xtk_m)
-        .def_rw("dtg_m", &WaypointRewardInputs::dtg_m)
-        .def_rw("waypoint_radius_m", &WaypointRewardInputs::waypoint_radius_m)
-        .def_rw("leg_len_m", &WaypointRewardInputs::leg_len_m)
-        .def_rw("lead_turn_m", &WaypointRewardInputs::lead_turn_m)
-        .def_rw("sequence_gate_m", &WaypointRewardInputs::sequence_gate_m)
-        .def_rw("has_prev_dist", &WaypointRewardInputs::has_prev_dist)
-        .def_rw("prev_dist_m", &WaypointRewardInputs::prev_dist_m)
-        .def_rw("route_length_m", &WaypointRewardInputs::route_length_m)
-        .def_rw("turn_relief_activation", &WaypointRewardInputs::turn_relief_activation)
-        .def_rw("progress_weight", &WaypointRewardInputs::progress_weight)
-        .def_rw("progress_negative_scale", &WaypointRewardInputs::progress_negative_scale)
-        .def_rw("distance_weight", &WaypointRewardInputs::distance_weight)
-        .def_rw("distance_clip_m", &WaypointRewardInputs::distance_clip_m)
-        .def_rw("distance_scale_by_route", &WaypointRewardInputs::distance_scale_by_route)
-        .def_rw("distance_route_ref_m", &WaypointRewardInputs::distance_route_ref_m)
-        .def_rw("distance_route_scale_min", &WaypointRewardInputs::distance_route_scale_min)
-        .def_rw("distance_route_scale_max", &WaypointRewardInputs::distance_route_scale_max)
-        .def_rw("cross_track_weight", &WaypointRewardInputs::cross_track_weight)
-        .def_rw("cross_track_deadband_m", &WaypointRewardInputs::cross_track_deadband_m)
-        .def_rw("cross_track_norm_m", &WaypointRewardInputs::cross_track_norm_m)
-        .def_rw("cross_track_power", &WaypointRewardInputs::cross_track_power)
-        .def_rw("cross_track_clip", &WaypointRewardInputs::cross_track_clip)
-        .def_rw("turn_relief_max", &WaypointRewardInputs::turn_relief_max)
-        .def_rw("proximity_weight", &WaypointRewardInputs::proximity_weight)
-        .def_rw("proximity_ref_m", &WaypointRewardInputs::proximity_ref_m)
-        .def_rw("proximity_power", &WaypointRewardInputs::proximity_power)
-        .def_rw("reached_bonus", &WaypointRewardInputs::reached_bonus);
+    nb::class_<WaypointRewardInputs> wp_inputs_class(m, "WaypointRewardInputs");
+    wp_inputs_class
+        .def(nb::init<>());
+#define EF_WAYPOINT_INPUT(type, name, default_value) \
+    wp_inputs_class.def_rw(#name, &WaypointRewardInputs::name);
+#include "core/mission/runtime/detail/waypoint_reward_inputs.inc"
 
-    nb::class_<WaypointRewardProducts>(m, "WaypointRewardProducts")
-        .def(nb::init<>())
-        .def_ro("valid", &WaypointRewardProducts::valid)
-        .def_ro("waypoint_progress", &WaypointRewardProducts::waypoint_progress)
-        .def_ro("waypoint_distance", &WaypointRewardProducts::waypoint_distance)
-        .def_ro("waypoint_cross_track", &WaypointRewardProducts::waypoint_cross_track)
-        .def_ro("waypoint_proximity", &WaypointRewardProducts::waypoint_proximity)
-        .def_ro("waypoint_reached_bonus", &WaypointRewardProducts::waypoint_reached_bonus)
-        .def_ro("arrived", &WaypointRewardProducts::arrived)
-        .def_ro("next_prev_dist_valid", &WaypointRewardProducts::next_prev_dist_valid)
-        .def_ro("next_prev_dist_m", &WaypointRewardProducts::next_prev_dist_m);
+    nb::class_<WaypointRewardProducts> wp_products_class(m, "WaypointRewardProducts");
+    wp_products_class
+        .def(nb::init<>());
+#define EF_WAYPOINT_PRODUCT(type, name, default_value) \
+    wp_products_class.def_ro(#name, &WaypointRewardProducts::name);
+#include "core/mission/runtime/detail/waypoint_reward_products.inc"
 
-    nb::class_<ApproachRewardInputs>(m, "ApproachRewardInputs")
-        .def(nb::init<>())
-        .def_rw("valid", &ApproachRewardInputs::valid)
-        .def_rw("ils_valid", &ApproachRewardInputs::ils_valid)
-        .def_rw("ils_loc_dev", &ApproachRewardInputs::ils_loc_dev)
-        .def_rw("ils_gs_dev", &ApproachRewardInputs::ils_gs_dev)
-        .def_rw("ils_dme_m", &ApproachRewardInputs::ils_dme_m)
-        .def_rw("has_prev_loc", &ApproachRewardInputs::has_prev_loc)
-        .def_rw("prev_loc_abs", &ApproachRewardInputs::prev_loc_abs)
-        .def_rw("has_prev_gs", &ApproachRewardInputs::has_prev_gs)
-        .def_rw("prev_gs_abs", &ApproachRewardInputs::prev_gs_abs)
-        .def_rw("has_prev_dme", &ApproachRewardInputs::has_prev_dme)
-        .def_rw("prev_dme_m", &ApproachRewardInputs::prev_dme_m)
-        .def_rw("localizer_weight", &ApproachRewardInputs::localizer_weight)
-        .def_rw("localizer_deadband", &ApproachRewardInputs::localizer_deadband)
-        .def_rw("localizer_norm", &ApproachRewardInputs::localizer_norm)
-        .def_rw("localizer_power", &ApproachRewardInputs::localizer_power)
-        .def_rw("localizer_clip", &ApproachRewardInputs::localizer_clip)
-        .def_rw("localizer_improve_weight", &ApproachRewardInputs::localizer_improve_weight)
-        .def_rw("glideslope_weight", &ApproachRewardInputs::glideslope_weight)
-        .def_rw("glideslope_deadband", &ApproachRewardInputs::glideslope_deadband)
-        .def_rw("glideslope_norm", &ApproachRewardInputs::glideslope_norm)
-        .def_rw("glideslope_power", &ApproachRewardInputs::glideslope_power)
-        .def_rw("glideslope_clip", &ApproachRewardInputs::glideslope_clip)
-        .def_rw("glideslope_improve_weight", &ApproachRewardInputs::glideslope_improve_weight)
-        .def_rw("dme_progress_weight", &ApproachRewardInputs::dme_progress_weight)
-        .def_rw("dme_progress_localizer_band", &ApproachRewardInputs::dme_progress_localizer_band)
-        .def_rw("dme_progress_glideslope_band", &ApproachRewardInputs::dme_progress_glideslope_band)
-        .def_rw("dme_progress_quality_power", &ApproachRewardInputs::dme_progress_quality_power)
-        .def_rw("capture_bonus", &ApproachRewardInputs::capture_bonus)
-        .def_rw("capture_localizer_band", &ApproachRewardInputs::capture_localizer_band)
-        .def_rw("capture_glideslope_band", &ApproachRewardInputs::capture_glideslope_band)
-        .def_rw("sink_rate_weight", &ApproachRewardInputs::sink_rate_weight)
-        .def_rw("flare_agl_m", &ApproachRewardInputs::flare_agl_m)
-        .def_rw("curr_alt_agl_m", &ApproachRewardInputs::curr_alt_agl_m)
-        .def_rw("sink_rate_mps", &ApproachRewardInputs::sink_rate_mps)
-        .def_rw("sink_rate_deadband_mps", &ApproachRewardInputs::sink_rate_deadband_mps)
-        .def_rw("sink_rate_norm_mps", &ApproachRewardInputs::sink_rate_norm_mps)
-        .def_rw("sink_rate_power", &ApproachRewardInputs::sink_rate_power)
-        .def_rw("sink_rate_clip", &ApproachRewardInputs::sink_rate_clip);
+    nb::class_<ApproachRewardInputs> approach_inputs_class(m, "ApproachRewardInputs");
+    approach_inputs_class
+        .def(nb::init<>());
+#define EF_APPROACH_INPUT(type, name, default_value) \
+    approach_inputs_class.def_rw(#name, &ApproachRewardInputs::name);
+#include "core/mission/runtime/detail/approach_reward_inputs.inc"
 
-    nb::class_<ApproachRewardProducts>(m, "ApproachRewardProducts")
-        .def(nb::init<>())
-        .def_ro("valid", &ApproachRewardProducts::valid)
-        .def_ro("approach_localizer", &ApproachRewardProducts::approach_localizer)
-        .def_ro("approach_localizer_improve", &ApproachRewardProducts::approach_localizer_improve)
-        .def_ro("approach_glideslope", &ApproachRewardProducts::approach_glideslope)
-        .def_ro("approach_glideslope_improve", &ApproachRewardProducts::approach_glideslope_improve)
-        .def_ro("approach_dme_progress", &ApproachRewardProducts::approach_dme_progress)
-        .def_ro("approach_capture_bonus", &ApproachRewardProducts::approach_capture_bonus)
-        .def_ro("landing_sink_rate_penalty", &ApproachRewardProducts::landing_sink_rate_penalty)
-        .def_ro("clear_history", &ApproachRewardProducts::clear_history)
-        .def_ro("next_prev_valid", &ApproachRewardProducts::next_prev_valid)
-        .def_ro("next_prev_loc_abs", &ApproachRewardProducts::next_prev_loc_abs)
-        .def_ro("next_prev_gs_abs", &ApproachRewardProducts::next_prev_gs_abs)
-        .def_ro("next_prev_dme_m", &ApproachRewardProducts::next_prev_dme_m);
+    nb::class_<ApproachRewardProducts> approach_products_class(m, "ApproachRewardProducts");
+    approach_products_class
+        .def(nb::init<>());
+#define EF_APPROACH_PRODUCT(type, name, default_value) \
+    approach_products_class.def_ro(#name, &ApproachRewardProducts::name);
+#include "core/mission/runtime/detail/approach_reward_products.inc"
 
     m.def("compute_waypoint_reward_terms", &compute_waypoint_reward_terms, nb::arg("inputs"));
     m.def("compute_approach_reward_terms", &compute_approach_reward_terms, nb::arg("inputs"));
@@ -473,66 +368,26 @@ void bind_episode(nb::module_& m) {
         .def_rw("conditions", &ConditionalObjectiveSpec::conditions)
         .def_rw("reward_bonus", &ConditionalObjectiveSpec::reward_bonus);
 
-    nb::class_<ConditionalObjectiveInputs>(m, "ConditionalObjectiveInputs")
-        .def(nb::init<>())
-        .def_rw("altitude_m", &ConditionalObjectiveInputs::altitude_m)
-        .def_rw("altitude_agl_m", &ConditionalObjectiveInputs::altitude_agl_m)
-        .def_rw("speed_mps", &ConditionalObjectiveInputs::speed_mps)
-        .def_rw("ground_speed_mps", &ConditionalObjectiveInputs::ground_speed_mps)
-        .def_rw("gear_fraction", &ConditionalObjectiveInputs::gear_fraction)
-        .def_rw("heading_error_deg", &ConditionalObjectiveInputs::heading_error_deg)
-        .def_rw("command_code", &ConditionalObjectiveInputs::command_code)
-        .def_rw("ground_track_error_deg", &ConditionalObjectiveInputs::ground_track_error_deg)
-        .def_rw("has_runway_cross_m", &ConditionalObjectiveInputs::has_runway_cross_m)
-        .def_rw("runway_cross_m", &ConditionalObjectiveInputs::runway_cross_m)
-        .def_rw("has_runway_from_threshold_m", &ConditionalObjectiveInputs::has_runway_from_threshold_m)
-        .def_rw("runway_from_threshold_m", &ConditionalObjectiveInputs::runway_from_threshold_m)
-        .def_rw("on_runway_geom", &ConditionalObjectiveInputs::on_runway_geom)
-        .def_rw("on_runway_task", &ConditionalObjectiveInputs::on_runway_task)
-        .def_rw("on_ground", &ConditionalObjectiveInputs::on_ground)
-        .def_rw("sink_rate_abs_mps", &ConditionalObjectiveInputs::sink_rate_abs_mps)
-        .def_rw("ils_localizer_abs", &ConditionalObjectiveInputs::ils_localizer_abs)
-        .def_rw("ils_glideslope_abs", &ConditionalObjectiveInputs::ils_glideslope_abs)
-        .def_rw("dme_m", &ConditionalObjectiveInputs::dme_m)
-        .def_rw("heading_deg", &ConditionalObjectiveInputs::heading_deg)
-        .def_rw("x_m", &ConditionalObjectiveInputs::x_m)
-        .def_rw("y_m", &ConditionalObjectiveInputs::y_m)
-        .def_rw("target_altitude_m", &ConditionalObjectiveInputs::target_altitude_m)
-        .def_rw("target_speed_mps", &ConditionalObjectiveInputs::target_speed_mps)
-        .def_rw("target_heading_deg", &ConditionalObjectiveInputs::target_heading_deg)
-        .def_rw("self_active", &ConditionalObjectiveInputs::self_active)
-        .def_rw("target_active", &ConditionalObjectiveInputs::target_active)
-        .def_rw("self_health", &ConditionalObjectiveInputs::self_health)
-        .def_rw("target_health", &ConditionalObjectiveInputs::target_health)
-        .def_rw("missiles_remaining", &ConditionalObjectiveInputs::missiles_remaining)
-        .def_rw("has_target_range_m", &ConditionalObjectiveInputs::has_target_range_m)
-        .def_rw("target_range_m", &ConditionalObjectiveInputs::target_range_m);
+    nb::class_<ConditionalObjectiveInputs> obj_inputs_class(m, "ConditionalObjectiveInputs");
+    obj_inputs_class
+        .def(nb::init<>());
+#define EF_OBJECTIVE_INPUT(type, name, default_value) \
+    obj_inputs_class.def_rw(#name, &ConditionalObjectiveInputs::name);
+#include "core/mission/runtime/detail/objective_inputs.inc"
 
-    nb::class_<ObjectiveShapingConfig>(m, "ObjectiveShapingConfig")
-        .def(nb::init<>())
-        .def_rw("runway_cross_penalty_weight", &ObjectiveShapingConfig::runway_cross_penalty_weight)
-        .def_rw("runway_cross_deadband_m", &ObjectiveShapingConfig::runway_cross_deadband_m)
-        .def_rw("runway_cross_norm_m", &ObjectiveShapingConfig::runway_cross_norm_m)
-        .def_rw("runway_cross_power", &ObjectiveShapingConfig::runway_cross_power)
-        .def_rw("runway_cross_clip", &ObjectiveShapingConfig::runway_cross_clip)
-        .def_rw("ground_track_penalty_weight", &ObjectiveShapingConfig::ground_track_penalty_weight)
-        .def_rw("ground_track_deadband_deg", &ObjectiveShapingConfig::ground_track_deadband_deg)
-        .def_rw("ground_track_norm_deg", &ObjectiveShapingConfig::ground_track_norm_deg)
-        .def_rw("ground_track_power", &ObjectiveShapingConfig::ground_track_power)
-        .def_rw("ground_track_clip", &ObjectiveShapingConfig::ground_track_clip);
+    nb::class_<ObjectiveShapingConfig> obj_shaping_class(m, "ObjectiveShapingConfig");
+    obj_shaping_class
+        .def(nb::init<>());
+#define EF_OBJECTIVE_SHAPING(type, name, default_value) \
+    obj_shaping_class.def_rw(#name, &ObjectiveShapingConfig::name);
+#include "core/mission/runtime/detail/objective_shaping.inc"
 
-    nb::class_<ConditionalObjectiveProducts>(m, "ConditionalObjectiveProducts")
-        .def(nb::init<>())
-        .def_ro("valid", &ConditionalObjectiveProducts::valid)
-        .def_ro("matched", &ConditionalObjectiveProducts::matched)
-        .def_ro("unknown_property", &ConditionalObjectiveProducts::unknown_property)
-        .def_ro("status0", &ConditionalObjectiveProducts::status0)
-        .def_ro("status1", &ConditionalObjectiveProducts::status1)
-        .def_ro("status2", &ConditionalObjectiveProducts::status2)
-        .def_ro("status_count", &ConditionalObjectiveProducts::status_count)
-        .def_ro("success_runway_cross_penalty", &ConditionalObjectiveProducts::success_runway_cross_penalty)
-        .def_ro("success_ground_track_error_penalty", &ConditionalObjectiveProducts::success_ground_track_error_penalty)
-        .def_ro("objective_bonus", &ConditionalObjectiveProducts::objective_bonus);
+    nb::class_<ConditionalObjectiveProducts> obj_products_class(m, "ConditionalObjectiveProducts");
+    obj_products_class
+        .def(nb::init<>());
+#define EF_OBJECTIVE_PRODUCT(type, name, default_value) \
+    obj_products_class.def_ro(#name, &ConditionalObjectiveProducts::name);
+#include "core/mission/runtime/detail/objective_products.inc"
 
     m.def(
         "evaluate_conditional_objective",
@@ -559,59 +414,19 @@ void bind_episode(nb::module_& m) {
         .value("Timeout", TerminationReasonCode::Timeout)
         .export_values();
 
-    nb::class_<SafetyRuntimeInputs>(m, "SafetyRuntimeInputs")
-        .def(nb::init<>())
-        .def_rw("finite_state_valid", &SafetyRuntimeInputs::finite_state_valid)
-        .def_rw("crash_penalty", &SafetyRuntimeInputs::crash_penalty)
-        .def_rw("survival_reward", &SafetyRuntimeInputs::survival_reward)
-        .def_rw("health", &SafetyRuntimeInputs::health)
-        .def_rw("airborne", &SafetyRuntimeInputs::airborne)
-        .def_rw("aoa_valid", &SafetyRuntimeInputs::aoa_valid)
-        .def_rw("aoa_abs_deg", &SafetyRuntimeInputs::aoa_abs_deg)
-        .def_rw("stall_threshold_deg", &SafetyRuntimeInputs::stall_threshold_deg)
-        .def_rw("stall_penalty_weight", &SafetyRuntimeInputs::stall_penalty_weight)
-        .def_rw("stall_penalty_clip", &SafetyRuntimeInputs::stall_penalty_clip)
-        .def_rw("g_abs", &SafetyRuntimeInputs::g_abs)
-        .def_rw("overload_g_threshold", &SafetyRuntimeInputs::overload_g_threshold)
-        .def_rw("overload_penalty_weight", &SafetyRuntimeInputs::overload_penalty_weight)
-        .def_rw("overload_penalty_clip", &SafetyRuntimeInputs::overload_penalty_clip)
-        .def_rw("curr_alt_agl_m", &SafetyRuntimeInputs::curr_alt_agl_m)
-        .def_rw("overload_min_alt_agl_m", &SafetyRuntimeInputs::overload_min_alt_agl_m)
-        .def_rw("altitude_m", &SafetyRuntimeInputs::altitude_m)
-        .def_rw("roll_abs_deg", &SafetyRuntimeInputs::roll_abs_deg)
-        .def_rw("pitch_abs_deg", &SafetyRuntimeInputs::pitch_abs_deg)
-        .def_rw("failfast_penalty", &SafetyRuntimeInputs::failfast_penalty)
-        .def_rw("gear_collapsed", &SafetyRuntimeInputs::gear_collapsed)
-        .def_rw("gear_collapse_penalty", &SafetyRuntimeInputs::gear_collapse_penalty)
-        .def_rw("runway_surface_phase", &SafetyRuntimeInputs::runway_surface_phase)
-        .def_rw("on_runway_task", &SafetyRuntimeInputs::on_runway_task)
-        .def_rw("gear_stress", &SafetyRuntimeInputs::gear_stress)
-        .def_rw("gear_stress_penalty_weight", &SafetyRuntimeInputs::gear_stress_penalty_weight)
-        .def_rw("off_runway_penalty", &SafetyRuntimeInputs::off_runway_penalty)
-        .def_rw("speed_mps", &SafetyRuntimeInputs::speed_mps)
-        .def_rw("off_runway_steps", &SafetyRuntimeInputs::off_runway_steps)
-        .def_rw("off_runway_terminate_speed", &SafetyRuntimeInputs::off_runway_terminate_speed)
-        .def_rw("off_runway_terminate_grace_s", &SafetyRuntimeInputs::off_runway_terminate_grace_s)
-        .def_rw("time_step_s", &SafetyRuntimeInputs::time_step_s)
-        .def_rw("off_runway_terminate_penalty", &SafetyRuntimeInputs::off_runway_terminate_penalty);
+    nb::class_<SafetyRuntimeInputs> safety_inputs_class(m, "SafetyRuntimeInputs");
+    safety_inputs_class
+        .def(nb::init<>());
+#define EF_SAFETY_INPUT(type, name, default_value) \
+    safety_inputs_class.def_rw(#name, &SafetyRuntimeInputs::name);
+#include "core/mission/runtime/detail/safety_runtime_inputs.inc"
 
-    nb::class_<SafetyRuntimeProducts>(m, "SafetyRuntimeProducts")
-        .def(nb::init<>())
-        .def_ro("valid", &SafetyRuntimeProducts::valid)
-        .def_ro("early_return", &SafetyRuntimeProducts::early_return)
-        .def_ro("terminated", &SafetyRuntimeProducts::terminated)
-        .def_ro("status_flag", &SafetyRuntimeProducts::status_flag)
-        .def_ro("reason_code", &SafetyRuntimeProducts::reason_code)
-        .def_ro("survival", &SafetyRuntimeProducts::survival)
-        .def_ro("crash_penalty", &SafetyRuntimeProducts::crash_penalty)
-        .def_ro("nan_guard_marker", &SafetyRuntimeProducts::nan_guard_marker)
-        .def_ro("stall_penalty", &SafetyRuntimeProducts::stall_penalty)
-        .def_ro("overload_penalty", &SafetyRuntimeProducts::overload_penalty)
-        .def_ro("failfast_penalty", &SafetyRuntimeProducts::failfast_penalty)
-        .def_ro("gear_collapse_penalty", &SafetyRuntimeProducts::gear_collapse_penalty)
-        .def_ro("off_runway_penalty", &SafetyRuntimeProducts::off_runway_penalty)
-        .def_ro("gear_stress_penalty", &SafetyRuntimeProducts::gear_stress_penalty)
-        .def_ro("off_runway_terminate_penalty", &SafetyRuntimeProducts::off_runway_terminate_penalty);
+    nb::class_<SafetyRuntimeProducts> safety_products_class(m, "SafetyRuntimeProducts");
+    safety_products_class
+        .def(nb::init<>());
+#define EF_SAFETY_PRODUCT(type, name, default_value) \
+    safety_products_class.def_ro(#name, &SafetyRuntimeProducts::name);
+#include "core/mission/runtime/detail/safety_runtime_products.inc"
 
     m.def("compute_safety_runtime", &compute_safety_runtime, nb::arg("inputs"));
     m.def(

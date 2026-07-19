@@ -1,116 +1,23 @@
 #pragma once
 
 struct WaypointRewardInputs {
-    bool valid = false;
-    int waypoint_index = 0;
-    int waypoint_count = 0;
-    bool is_flyover = false;
-    bool has_guidance = false;
-    bool passed_fix = false;
-    double dist_m = 0.0;
-    double xtk_m = 0.0;
-    double dtg_m = 0.0;
-    double waypoint_radius_m = 500.0;
-    double leg_len_m = 0.0;
-    double lead_turn_m = 0.0;
-    double sequence_gate_m = 500.0;
-    bool has_prev_dist = false;
-    double prev_dist_m = 0.0;
-    double route_length_m = 0.0;
-    double turn_relief_activation = 0.0;
-
-    double progress_weight = 0.0;
-    double progress_negative_scale = 1.0;
-    double distance_weight = 0.0;
-    double distance_clip_m = 0.0;
-    bool distance_scale_by_route = false;
-    double distance_route_ref_m = 55000.0;
-    double distance_route_scale_min = 0.5;
-    double distance_route_scale_max = 1.0;
-    double cross_track_weight = 0.0;
-    double cross_track_deadband_m = 0.0;
-    double cross_track_norm_m = 1000.0;
-    double cross_track_power = 1.0;
-    double cross_track_clip = 0.0;
-    double turn_relief_max = 0.0;
-    double proximity_weight = 0.0;
-    double proximity_ref_m = 0.0;
-    double proximity_power = 1.0;
-    double reached_bonus = 0.0;
+#define EF_WAYPOINT_INPUT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/waypoint_reward_inputs.inc"
 };
 
 struct WaypointRewardProducts {
-    bool valid = false;
-    double waypoint_progress = 0.0;
-    double waypoint_distance = 0.0;
-    double waypoint_cross_track = 0.0;
-    double waypoint_proximity = 0.0;
-    double waypoint_reached_bonus = 0.0;
-    bool arrived = false;
-    bool next_prev_dist_valid = false;
-    double next_prev_dist_m = 0.0;
+#define EF_WAYPOINT_PRODUCT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/waypoint_reward_products.inc"
 };
 
 struct ApproachRewardInputs {
-    bool valid = false;
-    bool ils_valid = false;
-    double ils_loc_dev = 0.0;
-    double ils_gs_dev = 0.0;
-    double ils_dme_m = 0.0;
-    bool has_prev_loc = false;
-    double prev_loc_abs = 0.0;
-    bool has_prev_gs = false;
-    double prev_gs_abs = 0.0;
-    bool has_prev_dme = false;
-    double prev_dme_m = 0.0;
-
-    double localizer_weight = 0.0;
-    double localizer_deadband = 0.0;
-    double localizer_norm = 1.0;
-    double localizer_power = 2.0;
-    double localizer_clip = 0.0;
-    double localizer_improve_weight = 0.0;
-
-    double glideslope_weight = 0.0;
-    double glideslope_deadband = 0.0;
-    double glideslope_norm = 1.0;
-    double glideslope_power = 2.0;
-    double glideslope_clip = 0.0;
-    double glideslope_improve_weight = 0.0;
-
-    double dme_progress_weight = 0.0;
-    double dme_progress_localizer_band = 0.0;
-    double dme_progress_glideslope_band = 0.0;
-    double dme_progress_quality_power = 1.0;
-
-    double capture_bonus = 0.0;
-    double capture_localizer_band = 0.20;
-    double capture_glideslope_band = 0.20;
-
-    double sink_rate_weight = 0.0;
-    double flare_agl_m = 20.0;
-    double curr_alt_agl_m = 0.0;
-    double sink_rate_mps = 0.0;
-    double sink_rate_deadband_mps = 0.0;
-    double sink_rate_norm_mps = 2.0;
-    double sink_rate_power = 2.0;
-    double sink_rate_clip = 0.0;
+#define EF_APPROACH_INPUT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/approach_reward_inputs.inc"
 };
 
 struct ApproachRewardProducts {
-    bool valid = false;
-    double approach_localizer = 0.0;
-    double approach_localizer_improve = 0.0;
-    double approach_glideslope = 0.0;
-    double approach_glideslope_improve = 0.0;
-    double approach_dme_progress = 0.0;
-    double approach_capture_bonus = 0.0;
-    double landing_sink_rate_penalty = 0.0;
-    bool clear_history = false;
-    bool next_prev_valid = false;
-    double next_prev_loc_abs = 0.0;
-    double next_prev_gs_abs = 0.0;
-    double next_prev_dme_m = 0.0;
+#define EF_APPROACH_PRODUCT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/approach_reward_products.inc"
 };
 
 struct FlightShapingRuntimeInputs {

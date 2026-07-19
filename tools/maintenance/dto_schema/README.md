@@ -1,8 +1,15 @@
 # DTO schema generator
 
-This standard-library-only tool keeps compact C++ X-macro field lists generated
-from declarative Python schemas. Generated `.inc` files remain checked in; do
-not edit them directly.
+This standard-library-only tool keeps compact C++ X-macro field lists and the
+Python builder modules under `gym_envs/scenario_loader/_generated/` (including
+that package's `__init__.py`) generated from declarative Python schemas. One
+command covers every artifact: `generate.py --check` / `--write`. Generated
+files remain checked in; do not edit them directly.
+
+Builder modules export `FIELD_NAMES`, `WRITABLE_FIELD_NAMES`,
+`READONLY_FIELDS`, and `FIELD_DEFAULTS`. `assign_from_object()` is generated
+only for schemas with at least one writable field and always skips
+`READONLY_FIELDS`; all-read-only products schemas get no assigner.
 
 Each module in `schemas/` exports one `DtoSchema`. A `Field` records `name`,
 `cpp_type`, `default`, optional `comment`, and its X-macro `group`. Reserved

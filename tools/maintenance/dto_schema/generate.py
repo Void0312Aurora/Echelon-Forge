@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
-"""Generate or verify checked-in X-macro fragments from DTO schemas."""
+"""Generate or verify all checked-in DTO artifacts from declarative schemas.
+
+One command covers every generated product: the C++ X-macro .inc fragments,
+the Python builder modules under gym_envs/scenario_loader/_generated/, and
+that package's __init__.py.
+"""
 
 from __future__ import annotations
 
 import argparse
 from collections import Counter
+from collections.abc import Callable
 import difflib
+import functools
 import hashlib
 import importlib
 import json
@@ -18,6 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
+from tools.maintenance.dto_schema import python_builder  # noqa: E402
 from tools.maintenance.dto_schema.model import DtoSchema  # noqa: E402
 from tools.maintenance.dto_schema.schemas import SCHEMA_MODULES  # noqa: E402
 
@@ -60,6 +68,30 @@ def render_schema(schema: DtoSchema, line_ending: str = "\n") -> bytes:
   return text.encode("utf-8")
 
 
+def artifact_renderers(
+  registrations: tuple[tuple[str, DtoSchema], ...],
+) -> tuple[tuple[str, Callable[[str], bytes]], ...]:
+  """All generated artifacts as (repo-relative path, render(line_ending)) pairs."""
+  artifacts: list[tuple[str, Callable[[str], bytes]]] = []
+  for _, schema in registrations:
+    artifacts.append((schema.output_path, functools.partial(render_schema, schema)))
+  for _, schema in registrations:
+    artifacts.append(
+      (
+        python_builder.builder_output_path(schema),
+        functools.partial(python_builder.render_builder_bytes, schema),
+      )
+    )
+  artifacts.append(
+    (python_builder.PACKAGE_INIT_PATH, python_builder.render_package_init_bytes)
+  )
+  paths = [path for path, _ in artifacts]
+  duplicates = sorted(path for path, count in Counter(paths).items() if count > 1)
+  if duplicates:
+    raise ValueError(f"duplicate generated artifact paths: {duplicates}")
+  return tuple(artifacts)
+
+
 def manifest_payload(
   registrations: tuple[tuple[str, DtoSchema], ...],
 ) -> dict[str, object]:
@@ -71,15 +103,17 @@ def manifest_payload(
         "name": schema.name,
         "schema": module_name.replace(".", "/") + ".py",
         "output": schema.output_path,
+        "python_builder": python_builder.builder_output_path(schema),
         "field_count": len(schema.fields),
         "groups": dict(sorted(group_counts.items())),
       }
     )
   return {
-    "version": 1,
+    "version": 2,
     "generator": "tools/maintenance/dto_schema/generate.py",
     "canonical_line_ending": "LF",
     "schemas": schemas,
+    "python_builder_package_init": python_builder.PACKAGE_INIT_PATH,
   }
 
 
@@ -122,17 +156,17 @@ def check_outputs(
   output_root: Path,
 ) -> int:
   stale = False
-  for _, schema in registrations:
-    target = output_root / schema.output_path
+  for path, render in artifact_renderers(registrations):
+    target = output_root / path
     actual = target.read_bytes() if target.is_file() else b""
     line_ending = _uniform_line_ending(actual)
-    expected = render_schema(schema, line_ending or "\n")
+    expected = render(line_ending or "\n")
     if actual == expected:
-      print(f"up-to-date: {schema.output_path}")
+      print(f"up-to-date: {path}")
       continue
     stale = True
-    print(f"stale: {schema.output_path}")
-    print(_diff_summary(schema.output_path, actual, expected))
+    print(f"stale: {path}")
+    print(_diff_summary(path, actual, expected))
   return 1 if stale else 0
 
 
@@ -140,23 +174,26 @@ def write_outputs(
   registrations: tuple[tuple[str, DtoSchema], ...],
   output_root: Path,
 ) -> int:
-  for _, schema in registrations:
-    target = output_root / schema.output_path
+  for path, render in artifact_renderers(registrations):
+    target = output_root / path
     actual = target.read_bytes() if target.is_file() else b""
     line_ending = _uniform_line_ending(actual)
-    expected = render_schema(schema, line_ending or "\n")
+    expected = render(line_ending or "\n")
     if target.is_file() and actual == expected:
-      print(f"unchanged: {schema.output_path}")
+      print(f"unchanged: {path}")
       continue
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(expected)
-    print(f"wrote: {schema.output_path}")
+    print(f"wrote: {path}")
   return 0
 
 
 def _build_parser() -> argparse.ArgumentParser:
   parser = argparse.ArgumentParser(
-    description="Generate checked-in DTO X-macro fragments."
+    description=(
+      "Generate checked-in DTO artifacts: X-macro fragments, Python "
+      "builders, and the _generated package __init__."
+    )
   )
   action = parser.add_mutually_exclusive_group(required=True)
   action.add_argument("--check", action="store_true", help="fail on stale outputs")
