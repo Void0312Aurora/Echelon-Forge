@@ -64,10 +64,36 @@ DTO 字段、一条训练线、一个探针或一个域切片的边际成本降�
 剖析与后端工作独立迭代的链接单元。计划期间发现的实测性能工作项
 一律路由到 exact-runtime 线，不扩宽本计划。
 
+## 系统性对齐：SCAL 一致性
+
+下方的工程轨道是必要但不充分的。仓库已拥有一份概念架构基线——
+[仿真系统架构设计](../architecture/simulation_system_architecture_design.zh.md)
+（SCAL 四面、图之图、六层信息状态、`P0-P10` 规范语义生命周期、因果-时序
+执行模型与能力组合式域扩展）——但维护中的代码尚未在结构上体现它。已知
+一致性缺口包括：scenario loader 在单个对象里聚集了多个生命周期阶段；
+观测模式分裂在 compiled-core 与 Python 适配器之间而无声明的
+`ObservationViewSpec` 边界；`MissionCommand` 以五种表示存在而非单一
+类型化契约词汇；`spawn_unit(type_name)` 尚未展开为类型化能力包。
+
+因此本计划把该基线当作目标本体，而非仅背景阅读：
+
+- **T0（新增）：语义生命周期与信息状态一致性。** 产出阶段一致性普查，
+  把每个维护中的运行时函数映射到其 `P0-P10` 阶段与信息状态层，登记
+  每处违例（跨阶段所有权、真值泄漏进策略路径、平行生命周期），并经
+  其余轨道逐项消解缺口登记。
+- **T2 重新定位：** `WorldBatchCore` 不只是去重容器，而是分阶段 tick
+  管线在维护 Python 侧的投影。模式插件必须阶段局部（Agency 图适配
+  器），基座的阶段边界必须与生命周期表对齐，使 WP4 能逐阶段迁往 C++。
+- **T1 锚定：** command/tasking schema 家族实现 Semantic 面的类型化
+  契约词汇；schema 分组应遵循基线的 packet 分类而非另造命名。
+- **T3 锚定：** 域注册遵循能力组合模型（`PlatformFamily`/`SensorFamily`
+  等扩展族），推动内容加载走向类型化能力包。
+
 ## 计划轨道
 
 | 轨道 | 范围 | 主要目标 | 关键风险 |
 | --- | --- | --- | --- |
+| T0 SCAL 一致性 | 对维护运行时（loader、vec-env、facade 消费者）做阶段一致性普查；对每个观测/奖励消费者做信息状态层审计；缺口登记并逐项路由到 T1-T4 | 代码在结构上体现架构基线；无平行生命周期 | 普查需要判断力；缺口必须路由到轨道而非引发临时重写 |
 | T1 DTO 单源化收尾 | world-batch（约 211 字段）、engagement 余量（约 445 字段、29 类）、command/tasking 的 umbrella-slice-codec 家族、GPU packed 视图 | 把剩余约 2,400 条手工同步语句移入 schema 所有权 | 成员顺序即 ABI；JSON codec 别名；部分暴露视图 |
 | T2 运行时基座统一 | B-2 残余破环（包 init 懒化或派发依赖倒置，并修复 AST 门禁盲区）、`WorldBatchCore` 提取、execution/cooperative/leader 模式插件、adapter 与 single/leader 运行时收编 | 单一批处理基座，消除约 1,400 行重复，分层单向 | monkeypatch 缝；shared-memory 与 leader 特殊路径 |
 | T3 C++ 结构边界 | `ef_core` 拆分为 engine/mission/facade/content 链接单元并加 include 方向门禁；facade 结果投影去重；在 T1 验证 codec 逃生口后把 `unit_definition_loader` 表驱动化 | 强制层边界；loader 1,881 行手写映射入 schema 所有权 | 链接顺序与初始化；NaN 哨兵配置语义 |
@@ -78,6 +104,10 @@ DTO 字段、一条训练线、一个探针或一个域切片的边际成本降�
 
 ## 顺序与依赖
 
+0. T0 普查是本计划的开局调研动作（连同三项配套调研：C++ episode
+   controller 与 Python 步进逻辑之间的 WP4 接口考古、共享路径中 air
+   具体性泄漏的域不对称盘点、command/content 家族的 schema 逃生口
+   普查）。其缺口登记在 T1-T4 关键期开始前重新冻结各期写集。
 1. T2.B-2（残余破环）先于更深的基座提取落地，使插件化从单向层图出发。
 2. T1 world-batch 家族先于 T3 的 facade 投影去重，后者消费生成的
    packet schema。

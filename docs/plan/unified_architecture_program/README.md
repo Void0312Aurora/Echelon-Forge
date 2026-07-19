@@ -81,10 +81,46 @@ must produce link units that profiling and backend work can iterate on in
 isolation. Any measured-performance work item discovered during the program
 is routed to the exact-runtime line instead of widening this program.
 
+## Systemic Alignment: SCAL Conformance
+
+The engineering tracks below are necessary but not sufficient. The repository
+already owns a conceptual architecture baseline —
+[Simulation System Architecture Design](../architecture/simulation_system_architecture_design.md)
+(SCAL faces, graph-of-graphs, the six information-state layers, the canonical
+`P0-P10` semantic lifecycle, the causal-temporal execution model, and
+capability-composition domain extension) — and the maintained code does not
+yet structurally embody it. Known conformance gaps include: the scenario
+loader concentrating several lifecycle stages in one object; observation
+modes split between compiled-core and Python adapters without a declared
+`ObservationViewSpec` boundary; `MissionCommand` existing as five
+representations instead of one typed contract vocabulary; and
+`spawn_unit(type_name)` not yet expanding to typed capability bundles.
+
+This program therefore treats the baseline as its target ontology, not just
+its background reading:
+
+- **T0 (new): semantic-lifecycle and information-state conformance.** Produce
+  a stage-conformance census that maps every maintained runtime function to
+  its `P0-P10` stage and information-state layer, register each violation
+  (stage-crossing ownership, truth leaks into policy paths, parallel
+  lifecycles), and drive the gap register down through the other tracks.
+- **T2 reframed:** `WorldBatchCore` is not merely a deduplication vessel; it
+  is the maintained Python projection of the staged tick pipeline. Mode
+  plugins must be stage-local (agency-graph adapters), and the substrate's
+  stage boundaries must match the lifecycle table so WP4 can migrate stages
+  to C++ one at a time.
+- **T1 anchored:** the command/tasking schema family implements the typed
+  contract vocabulary of the Semantic face; schema groups should follow the
+  baseline's packet taxonomy rather than inventing a parallel naming.
+- **T3 anchored:** domain registration follows the capability-composition
+  model (`PlatformFamily`/`SensorFamily`/... extension families), moving
+  content loading toward typed capability bundles.
+
 ## Program Tracks
 
 | Track | Scope | Primary target | Key risk |
 | --- | --- | --- | --- |
+| T0 SCAL conformance | Stage-conformance census across the maintained runtime (loader, vec-envs, facade consumers); information-state layer audit of every observation/reward consumer; gap register with per-gap routing into T1-T4 | Code structurally embodies the architecture baseline; no parallel lifecycles | Census requires judgment; gaps must route to tracks, not spawn ad-hoc rewrites |
 | T1 DTO single-source completion | world-batch (~211 fields), engagement remainder (~445 fields, 29 classes), command/tasking umbrella-slice-codec family, GPU packed views | Move the remaining ~2,400 manual sync statements into schema ownership | Member order is ABI; JSON codec aliases; partial-exposure views |
 | T2 Runtime substrate unification | B-2 residual cycle break (lazy package init or dispatch inversion, plus AST-gate blind-spot fixes), `WorldBatchCore` extraction, execution/cooperative/leader mode plugins, adapter and single/leader runtime collapse | One batch substrate, ~1,400 duplicated lines removed, one-way layering | Monkeypatch seams; shared-memory and leader special paths |
 | T3 C++ structural boundaries | `ef_core` split into engine/mission/facade/content link units with include-direction gates; facade result-projection dedup; table-driven `unit_definition_loader` after T1 proves codec escape hatches | Enforced layer boundaries; loader's 1,881-line hand mapping owned by schema | Link order and initialization; NaN-sentinel config semantics |
@@ -95,6 +131,12 @@ is routed to the exact-runtime line instead of widening this program.
 
 ## Sequencing And Dependencies
 
+0. T0's census is the program's opening research move (together with three
+   supporting investigations: the WP4 interface archaeology between the C++
+   episode controller and the Python stepping logic, the domain-asymmetry
+   inventory of air-specific leakage in shared paths, and the schema
+   escape-hatch survey for the command/content families). Its gap register
+   re-freezes the write sets of T1-T4 before their critical phases start.
 1. T2.B-2 (residual cycle break) lands before deeper substrate extraction so
    plugin work starts from a one-way layer graph.
 2. T1 world-batch family lands before T3 facade projection dedup, which
