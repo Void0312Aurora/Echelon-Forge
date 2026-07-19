@@ -1,5 +1,5 @@
 {
-  "type": "unit_regression",
+  "extends": "../../_base/scripted_takeoff_base.json",
   "check_kind": "scripted_takeoff_clearance_hold",
   "obs": {
     "instruments": [

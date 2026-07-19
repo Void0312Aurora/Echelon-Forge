@@ -1,65 +1,16 @@
 {
-  "type": "unit_regression",
-  "check_kind": "naval_screen_threat_roe",
+  "extends": "../../_base/naval_screen_threat_roe_base.json",
   "scenario": "scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json",
-  "seed": 20260516,
-  "screen_entity": "Blue_Screen_DDG51",
-  "hvu_entity": "Blue_HVU_TAKE1",
-  "contact_entity": "Red_Surface_Contact",
-  "max_steps": 240,
-  "continue_after_contact_chain": true,
-  "report_message_type": "ReportTrack",
-  "forbid_hvu_local_source": true,
-  "expected_runtime_mission_command": {
-    "active": true,
-    "roe_state": 1,
-    "engagement_authority_holder_id": 5101,
-    "engagement_authority_grantor_id": 5101,
-    "assigned_target_entity": "Red_Surface_Contact",
-    "authorization_to_fire": false
-  },
   "checks": {
     "initial_screen_hvu_separation_m": {
       "min": 12500.0,
       "max": 13250.0
-    },
-    "initial_screen_contact_range_m": {
-      "max": 46300.0
-    },
-    "initial_hvu_contact_range_m": {
-      "min": 39000.0,
-      "max": 41000.0
-    },
-    "screen_first_detection_step": {
-      "max": 80
-    },
-    "hvu_first_shared_track_step": {
-      "max": 80
-    },
-    "hvu_first_report_step": {
-      "max": 80
-    },
-    "mission_command_first_active_step": {
-      "max": 5
     },
     "screen_hvu_separation_m_min": {
       "min": 12500.0
     },
     "screen_hvu_separation_m_max": {
       "max": 15000.0
-    },
-    "hvu_contact_closest_approach_m": {
-      "min": 37000.0,
-      "max": 38000.0
-    },
-    "contact_health_delta": {
-      "abs_max": 0.0
-    },
-    "contact_damage_delta": {
-      "abs_max": 0.0
-    },
-    "screen_weapon_inventory_delta": {
-      "abs_max": 0.0
     }
   }
 }
