@@ -21,6 +21,11 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from python.rl.policy_algo.model_contracts import FaultLocalizationResult, FaultStage  # noqa: E402
+from tools.diagnostics.common import (  # noqa: E402
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+)
 from tools.diagnostics.fire_timing_fault_localization.real_update import (  # noqa: E402
     DEFAULT_SCENARIO,
     DEFAULT_TRAIN_CONFIG,
@@ -760,21 +765,29 @@ def _run_probe(args: argparse.Namespace) -> dict[str, Any]:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--algo", default="auto")
-    parser.add_argument("--device", default="cuda")
-    parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--max-steps", type=int, default=2400)
-    parser.add_argument("--seed", type=int, default=20260525)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        defaults={
+            "train_config": DEFAULT_TRAIN_CONFIG,
+            "model": DEFAULT_MODEL,
+            "algo": "auto",
+            "device": "cuda",
+        },
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "max_steps", "seed"),
+        defaults={"episodes": 1, "max_steps": 2400, "seed": 20260525},
+        option_primary={"max_steps": "hyphen"},
+    )
     parser.add_argument("--fit-steps", type=int, default=800)
     parser.add_argument("--fit-lr", type=float, default=0.01)
     parser.add_argument("--min-accuracy", type=float, default=0.99)
     parser.add_argument("--adapter-head", choices=("auto", "window_classifier", "stopping"), default="auto")
     parser.add_argument("--collector-action", choices=("hold", "model", "model_event_hold"), default="hold")
     parser.add_argument("--stochastic", action="store_true")
-    parser.add_argument("--json-out", default="")
+    add_json_out_arg(parser, option_primary="hyphen")
     return parser.parse_args()
 
 

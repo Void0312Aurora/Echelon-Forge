@@ -23,6 +23,9 @@ ensure_repo_imports()
 
 from tools.diagnostics.common import (
     EpisodeStepTransition,
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
     collect_episode_steps,
     finite_float,
 )
@@ -538,14 +541,21 @@ def evaluate_label_summary(labels: FirstEventHazardLabels) -> dict[str, Any]:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Offline supervised fit probe for the first-event credit head.")
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--algo", default="auto")
-    parser.add_argument("--device", default="auto")
-    parser.add_argument("--episodes", type=int, default=4)
-    parser.add_argument("--max_steps", type=int, default=640)
-    parser.add_argument("--seed", type=int, default=20260604)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        defaults={
+            "train_config": DEFAULT_TRAIN_CONFIG,
+            "model": DEFAULT_MODEL,
+            "algo": "auto",
+            "device": "auto",
+        },
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "max_steps", "seed"),
+        defaults={"episodes": 4, "max_steps": 640, "seed": 20260604},
+    )
     parser.add_argument("--collector_action", choices=["model", "hold"], default="model")
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--fit_steps", type=int, default=1200)
@@ -554,7 +564,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fit_lr", type=float, default=1.0e-3)
     parser.add_argument("--scopes", default="credit_head,credit_head_actor_mlp")
     parser.add_argument("--log_every", type=int, default=100)
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     return parser
 
 def main() -> int:

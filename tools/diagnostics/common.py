@@ -1,13 +1,172 @@
 from __future__ import annotations
 
+import argparse
 import contextlib
 import json
 import math
 import os
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
+
+# Canonical dest names for shared probe CLI groups (always underscore).
+PROBE_RUN_ARG_NAMES: tuple[str, ...] = ("scenario", "episodes", "seed", "max_steps")
+MODEL_LOAD_ARG_NAMES: tuple[str, ...] = ("train_config", "model", "algo", "device")
+_DUAL_OPTION_DESTS: frozenset[str] = frozenset({"max_steps", "train_config", "json_out"})
+
+
+def _option_strings(dest: str, *, primary: str = "underscore") -> tuple[str, str]:
+    """Return (visible_primary, suppressed_alias) option strings for *dest*."""
+
+    underscore = f"--{dest}"
+    hyphen = f"--{dest.replace('_', '-')}"
+    if primary == "hyphen":
+        return hyphen, underscore
+    if primary != "underscore":
+        raise ValueError(f"primary must be 'underscore' or 'hyphen', got {primary!r}")
+    return underscore, hyphen
+
+
+def add_dual_option(
+    parser: argparse.ArgumentParser,
+    dest: str,
+    *,
+    primary: str = "underscore",
+    **kwargs: Any,
+) -> None:
+    """Register one CLI option with underscore/hyphen aliases and a fixed dest.
+
+    The *primary* option string is the one shown in ``--help``; the alternate
+    form is registered with ``help=argparse.SUPPRESS`` so help text stays
+    byte-identical to historical single-form scripts while both spellings parse
+    to the same underscore ``dest``.
+    """
+
+    kwargs = dict(kwargs)
+    kwargs["dest"] = dest
+    if dest in _DUAL_OPTION_DESTS or "_" in dest:
+        primary_opt, alias_opt = _option_strings(dest, primary=primary)
+        parser.add_argument(primary_opt, **kwargs)
+        alias_kwargs = dict(kwargs)
+        alias_kwargs["help"] = argparse.SUPPRESS
+        parser.add_argument(alias_opt, **alias_kwargs)
+        return
+    # Single-token names have identical underscore/hyphen spellings.
+    parser.add_argument(f"--{dest}", **kwargs)
+
+
+def _resolve_include(
+    all_names: Sequence[str],
+    *,
+    include: Sequence[str] | None,
+    exclude: Sequence[str] | None,
+) -> tuple[str, ...]:
+    names = tuple(all_names if include is None else include)
+    unknown = [name for name in names if name not in all_names]
+    if unknown:
+        raise ValueError(f"unknown argument name(s): {unknown!r}; expected subset of {list(all_names)}")
+    excluded = set(exclude or ())
+    unknown_excl = excluded - set(all_names)
+    if unknown_excl:
+        raise ValueError(f"unknown exclude name(s): {sorted(unknown_excl)!r}")
+    return tuple(name for name in names if name not in excluded)
+
+
+def add_probe_run_args(
+    parser: argparse.ArgumentParser,
+    *,
+    include: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
+    defaults: Mapping[str, Any] | None = None,
+    helps: Mapping[str, str | None] | None = None,
+    required: Mapping[str, bool] | None = None,
+    types: Mapping[str, Any] | None = None,
+    option_primary: Mapping[str, str] | None = None,
+) -> None:
+    """Add shared probe-run options: scenario / episodes / seed / max_steps."""
+
+    defaults = dict(defaults or {})
+    helps = dict(helps or {})
+    required = dict(required or {})
+    types = dict(types or {})
+    option_primary = dict(option_primary or {})
+    default_types: dict[str, Any] = {
+        "episodes": int,
+        "seed": int,
+        "max_steps": int,
+    }
+    for name in _resolve_include(PROBE_RUN_ARG_NAMES, include=include, exclude=exclude):
+        kwargs: dict[str, Any] = {}
+        type_ = types[name] if name in types else default_types.get(name)
+        if type_ is not None:
+            kwargs["type"] = type_
+        if name in defaults:
+            kwargs["default"] = defaults[name]
+        if name in helps:
+            kwargs["help"] = helps[name]
+        if name in required:
+            kwargs["required"] = bool(required[name])
+        add_dual_option(
+            parser,
+            name,
+            primary=option_primary.get(name, "underscore"),
+            **kwargs,
+        )
+
+
+def add_model_load_args(
+    parser: argparse.ArgumentParser,
+    *,
+    include: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
+    defaults: Mapping[str, Any] | None = None,
+    helps: Mapping[str, str | None] | None = None,
+    required: Mapping[str, bool] | None = None,
+    types: Mapping[str, Any] | None = None,
+    option_primary: Mapping[str, str] | None = None,
+) -> None:
+    """Add shared model-load options: train_config / model / algo / device."""
+
+    defaults = dict(defaults or {})
+    helps = dict(helps or {})
+    required = dict(required or {})
+    types = dict(types or {})
+    option_primary = dict(option_primary or {})
+    for name in _resolve_include(MODEL_LOAD_ARG_NAMES, include=include, exclude=exclude):
+        kwargs: dict[str, Any] = {}
+        if name in types:
+            kwargs["type"] = types[name]
+        if name in defaults:
+            kwargs["default"] = defaults[name]
+        if name in helps:
+            kwargs["help"] = helps[name]
+        if name in required:
+            kwargs["required"] = bool(required[name])
+        add_dual_option(
+            parser,
+            name,
+            primary=option_primary.get(name, "underscore"),
+            **kwargs,
+        )
+
+
+def add_json_out_arg(
+    parser: argparse.ArgumentParser,
+    *,
+    default: str = "",
+    help: str | None = None,
+    required: bool = False,
+    option_primary: str = "underscore",
+) -> None:
+    """Add ``--json_out`` / ``--json-out`` with canonical dest ``json_out``."""
+
+    kwargs: dict[str, Any] = {"default": default}
+    if help is not None:
+        kwargs["help"] = help
+    if required:
+        kwargs["required"] = True
+    add_dual_option(parser, "json_out", primary=option_primary, **kwargs)
 
 
 def load_json_config(path: str) -> dict[str, Any]:

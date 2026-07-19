@@ -22,7 +22,14 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from tools.diagnostics.common import finite_float, mean_finite, write_json_output
+from tools.diagnostics.common import (
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+    finite_float,
+    mean_finite,
+    write_json_output,
+)
 from tools.diagnostics import air_combat_weapon_employment_process_probe as process_probe  # noqa: E402
 from tools.diagnostics import lethality_chain_contract as chain_contract  # noqa: E402
 
@@ -1965,16 +1972,23 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Sweep oracle fire delays across launch-window positions.")
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument(
-        "--episodes",
-        type=int,
-        default=1,
-        help="Independent seed samples per delay; each sample invokes the process probe with episodes=1.",
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        include=("train_config",),
+        defaults={"train_config": DEFAULT_TRAIN_CONFIG},
     )
-    parser.add_argument("--seed", type=int, default=20260615)
-    parser.add_argument("--max_steps", type=int, default=2000)
+    add_probe_run_args(
+        parser,
+        include=("episodes", "seed", "max_steps"),
+        defaults={"episodes": 1, "seed": 20260615, "max_steps": 2000},
+        helps={
+            "episodes": (
+                "Independent seed samples per delay; each sample invokes the process "
+                "probe with episodes=1."
+            ),
+        },
+    )
     parser.add_argument("--delays", default="0,32,64,128,256,512,768,1024,1280,1536,1664")
     parser.add_argument("--fire_range_m", type=float, default=12000.0)
     parser.add_argument("--legal_fire_range_m", type=float, default=0.0)
@@ -2016,7 +2030,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--output_dir",
         default=DEFAULT_OUTPUT_DIR,
     )
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     parser.add_argument("--csv_out", default="")
     parser.add_argument("--plot_out", default="")
     return parser

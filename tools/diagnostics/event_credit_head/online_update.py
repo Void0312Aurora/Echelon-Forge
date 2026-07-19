@@ -38,6 +38,9 @@ from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
 from tools.diagnostics.common import (  # noqa: E402
     EpisodeEnd,
     EpisodeStepTransition,
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
     collect_episode_steps,
 )
 from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
@@ -1055,14 +1058,21 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Event-credit online update-path isolation probe.")
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--algo", default="auto")
-    parser.add_argument("--device", default="auto")
-    parser.add_argument("--episodes", type=int, default=4)
-    parser.add_argument("--max_steps", type=int, default=640)
-    parser.add_argument("--seed", type=int, default=20260604)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        defaults={
+            "train_config": DEFAULT_TRAIN_CONFIG,
+            "model": DEFAULT_MODEL,
+            "algo": "auto",
+            "device": "auto",
+        },
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "max_steps", "seed"),
+        defaults={"episodes": 4, "max_steps": 640, "seed": 20260604},
+    )
     parser.add_argument("--collector_action", choices=["model", "hold"], default="model")
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--batch_size", type=int, default=512)
@@ -1074,7 +1084,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--online_stochastic", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--update_kinds", default="value,combined,ppo_plus_a7")
     parser.add_argument("--update_steps", type=int, default=8)
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     return parser
 
 

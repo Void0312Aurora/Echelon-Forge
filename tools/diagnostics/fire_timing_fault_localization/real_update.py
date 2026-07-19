@@ -30,6 +30,9 @@ from python.rl.policy_algo.grouped_stopping import (  # noqa: E402
 )
 from tools.diagnostics.common import (  # noqa: E402
     EpisodeStepTransition,
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
     collect_episode_steps,
 )
 from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
@@ -670,14 +673,22 @@ def _apply_loss_overrides(hyper: dict[str, Any], args: argparse.Namespace) -> No
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--algo", default="auto")
-    parser.add_argument("--device", default="cuda")
-    parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--max-steps", type=int, default=2400)
-    parser.add_argument("--seed", type=int, default=20260525)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        defaults={
+            "train_config": DEFAULT_TRAIN_CONFIG,
+            "model": DEFAULT_MODEL,
+            "algo": "auto",
+            "device": "cuda",
+        },
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "max_steps", "seed"),
+        defaults={"episodes": 1, "max_steps": 2400, "seed": 20260525},
+        option_primary={"max_steps": "hyphen"},
+    )
     parser.add_argument("--collector-action", choices=("hold", "model", "model_event_hold"), default="hold")
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--scopes", default="current,current_plus_features")
@@ -706,7 +717,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--prewindow-logit-ceiling", type=float, default=None)
     parser.add_argument("--quality-logit-floor-coef", type=float, default=None)
     parser.add_argument("--quality-logit-floor", type=float, default=None)
-    parser.add_argument("--json-out", default="")
+    add_json_out_arg(parser, option_primary="hyphen")
     return parser.parse_args()
 
 

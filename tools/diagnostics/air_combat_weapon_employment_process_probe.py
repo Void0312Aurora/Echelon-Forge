@@ -25,6 +25,11 @@ from python.rl.runtime.single_world_batch_runtime import (
 )
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
+from tools.diagnostics.common import (
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+)
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
     FIRE_MASK_COMPONENT_NAMES,
     ACTION_SIGNAL_NAMES,
@@ -546,8 +551,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Trace air-combat weapon-employment and lethality process signals."
     )
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        include=("train_config",),
+        defaults={"train_config": DEFAULT_TRAIN_CONFIG},
+    )
     parser.add_argument(
         "--mode",
         choices=[
@@ -574,12 +583,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=0.0,
         help="For --mode legal_mask_fire, optional range gate in meters; <=0 disables the range gate.",
     )
-    parser.add_argument("--model", default="", help="SB3 model path for --mode model.")
-    parser.add_argument("--algo", default="auto")
-    parser.add_argument("--device", default="auto")
-    parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--seed", type=int, default=20260525)
-    parser.add_argument("--max_steps", type=int, default=0)
+    add_model_load_args(
+        parser,
+        include=("model", "algo", "device"),
+        defaults={"model": "", "algo": "auto", "device": "auto"},
+        helps={"model": "SB3 model path for --mode model."},
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "seed", "max_steps"),
+        defaults={"episodes": 1, "seed": 20260525, "max_steps": 0},
+    )
     parser.add_argument(
         "--stochastic",
         action="store_true",
@@ -625,7 +639,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=mlf9_statistical_trends.parse_confidence_level,
         default=0.95,
     )
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     parser.add_argument("--plot_out", default="")
     return parser
 

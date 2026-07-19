@@ -20,7 +20,14 @@ from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from tools.diagnostics.common import finite_float, mean_finite, write_json_output
+from tools.diagnostics.common import (
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+    finite_float,
+    mean_finite,
+    write_json_output,
+)
 from tools.diagnostics import air_combat_weapon_employment_process_probe as process_probe  # noqa: E402
 
 DEFAULT_SCENARIO = resolve_repo_path(
@@ -252,16 +259,22 @@ def write_json(path: str, payload: dict[str, Any]) -> None:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Audit one-shot fire-timing learnability.")
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--episodes", type=int, default=2)
-    parser.add_argument("--seed", type=int, default=31)
-    parser.add_argument("--max_steps", type=int, default=2000)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        include=("train_config",),
+        defaults={"train_config": DEFAULT_TRAIN_CONFIG},
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "seed", "max_steps"),
+        defaults={"episodes": 2, "seed": 31, "max_steps": 2000},
+    )
     parser.add_argument("--delays", default="0,31,63")
     parser.add_argument("--fire_range_m", type=float, default=12000.0)
     parser.add_argument("--legal_fire_range_m", type=float, default=0.0)
     parser.add_argument("--reward_epsilon", type=float, default=1.0)
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     return parser
 
 def main() -> int:
