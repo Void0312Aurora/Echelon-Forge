@@ -31,6 +31,7 @@ import {
     removeUnitVisual,
     updateUnit,
 } from './scene3d.js';
+import { ensureSceneGeometry } from './scene-geometry.js';
 import {
     clearErrorBanner,
     renderAssetRegistryOptions,
@@ -173,6 +174,9 @@ export function updateSessionButtonState(appStatus) {
     }
     if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'asset_registry')) {
         applyAssetRegistry(appStatus.asset_registry);
+    }
+    if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'scene_geometry')) {
+        ensureSceneGeometry(!!appStatus.scene_geometry?.available);
     }
 
     if (Array.isArray(appStatus?.profiles)) {

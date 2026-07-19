@@ -7,6 +7,7 @@ from typing import Iterable
 
 from examples.viz.app.asset_registry import list_asset_registries, load_asset_registry
 from examples.viz.app.profile_loader import list_viz_profiles, load_viz_profile
+from examples.viz.runtime.scene_geometry import load_scene_geometry_payload
 from examples.viz.runtime.viz_session import VizSession
 
 
@@ -17,6 +18,7 @@ class SessionManager:
         self.session: VizSession | None = None
         self.current_profile: dict | None = None
         self.asset_registry = load_asset_registry()
+        self.scene_geometry: dict | None = None
         self._tasks: list = []
 
     def list_scenarios(self, roots: Iterable[str] | None = None) -> list[str]:
@@ -44,6 +46,17 @@ class SessionManager:
     def current(self) -> VizSession | None:
         return self.session
 
+    def _scene_geometry_status(self) -> dict:
+        payload = self.scene_geometry
+        if not isinstance(payload, dict):
+            return {"available": False}
+        return {
+            "available": True,
+            "bundle_id": str(payload.get("bundle", {}).get("bundle_id", "")),
+            "summary": payload.get("summary", {}),
+            "held_total": int(payload.get("held", {}).get("total", 0)),
+        }
+
     def status_payload(self) -> dict:
         session = self.session
         if session is None:
@@ -55,6 +68,7 @@ class SessionManager:
                 "asset_registries": self.list_asset_registries(),
                 "profile": self.current_profile["summary"] if isinstance(self.current_profile, dict) else None,
                 "asset_registry": self.asset_registry,
+                "scene_geometry": self._scene_geometry_status(),
             }
         return {
             "loaded": True,
@@ -64,6 +78,7 @@ class SessionManager:
             "asset_registries": self.list_asset_registries(),
             "profile": self.current_profile["summary"] if isinstance(self.current_profile, dict) else None,
             "asset_registry": self.asset_registry,
+            "scene_geometry": self._scene_geometry_status(),
         }
 
     def emit_status(self) -> None:
@@ -96,6 +111,8 @@ class SessionManager:
         self.current_profile = profile
         registry_ref = str(profile.get("asset_registry") or "").strip()
         self.asset_registry = load_asset_registry(registry_ref or None)
+        bundle_ref = str(profile.get("environment_bundle") or "").strip()
+        self.scene_geometry = load_scene_geometry_payload(bundle_ref) if bundle_ref else None
         session = self.load_session(profile["scenario"], overrides=profile.get("session_overrides"))
 
         startup = profile.get("startup", {}) if isinstance(profile, dict) else {}
@@ -112,6 +129,7 @@ class SessionManager:
     def clear_profile_selection(self) -> None:
         self.current_profile = None
         self.asset_registry = load_asset_registry()
+        self.scene_geometry = None
 
     def load_asset_registry_only(self, registry_ref: str) -> None:
         self.asset_registry = load_asset_registry(registry_ref)

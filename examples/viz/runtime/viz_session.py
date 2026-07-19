@@ -1868,10 +1868,17 @@ class VizSession:
                         or "T-AKE" in name_upper
                         or "HVU" in name_upper
                     )
+                    ground_tokens = ("GROUND", "PLATOON", "INFANTRY", "VEHICLE", "TANK", "IFV", "APC")
+                    is_ground = any(
+                        token in type_name_upper or token in name_upper
+                        for token in ground_tokens
+                    )
                     if is_aircraft:
                         viz_type = "Aircraft"
                     elif is_ship:
                         viz_type = "Ship"
+                    elif is_ground:
+                        viz_type = "Ground"
                     else:
                         viz_type = "Facility"
 

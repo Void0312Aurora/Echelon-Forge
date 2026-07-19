@@ -2,20 +2,20 @@
 // the shared animation loop, then installs global input handlers.
 
 import { vizState } from './store.js';
-import { initTacticalLayers, tacticalLayerSnapshot } from './layers.js';
+import { initTacticalLayers, mergeTacticalLayerSnapshot, workspaceLayerDefaults } from './layers.js';
 import { tacticalWorkspaceDefinitions } from './symbology.js';
 import {
     initTacticalMapInteractions,
     maybeDrawTacticalView,
     resizeTacticalCanvas,
 } from './tactical-map.js';
-import { animateUnits, render3D, resize3D, updateCameraForFrame } from './scene3d.js';
+import { animateUnits, camera, controls, render3D, resize3D, scene, updateCameraForFrame } from './scene3d.js';
 import { renderTacticalLayerControls, updateLanguageUi } from './ui-shell.js';
 import { initSession } from './session.js';
 import { loadUiPrefs } from './storage.js';
 
 // Expose shared state for DevTools debugging (read-only usage intended).
-window.vizDebug = { vizState };
+window.vizDebug = { vizState, scene, camera, controls };
 
 // --- Bootstrap ---
 initTacticalLayers();
@@ -35,7 +35,12 @@ if (uiPrefs.dockState && typeof uiPrefs.dockState === 'object') {
 if (uiPrefs.workspaceLayers && typeof uiPrefs.workspaceLayers === 'object') {
     for (const [workspaceId, snapshot] of Object.entries(uiPrefs.workspaceLayers)) {
         if (!tacticalWorkspaceDefinitions[workspaceId] || typeof snapshot !== 'object') continue;
-        vizState.tacticalWorkspaceLayerState.set(workspaceId, tacticalLayerSnapshot(snapshot));
+        // Merge over the workspace defaults so layers introduced after the
+        // snapshot was saved keep their default visibility.
+        vizState.tacticalWorkspaceLayerState.set(
+            workspaceId,
+            mergeTacticalLayerSnapshot(workspaceLayerDefaults(workspaceId), snapshot)
+        );
     }
 }
 const startupWorkspace = tacticalWorkspaceDefinitions[uiPrefs.activeWorkspace]

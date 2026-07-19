@@ -14,6 +14,12 @@ import {
     environmentOverlayBounds,
     getEnvironmentOverlayEntries,
 } from './environment-overlays.js';
+import {
+    drawSceneTerrain,
+    drawSceneVectors,
+    sceneGeometryAvailable,
+    sceneGeometryBounds,
+} from './scene-geometry.js';
 import { refreshAutoLayout } from './layout.js';
 
 const tacticalCanvas = dom.tacticalCanvas;
@@ -99,15 +105,20 @@ export function initTacticalMapInteractions() {
         event.preventDefault();
         const vp = vizState.tacticalViewport;
         if (!vp || !(vp.scale > 0)) return;
+        // The rendered viewport lags behind rapid gestures (draw throttling),
+        // so prefer the live manual-mode anchor over the last-drawn one.
+        const view = interaction.mode === 'manual' && interaction.scale > 0
+            ? { ...vp, cx: interaction.anchorX, cy: interaction.anchorY, scale: interaction.scale }
+            : vp;
         const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
         // Anchor the zoom on the cursor: the world point under the pointer
         // stays fixed on screen.
-        const cursorWorld = viewportToWorld(vp, event.clientX, event.clientY);
+        const cursorWorld = viewportToWorld(view, event.clientX, event.clientY);
         const minScale = vp.baseScale * 0.35;
         const maxScale = vp.baseScale * 12.0;
-        const newScale = Math.max(minScale, Math.min(maxScale, vp.scale * factor));
-        const centerX = vp.plotLeft + vp.plotWidth * 0.5;
-        const centerY = vp.plotTop + vp.plotHeight * 0.5;
+        const newScale = Math.max(minScale, Math.min(maxScale, view.scale * factor));
+        const centerX = view.plotLeft + view.plotWidth * 0.5;
+        const centerY = view.plotTop + view.plotHeight * 0.5;
         interaction.mode = 'manual';
         interaction.scale = newScale;
         interaction.anchorX = cursorWorld.x - (event.clientX - centerX) / newScale;
@@ -139,14 +150,15 @@ export function initTacticalMapInteractions() {
             return;
         }
         if (event.button !== 0) return;
+        const manualView = interaction.mode === 'manual' && interaction.scale > 0;
         interaction.dragging = true;
         interaction.dragMoved = false;
         interaction.pointerId = event.pointerId;
         interaction.dragStartX = event.clientX;
         interaction.dragStartY = event.clientY;
-        interaction.anchorStartX = vp ? vp.cx : interaction.anchorX;
-        interaction.anchorStartY = vp ? vp.cy : interaction.anchorY;
-        interaction.scaleAtDragStart = vp && vp.scale > 0 ? vp.scale : interaction.scale;
+        interaction.anchorStartX = manualView ? interaction.anchorX : (vp ? vp.cx : interaction.anchorX);
+        interaction.anchorStartY = manualView ? interaction.anchorY : (vp ? vp.cy : interaction.anchorY);
+        interaction.scaleAtDragStart = manualView ? interaction.scale : (vp && vp.scale > 0 ? vp.scale : interaction.scale);
         try {
             tacticalCanvas.setPointerCapture(event.pointerId);
         } catch (err) {
@@ -355,8 +367,16 @@ export function buildSmoothedTacticalState(state) {
     };
 }
 
+const EMPTY_TACTICAL_STATE = Object.freeze({ units: [], tactical: {} });
+
 export function drawTacticalView(state) {
-    if (vizState.presentationMode !== 'MAP' || !tacticalCtx || !state) return;
+    if (vizState.presentationMode !== 'MAP' || !tacticalCtx) return;
+    if (!state) {
+        // Scene geometry (terrain/vectors) can render before the first
+        // simulation state frame arrives.
+        if (!sceneGeometryAvailable()) return;
+        state = EMPTY_TACTICAL_STATE;
+    }
     const tacticalTrailHistory = vizState.tacticalTrailHistory;
     const tacticalInteraction = vizState.tacticalInteraction;
     const renderState = buildSmoothedTacticalState(state);
@@ -378,7 +398,12 @@ export function drawTacticalView(state) {
     tacticalCtx.fillStyle = tacticalSymbology.canvas.background;
     tacticalCtx.fillRect(0, 0, width, height);
 
-    if (plottedUnits.length === 0 && navMarkers.length === 0 && environmentEntries.length === 0) {
+    if (
+        plottedUnits.length === 0
+        && navMarkers.length === 0
+        && environmentEntries.length === 0
+        && !sceneGeometryAvailable()
+    ) {
         tacticalCtx.fillStyle = tacticalSymbology.canvas.emptyText;
         tacticalCtx.font = '12px monospace';
         tacticalCtx.fillText(i18n('ui.noUnits'), 24, 40);
@@ -468,6 +493,15 @@ export function drawTacticalView(state) {
             maxY = Math.max(maxY, bounds.maxY);
         }
     }
+    if (sceneGeometryAvailable() && isTacticalDrawPhaseEnabled('terrain')) {
+        const sceneBounds = sceneGeometryBounds();
+        if (sceneBounds) {
+            minX = Math.min(minX, sceneBounds.minX);
+            maxX = Math.max(maxX, sceneBounds.maxX);
+            minY = Math.min(minY, sceneBounds.minY);
+            maxY = Math.max(maxY, sceneBounds.maxY);
+        }
+    }
     if (!Number.isFinite(minX) || !Number.isFinite(maxX) || !Number.isFinite(minY) || !Number.isFinite(maxY)) {
         minX = -500.0;
         maxX = 500.0;
@@ -538,6 +572,8 @@ export function drawTacticalView(state) {
     tacticalCtx.rect(plotLeft, plotTop, plotWidth, plotHeight);
     tacticalCtx.clip();
 
+    drawSceneTerrain(tacticalCtx, toCanvas);
+
     const worldA = toWorld(plotLeft, plotBottom);
     const worldB = toWorld(plotRight, plotTop);
     const worldMinX = Math.min(worldA.x, worldB.x);
@@ -572,6 +608,8 @@ export function drawTacticalView(state) {
         tacticalCtx.lineTo(p1.x, p1.y);
         tacticalCtx.stroke();
     }
+
+    drawSceneVectors(tacticalCtx, toCanvas, scale);
 
     if (isTacticalDrawPhaseEnabled('environment') && environmentEntries.length > 0) {
         drawEnvironmentOverlays(tacticalCtx, environmentEntries, toCanvas, scale);
@@ -964,7 +1002,8 @@ function drawMeasurement(measure, toCanvas) {
 }
 
 export function maybeDrawTacticalView(nowMs) {
-    if (vizState.presentationMode !== 'MAP' || !vizState.lastTacticalState || !vizState.tacticalNeedsDraw) return;
+    if (vizState.presentationMode !== 'MAP' || !vizState.tacticalNeedsDraw) return;
+    if (!vizState.lastTacticalState && !sceneGeometryAvailable()) return;
     if ((nowMs - vizState.lastTacticalRenderAt) < TACTICAL_RENDER_INTERVAL_MS) return;
     drawTacticalView(vizState.lastTacticalState);
     vizState.lastTacticalRenderAt = nowMs;

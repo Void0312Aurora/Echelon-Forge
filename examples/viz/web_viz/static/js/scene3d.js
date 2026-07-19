@@ -205,6 +205,169 @@ export function applyNavSetup(markers) {
     }
 }
 
+// --- Unified scene geometry (terrain + static vectors, display-only) ---
+const sceneGeometryGroup = new THREE.Group();
+scene.add(sceneGeometryGroup);
+
+export function clearSceneGeometry3D() {
+    while (sceneGeometryGroup.children.length > 0) {
+        const child = sceneGeometryGroup.children[0];
+        sceneGeometryGroup.remove(child);
+        disposeObjectTree(child);
+    }
+}
+
+function buildTerrainMesh(terrain, helpers) {
+    const rows = Number(terrain.rows);
+    const cols = Number(terrain.cols);
+    if (!(rows > 1) || !(cols > 1)) return null;
+    const originX = Number(terrain.origin_x);
+    const originY = Number(terrain.origin_y);
+    const stepX = Number(terrain.step_x);
+    const stepY = Number(terrain.step_y);
+
+    const positions = new Float32Array(rows * cols * 3);
+    const colors = new Float32Array(rows * cols * 3);
+    for (let r = 0; r < rows; r += 1) {
+        for (let c = 0; c < cols; c += 1) {
+            const worldX = originX + stepX * c;
+            const worldY = originY + stepY * r;
+            const height = Number(terrain.heights[r][c]) || 0;
+            const offset = (r * cols + c) * 3;
+            // ENU -> three.js: x=east, y=up, z=-north.
+            positions[offset] = worldX;
+            positions[offset + 1] = height;
+            positions[offset + 2] = -worldY;
+            const base = helpers.terrainCellColor(terrain, r, c);
+            const shade = 0.6 + 0.4 * helpers.terrainShade(terrain, r, c);
+            colors[offset] = (base[0] / 255) * shade;
+            colors[offset + 1] = (base[1] / 255) * shade;
+            colors[offset + 2] = (base[2] / 255) * shade;
+        }
+    }
+    const indices = [];
+    for (let r = 0; r < rows - 1; r += 1) {
+        for (let c = 0; c < cols - 1; c += 1) {
+            const a = r * cols + c;
+            const b = a + 1;
+            const d = a + cols;
+            const e = d + 1;
+            indices.push(a, d, b, b, d, e);
+        }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const material = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    return new THREE.Mesh(geometry, material);
+}
+
+function shapeFromRings(rings) {
+    let shape = null;
+    for (const ring of rings) {
+        const points = (ring.points || []).map((p) => new THREE.Vector2(Number(p[0]), Number(p[1])));
+        if (points.length < 3) continue;
+        if (ring.role !== 'hole') {
+            if (shape === null) {
+                shape = new THREE.Shape(points);
+            }
+            // Additional outer rings become separate shapes handled by caller.
+        } else if (shape !== null) {
+            shape.holes.push(new THREE.Path(points));
+        }
+    }
+    return shape;
+}
+
+function buildBuildingsMesh(buildings) {
+    const group = new THREE.Group();
+    const material = new THREE.MeshLambertMaterial({ color: 0x8d8878, transparent: true, opacity: 0.92 });
+    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xcfc5a0, transparent: true, opacity: 0.35 });
+    for (const building of buildings || []) {
+        const shape = shapeFromRings(building.rings || []);
+        if (!shape) continue;
+        const height = Math.max(1.0, Number(building.height_m) || 1.0);
+        const geometry = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+        // Shape lies in the XY plane extruded along +Z; rotate so the prism
+        // rises along +Y with ENU north mapped to -Z.
+        geometry.rotateX(-Math.PI / 2);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.y = Number(building.base_m) || 0;
+        mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), edgeMaterial));
+        group.add(mesh);
+    }
+    return group;
+}
+
+function buildRoadsGroup(roads) {
+    const group = new THREE.Group();
+    const material = new THREE.LineBasicMaterial({ color: 0xbfb287, transparent: true, opacity: 0.75 });
+    for (const road of roads || []) {
+        for (const part of road.parts || []) {
+            if (!Array.isArray(part) || part.length < 2) continue;
+            const points = part.map((p) => new THREE.Vector3(
+                Number(p[0]),
+                (Number(p[2]) || 0) + 0.4,
+                -Number(p[1]),
+            ));
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            group.add(new THREE.Line(geometry, material));
+        }
+    }
+    return group;
+}
+
+function buildWaterGroup(water) {
+    const group = new THREE.Group();
+    const material = new THREE.MeshLambertMaterial({
+        color: 0x1e5f8a,
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+    });
+    for (const entry of water || []) {
+        const outers = (entry.paths || []).filter((path) => !String(path.role || '').includes('hole'));
+        const holes = (entry.paths || []).filter((path) => String(path.role || '').includes('hole'));
+        for (const outer of outers) {
+            const points = outer.points || [];
+            if (points.length < 3) continue;
+            const shape = new THREE.Shape(points.map((p) => new THREE.Vector2(Number(p[0]), Number(p[1]))));
+            for (const hole of holes) {
+                const holePoints = (hole.points || []).map((p) => new THREE.Vector2(Number(p[0]), Number(p[1])));
+                if (holePoints.length >= 3) shape.holes.push(new THREE.Path(holePoints));
+            }
+            const zValues = points.map((p) => Number(p[2]) || 0);
+            const surfaceZ = zValues.reduce((a, b) => a + b, 0) / Math.max(1, zValues.length);
+            const geometry = new THREE.ShapeGeometry(shape);
+            geometry.rotateX(-Math.PI / 2);
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.y = surfaceZ + 0.2;
+            group.add(mesh);
+        }
+    }
+    return group;
+}
+
+export function buildSceneGeometry3D(payload, helpers) {
+    clearSceneGeometry3D();
+    if (!payload || typeof payload !== 'object') return;
+    const terrain = payload.terrain;
+    if (terrain) {
+        const mesh = buildTerrainMesh(terrain, helpers);
+        if (mesh) sceneGeometryGroup.add(mesh);
+    }
+    sceneGeometryGroup.add(buildWaterGroup(payload.water));
+    sceneGeometryGroup.add(buildRoadsGroup(payload.roads));
+    sceneGeometryGroup.add(buildBuildingsMesh(payload.buildings));
+    const extent = payload.region_extent || {};
+    const spanX = Math.abs(Number(extent.max_x) - Number(extent.min_x)) || 0;
+    const spanY = Math.abs(Number(extent.max_y) - Number(extent.min_y)) || 0;
+    ensureGridContainsPoint(spanX * 0.5, spanY * 0.5, 500.0);
+    console.log('Unified scene geometry loaded into 3D view');
+}
+
 // --- Registry asset loading ---
 const loader = new GLTFLoader();
 const assetModelCache = new Map();
@@ -308,6 +471,16 @@ function buildFallbackVisual(uData, assetEntry) {
         geo.rotateZ(Math.PI / 2);
         const mat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xff4f4f : 0xffdd55 });
         group.add(new THREE.Mesh(geo, mat));
+    } else if (uData.type === 'Ground') {
+        // Compact vehicle-scale marker: hull box plus a small turret cap.
+        const hullGeo = new THREE.BoxGeometry(7, 2.6, 4);
+        hullGeo.translate(0, 1.3, 0);
+        const hullMat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0x9c4a3c : 0x4a6d4f });
+        group.add(new THREE.Mesh(hullGeo, hullMat));
+        const capGeo = new THREE.BoxGeometry(3.2, 1.4, 2.4);
+        capGeo.translate(-0.6, 3.3, 0);
+        const capMat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xb86a58 : 0x5f8763 });
+        group.add(new THREE.Mesh(capGeo, capMat));
     } else {
         const geo = new THREE.BoxGeometry(30, 60, 30);
         geo.translate(0, 30, 0);
@@ -389,7 +562,9 @@ export function getAssetChaseOffset(entry, fallbackType) {
     if (Array.isArray(chase) && chase.length === 3) {
         return new THREE.Vector3(Number(chase[0] || 0), Number(chase[1] || 30), Number(chase[2] || 80));
     }
-    return fallbackType === 'Ship' ? new THREE.Vector3(0, 75, 240) : new THREE.Vector3(0, 30, 80);
+    if (fallbackType === 'Ship') return new THREE.Vector3(0, 75, 240);
+    if (fallbackType === 'Ground') return new THREE.Vector3(0, 18, 42);
+    return new THREE.Vector3(0, 30, 80);
 }
 
 // --- Unit lifecycle ---

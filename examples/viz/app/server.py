@@ -192,6 +192,13 @@ def create_app(args: argparse.Namespace):
     def get_asset_registry():
         return {"asset_registry": manager.asset_registry}
 
+    @app.get("/api/viz/scene_geometry")
+    def get_scene_geometry():
+        payload = manager.scene_geometry
+        if not isinstance(payload, dict):
+            return {"ok": False, "error": "no environment bundle loaded"}, 404
+        return payload
+
     @app.get("/api/viz/status")
     def get_status():
         return manager.status_payload()

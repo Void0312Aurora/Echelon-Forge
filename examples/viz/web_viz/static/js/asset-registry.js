@@ -149,6 +149,9 @@ export function unitSymbolSpec(u) {
     if (u.type === 'Missile') {
         return { kind: 'missile', len: 13, wing: 4 };
     }
+    if (u.type === 'Ground') {
+        return { kind: 'generic', len: 10, wing: 5 };
+    }
     return { kind: 'generic', len: 12, wing: 5 };
 }
 

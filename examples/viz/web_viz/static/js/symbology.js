@@ -3,6 +3,43 @@
 // live toggle state lives in the store and is managed by layers.js.
 
 export const tacticalLayerCatalog = Object.freeze({
+    terrain: {
+        label: 'Terrain heightfield',
+        shortLabel: 'TERRAIN',
+        summaryLabel: 'TERRAIN',
+        group: 'environment',
+        // Drawn beneath the reference grid.
+        drawOrder: -4,
+        buttonId: 'btn-layer-terrain',
+        defaultEnabled: true,
+    },
+    water: {
+        label: 'Hydrology surfaces',
+        shortLabel: 'WATER',
+        summaryLabel: 'WATER',
+        group: 'environment',
+        drawOrder: 6,
+        buttonId: 'btn-layer-water',
+        defaultEnabled: true,
+    },
+    roads: {
+        label: 'Road network',
+        shortLabel: 'ROADS',
+        summaryLabel: 'ROADS',
+        group: 'environment',
+        drawOrder: 7,
+        buttonId: 'btn-layer-roads',
+        defaultEnabled: true,
+    },
+    buildings: {
+        label: 'Building footprints',
+        shortLabel: 'BLDG',
+        summaryLabel: 'BLDG',
+        group: 'environment',
+        drawOrder: 8,
+        buttonId: 'btn-layer-buildings',
+        defaultEnabled: true,
+    },
     environment: {
         label: 'Environment overlays',
         shortLabel: 'ENV',
@@ -71,14 +108,18 @@ export const tacticalLayerCatalog = Object.freeze({
 export const tacticalLayerKeys = Object.keys(tacticalLayerCatalog);
 
 export const tacticalLayerGroups = Object.freeze([
-    { id: 'environment', label: 'ENVIRONMENT', role: 'terrain / areas', layerKeys: ['environment'] },
+    { id: 'environment', label: 'ENVIRONMENT', role: 'terrain / areas', layerKeys: ['terrain', 'water', 'roads', 'buildings', 'environment'] },
     { id: 'maneuver', label: 'MANEUVER', role: 'routes / trails', layerKeys: ['route', 'trails'] },
     { id: 'sensors', label: 'SENSORS', role: 'tracks / rings / links', layerKeys: ['tracks', 'sensorRings', 'datalinks'] },
     { id: 'effects', label: 'EFFECTS', role: 'weapons / fires', layerKeys: ['weapons'] },
 ]);
 
 export const tacticalDrawPhases = Object.freeze([
+    { id: 'terrain', layer: 'terrain', order: tacticalLayerCatalog.terrain.drawOrder },
     { id: 'grid', layer: null, order: 0 },
+    { id: 'water', layer: 'water', order: tacticalLayerCatalog.water.drawOrder },
+    { id: 'roads', layer: 'roads', order: tacticalLayerCatalog.roads.drawOrder },
+    { id: 'buildings', layer: 'buildings', order: tacticalLayerCatalog.buildings.drawOrder },
     { id: 'environment', layer: 'environment', order: tacticalLayerCatalog.environment.drawOrder },
     { id: 'route', layer: 'route', order: tacticalLayerCatalog.route.drawOrder },
     { id: 'trails', layer: 'trails', order: tacticalLayerCatalog.trails.drawOrder },
@@ -218,6 +259,10 @@ export const tacticalWorkspaceDefinitions = {
         role: 'COMMON PICTURE',
         viewMode: 'MAP',
         layerDefaults: {
+            terrain: true,
+            water: true,
+            roads: true,
+            buildings: true,
             environment: true,
             route: true,
             trails: true,
@@ -232,6 +277,10 @@ export const tacticalWorkspaceDefinitions = {
         role: 'ENV / AREAS',
         viewMode: 'MAP',
         layerDefaults: {
+            terrain: true,
+            water: true,
+            roads: true,
+            buildings: true,
             environment: true,
             route: false,
             trails: false,
@@ -246,6 +295,10 @@ export const tacticalWorkspaceDefinitions = {
         role: 'SENSORS / LINKS',
         viewMode: 'MAP',
         layerDefaults: {
+            terrain: false,
+            water: false,
+            roads: false,
+            buildings: false,
             environment: false,
             route: false,
             trails: true,
@@ -260,6 +313,10 @@ export const tacticalWorkspaceDefinitions = {
         role: 'MODEL INSPECT',
         viewMode: '3D',
         layerDefaults: {
+            terrain: true,
+            water: true,
+            roads: true,
+            buildings: true,
             environment: true,
             route: true,
             trails: true,
