@@ -48,9 +48,14 @@ static-scene product:
 Resolved buildings become rigid prisms without changing their source XY
 footprints. Resolved zero-layer roads become width-bearing DEM-draped
 corridors; derived boundary polygons are clipped to the DEM extent while source
-centerlines remain unchanged. Roofs, bridges, elevated passages, and
-subsurface roads without metric profiles remain explicit held objects rather
-than receiving guessed heights.
+centerlines remain unchanged. Bridges (`bridge=true`, positive layer, linear
+centerline) resolve to `abutment_interpolated_deck` corridors: the two
+centerline endpoints are sampled from the DEM as abutment anchors and the deck
+elevation is interpolated linearly along the arc length. No measured deck
+elevation is claimed; `deck_profile.deck_elevation_measured` stays `false` and
+decks whose abutments fall outside the finite DEM remain held. Roofs,
+non-bridge elevated passages, and subsurface roads without metric profiles
+remain explicit held objects rather than receiving guessed heights.
 
 Phase 1 requires a frozen `--file`, terrain, `web_mercator`, scale 1, rotation
 0, Overture disabled, and an admitted actual elevation provider. The output is

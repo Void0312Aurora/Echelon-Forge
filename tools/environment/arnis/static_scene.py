@@ -411,6 +411,114 @@ def _derive_building(
     return entry
 
 
+def _polyline_arc_lengths(path: list[tuple[float, float]]) -> list[float] | None:
+    lengths = [0.0]
+    for start, end in zip(path, path[1:]):
+        step = math.hypot(end[0] - start[0], end[1] - start[1])
+        if step <= 1.0e-12:
+            return None
+        lengths.append(lengths[-1] + step)
+    return lengths
+
+
+def _derive_bridge_deck(
+    entry: dict[str, Any],
+    paths: list[tuple[str, list[tuple[float, float]]]],
+    width: float,
+    elevation: np.ndarray,
+    x_axis: np.ndarray,
+    y_axis: np.ndarray,
+) -> dict[str, Any]:
+    """Resolve a bridge deck by interpolating between abutment DEM anchors.
+
+    The only trusted vertical references for an OSM bridge are the two points
+    where the deck meets the terrain-connected road network. Both centerline
+    endpoints are sampled from the DEM and the deck elevation is interpolated
+    linearly along the centerline arc length (simply-supported approximation).
+    No measured deck elevation is claimed; lineage records the interpolation.
+    Corridor polygons reuse the per-segment width expansion but take their Z
+    from the interpolated deck profile instead of the terrain.
+    """
+
+    half_width = width * 0.5
+    centerline_parts_xyz: list[list[list[float]]] = []
+    corridor_segments: list[dict[str, Any]] = []
+    abutments: list[dict[str, Any]] = []
+    for part_index, (_role, path) in enumerate(paths):
+        lengths = _polyline_arc_lengths(path)
+        if lengths is None:
+            return _held(entry, "bridge_contains_degenerate_segment")
+        total_length = lengths[-1]
+        if total_length <= 1.0e-9:
+            return _held(entry, "bridge_centerline_degenerate")
+        anchors = _bilinear_sample(elevation, x_axis, y_axis, [path[0], path[-1]])
+        if not np.isfinite(anchors).all():
+            return _held(entry, "bridge_abutment_outside_finite_dem")
+        start_z = float(anchors[0])
+        end_z = float(anchors[1])
+        deck_z = [
+            start_z + (end_z - start_z) * (length / total_length)
+            for length in lengths
+        ]
+        abutments.append(
+            {
+                "part_index": part_index,
+                "start_elevation_m": start_z,
+                "end_elevation_m": end_z,
+                "span_length_m": total_length,
+            }
+        )
+        centerline_parts_xyz.append(
+            [[point[0], point[1], z] for point, z in zip(path, deck_z)]
+        )
+        for segment_index, (start, end) in enumerate(zip(path, path[1:])):
+            delta_x = end[0] - start[0]
+            delta_y = end[1] - start[1]
+            length = math.hypot(delta_x, delta_y)
+            normal_x = -delta_y / length * half_width
+            normal_y = delta_x / length * half_width
+            z_start = deck_z[segment_index]
+            z_end = deck_z[segment_index + 1]
+            corridor_segments.append(
+                {
+                    "source_part_index": part_index,
+                    "source_segment_index": segment_index,
+                    "clipped_to_dem_extent": False,
+                    "polygon_xyz": [
+                        [start[0] + normal_x, start[1] + normal_y, z_start],
+                        [start[0] - normal_x, start[1] - normal_y, z_start],
+                        [end[0] - normal_x, end[1] - normal_y, z_end],
+                        [end[0] + normal_x, end[1] + normal_y, z_end],
+                    ],
+                }
+            )
+    entry.update(
+        {
+            "status": "resolved",
+            "static_geometry": {
+                "kind": "abutment_interpolated_deck",
+                "width_m": width,
+                "centerline_geometry_xy": copy.deepcopy(entry.get("source_geometry_xy")),
+                "centerline_xy_interpolation_applied": False,
+                "centerline_parts_xyz": centerline_parts_xyz,
+                "corridor_segments": corridor_segments,
+                "corridor_clipped_to_dem_extent": False,
+                "clipped_segment_count": 0,
+                "skipped_segment_count": 0,
+                "deck_profile": {
+                    "method": "linear_interpolation_between_abutment_dem_anchors",
+                    "abutments": abutments,
+                    "deck_elevation_measured": False,
+                },
+                "drape_method": (
+                    "abutment_dem_anchors_with_linear_arc_length_deck_interpolation"
+                ),
+            },
+        }
+    )
+    return entry
+
+
 def _derive_road(
     feature: dict[str, Any],
     elevation: np.ndarray,
@@ -449,6 +557,24 @@ def _derive_road(
     entry = _base_entry(feature, "road", anchor, vector_artifact, elevation_artifact)
     entry["anchor"].update({"layer": layer, "bridge": bridge, "tunnel": tunnel, "covered": covered})
     if anchor["mode"] == "elevated_profile" or float(layer) > 0.0:
+        # Phase 2: bridges gain a deterministic deck derived from the two
+        # abutment DEM anchors. Non-bridge elevated profiles (for example
+        # positive-layer building passages) still lack a trustworthy vertical
+        # reference and remain held.
+        if (
+            bridge
+            and not tunnel
+            and float(layer) > 0.0
+            and geometry_type in {"LineString", "MultiLineString"}
+        ):
+            return _derive_bridge_deck(
+                entry,
+                paths,
+                width,
+                elevation,
+                x_axis,
+                y_axis,
+            )
         return _held(entry, "elevated_profile_unresolved")
     if bridge:
         return _held(entry, "bridge_elevation_profile_unresolved")
@@ -678,6 +804,10 @@ def derive_static_scene_geometry(
             "road": (
                 "per_segment_width_corridor_with_deterministic_dem_extent_clipping_"
                 "and_bilinear_dem_drape"
+            ),
+            "bridge": (
+                "abutment_dem_anchor_deck_with_linear_arc_length_interpolation_"
+                "no_measured_deck_elevation"
             ),
             "hydrology": "source_geometry_with_bilinear_dem_preview_z_only",
             "xy_geometry_policy": "source_xy_preserved_without_interpolation",

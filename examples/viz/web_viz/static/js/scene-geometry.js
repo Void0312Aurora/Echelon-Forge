@@ -39,6 +39,8 @@ const ROAD_STYLES = [
     { match: /./, stroke: 'rgba(150, 150, 128, 0.65)', casing: 'rgba(10, 16, 22, 0.8)' },
 ];
 
+const BRIDGE_STYLE = { stroke: 'rgba(176, 214, 214, 0.95)', casing: 'rgba(6, 10, 14, 0.95)' };
+
 const WATER_FILL = 'rgba(38, 110, 160, 0.42)';
 const WATER_STROKE = 'rgba(110, 200, 240, 0.55)';
 const BUILDING_FILL = 'rgba(196, 186, 156, 0.20)';
@@ -254,14 +256,15 @@ export function drawSceneVectors(ctx, toCanvas, scale) {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         for (const road of payload.roads || []) {
-            const width = Math.max(0.8, Number(road.width_m || 2) * scale);
-            const style = roadStyle(road.highway_type);
+            const isBridge = road.kind === 'bridge_deck';
+            const width = Math.max(isBridge ? 1.4 : 0.8, Number(road.width_m || 2) * scale);
+            const style = isBridge ? BRIDGE_STYLE : roadStyle(road.highway_type);
             for (const part of road.parts || []) {
                 if (!Array.isArray(part) || part.length < 2) continue;
-                if (style.casing && width >= 2.5) {
+                if (style.casing && (isBridge || width >= 2.5)) {
                     tracePath(ctx, toCanvas, part, false);
                     ctx.strokeStyle = style.casing;
-                    ctx.lineWidth = width + 1.6;
+                    ctx.lineWidth = width + (isBridge ? 2.4 : 1.6);
                     ctx.stroke();
                 }
                 tracePath(ctx, toCanvas, part, false);

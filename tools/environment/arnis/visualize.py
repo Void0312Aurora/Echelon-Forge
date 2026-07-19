@@ -859,8 +859,14 @@ def _draw_static_scene_3d(
         antialiased=True,
         alpha=0.52,
     )
-    drawn = {"building_prisms": 0, "road_corridor_quads": 0, "hydrology_paths": 0}
+    drawn = {
+        "building_prisms": 0,
+        "road_corridor_quads": 0,
+        "bridge_deck_quads": 0,
+        "hydrology_paths": 0,
+    }
     road_faces: list[list[tuple[float, float, float]]] = []
+    bridge_faces: list[list[tuple[float, float, float]]] = []
     hydrology_faces: list[list[tuple[float, float, float]]] = []
     for item in static_scene["objects"]:
         if item.get("status") != "resolved":
@@ -875,6 +881,10 @@ def _draw_static_scene_3d(
             for segment in geometry["corridor_segments"]:
                 road_faces.append([tuple(point) for point in segment["polygon_xyz"]])
                 drawn["road_corridor_quads"] += 1
+        elif kind == "abutment_interpolated_deck":
+            for segment in geometry["corridor_segments"]:
+                bridge_faces.append([tuple(point) for point in segment["polygon_xyz"]])
+                drawn["bridge_deck_quads"] += 1
         elif kind == "source_geometry_dem_display_drape":
             for path in geometry["display_paths_xyz"]:
                 coordinates = [tuple(point) for point in path["coordinates_xyz"]]
@@ -900,6 +910,16 @@ def _draw_static_scene_3d(
                 edgecolors="#d57c08",
                 linewidths=0.18,
                 alpha=0.82,
+            )
+        )
+    if bridge_faces:
+        ax.add_collection3d(
+            Poly3DCollection(
+                bridge_faces,
+                facecolors="#8fd0d0",
+                edgecolors="#3f9c9c",
+                linewidths=0.24,
+                alpha=0.9,
             )
         )
     if hydrology_faces:

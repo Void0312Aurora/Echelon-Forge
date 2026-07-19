@@ -430,11 +430,11 @@ def test_synthetic_continuous_bundle_writes_preview_and_metrics(tmp_path: Path) 
     }
     assert static_scene["summary"] == {
         "total": 7,
-        "resolved": 4,
-        "held": 3,
+        "resolved": 5,
+        "held": 2,
         "by_feature_class": {
             "building": {"total": 2, "resolved": 1, "held": 1},
-            "road": {"total": 4, "resolved": 2, "held": 2},
+            "road": {"total": 4, "resolved": 3, "held": 1},
             "hydrology": {"total": 1, "resolved": 1, "held": 0},
         },
     }
@@ -473,10 +473,22 @@ def test_synthetic_continuous_bundle_writes_preview_and_metrics(tmp_path: Path) 
     assert by_id["synthetic:building:roof-held"]["status"] == "held"
     assert by_id["synthetic:building:roof-held"]["static_geometry"] is None
     bridge = by_id["synthetic:road:bridge-held"]
-    assert bridge["status"] == "held"
-    assert bridge["hold_reason"] == "elevated_profile_unresolved"
+    assert bridge["status"] == "resolved"
     assert bridge["anchor"]["covered"] is True
-    assert bridge["static_geometry"] is None
+    bridge_geometry = bridge["static_geometry"]
+    assert bridge_geometry["kind"] == "abutment_interpolated_deck"
+    assert bridge_geometry["deck_profile"]["method"] == (
+        "linear_interpolation_between_abutment_dem_anchors"
+    )
+    assert bridge_geometry["deck_profile"]["deck_elevation_measured"] is False
+    assert len(bridge_geometry["deck_profile"]["abutments"]) == 1
+    bridge_abutment = bridge_geometry["deck_profile"]["abutments"][0]
+    assert bridge_abutment["span_length_m"] > 0.0
+    assert bridge_geometry["corridor_clipped_to_dem_extent"] is False
+    assert len(bridge_geometry["corridor_segments"]) == 2
+    deck_z = [point[2] for part in bridge_geometry["centerline_parts_xyz"] for point in part]
+    assert deck_z[0] == pytest.approx(bridge_abutment["start_elevation_m"])
+    assert deck_z[-1] == pytest.approx(bridge_abutment["end_elevation_m"])
     covered = by_id["synthetic:road:covered-resolved"]
     assert covered["status"] == "resolved"
     assert covered["anchor"]["covered"] is True

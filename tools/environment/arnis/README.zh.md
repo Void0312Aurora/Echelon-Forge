@@ -45,8 +45,12 @@ python tools/environment/arnis/visualize.py \
 - 使用真实米制 Z 比例的 `static_scene_preview.png`。
 
 已解析建筑生成刚性棱柱，源 XY footprint 不变；已解析零层道路按实际宽度生成 DEM
-贴合走廊，派生边界面会裁到 DEM 范围，但源 centerline 不变。缺少米制剖面的屋顶、
-桥梁、高层通道和地下道路保持显式 held，不猜测高度。
+贴合走廊，派生边界面会裁到 DEM 范围，但源 centerline 不变。桥梁
+（`bridge=true`、正 layer、线状 centerline）解析为 `abutment_interpolated_deck`
+走廊：centerline 两端点从 DEM 采样作为桥台锚点，桥面标高沿弧长线性插值。此推导不
+声称任何实测桥面标高（`deck_profile.deck_elevation_measured` 恒为 `false`），
+桥台落在有限 DEM 之外的桥仍保持 held。缺少米制剖面的屋顶、非桥梁高层通道和地下
+道路保持显式 held，不猜测高度。
 
 第一阶段强制 `--file`、terrain、`web_mercator`、scale 1、rotation 0、
 Overture disabled，并校验实际高程 provider。输出仍只是一份静态环境数据包：不释放

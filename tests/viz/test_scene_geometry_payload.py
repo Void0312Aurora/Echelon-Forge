@@ -77,14 +77,29 @@ def test_scene_geometry_road_entries_keep_metric_attributes(payload: dict) -> No
   road = payload["roads"][0]
   assert road["width_m"] > 0
   assert isinstance(road["highway_type"], str)
+  assert road["kind"] in {"terrain_draped", "bridge_deck"}
   assert road["parts"], "road entries must carry centerline parts"
   first_point = road["parts"][0][0]
   assert len(first_point) == 3, "centerline points are draped xyz"
+  assert road["corridor"], "road entries carry width-bearing corridor polygons"
+  assert len(road["corridor"][0][0]) == 3
 
   building = payload["buildings"][0]
   assert building["top_m"] > building["base_m"]
   assert building["rings"][0]["role"] == "outer"
   assert len(building["rings"][0]["points"][0]) == 2
+
+
+def test_scene_geometry_resolves_bridge_decks_from_abutment_anchors(payload: dict) -> None:
+  bridges = [road for road in payload["roads"] if road["kind"] == "bridge_deck"]
+  assert bridges, "chicago fixture must resolve bridge decks"
+  for bridge in bridges:
+    assert bridge["corridor"], "bridge decks carry corridor polygons"
+    deck_z = [point[2] for part in bridge["parts"] for point in part]
+    assert all(isinstance(z, float) for z in deck_z)
+  # Subsurface roads stay held and are never rendered.
+  assert payload["held"]["by_reason"].get("subsurface_profile_unresolved", 0) > 0
+  assert "bridge_elevation_profile_unresolved" not in payload["held"]["by_reason"]
 
 
 def test_scene_geometry_rejects_missing_bundle(tmp_path: Path) -> None:

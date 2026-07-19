@@ -52,10 +52,13 @@ categorical field，只允许 nearest-category 采样。建筑、道路和水系
 通过地形栅格插值。旧的 block-derived 草稿 bundle 已失效，新 importer 会 fail closed。
 
 静态场景派生产物保持源 XY 不变。已解析建筑使用 DEM 样本与米制 base offset 确定单一
-刚性基础平面；已解析道路使用带真实宽度的贴地 corridor polygon。缺少米制垂直剖面的
-对象继续 held：Chicago 固定样本中包括 `10` 个屋顶/建筑分部、`49` 条高架道路剖面和
-`47` 条地下道路剖面。该派生产物不是 collision、pathfinding、LOS、cover 或 damage
-权威。
+刚性基础平面；已解析道路使用带真实宽度的贴地 corridor polygon。正 layer 且 centerline
+为线状的桥梁解析为 `abutment_interpolated_deck` 走廊：桥面标高在两个桥台 DEM 锚点
+之间沿弧长线性插值，lineage 记录不存在实测桥面标高
+（`deck_elevation_measured: false`）。仍缺少米制垂直剖面的对象继续 held：Chicago
+固定样本中包括 `10` 个屋顶/建筑分部、`6` 条非桥梁高架道路剖面和 `47` 条地下道路
+剖面（合计 `63`，较第一阶段的 `106` 因桥面推导而减少）。该派生产物不是 collision、
+pathfinding、LOS、cover 或 damage 权威。
 
 固定 OSM 输入与签入 bundle 可逐字节验证；USGS 3DEP 和 ESA WorldCover 的网络/缓存
 来源尚未完整离线冻结，因此不能宣称未来从网络重新生成必然逐字节相同。

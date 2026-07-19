@@ -301,19 +301,67 @@ function buildBuildingsMesh(buildings) {
     return group;
 }
 
+function pushCorridorTriangles(target, polygon, lift) {
+    // Fan triangulation of a convex corridor quad; ENU -> three.js axes.
+    for (let i = 1; i + 1 < polygon.length; i += 1) {
+        for (const p of [polygon[0], polygon[i], polygon[i + 1]]) {
+            target.push(Number(p[0]), (Number(p[2]) || 0) + lift, -Number(p[1]));
+        }
+    }
+}
+
+function corridorMesh(positions, material) {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geometry.computeVertexNormals();
+    return new THREE.Mesh(geometry, material);
+}
+
 function buildRoadsGroup(roads) {
     const group = new THREE.Group();
-    const material = new THREE.LineBasicMaterial({ color: 0xbfb287, transparent: true, opacity: 0.75 });
+    const roadPositions = [];
+    const bridgePositions = [];
+    const linePoints = [];
     for (const road of roads || []) {
+        const isBridge = road.kind === 'bridge_deck';
+        const corridor = Array.isArray(road.corridor) ? road.corridor : [];
+        if (corridor.length > 0) {
+            const target = isBridge ? bridgePositions : roadPositions;
+            // Bridges get extra lift so decks stay clear of the water surface.
+            const lift = isBridge ? 0.6 : 0.25;
+            for (const polygon of corridor) {
+                if (Array.isArray(polygon) && polygon.length >= 3) {
+                    pushCorridorTriangles(target, polygon, lift);
+                }
+            }
+            continue;
+        }
+        // Fallback for entries without corridor polygons: draped centerline.
         for (const part of road.parts || []) {
-            if (!Array.isArray(part) || part.length < 2) continue;
+            if (Array.isArray(part) && part.length >= 2) linePoints.push(part);
+        }
+    }
+    if (roadPositions.length > 0) {
+        group.add(corridorMesh(roadPositions, new THREE.MeshLambertMaterial({
+            color: 0x716c59,
+            side: THREE.DoubleSide,
+        })));
+    }
+    if (bridgePositions.length > 0) {
+        group.add(corridorMesh(bridgePositions, new THREE.MeshLambertMaterial({
+            color: 0x9fb8b8,
+            side: THREE.DoubleSide,
+        })));
+    }
+    if (linePoints.length > 0) {
+        const material = new THREE.LineBasicMaterial({ color: 0xbfb287, transparent: true, opacity: 0.75 });
+        for (const part of linePoints) {
             const points = part.map((p) => new THREE.Vector3(
                 Number(p[0]),
                 (Number(p[2]) || 0) + 0.4,
                 -Number(p[1]),
             ));
-            const geometry = new THREE.BufferGeometry().setFromPoints(points);
-            group.add(new THREE.Line(geometry, material));
+            group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material));
         }
     }
     return group;

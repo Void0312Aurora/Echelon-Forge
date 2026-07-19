@@ -164,9 +164,30 @@ def _building_entry(item: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+_ROAD_KINDS = {
+    "terrain_draped_corridor": "terrain_draped",
+    "abutment_interpolated_deck": "bridge_deck",
+}
+
+
+def _corridor_polygons(geometry: dict[str, Any]) -> list[list[list[float]]]:
+    segments = geometry.get("corridor_segments")
+    if not isinstance(segments, list):
+        return []
+    polygons: list[list[list[float]]] = []
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        polygon = segment.get("polygon_xyz")
+        if isinstance(polygon, list) and len(polygon) >= 3:
+            polygons.append(_points_xyz(polygon))
+    return polygons
+
+
 def _road_entry(item: dict[str, Any], attributes_by_feature: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
     geometry = item.get("static_geometry") or {}
-    if geometry.get("kind") != "terrain_draped_corridor":
+    kind = _ROAD_KINDS.get(str(geometry.get("kind") or ""))
+    if kind is None:
         return None
     parts = geometry.get("centerline_parts_xyz")
     if not isinstance(parts, list) or not parts:
@@ -174,9 +195,11 @@ def _road_entry(item: dict[str, Any], attributes_by_feature: dict[str, dict[str,
     source_attributes = attributes_by_feature.get(str(item.get("source_feature_id") or ""), {})
     return {
         "id": str(item.get("object_id") or item.get("source_feature_id") or ""),
+        "kind": kind,
         "width_m": _round3(geometry.get("width_m", 2.0)),
         "highway_type": str(source_attributes.get("highway_type") or ""),
         "parts": [_points_xyz(part) for part in parts if isinstance(part, list)],
+        "corridor": _corridor_polygons(geometry),
     }
 
 

@@ -59,11 +59,16 @@ old block-derived draft bundle is invalid and now fails closed at import.
 
 The static-scene derivative preserves source XY. Resolved buildings use one
 rigid foundation plane from DEM samples plus a metric base offset. Resolved
-roads use width-bearing terrain-conforming corridor polygons. Objects lacking a
-metric vertical profile remain held: in the retained Chicago fixture this is
-`10` roof/building parts, `49` elevated road profiles, and `47` subsurface road
-profiles. The derived product is not collision, pathfinding, LOS, cover, or
-damage authority.
+roads use width-bearing terrain-conforming corridor polygons. Bridges with a
+positive layer and a linear centerline resolve to
+`abutment_interpolated_deck` corridors whose deck elevation is interpolated
+linearly between the two abutment DEM anchors; the lineage records that no
+measured deck elevation exists (`deck_elevation_measured: false`). Objects
+still lacking a metric vertical profile remain held: in the retained Chicago
+fixture this is `10` roof/building parts, `6` non-bridge elevated road
+profiles, and `47` subsurface road profiles (`63` total, down from the
+phase-1 `106` after the bridge-deck derivation). The derived product is not
+collision, pathfinding, LOS, cover, or damage authority.
 
 The frozen OSM input and checked-in bundle are byte-verifiable. USGS 3DEP and
 ESA WorldCover network/cache sources are not yet fully frozen for offline

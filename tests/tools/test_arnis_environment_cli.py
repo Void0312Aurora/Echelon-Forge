@@ -25,13 +25,16 @@ _FIXTURE_ROOT = (
 
 
 def test_phase1_request_builds_frozen_export_command(tmp_path: Path) -> None:
+    binary_path = Path("/opt/arnis-cmo")
     command = _phase1_export_command(
         _FIXTURE_ROOT / "request.json",
         tmp_path / "output",
-        Path("/opt/arnis-cmo"),
+        binary_path,
     )
 
-    assert command[0] == "/opt/arnis-cmo"
+    # Compare through Path so the assertion holds on both POSIX and Windows
+    # path separators.
+    assert command[0] == str(binary_path)
     assert "--file" in command
     assert "--terrain" in command
     assert "--projection" in command
