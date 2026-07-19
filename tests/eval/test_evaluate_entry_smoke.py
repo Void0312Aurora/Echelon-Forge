@@ -66,6 +66,25 @@ SMOKE_TRAIN_CONFIG = {
 
 
 class EvaluateEntrySmokeTests(unittest.TestCase):
+  def test_shared_checkpoint_loader_import_has_no_local_build_requirement(self) -> None:
+    env = dict(os.environ)
+    env["CMO_BUILD_DIR"] = str(REPO_ROOT / "missing-build-must-not-be-inspected")
+    proc = subprocess.run(
+      [sys.executable, "-c", "import python.rl.policy_checkpoint; print('import-ok')"],
+      cwd=str(REPO_ROOT),
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+      text=True,
+      check=False,
+      env=env,
+    )
+
+    self.assertEqual(proc.returncode, 0, msg=proc.stdout)
+    self.assertIn("import-ok", proc.stdout)
+    evaluate_source = (REPO_ROOT / "evaluate.py").read_text(encoding="utf-8")
+    self.assertIn("from python.rl.policy_checkpoint import load_sb3_policy", evaluate_source)
+    self.assertNotIn("from tools.eval.sb3_eval_base import load_sb3_policy", evaluate_source)
+
   def test_evaluate_entry_loads_model_via_shared_loader_and_runs_episode(self) -> None:
     """`evaluate.py` must load checkpoints through `load_sb3_policy` and complete a run."""
     from stable_baselines3 import PPO

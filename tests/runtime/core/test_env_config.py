@@ -13,10 +13,14 @@ ensure_repo_imports()
 
 from python.env_config import ( # noqa: E402
   ACTION_MODES,
+  BATCH_OBSERVATION_BACKENDS,
+  BATCH_VISUAL_BACKENDS,
   EXECUTION_STEP_RUNTIME_MODES,
   FLIGHT_SHAPING_BACKENDS,
   STEP_INFO_MODES,
   VALID_ACTION_MODES,
+  VALID_BATCH_OBSERVATION_BACKENDS,
+  VALID_BATCH_VISUAL_BACKENDS,
   VALID_EXECUTION_STEP_RUNTIME_MODES,
   VALID_FLIGHT_SHAPING_BACKENDS,
   VALID_STEP_INFO_MODES,
@@ -247,6 +251,8 @@ class ModeChoiceSurfaceParityTests(unittest.TestCase):
   def test_validation_sets_derive_from_canonical_ordered_tuples(self) -> None:
     for modes, valid in (
       (ACTION_MODES, VALID_ACTION_MODES),
+      (BATCH_OBSERVATION_BACKENDS, VALID_BATCH_OBSERVATION_BACKENDS),
+      (BATCH_VISUAL_BACKENDS, VALID_BATCH_VISUAL_BACKENDS),
       (EXECUTION_STEP_RUNTIME_MODES, VALID_EXECUTION_STEP_RUNTIME_MODES),
       (STEP_INFO_MODES, VALID_STEP_INFO_MODES),
       (FLIGHT_SHAPING_BACKENDS, VALID_FLIGHT_SHAPING_BACKENDS),
@@ -292,6 +298,25 @@ class ModeChoiceSurfaceParityTests(unittest.TestCase):
     for leading_entry in ("full", "auto", "compiled"):
       self.assertNotIn(f'choices=["{leading_entry}"', source)
       self.assertNotIn(f"choices=['{leading_entry}'", source)
+
+  def test_world_batch_benchmark_uses_semantically_matching_backend_owners(self) -> None:
+    source = (
+      REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "world_batch_vec_env.py"
+    ).read_text(encoding="utf-8")
+    self.assertIn("choices=list(BATCH_VISUAL_BACKENDS)", source)
+    self.assertIn("choices=list(BATCH_OBSERVATION_BACKENDS)", source)
+    self.assertEqual(source.count("choices=list(FLIGHT_SHAPING_BACKENDS)"), 1)
+
+  def test_world_batch_backend_normalizers_follow_their_owners(self) -> None:
+    from python.rl.runtime.world_batch.normalize import (
+      normalize_batch_observation_backend,
+      normalize_batch_visual_backend,
+    )
+
+    for mode in BATCH_OBSERVATION_BACKENDS:
+      self.assertEqual(normalize_batch_observation_backend(mode), mode)
+    for mode in BATCH_VISUAL_BACKENDS:
+      self.assertEqual(normalize_batch_visual_backend(mode), mode)
 
 
 if __name__ == "__main__":

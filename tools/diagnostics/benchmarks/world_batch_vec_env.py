@@ -14,7 +14,13 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
-from python.env_config import ACTION_MODES, EXECUTION_STEP_RUNTIME_MODES, FLIGHT_SHAPING_BACKENDS
+from python.env_config import (
+    ACTION_MODES,
+    BATCH_OBSERVATION_BACKENDS,
+    BATCH_VISUAL_BACKENDS,
+    EXECUTION_STEP_RUNTIME_MODES,
+    FLIGHT_SHAPING_BACKENDS,
+)
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
@@ -150,14 +156,14 @@ def main() -> int:
         "--batch-visual-backend",
         type=str,
         default="auto",
-        choices=list(FLIGHT_SHAPING_BACKENDS),
+        choices=list(BATCH_VISUAL_BACKENDS),
         help="World-batch visual backend to request.",
     )
     parser.add_argument(
         "--batch-observation-backend",
         type=str,
         default="auto",
-        choices=list(FLIGHT_SHAPING_BACKENDS),
+        choices=list(BATCH_OBSERVATION_BACKENDS),
         help="World-batch observation backend to request.",
     )
     parser.add_argument(

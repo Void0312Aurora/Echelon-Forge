@@ -11,11 +11,17 @@ ACTION_MODES = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hy
 EXECUTION_STEP_RUNTIME_MODES = ("compiled",)
 STEP_INFO_MODES = ("full", "terminal", "off")
 FLIGHT_SHAPING_BACKENDS = ("auto", "compiled", "gpu_host")
+# These currently have the same values as flight shaping, but remain distinct
+# semantic owners so one runtime domain can evolve without changing another.
+BATCH_OBSERVATION_BACKENDS = ("auto", "compiled", "gpu_host")
+BATCH_VISUAL_BACKENDS = ("auto", "compiled", "gpu_host")
 
 VALID_ACTION_MODES = frozenset(ACTION_MODES)
 VALID_EXECUTION_STEP_RUNTIME_MODES = frozenset(EXECUTION_STEP_RUNTIME_MODES)
 VALID_STEP_INFO_MODES = frozenset(STEP_INFO_MODES)
 VALID_FLIGHT_SHAPING_BACKENDS = frozenset(FLIGHT_SHAPING_BACKENDS)
+VALID_BATCH_OBSERVATION_BACKENDS = frozenset(BATCH_OBSERVATION_BACKENDS)
+VALID_BATCH_VISUAL_BACKENDS = frozenset(BATCH_VISUAL_BACKENDS)
 
 
 def _merge_config_value(

@@ -12,10 +12,10 @@ import numpy as np
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from python.env_config import resolve_env_settings
+from python.rl.policy_checkpoint import load_sb3_policy
 from python.training.cli import ACTION_MODE_CHOICES, MISSION_OBS_MODE_CHOICES
 from python.rl.control.wrappers import get_action_wrapper_spec
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
-from tools.eval.sb3_eval_base import load_sb3_policy
 
 
 def _build_evaluation_env(
