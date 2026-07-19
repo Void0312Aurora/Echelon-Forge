@@ -16,6 +16,18 @@ upstream license terms for those files.
 - Copyright: 2014-2023 Guillermo Rauch
 - License: MIT License, as stated in the file header.
 
+### three.js
+
+- Files: `examples/viz/web_viz/static/vendor/three/three.module.js` and the
+  addon modules under `examples/viz/web_viz/static/vendor/three/addons/`
+  (`loaders/GLTFLoader.js`, `controls/OrbitControls.js`,
+  `utils/BufferGeometryUtils.js`)
+- Version: 0.160.0
+- Copyright: 2010-2023 Three.js Authors
+- License: MIT License; full text vendored at
+  `examples/viz/web_viz/static/vendor/three/LICENSE`.
+- Source: https://github.com/mrdoob/three.js (npm package `three@0.160.0`)
+
 ## Visualization Assets
 
 The 3D assets under `examples/viz/web_viz/static/assets/` are visualization
