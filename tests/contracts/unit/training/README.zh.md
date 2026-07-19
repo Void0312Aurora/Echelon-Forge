@@ -14,8 +14,7 @@
   - 仅保留用于可追溯性和来源查找的历史合约。
 
 - 使用 `frozen/` 作为当前权威的领导者验收/泛化矩阵。
-- 历史性的弱基线和替代任务链变体已移至 [tests/archive/contracts/unit/training/leader_legacy](../../../archive/contracts/unit/training/leader_legacy/README.md)。
-- 冻结前的历史性根级别领导者合约已移至 [tests/archive/contracts/unit/training/leader_pre_frozen](../../../archive/contracts/unit/training/leader_pre_frozen/README.md)。
+- 历史性的弱基线、替代任务链变体与冻结前的根级别领导者合约已在测试系统整合中退出工作树，如需可从 git 历史找回。
 
 活跃的领导者验收入口点现为 `frozen/`。此目录中的根级别文件不再用于领导者门控。
 如果维护的桥接或包装检查需要较旧的行为形态，请将合约本身保留在维护树中，但将其指向维护中的 `冻结基线` 配置，而不是原始的 `已归档` 配置路径。

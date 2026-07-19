@@ -242,7 +242,7 @@ sites must not be introduced; use a maintained runtime/facade path instead.
 ## Dependency Notes
 
 - `gymnasium` is optional in this workspace.
-- Active maintained contract batches should avoid raw `UniversalEnv` construction. Historical raw-env specs are archived under `tests/archive/contracts/`.
+- Active maintained contract batches should avoid raw `UniversalEnv` construction. Historical raw-env specs were retired from the tree during test-system consolidation and remain recoverable from git history.
 - Kernel-only contracts such as `loader_command_chain` and route-generator checks can run without `gymnasium`.
 
 ## Authoring Guidance
@@ -329,10 +329,6 @@ easier.
   - Scripted wrapper mode selection, controller handoff, and residual-cap regressions.
 - `tests/contracts/unit/world_model/*.json`
   - Replay-buffer and world-model dataset regressions.
-- `tests/archive/contracts/env_regression/**/*.json`
-  - Archived raw `UniversalEnv` regression specs retained for provenance only.
-- `tests/archive/contracts/scripted_bridge/**/*.json`
-  - Archived scripted wrapper bridge specs retained for provenance only.
 
 ## Current Contract Folders
 
@@ -366,5 +362,3 @@ easier.
   - Wrapper/controller handoff contracts driven by dummy observations and loader phases.
 - `tests/contracts/unit/world_model/`
   - Replay/dataset contracts for offline or imitation-learning support code.
-- `tests/archive/contracts/`
-  - Historical JSON contract specs retained for provenance only; excluded from maintained contract counts and batch-runner globs.

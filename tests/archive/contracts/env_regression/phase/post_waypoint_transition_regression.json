@@ -1,9 +1,0 @@
-{
-  "type": "env_regression",
-  "check_kind": "post_waypoint_transition",
-  "seed": 0,
-  "include_visual": false,
-  "action_mode": "full",
-  "mission_obs_mode": "basic",
-  "scenario": "tests/scenarios/post_waypoint_transition_regression.json"
-}

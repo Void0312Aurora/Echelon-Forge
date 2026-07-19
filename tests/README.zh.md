@@ -171,7 +171,7 @@ Suite tier 含义：
 ## 依赖说明
 
 - `gymnasium` 在此工作区中是可选的。
-- 活跃维护的 contract batch 应避免 raw `UniversalEnv` 构造；历史 raw-env 规范已归档到 `tests/archive/contracts/`。
+- 活跃维护的 contract batch 应避免 raw `UniversalEnv` 构造；历史 raw-env 规范已在测试系统整合中退出工作树，可从 git 历史找回。
 - 仅内核的契约（例如 `loader_command_chain`）和路线生成器检查无需 `gymnasium` 即可运行。
 
 ## 编写指南
@@ -249,10 +249,6 @@ Suite tier 含义：
   - 脚本化包装器模式选择、控制器交接和剩余容量回归。
 - `tests/contracts/unit/world_model/*.json`
   - 回放缓冲区和世界模型数据集回归。
-- `tests/archive/contracts/env_regression/**/*.json`
-  - 已归档 raw `UniversalEnv` 回归规范，仅用于追溯。
-- `tests/archive/contracts/scripted_bridge/**/*.json`
-  - 已归档脚本化包装器桥接规范，仅用于追溯。
 
 ## 当前契约文件夹
 
@@ -286,5 +282,3 @@ Suite tier 含义：
   - 由虚拟观察和加载器阶段驱动的包装器/控制器交接契约。
 - `tests/contracts/unit/world_model/`
   - 用于离线或模仿学习支持代码的回放/数据集契约。
-- `tests/archive/contracts/`
-  - 仅为追溯保留的历史 JSON contract 规范；不计入维护态 contract 数量，也不应被 batch-runner glob 选中。
