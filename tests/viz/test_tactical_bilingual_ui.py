@@ -29,14 +29,12 @@ def test_tactical_ui_localizes_dynamic_controls_and_map_callouts() -> None:
 
   assert "function updateLanguageUi" in ui_shell
   assert "function updateSessionLabelText" in ui_shell
-  assert "function localizePresentationMode" in i18n
   assert "function localizeCameraMode" in i18n
   assert "function formatTacticalScaleText" in i18n
   assert "function localizeEnvironmentToken" in i18n
   assert "function localizeMissionLabel" in i18n
   assert "const ENVIRONMENT_LABEL_ZH = Object.freeze" in i18n
   assert "updateSessionLabelText();" in ui_shell
-  assert "localizePresentationMode(vizState.presentationMode)" in ui_shell
   assert "localizeCameraMode(vizState.viewMode)" in ui_shell
   assert "100 px = ${kmPer100px.toFixed(1)}公里" in i18n
   assert "const localized = localizeEnvironmentToken(raw);" in environment_overlays

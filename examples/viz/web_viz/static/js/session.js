@@ -108,10 +108,8 @@ window.adjustSpeed = function (dir) {
     setSpeed(SPEED_STEPS[nextIdx]);
 };
 
-window.cycleSpeed = function () {
-    const idx = SPEED_STEPS.indexOf(vizState.simSpeed);
-    const nextIdx = idx >= 0 ? (idx + 1) % SPEED_STEPS.length : 0;
-    setSpeed(SPEED_STEPS[nextIdx]);
+window.resetSpeed = function () {
+    setSpeed(1);
 };
 
 // --- Session loading ---

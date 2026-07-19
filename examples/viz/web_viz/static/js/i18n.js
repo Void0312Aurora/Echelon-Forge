@@ -23,17 +23,19 @@ export const I18N_TEXT = Object.freeze({
         'ui.exitMap': 'EXIT MAP',
         'ui.reload': 'RELOAD',
         'ui.stop': 'STOP',
-        'ui.view': 'VIEW',
         'ui.slow': 'SLOW',
         'ui.fast': 'FAST',
         'ui.speed': 'SPD',
+        'ui.speedResetTitle': 'Click to reset speed to 1x',
         'ui.start': 'START',
         'ui.pause': 'PAUSE',
         'ui.resume': 'RESUME',
-        'ui.presentationMap': 'MAP',
-        'ui.presentation3d': '3D',
+        'ui.camera': 'CAM',
         'ui.cameraChase': 'CHASE',
         'ui.cameraFree': 'FREE',
+        'ui.sessionLifecycle': 'Session lifecycle',
+        'ui.simSpeed': 'Simulation speed',
+        'ui.panels': 'Panels',
         'ui.waypointShort': 'WP',
         'ui.languageButton': '中文',
         'ui.sessionSetup': 'SESSION SETUP',
@@ -42,6 +44,7 @@ export const I18N_TEXT = Object.freeze({
         'ui.scenario': 'SCENARIO',
         'ui.assetSet': 'ASSET SET',
         'ui.loadProfile': 'LOAD PROFILE',
+        'ui.loadScenario': 'LOAD SCENARIO',
         'ui.load': 'LOAD',
         'ui.loadAssetSet': 'LOAD ASSET SET',
         'ui.tacticalData': 'TACTICAL DATA',
@@ -157,17 +160,19 @@ export const I18N_TEXT = Object.freeze({
         'ui.exitMap': '退出地图',
         'ui.reload': '重载',
         'ui.stop': '停止',
-        'ui.view': '视图',
         'ui.slow': '减速',
         'ui.fast': '加速',
         'ui.speed': '速率',
+        'ui.speedResetTitle': '点击恢复 1x 速度',
         'ui.start': '开始',
         'ui.pause': '暂停',
         'ui.resume': '继续',
-        'ui.presentationMap': '地图',
-        'ui.presentation3d': '3D',
+        'ui.camera': '相机',
         'ui.cameraChase': '跟随',
         'ui.cameraFree': '自由',
+        'ui.sessionLifecycle': '会话生命周期',
+        'ui.simSpeed': '仿真速度',
+        'ui.panels': '面板',
         'ui.waypointShort': '航点',
         'ui.languageButton': 'EN',
         'ui.sessionSetup': '会话设置',
@@ -176,6 +181,7 @@ export const I18N_TEXT = Object.freeze({
         'ui.scenario': '场景',
         'ui.assetSet': '资产集',
         'ui.loadProfile': '加载配置',
+        'ui.loadScenario': '加载场景',
         'ui.load': '加载',
         'ui.loadAssetSet': '加载资产集',
         'ui.tacticalData': '战术数据',
@@ -328,12 +334,6 @@ export function formatSpeed(value) {
 
 export function formatSpeedButton(value) {
     return `${i18n('ui.speed')}: ${formatSpeed(value)}x`;
-}
-
-export function localizePresentationMode(mode) {
-    return String(mode || '').toUpperCase() === '3D'
-        ? i18n('ui.presentation3d')
-        : i18n('ui.presentationMap');
 }
 
 export function localizeCameraMode(mode) {

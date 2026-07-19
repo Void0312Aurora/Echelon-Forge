@@ -15,7 +15,6 @@ import {
     formatSpeedButton,
     localizeCameraMode,
     localizeMissionLabel,
-    localizePresentationMode,
     localizedLayerText,
     localizedWorkspaceText,
     updateStaticI18nText,
@@ -57,7 +56,7 @@ window.toggleMapOnlyMode = function (force) {
     updatePresentationModeUI();
 };
 
-// --- Presentation mode (MAP vs 3D) ---
+// --- Presentation mode (MAP vs 3D, driven by the workspace tabs) ---
 export function updatePresentationModeUI() {
     const mapMode = vizState.presentationMode === 'MAP';
     if (!mapMode && vizState.mapOnlyMode) {
@@ -70,20 +69,10 @@ export function updatePresentationModeUI() {
     renderer.domElement.style.pointerEvents = mapMode ? 'none' : 'auto';
     controls.enabled = !mapMode;
     controls.enablePan = (!mapMode && vizState.viewMode !== 'CHASE');
-    dom.btnView.innerText = `${i18n('ui.view')}: ${localizePresentationMode(vizState.presentationMode)}`;
-    dom.btnCam.innerText = `3D: ${localizeCameraMode(vizState.viewMode)}`;
+    dom.btnCam.innerText = `${i18n('ui.camera')}: ${localizeCameraMode(vizState.viewMode)}`;
     dom.btnCam.style.display = mapMode ? 'none' : '';
     refreshAutoLayout({ redraw: true });
 }
-
-window.togglePresentationMode = function () {
-    vizState.chaseTargetPrev = null;
-    if (vizState.presentationMode === 'MAP') {
-        window.setTacticalWorkspace('inspect3d');
-        return;
-    }
-    window.setTacticalWorkspace(vizState.lastMapTacticalWorkspace || 'cop');
-};
 
 window.toggleCamera = function () {
     vizState.viewMode = vizState.viewMode === 'CHASE' ? 'FREE' : 'CHASE';
@@ -171,10 +160,20 @@ export function updateTacticalWorkspaceUI() {
     if (dom.workspaceRole) dom.workspaceRole.innerText = localizedWorkspaceText(vizState.activeTacticalWorkspace, 'role');
     if (!dom.workspaceLayerSummary) return;
 
+    // Summarize only the layers that are actually enabled; the full on/off
+    // matrix already lives in the layer buttons right below.
     dom.workspaceLayerSummary.innerHTML = '';
-    for (const key of tacticalLayerKeys) {
+    const activeKeys = tacticalLayerKeys.filter((key) => !!vizState.tacticalLayers[key]);
+    if (activeKeys.length === 0) {
         const chip = document.createElement('span');
-        chip.className = 'workspace-chip' + (vizState.tacticalLayers[key] ? ' active' : '');
+        chip.className = 'workspace-chip';
+        chip.innerText = '--';
+        dom.workspaceLayerSummary.appendChild(chip);
+        return;
+    }
+    for (const key of activeKeys) {
+        const chip = document.createElement('span');
+        chip.className = 'workspace-chip active';
         chip.innerText = localizedLayerText(key, 'summary');
         dom.workspaceLayerSummary.appendChild(chip);
     }
@@ -219,6 +218,7 @@ export function updateLanguageUi() {
     if (dom.btnSpeedDown) dom.btnSpeedDown.innerText = i18n('ui.slow');
     if (dom.btnSpeedUp) dom.btnSpeedUp.innerText = i18n('ui.fast');
     dom.btnSpeed.innerText = formatSpeedButton(vizState.simSpeed);
+    dom.btnSpeed.title = i18n('ui.speedResetTitle');
     updateSessionLabelText();
     renderTacticalLayerControls();
     updateTacticalLayerButtons();

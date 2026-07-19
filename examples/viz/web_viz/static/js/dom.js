@@ -32,7 +32,6 @@ export const dom = {
     btnLoad: getById('btn-load'),
     btnLoadProfile: getById('btn-load-profile'),
     btnLoadAssetRegistry: getById('btn-load-asset-registry'),
-    btnView: getById('btn-view'),
     btnCam: getById('btn-cam'),
     btnSpeed: getById('btn-speed'),
     btnSpeedDown: getById('btn-speed-down'),

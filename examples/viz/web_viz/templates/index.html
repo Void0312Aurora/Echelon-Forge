@@ -34,7 +34,7 @@
 
     <div id="viz-shell">
         <div id="viz-menubar">
-            <div class="menu-row menu-row--status">
+            <div class="menu-group menu-group--session">
                 <div class="brand" aria-hidden="true">
                     <span class="brand-mark">EF</span>
                     <span class="brand-text">
@@ -47,27 +47,34 @@
                     <span class="menu-tag" data-i18n="ui.session">SESSION</span>
                     <span id="viz-session-label">UNLOADED</span>
                 </div>
+                <div class="menu-cluster" role="group" aria-label="Session lifecycle" data-i18n-aria="ui.sessionLifecycle">
+                    <button id="btn-reload" onclick="reloadCurrentScenario()">RELOAD</button>
+                    <button id="btn-stop" onclick="stopCurrentSession()">STOP</button>
+                </div>
+            </div>
+            <div class="menu-group menu-group--workspace">
                 <div id="workspace-tabs" class="workspace-tabs" aria-label="Map workspace" data-i18n-aria="ui.mapWorkspace">
                     <button id="workspace-tab-cop" class="workspace-tab" onclick="setTacticalWorkspace('cop')">COP</button>
                     <button id="workspace-tab-environment" class="workspace-tab" onclick="setTacticalWorkspace('environment')">ENVIRONMENT</button>
                     <button id="workspace-tab-tracks" class="workspace-tab" onclick="setTacticalWorkspace('tracks')">TRACKS</button>
                     <button id="workspace-tab-inspect3d" class="workspace-tab" onclick="setTacticalWorkspace('inspect3d')">3D INSPECT</button>
                 </div>
-                <div class="menu-actions">
+                <button id="btn-cam" onclick="toggleCamera()">CAM: CHASE</button>
+            </div>
+            <div id="ui-controls" class="menu-group menu-group--run">
+                <div class="speed-cluster" role="group" aria-label="Simulation speed" data-i18n-aria="ui.simSpeed">
+                    <button id="btn-speed-down" onclick="adjustSpeed(-1)">SLOW</button>
+                    <button id="btn-speed" class="pill" onclick="resetSpeed()">SPD: 1x</button>
+                    <button id="btn-speed-up" onclick="adjustSpeed(1)">FAST</button>
+                </div>
+                <button id="btn-start" class="primary" onclick="runSessionAction()">START</button>
+            </div>
+            <div class="menu-group menu-group--prefs">
+                <button id="btn-map-only" onclick="toggleMapOnlyMode()">MAP ONLY</button>
+                <button id="btn-language" onclick="toggleUiLanguage()">中文</button>
+                <div class="menu-cluster" role="group" aria-label="Panels" data-i18n-aria="ui.panels">
                     <button id="btn-toggle-left" class="dock-toggle" onclick="toggleVizDock('left')">SETUP</button>
                     <button id="btn-toggle-right" class="dock-toggle" onclick="toggleVizDock('right')">DATA</button>
-                    <button id="btn-map-only" onclick="toggleMapOnlyMode()">MAP ONLY</button>
-                    <button id="btn-language" onclick="toggleUiLanguage()">中文</button>
-                    <button id="btn-reload" onclick="reloadCurrentScenario()">RELOAD</button>
-                    <button id="btn-stop" onclick="stopCurrentSession()">STOP</button>
-                    <div id="ui-controls">
-                        <button id="btn-view" onclick="togglePresentationMode()">VIEW: MAP</button>
-                        <button id="btn-cam" onclick="toggleCamera()">3D: CHASE</button>
-                        <button id="btn-speed-down" onclick="adjustSpeed(-1)">SLOW</button>
-                        <button id="btn-speed" class="pill" onclick="cycleSpeed()">SPD: 1x</button>
-                        <button id="btn-speed-up" onclick="adjustSpeed(1)">FAST</button>
-                        <button id="btn-start" class="primary" onclick="runSessionAction()">START</button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -82,17 +89,20 @@
                     <div class="menu-field">
                         <span class="menu-tag" data-i18n="ui.profile">PROFILE</span>
                         <select id="profile-select"></select>
-                        <button id="btn-load-profile" onclick="loadSelectedProfile()" data-i18n="ui.loadProfile">LOAD PROFILE</button>
+                        <button id="btn-load-profile" onclick="loadSelectedProfile()" data-i18n="ui.load"
+                            aria-label="Load profile" data-i18n-aria="ui.loadProfile">LOAD</button>
                     </div>
                     <div class="menu-field">
                         <span class="menu-tag" data-i18n="ui.scenario">SCENARIO</span>
                         <select id="scenario-select"></select>
-                        <button id="btn-load" onclick="loadSelectedScenario()" data-i18n="ui.load">LOAD</button>
+                        <button id="btn-load" onclick="loadSelectedScenario()" data-i18n="ui.load"
+                            aria-label="Load scenario" data-i18n-aria="ui.loadScenario">LOAD</button>
                     </div>
                     <div class="menu-field">
                         <span class="menu-tag" data-i18n="ui.assetSet">ASSET SET</span>
                         <select id="asset-registry-select"></select>
-                        <button id="btn-load-asset-registry" onclick="loadSelectedAssetRegistry()" data-i18n="ui.loadAssetSet">LOAD ASSET SET</button>
+                        <button id="btn-load-asset-registry" onclick="loadSelectedAssetRegistry()" data-i18n="ui.load"
+                            aria-label="Load asset set" data-i18n-aria="ui.loadAssetSet">LOAD</button>
                     </div>
                 </div>
             </div>
@@ -104,17 +114,13 @@
                 <button class="dock-close" onclick="toggleVizDock('right')" data-i18n="ui.close">CLOSE</button>
             </div>
             <div class="dock-body">
-                <div id="tactical-workspace-panel" class="dock-section">
-                    <h3 data-i18n="ui.workspace">WORKSPACE</h3>
+                <div id="tactical-layer-panel" class="dock-section">
+                    <h3 data-i18n="ui.layers">LAYERS</h3>
                     <div class="workspace-summary">
                         <span id="workspace-name" class="workspace-name">COP</span>
                         <span id="workspace-role" class="workspace-role">COMMON PICTURE</span>
                     </div>
                     <div id="workspace-layer-summary" class="workspace-chip-row"></div>
-                </div>
-
-                <div id="tactical-layer-panel" class="dock-section">
-                    <h3 data-i18n="ui.layers">LAYERS</h3>
                     <div id="tactical-layer-controls" class="tactical-layer-controls" aria-label="Tactical layers" data-i18n-aria="ui.tacticalLayers"></div>
                 </div>
 
