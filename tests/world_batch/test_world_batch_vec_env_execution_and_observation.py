@@ -25,11 +25,12 @@ from python.rl.runtime.world_batch.command_chain_cache import ( # noqa: E402
   project_world_task_order_maintained_assignment,
 )
 import python.rl.runtime.world_batch.adapter as world_batch_adapter_module # noqa: E402
-import python.rl.runtime.world_batch_vec_env as vec_env_module # noqa: E402
+import python.rl.runtime.world_batch.vec_env as vec_env_module # noqa: E402
+import python.rl.runtime.world_batch._observation_mixin as observation_mixin_module # noqa: E402
 from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer # noqa: E402
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO # noqa: E402
 from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.mission_obs_taxonomy import ( # noqa: E402
   mission_observation_dim,
   mission_observation_field_index,
@@ -589,21 +590,21 @@ class WorldBatchVecEnvExecutionAndObservationTests(unittest.TestCase):
         policy_observation_torch_bridge=True,
       )
       observed_allow_device_export: list[bool] = []
-      original_compute_batch = vec_env_module.compute_execution_observation_batch
+      original_compute_batch = observation_mixin_module.compute_execution_observation_batch
 
       def _wrapped_compute_execution_observation_batch(**kwargs):
         observed_allow_device_export.append(bool(kwargs.get("allow_device_export")))
         return original_compute_batch(**kwargs)
 
       try:
-        vec_env_module.compute_execution_observation_batch = _wrapped_compute_execution_observation_batch # type: ignore[assignment]
+        observation_mixin_module.compute_execution_observation_batch = _wrapped_compute_execution_observation_batch # type: ignore[assignment]
         vec_env.seed(123)
         _ = vec_env.reset()
         self.assertTrue(observed_allow_device_export)
         self.assertTrue(all(not value for value in observed_allow_device_export))
         self.assertIsNone(vec_env._policy_execution_device_view)
       finally:
-        vec_env_module.compute_execution_observation_batch = original_compute_batch # type: ignore[assignment]
+        observation_mixin_module.compute_execution_observation_batch = original_compute_batch # type: ignore[assignment]
         vec_env.close()
 
   def test_world_batch_vec_env_mainline_request_build_skips_unused_episode_state(self) -> None:

@@ -21,7 +21,7 @@ from python.testing.runtime import configure_sim_log_level, ensure_repo_imports,
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
 import ef_py  # noqa: E402
 from tools.diagnostics.common import (  # noqa: E402
     average_timing_sums,

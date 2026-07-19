@@ -12,7 +12,7 @@ import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
 from gym_envs.universal_env import build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.tasking.bridge import LoaderOwnedScriptedOpponentKernelView # noqa: E402
 
 

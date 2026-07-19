@@ -25,7 +25,7 @@ REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
 import ef_py  # noqa: E402
 from tools.diagnostics.common import (  # noqa: E402
     flight_shaping_runtime_stats_dict,

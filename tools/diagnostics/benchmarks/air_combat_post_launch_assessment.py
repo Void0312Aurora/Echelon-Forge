@@ -20,7 +20,7 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
 
 
 DEFAULT_SCENARIO = resolve_repo_path(

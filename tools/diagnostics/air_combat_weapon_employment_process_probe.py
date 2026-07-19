@@ -19,7 +19,7 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
     FIRE_MASK_COMPONENT_NAMES,

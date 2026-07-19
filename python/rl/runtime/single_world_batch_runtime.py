@@ -33,7 +33,7 @@ from python.rl.runtime.world_batch import (
     build_loader_step_info,
     compute_loader_step_outcome,
 )
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 
 
 @dataclass

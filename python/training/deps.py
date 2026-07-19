@@ -51,7 +51,7 @@ class TrainingDependencies:
         from python.rl.runtime.cooperative_world_batch_vec_env import (
             CooperativeWorldBatchVecEnv,
         )
-        from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+        from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
         from python.rl.control.wrappers import (
             MultiTimescaleActionWrapper,
             get_action_wrapper_spec,

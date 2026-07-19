@@ -20,7 +20,7 @@ import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
 from gym_envs.universal_env_parts import build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 
 
 def _make_detection(

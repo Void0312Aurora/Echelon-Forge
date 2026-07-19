@@ -25,11 +25,11 @@ from python.rl.runtime.world_batch.command_chain_cache import ( # noqa: E402
   project_world_task_order_maintained_assignment,
 )
 import python.rl.runtime.world_batch.adapter as world_batch_adapter_module # noqa: E402
-import python.rl.runtime.world_batch_vec_env as vec_env_module # noqa: E402
+import python.rl.runtime.world_batch.vec_env as vec_env_module # noqa: E402
 from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer # noqa: E402
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO # noqa: E402
 from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.mission_obs_taxonomy import ( # noqa: E402
   mission_observation_dim,
   mission_observation_field_index,
