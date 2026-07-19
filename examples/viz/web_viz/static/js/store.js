@@ -29,16 +29,26 @@ export const vizState = {
     tacticalNeedsDraw: true,
     tacticalTrailHistory: new Map(),
     tacticalInteraction: {
-        zoom: 1.0,
-        panX: 0.0,
-        panY: 0.0,
+        // 'auto' keeps the classic fit-to-content follow view; any pan/zoom
+        // gesture switches to 'manual', which holds a fixed world anchor.
+        mode: 'auto',
+        zoom: 1.0, // auto-mode multiplier; derived readout in manual mode
+        scale: 0.0, // px per meter (authoritative in manual mode)
+        anchorX: 0.0, // world-space view center (authoritative in manual mode)
+        anchorY: 0.0,
         dragging: false,
+        dragMoved: false,
         pointerId: null,
         dragStartX: 0.0,
         dragStartY: 0.0,
-        panStartX: 0.0,
-        panStartY: 0.0,
+        anchorStartX: 0.0,
+        anchorStartY: 0.0,
+        scaleAtDragStart: 0.0,
+        measuring: false,
+        measureMoved: false,
     },
+    // Right-drag range/bearing ruler: { x0, y0, x1, y1 } in world meters.
+    mapMeasure: null,
 
     // --- Tactical workspaces / layers ---
     // Live toggle state; seeded from the symbology catalog by layers.js.

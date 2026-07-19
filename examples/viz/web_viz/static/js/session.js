@@ -241,8 +241,7 @@ export function applyProfileUiDefaults() {
     }
     if (Number.isFinite(nextZoom) && nextZoom > 0.0) {
         vizState.tacticalInteraction.zoom = Math.max(0.35, Math.min(12.0, nextZoom));
-        vizState.tacticalInteraction.panX = 0.0;
-        vizState.tacticalInteraction.panY = 0.0;
+        vizState.tacticalInteraction.mode = 'auto';
     }
 
     let targetWorkspace = '';

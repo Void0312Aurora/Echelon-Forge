@@ -39,6 +39,8 @@ export const I18N_TEXT = Object.freeze({
         'ui.offline': 'LINK DOWN',
         'ui.error': 'SESSION ERROR',
         'ui.dismiss': 'DISMISS',
+        'ui.recenter': 'RECENTER',
+        'ui.recenterTitle': 'Reset to auto-follow view',
         'ui.waypointShort': 'WP',
         'ui.languageButton': '中文',
         'ui.sessionSetup': 'SESSION SETUP',
@@ -179,6 +181,8 @@ export const I18N_TEXT = Object.freeze({
         'ui.offline': '连接断开',
         'ui.error': '会话错误',
         'ui.dismiss': '关闭',
+        'ui.recenter': '回中',
+        'ui.recenterTitle': '恢复自动跟随视野',
         'ui.waypointShort': '航点',
         'ui.languageButton': 'EN',
         'ui.sessionSetup': '会话设置',
@@ -313,6 +317,9 @@ export function updateStaticI18nText() {
     }
     for (const el of document.querySelectorAll('[data-i18n-aria]')) {
         el.setAttribute('aria-label', i18n(el.dataset.i18nAria, el.getAttribute('aria-label') || ''));
+    }
+    for (const el of document.querySelectorAll('[data-i18n-title]')) {
+        el.title = i18n(el.dataset.i18nTitle, el.title || '');
     }
     document.documentElement.lang = vizState.uiLanguage === 'zh' ? 'zh-CN' : 'en';
 }

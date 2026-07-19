@@ -9,6 +9,7 @@ export const dom = {
     tacticalPanel: getById('tactical-panel'),
     tacticalCanvas: getById('tactical-canvas'),
     tacticalScale: getById('tactical-scale'),
+    btnMapRecenter: getById('btn-map-recenter'),
     vizShell: getById('viz-shell'),
     vizMenubar: getById('viz-menubar'),
     overlayPanel: getById('overlay'),

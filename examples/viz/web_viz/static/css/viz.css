@@ -1193,6 +1193,29 @@ h3::before {
     white-space: nowrap;
 }
 
+.tactical-header-right {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    min-width: 0;
+}
+
+#btn-map-recenter {
+    pointer-events: auto;
+    padding: 4px 10px;
+    font-size: 10px;
+    border-color: var(--line-soft);
+    color: var(--text-low);
+    background: rgba(4, 10, 16, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+#btn-map-recenter.active {
+    border-color: var(--amber);
+    color: var(--amber);
+    box-shadow: 0 0 8px rgba(255, 180, 84, 0.25);
+}
+
 /* HUD chips for view title and scale readout */
 .tactical-header-left > span {
     font-family: var(--font-display);

@@ -26,7 +26,11 @@
             <div class="tactical-header-left">
                 <span data-i18n="ui.tacticalView">TACTICAL VIEW</span>
             </div>
-            <span id="tactical-scale">SCALE --</span>
+            <div class="tactical-header-right">
+                <button id="btn-map-recenter" onclick="recenterTacticalMap()" data-i18n="ui.recenter"
+                    title="Reset to auto-follow view" data-i18n-title="ui.recenterTitle">RECENTER</button>
+                <span id="tactical-scale">SCALE --</span>
+            </div>
         </div>
         <canvas id="tactical-canvas"></canvas>
     </div>

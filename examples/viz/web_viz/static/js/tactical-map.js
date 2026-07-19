@@ -6,6 +6,7 @@ import { dom } from './dom.js';
 import { vizState } from './store.js';
 import { tacticalSymbology, tacticalAffiliationStyle } from './symbology.js';
 import { i18n, formatTacticalScaleText } from './i18n.js';
+import { setFocus } from './ui-shell.js';
 import { isTacticalDrawPhaseEnabled } from './layers.js';
 import { unitSymbolSpec, shouldShowSensorRingForUnit } from './asset-registry.js';
 import {
@@ -35,37 +36,155 @@ export function resizeTacticalCanvas() {
     requestTacticalDraw();
 }
 
+function viewportToWorld(vp, px, py) {
+    const centerX = vp.plotLeft + vp.plotWidth * 0.5;
+    const centerY = vp.plotTop + vp.plotHeight * 0.5;
+    return {
+        x: vp.cx + (px - centerX) / vp.scale,
+        y: vp.cy - (py - centerY) / vp.scale,
+    };
+}
+
+function worldToViewport(vp, wx, wy) {
+    const centerX = vp.plotLeft + vp.plotWidth * 0.5;
+    const centerY = vp.plotTop + vp.plotHeight * 0.5;
+    return {
+        x: centerX + (wx - vp.cx) * vp.scale,
+        y: centerY - (wy - vp.cy) * vp.scale,
+    };
+}
+
+function updateRecenterButton() {
+    const button = dom.btnMapRecenter;
+    if (!button) return;
+    button.classList.toggle('active', vizState.tacticalInteraction.mode === 'manual');
+}
+
+window.recenterTacticalMap = function () {
+    const interaction = vizState.tacticalInteraction;
+    interaction.mode = 'auto';
+    interaction.zoom = 1.0;
+    updateRecenterButton();
+    requestTacticalDraw();
+};
+
+function pickUnitAt(px, py) {
+    const vp = vizState.tacticalViewport;
+    const state = vizState.lastTacticalState;
+    if (!vp || !(vp.scale > 0) || !state) return;
+    const unitsList = Array.isArray(state.units) ? state.units : [];
+    let bestId = null;
+    let bestDist = 18.0; // px hit radius
+    for (const u of unitsList) {
+        const p = worldToViewport(vp, Number(u.x || 0), Number(u.y || 0));
+        const dist = Math.hypot(p.x - px, p.y - py);
+        if (dist < bestDist) {
+            bestDist = dist;
+            bestId = u.id;
+        }
+    }
+    if (bestId !== null) {
+        setFocus(bestId);
+        requestTacticalDraw();
+    }
+}
+
 export function initTacticalMapInteractions() {
     const interaction = vizState.tacticalInteraction;
+
+    tacticalCanvas.addEventListener('contextmenu', (event) => event.preventDefault());
 
     tacticalCanvas.addEventListener('wheel', (event) => {
         if (vizState.presentationMode !== 'MAP') return;
         event.preventDefault();
+        const vp = vizState.tacticalViewport;
+        if (!vp || !(vp.scale > 0)) return;
         const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
-        interaction.zoom = Math.max(0.35, Math.min(12.0, interaction.zoom * factor));
+        // Anchor the zoom on the cursor: the world point under the pointer
+        // stays fixed on screen.
+        const cursorWorld = viewportToWorld(vp, event.clientX, event.clientY);
+        const minScale = vp.baseScale * 0.35;
+        const maxScale = vp.baseScale * 12.0;
+        const newScale = Math.max(minScale, Math.min(maxScale, vp.scale * factor));
+        const centerX = vp.plotLeft + vp.plotWidth * 0.5;
+        const centerY = vp.plotTop + vp.plotHeight * 0.5;
+        interaction.mode = 'manual';
+        interaction.scale = newScale;
+        interaction.anchorX = cursorWorld.x - (event.clientX - centerX) / newScale;
+        interaction.anchorY = cursorWorld.y + (event.clientY - centerY) / newScale;
+        updateRecenterButton();
         requestTacticalDraw();
     }, { passive: false });
 
     tacticalCanvas.addEventListener('pointerdown', (event) => {
         if (vizState.presentationMode !== 'MAP') return;
+        const vp = vizState.tacticalViewport;
+        if (event.button === 2) {
+            // Right-drag: range/bearing ruler. A right click without drag
+            // clears the previous measurement.
+            if (!vp || !(vp.scale > 0)) return;
+            const w = viewportToWorld(vp, event.clientX, event.clientY);
+            interaction.measuring = true;
+            interaction.measureMoved = false;
+            interaction.pointerId = event.pointerId;
+            interaction.dragStartX = event.clientX;
+            interaction.dragStartY = event.clientY;
+            vizState.mapMeasure = { x0: w.x, y0: w.y, x1: w.x, y1: w.y };
+            try {
+                tacticalCanvas.setPointerCapture(event.pointerId);
+            } catch (err) {
+                // Synthetic pointers cannot be captured; drag still works.
+            }
+            requestTacticalDraw();
+            return;
+        }
+        if (event.button !== 0) return;
         interaction.dragging = true;
+        interaction.dragMoved = false;
         interaction.pointerId = event.pointerId;
         interaction.dragStartX = event.clientX;
         interaction.dragStartY = event.clientY;
-        interaction.panStartX = interaction.panX;
-        interaction.panStartY = interaction.panY;
-        tacticalCanvas.setPointerCapture(event.pointerId);
+        interaction.anchorStartX = vp ? vp.cx : interaction.anchorX;
+        interaction.anchorStartY = vp ? vp.cy : interaction.anchorY;
+        interaction.scaleAtDragStart = vp && vp.scale > 0 ? vp.scale : interaction.scale;
+        try {
+            tacticalCanvas.setPointerCapture(event.pointerId);
+        } catch (err) {
+            // Synthetic pointers cannot be captured; drag still works.
+        }
     });
 
     tacticalCanvas.addEventListener('pointermove', (event) => {
         if (vizState.presentationMode !== 'MAP') return;
-        if (!interaction.dragging || interaction.pointerId !== event.pointerId) return;
-        interaction.panX = interaction.panStartX + (event.clientX - interaction.dragStartX);
-        interaction.panY = interaction.panStartY + (event.clientY - interaction.dragStartY);
+        if (interaction.pointerId !== event.pointerId) return;
+        if (interaction.measuring) {
+            const vp = vizState.tacticalViewport;
+            if (!vp || !(vp.scale > 0) || !vizState.mapMeasure) return;
+            if (Math.hypot(event.clientX - interaction.dragStartX, event.clientY - interaction.dragStartY) >= 4) {
+                interaction.measureMoved = true;
+            }
+            const w = viewportToWorld(vp, event.clientX, event.clientY);
+            vizState.mapMeasure.x1 = w.x;
+            vizState.mapMeasure.y1 = w.y;
+            requestTacticalDraw();
+            return;
+        }
+        if (!interaction.dragging) return;
+        const dx = event.clientX - interaction.dragStartX;
+        const dy = event.clientY - interaction.dragStartY;
+        if (!interaction.dragMoved && Math.hypot(dx, dy) < 4) return;
+        const scale = interaction.scaleAtDragStart;
+        if (!(scale > 0)) return;
+        interaction.dragMoved = true;
+        interaction.mode = 'manual';
+        interaction.scale = scale;
+        interaction.anchorX = interaction.anchorStartX - dx / scale;
+        interaction.anchorY = interaction.anchorStartY + dy / scale;
+        updateRecenterButton();
         requestTacticalDraw();
     });
 
-    function endTacticalDrag(event) {
+    function endTacticalPointer(event) {
         if (interaction.pointerId !== null && event && interaction.pointerId === event.pointerId) {
             try {
                 tacticalCanvas.releasePointerCapture(event.pointerId);
@@ -74,13 +193,29 @@ export function initTacticalMapInteractions() {
             }
         }
         interaction.dragging = false;
+        interaction.measuring = false;
         interaction.pointerId = null;
     }
-    tacticalCanvas.addEventListener('pointerup', endTacticalDrag);
-    tacticalCanvas.addEventListener('pointercancel', endTacticalDrag);
+
+    tacticalCanvas.addEventListener('pointerup', (event) => {
+        if (interaction.pointerId !== event.pointerId) return;
+        if (interaction.measuring) {
+            const clearMeasure = !interaction.measureMoved;
+            endTacticalPointer(event);
+            if (clearMeasure) {
+                vizState.mapMeasure = null;
+            }
+            requestTacticalDraw();
+            return;
+        }
+        const wasClick = interaction.dragging && !interaction.dragMoved && event.button === 0;
+        endTacticalPointer(event);
+        if (wasClick) pickUnitAt(event.clientX, event.clientY);
+    });
+    tacticalCanvas.addEventListener('pointercancel', endTacticalPointer);
     tacticalCanvas.addEventListener('pointerleave', (event) => {
-        if (interaction.dragging && interaction.pointerId === event.pointerId) {
-            endTacticalDrag(event);
+        if ((interaction.dragging || interaction.measuring) && interaction.pointerId === event.pointerId) {
+            endTacticalPointer(event);
         }
     });
 }
@@ -133,6 +268,10 @@ export function resetTacticalMapState() {
     vizState.smoothedStateFrameIntervalMs = 1000.0 / 30.0;
     vizState.lastTacticalRenderAt = 0.0;
     vizState.tacticalNeedsDraw = true;
+    vizState.mapMeasure = null;
+    vizState.tacticalInteraction.mode = 'auto';
+    vizState.tacticalInteraction.zoom = 1.0;
+    updateRecenterButton();
     tacticalCtx.clearRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
     tacticalCtx.fillStyle = tacticalSymbology.canvas.background;
     tacticalCtx.fillRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
@@ -349,12 +488,27 @@ export function drawTacticalView(state) {
     const spanX = Math.max(1000, maxX - minX);
     const spanY = Math.max(1000, maxY - minY);
     const span = Math.max(spanX, spanY) * 1.12;
-    const cx = (minX + maxX) * 0.5;
-    const cy = (minY + maxY) * 0.5;
     const baseScale = Math.min(plotWidth / span, plotHeight / span);
-    const scale = baseScale * tacticalInteraction.zoom;
-    const screenCenterX = plotLeft + plotWidth * 0.5 + tacticalInteraction.panX;
-    const screenCenterY = plotTop + plotHeight * 0.5 + tacticalInteraction.panY;
+    let cx;
+    let cy;
+    let scale;
+    if (tacticalInteraction.mode === 'manual') {
+        // Manual mode holds the user's world anchor and absolute scale; the
+        // zoom field becomes a readout relative to the current fit scale.
+        cx = tacticalInteraction.anchorX;
+        cy = tacticalInteraction.anchorY;
+        scale = tacticalInteraction.scale;
+        tacticalInteraction.zoom = baseScale > 0 ? scale / baseScale : 1.0;
+    } else {
+        cx = (minX + maxX) * 0.5;
+        cy = (minY + maxY) * 0.5;
+        scale = baseScale * tacticalInteraction.zoom;
+        tacticalInteraction.anchorX = cx;
+        tacticalInteraction.anchorY = cy;
+        tacticalInteraction.scale = scale;
+    }
+    const screenCenterX = plotLeft + plotWidth * 0.5;
+    const screenCenterY = plotTop + plotHeight * 0.5;
     const toCanvas = (x, y) => ({
         x: screenCenterX + (x - cx) * scale,
         y: screenCenterY - (y - cy) * scale,
@@ -618,6 +772,9 @@ export function drawTacticalView(state) {
         const symbol = unitSymbolSpec(u);
         const len = symbol.len;
         const wing = symbol.wing;
+        if (Number(u.id) === Number(vizState.focusedId)) {
+            drawFocusBrackets(p, Math.max(len, wing) + 8, tacticalAffiliationStyle(u.side).unitFill);
+        }
         tacticalCtx.fillStyle = tacticalAffiliationStyle(u.side).unitFill;
         tacticalCtx.beginPath();
         if (symbol.kind === 'ship') {
@@ -722,6 +879,10 @@ export function drawTacticalView(state) {
         tacticalCtx.fillText(label, anchorX, anchorY);
     }
 
+    if (vizState.mapMeasure) {
+        drawMeasurement(vizState.mapMeasure, toCanvas);
+    }
+
     vizState.tacticalViewport = {
         cx,
         cy,
@@ -736,6 +897,70 @@ export function drawTacticalView(state) {
     const kmPer100px = (100.0 / scale) / 1000.0;
     const zoomPct = Math.round(tacticalInteraction.zoom * 100);
     dom.tacticalScale.innerText = formatTacticalScaleText(kmPer100px, gridStepM, zoomPct);
+}
+
+function drawFocusBrackets(p, radius, color) {
+    const arm = Math.max(5, radius * 0.45);
+    tacticalCtx.save();
+    tacticalCtx.strokeStyle = color;
+    tacticalCtx.lineWidth = 1.6;
+    tacticalCtx.globalAlpha = 0.9;
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+        const cornerX = p.x + sx * radius;
+        const cornerY = p.y + sy * radius;
+        tacticalCtx.beginPath();
+        tacticalCtx.moveTo(cornerX - sx * arm, cornerY);
+        tacticalCtx.lineTo(cornerX, cornerY);
+        tacticalCtx.lineTo(cornerX, cornerY - sy * arm);
+        tacticalCtx.stroke();
+    }
+    tacticalCtx.restore();
+}
+
+function formatMeasureDistance(meters) {
+    if (meters >= 10000) return `${(meters / 1000).toFixed(1)} km`;
+    if (meters >= 1000) return `${(meters / 1000).toFixed(2)} km`;
+    return `${Math.round(meters)} m`;
+}
+
+function drawMeasurement(measure, toCanvas) {
+    const a = toCanvas(measure.x0, measure.y0);
+    const b = toCanvas(measure.x1, measure.y1);
+    const dx = measure.x1 - measure.x0;
+    const dy = measure.y1 - measure.y0;
+    const distM = Math.hypot(dx, dy);
+    // Bearing measured from north, clockwise (sim: +y north, +x east).
+    const bearing = (Math.atan2(dx, dy) * 180.0 / Math.PI + 360.0) % 360.0;
+
+    tacticalCtx.save();
+    tacticalCtx.strokeStyle = 'rgba(255, 180, 84, 0.9)';
+    tacticalCtx.fillStyle = 'rgba(255, 180, 84, 0.9)';
+    tacticalCtx.lineWidth = 1.4;
+    tacticalCtx.setLineDash([7, 5]);
+    tacticalCtx.beginPath();
+    tacticalCtx.moveTo(a.x, a.y);
+    tacticalCtx.lineTo(b.x, b.y);
+    tacticalCtx.stroke();
+    tacticalCtx.setLineDash([]);
+    for (const point of [a, b]) {
+        tacticalCtx.beginPath();
+        tacticalCtx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+        tacticalCtx.fill();
+    }
+
+    const label = `${formatMeasureDistance(distM)} | ${String(Math.round(bearing)).padStart(3, '0')}°`;
+    tacticalCtx.font = '11px monospace';
+    const textWidth = tacticalCtx.measureText(label).width;
+    const midX = (a.x + b.x) * 0.5;
+    const midY = (a.y + b.y) * 0.5;
+    tacticalCtx.fillStyle = 'rgba(5, 11, 17, 0.9)';
+    tacticalCtx.fillRect(midX + 8, midY - 18, textWidth + 10, 17);
+    tacticalCtx.strokeStyle = 'rgba(255, 180, 84, 0.55)';
+    tacticalCtx.lineWidth = 1;
+    tacticalCtx.strokeRect(midX + 8, midY - 18, textWidth + 10, 17);
+    tacticalCtx.fillStyle = '#ffd9a1';
+    tacticalCtx.fillText(label, midX + 13, midY - 5);
+    tacticalCtx.restore();
 }
 
 export function maybeDrawTacticalView(nowMs) {
