@@ -7,7 +7,6 @@ import sys
 from argparse import Namespace
 from types import SimpleNamespace
 
-import eventlet
 import numpy as np
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -1624,10 +1623,12 @@ class VizSession:
                 if self.stop_requested:
                     break
                 speed = max(0.05, float(self.sim_speed))
+                # socketio.sleep delegates to the configured async model
+                # (threading here; eventlet/gevent-safe if that ever changes).
                 if speed >= 1.0:
-                    eventlet.sleep(dt_wall)
+                    self.socketio.sleep(dt_wall)
                 else:
-                    eventlet.sleep(dt_wall / speed)
+                    self.socketio.sleep(dt_wall / speed)
 
                 if not self.simulation_running:
                     continue

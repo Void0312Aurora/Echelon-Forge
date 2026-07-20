@@ -161,24 +161,31 @@ class SessionManager:
         self._drain_tasks(timeout_s=2.0)
         self.emit_status()
 
+    @staticmethod
+    def _task_finished(task) -> bool:
+        # threading.Thread exposes is_alive(); eventlet/gevent greenlets
+        # expose .dead. Support both so the async model stays swappable.
+        is_alive = getattr(task, "is_alive", None)
+        if callable(is_alive):
+            return not bool(is_alive())
+        return bool(getattr(task, "dead", True))
+
     def _drain_tasks(self, *, timeout_s: float) -> None:
         deadline = time.monotonic() + max(0.0, float(timeout_s))
         for task in list(self._tasks):
-            while not bool(getattr(task, "dead", False)) and time.monotonic() < deadline:
-                try:
-                    import eventlet
-
-                    eventlet.sleep(0.05)
-                except Exception:
-                    break
-            if not bool(getattr(task, "dead", False)):
+            while not self._task_finished(task) and time.monotonic() < deadline:
+                self.socketio.sleep(0.05)
+            if not self._task_finished(task):
+                # Greenlets can be killed; threads exit via the session's
+                # stop flag and are daemonized by flask-socketio, so an
+                # overrunning thread is abandoned rather than force-killed.
                 kill_fn = getattr(task, "kill", None)
                 if callable(kill_fn):
                     try:
                         kill_fn()
                     except Exception:
                         pass
-        self._tasks = [task for task in self._tasks if not bool(getattr(task, "dead", False))]
+        self._tasks = [task for task in self._tasks if not self._task_finished(task)]
 
     def shutdown(self, *, timeout_s: float = 5.0) -> None:
         session = self.session

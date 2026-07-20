@@ -63,7 +63,10 @@ def create_app(args: argparse.Namespace):
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     template_dir = os.path.join(base_dir, "web_viz/templates")
     static_dir = os.path.join(base_dir, "web_viz/static")
-    async_mode = "threading" if os.name == "nt" else "eventlet"
+    # Threading everywhere: eventlet is unmaintained upstream and the viz
+    # loop is one background thread per session, which plain threads serve
+    # fine at this scale. Revisit alongside the ASGI/binary-frame migration.
+    async_mode = "threading"
 
     app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
     socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
