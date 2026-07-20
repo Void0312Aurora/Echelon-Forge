@@ -102,6 +102,33 @@ def test_scene_geometry_resolves_bridge_decks_from_abutment_anchors(payload: dic
   assert "bridge_elevation_profile_unresolved" not in payload["held"]["by_reason"]
 
 
+def test_scene_geometry_linear_water_keeps_width_and_all_segments(payload: dict) -> None:
+  # The Chicago fixture carries two LineString river segments (3-point and
+  # 2-point). Both must reach the payload with their authored width so the
+  # renderers can stroke/ribbon them instead of fabricating polygons.
+  line_entries = [
+    entry for entry in payload["water"]
+    if any(path["role"] == "line" for path in entry["paths"])
+  ]
+  assert len(line_entries) == 2, "both fixture river segments must survive"
+  for entry in line_entries:
+    assert entry["width_m"] > 0, "linear watercourses carry authored width"
+    for path in entry["paths"]:
+      assert path["role"] == "line"
+      assert len(path["points"]) >= 2
+  point_counts = sorted(
+    len(entry["paths"][0]["points"]) for entry in line_entries
+  )
+  assert point_counts[0] == 2, "two-point continuation segment must not be dropped"
+
+  polygon_entries = [
+    entry for entry in payload["water"]
+    if all(path["role"] != "line" for path in entry["paths"])
+  ]
+  for entry in polygon_entries:
+    assert "width_m" not in entry, "polygon surfaces carry no width"
+
+
 def test_scene_geometry_rejects_missing_bundle(tmp_path: Path) -> None:
   with pytest.raises(SceneGeometryError):
     load_scene_geometry_payload(str(tmp_path / "missing"))

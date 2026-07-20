@@ -119,6 +119,7 @@ struct BatchWorldSetupRequest {
     std::vector<std::uint32_t> seeds;
     std::vector<WorldTerrainAssignment> terrain_assignments;
     std::vector<WorldWindAssignment> wind_assignments;
+    std::vector<WorldSunAssignment> sun_assignments;
     std::vector<WorldZoneDefinition> zones;
     std::vector<WorldSpawnRequest> spawn_requests;
     std::vector<TypedPlatformSpawnRequest> typed_platform_spawn_requests;

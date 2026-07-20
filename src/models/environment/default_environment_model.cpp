@@ -20,41 +20,42 @@ struct WeatherZoneImpl {
 struct Zone {
     std::string name;
     Vec3 center;
-    double width;  // X-size or Diameter
-    double length; // Y-size (0 if circle)
+    double width;   // X-size or Diameter
+    double length;  // Y-size (0 if circle)
     double heading; // Degrees
-    int type; // 0=Rect, 1=Circle
-    
+    int type;       // 0=Rect, 1=Circle
+
     // Properties
     IEnvironmentModel::SurfaceType surface;
     double friction;
     double roughness;
     double vegetation_density;
     double runway_heading; // If runway
-    int z_order; // Higher = Top (Overlays others)
+    int z_order;           // Higher = Top (Overlays others)
 };
 
 struct RasterGrid {
-    Vec3 origin; // Bottom-Left Corner (Min X, Min Y)
+    Vec3 origin;       // Bottom-Left Corner (Min X, Min Y)
     double resolution; // Meters per cell
-    int width; // Number of columns (X)
-    int height; // Number of rows (Y)
-    std::vector<IEnvironmentModel::SurfaceType> data; // Row-major (y * width + x) (Or standard image layout)
+    int width;         // Number of columns (X)
+    int height;        // Number of rows (Y)
+    std::vector<IEnvironmentModel::SurfaceType>
+        data; // Row-major (y * width + x) (Or standard image layout)
 
     // Helper: World (x,y) -> Grid Index
-    bool get_surface(double x, double y, IEnvironmentModel::SurfaceType& out_type) const {
+    bool get_surface(double x, double y, IEnvironmentModel::SurfaceType &out_type) const {
         // Local coords
         double lx = x - origin.x;
         double ly = y - origin.y;
-        
+
         // Check bounds
         if (lx < 0 || ly < 0) return false;
-        
+
         int col = static_cast<int>(lx / resolution);
         int row = static_cast<int>(ly / resolution);
-        
+
         if (col >= width || row >= height) return false;
-        
+
         // Index
         size_t idx = static_cast<size_t>(row * width + col);
         if (idx < data.size()) {
@@ -65,27 +66,23 @@ struct RasterGrid {
     }
 };
 
-
-
 class DefaultEnvironmentModel : public IEnvironmentModel {
     std::vector<WeatherZoneImpl> weather_zones_;
     std::vector<Zone> zones_;
     RasterGrid raster_layer_;
     double base_wind_speed_mps_ = 10.0;
-    double base_wind_dir_from_deg_ = 270.0;   // Wind "from" West => blowing to East (+X)
-    double wind_shear_mps_per_km_ = 4.0;      // Matches legacy (h/250 => +4 m/s per km)
+    double base_wind_dir_from_deg_ = 270.0; // Wind "from" West => blowing to East (+X)
+    double wind_shear_mps_per_km_ = 4.0;    // Matches legacy (h/250 => +4 m/s per km)
     // Defaults match the historical fixed sun vector {0, 0.7071, 0.7071}.
     double sun_azimuth_deg_ = 0.0;    // NAV: 0=North, CW positive
     double sun_elevation_deg_ = 45.0; // above horizon
     MaritimeState maritime_state_{};
     bool flat_terrain_ = false;
 
-public:
+  public:
     DefaultEnvironmentModel() {
         // Initialize with default weather
-        weather_zones_.push_back({
-            {15000.0, 15000.0, 5000.0}, 3000.0, 0.8, 0.6
-        });
+        weather_zones_.push_back({{15000.0, 15000.0, 5000.0}, 3000.0, 0.8, 0.6});
 
         // Initialize Raster Base Layer (20km x 20km centered at Origin)
         raster_layer_.origin = {-10000.0, -10000.0, 0.0};
@@ -99,29 +96,29 @@ public:
             for (int x = 0; x < raster_layer_.width; ++x) {
                 // 1km = 10 cells
                 bool patch = ((x / 10) + (y / 10)) % 2 == 0;
-                raster_layer_.data[y * raster_layer_.width + x] = patch ? 
-                    IEnvironmentModel::SurfaceType::SoftDirt : 
-                    IEnvironmentModel::SurfaceType::HardPacked;
+                raster_layer_.data[y * raster_layer_.width + x] =
+                    patch ? IEnvironmentModel::SurfaceType::SoftDirt
+                          : IEnvironmentModel::SurfaceType::HardPacked;
             }
         }
 
         // Initialize Default Zones
         // Zones are now loaded via API (add_zone).
-        
+
         // Raster initialized above.
     }
 
     AtmosphericData get_atmosphere_at(double x, double y, double z) override {
         AtmosphericData data;
-        constexpr double kG=9.80665, kR=287.0, kL=0.0065, kT0=288.15, kP0=101325.0;
+        constexpr double kG = 9.80665, kR = 287.0, kL = 0.0065, kT0 = 288.15, kP0 = 101325.0;
         double h = std::max(0.0, z);
-        if(h < 11000.0) {
-            data.temperature = kT0 - kL*h;
-            data.pressure = kP0 * std::pow(1.0 - kL*h/kT0, kG/(kR*kL));
+        if (h < 11000.0) {
+            data.temperature = kT0 - kL * h;
+            data.pressure = kP0 * std::pow(1.0 - kL * h / kT0, kG / (kR * kL));
         } else {
-            constexpr double kT11=216.65, kP11=22632.1;
+            constexpr double kT11 = 216.65, kP11 = 22632.1;
             data.temperature = kT11;
-            data.pressure = kP11 * std::exp(-kG*(h-11000.0)/(kR*kT11));
+            data.pressure = kP11 * std::exp(-kG * (h - 11000.0) / (kR * kT11));
         }
         data.air_density = data.pressure / (kR * data.temperature);
         data.speed_of_sound = std::sqrt(1.4 * kR * data.temperature);
@@ -141,15 +138,16 @@ public:
     }
 
     double get_terrain_elevation(double x, double y) override {
-         if (flat_terrain_) {
-             return 0.0;
-         }
-         constexpr double kPeakX = 25000.0, kPeakY = 25000.0, kPeakH = 2000.0, kSigmaSq = 25000000.0;
-         double d2 = (x-kPeakX)*(x-kPeakX) + (y-kPeakY)*(y-kPeakY);
-         return kPeakH * std::exp(-d2 / (2.0*kSigmaSq));
+        if (flat_terrain_) {
+            return 0.0;
+        }
+        constexpr double kPeakX = 25000.0, kPeakY = 25000.0, kPeakH = 2000.0, kSigmaSq = 25000000.0;
+        double d2 = (x - kPeakX) * (x - kPeakX) + (y - kPeakY) * (y - kPeakY);
+        return kPeakH * std::exp(-d2 / (2.0 * kSigmaSq));
     }
 
-    bool check_line_of_sight(double x1, double y1, double z1, double x2, double y2, double z2) override {
+    bool check_line_of_sight(double x1, double y1, double z1, double x2, double y2,
+                             double z2) override {
         const double terrain1 = get_terrain_elevation(x1, y1);
         const double terrain2 = get_terrain_elevation(x2, y2);
 
@@ -158,10 +156,8 @@ public:
         constexpr double kSurfaceEndpointToleranceM = 2.0;
         constexpr double kLowReliefTerrainToleranceM = 1.0;
         constexpr double kLandObstructionThresholdM = 1.5;
-        if (maritime_state_.configured &&
-            std::abs(z1) <= kSurfaceEndpointToleranceM &&
-            std::abs(z2) <= kSurfaceEndpointToleranceM &&
-            terrain1 <= kLowReliefTerrainToleranceM &&
+        if (maritime_state_.configured && std::abs(z1) <= kSurfaceEndpointToleranceM &&
+            std::abs(z2) <= kSurfaceEndpointToleranceM && terrain1 <= kLowReliefTerrainToleranceM &&
             terrain2 <= kLowReliefTerrainToleranceM) {
             constexpr int kLosSamples = 24;
             for (int i = 1; i < kLosSamples; ++i) {
@@ -205,7 +201,7 @@ public:
     TerrainCell get_terrain_at(double x, double y) override {
         TerrainCell cell;
         cell.elevation = get_terrain_elevation(x, y);
-        
+
         // Default (Background)
         cell.type = SurfaceType::SoftDirt;
         cell.friction_mult = 0.1;
@@ -214,8 +210,8 @@ public:
         cell.runway_heading = 0.0;
 
         // Iterate zones (sorted by z_order high->low). First match wins.
-        
-        for (const auto& zone : zones_) {
+
+        for (const auto &zone : zones_) {
             // Transform point to Zone Local Frame
             // Translate to center.
             double dx = x - zone.center.x;
@@ -233,15 +229,16 @@ public:
                 double local_len = dx * c + dy * s;
                 double local_wid = dx * (-s) + dy * c;
 
-                if (std::abs(local_wid) <= zone.width / 2.0 && std::abs(local_len) <= zone.length / 2.0) {
+                if (std::abs(local_wid) <= zone.width / 2.0 &&
+                    std::abs(local_len) <= zone.length / 2.0) {
                     inside = true;
                 }
-            } else if (zone.type == 1) { // Circle
+            } else if (zone.type == 1) {                            // Circle
                 if (dx * dx + dy * dy <= zone.width * zone.width) { // width = radius
                     inside = true;
                 }
             }
-            
+
             if (inside) {
                 cell.type = zone.surface;
                 cell.friction_mult = zone.friction;
@@ -256,27 +253,27 @@ public:
         IEnvironmentModel::SurfaceType grid_type;
         if (raster_layer_.get_surface(x, y, grid_type)) {
             cell.type = grid_type;
-            
+
             // Map Type to Properties (Simple Lookup)
             switch (grid_type) {
-                case SurfaceType::HardPacked:
-                    cell.friction_mult = 0.04;
-                    cell.roughness = 0.2;
-                    cell.vegetation_density = 0.1;
-                    break;
-                case SurfaceType::SoftDirt:
-                    cell.friction_mult = 0.1;
-                    cell.roughness = 0.5;
-                    cell.vegetation_density = 0.5;
-                    break;
-                case SurfaceType::Water:
-                    cell.friction_mult = 0.1; 
-                    cell.roughness = 0.0;
-                    break;
-                default: // Should not happen in this generator
-                    cell.friction_mult = 0.05;
-                    cell.roughness = 0.3;
-                    break;
+            case SurfaceType::HardPacked:
+                cell.friction_mult = 0.04;
+                cell.roughness = 0.2;
+                cell.vegetation_density = 0.1;
+                break;
+            case SurfaceType::SoftDirt:
+                cell.friction_mult = 0.1;
+                cell.roughness = 0.5;
+                cell.vegetation_density = 0.5;
+                break;
+            case SurfaceType::Water:
+                cell.friction_mult = 0.1;
+                cell.roughness = 0.0;
+                break;
+            default: // Should not happen in this generator
+                cell.friction_mult = 0.05;
+                cell.roughness = 0.3;
+                break;
             }
             return cell;
         }
@@ -284,11 +281,10 @@ public:
         return cell; // Fallback to Initial Default (SoftDirt)
     }
 
-    void clear_zones() override {
-        zones_.clear();
-    }
+    void clear_zones() override { zones_.clear(); }
 
-    void add_zone(const std::string& name, double x, double y, double width, double length, double heading, SurfaceType surface) override {
+    void add_zone(const std::string &name, double x, double y, double width, double length,
+                  double heading, SurfaceType surface) override {
         Zone z;
         z.name = name;
         z.center = {x, y, 0.0};
@@ -298,21 +294,29 @@ public:
         z.type = 0; // Rect
         z.surface = surface;
         z.runway_heading = heading; // Assume alignment for now
-        
+
         // Defaults based on type
         if (surface == SurfaceType::Concrete) {
-            z.friction = 0.02; z.roughness = 0.0; z.vegetation_density = 0.0; z.z_order = 10;
+            z.friction = 0.02;
+            z.roughness = 0.0;
+            z.vegetation_density = 0.0;
+            z.z_order = 10;
         } else if (surface == SurfaceType::Asphalt) {
-            z.friction = 0.02; z.roughness = 0.0; z.vegetation_density = 0.0; z.z_order = 5;
+            z.friction = 0.02;
+            z.roughness = 0.0;
+            z.vegetation_density = 0.0;
+            z.z_order = 5;
         } else {
-            z.friction = 0.1; z.roughness = 0.5; z.vegetation_density = 0.5; z.z_order = 1;
+            z.friction = 0.1;
+            z.roughness = 0.5;
+            z.vegetation_density = 0.5;
+            z.z_order = 1;
         }
-        
+
         zones_.push_back(z);
         // Keep sorted
-        std::sort(zones_.begin(), zones_.end(), [](const Zone& a, const Zone& b){
-            return a.z_order > b.z_order;
-        });
+        std::sort(zones_.begin(), zones_.end(),
+                  [](const Zone &a, const Zone &b) { return a.z_order > b.z_order; });
     }
 
     void set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km) override {
@@ -322,17 +326,16 @@ public:
         wind_shear_mps_per_km_ = shear_mps_per_km;
     }
 
-    void set_terrain_type(const std::string& terrain_type) override {
+    void set_terrain_type(const std::string &terrain_type) override {
         std::string key = terrain_type;
-        key.erase(key.begin(), std::find_if(key.begin(), key.end(), [](unsigned char c) {
-            return !std::isspace(c);
-        }));
-        key.erase(std::find_if(key.rbegin(), key.rend(), [](unsigned char c) {
-            return !std::isspace(c);
-        }).base(), key.end());
-        std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) {
-            return static_cast<char>(std::tolower(c));
-        });
+        key.erase(key.begin(), std::find_if(key.begin(), key.end(),
+                                            [](unsigned char c) { return !std::isspace(c); }));
+        key.erase(
+            std::find_if(key.rbegin(), key.rend(), [](unsigned char c) { return !std::isspace(c); })
+                .base(),
+            key.end());
+        std::transform(key.begin(), key.end(), key.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         if (key.empty()) {
             key = "flat";
         }
@@ -346,11 +349,11 @@ public:
         }
         throw std::invalid_argument(
             "Unknown terrain_type '" + terrain_type +
-            "'; expected one of: flat, gaussian_hill, hill, legacy, mountain"
-        );
+            "'; expected one of: flat, gaussian_hill, hill, legacy, mountain");
     }
 
-    void set_maritime_state(double sea_state, double wave_heading_deg, double wave_period_s) override {
+    void set_maritime_state(double sea_state, double wave_heading_deg,
+                            double wave_period_s) override {
         maritime_state_.configured = true;
         maritime_state_.sea_state = std::clamp(sea_state, 0.0, 12.0);
         maritime_state_.wave_heading_deg = std::fmod(wave_heading_deg, 360.0);
@@ -358,15 +361,11 @@ public:
         maritime_state_.wave_period_s = std::max(2.0, wave_period_s);
     }
 
-    void clear_maritime_state() override {
-        maritime_state_ = MaritimeState{};
-    }
+    void clear_maritime_state() override { maritime_state_ = MaritimeState{}; }
 
-    MaritimeState get_maritime_state() const override {
-        return maritime_state_;
-    }
+    MaritimeState get_maritime_state() const override { return maritime_state_; }
 
-    bool snapshot_to(DefaultEnvironmentSnapshot* out) const {
+    bool snapshot_to(DefaultEnvironmentSnapshot *out) const {
         if (out == nullptr) {
             return false;
         }
@@ -387,7 +386,7 @@ public:
             out->raster.surface_codes.push_back(static_cast<std::uint8_t>(surface));
         }
         out->zones.reserve(zones_.size());
-        for (const auto& zone : zones_) {
+        for (const auto &zone : zones_) {
             DefaultEnvironmentZoneSnapshot item{};
             item.center_x = zone.center.x;
             item.center_y = zone.center.y;
@@ -408,10 +407,7 @@ std::unique_ptr<IEnvironmentModel> make_default_environment_model() {
     return std::make_unique<DefaultEnvironmentModel>();
 }
 
-bool extract_default_environment_snapshot(
-    IEnvironmentModel* env,
-    DefaultEnvironmentSnapshot* out
-) {
-    auto* model = dynamic_cast<DefaultEnvironmentModel*>(env);
+bool extract_default_environment_snapshot(IEnvironmentModel *env, DefaultEnvironmentSnapshot *out) {
+    auto *model = dynamic_cast<DefaultEnvironmentModel *>(env);
     return model != nullptr && model->snapshot_to(out);
 }

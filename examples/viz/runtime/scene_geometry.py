@@ -238,13 +238,22 @@ def _road_entry(item: dict[str, Any], attributes_by_feature: dict[str, dict[str,
     }
 
 
-def _water_entry(item: dict[str, Any]) -> dict[str, Any] | None:
+def _water_entry(
+    item: dict[str, Any], attributes_by_feature: dict[str, dict[str, Any]]
+) -> dict[str, Any] | None:
     geometry = item.get("static_geometry") or {}
     if geometry.get("kind") != "source_geometry_dem_display_drape":
         return None
     display_paths = geometry.get("display_paths_xyz")
     if not isinstance(display_paths, list) or not display_paths:
         return None
+    source_attributes = attributes_by_feature.get(str(item.get("source_feature_id") or ""), {})
+    # Linear watercourses (rivers/streams as LineStrings) carry an authored
+    # width; polygon surfaces do not need one.
+    try:
+        width_m = float(source_attributes.get("width_m", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        width_m = 0.0
     paths = []
     for path in display_paths:
         if not isinstance(path, dict):
@@ -260,10 +269,13 @@ def _water_entry(item: dict[str, Any]) -> dict[str, Any] | None:
         )
     if not paths:
         return None
-    return {
+    entry: dict[str, Any] = {
         "id": str(item.get("object_id") or item.get("source_feature_id") or ""),
         "paths": paths,
     }
+    if width_m > 0.0:
+        entry["width_m"] = _round3(width_m)
+    return entry
 
 
 def load_scene_geometry_payload(
@@ -318,6 +330,11 @@ def load_scene_geometry_payload(
         if isinstance(feature, dict) and isinstance(feature.get("attributes"), dict):
             road_attributes[str(feature.get("feature_id") or "")] = feature["attributes"]
 
+    water_attributes: dict[str, dict[str, Any]] = {}
+    for feature in vectors["hydrology"].get("features", []):
+        if isinstance(feature, dict) and isinstance(feature.get("attributes"), dict):
+            water_attributes[str(feature.get("feature_id") or "")] = feature["attributes"]
+
     objects = static_scene.get("objects", [])
     buildings = []
     roads = []
@@ -335,7 +352,7 @@ def load_scene_geometry_payload(
             if entry is not None:
                 roads.append(entry)
         elif feature_class == "hydrology":
-            entry = _water_entry(item)
+            entry = _water_entry(item, water_attributes)
             if entry is not None:
                 water.append(entry)
 

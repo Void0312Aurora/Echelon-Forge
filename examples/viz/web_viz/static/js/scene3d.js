@@ -465,9 +465,24 @@ function buildWaterGroup(water) {
         opacity: 0.7,
         side: THREE.DoubleSide,
     });
+    const ribbonPositions = [];
     for (const entry of water || []) {
-        const outers = (entry.paths || []).filter((path) => !String(path.role || '').includes('hole'));
+        const outers = (entry.paths || []).filter((path) => {
+            const role = String(path.role || '');
+            return role !== 'line' && !role.includes('hole');
+        });
         const holes = (entry.paths || []).filter((path) => String(path.role || '').includes('hole'));
+        const lines = (entry.paths || []).filter((path) => String(path.role || '') === 'line');
+        // Linear watercourses become width ribbons along the DEM-draped
+        // centerline; treating them as polygons fabricated area (and dropped
+        // two-point segments entirely).
+        const halfWidth = Math.max(0.75, Number(entry.width_m || 3) * 0.5);
+        for (const line of lines) {
+            const points = line.points || [];
+            if (points.length >= 2) {
+                pushRoadRibbon(ribbonPositions, points, halfWidth, 0.15, null);
+            }
+        }
         for (const outer of outers) {
             const points = outer.points || [];
             if (points.length < 3) continue;
@@ -485,6 +500,9 @@ function buildWaterGroup(water) {
             mesh.position.y = surfaceZ + 0.2;
             group.add(mesh);
         }
+    }
+    if (ribbonPositions.length > 0) {
+        group.add(corridorMesh(ribbonPositions, material));
     }
     return group;
 }

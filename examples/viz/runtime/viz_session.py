@@ -4,6 +4,7 @@ import json
 import math
 import os
 import sys
+import threading
 from argparse import Namespace
 from types import SimpleNamespace
 
@@ -806,7 +807,10 @@ class VizSession:
         self.scenario = str(getattr(args, "scenario", ""))
         self.simulation_running = False
         self.simulation_paused = False
-        self.stop_requested = False
+        # Thread-safe stop signal: set from request handlers, honored by the
+        # worker. Never reset -- a VizSession runs exactly one loop, so a
+        # stop that arrives before startup must still terminate the worker.
+        self._stop_event = threading.Event()
         self.ready = False
         self.env = None
         self.model = None
@@ -815,6 +819,10 @@ class VizSession:
         self.nav_data = None
         self.sim_speed = 1.0
         self.last_error = ""
+
+    @property
+    def stop_requested(self) -> bool:
+        return self._stop_event.is_set()
 
     def _release_runtime_resources(self) -> None:
         env = self.env
@@ -863,14 +871,16 @@ class VizSession:
         self.simulation_paused = False
 
     def stop(self) -> None:
+        # Signal only; the worker thread owns the env and performs cleanup in
+        # its finally block. Closing the env from this (request) thread while
+        # the worker is mid-step would race under the threading async model.
         print("Stop Signal Received")
-        self.stop_requested = True
+        self._stop_event.set()
         self.simulation_running = False
         self.simulation_paused = False
         self.ready = False
         self.map_data = None
         self.nav_data = None
-        self._release_runtime_resources()
         self._notify_status()
 
     def set_speed(self, data) -> None:
@@ -917,10 +927,17 @@ class VizSession:
             self.simulation_running = False
             self.simulation_paused = False
             self.report_error(f"{type(exc).__name__}: {exc}")
+        finally:
+            # The worker exclusively releases runtime resources so a stop()
+            # from a request thread can never close the env mid-step.
+            self.ready = False
+            self._release_runtime_resources()
+            self._notify_status()
 
     def _run_loop_inner(self) -> None:
         args = self.args
-        self.stop_requested = False
+        # Do not reset the stop event here: a stop arriving before the worker
+        # reaches this point must still terminate the session.
         train_config = _load_train_config_for_viz(getattr(args, "model", None), getattr(args, "train_config", None))
         leader_mode = _is_leader_train_config(train_config)
         cooperative_mode = _is_cooperative_train_config(train_config)
@@ -2232,7 +2249,5 @@ class VizSession:
 
                 traceback.print_exc()
                 break
-
-        self.ready = False
-        self._release_runtime_resources()
-        self._notify_status()
+        # Resource release and status notification happen in run_loop's
+        # finally block (worker-owned cleanup).

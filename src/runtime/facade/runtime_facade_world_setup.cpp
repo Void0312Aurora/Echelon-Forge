@@ -321,16 +321,16 @@ std::vector<uint64_t> RuntimeFacade::apply_world_setup_batch(
     const std::vector<WorldTerrainAssignment> &terrain_assignments,
     const std::vector<WorldWindAssignment> &wind_assignments,
     const std::vector<WorldZoneDefinition> &zones, const std::vector<WorldSpawnRequest> &requests,
-    const std::vector<double> &time_steps) {
+    const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments) {
     return runtime_->apply_world_setup_batch(seeds, terrain_assignments, wind_assignments, zones,
-                                             requests, time_steps);
+                                             requests, time_steps, sun_assignments);
 }
 
 BatchWorldSetupResult RuntimeFacade::apply_world_setup(const BatchWorldSetupRequest &request) {
     BatchWorldSetupResult result{};
     result.entity_ids = runtime_->apply_world_setup_batch(
         request.seeds, request.terrain_assignments, request.wind_assignments, request.zones,
-        request.spawn_requests, request.time_steps);
+        request.spawn_requests, request.time_steps, request.sun_assignments);
     result.typed_platform_spawn_results.reserve(request.typed_platform_spawn_requests.size());
     for (std::size_t request_index = 0;
          request_index < request.typed_platform_spawn_requests.size(); ++request_index) {

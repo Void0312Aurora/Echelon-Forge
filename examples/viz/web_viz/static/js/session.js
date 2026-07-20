@@ -192,7 +192,9 @@ export function updateSessionButtonState(appStatus) {
         applyAssetRegistry(appStatus.asset_registry);
     }
     if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'scene_geometry')) {
-        ensureSceneGeometry(!!appStatus.scene_geometry?.available);
+        const sceneGeo = appStatus.scene_geometry;
+        // Key by bundle identity so profile switches refetch the new bundle.
+        ensureSceneGeometry(sceneGeo?.available ? (sceneGeo.bundle_id || 'unidentified-bundle') : null);
     }
 
     if (Array.isArray(appStatus?.profiles)) {

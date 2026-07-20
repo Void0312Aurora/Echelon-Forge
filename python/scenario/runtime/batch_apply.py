@@ -164,7 +164,7 @@ def _load_compiled_scenario_batch_direct(
     if apply_buffer is None:
         apply_buffer = BatchWorldApplyBuffer(world_count)
 
-    terrain_items, wind_items, zone_items, spawn_items = apply_buffer.prepare_direct(
+    terrain_items, wind_items, sun_items, zone_items, spawn_items = apply_buffer.prepare_direct(
         total_zone_count=len(compiled_template.zones) * world_count,
         total_spawn_count=len(compiled_template.spawns) * world_count,
     )
@@ -193,6 +193,11 @@ def _load_compiled_scenario_batch_direct(
         wind.speed_mps = float(wind_speed)
         wind.dir_from_deg = float(wind_dir_from)
         wind.shear_mps_per_km = float(wind_shear)
+
+        sun = sun_items[world_index]
+        sun.world_index = int(world_index)
+        sun.azimuth_deg = float(compiled_template.sun_azimuth_deg)
+        sun.elevation_deg = float(compiled_template.sun_elevation_deg)
 
         yaw_active = abs(float(context.world_yaw_deg)) > 1.0e-9
         yaw_deg = float(context.world_yaw_deg)
@@ -271,6 +276,7 @@ def _load_compiled_scenario_batch_direct(
         seeds=normalized_seeds,
         terrain_assignments=terrain_items,
         wind_assignments=wind_items,
+        sun_assignments=sun_items,
         zones=zone_items[:zone_cursor],
         spawn_requests=spawn_items[:spawn_cursor],
         time_steps=time_step_items,
@@ -379,7 +385,9 @@ def _apply_world_layouts_to_setup_target(
 
     if apply_buffer is None:
         apply_buffer = BatchWorldApplyBuffer(world_count)
-    terrain_assignments, wind_assignments, zone_defs, spawn_requests = apply_buffer.prepare(layouts)
+    terrain_assignments, wind_assignments, sun_assignments, zone_defs, spawn_requests = (
+        apply_buffer.prepare(layouts)
+    )
 
     normalized_seeds = [int(layout.seed) & 0xFFFFFFFF for layout in layouts]
     time_step_items = [
@@ -391,6 +399,7 @@ def _apply_world_layouts_to_setup_target(
         seeds=normalized_seeds,
         terrain_assignments=terrain_assignments,
         wind_assignments=wind_assignments,
+        sun_assignments=sun_assignments,
         zones=zone_defs,
         spawn_requests=spawn_requests,
         time_steps=time_step_items,
@@ -439,6 +448,7 @@ def _apply_world_setup_request(
     zones: list[Any],
     spawn_requests: list[Any],
     time_steps: list[float],
+    sun_assignments: list[Any] | None = None,
     setup_payload_apply: Callable[..., list[int]] | None = None,
 ) -> list[int]:
     if setup_payload_apply is None:
@@ -450,7 +460,10 @@ def _apply_world_setup_request(
             zones=zones,
             spawn_requests=spawn_requests,
             time_steps=time_steps,
+            sun_assignments=sun_assignments,
         )
+    # Injected appliers predate the sun contract; they receive the original
+    # keyword surface and the facade default (no sun override) applies.
     return setup_payload_apply(
         facade_setup_target,
         seeds=seeds,

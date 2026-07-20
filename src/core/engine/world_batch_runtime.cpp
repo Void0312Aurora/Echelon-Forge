@@ -560,6 +560,14 @@ void WorldBatchRuntime::set_winds_batch(const std::vector<WorldWindAssignment> &
     });
 }
 
+void WorldBatchRuntime::set_suns_batch(const std::vector<WorldSunAssignment> &assignments) {
+    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
+    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+        auto &world = checked_world(world_index);
+        world_batch_setup::apply_sun_assignments(world, assignments, grouped[world_index]);
+    });
+}
+
 void WorldBatchRuntime::clear_zones_batch(const std::vector<uint64_t> &world_indices) {
     if (world_indices.empty()) {
         parallel_for_index(worlds_.size(), worker_threads_,
@@ -598,7 +606,7 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const std::vector<WorldTerrainAssignment> &terrain_assignments,
     const std::vector<WorldWindAssignment> &wind_assignments,
     const std::vector<WorldZoneDefinition> &zones, const std::vector<WorldSpawnRequest> &requests,
-    const std::vector<double> &time_steps) {
+    const std::vector<double> &time_steps, const std::vector<WorldSunAssignment> &sun_assignments) {
     if (!time_steps.empty() && time_steps.size() != 1 && time_steps.size() != worlds_.size()) {
         throw std::invalid_argument("time_steps must have size 0, 1, or world_count");
     }
@@ -606,6 +614,7 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     std::vector<uint64_t> out(requests.size(), 0);
     const auto terrain_grouped = group_item_indices_by_world(worlds_.size(), terrain_assignments);
     const auto wind_grouped = group_item_indices_by_world(worlds_.size(), wind_assignments);
+    const auto sun_grouped = group_item_indices_by_world(worlds_.size(), sun_assignments);
     const auto zone_grouped = group_item_indices_by_world(worlds_.size(), zones);
     const auto spawn_grouped = group_item_indices_by_world(worlds_.size(), requests);
     clear_execution_episode_controller_batch();
@@ -614,9 +623,9 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
         auto &world = checked_world(world_index);
         world_batch_setup::apply_world_setup(
             world, world_index, worlds_.size(), seeds, terrain_assignments,
-            terrain_grouped[world_index], wind_assignments, wind_grouped[world_index], zones,
-            zone_grouped[world_index], requests, spawn_grouped[world_index], time_steps, &out,
-            spawn_from_request);
+            terrain_grouped[world_index], wind_assignments, wind_grouped[world_index],
+            sun_assignments, sun_grouped[world_index], zones, zone_grouped[world_index], requests,
+            spawn_grouped[world_index], time_steps, &out, spawn_from_request);
     });
     return out;
 }

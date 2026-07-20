@@ -15,7 +15,6 @@ import { buildSceneGeometry3D, clearSceneGeometry3D } from './scene3d.js';
 let payload = null;
 let terrainBitmap = null;
 let terrainRect = null;
-let loadingPromise = null;
 
 // Hillshade light vector (ENU) derived from the scenario sun truth, so the
 // 2D map shading and the engine's glare adjudication share one sun.
@@ -224,6 +223,10 @@ async function buildTerrainBitmap() {
 }
 
 export function clearSceneGeometry() {
+    // Invalidate any in-flight fetch so a stale response cannot install
+    // geometry after the clear.
+    fetchGeneration += 1;
+    loadedBundleKey = null;
     const hadPayload = payload !== null;
     payload = null;
     if (terrainBitmap && typeof terrainBitmap.close === 'function') terrainBitmap.close();
@@ -235,18 +238,34 @@ export function clearSceneGeometry() {
     }
 }
 
-export function ensureSceneGeometry(available) {
-    if (!available) {
+// Cache/in-flight state is keyed by the backend bundle identity so switching
+// profiles (bundle A -> B) refetches instead of keeping A's terrain forever.
+let loadedBundleKey = null;
+let fetchGeneration = 0;
+
+export function ensureSceneGeometry(bundleKey) {
+    const key = bundleKey ? String(bundleKey) : null;
+    if (key === null) {
         clearSceneGeometry();
         return;
     }
-    if (payload !== null || loadingPromise) return;
-    loadingPromise = (async () => {
+    if (key === loadedBundleKey) return; // already loaded or loading this bundle
+    loadedBundleKey = key;
+    const generation = ++fetchGeneration;
+    (async () => {
         try {
             const response = await fetch('/api/viz/scene_geometry');
-            if (!response.ok) return;
+            if (generation !== fetchGeneration) return; // superseded
+            if (!response.ok) {
+                loadedBundleKey = null;
+                return;
+            }
             const body = await response.json();
-            if (!body || typeof body !== 'object' || !body.terrain) return;
+            if (generation !== fetchGeneration) return;
+            if (!body || typeof body !== 'object' || !body.terrain) {
+                loadedBundleKey = null;
+                return;
+            }
             payload = body;
             const anchor = sceneGeodeticAnchor();
             if (anchor) {
@@ -256,6 +275,7 @@ export function ensureSceneGeometry(available) {
                 );
             }
             await buildTerrainBitmap();
+            if (generation !== fetchGeneration) return; // cleared/superseded during build
             buildSceneGeometry3D(payload, {
                 terrainCellColor,
                 terrainShade,
@@ -264,8 +284,7 @@ export function ensureSceneGeometry(available) {
             requestTacticalDraw();
         } catch (err) {
             console.warn('scene geometry fetch failed', err);
-        } finally {
-            loadingPromise = null;
+            if (generation === fetchGeneration) loadedBundleKey = null;
         }
     })();
 }
@@ -304,9 +323,22 @@ export function drawSceneVectors(ctx, toCanvas, scale) {
         for (const entry of payload.water || []) {
             for (const path of entry.paths || []) {
                 const points = path.points || [];
+                const role = String(path.role || '');
+                if (role === 'line') {
+                    // Linear watercourse: stroke along the centerline at the
+                    // authored width; closing/filling would fabricate area.
+                    if (points.length < 2) continue;
+                    tracePath(ctx, toCanvas, points, false);
+                    ctx.strokeStyle = WATER_STROKE;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.lineWidth = Math.max(1.2, Number(entry.width_m || 2) * scale);
+                    ctx.stroke();
+                    continue;
+                }
                 if (points.length < 3) continue;
                 tracePath(ctx, toCanvas, points, true);
-                const isHole = String(path.role || '').includes('hole');
+                const isHole = role.includes('hole');
                 ctx.fillStyle = isHole ? 'rgba(5, 11, 18, 0.85)' : WATER_FILL;
                 ctx.fill();
                 ctx.strokeStyle = WATER_STROKE;

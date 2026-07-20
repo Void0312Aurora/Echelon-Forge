@@ -101,6 +101,68 @@ def _ensure_checkout(lock: dict[str, Any], source_dir: Path) -> None:
         )
 
 
+def _verify_clean_worktree(source_dir: Path, *, patch_applied: bool) -> None:
+    """Reject checkouts that differ from pinned-commit(+patch) in any way.
+
+    A cached checkout could carry extra tracked edits or untracked files
+    (e.g. a .cargo/config.toml build hook) that cargo would happily execute,
+    after which the install metadata would falsely record a pinned build.
+    Fail closed instead of building arbitrary cached modifications.
+    """
+    status = _run(("git", "status", "--porcelain"), cwd=source_dir).stdout
+    entries = [
+        (line[:2], line[3:].strip())
+        for line in status.splitlines()
+        if line.strip()
+    ]
+    untracked = [path for state, path in entries if state == "??"]
+    tracked_changes = [(state, path) for state, path in entries if state != "??"]
+
+    if untracked:
+        raise ArnisBootstrapError(
+            "Arnis checkout contains untracked files that would enter the build: "
+            + ", ".join(sorted(untracked))
+        )
+    if not patch_applied:
+        if tracked_changes:
+            details = ", ".join(f"{state.strip() or '?'} {path}" for state, path in tracked_changes)
+            raise ArnisBootstrapError(
+                f"Arnis checkout has unexpected modifications before patching: {details}"
+            )
+        return
+    # With the patch applied, the only allowed tracked deviation is the patch
+    # itself: reversing it must leave a completely clean tree.
+    reverse_ok = _run(
+        ("git", "apply", "--reverse", "--check", str(_PATCH_PATH)),
+        cwd=source_dir,
+        check=False,
+    )
+    if reverse_ok.returncode != 0:
+        raise ArnisBootstrapError("Arnis checkout modifications do not match the pinned patch")
+    patch_paths = set(_patch_file_paths())
+    extra = [
+        f"{state.strip() or '?'} {path}"
+        for state, path in tracked_changes
+        if path not in patch_paths
+    ]
+    if extra:
+        raise ArnisBootstrapError(
+            "Arnis checkout has tracked modifications outside the pinned patch: "
+            + ", ".join(sorted(extra))
+        )
+
+
+def _patch_file_paths() -> list[str]:
+    """File paths touched by the pinned patch (parsed from its headers)."""
+    paths: list[str] = []
+    for line in _PATCH_PATH.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("+++ b/"):
+            paths.append(line[6:].strip())
+        elif line.startswith("+++ ") and not line.startswith("+++ /dev/null"):
+            paths.append(line[4:].strip())
+    return paths
+
+
 def _ensure_patch_applied(source_dir: Path) -> None:
     reverse = _run(
         ("git", "apply", "--reverse", "--check", str(_PATCH_PATH)),
@@ -108,6 +170,7 @@ def _ensure_patch_applied(source_dir: Path) -> None:
         check=False,
     )
     if reverse.returncode == 0:
+        _verify_clean_worktree(source_dir, patch_applied=True)
         return
     forward = _run(
         ("git", "apply", "--check", str(_PATCH_PATH)),
@@ -119,7 +182,9 @@ def _ensure_patch_applied(source_dir: Path) -> None:
             "Arnis checkout is neither cleanly patchable nor already patched:\n"
             f"{forward.stderr.strip()}"
         )
+    _verify_clean_worktree(source_dir, patch_applied=False)
     _run(("git", "apply", str(_PATCH_PATH)), cwd=source_dir)
+    _verify_clean_worktree(source_dir, patch_applied=True)
 
 
 def _install_binary(

@@ -3,6 +3,17 @@ from __future__ import annotations
 from frontend_sources import frontend_text, js_text
 
 
+def test_linear_water_renders_as_stroke_and_ribbon_not_polygon():
+    # 2D: line-role paths stroke at authored width; fills stay polygon-only.
+    scene_geometry = js_text("scene-geometry")
+    assert "role === 'line'" in scene_geometry
+    assert "entry.width_m" in scene_geometry
+    # 3D: line-role paths become width ribbons along the draped centerline.
+    scene3d = js_text("scene3d")
+    assert "ribbonPositions" in scene3d
+    assert "width_m" in scene3d
+
+
 def test_unified_scene_layers_are_registered_with_workspace_defaults() -> None:
   symbology = js_text("symbology")
   i18n = js_text("i18n")
@@ -46,7 +57,9 @@ def test_unified_scene_geometry_frontend_is_display_only() -> None:
   assert "function clearSceneGeometry3D" in scene3d
   assert "buildTerrainMesh" in scene3d
 
-  assert "ensureSceneGeometry(!!appStatus.scene_geometry?.available)" in session
+  # Scene geometry loads are keyed by backend bundle identity.
+  assert "ensureSceneGeometry(sceneGeo?.available" in session
+  assert "sceneGeo.bundle_id" in session
 
   # Display-only: the frontend never writes environment state back to the
   # session; loading still flows exclusively through profile/scenario events.

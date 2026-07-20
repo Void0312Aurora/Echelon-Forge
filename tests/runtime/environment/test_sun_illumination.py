@@ -120,6 +120,96 @@ class ScenarioLayoutIlluminationTests(unittest.TestCase):
             self.assertAlmostEqual(got, want, places=6)
 
 
+class BatchSetupIlluminationTests(unittest.TestCase):
+    """The vectorized reset path must land the scenario sun in each kernel."""
+
+    def test_world_sun_assignment_dto_defaults(self) -> None:
+        assignment = ef_py.WorldSunAssignment()
+        self.assertEqual(assignment.azimuth_deg, 0.0)
+        self.assertEqual(assignment.elevation_deg, 45.0)
+
+    def test_batch_world_setup_request_carries_sun_assignments(self) -> None:
+        request = ef_py.BatchWorldSetupRequest()
+        assignment = ef_py.WorldSunAssignment()
+        assignment.world_index = 0
+        assignment.azimuth_deg = 250.0
+        assignment.elevation_deg = 15.0
+        request.sun_assignments = [assignment]
+        self.assertEqual(len(request.sun_assignments), 1)
+        self.assertEqual(request.sun_assignments[0].azimuth_deg, 250.0)
+
+    def test_apply_world_setup_batch_sets_kernel_sun(self) -> None:
+        # C++ leg of the chain: batch setup lands per-world sun assignments
+        # in each kernel (and a re-setup without sun restores the default).
+        runtime = ef_py.WorldBatchRuntime(2)
+        first = ef_py.WorldSunAssignment()
+        first.world_index = 0
+        first.azimuth_deg = 250.0
+        first.elevation_deg = 15.0
+        second = ef_py.WorldSunAssignment()
+        second.world_index = 1
+        second.azimuth_deg = 90.0
+        second.elevation_deg = 60.0
+        runtime.apply_world_setup_batch(
+            seeds=[3, 4],
+            terrain_assignments=[],
+            wind_assignments=[],
+            zones=[],
+            requests=[],
+            time_steps=[],
+            sun_assignments=[first, second],
+        )
+        for world_index, (azimuth, elevation) in enumerate(((250.0, 15.0), (90.0, 60.0))):
+            expected = _expected_sun_vector(azimuth, elevation)
+            actual = runtime.world_raw_quarantine(world_index).get_sun_direction()
+            for got, want in zip(actual, expected):
+                self.assertAlmostEqual(got, want, places=6)
+        # Re-setup without sun assignments must not inherit the stale sun.
+        runtime.apply_world_setup_batch(
+            seeds=[5, 6],
+            terrain_assignments=[],
+            wind_assignments=[],
+            zones=[],
+            requests=[],
+            time_steps=[],
+        )
+        default = _expected_sun_vector(0.0, 45.0)
+        for world_index in range(2):
+            actual = runtime.world_raw_quarantine(world_index).get_sun_direction()
+            for got, want in zip(actual, default):
+                self.assertAlmostEqual(got, want, places=6)
+
+    def test_apply_buffer_prepares_sun_from_layout(self) -> None:
+        # Python leg of the chain: scenario layouts feed sun assignments into
+        # the batch DTO the vectorized reset path submits.
+        from python.scenario.runtime.models import BatchWorldApplyBuffer
+
+        layout = prepare_scenario_world_layout(
+            _ground_scenario({"sun_azimuth_deg": 250.0, "sun_elevation_deg": 15.0}),
+            seed=11,
+            rng=np.random.RandomState(11),
+        )
+        buffer = BatchWorldApplyBuffer(1)
+        _terrain, _wind, sun_items, _zones, _spawns = buffer.prepare([layout])
+        self.assertEqual(len(sun_items), 1)
+        self.assertEqual(sun_items[0].azimuth_deg, 250.0)
+        self.assertEqual(sun_items[0].elevation_deg, 15.0)
+
+        from python.scenario.runtime.world_setup import build_batch_world_setup_request
+
+        request = build_batch_world_setup_request(
+            seeds=[11],
+            terrain_assignments=[],
+            wind_assignments=[],
+            zones=[],
+            spawn_requests=[],
+            time_steps=[],
+            sun_assignments=sun_items,
+        )
+        self.assertEqual(len(request.sun_assignments), 1)
+        self.assertEqual(request.sun_assignments[0].azimuth_deg, 250.0)
+
+
 class BatchLayoutRequestIlluminationTests(unittest.TestCase):
     def test_runtime_world_layout_request_carries_sun_fields(self) -> None:
         request = ef_py.RuntimeWorldLayoutRequest()
