@@ -684,7 +684,9 @@ def test_wp21_generation_runtime_compiles_and_feeds_setup_request_without_loader
   compiled = artifact.compile_generated_scenario()
   layout = build_compiled_world_layout(compiled, seed=artifact.request.deterministic_seed)
   buffer = BatchWorldApplyBuffer(world_count=1)
-  terrain_assignments, wind_assignments, zone_defs, spawn_requests = buffer.prepare([layout])
+  terrain_assignments, wind_assignments, sun_assignments, zone_defs, spawn_requests = (
+    buffer.prepare([layout])
+  )
 
   request = build_batch_world_setup_request(
     seeds=[artifact.request.deterministic_seed],
@@ -693,6 +695,7 @@ def test_wp21_generation_runtime_compiles_and_feeds_setup_request_without_loader
     zones=zone_defs,
     spawn_requests=spawn_requests,
     time_steps=[0.0 if layout.time_step_s is None else float(layout.time_step_s)],
+    sun_assignments=sun_assignments,
   )
 
   assert compiled.scenario_name == "generation_runtime_test"
@@ -704,6 +707,7 @@ def test_wp21_generation_runtime_compiles_and_feeds_setup_request_without_loader
   assert list(request.seeds) == [31]
   assert len(list(request.terrain_assignments)) == 1
   assert len(list(request.wind_assignments)) == 1
+  assert len(list(request.sun_assignments)) == 1
   assert len(list(request.zones)) == len(layout.zones)
   assert len(list(request.spawn_requests)) == len(layout.spawns)
   assert list(request.time_steps) == [0.05]
