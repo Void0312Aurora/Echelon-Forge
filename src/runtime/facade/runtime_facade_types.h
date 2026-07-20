@@ -119,15 +119,9 @@ struct TaskingBatchRequest {
 };
 
 struct EngagementBatchRequest {
-    std::vector<EngagementEntityRef> refs;
-    std::vector<std::uint64_t> trace_ids;
-    bool include_track_packets = true;
-    bool include_launch_requests = true;
-    bool include_launch_events = true;
-    bool include_munition_lifecycle_packets = true;
-    bool include_effects_events = true;
-    bool include_damage_reports = true;
-    bool include_diagnostics_traces = true;
+#define EF_ENGAGEMENT_BATCH_REQUEST_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/engagement_batch_request.inc"
 };
 
 struct ExecutionBatchStepRequest {
@@ -148,37 +142,9 @@ struct ObservationBatchPacket {
 };
 
 struct EngagementEventPacket {
-    std::uint64_t snapshot_version = 0;
-    std::string barrier_id = "export";
-    std::uint64_t barrier_sequence = 0;
-    std::string barrier_detail = "maintained_facade_export";
-    double source_time_s = 0.0;
-    std::string producer_node_id;
-    InformationStateSource packet_provenance = make_information_state_source(
-        kPolicyInformationStateTrackState, kPolicySourceLabelTrackStatePacket,
-        kPolicyMaintainedStatusMaintained);
-    InformationStateSource diagnostics_provenance = make_information_state_source(
-        kPolicyInformationStateDecisionBelief, kPolicySourceLabelWorldTruthDiagnostics,
-        kPolicyMaintainedStatusDiagnosticsOnly);
-    std::vector<EngagementEntityRef> refs;
-    std::vector<std::uint64_t> trace_ids;
-    std::vector<TrackPacket> track_packets;
-    std::vector<LaunchRequest> launch_requests;
-    std::vector<LaunchEvent> launch_events;
-    std::vector<MunitionLifecyclePacket> munition_lifecycle_packets;
-    std::vector<EffectsEvent> effects_events;
-    std::vector<NearestApproachEvent> nearest_approach_events;
-    std::vector<FuzeEvaluationEvent> fuze_evaluation_events;
-    std::vector<WarheadMechanismEvent> warhead_mechanism_events;
-    std::vector<SpatialCoverageEvent> spatial_coverage_events;
-    std::vector<ComponentLoadEvent> component_load_events;
-    std::vector<ComponentDamageEvent> component_damage_events;
-    std::vector<PlatformConsequenceEvent> platform_consequence_events;
-    std::vector<StructuralBreakupEvent> structural_breakup_events;
-    std::vector<LifecycleTransitionEvent> lifecycle_transition_events;
-    std::vector<TrainingProjectionEvent> training_projection_events;
-    std::vector<DamageReport> damage_reports;
-    std::vector<DiagnosticsTrace> diagnostics_traces;
+#define EF_ENGAGEMENT_EVENT_PACKET_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/engagement_event_packet.inc"
 };
 
 struct TaskingBatchPacket {

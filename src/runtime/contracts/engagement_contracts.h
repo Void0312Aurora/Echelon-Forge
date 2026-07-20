@@ -69,333 +69,105 @@ inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsAndTrai
     "diagnostics_and_training";
 inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsOnly = "diagnostics_only";
 
+// Vocabulary note (I33, unified architecture program T1): the `stage` /
+// `owner_stage` string fields below (LethalityChainHeader and the
+// KillChain*/EffectsEvent-adjacent facts) are this family's stage-tagging
+// anchor. Per SCAL baseline amendment (b), engagement/command schema groups
+// are meant to eventually carry stage-contract and event-driven sub-graph
+// metadata instead of a forced linear P0-P10 stage sequence. This iteration
+// is vocabulary single-sourcing only: the strings keep their current
+// free-form values and no stage-contract type or enforcement mechanism is
+// introduced here.
+
 struct EngagementEntityRef {
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
+#define EF_ENGAGEMENT_ENTITY_REF_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/engagement_entity_ref.inc"
 };
 
 struct LethalityChainHeader {
-    std::uint32_t schema_version = kLethalityChainContractSchemaVersion;
-    std::uint64_t chain_id = 0;
-    std::uint64_t event_id = 0;
-    std::uint64_t parent_event_id = 0;
-    std::string stage = "unknown";
-    std::string status = "not_evaluated";
-    std::string reason;
-    double source_time_s = 0.0;
-    std::uint64_t source_frame = 0;
-    EngagementEntityRef munition{};
-    EngagementEntityRef shooter{};
-    EngagementEntityRef target{};
-    std::string producer_node_id;
-    std::string fidelity_mode = "unspecified";
-    std::string evidence_level = "uncalibrated";
-    std::string observation_mode = std::string(kLethalityObservationModeSampledRuntime);
-    std::string consumer_visibility =
-        std::string(kLethalityConsumerVisibilityDiagnosticsAndTraining);
-    double confidence = 0.0;
+#define EF_LETHALITY_CHAIN_HEADER_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/lethality_chain_header.inc"
 };
 
 struct NearestApproachEvent {
-    LethalityChainHeader header{};
-    double nearest_approach_time_s = 0.0;
-    double miss_distance_m = 0.0;
-    double local_forward_m = 0.0;
-    double local_right_m = 0.0;
-    double local_up_m = 0.0;
-    double closure_mps = 0.0;
-    std::string aspect_bucket = "unknown";
+#define EF_NEAREST_APPROACH_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/nearest_approach_event.inc"
 };
 
 struct FuzeEvaluationEvent {
-    LethalityChainHeader header{};
-    std::string fuze_type = "unknown";
-    bool armed = false;
-    bool triggered = false;
-    std::string failure_reason;
-    double delay_s = 0.0;
-    double reliability = 1.0;
-    double sample = 1.0;
-    double expected_detonation_probability = 0.0;
-    bool sampled_outcome = true;
-    double trigger_radius_m = 0.0;
-    double contact_surface_distance_m = 0.0;
-    double contact_penetration_depth_m = 0.0;
-    double contact_surface_tolerance_m = 0.0;
-    bool contact_inside_hitbox = false;
-    std::string sensor_opportunity_source = "none";
-    double sensor_opportunity_score = 0.0;
-    bool terminal_track_valid = false;
-    bool target_detected = false;
-    std::string target_detection_source = "none";
-    double target_detection_confidence = 0.0;
-    double target_detection_threshold = 0.0;
-    std::string detonation_point_source = "unknown";
-    double mechanism_coverage_score = 0.0;
-    bool direct_hitbox_intersection = false;
+#define EF_FUZE_EVALUATION_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/fuze_evaluation_event.inc"
 };
 
 struct WarheadMechanismEvent {
-    LethalityChainHeader header{};
-    std::string mechanism_family = "unknown";
-    double warhead_mass_kg = 0.0;
-    double lethal_radius_m = 0.0;
-    double fragment_energy_j = 0.0;
-    double fragment_density_per_m2 = 0.0;
-    double blast_overpressure_kpa = 0.0;
-    double blast_impulse_kpa_ms = 0.0;
-    double blast_scaled_distance_m_kg13 = 0.0;
-    double rod_cut_margin = 0.0;
-    double penetration_margin = 0.0;
-    double surface_incidence_cos = 0.0;
+#define EF_WARHEAD_MECHANISM_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/warhead_mechanism_event.inc"
 };
 
 struct SpatialCoverageEvent {
-    LethalityChainHeader header{};
-    std::uint32_t projected_hitbox_count = 0;
-    std::uint32_t sample_count = 0;
-    double hit_estimate = 0.0;
-    double hit_fraction = 0.0;
-    double energy_scale = 1.0;
-    double pattern_scale = 1.0;
-    double orientation_axis_forward = 0.0;
-    double orientation_axis_right = 0.0;
-    double orientation_axis_up = 0.0;
+#define EF_SPATIAL_COVERAGE_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/spatial_coverage_event.inc"
 };
 
 struct ComponentLoadEvent {
-    LethalityChainHeader header{};
-    std::string component_name;
-    std::string component_system;
-    std::string component_redundancy_group_id;
-    bool direct_hit = false;
-    double distance_m = 0.0;
-    double effect_scale = 0.0;
-    double spatial_intersection_fraction = 0.0;
-    double pattern_weight = 1.0;
-    double orientation_weight = 1.0;
-    double receiver_exposure_fraction = 1.0;
-    double armor_transmission = 1.0;
-    double sampling_confidence = 1.0;
-    double load_intensity_scale = 1.0;
-    double fragment_energy_j = 0.0;
-    double fragment_density_per_m2 = 0.0;
-    double penetration_margin = 0.0;
-    double blast_overpressure_kpa = 0.0;
-    double blast_impulse_kpa_ms = 0.0;
-    double blast_scaled_distance_m_kg13 = 0.0;
-    double rod_cut_margin = 0.0;
-    double surface_incidence_cos = 0.0;
-    std::string load_source = "unprojected";
+#define EF_COMPONENT_LOAD_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/component_load_event.inc"
 };
 
 struct ComponentDamageEvent {
-    LethalityChainHeader header{};
-    std::string component_name;
-    std::string component_system;
-    std::string component_redundancy_group_id;
-    double integrity_before = 1.0;
-    double integrity_after = 1.0;
-    std::string failure_mode = "none";
-    double failure_severity = 0.0;
-    double failure_probability = 0.0;
-    double failure_sample = 1.0;
+#define EF_COMPONENT_DAMAGE_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/component_damage_event.inc"
 };
 
 struct PlatformConsequenceEvent {
-    LethalityChainHeader header{};
-    double mission_capability_before = 1.0;
-    double mission_capability_after = 1.0;
-    double mobility_capability_before = 1.0;
-    double mobility_capability_after = 1.0;
-    double sensor_capability_before = 1.0;
-    double sensor_capability_after = 1.0;
-    double survivability_capability_before = 1.0;
-    double survivability_capability_after = 1.0;
-    bool mission_kill = false;
-    bool mobility_kill = false;
-    bool sensor_kill = false;
-    bool survivability_kill = false;
-    bool flight_control_kill = false;
-    bool propulsion_kill = false;
-    bool forced_landing = false;
-    bool crew_kill = false;
-    double control_delta = 0.0;
-    double engine_delta = 0.0;
-    double fuel_leak_delta = 0.0;
-    std::string fire_state = "unknown";
-    std::string aircraft_damage_state_before;
-    std::string aircraft_damage_state_after;
-    std::string aircraft_damage_state_delta;
-    std::string air_system_hit_flags;
-    std::string air_system_spatial_scales;
-    std::string vulnerability_scale_trace;
-    std::string loss_state_from = "unknown";
-    std::string loss_state_to = "unknown";
+#define EF_PLATFORM_CONSEQUENCE_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/platform_consequence_event.inc"
 };
 
 struct StructuralBreakupEvent {
-    LethalityChainHeader header{};
-    std::string breakup_state = "none";
-    std::string break_mode = "none";
-    std::string detached_part_ref;
-    std::uint32_t detached_part_count = 0;
-    bool airframe_breakup = false;
-    std::uint64_t cause_event_id = 0;
+#define EF_STRUCTURAL_BREAKUP_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/structural_breakup_event.inc"
 };
 
 struct LifecycleTransitionEvent {
-    LethalityChainHeader header{};
-    std::string lifecycle_from = "unknown";
-    std::string lifecycle_to = "unknown";
-    std::string ground_lifecycle = "unknown";
-    EngagementEntityRef wreck_entity{};
-    std::uint32_t debris_count = 0;
-    bool terminal = false;
-    std::uint64_t terminal_projection_id = 0;
+#define EF_LIFECYCLE_TRANSITION_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/lifecycle_transition_event.inc"
 };
 
 struct TrainingProjectionEvent {
-    LethalityChainHeader header{};
-    std::vector<std::uint64_t> consumed_event_ids;
-    std::string consumer_node_id;
-    std::string consumer_version;
-    std::string projection_kind = "training_consumer";
-    std::string reward_term;
-    double reward_delta = 0.0;
-    std::string terminal_reason;
-    bool fact_source = false;
+#define EF_TRAINING_PROJECTION_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/training_projection_event.inc"
 };
 
 struct ComponentMechanismLoadRow {
-    std::string component_name;
-    std::string component_system;
-    std::string component_redundancy_group_id;
-    bool direct_hit = false;
-    double distance_m = 0.0;
-    double effect_scale = 0.0;
-    std::uint32_t component_dependency_propagation_count = 0;
-    std::string component_dependency_target_system;
-    std::string component_dependency_edge_type = "none";
-    double component_dependency_threshold = 1.0;
-    double component_dependency_delay_s = 0.0;
-    std::string component_dependency_direction = "one_way";
-    std::string component_dependency_provenance;
-    double component_dependency_source_availability = 1.0;
-    double component_dependency_effective_scale = 0.0;
-    bool component_dependency_propagated = false;
-    double mechanism_fragment_energy_j = 0.0;
-    double mechanism_fragment_areal_density_per_m2 = 0.0;
-    double mechanism_penetration_margin = 0.0;
-    double mechanism_blast_overpressure_kpa = 0.0;
-    double mechanism_blast_impulse_kpa_ms = 0.0;
-    double mechanism_blast_scaled_distance_m_kg13 = 0.0;
-    double mechanism_rod_cut_margin = 0.0;
-    double mechanism_surface_incidence_cos = 0.0;
+#define EF_COMPONENT_MECHANISM_LOAD_ROW_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/component_mechanism_load_row.inc"
 };
 
 struct ComponentResponseRow {
-    std::string owner_stage = "component_response";
-    std::string source_current_owner_stage = "component_response_row";
-    std::uint32_t source_row_index = 0;
-    std::string component_name;
-    std::string component_system;
-    std::string component_redundancy_group_id;
-    double threshold_scale = 1.0;
-    double failure_probability = 0.0;
-    double failure_sample = 1.0;
-    std::string failure_probability_source = "none";
-    bool failure_probability_calibrated = false;
-    std::string failure_probability_evidence_dataset_ref;
-    std::string failure_probability_evidence_row_id;
-    std::string failure_probability_evidence_source_ref;
-    std::string failure_probability_evidence_provenance;
-    bool failure_probability_authority = false;
-    bool failure_probability_component_specific = false;
-    std::string failure_probability_weapon_family = "unknown";
-    std::string failure_probability_aspect_bucket = "unknown";
-    std::string failure_probability_closure_bucket = "unknown";
-    std::string failure_probability_miss_distance_bucket = "unknown";
-    std::string failure_probability_evidence_component_name;
-    std::string failure_probability_evidence_component_system;
-    std::string failure_probability_evidence_component_redundancy_group_id;
-    std::string failure_mode = "none";
-    double failure_severity = 0.0;
-    std::vector<std::string> failure_mode_names;
-    std::vector<double> failure_mode_severities;
-    std::string failure_mode_source = "none";
-    bool failure_mode_authority = false;
-    double integrity_before = 1.0;
-    double integrity_after = 1.0;
-    double redundancy_group_availability_before = 1.0;
-    double redundancy_group_availability_after = 1.0;
+#define EF_COMPONENT_RESPONSE_ROW_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/component_response_row.inc"
 };
 
 struct TrackPacket {
-    std::uint64_t track_id = 0;
-    EngagementEntityRef correlated_entity{};
-    bool has_correlated_entity = false;
-    std::string correlation_policy = "unresolved";
-    std::string source;
-    std::string classification = "unknown";
-    std::string status = "unknown";
-    double quality = 0.0;
-    double confidence = 0.0;
-    bool usable = false;
-    std::string iff = "unknown";
-    double source_time_s = 0.0;
-    double update_age_s = 0.0;
-    std::uint64_t snapshot_version = 0;
+#define EF_TRACK_PACKET_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/track_packet.inc"
 };
 
 struct LaunchRequest {
-    std::uint64_t request_id = 0;
-    EngagementEntityRef shooter{};
-    EngagementEntityRef target_entity{};
-    bool has_target_entity = false;
-    std::uint64_t target_track_id = 0;
-    bool has_target_track = false;
-    std::string station_id;
-    std::string mount_id;
-    std::string requested_munition_family;
-    std::string authority = "unspecified";
-    double requested_time_s = 0.0;
-    std::string merge_policy = "reject_on_conflict";
+#define EF_LAUNCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/launch_request.inc"
 };
 
 struct LaunchEvent {
-    std::uint64_t event_id = 0;
-    std::uint64_t request_id = 0;
-    bool accepted = false;
-    std::string rejection_reason;
-    std::string selected_launcher;
-    std::string selected_munition;
-    int ammo_delta = 0;
-    double cooldown_delta_s = 0.0;
-    EngagementEntityRef spawned_munition{};
-    bool has_spawned_munition = false;
-    double event_time_s = 0.0;
-    std::string producer_node_id;
+#define EF_LAUNCH_EVENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/launch_event.inc"
 };
 
 struct MunitionLifecyclePacket {
-    std::uint64_t packet_id = 0;
-    EngagementEntityRef munition{};
-    EngagementEntityRef attacker{};
-    EngagementEntityRef target_entity{};
-    bool has_target_entity = false;
-    std::uint64_t target_track_id = 0;
-    bool has_target_track = false;
-    std::uint64_t launch_event_id = 0;
-    bool active = false;
-    std::string seeker_mode = "unknown";
-    double guidance_cadence_s = 0.0;
-    std::string track_memory_state = "unknown";
-    double fuel_remaining_fraction = 0.0;
-    bool burnout = false;
-    double max_flight_time_s = 0.0;
-    std::string fuze_state = "unknown";
-    double source_time_s = 0.0;
+#define EF_MUNITION_LIFECYCLE_PACKET_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/munition_lifecycle_packet.inc"
 };
 
 struct EffectsEvent {
@@ -409,163 +181,48 @@ struct EffectsEvent {
 };
 
 struct KillChainApproachFact {
-    std::string owner_stage = "approach";
-    double closest_distance_m = 0.0;
-    double closest_point_local_forward_m = 0.0;
-    double closest_point_local_right_m = 0.0;
-    double closest_point_local_up_m = 0.0;
-    double closure_mps = 0.0;
-    double nearest_approach_time_s = 0.0;
+#define EF_KILL_CHAIN_APPROACH_FACT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/kill_chain_approach_fact.inc"
 };
 
 struct KillChainFuzeDecision {
-    std::string owner_stage = "fuze_decision";
-    std::string fuze_type = "unknown";
-    bool detonated = false;
-    std::string outcome_state = "unknown";
-    double detonation_time_s = 0.0;
-    double detonation_probability = 0.0;
-    double fuze_quality = 0.0;
-    double sensor_opportunity_score = 0.0;
-    bool terminal_track_valid = false;
-    bool target_detected = false;
-    double target_detection_confidence = 0.0;
-    double target_detection_threshold = 0.0;
-    std::string detonation_point_source = "unknown";
+#define EF_KILL_CHAIN_FUZE_DECISION_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/kill_chain_fuze_decision.inc"
 };
 
 struct KillChainComponentLoadFact {
-    std::string owner_stage = "warhead_load_field";
-    std::string component_name;
-    std::string component_system;
-    std::string component_redundancy_group_id;
-    bool direct_hit = false;
-    double distance_m = 0.0;
-    double effect_scale = 0.0;
-    double spatial_intersection_fraction = 0.0;
-    double pattern_weight = 1.0;
-    double orientation_weight = 1.0;
-    double receiver_exposure_fraction = 1.0;
-    double armor_transmission = 1.0;
-    double sampling_confidence = 1.0;
-    double load_intensity_scale = 1.0;
-    double fragment_energy_j = 0.0;
-    double fragment_areal_density_per_m2 = 0.0;
-    double penetration_margin = 0.0;
-    double blast_overpressure_kpa = 0.0;
-    double blast_impulse_kpa_ms = 0.0;
-    double blast_scaled_distance_m_kg13 = 0.0;
-    double rod_cut_margin = 0.0;
-    double surface_incidence_cos = 0.0;
+#define EF_KILL_CHAIN_COMPONENT_LOAD_FACT_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/kill_chain_component_load_fact.inc"
 };
 
 struct KillChainWarheadLoadField {
-    std::string owner_stage = "warhead_load_field";
-    std::string effect_family = "unknown";
-    double warhead_mass_kg = 0.0;
-    double lethal_radius_m = 0.0;
-    double spatial_effect_scale = 0.0;
-    double armor_transmission = 1.0;
-    double receiver_exposure_fraction = 1.0;
-    double mechanism_effect_scale = 1.0;
-    std::uint32_t projected_hitbox_count = 0;
-    std::uint32_t spatial_sample_count = 0;
-    double spatial_hit_estimate = 0.0;
-    double spatial_hit_fraction = 0.0;
-    double spatial_energy_scale = 1.0;
-    double spatial_pattern_scale = 1.0;
-    double orientation_pattern_scale = 1.0;
-    double fragment_energy_j = 0.0;
-    double fragment_areal_density_per_m2 = 0.0;
-    double penetration_margin = 0.0;
-    double blast_overpressure_kpa = 0.0;
-    double blast_impulse_kpa_ms = 0.0;
-    double blast_scaled_distance_m_kg13 = 0.0;
-    double rod_cut_margin = 0.0;
-    double surface_incidence_cos = 0.0;
-    std::vector<KillChainComponentLoadFact> component_loads;
+#define EF_KILL_CHAIN_WARHEAD_LOAD_FIELD_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/kill_chain_warhead_load_field.inc"
 };
 
 struct KillChainTargetSusceptibility {
-    std::string owner_stage = "target_susceptibility";
-    bool vulnerability_profile_present = false;
-    bool vulnerability_profile_synthetic = true;
-    bool calibrated_evidence = false;
-    bool pk_authority = false;
-    bool deterministic_fuze_authority = false;
-    std::string calibration_status = "none";
-    std::string aspect_bucket = "unknown";
-    double family_scale = 1.0;
-    double aspect_scale = 1.0;
-    double closure_scale = 1.0;
-    double miss_distance_scale = 1.0;
-    double effect_scale = 1.0;
+#define EF_KILL_CHAIN_TARGET_SUSCEPTIBILITY_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/kill_chain_target_susceptibility.inc"
 };
 
 struct KillChainComponentResponseFact {
-    std::string owner_stage = "component_response";
-    std::string source_current_owner_stage = "component_response_row";
-    std::uint32_t source_row_index = 0;
-    std::string component_name;
-    std::string component_system;
-    std::string component_redundancy_group_id;
-    double threshold_scale = 1.0;
-    double failure_probability = 0.0;
-    double failure_sample = 1.0;
-    std::string failure_probability_source = "none";
-    bool failure_probability_calibrated = false;
-    std::string failure_probability_evidence_dataset_ref;
-    std::string failure_probability_evidence_row_id;
-    std::string failure_probability_evidence_source_ref;
-    std::string failure_probability_evidence_provenance;
-    bool failure_probability_authority = false;
-    bool failure_probability_component_specific = false;
-    std::string failure_probability_weapon_family = "unknown";
-    std::string failure_probability_aspect_bucket = "unknown";
-    std::string failure_probability_closure_bucket = "unknown";
-    std::string failure_probability_miss_distance_bucket = "unknown";
-    std::string failure_probability_evidence_component_name;
-    std::string failure_probability_evidence_component_system;
-    std::string failure_probability_evidence_component_redundancy_group_id;
-    std::string failure_mode = "none";
-    double failure_severity = 0.0;
-    std::vector<std::string> failure_mode_names;
-    std::vector<double> failure_mode_severities;
-    std::string failure_mode_source = "none";
-    bool failure_mode_authority = false;
-    double integrity_before = 1.0;
-    double integrity_after = 1.0;
-    double redundancy_group_availability_before = 1.0;
-    double redundancy_group_availability_after = 1.0;
+#define EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/kill_chain_component_response_fact.inc"
 };
 
 struct KillChainConsequenceProjection {
-    std::string owner_stage = "consequence_projection";
-    std::string outcome_state = "unknown";
-    std::uint32_t component_hit_count = 0;
-    std::uint32_t component_failure_count = 0;
-    std::string primary_component_name;
-    std::string primary_component_system;
-    double primary_component_integrity = 1.0;
-    double redundancy_group_availability = 1.0;
-    std::string air_system_hit_flags;
-    std::string air_system_spatial_scales;
-    std::string vulnerability_scale_trace;
+#define EF_KILL_CHAIN_CONSEQUENCE_PROJECTION_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/kill_chain_consequence_projection.inc"
 };
 
 struct KillChainRuntimeFacade {
-    std::uint32_t schema_version = 1;
-    std::string schema_name = "a2.kill_chain_runtime_facade.v1";
-    bool runtime_dto_authority = true;
-    bool runtime_parameter_retuning = false;
-    bool calibration_authority = false;
-    bool real_world_pk = false;
-    KillChainApproachFact approach_fact{};
-    KillChainFuzeDecision fuze_decision{};
-    KillChainWarheadLoadField warhead_load_field{};
-    KillChainTargetSusceptibility target_susceptibility{};
-    std::vector<KillChainComponentResponseFact> component_responses;
-    KillChainConsequenceProjection consequence_projection{};
+#define EF_KILL_CHAIN_RUNTIME_FACADE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/kill_chain_runtime_facade.inc"
 };
 
 inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent &effects) {
@@ -723,42 +380,11 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
 }
 
 struct DamageReport {
-    std::uint64_t report_id = 0;
-    EngagementEntityRef target{};
-    std::uint64_t source_event_id = 0;
-    double hp_delta = 0.0;
-    double system_health_delta = 0.0;
-    std::string platform_damage_state_delta;
-    bool mission_kill = false;
-    bool mobility_kill = false;
-    bool sensor_kill = false;
-    bool survivability_kill = false;
-    bool forced_landing = false;
-    bool flight_control_kill = false;
-    bool propulsion_kill = false;
-    bool crew_kill = false;
-    std::string loss_state_from = "unknown";
-    std::string loss_state_to = "unknown";
-    bool destroyed = false;
-    double report_time_s = 0.0;
-    std::string producer_node_id;
+#define EF_DAMAGE_REPORT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/damage_report.inc"
 };
 
 struct DiagnosticsTrace {
-    std::uint64_t trace_id = 0;
-    std::uint64_t parent_trace_id = 0;
-    std::uint64_t chain_id = 0;
-    std::uint64_t track_id = 0;
-    std::uint64_t launch_request_id = 0;
-    std::uint64_t launch_event_id = 0;
-    EngagementEntityRef munition{};
-    std::uint64_t effects_event_id = 0;
-    std::uint64_t damage_report_id = 0;
-    std::uint64_t observation_packet_version = 0;
-    std::uint64_t source_snapshot_version = 0;
-    std::string barrier_id = "export";
-    std::string barrier_detail = "maintained_facade_export";
-    double source_time_s = 0.0;
-    std::string source_node_id;
-    std::string export_node_id;
+#define EF_DIAGNOSTICS_TRACE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/diagnostics_trace.inc"
 };

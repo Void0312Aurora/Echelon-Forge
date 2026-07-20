@@ -353,6 +353,156 @@ EXPECTED_REGISTRATIONS = {
     f"{_BUILDER_DIR}/runtime_counterfactual_branch_result_builder.py",
     8,
   ),
+  "tools/maintenance/dto_schema/schemas/engagement_entity_ref_fields.py": (
+    "src/runtime/contracts/detail/engagement_entity_ref.inc",
+    f"{_BUILDER_DIR}/engagement_entity_ref_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/lethality_chain_header_fields.py": (
+    "src/runtime/contracts/detail/lethality_chain_header.inc",
+    f"{_BUILDER_DIR}/lethality_chain_header_builder.py",
+    18,
+  ),
+  "tools/maintenance/dto_schema/schemas/nearest_approach_event_fields.py": (
+    "src/runtime/contracts/detail/nearest_approach_event.inc",
+    f"{_BUILDER_DIR}/nearest_approach_event_builder.py",
+    8,
+  ),
+  "tools/maintenance/dto_schema/schemas/fuze_evaluation_event_fields.py": (
+    "src/runtime/contracts/detail/fuze_evaluation_event.inc",
+    f"{_BUILDER_DIR}/fuze_evaluation_event_builder.py",
+    25,
+  ),
+  "tools/maintenance/dto_schema/schemas/warhead_mechanism_event_fields.py": (
+    "src/runtime/contracts/detail/warhead_mechanism_event.inc",
+    f"{_BUILDER_DIR}/warhead_mechanism_event_builder.py",
+    12,
+  ),
+  "tools/maintenance/dto_schema/schemas/spatial_coverage_event_fields.py": (
+    "src/runtime/contracts/detail/spatial_coverage_event.inc",
+    f"{_BUILDER_DIR}/spatial_coverage_event_builder.py",
+    10,
+  ),
+  "tools/maintenance/dto_schema/schemas/component_load_event_fields.py": (
+    "src/runtime/contracts/detail/component_load_event.inc",
+    f"{_BUILDER_DIR}/component_load_event_builder.py",
+    23,
+  ),
+  "tools/maintenance/dto_schema/schemas/component_damage_event_fields.py": (
+    "src/runtime/contracts/detail/component_damage_event.inc",
+    f"{_BUILDER_DIR}/component_damage_event_builder.py",
+    10,
+  ),
+  "tools/maintenance/dto_schema/schemas/platform_consequence_event_fields.py": (
+    "src/runtime/contracts/detail/platform_consequence_event.inc",
+    f"{_BUILDER_DIR}/platform_consequence_event_builder.py",
+    29,
+  ),
+  "tools/maintenance/dto_schema/schemas/structural_breakup_event_fields.py": (
+    "src/runtime/contracts/detail/structural_breakup_event.inc",
+    f"{_BUILDER_DIR}/structural_breakup_event_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/lifecycle_transition_event_fields.py": (
+    "src/runtime/contracts/detail/lifecycle_transition_event.inc",
+    f"{_BUILDER_DIR}/lifecycle_transition_event_builder.py",
+    8,
+  ),
+  "tools/maintenance/dto_schema/schemas/training_projection_event_fields.py": (
+    "src/runtime/contracts/detail/training_projection_event.inc",
+    f"{_BUILDER_DIR}/training_projection_event_builder.py",
+    9,
+  ),
+  "tools/maintenance/dto_schema/schemas/component_mechanism_load_row_fields.py": (
+    "src/runtime/contracts/detail/component_mechanism_load_row.inc",
+    f"{_BUILDER_DIR}/component_mechanism_load_row_builder.py",
+    24,
+  ),
+  "tools/maintenance/dto_schema/schemas/component_response_row_fields.py": (
+    "src/runtime/contracts/detail/component_response_row.inc",
+    f"{_BUILDER_DIR}/component_response_row_builder.py",
+    34,
+  ),
+  "tools/maintenance/dto_schema/schemas/track_packet_fields.py": (
+    "src/runtime/contracts/detail/track_packet.inc",
+    f"{_BUILDER_DIR}/track_packet_builder.py",
+    14,
+  ),
+  "tools/maintenance/dto_schema/schemas/launch_request_fields.py": (
+    "src/runtime/contracts/detail/launch_request.inc",
+    f"{_BUILDER_DIR}/launch_request_builder.py",
+    12,
+  ),
+  "tools/maintenance/dto_schema/schemas/launch_event_fields.py": (
+    "src/runtime/contracts/detail/launch_event.inc",
+    f"{_BUILDER_DIR}/launch_event_builder.py",
+    12,
+  ),
+  "tools/maintenance/dto_schema/schemas/munition_lifecycle_packet_fields.py": (
+    "src/runtime/contracts/detail/munition_lifecycle_packet.inc",
+    f"{_BUILDER_DIR}/munition_lifecycle_packet_builder.py",
+    17,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_approach_fact_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_approach_fact.inc",
+    f"{_BUILDER_DIR}/kill_chain_approach_fact_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_fuze_decision_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_fuze_decision.inc",
+    f"{_BUILDER_DIR}/kill_chain_fuze_decision_builder.py",
+    13,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_component_load_fact_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_component_load_fact.inc",
+    f"{_BUILDER_DIR}/kill_chain_component_load_fact_builder.py",
+    22,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_warhead_load_field_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_warhead_load_field.inc",
+    f"{_BUILDER_DIR}/kill_chain_warhead_load_field_builder.py",
+    24,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_target_susceptibility_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_target_susceptibility.inc",
+    f"{_BUILDER_DIR}/kill_chain_target_susceptibility_builder.py",
+    13,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_component_response_fact_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_component_response_fact.inc",
+    f"{_BUILDER_DIR}/kill_chain_component_response_fact_builder.py",
+    34,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_consequence_projection_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_consequence_projection.inc",
+    f"{_BUILDER_DIR}/kill_chain_consequence_projection_builder.py",
+    11,
+  ),
+  "tools/maintenance/dto_schema/schemas/kill_chain_runtime_facade_fields.py": (
+    "src/runtime/contracts/detail/kill_chain_runtime_facade.inc",
+    f"{_BUILDER_DIR}/kill_chain_runtime_facade_builder.py",
+    12,
+  ),
+  "tools/maintenance/dto_schema/schemas/damage_report_fields.py": (
+    "src/runtime/contracts/detail/damage_report.inc",
+    f"{_BUILDER_DIR}/damage_report_builder.py",
+    19,
+  ),
+  "tools/maintenance/dto_schema/schemas/diagnostics_trace_fields.py": (
+    "src/runtime/contracts/detail/diagnostics_trace.inc",
+    f"{_BUILDER_DIR}/diagnostics_trace_builder.py",
+    16,
+  ),
+  "tools/maintenance/dto_schema/schemas/engagement_batch_request_fields.py": (
+    "src/runtime/facade/detail/engagement_batch_request.inc",
+    f"{_BUILDER_DIR}/engagement_batch_request_builder.py",
+    9,
+  ),
+  "tools/maintenance/dto_schema/schemas/engagement_event_packet_fields.py": (
+    "src/runtime/facade/detail/engagement_event_packet.inc",
+    f"{_BUILDER_DIR}/engagement_event_packet_builder.py",
+    27,
+  ),
 }
 
 EXPECTED_PACKAGE_INIT = f"{_BUILDER_DIR}/__init__.py"
