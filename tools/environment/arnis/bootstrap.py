@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -101,90 +102,92 @@ def _ensure_checkout(lock: dict[str, Any], source_dir: Path) -> None:
         )
 
 
-def _verify_clean_worktree(source_dir: Path, *, patch_applied: bool) -> None:
-    """Reject checkouts that differ from pinned-commit(+patch) in any way.
+def _git_tree_id(source_dir: Path, index_file: Path, *setup: tuple[str, ...]) -> str:
+    """Run git commands against an isolated index and return `write-tree`."""
+    env = dict(os.environ)
+    env["GIT_INDEX_FILE"] = str(index_file)
+    for command in setup:
+        _run(("git", *command), cwd=source_dir, env=env)
+    return _run(("git", "write-tree"), cwd=source_dir, env=env).stdout.strip()
+
+
+def _expected_patched_tree_id(source_dir: Path, pinned_commit: str) -> str:
+    """Tree id of exactly pinned-commit + pinned-patch, built in isolation."""
+    with tempfile.TemporaryDirectory(prefix="arnis-verify-") as tmp:
+        index_file = Path(tmp) / "expected-index"
+        return _git_tree_id(
+            source_dir,
+            index_file,
+            ("read-tree", pinned_commit),
+            ("apply", "--cached", str(_PATCH_PATH)),
+        )
+
+
+def _actual_worktree_tree_id(source_dir: Path) -> str:
+    """Tree id of the working tree contents (tracked + untracked).
+
+    `git add -A` into an isolated index captures everything cargo would
+    build, honoring .gitignore (build artifacts are ignorable by design;
+    source-level injections are not ignored by any sane upstream).
+    """
+    with tempfile.TemporaryDirectory(prefix="arnis-verify-") as tmp:
+        index_file = Path(tmp) / "actual-index"
+        return _git_tree_id(
+            source_dir,
+            index_file,
+            ("add", "-A"),
+        )
+
+
+def _verify_worktree_matches_tree(
+    source_dir: Path, expected_tree: str, *, context: str
+) -> None:
+    """Fail closed unless the working tree is byte-identical to the tree.
+
+    Comparing tree ids covers tracked edits, untracked additions, and
+    deletions in one shot -- including edits inside files the patch touches,
+    which hunk-context checks like `git apply --reverse --check` cannot see.
+    """
+    actual_tree = _actual_worktree_tree_id(source_dir)
+    if actual_tree == expected_tree:
+        return
+    diff = _run(
+        ("git", "diff-tree", "-r", "--name-status", expected_tree, actual_tree),
+        cwd=source_dir,
+        check=False,
+    ).stdout.strip()
+    raise ArnisBootstrapError(
+        f"Arnis checkout does not match {context}; refusing to build. "
+        f"Deviations:\n{diff or '(tree content differs)'}"
+    )
+
+
+def _ensure_patch_applied(source_dir: Path, lock: dict[str, Any]) -> None:
+    """Ensure the working tree is exactly pinned-commit + pinned-patch.
 
     A cached checkout could carry extra tracked edits or untracked files
-    (e.g. a .cargo/config.toml build hook) that cargo would happily execute,
-    after which the install metadata would falsely record a pinned build.
-    Fail closed instead of building arbitrary cached modifications.
+    (e.g. a .cargo/config.toml build hook) that cargo would execute, after
+    which the install metadata would falsely record a pinned build. The
+    working tree is therefore compared against the expected tree derived in
+    an isolated index; any deviation fails closed.
     """
-    status = _run(("git", "status", "--porcelain"), cwd=source_dir).stdout
-    entries = [
-        (line[:2], line[3:].strip())
-        for line in status.splitlines()
-        if line.strip()
-    ]
-    untracked = [path for state, path in entries if state == "??"]
-    tracked_changes = [(state, path) for state, path in entries if state != "??"]
-
-    if untracked:
-        raise ArnisBootstrapError(
-            "Arnis checkout contains untracked files that would enter the build: "
-            + ", ".join(sorted(untracked))
-        )
-    if not patch_applied:
-        if tracked_changes:
-            details = ", ".join(f"{state.strip() or '?'} {path}" for state, path in tracked_changes)
-            raise ArnisBootstrapError(
-                f"Arnis checkout has unexpected modifications before patching: {details}"
-            )
+    pinned_commit = str(lock["upstream"]["commit"])
+    expected_patched = _expected_patched_tree_id(source_dir, pinned_commit)
+    actual = _actual_worktree_tree_id(source_dir)
+    if actual == expected_patched:
         return
-    # With the patch applied, the only allowed tracked deviation is the patch
-    # itself: reversing it must leave a completely clean tree.
-    reverse_ok = _run(
-        ("git", "apply", "--reverse", "--check", str(_PATCH_PATH)),
-        cwd=source_dir,
-        check=False,
-    )
-    if reverse_ok.returncode != 0:
-        raise ArnisBootstrapError("Arnis checkout modifications do not match the pinned patch")
-    patch_paths = set(_patch_file_paths())
-    extra = [
-        f"{state.strip() or '?'} {path}"
-        for state, path in tracked_changes
-        if path not in patch_paths
-    ]
-    if extra:
-        raise ArnisBootstrapError(
-            "Arnis checkout has tracked modifications outside the pinned patch: "
-            + ", ".join(sorted(extra))
+    pinned_tree = _run(
+        ("git", "rev-parse", f"{pinned_commit}^{{tree}}"), cwd=source_dir
+    ).stdout.strip()
+    if actual != pinned_tree:
+        # Neither pristine nor exactly-patched: refuse to touch it.
+        _verify_worktree_matches_tree(
+            source_dir, pinned_tree, context="the pinned commit (before patching)"
         )
-
-
-def _patch_file_paths() -> list[str]:
-    """File paths touched by the pinned patch (parsed from its headers)."""
-    paths: list[str] = []
-    for line in _PATCH_PATH.read_text(encoding="utf-8", errors="replace").splitlines():
-        if line.startswith("+++ b/"):
-            paths.append(line[6:].strip())
-        elif line.startswith("+++ ") and not line.startswith("+++ /dev/null"):
-            paths.append(line[4:].strip())
-    return paths
-
-
-def _ensure_patch_applied(source_dir: Path) -> None:
-    reverse = _run(
-        ("git", "apply", "--reverse", "--check", str(_PATCH_PATH)),
-        cwd=source_dir,
-        check=False,
-    )
-    if reverse.returncode == 0:
-        _verify_clean_worktree(source_dir, patch_applied=True)
-        return
-    forward = _run(
-        ("git", "apply", "--check", str(_PATCH_PATH)),
-        cwd=source_dir,
-        check=False,
-    )
-    if forward.returncode != 0:
-        raise ArnisBootstrapError(
-            "Arnis checkout is neither cleanly patchable nor already patched:\n"
-            f"{forward.stderr.strip()}"
-        )
-    _verify_clean_worktree(source_dir, patch_applied=False)
     _run(("git", "apply", str(_PATCH_PATH)), cwd=source_dir)
-    _verify_clean_worktree(source_dir, patch_applied=True)
+    _verify_worktree_matches_tree(
+        source_dir, expected_patched, context="pinned commit + pinned patch"
+    )
 
 
 def _install_binary(
@@ -288,7 +291,7 @@ def prepare_arnis(
     install = (install_dir or _default_install_dir(lock)).expanduser().resolve()
     link = (command_link or (Path.home() / ".local" / "bin" / "arnis-cmo")).expanduser()
     _ensure_checkout(lock, source)
-    _ensure_patch_applied(source)
+    _ensure_patch_applied(source, lock)
     binary = _install_binary(
         lock,
         source_dir=source,
