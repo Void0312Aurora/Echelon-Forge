@@ -934,86 +934,51 @@ void bind_runtime(nb::module_ &m) {
     batch_world_setup_result_class.def_rw(#name, &BatchWorldSetupResult::name);
 #include "runtime/facade/detail/batch_world_setup_result.inc"
 
-    nb::class_<RuntimeWorldLayoutRequest>(m, "RuntimeWorldLayoutRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &RuntimeWorldLayoutRequest::world_index)
-        .def_rw("seed", &RuntimeWorldLayoutRequest::seed)
-        .def_rw("terrain_type", &RuntimeWorldLayoutRequest::terrain_type)
-        .def_rw("wind_speed_mps", &RuntimeWorldLayoutRequest::wind_speed_mps)
-        .def_rw("wind_dir_from_deg", &RuntimeWorldLayoutRequest::wind_dir_from_deg)
-        .def_rw("wind_shear_mps_per_km", &RuntimeWorldLayoutRequest::wind_shear_mps_per_km)
-        .def_rw("maritime_configured", &RuntimeWorldLayoutRequest::maritime_configured)
-        .def_rw("sea_state", &RuntimeWorldLayoutRequest::sea_state)
-        .def_rw("wave_heading_deg", &RuntimeWorldLayoutRequest::wave_heading_deg)
-        .def_rw("wave_period_s", &RuntimeWorldLayoutRequest::wave_period_s)
-        .def_rw("zones", &RuntimeWorldLayoutRequest::zones)
-        .def_rw("spawn_requests", &RuntimeWorldLayoutRequest::spawn_requests)
-        .def_rw("time_steps", &RuntimeWorldLayoutRequest::time_steps);
+    nb::class_<RuntimeWorldLayoutRequest> runtime_world_layout_request_class(
+        m, "RuntimeWorldLayoutRequest");
+    runtime_world_layout_request_class.def(nb::init<>());
+#define EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD(type, name, default_value) \
+    runtime_world_layout_request_class.def_rw(#name, &RuntimeWorldLayoutRequest::name);
+#include "runtime/facade/detail/runtime_world_layout_request.inc"
 
-    nb::class_<RuntimeWorldLayoutResult>(m, "RuntimeWorldLayoutResult")
-        .def(nb::init<>())
-        .def_rw("world_index", &RuntimeWorldLayoutResult::world_index)
-        .def_rw("entity_ids", &RuntimeWorldLayoutResult::entity_ids);
+    nb::class_<RuntimeWorldLayoutResult> runtime_world_layout_result_class(
+        m, "RuntimeWorldLayoutResult");
+    runtime_world_layout_result_class.def(nb::init<>());
+#define EF_RUNTIME_WORLD_LAYOUT_RESULT_FIELD(type, name, default_value) \
+    runtime_world_layout_result_class.def_rw(#name, &RuntimeWorldLayoutResult::name);
+#include "runtime/facade/detail/runtime_world_layout_result.inc"
 
-    nb::class_<RuntimeCounterfactualBranchRequest>(m, "RuntimeCounterfactualBranchRequest")
-        .def(nb::init<>())
-        .def_rw("baseline_setup", &RuntimeCounterfactualBranchRequest::baseline_setup)
-        .def_rw("entity_ref", &RuntimeCounterfactualBranchRequest::entity_ref)
-        .def_rw("fidelity_request", &RuntimeCounterfactualBranchRequest::fidelity_request)
-        .def_rw("deterministic_seed", &RuntimeCounterfactualBranchRequest::deterministic_seed)
-        .def_rw("replay_envelope_id", &RuntimeCounterfactualBranchRequest::replay_envelope_id)
-        .def_rw("branch_point_id", &RuntimeCounterfactualBranchRequest::branch_point_id)
-        .def_rw("branch_worldline_id", &RuntimeCounterfactualBranchRequest::branch_worldline_id)
-        .def_rw("parent_worldline_id", &RuntimeCounterfactualBranchRequest::parent_worldline_id)
-        .def_rw("restore_barrier_id", &RuntimeCounterfactualBranchRequest::restore_barrier_id)
-        .def_rw("cadence_reason", &RuntimeCounterfactualBranchRequest::cadence_reason)
-        .def_rw("mutation_dx", &RuntimeCounterfactualBranchRequest::mutation_dx)
-        .def_rw("mutation_dy", &RuntimeCounterfactualBranchRequest::mutation_dy)
-        .def_rw("mutation_dz", &RuntimeCounterfactualBranchRequest::mutation_dz)
-        .def_rw("mutation_dvx", &RuntimeCounterfactualBranchRequest::mutation_dvx)
-        .def_rw("mutation_dvy", &RuntimeCounterfactualBranchRequest::mutation_dvy)
-        .def_rw("mutation_dvz", &RuntimeCounterfactualBranchRequest::mutation_dvz)
-        .def_rw("mutation_dheading", &RuntimeCounterfactualBranchRequest::mutation_dheading)
-        .def_rw("allow_raw_authoritative_state_mutation",
-                &RuntimeCounterfactualBranchRequest::allow_raw_authoritative_state_mutation)
-        .def_rw("evidence_refs", &RuntimeCounterfactualBranchRequest::evidence_refs);
+    nb::class_<RuntimeCounterfactualBranchRequest> runtime_counterfactual_branch_request_class(
+        m, "RuntimeCounterfactualBranchRequest");
+    runtime_counterfactual_branch_request_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_REQUEST_FIELD(type, name, default_value) \
+    runtime_counterfactual_branch_request_class.def_rw( \
+        #name, &RuntimeCounterfactualBranchRequest::name);
+#include "runtime/facade/detail/runtime_counterfactual_branch_request.inc"
 
-    nb::class_<RuntimeCounterfactualRestoreRequest>(m, "RuntimeCounterfactualRestoreRequest")
-        .def(nb::init<>())
-        .def_rw("snapshot", &RuntimeCounterfactualRestoreRequest::snapshot)
-        .def_rw("expected_worldline_id",
-                &RuntimeCounterfactualRestoreRequest::expected_worldline_id)
-        .def_rw("target_worldline_id", &RuntimeCounterfactualRestoreRequest::target_worldline_id)
-        .def_rw("target_deterministic_seed",
-                &RuntimeCounterfactualRestoreRequest::target_deterministic_seed)
-        .def_rw("target_entity_ref", &RuntimeCounterfactualRestoreRequest::target_entity_ref)
-        .def_rw("restore_barrier_id", &RuntimeCounterfactualRestoreRequest::restore_barrier_id)
-        .def_rw("allow_raw_authoritative_state_mutation",
-                &RuntimeCounterfactualRestoreRequest::allow_raw_authoritative_state_mutation)
-        .def_rw("request_full_clone", &RuntimeCounterfactualRestoreRequest::request_full_clone)
-        .def_rw("request_resident_state_restore",
-                &RuntimeCounterfactualRestoreRequest::request_resident_state_restore)
-        .def_rw("request_exact_gpu_restore",
-                &RuntimeCounterfactualRestoreRequest::request_exact_gpu_restore)
-        .def_rw("evidence_refs", &RuntimeCounterfactualRestoreRequest::evidence_refs);
+    nb::class_<RuntimeCounterfactualRestoreRequest> runtime_counterfactual_restore_request_class(
+        m, "RuntimeCounterfactualRestoreRequest");
+    runtime_counterfactual_restore_request_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_REQUEST_FIELD(type, name, default_value) \
+    runtime_counterfactual_restore_request_class.def_rw( \
+        #name, &RuntimeCounterfactualRestoreRequest::name);
+#include "runtime/facade/detail/runtime_counterfactual_restore_request.inc"
 
-    nb::class_<RuntimeCounterfactualRestoreResult>(m, "RuntimeCounterfactualRestoreResult")
-        .def(nb::init<>())
-        .def_rw("restored", &RuntimeCounterfactualRestoreResult::restored)
-        .def_rw("rejection_reason", &RuntimeCounterfactualRestoreResult::rejection_reason)
-        .def_rw("restored_snapshot", &RuntimeCounterfactualRestoreResult::restored_snapshot)
-        .def_rw("evidence_refs", &RuntimeCounterfactualRestoreResult::evidence_refs);
+    nb::class_<RuntimeCounterfactualRestoreResult> runtime_counterfactual_restore_result_class(
+        m, "RuntimeCounterfactualRestoreResult");
+    runtime_counterfactual_restore_result_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_RESULT_FIELD(type, name, default_value) \
+    runtime_counterfactual_restore_result_class.def_rw( \
+        #name, &RuntimeCounterfactualRestoreResult::name);
+#include "runtime/facade/detail/runtime_counterfactual_restore_result.inc"
 
-    nb::class_<RuntimeCounterfactualBranchResult>(m, "RuntimeCounterfactualBranchResult")
-        .def(nb::init<>())
-        .def_rw("admitted", &RuntimeCounterfactualBranchResult::admitted)
-        .def_rw("rejection_reason", &RuntimeCounterfactualBranchResult::rejection_reason)
-        .def_rw("fidelity_admission", &RuntimeCounterfactualBranchResult::fidelity_admission)
-        .def_rw("parent_snapshot", &RuntimeCounterfactualBranchResult::parent_snapshot)
-        .def_rw("branch_snapshot", &RuntimeCounterfactualBranchResult::branch_snapshot)
-        .def_rw("comparison", &RuntimeCounterfactualBranchResult::comparison)
-        .def_rw("restore_result", &RuntimeCounterfactualBranchResult::restore_result)
-        .def_rw("evidence_refs", &RuntimeCounterfactualBranchResult::evidence_refs);
+    nb::class_<RuntimeCounterfactualBranchResult> runtime_counterfactual_branch_result_class(
+        m, "RuntimeCounterfactualBranchResult");
+    runtime_counterfactual_branch_result_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_RESULT_FIELD(type, name, default_value) \
+    runtime_counterfactual_branch_result_class.def_rw( \
+        #name, &RuntimeCounterfactualBranchResult::name);
+#include "runtime/facade/detail/runtime_counterfactual_branch_result.inc"
 
     nb::class_<RuntimeExperimentStepRequest> runtime_experiment_step_request_class(
         m, "RuntimeExperimentStepRequest");
@@ -1029,22 +994,18 @@ void bind_runtime(nb::module_ &m) {
     runtime_experiment_request_class.def_rw(#name, &RuntimeExperimentRequest::name);
 #include "runtime/facade/detail/runtime_experiment_request.inc"
 
-    nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")
-        .def(nb::init<>())
-        .def_rw("refs", &ObservationBatchRequest::refs)
-        .def_rw("include_agent_observations", &ObservationBatchRequest::include_agent_observations)
-        .def_rw("include_instrument_states", &ObservationBatchRequest::include_instrument_states);
+    nb::class_<ObservationBatchRequest> observation_batch_request_class(
+        m, "ObservationBatchRequest");
+    observation_batch_request_class.def(nb::init<>());
+#define EF_OBSERVATION_BATCH_REQUEST_FIELD(type, name, default_value) \
+    observation_batch_request_class.def_rw(#name, &ObservationBatchRequest::name);
+#include "runtime/facade/detail/observation_batch_request.inc"
 
-    nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")
-        .def(nb::init<>())
-        .def_rw("refs", &TaskingBatchRequest::refs)
-        .def_rw("include_mission_command_contracts",
-                &TaskingBatchRequest::include_mission_command_contracts)
-        .def_rw("include_task_order_contracts", &TaskingBatchRequest::include_task_order_contracts)
-        .def_rw("include_leader_intent_contracts",
-                &TaskingBatchRequest::include_leader_intent_contracts)
-        .def_rw("include_pilot_report_contracts",
-                &TaskingBatchRequest::include_pilot_report_contracts);
+    nb::class_<TaskingBatchRequest> tasking_batch_request_class(m, "TaskingBatchRequest");
+    tasking_batch_request_class.def(nb::init<>());
+#define EF_TASKING_BATCH_REQUEST_FIELD(type, name, default_value) \
+    tasking_batch_request_class.def_rw(#name, &TaskingBatchRequest::name);
+#include "runtime/facade/detail/tasking_batch_request.inc"
 
     nb::class_<EngagementBatchRequest>(m, "EngagementBatchRequest")
         .def(nb::init<>())
@@ -1059,58 +1020,44 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("include_damage_reports", &EngagementBatchRequest::include_damage_reports)
         .def_rw("include_diagnostics_traces", &EngagementBatchRequest::include_diagnostics_traces);
 
-    nb::class_<ExecutionBatchStepRequest>(m, "ExecutionBatchStepRequest")
-        .def(nb::init<>())
-        .def_rw("step_requests", &ExecutionBatchStepRequest::step_requests)
-        .def_rw("include_agent_observations",
-                &ExecutionBatchStepRequest::include_agent_observations)
-        .def_rw("include_instrument_states", &ExecutionBatchStepRequest::include_instrument_states);
+    nb::class_<ExecutionBatchStepRequest> execution_batch_step_request_class(
+        m, "ExecutionBatchStepRequest");
+    execution_batch_step_request_class.def(nb::init<>());
+#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value) \
+    execution_batch_step_request_class.def_rw(#name, &ExecutionBatchStepRequest::name);
+#include "runtime/facade/detail/execution_batch_step_request.inc"
 
-    nb::class_<RewardTerm>(m, "RewardTerm")
-        .def(nb::init<>())
-        .def_rw("name", &RewardTerm::name)
-        .def_rw("value", &RewardTerm::value)
-        .def_rw("term_owner", &RewardTerm::term_owner);
+    nb::class_<RewardTerm> reward_term_class(m, "RewardTerm");
+    reward_term_class.def(nb::init<>());
+#define EF_REWARD_TERM_FIELD(type, name, default_value) \
+    reward_term_class.def_rw(#name, &RewardTerm::name);
+#include "runtime/contracts/detail/reward_term.inc"
 
-    nb::class_<RewardReport>(m, "RewardReport")
-        .def(nb::init<>())
-        .def_rw("fact_terms", &RewardReport::fact_terms)
-        .def_rw("shaping_terms", &RewardReport::shaping_terms)
-        .def_rw("fact_snapshot_version", &RewardReport::fact_snapshot_version)
-        .def_rw("term_owner", &RewardReport::term_owner);
+    nb::class_<RewardReport> reward_report_class(m, "RewardReport");
+    reward_report_class.def(nb::init<>());
+#define EF_REWARD_REPORT_FIELD(type, name, default_value) \
+    reward_report_class.def_rw(#name, &RewardReport::name);
+#include "runtime/contracts/detail/reward_report.inc"
 
-    nb::class_<TerminationSpec>(m, "TerminationSpec")
-        .def(nb::init<>())
-        .def_rw("reason", &TerminationSpec::reason)
-        .def_rw("reason_source", &TerminationSpec::reason_source)
-        .def_rw("snapshot_version", &TerminationSpec::snapshot_version);
+    nb::class_<TerminationSpec> termination_spec_class(m, "TerminationSpec");
+    termination_spec_class.def(nb::init<>());
+#define EF_TERMINATION_SPEC_FIELD(type, name, default_value) \
+    termination_spec_class.def_rw(#name, &TerminationSpec::name);
+#include "runtime/contracts/detail/termination_spec.inc"
 
-    nb::class_<ObservationViewSpec>(m, "ObservationViewSpec")
-        .def(nb::init<>())
-        .def_rw("schema_version", &ObservationViewSpec::schema_version)
-        .def_rw("required_fields", &ObservationViewSpec::required_fields)
-        .def_rw("optional_fields", &ObservationViewSpec::optional_fields)
-        .def_rw("reject_major_mismatch", &ObservationViewSpec::reject_major_mismatch)
-        .def_rw("allow_minor_version_drift", &ObservationViewSpec::allow_minor_version_drift)
-        .def_rw("allow_unknown_optional_fields",
-                &ObservationViewSpec::allow_unknown_optional_fields)
-        .def_rw("allow_missing_optional_fields",
-                &ObservationViewSpec::allow_missing_optional_fields);
+    nb::class_<ObservationViewSpec> observation_view_spec_class(m, "ObservationViewSpec");
+    observation_view_spec_class.def(nb::init<>());
+#define EF_OBSERVATION_VIEW_SPEC_FIELD(type, name, default_value) \
+    observation_view_spec_class.def_rw(#name, &ObservationViewSpec::name);
+#include "runtime/contracts/detail/observation_view_spec.inc"
 
-    nb::class_<ObservationViewCompatibilityReport>(m, "ObservationViewCompatibilityReport")
-        .def(nb::init<>())
-        .def_rw("compatible", &ObservationViewCompatibilityReport::compatible)
-        .def_rw("major_compatible", &ObservationViewCompatibilityReport::major_compatible)
-        .def_rw("required_fields_satisfied",
-                &ObservationViewCompatibilityReport::required_fields_satisfied)
-        .def_rw("optional_field_drift_allowed",
-                &ObservationViewCompatibilityReport::optional_field_drift_allowed)
-        .def_rw("missing_required_fields",
-                &ObservationViewCompatibilityReport::missing_required_fields)
-        .def_rw("unknown_optional_fields",
-                &ObservationViewCompatibilityReport::unknown_optional_fields)
-        .def_rw("missing_optional_fields",
-                &ObservationViewCompatibilityReport::missing_optional_fields);
+    nb::class_<ObservationViewCompatibilityReport> observation_view_compatibility_report_class(
+        m, "ObservationViewCompatibilityReport");
+    observation_view_compatibility_report_class.def(nb::init<>());
+#define EF_OBSERVATION_VIEW_COMPATIBILITY_REPORT_FIELD(type, name, default_value) \
+    observation_view_compatibility_report_class.def_rw( \
+        #name, &ObservationViewCompatibilityReport::name);
+#include "runtime/contracts/detail/observation_view_compatibility_report.inc"
 
     m.def("evaluate_observation_view_checkpoint_compatibility",
           &evaluate_observation_view_checkpoint_compatibility, nb::arg("checkpoint"),
@@ -1136,27 +1083,17 @@ void bind_runtime(nb::module_ &m) {
     m.def("decision_belief_has_valid_provenance", &decision_belief_has_valid_provenance,
           nb::arg("belief"));
 
-    nb::class_<ObservationBatchPacket>(m, "ObservationBatchPacket")
-        .def(nb::init<>())
-        .def_rw("snapshot_version", &ObservationBatchPacket::snapshot_version)
-        .def_rw("barrier_id", &ObservationBatchPacket::barrier_id)
-        .def_rw("source_time_s", &ObservationBatchPacket::source_time_s)
-        .def_rw("provenance", &ObservationBatchPacket::provenance)
-        .def_rw("refs", &ObservationBatchPacket::refs)
-        .def_rw("agent_observations", &ObservationBatchPacket::agent_observations)
-        .def_rw("instrument_states", &ObservationBatchPacket::instrument_states);
+    nb::class_<ObservationBatchPacket> observation_batch_packet_class(m, "ObservationBatchPacket");
+    observation_batch_packet_class.def(nb::init<>());
+#define EF_OBSERVATION_BATCH_PACKET_FIELD(type, name, default_value) \
+    observation_batch_packet_class.def_rw(#name, &ObservationBatchPacket::name);
+#include "runtime/facade/detail/observation_batch_packet.inc"
 
-    nb::class_<TaskingBatchPacket>(m, "TaskingBatchPacket")
-        .def(nb::init<>())
-        .def_rw("snapshot_version", &TaskingBatchPacket::snapshot_version)
-        .def_rw("barrier_id", &TaskingBatchPacket::barrier_id)
-        .def_rw("source_time_s", &TaskingBatchPacket::source_time_s)
-        .def_rw("provenance", &TaskingBatchPacket::provenance)
-        .def_rw("refs", &TaskingBatchPacket::refs)
-        .def_rw("mission_command_contracts", &TaskingBatchPacket::mission_command_contracts)
-        .def_rw("task_order_contracts", &TaskingBatchPacket::task_order_contracts)
-        .def_rw("leader_intent_contracts", &TaskingBatchPacket::leader_intent_contracts)
-        .def_rw("pilot_report_contracts", &TaskingBatchPacket::pilot_report_contracts);
+    nb::class_<TaskingBatchPacket> tasking_batch_packet_class(m, "TaskingBatchPacket");
+    tasking_batch_packet_class.def(nb::init<>());
+#define EF_TASKING_BATCH_PACKET_FIELD(type, name, default_value) \
+    tasking_batch_packet_class.def_rw(#name, &TaskingBatchPacket::name);
+#include "runtime/facade/detail/tasking_batch_packet.inc"
 
     nb::class_<EngagementEventPacket>(m, "EngagementEventPacket")
         .def(nb::init<>())

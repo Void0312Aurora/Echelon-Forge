@@ -273,6 +273,86 @@ EXPECTED_REGISTRATIONS = {
     f"{_BUILDER_DIR}/runtime_window_result_builder.py",
     10,
   ),
+  "tools/maintenance/dto_schema/schemas/reward_term_fields.py": (
+    "src/runtime/contracts/detail/reward_term.inc",
+    f"{_BUILDER_DIR}/reward_term_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/reward_report_fields.py": (
+    "src/runtime/contracts/detail/reward_report.inc",
+    f"{_BUILDER_DIR}/reward_report_builder.py",
+    4,
+  ),
+  "tools/maintenance/dto_schema/schemas/termination_spec_fields.py": (
+    "src/runtime/contracts/detail/termination_spec.inc",
+    f"{_BUILDER_DIR}/termination_spec_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/observation_view_spec_fields.py": (
+    "src/runtime/contracts/detail/observation_view_spec.inc",
+    f"{_BUILDER_DIR}/observation_view_spec_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/observation_view_compatibility_report_fields.py": (
+    "src/runtime/contracts/detail/observation_view_compatibility_report.inc",
+    f"{_BUILDER_DIR}/observation_view_compatibility_report_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/observation_batch_request_fields.py": (
+    "src/runtime/facade/detail/observation_batch_request.inc",
+    f"{_BUILDER_DIR}/observation_batch_request_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/tasking_batch_request_fields.py": (
+    "src/runtime/facade/detail/tasking_batch_request.inc",
+    f"{_BUILDER_DIR}/tasking_batch_request_builder.py",
+    5,
+  ),
+  "tools/maintenance/dto_schema/schemas/execution_batch_step_request_fields.py": (
+    "src/runtime/facade/detail/execution_batch_step_request.inc",
+    f"{_BUILDER_DIR}/execution_batch_step_request_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/observation_batch_packet_fields.py": (
+    "src/runtime/facade/detail/observation_batch_packet.inc",
+    f"{_BUILDER_DIR}/observation_batch_packet_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/tasking_batch_packet_fields.py": (
+    "src/runtime/facade/detail/tasking_batch_packet.inc",
+    f"{_BUILDER_DIR}/tasking_batch_packet_builder.py",
+    9,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_world_layout_request_fields.py": (
+    "src/runtime/facade/detail/runtime_world_layout_request.inc",
+    f"{_BUILDER_DIR}/runtime_world_layout_request_builder.py",
+    13,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_world_layout_result_fields.py": (
+    "src/runtime/facade/detail/runtime_world_layout_result.inc",
+    f"{_BUILDER_DIR}/runtime_world_layout_result_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_counterfactual_branch_request_fields.py": (
+    "src/runtime/facade/detail/runtime_counterfactual_branch_request.inc",
+    f"{_BUILDER_DIR}/runtime_counterfactual_branch_request_builder.py",
+    19,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_counterfactual_restore_request_fields.py": (
+    "src/runtime/facade/detail/runtime_counterfactual_restore_request.inc",
+    f"{_BUILDER_DIR}/runtime_counterfactual_restore_request_builder.py",
+    11,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_counterfactual_restore_result_fields.py": (
+    "src/runtime/facade/detail/runtime_counterfactual_restore_result.inc",
+    f"{_BUILDER_DIR}/runtime_counterfactual_restore_result_builder.py",
+    4,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_counterfactual_branch_result_fields.py": (
+    "src/runtime/facade/detail/runtime_counterfactual_branch_result.inc",
+    f"{_BUILDER_DIR}/runtime_counterfactual_branch_result_builder.py",
+    8,
+  ),
 }
 
 EXPECTED_PACKAGE_INIT = f"{_BUILDER_DIR}/__init__.py"

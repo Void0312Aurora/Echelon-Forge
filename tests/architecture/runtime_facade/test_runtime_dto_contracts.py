@@ -13,13 +13,14 @@ FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.
 
 def _text(path: Path) -> str:
   text = path.read_text(encoding="utf-8")
-  # DeviceResidentOutputDescriptor/RuntimeCapabilities and friends are now
-  # schema-owned (tools/maintenance/dto_schema, I26): expand the X-macro
-  # #include so this file's field-shape assertions keep matching the
-  # compiled struct instead of the #include line.
-  if path == FACADE_TYPES:
-    return expand_header_field_incs(text)
-  return text
+  # DeviceResidentOutputDescriptor/RuntimeCapabilities and friends (and, as
+  # of I31, RewardReport/TerminationSpec/ObservationViewSpec/
+  # ObservationViewCompatibilityReport in DTO_HEADER) are now schema-owned
+  # (tools/maintenance/dto_schema, I26/I31): expand the X-macro #include so
+  # this file's field-shape assertions keep matching the compiled struct
+  # instead of the #include line. The expansion is a no-op for files with
+  # no matching #include line, so it is safe to apply unconditionally.
+  return expand_header_field_incs(text)
 
 
 def _struct_body(header: str, struct_name: str) -> str:

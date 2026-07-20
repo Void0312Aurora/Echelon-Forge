@@ -3,6 +3,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+from tests.support.xmacro_text import expand_header_field_incs
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 POLICY_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts" / "policy_contracts.h"
@@ -109,7 +111,9 @@ def test_wp12_information_transformation_surface_reuses_policy_vocabulary_withou
 
 
 def test_observation_packet_remains_facade_side_data_product() -> None:
-  facade_header = FACADE_TYPES.read_text(encoding="utf-8")
+  # ObservationBatchPacket's provenance field is schema-owned (I31): expand
+  # the X-macro #include so this still matches the compiled field shape.
+  facade_header = expand_header_field_incs(FACADE_TYPES.read_text(encoding="utf-8"))
 
   assert "struct ObservationBatchPacket" in facade_header
   assert "struct DecisionBelief" not in facade_header

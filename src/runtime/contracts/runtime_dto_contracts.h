@@ -6,42 +6,29 @@
 #include <vector>
 
 struct RewardTerm {
-    std::string name;
-    double value = 0.0;
-    std::string term_owner = "simulation";
+#define EF_REWARD_TERM_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/reward_term.inc"
 };
 
 struct RewardReport {
-    std::vector<RewardTerm> fact_terms;
-    std::vector<RewardTerm> shaping_terms;
-    std::uint64_t fact_snapshot_version = 0;
-    std::string term_owner = "split";
+#define EF_REWARD_REPORT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/reward_report.inc"
 };
 
 struct TerminationSpec {
-    std::string reason = "running";
-    std::string reason_source = "simulation";
-    std::uint64_t snapshot_version = 0;
+#define EF_TERMINATION_SPEC_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/termination_spec.inc"
 };
 
 struct ObservationViewSpec {
-    std::string schema_version = "1.0";
-    std::vector<std::string> required_fields;
-    std::vector<std::string> optional_fields;
-    bool reject_major_mismatch = true;
-    bool allow_minor_version_drift = true;
-    bool allow_unknown_optional_fields = true;
-    bool allow_missing_optional_fields = true;
+#define EF_OBSERVATION_VIEW_SPEC_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/observation_view_spec.inc"
 };
 
 struct ObservationViewCompatibilityReport {
-    bool compatible = false;
-    bool major_compatible = false;
-    bool required_fields_satisfied = false;
-    bool optional_field_drift_allowed = false;
-    std::vector<std::string> missing_required_fields;
-    std::vector<std::string> unknown_optional_fields;
-    std::vector<std::string> missing_optional_fields;
+#define EF_OBSERVATION_VIEW_COMPATIBILITY_REPORT_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/observation_view_compatibility_report.inc"
 };
 
 struct ObservationSchemaVersionParts {

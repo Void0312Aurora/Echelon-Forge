@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from tests.architecture.runtime_facade.helpers import *
+from tests.support.xmacro_text import expand_header_field_incs
 
 
 def test_runtime_contract_headers_do_not_include_engine_headers() -> None:
@@ -161,7 +162,11 @@ def test_core_runtime_does_not_probe_gpu_for_facade_capability_projection() -> N
 
 def test_resident_state_candidate_stays_fail_closed_and_exports_remain_host_visible() -> None:
   contracts = (RUNTIME_CONTRACTS / "backend_profile_contracts.h").read_text(encoding="utf-8")
-  facade_types = (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
+  # ObservationBatchPacket's provenance field is schema-owned (I31): expand
+  # the X-macro #include so this still matches the compiled field shape.
+  facade_types = expand_header_field_incs(
+    (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
+  )
   facade_cpp = runtime_facade_source_text()
 
   assert "kBackendProfileIdResidentStateUnmaintainedCandidate" in contracts

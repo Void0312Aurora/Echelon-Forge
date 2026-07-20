@@ -63,78 +63,38 @@ struct BatchWorldSetupResult {
 };
 
 struct RuntimeWorldLayoutRequest {
-    std::uint64_t world_index = 0;
-    std::uint32_t seed = 42;
-    std::string terrain_type;
-    double wind_speed_mps = 0.0;
-    double wind_dir_from_deg = 0.0;
-    double wind_shear_mps_per_km = 0.0;
-    bool maritime_configured = false;
-    double sea_state = 0.0;
-    double wave_heading_deg = 0.0;
-    double wave_period_s = 8.0;
-    std::vector<WorldZoneDefinition> zones;
-    std::vector<WorldSpawnRequest> spawn_requests;
-    std::vector<double> time_steps;
+#define EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_world_layout_request.inc"
 };
 
 struct RuntimeWorldLayoutResult {
-    std::uint64_t world_index = 0;
-    std::vector<std::uint64_t> entity_ids;
+#define EF_RUNTIME_WORLD_LAYOUT_RESULT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_world_layout_result.inc"
 };
 
 struct RuntimeCounterfactualBranchRequest {
-    BatchWorldSetupRequest baseline_setup;
-    WorldEntityRef entity_ref;
-    RuntimeFidelityRequest fidelity_request;
-    std::uint64_t deterministic_seed = 0;
-    std::string replay_envelope_id;
-    std::string branch_point_id;
-    std::string branch_worldline_id;
-    std::string parent_worldline_id;
-    std::string restore_barrier_id = "counterfactual_selected_slice";
-    std::string cadence_reason = "selected_slice_cadence_trace_runtime_window";
-    double mutation_dx = 0.0;
-    double mutation_dy = 0.0;
-    double mutation_dz = 0.0;
-    double mutation_dvx = 0.0;
-    double mutation_dvy = 0.0;
-    double mutation_dvz = 0.0;
-    double mutation_dheading = 0.0;
-    bool allow_raw_authoritative_state_mutation = false;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_REQUEST_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_branch_request.inc"
 };
 
 struct RuntimeCounterfactualRestoreRequest {
-    RuntimeCounterfactualSnapshot snapshot;
-    std::string expected_worldline_id;
-    std::string target_worldline_id;
-    std::uint64_t target_deterministic_seed = 0;
-    WorldEntityRef target_entity_ref;
-    std::string restore_barrier_id = "counterfactual_selected_slice";
-    bool allow_raw_authoritative_state_mutation = false;
-    bool request_full_clone = false;
-    bool request_resident_state_restore = false;
-    bool request_exact_gpu_restore = false;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_REQUEST_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_restore_request.inc"
 };
 
 struct RuntimeCounterfactualRestoreResult {
-    bool restored = false;
-    std::string rejection_reason;
-    RuntimeCounterfactualSnapshot restored_snapshot;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_RESULT_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_restore_result.inc"
 };
 
 struct RuntimeCounterfactualBranchResult {
-    bool admitted = false;
-    std::string rejection_reason;
-    RuntimeFidelityAdmission fidelity_admission;
-    RuntimeCounterfactualSnapshot parent_snapshot;
-    RuntimeCounterfactualSnapshot branch_snapshot;
-    RuntimeWorldlineComparison comparison;
-    RuntimeCounterfactualRestoreResult restore_result;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_RESULT_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_branch_result.inc"
 };
 
 struct RuntimeExperimentStepRequest {
@@ -149,17 +109,13 @@ struct RuntimeExperimentRequest {
 };
 
 struct ObservationBatchRequest {
-    std::vector<WorldEntityRef> refs;
-    bool include_agent_observations = true;
-    bool include_instrument_states = false;
+#define EF_OBSERVATION_BATCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/observation_batch_request.inc"
 };
 
 struct TaskingBatchRequest {
-    std::vector<WorldEntityRef> refs;
-    bool include_mission_command_contracts = false;
-    bool include_task_order_contracts = false;
-    bool include_leader_intent_contracts = false;
-    bool include_pilot_report_contracts = false;
+#define EF_TASKING_BATCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/tasking_batch_request.inc"
 };
 
 struct EngagementBatchRequest {
@@ -175,9 +131,9 @@ struct EngagementBatchRequest {
 };
 
 struct ExecutionBatchStepRequest {
-    std::vector<WorldExecutionEpisodeStepRequest> step_requests;
-    bool include_agent_observations = true;
-    bool include_instrument_states = false;
+#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/facade/detail/execution_batch_step_request.inc"
 };
 
 struct DeviceResidentOutputDescriptor {
@@ -187,15 +143,8 @@ struct DeviceResidentOutputDescriptor {
 };
 
 struct ObservationBatchPacket {
-    std::uint64_t snapshot_version = 0;
-    std::string barrier_id = "export";
-    double source_time_s = 0.0;
-    InformationStateSource provenance = make_information_state_source(
-        kPolicyInformationStateAgentObservation, kPolicySourceLabelFacadeObservationPacket,
-        kPolicyMaintainedStatusMaintained);
-    std::vector<WorldEntityRef> refs;
-    std::vector<AgentObservation> agent_observations;
-    std::vector<InstrumentState> instrument_states;
+#define EF_OBSERVATION_BATCH_PACKET_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/observation_batch_packet.inc"
 };
 
 struct EngagementEventPacket {
@@ -233,17 +182,8 @@ struct EngagementEventPacket {
 };
 
 struct TaskingBatchPacket {
-    std::uint64_t snapshot_version = 0;
-    std::string barrier_id = "tasking_export";
-    double source_time_s = 0.0;
-    InformationStateSource provenance = make_information_state_source(
-        kPolicyInformationStateDecisionBelief, "facade_tasking_packet",
-        kPolicyMaintainedStatusAdapterProjection);
-    std::vector<WorldEntityRef> refs;
-    std::vector<MissionCommandMaintainedBatchContract> mission_command_contracts;
-    std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;
-    std::vector<LeaderIntentMaintainedBatchContract> leader_intent_contracts;
-    std::vector<PilotReportMaintainedBatchContract> pilot_report_contracts;
+#define EF_TASKING_BATCH_PACKET_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/tasking_batch_packet.inc"
 };
 
 struct ExecutionBatchStepResult {
