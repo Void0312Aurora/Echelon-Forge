@@ -68,6 +68,7 @@ from python.rl.runtime.world_batch import (
     observation_timing_snapshot,
     refresh_visual_cache_batch,
 )
+from python.rl.runtime.world_batch.core import CooperativePlugin, resolve_execution_mode
 from python.rl.runtime.world_batch._shared_ops import (
     batch_observation_runtime_base_check,
     diff_single_entity_command_chain,
@@ -231,6 +232,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self._slots: list[_CooperativeSlotState | None] = [None for _ in range(self.num_slots)]
         self._actions: np.ndarray | None = None
         self._closed = False
+
+        self._mode_plugin: CooperativePlugin = resolve_execution_mode("cooperative")
 
         super().__init__(self.num_slots, self.observation_space, self.action_space)
 
@@ -994,11 +997,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 sim_time = float(slot_state.steps) * float(
                     resolve_loader_time_step(slot_state.loader)
                 )
-                slot_state.loader.update_behaviors(
-                    sim_time,
-                    truth=slot_state.last_truth,
-                    inst=slot_state.last_inst,
-                    sync_to_kernel=False,
+                self._mode_plugin.update_post_step_behavior(
+                    slot_state, sim_time, slot_state.last_truth, slot_state.last_inst,
                 )
             if world.director is not None:
                 world.director.update(world, self._world_slot_states(world), force=True)
@@ -1006,7 +1006,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             if self.collect_step_timing:
                 behavior_update_ms += (time.perf_counter() - behavior_t0) * 1000.0
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        self._sync_command_chain_batch()
+        if not self._mode_plugin.skip_post_behavior_command_sync:
+            self._sync_command_chain_batch()
         if self.collect_step_timing:
             command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 

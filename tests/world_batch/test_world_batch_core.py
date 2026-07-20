@@ -540,7 +540,7 @@ class TestExecutionModePluginBase:
 
 
 class TestCooperativePlugin:
-    """CooperativePlugin uses base-class defaults for all hooks."""
+    """CooperativePlugin: wired production consumer in CooperativeWorldBatchVecEnv."""
 
     def test_mode_name(self):
         plugin = CooperativePlugin()
@@ -560,9 +560,35 @@ class TestCooperativePlugin:
         plugin = CooperativePlugin()
         plugin.finalize_post_step_truth(0, None, None)
 
+    def test_resolved_via_registry(self):
+        plugin = resolve_execution_mode("cooperative")
+        assert isinstance(plugin, CooperativePlugin)
+        assert plugin.mode_name == "cooperative"
+
+    def test_cooperative_vec_env_stores_plugin_at_construction(self):
+        """Verify CooperativeWorldBatchVecEnv resolves the plugin at construction."""
+        from python.rl.runtime.cooperative_world_batch_vec_env import (
+            CooperativeWorldBatchVecEnv,
+        )
+        assert hasattr(CooperativeWorldBatchVecEnv, "__init__")
+        import inspect
+        source = inspect.getsource(CooperativeWorldBatchVecEnv.__init__)
+        assert 'resolve_execution_mode("cooperative")' in source
+        assert "_mode_plugin" in source
+
+    def test_cooperative_step_wait_routes_through_plugin(self):
+        """Verify step_wait uses _mode_plugin.update_post_step_behavior."""
+        from python.rl.runtime.cooperative_world_batch_vec_env import (
+            CooperativeWorldBatchVecEnv,
+        )
+        import inspect
+        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait)
+        assert "_mode_plugin.update_post_step_behavior(" in source
+        assert "_mode_plugin.skip_post_behavior_command_sync" in source
+
 
 class TestLeaderPlugin:
-    """LeaderPlugin uses base-class defaults for all hooks."""
+    """LeaderPlugin: wired production consumer in LeaderWorldBatchExecutionRuntimeGroup."""
 
     def test_mode_name(self):
         plugin = LeaderPlugin()
@@ -581,6 +607,31 @@ class TestLeaderPlugin:
     def test_finalize_post_step_truth_is_noop(self):
         plugin = LeaderPlugin()
         plugin.finalize_post_step_truth(0, None, None)
+
+    def test_resolved_via_registry(self):
+        plugin = resolve_execution_mode("leader")
+        assert isinstance(plugin, LeaderPlugin)
+        assert plugin.mode_name == "leader"
+
+    def test_leader_group_stores_plugin_at_construction(self):
+        """Verify LeaderWorldBatchExecutionRuntimeGroup resolves the plugin."""
+        from python.rl.runtime.leader_world_batch_runtime import (
+            LeaderWorldBatchExecutionRuntimeGroup,
+        )
+        import inspect
+        source = inspect.getsource(LeaderWorldBatchExecutionRuntimeGroup.__init__)
+        assert 'resolve_execution_mode("leader")' in source
+        assert "_mode_plugin" in source
+
+    def test_leader_step_indices_routes_through_plugin(self):
+        """Verify step_indices uses _mode_plugin.update_post_step_behavior."""
+        from python.rl.runtime.leader_world_batch_runtime import (
+            LeaderWorldBatchExecutionRuntimeGroup,
+        )
+        import inspect
+        source = inspect.getsource(LeaderWorldBatchExecutionRuntimeGroup.step_indices)
+        assert "_mode_plugin.update_post_step_behavior(" in source
+        assert "_mode_plugin.skip_post_behavior_command_sync" in source
 
 
 class TestCoreLayeringAndHotPath:
@@ -662,3 +713,92 @@ class TestCoreLayeringAndHotPath:
         opnames = {instruction.opname for instruction in dis.get_instructions(assemble_observation_dict)}
         assert "IMPORT_NAME" not in opnames
         assert "IMPORT_FROM" not in opnames
+
+    @pytest.mark.parametrize(
+        "plugin_cls",
+        [CooperativePlugin, LeaderPlugin],
+        ids=["cooperative", "leader"],
+    )
+    def test_cooperative_and_leader_hooks_inherit_base_class(self, plugin_cls):
+        """Cooperative/Leader hooks are base-class inherited (no override);
+        dis coverage on ExecutionModePlugin hooks applies transitively."""
+        for hook_name in ("update_post_step_behavior", "finalize_post_step_truth"):
+            assert getattr(plugin_cls, hook_name) is getattr(
+                ExecutionModePlugin, hook_name
+            ), f"{plugin_cls.__name__}.{hook_name} must not override base class"
+        assert (
+            plugin_cls.skip_post_behavior_command_sync.fget
+            is ExecutionModePlugin.skip_post_behavior_command_sync.fget
+        )
+
+
+class TestCooperativePluginBehaviorEquivalence:
+    """Mock self-proof: cooperative hook is called with correct arguments."""
+
+    def test_update_post_step_behavior_called_per_slot(self):
+        """Prove the cooperative step_wait calls the plugin hook per slot."""
+        from python.rl.runtime.cooperative_world_batch_vec_env import (
+            CooperativeWorldBatchVecEnv,
+        )
+        import inspect
+        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait)
+        assert "self._mode_plugin.update_post_step_behavior(" in source
+        assert "slot_state, sim_time, slot_state.last_truth, slot_state.last_inst" in source
+
+    def test_cooperative_plugin_hook_semantic_equivalence(self):
+        """Prove that the plugin hook reproduces the pre-wiring inline behavior."""
+        calls = []
+        plugin = CooperativePlugin()
+
+        class _SlotLikeHandle:
+            def __init__(self):
+                self.loader = _FakeLoader(calls)
+
+        handle = _SlotLikeHandle()
+        plugin.update_post_step_behavior(handle, 2.5, "truth_val", "inst_val")
+        assert len(calls) == 1
+        assert calls[0] == ("update_behaviors", 2.5, "truth_val", "inst_val", False)
+
+    def test_cooperative_plugin_skip_sync_false_gates_command_sync(self):
+        """Prove the plugin gate does not suppress the command-chain sync."""
+        plugin = CooperativePlugin()
+        assert plugin.skip_post_behavior_command_sync is False
+
+    def test_cooperative_plugin_finalize_not_called_in_step(self):
+        """Cooperative rejects hybrid; finalize_post_step_truth is not routed."""
+        from python.rl.runtime.cooperative_world_batch_vec_env import (
+            CooperativeWorldBatchVecEnv,
+        )
+        import inspect
+        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait)
+        assert "finalize_post_step_truth" not in source
+
+
+class TestLeaderPluginBehaviorEquivalence:
+    """Mock self-proof: leader hook is called with correct arguments."""
+
+    def test_update_post_step_behavior_called_per_env(self):
+        """Prove the leader step_indices calls the plugin hook per env."""
+        from python.rl.runtime.leader_world_batch_runtime import (
+            LeaderWorldBatchExecutionRuntimeGroup,
+        )
+        import inspect
+        source = inspect.getsource(
+            LeaderWorldBatchExecutionRuntimeGroup.step_indices
+        )
+        assert "self._mode_plugin.update_post_step_behavior(" in source
+        assert "handle, sim_time, handle.last_truth, handle.last_inst" in source
+
+    def test_leader_plugin_hook_semantic_equivalence(self):
+        """Prove that the plugin hook reproduces the pre-wiring inline behavior."""
+        calls = []
+        plugin = LeaderPlugin()
+        handle = _FakeHandle(calls)
+        plugin.update_post_step_behavior(handle, 3.0, "t", "i")
+        assert len(calls) == 1
+        assert calls[0] == ("update_behaviors", 3.0, "t", "i", False)
+
+    def test_leader_plugin_skip_sync_false(self):
+        """Leader always syncs command chain after behavior update."""
+        plugin = LeaderPlugin()
+        assert plugin.skip_post_behavior_command_sync is False

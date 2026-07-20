@@ -538,15 +538,17 @@ register_execution_mode("execution", _standard_execution_factory)
 # ---------------------------------------------------------------------------
 
 class CooperativePlugin(ExecutionModePlugin):
-    """Registered execution-mode identity for multi-slot cooperative worlds.
+    """Execution-mode plugin consumed by ``CooperativeWorldBatchVecEnv``.
 
-    All hooks equal the base-class defaults, which matches cooperative
-    semantics (plain ``update_behaviors``, no mainline controller, no
-    command-sync skip).  Note that ``CooperativeWorldBatchVecEnv.step_wait``
-    currently still calls ``update_behaviors`` inline and does not consume
-    this plugin; wiring the cooperative step loop through the hook surface
-    is deferred to a later slice.  This class replaces the I32 stub so the
-    registry resolves a typed plugin instead of a placeholder.
+    Resolved once at vec-env construction via ``resolve_execution_mode("cooperative")``.
+    The cooperative step loop routes its per-slot behavior-update call through
+    ``update_post_step_behavior`` and gates the post-behavior command-chain sync
+    on ``skip_post_behavior_command_sync``.
+
+    All hooks equal the base-class defaults: cooperative semantics require plain
+    ``update_behaviors`` (never ``update_command_chain_only``), always sync the
+    command chain after behavior updates, and have no ``finalize_post_step_truth``
+    decision point (the constructor rejects air-combat hybrid action modes).
     """
 
     mode_name = "cooperative"
@@ -564,15 +566,19 @@ register_execution_mode("cooperative", _cooperative_factory)
 # ---------------------------------------------------------------------------
 
 class LeaderPlugin(ExecutionModePlugin):
-    """Registered execution-mode identity for the leader runtime path.
+    """Execution-mode plugin consumed by ``LeaderWorldBatchExecutionRuntimeGroup``.
 
-    All hooks equal the base-class defaults.  The leader runtime group
-    (``LeaderWorldBatchExecutionRuntimeGroup``) delegates world stepping to
-    an inner ``WorldBatchVecEnv`` whose own ``StandardExecutionPlugin``
-    owns the hot-path hooks; the leader group itself does not currently
-    call ``resolve_execution_mode``.  This class replaces the I32 stub so
-    the registry resolves a typed plugin instead of a placeholder; wiring
-    a production call site is deferred to a later slice.
+    Resolved once at group construction via ``resolve_execution_mode("leader")``.
+    The leader group routes its per-env behavior-update call through
+    ``update_post_step_behavior`` and gates the post-behavior command-chain sync
+    on ``skip_post_behavior_command_sync``.
+
+    All hooks equal the base-class defaults: the leader group's own decision
+    points are structurally identical to the base behavior (plain
+    ``update_behaviors``, always sync, no finalizer).  The inner
+    ``WorldBatchVecEnv`` that owns the physics step has its own
+    ``StandardExecutionPlugin`` for execution-mode-specific routing (mainline
+    episode controller, air-combat hybrid finalization).
     """
 
     mode_name = "leader"

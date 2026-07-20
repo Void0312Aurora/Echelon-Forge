@@ -32,6 +32,7 @@ from python.rl.runtime.world_batch import (
     compute_loader_step_outcome,
     copy_obs_batch_item,
 )
+from python.rl.runtime.world_batch.core import LeaderPlugin, resolve_execution_mode
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 
 
@@ -101,6 +102,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
     def __init__(self, world_vec: WorldBatchVecEnv, leader_envs: Sequence[Any] | None = None):
         self.world_vec = world_vec
         self.access = WorldBatchVecEnvAccess(world_vec)
+        self._mode_plugin: LeaderPlugin = resolve_execution_mode("leader")
         self._leader_envs = [
             None if env is None else unwrap_nested_env(env)
             for env in (list(leader_envs) if leader_envs is not None else [None] * int(self.world_vec.num_envs))
@@ -511,15 +513,13 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             handle.last_truth = truth_list[batch_idx]
             handle.last_inst = inst_list[batch_idx]
             sim_time = float(handle.steps) * self._world_time_step(env_idx)
-            handle.loader.update_behaviors(
-                sim_time,
-                truth=handle.last_truth,
-                inst=handle.last_inst,
-                sync_to_kernel=False,
+            self._mode_plugin.update_post_step_behavior(
+                handle, sim_time, handle.last_truth, handle.last_inst,
             )
         behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if collect_timing else 0.0
         sync_t0 = time.perf_counter() if collect_timing else 0.0
-        self.access.sync_command_chain(target_indices)
+        if not self._mode_plugin.skip_post_behavior_command_sync:
+            self.access.sync_command_chain(target_indices)
         if collect_timing:
             command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 
