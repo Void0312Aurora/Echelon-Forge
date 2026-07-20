@@ -206,10 +206,15 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert 'nb::class_<MissionCommandMaintainedBatchContract>(' in bindings_runtime
   assert 'nb::class_<LeaderIntentMaintainedBatchContract>(' in bindings_runtime
   assert 'nb::class_<PilotReportMaintainedBatchContract>(' in bindings_runtime
-  assert 'nb::class_<WorldMissionCommandMaintainedAssignment>(' in bindings_runtime
-  assert 'nb::class_<WorldTaskOrderMaintainedAssignment>(' in bindings_runtime
-  assert 'nb::class_<WorldLeaderIntentMaintainedAssignment>(' in bindings_runtime
-  assert 'nb::class_<WorldPilotReportMaintainedAssignment>(' in bindings_runtime
+  # NOTE(I35): the four World*MaintainedAssignment classes are schema-owned
+  # as of I35 and now declare their nb::class_<T> via a named local variable
+  # (matching the established I26 macro-binding style) instead of an inline
+  # fluent nb::class_<T>(m, "T") chain, so these markers match only on the
+  # type-only prefix that both binding styles share.
+  assert 'nb::class_<WorldMissionCommandMaintainedAssignment>' in bindings_runtime
+  assert 'nb::class_<WorldTaskOrderMaintainedAssignment>' in bindings_runtime
+  assert 'nb::class_<WorldLeaderIntentMaintainedAssignment>' in bindings_runtime
+  assert 'nb::class_<WorldPilotReportMaintainedAssignment>' in bindings_runtime
   assert '"set_mission_commands_maintained_batch"' in bindings_runtime
   assert '"get_mission_commands_maintained_batch"' in bindings_runtime
   assert '"set_task_orders_maintained_batch"' in bindings_runtime

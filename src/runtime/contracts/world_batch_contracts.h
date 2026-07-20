@@ -498,9 +498,8 @@ struct WorldMissionCommandAssignment {
         "WorldMissionCommandAssignment transports only the MissionCommand compatibility shell."
     );
 
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    shell_type command{};
+#define EF_WORLD_MISSION_COMMAND_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_mission_command_assignment.inc"
 };
 
 struct MissionCommandMaintainedBatchContract {
@@ -517,13 +516,8 @@ struct MissionCommandMaintainedBatchContract {
     using ground_static_task_type = MissionCommandGround::StaticTaskDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-    shared_core_type shared_core{};
-    air_recovery_type air_recovery{};
-    air_takeoff_type air_takeoff{};
-    air_formation_type air_formation{};
-    naval_stationing_type naval_stationing{};
-    naval_embarked_helo_type naval_embarked_helo{};
-    ground_static_task_type ground_static_task{};
+#define EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/mission_command_maintained_batch_contract.inc"
 
     static_assert(
         kMaintainedBatchTruth,
@@ -605,57 +599,34 @@ struct WorldMissionCommandMaintainedAssignment {
         "WorldMissionCommandMaintainedAssignment transports only the controlled MissionCommand maintained batch contract."
     );
 
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    contract_type mission_command{};
+#define EF_WORLD_MISSION_COMMAND_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_mission_command_maintained_assignment.inc"
 };
 
 struct TaskOrderAirTaskingIdentityDirective {
-    TaskType task_type = TaskType::Idle;
-    std::uint64_t element_id = 0;
-    std::uint64_t package_id = 0;
-    std::uint64_t lead_aircraft_id = 0;
+#define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/task_order_air_tasking_identity_directive.inc"
 
     bool operator==(const TaskOrderAirTaskingIdentityDirective&) const = default;
 };
 
 struct TaskOrderAirStationingDirective {
-    double anchor_x_m = 0.0;
-    double anchor_y_m = 0.0;
-    double anchor_z_m = 0.0;
-    StationType station_type = StationType::Orbit;
-    double station_radius_m = 0.0;
-    double station_leg_length_m = 0.0;
-    double station_heading_deg = 0.0;
-    double altitude_block_min_m = 0.0;
-    double altitude_block_max_m = 0.0;
-    double target_altitude_m = 0.0;
-    double speed_min_mps = 0.0;
-    double speed_max_mps = 0.0;
-    double target_speed_mps = 0.0;
-    int entry_condition_code = 0;
-    int exit_condition_code = 0;
-    double on_station_time_s = 0.0;
-    double fuel_bingo_override_kg = 0.0;
+#define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/task_order_air_stationing_directive.inc"
 
     bool operator==(const TaskOrderAirStationingDirective&) const = default;
 };
 
 struct TaskOrderAirFormationDirective {
-    std::uint64_t formation_template_id = 0;
-    std::uint64_t formation_contract_id = 0;
-    FormationRole formation_role_id = FormationRole::Unspecified;
-    WingmanSlot wingman_slot_id = WingmanSlot::Unspecified;
-    int join_policy_id = 0;
-    int rejoin_policy_id = 0;
-    int mutual_support_mode = 0;
-    std::uint64_t support_sector_id = 0;
+#define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/task_order_air_formation_directive.inc"
 
     bool operator==(const TaskOrderAirFormationDirective&) const = default;
 };
 
 struct TaskOrderNavalStationingDirective {
-    NavalStationType naval_station_type = NavalStationType::Unspecified;
+#define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/task_order_naval_stationing_directive.inc"
 
     bool operator==(const TaskOrderNavalStationingDirective&) const = default;
 };
@@ -862,15 +833,8 @@ struct TaskOrderMaintainedBatchContract {
     using ground_static_task_type = TaskOrderGround::StaticTaskDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-    shared_core_type shared_core{};
-    air_tasking_identity_type air_tasking_identity{};
-    air_stationing_type air_stationing{};
-    air_recovery_type air_recovery{};
-    air_takeoff_type air_takeoff{};
-    air_formation_type air_formation{};
-    naval_command_authority_type naval_command_authority{};
-    naval_stationing_type naval_stationing{};
-    ground_static_task_type ground_static_task{};
+#define EF_TASK_ORDER_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/task_order_maintained_batch_contract.inc"
 
     static_assert(
         kMaintainedBatchTruth,
@@ -946,9 +910,8 @@ struct WorldTaskOrderMaintainedAssignment {
         "WorldTaskOrderMaintainedAssignment transports only the controlled TaskOrder maintained batch contract."
     );
 
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    contract_type task_order{};
+#define EF_WORLD_TASK_ORDER_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_task_order_maintained_assignment.inc"
 };
 
 struct WorldLeaderIntentAssignment {
@@ -960,9 +923,8 @@ struct WorldLeaderIntentAssignment {
         "WorldLeaderIntentAssignment transports only the LeaderIntent compatibility shell."
     );
 
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    shell_type intent{};
+#define EF_WORLD_LEADER_INTENT_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_leader_intent_assignment.inc"
 };
 
 struct LeaderIntentMaintainedBatchContract {
@@ -978,17 +940,8 @@ struct LeaderIntentMaintainedBatchContract {
     using ground_static_status_type = LeaderIntentGround::StaticStatusDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-    shared_core_type shared_core{};
-    LeaderPhase phase_id = LeaderPhase::Idle;
-    int element_phase_id = 0;
-    air_recovery_type air_recovery{};
-    FormationMode formation_mode_id = FormationMode::Unspecified;
-    bool join_required_flag = false;
-    bool rejoin_required_flag = false;
-    air_takeoff_type air_takeoff{};
-    air_formation_type air_formation{};
-    naval_command_authority_type naval_command_authority{};
-    ground_static_status_type ground_static_status{};
+#define EF_LEADER_INTENT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/leader_intent_maintained_batch_contract.inc"
 
     static_assert(
         kMaintainedBatchTruth,
@@ -1077,9 +1030,8 @@ struct WorldLeaderIntentMaintainedAssignment {
         "WorldLeaderIntentMaintainedAssignment transports only the controlled LeaderIntent maintained batch contract."
     );
 
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    contract_type leader_intent{};
+#define EF_WORLD_LEADER_INTENT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_leader_intent_maintained_assignment.inc"
 };
 
 struct WorldPilotReportAssignment {
@@ -1091,9 +1043,8 @@ struct WorldPilotReportAssignment {
         "WorldPilotReportAssignment transports only the PilotReport compatibility shell."
     );
 
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    shell_type report{};
+#define EF_WORLD_PILOT_REPORT_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_pilot_report_assignment.inc"
 };
 
 struct PilotReportMaintainedBatchContract {
@@ -1107,10 +1058,8 @@ struct PilotReportMaintainedBatchContract {
     using ground_static_status_type = PilotReportGround::StaticStatusDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-    shared_core_type shared_core{};
-    air_owner_slice_type air{};
-    naval_command_authority_type naval_command_authority{};
-    ground_static_status_type ground_static_status{};
+#define EF_PILOT_REPORT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/pilot_report_maintained_batch_contract.inc"
 
     static_assert(
         kMaintainedBatchTruth,
@@ -1175,9 +1124,8 @@ struct WorldPilotReportMaintainedAssignment {
         "WorldPilotReportMaintainedAssignment transports only the controlled PilotReport maintained batch contract."
     );
 
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    contract_type pilot_report{};
+#define EF_WORLD_PILOT_REPORT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_pilot_report_maintained_assignment.inc"
 };
 
 [[nodiscard]] inline const MissionCommandCompatibilityTransportShell&

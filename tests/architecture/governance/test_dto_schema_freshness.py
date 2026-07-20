@@ -503,6 +503,86 @@ EXPECTED_REGISTRATIONS = {
     f"{_BUILDER_DIR}/engagement_event_packet_builder.py",
     27,
   ),
+  "tools/maintenance/dto_schema/schemas/world_mission_command_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_mission_command_assignment.inc",
+    f"{_BUILDER_DIR}/world_mission_command_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/mission_command_maintained_batch_contract_fields.py": (
+    "src/runtime/contracts/detail/mission_command_maintained_batch_contract.inc",
+    f"{_BUILDER_DIR}/mission_command_maintained_batch_contract_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_mission_command_maintained_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_mission_command_maintained_assignment.inc",
+    f"{_BUILDER_DIR}/world_mission_command_maintained_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/task_order_air_tasking_identity_directive_fields.py": (
+    "src/runtime/contracts/detail/task_order_air_tasking_identity_directive.inc",
+    f"{_BUILDER_DIR}/task_order_air_tasking_identity_directive_builder.py",
+    4,
+  ),
+  "tools/maintenance/dto_schema/schemas/task_order_air_stationing_directive_fields.py": (
+    "src/runtime/contracts/detail/task_order_air_stationing_directive.inc",
+    f"{_BUILDER_DIR}/task_order_air_stationing_directive_builder.py",
+    17,
+  ),
+  "tools/maintenance/dto_schema/schemas/task_order_air_formation_directive_fields.py": (
+    "src/runtime/contracts/detail/task_order_air_formation_directive.inc",
+    f"{_BUILDER_DIR}/task_order_air_formation_directive_builder.py",
+    8,
+  ),
+  "tools/maintenance/dto_schema/schemas/task_order_naval_stationing_directive_fields.py": (
+    "src/runtime/contracts/detail/task_order_naval_stationing_directive.inc",
+    f"{_BUILDER_DIR}/task_order_naval_stationing_directive_builder.py",
+    1,
+  ),
+  "tools/maintenance/dto_schema/schemas/task_order_maintained_batch_contract_fields.py": (
+    "src/runtime/contracts/detail/task_order_maintained_batch_contract.inc",
+    f"{_BUILDER_DIR}/task_order_maintained_batch_contract_builder.py",
+    9,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_task_order_maintained_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_task_order_maintained_assignment.inc",
+    f"{_BUILDER_DIR}/world_task_order_maintained_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_leader_intent_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_leader_intent_assignment.inc",
+    f"{_BUILDER_DIR}/world_leader_intent_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/leader_intent_maintained_batch_contract_fields.py": (
+    "src/runtime/contracts/detail/leader_intent_maintained_batch_contract.inc",
+    f"{_BUILDER_DIR}/leader_intent_maintained_batch_contract_builder.py",
+    11,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_leader_intent_maintained_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_leader_intent_maintained_assignment.inc",
+    f"{_BUILDER_DIR}/world_leader_intent_maintained_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_pilot_report_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_pilot_report_assignment.inc",
+    f"{_BUILDER_DIR}/world_pilot_report_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/pilot_report_maintained_batch_contract_fields.py": (
+    "src/runtime/contracts/detail/pilot_report_maintained_batch_contract.inc",
+    f"{_BUILDER_DIR}/pilot_report_maintained_batch_contract_builder.py",
+    4,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_pilot_report_maintained_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_pilot_report_maintained_assignment.inc",
+    f"{_BUILDER_DIR}/world_pilot_report_maintained_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/recent_engagement_events_fields.py": (
+    "src/core/engine/detail/recent_engagement_events.inc",
+    f"{_BUILDER_DIR}/recent_engagement_events_builder.py",
+    14,
+  ),
 }
 
 EXPECTED_PACKAGE_INIT = f"{_BUILDER_DIR}/__init__.py"

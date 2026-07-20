@@ -786,6 +786,15 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("officer_in_tactical_command",
                 &PilotReportNaval::CommandAuthorityDirective::officer_in_tactical_command);
 
+    // NOTE(I35): MissionCommandMaintainedBatchContract/TaskOrderMaintainedBatchContract/
+    // LeaderIntentMaintainedBatchContract/PilotReportMaintainedBatchContract header
+    // field blocks are schema-owned (tools/maintenance/dto_schema), but each of these
+    // four bindings has long registered every field except its own trailing
+    // ground_static_task/ground_static_status field (a pre-existing binding-surface
+    // omission; TaskOrder's slice stays reachable through the
+    // task_order_maintained_ground_static_task free function). That never-bound
+    // field is preserved here as-is (parity baseline) instead of being
+    // macro-expanded from the same X-macro as the header block.
     nb::class_<MissionCommandMaintainedBatchContract>(m, "MissionCommandMaintainedBatchContract")
         .def(nb::init<>())
         .def_rw("shared_core", &MissionCommandMaintainedBatchContract::shared_core)
@@ -1029,48 +1038,60 @@ void bind_runtime(nb::module_ &m) {
     world_pilot_action_assignment_class.def_rw(#name, &WorldPilotActionAssignment::name);
 #include "runtime/contracts/detail/world_pilot_action_assignment.inc"
 
-    nb::class_<WorldMissionCommandAssignment>(m, "WorldMissionCommandAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldMissionCommandAssignment::world_index)
-        .def_rw("entity_id", &WorldMissionCommandAssignment::entity_id)
-        .def_rw("command", &WorldMissionCommandAssignment::command);
+    nb::class_<WorldMissionCommandAssignment> world_mission_command_assignment_class(
+        m, "WorldMissionCommandAssignment");
+    world_mission_command_assignment_class.def(nb::init<>());
+#define EF_WORLD_MISSION_COMMAND_ASSIGNMENT_FIELD(type, name, default_value) \
+    world_mission_command_assignment_class.def_rw(#name, &WorldMissionCommandAssignment::name);
+#include "runtime/contracts/detail/world_mission_command_assignment.inc"
 
-    nb::class_<WorldMissionCommandMaintainedAssignment>(m,
-                                                        "WorldMissionCommandMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldMissionCommandMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldMissionCommandMaintainedAssignment::entity_id)
-        .def_rw("mission_command", &WorldMissionCommandMaintainedAssignment::mission_command);
+    nb::class_<WorldMissionCommandMaintainedAssignment>
+        world_mission_command_maintained_assignment_class(
+            m, "WorldMissionCommandMaintainedAssignment");
+    world_mission_command_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_MISSION_COMMAND_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)     \
+    world_mission_command_maintained_assignment_class.def_rw(                               \
+        #name, &WorldMissionCommandMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_mission_command_maintained_assignment.inc"
 
-    nb::class_<WorldTaskOrderMaintainedAssignment>(m, "WorldTaskOrderMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldTaskOrderMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldTaskOrderMaintainedAssignment::entity_id)
-        .def_rw("task_order", &WorldTaskOrderMaintainedAssignment::task_order);
+    nb::class_<WorldTaskOrderMaintainedAssignment> world_task_order_maintained_assignment_class(
+        m, "WorldTaskOrderMaintainedAssignment");
+    world_task_order_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_TASK_ORDER_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) \
+    world_task_order_maintained_assignment_class.def_rw(#name, &WorldTaskOrderMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_task_order_maintained_assignment.inc"
 
-    nb::class_<WorldLeaderIntentAssignment>(m, "WorldLeaderIntentAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldLeaderIntentAssignment::world_index)
-        .def_rw("entity_id", &WorldLeaderIntentAssignment::entity_id)
-        .def_rw("intent", &WorldLeaderIntentAssignment::intent);
+    nb::class_<WorldLeaderIntentAssignment> world_leader_intent_assignment_class(
+        m, "WorldLeaderIntentAssignment");
+    world_leader_intent_assignment_class.def(nb::init<>());
+#define EF_WORLD_LEADER_INTENT_ASSIGNMENT_FIELD(type, name, default_value) \
+    world_leader_intent_assignment_class.def_rw(#name, &WorldLeaderIntentAssignment::name);
+#include "runtime/contracts/detail/world_leader_intent_assignment.inc"
 
-    nb::class_<WorldLeaderIntentMaintainedAssignment>(m, "WorldLeaderIntentMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldLeaderIntentMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldLeaderIntentMaintainedAssignment::entity_id)
-        .def_rw("leader_intent", &WorldLeaderIntentMaintainedAssignment::leader_intent);
+    nb::class_<WorldLeaderIntentMaintainedAssignment>
+        world_leader_intent_maintained_assignment_class(
+            m, "WorldLeaderIntentMaintainedAssignment");
+    world_leader_intent_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_LEADER_INTENT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)      \
+    world_leader_intent_maintained_assignment_class.def_rw(                                \
+        #name, &WorldLeaderIntentMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_leader_intent_maintained_assignment.inc"
 
-    nb::class_<WorldPilotReportAssignment>(m, "WorldPilotReportAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldPilotReportAssignment::world_index)
-        .def_rw("entity_id", &WorldPilotReportAssignment::entity_id)
-        .def_rw("report", &WorldPilotReportAssignment::report);
+    nb::class_<WorldPilotReportAssignment> world_pilot_report_assignment_class(
+        m, "WorldPilotReportAssignment");
+    world_pilot_report_assignment_class.def(nb::init<>());
+#define EF_WORLD_PILOT_REPORT_ASSIGNMENT_FIELD(type, name, default_value) \
+    world_pilot_report_assignment_class.def_rw(#name, &WorldPilotReportAssignment::name);
+#include "runtime/contracts/detail/world_pilot_report_assignment.inc"
 
-    nb::class_<WorldPilotReportMaintainedAssignment>(m, "WorldPilotReportMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldPilotReportMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldPilotReportMaintainedAssignment::entity_id)
-        .def_rw("pilot_report", &WorldPilotReportMaintainedAssignment::pilot_report);
+    nb::class_<WorldPilotReportMaintainedAssignment>
+        world_pilot_report_maintained_assignment_class(
+            m, "WorldPilotReportMaintainedAssignment");
+    world_pilot_report_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_PILOT_REPORT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)     \
+    world_pilot_report_maintained_assignment_class.def_rw(                               \
+        #name, &WorldPilotReportMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_pilot_report_maintained_assignment.inc"
 
     nb::class_<WorldExecutionEpisodeStepRequest> world_execution_episode_step_request_class(
         m, "WorldExecutionEpisodeStepRequest");
