@@ -119,6 +119,7 @@ struct BatchWorldSetupRequest {
     std::vector<std::uint32_t> seeds;
     std::vector<WorldTerrainAssignment> terrain_assignments;
     std::vector<WorldWindAssignment> wind_assignments;
+    std::vector<WorldSunAssignment> sun_assignments;
     std::vector<WorldZoneDefinition> zones;
     std::vector<WorldSpawnRequest> spawn_requests;
     std::vector<TypedPlatformSpawnRequest> typed_platform_spawn_requests;
@@ -137,6 +138,9 @@ struct RuntimeWorldLayoutRequest {
     double wind_speed_mps = 0.0;
     double wind_dir_from_deg = 0.0;
     double wind_shear_mps_per_km = 0.0;
+    // Defaults preserve the historical fixed sun vector (north, 45 deg up).
+    double sun_azimuth_deg = 0.0;
+    double sun_elevation_deg = 45.0;
     bool maritime_configured = false;
     double sea_state = 0.0;
     double wave_heading_deg = 0.0;

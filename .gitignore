@@ -87,6 +87,7 @@ experiments_tmp/
 datasets/
 output/
 .playwright-mcp/
+.playwright-cli/
 docs/book/
 docs/book/**
 !docs/book/

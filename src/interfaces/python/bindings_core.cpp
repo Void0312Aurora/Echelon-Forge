@@ -627,6 +627,17 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
         .def("set_wind", &SimulationKernel::set_wind,
              "Set global wind (speed m/s, dir_from_deg NAV, shear m/s per km)",
              nb::arg("speed_mps"), nb::arg("dir_from_deg"), nb::arg("shear_mps_per_km") = 0.0)
+        .def("set_sun_direction", &SimulationKernel::set_sun_direction,
+             "Set the sun direction driving optical glare (azimuth deg NAV, elevation deg above "
+             "horizon)",
+             nb::arg("azimuth_deg"), nb::arg("elevation_deg"))
+        .def(
+            "get_sun_direction",
+            [](SimulationKernel &self) {
+                const auto sun = self.get_sun_direction();
+                return std::make_tuple(sun.x, sun.y, sun.z);
+            },
+            "Get the unit vector toward the sun as (east, north, up)")
         .def("set_maritime_state", &SimulationKernel::set_maritime_state,
              "Set global maritime state (sea state, wave heading deg NAV, wave period s)",
              nb::arg("sea_state"), nb::arg("wave_heading_deg") = 0.0,

@@ -112,6 +112,10 @@ class ScenarioWorldLayout:
     wind_speed_mps: float
     wind_dir_from_deg: float
     wind_shear_mps_per_km: float
+    # Sun direction driving optical glare (NAV azimuth, elevation above
+    # horizon). Defaults preserve the historical fixed vector.
+    sun_azimuth_deg: float
+    sun_elevation_deg: float
     # False: leave ships on platform fallback maritime params.
     # True: environment maritime fields fully override per-platform defaults.
     maritime_configured: bool
@@ -145,6 +149,7 @@ class BatchWorldApplyBuffer:
     world_count: int
     terrain_assignments: list[Any] | None = None
     wind_assignments: list[Any] | None = None
+    sun_assignments: list[Any] | None = None
     zone_defs: list[Any] | None = None
     spawn_requests: list[Any] | None = None
 
@@ -152,6 +157,7 @@ class BatchWorldApplyBuffer:
         self.world_count = max(0, int(self.world_count))
         self.terrain_assignments = [] if self.terrain_assignments is None else list(self.terrain_assignments)
         self.wind_assignments = [] if self.wind_assignments is None else list(self.wind_assignments)
+        self.sun_assignments = [] if self.sun_assignments is None else list(self.sun_assignments)
         self.zone_defs = [] if self.zone_defs is None else list(self.zone_defs)
         self.spawn_requests = [] if self.spawn_requests is None else list(self.spawn_requests)
 
@@ -163,12 +169,13 @@ class BatchWorldApplyBuffer:
             del items[target_size:]
         return items
 
-    def prepare(self, layouts: list[ScenarioWorldLayout]) -> tuple[list[Any], list[Any], list[Any], list[Any]]:
+    def prepare(self, layouts: list[ScenarioWorldLayout]) -> tuple[list[Any], list[Any], list[Any], list[Any], list[Any]]:
         if len(layouts) != int(self.world_count):
             raise ValueError(f"expected {self.world_count} layouts, got {len(layouts)}")
 
         terrain_items = self._ensure_size(self.terrain_assignments, len(layouts), ef_py.WorldTerrainAssignment)
         wind_items = self._ensure_size(self.wind_assignments, len(layouts), ef_py.WorldWindAssignment)
+        sun_items = self._ensure_size(self.sun_assignments, len(layouts), ef_py.WorldSunAssignment)
         total_zone_count = sum(len(layout.zones) for layout in layouts)
         total_spawn_count = sum(len(layout.spawns) for layout in layouts)
         zone_items = self._ensure_size(self.zone_defs, total_zone_count, ef_py.WorldZoneDefinition)
@@ -186,6 +193,11 @@ class BatchWorldApplyBuffer:
             wind.speed_mps = float(layout.wind_speed_mps)
             wind.dir_from_deg = float(layout.wind_dir_from_deg)
             wind.shear_mps_per_km = float(layout.wind_shear_mps_per_km)
+
+            sun = sun_items[world_index]
+            sun.world_index = int(world_index)
+            sun.azimuth_deg = float(getattr(layout, "sun_azimuth_deg", 0.0))
+            sun.elevation_deg = float(getattr(layout, "sun_elevation_deg", 45.0))
 
             for zone in layout.zones:
                 zone_def = zone_items[zone_cursor]
@@ -223,14 +235,15 @@ class BatchWorldApplyBuffer:
                 req.weapon_cooldown_s = float(spawn.weapon_cooldown_s)
                 req.weapon_last_fire_time = float(spawn.weapon_last_fire_time)
 
-        return terrain_items, wind_items, zone_items, spawn_items
+        return terrain_items, wind_items, sun_items, zone_items, spawn_items
 
-    def prepare_direct(self, *, total_zone_count: int, total_spawn_count: int) -> tuple[list[Any], list[Any], list[Any], list[Any]]:
+    def prepare_direct(self, *, total_zone_count: int, total_spawn_count: int) -> tuple[list[Any], list[Any], list[Any], list[Any], list[Any]]:
         terrain_items = self._ensure_size(self.terrain_assignments, int(self.world_count), ef_py.WorldTerrainAssignment)
         wind_items = self._ensure_size(self.wind_assignments, int(self.world_count), ef_py.WorldWindAssignment)
+        sun_items = self._ensure_size(self.sun_assignments, int(self.world_count), ef_py.WorldSunAssignment)
         zone_items = self._ensure_size(self.zone_defs, int(total_zone_count), ef_py.WorldZoneDefinition)
         spawn_items = self._ensure_size(self.spawn_requests, int(total_spawn_count), ef_py.WorldSpawnRequest)
-        return terrain_items, wind_items, zone_items, spawn_items
+        return terrain_items, wind_items, sun_items, zone_items, spawn_items
 
 
 __all__ = [

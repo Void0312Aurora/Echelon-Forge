@@ -2,7 +2,7 @@
 
 状态：active follow-on 入口；bootstrap 规划基线，以及 environment-substrate G0
 设计/实现线已在 `2026-06-06` 接受并闭合至 G0-M；当前进展追踪更新于
-`2026-06-06`。
+`2026-07-15`，并接受 Arnis adapter 第一阶段静态环境 bundle follow-on。
 
 语言：
 
@@ -14,6 +14,13 @@
 
 ## 当前状态
 
+- 已接受 environment-substrate Arnis adapter 第一阶段：
+  [environment_substrate_arnis_adapter/README.zh.md](environment_substrate_arnis_adapter/README.zh.md)。
+  该 follow-on 固定 Arnis 版本与 continuous patch，在 Minecraft 量化前导出
+  pre-scale 高程、categorical 地表覆盖及浮点道路、建筑和水系，严格导入 CMO
+  manifest，携带 fail-closed elevation anchor，并派生非 runtime 静态场景预览
+  （`403` resolved / `106` held）；不释放 runtime setup、movement、LOS、cover、
+  fires、damage 或 combat。
 - 最新状态总结以
   [陆军 / 地面当前进展追踪](ground_current_progress_20260524.zh.md) 为准。
 - 已接受 environment-substrate G0 design/implementation line：
@@ -111,6 +118,8 @@
 
 ## 当前入口
 
+- Arnis adapter 第一阶段：
+  [environment_substrate_arnis_adapter/README.zh.md](environment_substrate_arnis_adapter/README.zh.md)
 - 当前进展追踪：
   [ground_current_progress_20260524.zh.md](ground_current_progress_20260524.zh.md)
 - 已接受 environment-substrate G0 architecture package：

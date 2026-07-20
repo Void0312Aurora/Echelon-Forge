@@ -4,10 +4,10 @@ import json
 import math
 import os
 import sys
+import threading
 from argparse import Namespace
 from types import SimpleNamespace
 
-import eventlet
 import numpy as np
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -41,6 +41,8 @@ from python.world_model.features import (
     nav_tracking_features,
 )
 from examples.viz.runtime.environment_overlays import build_environment_overlay_payload
+from examples.viz.runtime.illumination import resolve_scenario_illumination
+from examples.viz.runtime.unit_semantics import infer_echelon
 from examples.viz.runtime.action_utils import normalize_fixed_action
 
 
@@ -88,6 +90,12 @@ def _unnormalize_action(action: np.ndarray, low: np.ndarray, high: np.ndarray) -
 
 COMMAND_CODE_TO_NAME = {int(v): str(k).upper() for k, v in COMMAND_NAME_TO_CODE.items()}
 GROUND_TASKING_PROFILE_ALIASES = {"army", "ground", "land"}
+
+# Versioned wire contracts. Bump when a consumer-visible field changes shape
+# or meaning so old/new frontends and replay tooling can negotiate; additive
+# fields do not require a bump.
+VIZ_STATE_FRAME_CONTRACT_VERSION = "examples.viz.state_frame.v1"
+VIZ_MAP_SETUP_CONTRACT_VERSION = "examples.viz.map_setup.v1"
 DEFAULT_C2_TASK_SEQUENCE = [
     "TASK_SCRAMBLE",
     "TASK_CAP",
@@ -799,7 +807,10 @@ class VizSession:
         self.scenario = str(getattr(args, "scenario", ""))
         self.simulation_running = False
         self.simulation_paused = False
-        self.stop_requested = False
+        # Thread-safe stop signal: set from request handlers, honored by the
+        # worker. Never reset -- a VizSession runs exactly one loop, so a
+        # stop that arrives before startup must still terminate the worker.
+        self._stop_event = threading.Event()
         self.ready = False
         self.env = None
         self.model = None
@@ -807,6 +818,11 @@ class VizSession:
         self.map_data = None
         self.nav_data = None
         self.sim_speed = 1.0
+        self.last_error = ""
+
+    @property
+    def stop_requested(self) -> bool:
+        return self._stop_event.is_set()
 
     def _release_runtime_resources(self) -> None:
         env = self.env
@@ -855,14 +871,16 @@ class VizSession:
         self.simulation_paused = False
 
     def stop(self) -> None:
+        # Signal only; the worker thread owns the env and performs cleanup in
+        # its finally block. Closing the env from this (request) thread while
+        # the worker is mid-step would race under the threading async model.
         print("Stop Signal Received")
-        self.stop_requested = True
+        self._stop_event.set()
         self.simulation_running = False
         self.simulation_paused = False
         self.ready = False
         self.map_data = None
         self.nav_data = None
-        self._release_runtime_resources()
         self._notify_status()
 
     def set_speed(self, data) -> None:
@@ -887,11 +905,43 @@ class VizSession:
             "ready": bool(self.ready),
             "stopped": bool(self.stop_requested),
             "speed": float(self.sim_speed),
+            "error": str(self.last_error),
         }
 
+    def report_error(self, message: str) -> None:
+        self.last_error = str(message)
+        try:
+            self.socketio.emit("viz_error", {"message": self.last_error, "scenario": str(self.scenario)})
+        except Exception:
+            pass
+        self._notify_status()
+
     def run_loop(self) -> None:
+        try:
+            self._run_loop_inner()
+        except Exception as exc:
+            import traceback
+
+            traceback.print_exc()
+            self.ready = False
+            self.simulation_running = False
+            self.simulation_paused = False
+            self.report_error(f"{type(exc).__name__}: {exc}")
+        finally:
+            # The worker exclusively releases runtime resources so a stop()
+            # from a request thread can never close the env mid-step.
+            self.ready = False
+            self._release_runtime_resources()
+            self._notify_status()
+
+    def _run_loop_inner(self) -> None:
         args = self.args
-        self.stop_requested = False
+        # Do not reset the stop event here: a stop arriving before the worker
+        # reaches this point must still terminate the session. Startup is
+        # slow (env construction, model load), so it also checks the stop
+        # signal at its expensive milestones to keep reload waits bounded.
+        if self.stop_requested:
+            return
         train_config = _load_train_config_for_viz(getattr(args, "model", None), getattr(args, "train_config", None))
         leader_mode = _is_leader_train_config(train_config)
         cooperative_mode = _is_cooperative_train_config(train_config)
@@ -1018,6 +1068,11 @@ class VizSession:
             mission_obs_mode = "leader"
             visual_downsample = 1
             visual_update_interval = 1
+
+        # Env construction is the longest startup step; honor a pending stop
+        # before committing to it.
+        if self.stop_requested:
+            return
 
         if not leader_mode and not cooperative_mode:
             print(
@@ -1248,8 +1303,12 @@ class VizSession:
                     display_obs[key] = value
             return display_obs
 
+        if self.stop_requested:
+            return
         print("Server ready. Waiting for start...")
         obs = _reset_env_for_viz(int(args.seed) if args.seed is not None else None)
+        if self.stop_requested:
+            return
         if isinstance(self.model, (_WorldModelPolicy, _ScriptedPolicy)):
             self.model.reset(obs)
         self.episode_return = 0.0
@@ -1553,11 +1612,29 @@ class VizSession:
         episode_max_agl = 0.0
 
         scenario_data = sim_env.loader.scenario_data
+        env_block = scenario_data.get("environment") if isinstance(scenario_data, dict) else None
+        env_block_stripped = not isinstance(env_block, dict) or not (
+            "zones" in env_block or "illumination" in env_block
+        )
+        if env_block_stripped:
+            # World-batch loader shims keep only a reduced environment block
+            # ({max_steps, time_step}); fall back to the scenario file so
+            # zones, overlays, and illumination still reach the viz.
+            scenario_path = str(getattr(args, "scenario", "") or "")
+            if scenario_path and os.path.isfile(scenario_path):
+                try:
+                    with open(scenario_path, "r", encoding="utf-8") as fh:
+                        scenario_data = json.load(fh)
+                except Exception:
+                    scenario_data = sim_env.loader.scenario_data
         zones = scenario_data.get("environment", {}).get("zones", [])
         environment_overlays = build_environment_overlay_payload(scenario_data)
+        illumination = resolve_scenario_illumination(scenario_data, sim=sim_env.sim)
         self.map_data = {
+            "contract_version": VIZ_MAP_SETUP_CONTRACT_VERSION,
             "zones": zones,
             "environment_overlays": environment_overlays,
+            "illumination": illumination,
         }
         print("=" * 60)
         print("MAP DATA SENT TO VIZ:")
@@ -1576,10 +1653,12 @@ class VizSession:
                 if self.stop_requested:
                     break
                 speed = max(0.05, float(self.sim_speed))
+                # socketio.sleep delegates to the configured async model
+                # (threading here; eventlet/gevent-safe if that ever changes).
                 if speed >= 1.0:
-                    eventlet.sleep(dt_wall)
+                    self.socketio.sleep(dt_wall)
                 else:
-                    eventlet.sleep(dt_wall / speed)
+                    self.socketio.sleep(dt_wall / speed)
 
                 if not self.simulation_running:
                     continue
@@ -1777,6 +1856,19 @@ class VizSession:
                 scenario_entities_cfg = {}
                 try:
                     loader_scenario_data = getattr(sim_env.loader, "scenario_data", None)
+                    loader_has_entities = (
+                        isinstance(loader_scenario_data, dict)
+                        and isinstance(loader_scenario_data.get("entities"), list)
+                        and len(loader_scenario_data.get("entities")) > 0
+                    )
+                    if not loader_has_entities:
+                        # World-batch loaders keep an empty scenario dict on the
+                        # compatibility shim; fall back to the scenario file so
+                        # the viz still gets side/type metadata for units.
+                        scenario_path = str(getattr(args, "scenario", "") or "")
+                        if scenario_path and os.path.isfile(scenario_path):
+                            with open(scenario_path, "r", encoding="utf-8") as fh:
+                                loader_scenario_data = json.load(fh)
                     if isinstance(loader_scenario_data, dict):
                         raw_entities_cfg = loader_scenario_data.get("entities", [])
                         if isinstance(raw_entities_cfg, list):
@@ -1794,18 +1886,32 @@ class VizSession:
                         return None
 
                     pos = sim_env.sim.get_unit_position(eid)
-                    hdg = sim_env.sim.get_unit_heading(eid)
+                    try:
+                        hdg = sim_env.sim.get_unit_heading(eid)
+                    except AttributeError:
+                        # World-batch adapter shims expose observations but not
+                        # the legacy per-unit heading accessor.
+                        obs_now = sim_env.sim.get_agent_observation(eid)
+                        hdg = float(getattr(obs_now, "heading", 0.0) or 0.0)
                     ent_cfg = scenario_entities_cfg.get(str(name), {})
                     type_name = str(ent_cfg.get("type", "")).strip()
                     type_name_upper = type_name.upper()
                     name_upper = str(name).upper()
-                    is_aircraft = (
-                        "F-16" in type_name_upper
-                        or "F16" in type_name_upper
-                        or "AIRCRAFT" in type_name_upper
-                        or "F-16" in name_upper
-                        or "F16" in name_upper
-                        or "AIRCRAFT" in name_upper
+                    aircraft_tokens = (
+                        "F-16",
+                        "F16",
+                        "AIRCRAFT",
+                        "MQ-9",
+                        "MQ9",
+                        "REAPER",
+                        "UAV",
+                        "DRONE",
+                        "SHAHED",
+                        "GERAN",
+                    )
+                    is_aircraft = any(
+                        token in type_name_upper or token in name_upper
+                        for token in aircraft_tokens
                     )
                     is_ship = (
                         "DDG-51" in type_name_upper
@@ -1819,10 +1925,17 @@ class VizSession:
                         or "T-AKE" in name_upper
                         or "HVU" in name_upper
                     )
+                    ground_tokens = ("GROUND", "PLATOON", "INFANTRY", "VEHICLE", "TANK", "IFV", "APC")
+                    is_ground = any(
+                        token in type_name_upper or token in name_upper
+                        for token in ground_tokens
+                    )
                     if is_aircraft:
                         viz_type = "Aircraft"
                     elif is_ship:
                         viz_type = "Ship"
+                    elif is_ground:
+                        viz_type = "Ground"
                     else:
                         viz_type = "Facility"
 
@@ -1832,6 +1945,9 @@ class VizSession:
                         "side": str(ent_cfg.get("side", "Unknown")),
                         "type": viz_type,
                         "platform_type": type_name,
+                        # Echelon seed for operational/strategic aggregation;
+                        # inferred from naming until the engine models it.
+                        "echelon": infer_echelon(type_name, name),
                         "x": pos[0],
                         "y": pos[1],
                         "z": pos[2] - 2.0 if is_aircraft else pos[2],
@@ -1878,6 +1994,7 @@ class VizSession:
                         "side": side,
                         "type": "Missile",
                         "platform_type": "Missile",
+                        "echelon": "",
                         "service_profile": service_profile,
                         "x": float(getattr(runtime_unit, "x", 0.0)),
                         "y": float(getattr(runtime_unit, "y", 0.0)),
@@ -2088,6 +2205,7 @@ class VizSession:
                         units_data.append(u)
 
                 state = {
+                    "contract_version": VIZ_STATE_FRAME_CONTRACT_VERSION,
                     "tick": sim_time,
                     "units": units_data,
                     "mission_status": _capture_mission_status(sim_time),
@@ -2144,7 +2262,5 @@ class VizSession:
 
                 traceback.print_exc()
                 break
-
-        self.ready = False
-        self._release_runtime_resources()
-        self._notify_status()
+        # Resource release and status notification happen in run_loop's
+        # finally block (worker-owned cleanup).

@@ -1,7 +1,3 @@
-import eventlet
-
-eventlet.monkey_patch()
-
 import argparse
 import os
 import sys
@@ -22,7 +18,7 @@ template_dir = os.path.join(base_dir, "web_viz/templates")
 static_dir = os.path.join(base_dir, "web_viz/static")
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 args = None
 session = None

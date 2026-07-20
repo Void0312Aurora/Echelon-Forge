@@ -1,0 +1,46 @@
+{
+  "bbox_wgs84": {
+    "max_lat": 41.8895,
+    "max_lon": -87.6315,
+    "min_lat": 41.8865,
+    "min_lon": -87.6355
+  },
+  "contract_version": "arnis_cmo_phase1_request.v1",
+  "expected": {
+    "bundle_contract_version": "arnis_cmo_bundle.v1",
+    "bundle_manifest_path": "expected/bundle.json",
+    "bundle_manifest_sha256": "524064a993f83bd1c25c6b5b039ba2ee5c11fd5fae3a9a3cb9a8d617a609571d",
+    "feature_counts": {
+      "buildings": 76,
+      "hydrology": 8,
+      "roads": 425
+    }
+  },
+  "fixture_id": "arnis-cmo-fixture:chicago-river-phase1",
+  "generator": {
+    "exporter_patch_id": "0001-cmo-continuous-bundle-export-v1",
+    "exporter_patch_sha256": "26536836d46aa7bc3e03da3449b4c52391f096527ab58f365d5dd4b96b9052ee",
+    "exporter_version": "cmo.phase1.v1",
+    "id": "arnis",
+    "upstream_revision": "af521c99124b5e07ecba018ea54f2ac47b6441d5",
+    "version": "3.0.0"
+  },
+  "options": {
+    "deterministic_seed": 0,
+    "overture": false,
+    "projection": "web_mercator",
+    "rotation_deg": 0.0,
+    "scale": 1.0,
+    "terrain": true
+  },
+  "required_actual_sources": {
+    "elevation_provider": "usgs_3dep",
+    "landcover_provider": "ESA WorldCover 2021 v200"
+  },
+  "request_id": "arnis-import:e5aae85d5e130d9168d90be8",
+  "source_input": {
+    "byte_length": 758113,
+    "path": "input/osm_extract_20260715.json",
+    "sha256": "efe1b0d5045ae898b18fa5587df7e477849ef009eb2417c9437f7f2aa64bebd1"
+  }
+}

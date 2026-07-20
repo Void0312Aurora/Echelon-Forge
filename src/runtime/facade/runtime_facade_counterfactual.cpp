@@ -28,6 +28,9 @@ BatchWorldSetupRequest single_world_counterfactual_setup(BatchWorldSetupRequest 
     for (auto &assignment : setup.wind_assignments) {
         assignment.world_index = 0;
     }
+    for (auto &assignment : setup.sun_assignments) {
+        assignment.world_index = 0;
+    }
     for (auto &zone : setup.zones) {
         zone.world_index = 0;
     }

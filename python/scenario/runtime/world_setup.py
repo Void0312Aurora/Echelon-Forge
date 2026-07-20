@@ -61,6 +61,7 @@ def build_batch_world_setup_request(
     zones: list[Any],
     spawn_requests: list[Any],
     time_steps: list[float],
+    sun_assignments: list[Any] | None = None,
 ):
     if not hasattr(ef_py, "BatchWorldSetupRequest"):
         raise RuntimeError(
@@ -74,6 +75,8 @@ def build_batch_world_setup_request(
     request.seeds = [int(seed) & 0xFFFFFFFF for seed in seeds]
     request.terrain_assignments = normalized_terrain_assignments
     request.wind_assignments = list(wind_assignments)
+    if sun_assignments is not None and hasattr(request, "sun_assignments"):
+        request.sun_assignments = list(sun_assignments)
     request.zones = list(zones)
     request.spawn_requests = list(spawn_requests)
     request.time_steps = [float(value) for value in time_steps]
@@ -102,6 +105,8 @@ def build_runtime_world_layout_request(
     zones: list[Any],
     spawn_requests: list[Any],
     time_steps: list[float],
+    sun_azimuth_deg: float = 0.0,
+    sun_elevation_deg: float = 45.0,
 ):
     if not hasattr(ef_py, "RuntimeWorldLayoutRequest"):
         raise RuntimeError(
@@ -114,6 +119,9 @@ def build_runtime_world_layout_request(
     request.wind_speed_mps = float(wind_speed_mps)
     request.wind_dir_from_deg = float(wind_dir_from_deg)
     request.wind_shear_mps_per_km = float(wind_shear_mps_per_km)
+    if hasattr(request, "sun_azimuth_deg"):
+        request.sun_azimuth_deg = float(sun_azimuth_deg)
+        request.sun_elevation_deg = float(sun_elevation_deg)
     request.maritime_configured = bool(maritime_configured)
     request.sea_state = float(sea_state)
     request.wave_heading_deg = float(wave_heading_deg)
@@ -175,6 +183,7 @@ def apply_world_setup_payload_maintained(
     zones: list[Any],
     spawn_requests: list[Any],
     time_steps: list[float],
+    sun_assignments: list[Any] | None = None,
 ) -> list[int]:
     normalized_terrain_assignments, _ = normalize_world_setup_terrain_assignments(
         terrain_assignments,
@@ -187,6 +196,7 @@ def apply_world_setup_payload_maintained(
         zones=zones,
         spawn_requests=spawn_requests,
         time_steps=time_steps,
+        sun_assignments=sun_assignments,
     )
     return apply_world_setup_request_maintained(setup_target, request)
 
