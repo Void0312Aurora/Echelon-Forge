@@ -469,6 +469,108 @@ Write set for this fix: `tests/architecture/runtime_facade/test_tasking_batch_co
 section). No `python/rl/runtime/world_batch/**` production code changed --
 this was a guard-adaptation gap, not a functional defect.
 
+### 6.2 I42 fix and re-verification (sibling gap)
+
+**Fix**: `test_batch_envs_use_tasking_bridge_for_command_chain_sync`
+(`tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py`,
+`GroundRuntimeSourceBridgeTests`) now reads
+`python/rl/runtime/world_batch/_shared_ops.py`'s source text once and
+appends it (joined with `"\n"`) onto each of the two per-file scan texts
+(`vec_env.py`'s and `cooperative_world_batch_vec_env.py`'s own
+`read_text()` result) before running the same nine `assertIn`/
+`assertNotIn` checks the test already had. The change is scoped to this
+one test function only; every other test in this file, and every other
+guard anywhere else in the suite, is untouched. A new inline comment
+(`NOTE(I42)`) records why, using the same local-splice pattern as I39's
+wp24 guard repair (section 6.1 above,
+`tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py`):
+I34 sank both vec-env consumers' per-entity command-chain diff and
+batch-submit calls -- including the `build_kernel_mission_command` call
+this guard watches for -- into the shared `_shared_ops.py` module
+(imported as `diff_single_entity_command_chain`/
+`submit_command_chain_assignments`), so neither consumer's own source text
+names `build_kernel_mission_command` or the maintained batch setters
+directly anymore -- only `_shared_ops.py` does now. The comment also notes
+that this guard's original "vec_env/cooperative import directly from
+`bridge.py`" framing is now satisfied through their shared `_shared_ops.py`
+dependency rather than a same-file import, so the framing is updated to
+match that fact -- but no assertion was loosened or removed: every
+positive check still requires the real token to be present somewhere in
+the sunk call chain (`_shared_ops.py` carries all five positive tokens the
+guard requires and none of the four forbidden legacy tokens, confirmed by
+inspection before the edit -- the I42 review additionally ran the substring
+check proving no maintained name contains a legacy name), and every
+forbidden-legacy-token check is strengthened rather than weakened, since it
+now also covers the module that physically performs the writes.
+
+**Negative self-proof** (rehearsed against an in-memory copy; the
+worktree's `_shared_ops.py` was never written to): a standalone script
+living outside the worktree imported the real, unmodified
+`GroundRuntimeSourceBridgeTests` test case, used `unittest.mock.patch.object`
+to intercept `pathlib.Path.read_text` for exactly the `_shared_ops.py` path
+so it returns a sabotaged in-memory copy with every
+`build_kernel_mission_command` occurrence renamed to
+`renamed_kernel_mission_command_symbol` (every other path's `read_text`
+fell through to the real file unchanged), then ran the test case directly
+via `TestCase.debug()`:
+
+```
+--- sanity: guard passes against the REAL (unsabotaged) _shared_ops.py ---
+OK: real worktree state is green, as expected.
+
+--- negative self-proof: guard against a SABOTAGED in-memory copy ---
+GUARD WENT RED AS EXPECTED. Traceback:
+  File ".../test_ground_runtime_lifecycle_bridge.py", line 129, in
+    test_batch_envs_use_tasking_bridge_for_command_chain_sync
+    self.assertIn("from python.rl.tasking.bridge import build_kernel_mission_command", text)
+AssertionError: 'from python.rl.tasking.bridge import build_kernel_mission_command'
+not found in '...renamed_kernel_mission_command_symbol...'
+
+--- post-check: worktree _shared_ops.py is untouched on disk ---
+OK: worktree _shared_ops.py byte-identical to before the rehearsal.
+```
+
+**Verification** (this worktree, `CMO_BUILD_DIR=<worktree>/build-local-win`):
+
+```
+pytest -q tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py
+-> 4 passed (previously 3 passed, 1 failed -- the node this section fixes)
+
+pytest -q tests/runtime/mission
+-> 90 passed, 8 subtests passed (previously 1 failed, 89 passed, 8 subtests
+   passed -- the fixed node was this directory's only red; no other node
+   changed)
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 446 passed, 45 subtests passed -- measured before this ledger edit.
+   `tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py` is not a
+   member of the smoke manifest (`tests/smoke/ci_smoke_suite.json` lists
+   five other `tests/runtime/mission/*` files but not this one), so this
+   guard's red/green state does not move this count either way.
+   445 passed, 1 failed, 45 subtests passed -- measured after this ledger
+   edit (this file plus its `.zh.md` peer): the one new red is the
+   bilingual-registry hash flag this edit itself raises
+   (`test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface`),
+   same mechanism as the I39/I41 landings; its `clusters --write` refresh
+   is a landing-side duty per the iteration brief, not part of this fix's
+   write set. `python tools/maintenance/translate_docs_batch.py audit`
+   (no `--write`; read-only comparison against the registry) confirms
+   `pair_count: 80`, `synced: 79`, `diverged: 1`, with
+   `plan/unified_architecture_program/t6_residual_ledger` (this document
+   pair) as the sole diverged entry.
+
+ruff check tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py
+-> All checks passed!
+
+git diff --check    -> clean
+```
+
+Write set for this fix: `tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py`
+(guard adaptation only) plus this ledger's own registration (this
+section, both languages). No `python/rl/runtime/world_batch/**` production
+code changed -- this was a guard-adaptation gap, not a functional defect,
+same as the wp24 sibling this section's parent entry cross-references.
+
 ## 7. I41: T3 second slice -- six-item include-direction violation evaluation matrix (one converged, five deferred)
 
 I38 ratcheted six pre-existing include-direction violations into

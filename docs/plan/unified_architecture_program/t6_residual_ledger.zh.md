@@ -414,6 +414,97 @@ git diff --check    -> 干净
 `python/rl/runtime/world_batch/**` 生产代码——这属于守护适配缺失，不是功
 能缺陷。
 
+### 6.2 I42 修复与复核（姊妹缺口）
+
+**修复**：`test_batch_envs_use_tasking_bridge_for_command_chain_sync`
+（`tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py`，
+`GroundRuntimeSourceBridgeTests`）现在把
+`python/rl/runtime/world_batch/_shared_ops.py` 的源码文本读取一次，用
+`"\n"` 拼接到两个逐文件扫描文本各自末尾（`vec_env.py`与
+`cooperative_world_batch_vec_env.py`各自 `read_text()` 的结果），再执行
+该测试原有的那九条 `assertIn`/`assertNotIn` 断言。改动范围仅限于这一个
+测试函数：本文件内的其它测试、以及套件中的任何其它守护，都未被触碰。新
+增的行内注释（`NOTE(I42)`）记录了原因，采用与 I39 的 wp24 守护修复（上方
+6.1 节，`tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py`）
+相同的本地拼接模式：I34 把两个 vec-env 消费者各自的逐实体命令链 diff 与
+批量提交调用——包括本守护要盯防的那次 `build_kernel_mission_command` 调
+用——都下沉到了共享的 `_shared_ops.py` 模块中（以
+`diff_single_entity_command_chain`/`submit_command_chain_assignments` 形
+式导入），因此两个消费者自身的源码文本都不再直接点名
+`build_kernel_mission_command` 或 maintained 批量 setter——如今只有
+`_shared_ops.py` 里还有。注释同时指出：本守护原有的"vec_env/cooperative
+直接从 `bridge.py` 导入"表述，如今是经由两者共享的 `_shared_ops.py` 依赖
+满足的，不再是同文件内导入——已按事实更新表述，但没有放松或删除任何断
+言：每条正向检查仍要求真实 token 出现在下沉后的调用链某处（`_shared_ops.py`
+携带了守护要求的全部五个正向 token、且四个禁用 legacy token 均缺席，修复
+前已逐一核对确认——I42 评审另实跑子串检查证明各 maintained 名均不含
+legacy 名），每条禁用
+legacy-token 检查也变得更严格而非更宽松，因为它现在同样覆盖了实际发起
+写调用的那个模块。
+
+**负向自证**（针对内存中的副本演练；工作树里的 `_shared_ops.py` 从未被
+写入）：一个位于工作树之外的独立脚本导入了真实、未经修改的
+`GroundRuntimeSourceBridgeTests` 测试用例，用
+`unittest.mock.patch.object` 只拦截 `_shared_ops.py` 这一个路径的
+`pathlib.Path.read_text`，让它返回一份被破坏的内存副本——把其中每一处
+`build_kernel_mission_command` 都改名为
+`renamed_kernel_mission_command_symbol`（其余所有路径的 `read_text` 均照
+常落到真实文件、不受影响），然后通过 `TestCase.debug()` 直接运行该测试
+用例：
+
+```
+--- sanity: guard passes against the REAL (unsabotaged) _shared_ops.py ---
+OK: real worktree state is green, as expected.
+
+--- negative self-proof: guard against a SABOTAGED in-memory copy ---
+GUARD WENT RED AS EXPECTED. Traceback:
+  File ".../test_ground_runtime_lifecycle_bridge.py", line 129, in
+    test_batch_envs_use_tasking_bridge_for_command_chain_sync
+    self.assertIn("from python.rl.tasking.bridge import build_kernel_mission_command", text)
+AssertionError: 'from python.rl.tasking.bridge import build_kernel_mission_command'
+not found in '...renamed_kernel_mission_command_symbol...'
+
+--- post-check: worktree _shared_ops.py is untouched on disk ---
+OK: worktree _shared_ops.py byte-identical to before the rehearsal.
+```
+
+**验证**（本工作树，`CMO_BUILD_DIR=<worktree>/build-local-win`）：
+
+```
+pytest -q tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py
+-> 4 passed（此前为 3 passed, 1 failed——本节修复的节点）
+
+pytest -q tests/runtime/mission
+-> 90 passed, 8 subtests passed（此前为 1 failed, 89 passed, 8 subtests
+   passed——被修复的节点是本目录唯一的红；未见其它节点变化）
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 446 passed, 45 subtests passed——测于本台账编辑之前。
+   `tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py` 不是
+   smoke 清单成员（`tests/smoke/ci_smoke_suite.json` 列了另外五个
+   `tests/runtime/mission/*` 文件，但没有这一个），因此本守护的红/绿状态
+   不会左右这一计数。
+   445 passed, 1 failed, 45 subtests passed——测于本台账编辑（本文件及其
+   `.zh.md` 对应版本）之后：新增的这一处红即本次编辑自身触发的双语注册表
+   哈希标记（`test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface`），
+   与 I39/I41 落地时同一机理；其 `clusters --write` 刷新按迭代任务书属落
+   地方职责，不在本次修复写集之内。`python tools/maintenance/translate_docs_batch.py audit`
+   （未带 `--write`，只读比对注册表）确认 `pair_count: 80`、
+   `synced: 79`、`diverged: 1`，且
+   `plan/unified_architecture_program/t6_residual_ledger`（即本文档对）
+   是唯一那条 diverged 条目。
+
+ruff check tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py
+-> All checks passed!
+
+git diff --check    -> 干净
+```
+
+本次修复的写集：`tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py`
+（仅守护适配）以及本台账自身的登记（本节，双语）。未改动任何
+`python/rl/runtime/world_batch/**` 生产代码——这属于守护适配缺失、不是功
+能缺陷，与本节上级条目所交叉引用的 wp24 姊妹条目同源。
+
 ## 7. I41：T3 第二切片——六条 include 方向违规的评估矩阵（1 条收敛，5 条缓办）
 
 I38 把六条既有的 include 方向违规 ratchet 进
