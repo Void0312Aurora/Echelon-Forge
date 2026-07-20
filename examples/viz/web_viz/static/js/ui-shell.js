@@ -5,6 +5,7 @@
 import { dom, getById } from './dom.js';
 import { vizState } from './store.js';
 import {
+    sidcForUnit,
     tacticalLayerGroups,
     tacticalLayerKeys,
     tacticalLayerSpec,
@@ -431,9 +432,13 @@ export function renderUnitList() {
         const div = document.createElement('div');
         div.className = 'unit-item' + (u.id === vizState.focusedId ? ' active' : '');
         div.dataset.side = String(u.data.side || 'Unknown');
+        // Standard symbology identifier (MIL-STD-2525 seed) for inspection.
+        div.title = sidcForUnit(u.data);
         const assetEntry = resolveAssetEntry(u.data);
         const title = document.createElement('div');
-        title.innerText = `[${u.data.id}] ${u.data.name || i18n('ui.unitFallback', 'Unit')}`;
+        const echelon = String(u.data.echelon || '');
+        title.innerText = `[${u.data.id}] ${u.data.name || i18n('ui.unitFallback', 'Unit')}`
+            + (echelon ? ` (${echelon.replace('_', ' ')})` : '');
         div.appendChild(title);
         if (assetEntry?.realism?.substitute_for || assetEntry?.realism?.realism_note) {
             const meta = document.createElement('div');

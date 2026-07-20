@@ -42,6 +42,7 @@ from python.world_model.features import (
 )
 from examples.viz.runtime.environment_overlays import build_environment_overlay_payload
 from examples.viz.runtime.illumination import resolve_scenario_illumination
+from examples.viz.runtime.unit_semantics import infer_echelon
 from examples.viz.runtime.action_utils import normalize_fixed_action
 
 
@@ -89,6 +90,12 @@ def _unnormalize_action(action: np.ndarray, low: np.ndarray, high: np.ndarray) -
 
 COMMAND_CODE_TO_NAME = {int(v): str(k).upper() for k, v in COMMAND_NAME_TO_CODE.items()}
 GROUND_TASKING_PROFILE_ALIASES = {"army", "ground", "land"}
+
+# Versioned wire contracts. Bump when a consumer-visible field changes shape
+# or meaning so old/new frontends and replay tooling can negotiate; additive
+# fields do not require a bump.
+VIZ_STATE_FRAME_CONTRACT_VERSION = "examples.viz.state_frame.v1"
+VIZ_MAP_SETUP_CONTRACT_VERSION = "examples.viz.map_setup.v1"
 DEFAULT_C2_TASK_SEQUENCE = [
     "TASK_SCRAMBLE",
     "TASK_CAP",
@@ -1595,6 +1602,7 @@ class VizSession:
         environment_overlays = build_environment_overlay_payload(scenario_data)
         illumination = resolve_scenario_illumination(scenario_data, sim=sim_env.sim)
         self.map_data = {
+            "contract_version": VIZ_MAP_SETUP_CONTRACT_VERSION,
             "zones": zones,
             "environment_overlays": environment_overlays,
             "illumination": illumination,
@@ -1906,6 +1914,9 @@ class VizSession:
                         "side": str(ent_cfg.get("side", "Unknown")),
                         "type": viz_type,
                         "platform_type": type_name,
+                        # Echelon seed for operational/strategic aggregation;
+                        # inferred from naming until the engine models it.
+                        "echelon": infer_echelon(type_name, name),
                         "x": pos[0],
                         "y": pos[1],
                         "z": pos[2] - 2.0 if is_aircraft else pos[2],
@@ -1952,6 +1963,7 @@ class VizSession:
                         "side": side,
                         "type": "Missile",
                         "platform_type": "Missile",
+                        "echelon": "",
                         "service_profile": service_profile,
                         "x": float(getattr(runtime_unit, "x", 0.0)),
                         "y": float(getattr(runtime_unit, "y", 0.0)),
@@ -2162,6 +2174,7 @@ class VizSession:
                         units_data.append(u)
 
                 state = {
+                    "contract_version": VIZ_STATE_FRAME_CONTRACT_VERSION,
                     "tick": sim_time,
                     "units": units_data,
                     "mission_status": _capture_mission_status(sim_time),

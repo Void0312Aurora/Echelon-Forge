@@ -62,6 +62,15 @@ export function sceneGeometryPayload() {
     return payload;
 }
 
+// Geodetic anchor of the local ENU frame (lat/lon of the local origin plus
+// the source WGS84 bbox), or null. Strategic-scale views will use this to
+// place local scenes on a globe; nothing in the tactical views consumes it
+// yet beyond surfacing it for inspection.
+export function sceneGeodeticAnchor() {
+    const anchor = payload?.geodetic_anchor;
+    return (anchor && typeof anchor === 'object') ? anchor : null;
+}
+
 export function sceneGeometryBounds() {
     if (!payload) return null;
     const extent = payload.region_extent || {};
@@ -239,6 +248,13 @@ export function ensureSceneGeometry(available) {
             const body = await response.json();
             if (!body || typeof body !== 'object' || !body.terrain) return;
             payload = body;
+            const anchor = sceneGeodeticAnchor();
+            if (anchor) {
+                console.log(
+                    `Scene geometry anchored at lat ${Number(anchor.anchor_lat_deg).toFixed(4)}, `
+                    + `lon ${Number(anchor.anchor_lon_deg).toFixed(4)} (${anchor.frame})`,
+                );
+            }
             await buildTerrainBitmap();
             buildSceneGeometry3D(payload, {
                 terrainCellColor,

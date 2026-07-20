@@ -113,6 +113,41 @@ def _terrain_payload(
     return payload
 
 
+def _geodetic_anchor(bundle: dict[str, Any]) -> dict[str, Any] | None:
+    """Bind the local ENU frame to the globe.
+
+    Strategic/operational-scale views will eventually place many local
+    scenes on one geodetic globe; carrying the anchor now means every
+    payload produced today stays placeable later. The Arnis projection
+    normalizes the WGS84 bbox center to the local origin, so the bbox
+    midpoint is the anchor of the ENU frame.
+    """
+    bbox = bundle.get("bbox_wgs84")
+    if not isinstance(bbox, dict):
+        return None
+    try:
+        min_lat = float(bbox["min_lat"])
+        max_lat = float(bbox["max_lat"])
+        min_lon = float(bbox["min_lon"])
+        max_lon = float(bbox["max_lon"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    request = bundle.get("request") if isinstance(bundle.get("request"), dict) else {}
+    return {
+        "frame": "local_enu_m",
+        "anchor_lat_deg": (min_lat + max_lat) / 2.0,
+        "anchor_lon_deg": (min_lon + max_lon) / 2.0,
+        "bbox_wgs84": {
+            "min_lat": min_lat,
+            "max_lat": max_lat,
+            "min_lon": min_lon,
+            "max_lon": max_lon,
+        },
+        "projection": str(request.get("projection") or ""),
+        "source": "arnis_bundle_bbox_wgs84",
+    }
+
+
 def _held_summary(objects: list[dict[str, Any]]) -> dict[str, Any]:
     by_reason: dict[str, int] = {}
     for item in objects:
@@ -321,6 +356,7 @@ def load_scene_geometry_payload(
             "min_y": _round3(region_extent.get("min_y", 0.0)),
             "max_y": _round3(region_extent.get("max_y", 0.0)),
         },
+        "geodetic_anchor": _geodetic_anchor(bundle),
         "terrain": _terrain_payload(
             elevation,
             x_axis,

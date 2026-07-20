@@ -53,6 +53,21 @@ import {
 
 let socket = null;
 
+// Contract-version tolerance: unknown versions render best-effort but are
+// reported once per channel+version so protocol drift is visible instead of
+// silent. Additive changes keep the same version string.
+const warnedContractVersions = new Set();
+function checkContractVersion(channel, received, expected) {
+    if (received === undefined || received === expected) return;
+    const key = `${channel}:${received}`;
+    if (warnedContractVersions.has(key)) return;
+    warnedContractVersions.add(key);
+    console.warn(
+        `viz ${channel} contract version mismatch: got ${JSON.stringify(received)}, `
+        + `frontend expects ${expected}; rendering best-effort`,
+    );
+}
+
 export function resetVizScene() {
     clearUnitVisuals();
     clearNavGroup();
@@ -298,6 +313,7 @@ export function initSession() {
     });
 
     socket.on('map_setup', (data) => {
+        checkContractVersion('map_setup', data?.contract_version, 'examples.viz.map_setup.v1');
         const zones = Array.isArray(data?.zones) ? data.zones : [];
         console.log(`Map setup received: ${zones.length} zones`);
         vizState.environmentOverlays = data.environment_overlays || null;
@@ -311,6 +327,7 @@ export function initSession() {
     });
 
     socket.on('state_update', (state) => {
+        checkContractVersion('state_update', state?.contract_version, 'examples.viz.state_frame.v1');
         const frameAt = performance.now();
         if (vizState.lastStateFrameAt !== null) {
             const interval = Math.max(1.0, frameAt - vizState.lastStateFrameAt);

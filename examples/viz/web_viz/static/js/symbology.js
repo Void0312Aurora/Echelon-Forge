@@ -341,3 +341,46 @@ export function tacticalAffiliationStyle(side) {
     return tacticalSymbology.affiliation[String(side || 'Unknown')]
         || tacticalSymbology.affiliation.Unknown;
 }
+
+// --- MIL-STD-2525 alignment seed ---
+// Operational/strategic views speak standard symbology (SIDC), not ad-hoc
+// shapes. Rendering stays custom for now; every unit gets a 2525C-shaped
+// semantic identifier so the vocabulary is already standard when aggregate
+// views arrive. 15 chars: scheme, affiliation, battle dimension, status,
+// function ID (5-10), symbol modifiers (11-12: HQ flag + echelon), '-' fill.
+export const sidcAffiliation = Object.freeze({
+    Blue: 'F', // friend
+    Red: 'H', // hostile
+    Neutral: 'N',
+    Unknown: 'U',
+});
+
+// Battle dimension + generic function ID per viz unit type (2525C subset).
+export const sidcUnitTypeSkeleton = Object.freeze({
+    Aircraft: { dimension: 'A', functionId: 'MF----' }, // military fixed wing
+    Ship: { dimension: 'S', functionId: 'C-----' }, // surface combatant
+    Ground: { dimension: 'G', functionId: 'U-----' }, // ground unit
+    Missile: { dimension: 'A', functionId: 'W-----' }, // weapon in flight
+    Facility: { dimension: 'G', functionId: 'I-----' }, // installation
+});
+
+// 2525C echelon codes (position 12).
+export const sidcEchelonCode = Object.freeze({
+    fire_team: 'A',
+    squad: 'B',
+    section: 'C',
+    platoon: 'D',
+    company: 'E',
+    battalion: 'F',
+    regiment: 'G',
+    brigade: 'H',
+    division: 'I',
+    corps: 'J',
+});
+
+export function sidcForUnit(unit) {
+    const affiliation = sidcAffiliation[String(unit?.side || 'Unknown')] || 'U';
+    const skeleton = sidcUnitTypeSkeleton[String(unit?.type || '')] || sidcUnitTypeSkeleton.Facility;
+    const echelon = sidcEchelonCode[String(unit?.echelon || '')] || '-';
+    return `S${affiliation}${skeleton.dimension}P${skeleton.functionId}-${echelon}---`;
+}
