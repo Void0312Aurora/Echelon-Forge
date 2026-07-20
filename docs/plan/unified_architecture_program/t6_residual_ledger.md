@@ -373,6 +373,17 @@ Registered at the I37 landing from the I37 review's lineage triage
 | Behavior evidence | `test_world_batch_vec_env_command_chain.py` 23/23 green at all commits -- maintained-contract write paths function correctly; this is a guard-adaptation gap, not a functional regression |
 | Repair direction | add `_shared_ops.py` to the guard's scan set (guard intent unchanged); owner: T6, attributed to I34 |
 
+**Sibling gap (registered at the I41 landing, same I34 attribution):**
+`tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py::GroundRuntimeSourceBridgeTests::test_batch_envs_use_tasking_bridge_for_command_chain_sync`
+-- surfaced by I41's focused regression and lineage-triaged by the I41
+review on isolated clean checkouts (green at `48c86c4b`, red from
+`c2952d61` onward): the guard still asserts vec_env/cooperative import
+`build_kernel_mission_command` directly from `bridge.py`, while the I34
+sink moved that call into `_shared_ops.py`; the I39 repair covered only the
+wp24 guard file, not this one. Behavior unaffected (same mechanism as the
+wp24 entry above). Repair direction: same as I39 -- include `_shared_ops.py`
+in this guard's scan set, guard intent unchanged. Fixed at I42.
+
 **Status**: fixed at I39. Section 6.1 below records the fix and its
 re-verification.
 
@@ -458,6 +469,214 @@ Write set for this fix: `tests/architecture/runtime_facade/test_tasking_batch_co
 section). No `python/rl/runtime/world_batch/**` production code changed --
 this was a guard-adaptation gap, not a functional defect.
 
+## 7. I41: T3 second slice -- six-item include-direction violation evaluation matrix (one converged, five deferred)
+
+I38 ratcheted six pre-existing include-direction violations into
+`tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`
+(see the I38 register row). I41 (T3's second slice) re-evaluated all six
+against the "safe to converge now vs. genuinely deferred structural/design
+gap" question, with a full consumer/binding census for each, and implemented
+the one that came back low-risk. This section is the evaluation matrix and
+disposition record the allowlist's own amendment note points at; the
+allowlist entries themselves carry the same conclusions inline (see each
+entry's `reason` field after the I41 amendment).
+
+| # | Edge (`from_group` -> `to_group`) | Verdict | One-line reason |
+| --- | --- | --- | --- |
+| a | `components/combat/common/weapon_common.h:12` -> `models/weapons/kalman_seeker.h` | **Converged** | `SeekerEkfState`/`SeekerEkfParams` had exactly four touchpoints (the definition site, one embedding site, one math-function call site, one direct-include test) and zero Python bindings; relocating the two structs to a components-owned leaf closes the edge with a byte-identical type move. |
+| b | `core/engine/world_batch_runtime.cpp:9` -> `gpu/gpu_interaction_broadphase_runtime.h` | Deferred | Four call sites inside the interaction-broadphase path call `gpu::` packed types/functions directly; closing this needs the GPU/engine integration seam itself, not a type move. |
+| c | `core/engine/world_batch_runtime.h:12` -> `core/mission/episode/execution_episode_controller.h` | Deferred | `ExecutionEpisodeController` batch ownership is read/written by nine `WorldBatchRuntime` methods; relocating ownership is a WP4 hot-path design decision (the facade/mission-owned batch wrapper the I38 `next_gate` names), not a type move. |
+| d | `core/engine/world_batch_runtime.h:13` -> `gpu/gpu_visual_runtime.h` | Deferred | `WorldBatchVisualBindingCompatibilityScene` is the return/parameter type of two public `WorldBatchRuntime` batch methods; same GPU/engine seam as (b). |
+| e | `core/engine/world_batch_visual_binding_compatibility_helper.h:9` -> `gpu/gpu_visual_runtime.h` | Deferred | The helper's entire purpose is bridging to four `gpu::render_visual_*` entry points; same seam as (b)/(d), not an incidental include. |
+| f | `runtime/contracts/world_batch_contracts.h:16` -> `core/mission/episode/execution_episode_batch_prepare.h` | Deferred | `StepEvaluationBatchConfig`/`StepEvaluationBatchEnvState` are consumed throughout `core/mission/episode` and `core/mission/runtime`, individually field-bound in `bindings_episode.cpp`, and `EnvState` alone embeds ten further mission-owned aggregate types by value; relocating verbatim only inverts the violation, and an independent contracts-owned mirror type would duplicate that whole nested-type graph -- a T1 DTO-family-completion-scale migration, not a mechanical move. |
+
+### 7.1 (a) converged: `missile_seeker` EKF state relocated to a components leaf
+
+**Census** (all touchpoints of `missile_seeker::SeekerEkfState`/`SeekerEkfParams`
+and the `missile_seeker::` free functions, repo-wide): `src/models/weapons/kalman_seeker.h`
+(definition site plus the EKF math functions that operate on the two
+structs), `src/components/combat/common/weapon_common.h` (`Missile` embeds
+`ekf_state`/`ekf_params` by value at lines 221-222), `src/models/weapons/default_guidance_model.cpp`
+(calls `missile_seeker::ekf_init/ekf_predict/ekf_update/ekf_filtered_*/ekf_closing_speed_mps`,
+but reached the free functions only *transitively* through
+`core/interfaces/guidance_model.h` -> `weapon_common.h` -> `kalman_seeker.h`,
+with no direct include of its own), and `src/tests/test_kalman_seeker.cpp`
+(includes `kalman_seeker.h` directly; exempt `tests` group, unaffected by
+direction policy either way). Neither struct, nor `Missile`, is ever passed
+through `nb::class_<...>` -- grepping `src/interfaces/python/*.cpp` for
+`Missile`/`ekf` finds only internal ECS `.get<Missile>()` calls, no binding.
+`tools/maintenance/dto_schema` has zero references to either struct, so the
+move does not touch schema/generator ownership.
+
+**Fix**: new leaf header `src/components/combat/common/missile_seeker_state.h`
+holds `namespace missile_seeker { struct SeekerEkfState {...}; struct
+SeekerEkfParams {...}; }`, byte-identical to the definitions previously
+inline in `kalman_seeker.h` (same field names, types, order, and default
+values -- a pure text relocation, not a redesign, so C++ layout/ABI for both
+structs and for `Missile` is unaffected by construction, not just by test
+evidence). `kalman_seeker.h` now `#include`s this leaf back (`models ->
+components`, already policy-allowed) instead of defining the structs itself.
+`weapon_common.h`'s include of `models/weapons/kalman_seeker.h` is replaced
+with the new leaf include (`components -> components`, same-group, always
+allowed). `default_guidance_model.cpp` gained a direct `#include
+"models/weapons/kalman_seeker.h"` (it is in the `models` group already, so
+this is not a new direction edge) because breaking `weapon_common.h`'s
+include of `kalman_seeker.h` also breaks the transitive chain that used to
+hand it the EKF math functions -- an IWYU fix the relocation makes mandatory,
+not optional. Four files touched (one new, three edited); zero CMake
+changes (headers are found via `ef_core`'s public include directory, not
+enumerated).
+
+### 7.2 (b)/(c)/(d)/(e) deferred: the GPU/engine and mission-batch-ownership design gaps are real, not mechanical
+
+All four sit on the WP4 hot-path/GPU integration seam the I38 `next_gate`
+text already named. I41 re-verified each is a multi-site functional
+coupling rather than an incidental include before deferring: (b)'s
+`gpu::InteractionBroadphaseConfig`/`InteractionEntityPacked`/`InteractionQueryPacked`
+and `gpu::build_interaction_broadphase_*_batch` are called at four sites
+inside `world_batch_runtime.cpp`'s interaction-broadphase path; (c)'s
+`std::vector<ExecutionEpisodeController> execution_episode_controllers_` is
+read or written by `clear_execution_episode_controller_batch`,
+`prime_execution_episode_controller_batch`,
+`execution_episode_controller_ready`,
+`export_execution_episode_states_batch`, `evaluate_execution_episode_batch`,
+`step_execution_episode_batch`, `step_execution_episode_results_batch`, and
+the two private `checked_execution_episode_controller` overloads -- nine
+methods, not one field; (d)'s `WorldBatchVisualBindingCompatibilityScene`
+is the return/parameter type of
+`collect_visual_binding_compatibility_scenes_from_candidate_ids_batch` and
+`collect_visual_binding_compatibility_scenes_batch`, two public batch
+methods; (e)'s helper (`world_batch_visual_binding_compatibility_helper.h`)
+exists specifically to build `gpu::VisualRenderRequest`/`VisibleObjectPacked`
+values and branch between `gpu::render_visual_experiment(_batch_export)`
+and `gpu::render_visual_reference_cpu(_batch)`, i.e. the gpu dependency is
+the helper's entire reason for existing. None of the four can be closed by
+relocating a type; each needs the GPU/engine integration seam (b/d/e) or the
+facade/mission-owned batch wrapper (c) the I38 `next_gate` text already
+calls for -- an architecture decision belonging to T4 (Exact-runtime
+alignment, whose own key risk is exactly this WP4 double-ownership
+transition) or the next T3 physical-split slice. Deferred untouched; the
+allowlist entries' `reason` fields now record this I41 re-verification
+inline (see the allowlist amendment note).
+
+### 7.3 (f) deferred: the mission/contracts DTO pair is a T1-scale migration, not a mechanical relocation
+
+Full consumer/binding census before concluding: `StepEvaluationBatchConfig`/`StepEvaluationBatchEnvState`
+(`core/mission/episode/execution_episode_batch_prepare.h`) are consumed by
+`core/mission/episode/execution_episode_controller.h`/`.cpp` (the
+`evaluate`/`step`/`step_result` methods `WorldBatchRuntime` calls through
+`WorldExecutionEpisodeStepRequest.config`/`.env_state`),
+`core/mission/episode/detail/episode_transition_runtime.h`/`.cpp`, and
+`core/mission/runtime/reward_runtime.h`; both types are individually
+field-bound in `interfaces/python/bindings_episode.cpp` (`nb::class_<StepEvaluationBatchConfig>`/`<StepEvaluationBatchEnvState>`,
+57 combined `def_rw` calls); and `StepEvaluationBatchEnvState` alone embeds
+ten further mission-owned aggregate types by value (`ExecutionEpisodeState`,
+`MissionObservationInputs`, `StepInfoInputs`, `SafetyRuntimeInputs`,
+`WaypointRewardInputs`, `ApproachRewardInputs`, `ConditionalObjectiveSpec`,
+`ConditionalObjectiveInputs`, `ObjectiveShapingConfig`,
+`FlightShapingRuntimeInputs`), each also separately bound, and consumed from
+four `python/rl/runtime/world_batch/**` call sites
+(`vec_env.py`, `_observation_mixin.py`, `cooperative_world_batch_vec_env.py`,
+`_execution_episode_mixin.py`).
+
+This census forecloses both remedies the task brief posed as options.
+Relocating either struct's physical ownership into `runtime/contracts`
+verbatim would require the new contracts header to `#include` whichever of
+the ten nested mission-owned types it still embeds by value --
+`runtime_contracts`'s policy-allowed target set is `{components}` only (see
+`tools/architecture/cpp_include_graph.FINE_GROUP_ALLOWED_TARGETS`), so that
+merely inverts the violation into one or more `runtime_contracts ->
+core_mission_runtime`/`core_mission_episode` edges, each strictly harder to
+defend than the current one (a whole aggregate type embedded by value, not
+two flat config/state structs). Defining an independent contracts-owned
+transport shape instead of relocating avoids inverting the edge, but only
+by duplicating the same ten-type nested graph under a second name that must
+then be kept in sync by hand -- trading a governance-gate violation for a
+silent-drift risk, and at a scope (ten aggregate types, ~57+ bound fields
+across two Python-binding files) matching the T1 DTO-family-completion track
+(the natural next single-sourcing candidate per the I31/I33/I35 lineage
+already indexed in section 4 above), not a T3 second-slice mechanical
+relocation. `python/rl/runtime/world_batch/**` is also outside this
+iteration's write-set boundary (I40 is concurrently using it in a sibling
+worktree per this iteration's task brief), which independently rules out
+touching the Python-visible binding shape this iteration even if the C++
+side were otherwise safe. Deferred; the allowlist entry's `reason` field
+records this full census inline.
+
+### 7.4 Verification (this worktree, `CMO_BUILD_DIR=<worktree>/build-local-win`, baseline `b618971f`)
+
+```
+cmake --build build-local-win --target ef_core ef_py -j4
+-> succeeded (incremental; pre-existing third-party spdlog/nanobind template
+   warnings only, unrelated to this iteration's diff)
+
+pytest -q tests/architecture/governance/test_cpp_include_direction.py
+-> 7 passed (allowlist entries 6 -> 5; the (a) fingerprint is correctly
+   flagged stale by the gate before the allowlist edit, proving the gate
+   detects the fix rather than the edit being unverified)
+
+tools/maintenance/dto_schema/generate.py --check -> all artifacts up-to-date
+
+ctest (build-local-win) -> 8/8 passed
+
+ef_test.exe --source-file="*test_kalman_seeker*" -> 3 test cases, 17423
+assertions, 0 failed (same EKF math now operating on the relocated structs)
+
+pytest -q tests/world_batch tests/architecture/runtime_facade
+  tests/runtime/bindings tests/runtime/mission tests/runtime/engagement
+  tests/architecture/damage_model/test_release_signoff_gate.py
+-> 471 passed, 6 failed, 1 skipped, 28 subtests. All six failures reproduced
+   identically on the pre-edit baseline (verified via `git stash`): the four
+   `test_wp22_*` nodes and the lazy-binding `common.ef_py` gap already
+   indexed in section 5 above, plus one not yet indexed there --
+   `tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py::GroundRuntimeSourceBridgeTests::test_batch_envs_use_tasking_bridge_for_command_chain_sync`
+   (asserts `vec_env.py`/`cooperative_world_batch_vec_env.py` still import
+   `build_kernel_mission_command` from `python.rl.tasking.bridge`; both now
+   route command-chain sync through `_shared_ops.py` instead, the same I34
+   sink already registered in section 6 -- apparently a sibling guard gap in
+   a different test file that section 6's I39 fix did not cover). Confirmed
+   unrelated to this iteration's diff (stash test: still red with this
+   iteration's changes removed) and out of this iteration's write-set
+   boundary (neither the test nor `vec_env.py`/`bridge.py` was touched);
+   surfaced here for visibility only, not adjudicated or fixed by this
+   section.
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 446 passed, 45 subtests passed (unchanged from this iteration's I38/I39
+   baseline)
+
+Cross-build parity: the (b)-(f) edges' types do carry Python bindings
+elsewhere (`gpu::InteractionBroadphaseConfig`/packed views in
+`bindings_gpu.cpp`, `ExecutionEpisodeController` in `bindings_episode.cpp`,
+and `StepEvaluationBatchConfig`/`EnvState` field-bound per section 7.3), but
+those five edges were untouched this iteration, so their binding surfaces
+are unaffected by construction; the one converged move, (a), involves only
+`Missile`/`SeekerEkfState`/`SeekerEkfParams`, which are never bound --
+grepping `src/interfaces/python/*.cpp` finds no `nb::class_<Missile>` and no
+`ekf`-named binding call. (Wording corrected at the I41 landing per review:
+the original "zero of the six edges' types are ever bound" claim
+contradicted section 7.3's own citation of the (f) bindings.) With zero Python-bound
+classes actually affected by this iteration's one converged move, the
+"affected classes" parity set is empty by construction; two sentinel
+contracts classes (`WorldEntityRef`, `TypedPlatformSpawnRequest`) were
+dumped (`dir()` plus a depth-4 recursive default-value snapshot) from both
+the pre-existing `D:\workshop\Research\Echelon-Forge\build-local-win`
+(2026-07-18) build and this worktree's rebuilt `ef_py`: both fields
+(`dir_public`, `default_value_snapshot`) compared byte-identical for both
+classes, evidencing the diffing harness itself is sound and this worktree's
+rebuild introduced no incidental Python-surface drift.
+
+ruff check .        -> All checks passed!
+git diff --check    -> clean
+```
+
+Write set for this section's converged fix: `src/components/combat/common/missile_seeker_state.h`
+(new), `src/components/combat/common/weapon_common.h`,
+`src/models/weapons/kalman_seeker.h`, `src/models/weapons/default_guidance_model.cpp`
+(4 files), plus the allowlist fixture (entry removed and remaining five
+amended) and this ledger section. No `python/**` or `examples/**` touched;
+no CMake target changes.
+
 ## Related
 
 - [Repository Consolidation Plan](../repository_consolidation/README.md)
@@ -466,3 +685,6 @@ this was a guard-adaptation gap, not a functional defect.
   (sibling `reference`-kind register; structural precedent for this document)
 - `tests/runtime/air_combat/weapon_guidance_realism/README.md` (wrapper/mixin
   collection contract referenced in section 1)
+- `tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`
+  (I38/I41 ratchet allowlist; section 7 above is this ledger's record of the
+  I41 amendment)

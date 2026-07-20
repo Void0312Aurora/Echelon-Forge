@@ -326,6 +326,15 @@ retained 文件零改动；三个文件与 HEAD 始终字节一致。
 | 行为证据 | `test_world_batch_vec_env_command_chain.py` 在各提交均 23/23 绿——维护契约写路径功能完好；属守护适配缺失、非功能回归 |
 | 修复方向 | 把 `_shared_ops.py` 纳入守护扫描集（守护意图不变）；归属：T6，记于 I34 名下 |
 
+**姊妹缺口（于 I41 落地时登记，同为 I34 归因）：**
+`tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py::GroundRuntimeSourceBridgeTests::test_batch_envs_use_tasking_bridge_for_command_chain_sync`
+——由 I41 聚焦回归暴露、经 I41 评审在隔离干净检出上谱系甄别（`48c86c4b`
+绿、自 `c2952d61` 起红）：该守护仍断言 vec_env/cooperative 直接从
+`bridge.py` 导入 `build_kernel_mission_command`，而 I34 下沉已把该调用移
+入 `_shared_ops.py`；I39 修复只覆盖了 wp24 守护文件、未及此处。行为面不受
+影响（与上方 wp24 条目同机理）。修复方向：与 I39 同款——把
+`_shared_ops.py` 纳入该守护扫描集，守护意图不变。已于 I42 修复。
+
 **现状**：已于 I39 修复。下方 6.1 节记录修复内容与复核。
 
 ### 6.1 I39 修复与复核
@@ -405,6 +414,191 @@ git diff --check    -> 干净
 `python/rl/runtime/world_batch/**` 生产代码——这属于守护适配缺失，不是功
 能缺陷。
 
+## 7. I41：T3 第二切片——六条 include 方向违规的评估矩阵（1 条收敛，5 条缓办）
+
+I38 把六条既有的 include 方向违规 ratchet 进
+`tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`
+（见 I38 登记行）。I41（T3 第二切片）针对每一条重新评估"本轮可安全收敛"
+与"确属结构/设计缺口、应缓办"这一问题，逐条做了完整的消费者/绑定面普查，
+并实施了普查后确认低风险的那一条。本节即允许清单自身修订说明所指向的评
+估矩阵与处置记录；允许清单各条目也已在自己的 `reason` 字段内联记录了同
+样的结论（见 I41 修订后的各条目）。
+
+| 序号 | 边（`from_group` -> `to_group`） | 裁决 | 一句话理由 |
+| --- | --- | --- | --- |
+| a | `components/combat/common/weapon_common.h:12` -> `models/weapons/kalman_seeker.h` | **收敛** | `SeekerEkfState`/`SeekerEkfParams` 恰好只有四个触点（定义处、一处按值持有、一处数学函数调用、一处直接 include 的测试），且零 Python 绑定；把两个结构体迁移到 components 自有叶子即可用逐字节等价的类型搬移关闭该边。 |
+| b | `core/engine/world_batch_runtime.cpp:9` -> `gpu/gpu_interaction_broadphase_runtime.h` | 缓办 | interaction-broadphase 路径内有四处直接调用 `gpu::` 打包类型/函数；关闭此边需要 GPU/engine 集成缝本身，而非类型搬移。 |
+| c | `core/engine/world_batch_runtime.h:12` -> `core/mission/episode/execution_episode_controller.h` | 缓办 | `ExecutionEpisodeController` 的批量所有权被 `WorldBatchRuntime` 的九个方法读写；迁移所有权是一项 WP4 热路径设计决策（即 I38 `next_gate` 所指的 facade/mission 自有批量包装器），不是类型搬移。 |
+| d | `core/engine/world_batch_runtime.h:13` -> `gpu/gpu_visual_runtime.h` | 缓办 | `WorldBatchVisualBindingCompatibilityScene` 是两个公开 `WorldBatchRuntime` 批量方法的返回/参数类型；与 (b) 同属一个 GPU/engine 集成缝。 |
+| e | `core/engine/world_batch_visual_binding_compatibility_helper.h:9` -> `gpu/gpu_visual_runtime.h` | 缓办 | 该 helper 存在的全部意义就是桥接四个 `gpu::render_visual_*` 入口；与 (b)/(d) 同一集成缝，并非偶发 include。 |
+| f | `runtime/contracts/world_batch_contracts.h:16` -> `core/mission/episode/execution_episode_batch_prepare.h` | 缓办 | `StepEvaluationBatchConfig`/`StepEvaluationBatchEnvState` 被 `core/mission/episode` 与 `core/mission/runtime` 全线消费，在 `bindings_episode.cpp` 中逐字段单独绑定，且 `EnvState` 本身还按值嵌入另外十个 mission 自有的聚合类型；原样搬移只会反转违规方向，独立定义 contracts 自有镜像类型又需要复制整张嵌套类型图——这是 T1 DTO 族收尾量级的迁移，不是机械搬移。 |
+
+### 7.1 (a) 已收敛：`missile_seeker` 的 EKF 状态迁至 components 叶子
+
+**普查**（`missile_seeker::SeekerEkfState`/`SeekerEkfParams` 及
+`missile_seeker::` 自由函数在全仓的所有触点）：`src/models/weapons/kalman_seeker.h`
+（定义处，以及操作这两个结构体的 EKF 数学函数）、`src/components/combat/common/weapon_common.h`
+（`Missile` 在第 221-222 行按值持有 `ekf_state`/`ekf_params`）、
+`src/models/weapons/default_guidance_model.cpp`（调用
+`missile_seeker::ekf_init/ekf_predict/ekf_update/ekf_filtered_*/ekf_closing_speed_mps`，
+但此前是*经由*
+`core/interfaces/guidance_model.h` -> `weapon_common.h` -> `kalman_seeker.h`
+这条传递链拿到这些自由函数，自身并未直接 include）、以及
+`src/tests/test_kalman_seeker.cpp`（直接 include `kalman_seeker.h`；属于
+豁免的 `tests` 组，不受方向策略约束）。两个结构体、以及 `Missile` 本身，
+从未经由 `nb::class_<...>` 绑定——对 `src/interfaces/python/*.cpp` 搜索
+`Missile`/`ekf` 只命中内部 ECS 的 `.get<Missile>()` 调用，没有任何绑定。
+`tools/maintenance/dto_schema` 对两个结构体零引用，故此次搬移不触及
+schema/生成器治理面。
+
+**修复**：新增叶子头文件 `src/components/combat/common/missile_seeker_state.h`，
+持有 `namespace missile_seeker { struct SeekerEkfState {...}; struct
+SeekerEkfParams {...}; }`，与此前 `kalman_seeker.h` 内联定义逐字节等价
+（字段名、类型、顺序、默认值均不变——纯粹的文本搬移，非重新设计，因此两
+个结构体以及 `Missile` 的 C++ 布局/ABI 在构造上即不受影响，不仅仅是靠测
+试证据推断）。`kalman_seeker.h` 现在反向 `#include` 这个叶子（`models ->
+components`，策略已允许），不再自行定义两个结构体。`weapon_common.h` 原
+本对 `models/weapons/kalman_seeker.h` 的 include 换成对新叶子的 include
+（`components -> components`，同组，永远允许）。`default_guidance_model.cpp`
+新增了一条直接的 `#include "models/weapons/kalman_seeker.h"`（该文件本就
+属于 `models` 组，故不构成新的方向边）——原因是切断 `weapon_common.h` 对
+`kalman_seeker.h` 的 include，同时也切断了此前把 EKF 数学函数传递给它的
+那条传递链，这是本次搬移必须连带做的"按实际使用补 include"修复，不是可
+选项。共触及 4 个文件（1 新增、3 修改）；零 CMake 改动（头文件通过
+`ef_core` 的公共 include 目录被发现，未被逐一列举）。
+
+### 7.2 (b)/(c)/(d)/(e) 缓办：GPU/engine 与 mission 批量所有权的设计缺口是真实的，不是机械问题
+
+四者都落在 I38 `next_gate` 文本已经点名的 WP4 热路径/GPU 集成缝上。I41
+在缓办前逐一复核确认了这是多处功能耦合，而非偶发 include：(b) 的
+`gpu::InteractionBroadphaseConfig`/`InteractionEntityPacked`/`InteractionQueryPacked`
+与 `gpu::build_interaction_broadphase_*_batch` 在 `world_batch_runtime.cpp`
+的 interaction-broadphase 路径内被四处调用；(c) 的
+`std::vector<ExecutionEpisodeController> execution_episode_controllers_`
+被 `clear_execution_episode_controller_batch`、
+`prime_execution_episode_controller_batch`、
+`execution_episode_controller_ready`、
+`export_execution_episode_states_batch`、`evaluate_execution_episode_batch`、
+`step_execution_episode_batch`、`step_execution_episode_results_batch`，以
+及两个私有的 `checked_execution_episode_controller` 重载读写——是九个方
+法，不是一个字段；(d) 的 `WorldBatchVisualBindingCompatibilityScene` 是
+`collect_visual_binding_compatibility_scenes_from_candidate_ids_batch` 与
+`collect_visual_binding_compatibility_scenes_batch` 两个公开批量方法的返
+回/参数类型；(e) 的 helper（`world_batch_visual_binding_compatibility_helper.h`）
+存在的目的就是构建 `gpu::VisualRenderRequest`/`VisibleObjectPacked` 值并
+在 `gpu::render_visual_experiment(_batch_export)` 与
+`gpu::render_visual_reference_cpu(_batch)` 之间分支——gpu 依赖就是这个
+helper 存在的全部理由。四者都无法靠搬移类型关闭；各自需要的是 GPU/engine
+集成缝本身（b/d/e）或 facade/mission 自有的批量包装器（c）——I38
+`next_gate` 文本已点名，这是属于 T4（精确运行时对齐，其自身关键风险恰
+恰就是这一 WP4 双重所有权过渡期）或下一个 T3 物理拆分切片的架构决策。
+本轮维持原状缓办；允许清单各条目的 `reason` 字段已内联记录本次 I41 复核
+结论（见允许清单修订说明）。
+
+### 7.3 (f) 缓办：mission/contracts 这对 DTO 是 T1 量级迁移，不是机械搬移
+
+裁决前的完整消费者/绑定面普查：`StepEvaluationBatchConfig`/`StepEvaluationBatchEnvState`
+（`core/mission/episode/execution_episode_batch_prepare.h`）被
+`core/mission/episode/execution_episode_controller.h`/`.cpp`（`WorldBatchRuntime`
+经 `WorldExecutionEpisodeStepRequest.config`/`.env_state` 调用的
+`evaluate`/`step`/`step_result` 方法）、
+`core/mission/episode/detail/episode_transition_runtime.h`/`.cpp`、以及
+`core/mission/runtime/reward_runtime.h` 消费；两个类型都在
+`interfaces/python/bindings_episode.cpp` 中被逐字段单独绑定
+（`nb::class_<StepEvaluationBatchConfig>`/`<StepEvaluationBatchEnvState>`，
+合计 57 次 `def_rw` 调用）；`StepEvaluationBatchEnvState` 本身还按值嵌入
+另外十个 mission 自有的聚合类型（`ExecutionEpisodeState`、
+`MissionObservationInputs`、`StepInfoInputs`、`SafetyRuntimeInputs`、
+`WaypointRewardInputs`、`ApproachRewardInputs`、`ConditionalObjectiveSpec`、
+`ConditionalObjectiveInputs`、`ObjectiveShapingConfig`、
+`FlightShapingRuntimeInputs`），每个也都单独被绑定，并被四处
+`python/rl/runtime/world_batch/**` 调用点消费（`vec_env.py`、
+`_observation_mixin.py`、`cooperative_world_batch_vec_env.py`、
+`_execution_episode_mixin.py`）。
+
+这份普查把任务书提出的两条备选补救路径都堵死了。若把任一结构体的物理归
+属原样迁入 `runtime/contracts`，新的 contracts 头文件就必须
+`#include` 它仍按值嵌入的十个 mission 自有嵌套类型中的一个或多个——而
+`runtime_contracts` 策略允许的目标集合仅有 `{components}`（见
+`tools/architecture/cpp_include_graph.FINE_GROUP_ALLOWED_TARGETS`），因此
+这只会把违规反转为一条或多条
+`runtime_contracts -> core_mission_runtime`/`core_mission_episode` 的边，
+且每一条都比现在这一条更难自证正当（是整个聚合类型按值嵌入，不是两个扁
+平的 config/state 结构体）。改为定义一个独立的 contracts 自有传输态类型
+虽能避免反转边的方向，但代价是把同一张十类型嵌套图复制一份到第二个名字
+下，此后还要手工维持两者同步——用"治理门违规"换成了"静默漂移风险"，而且
+这个改动的体量（十个聚合类型、跨两个 Python 绑定文件合计 57+ 个已绑定字
+段）与 T1 DTO 族收尾这条主线相当（按 I31/I33/I35 的既有线索，这正是上文
+第 4 节已索引的下一个自然的单一来源迁移候选），不是 T3 第二切片量级的机
+械搬移。`python/rl/runtime/world_batch/**` 也在本迭代写集边界之外（按本
+迭代任务书，I40 正在姊妹工作树中并发使用它）——即便 C++ 侧其他方面均安
+全，这一条也独立地排除了本轮触碰 Python 可见绑定形状的可能性。本条缓办；
+允许清单条目的 `reason` 字段已内联记录这份完整普查。
+
+### 7.4 验证（本工作树，`CMO_BUILD_DIR=<worktree>/build-local-win`，基线 `b618971f`）
+
+```
+cmake --build build-local-win --target ef_core ef_py -j4
+-> 成功（增量；仅有第三方 spdlog/nanobind 模板既有警告，与本迭代改动无关）
+
+pytest -q tests/architecture/governance/test_cpp_include_direction.py
+-> 7 passed（允许清单条目 6 -> 5；在编辑允许清单之前，门禁已正确把 (a)
+   的指纹标记为过期，证明门禁确实检测到了修复本身，而非该修复未经校验）
+
+tools/maintenance/dto_schema/generate.py --check -> 全部产物 up-to-date
+
+ctest（build-local-win） -> 8/8 passed
+
+ef_test.exe --source-file="*test_kalman_seeker*" -> 3 个测试用例、17423
+条断言，0 失败（同一套 EKF 数学运算现在作用于搬移后的结构体上）
+
+pytest -q tests/world_batch tests/architecture/runtime_facade
+  tests/runtime/bindings tests/runtime/mission tests/runtime/engagement
+  tests/architecture/damage_model/test_release_signoff_gate.py
+-> 471 passed, 6 failed, 1 skipped, 28 subtests。六个失败经 `git stash`
+   核实，在改动前的基线上逐一等同复现：上文第 5 节已登记的四个
+   `test_wp22_*` 节点与懒加载 `common.ef_py` 缺口，外加一个此前未登记
+   的——`tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py::GroundRuntimeSourceBridgeTests::test_batch_envs_use_tasking_bridge_for_command_chain_sync`
+   （断言 `vec_env.py`/`cooperative_world_batch_vec_env.py` 仍从
+   `python.rl.tasking.bridge` 导入 `build_kernel_mission_command`；两者
+   现在都改经 `_shared_ops.py` 做命令链同步，与第 6 节已登记的 I34 下沉
+   同源——看起来是另一个测试文件里的姊妹级守护缺口，第 6 节的 I39 修复
+   未覆盖到它）。已确认与本迭代改动无关（stash 掉本迭代改动后依然复现
+   为红）且在本迭代写集边界之外（该测试与 `vec_env.py`/`bridge.py` 均未
+   被本迭代触碰）；此处仅如实记录以便可见，本节不对其做裁决或修复。
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 446 passed, 45 subtests passed（与本迭代起始的 I38/I39 基线一致，无
+   变化）
+
+跨构建 parity：(b)-(f) 各边所涉类型在别处确有 Python 绑定
+（`gpu::InteractionBroadphaseConfig`/packed 视图在 `bindings_gpu.cpp`、
+`ExecutionEpisodeController` 在 `bindings_episode.cpp`、
+`StepEvaluationBatchConfig`/`EnvState` 如第 7.3 节所引为逐字段绑定），但
+这五条边本轮零触碰、其绑定面按构造不受影响；本轮唯一实施的搬移 (a) 仅涉
+`Missile`/`SeekerEkfState`/`SeekerEkfParams`，三者从未被绑定——对
+`src/interfaces/python/*.cpp` 搜索找不到任何 `nb::class_<Missile>` 或以
+`ekf` 命名的绑定调用。（措辞于 I41 落地时按评审更正：原"六条边类型零绑
+定"的说法与第 7.3 节自引的 (f) 绑定相矛盾。）既然本迭代唯一实施的这一次搬移实际影响的 Python
+绑定类数量为零，"受影响类"这一 parity 集合按构造即为空集；作为方法学自
+证与构建健康检查，另外抓取了两个哨兵 contracts 类
+（`WorldEntityRef`、`TypedPlatformSpawnRequest`）在旧构建产物
+`D:\workshop\Research\Echelon-Forge\build-local-win`（2026-07-18）与本工
+作树重建后的 `ef_py` 之间的 `dir()` 及深度 4 递归默认值快照：两个字段
+（`dir_public`、`default_value_snapshot`）在两个类上均逐字节一致，证明
+对拍方法本身可靠，且本工作树的重建未引入任何偶发的 Python 侧表面漂移。
+
+ruff check .        -> All checks passed!
+git diff --check    -> 干净
+```
+
+本节已收敛修复的写集：`src/components/combat/common/missile_seeker_state.h`
+（新增）、`src/components/combat/common/weapon_common.h`、
+`src/models/weapons/kalman_seeker.h`、
+`src/models/weapons/default_guidance_model.cpp`（共 4 个文件），外加允许
+清单 fixture（删除 1 条、修订余下 5 条）与本台账小节。未触碰任何
+`python/**` 或 `examples/**`；无 CMake 目标改动。
+
 ## 相关
 
 - [仓库整合计划](../repository_consolidation/README.zh.md)（上文引用的
@@ -413,3 +607,5 @@ git diff --check    -> 干净
   （同为 `reference` 类型的登记文档；本文档的结构先例）
 - `tests/runtime/air_combat/weapon_guidance_realism/README.md`（第 1 节引
   用的 wrapper/mixin 收集契约）
+- `tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`
+  （I38/I41 ratchet 允许清单；上文第 7 节即本台账对 I41 修订的记录）

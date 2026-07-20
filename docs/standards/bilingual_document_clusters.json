@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-20",
+  "generated_at": "2026-07-21",
   "root": "docs",
   "pairs": [
     {
@@ -178,9 +178,9 @@
       "english": "docs/plan/repository_consolidation/README.md",
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-07-20",
-      "english_hash": "c3d782afe54c2e3e382bb21094c618ebd68a4ab0f005848fc45b9231dc11e398",
-      "chinese_hash": "7f66dc1abb9e152c5c9a8d26a42cb33a471211da0cd5790a29ea2c719783a789"
+      "last_verified": "2026-07-21",
+      "english_hash": "aa07d28a6cf01554eca627e0a667de91aa3551f05c562a9282ee0f77e2cbddf9",
+      "chinese_hash": "5878e8fec4cb35c2b478365c29ac003256cb5da19511262fe6ef7715fb5c9225"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -223,9 +223,9 @@
       "english": "docs/plan/unified_architecture_program/t6_residual_ledger.md",
       "chinese": "docs/plan/unified_architecture_program/t6_residual_ledger.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-07-20",
-      "english_hash": "f76ce2de9ad9378abe3e2d68306863b069a22eda8477228d01280990bb87d618",
-      "chinese_hash": "553a0a41629f8c50e375586a1e526970dfc622b5dd86e7358c422aabd91a1c8f"
+      "last_verified": "2026-07-21",
+      "english_hash": "9bab82d666313590808b11b0ecc2e0003808abcd3ceece8c34d27c8cbb0fff38",
+      "chinese_hash": "337d68af9df588ca665befad2062fe272df1504a11be4567218a0c32497e6a00"
     },
     {
       "pair_id": "reference_artifacts",
