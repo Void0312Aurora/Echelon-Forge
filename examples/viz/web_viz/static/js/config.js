@@ -1,3 +1,4 @@
+// @ts-check
 // Shared frontend constants for the unified viz app.
 
 // --- 3D scene ---

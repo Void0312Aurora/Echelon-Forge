@@ -1,3 +1,4 @@
+// @ts-check
 // Applies the scenario sun truth (from the backend map_setup payload) to
 // every lighting consumer: the 2D hillshade and the 3D sun light + shadows.
 // One truth source keeps what the operator sees consistent with the sun the
@@ -7,6 +8,9 @@ import { vizState } from './store.js';
 import { refreshIlluminationShading } from './scene-geometry.js';
 import { updateSceneIllumination } from './scene3d.js';
 
+/**
+ * @param {Partial<import('./types.js').IlluminationPayload>|null|undefined} raw
+ */
 export function applyIllumination(raw) {
     if (!raw || typeof raw !== 'object') return;
     const ill = vizState.illumination;

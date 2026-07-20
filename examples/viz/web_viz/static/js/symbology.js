@@ -1,3 +1,4 @@
+// @ts-check
 // Static tactical-map registries: layer catalog, layer groups, draw phases,
 // symbology palette, and workspace definitions. Pure data plus lookups; the
 // live toggle state lives in the store and is managed by layers.js.
@@ -378,6 +379,10 @@ export const sidcEchelonCode = Object.freeze({
     corps: 'J',
 });
 
+/**
+ * @param {Pick<import('./types.js').UnitData, 'side'|'type'|'echelon'>|null|undefined} unit
+ * @returns {string} 15-character 2525C-shaped SIDC.
+ */
 export function sidcForUnit(unit) {
     const affiliation = sidcAffiliation[String(unit?.side || 'Unknown')] || 'U';
     const skeleton = sidcUnitTypeSkeleton[String(unit?.type || '')] || sidcUnitTypeSkeleton.Facility;

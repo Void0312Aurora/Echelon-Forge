@@ -1,3 +1,4 @@
+// @ts-check
 // Central mutable state shared by the viz frontend modules.
 //
 // Modules read and write fields on `vizState` directly; there is no reactive
@@ -23,6 +24,7 @@ export const vizState = {
     // Mirrors the engine sun defaults (IEnvironmentModel): NAV azimuth 0
     // (north), 45 deg above horizon. Updated from the map_setup payload so
     // the display uses the same sun the sensor glare adjudication does.
+    /** @type {import('./types.js').IlluminationState} */
     illumination: {
         sunAzimuthDeg: 0.0,
         sunElevationDeg: 45.0,
@@ -31,6 +33,7 @@ export const vizState = {
     },
 
     // --- Tactical map ---
+    /** @type {import('./types.js').StateFrame|null} */
     lastTacticalState: null,
     environmentOverlays: null,
     tacticalViewport: null,
