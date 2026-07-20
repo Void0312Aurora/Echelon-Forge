@@ -14,7 +14,9 @@ import pytest
 from python.rl.runtime.world_batch.core import (
     BATCH_STEP_STAGE_NAMES,
     BATCH_STEP_STAGES,
+    CooperativePlugin,
     ExecutionModePlugin,
+    LeaderPlugin,
     StageContract,
     StandardExecutionPlugin,
     SubStage,
@@ -394,13 +396,15 @@ class TestExecutionModeRegistry:
         assert isinstance(plugin, StandardExecutionPlugin)
         assert plugin.mode_name == "execution"
 
-    def test_resolve_cooperative_stub(self):
+    def test_resolve_cooperative_plugin(self):
         plugin = resolve_execution_mode("cooperative")
+        assert isinstance(plugin, CooperativePlugin)
         assert isinstance(plugin, ExecutionModePlugin)
         assert plugin.mode_name == "cooperative"
 
-    def test_resolve_leader_stub(self):
+    def test_resolve_leader_plugin(self):
         plugin = resolve_execution_mode("leader")
+        assert isinstance(plugin, LeaderPlugin)
         assert isinstance(plugin, ExecutionModePlugin)
         assert plugin.mode_name == "leader"
 
@@ -535,11 +539,54 @@ class TestExecutionModePluginBase:
         plugin.finalize_post_step_truth(0, None, None)
 
 
+class TestCooperativePlugin:
+    """CooperativePlugin uses base-class defaults for all hooks."""
+
+    def test_mode_name(self):
+        plugin = CooperativePlugin()
+        assert plugin.mode_name == "cooperative"
+
+    def test_skip_post_behavior_sync_is_false(self):
+        plugin = CooperativePlugin()
+        assert plugin.skip_post_behavior_command_sync is False
+
+    def test_update_post_step_calls_update_behaviors(self):
+        calls = []
+        plugin = CooperativePlugin()
+        plugin.update_post_step_behavior(_FakeHandle(calls), 1.0, "t", "i")
+        assert [call[0] for call in calls] == ["update_behaviors"]
+
+    def test_finalize_post_step_truth_is_noop(self):
+        plugin = CooperativePlugin()
+        plugin.finalize_post_step_truth(0, None, None)
+
+
+class TestLeaderPlugin:
+    """LeaderPlugin uses base-class defaults for all hooks."""
+
+    def test_mode_name(self):
+        plugin = LeaderPlugin()
+        assert plugin.mode_name == "leader"
+
+    def test_skip_post_behavior_sync_is_false(self):
+        plugin = LeaderPlugin()
+        assert plugin.skip_post_behavior_command_sync is False
+
+    def test_update_post_step_calls_update_behaviors(self):
+        calls = []
+        plugin = LeaderPlugin()
+        plugin.update_post_step_behavior(_FakeHandle(calls), 1.0, "t", "i")
+        assert [call[0] for call in calls] == ["update_behaviors"]
+
+    def test_finalize_post_step_truth_is_noop(self):
+        plugin = LeaderPlugin()
+        plugin.finalize_post_step_truth(0, None, None)
+
+
 class TestCoreLayeringAndHotPath:
     """G2 layering and hot-path guarantees for core.py."""
 
     def test_core_module_has_no_gym_envs_import_nodes(self):
-        # AST walk covers module-scope AND function-body (lazy) imports.
         tree = ast.parse(_CORE_PATH.read_text(encoding="utf-8"))
         offending: list[str] = []
         for node in ast.walk(tree):
@@ -554,6 +601,24 @@ class TestCoreLayeringAndHotPath:
         assert not offending, (
             "core.py must not import gym_envs (G2 one-way layer rings); "
             f"domain callables are injected at plugin construction: {offending}"
+        )
+
+    def test_shared_ops_module_has_no_gym_envs_import_nodes(self):
+        shared_ops_path = _CORE_PATH.parent / "_shared_ops.py"
+        tree = ast.parse(shared_ops_path.read_text(encoding="utf-8"))
+        offending: list[str] = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.split(".")[0] == "gym_envs":
+                        offending.append(f"import {alias.name} (line {node.lineno})")
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module or ""
+                if module.split(".")[0] == "gym_envs":
+                    offending.append(f"from {module} import ... (line {node.lineno})")
+        assert not offending, (
+            "_shared_ops.py must not import gym_envs (G2 discipline); "
+            f"found: {offending}"
         )
 
     @pytest.mark.parametrize(
@@ -577,5 +642,23 @@ class TestCoreLayeringAndHotPath:
     )
     def test_hot_path_hooks_contain_no_import_opcodes(self, hook):
         opnames = {instruction.opname for instruction in dis.get_instructions(hook)}
+        assert "IMPORT_NAME" not in opnames
+        assert "IMPORT_FROM" not in opnames
+
+    def test_shared_ops_diff_function_no_import_opcodes(self):
+        from python.rl.runtime.world_batch._shared_ops import diff_single_entity_command_chain
+        opnames = {instruction.opname for instruction in dis.get_instructions(diff_single_entity_command_chain)}
+        assert "IMPORT_NAME" not in opnames
+        assert "IMPORT_FROM" not in opnames
+
+    def test_shared_ops_submit_function_no_import_opcodes(self):
+        from python.rl.runtime.world_batch._shared_ops import submit_command_chain_assignments
+        opnames = {instruction.opname for instruction in dis.get_instructions(submit_command_chain_assignments)}
+        assert "IMPORT_NAME" not in opnames
+        assert "IMPORT_FROM" not in opnames
+
+    def test_shared_ops_assemble_observation_no_import_opcodes(self):
+        from python.rl.runtime.world_batch._shared_ops import assemble_observation_dict
+        opnames = {instruction.opname for instruction in dis.get_instructions(assemble_observation_dict)}
         assert "IMPORT_NAME" not in opnames
         assert "IMPORT_FROM" not in opnames

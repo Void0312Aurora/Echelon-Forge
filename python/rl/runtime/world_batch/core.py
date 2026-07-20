@@ -534,35 +534,63 @@ register_execution_mode("execution", _standard_execution_factory)
 
 
 # ---------------------------------------------------------------------------
-# Cooperative / leader stubs (thin shells — internal logic stays in place)
+# Cooperative execution plugin
 # ---------------------------------------------------------------------------
 
-class _StubExecutionPlugin(ExecutionModePlugin):
-    """Thin registration shell for modes whose internal logic stays
-    un-migrated in this iteration.  Future iterations will promote these
-    to full plugins.
+class CooperativePlugin(ExecutionModePlugin):
+    """Registered execution-mode identity for multi-slot cooperative worlds.
+
+    All hooks equal the base-class defaults, which matches cooperative
+    semantics (plain ``update_behaviors``, no mainline controller, no
+    command-sync skip).  Note that ``CooperativeWorldBatchVecEnv.step_wait``
+    currently still calls ``update_behaviors`` inline and does not consume
+    this plugin; wiring the cooperative step loop through the hook surface
+    is deferred to a later slice.  This class replaces the I32 stub so the
+    registry resolves a typed plugin instead of a placeholder.
     """
 
-    def __init__(self, mode_name: str) -> None:
-        self.mode_name = mode_name
+    mode_name = "cooperative"
 
 
-def _cooperative_stub_factory(**_kwargs: Any) -> _StubExecutionPlugin:
-    return _StubExecutionPlugin("cooperative")
+def _cooperative_factory(**_kwargs: Any) -> CooperativePlugin:
+    return CooperativePlugin()
 
 
-def _leader_stub_factory(**_kwargs: Any) -> _StubExecutionPlugin:
-    return _StubExecutionPlugin("leader")
+register_execution_mode("cooperative", _cooperative_factory)
 
 
-register_execution_mode("cooperative", _cooperative_stub_factory)
-register_execution_mode("leader", _leader_stub_factory)
+# ---------------------------------------------------------------------------
+# Leader execution plugin
+# ---------------------------------------------------------------------------
+
+class LeaderPlugin(ExecutionModePlugin):
+    """Registered execution-mode identity for the leader runtime path.
+
+    All hooks equal the base-class defaults.  The leader runtime group
+    (``LeaderWorldBatchExecutionRuntimeGroup``) delegates world stepping to
+    an inner ``WorldBatchVecEnv`` whose own ``StandardExecutionPlugin``
+    owns the hot-path hooks; the leader group itself does not currently
+    call ``resolve_execution_mode``.  This class replaces the I32 stub so
+    the registry resolves a typed plugin instead of a placeholder; wiring
+    a production call site is deferred to a later slice.
+    """
+
+    mode_name = "leader"
+
+
+def _leader_factory(**_kwargs: Any) -> LeaderPlugin:
+    return LeaderPlugin()
+
+
+register_execution_mode("leader", _leader_factory)
 
 
 __all__ = [
     "BATCH_STEP_STAGE_NAMES",
     "BATCH_STEP_STAGES",
+    "CooperativePlugin",
     "ExecutionModePlugin",
+    "LeaderPlugin",
     "StageContract",
     "StandardExecutionPlugin",
     "SubStage",

@@ -50,7 +50,7 @@ from python.rl.support.sb3_vec_env_compat import (
     VecEnvStepReturn,
     obs_space_info,
 )
-from python.rl.tasking.bridge import build_kernel_mission_command, resolve_loader_time_step
+from python.rl.tasking.bridge import resolve_loader_time_step
 from python.scenario.runtime import (
     BatchWorldApplyBuffer,
     build_compiled_world_layout,
@@ -59,17 +59,6 @@ from python.scenario.runtime import (
 from python.scenario.compiler import ScenarioCompiler
 
 from .adapter import RuntimeFacadeAdapter
-from .command_chain_cache import (
-    leader_intent_snapshot,
-    mission_command_snapshot,
-    pilot_report_snapshot,
-    project_world_leader_intent_maintained_assignment,
-    project_world_mission_command_maintained_assignment,
-    project_world_pilot_report_maintained_assignment,
-    project_world_task_order_maintained_assignment,
-    snapshot_changed,
-    task_order_snapshot,
-)
 from .common import (
     copy_obs,
     parse_reward_terms_json,
@@ -95,6 +84,14 @@ from ._vec_env_support import (
 )
 from ._visual_backend_mixin import _WorldBatchVecEnvVisualBackendMixin
 from .core import StandardExecutionPlugin, resolve_execution_mode
+from ._shared_ops import (
+    diff_single_entity_command_chain,
+    normalize_seed as _shared_normalize_seed,
+    resolve_batch_observation_backend_mode,
+    resolve_batch_visual_backend_mode,
+    save_obs_to_buffer,
+    submit_command_chain_assignments,
+)
 
 _copy_obs = copy_obs
 _parse_reward_terms_json = parse_reward_terms_json
@@ -365,9 +362,7 @@ class WorldBatchVecEnv(
         return self._runtime_adapter.last_window_evidence
 
     def _normalize_seed(self, seed: int | None) -> int:
-        if seed is None:
-            seed = int(np.random.randint(0, np.iinfo(np.uint32).max, dtype=np.uint32))
-        return int(seed) & 0xFFFFFFFF
+        return _shared_normalize_seed(seed)
 
     def _build_refs(self, indices: Sequence[int] | None = None):
         target_indices = list(range(self.num_envs)) if indices is None else [int(i) for i in indices]
@@ -424,74 +419,40 @@ class WorldBatchVecEnv(
 
     def _sync_command_chain_batch(self, indices: Sequence[int] | None = None) -> None:
         target_indices = list(range(self.num_envs)) if indices is None else [int(i) for i in indices]
-        mission_assignments = []
-        task_assignments = []
-        intent_assignments = []
-        report_assignments = []
+        mission_assignments: list = []
+        task_assignments: list = []
+        intent_assignments: list = []
+        report_assignments: list = []
         for env_idx in target_indices:
             handle = self._handles[env_idx]
             if handle.agent_id is None:
                 continue
             if not self._command_chain_entity_active(handle):
                 continue
-
-            mission_command = build_kernel_mission_command(handle.loader)
-            mission_snapshot = mission_command_snapshot(mission_command)
-            if snapshot_changed(handle.last_mission_command_snapshot, mission_snapshot):
-                mission_assign = ef_py.WorldMissionCommandMaintainedAssignment()
-                project_world_mission_command_maintained_assignment(
-                    mission_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_mission_command_shell=mission_command,
-                )
-                mission_assignments.append(mission_assign)
-                handle.last_mission_command_snapshot = mission_snapshot
-
-            task_snapshot = task_order_snapshot(getattr(handle.loader, "task_order", None))
-            if task_snapshot is not None and snapshot_changed(handle.last_task_order_snapshot, task_snapshot):
-                task_assign = ef_py.WorldTaskOrderMaintainedAssignment()
-                project_world_task_order_maintained_assignment(
-                    task_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_task_order_shell=handle.loader.task_order,
-                )
-                task_assignments.append(task_assign)
-                handle.last_task_order_snapshot = task_snapshot
-
-            intent_snapshot = leader_intent_snapshot(getattr(handle.loader, "leader_intent", None))
-            if intent_snapshot is not None and snapshot_changed(handle.last_leader_intent_snapshot, intent_snapshot):
-                intent_assign = ef_py.WorldLeaderIntentMaintainedAssignment()
-                project_world_leader_intent_maintained_assignment(
-                    intent_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_intent_shell=handle.loader.leader_intent,
-                )
-                intent_assignments.append(intent_assign)
-                handle.last_leader_intent_snapshot = intent_snapshot
-
-            report_snapshot = pilot_report_snapshot(getattr(handle.loader, "pilot_report", None))
-            if report_snapshot is not None and snapshot_changed(handle.last_pilot_report_snapshot, report_snapshot):
-                report_assign = ef_py.WorldPilotReportMaintainedAssignment()
-                project_world_pilot_report_maintained_assignment(
-                    report_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_report_shell=handle.loader.pilot_report,
-                )
-                report_assignments.append(report_assign)
-                handle.last_pilot_report_snapshot = report_snapshot
-
-        if mission_assignments:
-            self._runtime_adapter.set_mission_commands_maintained_batch(mission_assignments)
-        if task_assignments:
-            self._runtime_adapter.set_task_orders_maintained_batch(task_assignments)
-        if intent_assignments:
-            self._runtime_adapter.set_leader_intents_maintained_batch(intent_assignments)
-        if report_assignments:
-            self._runtime_adapter.set_pilot_reports_maintained_batch(report_assignments)
+            new_m, new_t, new_i, new_r = diff_single_entity_command_chain(
+                int(env_idx),
+                int(handle.agent_id),
+                handle.loader,
+                handle.last_mission_command_snapshot,
+                handle.last_task_order_snapshot,
+                handle.last_leader_intent_snapshot,
+                handle.last_pilot_report_snapshot,
+                mission_assignments,
+                task_assignments,
+                intent_assignments,
+                report_assignments,
+            )
+            handle.last_mission_command_snapshot = new_m
+            handle.last_task_order_snapshot = new_t
+            handle.last_leader_intent_snapshot = new_i
+            handle.last_pilot_report_snapshot = new_r
+        submit_command_chain_assignments(
+            self._runtime_adapter,
+            mission_assignments,
+            task_assignments,
+            intent_assignments,
+            report_assignments,
+        )
 
     @staticmethod
     def _command_chain_entity_active(handle: _BatchWorldHandle) -> bool:
@@ -504,11 +465,7 @@ class WorldBatchVecEnv(
             return True
 
     def _save_obs(self, env_idx: int, obs: VecEnvObs) -> None:
-        for key in self.keys:
-            if key is None:
-                self.buf_obs[key][env_idx] = obs
-            else:
-                self.buf_obs[key][env_idx] = obs[key]  # type: ignore[index]
+        save_obs_to_buffer(self.buf_obs, self.keys, env_idx, obs)
 
 
 

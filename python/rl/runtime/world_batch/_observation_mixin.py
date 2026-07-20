@@ -22,6 +22,7 @@ from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_fo
 from .common import observation_timing_snapshot
 from .observation_batching import ExecutionObservationBatch, compute_execution_observation_batch
 from ._vec_env_support import _float32_view
+from ._shared_ops import assemble_observation_dict
 
 
 class _WorldBatchVecEnvObservationMixin:
@@ -211,18 +212,17 @@ class _WorldBatchVecEnvObservationMixin:
                 if tasking_profile_for_loader(handle.loader) is resolve_tasking_profile("naval")
                 else inst_vec
             )
-            obs = {
-                "instruments": policy_inst_vec,
-                "contacts": contacts,
-                "rwr": rwr,
-                "mission": miss_vec,
-            }
-            if self.include_proprio:
-                if handle.last_action is None:
-                    proprio = np.zeros((int(self.action_space.shape[0]),), dtype=np.float32)
-                else:
-                    proprio = _float32_view(handle.last_action).reshape(-1)
-                obs["proprio"] = proprio
+            obs = assemble_observation_dict(
+                inst_vec=policy_inst_vec,
+                contacts=contacts,
+                rwr=rwr,
+                miss_vec=miss_vec,
+                max_contacts=int(self.max_contacts),
+                max_rwr=int(self.max_rwr),
+                include_proprio=self.include_proprio,
+                last_action=handle.last_action,
+                action_dim=int(self.action_space.shape[0]),
+            )
             obs_batch.append(self._attach_temporal_history(env_idx, self._attach_visual_observation(env_idx, obs)))
         return obs_batch
 
