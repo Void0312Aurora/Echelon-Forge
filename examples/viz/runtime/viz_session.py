@@ -937,7 +937,11 @@ class VizSession:
     def _run_loop_inner(self) -> None:
         args = self.args
         # Do not reset the stop event here: a stop arriving before the worker
-        # reaches this point must still terminate the session.
+        # reaches this point must still terminate the session. Startup is
+        # slow (env construction, model load), so it also checks the stop
+        # signal at its expensive milestones to keep reload waits bounded.
+        if self.stop_requested:
+            return
         train_config = _load_train_config_for_viz(getattr(args, "model", None), getattr(args, "train_config", None))
         leader_mode = _is_leader_train_config(train_config)
         cooperative_mode = _is_cooperative_train_config(train_config)
@@ -1064,6 +1068,11 @@ class VizSession:
             mission_obs_mode = "leader"
             visual_downsample = 1
             visual_update_interval = 1
+
+        # Env construction is the longest startup step; honor a pending stop
+        # before committing to it.
+        if self.stop_requested:
+            return
 
         if not leader_mode and not cooperative_mode:
             print(
@@ -1294,8 +1303,12 @@ class VizSession:
                     display_obs[key] = value
             return display_obs
 
+        if self.stop_requested:
+            return
         print("Server ready. Waiting for start...")
         obs = _reset_env_for_viz(int(args.seed) if args.seed is not None else None)
+        if self.stop_requested:
+            return
         if isinstance(self.model, (_WorldModelPolicy, _ScriptedPolicy)):
             self.model.reset(obs)
         self.episode_return = 0.0

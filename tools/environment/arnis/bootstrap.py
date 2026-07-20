@@ -124,18 +124,19 @@ def _expected_patched_tree_id(source_dir: Path, pinned_commit: str) -> str:
 
 
 def _actual_worktree_tree_id(source_dir: Path) -> str:
-    """Tree id of the working tree contents (tracked + untracked).
+    """Tree id of the working tree contents (tracked + untracked + ignored).
 
-    `git add -A` into an isolated index captures everything cargo would
-    build, honoring .gitignore (build artifacts are ignorable by design;
-    source-level injections are not ignored by any sane upstream).
+    `--force` matters: exclude rules (.gitignore, .git/info/exclude, global
+    excludes) are attacker-writable in a cached checkout, so an ignored
+    .cargo/config.toml could otherwise hide a rustc-wrapper from the tree
+    comparison while cargo still executes it.
     """
     with tempfile.TemporaryDirectory(prefix="arnis-verify-") as tmp:
         index_file = Path(tmp) / "actual-index"
         return _git_tree_id(
             source_dir,
             index_file,
-            ("add", "-A"),
+            ("add", "-A", "--force"),
         )
 
 

@@ -193,8 +193,10 @@ export function updateSessionButtonState(appStatus) {
     }
     if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'scene_geometry')) {
         const sceneGeo = appStatus.scene_geometry;
-        // Key by bundle identity so profile switches refetch the new bundle.
-        ensureSceneGeometry(sceneGeo?.available ? (sceneGeo.bundle_id || 'unidentified-bundle') : null);
+        // Key by the backend-computed cache key (load generation + digest),
+        // never by the bundle's self-declared id, which is unvalidated and
+        // could be empty or collide across bundles.
+        ensureSceneGeometry(sceneGeo?.available ? (sceneGeo.cache_key || `fallback:${sceneGeo.bundle_id || ''}`) : null);
     }
 
     if (Array.isArray(appStatus?.profiles)) {

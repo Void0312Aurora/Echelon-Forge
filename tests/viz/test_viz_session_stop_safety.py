@@ -66,3 +66,22 @@ def test_status_payload_reflects_stop_event() -> None:
     assert session.status_payload()["stopped"] is False
     session.stop()
     assert session.status_payload()["stopped"] is True
+
+
+def test_startup_honors_stop_checkpoints() -> None:
+    # Startup (env build, model load) is slow; a pending stop must make the
+    # worker return at the next checkpoint instead of finishing startup.
+    session = _make_session()
+    session.stop()
+    session.run_loop()  # returns via the first checkpoint, well before env build
+    assert session.env is None
+    assert session.ready is False
+
+
+def test_session_manager_serializes_transitions() -> None:
+    src = (
+        __import__("pathlib").Path("examples/viz/app/session_manager.py").read_text(encoding="utf-8")
+    )
+    assert "self._transition_lock = threading.Lock()" in src
+    # Replacement requires the old worker to be gone; no silent abandonment.
+    assert "has not terminated" in src

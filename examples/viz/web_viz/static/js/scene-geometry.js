@@ -172,20 +172,25 @@ export function refreshIlluminationShading() {
         vizState.illumination.sunElevationDeg,
     );
     if (!payload) return;
+    const generation = fetchGeneration;
     (async () => {
-        await buildTerrainBitmap();
+        const built = await buildTerrainBitmap();
+        if (generation !== fetchGeneration) return; // cleared/switched mid-build
+        commitTerrainBitmap(built);
         requestTacticalDraw();
     })();
 }
 
+// Builds into locals and returns them; callers commit via
+// commitTerrainBitmap() only after re-checking their fetch generation, so a
+// clear or profile switch during the createImageBitmap await can never
+// reinstall stale terrain.
 async function buildTerrainBitmap() {
-    terrainBitmap = null;
-    terrainRect = null;
     const terrain = payload?.terrain;
-    if (!terrain || !Array.isArray(terrain.heights)) return;
+    if (!terrain || !Array.isArray(terrain.heights)) return null;
     const rows = Number(terrain.rows);
     const cols = Number(terrain.cols);
-    if (!(rows > 1) || !(cols > 1)) return;
+    if (!(rows > 1) || !(cols > 1)) return null;
 
     const canvas = document.createElement('canvas');
     canvas.width = cols;
@@ -204,7 +209,7 @@ async function buildTerrainBitmap() {
         }
     }
     ctx.putImageData(image, 0, 0);
-    terrainBitmap = await createImageBitmap(canvas);
+    const bitmap = await createImageBitmap(canvas);
 
     // Row 0 is the northernmost sample (step_y < 0), matching canvas top.
     const stepX = Number(terrain.step_x);
@@ -213,13 +218,20 @@ async function buildTerrainBitmap() {
     const originY = Number(terrain.origin_y);
     const xs = [originX, originX + stepX * (cols - 1)];
     const ys = [originY, originY + stepY * (rows - 1)];
-    terrainRect = {
+    const rect = {
         minX: Math.min(...xs),
         maxX: Math.max(...xs),
         minY: Math.min(...ys),
         maxY: Math.max(...ys),
         northFirst: stepY < 0,
     };
+    return { bitmap, rect };
+}
+
+function commitTerrainBitmap(built) {
+    if (terrainBitmap && typeof terrainBitmap.close === 'function') terrainBitmap.close();
+    terrainBitmap = built ? built.bitmap : null;
+    terrainRect = built ? built.rect : null;
 }
 
 export function clearSceneGeometry() {
@@ -229,9 +241,7 @@ export function clearSceneGeometry() {
     loadedBundleKey = null;
     const hadPayload = payload !== null;
     payload = null;
-    if (terrainBitmap && typeof terrainBitmap.close === 'function') terrainBitmap.close();
-    terrainBitmap = null;
-    terrainRect = null;
+    commitTerrainBitmap(null);
     if (hadPayload) {
         clearSceneGeometry3D();
         requestTacticalDraw();
@@ -274,8 +284,9 @@ export function ensureSceneGeometry(bundleKey) {
                     + `lon ${Number(anchor.anchor_lon_deg).toFixed(4)} (${anchor.frame})`,
                 );
             }
-            await buildTerrainBitmap();
+            const built = await buildTerrainBitmap();
             if (generation !== fetchGeneration) return; // cleared/superseded during build
+            commitTerrainBitmap(built);
             buildSceneGeometry3D(payload, {
                 terrainCellColor,
                 terrainShade,

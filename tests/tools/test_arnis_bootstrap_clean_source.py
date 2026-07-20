@@ -110,6 +110,21 @@ def test_untracked_cargo_config_rejected(pinned_repo: tuple[Path, dict]) -> None
         _ensure_patch_applied(repo, lock)
 
 
+def test_gitignore_hidden_cargo_config_rejected(pinned_repo: tuple[Path, dict]) -> None:
+    # Exclude rules are attacker-writable in a cached checkout: hiding the
+    # injected file via .git/info/exclude must not bypass the tree check.
+    repo, lock = pinned_repo
+    _ensure_patch_applied(repo, lock)
+    exclude = repo / ".git" / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    exclude.write_text(".cargo/\n", encoding="utf-8")
+    cargo_dir = repo / ".cargo"
+    cargo_dir.mkdir()
+    (cargo_dir / "config.toml").write_text('[build]\nrustc-wrapper = "evil"\n', encoding="utf-8")
+    with pytest.raises(ArnisBootstrapError, match="refusing to build"):
+        _ensure_patch_applied(repo, lock)
+
+
 def test_dirty_unpatched_checkout_rejected(pinned_repo: tuple[Path, dict]) -> None:
     repo, lock = pinned_repo
     (repo / "Cargo.toml").write_text(

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import threading
 import time
 from typing import Iterable
 
@@ -19,7 +20,13 @@ class SessionManager:
         self.current_profile: dict | None = None
         self.asset_registry = load_asset_registry()
         self.scene_geometry: dict | None = None
+        # Bumped on every scene-geometry (re)load; part of the cache key so
+        # frontends refetch even across bundles with colliding declared ids.
+        self._scene_geometry_generation = 0
         self._tasks: list = []
+        # Serializes session transitions (load/stop/shutdown): concurrent
+        # threaded socket handlers must never race two replacements.
+        self._transition_lock = threading.Lock()
 
     def list_scenarios(self, roots: Iterable[str] | None = None) -> list[str]:
         search_roots = list(roots or ["scenarios"])
@@ -50,9 +57,18 @@ class SessionManager:
         payload = self.scene_geometry
         if not isinstance(payload, dict):
             return {"available": False}
+        bundle = payload.get("bundle", {})
         return {
             "available": True,
-            "bundle_id": str(payload.get("bundle", {}).get("bundle_id", "")),
+            "bundle_id": str(bundle.get("bundle_id", "")),
+            # Backend-authoritative cache key: a monotonically increasing
+            # load generation combined with the declared digest. Frontends
+            # must key their caches on this, never on the bundle's
+            # self-declared id (which is unvalidated and could collide).
+            "cache_key": (
+                f"{int(self._scene_geometry_generation)}:"
+                f"{bundle.get('content_digest_sha256', '')}"
+            ),
             "summary": payload.get("summary", {}),
             "held_total": int(payload.get("held", {}).get("total", 0)),
         }
@@ -88,6 +104,10 @@ class SessionManager:
             self.socketio.emit("viz_session_status", session.status_payload())
 
     def load_session(self, scenario: str, overrides: dict | None = None) -> VizSession:
+        with self._transition_lock:
+            return self._load_session_locked(scenario, overrides)
+
+    def _load_session_locked(self, scenario: str, overrides: dict | None = None) -> VizSession:
         base = argparse.Namespace(**vars(self.default_args)) if self.default_args is not None else argparse.Namespace()
         setattr(base, "scenario", str(scenario))
         if overrides:
@@ -97,7 +117,17 @@ class SessionManager:
         old_session = self.session
         if old_session is not None:
             old_session.stop()
-            self._drain_tasks(timeout_s=2.0)
+            # The old worker must be gone before a replacement starts:
+            # two live workers would interleave unscoped state_update
+            # streams. Startup can be slow (env build, model load), so the
+            # session's stop checkpoints bound the wait; if the worker still
+            # will not die, refuse the replacement instead of abandoning it.
+            self._drain_tasks(timeout_s=15.0)
+            if self._tasks:
+                raise RuntimeError(
+                    "previous viz session worker has not terminated; "
+                    "retry once it stops instead of running two sessions"
+                )
 
         session = VizSession(base, self.socketio, status_callback=self.emit_status)
         self.session = session
@@ -113,6 +143,7 @@ class SessionManager:
         self.asset_registry = load_asset_registry(registry_ref or None)
         bundle_ref = str(profile.get("environment_bundle") or "").strip()
         self.scene_geometry = load_scene_geometry_payload(bundle_ref) if bundle_ref else None
+        self._scene_geometry_generation += 1
         session = self.load_session(profile["scenario"], overrides=profile.get("session_overrides"))
 
         startup = profile.get("startup", {}) if isinstance(profile, dict) else {}
@@ -154,12 +185,13 @@ class SessionManager:
         self.emit_status()
 
     def stop_current(self) -> None:
-        if self.session is None:
-            return
-        self.session.stop()
-        self.session = None
-        self._drain_tasks(timeout_s=2.0)
-        self.emit_status()
+        with self._transition_lock:
+            if self.session is None:
+                return
+            self.session.stop()
+            self.session = None
+            self._drain_tasks(timeout_s=5.0)
+            self.emit_status()
 
     @staticmethod
     def _task_finished(task) -> bool:
@@ -188,12 +220,13 @@ class SessionManager:
         self._tasks = [task for task in self._tasks if not self._task_finished(task)]
 
     def shutdown(self, *, timeout_s: float = 5.0) -> None:
-        session = self.session
-        self.session = None
-        if session is not None:
-            session.stop()
-        self._drain_tasks(timeout_s=timeout_s)
-        self.emit_status()
+        with self._transition_lock:
+            session = self.session
+            self.session = None
+            if session is not None:
+                session.stop()
+            self._drain_tasks(timeout_s=timeout_s)
+            self.emit_status()
 
     def set_speed(self, data) -> None:
         if self.session is None:
