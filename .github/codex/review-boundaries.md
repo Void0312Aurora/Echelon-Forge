@@ -6,6 +6,33 @@ blocking semantics, and scope boundaries. The goal is convergence: each
 round of review should move a change closer to merge, not open an unbounded
 frontier.
 
+## Review dimensions
+
+Every full review covers these dimensions; each finding names the dimension
+it belongs to and takes its severity from the ladder below.
+
+1. **Correctness & regressions** — does the change do what it claims, on
+   the mainline paths, without breaking existing behavior?
+2. **Contracts & compatibility** — versioned wire/data contracts evolve
+   additively or with an explicit version bump; changed shapes update every
+   consumer (search for them); migrations and rollback stay possible.
+3. **Tests** — new behavior is pinned by tests at the right level; changed
+   behavior updates the tests that encoded the old behavior.
+4. **Security** — within the threat-model boundary defined below.
+5. **Complexity** — the audit defined below.
+6. **Architecture consistency** — the change follows the repository's
+   governance patterns rather than inventing parallel ones. In this
+   repository that includes: fail-closed validation over silent fallbacks;
+   display/adjudication separation (viz consumes truth, never fabricates
+   it); authority lives in the engine/backend, frontends render; explicit
+   evidence/release flags on derived data. Violations are P1.
+7. **Documentation sync** — user-visible behavior changes update the
+   affected docs; bilingual document clusters stay paired when both
+   languages exist (`docs/standards/bilingual_document_clusters.json`).
+
+Style and formatting are machine-gate territory (clang-format, ruff), not
+review findings, unless the gates cannot express the rule.
+
 ## Severity ladder
 
 | Level | Definition | Blocking? |
@@ -77,6 +104,21 @@ the threat model above. Do not return one layer deeper on each successive
 review round; that pattern produces unbounded review cycles on a frontier
 that was already knowingly accepted.
 
+## Risk-tiered review depth
+
+Review effort scales with the blast radius of the touched paths, judged by
+what consumes them (kernel and shared runtime code is consumed by
+everything; examples and docs are leaves):
+
+| Tier | Typical paths | Depth |
+|------|---------------|-------|
+| High | `src/core/`, `src/runtime/`, `src/models/`, `python/scenario/`, `python/rl/runtime/`, wire contracts and bindings | All dimensions, line-level scrutiny, cross-consumer impact search |
+| Medium | `examples/`, `tools/`, test infrastructure | Correctness, contracts, complexity; edge cases at P2 |
+| Low | `docs/`, comments, non-executable assets | Accuracy and doc-sync only |
+
+A PR mixing tiers is reviewed at the depth of its highest tier, but
+findings in lower-tier files still use lower-tier expectations.
+
 ## Convergence protocol for repeated reviews
 
 Before reviewing, read the pull request's existing review comments and the
@@ -89,6 +131,41 @@ author's responses (provided as context by the workflow when available):
 3. New findings in previously reviewed code are allowed but must meet the
    P0/P1 bar to block.
 
+**Round budget.** Round 1-2 on a pull request run all dimensions at full
+depth. From round 3 onward, new findings are reportable only at P0/P1;
+everything else is limited to verifying fixes for previously reported
+findings. If round 3+ keeps producing new P0/P1 findings, say explicitly
+that the change may need redesign or splitting rather than another patch
+round.
+
+## Finding lifecycle and arbitration
+
+Each finding follows one path, and reviews track it across rounds:
+
+```
+reported -> fixed                      (verify, then closed)
+         -> accepted as residual risk  (recorded below, then closed)
+         -> rebutted by the author     (one counter allowed, see below)
+```
+
+If the author rebuts a finding with a rationale, the reviewer may respond
+**once** with new evidence (not a restatement). After that, the finding is
+decided by the maintainer: either it is fixed, or it is recorded under
+"Accepted residual risks" / "Lessons" and closed. Reviews never re-argue a
+closed finding. The maintainer is the final arbiter; automated reviewers
+advise.
+
+## Gate feedback discipline
+
+When a review finds a *mechanical* defect class — one a linter, type
+checker, formatter, or contract test could have caught (shape mismatches,
+unused symbols, missed call-site updates, format drift) — the finding
+should include a one-line suggestion for the gate that would catch the
+class, not just the instance. Recurring mechanical classes belong in
+machine gates; review attention belongs on judgment problems. Maintainers
+record adopted gate rules in the Lessons appendix so the origin stays
+traceable.
+
 ## Accepted residual risks
 
 Maintainers record knowingly accepted risks here so reviews stop re-raising
@@ -100,4 +177,21 @@ them. Each entry: scope, risk, rationale, date.
   toolchain substitution). Verification stops at byte-identity of the
   source tree against the pinned commit plus pinned patch; deeper
   local-host compromise is out of scope per the default threat model.
+  (2026-07-21)
+
+## Lessons
+
+Process improvements distilled from review rounds: recurring finding
+patterns, gate rules adopted from review findings, and escaped defects
+(bugs that reached the default branch despite review) with the review
+blind spot they exposed. Each entry: pattern, upstream fix, date.
+
+- Multi-consumer shape changes (e.g. widening a tuple an API returns) need
+  a repository-wide consumer search *including tests*; a call-site missed
+  in a test suite cost a CI round. Gate direction: incremental typing
+  (JSDoc/checkJs on the frontend already; consider mypy on new Python
+  contract modules). (2026-07-21)
+- Review scope grows superlinearly with PR size; a multi-theme PR
+  (~20 commits across engine/runtime/frontend) took four review rounds to
+  converge. Process fix: single-theme PRs, and the round budget above.
   (2026-07-21)

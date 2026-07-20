@@ -1,9 +1,11 @@
-Review this pull request for correctness, regressions, missing tests, and security risks, and audit the complexity of what it adds.
-
-Apply the severity ladder, blocking semantics, threat-model boundary,
-complexity-audit checklist, and convergence protocol defined in
-`.github/codex/review-boundaries.md`. That file is the shared contract for
-every review round; read it before writing findings.
+Review this pull request against the full review contract in
+`.github/codex/review-boundaries.md`: the review dimensions (correctness,
+contracts/compatibility, tests, security, complexity, architecture
+consistency, documentation sync), the severity ladder and blocking
+semantics, the threat-model boundary, risk-tiered depth, the round budget,
+the finding lifecycle/arbitration rules, and the gate-feedback discipline.
+That file is the shared contract for every review round; read it before
+writing findings.
 
 Review discipline:
 
@@ -26,10 +28,12 @@ Review discipline:
 
 For each finding:
 
-- assign a severity from the ladder (P0-P3);
+- assign a severity from the ladder (P0-P3) and name its review dimension;
 - cite the relevant file and line or diff hunk;
 - explain the impact;
-- suggest a concrete fix.
+- suggest a concrete fix;
+- if the defect class is mechanical (catchable by a linter, type checker,
+  or contract test), add a one-line gate suggestion for the class.
 
 Output format:
 
