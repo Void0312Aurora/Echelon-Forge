@@ -92,9 +92,9 @@ def test_runtime_facade_capabilities_stay_independent_from_cuda_experiment_signa
 
 def test_runtime_binding_capability_surface_keeps_gpu_helper_signals_separate() -> None:
   source = RUNTIME_BINDINGS.read_text(encoding="utf-8")
-  runtime_capabilities_block = source.split('nb::class_<RuntimeCapabilities>(m, "RuntimeCapabilities")', 1)[1]
+  runtime_capabilities_block = source.split('nb::class_<RuntimeCapabilities>', 1)[1]
   runtime_capabilities_block = runtime_capabilities_block.split(
-    'nb::class_<RuntimeBatchConfig>(m, "RuntimeBatchConfig")',
+    'nb::class_<RuntimeBatchConfig>',
     1,
   )[0]
   assert "cuda_runtime_available" not in runtime_capabilities_block

@@ -83,6 +83,196 @@ EXPECTED_REGISTRATIONS = {
     f"{_BUILDER_DIR}/approach_reward_products_builder.py",
     13,
   ),
+  "tools/maintenance/dto_schema/schemas/platform_capability_fields.py": (
+    "src/runtime/contracts/detail/platform_capability.inc",
+    f"{_BUILDER_DIR}/platform_capability_builder.py",
+    9,
+  ),
+  "tools/maintenance/dto_schema/schemas/capability_bundle_fields.py": (
+    "src/runtime/contracts/detail/capability_bundle.inc",
+    f"{_BUILDER_DIR}/capability_bundle_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/resolved_platform_spawn_plan_fields.py": (
+    "src/runtime/contracts/detail/resolved_platform_spawn_plan.inc",
+    f"{_BUILDER_DIR}/resolved_platform_spawn_plan_builder.py",
+    16,
+  ),
+  "tools/maintenance/dto_schema/schemas/typed_platform_spawn_request_fields.py": (
+    "src/runtime/contracts/detail/typed_platform_spawn_request.inc",
+    f"{_BUILDER_DIR}/typed_platform_spawn_request_builder.py",
+    19,
+  ),
+  "tools/maintenance/dto_schema/schemas/typed_platform_spawn_validation_result_fields.py": (
+    "src/runtime/contracts/detail/typed_platform_spawn_validation_result.inc",
+    f"{_BUILDER_DIR}/typed_platform_spawn_validation_result_builder.py",
+    4,
+  ),
+  "tools/maintenance/dto_schema/schemas/batch_reset_request_fields.py": (
+    "src/runtime/facade/detail/batch_reset_request.inc",
+    f"{_BUILDER_DIR}/batch_reset_request_builder.py",
+    1,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_entity_ref_fields.py": (
+    "src/runtime/contracts/detail/world_entity_ref.inc",
+    f"{_BUILDER_DIR}/world_entity_ref_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_terrain_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_terrain_assignment.inc",
+    f"{_BUILDER_DIR}/world_terrain_assignment_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_wind_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_wind_assignment.inc",
+    f"{_BUILDER_DIR}/world_wind_assignment_builder.py",
+    4,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_zone_definition_fields.py": (
+    "src/runtime/contracts/detail/world_zone_definition.inc",
+    f"{_BUILDER_DIR}/world_zone_definition_builder.py",
+    8,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_spawn_request_fields.py": (
+    "src/runtime/contracts/detail/world_spawn_request.inc",
+    f"{_BUILDER_DIR}/world_spawn_request_builder.py",
+    20,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_pilot_action_assignment_fields.py": (
+    "src/runtime/contracts/detail/world_pilot_action_assignment.inc",
+    f"{_BUILDER_DIR}/world_pilot_action_assignment_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/world_execution_episode_step_request_fields.py": (
+    "src/runtime/contracts/detail/world_execution_episode_step_request.inc",
+    f"{_BUILDER_DIR}/world_execution_episode_step_request_builder.py",
+    4,
+  ),
+  "tools/maintenance/dto_schema/schemas/batch_world_setup_request_fields.py": (
+    "src/runtime/facade/detail/batch_world_setup_request.inc",
+    f"{_BUILDER_DIR}/batch_world_setup_request_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/batch_world_setup_result_fields.py": (
+    "src/runtime/facade/detail/batch_world_setup_result.inc",
+    f"{_BUILDER_DIR}/batch_world_setup_result_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/typed_platform_spawn_result_fields.py": (
+    "src/runtime/contracts/detail/typed_platform_spawn_result.inc",
+    f"{_BUILDER_DIR}/typed_platform_spawn_result_builder.py",
+    14,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_capabilities_fields.py": (
+    "src/runtime/facade/detail/runtime_capabilities.inc",
+    f"{_BUILDER_DIR}/runtime_capabilities_builder.py",
+    24,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_batch_config_fields.py": (
+    "src/runtime/facade/detail/runtime_batch_config.inc",
+    f"{_BUILDER_DIR}/runtime_batch_config_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_fidelity_request_fields.py": (
+    "src/runtime/facade/detail/runtime_fidelity_request.inc",
+    f"{_BUILDER_DIR}/runtime_fidelity_request_builder.py",
+    7,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_fidelity_admission_fields.py": (
+    "src/runtime/facade/detail/runtime_fidelity_admission.inc",
+    f"{_BUILDER_DIR}/runtime_fidelity_admission_builder.py",
+    11,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_counterfactual_snapshot_fields.py": (
+    "src/runtime/facade/detail/runtime_counterfactual_snapshot.inc",
+    f"{_BUILDER_DIR}/runtime_counterfactual_snapshot_builder.py",
+    21,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_worldline_comparison_fields.py": (
+    "src/runtime/facade/detail/runtime_worldline_comparison.inc",
+    f"{_BUILDER_DIR}/runtime_worldline_comparison_builder.py",
+    13,
+  ),
+  "tools/maintenance/dto_schema/schemas/resident_device_output_descriptor_fields.py": (
+    "src/runtime/facade/detail/resident_device_output_descriptor.inc",
+    f"{_BUILDER_DIR}/resident_device_output_descriptor_builder.py",
+    8,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_experiment_ancestry_fields.py": (
+    "src/runtime/facade/detail/runtime_experiment_ancestry.inc",
+    f"{_BUILDER_DIR}/runtime_experiment_ancestry_builder.py",
+    16,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_experiment_result_fields.py": (
+    "src/runtime/facade/detail/runtime_experiment_result.inc",
+    f"{_BUILDER_DIR}/runtime_experiment_result_builder.py",
+    11,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_experiment_step_request_fields.py": (
+    "src/runtime/facade/detail/runtime_experiment_step_request.inc",
+    f"{_BUILDER_DIR}/runtime_experiment_step_request_builder.py",
+    6,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_experiment_request_fields.py": (
+    "src/runtime/facade/detail/runtime_experiment_request.inc",
+    f"{_BUILDER_DIR}/runtime_experiment_request_builder.py",
+    21,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_input_record_fields.py": (
+    "src/runtime/facade/detail/runtime_window_input_record.inc",
+    f"{_BUILDER_DIR}/runtime_window_input_record_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_scheduling_context_fields.py": (
+    "src/runtime/facade/detail/runtime_window_scheduling_context.inc",
+    f"{_BUILDER_DIR}/runtime_window_scheduling_context_builder.py",
+    9,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_barrier_record_fields.py": (
+    "src/runtime/facade/detail/runtime_window_barrier_record.inc",
+    f"{_BUILDER_DIR}/runtime_window_barrier_record_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_visibility_record_fields.py": (
+    "src/runtime/facade/detail/runtime_window_visibility_record.inc",
+    f"{_BUILDER_DIR}/runtime_window_visibility_record_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_cadence_control_fields.py": (
+    "src/runtime/facade/detail/runtime_window_cadence_control.inc",
+    f"{_BUILDER_DIR}/runtime_window_cadence_control_builder.py",
+    6,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_node_execution_record_fields.py": (
+    "src/runtime/facade/detail/runtime_window_node_execution_record.inc",
+    f"{_BUILDER_DIR}/runtime_window_node_execution_record_builder.py",
+    14,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_cadence_fields.py": (
+    "src/runtime/facade/detail/runtime_window_cadence.inc",
+    f"{_BUILDER_DIR}/runtime_window_cadence_builder.py",
+    5,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_cadence_config_fields.py": (
+    "src/runtime/facade/detail/runtime_window_cadence_config.inc",
+    f"{_BUILDER_DIR}/runtime_window_cadence_config_builder.py",
+    2,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_cadence_trace_record_fields.py": (
+    "src/runtime/facade/detail/runtime_window_cadence_trace_record.inc",
+    f"{_BUILDER_DIR}/runtime_window_cadence_trace_record_builder.py",
+    15,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_request_fields.py": (
+    "src/runtime/facade/detail/runtime_window_request.inc",
+    f"{_BUILDER_DIR}/runtime_window_request_builder.py",
+    10,
+  ),
+  "tools/maintenance/dto_schema/schemas/runtime_window_result_fields.py": (
+    "src/runtime/facade/detail/runtime_window_result.inc",
+    f"{_BUILDER_DIR}/runtime_window_result_builder.py",
+    10,
+  ),
 }
 
 EXPECTED_PACKAGE_INIT = f"{_BUILDER_DIR}/__init__.py"

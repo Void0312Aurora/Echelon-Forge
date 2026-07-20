@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.support.xmacro_text import expand_header_field_incs
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DTO_HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "runtime_dto_contracts.h"
@@ -10,7 +12,14 @@ FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.
 
 
 def _text(path: Path) -> str:
-  return path.read_text(encoding="utf-8")
+  text = path.read_text(encoding="utf-8")
+  # DeviceResidentOutputDescriptor/RuntimeCapabilities and friends are now
+  # schema-owned (tools/maintenance/dto_schema, I26): expand the X-macro
+  # #include so this file's field-shape assertions keep matching the
+  # compiled struct instead of the #include line.
+  if path == FACADE_TYPES:
+    return expand_header_field_incs(text)
+  return text
 
 
 def _struct_body(header: str, struct_name: str) -> str:

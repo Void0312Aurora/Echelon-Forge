@@ -17,54 +17,28 @@
 #include "runtime/contracts/platform_capability_contracts.h"
 
 struct WorldEntityRef {
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
+#define EF_WORLD_ENTITY_REF_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_entity_ref.inc"
 };
 
 struct WorldTerrainAssignment {
-    std::uint64_t world_index = 0;
-    std::string terrain_type = "flat";
+#define EF_WORLD_TERRAIN_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_terrain_assignment.inc"
 };
 
 struct WorldWindAssignment {
-    std::uint64_t world_index = 0;
-    double speed_mps = 0.0;
-    double dir_from_deg = 0.0;
-    double shear_mps_per_km = 0.0;
+#define EF_WORLD_WIND_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_wind_assignment.inc"
 };
 
 struct WorldZoneDefinition {
-    std::uint64_t world_index = 0;
-    std::string name = "Zone";
-    double x = 0.0;
-    double y = 0.0;
-    double width = 1000.0;
-    double length = 1000.0;
-    double heading = 0.0;
-    int surface_type = 3;
+#define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_zone_definition.inc"
 };
 
 struct WorldSpawnRequest {
-    std::uint64_t world_index = 0;
-    Side side = Side::Neutral;
-    std::string type_name;
-    std::string entity_name;
-    bool is_agent = false;
-    double x = 0.0;
-    double y = 0.0;
-    double z = 0.0;
-    double heading = 0.0;
-    double pitch = 0.0;
-    double roll = 0.0;
-    double vx = 0.0;
-    double vy = 0.0;
-    double vz = 0.0;
-    bool ammo_override_enabled = false;
-    int missiles_remaining = 0;
-    int max_missiles = 0;
-    bool weapon_cooldown_override_enabled = false;
-    double weapon_cooldown_s = 2.0;
-    double weapon_last_fire_time = -1.0;
+#define EF_WORLD_SPAWN_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_spawn_request.inc"
 };
 
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMissingRequestId =
@@ -110,32 +84,14 @@ inline constexpr std::string_view kTypedPlatformSetupSurfaceInvalid =
     "invalid_typed_setup_surface";
 
 struct TypedPlatformSpawnRequest {
-    std::uint64_t world_index = 0;
-    Side side = Side::Neutral;
-    std::string request_id;
-    std::string source_type_name;
-    std::string entity_name;
-    bool is_agent = false;
-    double x = 0.0;
-    double y = 0.0;
-    double z = 0.0;
-    double heading = 0.0;
-    double pitch = 0.0;
-    double roll = 0.0;
-    double vx = 0.0;
-    double vy = 0.0;
-    double vz = 0.0;
-    runtime::platform_capabilities::CapabilityBundle capability_bundle;
-    runtime::platform_capabilities::ResolvedPlatformSpawnPlan resolved_spawn_plan;
-    std::vector<std::string> facade_evidence_refs;
-    bool type_name_projection_preserved = true;
+#define EF_TYPED_PLATFORM_SPAWN_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/typed_platform_spawn_request.inc"
 };
 
 struct TypedPlatformSpawnValidationResult {
-    bool valid = false;
-    bool fail_closed = false;
-    std::string rejection_reason;
-    std::vector<std::string> errors;
+#define EF_TYPED_PLATFORM_SPAWN_VALIDATION_RESULT_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/typed_platform_spawn_validation_result.inc"
 
     void reject(std::string reason) {
         valid = false;
@@ -475,20 +431,8 @@ struct TypedPlatformSpawnAdmission {
 };
 
 struct TypedPlatformSpawnResult {
-    std::uint64_t request_index = 0;
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    bool admitted = false;
-    bool materialized = false;
-    bool fail_closed = false;
-    std::string request_id;
-    std::string source_type_name;
-    std::string plan_id;
-    std::string capability_bundle_id;
-    std::string setup_surface;
-    std::string rejection_reason;
-    std::vector<std::string> errors;
-    std::vector<std::string> evidence_refs;
+#define EF_TYPED_PLATFORM_SPAWN_RESULT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/typed_platform_spawn_result.inc"
 
     void reject(std::string reason) {
         admitted = false;
@@ -541,9 +485,8 @@ make_typed_platform_spawn_result(
 }
 
 struct WorldPilotActionAssignment {
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    PilotAction action{};
+#define EF_WORLD_PILOT_ACTION_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/world_pilot_action_assignment.inc"
 };
 
 struct WorldMissionCommandAssignment {
@@ -1349,8 +1292,7 @@ world_pilot_report_maintained_batch_contract(
 }
 
 struct WorldExecutionEpisodeStepRequest {
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    StepEvaluationBatchConfig config{};
-    StepEvaluationBatchEnvState env_state{};
+#define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value) \
+    type name = default_value;
+#include "runtime/contracts/detail/world_execution_episode_step_request.inc"
 };

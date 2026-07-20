@@ -15,130 +15,52 @@
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime(nb::module_ &m) {
-    nb::class_<RuntimeCapabilities>(m, "RuntimeCapabilities")
-        .def(nb::init<>())
-        .def_rw("supports_batch_runtime", &RuntimeCapabilities::supports_batch_runtime)
-        .def_rw("supports_compiled_episode_controller",
-                &RuntimeCapabilities::supports_compiled_episode_controller)
-        .def_rw("supports_compiled_execution_step",
-                &RuntimeCapabilities::supports_compiled_execution_step)
-        .def_rw("supports_gpu_visual", &RuntimeCapabilities::supports_gpu_visual)
-        .def_rw("supports_gpu_observation", &RuntimeCapabilities::supports_gpu_observation)
-        .def_rw("supports_gpu_flight_shaping", &RuntimeCapabilities::supports_gpu_flight_shaping)
-        .def_rw("supports_device_observation_view",
-                &RuntimeCapabilities::supports_device_observation_view)
-        .def_rw("supports_resident_state", &RuntimeCapabilities::supports_resident_state)
-        .def_rw("supports_exact_gpu_backend", &RuntimeCapabilities::supports_exact_gpu_backend)
-        .def_rw("supports_shadow_compare", &RuntimeCapabilities::supports_shadow_compare)
-        .def_rw("maintained_baseline_backend_profile_id",
-                &RuntimeCapabilities::maintained_baseline_backend_profile_id)
-        .def_rw("maintained_baseline_parity_budget_ref",
-                &RuntimeCapabilities::maintained_baseline_parity_budget_ref)
-        .def_rw("maintained_baseline_profile_status",
-                &RuntimeCapabilities::maintained_baseline_profile_status)
-        .def_rw("device_observation_view_candidate_profile_id",
-                &RuntimeCapabilities::device_observation_view_candidate_profile_id)
-        .def_rw("device_observation_view_rejection_reason",
-                &RuntimeCapabilities::device_observation_view_rejection_reason)
-        .def_rw("exact_gpu_backend_candidate_profile_id",
-                &RuntimeCapabilities::exact_gpu_backend_candidate_profile_id)
-        .def_rw("exact_gpu_backend_rejection_reason",
-                &RuntimeCapabilities::exact_gpu_backend_rejection_reason)
-        .def_rw("resident_state_candidate_profile_id",
-                &RuntimeCapabilities::resident_state_candidate_profile_id)
-        .def_rw("resident_state_candidate_parity_budget_ref",
-                &RuntimeCapabilities::resident_state_candidate_parity_budget_ref)
-        .def_rw("resident_state_rejection_reason",
-                &RuntimeCapabilities::resident_state_rejection_reason)
-        .def_rw("shadow_compare_candidate_profile_id",
-                &RuntimeCapabilities::shadow_compare_candidate_profile_id)
-        .def_rw("shadow_compare_candidate_parity_budget_ref",
-                &RuntimeCapabilities::shadow_compare_candidate_parity_budget_ref)
-        .def_rw("shadow_compare_rejection_reason",
-                &RuntimeCapabilities::shadow_compare_rejection_reason)
-        .def_rw("multi_fidelity_rejection_reason",
-                &RuntimeCapabilities::multi_fidelity_rejection_reason);
+    nb::class_<RuntimeCapabilities> runtime_capabilities_class(m, "RuntimeCapabilities");
+    runtime_capabilities_class.def(nb::init<>());
+#define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value) \
+    runtime_capabilities_class.def_rw(#name, &RuntimeCapabilities::name);
+#include "runtime/facade/detail/runtime_capabilities.inc"
 
-    nb::class_<RuntimeBatchConfig>(m, "RuntimeBatchConfig")
-        .def(nb::init<>())
-        .def_rw("world_count", &RuntimeBatchConfig::world_count)
-        .def_rw("worker_threads", &RuntimeBatchConfig::worker_threads);
+    nb::class_<RuntimeBatchConfig> runtime_batch_config_class(m, "RuntimeBatchConfig");
+    runtime_batch_config_class.def(nb::init<>());
+#define EF_RUNTIME_BATCH_CONFIG_FIELD(type, name, default_value) \
+    runtime_batch_config_class.def_rw(#name, &RuntimeBatchConfig::name);
+#include "runtime/facade/detail/runtime_batch_config.inc"
 
-    nb::class_<RuntimeFidelityRequest>(m, "RuntimeFidelityRequest")
-        .def(nb::init<>())
-        .def_rw("request_label", &RuntimeFidelityRequest::request_label)
-        .def_rw("backend_profile_id", &RuntimeFidelityRequest::backend_profile_id)
-        .def_rw("parity_budget_ref", &RuntimeFidelityRequest::parity_budget_ref)
-        .def_rw("provider_family", &RuntimeFidelityRequest::provider_family)
-        .def_rw("model_family_scope", &RuntimeFidelityRequest::model_family_scope)
-        .def_rw("validation_gate", &RuntimeFidelityRequest::validation_gate)
-        .def_rw("facade_evidence_refs", &RuntimeFidelityRequest::facade_evidence_refs);
+    nb::class_<RuntimeFidelityRequest> runtime_fidelity_request_class(m, "RuntimeFidelityRequest");
+    runtime_fidelity_request_class.def(nb::init<>());
+#define EF_RUNTIME_FIDELITY_REQUEST_FIELD(type, name, default_value) \
+    runtime_fidelity_request_class.def_rw(#name, &RuntimeFidelityRequest::name);
+#include "runtime/facade/detail/runtime_fidelity_request.inc"
 
-    nb::class_<RuntimeFidelityAdmission>(m, "RuntimeFidelityAdmission")
-        .def(nb::init<>())
-        .def_rw("admitted", &RuntimeFidelityAdmission::admitted)
-        .def_rw("baseline_exact_evaluation", &RuntimeFidelityAdmission::baseline_exact_evaluation)
-        .def_rw("request_label", &RuntimeFidelityAdmission::request_label)
-        .def_rw("backend_profile_id", &RuntimeFidelityAdmission::backend_profile_id)
-        .def_rw("parity_budget_ref", &RuntimeFidelityAdmission::parity_budget_ref)
-        .def_rw("requested_provider_family", &RuntimeFidelityAdmission::requested_provider_family)
-        .def_rw("selected_provider_family", &RuntimeFidelityAdmission::selected_provider_family)
-        .def_rw("selected_stage_node_id", &RuntimeFidelityAdmission::selected_stage_node_id)
-        .def_rw("rejection_reason", &RuntimeFidelityAdmission::rejection_reason)
-        .def_rw("errors", &RuntimeFidelityAdmission::errors)
-        .def_rw("evidence_refs", &RuntimeFidelityAdmission::evidence_refs);
+    nb::class_<RuntimeFidelityAdmission> runtime_fidelity_admission_class(
+        m, "RuntimeFidelityAdmission");
+    runtime_fidelity_admission_class.def(nb::init<>());
+#define EF_RUNTIME_FIDELITY_ADMISSION_FIELD(type, name, default_value) \
+    runtime_fidelity_admission_class.def_rw(#name, &RuntimeFidelityAdmission::name);
+#include "runtime/facade/detail/runtime_fidelity_admission.inc"
 
-    nb::class_<RuntimeCounterfactualSnapshot>(m, "RuntimeCounterfactualSnapshot")
-        .def(nb::init<>())
-        .def_rw("worldline_id", &RuntimeCounterfactualSnapshot::worldline_id)
-        .def_rw("parent_worldline_id", &RuntimeCounterfactualSnapshot::parent_worldline_id)
-        .def_rw("deterministic_seed", &RuntimeCounterfactualSnapshot::deterministic_seed)
-        .def_rw("world_index", &RuntimeCounterfactualSnapshot::world_index)
-        .def_rw("entity_id", &RuntimeCounterfactualSnapshot::entity_id)
-        .def_rw("x", &RuntimeCounterfactualSnapshot::x)
-        .def_rw("y", &RuntimeCounterfactualSnapshot::y)
-        .def_rw("z", &RuntimeCounterfactualSnapshot::z)
-        .def_rw("vx", &RuntimeCounterfactualSnapshot::vx)
-        .def_rw("vy", &RuntimeCounterfactualSnapshot::vy)
-        .def_rw("vz", &RuntimeCounterfactualSnapshot::vz)
-        .def_rw("heading", &RuntimeCounterfactualSnapshot::heading)
-        .def_rw("pitch", &RuntimeCounterfactualSnapshot::pitch)
-        .def_rw("roll", &RuntimeCounterfactualSnapshot::roll)
-        .def_rw("snapshot_version", &RuntimeCounterfactualSnapshot::snapshot_version)
-        .def_rw("barrier_id", &RuntimeCounterfactualSnapshot::barrier_id)
-        .def_rw("fidelity_profile_id", &RuntimeCounterfactualSnapshot::fidelity_profile_id)
-        .def_rw("provider_family", &RuntimeCounterfactualSnapshot::provider_family)
-        .def_rw("selected_stage_node_id", &RuntimeCounterfactualSnapshot::selected_stage_node_id)
-        .def_rw("cadence_reason", &RuntimeCounterfactualSnapshot::cadence_reason)
-        .def_rw("evidence_refs", &RuntimeCounterfactualSnapshot::evidence_refs);
+    nb::class_<RuntimeCounterfactualSnapshot> runtime_counterfactual_snapshot_class(
+        m, "RuntimeCounterfactualSnapshot");
+    runtime_counterfactual_snapshot_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_SNAPSHOT_FIELD(type, name, default_value) \
+    runtime_counterfactual_snapshot_class.def_rw(#name, &RuntimeCounterfactualSnapshot::name);
+#include "runtime/facade/detail/runtime_counterfactual_snapshot.inc"
 
-    nb::class_<RuntimeWorldlineComparison>(m, "RuntimeWorldlineComparison")
-        .def(nb::init<>())
-        .def_rw("comparable", &RuntimeWorldlineComparison::comparable)
-        .def_rw("comparison_id", &RuntimeWorldlineComparison::comparison_id)
-        .def_rw("parent_worldline_id", &RuntimeWorldlineComparison::parent_worldline_id)
-        .def_rw("branch_worldline_id", &RuntimeWorldlineComparison::branch_worldline_id)
-        .def_rw("barrier_id", &RuntimeWorldlineComparison::barrier_id)
-        .def_rw("dx", &RuntimeWorldlineComparison::dx)
-        .def_rw("dy", &RuntimeWorldlineComparison::dy)
-        .def_rw("dz", &RuntimeWorldlineComparison::dz)
-        .def_rw("dvx", &RuntimeWorldlineComparison::dvx)
-        .def_rw("dvy", &RuntimeWorldlineComparison::dvy)
-        .def_rw("dvz", &RuntimeWorldlineComparison::dvz)
-        .def_rw("dheading", &RuntimeWorldlineComparison::dheading)
-        .def_rw("evidence_refs", &RuntimeWorldlineComparison::evidence_refs);
+    nb::class_<RuntimeWorldlineComparison> runtime_worldline_comparison_class(
+        m, "RuntimeWorldlineComparison");
+    runtime_worldline_comparison_class.def(nb::init<>());
+#define EF_RUNTIME_WORLDLINE_COMPARISON_FIELD(type, name, default_value) \
+    runtime_worldline_comparison_class.def_rw(#name, &RuntimeWorldlineComparison::name);
+#include "runtime/facade/detail/runtime_worldline_comparison.inc"
 
-    nb::class_<DeviceResidentOutputDescriptor>(m, "DeviceResidentOutputDescriptor")
-        .def(nb::init<>())
-        .def_rw("output_shape", &DeviceResidentOutputDescriptor::output_shape)
-        .def_rw("dtype", &DeviceResidentOutputDescriptor::dtype)
-        .def_rw("element_count", &DeviceResidentOutputDescriptor::element_count)
-        .def_rw("source_snapshot", &DeviceResidentOutputDescriptor::source_snapshot)
-        .def_rw("sync_or_export_barrier", &DeviceResidentOutputDescriptor::sync_or_export_barrier)
-        .def_rw("host_visible_availability",
-                &DeviceResidentOutputDescriptor::host_visible_availability)
-        .def_rw("diagnostics_label", &DeviceResidentOutputDescriptor::diagnostics_label)
-        .def_rw("consumer_constraints", &DeviceResidentOutputDescriptor::consumer_constraints);
+    nb::class_<DeviceResidentOutputDescriptor> device_resident_output_descriptor_class(
+        m, "DeviceResidentOutputDescriptor");
+    device_resident_output_descriptor_class.def(nb::init<>());
+#define EF_RESIDENT_DEVICE_OUTPUT_DESCRIPTOR_FIELD(type, name, default_value)          \
+    device_resident_output_descriptor_class.def_rw(                                    \
+        #name, &DeviceResidentOutputDescriptor::name);
+#include "runtime/facade/detail/resident_device_output_descriptor.inc"
 
     nb::class_<runtime::fidelity::FidelityProfileRequest>(m, "FidelityProfileRequest")
         .def(nb::init<>())
@@ -180,106 +102,48 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("errors", &runtime::fidelity::FidelityProfileAdmissionResult::errors)
         .def_rw("evidence_refs", &runtime::fidelity::FidelityProfileAdmissionResult::evidence_refs);
 
-    nb::class_<runtime::platform_capabilities::Capability>(m, "PlatformCapability")
-        .def(nb::init<>())
-        .def_rw("capability_id", &runtime::platform_capabilities::Capability::capability_id)
-        .def_rw("family", &runtime::platform_capabilities::Capability::family)
-        .def_rw("capability_type", &runtime::platform_capabilities::Capability::capability_type)
-        .def_rw("implementation_ref",
-                &runtime::platform_capabilities::Capability::implementation_ref)
-        .def_rw("requires_capability_ids",
-                &runtime::platform_capabilities::Capability::requires_capability_ids)
-        .def_rw("evidence_refs", &runtime::platform_capabilities::Capability::evidence_refs)
-        .def_rw("required", &runtime::platform_capabilities::Capability::required)
-        .def_rw("supported", &runtime::platform_capabilities::Capability::supported)
-        .def_rw("unsupported_reason",
-                &runtime::platform_capabilities::Capability::unsupported_reason);
+    nb::class_<runtime::platform_capabilities::Capability> platform_capability_class(
+        m, "PlatformCapability");
+    platform_capability_class.def(nb::init<>());
+#define EF_PLATFORM_CAPABILITY_FIELD(type, name, default_value) \
+    platform_capability_class.def_rw(#name, &runtime::platform_capabilities::Capability::name);
+#include "runtime/contracts/detail/platform_capability.inc"
 
-    nb::class_<runtime::platform_capabilities::CapabilityBundle>(m, "CapabilityBundle")
-        .def(nb::init<>())
-        .def_rw("bundle_id", &runtime::platform_capabilities::CapabilityBundle::bundle_id)
-        .def_rw("source_type_name",
-                &runtime::platform_capabilities::CapabilityBundle::source_type_name)
-        .def_rw("capabilities", &runtime::platform_capabilities::CapabilityBundle::capabilities)
-        .def_rw("template_evidence_ref",
-                &runtime::platform_capabilities::CapabilityBundle::template_evidence_ref)
-        .def_rw("evidence_refs", &runtime::platform_capabilities::CapabilityBundle::evidence_refs)
-        .def_rw("type_name_projection_preserved",
-                &runtime::platform_capabilities::CapabilityBundle::type_name_projection_preserved)
-        .def_rw("diagnostics_reason",
-                &runtime::platform_capabilities::CapabilityBundle::diagnostics_reason);
+    nb::class_<runtime::platform_capabilities::CapabilityBundle> capability_bundle_class(
+        m, "CapabilityBundle");
+    capability_bundle_class.def(nb::init<>());
+#define EF_CAPABILITY_BUNDLE_FIELD(type, name, default_value) \
+    capability_bundle_class.def_rw(#name, &runtime::platform_capabilities::CapabilityBundle::name);
+#include "runtime/contracts/detail/capability_bundle.inc"
 
-    nb::class_<runtime::platform_capabilities::ResolvedPlatformSpawnPlan>(
-        m, "ResolvedPlatformSpawnPlan")
-        .def(nb::init<>())
-        .def_rw("plan_id", &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::plan_id)
-        .def_rw("source_request_kind",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::source_request_kind)
-        .def_rw("source_type_name",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::source_type_name)
-        .def_rw("capability_bundle_id",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::capability_bundle_id)
-        .def_rw("resolved_platform_definition_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::
-                    resolved_platform_definition_ref)
-        .def_rw(
-            "materialization_strategy",
-            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::materialization_strategy)
-        .def_rw("template_evidence_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::template_evidence_ref)
-        .def_rw("resolution_evidence_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolution_evidence_ref)
-        .def_rw("materialization_evidence_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::
-                    materialization_evidence_ref)
-        .def_rw("evidence_refs",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::evidence_refs)
-        .def_rw("resolved_capabilities",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolved_capabilities)
-        .def_rw("rejected_capability_ids",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejected_capability_ids)
-        .def_rw("type_name_projection_preserved",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::
-                    type_name_projection_preserved)
-        .def_rw("admitted", &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::admitted)
-        .def_rw("rejection_reason",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejection_reason)
-        .def_rw("diagnostics_reason",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::diagnostics_reason);
+    nb::class_<runtime::platform_capabilities::ResolvedPlatformSpawnPlan>
+        resolved_platform_spawn_plan_class(m, "ResolvedPlatformSpawnPlan");
+    resolved_platform_spawn_plan_class.def(nb::init<>());
+#define EF_RESOLVED_PLATFORM_SPAWN_PLAN_FIELD(type, name, default_value)               \
+    resolved_platform_spawn_plan_class.def_rw(                                         \
+        #name, &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::name);
+#include "runtime/contracts/detail/resolved_platform_spawn_plan.inc"
 
-    nb::class_<TypedPlatformSpawnRequest>(m, "TypedPlatformSpawnRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &TypedPlatformSpawnRequest::world_index)
-        .def_rw("side", &TypedPlatformSpawnRequest::side)
-        .def_rw("request_id", &TypedPlatformSpawnRequest::request_id)
-        .def_rw("source_type_name", &TypedPlatformSpawnRequest::source_type_name)
-        .def_rw("entity_name", &TypedPlatformSpawnRequest::entity_name)
-        .def_rw("is_agent", &TypedPlatformSpawnRequest::is_agent)
-        .def_rw("x", &TypedPlatformSpawnRequest::x)
-        .def_rw("y", &TypedPlatformSpawnRequest::y)
-        .def_rw("z", &TypedPlatformSpawnRequest::z)
-        .def_rw("heading", &TypedPlatformSpawnRequest::heading)
-        .def_rw("pitch", &TypedPlatformSpawnRequest::pitch)
-        .def_rw("roll", &TypedPlatformSpawnRequest::roll)
-        .def_rw("vx", &TypedPlatformSpawnRequest::vx)
-        .def_rw("vy", &TypedPlatformSpawnRequest::vy)
-        .def_rw("vz", &TypedPlatformSpawnRequest::vz)
-        .def_rw("capability_bundle", &TypedPlatformSpawnRequest::capability_bundle)
-        .def_rw("resolved_spawn_plan", &TypedPlatformSpawnRequest::resolved_spawn_plan)
-        .def_rw("facade_evidence_refs", &TypedPlatformSpawnRequest::facade_evidence_refs)
-        .def_rw("type_name_projection_preserved",
-                &TypedPlatformSpawnRequest::type_name_projection_preserved);
+    nb::class_<TypedPlatformSpawnRequest> typed_platform_spawn_request_class(
+        m, "TypedPlatformSpawnRequest");
+    typed_platform_spawn_request_class.def(nb::init<>());
+#define EF_TYPED_PLATFORM_SPAWN_REQUEST_FIELD(type, name, default_value) \
+    typed_platform_spawn_request_class.def_rw(#name, &TypedPlatformSpawnRequest::name);
+#include "runtime/contracts/detail/typed_platform_spawn_request.inc"
 
-    nb::class_<TypedPlatformSpawnValidationResult>(m, "TypedPlatformSpawnValidationResult")
-        .def(nb::init<>())
-        .def_rw("valid", &TypedPlatformSpawnValidationResult::valid)
-        .def_rw("fail_closed", &TypedPlatformSpawnValidationResult::fail_closed)
-        .def_rw("rejection_reason", &TypedPlatformSpawnValidationResult::rejection_reason)
-        .def_rw("errors", &TypedPlatformSpawnValidationResult::errors);
+    nb::class_<TypedPlatformSpawnValidationResult> typed_platform_spawn_validation_result_class(
+        m, "TypedPlatformSpawnValidationResult");
+    typed_platform_spawn_validation_result_class.def(nb::init<>());
+#define EF_TYPED_PLATFORM_SPAWN_VALIDATION_RESULT_FIELD(type, name, default_value)     \
+    typed_platform_spawn_validation_result_class.def_rw(                               \
+        #name, &TypedPlatformSpawnValidationResult::name);
+#include "runtime/contracts/detail/typed_platform_spawn_validation_result.inc"
 
-    nb::class_<BatchResetRequest>(m, "BatchResetRequest")
-        .def(nb::init<>())
-        .def_rw("seeds", &BatchResetRequest::seeds);
+    nb::class_<BatchResetRequest> batch_reset_request_class(m, "BatchResetRequest");
+    batch_reset_request_class.def(nb::init<>());
+#define EF_BATCH_RESET_REQUEST_FIELD(type, name, default_value) \
+    batch_reset_request_class.def_rw(#name, &BatchResetRequest::name);
+#include "runtime/facade/detail/batch_reset_request.inc"
 
     nb::class_<EngagementEntityRef>(m, "EngagementEntityRef")
         .def(nb::init<>())
@@ -1029,22 +893,24 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("uses_truth_state", &DecisionBelief::uses_truth_state)
         .def_rw("uses_raw_ecs", &DecisionBelief::uses_raw_ecs);
 
-    nb::class_<WorldEntityRef>(m, "WorldEntityRef")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldEntityRef::world_index)
-        .def_rw("entity_id", &WorldEntityRef::entity_id);
+    nb::class_<WorldEntityRef> world_entity_ref_class(m, "WorldEntityRef");
+    world_entity_ref_class.def(nb::init<>());
+#define EF_WORLD_ENTITY_REF_FIELD(type, name, default_value) \
+    world_entity_ref_class.def_rw(#name, &WorldEntityRef::name);
+#include "runtime/contracts/detail/world_entity_ref.inc"
 
-    nb::class_<BatchWorldSetupRequest>(m, "BatchWorldSetupRequest")
-        .def(nb::init<>())
-        .def_rw("seeds", &BatchWorldSetupRequest::seeds)
-        .def_rw("terrain_assignments", &BatchWorldSetupRequest::terrain_assignments)
-        .def_rw("wind_assignments", &BatchWorldSetupRequest::wind_assignments)
-        .def_rw("zones", &BatchWorldSetupRequest::zones)
-        .def_rw("spawn_requests", &BatchWorldSetupRequest::spawn_requests)
-        .def_rw("typed_platform_spawn_requests",
-                &BatchWorldSetupRequest::typed_platform_spawn_requests)
-        .def_rw("time_steps", &BatchWorldSetupRequest::time_steps);
+    nb::class_<BatchWorldSetupRequest> batch_world_setup_request_class(
+        m, "BatchWorldSetupRequest");
+    batch_world_setup_request_class.def(nb::init<>());
+#define EF_BATCH_WORLD_SETUP_REQUEST_FIELD(type, name, default_value) \
+    batch_world_setup_request_class.def_rw(#name, &BatchWorldSetupRequest::name);
+#include "runtime/facade/detail/batch_world_setup_request.inc"
 
+    // NOTE(I26): the header field order (schema-owned, ABI/aggregate-init
+    // order) declares setup_surface before rejection_reason, but this
+    // binding has long registered rejection_reason first. That pre-existing
+    // divergence is preserved here (parity baseline) instead of being
+    // macro-expanded from the same X-macro as the header block.
     nb::class_<TypedPlatformSpawnResult>(m, "TypedPlatformSpawnResult")
         .def(nb::init<>())
         .def_rw("request_index", &TypedPlatformSpawnResult::request_index)
@@ -1062,11 +928,11 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("errors", &TypedPlatformSpawnResult::errors)
         .def_rw("evidence_refs", &TypedPlatformSpawnResult::evidence_refs);
 
-    nb::class_<BatchWorldSetupResult>(m, "BatchWorldSetupResult")
-        .def(nb::init<>())
-        .def_rw("entity_ids", &BatchWorldSetupResult::entity_ids)
-        .def_rw("typed_platform_spawn_results",
-                &BatchWorldSetupResult::typed_platform_spawn_results);
+    nb::class_<BatchWorldSetupResult> batch_world_setup_result_class(m, "BatchWorldSetupResult");
+    batch_world_setup_result_class.def(nb::init<>());
+#define EF_BATCH_WORLD_SETUP_RESULT_FIELD(type, name, default_value) \
+    batch_world_setup_result_class.def_rw(#name, &BatchWorldSetupResult::name);
+#include "runtime/facade/detail/batch_world_setup_result.inc"
 
     nb::class_<RuntimeWorldLayoutRequest>(m, "RuntimeWorldLayoutRequest")
         .def(nb::init<>())
@@ -1149,42 +1015,19 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("restore_result", &RuntimeCounterfactualBranchResult::restore_result)
         .def_rw("evidence_refs", &RuntimeCounterfactualBranchResult::evidence_refs);
 
-    nb::class_<RuntimeExperimentStepRequest>(m, "RuntimeExperimentStepRequest")
-        .def(nb::init<>())
-        .def_rw("state", &RuntimeExperimentStepRequest::state)
-        .def_rw("request", &RuntimeExperimentStepRequest::request)
-        .def_rw("observation_ref", &RuntimeExperimentStepRequest::observation_ref)
-        .def_rw("profile_ref", &RuntimeExperimentStepRequest::profile_ref)
-        .def_rw("claim_scope", &RuntimeExperimentStepRequest::claim_scope)
-        .def_rw("evidence_refs", &RuntimeExperimentStepRequest::evidence_refs);
+    nb::class_<RuntimeExperimentStepRequest> runtime_experiment_step_request_class(
+        m, "RuntimeExperimentStepRequest");
+    runtime_experiment_step_request_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_STEP_REQUEST_FIELD(type, name, default_value) \
+    runtime_experiment_step_request_class.def_rw(#name, &RuntimeExperimentStepRequest::name);
+#include "runtime/facade/detail/runtime_experiment_step_request.inc"
 
-    nb::class_<RuntimeExperimentRequest>(m, "RuntimeExperimentRequest")
-        .def(nb::init<>())
-        .def_rw("branch_request", &RuntimeExperimentRequest::branch_request)
-        .def_rw("parent_step_requests", &RuntimeExperimentRequest::parent_step_requests)
-        .def_rw("branch_step_requests", &RuntimeExperimentRequest::branch_step_requests)
-        .def_rw("trace_ids", &RuntimeExperimentRequest::trace_ids)
-        .def_rw("experiment_run_id", &RuntimeExperimentRequest::experiment_run_id)
-        .def_rw("comparison_id", &RuntimeExperimentRequest::comparison_id)
-        .def_rw("setup_ref", &RuntimeExperimentRequest::setup_ref)
-        .def_rw("generation_ref", &RuntimeExperimentRequest::generation_ref)
-        .def_rw("generated_input_ref", &RuntimeExperimentRequest::generated_input_ref)
-        .def_rw("generated_input_kind", &RuntimeExperimentRequest::generated_input_kind)
-        .def_rw("generated_input_source", &RuntimeExperimentRequest::generated_input_source)
-        .def_rw("generated_input_generator_version",
-                &RuntimeExperimentRequest::generated_input_generator_version)
-        .def_rw("generated_input_baseline_scenario_ref",
-                &RuntimeExperimentRequest::generated_input_baseline_scenario_ref)
-        .def_rw("generated_input_evidence_refs",
-                &RuntimeExperimentRequest::generated_input_evidence_refs)
-        .def_rw("capability_refs", &RuntimeExperimentRequest::capability_refs)
-        .def_rw("include_observations", &RuntimeExperimentRequest::include_observations)
-        .def_rw("include_diagnostics_traces", &RuntimeExperimentRequest::include_diagnostics_traces)
-        .def_rw("include_generated_input_ref",
-                &RuntimeExperimentRequest::include_generated_input_ref)
-        .def_rw("truth_claim", &RuntimeExperimentRequest::truth_claim)
-        .def_rw("promoted_to_support", &RuntimeExperimentRequest::promoted_to_support)
-        .def_rw("evidence_refs", &RuntimeExperimentRequest::evidence_refs);
+    nb::class_<RuntimeExperimentRequest> runtime_experiment_request_class(
+        m, "RuntimeExperimentRequest");
+    runtime_experiment_request_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_REQUEST_FIELD(type, name, default_value) \
+    runtime_experiment_request_class.def_rw(#name, &RuntimeExperimentRequest::name);
+#include "runtime/facade/detail/runtime_experiment_request.inc"
 
     nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")
         .def(nb::init<>())
@@ -1521,43 +1364,31 @@ void bind_runtime(nb::module_ &m) {
         [](const PilotReport &report) { return pilot_report_maintained_batch_contract(report); },
         nb::arg("report"));
 
-    nb::class_<RuntimeExperimentAncestry>(m, "RuntimeExperimentAncestry")
-        .def(nb::init<>())
-        .def_rw("evidence_bridge_valid", &RuntimeExperimentAncestry::evidence_bridge_valid)
-        .def_rw("evidence_bridge_fail_closed",
-                &RuntimeExperimentAncestry::evidence_bridge_fail_closed)
-        .def_rw("evidence_bridge_rejection_reason",
-                &RuntimeExperimentAncestry::evidence_bridge_rejection_reason)
-        .def_rw("evidence_bridge_errors", &RuntimeExperimentAncestry::evidence_bridge_errors)
-        .def_rw("counterfactual_request_ref",
-                &RuntimeExperimentAncestry::counterfactual_request_ref)
-        .def_rw("counterfactual_admission_ref",
-                &RuntimeExperimentAncestry::counterfactual_admission_ref)
-        .def_rw("setup_ref", &RuntimeExperimentAncestry::setup_ref)
-        .def_rw("generation_ref", &RuntimeExperimentAncestry::generation_ref)
-        .def_rw("replay_envelope_ref", &RuntimeExperimentAncestry::replay_envelope_ref)
-        .def_rw("branch_point_ref", &RuntimeExperimentAncestry::branch_point_ref)
-        .def_rw("generated_input_ref", &RuntimeExperimentAncestry::generated_input_ref)
-        .def_rw("backend_profile_ref", &RuntimeExperimentAncestry::backend_profile_ref)
-        .def_rw("fidelity_profile_ref", &RuntimeExperimentAncestry::fidelity_profile_ref)
-        .def_rw("capability_refs", &RuntimeExperimentAncestry::capability_refs)
-        .def_rw("profile_observation_refs", &RuntimeExperimentAncestry::profile_observation_refs)
-        .def_rw("evidence_refs", &RuntimeExperimentAncestry::evidence_refs);
+    nb::class_<RuntimeExperimentAncestry> runtime_experiment_ancestry_class(
+        m, "RuntimeExperimentAncestry");
+    runtime_experiment_ancestry_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_ANCESTRY_FIELD(type, name, default_value) \
+    runtime_experiment_ancestry_class.def_rw(#name, &RuntimeExperimentAncestry::name);
+#include "runtime/facade/detail/runtime_experiment_ancestry.inc"
 
-    nb::class_<RuntimeExperimentResult>(m, "RuntimeExperimentResult")
-        .def(nb::init<>())
-        .def_rw("admitted", &RuntimeExperimentResult::admitted)
-        .def_rw("rejection_reason", &RuntimeExperimentResult::rejection_reason)
-        .def_rw("branch_result", &RuntimeExperimentResult::branch_result)
-        .def_rw("parent_observation_packet", &RuntimeExperimentResult::parent_observation_packet)
-        .def_rw("branch_observation_packet", &RuntimeExperimentResult::branch_observation_packet)
-        .def_rw("parent_step_result", &RuntimeExperimentResult::parent_step_result)
-        .def_rw("branch_step_result", &RuntimeExperimentResult::branch_step_result)
-        .def_rw("parent_diagnostics_traces", &RuntimeExperimentResult::parent_diagnostics_traces)
-        .def_rw("branch_diagnostics_traces", &RuntimeExperimentResult::branch_diagnostics_traces)
-        .def_rw("ancestry", &RuntimeExperimentResult::ancestry)
-        .def_rw("evidence_refs", &RuntimeExperimentResult::evidence_refs);
+    nb::class_<RuntimeExperimentResult> runtime_experiment_result_class(
+        m, "RuntimeExperimentResult");
+    runtime_experiment_result_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_RESULT_FIELD(type, name, default_value) \
+    runtime_experiment_result_class.def_rw(#name, &RuntimeExperimentResult::name);
+#include "runtime/facade/detail/runtime_experiment_result.inc"
 
+    // NOTE(I26): RuntimeWindowActionRequest is not schema-generated. Its
+    // header field list (runtime_facade_types.h) is ABI-ordered as
+    // action_intent, source_layer, input_snapshot_version,
+    // clock_domain_metadata, cadence_control -- but clock_domain_metadata
+    // is a nested, never-bound type (no Python duplication to unify) and
+    // this binding's registration order/coverage already diverges from
+    // that ABI order (cadence_control before source_layer/
+    // input_snapshot_version; clock_domain_metadata omitted). Left
+    // hand-written and skipped from schema ownership; see the I26
+    // sub-family report for the recorded skip rationale. Its nested
+    // CadenceControl type is independently schema-owned below.
     nb::class_<RuntimeWindowActionRequest>(m, "RuntimeWindowActionRequest")
         .def(nb::init<>())
         .def_rw("action_intent", &RuntimeWindowActionRequest::action_intent)
@@ -1565,34 +1396,43 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("source_layer", &RuntimeWindowActionRequest::source_layer)
         .def_rw("input_snapshot_version", &RuntimeWindowActionRequest::input_snapshot_version);
 
-    nb::class_<RuntimeWindowInputRecord>(m, "RuntimeWindowInputRecord")
-        .def(nb::init<>())
-        .def_rw("request", &RuntimeWindowInputRecord::request)
-        .def_rw("reason", &RuntimeWindowInputRecord::reason);
+    nb::class_<RuntimeWindowInputRecord> runtime_window_input_record_class(
+        m, "RuntimeWindowInputRecord");
+    runtime_window_input_record_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_INPUT_RECORD_FIELD(type, name, default_value) \
+    runtime_window_input_record_class.def_rw(#name, &RuntimeWindowInputRecord::name);
+#include "runtime/facade/detail/runtime_window_input_record.inc"
 
-    nb::class_<RuntimeWindowSchedulingContext>(m, "RuntimeWindowSchedulingContext")
-        .def(nb::init<>())
-        .def_rw("window_id", &RuntimeWindowSchedulingContext::window_id)
-        .def_rw("world_id", &RuntimeWindowSchedulingContext::world_id)
-        .def_rw("source_time_s", &RuntimeWindowSchedulingContext::source_time_s)
-        .def_rw("barrier_sequence", &RuntimeWindowSchedulingContext::barrier_sequence)
-        .def_rw("current_barrier_id", &RuntimeWindowSchedulingContext::current_barrier_id)
-        .def_rw("accepted_inputs", &RuntimeWindowSchedulingContext::accepted_inputs)
-        .def_rw("deferred_inputs", &RuntimeWindowSchedulingContext::deferred_inputs)
-        .def_rw("rejected_inputs", &RuntimeWindowSchedulingContext::rejected_inputs)
-        .def_rw("expired_inputs", &RuntimeWindowSchedulingContext::expired_inputs);
+    nb::class_<RuntimeWindowSchedulingContext> runtime_window_scheduling_context_class(
+        m, "RuntimeWindowSchedulingContext");
+    runtime_window_scheduling_context_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_SCHEDULING_CONTEXT_FIELD(type, name, default_value) \
+    runtime_window_scheduling_context_class.def_rw(#name, &RuntimeWindowSchedulingContext::name);
+#include "runtime/facade/detail/runtime_window_scheduling_context.inc"
 
-    nb::class_<RuntimeWindowBarrierRecord>(m, "RuntimeWindowBarrierRecord")
-        .def(nb::init<>())
-        .def_rw("sequence", &RuntimeWindowBarrierRecord::sequence)
-        .def_rw("barrier_id", &RuntimeWindowBarrierRecord::barrier_id)
-        .def_rw("node_id", &RuntimeWindowBarrierRecord::node_id);
+    nb::class_<RuntimeWindowBarrierRecord> runtime_window_barrier_record_class(
+        m, "RuntimeWindowBarrierRecord");
+    runtime_window_barrier_record_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_BARRIER_RECORD_FIELD(type, name, default_value) \
+    runtime_window_barrier_record_class.def_rw(#name, &RuntimeWindowBarrierRecord::name);
+#include "runtime/facade/detail/runtime_window_barrier_record.inc"
 
-    nb::class_<RuntimeWindowVisibilityRecord>(m, "RuntimeWindowVisibilityRecord")
-        .def(nb::init<>())
-        .def_rw("barrier_id", &RuntimeWindowVisibilityRecord::barrier_id)
-        .def_rw("visible_input_count", &RuntimeWindowVisibilityRecord::visible_input_count);
+    nb::class_<RuntimeWindowVisibilityRecord> runtime_window_visibility_record_class(
+        m, "RuntimeWindowVisibilityRecord");
+    runtime_window_visibility_record_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_VISIBILITY_RECORD_FIELD(type, name, default_value) \
+    runtime_window_visibility_record_class.def_rw(#name, &RuntimeWindowVisibilityRecord::name);
+#include "runtime/facade/detail/runtime_window_visibility_record.inc"
 
+    // NOTE(I26): the RuntimeWindowNodeExecutionRecord/CadenceControl/
+    // Cadence/CadenceConfig/CadenceTraceRecord/Request/Result bindings
+    // below have long registered properties out of the header's ABI
+    // declaration order (several alphabetically); left hand-written and
+    // skipped from binding-side schema ownership so registration order/
+    // dir() sequence stays byte-for-byte unchanged. Each struct's C++
+    // field list is still schema-owned on the header side (see
+    // runtime_facade_types.h); see the I26 sub-family report for the
+    // recorded partial-coverage rationale.
     nb::class_<RuntimeWindowNodeExecutionRecord>(m, "RuntimeWindowNodeExecutionRecord")
         .def(nb::init<>())
         .def_rw("barrier_order", &RuntimeWindowNodeExecutionRecord::barrier_order)
@@ -1678,58 +1518,37 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("engagement_packet", &RuntimeWindowResult::engagement_packet)
         .def_rw("diagnostics_traces", &RuntimeWindowResult::diagnostics_traces);
 
-    nb::class_<WorldTerrainAssignment>(m, "WorldTerrainAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldTerrainAssignment::world_index)
-        .def_rw("terrain_type", &WorldTerrainAssignment::terrain_type);
+    nb::class_<WorldTerrainAssignment> world_terrain_assignment_class(
+        m, "WorldTerrainAssignment");
+    world_terrain_assignment_class.def(nb::init<>());
+#define EF_WORLD_TERRAIN_ASSIGNMENT_FIELD(type, name, default_value) \
+    world_terrain_assignment_class.def_rw(#name, &WorldTerrainAssignment::name);
+#include "runtime/contracts/detail/world_terrain_assignment.inc"
 
-    nb::class_<WorldWindAssignment>(m, "WorldWindAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldWindAssignment::world_index)
-        .def_rw("speed_mps", &WorldWindAssignment::speed_mps)
-        .def_rw("dir_from_deg", &WorldWindAssignment::dir_from_deg)
-        .def_rw("shear_mps_per_km", &WorldWindAssignment::shear_mps_per_km);
+    nb::class_<WorldWindAssignment> world_wind_assignment_class(m, "WorldWindAssignment");
+    world_wind_assignment_class.def(nb::init<>());
+#define EF_WORLD_WIND_ASSIGNMENT_FIELD(type, name, default_value) \
+    world_wind_assignment_class.def_rw(#name, &WorldWindAssignment::name);
+#include "runtime/contracts/detail/world_wind_assignment.inc"
 
-    nb::class_<WorldZoneDefinition>(m, "WorldZoneDefinition")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldZoneDefinition::world_index)
-        .def_rw("name", &WorldZoneDefinition::name)
-        .def_rw("x", &WorldZoneDefinition::x)
-        .def_rw("y", &WorldZoneDefinition::y)
-        .def_rw("width", &WorldZoneDefinition::width)
-        .def_rw("length", &WorldZoneDefinition::length)
-        .def_rw("heading", &WorldZoneDefinition::heading)
-        .def_rw("surface_type", &WorldZoneDefinition::surface_type);
+    nb::class_<WorldZoneDefinition> world_zone_definition_class(m, "WorldZoneDefinition");
+    world_zone_definition_class.def(nb::init<>());
+#define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value) \
+    world_zone_definition_class.def_rw(#name, &WorldZoneDefinition::name);
+#include "runtime/contracts/detail/world_zone_definition.inc"
 
-    nb::class_<WorldSpawnRequest>(m, "WorldSpawnRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldSpawnRequest::world_index)
-        .def_rw("side", &WorldSpawnRequest::side)
-        .def_rw("type_name", &WorldSpawnRequest::type_name)
-        .def_rw("entity_name", &WorldSpawnRequest::entity_name)
-        .def_rw("is_agent", &WorldSpawnRequest::is_agent)
-        .def_rw("x", &WorldSpawnRequest::x)
-        .def_rw("y", &WorldSpawnRequest::y)
-        .def_rw("z", &WorldSpawnRequest::z)
-        .def_rw("heading", &WorldSpawnRequest::heading)
-        .def_rw("pitch", &WorldSpawnRequest::pitch)
-        .def_rw("roll", &WorldSpawnRequest::roll)
-        .def_rw("vx", &WorldSpawnRequest::vx)
-        .def_rw("vy", &WorldSpawnRequest::vy)
-        .def_rw("vz", &WorldSpawnRequest::vz)
-        .def_rw("ammo_override_enabled", &WorldSpawnRequest::ammo_override_enabled)
-        .def_rw("missiles_remaining", &WorldSpawnRequest::missiles_remaining)
-        .def_rw("max_missiles", &WorldSpawnRequest::max_missiles)
-        .def_rw("weapon_cooldown_override_enabled",
-                &WorldSpawnRequest::weapon_cooldown_override_enabled)
-        .def_rw("weapon_cooldown_s", &WorldSpawnRequest::weapon_cooldown_s)
-        .def_rw("weapon_last_fire_time", &WorldSpawnRequest::weapon_last_fire_time);
+    nb::class_<WorldSpawnRequest> world_spawn_request_class(m, "WorldSpawnRequest");
+    world_spawn_request_class.def(nb::init<>());
+#define EF_WORLD_SPAWN_REQUEST_FIELD(type, name, default_value) \
+    world_spawn_request_class.def_rw(#name, &WorldSpawnRequest::name);
+#include "runtime/contracts/detail/world_spawn_request.inc"
 
-    nb::class_<WorldPilotActionAssignment>(m, "WorldPilotActionAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldPilotActionAssignment::world_index)
-        .def_rw("entity_id", &WorldPilotActionAssignment::entity_id)
-        .def_rw("action", &WorldPilotActionAssignment::action);
+    nb::class_<WorldPilotActionAssignment> world_pilot_action_assignment_class(
+        m, "WorldPilotActionAssignment");
+    world_pilot_action_assignment_class.def(nb::init<>());
+#define EF_WORLD_PILOT_ACTION_ASSIGNMENT_FIELD(type, name, default_value) \
+    world_pilot_action_assignment_class.def_rw(#name, &WorldPilotActionAssignment::name);
+#include "runtime/contracts/detail/world_pilot_action_assignment.inc"
 
     nb::class_<WorldMissionCommandAssignment>(m, "WorldMissionCommandAssignment")
         .def(nb::init<>())
@@ -1774,12 +1593,13 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("entity_id", &WorldPilotReportMaintainedAssignment::entity_id)
         .def_rw("pilot_report", &WorldPilotReportMaintainedAssignment::pilot_report);
 
-    nb::class_<WorldExecutionEpisodeStepRequest>(m, "WorldExecutionEpisodeStepRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldExecutionEpisodeStepRequest::world_index)
-        .def_rw("entity_id", &WorldExecutionEpisodeStepRequest::entity_id)
-        .def_rw("config", &WorldExecutionEpisodeStepRequest::config)
-        .def_rw("env_state", &WorldExecutionEpisodeStepRequest::env_state);
+    nb::class_<WorldExecutionEpisodeStepRequest> world_execution_episode_step_request_class(
+        m, "WorldExecutionEpisodeStepRequest");
+    world_execution_episode_step_request_class.def(nb::init<>());
+#define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value) \
+    world_execution_episode_step_request_class.def_rw(                           \
+        #name, &WorldExecutionEpisodeStepRequest::name);
+#include "runtime/contracts/detail/world_execution_episode_step_request.inc"
 
     nb::class_<WorldBatchRuntime>(m, "WorldBatchRuntime")
         .def(nb::init<size_t>(), nb::arg("world_count") = 0)

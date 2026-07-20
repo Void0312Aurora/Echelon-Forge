@@ -3,6 +3,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.support.xmacro_text import expand_binding_field_incs
+from tests.support.xmacro_text import expand_header_field_incs
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -31,8 +34,21 @@ RL_WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch"
 EXAMPLES_CONFIG = REPO_ROOT / "examples" / "config"
 
 
+_HEADER_FIELD_INC_OWNERS = (WORLD_BATCH_CONTRACTS, RUNTIME_FACADE_TYPES)
+
+
 def _text(path: Path) -> str:
-  return path.read_text(encoding="utf-8")
+  text = path.read_text(encoding="utf-8")
+  # Several field families under these paths are now schema-owned
+  # (tools/maintenance/dto_schema, I18/I23/I26): the struct/binding body is
+  # an X-macro #include rather than inline field text. Expand it here so
+  # this file's source-text boundary guards keep matching the compiled
+  # shape instead of the indirected #include line.
+  if path == BINDINGS_RUNTIME:
+    return expand_binding_field_incs(text)
+  if path in _HEADER_FIELD_INC_OWNERS:
+    return expand_header_field_incs(text)
+  return text
 
 
 def _runtime_facade_source_text() -> str:
@@ -89,8 +105,8 @@ def test_wp14_boundary_guard_runtime_capabilities_remains_backend_fidelity_only(
     )
 
   binding_source = _text(BINDINGS_RUNTIME)
-  runtime_caps_binding_start = binding_source.index('nb::class_<RuntimeCapabilities>(m, "RuntimeCapabilities")')
-  runtime_batch_config_start = binding_source.index('nb::class_<RuntimeBatchConfig>(m, "RuntimeBatchConfig")')
+  runtime_caps_binding_start = binding_source.index('nb::class_<RuntimeCapabilities>')
+  runtime_batch_config_start = binding_source.index('nb::class_<RuntimeBatchConfig>')
   runtime_capabilities_binding_block = binding_source[
     runtime_caps_binding_start:runtime_batch_config_start
   ]

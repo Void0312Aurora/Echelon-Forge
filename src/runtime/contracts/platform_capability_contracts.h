@@ -103,46 +103,18 @@ inline constexpr std::string_view
         "rejected_resolved_spawn_plan_requires_reason";
 
 struct Capability {
-    std::string capability_id;
-    std::string family;
-    std::string capability_type;
-    std::string implementation_ref;
-    std::vector<std::string> requires_capability_ids;
-    std::vector<std::string> evidence_refs;
-    bool required = true;
-    bool supported = true;
-    std::string unsupported_reason;
+#define EF_PLATFORM_CAPABILITY_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/platform_capability.inc"
 };
 
 struct CapabilityBundle {
-    std::string bundle_id;
-    std::string source_type_name;
-    std::vector<Capability> capabilities;
-    std::string template_evidence_ref;
-    std::vector<std::string> evidence_refs;
-    bool type_name_projection_preserved = true;
-    std::string diagnostics_reason;
+#define EF_CAPABILITY_BUNDLE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/capability_bundle.inc"
 };
 
 struct ResolvedPlatformSpawnPlan {
-    std::string plan_id;
-    std::string source_request_kind =
-        std::string(kPlatformSpawnRequestKindTypeNameProjection);
-    std::string source_type_name;
-    std::string capability_bundle_id;
-    std::string resolved_platform_definition_ref;
-    std::string materialization_strategy =
-        std::string(kPlatformMaterializationStrategyFactoryProjection);
-    std::string template_evidence_ref;
-    std::string resolution_evidence_ref;
-    std::string materialization_evidence_ref;
-    std::vector<std::string> evidence_refs;
-    std::vector<Capability> resolved_capabilities;
-    std::vector<std::string> rejected_capability_ids;
-    bool type_name_projection_preserved = true;
-    bool admitted = false;
-    std::string rejection_reason;
-    std::string diagnostics_reason;
+#define EF_RESOLVED_PLATFORM_SPAWN_PLAN_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/resolved_platform_spawn_plan.inc"
 };
 
 struct PlatformCapabilityValidationResult {
