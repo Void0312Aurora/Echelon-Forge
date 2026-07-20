@@ -100,7 +100,9 @@ public:
         double wave_period_s,
         const std::vector<WorldZoneDefinition>& zones,
         const std::vector<WorldSpawnRequest>& requests,
-        const std::vector<double>& time_steps = {}
+        const std::vector<double>& time_steps = {},
+        double sun_azimuth_deg = 0.0,
+        double sun_elevation_deg = 45.0
     );
     double world_time_step(std::size_t world_index) const;
 

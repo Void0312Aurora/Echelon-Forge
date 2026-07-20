@@ -54,6 +54,10 @@
       "dir_from_deg": 0.0,
       "shear_mps_per_km": 0.0
     },
+    "illumination": {
+      "sun_azimuth_deg": 250.0,
+      "sun_elevation_deg": 15.0
+    },
     "zones": [
       {
         "name": "NativeObjectiveEagle",

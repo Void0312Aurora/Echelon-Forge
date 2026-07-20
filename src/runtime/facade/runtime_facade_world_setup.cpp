@@ -349,7 +349,8 @@ RuntimeFacade::apply_world_layout(const RuntimeWorldLayoutRequest &request) {
         static_cast<std::size_t>(request.world_index), request.seed, request.terrain_type,
         request.wind_speed_mps, request.wind_dir_from_deg, request.wind_shear_mps_per_km,
         request.maritime_configured, request.sea_state, request.wave_heading_deg,
-        request.wave_period_s, request.zones, request.spawn_requests, request.time_steps);
+        request.wave_period_s, request.zones, request.spawn_requests, request.time_steps,
+        request.sun_azimuth_deg, request.sun_elevation_deg);
     return result;
 }
 

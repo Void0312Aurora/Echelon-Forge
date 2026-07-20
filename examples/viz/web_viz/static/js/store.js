@@ -19,6 +19,17 @@ export const vizState = {
     simTime: 0,
     simSpeed: 1,
 
+    // --- Environment truth shared by 2D hillshade and 3D lighting ---
+    // Mirrors the engine sun defaults (IEnvironmentModel): NAV azimuth 0
+    // (north), 45 deg above horizon. Updated from the map_setup payload so
+    // the display uses the same sun the sensor glare adjudication does.
+    illumination: {
+        sunAzimuthDeg: 0.0,
+        sunElevationDeg: 45.0,
+        configured: false,
+        engineConfirmed: false,
+    },
+
     // --- Tactical map ---
     lastTacticalState: null,
     environmentOverlays: null,

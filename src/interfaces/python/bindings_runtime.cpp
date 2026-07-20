@@ -1244,6 +1244,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("wind_speed_mps", &RuntimeWorldLayoutRequest::wind_speed_mps)
         .def_rw("wind_dir_from_deg", &RuntimeWorldLayoutRequest::wind_dir_from_deg)
         .def_rw("wind_shear_mps_per_km", &RuntimeWorldLayoutRequest::wind_shear_mps_per_km)
+        .def_rw("sun_azimuth_deg", &RuntimeWorldLayoutRequest::sun_azimuth_deg)
+        .def_rw("sun_elevation_deg", &RuntimeWorldLayoutRequest::sun_elevation_deg)
         .def_rw("maritime_configured", &RuntimeWorldLayoutRequest::maritime_configured)
         .def_rw("sea_state", &RuntimeWorldLayoutRequest::sea_state)
         .def_rw("wave_heading_deg", &RuntimeWorldLayoutRequest::wave_heading_deg)
@@ -1992,7 +1994,8 @@ void bind_runtime(nb::module_ &m) {
              nb::arg("wind_dir_from_deg"), nb::arg("wind_shear_mps_per_km"),
              nb::arg("maritime_configured"), nb::arg("sea_state"), nb::arg("wave_heading_deg"),
              nb::arg("wave_period_s"), nb::arg("zones"), nb::arg("requests"),
-             nb::arg("time_steps") = std::vector<double>{})
+             nb::arg("time_steps") = std::vector<double>{},
+             nb::arg("sun_azimuth_deg") = 0.0, nb::arg("sun_elevation_deg") = 45.0)
         .def("world_time_step", &WorldBatchRuntime::world_time_step, nb::arg("world_index"))
         .def("set_pilot_actions_batch", &WorldBatchRuntime::set_pilot_actions_batch,
              nb::arg("assignments"))

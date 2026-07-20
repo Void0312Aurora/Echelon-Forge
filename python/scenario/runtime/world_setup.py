@@ -102,6 +102,8 @@ def build_runtime_world_layout_request(
     zones: list[Any],
     spawn_requests: list[Any],
     time_steps: list[float],
+    sun_azimuth_deg: float = 0.0,
+    sun_elevation_deg: float = 45.0,
 ):
     if not hasattr(ef_py, "RuntimeWorldLayoutRequest"):
         raise RuntimeError(
@@ -114,6 +116,9 @@ def build_runtime_world_layout_request(
     request.wind_speed_mps = float(wind_speed_mps)
     request.wind_dir_from_deg = float(wind_dir_from_deg)
     request.wind_shear_mps_per_km = float(wind_shear_mps_per_km)
+    if hasattr(request, "sun_azimuth_deg"):
+        request.sun_azimuth_deg = float(sun_azimuth_deg)
+        request.sun_elevation_deg = float(sun_elevation_deg)
     request.maritime_configured = bool(maritime_configured)
     request.sea_state = float(sea_state)
     request.wave_heading_deg = float(wave_heading_deg)

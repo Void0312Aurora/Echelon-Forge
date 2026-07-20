@@ -206,6 +206,8 @@ class CompiledWorldLayoutTemplate:
     wind_speed_mps: float
     wind_dir_from_deg: float
     wind_shear_mps_per_km: float
+    sun_azimuth_deg: float
+    sun_elevation_deg: float
     maritime_configured: bool
     sea_state: float
     wave_heading_deg: float
@@ -228,6 +230,9 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
     wind_cfg = env_cfg.get("wind", {})
     if not isinstance(wind_cfg, dict):
         wind_cfg = {}
+    illumination_cfg = env_cfg.get("illumination", {})
+    if not isinstance(illumination_cfg, dict):
+        illumination_cfg = {}
     maritime_cfg = env_cfg.get("maritime", {})
     if not isinstance(maritime_cfg, dict):
         maritime_cfg = {}
@@ -327,6 +332,8 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
         wind_speed_mps=float(wind_cfg.get("speed_mps", 10.0)),
         wind_dir_from_deg=float(wind_cfg.get("dir_from_deg", 270.0)),
         wind_shear_mps_per_km=float(wind_cfg.get("shear_mps_per_km", 4.0)),
+        sun_azimuth_deg=float(illumination_cfg.get("sun_azimuth_deg", 0.0)),
+        sun_elevation_deg=float(illumination_cfg.get("sun_elevation_deg", 45.0)),
         maritime_configured=isinstance(env_cfg.get("maritime", None), dict),
         sea_state=float(maritime_cfg.get("sea_state", 0.0)),
         wave_heading_deg=float(maritime_cfg.get("wave_heading_deg", 0.0)),

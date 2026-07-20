@@ -541,6 +541,8 @@ class RuntimeFacadeAdapter:
             zones=list(zone_defs),
             spawn_requests=list(spawn_requests),
             time_steps=[] if layout.time_step_s is None else [float(layout.time_step_s)],
+            sun_azimuth_deg=float(getattr(layout, "sun_azimuth_deg", 0.0)),
+            sun_elevation_deg=float(getattr(layout, "sun_elevation_deg", 45.0)),
         )
 
     def _apply_runtime_world_layout_request(self, request: Any) -> Any:

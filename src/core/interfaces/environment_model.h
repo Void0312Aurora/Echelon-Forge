@@ -63,6 +63,12 @@ public:
     // shear_mps_per_km is applied in the "to" direction (same as the base wind).
     virtual void set_wind(double /*speed_mps*/, double /*dir_from_deg*/, double /*shear_mps_per_km*/) {}
 
+    // Sun configuration (drives get_sun_direction and the optical glare
+    // penalty in sensor models). azimuth_deg uses NAV convention: 0=North,
+    // CW positive; elevation_deg is above the horizon. Defaults preserve the
+    // historical fixed vector (azimuth 0, elevation 45).
+    virtual void set_sun_direction(double /*azimuth_deg*/, double /*elevation_deg*/) {}
+
     // Terrain profile configuration.
     // "flat" means zero-elevation terrain outside explicit zones.
     // "legacy"/"hill"/"gaussian_hill"/"mountain" preserve the historical procedural mountain.

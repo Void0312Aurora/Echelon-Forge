@@ -672,12 +672,15 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
     double wave_period_s,
     const std::vector<WorldZoneDefinition>& zones,
     const std::vector<WorldSpawnRequest>& requests,
-    const std::vector<double>& time_steps
+    const std::vector<double>& time_steps,
+    double sun_azimuth_deg,
+    double sun_elevation_deg
 ) {
     auto& world = checked_world(world_index);
     world_batch_setup::maybe_apply_time_step(world, world_index, time_steps);
     world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type : terrain_type);
     world.set_wind(wind_speed_mps, wind_dir_from_deg, wind_shear_mps_per_km);
+    world.set_sun_direction(sun_azimuth_deg, sun_elevation_deg);
     if (maritime_configured) {
         world.set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
     } else {

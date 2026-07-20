@@ -32,6 +32,7 @@ import {
     updateUnit,
 } from './scene3d.js';
 import { ensureSceneGeometry } from './scene-geometry.js';
+import { applyIllumination } from './illumination.js';
 import {
     clearErrorBanner,
     renderAssetRegistryOptions,
@@ -300,6 +301,7 @@ export function initSession() {
         const zones = Array.isArray(data?.zones) ? data.zones : [];
         console.log(`Map setup received: ${zones.length} zones`);
         vizState.environmentOverlays = data.environment_overlays || null;
+        applyIllumination(data?.illumination);
         requestTacticalDraw();
         applyMapSetup(zones);
     });

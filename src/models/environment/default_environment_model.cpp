@@ -74,6 +74,9 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     double base_wind_speed_mps_ = 10.0;
     double base_wind_dir_from_deg_ = 270.0;   // Wind "from" West => blowing to East (+X)
     double wind_shear_mps_per_km_ = 4.0;      // Matches legacy (h/250 => +4 m/s per km)
+    // Defaults match the historical fixed sun vector {0, 0.7071, 0.7071}.
+    double sun_azimuth_deg_ = 0.0;    // NAV: 0=North, CW positive
+    double sun_elevation_deg_ = 45.0; // above horizon
     MaritimeState maritime_state_{};
     bool flat_terrain_ = false;
 
@@ -184,7 +187,20 @@ public:
         return 0.0; // MVP
     }
 
-    Vec3 get_sun_direction() override { return {0.0, 0.7071, 0.7071}; }
+    Vec3 get_sun_direction() override {
+        // Unit vector pointing toward the sun. NAV azimuth: 0=North (+Y), CW
+        // positive toward East (+X); elevation above the horizon.
+        const double az_rad = sun_azimuth_deg_ * M_PI / 180.0;
+        const double el_rad = sun_elevation_deg_ * M_PI / 180.0;
+        const double horizontal = std::cos(el_rad);
+        return {std::sin(az_rad) * horizontal, std::cos(az_rad) * horizontal, std::sin(el_rad)};
+    }
+
+    void set_sun_direction(double azimuth_deg, double elevation_deg) override {
+        sun_azimuth_deg_ = std::fmod(azimuth_deg, 360.0);
+        if (sun_azimuth_deg_ < 0.0) sun_azimuth_deg_ += 360.0;
+        sun_elevation_deg_ = std::clamp(elevation_deg, -90.0, 90.0);
+    }
 
     TerrainCell get_terrain_at(double x, double y) override {
         TerrainCell cell;

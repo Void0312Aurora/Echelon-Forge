@@ -7,6 +7,7 @@
 // held objects arrive as counts and are never rendered as geometry.
 
 import { vizState } from './store.js';
+import { sunVectorFromAngles } from './utils.js';
 import { isTacticalDrawPhaseEnabled } from './layers.js';
 import { requestTacticalDraw } from './tactical-map.js';
 import { buildSceneGeometry3D, clearSceneGeometry3D } from './scene3d.js';
@@ -15,6 +16,13 @@ let payload = null;
 let terrainBitmap = null;
 let terrainRect = null;
 let loadingPromise = null;
+
+// Hillshade light vector (ENU) derived from the scenario sun truth, so the
+// 2D map shading and the engine's glare adjudication share one sun.
+let shadeLight = sunVectorFromAngles(
+    vizState.illumination.sunAzimuthDeg,
+    vizState.illumination.sunElevationDeg,
+);
 
 // Dark-theme land-cover base colors (ESA WorldCover class codes).
 const LANDCOVER_COLORS = {
@@ -141,13 +149,25 @@ export function terrainShade(terrain, row, col) {
     const dzdx = (heights[row][c1] - heights[row][c0]) / ((c1 - c0 || 1) * stepX);
     // Row index grows southward (step_y is negative), so north is r0.
     const dzdy = (heights[r0][col] - heights[r1][col]) / ((r1 - r0 || 1) * stepY);
-    // Lambertian shade with a light from the northwest, above.
-    const lx = -0.45;
-    const ly = 0.45;
-    const lz = 0.77;
+    // Lambertian shade lit by the operational sun (see vizState.illumination).
     const len = Math.sqrt(dzdx * dzdx + dzdy * dzdy + 1);
-    const dot = (-dzdx * lx + -dzdy * ly + lz) / len;
+    const dot = (-dzdx * shadeLight.east + -dzdy * shadeLight.north + shadeLight.up) / len;
     return Math.max(0, Math.min(1, dot));
+}
+
+// Re-derive the hillshade light from the current illumination truth and
+// rebuild the 2D terrain bitmap. The 3D scene needs no geometry rebuild: its
+// relief shading comes live from the sun-driven directional light.
+export function refreshIlluminationShading() {
+    shadeLight = sunVectorFromAngles(
+        vizState.illumination.sunAzimuthDeg,
+        vizState.illumination.sunElevationDeg,
+    );
+    if (!payload) return;
+    (async () => {
+        await buildTerrainBitmap();
+        requestTacticalDraw();
+    })();
 }
 
 async function buildTerrainBitmap() {

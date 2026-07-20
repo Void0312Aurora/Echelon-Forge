@@ -107,6 +107,10 @@ class ScenarioWorldLayout:
     wind_speed_mps: float
     wind_dir_from_deg: float
     wind_shear_mps_per_km: float
+    # Sun direction driving optical glare (NAV azimuth, elevation above
+    # horizon). Defaults preserve the historical fixed vector.
+    sun_azimuth_deg: float
+    sun_elevation_deg: float
     # False: leave ships on platform fallback maritime params.
     # True: environment maritime fields fully override per-platform defaults.
     maritime_configured: bool

@@ -41,6 +41,7 @@ from python.world_model.features import (
     nav_tracking_features,
 )
 from examples.viz.runtime.environment_overlays import build_environment_overlay_payload
+from examples.viz.runtime.illumination import resolve_scenario_illumination
 from examples.viz.runtime.action_utils import normalize_fixed_action
 
 
@@ -1575,11 +1576,28 @@ class VizSession:
         episode_max_agl = 0.0
 
         scenario_data = sim_env.loader.scenario_data
+        env_block = scenario_data.get("environment") if isinstance(scenario_data, dict) else None
+        env_block_stripped = not isinstance(env_block, dict) or not (
+            "zones" in env_block or "illumination" in env_block
+        )
+        if env_block_stripped:
+            # World-batch loader shims keep only a reduced environment block
+            # ({max_steps, time_step}); fall back to the scenario file so
+            # zones, overlays, and illumination still reach the viz.
+            scenario_path = str(getattr(args, "scenario", "") or "")
+            if scenario_path and os.path.isfile(scenario_path):
+                try:
+                    with open(scenario_path, "r", encoding="utf-8") as fh:
+                        scenario_data = json.load(fh)
+                except Exception:
+                    scenario_data = sim_env.loader.scenario_data
         zones = scenario_data.get("environment", {}).get("zones", [])
         environment_overlays = build_environment_overlay_payload(scenario_data)
+        illumination = resolve_scenario_illumination(scenario_data, sim=sim_env.sim)
         self.map_data = {
             "zones": zones,
             "environment_overlays": environment_overlays,
+            "illumination": illumination,
         }
         print("=" * 60)
         print("MAP DATA SENT TO VIZ:")

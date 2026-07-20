@@ -36,6 +36,8 @@ camera.position.set(0, 15000, 15000);
 
 export const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.domElement.style.position = 'fixed';
 renderer.domElement.style.inset = '0';
 renderer.domElement.style.zIndex = '0';
@@ -77,11 +79,57 @@ export function ensureGridContainsPoint(x, z, pad = 5000.0) {
 
 rebuildGrid(GRID_MIN_SIZE);
 
+// --- Lighting driven by the scenario sun truth (vizState.illumination) ---
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-dirLight.position.set(100, 200, 50);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.75);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.bias = -0.0002;
+dirLight.shadow.normalBias = 0.4;
 scene.add(dirLight);
+scene.add(dirLight.target);
+
+const SUN_DISTANCE_M = 4000.0;
+
+// Fit the orthographic shadow frustum around the area of interest (defaults
+// cover a small scene; buildSceneGeometry3D widens it to the bundle extent).
+export function fitShadowCameraToRadius(radiusM) {
+    const radius = Math.max(500.0, Number(radiusM) || 0);
+    const cam = dirLight.shadow.camera;
+    cam.left = -radius;
+    cam.right = radius;
+    cam.top = radius;
+    cam.bottom = -radius;
+    cam.near = 10.0;
+    cam.far = SUN_DISTANCE_M * 2.5;
+    cam.updateProjectionMatrix();
+}
+fitShadowCameraToRadius(2500.0);
+
+// Point the directional light along the operational sun vector. ENU ->
+// three.js: x=east, y=up, z=-north. The Lambert geometry term already
+// encodes elevation falloff (ground catches sin(el) of a fixed-power sun),
+// so the light keeps constant intensity while it is above the horizon; this
+// preserves shadow contrast at low sun angles instead of double-dimming.
+export function updateSceneIllumination() {
+    const ill = vizState.illumination;
+    const az = (Number(ill.sunAzimuthDeg) || 0) * (Math.PI / 180.0);
+    const el = (Number(ill.sunElevationDeg) || 0) * (Math.PI / 180.0);
+    const horizontal = Math.cos(el);
+    const east = Math.sin(az) * horizontal;
+    const north = Math.cos(az) * horizontal;
+    const up = Math.sin(el);
+    dirLight.position.set(east * SUN_DISTANCE_M, Math.max(60.0, up * SUN_DISTANCE_M), -north * SUN_DISTANCE_M);
+    dirLight.target.position.set(0, 0, 0);
+    const aboveHorizon = up > 0.02;
+    // High direct-to-ambient ratio keeps cast shadows legible on the dark
+    // tactical palette (shadowed ground ~= ambient only).
+    dirLight.intensity = aboveHorizon ? 1.4 : 0.0;
+    ambientLight.intensity = aboveHorizon ? 0.22 : 0.16;
+    dirLight.castShadow = aboveHorizon;
+}
+updateSceneIllumination();
 
 // --- Human-only NAV markers (mission / cruise points) and map zones ---
 const navGroup = new THREE.Group();
@@ -238,11 +286,14 @@ function buildTerrainMesh(terrain, helpers) {
             positions[offset] = worldX;
             positions[offset + 1] = height;
             positions[offset + 2] = -worldY;
+            // Plain material color only: slope shading and shadows come from
+            // the sun-driven directional light, so relief and occlusion read
+            // from one physically consistent source (no baked hillshade).
             const base = helpers.terrainCellColor(terrain, r, c);
-            const shade = 0.6 + 0.4 * helpers.terrainShade(terrain, r, c);
-            colors[offset] = (base[0] / 255) * shade;
-            colors[offset + 1] = (base[1] / 255) * shade;
-            colors[offset + 2] = (base[2] / 255) * shade;
+            const gain = 1.5 / 255;
+            colors[offset] = Math.min(1, base[0] * gain);
+            colors[offset + 1] = Math.min(1, base[1] * gain);
+            colors[offset + 2] = Math.min(1, base[2] * gain);
         }
     }
     const indices = [];
@@ -261,7 +312,9 @@ function buildTerrainMesh(terrain, helpers) {
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
     const material = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    return new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.receiveShadow = true;
+    return mesh;
 }
 
 function shapeFromRings(rings) {
@@ -294,6 +347,8 @@ function buildBuildingsMesh(buildings) {
         // rises along +Y with ENU north mapped to -Z.
         geometry.rotateX(-Math.PI / 2);
         const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
         mesh.position.y = Number(building.base_m) || 0;
         mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), edgeMaterial));
         group.add(mesh);
@@ -314,7 +369,9 @@ function corridorMesh(positions, material) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
     geometry.computeVertexNormals();
-    return new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.receiveShadow = true;
+    return mesh;
 }
 
 // Per-class lift keeps overlapping carriageways, service roads, and paths
@@ -424,6 +481,7 @@ function buildWaterGroup(water) {
             const geometry = new THREE.ShapeGeometry(shape);
             geometry.rotateX(-Math.PI / 2);
             const mesh = new THREE.Mesh(geometry, material);
+            mesh.receiveShadow = true;
             mesh.position.y = surfaceZ + 0.2;
             group.add(mesh);
         }
@@ -446,6 +504,7 @@ export function buildSceneGeometry3D(payload, helpers) {
     const spanX = Math.abs(Number(extent.max_x) - Number(extent.min_x)) || 0;
     const spanY = Math.abs(Number(extent.max_y) - Number(extent.min_y)) || 0;
     ensureGridContainsPoint(spanX * 0.5, spanY * 0.5, 500.0);
+    fitShadowCameraToRadius(Math.hypot(spanX, spanY) * 0.5 + 300.0);
     console.log('Unified scene geometry loaded into 3D view');
 }
 
@@ -571,6 +630,13 @@ function buildFallbackVisual(uData, assetEntry) {
     return group;
 }
 
+function markUnitVisualShadows(root) {
+    root.traverse?.((node) => {
+        if (node.isMesh) node.castShadow = true;
+    });
+    return root;
+}
+
 function buildVisualGroupForUnit(uData, assetEntry) {
     const registryModel = getRegistryModelClone(assetEntry);
     if (registryModel) {
@@ -584,9 +650,9 @@ function buildVisualGroupForUnit(uData, assetEntry) {
         const inFlame = registryModel.getObjectByName("InternalFlame");
         if (exFlame) exFlame.visible = false;
         if (inFlame) inFlame.visible = false;
-        return { group: registryModel, usingRegistryAsset: true };
+        return { group: markUnitVisualShadows(registryModel), usingRegistryAsset: true };
     }
-    return { group: buildFallbackVisual(uData, assetEntry), usingRegistryAsset: false };
+    return { group: markUnitVisualShadows(buildFallbackVisual(uData, assetEntry)), usingRegistryAsset: false };
 }
 
 function maybeUpgradeUnitVisual(uObj) {
