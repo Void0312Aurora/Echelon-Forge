@@ -37,6 +37,7 @@ from gym_envs.universal_env import (
     make_temporal_history_buffer,
     naval_station_action_command,
     normalize_action,
+    reset_air_combat_event_action_state,
     reset_naval_station_action_state,
     validate_naval_action_mode_for_loader,
 )
@@ -537,6 +538,7 @@ class WorldBatchVecEnv(
         handle.last_action = None
         handle.last_policy_action_intent = None
         reset_naval_station_action_state(handle.loader)
+        reset_air_combat_event_action_state(handle.loader)
         bind_naval_station_eval_reference(handle.loader)
         handle.last_inst = initial_inst
         handle.last_truth = initial_truth

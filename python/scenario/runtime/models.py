@@ -16,10 +16,15 @@ _SURFACE_TYPE_MAP = {
 }
 
 _SIDE_MAP = {
-    "Blue": ef_py.Side.Blue,
-    "Red": ef_py.Side.Red,
-    "Neutral": ef_py.Side.Neutral,
+    "Blue": "Blue",
+    "Red": "Red",
+    "Neutral": "Neutral",
 }
+
+
+def resolve_scenario_side(side_name: Any):
+    member_name = _SIDE_MAP.get(str(side_name), "Neutral")
+    return getattr(ef_py.Side, member_name)
 
 
 @dataclass

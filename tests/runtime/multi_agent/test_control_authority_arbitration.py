@@ -63,6 +63,10 @@ def _run_with_pilot_action(
   return float(inst.heading), float(inst.roll)
 
 
+def _shortest_signed_heading_delta_deg(heading_deg: float, reference_deg: float) -> float:
+  return (float(heading_deg) - float(reference_deg) + 180.0) % 360.0 - 180.0
+
+
 class ControlAuthorityArbitrationTests(unittest.TestCase):
   def test_near_zero_active_pilot_action_does_not_steal_mission_control(self) -> None:
     baseline_heading_deg, baseline_roll_deg = _run_with_pilot_action()
@@ -75,7 +79,10 @@ class ControlAuthorityArbitrationTests(unittest.TestCase):
     baseline_heading_deg, _baseline_roll_deg = _run_with_pilot_action()
     heading_deg, roll_deg = _run_with_pilot_action(stick_roll=0.6)
 
-    self.assertGreater(heading_deg, baseline_heading_deg + 10.0)
+    self.assertGreater(
+      _shortest_signed_heading_delta_deg(heading_deg, baseline_heading_deg),
+      10.0,
+    )
     self.assertGreater(roll_deg, 20.0)
 
 

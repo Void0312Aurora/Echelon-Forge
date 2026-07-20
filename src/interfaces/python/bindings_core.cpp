@@ -1172,6 +1172,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["seeker_lock_range_m"] = missile->seeker_lock_range;
                 out["guidance_delay_s"] = missile->guidance_delay_s;
                 out["guidance_update_period_s"] = missile->guidance_update_period_s;
+                out["last_guidance_time_s"] = missile->last_guidance_time;
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
@@ -1248,6 +1249,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["guidance_apn_lateral_accel_mps2"] = missile->guidance_apn_lateral_accel_mps2;
                 out["current_speed_mps"] = missile->current_speed_mps;
                 out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
+                out["commanded_lateral_accel_x_mps2"] = missile->commanded_lateral_accel_x_mps2;
+                out["commanded_lateral_accel_y_mps2"] = missile->commanded_lateral_accel_y_mps2;
+                out["commanded_lateral_accel_z_mps2"] = missile->commanded_lateral_accel_z_mps2;
                 out["achieved_lateral_accel_mps2"] = missile->achieved_lateral_accel_mps2;
                 out["burnout_time_s"] = missile->burnout_time_s;
                 out["boost_duration_s"] = missile->boost_duration_s;

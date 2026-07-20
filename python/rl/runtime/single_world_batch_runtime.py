@@ -16,8 +16,13 @@ except ModuleNotFoundError:  # pragma: no cover
 from python.rl.runtime.execution_runtime import ExecutionRuntimeAdapter, WrappedExecutionRuntimeAdapter
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
 from gym_envs.universal_env import (
+    add_air_combat_event_action_info,
+    air_combat_hybrid_effective_action,
+    apply_air_combat_event_action_gate,
     apply_naval_station_action,
     build_pilot_action,
+    finalize_air_combat_event_action_info,
+    is_air_combat_hybrid_action_mode,
     is_naval_station_action_mode,
     naval_action_family_for_mode,
     naval_station_action_command,
@@ -76,6 +81,29 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         return self
 
     @property
+    def loader(self):
+        return self.access.loader(0)
+
+    @property
+    def sim(self):
+        return self.access.sim(0)
+
+    @property
+    def agent_id(self):
+        return self.access.agent_id(0)
+
+    @property
+    def steps(self):
+        return self.access.steps(0)
+
+    @property
+    def max_steps(self):
+        return self.access.max_steps(0)
+
+    def get_time_step(self) -> float:
+        return float(self.access.world_time_step(0))
+
+    @property
     def unwrapped(self):
         return self._unwrapped
 
@@ -111,6 +139,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
             action_space=self.world_vec.action_space,
             action_mode=self.world_vec.action_mode,
         )
+        air_combat_truth_before = None
         if is_naval_station_action_mode(self.world_vec.action_mode):
             normalized_action = naval_station_action_command(normalized_action)
             handle.last_action = normalized_action.astype(np.float32, copy=True)
@@ -119,8 +148,25 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
                 self.access.sync_command_chain([env_idx])
                 if collect_timing:
                     command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
+        elif is_air_combat_hybrid_action_mode(self.world_vec.action_mode):
+            policy_intent = normalized_action.astype(np.float32, copy=True)
+            normalized_action = air_combat_hybrid_effective_action(
+                normalized_action,
+                previous_intent=handle.last_policy_action_intent,
+            )
+            handle.last_policy_action_intent = policy_intent
+            air_combat_truth_before = handle.last_truth
+            normalized_action, _ = apply_air_combat_event_action_gate(
+                handle.loader,
+                normalized_action,
+                agent_id=int(handle.agent_id),
+                truth_before=handle.last_truth,
+            )
+            handle.last_action = normalized_action.astype(np.float32, copy=True)
         else:
             handle.last_action = normalized_action.astype(np.float32, copy=True)
+        handle.loader._last_action_mode = str(self.world_vec.action_mode)
+        handle.loader._last_effective_action = handle.last_action.astype(np.float32, copy=True)
         assignment = ef_py.WorldPilotActionAssignment()
         assignment.world_index = int(env_idx)
         assignment.entity_id = int(handle.agent_id)
@@ -167,6 +213,13 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
             inst = inst_list[0]
             state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
 
+        if is_air_combat_hybrid_action_mode(self.world_vec.action_mode):
+            finalize_air_combat_event_action_info(
+                handle.loader,
+                truth_before=air_combat_truth_before,
+                truth_after=truth,
+            )
+
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
         handle.steps += 1
         handle.last_truth = truth
@@ -210,6 +263,8 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
             inst_now=inst,
             truth_now=truth,
         )
+        if is_air_combat_hybrid_action_mode(self.world_vec.action_mode):
+            add_air_combat_event_action_info(info, handle.loader)
         if window_evidence is not None:
             engagement_barrier_id = ""
             if window_evidence.engagement_packet is not None:

@@ -154,6 +154,11 @@ class MultiAgentRuntimeViewTests(unittest.TestCase):
     assign1.mission_command = ef_py.mission_command_maintained_batch_contract(wing_cmd)
     runtime.set_mission_commands_maintained_batch([assign0, assign1])
 
+    # Generic aircraft carry the maintained 0.2 s command-link latency. The
+    # tasking packet intentionally exposes delivered commands, not queued input.
+    for _ in range(4):
+      runtime.step_batch()
+
     view = MultiAgentWorldRuntimeView(
       runtime=runtime,
       loader=loader,

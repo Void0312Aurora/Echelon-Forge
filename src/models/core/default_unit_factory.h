@@ -1086,6 +1086,9 @@ class DefaultUnitFactory : public IUnitFactory {
                     : MissileGuidanceDefaults::kTrackMemoryTimeoutS;
             missile_runtime.current_speed_mps = current_speed_mps;
             missile_runtime.commanded_lateral_accel_mps2 = 0.0;
+            missile_runtime.commanded_lateral_accel_x_mps2 = 0.0;
+            missile_runtime.commanded_lateral_accel_y_mps2 = 0.0;
+            missile_runtime.commanded_lateral_accel_z_mps2 = 0.0;
             missile_runtime.achieved_lateral_accel_mps2 = 0.0;
             missile_runtime.autopilot_filter_state_mps2 = 0.0;
             missile_runtime.autopilot_rate_state_mps3 = 0.0;

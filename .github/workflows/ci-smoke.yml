@@ -83,3 +83,77 @@ jobs:
         run: |
           source tools/maintenance/cmo_env.sh
           cmo_python tools/runners/run_scenario_contract.py --suite tests/smoke/ci_contract_suite.json
+
+      - name: Build and validate isolated wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheelhouse="${RUNNER_TEMP}/cmo-wheelhouse"
+          wheel_build="${RUNNER_TEMP}/cmo-wheel-build"
+          wheel_venv="${RUNNER_TEMP}/cmo-wheel-venv"
+          rm -rf "${wheelhouse}" "${wheel_build}" "${wheel_venv}"
+          mkdir -p "${wheelhouse}"
+
+          CMAKE_BUILD_PARALLEL_LEVEL=2 \
+            SKBUILD_BUILD_DIR="${wheel_build}" \
+            ./.venv/bin/python -m pip wheel . --no-deps --wheel-dir "${wheelhouse}"
+          wheel_path="$(find "${wheelhouse}" -maxdepth 1 -type f -name 'cmo-*.whl' -print -quit)"
+          test -n "${wheel_path}"
+
+          WHEEL_PATH="${wheel_path}" ./.venv/bin/python - <<'PY'
+          import os
+          import zipfile
+
+          wheel_path = os.environ["WHEEL_PATH"]
+          with zipfile.ZipFile(wheel_path) as archive:
+              names = archive.namelist()
+
+          assert any(name.startswith("ef_py") and name.endswith((".so", ".pyd")) for name in names)
+          assert any(name == "python/__init__.py" for name in names)
+          assert any(name.startswith("gym_envs/scenario_loader/") for name in names)
+          assert "examples/agents/red_agent.py" in names
+          assert any(name.startswith("examples/config/database/") and name.endswith(".json") for name in names)
+          assert "scenarios/test/test_free_fall.json" in names
+
+          forbidden = [
+              name
+              for name in names
+              if name.startswith(("include/", "lib/cmake/"))
+              or name.endswith((".a", ".lib"))
+              or (name.startswith(("lib/", "bin/")) and "flecs" in name.lower())
+          ]
+          assert not forbidden, f"wheel contains third-party SDK artifacts: {forbidden}"
+          PY
+
+          python -m venv "${wheel_venv}"
+          "${wheel_venv}/bin/python" -m pip install --upgrade pip -c requirements/constraints-smoke.txt
+          "${wheel_venv}/bin/python" -m pip install --no-deps "${wheel_path}"
+          (cd "${RUNNER_TEMP}" && "${wheel_venv}/bin/python" -c \
+            'import ef_py; print(ef_py.__file__)')
+          "${wheel_venv}/bin/python" -m pip install \
+            -c requirements/constraints-smoke.txt \
+            numpy gymnasium
+
+          (cd "${RUNNER_TEMP}" && "${wheel_venv}/bin/python" - <<'PY'
+          from pathlib import Path
+
+          import ef_py
+          import python as cmo_python
+          from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+
+          wheel_root = Path(cmo_python.__file__).resolve().parent.parent
+          database = wheel_root / "examples" / "config" / "database"
+          scenario = wheel_root / "scenarios" / "test" / "test_free_fall.json"
+          assert database.is_dir(), database
+          assert scenario.is_file(), scenario
+
+          kernel = ef_py.SimulationKernel()
+          assert kernel.load_database(str(database))
+          kernel.shutdown()
+
+          env = WorldBatchVecEnv(scenario_path=str(scenario), n_envs=1, step_info_mode="off")
+          observation = env.reset()
+          assert observation is not None
+          env.close()
+          PY
+          )

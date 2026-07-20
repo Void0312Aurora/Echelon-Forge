@@ -30,9 +30,18 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   )
   assert '#include "systems/combat/pilot_weapon_release_system.h"' in systems_text
   assert '#include "systems/domains/naval/naval_mission_weapon_release_system.h"' in systems_text
-  assert "IWeaponReleaseService& weapon_release_service = *this" not in systems_text
-  assert "register_pilot_weapon_release_system(ecs, *weapon_release_service_)" in systems_text
-  assert "register_naval_mission_weapon_release_system(ecs, *weapon_release_service_)" in systems_text
+  assert not _contains_cpp_marker(
+    systems_text,
+    "IWeaponReleaseService& weapon_release_service = *this",
+  )
+  assert re.search(
+    r"register_pilot_weapon_release_system\(\s*ecs,\s*\*weapon_release_service_\s*\)",
+    systems_text,
+  )
+  assert re.search(
+    r"register_naval_mission_weapon_release_system\(\s*ecs,\s*\*weapon_release_service_\s*\)",
+    systems_text,
+  )
   assert "ecs.set<EngagementEventRecorderRef>({this})" not in systems_text
   assert "ecs.set<EngagementEventRecorderRef>({engagement_event_store_.get()})" in systems_text
   assert "class SimulationKernel :" not in kernel_header_text
@@ -93,7 +102,10 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   )
   assert "make_simulation_kernel_weapon_release_service(" in kernel_services_text
   assert "make_simulation_kernel_weapon_release_service(" in kernel_cpp_text
-  assert "make_simulation_kernel_weapon_release_service(*this)" not in kernel_cpp_text
+  assert not _contains_cpp_marker(
+    kernel_cpp_text,
+    "make_simulation_kernel_weapon_release_service(*this)",
+  )
   assert "std::make_unique<SimulationKernelEngagementEventStore>(ecs)" in kernel_cpp_text
   assert "src/core/engine/simulation_kernel_engagement_event_store.cpp" in cmake_text
   assert "src/core/engine/simulation_kernel_services.cpp" in cmake_text
@@ -104,8 +116,8 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   assert "SimulationKernelWeaponReleaseService::fire_weapon_from_pilot_action(" in release_service_text
   assert "SimulationKernelWeaponReleaseService::fire_naval_weapon_from_mission_command(" in release_service_text
   assert "launch_recorder_.record_legacy_launch_event(" in release_service_text
-  assert "SimulationKernel&" not in release_service_header_text
-  assert "SimulationKernel&" not in release_service_text
+  assert not _contains_cpp_marker(release_service_header_text, "SimulationKernel&")
+  assert not _contains_cpp_marker(release_service_text, "SimulationKernel&")
   assert "class IWeaponReleaseDamageBridge" in damage_bridge_text
   assert "virtual bool apply_proximity_hit(" in damage_bridge_text
   assert '#include "core/interfaces/weapon_release_damage_bridge.h"' in release_service_header_text
@@ -116,11 +128,23 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     "class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge"
     in kernel_cpp_text
   )
-  assert "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)" in kernel_cpp_text
+  assert _contains_cpp_marker(
+    kernel_cpp_text,
+    "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)",
+  )
   assert "*weapon_release_damage_bridge_" in kernel_cpp_text
-  assert "IWeaponReleaseDamageBridge& damage_bridge" in kernel_services_header_text
-  assert "IWeaponReleaseDamageBridge& damage_bridge" in kernel_services_text
-  assert "IWeaponReleaseDamageBridge& damage_bridge_" in release_service_header_text
+  assert _contains_cpp_marker(
+    kernel_services_header_text,
+    "IWeaponReleaseDamageBridge& damage_bridge",
+  )
+  assert _contains_cpp_marker(
+    kernel_services_text,
+    "IWeaponReleaseDamageBridge& damage_bridge",
+  )
+  assert _contains_cpp_marker(
+    release_service_header_text,
+    "IWeaponReleaseDamageBridge& damage_bridge_",
+  )
   assert "std::function" not in release_service_header_text
   assert "kernel_.fire_weapon_from_pilot_action(" not in kernel_services_text
   assert "kernel_.fire_naval_weapon_from_mission_command(" not in kernel_services_text
@@ -129,16 +153,22 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
 
   assert '#include "core/engine/simulation_kernel.h"' not in helper_text
   assert '#include "core/engine/simulation_kernel.h"' not in naval_helper_text
-  assert "SimulationKernel&" not in helper_text
-  assert "SimulationKernel&" not in naval_helper_text
+  assert not _contains_cpp_marker(helper_text, "SimulationKernel&")
+  assert not _contains_cpp_marker(naval_helper_text, "SimulationKernel&")
   assert '#include "core/interfaces/weapon_release_service.h"' in helper_text
   assert '#include "core/interfaces/weapon_release_service.h"' in naval_helper_text
   assert "register_pilot_weapon_release_system(" in helper_text
-  assert "IWeaponReleaseService& weapon_release_service" in helper_text
+  assert _contains_cpp_marker(
+    helper_text,
+    "IWeaponReleaseService& weapon_release_service",
+  )
   assert 'ecs.system<const PilotAction>("PilotWeaponRelease")' in helper_text
   assert "fire_weapon_from_pilot_action(" in helper_text
   assert "register_naval_mission_weapon_release_system(" in naval_helper_text
-  assert "IWeaponReleaseService& weapon_release_service" in naval_helper_text
+  assert _contains_cpp_marker(
+    naval_helper_text,
+    "IWeaponReleaseService& weapon_release_service",
+  )
   assert 'ecs.system<const MissionCommand, const NavalWeaponSystem>("NavalMissionWeaponRelease")' in naval_helper_text
   assert "fire_naval_weapon_from_mission_command(" in naval_helper_text
 
@@ -153,8 +183,8 @@ def test_tm04_weapon_release_service_is_not_a_kernel_forwarding_adapter() -> Non
   assert "fire_weapon_from_pilot_action(uint64_t attacker_id)" not in kernel_header_text
   assert "try_fire_naval_mission_weapon(" not in kernel_header_text
   assert '#include "simulation_kernel.h"' not in release_service_text
-  assert "SimulationKernel&" not in release_service_header_text
-  assert "SimulationKernel&" not in release_service_text
+  assert not _contains_cpp_marker(release_service_header_text, "SimulationKernel&")
+  assert not _contains_cpp_marker(release_service_text, "SimulationKernel&")
   assert "kernel_." not in kernel_services_text
   assert "kernel_." not in release_service_text
   assert "SimulationKernel::fire_weapon_from_pilot_action(" not in weapon_api_text

@@ -98,7 +98,7 @@ class SimulationKernel {
     const flecs::world &get_world() const { return ecs; }
 
     double get_time_step() const { return time_step; }
-    void set_time_step(double dt) { time_step = dt; }
+    void set_time_step(double dt);
 
     // Configuration
     bool load_database(const std::string &path);
@@ -245,6 +245,7 @@ class SimulationKernel {
     void shutdown();
 
   private:
+    void ensure_active(const char *operation) const;
     void register_components_and_systems();
 
     flecs::world ecs;

@@ -21,7 +21,7 @@ from .models import (
     ScenarioSpawnLayout,
     ScenarioWorldLayout,
     ScenarioZoneLayout,
-    _SIDE_MAP,
+    resolve_scenario_side,
     _SURFACE_TYPE_MAP,
 )
 from .randomization import (
@@ -251,7 +251,7 @@ def prepare_scenario_world_layout(
             spawns.append(
                 ScenarioSpawnLayout(
                     entity_name=template.entity_name,
-                    side=_SIDE_MAP.get(template.side_name, ef_py.Side.Neutral),
+                    side=resolve_scenario_side(template.side_name),
                     type_name=template.type_name,
                     is_agent=template.is_agent,
                     x=pos[0],
@@ -304,7 +304,7 @@ def prepare_scenario_world_layout(
                 spawns.append(
                     ScenarioSpawnLayout(
                         entity_name=str(ent_cfg.get("name", "")),
-                        side=_SIDE_MAP.get(str(ent_cfg.get("side", "Neutral")), ef_py.Side.Neutral),
+                        side=resolve_scenario_side(ent_cfg.get("side", "Neutral")),
                         type_name=str(ent_cfg.get("type", "")),
                         is_agent=bool(ent_cfg.get("is_agent", False)),
                         x=float(pos[0]),

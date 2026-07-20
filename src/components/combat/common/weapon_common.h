@@ -168,6 +168,11 @@ struct Missile {
 
     double current_speed_mps = 0.0;
     double commanded_lateral_accel_mps2 = 0.0;
+    // World-frame guidance command held between discrete seeker/guidance
+    // updates so the autopilot and missile dynamics can run every simulation tick.
+    double commanded_lateral_accel_x_mps2 = 0.0;
+    double commanded_lateral_accel_y_mps2 = 0.0;
+    double commanded_lateral_accel_z_mps2 = 0.0;
     double achieved_lateral_accel_mps2 = 0.0;
     double burnout_time_s = -1.0;
     double boost_duration_s = std::numeric_limits<double>::quiet_NaN();
@@ -319,6 +324,9 @@ inline void initialize_missile_launch_runtime(Missile &missile,
     missile.track_memory_timeout_s = std::max(0.0, state.track_memory_timeout_s);
     missile.current_speed_mps = std::max(0.0, state.launch_speed_mps);
     missile.commanded_lateral_accel_mps2 = 0.0;
+    missile.commanded_lateral_accel_x_mps2 = 0.0;
+    missile.commanded_lateral_accel_y_mps2 = 0.0;
+    missile.commanded_lateral_accel_z_mps2 = 0.0;
     missile.achieved_lateral_accel_mps2 = 0.0;
     missile.autopilot_filter_state_mps2 = 0.0;
     missile.autopilot_rate_state_mps3 = 0.0;

@@ -211,7 +211,14 @@ class SharedMemorySubprocVecEnv(VecEnv):
         self.buf_infos: list[dict[str, Any]] = [{} for _ in range(self.num_envs)]
 
     def step_async(self, actions: np.ndarray) -> None:
-        for remote, action in zip(self.remotes, actions):
+        action_batch = np.asarray(actions)
+        if action_batch.ndim == 0 or int(action_batch.shape[0]) != int(self.num_envs):
+            received = 0 if action_batch.ndim == 0 else int(action_batch.shape[0])
+            raise ValueError(
+                "SharedMemorySubprocVecEnv action batch size mismatch: "
+                f"expected {self.num_envs}, received {received}"
+            )
+        for remote, action in zip(self.remotes, action_batch, strict=True):
             remote.send(("step", action))
         self.waiting = True
 

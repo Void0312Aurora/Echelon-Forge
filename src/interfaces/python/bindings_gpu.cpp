@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -29,60 +30,51 @@
 #include "interfaces/python/dlpack_minimal.h"
 #include "runtime/facade/runtime_facade.h"
 
+#ifdef EF_ENABLE_CUDA_EXPERIMENTS
+#include <cuda_runtime_api.h>
+#endif
+
 namespace {
 struct ManagedDLPackTensor {
     DLManagedTensor managed{};
     std::vector<std::int64_t> shape;
     std::vector<std::int64_t> strides;
+    std::shared_ptr<void> data_owner;
 };
 
-void delete_managed_dlpack_tensor(DLManagedTensor* tensor) {
+void delete_managed_dlpack_tensor(DLManagedTensor *tensor) {
     if (tensor == nullptr) {
         return;
     }
-    delete static_cast<ManagedDLPackTensor*>(tensor->manager_ctx);
+    delete static_cast<ManagedDLPackTensor *>(tensor->manager_ctx);
 }
 
-void delete_dlpack_capsule(PyObject* capsule) {
+void delete_dlpack_capsule(PyObject *capsule) {
     if (capsule == nullptr || !PyCapsule_IsValid(capsule, "dltensor")) {
         return;
     }
-    auto* managed = static_cast<DLManagedTensor*>(PyCapsule_GetPointer(capsule, "dltensor"));
+    auto *managed = static_cast<DLManagedTensor *>(PyCapsule_GetPointer(capsule, "dltensor"));
     if (managed != nullptr && managed->deleter != nullptr) {
         managed->deleter(managed);
     }
 }
 
 class GpuTensorView {
-public:
+  public:
     GpuTensorView() = default;
 
-    GpuTensorView(
-        const void* data_ptr,
-        std::vector<std::int64_t> shape,
-        int device_id,
-        std::vector<std::int64_t> strides = {}
-    )
-        : data_ptr_(data_ptr),
-          shape_(std::move(shape)),
-          strides_(std::move(strides)),
-          device_id_(device_id) {}
+    GpuTensorView(const void *data_ptr, std::vector<std::int64_t> shape, int device_id,
+                  std::vector<std::int64_t> strides = {}, std::shared_ptr<void> data_owner = {})
+        : data_ptr_(data_ptr), shape_(std::move(shape)), strides_(std::move(strides)),
+          device_id_(device_id), data_owner_(std::move(data_owner)) {}
 
-    bool valid() const {
-        return data_ptr_ != nullptr && !shape_.empty();
-    }
+    bool valid() const { return data_ptr_ != nullptr && !shape_.empty(); }
 
-    std::vector<std::int64_t> shape() const {
-        return shape_;
-    }
+    std::vector<std::int64_t> shape() const { return shape_; }
 
-    std::vector<std::int64_t> strides() const {
-        return strides_;
-    }
+    std::vector<std::int64_t> strides() const { return strides_; }
 
-    int device_id() const {
-        return device_id_;
-    }
+    int device_id() const { return device_id_; }
 
     std::size_t numel() const {
         std::size_t out = 1;
@@ -99,12 +91,8 @@ public:
         return nb::make_tuple(static_cast<int>(kDLCUDA), int(device_id_));
     }
 
-    nb::object dlpack(
-        nb::object stream,
-        nb::object max_version,
-        nb::object dl_device,
-        nb::object copy
-    ) const {
+    nb::object dlpack(nb::object stream, nb::object max_version, nb::object dl_device,
+                      nb::object copy) const {
         (void)stream;
         (void)max_version;
         if (!valid()) {
@@ -119,29 +107,29 @@ public:
                 const int requested_type = nb::cast<int>(requested[0]);
                 const int requested_id = nb::cast<int>(requested[1]);
                 if (requested_type != static_cast<int>(kDLCUDA) || requested_id != device_id_) {
-                    throw std::runtime_error("GpuTensorView cannot export to a different dl_device");
+                    throw std::runtime_error(
+                        "GpuTensorView cannot export to a different dl_device");
                 }
             }
         }
 
-        auto* holder = new ManagedDLPackTensor();
+        auto *holder = new ManagedDLPackTensor();
         holder->shape = shape_;
         holder->strides = strides_;
-        holder->managed.dl_tensor.data = const_cast<void*>(data_ptr_);
+        holder->data_owner = data_owner_;
+        holder->managed.dl_tensor.data = const_cast<void *>(data_ptr_);
         holder->managed.dl_tensor.device = {kDLCUDA, device_id_};
         holder->managed.dl_tensor.ndim = static_cast<int32_t>(holder->shape.size());
         holder->managed.dl_tensor.dtype = {kDLFloat, 32, 1};
         holder->managed.dl_tensor.shape = holder->shape.data();
-        holder->managed.dl_tensor.strides = holder->strides.empty() ? nullptr : holder->strides.data();
+        holder->managed.dl_tensor.strides =
+            holder->strides.empty() ? nullptr : holder->strides.data();
         holder->managed.dl_tensor.byte_offset = 0;
         holder->managed.manager_ctx = holder;
         holder->managed.deleter = &delete_managed_dlpack_tensor;
 
-        PyObject* capsule = PyCapsule_New(
-            static_cast<void*>(&holder->managed),
-            "dltensor",
-            &delete_dlpack_capsule
-        );
+        PyObject *capsule = PyCapsule_New(static_cast<void *>(&holder->managed), "dltensor",
+                                          &delete_dlpack_capsule);
         if (capsule == nullptr) {
             delete holder;
             throw nb::python_error();
@@ -149,24 +137,24 @@ public:
         return nb::steal<nb::object>(capsule);
     }
 
-private:
-    const void* data_ptr_ = nullptr;
+  private:
+    const void *data_ptr_ = nullptr;
     std::vector<std::int64_t> shape_;
     std::vector<std::int64_t> strides_;
     int device_id_ = 0;
+    std::shared_ptr<void> data_owner_;
 };
 
+#ifdef EF_ENABLE_CUDA_EXPERIMENTS
 int current_cuda_device_id() {
     const auto device = gpu::probe_device();
     return device.active_device >= 0 ? device.active_device : 0;
 }
+#endif
 
-nb::object maybe_gpu_tensor_view(
-    const void* data_ptr,
-    std::size_t float_count,
-    std::vector<std::int64_t> shape,
-    std::vector<std::int64_t> strides = {}
-) {
+nb::object maybe_gpu_tensor_view(const void *data_ptr, std::size_t float_count,
+                                 std::vector<std::int64_t> shape,
+                                 std::vector<std::int64_t> strides = {}) {
     if (data_ptr == nullptr || shape.empty()) {
         return nb::none();
     }
@@ -180,17 +168,34 @@ nb::object maybe_gpu_tensor_view(
     if (float_count != 0 && expected != float_count) {
         return nb::none();
     }
-    return nb::cast(
-        GpuTensorView(
-            data_ptr,
-            std::move(shape),
-            current_cuda_device_id(),
-            std::move(strides)
-        )
-    );
+#ifdef EF_ENABLE_CUDA_EXPERIMENTS
+    void *owned_data = nullptr;
+    const std::size_t byte_count = expected * sizeof(float);
+    cudaError_t status = cudaMalloc(&owned_data, byte_count);
+    if (status != cudaSuccess) {
+        throw std::runtime_error(std::string("GpuTensorView cudaMalloc failed: ") +
+                                 cudaGetErrorString(status));
+    }
+    status = cudaMemcpy(owned_data, data_ptr, byte_count, cudaMemcpyDeviceToDevice);
+    if (status != cudaSuccess) {
+        cudaFree(owned_data);
+        throw std::runtime_error(std::string("GpuTensorView device snapshot copy failed: ") +
+                                 cudaGetErrorString(status));
+    }
+    std::shared_ptr<void> data_owner(owned_data, [](void *ptr) {
+        if (ptr != nullptr) {
+            cudaFree(ptr);
+        }
+    });
+    return nb::cast(GpuTensorView(owned_data, std::move(shape), current_cuda_device_id(),
+                                  std::move(strides), std::move(data_owner)));
+#else
+    (void)strides;
+    return nb::none();
+#endif
 }
 
-FlightShapingRuntimeProducts unpack_flight_shaping_products(const float* src) {
+FlightShapingRuntimeProducts unpack_flight_shaping_products(const float *src) {
     FlightShapingRuntimeProducts out{};
     out.valid = src[0] > 0.5f;
     out.altitude_progress = static_cast<double>(src[1]);
@@ -228,36 +233,25 @@ FlightShapingRuntimeProducts unpack_flight_shaping_products(const float* src) {
     return out;
 }
 
-std::vector<FlightShapingRuntimeProducts> unpack_flight_shaping_products_batch(
-    const std::vector<float>& flat,
-    std::size_t batch_size
-) {
+std::vector<FlightShapingRuntimeProducts>
+unpack_flight_shaping_products_batch(const std::vector<float> &flat, std::size_t batch_size) {
     if (flat.size() != batch_size * static_cast<std::size_t>(gpu::kFlightShapingOutputCount)) {
         throw std::runtime_error("unexpected flattened flight-shaping batch output size");
     }
     std::vector<FlightShapingRuntimeProducts> out;
     out.reserve(batch_size);
     for (std::size_t idx = 0; idx < batch_size; ++idx) {
-        out.push_back(
-            unpack_flight_shaping_products(
-                flat.data() + static_cast<std::ptrdiff_t>(idx * static_cast<std::size_t>(gpu::kFlightShapingOutputCount))
-            )
-        );
+        out.push_back(unpack_flight_shaping_products(
+            flat.data() + static_cast<std::ptrdiff_t>(
+                              idx * static_cast<std::size_t>(gpu::kFlightShapingOutputCount))));
     }
     return out;
 }
 
 gpu::ExecutionObservationBatchRequest build_execution_observation_batch_request(
-    const InstrumentState& inst,
-    const MissionObservationInputs& mission_inputs,
-    double ils_valid,
-    double ils_loc,
-    double ils_gs,
-    double ils_dme,
-    int max_contacts,
-    int max_rwr,
-    const AgentObservation& truth
-) {
+    const InstrumentState &inst, const MissionObservationInputs &mission_inputs, double ils_valid,
+    double ils_loc, double ils_gs, double ils_dme, int max_contacts, int max_rwr,
+    const AgentObservation &truth) {
     gpu::ExecutionObservationBatchRequest req{};
     req.inst.alt_baro_m = inst.alt_baro_m;
     req.inst.alt_radar_m = inst.alt_radar_m;
@@ -319,12 +313,14 @@ gpu::ExecutionObservationBatchRequest build_execution_observation_batch_request(
         req.mission.has_route_guidance = true;
         req.mission.route_idx = mission_inputs.route_guidance.idx;
         req.mission.route_count = mission_inputs.route_guidance.count;
-        req.mission.route_waypoint_flyover = mission_inputs.route_guidance.waypoint_mode == "flyover";
+        req.mission.route_waypoint_flyover =
+            mission_inputs.route_guidance.waypoint_mode == "flyover";
         req.mission.route_dist_m = mission_inputs.route_guidance.dist_m;
         req.mission.route_reward_xtk_m = mission_inputs.route_guidance.reward_xtk_m;
         req.mission.route_reward_dtg_m = mission_inputs.route_guidance.reward_dtg_m;
         req.mission.route_direct_to_track_deg = mission_inputs.route_guidance.direct_to_track_deg;
-        req.mission.route_reward_desired_track_deg = mission_inputs.route_guidance.reward_desired_track_deg;
+        req.mission.route_reward_desired_track_deg =
+            mission_inputs.route_guidance.reward_desired_track_deg;
         req.mission.route_next_turn_deg = mission_inputs.route_guidance.next_turn_deg;
         req.mission.route_distance_to_turn_m = mission_inputs.route_guidance.distance_to_turn_m;
         req.mission.nav_own_altitude_m = mission_inputs.nav_inputs.own_altitude_m;
@@ -357,33 +353,28 @@ struct BatchExecutionObservationOutputs {
     std::vector<float> contacts_out;
     std::vector<float> rwr_out;
     std::vector<float> mission_out;
-    const void* device_ptr = nullptr;
+    const void *device_ptr = nullptr;
     std::size_t device_float_count = 0;
 };
 
 BatchExecutionObservationOutputs compute_execution_observation_batch_binding_outputs(
-    const std::vector<InstrumentState>& inst_batch,
-    const std::vector<AgentObservation>& truth_batch,
-    const std::vector<MissionObservationInputs>& mission_inputs_batch,
-    nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch,
-    int max_contacts,
-    int max_rwr,
-    bool use_gpu
-) {
-    if (inst_batch.size() != truth_batch.size() || inst_batch.size() != mission_inputs_batch.size()) {
+    const std::vector<InstrumentState> &inst_batch,
+    const std::vector<AgentObservation> &truth_batch,
+    const std::vector<MissionObservationInputs> &mission_inputs_batch,
+    nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch, int max_contacts,
+    int max_rwr, bool use_gpu) {
+    if (inst_batch.size() != truth_batch.size() ||
+        inst_batch.size() != mission_inputs_batch.size()) {
         throw std::invalid_argument("batch observation inputs must have matching batch size");
     }
-    if (
-        ils_batch.ndim() != 2 ||
-        ils_batch.shape(0) != static_cast<ssize_t>(inst_batch.size()) ||
-        ils_batch.shape(1) < 4
-    ) {
+    if (ils_batch.ndim() != 2 || ils_batch.shape(0) != inst_batch.size() ||
+        ils_batch.shape(1) < 4) {
         throw std::invalid_argument("ils_batch must have shape [batch, >=4]");
     }
 
     BatchExecutionObservationOutputs out{};
     out.batch_size = inst_batch.size();
-    const auto* ils_ptr = static_cast<const float*>(ils_batch.data());
+    const auto *ils_ptr = static_cast<const float *>(ils_batch.data());
     const std::size_t ils_stride = static_cast<std::size_t>(ils_batch.shape(1));
 
     std::vector<gpu::ExecutionObservationBatchRequest> requests;
@@ -394,45 +385,28 @@ BatchExecutionObservationOutputs compute_execution_observation_batch_binding_out
     rwr_batch.reserve(out.batch_size);
     for (std::size_t idx = 0; idx < out.batch_size; ++idx) {
         const std::size_t ils_base = idx * ils_stride;
-        requests.push_back(
-            build_execution_observation_batch_request(
-                inst_batch[idx],
-                mission_inputs_batch[idx],
-                static_cast<double>(ils_ptr[ils_base + 0]),
-                static_cast<double>(ils_ptr[ils_base + 1]),
-                static_cast<double>(ils_ptr[ils_base + 2]),
-                static_cast<double>(ils_ptr[ils_base + 3]),
-                max_contacts,
-                max_rwr,
-                truth_batch[idx]
-            )
-        );
+        requests.push_back(build_execution_observation_batch_request(
+            inst_batch[idx], mission_inputs_batch[idx], static_cast<double>(ils_ptr[ils_base + 0]),
+            static_cast<double>(ils_ptr[ils_base + 1]), static_cast<double>(ils_ptr[ils_base + 2]),
+            static_cast<double>(ils_ptr[ils_base + 3]), max_contacts, max_rwr, truth_batch[idx]));
         contacts_batch.push_back(truth_batch[idx].contacts);
         rwr_batch.push_back(truth_batch[idx].rwr_warnings);
     }
 
-    const int mission_mode_code = mission_inputs_batch.empty() ? 0 : mission_inputs_batch.front().mode_code;
+    const int mission_mode_code =
+        mission_inputs_batch.empty() ? 0 : mission_inputs_batch.front().mode_code;
     out.instrument_count = gpu::kExecutionObservationInstrumentCount;
     out.mission_count = gpu::execution_observation_mission_float_count(mission_mode_code);
     out.contact_section = static_cast<std::size_t>(std::max(0, max_contacts)) * 5u;
     out.rwr_section = static_cast<std::size_t>(std::max(0, max_rwr)) * 4u;
-    out.per_request = gpu::execution_observation_output_float_count(max_contacts, max_rwr, mission_mode_code);
+    out.per_request =
+        gpu::execution_observation_output_float_count(max_contacts, max_rwr, mission_mode_code);
 
-    const std::vector<float> flat = use_gpu
-        ? gpu::compute_execution_observation_experiment_batch(
-            requests,
-            contacts_batch,
-            rwr_batch,
-            max_contacts,
-            max_rwr
-        )
-        : gpu::compute_execution_observation_reference_cpu_batch(
-            requests,
-            contacts_batch,
-            rwr_batch,
-            max_contacts,
-            max_rwr
-        );
+    const std::vector<float> flat =
+        use_gpu ? gpu::compute_execution_observation_experiment_batch(
+                      requests, contacts_batch, rwr_batch, max_contacts, max_rwr)
+                : gpu::compute_execution_observation_reference_cpu_batch(
+                      requests, contacts_batch, rwr_batch, max_contacts, max_rwr);
     if (flat.size() != out.batch_size * out.per_request) {
         throw std::runtime_error("unexpected flattened batch observation output size");
     }
@@ -443,28 +417,22 @@ BatchExecutionObservationOutputs compute_execution_observation_batch_binding_out
     out.mission_out.assign(out.batch_size * out.mission_count, 0.0f);
     for (std::size_t idx = 0; idx < out.batch_size; ++idx) {
         const std::size_t src_base = idx * out.per_request;
-        std::copy_n(
-            flat.begin() + static_cast<std::ptrdiff_t>(src_base),
-            static_cast<std::ptrdiff_t>(out.instrument_count),
-            out.inst_out.begin() + static_cast<std::ptrdiff_t>(idx * out.instrument_count)
-        );
-        std::copy_n(
-            flat.begin() + static_cast<std::ptrdiff_t>(src_base + out.instrument_count),
-            static_cast<std::ptrdiff_t>(out.contact_section),
-            out.contacts_out.begin() + static_cast<std::ptrdiff_t>(idx * out.contact_section)
-        );
-        std::copy_n(
-            flat.begin() + static_cast<std::ptrdiff_t>(src_base + out.instrument_count + out.contact_section),
-            static_cast<std::ptrdiff_t>(out.rwr_section),
-            out.rwr_out.begin() + static_cast<std::ptrdiff_t>(idx * out.rwr_section)
-        );
-        std::copy_n(
-            flat.begin() + static_cast<std::ptrdiff_t>(
-                src_base + out.instrument_count + out.contact_section + out.rwr_section
-            ),
-            static_cast<std::ptrdiff_t>(out.mission_count),
-            out.mission_out.begin() + static_cast<std::ptrdiff_t>(idx * out.mission_count)
-        );
+        std::copy_n(flat.begin() + static_cast<std::ptrdiff_t>(src_base),
+                    static_cast<std::ptrdiff_t>(out.instrument_count),
+                    out.inst_out.begin() + static_cast<std::ptrdiff_t>(idx * out.instrument_count));
+        std::copy_n(flat.begin() + static_cast<std::ptrdiff_t>(src_base + out.instrument_count),
+                    static_cast<std::ptrdiff_t>(out.contact_section),
+                    out.contacts_out.begin() +
+                        static_cast<std::ptrdiff_t>(idx * out.contact_section));
+        std::copy_n(flat.begin() + static_cast<std::ptrdiff_t>(src_base + out.instrument_count +
+                                                               out.contact_section),
+                    static_cast<std::ptrdiff_t>(out.rwr_section),
+                    out.rwr_out.begin() + static_cast<std::ptrdiff_t>(idx * out.rwr_section));
+        std::copy_n(flat.begin() +
+                        static_cast<std::ptrdiff_t>(src_base + out.instrument_count +
+                                                    out.contact_section + out.rwr_section),
+                    static_cast<std::ptrdiff_t>(out.mission_count),
+                    out.mission_out.begin() + static_cast<std::ptrdiff_t>(idx * out.mission_count));
     }
 
     if (use_gpu) {
@@ -474,228 +442,131 @@ BatchExecutionObservationOutputs compute_execution_observation_batch_binding_out
     return out;
 }
 
-bool visual_binding_batch_allows_device_export(
-    const std::vector<WorldBatchVisualBindingCompatibilityScene>& scenes
-) {
-    if (scenes.empty()) {
-        return false;
-    }
-    for (std::size_t idx = 1; idx < scenes.size(); ++idx) {
-        if (!world_batch_visual_binding_compatibility::default_environment_snapshots_equal(
-                scenes[0].environment_snapshot,
-                scenes[idx].environment_snapshot
-            )) {
-            return false;
-        }
-    }
-    return true;
+WorldBatchVisualObservationCompatibilityExport
+compute_compat_world_batch_visual_binding_outputs(const WorldBatchRuntime &runtime,
+                                                  const std::vector<WorldEntityRef> &refs,
+                                                  int downsample, bool use_gpu) {
+    const int factor = std::max(1, downsample);
+    const auto scenes =
+        runtime.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu);
+    return world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
 }
 
-WorldBatchVisualObservationCompatibilityExport compute_compat_world_batch_visual_binding_outputs(
-    const WorldBatchRuntime& runtime,
-    const std::vector<WorldEntityRef>& refs,
-    int downsample,
-    bool use_gpu
-) {
+WorldBatchVisualObservationCompatibilityExport
+compute_runtime_facade_visual_binding_outputs(const RuntimeFacade &facade,
+                                              const std::vector<WorldEntityRef> &refs,
+                                              int downsample, bool use_gpu) {
     const int factor = std::max(1, downsample);
-    const auto scenes = runtime.collect_visual_binding_compatibility_scenes_batch(
-        refs,
-        factor,
-        use_gpu
-    );
-    auto outputs = world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
-    if (use_gpu && visual_binding_batch_allows_device_export(scenes)) {
-        outputs.device_ptr = gpu::last_visual_output_device_ptr();
-        outputs.device_float_count = gpu::last_visual_output_float_count();
-    }
-    return outputs;
-}
-
-WorldBatchVisualObservationCompatibilityExport compute_runtime_facade_visual_binding_outputs(
-    const RuntimeFacade& facade,
-    const std::vector<WorldEntityRef>& refs,
-    int downsample,
-    bool use_gpu
-) {
-    const int factor = std::max(1, downsample);
-    const auto scenes = facade.collect_visual_binding_compatibility_scenes_batch(
-        refs,
-        factor,
-        use_gpu
-    );
-    auto outputs = world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
-    if (use_gpu && visual_binding_batch_allows_device_export(scenes)) {
-        outputs.device_ptr = gpu::last_visual_output_device_ptr();
-        outputs.device_float_count = gpu::last_visual_output_float_count();
-    }
-    return outputs;
+    const auto scenes =
+        facade.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu);
+    return world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
 }
 } // namespace
 
-void bind_gpu(nb::module_& m) {
+void bind_gpu(nb::module_ &m) {
     m.def(
         "compute_flight_shaping_batch",
-        [](const std::vector<FlightShapingRuntimeInputs>& inputs_batch, bool use_gpu) {
+        [](const std::vector<FlightShapingRuntimeInputs> &inputs_batch, bool use_gpu) {
             if (inputs_batch.empty()) {
                 return std::vector<FlightShapingRuntimeProducts>{};
             }
             if (use_gpu) {
                 return unpack_flight_shaping_products_batch(
                     gpu::compute_flight_shaping_experiment_batch(inputs_batch),
-                    inputs_batch.size()
-                );
+                    inputs_batch.size());
             }
             std::vector<FlightShapingRuntimeProducts> out;
             out.reserve(inputs_batch.size());
-            for (const auto& inputs : inputs_batch) {
+            for (const auto &inputs : inputs_batch) {
                 out.push_back(compute_flight_shaping_terms(inputs));
             }
             return out;
         },
-        nb::arg("inputs_batch"),
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("inputs_batch"), nb::arg("use_gpu") = false);
 
     m.def(
         "compute_execution_observation_runtime_numpy",
-        [](const InstrumentState& inst,
-           const AgentObservation& truth,
-           float ils_valid,
-           float ils_loc,
-           float ils_gs,
-           float ils_dme,
-           int max_contacts,
-           int max_rwr) {
+        [](const InstrumentState &inst, const AgentObservation &truth, float ils_valid,
+           float ils_loc, float ils_gs, float ils_dme, int max_contacts, int max_rwr) {
             ExecutionObservationRuntimeProducts out = compute_execution_observation_runtime(
-                inst,
-                truth,
-                static_cast<double>(ils_valid),
-                static_cast<double>(ils_loc),
-                static_cast<double>(ils_gs),
-                static_cast<double>(ils_dme),
-                max_contacts,
-                max_rwr
-            );
+                inst, truth, static_cast<double>(ils_valid), static_cast<double>(ils_loc),
+                static_cast<double>(ils_gs), static_cast<double>(ils_dme), max_contacts, max_rwr);
             size_t instrument_shape[1] = {out.instrument_values.size()};
             size_t contact_shape[2] = {static_cast<size_t>(std::max(0, max_contacts)), 5u};
             size_t rwr_shape[2] = {static_cast<size_t>(std::max(0, max_rwr)), 4u};
             return nb::make_tuple(
-                visual_tensor_to_numpy<nb::ndim<1>>(std::move(out.instrument_values), 1, instrument_shape),
-                visual_tensor_to_numpy<nb::ndim<2>>(std::move(out.contact_values), 2, contact_shape),
-                visual_tensor_to_numpy<nb::ndim<2>>(std::move(out.rwr_values), 2, rwr_shape)
-            );
+                visual_tensor_to_numpy<nb::ndim<1>>(std::move(out.instrument_values), 1,
+                                                    instrument_shape),
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(out.contact_values), 2,
+                                                    contact_shape),
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(out.rwr_values), 2, rwr_shape));
         },
-        nb::arg("inst"),
-        nb::arg("truth"),
-        nb::arg("ils_valid"),
-        nb::arg("ils_loc"),
-        nb::arg("ils_gs"),
-        nb::arg("ils_dme"),
-        nb::arg("max_contacts"),
-        nb::arg("max_rwr")
-    );
+        nb::arg("inst"), nb::arg("truth"), nb::arg("ils_valid"), nb::arg("ils_loc"),
+        nb::arg("ils_gs"), nb::arg("ils_dme"), nb::arg("max_contacts"), nb::arg("max_rwr"));
     m.def(
         "compute_execution_observation_batch_numpy",
-        [](const std::vector<InstrumentState>& inst_batch,
-           const std::vector<AgentObservation>& truth_batch,
-           const std::vector<MissionObservationInputs>& mission_inputs_batch,
+        [](const std::vector<InstrumentState> &inst_batch,
+           const std::vector<AgentObservation> &truth_batch,
+           const std::vector<MissionObservationInputs> &mission_inputs_batch,
            nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch,
-           int max_contacts,
-           int max_rwr,
-           bool use_gpu) {
+           int max_contacts, int max_rwr, bool use_gpu) {
             auto outputs = compute_execution_observation_batch_binding_outputs(
-                inst_batch,
-                truth_batch,
-                mission_inputs_batch,
-                ils_batch,
-                max_contacts,
-                max_rwr,
-                use_gpu
-            );
+                inst_batch, truth_batch, mission_inputs_batch, ils_batch, max_contacts, max_rwr,
+                use_gpu);
             size_t inst_shape[2] = {outputs.batch_size, outputs.instrument_count};
-            size_t contacts_shape[3] = {
-                outputs.batch_size,
-                static_cast<std::size_t>(std::max(0, max_contacts)),
-                5u
-            };
-            size_t rwr_shape[3] = {
-                outputs.batch_size,
-                static_cast<std::size_t>(std::max(0, max_rwr)),
-                4u
-            };
+            size_t contacts_shape[3] = {outputs.batch_size,
+                                        static_cast<std::size_t>(std::max(0, max_contacts)), 5u};
+            size_t rwr_shape[3] = {outputs.batch_size,
+                                   static_cast<std::size_t>(std::max(0, max_rwr)), 4u};
             size_t mission_shape[2] = {outputs.batch_size, outputs.mission_count};
             return nb::make_tuple(
                 visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.inst_out), 2, inst_shape),
-                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.contacts_out), 3, contacts_shape),
+                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.contacts_out), 3,
+                                                    contacts_shape),
                 visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.rwr_out), 3, rwr_shape),
-                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.mission_out), 2, mission_shape)
-            );
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.mission_out), 2,
+                                                    mission_shape));
         },
-        nb::arg("inst_batch"),
-        nb::arg("truth_batch"),
-        nb::arg("mission_inputs_batch"),
-        nb::arg("ils_batch"),
-        nb::arg("max_contacts"),
-        nb::arg("max_rwr"),
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("inst_batch"), nb::arg("truth_batch"), nb::arg("mission_inputs_batch"),
+        nb::arg("ils_batch"), nb::arg("max_contacts"), nb::arg("max_rwr"),
+        nb::arg("use_gpu") = false);
     m.def(
         "compute_execution_observation_batch_export",
-        [](const std::vector<InstrumentState>& inst_batch,
-           const std::vector<AgentObservation>& truth_batch,
-           const std::vector<MissionObservationInputs>& mission_inputs_batch,
+        [](const std::vector<InstrumentState> &inst_batch,
+           const std::vector<AgentObservation> &truth_batch,
+           const std::vector<MissionObservationInputs> &mission_inputs_batch,
            nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch,
-           int max_contacts,
-           int max_rwr,
-           bool use_gpu) {
+           int max_contacts, int max_rwr, bool use_gpu) {
             auto outputs = compute_execution_observation_batch_binding_outputs(
-                inst_batch,
-                truth_batch,
-                mission_inputs_batch,
-                ils_batch,
-                max_contacts,
-                max_rwr,
-                use_gpu
-            );
+                inst_batch, truth_batch, mission_inputs_batch, ils_batch, max_contacts, max_rwr,
+                use_gpu);
             size_t inst_shape[2] = {outputs.batch_size, outputs.instrument_count};
-            size_t contacts_shape[3] = {
-                outputs.batch_size,
-                static_cast<std::size_t>(std::max(0, max_contacts)),
-                5u
-            };
-            size_t rwr_shape[3] = {
-                outputs.batch_size,
-                static_cast<std::size_t>(std::max(0, max_rwr)),
-                4u
-            };
+            size_t contacts_shape[3] = {outputs.batch_size,
+                                        static_cast<std::size_t>(std::max(0, max_contacts)), 5u};
+            size_t rwr_shape[3] = {outputs.batch_size,
+                                   static_cast<std::size_t>(std::max(0, max_rwr)), 4u};
             size_t mission_shape[2] = {outputs.batch_size, outputs.mission_count};
             nb::object device_view = nb::none();
             if (use_gpu) {
-                device_view = maybe_gpu_tensor_view(
-                    outputs.device_ptr,
-                    outputs.device_float_count,
-                    {
-                        static_cast<std::int64_t>(outputs.batch_size),
-                        static_cast<std::int64_t>(outputs.per_request),
-                    }
-                );
+                device_view =
+                    maybe_gpu_tensor_view(outputs.device_ptr, outputs.device_float_count,
+                                          {
+                                              static_cast<std::int64_t>(outputs.batch_size),
+                                              static_cast<std::int64_t>(outputs.per_request),
+                                          });
             }
             return nb::make_tuple(
                 visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.inst_out), 2, inst_shape),
-                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.contacts_out), 3, contacts_shape),
+                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.contacts_out), 3,
+                                                    contacts_shape),
                 visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.rwr_out), 3, rwr_shape),
-                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.mission_out), 2, mission_shape),
-                device_view
-            );
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.mission_out), 2,
+                                                    mission_shape),
+                device_view);
         },
-        nb::arg("inst_batch"),
-        nb::arg("truth_batch"),
-        nb::arg("mission_inputs_batch"),
-        nb::arg("ils_batch"),
-        nb::arg("max_contacts"),
-        nb::arg("max_rwr"),
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("inst_batch"), nb::arg("truth_batch"), nb::arg("mission_inputs_batch"),
+        nb::arg("ils_batch"), nb::arg("max_contacts"), nb::arg("max_rwr"),
+        nb::arg("use_gpu") = false);
 
     nb::class_<gpu::DeviceInfo>(m, "GpuDeviceInfo")
         .def(nb::init<>())
@@ -717,16 +588,11 @@ void bind_gpu(nb::module_& m) {
         .def_prop_ro("strides", &GpuTensorView::strides)
         .def_prop_ro("device_id", &GpuTensorView::device_id)
         .def_prop_ro("numel", &GpuTensorView::numel)
-        .def_prop_ro("dtype", [](const GpuTensorView&) { return std::string("float32"); })
+        .def_prop_ro("dtype", [](const GpuTensorView &) { return std::string("float32"); })
         .def("__dlpack_device__", &GpuTensorView::dlpack_device)
-        .def(
-            "__dlpack__",
-            &GpuTensorView::dlpack,
-            nb::arg("stream") = nb::none(),
-            nb::arg("max_version") = nb::none(),
-            nb::arg("dl_device") = nb::none(),
-            nb::arg("copy") = nb::none()
-        );
+        .def("__dlpack__", &GpuTensorView::dlpack, nb::arg("stream") = nb::none(),
+             nb::arg("max_version") = nb::none(), nb::arg("dl_device") = nb::none(),
+             nb::arg("copy") = nb::none());
 
     nb::class_<gpu::VisualExperimentStats>(m, "VisualExperimentStats")
         .def(nb::init<>())
@@ -789,47 +655,38 @@ void bind_gpu(nb::module_& m) {
         .def_ro("kernel_ms", &gpu::InteractionBroadphaseExperimentStats::kernel_ms)
         .def_ro("device_to_host_ms", &gpu::InteractionBroadphaseExperimentStats::device_to_host_ms)
         .def_ro("total_ms", &gpu::InteractionBroadphaseExperimentStats::total_ms)
-        .def_ro("overflow_bucket_count", &gpu::InteractionBroadphaseExperimentStats::overflow_bucket_count)
-        .def_ro("overflow_query_count", &gpu::InteractionBroadphaseExperimentStats::overflow_query_count);
+        .def_ro("overflow_bucket_count",
+                &gpu::InteractionBroadphaseExperimentStats::overflow_bucket_count)
+        .def_ro("overflow_query_count",
+                &gpu::InteractionBroadphaseExperimentStats::overflow_query_count);
 
-    m.def("interaction_broadphase_word_count", &gpu::interaction_broadphase_word_count, nb::arg("entities_per_world"));
+    m.def("interaction_broadphase_word_count", &gpu::interaction_broadphase_word_count,
+          nb::arg("entities_per_world"));
     m.def("last_interaction_broadphase_stats", &gpu::last_interaction_broadphase_stats);
     m.def(
         "build_interaction_broadphase_batch_numpy",
-        [](const std::vector<gpu::InteractionEntityPacked>& entities,
-           const std::vector<gpu::InteractionQueryPacked>& queries,
-           const gpu::InteractionBroadphaseConfig& config,
-           bool use_gpu) {
+        [](const std::vector<gpu::InteractionEntityPacked> &entities,
+           const std::vector<gpu::InteractionQueryPacked> &queries,
+           const gpu::InteractionBroadphaseConfig &config, bool use_gpu) {
             const auto query_count = queries.size();
-            const auto words_per_query = gpu::interaction_broadphase_word_count(config.entities_per_world);
-            auto out = use_gpu
-                ? gpu::build_interaction_broadphase_experiment_batch(entities, queries, config)
-                : gpu::build_interaction_broadphase_reference_cpu_batch(entities, queries, config);
+            const auto words_per_query =
+                gpu::interaction_broadphase_word_count(config.entities_per_world);
+            auto out =
+                use_gpu
+                    ? gpu::build_interaction_broadphase_experiment_batch(entities, queries, config)
+                    : gpu::build_interaction_broadphase_reference_cpu_batch(entities, queries,
+                                                                            config);
             size_t shape[2] = {query_count, words_per_query};
-            return uint32_tensor_to_numpy<nb::ndim<2>>(
-                std::move(out),
-                2,
-                shape
-            );
+            return uint32_tensor_to_numpy<nb::ndim<2>>(std::move(out), 2, shape);
         },
-        nb::arg("entities"),
-        nb::arg("queries"),
-        nb::arg("config"),
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("entities"), nb::arg("queries"), nb::arg("config"), nb::arg("use_gpu") = false);
 
     m.def(
         "compute_world_batch_visual_observation_batch_numpy",
-        [](WorldBatchRuntime& runtime,
-           const std::vector<WorldEntityRef>& refs,
-           int downsample,
+        [](WorldBatchRuntime &runtime, const std::vector<WorldEntityRef> &refs, int downsample,
            bool use_gpu) {
-            auto outputs = compute_compat_world_batch_visual_binding_outputs(
-                runtime,
-                refs,
-                downsample,
-                use_gpu
-            );
+            auto outputs = compute_compat_world_batch_visual_binding_outputs(runtime, refs,
+                                                                             downsample, use_gpu);
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),
@@ -838,23 +695,14 @@ void bind_gpu(nb::module_& m) {
             };
             return visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape);
         },
-        nb::arg("batch_runtime"),
-        nb::arg("refs"),
-        nb::arg("downsample") = 1,
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("batch_runtime"), nb::arg("refs"), nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false);
     m.def(
         "compute_world_batch_visual_observation_batch_numpy",
-        [](RuntimeFacade& facade,
-           const std::vector<WorldEntityRef>& refs,
-           int downsample,
+        [](RuntimeFacade &facade, const std::vector<WorldEntityRef> &refs, int downsample,
            bool use_gpu) {
-            auto outputs = compute_runtime_facade_visual_binding_outputs(
-                facade,
-                refs,
-                downsample,
-                use_gpu
-            );
+            auto outputs =
+                compute_runtime_facade_visual_binding_outputs(facade, refs, downsample, use_gpu);
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),
@@ -863,23 +711,14 @@ void bind_gpu(nb::module_& m) {
             };
             return visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape);
         },
-        nb::arg("runtime_facade"),
-        nb::arg("refs"),
-        nb::arg("downsample") = 1,
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("runtime_facade"), nb::arg("refs"), nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false);
     m.def(
         "compute_world_batch_visual_observation_batch_export",
-        [](WorldBatchRuntime& runtime,
-           const std::vector<WorldEntityRef>& refs,
-           int downsample,
+        [](WorldBatchRuntime &runtime, const std::vector<WorldEntityRef> &refs, int downsample,
            bool use_gpu) {
-            auto outputs = compute_compat_world_batch_visual_binding_outputs(
-                runtime,
-                refs,
-                downsample,
-                use_gpu
-            );
+            auto outputs = compute_compat_world_batch_visual_binding_outputs(runtime, refs,
+                                                                             downsample, use_gpu);
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),
@@ -888,39 +727,27 @@ void bind_gpu(nb::module_& m) {
             };
             nb::object device_view = nb::none();
             if (use_gpu) {
-                device_view = maybe_gpu_tensor_view(
-                    outputs.device_ptr,
-                    outputs.device_float_count,
-                    {
-                        static_cast<std::int64_t>(outputs.batch_size),
-                        static_cast<std::int64_t>(outputs.out_h),
-                        static_cast<std::int64_t>(outputs.out_w),
-                        static_cast<std::int64_t>(arb::ARB_CHANNELS),
-                    }
-                );
+                device_view =
+                    maybe_gpu_tensor_view(outputs.device_ptr, outputs.device_float_count,
+                                          {
+                                              static_cast<std::int64_t>(outputs.batch_size),
+                                              static_cast<std::int64_t>(outputs.out_h),
+                                              static_cast<std::int64_t>(outputs.out_w),
+                                              static_cast<std::int64_t>(arb::ARB_CHANNELS),
+                                          });
             }
             return nb::make_tuple(
                 visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape),
-                device_view
-            );
+                device_view);
         },
-        nb::arg("batch_runtime"),
-        nb::arg("refs"),
-        nb::arg("downsample") = 1,
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("batch_runtime"), nb::arg("refs"), nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false);
     m.def(
         "compute_world_batch_visual_observation_batch_export",
-        [](RuntimeFacade& facade,
-           const std::vector<WorldEntityRef>& refs,
-           int downsample,
+        [](RuntimeFacade &facade, const std::vector<WorldEntityRef> &refs, int downsample,
            bool use_gpu) {
-            auto outputs = compute_runtime_facade_visual_binding_outputs(
-                facade,
-                refs,
-                downsample,
-                use_gpu
-            );
+            auto outputs =
+                compute_runtime_facade_visual_binding_outputs(facade, refs, downsample, use_gpu);
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),
@@ -929,25 +756,19 @@ void bind_gpu(nb::module_& m) {
             };
             nb::object device_view = nb::none();
             if (use_gpu) {
-                device_view = maybe_gpu_tensor_view(
-                    outputs.device_ptr,
-                    outputs.device_float_count,
-                    {
-                        static_cast<std::int64_t>(outputs.batch_size),
-                        static_cast<std::int64_t>(outputs.out_h),
-                        static_cast<std::int64_t>(outputs.out_w),
-                        static_cast<std::int64_t>(arb::ARB_CHANNELS),
-                    }
-                );
+                device_view =
+                    maybe_gpu_tensor_view(outputs.device_ptr, outputs.device_float_count,
+                                          {
+                                              static_cast<std::int64_t>(outputs.batch_size),
+                                              static_cast<std::int64_t>(outputs.out_h),
+                                              static_cast<std::int64_t>(outputs.out_w),
+                                              static_cast<std::int64_t>(arb::ARB_CHANNELS),
+                                          });
             }
             return nb::make_tuple(
                 visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape),
-                device_view
-            );
+                device_view);
         },
-        nb::arg("runtime_facade"),
-        nb::arg("refs"),
-        nb::arg("downsample") = 1,
-        nb::arg("use_gpu") = false
-    );
+        nb::arg("runtime_facade"), nb::arg("refs"), nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false);
 }

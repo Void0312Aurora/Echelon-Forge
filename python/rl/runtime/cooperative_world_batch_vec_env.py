@@ -23,6 +23,7 @@ from gym_envs.scenario_loader import (
 from gym_envs.universal_env import (
     build_step_info_minimal,
     build_universal_observation,
+    is_air_combat_hybrid_action_mode,
     make_action_space,
     make_observation_space,
     naval_policy_instruments,
@@ -145,6 +146,12 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.include_visual = bool(include_visual)
         self.include_proprio = bool(include_proprio)
         self.action_mode = str(action_mode)
+        if is_air_combat_hybrid_action_mode(self.action_mode):
+            raise ValueError(
+                "CooperativeWorldBatchVecEnv does not implement the air-combat event-action "
+                "gate/finalization contract; action_mode='air_combat_hybrid_v1' is rejected "
+                "instead of silently bypassing C2/ROE and post-launch gating"
+            )
         self.mission_obs_mode = str(mission_obs_mode).strip().lower()
         self.visual_downsample = max(1, int(visual_downsample))
         self.visual_update_interval = max(1, int(visual_update_interval))
@@ -1227,7 +1234,13 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 )
                 if world_done:
                     infos[slot_index]["terminal_observation"] = terminal_obs[int(slot_index)]
-                    infos[slot_index]["TimeLimit.truncated"] = bool(world_timeout)
+                    # A shared-world failure takes precedence over a simultaneous
+                    # timeout.  Marking every slot as time-limit truncated in the
+                    # mixed case causes value bootstrapping across a true terminal
+                    # failure in SB3-compatible consumers.
+                    infos[slot_index]["TimeLimit.truncated"] = bool(
+                        world_timeout and not world_failure
+                    )
                     infos[slot_index]["episode"] = {
                         "r": round(float(episode_return), 6),
                         "l": int(episode_length),

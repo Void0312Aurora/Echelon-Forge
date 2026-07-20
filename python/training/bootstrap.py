@@ -348,6 +348,7 @@ def _prepare_experiment_layout(
 
     exp_dir = ""
     run_name = ""
+    create_backups = False
     if args.resume_path:
         if not os.path.exists(args.resume_path):
             print(f"Error: Cannot resume, file not found: {args.resume_path}")
@@ -372,15 +373,19 @@ def _prepare_experiment_layout(
         exp_dir = os.path.join(args.output_base, run_name)
         interrupted_path = os.path.join(exp_dir, "checkpoints", "interrupted_model.zip")
         if os.path.exists(interrupted_path):
+            if args.init_from:
+                print(
+                    "Error: an interrupted checkpoint was found, but --init_from was also "
+                    "provided; remove the interrupted checkpoint or choose an explicit resume."
+                )
+                return None
             print(f"Found interrupted checkpoint at {interrupted_path}")
             print("Auto-resuming from interrupted checkpoint...")
             args.resume_path = interrupted_path
         else:
             os.makedirs(exp_dir, exist_ok=True)
             print(f"Starting New Experiment: {run_name} at {exp_dir}")
-
-        shutil.copy(train_cfg_path, os.path.join(exp_dir, "train_config_backup.json"))
-        shutil.copy(scenario_path, os.path.join(exp_dir, "scenario_backup.json"))
+            create_backups = True
 
     ckpt_dir = os.path.join(exp_dir, "checkpoints")
     log_dir = os.path.join(exp_dir, "logs")
@@ -389,6 +394,13 @@ def _prepare_experiment_layout(
     exp_lock = acquire_experiment_lock(exp_dir)
     if exp_lock is None:
         return None
+    if create_backups:
+        try:
+            shutil.copy(train_cfg_path, os.path.join(exp_dir, "train_config_backup.json"))
+            shutil.copy(scenario_path, os.path.join(exp_dir, "scenario_backup.json"))
+        except Exception:
+            exp_lock.close()
+            raise
     return exp_dir, run_name, ckpt_dir, log_dir, exp_lock
 
 

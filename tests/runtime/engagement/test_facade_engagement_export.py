@@ -37,6 +37,7 @@ def _spawn_request(
   heading: float,
   vy: float,
   is_agent: bool,
+  missiles_remaining: int | None = None,
 ) -> ef_py.WorldSpawnRequest:
   spawn = ef_py.WorldSpawnRequest()
   spawn.world_index = world_index
@@ -49,6 +50,10 @@ def _spawn_request(
   spawn.z = 1200.0
   spawn.heading = heading
   spawn.vy = vy
+  if missiles_remaining is not None:
+    spawn.ammo_override_enabled = True
+    spawn.missiles_remaining = int(missiles_remaining)
+    spawn.max_missiles = int(missiles_remaining)
   return spawn
 
 
@@ -77,6 +82,7 @@ def _make_tracked_facade_fixture() -> tuple[ef_py.RuntimeFacade, int, int]:
       heading=0.0,
       vy=180.0,
       is_agent=True,
+      missiles_remaining=4,
     ),
     _spawn_request(
       side=ef_py.Side.Red,
@@ -374,6 +380,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
         heading=0.0,
         vy=250.0,
         is_agent=True,
+        missiles_remaining=4,
       ),
       _spawn_request(
         world_index=1,

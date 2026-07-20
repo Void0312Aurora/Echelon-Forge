@@ -55,6 +55,7 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
       "examples/viz/runtime/",
       "tools/diagnostics/",
       "tools/eval/",
+      "tools/geometry/",
     },
     "files": {
       "tools/maintenance/damage_model.py",

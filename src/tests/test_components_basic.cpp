@@ -32,6 +32,51 @@
 
 TEST_SUITE("components_basic") {
 
+    TEST_CASE("unit definition directory load is transactional on malformed JSON") {
+        const std::filesystem::path root =
+            std::filesystem::temp_directory_path() / "ef_unit_definition_transaction_test";
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(root);
+        {
+            std::ofstream good(root / "good.json");
+            good << R"json({
+  "name": "Transactional_Load_Must_Not_Commit",
+  "type": "Aircraft"
+})json";
+        }
+        {
+            std::ofstream bad(root / "bad.json");
+            bad << R"json({"name": "broken")json";
+        }
+
+        UnitDefinition sentinel{};
+        sentinel.name = "preexisting_definition";
+        std::vector<UnitDefinition> definitions{sentinel};
+        std::string error;
+
+        CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        CHECK(definitions.front().name == "preexisting_definition");
+        CHECK(error.find("bad.json") != std::string::npos);
+
+        std::filesystem::remove(root / "bad.json");
+        const std::filesystem::path evidence_dir = root / "damage" / "vulnerability_evidence";
+        std::filesystem::create_directories(evidence_dir);
+        {
+            std::ofstream bad_evidence(evidence_dir / "bad_evidence.json");
+            bad_evidence << R"json({"dataset_id": "broken")json";
+        }
+        definitions = {sentinel};
+        error.clear();
+
+        CHECK_FALSE(load_unit_definitions_json(root.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        CHECK(definitions.front().name == "preexisting_definition");
+        CHECK(error.find("bad_evidence.json") != std::string::npos);
+
+        std::filesystem::remove_all(root);
+    }
+
     // --- Math utilities --------------------------------------------------------
 
     TEST_CASE("math_to_radians") {

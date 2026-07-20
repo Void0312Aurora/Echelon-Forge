@@ -15,8 +15,10 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cmath>
 #include <cstdint>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace {
@@ -60,6 +62,13 @@ SimulationKernel::~SimulationKernel() {
     shutdown();
 }
 
+void SimulationKernel::ensure_active(const char *operation) const {
+    if (shutdown_complete_) {
+        throw std::logic_error(std::string("SimulationKernel::") + operation +
+                               " cannot be used after shutdown");
+    }
+}
+
 void SimulationKernel::shutdown() {
     if (shutdown_complete_) {
         return;
@@ -74,15 +83,20 @@ void SimulationKernel::shutdown() {
     ecs.delete_with<SimObject>();
     ecs.reset();
 
+    weapon_release_service_.reset();
+    weapon_release_damage_bridge_.reset();
+    engagement_event_store_.reset();
     environment_model_.reset();
     unit_factory_.reset();
     effects_model_.reset();
     sensor_model_.reset();
+    acoustic_model_.reset();
     control_model_.reset();
     guidance_model_.reset();
 }
 
 void SimulationKernel::set_unit_factory(std::unique_ptr<IUnitFactory> factory) {
+    ensure_active("set_unit_factory");
     if (factory) {
         unit_factory_ = std::move(factory);
     } else {
@@ -91,6 +105,7 @@ void SimulationKernel::set_unit_factory(std::unique_ptr<IUnitFactory> factory) {
 }
 
 void SimulationKernel::set_effects_model(std::unique_ptr<IEffectsModel> model) {
+    ensure_active("set_effects_model");
     if (model) {
         effects_model_ = std::move(model);
         ecs.set<EffectsModelRef>({effects_model_.get()});
@@ -100,6 +115,7 @@ void SimulationKernel::set_effects_model(std::unique_ptr<IEffectsModel> model) {
 }
 
 void SimulationKernel::set_sensor_model(std::unique_ptr<ISensorModel> model) {
+    ensure_active("set_sensor_model");
     if (model) {
         sensor_model_ = std::move(model);
         ecs.set<SensorModelRef>({sensor_model_.get()});
@@ -109,6 +125,7 @@ void SimulationKernel::set_sensor_model(std::unique_ptr<ISensorModel> model) {
 }
 
 void SimulationKernel::set_acoustic_model(std::unique_ptr<IAcousticModel> model) {
+    ensure_active("set_acoustic_model");
     if (model) {
         acoustic_model_ = std::move(model);
         ecs.set<AcousticModelRef>({acoustic_model_.get()});
@@ -118,6 +135,7 @@ void SimulationKernel::set_acoustic_model(std::unique_ptr<IAcousticModel> model)
 }
 
 void SimulationKernel::set_control_model(std::unique_ptr<IControlModel> model) {
+    ensure_active("set_control_model");
     if (model) {
         control_model_ = std::move(model);
         ecs.set<ControlModelRef>({control_model_.get()});
@@ -127,6 +145,7 @@ void SimulationKernel::set_control_model(std::unique_ptr<IControlModel> model) {
 }
 
 void SimulationKernel::set_guidance_model(std::unique_ptr<IGuidanceModel> model) {
+    ensure_active("set_guidance_model");
     if (model) {
         guidance_model_ = std::move(model);
         ecs.set<GuidanceModelRef>({guidance_model_.get()});
@@ -136,6 +155,7 @@ void SimulationKernel::set_guidance_model(std::unique_ptr<IGuidanceModel> model)
 }
 
 void SimulationKernel::set_environment_model(std::unique_ptr<IEnvironmentModel> model) {
+    ensure_active("set_environment_model");
     if (model) {
         environment_model_ = std::move(model);
         ecs.set<EnvironmentModelRef>({environment_model_.get()});
@@ -145,6 +165,7 @@ void SimulationKernel::set_environment_model(std::unique_ptr<IEnvironmentModel> 
 }
 
 bool SimulationKernel::load_unit_definitions(const std::string &path, std::string *error) {
+    ensure_active("load_unit_definitions");
     if (!unit_factory_) {
         if (error) *error = "Unit factory not set.";
         return false;
@@ -153,10 +174,12 @@ bool SimulationKernel::load_unit_definitions(const std::string &path, std::strin
 }
 
 void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
+    ensure_active("set_missile_tuning");
     missile_tuning_ = tuning;
 }
 
 void SimulationKernel::reset(unsigned int seed) {
+    ensure_active("reset");
     engagement_event_store_->clear();
 
     // Delete all simulation entities (tagged with SimObject)
@@ -173,6 +196,7 @@ void SimulationKernel::reset(unsigned int seed) {
 }
 
 void SimulationKernel::step() {
+    ensure_active("step");
     if (exact_stage_trace_frame_active_) {
         throw std::logic_error(
             "SimulationKernel::step() cannot run while an exact-stage trace frame is active");
@@ -184,6 +208,7 @@ void SimulationKernel::step() {
 }
 
 bool SimulationKernel::load_database(const std::string &path) {
+    ensure_active("load_database");
     std::string error;
     if (unit_factory_->load_definitions(path, &error)) {
         spdlog::info("Database loaded from: {}", path);
@@ -193,9 +218,19 @@ bool SimulationKernel::load_database(const std::string &path) {
     return false;
 }
 
+void SimulationKernel::set_time_step(double dt) {
+    ensure_active("set_time_step");
+    if (!std::isfinite(dt) || dt <= 0.0) {
+        throw std::invalid_argument(
+            "SimulationKernel time step must be finite and greater than zero");
+    }
+    time_step = dt;
+}
+
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,
                                            double y, double z, double heading, double pitch,
                                            double roll, double vx, double vy, double vz) {
+    ensure_active("spawn_unit");
     if (!unit_factory_) {
         spdlog::error("Unit factory not set; cannot spawn unit.");
         return flecs::entity::null();
@@ -212,6 +247,7 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_na
 }
 
 void SimulationKernel::clear_zones() {
+    ensure_active("clear_zones");
     if (environment_model_) {
         environment_model_->clear_zones();
     }
@@ -219,6 +255,7 @@ void SimulationKernel::clear_zones() {
 
 void SimulationKernel::add_zone(const std::string &name, double x, double y, double width,
                                 double height, double heading, int surface_type) {
+    ensure_active("add_zone");
     if (environment_model_) {
         environment_model_->add_zone(name, x, y, width, height, heading,
                                      (IEnvironmentModel::SurfaceType)surface_type);
@@ -226,6 +263,7 @@ void SimulationKernel::add_zone(const std::string &name, double x, double y, dou
 }
 
 void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km) {
+    ensure_active("set_wind");
     if (environment_model_) {
         environment_model_->set_wind(speed_mps, dir_from_deg, shear_mps_per_km);
     }
@@ -245,6 +283,7 @@ Vec3 SimulationKernel::get_sun_direction() const {
 }
 
 void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
+    ensure_active("set_terrain_type");
     if (environment_model_) {
         environment_model_->set_terrain_type(terrain_type);
     }
@@ -252,12 +291,14 @@ void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
 
 void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,
                                           double wave_period_s) {
+    ensure_active("set_maritime_state");
     if (environment_model_) {
         environment_model_->set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
     }
 }
 
 void SimulationKernel::clear_maritime_state() {
+    ensure_active("clear_maritime_state");
     if (environment_model_) {
         environment_model_->clear_maritime_state();
     }

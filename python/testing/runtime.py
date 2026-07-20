@@ -63,13 +63,18 @@ def _newest_ef_py_artifact_mtime(path: str) -> float:
 
 def build_dirs(root: str | None = None) -> list[str]:
     base = root or repo_root()
-    candidates: list[str] = []
-
     env_build = _normalize_build_path(base, os.environ.get("CMO_BUILD_DIR", ""))
     if env_build:
-        candidates.append(env_build)
+        if not os.path.isdir(env_build):
+            raise RuntimeError(f"CMO_BUILD_DIR does not exist: {env_build}")
+        if not _has_ef_py_artifact(env_build):
+            raise RuntimeError(
+                "CMO_BUILD_DIR does not contain an ef_py artifact: "
+                f"{env_build}"
+            )
+        return [env_build]
 
-    candidates.extend(os.path.join(base, name) for name in _candidate_build_names())
+    candidates = [os.path.join(base, name) for name in _candidate_build_names()]
 
     existing: list[str] = []
     seen: set[str] = set()
@@ -83,15 +88,17 @@ def build_dirs(root: str | None = None) -> list[str]:
     with_artifacts = [path for path in existing if _has_ef_py_artifact(path)]
     if with_artifacts and not _is_windows():
         with_artifacts.sort(key=_newest_ef_py_artifact_mtime, reverse=True)
-    without_artifacts = [path for path in existing if path not in with_artifacts]
-    return with_artifacts + without_artifacts
+    return with_artifacts
 
 
 def build_dir(root: str | None = None) -> str:
     dirs = build_dirs(root)
     if dirs:
         return dirs[0]
-    return os.path.join(root or repo_root(), "build")
+    raise RuntimeError(
+        "No local ef_py build artifact found. Configure and build ef_py, or set "
+        "CMO_BUILD_DIR to a build directory containing the extension."
+    )
 
 
 def _iter_windows_dll_dirs(build: str) -> tuple[str, ...]:
@@ -129,6 +136,11 @@ def _iter_windows_dll_dirs(build: str) -> tuple[str, ...]:
 def ensure_repo_imports() -> str:
     root = repo_root()
     builds = build_dirs(root)
+    if not builds:
+        raise RuntimeError(
+            "No local ef_py build artifact found; refusing to fall back to an installed "
+            "site-packages extension."
+        )
     for build in reversed(builds):
         if build in sys.path:
             sys.path.remove(build)
