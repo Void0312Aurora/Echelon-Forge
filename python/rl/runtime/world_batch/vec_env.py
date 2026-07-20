@@ -94,6 +94,7 @@ from ._vec_env_support import (
     _scenario_stage,
 )
 from ._visual_backend_mixin import _WorldBatchVecEnvVisualBackendMixin
+from .core import StandardExecutionPlugin, resolve_execution_mode
 
 _copy_obs = copy_obs
 _parse_reward_terms_json = parse_reward_terms_json
@@ -347,6 +348,12 @@ class WorldBatchVecEnv(
         self._policy_visual_device_view = None
         self._policy_torch_bridge_enabled = bool(
             self.policy_observation_torch_bridge and torch is not None and hasattr(torch, "from_dlpack")
+        )
+        self._mode_plugin: StandardExecutionPlugin = resolve_execution_mode(
+            "execution",
+            execution_episode_controller_mainline=bool(self.execution_episode_controller_mainline),
+            is_air_combat_hybrid=bool(is_air_combat_hybrid_action_mode(self.action_mode)),
+            air_combat_event_finalizer=finalize_air_combat_event_action_info,
         )
 
     @property
@@ -637,6 +644,7 @@ class WorldBatchVecEnv(
 
         self._clear_policy_observation_device_cache()
         total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        # [stage:action_prepare]
         prepare_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         _, refs = self._build_refs()
         inst_now_list = None
@@ -691,57 +699,51 @@ class WorldBatchVecEnv(
             assignments.append(assign)
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
 
+        # [stage:physics_step]
         step_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         if naval_action_sync_indices:
+            # command_sync event-driven re-entry (naval station action mutation)
             self._sync_command_chain_batch(naval_action_sync_indices)
         self._set_pilot_actions_batch(assignments)
         self._step_runtime_batch()
         batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0
 
+        # [stage:state_read]
         read_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         _target_indices, truth_list, inst_list = self._read_truth_and_inst_batch()
         state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:behavior_update]
         behavior_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         for env_idx, handle in enumerate(self._handles):
             handle.steps += 1
             handle.loader.steps = int(handle.steps)
             handle.last_truth = truth_list[env_idx]
             handle.last_inst = inst_list[env_idx]
-            if is_air_combat_hybrid_action_mode(self.action_mode):
-                finalize_air_combat_event_action_info(
-                    handle.loader,
-                    truth_before=air_combat_truth_before[env_idx],
-                    truth_after=handle.last_truth,
-                )
+            self._mode_plugin.finalize_post_step_truth(
+                env_idx, handle, air_combat_truth_before[env_idx],
+            )
             sim_time = float(handle.steps) * float(
                 resolve_loader_time_step(handle.loader, default=self._world_time_step(env_idx))
             )
-            if self.execution_episode_controller_mainline:
-                handle.loader.update_command_chain_only(
-                    sim_time,
-                    truth=handle.last_truth,
-                    inst=handle.last_inst,
-                    sync_to_kernel=False,
-                )
-            else:
-                handle.loader.update_behaviors(
-                    sim_time,
-                    truth=handle.last_truth,
-                    inst=handle.last_inst,
-                    sync_to_kernel=False,
-                )
+            self._mode_plugin.update_post_step_behavior(
+                handle, sim_time, handle.last_truth, handle.last_inst,
+            )
         behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:command_sync]
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        if not self.execution_episode_controller_mainline:
+        if not self._mode_plugin.skip_post_behavior_command_sync:
             self._sync_command_chain_batch()
         command_sync_ms = (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
 
+        # [stage:observation_build]
         obs_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         obs_batch = self._build_observations_from_cached_state()
         obs_build_ms = (time.perf_counter() - obs_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:flight_shaping]
         shaping_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         self._prepare_batch_flight_shaping_overrides()
         flight_shaping_batch_ms = (time.perf_counter() - shaping_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:reward_episode]
         reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         any_done = False
         shadow_reports: list[dict[str, Any] | None] = [None] * self.num_envs

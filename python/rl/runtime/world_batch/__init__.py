@@ -35,18 +35,36 @@ from .runtime_support import (
     compute_loader_step_outcome,
     resolve_loader_runtime_sim,
 )
+from .core import (
+    BATCH_STEP_STAGE_NAMES,
+    BATCH_STEP_STAGES,
+    ExecutionModePlugin,
+    StageContract,
+    StandardExecutionPlugin,
+    SubStage,
+    register_execution_mode,
+    registered_execution_modes,
+    resolve_execution_mode,
+    validate_stage_extension_points,
+)
 from .runtime_access import WorldBatchVecEnvAccess
 from .state import BatchWorldHandle, CooperativeSlotState, CooperativeWorldState
 
 __all__ = [
+    "BATCH_STEP_STAGE_NAMES",
+    "BATCH_STEP_STAGES",
     "BatchWorldHandle",
     "build_loader_step_info",
     "compute_loader_step_outcome",
     "CooperativeSlotState",
     "CooperativeWorldState",
+    "ExecutionModePlugin",
     "ExecutionObservationBatch",
     "RuntimeFacadeAdapter",
     "RuntimeFacadeAdapterCapabilities",
+    "StageContract",
+    "StandardExecutionPlugin",
+    "SubStage",
     "ScriptedCooperativeCoordinationDirector",
     "WorldBatchVecEnvAccess",
     "clone_small_dict",
@@ -65,8 +83,12 @@ __all__ = [
     "parse_reward_terms_json",
     "pilot_report_snapshot",
     "refresh_visual_cache_batch",
+    "register_execution_mode",
+    "registered_execution_modes",
+    "resolve_execution_mode",
     "resolve_loader_runtime_sim",
     "snapshot_changed",
     "step_info_products_to_info_fields",
     "task_order_snapshot",
+    "validate_stage_extension_points",
 ]
