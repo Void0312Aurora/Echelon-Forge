@@ -37,6 +37,25 @@ from python.experiment.air_combat_matrix import (  # noqa: E402
 )
 
 
+def _strict_json_equal(actual: Any, expected: Any) -> bool:
+  """Structural equality that treats bool/int/float as distinct types.
+
+  Plain ``==`` conflates ``True == 1`` and ``1 == 1.0``, so a literal override
+  of the wrong scalar type (e.g. a boolean literal overriding an int field)
+  could silently pass a bare ``!=`` comparison. Recurses through JSON
+  containers so nested literal overrides get the same guarantee.
+  """
+  if isinstance(actual, Mapping) and isinstance(expected, Mapping):
+    return actual.keys() == expected.keys() and all(
+      _strict_json_equal(actual[key], expected[key]) for key in actual
+    )
+  if isinstance(actual, list) and isinstance(expected, list):
+    return len(actual) == len(expected) and all(
+      _strict_json_equal(a, b) for a, b in zip(actual, expected)
+    )
+  return type(actual) is type(expected) and actual == expected
+
+
 def _render_value(
   value: Any,
   indent: int,
@@ -46,7 +65,7 @@ def _render_value(
   overrides = entry.render.literal_overrides
   if path in overrides:
     literal = overrides[path]
-    if json.loads(literal) != value:
+    if not _strict_json_equal(json.loads(literal), value):
       raise ValueError(
         f"literal override at {'.'.join(path)} does not equal the composed "
         f"value: {literal!r} vs {value!r}"
@@ -58,7 +77,7 @@ def _render_value(
     if not value:
       return "{}"
     items = [
-      f'{pad_in}"{key}": {_render_value(child, indent + 1, entry, path + (key,))}'
+      f"{pad_in}{json.dumps(key)}: {_render_value(child, indent + 1, entry, path + (key,))}"
       for key, child in value.items()
     ]
     return "{\n" + ",\n".join(items) + "\n" + pad + "}"

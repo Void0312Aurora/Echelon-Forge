@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-20",
-      "english_hash": "946c6111c0b56380884597387bbf414c54f9fb5b10c62d572c0f2afb23576b79",
-      "chinese_hash": "6bf3edea40662ab51c45ea7681583971416a6ef59f22ac5b6ddd668637635c21"
+      "english_hash": "6115afacf8d110a3d10aeb1bd2e60715a858c8ed8327661bbd761a218d6fa506",
+      "chinese_hash": "a746e2544aaf529391d7588d097c3d384758f82418152f1c3f037a3aed5a1386"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -206,8 +206,8 @@
       "chinese": "docs/plan/unified_architecture_program/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-20",
-      "english_hash": "c41e60416ed1654adf098b8f0cb305be77200d76e4e90a23ae8204ac03a85688",
-      "chinese_hash": "a16a3072bdb505300f4be37dff5a8a7393be06b14c2bfa366149006778d2f7bf"
+      "english_hash": "4948a3e1afd6141cde062b963cdcabd89130f4a60221f1187251675510161715",
+      "chinese_hash": "ed59b754b878b3d15025ed4ee4c5426b2a376d8afbf51915ca8a7ebcd0a1ecc7"
     },
     {
       "pair_id": "plan/unified_architecture_program/scal_conformance_census_20260720",
@@ -217,6 +217,15 @@
       "last_verified": "2026-07-20",
       "english_hash": "171c86003ff90493e163cc13bafa1ab976879fbaf119ad255c8c65ddf744bdf8",
       "chinese_hash": "ee80f6b0688a078cd668966183e97cd20f30f5fe16c8525a0ce1e1a71e114d45"
+    },
+    {
+      "pair_id": "plan/unified_architecture_program/t6_residual_ledger",
+      "english": "docs/plan/unified_architecture_program/t6_residual_ledger.md",
+      "chinese": "docs/plan/unified_architecture_program/t6_residual_ledger.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-20",
+      "english_hash": "e456b0b42e69d69b62c82cbbff1021e5457a33cefd4d342706110f986e185541",
+      "chinese_hash": "6b97297e0d659be10419757478d4165cd50826fa6bd9a8afcf2dcab639c219ec"
     },
     {
       "pair_id": "reference_artifacts",

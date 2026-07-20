@@ -191,3 +191,4 @@ exact-runtime WP4/WP5 进展为门，不由本计划排期。
 - [文档生命周期政策](../../standards/governance/document_lifecycle_policy.zh.md)
 - [Agent 文档权威地图](../../agent/rules/document_authority_map.zh.md)
 - [SCAL 一致性普查（2026-07-20）](scal_conformance_census_20260720.zh.md)（T0 产出；违例登记与修订依据）
+- [T6 残差台账（2026-07-20）](t6_residual_ledger.zh.md)（T6 产出；索引迭代台账中以自然语言散落登记的 I28/I31/I33 本机红与 DTO 迁移残差）

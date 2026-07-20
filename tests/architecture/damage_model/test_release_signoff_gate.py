@@ -186,13 +186,34 @@ def test_release_signoff_gate_fails_closed_for_authority_guard(
   assert authority["non_authoritative_guards"]["pk_authority"] is True
 
 
-def test_release_signoff_gate_cli_writes_default_artifacts() -> None:
+def test_release_signoff_gate_cli_default_paths_resolve_under_the_retained_package() -> None:
+  # Regression guard for the default wiring itself: the CLI-writing test below
+  # redirects to tmp_path (retained artifacts are immutable-on-disk evidence),
+  # so this asserts the argparse defaults still resolve where callers expect
+  # without ever touching those files.
+  assert release_signoff_gate.DEFAULT_OUTPUT_DIR == (
+    release_signoff_gate.PACKAGE_DIR / "retained_artifacts" / "res001_release_signoff_20260531"
+  )
+  assert release_signoff_gate.DEFAULT_REPORT_PATH == (
+    release_signoff_gate.PACKAGE_DIR / "validation_res001_release_signoff_gate_20260531.zh.md"
+  )
+  assert release_signoff_gate.DEFAULT_OUTPUT_DIR.parent.is_dir()
+  assert release_signoff_gate.DEFAULT_REPORT_PATH.parent.is_dir()
+
+
+def test_release_signoff_gate_cli_writes_default_artifacts(tmp_path: Path) -> None:
+  output_dir = tmp_path / "retained"
+  report_path = tmp_path / "validation_res001_release_signoff_gate_20260531.zh.md"
   result = subprocess.run(
     [
       sys.executable,
-   "tools/maintenance/damage_model.py",
+      "tools/maintenance/damage_model.py",
       "release-governance",
       "source-release-signoff",
+      "--output-dir",
+      str(output_dir),
+      "--report",
+      str(report_path),
     ],
     cwd=REPO_ROOT,
     check=True,
@@ -201,10 +222,11 @@ def test_release_signoff_gate_cli_writes_default_artifacts() -> None:
   )
 
   assert result.stdout == ""
-  gate_path = release_signoff_gate.DEFAULT_OUTPUT_DIR / release_signoff_gate.GATE_FILENAME
-  manifest_path = release_signoff_gate.DEFAULT_OUTPUT_DIR / release_signoff_gate.MANIFEST_FILENAME
+  gate_path = output_dir / release_signoff_gate.GATE_FILENAME
+  manifest_path = output_dir / release_signoff_gate.MANIFEST_FILENAME
   assert gate_path.exists()
   assert manifest_path.exists()
+  assert report_path.exists()
   artifact = json.loads(gate_path.read_text(encoding="utf-8"))
   manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
   assert artifact["residual_decision"]["gate_result"] == (
