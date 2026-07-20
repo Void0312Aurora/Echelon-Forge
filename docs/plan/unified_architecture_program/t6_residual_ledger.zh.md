@@ -314,7 +314,7 @@ retained 文件零改动；三个文件与 HEAD 始终字节一致。
 `436 passed, 45 subtests`；聚焦 `world_batch`+leader+facade 选集
 `282 passed`、同样 5 条 flecs 红、`1 skipped`、`22 subtests`。
 
-## 6. I34：命令链文本守护适配缺失（wp24）
+## 6. I34：命令链文本守护适配缺失（wp24）（已于 I39 修复）
 
 于 I37 落地时依据 I37 评审的谱系甄别（逐提交隔离干净检出）登记：
 
@@ -325,6 +325,85 @@ retained 文件零改动；三个文件与 HEAD 始终字节一致。
 | 机理 | I34 把命令链写调用下沉到 `python/rl/runtime/world_batch/_shared_ops.py`；该守护的合成扫描集（adapter 加 vec_env 合成文本加 cooperative 模块）不含 `_shared_ops.py`，vec_env 合成与 cooperative 两处探针因此转空，而 `adapter.py` 自身 token 仍在 |
 | 行为证据 | `test_world_batch_vec_env_command_chain.py` 在各提交均 23/23 绿——维护契约写路径功能完好；属守护适配缺失、非功能回归 |
 | 修复方向 | 把 `_shared_ops.py` 纳入守护扫描集（守护意图不变）；归属：T6，记于 I34 名下 |
+
+**现状**：已于 I39 修复。下方 6.1 节记录修复内容与复核。
+
+### 6.1 I39 修复与复核
+
+**修复**：`test_wp24_python_command_chain_business_writes_use_maintained_contracts`
+（`tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py`）
+现在把 `python/rl/runtime/world_batch/_shared_ops.py` 的源码文本拼接进该测
+试自身的本地扫描变量 `world_batch_vec_env`/`cooperative_vec_env`
+（`world_batch_vec_env_source_text() + "\n" + shared_ops`；cooperative 一
+侧则是该模块自身文本再拼接同一份 `shared_ops` 字符串），然后再执行随后
+的正向 maintained-token 循环与禁用 legacy-token 循环。改动范围仅限于这一
+个测试函数：`tests/architecture/runtime_facade/helpers.py` 中被共享的
+`WORLD_BATCH_VEC_ENV_SOURCE_FILES` 元组（仅被另一个测试消费——
+`test_scenario_setup_facade_boundary.py::test_wp24_public_vec_env_runtime_compatibility_flag_is_absent_from_maintained_adapters`）
+未被触碰，因此没有任何其他守护的扫描集受到影响。新增的行内注释记录了原
+因：I34 把两个 vec-env 消费者各自的逐实体命令链 diff 与批量提交调用，都
+下沉到了共享的 `_shared_ops.py` 模块中（以
+`diff_single_entity_command_chain`/`submit_command_chain_assignments` 形
+式导入），因此两个消费者自身的源码文本都不再直接点名 maintained 赋值类/
+setter——如今只有 `_shared_ops.py` 里还有。没有放松任何断言；这次修复只
+是扩大了既有断言所扫描的文本范围，而且它让禁用 legacy-token 循环变得更
+严格（而非更宽松），因为该循环现在也覆盖了两个消费者实际发起写调用的那
+个模块。
+
+**负向自证**（针对内存中的副本演练；工作树里的 `_shared_ops.py` 从未被
+写入）：一个位于工作树之外的独立脚本导入了真实、未经修改的测试函数，用
+`unittest.mock.patch.object` 只拦截 `_shared_ops.py` 这一个路径的
+`pathlib.Path.read_text`，让它返回一份被破坏的副本——把
+`runtime_adapter.set_pilot_reports_maintained_batch(report_assignments)`
+还原为旧式的 `runtime_adapter.set_pilot_reports_batch(report_assignments)`
+（其余所有路径的 `read_text` 均照常落到真实文件、不受影响），然后直接调
+用该测试函数：
+
+```
+--- sanity: guard passes against the REAL (unsabotaged) _shared_ops.py ---
+OK: real worktree state is green, as expected.
+
+--- negative self-proof: guard against a SABOTAGED in-memory copy ---
+GUARD WENT RED AS EXPECTED. Traceback:
+  File ".../test_tasking_batch_contract_boundaries.py", line 295, in
+    test_wp24_python_command_chain_business_writes_use_maintained_contracts
+    assert "set_pilot_reports_maintained_batch" in source
+AssertionError
+
+--- post-check: worktree _shared_ops.py is untouched on disk ---
+OK: worktree _shared_ops.py byte-identical to before the rehearsal.
+```
+
+**验证**（本工作树，`CMO_BUILD_DIR=<worktree>/build-local-win`）：
+
+```
+pytest -q tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py
+-> 3 passed（此前为 2 passed, 1 failed）
+
+pytest -q tests/architecture/runtime_facade
+-> 67 passed, 4 failed——与本台账第 5 节已登记的四个 test_wp22_* 节点完全
+   相同（均在 test_runtime_escape_hatches.py 内）；未新增红
+
+pytest -q tests/architecture/policy_execution/test_intent_injection_authority_guard.py
+-> 4 passed, 1 failed——与本台账第 5 节已登记的 test_wp12_* 节点相同；不受
+   本次修复影响（不同文件，在本次修复写集之外）
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 439 passed, 45 subtests passed——测于本台账编辑之前。I39 评审对最终
+   写集实测为 438 passed / 1 failed（该红即本台账编辑触发的双语注册表
+   标记，其哈希刷新按迭代任务书属落地方职责）；已由 I39 落地时的
+   registry 刷新解决，落地树复验绿
+
+ruff check tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py
+-> All checks passed!
+
+git diff --check    -> 干净
+```
+
+本次修复的写集：`tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py`
+（仅守护适配）以及本台账自身的登记（本节）。未改动任何
+`python/rl/runtime/world_batch/**` 生产代码——这属于守护适配缺失，不是功
+能缺陷。
 
 ## 相关
 

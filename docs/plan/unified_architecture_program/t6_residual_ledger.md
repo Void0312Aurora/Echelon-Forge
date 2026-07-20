@@ -360,7 +360,7 @@ as this iteration's starting baseline: maintained smoke `436 passed, 45
 subtests`; focused `world_batch`+leader+facade selection `282 passed`, same
 5 flecs reds, `1 skipped`, `22 subtests`.
 
-## 6. I34: command-chain text-guard adaptation gap (wp24)
+## 6. I34: command-chain text-guard adaptation gap (wp24) (fixed at I39)
 
 Registered at the I37 landing from the I37 review's lineage triage
 (isolated clean checkouts per commit):
@@ -372,6 +372,91 @@ Registered at the I37 landing from the I37 review's lineage triage
 | Mechanism | I34 sank the command-chain write calls into `python/rl/runtime/world_batch/_shared_ops.py`; the guard's synthesized scan set (adapter plus vec_env synthesis plus cooperative module) does not include `_shared_ops.py`, so the vec_env-synthesis and cooperative probes went blank while `adapter.py` still carries its tokens |
 | Behavior evidence | `test_world_batch_vec_env_command_chain.py` 23/23 green at all commits -- maintained-contract write paths function correctly; this is a guard-adaptation gap, not a functional regression |
 | Repair direction | add `_shared_ops.py` to the guard's scan set (guard intent unchanged); owner: T6, attributed to I34 |
+
+**Status**: fixed at I39. Section 6.1 below records the fix and its
+re-verification.
+
+### 6.1 I39 fix and re-verification
+
+**Fix**: `test_wp24_python_command_chain_business_writes_use_maintained_contracts`
+(`tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py`)
+now folds `python/rl/runtime/world_batch/_shared_ops.py`'s source text into
+its local `world_batch_vec_env`/`cooperative_vec_env` scan variables
+(`world_batch_vec_env_source_text() + "\n" + shared_ops`, and the
+cooperative module's own text plus that same `shared_ops` string) before
+running both the positive maintained-token loop and the
+forbidden-legacy-token loop that follow. The change is scoped to this one
+test function only: `tests/architecture/runtime_facade/helpers.py`'s shared
+`WORLD_BATCH_VEC_ENV_SOURCE_FILES` tuple (consumed by exactly one other
+test, `test_scenario_setup_facade_boundary.py::test_wp24_public_vec_env_runtime_compatibility_flag_is_absent_from_maintained_adapters`)
+is untouched, so no other guard's scan set changed. A new inline comment
+records why: I34 sank both vec-env consumers' per-entity command-chain diff
+and batch-submit calls into the shared `_shared_ops.py` module (imported as
+`diff_single_entity_command_chain`/`submit_command_chain_assignments`), so
+neither consumer's own source text still names the maintained assignment
+classes/setters directly -- only `_shared_ops.py` does now. No assertion was
+loosened; the fix only widens what text the existing assertions run
+against, and it strengthens (rather than dilutes) the forbidden-legacy-token
+loop, since that loop now also covers the module that physically issues the
+writes for both consumers.
+
+**Negative self-proof** (rehearsed against an in-memory copy; the
+worktree's `_shared_ops.py` was never written to): a standalone script
+living outside the worktree imported the real, unmodified test function,
+used `unittest.mock.patch.object` to intercept `pathlib.Path.read_text` for
+exactly the `_shared_ops.py` path so it returns a sabotaged copy with
+`runtime_adapter.set_pilot_reports_maintained_batch(report_assignments)`
+reverted to the legacy `runtime_adapter.set_pilot_reports_batch(report_assignments)`
+(every other path's `read_text` fell through to the real file unchanged),
+then called the test function directly:
+
+```
+--- sanity: guard passes against the REAL (unsabotaged) _shared_ops.py ---
+OK: real worktree state is green, as expected.
+
+--- negative self-proof: guard against a SABOTAGED in-memory copy ---
+GUARD WENT RED AS EXPECTED. Traceback:
+  File ".../test_tasking_batch_contract_boundaries.py", line 295, in
+    test_wp24_python_command_chain_business_writes_use_maintained_contracts
+    assert "set_pilot_reports_maintained_batch" in source
+AssertionError
+
+--- post-check: worktree _shared_ops.py is untouched on disk ---
+OK: worktree _shared_ops.py byte-identical to before the rehearsal.
+```
+
+**Verification** (this worktree, `CMO_BUILD_DIR=<worktree>/build-local-win`):
+
+```
+pytest -q tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py
+-> 3 passed (previously 2 passed, 1 failed)
+
+pytest -q tests/architecture/runtime_facade
+-> 67 passed, 4 failed -- the same four test_wp22_* nodes this ledger's
+   section 5 already lists (test_runtime_escape_hatches.py); no new reds
+
+pytest -q tests/architecture/policy_execution/test_intent_injection_authority_guard.py
+-> 4 passed, 1 failed -- the same test_wp12_* node this ledger's section 5
+   already lists; unaffected by this fix (different file, outside this
+   fix's write set)
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 439 passed, 45 subtests passed -- measured before this ledger edit. The
+   I39 review measured the final write set at 438 passed / 1 failed (the
+   bilingual-registry flag raised by this very ledger edit, whose hash
+   refresh is a landing-side duty per the iteration brief); resolved by the
+   registry refresh at the I39 landing, re-verified green on the landed tree
+
+ruff check tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py
+-> All checks passed!
+
+git diff --check    -> clean
+```
+
+Write set for this fix: `tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py`
+(guard adaptation only) plus this ledger's own registration (this
+section). No `python/rl/runtime/world_batch/**` production code changed --
+this was a guard-adaptation gap, not a functional defect.
 
 ## Related
 

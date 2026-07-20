@@ -264,10 +264,24 @@ def test_wp24_python_command_chain_business_writes_use_maintained_contracts() ->
   command_chain_cache = (
     REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "command_chain_cache.py"
   ).read_text(encoding="utf-8")
-  world_batch_vec_env = world_batch_vec_env_source_text()
+  # NOTE(I39): I34 sank both vec-env consumers' per-entity command-chain diff
+  # and batch-submit calls into the shared `world_batch/_shared_ops.py`
+  # module (imported by `world_batch/vec_env.py` and
+  # `cooperative_world_batch_vec_env.py` as
+  # `diff_single_entity_command_chain`/`submit_command_chain_assignments`),
+  # so neither consumer's own source text still names the maintained
+  # assignment classes/setters directly -- only `_shared_ops.py` does now.
+  # Folding its text into both scan variables keeps this guard watching the
+  # code that actually issues the writes for the positive-token checks below
+  # without weakening the forbidden-legacy-writer checks that follow
+  # (`_shared_ops.py` contains none of those forbidden tokens either).
+  shared_ops = (
+    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "_shared_ops.py"
+  ).read_text(encoding="utf-8")
+  world_batch_vec_env = world_batch_vec_env_source_text() + "\n" + shared_ops
   cooperative_vec_env = (
     REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
-  ).read_text(encoding="utf-8")
+  ).read_text(encoding="utf-8") + "\n" + shared_ops
   multi_agent_runtime = (
     REPO_ROOT / "python" / "rl" / "runtime" / "multi_agent_runtime.py"
   ).read_text(encoding="utf-8")
