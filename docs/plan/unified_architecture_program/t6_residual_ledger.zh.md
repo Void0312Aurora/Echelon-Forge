@@ -17,8 +17,9 @@
 本文档即是这些登记行所指向、承诺补建的 T6 台账。按
 [SCAL 一致性普查](scal_conformance_census_20260720.zh.md)先例，本文档是描
 述性残差登记（`reference`），不是独立评审：它索引已经过评审的既有发现及
-其出处迭代号，并加入本迭代（I36）的直接复核证据。本文档不作出新裁决，也
-不关闭任何残差；某一行被"修复"仅代表其所属迭代已修复并如实记录，否则该行
+其出处迭代号，并加入本迭代（I36）的直接复核证据，以及 I37 对第 2 节所登
+记 xmacro helper 缺陷的后续修复与关闭。本文档本身不作出新裁决，也不独立
+关闭任何残差；某一行被"修复"仅代表其所属迭代已修复并如实记录（见 2.1 节），否则该行
 仍由未来迭代持有。
 
 ## 1. I28：weapon_guidance_realism 的 xfail/expectedFailure 清单
@@ -103,9 +104,10 @@ reason=...)`、reason 会出现在 `-rx` 输出中，不属于本次索引缺口
 - **机制标定漂移**——战斗部机制标定不再复现参考幅值（如标定剖面下
   `component_failure_count` 不再 `> 0`）。
 
-## 2. I33：xmacro 辅助函数换行吞噬缺陷 + 两处潜伏严格正则
+## 2. I33：xmacro 辅助函数换行吞噬缺陷 + 两处潜伏严格正则（已于 I37 修复）
 
-**根因**（由 I33 登记，尚未修复；按本迭代指令写保护至 I35 落地前）：
+**根因**（由 I33 登记；按本迭代自身指令写保护至 I35 落地，已于 I35 落地
+后由 I37 修复——修复内容与完整复核见 2.1 节）：
 `tests/support/xmacro_text.py::expand_header_field_incs` 使用
 `_INC_INCLUDE_RE = re.compile(r'#include "([^"]+\.inc)"\n?')`，其结尾的
 `\n?` 会选择性吞掉 `#include` 行自身的换行符。替换文本
@@ -139,8 +141,107 @@ pattern = rf"\bstruct\s+{re.escape(struct_name)}\b[^{{;]*\{{(?P<body>.*?)\n\}};"
 | `tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py` | `_struct_body`，第 54 行 | `TypedPlatformSpawnAdmission`、`TypedPlatformSpawnResult`、`BatchWorldSetupResult` |
 | `tests/runtime/mission/test_policy_contract_shape.py` | `_struct_body`，第 16 行 | `ActionHoldPolicy`、`ActionIntentPacket`、`CoordinationIntentPacket`、`AgentRole`、`DecisionBelief`、`AgentRoleAuthorizationResult` |
 
-**现状**：待 I35 落地后统一修复。按本迭代指令，`tests/support/xmacro_text.py`
-与上述两个文件均在本迭代写集之外，未做任何改动；本行仅为指针登记。
+**现状**：已于 I37 修复。下方 2.1 节记录修复内容、新增的 helper 级单元测
+试、四处正则的统一、两处潜伏点的复核，以及完整验证门证据。
+
+### 2.1 I37 修复与复核
+
+**修复**：`tests/support/xmacro_text.py` 中的 `_INC_INCLUDE_RE` 不再吞掉
+`#include` 行自身的结尾换行——`re.compile(r'#include "([^"]+\.inc)"\n?')`
+改为 `re.compile(r'#include "([^"]+\.inc)"')`。`#include` 行自身的换行符
+因此作为原样字面文本保留在周围源码中，使替换文本（本身仍不带结尾换行）
+后面总会紧跟这个被保留下来的换行——一个完全由宏拥有字段的 struct，其模
+拟出的 body 现在会在紧随其后的内容（通常是该 struct 自己的 `};`）前保留
+换行，与手写风格逐字节一致。`expand_header_field_incs` 与
+`expand_binding_field_incs` 共用这同一条正则，故这一行的修复同时覆盖两
+侧调用点；`expand_binding_field_incs` 携带完全相同的潜伏缺陷（下方新增
+的专项单元测试已确认），尽管台账登记的既有消费者均未依赖其粘连形态。
+
+**新增 helper 级单元测试**（`tests/support/test_xmacro_text.py`；此前该
+helper 无任何专属单元测试）：四个测试独立于任何生产头文件，围绕真实的
+两字段 `runtime/contracts/detail/engagement_entity_ref.inc`（只读引用，
+未新增任何 fixture 文件）构造"单宏组紧邻 `};`"的合成片段，直接验证修
+复——
+
+- `test_expand_header_field_incs_preserves_newline_before_closing_brace`
+  ——严格 `\n\}};` 式（不带 `?`）可匹配全宏化 struct。
+- `test_expand_header_field_incs_does_not_swallow_neighbouring_struct`
+  ——紧随宏化 struct 之后放置的邻居 struct 不会被吞入前者的 body。
+- `test_expand_header_field_incs_keeps_consecutive_include_lines_on_separate_lines`
+  ——同一 struct 内两个连续的 `#include` 行，其共享边界处也保持换行分
+  隔，不仅是收尾处。
+- `test_expand_binding_field_incs_preserves_newline_before_following_code`
+  ——绑定侧的姊妹函数获得同样的修复（共用正则）。
+
+四个测试均先在修复前的 helper 上确认为红（临时 `git stash` 仅还原
+`xmacro_text.py`），再在修复后确认为绿，证明它们确实命中缺陷本身，而非
+假绿。
+
+**四处正则统一为严格 `\n\}};` 式**（`\n?\}};` 放宽形态已在全仓退役）：
+`test_engagement_contract_shape.py::_struct_body` 与
+`test_runtime_dto_contracts.py::_struct_body` 的正则尾部由 `\n?\}};` 恢
+复为严格 `\n\}};`。本迭代任务书标记为"可能需要微调"的第三处适配——I35
+在 `test_dto_domain_shell_guard.py` 中改写的裸声明断言列表（如
+`"shared_core_type shared_core;"` 而非 `"...shared_core{};"`）——实测无
+需任何改动：该列表是针对 `_rendered_header_field` 另一条独立约定（"值初
+始化默认值省略末尾 `{}`"）的纯子串包含检查，与本次修复恢复的换行正交，
+故该列表逐字节保持不变且仍然通过。台账点名的两处潜伏点
+（`test_typed_platform_spawn_contracts.py`、`test_policy_contract_shape.py`）
+同样无需任何代码改动，且不再仅是"因头文件布局侥幸保绿"——helper 本体修
+复后，无论其扫描的 struct 未来是否被完全宏化，其严格 `\n\}};` 式均恒正
+确。
+
+**全仓扫描**：搜索字面 `\n?\}};` 正则拼写，在 `.py` 文件内现已零命中。
+仅剩的命中都是本台账与 `docs/plan/repository_consolidation/README.md`/
+`.zh.md` 中 I33 登记行的历史叙述文字，二者均以过去时如实描述 I33 当年实
+际做出的放宽；这些历史行刻意保持不变，未做编辑。
+
+**验证**（本工作树，`CMO_BUILD_DIR=<worktree>/build-local-win`）：
+
+```
+pytest -q tests/support/test_xmacro_text.py
+-> 4 passed（新增；每条均已在修复前的 helper 上独立确认为红）
+
+pytest -q tests/runtime/engagement/test_engagement_contract_shape.py
+-> 6 passed
+
+pytest -q tests/architecture/runtime_facade/test_runtime_dto_contracts.py
+-> 7 passed（零红；本台账第 5 节所列的四处 test_wp22_* 红实际位于另一
+   文件 test_runtime_escape_hatches.py，不在本文件内）
+
+pytest -q tests/architecture/command_tasking/test_dto_domain_shell_guard.py
+-> 11 passed
+
+pytest -q tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py
+-> 2 passed, 1 failed——test_wp24_python_command_chain_business_writes_use_maintained_contracts
+   在把 xmacro_text.py 还原至 I37 修复前状态时同样失败，即与本缺陷无关。
+   I37 评审的谱系甄别（隔离干净检出）：48c86c4b（I33）绿、自 c2952d61
+   （I34）起红——I34 落地把命令链写调用下沉到 _shared_ops.py，而该文本
+   守护的合成文件集不扫描它（adapter.py 在三个提交都含 token；真正转空
+   的是守护的 vec_env 合成文本与 cooperative 模块两处）。行为测试
+   （test_world_batch_vec_env_command_chain.py，23/23）保持绿，故属守护
+   适配缺失、非功能回归。已登记至下方第 6 节；修复方向：把 _shared_ops.py
+   纳入守护扫描集。在本迭代写集之外，未做处理
+
+pytest -q tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py
+-> 5 passed
+
+pytest -q tests/runtime/mission/test_policy_contract_shape.py
+-> 8 passed
+
+pytest -q tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py
+-> 13 passed
+
+pytest -q tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py
+-> 8 passed
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 439 passed, 45 subtests passed（与本迭代起始基线一致；新增的
+   tests/support/test_xmacro_text.py 未纳入 smoke 清单，未参与本次计数）
+
+ruff check .        -> All checks passed!
+git diff --check    -> 干净
+```
 
 ## 3. 任务 B 修复（本迭代 I36）：retained 存档重写副作用
 
@@ -210,6 +311,18 @@ retained 文件零改动；三个文件与 HEAD 始终字节一致。
 沿用 I34 独立复核并作为本迭代起始基线的门禁计数：维护 smoke
 `436 passed, 45 subtests`；聚焦 `world_batch`+leader+facade 选集
 `282 passed`、同样 5 条 flecs 红、`1 skipped`、`22 subtests`。
+
+## 6. I34：命令链文本守护适配缺失（wp24）
+
+于 I37 落地时依据 I37 评审的谱系甄别（逐提交隔离干净检出）登记：
+
+| 项 | 详情 |
+| --- | --- |
+| 失败节点 | `tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py::test_wp24_python_command_chain_business_writes_use_maintained_contracts` |
+| 谱系 | `48c86c4b`（I33）绿；自 `c2952d61`（I34）起红；与 I35/I36/I37 写集无关 |
+| 机理 | I34 把命令链写调用下沉到 `python/rl/runtime/world_batch/_shared_ops.py`；该守护的合成扫描集（adapter 加 vec_env 合成文本加 cooperative 模块）不含 `_shared_ops.py`，vec_env 合成与 cooperative 两处探针因此转空，而 `adapter.py` 自身 token 仍在 |
+| 行为证据 | `test_world_batch_vec_env_command_chain.py` 在各提交均 23/23 绿——维护契约写路径功能完好；属守护适配缺失、非功能回归 |
+| 修复方向 | 把 `_shared_ops.py` 纳入守护扫描集（守护意图不变）；归属：T6，记于 I34 名下 |
 
 ## 相关
 

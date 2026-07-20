@@ -20,11 +20,11 @@ def _header_text() -> str:
 
 
 def _struct_body(header: str, struct_name: str) -> str:
-  # The trailing newline before the closing brace is optional: expanding a
-  # struct's #include ".../*.inc" line (I33) consumes that include line's
-  # own newline, so the last expanded field can end up glued directly to
-  # the struct's "};" with no newline in between.
-  pattern = rf"\bstruct\s+{re.escape(struct_name)}\b[^{{;]*\{{(?P<body>.*?)\n?\}};"
+  # expand_header_field_incs() (I37) preserves the #include line's own
+  # newline, so a fully macro-owned struct's last expanded field always
+  # keeps a newline before the struct's "};" -- same as a hand-written
+  # struct. The closing-brace form can therefore stay strict.
+  pattern = rf"\bstruct\s+{re.escape(struct_name)}\b[^{{;]*\{{(?P<body>.*?)\n\}};"
   match = re.search(pattern, header, flags=re.DOTALL)
   assert match is not None, f"{struct_name} is missing from {ENGAGEMENT_HEADER}"
   return match.group("body")

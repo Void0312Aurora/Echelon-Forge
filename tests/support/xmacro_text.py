@@ -22,7 +22,15 @@ from tests.support.paths import REPO_ROOT
 from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
 
 
-_INC_INCLUDE_RE = re.compile(r'#include "([^"]+\.inc)"\n?')
+# Match only the ``#include "...inc"`` directive text itself -- deliberately
+# *not* its trailing newline. Leaving that newline untouched in the source
+# means the replacement (which never carries its own trailing newline; see
+# ``expand_header_field_incs``/``expand_binding_field_incs`` below) still
+# ends up followed by exactly the newline that was already there, so a
+# fully macro-owned struct's simulated body keeps a newline before whatever
+# follows (typically the struct's closing ``};``) instead of gluing the
+# last expanded field directly onto it.
+_INC_INCLUDE_RE = re.compile(r'#include "([^"]+\.inc)"')
 _MACRO_NAME_RE = re.compile(r"^([A-Z_][A-Z0-9_]*)\(", re.MULTILINE)
 
 

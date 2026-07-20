@@ -24,13 +24,12 @@ def _text(path: Path) -> str:
 
 
 def _struct_body(header: str, struct_name: str) -> str:
-  # The trailing newline before the closing brace is optional: expanding a
-  # struct's #include ".../*.inc" line (I26/I31/I33) consumes that include
-  # line's own newline, so a fully macro-owned struct's last expanded field
-  # ends up glued directly to the struct's "};" with no newline in between.
-  # The strict "\n\}};" form would then skip past that struct and greedily
-  # swallow its neighbours, breaking the not-in containment assertions.
-  pattern = rf"\bstruct\s+{re.escape(struct_name)}\b[^{{;]*\{{(?P<body>.*?)\n?\}};"
+  # expand_header_field_incs() (I37) preserves the #include line's own
+  # newline, so a fully macro-owned struct's last expanded field always
+  # keeps a newline before the struct's "};" -- same as a hand-written
+  # struct. The closing-brace form can therefore stay strict without
+  # risking a greedy over-match into a neighbouring struct's body.
+  pattern = rf"\bstruct\s+{re.escape(struct_name)}\b[^{{;]*\{{(?P<body>.*?)\n\}};"
   match = re.search(pattern, header, flags=re.DOTALL)
   assert match is not None, f"{struct_name} missing from {DTO_HEADER}"
   return match.group("body")

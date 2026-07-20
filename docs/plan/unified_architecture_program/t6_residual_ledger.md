@@ -19,10 +19,11 @@ index; this document is the promised T6 ledger those rows point at. Per the
 [SCAL Conformance Census](scal_conformance_census_20260720.md) precedent,
 this is a descriptive residual register (`reference`), not an independent
 review: it indexes already-adjudicated findings with their originating
-iteration and adds this iteration's (I36) direct re-verification evidence.
-It makes no new adjudications and closes no residual; closing a row here
-means the owning iteration fixed it (recorded as such) or a future iteration
-still owns it.
+iteration and adds this iteration's (I36) direct re-verification evidence,
+plus I37's follow-on fix-and-close of section 2's registered xmacro helper
+defect. It makes no new adjudications and closes no residual on its own;
+closing a row here means the owning iteration fixed it (recorded as such,
+per section 2.1) or a future iteration still owns it.
 
 ## 1. I28: weapon-guidance-realism xfail/expectedFailure inventory
 
@@ -115,10 +116,12 @@ source comments):
   longer reproduces its reference magnitude (e.g. `component_failure_count`
   no longer `> 0` for the calibrated profile).
 
-## 2. I33: xmacro helper newline defect and two latent strict-regex sites
+## 2. I33: xmacro helper newline defect and two latent strict-regex sites (fixed at I37)
 
-**Root cause** (registered by I33, not yet fixed; write-protected until I35
-lands per this iteration's instructions): `tests/support/xmacro_text.py::expand_header_field_incs`
+**Root cause** (registered by I33; fixed at I37 once I35 landed, per this
+iteration's own directive to write-protect the helper and the two latent
+sites until then -- see 2.1 for the fix and its full re-verification):
+`tests/support/xmacro_text.py::expand_header_field_incs`
 uses `_INC_INCLUDE_RE = re.compile(r'#include "([^"]+\.inc)"\n?')`, whose
 trailing `\n?` optionally consumes the `#include` line's own newline. The
 replacement text (`"\n".join(...)` over the expanded field declarations)
@@ -154,10 +157,126 @@ reproduce the same silent over-match):
 | `tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py` | `_struct_body`, line 54 | `TypedPlatformSpawnAdmission`, `TypedPlatformSpawnResult`, `BatchWorldSetupResult` |
 | `tests/runtime/mission/test_policy_contract_shape.py` | `_struct_body`, line 16 | `ActionHoldPolicy`, `ActionIntentPacket`, `CoordinationIntentPacket`, `AgentRole`, `DecisionBelief`, `AgentRoleAuthorizationResult` |
 
-**Status**: pending unified fix after I35 lands. Per this iteration's
-directive, `tests/support/xmacro_text.py` and the two files above are
-out of this iteration's write set and were not touched; this row is a
-pointer only.
+**Status**: fixed at I37. Section 2.1 below records the fix, the new
+helper-level unit tests, the four-site regex unification, the two latent
+sites' re-verification, and the full verification-gate evidence.
+
+### 2.1 I37 fix and re-verification
+
+**Fix**: `_INC_INCLUDE_RE` in `tests/support/xmacro_text.py` no longer
+consumes the `#include` line's own trailing newline --
+`re.compile(r'#include "([^"]+\.inc)"\n?')` becomes
+`re.compile(r'#include "([^"]+\.inc)"')`. The newline that terminates the
+`#include` line is therefore left untouched as literal text in the
+surrounding source, so the replacement (which still carries no trailing
+newline of its own) is always followed by exactly that preserved newline --
+a fully macro-owned struct's simulated body now keeps a newline before
+whatever follows (typically the struct's own `};`), matching the
+hand-written convention byte-for-byte. `expand_header_field_incs` and
+`expand_binding_field_incs` share this one regex, so the single-line fix
+covers both call sides; `expand_binding_field_incs` carried the identical
+latent defect (confirmed by a dedicated new unit test below) even though no
+cited consumer's assertions happened to depend on its glued form.
+
+**New helper-level unit tests** (`tests/support/test_xmacro_text.py`; the
+helper had no dedicated unit tests before I37): four tests exercise the fix
+directly, independent of any production header, by building a synthetic
+"single macro group immediately followed by `};`" fragment around the
+real, two-field `runtime/contracts/detail/engagement_entity_ref.inc`
+fixture (read-only; no new fixture file was added) --
+
+- `test_expand_header_field_incs_preserves_newline_before_closing_brace` --
+  the strict `\n\}};` form (no `?`) matches a fully macro-owned struct.
+- `test_expand_header_field_incs_does_not_swallow_neighbouring_struct` --
+  a struct placed immediately after the macro-owned one is not pulled into
+  the first struct's body.
+- `test_expand_header_field_incs_keeps_consecutive_include_lines_on_separate_lines`
+  -- two back-to-back `#include` lines inside one struct also stay
+  newline-separated at their shared boundary, not just at the closing brace.
+- `test_expand_binding_field_incs_preserves_newline_before_following_code` --
+  the binding-side sibling function gets the same fix (shared regex).
+
+All four were confirmed red against the pre-fix helper (temporary
+`git stash` of only `xmacro_text.py`) before being confirmed green against
+the fix, so they are proven to exercise the defect rather than passing
+vacuously.
+
+**Four regex sites unified to the strict `\n\}};` form** (the `\n?\}};`
+relaxation is retired everywhere): `test_engagement_contract_shape.py::_struct_body`
+and `test_runtime_dto_contracts.py::_struct_body` had their pattern's
+`\n?\}};` tail restored to strict `\n\}};`. The third adaptation this
+iteration's task brief flagged as possibly needing a tweak -- I35's
+bare-declaration assertion list in `test_dto_domain_shell_guard.py` (e.g.
+`"shared_core_type shared_core;"` rather than `"...shared_core{};"`) --
+turned out to need none: that list is a plain substring-containment check
+against `_rendered_header_field`'s separate "omit the trailing `{}` for a
+value-initialized default" rendering convention, which is orthogonal to the
+newline this fix restores, so the list stays byte-for-byte unchanged and
+still passes. The two latent sites this ledger named
+(`test_typed_platform_spawn_contracts.py`, `test_policy_contract_shape.py`)
+needed no code change either, and are no longer merely accidentally green:
+with the helper itself fixed, their strict `\n\}};` form is now correct
+regardless of whether their scanned structs become fully macro-owned in a
+future iteration.
+
+**Full-repo scan**: searching for the literal `\n?\}};` source spelling now
+returns zero hits inside `.py` files. The only remaining hits
+are historical prose in this ledger and in
+`docs/plan/repository_consolidation/README.md`/`.zh.md`'s I33 register row,
+both accurately describing -- in the past tense -- the relaxation I33
+actually made at the time; those historical rows are intentionally left
+unedited.
+
+**Verification** (this worktree, `CMO_BUILD_DIR=<worktree>/build-local-win`):
+
+```
+pytest -q tests/support/test_xmacro_text.py
+-> 4 passed (new; each independently confirmed red on the pre-fix helper)
+
+pytest -q tests/runtime/engagement/test_engagement_contract_shape.py
+-> 6 passed
+
+pytest -q tests/architecture/runtime_facade/test_runtime_dto_contracts.py
+-> 7 passed (zero reds; the four test_wp22_* reds this ledger's section 5
+   lists live in test_runtime_escape_hatches.py, a different file, not here)
+
+pytest -q tests/architecture/command_tasking/test_dto_domain_shell_guard.py
+-> 11 passed
+
+pytest -q tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py
+-> 2 passed, 1 failed -- test_wp24_python_command_chain_business_writes_use_maintained_contracts
+   fails identically with xmacro_text.py reverted to its pre-I37 state, i.e.
+   unrelated to this defect. Lineage triage by the I37 review (isolated clean
+   checkouts): green at 48c86c4b (I33), red from c2952d61 (I34) onward -- the
+   I34 landing sank the command-chain write calls into _shared_ops.py, which
+   this text guard's synthesized file set does not scan (adapter.py itself
+   still carries the tokens at all three commits; the guard's vec_env
+   synthesis and the cooperative module are the two spots that went blank).
+   Behavior tests (test_world_batch_vec_env_command_chain.py, 23/23) stay
+   green, so this is a guard-adaptation gap, not a functional regression.
+   Registered in section 6 below; repair direction: add _shared_ops.py to
+   the guard's scan set. Out of this iteration's write set and left untouched
+
+pytest -q tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py
+-> 5 passed
+
+pytest -q tests/runtime/mission/test_policy_contract_shape.py
+-> 8 passed
+
+pytest -q tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py
+-> 13 passed
+
+pytest -q tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py
+-> 8 passed
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 439 passed, 45 subtests passed (unchanged from this iteration's starting
+   baseline; tests/support/test_xmacro_text.py was not added to the smoke
+   manifest, so it did not participate in this count)
+
+ruff check .        -> All checks passed!
+git diff --check    -> clean
+```
 
 ## 3. Task B fix (this iteration, I36): retained-artifact rewrite side effect
 
@@ -238,6 +357,19 @@ Baseline gate counts carried forward from I34's independent re-run and used
 as this iteration's starting baseline: maintained smoke `436 passed, 45
 subtests`; focused `world_batch`+leader+facade selection `282 passed`, same
 5 flecs reds, `1 skipped`, `22 subtests`.
+
+## 6. I34: command-chain text-guard adaptation gap (wp24)
+
+Registered at the I37 landing from the I37 review's lineage triage
+(isolated clean checkouts per commit):
+
+| Item | Detail |
+| --- | --- |
+| Failing node | `tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py::test_wp24_python_command_chain_business_writes_use_maintained_contracts` |
+| Lineage | green at `48c86c4b` (I33); red from `c2952d61` (I34) onward; unrelated to I35/I36/I37 write sets |
+| Mechanism | I34 sank the command-chain write calls into `python/rl/runtime/world_batch/_shared_ops.py`; the guard's synthesized scan set (adapter plus vec_env synthesis plus cooperative module) does not include `_shared_ops.py`, so the vec_env-synthesis and cooperative probes went blank while `adapter.py` still carries its tokens |
+| Behavior evidence | `test_world_batch_vec_env_command_chain.py` 23/23 green at all commits -- maintained-contract write paths function correctly; this is a guard-adaptation gap, not a functional regression |
+| Repair direction | add `_shared_ops.py` to the guard's scan set (guard intent unchanged); owner: T6, attributed to I34 |
 
 ## Related
 
