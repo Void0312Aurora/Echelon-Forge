@@ -182,8 +182,15 @@ def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation
   world_batch_source = _text(WORLD_BATCH_SOURCE)
   facade_types = _text(RUNTIME_FACADE_TYPES)
 
-  assert "std::vector<uint64_t> apply_world_setup_batch(" in facade_header
-  assert "const std::vector<WorldSpawnRequest>& requests," in facade_header
+  assert re.search(
+    r"std::vector<uint64_t>\s+apply_world_setup_batch\(\s*"
+    r"const\s+std::vector<uint32_t>\s+&seeds\s*,",
+    facade_header,
+  )
+  assert re.search(
+    r"const\s+std::vector<WorldSpawnRequest>\s+&requests\s*,",
+    facade_header,
+  )
   assert "std::vector<WorldSpawnRequest> spawn_requests;" in facade_types
   assert "std::vector<TypedPlatformSpawnRequest> typed_platform_spawn_requests;" in facade_types, (
     "WP20 validation-first publicization must remain additive on BatchWorldSetupRequest "
@@ -211,7 +218,11 @@ def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation
     r"spawn_units_batch\(\s*const\s+std::vector<WorldSpawnRequest>\s*&\s*requests\s*\)",
     world_batch_source,
   )
-  assert "std::uint64_t spawn_typed_platform_unit(" in world_batch_header, (
+  assert re.search(
+    r"std::uint64_t\s+spawn_typed_platform_unit\(\s*"
+    r"const\s+TypedPlatformSpawnRequest\s+&request\s*\);",
+    world_batch_header,
+  ), (
     "WP22 maintained typed setup promotion requires a batch-owned typed spawn helper "
     "instead of rematerializing maintained requests into WorldSpawnRequest"
   )

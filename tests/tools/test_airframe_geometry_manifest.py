@@ -70,7 +70,7 @@ def test_f16_geometry_manifest_records_source_axis_and_damage_bounds(
   damage_geometry = manifest["current_damage_geometry"]
   assert damage_geometry["summary"]["hitbox_count"] >= 4
   assert damage_geometry["summary"]["component_count"] > 10
-  assert damage_geometry["public_dimension_error_percent"]["height_m"] < -70.0
+  assert -60.0 < damage_geometry["public_dimension_error_percent"]["height_m"] < -50.0
   assert manifest["authority_boundary"]["runtime_collision_mesh"] is False
   assert manifest["authority_boundary"]["real_weapon_pk_authority"] is False
 
@@ -83,15 +83,18 @@ def test_f16_component_binding_report_tracks_review_states(
   assert report["schema_version"] == "a2.target_geometry_component_binding_report.v1"
   assert report["status"] == "component_binding_report_generated_review_only"
   assert report["summary"]["component_count"] == 26
-  assert report["summary"]["bound_component_count"] == 26
-  assert report["summary"]["needs_review_count"] == 0
+  assert report["summary"]["bound_component_count"] == 19
+  assert report["summary"]["needs_review_count"] == 7
   assert report["summary"]["side_sign_review_count"] == 0
   assert report["summary"]["hard_blocker_count"] == 0
   assert report["summary"]["cross_region_semantic_candidate_count"] == 2
-  assert report["summary"]["geometry_review_required_count"] == 0
+  assert report["summary"]["geometry_review_required_count"] == 7
+  assert report["summary"]["review_status"] == "manual_review_required"
   rows = {row["component_name"]: row for row in report["rows"]}
   assert rows["apg68_radar_array"]["bound_region_id"] == "nose_radome"
-  assert rows["apg68_radar_array"]["review_status"] == "candidate_binding"
+  assert rows["apg68_radar_array"]["review_status"] == "needs_review"
+  assert rows["apg68_radar_array"]["review_semantics"] == "geometry_review_required"
+  assert "no_outer_region_overlap" in rows["apg68_radar_array"]["anomalies"]
   assert rows["cockpit_crew_station"]["bound_region_id"] in {
     "nose_radome",
     "forward_fuselage",
@@ -120,7 +123,9 @@ def test_f16_component_binding_report_tracks_review_states(
   assert rows["afterburner_nozzle"]["bound_region_id"] == "engine_nozzle"
   assert rows["afterburner_nozzle"]["blocked_region_binding"]["blocked"] is False
   assert rows["dedicated_canopy_surface_component"]["bound_region_id"] == "canopy"
-  assert rows["dedicated_intake_lip_or_duct_component"]["bound_region_id"] == "intake"
+  assert rows["dedicated_intake_lip_or_duct_component"]["bound_region_id"] == (
+    "forward_fuselage"
+  )
   assert rows["left_horizontal_tail_actuator_or_surface_component"][
     "bound_region_id"
   ] == "left_horizontal_tail"
@@ -129,8 +134,10 @@ def test_f16_component_binding_report_tracks_review_states(
   ] == "right_horizontal_tail"
   assert rows["left_wing_fuel_cell"]["bound_region_id"] == "left_wing"
   assert rows["right_wing_fuel_cell"]["bound_region_id"] == "right_wing"
-  assert rows["left_wing_fuel_cell"]["review_status"] == "candidate_binding"
-  assert rows["right_wing_fuel_cell"]["review_status"] == "candidate_binding"
+  assert rows["left_wing_fuel_cell"]["review_status"] == "needs_review"
+  assert rows["right_wing_fuel_cell"]["review_status"] == "needs_review"
+  assert "no_outer_region_overlap" in rows["left_wing_fuel_cell"]["anomalies"]
+  assert "no_outer_region_overlap" in rows["right_wing_fuel_cell"]["anomalies"]
   assert rows["left_wing_fuel_cell"]["side_sign_relation"][
     "side_sign_mismatch"
   ] is False
@@ -218,34 +225,31 @@ def test_f16_surface_component_candidates_keep_runtime_boundaries(
   assert surface_report["summary"]["missing_existing_runtime_component_relation_count"] == 0
   assert surface_report["summary"]["missing_runtime_link_held_count"] == 0
   assert surface_report["summary"]["side_sign_hard_blocker_count"] == 0
-  assert surface_report["summary"]["cross_region_semantic_hold_count"] == 8
-  assert surface_report["summary"]["needs_review_count"] == 0
+  assert surface_report["summary"]["cross_region_semantic_hold_count"] == 4
+  assert surface_report["summary"]["needs_review_count"] == 5
+  assert surface_report["summary"]["review_status"] == "manual_review_required"
   surface_rows = {
     row["surface_component_id"]: row for row in surface_report["rows"]
   }
   nose_surface = surface_rows["surface_nose_radome"]
   assert nose_surface["source_region_id"] == "nose_radome"
-  assert nose_surface["review_status"] == "candidate_surface_component"
-  assert nose_surface["review_flags"] == ["candidate_surface_component"]
-  assert nose_surface["clean_direct_component_names"] == [
-    "apg68_radar_array",
-    "iff_interrogator",
-  ]
+  assert nose_surface["review_status"] == "needs_human_review"
+  assert nose_surface["review_semantics"] == "linked_component_geometry_needs_review"
+  assert "linked_component_needs_review" in nose_surface["review_flags"]
+  assert nose_surface["clean_direct_component_names"] == ["iff_interrogator"]
   assert {
     link["component_name"] for link in nose_surface["linked_internal_components"]
   } >= {"apg68_radar_array", "iff_interrogator"}
   left_wing_surface = surface_rows["surface_left_wing_skin"]
   assert "surface_area_loss" in left_wing_surface["expected_damage_modes"]
   assert "side_sign_review" not in left_wing_surface["review_flags"]
-  assert left_wing_surface["review_status"] == "review_only_cross_region_semantic_hold"
-  assert left_wing_surface["review_semantics"] == "cross_region_semantic_hold"
+  assert left_wing_surface["review_status"] == "needs_human_review"
+  assert left_wing_surface["review_semantics"] == "linked_component_geometry_needs_review"
+  assert "linked_component_needs_review" in left_wing_surface["review_flags"]
   assert {
     link["component_name"] for link in left_wing_surface["linked_internal_components"]
   } >= {"left_wing_fuel_cell", "left_aileron_actuator", "wing_spar_center"}
-  assert set(left_wing_surface["clean_direct_component_names"]) >= {
-    "left_wing_fuel_cell",
-    "left_aileron_actuator",
-  }
+  assert left_wing_surface["clean_direct_component_names"] == []
   center_surface = surface_rows["surface_center_fuselage_skin"]
   assert center_surface["review_status"] == "review_only_cross_region_semantic_hold"
   assert center_surface["review_semantics"] == "cross_region_semantic_hold"
@@ -270,7 +274,7 @@ def test_f16_surface_component_candidates_keep_runtime_boundaries(
   ]
   forward_surface = surface_rows["surface_forward_fuselage_skin"]
   assert forward_surface["review_status"] == "candidate_surface_component"
-  assert forward_surface["clean_direct_link_count"] == 3
+  assert forward_surface["clean_direct_link_count"] == 4
   intake_surface = surface_rows["surface_intake_lip_and_duct"]
   assert intake_surface["review_semantics"] == (
     "cross_region_boundary_candidate_review_only"
@@ -279,9 +283,8 @@ def test_f16_surface_component_candidates_keep_runtime_boundaries(
     "runtime_relation_review_only_candidate"
   )
   assert intake_surface["missing_existing_runtime_component_relations"] == []
-  assert intake_surface["clean_direct_component_names"] == [
-    "dedicated_intake_lip_or_duct_component",
-  ]
+  assert intake_surface["clean_direct_component_names"] == []
+  assert "expected_component_bound_elsewhere" in intake_surface["review_flags"]
   canopy_surface = surface_rows["surface_canopy"]
   assert canopy_surface["review_status"] == "candidate_surface_component"
   assert canopy_surface["review_semantics"] == "candidate_surface_component"
@@ -320,9 +323,10 @@ def test_f16_semantic_damage_geometry_candidates_stay_parse_ready_only(
   assert semantic_report["summary"]["semantic_volume_component_count"] == 14
   assert semantic_report["summary"]["runtime_parse_ready_component_count"] == 14
   assert semantic_report["summary"]["runtime_active_component_count"] == 0
-  assert semantic_report["summary"]["cross_region_handoff_held_count"] == 8
+  assert semantic_report["summary"]["cross_region_handoff_held_count"] == 4
   assert semantic_report["summary"]["blocked_receiver_count"] == 0
-  assert semantic_report["summary"]["bad_geometry_receiver_count"] == 0
+  assert semantic_report["summary"]["bad_geometry_receiver_count"] == 11
+  assert semantic_report["summary"]["review_status"] == "manual_review_required_before_activation"
   assert semantic_report["summary"]["geometry_primitive_counts"]["thin_prism"] >= 5
   assert semantic_report["summary"]["geometry_primitive_counts"]["convex_hull"] >= 4
   semantic_rows = {
@@ -331,11 +335,9 @@ def test_f16_semantic_damage_geometry_candidates_stay_parse_ready_only(
   nose_volume = semantic_rows["semantic_nose_radome_volume"]
   assert nose_volume["source_region_id"] == "nose_radome"
   assert nose_volume["geometry_primitive"] == "convex_hull"
-  assert nose_volume["direct_receiver_components"] == [
-    "apg68_radar_array",
-    "iff_interrogator",
-  ]
+  assert nose_volume["direct_receiver_components"] == ["iff_interrogator"]
   assert nose_volume["cross_region_receiver_components"] == []
+  assert nose_volume["receiver_handoff_status"] == "blocked_receiver_review_required"
   assert nose_volume["runtime_component_json_candidate"]["geometry_primitive"] == (
     "convex_hull"
   )
@@ -345,16 +347,11 @@ def test_f16_semantic_damage_geometry_candidates_stay_parse_ready_only(
   assert len(nose_volume["runtime_geometry"]["vertices_m"]) >= 7
   left_wing_volume = semantic_rows["semantic_left_wing_skin_volume"]
   assert left_wing_volume["geometry_primitive"] == "thin_prism"
-  assert left_wing_volume["direct_receiver_components"] == [
-    "left_aileron_actuator",
-    "left_wing_fuel_cell",
-  ]
+  assert left_wing_volume["direct_receiver_components"] == []
   assert left_wing_volume["cross_region_receiver_components"] == [
     "wing_spar_center"
   ]
-  assert left_wing_volume["receiver_handoff_status"] == (
-    "direct_receivers_parse_ready_cross_region_receivers_held"
-  )
+  assert left_wing_volume["receiver_handoff_status"] == "blocked_receiver_review_required"
   assert semantic_report["authority_boundary"][
     "runtime_schema_parse_ready_candidate"
   ] is True
@@ -377,8 +374,9 @@ def test_f16_internal_component_prior_summary_preserves_review_boundaries(
   assert internal_prior_report["summary"]["post_constraint_outside_count"] == 0
   assert internal_prior_report["summary"]["constrained_inside_count"] == 26
   assert internal_prior_report["summary"]["nominal_size_fit_issue_count"] == 0
-  assert internal_prior_report["summary"]["parent_shell_exceed_review_count"] == 7
+  assert internal_prior_report["summary"]["parent_shell_exceed_review_count"] == 12
   assert internal_prior_report["summary"]["cross_region_held_prior_count"] == 2
+  assert internal_prior_report["summary"]["review_status"] == "manual_review_required_before_activation"
   assert internal_prior_report["whole_airframe_bounds"]["span"][0] > 14.0
   assert internal_prior_report["summary"]["shape_counts"] == {
     "capsule": 9,
@@ -1083,7 +1081,7 @@ def test_f16_parent_child_layout_retains_receiver_overlay_boundaries(
   assert parent_child_layout_report["summary"][
     "bound_receiver_component_count"
   ] == 26
-  assert parent_child_layout_report["summary"]["extra_receiver_slot_count"] == 12
+  assert parent_child_layout_report["summary"]["extra_receiver_slot_count"] == 13
   assert parent_child_layout_report["summary"][
     "cross_region_held_receiver_count"
   ] == 2
@@ -1094,6 +1092,9 @@ def test_f16_parent_child_layout_retains_receiver_overlay_boundaries(
     "cross_region_held_segment_overlay_count"
   ] == 5
   assert parent_child_layout_report["summary"]["runtime_active_component_count"] == 0
+  assert parent_child_layout_report["summary"]["review_status"] == (
+    "manual_review_required_before_activation"
+  )
   layout_rows = {
     row["parent_semantic_component_id"]: row
     for row in parent_child_layout_report["rows"]

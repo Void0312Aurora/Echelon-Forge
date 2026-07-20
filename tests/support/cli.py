@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import subprocess
 from pathlib import Path
@@ -17,7 +18,7 @@ def run_maintenance_cli(
   *args: str | Path,
   capture_output: bool = True,
 ) -> subprocess.CompletedProcess[str]:
-  script_args = shlex.split(script)
+  script_args = shlex.split(script, posix=os.name != "nt")
   if not script_args:
     raise ValueError("maintenance script must not be empty")
 

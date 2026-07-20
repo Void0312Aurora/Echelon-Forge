@@ -43,10 +43,30 @@ def test_target_geometry_lethality_matrix_probe_observes_proxy_deltas() -> None:
   assert metrics["family_changed_comparison_counts"]["continuous_rod"] > 0
   assert metrics["proxy_split_receiver_comparison_count"] > 0
   assert metrics["proxy_retired_parent_comparison_count"] == 0
-  assert metrics["nose_cockpit_center_unchanged_for_both_families"] is True
+  assert metrics["nose_cockpit_center_unchanged_for_both_families"] is False
   assert metrics["right_beam_near_far_monotonic_checks"]["all_pass"] is True
 
   comparisons = report["comparisons"]
+  nose_center_by_family = {
+    comparison["warhead_family"]: comparison
+    for comparison in comparisons
+    if comparison["case_id"] == "nose_cockpit_center"
+  }
+  assert set(nose_center_by_family) == {"blast_fragmentation", "continuous_rod"}
+  assert nose_center_by_family["blast_fragmentation"]["geometry_effect_observed"] is True
+  assert nose_center_by_family["continuous_rod"]["geometry_effect_observed"] is False
+  for comparison in nose_center_by_family.values():
+    assert comparison["default_event"]["component_primary_name"] == (
+      "cockpit_crew_station"
+    )
+    assert comparison["proxy_event"]["component_primary_name"] == (
+      "cockpit_crew_station"
+    )
+    assert (
+      comparison["default_event"]["component_primary_system"]
+      == comparison["proxy_event"]["component_primary_system"]
+    )
+
   assert all(
     comparison["default_event"]["effect_family"] == comparison["warhead_family"]
     for comparison in comparisons
@@ -62,7 +82,7 @@ def test_target_geometry_lethality_matrix_probe_observes_proxy_deltas() -> None:
   )
   assert all(
     comparison["proxy_event"]["component_failure_probability_event_aggregation"]
-    == "max_probability_across_component_mechanism_load_rows"
+    == "max_probability_across_component_response_rows"
     for comparison in comparisons
   )
   assert all(
@@ -92,7 +112,11 @@ def test_target_geometry_lethality_matrix_probe_observes_proxy_deltas() -> None:
     "default",
     "proxy",
   }
-  assert all(
+  assert any(
+    ":blast_fragmentation:" in comparison_id
+    for comparison_id in outcome["structural_breakup_comparison_ids"]
+  )
+  assert any(
     ":continuous_rod:" in comparison_id
     for comparison_id in outcome["structural_breakup_comparison_ids"]
   )

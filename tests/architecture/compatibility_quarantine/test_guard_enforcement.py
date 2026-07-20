@@ -199,7 +199,7 @@ def test_direct_sim_access_is_limited_to_explicitly_labeled_allowlists() -> None
     if not lines:
       continue
 
-    relative_path = str(path.relative_to(REPO_ROOT))
+    relative_path = path.relative_to(REPO_ROOT).as_posix()
     label = _label_for_path(relative_path)
     if label is None:
       hits[relative_path] = ("unlabeled", lines)
