@@ -13,6 +13,7 @@ yet scheduled into implementation tasks, organized by topic.
 | [physics/](physics/) | Physics engine upgrade roadmap |
 | [rl/](rl/) | Reinforcement learning and self-play roadmap |
 | [sensor/](sensor/) | Sensor and situational awareness plan |
+| [viz/](viz/) | Visualization stack evolution toward operational/strategic scale |
 | [models/](models/) | Hierarchical MoE execution policy design freeze |
 | [temp/](temp/) | Scratch-note index and authority boundary for retained temporary notes |
 
