@@ -24,7 +24,11 @@ ensure_repo_imports()
 from python.env_config import resolve_env_settings
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.training.bootstrap import validate_declared_training_entry_env_surface, validate_declared_training_entry_paths
+from python.experiment.report_envelope import add_report_envelope_arg, apply_report_envelope
+from tools.diagnostics.common import add_json_out_arg, add_model_load_args, add_probe_run_args
 from tools.eval.sb3_eval_base import load_json_config, write_json_output
+
+_TOOL_ID = "tools.eval.naval_station_policy_eval"
 
 
 FORBIDDEN_REWARD_TERMS = {
@@ -579,12 +583,12 @@ def run_offstation_command_probe(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Evaluate maintained naval station cooperative policy gates.")
-    parser.add_argument("--scenario", required=True)
-    parser.add_argument("--train_config", required=True)
+    add_probe_run_args(parser, include=["scenario"], required={"scenario": True})
+    add_model_load_args(parser, include=["train_config"], required={"train_config": True})
     parser.add_argument("--steps", type=int, default=1200)
-    parser.add_argument("--seed", type=int, default=20260525)
+    add_probe_run_args(parser, include=["seed"], defaults={"seed": 20260525})
     parser.add_argument("--worker_threads", type=int, default=1)
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     parser.add_argument(
         "--mode",
         choices=["baseline", "offstation_probe"],
@@ -592,6 +596,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="baseline runs the zero-action station hold gate; offstation_probe checks station-order reward-reference closure.",
     )
     parser.add_argument("--station_radius_offset_m", type=float, default=-1800.0)
+    add_report_envelope_arg(parser)
     return parser
 
 
@@ -623,11 +628,13 @@ def main(argv: list[str] | None = None) -> int:
             "passed": False,
             "error": str(exc),
         }
-        print(json.dumps(payload, indent=2, ensure_ascii=True))
-        write_json_output(str(args.json_out), payload)
+        report = apply_report_envelope(payload, enabled=args.report_envelope, tool_id=_TOOL_ID)
+        print(json.dumps(report, indent=2, ensure_ascii=True))
+        write_json_output(str(args.json_out), report)
         return 1
-    print(json.dumps(payload, indent=2, ensure_ascii=True))
-    write_json_output(str(args.json_out), payload)
+    report = apply_report_envelope(payload, enabled=args.report_envelope, tool_id=_TOOL_ID)
+    print(json.dumps(report, indent=2, ensure_ascii=True))
+    write_json_output(str(args.json_out), report)
     if not bool(payload.get("passed", False)):
         return 1
     return 0

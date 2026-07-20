@@ -1,0 +1,19 @@
+usage: envelope_audit.py [-h] --input INPUT [--output-dir OUTPUT_DIR]
+                         [--prefix PREFIX] [--variant VARIANT]
+                         [--target-motion-layer TARGET_MOTION_LAYER]
+                         [--date-stamp DATE_STAMP]
+
+Apply the KCES expectation envelope to a before report.
+
+options:
+  -h, --help            show this help message and exit
+  --input INPUT         Before-report JSON path.
+  --output-dir OUTPUT_DIR
+                        Output directory. Defaults to the input file
+                        directory.
+  --prefix PREFIX
+  --variant VARIANT
+  --target-motion-layer TARGET_MOTION_LAYER
+  --date-stamp DATE_STAMP
+                        Filename date stamp, for example 20260706. Defaults to
+                        today.

@@ -73,6 +73,25 @@ def write_and_hash_json(
   return _sha256_file(path)
 
 
+def add_retained_gate_output_args(
+  parser: argparse.ArgumentParser,
+  *,
+  retained_dir_default: Path,
+  output_dir_help: str = "Directory for retained JSON artifacts.",
+  stdout_help: str = "Also print the gate JSON to stdout after writing retained artifacts.",
+) -> None:
+  """Add the shared "always write retained gate, optionally echo" CLI options.
+
+  Covers ``--output-dir`` (defaults to *retained_dir_default*) and
+  ``--stdout``, shared verbatim by the independent-review retained-gate CLIs
+  (review closeout, scope-bucket review, uncertainty review). Each caller's
+  own help text stays an explicit override where it diverges from the most
+  common wording.
+  """
+  parser.add_argument("--output-dir", type=Path, default=retained_dir_default, help=output_dir_help)
+  parser.add_argument("--stdout", action="store_true", help=stdout_help)
+
+
 def _display_path(path: Path, repo_root: Path) -> str:
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()

@@ -23,7 +23,12 @@ from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv  #
 from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports  # noqa: E402
 
 ensure_repo_imports()
-from tools.diagnostics.common import average_timing_sums, merge_timing_sums  # noqa: E402
+from tools.diagnostics.common import (  # noqa: E402
+    add_model_load_args,
+    add_probe_run_args,
+    average_timing_sums,
+    merge_timing_sums,
+)
 
 
 def _collect_reset_timings(reset_infos) -> tuple[dict[str, float], dict[str, float]]:
@@ -78,8 +83,18 @@ def _collect_step_timings(infos) -> tuple[dict[str, float], dict[str, float], fl
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Quick throughput probe for leader-layer environments.")
-    parser.add_argument("--scenario", required=True, help="Scenario JSON path.")
-    parser.add_argument("--train_config", required=True, help="Leader-layer train config JSON path.")
+    add_probe_run_args(
+        parser,
+        include=["scenario"],
+        required={"scenario": True},
+        helps={"scenario": "Scenario JSON path."},
+    )
+    add_model_load_args(
+        parser,
+        include=["train_config"],
+        required={"train_config": True},
+        helps={"train_config": "Leader-layer train config JSON path."},
+    )
     parser.add_argument("--n_envs", type=int, default=None, help="Override number of envs from config.")
     parser.add_argument("--leader_steps", type=int, default=16, help="Number of vectorized leader steps to run.")
     parser.add_argument(

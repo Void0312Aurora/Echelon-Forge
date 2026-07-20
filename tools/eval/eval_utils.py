@@ -7,6 +7,7 @@ import numpy as np
 from python.angles import wrap_signed_deg
 from python.env_config import ACTION_MODES
 from python.runtime_bootstrap import ensure_repo_imports
+from tools.diagnostics.common import add_probe_run_args
 
 
 ACTION_MODE_CHOICES = tuple(ACTION_MODES)
@@ -25,10 +26,16 @@ def add_common_env_args(
     default_action_mode: str,
     include_no_randomization: bool = False,
 ) -> None:
-    parser.add_argument("--scenario", required=True)
-    parser.add_argument("--episodes", type=int, default=int(episodes_default))
-    parser.add_argument("--max_steps", type=int, default=int(max_steps_default))
-    parser.add_argument("--seed", type=int, default=int(seed_default))
+    add_probe_run_args(
+        parser,
+        include=["scenario", "episodes", "max_steps", "seed"],
+        required={"scenario": True},
+        defaults={
+            "episodes": int(episodes_default),
+            "max_steps": int(max_steps_default),
+            "seed": int(seed_default),
+        },
+    )
     parser.add_argument("--action_mode", type=str, default=str(default_action_mode), choices=ACTION_MODE_CHOICES)
     parser.add_argument("--include_visual", action="store_true")
     parser.add_argument("--include_proprio", action="store_true")

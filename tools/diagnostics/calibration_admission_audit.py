@@ -4,9 +4,18 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any
+
+_REPO_ROOT_HINT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+
+from python.experiment.report_envelope import add_report_envelope_arg, apply_report_envelope  # noqa: E402
+
+_TOOL_ID = "tools.diagnostics.calibration_admission_audit"
 
 
 MANIFEST_SCHEMA_VERSION = "mlf10.calibration_evidence_manifest.v1"
@@ -388,6 +397,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--report_surface",
         default="standalone_retained_diagnostics_artifact",
     )
+    add_report_envelope_arg(parser)
     return parser
 
 
@@ -398,7 +408,8 @@ def main() -> int:
         manifest_ref=str(args.manifest_json).replace("\\", "/"),
         report_surface=str(args.report_surface),
     )
-    text = json.dumps(payload, indent=2, ensure_ascii=True)
+    report = apply_report_envelope(payload, enabled=args.report_envelope, tool_id=_TOOL_ID)
+    text = json.dumps(report, indent=2, ensure_ascii=True)
     if args.json_out:
         output_path = os.path.abspath(args.json_out)
         os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)

@@ -15,6 +15,7 @@ if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
+from tools.diagnostics.common import add_json_out_arg, add_model_load_args, add_probe_run_args
 
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
@@ -173,22 +174,26 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Train/evaluate a visual_downsample ablation matrix for execution-layer visual policies."
     )
-    parser.add_argument("--scenario", required=True)
-    parser.add_argument("--train_config", required=True)
+    add_probe_run_args(parser, include=["scenario"], required={"scenario": True})
+    add_model_load_args(parser, include=["train_config"], required={"train_config": True})
     parser.add_argument("--factors", default="1,2,4", help="Comma-separated visual_downsample values.")
     parser.add_argument("--seeds", default="0", help="Comma-separated training seeds.")
     parser.add_argument("--total_timesteps", type=int, default=None, help="Override total_timesteps in copied configs.")
-    parser.add_argument("--device", default=None, help="Optional hyperparameters.device override for copied configs.")
+    add_model_load_args(
+        parser,
+        include=["device"],
+        helps={"device": "Optional hyperparameters.device override for copied configs."},
+    )
     parser.add_argument("--visual_update_interval", type=int, default=None)
     parser.add_argument("--n_envs", type=int, default=None)
     parser.add_argument("--eval_episodes", type=int, default=4)
     parser.add_argument("--eval_seed", type=int, default=1000)
     parser.add_argument("--eval_max_steps", type=int, default=None)
-    parser.add_argument("--algo", default="auto")
+    add_model_load_args(parser, include=["algo"], defaults={"algo": "auto"})
     parser.add_argument("--output_base", default="experiments_ablation")
     parser.add_argument("--run_prefix", default="visual_ds_ablation")
     parser.add_argument("--skip_existing", action="store_true", help="Skip training when final_model.zip already exists.")
-    parser.add_argument("--json_out", default="", help="Optional aggregate JSON output path.")
+    add_json_out_arg(parser, help="Optional aggregate JSON output path.")
     args = parser.parse_args()
 
     scenario_path = os.path.abspath(args.scenario)

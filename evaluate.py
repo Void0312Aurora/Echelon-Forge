@@ -16,6 +16,7 @@ from python.rl.policy_checkpoint import load_sb3_policy
 from python.training.cli import ACTION_MODE_CHOICES, MISSION_OBS_MODE_CHOICES
 from python.rl.control.wrappers import get_action_wrapper_spec
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
+from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 
 
 def _build_evaluation_env(
@@ -37,17 +38,34 @@ def _build_evaluation_env(
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Evaluation for CMO")
-    parser.add_argument("--scenario", type=str, required=True, help="Path to JSON scenario file")
-    parser.add_argument("--model", type=str, required=True, help="Path to trained model (zip)")
-    parser.add_argument(
-        "--algo",
-        type=str,
-        default="PPO",
-        choices=["PPO", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"],
-        help="Algorithm class used during training (must match checkpoint class).",
+    add_probe_run_args(
+        parser,
+        include=["scenario"],
+        required={"scenario": True},
+        helps={"scenario": "Path to JSON scenario file"},
     )
-    parser.add_argument("--episodes", type=int, default=10, help="Number of episodes to evaluate")
-    parser.add_argument("--seed", type=int, default=None, help="Optional seed for reproducible episode randomization")
+    add_model_load_args(
+        parser,
+        include=["model"],
+        required={"model": True},
+        helps={"model": "Path to trained model (zip)"},
+    )
+    add_model_load_args(
+        parser,
+        include=["algo"],
+        defaults={"algo": "PPO"},
+        choices={"algo": ["PPO", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"]},
+        helps={"algo": "Algorithm class used during training (must match checkpoint class)."},
+    )
+    add_probe_run_args(
+        parser,
+        include=["episodes", "seed"],
+        defaults={"episodes": 10, "seed": None},
+        helps={
+            "episodes": "Number of episodes to evaluate",
+            "seed": "Optional seed for reproducible episode randomization",
+        },
+    )
     parser.add_argument("--render", action="store_true", help="Render simulation (if supported)")
     parser.add_argument(
         "--include_visual",
@@ -87,11 +105,12 @@ def main():
         choices=ACTION_MODE_CHOICES,
         help="Action space mode (defaults to train_config env settings).",
     )
-    parser.add_argument(
-        "--train_config",
-        type=str,
-        default=None,
-        help="Optional training config JSON to apply the same action wrapper semantics used during training.",
+    add_model_load_args(
+        parser,
+        include=["train_config"],
+        helps={
+            "train_config": "Optional training config JSON to apply the same action wrapper semantics used during training."
+        },
     )
     
     args = parser.parse_args()

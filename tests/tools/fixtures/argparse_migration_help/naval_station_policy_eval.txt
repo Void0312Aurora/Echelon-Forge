@@ -1,0 +1,26 @@
+usage: naval_station_policy_eval.py [-h] --scenario SCENARIO --train_config
+                                    TRAIN_CONFIG [--steps STEPS] [--seed SEED]
+                                    [--worker_threads WORKER_THREADS]
+                                    [--json_out JSON_OUT]
+                                    [--mode {baseline,offstation_probe}]
+                                    [--station_radius_offset_m STATION_RADIUS_OFFSET_M]
+                                    [--report-envelope]
+
+Evaluate maintained naval station cooperative policy gates.
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO
+  --train_config TRAIN_CONFIG
+  --steps STEPS
+  --seed SEED
+  --worker_threads WORKER_THREADS
+  --json_out JSON_OUT
+  --mode {baseline,offstation_probe}
+                        baseline runs the zero-action station hold gate;
+                        offstation_probe checks station-order reward-reference
+                        closure.
+  --station_radius_offset_m STATION_RADIUS_OFFSET_M
+  --report-envelope     Wrap the JSON output in the opt-in report envelope
+                        (tool id, schema version, timestamp, git rev, optional
+                        experiment ref). Default: disabled, output unchanged.

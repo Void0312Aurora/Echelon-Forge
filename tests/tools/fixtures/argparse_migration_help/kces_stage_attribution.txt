@@ -1,0 +1,21 @@
+usage: kill_chain_expectation_stage_attribution.py [-h] --input INPUT
+                                                   [--output-dir OUTPUT_DIR]
+                                                   [--prefix PREFIX]
+                                                   [--variant VARIANT]
+                                                   [--target-motion-layer TARGET_MOTION_LAYER]
+                                                   [--date-stamp DATE_STAMP]
+
+Attribute KCES before-report rows to the first review stage.
+
+options:
+  -h, --help            show this help message and exit
+  --input INPUT         Before-report JSON path.
+  --output-dir OUTPUT_DIR
+                        Output directory. Defaults to the input file
+                        directory.
+  --prefix PREFIX
+  --variant VARIANT
+  --target-motion-layer TARGET_MOTION_LAYER
+  --date-stamp DATE_STAMP
+                        Filename date stamp, for example 20260623. Defaults to
+                        today.

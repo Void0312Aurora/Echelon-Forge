@@ -1,0 +1,12 @@
+usage: scope_bucket_review.py [-h] [--output-dir OUTPUT_DIR] [--stdout]
+
+Generate retained RES-007/RES-008 scope-bucket independent-review gate
+artifacts for the A2 blast-fragmentation candidate package.
+
+options:
+  -h, --help            show this help message and exit
+  --output-dir OUTPUT_DIR
+                        Directory for retained JSON artifacts. Defaults to the
+                        candidate retained-artifacts gate directory.
+  --stdout              Also print the gate JSON to stdout after writing
+                        retained artifacts.

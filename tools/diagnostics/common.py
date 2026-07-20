@@ -8,6 +8,7 @@ import os
 import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 # Canonical dest names for shared probe CLI groups (always underscore).
@@ -41,15 +42,39 @@ def add_dual_option(
     form is registered with ``help=argparse.SUPPRESS`` so help text stays
     byte-identical to historical single-form scripts while both spellings parse
     to the same underscore ``dest``.
+
+    ``required=True`` needs special handling: argparse tracks "was this
+    argument seen" per *action*, not per *dest*, so two independently
+    ``required=True`` actions sharing one dest would force a caller to spell
+    out both the primary and the alias. Registering the pair as a required
+    mutually exclusive group instead requires exactly one of the two
+    spellings, which is the actual "either form satisfies the requirement"
+    contract implied by "dual option". This changes the error text argparse
+    prints when *neither* form is supplied (``one of the arguments ... is
+    required`` instead of ``the following arguments are required: ...``);
+    ``--help`` output is unaffected either way (verified empirically: a
+    suppressed group member renders in neither the usage line nor the
+    detailed listing, same as a suppressed plain alias). One further semantic
+    shift under ``required=True``: supplying *both* spellings in one
+    invocation now raises argparse's mutually-exclusive error, where the old
+    (unusable) registration would have silently let the later value win --
+    no historical call site ever reached the old behavior, so this only
+    constrains new required-dual adopters.
     """
 
     kwargs = dict(kwargs)
     kwargs["dest"] = dest
     if dest in _DUAL_OPTION_DESTS or "_" in dest:
         primary_opt, alias_opt = _option_strings(dest, primary=primary)
-        parser.add_argument(primary_opt, **kwargs)
         alias_kwargs = dict(kwargs)
         alias_kwargs["help"] = argparse.SUPPRESS
+        if kwargs.pop("required", False):
+            alias_kwargs.pop("required", None)
+            group = parser.add_mutually_exclusive_group(required=True)
+            group.add_argument(primary_opt, **kwargs)
+            group.add_argument(alias_opt, **alias_kwargs)
+            return
+        parser.add_argument(primary_opt, **kwargs)
         parser.add_argument(alias_opt, **alias_kwargs)
         return
     # Single-token names have identical underscore/hyphen spellings.
@@ -82,6 +107,7 @@ def add_probe_run_args(
     helps: Mapping[str, str | None] | None = None,
     required: Mapping[str, bool] | None = None,
     types: Mapping[str, Any] | None = None,
+    choices: Mapping[str, Sequence[Any]] | None = None,
     option_primary: Mapping[str, str] | None = None,
 ) -> None:
     """Add shared probe-run options: scenario / episodes / seed / max_steps."""
@@ -90,6 +116,7 @@ def add_probe_run_args(
     helps = dict(helps or {})
     required = dict(required or {})
     types = dict(types or {})
+    choices = dict(choices or {})
     option_primary = dict(option_primary or {})
     default_types: dict[str, Any] = {
         "episodes": int,
@@ -107,6 +134,8 @@ def add_probe_run_args(
             kwargs["help"] = helps[name]
         if name in required:
             kwargs["required"] = bool(required[name])
+        if name in choices:
+            kwargs["choices"] = choices[name]
         add_dual_option(
             parser,
             name,
@@ -124,6 +153,7 @@ def add_model_load_args(
     helps: Mapping[str, str | None] | None = None,
     required: Mapping[str, bool] | None = None,
     types: Mapping[str, Any] | None = None,
+    choices: Mapping[str, Sequence[Any]] | None = None,
     option_primary: Mapping[str, str] | None = None,
 ) -> None:
     """Add shared model-load options: train_config / model / algo / device."""
@@ -132,6 +162,7 @@ def add_model_load_args(
     helps = dict(helps or {})
     required = dict(required or {})
     types = dict(types or {})
+    choices = dict(choices or {})
     option_primary = dict(option_primary or {})
     for name in _resolve_include(MODEL_LOAD_ARG_NAMES, include=include, exclude=exclude):
         kwargs: dict[str, Any] = {}
@@ -143,6 +174,8 @@ def add_model_load_args(
             kwargs["help"] = helps[name]
         if name in required:
             kwargs["required"] = bool(required[name])
+        if name in choices:
+            kwargs["choices"] = choices[name]
         add_dual_option(
             parser,
             name,
@@ -167,6 +200,44 @@ def add_json_out_arg(
     if required:
         kwargs["required"] = True
     add_dual_option(parser, "json_out", primary=option_primary, **kwargs)
+
+
+def add_kces_before_report_args(
+    parser: argparse.ArgumentParser,
+    *,
+    variant_default: str,
+    target_motion_layer_default: str,
+    date_stamp_example: str,
+    input_help: str = "Before-report JSON path.",
+) -> None:
+    """Add the shared KCES before-report options.
+
+    Covers ``--input``/``--output-dir``/``--prefix``/``--variant``/
+    ``--target-motion-layer``/``--date-stamp``, shared verbatim by the four
+    KCES before-report consumers (response diagnosis, stage attribution,
+    visualize, envelope audit). ``variant_default`` and
+    ``target_motion_layer_default`` stay caller-supplied so each script's
+    local ``DEFAULT_VARIANT``/``DEFAULT_TARGET_MOTION_LAYER`` constant (also
+    used by that script's non-CLI report-generation code) remains the single
+    source of truth; only ``date_stamp_example`` varies today (each caller's
+    help text names a different example date).
+    """
+
+    parser.add_argument("--input", required=True, type=Path, help=input_help)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Output directory. Defaults to the input file directory.",
+    )
+    parser.add_argument("--prefix", default="kces_anchor_cv")
+    parser.add_argument("--variant", default=variant_default)
+    parser.add_argument("--target-motion-layer", default=target_motion_layer_default)
+    parser.add_argument(
+        "--date-stamp",
+        default=None,
+        help=f"Filename date stamp, for example {date_stamp_example}. Defaults to today.",
+    )
 
 
 def load_json_config(path: str) -> dict[str, Any]:

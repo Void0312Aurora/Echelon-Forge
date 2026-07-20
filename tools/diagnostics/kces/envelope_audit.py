@@ -17,7 +17,7 @@ _REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
 if _REPO_ROOT_HINT not in sys.path:
   sys.path.insert(0, _REPO_ROOT_HINT)
 
-from tools.diagnostics.common import finite_float_or_none, write_json_output
+from tools.diagnostics.common import add_kces_before_report_args, finite_float_or_none, write_json_output
 
 SCHEMA_VERSION = "a2.kill_chain_expectation_envelope_audit.v1"
 ENVELOPE_SCHEMA_VERSION = "a2.kill_chain_expectation_envelope.v0"
@@ -506,20 +506,11 @@ def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Apply the KCES expectation envelope to a before report."
   )
-  parser.add_argument("--input", required=True, type=Path, help="Before-report JSON path.")
-  parser.add_argument(
-    "--output-dir",
-    type=Path,
-    default=None,
-    help="Output directory. Defaults to the input file directory.",
-  )
-  parser.add_argument("--prefix", default="kces_anchor_cv")
-  parser.add_argument("--variant", default=DEFAULT_VARIANT)
-  parser.add_argument("--target-motion-layer", default=DEFAULT_TARGET_MOTION_LAYER)
-  parser.add_argument(
-    "--date-stamp",
-    default=None,
-    help="Filename date stamp, for example 20260706. Defaults to today.",
+  add_kces_before_report_args(
+    parser,
+    variant_default=DEFAULT_VARIANT,
+    target_motion_layer_default=DEFAULT_TARGET_MOTION_LAYER,
+    date_stamp_example="20260706",
   )
   args = parser.parse_args(argv)
 

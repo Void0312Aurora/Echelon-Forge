@@ -1,0 +1,38 @@
+usage: policy_execution_eval.py [-h] [--mode {cooperative,single}] --scenario
+                                SCENARIO --train_config TRAIN_CONFIG --model
+                                MODEL [--algo ALGO] [--episodes EPISODES]
+                                [--seed SEED] [--stochastic] [--device DEVICE]
+                                [--include_visual | --no-include_visual]
+                                [--include_proprio | --no-include_proprio]
+                                [--mission_obs_mode {basic,nav_v1,nav_v2,nav_v2_formation_v1,nav_v2_formation_role_v1,naval_screen_station_v1}]
+                                [--visual_downsample VISUAL_DOWNSAMPLE]
+                                [--visual_update_interval VISUAL_UPDATE_INTERVAL]
+                                [--temporal_history_len TEMPORAL_HISTORY_LEN]
+                                [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}]
+                                [--json_out JSON_OUT] [--max_steps MAX_STEPS]
+
+Evaluate single-agent and cooperative learned execution policies.
+
+options:
+  -h, --help            show this help message and exit
+  --mode {cooperative,single}
+                        Evaluation mode.
+  --scenario SCENARIO
+  --train_config TRAIN_CONFIG
+  --model MODEL         Path to SB3 model zip.
+  --algo ALGO           auto / AdaptiveKLPPO / PPO
+  --episodes EPISODES
+  --seed SEED
+  --stochastic
+  --device DEVICE       Policy inference device: auto / cpu / cuda
+  --include_visual, --no-include_visual
+                        Override env visual flag from train config.
+  --include_proprio, --no-include_proprio
+                        Override env proprio flag from train config.
+  --mission_obs_mode {basic,nav_v1,nav_v2,nav_v2_formation_v1,nav_v2_formation_role_v1,naval_screen_station_v1}
+  --visual_downsample VISUAL_DOWNSAMPLE
+  --visual_update_interval VISUAL_UPDATE_INTERVAL
+  --temporal_history_len TEMPORAL_HISTORY_LEN
+  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}
+  --json_out JSON_OUT   Optional JSON output path.
+  --max_steps MAX_STEPS

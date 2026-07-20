@@ -1,0 +1,41 @@
+usage: leader_perf_probe.py [-h] --scenario SCENARIO --train_config
+                            TRAIN_CONFIG [--n_envs N_ENVS]
+                            [--leader_steps LEADER_STEPS]
+                            [--vec_backend {auto,subproc,shared,dummy}]
+                            [--torch_threads TORCH_THREADS]
+                            [--torch_interop_threads TORCH_INTEROP_THREADS]
+                            [--execution_device EXECUTION_DEVICE]
+                            [--execution_use_autocast | --no-execution_use_autocast]
+                            [--collect-step-timing | --no-collect-step-timing | --collect_step_timing | --no-collect_step_timing]
+                            [--execution-step-runtime-mode {compiled}]
+                            [--sim-log-level SIM_LOG_LEVEL]
+
+Quick throughput probe for leader-layer environments.
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO   Scenario JSON path.
+  --train_config TRAIN_CONFIG
+                        Leader-layer train config JSON path.
+  --n_envs N_ENVS       Override number of envs from config.
+  --leader_steps LEADER_STEPS
+                        Number of vectorized leader steps to run.
+  --vec_backend {auto,subproc,shared,dummy}
+                        Vector env backend for the probe.
+  --torch_threads TORCH_THREADS
+                        Optional PyTorch intra-op thread count.
+  --torch_interop_threads TORCH_INTEROP_THREADS
+                        Optional PyTorch inter-op thread count.
+  --execution_device EXECUTION_DEVICE
+                        Device for low-level execution inference.
+  --execution_use_autocast, --no-execution_use_autocast
+                        Enable autocast for low-level execution inference.
+  --collect-step-timing, --no-collect-step-timing, --collect_step_timing, --no-collect_step_timing
+                        Collect and report per-segment timing breakdowns from
+                        the leader env.
+  --execution-step-runtime-mode {compiled}, --execution_step_runtime_mode {compiled}
+                        Select the execution step runtime path inside the low-
+                        level execution env.
+  --sim-log-level SIM_LOG_LEVEL, --sim_log_level SIM_LOG_LEVEL
+                        Simulation log level for the probe process (for
+                        example: trace, debug, info, warn, error).

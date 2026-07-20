@@ -30,6 +30,7 @@ REPO_ROOT = Path(repo_root())
 
 from tools.maintenance.retained_artifacts.manifest_integrity import (
   _sha256_file,
+  add_retained_gate_output_args,
   write_and_hash_json,
 )
 PACKAGE_ID = (
@@ -677,16 +678,10 @@ def main(argv: list[str] | None = None) -> int:
       "Generate retained RES-011/012 independent review closeout gate artifacts."
     )
   )
-  parser.add_argument(
-    "--output-dir",
-    type=Path,
-    default=DEFAULT_RETAINED_DIR,
-    help="Directory for retained JSON artifacts.",
-  )
-  parser.add_argument(
-    "--stdout",
-    action="store_true",
-    help="Also print the gate JSON after writing retained artifacts.",
+  add_retained_gate_output_args(
+    parser,
+    retained_dir_default=DEFAULT_RETAINED_DIR,
+    stdout_help="Also print the gate JSON after writing retained artifacts.",
   )
   args = parser.parse_args(argv)
 

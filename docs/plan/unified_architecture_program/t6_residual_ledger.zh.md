@@ -309,6 +309,8 @@ retained 文件零改动；三个文件与 HEAD 始终字节一致。
 | `tests/gpu` 的 `build-gpu` 缺失红 | `pytest tests/gpu/test_cuda_import_order.py::CudaImportOrderTests::test_world_batch_vec_env_import_after_torch_runtime_setup` 失败：其拉起的子进程报 `ModuleNotFoundError: No module named 'ef_py'`，因为本工作树只有 `build-local-win/`，没有 `build-gpu/`。 | I34 登记行 |
 | diagnostics 脚本治理红 | `tests/architecture/governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function`——I35 评审首次在干净 48c86c4b 检出上复现；I38 评审再次确认；于 I38 落地时补入。 | I35/I38 评审 |
 | 2 处空战校准漂移红 | `tests/runtime/air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` 与 `tests/runtime/air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events`（签名 `'detonated_no_effect' == 'damage_applied'`）。I38 评审用 2026-07-18 改动前旧二进制直接复现两者——比同二进制 stash 对照更强的固有性证明——确证为与任何已落地迭代无关的本机产品/校准漂移，与 I28 裁定的漂移族同源。 | I38 评审 |
+| `platform_spawn` 的 spdlog 采集错误 | `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` 收集期报 `Could not find include directory for CMake dependency 'spdlog'`——与上方 flecs 条目同家族但依赖不同、文件此前未列；I44 评审在写集完全无涉 CMake 依赖解析的前提下复现。于 I44 落地时补入。 | I44 评审 |
+| `source_evidence_governance` 既有红 | `tests/architecture/damage_model/test_source_evidence_governance.py` 既有失败（单独跑 1 failed+5 errors；混跑 4 failed+5 errors——存在顺序敏感性）。根因链完全在任何已落地写集之外：`tools/maintenance/source_governance/rights_output_policy.py:107` 向 `re.sub` 传入 `None`。`test_source_admission_audit.py` 单独跑 6 passed。由 I44 评审超集扫描暴露；于 I44 落地时补入。 | I44 评审 |
 
 沿用 I34 独立复核并作为本迭代起始基线的门禁计数：维护 smoke
 `436 passed, 45 subtests`；聚焦 `world_batch`+leader+facade 选集

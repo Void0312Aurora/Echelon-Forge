@@ -29,7 +29,7 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
-from tools.diagnostics.common import finite_float_or_none, write_json_output
+from tools.diagnostics.common import add_kces_before_report_args, finite_float_or_none, write_json_output
 SCHEMA_VERSION = "a2.kill_chain_expectation_response_diagnosis.v2"
 DEFAULT_VARIANT = "REV-RUNTIME-PROJECTION"
 DEFAULT_TARGET_MOTION_LAYER = "nonmaneuvering_constant_velocity"
@@ -713,20 +713,11 @@ def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Diagnose KCES component-response review cells from a before report."
   )
-  parser.add_argument("--input", required=True, type=Path, help="Before-report JSON path.")
-  parser.add_argument(
-    "--output-dir",
-    type=Path,
-    default=None,
-    help="Output directory. Defaults to the input file directory.",
-  )
-  parser.add_argument("--prefix", default="kces_anchor_cv")
-  parser.add_argument("--variant", default=DEFAULT_VARIANT)
-  parser.add_argument("--target-motion-layer", default=DEFAULT_TARGET_MOTION_LAYER)
-  parser.add_argument(
-    "--date-stamp",
-    default=None,
-    help="Filename date stamp, for example 20260628. Defaults to today.",
+  add_kces_before_report_args(
+    parser,
+    variant_default=DEFAULT_VARIANT,
+    target_motion_layer_default=DEFAULT_TARGET_MOTION_LAYER,
+    date_stamp_example="20260628",
   )
   args = parser.parse_args(argv)
 

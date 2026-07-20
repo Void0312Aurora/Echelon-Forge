@@ -47,6 +47,7 @@ from python.env_config import resolve_env_settings
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.control.wrappers import get_action_wrapper_spec
+from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 
 
 @dataclass(frozen=True)
@@ -498,13 +499,19 @@ def _save_plot(data: dict[str, Any], output_path: str) -> None:
 
 def _main() -> int:
     p = argparse.ArgumentParser(description="Export 2D trajectory diagnostics for the continuous takeoff-to-landing task.")
-    p.add_argument("--scenario", type=str, required=True)
-    p.add_argument("--train_config", type=str, required=True)
-    p.add_argument("--model", type=str, default=None, help="SB3 model zip/path. Omit for scripted baseline.")
-    p.add_argument("--algo", type=str, default="auto", help="auto / AdaptiveKLPPO / PPO")
+    add_probe_run_args(p, include=["scenario"], required={"scenario": True})
+    add_model_load_args(p, include=["train_config"], required={"train_config": True})
+    add_model_load_args(
+        p,
+        include=["model", "algo"],
+        defaults={"algo": "auto"},
+        helps={
+            "model": "SB3 model zip/path. Omit for scripted baseline.",
+            "algo": "auto / AdaptiveKLPPO / PPO",
+        },
+    )
     p.add_argument("--scripted", action="store_true", help="Run the pure scripted baseline (wrapper residual scale forced to zero).")
-    p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--max_steps", type=int, default=None)
+    add_probe_run_args(p, include=["seed", "max_steps"], defaults={"seed": 0, "max_steps": None})
     p.add_argument("--zero_randomization", action="store_true")
     p.add_argument("--output", type=str, required=True, help="PNG output path")
     args = p.parse_args()

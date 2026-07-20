@@ -1,0 +1,25 @@
+usage: diagnose_cooperative_trajectory.py [-h] --task
+                                          {takeoff,takeoff_to_cruise}
+                                          --scenario SCENARIO --train_config
+                                          TRAIN_CONFIG [--model MODEL]
+                                          [--algo ALGO] [--scripted]
+                                          [--seed SEED]
+                                          [--curriculum_stage CURRICULUM_STAGE]
+                                          [--max_world_steps MAX_WORLD_STEPS]
+                                          --output OUTPUT
+
+Export one cooperative trajectory diagnostic episode.
+
+options:
+  -h, --help            show this help message and exit
+  --task {takeoff,takeoff_to_cruise}
+  --scenario SCENARIO
+  --train_config TRAIN_CONFIG
+  --model MODEL         Path to SB3 model zip/path. Omit when using
+                        --scripted.
+  --algo ALGO           auto / AdaptiveKLPPO / PPO
+  --scripted            Run the scripted residual-zero baseline.
+  --seed SEED
+  --curriculum_stage CURRICULUM_STAGE
+  --max_world_steps MAX_WORLD_STEPS
+  --output OUTPUT       PNG output path
