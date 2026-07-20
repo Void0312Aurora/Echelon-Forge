@@ -317,21 +317,31 @@ function buildTerrainMesh(terrain, helpers) {
     return mesh;
 }
 
-function shapeFromRings(rings) {
-    let shape = null;
-    for (const ring of rings) {
+// One shape per outer ring; holes attach to the outer of their own polygon
+// (MultiPolygon buildings would otherwise lose every polygon after the
+// first and mis-assign holes to it).
+function shapesFromRings(rings) {
+    const groups = new Map();
+    for (const ring of rings || []) {
         const points = (ring.points || []).map((p) => new THREE.Vector2(Number(p[0]), Number(p[1])));
         if (points.length < 3) continue;
+        const polygonKey = Number.isFinite(Number(ring.polygon)) ? Number(ring.polygon) : 0;
+        if (!groups.has(polygonKey)) groups.set(polygonKey, { outer: null, holes: [] });
+        const entry = groups.get(polygonKey);
         if (ring.role !== 'hole') {
-            if (shape === null) {
-                shape = new THREE.Shape(points);
-            }
-            // Additional outer rings become separate shapes handled by caller.
-        } else if (shape !== null) {
-            shape.holes.push(new THREE.Path(points));
+            if (entry.outer === null) entry.outer = points;
+        } else {
+            entry.holes.push(points);
         }
     }
-    return shape;
+    const shapes = [];
+    for (const entry of groups.values()) {
+        if (!entry.outer) continue;
+        const shape = new THREE.Shape(entry.outer);
+        for (const hole of entry.holes) shape.holes.push(new THREE.Path(hole));
+        shapes.push(shape);
+    }
+    return shapes;
 }
 
 function buildBuildingsMesh(buildings) {
@@ -339,10 +349,10 @@ function buildBuildingsMesh(buildings) {
     const material = new THREE.MeshLambertMaterial({ color: 0x8d8878, transparent: true, opacity: 0.92 });
     const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xcfc5a0, transparent: true, opacity: 0.35 });
     for (const building of buildings || []) {
-        const shape = shapeFromRings(building.rings || []);
-        if (!shape) continue;
+        const shapes = shapesFromRings(building.rings || []);
+        if (shapes.length === 0) continue;
         const height = Math.max(1.0, Number(building.height_m) || 1.0);
-        const geometry = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+        const geometry = new THREE.ExtrudeGeometry(shapes, { depth: height, bevelEnabled: false });
         // Shape lies in the XY plane extruded along +Z; rotate so the prism
         // rises along +Y with ENU north mapped to -Z.
         geometry.rotateX(-Math.PI / 2);

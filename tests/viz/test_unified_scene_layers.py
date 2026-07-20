@@ -3,6 +3,14 @@ from __future__ import annotations
 from frontend_sources import frontend_text, js_text
 
 
+def test_multipolygon_buildings_group_shapes_per_outer_ring():
+    scene3d = js_text("scene3d")
+    assert "function shapesFromRings" in scene3d
+    assert "ring.polygon" in scene3d
+    # The old first-outer-only helper is gone.
+    assert "function shapeFromRings(" not in scene3d
+
+
 def test_linear_water_renders_as_stroke_and_ribbon_not_polygon():
     # 2D: line-role paths stroke at authored width; fills stay polygon-only.
     scene_geometry = js_text("scene-geometry")

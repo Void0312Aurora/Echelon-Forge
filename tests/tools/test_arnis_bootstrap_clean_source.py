@@ -32,6 +32,14 @@ def _git(repo: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
+def _write_lf(path: Path, text: str) -> None:
+    # Explicit LF bytes: Python's text mode would write os.linesep and a
+    # global core.autocrlf=true would then make disk bytes diverge from blob
+    # bytes -- exactly the filter ambiguity the bootstrap refuses to trust.
+    with path.open("w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+
+
 @pytest.fixture()
 def pinned_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, dict]:
     """A pinned commit plus a synthetic patch that edits AND adds files."""
@@ -40,21 +48,26 @@ def pinned_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, 
     _git(repo, "init", "--quiet")
     _git(repo, "config", "user.email", "test@example.com")
     _git(repo, "config", "user.name", "Test")
+    # Mirror the bootstrap's filter-free checkout contract.
+    _git(repo, "config", "core.autocrlf", "false")
+    _git(repo, "config", "core.filemode", "false")
     (repo / "src").mkdir()
-    (repo / "src" / "main.rs").write_text(
-        "fn main() {\n    one();\n    two();\n    three();\n}\n", encoding="utf-8"
+    _write_lf(
+        repo / "src" / "main.rs",
+        "fn main() {\n    one();\n    two();\n    three();\n}\n",
     )
-    (repo / "Cargo.toml").write_text('[package]\nname = "arnis"\n', encoding="utf-8")
+    _write_lf(repo / "Cargo.toml", '[package]\nname = "arnis"\n')
     _git(repo, "add", "-A")
     _git(repo, "commit", "--quiet", "-m", "pinned")
     commit = _git(repo, "rev-parse", "HEAD")
 
     # Author the patch with git itself so the format (incl. new-file hunks)
     # is exactly what `git apply` expects; then restore the pinned state.
-    (repo / "src" / "main.rs").write_text(
-        "fn main() {\n    one();\n    two_patched();\n    three();\n}\n", encoding="utf-8"
+    _write_lf(
+        repo / "src" / "main.rs",
+        "fn main() {\n    one();\n    two_patched();\n    three();\n}\n",
     )
-    (repo / "src" / "cmo_export.rs").write_text("pub fn export() {}\n", encoding="utf-8")
+    _write_lf(repo / "src" / "cmo_export.rs", "pub fn export() {}\n")
     _git(repo, "add", "-A")
     patch_text = _git(repo, "diff", "--cached", "--binary")
     _git(repo, "reset", "--hard", commit, "--quiet")
@@ -108,6 +121,30 @@ def test_untracked_cargo_config_rejected(pinned_repo: tuple[Path, dict]) -> None
     (cargo_dir / "config.toml").write_text('[build]\nrustc-wrapper = "evil"\n', encoding="utf-8")
     with pytest.raises(ArnisBootstrapError, match="refusing to build"):
         _ensure_patch_applied(repo, lock)
+
+
+def test_clean_filter_poisoning_rejected(pinned_repo: tuple[Path, dict]) -> None:
+    # A poisoned repository-local clean filter (.git/config +
+    # .git/info/attributes) makes `git add`/`git hash-object` hash "expected"
+    # bytes while cargo reads the modified file. Raw-byte verification must
+    # see the on-disk content and reject it (and must not run the filter).
+    repo, lock = pinned_repo
+    _ensure_patch_applied(repo, lock)
+    marker = repo / "filter-ran.marker"
+    # Filter emits the pristine pinned bytes for main.rs while the disk copy
+    # is modified; it also drops a marker file if anything executes it.
+    pristine = "fn main() {\\n    one();\\n    two_patched();\\n    three();\\n}\\n"
+    _git(repo, "config", "filter.evil.clean", f"sh -c 'touch {marker.name}; printf \"{pristine}\"'")
+    attributes = repo / ".git" / "info" / "attributes"
+    attributes.parent.mkdir(parents=True, exist_ok=True)
+    attributes.write_text("src/main.rs filter=evil\n", encoding="utf-8")
+    main_rs = repo / "src" / "main.rs"
+    main_rs.write_text(
+        "fn main() {\n    evil_payload();\n}\n", encoding="utf-8"
+    )
+    with pytest.raises(ArnisBootstrapError, match="refusing to build"):
+        _ensure_patch_applied(repo, lock)
+    assert not marker.exists(), "verification must never execute git filters"
 
 
 def test_gitignore_hidden_cargo_config_rejected(pinned_repo: tuple[Path, dict]) -> None:

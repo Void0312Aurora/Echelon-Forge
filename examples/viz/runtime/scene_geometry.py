@@ -67,8 +67,19 @@ def _points_xyz(path: list[list[float]]) -> list[list[float]]:
     return [[_round3(point[0]), _round3(point[1]), _round3(point[2])] for point in path]
 
 
-def _downsample_step(rows: int, cols: int, max_dim: int) -> int:
-    return max(1, int(math.ceil(max(rows, cols) / float(max_dim))))
+def _bilinear_resample(grid: np.ndarray, row_pos: np.ndarray, col_pos: np.ndarray) -> np.ndarray:
+    r0 = np.floor(row_pos).astype(int)
+    c0 = np.floor(col_pos).astype(int)
+    r1 = np.minimum(r0 + 1, grid.shape[0] - 1)
+    c1 = np.minimum(c0 + 1, grid.shape[1] - 1)
+    tr = (row_pos - r0)[:, None]
+    tc = (col_pos - c0)[None, :]
+    return (
+        grid[np.ix_(r0, c0)] * (1.0 - tr) * (1.0 - tc)
+        + grid[np.ix_(r0, c1)] * (1.0 - tr) * tc
+        + grid[np.ix_(r1, c0)] * tr * (1.0 - tc)
+        + grid[np.ix_(r1, c1)] * tr * tc
+    )
 
 
 def _terrain_payload(
@@ -81,30 +92,47 @@ def _terrain_payload(
     max_dim: int = MAX_TERRAIN_GRID_DIM,
 ) -> dict[str, Any]:
     rows, cols = elevation.shape
-    step = _downsample_step(rows, cols, max_dim)
-    sampled = elevation[::step, ::step]
-    sampled_x = x_axis[::step]
-    sampled_y = y_axis[::step]
-    finite = sampled[np.isfinite(sampled)]
+    finite = elevation[np.isfinite(elevation)]
     if finite.size == 0:
         raise SceneGeometryError("terrain heightfield contains no finite samples")
-    heights = np.where(np.isfinite(sampled), sampled, float(np.min(finite)))
+    filled = np.where(np.isfinite(elevation), elevation, float(np.min(finite)))
+
+    # Per-axis endpoint-preserving resample onto a uniform target grid: a
+    # single shared stride would collapse long, narrow rasters to one sample
+    # wide and drop the final east/south samples. Bilinear resampling keeps
+    # both endpoints exactly and stays uniform, so the frontend's
+    # origin+step*i coordinate model remains valid.
+    target_rows = int(min(rows, max_dim))
+    target_cols = int(min(cols, max_dim))
+    row_pos = np.linspace(0.0, rows - 1.0, target_rows)
+    col_pos = np.linspace(0.0, cols - 1.0, target_cols)
+    heights = _bilinear_resample(filled, row_pos, col_pos)
+
+    x_start, x_end = float(x_axis[0]), float(x_axis[-1])
+    y_start, y_end = float(y_axis[0]), float(y_axis[-1])
 
     payload: dict[str, Any] = {
-        "rows": int(heights.shape[0]),
-        "cols": int(heights.shape[1]),
-        "origin_x": _round3(sampled_x[0]),
-        "origin_y": _round3(sampled_y[0]),
-        "step_x": float(x_axis[1] - x_axis[0]) * step,
-        "step_y": float(y_axis[1] - y_axis[0]) * step,
+        "rows": int(target_rows),
+        "cols": int(target_cols),
+        "origin_x": _round3(x_start),
+        "origin_y": _round3(y_start),
+        "step_x": (x_end - x_start) / max(1, target_cols - 1),
+        "step_y": (y_end - y_start) / max(1, target_rows - 1),
         "source_shape": [int(rows), int(cols)],
-        "downsample_step": int(step),
+        "downsample_step": max(
+            1, int(math.ceil(rows / float(target_rows))), int(math.ceil(cols / float(target_cols)))
+        ),
+        "sampling": "bilinear_endpoint_preserving_per_axis",
         "min_m": _round3(np.min(finite)),
         "max_m": _round3(np.max(finite)),
         "heights": [[_round3(v) for v in row] for row in heights.tolist()],
     }
     if landcover is not None:
-        classes = landcover[::step, ::step]
+        # Categories resample nearest-neighbor onto the same target grid so
+        # land cover stays aligned with the height samples.
+        row_idx = np.round(row_pos).astype(int)
+        col_idx = np.round(col_pos).astype(int)
+        classes = landcover[np.ix_(row_idx, col_idx)]
         payload["landcover"] = {
             "legend": dict(landcover_legend),
             "sampling": "nearest_category_only",
@@ -176,7 +204,7 @@ def _building_entry(item: dict[str, Any]) -> dict[str, Any] | None:
         polygons = coordinates
     else:
         return None
-    for polygon in polygons:
+    for polygon_index, polygon in enumerate(polygons):
         if not isinstance(polygon, list) or not polygon:
             continue
         for ring_index, ring in enumerate(polygon):
@@ -185,6 +213,9 @@ def _building_entry(item: dict[str, Any]) -> dict[str, Any] | None:
             rings.append(
                 {
                     "role": "outer" if ring_index == 0 else "hole",
+                    # MultiPolygon grouping: holes belong to their own outer
+                    # ring, not to whichever outer happens to come first.
+                    "polygon": int(polygon_index),
                     "points": _points_xy(ring),
                 }
             )

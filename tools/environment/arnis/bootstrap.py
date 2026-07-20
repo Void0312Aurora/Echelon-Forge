@@ -86,6 +86,12 @@ def _ensure_checkout(lock: dict[str, Any], source_dir: Path) -> None:
             (
                 "git",
                 "clone",
+                # Filter-free checkout: on-disk bytes must equal blob bytes
+                # so the raw-byte verification can compare them directly.
+                "-c",
+                "core.autocrlf=false",
+                "-c",
+                "core.filemode=false",
                 "--filter=blob:none",
                 "--no-checkout",
                 str(upstream["repository"]),
@@ -123,43 +129,76 @@ def _expected_patched_tree_id(source_dir: Path, pinned_commit: str) -> str:
         )
 
 
-def _actual_worktree_tree_id(source_dir: Path) -> str:
-    """Tree id of the working tree contents (tracked + untracked + ignored).
+def _git_blob_sha1(data: bytes) -> str:
+    header = f"blob {len(data)}\0".encode("ascii")
+    return hashlib.sha1(header + data).hexdigest()
 
-    `--force` matters: exclude rules (.gitignore, .git/info/exclude, global
-    excludes) are attacker-writable in a cached checkout, so an ignored
-    .cargo/config.toml could otherwise hide a rustc-wrapper from the tree
-    comparison while cargo still executes it.
+
+def _expected_blobs(source_dir: Path, tree_id: str) -> dict[str, str]:
+    """path -> blob sha map for a tree, read straight from the object db."""
+    listing = _run(("git", "ls-tree", "-r", "-z", tree_id), cwd=source_dir).stdout
+    blobs: dict[str, str] = {}
+    for record in listing.split("\0"):
+        if not record:
+            continue
+        meta, _tab, path = record.partition("\t")
+        parts = meta.split()
+        if len(parts) < 3:
+            raise ArnisBootstrapError(f"unparseable ls-tree record: {record!r}")
+        blobs[path] = parts[2]
+    return blobs
+
+
+def _actual_raw_blobs(source_dir: Path) -> dict[str, str]:
+    """path -> blob sha map hashed from raw on-disk bytes.
+
+    Deliberately avoids `git add`/`git hash-object` on the worktree: those
+    honor repository-local clean filters and .git/info/attributes, which are
+    attacker-writable in a cached checkout -- a poisoned filter could hash
+    "expected" bytes while cargo reads modified files, or execute code during
+    verification. Hashing raw bytes with hashlib has no such hooks.
     """
-    with tempfile.TemporaryDirectory(prefix="arnis-verify-") as tmp:
-        index_file = Path(tmp) / "actual-index"
-        return _git_tree_id(
-            source_dir,
-            index_file,
-            ("add", "-A", "--force"),
-        )
+    blobs: dict[str, str] = {}
+    for path in sorted(source_dir.rglob("*")):
+        if path.is_dir():
+            continue
+        relative = path.relative_to(source_dir).as_posix()
+        if relative == ".git" or relative.startswith(".git/"):
+            continue
+        blobs[relative] = _git_blob_sha1(path.read_bytes())
+    return blobs
 
 
 def _verify_worktree_matches_tree(
     source_dir: Path, expected_tree: str, *, context: str
 ) -> None:
-    """Fail closed unless the working tree is byte-identical to the tree.
+    """Fail closed unless on-disk bytes exactly match the expected tree.
 
-    Comparing tree ids covers tracked edits, untracked additions, and
-    deletions in one shot -- including edits inside files the patch touches,
-    which hunk-context checks like `git apply --reverse --check` cannot see.
+    Compares raw file bytes (what cargo will actually read) against the blob
+    ids of the expected tree. This covers tracked edits, untracked additions
+    (ignored or not), deletions, and content smuggled behind clean filters.
+    Requires a filter-free checkout (core.autocrlf=false); a legacy checkout
+    that was smudged on disk fails closed and should be re-cloned.
     """
-    actual_tree = _actual_worktree_tree_id(source_dir)
-    if actual_tree == expected_tree:
+    expected = _expected_blobs(source_dir, expected_tree)
+    actual = _actual_raw_blobs(source_dir)
+    if expected == actual:
         return
-    diff = _run(
-        ("git", "diff-tree", "-r", "--name-status", expected_tree, actual_tree),
-        cwd=source_dir,
-        check=False,
-    ).stdout.strip()
+    deviations: list[str] = []
+    for path in sorted(set(expected) | set(actual)):
+        want = expected.get(path)
+        got = actual.get(path)
+        if want == got:
+            continue
+        if want is None:
+            deviations.append(f"added      {path}")
+        elif got is None:
+            deviations.append(f"missing    {path}")
+        else:
+            deviations.append(f"modified   {path}")
     raise ArnisBootstrapError(
         f"Arnis checkout does not match {context}; refusing to build. "
-        f"Deviations:\n{diff or '(tree content differs)'}"
+        "Deviations:\n" + "\n".join(deviations[:40])
     )
 
 
@@ -174,13 +213,13 @@ def _ensure_patch_applied(source_dir: Path, lock: dict[str, Any]) -> None:
     """
     pinned_commit = str(lock["upstream"]["commit"])
     expected_patched = _expected_patched_tree_id(source_dir, pinned_commit)
-    actual = _actual_worktree_tree_id(source_dir)
-    if actual == expected_patched:
+    actual = _actual_raw_blobs(source_dir)
+    if actual == _expected_blobs(source_dir, expected_patched):
         return
     pinned_tree = _run(
         ("git", "rev-parse", f"{pinned_commit}^{{tree}}"), cwd=source_dir
     ).stdout.strip()
-    if actual != pinned_tree:
+    if actual != _expected_blobs(source_dir, pinned_tree):
         # Neither pristine nor exactly-patched: refuse to touch it.
         _verify_worktree_matches_tree(
             source_dir, pinned_tree, context="the pinned commit (before patching)"

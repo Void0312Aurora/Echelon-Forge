@@ -117,17 +117,20 @@ class SessionManager:
         old_session = self.session
         if old_session is not None:
             old_session.stop()
-            # The old worker must be gone before a replacement starts:
-            # two live workers would interleave unscoped state_update
-            # streams. Startup can be slow (env build, model load), so the
-            # session's stop checkpoints bound the wait; if the worker still
-            # will not die, refuse the replacement instead of abandoning it.
+        # Every live worker must be gone before a replacement starts -- not
+        # just the one referenced by self.session: stop_current() clears the
+        # reference while its worker may still be draining. Two live workers
+        # would interleave unscoped state_update streams. Startup can be
+        # slow (env build, model load), so the session's stop checkpoints
+        # bound the wait; if a worker still will not die, refuse the
+        # replacement instead of abandoning it.
+        if self._tasks:
             self._drain_tasks(timeout_s=15.0)
-            if self._tasks:
-                raise RuntimeError(
-                    "previous viz session worker has not terminated; "
-                    "retry once it stops instead of running two sessions"
-                )
+        if self._tasks:
+            raise RuntimeError(
+                "a previous viz session worker has not terminated; "
+                "retry once it stops instead of running two sessions"
+            )
 
         session = VizSession(base, self.socketio, status_callback=self.emit_status)
         self.session = session
@@ -137,14 +140,25 @@ class SessionManager:
         return session
 
     def load_profile(self, profile_ref: str) -> VizSession:
+        # Stage everything outside the lock (pure loads, no manager state),
+        # then commit metadata and start the session atomically under the
+        # transition lock: a refused replacement or a concurrent load must
+        # never leave one profile's metadata paired with another scenario.
         profile = load_viz_profile(profile_ref)
-        self.current_profile = profile
         registry_ref = str(profile.get("asset_registry") or "").strip()
-        self.asset_registry = load_asset_registry(registry_ref or None)
+        staged_registry = load_asset_registry(registry_ref or None)
         bundle_ref = str(profile.get("environment_bundle") or "").strip()
-        self.scene_geometry = load_scene_geometry_payload(bundle_ref) if bundle_ref else None
-        self._scene_geometry_generation += 1
-        session = self.load_session(profile["scenario"], overrides=profile.get("session_overrides"))
+        staged_geometry = load_scene_geometry_payload(bundle_ref) if bundle_ref else None
+
+        with self._transition_lock:
+            session = self._load_session_locked(
+                profile["scenario"], overrides=profile.get("session_overrides")
+            )
+            # The session started; commit the staged metadata with it.
+            self.current_profile = profile
+            self.asset_registry = staged_registry
+            self.scene_geometry = staged_geometry
+            self._scene_geometry_generation += 1
 
         startup = profile.get("startup", {}) if isinstance(profile, dict) else {}
         try:

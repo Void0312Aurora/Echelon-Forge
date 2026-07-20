@@ -129,6 +129,99 @@ def test_scene_geometry_linear_water_keeps_width_and_all_segments(payload: dict)
     assert "width_m" not in entry, "polygon surfaces carry no width"
 
 
+def test_scene_geometry_terrain_preserves_endpoints(payload: dict) -> None:
+  # The resampled grid must span the full source extent: origin+step*(n-1)
+  # lands exactly on the last source sample instead of dropping the final
+  # east/south samples.
+  import numpy as np
+
+  from tools.environment.arnis.visualize import (
+    _artifact_list,
+    _load_json,
+    _one_artifact,
+    _read_elevation,
+  )
+
+  bundle = _load_json(CHICAGO_BUNDLE / "bundle.json")
+  artifacts = _artifact_list(bundle)
+  elevation_artifact = _one_artifact(artifacts, kind="elevation_raster")
+  _elevation, x_axis, y_axis = _read_elevation(CHICAGO_BUNDLE, elevation_artifact)
+
+  terrain = payload["terrain"]
+  x_last = terrain["origin_x"] + terrain["step_x"] * (terrain["cols"] - 1)
+  y_last = terrain["origin_y"] + terrain["step_y"] * (terrain["rows"] - 1)
+  assert x_last == pytest.approx(float(x_axis[-1]), abs=1e-3)
+  assert y_last == pytest.approx(float(y_axis[-1]), abs=1e-3)
+  assert np.isfinite(terrain["heights"][-1][-1])
+
+
+def test_terrain_resampling_is_per_axis_and_alignment_safe() -> None:
+  # A long, narrow raster must not collapse to one sample wide, and land
+  # cover must resample onto exactly the same target grid as the heights.
+  import numpy as np
+
+  from examples.viz.runtime.scene_geometry import _terrain_payload
+
+  rows, cols = 400, 10
+  elevation = np.arange(rows * cols, dtype=np.float64).reshape(rows, cols)
+  x_axis = np.linspace(0.0, cols - 1.0, cols)
+  y_axis = np.linspace(0.0, -(rows - 1.0), rows)
+  landcover = np.full((rows, cols), 80, dtype=np.uint8)
+
+  terrain = _terrain_payload(
+    elevation, x_axis, y_axis, landcover, {"80": "water"}, max_dim=100
+  )
+  assert terrain["rows"] == 100, "long axis clamps to max_dim"
+  assert terrain["cols"] == 10, "short axis keeps full resolution"
+  assert terrain["sampling"] == "bilinear_endpoint_preserving_per_axis"
+  # Endpoints exact on both axes.
+  assert terrain["origin_x"] + terrain["step_x"] * (terrain["cols"] - 1) == pytest.approx(
+    float(x_axis[-1])
+  )
+  assert terrain["origin_y"] + terrain["step_y"] * (terrain["rows"] - 1) == pytest.approx(
+    float(y_axis[-1])
+  )
+  # Corner heights are the exact source corners (bilinear at endpoints).
+  assert terrain["heights"][0][0] == pytest.approx(float(elevation[0][0]))
+  assert terrain["heights"][-1][-1] == pytest.approx(float(elevation[-1][-1]))
+  values = terrain["landcover"]["values"]
+  assert len(values) == terrain["rows"]
+  assert len(values[0]) == terrain["cols"]
+
+
+def test_building_rings_carry_polygon_grouping() -> None:
+  # MultiPolygon buildings: each hole belongs to its own outer ring, so the
+  # payload must keep the polygon index for renderer grouping.
+  from examples.viz.runtime.scene_geometry import _building_entry
+
+  item = {
+    "object_id": "b:multi",
+    "status": "resolved",
+    "static_geometry": {
+      "kind": "rigid_prism",
+      "base_elevation_m": 10.0,
+      "top_elevation_m": 20.0,
+      "height_m": 10.0,
+      "footprint_geometry_xy": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
+            [[4, 4], [6, 4], [6, 6], [4, 6], [4, 4]],
+          ],
+          [
+            [[20, 0], [30, 0], [30, 10], [20, 10], [20, 0]],
+          ],
+        ],
+      },
+    },
+  }
+  entry = _building_entry(item)
+  assert entry is not None
+  roles = [(ring["polygon"], ring["role"]) for ring in entry["rings"]]
+  assert roles == [(0, "outer"), (0, "hole"), (1, "outer")]
+
+
 def test_scene_geometry_rejects_missing_bundle(tmp_path: Path) -> None:
   with pytest.raises(SceneGeometryError):
     load_scene_geometry_payload(str(tmp_path / "missing"))

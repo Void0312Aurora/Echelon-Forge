@@ -85,3 +85,42 @@ def test_session_manager_serializes_transitions() -> None:
     assert "self._transition_lock = threading.Lock()" in src
     # Replacement requires the old worker to be gone; no silent abandonment.
     assert "has not terminated" in src
+
+
+def test_lingering_workers_block_replacement_even_without_session_ref() -> None:
+    # stop_current() clears self.session while its worker may still drain;
+    # the next load must gate on lingering tasks, not on the session ref.
+    import time as _time
+    from types import SimpleNamespace
+
+    from examples.viz.app.session_manager import SessionManager
+
+    socketio = SimpleNamespace(
+        emit=lambda *a, **k: None,
+        sleep=_time.sleep,
+        start_background_task=lambda fn, *a, **k: None,
+    )
+    manager = SessionManager(socketio, default_args=None)
+    lingering = SimpleNamespace(is_alive=lambda: True)
+    manager._tasks = [lingering]
+    manager.session = None  # as stop_current leaves it on timeout
+    # Skip the real 15s drain wait; the lingering task stays alive anyway.
+    manager._drain_tasks = lambda **kwargs: None  # type: ignore[method-assign]
+
+    import pytest as _pytest
+
+    with _pytest.raises(RuntimeError, match="has not terminated"):
+        manager._load_session_locked("scenarios/does_not_matter.json")
+
+
+def test_profile_metadata_commits_only_after_session_start() -> None:
+    src = (
+        __import__("pathlib").Path("examples/viz/app/session_manager.py").read_text(encoding="utf-8")
+    )
+    # Staged loads happen before the lock; commits happen after
+    # _load_session_locked succeeds inside the lock.
+    staged = src.index("staged_geometry = ")
+    lock = src.index("with self._transition_lock:", staged)
+    start = src.index("_load_session_locked(", lock)
+    commit = src.index("self.current_profile = profile", start)
+    assert staged < lock < start < commit
