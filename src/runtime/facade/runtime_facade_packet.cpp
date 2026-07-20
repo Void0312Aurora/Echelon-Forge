@@ -385,6 +385,40 @@ bool contains_world_index(const std::vector<std::uint64_t> &world_indices,
            world_indices.end();
 }
 
+// Shared dedupe-and-accumulate walk behind both export_diagnostics_traces
+// and export_engagement_event_packet below.
+template <typename AccumulateFn>
+void for_each_distinct_export_world_index(const WorldBatchRuntime &runtime,
+                                          const std::vector<EngagementEntityRef> &refs,
+                                          AccumulateFn &&accumulate) {
+    std::vector<std::uint64_t> exported_world_indices;
+    for (const auto &ref : refs) {
+        if (!valid_runtime_world_index(runtime, ref.world_index)) {
+            continue;
+        }
+        if (contains_world_index(exported_world_indices, ref.world_index)) {
+            continue;
+        }
+        exported_world_indices.push_back(ref.world_index);
+        accumulate(ref.world_index);
+    }
+}
+
+// Shared valid-ref filter behind both export_diagnostics_traces and
+// export_engagement_event_packet below.
+std::vector<EngagementEntityRef>
+filter_valid_world_refs(const WorldBatchRuntime &runtime,
+                        const std::vector<EngagementEntityRef> &refs) {
+    std::vector<EngagementEntityRef> valid_refs;
+    valid_refs.reserve(refs.size());
+    for (const auto &ref : refs) {
+        if (valid_runtime_world_index(runtime, ref.world_index)) {
+            valid_refs.push_back(ref);
+        }
+    }
+    return valid_refs;
+}
+
 void assign_world_index(EngagementEntityRef &ref, std::uint64_t world_index) {
     if (ref.entity_id != 0) {
         ref.world_index = world_index;
@@ -668,20 +702,13 @@ std::vector<DiagnosticsTrace>
 RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) const {
     std::vector<DiagnosticsTrace> traces;
 
-    std::vector<std::uint64_t> exported_world_indices;
-    for (const auto &ref : request.refs) {
-        if (!valid_runtime_world_index(*runtime_, ref.world_index)) {
-            continue;
-        }
-        if (contains_world_index(exported_world_indices, ref.world_index)) {
-            continue;
-        }
-        exported_world_indices.push_back(ref.world_index);
-        append_recent_diagnostics_traces(
-            traces, with_world_index(export_recent_engagement_events_for_world(
-                                         static_cast<std::size_t>(ref.world_index)),
-                                     ref.world_index));
-    }
+    for_each_distinct_export_world_index(
+        *runtime_, request.refs, [&](std::uint64_t world_index) {
+            append_recent_diagnostics_traces(
+                traces, with_world_index(export_recent_engagement_events_for_world(
+                                             static_cast<std::size_t>(world_index)),
+                                         world_index));
+        });
 
     const bool needs_observations =
         request.include_track_packets || request.include_diagnostics_traces;
@@ -689,13 +716,8 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
         return traces;
     }
 
-    std::vector<EngagementEntityRef> valid_refs;
-    valid_refs.reserve(request.refs.size());
-    for (const auto &ref : request.refs) {
-        if (valid_runtime_world_index(*runtime_, ref.world_index)) {
-            valid_refs.push_back(ref);
-        }
-    }
+    const std::vector<EngagementEntityRef> valid_refs =
+        filter_valid_world_refs(*runtime_, request.refs);
     if (valid_refs.empty()) {
         return traces;
     }
@@ -758,22 +780,15 @@ RuntimeFacade::export_engagement_event_packet(const EngagementBatchRequest &requ
     packet.barrier_sequence = kExportBarrierSequence;
     packet.barrier_detail = std::string(kExportBarrierDetail);
 
-    std::vector<std::uint64_t> exported_world_indices;
-    for (const auto &ref : request.refs) {
-        if (!valid_runtime_world_index(*runtime_, ref.world_index)) {
-            continue;
-        }
-        if (contains_world_index(exported_world_indices, ref.world_index)) {
-            continue;
-        }
-        exported_world_indices.push_back(ref.world_index);
-        append_recent_engagement_events(
-            packet,
-            with_world_index(export_recent_engagement_events_for_world(
-                                 static_cast<std::size_t>(ref.world_index)),
-                             ref.world_index),
-            request);
-    }
+    for_each_distinct_export_world_index(
+        *runtime_, request.refs, [&](std::uint64_t world_index) {
+            append_recent_engagement_events(
+                packet,
+                with_world_index(export_recent_engagement_events_for_world(
+                                     static_cast<std::size_t>(world_index)),
+                                 world_index),
+                request);
+        });
 
     const bool needs_observations =
         request.include_track_packets || request.include_diagnostics_traces;
@@ -787,13 +802,8 @@ RuntimeFacade::export_engagement_event_packet(const EngagementBatchRequest &requ
         return packet;
     }
 
-    std::vector<EngagementEntityRef> valid_refs;
-    valid_refs.reserve(request.refs.size());
-    for (const auto &ref : request.refs) {
-        if (valid_runtime_world_index(*runtime_, ref.world_index)) {
-            valid_refs.push_back(ref);
-        }
-    }
+    const std::vector<EngagementEntityRef> valid_refs =
+        filter_valid_world_refs(*runtime_, request.refs);
     if (valid_refs.empty()) {
         apply_export_packet_metadata(&packet, resolve_engagement_snapshot_version(packet),
                                      resolve_engagement_source_time(packet));

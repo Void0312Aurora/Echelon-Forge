@@ -1,0 +1,69 @@
+{
+  "allowlist_version": "i38.cpp_include_direction_allowlist.v1",
+  "generated_at": "2026-07-20",
+  "baseline_commit": "7299e6be",
+  "program_track": "T3 (unified_architecture_program) I38 slice 1",
+  "description": "Ratchet allowlist for tests/architecture/governance/test_cpp_include_direction.py. Each entry is a pre-existing include-direction violation against the fine-grained layer policy in tools/architecture/cpp_include_graph.py, identified by an exact (file, line, include spelling) fingerprint. The gate fails on any violation NOT in this list (including a line-shifted or re-worded version of a listed one, which forces a conscious re-review) and fails if a listed entry is no longer reproduced (stale-allowlist rot). None of these are include-path-only mistakes; each is a structural ownership coupling that the deferred T3 physical link-unit split (ef_core -> engine/mission/facade/content targets) is expected to resolve by relocating types or inverting the dependency, not by editing an include path. See the I38 registration entry in docs/plan/repository_consolidation/README.md for the full census.",
+  "entries": [
+    {
+      "file": "src/components/combat/common/weapon_common.h",
+      "line": 12,
+      "include": "models/weapons/kalman_seeker.h",
+      "from_group": "components",
+      "to_group": "models",
+      "owner": "T3 physical link-unit split",
+      "next_gate": "Relocate the missile_seeker::SeekerEkfState/SeekerEkfParams value types owned by Missile into components/ (or a components-visible leaf) so models/weapons/kalman_seeker.h stops being a components dependency.",
+      "reason": "Missile embeds missile_seeker::SeekerEkfState/SeekerEkfParams by value (weapon_common.h:221-222); the seeker-filter state type is defined in models/weapons/kalman_seeker.h instead of a components-owned leaf, so the pure-DTO components layer reaches upward into a model implementation header."
+    },
+    {
+      "file": "src/core/engine/world_batch_runtime.cpp",
+      "line": 9,
+      "include": "gpu/gpu_interaction_broadphase_runtime.h",
+      "from_group": "core_engine",
+      "to_group": "gpu",
+      "owner": "T3 physical link-unit split",
+      "next_gate": "Design the GPU/engine integration seam (opaque packet handle or callback injection) called out by the T3 track's 'link order and initialization' risk before WorldBatchRuntime can stop including gpu/* directly.",
+      "reason": "WorldBatchRuntime's interaction-broadphase compatibility path (run_interaction_broadphase_candidate_ids and callers) calls gpu::InteractionBroadphaseConfig/InteractionEntityPacked/InteractionQueryPacked and gpu::build_interaction_broadphase_*_batch directly; engine owns the call, inverting the src/README top-level direction note ('gpu -> core/runtime data packets ... no ownership of canonical world-step truth')."
+    },
+    {
+      "file": "src/core/engine/world_batch_runtime.h",
+      "line": 12,
+      "include": "core/mission/episode/execution_episode_controller.h",
+      "from_group": "core_engine",
+      "to_group": "core_mission_episode",
+      "owner": "T3 physical link-unit split",
+      "next_gate": "Move batch-of-episode-controller ownership out of WorldBatchRuntime (engine) into a facade/mission-owned batch wrapper so engine stops holding core/mission/episode types by value.",
+      "reason": "WorldBatchRuntime owns std::vector<ExecutionEpisodeController> execution_episode_controllers_ directly and calls clear_state()/import_state()/has_state() on it; the engine-layer batch owner embeds a mission-layer object instead of mission depending on engine, inverting the documented core/mission README direction ('may consume ... the public API of core/engine')."
+    },
+    {
+      "file": "src/core/engine/world_batch_runtime.h",
+      "line": 13,
+      "include": "gpu/gpu_visual_runtime.h",
+      "from_group": "core_engine",
+      "to_group": "gpu",
+      "owner": "T3 physical link-unit split",
+      "next_gate": "Same GPU/engine integration seam as the interaction-broadphase entry above; WorldBatchVisualBindingCompatibilityScene stores gpu::VisualRenderRequest/VisibleObjectPacked by value in an engine-owned public struct.",
+      "reason": "WorldBatchVisualBindingCompatibilityScene (declared in this header) stores gpu::VisualRenderRequest and std::vector<gpu::VisibleObjectPacked> by value, so the engine-owned compatibility struct's shape depends on the gpu packet layout directly."
+    },
+    {
+      "file": "src/core/engine/world_batch_visual_binding_compatibility_helper.h",
+      "line": 9,
+      "include": "gpu/gpu_visual_runtime.h",
+      "from_group": "core_engine",
+      "to_group": "gpu",
+      "owner": "T3 physical link-unit split",
+      "next_gate": "Same GPU/engine integration seam; collect_scene_from_candidate_ids/render_scenes_batch build and consume gpu::VisualRenderRequest/VisibleObjectPacked and call gpu::render_visual_experiment(_batch_export)/render_visual_reference_cpu(_batch) directly.",
+      "reason": "This engine-layer compatibility helper builds gpu::VisualRenderRequest/VisibleObjectPacked values from ECS state and calls gpu::render_visual_experiment*/render_visual_reference_cpu* directly, the same engine-calls-into-gpu-helper-implementation pattern as the other two gpu entries above."
+    },
+    {
+      "file": "src/runtime/contracts/world_batch_contracts.h",
+      "line": 16,
+      "include": "core/mission/episode/execution_episode_batch_prepare.h",
+      "from_group": "runtime_contracts",
+      "to_group": "core_mission_episode",
+      "owner": "T3 physical link-unit split",
+      "next_gate": "Relocate StepEvaluationBatchConfig/StepEvaluationBatchEnvState (or a contracts-owned equivalent shape) into runtime/contracts so WorldExecutionEpisodeStepRequest stops sourcing its config/env_state field types from core/mission/episode.",
+      "reason": "WorldExecutionEpisodeStepRequest's config/env_state fields (declared via the world_execution_episode_step_request.inc X-macro list at the end of this header) are typed StepEvaluationBatchConfig/StepEvaluationBatchEnvState, both owned by core/mission/episode/execution_episode_batch_prepare.h; removing this include as apparently-unused broke the ef_py build (verified 2026-07-20), confirming the contracts leaf embeds mission-owned batch-prep DTOs by value rather than the reverse."
+    }
+  ]
+}
