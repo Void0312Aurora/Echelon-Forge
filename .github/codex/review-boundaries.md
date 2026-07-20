@@ -38,6 +38,36 @@ When a finding sits outside this boundary, report it once as P2 with a note
 that it exceeds the default threat model, and suggest recording it under
 "Accepted residual risks" below rather than re-raising it.
 
+## Complexity audit
+
+Every review includes a complexity audit of the changes: new functionality
+must earn its structure. Check, in order:
+
+1. **Reuse before reimplementation.** Does the change reimplement something
+   the repository already provides (helpers, DTOs, validation layers,
+   rendering paths, test utilities)? Search for existing equivalents before
+   concluding. Duplicating a maintained implementation splits future
+   maintenance and is a P1 finding.
+2. **Speculative abstraction (YAGNI).** Does a new abstraction (class,
+   layer, configuration knob, DTO field, feature flag, extension point)
+   have at least a second user or a concrete, named near-term consumer? If
+   not, flag it as P2 with the simpler inline alternative.
+3. **Mechanism minimization.** Could the same behavior be expressed with
+   less machinery -- fewer layers, fewer states, merged near-duplicate
+   functions, a plain function instead of a class, data instead of code?
+   Report as P2/P3 with the concrete simplification.
+4. **Defensive code at internal boundaries.** Validation or fallback logic
+   for inputs that cannot occur (values produced and consumed inside the
+   same trusted codebase) is noise; flag as P3. Validation at system
+   boundaries (user input, external files, network payloads) is correct
+   and must not be flagged.
+
+Severity mapping: duplicated maintained functionality is P1 (blocking);
+unused abstractions and reducible mechanisms are P2; readability-level
+simplifications and internal-boundary defensiveness are P3. The audit's
+purpose is convergence toward the smallest change that does the job, not
+style enforcement.
+
 ## Depth-probing rule
 
 When reviewing a defense or validation mechanism, evaluate its **complete
