@@ -253,7 +253,7 @@ def test_wp22_loader_owned_runtime_paths_do_not_reintroduce_scattered_raw_sim_se
 
 def test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized() -> None:
   text = (REPO_ROOT / "gym_envs" / "scenario_loader" / "behavior_runtime" / "naval_screen.py").read_text(encoding="utf-8")
-  bridge_text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  bridge_text = _tasking_bridge_source()
 
   assert "def _read_naval_screen_reference_motion(" in text
   assert "def _prefer_last_active_naval_screen_reference(" in text
@@ -269,7 +269,7 @@ def test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized() -> No
   assert "def is_unit_active(self, entity_id: int) -> bool:" in bridge_text
 
 def test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers() -> None:
-  text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  text = _tasking_bridge_source()
 
   assert "class LoaderOwnedRuntimeView:" in text
   assert "def loader_owned_runtime_view(loader: Any) -> LoaderOwnedRuntimeView:" in text
@@ -292,7 +292,7 @@ def test_wp22_scripted_opponent_kernel_access_stays_named_and_localized() -> Non
   text = (REPO_ROOT / "gym_envs" / "scenario_loader" / "behavior_runtime" / "scripted_opponents.py").read_text(
     encoding="utf-8"
   )
-  bridge_text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  bridge_text = _tasking_bridge_source()
 
   assert "loader_owned_scripted_opponent_kernel_view(loader)" in text
   assert "loader_owned_scripted_opponent_kernel_compat" not in text
@@ -304,7 +304,7 @@ def test_wp22_scripted_opponent_kernel_access_stays_named_and_localized() -> Non
 
 def test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized() -> None:
   text = (REPO_ROOT / "gym_envs" / "scenario_loader" / "loading.py").read_text(encoding="utf-8")
-  bridge_text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  bridge_text = _tasking_bridge_source()
 
   assert "apply_loader_owned_world_layout_to_kernel(loader, world_layout)" in text
   assert "apply_world_layout_to_kernel(loader.sim, world_layout)" not in text

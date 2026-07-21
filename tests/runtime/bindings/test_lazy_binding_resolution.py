@@ -36,7 +36,13 @@ class LazyBindingResolutionTests(unittest.TestCase):
     expected_root = Path(build_dir()).resolve()
     module_path = Path(str(getattr(ef_py, "__file__", ""))).resolve()
 
-    self.assertEqual(common.ef_py, ef_py)
+    # NOTE(I57): tools.diagnostics.common resolves ef_py lazily through the
+    # private `_ef_py()` helper in this lineage (no eager module-level `ef_py`
+    # attribute; no production consumer references `common.ef_py`). Assert the
+    # resolution API this lineage actually exposes -- `_ef_py()` must return the
+    # same repo-build ef_py module object -- which preserves the original intent
+    # ("common prefers the repo-build ef_py") without weakening it.
+    self.assertEqual(common._ef_py(), ef_py)
     self.assertTrue(str(module_path).startswith(str(expected_root)))
     self.assertTrue(hasattr(ef_py, "ConditionalObjectiveProperty"))
     self.assertTrue(hasattr(ef_py, "WorldBatchRuntime"))

@@ -303,14 +303,14 @@ retained 文件零改动；三个文件与 HEAD 始终字节一致。
 | 项目 | I36 直接复核结果 | 登记出处 |
 | --- | --- | --- |
 | 5 条 flecs 静态库链接签名红 | 复现了该失败类别：`tests/architecture/compatibility_quarantine/test_guard_enforcement.py` 与 `tests/architecture/runtime_spine/test_clock_domain_enforcement.py` 在收集阶段均报 `AssertionError: Could not find include directory for CMake dependency 'flecs'`（针对本工作树的 `build-local-win` 快照）。 | I31/I33/I34 登记行（每次均在隔离基线上独立复现；I34："same 5 flecs reds"） |
-| diagnostics 懒加载 `common.ef_py` 属性缺口 | `pytest tests/runtime/bindings/test_lazy_binding_resolution.py::LazyBindingResolutionTests::test_common_import_prefers_repo_build_ef_py` 失败：`AttributeError: module 'tools.diagnostics.common' has no attribute 'ef_py'. Did you mean: '_ef_py'?`（该模块只暴露私有的 `_ef_py()` 懒加载 helper）。 | I31 登记行（"one pre-existing `common.ef_py` attribute gap"） |
-| 4 处 `test_wp22_*` 红 | 按节点 ID 精确定位，均在 `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`：`test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized`、`test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers`、`test_wp22_scripted_opponent_kernel_access_stays_named_and_localized`、`test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized`；每条都断言一个本工作树 `python/rl/tasking/bridge.py` 尚不存在的重构后符号（如 `class LoaderOwnedScriptedOpponentKernelView:`）——这是相对于落地该 wp22 重构的分支的血缘差距，并非本迭代引入的回归。I35 评审的超集回归又暴露同族一处红：`test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api`（同文件），经纯净基线工作树复现，于 I35 落地时补入本条。 | I33 登记行（"the four `test_wp22_*` directory reds"）；I35 评审 |
-| `leader_phase_manager_approach_arm` 契约 | `python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/comm/leader_phase_manager_approach_arm.json` 失败：`expected approach-arm transition count mismatch: 0`。 | I34 登记行 |
-| `tests/gpu` 的 `build-gpu` 缺失红 | `pytest tests/gpu/test_cuda_import_order.py::CudaImportOrderTests::test_world_batch_vec_env_import_after_torch_runtime_setup` 失败：其拉起的子进程报 `ModuleNotFoundError: No module named 'ef_py'`，因为本工作树只有 `build-local-win/`，没有 `build-gpu/`。 | I34 登记行 |
-| diagnostics 脚本治理红 | `tests/architecture/governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function`——I35 评审首次在干净 48c86c4b 检出上复现；I38 评审再次确认；于 I38 落地时补入。 | I35/I38 评审 |
+| diagnostics 懒加载 `common.ef_py` 属性缺口 | `pytest tests/runtime/bindings/test_lazy_binding_resolution.py::LazyBindingResolutionTests::test_common_import_prefers_repo_build_ef_py` 失败：`AttributeError: module 'tools.diagnostics.common' has no attribute 'ef_py'. Did you mean: '_ef_py'?`（该模块只暴露私有的 `_ef_py()` 懒加载 helper）。**已于 I57 守卫适配到绿（见 8.5 节）。** | I31 登记行（"one pre-existing `common.ef_py` attribute gap"） |
+| 4 处 `test_wp22_*` 红 | 按节点 ID 精确定位，均在 `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`：`test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized`、`test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers`、`test_wp22_scripted_opponent_kernel_access_stays_named_and_localized`、`test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized`；每条都断言一个本工作树 `python/rl/tasking/bridge.py` 尚不存在的重构后符号（如 `class LoaderOwnedScriptedOpponentKernelView:`）——这是相对于落地该 wp22 重构的分支的血缘差距，并非本迭代引入的回归。I35 评审的超集回归又暴露同族一处红：`test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api`（同文件），经纯净基线工作树复现，于 I35 落地时补入本条。**四个 `test_wp22_*` 均已于 I57 守卫适配到绿（见 8.3 节）；那个 `test_wp12_*` 节点——实际位于 `tests/architecture/policy_execution/test_intent_injection_authority_guard.py`，而非本文件——亦于 I57 守卫适配到绿（见 8.4 节）。** | I33 登记行（"the four `test_wp22_*` directory reds"）；I35 评审 |
+| `leader_phase_manager_approach_arm` 契约 | `python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/comm/leader_phase_manager_approach_arm.json` 失败：`expected approach-arm transition count mismatch: 0`。**已于 I57 分类（见 8.8 节）：lineage 分歧——契约脚手架 `FakeLoader` 落后于本谱系 `approach_arm_require_runway_frame` arming 门控；JSON/runner 未动。** | I34 登记行 |
+| `tests/gpu` 的 `build-gpu` 缺失红 | `pytest tests/gpu/test_cuda_import_order.py::CudaImportOrderTests::test_world_batch_vec_env_import_after_torch_runtime_setup` 失败：其拉起的子进程报 `ModuleNotFoundError: No module named 'ef_py'`，因为本工作树只有 `build-local-win/`，没有 `build-gpu/`。**已于 I57 用条件 `skipUnless(build-gpu 存在)` 治理（见 8.7 节）。** | I34 登记行 |
+| diagnostics 脚本治理红 | `tests/architecture/governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function`——I35 评审首次在干净 48c86c4b 检出上复现；I38 评审再次确认；于 I38 落地时补入。**已于 I57 用 `xfail(strict=True)` 治理（见 8.6 节）：该守卫强制的顶层收敛从未落地本谱系，且无法在不祝福其所禁止的散乱的前提下适配。** | I35/I38 评审 |
 | 2 处空战校准漂移红 | `tests/runtime/air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` 与 `tests/runtime/air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events`（签名 `'detonated_no_effect' == 'damage_applied'`）。I38 评审用 2026-07-18 改动前旧二进制直接复现两者——比同二进制 stash 对照更强的固有性证明——确证为与任何已落地迭代无关的本机产品/校准漂移，与 I28 裁定的漂移族同源。 | I38 评审 |
 | `platform_spawn` 的 spdlog 采集错误 | `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` 收集期报 `Could not find include directory for CMake dependency 'spdlog'`——与上方 flecs 条目同家族但依赖不同、文件此前未列；I44 评审在写集完全无涉 CMake 依赖解析的前提下复现。于 I44 落地时补入。 | I44 评审 |
-| `source_evidence_governance` 既有红 | `tests/architecture/damage_model/test_source_evidence_governance.py` 既有失败（单独跑 1 failed+5 errors；混跑 4 failed+5 errors——存在顺序敏感性）。根因链完全在任何已落地写集之外：`tools/maintenance/source_governance/rights_output_policy.py:107` 向 `re.sub` 传入 `None`。`test_source_admission_audit.py` 单独跑 6 passed。由 I44 评审超集扫描暴露；于 I44 落地时补入。 | I44 评审 |
+| `source_evidence_governance` 既有红 | `tests/architecture/damage_model/test_source_evidence_governance.py` 既有失败（单独跑 1 failed+5 errors；混跑 4 failed+5 errors——存在顺序敏感性）。根因链完全在任何已落地写集之外：`tools/maintenance/source_governance/rights_output_policy.py:107` 向 `re.sub` 传入 `None`。`test_source_admission_audit.py` 单独跑 6 passed。由 I44 评审超集扫描暴露；于 I44 落地时补入。**已于 I57 修复（见 8.2 节）：`_pdf_text_probe` 现捕获原始字节并做严格 UTF-8 解码（不可解码输出 fail-close、零声明命中），`_normalize_statement_text` 对 `None` fail-close；单独跑现为 22 passed。** | I44 评审 |
 
 沿用 I34 独立复核并作为本迭代起始基线的门禁计数：维护 smoke
 `436 passed, 45 subtests`；聚焦 `world_batch`+leader+facade 选集
@@ -691,6 +691,300 @@ git diff --check    -> 干净
 `src/models/weapons/default_guidance_model.cpp`（共 4 个文件），外加允许
 清单 fixture（删除 1 条、修订余下 5 条）与本台账小节。未触碰任何
 `python/**` 或 `examples/**`；无 CMake 目标改动。
+
+## 8. I57：T6 第二清偿包（七条处置）
+
+基线提交 `fae17eb8`；在本工作树上针对只读共享 CPU 快照核验
+（`CMO_BUILD_DIR=D:\workshop\Research\EF-w2-training\build-local-win`；未触发
+任何 CMake/构建，写集为纯 Python/JSON/文档）。本迭代逐条复现了第 5 节所追踪
+的七个可治理红，逐条从源码定根因（不照抄第 5 节既有假设），并按性质处置。
+值得注意的是：第 5 节曾将三条红初判为"重构落在别的谱系、从未进本分支"，但
+直接检查发现它们其实是"重构**确已**落地本分支、只是守卫扫了搬移前的位置/写
+法"——故按 I39/I42 先例做**守卫适配到绿**，而非上 xfail。只有一条 lineage 红
+（第 7 条）确实无法适配，用 `xfail(strict=True)` 治理。
+
+### 8.1 处置汇总
+
+| 序号 | 节点/目标 | 复现的红 | 根因（源码证据） | 处置 |
+| --- | --- | --- | --- | --- |
+| 6 | `test_source_evidence_governance.py`（整文件） | 单独跑 `1 failed, 16 passed, 5 errors` | `rights_output_policy.py` 把 `None` 的 `result.stdout` 传入 `re.sub`（第 107 行）：`text=True` 用本机 Windows 控制台编码（GBK）解码 pdftotext 的合法 UTF-8 输出；reader 线程在 UTF-8 连字符序列（`e2 80 93`，其 `0x93` 字节处）中途崩溃，`result.stdout` 变为 `None` | **真缺陷修复→绿**（8.2） |
+| 1 | `runtime_facade/test_runtime_escape_hatches.py` 的四个 `test_wp22_*` | `4 failed` | 每个都只在"定义位于 `bridge.py`"这条断言失败；I24 已把 loader-owned 接缝类/函数搬入 `python/tasking_contracts/bridge_views.py`（bridge.py 现在 re-export 同一批对象）——rg 确认全部定义在此、且各消费端文件早已使用命名接缝 | **守卫适配→绿**（8.3） |
+| 2 | `policy_execution/test_intent_injection_authority_guard.py::test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api` | `1 failed` | `run_window` API 存在（`runtime_facade.h:116`），coordinator 携带全部被断言 token；唯一差异是 C++ `&` 绑定风格（`const RuntimeWindowRequest &request` vs 守卫的 `RuntimeWindowRequest& request`） | **守卫适配→绿**（8.4） |
+| 3 | `runtime/bindings/test_lazy_binding_resolution.py::...::test_common_import_prefers_repo_build_ef_py` | `AttributeError: ... has no attribute 'ef_py'` | 本谱系经私有懒加载 `_ef_py()` 解析 ef_py（无模块级 `ef_py` 属性；rg 全仓零生产消费者引用 `common.ef_py`） | **守卫适配→绿**（8.5） |
+| 7 | `governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function` | `1 failed`（多出 11 个顶层脚本） | diagnostics"按功能治理"的顶层收敛（收敛到 15 项批准集）从未落地本谱系；扩允许清单会祝福该守卫本要禁止的散乱 | **`xfail(strict=True)`**（8.6） |
+| 5 | `gpu/test_cuda_import_order.py::...::test_world_batch_vec_env_import_after_torch_runtime_setup` | `1 failed`（`ModuleNotFoundError: ef_py`） | 测试硬编码了 CPU-only 工作树永不生成的 `build-gpu/` GPU CUDA 构建树 | **条件 skip**（8.7） |
+| 4 | `run_scenario_contract.py --spec .../leader_phase_manager_approach_arm.json` | `expected approach-arm transition count mismatch: 0` | 纯 Python 相位管理器分歧：本谱系 `RuleBasedLeaderPhaseManager` 以 `approach_arm_require_runway_frame=True` 经 `loader.get_runway_local_frame(...)` 门控 arming，而契约脚手架 `FakeLoader` 从未实现它（其 `_activate_post_waypoint_transition(self)` 也早于当前 `sync_to_kernel=` 调用约定） | **分类（lineage；脚手架落后）**（8.8） |
+
+### 8.2 第 6 条——真缺陷修复：源权 PDF 探针 None/locale 解码
+
+**根因**：`tools/maintenance/source_governance/rights_output_policy.py::_pdf_text_probe`
+运行 `subprocess.run(["pdftotext", ...], capture_output=True, text=True)`。
+`text=True` 用控制台 locale 编码解码子进程 stdout，本机 Windows 为 GBK。
+pdftotext（MiKTeX）把 retained DENIX PDF 的页文本输出为**合法 UTF-8**
+（事实于 I57 评审轮更正、本迭代已直接复核：对两个 retained PDF 的原始探针
+字节做严格 UTF-8 解码均成功——TP-20 14,413 字节、TP-21 14,204 字节；GBK
+报错 `'gbk' codec can't decode byte 0x93 in position 70` 点名的 `0x93` 字节
+位于偏移 70 处的 UTF-8 连字符 `e2 80 93` 内（`b"r \xe2\x80\x93 Op"`），并非
+本节最初所称的 cp1252 智能引号）；GBK reader 线程在该多字节序列中途抛
+`UnicodeDecodeError`，于是 `result.stdout` 变为 `None`。
+`_public_distribution_statement(None)` 随后走到
+`_normalize_statement_text`（第 107 行）调用 `re.sub(r"\s+", " ", None)`
+→ `TypeError: expected string or bytes-like object, got 'NoneType'`。整文件跑
+为 `1 failed, 16 passed, 5 errors`（module 级 `source_rights_policy_bundle`
+fixture 在 setup 崩溃，连累五个消费者 error；CLI 测试经子进程同样崩溃）——且
+该文件的权利清单断言还要求 PDF 声明被真正识别
+（TP-20 的 `statement_id == "distribution_statement_a_public_release_unlimited"`、
+TP-21 的 `"public_release_distribution_unlimited"`），故仅做 None→fail-closed
+的补丁不足以让文件转绿。
+
+**修复**（生产，纯 Python；于 I57 评审轮加固）：`_pdf_text_probe` 现改为捕获
+原始字节（去掉 `text=True`）并做**严格** UTF-8 解码；遇 `UnicodeDecodeError`
+时返回专用的 fail-closed 形态
+（`extraction_status="pdf_text_probe_decode_error_fail_closed"`、全部声明标志
+`False`、保留 `statement_locator`），沿用 `pdftotext_missing`/`timeout` 分支的
+既有约定——不可解码的输出永远不可能产生权利声明命中。I57 首版补丁曾用
+`errors="ignore"` 解码；独立评审证明其**失败开放**——伪造字节流在权利短语内
+夹入畸形字节（`b"RE\xffLEASE"`）时该字节被静默删除、短语被拼回 `"RELEASE"`，
+误命中 `statement_id="public_release_distribution_unlimited"`（本轮已在进程内
+复现）——且该有损解码也无必要，因为真实 payload 输出本就是合法 UTF-8（见上
+方更正后的根因）；有损解码已在本迭代内替换为"严格解码、失败即 fail-closed"。
+`_normalize_statement_text` 保留 `None`/空值守卫，fail-close 到 `""`（把调用
+方契约的"无可提取声明"情形钉到与 `pdftotext_missing`/`timeout` 分支相同的判
+定）。用修复后的探针端到端跑真实 retained payload（真实 pdftotext）确认严格
+路径成功：TP-20 识别为 `distribution_statement_a_public_release_unlimited`、
+TP-21 识别为 `public_release_distribution_unlimited`。
+
+**聚焦单测**（新增 `tests/architecture/damage_model/test_rights_output_policy_probe.py`，
+9 个测试，密闭——monkeypatch `subprocess.run`，无需真实 pdftotext/payload）。
+伪 `subprocess.run` 桩自身锁定捕获模式：断言探针传了 `capture_output=True`、
+且从不传 `text=True`/`universal_newlines=`/`encoding=`/`errors=`（评审修复：
+首版桩忽略 kwargs、无论如何都返回 bytes，未来若有人加回 `text=True`，测试
+仍绿而真实路径崩）。覆盖面：`None`/空值归一化；`None` 声明评估 fail-closed；
+合法多字节 UTF-8 的严格解码（镜像真实 TP-20 内容的连字符 payload）识别出正
+确 `statement_id`；TP-21 式 id；评审的伪造畸形字节流 fail-closed 且零命中；
+`stdout=None` 不崩溃且零命中；缺二进制分支。测试性质口径（更正本节最初
+"每条测试修复前均红"的说法——评审证实其中三条在基线即绿）：**六条**为新行
+为钉扎、对修复前模块为红（`..._tolerates_missing_text`、
+`..._none_is_fail_closed`（声明）、`..._decodes_utf8_multibyte_text`、
+`..._public_release_without_statement_a`、`..._malformed_bytes_fail_closed`、
+`..._none_stdout_is_fail_closed`）；**三条**为回归守卫、修复前即绿、钉住不变
+行为（`..._collapses_whitespace_and_uppercases`、`..._detects_statement_a`、
+`..._missing_binary_is_fail_closed`）。评审场景的红→绿（进程内演示）：对临时
+`errors="ignore"` 逻辑，伪造流得 `statement_detected=True` /
+`statement_id='public_release_distribution_unlimited'`（失败开放）；对严格解
+码修复，同一流在探针内抛
+`UnicodeDecodeError: ... can't decode byte 0xff in position 22`，fail-close
+零命中（新增 `test_pdf_text_probe_malformed_bytes_fail_closed` 钉住的正是这
+一行为）。原 `None` 路径红证据仍成立：修复前的
+`_normalize_statement_text`/`_public_distribution_statement(None)` 抛出完全
+相同的 `TypeError: expected string or bytes-like object, got 'NoneType'`。
+
+**验证**：
+
+```
+pytest -q tests/architecture/damage_model/test_rights_output_policy_probe.py
+-> 9 passed（6 条新行为钉扎修复前红；3 条回归守卫修复前绿）
+
+pytest -q tests/architecture/damage_model/test_source_evidence_governance.py
+-> 22 passed   （此前 1 failed, 16 passed, 5 errors；严格解码加固后复验）
+```
+
+混跑（顺序敏感性）在 8.10 的整 `damage_model` 扫描中复验。
+
+### 8.3 第 1 条——守卫适配：四个 wp22 loader-owned 接缝守卫
+
+**根因（源码证据）**：`tests/architecture/runtime_facade/test_runtime_escape_hatches.py`
+中的四个 `test_wp22_*` 守卫全部只在"某接缝**定义**位于
+`python/rl/tasking/bridge.py`"这条断言失败（如 `class LoaderOwnedRuntimeView:`、
+`class LoaderOwnedScriptedOpponentKernelView:`、
+`def apply_loader_owned_world_layout_to_kernel(...)`）。bridge.py 自身头部注释
+记载 I24 已把这些 loader-owned 运行时视图与 profile-无关的命令链/任务命令接缝
+helper 搬入中立的 `python/tasking_contracts/bridge_views.py`；bridge.py 现在导入
+并 re-export 同一批对象。rg 确认每一处被断言的定义（类在 bridge_views.py:88/177、
+`get_unit_position/velocity`/`is_unit_active` 在 140/143/146、
+`loader_owned_runtime_view`/`loader_owned_scripted_opponent_kernel_view`/
+`apply_loader_owned_world_layout_to_kernel` 在 233/237/241、四个
+`sync_task_order/leader_intent/pilot_report/mission_command` 方法在 124-136、
+`sync_loader_mission_command`/`sync_loader_command_chain_reentrant` 在 312/335）
+都在 bridge_views.py，而每个被断言缺席的 forbidden/legacy token
+（`loader_owned_raw_sim_compat`、`LoaderOwnedRawSimCompatibilityFacade`、
+`*_compat`、`loader.sim.set_*`）在两文件均零命中。消费端断言（naval_screen.py/
+scripted_opponents.py/loading.py 早已使用命名接缝、无 raw `loader.sim.*`）本就通过。
+
+**处置（守卫适配，I39/I42 先例，不减弱任何断言）**：
+`tests/architecture/runtime_facade/helpers.py` 新增 `TASKING_BRIDGE_VIEWS` 常量与
+`_tasking_bridge_source()` helper，返回 bridge.py 文本拼接 bridge_views.py 文本；
+四个守卫的 `bridge_text`/`text` 改从它读取。每个正向 token 仍要求出现在合并接缝
+文本中；每个 forbidden token 现在要求在**两个**文件均缺席，负向检查因此增强而非
+放松。这与 I39/I42 对 `_shared_ops.py` 命令链下沉所做的"写调用搬到姊妹模块、扩
+扫描集"完全同款。
+
+结果：`test_runtime_escape_hatches.py` `4 failed -> 0 failed`。
+
+### 8.4 第 2 条——守卫适配：wp12 facade run_window 签名
+
+**根因（源码证据）**：RuntimeWindow 机制在本谱系完整存在。`runtime_facade.h:116`
+声明 `RuntimeWindowResult run_window(const RuntimeWindowRequest &request);`；
+`runtime_window_coordinator.h` 携带 `classify_runtime_window_inputs`（第 55 行）、
+`"source_layer is required"`（77）、`"input_snapshot_version is required"`（82）；
+同文件三个 wp12 的 C++ 编译测试通过；facade 头也不含任何 forbidden 的"第二注入
+API"token。守卫唯一失败的断言与源码仅差 C++ 引用绑定风格：它期望
+`RuntimeWindowRequest& request`（`&` 贴类型），本谱系风格为
+`RuntimeWindowRequest &request`（`&` 贴变量名）——同一声明。
+
+**处置（守卫适配，不减弱断言）**：那一条 `run_window` 断言现在对 needle 与头文件
+都折叠引用参数间的空格（`" &"`/`"& "` → `"&"`）后再比较。守卫仍要求
+`RuntimeWindowResult run_window(const RuntimeWindowRequest&)` 这一声明确切存在——
+只容忍语义无关的 `&` 绑定风格。未触碰 C++（守红线）。结果：守卫通过。
+（更正第 5 节 I35 备注：该 `test_wp12_*` 节点位于
+`tests/architecture/policy_execution/test_intent_injection_authority_guard.py`，
+而非 `test_runtime_escape_hatches.py`。）
+
+### 8.5 第 3 条——守卫适配：diagnostics common ef_py 解析
+
+**根因（源码证据）**：`tools/diagnostics/common.py` 经私有 `_ef_py()` helper 懒加载
+ef_py（函数内 `ensure_repo_imports()` 后 `import ef_py`）；不暴露任何 eager 的模块级
+`ef_py` 属性，故 `common.ef_py` 抛 `AttributeError`。rg 全仓发现 `common.ef_py`
+只被该测试与本台账引用——零生产消费者。这与该文件自身的懒绑定主题一致（同模块的
+姊妹测试正是验证各模块把 ef_py 绑定推迟到运行时使用）。
+
+**处置（守卫适配，意图保留）**：断言改为 `self.assertEqual(common._ef_py(), ef_py)`
+——即本谱系实际暴露的解析 API。这保留了原意（"common 优先用 repo-build 的 ef_py"）
+而不减弱它；周边检查（模块路径位于 `build_dir` 下、`ConditionalObjectiveProperty`/
+`WorldBatchRuntime` 存在）保持不变。结果：该节点通过。
+
+### 8.6 第 7 条——xfail(strict)：diagnostics 顶层收敛缺口
+
+**根因（源码证据）**：`test_diagnostics_top_level_entrypoints_are_governed_by_function`
+断言顶层 `tools/diagnostics/*.py` 集合等于 15 项的 `APPROVED_DIAGNOSTICS_TOP_LEVEL`。
+实际集合多出 11 个未治理脚本（`kill_chain_decoupling_probe`、
+`kill_chain_expectation_harness`/`_response_diagnosis`/`_stage_attribution`/`_visualize`、
+`kill_chain_guidance_mechanism_ablation`/`_exact_mechanism_ablation`、
+`lethality_chain_contract`、`mlf9_statistical_trends`、`structural_breakup_export`、
+`calibration_admission_audit`）：该守卫所强制的"按功能治理"顶层收敛从未落地本谱系。
+
+**处置（`xfail(strict=True)`，I28 先例，不删测试）**：这是唯一无法适配到绿的
+lineage 红——把这 11 个额外脚本扩进允许清单会祝福该守卫本要禁止的顶层散乱（其中
+`kill_chain_expectation_stage_attribution` 还会命中守卫自身的 `stage` 禁名部件检查），
+故守卫意图在此确实未被满足、而非仅被搬移。测试带
+`@pytest.mark.xfail(strict=True, reason=...)`，reason 机器可读、点名缺失的收敛重构
+并指向本台账。strict 意味着未来某次 diagnostics 收敛会把它翻为 `XPASS(strict)` 失败，
+提示移除该标记。该文件另外三个治理测试保持绿。
+
+### 8.7 第 5 条——条件 skip：tests/gpu build-gpu 缺失
+
+**根因**：`test_world_batch_vec_env_import_after_torch_runtime_setup` 把 `build-gpu/`
+硬编码进 `PYTHONPATH` 并起子进程导入 `world_batch_vec_env`（进而 `ef_py`）。CPU-only
+工作树（本树把 `CMO_BUILD_DIR` 指向共享 `build-local-win` CPU 快照）从不生成
+`build-gpu/`，故子进程抛 `ModuleNotFoundError: No module named 'ef_py'`。
+
+**处置（条件 skip，非无条件）**：该方法现带
+`@unittest.skipUnless(os.path.isdir(_BUILD_GPU), reason=...)`，reason 机器可读、指向
+本台账的 build-gpu 缺失环境条目。在 GPU 构建树上检查照常运行；在 CPU-only 树上报
+`SKIPPED` 而非误红。
+
+### 8.8 第 4 条——分类：leader_phase_manager_approach_arm 契约
+
+**根因（源码证据）**：该检查为纯 Python。其处理器
+（`python/testing/contracts/unit/leader.py::leader_phase_manager_approach_arm`）构造
+`FakeLoader`，在 `RuleBasedLeaderPhaseManager.reset()` 后断言
+`loader.transition_calls == 1`。`transition_calls` 仅当管理器调用
+`loader._activate_post_waypoint_transition(...)` 时递增，而这由 `_should_arm_approach(...)`
+门控。本谱系（`python/rl/tasking/leader_tasking.py`）该门控默认
+`approach_arm_require_runway_frame=True`（第 315 行），并在 `loader.get_runway_local_frame(...)`
+不产出有效帧时返回 `False`（第 702 行）——而脚手架 `FakeLoader` 从未实现
+`get_runway_local_frame`（`try/except` 令 `valid_runway_frame=False`），故 arming 从不
+触发、`transition_calls` 恒为 `0`。另外，管理器现在调用
+`_activate_post_waypoint_transition(sync_to_kernel=...)`，这一 kwarg 是脚手架的
+`_activate_post_waypoint_transition(self)` 不接受的——即便 arming 触发脚手架也会抛。
+两点都表明契约脚手架（spec + `FakeLoader`）建模的是比本谱系相位管理器更旧的 leader
+协议。
+
+**处置（分类；JSON/runner/脚手架/生产均不动）**：这是契约脚手架与生产相位管理器逻辑
+之间的谱系分歧，既非校准漂移、非 C++/二进制行为，也非明显零风险的 spec 缺陷（要转绿
+需在脚手架里伪造 runway-frame 几何并更新下沉签名——既非零风险、也不在"spec 明显缺陷"
+修复通道内，而改动相位管理器生产逻辑按红线属越界）。按契约红指引，此处带证据登记、
+保持不动。由于这是独立的契约 runner 检查（非 pytest 节点），无法用 xfail 治理；它作为
+已归因、已登记的 lineage 红保留，直至未来某轮把契约脚手架与 runway-frame arming 协议
+重新对齐（修复方向：给 `FakeLoader` 补 `get_runway_local_frame`、令
+`_activate_post_waypoint_transition` 接受 `sync_to_kernel=`，再提供满足
+`approach_arm_along_min_m`/`approach_arm_cross_abs_max_m` 的 runway 几何）。
+
+### 8.9 全目录扫描新暴露的环境红
+
+跑整个 `tests/architecture/damage_model` 目录（此前门禁只跑定向文件）暴露了一个在七条
+范围之外的双成员红家族：
+`test_candidate_artifact_contracts.py::test_candidate_retained_artifact_pack_writes_retained_files`
+（第 611 行）与
+`test_component_probability_artifacts.py::test_component_probability_retained_artifact_pack_writes_retained_files`
+（第 655 行）都断言 `loaded["manifest_relative_path"].endswith("retained_pack/manifest.json")`，
+但在 Windows 上该值以 `retained_pack\manifest.json`（反斜杠分隔符）结尾，故 POSIX 斜杠
+后缀检查失败。（对该目录 `rg '\.endswith\("[^"]*/[^"]*"\)'` 确认这两条即完整家族。）
+这是测试断言里的 Windows 路径分隔符（OS 条件）红，与任何已落地写集及本迭代改动无关
+（它们走 `retained_pack`/`component_probability` 生成器，而非源权治理模块）。归为环境类
+（与 flecs/spdlog/校准红同属"只分类"家族）；本迭代不触碰。
+
+同一次扫描还暴露了一条范围外的红：
+`test_component_fragility_validation.py::test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid`：
+其 `synthetic_sigmoid_probability` 行来自 `component_fragility_benchmark._comparison_rows`
+的 `baseline["baseline_component_failure_probability"]`，即二进制计算的组件失效概率面，现读作
+~0.170-0.173，对照测试硬编码的 `0.35168` 参考（最大相对差 1.07）。这是与第 5 节已追踪的两条
+空战校准漂移红（`test_component_failure_probability_surface.py` 等）同族的、二进制驱动的组件失效
+概率产品/校准漂移，而非路径/逻辑问题——归为环境类（校准），保持不动。合计：
+`tests/architecture/damage_model` 收尾为 `3 failed, 263 passed`（评审轮严格解码加固后重跑；
+比首轮多 1 passed，因探针文件由 8 条增至 9 条），三条失败全为环境类（两条 Windows
+路径分隔符 + 一条校准漂移）；第 6 条的 `test_source_evidence_governance.py`（22）与新增
+`test_rights_output_policy_probe.py`（9）在本次混跑中皆绿（第 5 节所标的顺序敏感性已消解）。
+
+### 8.10 验证（本工作树，`CMO_BUILD_DIR=<共享 CPU 快照>`）
+
+逐条红→绿（或已治理）证据见 8.2-8.8 内联。合并门禁：
+
+```
+pytest -q tests/architecture/runtime_facade tests/architecture/policy_execution
+       tests/runtime/bindings tests/architecture/governance
+-> 233 passed, 1 xfailed, 1 failed。xfail 是第 7 条。那一条失败是
+   test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface
+   ——本次台账编辑自身触发的双语注册表哈希标记（按迭代任务书属落地方
+   `clusters --write` 职责，非修复回归）。第 1/2/3 条皆绿；无其它红。
+
+pytest -q tests/architecture/damage_model
+-> 3 failed, 263 passed（评审轮严格解码加固后重跑；探针文件 8 -> 9 条）。
+   三条失败全为环境类、且在七条范围之外（见 8.9 节）：两条 Windows 路径
+   分隔符红 + 一条组件脆性校准漂移红。第 6 条的
+   test_source_evidence_governance.py（22）与新增
+   test_rights_output_policy_probe.py（9）在本次混跑中皆绿。
+
+pytest -q tests/gpu/test_cuda_import_order.py
+-> 1 skipped   （第 5 条条件 skip）
+
+ruff check .        -> All checks passed!
+git diff --check    -> 干净
+python tools/maintenance/translate_docs_batch.py audit   （只读）
+-> pair_count 86, synced 85, diverged 1（本台账对为唯一 diverged 条目）
+```
+
+全量 smoke（`tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json`）：
+`1 failed, 458 passed, 45 subtests passed`。smoke 清单有意保持不变（被适配的守卫均非 smoke
+成员，新增聚焦探针测试也刻意不纳入——以匹配该套件既有的"不含源权治理测试"惯例与速度预算）。
+那一条失败——以及 `458` 相对 `459`-passed 基线——正是本次台账编辑触发的双语注册表哈希标记
+（`test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface`），
+其 `clusters --write` 刷新按迭代任务书属落地方职责。
+
+### 8.11 写集（本迭代）
+
+- `tools/maintenance/source_governance/rights_output_policy.py`（第 6 条生产修复）
+- `tests/architecture/damage_model/test_rights_output_policy_probe.py`（第 6 条聚焦单测，新增）
+- `tests/architecture/runtime_facade/helpers.py`（第 1 条扩扫描集：`TASKING_BRIDGE_VIEWS` + `_tasking_bridge_source()`）
+- `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`（第 1 条守卫适配）
+- `tests/architecture/policy_execution/test_intent_injection_authority_guard.py`（第 2 条守卫适配）
+- `tests/runtime/bindings/test_lazy_binding_resolution.py`（第 3 条守卫适配）
+- `tests/architecture/governance/test_tools_script_governance.py`（第 7 条 xfail-strict）
+- `tests/gpu/test_cuda_import_order.py`（第 5 条条件 skip）
+- `docs/plan/unified_architecture_program/t6_residual_ledger.md` / `.zh.md`（本节 + 第 5 节状态更新）
+
+未触碰 C++、`examples/**`、`docs/plan/repository_consolidation/**`、契约 JSON 或契约 runner；
+未触发 CMake/构建。
 
 ## 相关
 

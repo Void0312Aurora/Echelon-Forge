@@ -348,14 +348,14 @@ where the category resolves to a small, enumerable set.
 | Item | I36 direct re-verification | Register pointer |
 | --- | --- | --- |
 | 5 flecs static-lib link-signature reds | Reproduced the failure class: `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` and `tests/architecture/runtime_spine/test_clock_domain_enforcement.py` both raise `AssertionError: Could not find include directory for CMake dependency 'flecs'` at collection time against this worktree's `build-local-win` snapshot. | I31/I33/I34 rows (independently reproduced on isolated baselines each time; I34: "same 5 flecs reds") |
-| Diagnostics lazy-load `common.ef_py` attribute gap | `pytest tests/runtime/bindings/test_lazy_binding_resolution.py::LazyBindingResolutionTests::test_common_import_prefers_repo_build_ef_py` fails: `AttributeError: module 'tools.diagnostics.common' has no attribute 'ef_py'. Did you mean: '_ef_py'?` (the module only exposes the private `_ef_py()` lazy-load helper). | I31 row ("one pre-existing `common.ef_py` attribute gap") |
-| 4 `test_wp22_*` reds | Named by node ID, all in `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`: `test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized`, `test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers`, `test_wp22_scripted_opponent_kernel_access_stays_named_and_localized`, `test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized`; each asserts a refactored symbol (e.g. `class LoaderOwnedScriptedOpponentKernelView:`) that this worktree's `python/rl/tasking/bridge.py` does not yet contain -- a lineage gap against whichever branch landed that wp22 refactor, not a regression introduced by this iteration. The I35 review's superset regression sweep surfaced one further red of the same family: `test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api` (same file), reproduced on a clean-baseline worktree and added here at the I35 landing. | I33 row ("the four `test_wp22_*` directory reds"); I35 review |
-| `leader_phase_manager_approach_arm` contract | `python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/comm/leader_phase_manager_approach_arm.json` fails: `expected approach-arm transition count mismatch: 0`. | I34 row |
-| `tests/gpu` `build-gpu`-absent red | `pytest tests/gpu/test_cuda_import_order.py::CudaImportOrderTests::test_world_batch_vec_env_import_after_torch_runtime_setup` fails: the subprocess it launches raises `ModuleNotFoundError: No module named 'ef_py'` because `build-gpu/` does not exist in this worktree (only `build-local-win/` does). | I34 row |
-| Diagnostics script-governance red | `tests/architecture/governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function` -- first reproduced by the I35 review on a clean 48c86c4b checkout; re-confirmed during the I38 review; added at the I38 landing. | I35/I38 reviews |
+| Diagnostics lazy-load `common.ef_py` attribute gap | `pytest tests/runtime/bindings/test_lazy_binding_resolution.py::LazyBindingResolutionTests::test_common_import_prefers_repo_build_ef_py` fails: `AttributeError: module 'tools.diagnostics.common' has no attribute 'ef_py'. Did you mean: '_ef_py'?` (the module only exposes the private `_ef_py()` lazy-load helper). **Guard-adapted to green at I57 (section 8.5).** | I31 row ("one pre-existing `common.ef_py` attribute gap") |
+| 4 `test_wp22_*` reds | Named by node ID, all in `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`: `test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized`, `test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers`, `test_wp22_scripted_opponent_kernel_access_stays_named_and_localized`, `test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized`; each asserts a refactored symbol (e.g. `class LoaderOwnedScriptedOpponentKernelView:`) that this worktree's `python/rl/tasking/bridge.py` does not yet contain -- a lineage gap against whichever branch landed that wp22 refactor, not a regression introduced by this iteration. The I35 review's superset regression sweep surfaced one further red of the same family: `test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api` (same file), reproduced on a clean-baseline worktree and added here at the I35 landing. **All four `test_wp22_*` guard-adapted to green at I57 (section 8.3); the `test_wp12_*` node -- which actually lives in `tests/architecture/policy_execution/test_intent_injection_authority_guard.py`, not this file -- guard-adapted to green at I57 (section 8.4).** | I33 row ("the four `test_wp22_*` directory reds"); I35 review |
+| `leader_phase_manager_approach_arm` contract | `python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/comm/leader_phase_manager_approach_arm.json` fails: `expected approach-arm transition count mismatch: 0`. **Classified at I57 (section 8.8): lineage divergence -- the contract harness's `FakeLoader` lags this lineage's `approach_arm_require_runway_frame` arming gate; JSON/runner untouched.** | I34 row |
+| `tests/gpu` `build-gpu`-absent red | `pytest tests/gpu/test_cuda_import_order.py::CudaImportOrderTests::test_world_batch_vec_env_import_after_torch_runtime_setup` fails: the subprocess it launches raises `ModuleNotFoundError: No module named 'ef_py'` because `build-gpu/` does not exist in this worktree (only `build-local-win/` does). **Governed by conditional `skipUnless(build-gpu present)` at I57 (section 8.7).** | I34 row |
+| Diagnostics script-governance red | `tests/architecture/governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function` -- first reproduced by the I35 review on a clean 48c86c4b checkout; re-confirmed during the I38 review; added at the I38 landing. **Governed by `xfail(strict=True)` at I57 (section 8.6): the top-level consolidation this guard enforces never landed here and cannot be adapted without blessing the sprawl it forbids.** | I35/I38 reviews |
 | 2 air-combat calibration-drift reds | `tests/runtime/air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` and `tests/runtime/air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events` (signature `'detonated_no_effect' == 'damage_applied'`). The I38 review reproduced both against the 2026-07-18 pre-change binary -- a stronger inherence proof than same-binary stash comparison -- confirming they are machine-baseline product/calibration drift unrelated to any landed iteration; same family as the I28-adjudicated drift classes. | I38 review |
 | `platform_spawn` spdlog collection error | `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` fails at collection with `Could not find include directory for CMake dependency 'spdlog'` -- same family as the flecs entry above but a different dependency and a file not previously listed; reproduced by the I44 review with a write set that touches nothing capable of affecting CMake dependency resolution. Added at the I44 landing. | I44 review |
-| `source_evidence_governance` pre-existing red | `tests/architecture/damage_model/test_source_evidence_governance.py` fails pre-existing (standalone: 1 failed + 5 errors; mixed-run: 4 failed + 5 errors -- order-sensitive). Root cause chain sits entirely outside any landed write set: `tools/maintenance/source_governance/rights_output_policy.py:107` passes `None` into `re.sub`. `test_source_admission_audit.py` alone runs 6 passed. Surfaced by the I44 review's superset sweep; added at the I44 landing. | I44 review |
+| `source_evidence_governance` pre-existing red | `tests/architecture/damage_model/test_source_evidence_governance.py` fails pre-existing (standalone: 1 failed + 5 errors; mixed-run: 4 failed + 5 errors -- order-sensitive). Root cause chain sits entirely outside any landed write set: `tools/maintenance/source_governance/rights_output_policy.py:107` passes `None` into `re.sub`. `test_source_admission_audit.py` alone runs 6 passed. Surfaced by the I44 review's superset sweep; added at the I44 landing. **Fixed at I57 (section 8.2): `_pdf_text_probe` now captures raw bytes and strict-UTF-8-decodes them (undecodable output fails closed with zero statement hits) and `_normalize_statement_text` fail-closes on `None`; standalone now 22 passed.** | I44 review |
 
 Baseline gate counts carried forward from I34's independent re-run and used
 as this iteration's starting baseline: maintained smoke `436 passed, 45
@@ -780,6 +780,369 @@ Write set for this section's converged fix: `src/components/combat/common/missil
 (4 files), plus the allowlist fixture (entry removed and remaining five
 amended) and this ledger section. No `python/**` or `examples/**` touched;
 no CMake target changes.
+
+## 8. I57: T6 second residual-payoff pack (seven-item disposition)
+
+Baseline commit `fae17eb8`; verified on this worktree against the shared
+read-only CPU snapshot (`CMO_BUILD_DIR=D:\workshop\Research\EF-w2-training\build-local-win`;
+no CMake/build was triggered, and the write set is pure Python/JSON/docs).
+This iteration reproduced each of the seven governable reds section 5 tracks,
+root-caused each from source (not from section 5's prior hypotheses), and
+disposed each by nature. Notably, three reds section 5 provisionally read as
+"the refactor landed on another lineage and never came here" turned out, on
+direct inspection, to be reds where the refactor **did** land here but the
+guard scans the pre-relocation location/spelling -- so they are guard-adapted
+to green (I39/I42 precedent) rather than xfail-governed. Only one lineage red
+(item 7) is genuinely unadaptable and is governed with `xfail(strict=True)`.
+
+### 8.1 Disposition summary
+
+| # | Node / target | Reproduced red | Root cause (source evidence) | Disposition |
+| --- | --- | --- | --- | --- |
+| 6 | `test_source_evidence_governance.py` (whole file) | standalone `1 failed, 16 passed, 5 errors` | `rights_output_policy.py` fed a `None` `result.stdout` into `re.sub` (line 107): `text=True` decoded pdftotext's valid-UTF-8 output with the Windows console codepage (GBK); the reader thread died mid en-dash sequence (`e2 80 93`, at its `0x93` byte), and `result.stdout` became `None` | **Real-defect fix -> green** (8.2) |
+| 1 | four `test_wp22_*` in `runtime_facade/test_runtime_escape_hatches.py` | `4 failed` | each fails only at its "definition lives in `bridge.py`" assertion; I24 relocated the loader-owned seam classes/functions into `python/tasking_contracts/bridge_views.py` (bridge.py now re-exports the identical objects) -- rg confirms all definitions live there, all consumer files already use the named seams | **Guard adaptation -> green** (8.3) |
+| 2 | `policy_execution/test_intent_injection_authority_guard.py::test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api` | `1 failed` | the `run_window` API is present (`runtime_facade.h:116`) and the coordinator carries every asserted token; the only mismatch is C++ `&` binding style (`const RuntimeWindowRequest &request` vs the guard's `RuntimeWindowRequest& request`) | **Guard adaptation -> green** (8.4) |
+| 3 | `runtime/bindings/test_lazy_binding_resolution.py::...::test_common_import_prefers_repo_build_ef_py` | `AttributeError: ... has no attribute 'ef_py'` | this lineage resolves ef_py through the private lazy `_ef_py()` helper (no eager module-level `ef_py` attribute; rg finds zero production consumers of `common.ef_py`) | **Guard adaptation -> green** (8.5) |
+| 7 | `governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function` | `1 failed` (11 extra top-level scripts) | the diagnostics "governed by function" top-level consolidation to the 15-entry approved set never landed here; adapting the allowlist would bless the very sprawl the guard forbids | **`xfail(strict=True)`** (8.6) |
+| 5 | `gpu/test_cuda_import_order.py::...::test_world_batch_vec_env_import_after_torch_runtime_setup` | `1 failed` (`ModuleNotFoundError: ef_py`) | the test hardcodes a `build-gpu/` GPU CUDA build tree that CPU-only worktrees never materialize | **Conditional skip** (8.7) |
+| 4 | `run_scenario_contract.py --spec .../leader_phase_manager_approach_arm.json` | `expected approach-arm transition count mismatch: 0` | pure-Python phase-manager divergence: this lineage's `RuleBasedLeaderPhaseManager` gates arming on `approach_arm_require_runway_frame=True` via `loader.get_runway_local_frame(...)`, which the contract harness's `FakeLoader` never implements (and its `_activate_post_waypoint_transition(self)` also predates the current `sync_to_kernel=` call convention) | **Classified (lineage; harness lag)** (8.8) |
+
+### 8.2 Item 6 -- real-defect fix: source-rights PDF probe None/locale-decode
+
+**Root cause**: `tools/maintenance/source_governance/rights_output_policy.py::_pdf_text_probe`
+ran `subprocess.run(["pdftotext", ...], capture_output=True, text=True)`.
+`text=True` decodes the child's stdout with the console locale codec, which on
+this Windows host is GBK. pdftotext (MiKTeX) emits the retained DENIX PDFs'
+page text as **valid UTF-8** (fact corrected at the I57 review round, which
+this iteration re-verified directly: strict UTF-8 decode of both retained
+PDFs' raw probe bytes succeeds -- TP-20 14,413 bytes, TP-21 14,204 bytes --
+and the `0x93` byte named by the GBK error `'gbk' codec can't decode byte
+0x93 in position 70` sits at offset 70 inside the UTF-8 en dash `e2 80 93`
+(`b"r \xe2\x80\x93 Op"`), not a cp1252 smart quote as this section first
+claimed); the GBK reader thread raised `UnicodeDecodeError` mid-sequence, so
+`result.stdout` came back `None`. `_public_distribution_statement(None)` then reached
+`_normalize_statement_text` (line 107) which called `re.sub(r"\s+", " ", None)`
+-> `TypeError: expected string or bytes-like object, got 'NoneType'`. The
+whole-file run was `1 failed, 16 passed, 5 errors` (the module-scoped
+`source_rights_policy_bundle` fixture crashed in setup, erroring its five
+consumers; the CLI test failed via the same crash in a subprocess) -- and the
+file's rights-inventory assertions additionally require the PDF statements to
+actually be detected (`statement_id == "distribution_statement_a_public_release_unlimited"`
+for TP-20, `"public_release_distribution_unlimited"` for TP-21), so a
+None->fail-closed patch alone would have kept the file red.
+
+**Fix** (production, pure-Python; hardened at the I57 review round):
+`_pdf_text_probe` now captures raw bytes (drops `text=True`) and decodes them
+as **strict** UTF-8; on `UnicodeDecodeError` the probe returns a dedicated
+fail-closed shape (`extraction_status="pdf_text_probe_decode_error_fail_closed"`,
+every statement flag `False`, `statement_locator` kept), following the
+`pdftotext_missing`/`timeout` branches' convention, so undecodable output can
+never produce a rights-statement hit. The first I57 patch had decoded with
+`errors="ignore"`; the independent review showed that to be **fail-open** --
+a forged stream carrying a malformed byte inside a rights phrase
+(`b"RE\xffLEASE"`) had the byte silently dropped, splicing `"RELEASE"` back
+together and false-positively yielding
+`statement_id="public_release_distribution_unlimited"` (reproduced in-process
+this round) -- and also unnecessary, since the real payload output is valid
+UTF-8 (see the corrected root cause above); the lossy decode was replaced by
+strict-decode-or-fail-closed within this same iteration.
+`_normalize_statement_text` retains the `None`/empty guard that fail-closes
+to `""` (pinning the caller contract's "no extractable statement" case to the
+same verdict the `pdftotext_missing`/`timeout` branches already return).
+Running the fixed probe end-to-end against the real retained payloads (real
+pdftotext) confirms the strict path succeeds and detects
+`distribution_statement_a_public_release_unlimited` for TP-20 and
+`public_release_distribution_unlimited` for TP-21.
+
+**Focused unit tests** (new, `tests/architecture/damage_model/test_rights_output_policy_probe.py`,
+9 tests, hermetic -- monkeypatches `subprocess.run`, no real pdftotext/payload
+needed). The fake `subprocess.run` stub itself locks the capture mode: it
+asserts the probe passes `capture_output=True` and never
+`text=True`/`universal_newlines=`/`encoding=`/`errors=` (review repair: the
+first stub ignored kwargs and returned bytes regardless, so a future
+`text=True` regression would have stayed green in the test while crashing the
+real path). Coverage: `None`/empty normalization; `None` statement evaluation
+fail-closed; strict decode of valid multi-byte UTF-8 (an en-dash payload
+mirroring the real TP-20 content) detecting the correct `statement_id`; the
+TP-21-style id; the review's forged malformed-byte stream failing closed with
+zero hits; `stdout=None` handled without crash and with zero hits; and the
+missing-binary branch. Test-nature accounting (correcting this section's
+original "each test was red pre-fix" claim, which the review disproved --
+three already passed at baseline): **six** tests pin new post-fix behavior
+and are red against the pre-fix module (`..._tolerates_missing_text`,
+`..._none_is_fail_closed` (statement), `..._decodes_utf8_multibyte_text`,
+`..._public_release_without_statement_a`, `..._malformed_bytes_fail_closed`,
+`..._none_stdout_is_fail_closed`); **three** are regression guards that
+already passed pre-fix and pin unchanged behavior
+(`..._collapses_whitespace_and_uppercases`, `..._detects_statement_a`,
+`..._missing_binary_is_fail_closed`). Red->green for the review scenario,
+demonstrated in-process: against the interim `errors="ignore"` logic the
+forged stream yields `statement_detected=True` /
+`statement_id='public_release_distribution_unlimited'` (fail-open); against
+the strict-decode fix the same stream raises
+`UnicodeDecodeError: ... can't decode byte 0xff in position 22` inside the
+probe, which fail-closes with zero hits (the new
+`test_pdf_text_probe_malformed_bytes_fail_closed` pins exactly this). The
+original `None`-path red proof stands: the pre-fix
+`_normalize_statement_text`/`_public_distribution_statement(None)` raise the
+identical `TypeError: expected string or bytes-like object, got 'NoneType'`.
+
+**Verification**:
+
+```
+pytest -q tests/architecture/damage_model/test_rights_output_policy_probe.py
+-> 9 passed (6 new-behavior pins red pre-fix; 3 regression guards green pre-fix)
+
+pytest -q tests/architecture/damage_model/test_source_evidence_governance.py
+-> 22 passed   (was 1 failed, 16 passed, 5 errors; re-verified after the
+   strict-decode hardening)
+```
+
+Mixed-run (order-sensitivity) is re-verified in 8.10's whole-`damage_model`
+sweep.
+
+### 8.3 Item 1 -- guard adaptation: four wp22 loader-owned-seam guards
+
+**Root cause (source evidence)**: each of the four `test_wp22_*` guards in
+`tests/architecture/runtime_facade/test_runtime_escape_hatches.py` fails only
+at the assertion that a seam **definition** lives in
+`python/rl/tasking/bridge.py` (e.g. `class LoaderOwnedRuntimeView:`,
+`class LoaderOwnedScriptedOpponentKernelView:`,
+`def apply_loader_owned_world_layout_to_kernel(...)`). bridge.py's own header
+comment records that I24 relocated these loader-owned runtime views and the
+profile-independent command-chain/mission-command seam helpers into the
+neutral `python/tasking_contracts/bridge_views.py`; bridge.py now imports and
+re-exports the identical objects. rg confirms every asserted definition
+(classes at bridge_views.py:88/177, `get_unit_position/velocity`/`is_unit_active`
+at 140/143/146, `loader_owned_runtime_view`/`loader_owned_scripted_opponent_kernel_view`/
+`apply_loader_owned_world_layout_to_kernel` at 233/237/241, the four
+`sync_task_order/leader_intent/pilot_report/mission_command` methods at
+124-136, `sync_loader_mission_command`/`sync_loader_command_chain_reentrant`
+at 312/335) lives in bridge_views.py, and every forbidden/legacy token asserted
+absent (`loader_owned_raw_sim_compat`, `LoaderOwnedRawSimCompatibilityFacade`,
+`*_compat`, `loader.sim.set_*`) has zero hits in either file. The consumer-file
+assertions (naval_screen.py/scripted_opponents.py/loading.py already use the
+named seams and no raw `loader.sim.*`) all already pass.
+
+**Disposition (guard adaptation, I39/I42 precedent, no assertion weakened)**:
+`tests/architecture/runtime_facade/helpers.py` gains a
+`TASKING_BRIDGE_VIEWS` constant and a `_tasking_bridge_source()` helper that
+returns bridge.py's text spliced with bridge_views.py's; the four guards now
+read `bridge_text`/`text` from it. Every positive token is still required
+present in the combined seam text; every forbidden token is now required
+absent from **both** files, which strengthens (not loosens) the negative
+checks. This is the exact "the write moved to a sibling module; widen the scan
+set" move I39/I42 made for the `_shared_ops.py` command-chain sink.
+
+Result: `test_runtime_escape_hatches.py` `4 failed -> 0 failed`.
+
+### 8.4 Item 2 -- guard adaptation: wp12 facade run_window signature
+
+**Root cause (source evidence)**: the RuntimeWindow machinery is fully present
+in this lineage. `runtime_facade.h:116` declares
+`RuntimeWindowResult run_window(const RuntimeWindowRequest &request);`;
+`runtime_window_coordinator.h` carries `classify_runtime_window_inputs`
+(line 55), `"source_layer is required"` (77), `"input_snapshot_version is
+required"` (82); the three C++-compile wp12 tests in the same file pass; and
+the facade header carries none of the forbidden second-injection-API tokens.
+The guard's sole failing assertion differs from source only in C++ reference
+binding style: it expects `RuntimeWindowRequest& request` (`&` bound to the
+type) while this lineage's style is `RuntimeWindowRequest &request` (`&` bound
+to the name) -- the identical declaration.
+
+**Disposition (guard adaptation, no assertion weakened)**: the single
+`run_window` assertion now compares with reference-parameter spacing collapsed
+(`" &"`/`"& "` -> `"&"`) on both the needle and the header. The guard still
+requires exactly this `RuntimeWindowResult run_window(const RuntimeWindowRequest&)`
+declaration to be present -- only the semantically irrelevant `&` binding style
+is tolerated. No C++ was touched (red-line honoured). Result: the guard passes.
+(Correction to section 5's I35 note: this `test_wp12_*` node lives in
+`tests/architecture/policy_execution/test_intent_injection_authority_guard.py`,
+not `test_runtime_escape_hatches.py`.)
+
+### 8.5 Item 3 -- guard adaptation: diagnostics common ef_py resolution
+
+**Root cause (source evidence)**: `tools/diagnostics/common.py` resolves ef_py
+lazily through a private `_ef_py()` helper (`import ef_py` inside the function
+after `ensure_repo_imports()`); it exposes no eager module-level `ef_py`
+attribute, so `common.ef_py` raises `AttributeError`. rg across the repo finds
+`common.ef_py` referenced only by this test and this ledger -- zero production
+consumers. This matches the file's own lazy-binding theme (the sibling tests in
+the same module verify modules delay ef_py binding until runtime use).
+
+**Disposition (guard adaptation, intent preserved)**: the assertion becomes
+`self.assertEqual(common._ef_py(), ef_py)` -- the resolution API this lineage
+actually exposes. This preserves the intent ("common prefers the repo-build
+ef_py") without weakening it; the surrounding checks (module path under
+`build_dir`, `ConditionalObjectiveProperty`/`WorldBatchRuntime` present) are
+unchanged. Result: the node passes.
+
+### 8.6 Item 7 -- xfail(strict): diagnostics top-level consolidation gap
+
+**Root cause (source evidence)**:
+`test_diagnostics_top_level_entrypoints_are_governed_by_function` asserts the
+top-level `tools/diagnostics/*.py` set equals a 15-entry
+`APPROVED_DIAGNOSTICS_TOP_LEVEL`. The actual set has 11 extra ungoverned
+scripts (`kill_chain_decoupling_probe`, `kill_chain_expectation_harness`/
+`_response_diagnosis`/`_stage_attribution`/`_visualize`,
+`kill_chain_guidance_mechanism_ablation`/`_exact_mechanism_ablation`,
+`lethality_chain_contract`, `mlf9_statistical_trends`,
+`structural_breakup_export`, `calibration_admission_audit`): the "governed by
+function" consolidation this guard enforces never landed on this lineage.
+
+**Disposition (`xfail(strict=True)`, I28 precedent, test not deleted)**: this
+is the one lineage red that cannot be adapted to green -- widening the allowlist
+to admit the 11 extras would bless the exact top-level sprawl the guard exists
+to forbid (one extra, `kill_chain_expectation_stage_attribution`, even trips the
+guard's own `stage` forbidden-name-part check), so the guard's intent is
+genuinely unmet here rather than merely relocated. The test carries
+`@pytest.mark.xfail(strict=True, reason=...)` with a machine-readable reason
+naming the missing consolidation refactor and pointing at this ledger. Strict
+means a future diagnostics consolidation flips it to `XPASS(strict)` failure,
+prompting removal of the marker. The file's three other governance tests stay
+green.
+
+### 8.7 Item 5 -- conditional skip: tests/gpu build-gpu absent
+
+**Root cause**: `test_world_batch_vec_env_import_after_torch_runtime_setup`
+hardcodes `build-gpu/` on `PYTHONPATH` and spawns a subprocess that imports
+`world_batch_vec_env` (hence `ef_py`). CPU-only worktrees (this one points
+`CMO_BUILD_DIR` at a shared `build-local-win` CPU snapshot) never materialize
+`build-gpu/`, so the subprocess raises `ModuleNotFoundError: No module named
+'ef_py'`.
+
+**Disposition (conditional skip, not unconditional)**: the method now carries
+`@unittest.skipUnless(os.path.isdir(_BUILD_GPU), reason=...)` with a
+machine-readable reason pointing at this ledger's build-gpu-absent
+environmental entry. On a GPU build tree the check runs unchanged; on CPU-only
+trees it reports `SKIPPED` instead of a false red.
+
+### 8.8 Item 4 -- classified: leader_phase_manager_approach_arm contract
+
+**Root cause (source evidence)**: the check is pure Python. Its handler
+(`python/testing/contracts/unit/leader.py::leader_phase_manager_approach_arm`)
+builds a `FakeLoader` and asserts `loader.transition_calls == 1` after
+`RuleBasedLeaderPhaseManager.reset()`. `transition_calls` only increments when
+the manager calls `loader._activate_post_waypoint_transition(...)`, gated by
+`_should_arm_approach(...)`. In this lineage
+(`python/rl/tasking/leader_tasking.py`) that gate defaults
+`approach_arm_require_runway_frame=True` (line 315) and returns `False` (line
+702) whenever `loader.get_runway_local_frame(...)` does not yield a valid
+frame -- and the harness `FakeLoader` never implements `get_runway_local_frame`
+(the `try/except` sets `valid_runway_frame=False`), so arming never fires and
+`transition_calls` stays `0`. Independently, the manager now calls
+`_activate_post_waypoint_transition(sync_to_kernel=...)`, a kwarg the harness's
+`_activate_post_waypoint_transition(self)` does not accept -- so even if arming
+fired the harness would raise. Both are signs the contract harness (spec +
+`FakeLoader`) models an older leader protocol than this lineage's phase
+manager.
+
+**Disposition (classified; JSON/runner/harness/production all untouched)**:
+this is a lineage divergence between the contract harness and the production
+phase-manager logic, not a calibration drift, not a C++/binary behavior, and
+not an obvious zero-risk spec defect (making it green would require fabricating
+runway-frame geometry in the harness and updating the sink signature -- neither
+zero-risk nor within the "spec obvious-defect" fix lane, and modifying the
+phase-manager production logic is out of scope by red-line). Per the contract-red
+guidance it is registered here with evidence and left untouched. Because this is
+a standalone contract-runner check (not a pytest node), it cannot be xfail-governed;
+it remains an attributed, documented lineage red until a future iteration
+re-syncs the contract harness with the runway-frame arming protocol (repair
+direction: teach `FakeLoader` `get_runway_local_frame` + accept `sync_to_kernel=`
+on `_activate_post_waypoint_transition`, then supply runway geometry satisfying
+`approach_arm_along_min_m`/`approach_arm_cross_abs_max_m`).
+
+### 8.9 Newly surfaced environmental red (full-directory sweep)
+
+Running the whole `tests/architecture/damage_model` directory (prior gates ran
+targeted files) surfaced a two-member red family outside the seven-item scope:
+`test_candidate_artifact_contracts.py::test_candidate_retained_artifact_pack_writes_retained_files`
+(line 611) and
+`test_component_probability_artifacts.py::test_component_probability_retained_artifact_pack_writes_retained_files`
+(line 655) both assert
+`loaded["manifest_relative_path"].endswith("retained_pack/manifest.json")`,
+but on Windows the value ends with `retained_pack\manifest.json` (backslash
+separator), so the POSIX-slash suffix check fails. (`rg '\.endswith\("[^"]*/[^"]*"\)'`
+over the directory confirms these two are the complete family.) This is a
+Windows path-separator (OS-conditional) red in the test assertions, unrelated
+to any landed write set and to this iteration's changes (they exercise
+`retained_pack`/`component_probability` generators, not the source-governance
+module). Classified as environmental (same "classify only" family as the
+flecs/spdlog/calibration reds); left untouched this iteration.
+
+The same sweep surfaced one further out-of-scope red,
+`test_component_fragility_validation.py::test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid`:
+its `synthetic_sigmoid_probability` rows come from
+`component_fragility_benchmark._comparison_rows`'s
+`baseline["baseline_component_failure_probability"]`, i.e. the binary-computed
+component-failure-probability surface, and now read ~0.170-0.173 against the
+test's hard-coded `0.35168` reference (max relative difference 1.07). This is
+product/calibration drift of the same binary-driven component-failure-probability
+family section 5 already tracks for the two air-combat calibration-drift reds
+(`test_component_failure_probability_surface.py` et al.), not a path/logic
+issue -- classified as environmental (calibration), left untouched. Net:
+`tests/architecture/damage_model` finishes `3 failed, 263 passed` (re-run
+after the review-round strict-decode hardening; one more passed than the
+first I57 sweep because the probe file grew from 8 to 9 tests), all three
+failures environmental (two Windows path-separator + one calibration drift);
+item 6's `test_source_evidence_governance.py` (22) and the new
+`test_rights_output_policy_probe.py` (9) are green in this mixed run (the
+order-sensitivity section 5 flagged is resolved).
+
+### 8.10 Verification (this worktree, `CMO_BUILD_DIR=<shared CPU snapshot>`)
+
+Per-item red->green (or governed) evidence is inline in 8.2-8.8. Consolidated
+gates:
+
+```
+pytest -q tests/architecture/runtime_facade tests/architecture/policy_execution
+       tests/runtime/bindings tests/architecture/governance
+-> 233 passed, 1 xfailed, 1 failed. The xfail is item 7. The one failure is
+   test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface
+   -- the bilingual-registry hash flag this very ledger edit raises (landing-side
+   `clusters --write` duty per the iteration brief, not a fix regression).
+   Items 1/2/3 are green; no other reds.
+
+pytest -q tests/architecture/damage_model
+-> 3 failed, 263 passed (re-run after the review-round strict-decode
+   hardening; the probe file grew 8 -> 9 tests). All three failures are
+   environmental and out of the seven-item scope (section 8.9): two Windows
+   path-separator reds and one component-fragility calibration-drift red.
+   Item 6's test_source_evidence_governance.py (22) and the new
+   test_rights_output_policy_probe.py (9) are green in this mixed run.
+
+pytest -q tests/gpu/test_cuda_import_order.py
+-> 1 skipped   (item 5 conditional skip)
+
+ruff check .        -> All checks passed!
+git diff --check    -> clean
+python tools/maintenance/translate_docs_batch.py audit   (read-only)
+-> pair_count 86, synced 85, diverged 1 (this ledger pair is the sole diverged entry)
+```
+
+Full smoke (`tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json`):
+`1 failed, 458 passed, 45 subtests passed`. The smoke manifest is intentionally
+left unchanged (none of the adapted guards are smoke members, and the new focused
+probe test is kept out to match the suite's existing exclusion of source-governance
+tests and its speed budget). The one failure -- and the `458` vs the `459`-passed
+baseline -- is exactly the expected bilingual-registry hash flag this ledger edit
+raises (`test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface`),
+whose `clusters --write` refresh is a landing-side duty per the iteration brief.
+
+### 8.11 Write set (this iteration)
+
+- `tools/maintenance/source_governance/rights_output_policy.py` (item 6 production fix)
+- `tests/architecture/damage_model/test_rights_output_policy_probe.py` (item 6 focused unit test, new)
+- `tests/architecture/runtime_facade/helpers.py` (item 1 scan-set widening: `TASKING_BRIDGE_VIEWS` + `_tasking_bridge_source()`)
+- `tests/architecture/runtime_facade/test_runtime_escape_hatches.py` (item 1 guard adaptation)
+- `tests/architecture/policy_execution/test_intent_injection_authority_guard.py` (item 2 guard adaptation)
+- `tests/runtime/bindings/test_lazy_binding_resolution.py` (item 3 guard adaptation)
+- `tests/architecture/governance/test_tools_script_governance.py` (item 7 xfail-strict)
+- `tests/gpu/test_cuda_import_order.py` (item 5 conditional skip)
+- `docs/plan/unified_architecture_program/t6_residual_ledger.md` / `.zh.md` (this section + section 5 status updates)
+
+No C++, `examples/**`, `docs/plan/repository_consolidation/**`, contract JSON,
+or contract runner touched; no CMake/build triggered.
 
 ## Related
 
