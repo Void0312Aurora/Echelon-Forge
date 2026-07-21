@@ -26,7 +26,16 @@ converging 11 of the declared leaks; the migration is a pure mechanical
 relocation of the leaf reads into a layer-tagged owner with bit-for-bit
 identical numeric results. Converging a leak means the consumer no longer reads
 raw World Truth: its reads flow through the declared view owner, and its verdict
-is flipped here.
+is flipped here. The **third slice (§7, 2026-07-21)** adjudicates and declares the
+five remaining deferred consumers (C11–C14, C19; TL14–TL16, TL20): each now
+carries a G4 declaration (its information-state layer and semantic stage). In the
+independent-review repair round (§7.5) the leader observation producer (C13) was
+additionally migrated onto the declared view — its own-ship reads are
+token-isomorphic to `own_ship_field`, and element-exact numeric parity with the
+fae17eb8 baseline function is pinned by a new focused test — flipping TL15 to
+*converged*; C11/C12/C14/C19 keep their reads per their adjudications
+(*declared-but-open*, 宁缺毋滥). Declarations are pure metadata (zero behavior
+change); the C13 migration is a mechanical read relocation with pinned parity.
 
 The G4 vocabulary used throughout is the authoritative six-layer information-state
 set from the
@@ -92,23 +101,25 @@ records whether the read already flows through a declared view/seam.
 | C8 | `gym_envs/scenario_loader/reward_runtime/objectives.py` | own-ship `truth.z/health/heading/x/y/missiles_remaining`; target `truth.contacts`, `sim.is_unit_active`/`get_unit_health` | consumes World Truth; produces reward/objective inputs | **Converged this slice** (§6; own + target read via declared view) |
 | C9 | `gym_envs/scenario_loader/reward_runtime/compiled_runtime.py` | assembles pre-built input DTOs; no direct information-layer read | — (assembler, not a direct consumer) | N/A — excluded from registry |
 | C10 | `gym_envs/scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | the World-Truth read seam itself (V3) | maintained seam; the declared observation view (§6) now reads from this seam's `truth`/`sim` output; a full typed `ObservationViewSpec` facade export remains a later step |
-| C11 | `gym_envs/scenario_loader/step_evaluation.py` | own-ship `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health`; orchestrates reward surfaces | stage-bundling aggregator (V7) | Deferred — 待裁定 (P9+P10 bundle) |
-| C12 | `gym_envs/scenario_loader/execution_runtime/mainline.py` | orchestrates the execution step; reward/observation via loader | orchestrator | Deferred — 待裁定 |
-| C13 | `gym_envs/leader_env_parts/decision_runtime/observations.py::build_observation` | mostly `inst.*`; `truth.x/y` for ILS/runway/anchor geometry; delegates nav to `get_mission_observation` | produces Agent Observation; consumes World Truth (position) | Deferred — 待裁定 (leader path) |
-| C14 | `python/rl/tasking/leader_tasking.py` | `get_policy_agent_observation`/`get_policy_instrument_state` at multiple sites | scripted director; consumes World Truth | Deferred — 待裁定 (scripted-director epistemics) |
+| C11 | `gym_envs/scenario_loader/step_evaluation.py` | own-ship `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health`; orchestrates reward surfaces | consumes World Truth (own-ship); stage-bundling aggregator (V7); P10 ObservationExport | **Declared (§7)**; reads kept (orchestrator bundling DTOs, not leaf reads) — declared-but-open (TL14) |
+| C12 | `gym_envs/scenario_loader/execution_runtime/mainline.py` | own-ship `truth.z/x/y/vx/vy`; orchestrates the execution step; reward/observation via loader | consumes World Truth (own-ship); execution step controller; P10 ObservationExport | **Declared (§7)**; reads kept (orchestrator) — declared-but-open |
+| C13 | `gym_envs/leader_env_parts/decision_runtime/observations.py::build_observation` | mostly `inst.*`; own-ship x/y for ILS/runway/anchor geometry; delegates nav to `get_mission_observation` | consumes World Truth (position); produces Agent Observation; P10 ObservationExport | **Converged (§7.5 repair round)** — own-ship reads via `observation_view.own_ship_field`; ban-gated; parity pinned by `tests/leader/test_leader_observation_view_parity.py` |
+| C14 | `python/rl/tasking/leader_tasking.py` | `get_policy_agent_observation`/`get_policy_instrument_state` at multiple sites | consumes World Truth (own-ship); scripted C2/leader director (maintained doctrine); P2 TaskingIntent + P3 CommandDelivery | **Declared (§7)**; migration forbidden (would add `python.rl`→`gym_envs` reverse dep) — declared-but-open (TL16) |
 | C15 | `tools/eval/waypoint_eval_utils.py`, `tools/eval/task_eval_driver.py` | `get_agent_observation`/`get_instrument_state` | eval-tool reads | eval/diagnostics surface — outside the maintained policy path |
 | C16 | `gym_envs/universal_env.py::UniversalEnv` class constructor | — | demoted fail-fast shell (`__init__` raises `RuntimeError`) | Dead path — no declaration needed. This is the removed raw-kernel env only; it is distinct from the still-active `build_universal_observation` it re-exports (see C17). |
 | C17 | `gym_envs/universal_env_parts/observations.py::build_universal_observation` — active universal policy-observation assembly, called by `CooperativeWorldBatchVecEnv` and `MultiAgentWorldRuntimeView` | `truth.x/y` (ILS query), `truth.contacts`, `truth.rwr_warnings` (Python fallback path); compiled path passes `truth` to `ef_py.compute_execution_observation_runtime_numpy`; delegates the mission vector to `get_mission_observation` | consumes World Truth; produces Agent Observation | **Converged this slice** (§6; reads via declared view; repair-round add) |
 | C18 | `gym_envs/scenario_loader/navigation_runtime/waypoint_rewards.py::build_waypoint_step_state` — direct waypoint reward-input consumer, called by `step_evaluation.py`/`execution_runtime/mainline.py` via `loader._build_waypoint_step_state` | own-ship `truth.x/y` (distance-to-fix and route reference); builds `ef_py.WaypointRewardInputs` | consumes World Truth; produces reward inputs | **Converged this slice** (§6; own-ship read via declared view; repair-round add) |
-| C19 | `gym_envs/scenario_loader/navigation_runtime/guidance.py` — shared route-guidance geometry helper (`query_route_guidance_result`, `compute_waypoint_guidance_state`, `apply_waypoint_guidance_update`, …) | own-ship `truth.x/y/speed` (route guidance geometry; `get_policy_agent_observation` fallback) | spans command-delivery (P3/P4 autopilot target) + reward-support (P10); not a single Agent-Observation-facing consumer | Deferred — 待裁定 (mixed guidance/command helper, not force-classified; repair round) |
+| C19 | `gym_envs/scenario_loader/navigation_runtime/guidance.py` — shared route-guidance geometry helper (`query_route_guidance_result`, `compute_waypoint_guidance_state`, `apply_waypoint_guidance_update`, …) | own-ship `truth.x/y/speed` (route guidance geometry; `get_policy_agent_observation` fallback) | consumes World Truth (own-ship); spans command-delivery (P3/P4 autopilot target) + reward-support (P10); not a single Agent-Observation-facing consumer | **Declared (§7)**; migration awaits a command/guidance read owner (an observation view is not the right owner for command-delivery reads) — declared-but-open (TL20) |
 
-Declared (first slice) and converged onto the declared observation view (second
-slice, §6): C1, C4, C5, C6, C7, C8, C17, C18 (the eight modules in
-`MAINTAINED_INFORMATION_LAYER_CONSUMERS` / `VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`;
-C17/C18 added in the first-slice repair round). Already conformant: C3. Excluded
-as non-consumer: C9. Dead: C16. Deferred with rationale (宁缺毋滥, not
-force-classified): C11, C12, C13, C14, C19. Outside the maintained policy path:
-C15.
+Converged onto the declared observation view: C1, C4, C5, C6, C7, C8, C17, C18
+(second slice, §6; C17/C18 added in the first-slice repair round) plus C13 (third
+slice repair round, §7.5) — the nine modules in
+`VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`. Declared (third slice, §7) with
+reads not yet view-converged (declared-but-open, in
+`DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`): C11, C12, C14, C19.
+`MAINTAINED_INFORMATION_LAYER_CONSUMERS` is the union of those two sets (13
+declared consumers). Already conformant: C3. Excluded as non-consumer: C9. Dead:
+C16. Outside the maintained policy path: C15.
 
 ## 3. Truth-leak inventory
 
@@ -134,33 +145,39 @@ diagnostic use (routed through the view's diagnostic face).
 | TL11 | `reward_runtime/shaping_inputs.py::build_flight_shaping_runtime_inputs` | own-ship `truth.z/speed` | **converged** (declared view) | C7. Reads via `observation_view.own_ship_field`; own-ship self-read, low-risk. |
 | TL12 | `reward_runtime/objectives.py::build_conditional_objective_inputs`, `_combat_target_snapshot` | own-ship `truth.z/health/heading/x/y/missiles_remaining`; target `truth.contacts` range, `sim.is_unit_active`/`get_unit_health(target)` | **converged** (declared view) | C8. Own-ship via `own_ship_field`; target `truth.contacts` via `contacts`; `sim.is_unit_active`/`get_unit_health` via `unit_active`/`unit_health`. |
 | TL13 | `scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | **exempt** (maintained seam) | V3. The single maintained read chokepoint; on the batch path `sim` is `_ScenarioLoaderRuntimeProxy` (facade-backed). The declared observation view (§6) now reads from this seam's `truth`/`sim` output; turning the seam's return into a full typed `ObservationViewSpec` facade export remains a later step. |
-| TL14 | `scenario_loader/step_evaluation.py` (`build_execution_runtime_state`, reward-input assembly) | own-ship `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health` | **leak** (own-ship, aggregator; deferred) | V7. Stage-bundling orchestrator; declaration deferred (待裁定) rather than force-classified. |
-| TL15 | `leader_env_parts/decision_runtime/observations.py::build_observation` | own-ship `truth.x/y` (ILS/runway/anchor geometry) | **leak** (own-ship position; deferred) | Leader observation path; declaration deferred (待裁定). |
-| TL16 | `python/rl/tasking/leader_tasking.py` (multiple sites) | `get_policy_agent_observation`/`get_policy_instrument_state` | **leak** (scripted-director; deferred) | Scripted director consuming World Truth; epistemic layer (maintained doctrine vs diagnostics-only) deferred (待裁定). |
+| TL14 | `scenario_loader/step_evaluation.py` (`build_execution_runtime_state`, reward-input assembly) | own-ship `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health` | **declared-but-open** (own-ship, aggregator) | V7 (C11). Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED (), stage P10 ObservationExport (I32 closure; P9 removed in the §7.5 repair). Reads kept, not view-converged: a stage-bundling orchestrator assembling reward/observation input DTOs, not a leaf observation-read surface. |
+| TL15 | `leader_env_parts/decision_runtime/observations.py::build_observation` | own-ship x/y (ILS/runway/anchor geometry) | **converged** (declared view; §7.5 repair round) | C13. Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED Agent Observation, stage P10 ObservationExport. Converged in the §7.5 repair round: own-ship reads via `observation_view.own_ship_field` (token-isomorphic replacement of `getattr(truth, "x"/"y", 0.0)`); ban-gated; element-exact parity with the fae17eb8 baseline pinned by `tests/leader/test_leader_observation_view_parity.py` (incl. the no-x/y default-firing scenario and a view-seam corruption red-proof). |
+| TL16 | `python/rl/tasking/leader_tasking.py` (multiple sites) | `get_policy_agent_observation`/`get_policy_instrument_state` | **declared-but-open** (scripted-director) | C14. Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED (), stages P2 TaskingIntent + P3 CommandDelivery. Adjudicated as maintained doctrine (a scripted C2/leader director legitimately consuming own-ship truth), not diagnostics-only. Migration forbidden: routing its reads through `gym_envs.observation_view` would add a `python.rl`→`gym_envs` reverse dependency; the declaration is neutral (`python.architecture`). |
 | TL17 | `tools/eval/waypoint_eval_utils.py`, `tools/eval/task_eval_driver.py` | `get_agent_observation`/`get_instrument_state` | **exempt** (eval surface) | Eval/diagnostics tooling, outside the maintained policy path; not a maintained-surface leak. |
 | TL18 | `universal_env_parts/observations.py::build_universal_observation` | `truth.x/y` (ILS query), `truth.contacts`, `truth.rwr_warnings` (Python fallback); compiled path passes `truth` to `ef_py.compute_execution_observation_runtime_numpy` | **converged** (declared view) | C17. Leaf reads via `observation_view.own_ship_attr` / `contacts` / `rwr_warnings`. The compiled path still passes the whole `truth` object to the kernel — a whole-object transfer, not a leaf read; out of scope this slice. |
 | TL19 | `navigation_runtime/waypoint_rewards.py::build_waypoint_step_state` | own-ship `truth.x/y` (distance-to-fix, route reference) → `ef_py.WaypointRewardInputs` | **converged** (declared view) | C18. Own-ship `truth.x/y` via `observation_view.own_ship_field`; the guidance helper (C19/TL20) delegation is unchanged (deferred). |
-| TL20 | `navigation_runtime/guidance.py` (`query_route_guidance_result`, `compute_waypoint_guidance_state`, `apply_waypoint_guidance_update`, …) | own-ship `truth.x/y/speed` (route guidance geometry) | **leak** (own-ship; deferred) | Shared route-guidance helper spanning command-delivery (autopilot target) and reward-support; declaration deferred (待裁定) rather than force-classified (C19). |
+| TL20 | `navigation_runtime/guidance.py` (`query_route_guidance_result`, `compute_waypoint_guidance_state`, `apply_waypoint_guidance_update`, …) | own-ship `truth.x/y/speed` (route guidance geometry) | **declared-but-open** (own-ship) | C19. Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED (), stages P3 CommandDelivery + P4 PlatformControl + P10 ObservationExport. A shared helper spanning command-delivery (autopilot target) and reward support; migration deferred until a command/guidance read owner exists (an observation view is not the right owner for command-delivery reads). |
 
 ## 4. Verdict distribution
 
 | Verdict | Count | Entries |
 |---------|-------|---------|
-| converged — reads via the declared observation view (§6) | 11 | TL1, TL2, TL4, TL5, TL7, TL8, TL10, TL11, TL12, TL18, TL19 |
-| leak — still needs T8 view-convergence (deferred) | 4 | TL14, TL15, TL16, TL20 |
+| converged — reads via the declared observation view (§6; TL15 in §7.5) | 12 | TL1, TL2, TL4, TL5, TL7, TL8, TL10, TL11, TL12, TL15, TL18, TL19 |
+| declared-but-open — G4 declaration landed (§7), reads not yet view-converged | 3 | TL14, TL16, TL20 |
 | exempt — legitimized by declaration/seam | 4 | TL3, TL9, TL13, TL17 |
 | diagnostic — legitimate diagnostic use | 1 | TL6 |
 
-The 11 converged entries are the eight declared consumers' leaf reads (TL1, TL2,
-TL4, TL5, TL7, TL8, TL10, TL11, TL12 on C1/C4/C5/C6/C7/C8, plus TL18 on C17 and
-TL19 on C18), now flowing through the declared observation-view owner
-(`gym_envs/observation_view.py`, §6) rather than raw World Truth.
-The 4 remaining leaks are the deferred aggregator/leader/guidance paths (TL14,
-TL15, TL16, TL20), still 待裁定. The exempt/diagnostic reads (TL3, TL6, TL9,
-TL13, TL17) keep their verdict; where they sit on a migrated consumer they are
-routed through the view's Shared-Tactical-Picture / diagnostic faces for
-consistency. A full typed `ObservationViewSpec` facade export at the TL13 seam
-(so the seam's return itself is a typed spec) remains a later step.
+The 12 converged entries are the nine converged consumers' leaf reads (TL1, TL2,
+TL4, TL5, TL7, TL8, TL10, TL11, TL12 on C1/C4/C5/C6/C7/C8, TL18 on C17, TL19 on
+C18, and TL15 on C13 since the §7.5 repair round), now flowing through the
+declared observation-view owner (`gym_envs/observation_view.py`) rather than raw
+World Truth. The 3 declared-but-open entries are the aggregator/director/guidance
+paths (TL14, TL16, TL20): each carries a G4 declaration (§7) but keeps its raw
+reads for the reasons adjudicated there (orchestrator DTO-bundling;
+`python.rl`→`gym_envs` reverse-dep bar; command/guidance read owner not yet
+built). "Declared" is not "converged": the declaration is pure metadata, so those
+three paths still read raw World Truth structurally until a later slice converges
+them — but there are no longer any *undeclared* leaks on the maintained surface.
+The exempt/diagnostic reads (TL3, TL6, TL9, TL13, TL17) keep their verdict; where
+they sit on a migrated consumer they are routed through the view's
+Shared-Tactical-Picture / diagnostic faces for consistency. A full typed
+`ObservationViewSpec` facade export at the TL13 seam (so the seam's return itself
+is a typed spec) remains a later step.
 
 ## 5. Next slices (not done here)
 
@@ -168,11 +185,20 @@ consistency. A full typed `ObservationViewSpec` facade export at the TL13 seam
   export. The second slice (§6) materialized the declared read view over the
   seam's `truth`/`sim` output and migrated the eight consumers onto it; the typed
   spec export (so the seam itself returns a typed view object) remains.
-- Adjudicate and declare the deferred aggregator/leader/guidance paths (C11–C14,
-  C19; TL14–TL16, TL20), then converge them onto the declared view.
-- Extend the G4 AST truth-read ban as those deferred consumers converge. The ban
-  already covers the eight migrated consumers (§6;
-  `tests/architecture/information_state/test_g4_truth_read_ban.py`).
+- Converge the declared-but-open consumers (§7) onto the view, per their
+  adjudicated blockers:
+  - C19 (TL20): build a command/guidance read owner (a peer of the observation
+    view) for the command-delivery reads, then converge the reward-support reads
+    onto the observation view.
+  - C11/C12 (TL14): converge the aggregators' own-ship reads once the
+    reward/observation input-DTO assembly can source them from the view without
+    perturbing the compiled runtime.
+  - C14 (TL16): stays declared-only unless a neutral read owner reachable from
+    `python.rl` without a `python.rl`→`gym_envs` edge is introduced.
+- Extend the G4 AST truth-read ban as those declared-but-open consumers converge:
+  move each path from `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS` into
+  `VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`. The ban already covers the eight
+  migrated consumers (§6; `tests/architecture/information_state/test_g4_truth_read_ban.py`).
 
 ## 6. Second slice: declaration-view convergence (2026-07-21)
 
@@ -288,6 +314,130 @@ were repaired in place the same day (all §6.4 gates re-run, identical results):
   subpackages (G2: shared needs sink downward, never sideways) — with the eight
   consumer imports, the registry owner path, the ban-gate message, and this
   register updated; no file or shim remains at the old path.
+
+## 7. Third slice: deferred-consumer adjudication and declaration (I56, 2026-07-21)
+
+The third T8 slice closes the §5 "adjudicate and declare the deferred paths" item
+for the five consumers the first two slices left 待裁定 (C11–C14, C19; TL14–TL16,
+TL20). Each is given an epistemic-layer verdict and a G4 declaration (three
+module-level constants). The declarations are pure metadata (zero behavior
+change; the five-consumer behavior test set is bit-identical before/after). In
+the independent-review repair round (§7.5), C13 — the one consumer whose reads
+are token-isomorphic to an existing view face — was additionally migrated onto
+the view with a new pinned parity test, flipping TL15 to *converged*; the other
+four keep their reads per §7.3 (宁缺毋滥: a read is only relocated when it is
+zero-risk and carries element-exact numeric-parity evidence against the baseline
+function).
+
+### 7.1 Per-consumer adjudication
+
+| Consumer (TL) | CONSUMED | PRODUCED | SEMANTIC_STAGE | Verdict | Migrate? | Rationale |
+|---------------|----------|----------|----------------|---------|----------|-----------|
+| C11 `step_evaluation` (TL14) | World Truth | () | P10 ObservationExport | declared-but-open | No (declare-only) | Stage-bundling aggregator: its own-ship reads feed reward/observation input-DTO assembly, not a leaf observation surface. Orchestrators declare but do not migrate. Stage per I32 closure (§7.5 P2 repair: P9 removed — it reads damage facts, produces no effects). |
+| C12 `execution_runtime/mainline` | World Truth | () | P10 ObservationExport | declared-but-open | No (declare-only) | Execution step controller (reward/termination/status + combat-terminal / damage-consequence overrides). Orchestrator; declare, don't migrate. Stage per I32 closure (§7.5 P2 repair: P9 removed — the overrides read already-produced damage/liveness facts). |
+| C13 `leader .../observations::build_observation` (TL15) | World Truth | Agent Observation | P10 ObservationExport | converged | **Yes (§7.5 repair round)** | A clean Agent-Observation producer whose own-ship x/y reads were token-isomorphic to `observation_view.own_ship_field` (the migrated C17/C18 shape). Migrated as a mechanical `own_ship_field` move; element-exact parity with the fae17eb8 baseline pinned by `tests/leader/test_leader_observation_view_parity.py`; in the ban-gate scan set. |
+| C14 `python/rl/tasking/leader_tasking` (TL16) | World Truth | () | P2 TaskingIntent, P3 CommandDelivery | declared-but-open | No (migration forbidden) | Adjudicated as **maintained doctrine** (a scripted C2/leader director that legitimately consumes own-ship truth to author tasking intent and commands), not diagnostics-only. Declaration is neutral (`python.architecture`), but migration would route `python.rl` reads through `gym_envs.observation_view`, adding a `python.rl`→`gym_envs` reverse dependency — forbidden. |
+| C19 `navigation_runtime/guidance` (TL20) | World Truth | () | P3 CommandDelivery, P4 PlatformControl, P10 ObservationExport | declared-but-open | No (needs a command owner) | A mixed command/reward helper: its own-ship reads feed both the autopilot command target (command delivery) and waypoint reward support. An observation view is not the right owner for command-delivery reads, so migration awaits a separate command/guidance read owner. |
+
+Notes:
+- **Stages.** Semantic stages follow the codebase's authoritative usage (the I32
+  stage contract in `python/rl/runtime/world_batch/core.py`): reward and
+  observation build both close at P10 ObservationExport (`observation_build` and
+  `reward_episode` both declare P10; `reward_episode` adds P1 WorldSetup solely
+  for the episode-autoreset sub-stage, which lives in the vec env, not in
+  C11/C12); tasking-intent/behavior at P2, command delivery at P3, platform
+  control at P4. No I32 batch-step stage or sub-stage declares P9 EffectsDamage —
+  P9 is the kernel effects/damage system's *production* stage, and C11/C12 only
+  read already-produced damage facts — so the aggregators declare P10 only
+  (§7.5 P2 repair; the first cut over-declared P9 and was corrected).
+- **PRODUCED.** Reward inputs, tasking/command artifacts and guidance/command
+  targets are not information layers, so those consumers declare `PRODUCED = ()`;
+  only C13, an observation producer, declares `Agent Observation`.
+
+### 7.2 Registry and gate changes
+
+- `python/architecture/information_layer.py`: the maintained registry is split
+  into `VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS` (ban-gated; the eight §6
+  consumers plus C13 since the §7.5 repair round — nine) and the new
+  `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS` (declaration-gated only; C11,
+  C12, C14, C19 — four). `MAINTAINED_INFORMATION_LAYER_CONSUMERS` is now the
+  union of the two (13 consumers).
+- Declaration gate (`test_g4_layer_declarations.py`): now parametrizes over all 13
+  maintained consumers (the five new declarations included) and adds a partition
+  test (converged ∩ deferred = ∅; union = maintained).
+- Ban gate (`test_g4_truth_read_ban.py`): scan set extended to the nine converged
+  consumers (C13 added in §7.5), plus a load-bearing test that each
+  declared-deferred consumer is excluded from the scan *and still performs raw
+  truth reads* — so the deferral is real, and converging one later (which removes
+  its raw reads) forces moving it into the converged, ban-gated set.
+- New parity harness: `tests/leader/test_leader_observation_view_parity.py`
+  (§7.5) pins C13's output element-exactly against the fae17eb8 baseline
+  function on synthetic scenarios and proves the reads flow through the view
+  seam (monkeypatch corruption red-proof).
+
+### 7.3 Migration outcomes
+
+C13 is migrated (§7.5): its own-ship x/y reads were token-isomorphic to
+`own_ship_field` (exactly the C17/C18 shape), the module imports without
+`stable_baselines3`, and the missing numeric harness was added rather than
+waited for — the new focused test pins `build_observation`'s output
+element-exactly against the fae17eb8 baseline function (extracted via
+`git show`), including the no-x/y default-firing scenario, and a one-off dual-run
+compared baseline vs migrated element-identically across the same scenarios.
+The other four keep their reads: C11/C12 are orchestrators (declare-only by
+design — their reads feed input-DTO assembly, not a leaf observation surface),
+C14's migration is barred by the `python.rl`→`gym_envs` reverse-dependency rule,
+and C19 needs a command/guidance read owner first (an observation view is not
+the right owner for command-delivery reads).
+
+### 7.4 Verification (zero behavior change)
+
+- `tests/architecture/information_state` — 37 passed (was 26; +5 declaration
+  parametrizations for the new consumers, +1 registry-partition test, +4
+  declared-deferred ban-exclusion parametrizations, +1 ban-scan parametrization
+  for the migrated C13).
+- New parity harness `tests/leader/test_leader_observation_view_parity.py` —
+  3 passed (two pinned-baseline scenarios + view-seam red-proof); corrupting the
+  view face reds the pins (load-bearing evidence, §7.5).
+- Five-consumer behavior set (`tests/leader`, `tests/runtime/execution`,
+  `tests/runtime/mission`, `tests/runtime/navigation`, with the new parity file
+  excluded for set-identity), identical before/after: 179 passed, 234 subtests
+  passed, 1 collection error
+  (`tests/leader/test_leader_runtime_control_contracts.py`; `stable_baselines3`
+  absent — machine baseline).
+- The declarations add no imports and no logic; the C13 migration relocates the
+  own-ship leaf reads only (parity pinned as above).
+
+### 7.5 Independent-review repair (2026-07-21)
+
+The independent review of this slice returned needs-repair on two findings; both
+were repaired in place the same day (all §7.4 gates re-run):
+
+- **P1 — C13 deferral rationale was factually wrong (adjudication).** The first
+  cut deferred C13's migration claiming "the leader-env numeric-parity tests are
+  `stable_baselines3`-gated". The review disproved this: no numeric test covers
+  `build_observation` at all (the sole SB3 collection error comes from
+  runtime-control tests that never call it), and the module imports cleanly
+  without SB3. Repair: C13 was migrated onto the declared view (the mechanical
+  `own_ship_field` move the adjudication already called migration-ready), and the
+  *missing harness* was built instead of being waited for —
+  `tests/leader/test_leader_observation_view_parity.py` pins the output
+  element-exactly against the fae17eb8 baseline function on x/y-sensitive
+  synthetic scenarios (plus the no-x/y default-firing case) and proves the pin is
+  load-bearing through the view-seam corruption red-proof. A one-off dual-run
+  (baseline module exec'd from `git show`, live module imported) confirmed
+  element-identical outputs and that corrupting `own_ship_field` diverges them.
+  TL15 flips to *converged*; registry moves C13 into the ban-gated converged set
+  (9/4 split).
+- **P2 — C11/C12 over-declared P9 EffectsDamage (stage closure).** The first cut
+  declared the aggregators at P9+P10. The I32 stage contracts in
+  `python/rl/runtime/world_batch/core.py` close reward and observation assembly
+  at P10 (`observation_build` P10; `reward_episode` P10 + P1-for-autoreset-only;
+  even the event-driven `post_launch_assessment` sub-stage declares P4/P5/P10) and
+  declare P9 nowhere — P9 is the kernel effects/damage system's production stage,
+  while C11/C12 only *read* already-produced damage facts. Repair: both
+  `SEMANTIC_STAGE` tuples are now `("P10 ObservationExport",)`; the §7.1 matrix,
+  §2 census rows and TL14 note were corrected accordingly.
 
 ## Related
 

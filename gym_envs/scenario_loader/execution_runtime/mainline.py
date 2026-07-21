@@ -10,6 +10,26 @@ from gym_envs.scenario_loader.reward_runtime.air_combat import (
     combat_entity_terminal_state,
 )
 
+
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). compute_full_step is the execution
+# step controller: it reads own-ship authoritative truth (z/x/y/vx/vy) directly
+# and computes the step reward, termination and status, applying the
+# combat-terminal / damage-consequence overrides. Reward/termination/status is a
+# control outcome, not an information layer, so PRODUCED is empty. Per the I32
+# batch-step contracts (python/rl/runtime/world_batch/core.py), reward evaluation
+# closes at P10 ObservationExport (the reward_episode stage; its P1 span covers
+# episode autoreset only, which lives in the vec env, not here); the
+# combat-terminal override *reads* already-produced damage/liveness facts and
+# produces no P9 effects, so this module declares P10 only. As an orchestrator its
+# own-ship reads are declared here (T8 third slice, I56) but kept rather than
+# routed through the observation view: it is declared-but-open
+# (t8_g4_truth_leak_inventory.md §7) and NOT ban-gated. Pure metadata; no runtime
+# cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
 _COMBAT_TERMINAL_EXCLUSIVE_TERMS = {
     "crash_penalty",
     "objective_bonus",

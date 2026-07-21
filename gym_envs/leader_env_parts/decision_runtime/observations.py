@@ -5,10 +5,29 @@ from typing import Any
 
 import numpy as np
 
+from gym_envs import observation_view
 from python.tasking_contracts.mission_defs import COMMAND_CODE_LANDING, normalize_phase_name
 
 from ..common import wrap_deg
 from .commands import fuel_margin_state
+
+
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). build_observation is the leader
+# decision-runtime observation producer: it consumes own-ship authoritative truth
+# (x/y for ILS / runway-frame / anchor geometry), delegates the navigation vector
+# to loader.get_mission_observation, and produces the leader policy observation
+# dict (Agent Observation). As of the T8 third-slice repair round (I56) those
+# own-ship reads flow through the declared observation view
+# (observation_view.own_ship_field), which owns the raw truth access; TL15 is
+# converged onto that declared view and this module is in the truth-read-ban scan
+# set (no raw truth.<attr> / getattr(truth, ...) reads remain). Numeric parity
+# with the fae17eb8 baseline function is pinned by
+# tests/leader/test_leader_observation_view_parity.py. Pure metadata; no runtime
+# cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
 
 
 def build_observation(env: Any) -> dict[str, np.ndarray]:
@@ -26,8 +45,8 @@ def build_observation(env: Any) -> dict[str, np.ndarray]:
     ).reshape(-1)
     ils = np.asarray(
         loader.get_ils_observation(
-            float(getattr(truth, "x", 0.0)),
-            float(getattr(truth, "y", 0.0)),
+            float(observation_view.own_ship_field(truth, "x", 0.0)),
+            float(observation_view.own_ship_field(truth, "y", 0.0)),
             float(getattr(inst, "alt_baro", 0.0)),
         ),
         dtype=np.float32,
@@ -40,14 +59,14 @@ def build_observation(env: Any) -> dict[str, np.ndarray]:
     c2_task_id = float(getattr(loader, "c2_task_id", 0))
 
     valid_rf, along_m, cross_m, _rw_len, _rw_wid = loader.get_runway_local_frame(
-        float(getattr(truth, "x", 0.0)),
-        float(getattr(truth, "y", 0.0)),
+        float(observation_view.own_ship_field(truth, "x", 0.0)),
+        float(observation_view.own_ship_field(truth, "y", 0.0)),
     )
     runway_heading_err = 0.0
     try:
         beacon = loader._nearest_ils_beacon(
-            float(getattr(truth, "x", 0.0)),
-            float(getattr(truth, "y", 0.0)),
+            float(observation_view.own_ship_field(truth, "x", 0.0)),
+            float(observation_view.own_ship_field(truth, "y", 0.0)),
         )
         if beacon is not None:
             runway_heading_err = wrap_deg(
@@ -75,10 +94,10 @@ def build_observation(env: Any) -> dict[str, np.ndarray]:
     )
 
     anchor_dx = float(getattr(task, "anchor_x_m", 0.0) if task is not None else 0.0) - float(
-        getattr(truth, "x", 0.0)
+        observation_view.own_ship_field(truth, "x", 0.0)
     )
     anchor_dy = float(getattr(task, "anchor_y_m", 0.0) if task is not None else 0.0) - float(
-        getattr(truth, "y", 0.0)
+        observation_view.own_ship_field(truth, "y", 0.0)
     )
     anchor_dist_m = float(math.hypot(anchor_dx, anchor_dy))
     anchor_bearing_deg = (

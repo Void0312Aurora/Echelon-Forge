@@ -11,9 +11,13 @@ declaration load-bearing on the Python-owned maintained surface:
   authoritative vocabulary strings. These are plain metadata assignments, so
   there is no per-step or import-time cost beyond the tuple literal.
 * :data:`MAINTAINED_INFORMATION_LAYER_CONSUMERS` is the G5-style registry of
-  dotted module paths that must carry such a declaration. Extension is
-  registration: a later T8 slice migrates one more consumer by adding its
-  declaration and appending its path here.
+  dotted module paths that must carry such a declaration. It is the union of
+  :data:`VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS` (consumers whose leaf reads
+  now flow through the declared observation view, additionally ban-gated) and
+  :data:`DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS` (adjudicated consumers
+  that carry a declaration but keep their own reads for now). Extension is
+  registration: a later slice converges a deferred consumer by moving its path
+  from the deferred tuple into the converged tuple.
 * :func:`validate_information_layer_declaration` is the shared checker used by
   the architecture test today, and reusable by a future AST/import gate when G4
   enforcement moves "from documentation to AST gates" (design doc §15).
@@ -67,16 +71,17 @@ REQUIRED_DECLARATION_ATTRS: tuple[str, ...] = (
     "SEMANTIC_STAGE",
 )
 
-# G5 registry: dotted module paths of maintained observation/reward consumers
-# that carry a G4 declaration. This is the first-slice set: the V4/V5/V6 census
-# consumers and the own-ship reward-input builders they sit beside, plus the two
-# repair-round additions the first-slice census missed — the active universal
-# policy-observation assembly path (called by CooperativeWorldBatchVecEnv /
-# MultiAgentWorldRuntimeView) and the waypoint reward-input builder. Later T8
-# slices append the deferred aggregators (step_evaluation, execution mainline,
-# leader tasking, route-guidance helper) once their epistemic layer is
-# adjudicated rather than forced.
-MAINTAINED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
+# Consumers whose leaf reads flow through the declared observation view: the
+# eight migrated in the second slice (§6 -- the V4/V5/V6 census consumers, the
+# own-ship reward-input builders they sit beside, and the two repair-round
+# additions: active universal policy-observation assembly and the waypoint
+# reward-input builder), plus the leader decision-runtime observation producer
+# migrated in the T8 third-slice repair round (I56 §7.5) after the independent
+# review disproved its deferral rationale -- its own-ship x/y reads are
+# token-isomorphic to own_ship_field, and numeric parity with the fae17eb8
+# baseline is pinned by tests/leader/test_leader_observation_view_parity.py.
+# These are the ban-gated set (no raw World-Truth reads may remain).
+_VIEW_CONVERGED_CONSUMERS: tuple[str, ...] = (
     "gym_envs.scenario_loader.mission_observation",
     "gym_envs.scenario_loader.reward_runtime.air_combat",
     "gym_envs.scenario_loader.reward_runtime.naval",
@@ -85,6 +90,42 @@ MAINTAINED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
     "gym_envs.scenario_loader.reward_runtime.objectives",
     "gym_envs.universal_env_parts.observations",
     "gym_envs.scenario_loader.navigation_runtime.waypoint_rewards",
+    "gym_envs.leader_env_parts.decision_runtime.observations",
+)
+
+# T8 third slice (I56): the deferred aggregator/leader/guidance consumers, now
+# adjudicated and each carrying a G4 declaration but keeping their own reads.
+# They are declaration-gated (they appear in MAINTAINED_INFORMATION_LAYER_CONSUMERS
+# below) but NOT ban-gated (their raw truth reads are intentional and not yet
+# view-converged). The adjudication (see t8_g4_truth_leak_inventory.md §7):
+#   * step_evaluation / execution mainline -- stage-bundling orchestrators whose
+#     own-ship reads feed reward/observation input-DTO assembly; declared, not
+#     migrated (orchestrators bundling DTOs, not leaf observation reads).
+#   * python.rl.tasking.leader_tasking -- the scripted C2/leader director
+#     (maintained doctrine). Declaring it is neutral (python.architecture), but
+#     migration is forbidden: routing its reads through gym_envs.observation_view
+#     would introduce a python.rl -> gym_envs reverse dependency.
+#   * navigation_runtime.guidance -- the shared route-guidance helper spanning
+#     command-delivery (autopilot target) and reward support; migration deferred
+#     until a command/guidance read owner exists (an observation view is not the
+#     right owner for command-delivery reads).
+DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
+    "gym_envs.scenario_loader.step_evaluation",
+    "gym_envs.scenario_loader.execution_runtime.mainline",
+    "python.rl.tasking.leader_tasking",
+    "gym_envs.scenario_loader.navigation_runtime.guidance",
+)
+
+# G5 registry: every maintained observation/reward consumer that carries a G4
+# declaration. It is the union of the view-converged consumers (ban-gated) and
+# the declared-but-deferred consumers (declaration-gated only). The declaration
+# gate checks every entry here; the truth-read-ban gate checks only the converged
+# subset. Extension is registration: a later slice converges a deferred consumer
+# by moving its path out of DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS into
+# the converged tuple (this union is unchanged).
+MAINTAINED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
+    *_VIEW_CONVERGED_CONSUMERS,
+    *DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS,
 )
 
 # T8 second slice (declaration-view convergence). The declared observation-view
@@ -100,16 +141,14 @@ MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS: tuple[str, ...] = (
     "gym_envs.observation_view",
 )
 
-# Consumers migrated onto the declared observation view this slice. The G4
-# truth-read-ban gate forbids raw World-Truth attribute reads (``truth.<attr>``
-# and ``getattr(truth, ...)``) in each of these modules, since their leaf reads
-# now flow through MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS. This slice migrates
-# all eight declared consumers, so the converged set equals the declared-consumer
-# registry; a later slice that declares further consumers may migrate them
-# incrementally and split this set out.
-VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
-    MAINTAINED_INFORMATION_LAYER_CONSUMERS
-)
+# Consumers migrated onto the declared observation view. The G4 truth-read-ban
+# gate forbids raw World-Truth attribute reads (``truth.<attr>`` and
+# ``getattr(truth, ...)``) in each of these modules, since their leaf reads flow
+# through MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS. The eight first/second-slice
+# consumers plus the leader observation producer converged in the I56 repair
+# round. A later slice converges another declared-but-deferred consumer by
+# moving its path from the deferred tuple into the converged tuple.
+VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = _VIEW_CONVERGED_CONSUMERS
 
 
 def validate_information_layer_declaration(
@@ -170,6 +209,7 @@ def validate_information_layer_declaration(
 __all__ = [
     "AUTHORITATIVE_INFORMATION_LAYERS",
     "CANONICAL_SEMANTIC_STAGES",
+    "DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS",
     "MAINTAINED_INFORMATION_LAYER_CONSUMERS",
     "MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS",
     "REQUIRED_DECLARATION_ATTRS",

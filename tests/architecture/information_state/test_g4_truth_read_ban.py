@@ -13,6 +13,12 @@ gate ratchets that convergence:
 * The declared view owner(s) in ``MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS`` are
   the read owner and are excluded from the ban; each must still carry a valid G4
   declaration (a read owner is allowed to read truth, consumers are not).
+* The declared-but-deferred consumers in
+  ``DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`` (T8 third slice, I56) carry a
+  G4 declaration but are not yet view-converged, so they are excluded from the ban
+  scan. The gate proves each still performs raw truth reads, so the exclusion is a
+  real deferral (not an accidentally-clean module) and converging one later forces
+  moving it into the ban-gated converged set.
 * An explicit inline diagnostic marker exempts a single read, so a legitimate
   declared diagnostic truth read stays possible without weakening the ban.
 * The gate proves it is load-bearing: injecting a raw truth read into an
@@ -30,6 +36,7 @@ from pathlib import Path
 import pytest
 
 from python.architecture.information_layer import (
+    DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS,
     MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS,
     REQUIRED_DECLARATION_ATTRS,
     VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS,
@@ -179,6 +186,28 @@ def test_diagnostic_marker_whitelists_a_single_truth_read() -> None:
         "    return a, b\n"
     )
     assert _raw_truth_read_lines(source) == [2]
+
+
+@pytest.mark.parametrize("dotted", DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS)
+def test_declared_deferred_consumer_is_excluded_from_ban_and_keeps_raw_reads(dotted: str) -> None:
+    # The T8 third slice (I56) declared these consumers' information layer but did
+    # not converge their reads onto the observation view. Prove (a) each is
+    # excluded from the ban scan set (so its intentional raw reads are allowed) and
+    # (b) it genuinely still performs raw truth reads -- so the deferral is real
+    # and this stays load-bearing: if a later slice converges one (removing its raw
+    # reads) without moving it into VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS, this
+    # goes red and forces the reclassification.
+    assert dotted not in VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS, (
+        f"declared-deferred consumer {dotted} must not be in the truth-read-ban scan set"
+    )
+    path = _module_path(dotted)
+    assert path.is_file(), f"declared-deferred consumer module is missing: {dotted}"
+    flagged = _raw_truth_read_lines(_module_source(dotted))
+    assert flagged, (
+        f"{dotted}: expected raw World-Truth reads (declared-but-deferred, not yet "
+        "view-converged); found none -- if it converged, move it into "
+        "VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS so the ban gate covers it"
+    )
 
 
 def test_view_owner_reads_truth_and_is_excluded_from_ban() -> None:

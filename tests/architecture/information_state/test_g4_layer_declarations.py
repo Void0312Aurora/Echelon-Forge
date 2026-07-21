@@ -27,8 +27,10 @@ import pytest
 from python.architecture.information_layer import (
     AUTHORITATIVE_INFORMATION_LAYERS,
     CANONICAL_SEMANTIC_STAGES,
+    DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS,
     MAINTAINED_INFORMATION_LAYER_CONSUMERS,
     REQUIRED_DECLARATION_ATTRS,
+    VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS,
     validate_information_layer_declaration,
 )
 
@@ -197,6 +199,29 @@ def test_every_maintained_consumer_declares_valid_g4_layer(dotted: str) -> None:
         path.read_text(encoding="utf-8"), dotted
     )
     assert not violations, "\n".join(violations)
+
+
+def test_maintained_registry_partitions_into_converged_and_deferred() -> None:
+    # The declaration gate covers every maintained consumer; the truth-read ban
+    # gate (test_g4_truth_read_ban.py) covers only the view-converged subset. Keep
+    # the two registries a clean partition so a consumer cannot be silently both
+    # migrated and deferred, and so MAINTAINED stays exactly their union (no gap,
+    # no overlap). A later slice converges a deferred consumer by moving its path
+    # from the deferred tuple into the converged tuple, preserving this union.
+    converged = set(VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS)
+    deferred = set(DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS)
+    assert converged.isdisjoint(deferred), (
+        "a consumer cannot be both view-converged and declared-deferred: "
+        f"{sorted(converged & deferred)}"
+    )
+    assert set(MAINTAINED_INFORMATION_LAYER_CONSUMERS) == converged | deferred, (
+        "MAINTAINED_INFORMATION_LAYER_CONSUMERS must equal the union of the "
+        "view-converged and declared-deferred registries"
+    )
+    # Both subsets are non-empty at this slice; guard against an accidental empty
+    # tuple making the membership/partition checks vacuously green.
+    assert converged, "expected a non-empty view-converged consumer set"
+    assert deferred, "expected a non-empty declared-deferred consumer set"
 
 
 def test_declaration_gate_rejects_malformed_declarations() -> None:

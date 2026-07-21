@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-21",
-      "english_hash": "6479aa50c9f5a7fee058cccd2a5a8e89cd12b9953081b75d3bef617ce67a4700",
-      "chinese_hash": "8ff90d65624773a1f8db91ddf4ace82574a7e6a4decd5a2a13f4103b866d44cc"
+      "english_hash": "eb55fd1667c834cf5f0d556483ab672e4048ab46cd3434df08db2176e2e2b8c4",
+      "chinese_hash": "e053ce9e54b94bb5b139ac4abbdc43f5d55c3971545b9a877b1f75276cbf686b"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -278,8 +278,8 @@
       "chinese": "docs/plan/unified_architecture_program/t8_g4_truth_leak_inventory.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-21",
-      "english_hash": "728bc1267be3b9a617dddcffd2fa8848ad8ab5843c213f76be6b71a664972524",
-      "chinese_hash": "10101030a86eeb6c2b7b45b13e8004f55e508508597598135f31ff9e07b328fb"
+      "english_hash": "c2876d6562bb61b7cc347149f3c99faf501917e63b8b1b897450258af6baa565",
+      "chinese_hash": "ca6d5a72bceffba4adbf9da5d66d832a978c7caa944517398098ae74ecada30d"
     },
     {
       "pair_id": "reference_artifacts",

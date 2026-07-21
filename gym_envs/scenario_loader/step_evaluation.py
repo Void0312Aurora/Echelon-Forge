@@ -8,6 +8,27 @@ from python.tasking_contracts.bridge_views import resolve_loader_time_step
 from .mission_observation import build_mission_observation_runtime_inputs
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). step_evaluation is the stage-bundling
+# aggregator for the execution step: it reads own-ship authoritative truth
+# (x/y/z/vx/vy/vz/speed/pitch/roll/heading/health) directly and assembles the
+# reward/observation input DTOs (step-info, safety, waypoint, objective, approach,
+# flight-shaping, mission-observation) that feed the compiled runtime. Those input
+# bundles are an output, not an information layer, so PRODUCED is empty. Per the
+# I32 batch-step contracts (python/rl/runtime/world_batch/core.py), reward and
+# observation/reward input assembly close at P10 ObservationExport (the
+# observation_build / reward_episode stages); this module reads already-produced
+# damage facts and produces no P9 effects, so it declares P10 only. As an
+# aggregator its own-ship reads are declared here (T8 third slice, I56) but kept
+# rather than routed through the observation view: it is an orchestrator that
+# bundles DTOs, not a leaf observation-read surface, so it is declared-but-open
+# (t8_g4_truth_leak_inventory.md §7, TL14) and NOT ban-gated. Pure metadata; no
+# runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 def build_step_info_runtime_inputs(loader, *, inst_now=None, truth_now=None, runway_frame=None):
     inputs = ef_py.StepInfoInputs()
     if inst_now is None:

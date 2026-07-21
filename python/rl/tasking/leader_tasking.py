@@ -35,6 +35,22 @@ from python.rl.control.mission_defs import (
     is_landing_command_code,
 )
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This module is the scripted C2/leader
+# director (RuleBasedLeaderPhaseManager / ScriptedC2TaskManager): a maintained
+# doctrine that consumes own-ship authoritative truth (x/y/z/heading via the
+# get_policy_agent_observation seam, plus instrument via get_policy_instrument_state)
+# to form tasking intent and deliver leader/mission commands. Task orders, leader
+# intent and pilot reports are tasking/command artifacts, not an information layer,
+# so PRODUCED is empty. Declaring it is neutral (python.architecture), but the
+# reads are kept: routing them through gym_envs.observation_view would add a
+# python.rl -> gym_envs reverse dependency, so this is declared-but-open
+# (t8_g4_truth_leak_inventory.md §7, TL16) and NOT ban-gated. Pure metadata; no
+# runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P2 TaskingIntent", "P3 CommandDelivery")
+
 # Local names preserved as thin aliases; semantics owned by python.angles/python.coercion.
 _wrap_deg = wrap_signed_deg
 _coerce_nonnegative_int = coerce_nonnegative_int
