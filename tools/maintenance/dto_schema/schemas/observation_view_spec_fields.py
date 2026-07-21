@@ -31,6 +31,18 @@ SCHEMA = DtoSchema(
         Field(name='allow_minor_version_drift', cpp_type='bool', default='true', group='EF_OBSERVATION_VIEW_SPEC_FIELD'),
         Field(name='allow_unknown_optional_fields', cpp_type='bool', default='true', group='EF_OBSERVATION_VIEW_SPEC_FIELD'),
         Field(name='allow_missing_optional_fields', cpp_type='bool', default='true', group='EF_OBSERVATION_VIEW_SPEC_FIELD'),
+        # T8 fourth slice (I60): additive structural-fact declaration of the maintained
+        # observation view at the TL13 seam. Appended after the checkpoint-compatibility
+        # fields (member order ABI: append-only). These carry the layer/stage/view-id
+        # STRUCTURAL facts mirrored from the Python registry (gym_envs.observation_view /
+        # python.architecture.information_layer); the detailed observation field list
+        # stays Python-owned to avoid dual-source drift, and a G4 architecture test gates
+        # C++ export == Python registry. Empty by default so every existing default-
+        # constructed ObservationViewSpec (checkpoint-compat consumers) is unchanged.
+        Field(name='view_id', cpp_type='std::string', default='""', group='EF_OBSERVATION_VIEW_SPEC_FIELD'),
+        Field(name='information_layer_produced', cpp_type='std::vector<std::string>', default='{}', group='EF_OBSERVATION_VIEW_SPEC_FIELD'),
+        Field(name='information_layer_consumed', cpp_type='std::vector<std::string>', default='{}', group='EF_OBSERVATION_VIEW_SPEC_FIELD'),
+        Field(name='semantic_stage', cpp_type='std::vector<std::string>', default='{}', group='EF_OBSERVATION_VIEW_SPEC_FIELD'),
     ),
     file_footer=FILE_FOOTER,
 )

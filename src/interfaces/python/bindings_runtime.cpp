@@ -1313,5 +1313,11 @@ void bind_runtime(nb::module_ &m) {
         .def("allocate_run_snapshot_version", &RuntimeFacade::allocate_run_snapshot_version)
         .def("peek_next_run_snapshot_version", &RuntimeFacade::peek_next_run_snapshot_version)
         .def("allocate_trace_id", &RuntimeFacade::allocate_trace_id)
-        .def("peek_next_trace_id", &RuntimeFacade::peek_next_trace_id);
+        .def("peek_next_trace_id", &RuntimeFacade::peek_next_trace_id)
+        // T8 information-state architecture, slice 4 / I60: additive read-only
+        // declaration export of the maintained observation view at the TL13 seam.
+        // Not wired into any existing export path; gated against the Python
+        // registry by the G4 export-parity architecture test.
+        .def("describe_maintained_observation_view",
+             &RuntimeFacade::describe_maintained_observation_view);
 }

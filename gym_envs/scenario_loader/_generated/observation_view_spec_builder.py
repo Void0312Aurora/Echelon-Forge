@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 
-FIELD_NAMES: tuple[str, ...] = ('schema_version', 'required_fields', 'optional_fields', 'reject_major_mismatch', 'allow_minor_version_drift', 'allow_unknown_optional_fields', 'allow_missing_optional_fields')
+FIELD_NAMES: tuple[str, ...] = ('schema_version', 'required_fields', 'optional_fields', 'reject_major_mismatch', 'allow_minor_version_drift', 'allow_unknown_optional_fields', 'allow_missing_optional_fields', 'view_id', 'information_layer_produced', 'information_layer_consumed', 'semantic_stage')
 
-WRITABLE_FIELD_NAMES: tuple[str, ...] = ('schema_version', 'required_fields', 'optional_fields', 'reject_major_mismatch', 'allow_minor_version_drift', 'allow_unknown_optional_fields', 'allow_missing_optional_fields')
+WRITABLE_FIELD_NAMES: tuple[str, ...] = ('schema_version', 'required_fields', 'optional_fields', 'reject_major_mismatch', 'allow_minor_version_drift', 'allow_unknown_optional_fields', 'allow_missing_optional_fields', 'view_id', 'information_layer_produced', 'information_layer_consumed', 'semantic_stage')
 
 READONLY_FIELDS: frozenset[str] = frozenset()
 
@@ -18,6 +18,10 @@ FIELD_DEFAULTS: dict[str, tuple[str, str]] = {
     'allow_minor_version_drift': ('bool', 'True'),
     'allow_unknown_optional_fields': ('bool', 'True'),
     'allow_missing_optional_fields': ('bool', 'True'),
+    'view_id': ('str', '\'""\''),
+    'information_layer_produced': ('object', "'{}'"),
+    'information_layer_consumed': ('object', "'{}'"),
+    'semantic_stage': ('object', "'{}'"),
 }
 
 _SENTINEL = object()

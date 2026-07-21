@@ -81,6 +81,11 @@ def test_observation_view_spec_exposes_versioned_checkpoint_compatibility_surfac
     "optional_fields",
     "reject_major_mismatch",
     "allow_minor_version_drift",
+    # T8/I60 additive structural-fact declaration fields (append-only).
+    "view_id",
+    "information_layer_produced",
+    "information_layer_consumed",
+    "semantic_stage",
   ):
     assert field in view_spec
 

@@ -291,7 +291,7 @@ EXPECTED_REGISTRATIONS = {
   "tools/maintenance/dto_schema/schemas/observation_view_spec_fields.py": (
     "src/runtime/contracts/detail/observation_view_spec.inc",
     f"{_BUILDER_DIR}/observation_view_spec_builder.py",
-    7,
+    11,
   ),
   "tools/maintenance/dto_schema/schemas/observation_view_compatibility_report_fields.py": (
     "src/runtime/contracts/detail/observation_view_compatibility_report.inc",

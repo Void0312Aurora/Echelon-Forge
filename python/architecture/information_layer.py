@@ -206,13 +206,113 @@ def validate_information_layer_declaration(
     return violations
 
 
+# T8 fourth slice (I60): the C++ runtime facade now exports a declared
+# ObservationViewSpec for the TL13 maintained observation seam
+# (RuntimeFacade::describe_maintained_observation_view). The two helpers below let
+# the G4 facility cross-check that C++ export against the Python single source of
+# truth (gym_envs/observation_view.py), so mirroring the layer strings into C++
+# cannot silently drift. This is opt-in: nothing in the maintained runtime calls
+# them, and the ef_py import is function-local so this module stays import-time
+# stdlib-only (the AST G4 gates keep running without a build).
+
+# Attribute names of the structural-fact ObservationViewSpec fields the C++ export
+# fills (mirrors the I60 append-only schema fields).
+OBSERVATION_VIEW_EXPORT_LAYER_ATTRS: tuple[str, ...] = (
+    "information_layer_produced",
+    "information_layer_consumed",
+    "semantic_stage",
+)
+
+
+def read_maintained_observation_view_export() -> dict[str, object]:
+    """Read the C++ facade's declared maintained-observation-view export (opt-in).
+
+    Returns a plain dict of the structural facts the export carries:
+    ``schema_version`` / ``view_id`` (str) and ``information_layer_produced`` /
+    ``information_layer_consumed`` / ``semantic_stage`` (tuple[str, ...]).
+
+    Imports are function-local so this module stays import-time stdlib-only.
+    Raises ``ImportError`` when no local ``ef_py`` build is available; callers
+    (e.g. the G4 export-parity architecture test) skip in that case.
+    """
+    from python.runtime_bootstrap import configure_repo_imports
+
+    configure_repo_imports()
+    import ef_py  # noqa: PLC0415  (function-local by design; keeps module stdlib-only)
+
+    spec = ef_py.RuntimeFacade(0).describe_maintained_observation_view()
+    return {
+        "schema_version": str(spec.schema_version),
+        "view_id": str(spec.view_id),
+        "information_layer_produced": tuple(spec.information_layer_produced),
+        "information_layer_consumed": tuple(spec.information_layer_consumed),
+        "semantic_stage": tuple(spec.semantic_stage),
+    }
+
+
+def observation_view_export_parity_violations(
+    export: dict[str, object],
+    *,
+    expected_view_id: str,
+    expected_consumed: Sequence[str],
+    expected_produced: Sequence[str],
+    expected_semantic_stage: Sequence[str],
+) -> list[str]:
+    """Return violations comparing a C++ export against the Python registry.
+
+    Pure function (no imports, no runtime state): it takes both the C++ export
+    (from :func:`read_maintained_observation_view_export`) and the authoritative
+    Python-registry declaration and checks that (a) the export is well-formed G4
+    vocabulary and (b) it equals the registry declaration exactly (order
+    included). An empty list means the C++ mirror and the Python single source of
+    truth agree, so the mirror has not drifted.
+    """
+    violations: list[str] = []
+
+    export_view_id = export.get("view_id")
+    if export_view_id != expected_view_id:
+        violations.append(
+            f"view_id drift: C++ export {export_view_id!r} != registry {expected_view_id!r}"
+        )
+
+    export_consumed = tuple(export.get("information_layer_consumed", ()))
+    export_produced = tuple(export.get("information_layer_produced", ()))
+    export_semantic_stage = tuple(export.get("semantic_stage", ()))
+
+    # (a) the export must itself be a well-formed G4 declaration.
+    violations.extend(
+        validate_information_layer_declaration(
+            consumed=export_consumed,
+            produced=export_produced,
+            semantic_stage=export_semantic_stage,
+            consumer="RuntimeFacade.describe_maintained_observation_view",
+        )
+    )
+
+    # (b) the export must equal the Python registry declaration exactly.
+    for label, exported, expected in (
+        ("INFORMATION_LAYER_CONSUMED", export_consumed, tuple(expected_consumed)),
+        ("INFORMATION_LAYER_PRODUCED", export_produced, tuple(expected_produced)),
+        ("SEMANTIC_STAGE", export_semantic_stage, tuple(expected_semantic_stage)),
+    ):
+        if exported != expected:
+            violations.append(
+                f"{label} drift: C++ export {exported!r} != registry {expected!r}"
+            )
+
+    return violations
+
+
 __all__ = [
     "AUTHORITATIVE_INFORMATION_LAYERS",
     "CANONICAL_SEMANTIC_STAGES",
     "DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS",
     "MAINTAINED_INFORMATION_LAYER_CONSUMERS",
     "MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS",
+    "OBSERVATION_VIEW_EXPORT_LAYER_ATTRS",
     "REQUIRED_DECLARATION_ATTRS",
     "VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS",
+    "observation_view_export_parity_violations",
+    "read_maintained_observation_view_export",
     "validate_information_layer_declaration",
 ]

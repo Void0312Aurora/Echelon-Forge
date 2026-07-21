@@ -174,6 +174,29 @@ class RuntimeFacade {
     std::uint64_t allocate_trace_id();                           // VA-8
     std::uint64_t peek_next_trace_id() const;
 
+    // --- T8 information-state architecture, fourth slice / I60 -------------
+    //
+    // Additive, read-only declaration export for the TL13 maintained
+    // observation read seam (scenario_loader/core.py::get_policy_agent_observation).
+    // It materializes "what layer the seam produces" as a runtime-queryable
+    // ObservationViewSpec instead of a documentation-only fact.
+    //
+    // The returned spec carries only the STRUCTURAL facts of the maintained
+    // observation view -- its schema version, view id, and the produced /
+    // consumed information-state layers and semantic stage -- mirrored from
+    // the Python-owned single source of truth (gym_envs/observation_view.py and
+    // python/architecture/information_layer.py). The detailed observation field
+    // list is deliberately left Python-owned (required_fields / optional_fields
+    // stay empty here) so there is no dual-source field catalogue to drift; a G4
+    // architecture test gates this C++ export against the Python registry.
+    //
+    // Zero-wiring: this slice does not migrate any consumer and nothing in the
+    // maintained runtime calls this method, so the TL13 seam's behavior and
+    // every existing serialized value are byte-for-byte unchanged. The method is
+    // a pure constant producer (no facade instance state is read or mutated),
+    // hence const and callable on any facade including a zero-world one.
+    ObservationViewSpec describe_maintained_observation_view() const;
+
   private:
     bool counterfactual_world_index_valid(std::uint64_t world_index) const noexcept;
     bool apply_counterfactual_delta(const WorldEntityRef &ref,

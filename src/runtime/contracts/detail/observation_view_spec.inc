@@ -11,5 +11,9 @@ EF_OBSERVATION_VIEW_SPEC_FIELD(bool, reject_major_mismatch, true)
 EF_OBSERVATION_VIEW_SPEC_FIELD(bool, allow_minor_version_drift, true)
 EF_OBSERVATION_VIEW_SPEC_FIELD(bool, allow_unknown_optional_fields, true)
 EF_OBSERVATION_VIEW_SPEC_FIELD(bool, allow_missing_optional_fields, true)
+EF_OBSERVATION_VIEW_SPEC_FIELD(std::string, view_id, "")
+EF_OBSERVATION_VIEW_SPEC_FIELD(std::vector<std::string>, information_layer_produced, {})
+EF_OBSERVATION_VIEW_SPEC_FIELD(std::vector<std::string>, information_layer_consumed, {})
+EF_OBSERVATION_VIEW_SPEC_FIELD(std::vector<std::string>, semantic_stage, {})
 
 #undef EF_OBSERVATION_VIEW_SPEC_FIELD
