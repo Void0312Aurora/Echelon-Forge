@@ -1306,5 +1306,12 @@ void bind_runtime(nb::module_ &m) {
              nb::arg("request"))
         .def("export_diagnostics_traces", &RuntimeFacade::export_diagnostics_traces,
              nb::arg("request"))
-        .def("run_window", &RuntimeFacade::run_window, nb::arg("request"));
+        .def("run_window", &RuntimeFacade::run_window, nb::arg("request"))
+        // T10 evidence spine, slice 3 / I54: new additive run-global producers
+        // (VA-2 snapshot version, VA-8 trace-id allocator). Not wired into any
+        // existing export path in this slice.
+        .def("allocate_run_snapshot_version", &RuntimeFacade::allocate_run_snapshot_version)
+        .def("peek_next_run_snapshot_version", &RuntimeFacade::peek_next_run_snapshot_version)
+        .def("allocate_trace_id", &RuntimeFacade::allocate_trace_id)
+        .def("peek_next_trace_id", &RuntimeFacade::peek_next_trace_id);
 }

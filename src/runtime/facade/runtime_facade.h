@@ -115,6 +115,65 @@ class RuntimeFacade {
     export_diagnostics_traces(const EngagementBatchRequest &request) const;
     RuntimeWindowResult run_window(const RuntimeWindowRequest &request);
 
+    // --- T10 evidence spine, slice 3 / I54: dedicated run-global producers ---
+    //
+    // NEW additive evidence producers (census VA-2, VA-8). They are built
+    // "producer first": nothing in this slice calls them from an existing
+    // export path, so every existing serialized value (packet snapshot_version,
+    // trace_id, barrier metadata, replay envelopes) is byte-for-byte unchanged.
+    // Wiring these into the maintained run is deferred to slice 4.
+    //
+    // Run-global boundary adjudication (from the run/episode/reset lifecycle):
+    //   A "run" == the lifetime of a single RuntimeFacade instance. Both
+    //   counters mint monotonically increasing std::uint64_t values (first
+    //   minted value is 1) for the whole life of the facade object and are
+    //   deliberately NOT reset by any in-run operation, specifically:
+    //     * export_* calls (values stay monotone across exports),
+    //     * step_batch / step_execution_batch,
+    //     * reset_batch (episode re-seed) and clear_execution_episode_batch,
+    //     * resize / configure_batch,
+    //     * kernel-side clear() / event-clock rewind.
+    //   The last item is structural, not incidental: the pre-existing kernel
+    //   trace-id allocator (SimulationKernelEngagementEventStore::
+    //   next_engagement_event_id_) is per-world state beneath WorldBatchRuntime
+    //   and is reset to 1 by clear() and by an event-clock rewind. These
+    //   facade-owned counters live above that layer and cannot be reached by
+    //   it, which is precisely the VA-8 requirement: a dedicated allocator that
+    //   does not share the resettable engagement-event id space. Only
+    //   constructing a fresh RuntimeFacade restarts the sequences at 1.
+    //
+    // Move semantics (I54-R): moving a RuntimeFacade transfers the run
+    //   identity, including both allocator cursors, to the destination, which
+    //   continues the sequences exactly where the source stopped. The
+    //   moved-from facade's cursors are exchanged to the invalidated sentinel
+    //   (kInvalidatedEvidenceCursor = 0, a value the allocators never mint);
+    //   its allocate_*/peek_next_* then fail fast with std::logic_error
+    //   instead of silently minting ids that duplicate -- or, via move
+    //   assignment, rewind -- the destination's run. Defaulted moves would
+    //   copy the uint64 cursors and permit exactly that, so the move
+    //   constructor/assignment are user-defined in runtime_facade.cpp.
+    //
+    // Exhaustion boundary (I54-R2): the cursors are plain uint64
+    //   post-increments with no dedicated overflow guard. Minting the final
+    //   id UINT64_MAX wraps the cursor to 0, which is exactly the invalidated
+    //   sentinel above, so every later allocate_*/peek_next_* on that counter
+    //   fails fast (std::logic_error) permanently: the sequence collapses
+    //   into the invalidated state instead of wrapping around and repeating
+    //   ids. Exhaustion and moved-from deliberately share that single
+    //   invalidated representation (no separate exhausted state; the
+    //   fail-fast message names both entry paths). Practical reachability:
+    //   minting once per nanosecond would take roughly 584 years to exhaust
+    //   the space.
+    //
+    // allocate_* mint-and-advance (post-increment); peek_next_* report the
+    // value the next allocate_* would return without advancing. All four
+    // throw std::logic_error once the counter is invalidated -- by move or
+    // by exhaustion (see the two paragraphs above).
+    std::uint64_t allocate_run_snapshot_version();               // VA-2
+    std::uint64_t peek_next_run_snapshot_version() const;
+    std::uint64_t allocate_trace_id();                           // VA-8
+    std::uint64_t peek_next_trace_id() const;
+
   private:
     bool counterfactual_world_index_valid(std::uint64_t world_index) const noexcept;
     bool apply_counterfactual_delta(const WorldEntityRef &ref,
@@ -130,7 +189,24 @@ class RuntimeFacade {
     TaskingBatchPacket build_tasking_packet(const TaskingBatchRequest &request) const;
     void register_counterfactual_worldline_snapshot(const RuntimeCounterfactualSnapshot &snapshot);
 
+    // Invalidated sentinel for the evidence cursors below: 0 is never minted
+    // (sequences start at 1), so a 0 cursor means the counter was invalidated
+    // by one of its two entry paths -- the facade was moved-from, or the
+    // cursor exhausted its uint64 space (post-increment of UINT64_MAX wraps
+    // to 0) -- and the four producer methods above fail fast
+    // (std::logic_error).
+    static constexpr std::uint64_t kInvalidatedEvidenceCursor = 0;
+
     struct CounterfactualWorldlineRegistry;
     std::unique_ptr<WorldBatchRuntime> runtime_;
     std::unique_ptr<CounterfactualWorldlineRegistry> counterfactual_worldlines_;
+    // T10 slice 3 / I54 run-global evidence allocators (see the public
+    // producer declarations above for the run-global boundary adjudication
+    // and move semantics). Appended after the existing members; a fresh
+    // facade starts both at 1. NOTE: RuntimeFacade's move constructor and
+    // move assignment are user-defined (runtime_facade.cpp) and must transfer
+    // EVERY member listed here; a sizeof tripwire there fires when this
+    // member set changes.
+    std::uint64_t next_run_snapshot_version_ = 1; // VA-2
+    std::uint64_t next_trace_id_ = 1;             // VA-8
 };

@@ -363,6 +363,7 @@ set(EF_TEST_SOURCES
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
     src/tests/test_world_batch_runtime.cpp
+    src/tests/test_runtime_facade_evidence_allocators.cpp
     src/tests/test_default_effects_model.cpp
 )
 
