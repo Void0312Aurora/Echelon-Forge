@@ -364,67 +364,18 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
         }
     };
 
-    tuning.max_speed = src.value("max_speed", tuning.max_speed);
-    tuning.turn_rate = src.value("turn_rate", tuning.turn_rate);
-    tuning.fuse_distance = src.value("fuse_distance", tuning.fuse_distance);
-    tuning.damage = src.value("damage", tuning.damage);
-    tuning.seeker_fov_deg = src.value("seeker_fov_deg", tuning.seeker_fov_deg);
-    tuning.seeker_lock_range = src.value("seeker_lock_range", tuning.seeker_lock_range);
-    tuning.guidance_delay_s = src.value("guidance_delay_s", tuning.guidance_delay_s);
-    tuning.guidance_update_period_s =
-        src.value("guidance_update_period_s", tuning.guidance_update_period_s);
-    tuning.max_flight_time_s = src.value("max_flight_time_s", tuning.max_flight_time_s);
-    tuning.nav_gain = src.value("nav_gain", tuning.nav_gain);
-    tuning.apn_target_accel_gain = src.value("apn_target_accel_gain", tuning.apn_target_accel_gain);
-    tuning.sensor_max_range = src.value("sensor_max_range", tuning.sensor_max_range);
-    tuning.sensor_fov_deg = src.value("sensor_fov_deg", tuning.sensor_fov_deg);
-    tuning.sensor_scan_period = src.value("sensor_scan_period", tuning.sensor_scan_period);
-    tuning.sensor_detection_prob = src.value("sensor_detection_prob", tuning.sensor_detection_prob);
-    tuning.sensor_bearing_noise_std =
-        src.value("sensor_bearing_noise_std", tuning.sensor_bearing_noise_std);
-    tuning.sensor_range_noise_std =
-        src.value("sensor_range_noise_std", tuning.sensor_range_noise_std);
-    tuning.sensor_track_memory_s = src.value("sensor_track_memory_s", tuning.sensor_track_memory_s);
-    tuning.seeker_type = src.value("seeker_type", tuning.seeker_type);
-    tuning.seeker_activation_range_m =
-        src.value("seeker_activation_range_m", tuning.seeker_activation_range_m);
-    tuning.seeker_gimbal_limit_deg =
-        src.value("seeker_gimbal_limit_deg", tuning.seeker_gimbal_limit_deg);
-    tuning.seeker_ifov_deg = src.value("seeker_ifov_deg", tuning.seeker_ifov_deg);
-    tuning.bearing_filter_tau_s = src.value("bearing_filter_tau_s", tuning.bearing_filter_tau_s);
-    tuning.elevation_filter_tau_s =
-        src.value("elevation_filter_tau_s", tuning.elevation_filter_tau_s);
-    tuning.range_filter_tau_s = src.value("range_filter_tau_s", tuning.range_filter_tau_s);
-    tuning.track_break_time_s = src.value("track_break_time_s", tuning.track_break_time_s);
-    tuning.boost_time_s = src.value("boost_time_s", tuning.boost_time_s);
-    tuning.sustain_time_s = src.value("sustain_time_s", tuning.sustain_time_s);
-    tuning.boost_thrust_n = src.value("boost_thrust_n", tuning.boost_thrust_n);
-    tuning.sustain_thrust_n = src.value("sustain_thrust_n", tuning.sustain_thrust_n);
-    tuning.reference_area_m2 = src.value("reference_area_m2", tuning.reference_area_m2);
-    tuning.cd0_subsonic = src.value("cd0_subsonic", tuning.cd0_subsonic);
-    tuning.cd0_supersonic = src.value("cd0_supersonic", tuning.cd0_supersonic);
-    tuning.induced_drag_k = src.value("induced_drag_k", tuning.induced_drag_k);
-    parse_vector("cd0_mach_breakpoints", &tuning.cd0_mach_breakpoints);
-    parse_vector("cd0_mach_values", &tuning.cd0_mach_values);
-    parse_vector("induced_drag_k_mach_breakpoints", &tuning.induced_drag_k_mach_breakpoints);
-    parse_vector("induced_drag_k_mach_values", &tuning.induced_drag_k_mach_values);
-    tuning.propellant_mass_kg = src.value("propellant_mass_kg", tuning.propellant_mass_kg);
-    tuning.max_lateral_g = src.value("max_lateral_g", tuning.max_lateral_g);
-    tuning.autopilot_tau_s = src.value("autopilot_tau_s", tuning.autopilot_tau_s);
-    tuning.autopilot_damping = src.value("autopilot_damping", tuning.autopilot_damping);
-    tuning.autopilot_order = src.value("autopilot_order", tuning.autopilot_order);
-    tuning.max_accel_response_g_per_s =
-        src.value("max_accel_response_g_per_s", tuning.max_accel_response_g_per_s);
-    tuning.mach_transonic_start = src.value("mach_transonic_start", tuning.mach_transonic_start);
-    tuning.mach_transonic_end = src.value("mach_transonic_end", tuning.mach_transonic_end);
-    tuning.cd0_power_on_ratio = src.value("cd0_power_on_ratio", tuning.cd0_power_on_ratio);
-    tuning.min_launch_range_m = src.value("min_launch_range_m", tuning.min_launch_range_m);
-    tuning.max_launch_off_boresight_deg =
-        src.value("max_launch_off_boresight_deg", tuning.max_launch_off_boresight_deg);
-    tuning.lobl_required = src.value("lobl_required", tuning.lobl_required);
-    tuning.midcourse_datalink_supported =
-        src.value("midcourse_datalink_supported", tuning.midcourse_datalink_supported);
-    tuning.use_kalman_seeker = src.value("use_kalman_seeker", tuning.use_kalman_seeker);
+    // Table-driven reads over the single-source X-macro field list
+    // (content/detail/missile_tuning_fields.inc, I58). Each expansion is
+    // token-identical to the previous hand-written body: scalar keys keep the
+    // src.value(key, current) "missing key preserves existing value" semantics,
+    // vector keys keep the parse_vector clear-then-fill semantics, and the
+    // declared field order is unchanged.
+#define EF_MISSILE_TUNING_FIELD(cpp_type, name, default_value) \
+    tuning.name = src.value(#name, tuning.name);
+#define EF_MISSILE_TUNING_VECTOR_FIELD(cpp_type, name, default_value) \
+    parse_vector(#name, &tuning.name);
+#include "content/detail/missile_tuning_fields.inc"
+
     *out_tuning = tuning;
 }
 

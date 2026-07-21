@@ -12,6 +12,7 @@
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -171,6 +172,187 @@ TEST_SUITE("content_compile_passes") {
             content_compile::validate_unit_json_entry(unknown_json, "unknown.json");
         REQUIRE(diagnostics.size() == 1);
         CHECK(diagnostics[0].key == "totally_unknown_key");
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("missile tuning parse: all 52 helper keys map to their members (I58)") {
+        // Synthetic-face parity for the I58 table-driven parse: a Missile entry
+        // whose nested missile_tuning object carries every one of the 52 keys
+        // with a distinct sentinel must land each value on the matching
+        // MissileTuningDefinition member (a mis-wired key/member would collide
+        // or miss). No warhead/fuze/fuse/guidance/sensor blocks are present, so
+        // the 52 helper reads are the only writers.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_missile_tuning_all_keys_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string all_keys = R"json({
+  "type": "Missile",
+  "name": "Synthetic_All_Keys_Missile",
+  "missile_tuning": {
+    "max_speed": 1.5,
+    "turn_rate": 2.5,
+    "fuse_distance": 3.5,
+    "damage": 4.5,
+    "seeker_fov_deg": 5.5,
+    "seeker_lock_range": 6.5,
+    "guidance_delay_s": 7.5,
+    "guidance_update_period_s": 8.5,
+    "max_flight_time_s": 9.5,
+    "nav_gain": 10.5,
+    "apn_target_accel_gain": 11.5,
+    "sensor_max_range": 12.5,
+    "sensor_fov_deg": 13.5,
+    "sensor_scan_period": 14.5,
+    "sensor_detection_prob": 15.5,
+    "sensor_bearing_noise_std": 16.5,
+    "sensor_range_noise_std": 17.5,
+    "sensor_track_memory_s": 18.5,
+    "seeker_type": 7,
+    "seeker_activation_range_m": 20.5,
+    "seeker_gimbal_limit_deg": 21.5,
+    "seeker_ifov_deg": 22.5,
+    "bearing_filter_tau_s": 23.5,
+    "elevation_filter_tau_s": 24.5,
+    "range_filter_tau_s": 25.5,
+    "track_break_time_s": 26.5,
+    "boost_time_s": 27.5,
+    "sustain_time_s": 28.5,
+    "boost_thrust_n": 29.5,
+    "sustain_thrust_n": 30.5,
+    "reference_area_m2": 31.5,
+    "cd0_subsonic": 32.5,
+    "cd0_supersonic": 33.5,
+    "induced_drag_k": 34.5,
+    "cd0_mach_breakpoints": [1.0, 2.0, 3.0],
+    "cd0_mach_values": [4.0, 5.0],
+    "induced_drag_k_mach_breakpoints": [6.0],
+    "induced_drag_k_mach_values": [7.0, 8.0, 9.0, 10.0],
+    "propellant_mass_kg": 39.5,
+    "max_lateral_g": 40.5,
+    "autopilot_tau_s": 41.5,
+    "autopilot_damping": 42.5,
+    "autopilot_order": 9,
+    "max_accel_response_g_per_s": 44.5,
+    "mach_transonic_start": 45.5,
+    "mach_transonic_end": 46.5,
+    "cd0_power_on_ratio": 47.5,
+    "min_launch_range_m": 48.5,
+    "max_launch_off_boresight_deg": 49.5,
+    "lobl_required": true,
+    "midcourse_datalink_supported": true,
+    "use_kalman_seeker": true
+  }
+})json";
+
+        const fs::path path = directory / "all_keys.json";
+        { std::ofstream(path) << all_keys; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].has_missile_tuning);
+        const MissileTuningDefinition &mt = defs[0].missile_tuning;
+
+        CHECK(mt.max_speed == doctest::Approx(1.5));
+        CHECK(mt.turn_rate == doctest::Approx(2.5));
+        CHECK(mt.fuse_distance == doctest::Approx(3.5));
+        CHECK(mt.damage == doctest::Approx(4.5));
+        CHECK(mt.seeker_fov_deg == doctest::Approx(5.5));
+        CHECK(mt.seeker_lock_range == doctest::Approx(6.5));
+        CHECK(mt.guidance_delay_s == doctest::Approx(7.5));
+        CHECK(mt.guidance_update_period_s == doctest::Approx(8.5));
+        CHECK(mt.max_flight_time_s == doctest::Approx(9.5));
+        CHECK(mt.nav_gain == doctest::Approx(10.5));
+        CHECK(mt.apn_target_accel_gain == doctest::Approx(11.5));
+        CHECK(mt.sensor_max_range == doctest::Approx(12.5));
+        CHECK(mt.sensor_fov_deg == doctest::Approx(13.5));
+        CHECK(mt.sensor_scan_period == doctest::Approx(14.5));
+        CHECK(mt.sensor_detection_prob == doctest::Approx(15.5));
+        CHECK(mt.sensor_bearing_noise_std == doctest::Approx(16.5));
+        CHECK(mt.sensor_range_noise_std == doctest::Approx(17.5));
+        CHECK(mt.sensor_track_memory_s == doctest::Approx(18.5));
+        CHECK(mt.seeker_type == 7);
+        CHECK(mt.seeker_activation_range_m == doctest::Approx(20.5));
+        CHECK(mt.seeker_gimbal_limit_deg == doctest::Approx(21.5));
+        CHECK(mt.seeker_ifov_deg == doctest::Approx(22.5));
+        CHECK(mt.bearing_filter_tau_s == doctest::Approx(23.5));
+        CHECK(mt.elevation_filter_tau_s == doctest::Approx(24.5));
+        CHECK(mt.range_filter_tau_s == doctest::Approx(25.5));
+        CHECK(mt.track_break_time_s == doctest::Approx(26.5));
+        CHECK(mt.boost_time_s == doctest::Approx(27.5));
+        CHECK(mt.sustain_time_s == doctest::Approx(28.5));
+        CHECK(mt.boost_thrust_n == doctest::Approx(29.5));
+        CHECK(mt.sustain_thrust_n == doctest::Approx(30.5));
+        CHECK(mt.reference_area_m2 == doctest::Approx(31.5));
+        CHECK(mt.cd0_subsonic == doctest::Approx(32.5));
+        CHECK(mt.cd0_supersonic == doctest::Approx(33.5));
+        CHECK(mt.induced_drag_k == doctest::Approx(34.5));
+        CHECK(mt.cd0_mach_breakpoints == std::vector<double>{1.0, 2.0, 3.0});
+        CHECK(mt.cd0_mach_values == std::vector<double>{4.0, 5.0});
+        CHECK(mt.induced_drag_k_mach_breakpoints == std::vector<double>{6.0});
+        CHECK(mt.induced_drag_k_mach_values == std::vector<double>{7.0, 8.0, 9.0, 10.0});
+        CHECK(mt.propellant_mass_kg == doctest::Approx(39.5));
+        CHECK(mt.max_lateral_g == doctest::Approx(40.5));
+        CHECK(mt.autopilot_tau_s == doctest::Approx(41.5));
+        CHECK(mt.autopilot_damping == doctest::Approx(42.5));
+        CHECK(mt.autopilot_order == 9);
+        CHECK(mt.max_accel_response_g_per_s == doctest::Approx(44.5));
+        CHECK(mt.mach_transonic_start == doctest::Approx(45.5));
+        CHECK(mt.mach_transonic_end == doctest::Approx(46.5));
+        CHECK(mt.cd0_power_on_ratio == doctest::Approx(47.5));
+        CHECK(mt.min_launch_range_m == doctest::Approx(48.5));
+        CHECK(mt.max_launch_off_boresight_deg == doctest::Approx(49.5));
+        CHECK(mt.lobl_required);
+        CHECK(mt.midcourse_datalink_supported);
+        CHECK(mt.use_kalman_seeker);
+
+        // The four members not read by the helper stay at their struct defaults.
+        CHECK_FALSE(mt.has_warhead_profile);
+        CHECK_FALSE(mt.has_fuze_profile);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("missile tuning parse: three-source override order, seed, and missing-key default (I58)") {
+        // Parity for the call-side entry -> missile_tuning -> guidance merge: the
+        // same helper runs on each source in order, so the last writer wins.
+        // reference_area_m2 / boost_time_s are pure helper reads (not guidance
+        // aliases), so guidance overrides the nested value; damage is set by
+        // source 1 then source 2; max_speed is only seeded from flight_model;
+        // sustain_time_s is unset everywhere and keeps its NaN default.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_missile_tuning_merge_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string merged = R"json({
+  "type": "Missile",
+  "name": "Synthetic_Merge_Missile",
+  "flight_model": { "max_speed": 900.0 },
+  "damage": 1.0,
+  "missile_tuning": { "damage": 2.0, "boost_time_s": 20.0 },
+  "guidance": { "boost_time_s": 30.0, "reference_area_m2": 3.0 }
+})json";
+
+        const fs::path path = directory / "merged.json";
+        { std::ofstream(path) << merged; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].has_missile_tuning);
+        const MissileTuningDefinition &mt = defs[0].missile_tuning;
+
+        CHECK(mt.damage == doctest::Approx(2.0));            // source 2 over source 1
+        CHECK(mt.boost_time_s == doctest::Approx(30.0));     // source 3 over source 2
+        CHECK(mt.reference_area_m2 == doctest::Approx(3.0)); // source 3 only
+        CHECK(mt.max_speed == doctest::Approx(900.0));       // flight_model seed, never overridden
+        CHECK(std::isnan(mt.sustain_time_s));                // unset key keeps default
 
         fs::remove_all(directory);
     }
