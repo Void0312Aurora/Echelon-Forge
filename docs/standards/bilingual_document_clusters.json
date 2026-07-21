@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-21",
-      "english_hash": "c3fbe9b5af7d77d76013d15a6556954abdfe171529f47c5778f29a5c0591a6e8",
-      "chinese_hash": "9d5eb703189998da3b9733aab660dc0da3b9040ba5360e88a827385add974e23"
+      "english_hash": "9ed632740224fa9d859a221af4356a297b4ffd289dbb7c71ac2632c09a5202ed",
+      "chinese_hash": "d8dc14f489eec911af4239945ae831b9c682d346751a9f5b2b8597cdaa60b5b5"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -226,6 +226,15 @@
       "last_verified": "2026-07-20",
       "english_hash": "171c86003ff90493e163cc13bafa1ab976879fbaf119ad255c8c65ddf744bdf8",
       "chinese_hash": "ee80f6b0688a078cd668966183e97cd20f30f5fe16c8525a0ce1e1a71e114d45"
+    },
+    {
+      "pair_id": "plan/unified_architecture_program/t10_evidence_glossary_20260721",
+      "english": "docs/plan/unified_architecture_program/t10_evidence_glossary_20260721.md",
+      "chinese": "docs/plan/unified_architecture_program/t10_evidence_glossary_20260721.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-21",
+      "english_hash": "2014893b87800d627d1bbe08636480b58635b00598bed92d450f341456c770b7",
+      "chinese_hash": "bdaabddacacc5504d5d85fd576581ba9b1b402610ffae759e6c293059f745e9a"
     },
     {
       "pair_id": "plan/unified_architecture_program/t10_evidence_spine_census_20260721",
