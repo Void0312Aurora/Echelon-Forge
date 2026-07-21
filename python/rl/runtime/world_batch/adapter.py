@@ -79,6 +79,7 @@ class RuntimeFacadeAdapterCapabilities:
     has_set_task_orders_maintained_batch: bool
     has_set_leader_intents_maintained_batch: bool
     has_set_pilot_reports_maintained_batch: bool
+    has_run_global_evidence_producers: bool
 
 
 def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAdapterCapabilities:
@@ -109,6 +110,12 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
         ),
         has_set_pilot_reports_maintained_batch=bool(
             hasattr(facade, "set_pilot_reports_maintained_batch")
+        ),
+        has_run_global_evidence_producers=bool(
+            hasattr(facade, "allocate_trace_id")
+            and hasattr(facade, "peek_next_trace_id")
+            and hasattr(facade, "allocate_run_snapshot_version")
+            and hasattr(facade, "peek_next_run_snapshot_version")
         ),
     )
 
@@ -275,9 +282,34 @@ class _ScenarioLoaderRuntimeProxy:
 
 
 class RuntimeFacadeAdapter:
-    """Centralized compatibility adapter for facade-shaped runtime access."""
+    """Centralized compatibility adapter for facade-shaped runtime access.
 
-    def __init__(self, world_count: int):
+    Evidence-producer opt-in (T10 evidence-spine census slice 4; see
+    ``docs/plan/unified_architecture_program/t10_evidence_spine_census_20260721.md``
+    section 3 step 4 and the ``trace_ids`` / ``input_snapshot_version`` rows of
+    ``t10_evidence_glossary_20260721.md``):
+
+    ``use_facade_evidence_producers`` selects which evidence values the
+    maintained window path (:meth:`run_maintained_window`) stamps onto the
+    window request. It defaults to ``False`` to keep the maintained run's
+    serialized evidence byte-for-byte identical to the pre-slice-4 baseline:
+    the window engagement request keeps the placeholder ``trace_ids = [1]`` and
+    the synthetic ``input_snapshot_version`` (caller value, else
+    ``"obs:{world}:{entity}"``), and the I54 run-global producers are never
+    invoked. Setting it ``True`` opts the whole run (one facade == one
+    ``RuntimeFacadeAdapter`` == one "run", matching the I54 run-global boundary)
+    into the real produced values minted behind the facade: ``trace_ids`` is one
+    id from :meth:`~RuntimeFacade.allocate_trace_id` (VA-8 dedicated allocator,
+    monotone, disjoint from the resettable kernel engagement-event id space) and
+    ``input_snapshot_version`` becomes ``"snapshot:{n}"`` where ``n`` is minted
+    from :meth:`~RuntimeFacade.allocate_run_snapshot_version` (VA-2 run-global
+    monotone snapshot-version counter). The opt-in path overrides the synthetic
+    caller/default strings by design -- that is the whole point of wiring the
+    real producers in -- so it changes the serialized evidence and is gated
+    behind this explicit switch.
+    """
+
+    def __init__(self, world_count: int, *, use_facade_evidence_producers: bool = False):
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
             raise RuntimeError("RuntimeFacadeAdapter requires ef_py.RuntimeFacade bindings")
@@ -288,6 +320,7 @@ class RuntimeFacadeAdapter:
         self._world_layouts: dict[int, AppliedScenarioWorld] = {}
         self._world_time_steps: dict[int, float] = {}
         self._next_launch_request_id = 1
+        self._use_facade_evidence_producers = bool(use_facade_evidence_producers)
 
     @property
     def capabilities(self) -> RuntimeFacadeAdapterCapabilities:
@@ -312,6 +345,64 @@ class RuntimeFacadeAdapter:
 
     def supports_runtime_window_api(self) -> bool:
         return self.capabilities.has_runtime_window_api
+
+    @property
+    def use_facade_evidence_producers(self) -> bool:
+        """Whether the maintained window path stamps real facade-minted evidence.
+
+        ``False`` (default) keeps the placeholder ``trace_ids``/synthetic
+        ``input_snapshot_version`` and never touches the I54 producers, so the
+        serialized evidence matches the pre-slice-4 baseline byte-for-byte.
+        """
+        return self._use_facade_evidence_producers
+
+    def _require_run_global_evidence_producers(self) -> None:
+        if not self.capabilities.has_run_global_evidence_producers:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter(use_facade_evidence_producers=True) requires the I54 "
+                "run-global evidence producers (allocate_trace_id / "
+                "allocate_run_snapshot_version) on the RuntimeFacade bindings"
+            )
+
+    def _maintained_window_trace_ids(self) -> list[int]:
+        """Trace-id list stamped onto the window engagement request.
+
+        Default (opt-in off): the maintained placeholder ``[1]`` -- see the
+        glossary ``trace_ids`` row (``EngagementEventPacket``) -- reproduced
+        without invoking any producer, so the default export stays byte-for-byte
+        identical to the pre-slice-4 baseline. Opt-in: one real id minted from
+        the facade's VA-8 ``allocate_trace_id`` allocator (monotone across
+        windows, disjoint from the resettable kernel engagement-event id space).
+        """
+        if not self._use_facade_evidence_producers:
+            return [1]
+        self._require_run_global_evidence_producers()
+        return [int(self.facade.allocate_trace_id())]
+
+    def _maintained_window_input_snapshot_version(
+        self,
+        *,
+        world_index: int,
+        entity_id: int,
+        caller_value: str | None,
+    ) -> str:
+        """Input snapshot-version string stamped onto the window action request.
+
+        Default (opt-in off): the caller value when non-blank, else the
+        synthetic ``"obs:{world}:{entity}"`` placeholder -- see the glossary
+        ``input_snapshot_version`` row -- reproduced without invoking any
+        producer. Opt-in: ``"snapshot:{n}"`` where ``n`` is minted from the
+        facade's VA-2 run-global monotone ``allocate_run_snapshot_version``
+        producer; the ``snapshot:`` prefix mirrors the existing restore-boundary
+        ``snapshot_version_ref`` embedding (``"snapshot:" + version``). The
+        opt-in value overrides any synthetic caller string by design.
+        """
+        if self._use_facade_evidence_producers:
+            self._require_run_global_evidence_producers()
+            return f"snapshot:{int(self.facade.allocate_run_snapshot_version())}"
+        if caller_value is not None and str(caller_value).strip():
+            return str(caller_value)
+        return f"obs:{int(world_index)}:{int(entity_id)}"
 
     def _runtime_window_authorized_action_role(
         self,
@@ -406,6 +497,17 @@ class RuntimeFacadeAdapter:
         include_engagement: bool = True,
         include_diagnostics: bool = True,
     ) -> RuntimeWindowEvidence | None:
+        """Run one maintained facade window and capture its evidence slice.
+
+        Evidence values (``trace_ids`` on the engagement request and
+        ``input_snapshot_version`` on the action request) follow
+        :attr:`use_facade_evidence_producers`: off (default) keeps the
+        byte-identical placeholder ``[1]`` / synthetic ``"obs:{world}:{entity}"``
+        (or the caller's ``input_snapshot_version``); on stamps the real
+        facade-minted VA-8 trace id and VA-2 ``"snapshot:{n}"`` version,
+        overriding any synthetic caller string. See the class docstring and the
+        T10 evidence-spine census slice 4 for the additive rationale.
+        """
         if not self.supports_runtime_window_api():
             self._last_window_evidence = None
             return None
@@ -433,7 +535,7 @@ class RuntimeFacadeAdapter:
         engagement_ref.world_index = int(world_index)
         engagement_ref.entity_id = int(entity_id)
         engagement_request.refs = [engagement_ref]
-        engagement_request.trace_ids = [1]
+        engagement_request.trace_ids = self._maintained_window_trace_ids()
         request.engagement_request = engagement_request
         request.export_observation = True
         request.export_engagement = bool(include_engagement)
@@ -442,10 +544,10 @@ class RuntimeFacadeAdapter:
         if pilot_action is not None or mission_command is not None:
             action_request = ef_py.RuntimeWindowActionRequest()
             action_request.source_layer = str(source_layer)
-            snapshot_version = str(
-                input_snapshot_version
-                if input_snapshot_version is not None and str(input_snapshot_version).strip()
-                else f"obs:{int(world_index)}:{int(entity_id)}"
+            snapshot_version = self._maintained_window_input_snapshot_version(
+                world_index=int(world_index),
+                entity_id=int(entity_id),
+                caller_value=input_snapshot_version,
             )
             action_request.input_snapshot_version = snapshot_version
             action_request.action_intent.source_id = (
