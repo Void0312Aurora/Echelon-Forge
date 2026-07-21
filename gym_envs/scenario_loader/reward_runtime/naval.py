@@ -8,6 +8,17 @@ import numpy as np
 from python.tasking_contracts.bridge_views import mission_command_dict
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This reward surface consumes
+# authoritative truth directly (own/target truth.x,y and truth.contacts plus
+# other-unit position/observation reads) and the support report chain, catalogued
+# as truth leak V6 pending T8 view convergence. Reward is an output, not an
+# information layer, so PRODUCED is empty. Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth", "Shared Tactical Picture")
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 def _is_naval_profile(loader: Any) -> bool:
     scenario = getattr(loader, "scenario_data", {}) if loader is not None else {}
     mission = mission_command_dict(loader) if loader is not None else {}

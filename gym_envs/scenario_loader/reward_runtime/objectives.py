@@ -4,6 +4,18 @@ from ..common import OBJECTIVE_DYNAMIC_TARGET_MAP, OBJECTIVE_OP_MAP, OBJECTIVE_P
 from .air_combat import combat_entity_terminal_state
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This objective/approach reward-input
+# builder consumes authoritative truth directly (own-ship truth.z / health /
+# heading / x,y / missiles_remaining and target truth.contacts / unit health),
+# catalogued in the G4 truth-leak inventory pending T8 view convergence. Reward
+# inputs are an output, not an information layer, so PRODUCED is empty. Pure
+# metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 def _objective_shaping_binding_error(exc: Exception) -> RuntimeError:
     return RuntimeError(
         "conditional objective reward shaping requires ef_py.ObjectiveShapingConfig(), "

@@ -3,6 +3,17 @@ import ef_py
 from gym_envs.scenario_loader._generated import safety_runtime_inputs_builder
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This reward-input builder consumes
+# own-ship authoritative truth directly (truth.health / z / pitch / speed),
+# catalogued in the G4 truth-leak inventory as an own-ship read pending T8 view
+# convergence. Reward inputs are an output, not an information layer, so PRODUCED
+# is empty. Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 _CFG_FIELDS = (
     "crash_penalty",
     "survival_reward",

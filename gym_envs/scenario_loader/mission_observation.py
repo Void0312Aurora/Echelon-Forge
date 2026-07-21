@@ -18,6 +18,17 @@ from python.tasking_contracts.bridge_views import loader_owned_runtime_view, mis
 from .common import formation_role_code_from_member
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This adapter produces the policy
+# observation vector (Agent Observation). The Python-owned modes currently read
+# authoritative truth directly (truth.contacts / missiles_remaining / x,y) and
+# the support report chain, catalogued as truth leaks V4 pending T8 view
+# convergence in the G4 truth-leak inventory. Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth", "Shared Tactical Picture")
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 def mission_nav_inputs(loader, truth, inst, route_result):
     if route_result is None or not bool(getattr(route_result, "valid", False)):
         return None

@@ -12,6 +12,20 @@ from .guidance import (
 )
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). build_waypoint_step_state is a
+# direct waypoint reward-input consumer: it reads own-ship authoritative truth
+# (truth.x/y for distance-to-fix and the route reference point) and builds
+# ef_py.WaypointRewardInputs, called by step_evaluation.py and
+# execution_runtime/mainline.py via loader._build_waypoint_step_state.
+# Catalogued as an own-ship truth leak in the G4 truth-leak inventory pending T8
+# view convergence. Reward inputs are an output, not an information layer, so
+# PRODUCED is empty. Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 def build_waypoint_step_state(loader, cfg: dict, *, truth=None, inst=None, turn_relief_activation: float = 0.0):
     try:
         cmd_code = int(loader.mission_cmd.get("command_code", 0))

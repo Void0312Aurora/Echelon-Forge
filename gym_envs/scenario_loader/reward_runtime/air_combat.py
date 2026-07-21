@@ -4,6 +4,17 @@ import math
 from typing import Any
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This reward surface consumes
+# authoritative truth directly (truth.missiles_remaining plus sim engagement /
+# damage-state reads), catalogued as truth leak V5 pending T8 view convergence.
+# Reward is an output, not an information layer, so PRODUCED is empty. Pure
+# metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 _DEFAULT_TERMINAL_DAMAGE_STATES = {"lost", "mobility_kill", "mission_kill"}
 _DAMAGE_DELTA_FIELDS = {"mission", "mobility", "sensor", "survivability"}
 _LOSS_PROGRESS_BONUS_DEFAULTS = {

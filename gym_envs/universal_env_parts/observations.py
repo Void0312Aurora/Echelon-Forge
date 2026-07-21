@@ -4,6 +4,23 @@ import numpy as np
 
 from .common import ef_py
 
+
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). build_universal_observation is the
+# active universal policy-observation assembly path — called by
+# CooperativeWorldBatchVecEnv and MultiAgentWorldRuntimeView, not the removed
+# fail-fast UniversalEnv class. It reads authoritative truth directly (truth.x/y
+# for the ILS query, and truth.contacts / truth.rwr_warnings on the Python
+# fallback path; the compiled path passes truth into
+# ef_py.compute_execution_observation_runtime_numpy) and delegates the mission
+# vector to get_mission_observation, producing the policy observation (Agent
+# Observation). Catalogued as a truth leak pending T8 view convergence in the G4
+# truth-leak inventory. Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 _NAVAL_INSTRUMENT_KEEP_INDICES = (
     8,   # roll/orientation sanity.
     9,   # heading.
