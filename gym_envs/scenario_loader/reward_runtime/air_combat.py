@@ -3,13 +3,18 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from gym_envs import observation_view
+
 
 # G4 information-state declaration (architecture design doc §3/§15; facility in
 # python/architecture/information_layer.py). This reward surface consumes
-# authoritative truth directly (truth.missiles_remaining plus sim engagement /
-# damage-state reads), catalogued as truth leak V5 pending T8 view convergence.
-# Reward is an output, not an information layer, so PRODUCED is empty. Pure
-# metadata; no runtime cost.
+# authoritative truth (own-ship missiles_remaining) plus sim engagement-evidence
+# and diagnostic damage-state reads. As of the T8 second slice those reads flow
+# through the declared observation view (observation_view own-ship /
+# engagement-evidence / diagnostic faces), which owns the raw truth/sim access;
+# TL4/TL5/TL7 are converged and TL6 is routed through the view's explicit
+# diagnostic face. Reward is an output, not an information layer, so PRODUCED is
+# empty. Pure metadata; no runtime cost.
 INFORMATION_LAYER_CONSUMED = ("World Truth",)
 INFORMATION_LAYER_PRODUCED = ()
 SEMANTIC_STAGE = ("P10 ObservationExport",)
@@ -457,7 +462,7 @@ def _recent_engagement_events(sim: Any) -> Any | None:
     if sim is None or not hasattr(sim, "export_recent_engagement_events"):
         return None
     try:
-        return sim.export_recent_engagement_events()
+        return observation_view.recent_engagement_events(sim)
     except Exception:
         return None
 
@@ -701,7 +706,7 @@ def _damage_consequence_snapshot(sim: Any, entity_id: int) -> dict[str, Any]:
     if hasattr(sim, "debug_get_aircraft_damage_state"):
         try:
             snapshot["aircraft"] = _float_state_map(
-                sim.debug_get_aircraft_damage_state(int(entity_id)),
+                observation_view.debug_aircraft_damage_state(sim, int(entity_id)),
                 _AIRCRAFT_DAMAGE_STATE_FIELDS,
             )
         except Exception:
@@ -709,7 +714,7 @@ def _damage_consequence_snapshot(sim: Any, entity_id: int) -> dict[str, Any]:
     if hasattr(sim, "debug_get_ground_contact_state"):
         try:
             snapshot["ground"] = _float_state_map(
-                sim.debug_get_ground_contact_state(int(entity_id)),
+                observation_view.debug_ground_contact_state(sim, int(entity_id)),
                 _GROUND_CONTACT_STATE_FIELDS,
             )
         except Exception:
@@ -722,7 +727,7 @@ def _ground_contact_terminal_state(sim: Any, entity_id: int) -> dict[str, Any]:
         return {}
     try:
         ground = _float_state_map(
-            sim.debug_get_ground_contact_state(int(entity_id)),
+            observation_view.debug_ground_contact_state(sim, int(entity_id)),
             _GROUND_CONTACT_STATE_FIELDS,
         )
     except Exception:
@@ -986,11 +991,7 @@ def _report_target_id(report: Any) -> int:
 
 
 def _truth_missiles_remaining(truth: Any) -> int | None:
-    try:
-        value = int(getattr(truth, "missiles_remaining", -1))
-    except Exception:
-        return None
-    return value if value >= 0 else None
+    return observation_view.own_missiles_remaining(truth)
 
 
 def _last_fire_attempted(loader: Any) -> bool:
@@ -1478,7 +1479,7 @@ def combat_entity_terminal_state(loader: Any, sim: Any, entity_id: int) -> dict[
     active = False
     if sim is not None and entity_id > 0 and hasattr(sim, "is_unit_active"):
         try:
-            active = bool(sim.is_unit_active(entity_id))
+            active = bool(observation_view.unit_active(sim, entity_id))
         except Exception:
             active = False
 

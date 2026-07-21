@@ -87,6 +87,30 @@ MAINTAINED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
     "gym_envs.scenario_loader.navigation_runtime.waypoint_rewards",
 )
 
+# T8 second slice (declaration-view convergence). The declared observation-view
+# owner module is the layer-tagged read owner that legitimately performs the raw
+# World-Truth / Track-State / Shared-Tactical-Picture / engagement-evidence reads
+# on behalf of the migrated consumers (it consumes truth and produces the policy
+# observation read faces). It carries its own G4 declaration and is the sole
+# whitelist for the truth-read-ban gate: a declared read owner may read truth,
+# the consumers may not. Per G2 the owner sits at the gym_envs parent-package
+# layer -- the common lower layer of both consumer subpackages (scenario_loader
+# and universal_env_parts) -- so neither takes a lateral sibling import.
+MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS: tuple[str, ...] = (
+    "gym_envs.observation_view",
+)
+
+# Consumers migrated onto the declared observation view this slice. The G4
+# truth-read-ban gate forbids raw World-Truth attribute reads (``truth.<attr>``
+# and ``getattr(truth, ...)``) in each of these modules, since their leaf reads
+# now flow through MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS. This slice migrates
+# all eight declared consumers, so the converged set equals the declared-consumer
+# registry; a later slice that declares further consumers may migrate them
+# incrementally and split this set out.
+VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
+    MAINTAINED_INFORMATION_LAYER_CONSUMERS
+)
+
 
 def validate_information_layer_declaration(
     *,
@@ -147,6 +171,8 @@ __all__ = [
     "AUTHORITATIVE_INFORMATION_LAYERS",
     "CANONICAL_SEMANTIC_STAGES",
     "MAINTAINED_INFORMATION_LAYER_CONSUMERS",
+    "MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS",
     "REQUIRED_DECLARATION_ATTRS",
+    "VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS",
     "validate_information_layer_declaration",
 ]

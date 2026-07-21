@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from gym_envs import observation_view
+
 from .common import ef_py
 
 
@@ -9,13 +11,16 @@ from .common import ef_py
 # python/architecture/information_layer.py). build_universal_observation is the
 # active universal policy-observation assembly path — called by
 # CooperativeWorldBatchVecEnv and MultiAgentWorldRuntimeView, not the removed
-# fail-fast UniversalEnv class. It reads authoritative truth directly (truth.x/y
-# for the ILS query, and truth.contacts / truth.rwr_warnings on the Python
-# fallback path; the compiled path passes truth into
-# ef_py.compute_execution_observation_runtime_numpy) and delegates the mission
-# vector to get_mission_observation, producing the policy observation (Agent
-# Observation). Catalogued as a truth leak pending T8 view convergence in the G4
-# truth-leak inventory. Pure metadata; no runtime cost.
+# fail-fast UniversalEnv class. It reads authoritative truth (truth.x/y for the
+# ILS query, and truth.contacts / truth.rwr_warnings on the Python fallback path)
+# and delegates the mission vector to get_mission_observation, producing the
+# policy observation (Agent Observation). As of the T8 second slice those leaf
+# field reads flow through the declared observation view (observation_view
+# own-ship / track / RWR faces), which owns the raw truth access; TL18 is
+# converged onto that declared view. The compiled path still passes the whole
+# truth object into ef_py.compute_execution_observation_runtime_numpy — a
+# whole-object transfer into the compiled kernel, not a leaf field read, so it
+# stays in place (out of scope for this slice). Pure metadata; no runtime cost.
 INFORMATION_LAYER_CONSUMED = ("World Truth",)
 INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
 SEMANTIC_STAGE = ("P10 ObservationExport",)
@@ -78,7 +83,11 @@ def build_universal_observation(
             loader.reset_runtime_eval_cache()
         except Exception:
             pass
-    ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
+    ils_vec = loader.get_ils_observation(
+        float(observation_view.own_ship_attr(truth, "x")),
+        float(observation_view.own_ship_attr(truth, "y")),
+        float(inst.alt_baro),
+    )
     compiled_obs_enabled = bool(getattr(loader, "use_compiled_execution_step_runtime", True)) and hasattr(
         ef_py, "compute_execution_observation_runtime_numpy"
     )
@@ -142,13 +151,13 @@ def build_universal_observation(
         )
 
         contacts = np.zeros((int(max_contacts), 5), dtype=np.float32)
-        for i, track in enumerate(getattr(truth, "contacts", [])):
+        for i, track in enumerate(observation_view.contacts(truth)):
             if i >= int(max_contacts):
                 break
             contacts[i] = [track.range, track.azimuth, track.elevation, track.closing_speed, track.time_since_update]
 
         rwr = np.zeros((int(max_rwr), 4), dtype=np.float32)
-        for i, warning in enumerate(getattr(truth, "rwr_warnings", [])):
+        for i, warning in enumerate(observation_view.rwr_warnings(truth)):
             if i >= int(max_rwr):
                 break
             rwr[i] = [

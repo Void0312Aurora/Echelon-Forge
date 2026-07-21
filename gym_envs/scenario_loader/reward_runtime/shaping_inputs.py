@@ -1,12 +1,15 @@
 import ef_py
 
+from gym_envs import observation_view
+
 
 # G4 information-state declaration (architecture design doc §3/§15; facility in
 # python/architecture/information_layer.py). This reward-input builder consumes
-# own-ship authoritative truth directly (truth.z / speed) alongside instrument
-# state, catalogued in the G4 truth-leak inventory as an own-ship read pending
-# T8 view convergence. Reward inputs are an output, not an information layer, so
-# PRODUCED is empty. Pure metadata; no runtime cost.
+# own-ship authoritative truth (z / speed) alongside instrument state. As of the
+# T8 second slice those truth reads flow through the declared observation view
+# (observation_view.own_ship_field), which owns the raw truth access; TL11 is
+# converged onto that declared view. Reward inputs are an output, not an
+# information layer, so PRODUCED is empty. Pure metadata; no runtime cost.
 INFORMATION_LAYER_CONSUMED = ("World Truth",)
 INFORMATION_LAYER_PRODUCED = ()
 SEMANTIC_STAGE = ("P10 ObservationExport",)
@@ -35,12 +38,12 @@ def build_flight_shaping_runtime_inputs(
     ils_loc: float,
 ):
     inputs = ef_py.FlightShapingRuntimeInputs()
-    inputs.truth_altitude_m = float(getattr(truth, "z", 0.0))
-    inputs.truth_speed_mps = float(getattr(truth, "speed", 0.0))
+    inputs.truth_altitude_m = float(observation_view.own_ship_field(truth, "z", 0.0))
+    inputs.truth_speed_mps = float(observation_view.own_ship_field(truth, "speed", 0.0))
     inputs.prev_altitude_m = float(getattr(loader, "prev_alt", 0.0))
     inputs.prev_ias_mps = float(getattr(loader, "prev_speed", 0.0))
     inputs.curr_ias_mps = float(curr_ias)
-    inputs.curr_alt_baro_m = float(inst_vec[2]) if len(inst_vec) > 2 else float(getattr(truth, "z", 0.0))
+    inputs.curr_alt_baro_m = float(inst_vec[2]) if len(inst_vec) > 2 else float(observation_view.own_ship_field(truth, "z", 0.0))
     inputs.curr_alt_agl_m = float(curr_alt_agl)
     inputs.curr_gear_fraction = float(curr_gear)
     inputs.curr_roll_deg = float(curr_roll)

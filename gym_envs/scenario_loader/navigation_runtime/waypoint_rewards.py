@@ -2,6 +2,7 @@ import math
 
 import ef_py
 
+from gym_envs import observation_view
 from python.scenario.compiler import WaypointModeRewardConfig
 
 from .guidance import (
@@ -17,10 +18,13 @@ from .guidance import (
 # direct waypoint reward-input consumer: it reads own-ship authoritative truth
 # (truth.x/y for distance-to-fix and the route reference point) and builds
 # ef_py.WaypointRewardInputs, called by step_evaluation.py and
-# execution_runtime/mainline.py via loader._build_waypoint_step_state.
-# Catalogued as an own-ship truth leak in the G4 truth-leak inventory pending T8
-# view convergence. Reward inputs are an output, not an information layer, so
-# PRODUCED is empty. Pure metadata; no runtime cost.
+# execution_runtime/mainline.py via loader._build_waypoint_step_state. As of the
+# T8 second slice those own-ship reads flow through the declared observation view
+# (observation_view.own_ship_field), which owns the raw truth access; TL19 is
+# converged onto that declared view. The route-guidance helper delegation
+# (compute_waypoint_guidance_state / route_reference_xy in guidance.py, C19) is a
+# deferred 待裁定 path and keeps its own reads. Reward inputs are an output, not
+# an information layer, so PRODUCED is empty. Pure metadata; no runtime cost.
 INFORMATION_LAYER_CONSUMED = ("World Truth",)
 INFORMATION_LAYER_PRODUCED = ()
 SEMANTIC_STAGE = ("P10 ObservationExport",)
@@ -45,8 +49,8 @@ def build_waypoint_step_state(loader, cfg: dict, *, truth=None, inst=None, turn_
     wp = loader.waypoints[idx]
     dist_m = float(
         math.hypot(
-            float(wp.get("x", 0.0)) - float(getattr(truth, "x", 0.0)),
-            float(wp.get("y", 0.0)) - float(getattr(truth, "y", 0.0)),
+            float(wp.get("x", 0.0)) - float(observation_view.own_ship_field(truth, "x", 0.0)),
+            float(wp.get("y", 0.0)) - float(observation_view.own_ship_field(truth, "y", 0.0)),
         )
     )
     mode = normalize_waypoint_mode(wp.get("waypoint_mode", loader.mission_cmd.get("waypoint_mode", "flyby")))
@@ -74,8 +78,8 @@ def build_waypoint_step_state(loader, cfg: dict, *, truth=None, inst=None, turn_
     else:
         ref_x, ref_y = route_reference_xy(
             loader,
-            float(getattr(truth, "x", 0.0)),
-            float(getattr(truth, "y", 0.0)),
+            float(observation_view.own_ship_field(truth, "x", 0.0)),
+            float(observation_view.own_ship_field(truth, "y", 0.0)),
             int(idx),
         )
         dist_m = float(
