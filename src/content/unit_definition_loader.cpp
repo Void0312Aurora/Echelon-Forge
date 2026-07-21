@@ -1,5 +1,7 @@
 #include "content/unit_definition_loader.h"
 
+#include "content/content_compile_passes.h"
+
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
@@ -1586,7 +1588,8 @@ bool parse_unit_json(
 
 bool load_file(const std::string &path, std::vector<UnitDefinition> &out_definitions,
                std::string *error,
-               const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors = nullptr) {
+               const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors = nullptr,
+               std::vector<nlohmann::json> *out_raw_entries = nullptr) {
     std::ifstream file(path);
     if (!file.is_open()) {
         if (error) *error = "Failed to open unit definition file: " + path;
@@ -1608,6 +1611,9 @@ bool load_file(const std::string &path, std::vector<UnitDefinition> &out_definit
             UnitDefinition def{};
             if (parse_unit_json(entry, def, error, vulnerability_descriptors)) {
                 out_definitions.push_back(def);
+                if (out_raw_entries) {
+                    out_raw_entries->push_back(entry);
+                }
             } else {
                 return false;
             }
@@ -1618,6 +1624,9 @@ bool load_file(const std::string &path, std::vector<UnitDefinition> &out_definit
         UnitDefinition def{};
         if (parse_unit_json(root, def, error, vulnerability_descriptors)) {
             out_definitions.push_back(def);
+            if (out_raw_entries) {
+                out_raw_entries->push_back(root);
+            }
         } else {
             return false;
         }
@@ -1833,9 +1842,21 @@ load_vulnerability_evidence_descriptors(const std::string &root_path, bool *succ
     return descriptors;
 }
 
-bool load_unit_definitions_json(const std::string &path,
-                                std::vector<UnitDefinition> &out_definitions, std::string *error) {
-    std::vector<UnitDefinition> loaded_definitions;
+namespace content_compile {
+
+// Parse pass (ContentCompile stage 1). This is the historical
+// load_unit_definitions_json traversal body relocated verbatim behind a declared
+// pass boundary: same directory-vs-single-file dispatch, the same
+// vulnerability-evidence descriptor pre-load, the same recursive walk with the
+// immediate-parent skip of damage/vulnerability_evidence/, the same first-failure
+// error strings, and the same outer guard that catches only
+// fs::filesystem_error (so std::stoi / get<std::string> throws still escape
+// uncaught, exactly as before -- the unified error surface is a later slice).
+// The only addition is the optional out_raw_entries capture, threaded to
+// load_file, which the validate pass consumes and which changes no parsed
+// UnitDefinition output.
+bool parse_pass(const std::string &path, std::vector<UnitDefinition> &out_definitions,
+                std::string *error, std::vector<nlohmann::json> *out_raw_entries) {
     try {
         if (fs::is_directory(path)) {
             const fs::path vulnerability_evidence_dir =
@@ -1856,8 +1877,8 @@ bool load_unit_definitions_json(const std::string &path,
                     continue;
                 }
                 std::string file_error;
-                if (!load_file(entry.path().string(), loaded_definitions, &file_error,
-                               &vulnerability_descriptors)) {
+                if (!load_file(entry.path().string(), out_definitions, &file_error,
+                               &vulnerability_descriptors, out_raw_entries)) {
                     if (error) {
                         *error = "Failed to load file " + entry.path().string() + ": " +
                                  (file_error.empty() ? "unknown error" : file_error);
@@ -1865,7 +1886,7 @@ bool load_unit_definitions_json(const std::string &path,
                     return false;
                 }
             }
-        } else if (!load_file(path, loaded_definitions, error)) {
+        } else if (!load_file(path, out_definitions, error, nullptr, out_raw_entries)) {
             return false;
         }
     } catch (const fs::filesystem_error &ex) {
@@ -1874,6 +1895,39 @@ bool load_unit_definitions_json(const std::string &path,
         }
         return false;
     }
+
+    return true;
+}
+
+} // namespace content_compile
+
+bool load_unit_definitions_json(const std::string &path,
+                                std::vector<UnitDefinition> &out_definitions, std::string *error) {
+    // Thin ContentCompile orchestrator: parse -> validate -> resolve, then commit.
+    // Materialize is the separate DefaultUnitFactory::spawn step and is unchanged.
+    // The public contract (return value, *error, out_definitions transactionality)
+    // is byte/behaviour-identical to the pre-slice loader: only parse_pass writes
+    // definitions/errors, and out_definitions is committed only on parse success.
+    std::vector<UnitDefinition> loaded_definitions;
+    std::vector<nlohmann::json> raw_entries;
+    if (!content_compile::parse_pass(path, loaded_definitions, error, &raw_entries)) {
+        return false;
+    }
+
+    // Validate pass (structural schema diagnostics only). The maintained load
+    // path must stay byte/behaviour-identical, so the diagnostics are computed
+    // and then intentionally discarded here -- emitting them (e.g. via spdlog)
+    // would change stderr/stdout. The pass never throws, rejects, or mutates.
+    const std::vector<content_compile::ContentDiagnostic> diagnostics =
+        content_compile::validate_pass(raw_entries, path);
+    (void)diagnostics;
+
+    // Resolve pass (explicit pass-through). Name references are resolved later at
+    // materialize time by DefaultUnitFactory::spawn; this pass does not change
+    // that timing -- see content_compile_passes.h / default_unit_factory.h.
+    const content_compile::DeferredReferenceReport resolve_report =
+        content_compile::resolve_pass(loaded_definitions);
+    (void)resolve_report;
 
     out_definitions.insert(out_definitions.end(), loaded_definitions.begin(),
                            loaded_definitions.end());
