@@ -167,7 +167,36 @@ set(EF_CORE_SOURCES
     ${EF_CORE_MISSION_SOURCES}
     ${EF_RUNTIME_FACADE_SOURCES}
     ${EF_MODEL_DEFAULT_SOURCES}
+)
+
+# --- Content Library (T3 first physical link-unit split, I46) ---
+# content/ is the cleanest T3 leaf layer: its only maintained include edges are
+# to the header-only components/ group plus its own content/ headers, and its sole
+# translation unit (unit_definition_loader.cpp, ~1.9k lines) references no
+# engine/mission/facade symbol.  Compiling it into its own static archive gives
+# T3 a real, independently buildable/profilable link unit while keeping every
+# consumer's include spelling ("content/...") unchanged -- ef_content re-exports
+# the same src/ public include directory ef_core does, so no source file moves.
+#
+# The dependency is strictly one-way (ef_core -> ef_content): the loader calls
+# only third-party json/spdlog plus its own header-only content headers, so
+# there is no back-edge and therefore no MinGW single-pass link-order hazard.
+# The third-party link set mirrors ef_core's so the TU compiles in a
+# byte-identical environment to its previous in-ef_core compilation (flecs and
+# Threads arrive transitively through the components/ headers content includes).
+add_library(ef_content STATIC
     ${EF_CONTENT_SOURCES}
+)
+
+target_include_directories(ef_content PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_link_libraries(ef_content PUBLIC
+    flecs::flecs
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    Threads::Threads
 )
 
 # --- Core Library ---
@@ -179,7 +208,13 @@ target_include_directories(ef_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# ef_content is listed first: ef_core's engine/model TUs call into the content
+# loader (e.g. simulation_kernel.cpp -> default_unit_factory.h ->
+# load_unit_definitions_json), and content never calls back, so ef_content must
+# resolve after ef_core on a single-pass link line.  CMake derives that order
+# from this dependency edge automatically for every downstream consumer.
 target_link_libraries(ef_core PUBLIC
+    ef_content
     flecs::flecs
     spdlog::spdlog
     nlohmann_json::nlohmann_json
@@ -348,6 +383,7 @@ endif()
 
 set(EF_PROJECT_WARNING_TARGETS
     ef_core
+    ef_content
     ef_app
     ef_py
     ef_gpu_experiments
