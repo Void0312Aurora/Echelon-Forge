@@ -4,9 +4,14 @@ import pytest
 
 from python.rl.runtime.agent_shim import (
   ADAPTER_PROJECTION,
+  ALLOWED_MERGE_POLICIES,
   DIAGNOSTICS_ONLY,
   LAW14_MAINTAINED_READ_LABEL_ALLOWLIST,
   MAINTAINED,
+  MERGE_APPEND_ONLY,
+  MERGE_BY_FIELD,
+  MERGE_LAST_WRITE_WINS,
+  MERGE_PRIORITY_OVERRIDE,
   MERGE_REJECT_ON_CONFLICT,
   OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION,
   OBS_DECISION_BELIEF_PACKET,
@@ -21,6 +26,28 @@ from python.rl.runtime.agent_shim import (
   roster_slot_role,
   single_agent_role,
 )
+from python.tasking_contracts.agency_registry import MERGE_POLICIES
+
+
+def test_merge_policy_vocabulary_is_owned_by_the_agency_registry():
+  """I53 P1-1 mechanical convergence: the allowed merge-policy *set* is the T9
+  registry tuple (identity, not a copy), and each named local constant pins its
+  exact registry member by name+position so neither side can drift silently."""
+  assert ALLOWED_MERGE_POLICIES is MERGE_POLICIES
+  assert isinstance(ALLOWED_MERGE_POLICIES, tuple)
+  assert all(type(policy) is str for policy in ALLOWED_MERGE_POLICIES)
+  assert (
+    MERGE_LAST_WRITE_WINS,
+    MERGE_PRIORITY_OVERRIDE,
+    MERGE_REJECT_ON_CONFLICT,
+    MERGE_BY_FIELD,
+    MERGE_APPEND_ONLY,
+  ) == MERGE_POLICIES
+  assert MERGE_LAST_WRITE_WINS == "last_write_wins"
+  assert MERGE_PRIORITY_OVERRIDE == "priority_override"
+  assert MERGE_REJECT_ON_CONFLICT == "reject_on_conflict"
+  assert MERGE_BY_FIELD == "merge_by_field"
+  assert MERGE_APPEND_ONLY == "append_only"
 
 
 def test_observation_provenance_labels_classify_boundaries():

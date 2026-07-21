@@ -36,6 +36,20 @@ re-adjudicated A14 from `arbitration` to `gating` on source-code evidence, and (
 pinned the *exact* category set of the key re-adjudicated sites. The per-item
 changes are marked inline below and summarized in §8.
 
+**T9 slice 2 (I53) update.** The §7 "call-site convergence" backlog was
+adjudicated for its **zero-semantic-risk mechanical subset only** (per-site: is a
+token a string/constant literal repointable at an `agency_registry` constant, or
+control-flow/semantic logic?). **Within the censused A1-A14 list the narrow
+adjudication converged 0 of 14 sites** -- their scatter is compiled-`ef_py`-enum
+access, schema-layer DTO field-name keys, and `if/else`/prose logic (§3.2). A
+full-maintained-surface hunt (I53 repair round) then found **one true mechanical
+site outside the A-list**: `python/rl/runtime/agent_shim.py` locally duplicated
+the five-policy merge vocabulary; its `ALLOWED_MERGE_POLICIES` now references the
+registry's `MERGE_POLICIES` directly, with a drift-pin unit test (§3.2). No
+fixture or ratchet-gate change was needed (the site is outside the T9 scan roots
+and merge-policy strings are not detection tokens). Semantic convergence stays
+deferred.
+
 ## 1. Scope And Method
 
 The maintained authority surface was surveyed with `rg` across
@@ -141,7 +155,7 @@ token-to-count fingerprint lives in the census JSON.
 | A3 | `python/rl/profile/common_core_defaults.py` | `AuthorityScope`, `CommandRelationship` | delegation, scope | default-provider | Leaf default-value providers for the delegation/scope enums. (Its `command_relationship_default()` function name is compound-excluded by word boundary; pinned via `CommandRelationship`.) |
 | A4 | `python/rl/profile/air_profile.py` | `AuthorityScope`, `CommandRelationship`, `authorization_to_fire`, `command_relationship`, `engagement_authority_grantor_id`, `engagement_authority_holder_id`, `roe_state` | arbitration, delegation, doctrine, scope | default+precedence | Air defaults + engagement-authority field resolution + **leader-intent-over-mission-command fire-authority precedence**. (`leader_authorization_to_fire` local is word-boundary excluded; file pinned via the bare field.) |
 | A5 | `python/rl/profile/ground_profile.py` | `AuthorityScope`, `CommandRelationship`, `authorization_to_fire`, `command_relationship`, `ground_commander_id`, `infer_command_relationship`, `officer_in_tactical_command` | arbitration, delegation, role, scope | default+delegation+precedence | Ground defaults + OTC/ground-commander delegation + **leader-intent-vs-mission-command fire-authorization precedence** (`build_kernel_mission_command`, lines 428-431). **R1: added arbitration**; **R2: pins the `command_relationship`/`infer_command_relationship` synonyms and pins the category set exactly.** |
-| A6 | `python/rl/profile/naval_profile.py` | `AuthorityScope`, `CommandRelationship`, `NavalWarfareRole`, `authorization_to_fire`, `command_relationship`, `engagement_authority_grantor_id`, `engagement_authority_holder_id`, `officer_in_tactical_command`, `roe_state`, `warfare_role_code` | arbitration, delegation, doctrine, role, scope | default+delegation+precedence | Densest single-file surface: warfare-role, OTC, command relationship, ROE, engagement/fire authority + leader precedence. **R2: pins the snake_case `command_relationship` token.** |
+| A6 | `python/rl/profile/naval_profile.py` | `AuthorityScope`, `CommandRelationship`, `NavalWarfareRole`, `authorization_to_fire`, `command_relationship`, `engagement_authority_grantor_id`, `engagement_authority_holder_id`, `officer_in_tactical_command`, `roe_state`, `warfare_role_code` | arbitration, delegation, doctrine, role, scope | default+delegation+precedence | Densest single-file surface: warfare-role, OTC, command relationship, ROE, engagement/fire-authority field resolution. **I53 correction (was "leader precedence"):** the naval profile carries no `leader_intent`; its `build_kernel_mission_command` fills the authority/ROE fields from `loader.mission_cmd` and then re-reads the same fields from `scenario_data["mission_command"]` -- on the regular load path the two names are bound to the **same dict** (`loading.py:113-117`, re-synced at `:242`), so the re-read is idempotent rather than a real precedence; whether any runtime rebinding ever separates them is to-be-adjudicated (§3.2). **R2: pins the snake_case `command_relationship` token.** |
 | A7 | `gym_envs/scenario_loader/core.py` | `_hierarchical_command_chain_active` | gating | delegate-method | Loader delegate of the command-chain **activation** gate (enable/disable). **R1: arbitration -> gating**; **R2: pinned via the loader-delegate token `_hierarchical_command_chain_active`** (word-boundary matching no longer folds the gate name into the underscore-prefixed method) with the category set pinned exactly. |
 | A8 | `gym_envs/scenario_loader/runtime_state.py` | `authorization_to_fire`, `engagement_authority_grantor_id`, `engagement_authority_holder_id`, `ground_commander_id`, `roe_state` | delegation, doctrine, role | state-projection | Pure state mirror: projects mission-command authority/ROE + ground-commander fields into runtime-state JSON mirrors; makes no decision. **R1: dropped arbitration** (mirror, not a gate; `engagement_authority_holder_id` here is a mirrored identity); **R2: category set pinned exactly** so arbitration cannot be silently re-added. |
 | A9 | `gym_envs/scenario_loader/behavior_runtime/command_chain.py` | `hierarchical_command_chain_active` | gating | activation-gate | **Definition site** of the command-chain **activation** gate (from task_order/leader_intent/pilot_report/c2_task_name presence). **R1: arbitration -> gating**; **R2: category set pinned exactly**. |
@@ -180,6 +194,104 @@ file there is not silently missed, and to state a uniform standard):
   site (A9 / A2) instead. (Repair: the first round counted the `__init__.py`
   re-export but not `ground_adapter.py`; both are now excluded consistently.)
 
+### 3.2 I53 Mechanical-Convergence Adjudication (T9 Slice 2)
+
+T9 slice 2 works the §7 call-site-convergence backlog for the **zero-semantic-risk
+mechanical subset only**: per site, is each authority token a *string/constant
+literal* that can be mechanically repointed at an `agency_registry` constant with a
+byte-identical runtime value, or *control-flow / semantic logic* that must not move
+this slice? **Finding: within the censused A1-A14 list the narrow adjudication
+stands at 0 of 14 convergeable; a full-maintained-surface hunt (I53 repair round)
+found one true mechanical site outside the A-list -- the `agent_shim` merge-policy
+collection -- which was converged this slice (see "Converged at I53" below).**
+The A1-A14 authority "scatter" is not duplicated literal vocabulary
+collections. It is three forms, each already out of the mechanical subset:
+
+- **Compiled `ef_py` enum attribute access** (A2-A6): the vocabulary lives in the
+  compiled kernel and is read as `getattr(ef_py.CommandRelationship, "TACON")` /
+  `getattr(namespace, "ScreenCommander")`. The registry is a **mirror** of that
+  compiled source of truth (the §6 gate pins registry == header), so repointing a
+  consumer at the mirror would *regress* the source of truth, not converge it --
+  and the census's own "do not touch" list already excludes compiled-enum access.
+- **Schema-layer DTO field-name keys** (A4-A6, A8, A10-A14): `mission_cmd.get(
+  "authorization_to_fire")`, `("roe_state", "roe_state")` mirror pairs, etc. These
+  are mission-command DTO/JSON contract field names owned by the schema layer
+  (`python/tasking_contracts/mission_defs.py` / the DTO schema generator); the
+  registry only *cross-references* them as `DELEGATION_CARRIERS` /
+  `DOCTRINE_FAMILY.roe_pattern_fields` "declared documentation, not an enforced
+  ACL". Repointing dozens of field reads at the registry would be a category error
+  (DTO ownership belongs to T1) and an anti-hub violation (G2), and the registry
+  exposes them only positionally (fragile), so it is not a clean mechanical win.
+- **`if/else` authority logic or English-prose folklore** (A1, A7, A9, A11-A13):
+  the activation gate, the who-may-fire arbitration, the reward ROE gates, and the
+  scripted-C2 authorship convention. These are the semantic logic itself and the
+  census already defers them.
+
+A one-time equivalence proof confirmed every site's vocabulary is **byte-identical**
+to the registry constants, split by the term's *actual registration location*
+(I53 repair: the first-round claim folded everything into carriers/pattern
+fields, which was imprecise for two role-identity fields):
+
+- **Enum mirrors**: `COMMAND_RELATIONSHIPS`, `AUTHORITY_SCOPE_LEVELS`,
+  `COORDINATION_MODES`, `NAVAL_WARFARE_ROLES` set-equal the live `ef_py` members.
+- **Delegation carriers** (`DELEGATION_CARRIERS`): `officer_in_tactical_command`,
+  `engagement_authority_grantor_id`, `authorization_to_fire`,
+  `command_relationship`.
+- **ROE pattern fields** (`DOCTRINE_FAMILY.roe_pattern_fields`): `roe_state`,
+  `authorization_to_fire`, `engagement_authority_holder_id`,
+  `engagement_authority_grantor_id`.
+- **Role `authors` fields** (`AUTHORITY_ROLES[*].authors`): `ground_commander_id`
+  is registered as `AUTHORITY_ROLES["ground_commander"].authors[0]` and
+  `warfare_role_code` as `AUTHORITY_ROLES["naval_warfare_commander"].authors[0]`
+  -- role-identity author fields, **not** carriers or pattern fields.
+
+So every A1-A14 non-convergence verdict below is **architectural, never a value
+mismatch**. Because no A-list code changed, the per-file token->count
+fingerprints are unchanged and the ratchet gate is untouched.
+
+**Converged at I53 (full-surface hunt, outside the A-list):**
+`python/rl/runtime/agent_shim.py` locally re-declared the five SCAL merge
+policies -- five `MERGE_*` string constants plus an `ALLOWED_MERGE_POLICIES`
+tuple duplicating `MERGE_POLICIES` (same values, same order, same type). This is
+the exact "locally re-declared vocabulary collection" shape the mechanical
+subset targets, and the dependency direction `python.rl -> python.tasking_contracts`
+is the census's recorded legal direction. Convergence keeps the five named
+constants as literals (they are keyword-argument defaults and greppable call-site
+vocabulary; deriving them by unpacking/indexing would add positional fragility)
+and repoints the *collection* -- `ALLOWED_MERGE_POLICIES` is now the registry's
+`MERGE_POLICIES` object itself, so the `_normalize_merge_policy` membership gate
+validates against the registry-owned vocabulary. A drift-pin unit test
+(`tests/runtime/test_agent_shim.py::test_merge_policy_vocabulary_is_owned_by_the_agency_registry`)
+asserts tuple identity plus each named constant's value/order against the
+registry, so neither side can drift silently. `agent_shim.py` sits outside the
+T9 scan roots and the merge-policy strings are not detection tokens, so the
+census fixture and ratchet gate needed no change.
+
+| # | Vocabulary form at site | Verdict | Reason (not a mechanical subset this slice) | Held precondition |
+|---|---|---|---|---|
+| A1 | Prose folklore in a docstring | not convergeable | English convention, not code -- cannot become an import; `SCOPE_FOLKLORE_RULES` mirrors it descriptively. | Semantic slice: make the C2 authorship boundary enforceable data (domain-evidence review). |
+| A2 | Compiled `ef_py` enum access + default-inference dispatch | not convergeable | Compiled-enum source of truth + control-flow; registry is a mirror of `ef_py`, so repointing would regress source of truth. | Route default-inference through the compiled `authorize_maintained_*` (domain review). |
+| A3 | `getattr(ef_py.CommandRelationship,'TACON')` / `AuthorityScope 'Tactical'` | not convergeable | Single compiled-enum member access; `COMMAND_RELATIONSHIPS[i]` would be fragile positional indexing into the mirror (excluded: compiled-enum). | Default-provider convergence onto compiled defaults (later slice). |
+| A4 | Compiled enums + DTO keys + leader-vs-mission precedence | not convergeable | Compiled-enum + DTO field keys + arbitration `if/else`. | Semantic arbitration slice (domain review). |
+| A5 | Compiled enums + DTO keys + `infer_command_relationship` + precedence | not convergeable | Compiled-enum + delegation/arbitration control-flow (category set pinned). | Semantic delegation/arbitration slice. |
+| A6 | `getattr(namespace,'ScreenCommander')` + compiled enums + DTO keys | not convergeable | Compiled-enum member access (warfare-role inference) + DTO field keys. Precision note (I53 repair round 2): `naval_profile.py` carries no `leader_intent`. Its `build_kernel_mission_command` fills the authority/ROE fields (`roe_state`, holder/grantor ids, `authorization_to_fire`) from `loader.mission_cmd` and then re-reads the same fields from `scenario_data["mission_command"]`; at load time the two names are bound to the **same mapping** (`loading.py:113-117`, re-synced at `:242`), so on the regular path the re-read is idempotent, not a precedence. Whether any runtime rebinding site ever separates the two mappings into a real override is **to-be-adjudicated**. | Semantic warfare-role/delegation slice, plus adjudicating whether the runtime rebinding of `loader.mission_cmd` vs `scenario_data["mission_command"]` ever forms a real precedence (or evidence of an actual separation path). |
+| A7 | `_hierarchical_command_chain_active` delegate method | not convergeable | Pure delegation to the activation-gate impl; control-flow, no vocabulary literal. | Semantic command-chain activation convergence. |
+| A8 | DTO field-name pairs in JSON-mirror tuples | not convergeable | State mirror over schema-layer field names (not agency vocabulary); repointing = category error + hub coupling. | DTO field-name ownership decision (T1 schema), not T9. |
+| A9 | `hierarchical_command_chain_active()` presence checks | not convergeable | The `if/else` activation-gate logic itself (excluded). | Semantic activation-gate slice. |
+| A10 | `leader_intent.authorization_to_fire = mission_cmd.get(...)` | not convergeable | Field-copy control-flow over a DTO key. | Semantic delegation slice. |
+| A11 | reads `roe_state`/`authorization_to_fire` -> ROE reward gate | not convergeable | Reward-side `if/else` reader; DTO keys. | Semantic ROE / DoctrineFamily-mechanism slice. |
+| A12 | reads `authorization_to_fire`/`roe_state` -> reward gate | not convergeable | Reward-side `if/else` reader; DTO keys. | Semantic ROE / DoctrineFamily-mechanism slice. |
+| A13 | `holder_ok`/`c2_authorized` who-may-fire arbitration | not convergeable | The who-may-fire arbitration logic itself (excluded); DTO keys. Canonical T9 target. | Semantic arbitration slice (domain-evidence review). |
+| A14 | fire-mask eligibility gate + DTO keys | not convergeable + write-excluded | Observation-face ownership (I45/I50; I50 actively converged its reads onto `observation_view`) -- write-exclusion still applies; the mask is control-flow, not a literal collection. | Observation-face (T8 line) coordination; semantic gate slice. |
+
+**Out-of-census note.** `gym_envs/universal_env_parts/naval_actions.py` defines the
+module scalar `NAVAL_STATION3_CARRIER_INTERFACE_KIND = "PilotActionAssignment"`
+(a byte-match of `ACTION_INTERFACE_KINDS[0]`). It is **not** a censused authority
+site -- it carries no detection token, so the ratchet never sees it -- and is a
+single scalar rather than a duplicated collection; repointing it at the mirror by
+positional index would add fragility for no authority-decision benefit, so it is
+recorded here and left untouched.
+
 ## 4. Category Distribution
 
 | Category | Files | Description |
@@ -187,7 +299,7 @@ file there is not silently missed, and to state a uniform standard):
 | scope | 6 (A1-A6) | Authority echelon + the C2 read/write-scope folklore. |
 | role | 4 (A2, A5, A6, A8) | Command-node identities (OTC, ground/`commander_id`, naval warfare role). |
 | delegation | 11 (A2-A6, A8, A10-A14) | Command relationships (incl. the snake_case / `infer_` synonyms), OTC/grantor transfer, fire-authority delegation. |
-| arbitration | 4 (A4, A5, A6, A13) | Leader-over-mission precedence + who-may-fire holder gate. (**R2**: A14 moved out -- its fire mask is a gate, not conflict resolution.) |
+| arbitration | 4 (A4, A5, A6, A13) | Leader-over-mission precedence (A4/A5) + who-may-fire holder gate (A13); A6's arbitration-shaped re-read is idempotent on the regular load path and to-be-adjudicated (I53 correction, §3 A6 row). (**R2**: A14 moved out -- its fire mask is a gate, not conflict resolution.) |
 | gating | 3 (A7, A9, A14) | Command-chain activation (A7/A9) + the air-combat fire-eligibility mask (A14). |
 | doctrine | 6 (A4, A6, A8, A11, A12, A14) | ROE-state / weapon-control pattern fields. |
 | undecided | 0 | No unadjudicated sites this slice. |
@@ -314,9 +426,19 @@ pin).
 
 ## 7. Deferred / Held
 
-- **Call-site convergence** (routing A1-A14 through the registry / the compiled
-  `authorize_maintained_*` gates) is deferred to a later T9 slice with domain-
-  evidence review. This slice is census + vocabulary + gate only.
+- **Call-site convergence.** The **mechanical vocabulary subset was converged at
+  I53 (T9 slice 2)**: within the censused A1-A14 list the narrow adjudication
+  stands at **0 of 14 convergeable** -- their scatter is compiled-`ef_py`-enum
+  access (the registry is a mirror of that source of truth), schema-layer DTO
+  field-name keys, and `if/else`/prose logic (full 14-site adjudication in §3.2,
+  byte-equivalence proven). A full-maintained-surface hunt (I53 repair round)
+  found **one true mechanical site outside the A-list** -- the
+  `python/rl/runtime/agent_shim.py` merge-policy collection -- **converged this
+  slice** (its `ALLOWED_MERGE_POLICIES` now references the registry's
+  `MERGE_POLICIES`, drift-pinned by a unit test; §3.2). **Semantic convergence is
+  still deferred**: routing A1-A14's behavior through the registry / the compiled
+  `authorize_maintained_*` gates, the `DoctrineFamily` mechanism, and any
+  compiled-side change all wait for a later T9 slice with domain-evidence review.
 - **`DoctrineFamily` mechanism** (real ROE/engagement-policy behavior) is held;
   only the name and vocabulary are declared.
 - **Runtime-face sites R1-R2** and the **policy-network face**

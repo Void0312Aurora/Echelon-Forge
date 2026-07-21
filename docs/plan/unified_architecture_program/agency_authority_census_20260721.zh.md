@@ -27,6 +27,16 @@
 (6) 依源码证据将 A14 由 `arbitration` 重裁为 `gating`，(7) 对关键重裁站点钉死其
 *精确*类别集。逐项改动在下文就地标注，并在 §8 汇总。
 
+**T9 第二切片（I53）更新。** §7 的“调用点收敛”待办已按**仅零语义风险的机械子集**
+裁定（逐站点：token 是可重指向 `agency_registry` 常量的字符串/常量字面量，还是
+控制流/语义逻辑？）。**在已普查的 A1-A14 清单内，狭义裁定为 0/14 可收敛**——其散点
+是编译端 `ef_py` 枚举访问、schema 层 DTO 字段名键、以及 `if/else`/prose 逻辑
+（见 §3.2）。随后的全维护面猎找（I53 修复轮）发现 **A 清单之外的一处真机械站点**：
+`python/rl/runtime/agent_shim.py` 本地复刻了五项合并策略词汇；其
+`ALLOWED_MERGE_POLICIES` 现直接引用注册表的 `MERGE_POLICIES`，并配防漂移单测
+（见 §3.2）。fixture 与 ratchet 门禁无需改动（该站点在 T9 扫描根之外，且合并策略
+字符串不是探测词）。语义收敛继续推迟。
+
 ## 1. 范围与方法
 
 维护权限面用 `rg` 普查了 `python/tasking_contracts/**`、`python/rl/tasking/**`、
@@ -112,7 +122,7 @@ Agency 面）及编译契约对齐。ratchet 门禁解析枚举/scope 头文件�
 | A3 | `python/rl/profile/common_core_defaults.py` | `AuthorityScope`、`CommandRelationship` | delegation, scope | 默认提供 | 委派/范围枚举的叶子默认值提供者。（其 `command_relationship_default()` 函数名按词边界为复合排除；由 `CommandRelationship` 钉住。） |
 | A4 | `python/rl/profile/air_profile.py` | `AuthorityScope`、`CommandRelationship`、`authorization_to_fire`、`command_relationship`、`engagement_authority_grantor_id`、`engagement_authority_holder_id`、`roe_state` | arbitration, delegation, doctrine, scope | 默认+优先级 | 空军默认 + 交战权限字段解析 + **leader 意图压过任务指令的开火权限优先级**。（`leader_authorization_to_fire` 局部按词边界排除；文件由裸字段钉住。） |
 | A5 | `python/rl/profile/ground_profile.py` | `AuthorityScope`、`CommandRelationship`、`authorization_to_fire`、`command_relationship`、`ground_commander_id`、`infer_command_relationship`、`officer_in_tactical_command` | arbitration, delegation, role, scope | 默认+委派+优先级 | 地面默认 + OTC/地面指挥官委派 + **leader 意图 vs 任务指令的开火授权优先级**（`build_kernel_mission_command`，行 428-431）。**第一轮：补 arbitration**；**第二轮：钉住 `command_relationship`/`infer_command_relationship` 同义词并精确钉死类别集。** |
-| A6 | `python/rl/profile/naval_profile.py` | `AuthorityScope`、`CommandRelationship`、`NavalWarfareRole`、`authorization_to_fire`、`command_relationship`、`engagement_authority_grantor_id`、`engagement_authority_holder_id`、`officer_in_tactical_command`、`roe_state`、`warfare_role_code` | arbitration, delegation, doctrine, role, scope | 默认+委派+优先级 | 单文件最密集面：作战角色、OTC、指挥关系、ROE、交战/开火权限 + leader 优先级。**第二轮：钉住 snake_case `command_relationship` token。** |
+| A6 | `python/rl/profile/naval_profile.py` | `AuthorityScope`、`CommandRelationship`、`NavalWarfareRole`、`authorization_to_fire`、`command_relationship`、`engagement_authority_grantor_id`、`engagement_authority_holder_id`、`officer_in_tactical_command`、`roe_state`、`warfare_role_code` | arbitration, delegation, doctrine, role, scope | 默认+委派+优先级 | 单文件最密集面：作战角色、OTC、指挥关系、ROE、交战/开火权限字段解析。**I53 更正（原表述"leader 优先级"）：**海军 profile 不含 `leader_intent`；其 `build_kernel_mission_command` 先从 `loader.mission_cmd` 填充权限/ROE 字段、再从 `scenario_data["mission_command"]` 重读同名字段——常规装载路径上二者绑定为**同一 dict**（`loading.py:113-117`，`:242` 再同步），该重读是幂等而非真实优先级；运行期重绑是否使二者分离，待裁定（§3.2）。**第二轮：钉住 snake_case `command_relationship` token。** |
 | A7 | `gym_envs/scenario_loader/core.py` | `_hierarchical_command_chain_active` | gating | 委托方法 | loader 对命令链**激活**门（使能/禁用）的委托。**第一轮：arbitration → gating**；**第二轮：以 loader 委托 token `_hierarchical_command_chain_active` 钉住**（词边界匹配不再把门名折进带下划线前缀的方法），并精确钉死类别集。 |
 | A8 | `gym_envs/scenario_loader/runtime_state.py` | `authorization_to_fire`、`engagement_authority_grantor_id`、`engagement_authority_holder_id`、`ground_commander_id`、`roe_state` | delegation, doctrine, role | 状态投影 | 纯状态镜像：将任务指令权限/ROE 与地面指挥官字段投影进 runtime-state JSON 镜像；不作任何裁决。**第一轮：去掉 arbitration**（是镜像而非门；此处 `engagement_authority_holder_id` 为镜像身份）；**第二轮：精确钉死类别集**以防 arbitration 被静默加回。 |
 | A9 | `gym_envs/scenario_loader/behavior_runtime/command_chain.py` | `hierarchical_command_chain_active` | gating | 激活门 | 命令链**激活**门的**定义站点**（依 task_order/leader_intent/pilot_report/c2_task_name 是否存在）。**第一轮：arbitration → gating**；**第二轮：精确钉死类别集**。 |
@@ -145,6 +155,85 @@ Agency 面）及编译契约对齐。ratchet 门禁解析枚举/scope 头文件�
   语句，两者都不计入。权限逻辑钉在其定义/委托站点（A9 / A2）。（修复：首轮把
   `__init__.py` 再导出计入却未计 `ground_adapter.py`；现二者一致排除。）
 
+### 3.2 I53 机械收敛裁定（T9 第二切片）
+
+T9 第二切片按**仅零语义风险的机械子集**处理 §7 调用点收敛待办：逐站点判断每个
+权限 token 是*字符串/常量字面量*（可机械重指向 `agency_registry` 常量，运行时值
+逐字节相同），还是*控制流/语义逻辑*（本切片不动）。**结论：在已普查的 A1-A14
+清单内狭义裁定为 0/14 可收敛；全维护面猎找（I53 修复轮）在 A 清单之外发现一处
+真机械站点——`agent_shim` 合并策略集合——已在本切片收敛（见下文“I53 已收敛”）。**
+A1-A14 的权限“散点”并非重复的字面量词汇集合，而是三种形态，
+且每种都已在机械子集之外：
+
+- **编译端 `ef_py` 枚举属性访问**（A2-A6）：词汇存于编译内核，以
+  `getattr(ef_py.CommandRelationship, "TACON")` / `getattr(namespace, "ScreenCommander")`
+  读取。注册表是该编译真源的**镜像**（§6 门禁钉住 registry == 头文件），故把消费者
+  重指向镜像会*倒退*真源而非收敛——普查自身的“不动”清单也已排除编译枚举访问。
+- **schema 层 DTO 字段名键**（A4-A6、A8、A10-A14）：`mission_cmd.get("authorization_to_fire")`、
+  `("roe_state", "roe_state")` 镜像对等。它们是任务指令 DTO/JSON 契约字段名，由
+  schema 层拥有（`python/tasking_contracts/mission_defs.py` / DTO schema 生成器）；
+  注册表仅将它们*交叉引用*为 `DELEGATION_CARRIERS` / `DOCTRINE_FAMILY.roe_pattern_fields`
+  “声明式文档，而非强制 ACL”。把数十处字段读取重指向注册表将是类别错误（DTO 归属
+  属于 T1）且违反反 hub（G2），且注册表仅以位置暴露它们（脆弱），故非干净机械收益。
+- **`if/else` 权限逻辑或英文 prose 民俗**（A1、A7、A9、A11-A13）：激活门、谁可开火
+  仲裁、奖励 ROE 门、脚本化 C2 编写约定。这些即语义逻辑本身，普查已推迟。
+
+一次性等值证明确认每处站点的词汇与注册表常量**逐字节相同**，并按术语的*实际登记
+位置*分列（I53 修复：首轮把所有字段折进载体/模式字段的口径不准，两个角色身份字段
+实际登记在别处）：
+
+- **枚举镜像**：`COMMAND_RELATIONSHIPS`、`AUTHORITY_SCOPE_LEVELS`、
+  `COORDINATION_MODES`、`NAVAL_WARFARE_ROLES` 与实时 `ef_py` 成员集合相等。
+- **委派载体**（`DELEGATION_CARRIERS`）：`officer_in_tactical_command`、
+  `engagement_authority_grantor_id`、`authorization_to_fire`、`command_relationship`。
+- **ROE 模式字段**（`DOCTRINE_FAMILY.roe_pattern_fields`）：`roe_state`、
+  `authorization_to_fire`、`engagement_authority_holder_id`、
+  `engagement_authority_grantor_id`。
+- **角色 `authors` 字段**（`AUTHORITY_ROLES[*].authors`）：`ground_commander_id`
+  登记为 `AUTHORITY_ROLES["ground_commander"].authors[0]`，`warfare_role_code`
+  登记为 `AUTHORITY_ROLES["naval_warfare_commander"].authors[0]`——角色身份
+  author 字段，**不在**载体或模式字段中。
+
+故下表每条 A1-A14 非收敛裁定均为**架构原因，绝非取值不一致**。因 A 清单代码未改，
+逐文件 token→count 指纹不变，ratchet 门禁未动。
+
+**I53 已收敛（全维护面猎找，A 清单之外）：**
+`python/rl/runtime/agent_shim.py` 本地重复声明了 SCAL 五项合并策略——五个
+`MERGE_*` 字符串常量加一个与 `MERGE_POLICIES` 精确重复（同值同序同型）的
+`ALLOWED_MERGE_POLICIES` 元组。这正是机械子集针对的“本地重复声明的词汇集合”
+形态，且依赖方向 `python.rl -> python.tasking_contracts` 是普查登记的合法方向。
+收敛方案：五个命名常量保留字面量（它们是关键字参数默认值与可 grep 的调用点词汇，
+用解包/下标派生会引入位置脆弱性），只把*集合*重指向——`ALLOWED_MERGE_POLICIES`
+现即注册表的 `MERGE_POLICIES` 对象本身，使 `_normalize_merge_policy` 的成员判定
+落到注册表拥有的词汇上。防漂移单测
+（`tests/runtime/test_agent_shim.py::test_merge_policy_vocabulary_is_owned_by_the_agency_registry`）
+断言元组同一性与每个命名常量的值/顺序均与注册表一致，两侧任何漂移都会大声失败。
+`agent_shim.py` 在 T9 扫描根之外、合并策略字符串也不是探测词，故普查 fixture 与
+ratchet 门禁无需改动。
+
+| # | 站点词汇形态 | 裁定 | 理由（本切片非机械子集） | 前置条件（暂缓） |
+|---|---|---|---|---|
+| A1 | docstring 中的 prose 民俗 | 不可收敛 | 英文约定而非代码——无法成为 import；`SCOPE_FOLKLORE_RULES` 描述性镜像。 | 语义切片：将 C2 编写边界做成可强制数据（领域证据评审）。 |
+| A2 | 编译 `ef_py` 枚举访问 + 默认推断分派 | 不可收敛 | 编译枚举真源 + 控制流；注册表是 `ef_py` 镜像，重指向会倒退真源。 | 将默认推断接入编译 `authorize_maintained_*`（领域评审）。 |
+| A3 | `getattr(ef_py.CommandRelationship,'TACON')` / `AuthorityScope 'Tactical'` | 不可收敛 | 单个编译枚举成员访问；`COMMAND_RELATIONSHIPS[i]` 是对镜像的脆弱位置索引（排除：编译枚举）。 | 默认提供者收敛到编译默认（后续切片）。 |
+| A4 | 编译枚举 + DTO 键 + leader-vs-mission 优先级 | 不可收敛 | 编译枚举 + DTO 字段键 + 仲裁 `if/else`。 | 语义仲裁切片（领域评审）。 |
+| A5 | 编译枚举 + DTO 键 + `infer_command_relationship` + 优先级 | 不可收敛 | 编译枚举 + 委派/仲裁控制流（类别集已钉定）。 | 语义委派/仲裁切片。 |
+| A6 | `getattr(namespace,'ScreenCommander')` + 编译枚举 + DTO 键 | 不可收敛 | 编译枚举成员访问（作战角色推断）+ DTO 字段键。精度注记（I53 修复第二轮）：`naval_profile.py` 不含 `leader_intent`。其 `build_kernel_mission_command` 先从 `loader.mission_cmd` 填充权限/ROE 字段（`roe_state`、holder/grantor id、`authorization_to_fire`），再从 `scenario_data["mission_command"]` 重读同名字段；装载期二者绑定为**同一映射**（`loading.py:113-117`，`:242` 再同步），故常规路径上该重读是幂等而非优先级。运行期各重绑站点是否曾使两份映射分离成真实覆盖，**待裁定**。 | 语义作战角色/委派切片，外加裁定 `loader.mission_cmd` 与 `scenario_data["mission_command"]` 的运行期重绑是否形成真实优先级（或给出实际分离路径的证据）。 |
+| A7 | `_hierarchical_command_chain_active` 委托方法 | 不可收敛 | 纯委托到激活门实现；控制流，无词汇字面量。 | 语义命令链激活收敛。 |
+| A8 | JSON 镜像元组中的 DTO 字段名对 | 不可收敛 | 对 schema 层字段名的状态镜像（非 agency 词汇）；重指向 = 类别错误 + hub 耦合。 | DTO 字段名归属决策（T1 schema），非 T9。 |
+| A9 | `hierarchical_command_chain_active()` 存在性检查 | 不可收敛 | `if/else` 激活门逻辑本身（排除）。 | 语义激活门切片。 |
+| A10 | `leader_intent.authorization_to_fire = mission_cmd.get(...)` | 不可收敛 | 对 DTO 键的字段拷贝控制流。 | 语义委派切片。 |
+| A11 | 读 `roe_state`/`authorization_to_fire` → ROE 奖励门 | 不可收敛 | 奖励侧 `if/else` 读取者；DTO 键。 | 语义 ROE / DoctrineFamily 机制切片。 |
+| A12 | 读 `authorization_to_fire`/`roe_state` → 奖励门 | 不可收敛 | 奖励侧 `if/else` 读取者；DTO 键。 | 语义 ROE / DoctrineFamily 机制切片。 |
+| A13 | `holder_ok`/`c2_authorized` 谁可开火仲裁 | 不可收敛 | 谁可开火仲裁逻辑本身（排除）；DTO 键。典范 T9 目标。 | 语义仲裁切片（领域证据评审）。 |
+| A14 | 开火掩码资格门 + DTO 键 | 不可收敛 + 写排除 | 观测面归属（I45/I50；I50 已将其读取收敛到 `observation_view`）——写排除仍适用；掩码是控制流而非字面量集合。 | 观测面（T8 线）协调；语义门切片。 |
+
+**范围外注记。** `gym_envs/universal_env_parts/naval_actions.py` 定义模块级标量
+`NAVAL_STATION3_CARRIER_INTERFACE_KIND = "PilotActionAssignment"`（与
+`ACTION_INTERFACE_KINDS[0]` 逐字节相同）。它**不是**已普查权限站点——不含探测词，
+ratchet 从不见它——且是单个标量而非重复集合；以位置索引把它重指向镜像只会为零
+权限决策收益增添脆弱性，故此处登记并保持不动。
+
 ## 4. 类别分布
 
 | 类别 | 文件数 | 说明 |
@@ -152,7 +241,7 @@ Agency 面）及编译契约对齐。ratchet 门禁解析枚举/scope 头文件�
 | scope | 6（A1-A6） | 权限梯次 + C2 读写范围民俗。 |
 | role | 4（A2、A5、A6、A8） | 指挥节点身份（OTC、地面/`commander_id`、海军作战角色）。 |
 | delegation | 11（A2-A6、A8、A10-A14） | 指挥关系（含 snake_case / `infer_` 同义词）、OTC/授予者转移、开火权限委派。 |
-| arbitration | 4（A4、A5、A6、A13） | leader 压过任务指令的优先级 + 谁可开火 holder 门。（**第二轮**：A14 移出——其开火掩码是门而非冲突解决。） |
+| arbitration | 4（A4、A5、A6、A13） | leader 压过任务指令的优先级（A4/A5）+ 谁可开火 holder 门（A13）；A6 的仲裁形态重读在常规装载路径上幂等、待裁定（I53 更正，见 §3 A6 行）。（**第二轮**：A14 移出——其开火掩码是门而非冲突解决。） |
 | gating | 3（A7、A9、A14） | 命令链激活（A7/A9）+ 空战开火资格掩码（A14）。 |
 | doctrine | 6（A4、A6、A8、A11、A12、A14） | ROE-state / 武器控制模式字段。 |
 | undecided | 0 | 本切片无未裁定站点。 |
@@ -257,8 +346,15 @@ ghost 成员——`//` 或 `/* */`——不被还原）、
 
 ## 7. 推迟 / 暂缓
 
-- **调用点收敛**（把 A1-A14 接入注册表 / 编译式 `authorize_maintained_*` 门）
-  推迟到后续带领域证据评审的 T9 切片。本切片仅普查 + 词汇 + 门禁。
+- **调用点收敛。** **机械词汇子集已在 I53（T9 第二切片）收敛**：在已普查的 A1-A14
+  清单内狭义裁定为 **0/14 可收敛**——其散点是编译端 `ef_py` 枚举访问（注册表是该
+  真源的镜像）、schema 层 DTO 字段名键、以及 `if/else`/prose 逻辑（14 站点完整
+  裁定见 §3.2，逐字节等值已证明）。全维护面猎找（I53 修复轮）在 A 清单之外发现
+  **一处真机械站点**——`python/rl/runtime/agent_shim.py` 合并策略集合——**已在本
+  切片收敛**（其 `ALLOWED_MERGE_POLICIES` 现直接引用注册表的 `MERGE_POLICIES`，
+  配防漂移单测；见 §3.2）。**语义收敛仍推迟**：把 A1-A14 的行为接入注册表 /
+  编译式 `authorize_maintained_*` 门、`DoctrineFamily` 机制、以及任何编译端改动，
+  均待后续带领域证据评审的 T9 切片。
 - **`DoctrineFamily` 机制**（真正的 ROE/交战策略行为）暂缓；只声明名字与词汇。
 - **runtime 面站点 R1-R2** 与**策略网络面**（`python/rl/policy_algo/**`）由其他面
   拥有；T9 协调而非修改它们，并保持其排除在扫描根之外（登记边界）。
