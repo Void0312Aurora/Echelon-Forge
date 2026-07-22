@@ -415,6 +415,21 @@ ghost 成员——`//` 或 `/* */`——不被还原）、
   `test_pinned_key_site_check_bites_on_reflip`）；普通站点保留候选集合模型以避免
   过度僵化。
 
+### 后续（I64）
+
+- **fixture A6 semantic 对齐。** 普查 JSON fixture 的 A6
+  （`python/rl/profile/naval_profile.py`）`semantic` 注释此前仍沿用 I53 前的
+  “leader 意图压过任务指令的开火授权优先级”表述——这是 I53 遗留的一条 P3 欠账，
+  因为该切片写集限定为 JSON/文档/测试、且此字段纯描述性（ratchet 门禁只断言
+  `semantic` 非空，从不校验其内容）。现已刷新为 I53 结论（§3 A6 行 / §3.2）：
+  `naval_profile` 不含 `leader_intent`；其 `build_kernel_mission_command` 先从
+  `loader.mission_cmd` 填充权限/ROE 字段，再从 `scenario_data["mission_command"]`
+  重读同名字段，二者在常规装载路径上绑定为同一 dict（`loading.py:113-117`，
+  `:242` 再同步），故该仲裁形态重读是幂等伪优先级，运行期重绑是否使二者分离待裁定。
+  仅改 fixture 的 `semantic` 字符串；`tokens`/`token_counts`/`categories`（因而
+  ratchet 指纹）均未动，故 agency 门保持绿色。同一轮亦对其余 13 条 fixture
+  `semantic` 注释按 §3 重新审计，结论一致。
+
 ## 相关
 
 - [统一架构计划](README.zh.md)（T9 轨道定义）

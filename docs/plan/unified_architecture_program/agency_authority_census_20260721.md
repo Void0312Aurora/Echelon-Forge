@@ -514,6 +514,25 @@ pin).
   `test_pinned_key_site_check_bites_on_reflip`); ordinary sites keep the
   candidate-set model to avoid over-rigidity.
 
+### Follow-up (I64)
+
+- **Fixture A6 semantic aligned.** The census JSON fixture's A6
+  (`python/rl/profile/naval_profile.py`) `semantic` annotation still carried the
+  pre-I53 "leader-intent-over-mission-command fire-authorization precedence" wording
+  -- a P3 note left open at I53 because that slice's write set was JSON/docs/tests
+  only and the field is purely descriptive (the ratchet gate asserts `semantic` is
+  non-empty, never its content). It is now refreshed to the I53 conclusion (§3 A6
+  row / §3.2): `naval_profile` carries no `leader_intent`;
+  `build_kernel_mission_command` fills the authority/ROE fields from
+  `loader.mission_cmd` and re-reads the same fields from
+  `scenario_data["mission_command"]`, which bind the same dict on the regular load
+  path (`loading.py:113-117`, re-synced at `:242`), so the arbitration-shaped re-read
+  is an idempotent pseudo-precedence and whether any runtime rebinding ever separates
+  the two mappings is to-be-adjudicated. Only the fixture's `semantic` string
+  changed; `tokens`/`token_counts`/`categories` (and thus the ratchet fingerprint)
+  are untouched, so the agency gate stays green. The other 13 fixture `semantic`
+  annotations were re-audited against §3 in the same pass and found consistent.
+
 ## Related
 
 - [Unified Architecture Program](README.md) (T9 track definition)
