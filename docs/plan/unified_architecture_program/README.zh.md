@@ -8,7 +8,7 @@
 生命周期：`maintained`
 规范路径：`docs/plan/unified_architecture_program/README.md`
 所有者：`unified architecture program workline`
-最近核验：`2026-07-20`
+最近核验：`2026-07-27`
 
 状态：`codex/redundancy-consolidation` 分支上的活跃计划，把已完成的文本级
 整合阶段（I1-I19）与蓝图 W1-W2 波（I20-I24）延伸为剩余架构级统一工作的
@@ -186,6 +186,7 @@ exact-runtime WP4/WP5 进展为门，不由本计划排期。
 
 ## 相关权威
 
+- [I72+ 迭代队列（2026-07-26）](iteration_queue_i72_plus_20260726.zh.md)（I61-I71 落地波次后的依赖序执行设计）
 - [仓库整合计划](../repository_consolidation/README.zh.md)（迭代台账与协议）
 - [exact runtime 重构计划](../exact_runtime/cpp_exact_runtime_refactor_plan.zh.md)
 - [文档生命周期政策](../../standards/governance/document_lifecycle_policy.zh.md)

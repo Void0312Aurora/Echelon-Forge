@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/README.md`
 Owner: `unified architecture program workline`
-Last verified: `2026-07-20`
+Last verified: `2026-07-27`
 
 Status: active program on branch `codex/redundancy-consolidation`, extending
 the completed text-level consolidation phases (I1-I19) and the blueprint
@@ -240,6 +240,8 @@ and are not scheduled by this program.
 
 ## Related Authority
 
+- [I72+ Iteration Queue (2026-07-26)](iteration_queue_i72_plus_20260726.md)
+  (dependency-ordered execution design after the I61-I71 landing wave)
 - [Repository Consolidation Plan](../repository_consolidation/README.md)
   (iteration ledger and protocol)
 - [Exact Runtime Refactor Plan](../exact_runtime/cpp_exact_runtime_refactor_plan.md)

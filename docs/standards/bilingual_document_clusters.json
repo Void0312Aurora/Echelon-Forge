@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-27",
-      "english_hash": "e029990751588f88d534c4a09c7fec1c76cf628fd2d4760442cb8bb8082c3685",
-      "chinese_hash": "4b6b48074fa8fe5486e99283d0fd2441f7284879d1b6c46cebaea4201aa5a5b2"
+      "english_hash": "022207f879ac06da8cb4d675acc7ca9846704b3960dd18da33042f9f05f5dbe2",
+      "chinese_hash": "e9b234d0713167d57c9487b1b725396a183d75d3d4fb06326ee8077bc74c9570"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -205,9 +205,9 @@
       "english": "docs/plan/unified_architecture_program/README.md",
       "chinese": "docs/plan/unified_architecture_program/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-07-20",
-      "english_hash": "4948a3e1afd6141cde062b963cdcabd89130f4a60221f1187251675510161715",
-      "chinese_hash": "ed59b754b878b3d15025ed4ee4c5426b2a376d8afbf51915ca8a7ebcd0a1ecc7"
+      "last_verified": "2026-07-27",
+      "english_hash": "e378293d29bd44b059095e3c1f3a155913338b24013b9508f60283e629406e18",
+      "chinese_hash": "7d8a5e20d117579dc3854fb62ff4192a255e2955df461db14e89ad557fe66230"
     },
     {
       "pair_id": "plan/unified_architecture_program/agency_authority_census_20260721",
@@ -217,6 +217,15 @@
       "last_verified": "2026-07-26",
       "english_hash": "65ebf20871d600570f5f6b1deb3839e57c86fcc809d96e12f8a78699a8dc07cc",
       "chinese_hash": "4a66c33243e16517328a61f71a1c53c10519e7b404b20d0ac9d138d10638517a"
+    },
+    {
+      "pair_id": "plan/unified_architecture_program/iteration_queue_i72_plus_20260726",
+      "english": "docs/plan/unified_architecture_program/iteration_queue_i72_plus_20260726.md",
+      "chinese": "docs/plan/unified_architecture_program/iteration_queue_i72_plus_20260726.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-27",
+      "english_hash": "3e0df3c6a9b99ad4d41b45d4d5d288666fca1238d65e84967325dfe5a982c10a",
+      "chinese_hash": "a06879e53aa114716432a1f77dba5461213e6c32209bc3c9121ac1082f931a1e"
     },
     {
       "pair_id": "plan/unified_architecture_program/scal_conformance_census_20260720",
