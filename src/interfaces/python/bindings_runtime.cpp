@@ -1081,6 +1081,42 @@ void bind_runtime(nb::module_ &m) {
     m.def("validate_replay_envelope", &runtime::counterfactual::validate_replay_envelope,
           nb::arg("envelope"));
 
+    // T10 evidence spine, slice 6A (this iteration): additive read surface for
+    // the maintained engagement-packet ancestry producer
+    // (RuntimeFacade::build_maintained_packet_ancestry). Nothing on an existing
+    // path constructs or consumes these bindings. The typed lineage ref reuses
+    // the shared VA-5/VA-6 vocabulary (ref_id / evidence_kind /
+    // provenance_label) already owned by the C++ contract type.
+    nb::class_<runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef>(
+        m, "ScenarioGenerationEvidenceMetadataRef")
+        .def(nb::init<>())
+        .def_rw("ref_id", &runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef::ref_id)
+        .def_rw("evidence_kind",
+                &runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef::evidence_kind)
+        .def_rw("provenance_label",
+                &runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef::provenance_label);
+
+    nb::class_<MaintainedEngagementPacketAncestry>(m, "MaintainedEngagementPacketAncestry")
+        .def(nb::init<>())
+        .def_rw("packet_ancestry_id", &MaintainedEngagementPacketAncestry::packet_ancestry_id)
+        .def_rw("run_id", &MaintainedEngagementPacketAncestry::run_id)
+        .def_rw("episode_id", &MaintainedEngagementPacketAncestry::episode_id)
+        .def_rw("anchor_trace_id", &MaintainedEngagementPacketAncestry::anchor_trace_id)
+        .def_rw("parent_trace_id", &MaintainedEngagementPacketAncestry::parent_trace_id)
+        .def_rw("replay_envelope_ref", &MaintainedEngagementPacketAncestry::replay_envelope_ref)
+        .def_rw("parent_event_order_ref",
+                &MaintainedEngagementPacketAncestry::parent_event_order_ref)
+        .def_rw("lineage_refs", &MaintainedEngagementPacketAncestry::lineage_refs)
+        .def_rw("ancestral_traces", &MaintainedEngagementPacketAncestry::ancestral_traces);
+
+    nb::class_<MaintainedPacketAncestryResult>(m, "MaintainedPacketAncestryResult")
+        .def(nb::init<>())
+        .def_rw("admitted", &MaintainedPacketAncestryResult::admitted)
+        .def_rw("ancestry", &MaintainedPacketAncestryResult::ancestry)
+        .def_rw("rejection_reason", &MaintainedPacketAncestryResult::rejection_reason)
+        .def_rw("errors", &MaintainedPacketAncestryResult::errors)
+        .def_rw("evidence_refs", &MaintainedPacketAncestryResult::evidence_refs);
+
     nb::class_<WorldTerrainAssignment> world_terrain_assignment_class(
         m, "WorldTerrainAssignment");
     world_terrain_assignment_class.def(nb::init<>());
@@ -1406,5 +1442,17 @@ void bind_runtime(nb::module_ &m) {
         .def("build_maintained_replay_envelope",
              &RuntimeFacade::build_maintained_replay_envelope, nb::arg("window_result"),
              nb::arg("run_id"), nb::arg("episode_id"), nb::arg("deterministic_seed"),
-             nb::arg("run_snapshot_version") = 0);
+             nb::arg("run_snapshot_version") = 0)
+        // T10 evidence spine, slice 6A (this iteration): additive read-only
+        // maintained engagement-packet ancestry producer. Not wired into any
+        // existing path; only meaningful against window evidence stamped by
+        // the I59 opt-in (use_facade_evidence_producers=True) adapter path.
+        // See the declaration comment in runtime_facade.h for the gate order,
+        // the "ancestry:maintained:*" id namespace, and the root semantics of
+        // parent_trace_id = 0 (default = no parent linkage, keeping every
+        // trace copy's parent_trace_id at the pre-slice default 0).
+        .def("build_maintained_packet_ancestry",
+             &RuntimeFacade::build_maintained_packet_ancestry, nb::arg("window_result"),
+             nb::arg("run_id"), nb::arg("episode_id"), nb::arg("deterministic_seed"),
+             nb::arg("parent_trace_id") = 0);
 }

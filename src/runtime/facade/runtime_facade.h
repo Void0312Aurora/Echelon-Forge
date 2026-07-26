@@ -270,6 +270,56 @@ class RuntimeFacade {
                                      std::uint64_t deterministic_seed,
                                      std::uint64_t run_snapshot_version = 0) const;
 
+    // --- T10 evidence spine, slice 6A (this iteration) ---------------------
+    //
+    // Maintained engagement-packet ancestry producer (census slice-6 anchor:
+    // "Set parent_trace_id (via the slice-3 allocator) and the *_ref
+    // lineage", scoped to the engagement-event packet family).
+    //
+    // Assembles a MaintainedPacketAncestryResult from the REAL products of one
+    // maintained window, linking the window's exported DiagnosticsTrace family
+    // to the previous window's run-minted VA-8 anchor. Like the slice-5
+    // envelope producer it is read-only (peeks the allocator cursor, mints
+    // nothing) and returns COPIES: the window products, the default export
+    // path, and every existing serialized value stay byte-for-byte unchanged.
+    // Nothing in the maintained runtime calls this method; the only Python
+    // reach is the RuntimeFacadeAdapter.build_maintained_packet_ancestry seam,
+    // which requires the I59 use_facade_evidence_producers=True opt-in.
+    //
+    // Gates (fail-closed, named reasons in runtime_facade_internal.h):
+    //
+    //   1. The window must yield an ADMITTED maintained replay envelope: this
+    //      producer internally runs build_maintained_replay_envelope (default
+    //      VA-2 qualification off) and propagates its rejection reasons
+    //      verbatim, so all nine slice-5 real-evidence gates -- including the
+    //      VA-8 "trace ids minted by THIS facade" admission that makes
+    //      foreign/synthetic evidence and the default placeholder [1] fail
+    //      closed -- plus validate_replay_envelope guard this surface too.
+    //      The admitted envelope id becomes ancestry.replay_envelope_ref, so
+    //      an ancestry record always names a validator-accepted envelope.
+    //   2. parent_trace_id (when non-zero) must have been minted by THIS
+    //      facade's VA-8 allocator (in [1, peek_next_trace_id())) --
+    //      kMaintainedPacketAncestryParentNotRunMinted otherwise, which is how
+    //      foreign-facade parent linkage fails closed.
+    //   3. parent_trace_id (when non-zero) must be strictly below every one of
+    //      the window's own trace tags (ancestry points backwards; no self or
+    //      forward links, hence no cycles) --
+    //      kMaintainedPacketAncestryParentNotBeforeWindow otherwise.
+    //   4. The window must carry exported diagnostics traces, at least one of
+    //      which is tagged with one of the packet's (already-admitted)
+    //      run-minted trace ids; kernel-space traces alone cannot anchor an
+    //      ancestry (the two uint64 id spaces are value-indistinguishable, so
+    //      tag-set membership is the only honest discriminator).
+    //
+    // parent_trace_id = 0 declares a root window: ancestral trace copies keep
+    // parent_trace_id = 0, byte-identical to the pre-slice default, so a root
+    // ancestry asserts lineage without inventing a parent.
+    MaintainedPacketAncestryResult
+    build_maintained_packet_ancestry(const RuntimeWindowResult &window_result,
+                                     const std::string &run_id, const std::string &episode_id,
+                                     std::uint64_t deterministic_seed,
+                                     std::uint64_t parent_trace_id = 0) const;
+
     // --- T8 information-state architecture, fourth slice / I60 -------------
     //
     // Additive, read-only declaration export for the TL13 maintained

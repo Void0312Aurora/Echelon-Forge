@@ -260,3 +260,60 @@ struct RuntimeWindowResult {
 #define EF_RUNTIME_WINDOW_RESULT_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime_window_result.inc"
 };
+
+// --- T10 evidence spine, slice 6A (this iteration) -------------------------
+//
+// Additive result DTOs of the maintained engagement-packet ancestry producer
+// (RuntimeFacade::build_maintained_packet_ancestry). Hand-written next to the
+// window DTOs they reference, following the slice-5 precedent
+// (MaintainedReplayEnvelopeResult in counterfactual_replay_contract_types.h);
+// appended at the end of this header, so no existing member order moves.
+//
+// The ancestry carries parent-linked COPIES of a real window's exported
+// DiagnosticsTrace family (census slice-6 gap: parent_trace_id is hardcoded 0
+// on the facade export path) -- the window products themselves are never
+// mutated, so every default-path serialized value stays byte-identical.
+// Lineage refs use the shared typed-ref vocabulary
+// (ScenarioGenerationEvidenceMetadataRef: ref_id / evidence_kind /
+// provenance_label, the VA-5/VA-6 field names the lineage schema modules pin).
+struct MaintainedEngagementPacketAncestry {
+    // "ancestry:maintained:{run_id}:trace:{anchor_trace_id}" -- reserved
+    // namespace, disjoint from "replay:maintained:*" and "replay:facade:*".
+    std::string packet_ancestry_id;
+    std::string run_id;
+    std::string episode_id;
+    // The window's own run-minted VA-8 anchor (engagement packet trace_ids
+    // tail, same anchor the slice-5 envelope id embeds).
+    std::uint64_t anchor_trace_id = 0;
+    // The PREVIOUS window's run-minted anchor; 0 = root window (no parent),
+    // which is exactly the pre-slice default value of parent_trace_id.
+    std::uint64_t parent_trace_id = 0;
+    // The admitted maintained replay envelope of the SAME window
+    // ("replay:maintained:{run_id}:trace:{anchor}"), validated by
+    // validate_replay_envelope before this ancestry can be admitted.
+    std::string replay_envelope_ref;
+    // "event:trace:{parent_trace_id}" (the slice-5 event-order embedding) or
+    // empty at the root.
+    std::string parent_event_order_ref;
+    // Typed lineage refs (VA-5 vocabulary): replay envelope + anchor trace
+    // (+ parent trace when linked).
+    std::vector<runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef> lineage_refs;
+    // Parent-linked copies of the window's exported diagnostics traces.
+    // Copies whose trace_id is one of the packet's run-minted tags carry
+    // parent_trace_id = the ancestry parent; copies from the kernel
+    // engagement-event id space are left untouched (the census's disjoint-id
+    // warning: a VA-8 parent must not be grafted onto a kernel-space trace).
+    std::vector<DiagnosticsTrace> ancestral_traces;
+};
+
+// Fail-closed result: `admitted` is only true when the slice-5 envelope gates
+// (including validate_replay_envelope) passed AND the ancestry-specific parent
+// gates passed. On rejection the ancestry stays default-constructed, so a
+// rejected result cannot leak half-real lineage.
+struct MaintainedPacketAncestryResult {
+    bool admitted = false;
+    MaintainedEngagementPacketAncestry ancestry{};
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+    std::vector<std::string> evidence_refs;
+};

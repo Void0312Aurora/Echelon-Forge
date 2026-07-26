@@ -1075,3 +1075,144 @@ RuntimeFacade::build_maintained_replay_envelope(const RuntimeWindowResult &windo
                                 ordered_refs.end());
     return result;
 }
+
+// T10 evidence spine, slice 6A (this iteration): maintained engagement-packet
+// ancestry producer. Contract, gate order, and the root/parent semantics are
+// documented on the declaration in runtime_facade.h; the fail-closed reason
+// strings live in runtime_facade_internal.h (kMaintainedPacketAncestry*).
+// Read-only like the slice-5 producer: it peeks the VA-8 cursor (via the
+// internal envelope build and the parent admission check) and mints nothing,
+// so calling it is idempotent and perturbs no existing serialized value.
+MaintainedPacketAncestryResult
+RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &window_result,
+                                                const std::string &run_id,
+                                                const std::string &episode_id,
+                                                std::uint64_t deterministic_seed,
+                                                std::uint64_t parent_trace_id) const {
+    using runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef;
+
+    MaintainedPacketAncestryResult result{};
+
+    // Gate 1: the same window must assemble an ADMITTED maintained replay
+    // envelope. This reuses all nine slice-5 real-evidence gates (run/episode
+    // id, real export provenance, VA-8 trace-id admission -- the gate that
+    // fail-closes foreign-facade and default-placeholder evidence -- window
+    // barrier, producer node, finite time) plus validate_replay_envelope, and
+    // binds the ancestry to a validator-accepted envelope id. Default VA-2
+    // qualification (run_snapshot_version = 0) keeps the envelope's snapshot
+    // ref byte-identical to the slice-5 default.
+    const runtime::counterfactual::MaintainedReplayEnvelopeResult envelope_result =
+        build_maintained_replay_envelope(window_result, run_id, episode_id, deterministic_seed);
+    if (!envelope_result.admitted) {
+        result.rejection_reason = envelope_result.rejection_reason;
+        result.errors = envelope_result.errors;
+        return result;
+    }
+
+    // Non-empty and all run-minted: gate 1 admitted them.
+    const std::vector<std::uint64_t> &window_trace_tags =
+        window_result.engagement_packet.trace_ids;
+    const std::uint64_t anchor_trace_id = window_trace_tags.back();
+
+    // Gates 2 + 3: parent linkage must come from THIS facade's VA-8 allocator
+    // (foreign/synthetic parents fail closed, mirroring the slice-5 admission
+    // pattern) and must point strictly backwards (below every window tag).
+    if (parent_trace_id != 0U) {
+        if (parent_trace_id >= peek_next_trace_id()) {
+            result.rejection_reason = std::string(kMaintainedPacketAncestryParentNotRunMinted);
+            return result;
+        }
+        const std::uint64_t window_min_trace_tag =
+            *std::min_element(window_trace_tags.begin(), window_trace_tags.end());
+        if (parent_trace_id >= window_min_trace_tag) {
+            result.rejection_reason =
+                std::string(kMaintainedPacketAncestryParentNotBeforeWindow);
+            return result;
+        }
+    }
+
+    // Gate 4: the packet family must actually carry exported traces, and at
+    // least one must be tagged with a run-minted packet tag. Kernel-space
+    // trace ids are value-indistinguishable from VA-8 ids (census VA-8), so
+    // membership in the admitted tag set is the discriminator.
+    const std::vector<DiagnosticsTrace> &window_traces = window_result.diagnostics_traces;
+    if (window_traces.empty()) {
+        result.rejection_reason =
+            std::string(kMaintainedPacketAncestryMissingDiagnosticsTraces);
+        return result;
+    }
+    const auto is_run_minted_tag = [&window_trace_tags](std::uint64_t trace_id) {
+        return std::find(window_trace_tags.begin(), window_trace_tags.end(), trace_id) !=
+               window_trace_tags.end();
+    };
+    std::uint64_t linked_trace_count = 0;
+    for (const auto &trace : window_traces) {
+        if (is_run_minted_tag(trace.trace_id)) {
+            ++linked_trace_count;
+        }
+    }
+    if (linked_trace_count == 0U) {
+        result.rejection_reason = std::string(kMaintainedPacketAncestryNoRunMintedTraces);
+        return result;
+    }
+
+    // Populate: parent-linked COPIES only. The window product is const and
+    // never mutated; copies whose trace_id is a run-minted packet tag carry
+    // the ancestry parent, kernel-space copies stay untouched, and at the
+    // root (parent_trace_id == 0) every copy keeps the pre-slice default 0.
+    MaintainedEngagementPacketAncestry ancestry{};
+    ancestry.packet_ancestry_id = std::string(kMaintainedPacketAncestryIdPrefix) + run_id +
+                                  ":trace:" + std::to_string(anchor_trace_id);
+    ancestry.run_id = run_id;
+    ancestry.episode_id = episode_id;
+    ancestry.anchor_trace_id = anchor_trace_id;
+    ancestry.parent_trace_id = parent_trace_id;
+    ancestry.replay_envelope_ref = envelope_result.envelope.replay_envelope_id;
+    ancestry.parent_event_order_ref =
+        parent_trace_id == 0U ? std::string()
+                              : "event:trace:" + std::to_string(parent_trace_id);
+    ancestry.ancestral_traces = window_traces;
+    if (parent_trace_id != 0U) {
+        for (auto &trace : ancestry.ancestral_traces) {
+            if (is_run_minted_tag(trace.trace_id)) {
+                trace.parent_trace_id = parent_trace_id;
+            }
+        }
+    }
+
+    // Typed lineage refs (VA-5 vocabulary: ref_id / evidence_kind /
+    // provenance_label): the validated envelope, this window's anchor, and the
+    // parent edge when linked. Deterministic order.
+    ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+        .ref_id = ancestry.replay_envelope_ref,
+        .evidence_kind = std::string(
+            runtime::counterfactual::kScenarioGenerationEvidenceKindReplayEnvelope),
+        .provenance_label = "replay",
+    });
+    ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+        .ref_id = "event:trace:" + std::to_string(anchor_trace_id),
+        .evidence_kind = std::string(kMaintainedPacketAncestryEvidenceKindAnchorTrace),
+        .provenance_label = "anchor",
+    });
+    if (parent_trace_id != 0U) {
+        ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = ancestry.parent_event_order_ref,
+            .evidence_kind = std::string(kMaintainedPacketAncestryEvidenceKindParentTrace),
+            .provenance_label = "parent",
+        });
+    }
+
+    result.admitted = true;
+    result.ancestry = std::move(ancestry);
+    result.evidence_refs.push_back(std::string(kMaintainedPacketAncestryProducerEvidenceLabel));
+    result.evidence_refs.push_back("packet_ancestry_id=" + result.ancestry.packet_ancestry_id);
+    result.evidence_refs.push_back("replay_envelope_ref=" +
+                                   result.ancestry.replay_envelope_ref);
+    result.evidence_refs.push_back("anchor_trace_id=" + std::to_string(anchor_trace_id));
+    if (parent_trace_id != 0U) {
+        result.evidence_refs.push_back("parent_trace_id=" + std::to_string(parent_trace_id));
+    }
+    result.evidence_refs.push_back("linked_trace_count=" +
+                                   std::to_string(linked_trace_count));
+    return result;
+}

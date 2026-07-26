@@ -713,6 +713,68 @@ class RuntimeFacadeAdapter:
             else 0,
         )
 
+    def build_maintained_packet_ancestry(
+        self,
+        *,
+        run_id: str,
+        episode_id: str,
+        deterministic_seed: int,
+        window_evidence: RuntimeWindowEvidence | None = None,
+        parent_trace_id: int = 0,
+    ) -> Any:
+        """Build engagement-packet ancestry from a maintained window's real products.
+
+        New additive API (T10 evidence-spine census slice 6A, this iteration);
+        nothing on the default adapter path calls it. It forwards the window's
+        ``RuntimeWindowResult`` (``window_evidence`` when given, else the
+        adapter's :attr:`last_window_evidence`) to the facade producer
+        ``build_maintained_packet_ancestry`` together with the caller-owned run
+        identity and the ancestry parent, and returns the fail-closed
+        ``MaintainedPacketAncestryResult`` (``admitted`` / ``ancestry`` /
+        ``rejection_reason``).
+
+        ``parent_trace_id`` (default ``0`` = root window, no parent) is the
+        PREVIOUS window's run-minted VA-8 anchor -- typically the
+        ``ancestry.anchor_trace_id`` of the previous call, which keeps the
+        chain caller-explicit and stateless. The C++ producer fail-closes when
+        the parent was not minted by this run's allocator (foreign-facade
+        linkage) or does not strictly precede the window's own trace tags.
+
+        Like the slice-5 envelope seam this requires
+        ``use_facade_evidence_producers=True`` (I59): ancestry is only
+        meaningful over real facade-minted evidence, and the producer
+        independently rejects the default placeholder ``trace_ids = [1]``. The
+        producer is read-only and returns parent-linked COPIES of the window's
+        exported diagnostics traces, so the stored window evidence and every
+        default serialized value stay byte-for-byte unchanged.
+        """
+        if not self._use_facade_evidence_producers:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_packet_ancestry requires "
+                "use_facade_evidence_producers=True: maintained packet ancestry "
+                "is only meaningful over real facade-minted evidence (I59 opt-in), "
+                "not the default placeholder trace_ids/input_snapshot_version"
+            )
+        if not hasattr(self.facade, "build_maintained_packet_ancestry"):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_packet_ancestry requires the "
+                "T10 slice-6A RuntimeFacade.build_maintained_packet_ancestry binding"
+            )
+        evidence = self._last_window_evidence if window_evidence is None else window_evidence
+        if evidence is None or getattr(evidence, "window_result", None) is None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_packet_ancestry requires a "
+                "completed maintained window (run_maintained_window) or an explicit "
+                "window_evidence argument"
+            )
+        return self.facade.build_maintained_packet_ancestry(
+            evidence.window_result,
+            str(run_id),
+            str(episode_id),
+            int(deterministic_seed),
+            int(parent_trace_id),
+        )
+
     def world_count(self) -> int:
         return int(self.facade.world_count())
 

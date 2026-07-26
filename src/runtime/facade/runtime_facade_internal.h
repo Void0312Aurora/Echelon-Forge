@@ -158,6 +158,32 @@ inline constexpr std::string_view kMaintainedReplayEnvelopeProducerEvidenceLabel
 // the opt-in run-global qualification path (default off keeps the packet string
 // byte-identical).
 inline constexpr std::string_view kMaintainedReplayEnvelopeRunSnapshotInfix = ":run_snapshot:";
+// T10 slice 6A (this iteration): fail-closed rejection reasons and evidence
+// vocabulary of the maintained engagement-packet ancestry producer
+// (RuntimeFacade::build_maintained_packet_ancestry). The producer reuses the
+// slice-5 envelope gates verbatim (their kMaintainedReplayEnvelope* reasons
+// propagate unchanged), so only the ancestry-specific gates are named here.
+inline constexpr std::string_view kMaintainedPacketAncestryParentNotRunMinted =
+    "maintained_packet_ancestry_parent_trace_id_not_minted_by_this_run";
+inline constexpr std::string_view kMaintainedPacketAncestryParentNotBeforeWindow =
+    "maintained_packet_ancestry_parent_trace_id_not_before_window_traces";
+inline constexpr std::string_view kMaintainedPacketAncestryMissingDiagnosticsTraces =
+    "maintained_packet_ancestry_window_diagnostics_traces_missing";
+inline constexpr std::string_view kMaintainedPacketAncestryNoRunMintedTraces =
+    "maintained_packet_ancestry_no_window_trace_carries_a_run_minted_tag";
+inline constexpr std::string_view kMaintainedPacketAncestryProducerEvidenceLabel =
+    "RuntimeFacade.build_maintained_packet_ancestry";
+// Typed-ref lineage vocabulary (VA-5): evidence kinds carried on the ancestry
+// result's ScenarioGenerationEvidenceMetadataRef entries. The replay-envelope
+// entry reuses the contract-owned kScenarioGenerationEvidenceKindReplayEnvelope;
+// these two name the trace-id edges the ancestry adds.
+inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindAnchorTrace =
+    "anchor_trace";
+inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindParentTrace =
+    "parent_trace";
+// "ancestry:maintained:*" id namespace; disjoint from "replay:maintained:*"
+// (slice 5), "replay:facade:*" (restore boundary), and caller-authored spaces.
+inline constexpr std::string_view kMaintainedPacketAncestryIdPrefix = "ancestry:maintained:";
 
 inline bool runtime_string_blank(const std::string &value) {
     return value.empty() || std::all_of(value.begin(), value.end(),
