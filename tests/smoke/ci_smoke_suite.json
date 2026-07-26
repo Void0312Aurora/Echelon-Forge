@@ -51,6 +51,7 @@
     "tests/runtime/facade/test_facade_step_evidence_gates.py",
     "tests/runtime/facade/test_runtime_facade_core.py",
     "tests/runtime/facade/test_runtime_facade_counterfactual.py",
+    "tests/runtime/exact/test_execution_controller_option_parity.py",
     "tests/runtime/link/test_command_link_qos.py",
     "tests/runtime/link/test_data_link_qos_runtime.py",
     "tests/runtime/mission/test_mission_command_air_fields_roundtrip.py",
