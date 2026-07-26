@@ -24,6 +24,7 @@
     "tests/architecture/information_state/test_g4_inventory_consistency.py",
     "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py",
     "tests/architecture/tasking_contracts/test_tasking_contracts_compat_shims.py",
+    "tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py",
     "tests/architecture/command_tasking/test_tasking_bridge_guardrails.py",
     "tests/runtime/core/test_env_config.py",
     "tests/runtime/core/test_explicit_build_dir_fail_closed.py",

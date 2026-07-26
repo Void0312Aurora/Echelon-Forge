@@ -121,7 +121,13 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
 
 
 class _ScenarioLoaderRuntimeProxy:
-    """World-indexed loader runtime shim that prefers facade-owned batch surfaces."""
+    """World-indexed loader runtime shim that prefers facade-owned batch surfaces.
+
+    Structurally implements the maintained ``ScenarioLoader.sim`` seam contract
+    ``python.tasking_contracts.runtime_contract.ScenarioLoaderRuntime`` (kept
+    structural — no nominal inheritance); conformance is enforced by
+    ``tests/architecture/tasking_contracts/test_scenario_loader_runtime_contract.py``.
+    """
 
     def __init__(self, adapter: "RuntimeFacadeAdapter", world_index: int):
         self._adapter = adapter
