@@ -192,25 +192,13 @@ struct CounterfactualAdmissionResult {
 };
 
 struct ScenarioGenerationEvidenceMetadataRef {
-    std::string ref_id;
-    std::string evidence_kind;
-    std::string provenance_label;
+#define EF_SCENARIO_GENERATION_EVIDENCE_REF_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/scenario_generation_evidence_ref.inc"
 };
 
 struct ScenarioGenerationRequestMetadata {
-    std::string request_id;
-    std::string request_version = "1";
-    std::string contract_version = std::string(kScenarioGenerationContractVersionRequestV1);
-    std::string generation_kind;
-    std::string source;
-    std::string generator_version;
-    bool has_deterministic_seed = false;
-    std::uint64_t deterministic_seed = 0;
-    std::string baseline_scenario_ref;
-    std::string replay_envelope_ref;
-    std::string branch_point_ref;
-    std::vector<std::string> capability_refs;
-    std::vector<ScenarioGenerationEvidenceMetadataRef> evidence_refs;
+#define EF_SCENARIO_GENERATION_REQUEST_METADATA_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/scenario_generation_request_metadata.inc"
 };
 
 struct ScenarioGenerationArtifactMetadata {

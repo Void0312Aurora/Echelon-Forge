@@ -7,6 +7,7 @@
     "tests/architecture/governance/test_dto_schema_freshness.py",
     "tests/architecture/governance/test_experiment_matrix_freshness.py",
     "tests/architecture/governance/test_experiment_matrix_hardening.py",
+    "tests/architecture/governance/test_scenario_generation_lineage_parity.py",
     "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_world_batch_adapter_removes_direct_runtime_fallback",
     "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_runtime_facade_escape_hatch_is_documented",
     "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py::test_runtime_contract_headers_do_not_include_engine_headers",
