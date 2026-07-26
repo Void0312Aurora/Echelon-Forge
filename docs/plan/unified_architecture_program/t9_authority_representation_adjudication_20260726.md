@@ -172,6 +172,85 @@ Sign-off state: `pending human domain review` (record the reviewer, date, and
 verdict deltas here when that review happens; until then, the no-mapping gate
 pins the status quo).
 
+### 5.1 Sign-Off Record (2026-07-27, Owner-Delegated)
+
+**Nature of this record (honesty constraint).** This is an **owner-delegated
+agent adjudication**: the repository owner (single maintainer) explicitly
+authorized recording this sign-off on their behalf ("允许代签", 2026-07-27).
+It is **not** an independent human C2 domain-expert review and must never be
+cited as one. The three §5 questions were adjudicated substantively before
+recording — against the cited code paths, the census record, and the
+repository's C2/doctrine forward docs — and the evidence consulted is listed
+per verdict.
+
+**Question 1 — should an echelon->action-interface mapping exist at all:
+NO implicit mapping; the no-mapping verdicts stand as the maintained
+contract.** Holding `TACON` at `Tactical` scope does not, in this program's
+doctrine model, implicitly entail `mission_command` action-interface
+authority:
+
+- The repository's own doctrine reference frames C2 as a mission-command
+  problem built around authority delegation that is **explicit**
+  (`docs/standards/services/air_force.md` — AFDP 3-0.1's commander-centered
+  function with *explicit delegation of authority*); nothing in
+  `docs/forward/c2/` (command-link roadmap, operation layer) derives an
+  execution-agent capability from an echelon annotation.
+- The echelon defaults are ubiquitous carried data: A3 defaults **every**
+  normalized task order to `TACON`/`Tactical` (census §9), and no compiled
+  decision logic reads an echelon value (§1). An implicit entailment would
+  therefore grant `mission_command` interface authority to essentially every
+  agent by default — collapsing the deliberate distinction between carried
+  command-node doctrine data and enforced execution-agent capability.
+- Consequently the two representations are maintained as **intentionally
+  orthogonal** (echelon = command-node doctrine annotation; action-interface =
+  execution-agent capability contract). Any future mapping must arrive as an
+  **explicit registered structure** (G5 "extension is registration") through a
+  dedicated domain-evidence slice — never by name similarity (iteration-queue
+  §5 red line).
+
+**Question 2 — which side owns a mapping if one is ever introduced: moot
+under the Question 1 verdict; the registry is pre-designated as the
+declaration owner.** Should a future domain-evidence slice ever introduce a
+mapping, `python/tasking_contracts/agency_registry.py` is pre-designated as
+its declaration owner: it is already the single declarative owner of the
+authority vocabulary and the only place both families stand side by side
+(`CATEGORY_SCOPE` co-declares `AUTHORITY_SCOPE_LEVELS +
+ACTION_INTERFACE_SCOPES` at `agency_registry.py:604` — a disclosed
+co-declaration, not a mapping), and its G5 discipline (frozen declaration plus
+drift-pin gates) is exactly the shape such a mapping would need. Which
+A-paths would route through it stays with that future slice.
+
+**Question 3 — the A13 identity adjacency: coincidence of id allocation,
+monitored by gate; not a latent requirement.** `engagement_authority_holder_id`
+and `AgentAuthorityScope.entity_ids` share one integer id space because both
+denote world entities and every entity reference uses that space — the shared
+value domain is inherent to entity identity, not evidence of a designed
+linkage. The two checks answer different questions (per-mission-command
+engagement authority held by an entity vs per-agent interface capability over
+entities); no cross-read, conversion, or comparison exists (§3 A13 row), and
+the landed boundary gate
+(`tests/architecture/agency/test_authority_representation_boundary.py`) turns
+a future cross-read red: obtaining an action-interface value inside the pinned
+files requires naming at least one discriminating identifier (`AgentRole` /
+`AgentAuthorityScope` / `authorize_maintained_*`), which the gate catches.
+Status: **monitored-by-gate**. If who-may-fire is ever redesigned to consult
+`AgentAuthorityScope.entity_ids`, that is a Question-1-class mapping and takes
+the same explicit-registration path.
+
+**Queue consequence.** With no-mapping signed off, the scheduled T9 behavioral
+slice **I86 closes held** per its own row logic in the I72+ iteration queue
+(`iteration_queue_i72_plus_20260726.md`: "If I77 returns no mapping, I86
+closes held instead").
+
+Sign-off state: `adjudicated — owner-delegated (2026-07-27)`; the pending line
+above is retained as landed history, and this record is the entry it called
+for — with the delegation nature stated rather than a human domain-expert
+identity.
+
+Sign-off line: "Owner-delegated agent adjudication under explicit owner
+authorization (2026-07-27); recorded by the unified architecture program
+workline."
+
 ## 6. Consistency Gate
 
 `tests/architecture/agency/test_authority_representation_boundary.py` makes
