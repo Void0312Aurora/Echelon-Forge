@@ -50,6 +50,27 @@ fixture or ratchet-gate change was needed (the site is outside the T9 scan roots
 and merge-policy strings are not detection tokens). Semantic convergence stays
 deferred.
 
+**A3 default-name ownership update (I68).** A follow-up to the I53 mechanical
+convergence, structurally the same move: the *name* of the command-relationship /
+authority-scope default that the maintained normalization layer applies to an
+unset task order is now declared in the registry rather than spelled locally at
+the leaf provider. This is a **name-ownership move over an already-single-sourced
+value**, not the deferred T9 semantic convergence, which stays deferred in full.
+§9 records the adjudication: the **zero-behavior** convergence (the registry now
+declares `DEFAULT_COMMAND_RELATIONSHIP` / `DEFAULT_AUTHORITY_SCOPE`; A3
+`common_core_defaults.py` resolves those declared names against the compiled enum
+instead of a local `"TACON"` / `"Tactical"` literal, byte-identically), a
+drift/equivalence unit test, and a **premise correction** for A2/A3: the compiled
+`authorize_maintained_*` gates operate on the `AgentRole` / `AgentAuthorityScope`
+*action-interface* representation, **not** the `CommandRelationship` /
+`AuthorityScope` echelon enums, so "converge onto compiled defaults" is not a
+like-for-like target -- the compiled construction default is the *unset sentinel*
+(`None` / `Unspecified`), and no compiled site produces `TACON` / `Tactical`. A2's
+inference dispatch stays declare-only (control flow). The A3 per-file token->count
+fingerprint is **unchanged** (the change swaps a string literal for an imported
+constant of a different spelling; `ef_py.CommandRelationship` / `ef_py.AuthorityScope`
+still appear exactly once each), so the ratchet gate needed no fixture edit.
+
 ## 1. Scope And Method
 
 The maintained authority surface was surveyed with `rg` across
@@ -271,7 +292,7 @@ census fixture and ratchet gate needed no change.
 |---|---|---|---|---|
 | A1 | Prose folklore in a docstring | not convergeable | English convention, not code -- cannot become an import; `SCOPE_FOLKLORE_RULES` mirrors it descriptively. | Semantic slice: make the C2 authorship boundary enforceable data (domain-evidence review). |
 | A2 | Compiled `ef_py` enum access + default-inference dispatch | not convergeable | Compiled-enum source of truth + control-flow; registry is a mirror of `ef_py`, so repointing would regress source of truth. | Route default-inference through the compiled `authorize_maintained_*` (domain review). |
-| A3 | `getattr(ef_py.CommandRelationship,'TACON')` / `AuthorityScope 'Tactical'` | not convergeable | Single compiled-enum member access; `COMMAND_RELATIONSHIPS[i]` would be fragile positional indexing into the mirror (excluded: compiled-enum). | Default-provider convergence onto compiled defaults (later slice). |
+| A3 | `getattr(ef_py.CommandRelationship,'TACON')` / `AuthorityScope 'Tactical'` | not convergeable | Single compiled-enum member access; `COMMAND_RELATIONSHIPS[i]` would be fragile positional indexing into the mirror (excluded: compiled-enum). This row records the pre-change site form; the default *names* have since moved to registry declarations -- see section 9. | Default-provider convergence onto compiled defaults (later slice). |
 | A4 | Compiled enums + DTO keys + leader-vs-mission precedence | not convergeable | Compiled-enum + DTO field keys + arbitration `if/else`. | Semantic arbitration slice (domain review). |
 | A5 | Compiled enums + DTO keys + `infer_command_relationship` + precedence | not convergeable | Compiled-enum + delegation/arbitration control-flow (category set pinned). | Semantic delegation/arbitration slice. |
 | A6 | `getattr(namespace,'ScreenCommander')` + compiled enums + DTO keys | not convergeable | Compiled-enum member access (warfare-role inference) + DTO field keys. Precision note (I53 repair round 2): `naval_profile.py` carries no `leader_intent`. Its `build_kernel_mission_command` fills the authority/ROE fields (`roe_state`, holder/grantor ids, `authorization_to_fire`) from `loader.mission_cmd` and then re-reads the same fields from `scenario_data["mission_command"]`; at load time the two names are bound to the **same mapping** (`loading.py:113-117`, re-synced at `:242`), so on the regular path the re-read is idempotent, not a precedence. Whether any runtime rebinding site ever separates the two mappings into a real override is **to-be-adjudicated**. | Semantic warfare-role/delegation slice, plus adjudicating whether the runtime rebinding of `loader.mission_cmd` vs `scenario_data["mission_command"]` ever forms a real precedence (or evidence of an actual separation path). |
@@ -532,6 +553,85 @@ pin).
   changed; `tokens`/`token_counts`/`categories` (and thus the ratchet fingerprint)
   are untouched, so the agency gate stays green. The other 13 fixture `semantic`
   annotations were re-audited against §3 in the same pass and found consistent.
+
+## 9. A3 Default-Name Ownership Adjudication (I68)
+
+This section records the adjudication behind the A3 default-name ownership move
+announced in the header. Its scope is deliberately narrow: it moves the *name* of
+an authority default into the registry declaration layer and pins the equivalence.
+It changes no C2 behavior, no compiled code, no `authorize_maintained_*` gate, and
+no `DoctrineFamily` mechanism. The deferred T9 semantic convergence (§7, §3.2)
+remains deferred in its entirety.
+
+**What the site is.** A3 (`python/rl/profile/common_core_defaults.py`) provides the
+leaf default for the two echelon fields that the maintained normalization layer
+upgrades when a task order leaves them unset: `command_relationship` and
+`authority_scope`. Before this change the provider spelled the choice as two local
+string literals, `getattr(ef_py.CommandRelationship, "TACON")` and
+`getattr(ef_py.AuthorityScope, "Tactical")`.
+
+**Premise correction (the §3.2 A3 held precondition was mis-specified).** The A3
+row of the §3.2 table recorded the held precondition as "default-provider
+convergence onto compiled defaults (later slice)". That target does not exist as
+stated, for two independently checked reasons:
+
+- **No compiled site produces these values.** Across `src/**`, `TACON` and
+  `Tactical` appear only as the enum member definitions in
+  `src/components/tasking/common/core_tasking_enums.h` (`TACON = 3`,
+  `Tactical = 3`) and as their pybind exports in
+  `src/interfaces/python/bindings_command.cpp`. No compiled code path ever
+  *assigns* either value.
+- **The compiled authorization gates are a different representation.** The
+  `authorize_maintained_action_intent` / `authorize_maintained_coordination_intent`
+  gates (`src/runtime/contracts/policy_contracts.h`) operate on the `AgentRole` /
+  `AgentAuthorityScope` action-interface representation, not on the
+  `CommandRelationship` / `AuthorityScope` echelon enums. So "converge the A3
+  default onto the compiled default" is not a like-for-like target: the compiled
+  *construction* default for these fields is the unset sentinel
+  (`CommandRelationship::None` / `AuthorityScope::Unspecified`, both value 0), which
+  is precisely what the normalization default exists to replace.
+
+The consequence is that the value source for this default was **already single**:
+Python A3 is the only producer. What was scattered was not the value but the
+*declaration* of the choice -- a doctrinal decision stated as a bare literal inside
+a leaf provider, with no registry record.
+
+**The move.** The registry (`python/tasking_contracts/agency_registry.py`) now
+declares `DEFAULT_COMMAND_RELATIONSHIP = "TACON"` and
+`DEFAULT_AUTHORITY_SCOPE = "Tactical"` alongside the existing mirror tuples, with
+the reasoning above recorded at the declaration site. A3 imports those names and
+resolves them against the compiled enum exactly as before. This is structurally the
+same shape as the sanctioned I53 `agent_shim` convergence -- a locally spelled
+vocabulary item repointed at the registry that owns the vocabulary, in the census's
+recorded legal dependency direction `python.rl -> python.tasking_contracts` -- and
+it inherits the same guardrail, a drift-pin test rather than trust.
+
+**Byte-identity evidence.** The resolved runtime value is the same compiled enum
+member on both sides of the change, verified at `is`-identity level: both
+`command_relationship_default()` and `authority_scope_default()` return the same
+pybind enum object (integer 3) that the former literals produced. The pin lives in
+`tests/architecture/agency/test_authority_default_single_source.py`, which asserts
+(a) the registry constants' values, (b) their membership in the mirror tuples at the
+compiled enum's integer position, (c) A3's resolved value against
+`ef_py.CommandRelationship.TACON` / `ef_py.AuthorityScope.Tactical`, and (d) that
+A3's module-level binding **is** the registry constant object, so the single source
+cannot silently fork into a stale local copy. The test was confirmed load-bearing by
+injecting drift in two directions (changing the registry constant, and restoring a
+local literal at A3): each injection turns the module red.
+
+**Ratchet-fingerprint invariance.** The A3 per-file token->count fingerprint in
+`tests/architecture/fixtures/agency_authority_census_20260721.json` is
+`{'AuthorityScope': 1, 'CommandRelationship': 1}` both before and after the change,
+because the edit swaps a string literal for an imported constant of a different
+spelling while `ef_py.CommandRelationship` / `ef_py.AuthorityScope` still appear
+exactly once each, and the §6 scanner ignores comments and `import`/`__all__`
+re-export plumbing. No fixture edit was therefore warranted, and the ratchet gate
+stays green unmodified.
+
+**Still deferred.** A2 (`python/rl/tasking/common_core_profile.py`) is untouched:
+its default-inference dispatch is control flow, not a vocabulary literal, and stays
+declare-only. Every §3.2 "not convergeable" verdict other than the A3 held-precondition
+correction above stands as recorded.
 
 ## Related
 

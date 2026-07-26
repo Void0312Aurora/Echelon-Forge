@@ -23,12 +23,20 @@ Design constraints (Unified Architecture Program, track T9 slice 1):
   ``AgentRole`` authority model (``src/runtime/contracts/policy_contracts.h``).
   The companion gate parses those headers and fails on any drift between the
   registry mirror and the compiled enum/scope values.
-- **Zero runtime wiring / zero C2 behavior change.** This module has no import
-  of ``ef_py``, ``python.rl``, or ``gym_envs``; it registers no callback, patches
-  no call site, and is not consumed by any runtime path in this slice. Converging
-  the scattered call sites onto this vocabulary is deliberately deferred to a
-  later, domain-evidence-reviewed slice (T9's key risk: C2 semantics are research
-  subject matter). This slice only *declares* and *gates*.
+- **Pure-stdlib frozen declaration / zero C2 behavior change.** This module has
+  no import of ``ef_py``, ``python.rl``, or ``gym_envs``; it registers no
+  callback, patches no call site, and wires nothing. Slice 1 (I47) declared and
+  gated only. Two later name-ownership moves repointed a locally spelled
+  vocabulary item at the constant that owns it, in the census-legal direction
+  ``python.rl -> python.tasking_contracts``, each pinned byte-identically by a
+  drift/equivalence test so no behavior changes: I53 pointed
+  ``agent_shim.ALLOWED_MERGE_POLICIES`` at :data:`MERGE_POLICIES`, and I68
+  pointed the A3 command-relationship / authority-scope default *names* at
+  :data:`DEFAULT_COMMAND_RELATIONSHIP` / :data:`DEFAULT_AUTHORITY_SCOPE`
+  (census EN/ZH §9). Converging the *behavior* of the remaining scattered call
+  sites onto this vocabulary (and onto the compiled ``authorize_maintained_*``
+  gates) stays deferred to later, domain-evidence-reviewed slices (T9's key
+  risk: C2 semantics are research subject matter).
 
 The companion architecture gate
 (``tests/architecture/agency/test_authority_registry_gate.py``) pins the census
@@ -359,6 +367,39 @@ DELEGATION_CARRIERS: tuple[str, ...] = (
 
 
 # --------------------------------------------------------------------------- #
+# Maintained-tasking authority defaults (single declarative source for A2/A3)
+# --------------------------------------------------------------------------- #
+# The default *value choice* the maintained tasking normalization layer applies
+# when a task order still carries the compiled struct's raw-construction sentinel
+# in ``command_relationship`` / ``authority_scope`` -- namely
+# ``CommandRelationship::None`` / ``AuthorityScope::Unspecified`` (both enum value
+# 0; see ``src/components/tasking/common/task_order_core.h``). This is a
+# *normalization default*, deliberately distinct from that raw-construction
+# sentinel: the maintained Python profile layer (A2
+# ``python/rl/tasking/common_core_profile.py`` and its leaf provider A3
+# ``python/rl/profile/common_core_defaults.py``) upgrades an *unset* echelon
+# field to a doctrinal default (TACON command relationship at the Tactical
+# authority scope) so a maintained order that omitted them is still well-formed.
+#
+# There is **no compiled counterpart that produces these values**: nothing in
+# ``src/**`` ever assigns ``TACON`` / ``Tactical`` (the only compiled mentions are
+# the enum member definitions and the pybind exports), and the compiled
+# ``authorize_maintained_*`` gates operate on the ``AgentRole`` /
+# ``AgentAuthorityScope`` *action-interface* representation
+# (``platform_control`` / ``mission_command`` / ``formation_coordination``
+# strings), not the ``CommandRelationship`` / ``AuthorityScope`` echelon enums.
+# So the value source is already single (Python A3); this change (I68) elevates
+# the *name choice* to the registry declaration layer so A3 resolves
+# ``getattr(ef_py.<enum>, NAME)`` from here rather than a local string literal.
+# The resolved runtime value is byte-identical (same enum member), so the move is
+# zero-behavior (census EN/ZH §9). Each name below
+# is a member of its mirror tuple above; the equivalence test in
+# ``tests/architecture/agency/test_authority_default_single_source.py`` pins that.
+DEFAULT_COMMAND_RELATIONSHIP: str = "TACON"
+DEFAULT_AUTHORITY_SCOPE: str = "Tactical"
+
+
+# --------------------------------------------------------------------------- #
 # Arbitration policies
 # --------------------------------------------------------------------------- #
 # Mirrors the SCAL cross-layer ``merge_policy`` enum
@@ -616,6 +657,8 @@ __all__ = [
     "COMMAND_RELATIONSHIPS",
     "COMPILED_AUTHORIZATION_GATES",
     "COORDINATION_MODES",
+    "DEFAULT_AUTHORITY_SCOPE",
+    "DEFAULT_COMMAND_RELATIONSHIP",
     "DELEGATION_CARRIERS",
     "DOCTRINE_FAMILY",
     "DoctrineFamilyPlaceholder",

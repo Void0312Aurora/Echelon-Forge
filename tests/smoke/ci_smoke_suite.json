@@ -15,6 +15,8 @@
     "tests/architecture/runtime_facade/test_world_batch_owner_imports.py",
     "tests/architecture/build_system/test_cmake_target_readiness.py",
     "tests/architecture/content/test_unit_definition_direct_fields_inc.py",
+    "tests/architecture/agency/test_authority_registry_gate.py",
+    "tests/architecture/agency/test_authority_default_single_source.py",
     "tests/architecture/governance/test_document_link_audit.py",
     "tests/architecture/governance/test_cpp_include_direction.py",
     "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py",
