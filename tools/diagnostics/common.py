@@ -41,15 +41,39 @@ def add_dual_option(
     form is registered with ``help=argparse.SUPPRESS`` so help text stays
     byte-identical to historical single-form scripts while both spellings parse
     to the same underscore ``dest``.
+
+    ``required=True`` needs special handling: argparse tracks "was this
+    argument seen" per *action*, not per *dest*, so two independently
+    ``required=True`` actions sharing one dest would force a caller to spell
+    out both the primary and the alias. Registering the pair as a required
+    mutually exclusive group instead requires exactly one of the two
+    spellings, which is the actual "either form satisfies the requirement"
+    contract implied by "dual option". This changes the error text argparse
+    prints when *neither* form is supplied (``one of the arguments ... is
+    required`` instead of ``the following arguments are required: ...``);
+    ``--help`` output is unaffected either way (verified empirically: a
+    suppressed group member renders in neither the usage line nor the
+    detailed listing, same as a suppressed plain alias). One further semantic
+    shift under ``required=True``: supplying *both* spellings in one
+    invocation now raises argparse's mutually-exclusive error, where the old
+    (unusable) registration would have silently let the later value win --
+    no historical call site ever reached the old behavior, so this only
+    constrains new required-dual adopters.
     """
 
     kwargs = dict(kwargs)
     kwargs["dest"] = dest
     if dest in _DUAL_OPTION_DESTS or "_" in dest:
         primary_opt, alias_opt = _option_strings(dest, primary=primary)
-        parser.add_argument(primary_opt, **kwargs)
         alias_kwargs = dict(kwargs)
         alias_kwargs["help"] = argparse.SUPPRESS
+        if kwargs.pop("required", False):
+            alias_kwargs.pop("required", None)
+            group = parser.add_mutually_exclusive_group(required=True)
+            group.add_argument(primary_opt, **kwargs)
+            group.add_argument(alias_opt, **alias_kwargs)
+            return
+        parser.add_argument(primary_opt, **kwargs)
         parser.add_argument(alias_opt, **alias_kwargs)
         return
     # Single-token names have identical underscore/hyphen spellings.
