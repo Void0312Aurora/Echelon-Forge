@@ -26,14 +26,6 @@ from ._shared_ops import assemble_observation_dict
 
 
 class _WorldBatchVecEnvObservationMixin:
-    def _collect_observations(self, indices: Sequence[int] | None = None) -> list[dict[str, np.ndarray]]:
-        target_indices, truth_list, inst_list = self._read_truth_and_inst_batch(indices)
-        for batch_idx, env_idx in enumerate(target_indices):
-            handle = self._handles[env_idx]
-            handle.last_inst = inst_list[batch_idx]
-            handle.last_truth = truth_list[batch_idx]
-        return self._build_observations_from_cached_state(target_indices)
-
     def _prepare_step_evaluations_batch(
         self,
         target_indices: list[int],

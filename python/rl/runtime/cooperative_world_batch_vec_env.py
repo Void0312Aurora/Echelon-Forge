@@ -22,7 +22,6 @@ from gym_envs.scenario_loader import (
 )
 from gym_envs.universal_env import (
     build_step_info_minimal,
-    build_universal_observation,
     is_air_combat_hybrid_action_mode,
     make_action_space,
     make_observation_space,
@@ -616,30 +615,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             history_len=self.temporal_history_len,
             action_dim=int(self.action_space.shape[0]),
         )
-
-    def _build_slot_observation(
-        self,
-        slot_state: _CooperativeSlotState,
-        *,
-        inst: Any,
-        truth: Any,
-    ) -> dict[str, np.ndarray]:
-        obs = build_universal_observation(
-            slot_state.loader,
-            inst,
-            truth,
-            mission_obs_mode=self.mission_obs_mode,
-            max_contacts=self.max_contacts,
-            max_rwr=self.max_rwr,
-            include_proprio=self.include_proprio,
-            last_action=slot_state.last_action,
-            action_space=self.action_space,
-            steps=int(slot_state.steps),
-            max_steps=int(slot_state.max_steps),
-        )
-        if self.include_visual:
-            obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
-        return obs
 
     def _world_slot_states(self, world: _CooperativeWorldState) -> list[_CooperativeSlotState]:
         slot_states: list[_CooperativeSlotState] = []

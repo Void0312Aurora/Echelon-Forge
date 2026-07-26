@@ -57,10 +57,8 @@ from .runtime_state import (
     make_scenario_loader_state_shell as _make_scenario_loader_state_shell_impl,
 )
 from .mission_observation import (
-    build_mission_nav_products as _build_mission_nav_products_impl,
     build_mission_observation_runtime_inputs as _build_mission_observation_runtime_inputs_impl,
     compiled_mission_observation_enabled as _compiled_mission_observation_enabled_impl,
-    compute_mission_observation_products as _compute_mission_observation_products_impl,
     get_mission_observation as _get_mission_observation_impl,
     get_waypoint_nav_products as _get_waypoint_nav_products_impl,
     mission_nav_inputs as _mission_nav_inputs_impl,
@@ -70,7 +68,6 @@ from .mission_observation import (
 from .step_evaluation import (
     build_step_evaluation_batch_env_state as _build_step_evaluation_batch_env_state_impl,
     build_step_evaluation_inputs as _build_step_evaluation_inputs_impl,
-    build_step_info_runtime_inputs as _build_step_info_runtime_inputs_impl,
     compiled_step_info_enabled as _compiled_step_info_enabled_impl,
     compute_step_info_runtime_products as _compute_step_info_runtime_products_impl,
     get_cached_step_evaluation as _get_cached_step_evaluation_impl,
@@ -81,7 +78,6 @@ from .execution_runtime import (
     compare_execution_episode_controller_shadow as _compare_execution_episode_controller_shadow_impl,
     compare_execution_episode_runtime_products as _compare_execution_episode_runtime_products_impl,
     compute_full_step as _compute_full_step_impl,
-    consume_compiled_episode_runtime as _consume_compiled_episode_runtime_impl,
     consume_execution_episode_controller_mainline_step as _consume_execution_episode_controller_mainline_step_impl,
     execution_episode_status_vector as _execution_episode_status_vector_impl,
 )
@@ -90,7 +86,6 @@ from .navigation_runtime import (
     active_waypoint_mode as _active_waypoint_mode_impl,
     active_waypoint_turn_relief_activation as _active_waypoint_turn_relief_activation_impl,
     apply_waypoint_guidance_update as _apply_waypoint_guidance_update_impl,
-    build_waypoint_reward_inputs as _build_waypoint_reward_inputs_impl,
     build_waypoint_step_state as _build_waypoint_step_state_impl,
     cfg_value_for_waypoint_mode as _cfg_value_for_waypoint_mode_impl,
     command_tracking_error_deg as _command_tracking_error_deg_impl,
@@ -523,9 +518,6 @@ class ScenarioLoader:
     def _mission_nav_inputs(self, truth, inst, route_result):
         return _mission_nav_inputs_impl(self, truth, inst, route_result)
 
-    def _build_mission_nav_products(self, route_result, truth, inst):
-        return _build_mission_nav_products_impl(self, route_result, truth, inst)
-
     @staticmethod
     def _mission_observation_mode_code(mode: str) -> int:
         return _mission_observation_mode_code_impl(mode)
@@ -539,17 +531,6 @@ class ScenarioLoader:
 
     def _compiled_mission_observation_enabled(self) -> bool:
         return _compiled_mission_observation_enabled_impl(self)
-
-    def _compute_mission_observation_products(self, mode: str, *, truth=None, inst=None):
-        return _compute_mission_observation_products_impl(self, mode, truth=truth, inst=inst)
-
-    def _build_step_info_runtime_inputs(self, *, inst_now=None, truth_now=None, runway_frame=None):
-        return _build_step_info_runtime_inputs_impl(
-            self,
-            inst_now=inst_now,
-            truth_now=truth_now,
-            runway_frame=runway_frame,
-        )
 
     def _compiled_step_info_enabled(self) -> bool:
         return _compiled_step_info_enabled_impl(self)
@@ -660,26 +641,6 @@ class ScenarioLoader:
             reward_breakdown=reward_breakdown,
         )
 
-    def _consume_compiled_episode_runtime(
-        self,
-        *,
-        cfg: dict,
-        safety_cfg,
-        truth,
-        step_eval: dict,
-        frame_products,
-        track_structural_state_change: bool = False,
-    ):
-        return _consume_compiled_episode_runtime_impl(
-            self,
-            cfg=cfg,
-            safety_cfg=safety_cfg,
-            truth=truth,
-            step_eval=step_eval,
-            frame_products=frame_products,
-            track_structural_state_change=track_structural_state_change,
-        )
-
     def consume_execution_episode_controller_mainline_step(
         self,
         *,
@@ -702,40 +663,6 @@ class ScenarioLoader:
             cfg,
             truth=truth,
             inst=inst,
-            turn_relief_activation=turn_relief_activation,
-        )
-
-    def _build_waypoint_reward_inputs(
-        self,
-        cfg: dict,
-        *,
-        idx: int,
-        count: int,
-        mode: str,
-        dist_m: float,
-        leg_len_m: float,
-        xtk_m,
-        dtg_m,
-        waypoint_radius_m: float,
-        lead_turn_m: float,
-        sequence_gate_m: float,
-        passed_fix: bool,
-        turn_relief_activation: float,
-    ):
-        return _build_waypoint_reward_inputs_impl(
-            self,
-            cfg,
-            idx=idx,
-            count=count,
-            mode=mode,
-            dist_m=dist_m,
-            leg_len_m=leg_len_m,
-            xtk_m=xtk_m,
-            dtg_m=dtg_m,
-            waypoint_radius_m=waypoint_radius_m,
-            lead_turn_m=lead_turn_m,
-            sequence_gate_m=sequence_gate_m,
-            passed_fix=passed_fix,
             turn_relief_activation=turn_relief_activation,
         )
 

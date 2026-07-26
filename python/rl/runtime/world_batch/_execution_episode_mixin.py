@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import Any
-import json
 import time
 
 import ef_py
@@ -49,71 +48,6 @@ class _WorldBatchVecEnvExecutionEpisodeMixin:
             "last_termination_reason": str(getattr(state, "last_termination_reason", "")),
             "last_reward_total": float(getattr(state, "last_reward_total", 0.0)),
         }
-
-    @staticmethod
-    def _execution_episode_controller_state_requires_reprime(runtime_state, loader_state) -> bool:
-        def _canonicalize_runtime_json(raw: Any) -> str:
-            if not isinstance(raw, str) or not raw.strip():
-                return str(raw or "")
-            try:
-                parsed = json.loads(raw)
-            except Exception:
-                return str(raw)
-
-            def _strip_internal_cache_fields(value: Any) -> Any:
-                if isinstance(value, dict):
-                    return {
-                        str(key): _strip_internal_cache_fields(item)
-                        for key, item in value.items()
-                        if not str(key).startswith("_")
-                    }
-                if isinstance(value, list):
-                    return [_strip_internal_cache_fields(item) for item in value]
-                return value
-
-            return json.dumps(_strip_internal_cache_fields(parsed), ensure_ascii=True, sort_keys=True)
-
-        def _route_digest(state: Any) -> list[tuple[float, float, float, float, float, float, str]]:
-            route = []
-            for waypoint in list(getattr(state, "route_waypoints", [])):
-                route.append(
-                    (
-                        float(getattr(waypoint, "x_m", 0.0)),
-                        float(getattr(waypoint, "y_m", 0.0)),
-                        float(getattr(waypoint, "z_m", 0.0)),
-                        float(getattr(waypoint, "radius_m", 0.0)),
-                        float(getattr(waypoint, "altitude_m", 0.0)),
-                        float(getattr(waypoint, "speed_mps", 0.0)),
-                        str(getattr(waypoint, "waypoint_mode", "")),
-                    )
-                )
-            return route
-
-        runtime_digest = {
-            "has_mission_command_json": bool(getattr(runtime_state, "has_mission_command_json", False)),
-            "mission_command_json": _canonicalize_runtime_json(str(getattr(runtime_state, "mission_command_json", ""))),
-            "route_waypoints": _route_digest(runtime_state),
-            "has_post_waypoint_transition_json": bool(getattr(runtime_state, "has_post_waypoint_transition_json", False)),
-            "post_waypoint_transition_json": _canonicalize_runtime_json(
-                str(getattr(runtime_state, "post_waypoint_transition_json", ""))
-            ),
-            "mission_phase_name": str(getattr(runtime_state, "mission_phase_name", "")),
-            "has_cached_route_ref_id": bool(getattr(runtime_state, "has_cached_route_ref_id", False)),
-            "cached_route_ref_id": int(getattr(runtime_state, "cached_route_ref_id", 0)),
-        }
-        loader_digest = {
-            "has_mission_command_json": bool(getattr(loader_state, "has_mission_command_json", False)),
-            "mission_command_json": _canonicalize_runtime_json(str(getattr(loader_state, "mission_command_json", ""))),
-            "route_waypoints": _route_digest(loader_state),
-            "has_post_waypoint_transition_json": bool(getattr(loader_state, "has_post_waypoint_transition_json", False)),
-            "post_waypoint_transition_json": _canonicalize_runtime_json(
-                str(getattr(loader_state, "post_waypoint_transition_json", ""))
-            ),
-            "mission_phase_name": str(getattr(loader_state, "mission_phase_name", "")),
-            "has_cached_route_ref_id": bool(getattr(loader_state, "has_cached_route_ref_id", False)),
-            "cached_route_ref_id": int(getattr(loader_state, "cached_route_ref_id", 0)),
-        }
-        return runtime_digest != loader_digest
 
     def _execution_episode_controller_runtime_ready(self, env_idx: int) -> bool:
         return self.execution_episode_ready(env_idx)
