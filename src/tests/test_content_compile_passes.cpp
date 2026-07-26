@@ -357,4 +357,96 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
+    TEST_CASE("direct fields parse: mechanical scalar subset maps to member and keeps default (I61)") {
+        // Synthetic-face parity for the I61 table-driven direct-scalar migration
+        // (content/detail/unit_definition_direct_fields.inc). The converged
+        // purely-mechanical subset is {mass_kg, data_link_network_id}: present
+        // keys must land on their matching UnitDefinition members, and omitted
+        // keys must keep the exact literal defaults used by the pre-I61 reads.
+        // A mis-wired phase macro (wrong member/default) fails these checks.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_unit_direct_fields_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string present_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Present",
+  "mass_kg": 4242.5,
+  "data_link_network_id": 37
+})json";
+        const std::string absent_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Absent"
+})json";
+
+        const fs::path present = directory / "present.json";
+        const fs::path absent = directory / "absent.json";
+        { std::ofstream(present) << present_json; }
+        { std::ofstream(absent) << absent_json; }
+
+        std::vector<UnitDefinition> present_defs;
+        std::vector<UnitDefinition> absent_defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(present.string(), present_defs, &error));
+        REQUIRE(load_unit_definitions_json(absent.string(), absent_defs, &error));
+        REQUIRE(present_defs.size() == 1);
+        REQUIRE(absent_defs.size() == 1);
+
+        CHECK(present_defs[0].mass_kg == doctest::Approx(4242.5)); // table-driven read
+        CHECK(absent_defs[0].mass_kg == doctest::Approx(0.0));     // literal default preserved
+        CHECK(present_defs[0].data_link_network_id == 37);          // late-phase read
+        CHECK(absent_defs[0].data_link_network_id == 0);            // literal default preserved
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("direct fields parse: phase expansion preserves malformed-key fail-first order (I61)") {
+        // Successful-input parity is insufficient: nlohmann conversions throw,
+        // so moving a table-driven read across another read changes which bad
+        // key fails first. These two probes pin mass_kg's early phase and the
+        // data-link field's original position between has_data_link and the
+        // clamped data_link_max_reports_per_update read.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_unit_direct_fields_order_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string before_data_link_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Order_Before",
+  "engine_ref": 17,
+  "data_link_network_id": "bad-network-id"
+})json";
+        const std::string within_data_link_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Order_Within",
+  "data_link_network_id": [],
+  "data_link_max_reports_per_update": {}
+})json";
+
+        const fs::path before_data_link = directory / "before_data_link.json";
+        const fs::path within_data_link = directory / "within_data_link.json";
+        { std::ofstream(before_data_link) << before_data_link_json; }
+        { std::ofstream(within_data_link) << within_data_link_json; }
+
+        const auto thrown_message = [](const fs::path &path) {
+            std::vector<UnitDefinition> defs;
+            std::string error;
+            try {
+                (void)load_unit_definitions_json(path.string(), defs, &error);
+            } catch (const std::exception &ex) {
+                return std::string(ex.what());
+            }
+            return std::string{};
+        };
+
+        const std::string before_message = thrown_message(before_data_link);
+        const std::string within_message = thrown_message(within_data_link);
+        CHECK(before_message.find("type must be string, but is number") != std::string::npos);
+        CHECK(within_message.find("type must be number, but is array") != std::string::npos);
+
+        fs::remove_all(directory);
+    }
+
 } // TEST_SUITE content_compile_passes

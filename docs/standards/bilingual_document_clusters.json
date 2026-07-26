@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-26",
-      "english_hash": "68306490de57f596b3c9aca306a55e4e2ef437452e4e9375078f52b6db86973b",
-      "chinese_hash": "c4f841f9017630e72fa63418d7a4db01deb2a05e3ed2cb0b4da1eab602fb5b3c"
+      "english_hash": "3cd1449bb39f6fb47783fd9b612352cee53d2960eaa70055ca709cdacd526a15",
+      "chinese_hash": "d650ad2adca0e3b6167f202c90b91690c1d30c10b44498e4f064a8863e00f332"
     },
     {
       "pair_id": "plan/runtime_facade/README",

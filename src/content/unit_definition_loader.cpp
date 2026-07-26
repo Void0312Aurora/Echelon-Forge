@@ -769,7 +769,15 @@ bool parse_unit_json(
     }
 
     def.name = entry.value("name", type_str);
-    def.mass_kg = entry.value("mass_kg", 0.0);
+    // Table-driven purely-mechanical direct top-level scalar reads
+    // (content/detail/unit_definition_direct_fields.inc, I61 / T11 slice 4
+    // bundle 2). The list is expanded at each field's original parse phase so
+    // malformed multi-key input keeps the same fail-first order. Each active
+    // expansion is token-identical to the previous hand-written statement.
+#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value) \
+    def.name = entry.value(#name, default_value);
+#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)
+#include "content/detail/unit_definition_direct_fields.inc"
     def.has_stall_state = false;
     def.stall_state = {};
     def.has_missile_tuning = false;
@@ -1481,7 +1489,10 @@ bool parse_unit_json(
     }
 
     def.has_data_link = entry.value("has_data_link", false);
-    def.data_link_network_id = entry.value("data_link_network_id", 0);
+#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)
+#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value) \
+    def.name = entry.value(#name, default_value);
+#include "content/detail/unit_definition_direct_fields.inc"
     def.data_link_max_reports_per_update =
         std::max(0, entry.value("data_link_max_reports_per_update", 16));
     def.data_link_max_messages_per_update =
