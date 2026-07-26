@@ -1,0 +1,93 @@
+{
+  "schema_version": "t11.content_capability_bundle.v1",
+  "platform_family": "submarine",
+  "source_type_name": "Kilo_Class_MVP",
+  "reference_definition_path": "examples/config/database/ships/units/kilo_class_mvp.json",
+  "definition_ref": "platform.definition.kilo_class_mvp",
+  "bundle_id": "platform.bundle.kilo_class_mvp",
+  "template_evidence_ref": "platform.evidence.kilo_class_mvp.bundle_template",
+  "capabilities": [
+    {
+      "capability_id": "platform.capability.kilo_class_mvp.mounted_sonars",
+      "family": "sensing",
+      "capability_type": "mounted_sonars",
+      "implementation_ref": "platform.definition.kilo_class_mvp",
+      "evidence_refs": ["platform.evidence.kilo_class_mvp.mounted_sonars"],
+      "required": true,
+      "supported": true
+    },
+    {
+      "capability_id": "platform.capability.kilo_class_mvp.submarine_platform_mobility",
+      "family": "mobility",
+      "capability_type": "submarine_platform_mobility",
+      "implementation_ref": "platform.definition.kilo_class_mvp",
+      "evidence_refs": [
+        "platform.evidence.kilo_class_mvp.submarine_platform",
+        "platform.evidence.kilo_class_mvp.mobility"
+      ],
+      "required": true,
+      "supported": true
+    },
+    {
+      "capability_id": "platform.capability.kilo_class_mvp.submarine_platform_survivability",
+      "family": "survivability",
+      "capability_type": "submarine_platform_survivability",
+      "implementation_ref": "platform.definition.kilo_class_mvp",
+      "evidence_refs": [
+        "platform.evidence.kilo_class_mvp.submarine_platform",
+        "platform.evidence.kilo_class_mvp.survivability"
+      ],
+      "required": true,
+      "supported": true
+    },
+    {
+      "capability_id": "platform.capability.kilo_class_mvp.command_link",
+      "family": "command",
+      "capability_type": "command_link",
+      "implementation_ref": "platform.definition.kilo_class_mvp",
+      "evidence_refs": ["platform.evidence.kilo_class_mvp.command_link"],
+      "required": true,
+      "supported": true
+    },
+    {
+      "capability_id": "platform.capability.kilo_class_mvp.naval_platform_doctrine",
+      "family": "doctrine",
+      "capability_type": "naval_platform_doctrine",
+      "implementation_ref": "platform.definition.kilo_class_mvp",
+      "evidence_refs": [
+        "platform.evidence.kilo_class_mvp.naval_platform_doctrine",
+        "platform.evidence.kilo_class_mvp.naval_weapon_system"
+      ],
+      "required": true,
+      "supported": true
+    },
+    {
+      "capability_id": "platform.capability.kilo_class_mvp.health_and_damage_model",
+      "family": "survivability",
+      "capability_type": "health_and_damage_model",
+      "implementation_ref": "platform.definition.kilo_class_mvp",
+      "evidence_refs": [
+        "platform.evidence.kilo_class_mvp.health",
+        "platform.evidence.kilo_class_mvp.damage_model"
+      ],
+      "required": true,
+      "supported": true
+    }
+  ],
+  "evidence_refs": [
+    "platform.evidence.kilo_class_mvp.bundle_template",
+    "platform.evidence.kilo_class_mvp.definition_snapshot",
+    "platform.evidence.kilo_class_mvp.mounted_sonars",
+    "platform.evidence.kilo_class_mvp.submarine_platform",
+    "platform.evidence.kilo_class_mvp.mobility",
+    "platform.evidence.kilo_class_mvp.survivability",
+    "platform.evidence.kilo_class_mvp.command_link",
+    "platform.evidence.kilo_class_mvp.naval_platform_doctrine",
+    "platform.evidence.kilo_class_mvp.naval_weapon_system",
+    "platform.evidence.kilo_class_mvp.health",
+    "platform.evidence.kilo_class_mvp.damage_model"
+  ],
+  "_provenance": {
+    "note": "T11 pilot (this iteration): content-declared capability bundle for the bounded submarine family. Declares the same capability composition the runtime factory projects from examples/config/database/ships/units/kilo_class_mvp.json; the agreement is pinned field-for-field by tests/content/capability_bundles/test_capability_bundle_schema.py and entity-level by test_typed_platform_request_parity.py."
+  }
+}
