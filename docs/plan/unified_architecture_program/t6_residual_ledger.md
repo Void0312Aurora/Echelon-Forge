@@ -1407,6 +1407,64 @@ No production code, C++, `examples/**`,
 `docs/plan/repository_consolidation/**`, contract JSON, or contract runner
 touched; no CMake/build triggered.
 
+## 10. I72 follow-up: path-suffix matcher utility (assertion-form adjudication)
+
+Strengthening follow-up to I65's items 1-2 (section 9.3). The queue row this
+slice implemented predated I65 and prescribed repairing the two
+`retained_pack/manifest.json` suffix reds (section 8.9) with a
+component-normalized suffix matcher. I65 landed first and fixed both call
+sites differently: full `Path` equality against the test-constructed
+`tmp_path / "retained_pack" / "manifest.json"`. The overlap was adjudicated
+before landing rather than double-repaired.
+
+**Adjudication -- which assertion form survives**: I65's Path-equality form,
+tested against the boundary-crossing `not_retained_pack/manifest.json` trap
+(the discriminator that motivated the matcher), rejects it by construction --
+the full compared path differs, so no suffix trap is reachable at all. It
+additionally pins the entire prefix, which a two-component suffix match does
+not. For these two call sites Path equality is therefore strictly stronger
+than the matcher, and both assertions are left exactly as I65 wrote them
+(section 9.3); this iteration changes neither repaired assertion.
+
+**What this iteration adds (tests only)**: the matcher
+`tests/architecture/damage_model/helpers.py::path_suffix_components(value,
+count)` is kept as a reusable utility for the residual niche Path equality
+cannot serve -- suffix checks whose full expected path a test cannot
+construct (variable/unknown prefix), e.g. future assertions against producer
+display text where only the tail is contractual. Its docstring records the
+scope rule ("prefer full Path equality when the test can build the full
+expected location") so it cannot be mistaken for the preferred form at
+fixed-location call sites. The matcher is pinned by the new hermetic
+sub-second `tests/architecture/damage_model/test_path_suffix_components.py`
+(15 tests): positives cover the Windows-native absolute shape of the original
+red, POSIX absolute, repo-relative, mixed-separator, and
+separator-run/leading-separator forms; negatives prove rejection of wrong
+directory component, wrong filename, right components in the wrong order,
+fewer components than requested, and the boundary-crossing
+`not_retained_pack/manifest.json` tail, for which the test first asserts
+inline that raw `endswith` *does* accept it (the trap) before asserting the
+matcher rejects it. Kept out of the smoke manifest per the I37
+(`test_xmacro_text.py`) / I57 (`test_rights_output_policy_probe.py`)
+exclusion precedent: a hermetic test-support unit test, not a drift gate.
+
+**Verification** (this worktree,
+`CMO_BUILD_DIR=D:\workshop\Research\EF-landing\build-local-win`):
+
+```
+pytest -q <the two I65-repaired nodes>
+       tests/architecture/damage_model/test_path_suffix_components.py
+-> 17 passed (the two Path-equality assertions green as I65 wrote them, plus
+   the 15 matcher tests)
+```
+
+**Write set (this iteration)**:
+`tests/architecture/damage_model/helpers.py` (matcher utility),
+`tests/architecture/damage_model/test_path_suffix_components.py` (new), plus
+this ledger pair (this section only -- the section 5 rows and section 9.3
+are I65's records and are not re-stated). The two I65-repaired test files
+are not modified by this iteration. No production code, no C++, no contract
+JSON, no smoke-manifest change.
+
 ## Related
 
 - [Repository Consolidation Plan](../repository_consolidation/README.md)

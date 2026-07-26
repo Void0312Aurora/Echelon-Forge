@@ -1213,6 +1213,54 @@ pytest -q tests/runtime
 未触碰生产代码、C++、`examples/**`、`docs/plan/repository_consolidation/**`、
 契约 JSON 或契约 runner；未触发 CMake/构建。
 
+## 10. I72 跟进：路径后缀匹配器工具（断言形态裁定）
+
+对 I65 第 1-2 条（9.3 节）的强化型跟进。本切片所实现的队列行早于 I65 写就，
+其处方是用组件归一化后缀匹配器修复 8.9 节的两条
+`retained_pack/manifest.json` 后缀红。I65 先行落地并以不同方式修复了两处调
+用点：将 `Path` 与测试自身构造的
+`tmp_path / "retained_pack" / "manifest.json"` 做完整相等比较。该重叠在落地
+前经裁定消解，而非重复修复。
+
+**裁定——哪种断言形态存续**：用跨组件边界的
+`not_retained_pack/manifest.json` 陷阱（正是催生该匹配器的判别用例）检验
+I65 的 Path 相等形态：它从构造上就拒绝该陷阱——被比较的完整路径不同，后缀
+陷阱根本无从触及。它还锁定了完整前缀，这是双组件后缀匹配做不到的。因此对这
+两处调用点而言，Path 相等严格强于匹配器，两条断言保持 I65 所写原样
+（9.3 节）；本迭代不改动任何一条已修复断言。
+
+**本迭代新增（仅测试侧）**：匹配器
+`tests/architecture/damage_model/helpers.py::path_suffix_components(value,
+count)` 作为可复用工具保留，服务于 Path 相等无法覆盖的剩余场景——测试无法
+构造完整预期路径（前缀可变/未知）的后缀检查，例如未来只有尾部具有契约意义
+的生产方展示文本断言。其 docstring 记录了适用规则（"测试能构造完整预期位置
+时，优先用完整 Path 相等"），以免在位置固定的调用点被误当作首选形态。匹配
+器由新增的封闭亚秒级
+`tests/architecture/damage_model/test_path_suffix_components.py`（15 条）钉
+住：正例覆盖原始红的 Windows 原生绝对路径形态、POSIX 绝对、仓相对、混合分
+隔符、以及分隔符连写/前导分隔符形式；负例证明拒绝目录组件错误、文件名错
+误、组件顺序颠倒、组件数不足，以及跨边界的
+`not_retained_pack/manifest.json` 尾巴（该条测试先内联断言原始 `endswith`
+*确实*接受它——即陷阱本身——再断言匹配器拒绝它）。按 I37
+（`test_xmacro_text.py`）/ I57（`test_rights_output_policy_probe.py`）排除
+先例保持在 smoke 清单之外：封闭的测试支撑单测，并非漂移门禁。
+
+**验证**（本工作树，
+`CMO_BUILD_DIR=D:\workshop\Research\EF-landing\build-local-win`）：
+
+```
+pytest -q <两条 I65 已修复节点>
+       tests/architecture/damage_model/test_path_suffix_components.py
+-> 17 passed（两条 Path 相等断言按 I65 所写原样跑绿，外加 15 条匹配器测试）
+```
+
+**写集（本迭代）**：
+`tests/architecture/damage_model/helpers.py`（匹配器工具）、
+`tests/architecture/damage_model/test_path_suffix_components.py`（新增），
+外加本台账对（仅本节——第 5 节各行与 9.3 节是 I65 的记录，不再复述）。两个
+经 I65 修复的测试文件本迭代未改动。未触碰生产代码、C++、契约 JSON，smoke
+清单不变。
+
 ## 相关
 
 - [仓库整合计划](../repository_consolidation/README.zh.md)（上文引用的
