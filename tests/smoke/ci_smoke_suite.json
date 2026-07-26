@@ -6,6 +6,7 @@
     "tests/architecture/governance/test_runtime_bootstrap_owner.py::test_maintained_python_paths_use_the_canonical_runtime_bootstrap_owner",
     "tests/architecture/governance/test_dto_schema_freshness.py",
     "tests/architecture/governance/test_experiment_matrix_freshness.py",
+    "tests/architecture/governance/test_cooperative_flight_matrix_freshness.py",
     "tests/architecture/governance/test_experiment_matrix_hardening.py",
     "tests/architecture/governance/test_scenario_generation_lineage_parity.py",
     "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_world_batch_adapter_removes_direct_runtime_fallback",
