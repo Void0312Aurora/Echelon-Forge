@@ -1,4 +1,4 @@
-# T8 G4 Truth-Leak Inventory (2026-07-21)
+# T8 G4 Truth-Leak Inventory (2026-07-26)
 
 Language:
 - English canonical: `t8_g4_truth_leak_inventory.md`
@@ -8,8 +8,8 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/t8_g4_truth_leak_inventory.md`
 Owner: `unified architecture program workline`
-Last verified: `2026-07-21`
-Baseline commit: `8bd21d86`
+Last verified: `2026-07-26`
+Baseline commit: `0aa76a00`
 
 Status: T8 (information-state architecture) register for the
 [Unified Architecture Program](README.md). It records (a) the maintained
@@ -36,6 +36,16 @@ fae17eb8 baseline function is pinned by a new focused test — flipping TL15 to
 *converged*; C11/C12/C14/C19 keep their reads per their adjudications
 (*declared-but-open*, 宁缺毋滥). Declarations are pure metadata (zero behavior
 change); the C13 migration is a mechanical read relocation with pinned parity.
+The **fourth slice (§8, I60)** makes the maintained view's declaration a
+runtime-queryable fact: the C++ runtime facade exports the view's *structural
+declaration* (view id + produced/consumed layers + semantic stage) via
+`RuntimeFacade::describe_maintained_observation_view`, pinned to the Python single
+source of truth by a parity gate. This exports a declaration, not data — the TL13
+seam's returns are byte-for-byte unchanged and no consumer reads a typed spec yet.
+The **fifth slice (§9, I63)** is documentation + tests only: it settles this
+register against I60 and hardens the seams between the three G4 gates (a positive
+"reads through the view" gate, an inventory↔code drift gate, and a reward-surface
+escape-hatch scan), again with zero behavior change.
 
 The G4 vocabulary used throughout is the authoritative six-layer information-state
 set from the
@@ -144,7 +154,7 @@ diagnostic use (routed through the view's diagnostic face).
 | TL10 | `reward_runtime/safety.py::build_safety_runtime_inputs` | own-ship `truth.health/z/pitch/speed` | **converged** (declared view) | C6. Reads via `observation_view.own_ship_field`; own-ship self-read, low-risk. |
 | TL11 | `reward_runtime/shaping_inputs.py::build_flight_shaping_runtime_inputs` | own-ship `truth.z/speed` | **converged** (declared view) | C7. Reads via `observation_view.own_ship_field`; own-ship self-read, low-risk. |
 | TL12 | `reward_runtime/objectives.py::build_conditional_objective_inputs`, `_combat_target_snapshot` | own-ship `truth.z/health/heading/x/y/missiles_remaining`; target `truth.contacts` range, `sim.is_unit_active`/`get_unit_health(target)` | **converged** (declared view) | C8. Own-ship via `own_ship_field`; target `truth.contacts` via `contacts`; `sim.is_unit_active`/`get_unit_health` via `unit_active`/`unit_health`. |
-| TL13 | `scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | **exempt** (maintained seam) | V3. The single maintained read chokepoint; on the batch path `sim` is `_ScenarioLoaderRuntimeProxy` (facade-backed). The declared observation view (§6) now reads from this seam's `truth`/`sim` output; turning the seam's return into a full typed `ObservationViewSpec` facade export remains a later step. |
+| TL13 | `scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | **exempt** (maintained seam) | V3. The single maintained read chokepoint; on the batch path `sim` is `_ScenarioLoaderRuntimeProxy` (facade-backed). The declared observation view (§6) reads from this seam's `truth`/`sim` output. **Landed (§8, I60):** the maintained view's *structural declaration* (view id + produced/consumed layers + semantic stage) is now exported from the C++ runtime facade via `RuntimeFacade::describe_maintained_observation_view`, pinned to the Python single source of truth by a parity gate (`tests/architecture/information_state/test_g4_observation_view_export.py`). That exports a declaration, not data flow: the seam's return is unchanged and consumers do not read a typed `ObservationViewSpec` — the typed data-flow migration remains a later step (§5), so this verdict stays *exempt-as-seam*. |
 | TL14 | `scenario_loader/step_evaluation.py` (`build_execution_runtime_state`, reward-input assembly) | own-ship `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health` | **declared-but-open** (own-ship, aggregator) | V7 (C11). Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED (), stage P10 ObservationExport (I32 closure; P9 removed in the §7.5 repair). Reads kept, not view-converged: a stage-bundling orchestrator assembling reward/observation input DTOs, not a leaf observation-read surface. |
 | TL15 | `leader_env_parts/decision_runtime/observations.py::build_observation` | own-ship x/y (ILS/runway/anchor geometry) | **converged** (declared view; §7.5 repair round) | C13. Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED Agent Observation, stage P10 ObservationExport. Converged in the §7.5 repair round: own-ship reads via `observation_view.own_ship_field` (token-isomorphic replacement of `getattr(truth, "x"/"y", 0.0)`); ban-gated; element-exact parity with the fae17eb8 baseline pinned by `tests/leader/test_leader_observation_view_parity.py` (incl. the no-x/y default-firing scenario and a view-seam corruption red-proof). |
 | TL16 | `python/rl/tasking/leader_tasking.py` (multiple sites) | `get_policy_agent_observation`/`get_policy_instrument_state` | **declared-but-open** (scripted-director) | C14. Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED (), stages P2 TaskingIntent + P3 CommandDelivery. Adjudicated as maintained doctrine (a scripted C2/leader director legitimately consuming own-ship truth), not diagnostics-only. Migration forbidden: routing its reads through `gym_envs.observation_view` would add a `python.rl`→`gym_envs` reverse dependency; the declaration is neutral (`python.architecture`). |
@@ -175,16 +185,23 @@ three paths still read raw World Truth structurally until a later slice converge
 them — but there are no longer any *undeclared* leaks on the maintained surface.
 The exempt/diagnostic reads (TL3, TL6, TL9, TL13, TL17) keep their verdict; where
 they sit on a migrated consumer they are routed through the view's
-Shared-Tactical-Picture / diagnostic faces for consistency. A full typed
-`ObservationViewSpec` facade export at the TL13 seam (so the seam's return itself
-is a typed spec) remains a later step.
+Shared-Tactical-Picture / diagnostic faces for consistency. The fourth slice
+(§8, I60) exported the maintained view's *structural declaration* from the C++
+facade (parity-gated), but a full typed `ObservationViewSpec` *data-flow* export
+at the TL13 seam (so the seam's return itself is a typed spec that consumers read
+through) remains a later step (§5).
 
 ## 5. Next slices (not done here)
 
-- Turn the TL13 seam's return into a full typed `ObservationViewSpec` facade
-  export. The second slice (§6) materialized the declared read view over the
-  seam's `truth`/`sim` output and migrated the eight consumers onto it; the typed
-  spec export (so the seam itself returns a typed view object) remains.
+- Migrate the observation *data flow* onto the typed `ObservationViewSpec`
+  export. The fourth slice (§8, I60) landed the *structural declaration* export at
+  the TL13 seam — the C++ facade now exports the view's view-id / produced /
+  consumed layers / semantic stage, parity-gated against the Python single source
+  of truth — but this is a declaration, not data: the seam still returns raw
+  `truth`/`sim` and the consumers still read through the §6 read view. Turning
+  that into a typed data flow (the seam returns a typed spec object and consumers
+  read their fields through it, retiring the raw `truth`/`sim` read view) is a
+  large cross-cutting migration coordinated under WP4, not a T8-local step.
 - Converge the declared-but-open consumers (§7) onto the view, per their
   adjudicated blockers:
   - C19 (TL20): build a command/guidance read owner (a peer of the observation
@@ -197,8 +214,23 @@ is a typed spec) remains a later step.
     `python.rl` without a `python.rl`→`gym_envs` edge is introduced.
 - Extend the G4 AST truth-read ban as those declared-but-open consumers converge:
   move each path from `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS` into
-  `VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`. The ban already covers the eight
-  migrated consumers (§6; `tests/architecture/information_state/test_g4_truth_read_ban.py`).
+  `VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`. The ban already covers the nine
+  converged consumers (§6's eight plus the §7.5 C13 repair;
+  `tests/architecture/information_state/test_g4_truth_read_ban.py`), and each such
+  consumer is additionally required to read *through* the view (§9.2).
+- Extend the reward-surface escape-hatch scan (§9.2) to the observation surfaces.
+  The §9 directory scan closes the "new unregistered reward consumer with raw
+  reads" escape only for `gym_envs/scenario_loader/reward_runtime/**` — a clean,
+  bounded reward-consumer package where no file reads raw truth today. The
+  observation surfaces cannot be scanned the same way yet: their directories
+  interleave legitimate non-consumer World-Truth readers (command / action /
+  scenario-loading / behavior paths — e.g. `leader_env_parts/decision_runtime/commands.py`,
+  `universal_env_parts/air_combat_event_action.py`, `scenario_loader/loading.py`,
+  `scenario_loader/behavior_runtime/post_waypoint_transition.py`), so a
+  directory-level scan there would false-positive. Closing that broader escape
+  needs a per-file "is this a maintained observation/reward consumer?" classifier
+  (or those non-consumer readers relocated behind their own declared read owners)
+  first.
 
 ## 6. Second slice: declaration-view convergence (2026-07-21)
 
@@ -439,6 +471,120 @@ were repaired in place the same day (all §7.4 gates re-run):
   `SEMANTIC_STAGE` tuples are now `("P10 ObservationExport",)`; the §7.1 matrix,
   §2 census rows and TL14 note were corrected accordingly.
 
+## 8. Fourth slice: observation-view structural-fact export (I60, 2026-07-21)
+
+The fourth T8 slice makes "what the maintained observation view declares" a
+runtime-queryable fact by mirroring the view's *structural declaration* out of the
+C++ runtime facade, without migrating any observation data flow. It closes the
+"the declaration only lives in Python" half of the §5 typed-export item: the
+structural declaration is now exported and parity-gated; the typed *data-flow*
+migration remains open (§5). This exports a declaration, not data — it is not a
+convergence and changes no verdict (TL13 stays *exempt-as-seam*).
+
+### 8.1 The export
+
+- `RuntimeFacade::describe_maintained_observation_view()` is a read-only `const`
+  method returning an `ObservationViewSpec` DTO that carries the maintained view's
+  structural facts, mirrored from the Python single source of truth
+  (`gym_envs/observation_view.py`'s G4 declaration): `view_id =
+  "gym_envs.observation_view"`, `information_layer_produced = ("Agent
+  Observation",)`, `information_layer_consumed = ("World Truth", "Track State",
+  "Shared Tactical Picture")`, `semantic_stage = ("P10 ObservationExport",)`.
+- **Single-source strategy.** Only the *structural facts* are mirrored into C++.
+  The detailed observation field catalogue stays Python-owned — the export's
+  `required_fields` / `optional_fields` are deliberately empty — so there is no
+  dual-source field list that could drift.
+- **Write set (I60).** Declaration `src/runtime/facade/runtime_facade.h`;
+  implementation `src/runtime/facade/runtime_facade_query.cpp`; binding
+  `src/interfaces/python/bindings_runtime.cpp`; DTO schema
+  `src/runtime/contracts/detail/observation_view_spec.inc` (+ its generated
+  builder/schema); and the opt-in parity helpers in
+  `python/architecture/information_layer.py`
+  (`read_maintained_observation_view_export`,
+  `observation_view_export_parity_violations`,
+  `OBSERVATION_VIEW_EXPORT_LAYER_ATTRS`; the pre-existing
+  `MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS` tuple — added by the §6 view slice,
+  I50 — is reused, not added, by I60). The parity helpers keep the `ef_py`
+  import function-local, so `information_layer.py` stays import-time stdlib-only
+  and the AST G4 gates keep running without a build.
+
+### 8.2 Parity + zero-wiring gate
+
+`tests/architecture/information_state/test_g4_observation_view_export.py`:
+
+- **Export parity (single source of truth).** The C++ export equals the Python
+  registry declaration exactly (order included) and uses only the authoritative
+  six-layer / P0-P10 vocabulary. A pure parity checker
+  (`observation_view_export_parity_violations`) is load-bearing: it reds on
+  injected drift in every mirrored dimension.
+- **Determinism.** The export is a pure constant producer — identical across
+  repeated calls and across facades with different world counts — so it reads no
+  facade instance state and cannot couple to (or perturb) run behavior.
+- **Zero wiring.** The export symbol appears only at its declaration /
+  implementation / binding sites; no maintained C++ export path and no Python
+  consumer (including the TL13 seam) calls it, so the seam's returns are
+  byte-for-byte unchanged.
+- The `ef_py`-dependent parity/value tests skip without a local build (repo
+  convention); the load-bearing and zero-wiring tests are pure text/AST and always
+  run.
+
+### 8.3 Scope boundary (exported is not migrated)
+
+The export is a *declaration*, not a *data flow*. TL13 stays **exempt (maintained
+seam)**: the seam still returns raw `truth`/`sim`, the migrated consumers still
+read through the §6 read view, and the typed data-flow migration (consumers
+reading fields through a typed spec) is unchanged from §5's open list.
+
+## 9. Fifth slice: register settle-up and gate-net hardening (I63, 2026-07-26)
+
+The fifth T8 slice is documentation + tests only — zero behavior change, no
+`gym_envs/**` production edits and no C++ edits. It (a) settles this register
+against the I60 export and (b) hardens the seams *between* the three G4 gates
+(declaration, truth-read ban, export parity) with three test-only additions.
+
+### 9.1 Register settle-up
+
+The TL13 row, §4 closing note and §5 previously carried I56-era wording that
+listed "turn the seam's return into a declared `ObservationViewSpec` export" as a
+pending item. They now record I60 as landed (the structural declaration is
+exported and parity-gated) and re-scope the remaining work to the typed
+*data-flow* migration (§5) plus the observation-surface escape-hatch residual
+(§5). No leak verdict changes: I60 exports a declaration, so the census (§4) is
+unchanged.
+
+### 9.2 Gate-net hardening (seams between the three gates)
+
+The declaration gate proves each maintained consumer *declares* a valid layer;
+the ban gate proves each converged consumer holds *no raw reads*; the export gate
+pins the *C++ mirror* to the Python declaration. Three seams sat between them,
+each now closed (or explicitly registered as open):
+
+| Seam between the existing gates | Handling | Where |
+|---------------------------------|----------|-------|
+| A consumer is *declared* and holds *no raw reads*, but nothing proves it actually reads *through* the view (it could read via a back door, or not at all, and still pass the ban vacuously) | **Closed** — positive view-usage gate: every `VIEW_CONVERGED` consumer must import the view owner and reference at least one face | `test_g4_truth_read_ban.py::test_view_converged_consumer_reads_through_the_declared_view` (parametrized ×9) + `test_view_usage_gate_is_load_bearing` |
+| The maintained register (§2 consumer census, §6 face inventory) can drift from the code registry and the view's public faces | **Closed for the code→doc direction** — inventory↔code gate: every registered consumer + the owner is documented (as its `a/b/c.py` path) in both registers; `observation_view.__all__` equals its public faces plus the three declaration constants; every public face is documented in both registers by its own **word-boundary** mention (a longer alias such as `naval_target_track` does not count as documenting `target_track`, nor `support_unit_messages_optional` as documenting `support_unit_messages`). The doc→code direction is not enforced: a register row that goes stale (its consumer removed from the code registry, its face dropped from the view) — or a fabricated row naming code that never existed — does not turn the gate red | `test_g4_inventory_consistency.py` (5 tests incl. two load-bearing rehearsals) |
+| The ban only scans *registered* consumers; a new unregistered reward consumer dropped into `reward_runtime/` with raw reads would slip past it | **Closed for `reward_runtime/**`** — directory escape-hatch scan: any file there performing raw truth reads must be a registered maintained consumer (or the view owner) | `test_g4_truth_read_ban.py::test_no_unregistered_reward_consumer_performs_raw_truth_reads` + `test_reward_consumer_escape_hatch_scan_is_load_bearing` |
+| The same escape on the *observation* surfaces (`mission_observation`, `universal_env_parts`, `leader_env_parts`, `navigation_runtime`, …) | **Open (registered §5)** — those directories interleave legitimate non-consumer World-Truth readers (command / action / loading / behavior paths), so a directory-level scan would false-positive; closing it needs a per-file consumer classifier or those readers relocated behind their own declared owners | §5 |
+
+Each new gate carries an in-memory load-bearing rehearsal (mutating a copy of a
+real module and asserting the check flips red) so it is not vacuously green; the
+working tree is never modified.
+
+### 9.3 Verification (zero behavior change)
+
+- `tests/architecture/information_state` — 61 passed with a local build (was 44
+  after I60; +17 this slice: +9 parametrized positive view-usage + 1 load-bearing,
+  +2 reward escape-hatch scan, +5 inventory↔code consistency). Without a build the
+  four `ef_py` export-parity tests skip, so the count reads 57 passed + 4 skipped
+  (was 40 + 4). The existing declaration / ban / export-parity assertions are
+  unchanged and still green.
+- No `gym_envs/**` or C++ file is touched; all additions are pure AST/text gates
+  plus this register refresh. The bilingual-hash governance gate goes red on the
+  edited register until the cluster hash is regenerated; that refresh is part of
+  this slice (`translate_docs_batch.py clusters --write --pair
+  plan/unified_architecture_program/t8_g4_truth_leak_inventory`), so
+  `tests/architecture/governance` lands green.
+
 ## Related
 
 - [Unified Architecture Program](README.md)
@@ -450,5 +596,9 @@ were repaired in place the same day (all §7.4 gates re-run):
   (§3 information-state layers; §6 P0-P10 stages; §15 G4; §16 representation strategy)
 - Facility: `python/architecture/information_layer.py`
 - View owner: `gym_envs/observation_view.py`
+- Structural-fact export: `RuntimeFacade::describe_maintained_observation_view`
+  (`src/runtime/facade/runtime_facade.h` / `runtime_facade_query.cpp`)
 - Gates: `tests/architecture/information_state/test_g4_layer_declarations.py`,
-  `tests/architecture/information_state/test_g4_truth_read_ban.py`
+  `tests/architecture/information_state/test_g4_truth_read_ban.py`,
+  `tests/architecture/information_state/test_g4_observation_view_export.py`,
+  `tests/architecture/information_state/test_g4_inventory_consistency.py`

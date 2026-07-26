@@ -19,6 +19,8 @@
     "tests/architecture/agency/test_authority_default_single_source.py",
     "tests/architecture/governance/test_document_link_audit.py",
     "tests/architecture/governance/test_cpp_include_direction.py",
+    "tests/architecture/information_state/test_g4_truth_read_ban.py",
+    "tests/architecture/information_state/test_g4_inventory_consistency.py",
     "tests/architecture/tasking_contracts/test_tasking_contracts_boundary.py",
     "tests/architecture/tasking_contracts/test_tasking_contracts_compat_shims.py",
     "tests/architecture/command_tasking/test_tasking_bridge_guardrails.py",
