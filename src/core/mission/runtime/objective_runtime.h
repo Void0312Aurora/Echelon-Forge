@@ -74,8 +74,7 @@ struct ConditionalObjectiveProducts {
 #include "core/mission/runtime/detail/objective_products.inc"
 };
 
-ConditionalObjectiveProducts evaluate_conditional_objective(
-    const ConditionalObjectiveSpec& spec,
-    const ConditionalObjectiveInputs& inputs,
-    const ObjectiveShapingConfig& shaping
-);
+ConditionalObjectiveProducts
+evaluate_conditional_objective(const ConditionalObjectiveSpec &spec,
+                               const ConditionalObjectiveInputs &inputs,
+                               const ObjectiveShapingConfig &shaping);

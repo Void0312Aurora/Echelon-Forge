@@ -422,13 +422,10 @@ void bind_core(nb::module_ &m) {
         .def_prop_rw(
             "lobl_required", [](const MissileTuning &self) { return self.lobl_required; },
             [](MissileTuning &self, bool value) { self.set_lobl_required_override(value); })
-        .def_prop_rw("midcourse_datalink_supported",
-                     [](const MissileTuning &self) {
-                         return self.midcourse_datalink_supported;
-                     },
-                     [](MissileTuning &self, bool value) {
-                         self.set_midcourse_datalink_override(value);
-                     })
+        .def_prop_rw(
+            "midcourse_datalink_supported",
+            [](const MissileTuning &self) { return self.midcourse_datalink_supported; },
+            [](MissileTuning &self, bool value) { self.set_midcourse_datalink_override(value); })
         .def_prop_rw(
             "use_kalman_seeker", [](const MissileTuning &self) { return self.use_kalman_seeker; },
             [](MissileTuning &self, bool value) { self.set_kalman_seeker_override(value); })

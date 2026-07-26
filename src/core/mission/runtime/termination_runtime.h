@@ -29,11 +29,8 @@ struct SafetyRuntimeProducts {
 #include "core/mission/runtime/detail/safety_runtime_products.inc"
 };
 
-SafetyRuntimeProducts compute_safety_runtime(const SafetyRuntimeInputs& inputs);
-TerminationReasonCode finalize_termination_reason(
-    TerminationReasonCode current_reason,
-    bool terminated,
-    bool truncated,
-    double status_flag
-);
+SafetyRuntimeProducts compute_safety_runtime(const SafetyRuntimeInputs &inputs);
+TerminationReasonCode finalize_termination_reason(TerminationReasonCode current_reason,
+                                                  bool terminated, bool truncated,
+                                                  double status_flag);
 std::string termination_reason_name(TerminationReasonCode reason);
