@@ -11,6 +11,25 @@ import numpy as np
 from python.mission_obs_taxonomy import mission_observation_compiled_fallback_mode
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This module is the world-batch
+# execution-observation batch assembly: it consumes cached own-ship authoritative
+# truth (``state.last_truth`` -- ``truth.x/y`` for the ILS query; the cached truth
+# objects are then handed to the compiled ``ef_py`` observation batch kernels) and
+# produces the batched Agent Observation arrays. Per the I32 batch-step stage
+# contracts (python/rl/runtime/world_batch/core.py), this is the
+# ``observation_build`` closure at P10 ObservationExport. Declared this
+# iteration, settling its I76 G4_DECLARATION_PENDING_CONSUMERS pin
+# (python/architecture/consumer_classification.py); reads kept, not
+# view-converged: the batch path consumes cached per-state truth under the I32
+# stage contracts rather than a per-loader observation view, so this module is
+# declared-but-open (t8_g4_truth_leak_inventory.md) and NOT ban-gated. Pure
+# metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 @dataclass
 class ExecutionObservationBatch:
     inst_batch: list[Any]

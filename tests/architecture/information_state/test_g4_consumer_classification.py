@@ -400,36 +400,64 @@ def test_registered_consumer_cannot_hide_as_diagnostics() -> None:
     )
 
 
+def test_pending_pin_is_settled_and_world_batch_consumers_are_registered() -> None:
+    # The T8 follow-up (this iteration) settled the two I76 pending pins: both
+    # world-batch consumers now carry G4 declarations and are registered as
+    # declared-but-deferred consumers, so the real pending tuple is exactly
+    # empty. Pin the settled state so it cannot silently regress: a repopulated
+    # pending tuple (or an unregistered world-batch consumer) goes red here.
+    assert G4_DECLARATION_PENDING_CONSUMERS == ()
+    for settled in (
+        "python.rl.runtime.world_batch._vec_env_support",
+        "python.rl.runtime.world_batch.observation_batching",
+    ):
+        assert settled in MAINTAINED_INFORMATION_LAYER_CONSUMERS, (
+            f"{settled}: its pending pin was settled by G4 registration; it must "
+            "stay registered (or be re-pinned in a reviewed diff)"
+        )
+        assert MAINTAINED_TRUTH_READER_CLASSIFICATION[settled] == OBSERVATION_CONSUMER
+
+
 def test_pending_declaration_pin_is_load_bearing_in_both_directions() -> None:
-    # The unregistered observation/reward consumers are pinned exactly:
-    # (a) dropping a pin while the consumer stays classified-but-unregistered
-    # goes red, and (b) a stale pin (consumer became G4-registered) goes red.
+    # The real pending tuple is empty (settled this iteration), but the pin
+    # machinery must stay load-bearing for the next unregistered consumer:
+    # (a) a classified observation/reward consumer that is neither registered
+    # nor pinned goes red, and (b) a stale pin (consumer is G4-registered) goes
+    # red. Rehearse both against in-memory tampered registries; the working
+    # tree is never modified.
     sources = _scanned_surface_sources()
     readers = _raw_truth_readers(sources)
     stages = _declared_semantic_stages(sources)
-    pending = "python.rl.runtime.world_batch.observation_batching"
-    assert pending in G4_DECLARATION_PENDING_CONSUMERS
+    settled = "python.rl.runtime.world_batch.observation_batching"
+    assert settled in MAINTAINED_INFORMATION_LAYER_CONSUMERS
+    assert MAINTAINED_TRUTH_READER_CLASSIFICATION[settled] == OBSERVATION_CONSUMER
 
-    shrunk = tuple(d for d in G4_DECLARATION_PENDING_CONSUMERS if d != pending)
+    # (a) Drop the consumer from the G4 registry while the pending tuple stays
+    # empty: it becomes classified-but-unregistered with no pin -> red.
+    shrunk_registry = tuple(
+        dotted for dotted in MAINTAINED_INFORMATION_LAYER_CONSUMERS if dotted != settled
+    )
+    violations = classification_violations(
+        raw_truth_readers=readers,
+        classification=MAINTAINED_TRUTH_READER_CLASSIFICATION,
+        g4_registered_consumers=shrunk_registry,
+        g4_view_owners=MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS,
+        declared_semantic_stages=stages,
+        declaration_pending=(),
+    )
+    assert any(settled in v and "G4_DECLARATION_PENDING_CONSUMERS" in v for v in violations), (
+        "gate failed to demand a pin (or a G4 registration) for an unregistered consumer"
+    )
+
+    # (b) Re-pin the now-registered consumer: the stale pin -> red.
     violations = classification_violations(
         raw_truth_readers=readers,
         classification=MAINTAINED_TRUTH_READER_CLASSIFICATION,
         g4_registered_consumers=MAINTAINED_INFORMATION_LAYER_CONSUMERS,
         g4_view_owners=MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS,
         declared_semantic_stages=stages,
-        declaration_pending=shrunk,
+        declaration_pending=(settled,),
     )
-    assert any(pending in v for v in violations), (
-        "gate failed to demand a pin (or a G4 registration) for an unregistered consumer"
-    )
-
-    violations = classification_violations(
-        raw_truth_readers=readers,
-        classification=MAINTAINED_TRUTH_READER_CLASSIFICATION,
-        g4_registered_consumers=(*MAINTAINED_INFORMATION_LAYER_CONSUMERS, pending),
-        g4_view_owners=MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS,
-        declared_semantic_stages=stages,
-    )
-    assert any(pending in v and "stale pin" in v for v in violations), (
+    assert any(settled in v and "stale pin" in v for v in violations), (
         "gate failed to flag a stale pending pin after the consumer became G4-registered"
     )

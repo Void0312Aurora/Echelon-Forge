@@ -8,6 +8,25 @@ import numpy as np
 from gym_envs.scenario_loader import ScenarioLoader
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This module holds the world-batch
+# vec-env observation support helpers: ``_execution_instrument_vector`` consumes
+# own-ship authoritative truth (``truth.x/y`` for the ILS query; the truth object
+# then feeds ``ef_py.compute_execution_observation_runtime_numpy``) and produces
+# the per-agent execution instrument observation vector. Per the I32 batch-step
+# stage contracts (python/rl/runtime/world_batch/core.py), execution observation
+# assembly closes at P10 ObservationExport. Declared this iteration, settling its
+# I76 G4_DECLARATION_PENDING_CONSUMERS pin
+# (python/architecture/consumer_classification.py); reads kept, not
+# view-converged: the batch path consumes cached per-state truth under the I32
+# stage contracts rather than a per-loader observation view, so this module is
+# declared-but-open (t8_g4_truth_leak_inventory.md) and NOT ban-gated. Pure
+# metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 _POST_LAUNCH_ASSESSMENT_REWARD_KEYS = {
     "combat_win_bonus",
     "combat_loss_penalty",

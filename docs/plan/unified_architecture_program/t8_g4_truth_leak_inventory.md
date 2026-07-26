@@ -45,7 +45,12 @@ seam's returns are byte-for-byte unchanged and no consumer reads a typed spec ye
 The **fifth slice (§9, I63)** is documentation + tests only: it settles this
 register against I60 and hardens the seams between the three G4 gates (a positive
 "reads through the view" gate, an inventory↔code drift gate, and a reward-surface
-escape-hatch scan), again with zero behavior change.
+escape-hatch scan), again with zero behavior change. The **sixth slice (§10, I76
++ the follow-up recorded this iteration)** closes the observation-surface
+escape hatch §9.2 had registered as open — I76 landed the per-file maintained
+truth-reader classifier and its gate, and the follow-up settled the two
+world-batch consumers that classifier had pinned as declaration-pending
+(declarations are pure metadata; zero behavior change).
 
 The G4 vocabulary used throughout is the authoritative six-layer information-state
 set from the
@@ -103,7 +108,7 @@ records whether the read already flows through a declared view/seam.
 |---|----------|-------------------|----------|----------------|
 | C1 | `gym_envs/scenario_loader/mission_observation.py` — Python-owned modes (`naval_screen_station_v1`, `air_combat_c2_roe_v1/v2`) | `truth.contacts`, `truth.missiles_remaining`, `truth.x/y`; support `get_agent_observation`/`get_unit_position`; support `get_unit_messages` | consumes World Truth + Shared Tactical Picture; produces Agent Observation | **Converged this slice** (§6; reads via declared view; was V4 leak) |
 | C2 | `gym_envs/scenario_loader/mission_observation.py` — compiled modes (`basic`/`nav_v1`/`nav_v2`/…) | compiled `ef_py.compute_mission_observation` from `mission_command_view` + route guidance (truth passed in) | produces Agent Observation (compiled) | compiled facade path; covered by C1 module declaration |
-| C3 | `python/rl/runtime/world_batch/observation_batching.py` + `_observation_mixin.py` | `state.last_truth`/`state.last_inst` (truth/instrument cache), `truth.x/y`, `inst.alt_baro` → compiled batch | consumes World Truth (cache) → produces Agent Observation | **Yes** — I32 stage contract (`state_read`/`observation_build`), already conformant |
+| C3 | `python/rl/runtime/world_batch/observation_batching.py` + `_observation_mixin.py` | `state.last_truth`/`state.last_inst` (truth/instrument cache), `truth.x/y`, `inst.alt_baro` → compiled batch | consumes World Truth (cache) → produces Agent Observation; P10 ObservationExport | **Yes** — I32 stage contract (`state_read`/`observation_build`); **Declared (§10 follow-up)** — module-level G4 declaration registered; reads kept on the I32 cached-truth batch contract — declared-but-open |
 | C4 | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | `truth.missiles_remaining`; `sim.export_recent_engagement_events`; `sim.debug_get_aircraft_damage_state`/`debug_get_ground_contact_state`; `sim.is_unit_active` | consumes World Truth; produces reward | **Converged this slice** (§6; reads via declared view; was V5 leak) |
 | C5 | `gym_envs/scenario_loader/reward_runtime/naval.py` | `truth.x/y`, `truth.contacts`; `sim.get_unit_position`/`get_agent_observation` (other units); `sim.get_unit_messages` | consumes World Truth + Shared Tactical Picture; produces reward | **Converged this slice** (§6; reads via declared view; was V6 leak) |
 | C6 | `gym_envs/scenario_loader/reward_runtime/safety.py` | own-ship `truth.health/z/pitch/speed` | consumes World Truth; produces reward inputs | **Converged this slice** (§6; own-ship read via declared view) |
@@ -120,16 +125,20 @@ records whether the read already flows through a declared view/seam.
 | C17 | `gym_envs/universal_env_parts/observations.py::build_universal_observation` — active universal policy-observation assembly, called by `CooperativeWorldBatchVecEnv` and `MultiAgentWorldRuntimeView` | `truth.x/y` (ILS query), `truth.contacts`, `truth.rwr_warnings` (Python fallback path); compiled path passes `truth` to `ef_py.compute_execution_observation_runtime_numpy`; delegates the mission vector to `get_mission_observation` | consumes World Truth; produces Agent Observation | **Converged this slice** (§6; reads via declared view; repair-round add) |
 | C18 | `gym_envs/scenario_loader/navigation_runtime/waypoint_rewards.py::build_waypoint_step_state` — direct waypoint reward-input consumer, called by `step_evaluation.py`/`execution_runtime/mainline.py` via `loader._build_waypoint_step_state` | own-ship `truth.x/y` (distance-to-fix and route reference); builds `ef_py.WaypointRewardInputs` | consumes World Truth; produces reward inputs | **Converged this slice** (§6; own-ship read via declared view; repair-round add) |
 | C19 | `gym_envs/scenario_loader/navigation_runtime/guidance.py` — shared route-guidance geometry helper (`query_route_guidance_result`, `compute_waypoint_guidance_state`, `apply_waypoint_guidance_update`, …) | own-ship `truth.x/y/speed` (route guidance geometry; `get_policy_agent_observation` fallback) | consumes World Truth (own-ship); spans command-delivery (P3/P4 autopilot target) + reward-support (P10); not a single Agent-Observation-facing consumer | **Declared (§7)**; migration awaits a command/guidance read owner (an observation view is not the right owner for command-delivery reads) — declared-but-open (TL20) |
+| C20 | `python/rl/runtime/world_batch/_vec_env_support.py::_execution_instrument_vector` — vec-env execution-observation support helper (per-agent instrument-vector build on the batch path) | own-ship `truth.x/y` (ILS query); `truth` then handed to `ef_py.compute_execution_observation_runtime_numpy` | consumes World Truth (cache); produces Agent Observation; P10 ObservationExport | **Declared (§10 follow-up)**; reads kept on the I32 cached-truth batch contract — declared-but-open |
 
 Converged onto the declared observation view: C1, C4, C5, C6, C7, C8, C17, C18
 (second slice, §6; C17/C18 added in the first-slice repair round) plus C13 (third
 slice repair round, §7.5) — the nine modules in
-`VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`. Declared (third slice, §7) with
-reads not yet view-converged (declared-but-open, in
-`DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`): C11, C12, C14, C19.
-`MAINTAINED_INFORMATION_LAYER_CONSUMERS` is the union of those two sets (13
-declared consumers). Already conformant: C3. Excluded as non-consumer: C9. Dead:
-C16. Outside the maintained policy path: C15.
+`VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`. Declared with reads not yet
+view-converged (declared-but-open, in
+`DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`): C11, C12, C14, C19 (third
+slice, §7) plus C3 and C20 (world-batch batch-observation paths, §10 follow-up).
+`MAINTAINED_INFORMATION_LAYER_CONSUMERS` is the union of those two sets (15
+declared consumers). C3 was previously recorded here as "already conformant" via
+the I32 stage contract alone; the §10 follow-up added its module-level G4
+declaration on top. Excluded as non-consumer: C9. Dead: C16. Outside the
+maintained policy path: C15.
 
 ## 3. Truth-leak inventory
 
@@ -218,19 +227,22 @@ through) remains a later step (§5).
   converged consumers (§6's eight plus the §7.5 C13 repair;
   `tests/architecture/information_state/test_g4_truth_read_ban.py`), and each such
   consumer is additionally required to read *through* the view (§9.2).
-- Extend the reward-surface escape-hatch scan (§9.2) to the observation surfaces.
-  The §9 directory scan closes the "new unregistered reward consumer with raw
-  reads" escape only for `gym_envs/scenario_loader/reward_runtime/**` — a clean,
-  bounded reward-consumer package where no file reads raw truth today. The
-  observation surfaces cannot be scanned the same way yet: their directories
-  interleave legitimate non-consumer World-Truth readers (command / action /
-  scenario-loading / behavior paths — e.g. `leader_env_parts/decision_runtime/commands.py`,
+- ~~Extend the reward-surface escape-hatch scan (§9.2) to the observation
+  surfaces.~~ **Landed (§10, I76 + this iteration's follow-up).** The per-file
+  classifier this bullet asked for exists
+  (`python/architecture/consumer_classification.py`), its gate
+  (`tests/architecture/information_state/test_g4_consumer_classification.py`)
+  AST-scans the whole `gym_envs/**` + `python/rl/**` surface — a strict superset
+  of the §9 `reward_runtime/**` directory scan — and classifies every raw
+  World-Truth reader per file, so the legitimate non-consumer readers (command /
+  action / scenario-loading / behavior paths — e.g.
+  `leader_env_parts/decision_runtime/commands.py`,
   `universal_env_parts/air_combat_event_action.py`, `scenario_loader/loading.py`,
-  `scenario_loader/behavior_runtime/post_waypoint_transition.py`), so a
-  directory-level scan there would false-positive. Closing that broader escape
-  needs a per-file "is this a maintained observation/reward consumer?" classifier
-  (or those non-consumer readers relocated behind their own declared read owners)
-  first.
+  `scenario_loader/behavior_runtime/post_waypoint_transition.py`) no longer
+  false-positive: each carries a reviewed classification row instead. The two
+  world-batch consumers the classifier initially pinned as declaration-pending
+  were settled in the follow-up (§10): both now carry G4 declarations and are
+  registered declared-but-open.
 
 ## 6. Second slice: declaration-view convergence (2026-07-21)
 
@@ -564,7 +576,7 @@ each now closed (or explicitly registered as open):
 | A consumer is *declared* and holds *no raw reads*, but nothing proves it actually reads *through* the view (it could read via a back door, or not at all, and still pass the ban vacuously) | **Closed** — positive view-usage gate: every `VIEW_CONVERGED` consumer must import the view owner and reference at least one face | `test_g4_truth_read_ban.py::test_view_converged_consumer_reads_through_the_declared_view` (parametrized ×9) + `test_view_usage_gate_is_load_bearing` |
 | The maintained register (§2 consumer census, §6 face inventory) can drift from the code registry and the view's public faces | **Closed for the code→doc direction** — inventory↔code gate: every registered consumer + the owner is documented (as its `a/b/c.py` path) in both registers; `observation_view.__all__` equals its public faces plus the three declaration constants; every public face is documented in both registers by its own **word-boundary** mention (a longer alias such as `naval_target_track` does not count as documenting `target_track`, nor `support_unit_messages_optional` as documenting `support_unit_messages`). The doc→code direction is not enforced: a register row that goes stale (its consumer removed from the code registry, its face dropped from the view) — or a fabricated row naming code that never existed — does not turn the gate red | `test_g4_inventory_consistency.py` (5 tests incl. two load-bearing rehearsals) |
 | The ban only scans *registered* consumers; a new unregistered reward consumer dropped into `reward_runtime/` with raw reads would slip past it | **Closed for `reward_runtime/**`** — directory escape-hatch scan: any file there performing raw truth reads must be a registered maintained consumer (or the view owner) | `test_g4_truth_read_ban.py::test_no_unregistered_reward_consumer_performs_raw_truth_reads` + `test_reward_consumer_escape_hatch_scan_is_load_bearing` |
-| The same escape on the *observation* surfaces (`mission_observation`, `universal_env_parts`, `leader_env_parts`, `navigation_runtime`, …) | **Open (registered §5)** — those directories interleave legitimate non-consumer World-Truth readers (command / action / loading / behavior paths), so a directory-level scan would false-positive; closing it needs a per-file consumer classifier or those readers relocated behind their own declared owners | §5 |
+| The same escape on the *observation* surfaces (`mission_observation`, `universal_env_parts`, `leader_env_parts`, `navigation_runtime`, …) | **Closed (§10, I76 + follow-up)** — was *Open (registered §5)* at this slice: those directories interleave legitimate non-consumer World-Truth readers (command / action / loading / behavior paths), so a directory-level scan would false-positive. The I76 per-file classifier closes it: every raw truth reader on the whole `gym_envs/**` + `python/rl/**` surface carries a reviewed per-file classification row, enforced in both directions (an unregistered reader goes red; a stale row goes red), with the classification pinned structurally by each declarer's `SEMANTIC_STAGE` where one exists | `test_g4_consumer_classification.py` (see §10) |
 
 Each new gate carries an in-memory load-bearing rehearsal (mutating a copy of a
 real module and asserting the check flips red) so it is not vacuously green; the
@@ -584,6 +596,80 @@ working tree is never modified.
   this slice (`translate_docs_batch.py clusters --write --pair
   plan/unified_architecture_program/t8_g4_truth_leak_inventory`), so
   `tests/architecture/governance` lands green.
+
+## 10. Sixth slice: per-file classifier (I76) and pending-declaration settle-up (this iteration, 2026-07-27)
+
+The sixth T8 slice lands in two steps and closes the §9.2 row that was
+registered *Open*.
+
+### 10.1 Per-file maintained truth-reader classification (I76)
+
+I76 landed the classifier §5 asked for:
+`python/architecture/consumer_classification.py` classifies, per file, every
+maintained module on the `gym_envs/**` + `python/rl/**` surface that performs a
+raw World-Truth read (`truth.<attr>` / `getattr(truth, ...)`, minus reads
+carrying the inline `g4-diagnostic-truth-read` marker) into one of five roles:
+`observation-consumer`, `reward-consumer`, `command-action-loading-reader`,
+`diagnostics`, or `declared-view-owner`. The companion gate
+(`tests/architecture/information_state/test_g4_consumer_classification.py`)
+AST-scans the surface and enforces registry↔code agreement in both directions —
+an injected unregistered truth reader goes red (no classification row) and a
+stale row goes red (its file no longer reads truth) — with classification lies
+caught structurally where a G4 declaration exists (a `P10 ObservationExport`
+declarer cannot be labeled a command/loading/diagnostics reader, and vice
+versa). Extension is registration (G5). I76 also pinned, exactly, the two
+classified observation consumers that did not yet carry a G4 declaration in
+`G4_DECLARATION_PENDING_CONSUMERS`:
+`python/rl/runtime/world_batch/_vec_env_support.py` and
+`python/rl/runtime/world_batch/observation_batching.py`.
+
+### 10.2 Pending-declaration settle-up (this iteration)
+
+This iteration settles those two pins — declarations only, zero behavior
+change (module-level constants plus comments; no read is moved or altered):
+
+- Both world-batch modules now declare `INFORMATION_LAYER_CONSUMED = ("World
+  Truth",)`, `INFORMATION_LAYER_PRODUCED = ("Agent Observation",)`,
+  `SEMANTIC_STAGE = ("P10 ObservationExport",)` — mirroring the I32 batch-step
+  stage contracts (`state_read` / `observation_build` in
+  `python/rl/runtime/world_batch/core.py`) they already execute under, and
+  matching the C3 census verdict recorded in §2.
+- Both are registered in `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`
+  (declaration-gated, NOT ban-gated): reads kept, not view-converged. The batch
+  path consumes cached per-state truth (`state.last_truth`) under the I32 stage
+  contracts rather than a per-loader observation view; convergence, if ever,
+  is a later adjudication.
+- `G4_DECLARATION_PENDING_CONSUMERS` is emptied. The pin machinery stays: the
+  classifier gate's tamper rehearsals now run against in-memory tampered
+  registries (un-registering a classified consumer with no pin goes red; a
+  stale pin goes red), and a new test pins the settled state itself
+  (`test_pending_pin_is_settled_and_world_batch_consumers_are_registered`).
+
+Census updates: C3's "Declared view?" cell records the declaration (§2), and
+the new C20 row covers `_vec_env_support.py`, which the pre-I76 census had not
+listed as a separate consumer. No leak verdict changes: both modules were
+already conformant under the I32 stage contracts; the declarations make G4
+explicit at module level, they do not move any read.
+
+### 10.3 Verification (zero behavior change)
+
+- `tests/architecture/information_state` — the full gate set passes with the
+  flipped pins: 79 passed with a local build (was 61 after I63, 74 after
+  I76's +13 classifier tests; the follow-up adds +2 declaration-gate and +2
+  deferred-raw-read parametrizations and +1 settled-pin test, retiring nothing
+  but the old pending-pin rehearsal's reliance on a populated real pin).
+  Without a build the four `ef_py` export-parity tests skip (75 passed + 4
+  skipped). The declaration gate now
+  enumerates 15 maintained consumers (was 13); the deferred-consumer raw-read
+  expectation (`test_g4_truth_read_ban.py`, parametrized over the deferred
+  registry) covers the two additions and proves their deferral is real.
+- No production read is touched: the two consumer files gain only the three
+  declaration constants and comments; `python/architecture/*` and the
+  classifier gate's rehearsals are the only other code edits.
+- The bilingual-hash governance gate goes red on the edited register until the
+  cluster hash is regenerated; that refresh is landing-side
+  (`translate_docs_batch.py clusters --write --pair
+  plan/unified_architecture_program/t8_g4_truth_leak_inventory`).
 
 ## Related
 

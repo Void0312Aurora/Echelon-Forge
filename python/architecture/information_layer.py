@@ -109,11 +109,22 @@ _VIEW_CONVERGED_CONSUMERS: tuple[str, ...] = (
 #     command-delivery (autopilot target) and reward support; migration deferred
 #     until a command/guidance read owner exists (an observation view is not the
 #     right owner for command-delivery reads).
+#
+# T8 follow-up (this iteration): the two world-batch execution-observation
+# consumers the I76 per-file classifier pinned as declaration-pending
+# (G4_DECLARATION_PENDING_CONSUMERS in python/architecture/consumer_classification.py)
+# now carry declarations and register here; that pending pin is emptied. Reads
+# kept, not view-converged: the batch path consumes cached per-state truth under
+# the I32 batch-step stage contracts (state_read/observation_build in
+# python/rl/runtime/world_batch/core.py), not a per-loader observation view;
+# convergence is a later slice.
 DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
     "gym_envs.scenario_loader.step_evaluation",
     "gym_envs.scenario_loader.execution_runtime.mainline",
     "python.rl.tasking.leader_tasking",
     "gym_envs.scenario_loader.navigation_runtime.guidance",
+    "python.rl.runtime.world_batch._vec_env_support",
+    "python.rl.runtime.world_batch.observation_batching",
 )
 
 # G5 registry: every maintained observation/reward consumer that carries a G4
