@@ -862,4 +862,163 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
+    TEST_CASE("engine tuning parse: all 16 table-driven keys map to their members") {
+        // Synthetic-face parity for the table-driven engine parse
+        // (content/detail/engine_tuning_fields.inc, T11 / this iteration). An
+        // Aircraft entry whose top-level engine_tuning object carries every one
+        // of the 16 migrated keys with a distinct sentinel must land each value
+        // on the matching EngineTuning member (a mis-wired key/member would
+        // collide or miss). The single-pass X-macro include is what emits these
+        // reads, so a dropped include drops all 16.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_engine_tuning_all_keys_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string all_keys = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_All_Keys_Engine",
+  "engine_tuning": {
+    "mil_thrust_n": 1.5,
+    "ab_thrust_n": 2.5,
+    "throttle_ab_threshold": 3.5,
+    "throttle_idle_bias": 4.5,
+    "tau_spool_up_s": 5.5,
+    "tau_spool_down_s": 6.5,
+    "tau_ab_light_s": 7.5,
+    "tau_ab_extinguish_s": 8.5,
+    "ram_rise_gain": 9.5,
+    "ram_rise_mach_cap": 10.5,
+    "ram_decay_start_mach": 11.5,
+    "ram_decay_gain": 12.5,
+    "thrust_sigma_exponent": 13.5,
+    "thrust_theta_exponent": 14.5,
+    "tsfc_mil_kg_per_nh": 15.5,
+    "tsfc_ab_kg_per_nh": 16.5
+  }
+})json";
+
+        const fs::path path = directory / "all_keys.json";
+        { std::ofstream(path) << all_keys; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].engine_data.has_tuning);
+        const EngineTuning &et = defs[0].engine_data.tuning;
+
+        CHECK(et.mil_thrust_n == doctest::Approx(1.5));
+        CHECK(et.ab_thrust_n == doctest::Approx(2.5));
+        CHECK(et.throttle_ab_threshold == doctest::Approx(3.5));
+        CHECK(et.throttle_idle_bias == doctest::Approx(4.5));
+        CHECK(et.tau_spool_up_s == doctest::Approx(5.5));
+        CHECK(et.tau_spool_down_s == doctest::Approx(6.5));
+        CHECK(et.tau_ab_light_s == doctest::Approx(7.5));
+        CHECK(et.tau_ab_extinguish_s == doctest::Approx(8.5));
+        CHECK(et.ram_rise_gain == doctest::Approx(9.5));
+        CHECK(et.ram_rise_mach_cap == doctest::Approx(10.5));
+        CHECK(et.ram_decay_start_mach == doctest::Approx(11.5));
+        CHECK(et.ram_decay_gain == doctest::Approx(12.5));
+        CHECK(et.thrust_sigma_exponent == doctest::Approx(13.5));
+        CHECK(et.thrust_theta_exponent == doctest::Approx(14.5));
+        CHECK(et.tsfc_mil_kg_per_nh == doctest::Approx(15.5));
+        CHECK(et.tsfc_ab_kg_per_nh == doctest::Approx(16.5));
+
+        // `enabled` stays hand-written with a literal `true` default: it is not
+        // present in the JSON above, yet the merge must still come out enabled.
+        CHECK(et.enabled);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("engine tuning parse: preset seed survives, absent keys keep the seeded value") {
+        // The other half of the parity contract. `engine_tuning` seeds from
+        // flight_dynamics::default_engine_tuning() and then merges, so an object
+        // carrying only two keys must override exactly those two and leave every
+        // other member at the preset value -- the "missing key preserves the
+        // existing value" semantics that the macro's src.value(key, current)
+        // expansion carries (the .inc's default_value token is parity-only and
+        // never reaches the parse).
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_engine_tuning_preset_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string sparse = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Sparse_Engine",
+  "engine_tuning": { "tau_spool_up_s": 9.25, "tsfc_ab_kg_per_nh": 0.5 }
+})json";
+
+        const fs::path path = directory / "sparse.json";
+        { std::ofstream(path) << sparse; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].engine_data.has_tuning);
+        const EngineTuning &et = defs[0].engine_data.tuning;
+        const EngineTuning &preset = flight_dynamics::default_engine_tuning();
+
+        CHECK(et.tau_spool_up_s == doctest::Approx(9.25));      // overridden
+        CHECK(et.tsfc_ab_kg_per_nh == doctest::Approx(0.5));    // overridden
+        CHECK(et.mil_thrust_n == doctest::Approx(preset.mil_thrust_n));
+        CHECK(et.throttle_ab_threshold == doctest::Approx(preset.throttle_ab_threshold));
+        CHECK(et.throttle_idle_bias == doctest::Approx(preset.throttle_idle_bias));
+        CHECK(et.ram_decay_gain == doctest::Approx(preset.ram_decay_gain));
+        CHECK(et.thrust_sigma_exponent == doctest::Approx(preset.thrust_sigma_exponent));
+        CHECK(et.tsfc_mil_kg_per_nh == doctest::Approx(preset.tsfc_mil_kg_per_nh));
+        CHECK(et.enabled);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("engine tuning parse: table expansion preserves malformed-key fail-first order") {
+        // Successful-input parity is insufficient: nlohmann conversions throw,
+        // so moving a table-driven read across another read changes which bad
+        // key fails first (the I61 direct-fields discipline). These two probes
+        // pin the hand-written `enabled` read's position before the table and
+        // the first table row's position before the last.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_engine_tuning_order_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string enabled_before_table_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Engine_Order_Enabled",
+  "engine_tuning": { "enabled": "bad-enabled", "mil_thrust_n": [] }
+})json";
+        const std::string first_row_before_last_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Engine_Order_Rows",
+  "engine_tuning": { "mil_thrust_n": "bad-thrust", "tsfc_ab_kg_per_nh": [] }
+})json";
+
+        const fs::path enabled_before_table = directory / "enabled_before_table.json";
+        const fs::path first_row_before_last = directory / "first_row_before_last.json";
+        { std::ofstream(enabled_before_table) << enabled_before_table_json; }
+        { std::ofstream(first_row_before_last) << first_row_before_last_json; }
+
+        const auto thrown_message = [](const fs::path &path) {
+            std::vector<UnitDefinition> defs;
+            std::string error;
+            try {
+                (void)load_unit_definitions_json(path.string(), defs, &error);
+            } catch (const std::exception &ex) {
+                return std::string(ex.what());
+            }
+            return std::string{};
+        };
+
+        const std::string enabled_message = thrown_message(enabled_before_table);
+        const std::string row_message = thrown_message(first_row_before_last);
+        CHECK(enabled_message.find("type must be boolean, but is string") != std::string::npos);
+        CHECK(row_message.find("type must be number, but is string") != std::string::npos);
+
+        fs::remove_all(directory);
+    }
+
 } // TEST_SUITE content_compile_passes

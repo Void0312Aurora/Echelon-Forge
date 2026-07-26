@@ -242,23 +242,25 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
 void parse_engine_tuning_json_fields(const nlohmann::json &src, EngineTuning *out_tuning) {
     if (!out_tuning || !src.is_object()) return;
     EngineTuning tuning = *out_tuning;
+    // Hand-written and deliberately NOT table-driven: `enabled` takes a literal
+    // `true` default (not the "missing key keeps existing value" form the other
+    // 16 keys use), which is load-bearing for the engine.tuning / engine_tuning
+    // codec escape hatch and for the top-level call site's re-seed branch. See
+    // the scope note in the .inc header.
     tuning.enabled = src.value("enabled", true);
-    tuning.mil_thrust_n = src.value("mil_thrust_n", tuning.mil_thrust_n);
-    tuning.ab_thrust_n = src.value("ab_thrust_n", tuning.ab_thrust_n);
-    tuning.throttle_ab_threshold = src.value("throttle_ab_threshold", tuning.throttle_ab_threshold);
-    tuning.throttle_idle_bias = src.value("throttle_idle_bias", tuning.throttle_idle_bias);
-    tuning.tau_spool_up_s = src.value("tau_spool_up_s", tuning.tau_spool_up_s);
-    tuning.tau_spool_down_s = src.value("tau_spool_down_s", tuning.tau_spool_down_s);
-    tuning.tau_ab_light_s = src.value("tau_ab_light_s", tuning.tau_ab_light_s);
-    tuning.tau_ab_extinguish_s = src.value("tau_ab_extinguish_s", tuning.tau_ab_extinguish_s);
-    tuning.ram_rise_gain = src.value("ram_rise_gain", tuning.ram_rise_gain);
-    tuning.ram_rise_mach_cap = src.value("ram_rise_mach_cap", tuning.ram_rise_mach_cap);
-    tuning.ram_decay_start_mach = src.value("ram_decay_start_mach", tuning.ram_decay_start_mach);
-    tuning.ram_decay_gain = src.value("ram_decay_gain", tuning.ram_decay_gain);
-    tuning.thrust_sigma_exponent = src.value("thrust_sigma_exponent", tuning.thrust_sigma_exponent);
-    tuning.thrust_theta_exponent = src.value("thrust_theta_exponent", tuning.thrust_theta_exponent);
-    tuning.tsfc_mil_kg_per_nh = src.value("tsfc_mil_kg_per_nh", tuning.tsfc_mil_kg_per_nh);
-    tuning.tsfc_ab_kg_per_nh = src.value("tsfc_ab_kg_per_nh", tuning.tsfc_ab_kg_per_nh);
+
+    // Table-driven reads over the single-source X-macro field list
+    // (content/detail/engine_tuning_fields.inc). Each expansion is
+    // token-identical to the previous hand-written body: every key keeps the
+    // src.value(key, current) "missing key preserves existing value" semantics
+    // and the read order (== declaration order) is unchanged. `enabled` is
+    // excluded above because its default is a literal, not the current value.
+    // EngineTuning has no vector members, so unlike the missile/aero siblings
+    // there is no parse_vector lambda and the list is consumed in one pass.
+#define EF_ENGINE_TUNING_FIELD(cpp_type, name, default_value) \
+    tuning.name = src.value(#name, tuning.name);
+#include "content/detail/engine_tuning_fields.inc"
+
     *out_tuning = tuning;
 }
 
