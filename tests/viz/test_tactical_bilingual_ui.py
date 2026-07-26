@@ -1,58 +1,54 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-INDEX_HTML = REPO_ROOT / "examples" / "viz" / "web_viz" / "templates" / "index.html"
-
-
-def _index_text() -> str:
-  return INDEX_HTML.read_text(encoding="utf-8")
+from frontend_sources import frontend_text, index_text, js_text
 
 
 def test_tactical_ui_exposes_english_chinese_language_switch() -> None:
-  text = _index_text()
+  html = index_text()
+  store = js_text("store")
+  i18n = js_text("i18n")
+  ui_shell = js_text("ui-shell")
 
-  assert 'id="btn-language"' in text
-  assert "let uiLanguage = 'en';" in text
-  assert "const I18N_TEXT = Object.freeze" in text
-  assert "'ui.tacticalView': 'TACTICAL VIEW'" in text
-  assert "'ui.tacticalView': '战术视图'" in text
-  assert "'ui.languageButton': '中文'" in text
-  assert "'ui.languageButton': 'EN'" in text
-  assert "window.toggleUiLanguage" in text
-  assert "document.documentElement.lang = uiLanguage === 'zh' ? 'zh-CN' : 'en';" in text
-  assert 'data-i18n="ui.tacticalView"' in text
-  assert 'data-i18n-aria="ui.tacticalLayers"' in text
+  assert 'id="btn-language"' in html
+  assert "uiLanguage: 'en'," in store
+  assert "const I18N_TEXT = Object.freeze" in i18n
+  assert "'ui.tacticalView': 'TACTICAL VIEW'" in i18n
+  assert "'ui.tacticalView': '战术视图'" in i18n
+  assert "'ui.languageButton': '中文'" in i18n
+  assert "'ui.languageButton': 'EN'" in i18n
+  assert "window.toggleUiLanguage" in ui_shell
+  assert "document.documentElement.lang = vizState.uiLanguage === 'zh' ? 'zh-CN' : 'en';" in i18n
+  assert 'data-i18n="ui.tacticalView"' in html
+  assert 'data-i18n-aria="ui.tacticalLayers"' in html
 
 
 def test_tactical_ui_localizes_dynamic_controls_and_map_callouts() -> None:
-  text = _index_text()
+  i18n = js_text("i18n")
+  ui_shell = js_text("ui-shell")
+  environment_overlays = js_text("environment-overlays")
 
-  assert "function updateLanguageUi" in text
-  assert "function updateSessionLabelText" in text
-  assert "function localizePresentationMode" in text
-  assert "function localizeCameraMode" in text
-  assert "function formatTacticalScaleText" in text
-  assert "function localizeEnvironmentToken" in text
-  assert "function localizeMissionLabel" in text
-  assert "const ENVIRONMENT_LABEL_ZH = Object.freeze" in text
-  assert "updateSessionLabelText();" in text
-  assert "localizePresentationMode(presentationMode)" in text
-  assert "localizeCameraMode(viewMode)" in text
-  assert "100 px = ${kmPer100px.toFixed(1)}公里" in text
-  assert "const localized = localizeEnvironmentToken(raw);" in text
-  assert "localizeMissionLabel(status.c2_task_label || status.c2_task || '--')" in text
-  assert "i18n('ui.waypointShort')" in text
+  assert "function updateLanguageUi" in ui_shell
+  assert "function updateSessionLabelText" in ui_shell
+  assert "function localizeCameraMode" in i18n
+  assert "function formatTacticalScaleText" in i18n
+  assert "function localizeEnvironmentToken" in i18n
+  assert "function localizeMissionLabel" in i18n
+  assert "const ENVIRONMENT_LABEL_ZH = Object.freeze" in i18n
+  assert "updateSessionLabelText();" in ui_shell
+  assert "localizeCameraMode(vizState.viewMode)" in ui_shell
+  assert "100 px = ${kmPer100px.toFixed(1)}公里" in i18n
+  assert "const localized = localizeEnvironmentToken(raw);" in environment_overlays
+  assert "localizeMissionLabel(status.c2_task_label || status.c2_task || '--')" in ui_shell
+  assert "i18n('ui.waypointShort')" in ui_shell
 
 
 def test_tactical_bilingual_ui_is_display_only() -> None:
-  text = _index_text()
+  session = js_text("session")
+  ui_shell = js_text("ui-shell")
 
-  assert "socket.emit('viz_load_profile'" in text
-  assert "socket.emit('viz_load_session'" in text
-  assert "scenario.environment =" not in text
-  assert "profile.ui_defaults =" not in text
-  assert "currentScenario = loaded ? String(session.scenario || '') : '';" in text
-  assert "option.innerText = scenario;" in text
+  assert "socket.emit('viz_load_profile'" in session
+  assert "socket.emit('viz_load_session'" in session
+  assert "scenario.environment =" not in frontend_text()
+  assert "profile.ui_defaults =" not in frontend_text()
+  assert "vizState.currentScenario = loaded ? String(session.scenario || '') : '';" in session
+  assert "option.innerText = scenario;" in ui_shell

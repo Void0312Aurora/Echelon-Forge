@@ -63,11 +63,20 @@ def create_app(args: argparse.Namespace):
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     template_dir = os.path.join(base_dir, "web_viz/templates")
     static_dir = os.path.join(base_dir, "web_viz/static")
-    async_mode = "threading" if os.name == "nt" else "eventlet"
+    # Threading everywhere: eventlet is unmaintained upstream and the viz
+    # loop is one background thread per session, which plain threads serve
+    # fine at this scale. Revisit alongside the ASGI/binary-frame migration.
+    async_mode = "threading"
 
     app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
     socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
     manager = SessionManager(socketio, default_args=args)
+
+    def report_load_error(action: str, exc: Exception) -> None:
+        message = f"{action}: {type(exc).__name__}: {exc}"
+        print(f"[viz] {message}")
+        socketio.emit("viz_error", {"message": message})
+        manager.emit_status()
 
     @app.route("/")
     def index():
@@ -104,13 +113,16 @@ def create_app(args: argparse.Namespace):
         if isinstance(data, dict):
             scenario = str(data.get("scenario", "")).strip()
             profile = str(data.get("profile", "")).strip()
-        if profile:
-            manager.load_profile(profile)
-            return
-        if not scenario:
-            return
-        manager.clear_profile_selection()
-        manager.load_session(scenario)
+        try:
+            if profile:
+                manager.load_profile(profile)
+                return
+            if not scenario:
+                return
+            manager.clear_profile_selection()
+            manager.load_session(scenario)
+        except Exception as exc:
+            report_load_error(f"load {profile or scenario}", exc)
 
     @socketio.on("viz_load_profile")
     def handle_viz_load_profile(data):
@@ -119,7 +131,10 @@ def create_app(args: argparse.Namespace):
             profile = str(data.get("profile", "")).strip()
         if not profile:
             return
-        manager.load_profile(profile)
+        try:
+            manager.load_profile(profile)
+        except Exception as exc:
+            report_load_error(f"load profile {profile}", exc)
 
     @socketio.on("viz_load_asset_registry")
     def handle_viz_load_asset_registry(data):
@@ -128,7 +143,10 @@ def create_app(args: argparse.Namespace):
             registry = str(data.get("asset_registry", "")).strip()
         if not registry:
             return
-        manager.load_asset_registry_only(registry)
+        try:
+            manager.load_asset_registry_only(registry)
+        except Exception as exc:
+            report_load_error(f"load asset registry {registry}", exc)
 
     @socketio.on("viz_stop_session")
     def handle_viz_stop_session():
@@ -142,21 +160,24 @@ def create_app(args: argparse.Namespace):
         if isinstance(data, dict):
             scenario = str(data.get("scenario", "")).strip()
             profile = str(data.get("profile", "")).strip()
-        if profile:
-            manager.load_profile(profile)
-            return
-        current_profile = manager.current_profile
-        if not scenario and isinstance(current_profile, dict):
-            profile_path = str(current_profile.get("path", "")).strip()
-            if profile_path:
-                manager.load_profile(profile_path)
+        try:
+            if profile:
+                manager.load_profile(profile)
                 return
-        if not scenario and current is not None:
-            scenario = current.scenario
-        if not scenario:
-            return
-        manager.clear_profile_selection()
-        manager.load_session(scenario)
+            current_profile = manager.current_profile
+            if not scenario and isinstance(current_profile, dict):
+                profile_path = str(current_profile.get("path", "")).strip()
+                if profile_path:
+                    manager.load_profile(profile_path)
+                    return
+            if not scenario and current is not None:
+                scenario = current.scenario
+            if not scenario:
+                return
+            manager.clear_profile_selection()
+            manager.load_session(scenario)
+        except Exception as exc:
+            report_load_error(f"reload {profile or scenario}", exc)
 
     @app.get("/api/viz/scenarios")
     def list_scenarios():
@@ -173,6 +194,13 @@ def create_app(args: argparse.Namespace):
     @app.get("/api/viz/assets")
     def get_asset_registry():
         return {"asset_registry": manager.asset_registry}
+
+    @app.get("/api/viz/scene_geometry")
+    def get_scene_geometry():
+        payload = manager.scene_geometry
+        if not isinstance(payload, dict):
+            return {"ok": False, "error": "no environment bundle loaded"}, 404
+        return payload
 
     @app.get("/api/viz/status")
     def get_status():

@@ -1,0 +1,3 @@
+# Preserve byte-addressed Arnis artifacts exactly across platforms.
+tools/environment/arnis/patches/*.patch -text
+tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text

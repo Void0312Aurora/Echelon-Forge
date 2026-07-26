@@ -269,6 +269,19 @@ void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double sh
     }
 }
 
+void SimulationKernel::set_sun_direction(double azimuth_deg, double elevation_deg) {
+    if (environment_model_) {
+        environment_model_->set_sun_direction(azimuth_deg, elevation_deg);
+    }
+}
+
+Vec3 SimulationKernel::get_sun_direction() const {
+    if (environment_model_) {
+        return environment_model_->get_sun_direction();
+    }
+    return {0.0, 0.7071, 0.7071};
+}
+
 void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
     ensure_active("set_terrain_type");
     if (environment_model_) {

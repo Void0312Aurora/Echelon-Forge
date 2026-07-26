@@ -17,6 +17,8 @@
   - 面向操作员的探测、基准测试和矩阵式诊断工具。
 - `tools/runners/`
   - 用于 JSON 契约套件及类似维护入口点的稳定运行器。
+- `tools/environment/`
+  - 固定版本的环境/场景数据生成器适配、导出与校验入口。
 - `tools/maintenance/`
   - 工作区审计和清理辅助函数。
 - `tools/archive/`
@@ -75,6 +77,15 @@
   - 按 `--group`（`chain`、`unit`、`route_generator`、`same_process`、`sim_kernel`）批量运行 `tests/contracts/` 下的 JSON 契约，默认运行全部已维护分组。`--default-group sim_kernel` 便捷地只选 `sim_kernel` 分组而无需拼写 `--group`。
 - [measure_test_coverage.py](runners/measure_test_coverage.py)
   - 从已签入的 pytest suite manifest 生成可保留的 Python `coverage` 与可选 C++ `gcovr` 报告。C++ 报告应使用覆盖率插桩的 CMake 构建，让 Python 测试经插桩 `ef_py` 运行，避免只得到 doctest-only 覆盖率。
+
+## 环境生成与适配
+
+- [arnis/README.zh.md](environment/arnis/README.zh.md)
+  - 固定 Arnis `v3.0.0` 与 CMO patch 的 `prepare / export / verify` 入口，输出
+    Minecraft 量化前的连续米制 `arnis_cmo_bundle.v1`，执行 CMO
+    manifest/catalog 校验，并提供明确标为非 runtime 的连续场与真实比例静态场景预览；
+    静态放置绑定来源，缺少剖面的屋顶、桥梁和地下对象保持 held，不释放地形运行时、
+    movement、LOS、cover 或 combat。
 
 ## 维护
 

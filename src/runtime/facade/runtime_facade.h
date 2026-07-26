@@ -51,7 +51,8 @@ class RuntimeFacade {
                             const std::vector<WorldWindAssignment> &wind_assignments,
                             const std::vector<WorldZoneDefinition> &zones,
                             const std::vector<WorldSpawnRequest> &requests,
-                            const std::vector<double> &time_steps = {});
+                            const std::vector<double> &time_steps = {},
+                            const std::vector<WorldSunAssignment> &sun_assignments = {});
     BatchWorldSetupResult apply_world_setup(const BatchWorldSetupRequest &request);
     RuntimeWorldLayoutResult apply_world_layout(const RuntimeWorldLayoutRequest &request);
     double world_time_step(std::size_t world_index) const;

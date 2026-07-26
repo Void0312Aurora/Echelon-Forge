@@ -1,6 +1,3 @@
-import eventlet
-eventlet.monkey_patch()
-
 import sys
 import os
 import time
@@ -15,7 +12,7 @@ import ef_py
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Simulation State
 kernel = ef_py.SimulationKernel()

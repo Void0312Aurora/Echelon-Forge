@@ -33,6 +33,14 @@ struct WorldWindAssignment {
     double shear_mps_per_km = 0.0;
 };
 
+// Sun direction driving optical glare. Defaults preserve the historical
+// fixed vector (north azimuth, 45 deg elevation).
+struct WorldSunAssignment {
+    std::uint64_t world_index = 0;
+    double azimuth_deg = 0.0;
+    double elevation_deg = 45.0;
+};
+
 struct WorldZoneDefinition {
     std::uint64_t world_index = 0;
     std::string name = "Zone";
@@ -83,15 +91,12 @@ inline constexpr std::string_view kTypedPlatformSpawnRejectionWrongRequestKind =
     "typed_platform_spawn_requires_typed_platform_request_kind";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionTypeNameProjectionRequired =
     "typed_platform_spawn_requires_type_name_projection_path";
-inline constexpr std::string_view
-    kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired =
-        "typed_platform_spawn_requires_maintained_typed_setup";
-inline constexpr std::string_view
-    kTypedPlatformSpawnRejectionTypeNameProjectionRequest =
-        "typed_platform_spawn_type_name_projection_request";
-inline constexpr std::string_view
-    kTypedPlatformSpawnRejectionMixedSetupSurface =
-        "typed_platform_spawn_mixed_typed_setup_and_type_name_projection_surface";
+inline constexpr std::string_view kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired =
+    "typed_platform_spawn_requires_maintained_typed_setup";
+inline constexpr std::string_view kTypedPlatformSpawnRejectionTypeNameProjectionRequest =
+    "typed_platform_spawn_type_name_projection_request";
+inline constexpr std::string_view kTypedPlatformSpawnRejectionMixedSetupSurface =
+    "typed_platform_spawn_mixed_typed_setup_and_type_name_projection_surface";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMissingEvidence =
     "typed_platform_spawn_evidence_required";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionWorldIndexOutOfRange =
@@ -100,14 +105,11 @@ inline constexpr std::string_view kTypedPlatformSpawnRejectionMaterializationFai
     "typed_platform_spawn_materialization_failed";
 inline constexpr std::string_view kTypedPlatformSetupSurfaceMaintainedTypedSetup =
     "maintained_typed_setup";
-inline constexpr std::string_view
-    kTypedPlatformSetupSurfaceTypeNameProjectionRequest =
-        "type_name_projection_request";
-inline constexpr std::string_view
-    kTypedPlatformSetupSurfaceMixedTypedProjectionBridge =
-        "mixed_typed_setup_type_name_projection_bridge";
-inline constexpr std::string_view kTypedPlatformSetupSurfaceInvalid =
-    "invalid_typed_setup_surface";
+inline constexpr std::string_view kTypedPlatformSetupSurfaceTypeNameProjectionRequest =
+    "type_name_projection_request";
+inline constexpr std::string_view kTypedPlatformSetupSurfaceMixedTypedProjectionBridge =
+    "mixed_typed_setup_type_name_projection_bridge";
+inline constexpr std::string_view kTypedPlatformSetupSurfaceInvalid = "invalid_typed_setup_surface";
 
 struct TypedPlatformSpawnRequest {
     std::uint64_t world_index = 0;
@@ -145,9 +147,7 @@ struct TypedPlatformSpawnValidationResult {
         }
     }
 
-    void add_error(std::string error) {
-        errors.push_back(std::move(error));
-    }
+    void add_error(std::string error) { errors.push_back(std::move(error)); }
 };
 
 struct TypedPlatformSetupSurfaceEvidence {
@@ -160,10 +160,7 @@ struct TypedPlatformSetupSurfaceEvidence {
 };
 
 [[nodiscard]] inline TypedPlatformSpawnValidationResult
-reject_typed_platform_spawn_request(
-    std::string_view reason,
-    std::string error
-) {
+reject_typed_platform_spawn_request(std::string_view reason, std::string error) {
     TypedPlatformSpawnValidationResult result{};
     result.reject(std::string(reason));
     result.add_error(std::move(error));
@@ -171,81 +168,57 @@ reject_typed_platform_spawn_request(
 }
 
 [[nodiscard]] inline TypedPlatformSpawnValidationResult
-validate_typed_platform_spawn_request_common(
-    const TypedPlatformSpawnRequest& request
-) {
+validate_typed_platform_spawn_request_common(const TypedPlatformSpawnRequest &request) {
     namespace platform = runtime::platform_capabilities;
 
     if (platform::is_blank(request.request_id)) {
-        return reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionMissingRequestId,
-            "request_id is required"
-        );
+        return reject_typed_platform_spawn_request(kTypedPlatformSpawnRejectionMissingRequestId,
+                                                   "request_id is required");
     }
     if (platform::is_blank(request.source_type_name)) {
         return reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionMissingSourceTypeName,
-            "source_type_name is required"
-        );
+            kTypedPlatformSpawnRejectionMissingSourceTypeName, "source_type_name is required");
     }
     if (platform::is_blank(request.capability_bundle.bundle_id)) {
-        return reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionMissingBundle,
-            "capability_bundle is required"
-        );
+        return reject_typed_platform_spawn_request(kTypedPlatformSpawnRejectionMissingBundle,
+                                                   "capability_bundle is required");
     }
 
     const platform::PlatformCapabilityValidationResult bundle_result =
         platform::validate_capability_bundle(request.capability_bundle);
     if (!bundle_result.valid) {
-        TypedPlatformSpawnValidationResult result =
-            reject_typed_platform_spawn_request(
-                kTypedPlatformSpawnRejectionInvalidBundle,
-                "capability_bundle failed validation"
-            );
+        TypedPlatformSpawnValidationResult result = reject_typed_platform_spawn_request(
+            kTypedPlatformSpawnRejectionInvalidBundle, "capability_bundle failed validation");
         if (!bundle_result.rejection_reason.empty()) {
-            result.add_error(
-                "bundle rejection: " + bundle_result.rejection_reason
-            );
+            result.add_error("bundle rejection: " + bundle_result.rejection_reason);
         }
-        result.errors.insert(
-            result.errors.end(),
-            bundle_result.errors.begin(),
-            bundle_result.errors.end()
-        );
+        result.errors.insert(result.errors.end(), bundle_result.errors.begin(),
+                             bundle_result.errors.end());
         return result;
     }
 
     if (platform::is_blank(request.resolved_spawn_plan.plan_id)) {
-        return reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionMissingResolvedPlan,
-            "resolved_spawn_plan is required"
-        );
+        return reject_typed_platform_spawn_request(kTypedPlatformSpawnRejectionMissingResolvedPlan,
+                                                   "resolved_spawn_plan is required");
     }
     if (request.resolved_spawn_plan.source_request_kind !=
         platform::kPlatformSpawnRequestKindTypedPlatformRequest) {
         return reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionWrongRequestKind,
-            "resolved_spawn_plan.source_request_kind must be typed_platform_request"
-        );
+            "resolved_spawn_plan.source_request_kind must be typed_platform_request");
     }
 
     const platform::PlatformCapabilityValidationResult plan_result =
         platform::validate_resolved_platform_spawn_plan(request.resolved_spawn_plan);
     if (!plan_result.valid) {
         TypedPlatformSpawnValidationResult result =
-            reject_typed_platform_spawn_request(
-                kTypedPlatformSpawnRejectionInvalidResolvedPlan,
-                "resolved_spawn_plan failed validation"
-            );
+            reject_typed_platform_spawn_request(kTypedPlatformSpawnRejectionInvalidResolvedPlan,
+                                                "resolved_spawn_plan failed validation");
         if (!plan_result.rejection_reason.empty()) {
             result.add_error("plan rejection: " + plan_result.rejection_reason);
         }
-        result.errors.insert(
-            result.errors.end(),
-            plan_result.errors.begin(),
-            plan_result.errors.end()
-        );
+        result.errors.insert(result.errors.end(), plan_result.errors.begin(),
+                             plan_result.errors.end());
         return result;
     }
 
@@ -253,8 +226,7 @@ validate_typed_platform_spawn_request_common(
         platform::contains_blank_value(request.facade_evidence_refs)) {
         return reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionMissingEvidence,
-            "facade_evidence_refs is required and cannot contain blank entries"
-        );
+            "facade_evidence_refs is required and cannot contain blank entries");
     }
 
     TypedPlatformSpawnValidationResult result{};
@@ -262,24 +234,20 @@ validate_typed_platform_spawn_request_common(
     return result;
 }
 
-[[nodiscard]] inline bool typed_platform_spawn_preserves_type_name_projection(
-    const TypedPlatformSpawnRequest& request
-) {
+[[nodiscard]] inline bool
+typed_platform_spawn_preserves_type_name_projection(const TypedPlatformSpawnRequest &request) {
     return request.type_name_projection_preserved ||
-        request.capability_bundle.type_name_projection_preserved ||
-        request.resolved_spawn_plan.type_name_projection_preserved;
+           request.capability_bundle.type_name_projection_preserved ||
+           request.resolved_spawn_plan.type_name_projection_preserved;
 }
 
 [[nodiscard]] inline TypedPlatformSetupSurfaceEvidence
-classify_typed_platform_spawn_setup_surface(
-    const TypedPlatformSpawnRequest& request
-) {
+classify_typed_platform_spawn_setup_surface(const TypedPlatformSpawnRequest &request) {
     namespace platform = runtime::platform_capabilities;
 
     TypedPlatformSetupSurfaceEvidence evidence{};
-    const bool typed_request_kind =
-        request.resolved_spawn_plan.source_request_kind ==
-        platform::kPlatformSpawnRequestKindTypedPlatformRequest;
+    const bool typed_request_kind = request.resolved_spawn_plan.source_request_kind ==
+                                    platform::kPlatformSpawnRequestKindTypedPlatformRequest;
     const bool type_name_projection_request_kind =
         request.resolved_spawn_plan.source_request_kind ==
         platform::kPlatformSpawnRequestKindTypeNameProjection;
@@ -308,34 +276,24 @@ classify_typed_platform_spawn_setup_surface(
         evidence.reasons.push_back("type_name_projection_preserved");
     }
 
-    if (typed_request_kind && resolved_spawn_bridge &&
-        !factory_projection_materialization &&
-        !type_name_projection_request_kind &&
-        !type_name_projection_preserved) {
-        evidence.setup_surface =
-            std::string(kTypedPlatformSetupSurfaceMaintainedTypedSetup);
+    if (typed_request_kind && resolved_spawn_bridge && !factory_projection_materialization &&
+        !type_name_projection_request_kind && !type_name_projection_preserved) {
+        evidence.setup_surface = std::string(kTypedPlatformSetupSurfaceMaintainedTypedSetup);
         evidence.maintained_typed_setup = true;
         return evidence;
     }
 
-    if (!typed_request_kind &&
-        type_name_projection_request_kind &&
-        factory_projection_materialization &&
-        type_name_projection_preserved) {
-        evidence.setup_surface = std::string(
-            kTypedPlatformSetupSurfaceTypeNameProjectionRequest
-        );
+    if (!typed_request_kind && type_name_projection_request_kind &&
+        factory_projection_materialization && type_name_projection_preserved) {
+        evidence.setup_surface = std::string(kTypedPlatformSetupSurfaceTypeNameProjectionRequest);
         evidence.type_name_projection_request = true;
         return evidence;
     }
 
     if ((typed_request_kind || resolved_spawn_bridge) &&
-        (type_name_projection_request_kind ||
-         factory_projection_materialization ||
+        (type_name_projection_request_kind || factory_projection_materialization ||
          type_name_projection_preserved)) {
-        evidence.setup_surface = std::string(
-            kTypedPlatformSetupSurfaceMixedTypedProjectionBridge
-        );
+        evidence.setup_surface = std::string(kTypedPlatformSetupSurfaceMixedTypedProjectionBridge);
         evidence.mixed_typed_projection_bridge = true;
         return evidence;
     }
@@ -345,7 +303,7 @@ classify_typed_platform_spawn_setup_surface(
 }
 
 [[nodiscard]] inline TypedPlatformSpawnValidationResult
-validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) {
+validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest &request) {
     TypedPlatformSpawnValidationResult result =
         validate_typed_platform_spawn_request_common(request);
     if (!result.valid) {
@@ -357,8 +315,7 @@ validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) 
         !request.resolved_spawn_plan.type_name_projection_preserved) {
         return reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionTypeNameProjectionRequired,
-            "typed platform setup must preserve the type_name projection path"
-        );
+            "typed platform setup must preserve the type_name projection path");
     }
 
     result.valid = true;
@@ -366,9 +323,7 @@ validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) 
 }
 
 [[nodiscard]] inline TypedPlatformSpawnValidationResult
-validate_maintained_typed_platform_spawn_request(
-    const TypedPlatformSpawnRequest& request
-) {
+validate_maintained_typed_platform_spawn_request(const TypedPlatformSpawnRequest &request) {
     TypedPlatformSpawnValidationResult result =
         validate_typed_platform_spawn_request_common(request);
     if (!result.valid) {
@@ -386,54 +341,43 @@ validate_maintained_typed_platform_spawn_request(
     if (surface.type_name_projection_request) {
         rejection = reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionTypeNameProjectionRequest,
-            "typed platform setup remains a type_name projection request"
-        );
+            "typed platform setup remains a type_name projection request");
     } else if (surface.mixed_typed_projection_bridge) {
-        rejection = reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionMixedSetupSurface,
-            "typed platform setup mixes maintained typed setup with type_name projection preservation"
-        );
+        rejection =
+            reject_typed_platform_spawn_request(kTypedPlatformSpawnRejectionMixedSetupSurface,
+                                                "typed platform setup mixes maintained typed setup "
+                                                "with type_name projection preservation");
     } else {
         rejection = reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired,
-            "typed platform setup must declare maintained typed setup semantics"
-        );
+            "typed platform setup must declare maintained typed setup semantics");
     }
 
-    rejection.errors.insert(
-        rejection.errors.end(),
-        surface.reasons.begin(),
-        surface.reasons.end()
-    );
+    rejection.errors.insert(rejection.errors.end(), surface.reasons.begin(), surface.reasons.end());
     return rejection;
 }
 
 [[nodiscard]] inline std::vector<std::string>
-collect_typed_platform_spawn_evidence_refs(
-    const TypedPlatformSpawnRequest& request
-) {
+collect_typed_platform_spawn_evidence_refs(const TypedPlatformSpawnRequest &request) {
     namespace platform = runtime::platform_capabilities;
 
     std::vector<std::string> evidence_refs{};
-    evidence_refs.reserve(
-        request.facade_evidence_refs.size() +
-        request.capability_bundle.evidence_refs.size() +
-        request.resolved_spawn_plan.evidence_refs.size() + 4
-    );
+    evidence_refs.reserve(request.facade_evidence_refs.size() +
+                          request.capability_bundle.evidence_refs.size() +
+                          request.resolved_spawn_plan.evidence_refs.size() + 4);
 
-    const auto append_if_present = [&](const std::string& ref) {
+    const auto append_if_present = [&](const std::string &ref) {
         if (platform::is_blank(ref)) {
             return;
         }
-        if (std::find(evidence_refs.begin(), evidence_refs.end(), ref) !=
-            evidence_refs.end()) {
+        if (std::find(evidence_refs.begin(), evidence_refs.end(), ref) != evidence_refs.end()) {
             return;
         }
         evidence_refs.push_back(ref);
     };
 
-    const auto append_many = [&](const std::vector<std::string>& refs) {
-        for (const std::string& ref : refs) {
+    const auto append_many = [&](const std::vector<std::string> &refs) {
+        for (const std::string &ref : refs) {
             append_if_present(ref);
         }
     };
@@ -469,9 +413,7 @@ struct TypedPlatformSpawnAdmission {
         }
     }
 
-    void add_error(std::string error) {
-        errors.push_back(std::move(error));
-    }
+    void add_error(std::string error) { errors.push_back(std::move(error)); }
 };
 
 struct TypedPlatformSpawnResult {
@@ -499,16 +441,12 @@ struct TypedPlatformSpawnResult {
         }
     }
 
-    void add_error(std::string error) {
-        errors.push_back(std::move(error));
-    }
+    void add_error(std::string error) { errors.push_back(std::move(error)); }
 };
 
 [[nodiscard]] inline TypedPlatformSpawnAdmission
-make_typed_platform_spawn_admission(
-    std::uint64_t request_index,
-    const TypedPlatformSpawnRequest& request
-) {
+make_typed_platform_spawn_admission(std::uint64_t request_index,
+                                    const TypedPlatformSpawnRequest &request) {
     TypedPlatformSpawnAdmission admission{};
     admission.request_index = request_index;
     admission.world_index = request.world_index;
@@ -521,9 +459,7 @@ make_typed_platform_spawn_admission(
 }
 
 [[nodiscard]] inline TypedPlatformSpawnResult
-make_typed_platform_spawn_result(
-    const TypedPlatformSpawnAdmission& admission
-) {
+make_typed_platform_spawn_result(const TypedPlatformSpawnAdmission &admission) {
     TypedPlatformSpawnResult result{};
     result.request_index = admission.request_index;
     result.world_index = admission.world_index;
@@ -548,12 +484,10 @@ struct WorldPilotActionAssignment {
 
 struct WorldMissionCommandAssignment {
     using shell_type = MissionCommandCompatibilityTransportShell;
-    static constexpr bool kCompatibilityTransportShell =
-        kMissionCommandCompatibilityTransportShell;
+    static constexpr bool kCompatibilityTransportShell = kMissionCommandCompatibilityTransportShell;
     static_assert(
         kCompatibilityTransportShell,
-        "WorldMissionCommandAssignment transports only the MissionCommand compatibility shell."
-    );
+        "WorldMissionCommandAssignment transports only the MissionCommand compatibility shell.");
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
@@ -582,16 +516,13 @@ struct MissionCommandMaintainedBatchContract {
     naval_embarked_helo_type naval_embarked_helo{};
     ground_static_task_type ground_static_task{};
 
-    static_assert(
-        kMaintainedBatchTruth,
-        "MissionCommandMaintainedBatchContract is the controlled MissionCommand maintained batch read/write shape."
-    );
+    static_assert(kMaintainedBatchTruth, "MissionCommandMaintainedBatchContract is the controlled "
+                                         "MissionCommand maintained batch read/write shape.");
 };
 
 [[nodiscard]] inline MissionCommandMaintainedBatchContract
 mission_command_maintained_batch_contract(
-    const MissionCommandCompatibilityTransportShell& command
-) noexcept {
+    const MissionCommandCompatibilityTransportShell &command) noexcept {
     return {
         .shared_core = mission_command_shared_core_directive(command),
         .air_recovery = mission_command_air_recovery_directive(command),
@@ -604,12 +535,11 @@ mission_command_maintained_batch_contract(
 }
 
 inline void apply_mission_command_maintained_batch_contract_to_compatibility_shell(
-    MissionCommandCompatibilityTransportShell& command,
-    const MissionCommandMaintainedBatchContract& contract
-) noexcept {
+    MissionCommandCompatibilityTransportShell &command,
+    const MissionCommandMaintainedBatchContract &contract) noexcept {
     mission_command_shared_core(command) = contract.shared_core;
 
-    auto& air = mission_command_air_owner_slice(command);
+    auto &air = mission_command_air_owner_slice(command);
     air.recovery_base_id = contract.air_recovery.recovery_base_id;
     air.recovery_runway_id = contract.air_recovery.recovery_runway_id;
     air.recovery_approach_type = contract.air_recovery.recovery_approach_type;
@@ -622,18 +552,16 @@ inline void apply_mission_command_maintained_batch_contract_to_compatibility_she
     air.form_offset_y = contract.air_formation.form_offset_y;
     air.form_offset_z = contract.air_formation.form_offset_z;
 
-    auto& naval = mission_command_naval_owner_slice(command);
+    auto &naval = mission_command_naval_owner_slice(command);
     naval.reference_entity_id = contract.naval_stationing.reference_entity_id;
     naval.station_radius_m = contract.naval_stationing.station_radius_m;
     naval.station_bearing_deg = contract.naval_stationing.station_bearing_deg;
-    naval.embarked_helo_entity_id =
-        contract.naval_embarked_helo.embarked_helo_entity_id;
+    naval.embarked_helo_entity_id = contract.naval_embarked_helo.embarked_helo_entity_id;
     naval.launch_helo = contract.naval_embarked_helo.launch_helo;
     naval.recover_helo = contract.naval_embarked_helo.recover_helo;
-    naval.relay_oth_targeting =
-        contract.naval_embarked_helo.relay_oth_targeting;
+    naval.relay_oth_targeting = contract.naval_embarked_helo.relay_oth_targeting;
 
-    auto& ground = mission_command_ground_owner_slice(command);
+    auto &ground = mission_command_ground_owner_slice(command);
     ground.ground_task_mode = contract.ground_static_task.ground_task_mode;
     ground.objective_area_id = contract.ground_static_task.objective_area_id;
     ground.objective_node_id = contract.ground_static_task.objective_node_id;
@@ -643,24 +571,19 @@ inline void apply_mission_command_maintained_batch_contract_to_compatibility_she
 
 [[nodiscard]] inline MissionCommandCompatibilityTransportShell
 mission_command_compatibility_shell_from_maintained_batch_contract(
-    const MissionCommandMaintainedBatchContract& contract
-) noexcept {
+    const MissionCommandMaintainedBatchContract &contract) noexcept {
     MissionCommandCompatibilityTransportShell compatibility_shell{};
-    apply_mission_command_maintained_batch_contract_to_compatibility_shell(
-        compatibility_shell,
-        contract
-    );
+    apply_mission_command_maintained_batch_contract_to_compatibility_shell(compatibility_shell,
+                                                                           contract);
     return compatibility_shell;
 }
 
 struct WorldMissionCommandMaintainedAssignment {
     using contract_type = MissionCommandMaintainedBatchContract;
-    static constexpr bool kMaintainedBatchTruth =
-        contract_type::kMaintainedBatchTruth;
-    static_assert(
-        kMaintainedBatchTruth,
-        "WorldMissionCommandMaintainedAssignment transports only the controlled MissionCommand maintained batch contract."
-    );
+    static constexpr bool kMaintainedBatchTruth = contract_type::kMaintainedBatchTruth;
+    static_assert(kMaintainedBatchTruth,
+                  "WorldMissionCommandMaintainedAssignment transports only the controlled "
+                  "MissionCommand maintained batch contract.");
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
@@ -673,7 +596,7 @@ struct TaskOrderAirTaskingIdentityDirective {
     std::uint64_t package_id = 0;
     std::uint64_t lead_aircraft_id = 0;
 
-    bool operator==(const TaskOrderAirTaskingIdentityDirective&) const = default;
+    bool operator==(const TaskOrderAirTaskingIdentityDirective &) const = default;
 };
 
 struct TaskOrderAirStationingDirective {
@@ -695,7 +618,7 @@ struct TaskOrderAirStationingDirective {
     double on_station_time_s = 0.0;
     double fuel_bingo_override_kg = 0.0;
 
-    bool operator==(const TaskOrderAirStationingDirective&) const = default;
+    bool operator==(const TaskOrderAirStationingDirective &) const = default;
 };
 
 struct TaskOrderAirFormationDirective {
@@ -708,19 +631,17 @@ struct TaskOrderAirFormationDirective {
     int mutual_support_mode = 0;
     std::uint64_t support_sector_id = 0;
 
-    bool operator==(const TaskOrderAirFormationDirective&) const = default;
+    bool operator==(const TaskOrderAirFormationDirective &) const = default;
 };
 
 struct TaskOrderNavalStationingDirective {
     NavalStationType naval_station_type = NavalStationType::Unspecified;
 
-    bool operator==(const TaskOrderNavalStationingDirective&) const = default;
+    bool operator==(const TaskOrderNavalStationingDirective &) const = default;
 };
 
 [[nodiscard]] inline TaskOrderAirTaskingIdentityDirective
-task_order_air_tasking_identity_directive(
-    const TaskOrderAirOwnerSlice& air
-) noexcept {
+task_order_air_tasking_identity_directive(const TaskOrderAirOwnerSlice &air) noexcept {
     return {
         .task_type = air.task_type,
         .element_id = air.element_id,
@@ -729,19 +650,13 @@ task_order_air_tasking_identity_directive(
     };
 }
 
-[[nodiscard]] inline TaskOrderAirTaskingIdentityDirective
-task_order_air_tasking_identity_directive(
-    const TaskOrderCompatibilityTransportShell& order
-) noexcept {
-    return task_order_air_tasking_identity_directive(
-        task_order_air_owner_slice(order)
-    );
+[[nodiscard]] inline TaskOrderAirTaskingIdentityDirective task_order_air_tasking_identity_directive(
+    const TaskOrderCompatibilityTransportShell &order) noexcept {
+    return task_order_air_tasking_identity_directive(task_order_air_owner_slice(order));
 }
 
 [[nodiscard]] inline TaskOrderAirStationingDirective
-task_order_air_stationing_directive(
-    const TaskOrderAirOwnerSlice& air
-) noexcept {
+task_order_air_stationing_directive(const TaskOrderAirOwnerSlice &air) noexcept {
     return {
         .anchor_x_m = air.anchor_x_m,
         .anchor_y_m = air.anchor_y_m,
@@ -764,16 +679,12 @@ task_order_air_stationing_directive(
 }
 
 [[nodiscard]] inline TaskOrderAirStationingDirective
-task_order_air_stationing_directive(
-    const TaskOrderCompatibilityTransportShell& order
-) noexcept {
+task_order_air_stationing_directive(const TaskOrderCompatibilityTransportShell &order) noexcept {
     return task_order_air_stationing_directive(task_order_air_owner_slice(order));
 }
 
 [[nodiscard]] inline TaskOrderAirFormationDirective
-task_order_air_formation_directive(
-    const TaskOrderAirOwnerSlice& air
-) noexcept {
+task_order_air_formation_directive(const TaskOrderAirOwnerSlice &air) noexcept {
     return {
         .formation_template_id = air.formation_template_id,
         .formation_contract_id = air.formation_contract_id,
@@ -787,34 +698,24 @@ task_order_air_formation_directive(
 }
 
 [[nodiscard]] inline TaskOrderAirFormationDirective
-task_order_air_formation_directive(
-    const TaskOrderCompatibilityTransportShell& order
-) noexcept {
+task_order_air_formation_directive(const TaskOrderCompatibilityTransportShell &order) noexcept {
     return task_order_air_formation_directive(task_order_air_owner_slice(order));
 }
 
 [[nodiscard]] inline TaskOrderNavalStationingDirective
-task_order_naval_stationing_directive(
-    const TaskOrderNavalOwnerSlice& naval
-) noexcept {
+task_order_naval_stationing_directive(const TaskOrderNavalOwnerSlice &naval) noexcept {
     return {
         .naval_station_type = naval.naval_station_type,
     };
 }
 
 [[nodiscard]] inline TaskOrderNavalStationingDirective
-task_order_naval_stationing_directive(
-    const TaskOrderCompatibilityTransportShell& order
-) noexcept {
-    return task_order_naval_stationing_directive(
-        task_order_naval_owner_slice(order)
-    );
+task_order_naval_stationing_directive(const TaskOrderCompatibilityTransportShell &order) noexcept {
+    return task_order_naval_stationing_directive(task_order_naval_owner_slice(order));
 }
 
 inline void apply_task_order_air_tasking_identity_directive(
-    TaskOrderAirOwnerSlice& air,
-    const TaskOrderAirTaskingIdentityDirective& directive
-) noexcept {
+    TaskOrderAirOwnerSlice &air, const TaskOrderAirTaskingIdentityDirective &directive) noexcept {
     air.task_type = directive.task_type;
     air.element_id = directive.element_id;
     air.package_id = directive.package_id;
@@ -822,9 +723,7 @@ inline void apply_task_order_air_tasking_identity_directive(
 }
 
 inline void apply_task_order_air_stationing_directive(
-    TaskOrderAirOwnerSlice& air,
-    const TaskOrderAirStationingDirective& directive
-) noexcept {
+    TaskOrderAirOwnerSlice &air, const TaskOrderAirStationingDirective &directive) noexcept {
     air.anchor_x_m = directive.anchor_x_m;
     air.anchor_y_m = directive.anchor_y_m;
     air.anchor_z_m = directive.anchor_z_m;
@@ -844,29 +743,26 @@ inline void apply_task_order_air_stationing_directive(
     air.fuel_bingo_override_kg = directive.fuel_bingo_override_kg;
 }
 
-inline void apply_task_order_air_recovery_directive(
-    TaskOrderAirOwnerSlice& air,
-    const TaskOrderAir::RecoveryDirective& directive
-) noexcept {
+inline void
+apply_task_order_air_recovery_directive(TaskOrderAirOwnerSlice &air,
+                                        const TaskOrderAir::RecoveryDirective &directive) noexcept {
     air.recovery_base_id = directive.recovery_base_id;
     air.recovery_runway_id = directive.recovery_runway_id;
     air.recovery_approach_type = directive.recovery_approach_type;
 }
 
-inline void apply_task_order_air_takeoff_directive(
-    TaskOrderAirOwnerSlice& air,
-    const TaskOrderAir::TakeoffDirective& directive
-) noexcept {
+inline void
+apply_task_order_air_takeoff_directive(TaskOrderAirOwnerSlice &air,
+                                       const TaskOrderAir::TakeoffDirective &directive) noexcept {
     air.takeoff_procedure_id = directive.takeoff_procedure_id;
     air.takeoff_clearance_id = directive.takeoff_clearance_id;
     air.takeoff_interval_s = directive.takeoff_interval_s;
     air.runway_slot_id = directive.runway_slot_id;
 }
 
-inline void apply_task_order_air_formation_directive(
-    TaskOrderAirOwnerSlice& air,
-    const TaskOrderAirFormationDirective& directive
-) noexcept {
+inline void
+apply_task_order_air_formation_directive(TaskOrderAirOwnerSlice &air,
+                                         const TaskOrderAirFormationDirective &directive) noexcept {
     air.formation_template_id = directive.formation_template_id;
     air.formation_contract_id = directive.formation_contract_id;
     air.formation_role_id = directive.formation_role_id;
@@ -878,24 +774,20 @@ inline void apply_task_order_air_formation_directive(
 }
 
 inline void apply_task_order_naval_command_authority_directive(
-    TaskOrderNavalOwnerSlice& naval,
-    const TaskOrderNaval::CommandAuthorityDirective& directive
-) noexcept {
+    TaskOrderNavalOwnerSlice &naval,
+    const TaskOrderNaval::CommandAuthorityDirective &directive) noexcept {
     naval.warfare_role_code = directive.warfare_role_code;
     naval.officer_in_tactical_command = directive.officer_in_tactical_command;
 }
 
 inline void apply_task_order_naval_stationing_directive(
-    TaskOrderNavalOwnerSlice& naval,
-    const TaskOrderNavalStationingDirective& directive
-) noexcept {
+    TaskOrderNavalOwnerSlice &naval, const TaskOrderNavalStationingDirective &directive) noexcept {
     naval.naval_station_type = directive.naval_station_type;
 }
 
 inline void apply_task_order_ground_static_task_directive(
-    TaskOrderGroundOwnerSlice& ground,
-    const TaskOrderGround::StaticTaskDirective& directive
-) noexcept {
+    TaskOrderGroundOwnerSlice &ground,
+    const TaskOrderGround::StaticTaskDirective &directive) noexcept {
     ground.ground_task_mode = directive.ground_task_mode;
     ground.objective_area_id = directive.objective_area_id;
     ground.objective_node_id = directive.objective_node_id;
@@ -929,16 +821,12 @@ struct TaskOrderMaintainedBatchContract {
     naval_stationing_type naval_stationing{};
     ground_static_task_type ground_static_task{};
 
-    static_assert(
-        kMaintainedBatchTruth,
-        "TaskOrderMaintainedBatchContract is the controlled TaskOrder maintained batch read/write shape."
-    );
+    static_assert(kMaintainedBatchTruth, "TaskOrderMaintainedBatchContract is the controlled "
+                                         "TaskOrder maintained batch read/write shape.");
 };
 
 [[nodiscard]] inline TaskOrderMaintainedBatchContract
-task_order_maintained_batch_contract(
-    const TaskOrderCompatibilityTransportShell& order
-) noexcept {
+task_order_maintained_batch_contract(const TaskOrderCompatibilityTransportShell &order) noexcept {
     return {
         .shared_core = task_order_shared_core_directive(order),
         .air_tasking_identity = task_order_air_tasking_identity_directive(order),
@@ -953,55 +841,36 @@ task_order_maintained_batch_contract(
 }
 
 inline void apply_task_order_maintained_batch_contract_to_compatibility_shell(
-    TaskOrderCompatibilityTransportShell& order,
-    const TaskOrderMaintainedBatchContract& contract
-) noexcept {
+    TaskOrderCompatibilityTransportShell &order,
+    const TaskOrderMaintainedBatchContract &contract) noexcept {
     task_order_shared_core(order) = contract.shared_core;
-    auto& air = task_order_air_owner_slice(order);
-    apply_task_order_air_tasking_identity_directive(
-        air,
-        contract.air_tasking_identity
-    );
+    auto &air = task_order_air_owner_slice(order);
+    apply_task_order_air_tasking_identity_directive(air, contract.air_tasking_identity);
     apply_task_order_air_stationing_directive(air, contract.air_stationing);
     apply_task_order_air_recovery_directive(air, contract.air_recovery);
     apply_task_order_air_takeoff_directive(air, contract.air_takeoff);
     apply_task_order_air_formation_directive(air, contract.air_formation);
-    auto& naval = task_order_naval_owner_slice(order);
-    apply_task_order_naval_command_authority_directive(
-        naval,
-        contract.naval_command_authority
-    );
-    apply_task_order_naval_stationing_directive(
-        naval,
-        contract.naval_stationing
-    );
-    auto& ground = task_order_ground_owner_slice(order);
-    apply_task_order_ground_static_task_directive(
-        ground,
-        contract.ground_static_task
-    );
+    auto &naval = task_order_naval_owner_slice(order);
+    apply_task_order_naval_command_authority_directive(naval, contract.naval_command_authority);
+    apply_task_order_naval_stationing_directive(naval, contract.naval_stationing);
+    auto &ground = task_order_ground_owner_slice(order);
+    apply_task_order_ground_static_task_directive(ground, contract.ground_static_task);
 }
 
 [[nodiscard]] inline TaskOrderCompatibilityTransportShell
 task_order_compatibility_shell_from_maintained_batch_contract(
-    const TaskOrderMaintainedBatchContract& contract
-) noexcept {
+    const TaskOrderMaintainedBatchContract &contract) noexcept {
     TaskOrderCompatibilityTransportShell compatibility_shell{};
-    apply_task_order_maintained_batch_contract_to_compatibility_shell(
-        compatibility_shell,
-        contract
-    );
+    apply_task_order_maintained_batch_contract_to_compatibility_shell(compatibility_shell,
+                                                                      contract);
     return compatibility_shell;
 }
 
 struct WorldTaskOrderMaintainedAssignment {
     using contract_type = TaskOrderMaintainedBatchContract;
-    static constexpr bool kMaintainedBatchTruth =
-        contract_type::kMaintainedBatchTruth;
-    static_assert(
-        kMaintainedBatchTruth,
-        "WorldTaskOrderMaintainedAssignment transports only the controlled TaskOrder maintained batch contract."
-    );
+    static constexpr bool kMaintainedBatchTruth = contract_type::kMaintainedBatchTruth;
+    static_assert(kMaintainedBatchTruth, "WorldTaskOrderMaintainedAssignment transports only the "
+                                         "controlled TaskOrder maintained batch contract.");
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
@@ -1010,12 +879,10 @@ struct WorldTaskOrderMaintainedAssignment {
 
 struct WorldLeaderIntentAssignment {
     using shell_type = LeaderIntentCompatibilityTransportShell;
-    static constexpr bool kCompatibilityTransportShell =
-        kLeaderIntentCompatibilityTransportShell;
+    static constexpr bool kCompatibilityTransportShell = kLeaderIntentCompatibilityTransportShell;
     static_assert(
         kCompatibilityTransportShell,
-        "WorldLeaderIntentAssignment transports only the LeaderIntent compatibility shell."
-    );
+        "WorldLeaderIntentAssignment transports only the LeaderIntent compatibility shell.");
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
@@ -1047,16 +914,12 @@ struct LeaderIntentMaintainedBatchContract {
     naval_command_authority_type naval_command_authority{};
     ground_static_status_type ground_static_status{};
 
-    static_assert(
-        kMaintainedBatchTruth,
-        "LeaderIntentMaintainedBatchContract is the controlled LeaderIntent maintained batch read/write shape."
-    );
+    static_assert(kMaintainedBatchTruth, "LeaderIntentMaintainedBatchContract is the controlled "
+                                         "LeaderIntent maintained batch read/write shape.");
 };
 
-[[nodiscard]] inline LeaderIntentMaintainedBatchContract
-leader_intent_maintained_batch_contract(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline LeaderIntentMaintainedBatchContract leader_intent_maintained_batch_contract(
+    const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return {
         .shared_core = leader_intent_shared_core(intent),
         .phase_id = leader_intent_air_owner_slice(intent).phase_id,
@@ -1073,11 +936,10 @@ leader_intent_maintained_batch_contract(
 }
 
 inline void apply_leader_intent_maintained_batch_contract_to_compatibility_shell(
-    LeaderIntentCompatibilityTransportShell& intent,
-    const LeaderIntentMaintainedBatchContract& contract
-) noexcept {
+    LeaderIntentCompatibilityTransportShell &intent,
+    const LeaderIntentMaintainedBatchContract &contract) noexcept {
     leader_intent_shared_core(intent) = contract.shared_core;
-    auto& air = leader_intent_air_owner_slice(intent);
+    auto &air = leader_intent_air_owner_slice(intent);
     air.phase_id = contract.phase_id;
     air.element_phase_id = contract.element_phase_id;
     air.formation_mode_id = contract.formation_mode_id;
@@ -1095,44 +957,34 @@ inline void apply_leader_intent_maintained_batch_contract_to_compatibility_shell
     air.form_offset_y = contract.air_formation.form_offset_y;
     air.form_offset_z = contract.air_formation.form_offset_z;
 
-    auto& naval = leader_intent_naval_owner_slice(intent);
-    naval.warfare_role_code =
-        contract.naval_command_authority.warfare_role_code;
+    auto &naval = leader_intent_naval_owner_slice(intent);
+    naval.warfare_role_code = contract.naval_command_authority.warfare_role_code;
     naval.officer_in_tactical_command =
         contract.naval_command_authority.officer_in_tactical_command;
 
-    auto& ground = leader_intent_ground_owner_slice(intent);
-    ground.ground_status_phase =
-        contract.ground_static_status.ground_status_phase;
+    auto &ground = leader_intent_ground_owner_slice(intent);
+    ground.ground_status_phase = contract.ground_static_status.ground_status_phase;
     ground.ground_task_mode = contract.ground_static_status.ground_task_mode;
     ground.objective_area_id = contract.ground_static_status.objective_area_id;
     ground.objective_node_id = contract.ground_static_status.objective_node_id;
-    ground.ground_commander_id =
-        contract.ground_static_status.ground_commander_id;
-    ground.tactical_cadence_hz =
-        contract.ground_static_status.tactical_cadence_hz;
+    ground.ground_commander_id = contract.ground_static_status.ground_commander_id;
+    ground.tactical_cadence_hz = contract.ground_static_status.tactical_cadence_hz;
 }
 
 [[nodiscard]] inline LeaderIntentCompatibilityTransportShell
 leader_intent_compatibility_shell_from_maintained_batch_contract(
-    const LeaderIntentMaintainedBatchContract& contract
-) noexcept {
+    const LeaderIntentMaintainedBatchContract &contract) noexcept {
     LeaderIntentCompatibilityTransportShell compatibility_shell{};
-    apply_leader_intent_maintained_batch_contract_to_compatibility_shell(
-        compatibility_shell,
-        contract
-    );
+    apply_leader_intent_maintained_batch_contract_to_compatibility_shell(compatibility_shell,
+                                                                         contract);
     return compatibility_shell;
 }
 
 struct WorldLeaderIntentMaintainedAssignment {
     using contract_type = LeaderIntentMaintainedBatchContract;
-    static constexpr bool kMaintainedBatchTruth =
-        contract_type::kMaintainedBatchTruth;
-    static_assert(
-        kMaintainedBatchTruth,
-        "WorldLeaderIntentMaintainedAssignment transports only the controlled LeaderIntent maintained batch contract."
-    );
+    static constexpr bool kMaintainedBatchTruth = contract_type::kMaintainedBatchTruth;
+    static_assert(kMaintainedBatchTruth, "WorldLeaderIntentMaintainedAssignment transports only "
+                                         "the controlled LeaderIntent maintained batch contract.");
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
@@ -1141,12 +993,10 @@ struct WorldLeaderIntentMaintainedAssignment {
 
 struct WorldPilotReportAssignment {
     using shell_type = PilotReportCompatibilityTransportShell;
-    static constexpr bool kCompatibilityTransportShell =
-        kPilotReportCompatibilityTransportShell;
+    static constexpr bool kCompatibilityTransportShell = kPilotReportCompatibilityTransportShell;
     static_assert(
         kCompatibilityTransportShell,
-        "WorldPilotReportAssignment transports only the PilotReport compatibility shell."
-    );
+        "WorldPilotReportAssignment transports only the PilotReport compatibility shell.");
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
@@ -1169,16 +1019,12 @@ struct PilotReportMaintainedBatchContract {
     naval_command_authority_type naval_command_authority{};
     ground_static_status_type ground_static_status{};
 
-    static_assert(
-        kMaintainedBatchTruth,
-        "PilotReportMaintainedBatchContract is the controlled PilotReport maintained batch read/write shape."
-    );
+    static_assert(kMaintainedBatchTruth, "PilotReportMaintainedBatchContract is the controlled "
+                                         "PilotReport maintained batch read/write shape.");
 };
 
-[[nodiscard]] inline PilotReportMaintainedBatchContract
-pilot_report_maintained_batch_contract(
-    const PilotReportCompatibilityTransportShell& report
-) noexcept {
+[[nodiscard]] inline PilotReportMaintainedBatchContract pilot_report_maintained_batch_contract(
+    const PilotReportCompatibilityTransportShell &report) noexcept {
     return {
         .shared_core = pilot_report_shared_core(report),
         .air = pilot_report_air_owner_slice(report),
@@ -1188,103 +1034,82 @@ pilot_report_maintained_batch_contract(
 }
 
 inline void apply_pilot_report_maintained_batch_contract_to_compatibility_shell(
-    PilotReportCompatibilityTransportShell& report,
-    const PilotReportMaintainedBatchContract& contract
-) noexcept {
+    PilotReportCompatibilityTransportShell &report,
+    const PilotReportMaintainedBatchContract &contract) noexcept {
     pilot_report_shared_core(report) = contract.shared_core;
     pilot_report_air_owner_slice(report) = contract.air;
-    auto& naval = pilot_report_naval_owner_slice(report);
-    naval.warfare_role_code =
-        contract.naval_command_authority.warfare_role_code;
+    auto &naval = pilot_report_naval_owner_slice(report);
+    naval.warfare_role_code = contract.naval_command_authority.warfare_role_code;
     naval.officer_in_tactical_command =
         contract.naval_command_authority.officer_in_tactical_command;
-    auto& ground = pilot_report_ground_owner_slice(report);
-    ground.ground_status_phase =
-        contract.ground_static_status.ground_status_phase;
+    auto &ground = pilot_report_ground_owner_slice(report);
+    ground.ground_status_phase = contract.ground_static_status.ground_status_phase;
     ground.ground_task_mode = contract.ground_static_status.ground_task_mode;
     ground.objective_area_id = contract.ground_static_status.objective_area_id;
     ground.objective_node_id = contract.ground_static_status.objective_node_id;
-    ground.ground_commander_id =
-        contract.ground_static_status.ground_commander_id;
-    ground.tactical_cadence_hz =
-        contract.ground_static_status.tactical_cadence_hz;
+    ground.ground_commander_id = contract.ground_static_status.ground_commander_id;
+    ground.tactical_cadence_hz = contract.ground_static_status.tactical_cadence_hz;
     ground.readiness_ratio = contract.ground_static_status.readiness_ratio;
 }
 
 [[nodiscard]] inline PilotReportCompatibilityTransportShell
 pilot_report_compatibility_shell_from_maintained_batch_contract(
-    const PilotReportMaintainedBatchContract& contract
-) noexcept {
+    const PilotReportMaintainedBatchContract &contract) noexcept {
     PilotReportCompatibilityTransportShell compatibility_shell{};
-    apply_pilot_report_maintained_batch_contract_to_compatibility_shell(
-        compatibility_shell,
-        contract
-    );
+    apply_pilot_report_maintained_batch_contract_to_compatibility_shell(compatibility_shell,
+                                                                        contract);
     return compatibility_shell;
 }
 
 struct WorldPilotReportMaintainedAssignment {
     using contract_type = PilotReportMaintainedBatchContract;
-    static constexpr bool kMaintainedBatchTruth =
-        contract_type::kMaintainedBatchTruth;
-    static_assert(
-        kMaintainedBatchTruth,
-        "WorldPilotReportMaintainedAssignment transports only the controlled PilotReport maintained batch contract."
-    );
+    static constexpr bool kMaintainedBatchTruth = contract_type::kMaintainedBatchTruth;
+    static_assert(kMaintainedBatchTruth, "WorldPilotReportMaintainedAssignment transports only the "
+                                         "controlled PilotReport maintained batch contract.");
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
     contract_type pilot_report{};
 };
 
-[[nodiscard]] inline const MissionCommandCompatibilityTransportShell&
+[[nodiscard]] inline const MissionCommandCompatibilityTransportShell &
 world_batch_assignment_compatibility_shell(
-    const WorldMissionCommandAssignment& assignment
-) noexcept {
+    const WorldMissionCommandAssignment &assignment) noexcept {
     return assignment.command;
 }
 
-[[nodiscard]] inline MissionCommandCompatibilityTransportShell&
-world_batch_assignment_compatibility_shell(
-    WorldMissionCommandAssignment& assignment
-) noexcept {
+[[nodiscard]] inline MissionCommandCompatibilityTransportShell &
+world_batch_assignment_compatibility_shell(WorldMissionCommandAssignment &assignment) noexcept {
     return assignment.command;
 }
 
-[[nodiscard]] inline const MissionCommandMaintainedBatchContract&
+[[nodiscard]] inline const MissionCommandMaintainedBatchContract &
 world_mission_command_maintained_batch_contract(
-    const WorldMissionCommandMaintainedAssignment& assignment
-) noexcept {
+    const WorldMissionCommandMaintainedAssignment &assignment) noexcept {
     return assignment.mission_command;
 }
 
-[[nodiscard]] inline MissionCommandMaintainedBatchContract&
+[[nodiscard]] inline MissionCommandMaintainedBatchContract &
 world_mission_command_maintained_batch_contract(
-    WorldMissionCommandMaintainedAssignment& assignment
-) noexcept {
+    WorldMissionCommandMaintainedAssignment &assignment) noexcept {
     return assignment.mission_command;
 }
 
-[[nodiscard]] inline const TaskOrderMaintainedBatchContract&
+[[nodiscard]] inline const TaskOrderMaintainedBatchContract &
 world_task_order_maintained_batch_contract(
-    const WorldTaskOrderMaintainedAssignment& assignment
-) noexcept {
+    const WorldTaskOrderMaintainedAssignment &assignment) noexcept {
     return assignment.task_order;
 }
 
-[[nodiscard]] inline TaskOrderMaintainedBatchContract&
-world_task_order_maintained_batch_contract(
-    WorldTaskOrderMaintainedAssignment& assignment
-) noexcept {
+[[nodiscard]] inline TaskOrderMaintainedBatchContract &world_task_order_maintained_batch_contract(
+    WorldTaskOrderMaintainedAssignment &assignment) noexcept {
     return assignment.task_order;
 }
 
 [[nodiscard]] inline WorldTaskOrderMaintainedAssignment
 project_world_task_order_maintained_batch_assignment(
-    std::uint64_t world_index,
-    std::uint64_t entity_id,
-    const TaskOrderCompatibilityTransportShell& order
-) noexcept {
+    std::uint64_t world_index, std::uint64_t entity_id,
+    const TaskOrderCompatibilityTransportShell &order) noexcept {
     return {
         .world_index = world_index,
         .entity_id = entity_id,
@@ -1292,59 +1117,47 @@ project_world_task_order_maintained_batch_assignment(
     };
 }
 
-[[nodiscard]] inline const LeaderIntentCompatibilityTransportShell&
-world_batch_assignment_compatibility_shell(
-    const WorldLeaderIntentAssignment& assignment
-) noexcept {
+[[nodiscard]] inline const LeaderIntentCompatibilityTransportShell &
+world_batch_assignment_compatibility_shell(const WorldLeaderIntentAssignment &assignment) noexcept {
     return assignment.intent;
 }
 
-[[nodiscard]] inline LeaderIntentCompatibilityTransportShell&
-world_batch_assignment_compatibility_shell(
-    WorldLeaderIntentAssignment& assignment
-) noexcept {
+[[nodiscard]] inline LeaderIntentCompatibilityTransportShell &
+world_batch_assignment_compatibility_shell(WorldLeaderIntentAssignment &assignment) noexcept {
     return assignment.intent;
 }
 
-[[nodiscard]] inline const LeaderIntentMaintainedBatchContract&
+[[nodiscard]] inline const LeaderIntentMaintainedBatchContract &
 world_leader_intent_maintained_batch_contract(
-    const WorldLeaderIntentMaintainedAssignment& assignment
-) noexcept {
+    const WorldLeaderIntentMaintainedAssignment &assignment) noexcept {
     return assignment.leader_intent;
 }
 
-[[nodiscard]] inline LeaderIntentMaintainedBatchContract&
+[[nodiscard]] inline LeaderIntentMaintainedBatchContract &
 world_leader_intent_maintained_batch_contract(
-    WorldLeaderIntentMaintainedAssignment& assignment
-) noexcept {
+    WorldLeaderIntentMaintainedAssignment &assignment) noexcept {
     return assignment.leader_intent;
 }
 
-[[nodiscard]] inline const PilotReportCompatibilityTransportShell&
-world_batch_assignment_compatibility_shell(
-    const WorldPilotReportAssignment& assignment
-) noexcept {
+[[nodiscard]] inline const PilotReportCompatibilityTransportShell &
+world_batch_assignment_compatibility_shell(const WorldPilotReportAssignment &assignment) noexcept {
     return assignment.report;
 }
 
-[[nodiscard]] inline PilotReportCompatibilityTransportShell&
-world_batch_assignment_compatibility_shell(
-    WorldPilotReportAssignment& assignment
-) noexcept {
+[[nodiscard]] inline PilotReportCompatibilityTransportShell &
+world_batch_assignment_compatibility_shell(WorldPilotReportAssignment &assignment) noexcept {
     return assignment.report;
 }
 
-[[nodiscard]] inline const PilotReportMaintainedBatchContract&
+[[nodiscard]] inline const PilotReportMaintainedBatchContract &
 world_pilot_report_maintained_batch_contract(
-    const WorldPilotReportMaintainedAssignment& assignment
-) noexcept {
+    const WorldPilotReportMaintainedAssignment &assignment) noexcept {
     return assignment.pilot_report;
 }
 
-[[nodiscard]] inline PilotReportMaintainedBatchContract&
+[[nodiscard]] inline PilotReportMaintainedBatchContract &
 world_pilot_report_maintained_batch_contract(
-    WorldPilotReportMaintainedAssignment& assignment
-) noexcept {
+    WorldPilotReportMaintainedAssignment &assignment) noexcept {
     return assignment.pilot_report;
 }
 

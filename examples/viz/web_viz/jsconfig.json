@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "es2022",
+        "moduleResolution": "bundler",
+        "checkJs": false,
+        "noEmit": true,
+        "strict": false,
+        "strictNullChecks": false,
+        "paths": {
+            "three": ["./static/vendor/three/three.module.js"],
+            "three/addons/*": ["./static/vendor/three/addons/*"]
+        }
+    },
+    "include": ["static/js/**/*.js"],
+    "exclude": ["static/vendor/**"]
+}
