@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-27",
-      "english_hash": "06f675508201ba2d9f1fd3b4c82d6b0c48d89d0065434206df94927c4932451c",
-      "chinese_hash": "5204a4c0468fd0e356ae6d7340d959215cd27764c45e60356db4677d026a0e82"
+      "english_hash": "5106208c3ba82445c367be65eb2d79174f763cff973a1ed82325a1b3fd7b1402",
+      "chinese_hash": "34b86d1722620c149368255773bc5e31488e6e0fd5f4a90e7cbe25e89f4a504d"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -289,6 +289,15 @@
       "last_verified": "2026-07-26",
       "english_hash": "611ba350b05c8e8e3a6bbfc46739af484adbf459d84a4bf5bcdaaaf586cc88d6",
       "chinese_hash": "62c03b5077c89e0e851eadabec6788e6550c3d15df6a944da3fdbcb517795033"
+    },
+    {
+      "pair_id": "plan/unified_architecture_program/t9_authority_representation_adjudication_20260726",
+      "english": "docs/plan/unified_architecture_program/t9_authority_representation_adjudication_20260726.md",
+      "chinese": "docs/plan/unified_architecture_program/t9_authority_representation_adjudication_20260726.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-27",
+      "english_hash": "990eb6d9d011144ae267dc01948249cce3504b6768b145676a2c818be32df126",
+      "chinese_hash": "ffb948bc60118d570419f1355053f2b7347db52bf63ae28078ca0085ca0cb14d"
     },
     {
       "pair_id": "reference_artifacts",

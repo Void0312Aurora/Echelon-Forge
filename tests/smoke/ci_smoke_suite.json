@@ -19,6 +19,7 @@
     "tests/architecture/content/test_aero_tuning_fields_inc.py",
     "tests/architecture/agency/test_authority_registry_gate.py",
     "tests/architecture/agency/test_authority_default_single_source.py",
+    "tests/architecture/agency/test_authority_representation_boundary.py",
     "tests/architecture/governance/test_document_link_audit.py",
     "tests/architecture/governance/test_cpp_include_direction.py",
     "tests/architecture/information_state/test_g4_truth_read_ban.py",
