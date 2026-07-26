@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include "core/engine/world_batch_runtime.h"
+#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 #include "runtime/contracts/platform_capability_contracts.h"
@@ -1006,6 +1007,80 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("engagement_packet", &RuntimeWindowResult::engagement_packet)
         .def_rw("diagnostics_traces", &RuntimeWindowResult::diagnostics_traces);
 
+    // T10 evidence spine, slice 5: additive read surface for the WP15 replay
+    // contract types plus the fail-closed validator, so the maintained Python
+    // run can validate the envelope its own window products assembled
+    // (RuntimeFacade::build_maintained_replay_envelope). Nothing on an
+    // existing path constructs or consumes these bindings.
+    nb::class_<runtime::counterfactual::ReplaySnapshotRef>(m, "ReplaySnapshotRef")
+        .def(nb::init<>())
+        .def_rw("snapshot_version_ref",
+                &runtime::counterfactual::ReplaySnapshotRef::snapshot_version_ref);
+
+    nb::class_<runtime::counterfactual::ReplayBarrierRef>(m, "ReplayBarrierRef")
+        .def(nb::init<>())
+        .def_rw("barrier_id", &runtime::counterfactual::ReplayBarrierRef::barrier_id)
+        .def_rw("barrier_sequence", &runtime::counterfactual::ReplayBarrierRef::barrier_sequence)
+        .def_rw("barrier_detail", &runtime::counterfactual::ReplayBarrierRef::barrier_detail);
+
+    nb::class_<runtime::counterfactual::ReplayEventOrderRef>(m, "ReplayEventOrderRef")
+        .def(nb::init<>())
+        .def_rw("sort_key", &runtime::counterfactual::ReplayEventOrderRef::sort_key)
+        .def_rw("event_id", &runtime::counterfactual::ReplayEventOrderRef::event_id)
+        .def_rw("producer_node_id",
+                &runtime::counterfactual::ReplayEventOrderRef::producer_node_id);
+
+    nb::class_<runtime::counterfactual::ReplayFacadeProvenanceRef>(m, "ReplayFacadeProvenanceRef")
+        .def(nb::init<>())
+        .def_rw("packet_ref", &runtime::counterfactual::ReplayFacadeProvenanceRef::packet_ref)
+        .def_rw("packet_kind", &runtime::counterfactual::ReplayFacadeProvenanceRef::packet_kind)
+        .def_rw("information_state_source",
+                &runtime::counterfactual::ReplayFacadeProvenanceRef::information_state_source);
+
+    nb::class_<runtime::counterfactual::ReplayEnvelope>(m, "ReplayEnvelope")
+        .def(nb::init<>())
+        .def_rw("replay_envelope_id",
+                &runtime::counterfactual::ReplayEnvelope::replay_envelope_id)
+        .def_rw("run_id", &runtime::counterfactual::ReplayEnvelope::run_id)
+        .def_rw("episode_id", &runtime::counterfactual::ReplayEnvelope::episode_id)
+        .def_rw("has_deterministic_seed",
+                &runtime::counterfactual::ReplayEnvelope::has_deterministic_seed)
+        .def_rw("deterministic_seed",
+                &runtime::counterfactual::ReplayEnvelope::deterministic_seed)
+        .def_rw("has_source_time", &runtime::counterfactual::ReplayEnvelope::has_source_time)
+        .def_rw("source_time_s", &runtime::counterfactual::ReplayEnvelope::source_time_s)
+        .def_rw("snapshot_ref", &runtime::counterfactual::ReplayEnvelope::snapshot_ref)
+        .def_rw("barrier_ref", &runtime::counterfactual::ReplayEnvelope::barrier_ref)
+        .def_rw("event_order_ref", &runtime::counterfactual::ReplayEnvelope::event_order_ref)
+        .def_rw("facade_provenance_ref",
+                &runtime::counterfactual::ReplayEnvelope::facade_provenance_ref)
+        .def_rw("snapshot_restore_supported",
+                &runtime::counterfactual::ReplayEnvelope::snapshot_restore_supported)
+        .def_rw("restore_support_boundary",
+                &runtime::counterfactual::ReplayEnvelope::restore_support_boundary);
+
+    nb::class_<runtime::counterfactual::ReplayContractValidationResult>(
+        m, "ReplayContractValidationResult")
+        .def(nb::init<>())
+        .def_rw("valid", &runtime::counterfactual::ReplayContractValidationResult::valid)
+        .def_rw("errors", &runtime::counterfactual::ReplayContractValidationResult::errors)
+        .def_rw("rejection_reason",
+                &runtime::counterfactual::ReplayContractValidationResult::rejection_reason);
+
+    nb::class_<runtime::counterfactual::MaintainedReplayEnvelopeResult>(
+        m, "MaintainedReplayEnvelopeResult")
+        .def(nb::init<>())
+        .def_rw("admitted", &runtime::counterfactual::MaintainedReplayEnvelopeResult::admitted)
+        .def_rw("envelope", &runtime::counterfactual::MaintainedReplayEnvelopeResult::envelope)
+        .def_rw("rejection_reason",
+                &runtime::counterfactual::MaintainedReplayEnvelopeResult::rejection_reason)
+        .def_rw("errors", &runtime::counterfactual::MaintainedReplayEnvelopeResult::errors)
+        .def_rw("evidence_refs",
+                &runtime::counterfactual::MaintainedReplayEnvelopeResult::evidence_refs);
+
+    m.def("validate_replay_envelope", &runtime::counterfactual::validate_replay_envelope,
+          nb::arg("envelope"));
+
     nb::class_<WorldTerrainAssignment> world_terrain_assignment_class(
         m, "WorldTerrainAssignment");
     world_terrain_assignment_class.def(nb::init<>());
@@ -1319,5 +1394,17 @@ void bind_runtime(nb::module_ &m) {
         // Not wired into any existing export path; gated against the Python
         // registry by the G4 export-parity architecture test.
         .def("describe_maintained_observation_view",
-             &RuntimeFacade::describe_maintained_observation_view);
+             &RuntimeFacade::describe_maintained_observation_view)
+        // T10 evidence spine, slice 5: additive read-only maintained-run
+        // replay-envelope producer. Not wired into any existing path; only
+        // meaningful against window evidence stamped by the I59 opt-in
+        // (use_facade_evidence_producers=True) adapter path. See the
+        // declaration comment in runtime_facade.h for the field sources, the
+        // "replay:maintained:*" id namespace, and the opt-in
+        // `run_snapshot_version` VA-2 qualification (default 0 = off, keeping
+        // the packet's per-export provenance string byte-identical).
+        .def("build_maintained_replay_envelope",
+             &RuntimeFacade::build_maintained_replay_envelope, nb::arg("window_result"),
+             nb::arg("run_id"), nb::arg("episode_id"), nb::arg("deterministic_seed"),
+             nb::arg("run_snapshot_version") = 0);
 }

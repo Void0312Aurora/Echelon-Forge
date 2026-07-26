@@ -131,6 +131,33 @@ inline constexpr std::string_view kRuntimeExperimentSupportPromotionRejection =
     "counterfactual_experiment_support_promotion_forbidden";
 inline constexpr std::string_view kRuntimeExperimentBranchRejected =
     "counterfactual_experiment_branch_rejected";
+// T10 slice 5: fail-closed rejection reasons of the maintained-run
+// replay-envelope producer (RuntimeFacade::build_maintained_replay_envelope).
+inline constexpr std::string_view kMaintainedReplayEnvelopeRunIdRequired =
+    "maintained_replay_envelope_run_id_required";
+inline constexpr std::string_view kMaintainedReplayEnvelopeEpisodeIdRequired =
+    "maintained_replay_envelope_episode_id_required";
+inline constexpr std::string_view kMaintainedReplayEnvelopeMissingObservationProvenance =
+    "maintained_replay_envelope_observation_packet_provenance_missing";
+inline constexpr std::string_view kMaintainedReplayEnvelopeMissingTraceIds =
+    "maintained_replay_envelope_engagement_trace_ids_missing";
+inline constexpr std::string_view kMaintainedReplayEnvelopeTraceIdsNotRunMinted =
+    "maintained_replay_envelope_trace_ids_not_minted_by_this_run";
+inline constexpr std::string_view kMaintainedReplayEnvelopeMissingWindowCommitBarrier =
+    "maintained_replay_envelope_window_commit_barrier_missing";
+inline constexpr std::string_view kMaintainedReplayEnvelopeMissingProducerNode =
+    "maintained_replay_envelope_engagement_producer_node_missing";
+inline constexpr std::string_view kMaintainedReplayEnvelopeSourceTimeNotFinite =
+    "maintained_replay_envelope_source_time_not_finite";
+inline constexpr std::string_view kMaintainedReplayEnvelopeRunSnapshotNotRunMinted =
+    "maintained_replay_envelope_run_snapshot_version_not_minted_by_this_run";
+inline constexpr std::string_view kMaintainedReplayEnvelopeProducerEvidenceLabel =
+    "RuntimeFacade.build_maintained_replay_envelope";
+// T10 slice 5 / VA-2: infix joining the observation packet's per-export
+// provenance string to the run-global monotone snapshot version, used only on
+// the opt-in run-global qualification path (default off keeps the packet string
+// byte-identical).
+inline constexpr std::string_view kMaintainedReplayEnvelopeRunSnapshotInfix = ":run_snapshot:";
 
 inline bool runtime_string_blank(const std::string &value) {
     return value.empty() || std::all_of(value.begin(), value.end(),

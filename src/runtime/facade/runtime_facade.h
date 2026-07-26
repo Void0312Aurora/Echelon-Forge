@@ -12,6 +12,10 @@ class WorldBatchRuntime;
 struct WorldBatchVisualBindingCompatibilityScene;
 struct RecentEngagementEvents;
 
+namespace runtime::counterfactual {
+struct MaintainedReplayEnvelopeResult;
+} // namespace runtime::counterfactual
+
 class RuntimeFacade {
   public:
     explicit RuntimeFacade(std::size_t world_count = 0);
@@ -173,6 +177,98 @@ class RuntimeFacade {
     std::uint64_t peek_next_run_snapshot_version() const;
     std::uint64_t allocate_trace_id();                           // VA-8
     std::uint64_t peek_next_trace_id() const;
+
+    // --- T10 evidence spine, slice 5: maintained-run replay-envelope producer
+    //
+    // NEW additive read-only producer (census section 3 step 5). It assembles a
+    // runtime::counterfactual::ReplayEnvelope from a maintained run's REAL
+    // window products -- the RuntimeWindowResult returned by run_window --
+    // instead of the synthetic request/snapshot fields the two existing
+    // envelope assemblies use (replay_envelope_from_experiment_request and
+    // runtime_counterfactual_restore_boundary_for_snapshot, both file-local to
+    // runtime_facade_counterfactual.cpp and both untouched by this slice).
+    //
+    // Real-evidence field sources (fail-closed when absent):
+    //   * snapshot_ref.snapshot_version_ref / facade_provenance_ref.packet_ref
+    //     copy the run-produced provenance strings on the exported observation
+    //     packet ("global:{snapshot_version}" / "obs:{snapshot_version}",
+    //     apply_observation_packet_provenance) -- the packet's real
+    //     snapshot_version embedding, not a re-derived constant.
+    //   * facade_provenance_ref.information_state_source copies the observation
+    //     packet's own provenance struct (the run's real WP11 label + id lists).
+    //   * barrier_ref copies the window's real "window_commit" barrier record
+    //     (barrier_id + sequence from RuntimeWindowResult.barrier_trace) plus
+    //     the engagement packet's real barrier_detail.
+    //   * event_order_ref anchors on the engagement packet's trace_ids tail --
+    //     which the I59 opt-in adapter path stamps from the VA-8
+    //     allocate_trace_id producer -- as "event:trace:{id}", with the
+    //     packet's real producer_node_id.
+    //   * source_time_s echoes the window's real context.source_time_s.
+    //   * run_id / episode_id / deterministic_seed are the caller-owned run
+    //     identity (the run orchestrator owns them; the facade cannot mint a
+    //     more-real run identity), validated non-blank.
+    //
+    // Opt-in truth linkage (I59): the producer REQUIRES the window's trace ids
+    // to have been minted by THIS facade's VA-8 allocator (every id must be
+    // < peek_next_trace_id()); the default maintained path's placeholder
+    // trace_ids = [1] against an untouched allocator (peek == 1) fails closed
+    // with a named reason. A meaningful envelope therefore requires the
+    // RuntimeFacadeAdapter(use_facade_evidence_producers=True) opt-in path (or
+    // an equivalent caller that stamps allocator-minted ids).
+    //
+    // Envelope id namespace: "replay:maintained:{run_id}:trace:{trace_id}".
+    // Existing id spaces stay untouched and disjoint: "replay:facade:*" is the
+    // snapshot-derived restore-boundary space and remaining spaces are
+    // caller-authored (e.g. "replay:wp17f:*" fixtures); "replay:maintained:*"
+    // is verified unused at this baseline and is reserved for this producer.
+    //
+    // Restore claim: the maintained window path registers no counterfactual
+    // worldline snapshot, so the envelope honestly claims
+    // snapshot_restore_supported = false with the
+    // restore_unsupported_until_snapshot_restore_proof boundary (accepted by
+    // validate_replay_envelope; restore proof stays with the counterfactual
+    // restore path).
+    //
+    // Zero-wiring: nothing in the maintained runtime calls this method; it
+    // only READS the allocator cursors (peek) and mints nothing, so calling it
+    // is idempotent and every existing serialized value is byte-for-byte
+    // unchanged. The assembled envelope is validated with
+    // validate_replay_envelope before it is returned; rejection reasons are
+    // stable named strings (see runtime_facade_internal.h
+    // kMaintainedReplayEnvelope* constants).
+    // Snapshot identity (VA-2), opt-in and additive: by DEFAULT
+    // (`run_snapshot_version == 0`, the allocator's invalid sentinel)
+    // snapshot_ref.snapshot_version_ref is exactly the observation packet's own
+    // run-produced provenance string ("global:{packet.snapshot_version}").
+    // That value is real, but packet.snapshot_version is the PER-EXPORT
+    // sequence (next_snapshot_version(index) = index + 1, reset every export),
+    // which census VA-2 names explicitly: it is not run-globally unique, so two
+    // exports of one run carry the same "global:1" and the envelope's snapshot
+    // identity does not distinguish them.
+    //
+    // Passing a non-zero `run_snapshot_version` qualifies the ref with the VA-2
+    // run-global monotone version built in slice 3
+    // (allocate_run_snapshot_version), yielding
+    // "global:{packet_version}:run_snapshot:{run_global_version}" -- additive by
+    // construction: the existing per-export substring keeps its exact meaning
+    // and position as the prefix, and nothing is renamed, retyped, or dropped.
+    // The value must have been minted by THIS facade's VA-2 allocator (in
+    // [1, peek_next_run_snapshot_version())) or the producer fails closed with
+    // kMaintainedReplayEnvelopeRunSnapshotNotRunMinted -- the caller cannot
+    // inject an arbitrary snapshot identity. The maintained run recovers its
+    // own minted value from the window's real
+    // RuntimeWindowNodeExecutionRecord.source_snapshot_version ("snapshot:{n}",
+    // stamped by the I59 opt-in path), so this stays run-produced evidence
+    // rather than a caller-invented number.
+    //
+    // Because qualifying changes a serialized string, it follows the I59
+    // discipline: default off (this parameter defaults to 0), reached only
+    // through an explicit adapter opt-in, with a named fail-closed rejection.
+    runtime::counterfactual::MaintainedReplayEnvelopeResult
+    build_maintained_replay_envelope(const RuntimeWindowResult &window_result,
+                                     const std::string &run_id, const std::string &episode_id,
+                                     std::uint64_t deterministic_seed,
+                                     std::uint64_t run_snapshot_version = 0) const;
 
     // --- T8 information-state architecture, fourth slice / I60 -------------
     //

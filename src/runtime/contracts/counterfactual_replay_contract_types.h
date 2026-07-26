@@ -132,6 +132,24 @@ struct ReplayRestoreSupportResult {
     std::string rejection_reason;
 };
 
+// T10 evidence spine, slice 5: result of the maintained-run replay-envelope
+// producer (RuntimeFacade::build_maintained_replay_envelope). Unlike the two
+// synthetic envelope assemblies (replay_envelope_from_experiment_request and
+// runtime_counterfactual_restore_boundary_for_snapshot, both file-local to
+// runtime_facade_counterfactual.cpp), the envelope carried here is built from
+// a maintained run's real window products; `admitted` is fail-closed and only
+// true when the producer's real-evidence gates passed AND the assembled
+// envelope passed validate_replay_envelope. On rejection the partially
+// assembled envelope is NOT exposed (envelope stays default-constructed) so a
+// rejected result cannot leak half-real evidence refs.
+struct MaintainedReplayEnvelopeResult {
+    bool admitted = false;
+    ReplayEnvelope envelope{};
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+    std::vector<std::string> evidence_refs;
+};
+
 struct WorldlineBranchSupportResult {
     bool supported = false;
     std::string child_worldline_id;

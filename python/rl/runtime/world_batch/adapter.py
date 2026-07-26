@@ -607,6 +607,106 @@ class RuntimeFacadeAdapter:
             uses_compat_fallback=False,
         )
 
+    _RUN_SNAPSHOT_VERSION_PREFIX = "snapshot:"
+
+    @staticmethod
+    def _recover_run_snapshot_version(evidence: RuntimeWindowEvidence) -> int:
+        """Recover the window's own VA-2 run-global snapshot version, or 0.
+
+        The I59 opt-in path stamps ``input_snapshot_version = "snapshot:{n}"``
+        with ``n`` minted from the facade's VA-2 run-global monotone
+        ``allocate_run_snapshot_version``, and the window echoes it back on the
+        real executed-node records' ``source_snapshot_version``. Reading it back
+        out of the window's own products keeps the envelope's snapshot identity
+        run-produced evidence rather than a caller-invented number -- and the
+        C++ producer independently re-checks the value against the allocator
+        cursor, so a wrong recovery fails closed instead of being trusted.
+
+        Returns 0 (the producer's "leave the packet's per-export string alone"
+        default) when no node carries a ``"snapshot:{int}"`` version, which is
+        exactly the non-opt-in synthetic ``"obs:{world}:{entity}"`` shape.
+        """
+        recovered = 0
+        for node in getattr(evidence, "executed_nodes", None) or []:
+            version = str(getattr(node, "source_snapshot_version", "") or "")
+            if not version.startswith(RuntimeFacadeAdapter._RUN_SNAPSHOT_VERSION_PREFIX):
+                continue
+            suffix = version[len(RuntimeFacadeAdapter._RUN_SNAPSHOT_VERSION_PREFIX) :]
+            if not suffix.isdigit():
+                continue
+            recovered = max(recovered, int(suffix))
+        return recovered
+
+    def build_maintained_replay_envelope(
+        self,
+        *,
+        run_id: str,
+        episode_id: str,
+        deterministic_seed: int,
+        window_evidence: RuntimeWindowEvidence | None = None,
+        qualify_run_global_snapshot_version: bool = False,
+    ) -> Any:
+        """Build a ReplayEnvelope from a maintained window's real products.
+
+        New additive API (T10 evidence-spine census slice 5); nothing on the
+        default adapter path calls it. It forwards the window's
+        ``RuntimeWindowResult`` (``window_evidence`` when given, else the
+        adapter's :attr:`last_window_evidence`) to the facade producer
+        ``build_maintained_replay_envelope`` together with the caller-owned run
+        identity (``run_id`` / ``episode_id`` / the run's real setup
+        ``deterministic_seed``), and returns the fail-closed
+        ``MaintainedReplayEnvelopeResult`` (``admitted`` / ``envelope`` /
+        ``rejection_reason``).
+
+        The envelope is only meaningful over real minted evidence, so this
+        adapter seam requires ``use_facade_evidence_producers=True`` (I59): the
+        C++ producer independently fail-closes when the window's ``trace_ids``
+        were not minted by this run's VA-8 allocator, which is exactly the
+        default path's placeholder ``[1]``. The producer is read-only (it only
+        peeks the allocator cursors), so calling it never perturbs the run's
+        evidence sequences.
+
+        ``qualify_run_global_snapshot_version`` (default ``False``) opts into the
+        census VA-2 fix for the envelope's snapshot identity. Off, the envelope's
+        ``snapshot_ref.snapshot_version_ref`` is the observation packet's own
+        per-export provenance string (``"global:{n}"``), which is real but resets
+        every export and so is NOT run-globally unique. On, the window's own
+        run-global monotone version -- recovered from its real executed-node
+        records by :meth:`_recover_run_snapshot_version` and re-validated against
+        the allocator inside the producer -- qualifies the ref additively as
+        ``"global:{export_n}:run_snapshot:{run_global_n}"``. Because this changes
+        a serialized string it stays default-off behind this explicit flag, per
+        the census's additive-only red line.
+        """
+        if not self._use_facade_evidence_producers:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_replay_envelope requires "
+                "use_facade_evidence_producers=True: the maintained replay envelope "
+                "is only meaningful over real facade-minted evidence (I59 opt-in), "
+                "not the default placeholder trace_ids/input_snapshot_version"
+            )
+        if not hasattr(self.facade, "build_maintained_replay_envelope"):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_replay_envelope requires the "
+                "T10 slice-5 RuntimeFacade.build_maintained_replay_envelope binding"
+            )
+        evidence = self._last_window_evidence if window_evidence is None else window_evidence
+        if evidence is None or getattr(evidence, "window_result", None) is None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_replay_envelope requires a "
+                "completed maintained window (run_maintained_window) or an explicit "
+                "window_evidence argument"
+            )
+        return self.facade.build_maintained_replay_envelope(
+            evidence.window_result,
+            str(run_id),
+            str(episode_id),
+            int(deterministic_seed),
+            self._recover_run_snapshot_version(evidence)
+            if qualify_run_global_snapshot_version
+            else 0,
+        )
+
     def world_count(self) -> int:
         return int(self.facade.world_count())
 
