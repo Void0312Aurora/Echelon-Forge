@@ -699,6 +699,75 @@ git diff --check    -> 干净
 清单 fixture（删除 1 条、修订余下 5 条）与本台账小节。未触碰任何
 `python/**` 或 `examples/**`；无 CMake 目标改动。
 
+### 7.5 (f) 本迭代（2026-07-27）重裁：T1 schema 归属路线被堵死；该边维持搁置
+
+本迭代（队列 I81，T1/T3；激活门：I80 证据已于 `407eea22` 落地）针对第
+7.3 节的缓办重新提出了一个 I41 普查未直接回答的具体问题：
+`tools/maintenance/dto_schema` 能否接管被借用的类型，使两侧从同一来源
+逐字节等价地生成——就像 I33 交战族的 contracts 自有叶子
+（`src/runtime/contracts/detail/engagement_entity_ref.inc`，由
+`engagement_contracts.h` 与 `bindings_runtime.cpp` 包含，mission 沿策略
+允许的方向反向包含 contracts）单一来源化共享类型那样？裁决：**搁置**，
+基于本迭代对源码逐条核实的三点理由：
+
+1. **I33 模式要求字段清单叶子封闭；这里并不满足。** contracts 自有叶子
+   这一手法只在每个字段都是标量、字符串或其向量时可行，这样生成的
+   `.inc` 无需进一步包含即可在 `runtime/contracts` 内编译。
+   `StepEvaluationBatchEnvState` 按值嵌入第 7.3 节已普查的十个 mission
+   自有聚合类型，且其中第一个 `ExecutionEpisodeState`
+   （`core/mission/episode/execution_episode_state.h`）自身还嵌入来自
+   `core/geometry/spatial_query_runtime.h` 的
+   `std::vector<SpatialRouteWaypoint>`（另有来自 `components/` 的
+   `MissionCommand`，这一个是允许的）。`runtime_contracts` 策略允许的
+   目标集合仅有 `{components}`，因此 contracts 侧的定义除了第 7.3 节已
+   排除的 `runtime_contracts -> core_mission_*` 边之外，还需要新增
+   `runtime_contracts -> core_geometry` 边——这是 I41 普查尚未点名的一
+   个阻断项。
+2. **schema 生成的字段清单躲不开门禁。** include 方向扫描器把 `.inc`
+   文本包含当作一等边来计
+   （`tools/architecture/cpp_include_graph.py` 的 `SOURCE_SUFFIXES` 含
+   `.inc`），因此 contracts 侧的结构体若文本包含
+   `core/mission/runtime/detail/flight_shaping_shared_fields.inc`（即
+   `StepEvaluationBatchConfig` 与 `FlightShapingRuntimeInputs` 已共用的
+   双展开清单）或任何同级 mission 自有 `.inc`，只会在新位置以新指纹重
+   造违规。*字段清单*的逐字节等价生成可以做到；*include 图*的逐字节等
+   价闭合做不到。
+3. **唯一叶子封闭的片段不值得搬。** 单独搬 `StepEvaluationBatchConfig`
+   是可行的（只要共享的 flight-shaping `.inc` 也一并移到
+   `runtime/contracts/detail/`，mission 可以合法反向包含），但允许清单
+   指纹钉住的是 `execution_episode_batch_prepare.h` 这条 include，而
+   `env_state` 的类型仍然强制它存在；条目会原样存续、允许清单不会缩
+   减，这次搬移只会让 `StepEvaluationBatchConfig` 的 ABI 暴露在物理迁
+   移的扰动之下（成员顺序虽保持，但 mission 全体消费方都要跟着改），
+   换来的门禁进展为零。
+
+绑定面已于本迭代复核：`interfaces/python/bindings_episode.cpp` 中 57 次
+`def_rw` = 15（`StepEvaluationBatchConfig`）+ 42
+（`StepEvaluationBatchEnvState`），与 I41 普查一致无变化。
+
+搁置裁决的工件（本迭代写集）：`src/runtime/contracts/world_batch_contracts.h`
+include 现场的带日期裁决注释（该 include 从第 16 行移至第 34 行，允许
+清单指纹的 `line` 字段在同一次编辑中同步更新）；允许清单条目
+（`tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`，
+`allowlist_version` v2 -> v3），其 `reason` 追加了本次重裁、
+`owner`/`next_gate` 重新指向 T1 DTO 族收尾迁移；门禁文件
+`tests/architecture/governance/test_cpp_include_direction.py` 中新增的
+专用搁置边钉子测试
+（`test_the_contracts_to_mission_step_request_edge_stays_held_with_its_adjudication`），
+断言 `runtime_contracts` 组条目唯一、裁决标记齐全、include 现场注释存
+在、以及 15/42 的绑定拆分，使绑定漂移或第二条 contracts 违规都必须经
+过显式重裁（该门禁文件已注册于 `tests/smoke/ci_smoke_suite.json`，无需
+新增注册）；外加本节及其 `zh` 孪生。关闭该边的退出条件不变且已被机器
+钉住：由 T1 DTO 族收尾迁移搬移或单一来源化完整嵌套类型图、保持 57 绑
+定 parity，并显式编辑该钉子测试。依赖方向不得反转。
+
+验证（本工作树，`CMO_BUILD_DIR=D:\workshop\Research\EF-landing\build-local-win`，
+基线 `1a456e29`）：`pytest -q
+tests/architecture/governance/test_cpp_include_direction.py` -> 8 passed
+（既有 7 项 + 新增搁置边钉子）；
+`tools/maintenance/dto_schema/generate.py --check` -> 全部产物
+up-to-date；维护冒烟按惯例于本迭代落地时记录。
+
 ## 8. I57：T6 第二清偿包（七条处置）
 
 基线提交 `fae17eb8`；在本工作树上针对只读共享 CPU 快照核验

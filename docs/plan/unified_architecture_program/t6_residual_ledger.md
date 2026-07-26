@@ -791,6 +791,85 @@ Write set for this section's converged fix: `src/components/combat/common/missil
 amended) and this ledger section. No `python/**` or `examples/**` touched;
 no CMake target changes.
 
+### 7.5 (f) re-adjudicated this iteration (2026-07-27): the T1 schema-ownership route is foreclosed; the edge is held
+
+This iteration (queue I81, T1/T3; activation gate: the I80 evidence landed at
+`407eea22`) re-opened section 7.3's deferral with one specific question the
+I41 census had not directly answered: can `tools/maintenance/dto_schema`
+own the borrowed types so that both sides generate from one source
+byte-equivalently, the way the I33 engagement family's contracts-owned leaf
+(`src/runtime/contracts/detail/engagement_entity_ref.inc`, included by
+`engagement_contracts.h` and `bindings_runtime.cpp`, with mission including
+contracts back along the policy-allowed direction) single-sources shared
+types? Verdict: **held**, foreclosed on three grounds verified against
+source this iteration:
+
+1. **The I33 pattern requires a leaf-closed field list; this one is not.**
+   The contracts-owned-leaf trick works when every field is a scalar,
+   string, or vector thereof, so the generated `.inc` compiles inside
+   `runtime/contracts` without further includes. `StepEvaluationBatchEnvState`
+   embeds the ten mission-owned aggregates already censused in section 7.3,
+   and the first of them, `ExecutionEpisodeState`
+   (`core/mission/episode/execution_episode_state.h`), itself embeds
+   `std::vector<SpatialRouteWaypoint>` from
+   `core/geometry/spatial_query_runtime.h` (plus `MissionCommand` from
+   `components/`, which is permitted). `runtime_contracts`' policy-allowed
+   target set is `{components}` only, so a contracts-located definition
+   needs new `runtime_contracts -> core_geometry` edges in addition to the
+   `runtime_contracts -> core_mission_*` ones section 7.3 already ruled out
+   -- a blocker the I41 census had not yet named.
+2. **Schema-generated field lists do not evade the gate.** The
+   include-direction scanner counts `.inc` textual includes as first-class
+   edges (`SOURCE_SUFFIXES` includes `.inc` in
+   `tools/architecture/cpp_include_graph.py`), so a contracts-located
+   struct that textually includes
+   `core/mission/runtime/detail/flight_shaping_shared_fields.inc` (the
+   dual-expansion list already shared between `StepEvaluationBatchConfig`
+   and `FlightShapingRuntimeInputs`) or any sibling mission-owned `.inc`
+   would re-create the violation at the new location with a new
+   fingerprint. Byte-equivalent generation of the *field lists* is
+   achievable; byte-equivalent closure of the *include graph* is not.
+3. **The one leaf-closed fragment is not worth moving.**
+   `StepEvaluationBatchConfig` alone could relocate (it is flat once the
+   shared flight-shaping `.inc` also moves to `runtime/contracts/detail/`,
+   which mission may legally include back), but the allowlist fingerprint
+   pins the `execution_episode_batch_prepare.h` include, which
+   `env_state`'s type still forces; the entry would survive verbatim, the
+   allowlist would not shrink, and the move would expose the
+   `StepEvaluationBatchConfig` ABI (member order preserved but physical
+   relocation churn across every mission consumer) for zero gate progress.
+
+The binding surface was re-verified this iteration: 57 `def_rw` = 15
+(`StepEvaluationBatchConfig`) + 42 (`StepEvaluationBatchEnvState`) in
+`interfaces/python/bindings_episode.cpp`, unchanged from the I41 census.
+
+Held-verdict artifacts (this iteration's write set): a dated adjudication
+comment at the include site in `src/runtime/contracts/world_batch_contracts.h`
+(the include moved line 16 -> 34, so the allowlist fingerprint's `line`
+field was updated in the same edit); the allowlist entry
+(`tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`,
+`allowlist_version` v2 -> v3) with the re-adjudication appended to its
+`reason` and its `owner`/`next_gate` retargeted at the T1
+DTO-family-completion migration; a dedicated held-edge pin test in
+`tests/architecture/governance/test_cpp_include_direction.py`
+(`test_the_contracts_to_mission_step_request_edge_stays_held_with_its_adjudication`)
+asserting the single `runtime_contracts` entry, its adjudication markers,
+the include-site comment, and the 15/42 binding split, so binding drift or
+a second contracts violation forces explicit re-adjudication (the gate file
+is already registered in `tests/smoke/ci_smoke_suite.json`, so no new
+registration was needed); and this section plus its `zh` twin. The exit
+condition for closing the edge is unchanged and now machine-pinned: the T1
+DTO-family-completion migration that relocates or single-sources the full
+nested type graph with 57-binding parity, editing the pin test explicitly.
+The dependency direction is not to be reversed.
+
+Verification (this worktree, `CMO_BUILD_DIR=D:\workshop\Research\EF-landing\build-local-win`,
+baseline `1a456e29`): `pytest -q
+tests/architecture/governance/test_cpp_include_direction.py` -> 8 passed
+(7 pre-existing + the new held-edge pin);
+`tools/maintenance/dto_schema/generate.py --check` -> all artifacts
+up-to-date; maintained smoke recorded at this iteration's landing.
+
 ## 8. I57: T6 second residual-payoff pack (seven-item disposition)
 
 Baseline commit `fae17eb8`; verified on this worktree against the shared

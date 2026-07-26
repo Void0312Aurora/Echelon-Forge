@@ -217,6 +217,69 @@ def test_gate_rejects_an_injected_violation_not_covered_by_the_allowlist(tmp_pat
     assert unexpected == [], "expected the injected violation to be flagged as unexpected"
 
 
+def test_the_contracts_to_mission_step_request_edge_stays_held_with_its_adjudication() -> None:
+  """T1/T3 held-edge pin (re-adjudicated this iteration, 2026-07-27).
+
+  WorldExecutionEpisodeStepRequest (runtime/contracts/world_batch_contracts.h)
+  types its config/env_state fields as StepEvaluationBatchConfig/
+  StepEvaluationBatchEnvState, owned by core/mission/episode/
+  execution_episode_batch_prepare.h. The T1 schema-ownership route (dto_schema
+  single-sourcing per the I33 engagement-family contracts-owned-leaf pattern)
+  was evaluated and foreclosed: the env-state struct is not leaf-closed (ten
+  mission-owned aggregates by value, plus ExecutionEpisodeState's
+  core/geometry SpatialRouteWaypoint dependency, both outside
+  runtime_contracts' {components} target set), and the scanner counts .inc
+  textual includes as edges, so any contracts-located definition re-creates
+  the violation. This test pins the ratcheted entry and its binding surface;
+  the edge may only be closed by the T1 DTO-family-completion migration
+  editing this test explicitly, never by reversing the dependency."""
+  payload = _load_allowlist_payload()
+  contracts_entries = [
+    entry for entry in payload["entries"] if entry["from_group"] == "runtime_contracts"
+  ]
+  assert len(contracts_entries) == 1, (
+    "expected exactly one held runtime_contracts entry; a second contracts "
+    "violation must not shelter under the held (f) adjudication"
+  )
+
+  entry = contracts_entries[0]
+  assert entry["file"] == "src/runtime/contracts/world_batch_contracts.h"
+  assert entry["include"] == "core/mission/episode/execution_episode_batch_prepare.h"
+  assert entry["to_group"] == "core_mission_episode"
+  for marker in (
+    "Re-adjudicated 2026-07-27",
+    "SpatialRouteWaypoint",
+    "T1 DTO-family-completion",
+    "do not reverse the dependency",
+  ):
+    assert marker in entry["reason"], (
+      f"the held (f) entry's reason lost its adjudication marker {marker!r}; "
+      "re-adjudicate before weakening the record"
+    )
+
+  # The include site must carry the matching dated adjudication comment so the
+  # held verdict is visible where the coupling physically lives.
+  include_site = (REPO_ROOT / entry["file"]).read_text(encoding="utf-8")
+  assert "HELD include-direction edge" in include_site
+  assert "re-adjudicated this iteration, 2026-07-27" in include_site
+
+  # Binding-surface parity pin: the held verdict was adjudicated against a
+  # 57-field def_rw surface (15 config + 42 env-state) in bindings_episode.cpp.
+  # If either block drifts, the census underlying the held verdict is stale
+  # and the edge must be re-adjudicated, not silently kept.
+  bindings_text = (
+    REPO_ROOT / "src" / "interfaces" / "python" / "bindings_episode.cpp"
+  ).read_text(encoding="utf-8")
+
+  def _def_rw_count(class_token: str) -> int:
+    start = bindings_text.index(f"nb::class_<{class_token}>")
+    end = bindings_text.index(";", start)
+    return bindings_text.count(".def_rw(", start, end)
+
+  assert _def_rw_count("StepEvaluationBatchConfig") == 15
+  assert _def_rw_count("StepEvaluationBatchEnvState") == 42
+
+
 def test_direction_policy_groups_stay_in_sync_with_the_maintained_src_tree() -> None:
   """Every file under src/** must resolve to a known fine-grained group so
   the census/gate cannot silently ignore a newly-added top-level directory."""
