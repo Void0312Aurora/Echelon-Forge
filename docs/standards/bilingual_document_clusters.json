@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-22",
+  "generated_at": "2026-07-26",
   "root": "docs",
   "pairs": [
     {
@@ -178,9 +178,9 @@
       "english": "docs/plan/repository_consolidation/README.md",
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-07-22",
-      "english_hash": "686ee97462d1afaa0ab396382512eb0947796dafbaebe0605aa2463851bd9f5f",
-      "chinese_hash": "a6167f1d249cb083f9f1dcf77d12db4e6b695d45616cfebf8d4aea7f94ecc29d"
+      "last_verified": "2026-07-26",
+      "english_hash": "68306490de57f596b3c9aca306a55e4e2ef437452e4e9375078f52b6db86973b",
+      "chinese_hash": "c4f841f9017630e72fa63418d7a4db01deb2a05e3ed2cb0b4da1eab602fb5b3c"
     },
     {
       "pair_id": "plan/runtime_facade/README",

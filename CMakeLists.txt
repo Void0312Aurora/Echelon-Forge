@@ -73,10 +73,33 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(spdlog)
 
 # 3. nanobind (Python Bindings)
+#
+# The pinned v1.9.2 does not build with MinGW GCC on Windows: NB_EXPORT expands
+# to __declspec(dllexport) (default visibility) while NB_NAMESPACE attaches
+# visibility("hidden") for any __GNUC__ compiler, and GCC rejects the
+# contradiction ("'dllexport' implies default visibility, but 'class
+# nanobind::python_error' has already been declared with a different
+# visibility").  Upstream fixed this in commit bcd9360, first released in
+# v2.0.0, by restricting the hidden-visibility attribute to non-Windows GCC.
+#
+# Bumping to v2.0.0 is not currently viable: it changes the nb::shape and
+# ndarray/lambda-signature APIs that src/interfaces/python uses.  Until those
+# bindings are migrated, backport just the visibility guard.  The patch is a
+# no-op on MSVC and Linux GCC, which already take the intended code path.
+#
+# UPDATE_DISCONNECTED caveat: on CMake < 3.27 a future GIT_TAG bump may leave
+# an already-populated _deps/nanobind-src on the old revision, and the patch
+# script would still apply cleanly against the stale source instead of failing
+# closed.  Tag bumps therefore want a clean _deps (delete the nanobind-src /
+# nanobind-subbuild dirs before reconfiguring).
 FetchContent_Declare(
     nanobind
     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
     GIT_TAG        80a30c8efb093b14f0e744bc7f6a9ef34beb3f7f # v1.9.2
+    PATCH_COMMAND  "${CMAKE_COMMAND}"
+                   "-DNANOBIND_DEFS_HEADER=<SOURCE_DIR>/include/nanobind/nb_defs.h"
+                   -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/nanobind_mingw_visibility.cmake"
+    UPDATE_DISCONNECTED TRUE
 )
 FetchContent_MakeAvailable(nanobind)
 
