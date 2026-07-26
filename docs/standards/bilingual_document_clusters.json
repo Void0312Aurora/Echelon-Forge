@@ -179,8 +179,8 @@
       "chinese": "docs/plan/repository_consolidation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-26",
-      "english_hash": "73133a97caee8e0357de9808f7561676e0bfbd86fcb43ed8506a4c52f3b8ad74",
-      "chinese_hash": "f680e4d5492bd06c719aa52882a489c2b27802a7f822118235bc142160faf8e6"
+      "english_hash": "16b5ed7f404c9fd58675b2ecc2e601f27dd8e841e6ec063758e9d3617da61d7e",
+      "chinese_hash": "6132e6de826f2ff69b50ca95ce45d329e612c5d55ccdf084b637c16f800d50df"
     },
     {
       "pair_id": "plan/runtime_facade/README",
@@ -262,6 +262,15 @@
       "last_verified": "2026-07-21",
       "english_hash": "8f8b573b5c74ef50e492d5cbb08ae2c433d126a6d30754e03c92075736c3f704",
       "chinese_hash": "54a046f0b3e795a9faf9594ae6d6061479e509672ff8b469a9ec909b77d6840b"
+    },
+    {
+      "pair_id": "plan/unified_architecture_program/t2_learning_runtime_note_20260726",
+      "english": "docs/plan/unified_architecture_program/t2_learning_runtime_note_20260726.md",
+      "chinese": "docs/plan/unified_architecture_program/t2_learning_runtime_note_20260726.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-07-26",
+      "english_hash": "a66abfa5c6231531c4ade62b866f5e64482686ce0743268d77435f977beeb41e",
+      "chinese_hash": "773db28e7568c8e2bbce45942aa4009e40dd82498b7779b960d290f79aa2da8a"
     },
     {
       "pair_id": "plan/unified_architecture_program/t6_residual_ledger",
