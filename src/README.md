@@ -80,7 +80,7 @@ Lower layers may define data, models, and system logic. Upper layers own composi
 
 ## CMake Source Groups
 
-We still keep a single `ef_core` target, but the source files in `CMakeLists.txt` are already grouped along future target boundaries:
+`ef_core` is no longer the only maintained link unit: `content/` compiles into its own `ef_content` static archive (linked by `ef_core` one-way), and `runtime/facade` compiles into its own `ef_facade` static archive (which links `ef_core` one-way from above). The remaining source files in `CMakeLists.txt` stay grouped along the future target boundaries:
 
 - `EF_CORE_ENGINE_SOURCES`
 - `EF_CORE_GEOMETRY_SOURCES`
@@ -95,7 +95,7 @@ We still keep a single `ef_core` target, but the source files in `CMakeLists.txt
 - `EF_GPU_MAINTAINED_HELPER_SOURCES`
 - `EF_GPU_EXPERIMENT_SOURCES`
 
-New source files should first be placed into an explicit source group. Do not append `src/...` files directly to `add_library(ef_core)` or `nanobind_add_module(ef_py)`.
+New source files should first be placed into an explicit source group. Do not append `src/...` files directly to `add_library(ef_core)`, `add_library(ef_content)`, `add_library(ef_facade)`, or `nanobind_add_module(ef_py)`.
 
 ## Prohibitions
 

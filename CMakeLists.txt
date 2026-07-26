@@ -189,7 +189,6 @@ set(EF_CORE_SOURCES
     ${EF_CORE_ENGINE_SOURCES}
     ${EF_CORE_GEOMETRY_SOURCES}
     ${EF_CORE_MISSION_SOURCES}
-    ${EF_RUNTIME_FACADE_SOURCES}
     ${EF_MODEL_DEFAULT_SOURCES}
 )
 
@@ -245,8 +244,55 @@ target_link_libraries(ef_core PUBLIC
     Threads::Threads
 )
 
+# --- Facade Library (T3 second physical link-unit split, this iteration) ---
+# runtime/facade is the T3 unit whose split direction is the *inverse* of the
+# I46 content split: instead of a leaf below ef_core, the facade is the
+# application layer strictly ABOVE it.  The governance gates already prove the
+# direction is one-way -- nothing left inside ef_core (engine/geometry/mission/
+# models) may #include runtime/facade (see
+# test_facade_application_layer_has_no_incoming_edges_outside_its_permitted_callers),
+# while facade TUs call down into engine/mission freely.  The remaining named
+# T3 units (engine, mission) are NOT splittable yet: they are symbol-cyclic
+# through the ratcheted world_batch_runtime.h -> execution_episode_controller.h
+# edge (engine owns mission controllers by value), so cutting either one today
+# would manufacture a static-library cycle; that stays deferred to the T4
+# batch-wrapper design per the I41 allowlist verdicts.
+#
+# Because the facade sits on top, ef_core must NOT link ef_facade (that would
+# declare a cycle); instead the two consumers whose TUs reference facade
+# symbols (ef_py bindings and the ef_test facade suites) link ef_facade
+# directly and receive ef_core transitively, which also guarantees the
+# single-pass MinGW link order "consumer objects, ef_facade, ef_core, ..."
+# that facade's undefined engine/mission symbols require.  No source file
+# moves; every include spelling ("runtime/facade/...") is unchanged because
+# ef_facade re-exports the same src/ public include directory ef_core does.
+# The third-party link set mirrors ef_core's so each facade TU compiles in a
+# byte-identical environment to its previous in-ef_core compilation.
+add_library(ef_facade STATIC
+    ${EF_RUNTIME_FACADE_SOURCES}
+)
+
+target_include_directories(ef_facade PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# ef_core is listed first: facade TUs resolve engine/mission/content symbols
+# out of ef_core (and ef_content behind it), and nothing in ef_core calls back
+# into the facade, so this is the one allowed direction.  CMake derives the
+# "ef_facade before ef_core" final-link order from this edge automatically for
+# every downstream consumer.
+target_link_libraries(ef_facade PUBLIC
+    ef_core
+    flecs::flecs
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    Threads::Threads
+)
+
 # --- Standalone App ---
 # We keep src/main.cpp for local C++ testing, but now it needs to include/use SimulationKernel
+# (main.cpp consumes SimulationKernel directly and references no facade symbol,
+# so it keeps linking ef_core only.)
 add_executable(ef_app src/main.cpp)
 target_link_libraries(ef_app PRIVATE ef_core)
 
@@ -263,7 +309,15 @@ set(EF_PYTHON_BINDING_SOURCES
 nanobind_add_module(ef_py
     ${EF_PYTHON_BINDING_SOURCES}
 )
-target_link_libraries(ef_py PRIVATE ef_core)
+# bindings_runtime.cpp/bindings_gpu.cpp reference RuntimeFacade symbols, so the
+# bindings link the facade unit ahead of ef_core.  ef_core stays a *direct*
+# link item on purpose: the engine's compatibility path calls gpu:: helpers
+# (the ratcheted world_batch_runtime -> gpu edges) without a declared
+# ef_core -> ef_gpu_experiments dependency, and it is ef_core's direct-item
+# status that makes CMake repeat it after ef_gpu_experiments on the
+# single-pass MinGW link line.  Dropping it in favour of the transitive edge
+# through ef_facade could reorder that repetition away.
+target_link_libraries(ef_py PRIVATE ef_facade ef_core)
 
 # --- Experimental GPU Scaffolding ---
 set(EF_GPU_MAINTAINED_HELPER_SOURCES
@@ -392,7 +446,10 @@ set(EF_TEST_SOURCES
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})
-target_link_libraries(ef_test PRIVATE ef_core ef_gpu_experiments doctest::doctest)
+# test_runtime_facade_*.cpp reference RuntimeFacade symbols, so ef_test links
+# ef_facade ahead of ef_core; the remaining suites keep their direct ef_core /
+# ef_gpu_experiments edges unchanged.
+target_link_libraries(ef_test PRIVATE ef_facade ef_core ef_gpu_experiments doctest::doctest)
 target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # CTest entries for all doctest suites plus focused structural-failure lanes.
@@ -411,6 +468,7 @@ endif()
 set(EF_PROJECT_WARNING_TARGETS
     ef_core
     ef_content
+    ef_facade
     ef_app
     ef_py
     ef_gpu_experiments
