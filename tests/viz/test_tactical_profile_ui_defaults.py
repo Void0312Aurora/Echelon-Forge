@@ -5,13 +5,7 @@ from pathlib import Path
 
 from examples.viz.app.profile_loader import _normalize_ui_defaults, load_viz_profile
 
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-INDEX_HTML = REPO_ROOT / "examples" / "viz" / "web_viz" / "templates" / "index.html"
-
-
-def _index_text() -> str:
-  return INDEX_HTML.read_text(encoding="utf-8")
+from frontend_sources import frontend_text, js_text
 
 
 def test_viz_profile_loader_accepts_tactical_workspace_and_layer_defaults(tmp_path: Path) -> None:
@@ -120,17 +114,17 @@ def test_viz_profile_fixtures_expose_p4_defaults_and_current_naval_action_mode()
 
 
 def test_tactical_profile_ui_defaults_are_applied_without_scenario_mutation() -> None:
-  text = _index_text()
+  session = js_text("session")
 
-  assert "const nextWorkspace = String(ui.tactical_workspace || '').trim();" in text
-  assert "const hasProfileLayerDefaults = ui.tactical_layers && typeof ui.tactical_layers === 'object';" in text
-  assert "const nextMapOnly = typeof ui.map_only === 'boolean' ? ui.map_only : null;" in text
-  assert "mergeTacticalLayerSnapshot(workspaceLayerDefaults(baseWorkspace), ui.tactical_layers)" in text
-  assert "window.setTacticalWorkspace(targetWorkspace, { skipCapture: true, layers: profileLayers });" in text
-  assert "window.toggleMapOnlyMode(nextMapOnly)" in text
-  assert "captureActiveWorkspaceLayers();" in text
+  assert "const nextWorkspace = String(ui.tactical_workspace || '').trim();" in session
+  assert "const hasProfileLayerDefaults = ui.tactical_layers && typeof ui.tactical_layers === 'object';" in session
+  assert "const nextMapOnly = typeof ui.map_only === 'boolean' ? ui.map_only : null;" in session
+  assert "mergeTacticalLayerSnapshot(workspaceLayerDefaults(baseWorkspace), ui.tactical_layers)" in session
+  assert "window.setTacticalWorkspace(targetWorkspace, { skipCapture: true, layers: profileLayers });" in session
+  assert "window.toggleMapOnlyMode(nextMapOnly)" in session
+  assert "captureActiveWorkspaceLayers();" in session
 
-  assert "socket.emit('viz_load_profile'" in text
-  assert "socket.emit('viz_load_session'" in text
-  assert "scenario.environment =" not in text
-  assert "profile.ui_defaults =" not in text
+  assert "socket.emit('viz_load_profile'" in session
+  assert "socket.emit('viz_load_session'" in session
+  assert "scenario.environment =" not in frontend_text()
+  assert "profile.ui_defaults =" not in frontend_text()

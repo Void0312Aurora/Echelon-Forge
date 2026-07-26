@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 
-FIELD_NAMES: tuple[str, ...] = ('seeds', 'terrain_assignments', 'wind_assignments', 'zones', 'spawn_requests', 'typed_platform_spawn_requests', 'time_steps')
+FIELD_NAMES: tuple[str, ...] = ('seeds', 'terrain_assignments', 'wind_assignments', 'sun_assignments', 'zones', 'spawn_requests', 'typed_platform_spawn_requests', 'time_steps')
 
-WRITABLE_FIELD_NAMES: tuple[str, ...] = ('seeds', 'terrain_assignments', 'wind_assignments', 'zones', 'spawn_requests', 'typed_platform_spawn_requests', 'time_steps')
+WRITABLE_FIELD_NAMES: tuple[str, ...] = ('seeds', 'terrain_assignments', 'wind_assignments', 'sun_assignments', 'zones', 'spawn_requests', 'typed_platform_spawn_requests', 'time_steps')
 
 READONLY_FIELDS: frozenset[str] = frozenset()
 
@@ -14,6 +14,7 @@ FIELD_DEFAULTS: dict[str, tuple[str, str]] = {
     'seeds': ('object', "'{}'"),
     'terrain_assignments': ('object', "'{}'"),
     'wind_assignments': ('object', "'{}'"),
+    'sun_assignments': ('object', "'{}'"),
     'zones': ('object', "'{}'"),
     'spawn_requests': ('object', "'{}'"),
     'typed_platform_spawn_requests': ('object', "'{}'"),

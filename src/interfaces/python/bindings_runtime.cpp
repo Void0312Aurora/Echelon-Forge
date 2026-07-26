@@ -1130,6 +1130,12 @@ void bind_runtime(nb::module_ &m) {
     world_wind_assignment_class.def_rw(#name, &WorldWindAssignment::name);
 #include "runtime/contracts/detail/world_wind_assignment.inc"
 
+    nb::class_<WorldSunAssignment>(m, "WorldSunAssignment")
+        .def(nb::init<>())
+        .def_rw("world_index", &WorldSunAssignment::world_index)
+        .def_rw("azimuth_deg", &WorldSunAssignment::azimuth_deg)
+        .def_rw("elevation_deg", &WorldSunAssignment::elevation_deg);
+
     nb::class_<WorldZoneDefinition> world_zone_definition_class(m, "WorldZoneDefinition");
     world_zone_definition_class.def(nb::init<>());
 #define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value) \
@@ -1243,19 +1249,22 @@ void bind_runtime(nb::module_ &m) {
         .def("set_terrain_types_batch", &WorldBatchRuntime::set_terrain_types_batch,
              nb::arg("assignments"))
         .def("set_winds_batch", &WorldBatchRuntime::set_winds_batch, nb::arg("assignments"))
+        .def("set_suns_batch", &WorldBatchRuntime::set_suns_batch, nb::arg("assignments"))
         .def("clear_zones_batch", &WorldBatchRuntime::clear_zones_batch,
              nb::arg("world_indices") = std::vector<uint64_t>{})
         .def("add_zones_batch", &WorldBatchRuntime::add_zones_batch, nb::arg("zones"))
         .def("spawn_units_batch", &WorldBatchRuntime::spawn_units_batch, nb::arg("requests"))
         .def("apply_world_setup_batch", &WorldBatchRuntime::apply_world_setup_batch,
              nb::arg("seeds"), nb::arg("terrain_assignments"), nb::arg("wind_assignments"),
-             nb::arg("zones"), nb::arg("requests"), nb::arg("time_steps") = std::vector<double>{})
+             nb::arg("zones"), nb::arg("requests"), nb::arg("time_steps") = std::vector<double>{},
+             nb::arg("sun_assignments") = std::vector<WorldSunAssignment>{})
         .def("apply_world_layout", &WorldBatchRuntime::apply_world_layout, nb::arg("world_index"),
              nb::arg("seed"), nb::arg("terrain_type"), nb::arg("wind_speed_mps"),
              nb::arg("wind_dir_from_deg"), nb::arg("wind_shear_mps_per_km"),
              nb::arg("maritime_configured"), nb::arg("sea_state"), nb::arg("wave_heading_deg"),
              nb::arg("wave_period_s"), nb::arg("zones"), nb::arg("requests"),
-             nb::arg("time_steps") = std::vector<double>{})
+             nb::arg("time_steps") = std::vector<double>{}, nb::arg("sun_azimuth_deg") = 0.0,
+             nb::arg("sun_elevation_deg") = 45.0)
         .def("world_time_step", &WorldBatchRuntime::world_time_step, nb::arg("world_index"))
         .def("set_pilot_actions_batch", &WorldBatchRuntime::set_pilot_actions_batch,
              nb::arg("assignments"))
@@ -1354,7 +1363,8 @@ void bind_runtime(nb::module_ &m) {
         .def("step_batch", &RuntimeFacade::step_batch)
         .def("apply_world_setup_batch", &RuntimeFacade::apply_world_setup_batch, nb::arg("seeds"),
              nb::arg("terrain_assignments"), nb::arg("wind_assignments"), nb::arg("zones"),
-             nb::arg("requests"), nb::arg("time_steps") = std::vector<double>{})
+             nb::arg("requests"), nb::arg("time_steps") = std::vector<double>{},
+             nb::arg("sun_assignments") = std::vector<WorldSunAssignment>{})
         .def("apply_world_setup", &RuntimeFacade::apply_world_setup, nb::arg("request"))
         .def("apply_world_layout", &RuntimeFacade::apply_world_layout, nb::arg("request"))
         .def("world_time_step", &RuntimeFacade::world_time_step, nb::arg("world_index"))

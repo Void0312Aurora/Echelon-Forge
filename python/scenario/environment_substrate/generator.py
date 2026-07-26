@@ -624,6 +624,7 @@ def build_deterministic_generated_environment_manifest(
             "derived_seed": int(local_seed),
             "tile_id": tile_id,
             "covered_tile_ids": [tile_id],
+            "catalog_id": catalog.catalog_id,
             "catalog_ref": catalog.catalog_id,
             "catalog_schema_version": catalog.schema_version,
             "stage_id": "g0-k-fixture",

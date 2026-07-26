@@ -42,6 +42,14 @@ TACTICAL_WORKSPACE_ALIASES = {
     "modelinspect": "inspect3d",
 }
 TACTICAL_LAYER_ALIASES = {
+    "terrain": "terrain",
+    "heightfield": "terrain",
+    "water": "water",
+    "hydrology": "water",
+    "road": "roads",
+    "roads": "roads",
+    "building": "buildings",
+    "buildings": "buildings",
     "env": "environment",
     "environment": "environment",
     "route": "route",
@@ -294,6 +302,9 @@ def load_viz_profile(profile_ref: str, roots: Iterable[str] | None = None) -> di
     asset_registry = str(data.get("asset_registry") or "").strip()
     if asset_registry:
         asset_registry = _resolve_path(asset_registry, profile_dir=profile_dir) or ""
+    environment_bundle = str(data.get("environment_bundle") or "").strip()
+    if environment_bundle:
+        environment_bundle = _resolve_path(environment_bundle, profile_dir=profile_dir) or ""
 
     return {
         "path": _to_rel_if_possible(abs_path),
@@ -302,6 +313,7 @@ def load_viz_profile(profile_ref: str, roots: Iterable[str] | None = None) -> di
         "description": description,
         "scenario": scenario,
         "asset_registry": asset_registry,
+        "environment_bundle": environment_bundle,
         "session_overrides": session_overrides,
         "startup": startup,
         "ui_defaults": ui_defaults,
@@ -311,6 +323,7 @@ def load_viz_profile(profile_ref: str, roots: Iterable[str] | None = None) -> di
             "description": description,
             "scenario": scenario,
             "asset_registry": asset_registry,
+            "environment_bundle": environment_bundle,
             "startup": startup,
             "ui_defaults": ui_defaults,
         },

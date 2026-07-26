@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 
-FIELD_NAMES: tuple[str, ...] = ('world_index', 'seed', 'terrain_type', 'wind_speed_mps', 'wind_dir_from_deg', 'wind_shear_mps_per_km', 'maritime_configured', 'sea_state', 'wave_heading_deg', 'wave_period_s', 'zones', 'spawn_requests', 'time_steps')
+FIELD_NAMES: tuple[str, ...] = ('world_index', 'seed', 'terrain_type', 'wind_speed_mps', 'wind_dir_from_deg', 'wind_shear_mps_per_km', 'sun_azimuth_deg', 'sun_elevation_deg', 'maritime_configured', 'sea_state', 'wave_heading_deg', 'wave_period_s', 'zones', 'spawn_requests', 'time_steps')
 
-WRITABLE_FIELD_NAMES: tuple[str, ...] = ('world_index', 'seed', 'terrain_type', 'wind_speed_mps', 'wind_dir_from_deg', 'wind_shear_mps_per_km', 'maritime_configured', 'sea_state', 'wave_heading_deg', 'wave_period_s', 'zones', 'spawn_requests', 'time_steps')
+WRITABLE_FIELD_NAMES: tuple[str, ...] = ('world_index', 'seed', 'terrain_type', 'wind_speed_mps', 'wind_dir_from_deg', 'wind_shear_mps_per_km', 'sun_azimuth_deg', 'sun_elevation_deg', 'maritime_configured', 'sea_state', 'wave_heading_deg', 'wave_period_s', 'zones', 'spawn_requests', 'time_steps')
 
 READONLY_FIELDS: frozenset[str] = frozenset()
 
@@ -17,6 +17,8 @@ FIELD_DEFAULTS: dict[str, tuple[str, str]] = {
     'wind_speed_mps': ('float', '0.0'),
     'wind_dir_from_deg': ('float', '0.0'),
     'wind_shear_mps_per_km': ('float', '0.0'),
+    'sun_azimuth_deg': ('float', '0.0'),
+    'sun_elevation_deg': ('float', '45.0'),
     'maritime_configured': ('bool', 'False'),
     'sea_state': ('float', '0.0'),
     'wave_heading_deg': ('float', '0.0'),

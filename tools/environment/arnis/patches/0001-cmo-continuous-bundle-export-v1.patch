@@ -1,0 +1,3124 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 56c98ece01c2821dfb256fdc6519d7289093d366..cb0c1aee29c8dfeb09c3e570613650670adb7017 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -229,6 +229,7 @@ dependencies = [
+  "semver",
+  "serde",
+  "serde_json",
++ "sha2",
+  "sysinfo",
+  "tauri",
+  "tauri-build",
+diff --git a/Cargo.toml b/Cargo.toml
+index 1aa49dce4aaafcaddf560e8345c4efc08c9fa911..89015e1ad1803c5884c85c8358ec19ad4864d962 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -51,6 +51,7 @@ semver = "1.0.27"
+ parquet = { version = "59", default-features = false, features = ["snap", "zstd"] }
+ serde = { version = "1.0", features = ["derive"] }
+ serde_json = "1.0"
++sha2 = "0.10"
+ sysinfo = { version = "0.33", default-features = false, features = ["system"] }
+ tauri = { version = "2", optional = true }
+ tauri-plugin-log = { version = "2.6.0", optional = true }
+@@ -79,4 +80,4 @@ path = "assets/refresh_wikidata_index.rs"
+ # Freeze nbtx at the last pre-`NbtError`-rename commit; the pinned
+ # bedrockrs_proto_core leaves it unpinned so cargo update would break it.
+ [patch."https://github.com/bedrock-crustaceans/nbtx"]
+-nbtx = { git = "https://github.com/louis-e/nbtx", rev = "551c38ac74f2e68a07d3dbdd354faac0c0ac966e" }
+\ No newline at end of file
++nbtx = { git = "https://github.com/louis-e/nbtx", rev = "551c38ac74f2e68a07d3dbdd354faac0c0ac966e" }
+diff --git a/src/args.rs b/src/args.rs
+index 3f3ada1c76b5400501893fc280212f0161123038..7fef063ff5d943c7a851697ead290b45c8520982 100644
+--- a/src/args.rs
++++ b/src/args.rs
+@@ -24,6 +24,18 @@ pub struct Args {
+     #[arg(long = "output-dir", alias = "path")]
+     pub path: Option<PathBuf>,
+ 
++    /// Export a deterministic CMO environment bundle instead of a Minecraft world.
++    #[arg(long = "cmo-output-dir")]
++    pub cmo_output_dir: Option<PathBuf>,
++
++    /// Fail CMO export unless this elevation provider supplied the processed DEM.
++    #[arg(long = "cmo-require-elevation-provider")]
++    pub cmo_require_elevation_provider: Option<String>,
++
++    /// SHA-256 of the exact Arnis CMO exporter patch, supplied by the pinned adapter.
++    #[arg(long = "cmo-exporter-patch-sha256")]
++    pub cmo_exporter_patch_sha256: Option<String>,
++
+     /// Generate a Bedrock Edition world (.mcworld) instead of Java Edition
+     #[arg(long)]
+     pub bedrock: bool,
+@@ -174,11 +186,79 @@ pub fn validate_args(args: &Args) -> Result<(), String> {
+         return Err("Cannot use --bedrock and --luanti together.".to_string());
+     }
+ 
++    if args.cmo_output_dir.is_some() {
++        if args.path.is_some() {
++            return Err(
++                "--cmo-output-dir cannot be combined with --output-dir or --path.".to_string(),
++            );
++        }
++        if args.bedrock || args.luanti {
++            return Err(
++                "--cmo-output-dir cannot be combined with --bedrock or --luanti.".to_string(),
++            );
++        }
++        if !args.terrain {
++            return Err("--cmo-output-dir requires --terrain.".to_string());
++        }
++        if args.projection != crate::projection::ProjectionKind::WebMercator {
++            return Err("--cmo-output-dir requires --projection web_mercator.".to_string());
++        }
++        if (args.scale - 1.0).abs() > f64::EPSILON {
++            return Err("--cmo-output-dir currently requires --scale 1.".to_string());
++        }
++        if args.rotation.abs() > f64::EPSILON {
++            return Err("--cmo-output-dir currently requires --rotation 0.".to_string());
++        }
++        if args.overture {
++            return Err(
++                "--cmo-output-dir currently requires --overture=false so every vector source is frozen in the OSM input."
++                    .to_string(),
++            );
++        }
++        if args.file.is_none() {
++            return Err(
++                "--cmo-output-dir requires --file so the OSM source is frozen and checksummed before export."
++                    .to_string(),
++            );
++        }
++        if args
++            .cmo_require_elevation_provider
++            .as_deref()
++            .is_none_or(|value| value.trim().is_empty())
++        {
++            return Err("--cmo-output-dir requires --cmo-require-elevation-provider.".to_string());
++        }
++        if args
++            .cmo_exporter_patch_sha256
++            .as_deref()
++            .is_none_or(|value| {
++                value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit())
++            })
++        {
++            return Err(
++                "--cmo-output-dir requires a 64-hex --cmo-exporter-patch-sha256.".to_string(),
++            );
++        }
++    } else if args.cmo_require_elevation_provider.is_some()
++        || args.cmo_exporter_patch_sha256.is_some()
++    {
++        return Err("CMO exporter identity flags require --cmo-output-dir.".to_string());
++    }
++
+     if args.map_preview && args.luanti {
+         return Err("--map-preview is not supported for Luanti worlds.".to_string());
+     }
+ 
+-    if args.bedrock {
++    if args.cmo_output_dir.is_some() {
++        if let Some(ref path) = args.cmo_output_dir {
++            if path.exists() && !path.is_dir() {
++                return Err(format!(
++                    "CMO output path exists but is not a directory: {}",
++                    path.display()
++                ));
++            }
++        }
++    } else if args.bedrock {
+         // Bedrock: path is optional; if provided, it must be an existing directory
+         if let Some(ref path) = args.path {
+             if !path.exists() {
+@@ -438,6 +518,123 @@ mod tests {
+         // assert!(Args::try_parse_from(cmd.iter()).is_ok());
+     }
+ 
++    #[test]
++    fn test_cmo_export_accepts_only_frozen_phase_one_inputs() {
++        let tmpdir = tempfile::tempdir().unwrap();
++        let output = tmpdir.path().join("bundle");
++        let source = tmpdir.path().join("osm.json");
++        std::fs::write(&source, "{}").unwrap();
++        let cmd = [
++            "arnis",
++            "--bbox",
++            "1,2,3,4",
++            "--file",
++            source.to_str().unwrap(),
++            "--cmo-output-dir",
++            output.to_str().unwrap(),
++            "--cmo-require-elevation-provider",
++            "test_dem",
++            "--cmo-exporter-patch-sha256",
++            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
++            "--terrain",
++            "--projection",
++            "web_mercator",
++            "--overture=false",
++        ];
++        let args = Args::parse_from(cmd.iter());
++
++        assert!(args.path.is_none());
++        assert!(validate_args(&args).is_ok());
++    }
++
++    #[test]
++    fn test_cmo_export_rejects_unfrozen_or_transformed_inputs() {
++        let tmpdir = tempfile::tempdir().unwrap();
++        let output = tmpdir.path().join("bundle");
++        let source = tmpdir.path().join("osm.json");
++        std::fs::write(&source, "{}").unwrap();
++        let base = vec![
++            "arnis".to_string(),
++            "--bbox".to_string(),
++            "1,2,3,4".to_string(),
++            "--file".to_string(),
++            source.display().to_string(),
++            "--cmo-output-dir".to_string(),
++            output.display().to_string(),
++            "--cmo-require-elevation-provider".to_string(),
++            "test_dem".to_string(),
++            "--cmo-exporter-patch-sha256".to_string(),
++            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string(),
++            "--terrain".to_string(),
++            "--projection".to_string(),
++            "web_mercator".to_string(),
++            "--overture=false".to_string(),
++        ];
++
++        let mut cases = Vec::new();
++        let mut without_file = base.clone();
++        without_file.drain(3..5);
++        cases.push(without_file);
++        let mut without_terrain = base.clone();
++        without_terrain.retain(|value| value != "--terrain");
++        cases.push(without_terrain);
++        let mut with_rotation = base.clone();
++        with_rotation.extend(["--rotation".to_string(), "1".to_string()]);
++        cases.push(with_rotation);
++        let mut with_scale = base.clone();
++        with_scale.extend(["--scale".to_string(), "2".to_string()]);
++        cases.push(with_scale);
++        let mut with_overture = base.clone();
++        with_overture.retain(|value| value != "--overture=false");
++        cases.push(with_overture);
++
++        for command in cases {
++            let args = Args::parse_from(command);
++            assert!(validate_args(&args).is_err());
++        }
++    }
++
++    #[test]
++    fn test_cmo_export_rejects_ambiguous_output_or_standalone_provider_guard() {
++        let tmpdir = tempfile::tempdir().unwrap();
++        let output = tmpdir.path().join("bundle");
++        let source = tmpdir.path().join("osm.json");
++        std::fs::write(&source, "{}").unwrap();
++        let ambiguous = Args::parse_from([
++            "arnis",
++            "--bbox",
++            "1,2,3,4",
++            "--file",
++            source.to_str().unwrap(),
++            "--output-dir",
++            tmpdir.path().to_str().unwrap(),
++            "--cmo-output-dir",
++            output.to_str().unwrap(),
++            "--cmo-require-elevation-provider",
++            "test_dem",
++            "--cmo-exporter-patch-sha256",
++            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
++            "--terrain",
++            "--projection",
++            "web_mercator",
++            "--overture=false",
++        ]);
++        assert!(validate_args(&ambiguous).is_err());
++
++        let provider_without_export = Args::parse_from([
++            "arnis",
++            "--bbox",
++            "1,2,3,4",
++            "--output-dir",
++            tmpdir.path().to_str().unwrap(),
++            "--cmo-require-elevation-provider",
++            "test_dem",
++            "--cmo-exporter-patch-sha256",
++            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
++        ]);
++        assert!(validate_args(&provider_without_export).is_err());
++    }
++
+     #[test]
+     fn test_spawn_point_both_required() {
+         let tmpdir = tempfile::tempdir().unwrap();
+diff --git a/src/cmo_export.rs b/src/cmo_export.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..919a9209d8d070522c34374bc26ec4d95fe7863a
+--- /dev/null
++++ b/src/cmo_export.rs
+@@ -0,0 +1,2444 @@
++use crate::args::Args;
++use crate::coordinate_system::geographic::LLBBox;
++use crate::ground::Ground;
++use crate::osm_parser::{
++    OutlineSuppression, ProcessedElement, ProcessedMemberRole, ProcessedRelation, ProcessedWay,
++};
++use crate::projection::{Projection, WebMercatorProjection};
++use serde::{Deserialize, Serialize};
++use serde_json::{json, Value};
++use sha2::{Digest, Sha256};
++use std::collections::{BTreeMap, HashMap, HashSet};
++use std::error::Error;
++use std::fs::{self, File};
++use std::io::{BufReader, BufWriter, Read, Write};
++use std::path::{Path, PathBuf};
++
++const BUNDLE_CONTRACT_VERSION: &str = "arnis_cmo_bundle.v1";
++const FEATURE_SCHEMA: &str = "arnis_cmo_features";
++const FEATURE_SCHEMA_VERSION: u32 = 1;
++const EXPORTER_VERSION: &str = "cmo.phase1.v1";
++const EXPORTER_PATCH_ID: &str = "0001-cmo-continuous-bundle-export-v1";
++const ARNIS_UPSTREAM_REVISION: &str = "af521c99124b5e07ecba018ea54f2ac47b6441d5";
++const METERS_PER_BUILDING_LEVEL: f64 = 3.0;
++const METERS_PER_ROAD_LANE: f64 = 3.2;
++
++type ExportResult<T> = Result<T, Box<dyn Error>>;
++
++#[derive(Clone, Serialize)]
++struct FeatureGeometry {
++    r#type: String,
++    coordinates: Value,
++}
++
++#[derive(Clone, Serialize)]
++struct CmoFeature {
++    feature_id: String,
++    geometry: FeatureGeometry,
++    attributes: BTreeMap<String, Value>,
++    provenance: BTreeMap<String, Value>,
++    lineage: Value,
++}
++
++#[derive(Serialize)]
++struct CmoFeatureFile<'a> {
++    schema: &'static str,
++    schema_version: u32,
++    coordinate_frame: &'static str,
++    feature_class: &'a str,
++    features: &'a [CmoFeature],
++}
++
++#[derive(Clone, Serialize)]
++struct ArtifactDescriptor {
++    artifact_id: String,
++    kind: String,
++    path: String,
++    sha256: String,
++    byte_length: u64,
++    media_type: String,
++    #[serde(skip_serializing_if = "Option::is_none")]
++    dtype: Option<String>,
++    #[serde(skip_serializing_if = "Option::is_none")]
++    shape: Option<[usize; 2]>,
++    #[serde(skip_serializing_if = "Option::is_none")]
++    feature_class: Option<String>,
++    #[serde(skip_serializing_if = "Option::is_none")]
++    feature_count: Option<usize>,
++    metadata: BTreeMap<String, Value>,
++}
++
++#[derive(Clone, Copy, Debug, PartialEq)]
++struct MetricNode {
++    id: u64,
++    point: [f64; 2],
++}
++
++#[derive(Clone, Copy, Debug, PartialEq)]
++struct MetricBounds {
++    min_x: f64,
++    min_y: f64,
++    max_x: f64,
++    max_y: f64,
++}
++
++impl MetricBounds {
++    fn from_bbox(bbox: &LLBBox, projection: &WebMercatorProjection, northing_scale: f64) -> Self {
++        let corners = [
++            (bbox.min().lat(), bbox.min().lng()),
++            (bbox.min().lat(), bbox.max().lng()),
++            (bbox.max().lat(), bbox.min().lng()),
++            (bbox.max().lat(), bbox.max().lng()),
++        ];
++        let mut min_x = f64::INFINITY;
++        let mut min_y = f64::INFINITY;
++        let mut max_x = f64::NEG_INFINITY;
++        let mut max_y = f64::NEG_INFINITY;
++        for (lat, lon) in corners {
++            let (x, z) = projection.forward(lat, lon);
++            let y = -z * northing_scale;
++            min_x = min_x.min(x);
++            min_y = min_y.min(y);
++            max_x = max_x.max(x);
++            max_y = max_y.max(y);
++        }
++        Self {
++            min_x,
++            min_y,
++            max_x,
++            max_y,
++        }
++    }
++}
++
++struct MetricGeometryIndex {
++    ways: HashMap<u64, Vec<MetricNode>>,
++    bounds: MetricBounds,
++}
++
++#[derive(Deserialize)]
++struct RawOsmDocument {
++    elements: Vec<RawOsmElement>,
++}
++
++#[derive(Deserialize)]
++struct RawOsmElement {
++    #[serde(rename = "type")]
++    element_type: String,
++    id: u64,
++    lat: Option<f64>,
++    lon: Option<f64>,
++    nodes: Option<Vec<u64>>,
++}
++
++struct HashingReader<R> {
++    inner: R,
++    digest: Sha256,
++    byte_length: u64,
++}
++
++impl<R> HashingReader<R> {
++    fn new(inner: R) -> Self {
++        Self {
++            inner,
++            digest: Sha256::new(),
++            byte_length: 0,
++        }
++    }
++
++    fn finish(self) -> (String, u64) {
++        (format!("{:x}", self.digest.finalize()), self.byte_length)
++    }
++}
++
++impl<R: Read> Read for HashingReader<R> {
++    fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
++        let read = self.inner.read(buffer)?;
++        self.digest.update(&buffer[..read]);
++        self.byte_length += read as u64;
++        Ok(read)
++    }
++}
++
++fn load_metric_geometry(
++    path: &Path,
++    bbox: &LLBBox,
++) -> ExportResult<(MetricGeometryIndex, String, u64)> {
++    let file = File::open(path)?;
++    let mut reader = HashingReader::new(BufReader::new(file));
++    let document: RawOsmDocument = serde_json::from_reader(&mut reader)?;
++    let (sha256, byte_length) = reader.finish();
++    let origin_lat = (bbox.min().lat() + bbox.max().lat()) / 2.0;
++    let origin_lon = (bbox.min().lng() + bbox.max().lng()) / 2.0;
++    let projection = WebMercatorProjection::new(origin_lat, origin_lon, 1.0);
++    let northing_scale = origin_lat.to_radians().cos();
++    let bounds = MetricBounds::from_bbox(bbox, &projection, northing_scale);
++    let mut nodes = HashMap::new();
++    for element in &document.elements {
++        if element.element_type != "node" || nodes.contains_key(&element.id) {
++            continue;
++        }
++        let (Some(lat), Some(lon)) = (element.lat, element.lon) else {
++            continue;
++        };
++        let (x, z) = projection.forward(lat, lon);
++        nodes.insert(
++            element.id,
++            MetricNode {
++                id: element.id,
++                point: [x, -z * northing_scale],
++            },
++        );
++    }
++    let mut ways = HashMap::new();
++    for element in &document.elements {
++        if element.element_type != "way" || ways.contains_key(&element.id) {
++            continue;
++        }
++        let Some(node_ids) = &element.nodes else {
++            continue;
++        };
++        let metric_nodes: Vec<MetricNode> = node_ids
++            .iter()
++            .filter_map(|node_id| nodes.get(node_id).copied())
++            .collect();
++        if metric_nodes.len() >= 2 {
++            ways.insert(element.id, metric_nodes);
++        }
++    }
++    Ok((MetricGeometryIndex { ways, bounds }, sha256, byte_length))
++}
++
++fn normalized_tags(tags: &std::collections::HashMap<String, String>) -> BTreeMap<String, String> {
++    tags.iter()
++        .map(|(key, value)| (key.clone(), value.clone()))
++        .collect()
++}
++
++fn tags_value(tags: &std::collections::HashMap<String, String>) -> Value {
++    serde_json::to_value(normalized_tags(tags)).expect("string map serialization cannot fail")
++}
++
++fn source_provider(tags: &std::collections::HashMap<String, String>) -> &'static str {
++    if tags.get("source").map(String::as_str) == Some("overture_maps") {
++        "overture_maps"
++    } else {
++        "openstreetmap"
++    }
++}
++
++fn ring_coordinates(nodes: &[MetricNode]) -> Option<Vec<[f64; 2]>> {
++    let mut points: Vec<[f64; 2]> = nodes.iter().map(|node| node.point).collect();
++    points.dedup();
++    if points.len() < 4 || points.first() != points.last() {
++        return None;
++    }
++    Some(points)
++}
++
++fn clip_polygon_edge<Inside, Intersect>(
++    input: &[[f64; 2]],
++    inside: Inside,
++    intersect: Intersect,
++) -> Vec<[f64; 2]>
++where
++    Inside: Fn([f64; 2]) -> bool,
++    Intersect: Fn([f64; 2], [f64; 2]) -> [f64; 2],
++{
++    if input.is_empty() {
++        return Vec::new();
++    }
++    let mut output = Vec::new();
++    let mut previous = *input.last().expect("non-empty polygon");
++    let mut previous_inside = inside(previous);
++    for &current in input {
++        let current_inside = inside(current);
++        if current_inside {
++            if !previous_inside {
++                output.push(intersect(previous, current));
++            }
++            output.push(current);
++        } else if previous_inside {
++            output.push(intersect(previous, current));
++        }
++        previous = current;
++        previous_inside = current_inside;
++    }
++    output
++}
++
++fn vertical_intersection(a: [f64; 2], b: [f64; 2], x: f64) -> [f64; 2] {
++    let delta = b[0] - a[0];
++    let t = if delta.abs() <= f64::EPSILON {
++        0.0
++    } else {
++        (x - a[0]) / delta
++    };
++    [x, a[1] + t * (b[1] - a[1])]
++}
++
++fn horizontal_intersection(a: [f64; 2], b: [f64; 2], y: f64) -> [f64; 2] {
++    let delta = b[1] - a[1];
++    let t = if delta.abs() <= f64::EPSILON {
++        0.0
++    } else {
++        (y - a[1]) / delta
++    };
++    [a[0] + t * (b[0] - a[0]), y]
++}
++
++fn clipped_ring_coordinates(nodes: &[MetricNode], bounds: &MetricBounds) -> Option<Vec<[f64; 2]>> {
++    let closed = ring_coordinates(nodes)?;
++    let mut points = closed[..closed.len() - 1].to_vec();
++    points = clip_polygon_edge(
++        &points,
++        |point| point[0] >= bounds.min_x,
++        |a, b| vertical_intersection(a, b, bounds.min_x),
++    );
++    points = clip_polygon_edge(
++        &points,
++        |point| point[0] <= bounds.max_x,
++        |a, b| vertical_intersection(a, b, bounds.max_x),
++    );
++    points = clip_polygon_edge(
++        &points,
++        |point| point[1] >= bounds.min_y,
++        |a, b| horizontal_intersection(a, b, bounds.min_y),
++    );
++    points = clip_polygon_edge(
++        &points,
++        |point| point[1] <= bounds.max_y,
++        |a, b| horizontal_intersection(a, b, bounds.max_y),
++    );
++    points.dedup();
++    if points.len() < 3 {
++        return None;
++    }
++    points.push(points[0]);
++    Some(points)
++}
++
++fn clip_segment_to_bounds(
++    start: [f64; 2],
++    end: [f64; 2],
++    bounds: &MetricBounds,
++) -> Option<([f64; 2], [f64; 2])> {
++    let dx = end[0] - start[0];
++    let dy = end[1] - start[1];
++    let p = [-dx, dx, -dy, dy];
++    let q = [
++        start[0] - bounds.min_x,
++        bounds.max_x - start[0],
++        start[1] - bounds.min_y,
++        bounds.max_y - start[1],
++    ];
++    let mut enter = 0.0_f64;
++    let mut leave = 1.0_f64;
++    for (denominator, numerator) in p.into_iter().zip(q) {
++        if denominator.abs() <= f64::EPSILON {
++            if numerator < 0.0 {
++                return None;
++            }
++            continue;
++        }
++        let ratio = numerator / denominator;
++        if denominator < 0.0 {
++            enter = enter.max(ratio);
++        } else {
++            leave = leave.min(ratio);
++        }
++        if enter > leave {
++            return None;
++        }
++    }
++    Some((
++        [start[0] + enter * dx, start[1] + enter * dy],
++        [start[0] + leave * dx, start[1] + leave * dy],
++    ))
++}
++
++fn clipped_line_coordinates(nodes: &[MetricNode], bounds: &MetricBounds) -> Vec<Vec<[f64; 2]>> {
++    let mut parts: Vec<Vec<[f64; 2]>> = Vec::new();
++    for pair in nodes.windows(2) {
++        let Some((start, end)) = clip_segment_to_bounds(pair[0].point, pair[1].point, bounds)
++        else {
++            continue;
++        };
++        if start == end {
++            continue;
++        }
++        if let Some(current) = parts.last_mut() {
++            if current.last().copied() == Some(start) {
++                current.push(end);
++                current.dedup();
++                continue;
++            }
++        }
++        parts.push(vec![start, end]);
++    }
++    parts.retain(|part| part.len() >= 2);
++    parts
++}
++
++fn merge_metric_way_segments(ways: &mut Vec<Vec<MetricNode>>) {
++    loop {
++        let mut merged = false;
++        'outer: for left_index in 0..ways.len() {
++            if ways[left_index].is_empty() {
++                continue;
++            }
++            for right_index in (left_index + 1)..ways.len() {
++                if ways[right_index].is_empty() {
++                    continue;
++                }
++                let left_first = ways[left_index].first().map(|node| node.id);
++                let left_last = ways[left_index].last().map(|node| node.id);
++                let right_first = ways[right_index].first().map(|node| node.id);
++                let right_last = ways[right_index].last().map(|node| node.id);
++                let mut right = ways.remove(right_index);
++                if left_last == right_first {
++                    right.remove(0);
++                    ways[left_index].extend(right);
++                } else if left_last == right_last {
++                    right.reverse();
++                    right.remove(0);
++                    ways[left_index].extend(right);
++                } else if left_first == right_last {
++                    right.pop();
++                    right.extend(ways[left_index].drain(..));
++                    ways[left_index] = right;
++                } else if left_first == right_first {
++                    right.reverse();
++                    right.pop();
++                    right.extend(ways[left_index].drain(..));
++                    ways[left_index] = right;
++                } else {
++                    ways.insert(right_index, right);
++                    continue;
++                }
++                merged = true;
++                break 'outer;
++            }
++        }
++        if !merged {
++            break;
++        }
++    }
++}
++
++fn parse_measure_m(value: &str) -> Option<f64> {
++    let first = value.split(';').next()?.trim();
++    let normalized = first
++        .strip_suffix("meters")
++        .or_else(|| first.strip_suffix("meter"))
++        .or_else(|| first.strip_suffix('m'))
++        .unwrap_or(first)
++        .trim();
++    normalized
++        .parse::<f64>()
++        .ok()
++        .filter(|number| number.is_finite() && *number > 0.0)
++}
++
++fn parse_nonnegative_measure_m(value: &str) -> Option<f64> {
++    let first = value.split(';').next()?.trim();
++    let normalized = first
++        .strip_suffix("meters")
++        .or_else(|| first.strip_suffix("meter"))
++        .or_else(|| first.strip_suffix('m'))
++        .unwrap_or(first)
++        .trim();
++    normalized
++        .parse::<f64>()
++        .ok()
++        .filter(|number| number.is_finite() && *number >= 0.0)
++}
++
++fn parse_numeric_tag(tags: &std::collections::HashMap<String, String>, key: &str) -> Option<f64> {
++    tags.get(key)
++        .and_then(|value| value.split(';').next())
++        .and_then(|value| value.trim().parse::<f64>().ok())
++        .filter(|value| value.is_finite())
++}
++
++fn parse_integer_tag(tags: &std::collections::HashMap<String, String>, key: &str) -> Option<i64> {
++    tags.get(key)
++        .and_then(|value| value.split(';').next())
++        .and_then(|value| value.trim().parse::<i64>().ok())
++}
++
++fn parse_nonnegative_level(
++    tags: &std::collections::HashMap<String, String>,
++    key: &str,
++) -> Option<f64> {
++    parse_numeric_tag(tags, key).filter(|value| *value >= 0.0)
++}
++
++fn parse_level(tags: &std::collections::HashMap<String, String>, key: &str) -> f64 {
++    tags.get(key)
++        .and_then(|value| value.parse::<f64>().ok())
++        .filter(|value| value.is_finite())
++        .unwrap_or(0.0)
++}
++
++fn base_provenance(
++    source_type: &str,
++    source_id: u64,
++    tags: &std::collections::HashMap<String, String>,
++) -> BTreeMap<String, Value> {
++    let mut provenance = BTreeMap::new();
++    provenance.insert("source_provider".to_string(), json!(source_provider(tags)));
++    provenance.insert("source_feature_type".to_string(), json!(source_type));
++    provenance.insert(
++        "source_feature_id".to_string(),
++        json!(source_id.to_string()),
++    );
++    provenance.insert("source_tags".to_string(), tags_value(tags));
++    provenance.insert("tags_filtered_by_arnis".to_string(), json!(true));
++    provenance
++}
++
++fn measurement_lineage(source: &str) -> Value {
++    json!({
++        "source_domain": "metric_semantics_pre_block_conversion",
++        "source_semantics": source,
++        "derived_from_block_count": false,
++        "derived_from_block_range": false
++    })
++}
++
++fn semantic_lineage(source: &str) -> Value {
++    json!({
++        "source_domain": "semantic_tags_pre_block_conversion",
++        "source_semantics": source,
++        "derived_from_block_count": false,
++        "derived_from_block_range": false
++    })
++}
++
++fn feature_lineage(measurements: BTreeMap<String, Value>) -> Value {
++    json!({
++        "geometry_source_stage": "projected_from_wgs84_f64",
++        "block_projection_applied": false,
++        "measurements": measurements
++    })
++}
++
++fn road_width_m(
++    highway_type: &str,
++    tags: &std::collections::HashMap<String, String>,
++) -> (f64, &'static str) {
++    if let Some(width) = tags.get("width").and_then(|value| parse_measure_m(value)) {
++        return (width, "osm_width_m");
++    }
++    if let Some(lanes) = tags
++        .get("lanes")
++        .and_then(|value| value.split(';').next())
++        .and_then(|value| value.trim().parse::<f64>().ok())
++        .filter(|value| value.is_finite() && *value > 0.0)
++    {
++        return (lanes * METERS_PER_ROAD_LANE, "osm_lanes_times_3_2m");
++    }
++    let width = match highway_type {
++        "motorway" => 12.0,
++        "trunk" => 10.0,
++        "motorway_link" | "trunk_link" => 7.0,
++        "primary" | "secondary" => 8.0,
++        "primary_link" | "secondary_link" | "tertiary" => 7.0,
++        "tertiary_link" | "residential" | "unclassified" | "service" => 5.5,
++        "living_street" => 4.0,
++        "pedestrian" => 3.0,
++        "cycleway" | "footway" | "path" | "steps" | "track" => 2.0,
++        _ => 5.0,
++    };
++    (width, "cmo_metric_default_by_highway_class")
++}
++
++fn road_features(way: &ProcessedWay, geometry: &MetricGeometryIndex) -> Vec<CmoFeature> {
++    let Some(highway_type) = way.tags.get("highway") else {
++        return Vec::new();
++    };
++    let Some(nodes) = geometry.ways.get(&way.id) else {
++        return Vec::new();
++    };
++    let (width_m, width_source) = road_width_m(highway_type, &way.tags);
++    let bridge = matches!(
++        way.tags.get("bridge").map(String::as_str),
++        Some(value) if value != "no"
++    );
++    let explicit_tunnel = matches!(
++        way.tags.get("tunnel").map(String::as_str),
++        Some(value) if !value.eq_ignore_ascii_case("no") && !value.eq_ignore_ascii_case("false")
++    );
++    let covered = matches!(
++        way.tags.get("covered").map(String::as_str),
++        Some(value) if !value.eq_ignore_ascii_case("no") && !value.eq_ignore_ascii_case("false")
++    );
++    let parsed_layer = parse_numeric_tag(&way.tags, "layer");
++    let layer = parsed_layer.unwrap_or(0.0);
++    let layer_is_valid = parsed_layer.is_some() || !way.tags.contains_key("layer");
++    let (vertical_anchor_mode, vertical_placement_source) = if bridge || layer > 0.0 {
++        (
++            "elevated_profile",
++            "osm_bridge_or_positive_layer_requires_metric_elevated_profile",
++        )
++    } else if explicit_tunnel {
++        (
++            "subsurface_profile",
++            "osm_tunnel_requires_metric_subsurface_profile",
++        )
++    } else if layer < 0.0 {
++        (
++            "subsurface_profile",
++            "osm_negative_layer_requires_metric_subsurface_profile",
++        )
++    } else if !layer_is_valid {
++        (
++            "elevated_profile",
++            "unresolved_non_numeric_osm_layer_requires_metric_profile",
++        )
++    } else {
++        ("terrain_draped", "continuous_dem_draped_road_geometry")
++    };
++    let vertical_placement_resolved = vertical_anchor_mode == "terrain_draped";
++    clipped_line_coordinates(nodes, &geometry.bounds)
++        .into_iter()
++        .enumerate()
++        .map(|(part_index, points)| {
++            let mut attributes = BTreeMap::new();
++            attributes.insert("highway_type".to_string(), json!(highway_type));
++            attributes.insert("width_m".to_string(), json!(width_m));
++            attributes.insert("width_source".to_string(), json!(width_source));
++            attributes.insert(
++                "surface_class".to_string(),
++                json!(way
++                    .tags
++                    .get("surface")
++                    .map(String::as_str)
++                    .unwrap_or("unspecified")),
++            );
++            attributes.insert("connectivity".to_string(), json!("source_geometry"));
++            attributes.insert("bridge".to_string(), json!(bridge));
++            attributes.insert("tunnel".to_string(), json!(explicit_tunnel));
++            attributes.insert("covered".to_string(), json!(covered));
++            let layer_value = match parsed_layer {
++                Some(layer) => json!(layer),
++                None => way
++                    .tags
++                    .get("layer")
++                    .map_or_else(|| json!(0.0), |raw| json!(raw)),
++            };
++            attributes.insert("layer".to_string(), layer_value);
++            attributes.insert(
++                "vertical_anchor_mode".to_string(),
++                json!(vertical_anchor_mode),
++            );
++            attributes.insert(
++                "vertical_placement_resolved".to_string(),
++                json!(vertical_placement_resolved),
++            );
++            attributes.insert(
++                "vertical_anchor_source".to_string(),
++                json!(vertical_placement_source),
++            );
++            let layer_source = match (way.tags.contains_key("layer"), parsed_layer.is_some()) {
++                (true, true) => "osm_layer_semantic",
++                (true, false) => "invalid_osm_layer_raw_semantic",
++                (false, _) => "implicit_osm_layer_zero",
++            };
++            let bridge_source = if way.tags.contains_key("bridge") {
++                "osm_bridge_semantic"
++            } else {
++                "implicit_osm_bridge_false"
++            };
++            let tunnel_source = if explicit_tunnel {
++                "osm_tunnel_semantic"
++            } else if way.tags.contains_key("tunnel") {
++                "explicit_osm_tunnel_false"
++            } else {
++                "implicit_osm_tunnel_false"
++            };
++            let covered_source = if covered {
++                "osm_covered_semantic"
++            } else if way.tags.contains_key("covered") {
++                "explicit_osm_covered_false"
++            } else {
++                "implicit_osm_covered_false"
++            };
++            let measurements = BTreeMap::from([
++                ("width_m".to_string(), measurement_lineage(width_source)),
++                ("layer".to_string(), semantic_lineage(layer_source)),
++                ("bridge".to_string(), semantic_lineage(bridge_source)),
++                ("tunnel".to_string(), semantic_lineage(tunnel_source)),
++                ("covered".to_string(), semantic_lineage(covered_source)),
++                (
++                    "vertical_anchor_mode".to_string(),
++                    semantic_lineage(vertical_placement_source),
++                ),
++                (
++                    "vertical_placement_resolved".to_string(),
++                    semantic_lineage(vertical_placement_source),
++                ),
++                (
++                    "vertical_anchor_source".to_string(),
++                    semantic_lineage(vertical_placement_source),
++                ),
++            ]);
++            CmoFeature {
++                feature_id: format!(
++                    "{}:way:{}:road:part:{part_index:04}",
++                    source_provider(&way.tags),
++                    way.id
++                ),
++                geometry: FeatureGeometry {
++                    r#type: "LineString".to_string(),
++                    coordinates: json!(points),
++                },
++                attributes,
++                provenance: base_provenance("way", way.id, &way.tags),
++                lineage: feature_lineage(measurements),
++            }
++        })
++        .collect()
++}
++
++struct BuildingVerticalPlacement {
++    anchor_mode: &'static str,
++    resolved: bool,
++    base_offset_m: Option<f64>,
++    layer: Option<i64>,
++    source: &'static str,
++}
++
++fn building_vertical_placement(
++    tags: &std::collections::HashMap<String, String>,
++) -> BuildingVerticalPlacement {
++    let layer = parse_integer_tag(tags, "layer");
++    if let Some(base_offset_m) = tags
++        .get("min_height")
++        .and_then(|value| parse_nonnegative_measure_m(value))
++    {
++        return BuildingVerticalPlacement {
++            anchor_mode: "terrain_rigid",
++            resolved: true,
++            base_offset_m: Some(base_offset_m),
++            layer,
++            source: "osm_min_height_m",
++        };
++    }
++    if let Some(min_level) = parse_nonnegative_level(tags, "building:min_level") {
++        return BuildingVerticalPlacement {
++            anchor_mode: "terrain_rigid",
++            resolved: true,
++            base_offset_m: Some(min_level * METERS_PER_BUILDING_LEVEL),
++            layer,
++            source: "osm_building_min_level_times_3m",
++        };
++    }
++    if let Some(min_level) = parse_nonnegative_level(tags, "min_level") {
++        return BuildingVerticalPlacement {
++            anchor_mode: "terrain_rigid",
++            resolved: true,
++            base_offset_m: Some(min_level * METERS_PER_BUILDING_LEVEL),
++            layer,
++            source: "osm_min_level_times_3m",
++        };
++    }
++
++    let is_building_part = tags.contains_key("building:part")
++        || tags.get("building").map(String::as_str) == Some("roof");
++    if is_building_part && layer.is_some_and(|value| value > 0) {
++        return BuildingVerticalPlacement {
++            anchor_mode: "elevated_profile",
++            resolved: false,
++            base_offset_m: None,
++            layer,
++            source: "unresolved_positive_layer_without_metric_base_offset",
++        };
++    }
++
++    BuildingVerticalPlacement {
++        anchor_mode: "terrain_rigid",
++        resolved: true,
++        base_offset_m: Some(0.0),
++        layer,
++        source: "implicit_terrain_base_zero_m",
++    }
++}
++
++fn insert_building_vertical_placement(
++    attributes: &mut BTreeMap<String, Value>,
++    measurements: &mut BTreeMap<String, Value>,
++    placement: &BuildingVerticalPlacement,
++) {
++    attributes.insert(
++        "vertical_anchor_mode".to_string(),
++        json!(placement.anchor_mode),
++    );
++    attributes.insert(
++        "vertical_placement_resolved".to_string(),
++        json!(placement.resolved),
++    );
++    attributes.insert(
++        "vertical_anchor_source".to_string(),
++        json!(placement.source),
++    );
++    measurements.insert(
++        "vertical_anchor_mode".to_string(),
++        semantic_lineage(placement.source),
++    );
++    measurements.insert(
++        "vertical_placement_resolved".to_string(),
++        semantic_lineage(placement.source),
++    );
++    if placement.resolved {
++        let base_offset_m = placement
++            .base_offset_m
++            .expect("resolved building placement must have a metric base offset");
++        attributes.insert("base_offset_m".to_string(), json!(base_offset_m));
++        attributes.insert("base_offset_source".to_string(), json!(placement.source));
++        measurements.insert(
++            "base_offset_m".to_string(),
++            measurement_lineage(placement.source),
++        );
++        measurements.insert(
++            "base_offset_source".to_string(),
++            semantic_lineage(placement.source),
++        );
++    }
++    measurements.insert(
++        "vertical_anchor_source".to_string(),
++        semantic_lineage(placement.source),
++    );
++    if let Some(layer) = placement.layer {
++        attributes.insert("layer".to_string(), json!(layer));
++        measurements.insert("layer".to_string(), semantic_lineage("osm_layer_semantic"));
++    }
++}
++
++struct MetricBuildingHeight {
++    meters: f64,
++    source: &'static str,
++    semantics: &'static str,
++}
++
++fn metric_building_height(
++    tags: &std::collections::HashMap<String, String>,
++) -> Option<MetricBuildingHeight> {
++    let building_type = tags
++        .get("building")
++        .or_else(|| tags.get("building:part"))
++        .map(String::as_str)
++        .unwrap_or("yes");
++    if building_type == "bridge" {
++        return None;
++    }
++    let min_height = tags
++        .get("min_height")
++        .and_then(|value| parse_measure_m(value))
++        .unwrap_or(0.0);
++    let is_roof =
++        tags.get("building:part").map(String::as_str) == Some("roof") || building_type == "roof";
++    if is_roof {
++        if let Some(height) = tags
++            .get("roof:height")
++            .and_then(|value| parse_measure_m(value))
++        {
++            return Some(MetricBuildingHeight {
++                meters: height,
++                source: "osm_roof_height_m",
++                semantics: "physical_roof_thickness_m",
++            });
++        }
++        if let Some(total_height) = tags.get("height").and_then(|value| parse_measure_m(value)) {
++            return Some(MetricBuildingHeight {
++                meters: (total_height - min_height).max(0.1),
++                source: "osm_height_minus_min_height_m",
++                semantics: "physical_roof_thickness_m",
++            });
++        }
++        return Some(MetricBuildingHeight {
++            meters: 0.5,
++            source: "cmo_metric_default_roof_thickness",
++            semantics: "physical_roof_thickness_m",
++        });
++    }
++    if let Some(total_height) = tags.get("height").and_then(|value| parse_measure_m(value)) {
++        return Some(MetricBuildingHeight {
++            meters: (total_height - min_height).max(0.1),
++            source: "osm_height_minus_min_height_m",
++            semantics: "physical_vertical_extent_m",
++        });
++    }
++    let levels = parse_level(tags, "building:levels");
++    let min_level = parse_level(tags, "building:min_level").max(parse_level(tags, "min_level"));
++    if levels > min_level {
++        return Some(MetricBuildingHeight {
++            meters: (levels - min_level) * METERS_PER_BUILDING_LEVEL,
++            source: "osm_building_levels_times_3m",
++            semantics: "physical_vertical_extent_m",
++        });
++    }
++    let meters = if tags.get("amenity").map(String::as_str) == Some("shelter") {
++        3.0
++    } else {
++        match building_type {
++            "garage" | "garages" | "carport" | "shed" => 3.0,
++            "parking" => 12.0,
++            "apartments" => 9.0,
++            "hospital" => 12.0,
++            _ => 6.0,
++        }
++    };
++    Some(MetricBuildingHeight {
++        meters,
++        source: "cmo_metric_default_by_building_class",
++        semantics: "physical_vertical_extent_m",
++    })
++}
++
++fn building_feature_from_way(
++    way: &ProcessedWay,
++    relation_id: Option<u64>,
++    part_index: Option<usize>,
++    geometry: &MetricGeometryIndex,
++) -> Option<CmoFeature> {
++    if !way.tags.contains_key("building")
++        && !way.tags.contains_key("building:part")
++        && relation_id.is_none()
++    {
++        return None;
++    }
++    let ring = clipped_ring_coordinates(geometry.ways.get(&way.id)?, &geometry.bounds)?;
++    let height = metric_building_height(&way.tags)?;
++    let material = way
++        .tags
++        .get("building:material")
++        .or_else(|| way.tags.get("material"))
++        .map(String::as_str)
++        .unwrap_or("unspecified");
++    let mut attributes = BTreeMap::new();
++    attributes.insert("footprint".to_string(), json!("polygon"));
++    attributes.insert("height_m".to_string(), json!(height.meters));
++    attributes.insert("height_source".to_string(), json!(height.source));
++    attributes.insert("height_semantics".to_string(), json!(height.semantics));
++    attributes.insert("material".to_string(), json!(material));
++    attributes.insert(
++        "building_type".to_string(),
++        json!(way
++            .tags
++            .get("building")
++            .or_else(|| way.tags.get("building:part"))
++            .map(String::as_str)
++            .unwrap_or("yes")),
++    );
++    let placement = building_vertical_placement(&way.tags);
++    let mut measurements =
++        BTreeMap::from([("height_m".to_string(), measurement_lineage(height.source))]);
++    insert_building_vertical_placement(&mut attributes, &mut measurements, &placement);
++    let suffix = match (relation_id, part_index) {
++        (Some(relation_id), Some(index)) => format!("relation:{relation_id}:part:{index:04}"),
++        _ => format!("way:{}", way.id),
++    };
++    let mut provenance = base_provenance("way", way.id, &way.tags);
++    if let Some(relation_id) = relation_id {
++        provenance.insert(
++            "source_relation_id".to_string(),
++            json!(relation_id.to_string()),
++        );
++        provenance.insert("source_member_role".to_string(), json!("part"));
++    }
++    Some(CmoFeature {
++        feature_id: format!("{}:{suffix}:building", source_provider(&way.tags)),
++        geometry: FeatureGeometry {
++            r#type: "Polygon".to_string(),
++            coordinates: json!([ring]),
++        },
++        attributes,
++        provenance,
++        lineage: feature_lineage(measurements),
++    })
++}
++
++fn water_kind(tags: &std::collections::HashMap<String, String>) -> Option<String> {
++    if let Some(value) = tags.get("waterway") {
++        return Some(value.clone());
++    }
++    if let Some(value) = tags.get("water") {
++        return Some(value.clone());
++    }
++    if let Some(value) = tags.get("natural") {
++        if matches!(value.as_str(), "water" | "bay" | "wetland") {
++            return Some(value.clone());
++        }
++    }
++    if tags.get("landuse").map(String::as_str) == Some("reservoir") {
++        return Some("reservoir".to_string());
++    }
++    None
++}
++
++fn insert_hydrology_vertical_placement(
++    attributes: &mut BTreeMap<String, Value>,
++    measurements: &mut BTreeMap<String, Value>,
++) {
++    const SOURCE: &str = "continuous_dem_water_surface_sampling";
++    attributes.insert(
++        "vertical_anchor_mode".to_string(),
++        json!("water_surface_from_dem"),
++    );
++    attributes.insert("vertical_placement_resolved".to_string(), json!(true));
++    attributes.insert("vertical_anchor_source".to_string(), json!(SOURCE));
++    for key in [
++        "vertical_anchor_mode",
++        "vertical_placement_resolved",
++        "vertical_anchor_source",
++    ] {
++        measurements.insert(key.to_string(), semantic_lineage(SOURCE));
++    }
++}
++
++fn is_water_area(tags: &std::collections::HashMap<String, String>) -> bool {
++    matches!(
++        tags.get("natural").map(String::as_str),
++        Some("water" | "bay" | "wetland")
++    ) || tags.contains_key("water")
++        || tags.get("landuse").map(String::as_str) == Some("reservoir")
++        || matches!(
++            tags.get("waterway").map(String::as_str),
++            Some("riverbank" | "dock")
++        )
++}
++
++fn waterway_width_m(kind: &str) -> f64 {
++    match kind {
++        "river" => 12.0,
++        "canal" => 8.0,
++        "stream" => 3.0,
++        "ditch" | "drain" => 1.5,
++        _ => 2.0,
++    }
++}
++
++fn hydrology_features_from_way(
++    way: &ProcessedWay,
++    geometry: &MetricGeometryIndex,
++) -> Vec<CmoFeature> {
++    let Some(kind) = water_kind(&way.tags) else {
++        return Vec::new();
++    };
++    let Some(nodes) = geometry.ways.get(&way.id) else {
++        return Vec::new();
++    };
++    let area = is_water_area(&way.tags);
++    let geometries: Vec<FeatureGeometry> = if area {
++        let Some(ring) = clipped_ring_coordinates(nodes, &geometry.bounds) else {
++            return Vec::new();
++        };
++        vec![FeatureGeometry {
++            r#type: "Polygon".to_string(),
++            coordinates: json!([ring]),
++        }]
++    } else {
++        clipped_line_coordinates(nodes, &geometry.bounds)
++            .into_iter()
++            .map(|points| FeatureGeometry {
++                r#type: "LineString".to_string(),
++                coordinates: json!(points),
++            })
++            .collect()
++    };
++    let explicit_width = way
++        .tags
++        .get("width")
++        .and_then(|value| parse_measure_m(value));
++    geometries
++        .into_iter()
++        .enumerate()
++        .map(|(part_index, feature_geometry)| {
++            let mut attributes = BTreeMap::new();
++            attributes.insert("state".to_string(), json!("static_source_geometry"));
++            attributes.insert("water_kind".to_string(), json!(kind));
++            attributes.insert(
++                "geometry_role".to_string(),
++                json!(if area { "area" } else { "centerline" }),
++            );
++            let mut measurements = BTreeMap::new();
++            insert_hydrology_vertical_placement(&mut attributes, &mut measurements);
++            if !area {
++                let width_source = if explicit_width.is_some() {
++                    "osm_width_m"
++                } else {
++                    "cmo_metric_default_by_waterway_class"
++                };
++                attributes.insert(
++                    "width_m".to_string(),
++                    json!(explicit_width.unwrap_or_else(|| waterway_width_m(&kind))),
++                );
++                attributes.insert("width_source".to_string(), json!(width_source));
++                measurements.insert("width_m".to_string(), measurement_lineage(width_source));
++            }
++            CmoFeature {
++                feature_id: format!(
++                    "{}:way:{}:hydrology:part:{part_index:04}",
++                    source_provider(&way.tags),
++                    way.id
++                ),
++                geometry: feature_geometry,
++                attributes,
++                provenance: base_provenance("way", way.id, &way.tags),
++                lineage: feature_lineage(measurements),
++            }
++        })
++        .collect()
++}
++
++fn point_in_ring(point: [f64; 2], ring: &[[f64; 2]]) -> bool {
++    if ring.len() < 4 {
++        return false;
++    }
++    let mut inside = false;
++    let mut previous = ring.len() - 1;
++    for current in 0..ring.len() {
++        let a = ring[current];
++        let b = ring[previous];
++        let crosses = ((a[1] > point[1]) != (b[1] > point[1]))
++            && (point[0] < (b[0] - a[0]) * (point[1] - a[1]) / (b[1] - a[1]) + a[0]);
++        if crosses {
++            inside = !inside;
++        }
++        previous = current;
++    }
++    inside
++}
++
++fn ring_area_abs(ring: &[[f64; 2]]) -> f64 {
++    if ring.len() < 4 {
++        return 0.0;
++    }
++    0.5 * ring
++        .windows(2)
++        .map(|pair| pair[0][0] * pair[1][1] - pair[1][0] * pair[0][1])
++        .sum::<f64>()
++        .abs()
++}
++
++fn assembled_relation_polygons(
++    relation: &ProcessedRelation,
++    include_parts: bool,
++    geometry: &MetricGeometryIndex,
++) -> Vec<(Vec<[f64; 2]>, Vec<Vec<[f64; 2]>>)> {
++    let mut outers: Vec<Vec<MetricNode>> = relation
++        .members
++        .iter()
++        .filter(|member| {
++            matches!(member.role, ProcessedMemberRole::Outer)
++                || (include_parts && matches!(member.role, ProcessedMemberRole::Part))
++        })
++        .filter_map(|member| geometry.ways.get(&member.way.id).cloned())
++        .collect();
++    let mut inners: Vec<Vec<MetricNode>> = relation
++        .members
++        .iter()
++        .filter(|member| matches!(member.role, ProcessedMemberRole::Inner))
++        .filter_map(|member| geometry.ways.get(&member.way.id).cloned())
++        .collect();
++    merge_metric_way_segments(&mut outers);
++    merge_metric_way_segments(&mut inners);
++    let mut polygons: Vec<(Vec<[f64; 2]>, Vec<Vec<[f64; 2]>>)> = outers
++        .into_iter()
++        .filter_map(|ring| {
++            clipped_ring_coordinates(&ring, &geometry.bounds).map(|clipped| (clipped, Vec::new()))
++        })
++        .collect();
++    let inner_rings: Vec<Vec<[f64; 2]>> = inners
++        .into_iter()
++        .filter_map(|ring| clipped_ring_coordinates(&ring, &geometry.bounds))
++        .collect();
++    for inner in inner_rings {
++        let Some(point) = inner.first().copied() else {
++            continue;
++        };
++        let target = polygons
++            .iter()
++            .enumerate()
++            .filter(|(_, (outer, _))| point_in_ring(point, outer))
++            .min_by(|(_, (left, _)), (_, (right, _))| {
++                ring_area_abs(left).total_cmp(&ring_area_abs(right))
++            })
++            .map(|(index, _)| index);
++        if let Some(index) = target {
++            polygons[index].1.push(inner);
++        }
++    }
++    polygons.sort_by(|left, right| {
++        let left_key = left.0.first().copied().unwrap_or([0.0, 0.0]);
++        let right_key = right.0.first().copied().unwrap_or([0.0, 0.0]);
++        left_key[0]
++            .total_cmp(&right_key[0])
++            .then(left_key[1].total_cmp(&right_key[1]))
++    });
++    polygons
++}
++
++fn is_building_relation(relation: &ProcessedRelation) -> bool {
++    relation.tags.contains_key("building")
++        || relation.tags.get("type").map(String::as_str) == Some("building")
++        || relation.members.iter().any(|member| {
++            member.way.tags.contains_key("building")
++                || member.way.tags.contains_key("building:part")
++        })
++}
++
++fn building_features_from_relation(
++    relation: &ProcessedRelation,
++    geometry: &MetricGeometryIndex,
++) -> Vec<CmoFeature> {
++    if !is_building_relation(relation) {
++        return Vec::new();
++    }
++    let part_members: Vec<_> = relation
++        .members
++        .iter()
++        .filter(|member| matches!(member.role, ProcessedMemberRole::Part))
++        .collect();
++    if !part_members.is_empty() {
++        return part_members
++            .into_iter()
++            .enumerate()
++            .filter_map(|(index, member)| {
++                let mut merged_tags = relation.tags.clone();
++                merged_tags.extend(member.way.tags.clone());
++                let merged_way = ProcessedWay {
++                    id: member.way.id,
++                    nodes: member.way.nodes.clone(),
++                    tags: merged_tags,
++                };
++                let mut feature = building_feature_from_way(
++                    &merged_way,
++                    Some(relation.id),
++                    Some(index),
++                    geometry,
++                )?;
++                feature
++                    .provenance
++                    .insert("source_tags".to_string(), tags_value(&member.way.tags));
++                feature.provenance.insert(
++                    "inherited_relation_tags".to_string(),
++                    tags_value(&relation.tags),
++                );
++                Some(feature)
++            })
++            .collect();
++    }
++
++    let polygons = assembled_relation_polygons(relation, false, geometry);
++    polygons
++        .into_iter()
++        .enumerate()
++        .filter_map(|(index, (outer, holes))| {
++            let mut attributes = BTreeMap::new();
++            let height = metric_building_height(&relation.tags)?;
++            attributes.insert("footprint".to_string(), json!("polygon"));
++            attributes.insert("height_m".to_string(), json!(height.meters));
++            attributes.insert("height_source".to_string(), json!(height.source));
++            attributes.insert("height_semantics".to_string(), json!(height.semantics));
++            attributes.insert(
++                "material".to_string(),
++                json!(relation
++                    .tags
++                    .get("building:material")
++                    .or_else(|| relation.tags.get("material"))
++                    .map(String::as_str)
++                    .unwrap_or("unspecified")),
++            );
++            let placement = building_vertical_placement(&relation.tags);
++            let mut measurements =
++                BTreeMap::from([("height_m".to_string(), measurement_lineage(height.source))]);
++            insert_building_vertical_placement(&mut attributes, &mut measurements, &placement);
++            let mut rings = vec![outer];
++            rings.extend(holes);
++            Some(CmoFeature {
++                feature_id: format!(
++                    "{}:relation:{}:building:part:{index:04}",
++                    source_provider(&relation.tags),
++                    relation.id
++                ),
++                geometry: FeatureGeometry {
++                    r#type: "Polygon".to_string(),
++                    coordinates: json!(rings),
++                },
++                attributes,
++                provenance: base_provenance("relation", relation.id, &relation.tags),
++                lineage: feature_lineage(measurements),
++            })
++        })
++        .collect()
++}
++
++fn hydrology_features_from_relation(
++    relation: &ProcessedRelation,
++    geometry: &MetricGeometryIndex,
++) -> Vec<CmoFeature> {
++    let Some(kind) = water_kind(&relation.tags) else {
++        return Vec::new();
++    };
++    assembled_relation_polygons(relation, false, geometry)
++        .into_iter()
++        .enumerate()
++        .map(|(index, (outer, holes))| {
++            let mut rings = vec![outer];
++            rings.extend(holes);
++            let mut attributes = BTreeMap::new();
++            attributes.insert("state".to_string(), json!("static_source_geometry"));
++            attributes.insert("water_kind".to_string(), json!(kind));
++            attributes.insert("geometry_role".to_string(), json!("area"));
++            let mut measurements = BTreeMap::new();
++            insert_hydrology_vertical_placement(&mut attributes, &mut measurements);
++            CmoFeature {
++                feature_id: format!(
++                    "{}:relation:{}:hydrology:part:{index:04}",
++                    source_provider(&relation.tags),
++                    relation.id
++                ),
++                geometry: FeatureGeometry {
++                    r#type: "Polygon".to_string(),
++                    coordinates: json!(rings),
++                },
++                attributes,
++                provenance: base_provenance("relation", relation.id, &relation.tags),
++                lineage: feature_lineage(measurements),
++            }
++        })
++        .collect()
++}
++
++fn extract_features(
++    elements: &[ProcessedElement],
++    suppression: &OutlineSuppression,
++    geometry: &MetricGeometryIndex,
++) -> (Vec<CmoFeature>, Vec<CmoFeature>, Vec<CmoFeature>) {
++    let mut roads = Vec::new();
++    let mut buildings = Vec::new();
++    let mut hydrology = Vec::new();
++    let mut relation_building_member_ids = HashSet::new();
++    let mut relation_hydrology_member_ids = HashSet::new();
++
++    for element in elements {
++        let ProcessedElement::Relation(relation) = element else {
++            continue;
++        };
++        if !suppression.contains(&("relation", relation.id)) {
++            let relation_features = building_features_from_relation(relation, geometry);
++            if !relation_features.is_empty() {
++                let mut has_way_sources = false;
++                for feature in &relation_features {
++                    if feature
++                        .provenance
++                        .get("source_feature_type")
++                        .and_then(Value::as_str)
++                        == Some("way")
++                    {
++                        if let Some(source_id) = feature
++                            .provenance
++                            .get("source_feature_id")
++                            .and_then(Value::as_str)
++                            .and_then(|value| value.parse::<u64>().ok())
++                        {
++                            relation_building_member_ids.insert(source_id);
++                            has_way_sources = true;
++                        }
++                    }
++                }
++                if !has_way_sources {
++                    relation_building_member_ids
++                        .extend(relation.members.iter().map(|member| member.way.id));
++                }
++                buildings.extend(relation_features);
++            }
++        }
++        let relation_features = hydrology_features_from_relation(relation, geometry);
++        if !relation_features.is_empty() {
++            relation_hydrology_member_ids
++                .extend(relation.members.iter().map(|member| member.way.id));
++            hydrology.extend(relation_features);
++        }
++    }
++
++    for element in elements {
++        match element {
++            ProcessedElement::Way(way) => {
++                roads.extend(road_features(way, geometry));
++                if !suppression.contains(&("way", way.id))
++                    && !relation_building_member_ids.contains(&way.id)
++                {
++                    if let Some(feature) = building_feature_from_way(way, None, None, geometry) {
++                        buildings.push(feature);
++                    }
++                }
++                if !relation_hydrology_member_ids.contains(&way.id) {
++                    hydrology.extend(hydrology_features_from_way(way, geometry));
++                }
++            }
++            ProcessedElement::Relation(_) => {}
++            ProcessedElement::Node(_) => {}
++        }
++    }
++    for features in [&mut roads, &mut buildings, &mut hydrology] {
++        features.sort_by(|left, right| left.feature_id.cmp(&right.feature_id));
++        features.dedup_by(|left, right| left.feature_id == right.feature_id);
++    }
++    (roads, buildings, hydrology)
++}
++
++fn write_json<T: Serialize>(path: &Path, value: &T) -> ExportResult<()> {
++    let mut writer = BufWriter::new(File::create(path)?);
++    serde_json::to_writer_pretty(&mut writer, value)?;
++    writer.write_all(b"\n")?;
++    writer.flush()?;
++    Ok(())
++}
++
++fn sha256_file(path: &Path) -> ExportResult<(String, u64)> {
++    let mut file = File::open(path)?;
++    let mut digest = Sha256::new();
++    let mut byte_length = 0_u64;
++    let mut buffer = [0_u8; 64 * 1024];
++    loop {
++        let read = file.read(&mut buffer)?;
++        if read == 0 {
++            break;
++        }
++        digest.update(&buffer[..read]);
++        byte_length += read as u64;
++    }
++    Ok((format!("{:x}", digest.finalize()), byte_length))
++}
++
++fn sha256_bytes(bytes: &[u8]) -> String {
++    format!("{:x}", Sha256::digest(bytes))
++}
++
++fn continuous_lineage() -> Value {
++    json!({
++        "contract": "arnis_continuous_metric.v1",
++        "representation": "continuous_metric_2_5d",
++        "export_stage": "post_semantic_processing_pre_render_quantization",
++        "geometry": {
++            "source_stage": "projected_from_wgs84_f64",
++            "storage": "json_float64",
++            "quantization_step_m": null,
++            "block_projection_applied": false
++        },
++        "elevation": {
++            "source_stage": "postprocessed_metric_dem",
++            "storage": "float32_le",
++            "vertical_quantization_step_m": null,
++            "minecraft_y_transform_applied": false,
++            "minecraft_y_roundtrip": false
++        },
++        "landcover": {
++            "source_stage": "source_classification_metric_grid",
++            "block_palette_roundtrip": false
++        },
++        "minecraft_world_read": false,
++        "anvil_region_read": false,
++        "voxelization_applied": false
++    })
++}
++
++fn has_exclusive_elevation_source(
++    primary_source: &str,
++    contributing_sources: &BTreeMap<String, usize>,
++    missing_source_units: usize,
++    required_source: &str,
++) -> bool {
++    primary_source == required_source
++        && missing_source_units == 0
++        && contributing_sources.len() == 1
++        && contributing_sources
++            .get(required_source)
++            .is_some_and(|count| *count > 0)
++}
++
++fn write_feature_artifact(
++    output_root: &Path,
++    relative_path: &str,
++    feature_class: &str,
++    features: &[CmoFeature],
++) -> ExportResult<ArtifactDescriptor> {
++    let path = output_root.join(relative_path);
++    write_json(
++        &path,
++        &CmoFeatureFile {
++            schema: FEATURE_SCHEMA,
++            schema_version: FEATURE_SCHEMA_VERSION,
++            coordinate_frame: "local_enu_m",
++            feature_class,
++            features,
++        },
++    )?;
++    let (sha256, byte_length) = sha256_file(&path)?;
++    Ok(ArtifactDescriptor {
++        artifact_id: format!("artifact:{feature_class}"),
++        kind: "vector_features".to_string(),
++        path: relative_path.to_string(),
++        sha256,
++        byte_length,
++        media_type: "application/vnd.arnis-cmo.features+json".to_string(),
++        dtype: None,
++        shape: None,
++        feature_class: Some(feature_class.to_string()),
++        feature_count: Some(features.len()),
++        metadata: BTreeMap::from([(
++            "lineage".to_string(),
++            json!({
++                "representation": "continuous_metric_2_5d",
++                "source_stage": "projected_from_wgs84_f64",
++                "storage": "json_float64",
++                "quantization_step_m": null,
++                "block_projection_applied": false
++            }),
++        )]),
++    })
++}
++
++fn write_elevation_artifact(
++    output_root: &Path,
++    bounds: &MetricBounds,
++    ground: &Ground,
++) -> ExportResult<ArtifactDescriptor> {
++    let data = ground
++        .elevation_data()
++        .ok_or("CMO export requires successfully fetched elevation data")?;
++    let relative_path = "rasters/elevation.f32le";
++    let path = output_root.join(relative_path);
++    let metric_heights = data
++        .postprocessed_heights_m
++        .as_ref()
++        .ok_or("CMO export requires retained postprocessed metric DEM")?;
++    let mut writer = BufWriter::new(File::create(&path)?);
++    for row in metric_heights {
++        for &height_m in row {
++            writer.write_all(&height_m.to_le_bytes())?;
++        }
++    }
++    writer.flush()?;
++    let (sha256, byte_length) = sha256_file(&path)?;
++    let step_x = if data.width > 1 {
++        (bounds.max_x - bounds.min_x) / (data.width - 1) as f64
++    } else {
++        0.0
++    };
++    let step_y = if data.height > 1 {
++        (bounds.min_y - bounds.max_y) / (data.height - 1) as f64
++    } else {
++        0.0
++    };
++    let mut metadata = BTreeMap::new();
++    metadata.insert("grid_registration".to_string(), json!("point"));
++    metadata.insert(
++        "origin_xy_m".to_string(),
++        json!([bounds.min_x, bounds.max_y]),
++    );
++    metadata.insert("step_xy_m".to_string(), json!([step_x, step_y]));
++    metadata.insert("units".to_string(), json!("m"));
++    metadata.insert(
++        "vertical_datum".to_string(),
++        json!("source_provider_native_unspecified"),
++    );
++    metadata.insert("uncertainty_status".to_string(), json!("not_reported"));
++    metadata.insert(
++        "semantics".to_string(),
++        json!("arnis_postprocessed_ground_surface"),
++    );
++    metadata.insert(
++        "lineage".to_string(),
++        json!({
++            "representation": "continuous_metric_2_5d",
++            "source_stage": "postprocessed_metric_dem",
++            "storage": "float32_le",
++            "vertical_quantization_step_m": null,
++            "minecraft_y_transform_applied": false,
++            "minecraft_y_roundtrip": false
++        }),
++    );
++    metadata.insert(
++        "processing_stage".to_string(),
++        json!("postprocess_meters_pre_minecraft_scale"),
++    );
++    metadata.insert("minecraft_scaling_applied".to_string(), json!(false));
++    metadata.insert("source_provider".to_string(), json!(data.source_name));
++    metadata.insert(
++        "contributing_sources".to_string(),
++        json!(data.contributing_sources),
++    );
++    metadata.insert(
++        "missing_source_units".to_string(),
++        json!(data.missing_source_units),
++    );
++    metadata.insert(
++        "world_shape".to_string(),
++        json!([data.world_height, data.world_width]),
++    );
++    Ok(ArtifactDescriptor {
++        artifact_id: "artifact:elevation".to_string(),
++        kind: "elevation_raster".to_string(),
++        path: relative_path.to_string(),
++        sha256,
++        byte_length,
++        media_type: "application/vnd.arnis-cmo.raster-f32le".to_string(),
++        dtype: Some("float32_le".to_string()),
++        shape: Some([data.height, data.width]),
++        feature_class: None,
++        feature_count: None,
++        metadata,
++    })
++}
++
++fn write_landcover_artifact(
++    output_root: &Path,
++    bounds: &MetricBounds,
++    ground: &Ground,
++) -> ExportResult<ArtifactDescriptor> {
++    let data = ground
++        .land_cover_data()
++        .ok_or("CMO export requires successfully fetched ESA WorldCover data")?;
++    let relative_path = "rasters/landcover.u8";
++    let path = output_root.join(relative_path);
++    let mut writer = BufWriter::new(File::create(&path)?);
++    for row in &data.grid {
++        writer.write_all(row)?;
++    }
++    writer.flush()?;
++    let (sha256, byte_length) = sha256_file(&path)?;
++    let step_x = if data.width > 1 {
++        (bounds.max_x - bounds.min_x) / (data.width - 1) as f64
++    } else {
++        0.0
++    };
++    let step_y = if data.height > 1 {
++        (bounds.min_y - bounds.max_y) / (data.height - 1) as f64
++    } else {
++        0.0
++    };
++    let mut metadata = BTreeMap::new();
++    metadata.insert("grid_registration".to_string(), json!("point"));
++    metadata.insert(
++        "origin_xy_m".to_string(),
++        json!([bounds.min_x, bounds.max_y]),
++    );
++    metadata.insert("step_xy_m".to_string(), json!([step_x, step_y]));
++    metadata.insert(
++        "classification_scheme".to_string(),
++        json!("ESA_WorldCover_2021_v200"),
++    );
++    metadata.insert("source_native_resolution_m".to_string(), json!(10.0));
++    metadata.insert(
++        "semantics".to_string(),
++        json!("esa_worldcover_source_classification_metric_grid"),
++    );
++    metadata.insert(
++        "lineage".to_string(),
++        json!({
++            "representation": "continuous_metric_2_5d",
++            "source_stage": "source_classification_metric_grid",
++            "storage": "uint8",
++            "block_palette_roundtrip": false
++        }),
++    );
++    metadata.insert(
++        "class_legend".to_string(),
++        json!({
++            "0": "unknown_nodata",
++            "10": "tree_cover",
++            "20": "shrubland",
++            "30": "grassland",
++            "40": "cropland",
++            "50": "built_up",
++            "60": "bare_sparse_vegetation",
++            "70": "snow_ice",
++            "80": "permanent_water",
++            "90": "herbaceous_wetland",
++            "95": "mangroves",
++            "100": "moss_lichen"
++        }),
++    );
++    Ok(ArtifactDescriptor {
++        artifact_id: "artifact:landcover".to_string(),
++        kind: "landcover_raster".to_string(),
++        path: relative_path.to_string(),
++        sha256,
++        byte_length,
++        media_type: "application/vnd.arnis-cmo.raster-u8".to_string(),
++        dtype: Some("uint8".to_string()),
++        shape: Some([data.height, data.width]),
++        feature_class: None,
++        feature_count: None,
++        metadata,
++    })
++}
++
++fn ensure_empty_output(output_root: &Path) -> ExportResult<()> {
++    if output_root.exists() {
++        if !output_root.is_dir() {
++            return Err(
++                format!("output path is not a directory: {}", output_root.display()).into(),
++            );
++        }
++        if fs::read_dir(output_root)?.next().is_some() {
++            return Err(format!(
++                "CMO output directory must be empty: {}",
++                output_root.display()
++            )
++            .into());
++        }
++    }
++    fs::create_dir_all(output_root.join("rasters"))?;
++    fs::create_dir_all(output_root.join("vectors"))?;
++    Ok(())
++}
++
++fn write_bundle_into(
++    elements: &[ProcessedElement],
++    llbbox: &LLBBox,
++    ground: &Ground,
++    suppression: &OutlineSuppression,
++    args: &Args,
++    output_root: &Path,
++) -> ExportResult<PathBuf> {
++    ensure_empty_output(output_root)?;
++    let elevation = ground
++        .elevation_data()
++        .ok_or("CMO export requires elevation data")?;
++    if let Some(required_provider) = args.cmo_require_elevation_provider.as_deref() {
++        if !has_exclusive_elevation_source(
++            &elevation.source_name,
++            &elevation.contributing_sources,
++            elevation.missing_source_units,
++            required_provider,
++        ) {
++            return Err(format!(
++                "required exclusive elevation provider '{required_provider}', but Arnis used primary '{}' with contributions {:?} and {} missing source units",
++                elevation.source_name,
++                elevation.contributing_sources,
++                elevation.missing_source_units,
++            )
++            .into());
++        }
++    }
++    let osm_path = Path::new(args.file.as_deref().ok_or("CMO export requires --file")?);
++    let (metric_geometry, osm_sha256, osm_byte_length) = load_metric_geometry(osm_path, llbbox)?;
++    let exporter_patch_sha256 = args
++        .cmo_exporter_patch_sha256
++        .as_deref()
++        .ok_or("CMO export requires --cmo-exporter-patch-sha256")?;
++    let source_key = sha256_bytes(
++        format!(
++            "{}|{:.8},{:.8},{:.8},{:.8}|{}",
++            osm_sha256,
++            llbbox.min().lat(),
++            llbbox.min().lng(),
++            llbbox.max().lat(),
++            llbbox.max().lng(),
++            elevation.source_name
++        )
++        .as_bytes(),
++    );
++    let tile_scheme_id = format!("arnis-{}", &source_key[..16]);
++    let tile_id = format!("tile:{tile_scheme_id}:r0000:c0000");
++    let (roads, buildings, hydrology) = extract_features(elements, suppression, &metric_geometry);
++    let mut artifacts = vec![
++        write_elevation_artifact(output_root, &metric_geometry.bounds, ground)?,
++        write_landcover_artifact(output_root, &metric_geometry.bounds, ground)?,
++        write_feature_artifact(output_root, "vectors/roads.cmo.json", "road", &roads)?,
++        write_feature_artifact(
++            output_root,
++            "vectors/buildings.cmo.json",
++            "building",
++            &buildings,
++        )?,
++        write_feature_artifact(
++            output_root,
++            "vectors/hydrology.cmo.json",
++            "hydrology",
++            &hydrology,
++        )?,
++    ];
++
++    let provenance = json!({
++        "contract_version": BUNDLE_CONTRACT_VERSION,
++        "exporter_version": EXPORTER_VERSION,
++        "exporter_patch_id": EXPORTER_PATCH_ID,
++        "exporter_patch_sha256": exporter_patch_sha256,
++        "generator": {
++            "id": "arnis",
++            "version": env!("CARGO_PKG_VERSION"),
++            "upstream_revision": ARNIS_UPSTREAM_REVISION
++        },
++        "source_inputs": [{
++            "kind": "osm_json",
++            "sha256": osm_sha256,
++            "byte_length": osm_byte_length,
++            "provider": "openstreetmap",
++            "tags_filtered_by_arnis": true
++        }],
++        "elevation": {
++            "primary_provider": elevation.source_name,
++            "contributing_sources": elevation.contributing_sources,
++            "missing_source_units": elevation.missing_source_units,
++            "source_mode": if args.aws_only_elevation { "aws_only" } else { "arnis_provider_selection" },
++            "semantics": "arnis_postprocessed_ground_surface",
++            "vertical_datum": "source_provider_native_unspecified"
++        },
++        "landcover": {
++            "provider": "ESA WorldCover",
++            "release": "2021 v200",
++            "semantics": "esa_worldcover_source_classification_metric_grid"
++        },
++        "processing": [
++            "osm_parse_and_tag_filter",
++            "elevation_outlier_filter",
++            "terrain_anomaly_repair",
++            "landcover_aware_elevation_repair"
++        ],
++        "coordinate_system": {
++            "coordinate_frame": "local_enu_m",
++            "source_projection": "arnis_local_web_mercator_r6371000_f64",
++            "origin_wgs84": {
++                "latitude": (llbbox.min().lat() + llbbox.max().lat()) / 2.0,
++                "longitude": (llbbox.min().lng() + llbbox.max().lng()) / 2.0
++            },
++            "axis_mapping": {"x": "east", "y": "north"},
++            "scale": 1.0,
++            "rotation_deg": 0.0
++        },
++        "lineage": continuous_lineage(),
++        "capability_boundary": {
++            "static_environment_data_only": true,
++            "no_runtime_setup_release": true,
++            "no_held_capability_release": true
++        }
++    });
++    let provenance_path = output_root.join("provenance.json");
++    write_json(&provenance_path, &provenance)?;
++    let (provenance_sha256, provenance_byte_length) = sha256_file(&provenance_path)?;
++    artifacts.push(ArtifactDescriptor {
++        artifact_id: "artifact:provenance".to_string(),
++        kind: "provenance".to_string(),
++        path: "provenance.json".to_string(),
++        sha256: provenance_sha256,
++        byte_length: provenance_byte_length,
++        media_type: "application/json".to_string(),
++        dtype: None,
++        shape: None,
++        feature_class: None,
++        feature_count: None,
++        metadata: BTreeMap::from([(
++            "lineage".to_string(),
++            json!({
++                "representation": "continuous_metric_2_5d",
++                "source_stage": "continuous_bundle_provenance",
++                "storage": "json",
++                "block_derived": false
++            }),
++        )]),
++    });
++    artifacts.sort_by(|left, right| left.path.cmp(&right.path));
++
++    let region_extent = json!({
++        "min_x": metric_geometry.bounds.min_x,
++        "min_y": metric_geometry.bounds.min_y,
++        "max_x": metric_geometry.bounds.max_x,
++        "max_y": metric_geometry.bounds.max_y
++    });
++    let content_digest = sha256_bytes(&serde_json::to_vec(&json!({
++        "artifacts": artifacts,
++        "region_extent": region_extent,
++        "source_key": source_key
++    }))?);
++    let bundle_id = format!("arnis-cmo-bundle:{}", &content_digest[..24]);
++    let bundle = json!({
++        "contract_version": BUNDLE_CONTRACT_VERSION,
++        "bundle_id": bundle_id,
++        "content_digest_sha256": content_digest,
++        "generator": {
++            "id": "arnis",
++            "version": env!("CARGO_PKG_VERSION"),
++            "upstream_revision": ARNIS_UPSTREAM_REVISION,
++            "exporter_version": EXPORTER_VERSION,
++            "exporter_patch_id": EXPORTER_PATCH_ID,
++            "exporter_patch_sha256": exporter_patch_sha256
++        },
++        "request": {
++            "request_id": format!("arnis-import:{}", &source_key[..24]),
++            "deterministic_seed": 0,
++            "source_input_sha256": osm_sha256,
++            "projection": "arnis_local_scaled_web_mercator_r6371000_normalized_to_local_enu",
++            "scale": 1.0,
++            "rotation_deg": 0.0,
++            "overture": false
++        },
++        "coordinate_frame": "local_enu_m",
++        "lineage": continuous_lineage(),
++        "bbox_wgs84": {
++            "min_lat": llbbox.min().lat(),
++            "min_lon": llbbox.min().lng(),
++            "max_lat": llbbox.max().lat(),
++            "max_lon": llbbox.max().lng()
++        },
++        "region_extent": region_extent,
++        "tile_scheme": {
++            "tile_scheme_id": tile_scheme_id,
++            "tile_id": tile_id,
++            "columns": 1,
++            "rows": 1,
++            "halo_m": 0.0
++        },
++        "artifacts": artifacts,
++        "capability_claims": [],
++        "no_held_capability_release": true
++    });
++    let bundle_path = output_root.join("bundle.json");
++    write_json(&bundle_path, &bundle)?;
++
++    let mut checksum_paths: Vec<String> = bundle["artifacts"]
++        .as_array()
++        .into_iter()
++        .flatten()
++        .filter_map(|artifact| artifact["path"].as_str().map(str::to_string))
++        .collect();
++    checksum_paths.push("bundle.json".to_string());
++    checksum_paths.sort();
++    let mut checksum_writer = BufWriter::new(File::create(output_root.join("checksums.sha256"))?);
++    for relative_path in checksum_paths {
++        let (sha256, _) = sha256_file(&output_root.join(&relative_path))?;
++        writeln!(checksum_writer, "{sha256}  {relative_path}")?;
++    }
++    checksum_writer.flush()?;
++    Ok(bundle_path)
++}
++
++pub fn export_bundle(
++    elements: &[ProcessedElement],
++    llbbox: &LLBBox,
++    ground: &Ground,
++    suppression: &OutlineSuppression,
++    args: &Args,
++    output_root: &Path,
++) -> ExportResult<PathBuf> {
++    if output_root.exists() {
++        if !output_root.is_dir() {
++            return Err(
++                format!("output path is not a directory: {}", output_root.display()).into(),
++            );
++        }
++        if fs::read_dir(output_root)?.next().is_some() {
++            return Err(format!(
++                "CMO output directory must be empty: {}",
++                output_root.display()
++            )
++            .into());
++        }
++    }
++    let output_name = output_root
++        .file_name()
++        .and_then(|value| value.to_str())
++        .ok_or("CMO output directory requires a portable final path component")?;
++    let parent = output_root.parent().unwrap_or_else(|| Path::new("."));
++    let staging_root = parent.join(format!(".{output_name}.cmo-staging-{}", std::process::id()));
++    if staging_root.exists() {
++        return Err(format!(
++            "CMO staging directory already exists: {}",
++            staging_root.display()
++        )
++        .into());
++    }
++    let write_result =
++        write_bundle_into(elements, llbbox, ground, suppression, args, &staging_root);
++    if let Err(error) = write_result {
++        let _ = fs::remove_dir_all(&staging_root);
++        return Err(error);
++    }
++    if output_root.exists() {
++        fs::remove_dir(output_root)?;
++    }
++    if let Err(error) = fs::rename(&staging_root, output_root) {
++        let _ = fs::remove_dir_all(&staging_root);
++        return Err(error.into());
++    }
++    Ok(output_root.join("bundle.json"))
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use std::collections::BTreeSet;
++
++    fn node(id: u64, x: f64, y: f64) -> MetricNode {
++        MetricNode { id, point: [x, y] }
++    }
++
++    #[test]
++    fn raw_wgs84_projection_preserves_sub_meter_offsets() {
++        let temp = tempfile::NamedTempFile::new().unwrap();
++        std::fs::write(
++            temp.path(),
++            r#"{"elements":[
++                {"type":"node","id":1,"lat":41.5,"lon":-86.5},
++                {"type":"node","id":2,"lat":41.5,"lon":-86.499999},
++                {"type":"way","id":7,"nodes":[1,2]}
++            ]}"#,
++        )
++        .unwrap();
++        let bbox = LLBBox::new(41.0, -87.0, 42.0, -86.0).unwrap();
++        let (geometry, _, _) = load_metric_geometry(temp.path(), &bbox).unwrap();
++        let points = &geometry.ways[&7];
++        let delta = (points[1].point[0] - points[0].point[0]).abs();
++        assert!(delta > 0.0 && delta < 1.0, "sub-metre delta was {delta}");
++    }
++
++    #[test]
++    fn normalized_northing_span_matches_geodesic_distance() {
++        let bbox = LLBBox::new(41.8865, -87.6355, 41.8895, -87.6315).unwrap();
++        let origin_lat = (bbox.min().lat() + bbox.max().lat()) / 2.0;
++        let origin_lon = (bbox.min().lng() + bbox.max().lng()) / 2.0;
++        let projection = WebMercatorProjection::new(origin_lat, origin_lon, 1.0);
++        let bounds = MetricBounds::from_bbox(&bbox, &projection, origin_lat.to_radians().cos());
++        let (geodesic_northing_m, _) =
++            crate::coordinate_system::transformation::geo_distance(bbox.min(), bbox.max());
++        let projected_span = bounds.max_y - bounds.min_y;
++        let relative_error = (projected_span - geodesic_northing_m).abs() / geodesic_northing_m;
++        assert!(
++            relative_error < 0.005,
++            "normalized northing {projected_span}m differs from geodesic {geodesic_northing_m}m"
++        );
++    }
++
++    #[test]
++    fn ring_coordinates_reject_open_way_and_preserve_closed_way() {
++        assert!(
++            ring_coordinates(&[node(1, 0.0, 0.0), node(2, 10.0, 0.0), node(3, 10.0, 10.0)])
++                .is_none()
++        );
++        let ring = ring_coordinates(&[
++            node(1, 0.0, 0.0),
++            node(2, 10.0, 0.0),
++            node(3, 10.0, 10.0),
++            node(1, 0.0, 0.0),
++        ])
++        .expect("valid closed ring");
++        assert_eq!(ring.first(), ring.last());
++        assert_eq!(ring.len(), 4);
++    }
++
++    #[test]
++    fn polygon_clipping_adds_bbox_edges_without_out_of_bounds_points() {
++        let bounds = MetricBounds {
++            min_x: 0.0,
++            min_y: 0.0,
++            max_x: 10.0,
++            max_y: 10.0,
++        };
++        let ring = clipped_ring_coordinates(
++            &[
++                node(1, -5.25, -5.5),
++                node(2, 15.25, -5.5),
++                node(3, 15.25, 15.5),
++                node(4, -5.25, 15.5),
++                node(1, -5.25, -5.5),
++            ],
++            &bounds,
++        )
++        .expect("clipped polygon");
++        assert_eq!(ring.first(), ring.last());
++        assert!(ring
++            .iter()
++            .all(|point| { (0.0..=10.0).contains(&point[0]) && (0.0..=10.0).contains(&point[1]) }));
++        assert_eq!(ring.len(), 5);
++    }
++
++    #[test]
++    fn metric_defaults_do_not_depend_on_block_ranges_or_height_blocks() {
++        let road_tags = HashMap::from([("lanes".to_string(), "2.5".to_string())]);
++        assert_eq!(
++            road_width_m("residential", &road_tags),
++            (8.0, "osm_lanes_times_3_2m")
++        );
++        let building_tags = HashMap::from([
++            ("building".to_string(), "apartments".to_string()),
++            ("building:levels".to_string(), "3".to_string()),
++        ]);
++        let height = metric_building_height(&building_tags).unwrap();
++        assert_eq!(height.meters, 9.0);
++        assert_eq!(height.source, "osm_building_levels_times_3m");
++        let explicit = HashMap::from([
++            ("building".to_string(), "yes".to_string()),
++            ("height".to_string(), "12.75 m".to_string()),
++            ("min_height".to_string(), "2.25 m".to_string()),
++        ]);
++        assert_eq!(metric_building_height(&explicit).unwrap().meters, 10.5);
++    }
++
++    #[test]
++    fn building_vertical_placement_prefers_metric_offsets_and_fails_closed_on_layer_only_parts() {
++        let explicit_min_height = HashMap::from([
++            ("building:part".to_string(), "roof".to_string()),
++            ("layer".to_string(), "3".to_string()),
++            ("min_height".to_string(), "7.25 m".to_string()),
++            ("building:min_level".to_string(), "2".to_string()),
++        ]);
++        let placement = building_vertical_placement(&explicit_min_height);
++        assert_eq!(placement.anchor_mode, "terrain_rigid");
++        assert!(placement.resolved);
++        assert_eq!(placement.base_offset_m, Some(7.25));
++        assert_eq!(placement.layer, Some(3));
++        assert_eq!(placement.source, "osm_min_height_m");
++
++        let explicit_level = HashMap::from([
++            ("building:part".to_string(), "yes".to_string()),
++            ("building:min_level".to_string(), "2".to_string()),
++            ("min_level".to_string(), "4".to_string()),
++        ]);
++        let placement = building_vertical_placement(&explicit_level);
++        assert!(placement.resolved);
++        assert_eq!(placement.base_offset_m, Some(6.0));
++        assert_eq!(placement.source, "osm_building_min_level_times_3m");
++
++        let ground_building = HashMap::from([("building".to_string(), "yes".to_string())]);
++        let placement = building_vertical_placement(&ground_building);
++        assert_eq!(placement.anchor_mode, "terrain_rigid");
++        assert!(placement.resolved);
++        assert_eq!(placement.base_offset_m, Some(0.0));
++        assert_eq!(placement.source, "implicit_terrain_base_zero_m");
++
++        for tags in [
++            HashMap::from([
++                ("building:part".to_string(), "roof".to_string()),
++                ("layer".to_string(), "2".to_string()),
++            ]),
++            HashMap::from([
++                ("building:part".to_string(), "yes".to_string()),
++                ("layer".to_string(), "1".to_string()),
++            ]),
++        ] {
++            let placement = building_vertical_placement(&tags);
++            assert_eq!(placement.anchor_mode, "elevated_profile");
++            assert!(!placement.resolved);
++            assert_eq!(placement.base_offset_m, None);
++            assert!(placement.layer.is_some_and(|layer| layer > 0));
++            assert_eq!(
++                placement.source,
++                "unresolved_positive_layer_without_metric_base_offset"
++            );
++            let mut attributes = BTreeMap::new();
++            let mut measurements = BTreeMap::new();
++            insert_building_vertical_placement(&mut attributes, &mut measurements, &placement);
++            assert!(!attributes.contains_key("base_offset_m"));
++            assert!(!attributes.contains_key("base_offset_source"));
++            assert!(!measurements.contains_key("base_offset_m"));
++            assert!(!measurements.contains_key("base_offset_source"));
++            assert!(attributes["layer"].as_i64().is_some_and(|layer| layer > 0));
++            assert_eq!(
++                measurements["layer"]["source_semantics"],
++                "osm_layer_semantic"
++            );
++            assert_eq!(measurements["layer"]["derived_from_block_count"], false);
++            assert_eq!(measurements["layer"]["derived_from_block_range"], false);
++        }
++
++        let placement = building_vertical_placement(&ground_building);
++        let mut attributes = BTreeMap::new();
++        let mut measurements = BTreeMap::new();
++        insert_building_vertical_placement(&mut attributes, &mut measurements, &placement);
++        assert_eq!(attributes["base_offset_m"], 0.0);
++        assert_eq!(
++            measurements["base_offset_m"]["source_semantics"],
++            "implicit_terrain_base_zero_m"
++        );
++        assert_eq!(
++            measurements["base_offset_m"]["derived_from_block_count"],
++            false
++        );
++        assert_eq!(
++            measurements["base_offset_m"]["derived_from_block_range"],
++            false
++        );
++    }
++
++    #[test]
++    fn exported_static_features_carry_fail_closed_vertical_anchor_semantics() {
++        let bounds = MetricBounds {
++            min_x: 0.0,
++            min_y: 0.0,
++            max_x: 10.0,
++            max_y: 10.0,
++        };
++        let geometry = MetricGeometryIndex {
++            ways: HashMap::from([
++                (1, vec![node(1, 1.25, 1.5), node(2, 8.75, 8.5)]),
++                (2, vec![node(3, 1.5, 8.0), node(4, 8.0, 1.5)]),
++                (3, vec![node(5, 2.0, 5.0), node(6, 8.0, 5.0)]),
++                (4, vec![node(7, 1.0, 3.0), node(8, 9.0, 3.0)]),
++                (5, vec![node(9, 1.0, 4.0), node(10, 9.0, 4.0)]),
++                (6, vec![node(11, 1.0, 6.0), node(12, 9.0, 6.0)]),
++                (7, vec![node(13, 1.0, 7.0), node(14, 9.0, 7.0)]),
++                (8, vec![node(15, 1.0, 8.0), node(16, 9.0, 8.0)]),
++            ]),
++            bounds,
++        };
++
++        let bridge = ProcessedWay {
++            id: 1,
++            nodes: Vec::new(),
++            tags: HashMap::from([
++                ("highway".to_string(), "primary".to_string()),
++                ("bridge".to_string(), "yes".to_string()),
++                ("covered".to_string(), "yes".to_string()),
++                ("layer".to_string(), "1".to_string()),
++            ]),
++        };
++        let bridge_feature = &road_features(&bridge, &geometry)[0];
++        assert_eq!(
++            bridge_feature.attributes["vertical_anchor_mode"],
++            "elevated_profile"
++        );
++        assert_eq!(
++            bridge_feature.attributes["vertical_placement_resolved"],
++            false
++        );
++        assert_eq!(bridge_feature.attributes["layer"], 1.0);
++        assert_eq!(bridge_feature.attributes["bridge"], true);
++        assert_eq!(bridge_feature.attributes["covered"], true);
++        assert_eq!(bridge_feature.attributes["tunnel"], false);
++
++        let tunnel = ProcessedWay {
++            id: 2,
++            nodes: Vec::new(),
++            tags: HashMap::from([
++                ("highway".to_string(), "service".to_string()),
++                ("tunnel".to_string(), "no".to_string()),
++                ("layer".to_string(), "-1".to_string()),
++            ]),
++        };
++        let tunnel_feature = &road_features(&tunnel, &geometry)[0];
++        assert_eq!(
++            tunnel_feature.attributes["vertical_anchor_mode"],
++            "subsurface_profile"
++        );
++        assert_eq!(
++            tunnel_feature.attributes["vertical_placement_resolved"],
++            false
++        );
++        assert_eq!(tunnel_feature.attributes["layer"], -1.0);
++        assert_eq!(tunnel_feature.attributes["tunnel"], false);
++
++        let ground_road = ProcessedWay {
++            id: 4,
++            nodes: Vec::new(),
++            tags: HashMap::from([("highway".to_string(), "residential".to_string())]),
++        };
++        let ground_road_feature = &road_features(&ground_road, &geometry)[0];
++        assert_eq!(
++            ground_road_feature.attributes["vertical_anchor_mode"],
++            "terrain_draped"
++        );
++        assert_eq!(
++            ground_road_feature.attributes["vertical_placement_resolved"],
++            true
++        );
++        assert_eq!(ground_road_feature.attributes["layer"], 0.0);
++
++        let positive_layer_road = ProcessedWay {
++            id: 5,
++            nodes: Vec::new(),
++            tags: HashMap::from([
++                ("highway".to_string(), "service".to_string()),
++                ("layer".to_string(), "1".to_string()),
++                ("tunnel".to_string(), "building_passage".to_string()),
++            ]),
++        };
++        let positive_layer_feature = &road_features(&positive_layer_road, &geometry)[0];
++        assert_eq!(
++            positive_layer_feature.attributes["vertical_anchor_mode"],
++            "elevated_profile"
++        );
++        assert_eq!(
++            positive_layer_feature.attributes["vertical_placement_resolved"],
++            false
++        );
++        assert_eq!(positive_layer_feature.attributes["tunnel"], true);
++
++        let building_passage = ProcessedWay {
++            id: 6,
++            nodes: Vec::new(),
++            tags: HashMap::from([
++                ("highway".to_string(), "service".to_string()),
++                ("tunnel".to_string(), "building_passage".to_string()),
++            ]),
++        };
++        let building_passage_feature = &road_features(&building_passage, &geometry)[0];
++        assert_eq!(
++            building_passage_feature.attributes["vertical_anchor_mode"],
++            "subsurface_profile"
++        );
++        assert_eq!(building_passage_feature.attributes["tunnel"], true);
++
++        let covered_road = ProcessedWay {
++            id: 7,
++            nodes: Vec::new(),
++            tags: HashMap::from([
++                ("highway".to_string(), "service".to_string()),
++                ("covered".to_string(), "arcade".to_string()),
++            ]),
++        };
++        let covered_feature = &road_features(&covered_road, &geometry)[0];
++        assert_eq!(
++            covered_feature.attributes["vertical_anchor_mode"],
++            "terrain_draped"
++        );
++        assert_eq!(
++            covered_feature.attributes["vertical_placement_resolved"],
++            true
++        );
++        assert_eq!(covered_feature.attributes["tunnel"], false);
++        assert_eq!(covered_feature.attributes["covered"], true);
++        assert_eq!(
++            covered_feature.lineage["measurements"]["covered"]["source_semantics"],
++            "osm_covered_semantic"
++        );
++
++        let invalid_layer_road = ProcessedWay {
++            id: 8,
++            nodes: Vec::new(),
++            tags: HashMap::from([
++                ("highway".to_string(), "service".to_string()),
++                ("layer".to_string(), "upper".to_string()),
++            ]),
++        };
++        let invalid_layer_feature = &road_features(&invalid_layer_road, &geometry)[0];
++        assert_eq!(invalid_layer_feature.attributes["layer"], "upper");
++        assert_eq!(
++            invalid_layer_feature.attributes["vertical_anchor_mode"],
++            "elevated_profile"
++        );
++        assert_eq!(
++            invalid_layer_feature.attributes["vertical_placement_resolved"],
++            false
++        );
++        assert_eq!(
++            invalid_layer_feature.lineage["measurements"]["layer"]["source_semantics"],
++            "invalid_osm_layer_raw_semantic"
++        );
++
++        let expected_road_measurements = BTreeSet::from([
++            "bridge",
++            "covered",
++            "layer",
++            "tunnel",
++            "vertical_anchor_mode",
++            "vertical_anchor_source",
++            "vertical_placement_resolved",
++            "width_m",
++        ]);
++        for feature in [
++            bridge_feature,
++            tunnel_feature,
++            ground_road_feature,
++            positive_layer_feature,
++            building_passage_feature,
++            covered_feature,
++            invalid_layer_feature,
++        ] {
++            let actual = feature.lineage["measurements"]
++                .as_object()
++                .unwrap()
++                .keys()
++                .map(String::as_str)
++                .collect::<BTreeSet<_>>();
++            assert_eq!(actual, expected_road_measurements);
++        }
++
++        let river = ProcessedWay {
++            id: 3,
++            nodes: Vec::new(),
++            tags: HashMap::from([("waterway".to_string(), "river".to_string())]),
++        };
++        let river_feature = &hydrology_features_from_way(&river, &geometry)[0];
++        assert_eq!(
++            river_feature.attributes["vertical_anchor_mode"],
++            "water_surface_from_dem"
++        );
++        assert_eq!(
++            river_feature.attributes["vertical_placement_resolved"],
++            true
++        );
++
++        for feature in [
++            bridge_feature,
++            tunnel_feature,
++            ground_road_feature,
++            positive_layer_feature,
++            building_passage_feature,
++            covered_feature,
++            invalid_layer_feature,
++            river_feature,
++        ] {
++            let measurements = &feature.lineage["measurements"];
++            for key in [
++                "vertical_anchor_mode",
++                "vertical_placement_resolved",
++                "vertical_anchor_source",
++            ] {
++                assert_eq!(measurements[key]["derived_from_block_count"], false);
++                assert_eq!(measurements[key]["derived_from_block_range"], false);
++            }
++        }
++    }
++
++    #[test]
++    fn continuous_lineage_explicitly_rejects_minecraft_roundtrips() {
++        let lineage = continuous_lineage();
++        assert_eq!(lineage["contract"], "arnis_continuous_metric.v1");
++        assert_eq!(lineage["geometry"]["block_projection_applied"], false);
++        assert_eq!(lineage["elevation"]["minecraft_y_roundtrip"], false);
++        assert_eq!(lineage["voxelization_applied"], false);
++    }
++
++    #[test]
++    fn point_in_ring_assigns_holes() {
++        let outer = vec![
++            [0.0, 0.0],
++            [10.0, 0.0],
++            [10.0, 10.0],
++            [0.0, 10.0],
++            [0.0, 0.0],
++        ];
++        assert!(point_in_ring([5.0, 5.0], &outer));
++        assert!(!point_in_ring([15.0, 5.0], &outer));
++    }
++
++    #[test]
++    fn exclusive_elevation_source_rejects_fallback_or_missing_units() {
++        let usgs_only = BTreeMap::from([("usgs_3dep".to_string(), 2)]);
++        assert!(has_exclusive_elevation_source(
++            "usgs_3dep",
++            &usgs_only,
++            0,
++            "usgs_3dep"
++        ));
++        let mixed = BTreeMap::from([("aws_terrain".to_string(), 1), ("usgs_3dep".to_string(), 1)]);
++        assert!(!has_exclusive_elevation_source(
++            "usgs_3dep",
++            &mixed,
++            0,
++            "usgs_3dep"
++        ));
++        assert!(!has_exclusive_elevation_source(
++            "usgs_3dep",
++            &usgs_only,
++            1,
++            "usgs_3dep"
++        ));
++    }
++}
+diff --git a/src/elevation/mod.rs b/src/elevation/mod.rs
+index 89dfedea7c36bc65cb22d8aa0ed10e72b2968a39..51bea34eee6373fc46271b43f746438aed8b70f6 100644
+--- a/src/elevation/mod.rs
++++ b/src/elevation/mod.rs
+@@ -28,6 +28,9 @@ pub struct ElevationData {
+     /// (≈80 MB at f64, halved at f32). Postprocess still runs in f64 for
+     /// numerical stability; the downcast happens once at construction.
+     pub(crate) heights: Vec<Vec<f32>>,
++    /// Land-cover-aware repaired elevations in source metres, captured before
++    /// Minecraft Y scaling. This is retained only for CMO export.
++    pub(crate) postprocessed_heights_m: Option<Vec<Vec<f32>>>,
+     /// Width of the elevation grid (may be smaller than world width due to capping)
+     pub(crate) width: usize,
+     /// Height of the elevation grid (may be smaller than world height due to capping)
+@@ -41,6 +44,12 @@ pub struct ElevationData {
+     /// elevation (e.g. the snow line) to a Minecraft Y threshold.
+     pub(crate) min_height_m: f64,
+     pub(crate) blocks_per_meter: f64,
++    /// Provider that supplied the raw DEM before Arnis post-processing.
++    pub(crate) source_name: String,
++    /// All provider sources that contributed raw elevation source units.
++    pub(crate) contributing_sources: std::collections::BTreeMap<String, usize>,
++    /// Source units that remained missing before post-processing fill.
++    pub(crate) missing_source_units: usize,
+ }
+ 
+ /// Maximum elevation grid dimension requested from providers per axis.
+@@ -60,6 +69,15 @@ pub struct ElevationData {
+ /// available. Typical user bboxes stay well below the cap.
+ pub const MAX_ELEVATION_GRID_DIM: usize = 16384;
+ 
++fn retain_metric_grid(height_grid: &[Vec<f64>], retain: bool) -> Option<Vec<Vec<f32>>> {
++    retain.then(|| {
++        height_grid
++            .iter()
++            .map(|row| row.iter().map(|height| *height as f32).collect())
++            .collect()
++    })
++}
++
+ /// Compute world and grid dimensions for the given bbox and scale.
+ ///
+ /// Exposed so callers (e.g. `Ground::new_enabled`) can fetch land cover at the
+@@ -101,6 +119,7 @@ pub fn fetch_elevation_data(
+     extended_max_y: i32,
+     land_cover: Option<&mut LandCoverData>,
+     source_mode: SourceMode,
++    retain_postprocessed_meters: bool,
+     benchmark: bool,
+ ) -> Result<ElevationData, Box<dyn std::error::Error>> {
+     let mut bench = crate::bench::Bench::new(benchmark);
+@@ -118,12 +137,14 @@ pub fn fetch_elevation_data(
+ 
+     emit_gui_progress_update(10.0, "Downloading data...");
+ 
+-    let raw = fetch_raw_with_fallback(&chain, bbox, grid_width, grid_height)?;
++    let (raw, source_name) = fetch_raw_with_fallback(&chain, bbox, grid_width, grid_height)?;
+ 
+     bench.mark("elev_raw_fetch");
+     emit_gui_progress_update(12.0, "Processing elevation...");
+ 
+     // Shared post-processing pipeline
++    let contributing_sources = raw.contributing_sources;
++    let missing_source_units = raw.missing_source_units;
+     let mut height_grid = raw.heights_meters;
+     filter_elevation_outliers(&mut height_grid);
+     bench.mark("elev_filter_outliers");
+@@ -181,6 +202,8 @@ pub fn fetch_elevation_data(
+     bench.mark("elev_landcover_repair");
+     emit_gui_progress_update(16.0, "Processing elevation...");
+ 
++    let postprocessed_heights_m = retain_metric_grid(&height_grid, retain_postprocessed_meters);
++
+     let (mc_heights, min_height_m, blocks_per_meter) = scale_to_minecraft(
+         &height_grid,
+         scale,
+@@ -215,12 +238,16 @@ pub fn fetch_elevation_data(
+ 
+     Ok(ElevationData {
+         heights: mc_heights_f32,
++        postprocessed_heights_m,
+         width: grid_width,
+         height: grid_height,
+         world_width,
+         world_height,
+         min_height_m,
+         blocks_per_meter,
++        source_name,
++        contributing_sources,
++        missing_source_units,
+     })
+ }
+ 
+@@ -236,12 +263,12 @@ fn fetch_raw_with_fallback(
+     bbox: &LLBBox,
+     grid_width: usize,
+     grid_height: usize,
+-) -> Result<RawElevationGrid, Box<dyn std::error::Error>> {
++) -> Result<(RawElevationGrid, String), Box<dyn std::error::Error>> {
+     let last = chain.len() - 1;
+     for (i, provider) in chain.iter().enumerate() {
+         let name = provider.name();
+         match provider.fetch_raw(bbox, grid_width, grid_height) {
+-            Ok(raw) => {
++            Ok(mut raw) => {
+                 if i < last {
+                     let nan_ratio = compute_nan_ratio(&raw.heights_meters);
+                     if nan_ratio > 0.5 {
+@@ -264,7 +291,10 @@ fn fetch_raw_with_fallback(
+                         continue;
+                     }
+                 }
+-                return Ok(raw);
++                if raw.contributing_sources.is_empty() {
++                    raw.contributing_sources.insert(name.to_string(), 1);
++                }
++                return Ok((raw, name.to_string()));
+             }
+             Err(e) if i < last => {
+                 eprintln!(
+@@ -307,3 +337,18 @@ fn compute_nan_ratio(heights: &[Vec<f64>]) -> f64 {
+     }
+     nan_count as f64 / total as f64
+ }
++
++#[cfg(test)]
++mod continuous_metric_tests {
++    use super::*;
++
++    #[test]
++    fn metric_dem_retention_precedes_minecraft_scaling() {
++        let metric = vec![vec![101.25, 103.75], vec![99.5, 110.0]];
++        let retained = retain_metric_grid(&metric, true).unwrap();
++        let (minecraft, _, _) = scale_to_minecraft(&metric, 1.0, 64, false, 0);
++        assert_eq!(retained[0][0], 101.25_f32);
++        assert_ne!(f64::from(retained[0][0]), minecraft[0][0]);
++        assert!(retain_metric_grid(&metric, false).is_none());
++    }
++}
+diff --git a/src/elevation/provider.rs b/src/elevation/provider.rs
+index c7bc60a477ec007ebd231fc2492f9b24e120e91f..f0ff542a2f661605837aec1a7758523810eabed3 100644
+--- a/src/elevation/provider.rs
++++ b/src/elevation/provider.rs
+@@ -5,6 +5,10 @@ use crate::coordinate_system::geographic::LLBBox;
+ pub struct RawElevationGrid {
+     /// Height values in meters above sea level. NaN for missing data.
+     pub heights_meters: Vec<Vec<f64>>,
++    /// Source units that contributed samples before post-processing.
++    pub contributing_sources: std::collections::BTreeMap<String, usize>,
++    /// Provider source units that remained unavailable and required post-processing fill.
++    pub missing_source_units: usize,
+ }
+ 
+ /// Trait for elevation data providers.
+diff --git a/src/elevation/providers/aws_terrain.rs b/src/elevation/providers/aws_terrain.rs
+index b77df0db43285d5dd48c61c46c618eedddcf8851..b56810a022085df971c999f8c2dd0671bdc44426 100644
+--- a/src/elevation/providers/aws_terrain.rs
++++ b/src/elevation/providers/aws_terrain.rs
+@@ -164,8 +164,14 @@ impl ElevationProvider for AwsTerrain {
+             })
+             .collect();
+ 
++        let mut contributing_sources = std::collections::BTreeMap::new();
++        if !tile_map.is_empty() {
++            contributing_sources.insert(self.name().to_string(), tile_map.len());
++        }
+         Ok(RawElevationGrid {
+             heights_meters: height_grid,
++            contributing_sources,
++            missing_source_units: tiles.len().saturating_sub(tile_map.len()),
+         })
+     }
+ }
+diff --git a/src/elevation/providers/fixed_tile.rs b/src/elevation/providers/fixed_tile.rs
+index 7bf0ac14bf387a6a6a4ae3a07dec636cd6000e19..77b7008b272b7a8b915066e07fc77106606f1e32 100644
+--- a/src/elevation/providers/fixed_tile.rs
++++ b/src/elevation/providers/fixed_tile.rs
+@@ -612,8 +612,18 @@ pub(super) fn fetch_fixed_tile_grid<P: FixedTileProvider>(
+         })
+         .collect();
+ 
++    let mut contributing_sources = std::collections::BTreeMap::new();
++    let primary_successes = tile_keys.len().saturating_sub(primary_failures);
++    if primary_successes > 0 {
++        contributing_sources.insert(provider.log_prefix().to_string(), primary_successes);
++    }
++    if fallback_recovered > 0 {
++        contributing_sources.insert("aws_terrain".to_string(), fallback_recovered);
++    }
+     Ok(RawElevationGrid {
+         heights_meters: height_grid,
++        contributing_sources,
++        missing_source_units: primary_failures.saturating_sub(fallback_recovered),
+     })
+ }
+ 
+diff --git a/src/elevation/providers/mapterhorn.rs b/src/elevation/providers/mapterhorn.rs
+index 03ec90669c3bb80b6f95e2434ab0d1596c7cdc5a..6ab43936bc3fe4852c9450d47ea776805d933e03 100644
+--- a/src/elevation/providers/mapterhorn.rs
++++ b/src/elevation/providers/mapterhorn.rs
+@@ -99,6 +99,11 @@ impl ElevationProvider for Mapterhorn {
+ 
+         Ok(RawElevationGrid {
+             heights_meters: height_grid,
++            contributing_sources: std::collections::BTreeMap::from([(
++                self.name().to_string(),
++                outcome.available.len(),
++            )]),
++            missing_source_units: outcome.failed_downloads,
+         })
+     }
+ }
+diff --git a/src/elevation/providers/regional.rs b/src/elevation/providers/regional.rs
+index c9c3dd041f4e9059b958612513f2dc5366a0ca4b..818a632f776652ab04a1713de2363cbada65c4ee 100644
+--- a/src/elevation/providers/regional.rs
++++ b/src/elevation/providers/regional.rs
+@@ -171,6 +171,8 @@ pub(super) fn decode_geotiff_f32(
+ 
+     Ok(RawElevationGrid {
+         heights_meters: height_grid,
++        contributing_sources: std::collections::BTreeMap::new(),
++        missing_source_units: 0,
+     })
+ }
+ 
+diff --git a/src/ground.rs b/src/ground.rs
+index fb359dff310cd7fdbb0aaefa879fa876dd2725c4..3803d1297e195a307c0624b4662df153dc08c834 100644
+--- a/src/ground.rs
++++ b/src/ground.rs
+@@ -156,12 +156,16 @@ impl Ground {
+             ground_level: 0,
+             elevation_data: Some(crate::elevation::ElevationData {
+                 heights,
++                postprocessed_heights_m: None,
+                 width: grid_width,
+                 height: grid_height,
+                 world_width,
+                 world_height,
+                 min_height_m: 0.0,
+                 blocks_per_meter: 1.0,
++                source_name: "test".to_string(),
++                contributing_sources: std::collections::BTreeMap::from([("test".to_string(), 1)]),
++                missing_source_units: 0,
+             }),
+             land_cover: None,
+             world_width,
+@@ -180,6 +184,7 @@ impl Ground {
+         disable_height_limit: bool,
+         extended_max_y: i32,
+         aws_only_elevation: bool,
++        retain_postprocessed_meters: bool,
+         benchmark: bool,
+     ) -> Self {
+         let mut bench = crate::bench::Bench::new(benchmark);
+@@ -222,6 +227,7 @@ impl Ground {
+             extended_max_y,
+             land_cover.as_mut(),
+             source_mode,
++            retain_postprocessed_meters,
+             benchmark,
+         ) {
+             Ok(elevation_data) => {
+@@ -280,6 +286,14 @@ impl Ground {
+         self.climate
+     }
+ 
++    pub(crate) fn elevation_data(&self) -> Option<&ElevationData> {
++        self.elevation_data.as_ref()
++    }
++
++    pub(crate) fn land_cover_data(&self) -> Option<&LandCoverData> {
++        self.land_cover.as_ref()
++    }
++
+     /// Returns whether land cover data is available
+     #[inline(always)]
+     pub fn has_land_cover(&self) -> bool {
+@@ -775,6 +789,7 @@ pub fn generate_ground_data(args: &Args) -> Ground {
+             args.disable_height_limit,
+             extended_max_y_for(args),
+             args.aws_only_elevation,
++            args.cmo_output_dir.is_some(),
+             args.benchmark,
+         );
+         if args.debug {
+@@ -811,12 +826,16 @@ mod tests {
+             ground_level: 0,
+             elevation_data: Some(ElevationData {
+                 heights,
++                postprocessed_heights_m: None,
+                 width: w,
+                 height: h,
+                 world_width: w,
+                 world_height: h,
+                 min_height_m: 0.0,
+                 blocks_per_meter: 1.0,
++                source_name: "test".to_string(),
++                contributing_sources: std::collections::BTreeMap::from([("test".to_string(), 1)]),
++                missing_source_units: 0,
+             }),
+             land_cover: None,
+             world_width: w,
+@@ -889,12 +908,16 @@ mod tests {
+     fn snow_threshold_inverts_the_scale() {
+         let ed = |min_m: f64, bpm: f64| ElevationData {
+             heights: vec![vec![0.0; 2]; 2],
++            postprocessed_heights_m: None,
+             width: 2,
+             height: 2,
+             world_width: 2,
+             world_height: 2,
+             min_height_m: min_m,
+             blocks_per_meter: bpm,
++            source_name: "test".to_string(),
++            contributing_sources: std::collections::BTreeMap::from([("test".to_string(), 1)]),
++            missing_source_units: 0,
+         };
+         // 46 deg snow line is 3000 m; at 0.1 block/m from min 0 m, ground 64 => Y 364.
+         assert_eq!(snow_threshold_for(&ed(0.0, 0.1), 46.0, 64), 364);
+diff --git a/src/gui.rs b/src/gui.rs
+index 7405b1dc4b8aafee3ed6e60e8bff6b2a2b5a7a32..5f91d2e7173bca80d84a8654a4b671ba7cb01cf9 100644
+--- a/src/gui.rs
++++ b/src/gui.rs
+@@ -1180,6 +1180,9 @@ fn gui_start_generation(
+                 } else {
+                     world_path
+                 }),
++                cmo_output_dir: None,
++                cmo_require_elevation_provider: None,
++                cmo_exporter_patch_sha256: None,
+                 bedrock: world_format == WorldFormat::BedrockMcWorld,
+                 luanti: world_format == WorldFormat::LuantiWorld,
+                 downloader: "requests".to_string(),
+diff --git a/src/main.rs b/src/main.rs
+index 63e83e291e96d9be7b2e2b6c8f12465813846d2a..f2c5c5d995221ad5ae02b35a3e51b0ebaae55a04 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -8,6 +8,7 @@ mod block_definitions;
+ mod bresenham;
+ mod climate;
+ mod clipping;
++mod cmo_export;
+ mod colors;
+ mod coordinate_system;
+ mod data_processing;
+@@ -147,7 +148,9 @@ fn run_cli() {
+     };
+ 
+     // Build the generation output path and level name
+-    let (generation_path, level_name) = if args.bedrock {
++    let (generation_path, level_name) = if args.cmo_output_dir.is_some() {
++        (PathBuf::new(), None)
++    } else if args.bedrock {
+         // Bedrock: generate .mcworld file in user-specified path or Desktop
+         let output_dir = args
+             .path
+@@ -279,6 +282,32 @@ fn run_cli() {
+         .sort_by_key(|element: &osm_parser::ProcessedElement| osm_parser::get_priority(element));
+     bench.mark("sort_priority");
+ 
++    // CMO exports continuous metric source data before any block-rasterized
++    // OSM land-cover override, map transformation, rotation, or world write.
++    if let Some(output_dir) = args.cmo_output_dir.as_deref() {
++        match cmo_export::export_bundle(
++            &parsed_elements,
++            &args.bbox,
++            &ground,
++            &outline_suppression,
++            &args,
++            output_dir,
++        ) {
++            Ok(bundle_path) => {
++                println!(
++                    "{} CMO environment bundle saved to: {}",
++                    "Done!".green().bold(),
++                    bundle_path.display()
++                );
++                return;
++            }
++            Err(error) => {
++                eprintln!("{} CMO export failed: {}", "Error:".red().bold(), error);
++                std::process::exit(1);
++            }
++        }
++    }
++
+     // OSM water override first, then bridge repair handles remaining bridge-shadow cells.
+     ground.apply_osm_water_override(&parsed_elements, &xzbbox);
+     if args.debug {
+diff --git a/src/preview_3d.rs b/src/preview_3d.rs
+index c650d16c75a2c6cfeb279a02a7e0cd01b27ffd47..6f85d23d4566081360b161a2a4a97604c2910e50 100644
+--- a/src/preview_3d.rs
++++ b/src/preview_3d.rs
+@@ -95,9 +95,18 @@ pub fn build_preview_payload(bbox_text: &str, aws_only: bool) -> Result<Vec<u8>,
+     };
+ 
+     // ground_level 0 keeps the meter->Y affine trivially invertible below.
+-    let elevation =
+-        fetch_elevation_data(&bbox, preview_scale, 0, false, 0, None, source_mode, false)
+-            .map_err(|e| format!("Elevation fetch failed: {e}"))?;
++    let elevation = fetch_elevation_data(
++        &bbox,
++        preview_scale,
++        0,
++        false,
++        0,
++        None,
++        source_mode,
++        false,
++        false,
++    )
++    .map_err(|e| format!("Elevation fetch failed: {e}"))?;
+ 
+     let gw = elevation.width;
+     let gh = elevation.height;

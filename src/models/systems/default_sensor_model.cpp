@@ -292,11 +292,13 @@ class DefaultSensorModel : public ISensorModel {
                     target_t.z, sensor.type);
                 weath_factor = 1.0 - att;
 
-                // 3. Sun Glare (Visual/IR)
+                // 3. Sun Glare (Visual/IR). Only a sun above the horizon can
+                // blind a sensor; below-horizon (night) suns must not apply
+                // the penalty through the earth.
                 if (sensor.type <= 1) { // 0=Visual, 1=IR
                     Vec3 sun = env_ref->model->get_sun_direction();
                     // Dot product of (ToTarget) and (Sun)
-                    if (dist > 1.0) {
+                    if (sun.z > 0.0 && dist > 1.0) {
                         double udx = dx / dist;
                         double udy = dy / dist;
                         double udz = dz / dist;

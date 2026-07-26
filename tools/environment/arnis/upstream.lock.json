@@ -1,0 +1,21 @@
+{
+  "build": {
+    "cargo_arguments": [
+      "--locked",
+      "--release",
+      "--no-default-features"
+    ]
+  },
+  "bundle_contract_version": "arnis_cmo_bundle.v1",
+  "install_id": "v3.0.0-cmo5",
+  "patch": {
+    "path": "patches/0001-cmo-continuous-bundle-export-v1.patch",
+    "sha256": "26536836d46aa7bc3e03da3449b4c52391f096527ab58f365d5dd4b96b9052ee"
+  },
+  "upstream": {
+    "commit": "af521c99124b5e07ecba018ea54f2ac47b6441d5",
+    "repository": "https://github.com/louis-e/arnis.git",
+    "tag": "v3.0.0",
+    "version": "3.0.0"
+  }
+}

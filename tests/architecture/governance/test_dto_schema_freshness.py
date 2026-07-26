@@ -151,7 +151,7 @@ EXPECTED_REGISTRATIONS = {
   "tools/maintenance/dto_schema/schemas/batch_world_setup_request_fields.py": (
     "src/runtime/facade/detail/batch_world_setup_request.inc",
     f"{_BUILDER_DIR}/batch_world_setup_request_builder.py",
-    7,
+    8,
   ),
   "tools/maintenance/dto_schema/schemas/batch_world_setup_result_fields.py": (
     "src/runtime/facade/detail/batch_world_setup_result.inc",
@@ -326,7 +326,7 @@ EXPECTED_REGISTRATIONS = {
   "tools/maintenance/dto_schema/schemas/runtime_world_layout_request_fields.py": (
     "src/runtime/facade/detail/runtime_world_layout_request.inc",
     f"{_BUILDER_DIR}/runtime_world_layout_request_builder.py",
-    13,
+    15,
   ),
   "tools/maintenance/dto_schema/schemas/runtime_world_layout_result_fields.py": (
     "src/runtime/facade/detail/runtime_world_layout_result.inc",

@@ -106,6 +106,8 @@ class SimulationKernel {
     void add_zone(const std::string &name, double x, double y, double width, double height,
                   double heading, int surface_type);
     void set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km = 0.0);
+    void set_sun_direction(double azimuth_deg, double elevation_deg);
+    Vec3 get_sun_direction() const;
     void set_terrain_type(const std::string &terrain_type);
     void set_maritime_state(double sea_state, double wave_heading_deg = 0.0,
                             double wave_period_s = 8.0);

@@ -16,6 +16,18 @@ upstream license terms for those files.
 - Copyright: 2014-2023 Guillermo Rauch
 - License: MIT License, as stated in the file header.
 
+### three.js
+
+- Files: `examples/viz/web_viz/static/vendor/three/three.module.js` and the
+  addon modules under `examples/viz/web_viz/static/vendor/three/addons/`
+  (`loaders/GLTFLoader.js`, `controls/OrbitControls.js`,
+  `utils/BufferGeometryUtils.js`)
+- Version: 0.160.0
+- Copyright: 2010-2023 Three.js Authors
+- License: MIT License; full text vendored at
+  `examples/viz/web_viz/static/vendor/three/LICENSE`.
+- Source: https://github.com/mrdoob/three.js (npm package `three@0.160.0`)
+
 ## Visualization Assets
 
 The 3D assets under `examples/viz/web_viz/static/assets/` are visualization
@@ -103,3 +115,34 @@ licenses and are not relicensed by this repository.
 
 Python packages declared in `pyproject.toml` also retain their upstream
 licenses.
+
+## Environment Generation Adapter and Geospatial Fixture
+
+### Arnis
+
+The maintained adapter under `tools/environment/arnis/` pins Arnis `v3.0.0`
+at commit `af521c99124b5e07ecba018ea54f2ac47b6441d5` and applies the repository's
+continuous CMO bundle-export patch, SHA-256
+`26536836d46aa7bc3e03da3449b4c52391f096527ab58f365d5dd4b96b9052ee`.
+Arnis is licensed under the Apache License, Version 2.0. The full upstream
+source tree is not stored in this repository.
+
+- Upstream: https://github.com/louis-e/arnis
+- License: https://github.com/louis-e/arnis/blob/v3.0.0/LICENSE
+
+### Chicago River Arnis phase-1 fixture
+
+The files under
+`tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/chicago_river_phase1/`
+contain retained or derived third-party geospatial data with per-artifact
+rights. They are not relicensed by the repository-level Apache-2.0 license.
+Detailed attribution and file scope are recorded in the fixture-local
+`ATTRIBUTION.md` and `source_manifest.json`.
+
+- OpenStreetMap input and OSM-derived vectors:
+  ODbL-1.0, `© OpenStreetMap contributors`.
+- ESA WorldCover 2021 v200 land-cover data and derived processing effects:
+  CC-BY-4.0 with the acknowledgement recorded in the fixture.
+- USGS 3DEP elevation source: United States government public-domain data;
+  the retained raster is an Arnis-processed derivative, not an original USGS
+  product.
