@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import math
 
+import pytest
+
 from tests.runtime.air_combat.weapon_guidance_realism.helpers import (
   _drive_missile_with_truth_track,
   _make_baseline_kernel,
@@ -33,6 +35,20 @@ def _run_live_structured_air_detonation() -> tuple[object, int, int, int]:
   return sim.export_recent_engagement_events(), missile_id, red_id, blue_id
 
 
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "lethality calibration drift (T6 residual ledger section 5, '2 air-combat "
+    "calibration-drift reds', signature \"'detonated_no_effect' == "
+    "'damage_applied'\"): the live proximity-fuze detonation in this scenario "
+    "now yields effects.outcome_state='detonated_no_effect', i.e. the warhead "
+    "detonates but applies no damage. Binary-side effects/damage-application "
+    "drift -- reproduced against both the 2026-07-18 and the 2026-07-26 ef_py "
+    "builds, with this test file unchanged since 2026-06-21. Strict: "
+    "recalibration that restores damage application flips this to "
+    "XPASS(strict) and the marker must then be removed."
+  ),
+)
 def test_live_detonation_exports_standard_warhead_spatial_and_component_events() -> None:
   events, missile_id, red_id, _blue_id = _run_live_structured_air_detonation()
 

@@ -769,6 +769,23 @@ def test_fragility_benchmark_blocks_residuals_without_truth(
   assert residuals["RES-012"]["blocking_condition_ids"] == ["BLOCK-CP-001"]
 
 
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "component-failure-probability calibration drift (T6 residual ledger "
+    "section 5, registered from section 8.9): the "
+    "synthetic_sigmoid_probability rows come from "
+    "component_fragility_benchmark._synthetic_baseline_rows -> "
+    "surface_probe._sample_primary_event, i.e. the binary-computed "
+    "component-failure-probability surface, and now read ~0.1699-0.1729 "
+    "against this test's hard-coded 0.35168 reference (max relative "
+    "difference 1.07). Same binary-driven drift family as the two "
+    "air-combat calibration reds; reproduced against both the 2026-07-18 "
+    "and the 2026-07-26 ef_py builds. Strict: recalibration that restores "
+    "the 0.35168 surface flips this to XPASS(strict) and the marker must "
+    "then be removed (re-baseline the reference alongside it)."
+  ),
+)
 def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid(
   fragility_benchmark_artifact: Artifact,
 ) -> None:

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import textwrap
 
+import pytest
+
 from tests.architecture.helpers import (
   REPO_ROOT,
   compile_cpp_snippet,
@@ -9,8 +11,38 @@ from tests.architecture.helpers import (
   dependency_link_args,
 )
 
-FLECS_INCLUDE = dependency_include_path("flecs")
+
+def _optional_dependency_include(dependency: str):
+  """Resolve a CMake dependency's include dir, or None when it is absent.
+
+  `dependency_include_path` raises `AssertionError` at import time, which
+  aborts collection for the whole module. Returning None instead lets the
+  module collect so the dependency-free checks still run and the
+  dependency-bound ones report SKIPPED rather than a collection error.
+  """
+  try:
+    return dependency_include_path(dependency)
+  except AssertionError:
+    return None
+
+
+FLECS_INCLUDE = _optional_dependency_include("flecs")
 FLECS_LINK_ARGS = dependency_link_args("flecs")
+
+# Governs the local-environment red recorded in the T6 residual ledger
+# (docs/plan/unified_architecture_program/t6_residual_ledger.md, section 5
+# "flecs static-lib link-signature reds"): CPU build snapshots that ship
+# only `_deps/flecs-build` without `_deps/flecs-src` cannot supply flecs
+# headers. Conditional on actual dependency presence, mirroring the
+# section 8.7 build-gpu-absent precedent -- on a build tree with the flecs
+# source present these checks run unchanged.
+requires_flecs = pytest.mark.skipif(
+  FLECS_INCLUDE is None,
+  reason=(
+    "missing CMake dependency 'flecs' include directory in the configured "
+    "CMO_BUILD_DIR (no _deps/flecs-src); see T6 residual ledger section 5"
+  ),
+)
 
 
 def _compile_and_run(source: str):
@@ -22,6 +54,7 @@ def _compile_and_run(source: str):
   )
 
 
+@requires_flecs
 def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_domain_gate() -> None:
   source = textwrap.dedent(
     r"""

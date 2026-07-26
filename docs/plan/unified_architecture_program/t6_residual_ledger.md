@@ -8,8 +8,8 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/t6_residual_ledger.md`
 Owner: `unified architecture program workline`
-Last verified: `2026-07-20`
-Baseline commit: `c2952d61`
+Last verified: `2026-07-26`
+Baseline commit: `0aa76a00`
 
 Status: T6 (test-infrastructure rationalization) residual index for the
 [Unified Architecture Program](README.md). Several accepted iterations
@@ -337,25 +337,35 @@ this ledger's writing I35's own migration register row does not yet exist
 This ledger tracks it as a pointer only and does not duplicate or race the
 migration.
 
-## 5. Local environment red list (as of c2952d61)
+## 5. Local environment red list (complete open-red list; last refreshed at I65)
 
-Five categories of pre-existing, machine/worktree-local reds have been
-independently reproduced across I31, I33, and I34's isolated-baseline
-checks. This iteration re-confirmed each category directly on this exact
-worktree (`CMO_BUILD_DIR=<worktree>/build-local-win`), naming exact node IDs
-where the category resolves to a small, enumerable set.
+Categories of pre-existing, machine/worktree-local reds, independently
+reproduced across I31, I33, and I34's isolated-baseline checks. I36
+re-confirmed each category directly on its worktree
+(`CMO_BUILD_DIR=<worktree>/build-local-win`), naming exact node IDs where the
+category resolves to a small, enumerable set.
+
+This section is maintained as the **complete** open-red list, not a snapshot:
+reds surfaced by later sweeps are registered here rather than left only in the
+iteration section that found them. I65 registered the two items section 8.9
+surfaced (the Windows path-separator pair and the component-fragility
+calibration drift) and recorded each row's current disposition inline, so the
+`Reproduced`/`Governed`/`Fixed` state of every row is readable from this
+table alone.
 
 | Item | I36 direct re-verification | Register pointer |
 | --- | --- | --- |
-| 5 flecs static-lib link-signature reds | Reproduced the failure class: `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` and `tests/architecture/runtime_spine/test_clock_domain_enforcement.py` both raise `AssertionError: Could not find include directory for CMake dependency 'flecs'` at collection time against this worktree's `build-local-win` snapshot. | I31/I33/I34 rows (independently reproduced on isolated baselines each time; I34: "same 5 flecs reds") |
+| 5 flecs static-lib link-signature reds | Reproduced the failure class: `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` and `tests/architecture/runtime_spine/test_clock_domain_enforcement.py` both raise `AssertionError: Could not find include directory for CMake dependency 'flecs'` at collection time against this worktree's `build-local-win` snapshot. **Governed by conditional skip at I65 (section 9.4); root-caused there as a build-snapshot-completeness red (`_deps/flecs-build` present without `_deps/flecs-src`), not a lineage red -- a build tree carrying the dependency sources runs all of these green.** | I31/I33/I34 rows (independently reproduced on isolated baselines each time; I34: "same 5 flecs reds") |
 | Diagnostics lazy-load `common.ef_py` attribute gap | `pytest tests/runtime/bindings/test_lazy_binding_resolution.py::LazyBindingResolutionTests::test_common_import_prefers_repo_build_ef_py` fails: `AttributeError: module 'tools.diagnostics.common' has no attribute 'ef_py'. Did you mean: '_ef_py'?` (the module only exposes the private `_ef_py()` lazy-load helper). **Guard-adapted to green at I57 (section 8.5).** | I31 row ("one pre-existing `common.ef_py` attribute gap") |
 | 4 `test_wp22_*` reds | Named by node ID, all in `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`: `test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized`, `test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers`, `test_wp22_scripted_opponent_kernel_access_stays_named_and_localized`, `test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized`; each asserts a refactored symbol (e.g. `class LoaderOwnedScriptedOpponentKernelView:`) that this worktree's `python/rl/tasking/bridge.py` does not yet contain -- a lineage gap against whichever branch landed that wp22 refactor, not a regression introduced by this iteration. The I35 review's superset regression sweep surfaced one further red of the same family: `test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api` (same file), reproduced on a clean-baseline worktree and added here at the I35 landing. **All four `test_wp22_*` guard-adapted to green at I57 (section 8.3); the `test_wp12_*` node -- which actually lives in `tests/architecture/policy_execution/test_intent_injection_authority_guard.py`, not this file -- guard-adapted to green at I57 (section 8.4).** | I33 row ("the four `test_wp22_*` directory reds"); I35 review |
 | `leader_phase_manager_approach_arm` contract | `python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/comm/leader_phase_manager_approach_arm.json` fails: `expected approach-arm transition count mismatch: 0`. **Classified at I57 (section 8.8): lineage divergence -- the contract harness's `FakeLoader` lags this lineage's `approach_arm_require_runway_frame` arming gate; JSON/runner untouched.** | I34 row |
 | `tests/gpu` `build-gpu`-absent red | `pytest tests/gpu/test_cuda_import_order.py::CudaImportOrderTests::test_world_batch_vec_env_import_after_torch_runtime_setup` fails: the subprocess it launches raises `ModuleNotFoundError: No module named 'ef_py'` because `build-gpu/` does not exist in this worktree (only `build-local-win/` does). **Governed by conditional `skipUnless(build-gpu present)` at I57 (section 8.7).** | I34 row |
 | Diagnostics script-governance red | `tests/architecture/governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function` -- first reproduced by the I35 review on a clean 48c86c4b checkout; re-confirmed during the I38 review; added at the I38 landing. **Governed by `xfail(strict=True)` at I57 (section 8.6): the top-level consolidation this guard enforces never landed here and cannot be adapted without blessing the sprawl it forbids.** | I35/I38 reviews |
-| 2 air-combat calibration-drift reds | `tests/runtime/air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` and `tests/runtime/air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events` (signature `'detonated_no_effect' == 'damage_applied'`). The I38 review reproduced both against the 2026-07-18 pre-change binary -- a stronger inherence proof than same-binary stash comparison -- confirming they are machine-baseline product/calibration drift unrelated to any landed iteration; same family as the I28-adjudicated drift classes. | I38 review |
-| `platform_spawn` spdlog collection error | `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` fails at collection with `Could not find include directory for CMake dependency 'spdlog'` -- same family as the flecs entry above but a different dependency and a file not previously listed; reproduced by the I44 review with a write set that touches nothing capable of affecting CMake dependency resolution. Added at the I44 landing. | I44 review |
+| 2 air-combat calibration-drift reds | `tests/runtime/air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` and `tests/runtime/air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events` (signature `'detonated_no_effect' == 'damage_applied'`). The I38 review reproduced both against the 2026-07-18 pre-change binary -- a stronger inherence proof than same-binary stash comparison -- confirming they are machine-baseline product/calibration drift unrelated to any landed iteration; same family as the I28-adjudicated drift classes. **Governed by `xfail(strict=True)` at I65 (section 9.5), after re-proving inherence against a second, newer binary (2026-07-26) as well as the 2026-07-18 one.** | I38 review |
+| `platform_spawn` spdlog collection error | `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` fails at collection with `Could not find include directory for CMake dependency 'spdlog'` -- same family as the flecs entry above but a different dependency and a file not previously listed; reproduced by the I44 review with a write set that touches nothing capable of affecting CMake dependency resolution. Added at the I44 landing. **Governed by conditional skip at I65 (section 9.4); root-caused there as a build-snapshot-completeness red, not a lineage red.** | I44 review |
 | `source_evidence_governance` pre-existing red | `tests/architecture/damage_model/test_source_evidence_governance.py` fails pre-existing (standalone: 1 failed + 5 errors; mixed-run: 4 failed + 5 errors -- order-sensitive). Root cause chain sits entirely outside any landed write set: `tools/maintenance/source_governance/rights_output_policy.py:107` passes `None` into `re.sub`. `test_source_admission_audit.py` alone runs 6 passed. Surfaced by the I44 review's superset sweep; added at the I44 landing. **Fixed at I57 (section 8.2): `_pdf_text_probe` now captures raw bytes and strict-UTF-8-decodes them (undecodable output fails closed with zero statement hits) and `_normalize_statement_text` fail-closes on `None`; standalone now 22 passed.** | I44 review |
+| 2 Windows path-separator reds (`retained_pack/manifest.json`) | `tests/architecture/damage_model/test_candidate_artifact_contracts.py` (line 611) and `test_component_probability_artifacts.py` (line 655) both assert `loaded["manifest_relative_path"].endswith("retained_pack/manifest.json")`, but the value is an absolute `tmp_path` with OS-native separators on Windows. Surfaced by the I57 full-directory sweep (section 8.9), registered into this section at I65. **Fixed at I65 (section 9.3): the assertions now compare `Path` objects against the constructed output dir -- an OS-agnostic and strictly stronger check. Root-caused as a test-assertion defect, not environmental.** | I57 sweep (section 8.9); fixed I65 |
+| `component_fragility_benchmark` calibration-drift red | `tests/architecture/damage_model/test_component_fragility_validation.py::test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid` -- its `synthetic_sigmoid_probability` rows come from the binary-computed component-failure-probability surface and read ~0.1699-0.1729 against the test's hard-coded `0.35168` reference (max relative difference 1.07). Surfaced by the I57 full-directory sweep (section 8.9), registered into this section at I65. **Governed by `xfail(strict=True)` at I65 (section 9.5); same binary-driven drift family as the two air-combat calibration reds above.** | I57 sweep (section 8.9); governed I65 |
 
 Baseline gate counts carried forward from I34's independent re-run and used
 as this iteration's starting baseline: maintained smoke `436 passed, 45
@@ -1143,6 +1153,259 @@ whose `clusters --write` refresh is a landing-side duty per the iteration brief.
 
 No C++, `examples/**`, `docs/plan/repository_consolidation/**`, contract JSON,
 or contract runner touched; no CMake/build triggered.
+
+## 9. I65: T6 third residual-payoff pack (six-item disposition)
+
+Baseline commit `0aa76a00` (I64). Tests and docs only -- no production code
+touched. This iteration reproduced each of the six reds a prior scoping pass
+listed as still open after I57, root-caused each from source, and disposed each
+by nature. Two diagnoses **disagreed with the incoming classification** and are
+called out explicitly in 9.2, because both change what the disposition means.
+
+### 9.1 Disposition summary
+
+| # | Node / target | Reproduced red | Root cause (source evidence) | Disposition |
+| --- | --- | --- | --- | --- |
+| 1 | `damage_model/test_candidate_artifact_contracts.py::test_candidate_retained_artifact_pack_writes_retained_files` (line 611) | `1 failed` | the assertion suffix-matches a POSIX-slash string against an **absolute `tmp_path`** value (`...\test_candidate_retained_artifa0\retained_pack\manifest.json`); production `_display_path` correctly emits posix only for repo-relative paths and falls back to `str(path)` for paths outside the repo root | **Test-assertion fix -> green** (9.3) |
+| 2 | `damage_model/test_component_probability_artifacts.py::test_component_probability_retained_artifact_pack_writes_retained_files` (line 655) | `1 failed` | identical to item 1 (same assertion, same `_display_path` fallback in `component_probability_retained_pack.py`) | **Test-assertion fix -> green** (9.3) |
+| 3 | `compatibility_quarantine/test_guard_enforcement.py` + `runtime_spine/test_clock_domain_enforcement.py` | collection error, whole files | module-level `dependency_include_path("flecs")` raises `AssertionError` at import, aborting collection for **every** test in both files -- including the 9 text/AST guards that need no C++ toolchain. The configured CPU snapshot ships `_deps/flecs-build` without `_deps/flecs-src` | **Conditional skip** (9.4) |
+| 4 | `platform_spawn/test_default_factory_spawn_plan_resolution.py` | collection error, whole file | identical mechanism for `spdlog` (and `flecs`/`nlohmann_json`); aborted collection for the three header-text guards a later T11 slice gates on | **Conditional skip** (9.4) |
+| 5 | `air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` | `1 failed` | binary-side component-attribution drift: `component_primary_name` is now `left_horizontal_tail_actuator_or_surface_component`, not `engine_core` (line 319 -- **not** the load-floor assertion the ledger's row title implies) | **`xfail(strict=True)`** (9.5) |
+| 6 | `air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events` | `1 failed` | binary-side effects drift: `effects.outcome_state == 'detonated_no_effect'` vs `'damage_applied'` -- the warhead detonates but applies no damage | **`xfail(strict=True)`** (9.5) |
+| 7 | `damage_model/test_component_fragility_validation.py::test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid` | `1 failed` | `synthetic_sigmoid_probability` traces through `component_fragility_benchmark._synthetic_baseline_rows` -> `surface_probe._sample_primary_event`, i.e. the same binary-computed surface as items 5/6; reads ~0.1699-0.1729 vs the hard-coded `0.35168` | **`xfail(strict=True)`** (9.5) |
+
+### 9.2 Two diagnoses that disagreed with the incoming classification
+
+**(a) The flecs/spdlog reds are not inherent to a CPU-only worktree.** They
+were handed to this iteration as environmental, to be governed on the
+section 8.7 precedent. Governing them is still correct, but the root cause is
+narrower than "this machine cannot build flecs": the reds are a **build-snapshot
+completeness** artifact. The snapshot section 8.10 used
+(`EF-w2-training/build-local-win`) contains only `_deps/flecs-build`; a sibling
+worktree's snapshot (`EF-w3-flightshaping/build-local-win`, built 2026-07-26)
+carries the full `_deps` source trees (`flecs-src`, `spdlog-src`,
+`nlohmann_json-src`, ...). Pointing `CMO_BUILD_DIR` at the complete tree runs
+**all 24 tests across the three files green, with zero skips** (verification in
+9.6). So the skip predicate had to key on actual dependency-include presence --
+which it does -- and the skip must never fire on a properly configured tree.
+This is recorded because it changes the repair direction for these rows: they
+close by configuring/retaining a complete build tree, not by any code change.
+It also means section 5's long-standing "5 flecs static-lib link-signature
+reds" row was never a lineage or platform defect.
+
+**(b) Item 5's ledger row mis-describes its own failure.** Section 5 and the
+scoping pass both carry this node as a load-floor/blast-tail-valley red. It
+does not fail there. It fails one assertion earlier, at line 319, on
+**component attribution** (`engine_core` ->
+`left_horizontal_tail_actuator_or_surface_component`); the load-floor
+assertions on lines 320-324 are never reached. The disposition
+(`xfail(strict=True)`) is unchanged, but the xfail reason names the actual
+drift rather than the inherited mis-description, so a future recalibration is
+diagnosed against the right symptom.
+
+Neither disagreement upgraded a red into a genuine regression: see 9.5 for the
+inherence proof that kept items 5-7 in the calibration-drift lane.
+
+### 9.3 Items 1-2 -- test-assertion fix: Windows path separator
+
+**Root cause (source evidence)**: both tests call
+`load_retained_artifact_pack_manifest(repo_root=REPO_ROOT, output_dir=tmp_path / "retained_pack")`.
+Both `component_probability_retained_pack.py` and the candidate-side
+`effect_scale_retained_pack.py` compute the value with a local `_display_path`
+that returns `path.relative_to(repo_root).as_posix()` **and falls back to
+`str(path)` on `ValueError`**. `tmp_path` is outside the repo root, so the
+fallback fires and the value is an absolute native-separator path. The reds are
+therefore defects in the assertions, not in production code, and not
+OS-conditional accidents of the generator.
+
+**Fix (assertion strengthened, production untouched)**: each assertion now
+compares a `Path` against the path the test itself constructed:
+
+```python
+assert (
+  Path(loaded["manifest_relative_path"])
+  == tmp_path / "retained_pack" / "manifest.json"
+)
+```
+
+`Path` equality normalizes the separator on every platform, so the check is
+OS-agnostic. It is **stronger** than the original: the suffix check accepted
+any prefix, while this pins the full expected location. A substring/`in`
+weakening was explicitly avoided. A comment records why the value is absolute,
+so the next reader does not "fix" it back to a suffix match.
+
+**Complete-family verification**: `rg '\.endswith\(\s*["'"'"'][^"'"'"']*/[^"'"'"']*["'"'"']\s*\)'`
+across all of `tests/` returns exactly three sites -- the two above and
+`tests/tools/test_airframe_geometry_review_cli.py:179`
+(`...endswith("gltf/scene.gltf")`). The third is structurally exposed to the
+same `ValueError -> str(path)` fallback (`airframe_review/filesystem.py:9`) but
+is **green**, because its manifest path resolves under the repo root, so the
+posix branch is taken. It is left untouched (no red to fix) and recorded here
+so a future `tmp_path` change to that fixture is diagnosed immediately.
+`rg 'manifest_relative_path'` across `tests/` confirms no other consumer.
+Section 8.9's "these two are the complete family" claim is therefore confirmed
+for reds, and refined: the *pattern* family has three members, of which two
+are red.
+
+### 9.4 Items 3-4 -- conditional skip: absent CMake dependency includes
+
+**Root cause**: in all three files the dependency include paths are resolved at
+**module scope**, so `dependency_include_path`'s `AssertionError` surfaces as a
+collection error that discards the entire file. The collateral damage was the
+larger problem: `test_guard_enforcement.py` has 16 tests of which only 7 compile
+C++, and `test_default_factory_spawn_plan_resolution.py` has 7 of which only 4
+do -- so 12 pure text/AST guards were being lost to a missing C++ header,
+including the header-text guards a later T11 slice gates on.
+
+**Disposition (conditional skip, section 8.7 precedent, nothing weakened)**:
+each file gains a local `_optional_dependency_include()` that returns `None`
+instead of raising, plus a `pytest.mark.skipif` predicated on that resolution:
+
+- `requires_flecs` in `test_guard_enforcement.py` and
+  `test_clock_domain_enforcement.py`, applied to the 7 and 1 compile-bound
+  tests respectively.
+- `requires_platform_spawn_includes` in
+  `test_default_factory_spawn_plan_resolution.py`, applied to its 4
+  compile-bound tests; its reason string interpolates the **actual** missing
+  dependency names.
+
+Every reason string names the missing dependency, the fact that
+`_deps/<dependency>-src` is absent from the configured `CMO_BUILD_DIR`, and
+points at section 5. The skip is conditional in the strong sense: on a build
+tree carrying the dependency sources the predicate is False and all checks run
+unchanged (proven in 9.6, `24 passed`, zero skipped). Net effect on the
+incomplete snapshot: 12 previously-uncollectable guards now execute and pass;
+only 12 genuinely toolchain-bound checks skip.
+
+### 9.5 Items 5-7 -- xfail(strict): binary-side calibration drift
+
+**Inherence proof (this is what licenses the xfail)**: the ledger's existing
+proof for items 5-6 was reproduction against the 2026-07-18 pre-change binary.
+This iteration added a second, independent axis:
+
+- All three reds reproduce identically against **two different binaries** built
+  from different points in the lineage -- the 2026-07-18 snapshot
+  (`EF-w2-training`) and a 2026-07-26 snapshot (`EF-w3-flightshaping`), the
+  latter postdating every C++ commit on this branch (latest: `cf172d8f`,
+  2026-07-21). A regression introduced by a recent iteration would not survive
+  being rebuilt after that iteration.
+- `git log` on both air-combat test files shows no change since **2026-06-21**
+  (`f2532638`), so the expectations are not newly-tightened assertions.
+- Item 7's value provably originates in the same binary surface as items 5-6:
+  `_synthetic_baseline_rows` calls `surface_probe._sample_primary_event` and
+  reads `summary["component_failure_probability"]`. It is one drift, observed
+  through three different tests, not three independent failures.
+
+On that evidence all three stay in the calibration-drift lane. **No genuine
+regression was found**; had the fresh-binary run turned any of them green, that
+would have been reported as a stale-binary artifact instead.
+
+**Disposition (`xfail(strict=True)`, section 8.6 / I28 precedent, no test
+deleted or weakened)**: each node carries
+`@pytest.mark.xfail(strict=True, reason=...)`. Each reason names the drifted
+quantity with its observed-vs-expected values, states the two-binary inherence
+evidence, points at section 5, and states that recalibration flips the node to
+`XPASS(strict)` and requires removing the marker. Strict is the point: per the
+program README's T6 key risk ("baseline repairs must not mask real
+regressions"), a blanket skip would silently absorb a future recovery, whereas
+`XPASS(strict)` is itself a failure that forces a revisit. No assertion was
+relaxed and no reference value was re-baselined -- doing so would have
+destroyed the drift evidence.
+
+### 9.6 Verification (this worktree)
+
+Both build trees are exercised deliberately: the **incomplete** snapshot
+(`EF-w2-training/build-local-win`, `_deps/flecs-build` only) is where the
+governed reds reproduce, and the **complete** snapshot
+(`EF-w3-flightshaping/build-local-win`, full `_deps` sources) proves the skips
+are conditional. No CMake/build was triggered; the write set is tests + docs.
+
+```
+tools\maintenance\cmo_env.ps1 validate       -> validation ok (both trees)
+
+--- CMO_BUILD_DIR=EF-w2-training/build-local-win (incomplete snapshot) ---
+
+BEFORE (baseline 0aa76a00):
+  damage_model: candidate_artifact_contracts + component_probability_artifacts
+    + component_fragility_validation      -> 3 failed, 61 passed
+  compatibility_quarantine/test_guard_enforcement.py
+    + runtime_spine/test_clock_domain_enforcement.py
+    + platform_spawn/test_default_factory_spawn_plan_resolution.py
+                                          -> 3 errors during collection
+                                             (0 tests collected)
+  air_combat: component_failure_probability_surface
+    + live_detonation_event_surface       -> 2 failed, 11 passed
+
+AFTER:
+  the three collection-error files + the two air-combat files
+                                          -> 23 passed, 12 skipped, 2 xfailed
+     (every skip reason names its missing dependency; 12 of the 23 passes are
+      previously-uncollectable guards, the other 11 are air-combat tests that
+      were always collectable)
+  damage_model (the three files)           -> 63 passed, 1 xfailed
+     (was 3 failed, 61 passed: items 1-2 fixed, item 7 xfailed)
+
+--- CMO_BUILD_DIR=EF-w3-flightshaping/build-local-win (complete snapshot) ---
+
+  the three former collection-error files -> 24 passed, 0 skipped
+     (proves items 3-4's skips are genuinely conditional, not latent
+      unconditional skips)
+  the two air-combat files                -> 2 failed, 11 passed at baseline
+     (items 5-6 reproduce on the newer binary too: the inherence proof in 9.5)
+  damage_model (the three files)          -> 3 failed, 61 passed at baseline
+     (item 7 reproduces on the newer binary too)
+
+--- gates ---
+
+ruff check <the 8 changed test files>  -> All checks passed!
+git diff --check                       -> clean
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 1 failed, 459 passed, 45 subtests passed. The one failure is the expected
+   bilingual-registry hash flag this ledger edit raises
+   (test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface),
+   whose `clusters --write` refresh is a landing-side duty (same as 8.10).
+   459 passed vs 8.10's 458: not attributable to this pack -- none of the
+   files this write set touches (including the items 1-2 damage_model files)
+   is a ci_smoke_suite member. The +1 is suite-content growth between the two
+   measurements: the manifest itself is unchanged (fae17eb8..0aa76a00 does
+   not touch ci_smoke_suite.json), and the only member whose test count
+   changed is tests/runtime/test_agent_shim.py, which 1a2e64a5 grew from 21
+   to 22 tests.
+
+python tools/maintenance/translate_docs_batch.py audit   (read-only)
+-> pair_count 86, synced 85, diverged 1 -- this ledger pair is the sole
+   diverged entry, as at 8.10.
+
+pytest -q tests/runtime
+-> 21 failed, 879 passed, 35 xfailed, 467 subtests passed.
+   None of the 21 is in this write set. Attribution checked explicitly:
+   re-running the four failing files against the **complete/newer** snapshot
+   recovers 16 of them (they are stale-binary artifacts of the 2026-07-18
+   build, which predates the I54/I60 C++ commits). The residual 5 -- all in
+   `tests/runtime/facade/test_runtime_facade_window_loop_injection.py` --
+   were then re-measured with this iteration's write set **stashed**: the
+   identical 5 fail at bare `0aa76a00`, so they are pre-existing and
+   untouched by this pack. They are not registered into section 5 here
+   because they are not local-environment reds of the governed kind; they
+   need their own lineage triage.
+```
+
+### 9.7 Write set (this iteration)
+
+- `tests/architecture/damage_model/test_candidate_artifact_contracts.py` (item 1 assertion fix)
+- `tests/architecture/damage_model/test_component_probability_artifacts.py` (item 2 assertion fix)
+- `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` (item 3 conditional skip)
+- `tests/architecture/runtime_spine/test_clock_domain_enforcement.py` (item 3 conditional skip)
+- `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` (item 4 conditional skip)
+- `tests/runtime/air_combat/test_component_failure_probability_surface.py` (item 5 xfail-strict)
+- `tests/runtime/air_combat/test_live_detonation_event_surface.py` (item 6 xfail-strict)
+- `tests/architecture/damage_model/test_component_fragility_validation.py` (item 7 xfail-strict)
+- `docs/plan/unified_architecture_program/t6_residual_ledger.md` / `.zh.md` (this section + section 5 completion/registration)
+
+No production code, C++, `examples/**`,
+`docs/plan/repository_consolidation/**`, contract JSON, or contract runner
+touched; no CMake/build triggered.
 
 ## Related
 

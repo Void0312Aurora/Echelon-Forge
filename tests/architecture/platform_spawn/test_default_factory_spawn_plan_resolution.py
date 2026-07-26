@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import textwrap
 
+import pytest
+
 from tests.architecture.helpers import (
   REPO_ROOT,
   compile_cpp_snippet,
@@ -9,10 +11,52 @@ from tests.architecture.helpers import (
 )
 
 DEFAULT_UNIT_FACTORY_HEADER = REPO_ROOT / "src" / "models" / "core" / "default_unit_factory.h"
-PLATFORM_SPAWN_INCLUDE_PATHS = (
-  dependency_include_path("spdlog"),
-  dependency_include_path("flecs"),
-  dependency_include_path("nlohmann_json"),
+
+_PLATFORM_SPAWN_DEPENDENCIES = ("spdlog", "flecs", "nlohmann_json")
+
+
+def _optional_dependency_include(dependency: str):
+  """Resolve a CMake dependency's include dir, or None when it is absent.
+
+  `dependency_include_path` raises `AssertionError` at import time, which
+  aborted collection for this whole module -- including the three
+  header-text guards that need no C++ toolchain. Returning None keeps the
+  module collectable so those guards still run (a later T11 slice gates on
+  them) and only the compile-bound checks report SKIPPED.
+  """
+  try:
+    return dependency_include_path(dependency)
+  except AssertionError:
+    return None
+
+
+_RESOLVED_INCLUDES = {
+  dependency: _optional_dependency_include(dependency)
+  for dependency in _PLATFORM_SPAWN_DEPENDENCIES
+}
+_MISSING_DEPENDENCIES = tuple(
+  dependency
+  for dependency, include in _RESOLVED_INCLUDES.items()
+  if include is None
+)
+PLATFORM_SPAWN_INCLUDE_PATHS = tuple(
+  include for include in _RESOLVED_INCLUDES.values() if include is not None
+)
+
+# Governs the local-environment red recorded in the T6 residual ledger
+# (docs/plan/unified_architecture_program/t6_residual_ledger.md, section 5
+# "platform_spawn spdlog collection error"): CPU build snapshots that ship
+# only `_deps/<dep>-build` without `_deps/<dep>-src` cannot supply these
+# headers. Conditional on actual dependency presence, mirroring the
+# section 8.7 build-gpu-absent precedent -- on a build tree carrying the
+# dependency sources these checks run unchanged.
+requires_platform_spawn_includes = pytest.mark.skipif(
+  bool(_MISSING_DEPENDENCIES),
+  reason=(
+    "missing CMake dependency include directories in the configured "
+    f"CMO_BUILD_DIR: {', '.join(_MISSING_DEPENDENCIES)} "
+    "(no _deps/<dependency>-src); see T6 residual ledger section 5"
+  ),
 )
 
 
@@ -77,6 +121,7 @@ def test_wp14_default_factory_static_lowering_shape_preserves_type_name_projecti
   assert "spawn_platform" not in header
 
 
+@requires_platform_spawn_includes
 def test_wp14_aircraft_bundle_and_plan_are_deterministic_and_validate() -> None:
   source = textwrap.dedent(
     r"""
@@ -145,6 +190,7 @@ def test_wp14_aircraft_bundle_and_plan_are_deterministic_and_validate() -> None:
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_platform_spawn_includes
 def test_wp14_synthetic_platform_definition_surfaces_sensor_loadout_command_and_naval_evidence() -> None:
   source = textwrap.dedent(
     rf"""
@@ -283,6 +329,7 @@ def test_wp14_spawn_path_uses_observable_type_name_plan_resolution_entrypoint() 
   assert "spawn_platform" not in header
 
 
+@requires_platform_spawn_includes
 def test_wp14_resolved_spawn_plan_evidence_is_queryable_from_type_name_projection_path() -> None:
   source = textwrap.dedent(
     r"""
@@ -380,6 +427,7 @@ def test_wp14_resolved_spawn_plan_evidence_is_queryable_from_type_name_projectio
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_platform_spawn_includes
 def test_wp14_resolved_spawn_plan_air_and_naval_type_names_share_materialization_chain() -> None:
   source = textwrap.dedent(
     r"""
