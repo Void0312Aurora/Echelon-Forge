@@ -195,57 +195,30 @@ NavalWeaponType parse_naval_weapon_type(const std::string &type_str) {
 void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tuning) {
     if (!out_tuning || !src.is_object()) return;
     AeroTuning tuning = *out_tuning;
+    // Hand-written and deliberately NOT table-driven: `enabled` takes a literal
+    // `true` default (not the "missing key keeps existing value" form the other
+    // 44 keys use), which is load-bearing for the airframe.tuning / aero_tuning
+    // codec escape hatch. See the scope note in the .inc header.
     tuning.enabled = src.value("enabled", true);
-    tuning.cl_alpha_per_deg = src.value("cl_alpha_per_deg", tuning.cl_alpha_per_deg);
-    tuning.cl0 = src.value("cl0", tuning.cl0);
-    tuning.cd0_clean = src.value("cd0_clean", tuning.cd0_clean);
-    tuning.induced_drag_k = src.value("induced_drag_k", tuning.induced_drag_k);
-    tuning.cm_alpha_per_rad = src.value("cm_alpha_per_rad", tuning.cm_alpha_per_rad);
-    tuning.cm_q = src.value("cm_q", tuning.cm_q);
-    tuning.alpha_stall_clean_deg = src.value("alpha_stall_clean_deg", tuning.alpha_stall_clean_deg);
-    tuning.alpha_stall_flaps_full_deg =
-        src.value("alpha_stall_flaps_full_deg", tuning.alpha_stall_flaps_full_deg);
-    tuning.alpha_peak_offset_deg = src.value("alpha_peak_offset_deg", tuning.alpha_peak_offset_deg);
-    tuning.alpha_deep_offset_deg = src.value("alpha_deep_offset_deg", tuning.alpha_deep_offset_deg);
-    tuning.cl_peak_clean = src.value("cl_peak_clean", tuning.cl_peak_clean);
-    tuning.cl_peak_flaps_full = src.value("cl_peak_flaps_full", tuning.cl_peak_flaps_full);
-    tuning.cl_deep_clean = src.value("cl_deep_clean", tuning.cl_deep_clean);
-    tuning.cl_deep_flaps_full = src.value("cl_deep_flaps_full", tuning.cl_deep_flaps_full);
-    tuning.pitch_break_onset_deg = src.value("pitch_break_onset_deg", tuning.pitch_break_onset_deg);
-    tuning.pitch_break_full_deg = src.value("pitch_break_full_deg", tuning.pitch_break_full_deg);
-    tuning.pitch_break_cm_nose_down =
-        src.value("pitch_break_cm_nose_down", tuning.pitch_break_cm_nose_down);
-    tuning.post_stall_damp_floor = src.value("post_stall_damp_floor", tuning.post_stall_damp_floor);
-    tuning.aoa_rate_pitch_break_gain =
-        src.value("aoa_rate_pitch_break_gain", tuning.aoa_rate_pitch_break_gain);
-    tuning.elevator_max_deflection_deg =
-        src.value("elevator_max_deflection_deg", tuning.elevator_max_deflection_deg);
-    tuning.aileron_max_deflection_deg =
-        src.value("aileron_max_deflection_deg", tuning.aileron_max_deflection_deg);
-    tuning.rudder_max_deflection_deg =
-        src.value("rudder_max_deflection_deg", tuning.rudder_max_deflection_deg);
-    tuning.cm_delta_e_per_rad = src.value("cm_delta_e_per_rad", tuning.cm_delta_e_per_rad);
-    tuning.cl_delta_a_per_rad = src.value("cl_delta_a_per_rad", tuning.cl_delta_a_per_rad);
-    tuning.cn_delta_r_per_rad = src.value("cn_delta_r_per_rad", tuning.cn_delta_r_per_rad);
-    tuning.fbw_elevator_cmd_per_rate_err =
-        src.value("fbw_elevator_cmd_per_rate_err", tuning.fbw_elevator_cmd_per_rate_err);
-    tuning.fbw_aileron_cmd_per_rate_err =
-        src.value("fbw_aileron_cmd_per_rate_err", tuning.fbw_aileron_cmd_per_rate_err);
-    tuning.fbw_rudder_cmd_per_rate_err =
-        src.value("fbw_rudder_cmd_per_rate_err", tuning.fbw_rudder_cmd_per_rate_err);
-    tuning.ari_rudder_cmd_per_aileron_cmd =
-        src.value("ari_rudder_cmd_per_aileron_cmd", tuning.ari_rudder_cmd_per_aileron_cmd);
-    tuning.fbw_g_command_enabled = src.value("fbw_g_command_enabled", tuning.fbw_g_command_enabled);
-    tuning.fbw_g_command_neutral = src.value("fbw_g_command_neutral", tuning.fbw_g_command_neutral);
-    tuning.fbw_g_command_max = src.value("fbw_g_command_max", tuning.fbw_g_command_max);
-    tuning.fbw_g_command_min = src.value("fbw_g_command_min", tuning.fbw_g_command_min);
-    tuning.fbw_pitch_rate_per_g_err =
-        src.value("fbw_pitch_rate_per_g_err", tuning.fbw_pitch_rate_per_g_err);
-    tuning.actuator_tau_elevator_s =
-        src.value("actuator_tau_elevator_s", tuning.actuator_tau_elevator_s);
-    tuning.actuator_tau_aileron_s =
-        src.value("actuator_tau_aileron_s", tuning.actuator_tau_aileron_s);
-    tuning.actuator_tau_rudder_s = src.value("actuator_tau_rudder_s", tuning.actuator_tau_rudder_s);
+
+    // Table-driven reads over the single-source X-macro field list
+    // (content/detail/aero_tuning_fields.inc). Each expansion is token-identical
+    // to the previous hand-written body: scalar keys keep the
+    // src.value(key, current) "missing key preserves existing value" semantics,
+    // vector keys keep the parse_vector clear-then-fill semantics, and the read
+    // order is unchanged. `enabled` is excluded above because its default is a
+    // literal, not the current value.
+    //
+    // The list is consumed in TWO passes so the emitted statement order matches
+    // the pre-change body exactly: the 37 scalar reads came before the
+    // parse_vector lambda declaration and the 7 vector reads after it. Pass 1
+    // expands scalars only (vector rows to nothing), then the lambda is
+    // declared, then pass 2 expands vectors only. A single pass would have to
+    // hoist the lambda above every scalar read, reordering statements.
+#define EF_AERO_TUNING_FIELD(cpp_type, name, default_value) \
+    tuning.name = src.value(#name, tuning.name);
+#define EF_AERO_TUNING_VECTOR_FIELD(cpp_type, name, default_value)
+#include "content/detail/aero_tuning_fields.inc"
 
     auto parse_vector = [&](const char *key, std::vector<double> *out_values) {
         if (!out_values || !src.contains(key) || !src[key].is_array()) {
@@ -258,14 +231,10 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
         }
     };
 
-    parse_vector("mach_breakpoints", &tuning.mach_breakpoints);
-    parse_vector("cl_alpha_scale_vs_mach", &tuning.cl_alpha_scale_vs_mach);
-    parse_vector("cd0_add_vs_mach", &tuning.cd0_add_vs_mach);
-    parse_vector("induced_drag_scale_vs_mach", &tuning.induced_drag_scale_vs_mach);
-    parse_vector("cm_alpha_scale_vs_mach", &tuning.cm_alpha_scale_vs_mach);
-    parse_vector("stall_alpha_delta_deg_vs_mach", &tuning.stall_alpha_delta_deg_vs_mach);
-    parse_vector("control_effectiveness_scale_vs_mach",
-                 &tuning.control_effectiveness_scale_vs_mach);
+#define EF_AERO_TUNING_FIELD(cpp_type, name, default_value)
+#define EF_AERO_TUNING_VECTOR_FIELD(cpp_type, name, default_value) \
+    parse_vector(#name, &tuning.name);
+#include "content/detail/aero_tuning_fields.inc"
 
     *out_tuning = tuning;
 }

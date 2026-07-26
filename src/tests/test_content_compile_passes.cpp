@@ -6,6 +6,7 @@
 // orchestrator's byte/behaviour parity (a file with an unrecognized top-level
 // key loads to the same UnitDefinition as one without it).
 
+#include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "content/content_compile_passes.h"
 #include "content/unit_definition_loader.h"
 
@@ -445,6 +446,177 @@ TEST_SUITE("content_compile_passes") {
         const std::string within_message = thrown_message(within_data_link);
         CHECK(before_message.find("type must be string, but is number") != std::string::npos);
         CHECK(within_message.find("type must be number, but is array") != std::string::npos);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("aero tuning parse: all 44 table-driven keys map to their members") {
+        // Synthetic-face parity for the table-driven aero parse
+        // (content/detail/aero_tuning_fields.inc, T11 slice 4 bundle 3). An
+        // Aircraft entry whose top-level aero_tuning object carries every one of
+        // the 44 migrated keys with a distinct sentinel must land each value on
+        // the matching AeroTuning member (a mis-wired key/member would collide
+        // or miss). The two-pass X-macro include is what emits these reads, so a
+        // dropped pass drops either the 37 scalars or the 7 vectors.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_aero_tuning_all_keys_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string all_keys = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_All_Keys_Aero",
+  "aero_tuning": {
+    "cl_alpha_per_deg": 1.5,
+    "cl0": 2.5,
+    "cd0_clean": 3.5,
+    "induced_drag_k": 4.5,
+    "cm_alpha_per_rad": 5.5,
+    "cm_q": 6.5,
+    "alpha_stall_clean_deg": 7.5,
+    "alpha_stall_flaps_full_deg": 8.5,
+    "alpha_peak_offset_deg": 9.5,
+    "alpha_deep_offset_deg": 10.5,
+    "cl_peak_clean": 11.5,
+    "cl_peak_flaps_full": 12.5,
+    "cl_deep_clean": 13.5,
+    "cl_deep_flaps_full": 14.5,
+    "pitch_break_onset_deg": 15.5,
+    "pitch_break_full_deg": 16.5,
+    "pitch_break_cm_nose_down": 17.5,
+    "post_stall_damp_floor": 18.5,
+    "aoa_rate_pitch_break_gain": 19.5,
+    "elevator_max_deflection_deg": 20.5,
+    "aileron_max_deflection_deg": 21.5,
+    "rudder_max_deflection_deg": 22.5,
+    "cm_delta_e_per_rad": 23.5,
+    "cl_delta_a_per_rad": 24.5,
+    "cn_delta_r_per_rad": 25.5,
+    "fbw_elevator_cmd_per_rate_err": 26.5,
+    "fbw_aileron_cmd_per_rate_err": 27.5,
+    "fbw_rudder_cmd_per_rate_err": 28.5,
+    "ari_rudder_cmd_per_aileron_cmd": 29.5,
+    "fbw_g_command_enabled": false,
+    "fbw_g_command_neutral": 31.5,
+    "fbw_g_command_max": 32.5,
+    "fbw_g_command_min": 33.5,
+    "fbw_pitch_rate_per_g_err": 34.5,
+    "actuator_tau_elevator_s": 35.5,
+    "actuator_tau_aileron_s": 36.5,
+    "actuator_tau_rudder_s": 37.5,
+    "mach_breakpoints": [1.0, 2.0, 3.0],
+    "cl_alpha_scale_vs_mach": [4.0, 5.0],
+    "cd0_add_vs_mach": [6.0],
+    "induced_drag_scale_vs_mach": [7.0, 8.0, 9.0, 10.0],
+    "cm_alpha_scale_vs_mach": [11.0],
+    "stall_alpha_delta_deg_vs_mach": [12.0, 13.0],
+    "control_effectiveness_scale_vs_mach": [14.0, 15.0, 16.0]
+  }
+})json";
+
+        const fs::path path = directory / "all_keys.json";
+        { std::ofstream(path) << all_keys; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].airframe.has_tuning);
+        const AeroTuning &at = defs[0].airframe.tuning;
+
+        CHECK(at.cl_alpha_per_deg == doctest::Approx(1.5));
+        CHECK(at.cl0 == doctest::Approx(2.5));
+        CHECK(at.cd0_clean == doctest::Approx(3.5));
+        CHECK(at.induced_drag_k == doctest::Approx(4.5));
+        CHECK(at.cm_alpha_per_rad == doctest::Approx(5.5));
+        CHECK(at.cm_q == doctest::Approx(6.5));
+        CHECK(at.alpha_stall_clean_deg == doctest::Approx(7.5));
+        CHECK(at.alpha_stall_flaps_full_deg == doctest::Approx(8.5));
+        CHECK(at.alpha_peak_offset_deg == doctest::Approx(9.5));
+        CHECK(at.alpha_deep_offset_deg == doctest::Approx(10.5));
+        CHECK(at.cl_peak_clean == doctest::Approx(11.5));
+        CHECK(at.cl_peak_flaps_full == doctest::Approx(12.5));
+        CHECK(at.cl_deep_clean == doctest::Approx(13.5));
+        CHECK(at.cl_deep_flaps_full == doctest::Approx(14.5));
+        CHECK(at.pitch_break_onset_deg == doctest::Approx(15.5));
+        CHECK(at.pitch_break_full_deg == doctest::Approx(16.5));
+        CHECK(at.pitch_break_cm_nose_down == doctest::Approx(17.5));
+        CHECK(at.post_stall_damp_floor == doctest::Approx(18.5));
+        CHECK(at.aoa_rate_pitch_break_gain == doctest::Approx(19.5));
+        CHECK(at.elevator_max_deflection_deg == doctest::Approx(20.5));
+        CHECK(at.aileron_max_deflection_deg == doctest::Approx(21.5));
+        CHECK(at.rudder_max_deflection_deg == doctest::Approx(22.5));
+        CHECK(at.cm_delta_e_per_rad == doctest::Approx(23.5));
+        CHECK(at.cl_delta_a_per_rad == doctest::Approx(24.5));
+        CHECK(at.cn_delta_r_per_rad == doctest::Approx(25.5));
+        CHECK(at.fbw_elevator_cmd_per_rate_err == doctest::Approx(26.5));
+        CHECK(at.fbw_aileron_cmd_per_rate_err == doctest::Approx(27.5));
+        CHECK(at.fbw_rudder_cmd_per_rate_err == doctest::Approx(28.5));
+        CHECK(at.ari_rudder_cmd_per_aileron_cmd == doctest::Approx(29.5));
+        CHECK_FALSE(at.fbw_g_command_enabled);
+        CHECK(at.fbw_g_command_neutral == doctest::Approx(31.5));
+        CHECK(at.fbw_g_command_max == doctest::Approx(32.5));
+        CHECK(at.fbw_g_command_min == doctest::Approx(33.5));
+        CHECK(at.fbw_pitch_rate_per_g_err == doctest::Approx(34.5));
+        CHECK(at.actuator_tau_elevator_s == doctest::Approx(35.5));
+        CHECK(at.actuator_tau_aileron_s == doctest::Approx(36.5));
+        CHECK(at.actuator_tau_rudder_s == doctest::Approx(37.5));
+        CHECK(at.mach_breakpoints == std::vector<double>{1.0, 2.0, 3.0});
+        CHECK(at.cl_alpha_scale_vs_mach == std::vector<double>{4.0, 5.0});
+        CHECK(at.cd0_add_vs_mach == std::vector<double>{6.0});
+        CHECK(at.induced_drag_scale_vs_mach == std::vector<double>{7.0, 8.0, 9.0, 10.0});
+        CHECK(at.cm_alpha_scale_vs_mach == std::vector<double>{11.0});
+        CHECK(at.stall_alpha_delta_deg_vs_mach == std::vector<double>{12.0, 13.0});
+        CHECK(at.control_effectiveness_scale_vs_mach ==
+              std::vector<double>{14.0, 15.0, 16.0});
+
+        // `enabled` stays hand-written with a literal `true` default: it is not
+        // present in the JSON above, yet the merge must still come out enabled.
+        CHECK(at.enabled);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("aero tuning parse: preset seed survives, absent keys keep the seeded value") {
+        // The other half of the parity contract. `aero_tuning` seeds from
+        // flight_dynamics::default_aero_tuning() and then merges, so an object
+        // carrying only two keys must override exactly those two and leave every
+        // other member at the preset value -- the "missing key preserves the
+        // existing value" semantics that the scalar macro's
+        // src.value(key, current) expansion carries (the .inc's default_value
+        // token is parity-only and never reaches the parse).
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_aero_tuning_preset_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string sparse = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Sparse_Aero",
+  "aero_tuning": { "cd0_clean": 0.099, "mach_breakpoints": [0.5, 0.9] }
+})json";
+
+        const fs::path path = directory / "sparse.json";
+        { std::ofstream(path) << sparse; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].airframe.has_tuning);
+        const AeroTuning &at = defs[0].airframe.tuning;
+        const AeroTuning &preset = flight_dynamics::default_aero_tuning();
+
+        CHECK(at.cd0_clean == doctest::Approx(0.099));                  // overridden
+        CHECK(at.mach_breakpoints == std::vector<double>{0.5, 0.9});    // replaced wholesale
+        CHECK(at.cl_alpha_per_deg == doctest::Approx(preset.cl_alpha_per_deg));
+        CHECK(at.cm_q == doctest::Approx(preset.cm_q));
+        CHECK(at.actuator_tau_rudder_s == doctest::Approx(preset.actuator_tau_rudder_s));
+        CHECK(at.fbw_g_command_enabled == preset.fbw_g_command_enabled);
+        CHECK(at.cl_alpha_scale_vs_mach == preset.cl_alpha_scale_vs_mach);
+        CHECK(at.control_effectiveness_scale_vs_mach ==
+              preset.control_effectiveness_scale_vs_mach);
+        CHECK(at.enabled);
 
         fs::remove_all(directory);
     }
