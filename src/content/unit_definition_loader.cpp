@@ -944,45 +944,16 @@ bool parse_unit_json(
     if (entry.contains("ship_platform") && entry["ship_platform"].is_object()) {
         def.has_ship_platform = true;
         const auto &sp = entry["ship_platform"];
-        def.ship_platform.displacement_light_kg =
-            sp.value("displacement_light_kg", def.ship_platform.displacement_light_kg);
-        def.ship_platform.displacement_full_load_kg =
-            sp.value("displacement_full_load_kg", def.ship_platform.displacement_full_load_kg);
-        def.ship_platform.length_m = sp.value("length_m", def.ship_platform.length_m);
-        def.ship_platform.beam_m = sp.value("beam_m", def.ship_platform.beam_m);
-        def.ship_platform.draft_m = sp.value("draft_m", def.ship_platform.draft_m);
-        def.ship_platform.height_above_waterline_m =
-            sp.value("height_above_waterline_m", def.ship_platform.height_above_waterline_m);
-        def.ship_platform.max_speed_mps =
-            sp.value("max_speed_mps", def.ship_platform.max_speed_mps);
-        def.ship_platform.economical_speed_mps =
-            sp.value("economical_speed_mps", def.ship_platform.economical_speed_mps);
-        def.ship_platform.range_nm = sp.value("range_nm", def.ship_platform.range_nm);
-        def.ship_platform.range_speed_mps =
-            sp.value("range_speed_mps", def.ship_platform.range_speed_mps);
-        def.ship_platform.max_accel_mps2 =
-            sp.value("max_accel_mps2", def.ship_platform.max_accel_mps2);
-        def.ship_platform.max_decel_mps2 =
-            sp.value("max_decel_mps2", def.ship_platform.max_decel_mps2);
-        def.ship_platform.max_turn_rate_deg_s =
-            sp.value("max_turn_rate_deg_s", def.ship_platform.max_turn_rate_deg_s);
-        def.ship_platform.low_speed_turn_factor =
-            sp.value("low_speed_turn_factor", def.ship_platform.low_speed_turn_factor);
-        def.ship_platform.steerageway_speed_mps =
-            sp.value("steerageway_speed_mps", def.ship_platform.steerageway_speed_mps);
-        def.ship_platform.sea_state = sp.value("sea_state", def.ship_platform.sea_state);
-        def.ship_platform.wave_heading_deg =
-            sp.value("wave_heading_deg", def.ship_platform.wave_heading_deg);
-        def.ship_platform.wave_period_s =
-            sp.value("wave_period_s", def.ship_platform.wave_period_s);
-        def.ship_platform.max_roll_deg_sea_state_6 =
-            sp.value("max_roll_deg_sea_state_6", def.ship_platform.max_roll_deg_sea_state_6);
-        def.ship_platform.max_pitch_deg_sea_state_6 =
-            sp.value("max_pitch_deg_sea_state_6", def.ship_platform.max_pitch_deg_sea_state_6);
-        def.ship_platform.added_resistance_fraction_sea_state_6 =
-            sp.value("added_resistance_fraction_sea_state_6",
-                     def.ship_platform.added_resistance_fraction_sea_state_6);
-        def.ship_platform.crew = sp.value("crew", def.ship_platform.crew);
+        // Table-driven ShipPlatform inner scalar reads
+        // (content/detail/ship_platform_fields.inc, T11 loader table-drive
+        // bundle, this iteration). Expanded at the original seam in the
+        // original read order so malformed multi-key input keeps the same
+        // fail-first order; each expansion is token-identical to the previous
+        // hand-written statement. The presence flag and sp binding above stay
+        // hand-written.
+#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value) \
+        def.ship_platform.name = sp.value(#name, def.ship_platform.name);
+#include "content/detail/ship_platform_fields.inc"
     }
 
     def.has_submarine_platform = false;
@@ -990,32 +961,16 @@ bool parse_unit_json(
     if (entry.contains("submarine_platform") && entry["submarine_platform"].is_object()) {
         def.has_submarine_platform = true;
         const auto &sp = entry["submarine_platform"];
-        def.submarine_platform.submerged_displacement_kg =
-            sp.value("submerged_displacement_kg", def.submarine_platform.submerged_displacement_kg);
-        def.submarine_platform.length_m = sp.value("length_m", def.submarine_platform.length_m);
-        def.submarine_platform.beam_m = sp.value("beam_m", def.submarine_platform.beam_m);
-        def.submarine_platform.draft_m = sp.value("draft_m", def.submarine_platform.draft_m);
-        def.submarine_platform.max_speed_submerged_mps =
-            sp.value("max_speed_submerged_mps", def.submarine_platform.max_speed_submerged_mps);
-        def.submarine_platform.quiet_speed_mps =
-            sp.value("quiet_speed_mps", def.submarine_platform.quiet_speed_mps);
-        def.submarine_platform.max_accel_mps2 =
-            sp.value("max_accel_mps2", def.submarine_platform.max_accel_mps2);
-        def.submarine_platform.max_decel_mps2 =
-            sp.value("max_decel_mps2", def.submarine_platform.max_decel_mps2);
-        def.submarine_platform.max_turn_rate_deg_s =
-            sp.value("max_turn_rate_deg_s", def.submarine_platform.max_turn_rate_deg_s);
-        def.submarine_platform.max_depth_rate_mps =
-            sp.value("max_depth_rate_mps", def.submarine_platform.max_depth_rate_mps);
-        def.submarine_platform.nominal_patrol_depth_m =
-            sp.value("nominal_patrol_depth_m", def.submarine_platform.nominal_patrol_depth_m);
-        def.submarine_platform.max_operating_depth_m =
-            sp.value("max_operating_depth_m", def.submarine_platform.max_operating_depth_m);
-        def.submarine_platform.acoustic_stealth_bias_db =
-            sp.value("acoustic_stealth_bias_db", def.submarine_platform.acoustic_stealth_bias_db);
-        def.submarine_platform.self_noise_per_speed_db =
-            sp.value("self_noise_per_speed_db", def.submarine_platform.self_noise_per_speed_db);
-        def.submarine_platform.crew = sp.value("crew", def.submarine_platform.crew);
+        // Table-driven SubmarinePlatform inner scalar reads
+        // (content/detail/submarine_platform_fields.inc, T11 loader
+        // table-drive bundle, this iteration). Expanded at the original seam
+        // in the original read order so malformed multi-key input keeps the
+        // same fail-first order; each expansion is token-identical to the
+        // previous hand-written statement. The presence flag and sp binding
+        // above stay hand-written.
+#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value) \
+        def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);
+#include "content/detail/submarine_platform_fields.inc"
     }
 
     def.has_naval_stores = false;

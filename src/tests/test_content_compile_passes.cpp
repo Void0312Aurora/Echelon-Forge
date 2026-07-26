@@ -621,4 +621,245 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
+    TEST_CASE("platform fields parse: full-field fixture parity and struct defaults (this iteration)") {
+        // Synthetic-face parity for the table-driven ship_platform /
+        // submarine_platform inner scalar migration
+        // (content/detail/ship_platform_fields.inc,
+        // content/detail/submarine_platform_fields.inc). A full-field fixture
+        // must land every JSON key on its matching member; an absent-object
+        // fixture must keep the presence flags false and every member at its
+        // struct default; a partial-object fixture must keep the missing keys
+        // at their struct defaults (the sp.value(key, current) semantics). A
+        // mis-wired macro (wrong member, wrong key, lost row) fails these.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_platform_fields_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string full_json = R"json({ "units": [
+{
+  "type": "Ship",
+  "name": "Synthetic_Ship_Full",
+  "ship_platform": {
+    "displacement_light_kg": 1000.5,
+    "displacement_full_load_kg": 2000.5,
+    "length_m": 150.5,
+    "beam_m": 20.5,
+    "draft_m": 6.5,
+    "height_above_waterline_m": 12.5,
+    "max_speed_mps": 15.5,
+    "economical_speed_mps": 8.5,
+    "range_nm": 4500.5,
+    "range_speed_mps": 9.5,
+    "max_accel_mps2": 0.35,
+    "max_decel_mps2": 0.45,
+    "max_turn_rate_deg_s": 3.5,
+    "low_speed_turn_factor": 0.55,
+    "steerageway_speed_mps": 1.5,
+    "sea_state": 4.5,
+    "wave_heading_deg": 45.5,
+    "wave_period_s": 9.5,
+    "max_roll_deg_sea_state_6": 10.5,
+    "max_pitch_deg_sea_state_6": 4.5,
+    "added_resistance_fraction_sea_state_6": 0.65,
+    "crew": 314
+  }
+},
+{
+  "type": "Submarine",
+  "name": "Synthetic_Submarine_Full",
+  "submarine_platform": {
+    "submerged_displacement_kg": 3000.5,
+    "length_m": 73.5,
+    "beam_m": 9.75,
+    "draft_m": 6.25,
+    "max_speed_submerged_mps": 10.25,
+    "quiet_speed_mps": 2.5,
+    "max_accel_mps2": 0.15,
+    "max_decel_mps2": 0.25,
+    "max_turn_rate_deg_s": 1.75,
+    "max_depth_rate_mps": 4.5,
+    "nominal_patrol_depth_m": 120.5,
+    "max_operating_depth_m": 350.5,
+    "acoustic_stealth_bias_db": -6.5,
+    "self_noise_per_speed_db": 1.75,
+    "crew": 52
+  }
+}
+] })json";
+        const std::string absent_json = R"json({ "units": [
+{ "type": "Ship", "name": "Synthetic_Ship_Absent" },
+{ "type": "Submarine", "name": "Synthetic_Submarine_Absent" }
+] })json";
+        const std::string partial_json = R"json({ "units": [
+{
+  "type": "Ship",
+  "name": "Synthetic_Ship_Partial",
+  "ship_platform": { "length_m": 88.5 }
+},
+{
+  "type": "Submarine",
+  "name": "Synthetic_Submarine_Partial",
+  "submarine_platform": { "length_m": 66.5 }
+}
+] })json";
+
+        const fs::path full = directory / "full.json";
+        const fs::path absent = directory / "absent.json";
+        const fs::path partial = directory / "partial.json";
+        { std::ofstream(full) << full_json; }
+        { std::ofstream(absent) << absent_json; }
+        { std::ofstream(partial) << partial_json; }
+
+        std::vector<UnitDefinition> full_defs;
+        std::vector<UnitDefinition> absent_defs;
+        std::vector<UnitDefinition> partial_defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(full.string(), full_defs, &error));
+        REQUIRE(load_unit_definitions_json(absent.string(), absent_defs, &error));
+        REQUIRE(load_unit_definitions_json(partial.string(), partial_defs, &error));
+        REQUIRE(full_defs.size() == 2);
+        REQUIRE(absent_defs.size() == 2);
+        REQUIRE(partial_defs.size() == 2);
+
+        // Full-field ship fixture: every table row maps to its member.
+        REQUIRE(full_defs[0].has_ship_platform);
+        const ShipPlatform &ship = full_defs[0].ship_platform;
+        CHECK(ship.displacement_light_kg == doctest::Approx(1000.5));
+        CHECK(ship.displacement_full_load_kg == doctest::Approx(2000.5));
+        CHECK(ship.length_m == doctest::Approx(150.5));
+        CHECK(ship.beam_m == doctest::Approx(20.5));
+        CHECK(ship.draft_m == doctest::Approx(6.5));
+        CHECK(ship.height_above_waterline_m == doctest::Approx(12.5));
+        CHECK(ship.max_speed_mps == doctest::Approx(15.5));
+        CHECK(ship.economical_speed_mps == doctest::Approx(8.5));
+        CHECK(ship.range_nm == doctest::Approx(4500.5));
+        CHECK(ship.range_speed_mps == doctest::Approx(9.5));
+        CHECK(ship.max_accel_mps2 == doctest::Approx(0.35));
+        CHECK(ship.max_decel_mps2 == doctest::Approx(0.45));
+        CHECK(ship.max_turn_rate_deg_s == doctest::Approx(3.5));
+        CHECK(ship.low_speed_turn_factor == doctest::Approx(0.55));
+        CHECK(ship.steerageway_speed_mps == doctest::Approx(1.5));
+        CHECK(ship.sea_state == doctest::Approx(4.5));
+        CHECK(ship.wave_heading_deg == doctest::Approx(45.5));
+        CHECK(ship.wave_period_s == doctest::Approx(9.5));
+        CHECK(ship.max_roll_deg_sea_state_6 == doctest::Approx(10.5));
+        CHECK(ship.max_pitch_deg_sea_state_6 == doctest::Approx(4.5));
+        CHECK(ship.added_resistance_fraction_sea_state_6 == doctest::Approx(0.65));
+        CHECK(ship.crew == 314);
+
+        // Full-field submarine fixture: every table row maps to its member.
+        REQUIRE(full_defs[1].has_submarine_platform);
+        const SubmarinePlatform &sub = full_defs[1].submarine_platform;
+        CHECK(sub.submerged_displacement_kg == doctest::Approx(3000.5));
+        CHECK(sub.length_m == doctest::Approx(73.5));
+        CHECK(sub.beam_m == doctest::Approx(9.75));
+        CHECK(sub.draft_m == doctest::Approx(6.25));
+        CHECK(sub.max_speed_submerged_mps == doctest::Approx(10.25));
+        CHECK(sub.quiet_speed_mps == doctest::Approx(2.5));
+        CHECK(sub.max_accel_mps2 == doctest::Approx(0.15));
+        CHECK(sub.max_decel_mps2 == doctest::Approx(0.25));
+        CHECK(sub.max_turn_rate_deg_s == doctest::Approx(1.75));
+        CHECK(sub.max_depth_rate_mps == doctest::Approx(4.5));
+        CHECK(sub.nominal_patrol_depth_m == doctest::Approx(120.5));
+        CHECK(sub.max_operating_depth_m == doctest::Approx(350.5));
+        CHECK(sub.acoustic_stealth_bias_db == doctest::Approx(-6.5));
+        CHECK(sub.self_noise_per_speed_db == doctest::Approx(1.75));
+        CHECK(sub.crew == 52);
+
+        // Absent-object fixture: flags stay false, members keep struct
+        // defaults (spot the non-zero ones so a lost default goes red).
+        CHECK_FALSE(absent_defs[0].has_ship_platform);
+        CHECK(absent_defs[0].ship_platform.max_accel_mps2 == doctest::Approx(0.12));
+        CHECK(absent_defs[0].ship_platform.max_decel_mps2 == doctest::Approx(0.18));
+        CHECK(absent_defs[0].ship_platform.max_turn_rate_deg_s == doctest::Approx(2.0));
+        CHECK(absent_defs[0].ship_platform.low_speed_turn_factor == doctest::Approx(0.25));
+        CHECK(absent_defs[0].ship_platform.steerageway_speed_mps == doctest::Approx(0.5));
+        CHECK(absent_defs[0].ship_platform.wave_period_s == doctest::Approx(8.0));
+        CHECK(absent_defs[0].ship_platform.max_roll_deg_sea_state_6 == doctest::Approx(8.0));
+        CHECK(absent_defs[0].ship_platform.max_pitch_deg_sea_state_6 == doctest::Approx(3.0));
+        CHECK(absent_defs[0].ship_platform.added_resistance_fraction_sea_state_6 ==
+              doctest::Approx(0.12));
+        CHECK(absent_defs[0].ship_platform.crew == 0);
+        CHECK_FALSE(absent_defs[1].has_submarine_platform);
+        CHECK(absent_defs[1].submarine_platform.max_accel_mps2 == doctest::Approx(0.05));
+        CHECK(absent_defs[1].submarine_platform.max_decel_mps2 == doctest::Approx(0.08));
+        CHECK(absent_defs[1].submarine_platform.max_turn_rate_deg_s == doctest::Approx(1.5));
+        CHECK(absent_defs[1].submarine_platform.max_depth_rate_mps == doctest::Approx(3.0));
+        CHECK(absent_defs[1].submarine_platform.nominal_patrol_depth_m == doctest::Approx(60.0));
+        CHECK(absent_defs[1].submarine_platform.max_operating_depth_m == doctest::Approx(300.0));
+        CHECK(absent_defs[1].submarine_platform.self_noise_per_speed_db == doctest::Approx(1.2));
+        CHECK(absent_defs[1].submarine_platform.crew == 0);
+
+        // Partial-object fixture: present key lands, missing keys keep struct
+        // defaults (missing-key-keeps-existing-value semantics).
+        REQUIRE(partial_defs[0].has_ship_platform);
+        CHECK(partial_defs[0].ship_platform.length_m == doctest::Approx(88.5));
+        CHECK(partial_defs[0].ship_platform.max_accel_mps2 == doctest::Approx(0.12));
+        REQUIRE(partial_defs[1].has_submarine_platform);
+        CHECK(partial_defs[1].submarine_platform.length_m == doctest::Approx(66.5));
+        CHECK(partial_defs[1].submarine_platform.max_accel_mps2 == doctest::Approx(0.05));
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("platform fields parse: malformed-key fail-first order (this iteration)") {
+        // Successful-input parity is insufficient: nlohmann conversions throw,
+        // so reordering a table-driven read changes which bad key fails first.
+        // Probe 1 pins within-ship-block order (beam_m before crew), probe 2
+        // pins within-submarine-block order (quiet_speed_mps before crew), and
+        // probe 3 pins the ship block running before the submarine block.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_platform_fields_order_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string within_ship_json = R"json({
+  "type": "Ship",
+  "name": "Synthetic_Ship_Order_Within",
+  "ship_platform": { "beam_m": [], "crew": {} }
+})json";
+        const std::string within_submarine_json = R"json({
+  "type": "Submarine",
+  "name": "Synthetic_Submarine_Order_Within",
+  "submarine_platform": { "quiet_speed_mps": {}, "crew": [] }
+})json";
+        const std::string across_blocks_json = R"json({
+  "type": "Ship",
+  "name": "Synthetic_Platform_Order_Across",
+  "ship_platform": { "crew": "bad-crew" },
+  "submarine_platform": { "length_m": [] }
+})json";
+
+        const fs::path within_ship = directory / "within_ship.json";
+        const fs::path within_submarine = directory / "within_submarine.json";
+        const fs::path across_blocks = directory / "across_blocks.json";
+        { std::ofstream(within_ship) << within_ship_json; }
+        { std::ofstream(within_submarine) << within_submarine_json; }
+        { std::ofstream(across_blocks) << across_blocks_json; }
+
+        const auto thrown_message = [](const fs::path &path) {
+            std::vector<UnitDefinition> defs;
+            std::string error;
+            try {
+                (void)load_unit_definitions_json(path.string(), defs, &error);
+            } catch (const std::exception &ex) {
+                return std::string(ex.what());
+            }
+            return std::string{};
+        };
+
+        const std::string within_ship_message = thrown_message(within_ship);
+        const std::string within_submarine_message = thrown_message(within_submarine);
+        const std::string across_blocks_message = thrown_message(across_blocks);
+        CHECK(within_ship_message.find("type must be number, but is array") !=
+              std::string::npos);
+        CHECK(within_submarine_message.find("type must be number, but is object") !=
+              std::string::npos);
+        CHECK(across_blocks_message.find("type must be number, but is string") !=
+              std::string::npos);
+
+        fs::remove_all(directory);
+    }
+
 } // TEST_SUITE content_compile_passes

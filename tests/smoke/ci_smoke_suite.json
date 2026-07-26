@@ -17,6 +17,7 @@
     "tests/architecture/build_system/test_cmake_target_readiness.py",
     "tests/architecture/content/test_unit_definition_direct_fields_inc.py",
     "tests/architecture/content/test_aero_tuning_fields_inc.py",
+    "tests/architecture/content/test_ship_submarine_platform_fields_inc.py",
     "tests/architecture/agency/test_authority_registry_gate.py",
     "tests/architecture/agency/test_authority_default_single_source.py",
     "tests/architecture/agency/test_authority_representation_boundary.py",
