@@ -30,6 +30,8 @@ SCHEMA = DtoSchema(
         Field(name='wind_speed_mps', cpp_type='double', default='0.0', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),
         Field(name='wind_dir_from_deg', cpp_type='double', default='0.0', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),
         Field(name='wind_shear_mps_per_km', cpp_type='double', default='0.0', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),
+        Field(name='sun_azimuth_deg', cpp_type='double', default='0.0', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),
+        Field(name='sun_elevation_deg', cpp_type='double', default='45.0', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),
         Field(name='maritime_configured', cpp_type='bool', default='false', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),
         Field(name='sea_state', cpp_type='double', default='0.0', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),
         Field(name='wave_heading_deg', cpp_type='double', default='0.0', group='EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD'),

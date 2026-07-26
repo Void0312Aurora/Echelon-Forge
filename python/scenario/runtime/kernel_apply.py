@@ -51,6 +51,8 @@ def prepare_scenario_world_layout(
     wind_speed = 10.0
     wind_dir_from = 270.0
     wind_shear = 4.0
+    sun_azimuth_deg = 0.0
+    sun_elevation_deg = 45.0
     maritime_configured = False
     sea_state = 0.0
     wave_heading_deg = 0.0
@@ -70,6 +72,8 @@ def prepare_scenario_world_layout(
         wind_speed = float(compiled_template.wind_speed_mps)
         wind_dir_from = float(compiled_template.wind_dir_from_deg)
         wind_shear = float(compiled_template.wind_shear_mps_per_km)
+        sun_azimuth_deg = float(compiled_template.sun_azimuth_deg)
+        sun_elevation_deg = float(compiled_template.sun_elevation_deg)
         maritime_configured = bool(compiled_template.maritime_configured)
         sea_state = float(compiled_template.sea_state)
         wave_heading_deg = float(compiled_template.wave_heading_deg)
@@ -88,6 +92,13 @@ def prepare_scenario_world_layout(
         wind_speed = float(wind_cfg.get("speed_mps", 10.0))
         wind_dir_from = float(wind_cfg.get("dir_from_deg", 270.0))
         wind_shear = float(wind_cfg.get("shear_mps_per_km", 4.0))
+        illumination_cfg = (
+            env_cfg.get("illumination", {})
+            if isinstance(env_cfg.get("illumination", {}), dict)
+            else {}
+        )
+        sun_azimuth_deg = float(illumination_cfg.get("sun_azimuth_deg", 0.0))
+        sun_elevation_deg = float(illumination_cfg.get("sun_elevation_deg", 45.0))
         maritime_configured = isinstance(env_cfg.get("maritime", None), dict)
         maritime_cfg = env_cfg.get("maritime", {}) if maritime_configured else {}
         sea_state = float(maritime_cfg.get("sea_state", 0.0))
@@ -327,6 +338,8 @@ def prepare_scenario_world_layout(
         wind_speed_mps=float(wind_speed),
         wind_dir_from_deg=float(wind_dir_from),
         wind_shear_mps_per_km=float(wind_shear),
+        sun_azimuth_deg=float(sun_azimuth_deg),
+        sun_elevation_deg=float(sun_elevation_deg),
         maritime_configured=bool(maritime_configured),
         sea_state=float(sea_state),
         wave_heading_deg=float(wave_heading_deg),
@@ -351,6 +364,11 @@ def apply_world_layout_to_kernel(sim, layout: ScenarioWorldLayout) -> AppliedSce
                 layout.wind_dir_from_deg,
                 layout.wind_shear_mps_per_km,
             )
+        except Exception:
+            pass
+    if hasattr(sim, "set_sun_direction"):
+        try:
+            sim.set_sun_direction(layout.sun_azimuth_deg, layout.sun_elevation_deg)
         except Exception:
             pass
     if layout.maritime_configured and hasattr(sim, "set_maritime_state"):

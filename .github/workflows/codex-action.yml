@@ -78,6 +78,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      pull-requests: read
     outputs:
       final_message: ${{ steps.run_codex.outputs.final-message }}
     steps:
@@ -97,6 +98,28 @@ jobs:
             "$PR_BASE_REF" \
             "+refs/pull/$PR_NUMBER/head"
 
+      - name: Collect prior review context
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            echo "# Prior review context for PR #$PR_NUMBER"
+            echo "Injected by the workflow; not part of the pull request diff."
+            echo
+            echo "## Issue comments (chronological, bodies truncated)"
+            gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+              --jq '.[] | "---\n@\(.user.login) at \(.created_at):\n\(.body[0:6000])\n"' \
+              || echo "(comments unavailable)"
+            echo
+            echo "## Review submissions"
+            gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" --paginate \
+              --jq '.[] | select(.body != null and .body != "") | "---\n@\(.user.login) [\(.state)] at \(.submitted_at):\n\(.body[0:6000])\n"' \
+              || echo "(reviews unavailable)"
+          } > .codex-prior-review-context.md
+          wc -c .codex-prior-review-context.md
+
       - name: Run Codex
         id: run_codex
         uses: openai/codex-action@v1
@@ -112,18 +135,15 @@ jobs:
           allow-bot-users: github-actions[bot]
           output-file: ${{ runner.temp }}/codex-pr-review.md
           prompt: |
-            Review this pull request for correctness, regressions, missing tests, and security risks.
+            Read and follow .github/codex/prompts/pr-review.md. It references
+            the severity ladder, blocking semantics, threat-model boundary,
+            and convergence protocol in .github/codex/review-boundaries.md;
+            both files are authoritative for this review.
 
-            Only report high-confidence issues that should block or change the pull request.
-            Avoid style-only comments, broad refactors, speculative suggestions, and duplicate findings.
-
-            For each issue:
-
-            - cite the relevant file and line or diff hunk;
-            - explain the impact;
-            - suggest a concrete fix.
-
-            If you do not find blocking or material issues, say so clearly.
+            Prior review context (earlier bot reviews and author responses)
+            is provided at .codex-prior-review-context.md in the workspace
+            root. It is injected context, not part of the pull request diff.
+            Apply the convergence protocol against it.
 
             This is pull request #${{ github.event.pull_request.number }} for ${{ github.repository }}.
 
@@ -182,6 +202,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      pull-requests: read
     outputs:
       final_message: ${{ steps.run_codex.outputs.final-message }}
     steps:
@@ -201,6 +222,29 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Collect prior review context
+        if: github.event.issue.pull_request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            echo "# Prior review context for PR #$PR_NUMBER"
+            echo "Injected by the workflow; not part of the pull request diff."
+            echo
+            echo "## Issue comments (chronological, bodies truncated)"
+            gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+              --jq '.[] | "---\n@\(.user.login) at \(.created_at):\n\(.body[0:6000])\n"' \
+              || echo "(comments unavailable)"
+            echo
+            echo "## Review submissions"
+            gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" --paginate \
+              --jq '.[] | select(.body != null and .body != "") | "---\n@\(.user.login) [\(.state)] at \(.submitted_at):\n\(.body[0:6000])\n"' \
+              || echo "(reviews unavailable)"
+          } > .codex-prior-review-context.md
+          wc -c .codex-prior-review-context.md
+
       - name: Run Codex
         id: run_codex
         uses: openai/codex-action@v1
@@ -216,11 +260,15 @@ jobs:
           allow-bot-users: github-actions[bot]
           output-file: ${{ runner.temp }}/codex-comment-task.md
           prompt: |
-            Handle the requested Codex task from a GitHub issue or pull request comment.
+            Read and follow .github/codex/prompts/comment-task.md.
 
-            Focus on the user's explicit request. Inspect the repository and relevant context before answering.
-            Do not modify files in this comment-task workflow. If the request needs code changes, describe the recommended change or ask the maintainer to run the manual Codex patch workflow.
-            Provide a concise answer with any important caveats.
+            If the request is a pull-request review, also follow
+            .github/codex/prompts/pr-review.md and the severity/boundary/
+            convergence contract in .github/codex/review-boundaries.md.
+            When this task runs on a pull request, prior review context
+            (earlier reviews and author responses) is provided at
+            .codex-prior-review-context.md in the workspace root; apply the
+            convergence protocol against it.
 
             Repository: ${{ github.repository }}
             Issue or PR number: #${{ github.event.issue.number }}

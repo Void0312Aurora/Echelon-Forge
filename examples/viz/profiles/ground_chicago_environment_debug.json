@@ -1,0 +1,23 @@
+{
+  "name": "Ground Chicago Environment Debug",
+  "description": "Unified-scene rendering debug profile: loads the native ground platoon occupy scenario together with the frozen Chicago River arnis_cmo_bundle.v1 fixture so the tactical map and 3D inspect view render the shared terrain heightfield, road network, hydrology, and building prisms beneath the common operational picture. Display-only: the environment bundle never feeds the runtime.",
+  "scenario": "scenarios/ground/ground_platoon_native_static_occupy_v1.json",
+  "asset_registry": "examples/viz/assets/registry/default.json",
+  "environment_bundle": "tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/chicago_river_phase1/expected",
+  "startup": {
+    "speed": 1.0,
+    "auto_start": false
+  },
+  "ui": {
+    "presentation_mode": "MAP",
+    "tactical_workspace": "environment",
+    "tactical_zoom": 1.0,
+    "tactical_layers": {
+      "terrain": true,
+      "water": true,
+      "roads": true,
+      "buildings": true,
+      "environment": true
+    }
+  }
+}

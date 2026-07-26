@@ -1,0 +1,1326 @@
+{
+  "schema": "arnis_cmo_features",
+  "schema_version": 1,
+  "coordinate_frame": "local_enu_m",
+  "feature_class": "hydrology",
+  "features": [
+    {
+      "feature_id": "openstreetmap:relation:13730103:hydrology:part:0000",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              165.55843772187356,
+              -93.99369195114876
+            ],
+            [
+              165.33493383127754,
+              -93.99244965183229
+            ],
+            [
+              154.49913408218654,
+              -93.92573357940947
+            ],
+            [
+              123.82115557253685,
+              -93.80342077707876
+            ],
+            [
+              107.14942089317779,
+              -93.73670470326928
+            ],
+            [
+              106.94247284654746,
+              -88.0880747204445
+            ],
+            [
+              103.73063915484546,
+              -88.1325521383437
+            ],
+            [
+              100.61814052576128,
+              -88.243745684825
+            ],
+            [
+              99.21917172654062,
+              -88.25486503981979
+            ],
+            [
+              96.79374061438659,
+              -88.27710374842273
+            ],
+            [
+              95.29543675254808,
+              -88.2882231054975
+            ],
+            [
+              69.29448410850755,
+              -88.61068437608012
+            ],
+            [
+              67.91207115325255,
+              -88.62180373038157
+            ],
+            [
+              65.58597510371638,
+              -88.63292308329639
+            ],
+            [
+              63.913834882002575,
+              -88.64404243621122
+            ],
+            [
+              61.331123253938955,
+              -88.72187791285486
+            ],
+            [
+              58.847746688493174,
+              -88.75523597575928
+            ],
+            [
+              58.011676578224446,
+              -91.43499971900796
+            ],
+            [
+              57.40738827994643,
+              -91.44611906914949
+            ],
+            [
+              57.4156662013411,
+              -92.39126371470032
+            ],
+            [
+              57.42394412391213,
+              -93.18073738477744
+            ],
+            [
+              57.432222045306794,
+              -94.02580769047034
+            ],
+            [
+              -16.63034506885664,
+              -94.07028507162335
+            ],
+            [
+              -18.261095681244374,
+              -90.34530338225916
+            ],
+            [
+              -21.539152747632805,
+              -90.4009001392067
+            ],
+            [
+              -24.32881242350312,
+              -90.44537754254607
+            ],
+            [
+              -25.2724955189607,
+              -90.4676162449091
+            ],
+            [
+              -27.706204552509384,
+              -90.5009742967203
+            ],
+            [
+              -27.722760396475085,
+              -89.40015846353853
+            ],
+            [
+              -28.823724007842266,
+              -89.41127781576003
+            ],
+            [
+              -33.76564337337347,
+              -89.48911328200381
+            ],
+            [
+              -46.81164826659351,
+              -89.63366486781649
+            ],
+            [
+              -49.0301313321172,
+              -89.65590357156616
+            ],
+            [
+              -51.11616764709166,
+              -89.67814227531582
+            ],
+            [
+              -52.142629961201365,
+              -89.6892616275373
+            ],
+            [
+              -52.904198774212624,
+              -89.7003809797588
+            ],
+            [
+              -54.187276666849755,
+              -89.71150033128697
+            ],
+            [
+              -57.150772701419015,
+              -89.74485838795145
+            ],
+            [
+              -59.20369732963842,
+              -89.7670970910078
+            ],
+            [
+              -61.844354410993816,
+              -93.78118208511562
+            ],
+            [
+              -65.27141407189718,
+              -98.76264728707108
+            ],
+            [
+              -78.73131505955423,
+              -98.69593125832768
+            ],
+            [
+              -78.85548388753244,
+              -93.55879516687075
+            ],
+            [
+              -82.19148640721265,
+              -93.569914512159
+            ],
+            [
+              -82.15009679788658,
+              -98.7848859637811
+            ],
+            [
+              -93.49912770403245,
+              -98.79600530144278
+            ],
+            [
+              -93.6315744534053,
+              -93.62551124137356
+            ],
+            [
+              -96.72751723970016,
+              -93.64774993403003
+            ],
+            [
+              -96.75235100506053,
+              -98.79600530144278
+            ],
+            [
+              -108.16760528589283,
+              -98.80712463910446
+            ],
+            [
+              -108.16760528589283,
+              -93.70334666255125
+            ],
+            [
+              -111.5781091028305,
+              -93.72558535382109
+            ],
+            [
+              -111.61122079076189,
+              -98.81824397676614
+            ],
+            [
+              -121.71856341359671,
+              -98.82936331720111
+            ],
+            [
+              -125.28634774644397,
+              -93.79230143040387
+            ],
+            [
+              -129.7812593307831,
+              -93.814540122367
+            ],
+            [
+              -126.88398667090028,
+              -98.06212895614584
+            ],
+            [
+              -131.7927943485001,
+              -98.02877093900085
+            ],
+            [
+              -131.75968266174505,
+              -93.82565947042856
+            ],
+            [
+              -135.6171942598748,
+              -93.84789816100506
+            ],
+            [
+              -135.6171942598748,
+              -98.01765159648589
+            ],
+            [
+              -139.16014482736168,
+              -97.99541291977587
+            ],
+            [
+              -137.8273994040038,
+              -96.03840893735361
+            ],
+            [
+              -141.01439933034544,
+              -93.79230143040387
+            ],
+            [
+              -142.96798889477068,
+              -96.6944501048297
+            ],
+            [
+              -145.161638194934,
+              -93.73670470326928
+            ],
+            [
+              -148.22446929329743,
+              -95.91609617107576
+            ],
+            [
+              -146.93311347808924,
+              -97.95093556219591
+            ],
+            [
+              -150.36845106156366,
+              -97.93981622453423
+            ],
+            [
+              -154.04384837842343,
+              -92.84715697135731
+            ],
+            [
+              -156.34511066259924,
+              -92.90275370681177
+            ],
+            [
+              -158.72087424403253,
+              -92.95835044365289
+            ],
+            [
+              -160.2936794031285,
+              -92.64700871526266
+            ],
+            [
+              -161.89959624897952,
+              -93.60327255010374
+            ],
+            [
+              -162.64460921802507,
+              -94.09252376427982
+            ],
+            [
+              -163.37306634428128,
+              -93.08066326193006
+            ],
+            [
+              -165.55843772187356,
+              -94.4959962057893
+            ],
+            [
+              -165.55843772187356,
+              -17.299073241012366
+            ],
+            [
+              -155.36831588038663,
+              -17.123998064072765
+            ],
+            [
+              -56.215367528532454,
+              -15.244808083957656
+            ],
+            [
+              -52.85453124349189,
+              -15.178091271064375
+            ],
+            [
+              -52.83797539952619,
+              -16.434591147498026
+            ],
+            [
+              -30.14819150980547,
+              -16.968325540405704
+            ],
+            [
+              -28.56710842931484,
+              -17.023922870039183
+            ],
+            [
+              -28.575386350709508,
+              -13.065391865163598
+            ],
+            [
+              -5.438594679796725,
+              -13.398976025308775
+            ],
+            [
+              -2.119148002905858,
+              -13.454573381981902
+            ],
+            [
+              62.71353620919393,
+              -15.200330209157684
+            ],
+            [
+              63.0032634744764,
+              -15.200330209157684
+            ],
+            [
+              63.028097241013114,
+              -17.27967058357988
+            ],
+            [
+              63.11915438105992,
+              -24.195974829070302
+            ],
+            [
+              68.55774906085665,
+              -24.229333194957466
+            ],
+            [
+              94.65803676751504,
+              -23.895749543019072
+            ],
+            [
+              100.14629897803248,
+              -23.829032813324716
+            ],
+            [
+              100.13802105663783,
+              -18.091391527589526
+            ],
+            [
+              112.72046232352373,
+              -18.20258617021669
+            ],
+            [
+              132.71164367742097,
+              -19.15886002359528
+            ],
+            [
+              151.54391596901198,
+              -20.104014287635437
+            ],
+            [
+              154.5488016140836,
+              -20.23744782051653
+            ],
+            [
+              165.55843772187356,
+              -20.37250611085132
+            ],
+            [
+              165.55843772187356,
+              -93.99369195114876
+            ]
+          ],
+          [
+            [
+              101.52043401071644,
+              -24.051421917621386
+            ],
+            [
+              101.54526777725316,
+              -23.528807512713673
+            ],
+            [
+              101.7356599799178,
+              -23.061790351467213
+            ],
+            [
+              102.08333269966838,
+              -22.683728817102278
+            ],
+            [
+              102.53861840343149,
+              -22.439100755992538
+            ],
+            [
+              103.05184956048632,
+              -22.372384011738372
+            ],
+            [
+              103.54852487357549,
+              -22.483578587113072
+            ],
+            [
+              103.94586512404683,
+              -22.728206648222812
+            ],
+            [
+              104.25214823329497,
+              -23.084029264600844
+            ],
+            [
+              104.42598459317026,
+              -23.506568599580042
+            ],
+            [
+              104.45909628110165,
+              -23.973585731706876
+            ],
+            [
+              104.35148329591283,
+              -24.418363921580458
+            ],
+            [
+              104.11142356135107,
+              -24.81866427340026
+            ],
+            [
+              103.75547292020582,
+              -25.118889519238675
+            ],
+            [
+              103.33329890437413,
+              -25.29680076884178
+            ],
+            [
+              102.86973527804001,
+              -25.3301591277957
+            ],
+            [
+              102.4144495742769,
+              -25.218964596100435
+            ],
+            [
+              101.98399763705056,
+              -24.940978262009
+            ],
+            [
+              101.66943660523135,
+              -24.540677919202416
+            ],
+            [
+              101.52043401071644,
+              -24.051421917621386
+            ]
+          ],
+          [
+            [
+              58.89741421921391,
+              -24.66299191543773
+            ],
+            [
+              58.91397006317961,
+              -24.140377555596103
+            ],
+            [
+              59.112640188415256,
+              -23.673360437335752
+            ],
+            [
+              59.46031290816586,
+              -23.295298935557064
+            ],
+            [
+              59.91559861192895,
+              -23.05067089524706
+            ],
+            [
+              60.4288297689838,
+              -22.983954156539486
+            ],
+            [
+              60.925505082072966,
+              -23.095148720127675
+            ],
+            [
+              61.32284533254428,
+              -23.33977675905103
+            ],
+            [
+              61.62085052039778,
+              -23.69559934769609
+            ],
+            [
+              61.80296480166775,
+              -24.11813864592909
+            ],
+            [
+              61.83607648959915,
+              -24.585155738536436
+            ],
+            [
+              61.728463504410286,
+              -25.029933890277174
+            ],
+            [
+              61.48840376984855,
+              -25.43023420465746
+            ],
+            [
+              61.1324531287033,
+              -25.730459424842874
+            ],
+            [
+              60.70200119030058,
+              -25.90837066196614
+            ],
+            [
+              60.24671548653748,
+              -25.941729018146763
+            ],
+            [
+              59.79142978277438,
+              -25.830534496851364
+            ],
+            [
+              59.36097784554803,
+              -25.55254818494631
+            ],
+            [
+              59.04641681372883,
+              -25.152247878192593
+            ],
+            [
+              58.89741421921391,
+              -24.66299191543773
+            ]
+          ],
+          [
+            [
+              -57.95373112493268,
+              -18.980948619380836
+            ],
+            [
+              -57.92889735957231,
+              -18.469453304617996
+            ],
+            [
+              -57.73022723433667,
+              -17.99131634880908
+            ],
+            [
+              -57.38255451458606,
+              -17.613254543354305
+            ],
+            [
+              -56.92726881082297,
+              -17.368626308913466
+            ],
+            [
+              -56.42231557633915,
+              -17.301909514739943
+            ],
+            [
+              -55.91736234067897,
+              -17.41310416984695
+            ],
+            [
+              -55.52002209020764,
+              -17.65773240498111
+            ],
+            [
+              -55.22201690235414,
+              -18.01355527788917
+            ],
+            [
+              -55.039902621084174,
+              -18.436094915157806
+            ],
+            [
+              -55.006790933152786,
+              -18.903112377307053
+            ],
+            [
+              -55.114403918341644,
+              -19.347890888883153
+            ],
+            [
+              -55.35446365290338,
+              -19.74819152219266
+            ],
+            [
+              -55.71041429404863,
+              -20.048416982961637
+            ],
+            [
+              -56.14086623127499,
+              -20.22632836013643
+            ],
+            [
+              -56.60442985760911,
+              -20.25968674474335
+            ],
+            [
+              -57.051437638801175,
+              -20.148492134009107
+            ],
+            [
+              -57.481889577203894,
+              -19.870505600933573
+            ],
+            [
+              -57.7964506090231,
+              -19.470204973863986
+            ],
+            [
+              -57.95373112493268,
+              -18.980948619380836
+            ]
+          ],
+          [
+            [
+              -28.699555179864063,
+              -18.50281169546484
+            ],
+            [
+              -28.67472141332733,
+              -17.99131634880908
+            ],
+            [
+              -28.47605128809167,
+              -17.51317935833394
+            ],
+            [
+              -28.13665649091211,
+              -17.135117529306136
+            ],
+            [
+              -27.681370787149024,
+              -16.901608742072234
+            ],
+            [
+              -27.168139630094164,
+              -16.82377247781207
+            ],
+            [
+              -26.671464317005004,
+              -16.934967140545645
+            ],
+            [
+              -26.27412406653368,
+              -17.17959539231959
+            ],
+            [
+              -25.967840957285517,
+              -17.53541828880068
+            ],
+            [
+              -25.794004597410222,
+              -17.957957953108966
+            ],
+            [
+              -25.75261498808416,
+              -18.424975450617758
+            ],
+            [
+              -25.860227972096656,
+              -18.86975398923351
+            ],
+            [
+              -26.108565629229417,
+              -19.27005465027599
+            ],
+            [
+              -26.456238347803644,
+              -19.570280130458052
+            ],
+            [
+              -26.88669028620637,
+              -19.74819152219266
+            ],
+            [
+              -27.350253911364128,
+              -19.78154990679958
+            ],
+            [
+              -27.80553961512722,
+              -19.670355288438767
+            ],
+            [
+              -28.235991553529946,
+              -19.392368735950146
+            ],
+            [
+              -28.54227466395447,
+              -18.992068082534235
+            ],
+            [
+              -28.699555179864063,
+              -18.50281169546484
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "area",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "river"
+      },
+      "provenance": {
+        "source_feature_id": "13730103",
+        "source_feature_type": "relation",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "natural": "water",
+          "type": "multipolygon",
+          "water": "river"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:407267816:hydrology:part:0000",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            165.55843772187356,
+            -51.903945040629445
+          ],
+          [
+            144.88846677244084,
+            -52.05015446845255
+          ],
+          [
+            -52.79658579020011,
+            -53.8181406290988
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "centerline",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "river",
+        "width_m": 12.0,
+        "width_source": "cmo_metric_default_by_waterway_class"
+      },
+      "provenance": {
+        "source_feature_id": "407267816",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "boat": "yes",
+          "canoe": "yes",
+          "deep_draft": "yes",
+          "intermittent": "no",
+          "name": "Chicago River",
+          "oneway:canoe": "no",
+          "rapids": "no",
+          "ship": "yes",
+          "tidal": "no",
+          "waterway": "river",
+          "wikidata": "Q643284"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "cmo_metric_default_by_waterway_class"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:407267816:hydrology:part:0001",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -52.79658579020012,
+            -53.8181406290988
+          ],
+          [
+            -165.55843772187356,
+            -54.34778734396139
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "centerline",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "river",
+        "width_m": 12.0,
+        "width_source": "cmo_metric_default_by_waterway_class"
+      },
+      "provenance": {
+        "source_feature_id": "407267816",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "boat": "yes",
+          "canoe": "yes",
+          "deep_draft": "yes",
+          "intermittent": "no",
+          "name": "Chicago River",
+          "oneway:canoe": "no",
+          "rapids": "no",
+          "ship": "yes",
+          "tidal": "no",
+          "waterway": "river",
+          "wikidata": "Q643284"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "width_m": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "metric_semantics_pre_block_conversion",
+            "source_semantics": "cmo_metric_default_by_waterway_class"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:747171878:hydrology:part:0000",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              43.442534057805545,
+              -97.4060879148548
+            ],
+            [
+              43.45081198037658,
+              -97.69519075368443
+            ],
+            [
+              43.45081198037658,
+              -102.17628325588315
+            ],
+            [
+              1.150631142087911,
+              -102.10956725764603
+            ],
+            [
+              1.0595740008647472,
+              -97.72854877221607
+            ],
+            [
+              1.0512960794700796,
+              -97.4283265943381
+            ],
+            [
+              43.442534057805545,
+              -97.4060879148548
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "area",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "basin"
+      },
+      "provenance": {
+        "source_feature_id": "747171878",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "amenity": "fountain",
+          "intermittent": "yes",
+          "name": "The Swimming Hole",
+          "natural": "water",
+          "water": "basin"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:863109949:hydrology:part:0000",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.85548388753244,
+              -93.55879516687075
+            ],
+            [
+              -78.73131505955423,
+              -98.69593125832768
+            ],
+            [
+              -65.27141407189718,
+              -98.76264728707108
+            ],
+            [
+              -61.844354410993816,
+              -93.78118208511562
+            ],
+            [
+              -67.26639324682483,
+              -93.74782404855753
+            ],
+            [
+              -78.85548388753244,
+              -93.55879516687075
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "area",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "wetland"
+      },
+      "provenance": {
+        "source_feature_id": "863109949",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "floating": "yes",
+          "leisure": "garden",
+          "natural": "wetland"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:863109950:hydrology:part:0000",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -93.6315744534053,
+              -93.62551124137356
+            ],
+            [
+              -82.19148640721265,
+              -93.569914512159
+            ],
+            [
+              -82.15009679788658,
+              -98.7848859637811
+            ],
+            [
+              -93.49912770403245,
+              -98.79600530144278
+            ],
+            [
+              -93.6315744534053,
+              -93.62551124137356
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "area",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "wetland"
+      },
+      "provenance": {
+        "source_feature_id": "863109950",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "floating": "yes",
+          "leisure": "garden",
+          "natural": "wetland"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:863109951:hydrology:part:0000",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -108.16760528589283,
+              -93.70334666255125
+            ],
+            [
+              -96.72751723970016,
+              -93.64774993403003
+            ],
+            [
+              -96.75235100506053,
+              -98.79600530144278
+            ],
+            [
+              -108.16760528589283,
+              -98.80712463910446
+            ],
+            [
+              -108.16760528589283,
+              -93.70334666255125
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "area",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "wetland"
+      },
+      "provenance": {
+        "source_feature_id": "863109951",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "floating": "yes",
+          "leisure": "garden",
+          "natural": "wetland"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          }
+        }
+      }
+    },
+    {
+      "feature_id": "openstreetmap:way:863109952:hydrology:part:0000",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -125.28634774644397,
+              -93.79230143040387
+            ],
+            [
+              -111.5781091028305,
+              -93.72558535382109
+            ],
+            [
+              -111.61122079076189,
+              -98.81824397676614
+            ],
+            [
+              -121.71856341359671,
+              -98.82936331720111
+            ],
+            [
+              -125.28634774644397,
+              -93.79230143040387
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "geometry_role": "area",
+        "state": "static_source_geometry",
+        "vertical_anchor_mode": "water_surface_from_dem",
+        "vertical_anchor_source": "continuous_dem_water_surface_sampling",
+        "vertical_placement_resolved": true,
+        "water_kind": "wetland"
+      },
+      "provenance": {
+        "source_feature_id": "863109952",
+        "source_feature_type": "way",
+        "source_provider": "openstreetmap",
+        "source_tags": {
+          "floating": "yes",
+          "leisure": "garden",
+          "natural": "wetland"
+        },
+        "tags_filtered_by_arnis": true
+      },
+      "lineage": {
+        "block_projection_applied": false,
+        "geometry_source_stage": "projected_from_wgs84_f64",
+        "measurements": {
+          "vertical_anchor_mode": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_anchor_source": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          },
+          "vertical_placement_resolved": {
+            "derived_from_block_count": false,
+            "derived_from_block_range": false,
+            "source_domain": "semantic_tags_pre_block_conversion",
+            "source_semantics": "continuous_dem_water_surface_sampling"
+          }
+        }
+      }
+    }
+  ]
+}

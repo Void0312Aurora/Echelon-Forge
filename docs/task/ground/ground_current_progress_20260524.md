@@ -1,8 +1,8 @@
 # Ground / Army Current Progress Tracking
 
-Status: `2026-06-06` ground static command-authoring plus accepted and closed
-environment-substrate G0 design/implementation line through G0-M metadata-only
-derived products.
+Status: updated through `2026-07-15`; ground static command-authoring and the
+environment-substrate G0 design/implementation line are closed through G0-M,
+with the Arnis adapter phase-1 static-environment bundle follow-on accepted.
 
 This is the active tracking entry for `docs/task/ground/` after the G0-G5
 ground bootstrap line opened on `2026-05-21`. It tracks the Army/ground line
@@ -10,6 +10,13 @@ across infrastructure, domain semantics, and RL/tasking integration.
 
 Current positioning:
 
+- Arnis adapter phase 1 is accepted: a frozen OSM input passes through the
+  pinned continuous Arnis patch and, before Minecraft quantization, produces
+  pre-scale elevation, categorical land cover, and floating-point road,
+  building, and hydrology data. It strict-imports as a CMO static manifest;
+  elevation-anchor admission and offline static-scene derivation now resolve
+  `403` of `509` vector objects while keeping `106` missing vertical profiles
+  held. Runtime terrain setup and ground movement remain unreleased.
 - `services/army` is the service-profile boundary.
 - `ground` is the maintained execution-specialization name; `army` and `land`
   are accepted aliases that normalize to `ground`.

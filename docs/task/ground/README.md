@@ -2,7 +2,8 @@
 
 Status: active follow-on entry; bootstrap planning baseline plus the
 environment-substrate G0 design/implementation line accepted and closed through
-G0-M on `2026-06-06`; current progress tracking updated on `2026-06-06`.
+G0-M on `2026-06-06`; current progress tracking updated on `2026-07-15` with
+the accepted Arnis adapter phase-1 static-environment bundle follow-on.
 
 Language:
 
@@ -15,6 +16,15 @@ without creating a new vertical runtime path.
 
 ## Current Status
 
+- Accepted environment-substrate Arnis adapter phase 1:
+  [environment_substrate_arnis_adapter/README.md](environment_substrate_arnis_adapter/README.md).
+  This follow-on pins Arnis plus the continuous CMO patch and, before Minecraft
+  quantization, exports pre-scale elevation, categorical land cover, and
+  floating-point road, building, and hydrology data. It strictly imports the
+  bundle into a CMO manifest, carries fail-closed elevation anchors, and derives
+  a non-runtime static-scene geometry preview (`403` resolved / `106` held)
+  without releasing runtime setup, movement, LOS, cover, fires, damage, or
+  combat.
 - The latest state summary is
   [ground_current_progress_20260524.md](ground_current_progress_20260524.md).
 - Accepted environment-substrate G0 design/implementation line:
@@ -124,6 +134,8 @@ without creating a new vertical runtime path.
 
 ## Current Entry Points
 
+- Arnis adapter phase 1:
+  [environment_substrate_arnis_adapter/README.md](environment_substrate_arnis_adapter/README.md)
 - Current progress tracking:
   [ground_current_progress_20260524.md](ground_current_progress_20260524.md)
 - Accepted environment-substrate G0 architecture package:

@@ -1,0 +1,85 @@
+{
+  "capability_boundary": {
+    "no_held_capability_release": true,
+    "no_runtime_setup_release": true,
+    "static_environment_data_only": true
+  },
+  "contract_version": "arnis_cmo_bundle.v1",
+  "coordinate_system": {
+    "axis_mapping": {
+      "x": "east",
+      "y": "north"
+    },
+    "coordinate_frame": "local_enu_m",
+    "origin_wgs84": {
+      "latitude": 41.888,
+      "longitude": -87.6335
+    },
+    "rotation_deg": 0.0,
+    "scale": 1.0,
+    "source_projection": "arnis_local_web_mercator_r6371000_f64"
+  },
+  "elevation": {
+    "contributing_sources": {
+      "usgs_3dep": 2
+    },
+    "missing_source_units": 0,
+    "primary_provider": "usgs_3dep",
+    "semantics": "arnis_postprocessed_ground_surface",
+    "source_mode": "arnis_provider_selection",
+    "vertical_datum": "source_provider_native_unspecified"
+  },
+  "exporter_patch_id": "0001-cmo-continuous-bundle-export-v1",
+  "exporter_patch_sha256": "26536836d46aa7bc3e03da3449b4c52391f096527ab58f365d5dd4b96b9052ee",
+  "exporter_version": "cmo.phase1.v1",
+  "generator": {
+    "id": "arnis",
+    "upstream_revision": "af521c99124b5e07ecba018ea54f2ac47b6441d5",
+    "version": "3.0.0"
+  },
+  "landcover": {
+    "provider": "ESA WorldCover",
+    "release": "2021 v200",
+    "semantics": "esa_worldcover_source_classification_metric_grid"
+  },
+  "lineage": {
+    "anvil_region_read": false,
+    "contract": "arnis_continuous_metric.v1",
+    "elevation": {
+      "minecraft_y_roundtrip": false,
+      "minecraft_y_transform_applied": false,
+      "source_stage": "postprocessed_metric_dem",
+      "storage": "float32_le",
+      "vertical_quantization_step_m": null
+    },
+    "export_stage": "post_semantic_processing_pre_render_quantization",
+    "geometry": {
+      "block_projection_applied": false,
+      "quantization_step_m": null,
+      "source_stage": "projected_from_wgs84_f64",
+      "storage": "json_float64"
+    },
+    "landcover": {
+      "block_palette_roundtrip": false,
+      "source_stage": "source_classification_metric_grid"
+    },
+    "minecraft_world_read": false,
+    "representation": "continuous_metric_2_5d",
+    "voxelization_applied": false
+  },
+  "processing": [
+    "osm_parse_and_tag_filter",
+    "elevation_outlier_filter",
+    "terrain_anomaly_repair",
+    "landcover_aware_elevation_repair"
+  ],
+  "source_inputs": [
+    {
+      "byte_length": 758113,
+      "kind": "osm_json",
+      "provider": "openstreetmap",
+      "sha256": "efe1b0d5045ae898b18fa5587df7e477849ef009eb2417c9437f7f2aa64bebd1",
+      "tags_filtered_by_arnis": true
+    }
+  ]
+}

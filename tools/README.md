@@ -20,6 +20,8 @@
     proxies and human-auditable geometry packets.
 - `tools/runners/`
   - Stable runners for JSON contract suites and similar maintained entrypoints.
+- `tools/environment/`
+  - Pinned environment/scenario data-generator adapters, export, and verification.
 - `tools/maintenance/`
   - Workspace audit and cleanup helpers.
 - `tools/archive/`
@@ -90,6 +92,17 @@
   - Runs grouped JSON contract batches from `tests/contracts/` by `--group` (`chain`, `unit`, `route_generator`, `same_process`, `sim_kernel`), or all maintained groups by default. The `--default-group sim_kernel` convenience selects the `sim_kernel` group without spelling `--group`.
 - [measure_test_coverage.py](runners/measure_test_coverage.py)
   - Generates retained Python `coverage` and optional C++ `gcovr` reports from a checked-in pytest suite manifest. Use a coverage-instrumented CMake build for C++ reports so Python tests exercise the instrumented `ef_py` binding instead of reporting doctest-only coverage.
+
+## Environment Generation and Integration
+
+- [arnis/README.md](environment/arnis/README.md)
+  - Pinned Arnis `v3.0.0` plus the CMO patch behind one `prepare / export /
+    verify` entrypoint. It emits continuous metric `arnis_cmo_bundle.v1` data
+    before Minecraft quantization, runs CMO manifest/catalog validation, and
+    provides explicitly non-runtime continuous-field and true-scale static-scene
+    previews. Static placement is provenance-bound and unresolved roofs,
+    bridges, or subsurface profiles remain held; no terrain runtime, movement,
+    LOS, cover, or combat is released.
 
 ## Maintenance
 

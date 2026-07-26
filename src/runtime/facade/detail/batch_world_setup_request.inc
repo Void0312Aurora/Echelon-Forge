@@ -7,6 +7,7 @@
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<std::uint32_t>, seeds, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldTerrainAssignment>, terrain_assignments, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldWindAssignment>, wind_assignments, {})
+EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldSunAssignment>, sun_assignments, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldZoneDefinition>, zones, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<WorldSpawnRequest>, spawn_requests, {})
 EF_BATCH_WORLD_SETUP_REQUEST_FIELD(std::vector<TypedPlatformSpawnRequest>, typed_platform_spawn_requests, {})
