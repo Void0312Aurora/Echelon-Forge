@@ -10,6 +10,7 @@ Canonical: `docs/plan/unified_architecture_program/t7_i90_final_residual_audit_2
 Owner: `unified architecture program workline`
 Last verified: `2026-07-27`
 Baseline/source landing head: `5a2c75f7`
+Landing commit: `5b728ac2`
 
 Status: **I90 accepted — final residual audit clean pass 2.**
 
@@ -21,7 +22,8 @@ or reopen held work.
 ## 1. Scope and two-pass evidence
 
 The material I89 repair landed at `a272fc04`; `5a2c75f7` is the subsequent
-ledger/hash settlement. Both clean passes used that source tree and a
+ledger/hash settlement and I90's audit source head. The I90 report/ledger
+closure landed at `5b728ac2`. Both clean passes used that source tree and a
 matching `EF-landing\build-local-win` runtime build:
 
 | Pass | Checkout | Evidence | Independent review |
