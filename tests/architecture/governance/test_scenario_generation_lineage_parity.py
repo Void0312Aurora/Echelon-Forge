@@ -40,6 +40,8 @@ from dataclasses import MISSING, fields as dataclass_fields
 from pathlib import Path
 import re
 
+import pytest
+
 from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
@@ -81,9 +83,22 @@ def _cpp_struct_body_lines(header_text: str, struct_name: str) -> list[str]:
     rf"struct {struct_name} \{{\n(.*?)\n\}};", header_text, re.DOTALL
   )
   assert match is not None, f"struct {struct_name} not found in {CONTRACT_TYPES_HEADER}"
-  return [
-    line.strip() for line in match.group(1).splitlines() if line.strip()
-  ]
+  physical_lines = [line.strip() for line in match.group(1).splitlines()]
+  logical_lines: list[str] = []
+  continuation = ""
+  for line in physical_lines:
+    if continuation:
+      assert line, f"blank line after line continuation in {struct_name}"
+      line = f"{continuation} {line}"
+      continuation = ""
+    if not line:
+      continue
+    if line.endswith("\\"):
+      continuation = line[:-1].rstrip()
+    else:
+      logical_lines.append(" ".join(line.split()))
+  assert not continuation, f"unterminated preprocessor directive in {struct_name}"
+  return logical_lines
 
 
 def _schema_members(schema) -> list[tuple[str, str, str]]:
@@ -101,7 +116,10 @@ def _assert_cpp_seam_adopts_generated_include(struct_name: str, schema) -> None:
 
   With the generated include at the original seam, the compiled member list
   is the schema's rendering by construction; any hand-written member added
-  next to the include would break this exact-body check.
+  next to the include would break this exact-logical-body check. Preprocessor
+  continuation and whitespace are normalized so clang-format does not turn
+  a physical-line change into a false governance failure. A blank line after
+  a continuation fails closed because it terminates a C++ macro definition.
   """
   header_text = CONTRACT_TYPES_HEADER.read_text(encoding="utf-8")
   macro = _schema_field_macro(schema)
@@ -127,6 +145,28 @@ def test_cpp_seams_adopt_generated_includes() -> None:
   _assert_cpp_seam_adopts_generated_include(
     "ScenarioGenerationRequestMetadata", REQUEST_METADATA_SCHEMA
   )
+
+
+def test_cpp_seam_parser_rejects_blank_macro_continuation() -> None:
+  macro = "#define EF_SYNTHETIC_FIELD(type, name, default_value)"
+  include = '#include "runtime/contracts/detail/synthetic.inc"'
+  header_text = (
+    "struct Synthetic {\n\n"
+    f"{macro} \\\n"
+    "    type name = default_value;\n\n"
+    f"{include}\n\n"
+    "};"
+  )
+  assert _cpp_struct_body_lines(header_text, "Synthetic") == [
+    f"{macro} type name = default_value;",
+    include,
+  ]
+
+  malformed_header = header_text.replace(
+    f"{macro} \\\n", f"{macro} \\\n\n"
+  )
+  with pytest.raises(AssertionError, match="blank line after line continuation"):
+    _cpp_struct_body_lines(malformed_header, "Synthetic")
 
 
 def test_checked_in_incs_match_schema_names_types_defaults_and_order() -> None:
