@@ -73,15 +73,17 @@ _MACROS = frozenset({_EARLY_MACRO, _DATA_LINK_MACRO})
 _INC_INCLUDE_DIRECTIVE = '#include "content/detail/unit_definition_direct_fields.inc"'
 _LOADER_SIGNATURE = "bool parse_unit_json("
 
+# clang-format (repo style, ColumnLimit 100) right-aligns macro continuation
+# backslashes to column 100; the pins carry that exact padded text.
 _EARLY_EXPANSION_BLOCK = (
-    "#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value) \\\n"
+    "#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)" + 34 * " " + "\\\n"
     "    def.name = entry.value(#name, default_value);\n"
     "#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)\n"
     f"{_INC_INCLUDE_DIRECTIVE}"
 )
 _DATA_LINK_EXPANSION_BLOCK = (
     "#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)\n"
-    "#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value) \\\n"
+    "#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)" + 30 * " " + "\\\n"
     "    def.name = entry.value(#name, default_value);\n"
     f"{_INC_INCLUDE_DIRECTIVE}"
 )

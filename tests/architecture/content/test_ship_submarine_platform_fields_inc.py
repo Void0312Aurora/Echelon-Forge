@@ -94,14 +94,17 @@ _SHIP_INC_INCLUDE = '#include "content/detail/ship_platform_fields.inc"'
 _SUBMARINE_INC_INCLUDE = '#include "content/detail/submarine_platform_fields.inc"'
 _LOADER_SIGNATURE = "bool parse_unit_json("
 
+# clang-format (repo style, ColumnLimit 100) right-aligns macro continuation
+# backslashes to column 100 and indents the macro body one level (4 spaces);
+# the pins carry that exact padded text.
 _SHIP_EXPANSION_BLOCK = (
-    "#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value) \\\n"
-    "        def.ship_platform.name = sp.value(#name, def.ship_platform.name);\n"
+    "#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value)" + 38 * " " + "\\\n"
+    "    def.ship_platform.name = sp.value(#name, def.ship_platform.name);\n"
     f"{_SHIP_INC_INCLUDE}"
 )
 _SUBMARINE_EXPANSION_BLOCK = (
-    "#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value) \\\n"
-    "        def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);\n"
+    "#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value)" + 33 * " " + "\\\n"
+    "    def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);\n"
     f"{_SUBMARINE_INC_INCLUDE}"
 )
 
