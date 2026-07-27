@@ -97,6 +97,6 @@ struct FlightShapingRuntimeProducts {
     double alignment_reward = 0.0;
 };
 
-WaypointRewardProducts compute_waypoint_reward_terms(const WaypointRewardInputs& inputs);
-ApproachRewardProducts compute_approach_reward_terms(const ApproachRewardInputs& inputs);
-FlightShapingRuntimeProducts compute_flight_shaping_terms(const FlightShapingRuntimeInputs& inputs);
+WaypointRewardProducts compute_waypoint_reward_terms(const WaypointRewardInputs &inputs);
+ApproachRewardProducts compute_approach_reward_terms(const ApproachRewardInputs &inputs);
+FlightShapingRuntimeProducts compute_flight_shaping_terms(const FlightShapingRuntimeInputs &inputs);

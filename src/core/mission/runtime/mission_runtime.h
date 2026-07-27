@@ -63,16 +63,11 @@ struct StepInfoProducts {
 };
 
 double resolve_ground_track_deg(double fallback_heading_deg, double inst_ground_track_deg);
-double compute_ground_track_error_deg(double target_heading_deg, double fallback_heading_deg, double inst_ground_track_deg);
-double compute_command_tracking_error_deg(
-    double target_heading_deg,
-    double truth_heading_deg,
-    int command_code,
-    double inst_ground_track_deg
-);
-MissionNavProducts compute_waypoint_mission_nav(
-    const SpatialRouteQueryResult& route_result,
-    const MissionNavInputs& inputs
-);
-MissionObservationProducts compute_mission_observation(const MissionObservationInputs& inputs);
-StepInfoProducts compute_step_info_runtime(const StepInfoInputs& inputs);
+double compute_ground_track_error_deg(double target_heading_deg, double fallback_heading_deg,
+                                      double inst_ground_track_deg);
+double compute_command_tracking_error_deg(double target_heading_deg, double truth_heading_deg,
+                                          int command_code, double inst_ground_track_deg);
+MissionNavProducts compute_waypoint_mission_nav(const SpatialRouteQueryResult &route_result,
+                                                const MissionNavInputs &inputs);
+MissionObservationProducts compute_mission_observation(const MissionObservationInputs &inputs);
+StepInfoProducts compute_step_info_runtime(const StepInfoInputs &inputs);

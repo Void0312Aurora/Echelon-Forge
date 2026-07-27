@@ -26,7 +26,7 @@ struct ObservationViewSpec {
 };
 
 struct ObservationViewCompatibilityReport {
-#define EF_OBSERVATION_VIEW_COMPATIBILITY_REPORT_FIELD(type, name, default_value) \
+#define EF_OBSERVATION_VIEW_COMPATIBILITY_REPORT_FIELD(type, name, default_value)                  \
     type name = default_value;
 #include "runtime/contracts/detail/observation_view_compatibility_report.inc"
 };
@@ -37,7 +37,7 @@ struct ObservationSchemaVersionParts {
     int minor = 0;
 };
 
-inline ObservationSchemaVersionParts parse_observation_schema_version(const std::string& version) {
+inline ObservationSchemaVersionParts parse_observation_schema_version(const std::string &version) {
     ObservationSchemaVersionParts parts{};
     const std::size_t dot = version.find('.');
     if (dot == std::string::npos || dot == 0 || dot + 1 >= version.size()) {
@@ -63,40 +63,36 @@ inline ObservationSchemaVersionParts parse_observation_schema_version(const std:
     }
 }
 
-inline bool observation_view_has_field(
-    const std::vector<std::string>& fields,
-    const std::string& name
-) {
+inline bool observation_view_has_field(const std::vector<std::string> &fields,
+                                       const std::string &name) {
     return std::find(fields.begin(), fields.end(), name) != fields.end();
 }
 
-inline ObservationViewCompatibilityReport evaluate_observation_view_checkpoint_compatibility(
-    const ObservationViewSpec& checkpoint,
-    const ObservationViewSpec& provider
-) {
+inline ObservationViewCompatibilityReport
+evaluate_observation_view_checkpoint_compatibility(const ObservationViewSpec &checkpoint,
+                                                   const ObservationViewSpec &provider) {
     ObservationViewCompatibilityReport report{};
     const ObservationSchemaVersionParts checkpoint_version =
         parse_observation_schema_version(checkpoint.schema_version);
     const ObservationSchemaVersionParts provider_version =
         parse_observation_schema_version(provider.schema_version);
 
-    report.major_compatible = checkpoint_version.valid &&
-        provider_version.valid &&
-        checkpoint_version.major == provider_version.major;
+    report.major_compatible = checkpoint_version.valid && provider_version.valid &&
+                              checkpoint_version.major == provider_version.major;
 
-    for (const auto& field : checkpoint.required_fields) {
+    for (const auto &field : checkpoint.required_fields) {
         if (!observation_view_has_field(provider.required_fields, field)) {
             report.missing_required_fields.push_back(field);
         }
     }
     report.required_fields_satisfied = report.missing_required_fields.empty();
 
-    for (const auto& field : provider.optional_fields) {
+    for (const auto &field : provider.optional_fields) {
         if (!observation_view_has_field(checkpoint.optional_fields, field)) {
             report.unknown_optional_fields.push_back(field);
         }
     }
-    for (const auto& field : checkpoint.optional_fields) {
+    for (const auto &field : checkpoint.optional_fields) {
         if (!observation_view_has_field(provider.optional_fields, field) &&
             !observation_view_has_field(provider.required_fields, field)) {
             report.missing_optional_fields.push_back(field);
@@ -104,14 +100,12 @@ inline ObservationViewCompatibilityReport evaluate_observation_view_checkpoint_c
     }
 
     report.optional_field_drift_allowed =
-        checkpoint.allow_minor_version_drift &&
-        checkpoint.allow_unknown_optional_fields &&
+        checkpoint.allow_minor_version_drift && checkpoint.allow_unknown_optional_fields &&
         checkpoint.allow_missing_optional_fields &&
         (report.unknown_optional_fields.empty() || checkpoint.allow_unknown_optional_fields) &&
         (report.missing_optional_fields.empty() || checkpoint.allow_missing_optional_fields);
 
-    report.compatible = report.major_compatible &&
-        report.required_fields_satisfied &&
-        report.optional_field_drift_allowed;
+    report.compatible = report.major_compatible && report.required_fields_satisfied &&
+                        report.optional_field_drift_allowed;
     return report;
 }

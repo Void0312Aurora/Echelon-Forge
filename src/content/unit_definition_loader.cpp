@@ -341,9 +341,9 @@ void parse_missile_tuning_json_fields(const nlohmann::json &src,
     // src.value(key, current) "missing key preserves existing value" semantics,
     // vector keys keep the parse_vector clear-then-fill semantics, and the
     // declared field order is unchanged.
-#define EF_MISSILE_TUNING_FIELD(cpp_type, name, default_value) \
+#define EF_MISSILE_TUNING_FIELD(cpp_type, name, default_value)                                     \
     tuning.name = src.value(#name, tuning.name);
-#define EF_MISSILE_TUNING_VECTOR_FIELD(cpp_type, name, default_value) \
+#define EF_MISSILE_TUNING_VECTOR_FIELD(cpp_type, name, default_value)                              \
     parse_vector(#name, &tuning.name);
 #include "content/detail/missile_tuning_fields.inc"
 

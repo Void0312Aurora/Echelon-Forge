@@ -109,7 +109,7 @@ struct TypedPlatformSpawnRequest {
 };
 
 struct TypedPlatformSpawnValidationResult {
-#define EF_TYPED_PLATFORM_SPAWN_VALIDATION_RESULT_FIELD(type, name, default_value) \
+#define EF_TYPED_PLATFORM_SPAWN_VALIDATION_RESULT_FIELD(type, name, default_value)                 \
     type name = default_value;
 #include "runtime/contracts/detail/typed_platform_spawn_validation_result.inc"
 
@@ -450,7 +450,8 @@ struct WorldMissionCommandAssignment {
         kCompatibilityTransportShell,
         "WorldMissionCommandAssignment transports only the MissionCommand compatibility shell.");
 
-#define EF_WORLD_MISSION_COMMAND_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#define EF_WORLD_MISSION_COMMAND_ASSIGNMENT_FIELD(type, name, default_value)                       \
+    type name = default_value;
 #include "runtime/contracts/detail/world_mission_command_assignment.inc"
 };
 
@@ -468,7 +469,8 @@ struct MissionCommandMaintainedBatchContract {
     using ground_static_task_type = MissionCommandGround::StaticTaskDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-#define EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#define EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)              \
+    type name = default_value;
 #include "runtime/contracts/detail/mission_command_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "MissionCommandMaintainedBatchContract is the controlled "
@@ -540,33 +542,38 @@ struct WorldMissionCommandMaintainedAssignment {
                   "WorldMissionCommandMaintainedAssignment transports only the controlled "
                   "MissionCommand maintained batch contract.");
 
-#define EF_WORLD_MISSION_COMMAND_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#define EF_WORLD_MISSION_COMMAND_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)            \
+    type name = default_value;
 #include "runtime/contracts/detail/world_mission_command_maintained_assignment.inc"
 };
 
 struct TaskOrderAirTaskingIdentityDirective {
-#define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value)              \
+    type name = default_value;
 #include "runtime/contracts/detail/task_order_air_tasking_identity_directive.inc"
 
     bool operator==(const TaskOrderAirTaskingIdentityDirective &) const = default;
 };
 
 struct TaskOrderAirStationingDirective {
-#define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                    \
+    type name = default_value;
 #include "runtime/contracts/detail/task_order_air_stationing_directive.inc"
 
     bool operator==(const TaskOrderAirStationingDirective &) const = default;
 };
 
 struct TaskOrderAirFormationDirective {
-#define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value)                     \
+    type name = default_value;
 #include "runtime/contracts/detail/task_order_air_formation_directive.inc"
 
     bool operator==(const TaskOrderAirFormationDirective &) const = default;
 };
 
 struct TaskOrderNavalStationingDirective {
-#define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value) type name = default_value;
+#define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                  \
+    type name = default_value;
 #include "runtime/contracts/detail/task_order_naval_stationing_directive.inc"
 
     bool operator==(const TaskOrderNavalStationingDirective &) const = default;
@@ -743,7 +750,8 @@ struct TaskOrderMaintainedBatchContract {
     using ground_static_task_type = TaskOrderGround::StaticTaskDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-#define EF_TASK_ORDER_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#define EF_TASK_ORDER_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)                   \
+    type name = default_value;
 #include "runtime/contracts/detail/task_order_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "TaskOrderMaintainedBatchContract is the controlled "
@@ -797,7 +805,8 @@ struct WorldTaskOrderMaintainedAssignment {
     static_assert(kMaintainedBatchTruth, "WorldTaskOrderMaintainedAssignment transports only the "
                                          "controlled TaskOrder maintained batch contract.");
 
-#define EF_WORLD_TASK_ORDER_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#define EF_WORLD_TASK_ORDER_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)                 \
+    type name = default_value;
 #include "runtime/contracts/detail/world_task_order_maintained_assignment.inc"
 };
 
@@ -808,7 +817,8 @@ struct WorldLeaderIntentAssignment {
         kCompatibilityTransportShell,
         "WorldLeaderIntentAssignment transports only the LeaderIntent compatibility shell.");
 
-#define EF_WORLD_LEADER_INTENT_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#define EF_WORLD_LEADER_INTENT_ASSIGNMENT_FIELD(type, name, default_value)                         \
+    type name = default_value;
 #include "runtime/contracts/detail/world_leader_intent_assignment.inc"
 };
 
@@ -825,7 +835,8 @@ struct LeaderIntentMaintainedBatchContract {
     using ground_static_status_type = LeaderIntentGround::StaticStatusDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-#define EF_LEADER_INTENT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#define EF_LEADER_INTENT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)                \
+    type name = default_value;
 #include "runtime/contracts/detail/leader_intent_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "LeaderIntentMaintainedBatchContract is the controlled "
@@ -900,7 +911,8 @@ struct WorldLeaderIntentMaintainedAssignment {
     static_assert(kMaintainedBatchTruth, "WorldLeaderIntentMaintainedAssignment transports only "
                                          "the controlled LeaderIntent maintained batch contract.");
 
-#define EF_WORLD_LEADER_INTENT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#define EF_WORLD_LEADER_INTENT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)              \
+    type name = default_value;
 #include "runtime/contracts/detail/world_leader_intent_maintained_assignment.inc"
 };
 
@@ -926,7 +938,8 @@ struct PilotReportMaintainedBatchContract {
     using ground_static_status_type = PilotReportGround::StaticStatusDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
-#define EF_PILOT_REPORT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value) type name = default_value;
+#define EF_PILOT_REPORT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)                 \
+    type name = default_value;
 #include "runtime/contracts/detail/pilot_report_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "PilotReportMaintainedBatchContract is the controlled "
@@ -977,7 +990,8 @@ struct WorldPilotReportMaintainedAssignment {
     static_assert(kMaintainedBatchTruth, "WorldPilotReportMaintainedAssignment transports only the "
                                          "controlled PilotReport maintained batch contract.");
 
-#define EF_WORLD_PILOT_REPORT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
+#define EF_WORLD_PILOT_REPORT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)               \
+    type name = default_value;
 #include "runtime/contracts/detail/world_pilot_report_maintained_assignment.inc"
 };
 
@@ -1071,7 +1085,7 @@ world_pilot_report_maintained_batch_contract(
 }
 
 struct WorldExecutionEpisodeStepRequest {
-#define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value) \
+#define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value)                   \
     type name = default_value;
 #include "runtime/contracts/detail/world_execution_episode_step_request.inc"
 };

@@ -36,14 +36,13 @@ struct RuntimeFidelityAdmission {
 };
 
 struct RuntimeCounterfactualSnapshot {
-#define EF_RUNTIME_COUNTERFACTUAL_SNAPSHOT_FIELD(type, name, default_value) \
+#define EF_RUNTIME_COUNTERFACTUAL_SNAPSHOT_FIELD(type, name, default_value)                        \
     type name = default_value;
 #include "runtime/facade/detail/runtime_counterfactual_snapshot.inc"
 };
 
 struct RuntimeWorldlineComparison {
-#define EF_RUNTIME_WORLDLINE_COMPARISON_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_RUNTIME_WORLDLINE_COMPARISON_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime_worldline_comparison.inc"
 };
 
@@ -63,8 +62,7 @@ struct BatchWorldSetupResult {
 };
 
 struct RuntimeWorldLayoutRequest {
-#define EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime_world_layout_request.inc"
 };
 
@@ -74,31 +72,31 @@ struct RuntimeWorldLayoutResult {
 };
 
 struct RuntimeCounterfactualBranchRequest {
-#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_REQUEST_FIELD(type, name, default_value) \
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_REQUEST_FIELD(type, name, default_value)                  \
     type name = default_value;
 #include "runtime/facade/detail/runtime_counterfactual_branch_request.inc"
 };
 
 struct RuntimeCounterfactualRestoreRequest {
-#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_REQUEST_FIELD(type, name, default_value) \
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_REQUEST_FIELD(type, name, default_value)                 \
     type name = default_value;
 #include "runtime/facade/detail/runtime_counterfactual_restore_request.inc"
 };
 
 struct RuntimeCounterfactualRestoreResult {
-#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_RESULT_FIELD(type, name, default_value) \
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_RESULT_FIELD(type, name, default_value)                  \
     type name = default_value;
 #include "runtime/facade/detail/runtime_counterfactual_restore_result.inc"
 };
 
 struct RuntimeCounterfactualBranchResult {
-#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_RESULT_FIELD(type, name, default_value) \
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_RESULT_FIELD(type, name, default_value)                   \
     type name = default_value;
 #include "runtime/facade/detail/runtime_counterfactual_branch_result.inc"
 };
 
 struct RuntimeExperimentStepRequest {
-#define EF_RUNTIME_EXPERIMENT_STEP_REQUEST_FIELD(type, name, default_value) \
+#define EF_RUNTIME_EXPERIMENT_STEP_REQUEST_FIELD(type, name, default_value)                        \
     type name = default_value;
 #include "runtime/facade/detail/runtime_experiment_step_request.inc"
 };
@@ -119,19 +117,17 @@ struct TaskingBatchRequest {
 };
 
 struct EngagementBatchRequest {
-#define EF_ENGAGEMENT_BATCH_REQUEST_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_ENGAGEMENT_BATCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/engagement_batch_request.inc"
 };
 
 struct ExecutionBatchStepRequest {
-#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/execution_batch_step_request.inc"
 };
 
 struct DeviceResidentOutputDescriptor {
-#define EF_RESIDENT_DEVICE_OUTPUT_DESCRIPTOR_FIELD(type, name, default_value) \
+#define EF_RESIDENT_DEVICE_OUTPUT_DESCRIPTOR_FIELD(type, name, default_value)                      \
     type name = default_value;
 #include "runtime/facade/detail/resident_device_output_descriptor.inc"
 };
@@ -142,8 +138,7 @@ struct ObservationBatchPacket {
 };
 
 struct EngagementEventPacket {
-#define EF_ENGAGEMENT_EVENT_PACKET_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_ENGAGEMENT_EVENT_PACKET_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/engagement_event_packet.inc"
 };
 
@@ -182,8 +177,8 @@ struct RuntimeExperimentResult {
 
 struct RuntimeWindowActionRequest {
     struct CadenceControl {
-#define EF_RUNTIME_WINDOW_CADENCE_CONTROL_FIELD(type, name, default_value) \
-        type name = default_value;
+#define EF_RUNTIME_WINDOW_CADENCE_CONTROL_FIELD(type, name, default_value)                         \
+    type name = default_value;
 #include "runtime/facade/detail/runtime_window_cadence_control.inc"
     };
 
@@ -211,25 +206,24 @@ struct RuntimeWindowInputRecord {
 };
 
 struct RuntimeWindowSchedulingContext {
-#define EF_RUNTIME_WINDOW_SCHEDULING_CONTEXT_FIELD(type, name, default_value) \
+#define EF_RUNTIME_WINDOW_SCHEDULING_CONTEXT_FIELD(type, name, default_value)                      \
     type name = default_value;
 #include "runtime/facade/detail/runtime_window_scheduling_context.inc"
 };
 
 struct RuntimeWindowBarrierRecord {
-#define EF_RUNTIME_WINDOW_BARRIER_RECORD_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_RUNTIME_WINDOW_BARRIER_RECORD_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime_window_barrier_record.inc"
 };
 
 struct RuntimeWindowVisibilityRecord {
-#define EF_RUNTIME_WINDOW_VISIBILITY_RECORD_FIELD(type, name, default_value) \
+#define EF_RUNTIME_WINDOW_VISIBILITY_RECORD_FIELD(type, name, default_value)                       \
     type name = default_value;
 #include "runtime/facade/detail/runtime_window_visibility_record.inc"
 };
 
 struct RuntimeWindowNodeExecutionRecord {
-#define EF_RUNTIME_WINDOW_NODE_EXECUTION_RECORD_FIELD(type, name, default_value) \
+#define EF_RUNTIME_WINDOW_NODE_EXECUTION_RECORD_FIELD(type, name, default_value)                   \
     type name = default_value;
 #include "runtime/facade/detail/runtime_window_node_execution_record.inc"
 };
@@ -240,13 +234,12 @@ struct RuntimeWindowCadence {
 };
 
 struct RuntimeWindowCadenceConfig {
-#define EF_RUNTIME_WINDOW_CADENCE_CONFIG_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_RUNTIME_WINDOW_CADENCE_CONFIG_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime_window_cadence_config.inc"
 };
 
 struct RuntimeWindowCadenceTraceRecord {
-#define EF_RUNTIME_WINDOW_CADENCE_TRACE_RECORD_FIELD(type, name, default_value) \
+#define EF_RUNTIME_WINDOW_CADENCE_TRACE_RECORD_FIELD(type, name, default_value)                    \
     type name = default_value;
 #include "runtime/facade/detail/runtime_window_cadence_trace_record.inc"
 };

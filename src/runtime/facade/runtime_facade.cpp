@@ -23,8 +23,8 @@ RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config)
 // cursors at kInvalidatedEvidenceCursor so the producer methods fail fast.
 // The tripwire below fires if the member set changes without this file
 // being revisited.
-static_assert(sizeof(RuntimeFacade) == 2 * sizeof(std::unique_ptr<WorldBatchRuntime>) +
-                                           2 * sizeof(std::uint64_t),
+static_assert(sizeof(RuntimeFacade) ==
+                  2 * sizeof(std::unique_ptr<WorldBatchRuntime>) + 2 * sizeof(std::uint64_t),
               "RuntimeFacade member set changed: update the user-defined move constructor and "
               "move assignment in runtime_facade.cpp to transfer every member");
 

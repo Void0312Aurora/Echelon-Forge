@@ -214,9 +214,8 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.cd0_power_on_ratio) || std::isfinite(tuning.min_launch_range_m) ||
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
            tuning.midcourse_datalink_supported || tuning.use_kalman_seeker ||
-           tuning.explicit_overrides != 0 ||
-           std::isfinite(tuning.apn_target_accel_gain) || tuning.has_warhead_profile ||
-           tuning.has_fuze_profile;
+           tuning.explicit_overrides != 0 || std::isfinite(tuning.apn_target_accel_gain) ||
+           tuning.has_warhead_profile || tuning.has_fuze_profile;
 }
 
 std::string naval_weapon_type_name(NavalWeaponType weapon_type) {

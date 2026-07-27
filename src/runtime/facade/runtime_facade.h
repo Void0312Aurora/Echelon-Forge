@@ -174,9 +174,9 @@ class RuntimeFacade {
     // value the next allocate_* would return without advancing. All four
     // throw std::logic_error once the counter is invalidated -- by move or
     // by exhaustion (see the two paragraphs above).
-    std::uint64_t allocate_run_snapshot_version();               // VA-2
+    std::uint64_t allocate_run_snapshot_version(); // VA-2
     std::uint64_t peek_next_run_snapshot_version() const;
-    std::uint64_t allocate_trace_id();                           // VA-8
+    std::uint64_t allocate_trace_id(); // VA-8
     std::uint64_t peek_next_trace_id() const;
 
     // --- T10 evidence spine, slice 5: maintained-run replay-envelope producer

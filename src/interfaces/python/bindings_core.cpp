@@ -422,13 +422,10 @@ void bind_core(nb::module_ &m) {
         .def_prop_rw(
             "lobl_required", [](const MissileTuning &self) { return self.lobl_required; },
             [](MissileTuning &self, bool value) { self.set_lobl_required_override(value); })
-        .def_prop_rw("midcourse_datalink_supported",
-                     [](const MissileTuning &self) {
-                         return self.midcourse_datalink_supported;
-                     },
-                     [](MissileTuning &self, bool value) {
-                         self.set_midcourse_datalink_override(value);
-                     })
+        .def_prop_rw(
+            "midcourse_datalink_supported",
+            [](const MissileTuning &self) { return self.midcourse_datalink_supported; },
+            [](MissileTuning &self, bool value) { self.set_midcourse_datalink_override(value); })
         .def_prop_rw(
             "use_kalman_seeker", [](const MissileTuning &self) { return self.use_kalman_seeker; },
             [](MissileTuning &self, bool value) { self.set_kalman_seeker_override(value); })
@@ -573,7 +570,7 @@ void bind_core(nb::module_ &m) {
 
     nb::class_<RecentEngagementEvents> recent_engagement_events_class(m, "RecentEngagementEvents");
     recent_engagement_events_class.def(nb::init<>());
-#define EF_RECENT_ENGAGEMENT_EVENTS_FIELD(type, name, default_value) \
+#define EF_RECENT_ENGAGEMENT_EVENTS_FIELD(type, name, default_value)                               \
     recent_engagement_events_class.def_rw(#name, &RecentEngagementEvents::name);
 #include "core/engine/detail/recent_engagement_events.inc"
 

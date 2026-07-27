@@ -29,12 +29,13 @@ TEST_SUITE("content_compile_passes") {
         CHECK(content_compile::is_recognized_top_level_key("type"));
         CHECK(content_compile::is_recognized_top_level_key("guidance"));
         CHECK(content_compile::is_recognized_top_level_key("max_flight_time_s"));
-        CHECK(content_compile::is_recognized_top_level_key("fuse"));            // dual spelling
+        CHECK(content_compile::is_recognized_top_level_key("fuse")); // dual spelling
         CHECK(content_compile::is_recognized_top_level_key("countermeasures"));
-        CHECK(content_compile::is_recognized_top_level_key("ew_suite_ref"));    // present-but-unread
-        CHECK(content_compile::is_recognized_top_level_key("rcs_profile_ref")); // present-but-unread
-        CHECK(content_compile::is_recognized_top_level_key("rcs"));             // present-but-unread
-        CHECK(content_compile::is_recognized_top_level_key("_provenance"));     // underscore rule
+        CHECK(content_compile::is_recognized_top_level_key("ew_suite_ref")); // present-but-unread
+        CHECK(
+            content_compile::is_recognized_top_level_key("rcs_profile_ref")); // present-but-unread
+        CHECK(content_compile::is_recognized_top_level_key("rcs"));           // present-but-unread
+        CHECK(content_compile::is_recognized_top_level_key("_provenance"));   // underscore rule
         CHECK(content_compile::is_recognized_top_level_key("_real_world"));
         CHECK_FALSE(content_compile::is_recognized_top_level_key("totally_unknown_key"));
         CHECK_FALSE(content_compile::is_recognized_top_level_key("engine_reff"));
@@ -318,7 +319,8 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
-    TEST_CASE("missile tuning parse: three-source override order, seed, and missing-key default (I58)") {
+    TEST_CASE(
+        "missile tuning parse: three-source override order, seed, and missing-key default (I58)") {
         // Parity for the call-side entry -> missile_tuning -> guidance merge: the
         // same helper runs on each source in order, so the last writer wins.
         // reference_area_m2 / boost_time_s are pure helper reads (not guidance
