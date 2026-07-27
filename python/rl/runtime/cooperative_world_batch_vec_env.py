@@ -50,6 +50,7 @@ from python.rl.support.sb3_vec_env_compat import (
     obs_space_info,
 )
 from python.rl.runtime.world_batch import (
+    WorldBatchCore,
     build_loader_step_info,
     compute_loader_step_outcome,
     CooperativeSlotState,
@@ -294,8 +295,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             include_agent_observations=True,
             include_instrument_states=True,
         )
-        truth_list = list(getattr(packet, "agent_observations", []) or [])
-        inst_list = list(getattr(packet, "instrument_states", []) or [])
+        truth_list, inst_list = WorldBatchCore.extract_observation_batch(
+            packet,
+            consumer="cooperative slot state readers",
+            require_payload=False,
+        )
         return target_slot_indices, truth_list, inst_list
 
     def seed(self, seed: int | None = None) -> list[int]:
@@ -763,8 +767,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state = self._slots[slot_index]
             if slot_state is None:
                 continue
-            slot_state.last_truth = truth_list[local_slot_index] if local_slot_index < len(truth_list) else None
-            slot_state.last_inst = inst_list[local_slot_index] if local_slot_index < len(inst_list) else None
+            WorldBatchCore.record_observation_state(
+                slot_state,
+                truth=(truth_list[local_slot_index] if local_slot_index < len(truth_list) else None),
+                inst=(inst_list[local_slot_index] if local_slot_index < len(inst_list) else None),
+            )
         if world.director is not None:
             world.director.reset(world, self._world_slot_states(world))
 
@@ -955,8 +962,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state = self._slots[slot_index]
             if slot_state is None:
                 continue
-            slot_state.last_truth = truth_list[local_slot_index] if local_slot_index < len(truth_list) else None
-            slot_state.last_inst = inst_list[local_slot_index] if local_slot_index < len(inst_list) else None
+            WorldBatchCore.record_observation_state(
+                slot_state,
+                truth=(truth_list[local_slot_index] if local_slot_index < len(truth_list) else None),
+                inst=(inst_list[local_slot_index] if local_slot_index < len(inst_list) else None),
+            )
         if self.collect_step_timing:
             state_read_ms = (time.perf_counter() - read_t0) * 1000.0
         for world in self._worlds:

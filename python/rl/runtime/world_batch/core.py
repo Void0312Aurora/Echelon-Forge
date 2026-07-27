@@ -26,6 +26,145 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Callable, ClassVar, Mapping
 
+from python.tasking_contracts.runtime_contract import ScenarioLoaderRuntime
+
+
+class WorldBatchCore:
+    """Measured slice-1 owners shared by the maintained batch modes.
+
+    The first extraction is deliberately data-plane only.  A maintained
+    facade observation packet is decoded once here, the evidence metadata
+    projection is shared by the single/leader runtime wrappers, and the
+    per-loader truth/instrument fields are recorded as a mirror of that
+    packet.  Mode-specific episode ownership stays with the existing callers
+    and their already-registered ``ExecutionModePlugin`` hooks (in
+    particular, the I82 controller/mainline boundary is not changed here).
+
+    ``ScenarioLoaderRuntime`` is the I73 structural seam at the loader's
+    ``sim`` handle.  ``loader_runtime`` names that boundary without adding a
+    new runtime method or bypassing the facade observation-packet path.
+    """
+
+    @staticmethod
+    def loader_runtime(loader: Any) -> ScenarioLoaderRuntime:
+        """Return the typed ``ScenarioLoader.sim`` seam unchanged.
+
+        The maintained proxy is the sole production provider.  Keeping this
+        helper as a plain attribute read preserves the old ``AttributeError``
+        behavior for malformed test doubles while giving the slice a concrete
+        I73-owned return type.
+        """
+
+        runtime: ScenarioLoaderRuntime = getattr(loader, "sim")
+        return runtime
+
+    @staticmethod
+    def extract_observation_batch(
+        packet: Any,
+        *,
+        consumer: str,
+        require_payload: bool = True,
+        missing_message: str | None = None,
+    ) -> tuple[list[Any], list[Any]]:
+        """Extract agent-observation and instrument arrays from one packet.
+
+        The facade packet remains the only maintained observation read owner.
+        ``require_payload=False`` is reserved for the cooperative reset/read
+        compatibility path, whose existing behavior permits an empty packet
+        and lets its slot-level caller decide what to do.
+        """
+
+        truth_items = list(getattr(packet, "agent_observations", []) or [])
+        instrument_items = list(getattr(packet, "instrument_states", []) or [])
+        if require_payload and (not truth_items or not instrument_items):
+            raise RuntimeError(
+                missing_message
+                or (
+                    f"{consumer} did not return the maintained observation "
+                    "packet payload required by its consumers"
+                )
+            )
+        return truth_items, instrument_items
+
+    @staticmethod
+    def extract_observation_pair(
+        packet: Any,
+        *,
+        consumer: str,
+        missing_message: str | None = None,
+    ) -> tuple[Any, Any]:
+        """Extract the first truth/instrument pair with fail-closed payload."""
+
+        truth_items, instrument_items = WorldBatchCore.extract_observation_batch(
+            packet,
+            consumer=consumer,
+            missing_message=missing_message,
+        )
+        return truth_items[0], instrument_items[0]
+
+    @staticmethod
+    def record_observation_state(handle: Any, *, truth: Any, inst: Any) -> None:
+        """Record the latest packet values on an environment mirror.
+
+        ``handle`` may be a single-world handle, leader handle, or cooperative
+        slot state.  Counter advancement and episode/reward ownership remain
+        in each caller because those semantics differ between the three modes.
+        """
+
+        handle.last_truth = truth
+        handle.last_inst = inst
+
+    @staticmethod
+    def runtime_window_evidence_info(window_evidence: Any) -> dict[str, Any]:
+        """Project maintained window evidence into the existing info shape.
+
+        This is the exact common projection previously duplicated by the
+        single-world and leader wrappers.  Missing optional packet members keep
+        their historical empty/default values.
+        """
+
+        engagement_barrier_id = ""
+        if window_evidence.engagement_packet is not None:
+            engagement_barrier_id = str(
+                getattr(window_evidence.engagement_packet, "barrier_id", "") or ""
+            )
+        return {
+            "barrier_ids": [
+                str(getattr(record, "barrier_id", "") or "")
+                for record in list(window_evidence.barrier_trace)
+            ],
+            "event_barrier_id": engagement_barrier_id,
+            "observation_barrier_id": str(
+                getattr(window_evidence.observation_packet, "barrier_id", "") or ""
+            ),
+            "observation_provenance": str(
+                getattr(
+                    getattr(window_evidence.observation_packet, "provenance", None),
+                    "source_label",
+                    "",
+                )
+                or ""
+            ),
+            "engagement_provenance": str(
+                getattr(
+                    getattr(window_evidence.engagement_packet, "packet_provenance", None),
+                    "source_label",
+                    "",
+                )
+                or ""
+            ),
+            "diagnostics_provenance": str(
+                getattr(
+                    getattr(window_evidence.engagement_packet, "diagnostics_provenance", None),
+                    "source_label",
+                    "",
+                )
+                or ""
+            ),
+            "cadence_reason": str(window_evidence.cadence_reason),
+            "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
+        }
+
 
 @dataclass(frozen=True)
 class SubStage:
@@ -600,6 +739,7 @@ __all__ = [
     "StageContract",
     "StandardExecutionPlugin",
     "SubStage",
+    "WorldBatchCore",
     "register_execution_mode",
     "registered_execution_modes",
     "resolve_execution_mode",
