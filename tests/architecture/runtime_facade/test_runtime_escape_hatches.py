@@ -254,6 +254,7 @@ def test_wp22_loader_owned_runtime_paths_do_not_reintroduce_scattered_raw_sim_se
 def test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized() -> None:
   text = (REPO_ROOT / "gym_envs" / "scenario_loader" / "behavior_runtime" / "naval_screen.py").read_text(encoding="utf-8")
   bridge_text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  canonical_bridge_text = TASKING_BRIDGE_CANONICAL.read_text(encoding="utf-8")
 
   assert "def _read_naval_screen_reference_motion(" in text
   assert "def _prefer_last_active_naval_screen_reference(" in text
@@ -262,55 +263,94 @@ def test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized() -> No
   assert "loader.sim.get_unit_position(" not in text
   assert "loader.sim.get_unit_velocity(" not in text
   assert "loader.sim.is_unit_active(" not in text
-  assert "class LoaderOwnedRuntimeView:" in bridge_text
-  assert "class LoaderOwnedRawSimCompatibilityFacade:" not in bridge_text
-  assert "def get_unit_position(self, entity_id: int) -> Any:" in bridge_text
-  assert "def get_unit_velocity(self, entity_id: int) -> Any:" in bridge_text
-  assert "def is_unit_active(self, entity_id: int) -> bool:" in bridge_text
+  for canonical_definition in (
+    "class LoaderOwnedRuntimeView:",
+    "def get_unit_position(self, entity_id: int) -> Any:",
+    "def get_unit_velocity(self, entity_id: int) -> Any:",
+    "def is_unit_active(self, entity_id: int) -> bool:",
+  ):
+    assert canonical_definition in canonical_bridge_text
+    assert canonical_definition not in bridge_text
+  for retired_marker in (
+    "class LoaderOwnedRawSimCompatibilityFacade:",
+    "def loader_owned_raw_sim_compat(",
+  ):
+    assert retired_marker not in canonical_bridge_text
+    assert retired_marker not in bridge_text
 
 def test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers() -> None:
   text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  canonical_bridge_text = TASKING_BRIDGE_CANONICAL.read_text(encoding="utf-8")
 
-  assert "class LoaderOwnedRuntimeView:" in text
-  assert "def loader_owned_runtime_view(loader: Any) -> LoaderOwnedRuntimeView:" in text
-  assert "def sync_loader_mission_command(loader: Any, cmd: Any) -> None:" in text
-  assert "def sync_loader_command_chain_reentrant(loader: Any) -> None:" in text
-  assert "def sync_task_order(self, agent_id: Any, task_order: Any) -> None:" in text
-  assert "def sync_leader_intent(self, agent_id: Any, leader_intent: Any) -> None:" in text
-  assert "def sync_pilot_report(self, agent_id: Any, pilot_report: Any) -> None:" in text
-  assert "def sync_mission_command(self, agent_id: Any, cmd: Any) -> None:" in text
-  assert "loader_owned_raw_sim_compat" not in text
-  assert "sync_loader_command_chain_compat" not in text
-  assert "read_loader_truth_compat" not in text
-  assert "read_loader_instrument_compat" not in text
-  assert "loader.sim.set_mission_command(" not in text
-  assert "loader.sim.set_task_order(" not in text
-  assert "loader.sim.set_leader_intent(" not in text
-  assert "loader.sim.set_pilot_report(" not in text
+  for canonical_definition in (
+    "class LoaderOwnedRuntimeView:",
+    "def loader_owned_runtime_view(loader: Any) -> LoaderOwnedRuntimeView:",
+    "def sync_loader_mission_command(loader: Any, cmd: Any) -> None:",
+    "def sync_loader_command_chain_reentrant(loader: Any) -> None:",
+    "def sync_task_order(self, agent_id: Any, task_order: Any) -> None:",
+    "def sync_leader_intent(self, agent_id: Any, leader_intent: Any) -> None:",
+    "def sync_pilot_report(self, agent_id: Any, pilot_report: Any) -> None:",
+    "def sync_mission_command(self, agent_id: Any, cmd: Any) -> None:",
+  ):
+    assert canonical_definition in canonical_bridge_text
+    assert canonical_definition not in text
+  for retired_marker in (
+    "LoaderOwnedRawSimCompatibilityFacade",
+    "loader_owned_raw_sim_compat",
+    "sync_loader_command_chain_compat",
+    "read_loader_truth_compat",
+    "read_loader_instrument_compat",
+    "loader.sim.set_mission_command(",
+    "loader.sim.set_task_order(",
+    "loader.sim.set_leader_intent(",
+    "loader.sim.set_pilot_report(",
+  ):
+    assert retired_marker not in canonical_bridge_text
+    assert retired_marker not in text
 
 def test_wp22_scripted_opponent_kernel_access_stays_named_and_localized() -> None:
   text = (REPO_ROOT / "gym_envs" / "scenario_loader" / "behavior_runtime" / "scripted_opponents.py").read_text(
     encoding="utf-8"
   )
   bridge_text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  canonical_bridge_text = TASKING_BRIDGE_CANONICAL.read_text(encoding="utf-8")
 
   assert "loader_owned_scripted_opponent_kernel_view(loader)" in text
   assert "loader_owned_scripted_opponent_kernel_compat" not in text
   assert "loader.sim," not in text
-  assert "class LoaderOwnedScriptedOpponentKernelView:" in bridge_text
-  assert "def loader_owned_scripted_opponent_kernel_view(loader: Any) -> LoaderOwnedScriptedOpponentKernelView:" in bridge_text
-  assert "class LoaderOwnedScriptedOpponentKernelCompat:" not in bridge_text
-  assert "def loader_owned_scripted_opponent_kernel_compat(" not in bridge_text
+  for canonical_definition in (
+    "class LoaderOwnedScriptedOpponentKernelView:",
+    "def loader_owned_scripted_opponent_kernel_view(loader: Any) -> LoaderOwnedScriptedOpponentKernelView:",
+  ):
+    assert canonical_definition in canonical_bridge_text
+    assert canonical_definition not in bridge_text
+  for retired_marker in (
+    "class LoaderOwnedScriptedOpponentKernelCompat:",
+    "def loader_owned_scripted_opponent_kernel_compat(",
+  ):
+    assert retired_marker not in canonical_bridge_text
+    assert retired_marker not in bridge_text
 
 def test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized() -> None:
   text = (REPO_ROOT / "gym_envs" / "scenario_loader" / "loading.py").read_text(encoding="utf-8")
   bridge_text = TASKING_BRIDGE.read_text(encoding="utf-8")
+  canonical_bridge_text = TASKING_BRIDGE_CANONICAL.read_text(encoding="utf-8")
 
   assert "apply_loader_owned_world_layout_to_kernel(loader, world_layout)" in text
   assert "apply_world_layout_to_kernel(loader.sim, world_layout)" not in text
   assert "loader.sim," not in text
-  assert "def apply_loader_owned_world_layout_to_kernel(loader: Any, layout: Any) -> Any:" in bridge_text
-  assert "loader-owned world-layout kernel-apply seam" in bridge_text
+  for canonical_definition in (
+    "def apply_loader_owned_world_layout_to_kernel(loader: Any, layout: Any) -> Any:",
+    "loader-owned world-layout kernel-apply seam",
+  ):
+    assert canonical_definition in canonical_bridge_text
+    assert canonical_definition not in bridge_text
+  for retired_marker in (
+    "apply_world_layout_to_kernel(loader.sim",
+    "loader.sim,",
+  ):
+    assert retired_marker not in canonical_bridge_text
+    assert retired_marker not in bridge_text
 
 def test_wp22_runtime_state_execution_episode_export_drops_empty_raw_loader_guard() -> None:
   text = (REPO_ROOT / "gym_envs" / "scenario_loader" / "runtime_state.py").read_text(encoding="utf-8")

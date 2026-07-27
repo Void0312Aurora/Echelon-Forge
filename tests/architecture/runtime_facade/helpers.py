@@ -37,6 +37,7 @@ WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / 
 WORLD_BATCH_RUNTIME_ACCESS = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "runtime_access.py"
 LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
 TASKING_BRIDGE = REPO_ROOT / "python" / "rl" / "tasking" / "bridge.py"
+TASKING_BRIDGE_CANONICAL = REPO_ROOT / "python" / "tasking_contracts" / "bridge_views.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
 RUNTIME_FACADE_SOURCE_FILES = (
