@@ -13,8 +13,7 @@ size_t hardware_thread_count() noexcept {
     return hc == 0U ? 1U : static_cast<size_t>(hc);
 }
 
-template <typename Fn>
-void parallel_for_index(size_t task_count, Fn&& fn) {
+template <typename Fn> void parallel_for_index(size_t task_count, Fn &&fn) {
     if (task_count == 0) {
         return;
     }
@@ -62,7 +61,7 @@ void parallel_for_index(size_t task_count, Fn&& fn) {
         begin = end;
     }
     run_range(begin, task_count);
-    for (auto& worker : workers) {
+    for (auto &worker : workers) {
         worker.join();
     }
     if (first_exception != nullptr) {
@@ -71,7 +70,7 @@ void parallel_for_index(size_t task_count, Fn&& fn) {
 }
 
 template <typename Products, typename Inputs>
-Products compute_common_execution_runtime(const Inputs& inputs) {
+Products compute_common_execution_runtime(const Inputs &inputs) {
     Products out{};
     out.valid = true;
 
@@ -99,18 +98,16 @@ Products compute_common_execution_runtime(const Inputs& inputs) {
 }
 
 template <typename Inputs, typename Products>
-std::vector<Products> compute_runtime_batch(
-    const std::vector<Inputs>& inputs_batch,
-    Products (*compute_one)(const Inputs&)
-) {
+std::vector<Products> compute_runtime_batch(const std::vector<Inputs> &inputs_batch,
+                                            Products (*compute_one)(const Inputs &)) {
     std::vector<Products> out(inputs_batch.size());
-    parallel_for_index(inputs_batch.size(), [&](size_t i) {
-        out[i] = compute_one(inputs_batch[i]);
-    });
+    parallel_for_index(inputs_batch.size(),
+                       [&](size_t i) { out[i] = compute_one(inputs_batch[i]); });
     return out;
 }
 
-double sum_flight_shaping_terms(const FlightShapingRuntimeProducts& products, bool include_roll_stability) {
+double sum_flight_shaping_terms(const FlightShapingRuntimeProducts &products,
+                                bool include_roll_stability) {
     double total = 0.0;
     total += products.altitude_progress;
     total += products.low_alt_descent_penalty;
@@ -147,11 +144,9 @@ double sum_flight_shaping_terms(const FlightShapingRuntimeProducts& products, bo
     return total;
 }
 
-void apply_default_waypoint_status(
-    const ExecutionStepRuntimeInputs& inputs,
-    const ExecutionStepRuntimeProducts& step_products,
-    ExecutionEpisodeRuntimeProducts* out
-) {
+void apply_default_waypoint_status(const ExecutionStepRuntimeInputs &inputs,
+                                   const ExecutionStepRuntimeProducts &step_products,
+                                   ExecutionEpisodeRuntimeProducts *out) {
     if (out == nullptr || !inputs.has_waypoint) {
         return;
     }
@@ -163,19 +158,20 @@ void apply_default_waypoint_status(
     out->status2 = static_cast<double>(inputs.waypoint.waypoint_count);
 }
 
-}  // namespace
+} // namespace
 
-ExecutionFrameRuntimeProducts compute_execution_frame_runtime(const ExecutionFrameRuntimeInputs& inputs) {
+ExecutionFrameRuntimeProducts
+compute_execution_frame_runtime(const ExecutionFrameRuntimeInputs &inputs) {
     return compute_common_execution_runtime<ExecutionFrameRuntimeProducts>(inputs);
 }
 
 std::vector<ExecutionFrameRuntimeProducts> compute_execution_frame_runtime_batch(
-    const std::vector<ExecutionFrameRuntimeInputs>& inputs_batch
-) {
+    const std::vector<ExecutionFrameRuntimeInputs> &inputs_batch) {
     return compute_runtime_batch(inputs_batch, &compute_execution_frame_runtime);
 }
 
-ExecutionEpisodeRuntimeProducts compute_execution_episode_runtime(const ExecutionEpisodeRuntimeInputs& inputs) {
+ExecutionEpisodeRuntimeProducts
+compute_execution_episode_runtime(const ExecutionEpisodeRuntimeInputs &inputs) {
     auto out = compute_common_execution_runtime<ExecutionEpisodeRuntimeProducts>(inputs);
 
     if (!out.execution_step_evaluated && !out.flight_shaping_evaluated) {
@@ -195,20 +191,18 @@ ExecutionEpisodeRuntimeProducts compute_execution_episode_runtime(const Executio
         out.final_reason_code = out.execution_step.final_reason_code;
         apply_default_waypoint_status(inputs.execution_step, out.execution_step, &out);
         if (out.flight_shaping_evaluated && out.execution_step.safety.crash_penalty == 0.0) {
-            out.compiled_reward_total += sum_flight_shaping_terms(
-                out.flight_shaping,
-                inputs.include_roll_stability
-            );
+            out.compiled_reward_total +=
+                sum_flight_shaping_terms(out.flight_shaping, inputs.include_roll_stability);
         }
         return out;
     }
 
-    out.compiled_reward_total = sum_flight_shaping_terms(out.flight_shaping, inputs.include_roll_stability);
+    out.compiled_reward_total =
+        sum_flight_shaping_terms(out.flight_shaping, inputs.include_roll_stability);
     return out;
 }
 
 std::vector<ExecutionEpisodeRuntimeProducts> compute_execution_episode_runtime_batch(
-    const std::vector<ExecutionEpisodeRuntimeInputs>& inputs_batch
-) {
+    const std::vector<ExecutionEpisodeRuntimeInputs> &inputs_batch) {
     return compute_runtime_batch(inputs_batch, &compute_execution_episode_runtime);
 }

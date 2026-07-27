@@ -261,11 +261,9 @@ void bind_runtime(nb::module_ &m) {
 
     // The def_rw list is owned by the X-macro field list; exposed property
     // names and their order stay identical to the EffectsEvent declaration.
-    nb::class_<EffectsEvent>(m, "EffectsEvent")
-        .def(nb::init<>())
+    nb::class_<EffectsEvent>(m, "EffectsEvent").def(nb::init<>())
 #define EF_EFFECTS_EVENT_FIELD(type, name, default_value) .def_rw(#name, &EffectsEvent::name)
-#define EF_EFFECTS_EVENT_RESULT_FIELD(type, name, default_value)                                   \
-    .def_rw(#name, &EffectsEvent::name)
+#define EF_EFFECTS_EVENT_RESULT_FIELD(type, name, default_value) .def_rw(#name, &EffectsEvent::name)
 #include "runtime/contracts/detail/effects_event_fields.inc"
 #undef EF_EFFECTS_EVENT_RESULT_FIELD
 #undef EF_EFFECTS_EVENT_FIELD

@@ -14,7 +14,7 @@
 #include "core/mission/runtime/reward_runtime.h"
 #include "core/mission/runtime/termination_runtime.h"
 
-void bind_episode(nb::module_& m) {
+void bind_episode(nb::module_ &m) {
     nb::class_<SpatialRunwayDefinition>(m, "SpatialRunwayDefinition")
         .def(nb::init<>())
         .def_rw("runway_id", &SpatialRunwayDefinition::runway_id)
@@ -70,11 +70,14 @@ void bind_episode(nb::module_& m) {
         .def_rw("own_speed_mps", &SpatialRouteQueryOptions::own_speed_mps)
         .def_rw("base_lookahead_m", &SpatialRouteQueryOptions::base_lookahead_m)
         .def_rw("lnav_max_intercept_deg", &SpatialRouteQueryOptions::lnav_max_intercept_deg)
-        .def_rw("lnav_capture_max_intercept_deg", &SpatialRouteQueryOptions::lnav_capture_max_intercept_deg)
+        .def_rw("lnav_capture_max_intercept_deg",
+                &SpatialRouteQueryOptions::lnav_capture_max_intercept_deg)
         .def_rw("lnav_capture_xtrack_m", &SpatialRouteQueryOptions::lnav_capture_xtrack_m)
-        .def_rw("lnav_capture_course_error_deg", &SpatialRouteQueryOptions::lnav_capture_course_error_deg)
+        .def_rw("lnav_capture_course_error_deg",
+                &SpatialRouteQueryOptions::lnav_capture_course_error_deg)
         .def_rw("lnav_direct_to_final_fix", &SpatialRouteQueryOptions::lnav_direct_to_final_fix)
-        .def_rw("lnav_flyover_capture_window_m", &SpatialRouteQueryOptions::lnav_flyover_capture_window_m)
+        .def_rw("lnav_flyover_capture_window_m",
+                &SpatialRouteQueryOptions::lnav_flyover_capture_window_m)
         .def_rw("lnav_bank_limit_deg", &SpatialRouteQueryOptions::lnav_bank_limit_deg)
         .def_rw("lnav_sequence_gate_scale", &SpatialRouteQueryOptions::lnav_sequence_gate_scale)
         .def_rw("lnav_sequence_gate_min_m", &SpatialRouteQueryOptions::lnav_sequence_gate_min_m)
@@ -124,25 +127,28 @@ void bind_episode(nb::module_& m) {
         .def("clear_runways", &CompiledScenarioGeometry::clear_runways)
         .def("add_runway", &CompiledScenarioGeometry::add_runway, nb::arg("runway"))
         .def("clear_route", &CompiledScenarioGeometry::clear_route)
-        .def("set_route_leg_origin", &CompiledScenarioGeometry::set_route_leg_origin, nb::arg("x_m"), nb::arg("y_m"))
-        .def("add_route_waypoint", &CompiledScenarioGeometry::add_route_waypoint, nb::arg("waypoint"))
+        .def("set_route_leg_origin", &CompiledScenarioGeometry::set_route_leg_origin,
+             nb::arg("x_m"), nb::arg("y_m"))
+        .def("add_route_waypoint", &CompiledScenarioGeometry::add_route_waypoint,
+             nb::arg("waypoint"))
         .def("runway_count", &CompiledScenarioGeometry::runway_count)
         .def("route_waypoint_count", &CompiledScenarioGeometry::route_waypoint_count)
-        .def("query_runway_local_frame", &CompiledScenarioGeometry::query_runway_local_frame, nb::arg("x_m"), nb::arg("y_m"))
-        .def("query_ils", &CompiledScenarioGeometry::query_ils, nb::arg("x_m"), nb::arg("y_m"), nb::arg("alt_m"), nb::arg("threshold_crossing_height_m") = 0.0)
-        .def("query_route_guidance", &CompiledScenarioGeometry::query_route_guidance, nb::arg("options"));
+        .def("query_runway_local_frame", &CompiledScenarioGeometry::query_runway_local_frame,
+             nb::arg("x_m"), nb::arg("y_m"))
+        .def("query_ils", &CompiledScenarioGeometry::query_ils, nb::arg("x_m"), nb::arg("y_m"),
+             nb::arg("alt_m"), nb::arg("threshold_crossing_height_m") = 0.0)
+        .def("query_route_guidance", &CompiledScenarioGeometry::query_route_guidance,
+             nb::arg("options"));
 
     nb::class_<MissionNavInputs> nav_inputs_class(m, "MissionNavInputs");
-    nav_inputs_class
-        .def(nb::init<>());
-#define EF_NAV_INPUT(type, name, default_value) \
+    nav_inputs_class.def(nb::init<>());
+#define EF_NAV_INPUT(type, name, default_value)                                                    \
     nav_inputs_class.def_rw(#name, &MissionNavInputs::name);
 #include "core/mission/runtime/detail/mission_nav_inputs.inc"
 
     nb::class_<MissionNavProducts> nav_products_class(m, "MissionNavProducts");
-    nav_products_class
-        .def(nb::init<>());
-#define EF_NAV_PRODUCT(type, name, default_value) \
+    nav_products_class.def(nb::init<>());
+#define EF_NAV_PRODUCT(type, name, default_value)                                                  \
     nav_products_class.def_ro(#name, &MissionNavProducts::name);
 #include "core/mission/runtime/detail/mission_nav_products.inc"
 
@@ -163,7 +169,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("self_role_code", &MissionObservationInputs::self_role_code)
         .def_rw("self_formation_role_code", &MissionObservationInputs::self_formation_role_code)
         .def_rw("relative_slot_code", &MissionObservationInputs::relative_slot_code)
-        .def_rw("reference_relative_slot_code", &MissionObservationInputs::reference_relative_slot_code)
+        .def_rw("reference_relative_slot_code",
+                &MissionObservationInputs::reference_relative_slot_code)
         .def_rw("has_route_guidance", &MissionObservationInputs::has_route_guidance)
         .def_rw("route_guidance", &MissionObservationInputs::route_guidance)
         .def_rw("nav_inputs", &MissionObservationInputs::nav_inputs);
@@ -190,53 +197,54 @@ void bind_episode(nb::module_& m) {
         .def_rw("runway_length_margin_m", &StepInfoInputs::runway_length_margin_m);
 
     nb::class_<StepInfoProducts> step_info_products_class(m, "StepInfoProducts");
-    step_info_products_class
-        .def(nb::init<>());
-#define EF_STEP_INFO_PRODUCT(type, name, default_value) \
+    step_info_products_class.def(nb::init<>());
+#define EF_STEP_INFO_PRODUCT(type, name, default_value)                                            \
     step_info_products_class.def_ro(#name, &StepInfoProducts::name);
 #include "core/mission/runtime/detail/step_info_products.inc"
 
-    m.def("resolve_ground_track_deg", &resolve_ground_track_deg, nb::arg("fallback_heading_deg"), nb::arg("inst_ground_track_deg"));
-    m.def("compute_ground_track_error_deg", &compute_ground_track_error_deg, nb::arg("target_heading_deg"), nb::arg("fallback_heading_deg"), nb::arg("inst_ground_track_deg"));
-    m.def("compute_command_tracking_error_deg", &compute_command_tracking_error_deg, nb::arg("target_heading_deg"), nb::arg("truth_heading_deg"), nb::arg("command_code"), nb::arg("inst_ground_track_deg"));
-    m.def("compute_waypoint_mission_nav", &compute_waypoint_mission_nav, nb::arg("route_result"), nb::arg("inputs"));
+    m.def("resolve_ground_track_deg", &resolve_ground_track_deg, nb::arg("fallback_heading_deg"),
+          nb::arg("inst_ground_track_deg"));
+    m.def("compute_ground_track_error_deg", &compute_ground_track_error_deg,
+          nb::arg("target_heading_deg"), nb::arg("fallback_heading_deg"),
+          nb::arg("inst_ground_track_deg"));
+    m.def("compute_command_tracking_error_deg", &compute_command_tracking_error_deg,
+          nb::arg("target_heading_deg"), nb::arg("truth_heading_deg"), nb::arg("command_code"),
+          nb::arg("inst_ground_track_deg"));
+    m.def("compute_waypoint_mission_nav", &compute_waypoint_mission_nav, nb::arg("route_result"),
+          nb::arg("inputs"));
     m.def("compute_mission_observation", &compute_mission_observation, nb::arg("inputs"));
     m.def("compute_step_info_runtime", &compute_step_info_runtime, nb::arg("inputs"));
 
     nb::class_<WaypointRewardInputs> wp_inputs_class(m, "WaypointRewardInputs");
-    wp_inputs_class
-        .def(nb::init<>());
-#define EF_WAYPOINT_INPUT(type, name, default_value) \
+    wp_inputs_class.def(nb::init<>());
+#define EF_WAYPOINT_INPUT(type, name, default_value)                                               \
     wp_inputs_class.def_rw(#name, &WaypointRewardInputs::name);
 #include "core/mission/runtime/detail/waypoint_reward_inputs.inc"
 
     nb::class_<WaypointRewardProducts> wp_products_class(m, "WaypointRewardProducts");
-    wp_products_class
-        .def(nb::init<>());
-#define EF_WAYPOINT_PRODUCT(type, name, default_value) \
+    wp_products_class.def(nb::init<>());
+#define EF_WAYPOINT_PRODUCT(type, name, default_value)                                             \
     wp_products_class.def_ro(#name, &WaypointRewardProducts::name);
 #include "core/mission/runtime/detail/waypoint_reward_products.inc"
 
     nb::class_<ApproachRewardInputs> approach_inputs_class(m, "ApproachRewardInputs");
-    approach_inputs_class
-        .def(nb::init<>());
-#define EF_APPROACH_INPUT(type, name, default_value) \
+    approach_inputs_class.def(nb::init<>());
+#define EF_APPROACH_INPUT(type, name, default_value)                                               \
     approach_inputs_class.def_rw(#name, &ApproachRewardInputs::name);
 #include "core/mission/runtime/detail/approach_reward_inputs.inc"
 
     nb::class_<ApproachRewardProducts> approach_products_class(m, "ApproachRewardProducts");
-    approach_products_class
-        .def(nb::init<>());
-#define EF_APPROACH_PRODUCT(type, name, default_value) \
+    approach_products_class.def(nb::init<>());
+#define EF_APPROACH_PRODUCT(type, name, default_value)                                             \
     approach_products_class.def_ro(#name, &ApproachRewardProducts::name);
 #include "core/mission/runtime/detail/approach_reward_products.inc"
 
     m.def("compute_waypoint_reward_terms", &compute_waypoint_reward_terms, nb::arg("inputs"));
     m.def("compute_approach_reward_terms", &compute_approach_reward_terms, nb::arg("inputs"));
 
-    nb::class_<FlightShapingRuntimeInputs> flight_shaping_inputs_class(m, "FlightShapingRuntimeInputs");
-    flight_shaping_inputs_class
-        .def(nb::init<>())
+    nb::class_<FlightShapingRuntimeInputs> flight_shaping_inputs_class(
+        m, "FlightShapingRuntimeInputs");
+    flight_shaping_inputs_class.def(nb::init<>())
         .def_rw("truth_altitude_m", &FlightShapingRuntimeInputs::truth_altitude_m)
         .def_rw("truth_speed_mps", &FlightShapingRuntimeInputs::truth_speed_mps)
         .def_rw("prev_altitude_m", &FlightShapingRuntimeInputs::prev_altitude_m)
@@ -255,7 +263,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("target_speed_mps", &FlightShapingRuntimeInputs::target_speed_mps)
         .def_rw("heading_error_deg", &FlightShapingRuntimeInputs::heading_error_deg)
         .def_rw("ground_track_error_deg", &FlightShapingRuntimeInputs::ground_track_error_deg)
-        .def_rw("waypoint_turn_relief_activation", &FlightShapingRuntimeInputs::waypoint_turn_relief_activation)
+        .def_rw("waypoint_turn_relief_activation",
+                &FlightShapingRuntimeInputs::waypoint_turn_relief_activation)
         .def_rw("preliftoff", &FlightShapingRuntimeInputs::preliftoff)
         .def_rw("on_runway_task", &FlightShapingRuntimeInputs::on_runway_task)
         .def_rw("airborne", &FlightShapingRuntimeInputs::airborne)
@@ -269,7 +278,7 @@ void bind_episode(nb::module_& m) {
     // Config-static shaping fields shared with StepEvaluationBatchConfig,
     // bound from the same X-macro list that declares the struct members so the
     // exposed attribute names cannot drift from the C++ fields.
-#define EF_FLIGHT_SHAPING_FIELD(type, name, default_value) \
+#define EF_FLIGHT_SHAPING_FIELD(type, name, default_value)                                         \
     flight_shaping_inputs_class.def_rw(#name, &FlightShapingRuntimeInputs::name);
 #include "core/mission/runtime/detail/flight_shaping_shared_fields.inc"
 
@@ -284,7 +293,8 @@ void bind_episode(nb::module_& m) {
         .def_ro("liftoff_bonus", &FlightShapingRuntimeProducts::liftoff_bonus)
         .def_ro("next_liftoff_awarded", &FlightShapingRuntimeProducts::next_liftoff_awarded)
         .def_ro("rotation_reward", &FlightShapingRuntimeProducts::rotation_reward)
-        .def_ro("rotation_overpitch_penalty", &FlightShapingRuntimeProducts::rotation_overpitch_penalty)
+        .def_ro("rotation_overpitch_penalty",
+                &FlightShapingRuntimeProducts::rotation_overpitch_penalty)
         .def_ro("gear_up_bonus", &FlightShapingRuntimeProducts::gear_up_bonus)
         .def_ro("next_gear_bonus_awarded", &FlightShapingRuntimeProducts::next_gear_bonus_awarded)
         .def_ro("roll_stability", &FlightShapingRuntimeProducts::roll_stability)
@@ -300,12 +310,18 @@ void bind_episode(nb::module_& m) {
         .def_ro("beta_abs_penalty", &FlightShapingRuntimeProducts::beta_abs_penalty)
         .def_ro("g_deviation_penalty", &FlightShapingRuntimeProducts::g_deviation_penalty)
         .def_ro("speed_reward", &FlightShapingRuntimeProducts::speed_reward)
-        .def_ro("runway_centerline_m_penalty", &FlightShapingRuntimeProducts::runway_centerline_m_penalty)
-        .def_ro("runway_centerline_penalty", &FlightShapingRuntimeProducts::runway_centerline_penalty)
-        .def_ro("runway_centerline_barrier", &FlightShapingRuntimeProducts::runway_centerline_barrier)
-        .def_ro("departure_centerline_m_penalty", &FlightShapingRuntimeProducts::departure_centerline_m_penalty)
-        .def_ro("departure_centerline_reward", &FlightShapingRuntimeProducts::departure_centerline_reward)
-        .def_ro("departure_track_error_penalty", &FlightShapingRuntimeProducts::departure_track_error_penalty)
+        .def_ro("runway_centerline_m_penalty",
+                &FlightShapingRuntimeProducts::runway_centerline_m_penalty)
+        .def_ro("runway_centerline_penalty",
+                &FlightShapingRuntimeProducts::runway_centerline_penalty)
+        .def_ro("runway_centerline_barrier",
+                &FlightShapingRuntimeProducts::runway_centerline_barrier)
+        .def_ro("departure_centerline_m_penalty",
+                &FlightShapingRuntimeProducts::departure_centerline_m_penalty)
+        .def_ro("departure_centerline_reward",
+                &FlightShapingRuntimeProducts::departure_centerline_reward)
+        .def_ro("departure_track_error_penalty",
+                &FlightShapingRuntimeProducts::departure_track_error_penalty)
         .def_ro("departure_track_reward", &FlightShapingRuntimeProducts::departure_track_reward)
         .def_ro("alignment_reward", &FlightShapingRuntimeProducts::alignment_reward);
 
@@ -369,33 +385,25 @@ void bind_episode(nb::module_& m) {
         .def_rw("reward_bonus", &ConditionalObjectiveSpec::reward_bonus);
 
     nb::class_<ConditionalObjectiveInputs> obj_inputs_class(m, "ConditionalObjectiveInputs");
-    obj_inputs_class
-        .def(nb::init<>());
-#define EF_OBJECTIVE_INPUT(type, name, default_value) \
+    obj_inputs_class.def(nb::init<>());
+#define EF_OBJECTIVE_INPUT(type, name, default_value)                                              \
     obj_inputs_class.def_rw(#name, &ConditionalObjectiveInputs::name);
 #include "core/mission/runtime/detail/objective_inputs.inc"
 
     nb::class_<ObjectiveShapingConfig> obj_shaping_class(m, "ObjectiveShapingConfig");
-    obj_shaping_class
-        .def(nb::init<>());
-#define EF_OBJECTIVE_SHAPING(type, name, default_value) \
+    obj_shaping_class.def(nb::init<>());
+#define EF_OBJECTIVE_SHAPING(type, name, default_value)                                            \
     obj_shaping_class.def_rw(#name, &ObjectiveShapingConfig::name);
 #include "core/mission/runtime/detail/objective_shaping.inc"
 
     nb::class_<ConditionalObjectiveProducts> obj_products_class(m, "ConditionalObjectiveProducts");
-    obj_products_class
-        .def(nb::init<>());
-#define EF_OBJECTIVE_PRODUCT(type, name, default_value) \
+    obj_products_class.def(nb::init<>());
+#define EF_OBJECTIVE_PRODUCT(type, name, default_value)                                            \
     obj_products_class.def_ro(#name, &ConditionalObjectiveProducts::name);
 #include "core/mission/runtime/detail/objective_products.inc"
 
-    m.def(
-        "evaluate_conditional_objective",
-        &evaluate_conditional_objective,
-        nb::arg("spec"),
-        nb::arg("inputs"),
-        nb::arg("shaping")
-    );
+    m.def("evaluate_conditional_objective", &evaluate_conditional_objective, nb::arg("spec"),
+          nb::arg("inputs"), nb::arg("shaping"));
 
     nb::enum_<TerminationReasonCode>(m, "TerminationReasonCode")
         .value("Running", TerminationReasonCode::Running)
@@ -415,28 +423,20 @@ void bind_episode(nb::module_& m) {
         .export_values();
 
     nb::class_<SafetyRuntimeInputs> safety_inputs_class(m, "SafetyRuntimeInputs");
-    safety_inputs_class
-        .def(nb::init<>());
-#define EF_SAFETY_INPUT(type, name, default_value) \
+    safety_inputs_class.def(nb::init<>());
+#define EF_SAFETY_INPUT(type, name, default_value)                                                 \
     safety_inputs_class.def_rw(#name, &SafetyRuntimeInputs::name);
 #include "core/mission/runtime/detail/safety_runtime_inputs.inc"
 
     nb::class_<SafetyRuntimeProducts> safety_products_class(m, "SafetyRuntimeProducts");
-    safety_products_class
-        .def(nb::init<>());
-#define EF_SAFETY_PRODUCT(type, name, default_value) \
+    safety_products_class.def(nb::init<>());
+#define EF_SAFETY_PRODUCT(type, name, default_value)                                               \
     safety_products_class.def_ro(#name, &SafetyRuntimeProducts::name);
 #include "core/mission/runtime/detail/safety_runtime_products.inc"
 
     m.def("compute_safety_runtime", &compute_safety_runtime, nb::arg("inputs"));
-    m.def(
-        "finalize_termination_reason",
-        &finalize_termination_reason,
-        nb::arg("current_reason"),
-        nb::arg("terminated"),
-        nb::arg("truncated"),
-        nb::arg("status_flag")
-    );
+    m.def("finalize_termination_reason", &finalize_termination_reason, nb::arg("current_reason"),
+          nb::arg("terminated"), nb::arg("truncated"), nb::arg("status_flag"));
     m.def("termination_reason_name", &termination_reason_name, nb::arg("reason"));
 
     nb::class_<ExecutionStepRuntimeInputs>(m, "ExecutionStepRuntimeInputs")
@@ -445,7 +445,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("has_waypoint", &ExecutionStepRuntimeInputs::has_waypoint)
         .def_rw("waypoint", &ExecutionStepRuntimeInputs::waypoint)
         .def_rw("waypoint_episode_success", &ExecutionStepRuntimeInputs::waypoint_episode_success)
-        .def_rw("waypoint_episode_success_bonus", &ExecutionStepRuntimeInputs::waypoint_episode_success_bonus)
+        .def_rw("waypoint_episode_success_bonus",
+                &ExecutionStepRuntimeInputs::waypoint_episode_success_bonus)
         .def_rw("has_approach", &ExecutionStepRuntimeInputs::has_approach)
         .def_rw("approach", &ExecutionStepRuntimeInputs::approach)
         .def_rw("has_objectives", &ExecutionStepRuntimeInputs::has_objectives)
@@ -461,7 +462,8 @@ void bind_episode(nb::module_& m) {
         .def_ro("waypoint_evaluated", &ExecutionStepRuntimeProducts::waypoint_evaluated)
         .def_ro("waypoint", &ExecutionStepRuntimeProducts::waypoint)
         .def_ro("waypoint_episode_success", &ExecutionStepRuntimeProducts::waypoint_episode_success)
-        .def_ro("waypoint_episode_success_bonus", &ExecutionStepRuntimeProducts::waypoint_episode_success_bonus)
+        .def_ro("waypoint_episode_success_bonus",
+                &ExecutionStepRuntimeProducts::waypoint_episode_success_bonus)
         .def_ro("approach_evaluated", &ExecutionStepRuntimeProducts::approach_evaluated)
         .def_ro("approach", &ExecutionStepRuntimeProducts::approach)
         .def_ro("objective_evaluated", &ExecutionStepRuntimeProducts::objective_evaluated)
@@ -493,22 +495,21 @@ void bind_episode(nb::module_& m) {
     nb::class_<ExecutionFrameRuntimeProducts>(m, "ExecutionFrameRuntimeProducts")
         .def(nb::init<>())
         .def_ro("valid", &ExecutionFrameRuntimeProducts::valid)
-        .def_ro("mission_observation_evaluated", &ExecutionFrameRuntimeProducts::mission_observation_evaluated)
+        .def_ro("mission_observation_evaluated",
+                &ExecutionFrameRuntimeProducts::mission_observation_evaluated)
         .def_ro("mission_observation", &ExecutionFrameRuntimeProducts::mission_observation)
         .def_ro("step_info_evaluated", &ExecutionFrameRuntimeProducts::step_info_evaluated)
         .def_ro("step_info", &ExecutionFrameRuntimeProducts::step_info)
-        .def_ro("execution_step_evaluated", &ExecutionFrameRuntimeProducts::execution_step_evaluated)
+        .def_ro("execution_step_evaluated",
+                &ExecutionFrameRuntimeProducts::execution_step_evaluated)
         .def_ro("execution_step", &ExecutionFrameRuntimeProducts::execution_step)
-        .def_ro("flight_shaping_evaluated", &ExecutionFrameRuntimeProducts::flight_shaping_evaluated)
+        .def_ro("flight_shaping_evaluated",
+                &ExecutionFrameRuntimeProducts::flight_shaping_evaluated)
         .def_ro("flight_shaping", &ExecutionFrameRuntimeProducts::flight_shaping);
 
     m.def("compute_execution_frame_runtime", &compute_execution_frame_runtime, nb::arg("inputs"));
-    m.def(
-        "compute_execution_frame_runtime_batch",
-        &compute_execution_frame_runtime_batch,
-        nb::arg("inputs_batch"),
-        nb::call_guard<nb::gil_scoped_release>()
-    );
+    m.def("compute_execution_frame_runtime_batch", &compute_execution_frame_runtime_batch,
+          nb::arg("inputs_batch"), nb::call_guard<nb::gil_scoped_release>());
 
     nb::class_<ExecutionEpisodeRuntimeInputs>(m, "ExecutionEpisodeRuntimeInputs")
         .def(nb::init<>())
@@ -525,13 +526,16 @@ void bind_episode(nb::module_& m) {
     nb::class_<ExecutionEpisodeRuntimeProducts>(m, "ExecutionEpisodeRuntimeProducts")
         .def(nb::init<>())
         .def_ro("valid", &ExecutionEpisodeRuntimeProducts::valid)
-        .def_ro("mission_observation_evaluated", &ExecutionEpisodeRuntimeProducts::mission_observation_evaluated)
+        .def_ro("mission_observation_evaluated",
+                &ExecutionEpisodeRuntimeProducts::mission_observation_evaluated)
         .def_ro("mission_observation", &ExecutionEpisodeRuntimeProducts::mission_observation)
         .def_ro("step_info_evaluated", &ExecutionEpisodeRuntimeProducts::step_info_evaluated)
         .def_ro("step_info", &ExecutionEpisodeRuntimeProducts::step_info)
-        .def_ro("execution_step_evaluated", &ExecutionEpisodeRuntimeProducts::execution_step_evaluated)
+        .def_ro("execution_step_evaluated",
+                &ExecutionEpisodeRuntimeProducts::execution_step_evaluated)
         .def_ro("execution_step", &ExecutionEpisodeRuntimeProducts::execution_step)
-        .def_ro("flight_shaping_evaluated", &ExecutionEpisodeRuntimeProducts::flight_shaping_evaluated)
+        .def_ro("flight_shaping_evaluated",
+                &ExecutionEpisodeRuntimeProducts::flight_shaping_evaluated)
         .def_ro("flight_shaping", &ExecutionEpisodeRuntimeProducts::flight_shaping)
         .def_ro("outcome_evaluated", &ExecutionEpisodeRuntimeProducts::outcome_evaluated)
         .def_ro("compiled_reward_total", &ExecutionEpisodeRuntimeProducts::compiled_reward_total)
@@ -543,23 +547,14 @@ void bind_episode(nb::module_& m) {
         .def_ro("reason_code", &ExecutionEpisodeRuntimeProducts::reason_code)
         .def_ro("final_reason_code", &ExecutionEpisodeRuntimeProducts::final_reason_code);
 
-    m.def("compute_execution_episode_runtime", &compute_execution_episode_runtime, nb::arg("inputs"));
-    m.def(
-        "compute_execution_episode_runtime_batch",
-        &compute_execution_episode_runtime_batch,
-        nb::arg("inputs_batch"),
-        nb::call_guard<nb::gil_scoped_release>()
-    );
-    m.def(
-        "build_episode_reward_breakdown_json",
-        &build_episode_reward_breakdown_json,
-        nb::arg("runtime_inputs"),
-        nb::arg("products"),
-        nb::arg("reward_total"),
-        nb::arg("waypoint_arrived"),
-        nb::arg("had_post_waypoint_transition_before"),
-        nb::arg("phase_transition_bonus")
-    );
+    m.def("compute_execution_episode_runtime", &compute_execution_episode_runtime,
+          nb::arg("inputs"));
+    m.def("compute_execution_episode_runtime_batch", &compute_execution_episode_runtime_batch,
+          nb::arg("inputs_batch"), nb::call_guard<nb::gil_scoped_release>());
+    m.def("build_episode_reward_breakdown_json", &build_episode_reward_breakdown_json,
+          nb::arg("runtime_inputs"), nb::arg("products"), nb::arg("reward_total"),
+          nb::arg("waypoint_arrived"), nb::arg("had_post_waypoint_transition_before"),
+          nb::arg("phase_transition_bonus"));
 
     nb::class_<ExecutionEpisodeState>(m, "ExecutionEpisodeState")
         .def(nb::init<>())
@@ -573,7 +568,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("waypoint_index", &ExecutionEpisodeState::waypoint_index)
         .def_rw("has_waypoint_prev_dist_m", &ExecutionEpisodeState::has_waypoint_prev_dist_m)
         .def_rw("waypoint_prev_dist_m", &ExecutionEpisodeState::waypoint_prev_dist_m)
-        .def_rw("waypoint_total_route_length_m", &ExecutionEpisodeState::waypoint_total_route_length_m)
+        .def_rw("waypoint_total_route_length_m",
+                &ExecutionEpisodeState::waypoint_total_route_length_m)
         .def_rw("waypoint_leg_origin_x_m", &ExecutionEpisodeState::waypoint_leg_origin_x_m)
         .def_rw("waypoint_leg_origin_y_m", &ExecutionEpisodeState::waypoint_leg_origin_y_m)
         .def_rw("prev_altitude_m", &ExecutionEpisodeState::prev_altitude_m)
@@ -587,8 +583,10 @@ void bind_episode(nb::module_& m) {
         .def_rw("approach_prev_loc_abs", &ExecutionEpisodeState::approach_prev_loc_abs)
         .def_rw("has_approach_prev_gs_abs", &ExecutionEpisodeState::has_approach_prev_gs_abs)
         .def_rw("approach_prev_gs_abs", &ExecutionEpisodeState::approach_prev_gs_abs)
-        .def_rw("has_post_waypoint_transition_json", &ExecutionEpisodeState::has_post_waypoint_transition_json)
-        .def_rw("post_waypoint_transition_json", &ExecutionEpisodeState::post_waypoint_transition_json)
+        .def_rw("has_post_waypoint_transition_json",
+                &ExecutionEpisodeState::has_post_waypoint_transition_json)
+        .def_rw("post_waypoint_transition_json",
+                &ExecutionEpisodeState::post_waypoint_transition_json)
         .def_rw("mission_phase_name", &ExecutionEpisodeState::mission_phase_name)
         .def_rw("has_cached_route_ref_id", &ExecutionEpisodeState::has_cached_route_ref_id)
         .def_rw("cached_route_ref_id", &ExecutionEpisodeState::cached_route_ref_id)
@@ -596,12 +594,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("last_reward_total", &ExecutionEpisodeState::last_reward_total)
         .def_rw("last_reward_breakdown_json", &ExecutionEpisodeState::last_reward_breakdown_json);
 
-    m.def(
-        "execution_episode_states_equivalent",
-        &execution_episode_states_equivalent,
-        nb::arg("lhs"),
-        nb::arg("rhs")
-    );
+    m.def("execution_episode_states_equivalent", &execution_episode_states_equivalent,
+          nb::arg("lhs"), nb::arg("rhs"));
 
     nb::class_<ExecutionEpisodeControllerStepResult>(m, "ExecutionEpisodeControllerStepResult")
         .def(nb::init<>())
@@ -616,7 +610,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("status3", &ExecutionEpisodeControllerStepResult::status3)
         .def_rw("step_info_valid", &ExecutionEpisodeControllerStepResult::step_info_valid)
         .def_rw("step_info", &ExecutionEpisodeControllerStepResult::step_info)
-        .def_rw("structural_state_changed", &ExecutionEpisodeControllerStepResult::structural_state_changed);
+        .def_rw("structural_state_changed",
+                &ExecutionEpisodeControllerStepResult::structural_state_changed);
 
     nb::class_<ExecutionEpisodeController>(m, "ExecutionEpisodeController")
         .def(nb::init<>())
@@ -624,43 +619,30 @@ void bind_episode(nb::module_& m) {
         .def("has_state", &ExecutionEpisodeController::has_state)
         .def("import_state", &ExecutionEpisodeController::import_state, nb::arg("state"))
         .def("export_state", &ExecutionEpisodeController::export_state)
-        .def(
-            "prepare_runtime_inputs",
-            &ExecutionEpisodeController::prepare_runtime_inputs,
-            nb::arg("config"),
-            nb::arg("env_state")
-        )
-        .def(
-            "evaluate",
-            &ExecutionEpisodeController::evaluate,
-            nb::arg("config"),
-            nb::arg("env_state")
-        )
-        .def(
-            "step",
-            &ExecutionEpisodeController::step,
-            nb::arg("config"),
-            nb::arg("env_state")
-        )
-        .def(
-            "step_result",
-            &ExecutionEpisodeController::step_result,
-            nb::arg("config"),
-            nb::arg("env_state")
-        );
+        .def("prepare_runtime_inputs", &ExecutionEpisodeController::prepare_runtime_inputs,
+             nb::arg("config"), nb::arg("env_state"))
+        .def("evaluate", &ExecutionEpisodeController::evaluate, nb::arg("config"),
+             nb::arg("env_state"))
+        .def("step", &ExecutionEpisodeController::step, nb::arg("config"), nb::arg("env_state"))
+        .def("step_result", &ExecutionEpisodeController::step_result, nb::arg("config"),
+             nb::arg("env_state"));
 
     // Batch preparation API
     nb::class_<StepEvaluationBatchConfig>(m, "StepEvaluationBatchConfig")
         .def(nb::init<>())
         .def_rw("altitude_progress_weight", &StepEvaluationBatchConfig::altitude_progress_weight)
         .def_rw("speed_progress_weight", &StepEvaluationBatchConfig::speed_progress_weight)
-        .def_rw("speed_progress_negative_weight", &StepEvaluationBatchConfig::speed_progress_negative_weight)
+        .def_rw("speed_progress_negative_weight",
+                &StepEvaluationBatchConfig::speed_progress_negative_weight)
         .def_rw("stationary_penalty", &StepEvaluationBatchConfig::stationary_penalty)
         .def_rw("stationary_grace_steps", &StepEvaluationBatchConfig::stationary_grace_steps)
-        .def_rw("stationary_speed_threshold_mps", &StepEvaluationBatchConfig::stationary_speed_threshold_mps)
-        .def_rw("stationary_alt_threshold_m", &StepEvaluationBatchConfig::stationary_alt_threshold_m)
+        .def_rw("stationary_speed_threshold_mps",
+                &StepEvaluationBatchConfig::stationary_speed_threshold_mps)
+        .def_rw("stationary_alt_threshold_m",
+                &StepEvaluationBatchConfig::stationary_alt_threshold_m)
         .def_rw("liftoff_bonus", &StepEvaluationBatchConfig::liftoff_bonus)
-        .def_rw("liftoff_speed_threshold_mps", &StepEvaluationBatchConfig::liftoff_speed_threshold_mps)
+        .def_rw("liftoff_speed_threshold_mps",
+                &StepEvaluationBatchConfig::liftoff_speed_threshold_mps)
         .def_rw("liftoff_alt_threshold_m", &StepEvaluationBatchConfig::liftoff_alt_threshold_m)
         .def_rw("crash_penalty", &StepEvaluationBatchConfig::crash_penalty)
         .def_rw("target_altitude_m", &StepEvaluationBatchConfig::target_altitude_m)
@@ -690,7 +672,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("gear_bonus_awarded", &StepEvaluationBatchEnvState::gear_bonus_awarded)
         .def_rw("prev_altitude_m", &StepEvaluationBatchEnvState::prev_altitude_m)
         .def_rw("prev_ias_mps", &StepEvaluationBatchEnvState::prev_ias_mps)
-        .def_rw("defer_landing_post_transition", &StepEvaluationBatchEnvState::defer_landing_post_transition)
+        .def_rw("defer_landing_post_transition",
+                &StepEvaluationBatchEnvState::defer_landing_post_transition)
         .def_rw("has_episode_state", &StepEvaluationBatchEnvState::has_episode_state)
         .def_rw("episode_state", &StepEvaluationBatchEnvState::episode_state)
         .def_rw("has_mission_observation", &StepEvaluationBatchEnvState::has_mission_observation)
@@ -702,7 +685,8 @@ void bind_episode(nb::module_& m) {
         .def_rw("has_waypoint", &StepEvaluationBatchEnvState::has_waypoint)
         .def_rw("waypoint", &StepEvaluationBatchEnvState::waypoint)
         .def_rw("waypoint_episode_success", &StepEvaluationBatchEnvState::waypoint_episode_success)
-        .def_rw("waypoint_episode_success_bonus", &StepEvaluationBatchEnvState::waypoint_episode_success_bonus)
+        .def_rw("waypoint_episode_success_bonus",
+                &StepEvaluationBatchEnvState::waypoint_episode_success_bonus)
         .def_rw("has_approach", &StepEvaluationBatchEnvState::has_approach)
         .def_rw("approach", &StepEvaluationBatchEnvState::approach)
         .def_rw("has_objectives", &StepEvaluationBatchEnvState::has_objectives)
@@ -713,11 +697,6 @@ void bind_episode(nb::module_& m) {
         .def_rw("flight_shaping", &StepEvaluationBatchEnvState::flight_shaping)
         .def_rw("include_roll_stability", &StepEvaluationBatchEnvState::include_roll_stability);
 
-    m.def(
-        "prepare_step_evaluations_batch",
-        &prepare_step_evaluations_batch,
-        nb::arg("config"),
-        nb::arg("env_states"),
-        nb::call_guard<nb::gil_scoped_release>()
-    );
+    m.def("prepare_step_evaluations_batch", &prepare_step_evaluations_batch, nb::arg("config"),
+          nb::arg("env_states"), nb::call_guard<nb::gil_scoped_release>());
 }

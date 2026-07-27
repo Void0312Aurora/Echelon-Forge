@@ -114,8 +114,8 @@ struct StepEvaluationBatchEnvState {
 };
 
 // Batch prepare step evaluations in C++
-// Returns a vector of ExecutionEpisodeRuntimeInputs ready for compute_execution_episode_runtime_batch
-std::vector<ExecutionEpisodeRuntimeInputs> prepare_step_evaluations_batch(
-    const StepEvaluationBatchConfig& config,
-    const std::vector<StepEvaluationBatchEnvState>& env_states
-);
+// Returns a vector of ExecutionEpisodeRuntimeInputs ready for
+// compute_execution_episode_runtime_batch
+std::vector<ExecutionEpisodeRuntimeInputs>
+prepare_step_evaluations_batch(const StepEvaluationBatchConfig &config,
+                               const std::vector<StepEvaluationBatchEnvState> &env_states);

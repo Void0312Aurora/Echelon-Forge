@@ -9,35 +9,25 @@ inline bool is_finite(double x) {
     return std::isfinite(x);
 }
 
-inline bool check_finite_state(const StepEvaluationBatchEnvState& state) {
-    return is_finite(state.truth_x) &&
-           is_finite(state.truth_y) &&
-           is_finite(state.truth_z) &&
-           is_finite(state.truth_vx) &&
-           is_finite(state.truth_vy) &&
-           is_finite(state.truth_vz) &&
-           is_finite(state.truth_speed) &&
-           is_finite(state.truth_pitch) &&
-           is_finite(state.truth_roll) &&
-           is_finite(state.truth_heading) &&
+inline bool check_finite_state(const StepEvaluationBatchEnvState &state) {
+    return is_finite(state.truth_x) && is_finite(state.truth_y) && is_finite(state.truth_z) &&
+           is_finite(state.truth_vx) && is_finite(state.truth_vy) && is_finite(state.truth_vz) &&
+           is_finite(state.truth_speed) && is_finite(state.truth_pitch) &&
+           is_finite(state.truth_roll) && is_finite(state.truth_heading) &&
            is_finite(state.truth_health);
 }
 
-inline double safe_get(const std::vector<double>& vec, size_t idx, double default_val = 0.0) {
+inline double safe_get(const std::vector<double> &vec, size_t idx, double default_val = 0.0) {
     return idx < vec.size() ? vec[idx] : default_val;
 }
 
-bool has_rich_runtime_inputs(const StepEvaluationBatchEnvState& state) {
-    return state.has_mission_observation ||
-        state.has_step_info ||
-        state.has_safety ||
-        state.has_waypoint ||
-        state.has_approach ||
-        state.has_objectives ||
-        state.has_flight_shaping;
+bool has_rich_runtime_inputs(const StepEvaluationBatchEnvState &state) {
+    return state.has_mission_observation || state.has_step_info || state.has_safety ||
+           state.has_waypoint || state.has_approach || state.has_objectives ||
+           state.has_flight_shaping;
 }
 
-ExecutionEpisodeRuntimeInputs build_rich_runtime_inputs(const StepEvaluationBatchEnvState& state) {
+ExecutionEpisodeRuntimeInputs build_rich_runtime_inputs(const StepEvaluationBatchEnvState &state) {
     ExecutionEpisodeRuntimeInputs runtime_inputs;
 
     if (state.has_mission_observation) {
@@ -97,7 +87,8 @@ ExecutionEpisodeRuntimeInputs build_rich_runtime_inputs(const StepEvaluationBatc
     return runtime_inputs;
 }
 
-StepEvaluationBatchEnvState resolve_episode_state_overrides(const StepEvaluationBatchEnvState& state) {
+StepEvaluationBatchEnvState
+resolve_episode_state_overrides(const StepEvaluationBatchEnvState &state) {
     if (!state.has_episode_state) {
         return state;
     }
@@ -109,7 +100,7 @@ StepEvaluationBatchEnvState resolve_episode_state_overrides(const StepEvaluation
     return resolved;
 }
 
-int resolve_prior_off_runway_steps(const StepEvaluationBatchEnvState& state) {
+int resolve_prior_off_runway_steps(const StepEvaluationBatchEnvState &state) {
     if (state.has_episode_state) {
         return std::max(0, int(state.episode_state.off_runway_steps));
     }
@@ -117,23 +108,11 @@ int resolve_prior_off_runway_steps(const StepEvaluationBatchEnvState& state) {
 }
 
 FlightShapingRuntimeInputs build_flight_shaping_inputs(
-    const StepEvaluationBatchConfig& config,
-    const StepEvaluationBatchEnvState& state,
-    double curr_ias,
-    double curr_alt_agl,
-    double curr_gear,
-    double curr_roll,
-    double heading_error_deg,
-    double ground_track_error_deg,
-    bool preliftoff,
-    bool on_runway_task,
-    bool airborne,
-    bool has_runway_cross_m,
-    double runway_cross_m,
-    double runway_width_m,
-    double ils_valid,
-    double ils_loc
-) {
+    const StepEvaluationBatchConfig &config, const StepEvaluationBatchEnvState &state,
+    double curr_ias, double curr_alt_agl, double curr_gear, double curr_roll,
+    double heading_error_deg, double ground_track_error_deg, bool preliftoff, bool on_runway_task,
+    bool airborne, bool has_runway_cross_m, double runway_cross_m, double runway_width_m,
+    double ils_valid, double ils_loc) {
     FlightShapingRuntimeInputs inputs;
 
     // Dynamic fields
@@ -178,21 +157,12 @@ FlightShapingRuntimeInputs build_flight_shaping_inputs(
     return inputs;
 }
 
-SafetyRuntimeInputs build_safety_inputs(
-    const StepEvaluationBatchConfig& config,
-    bool finite_state_valid,
-    bool airborne,
-    bool aoa_valid,
-    double curr_aoa,
-    double curr_g,
-    double curr_alt_agl,
-    double curr_roll,
-    bool gear_collapsed,
-    bool runway_surface_phase,
-    bool on_runway_task,
-    double gear_stress,
-    int off_runway_steps
-) {
+SafetyRuntimeInputs build_safety_inputs(const StepEvaluationBatchConfig &config,
+                                        bool finite_state_valid, bool airborne, bool aoa_valid,
+                                        double curr_aoa, double curr_g, double curr_alt_agl,
+                                        double curr_roll, bool gear_collapsed,
+                                        bool runway_surface_phase, bool on_runway_task,
+                                        double gear_stress, int off_runway_steps) {
     SafetyRuntimeInputs inputs;
     inputs.finite_state_valid = finite_state_valid;
     inputs.crash_penalty = config.crash_penalty;
@@ -226,14 +196,13 @@ SafetyRuntimeInputs build_safety_inputs(
 
 } // anonymous namespace
 
-std::vector<ExecutionEpisodeRuntimeInputs> prepare_step_evaluations_batch(
-    const StepEvaluationBatchConfig& config,
-    const std::vector<StepEvaluationBatchEnvState>& env_states
-) {
+std::vector<ExecutionEpisodeRuntimeInputs>
+prepare_step_evaluations_batch(const StepEvaluationBatchConfig &config,
+                               const std::vector<StepEvaluationBatchEnvState> &env_states) {
     std::vector<ExecutionEpisodeRuntimeInputs> results;
     results.reserve(env_states.size());
 
-    for (const auto& state : env_states) {
+    for (const auto &state : env_states) {
         if (has_rich_runtime_inputs(state)) {
             results.push_back(build_rich_runtime_inputs(state));
             continue;
@@ -249,13 +218,16 @@ std::vector<ExecutionEpisodeRuntimeInputs> prepare_step_evaluations_batch(
         double curr_gear = safe_get(resolved_state.inst_vec, 18);
         double curr_ias = safe_get(resolved_state.inst_vec, 0);
         double curr_alt_agl = safe_get(resolved_state.inst_vec, 3, resolved_state.truth_z);
-        double curr_ground_speed = safe_get(resolved_state.inst_vec, 29,
-            std::hypot(resolved_state.truth_vx, resolved_state.truth_vy));
+        double curr_ground_speed =
+            safe_get(resolved_state.inst_vec, 29,
+                     std::hypot(resolved_state.truth_vx, resolved_state.truth_vy));
 
         // Compute heading errors (simplified - assumes target_heading is in config)
         double heading_error_deg = config.target_heading_deg - resolved_state.truth_heading;
-        while (heading_error_deg > 180.0) heading_error_deg -= 360.0;
-        while (heading_error_deg < -180.0) heading_error_deg += 360.0;
+        while (heading_error_deg > 180.0)
+            heading_error_deg -= 360.0;
+        while (heading_error_deg < -180.0)
+            heading_error_deg += 360.0;
         double ground_track_error_deg = heading_error_deg; // Simplified
 
         // ILS values
@@ -265,9 +237,9 @@ std::vector<ExecutionEpisodeRuntimeInputs> prepare_step_evaluations_batch(
         double ils_dme = safe_get(resolved_state.ils_vec, 3);
 
         // Check finite state
-        bool finite_state_valid = check_finite_state(resolved_state) &&
-            is_finite(curr_ias) && is_finite(curr_alt_agl) &&
-            is_finite(curr_aoa) && is_finite(curr_roll) && is_finite(curr_g);
+        bool finite_state_valid = check_finite_state(resolved_state) && is_finite(curr_ias) &&
+                                  is_finite(curr_alt_agl) && is_finite(curr_aoa) &&
+                                  is_finite(curr_roll) && is_finite(curr_g);
 
         // Determine flight phase
         bool on_ground = curr_alt_agl <= 1.0; // Simplified threshold
@@ -279,27 +251,22 @@ std::vector<ExecutionEpisodeRuntimeInputs> prepare_step_evaluations_batch(
         // Build safety inputs
         bool aoa_valid = is_finite(curr_aoa) && std::abs(curr_aoa) < 89.0 && curr_ias > 10.0;
         const int prior_off_runway_steps = resolve_prior_off_runway_steps(resolved_state);
-        int off_runway_steps = runway_surface_phase && (!on_runway_task)
-            ? (prior_off_runway_steps + 1)
-            : 0;
-        SafetyRuntimeInputs safety_inputs = build_safety_inputs(
-            config, finite_state_valid, airborne, aoa_valid,
-            curr_aoa, curr_g, curr_alt_agl, curr_roll,
-            false, // gear_collapsed - simplified
-            runway_surface_phase, on_runway_task,
-            0.0, // gear_stress - simplified
-            off_runway_steps
-        );
+        int off_runway_steps =
+            runway_surface_phase && (!on_runway_task) ? (prior_off_runway_steps + 1) : 0;
+        SafetyRuntimeInputs safety_inputs =
+            build_safety_inputs(config, finite_state_valid, airborne, aoa_valid, curr_aoa, curr_g,
+                                curr_alt_agl, curr_roll,
+                                false, // gear_collapsed - simplified
+                                runway_surface_phase, on_runway_task,
+                                0.0, // gear_stress - simplified
+                                off_runway_steps);
 
         // Build flight shaping inputs
         FlightShapingRuntimeInputs shaping_inputs = build_flight_shaping_inputs(
-            config, resolved_state,
-            curr_ias, curr_alt_agl, curr_gear, curr_roll,
-            heading_error_deg, ground_track_error_deg,
-            preliftoff, on_runway_task, airborne,
-            false, 0.0, 0.0, // runway cross - simplified
-            ils_valid, ils_loc
-        );
+            config, resolved_state, curr_ias, curr_alt_agl, curr_gear, curr_roll, heading_error_deg,
+            ground_track_error_deg, preliftoff, on_runway_task, airborne, false, 0.0,
+            0.0, // runway cross - simplified
+            ils_valid, ils_loc);
 
         // Build execution step inputs
         ExecutionStepRuntimeInputs exec_inputs;
