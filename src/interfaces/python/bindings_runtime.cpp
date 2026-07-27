@@ -1119,8 +1119,7 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("run_id", &MaintainedWorldlineComparison::run_id)
         .def_rw("episode_id", &MaintainedWorldlineComparison::episode_id)
         .def_rw("baseline_worldline_id", &MaintainedWorldlineComparison::baseline_worldline_id)
-        .def_rw("candidate_worldline_id",
-                &MaintainedWorldlineComparison::candidate_worldline_id)
+        .def_rw("candidate_worldline_id", &MaintainedWorldlineComparison::candidate_worldline_id)
         .def_rw("baseline_anchor_trace_id",
                 &MaintainedWorldlineComparison::baseline_anchor_trace_id)
         .def_rw("candidate_anchor_trace_id",
