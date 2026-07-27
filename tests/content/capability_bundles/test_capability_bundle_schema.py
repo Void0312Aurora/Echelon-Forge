@@ -37,7 +37,11 @@ from python.content.capability_bundles.schema import (
   REJECTION_MISSING_BUNDLE_EVIDENCE,
   REJECTION_MISSING_CAPABILITIES,
   REJECTION_MISSING_CAPABILITY_EVIDENCE,
+  REJECTION_MISSING_UNSUPPORTED_REASON,
+  REJECTION_REQUIRED_TYPE,
   REJECTION_SCHEMA_VERSION_UNSUPPORTED,
+  REJECTION_SUPPORTED_TYPE,
+  REJECTION_UNSUPPORTED_REASON_TYPE,
   REJECTION_UNSUPPORTED_CAPABILITY_FAMILY,
 )
 
@@ -120,6 +124,64 @@ def test_bundle_shape_rejections_reuse_the_wp14a_vocabulary() -> None:
   diagnostics = validate_capability_bundle_document(document)
   assert not diagnostics.valid
   assert diagnostics.rejection_reason == REJECTION_MISSING_BUNDLE_EVIDENCE
+
+
+@pytest.mark.parametrize("invalid", ["true", 1, None])
+def test_required_rejects_non_boolean_json_values(invalid: object) -> None:
+  document = _load_bundle_document()
+  document["capabilities"][0]["required"] = invalid
+  diagnostics = validate_capability_bundle_document(document)
+  assert diagnostics.rejection_reason == REJECTION_REQUIRED_TYPE
+  assert diagnostics.fail_closed
+
+
+@pytest.mark.parametrize("invalid", ["false", 0, None])
+def test_supported_rejects_non_boolean_json_values(invalid: object) -> None:
+  document = _load_bundle_document()
+  document["capabilities"][0]["supported"] = invalid
+  diagnostics = validate_capability_bundle_document(document)
+  assert diagnostics.rejection_reason == REJECTION_SUPPORTED_TYPE
+  assert diagnostics.fail_closed
+
+
+@pytest.mark.parametrize("invalid", [1, 0.0, None, []])
+def test_unsupported_reason_rejects_non_string_json_values(invalid: object) -> None:
+  document = _load_bundle_document()
+  entry = document["capabilities"][0]
+  entry["supported"] = False
+  entry["unsupported_reason"] = invalid
+  diagnostics = validate_capability_bundle_document(document)
+  assert diagnostics.rejection_reason == REJECTION_UNSUPPORTED_REASON_TYPE
+  assert diagnostics.fail_closed
+
+
+def test_unsupported_capability_requires_non_blank_reason() -> None:
+  document = _load_bundle_document()
+  entry = document["capabilities"][0]
+  entry["supported"] = False
+  entry["unsupported_reason"] = "  "
+  diagnostics = validate_capability_bundle_document(document)
+  assert diagnostics.rejection_reason == REJECTION_MISSING_UNSUPPORTED_REASON
+  assert diagnostics.fail_closed
+
+
+def test_validated_capability_flags_are_copied_without_coercion() -> None:
+  import python.content.capability_bundles.submarine  # noqa: F401
+
+  document = _load_bundle_document()
+  entry = document["capabilities"][0]
+  entry["required"] = False
+  entry["supported"] = False
+  entry["unsupported_reason"] = "pilot backend unavailable"
+  expansion = expand_typed_platform_request(
+    document, "content-typed:strict-flags", _placement()
+  )
+  assert expansion.diagnostics.valid
+  assert expansion.request is not None
+  capability = expansion.request.capability_bundle.capabilities[0]
+  assert capability.required is False
+  assert capability.supported is False
+  assert capability.unsupported_reason == "pilot backend unavailable"
 
 
 def test_registry_is_an_empty_opt_in_socket_until_a_family_registers() -> None:

@@ -227,9 +227,9 @@ def _expanded_capabilities(
                 capability_type=str(entry["capability_type"]),
                 implementation_ref=str(entry.get("implementation_ref", "")),
                 evidence_refs=tuple(entry["evidence_refs"]),
-                required=bool(entry.get("required", True)),
-                supported=bool(entry.get("supported", True)),
-                unsupported_reason=str(entry.get("unsupported_reason", "")),
+                required=entry.get("required", True),
+                supported=entry.get("supported", True),
+                unsupported_reason=entry.get("unsupported_reason", ""),
             )
         )
     return tuple(capabilities)

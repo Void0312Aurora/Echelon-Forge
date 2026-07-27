@@ -55,6 +55,10 @@ REJECTION_MISSING_CAPABILITY_FAMILY = "platform_capability_family_required"
 REJECTION_UNSUPPORTED_CAPABILITY_FAMILY = "platform_capability_family_not_maintained"
 REJECTION_MISSING_CAPABILITY_TYPE = "platform_capability_type_required"
 REJECTION_MISSING_CAPABILITY_EVIDENCE = "platform_capability_evidence_required"
+REJECTION_REQUIRED_TYPE = "content_capability_bundle_required_must_be_boolean"
+REJECTION_SUPPORTED_TYPE = "content_capability_bundle_supported_must_be_boolean"
+REJECTION_UNSUPPORTED_REASON_TYPE = "content_capability_bundle_unsupported_reason_must_be_string"
+REJECTION_MISSING_UNSUPPORTED_REASON = "unsupported_platform_capability_reason_required"
 
 
 @dataclass
@@ -139,6 +143,33 @@ def _validate_capability_entry(
             diagnostics,
             REJECTION_MISSING_CAPABILITY_EVIDENCE,
             f"{label}: evidence_refs is required and cannot contain blank entries",
+        )
+    required = capability.get("required", True)
+    if type(required) is not bool:
+        return _reject(
+            diagnostics,
+            REJECTION_REQUIRED_TYPE,
+            f"{label}: required must be a JSON boolean when present",
+        )
+    supported = capability.get("supported", True)
+    if type(supported) is not bool:
+        return _reject(
+            diagnostics,
+            REJECTION_SUPPORTED_TYPE,
+            f"{label}: supported must be a JSON boolean when present",
+        )
+    unsupported_reason = capability.get("unsupported_reason", "")
+    if not isinstance(unsupported_reason, str):
+        return _reject(
+            diagnostics,
+            REJECTION_UNSUPPORTED_REASON_TYPE,
+            f"{label}: unsupported_reason must be a string when present",
+        )
+    if not supported and not unsupported_reason.strip():
+        return _reject(
+            diagnostics,
+            REJECTION_MISSING_UNSUPPORTED_REASON,
+            f"{label}: unsupported capabilities must declare unsupported_reason",
         )
     return None
 
