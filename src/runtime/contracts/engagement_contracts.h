@@ -140,8 +140,7 @@ struct TrainingProjectionEvent {
 };
 
 struct ComponentMechanismLoadRow {
-#define EF_COMPONENT_MECHANISM_LOAD_ROW_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_COMPONENT_MECHANISM_LOAD_ROW_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/contracts/detail/component_mechanism_load_row.inc"
 };
 
@@ -191,31 +190,30 @@ struct KillChainFuzeDecision {
 };
 
 struct KillChainComponentLoadFact {
-#define EF_KILL_CHAIN_COMPONENT_LOAD_FACT_FIELD(type, name, default_value) \
+#define EF_KILL_CHAIN_COMPONENT_LOAD_FACT_FIELD(type, name, default_value)                         \
     type name = default_value;
 #include "runtime/contracts/detail/kill_chain_component_load_fact.inc"
 };
 
 struct KillChainWarheadLoadField {
-#define EF_KILL_CHAIN_WARHEAD_LOAD_FIELD_FIELD(type, name, default_value) \
-    type name = default_value;
+#define EF_KILL_CHAIN_WARHEAD_LOAD_FIELD_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/contracts/detail/kill_chain_warhead_load_field.inc"
 };
 
 struct KillChainTargetSusceptibility {
-#define EF_KILL_CHAIN_TARGET_SUSCEPTIBILITY_FIELD(type, name, default_value) \
+#define EF_KILL_CHAIN_TARGET_SUSCEPTIBILITY_FIELD(type, name, default_value)                       \
     type name = default_value;
 #include "runtime/contracts/detail/kill_chain_target_susceptibility.inc"
 };
 
 struct KillChainComponentResponseFact {
-#define EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(type, name, default_value) \
+#define EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(type, name, default_value)                     \
     type name = default_value;
 #include "runtime/contracts/detail/kill_chain_component_response_fact.inc"
 };
 
 struct KillChainConsequenceProjection {
-#define EF_KILL_CHAIN_CONSEQUENCE_PROJECTION_FIELD(type, name, default_value) \
+#define EF_KILL_CHAIN_CONSEQUENCE_PROJECTION_FIELD(type, name, default_value)                      \
     type name = default_value;
 #include "runtime/contracts/detail/kill_chain_consequence_projection.inc"
 };

@@ -517,25 +517,25 @@ void bind_command(nb::module_ &m) {
         .def_rw("takeoff_interval_s", &TaskOrderAir::TakeoffDirective::takeoff_interval_s)
         .def_rw("runway_slot_id", &TaskOrderAir::TakeoffDirective::runway_slot_id);
 
-    nb::class_<TaskOrderAirTaskingIdentityDirective> task_order_air_tasking_identity_directive_class(
-        m, "TaskOrderAirTaskingIdentityDirective");
+    nb::class_<TaskOrderAirTaskingIdentityDirective>
+        task_order_air_tasking_identity_directive_class(m, "TaskOrderAirTaskingIdentityDirective");
     task_order_air_tasking_identity_directive_class.def(nb::init<>());
-#define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value)      \
-    task_order_air_tasking_identity_directive_class.def_rw(                                \
+#define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value)              \
+    task_order_air_tasking_identity_directive_class.def_rw(                                        \
         #name, &TaskOrderAirTaskingIdentityDirective::name);
 #include "runtime/contracts/detail/task_order_air_tasking_identity_directive.inc"
 
     nb::class_<TaskOrderAirStationingDirective> task_order_air_stationing_directive_class(
         m, "TaskOrderAirStationingDirective");
     task_order_air_stationing_directive_class.def(nb::init<>());
-#define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value) \
+#define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                    \
     task_order_air_stationing_directive_class.def_rw(#name, &TaskOrderAirStationingDirective::name);
 #include "runtime/contracts/detail/task_order_air_stationing_directive.inc"
 
     nb::class_<TaskOrderAirFormationDirective> task_order_air_formation_directive_class(
         m, "TaskOrderAirFormationDirective");
     task_order_air_formation_directive_class.def(nb::init<>());
-#define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value) \
+#define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value)                     \
     task_order_air_formation_directive_class.def_rw(#name, &TaskOrderAirFormationDirective::name);
 #include "runtime/contracts/detail/task_order_air_formation_directive.inc"
 
@@ -610,8 +610,9 @@ void bind_command(nb::module_ &m) {
     nb::class_<TaskOrderNavalStationingDirective> task_order_naval_stationing_directive_class(
         m, "TaskOrderNavalStationingDirective");
     task_order_naval_stationing_directive_class.def(nb::init<>());
-#define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value) \
-    task_order_naval_stationing_directive_class.def_rw(#name, &TaskOrderNavalStationingDirective::name);
+#define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                  \
+    task_order_naval_stationing_directive_class.def_rw(#name,                                      \
+                                                       &TaskOrderNavalStationingDirective::name);
 #include "runtime/contracts/detail/task_order_naval_stationing_directive.inc"
 
     nb::class_<TaskOrder>(m, "TaskOrder")

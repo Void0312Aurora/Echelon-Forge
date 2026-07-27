@@ -37,11 +37,11 @@ struct ContentDiagnostic {
     enum class Severity { Info, Warning };
 
     Severity severity = Severity::Warning;
-    std::string source;     // originating file path / logical origin (best-effort)
-    std::string unit_name;  // best-effort unit name; empty when unknown
-    std::string code;       // stable machine code, e.g. "unknown_top_level_key"
-    std::string key;        // offending key when applicable
-    std::string message;    // human-readable description
+    std::string source;    // originating file path / logical origin (best-effort)
+    std::string unit_name; // best-effort unit name; empty when unknown
+    std::string code;      // stable machine code, e.g. "unknown_top_level_key"
+    std::string key;       // offending key when applicable
+    std::string message;   // human-readable description
 };
 
 // -------------------------------------------------------------------------
@@ -60,10 +60,8 @@ struct ContentDiagnostic {
 // When `out_raw_entries` is non-null it also receives each parsed unit's raw
 // top-level JSON object, purely so the validate pass can inspect it; capturing
 // changes no parsed UnitDefinition output.
-bool parse_pass(const std::string& path,
-                std::vector<UnitDefinition>& out_definitions,
-                std::string* error,
-                std::vector<nlohmann::json>* out_raw_entries = nullptr);
+bool parse_pass(const std::string &path, std::vector<UnitDefinition> &out_definitions,
+                std::string *error, std::vector<nlohmann::json> *out_raw_entries = nullptr);
 
 // -------------------------------------------------------------------------
 // Validate pass
@@ -73,19 +71,19 @@ bool parse_pass(const std::string& path,
 // present-but-unread keys (ew_suite_ref / rcs / rcs_profile_ref), and the
 // underscore-annotation convention (any key beginning with '_'). Hardcoded from
 // the I52 survey; the draft JSON is NOT read at build or run time.
-bool is_recognized_top_level_key(const std::string& key);
+bool is_recognized_top_level_key(const std::string &key);
 
 // Validate a single top-level unit JSON object. Returns structural diagnostics
 // (currently one "unknown_top_level_key" warning per unrecognized top-level
 // key). Never throws, never mutates, never rejects; a non-object input yields no
 // diagnostics.
-std::vector<ContentDiagnostic> validate_unit_json_entry(const nlohmann::json& entry,
-                                                        const std::string& source = "");
+std::vector<ContentDiagnostic> validate_unit_json_entry(const nlohmann::json &entry,
+                                                        const std::string &source = "");
 
 // Validate pass: batch form over the raw top-level entries captured by the parse
 // pass. Aggregates per-entry diagnostics; never throws, mutates, or rejects.
-std::vector<ContentDiagnostic> validate_pass(const std::vector<nlohmann::json>& entries,
-                                             const std::string& source = "");
+std::vector<ContentDiagnostic> validate_pass(const std::vector<nlohmann::json> &entries,
+                                             const std::string &source = "");
 
 // -------------------------------------------------------------------------
 // Resolve pass
@@ -100,8 +98,8 @@ struct DeferredReferenceReport {
     std::size_t sensor_ref = 0;
     std::size_t sensor_refs = 0;
     std::size_t engine_ref = 0;
-    std::size_t ew_suite_ref = 0;     // present-but-unread: parser never populates it
-    std::size_t rcs_profile_ref = 0;  // present-but-unread: parser never populates it
+    std::size_t ew_suite_ref = 0;    // present-but-unread: parser never populates it
+    std::size_t rcs_profile_ref = 0; // present-but-unread: parser never populates it
     std::size_t default_loadout = 0;
     std::size_t embarked_helo_ref = 0;
     std::size_t definitions_with_deferred_refs = 0;
@@ -110,6 +108,6 @@ struct DeferredReferenceReport {
 // Resolve pass: an explicit PASS-THROUGH. Reference resolution stays deferred to
 // the factory/spawn materialize step (unchanged timing); this pass only tallies
 // the deferred edges for observability and MUST NOT mutate `definitions`.
-DeferredReferenceReport resolve_pass(const std::vector<UnitDefinition>& definitions);
+DeferredReferenceReport resolve_pass(const std::vector<UnitDefinition> &definitions);
 
 } // namespace content_compile

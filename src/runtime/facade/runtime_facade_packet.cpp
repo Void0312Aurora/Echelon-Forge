@@ -702,13 +702,12 @@ std::vector<DiagnosticsTrace>
 RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) const {
     std::vector<DiagnosticsTrace> traces;
 
-    for_each_distinct_export_world_index(
-        *runtime_, request.refs, [&](std::uint64_t world_index) {
-            append_recent_diagnostics_traces(
-                traces, with_world_index(export_recent_engagement_events_for_world(
-                                             static_cast<std::size_t>(world_index)),
-                                         world_index));
-        });
+    for_each_distinct_export_world_index(*runtime_, request.refs, [&](std::uint64_t world_index) {
+        append_recent_diagnostics_traces(
+            traces, with_world_index(export_recent_engagement_events_for_world(
+                                         static_cast<std::size_t>(world_index)),
+                                     world_index));
+    });
 
     const bool needs_observations =
         request.include_track_packets || request.include_diagnostics_traces;
@@ -780,15 +779,13 @@ RuntimeFacade::export_engagement_event_packet(const EngagementBatchRequest &requ
     packet.barrier_sequence = kExportBarrierSequence;
     packet.barrier_detail = std::string(kExportBarrierDetail);
 
-    for_each_distinct_export_world_index(
-        *runtime_, request.refs, [&](std::uint64_t world_index) {
-            append_recent_engagement_events(
-                packet,
-                with_world_index(export_recent_engagement_events_for_world(
-                                     static_cast<std::size_t>(world_index)),
-                                 world_index),
-                request);
-        });
+    for_each_distinct_export_world_index(*runtime_, request.refs, [&](std::uint64_t world_index) {
+        append_recent_engagement_events(packet,
+                                        with_world_index(export_recent_engagement_events_for_world(
+                                                             static_cast<std::size_t>(world_index)),
+                                                         world_index),
+                                        request);
+    });
 
     const bool needs_observations =
         request.include_track_packets || request.include_diagnostics_traces;
