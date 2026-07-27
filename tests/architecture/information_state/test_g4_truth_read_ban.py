@@ -12,7 +12,9 @@ gate ratchets that convergence:
   design doc §15), scoped to the migrated surface.
 * The declared view owner(s) in ``MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS`` are
   the read owner and are excluded from the ban; each must still carry a valid G4
-  declaration (a read owner is allowed to read truth, consumers are not).
+  declaration (a read owner is allowed to read truth, consumers are not). The
+  I87 world-batch consumers are lower-layer modules, so their owner reader is
+  injected by a higher-level ``gym_envs`` caller rather than imported directly.
 * The declared-but-deferred consumers in
   ``DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`` (T8 third slice, I56) carry a
   G4 declaration but are not yet view-converged, so they are excluded from the ban
@@ -238,6 +240,21 @@ def test_view_owner_reads_truth_and_is_excluded_from_ban() -> None:
 _VIEW_OWNER_DOTTED = MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS[0]
 _VIEW_OWNER_LEAF = _VIEW_OWNER_DOTTED.rsplit(".", 1)[-1]
 
+# I87 C3/C20 are ``python.rl`` consumers. G2 forbids those lower modules from
+# importing the ``gym_envs`` owner laterally, so the positive convergence gate
+# for these two entries is an explicit injected-reader wiring check below.
+_I87_INJECTED_VIEW_CONSUMERS = frozenset(
+    {
+        "python.rl.runtime.world_batch.observation_batching",
+        "python.rl.runtime.world_batch._vec_env_support",
+    }
+)
+_DIRECT_VIEW_CONSUMERS = tuple(
+    dotted
+    for dotted in VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS
+    if dotted not in _I87_INJECTED_VIEW_CONSUMERS
+)
+
 
 def _view_owner_import_bindings(source: str) -> set[str]:
     """Local names bound to the observation-view owner module or its faces.
@@ -276,7 +293,7 @@ def _references_any_name(source: str, names: set[str]) -> bool:
     return False
 
 
-@pytest.mark.parametrize("dotted", VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS)
+@pytest.mark.parametrize("dotted", _DIRECT_VIEW_CONSUMERS)
 def test_view_converged_consumer_reads_through_the_declared_view(dotted: str) -> None:
     source = _module_source(dotted)
     bindings = _view_owner_import_bindings(source)
@@ -288,6 +305,59 @@ def test_view_converged_consumer_reads_through_the_declared_view(dotted: str) ->
         f"{dotted}: imports the observation view but never references a view face; a "
         "converged consumer must actually read through the view, not merely import it"
     )
+
+
+def _uses_injected_own_ship_reader(source: str) -> bool:
+    tree = ast.parse(source)
+    return any(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "own_ship_field_reader"
+        for node in ast.walk(tree)
+    )
+
+
+@pytest.mark.parametrize("dotted", sorted(_I87_INJECTED_VIEW_CONSUMERS))
+def test_i87_world_batch_consumers_use_injected_view_reader_without_lower_import(
+    dotted: str,
+) -> None:
+    source = _module_source(dotted)
+    assert not _view_owner_import_bindings(source), (
+        f"{dotted}: lower I87 consumer must not import {_VIEW_OWNER_DOTTED}; "
+        "the declared owner is injected from a higher layer"
+    )
+    assert "own_ship_field_reader" in source, (
+        f"{dotted}: I87 consumer must expose the injected own-ship reader seam"
+    )
+    assert _uses_injected_own_ship_reader(source), (
+        f"{dotted}: I87 consumer must actually call the injected reader"
+    )
+
+
+def test_i87_injected_reader_wiring_resolves_to_declared_owner() -> None:
+    providers = (
+        "python.rl.runtime.world_batch.vec_env",
+        "python.rl.runtime.cooperative_world_batch_vec_env",
+    )
+    for dotted in providers:
+        source = _module_source(dotted)
+        assert "from gym_envs import observation_view" in source, dotted
+        assert "observation_view.own_ship_attr" in source, dotted
+
+    forwarding_modules = (
+        "python.rl.runtime.world_batch._observation_mixin",
+        "python.rl.runtime.world_batch._execution_episode_mixin",
+        "python.rl.runtime.world_batch._air_combat_post_launch_mixin",
+        "python.rl.runtime.cooperative_world_batch_vec_env",
+    )
+    for dotted in forwarding_modules:
+        source = _module_source(dotted)
+        assert "own_ship_field_reader=" in source, dotted
+
+    for dotted in sorted(_I87_INJECTED_VIEW_CONSUMERS):
+        source = _module_source(dotted)
+        assert 'own_ship_field_reader(truth, "x")' in source, dotted
+        assert 'own_ship_field_reader(truth, "y")' in source, dotted
 
 
 def test_view_usage_gate_is_load_bearing() -> None:

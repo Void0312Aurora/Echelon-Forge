@@ -153,6 +153,8 @@ class _WorldBatchVecEnvExecutionEpisodeMixin:
                 handle.last_inst,
                 max_contacts=self.max_contacts,
                 max_rwr=self.max_rwr,
+                own_ship_field_reader=self._observation_own_ship_field_reader,
+                observation_view_spec=self._runtime_adapter.typed_observation_view_spec,
             )
             ils_vec = (
                 np.asarray(inst_vec[-4:], dtype=np.float32)
@@ -274,6 +276,8 @@ class _WorldBatchVecEnvExecutionEpisodeMixin:
                 handle.last_inst,
                 max_contacts=self.max_contacts,
                 max_rwr=self.max_rwr,
+                own_ship_field_reader=self._observation_own_ship_field_reader,
+                observation_view_spec=self._runtime_adapter.typed_observation_view_spec,
             )
             ils_vec = np.asarray(inst_vec[-4:], dtype=np.float32) if inst_vec.size >= 4 else np.zeros((4,), dtype=np.float32)
             cache = getattr(loader, "_runtime_eval_cache", None)

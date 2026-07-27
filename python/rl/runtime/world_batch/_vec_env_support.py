@@ -1,27 +1,25 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import ef_py
 import numpy as np
 
 from gym_envs.scenario_loader import ScenarioLoader
+from .typed_observation_view import admit_typed_observation_view_spec
 
 
 # G4 information-state declaration (architecture design doc §3/§15; facility in
-# python/architecture/information_layer.py). This module holds the world-batch
-# vec-env observation support helpers: ``_execution_instrument_vector`` consumes
-# own-ship authoritative truth (``truth.x/y`` for the ILS query; the truth object
-# then feeds ``ef_py.compute_execution_observation_runtime_numpy``) and produces
-# the per-agent execution instrument observation vector. Per the I32 batch-step
-# stage contracts (python/rl/runtime/world_batch/core.py), execution observation
-# assembly closes at P10 ObservationExport. Declared this iteration, settling its
-# I76 G4_DECLARATION_PENDING_CONSUMERS pin
-# (python/architecture/consumer_classification.py); reads kept, not
-# view-converged: the batch path consumes cached per-state truth under the I32
-# stage contracts rather than a per-loader observation view, so this module is
-# declared-but-open (t8_g4_truth_leak_inventory.md) and NOT ban-gated. Pure
-# metadata; no runtime cost.
+# python/architecture/information_layer.py). This module holds the C20
+# vec-env execution-observation support helper. It obtains own-ship ILS
+# coordinates through the high-level injected observation-view reader and passes
+# the opaque truth object unchanged to ``ef_py``. Per the I32 batch-step stage
+# contracts (python/rl/runtime/world_batch/core.py), execution observation
+# assembly closes at P10 ObservationExport. The I87 typed-view spec is
+# structural-only: empty required/optional lists do not filter or wildcard
+# fields. The default-off path performs no facade describe call or spec
+# admission.
 INFORMATION_LAYER_CONSUMED = ("World Truth",)
 INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
 SEMANTIC_STAGE = ("P10 ObservationExport",)
@@ -43,8 +41,23 @@ def _float32_view(value: Any) -> np.ndarray:
     return np.asarray(value, dtype=np.float32)
 
 
-def _execution_instrument_vector(loader: ScenarioLoader, truth: Any, inst: Any, *, max_contacts: int, max_rwr: int) -> np.ndarray:
-    ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
+def _execution_instrument_vector(
+    loader: ScenarioLoader,
+    truth: Any,
+    inst: Any,
+    *,
+    max_contacts: int,
+    max_rwr: int,
+    own_ship_field_reader: Callable[[Any, str], Any],
+    observation_view_spec: Any = None,
+) -> np.ndarray:
+    if observation_view_spec is not None:
+        admit_typed_observation_view_spec(observation_view_spec)
+    ils_vec = loader.get_ils_observation(
+        float(own_ship_field_reader(truth, "x")),
+        float(own_ship_field_reader(truth, "y")),
+        float(inst.alt_baro),
+    )
     inst_vec, _contacts, _rwr = ef_py.compute_execution_observation_runtime_numpy(
         inst,
         truth,

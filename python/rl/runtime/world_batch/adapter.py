@@ -24,6 +24,7 @@ from .command_chain_cache import project_world_leader_intent_maintained_assignme
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
 from .command_chain_cache import project_world_task_order_maintained_assignment
+from .typed_observation_view import admit_typed_observation_view_spec
 
 
 def _maintained_task_order_write_required_message(surface: str) -> str:
@@ -315,7 +316,13 @@ class RuntimeFacadeAdapter:
     behind this explicit switch.
     """
 
-    def __init__(self, world_count: int, *, use_facade_evidence_producers: bool = False):
+    def __init__(
+        self,
+        world_count: int,
+        *,
+        use_facade_evidence_producers: bool = False,
+        use_typed_observation_view: bool = False,
+    ):
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
             raise RuntimeError("RuntimeFacadeAdapter requires ef_py.RuntimeFacade bindings")
@@ -327,6 +334,9 @@ class RuntimeFacadeAdapter:
         self._world_time_steps: dict[int, float] = {}
         self._next_launch_request_id = 1
         self._use_facade_evidence_producers = bool(use_facade_evidence_producers)
+        self._typed_observation_view_spec: Any | None = None
+        if use_typed_observation_view:
+            self._typed_observation_view_spec = self._describe_and_admit_typed_observation_view()
 
     @property
     def capabilities(self) -> RuntimeFacadeAdapterCapabilities:
@@ -348,6 +358,38 @@ class RuntimeFacadeAdapter:
 
     def clear_last_window_evidence(self) -> None:
         self._last_window_evidence = None
+
+    @property
+    def typed_observation_view_spec(self) -> Any | None:
+        """Return the admitted I87 spec, or ``None`` on the default path."""
+
+        return self._typed_observation_view_spec
+
+    def _describe_and_admit_typed_observation_view(self) -> Any:
+        """Read and admit the I87 view exactly once during construction.
+
+        The default path never calls the export.  There is intentionally no
+        public post-construction enable method: the facade, structural
+        admission, and cached spec belong to one adapter construction boundary.
+        The admitted spec is later consumed by the C3/C20 helpers before they
+        read the existing ``ObservationBatchPacket`` payload.
+        """
+
+        if self._typed_observation_view_spec is not None:
+            return self._typed_observation_view_spec
+        describe = getattr(self.facade, "describe_maintained_observation_view", None)
+        if not callable(describe) or not hasattr(ef_py, "ObservationViewSpec"):
+            raise RuntimeError(
+                "typed observation view requires the maintained ObservationViewSpec "
+                "facade export"
+            )
+        spec = describe()
+        if not isinstance(spec, ef_py.ObservationViewSpec):
+            raise RuntimeError(
+                "describe_maintained_observation_view returned a non-ObservationViewSpec value"
+            )
+        self._typed_observation_view_spec = admit_typed_observation_view_spec(spec)
+        return self._typed_observation_view_spec
 
     def supports_runtime_window_api(self) -> bool:
         return self.capabilities.has_runtime_window_api

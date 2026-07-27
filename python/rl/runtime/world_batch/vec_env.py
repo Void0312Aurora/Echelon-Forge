@@ -17,6 +17,7 @@ try:
 except Exception:  # pragma: no cover - training envs are expected to have torch
     torch = None
 
+from gym_envs import observation_view
 from gym_envs.scenario_loader import (
     ScenarioLoader,
     normalize_execution_step_runtime_mode,
@@ -206,6 +207,7 @@ class WorldBatchVecEnv(
         worker_threads: int | None = None,
         collect_step_timing: bool = False,
         batch_observation_backend: str | None = "auto",
+        use_typed_observation_view: bool = False,
         batch_visual_backend: str | None = "auto",
         execution_step_batch_prepare: bool = False,
         execution_episode_controller_shadow_compare: bool = False,
@@ -352,7 +354,10 @@ class WorldBatchVecEnv(
                 "execution_episode_controller_mainline is not compatible with "
                 "execution_episode_controller_shadow_compare"
             )
-        self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)
+        self._runtime_adapter = _RuntimeFacadeAdapter(
+            self.n_envs,
+            use_typed_observation_view=bool(use_typed_observation_view),
+        )
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
@@ -515,6 +520,12 @@ class WorldBatchVecEnv(
     @property
     def runtime_facade(self):
         return self._runtime_adapter.facade
+
+    @staticmethod
+    def _observation_own_ship_field_reader(truth: Any, field: str) -> Any:
+        """Inject the existing declared-view owner into lower batch helpers."""
+
+        return observation_view.own_ship_attr(truth, field)
 
     @property
     def last_runtime_window_evidence(self):

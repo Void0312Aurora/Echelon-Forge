@@ -80,7 +80,9 @@ REQUIRED_DECLARATION_ATTRS: tuple[str, ...] = (
 # review disproved its deferral rationale -- its own-ship x/y reads are
 # token-isomorphic to own_ship_field, and numeric parity with the fae17eb8
 # baseline is pinned by tests/leader/test_leader_observation_view_parity.py.
-# These are the ban-gated set (no raw World-Truth reads may remain).
+# These are the ban-gated set (no raw World-Truth reads may remain). The two
+# world-batch entries at the end receive their owner reader from a higher layer
+# because the lower ``python.rl`` modules must not import ``gym_envs``.
 _VIEW_CONVERGED_CONSUMERS: tuple[str, ...] = (
     "gym_envs.scenario_loader.mission_observation",
     "gym_envs.scenario_loader.reward_runtime.air_combat",
@@ -91,6 +93,8 @@ _VIEW_CONVERGED_CONSUMERS: tuple[str, ...] = (
     "gym_envs.universal_env_parts.observations",
     "gym_envs.scenario_loader.navigation_runtime.waypoint_rewards",
     "gym_envs.leader_env_parts.decision_runtime.observations",
+    "python.rl.runtime.world_batch.observation_batching",
+    "python.rl.runtime.world_batch._vec_env_support",
 )
 
 # T8 third slice (I56): the deferred aggregator/leader/guidance consumers, now
@@ -110,21 +114,15 @@ _VIEW_CONVERGED_CONSUMERS: tuple[str, ...] = (
 #     until a command/guidance read owner exists (an observation view is not the
 #     right owner for command-delivery reads).
 #
-# T8 follow-up (this iteration): the two world-batch execution-observation
-# consumers the I76 per-file classifier pinned as declaration-pending
-# (G4_DECLARATION_PENDING_CONSUMERS in python/architecture/consumer_classification.py)
-# now carry declarations and register here; that pending pin is emptied. Reads
-# kept, not view-converged: the batch path consumes cached per-state truth under
-# the I32 batch-step stage contracts (state_read/observation_build in
-# python/rl/runtime/world_batch/core.py), not a per-loader observation view;
-# convergence is a later slice.
+# T8 follow-up (I87): the world-batch execution-observation consumers now have
+# an opt-in typed-view path. Their default path remains byte-compatible, while
+# both C3/C20 leaf reads are injected from the existing declared owner and the
+# two consumers are therefore view-converged under the I87 pilot.
 DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS: tuple[str, ...] = (
     "gym_envs.scenario_loader.step_evaluation",
     "gym_envs.scenario_loader.execution_runtime.mainline",
     "python.rl.tasking.leader_tasking",
     "gym_envs.scenario_loader.navigation_runtime.guidance",
-    "python.rl.runtime.world_batch._vec_env_support",
-    "python.rl.runtime.world_batch.observation_batching",
 )
 
 # G5 registry: every maintained observation/reward consumer that carries a G4

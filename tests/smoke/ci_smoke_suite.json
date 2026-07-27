@@ -80,6 +80,7 @@
     "tests/training/test_training_bootstrap_contracts.py",
     "tests/training/test_naval_training_entry_contracts.py",
     "tests/runtime/test_agent_shim.py",
+    "tests/world_batch/test_typed_observation_view_pilot.py",
     "tests/world_batch/test_world_batch_core_slice1.py",
     "tests/world_batch/test_world_batch_runtime_surface.py",
     "tests/world_batch/test_batch_scenario_runtime.py"

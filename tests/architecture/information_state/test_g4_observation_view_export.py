@@ -21,18 +21,18 @@ This gate ratchets that export:
   six-layer / P0-P10 whitelist.
 * **Load-bearing.** The pure parity checker goes red on injected drift, so the
   gate is not vacuously green.
-* **Zero wiring.** This slice migrates no consumer: the export symbol appears
-  only at its declaration / implementation / binding sites and nothing in the
-  maintained C++ export paths or the Python consumers (including the TL13 seam)
-  calls it, so the seam's behavior is byte-for-byte unchanged.
+* **Bounded wiring.** I87 reads the export exactly once from the same facade at
+  adapter construction when explicitly enabled. The default path and TL13 seam
+  never call it, and no C++ runtime path is rewired.
 
 The ef_py-dependent parity/value tests skip when no local build is available
-(matching the repo's ef_py skip convention); the load-bearing and zero-wiring
+(matching the repo's ef_py skip convention); the load-bearing and wiring-boundary
 tests are pure text/AST and always run.
 """
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 import pytest
@@ -206,8 +206,8 @@ def test_parity_gate_is_load_bearing() -> None:
     )
 
 
-# --- Zero wiring: nothing calls the export in this slice ----------------------
-def test_export_symbol_is_not_wired_into_any_maintained_path() -> None:
+# --- Wiring boundary: construction-only I87 opt-in ---------------------------
+def test_export_symbol_is_wired_only_at_the_declared_construction_boundary() -> None:
     # The declaration must be a read-only const method.
     header = (REPO_ROOT / "src/runtime/facade/runtime_facade.h").read_text(
         encoding="utf-8"
@@ -239,12 +239,43 @@ def test_export_symbol_is_not_wired_into_any_maintained_path() -> None:
             f"unexpected {_EXPORT_SYMBOL!r} presence in {rel}"
         )
 
-    # (3) No Python consumer (including the TL13 seam) calls the export: this
-    # slice migrates nothing on the Python side.
+    # (3) No gym_envs consumer (including the TL13 seam) calls the export. The
+    # I87 opt-in is deliberately owned by the higher-level Python adapter, not
+    # by the TL13 seam or a lower observation consumer.
     for path in sorted((REPO_ROOT / "gym_envs").rglob("*.py")):
         assert _EXPORT_SYMBOL not in path.read_text(encoding="utf-8"), (
             f"{path.relative_to(REPO_ROOT).as_posix()} references the export; the "
-            "TL13 seam and its consumers must stay unchanged in this slice"
+            "TL13 seam and its consumers must stay unchanged"
+        )
+
+    # (4) I87 has exactly one Python call site: the adapter's construction-time
+    # opt-in. Keeping this assertion narrow makes the default-off describe count
+    # and the single-facade ownership boundary visible to the architecture gate.
+    adapter_path = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
+    adapter_text = adapter_path.read_text(encoding="utf-8")
+    adapter_tree = ast.parse(adapter_text)
+    adapter_calls = [
+        node
+        for node in ast.walk(adapter_tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "getattr"
+        and len(node.args) >= 2
+        and isinstance(node.args[1], ast.Constant)
+        and node.args[1].value == _EXPORT_SYMBOL
+    ]
+    assert len(adapter_calls) == 1, (
+        "I87 must read the maintained ObservationViewSpec export exactly once "
+        "through RuntimeFacadeAdapter construction"
+    )
+    for path in sorted((REPO_ROOT / "python" / "rl").rglob("*.py")):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        text = path.read_text(encoding="utf-8")
+        if rel == "python/rl/runtime/world_batch/adapter.py":
+            continue
+        assert _EXPORT_SYMBOL not in text, (
+            f"{rel} references {_EXPORT_SYMBOL!r}: keep the I87 export read in "
+            "the adapter construction boundary"
         )
 
 

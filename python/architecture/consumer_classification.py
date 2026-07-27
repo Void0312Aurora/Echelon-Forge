@@ -73,11 +73,11 @@ observation/reward consumers that are not yet registered in
 either direction, so a new observation/reward consumer cannot be classified
 without either carrying a G4 declaration or growing the pinned pending list in
 a reviewable diff. The two world-batch consumers the I63/I76 slices recorded as
-pending were settled in a follow-up (this iteration): both now carry G4
-declarations and are registered declared-but-deferred consumers, so the pinned
-pending set is empty. The pin machinery stays load-bearing for the next
-unregistered consumer. Read migration remains out of scope (no production read
-migration in the classifier slices).
+pending were first registered with G4 declarations, then I87 routed their x/y
+leaf reads through the injected declared-view owner. They are now converged
+consumers and correctly have no raw-reader classification rows; the pinned
+pending set remains empty. The pin machinery stays load-bearing for the next
+unregistered consumer.
 
 This module is import-time stdlib-only and imports nothing from ``gym_envs`` or
 ``python.rl``; the pure validator below takes every repo fact as a parameter so
@@ -165,14 +165,6 @@ MAINTAINED_TRUTH_READER_CLASSIFICATION: dict[str, str] = {
     # create a python.rl -> gym_envs reverse dependency).
     "python.rl.tasking.leader_tasking": COMMAND_ACTION_LOADING_READER,
 
-    # G4-registered declared-but-deferred world-batch observation consumers
-    # (declared in the T8 follow-up, this iteration, settling their I76 pending
-    # pins): batch execution / mission observation assembly reads own-ship truth
-    # x/y to build the ILS observation input. Their declarations include
-    # "P10 ObservationExport", which structurally pins these categories.
-    "python.rl.runtime.world_batch._vec_env_support": OBSERVATION_CONSUMER,
-    "python.rl.runtime.world_batch.observation_batching": OBSERVATION_CONSUMER,
-
     # Command / action / loading / behavior readers -- the legitimate
     # non-consumer truth readers the I63 register said a directory scan would
     # mislabel. None carries a G4 declaration; each category below is a
@@ -204,10 +196,12 @@ MAINTAINED_TRUTH_READER_CLASSIFICATION: dict[str, str] = {
 # stops being a classified unregistered consumer (registered, reclassified, or
 # no longer reading truth). Empty since the T8 follow-up (this iteration): the
 # two world-batch consumers the I76 slice pinned here now carry G4 declarations
-# and are registered in ``MAINTAINED_INFORMATION_LAYER_CONSUMERS``
-# (declared-but-deferred). The pin machinery stays: a future classified
-# observation/reward consumer without a declaration must grow this tuple in a
-# reviewable diff, and the gate's tamper rehearsals keep both directions red.
+# and are registered in ``MAINTAINED_INFORMATION_LAYER_CONSUMERS``. I87 moves
+# their leaf reads behind the injected declared observation-view owner, so they
+# no longer appear in this raw-reader classification. The pin machinery stays:
+# a future classified observation/reward consumer without a declaration must
+# grow this tuple in a reviewable diff, and the gate's tamper rehearsals keep
+# both directions red.
 G4_DECLARATION_PENDING_CONSUMERS: tuple[str, ...] = ()
 
 

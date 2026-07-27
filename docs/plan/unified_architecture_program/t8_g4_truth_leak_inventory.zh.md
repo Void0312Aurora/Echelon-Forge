@@ -12,7 +12,9 @@
 基线提交：`0aa76a00`
 
 状态：[统一架构计划](README.zh.md)的 T8（信息状态架构）登记册。它记录：(a) 维护面观测/奖励消费者普查；(b) G4 层声明机制的落地范围；(c) 策略路径上的 World Truth 直读，逐条裁定。参照
-[SCAL 一致性普查](scal_conformance_census_20260720.zh.md)先例，本文为描述性登记册（`reference`）：不改变任何运行期行为。第一切片落地了 G4 声明机制（纯元数据加一个架构测试）并清点了真值泄漏，未关闭任何一条。**第二切片（§6，2026-07-21）** 在 TL13 读取 seam 上物化一个声明式观察视图，并将八个已声明消费者迁移到经其读取，从结构上收敛 11 条已声明泄漏；该迁移是把裸读纯机械地搬入一个带层标注的 owner，数值结果 bit-for-bit 不变。收敛一条泄漏意味着消费者不再读原始 World Truth：其读取经声明式视图 owner，并在此翻转其裁定。**第三切片（§7，2026-07-21）** 裁定并声明剩余五个推迟消费者（C11–C14、C19；TL14–TL16、TL20）：每个现携带 G4 声明（其信息状态层与语义阶段）。独立评审修复轮（§7.5）中，leader 观测产出者（C13）另被迁移到声明式视图——其本机读取与 `own_ship_field` 逐 token 同构，且与 fae17eb8 基线函数的逐元素数值 parity 由新聚焦测试钉住——将 TL15 翻转为*收敛*；C11/C12/C14/C19 按各自裁定保留读取（*已声明但未收敛*，宁缺毋滥）。声明为纯元数据（零行为变更）；C13 迁移为机械读取搬迁，parity 已钉住。**第四切片（§8，I60）** 把维护视图的声明变为运行期可查询的事实：C++ 运行期 facade 经 `RuntimeFacade::describe_maintained_observation_view` 导出该视图的*结构性声明*（view id + 产出/消费层 + 语义阶段），并由一致性门钉住到 Python 单一真源。这导出的是声明、不是数据——TL13 seam 的返回 bit 级不变，尚无消费者读取类型化 spec。**第五切片（§9，I63）** 仅文档 + 测试：将本登记册对 I60 收账，并加固三个 G4 门之间的缝隙（一个"确经视图读取"正向门、一个清单↔代码漂移门、一个奖励面逃逸口扫描），同样零行为变更。**第六切片（§10，I76 + 本迭代记录的后续）** 关闭 §9.2 曾登记为开放的观测面逃逸口——I76 落地了逐文件维护真值读取者分类器及其门，后续则把该分类器钉为"声明待办"的两个 world-batch 消费者收账（声明为纯元数据；零行为变更）。
+[SCAL 一致性普查](scal_conformance_census_20260720.zh.md)先例，本文为描述性登记册（`reference`）：不改变任何运行期行为。第一切片落地了 G4 声明机制（纯元数据加一个架构测试）并清点了真值泄漏，未关闭任何一条。**第二切片（§6，2026-07-21）** 在 TL13 读取 seam 上物化一个声明式观察视图，并将八个已声明消费者迁移到经其读取，从结构上收敛 11 条已声明泄漏；该迁移是把裸读纯机械地搬入一个带层标注的 owner，数值结果 bit-for-bit 不变。收敛一条泄漏意味着消费者不再读原始 World Truth：其读取经声明式视图 owner，并在此翻转其裁定。**第三切片（§7，2026-07-21）** 裁定并声明剩余五个推迟消费者（C11–C14、C19；TL14–TL16、TL20）：每个现携带 G4 声明（其信息状态层与语义阶段）。独立评审修复轮（§7.5）中，leader 观测产出者（C13）另被迁移到声明式视图——其本机读取与 `own_ship_field` 逐 token 同构，且与 fae17eb8 基线函数的逐元素数值 parity 由新聚焦测试钉住——将 TL15 翻转为*收敛*；C11/C12/C14/C19 按各自裁定保留读取（*已声明但未收敛*，宁缺毋滥）。声明为纯元数据（零行为变更）；C13 迁移为机械读取搬迁，parity 已钉住。**第四切片（§8，I60）** 把维护视图的声明变为运行期可查询的事实：C++ 运行期 facade 经 `RuntimeFacade::describe_maintained_observation_view` 导出该视图的*结构性声明*（view id + 产出/消费层 + 语义阶段），并由一致性门钉住到 Python 单一真源。这导出的是声明、不是数据——TL13 seam 的返回 bit 级不变；I60 落地时尚无消费者读取类型化 spec，I87 候选是首个受限消费者。**第五切片（§9，I63）** 仅文档 + 测试：将本登记册对 I60 收账，并加固三个 G4 门之间的缝隙（一个"确经视图读取"正向门、一个清单↔代码漂移门、一个奖励面逃逸口扫描），同样零行为变更。**第六切片（§10，I76 + 本迭代记录的后续）** 关闭 §9.2 曾登记为开放的观测面逃逸口——I76 落地了逐文件维护真值读取者分类器及其门，后续则把该分类器钉为"声明待办"的两个 world-batch 消费者收账（声明为纯元数据；零行为变更）。
+
+**第七切片（I87 候选，2026-07-27；待独立评审）** 刻意小于此前开放的完整类型化迁移：仅 C3/C20 消费既有 facade `ObservationViewSpec`。显式构造期 opt-in 从同一 facade 只读并结构准入一次；默认关闭时 describe 次数为零。空 required/optional 清单仅表示*结构性声明*，既不是 wildcard，也不是零字段。两个 Python `truth.x/y` 叶读改由高层注入的 `gym_envs.observation_view.own_ship_attr` reader 承担，而 opaque truth 对象仍原样传入编译内核。TL13 seam 与 `_ScenarioLoaderRuntimeProxy` 均不扩面。本段只记录候选，不表示已接受/已落地。
 
 全文使用的 G4 词汇即
 [仿真系统架构设计](../architecture/simulation_system_architecture_design.md)§3 的权威六层信息状态集合，逐字沿用 `python/rl/runtime/world_batch/core.py` 中 I32 阶段契约白名单（由 `tests/world_batch/test_world_batch_core.py` 钉住）：World Truth、Sensed State、Track State、Shared Tactical Picture、Agent Observation、Decision Belief。
@@ -35,14 +37,14 @@
 |---|--------|--------------|-------|--------------|
 | C1 | `gym_envs/scenario_loader/mission_observation.py` —— Python 自持模式（`naval_screen_station_v1`、`air_combat_c2_roe_v1/v2`） | `truth.contacts`、`truth.missiles_remaining`、`truth.x/y`；support `get_agent_observation`/`get_unit_position`；support `get_unit_messages` | 消费 World Truth + Shared Tactical Picture；产出 Agent Observation | **本切片已收敛**（§6；经声明视图；原 V4 泄漏） |
 | C2 | `gym_envs/scenario_loader/mission_observation.py` —— 编译模式（`basic`/`nav_v1`/`nav_v2`/…） | 由 `mission_command_view` + 航路引导编译 `ef_py.compute_mission_observation`（truth 传入） | 产出 Agent Observation（编译） | 编译 facade 路径；由 C1 模块声明覆盖 |
-| C3 | `python/rl/runtime/world_batch/observation_batching.py` + `_observation_mixin.py` | `state.last_truth`/`state.last_inst`（truth/仪表缓存）、`truth.x/y`、`inst.alt_baro` → 编译批 | 消费 World Truth（缓存）→ 产出 Agent Observation；P10 ObservationExport | **是** —— I32 阶段契约（`state_read`/`observation_build`）；**已声明（§10 后续）**—— 已登记模块级 G4 声明；读取保留在 I32 缓存 truth 批契约上 —— 已声明但未收敛 |
+| C3 | `python/rl/runtime/world_batch/observation_batching.py` + `_observation_mixin.py` | `state.last_truth`/`state.last_inst`（truth/仪表缓存）、注入的本机 x/y reader、`inst.alt_baro` → 编译批 | 消费 World Truth（缓存）→ 产出 Agent Observation；P10 ObservationExport | **I87 候选（待评审）**—— 默认关闭保持 I32 路径；opt-in 构造时只准入一次结构性 `ObservationViewSpec`，x/y 经高层声明视图 reader；opaque truth 仍作为 whole-object 内核输入；新增 parity 与零裸叶读门 |
 | C4 | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | `truth.missiles_remaining`；`sim.export_recent_engagement_events`；`sim.debug_get_aircraft_damage_state`/`debug_get_ground_contact_state`；`sim.is_unit_active` | 消费 World Truth；产出奖励 | **本切片已收敛**（§6；经声明视图；原 V5 泄漏） |
 | C5 | `gym_envs/scenario_loader/reward_runtime/naval.py` | `truth.x/y`、`truth.contacts`；`sim.get_unit_position`/`get_agent_observation`（他体单位）；`sim.get_unit_messages` | 消费 World Truth + Shared Tactical Picture；产出奖励 | **本切片已收敛**（§6；经声明视图；原 V6 泄漏） |
 | C6 | `gym_envs/scenario_loader/reward_runtime/safety.py` | 本机 `truth.health/z/pitch/speed` | 消费 World Truth；产出奖励输入 | **本切片已收敛**（§6；本机经声明视图读） |
 | C7 | `gym_envs/scenario_loader/reward_runtime/shaping_inputs.py` | 本机 `truth.z/speed` + 仪表向量 | 消费 World Truth；产出奖励输入 | **本切片已收敛**（§6；本机经声明视图读） |
 | C8 | `gym_envs/scenario_loader/reward_runtime/objectives.py` | 本机 `truth.z/health/heading/x/y/missiles_remaining`；目标 `truth.contacts`、`sim.is_unit_active`/`get_unit_health` | 消费 World Truth；产出奖励/目标输入 | **本切片已收敛**（§6；本机 + 目标经声明视图读） |
 | C9 | `gym_envs/scenario_loader/reward_runtime/compiled_runtime.py` | 组装预构建输入 DTO；无直接信息层读取 | —（组装器，非直接消费者） | 不适用 —— 排除出注册表 |
-| C10 | `gym_envs/scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state`（批路径上为 facade 背书代理） | World Truth 读取 seam 本身（V3） | 维护 seam；声明式观察视图（§6）现从该 seam 的 `truth`/`sim` 输出读取；完整类型化 `ObservationViewSpec` facade 导出仍为后续步骤 |
+| C10 | `gym_envs/scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state`（批路径上为 facade 背书代理） | World Truth 读取 seam 本身（V3） | 维护 seam；声明式观察视图（§6）从该 seam 的 `truth`/`sim` 输出读取；I87 候选只在更高层 adapter 读取导出的结构性 spec，本 seam 不变 |
 | C11 | `gym_envs/scenario_loader/step_evaluation.py` | 本机 `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health`；编排奖励面 | 消费 World Truth（本机）；跨阶段捆绑聚合器（V7）；P10 ObservationExport | **已声明（§7）**；读取保留（编排器捆绑 DTO，非叶读）—— 已声明但未收敛（TL14） |
 | C12 | `gym_envs/scenario_loader/execution_runtime/mainline.py` | 本机 `truth.z/x/y/vx/vy`；编排执行步；奖励/观测经 loader | 消费 World Truth（本机）；执行步控制器；P10 ObservationExport | **已声明（§7）**；读取保留（编排器）—— 已声明但未收敛 |
 | C13 | `gym_envs/leader_env_parts/decision_runtime/observations.py::build_observation` | 主要为 `inst.*`；本机 x/y 用于 ILS/跑道/锚点几何；nav 委派给 `get_mission_observation` | 消费 World Truth（位置）；产出 Agent Observation；P10 ObservationExport | **已收敛（§7.5 修复轮）**—— 本机读取经 `observation_view.own_ship_field`；受禁令门；parity 由 `tests/leader/test_leader_observation_view_parity.py` 钉住 |
@@ -52,9 +54,9 @@
 | C17 | `gym_envs/universal_env_parts/observations.py::build_universal_observation` —— 活跃的通用策略观测组装，由 `CooperativeWorldBatchVecEnv` 与 `MultiAgentWorldRuntimeView` 调用 | `truth.x/y`（ILS 查询）、`truth.contacts`、`truth.rwr_warnings`（Python 回退路径）；编译路径将 `truth` 传入 `ef_py.compute_execution_observation_runtime_numpy`；mission 向量委派给 `get_mission_observation` | 消费 World Truth；产出 Agent Observation | **本切片已收敛**（§6；经声明视图；修复轮加入） |
 | C18 | `gym_envs/scenario_loader/navigation_runtime/waypoint_rewards.py::build_waypoint_step_state` —— 直接的航点奖励输入消费者，由 `step_evaluation.py`/`execution_runtime/mainline.py` 经 `loader._build_waypoint_step_state` 调用 | 本机 `truth.x/y`（到点距离与航路参考点）；构造 `ef_py.WaypointRewardInputs` | 消费 World Truth；产出奖励输入 | **本切片已收敛**（§6；本机经声明视图读；修复轮加入） |
 | C19 | `gym_envs/scenario_loader/navigation_runtime/guidance.py` —— 共享航路引导几何辅助（`query_route_guidance_result`、`compute_waypoint_guidance_state`、`apply_waypoint_guidance_update` 等） | 本机 `truth.x/y/speed`（航路引导几何；`get_policy_agent_observation` 回退） | 消费 World Truth（本机）；跨越指令下发（P3/P4 自动驾驶目标）+ 奖励支撑（P10）；非单一面向 Agent Observation 的消费者 | **已声明（§7）**；迁移待一个指令/引导读取 owner（观察视图不是指令下发读取的正确 owner）—— 已声明但未收敛（TL20） |
-| C20 | `python/rl/runtime/world_batch/_vec_env_support.py::_execution_instrument_vector` —— vec-env 执行观测支撑辅助（批路径上的逐 agent 仪表向量构建） | 本机 `truth.x/y`（ILS 查询）；`truth` 随后传入 `ef_py.compute_execution_observation_runtime_numpy` | 消费 World Truth（缓存）；产出 Agent Observation；P10 ObservationExport | **已声明（§10 后续）**；读取保留在 I32 缓存 truth 批契约上 —— 已声明但未收敛 |
+| C20 | `python/rl/runtime/world_batch/_vec_env_support.py::_execution_instrument_vector` —— vec-env 执行观测支撑辅助（批路径上的逐 agent 仪表向量构建） | 注入的本机 x/y reader（ILS 查询）；opaque `truth` 随后传入 `ef_py.compute_execution_observation_runtime_numpy` | 消费 World Truth（缓存）；产出 Agent Observation；P10 ObservationExport | **I87 候选（待评审）**—— 与 C3 共用构造期结构准入与默认关闭 parity；下层不新增 `gym_envs` owner import |
 
-已收敛到声明式观察视图：C1、C4、C5、C6、C7、C8、C17、C18（第二切片 §6；C17/C18 于第一切片修复轮加入），另加 C13（第三切片修复轮 §7.5）——即 `VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS` 中的九个模块。已声明但读取尚未收敛（已声明但未收敛，位于 `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`）：C11、C12、C14、C19（第三切片 §7），另加 C3 与 C20（world-batch 批观测路径，§10 后续）。`MAINTAINED_INFORMATION_LAYER_CONSUMERS` 为这两个集合的并集（15 个已声明消费者）。C3 此前在此仅以 I32 阶段契约记录为"已合规"；§10 后续在其上补齐了模块级 G4 声明。作为非消费者排除：C9。死路径：C16。维护策略路径之外：C15。
+已收敛到声明式观察视图：C1、C4、C5、C6、C7、C8、C17、C18（第二切片 §6；C17/C18 于第一切片修复轮加入），另加 C13（第三切片修复轮 §7.5）。已声明但读取尚未收敛（位于 `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`）：C11、C12、C14、C19（第三切片 §7）。I87 候选通过注入 reader 与零裸叶读门把 C3/C20 移入收敛集合；权威接受状态仍待独立评审。`MAINTAINED_INFORMATION_LAYER_CONSUMERS` 仍为声明集合之并集。C3 此前仅由 I32 阶段契约记录为"已合规"，§10 先补齐模块级 G4 声明，I87 候选再交付受限数据流试点。作为非消费者排除：C9。死路径：C16。维护策略路径之外：C15。
 
 ## 3. 真值泄漏清单
 
@@ -74,7 +76,7 @@
 | TL10 | `reward_runtime/safety.py::build_safety_runtime_inputs` | 本机 `truth.health/z/pitch/speed` | **收敛**（声明视图） | C6。经 `observation_view.own_ship_field` 读取；本机自读，低风险。 |
 | TL11 | `reward_runtime/shaping_inputs.py::build_flight_shaping_runtime_inputs` | 本机 `truth.z/speed` | **收敛**（声明视图） | C7。经 `observation_view.own_ship_field` 读取；本机自读，低风险。 |
 | TL12 | `reward_runtime/objectives.py::build_conditional_objective_inputs`、`_combat_target_snapshot` | 本机 `truth.z/health/heading/x/y/missiles_remaining`；目标 `truth.contacts` 距离、`sim.is_unit_active`/`get_unit_health(target)` | **收敛**（声明视图） | C8。本机经 `own_ship_field`；目标 `truth.contacts` 经 `contacts`；`sim.is_unit_active`/`get_unit_health` 经 `unit_active`/`unit_health`。 |
-| TL13 | `scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state`（批路径上为 facade 背书代理） | **豁免**（维护 seam） | V3。唯一的维护读取瓶颈；批路径上 `sim` 为 `_ScenarioLoaderRuntimeProxy`（facade 背书）。声明式观察视图（§6）从该 seam 的 `truth`/`sim` 输出读取。**已落地（§8，I60）：** 维护视图的*结构性声明*（view id + 产出/消费层 + 语义阶段）现经 C++ 运行期 facade `RuntimeFacade::describe_maintained_observation_view` 导出，并由一致性门（`tests/architecture/information_state/test_g4_observation_view_export.py`）钉住到 Python 单一真源。这导出的是声明、非数据流：seam 返回不变、消费者不读类型化 `ObservationViewSpec`——类型化数据流迁移仍为后续步骤（§5），故本裁定保持 *exempt-as-seam*。 |
+| TL13 | `scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state`（批路径上为 facade 背书代理） | **豁免**（维护 seam） | V3。唯一的维护读取瓶颈；批路径上 `sim` 为 `_ScenarioLoaderRuntimeProxy`（facade 背书）。声明式观察视图（§6）从该 seam 的 `truth`/`sim` 输出读取。**已落地（§8，I60）：** 结构性声明经 C++ facade 导出并由一致性门钉住；I87 候选只在 adapter 构造时为 C3/C20 消费该声明，seam 返回与 proxy 表面不变，故本裁定保持 *exempt-as-seam*。 |
 | TL14 | `scenario_loader/step_evaluation.py`（`build_execution_runtime_state`、奖励输入组装） | 本机 `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health` | **已声明但未收敛**（本机，聚合器） | V7（C11）。2026-07-21 声明（§7）：CONSUMED World Truth，PRODUCED ()，阶段 P10 ObservationExport（I32 闭合；§7.5 修复中移除 P9）。读取保留、未收敛：跨阶段捆绑编排器，组装奖励/观测输入 DTO，非叶观测读取面。 |
 | TL15 | `leader_env_parts/decision_runtime/observations.py::build_observation` | 本机 x/y（ILS/跑道/锚点几何） | **收敛**（声明视图；§7.5 修复轮） | C13。2026-07-21 声明（§7）：CONSUMED World Truth，PRODUCED Agent Observation，阶段 P10 ObservationExport。§7.5 修复轮收敛：本机读取经 `observation_view.own_ship_field`（对 `getattr(truth, "x"/"y", 0.0)` 的逐 token 同构替换）；受禁令门；与 fae17eb8 基线的逐元素 parity 由 `tests/leader/test_leader_observation_view_parity.py` 钉住（含无 x/y 默认值触发场景与视图缝损坏红证）。 |
 | TL16 | `python/rl/tasking/leader_tasking.py`（多处） | `get_policy_agent_observation`/`get_policy_instrument_state` | **已声明但未收敛**（脚本指挥） | C14。2026-07-21 声明（§7）：CONSUMED World Truth，PRODUCED ()，阶段 P2 TaskingIntent + P3 CommandDelivery。裁定为维护式条令（脚本化 C2/leader 指挥合法消费本机 truth），非仅诊断。声明中立（`python.architecture`），但迁移会将 `python.rl` 读取经 `gym_envs.observation_view` 路由，引入 `python.rl`→`gym_envs` 反向依赖——禁止。 |
@@ -92,11 +94,11 @@
 | 豁免 —— 由声明/seam 合法化 | 4 | TL3、TL9、TL13、TL17 |
 | 诊断 —— 合法诊断用途 | 1 | TL6 |
 
-12 条收敛条目即九个收敛消费者的叶读（TL1、TL2、TL4、TL5、TL7、TL8、TL10、TL11、TL12 位于 C1/C4/C5/C6/C7/C8，TL18 位于 C17、TL19 位于 C18，另加 §7.5 修复轮起 TL15 位于 C13），现经声明式观察视图 owner（`gym_envs/observation_view.py`）读取，而非原始 World Truth。3 条"已声明但未收敛"为聚合器/指挥/引导路径（TL14、TL16、TL20）：每条携带 G4 声明（§7），但因 §7 所裁定的理由保留其裸读（编排器捆绑 DTO；`python.rl`→`gym_envs` 反向依赖禁令；指令/引导读取 owner 尚未构建）。"已声明"不等于"收敛"：声明为纯元数据，故这三条路径在结构上仍读原始 World Truth，直至后续切片将其收敛——但维护面已不再有*未声明*的泄漏。豁免/诊断读取（TL3、TL6、TL9、TL13、TL17）保持裁定；凡位于已迁移消费者上者，为一致性经视图的 Shared Tactical Picture / 诊断面路由。第四切片（§8，I60）已把维护视图的*结构性声明*从 C++ facade 导出（一致性门钉住），但在 TL13 seam 处把 seam 返回本身变为类型化 `ObservationViewSpec` *数据流*导出（令 seam 返回类型化 spec 且消费者经其读取字段）仍为后续步骤（§5）。
+12 条历史收敛条目仍指既有消费者的叶读；I87 候选另为 C3/C20 增加受限的注入 reader 路径（候选状态待评审）。3 条"已声明但未收敛"为聚合器/指挥/引导路径（TL14、TL16、TL20），因 §7 裁定理由保留裸读。豁免/诊断读取（TL3、TL6、TL9、TL13、TL17）保持裁定。I60 导出的结构性声明现被 I87 候选在 adapter 构造边界消费；TL13 seam 本身不变，更广泛类型化数据流仍是 §5 后续工作。
 
 ## 5. 后续切片（本切片未做）
 
-- 把观测*数据流*迁移到类型化 `ObservationViewSpec` 导出上。第四切片（§8，I60）已在 TL13 seam 落地*结构性声明*导出——C++ facade 现导出视图的 view-id / 产出 / 消费层 / 语义阶段，并对 Python 单一真源做一致性钉住——但这是声明、非数据：seam 仍返回原始 `truth`/`sim`，消费者仍经 §6 读取视图读取。把它变为类型化数据流（seam 返回类型化 spec 对象、消费者经其读取字段，并退役原始 `truth`/`sim` 读取视图）是一个跨切面的大迁移，由 WP4 协调，非 T8 本地步骤。
+- 在 I87 C3/C20 候选之外继续完成观测*数据流*迁移。I60 已落地结构性导出，I87 消费该声明但不改变 TL13 返回或详细字段目录；让 seam 本身返回带字段的类型化视图、或退役 opaque `truth`/`sim` whole-object 传递，仍是由 WP4 协调的大型迁移，非本候选范围。
 - 将已声明但未收敛的消费者（§7）按其裁定的阻断项收敛到视图：
   - C19（TL20）：构建一个指令/引导读取 owner（观察视图的对等物）承接指令下发读取，再将奖励支撑读取收敛到观察视图。
   - C11/C12（TL14）：当奖励/观测输入 DTO 组装能在不扰动编译运行时的前提下从视图取本机读取时，收敛聚合器的本机读取。
@@ -200,18 +202,18 @@ C13 已迁移（§7.5）：其本机 x/y 读取与 `own_ship_field` 逐 token �
 - **单一真源策略。** 只有*结构性事实*被镜像进 C++。详细观测字段目录保持 Python 自持——导出的 `required_fields` / `optional_fields` 刻意留空——故不存在会漂移的双源字段清单。
 - **写集（I60）。** 声明 `src/runtime/facade/runtime_facade.h`；实现 `src/runtime/facade/runtime_facade_query.cpp`；绑定 `src/interfaces/python/bindings_runtime.cpp`；DTO 模式 `src/runtime/contracts/detail/observation_view_spec.inc`（及其生成的 builder/schema）；以及 `python/architecture/information_layer.py` 中的可选一致性辅助（`read_maintained_observation_view_export`、`observation_view_export_parity_violations`、`OBSERVATION_VIEW_EXPORT_LAYER_ATTRS`；既有元组 `MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS`——由 §6 视图切片（I50）新增——为 I60 所复用、非新增）。这些辅助把 `ef_py` import 保持在函数内，故 `information_layer.py` 在导入期仍仅依赖标准库，AST G4 门无需构建即可运行。
 
-### 8.2 一致性 + 零接线门
+### 8.2 一致性 + 受限接线门
 
 `tests/architecture/information_state/test_g4_observation_view_export.py`：
 
 - **导出一致性（单一真源）。** C++ 导出与 Python 注册表声明逐项相等（含顺序），且仅用权威六层 / P0–P10 词汇。纯一致性校验器（`observation_view_export_parity_violations`）可承载：在每个被镜像维度注入漂移都会变红。
 - **确定性。** 导出是纯常量产出者——跨重复调用、跨不同 world 数的 facade 均一致——故不读任何 facade 实例状态，不会与运行行为耦合（或扰动）。
-- **零接线。** 导出符号仅出现在其声明 / 实现 / 绑定处；没有任何维护 C++ 导出路径、也没有任何 Python 消费者（含 TL13 seam）调用它，故 seam 的返回 bit 级不变。
-- 依赖 `ef_py` 的一致性/取值测试在无本地构建时跳过（沿用仓库约定）；可承载与零接线测试为纯文本/AST，始终运行。
+- **受限接线。** 没有维护 C++ 路径或 `gym_envs`/TL13 consumer 调用导出；I87 候选仅在 `RuntimeFacadeAdapter` 构造期增加一个 Python call site。默认关闭时 describe 为零次，opt-in 从同一 facade 只读一次并缓存结构性准入结果。
+- 依赖 `ef_py` 的一致性/取值测试在无本地构建时跳过（沿用仓库约定）；可承载与接线边界测试为纯文本/AST，始终运行。
 
 ### 8.3 范围边界（导出不等于迁移）
 
-导出是*声明*、非*数据流*。TL13 保持 **豁免（维护 seam）**：seam 仍返回原始 `truth`/`sim`，已迁移消费者仍经 §6 读取视图读取，类型化数据流迁移（消费者经类型化 spec 读取字段）相较 §5 开放清单不变。
+导出是结构性声明、非字段目录。TL13 保持 **豁免（维护 seam）**：seam 仍返回原始 `truth`/`sim`。I87 候选为 C3/C20 准入该声明并注入既有 §6 reader；更广泛类型化字段流仍在 §5 开放清单。
 
 ## 9. 第五切片：登记册收账与门网加固（I63，2026-07-26）
 
@@ -260,29 +262,29 @@ AST 扫描该面并双向强制注册表↔代码一致——注入的未注册�
 `python/rl/runtime/world_batch/_vec_env_support.py` 与
 `python/rl/runtime/world_batch/observation_batching.py`。
 
-### 10.2 声明待办收账（本迭代）
+### 10.2 声明待办收账（I76 后续，历史记录）
 
-本迭代对这两个钉收账——仅声明、零行为变更（模块级常量加注释；不移动、不改动任何读取）：
+I76 后续先以声明方式收账；下方的 I87 候选才是这两个模块的受限读取迁移：
 
 - 两个 world-batch 模块现均声明 `INFORMATION_LAYER_CONSUMED = ("World
   Truth",)`、`INFORMATION_LAYER_PRODUCED = ("Agent Observation",)`、
   `SEMANTIC_STAGE = ("P10 ObservationExport",)` —— 镜像它们本已在其下执行的
   I32 批步阶段契约（`python/rl/runtime/world_batch/core.py` 中的
   `state_read` / `observation_build`），并与 §2 记录的 C3 普查裁定一致。
-- 两者均注册进 `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`
-  （受声明门、不受禁令门）：读取保留、未收敛到视图。批路径按 I32 阶段契约消费
-  逐 state 缓存 truth（`state.last_truth`），而非逐 loader 观察视图；是否收敛
-  是后续裁定。
+- 在 I76 历史快照中，两者均注册进 `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`
+  （受声明门、不受禁令门）；I87 候选随后将它们移入收敛集合。当前候选通过
+  注入 reader 消费逐 state 缓存 truth（`state.last_truth`），而非新增逐 loader
+  观察视图或 lower-layer owner import。
 - `G4_DECLARATION_PENDING_CONSUMERS` 清空。钉机制保留：分类器门的篡改排演现
   针对内存内篡改注册表运行（把已分类消费者移出注册且无钉则变红；陈旧钉变红），
   并新增一个测试钉住收账后的状态本身
   （`test_pending_pin_is_settled_and_world_batch_consumers_are_registered`）。
 
 普查更新：C3 的"经声明视图？"单元格记录该声明（§2），新增 C20 行覆盖
-`_vec_env_support.py`（I76 前的普查未将其单列为消费者）。无泄漏裁定变化：两个
-模块此前已在 I32 阶段契约下合规；声明只是把 G4 在模块级挑明，不移动任何读取。
+`_vec_env_support.py`（I76 前的普查未将其单列为消费者）。I87 候选在保留 I32
+阶段契约的前提下移动 x/y 叶读到高层注入 reader；其接受状态仍待独立评审。
 
-### 10.3 验证（零行为变更）
+### 10.3 I76 收账验证（零行为变更）
 
 - `tests/architecture/information_state` —— 全套门在翻转后的钉下通过：有本地
   构建时 79 passed（I63 后为 61，I76 的 +13 分类器测试后为 74；本后续新增 +2
@@ -296,6 +298,14 @@ AST 扫描该面并双向强制注册表↔代码一致——注入的未注册�
 - 双语哈希治理门会因本登记册被编辑而变红，直到重新生成簇哈希；该刷新在落地侧
   （`translate_docs_batch.py clusters --write --pair
   plan/unified_architecture_program/t8_g4_truth_leak_inventory`）。
+
+### 10.4 I87 受限类型化观测候选（2026-07-27；待评审）
+
+候选实现严格限制在 C3/C20：
+
+- `RuntimeFacadeAdapter(use_typed_observation_view=True)` 从自身 facade 在构造期读取 `describe_maintained_observation_view()` 一次，并只准入 view id `gym_envs.observation_view`、schema major `1`、声明的产出/消费层与 `P10 ObservationExport`。任一非空 `required_fields` 或 `optional_fields` 都 fail-closed；空清单仅为结构性声明，不是 wildcard 或零字段。默认路径 describe 为零次。
+- 高层 `WorldBatchVecEnv` 与 cooperative caller 将 `gym_envs.observation_view.own_ship_attr` 注入 C3/C20。下层 `python.rl.runtime.world_batch` 不新增 owner import，也不再裸读 `truth.x/y`；opaque truth 对象仍传入编译内核。`_ScenarioLoaderRuntimeProxy` 与 TL13 seam 不变。
+- 聚焦测试钉住构造次数、全部结构失配、空/非空字段语义、opaque-truth 转发、off/on parity、注入 reader 与零裸叶读门。本段仅为候选证据，不标记权威登记册已接受。
 
 ## 相关
 

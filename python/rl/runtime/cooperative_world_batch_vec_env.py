@@ -16,6 +16,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 import ef_py
 
+from gym_envs import observation_view
 from gym_envs.scenario_loader import (
     ScenarioLoader,
     normalize_execution_step_runtime_mode,
@@ -272,6 +273,12 @@ class CooperativeWorldBatchVecEnv(VecEnv):
     def _batch_visual_backend_mode(self) -> str:
         return resolve_batch_visual_backend_mode(self.batch_visual_backend)
 
+    @staticmethod
+    def _observation_own_ship_field_reader(truth: Any, field: str) -> Any:
+        """Inject the declared observation-view owner into the shared C3 builder."""
+
+        return observation_view.own_ship_attr(truth, field)
+
     def _slot_refs(self, slot_indices: list[int]) -> list[Any]:
         refs: list[Any] = []
         for slot_index in slot_indices:
@@ -506,6 +513,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             backend=backend,
             allow_device_export=False,
             torch_bridge_enabled=False,
+            observation_view_spec=self._runtime_adapter.typed_observation_view_spec,
+            own_ship_field_reader=self._observation_own_ship_field_reader,
         )
         inst_batch = obs_batch_data.inst_batch
         truth_batch = obs_batch_data.truth_batch
