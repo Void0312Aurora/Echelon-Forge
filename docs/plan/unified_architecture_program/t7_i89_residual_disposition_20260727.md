@@ -9,7 +9,7 @@ Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/t7_i89_residual_disposition_20260727.md`
 Owner: `unified architecture program workline`
 Last verified: `2026-07-27`
-Baseline commit: `b2cec611`
+Baseline commit: `a272fc04`
 
 Status: classification component of the I89 narrow repair pack for findings
 from the I88 final-residual-audit pass. The same I89 pack also owns the

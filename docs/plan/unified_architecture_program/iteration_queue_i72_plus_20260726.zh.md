@@ -9,7 +9,7 @@
 正本：`docs/plan/unified_architecture_program/iteration_queue_i72_plus_20260726.md`
 所有者：`unified architecture program workline`
 最后核验：`2026-07-27`
-基线与源落地 head：`93f1214c`
+基线与源落地 head：`a272fc04`
 
 状态：未落地的 2026-07-23 草案（`iteration_queue_i67_plus_20260723.md`）的重编号后继版，
 本文取代该草案。草案按 I61-I66 候选编号设计；该编号在 I61-I71 落地波登记时发生了变化。

@@ -9,7 +9,7 @@
 正本：`docs/plan/unified_architecture_program/t7_i89_residual_disposition_20260727.md`
 归属：`unified architecture program workline`
 最近核验：`2026-07-27`
-基线提交：`b2cec611`
+基线提交：`a272fc04`
 
 状态：I89 窄修复包中对 I88 最终残留审计首轮发现与保留面的分类组件。同一 I89 包另负责 `sensor_refs` 平价修复和 T8/T9 维护文档更正；本文既不提升任何 held 面，也不授权清理。本文本身不改变运行行为、生成物、工作树或 Git 元数据。
 

@@ -9,7 +9,7 @@ Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/iteration_queue_i72_plus_20260726.md`
 Owner: `unified architecture program workline`
 Last verified: `2026-07-27`
-Baseline and source landing head: `93f1214c`
+Baseline and source landing head: `a272fc04`
 
 Status: renumbered successor to the unlanded 2026-07-23 draft
 (`iteration_queue_i67_plus_20260723.md`), which this document supersedes. The
