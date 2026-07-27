@@ -14,7 +14,7 @@
 状态：未落地的 2026-07-23 草案（`iteration_queue_i67_plus_20260723.md`）的重编号后继版，
 本文取代该草案。草案按 I61-I66 候选编号设计；该编号在 I61-I71 落地波登记时发生了变化。
 I72-I85 现均 accepted/landed；I86 以带证据 held 收口；I87 为 accepted/landed。I88
-已作为第一轮终局审计执行并返回 findings；I89 现为活动中的窄修复包，I90 保持最后。后续 I96-I98 PR-bot 修复只登记入台账，
+已作为第一轮终局审计执行并返回 findings；I89 已接受/落地，I90 是最后的接受收口审计。后续 I96-I98 PR-bot 修复只登记入台账，
 不属于 I72-I90 编号映射；`727193b2` 是谱系 CI gate 的前置/核验修复，不是新迭代编号。
 
 ## 0. 编号说明
@@ -94,8 +94,8 @@ I41、I44、I54、I55、I57、I58、I59、I61、I62、I63）在落地时未变�
 | 迭代 | 轨道 | 交付物 | 启动门 | 退出证据 |
 |---|---|---|---|---|
 | I88（发现；clean 计数为 0） | T7 | 覆盖 T1-T11 代码、调用者、门、文档、held 项与工作树状态的终局审计第一轮。 | I72-I85 accepted/landed；I86 带证据 held；I87 accepted/landed。 | findings 已记入 [I89 残留裁定](t7_i89_residual_disposition_20260727.zh.md)；不计 clean。 |
-| I89（进行中） | T1-T11 | 仅修 I88 findings：有界 sensor-loader 平价、T8/T9 维护文档更正与残余分类。 | I88 有发现 | 将独立评审的风险切片组装为一个一致落地提交；完整受影响门与独立评审。 |
-| I90（最后；待执行） | T7 | 新 checkout 与匹配构建上的终局审计，并在修复后取得两轮 clean。 | I89 评审后无新改动 | 与 I89 裁定分类一致、无新发现、台账哈希完整、连续两轮干净。 |
+| I89（accepted/landed） | T1-T11 | 仅修 I88 findings：有界 sensor-loader 平价、T8/T9 维护文档更正与残余分类。 | I88 有发现 | 以 `a272fc04` 落地，独立评审 PASS，落地门禁全绿。 |
+| I90（最后；accepted） | T7 | 新 checkout 与匹配构建上的终局审计，并在修复后取得两轮 clean。 | I89 评审后无新改动 | [终局残余报告](t7_i90_final_residual_audit_20260727.zh.md)；无新发现、台账哈希完整、连续两轮干净。 |
 
 ## 5. 明确不排期 / held
 
@@ -113,6 +113,7 @@ I41、I44、I54、I55、I57、I58、I59、I61、I62、I63）在落地时未变�
 - [Exact Runtime 重构计划](../exact_runtime/cpp_exact_runtime_refactor_plan.zh.md)
 - [T6 残差台账](t6_residual_ledger.zh.md)
 - [I89 残留裁定](t7_i89_residual_disposition_20260727.zh.md)
+- [I90 终局残余审计](t7_i90_final_residual_audit_20260727.zh.md)
 - [T8 G4 真值泄漏登记](t8_g4_truth_leak_inventory.zh.md)
 - [T10 证据主干普查](t10_evidence_spine_census_20260721.zh.md)
 - [T11 内容流水线普查](t11_content_pipeline_census_20260721.zh.md)

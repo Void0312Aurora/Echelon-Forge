@@ -187,6 +187,7 @@ exact-runtime WP4/WP5 进展为门，不由本计划排期。
 ## 相关权威
 
 - [I89 残留裁定（2026-07-27）](t7_i89_residual_disposition_20260727.zh.md)（I88 findings 分类与 owner-gated held 面）
+- [I90 终局残余审计（2026-07-27）](t7_i90_final_residual_audit_20260727.zh.md)（T7 最终 clean 证据与 held 面收口边界）
 - [I72+ 迭代队列（2026-07-26）](iteration_queue_i72_plus_20260726.zh.md)（I61-I71 落地波次后的依赖序执行设计）
 - [仓库整合计划](../repository_consolidation/README.zh.md)（迭代台账与协议）
 - [exact runtime 重构计划](../exact_runtime/cpp_exact_runtime_refactor_plan.zh.md)
