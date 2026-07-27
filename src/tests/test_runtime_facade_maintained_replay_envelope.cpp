@@ -89,9 +89,9 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         CHECK(result.envelope.facade_provenance_ref.packet_ref ==
               window_result.observation_packet.provenance.observation_packet_ids.front());
         CHECK(result.envelope.facade_provenance_ref.packet_kind == "ObservationBatchPacket");
-        CHECK(result.envelope.facade_provenance_ref.information_state_source
-                  .observation_packet_ids ==
-              window_result.observation_packet.provenance.observation_packet_ids);
+        CHECK(
+            result.envelope.facade_provenance_ref.information_state_source.observation_packet_ids ==
+            window_result.observation_packet.provenance.observation_packet_ids);
         CHECK(result.envelope.facade_provenance_ref.information_state_source.source_label ==
               window_result.observation_packet.provenance.source_label);
 
@@ -187,8 +187,8 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         SUBCASE("missing observation packet provenance") {
             RuntimeWindowResult window_result = minted_window_result(minted);
             window_result.observation_packet.provenance.observation_packet_ids.clear();
-            const auto result = facade.build_maintained_replay_envelope(window_result, "run:x",
-                                                                        "episode:x", 7);
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason ==
                   "maintained_replay_envelope_observation_packet_provenance_missing");
@@ -196,8 +196,8 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         SUBCASE("missing engagement trace ids") {
             RuntimeWindowResult window_result = minted_window_result(minted);
             window_result.engagement_packet.trace_ids.clear();
-            const auto result = facade.build_maintained_replay_envelope(window_result, "run:x",
-                                                                        "episode:x", 7);
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason ==
                   "maintained_replay_envelope_engagement_trace_ids_missing");
@@ -209,8 +209,8 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
                 .sequence = 1,
                 .barrier_id = "export",
             });
-            const auto result = facade.build_maintained_replay_envelope(window_result, "run:x",
-                                                                        "episode:x", 7);
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason ==
                   "maintained_replay_envelope_window_commit_barrier_missing");
@@ -218,8 +218,8 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         SUBCASE("missing engagement producer node") {
             RuntimeWindowResult window_result = minted_window_result(minted);
             window_result.engagement_packet.producer_node_id.clear();
-            const auto result = facade.build_maintained_replay_envelope(window_result, "run:x",
-                                                                        "episode:x", 7);
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason ==
                   "maintained_replay_envelope_engagement_producer_node_missing");
@@ -227,11 +227,10 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         SUBCASE("non-finite window source time") {
             RuntimeWindowResult window_result = minted_window_result(minted);
             window_result.context.source_time_s = std::numeric_limits<double>::quiet_NaN();
-            const auto result = facade.build_maintained_replay_envelope(window_result, "run:x",
-                                                                        "episode:x", 7);
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
-            CHECK(result.rejection_reason ==
-                  "maintained_replay_envelope_source_time_not_finite");
+            CHECK(result.rejection_reason == "maintained_replay_envelope_source_time_not_finite");
         }
     }
 
@@ -242,8 +241,8 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         const RuntimeWindowResult window_result = minted_window_result(minted_trace);
 
         SUBCASE("default (0) leaves the packet's per-export string byte-identical") {
-            const auto result = facade.build_maintained_replay_envelope(window_result, "run:va2",
-                                                                        "episode:va2", 7);
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:va2", "episode:va2", 7);
             REQUIRE(result.admitted);
             CHECK(result.envelope.snapshot_ref.snapshot_version_ref == "global:1");
         }
@@ -257,9 +256,9 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
             CHECK(result.evidence_refs[1] == "snapshot_version_ref=global:1:run_snapshot:1");
         }
         SUBCASE("a version at or beyond the allocator cursor fails closed") {
-            const auto result = facade.build_maintained_replay_envelope(
-                window_result, "run:va2", "episode:va2", 7,
-                facade.peek_next_run_snapshot_version());
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:va2", "episode:va2", 7,
+                                                        facade.peek_next_run_snapshot_version());
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason ==
                   "maintained_replay_envelope_run_snapshot_version_not_minted_by_this_run");

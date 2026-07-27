@@ -978,8 +978,7 @@ RuntimeFacade::build_maintained_replay_envelope(const RuntimeWindowResult &windo
         }
     }
     if (window_commit_record == nullptr) {
-        result.rejection_reason =
-            std::string(kMaintainedReplayEnvelopeMissingWindowCommitBarrier);
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeMissingWindowCommitBarrier);
         return result;
     }
 
@@ -1004,8 +1003,7 @@ RuntimeFacade::build_maintained_replay_envelope(const RuntimeWindowResult &windo
     std::string snapshot_version_ref = observation_provenance.source_observation_versions.front();
     if (run_snapshot_version != 0) {
         if (run_snapshot_version >= peek_next_run_snapshot_version()) {
-            result.rejection_reason =
-                std::string(kMaintainedReplayEnvelopeRunSnapshotNotRunMinted);
+            result.rejection_reason = std::string(kMaintainedReplayEnvelopeRunSnapshotNotRunMinted);
             return result;
         }
         snapshot_version_ref += std::string(kMaintainedReplayEnvelopeRunSnapshotInfix) +
@@ -1086,12 +1084,10 @@ RuntimeFacade::build_maintained_replay_envelope(const RuntimeWindowResult &windo
 // Read-only like the slice-5 producer: it peeks the VA-8 cursor (via the
 // internal envelope build and the parent admission check) and mints nothing,
 // so calling it is idempotent and perturbs no existing serialized value.
-MaintainedPacketAncestryResult
-RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &window_result,
-                                                const std::string &run_id,
-                                                const std::string &episode_id,
-                                                std::uint64_t deterministic_seed,
-                                                std::uint64_t parent_trace_id) const {
+MaintainedPacketAncestryResult RuntimeFacade::build_maintained_packet_ancestry(
+    const RuntimeWindowResult &window_result, const std::string &run_id,
+    const std::string &episode_id, std::uint64_t deterministic_seed,
+    std::uint64_t parent_trace_id) const {
     using runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef;
 
     MaintainedPacketAncestryResult result{};
@@ -1113,8 +1109,7 @@ RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &windo
     }
 
     // Non-empty and all run-minted: gate 1 admitted them.
-    const std::vector<std::uint64_t> &window_trace_tags =
-        window_result.engagement_packet.trace_ids;
+    const std::vector<std::uint64_t> &window_trace_tags = window_result.engagement_packet.trace_ids;
     const std::uint64_t anchor_trace_id = window_trace_tags.back();
 
     // Gates 2 + 3: parent linkage must come from THIS facade's VA-8 allocator
@@ -1128,8 +1123,7 @@ RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &windo
         const std::uint64_t window_min_trace_tag =
             *std::min_element(window_trace_tags.begin(), window_trace_tags.end());
         if (parent_trace_id >= window_min_trace_tag) {
-            result.rejection_reason =
-                std::string(kMaintainedPacketAncestryParentNotBeforeWindow);
+            result.rejection_reason = std::string(kMaintainedPacketAncestryParentNotBeforeWindow);
             return result;
         }
     }
@@ -1140,8 +1134,7 @@ RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &windo
     // membership in the admitted tag set is the discriminator.
     const std::vector<DiagnosticsTrace> &window_traces = window_result.diagnostics_traces;
     if (window_traces.empty()) {
-        result.rejection_reason =
-            std::string(kMaintainedPacketAncestryMissingDiagnosticsTraces);
+        result.rejection_reason = std::string(kMaintainedPacketAncestryMissingDiagnosticsTraces);
         return result;
     }
     const auto is_run_minted_tag = [&window_trace_tags](std::uint64_t trace_id) {
@@ -1172,8 +1165,7 @@ RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &windo
     ancestry.parent_trace_id = parent_trace_id;
     ancestry.replay_envelope_ref = envelope_result.envelope.replay_envelope_id;
     ancestry.parent_event_order_ref =
-        parent_trace_id == 0U ? std::string()
-                              : "event:trace:" + std::to_string(parent_trace_id);
+        parent_trace_id == 0U ? std::string() : "event:trace:" + std::to_string(parent_trace_id);
     ancestry.ancestral_traces = window_traces;
     if (parent_trace_id != 0U) {
         for (auto &trace : ancestry.ancestral_traces) {
@@ -1188,8 +1180,8 @@ RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &windo
     // parent edge when linked. Deterministic order.
     ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
         .ref_id = ancestry.replay_envelope_ref,
-        .evidence_kind = std::string(
-            runtime::counterfactual::kScenarioGenerationEvidenceKindReplayEnvelope),
+        .evidence_kind =
+            std::string(runtime::counterfactual::kScenarioGenerationEvidenceKindReplayEnvelope),
         .provenance_label = "replay",
     });
     ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
@@ -1209,13 +1201,11 @@ RuntimeFacade::build_maintained_packet_ancestry(const RuntimeWindowResult &windo
     result.ancestry = std::move(ancestry);
     result.evidence_refs.push_back(std::string(kMaintainedPacketAncestryProducerEvidenceLabel));
     result.evidence_refs.push_back("packet_ancestry_id=" + result.ancestry.packet_ancestry_id);
-    result.evidence_refs.push_back("replay_envelope_ref=" +
-                                   result.ancestry.replay_envelope_ref);
+    result.evidence_refs.push_back("replay_envelope_ref=" + result.ancestry.replay_envelope_ref);
     result.evidence_refs.push_back("anchor_trace_id=" + std::to_string(anchor_trace_id));
     if (parent_trace_id != 0U) {
         result.evidence_refs.push_back("parent_trace_id=" + std::to_string(parent_trace_id));
     }
-    result.evidence_refs.push_back("linked_trace_count=" +
-                                   std::to_string(linked_trace_count));
+    result.evidence_refs.push_back("linked_trace_count=" + std::to_string(linked_trace_count));
     return result;
 }

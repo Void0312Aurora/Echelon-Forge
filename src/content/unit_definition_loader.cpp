@@ -215,7 +215,7 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
     // expands scalars only (vector rows to nothing), then the lambda is
     // declared, then pass 2 expands vectors only. A single pass would have to
     // hoist the lambda above every scalar read, reordering statements.
-#define EF_AERO_TUNING_FIELD(cpp_type, name, default_value) \
+#define EF_AERO_TUNING_FIELD(cpp_type, name, default_value)                                        \
     tuning.name = src.value(#name, tuning.name);
 #define EF_AERO_TUNING_VECTOR_FIELD(cpp_type, name, default_value)
 #include "content/detail/aero_tuning_fields.inc"
@@ -232,7 +232,7 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
     };
 
 #define EF_AERO_TUNING_FIELD(cpp_type, name, default_value)
-#define EF_AERO_TUNING_VECTOR_FIELD(cpp_type, name, default_value) \
+#define EF_AERO_TUNING_VECTOR_FIELD(cpp_type, name, default_value)                                 \
     parse_vector(#name, &tuning.name);
 #include "content/detail/aero_tuning_fields.inc"
 
@@ -257,7 +257,7 @@ void parse_engine_tuning_json_fields(const nlohmann::json &src, EngineTuning *ou
     // excluded above because its default is a literal, not the current value.
     // EngineTuning has no vector members, so unlike the missile/aero siblings
     // there is no parse_vector lambda and the list is consumed in one pass.
-#define EF_ENGINE_TUNING_FIELD(cpp_type, name, default_value) \
+#define EF_ENGINE_TUNING_FIELD(cpp_type, name, default_value)                                      \
     tuning.name = src.value(#name, tuning.name);
 #include "content/detail/engine_tuning_fields.inc"
 
@@ -745,7 +745,7 @@ bool parse_unit_json(
     // bundle 2). The list is expanded at each field's original parse phase so
     // malformed multi-key input keeps the same fail-first order. Each active
     // expansion is token-identical to the previous hand-written statement.
-#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value) \
+#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)                                  \
     def.name = entry.value(#name, default_value);
 #define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)
 #include "content/detail/unit_definition_direct_fields.inc"
@@ -953,8 +953,8 @@ bool parse_unit_json(
         // fail-first order; each expansion is token-identical to the previous
         // hand-written statement. The presence flag and sp binding above stay
         // hand-written.
-#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value) \
-        def.ship_platform.name = sp.value(#name, def.ship_platform.name);
+#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value)                                      \
+    def.ship_platform.name = sp.value(#name, def.ship_platform.name);
 #include "content/detail/ship_platform_fields.inc"
     }
 
@@ -970,8 +970,8 @@ bool parse_unit_json(
         // same fail-first order; each expansion is token-identical to the
         // previous hand-written statement. The presence flag and sp binding
         // above stay hand-written.
-#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value) \
-        def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);
+#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value)                                 \
+    def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);
 #include "content/detail/submarine_platform_fields.inc"
     }
 
@@ -1416,7 +1416,7 @@ bool parse_unit_json(
 
     def.has_data_link = entry.value("has_data_link", false);
 #define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)
-#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value) \
+#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)                              \
     def.name = entry.value(#name, default_value);
 #include "content/detail/unit_definition_direct_fields.inc"
     def.data_link_max_reports_per_update =

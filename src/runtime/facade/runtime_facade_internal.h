@@ -177,10 +177,8 @@ inline constexpr std::string_view kMaintainedPacketAncestryProducerEvidenceLabel
 // result's ScenarioGenerationEvidenceMetadataRef entries. The replay-envelope
 // entry reuses the contract-owned kScenarioGenerationEvidenceKindReplayEnvelope;
 // these two name the trace-id edges the ancestry adds.
-inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindAnchorTrace =
-    "anchor_trace";
-inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindParentTrace =
-    "parent_trace";
+inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindAnchorTrace = "anchor_trace";
+inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindParentTrace = "parent_trace";
 // "ancestry:maintained:*" id namespace; disjoint from "replay:maintained:*"
 // (slice 5), "replay:facade:*" (restore boundary), and caller-authored spaces.
 inline constexpr std::string_view kMaintainedPacketAncestryIdPrefix = "ancestry:maintained:";

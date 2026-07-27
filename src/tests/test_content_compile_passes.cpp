@@ -360,7 +360,8 @@ TEST_SUITE("content_compile_passes") {
         fs::remove_all(directory);
     }
 
-    TEST_CASE("direct fields parse: mechanical scalar subset maps to member and keeps default (I61)") {
+    TEST_CASE(
+        "direct fields parse: mechanical scalar subset maps to member and keeps default (I61)") {
         // Synthetic-face parity for the I61 table-driven direct-scalar migration
         // (content/detail/unit_definition_direct_fields.inc). The converged
         // purely-mechanical subset is {mass_kg, data_link_network_id}: present
@@ -398,13 +399,14 @@ TEST_SUITE("content_compile_passes") {
 
         CHECK(present_defs[0].mass_kg == doctest::Approx(4242.5)); // table-driven read
         CHECK(absent_defs[0].mass_kg == doctest::Approx(0.0));     // literal default preserved
-        CHECK(present_defs[0].data_link_network_id == 37);          // late-phase read
-        CHECK(absent_defs[0].data_link_network_id == 0);            // literal default preserved
+        CHECK(present_defs[0].data_link_network_id == 37);         // late-phase read
+        CHECK(absent_defs[0].data_link_network_id == 0);           // literal default preserved
 
         fs::remove_all(directory);
     }
 
-    TEST_CASE("direct fields parse: phase expansion preserves malformed-key fail-first order (I61)") {
+    TEST_CASE(
+        "direct fields parse: phase expansion preserves malformed-key fail-first order (I61)") {
         // Successful-input parity is insufficient: nlohmann conversions throw,
         // so moving a table-driven read across another read changes which bad
         // key fails first. These two probes pin mass_kg's early phase and the
@@ -569,8 +571,7 @@ TEST_SUITE("content_compile_passes") {
         CHECK(at.induced_drag_scale_vs_mach == std::vector<double>{7.0, 8.0, 9.0, 10.0});
         CHECK(at.cm_alpha_scale_vs_mach == std::vector<double>{11.0});
         CHECK(at.stall_alpha_delta_deg_vs_mach == std::vector<double>{12.0, 13.0});
-        CHECK(at.control_effectiveness_scale_vs_mach ==
-              std::vector<double>{14.0, 15.0, 16.0});
+        CHECK(at.control_effectiveness_scale_vs_mach == std::vector<double>{14.0, 15.0, 16.0});
 
         // `enabled` stays hand-written with a literal `true` default: it is not
         // present in the JSON above, yet the merge must still come out enabled.
@@ -609,21 +610,21 @@ TEST_SUITE("content_compile_passes") {
         const AeroTuning &at = defs[0].airframe.tuning;
         const AeroTuning &preset = flight_dynamics::default_aero_tuning();
 
-        CHECK(at.cd0_clean == doctest::Approx(0.099));                  // overridden
-        CHECK(at.mach_breakpoints == std::vector<double>{0.5, 0.9});    // replaced wholesale
+        CHECK(at.cd0_clean == doctest::Approx(0.099));               // overridden
+        CHECK(at.mach_breakpoints == std::vector<double>{0.5, 0.9}); // replaced wholesale
         CHECK(at.cl_alpha_per_deg == doctest::Approx(preset.cl_alpha_per_deg));
         CHECK(at.cm_q == doctest::Approx(preset.cm_q));
         CHECK(at.actuator_tau_rudder_s == doctest::Approx(preset.actuator_tau_rudder_s));
         CHECK(at.fbw_g_command_enabled == preset.fbw_g_command_enabled);
         CHECK(at.cl_alpha_scale_vs_mach == preset.cl_alpha_scale_vs_mach);
-        CHECK(at.control_effectiveness_scale_vs_mach ==
-              preset.control_effectiveness_scale_vs_mach);
+        CHECK(at.control_effectiveness_scale_vs_mach == preset.control_effectiveness_scale_vs_mach);
         CHECK(at.enabled);
 
         fs::remove_all(directory);
     }
 
-    TEST_CASE("platform fields parse: full-field fixture parity and struct defaults (this iteration)") {
+    TEST_CASE(
+        "platform fields parse: full-field fixture parity and struct defaults (this iteration)") {
         // Synthetic-face parity for the table-driven ship_platform /
         // submarine_platform inner scalar migration
         // (content/detail/ship_platform_fields.inc,
@@ -854,8 +855,7 @@ TEST_SUITE("content_compile_passes") {
         const std::string within_ship_message = thrown_message(within_ship);
         const std::string within_submarine_message = thrown_message(within_submarine);
         const std::string across_blocks_message = thrown_message(across_blocks);
-        CHECK(within_ship_message.find("type must be number, but is array") !=
-              std::string::npos);
+        CHECK(within_ship_message.find("type must be number, but is array") != std::string::npos);
         CHECK(within_submarine_message.find("type must be number, but is object") !=
               std::string::npos);
         CHECK(across_blocks_message.find("type must be number, but is string") !=
@@ -964,8 +964,8 @@ TEST_SUITE("content_compile_passes") {
         const EngineTuning &et = defs[0].engine_data.tuning;
         const EngineTuning &preset = flight_dynamics::default_engine_tuning();
 
-        CHECK(et.tau_spool_up_s == doctest::Approx(9.25));      // overridden
-        CHECK(et.tsfc_ab_kg_per_nh == doctest::Approx(0.5));    // overridden
+        CHECK(et.tau_spool_up_s == doctest::Approx(9.25));   // overridden
+        CHECK(et.tsfc_ab_kg_per_nh == doctest::Approx(0.5)); // overridden
         CHECK(et.mil_thrust_n == doctest::Approx(preset.mil_thrust_n));
         CHECK(et.throttle_ab_threshold == doctest::Approx(preset.throttle_ab_threshold));
         CHECK(et.throttle_idle_bias == doctest::Approx(preset.throttle_idle_bias));
