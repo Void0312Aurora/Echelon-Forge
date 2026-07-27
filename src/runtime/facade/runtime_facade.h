@@ -209,13 +209,17 @@ class RuntimeFacade {
     //     identity (the run orchestrator owns them; the facade cannot mint a
     //     more-real run identity), validated non-blank.
     //
-    // Opt-in truth linkage (I59): the producer REQUIRES the window's trace ids
-    // to have been minted by THIS facade's VA-8 allocator (every id must be
-    // < peek_next_trace_id()); the default maintained path's placeholder
-    // trace_ids = [1] against an untouched allocator (peek == 1) fails closed
-    // with a named reason. A meaningful envelope therefore requires the
-    // RuntimeFacadeAdapter(use_facade_evidence_producers=True) opt-in path (or
-    // an equivalent caller that stamps allocator-minted ids).
+    // Opt-in truth linkage (I59): the producer first REQUIRES the window result
+    // to carry the opaque identity attached by THIS facade's run_window seam.
+    // A hand-built result and a result returned by another facade fail closed
+    // before numeric evidence admission, even when both allocators overlap.
+    // The window's trace ids must then have been minted by THIS facade's VA-8
+    // allocator (every id must be < peek_next_trace_id()); the default
+    // maintained path's placeholder trace_ids = [1] against an untouched
+    // allocator (peek == 1) fails closed with a named reason. A meaningful
+    // envelope therefore requires the RuntimeFacadeAdapter(
+    // use_facade_evidence_producers=True) opt-in path (or an equivalent caller
+    // that stamps allocator-minted ids).
     //
     // Envelope id namespace: "replay:maintained:{run_id}:trace:{trace_id}".
     // Existing id spaces stay untouched and disjoint: "replay:facade:*" is the
@@ -289,24 +293,26 @@ class RuntimeFacade {
     //
     // Gates (fail-closed, named reasons in runtime_facade_internal.h):
     //
-    //   1. The window must yield an ADMITTED maintained replay envelope: this
+    //   1. The window must carry the opaque association minted by THIS
+    //      facade's run_window seam; foreign and synthetic results fail before
+    //      numeric evidence admission.
+    //   2. The window must yield an ADMITTED maintained replay envelope: this
     //      producer internally runs build_maintained_replay_envelope (default
     //      VA-2 qualification off) and propagates its rejection reasons
-    //      verbatim, so all nine slice-5 real-evidence gates -- including the
-    //      VA-8 "trace ids minted by THIS facade" admission that makes
-    //      foreign/synthetic evidence and the default placeholder [1] fail
-    //      closed -- plus validate_replay_envelope guard this surface too.
+    //      verbatim, so the slice-5 real-evidence gates -- including the VA-8
+    //      trace-id admission that rejects the default placeholder [1] -- plus
+    //      validate_replay_envelope guard this surface too.
     //      The admitted envelope id becomes ancestry.replay_envelope_ref, so
     //      an ancestry record always names a validator-accepted envelope.
-    //   2. parent_trace_id (when non-zero) must have been minted by THIS
+    //   3. parent_trace_id (when non-zero) must have been minted by THIS
     //      facade's VA-8 allocator (in [1, peek_next_trace_id())) --
     //      kMaintainedPacketAncestryParentNotRunMinted otherwise, which is how
     //      foreign-facade parent linkage fails closed.
-    //   3. parent_trace_id (when non-zero) must be strictly below every one of
+    //   4. parent_trace_id (when non-zero) must be strictly below every one of
     //      the window's own trace tags (ancestry points backwards; no self or
     //      forward links, hence no cycles) --
     //      kMaintainedPacketAncestryParentNotBeforeWindow otherwise.
-    //   4. The window must carry exported diagnostics traces, at least one of
+    //   5. The window must carry exported diagnostics traces, at least one of
     //      which is tagged with one of the packet's (already-admitted)
     //      run-minted trace ids; kernel-space traces alone cannot anchor an
     //      ancestry (the two uint64 id spaces are value-indistinguishable, so
@@ -342,8 +348,8 @@ class RuntimeFacade {
     // facade run are, e.g., two batch worlds set up with the same or different
     // seeds (parallel same-seed/different-seed runs) or two window sequences
     // separated by a counterfactual intervention. Evidence minted by a
-    // DIFFERENT facade cannot enter: the reused slice-5 VA-8 admission gate
-    // fail-closes it per side.
+    // DIFFERENT facade cannot enter: each side's opaque run_window identity
+    // association fail-closes it before the slice-5 numeric gates.
     //
     // Gates (fail-closed; comparison-level reasons in runtime_facade_internal.h
     // kMaintainedWorldlineComparison*, underlying slice-5/6A reasons carried in
@@ -352,7 +358,8 @@ class RuntimeFacade {
     //
     //   1./2. Each window must yield an ADMITTED maintained replay envelope
     //      (build_maintained_replay_envelope, default VA-2 qualification off):
-    //      all nine slice-5 real-evidence gates plus validate_replay_envelope
+    //      all slice-5 real-evidence gates (beginning with the opaque
+    //      window/facade association) plus validate_replay_envelope
     //      -- which requires the deterministic seed and the deterministic
     //      event-order sort key, so "deterministic replay refs present" is
     //      discharged by the validator, per side. Rejection:
@@ -422,6 +429,8 @@ class RuntimeFacade {
     ObservationViewSpec describe_maintained_observation_view() const;
 
   private:
+    bool runtime_window_result_belongs_to_this_facade(
+        const RuntimeWindowResult &window_result) const noexcept;
     bool counterfactual_world_index_valid(std::uint64_t world_index) const noexcept;
     bool apply_counterfactual_delta(const WorldEntityRef &ref,
                                     const RuntimeCounterfactualBranchRequest &request);
@@ -447,6 +456,10 @@ class RuntimeFacade {
     struct CounterfactualWorldlineRegistry;
     std::unique_ptr<WorldBatchRuntime> runtime_;
     std::unique_ptr<CounterfactualWorldlineRegistry> counterfactual_worldlines_;
+    // Opaque run identity used to bind RuntimeWindowResult products to the
+    // facade instance that returned them.  It is intentionally not a DTO field
+    // and is not exported through Python bindings.
+    std::shared_ptr<const RuntimeFacadeIdentity> identity_;
     // T10 slice 3 / I54 run-global evidence allocators (see the public
     // producer declarations above for the run-global boundary adjudication
     // and move semantics). Appended after the existing members; a fresh
@@ -456,4 +469,5 @@ class RuntimeFacade {
     // member set changes.
     std::uint64_t next_run_snapshot_version_ = 1; // VA-2
     std::uint64_t next_trace_id_ = 1;             // VA-8
+    std::uint64_t next_window_identity_ = 1;
 };

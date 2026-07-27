@@ -13,6 +13,19 @@
 #include <string_view>
 #include <vector>
 
+// Opaque provenance objects for maintained runtime-window products.  They are
+// defined only in the facade implementation boundary and are deliberately not
+// exposed through the nanobind RuntimeWindowResult surface.  Pointer identity
+// binds a result to the RuntimeFacade run that returned it; a default-constructed
+// or foreign-facade result therefore cannot pass the maintained evidence gates
+// merely by copying overlapping numeric trace ids.
+struct RuntimeFacadeIdentity {};
+
+struct RuntimeWindowIdentity {
+    std::shared_ptr<const RuntimeFacadeIdentity> facade_identity;
+    std::uint64_t window_sequence = 0;
+};
+
 namespace runtime_facade_internal {
 
 using runtime::scheduler::find_stage_node_manifest;
@@ -135,6 +148,10 @@ inline constexpr std::string_view kRuntimeExperimentBranchRejected =
 // replay-envelope producer (RuntimeFacade::build_maintained_replay_envelope).
 inline constexpr std::string_view kMaintainedReplayEnvelopeRunIdRequired =
     "maintained_replay_envelope_run_id_required";
+inline constexpr std::string_view kMaintainedReplayEnvelopeWindowIdentityMissing =
+    "maintained_replay_envelope_window_identity_missing";
+inline constexpr std::string_view kMaintainedReplayEnvelopeWindowIdentityForeign =
+    "maintained_replay_envelope_window_identity_not_minted_by_this_facade";
 inline constexpr std::string_view kMaintainedReplayEnvelopeEpisodeIdRequired =
     "maintained_replay_envelope_episode_id_required";
 inline constexpr std::string_view kMaintainedReplayEnvelopeMissingObservationProvenance =
@@ -211,8 +228,7 @@ inline constexpr std::string_view kMaintainedWorldlineComparisonEvidenceKindPack
 // ids, the registered "worldline:runtime:*"/"worldline:baseline"/
 // "worldline:branch" spaces, "replay:maintained:*", "ancestry:maintained:*",
 // and caller-authored spaces. Verified unused at this baseline.
-inline constexpr std::string_view kMaintainedWorldlineComparisonIdPrefix =
-    "comparison:maintained:";
+inline constexpr std::string_view kMaintainedWorldlineComparisonIdPrefix = "comparison:maintained:";
 inline constexpr std::string_view kMaintainedWorldlineComparisonWorldlineIdPrefix =
     "worldline:maintained:";
 

@@ -27,8 +27,8 @@ What is pinned:
   default (non-opt-in) maintained path still carries the placeholder evidence
   with all exported trace parents at the pre-slice default ``0``;
 * fail-closed foreign-facade evidence handling: window evidence produced by a
-  DIFFERENT facade's allocator is rejected (the slice-5 VA-8 admission gate,
-  reused by this producer), a parent id this run never minted is rejected, and
+  DIFFERENT facade is rejected by the opaque window/facade identity gate, a
+  parent id this run never minted is rejected, and
   a parent that does not strictly precede the window's own tags is rejected --
   each with a named reason and with no partially assembled lineage leaked;
 * the seam's opt-in contract: ``use_facade_evidence_producers=False`` raises the
@@ -330,31 +330,31 @@ def test_gate_parent_must_strictly_precede_the_window(real_run) -> None:
 def test_gate_foreign_facade_window_evidence_fails_closed(real_run) -> None:
     """Evidence minted by a DIFFERENT facade's allocator is rejected.
 
-    A second opted-in run advances its own allocator past this run's cursor;
-    feeding its real window evidence through THIS run's seam trips the reused
-    slice-5 VA-8 admission gate (trace ids not minted by this run).
+    A second opted-in run produces a real window carrying a different opaque
+    facade identity; feeding it through THIS run's seam is rejected even when
+    the two allocators overlap numerically.
     """
     adapter, _shooter_id, _source_time_s = real_run
     own_cursor = int(adapter.facade.peek_next_trace_id())
+    if own_cursor == 1:
+        assert int(adapter.facade.allocate_trace_id()) == 1
+        own_cursor = int(adapter.facade.peek_next_trace_id())
+    assert own_cursor > 1
 
     foreign_adapter, foreign_shooter, foreign_time = _primed_adapter(
         use_facade_evidence_producers=True
     )
-    foreign_evidence = None
-    # Advance the foreign allocator until its anchor is provably foreign here
-    # (>= this run's cursor), so the rejection cannot be a coincidental overlap
-    # of the two value-indistinguishable id sequences.
-    for k in range(own_cursor + 1):
-        foreign_evidence = _run_fire_window(
-            foreign_adapter, foreign_shooter, foreign_time, f"foreign:{k}"
-        )
+    foreign_evidence = _run_fire_window(
+        foreign_adapter, foreign_shooter, foreign_time, "foreign:overlap"
+    )
     assert foreign_evidence is not None
-    assert _anchor(foreign_evidence) >= own_cursor
+    assert _anchor(foreign_evidence) == 1
+    assert _anchor(foreign_evidence) < own_cursor
 
     result = _build(real_run, foreign_evidence)
     assert result.admitted is False
     assert result.rejection_reason == (
-        "maintained_replay_envelope_trace_ids_not_minted_by_this_run"
+        "maintained_replay_envelope_window_identity_not_minted_by_this_facade"
     )
 
 

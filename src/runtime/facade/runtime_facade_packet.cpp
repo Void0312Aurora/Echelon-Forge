@@ -743,7 +743,7 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
 }
 
 RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &request) {
-    return execute_runtime_window(
+    RuntimeWindowResult result = execute_runtime_window(
         request,
         RuntimeWindowCoordinatorCallbacks{
             .apply_pilot_actions =
@@ -768,6 +768,19 @@ RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &reques
                     return export_diagnostics_traces(engagement_request);
                 },
         });
+
+    // The identity is intentionally attached only at the public facade seam,
+    // after the coordinator has produced the result.  Synthetic results made
+    // through the binding have no identity, and a result from another facade
+    // carries a different shared identity object even when its numeric trace
+    // ids overlap this run.
+    if (identity_ == nullptr || next_window_identity_ == kInvalidatedEvidenceCursor) {
+        return result;
+    }
+    const std::uint64_t window_sequence = next_window_identity_++;
+    result.identity_token_.identity_ =
+        std::make_shared<RuntimeWindowIdentity>(RuntimeWindowIdentity{identity_, window_sequence});
+    return result;
 }
 
 EngagementEventPacket

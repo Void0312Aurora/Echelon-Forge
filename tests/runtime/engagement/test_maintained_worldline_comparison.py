@@ -552,7 +552,7 @@ def test_gate_windows_sharing_the_anchor_are_rejected(real_run) -> None:
 @_requires_binding
 def test_gate_foreign_facade_candidate_evidence_fails_closed(real_run) -> None:
     """Candidate evidence minted by a DIFFERENT facade's allocator is rejected
-    through the reused slice-5 VA-8 admission gate, wrapped in the side-naming
+    through the opaque window/facade identity gate, wrapped in the side-naming
     candidate reason with the underlying reason in errors."""
     adapter, _shooter_id, _source_time_s = real_run
     baseline = _real_window(real_run, "gate:foreign_baseline")
@@ -561,16 +561,15 @@ def test_gate_foreign_facade_candidate_evidence_fails_closed(real_run) -> None:
     foreign_adapter, foreign_shooter, foreign_time = _primed_adapter(
         use_facade_evidence_producers=True
     )
-    foreign_evidence = None
-    # Advance the foreign allocator until its anchor is provably foreign here
-    # (>= this run's cursor), so the rejection cannot be a coincidental overlap
-    # of the two value-indistinguishable id sequences.
-    for k in range(own_cursor + 1):
-        foreign_evidence = _run_fire_window(
-            foreign_adapter, foreign_shooter, foreign_time, f"foreign:{k}"
-        )
+    # The foreign facade's first anchor deliberately overlaps a numeric id that
+    # this facade has already minted; identity, not cursor range, must reject it.
+    foreign_evidence = _run_fire_window(
+        foreign_adapter, foreign_shooter, foreign_time, "foreign:overlap"
+    )
     assert foreign_evidence is not None
-    assert _anchor(foreign_evidence) >= own_cursor
+    assert own_cursor > 1
+    assert _anchor(foreign_evidence) == 1
+    assert _anchor(foreign_evidence) < own_cursor
 
     result = _compare(adapter, baseline, foreign_evidence)
     assert result.admitted is False
@@ -578,10 +577,61 @@ def test_gate_foreign_facade_candidate_evidence_fails_closed(real_run) -> None:
         "maintained_worldline_comparison_candidate_envelope_rejected"
     )
     assert list(result.errors)[0] == (
-        "maintained_replay_envelope_trace_ids_not_minted_by_this_run"
+        "maintained_replay_envelope_window_identity_not_minted_by_this_facade"
     )
     assert result.comparison.comparison_id == ""
     assert list(result.evidence_refs) == []
+
+
+@_requires_binding
+def test_gate_hand_built_candidate_reports_the_candidate_side(real_run) -> None:
+    """A caller-built candidate has no opaque token and fails on its own side."""
+    adapter, _shooter_id, _source_time_s = real_run
+    baseline = _real_window(real_run, "gate:synthetic_candidate_baseline")
+    hand_built_candidate = ef_py.RuntimeWindowResult()
+
+    result = adapter.facade.build_maintained_worldline_comparison(
+        baseline.window_result,
+        hand_built_candidate,
+        _RUN_ID,
+        _EPISODE_ID,
+        _SEED,
+        _SEED,
+    )
+    assert result.admitted is False
+    assert result.rejection_reason == (
+        "maintained_worldline_comparison_candidate_envelope_rejected"
+    )
+    assert list(result.errors) == [
+        "maintained_replay_envelope_window_identity_missing"
+    ]
+    assert result.comparison.comparison_id == ""
+    assert list(result.evidence_refs) == []
+
+
+@_requires_binding
+def test_gate_worldline_keeps_baseline_first_when_both_sides_are_invalid() -> None:
+    """The candidate must not mask a baseline identity rejection."""
+    local = ef_py.RuntimeFacade(0)
+    foreign = ef_py.RuntimeFacade(0)
+    foreign_baseline = foreign.run_window(ef_py.RuntimeWindowRequest())
+    hand_built_candidate = ef_py.RuntimeWindowResult()
+
+    result = local.build_maintained_worldline_comparison(
+        foreign_baseline,
+        hand_built_candidate,
+        _RUN_ID,
+        _EPISODE_ID,
+        _SEED,
+        _SEED,
+    )
+    assert result.admitted is False
+    assert result.rejection_reason == (
+        "maintained_worldline_comparison_baseline_envelope_rejected"
+    )
+    assert list(result.errors) == [
+        "maintained_replay_envelope_window_identity_not_minted_by_this_facade"
+    ]
 
 
 @_requires_binding

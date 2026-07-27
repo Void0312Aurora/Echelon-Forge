@@ -7,14 +7,16 @@
 #include <cmath>
 #include <limits>
 #include <string>
+#include <type_traits>
 
 // T10 slice 5: contract gates for the maintained-run replay-envelope producer
 // (RuntimeFacade::build_maintained_replay_envelope). These cases pin the
-// assembly and fail-closed contract over hand-built RuntimeWindowResult
-// inputs -- deliberately synthetic here, because rejecting non-real evidence
-// is the contract under test and the allocator-consistency gates need precise
-// cursor control (a real run cannot be made to hand the producer an unminted
-// id). The real-run end-to-end proof -- actual scenario, actual maintained
+// assembly and fail-closed contract over identity-backed RuntimeWindowResult
+// inputs whose individual evidence fields are adjusted for precise gate
+// control.  Each positive fixture still originates at RuntimeFacade::run_window
+// so it carries the opaque facade/window association; the dedicated negative
+// cases below prove that a hand-built or foreign result cannot borrow numeric
+// ids to enter the producer. The real-run end-to-end proof -- actual scenario, actual maintained
 // windows, real exported packets, over the I59 opt-in adapter path -- lives in
 // tests/runtime/engagement/test_maintained_replay_envelope.py, which also pins
 // the adapter seam's opt-in contract and the unchanged default path.
@@ -22,12 +24,15 @@ namespace {
 
 using runtime::counterfactual::MaintainedReplayEnvelopeResult;
 
+static_assert(std::is_aggregate_v<RuntimeWindowResult>,
+              "RuntimeWindowResult must preserve aggregate/designated initialization");
+
 // A window-result shape equivalent to what one maintained opt-in window
 // produces: real-format provenance strings on the observation packet, minted
 // trace ids on the engagement packet, a window_commit barrier record, and the
 // manifest-stamped export node id.
-RuntimeWindowResult minted_window_result(std::uint64_t anchor_trace_id) {
-    RuntimeWindowResult window_result{};
+RuntimeWindowResult minted_window_result(RuntimeFacade &facade, std::uint64_t anchor_trace_id) {
+    RuntimeWindowResult window_result = facade.run_window(RuntimeWindowRequest{});
     window_result.context.source_time_s = 12.5;
     window_result.observation_packet.snapshot_version = 1;
     window_result.observation_packet.provenance.observation_packet_ids = {"obs:1"};
@@ -53,11 +58,16 @@ RuntimeWindowResult minted_window_result(std::uint64_t anchor_trace_id) {
 
 TEST_SUITE("runtime_facade_maintained_replay_envelope") {
 
+    TEST_CASE("runtime window result preserves designated aggregate initialization") {
+        const RuntimeWindowResult result{.context = {}};
+        CHECK(result.context.window_id.empty());
+    }
+
     TEST_CASE("minted window evidence assembles an admitted validated envelope field by field") {
         RuntimeFacade facade(0);
         const std::uint64_t minted = facade.allocate_trace_id();
         CHECK(minted == 1);
-        const RuntimeWindowResult window_result = minted_window_result(minted);
+        const RuntimeWindowResult window_result = minted_window_result(facade, minted);
 
         const MaintainedReplayEnvelopeResult result = facade.build_maintained_replay_envelope(
             window_result, "run:cpp", "episode:cpp", 424242);
@@ -114,13 +124,58 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         CHECK(result.evidence_refs[4] == "facade_provenance_ref=obs:1");
     }
 
+    TEST_CASE("window identity rejects a foreign facade with overlapping numeric ids") {
+        RuntimeFacade first(0);
+        RuntimeFacade second(0);
+        const std::uint64_t first_trace = first.allocate_trace_id();
+        const std::uint64_t second_trace = second.allocate_trace_id();
+        CHECK(first_trace == 1);
+        CHECK(second_trace == 1);
+
+        const RuntimeWindowResult first_window = minted_window_result(first, first_trace);
+        const RuntimeWindowResult second_window = minted_window_result(second, second_trace);
+
+        // Both facades deliberately overlap at numeric trace id 1.  The
+        // opaque run identity, not the cursor range, is the admission fact.
+        const auto foreign_from_first = second.build_maintained_replay_envelope(
+            first_window, "run:foreign", "episode:foreign", 7);
+        CHECK_FALSE(foreign_from_first.admitted);
+        CHECK(foreign_from_first.rejection_reason ==
+              "maintained_replay_envelope_window_identity_not_minted_by_this_facade");
+
+        const auto foreign_from_second = first.build_maintained_replay_envelope(
+            second_window, "run:foreign", "episode:foreign", 7);
+        CHECK_FALSE(foreign_from_second.admitted);
+        CHECK(foreign_from_second.rejection_reason ==
+              "maintained_replay_envelope_window_identity_not_minted_by_this_facade");
+    }
+
+    TEST_CASE("window identity rejects a hand-built result with copied local evidence") {
+        RuntimeFacade facade(0);
+        const std::uint64_t trace_id = facade.allocate_trace_id();
+        REQUIRE(trace_id == 1);
+        const RuntimeWindowResult real_window = minted_window_result(facade, trace_id);
+
+        // A caller-authored DTO can copy every visible evidence field and the
+        // same numeric trace id, but cannot manufacture the non-bindable token.
+        RuntimeWindowResult hand_built{};
+        hand_built.context.source_time_s = real_window.context.source_time_s;
+        hand_built.observation_packet = real_window.observation_packet;
+        hand_built.engagement_packet = real_window.engagement_packet;
+        hand_built.barrier_trace = real_window.barrier_trace;
+        const auto synthetic = facade.build_maintained_replay_envelope(hand_built, "run:synthetic",
+                                                                       "episode:synthetic", 7);
+        CHECK_FALSE(synthetic.admitted);
+        CHECK(synthetic.rejection_reason == "maintained_replay_envelope_window_identity_missing");
+    }
+
     TEST_CASE("producer is read-only and idempotent over the allocator cursors") {
         RuntimeFacade facade(0);
         (void)facade.allocate_trace_id();
         (void)facade.allocate_run_snapshot_version();
         const std::uint64_t trace_cursor = facade.peek_next_trace_id();
         const std::uint64_t snapshot_cursor = facade.peek_next_run_snapshot_version();
-        const RuntimeWindowResult window_result = minted_window_result(1);
+        const RuntimeWindowResult window_result = minted_window_result(facade, 1);
 
         const MaintainedReplayEnvelopeResult first = facade.build_maintained_replay_envelope(
             window_result, "run:idempotent", "episode:idempotent", 7);
@@ -140,7 +195,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         RuntimeFacade facade(0);
         // No allocate_trace_id call: peek == 1, so the default maintained
         // path's placeholder trace_ids = [1] is provably not run-minted.
-        const RuntimeWindowResult window_result = minted_window_result(1);
+        const RuntimeWindowResult window_result = minted_window_result(facade, 1);
 
         const MaintainedReplayEnvelopeResult result = facade.build_maintained_replay_envelope(
             window_result, "run:placeholder", "episode:placeholder", 7);
@@ -156,7 +211,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
     TEST_CASE("trace ids at or beyond the allocator cursor fail closed") {
         RuntimeFacade facade(0);
         const std::uint64_t minted = facade.allocate_trace_id();
-        RuntimeWindowResult window_result = minted_window_result(minted);
+        RuntimeWindowResult window_result = minted_window_result(facade, minted);
         // peek is now 2; an id equal to the cursor was never handed out.
         window_result.engagement_packet.trace_ids = {minted, facade.peek_next_trace_id()};
 
@@ -174,18 +229,18 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
 
         SUBCASE("blank run id") {
             const auto result = facade.build_maintained_replay_envelope(
-                minted_window_result(minted), "  ", "episode:x", 7);
+                minted_window_result(facade, minted), "  ", "episode:x", 7);
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason == "maintained_replay_envelope_run_id_required");
         }
         SUBCASE("blank episode id") {
             const auto result = facade.build_maintained_replay_envelope(
-                minted_window_result(minted), "run:x", "", 7);
+                minted_window_result(facade, minted), "run:x", "", 7);
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason == "maintained_replay_envelope_episode_id_required");
         }
         SUBCASE("missing observation packet provenance") {
-            RuntimeWindowResult window_result = minted_window_result(minted);
+            RuntimeWindowResult window_result = minted_window_result(facade, minted);
             window_result.observation_packet.provenance.observation_packet_ids.clear();
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
@@ -194,7 +249,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
                   "maintained_replay_envelope_observation_packet_provenance_missing");
         }
         SUBCASE("missing engagement trace ids") {
-            RuntimeWindowResult window_result = minted_window_result(minted);
+            RuntimeWindowResult window_result = minted_window_result(facade, minted);
             window_result.engagement_packet.trace_ids.clear();
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
@@ -203,7 +258,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
                   "maintained_replay_envelope_engagement_trace_ids_missing");
         }
         SUBCASE("missing window_commit barrier record") {
-            RuntimeWindowResult window_result = minted_window_result(minted);
+            RuntimeWindowResult window_result = minted_window_result(facade, minted);
             window_result.barrier_trace.clear();
             window_result.barrier_trace.push_back(RuntimeWindowBarrierRecord{
                 .sequence = 1,
@@ -216,7 +271,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
                   "maintained_replay_envelope_window_commit_barrier_missing");
         }
         SUBCASE("missing engagement producer node") {
-            RuntimeWindowResult window_result = minted_window_result(minted);
+            RuntimeWindowResult window_result = minted_window_result(facade, minted);
             window_result.engagement_packet.producer_node_id.clear();
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
@@ -225,7 +280,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
                   "maintained_replay_envelope_engagement_producer_node_missing");
         }
         SUBCASE("non-finite window source time") {
-            RuntimeWindowResult window_result = minted_window_result(minted);
+            RuntimeWindowResult window_result = minted_window_result(facade, minted);
             window_result.context.source_time_s = std::numeric_limits<double>::quiet_NaN();
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
@@ -238,7 +293,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         RuntimeFacade facade(0);
         const std::uint64_t minted_trace = facade.allocate_trace_id();
         const std::uint64_t minted_snapshot = facade.allocate_run_snapshot_version();
-        const RuntimeWindowResult window_result = minted_window_result(minted_trace);
+        const RuntimeWindowResult window_result = minted_window_result(facade, minted_trace);
 
         SUBCASE("default (0) leaves the packet's per-export string byte-identical") {
             const auto result =

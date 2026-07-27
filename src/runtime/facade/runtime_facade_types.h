@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,31 @@
 #include "runtime/contracts/policy_contracts.h"
 #include "runtime/contracts/runtime_dto_contracts.h"
 #include "runtime/contracts/world_batch_contracts.h"
+
+// These types are intentionally incomplete at the public DTO boundary.  The
+// runtime facade attaches an opaque, non-bindable identity to results returned
+// by RuntimeFacade::run_window; maintained evidence producers use it to reject
+// synthetic results and results returned by another facade instance.
+struct RuntimeFacadeIdentity;
+struct RuntimeWindowIdentity;
+
+// Public storage keeps RuntimeWindowResult an aggregate (existing designated
+// initialization is a source-compatibility contract), while the incomplete
+// pointee and private payload keep the token opaque. RuntimeFacade is the only
+// producer that can attach or inspect a non-empty token; Python bindings omit
+// this holder entirely.
+class RuntimeWindowIdentityToken {
+  public:
+    RuntimeWindowIdentityToken() = default;
+    RuntimeWindowIdentityToken(const RuntimeWindowIdentityToken &) = default;
+    RuntimeWindowIdentityToken(RuntimeWindowIdentityToken &&) noexcept = default;
+    RuntimeWindowIdentityToken &operator=(const RuntimeWindowIdentityToken &) = default;
+    RuntimeWindowIdentityToken &operator=(RuntimeWindowIdentityToken &&) noexcept = default;
+
+  private:
+    friend class RuntimeFacade;
+    std::shared_ptr<const RuntimeWindowIdentity> identity_;
+};
 
 struct RuntimeCapabilities {
 #define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value) type name = default_value;
@@ -252,6 +278,9 @@ struct RuntimeWindowRequest {
 struct RuntimeWindowResult {
 #define EF_RUNTIME_WINDOW_RESULT_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime_window_result.inc"
+    // Trailing additive storage: existing field order and offsets stay fixed,
+    // and the result remains an aggregate for designated initialization.
+    RuntimeWindowIdentityToken identity_token_{};
 };
 
 // --- T10 evidence spine, slice 6A (this iteration) -------------------------
