@@ -182,6 +182,39 @@ inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindParentTra
 // "ancestry:maintained:*" id namespace; disjoint from "replay:maintained:*"
 // (slice 5), "replay:facade:*" (restore boundary), and caller-authored spaces.
 inline constexpr std::string_view kMaintainedPacketAncestryIdPrefix = "ancestry:maintained:";
+// T10 slice 7 (this iteration): fail-closed rejection reasons and evidence
+// vocabulary of the maintained worldline/counterfactual comparison producer
+// (RuntimeFacade::build_maintained_worldline_comparison). The producer reuses
+// the slice-5 envelope gates and slice-6A ancestry gates per side; their
+// underlying reasons are carried in the result's `errors` behind these
+// side-naming wrappers (two windows make verbatim propagation ambiguous).
+inline constexpr std::string_view kMaintainedWorldlineComparisonBaselineEnvelopeRejected =
+    "maintained_worldline_comparison_baseline_envelope_rejected";
+inline constexpr std::string_view kMaintainedWorldlineComparisonCandidateEnvelopeRejected =
+    "maintained_worldline_comparison_candidate_envelope_rejected";
+inline constexpr std::string_view kMaintainedWorldlineComparisonBaselineAncestryRejected =
+    "maintained_worldline_comparison_baseline_ancestry_rejected";
+inline constexpr std::string_view kMaintainedWorldlineComparisonCandidateAncestryRejected =
+    "maintained_worldline_comparison_candidate_ancestry_rejected";
+inline constexpr std::string_view kMaintainedWorldlineComparisonAnchorsNotDistinct =
+    "maintained_worldline_comparison_windows_share_the_anchor_trace";
+inline constexpr std::string_view kMaintainedWorldlineComparisonProducerEvidenceLabel =
+    "RuntimeFacade.build_maintained_worldline_comparison";
+// Typed-ref lineage vocabulary (VA-5): the envelope entries reuse the
+// contract-owned kScenarioGenerationEvidenceKindReplayEnvelope and the anchor
+// entries reuse kMaintainedPacketAncestryEvidenceKindAnchorTrace; this one
+// names the slice-6A ancestry ids the comparison consumes.
+inline constexpr std::string_view kMaintainedWorldlineComparisonEvidenceKindPacketAncestry =
+    "packet_ancestry";
+// "comparison:maintained:*" and "worldline:maintained:*" id namespaces;
+// disjoint from the raw-facade "counterfactual:selected_slice*" comparison
+// ids, the registered "worldline:runtime:*"/"worldline:baseline"/
+// "worldline:branch" spaces, "replay:maintained:*", "ancestry:maintained:*",
+// and caller-authored spaces. Verified unused at this baseline.
+inline constexpr std::string_view kMaintainedWorldlineComparisonIdPrefix =
+    "comparison:maintained:";
+inline constexpr std::string_view kMaintainedWorldlineComparisonWorldlineIdPrefix =
+    "worldline:maintained:";
 
 inline bool runtime_string_blank(const std::string &value) {
     return value.empty() || std::all_of(value.begin(), value.end(),

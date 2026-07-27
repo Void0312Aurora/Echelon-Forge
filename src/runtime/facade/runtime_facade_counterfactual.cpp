@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace {
@@ -1207,5 +1208,175 @@ MaintainedPacketAncestryResult RuntimeFacade::build_maintained_packet_ancestry(
         result.evidence_refs.push_back("parent_trace_id=" + std::to_string(parent_trace_id));
     }
     result.evidence_refs.push_back("linked_trace_count=" + std::to_string(linked_trace_count));
+    return result;
+}
+
+// T10 evidence spine, slice 7 (this iteration): maintained worldline /
+// counterfactual comparison producer. Contract, gate order, the worldline
+// semantics, and the no-truth-promotion red line are documented on the
+// declaration in runtime_facade.h; the fail-closed reason strings live in
+// runtime_facade_internal.h (kMaintainedWorldlineComparison*). Read-only like
+// the slice-5/6A producers it consumes: every inner call only peeks the
+// allocator cursors and mints nothing, no counterfactual worldline snapshot
+// is registered, so calling it is idempotent and perturbs no existing
+// serialized value. (Each side's ancestry build re-runs that side's envelope
+// build internally; both are deterministic over the same const inputs, so the
+// ancestry's replay_envelope_ref equals the directly built envelope id by
+// construction.)
+MaintainedWorldlineComparisonResult RuntimeFacade::build_maintained_worldline_comparison(
+    const RuntimeWindowResult &baseline_window_result,
+    const RuntimeWindowResult &candidate_window_result, const std::string &run_id,
+    const std::string &episode_id, std::uint64_t baseline_deterministic_seed,
+    std::uint64_t candidate_deterministic_seed, std::uint64_t baseline_parent_trace_id,
+    std::uint64_t candidate_parent_trace_id) const {
+    using runtime::counterfactual::MaintainedReplayEnvelopeResult;
+    using runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef;
+
+    MaintainedWorldlineComparisonResult result{};
+
+    // Side-naming rejection wrapper: the comparison-level reason names the
+    // failed side/surface; the underlying slice-5/6A reason (and its errors)
+    // go to result.errors so nothing is lost and nothing half-real leaks.
+    const auto reject_side = [&result](std::string_view comparison_reason,
+                                       const std::string &inner_reason,
+                                       const std::vector<std::string> &inner_errors) {
+        result.rejection_reason = std::string(comparison_reason);
+        if (!inner_reason.empty()) {
+            result.errors.push_back(inner_reason);
+        }
+        result.errors.insert(result.errors.end(), inner_errors.begin(), inner_errors.end());
+    };
+
+    // Gates 1 + 2: both windows admit a maintained replay envelope (all nine
+    // slice-5 real-evidence gates -- including the VA-8 "trace ids minted by
+    // THIS facade" admission that fail-closes foreign-facade and
+    // default-placeholder evidence -- plus validate_replay_envelope, which
+    // requires the deterministic seed and event-order sort key: the
+    // deterministic replay refs of both sides are validator-guaranteed).
+    const MaintainedReplayEnvelopeResult baseline_envelope = build_maintained_replay_envelope(
+        baseline_window_result, run_id, episode_id, baseline_deterministic_seed);
+    if (!baseline_envelope.admitted) {
+        reject_side(kMaintainedWorldlineComparisonBaselineEnvelopeRejected,
+                    baseline_envelope.rejection_reason, baseline_envelope.errors);
+        return result;
+    }
+    const MaintainedReplayEnvelopeResult candidate_envelope = build_maintained_replay_envelope(
+        candidate_window_result, run_id, episode_id, candidate_deterministic_seed);
+    if (!candidate_envelope.admitted) {
+        reject_side(kMaintainedWorldlineComparisonCandidateEnvelopeRejected,
+                    candidate_envelope.rejection_reason, candidate_envelope.errors);
+        return result;
+    }
+
+    // Gates 3 + 4: both windows admit a maintained packet ancestry (slice-6A
+    // parent gates guard each side's lineage contribution).
+    const MaintainedPacketAncestryResult baseline_ancestry = build_maintained_packet_ancestry(
+        baseline_window_result, run_id, episode_id, baseline_deterministic_seed,
+        baseline_parent_trace_id);
+    if (!baseline_ancestry.admitted) {
+        reject_side(kMaintainedWorldlineComparisonBaselineAncestryRejected,
+                    baseline_ancestry.rejection_reason, baseline_ancestry.errors);
+        return result;
+    }
+    const MaintainedPacketAncestryResult candidate_ancestry = build_maintained_packet_ancestry(
+        candidate_window_result, run_id, episode_id, candidate_deterministic_seed,
+        candidate_parent_trace_id);
+    if (!candidate_ancestry.admitted) {
+        reject_side(kMaintainedWorldlineComparisonCandidateAncestryRejected,
+                    candidate_ancestry.rejection_reason, candidate_ancestry.errors);
+        return result;
+    }
+
+    // Gate 5: distinct anchors -- a window joined against itself is not a
+    // worldline comparison, and identical anchors would collapse the two
+    // worldline ids into one.
+    const std::uint64_t baseline_anchor = baseline_ancestry.ancestry.anchor_trace_id;
+    const std::uint64_t candidate_anchor = candidate_ancestry.ancestry.anchor_trace_id;
+    if (baseline_anchor == candidate_anchor) {
+        result.rejection_reason = std::string(kMaintainedWorldlineComparisonAnchorsNotDistinct);
+        return result;
+    }
+
+    // Populate: evidence ids only (no truth-state copy anywhere below).
+    MaintainedWorldlineComparison comparison{};
+    comparison.comparison_id = std::string(kMaintainedWorldlineComparisonIdPrefix) + run_id +
+                               ":trace:" + std::to_string(baseline_anchor) + ":vs:" +
+                               std::to_string(candidate_anchor);
+    comparison.run_id = run_id;
+    comparison.episode_id = episode_id;
+    comparison.baseline_worldline_id =
+        std::string(kMaintainedWorldlineComparisonWorldlineIdPrefix) + run_id + ":trace:" +
+        std::to_string(baseline_anchor);
+    comparison.candidate_worldline_id =
+        std::string(kMaintainedWorldlineComparisonWorldlineIdPrefix) + run_id + ":trace:" +
+        std::to_string(candidate_anchor);
+    comparison.baseline_anchor_trace_id = baseline_anchor;
+    comparison.candidate_anchor_trace_id = candidate_anchor;
+    comparison.baseline_replay_envelope_ref = baseline_envelope.envelope.replay_envelope_id;
+    comparison.candidate_replay_envelope_ref = candidate_envelope.envelope.replay_envelope_id;
+    comparison.baseline_packet_ancestry_ref = baseline_ancestry.ancestry.packet_ancestry_id;
+    comparison.candidate_packet_ancestry_ref = candidate_ancestry.ancestry.packet_ancestry_id;
+    comparison.baseline_event_order_ref = baseline_envelope.envelope.event_order_ref.event_id;
+    comparison.candidate_event_order_ref = candidate_envelope.envelope.event_order_ref.event_id;
+    comparison.baseline_snapshot_version_ref =
+        baseline_envelope.envelope.snapshot_ref.snapshot_version_ref;
+    comparison.candidate_snapshot_version_ref =
+        candidate_envelope.envelope.snapshot_ref.snapshot_version_ref;
+    comparison.baseline_deterministic_seed = baseline_deterministic_seed;
+    comparison.candidate_deterministic_seed = candidate_deterministic_seed;
+    comparison.deterministic_seed_matched =
+        baseline_deterministic_seed == candidate_deterministic_seed;
+    comparison.claim_scope =
+        std::string(runtime::counterfactual::kExperimentProfileClaimScopeComparative);
+    comparison.truth_claim = false;
+    comparison.promoted_to_support = false;
+
+    // Typed lineage refs (VA-5 vocabulary): envelope + ancestry + anchor per
+    // side. Deterministic order, baseline first.
+    const auto push_side_lineage = [&comparison](const std::string &envelope_ref,
+                                                 const std::string &ancestry_ref,
+                                                 const std::string &event_order_ref,
+                                                 const char *side_label) {
+        comparison.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = envelope_ref,
+            .evidence_kind = std::string(
+                runtime::counterfactual::kScenarioGenerationEvidenceKindReplayEnvelope),
+            .provenance_label = side_label,
+        });
+        comparison.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = ancestry_ref,
+            .evidence_kind =
+                std::string(kMaintainedWorldlineComparisonEvidenceKindPacketAncestry),
+            .provenance_label = side_label,
+        });
+        comparison.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = event_order_ref,
+            .evidence_kind = std::string(kMaintainedPacketAncestryEvidenceKindAnchorTrace),
+            .provenance_label = side_label,
+        });
+    };
+    push_side_lineage(comparison.baseline_replay_envelope_ref,
+                      comparison.baseline_packet_ancestry_ref,
+                      comparison.baseline_event_order_ref, "baseline");
+    push_side_lineage(comparison.candidate_replay_envelope_ref,
+                      comparison.candidate_packet_ancestry_ref,
+                      comparison.candidate_event_order_ref, "candidate");
+
+    result.admitted = true;
+    result.comparison = std::move(comparison);
+    result.evidence_refs.push_back(
+        std::string(kMaintainedWorldlineComparisonProducerEvidenceLabel));
+    result.evidence_refs.push_back("comparison_id=" + result.comparison.comparison_id);
+    result.evidence_refs.push_back("baseline_replay_envelope_ref=" +
+                                   result.comparison.baseline_replay_envelope_ref);
+    result.evidence_refs.push_back("candidate_replay_envelope_ref=" +
+                                   result.comparison.candidate_replay_envelope_ref);
+    result.evidence_refs.push_back("baseline_packet_ancestry_ref=" +
+                                   result.comparison.baseline_packet_ancestry_ref);
+    result.evidence_refs.push_back("candidate_packet_ancestry_ref=" +
+                                   result.comparison.candidate_packet_ancestry_ref);
+    result.evidence_refs.push_back(
+        std::string("deterministic_seed_matched=") +
+        (result.comparison.deterministic_seed_matched ? "true" : "false"));
     return result;
 }

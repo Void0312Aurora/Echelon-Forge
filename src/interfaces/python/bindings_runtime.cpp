@@ -1107,6 +1107,59 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("errors", &MaintainedPacketAncestryResult::errors)
         .def_rw("evidence_refs", &MaintainedPacketAncestryResult::evidence_refs);
 
+    // T10 evidence spine, slice 7 (this iteration): additive read surface for
+    // the maintained worldline/counterfactual comparison producer
+    // (RuntimeFacade::build_maintained_worldline_comparison). Nothing on an
+    // existing path constructs or consumes these bindings. The DTO carries
+    // evidence ids only (no truth-state copies -- the no-truth-promotion red
+    // line documented on the C++ type in runtime_facade_types.h).
+    nb::class_<MaintainedWorldlineComparison>(m, "MaintainedWorldlineComparison")
+        .def(nb::init<>())
+        .def_rw("comparison_id", &MaintainedWorldlineComparison::comparison_id)
+        .def_rw("run_id", &MaintainedWorldlineComparison::run_id)
+        .def_rw("episode_id", &MaintainedWorldlineComparison::episode_id)
+        .def_rw("baseline_worldline_id", &MaintainedWorldlineComparison::baseline_worldline_id)
+        .def_rw("candidate_worldline_id",
+                &MaintainedWorldlineComparison::candidate_worldline_id)
+        .def_rw("baseline_anchor_trace_id",
+                &MaintainedWorldlineComparison::baseline_anchor_trace_id)
+        .def_rw("candidate_anchor_trace_id",
+                &MaintainedWorldlineComparison::candidate_anchor_trace_id)
+        .def_rw("baseline_replay_envelope_ref",
+                &MaintainedWorldlineComparison::baseline_replay_envelope_ref)
+        .def_rw("candidate_replay_envelope_ref",
+                &MaintainedWorldlineComparison::candidate_replay_envelope_ref)
+        .def_rw("baseline_packet_ancestry_ref",
+                &MaintainedWorldlineComparison::baseline_packet_ancestry_ref)
+        .def_rw("candidate_packet_ancestry_ref",
+                &MaintainedWorldlineComparison::candidate_packet_ancestry_ref)
+        .def_rw("baseline_event_order_ref",
+                &MaintainedWorldlineComparison::baseline_event_order_ref)
+        .def_rw("candidate_event_order_ref",
+                &MaintainedWorldlineComparison::candidate_event_order_ref)
+        .def_rw("baseline_snapshot_version_ref",
+                &MaintainedWorldlineComparison::baseline_snapshot_version_ref)
+        .def_rw("candidate_snapshot_version_ref",
+                &MaintainedWorldlineComparison::candidate_snapshot_version_ref)
+        .def_rw("baseline_deterministic_seed",
+                &MaintainedWorldlineComparison::baseline_deterministic_seed)
+        .def_rw("candidate_deterministic_seed",
+                &MaintainedWorldlineComparison::candidate_deterministic_seed)
+        .def_rw("deterministic_seed_matched",
+                &MaintainedWorldlineComparison::deterministic_seed_matched)
+        .def_rw("claim_scope", &MaintainedWorldlineComparison::claim_scope)
+        .def_rw("truth_claim", &MaintainedWorldlineComparison::truth_claim)
+        .def_rw("promoted_to_support", &MaintainedWorldlineComparison::promoted_to_support)
+        .def_rw("lineage_refs", &MaintainedWorldlineComparison::lineage_refs);
+
+    nb::class_<MaintainedWorldlineComparisonResult>(m, "MaintainedWorldlineComparisonResult")
+        .def(nb::init<>())
+        .def_rw("admitted", &MaintainedWorldlineComparisonResult::admitted)
+        .def_rw("comparison", &MaintainedWorldlineComparisonResult::comparison)
+        .def_rw("rejection_reason", &MaintainedWorldlineComparisonResult::rejection_reason)
+        .def_rw("errors", &MaintainedWorldlineComparisonResult::errors)
+        .def_rw("evidence_refs", &MaintainedWorldlineComparisonResult::evidence_refs);
+
     nb::class_<WorldTerrainAssignment> world_terrain_assignment_class(m, "WorldTerrainAssignment");
     world_terrain_assignment_class.def(nb::init<>());
 #define EF_WORLD_TERRAIN_ASSIGNMENT_FIELD(type, name, default_value)                               \
@@ -1450,5 +1503,19 @@ void bind_runtime(nb::module_ &m) {
         // trace copy's parent_trace_id at the pre-slice default 0).
         .def("build_maintained_packet_ancestry", &RuntimeFacade::build_maintained_packet_ancestry,
              nb::arg("window_result"), nb::arg("run_id"), nb::arg("episode_id"),
-             nb::arg("deterministic_seed"), nb::arg("parent_trace_id") = 0);
+             nb::arg("deterministic_seed"), nb::arg("parent_trace_id") = 0)
+        // T10 evidence spine, slice 7 (this iteration): additive read-only
+        // maintained worldline/counterfactual comparison producer. Not wired
+        // into any existing path; only meaningful against window evidence
+        // stamped by the I59 opt-in (use_facade_evidence_producers=True)
+        // adapter path. See the declaration comment in runtime_facade.h for
+        // the gate order, the "comparison:maintained:*" /
+        // "worldline:maintained:*" id namespaces, and the no-truth-promotion
+        // red line (evidence ids only, never copies of truth state).
+        .def("build_maintained_worldline_comparison",
+             &RuntimeFacade::build_maintained_worldline_comparison,
+             nb::arg("baseline_window_result"), nb::arg("candidate_window_result"),
+             nb::arg("run_id"), nb::arg("episode_id"), nb::arg("baseline_deterministic_seed"),
+             nb::arg("candidate_deterministic_seed"), nb::arg("baseline_parent_trace_id") = 0,
+             nb::arg("candidate_parent_trace_id") = 0);
 }

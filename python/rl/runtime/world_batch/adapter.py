@@ -775,6 +775,96 @@ class RuntimeFacadeAdapter:
             int(parent_trace_id),
         )
 
+    def build_maintained_worldline_comparison(
+        self,
+        *,
+        run_id: str,
+        episode_id: str,
+        baseline_deterministic_seed: int,
+        candidate_deterministic_seed: int,
+        baseline_window_evidence: RuntimeWindowEvidence,
+        candidate_window_evidence: RuntimeWindowEvidence | None = None,
+        baseline_parent_trace_id: int = 0,
+        candidate_parent_trace_id: int = 0,
+    ) -> Any:
+        """Build a worldline/counterfactual comparison from two maintained windows.
+
+        New additive API (T10 evidence-spine census slice 7, this iteration);
+        nothing on the default adapter path calls it. It forwards the two
+        windows' ``RuntimeWindowResult`` products -- the explicit
+        ``baseline_window_evidence`` plus ``candidate_window_evidence`` (or the
+        adapter's :attr:`last_window_evidence` when omitted: the most recent
+        real window is the natural candidate against an earlier baseline) -- to
+        the facade producer ``build_maintained_worldline_comparison`` together
+        with the shared caller-owned run identity and each worldline's own
+        setup seed, and returns the fail-closed
+        ``MaintainedWorldlineComparisonResult`` (``admitted`` / ``comparison`` /
+        ``rejection_reason``).
+
+        The comparison consumes the slice-5 (I69) replay-envelope and slice-6A
+        (I79) packet-ancestry producers per side, so all of their gates guard
+        it: both windows must carry evidence minted by THIS facade's VA-8
+        allocator, both envelopes must pass ``validate_replay_envelope``
+        (deterministic replay refs guaranteed), both ancestries must admit
+        their ``*_parent_trace_id`` linkage, and the two anchors must be
+        distinct. The admitted comparison references evidence ids only --
+        envelope/ancestry/worldline ids, anchor trace ids, event-order and
+        snapshot-version refs -- never copies of truth state (the slice's
+        no-truth-promotion red line; ``truth_claim`` / ``promoted_to_support``
+        are structurally always ``False`` and ``claim_scope`` is always
+        ``"comparative"``).
+
+        Like the slice-5/6A seams this requires
+        ``use_facade_evidence_producers=True`` (I59): a worldline comparison is
+        only meaningful over real facade-minted evidence, and the producer
+        independently rejects the default placeholder ``trace_ids = [1]``. The
+        producer is read-only (peeks the allocator cursors, mints nothing), so
+        calling it never perturbs the run's evidence sequences or the stored
+        window products.
+        """
+        if not self._use_facade_evidence_producers:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires "
+                "use_facade_evidence_producers=True: the maintained worldline comparison "
+                "is only meaningful over real facade-minted evidence (I59 opt-in), "
+                "not the default placeholder trace_ids/input_snapshot_version"
+            )
+        if not hasattr(self.facade, "build_maintained_worldline_comparison"):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires the "
+                "T10 slice-7 RuntimeFacade.build_maintained_worldline_comparison binding"
+            )
+        if (
+            baseline_window_evidence is None
+            or getattr(baseline_window_evidence, "window_result", None) is None
+        ):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires a "
+                "completed maintained baseline window (run_maintained_window) passed as "
+                "baseline_window_evidence"
+            )
+        candidate = (
+            self._last_window_evidence
+            if candidate_window_evidence is None
+            else candidate_window_evidence
+        )
+        if candidate is None or getattr(candidate, "window_result", None) is None:
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires a "
+                "completed maintained candidate window (run_maintained_window) or an "
+                "explicit candidate_window_evidence argument"
+            )
+        return self.facade.build_maintained_worldline_comparison(
+            baseline_window_evidence.window_result,
+            candidate.window_result,
+            str(run_id),
+            str(episode_id),
+            int(baseline_deterministic_seed),
+            int(candidate_deterministic_seed),
+            int(baseline_parent_trace_id),
+            int(candidate_parent_trace_id),
+        )
+
     def world_count(self) -> int:
         return int(self.facade.world_count())
 

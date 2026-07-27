@@ -321,6 +321,83 @@ class RuntimeFacade {
                                      std::uint64_t deterministic_seed,
                                      std::uint64_t parent_trace_id = 0) const;
 
+    // --- T10 evidence spine, slice 7 (this iteration) -----------------------
+    //
+    // Maintained worldline/counterfactual comparison producer (census section
+    // 3 step 7: "Surface worldline/counterfactual comparison through the
+    // maintained adapter (opt-in)"). It joins TWO maintained windows of THIS
+    // facade's run -- a baseline worldline and a candidate (counterfactual)
+    // worldline -- into an evidence-level comparison, consuming the slice-5
+    // (I69) replay-envelope producer and the slice-6A (I79) packet-ancestry
+    // producer for each side. Like both, it is read-only (peeks the allocator
+    // cursors via the inner producers, mints nothing, registers no
+    // counterfactual worldline snapshot) and additive: nothing in the
+    // maintained runtime calls this method; the only Python reach is the
+    // RuntimeFacadeAdapter.build_maintained_worldline_comparison seam, which
+    // requires the I59 use_facade_evidence_producers=True opt-in.
+    //
+    // What a "worldline" is here: the evidence chain of one window sequence,
+    // named by its window's run-minted VA-8 anchor
+    // ("worldline:maintained:{run_id}:trace:{anchor}"). Two worldlines of one
+    // facade run are, e.g., two batch worlds set up with the same or different
+    // seeds (parallel same-seed/different-seed runs) or two window sequences
+    // separated by a counterfactual intervention. Evidence minted by a
+    // DIFFERENT facade cannot enter: the reused slice-5 VA-8 admission gate
+    // fail-closes it per side.
+    //
+    // Gates (fail-closed; comparison-level reasons in runtime_facade_internal.h
+    // kMaintainedWorldlineComparison*, underlying slice-5/6A reasons carried in
+    // result.errors -- with two windows, verbatim propagation would not say
+    // which side failed):
+    //
+    //   1./2. Each window must yield an ADMITTED maintained replay envelope
+    //      (build_maintained_replay_envelope, default VA-2 qualification off):
+    //      all nine slice-5 real-evidence gates plus validate_replay_envelope
+    //      -- which requires the deterministic seed and the deterministic
+    //      event-order sort key, so "deterministic replay refs present" is
+    //      discharged by the validator, per side. Rejection:
+    //      *_baseline_envelope_rejected / *_candidate_envelope_rejected.
+    //   3./4. Each window must yield an ADMITTED maintained packet ancestry
+    //      (build_maintained_packet_ancestry with the side's parent id): the
+    //      slice-6A parent gates guard the lineage each side contributes.
+    //      Rejection: *_baseline_ancestry_rejected /
+    //      *_candidate_ancestry_rejected. (Each ancestry call re-runs its
+    //      side's envelope build internally; both builds are deterministic
+    //      over the same inputs, so ancestry.replay_envelope_ref equals the
+    //      gate-1/2 envelope id by construction.)
+    //   5. The two anchors must be DISTINCT (a window compared against itself
+    //      is not a worldline comparison) --
+    //      *_windows_share_the_anchor_trace otherwise.
+    //
+    // NO TRUTH PROMOTION (the slice red line, see the DTO comment in
+    // runtime_facade_types.h): the result references evidence ids only --
+    // envelope ids, ancestry ids, anchor trace ids, event-order refs, snapshot
+    // version refs -- never copies of truth state (no kinematic deltas, unlike
+    // the raw RuntimeWorldlineComparison). truth_claim/promoted_to_support are
+    // structurally always false and claim_scope is always "comparative".
+    // Measuring HOW the worldlines diverge stays downstream replay work over
+    // the two referenced envelopes; this producer only establishes that both
+    // sides are replay-comparable by construction and records their identity.
+    //
+    // run_id / episode_id are the shared caller-owned run identity (one facade
+    // == one run, the I54 boundary; both windows belong to it).
+    // baseline/candidate deterministic seeds are the two worldlines' own
+    // caller-owned setup seeds (they differ for a different-seed world pair);
+    // deterministic_seed_matched records their equality.
+    // baseline/candidate parent_trace_id (default 0 = root) are the sides'
+    // slice-6A ancestry parents.
+    //
+    // Zero-wiring byte parity: nothing on any existing path calls this method,
+    // it only reads, and the default (non-opt-in) adapter path cannot reach it
+    // meaningfully (placeholder evidence fails gate 1), so every existing
+    // serialized value is byte-for-byte unchanged.
+    MaintainedWorldlineComparisonResult build_maintained_worldline_comparison(
+        const RuntimeWindowResult &baseline_window_result,
+        const RuntimeWindowResult &candidate_window_result, const std::string &run_id,
+        const std::string &episode_id, std::uint64_t baseline_deterministic_seed,
+        std::uint64_t candidate_deterministic_seed, std::uint64_t baseline_parent_trace_id = 0,
+        std::uint64_t candidate_parent_trace_id = 0) const;
+
     // --- T8 information-state architecture, fourth slice / I60 -------------
     //
     // Additive, read-only declaration export for the TL13 maintained

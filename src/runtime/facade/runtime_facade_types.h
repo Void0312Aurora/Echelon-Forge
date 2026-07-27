@@ -310,3 +310,90 @@ struct MaintainedPacketAncestryResult {
     std::vector<std::string> errors;
     std::vector<std::string> evidence_refs;
 };
+
+// --- T10 evidence spine, slice 7 (this iteration) ---------------------------
+//
+// Additive result DTOs of the maintained worldline/counterfactual comparison
+// producer (RuntimeFacade::build_maintained_worldline_comparison). Hand-written
+// next to the slice-6A ancestry DTOs they consume, following the slice-5/6A
+// precedent; appended at the end of this header, so no existing member order
+// moves (member order is ABI for every DTO above).
+//
+// NO TRUTH PROMOTION -- the slice red line. Unlike the raw counterfactual
+// surface's RuntimeWorldlineComparison (which carries kinematic truth deltas
+// dx/dy/dz/dvx/dvy/dvz/dheading), this DTO carries evidence REFERENCES only:
+// ids minted by the slice-5/6A producers of THIS facade (replay envelope ids,
+// packet ancestry ids, VA-8 anchor trace ids, event-order refs, snapshot
+// version refs) plus the caller-owned run identity and seeds. No field copies
+// truth state, so an admitted comparison can never promote a counterfactual
+// worldline's state into support -- there is nothing state-shaped to promote.
+// truth_claim / promoted_to_support are structurally always false (the
+// producer takes no flag that could set them) and claim_scope is always the
+// contract-owned "comparative" (kExperimentProfileClaimScopeComparative),
+// mirroring the WP17 experiment surface's descriptive-claims discipline.
+struct MaintainedWorldlineComparison {
+    // "comparison:maintained:{run_id}:trace:{baseline_anchor}:vs:{candidate_anchor}"
+    // -- reserved namespace, disjoint from the raw-facade
+    // "counterfactual:selected_slice*" comparison ids and from
+    // "replay:maintained:*" / "ancestry:maintained:*".
+    std::string comparison_id;
+    std::string run_id;
+    std::string episode_id;
+    // Maintained worldline identity, minted by THIS producer as
+    // "worldline:maintained:{run_id}:trace:{anchor}": a worldline here is the
+    // evidence chain named by its window's run-minted VA-8 anchor, not a
+    // registered counterfactual snapshot (no worldline registry entry is
+    // created or read; the counterfactual restore path stays untouched).
+    std::string baseline_worldline_id;
+    std::string candidate_worldline_id;
+    // The two windows' run-minted VA-8 anchors (engagement packet trace_ids
+    // tails), admitted by the slice-5 gates; distinct by the comparison gate.
+    std::uint64_t baseline_anchor_trace_id = 0;
+    std::uint64_t candidate_anchor_trace_id = 0;
+    // Deterministic replay refs: each side's admitted maintained replay
+    // envelope ("replay:maintained:{run_id}:trace:{anchor}", I69 producer,
+    // validated by validate_replay_envelope which requires the deterministic
+    // seed and the deterministic event-order sort key).
+    std::string baseline_replay_envelope_ref;
+    std::string candidate_replay_envelope_ref;
+    // Each side's admitted maintained packet ancestry
+    // ("ancestry:maintained:{run_id}:trace:{anchor}", I79 producer).
+    std::string baseline_packet_ancestry_ref;
+    std::string candidate_packet_ancestry_ref;
+    // "event:trace:{anchor}" -- the envelopes' deterministic event-order ids.
+    std::string baseline_event_order_ref;
+    std::string candidate_event_order_ref;
+    // The envelopes' snapshot identities (the packets' run-produced
+    // "global:{n}" provenance strings; slice-5 default VA-2 qualification off).
+    std::string baseline_snapshot_version_ref;
+    std::string candidate_snapshot_version_ref;
+    // Caller-owned run identity seeds of the two worldlines (the run
+    // orchestrator owns them, exactly as on the envelope producer), echoed so
+    // a consumer can pick the same-seed replay pair without re-deriving.
+    std::uint64_t baseline_deterministic_seed = 0;
+    std::uint64_t candidate_deterministic_seed = 0;
+    bool deterministic_seed_matched = false;
+    // Always "comparative" / false / false -- see the no-truth-promotion block
+    // comment above.
+    std::string claim_scope;
+    bool truth_claim = false;
+    bool promoted_to_support = false;
+    // Typed lineage refs (VA-5 vocabulary: ref_id / evidence_kind /
+    // provenance_label): envelope + ancestry + anchor per side, labels
+    // "baseline" / "candidate". Deterministic order.
+    std::vector<runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef> lineage_refs;
+};
+
+// Fail-closed result: `admitted` is only true when BOTH windows' slice-5
+// envelope gates and slice-6A ancestry gates passed (their rejections are
+// wrapped in side-naming reasons, underlying detail in `errors`) AND the
+// comparison-specific distinct-anchor gate passed. On rejection the comparison
+// stays default-constructed, so a rejected result cannot leak a half-real
+// evidence join.
+struct MaintainedWorldlineComparisonResult {
+    bool admitted = false;
+    MaintainedWorldlineComparison comparison{};
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+    std::vector<std::string> evidence_refs;
+};
