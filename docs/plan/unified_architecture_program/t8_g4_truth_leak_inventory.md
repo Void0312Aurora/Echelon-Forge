@@ -8,8 +8,8 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/t8_g4_truth_leak_inventory.md`
 Owner: `unified architecture program workline`
-Last verified: `2026-07-26`
-Baseline commit: `0aa76a00`
+Last verified: `2026-07-27`
+Baseline commit: `dd292f4b`
 
 Status: T8 (information-state architecture) register for the
 [Unified Architecture Program](README.md). It records (a) the maintained
@@ -42,7 +42,7 @@ declaration* (view id + produced/consumed layers + semantic stage) via
 `RuntimeFacade::describe_maintained_observation_view`, pinned to the Python single
 source of truth by a parity gate. This exports a declaration, not data — the TL13
 seam's returns are byte-for-byte unchanged; at I60 landing no consumer read a
-typed spec (the bounded I87 candidate below is the first such consumer).
+typed spec (the bounded I87 slice below is the first such consumer).
 The **fifth slice (§9, I63)** is documentation + tests only: it settles this
 register against I60 and hardens the seams between the three G4 gates (a positive
 "reads through the view" gate, an inventory↔code drift gate, and a reward-surface
@@ -53,7 +53,7 @@ truth-reader classifier and its gate, and the follow-up settled the two
 world-batch consumers that classifier had pinned as declaration-pending
 (declarations are pure metadata; zero behavior change).
 
-The **seventh slice (I87 candidate, 2026-07-27; pending independent review)**
+The **seventh slice (I87 accepted/landed, 2026-07-27)**
 is deliberately narrower than the full typed migration previously left open:
 only C3/C20 consume the existing facade `ObservationViewSpec`. An explicit
 construction-time opt-in reads and structurally admits that spec once from the
@@ -62,8 +62,8 @@ lists mean *structural-only* (neither wildcard nor zero-field). The two Python
 `truth.x/y` leaf reads move behind a high-level injected
 `gym_envs.observation_view.own_ship_attr` reader, while the opaque truth object
 still enters the compiled kernels unchanged. The TL13 seam and
-`_ScenarioLoaderRuntimeProxy` do not grow. This paragraph records a candidate,
-not an accepted/landed verdict.
+`_ScenarioLoaderRuntimeProxy` do not grow. This paragraph records the
+accepted/landed bounded slice.
 
 The G4 vocabulary used throughout is the authoritative six-layer information-state
 set from the
@@ -121,14 +121,14 @@ records whether the read already flows through a declared view/seam.
 |---|----------|-------------------|----------|----------------|
 | C1 | `gym_envs/scenario_loader/mission_observation.py` — Python-owned modes (`naval_screen_station_v1`, `air_combat_c2_roe_v1/v2`) | `truth.contacts`, `truth.missiles_remaining`, `truth.x/y`; support `get_agent_observation`/`get_unit_position`; support `get_unit_messages` | consumes World Truth + Shared Tactical Picture; produces Agent Observation | **Converged this slice** (§6; reads via declared view; was V4 leak) |
 | C2 | `gym_envs/scenario_loader/mission_observation.py` — compiled modes (`basic`/`nav_v1`/`nav_v2`/…) | compiled `ef_py.compute_mission_observation` from `mission_command_view` + route guidance (truth passed in) | produces Agent Observation (compiled) | compiled facade path; covered by C1 module declaration |
-| C3 | `python/rl/runtime/world_batch/observation_batching.py` + `_observation_mixin.py` | `state.last_truth`/`state.last_inst` (truth/instrument cache), injected own-ship x/y reader, `inst.alt_baro` → compiled batch | consumes World Truth (cache) → produces Agent Observation; P10 ObservationExport | **I87 candidate (pending review)** — default-off preserves the I32 path; opt-in admits the structural `ObservationViewSpec` once and routes x/y through the high-level declared-view reader; opaque truth remains a whole-object kernel input; parity and no-raw-leaf gates are added |
+| C3 | `python/rl/runtime/world_batch/observation_batching.py` + `_observation_mixin.py` | `state.last_truth`/`state.last_inst` (truth/instrument cache), injected own-ship x/y reader, `inst.alt_baro` → compiled batch | consumes World Truth (cache) → produces Agent Observation; P10 ObservationExport | **I87 accepted/landed** — default-off preserves the I32 path; opt-in admits the structural `ObservationViewSpec` once and routes x/y through the high-level declared-view reader; opaque truth remains a whole-object kernel input; parity and no-raw-leaf gates are landed |
 | C4 | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | `truth.missiles_remaining`; `sim.export_recent_engagement_events`; `sim.debug_get_aircraft_damage_state`/`debug_get_ground_contact_state`; `sim.is_unit_active` | consumes World Truth; produces reward | **Converged this slice** (§6; reads via declared view; was V5 leak) |
 | C5 | `gym_envs/scenario_loader/reward_runtime/naval.py` | `truth.x/y`, `truth.contacts`; `sim.get_unit_position`/`get_agent_observation` (other units); `sim.get_unit_messages` | consumes World Truth + Shared Tactical Picture; produces reward | **Converged this slice** (§6; reads via declared view; was V6 leak) |
 | C6 | `gym_envs/scenario_loader/reward_runtime/safety.py` | own-ship `truth.health/z/pitch/speed` | consumes World Truth; produces reward inputs | **Converged this slice** (§6; own-ship read via declared view) |
 | C7 | `gym_envs/scenario_loader/reward_runtime/shaping_inputs.py` | own-ship `truth.z/speed` + instrument vector | consumes World Truth; produces reward inputs | **Converged this slice** (§6; own-ship read via declared view) |
 | C8 | `gym_envs/scenario_loader/reward_runtime/objectives.py` | own-ship `truth.z/health/heading/x/y/missiles_remaining`; target `truth.contacts`, `sim.is_unit_active`/`get_unit_health` | consumes World Truth; produces reward/objective inputs | **Converged this slice** (§6; own + target read via declared view) |
 | C9 | `gym_envs/scenario_loader/reward_runtime/compiled_runtime.py` | assembles pre-built input DTOs; no direct information-layer read | — (assembler, not a direct consumer) | N/A — excluded from registry |
-| C10 | `gym_envs/scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | the World-Truth read seam itself (V3) | maintained seam; the declared observation view (§6) reads from this seam's `truth`/`sim` output; the I87 candidate reads only the exported structural spec at the higher adapter boundary and leaves this seam unchanged |
+| C10 | `gym_envs/scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | the World-Truth read seam itself (V3) | maintained seam; the declared observation view (§6) reads from this seam's `truth`/`sim` output; the accepted I87 slice reads only the exported structural spec at the higher adapter boundary and leaves this seam unchanged |
 | C11 | `gym_envs/scenario_loader/step_evaluation.py` | own-ship `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health`; orchestrates reward surfaces | consumes World Truth (own-ship); stage-bundling aggregator (V7); P10 ObservationExport | **Declared (§7)**; reads kept (orchestrator bundling DTOs, not leaf reads) — declared-but-open (TL14) |
 | C12 | `gym_envs/scenario_loader/execution_runtime/mainline.py` | own-ship `truth.z/x/y/vx/vy`; orchestrates the execution step; reward/observation via loader | consumes World Truth (own-ship); execution step controller; P10 ObservationExport | **Declared (§7)**; reads kept (orchestrator) — declared-but-open |
 | C13 | `gym_envs/leader_env_parts/decision_runtime/observations.py::build_observation` | mostly `inst.*`; own-ship x/y for ILS/runway/anchor geometry; delegates nav to `get_mission_observation` | consumes World Truth (position); produces Agent Observation; P10 ObservationExport | **Converged (§7.5 repair round)** — own-ship reads via `observation_view.own_ship_field`; ban-gated; parity pinned by `tests/leader/test_leader_observation_view_parity.py` |
@@ -138,7 +138,7 @@ records whether the read already flows through a declared view/seam.
 | C17 | `gym_envs/universal_env_parts/observations.py::build_universal_observation` — active universal policy-observation assembly, called by `CooperativeWorldBatchVecEnv` and `MultiAgentWorldRuntimeView` | `truth.x/y` (ILS query), `truth.contacts`, `truth.rwr_warnings` (Python fallback path); compiled path passes `truth` to `ef_py.compute_execution_observation_runtime_numpy`; delegates the mission vector to `get_mission_observation` | consumes World Truth; produces Agent Observation | **Converged this slice** (§6; reads via declared view; repair-round add) |
 | C18 | `gym_envs/scenario_loader/navigation_runtime/waypoint_rewards.py::build_waypoint_step_state` — direct waypoint reward-input consumer, called by `step_evaluation.py`/`execution_runtime/mainline.py` via `loader._build_waypoint_step_state` | own-ship `truth.x/y` (distance-to-fix and route reference); builds `ef_py.WaypointRewardInputs` | consumes World Truth; produces reward inputs | **Converged this slice** (§6; own-ship read via declared view; repair-round add) |
 | C19 | `gym_envs/scenario_loader/navigation_runtime/guidance.py` — shared route-guidance geometry helper (`query_route_guidance_result`, `compute_waypoint_guidance_state`, `apply_waypoint_guidance_update`, …) | own-ship `truth.x/y/speed` (route guidance geometry; `get_policy_agent_observation` fallback) | consumes World Truth (own-ship); spans command-delivery (P3/P4 autopilot target) + reward-support (P10); not a single Agent-Observation-facing consumer | **Declared (§7)**; migration awaits a command/guidance read owner (an observation view is not the right owner for command-delivery reads) — declared-but-open (TL20) |
-| C20 | `python/rl/runtime/world_batch/_vec_env_support.py::_execution_instrument_vector` — vec-env execution-observation support helper (per-agent instrument-vector build on the batch path) | injected own-ship x/y reader (ILS query); opaque `truth` then handed to `ef_py.compute_execution_observation_runtime_numpy` | consumes World Truth (cache); produces Agent Observation; P10 ObservationExport | **I87 candidate (pending review)** — same construction-time structural admission and default-off parity as C3; no lower-layer `gym_envs` owner import |
+| C20 | `python/rl/runtime/world_batch/_vec_env_support.py::_execution_instrument_vector` — vec-env execution-observation support helper (per-agent instrument-vector build on the batch path) | injected own-ship x/y reader (ILS query); opaque `truth` then handed to `ef_py.compute_execution_observation_runtime_numpy` | consumes World Truth (cache); produces Agent Observation; P10 ObservationExport | **I87 accepted/landed** — same construction-time structural admission and default-off parity as C3; no lower-layer `gym_envs` owner import |
 
 Converged onto the declared observation view: C1, C4, C5, C6, C7, C8, C17, C18
 (second slice, §6; C17/C18 added in the first-slice repair round) plus C13 (third
@@ -146,12 +146,12 @@ slice repair round, §7.5) — the nine modules in
 `VIEW_CONVERGED_INFORMATION_LAYER_CONSUMERS`. Declared with reads not yet
 view-converged (declared-but-open, in
 `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS`): C11, C12, C14, C19 (third
-slice, §7). In the I87 candidate, C3 and C20 are moved into the converged set
-by injected-reader and no-raw-leaf gates; the authoritative accepted register
-status remains pending independent review. `MAINTAINED_INFORMATION_LAYER_CONSUMERS`
+slice, §7). In the accepted I87 slice, C3 and C20 are moved into the converged set
+by injected-reader and no-raw-leaf gates; the authoritative register status is
+accepted/landed. `MAINTAINED_INFORMATION_LAYER_CONSUMERS`
 remains the union of the declared sets. C3 was previously recorded here as
 "already conformant" via the I32 stage contract alone; §10 added its module-level
-G4 declaration before the I87 candidate supplied the bounded data-flow pilot.
+G4 declaration before the accepted I87 slice supplied the bounded data-flow pilot.
 Excluded as non-consumer: C9. Dead: C16. Outside the maintained policy path: C15.
 
 ## 3. Truth-leak inventory
@@ -177,7 +177,7 @@ diagnostic use (routed through the view's diagnostic face).
 | TL10 | `reward_runtime/safety.py::build_safety_runtime_inputs` | own-ship `truth.health/z/pitch/speed` | **converged** (declared view) | C6. Reads via `observation_view.own_ship_field`; own-ship self-read, low-risk. |
 | TL11 | `reward_runtime/shaping_inputs.py::build_flight_shaping_runtime_inputs` | own-ship `truth.z/speed` | **converged** (declared view) | C7. Reads via `observation_view.own_ship_field`; own-ship self-read, low-risk. |
 | TL12 | `reward_runtime/objectives.py::build_conditional_objective_inputs`, `_combat_target_snapshot` | own-ship `truth.z/health/heading/x/y/missiles_remaining`; target `truth.contacts` range, `sim.is_unit_active`/`get_unit_health(target)` | **converged** (declared view) | C8. Own-ship via `own_ship_field`; target `truth.contacts` via `contacts`; `sim.is_unit_active`/`get_unit_health` via `unit_active`/`unit_health`. |
-| TL13 | `scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | **exempt** (maintained seam) | V3. The single maintained read chokepoint; on the batch path `sim` is `_ScenarioLoaderRuntimeProxy` (facade-backed). The declared observation view (§6) reads from this seam's `truth`/`sim` output. **Landed (§8, I60):** the maintained view's structural declaration is exported through `RuntimeFacade::describe_maintained_observation_view`. The I87 candidate consumes that declaration only at adapter construction for C3/C20; the seam's return and proxy surface remain unchanged, so this verdict stays *exempt-as-seam*. |
+| TL13 | `scenario_loader/core.py::get_policy_agent_observation` / `get_policy_instrument_state` | `sim.get_agent_observation`/`get_instrument_state` (facade-backed proxy on batch path) | **exempt** (maintained seam) | V3. The single maintained read chokepoint; on the batch path `sim` is `_ScenarioLoaderRuntimeProxy` (facade-backed). The declared observation view (§6) reads from this seam's `truth`/`sim` output. **Landed (§8, I60):** the maintained view's structural declaration is exported through `RuntimeFacade::describe_maintained_observation_view`. The accepted I87 slice consumes that declaration only at adapter construction for C3/C20; the seam's return and proxy surface remain unchanged, so this verdict stays *exempt-as-seam*. |
 | TL14 | `scenario_loader/step_evaluation.py` (`build_execution_runtime_state`, reward-input assembly) | own-ship `truth.x/y/z/vx/vy/vz/speed/pitch/roll/heading/health` | **declared-but-open** (own-ship, aggregator) | V7 (C11). Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED (), stage P10 ObservationExport (I32 closure; P9 removed in the §7.5 repair). Reads kept, not view-converged: a stage-bundling orchestrator assembling reward/observation input DTOs, not a leaf observation-read surface. |
 | TL15 | `leader_env_parts/decision_runtime/observations.py::build_observation` | own-ship x/y (ILS/runway/anchor geometry) | **converged** (declared view; §7.5 repair round) | C13. Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED Agent Observation, stage P10 ObservationExport. Converged in the §7.5 repair round: own-ship reads via `observation_view.own_ship_field` (token-isomorphic replacement of `getattr(truth, "x"/"y", 0.0)`); ban-gated; element-exact parity with the fae17eb8 baseline pinned by `tests/leader/test_leader_observation_view_parity.py` (incl. the no-x/y default-firing scenario and a view-seam corruption red-proof). |
 | TL16 | `python/rl/tasking/leader_tasking.py` (multiple sites) | `get_policy_agent_observation`/`get_policy_instrument_state` | **declared-but-open** (scripted-director) | C14. Declared 2026-07-21 (§7): CONSUMED World Truth, PRODUCED (), stages P2 TaskingIntent + P3 CommandDelivery. Adjudicated as maintained doctrine (a scripted C2/leader director legitimately consuming own-ship truth), not diagnostics-only. Migration forbidden: routing its reads through `gym_envs.observation_view` would add a `python.rl`→`gym_envs` reverse dependency; the declaration is neutral (`python.architecture`). |
@@ -210,7 +210,7 @@ The exempt/diagnostic reads (TL3, TL6, TL9, TL13, TL17) keep their verdict; wher
 they sit on a migrated consumer they are routed through the view's
 Shared-Tactical-Picture / diagnostic faces for consistency. The fourth slice
 (§8, I60) exported the maintained view's *structural declaration* from the C++
-facade (parity-gated). The I87 candidate consumes that structural fact for the
+facade (parity-gated). The accepted I87 slice consumes that structural fact for the
 bounded C3/C20 pilot; a full typed data flow at the TL13 seam remains a later
 step (§5).
 
@@ -543,7 +543,7 @@ convergence and changes no verdict (TL13 stays *exempt-as-seam*).
   repeated calls and across facades with different world counts — so it reads no
   facade instance state and cannot couple to (or perturb) run behavior.
 - **Bounded wiring.** No maintained C++ path or `gym_envs`/TL13 consumer calls
-  the export. The I87 candidate adds exactly one Python call site in
+  the export. The accepted I87 slice adds exactly one Python call site in
   `RuntimeFacadeAdapter`: default-off makes zero calls; construction-time opt-in
   calls the same facade once and caches the admitted structural spec.
 - The `ef_py`-dependent parity/value tests skip without a local build (repo
@@ -636,8 +636,8 @@ classified observation consumers that did not yet carry a G4 declaration in
 ### 10.2 Pending-declaration settle-up (I76 follow-up, recorded historical)
 
 The I76 follow-up settled those two pins as declarations only, before the
-separate I87 candidate below. Its historical scope was zero behavior change;
-the I87 candidate is the first bounded read migration for these modules:
+separate I87 slice below. Its historical scope was zero behavior change;
+the accepted I87 slice is the first bounded read migration for these modules:
 
 - Both world-batch modules now declare `INFORMATION_LAYER_CONSUMED = ("World
   Truth",)`, `INFORMATION_LAYER_PRODUCED = ("Agent Observation",)`,
@@ -647,7 +647,7 @@ the I87 candidate is the first bounded read migration for these modules:
   matching the C3 census verdict recorded in §2.
 - In the I76 historical snapshot both were registered in
   `DECLARED_DEFERRED_INFORMATION_LAYER_CONSUMERS` (declaration-gated, not
-  ban-gated). The I87 candidate then moves them into the converged set and
+  ban-gated). The accepted I87 slice then moves them into the converged set and
   injects the declared owner reader while preserving cached per-state truth and
   the I32 stage contract.
 - `G4_DECLARATION_PENDING_CONSUMERS` is emptied. The pin machinery stays: the
@@ -658,9 +658,9 @@ the I87 candidate is the first bounded read migration for these modules:
 
 Census updates: C3's "Declared view?" cell records the declaration (§2), and
 the new C20 row covers `_vec_env_support.py`, which the pre-I76 census had not
-listed as a separate consumer. The I87 candidate moves only the x/y leaf reads
+listed as a separate consumer. The accepted I87 slice moves only the x/y leaf reads
 behind the injected owner while retaining the I32 contracts; acceptance remains
-pending independent review.
+and is accepted/landed with the focused gates recorded below.
 
 ### 10.3 Verification of the I76 settle-up (zero behavior change)
 
@@ -682,9 +682,9 @@ pending independent review.
   (`translate_docs_batch.py clusters --write --pair
   plan/unified_architecture_program/t8_g4_truth_leak_inventory`).
 
-### 10.4 I87 bounded typed-observation candidate (2026-07-27; pending review)
+### 10.4 I87 bounded typed-observation slice (2026-07-27; accepted/landed)
 
-The candidate implementation is intentionally limited to C3/C20:
+The accepted implementation is intentionally limited to C3/C20:
 
 - `RuntimeFacadeAdapter(use_typed_observation_view=True)` reads
   `describe_maintained_observation_view()` exactly once from its own facade and
@@ -700,8 +700,8 @@ The candidate implementation is intentionally limited to C3/C20:
   kernel. `_ScenarioLoaderRuntimeProxy` and the TL13 seam are unchanged.
 - Focused tests pin construction count, all structural rejection branches,
   empty/non-empty field semantics, opaque-truth forwarding, default/off parity,
-  and the injected-reader/no-raw-leaf architecture gates. This is a candidate
-  evidence note only; it does not mark the authoritative register accepted.
+  and the injected-reader/no-raw-leaf architecture gates. This is the landed
+  evidence for the bounded I87 slice; broader typed data flow remains deferred.
 
 ## Related
 

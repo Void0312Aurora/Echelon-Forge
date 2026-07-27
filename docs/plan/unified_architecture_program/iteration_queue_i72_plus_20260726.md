@@ -9,14 +9,15 @@ Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/iteration_queue_i72_plus_20260726.md`
 Owner: `unified architecture program workline`
 Last verified: `2026-07-27`
-Baseline and documented head: `18abf5e7`
+Baseline and source landing head: `93f1214c`
 
 Status: renumbered successor to the unlanded 2026-07-23 draft
 (`iteration_queue_i67_plus_20260723.md`), which this document supersedes. The
 draft was designed against the I61-I66 candidate numbering; that numbering
 changed when the I61-I71 landing wave was registered. I72-I85 are now
 accepted/landed; I86 is closed held with evidence; I87 is accepted/landed.
-I88 is next, I89 is conditional on I88 findings, and I90 remains last. The
+I88 was run as the first residual-audit pass and returned findings; I89 is now
+the active narrow repair pack, and I90 remains last. The
 later I96-I98 PR-bot remediations are register-only repairs, not members of this
 I72-I90 numbering map; `727193b2` is a lineage CI-gate prerequisite and
 verification repair, not a new iteration number.
@@ -108,9 +109,9 @@ numbers.
 
 | Iteration | Track | Deliverable | Activation gate | Exit evidence |
 |---|---|---|---|---|
-| I88 (next) | T7 | Final residual audit, clean pass 1, covering T1-T11 code, callers, gates, docs, held items, and worktree state. | I72-I85 accepted/landed; I86 held with evidence; I87 accepted/landed. | Every survivor classified `intentional` / `held` / `uneconomic`; zero unclassified findings. |
-| I89 (conditional) | T1-T11 | Narrow repair pack for findings from I88 only. No opportunistic work. | I88 findings | One commit per repaired iteration risk, full affected gates, independent review. If I88 is clean, I89 is skipped. |
-| I90 (last) | T7 | Final residual audit, clean pass 2 on a fresh checkout and matching build. | No changes after the last repair | Same classifications as pass 1, no new findings, complete ledger hashes, and two consecutive clean passes. |
+| I88 (findings; clean count 0) | T7 | Final residual audit pass 1 over T1-T11 code, callers, gates, docs, held items, and worktree state. | I72-I85 accepted/landed; I86 held with evidence; I87 accepted/landed. | Findings recorded in [I89 residual disposition](t7_i89_residual_disposition_20260727.md); no clean-pass credit. |
+| I89 (active) | T1-T11 | Narrow repair pack for I88 findings only: bounded sensor-loader parity plus T8/T9 maintenance corrections and explicit residual classification. | I88 findings | One coherent landing commit assembled from independently reviewed risk slices; full affected gates and independent review. |
+| I90 (last; pending) | T7 | Final residual audit on a fresh checkout and matching build, with two post-repair clean passes. | No changes after I89 review | Same classifications as I89 disposition, no new findings, complete ledger hashes, and two consecutive clean passes. |
 
 ## 5. Explicitly Unscheduled / Held
 
@@ -130,6 +131,7 @@ numbers.
 - [Repository Consolidation Plan](../repository_consolidation/README.md)
 - [Exact Runtime Refactor Plan](../exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [T6 Residual Ledger](t6_residual_ledger.md)
+- [I89 Residual Disposition](t7_i89_residual_disposition_20260727.md)
 - [T8 G4 Truth-Leak Inventory](t8_g4_truth_leak_inventory.md)
 - [T10 Evidence Spine Census](t10_evidence_spine_census_20260721.md)
 - [T11 Content Pipeline Census](t11_content_pipeline_census_20260721.md)

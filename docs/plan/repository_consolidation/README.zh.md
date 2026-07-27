@@ -188,6 +188,7 @@ claim。
 
 ### 落地树验证记录（2026-07-26/27 落地波次）
 
+| I89 T7 窄修复包：I88 残余平价与治理收口 | `accepted` | `bdf03553` + `b2cec611`（有界 sensor-loader 平价）+ `86186e56`/`93f1214c`（残留裁定与文档同步） | I88 返回 findings 而非 clean。本窄包修复有效 C++/Python `sensor_refs` 分支不一致（空数组抑制 inline sensor；非数组落入 fallback；数组中的非字符串元素忽略；非空字符串数组产生 `sensor_refs`），刷新已接受 I87 的 T8 登记与 T9 证据指针，并为每个非代码幸存面登记 owner 与下一道门。不删除用户生成物/工作树，也不扩张 held 范围。 | 代码候选独立评审：22 个聚焦测试通过，含忽略元素边缘；ruff 与 diff check 干净。残留裁定独立检查 EN/ZH 结构与本地链接；全树历史链接问题仍在维护范围之外。修复后门禁与最终审计由 I90 记录。 |
 上表中写"落地树 maintained smoke 见下文"的行即指本记录。波次头 `9ab17d455ea3cf7f3e3d8fb606a8d2a8f672c999`（26 个迭代：I61-I63、I65-I81、I85、I91-I95 及 I70 构建修复，2026-07-26/27 落地）：maintained smoke 701 passed, 4 gap-matrix skips, 0 failed (exit 0)；ef_test 137 用例 / 19,137 断言；ctest 8/8；dto_schema 与实验矩阵生成器 --check 干净（空战 24/24、协同 12/12）；文档链接审计 0 issues；全仓 ruff 干净；`git diff --check` 干净。每个迭代均携带独立评审结论落地；needs-repair 结论按评审纪律在提交前修复并通过确认轮。
 
 当前结算 head `18abf5e7` 包含谱系 CI gate 前置/核验修复 `727193b2`：maintained smoke 752 passed / 4 skipped / 45 subtests；`ef_test` 143 cases / 19,147 assertions；文档登记 89/89 synced；文档链接审计 180 documents / 2,782 links / 0 issues。

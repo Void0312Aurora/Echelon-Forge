@@ -301,3 +301,43 @@ def test_bounded_derivation_fails_closed_outside_the_submarine_family() -> None:
   out_of_family["airframe"] = {"empty_mass_kg": 1.0}
   with pytest.raises(ValueError, match="outside the bounded submarine"):
     derive_submarine_capability_bundle_facts(out_of_family)
+
+
+def test_sensor_refs_loader_branch_matches_cpp_presence_and_array_semantics() -> None:
+  from python.content.capability_bundles.submarine import (
+    derive_submarine_capability_bundle_facts,
+  )
+
+  base = {"type": "Submarine", "sensor": {"range_m": 1.0}}
+
+  empty_array = {**base, "sensor_refs": []}
+  empty_types = {
+    capability_type
+    for _, capability_type, _ in derive_submarine_capability_bundle_facts(empty_array)
+  }
+  assert "sensor_refs" not in empty_types
+  assert "inline_sensor" not in empty_types
+
+  non_array = {**base, "sensor_refs": "not-an-array"}
+  non_array_types = {
+    capability_type
+    for _, capability_type, _ in derive_submarine_capability_bundle_facts(non_array)
+  }
+  assert "sensor_refs" not in non_array_types
+  assert "inline_sensor" in non_array_types
+
+  non_empty_array = {**base, "sensor_refs": ["AN/BPS-5"]}
+  non_empty_types = {
+    capability_type
+    for _, capability_type, _ in derive_submarine_capability_bundle_facts(non_empty_array)
+  }
+  assert "sensor_refs" in non_empty_types
+  assert "inline_sensor" not in non_empty_types
+
+  non_string_array = {"type": "Submarine", "sensor": {"range_m": 1.0}, "sensor_refs": [1, None, True]}
+  non_string_types = {
+    capability_type
+    for _, capability_type, _ in derive_submarine_capability_bundle_facts(non_string_array)
+  }
+  assert "sensor_refs" not in non_string_types
+  assert "inline_sensor" not in non_string_types

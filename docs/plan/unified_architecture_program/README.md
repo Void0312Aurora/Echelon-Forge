@@ -240,6 +240,7 @@ and are not scheduled by this program.
 
 ## Related Authority
 
+- [I89 Residual Disposition (2026-07-27)](t7_i89_residual_disposition_20260727.md) (I88 finding classifications and owner-gated held surfaces)
 - [I72+ Iteration Queue (2026-07-26)](iteration_queue_i72_plus_20260726.md)
   (dependency-ordered execution design after the I61-I71 landing wave)
 - [Repository Consolidation Plan](../repository_consolidation/README.md)

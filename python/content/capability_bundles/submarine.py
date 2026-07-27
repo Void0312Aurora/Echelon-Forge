@@ -137,15 +137,24 @@ def derive_submarine_capability_bundle_facts(
 
     facts: List[Tuple[str, str, Tuple[str, ...]]] = []
 
-    has_sensor_refs = bool(definition.get("sensor_refs"))
-    if has_sensor_refs:
+    sensor_refs = definition.get("sensor_refs")
+    # Match unit_definition_loader.cpp: presence of an array selects this
+    # branch, even when the array is empty. Non-array values fall through to
+    # the inline-sensor branch below.
+    has_sensor_refs_branch = "sensor_refs" in definition and isinstance(sensor_refs, list)
+    sensor_ref_values = (
+        tuple(value for value in sensor_refs if isinstance(value, str))
+        if has_sensor_refs_branch
+        else ()
+    )
+    if sensor_ref_values:
         facts.append(("sensing", "sensor_refs", ("sensor_refs", "sensor_ref")))
     if str(definition.get("sensor_ref") or ""):
         facts.append(("sensing", "sensor_ref", ("sensor_ref",)))
     # Loader chain: sensor_refs / inline sensor / has_sensor are a mutually
     # exclusive if/else-if chain, so an inline sensor only sets the flag when
-    # sensor_refs is absent (t11 schema survey, family SEN).
-    has_inline_sensor = not has_sensor_refs and (
+    # sensor_refs is absent or non-array (t11 schema survey, family SEN).
+    has_inline_sensor = not has_sensor_refs_branch and (
         isinstance(definition.get("sensor"), Mapping) or bool(definition.get("has_sensor"))
     )
     if has_inline_sensor:

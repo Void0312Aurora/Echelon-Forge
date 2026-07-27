@@ -8,8 +8,8 @@
 生命周期：`maintained`
 规范路径：`docs/plan/unified_architecture_program/t9_authority_representation_adjudication_20260726.md`
 所有者：`unified architecture program workline`
-最近核验：`2026-07-26`
-基线提交：`c10cceac`
+最近核验：`2026-07-27`
+基线提交：`dd292f4b`
 
 状态：[统一架构计划](README.zh.md)的 T9（Agency 与条令架构）裁定切片。I68 的
 A3 默认值名称归属搬迁（[Agency 权限普查](agency_authority_census_20260721.zh.md)
@@ -101,7 +101,7 @@ action-interface 授权路径）以同一标准对梯级词汇裁定。
 | A5 | `python/rl/profile/ground_profile.py` | **no-mapping** | `infer_command_relationship` 返回 `Support` 或默认（`:24-25`、`:156-170`）；梯级默认（`:233-234`、`:254-257`、`:287-297`）；leader-vs-mission 开火授权优先（`:428-431`）；OTC 兜底取名（`:462`）。所有取值均为梯级枚举或任务式指挥（mission-command）DTO 字段；无 action-interface 标识符（§2）。`:428-431` 的优先级仲裁的是两个*梯级侧*生产者（`leader_intent` vs `mission_cmd`），并非两种表示之间。 |
 | A6 | `python/rl/profile/naval_profile.py` | **no-mapping** | 梯级默认（`:206-207`、`:223-226`、`:246-249`）；warfare-role / OTC 推断（`:273-292`）；交战权限与 ROE 字段填充及 mission-config 重读（`:425-458`、`:505-552`）。与 A4/A5 同形：仅 `NavalWarfareRole` / `CommandRelationship` / `AuthorityScope` 成员与 DTO 字段；无 action-interface 标识符（§2）。（普查 A6 关于 `loader.mission_cmd` 与 `scenario_data["mission_command"]` 重绑定的待决问题属*梯级侧内部*的别名问题，不触及本边界。） |
 | A13 | `gym_envs/universal_env_parts/air_combat_event_action.py` | **no-mapping** | 典范“谁可开火”门经 `cmd_view` 读任务式指挥（mission-command）DTO 字段：`holder_id = cmd_view.int_field("engagement_authority_holder_id", 0)`；`holder_ok = holder_id <= 0 or holder_id == agent_id`；`c2_authorized = authorization_to_fire AND holder_ok`（`:167-169`）。`agent_id` 是环境层的 agent/实体身份，不是对 `AgentAuthorityScope.entity_ids` 的读取——该文件（乃至 `gym_envs/**` 全域，§2）不命名任何 action-interface 标识符。如实记录的毗邻性：`engagement_authority_holder_id` 与 `AgentAuthorityScope.entity_ids` 指称同一整数 id 空间中的实体，但没有任何共享代码路径、转换或比较连接二者。 |
-| 反向 | `python/rl/runtime/world_batch/adapter.py` | **no-mapping** | 运行时面的 `AgentRole` 构造**仅**由动作载荷类型推导 `authority_scope.scope`（载荷为任务式指挥（mission command）则 `"mission_command"` 否则 `"platform_control"`，`:433-437`），并从窗口请求填充 id（`:438-440`）；授权调用（`:591-600`）传入该 role 与 intent。文件中不出现任何梯级标识符（`CommandRelationship` / `AuthorityScope` / 成员名 / `command_relationship`）。即使被授权的 intent 携带 `MissionCommand`，授权谓词也只读 role 形状、scope<->interface 兼容性、以及包的 `action_interface` 描述符 + `has_pilot_action` / `has_mission_command` 标志（`policy_contracts.h:418-436, 454-476`）——从不读任何载荷字段，无论梯级与否。 |
+| 反向 | `python/rl/runtime/world_batch/adapter.py` | **no-mapping** | 运行时面的 `AgentRole` 构造**仅**由动作载荷类型推导 `authority_scope.scope`（载荷为任务式指挥（mission command）则 `"mission_command"` 否则 `"platform_control"`，`:481-488`），并在同一代码块从窗口请求填充 id；授权调用（`:639-642`）传入该 role 与 intent。文件中不出现任何梯级标识符（`CommandRelationship` / `AuthorityScope` / 成员名 / `command_relationship`）。即使被授权的 intent 携带 `MissionCommand`，授权谓词也只读 role 形状、scope<->interface 兼容性、以及包的 `action_interface` 描述符 + `has_pilot_action` / `has_mission_command` 标志（`policy_contracts.h:418-436, 454-476`）——从不读任何载荷字段，无论梯级与否。 |
 | 反向 | `python/rl/runtime/agent_shim.py` | **no-mapping** | Python 侧 `AgentRole` 草图（`:215` 起）及其 `authority_scope` 映射只使用 action-interface 键（`scope` / `world_index` / `entity_ids` / `roster_id` / `command_family`，`:259-272`）；文件中不出现任何梯级标识符。 |
 
 **汇总：正向 5/5 路径、反向 2/2 路径均判定 no-mapping；mapped 为 0；
