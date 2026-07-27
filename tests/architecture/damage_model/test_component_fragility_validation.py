@@ -769,23 +769,6 @@ def test_fragility_benchmark_blocks_residuals_without_truth(
   assert residuals["RES-012"]["blocking_condition_ids"] == ["BLOCK-CP-001"]
 
 
-@pytest.mark.xfail(
-  strict=True,
-  reason=(
-    "component-failure-probability calibration drift (T6 residual ledger "
-    "section 5, registered from section 8.9): the "
-    "synthetic_sigmoid_probability rows come from "
-    "component_fragility_benchmark._synthetic_baseline_rows -> "
-    "surface_probe._sample_primary_event, i.e. the binary-computed "
-    "component-failure-probability surface, and now read ~0.1699-0.1729 "
-    "against this test's hard-coded 0.35168 reference (max relative "
-    "difference 1.07). Same binary-driven drift family as the two "
-    "air-combat calibration reds; reproduced against both the 2026-07-18 "
-    "and the 2026-07-26 ef_py builds. Strict: recalibration that restores "
-    "the 0.35168 surface flips this to XPASS(strict) and the marker must "
-    "then be removed (re-baseline the reference alongside it)."
-  ),
-)
 def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid(
   fragility_benchmark_artifact: Artifact,
 ) -> None:
@@ -831,44 +814,84 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid(
     "component-middle",
     "component-outer",
   ]
-  assert [row["candidate_probability"] for row in rows] == [0.52, 0.37, 0.21]
-  assert [row["synthetic_sigmoid_probability"] for row in rows] == pytest.approx(
-    [0.35168000000000005, 0.35168000000000005, 0.35168000000000005]
-  )
+  candidate_probabilities = [row["candidate_probability"] for row in rows]
+  assert candidate_probabilities == [0.52, 0.37, 0.21]
   assert all(
     row["synthetic_sigmoid_probability_source"] == "synthetic_sigmoid"
     for row in rows
   )
   assert all(row["synthetic_sigmoid_calibrated"] is False for row in rows)
+  synthetic_probabilities = [
+    row["synthetic_sigmoid_probability"] for row in rows
+  ]
+  assert all(0.0 <= value <= 1.0 for value in synthetic_probabilities)
+  for row, candidate, synthetic in zip(
+    rows, candidate_probabilities, synthetic_probabilities
+  ):
+    assert row["candidate_minus_synthetic_sigmoid"] == pytest.approx(
+      candidate - synthetic
+    )
+    assert row["candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
+      candidate / synthetic
+    )
   assert all(
     row["replacement_conclusion"]
     == "replacement_blocked_no_independent_truth"
     for row in rows
   )
-  assert rows[0]["candidate_minus_synthetic_sigmoid"] == pytest.approx(
-    0.16831999999999997
-  )
-  assert rows[2]["candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
-    0.5971337579617834
-  )
-
   metrics = comparison["metrics"]
   assert metrics["point_count"] == 3
   assert metrics["metric_role"] == (
     "candidate_vs_synthetic_baseline_delta_only_not_calibration_truth"
   )
-  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is False
   assert metrics["mean_candidate_probability"] == pytest.approx(
-    0.3666666666666667
+    sum(candidate_probabilities) / len(candidate_probabilities)
   )
   assert metrics["mean_synthetic_sigmoid_probability"] == pytest.approx(
-    0.35168000000000005
+    sum(synthetic_probabilities) / len(synthetic_probabilities)
   )
   assert metrics["mean_absolute_difference_vs_synthetic_sigmoid"] == pytest.approx(
-    0.10943999999999998
+    sum(
+      abs(candidate - synthetic)
+      for candidate, synthetic in zip(
+        candidate_probabilities, synthetic_probabilities
+      )
+    )
+    / len(rows)
+  )
+  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is all(
+    row["candidate_probability"] > row["synthetic_sigmoid_probability"]
+    for row in rows
   )
   assert metrics["replacement_allowed"] is False
   assert "cannot prove accuracy" in metrics["calibration_interpretation"]
+
+
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "T6 residual ledger section 11, I97-R7: observed synthetic sigmoid "
+    "vector ~= (0.172892, 0.171096, 0.169898) versus expected "
+    "(0.35168, 0.35168, 0.35168); two-binary inheritance: reproduced with "
+    "both the 2026-07-18 and 2026-07-26 binaries. Strict: restored retained "
+    "surface must XPASS."
+  ),
+)
+def test_fragility_benchmark_synthetic_sigmoid_outcome_matches_retained_reference(
+  fragility_benchmark_artifact: Artifact,
+) -> None:
+  comparison = fragility_benchmark_artifact["candidate_vs_synthetic_sigmoid_comparison"]
+  rows = comparison["rows"]
+  synthetic_probabilities = tuple(
+    row["synthetic_sigmoid_probability"] for row in rows
+  )
+  assert synthetic_probabilities == pytest.approx(
+    (
+      0.35168000000000005,
+      0.35168000000000005,
+      0.35168000000000005,
+    )
+  )
 
 
 def test_fragility_benchmark_uncertainty_and_independence_fail_closed(

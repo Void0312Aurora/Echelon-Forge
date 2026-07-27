@@ -298,29 +298,35 @@ def test_mlf5c_expanded_aspect_distance_surface_preserves_gradients() -> None:
   assert rod_top_outside == 0.0
 
 
-@pytest.mark.xfail(
-  strict=True,
-  reason=(
-    "component-failure-probability calibration drift (T6 residual ledger "
-    "section 5, '2 air-combat calibration-drift reds'): the blast-fragmentation "
-    "direct-hit probe at local point (-6.0, 0.0, 0.0) now attributes "
-    "component_primary_name='left_horizontal_tail_actuator_or_surface_component' "
-    "instead of 'engine_core'. Binary-side component-attribution/load-floor "
-    "drift -- reproduced against both the 2026-07-18 and the 2026-07-26 "
-    "ef_py builds, with this test file unchanged since 2026-06-21. Strict: "
-    "recalibration that restores engine_core attribution flips this to "
-    "XPASS(strict) and the marker must then be removed."
-  ),
-)
 def test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley() -> None:
-  _overlay, direct_event = _profiled_local_hit_overlay_and_event_with_velocity(
+  _overlay, direct_event, near_event = _mlf5c_direct_hit_load_floor_events()
+  engine_core_load = _row_for_component(direct_event, "engine_core")
+
+  _assert_synthetic_probability(direct_event)
+  _assert_synthetic_probability(near_event)
+  assert bool(direct_event.direct_hitbox_intersection)
+  assert not bool(near_event.direct_hitbox_intersection)
+  assert bool(engine_core_load.direct_hit)
+  assert float(engine_core_load.mechanism_blast_overpressure_kpa) > 500.0
+  assert float(direct_event.component_primary_mechanism_blast_overpressure_kpa) > 0.0
+  assert float(direct_event.component_primary_mechanism_blast_overpressure_kpa) > float(
+    near_event.component_primary_mechanism_blast_overpressure_kpa
+  )
+  assert float(direct_event.component_failure_probability) >= 0.55
+  assert float(direct_event.component_failure_probability) > float(
+    near_event.component_failure_probability
+  )
+
+
+def _mlf5c_direct_hit_load_floor_events() -> tuple[object, object, object]:
+  overlay, direct_event = _profiled_local_hit_overlay_and_event_with_velocity(
     "blast_fragmentation",
     (-6.0, 0.0, 0.0),
     (250.0, 900.0, 0.0),
     damage=90.0,
     radius=35.0,
   )
-  _overlay, near_event = _profiled_local_hit_overlay_and_event_with_velocity(
+  _near_overlay, near_event = _profiled_local_hit_overlay_and_event_with_velocity(
     "blast_fragmentation",
     (-8.0, 0.0, 0.0),
     (250.0, 900.0, 0.0),
@@ -328,16 +334,22 @@ def test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley() -> None:
     radius=35.0,
   )
 
-  _assert_synthetic_probability(direct_event)
-  _assert_synthetic_probability(near_event)
-  assert bool(direct_event.direct_hitbox_intersection)
-  assert not bool(near_event.direct_hitbox_intersection)
+  return overlay, direct_event, near_event
+
+
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "T6 residual ledger section 11, I97-R1: observed primary_name="
+    "'left_horizontal_tail_actuator_or_surface_component' versus expected "
+    "'engine_core'; two-binary inheritance: reproduced with both the "
+    "2026-07-18 and 2026-07-26 binaries. Strict: restored engine_core "
+    "attribution must XPASS."
+  ),
+)
+def test_mlf5c_direct_hit_component_primary_name_matches_engine_core() -> None:
+  _overlay, direct_event, _near_event = _mlf5c_direct_hit_load_floor_events()
   assert str(direct_event.component_primary_name) == "engine_core"
-  assert float(direct_event.component_primary_mechanism_blast_overpressure_kpa) > 500.0
-  assert float(direct_event.component_failure_probability) >= 0.55
-  assert float(direct_event.component_failure_probability) > float(
-    near_event.component_failure_probability
-  )
 
 
 def test_mlf5c_continuous_rod_nose_direct_hit_is_not_axial_grazing() -> None:

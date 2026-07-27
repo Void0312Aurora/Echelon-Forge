@@ -287,8 +287,8 @@
       "chinese": "docs/plan/unified_architecture_program/t6_residual_ledger.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-07-27",
-      "english_hash": "657a487c1b81360defa6b388f63c6fae181b5157c3d75a23aa627460cd041e69",
-      "chinese_hash": "9979711dbabb3d62448f892f99c656e397dd49641a271537c085ad5890f66841"
+      "english_hash": "252cc5574728139af614c4e6326cef29640a917d4e54cb94c1c9a33576d4f6b0",
+      "chinese_hash": "4f118bfab18dfcec9b7d2cc4fbbb33c359e6e3d11ba8473ffbdbb164bdc17282"
     },
     {
       "pair_id": "plan/unified_architecture_program/t8_g4_truth_leak_inventory",

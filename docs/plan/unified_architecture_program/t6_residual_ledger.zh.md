@@ -1330,6 +1330,42 @@ pytest -q <两条 I65 已修复节点>
 经 I65 修复的测试文件本迭代未改动。未触碰生产代码、C++、契约 JSON，smoke
 清单不变。
 
+## 11. I97 审阅修复：七条聚焦的双二进制残差
+
+本节登记 I97 修复提交 `fdd9882764` 的最小跟进。此前覆盖整个测试的标记已收窄，
+使每一条实现无关的二值残差都对应一个严格 xfail 断言。使用
+2026-07-18 与 2026-07-26 两个 `ef_py` 二进制均复现同一观测；该双二进制继承
+证据说明残差不是单一构建伪象，但不把预期行为本身提升为权威事实。
+
+| 残差 | 聚焦测试节点 | 两个二进制均观测到 | 修复后预期 |
+| --- | --- | --- | --- |
+| I97-R1 | `test_mlf5c_direct_hit_component_primary_name_matches_engine_core` | 直击 `component_primary_name='left_horizontal_tail_actuator_or_surface_component'` | `component_primary_name='engine_core'` |
+| I97-R2 | `test_live_detonation_outcome_state_matches_damage_application` | `effects.outcome_state='detonated_no_effect'` | `'damage_applied'` |
+| I97-R3 | `test_live_detonation_fragment_energy_is_positive` | `warhead.fragment_energy_j=0.0` | `>0.0` |
+| I97-R4 | `test_live_detonation_blast_overpressure_is_positive` | `warhead.blast_overpressure_kpa=0.0` | `>0.0` |
+| I97-R5 | `test_live_detonation_spatial_sample_count_is_positive` | `spatial.sample_count=0` | `>0` |
+| I97-R6 | `test_live_detonation_exports_nonblank_component_source_rows` | 非空 `component_mechanism_load_rows` 为 0 条 | 至少 1 条非空源行 |
+| I97-R7 | `test_fragility_benchmark_synthetic_sigmoid_outcome_matches_retained_reference` | synthetic 向量 `(0.17289200648782854, 0.1710962556841057, 0.16989812081797678)` | 保留向量 `(0.35168, 0.35168, 0.35168)` |
+
+R1 的伴随断言保持 active：从 `component_mechanism_load_rows` 中定位
+`engine_core` 行，该行当前观测直击爆炸载荷为 `588.6225285038623 kPa`
+（`>500`）；当前选中的主组件行只对自身的正值/相对载荷性质保持 active 检查。
+live 事件测试中的 header、事件计数、跨事件等值关系和行到组件映射保持 active。
+fragility 测试也将 delta、ratio、candidate/synthetic 均值、平均绝对差（MAD）
+及比较布尔值保留为基于当前行的 active 代数一致性检查；只有保留的三点
+synthetic 向量属于残差。
+
+每个标记均为 strict，并在独立 reason 中写明观测/预期、双二进制继承说明及精确
+指针（`T6 residual ledger section 11, I97-R1` 至 `I97-R7`）。因此标准运行应报告
+3 个结构测试通过和 7 个聚焦 xfail；`--runxfail` 必须只将这 7 个节点转为失败。
+
+**写集（I97 审阅修复）**：
+`tests/runtime/air_combat/test_component_failure_probability_surface.py`、
+`tests/runtime/air_combat/test_live_detonation_event_surface.py`、
+`tests/architecture/damage_model/test_component_fragility_validation.py`，
+以及本台账对和维护中的双语簇注册表哈希刷新。未触碰生产代码、C++、契约 JSON
+或 smoke 清单。
+
 ## 相关
 
 - [仓库整合计划](../repository_consolidation/README.zh.md)（上文引用的

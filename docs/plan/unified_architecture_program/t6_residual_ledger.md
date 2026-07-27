@@ -1544,6 +1544,49 @@ are I65's records and are not re-stated). The two I65-repaired test files
 are not modified by this iteration. No production code, no C++, no contract
 JSON, no smoke-manifest change.
 
+## 11. I97 reviewer repair: seven focused binary residuals
+
+This section records the minimal follow-up to the I97 repair commit
+`fdd9882764`. The earlier whole-test markers were narrowed so that each
+implementation-independent binary residual has one strict-xfail assertion.
+The same observation was reproduced with both the 2026-07-18 and 2026-07-26
+`ef_py` binaries; this two-binary inheritance is evidence that the residual is
+not a single-build artifact, not evidence that the expected behavior is
+authoritative.
+
+| Residual | Focused test node | Observed on both binaries | Expected after repair |
+| --- | --- | --- | --- |
+| I97-R1 | `test_mlf5c_direct_hit_component_primary_name_matches_engine_core` | direct-hit `component_primary_name='left_horizontal_tail_actuator_or_surface_component'` | `component_primary_name='engine_core'` |
+| I97-R2 | `test_live_detonation_outcome_state_matches_damage_application` | `effects.outcome_state='detonated_no_effect'` | `'damage_applied'` |
+| I97-R3 | `test_live_detonation_fragment_energy_is_positive` | `warhead.fragment_energy_j=0.0` | `>0.0` |
+| I97-R4 | `test_live_detonation_blast_overpressure_is_positive` | `warhead.blast_overpressure_kpa=0.0` | `>0.0` |
+| I97-R5 | `test_live_detonation_spatial_sample_count_is_positive` | `spatial.sample_count=0` | `>0` |
+| I97-R6 | `test_live_detonation_exports_nonblank_component_source_rows` | zero nonblank `component_mechanism_load_rows` | at least one nonblank source row |
+| I97-R7 | `test_fragility_benchmark_synthetic_sigmoid_outcome_matches_retained_reference` | synthetic vector `(0.17289200648782854, 0.1710962556841057, 0.16989812081797678)` | retained vector `(0.35168, 0.35168, 0.35168)` |
+
+R1's companion assertion remains active and selects the `engine_core` row from
+`component_mechanism_load_rows`, where the observed direct-hit blast load is
+`588.6225285038623 kPa` (`>500`); the current selected primary row remains
+actively checked only for its own positive/relative load properties. In the
+live-event test, headers, event counts, cross-event equalities, and the
+row-to-component mapping remain active. The fragility test likewise keeps
+delta, ratio, candidate/synthetic means, mean absolute difference (MAD), and
+the comparison boolean as active algebraic checks derived from the current
+rows; only the retained three-point synthetic vector is residual.
+
+Each marker is intentionally strict and has an independent reason containing
+the observed/expected pair, the two-binary inheritance statement, and its
+exact pointer (`T6 residual ledger section 11, I97-R1` through `I97-R7`). A
+normal run therefore reports three passing structural tests and seven focused
+xfails; `--runxfail` must turn exactly those seven nodes into failures.
+
+**Write set (I97 reviewer repair)**:
+`tests/runtime/air_combat/test_component_failure_probability_surface.py`,
+`tests/runtime/air_combat/test_live_detonation_event_surface.py`,
+`tests/architecture/damage_model/test_component_fragility_validation.py`,
+and this ledger pair plus the maintained bilingual-cluster registry hash
+refresh. No production code, C++, contract JSON, or smoke-manifest change.
+
 ## Related
 
 - [Repository Consolidation Plan](../repository_consolidation/README.md)
