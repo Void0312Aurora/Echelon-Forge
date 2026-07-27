@@ -655,6 +655,67 @@ from opt-in to default, tier 1's `compute_full_step` term-by-term
 orchestration becomes the retirement target this program's README already
 names.
 
+### Default-flip addendum (I82, 2026-07-27): covered cells resolved, flip HELD pending performance
+
+This addendum records a partial trigger of the condition above, with the
+flip itself HELD. With the coverage matrix landed (I80) and the disposition
+adjudicated (I81/I91), the `execution_episode_controller_mainline`
+constructor default moved from a hard `False` to an unset sentinel resolved
+at construction
+(`WorldBatchVecEnv._resolve_execution_episode_controller_mainline_default`).
+The resolver encodes the full covered-cell ownership rule -- compiled/auto
+flight shaping, post-launch assessment not configured, action mode in the
+parity-pinned whitelist (`full`/`takeoff2`/`takeoff4`, each with its own
+cross-layer parity pin; whitelist polarity, so new action modes default to
+the Python path), no scripted opponents declared in the scenario, no second
+entity side declared in the scenario, no tier-2
+`execution_step_batch_prepare` opt-in, and the runtime episode-controller
+APIs present -- but the flip is DISARMED behind the module constant
+`_CONTROLLER_DEFAULT_FLIP_ARMED = False`
+(python/rl/runtime/world_batch/vec_env.py): while it is `False`, every
+unset default resolves to the Python-orchestrated path, and a cell the rule
+would have flipped reports the named reason
+`default_off_covered_cell_flip-held-pending-performance` through the
+resolution introspection attribute.
+
+Held ruling (2026-07-27, issued under explicit owner delegation -- the
+owner's "允许代签" authorization -- and recorded as a delegated program
+ruling, not as human expert judgment): the plan's Acceptance Criteria
+require the compiled episode cutover to improve maintained execution
+rollout wall-clock beyond noise, and the slice's own hot-path measurement
+showed the controller path 20-30% SLOWER on the inline micro fixture
+(n_envs=1 medians 0.297 vs 0.244 s/100 steps; n_envs=8 medians 2.409 vs
+1.869). The default flip is therefore held pending representative-scenario
+wall-clock evidence; per the program's performance boundary, that
+performance work routes to the exact-runtime line, which owns the arming
+condition (a representative-scenario measurement showing the controller
+path improves maintained rollout beyond noise).
+
+Everything else the slice built is kept. Every non-covered configuration
+resolves to the Python-orchestrated path with a named reason and never
+errors (gpu_host stays HELD on the Python path; post-launch-configured runs
+bind the red line because the mainline hard-disables the assessment;
+`naval_station3` keeps the Python-owned naval reward surface -- direct
+evidence: the controller path does not produce
+`naval_station_error_penalty`; multi-side scenarios keep the Python-owned
+combat products -- direct evidence: the controller path reports generic
+`timeout` where tier 1 reports `combat_win`/`combat_timeout`; scripted
+opponents are Python-stepped by `update_behaviors`, which the mainline
+replaces with `update_command_chain_only`). Explicit `True`/`False` keep
+their exact pre-flip semantics -- the public kwarg name is unchanged, and
+the covered-cell cross-layer parity evidence (explicit controller vs
+explicit Python path) stays green as explicit-opt-in parity. Tier-1
+retirement did NOT happen in this slice: `compute_full_step` orchestration,
+the post-launch mixin, the shadow comparator, and the tier-2 reward tail
+all remain reachable from the excluded cells and from explicit `False`, so
+the shrink-only deletion list for this slice is empty by adjudication
+(deletion trails a later slice, after the excluded cells gain
+controller-side owners and the flip arms). Evidence:
+tests/runtime/exact/test_execution_controller_option_parity.py (held-flip
+default-resolution pins on the covered cells, explicit-opt-in cross-layer
+parity pins, excluded-cell resolution pins, and the recorded hot-path
+measurement).
+
 ## Phased Modification Plan
 
 ### Phase 0. Boundary Freeze And Instrumentation

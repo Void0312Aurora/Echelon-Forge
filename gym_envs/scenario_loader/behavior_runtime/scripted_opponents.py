@@ -113,6 +113,35 @@ class ScriptedOpponentRuntime:
             self.reports[int(entity_id)] = dict(report)
 
 
+def scenario_declares_scripted_opponents(scenario_data: Any) -> bool:
+    """True when the scenario declares any entity the Python scripted-opponent
+    runtime would instantiate (same alias filter as
+    ``ScriptedOpponentRuntime.build_from_loader``).
+
+    Added this iteration for the execution-episode-controller default
+    resolution: scripted opponents are Python-orchestrated behavior driven by
+    ``update_behaviors``, which the controller mainline replaces with
+    ``update_command_chain_only``, so scenarios that declare them must keep the
+    Python-orchestrated default path until opponent stepping has a
+    controller-side owner.
+    """
+    if not isinstance(scenario_data, dict):
+        return False
+    entities_cfg = scenario_data.get("entities", [])
+    if not isinstance(entities_cfg, list):
+        return False
+    for ent_cfg in entities_cfg:
+        if not isinstance(ent_cfg, dict):
+            continue
+        scripted_cfg = ent_cfg.get("scripted_agent", None)
+        if not isinstance(scripted_cfg, dict):
+            continue
+        script_name = str(scripted_cfg.get("name", "") or scripted_cfg.get("type", "")).strip().lower()
+        if script_name in _RED_SCRIPTED_AGENT_ALIASES:
+            return True
+    return False
+
+
 def make_scripted_opponent_runtime() -> ScriptedOpponentRuntime:
     return ScriptedOpponentRuntime()
 

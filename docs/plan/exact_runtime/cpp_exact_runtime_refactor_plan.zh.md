@@ -573,6 +573,50 @@ post-launch 评估路径与第 1/2 层全部 `flight_shaping_backend` 选项，�
 为默认，第 1 层 `compute_full_step` 的逐项手工编排就会成为本项目 README 已经命名
 的那个退役目标。
 
+### 默认值翻转补记（I82，2026-07-27）：覆盖单元格解析规则落地，翻转 HELD 待性能证据
+
+本补记登记上述触发条件的部分触发，且翻转本身处于 HELD 状态。随着覆盖矩阵
+落地（I80）与处置裁定完成（I81/I91），`execution_episode_controller_mainline`
+构造函数默认值从硬编码 `False` 改为未设置哨兵值，并在构造时解析
+（`WorldBatchVecEnv._resolve_execution_episode_controller_mainline_default`）。
+解析器完整编码了覆盖单元格所有权规则——compiled/auto 飞行整形后端、未配置
+post-launch 评估、动作模式在一致性钉子白名单内（`full`/`takeoff2`/`takeoff4`，
+每个模式都有各自的跨层一致性钉子；白名单极性，新动作模式默认走 Python
+路径）、想定未声明脚本化对手、想定未声明第二个实体阵营、未启用第 2 层
+`execution_step_batch_prepare` 选配、且运行时片段控制器 API 存在——但翻转
+本身被 DISARMED 在模块常量 `_CONTROLLER_DEFAULT_FLIP_ARMED = False` 之后
+（python/rl/runtime/world_batch/vec_env.py）：当该常量为 `False` 时，所有
+未设置的默认值都解析到 Python 编排路径，而本会被该规则翻转的单元格通过
+解析自省属性报告命名原因
+`default_off_covered_cell_flip-held-pending-performance`。
+
+HELD 裁定（2026-07-27，依据所有者明示的委托授权——所有者的"允许代签"
+授权——签发，登记为受委托的程序性裁定，而非人类专家判断）：本计划的验收
+标准要求编译片段切换必须超出噪声地改善维护中执行 rollout 的墙钟时间，而
+该切片自身的热路径测量显示控制器路径在内联微型 fixture 上比 Python 路径
+慢 20-30%（n_envs=1 中位数 0.297 对 0.244 秒/100 步；n_envs=8 中位数
+2.409 对 1.869）。因此默认翻转 HELD，待代表性想定的墙钟证据；依照程序的
+性能边界，该性能工作路由到 exact-runtime 线，由其持有解除条件（一次代表性
+想定测量，证明控制器路径超出噪声地改善维护中 rollout）。
+
+该切片构建的其余一切均保留。所有非覆盖配置都以命名原因解析回 Python
+编排路径且绝不报错（gpu_host 在 Python 路径上保持 HELD；配置了 post-launch
+的运行绑定红线，因为 mainline 硬禁用该评估；`naval_station3` 保持 Python
+所有的海军奖励表面——直接证据：控制器路径不产生
+`naval_station_error_penalty`；多阵营想定保持 Python 所有的战斗产物——直接
+证据：第 1 层报告 `combat_win`/`combat_timeout` 之处控制器路径报告泛化的
+`timeout`；脚本化对手由 `update_behaviors` 在 Python 侧步进，而 mainline
+将其替换为 `update_command_chain_only`）。显式 `True`/`False` 保持翻转前的
+精确语义——公共 kwarg 名称不变，且覆盖单元格的跨层一致性证据（显式控制器
+对显式 Python 路径）作为显式选配一致性保持绿色。该切片没有发生第 1 层
+退役：`compute_full_step` 编排、post-launch mixin、影子比较器与第 2 层
+reward tail 仍可从被排除单元格和显式 `False` 到达，因此该切片的只收缩删除
+清单经裁定为空（删除拖尾到后续切片，待被排除单元格获得控制器侧所有者且
+翻转解除 HELD 之后）。证据：
+tests/runtime/exact/test_execution_controller_option_parity.py（覆盖单元格
+的 HELD 翻转默认解析钉子、显式选配跨层一致性钉子、被排除单元格解析钉子，
+以及记录在案的热路径测量）。
+
 ## 阶段性修改计划
 
 ### 阶段 0. 边界冻结与仪器化
