@@ -125,10 +125,21 @@ bool RuntimeFacade::runtime_window_result_belongs_to_this_facade(
     if (identity_ == nullptr || window_result.identity_token_.identity_ == nullptr) {
         return false;
     }
-    const RuntimeWindowIdentity &window_identity = *window_result.identity_token_.identity_;
-    return window_identity.facade_identity.get() == identity_.get() &&
-           window_identity.window_sequence != 0 &&
-           identity_->recorded_window_sequences.contains(window_identity.window_sequence);
+    const std::shared_ptr<const RuntimeWindowIdentity> &window_identity_token =
+        window_result.identity_token_.identity_;
+    const RuntimeWindowIdentity &window_identity = *window_identity_token;
+    const std::shared_ptr<const RuntimeFacadeIdentity> facade_identity =
+        window_identity.facade_identity.lock();
+    if (facade_identity == nullptr || facade_identity.get() != identity_.get() ||
+        window_identity.window_sequence == 0) {
+        return false;
+    }
+    const auto it = identity_->recorded_window_sequences.find(window_identity.window_sequence);
+    if (it == identity_->recorded_window_sequences.end()) {
+        return false;
+    }
+    const std::shared_ptr<const RuntimeWindowIdentity> recorded = it->second.lock();
+    return recorded != nullptr && recorded.get() == window_identity_token.get();
 }
 
 bool RuntimeFacade::runtime_window_result_evidence_matches_identity(
@@ -162,7 +173,13 @@ bool RuntimeFacade::runtime_window_trace_ids_recorded_by_this_window(
         window_identity.evidence.engagement_trace_ids.begin(),
         window_identity.evidence.engagement_trace_ids.end(), [&](std::uint64_t trace_id) {
             const auto it = identity_->recorded_trace_window_sequences.find(trace_id);
-            return it != identity_->recorded_trace_window_sequences.end() && it->second == sequence;
+            if (it == identity_->recorded_trace_window_sequences.end()) {
+                return false;
+            }
+            const std::shared_ptr<const RuntimeWindowIdentity> recorded = it->second.lock();
+            return recorded != nullptr &&
+                   recorded.get() == window_result.identity_token_.identity_.get() &&
+                   recorded->window_sequence == sequence;
         });
 }
 
@@ -172,8 +189,11 @@ bool RuntimeFacade::runtime_window_snapshot_recorded_by_this_window(
         return false;
     }
     const auto it = identity_->recorded_snapshot_window_sequences.find(run_snapshot_version);
-    return it != identity_->recorded_snapshot_window_sequences.end() &&
-           it->second == window_result.identity_token_.identity_->window_sequence;
+    if (it == identity_->recorded_snapshot_window_sequences.end()) {
+        return false;
+    }
+    const std::shared_ptr<const RuntimeWindowIdentity> recorded = it->second.lock();
+    return recorded != nullptr && recorded.get() == window_result.identity_token_.identity_.get();
 }
 
 bool RuntimeFacade::runtime_window_parent_trace_recorded_before_this_window(
@@ -182,6 +202,16 @@ bool RuntimeFacade::runtime_window_parent_trace_recorded_before_this_window(
         return false;
     }
     const auto it = identity_->recorded_anchor_window_sequences.find(parent_trace_id);
-    return it != identity_->recorded_anchor_window_sequences.end() &&
-           it->second < window_result.identity_token_.identity_->window_sequence;
+    if (it == identity_->recorded_anchor_window_sequences.end()) {
+        return false;
+    }
+    const std::shared_ptr<const RuntimeWindowIdentity> recorded = it->second.lock();
+    if (recorded == nullptr) {
+        return false;
+    }
+    const std::shared_ptr<const RuntimeFacadeIdentity> recorded_facade_identity =
+        recorded->facade_identity.lock();
+    return recorded_facade_identity != nullptr &&
+           recorded_facade_identity.get() == identity_.get() &&
+           recorded->window_sequence < window_result.identity_token_.identity_->window_sequence;
 }

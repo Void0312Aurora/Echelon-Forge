@@ -7,8 +7,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -20,14 +23,54 @@
 // snapshot below binds the token to the exact evidence consumed by the
 // maintained replay/ancestry/worldline producers. Copying a genuine token onto
 // substituted public DTO fields therefore cannot authenticate the substitute.
+struct RuntimeWindowIdentity;
+
 struct RuntimeFacadeIdentity {
     // Only ids observed on a genuine run_window result while they were already
-    // below their facade allocator cursor enter these registries. The mapped
-    // sequence is the immutable window anchor that recorded the id.
-    std::map<std::uint64_t, bool> recorded_window_sequences;
-    std::map<std::uint64_t, std::uint64_t> recorded_trace_window_sequences;
-    std::map<std::uint64_t, std::uint64_t> recorded_anchor_window_sequences;
-    std::map<std::uint64_t, std::uint64_t> recorded_snapshot_window_sequences;
+    // below their facade allocator cursor enter these registries. The weak
+    // token reference is the immutable window anchor that recorded the id;
+    // retaining a RuntimeWindowResult keeps the corresponding evidence live.
+    // Discarded results are retained only in the bounded recent-window ring
+    // below, so a caller can still hand the immediately preceding anchor to a
+    // subsequent window without making the ledger an unbounded history.
+    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>> recorded_window_sequences;
+    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>>
+        recorded_trace_window_sequences;
+    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>>
+        recorded_anchor_window_sequences;
+    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>>
+        recorded_snapshot_window_sequences;
+
+    static constexpr std::size_t kRecentWindowIdentityRetention = 64;
+    std::deque<std::shared_ptr<const RuntimeWindowIdentity>> recent_window_identities;
+
+    void prune_expired_window_identity_registries() {
+        const auto prune = [](auto &registry) {
+            for (auto it = registry.begin(); it != registry.end();) {
+                if (it->second.expired()) {
+                    it = registry.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        };
+
+        prune(recorded_window_sequences);
+        prune(recorded_trace_window_sequences);
+        prune(recorded_anchor_window_sequences);
+        prune(recorded_snapshot_window_sequences);
+    }
+
+    void retain_recent_window_identity(std::shared_ptr<const RuntimeWindowIdentity> identity) {
+        if (identity == nullptr) {
+            return;
+        }
+        recent_window_identities.push_back(std::move(identity));
+        while (recent_window_identities.size() > kRecentWindowIdentityRetention) {
+            recent_window_identities.pop_front();
+        }
+        prune_expired_window_identity_registries();
+    }
 };
 
 struct RuntimeWindowEvidenceSnapshot {
@@ -42,7 +85,9 @@ struct RuntimeWindowEvidenceSnapshot {
 };
 
 struct RuntimeWindowIdentity {
-    std::shared_ptr<const RuntimeFacadeIdentity> facade_identity;
+    // The token may be kept by a result after the facade is destroyed. A weak
+    // back-reference avoids a cycle with RuntimeFacadeIdentity's bounded ring.
+    std::weak_ptr<const RuntimeFacadeIdentity> facade_identity;
     std::uint64_t window_sequence = 0;
     RuntimeWindowEvidenceSnapshot evidence{};
 };

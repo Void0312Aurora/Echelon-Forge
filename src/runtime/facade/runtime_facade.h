@@ -308,6 +308,11 @@ class RuntimeFacade {
     //      facade's VA-8 allocator and recorded by an earlier genuine window --
     //      kMaintainedPacketAncestryParentNotRunMinted otherwise. Allocation
     //      without a window anchor and foreign-facade linkage both fail closed.
+    //      A numeric anchor remains usable while its RuntimeWindowResult is
+    //      retained by the caller or while it is in the facade's bounded
+    //      recent-window retention (64 windows); callers that need an older
+    //      anchor must retain the source window result instead of relying on an
+    //      unbounded numeric history.
     //   4. parent_trace_id (when non-zero) must be strictly below every one of
     //      the window's own trace tags (ancestry points backwards; no self or
     //      forward links, hence no cycles) --

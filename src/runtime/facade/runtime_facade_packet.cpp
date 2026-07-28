@@ -779,6 +779,10 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
 }
 
 RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &request) {
+    if (identity_ != nullptr) {
+        identity_->prune_expired_window_identity_registries();
+    }
+
     RuntimeWindowResult result = execute_runtime_window(
         request,
         RuntimeWindowCoordinatorCallbacks{
@@ -815,32 +819,38 @@ RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &reques
     }
     const std::uint64_t window_sequence = next_window_identity_++;
     RuntimeWindowEvidenceSnapshot sealed = sealed_window_evidence(result);
-    identity_->recorded_window_sequences.try_emplace(window_sequence, true);
+    const std::shared_ptr<const RuntimeWindowIdentity> window_identity =
+        std::make_shared<RuntimeWindowIdentity>(
+            RuntimeWindowIdentity{identity_, window_sequence, std::move(sealed)});
+    identity_->recorded_window_sequences.try_emplace(window_sequence, window_identity);
 
-    for (const std::uint64_t trace_id : sealed.engagement_trace_ids) {
+    for (const std::uint64_t trace_id : window_identity->evidence.engagement_trace_ids) {
         if (trace_id >= 1U && trace_id < next_trace_id_) {
-            identity_->recorded_trace_window_sequences.try_emplace(trace_id, window_sequence);
+            identity_->recorded_trace_window_sequences.try_emplace(trace_id, window_identity);
         }
     }
-    if (!sealed.engagement_trace_ids.empty()) {
-        const std::uint64_t anchor_trace_id = sealed.engagement_trace_ids.back();
+    if (!window_identity->evidence.engagement_trace_ids.empty()) {
+        const std::uint64_t anchor_trace_id = window_identity->evidence.engagement_trace_ids.back();
         const auto trace_it = identity_->recorded_trace_window_sequences.find(anchor_trace_id);
-        if (trace_it != identity_->recorded_trace_window_sequences.end() &&
-            trace_it->second == window_sequence) {
+        const std::shared_ptr<const RuntimeWindowIdentity> recorded_trace =
+            trace_it == identity_->recorded_trace_window_sequences.end() ? nullptr
+                                                                         : trace_it->second.lock();
+        if (recorded_trace != nullptr && recorded_trace.get() == window_identity.get()) {
             identity_->recorded_anchor_window_sequences.try_emplace(anchor_trace_id,
-                                                                    window_sequence);
+                                                                    window_identity);
         }
     }
 
-    for (const std::string &source_version : sealed.execution_source_snapshot_versions) {
+    for (const std::string &source_version :
+         window_identity->evidence.execution_source_snapshot_versions) {
         const std::optional<std::uint64_t> parsed = parse_run_snapshot_version(source_version);
         if (parsed.has_value() && *parsed < next_run_snapshot_version_) {
-            identity_->recorded_snapshot_window_sequences.try_emplace(*parsed, window_sequence);
+            identity_->recorded_snapshot_window_sequences.try_emplace(*parsed, window_identity);
         }
     }
 
-    result.identity_token_.identity_ = std::make_shared<RuntimeWindowIdentity>(
-        RuntimeWindowIdentity{identity_, window_sequence, std::move(sealed)});
+    identity_->retain_recent_window_identity(window_identity);
+    result.identity_token_.identity_ = window_identity;
     return result;
 }
 
