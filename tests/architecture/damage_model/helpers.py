@@ -31,6 +31,29 @@ def assert_hex64(value: str) -> None:
   assert HEX64.fullmatch(value)
 
 
+def path_suffix_components(value: str, count: int) -> tuple[str, ...]:
+  """Return the last ``count`` normalized path components of ``value``.
+
+  Splits on both POSIX and Windows separators because producer path text can
+  be OS-conditional: ``tools/maintenance/candidate_artifacts``'
+  ``_display_path`` emits repo-relative POSIX text for in-repo paths but
+  falls back to ``str(path)`` (OS-native separators) for out-of-repo
+  locations such as pytest ``tmp_path`` outputs. Component comparison is
+  strictly stronger than a raw ``str.endswith`` on producer text, which is
+  separator-fragile and accepts boundary-crossing suffixes like
+  ``not_retained_pack/manifest.json``.
+
+  Scope rule: use this matcher only for suffix checks whose full expected
+  path the test cannot construct (variable/unknown prefix). When the test
+  itself builds the full expected location, prefer full ``Path`` equality --
+  as the two ``retained_pack/manifest.json`` assertions repaired at I65 do
+  (t6_residual_ledger.md section 9.3): Path equality pins the entire path,
+  strictly stronger than any suffix check, and rejects the boundary-crossing
+  trap by construction.
+  """
+  return tuple(part for part in re.split(r"[\\/]+", value) if part)[-count:]
+
+
 def write_release_json(path: Path, payload: dict[str, Any]) -> Path:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

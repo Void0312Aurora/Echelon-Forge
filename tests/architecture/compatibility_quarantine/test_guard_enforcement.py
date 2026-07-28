@@ -4,6 +4,8 @@ import ast
 import textwrap
 from pathlib import Path
 
+import pytest
+
 from tests.architecture.helpers import (
   REPO_ROOT,
   compile_cpp_snippet,
@@ -11,8 +13,39 @@ from tests.architecture.helpers import (
   dependency_link_args,
 )
 
-FLECS_INCLUDE = dependency_include_path("flecs")
+
+def _optional_dependency_include(dependency: str):
+  """Resolve a CMake dependency's include dir, or None when it is absent.
+
+  `dependency_include_path` raises `AssertionError` at import time, which
+  aborts collection for the whole module -- including the many text/AST
+  guards here that need no C++ toolchain at all. Returning None instead
+  lets those guards keep running and confines the environmental red to the
+  compile-bound checks, which report SKIPPED.
+  """
+  try:
+    return dependency_include_path(dependency)
+  except AssertionError:
+    return None
+
+
+FLECS_INCLUDE = _optional_dependency_include("flecs")
 FLECS_LINK_ARGS = dependency_link_args("flecs")
+
+# Governs the local-environment red recorded in the T6 residual ledger
+# (docs/plan/unified_architecture_program/t6_residual_ledger.md, section 5
+# "flecs static-lib link-signature reds"): CPU build snapshots that ship
+# only `_deps/flecs-build` without `_deps/flecs-src` cannot supply flecs
+# headers. Conditional on actual dependency presence, mirroring the
+# section 8.7 build-gpu-absent precedent -- on a build tree with the flecs
+# source present these checks run unchanged.
+requires_flecs = pytest.mark.skipif(
+  FLECS_INCLUDE is None,
+  reason=(
+    "missing CMake dependency 'flecs' include directory in the configured "
+    "CMO_BUILD_DIR (no _deps/flecs-src); see T6 residual ledger section 5"
+  ),
+)
 ALLOWLIST_EVIDENCE_DOC_CANDIDATES = (
   REPO_ROOT
   / "docs"
@@ -513,6 +546,7 @@ def test_wp22_command_retirement_docs_keep_allowlist_and_default_factory_blocker
     assert required in text_zh
 
 
+@requires_flecs
 def test_wp22_air_control_resolution_contract_prefers_pilot_then_legacy_then_action() -> None:
   source = textwrap.dedent(
     r"""
@@ -606,6 +640,7 @@ def test_wp22_air_control_resolution_contract_prefers_pilot_then_legacy_then_act
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_flecs
 def test_wp22_logistics_jettison_resolution_prefers_typed_pilot_action_before_legacy_action() -> None:
   source = textwrap.dedent(
     r"""
@@ -650,6 +685,7 @@ def test_wp22_logistics_jettison_resolution_prefers_typed_pilot_action_before_le
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_flecs
 def test_wp22_operation_and_command_link_allow_typed_control_state_without_legacy_mirrors() -> None:
   source = textwrap.dedent(
     r"""
@@ -749,6 +785,7 @@ def test_wp22_operation_and_command_link_allow_typed_control_state_without_legac
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_flecs
 def test_wp22_pending_movement_delivery_ignores_corrupted_legacy_transport_shell() -> None:
   source = textwrap.dedent(
     r"""
@@ -831,6 +868,7 @@ def test_wp22_pending_movement_delivery_ignores_corrupted_legacy_transport_shell
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_flecs
 def test_wp22_pending_action_delivery_refreshes_typed_overlay_without_claiming_full_replacement() -> None:
   source = textwrap.dedent(
     r"""
@@ -938,6 +976,7 @@ def test_wp22_pending_action_delivery_refreshes_typed_overlay_without_claiming_f
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_flecs
 def test_wp22_typed_air_control_overlay_becomes_the_maintained_owner_before_legacy_fallback() -> None:
   source = textwrap.dedent(
     r"""
@@ -1047,6 +1086,7 @@ def test_wp22_typed_air_control_overlay_becomes_the_maintained_owner_before_lega
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+@requires_flecs
 def test_wp22_typed_air_control_overlay_stays_visible_without_active_command_target() -> None:
   source = textwrap.dedent(
     r"""

@@ -26,14 +26,6 @@ from ._shared_ops import assemble_observation_dict
 
 
 class _WorldBatchVecEnvObservationMixin:
-    def _collect_observations(self, indices: Sequence[int] | None = None) -> list[dict[str, np.ndarray]]:
-        target_indices, truth_list, inst_list = self._read_truth_and_inst_batch(indices)
-        for batch_idx, env_idx in enumerate(target_indices):
-            handle = self._handles[env_idx]
-            handle.last_inst = inst_list[batch_idx]
-            handle.last_truth = truth_list[batch_idx]
-        return self._build_observations_from_cached_state(target_indices)
-
     def _prepare_step_evaluations_batch(
         self,
         target_indices: list[int],
@@ -128,6 +120,7 @@ class _WorldBatchVecEnvObservationMixin:
             raise RuntimeError("maintained observation batching requires compute_execution_observation_batch_numpy")
 
         allow_execution_device_export = self._execution_observation_device_export_allowed(target_indices)
+        typed_view_spec = self._runtime_adapter.typed_observation_view_spec
         obs_batch_data: ExecutionObservationBatch = compute_execution_observation_batch(
             states=[self._handles[env_idx] for env_idx in target_indices],
             mission_obs_mode=self.mission_obs_mode,
@@ -136,6 +129,8 @@ class _WorldBatchVecEnvObservationMixin:
             backend=backend,
             allow_device_export=bool(allow_execution_device_export),
             torch_bridge_enabled=bool(self._policy_torch_bridge_enabled),
+            observation_view_spec=typed_view_spec,
+            own_ship_field_reader=self._observation_own_ship_field_reader,
         )
         inst_batch = obs_batch_data.inst_batch
         truth_batch = obs_batch_data.truth_batch

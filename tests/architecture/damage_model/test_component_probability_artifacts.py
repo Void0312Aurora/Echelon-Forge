@@ -652,7 +652,14 @@ def test_component_probability_retained_artifact_pack_writes_retained_files(
   assert loaded["manifest_exists"] is True
   assert loaded["retained_artifact_count"] == 4
   assert loaded["all_artifacts_exist"] is True
-  assert loaded["manifest_relative_path"].endswith("retained_pack/manifest.json")
+  # Compared as a Path, not a string suffix: `_display_path` falls back to
+  # `str(path)` for paths outside the repo root (tmp_path here), so the
+  # separator is OS-native (backslash on Windows). Path equality pins the
+  # full expected location on every platform.
+  assert (
+    Path(loaded["manifest_relative_path"])
+    == tmp_path / "retained_pack" / "manifest.json"
+  )
 
 
 def test_component_probability_retained_artifact_pack_cli_writes_manifest(

@@ -79,7 +79,7 @@ gpu
 
 ## CMake 分组
 
-当前仍保留 `ef_core` 这一个构建目标，但 `CMakeLists.txt` 中的源码已经按未来构建目标边界完成分组：
+`ef_core` 已不再是唯一的维护链接单元：`content/` 编译进独立的 `ef_content` 静态库（由 `ef_core` 单向链接），`runtime/facade` 编译进独立的 `ef_facade` 静态库（自上而下单向链接 `ef_core`）。`CMakeLists.txt` 中其余源码仍按未来构建目标边界分组：
 
 - `EF_CORE_ENGINE_SOURCES`
 - `EF_CORE_GEOMETRY_SOURCES`
@@ -94,7 +94,7 @@ gpu
 - `EF_GPU_MAINTAINED_HELPER_SOURCES`
 - `EF_GPU_EXPERIMENT_SOURCES`
 
-新增源码应先归入明确的源码分组；不要直接把 `src/...` 文件追加到 `add_library(ef_core)` 或 `nanobind_add_module(ef_py)`。
+新增源码应先归入明确的源码分组；不要直接把 `src/...` 文件追加到 `add_library(ef_core)`、`add_library(ef_content)`、`add_library(ef_facade)` 或 `nanobind_add_module(ef_py)`。
 
 ## 禁止事项
 

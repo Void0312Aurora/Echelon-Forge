@@ -27,6 +27,7 @@ from python.rl.runtime.execution_runtime import (
 )
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
 from python.rl.runtime.world_batch import (
+    WorldBatchCore,
     WorldBatchVecEnvAccess,
     build_loader_step_info,
     compute_loader_step_outcome,
@@ -221,47 +222,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
 
     @staticmethod
     def _runtime_window_evidence_info(window_evidence: Any) -> dict[str, Any]:
-        engagement_barrier_id = ""
-        if window_evidence.engagement_packet is not None:
-            engagement_barrier_id = str(
-                getattr(window_evidence.engagement_packet, "barrier_id", "") or ""
-            )
-        return {
-            "barrier_ids": [
-                str(getattr(record, "barrier_id", "") or "")
-                for record in list(window_evidence.barrier_trace)
-            ],
-            "event_barrier_id": engagement_barrier_id,
-            "observation_barrier_id": str(
-                getattr(window_evidence.observation_packet, "barrier_id", "") or ""
-            ),
-            "observation_provenance": str(
-                getattr(
-                    getattr(window_evidence.observation_packet, "provenance", None),
-                    "source_label",
-                    "",
-                )
-                or ""
-            ),
-            "engagement_provenance": str(
-                getattr(
-                    getattr(window_evidence.engagement_packet, "packet_provenance", None),
-                    "source_label",
-                    "",
-                )
-                or ""
-            ),
-            "diagnostics_provenance": str(
-                getattr(
-                    getattr(window_evidence.engagement_packet, "diagnostics_provenance", None),
-                    "source_label",
-                    "",
-                )
-                or ""
-            ),
-            "cadence_reason": str(window_evidence.cadence_reason),
-            "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
-        }
+        return WorldBatchCore.runtime_window_evidence_info(window_evidence)
 
     def max_decision_interval_steps(self, env_indices: Sequence[int] | None = None) -> int:
         if env_indices is None:
@@ -484,14 +445,14 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                 if window_evidence is None:
                     window_evidence_by_env = {}
                     break
-                observation_packet = window_evidence.observation_packet
-                truth_items = list(getattr(observation_packet, "agent_observations", []) or [])
-                inst_items = list(getattr(observation_packet, "instrument_states", []) or [])
-                if not truth_items or not inst_items:
-                    raise RuntimeError(
-                        "RuntimeFacade.run_window() did not return the maintained observation packet payload "
-                        "required by leader runtime consumers"
-                    )
+                truth_items, inst_items = WorldBatchCore.extract_observation_batch(
+                    window_evidence.observation_packet,
+                    consumer="leader runtime consumers",
+                    missing_message=(
+                        "RuntimeFacade.run_window() did not return the maintained "
+                        "observation packet payload required by leader runtime consumers"
+                    ),
+                )
                 window_evidence_by_env[int(env_idx)] = window_evidence
                 truth_list.append(truth_items[0])
                 inst_list.append(inst_items[0])
@@ -510,8 +471,11 @@ class LeaderWorldBatchExecutionRuntimeGroup:
         for batch_idx, env_idx in enumerate(target_indices):
             handle = self.access.state(env_idx)
             handle.steps += 1
-            handle.last_truth = truth_list[batch_idx]
-            handle.last_inst = inst_list[batch_idx]
+            WorldBatchCore.record_observation_state(
+                handle,
+                truth=truth_list[batch_idx],
+                inst=inst_list[batch_idx],
+            )
             sim_time = float(handle.steps) * self._world_time_step(env_idx)
             self._mode_plugin.update_post_step_behavior(
                 handle, sim_time, handle.last_truth, handle.last_inst,

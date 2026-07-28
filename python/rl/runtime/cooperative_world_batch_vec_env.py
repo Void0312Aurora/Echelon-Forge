@@ -16,13 +16,13 @@ except ModuleNotFoundError:  # pragma: no cover
 
 import ef_py
 
+from gym_envs import observation_view
 from gym_envs.scenario_loader import (
     ScenarioLoader,
     normalize_execution_step_runtime_mode,
 )
 from gym_envs.universal_env import (
     build_step_info_minimal,
-    build_universal_observation,
     is_air_combat_hybrid_action_mode,
     make_action_space,
     make_observation_space,
@@ -51,6 +51,7 @@ from python.rl.support.sb3_vec_env_compat import (
     obs_space_info,
 )
 from python.rl.runtime.world_batch import (
+    WorldBatchCore,
     build_loader_step_info,
     compute_loader_step_outcome,
     CooperativeSlotState,
@@ -272,6 +273,12 @@ class CooperativeWorldBatchVecEnv(VecEnv):
     def _batch_visual_backend_mode(self) -> str:
         return resolve_batch_visual_backend_mode(self.batch_visual_backend)
 
+    @staticmethod
+    def _observation_own_ship_field_reader(truth: Any, field: str) -> Any:
+        """Inject the declared observation-view owner into the shared C3 builder."""
+
+        return observation_view.own_ship_attr(truth, field)
+
     def _slot_refs(self, slot_indices: list[int]) -> list[Any]:
         refs: list[Any] = []
         for slot_index in slot_indices:
@@ -295,8 +302,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             include_agent_observations=True,
             include_instrument_states=True,
         )
-        truth_list = list(getattr(packet, "agent_observations", []) or [])
-        inst_list = list(getattr(packet, "instrument_states", []) or [])
+        truth_list, inst_list = WorldBatchCore.extract_observation_batch(
+            packet,
+            consumer="cooperative slot state readers",
+            require_payload=False,
+        )
         return target_slot_indices, truth_list, inst_list
 
     def seed(self, seed: int | None = None) -> list[int]:
@@ -503,6 +513,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             backend=backend,
             allow_device_export=False,
             torch_bridge_enabled=False,
+            observation_view_spec=self._runtime_adapter.typed_observation_view_spec,
+            own_ship_field_reader=self._observation_own_ship_field_reader,
         )
         inst_batch = obs_batch_data.inst_batch
         truth_batch = obs_batch_data.truth_batch
@@ -616,30 +628,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             history_len=self.temporal_history_len,
             action_dim=int(self.action_space.shape[0]),
         )
-
-    def _build_slot_observation(
-        self,
-        slot_state: _CooperativeSlotState,
-        *,
-        inst: Any,
-        truth: Any,
-    ) -> dict[str, np.ndarray]:
-        obs = build_universal_observation(
-            slot_state.loader,
-            inst,
-            truth,
-            mission_obs_mode=self.mission_obs_mode,
-            max_contacts=self.max_contacts,
-            max_rwr=self.max_rwr,
-            include_proprio=self.include_proprio,
-            last_action=slot_state.last_action,
-            action_space=self.action_space,
-            steps=int(slot_state.steps),
-            max_steps=int(slot_state.max_steps),
-        )
-        if self.include_visual:
-            obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
-        return obs
 
     def _world_slot_states(self, world: _CooperativeWorldState) -> list[_CooperativeSlotState]:
         slot_states: list[_CooperativeSlotState] = []
@@ -788,8 +776,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state = self._slots[slot_index]
             if slot_state is None:
                 continue
-            slot_state.last_truth = truth_list[local_slot_index] if local_slot_index < len(truth_list) else None
-            slot_state.last_inst = inst_list[local_slot_index] if local_slot_index < len(inst_list) else None
+            WorldBatchCore.record_observation_state(
+                slot_state,
+                truth=(truth_list[local_slot_index] if local_slot_index < len(truth_list) else None),
+                inst=(inst_list[local_slot_index] if local_slot_index < len(inst_list) else None),
+            )
         if world.director is not None:
             world.director.reset(world, self._world_slot_states(world))
 
@@ -980,8 +971,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state = self._slots[slot_index]
             if slot_state is None:
                 continue
-            slot_state.last_truth = truth_list[local_slot_index] if local_slot_index < len(truth_list) else None
-            slot_state.last_inst = inst_list[local_slot_index] if local_slot_index < len(inst_list) else None
+            WorldBatchCore.record_observation_state(
+                slot_state,
+                truth=(truth_list[local_slot_index] if local_slot_index < len(truth_list) else None),
+                inst=(inst_list[local_slot_index] if local_slot_index < len(inst_list) else None),
+            )
         if self.collect_step_timing:
             state_read_ms = (time.perf_counter() - read_t0) * 1000.0
         for world in self._worlds:

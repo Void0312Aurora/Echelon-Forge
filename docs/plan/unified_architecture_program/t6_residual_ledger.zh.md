@@ -1,4 +1,4 @@
-# T6 残差台账（2026-07-20）
+# T6 残差台账（2026-07-26）
 
 语言：
 - 英文规范版：[t6_residual_ledger.md](t6_residual_ledger.md)
@@ -8,8 +8,8 @@
 生命周期：`maintained`
 规范路径：`docs/plan/unified_architecture_program/t6_residual_ledger.md`
 所有者：`unified architecture program workline`
-最近核验：`2026-07-20`
-基线提交：`c2952d61`
+最近核验：`2026-07-26`
+基线提交：`0aa76a00`
 
 状态：[统一架构计划](README.md) T6（测试基础设施合理化）残差索引。多轮已
 验收迭代（I28、I31、I33）把非阻塞残差以自然语言散落登记在
@@ -293,24 +293,31 @@ retained 文件零改动；三个文件与 HEAD 始终字节一致。
 自身的迁移登记行尚未出现（进行中，未落地）。本台账仅作指针登记，不重复或
 抢跑该迁移。
 
-## 5. 本机环境红清单（截至 c2952d61）
+## 5. 本机环境红清单（完整未决红清单；最近于 I65 刷新）
 
-以下五类属于机器/工作树本地的既有环境红，已在 I31、I33、I34 的隔离基线核
-查中独立复现过。本迭代在这一具体工作树上
+以下为机器/工作树本地的既有环境红类别，已在 I31、I33、I34 的隔离基线核查中
+独立复现过。I36 曾在其工作树上
 （`CMO_BUILD_DIR=<worktree>/build-local-win`）逐类直接复核；对能收敛为可枚
 举小集合的类别，直接点出精确节点 ID。
 
+本节按**完整**未决红清单维护，而非快照：后续扫描新暴露的红一律登记于此，不
+再只留在发现它的迭代小节里。I65 已把 8.9 节暴露的两项（Windows 路径分隔符
+成对红、component-fragility 校准漂移）登记进来，并在每行内联记录其当前处置，
+因此每行的 `已复现`/`已治理`/`已修复` 状态可仅凭本表读出。
+
 | 项目 | I36 直接复核结果 | 登记出处 |
 | --- | --- | --- |
-| 5 条 flecs 静态库链接签名红 | 复现了该失败类别：`tests/architecture/compatibility_quarantine/test_guard_enforcement.py` 与 `tests/architecture/runtime_spine/test_clock_domain_enforcement.py` 在收集阶段均报 `AssertionError: Could not find include directory for CMake dependency 'flecs'`（针对本工作树的 `build-local-win` 快照）。 | I31/I33/I34 登记行（每次均在隔离基线上独立复现；I34："same 5 flecs reds"） |
+| 5 条 flecs 静态库链接签名红 | 复现了该失败类别：`tests/architecture/compatibility_quarantine/test_guard_enforcement.py` 与 `tests/architecture/runtime_spine/test_clock_domain_enforcement.py` 在收集阶段均报 `AssertionError: Could not find include directory for CMake dependency 'flecs'`（针对本工作树的 `build-local-win` 快照）。**已于 I65 用条件 skip 治理（见 9.4 节）；并在该节根因定位为构建快照完整性红（只有 `_deps/flecs-build` 而无 `_deps/flecs-src`），并非血缘红——携带依赖源码树的构建目录可让这些全部跑绿。** | I31/I33/I34 登记行（每次均在隔离基线上独立复现；I34："same 5 flecs reds"） |
 | diagnostics 懒加载 `common.ef_py` 属性缺口 | `pytest tests/runtime/bindings/test_lazy_binding_resolution.py::LazyBindingResolutionTests::test_common_import_prefers_repo_build_ef_py` 失败：`AttributeError: module 'tools.diagnostics.common' has no attribute 'ef_py'. Did you mean: '_ef_py'?`（该模块只暴露私有的 `_ef_py()` 懒加载 helper）。**已于 I57 守卫适配到绿（见 8.5 节）。** | I31 登记行（"one pre-existing `common.ef_py` attribute gap"） |
 | 4 处 `test_wp22_*` 红 | 按节点 ID 精确定位，均在 `tests/architecture/runtime_facade/test_runtime_escape_hatches.py`：`test_wp22_naval_screen_raw_unit_state_seam_stays_named_and_localized`、`test_wp22_tasking_bridge_quarantines_raw_mission_and_command_chain_sync_helpers`、`test_wp22_scripted_opponent_kernel_access_stays_named_and_localized`、`test_wp22_loading_world_layout_kernel_apply_stays_named_and_localized`；每条都断言一个本工作树 `python/rl/tasking/bridge.py` 尚不存在的重构后符号（如 `class LoaderOwnedScriptedOpponentKernelView:`）——这是相对于落地该 wp22 重构的分支的血缘差距，并非本迭代引入的回归。I35 评审的超集回归又暴露同族一处红：`test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api`（同文件），经纯净基线工作树复现，于 I35 落地时补入本条。**四个 `test_wp22_*` 均已于 I57 守卫适配到绿（见 8.3 节）；那个 `test_wp12_*` 节点——实际位于 `tests/architecture/policy_execution/test_intent_injection_authority_guard.py`，而非本文件——亦于 I57 守卫适配到绿（见 8.4 节）。** | I33 登记行（"the four `test_wp22_*` directory reds"）；I35 评审 |
 | `leader_phase_manager_approach_arm` 契约 | `python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/comm/leader_phase_manager_approach_arm.json` 失败：`expected approach-arm transition count mismatch: 0`。**已于 I57 分类（见 8.8 节）：lineage 分歧——契约脚手架 `FakeLoader` 落后于本谱系 `approach_arm_require_runway_frame` arming 门控；JSON/runner 未动。** | I34 登记行 |
 | `tests/gpu` 的 `build-gpu` 缺失红 | `pytest tests/gpu/test_cuda_import_order.py::CudaImportOrderTests::test_world_batch_vec_env_import_after_torch_runtime_setup` 失败：其拉起的子进程报 `ModuleNotFoundError: No module named 'ef_py'`，因为本工作树只有 `build-local-win/`，没有 `build-gpu/`。**已于 I57 用条件 `skipUnless(build-gpu 存在)` 治理（见 8.7 节）。** | I34 登记行 |
 | diagnostics 脚本治理红 | `tests/architecture/governance/test_tools_script_governance.py::test_diagnostics_top_level_entrypoints_are_governed_by_function`——I35 评审首次在干净 48c86c4b 检出上复现；I38 评审再次确认；于 I38 落地时补入。**已于 I57 用 `xfail(strict=True)` 治理（见 8.6 节）：该守卫强制的顶层收敛从未落地本谱系，且无法在不祝福其所禁止的散乱的前提下适配。** | I35/I38 评审 |
-| 2 处空战校准漂移红 | `tests/runtime/air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` 与 `tests/runtime/air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events`（签名 `'detonated_no_effect' == 'damage_applied'`）。I38 评审用 2026-07-18 改动前旧二进制直接复现两者——比同二进制 stash 对照更强的固有性证明——确证为与任何已落地迭代无关的本机产品/校准漂移，与 I28 裁定的漂移族同源。 | I38 评审 |
-| `platform_spawn` 的 spdlog 采集错误 | `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` 收集期报 `Could not find include directory for CMake dependency 'spdlog'`——与上方 flecs 条目同家族但依赖不同、文件此前未列；I44 评审在写集完全无涉 CMake 依赖解析的前提下复现。于 I44 落地时补入。 | I44 评审 |
+| 2 处空战校准漂移红 | `tests/runtime/air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` 与 `tests/runtime/air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events`（签名 `'detonated_no_effect' == 'damage_applied'`）。I38 评审用 2026-07-18 改动前旧二进制直接复现两者——比同二进制 stash 对照更强的固有性证明——确证为与任何已落地迭代无关的本机产品/校准漂移，与 I28 裁定的漂移族同源。**已于 I65 用 `xfail(strict=True)` 治理（见 9.5 节）：除 2026-07-18 的二进制外，又针对更新的 2026-07-26 二进制重新证明了固有性。** | I38 评审 |
+| `platform_spawn` 的 spdlog 采集错误 | `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` 收集期报 `Could not find include directory for CMake dependency 'spdlog'`——与上方 flecs 条目同家族但依赖不同、文件此前未列；I44 评审在写集完全无涉 CMake 依赖解析的前提下复现。于 I44 落地时补入。**已于 I65 用条件 skip 治理（见 9.4 节）；根因定位为构建快照完整性红，并非血缘红。** | I44 评审 |
 | `source_evidence_governance` 既有红 | `tests/architecture/damage_model/test_source_evidence_governance.py` 既有失败（单独跑 1 failed+5 errors；混跑 4 failed+5 errors——存在顺序敏感性）。根因链完全在任何已落地写集之外：`tools/maintenance/source_governance/rights_output_policy.py:107` 向 `re.sub` 传入 `None`。`test_source_admission_audit.py` 单独跑 6 passed。由 I44 评审超集扫描暴露；于 I44 落地时补入。**已于 I57 修复（见 8.2 节）：`_pdf_text_probe` 现捕获原始字节并做严格 UTF-8 解码（不可解码输出 fail-close、零声明命中），`_normalize_statement_text` 对 `None` fail-close；单独跑现为 22 passed。** | I44 评审 |
+| 2 条 Windows 路径分隔符红（`retained_pack/manifest.json`） | `tests/architecture/damage_model/test_candidate_artifact_contracts.py`（第 611 行）与 `test_component_probability_artifacts.py`（第 655 行）都断言 `loaded["manifest_relative_path"].endswith("retained_pack/manifest.json")`，但该值是带本机分隔符的绝对 `tmp_path`（Windows 上为反斜杠）。由 I57 全目录扫描暴露（8.9 节），于 I65 登记进本节。**已于 I65 修复（见 9.3 节）：断言改为将 `Path` 对象与测试自身构造的输出目录比较——跨平台且严格更强。根因定位为测试断言缺陷，而非环境问题。** | I57 扫描（8.9 节）；I65 修复 |
+| `component_fragility_benchmark` 校准漂移红 | `tests/architecture/damage_model/test_component_fragility_validation.py::test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid`——其 `synthetic_sigmoid_probability` 行来自二进制计算的 component-failure-probability 曲面，现读数约 0.1699-0.1729，而测试硬编码参考值为 `0.35168`（最大相对差 1.07）。由 I57 全目录扫描暴露（8.9 节），于 I65 登记进本节。**已于 I65 用 `xfail(strict=True)` 治理（见 9.5 节）；与上方两条空战校准红属同一二进制驱动漂移族。** | I57 扫描（8.9 节）；I65 治理 |
 
 沿用 I34 独立复核并作为本迭代起始基线的门禁计数：维护 smoke
 `436 passed, 45 subtests`；聚焦 `world_batch`+leader+facade 选集
@@ -692,6 +699,75 @@ git diff --check    -> 干净
 清单 fixture（删除 1 条、修订余下 5 条）与本台账小节。未触碰任何
 `python/**` 或 `examples/**`；无 CMake 目标改动。
 
+### 7.5 (f) 本迭代（2026-07-27）重裁：T1 schema 归属路线被堵死；该边维持搁置
+
+本迭代（队列 I81，T1/T3；激活门：I80 证据已于 `407eea22` 落地）针对第
+7.3 节的缓办重新提出了一个 I41 普查未直接回答的具体问题：
+`tools/maintenance/dto_schema` 能否接管被借用的类型，使两侧从同一来源
+逐字节等价地生成——就像 I33 交战族的 contracts 自有叶子
+（`src/runtime/contracts/detail/engagement_entity_ref.inc`，由
+`engagement_contracts.h` 与 `bindings_runtime.cpp` 包含，mission 沿策略
+允许的方向反向包含 contracts）单一来源化共享类型那样？裁决：**搁置**，
+基于本迭代对源码逐条核实的三点理由：
+
+1. **I33 模式要求字段清单叶子封闭；这里并不满足。** contracts 自有叶子
+   这一手法只在每个字段都是标量、字符串或其向量时可行，这样生成的
+   `.inc` 无需进一步包含即可在 `runtime/contracts` 内编译。
+   `StepEvaluationBatchEnvState` 按值嵌入第 7.3 节已普查的十个 mission
+   自有聚合类型，且其中第一个 `ExecutionEpisodeState`
+   （`core/mission/episode/execution_episode_state.h`）自身还嵌入来自
+   `core/geometry/spatial_query_runtime.h` 的
+   `std::vector<SpatialRouteWaypoint>`（另有来自 `components/` 的
+   `MissionCommand`，这一个是允许的）。`runtime_contracts` 策略允许的
+   目标集合仅有 `{components}`，因此 contracts 侧的定义除了第 7.3 节已
+   排除的 `runtime_contracts -> core_mission_*` 边之外，还需要新增
+   `runtime_contracts -> core_geometry` 边——这是 I41 普查尚未点名的一
+   个阻断项。
+2. **schema 生成的字段清单躲不开门禁。** include 方向扫描器把 `.inc`
+   文本包含当作一等边来计
+   （`tools/architecture/cpp_include_graph.py` 的 `SOURCE_SUFFIXES` 含
+   `.inc`），因此 contracts 侧的结构体若文本包含
+   `core/mission/runtime/detail/flight_shaping_shared_fields.inc`（即
+   `StepEvaluationBatchConfig` 与 `FlightShapingRuntimeInputs` 已共用的
+   双展开清单）或任何同级 mission 自有 `.inc`，只会在新位置以新指纹重
+   造违规。*字段清单*的逐字节等价生成可以做到；*include 图*的逐字节等
+   价闭合做不到。
+3. **唯一叶子封闭的片段不值得搬。** 单独搬 `StepEvaluationBatchConfig`
+   是可行的（只要共享的 flight-shaping `.inc` 也一并移到
+   `runtime/contracts/detail/`，mission 可以合法反向包含），但允许清单
+   指纹钉住的是 `execution_episode_batch_prepare.h` 这条 include，而
+   `env_state` 的类型仍然强制它存在；条目会原样存续、允许清单不会缩
+   减，这次搬移只会让 `StepEvaluationBatchConfig` 的 ABI 暴露在物理迁
+   移的扰动之下（成员顺序虽保持，但 mission 全体消费方都要跟着改），
+   换来的门禁进展为零。
+
+绑定面已于本迭代复核：`interfaces/python/bindings_episode.cpp` 中 57 次
+`def_rw` = 15（`StepEvaluationBatchConfig`）+ 42
+（`StepEvaluationBatchEnvState`），与 I41 普查一致无变化。
+
+搁置裁决的工件（本迭代写集）：`src/runtime/contracts/world_batch_contracts.h`
+include 现场的带日期裁决注释（该 include 从第 16 行移至第 34 行，允许
+清单指纹的 `line` 字段在同一次编辑中同步更新）；允许清单条目
+（`tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json`，
+`allowlist_version` v2 -> v3），其 `reason` 追加了本次重裁、
+`owner`/`next_gate` 重新指向 T1 DTO 族收尾迁移；门禁文件
+`tests/architecture/governance/test_cpp_include_direction.py` 中新增的
+专用搁置边钉子测试
+（`test_the_contracts_to_mission_step_request_edge_stays_held_with_its_adjudication`），
+断言 `runtime_contracts` 组条目唯一、裁决标记齐全、include 现场注释存
+在、以及 15/42 的绑定拆分，使绑定漂移或第二条 contracts 违规都必须经
+过显式重裁（该门禁文件已注册于 `tests/smoke/ci_smoke_suite.json`，无需
+新增注册）；外加本节及其 `zh` 孪生。关闭该边的退出条件不变且已被机器
+钉住：由 T1 DTO 族收尾迁移搬移或单一来源化完整嵌套类型图、保持 57 绑
+定 parity，并显式编辑该钉子测试。依赖方向不得反转。
+
+验证（本工作树，`CMO_BUILD_DIR=D:\workshop\Research\EF-landing\build-local-win`，
+基线 `1a456e29`）：`pytest -q
+tests/architecture/governance/test_cpp_include_direction.py` -> 8 passed
+（既有 7 项 + 新增搁置边钉子）；
+`tools/maintenance/dto_schema/generate.py --check` -> 全部产物
+up-to-date；维护冒烟按惯例于本迭代落地时记录。
+
 ## 8. I57：T6 第二清偿包（七条处置）
 
 基线提交 `fae17eb8`；在本工作树上针对只读共享 CPU 快照核验
@@ -985,6 +1061,310 @@ python tools/maintenance/translate_docs_batch.py audit   （只读）
 
 未触碰 C++、`examples/**`、`docs/plan/repository_consolidation/**`、契约 JSON 或契约 runner；
 未触发 CMake/构建。
+
+## 9. I65：T6 第三清偿包（六条处置）
+
+基线提交 `0aa76a00`（I64）。仅测试与文档，未触碰生产代码。本迭代复现了先前
+范围梳理列为 I57 之后仍未决的六条红，逐条从源码定位根因，并按性质处置。其中
+**两条诊断与传入分类不一致**，已在 9.2 节明确点出，因为两者都改变了处置的
+含义。
+
+### 9.1 处置汇总
+
+| # | 节点/目标 | 复现到的红 | 根因（源码证据） | 处置 |
+| --- | --- | --- | --- | --- |
+| 1 | `damage_model/test_candidate_artifact_contracts.py::test_candidate_retained_artifact_pack_writes_retained_files`（第 611 行） | `1 failed` | 断言用 POSIX 斜杠字符串做后缀匹配，而实际值是**绝对 `tmp_path`**（`...\test_candidate_retained_artifa0\retained_pack\manifest.json`）；生产 `_display_path` 仅对仓库相对路径输出 posix，对仓库根之外的路径回落到 `str(path)` | **测试断言修复 -> 绿**（9.3） |
+| 2 | `damage_model/test_component_probability_artifacts.py::test_component_probability_retained_artifact_pack_writes_retained_files`（第 655 行） | `1 failed` | 与第 1 条完全相同（同一断言，`component_probability_retained_pack.py` 中同样的 `_display_path` 回落） | **测试断言修复 -> 绿**（9.3） |
+| 3 | `compatibility_quarantine/test_guard_enforcement.py` + `runtime_spine/test_clock_domain_enforcement.py` | 整文件收集错误 | 模块级 `dependency_include_path("flecs")` 在 import 期抛 `AssertionError`，令两个文件中**每一个**测试都无法收集——包括 9 个完全不需要 C++ 工具链的文本/AST 守卫。所配置的 CPU 快照只有 `_deps/flecs-build`，没有 `_deps/flecs-src` | **条件 skip**（9.4） |
+| 4 | `platform_spawn/test_default_factory_spawn_plan_resolution.py` | 整文件收集错误 | 对 `spdlog`（以及 `flecs`/`nlohmann_json`）为同一机制；导致后续 T11 切片所依赖的三个头文件文本守卫也无法收集 | **条件 skip**（9.4） |
+| 5 | `air_combat/test_component_failure_probability_surface.py::test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley` | `1 failed` | 二进制侧部件归属漂移：`component_primary_name` 现为 `left_horizontal_tail_actuator_or_surface_component`，而非 `engine_core`（第 319 行——**并非**台账行标题暗示的 load-floor 断言） | **`xfail(strict=True)`**（9.5） |
+| 6 | `air_combat/test_live_detonation_event_surface.py::test_live_detonation_exports_standard_warhead_spatial_and_component_events` | `1 failed` | 二进制侧效应漂移：`effects.outcome_state == 'detonated_no_effect'` 而非 `'damage_applied'`——战斗部起爆但未施加伤害 | **`xfail(strict=True)`**（9.5） |
+| 7 | `damage_model/test_component_fragility_validation.py::test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid` | `1 failed` | `synthetic_sigmoid_probability` 经 `component_fragility_benchmark._synthetic_baseline_rows` -> `surface_probe._sample_primary_event` 追溯到与第 5/6 条同一个二进制计算曲面；读数约 0.1699-0.1729，硬编码参考值为 `0.35168` | **`xfail(strict=True)`**（9.5） |
+
+### 9.2 两条与传入分类不一致的诊断
+
+**(a) flecs/spdlog 红并非 CPU-only 工作树的固有属性。** 它们被作为环境红交给
+本迭代，要求按 8.7 节先例治理。治理本身仍然正确，但根因比"本机无法构建
+flecs"更窄：这些红是**构建快照完整性**造成的。8.10 节所用快照
+（`EF-w2-training/build-local-win`）只含 `_deps/flecs-build`；而姊妹工作树的
+快照（`EF-w3-flightshaping/build-local-win`，构建于 2026-07-26）携带完整
+`_deps` 源码树（`flecs-src`、`spdlog-src`、`nlohmann_json-src` 等）。把
+`CMO_BUILD_DIR` 指向完整树，可让**三个文件共 24 个测试全绿、零 skip**（验证
+见 9.6）。因此 skip 谓词必须以依赖 include 的实际存在性为条件——现已如此——
+且在配置正确的树上绝不触发。记录此点是因为它改变了这些行的修复方向：它们靠
+配置/保留完整构建树来关闭，而非靠任何代码改动。这也意味着第 5 节长期存在的
+"5 条 flecs 静态库链接签名红"从来都不是血缘缺陷或平台缺陷。
+
+**(b) 第 5 条的台账行错述了它自身的失败。** 第 5 节与范围梳理都把该节点记为
+load-floor/blast-tail-valley 红。它并不在那里失败，而是在更前一条断言、即第
+319 行的**部件归属**上失败（`engine_core` ->
+`left_horizontal_tail_actuator_or_surface_component`）；第 320-324 行的
+load-floor 断言根本没被执行到。处置（`xfail(strict=True)`）不变，但 xfail 的
+reason 写的是真实漂移而非沿袭的错述，以便未来重校准能针对正确症状诊断。
+
+两条不一致都没有把某条红升级为真实回归：保持第 5-7 条留在校准漂移通道的固有
+性证明见 9.5 节。
+
+### 9.3 第 1-2 条——测试断言修复：Windows 路径分隔符
+
+**根因（源码证据）**：两个测试都调用
+`load_retained_artifact_pack_manifest(repo_root=REPO_ROOT, output_dir=tmp_path / "retained_pack")`。
+`component_probability_retained_pack.py` 与 candidate 侧的
+`effect_scale_retained_pack.py` 都用本地 `_display_path` 计算该值，其实现为
+`path.relative_to(repo_root).as_posix()`，**并在 `ValueError` 时回落到
+`str(path)`**。`tmp_path` 位于仓库根之外，因此回落分支生效，该值是带本机分隔
+符的绝对路径。故这两条红是断言的缺陷，既不在生产代码，也不是生成器的
+OS 相关偶发问题。
+
+**修复（断言被强化，生产代码未动）**：每条断言改为把 `Path` 与测试自身构造的
+路径比较：
+
+```python
+assert (
+  Path(loaded["manifest_relative_path"])
+  == tmp_path / "retained_pack" / "manifest.json"
+)
+```
+
+`Path` 相等会在所有平台上归一化分隔符，因此该检查与 OS 无关。它比原断言
+**更强**：原后缀检查接受任意前缀，而它锁定完整的预期位置。已明确避免用
+子串/`in` 之类的弱化写法。代码注释记录了该值为何是绝对路径，以免后来者把它
+"修"回后缀匹配。
+
+**完整家族验证**：对整个 `tests/` 用 ripgrep 搜索"内含斜杠的字符串字面量作为
+`.endswith(...)` 参数"这一模式，恰好返回三处——上述两处，以及
+`tests/tools/test_airframe_geometry_review_cli.py:179`
+（`...endswith("gltf/scene.gltf")`）。第三处在结构上同样暴露于
+`ValueError -> str(path)` 回落（`airframe_review/filesystem.py:9`），但它是
+**绿的**，因为其 manifest 路径能解析到仓库根之下，走的是 posix 分支。该处保持
+未动（无红可修），在此记录以便该 fixture 未来若改用 `tmp_path` 能立即被诊断。
+对 `tests/` 搜索 `manifest_relative_path` 确认没有其他消费者。因此
+8.9 节"这两条即完整家族"的说法对红而言得到确认，并被细化：该*模式*家族有三个
+成员，其中两个为红。
+
+### 9.4 第 3-4 条——条件 skip：CMake 依赖 include 缺失
+
+**根因**：三个文件都在**模块作用域**解析依赖 include 路径，因此
+`dependency_include_path` 的 `AssertionError` 表现为收集错误并丢弃整个文件。
+更大的问题是附带损失：`test_guard_enforcement.py` 有 16 个测试而其中只有 7 个
+编译 C++，`test_default_factory_spawn_plan_resolution.py` 有 7 个而只有 4 个
+编译——于是 12 个纯文本/AST 守卫因缺少一个 C++ 头文件而全部丢失，其中包括后续
+T11 切片所依赖的头文件文本守卫。
+
+**处置（条件 skip，8.7 节先例，未弱化任何检查）**：每个文件新增本地
+`_optional_dependency_include()`，在解析失败时返回 `None` 而不抛异常，并据此
+构造 `pytest.mark.skipif`：
+
+- `test_guard_enforcement.py` 与 `test_clock_domain_enforcement.py` 中的
+  `requires_flecs`，分别施加于 7 个和 1 个依赖编译的测试。
+- `test_default_factory_spawn_plan_resolution.py` 中的
+  `requires_platform_spawn_includes`，施加于其 4 个依赖编译的测试；其 reason
+  字符串会插入**实际**缺失的依赖名。
+
+每条 reason 都写明缺失的依赖、所配置 `CMO_BUILD_DIR` 中不存在
+`_deps/<dependency>-src` 这一事实，并指向第 5 节。该 skip 在强意义上是条件性
+的：在携带依赖源码的构建树上谓词为假，所有检查照常运行（9.6 节已证，
+`24 passed`、零 skip）。在不完整快照上的净效果：12 个此前无法收集的守卫现在
+执行并通过，只有 12 个真正依赖工具链的检查被 skip。
+
+### 9.5 第 5-7 条——xfail(strict)：二进制侧校准漂移
+
+**固有性证明（这正是 xfail 的正当性来源）**：台账对第 5-6 条既有的证明是针对
+2026-07-18 改动前二进制的复现。本迭代补充了一条独立的证据轴：
+
+- 三条红在**两个不同二进制**上以完全相同方式复现，二者构建自谱系上不同时点：
+  2026-07-18 快照（`EF-w2-training`）与 2026-07-26 快照
+  （`EF-w3-flightshaping`），后者晚于本分支上所有 C++ 提交（最新为
+  `cf172d8f`，2026-07-21）。若是近期迭代引入的回归，在该迭代之后重新构建就不
+  会继续存在。
+- 对两个空战测试文件执行 `git log` 显示自 **2026-06-21**（`f2532638`）以来均
+  未改动，故这些期望并非新近收紧的断言。
+- 第 7 条的取值可证与第 5-6 条源自同一二进制曲面：
+  `_synthetic_baseline_rows` 调用 `surface_probe._sample_primary_event` 并读取
+  `summary["component_failure_probability"]`。这是**一处**漂移经三个不同测试
+  观察到的结果，而非三处独立失败。
+
+基于上述证据，三条均留在校准漂移通道。**未发现真实回归**；若新二进制的运行使
+其中任一条转绿，那将被作为旧二进制假象报告，而不是 xfail 掉。
+
+**处置（`xfail(strict=True)`，8.6 节/I28 先例，未删除或弱化任何测试）**：每个
+节点带 `@pytest.mark.xfail(strict=True, reason=...)`。每条 reason 写明漂移的
+量及其实测值与期望值、两个二进制的固有性证据、指向第 5 节，并说明重校准会把
+该节点翻为 `XPASS(strict)` 且届时必须移除该标记。strict 正是关键：按计划
+README 的 T6 关键风险（"基线修复不得掩盖真实回归"），一刀切 skip 会静默吸收
+未来的恢复，而 `XPASS(strict)` 本身即失败，强制复查。未放松任何断言、未重设
+任何参考值——那样做会销毁漂移证据。
+
+### 9.6 验证（本工作树）
+
+有意对两个构建树分别验证：**不完整**快照
+（`EF-w2-training/build-local-win`，只有 `_deps/flecs-build`）是被治理的红的
+复现处；**完整**快照（`EF-w3-flightshaping/build-local-win`，含完整 `_deps`
+源码）用于证明 skip 是条件性的。未触发 CMake/构建；写集为测试 + 文档。
+
+```
+tools\maintenance\cmo_env.ps1 validate       -> validation ok（两个树均如此）
+
+--- CMO_BUILD_DIR=EF-w2-training/build-local-win（不完整快照）---
+
+改动前（基线 0aa76a00）：
+  damage_model：candidate_artifact_contracts + component_probability_artifacts
+    + component_fragility_validation      -> 3 failed, 61 passed
+  compatibility_quarantine/test_guard_enforcement.py
+    + runtime_spine/test_clock_domain_enforcement.py
+    + platform_spawn/test_default_factory_spawn_plan_resolution.py
+                                          -> 3 errors during collection
+                                             （收集到 0 个测试）
+  air_combat：component_failure_probability_surface
+    + live_detonation_event_surface       -> 2 failed, 11 passed
+
+改动后：
+  三个原收集错误文件 + 两个空战文件
+                                          -> 23 passed, 12 skipped, 2 xfailed
+     （每条 skip 的 reason 都写明其缺失依赖；23 个通过项中 12 个是此前无法
+      收集的守卫，其余 11 个是一直可收集的空战测试）
+  damage_model（三个文件）                 -> 63 passed, 1 xfailed
+     （原为 3 failed, 61 passed：第 1-2 条已修复，第 7 条已 xfail）
+
+--- CMO_BUILD_DIR=EF-w3-flightshaping/build-local-win（完整快照）---
+
+  三个原收集错误文件                      -> 24 passed, 0 skipped
+     （证明第 3-4 条的 skip 确为条件性，而非潜伏的无条件 skip）
+  两个空战文件                            -> 基线下 2 failed, 11 passed
+     （第 5-6 条在更新的二进制上同样复现：9.5 节的固有性证明）
+  damage_model（三个文件）                 -> 基线下 3 failed, 61 passed
+     （第 7 条在更新的二进制上同样复现）
+
+--- 门禁 ---
+
+ruff check <8 个改动的测试文件>        -> All checks passed!
+git diff --check                       -> clean
+
+python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+-> 1 failed, 459 passed, 45 subtests passed。唯一失败即本台账编辑必然触发的
+   双语注册表哈希标记
+   （test_document_link_audit.py::test_repository_bilingual_registry_matches_the_maintained_surface），
+   其 `clusters --write` 刷新属落地侧职责（与 8.10 节相同）。
+   459 passed 相对 8.10 节的 458 多 1：不可归因于本清偿包——本写集触及的文件
+   （包括第 1-2 条的 damage_model 文件）没有一个是 ci_smoke_suite 成员。
+   这 +1 来自两次测量之间的套件内容增长：清单本身未变
+   （fae17eb8..0aa76a00 未触及 ci_smoke_suite.json），唯一测试数发生变化的
+   成员文件是 tests/runtime/test_agent_shim.py，由 1a2e64a5 从 21 个增至
+   22 个测试。
+
+python tools/maintenance/translate_docs_batch.py audit（只读）
+-> pair_count 86, synced 85, diverged 1——与 8.10 节一致，本台账这一对是唯一
+   diverged 条目。
+
+pytest -q tests/runtime
+-> 21 failed, 879 passed, 35 xfailed, 467 subtests passed。
+   这 21 条均不在本写集内。已显式核查归属：把四个失败文件针对**完整/更新**
+   快照重跑，其中 16 条恢复（它们是 2026-07-18 构建的旧二进制假象，该构建早于
+   I54/I60 的 C++ 提交）。剩余 5 条——全部位于
+   `tests/runtime/facade/test_runtime_facade_window_loop_injection.py`——随后在
+   把本迭代写集 **stash** 后重新测量：在纯 `0aa76a00` 上失败的是同样这 5 条，
+   故为既有失败，与本清偿包无关。此处未把它们登记进第 5 节，因为它们不属于被
+   治理的那类本机环境红，需要各自的血缘三角定位。
+```
+
+### 9.7 写集（本迭代）
+
+- `tests/architecture/damage_model/test_candidate_artifact_contracts.py`（第 1 条断言修复）
+- `tests/architecture/damage_model/test_component_probability_artifacts.py`（第 2 条断言修复）
+- `tests/architecture/compatibility_quarantine/test_guard_enforcement.py`（第 3 条条件 skip）
+- `tests/architecture/runtime_spine/test_clock_domain_enforcement.py`（第 3 条条件 skip）
+- `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py`（第 4 条条件 skip）
+- `tests/runtime/air_combat/test_component_failure_probability_surface.py`（第 5 条 xfail-strict）
+- `tests/runtime/air_combat/test_live_detonation_event_surface.py`（第 6 条 xfail-strict）
+- `tests/architecture/damage_model/test_component_fragility_validation.py`（第 7 条 xfail-strict）
+- `docs/plan/unified_architecture_program/t6_residual_ledger.md` / `.zh.md`（本节 + 第 5 节补全/登记）
+
+未触碰生产代码、C++、`examples/**`、`docs/plan/repository_consolidation/**`、
+契约 JSON 或契约 runner；未触发 CMake/构建。
+
+## 10. I72 跟进：路径后缀匹配器工具（断言形态裁定）
+
+对 I65 第 1-2 条（9.3 节）的强化型跟进。本切片所实现的队列行早于 I65 写就，
+其处方是用组件归一化后缀匹配器修复 8.9 节的两条
+`retained_pack/manifest.json` 后缀红。I65 先行落地并以不同方式修复了两处调
+用点：将 `Path` 与测试自身构造的
+`tmp_path / "retained_pack" / "manifest.json"` 做完整相等比较。该重叠在落地
+前经裁定消解，而非重复修复。
+
+**裁定——哪种断言形态存续**：用跨组件边界的
+`not_retained_pack/manifest.json` 陷阱（正是催生该匹配器的判别用例）检验
+I65 的 Path 相等形态：它从构造上就拒绝该陷阱——被比较的完整路径不同，后缀
+陷阱根本无从触及。它还锁定了完整前缀，这是双组件后缀匹配做不到的。因此对这
+两处调用点而言，Path 相等严格强于匹配器，两条断言保持 I65 所写原样
+（9.3 节）；本迭代不改动任何一条已修复断言。
+
+**本迭代新增（仅测试侧）**：匹配器
+`tests/architecture/damage_model/helpers.py::path_suffix_components(value,
+count)` 作为可复用工具保留，服务于 Path 相等无法覆盖的剩余场景——测试无法
+构造完整预期路径（前缀可变/未知）的后缀检查，例如未来只有尾部具有契约意义
+的生产方展示文本断言。其 docstring 记录了适用规则（"测试能构造完整预期位置
+时，优先用完整 Path 相等"），以免在位置固定的调用点被误当作首选形态。匹配
+器由新增的封闭亚秒级
+`tests/architecture/damage_model/test_path_suffix_components.py`（15 条）钉
+住：正例覆盖原始红的 Windows 原生绝对路径形态、POSIX 绝对、仓相对、混合分
+隔符、以及分隔符连写/前导分隔符形式；负例证明拒绝目录组件错误、文件名错
+误、组件顺序颠倒、组件数不足，以及跨边界的
+`not_retained_pack/manifest.json` 尾巴（该条测试先内联断言原始 `endswith`
+*确实*接受它——即陷阱本身——再断言匹配器拒绝它）。按 I37
+（`test_xmacro_text.py`）/ I57（`test_rights_output_policy_probe.py`）排除
+先例保持在 smoke 清单之外：封闭的测试支撑单测，并非漂移门禁。
+
+**验证**（本工作树，
+`CMO_BUILD_DIR=D:\workshop\Research\EF-landing\build-local-win`）：
+
+```
+pytest -q <两条 I65 已修复节点>
+       tests/architecture/damage_model/test_path_suffix_components.py
+-> 17 passed（两条 Path 相等断言按 I65 所写原样跑绿，外加 15 条匹配器测试）
+```
+
+**写集（本迭代）**：
+`tests/architecture/damage_model/helpers.py`（匹配器工具）、
+`tests/architecture/damage_model/test_path_suffix_components.py`（新增），
+外加本台账对（仅本节——第 5 节各行与 9.3 节是 I65 的记录，不再复述）。两个
+经 I65 修复的测试文件本迭代未改动。未触碰生产代码、C++、契约 JSON，smoke
+清单不变。
+
+## 11. I97 审阅修复：七条聚焦的双二进制残差
+
+本节登记 I97 修复提交 `fdd9882764` 的最小跟进。此前覆盖整个测试的标记已收窄，
+使每一条实现无关的二值残差都对应一个严格 xfail 断言。使用
+2026-07-18 与 2026-07-26 两个 `ef_py` 二进制均复现同一观测；该双二进制继承
+证据说明残差不是单一构建伪象，但不把预期行为本身提升为权威事实。
+
+| 残差 | 聚焦测试节点 | 两个二进制均观测到 | 修复后预期 |
+| --- | --- | --- | --- |
+| I97-R1 | `test_mlf5c_direct_hit_component_primary_name_matches_engine_core` | 直击 `component_primary_name='left_horizontal_tail_actuator_or_surface_component'` | `component_primary_name='engine_core'` |
+| I97-R2 | `test_live_detonation_outcome_state_matches_damage_application` | `effects.outcome_state='detonated_no_effect'` | `'damage_applied'` |
+| I97-R3 | `test_live_detonation_fragment_energy_is_positive` | `warhead.fragment_energy_j=0.0` | `>0.0` |
+| I97-R4 | `test_live_detonation_blast_overpressure_is_positive` | `warhead.blast_overpressure_kpa=0.0` | `>0.0` |
+| I97-R5 | `test_live_detonation_spatial_sample_count_is_positive` | `spatial.sample_count=0` | `>0` |
+| I97-R6 | `test_live_detonation_exports_nonblank_component_source_rows` | 非空 `component_mechanism_load_rows` 为 0 条 | 至少 1 条非空源行 |
+| I97-R7 | `test_fragility_benchmark_synthetic_sigmoid_outcome_matches_retained_reference` | synthetic 向量 `(0.17289200648782854, 0.1710962556841057, 0.16989812081797678)` | 保留向量 `(0.35168, 0.35168, 0.35168)` |
+
+R1 的伴随断言保持 active：从 `component_mechanism_load_rows` 中定位
+`engine_core` 行，该行当前观测直击爆炸载荷为 `588.6225285038623 kPa`
+（`>500`）；当前选中的主组件行只对自身的正值/相对载荷性质保持 active 检查。
+live 事件测试中的 header、事件计数、跨事件等值关系和行到组件映射保持 active。
+fragility 测试也将 delta、ratio、candidate/synthetic 均值、平均绝对差（MAD）
+及比较布尔值保留为基于当前行的 active 代数一致性检查；只有保留的三点
+synthetic 向量属于残差。
+
+每个标记均为 strict，并在独立 reason 中写明观测/预期、双二进制继承说明及精确
+指针（`T6 residual ledger section 11, I97-R1` 至 `I97-R7`）。因此标准运行应报告
+3 个结构测试通过和 7 个聚焦 xfail；`--runxfail` 必须只将这 7 个节点转为失败。
+
+**写集（I97 审阅修复）**：
+`tests/runtime/air_combat/test_component_failure_probability_surface.py`、
+`tests/runtime/air_combat/test_live_detonation_event_surface.py`、
+`tests/architecture/damage_model/test_component_fragility_validation.py`，
+以及本台账对和维护中的双语簇注册表哈希刷新。未触碰生产代码、C++、契约 JSON
+或 smoke 清单。
 
 ## 相关
 

@@ -583,6 +583,16 @@ EXPECTED_REGISTRATIONS = {
     f"{_BUILDER_DIR}/recent_engagement_events_builder.py",
     14,
   ),
+  "tools/maintenance/dto_schema/schemas/scenario_generation_evidence_ref_fields.py": (
+    "src/runtime/contracts/detail/scenario_generation_evidence_ref.inc",
+    f"{_BUILDER_DIR}/scenario_generation_evidence_ref_builder.py",
+    3,
+  ),
+  "tools/maintenance/dto_schema/schemas/scenario_generation_request_metadata_fields.py": (
+    "src/runtime/contracts/detail/scenario_generation_request_metadata.inc",
+    f"{_BUILDER_DIR}/scenario_generation_request_metadata_builder.py",
+    13,
+  ),
 }
 
 EXPECTED_PACKAGE_INIT = f"{_BUILDER_DIR}/__init__.py"

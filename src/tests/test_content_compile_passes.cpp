@@ -6,6 +6,7 @@
 // orchestrator's byte/behaviour parity (a file with an unrecognized top-level
 // key loads to the same UnitDefinition as one without it).
 
+#include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "content/content_compile_passes.h"
 #include "content/unit_definition_loader.h"
 
@@ -355,6 +356,669 @@ TEST_SUITE("content_compile_passes") {
         CHECK(mt.reference_area_m2 == doctest::Approx(3.0)); // source 3 only
         CHECK(mt.max_speed == doctest::Approx(900.0));       // flight_model seed, never overridden
         CHECK(std::isnan(mt.sustain_time_s));                // unset key keeps default
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE(
+        "direct fields parse: mechanical scalar subset maps to member and keeps default (I61)") {
+        // Synthetic-face parity for the I61 table-driven direct-scalar migration
+        // (content/detail/unit_definition_direct_fields.inc). The converged
+        // purely-mechanical subset is {mass_kg, data_link_network_id}: present
+        // keys must land on their matching UnitDefinition members, and omitted
+        // keys must keep the exact literal defaults used by the pre-I61 reads.
+        // A mis-wired phase macro (wrong member/default) fails these checks.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_unit_direct_fields_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string present_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Present",
+  "mass_kg": 4242.5,
+  "data_link_network_id": 37
+})json";
+        const std::string absent_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Absent"
+})json";
+
+        const fs::path present = directory / "present.json";
+        const fs::path absent = directory / "absent.json";
+        { std::ofstream(present) << present_json; }
+        { std::ofstream(absent) << absent_json; }
+
+        std::vector<UnitDefinition> present_defs;
+        std::vector<UnitDefinition> absent_defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(present.string(), present_defs, &error));
+        REQUIRE(load_unit_definitions_json(absent.string(), absent_defs, &error));
+        REQUIRE(present_defs.size() == 1);
+        REQUIRE(absent_defs.size() == 1);
+
+        CHECK(present_defs[0].mass_kg == doctest::Approx(4242.5)); // table-driven read
+        CHECK(absent_defs[0].mass_kg == doctest::Approx(0.0));     // literal default preserved
+        CHECK(present_defs[0].data_link_network_id == 37);         // late-phase read
+        CHECK(absent_defs[0].data_link_network_id == 0);           // literal default preserved
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE(
+        "direct fields parse: phase expansion preserves malformed-key fail-first order (I61)") {
+        // Successful-input parity is insufficient: nlohmann conversions throw,
+        // so moving a table-driven read across another read changes which bad
+        // key fails first. These two probes pin mass_kg's early phase and the
+        // data-link field's original position between has_data_link and the
+        // clamped data_link_max_reports_per_update read.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_unit_direct_fields_order_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string before_data_link_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Order_Before",
+  "engine_ref": 17,
+  "data_link_network_id": "bad-network-id"
+})json";
+        const std::string within_data_link_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Direct_Order_Within",
+  "data_link_network_id": [],
+  "data_link_max_reports_per_update": {}
+})json";
+
+        const fs::path before_data_link = directory / "before_data_link.json";
+        const fs::path within_data_link = directory / "within_data_link.json";
+        { std::ofstream(before_data_link) << before_data_link_json; }
+        { std::ofstream(within_data_link) << within_data_link_json; }
+
+        const auto thrown_message = [](const fs::path &path) {
+            std::vector<UnitDefinition> defs;
+            std::string error;
+            try {
+                (void)load_unit_definitions_json(path.string(), defs, &error);
+            } catch (const std::exception &ex) {
+                return std::string(ex.what());
+            }
+            return std::string{};
+        };
+
+        const std::string before_message = thrown_message(before_data_link);
+        const std::string within_message = thrown_message(within_data_link);
+        CHECK(before_message.find("type must be string, but is number") != std::string::npos);
+        CHECK(within_message.find("type must be number, but is array") != std::string::npos);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("aero tuning parse: all 44 table-driven keys map to their members") {
+        // Synthetic-face parity for the table-driven aero parse
+        // (content/detail/aero_tuning_fields.inc, T11 slice 4 bundle 3). An
+        // Aircraft entry whose top-level aero_tuning object carries every one of
+        // the 44 migrated keys with a distinct sentinel must land each value on
+        // the matching AeroTuning member (a mis-wired key/member would collide
+        // or miss). The two-pass X-macro include is what emits these reads, so a
+        // dropped pass drops either the 37 scalars or the 7 vectors.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_aero_tuning_all_keys_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string all_keys = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_All_Keys_Aero",
+  "aero_tuning": {
+    "cl_alpha_per_deg": 1.5,
+    "cl0": 2.5,
+    "cd0_clean": 3.5,
+    "induced_drag_k": 4.5,
+    "cm_alpha_per_rad": 5.5,
+    "cm_q": 6.5,
+    "alpha_stall_clean_deg": 7.5,
+    "alpha_stall_flaps_full_deg": 8.5,
+    "alpha_peak_offset_deg": 9.5,
+    "alpha_deep_offset_deg": 10.5,
+    "cl_peak_clean": 11.5,
+    "cl_peak_flaps_full": 12.5,
+    "cl_deep_clean": 13.5,
+    "cl_deep_flaps_full": 14.5,
+    "pitch_break_onset_deg": 15.5,
+    "pitch_break_full_deg": 16.5,
+    "pitch_break_cm_nose_down": 17.5,
+    "post_stall_damp_floor": 18.5,
+    "aoa_rate_pitch_break_gain": 19.5,
+    "elevator_max_deflection_deg": 20.5,
+    "aileron_max_deflection_deg": 21.5,
+    "rudder_max_deflection_deg": 22.5,
+    "cm_delta_e_per_rad": 23.5,
+    "cl_delta_a_per_rad": 24.5,
+    "cn_delta_r_per_rad": 25.5,
+    "fbw_elevator_cmd_per_rate_err": 26.5,
+    "fbw_aileron_cmd_per_rate_err": 27.5,
+    "fbw_rudder_cmd_per_rate_err": 28.5,
+    "ari_rudder_cmd_per_aileron_cmd": 29.5,
+    "fbw_g_command_enabled": false,
+    "fbw_g_command_neutral": 31.5,
+    "fbw_g_command_max": 32.5,
+    "fbw_g_command_min": 33.5,
+    "fbw_pitch_rate_per_g_err": 34.5,
+    "actuator_tau_elevator_s": 35.5,
+    "actuator_tau_aileron_s": 36.5,
+    "actuator_tau_rudder_s": 37.5,
+    "mach_breakpoints": [1.0, 2.0, 3.0],
+    "cl_alpha_scale_vs_mach": [4.0, 5.0],
+    "cd0_add_vs_mach": [6.0],
+    "induced_drag_scale_vs_mach": [7.0, 8.0, 9.0, 10.0],
+    "cm_alpha_scale_vs_mach": [11.0],
+    "stall_alpha_delta_deg_vs_mach": [12.0, 13.0],
+    "control_effectiveness_scale_vs_mach": [14.0, 15.0, 16.0]
+  }
+})json";
+
+        const fs::path path = directory / "all_keys.json";
+        { std::ofstream(path) << all_keys; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].airframe.has_tuning);
+        const AeroTuning &at = defs[0].airframe.tuning;
+
+        CHECK(at.cl_alpha_per_deg == doctest::Approx(1.5));
+        CHECK(at.cl0 == doctest::Approx(2.5));
+        CHECK(at.cd0_clean == doctest::Approx(3.5));
+        CHECK(at.induced_drag_k == doctest::Approx(4.5));
+        CHECK(at.cm_alpha_per_rad == doctest::Approx(5.5));
+        CHECK(at.cm_q == doctest::Approx(6.5));
+        CHECK(at.alpha_stall_clean_deg == doctest::Approx(7.5));
+        CHECK(at.alpha_stall_flaps_full_deg == doctest::Approx(8.5));
+        CHECK(at.alpha_peak_offset_deg == doctest::Approx(9.5));
+        CHECK(at.alpha_deep_offset_deg == doctest::Approx(10.5));
+        CHECK(at.cl_peak_clean == doctest::Approx(11.5));
+        CHECK(at.cl_peak_flaps_full == doctest::Approx(12.5));
+        CHECK(at.cl_deep_clean == doctest::Approx(13.5));
+        CHECK(at.cl_deep_flaps_full == doctest::Approx(14.5));
+        CHECK(at.pitch_break_onset_deg == doctest::Approx(15.5));
+        CHECK(at.pitch_break_full_deg == doctest::Approx(16.5));
+        CHECK(at.pitch_break_cm_nose_down == doctest::Approx(17.5));
+        CHECK(at.post_stall_damp_floor == doctest::Approx(18.5));
+        CHECK(at.aoa_rate_pitch_break_gain == doctest::Approx(19.5));
+        CHECK(at.elevator_max_deflection_deg == doctest::Approx(20.5));
+        CHECK(at.aileron_max_deflection_deg == doctest::Approx(21.5));
+        CHECK(at.rudder_max_deflection_deg == doctest::Approx(22.5));
+        CHECK(at.cm_delta_e_per_rad == doctest::Approx(23.5));
+        CHECK(at.cl_delta_a_per_rad == doctest::Approx(24.5));
+        CHECK(at.cn_delta_r_per_rad == doctest::Approx(25.5));
+        CHECK(at.fbw_elevator_cmd_per_rate_err == doctest::Approx(26.5));
+        CHECK(at.fbw_aileron_cmd_per_rate_err == doctest::Approx(27.5));
+        CHECK(at.fbw_rudder_cmd_per_rate_err == doctest::Approx(28.5));
+        CHECK(at.ari_rudder_cmd_per_aileron_cmd == doctest::Approx(29.5));
+        CHECK_FALSE(at.fbw_g_command_enabled);
+        CHECK(at.fbw_g_command_neutral == doctest::Approx(31.5));
+        CHECK(at.fbw_g_command_max == doctest::Approx(32.5));
+        CHECK(at.fbw_g_command_min == doctest::Approx(33.5));
+        CHECK(at.fbw_pitch_rate_per_g_err == doctest::Approx(34.5));
+        CHECK(at.actuator_tau_elevator_s == doctest::Approx(35.5));
+        CHECK(at.actuator_tau_aileron_s == doctest::Approx(36.5));
+        CHECK(at.actuator_tau_rudder_s == doctest::Approx(37.5));
+        CHECK(at.mach_breakpoints == std::vector<double>{1.0, 2.0, 3.0});
+        CHECK(at.cl_alpha_scale_vs_mach == std::vector<double>{4.0, 5.0});
+        CHECK(at.cd0_add_vs_mach == std::vector<double>{6.0});
+        CHECK(at.induced_drag_scale_vs_mach == std::vector<double>{7.0, 8.0, 9.0, 10.0});
+        CHECK(at.cm_alpha_scale_vs_mach == std::vector<double>{11.0});
+        CHECK(at.stall_alpha_delta_deg_vs_mach == std::vector<double>{12.0, 13.0});
+        CHECK(at.control_effectiveness_scale_vs_mach == std::vector<double>{14.0, 15.0, 16.0});
+
+        // `enabled` stays hand-written with a literal `true` default: it is not
+        // present in the JSON above, yet the merge must still come out enabled.
+        CHECK(at.enabled);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("aero tuning parse: preset seed survives, absent keys keep the seeded value") {
+        // The other half of the parity contract. `aero_tuning` seeds from
+        // flight_dynamics::default_aero_tuning() and then merges, so an object
+        // carrying only two keys must override exactly those two and leave every
+        // other member at the preset value -- the "missing key preserves the
+        // existing value" semantics that the scalar macro's
+        // src.value(key, current) expansion carries (the .inc's default_value
+        // token is parity-only and never reaches the parse).
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_aero_tuning_preset_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string sparse = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Sparse_Aero",
+  "aero_tuning": { "cd0_clean": 0.099, "mach_breakpoints": [0.5, 0.9] }
+})json";
+
+        const fs::path path = directory / "sparse.json";
+        { std::ofstream(path) << sparse; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].airframe.has_tuning);
+        const AeroTuning &at = defs[0].airframe.tuning;
+        const AeroTuning &preset = flight_dynamics::default_aero_tuning();
+
+        CHECK(at.cd0_clean == doctest::Approx(0.099));               // overridden
+        CHECK(at.mach_breakpoints == std::vector<double>{0.5, 0.9}); // replaced wholesale
+        CHECK(at.cl_alpha_per_deg == doctest::Approx(preset.cl_alpha_per_deg));
+        CHECK(at.cm_q == doctest::Approx(preset.cm_q));
+        CHECK(at.actuator_tau_rudder_s == doctest::Approx(preset.actuator_tau_rudder_s));
+        CHECK(at.fbw_g_command_enabled == preset.fbw_g_command_enabled);
+        CHECK(at.cl_alpha_scale_vs_mach == preset.cl_alpha_scale_vs_mach);
+        CHECK(at.control_effectiveness_scale_vs_mach == preset.control_effectiveness_scale_vs_mach);
+        CHECK(at.enabled);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE(
+        "platform fields parse: full-field fixture parity and struct defaults (this iteration)") {
+        // Synthetic-face parity for the table-driven ship_platform /
+        // submarine_platform inner scalar migration
+        // (content/detail/ship_platform_fields.inc,
+        // content/detail/submarine_platform_fields.inc). A full-field fixture
+        // must land every JSON key on its matching member; an absent-object
+        // fixture must keep the presence flags false and every member at its
+        // struct default; a partial-object fixture must keep the missing keys
+        // at their struct defaults (the sp.value(key, current) semantics). A
+        // mis-wired macro (wrong member, wrong key, lost row) fails these.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_platform_fields_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string full_json = R"json({ "units": [
+{
+  "type": "Ship",
+  "name": "Synthetic_Ship_Full",
+  "ship_platform": {
+    "displacement_light_kg": 1000.5,
+    "displacement_full_load_kg": 2000.5,
+    "length_m": 150.5,
+    "beam_m": 20.5,
+    "draft_m": 6.5,
+    "height_above_waterline_m": 12.5,
+    "max_speed_mps": 15.5,
+    "economical_speed_mps": 8.5,
+    "range_nm": 4500.5,
+    "range_speed_mps": 9.5,
+    "max_accel_mps2": 0.35,
+    "max_decel_mps2": 0.45,
+    "max_turn_rate_deg_s": 3.5,
+    "low_speed_turn_factor": 0.55,
+    "steerageway_speed_mps": 1.5,
+    "sea_state": 4.5,
+    "wave_heading_deg": 45.5,
+    "wave_period_s": 9.5,
+    "max_roll_deg_sea_state_6": 10.5,
+    "max_pitch_deg_sea_state_6": 4.5,
+    "added_resistance_fraction_sea_state_6": 0.65,
+    "crew": 314
+  }
+},
+{
+  "type": "Submarine",
+  "name": "Synthetic_Submarine_Full",
+  "submarine_platform": {
+    "submerged_displacement_kg": 3000.5,
+    "length_m": 73.5,
+    "beam_m": 9.75,
+    "draft_m": 6.25,
+    "max_speed_submerged_mps": 10.25,
+    "quiet_speed_mps": 2.5,
+    "max_accel_mps2": 0.15,
+    "max_decel_mps2": 0.25,
+    "max_turn_rate_deg_s": 1.75,
+    "max_depth_rate_mps": 4.5,
+    "nominal_patrol_depth_m": 120.5,
+    "max_operating_depth_m": 350.5,
+    "acoustic_stealth_bias_db": -6.5,
+    "self_noise_per_speed_db": 1.75,
+    "crew": 52
+  }
+}
+] })json";
+        const std::string absent_json = R"json({ "units": [
+{ "type": "Ship", "name": "Synthetic_Ship_Absent" },
+{ "type": "Submarine", "name": "Synthetic_Submarine_Absent" }
+] })json";
+        const std::string partial_json = R"json({ "units": [
+{
+  "type": "Ship",
+  "name": "Synthetic_Ship_Partial",
+  "ship_platform": { "length_m": 88.5 }
+},
+{
+  "type": "Submarine",
+  "name": "Synthetic_Submarine_Partial",
+  "submarine_platform": { "length_m": 66.5 }
+}
+] })json";
+
+        const fs::path full = directory / "full.json";
+        const fs::path absent = directory / "absent.json";
+        const fs::path partial = directory / "partial.json";
+        { std::ofstream(full) << full_json; }
+        { std::ofstream(absent) << absent_json; }
+        { std::ofstream(partial) << partial_json; }
+
+        std::vector<UnitDefinition> full_defs;
+        std::vector<UnitDefinition> absent_defs;
+        std::vector<UnitDefinition> partial_defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(full.string(), full_defs, &error));
+        REQUIRE(load_unit_definitions_json(absent.string(), absent_defs, &error));
+        REQUIRE(load_unit_definitions_json(partial.string(), partial_defs, &error));
+        REQUIRE(full_defs.size() == 2);
+        REQUIRE(absent_defs.size() == 2);
+        REQUIRE(partial_defs.size() == 2);
+
+        // Full-field ship fixture: every table row maps to its member.
+        REQUIRE(full_defs[0].has_ship_platform);
+        const ShipPlatform &ship = full_defs[0].ship_platform;
+        CHECK(ship.displacement_light_kg == doctest::Approx(1000.5));
+        CHECK(ship.displacement_full_load_kg == doctest::Approx(2000.5));
+        CHECK(ship.length_m == doctest::Approx(150.5));
+        CHECK(ship.beam_m == doctest::Approx(20.5));
+        CHECK(ship.draft_m == doctest::Approx(6.5));
+        CHECK(ship.height_above_waterline_m == doctest::Approx(12.5));
+        CHECK(ship.max_speed_mps == doctest::Approx(15.5));
+        CHECK(ship.economical_speed_mps == doctest::Approx(8.5));
+        CHECK(ship.range_nm == doctest::Approx(4500.5));
+        CHECK(ship.range_speed_mps == doctest::Approx(9.5));
+        CHECK(ship.max_accel_mps2 == doctest::Approx(0.35));
+        CHECK(ship.max_decel_mps2 == doctest::Approx(0.45));
+        CHECK(ship.max_turn_rate_deg_s == doctest::Approx(3.5));
+        CHECK(ship.low_speed_turn_factor == doctest::Approx(0.55));
+        CHECK(ship.steerageway_speed_mps == doctest::Approx(1.5));
+        CHECK(ship.sea_state == doctest::Approx(4.5));
+        CHECK(ship.wave_heading_deg == doctest::Approx(45.5));
+        CHECK(ship.wave_period_s == doctest::Approx(9.5));
+        CHECK(ship.max_roll_deg_sea_state_6 == doctest::Approx(10.5));
+        CHECK(ship.max_pitch_deg_sea_state_6 == doctest::Approx(4.5));
+        CHECK(ship.added_resistance_fraction_sea_state_6 == doctest::Approx(0.65));
+        CHECK(ship.crew == 314);
+
+        // Full-field submarine fixture: every table row maps to its member.
+        REQUIRE(full_defs[1].has_submarine_platform);
+        const SubmarinePlatform &sub = full_defs[1].submarine_platform;
+        CHECK(sub.submerged_displacement_kg == doctest::Approx(3000.5));
+        CHECK(sub.length_m == doctest::Approx(73.5));
+        CHECK(sub.beam_m == doctest::Approx(9.75));
+        CHECK(sub.draft_m == doctest::Approx(6.25));
+        CHECK(sub.max_speed_submerged_mps == doctest::Approx(10.25));
+        CHECK(sub.quiet_speed_mps == doctest::Approx(2.5));
+        CHECK(sub.max_accel_mps2 == doctest::Approx(0.15));
+        CHECK(sub.max_decel_mps2 == doctest::Approx(0.25));
+        CHECK(sub.max_turn_rate_deg_s == doctest::Approx(1.75));
+        CHECK(sub.max_depth_rate_mps == doctest::Approx(4.5));
+        CHECK(sub.nominal_patrol_depth_m == doctest::Approx(120.5));
+        CHECK(sub.max_operating_depth_m == doctest::Approx(350.5));
+        CHECK(sub.acoustic_stealth_bias_db == doctest::Approx(-6.5));
+        CHECK(sub.self_noise_per_speed_db == doctest::Approx(1.75));
+        CHECK(sub.crew == 52);
+
+        // Absent-object fixture: flags stay false, members keep struct
+        // defaults (spot the non-zero ones so a lost default goes red).
+        CHECK_FALSE(absent_defs[0].has_ship_platform);
+        CHECK(absent_defs[0].ship_platform.max_accel_mps2 == doctest::Approx(0.12));
+        CHECK(absent_defs[0].ship_platform.max_decel_mps2 == doctest::Approx(0.18));
+        CHECK(absent_defs[0].ship_platform.max_turn_rate_deg_s == doctest::Approx(2.0));
+        CHECK(absent_defs[0].ship_platform.low_speed_turn_factor == doctest::Approx(0.25));
+        CHECK(absent_defs[0].ship_platform.steerageway_speed_mps == doctest::Approx(0.5));
+        CHECK(absent_defs[0].ship_platform.wave_period_s == doctest::Approx(8.0));
+        CHECK(absent_defs[0].ship_platform.max_roll_deg_sea_state_6 == doctest::Approx(8.0));
+        CHECK(absent_defs[0].ship_platform.max_pitch_deg_sea_state_6 == doctest::Approx(3.0));
+        CHECK(absent_defs[0].ship_platform.added_resistance_fraction_sea_state_6 ==
+              doctest::Approx(0.12));
+        CHECK(absent_defs[0].ship_platform.crew == 0);
+        CHECK_FALSE(absent_defs[1].has_submarine_platform);
+        CHECK(absent_defs[1].submarine_platform.max_accel_mps2 == doctest::Approx(0.05));
+        CHECK(absent_defs[1].submarine_platform.max_decel_mps2 == doctest::Approx(0.08));
+        CHECK(absent_defs[1].submarine_platform.max_turn_rate_deg_s == doctest::Approx(1.5));
+        CHECK(absent_defs[1].submarine_platform.max_depth_rate_mps == doctest::Approx(3.0));
+        CHECK(absent_defs[1].submarine_platform.nominal_patrol_depth_m == doctest::Approx(60.0));
+        CHECK(absent_defs[1].submarine_platform.max_operating_depth_m == doctest::Approx(300.0));
+        CHECK(absent_defs[1].submarine_platform.self_noise_per_speed_db == doctest::Approx(1.2));
+        CHECK(absent_defs[1].submarine_platform.crew == 0);
+
+        // Partial-object fixture: present key lands, missing keys keep struct
+        // defaults (missing-key-keeps-existing-value semantics).
+        REQUIRE(partial_defs[0].has_ship_platform);
+        CHECK(partial_defs[0].ship_platform.length_m == doctest::Approx(88.5));
+        CHECK(partial_defs[0].ship_platform.max_accel_mps2 == doctest::Approx(0.12));
+        REQUIRE(partial_defs[1].has_submarine_platform);
+        CHECK(partial_defs[1].submarine_platform.length_m == doctest::Approx(66.5));
+        CHECK(partial_defs[1].submarine_platform.max_accel_mps2 == doctest::Approx(0.05));
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("platform fields parse: malformed-key fail-first order (this iteration)") {
+        // Successful-input parity is insufficient: nlohmann conversions throw,
+        // so reordering a table-driven read changes which bad key fails first.
+        // Probe 1 pins within-ship-block order (beam_m before crew), probe 2
+        // pins within-submarine-block order (quiet_speed_mps before crew), and
+        // probe 3 pins the ship block running before the submarine block.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_platform_fields_order_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string within_ship_json = R"json({
+  "type": "Ship",
+  "name": "Synthetic_Ship_Order_Within",
+  "ship_platform": { "beam_m": [], "crew": {} }
+})json";
+        const std::string within_submarine_json = R"json({
+  "type": "Submarine",
+  "name": "Synthetic_Submarine_Order_Within",
+  "submarine_platform": { "quiet_speed_mps": {}, "crew": [] }
+})json";
+        const std::string across_blocks_json = R"json({
+  "type": "Ship",
+  "name": "Synthetic_Platform_Order_Across",
+  "ship_platform": { "crew": "bad-crew" },
+  "submarine_platform": { "length_m": [] }
+})json";
+
+        const fs::path within_ship = directory / "within_ship.json";
+        const fs::path within_submarine = directory / "within_submarine.json";
+        const fs::path across_blocks = directory / "across_blocks.json";
+        { std::ofstream(within_ship) << within_ship_json; }
+        { std::ofstream(within_submarine) << within_submarine_json; }
+        { std::ofstream(across_blocks) << across_blocks_json; }
+
+        const auto thrown_message = [](const fs::path &path) {
+            std::vector<UnitDefinition> defs;
+            std::string error;
+            try {
+                (void)load_unit_definitions_json(path.string(), defs, &error);
+            } catch (const std::exception &ex) {
+                return std::string(ex.what());
+            }
+            return std::string{};
+        };
+
+        const std::string within_ship_message = thrown_message(within_ship);
+        const std::string within_submarine_message = thrown_message(within_submarine);
+        const std::string across_blocks_message = thrown_message(across_blocks);
+        CHECK(within_ship_message.find("type must be number, but is array") != std::string::npos);
+        CHECK(within_submarine_message.find("type must be number, but is object") !=
+              std::string::npos);
+        CHECK(across_blocks_message.find("type must be number, but is string") !=
+              std::string::npos);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("engine tuning parse: all 16 table-driven keys map to their members") {
+        // Synthetic-face parity for the table-driven engine parse
+        // (content/detail/engine_tuning_fields.inc, T11 / this iteration). An
+        // Aircraft entry whose top-level engine_tuning object carries every one
+        // of the 16 migrated keys with a distinct sentinel must land each value
+        // on the matching EngineTuning member (a mis-wired key/member would
+        // collide or miss). The single-pass X-macro include is what emits these
+        // reads, so a dropped include drops all 16.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_engine_tuning_all_keys_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string all_keys = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_All_Keys_Engine",
+  "engine_tuning": {
+    "mil_thrust_n": 1.5,
+    "ab_thrust_n": 2.5,
+    "throttle_ab_threshold": 3.5,
+    "throttle_idle_bias": 4.5,
+    "tau_spool_up_s": 5.5,
+    "tau_spool_down_s": 6.5,
+    "tau_ab_light_s": 7.5,
+    "tau_ab_extinguish_s": 8.5,
+    "ram_rise_gain": 9.5,
+    "ram_rise_mach_cap": 10.5,
+    "ram_decay_start_mach": 11.5,
+    "ram_decay_gain": 12.5,
+    "thrust_sigma_exponent": 13.5,
+    "thrust_theta_exponent": 14.5,
+    "tsfc_mil_kg_per_nh": 15.5,
+    "tsfc_ab_kg_per_nh": 16.5
+  }
+})json";
+
+        const fs::path path = directory / "all_keys.json";
+        { std::ofstream(path) << all_keys; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].engine_data.has_tuning);
+        const EngineTuning &et = defs[0].engine_data.tuning;
+
+        CHECK(et.mil_thrust_n == doctest::Approx(1.5));
+        CHECK(et.ab_thrust_n == doctest::Approx(2.5));
+        CHECK(et.throttle_ab_threshold == doctest::Approx(3.5));
+        CHECK(et.throttle_idle_bias == doctest::Approx(4.5));
+        CHECK(et.tau_spool_up_s == doctest::Approx(5.5));
+        CHECK(et.tau_spool_down_s == doctest::Approx(6.5));
+        CHECK(et.tau_ab_light_s == doctest::Approx(7.5));
+        CHECK(et.tau_ab_extinguish_s == doctest::Approx(8.5));
+        CHECK(et.ram_rise_gain == doctest::Approx(9.5));
+        CHECK(et.ram_rise_mach_cap == doctest::Approx(10.5));
+        CHECK(et.ram_decay_start_mach == doctest::Approx(11.5));
+        CHECK(et.ram_decay_gain == doctest::Approx(12.5));
+        CHECK(et.thrust_sigma_exponent == doctest::Approx(13.5));
+        CHECK(et.thrust_theta_exponent == doctest::Approx(14.5));
+        CHECK(et.tsfc_mil_kg_per_nh == doctest::Approx(15.5));
+        CHECK(et.tsfc_ab_kg_per_nh == doctest::Approx(16.5));
+
+        // `enabled` stays hand-written with a literal `true` default: it is not
+        // present in the JSON above, yet the merge must still come out enabled.
+        CHECK(et.enabled);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("engine tuning parse: preset seed survives, absent keys keep the seeded value") {
+        // The other half of the parity contract. `engine_tuning` seeds from
+        // flight_dynamics::default_engine_tuning() and then merges, so an object
+        // carrying only two keys must override exactly those two and leave every
+        // other member at the preset value -- the "missing key preserves the
+        // existing value" semantics that the macro's src.value(key, current)
+        // expansion carries (the .inc's default_value token is parity-only and
+        // never reaches the parse).
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_engine_tuning_preset_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string sparse = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Sparse_Engine",
+  "engine_tuning": { "tau_spool_up_s": 9.25, "tsfc_ab_kg_per_nh": 0.5 }
+})json";
+
+        const fs::path path = directory / "sparse.json";
+        { std::ofstream(path) << sparse; }
+
+        std::vector<UnitDefinition> defs;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), defs, &error));
+        REQUIRE(defs.size() == 1);
+        REQUIRE(defs[0].engine_data.has_tuning);
+        const EngineTuning &et = defs[0].engine_data.tuning;
+        const EngineTuning &preset = flight_dynamics::default_engine_tuning();
+
+        CHECK(et.tau_spool_up_s == doctest::Approx(9.25));   // overridden
+        CHECK(et.tsfc_ab_kg_per_nh == doctest::Approx(0.5)); // overridden
+        CHECK(et.mil_thrust_n == doctest::Approx(preset.mil_thrust_n));
+        CHECK(et.throttle_ab_threshold == doctest::Approx(preset.throttle_ab_threshold));
+        CHECK(et.throttle_idle_bias == doctest::Approx(preset.throttle_idle_bias));
+        CHECK(et.ram_decay_gain == doctest::Approx(preset.ram_decay_gain));
+        CHECK(et.thrust_sigma_exponent == doctest::Approx(preset.thrust_sigma_exponent));
+        CHECK(et.tsfc_mil_kg_per_nh == doctest::Approx(preset.tsfc_mil_kg_per_nh));
+        CHECK(et.enabled);
+
+        fs::remove_all(directory);
+    }
+
+    TEST_CASE("engine tuning parse: table expansion preserves malformed-key fail-first order") {
+        // Successful-input parity is insufficient: nlohmann conversions throw,
+        // so moving a table-driven read across another read changes which bad
+        // key fails first (the I61 direct-fields discipline). These two probes
+        // pin the hand-written `enabled` read's position before the table and
+        // the first table row's position before the last.
+        namespace fs = std::filesystem;
+        const fs::path directory = fs::temp_directory_path() / "ef_engine_tuning_order_test";
+        fs::remove_all(directory);
+        fs::create_directories(directory);
+
+        const std::string enabled_before_table_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Engine_Order_Enabled",
+  "engine_tuning": { "enabled": "bad-enabled", "mil_thrust_n": [] }
+})json";
+        const std::string first_row_before_last_json = R"json({
+  "type": "Aircraft",
+  "name": "Synthetic_Engine_Order_Rows",
+  "engine_tuning": { "mil_thrust_n": "bad-thrust", "tsfc_ab_kg_per_nh": [] }
+})json";
+
+        const fs::path enabled_before_table = directory / "enabled_before_table.json";
+        const fs::path first_row_before_last = directory / "first_row_before_last.json";
+        { std::ofstream(enabled_before_table) << enabled_before_table_json; }
+        { std::ofstream(first_row_before_last) << first_row_before_last_json; }
+
+        const auto thrown_message = [](const fs::path &path) {
+            std::vector<UnitDefinition> defs;
+            std::string error;
+            try {
+                (void)load_unit_definitions_json(path.string(), defs, &error);
+            } catch (const std::exception &ex) {
+                return std::string(ex.what());
+            }
+            return std::string{};
+        };
+
+        const std::string enabled_message = thrown_message(enabled_before_table);
+        const std::string row_message = thrown_message(first_row_before_last);
+        CHECK(enabled_message.find("type must be boolean, but is string") != std::string::npos);
+        CHECK(row_message.find("type must be number, but is string") != std::string::npos);
 
         fs::remove_all(directory);
     }

@@ -116,4 +116,6 @@ SCHEMA_MODULES = (
   "tools.maintenance.dto_schema.schemas.pilot_report_maintained_batch_contract_fields",
   "tools.maintenance.dto_schema.schemas.world_pilot_report_maintained_assignment_fields",
   "tools.maintenance.dto_schema.schemas.recent_engagement_events_fields",
+  "tools.maintenance.dto_schema.schemas.scenario_generation_evidence_ref_fields",
+  "tools.maintenance.dto_schema.schemas.scenario_generation_request_metadata_fields",
 )

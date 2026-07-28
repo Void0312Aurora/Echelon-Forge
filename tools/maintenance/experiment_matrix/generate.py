@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
-"""Generate or verify the air-combat run-config matrix from its Experiment owner.
+"""Generate or verify Experiment-owned run-config matrices.
 
-The 24 checked-in files under examples/config/training/active/air_combat/ are
-projections of python/experiment/air_combat_matrix.py (one config base plus a
+Each registered matrix is a set of checked-in run-config files that are
+projections of typed Experiment definitions (one config base plus a
 per-experiment delta). This tool re-expands every registered entry and either
 verifies byte parity (--check), rewrites the files (--write), or prints the
 machine-readable registration manifest (--manifest) used by the architecture
-freshness gate.
+freshness gates. ``--matrix`` selects the matrix; the default stays the
+original 24-file air-combat set:
+
+- ``air_combat``: examples/config/training/active/air_combat/ (24 files),
+  owned by python/experiment/air_combat_matrix.py.
+- ``cooperative_flight``: the cooperative flight-shaping and P4b entries at
+  examples/config/training/active/ (12 files), owned by
+  python/experiment/cooperative_flight_matrix.py.
 
 Canonical serialization is LF with a trailing newline; when a checked-out file
 is uniformly CRLF (Windows autocrlf checkouts), its line ending is preserved,
@@ -16,25 +23,63 @@ mirroring tools/maintenance/dto_schema/generate.py.
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import difflib
 import hashlib
 import json
 from pathlib import Path
 import sys
-from typing import Any, Mapping
-
+from typing import Any, Callable, Mapping, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
+from python.experiment import cooperative_flight_matrix  # noqa: E402
 from python.experiment.air_combat_matrix import (  # noqa: E402
   CONFIG_BASE_ID,
   MATRIX_DIR,
   MATRIX_ENTRIES,
-  MatrixEntry,
   composed_config,
 )
+from python.experiment.matrix_projection import MatrixEntryBase  # noqa: E402
+
+
+@dataclass(frozen=True)
+class MatrixSpec:
+  """One selectable matrix: its owner module plus the projection callables."""
+
+  name: str
+  owner_module: str
+  matrix_dir: str
+  config_base_ids: tuple[str, ...]
+  entries: Callable[[], Sequence[MatrixEntryBase]]
+  composed_config: Callable[[MatrixEntryBase], dict[str, Any]]
+
+
+# The air-combat callables read this module's globals at call time so the
+# existing test seam (monkeypatching MATRIX_ENTRIES on this module) keeps
+# steering the default matrix.
+MATRIX_SPECS: Mapping[str, MatrixSpec] = {
+  "air_combat": MatrixSpec(
+    name="air_combat",
+    owner_module="python/experiment/air_combat_matrix.py",
+    matrix_dir=MATRIX_DIR,
+    config_base_ids=(CONFIG_BASE_ID,),
+    entries=lambda: MATRIX_ENTRIES,
+    composed_config=lambda entry: composed_config(entry),
+  ),
+  "cooperative_flight": MatrixSpec(
+    name="cooperative_flight",
+    owner_module="python/experiment/cooperative_flight_matrix.py",
+    matrix_dir=cooperative_flight_matrix.MATRIX_DIR,
+    config_base_ids=tuple(cooperative_flight_matrix.CONFIG_BASES),
+    entries=lambda: cooperative_flight_matrix.MATRIX_ENTRIES,
+    composed_config=cooperative_flight_matrix.composed_config,
+  ),
+}
+
+DEFAULT_MATRIX = "air_combat"
 
 
 def _strict_json_equal(actual: Any, expected: Any) -> bool:
@@ -59,7 +104,7 @@ def _strict_json_equal(actual: Any, expected: Any) -> bool:
 def _render_value(
   value: Any,
   indent: int,
-  entry: MatrixEntry,
+  entry: MatrixEntryBase,
   path: tuple[str, ...],
 ) -> str:
   overrides = entry.render.literal_overrides
@@ -95,18 +140,23 @@ def _render_value(
   return json.dumps(value)
 
 
-def render_entry_bytes(entry: MatrixEntry, line_ending: str = "\n") -> bytes:
+def render_entry_bytes(
+  entry: MatrixEntryBase,
+  line_ending: str = "\n",
+  compose: Callable[[MatrixEntryBase], dict[str, Any]] = composed_config,
+) -> bytes:
   if line_ending not in {"\n", "\r\n"}:
     raise ValueError(f"unsupported line ending: {line_ending!r}")
-  text = _render_value(composed_config(entry), 0, entry, ()) + "\n"
+  text = _render_value(compose(entry), 0, entry, ()) + "\n"
   if line_ending != "\n":
     text = text.replace("\n", line_ending)
   return text.encode("utf-8")
 
 
-def manifest_payload() -> dict[str, object]:
+def manifest_payload(matrix: str = DEFAULT_MATRIX) -> dict[str, object]:
+  spec = MATRIX_SPECS[matrix]
   entries = []
-  for entry in sorted(MATRIX_ENTRIES, key=lambda item: item.experiment.experiment_id):
+  for entry in sorted(spec.entries(), key=lambda item: item.experiment.experiment_id):
     experiment = entry.experiment
     entries.append(
       {
@@ -123,15 +173,21 @@ def manifest_payload() -> dict[str, object]:
         },
       }
     )
-  return {
+  payload: dict[str, object] = {
     "version": 1,
     "generator": "tools/maintenance/experiment_matrix/generate.py",
-    "owner_module": "python/experiment/air_combat_matrix.py",
-    "config_base": CONFIG_BASE_ID,
-    "matrix_dir": MATRIX_DIR,
+    "matrix": spec.name,
+    "owner_module": spec.owner_module,
+    "config_bases": list(spec.config_base_ids),
+    "matrix_dir": spec.matrix_dir,
     "canonical_line_ending": "LF",
     "entries": entries,
   }
+  if len(spec.config_base_ids) == 1:
+    # Single-base matrices keep the original scalar field alongside the
+    # general list so existing manifest consumers stay valid.
+    payload["config_base"] = spec.config_base_ids[0]
+  return payload
 
 
 def _uniform_line_ending(content: bytes) -> str | None:
@@ -168,13 +224,14 @@ def _diff_summary(path: str, actual: bytes, expected: bytes) -> str:
   return summary
 
 
-def check_outputs(output_root: Path) -> int:
+def check_outputs(output_root: Path, matrix: str = DEFAULT_MATRIX) -> int:
+  spec = MATRIX_SPECS[matrix]
   stale = False
-  for entry in MATRIX_ENTRIES:
+  for entry in spec.entries():
     target = output_root / entry.output_path
     actual = target.read_bytes() if target.is_file() else b""
     line_ending = _uniform_line_ending(actual)
-    expected = render_entry_bytes(entry, line_ending or "\n")
+    expected = render_entry_bytes(entry, line_ending or "\n", spec.composed_config)
     if actual == expected:
       print(f"up-to-date: {entry.output_path}")
       continue
@@ -184,12 +241,13 @@ def check_outputs(output_root: Path) -> int:
   return 1 if stale else 0
 
 
-def write_outputs(output_root: Path) -> int:
-  for entry in MATRIX_ENTRIES:
+def write_outputs(output_root: Path, matrix: str = DEFAULT_MATRIX) -> int:
+  spec = MATRIX_SPECS[matrix]
+  for entry in spec.entries():
     target = output_root / entry.output_path
     actual = target.read_bytes() if target.is_file() else b""
     line_ending = _uniform_line_ending(actual)
-    expected = render_entry_bytes(entry, line_ending or "\n")
+    expected = render_entry_bytes(entry, line_ending or "\n", spec.composed_config)
     if target.is_file() and actual == expected:
       print(f"unchanged: {entry.output_path}")
       continue
@@ -202,8 +260,8 @@ def write_outputs(output_root: Path) -> int:
 def _build_parser() -> argparse.ArgumentParser:
   parser = argparse.ArgumentParser(
     description=(
-      "Expand the typed air-combat Experiment matrix into its checked-in "
-      "run-config files, or verify they are byte-identical."
+      "Expand a typed Experiment matrix into its checked-in run-config "
+      "files, or verify they are byte-identical."
     )
   )
   action = parser.add_mutually_exclusive_group(required=True)
@@ -213,6 +271,12 @@ def _build_parser() -> argparse.ArgumentParser:
     "--manifest",
     action="store_true",
     help="print the registered experiment/output manifest as JSON",
+  )
+  parser.add_argument(
+    "--matrix",
+    choices=sorted(MATRIX_SPECS),
+    default=DEFAULT_MATRIX,
+    help=f"which registered matrix to operate on (default: {DEFAULT_MATRIX})",
   )
   parser.add_argument(
     "--repo-root",
@@ -226,11 +290,11 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
   args = _build_parser().parse_args(argv)
   if args.manifest:
-    print(json.dumps(manifest_payload(), indent=2, sort_keys=True))
+    print(json.dumps(manifest_payload(args.matrix), indent=2, sort_keys=True))
     return 0
   if args.write:
-    return write_outputs(args.repo_root)
-  return check_outputs(args.repo_root)
+    return write_outputs(args.repo_root, args.matrix)
+  return check_outputs(args.repo_root, args.matrix)
 
 
 if __name__ == "__main__":

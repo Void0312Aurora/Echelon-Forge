@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -9,6 +10,22 @@ import ef_py
 import numpy as np
 
 from python.mission_obs_taxonomy import mission_observation_compiled_fallback_mode
+from .typed_observation_view import admit_typed_observation_view_spec
+
+
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This module is the C3 world-batch
+# execution-observation assembler: it consumes cached truth/instrument objects,
+# obtains the two own-ship ILS coordinates through the high-level injected
+# observation-view reader, and passes the opaque truth object unchanged to the
+# compiled ``ef_py`` batch kernel. Per the I32 batch-step stage contracts
+# (python/rl/runtime/world_batch/core.py), this is the ``observation_build``
+# closure at P10 ObservationExport. The I87 typed-view spec is structural-only:
+# empty required/optional lists do not filter or wildcard fields. The default-
+# off path performs no facade describe call or spec admission.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
 
 
 @dataclass
@@ -34,11 +51,16 @@ def compute_execution_observation_batch(
     backend: str,
     allow_device_export: bool = False,
     torch_bridge_enabled: bool = False,
+    observation_view_spec: Any = None,
+    own_ship_field_reader: Callable[[Any, str], Any],
 ) -> ExecutionObservationBatch:
     inst_batch: list[Any] = []
     truth_batch: list[Any] = []
     mission_inputs_batch: list[Any] = []
     ils_batch = np.zeros((len(states), 4), dtype=np.float32)
+
+    if observation_view_spec is not None:
+        admit_typed_observation_view_spec(observation_view_spec)
 
     mission_mode_for_compiled = str(mission_obs_mode or "basic")
     python_owned_mission = False
@@ -78,7 +100,9 @@ def compute_execution_observation_batch(
                 inst=inst,
             )
         )
-        ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
+        own_x = float(own_ship_field_reader(truth, "x"))
+        own_y = float(own_ship_field_reader(truth, "y"))
+        ils_vec = loader.get_ils_observation(own_x, own_y, float(inst.alt_baro))
         ils_batch[state_index, :] = np.asarray(ils_vec[:4], dtype=np.float32)
     mission_input_build_ms = (time.perf_counter() - mission_input_t0) * 1000.0
 

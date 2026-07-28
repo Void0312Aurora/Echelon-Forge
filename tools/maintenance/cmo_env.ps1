@@ -161,6 +161,22 @@ function Get-CmoVenvPython {
         [string]$RootDir
     )
 
+    # Allow a shared interpreter to be supplied explicitly, mirroring how
+    # CMO_BUILD_DIR lets several worktrees share one build snapshot.  Worktrees
+    # created for a single task often have no .venv of their own, and
+    # reconstructing one per worktree is slow and easy to get subtly wrong.
+    #
+    # Note CMO_PYTHON is also *exported* by Initialize-CmoEnv, so a child
+    # process that invokes this script for a different repository now inherits
+    # the parent's interpreter choice instead of resolving that repo's .venv;
+    # clear CMO_PYTHON/CMO_VENV first for nested cross-repo invocations.
+    if (-not [string]::IsNullOrWhiteSpace($env:CMO_PYTHON)) {
+        return $env:CMO_PYTHON
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:CMO_VENV)) {
+        return (Join-Path $env:CMO_VENV "Scripts\python.exe")
+    }
+
     return (Join-Path $RootDir ".venv\Scripts\python.exe")
 }
 
@@ -282,7 +298,7 @@ function Initialize-CmoEnv {
     $venvPython = Get-CmoVenvPython -RootDir $rootDir
 
     if (-not (Test-Path -LiteralPath $venvPython -PathType Leaf)) {
-        Write-CmoError "[cmo_env] missing repository virtualenv: $venvPython`n[cmo_env] create it with: py -3.11 -m venv .venv"
+        Write-CmoError "[cmo_env] missing repository virtualenv: $venvPython`n[cmo_env] create it with: py -3.11 -m venv .venv`n[cmo_env] or point at an existing one: `$env:CMO_VENV = 'D:\path\to\repo\.venv'"
         exit 2
     }
 
@@ -330,7 +346,7 @@ function Test-CmoEnv {
     }
 
     if (-not (Test-Path -LiteralPath $venvPython -PathType Leaf)) {
-        Write-CmoError "[cmo_env] missing repository virtualenv: $venvPython`n[cmo_env] create it with: py -3.11 -m venv .venv"
+        Write-CmoError "[cmo_env] missing repository virtualenv: $venvPython`n[cmo_env] create it with: py -3.11 -m venv .venv`n[cmo_env] or point at an existing one: `$env:CMO_VENV = 'D:\path\to\repo\.venv'"
         exit 2
     }
 

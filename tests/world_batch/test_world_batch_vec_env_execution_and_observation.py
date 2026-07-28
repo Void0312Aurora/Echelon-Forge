@@ -988,6 +988,12 @@ class WorldBatchVecEnvExecutionAndObservationTests(unittest.TestCase):
         include_visual=False,
         include_proprio=False,
         execution_step_runtime_mode="compiled",
+        # This test pins the Python-orchestrated reward/info tail. The
+        # covered-cell default-resolution machinery landed HELD (flip
+        # disarmed pending performance evidence), so unset defaults still
+        # resolve to the Python path today; the explicit pin keeps this
+        # test stable regardless of a future arming (this iteration).
+        execution_episode_controller_mainline=False,
       )
       try:
         vec_env.seed(123)

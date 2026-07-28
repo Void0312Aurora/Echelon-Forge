@@ -34,7 +34,7 @@ rule.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Mapping
 
@@ -47,6 +47,24 @@ from python.experiment.definition import (
     ScenarioRef,
     SeedSpec,
 )
+from python.experiment.matrix_projection import (
+    SCALAR_ARRAY_LAYOUTS,
+    MatrixEntryBase,
+    RenderStyle,
+)
+
+__all__ = [
+    "CONFIG_BASE",
+    "CONFIG_BASE_ID",
+    "MATRIX_DIR",
+    "MATRIX_ENTRIES",
+    "MatrixEntry",
+    "REGISTRY",
+    "RenderStyle",
+    "SCALAR_ARRAY_LAYOUTS",
+    "build_registry",
+    "composed_config",
+]
 
 MATRIX_DIR = "examples/config/training/active/air_combat"
 CONFIG_BASE_ID = "air_combat_1v1_hmoe_execution_v1"
@@ -66,49 +84,11 @@ CANONICAL_TRAILING_KEYS: Mapping[tuple[str, ...], tuple[str, ...]] = MappingProx
     }
 )
 
-SCALAR_ARRAY_LAYOUTS = ("inline", "expanded")
-
-
 @dataclass(frozen=True)
-class RenderStyle:
-    """Per-entry serialization dialect required for byte parity."""
+class MatrixEntry(MatrixEntryBase):
+    """One registered air-combat experiment plus its pinned output projection."""
 
-    scalar_array_layout: str = "inline"
-    literal_overrides: Mapping[tuple[str, ...], str] = field(default_factory=dict)
-
-    def __post_init__(self) -> None:
-        if self.scalar_array_layout not in SCALAR_ARRAY_LAYOUTS:
-            raise ValueError(
-                f"scalar_array_layout must be one of {SCALAR_ARRAY_LAYOUTS}, "
-                f"got {self.scalar_array_layout!r}"
-            )
-        overrides = dict(self.literal_overrides)
-        for path, literal in overrides.items():
-            if (
-                not isinstance(path, tuple)
-                or not path
-                or not all(isinstance(part, str) and part for part in path)
-            ):
-                raise ValueError(f"literal override path must be a tuple of keys: {path!r}")
-            if not isinstance(literal, str) or not literal:
-                raise ValueError(f"literal override must be a non-empty string: {literal!r}")
-        object.__setattr__(self, "literal_overrides", MappingProxyType(overrides))
-
-
-@dataclass(frozen=True)
-class MatrixEntry:
-    """One registered experiment plus its pinned output projection."""
-
-    experiment: Experiment
-    output_path: str
-    render: RenderStyle
-
-    def __post_init__(self) -> None:
-        expected = f"{MATRIX_DIR}/{self.experiment.experiment_id}.json"
-        if self.output_path != expected:
-            raise ValueError(
-                f"matrix output path must be {expected}, got {self.output_path!r}"
-            )
+    MATRIX_DIR = "examples/config/training/active/air_combat"
 
 
 # --- Scenario pairings (directory README + training entry contract tests) ---

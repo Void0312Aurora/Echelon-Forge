@@ -164,6 +164,8 @@ class _WorldBatchVecEnvAirCombatPostLaunchMixin:
                 handle.last_inst,
                 max_contacts=int(self.max_contacts),
                 max_rwr=int(self.max_rwr),
+                own_ship_field_reader=self._observation_own_ship_field_reader,
+                observation_view_spec=self._runtime_adapter.typed_observation_view_spec,
             )
             reward_obs = {"instruments": inst_vec}
             step_reward, step_terminated, step_truncated, step_status = _compute_loader_step_outcome(

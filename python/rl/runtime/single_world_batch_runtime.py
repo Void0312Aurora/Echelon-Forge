@@ -29,6 +29,7 @@ from gym_envs.universal_env import (
     normalize_action,
 )
 from python.rl.runtime.world_batch import (
+    WorldBatchCore,
     WorldBatchVecEnvAccess,
     build_loader_step_info,
     compute_loader_step_outcome,
@@ -46,7 +47,7 @@ class _SingleWorldView:
 
     @property
     def sim(self):
-        return self.runtime.access.sim(0)
+        return WorldBatchCore.loader_runtime(self.runtime.loader)
 
     @property
     def agent_id(self):
@@ -86,7 +87,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
 
     @property
     def sim(self):
-        return self.access.sim(0)
+        return WorldBatchCore.loader_runtime(self.loader)
 
     @property
     def agent_id(self):
@@ -201,16 +202,15 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         else:
             batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
             read_t0 = time.perf_counter() if collect_timing else 0.0
-            observation_packet = window_evidence.observation_packet
-            truth_list = list(getattr(observation_packet, "agent_observations", []) or [])
-            inst_list = list(getattr(observation_packet, "instrument_states", []) or [])
-            if not truth_list or not inst_list:
-                raise RuntimeError(
-                    "RuntimeFacade.run_window() did not return the maintained observation packet payload "
-                    "required by single-world training consumers"
-                )
-            truth = truth_list[0]
-            inst = inst_list[0]
+            truth, inst = WorldBatchCore.extract_observation_pair(
+                window_evidence.observation_packet,
+                consumer="single-world training consumers",
+                missing_message=(
+                    "RuntimeFacade.run_window() did not return the maintained "
+                    "observation packet payload required by single-world "
+                    "training consumers"
+                ),
+            )
             state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
 
         if is_air_combat_hybrid_action_mode(self.world_vec.action_mode):
@@ -222,8 +222,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
 
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
         handle.steps += 1
-        handle.last_truth = truth
-        handle.last_inst = inst
+        WorldBatchCore.record_observation_state(handle, truth=truth, inst=inst)
         sim_time = float(handle.steps) * float(self.access.world_time_step(env_idx))
         handle.loader.update_behaviors(
             sim_time,
@@ -266,47 +265,9 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         if is_air_combat_hybrid_action_mode(self.world_vec.action_mode):
             add_air_combat_event_action_info(info, handle.loader)
         if window_evidence is not None:
-            engagement_barrier_id = ""
-            if window_evidence.engagement_packet is not None:
-                engagement_barrier_id = str(
-                    getattr(window_evidence.engagement_packet, "barrier_id", "") or ""
-                )
-            info["runtime_window_evidence"] = {
-                "barrier_ids": [
-                    str(getattr(record, "barrier_id", "") or "")
-                    for record in list(window_evidence.barrier_trace)
-                ],
-                "event_barrier_id": engagement_barrier_id,
-                "observation_barrier_id": str(
-                    getattr(window_evidence.observation_packet, "barrier_id", "") or ""
-                ),
-                "observation_provenance": str(
-                    getattr(
-                        getattr(window_evidence.observation_packet, "provenance", None),
-                        "source_label",
-                        "",
-                    )
-                    or ""
-                ),
-                "engagement_provenance": str(
-                    getattr(
-                        getattr(window_evidence.engagement_packet, "packet_provenance", None),
-                        "source_label",
-                        "",
-                    )
-                    or ""
-                ),
-                "diagnostics_provenance": str(
-                    getattr(
-                        getattr(window_evidence.engagement_packet, "diagnostics_provenance", None),
-                        "source_label",
-                        "",
-                    )
-                    or ""
-                ),
-                "cadence_reason": str(window_evidence.cadence_reason),
-                "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
-            }
+            info["runtime_window_evidence"] = WorldBatchCore.runtime_window_evidence_info(
+                window_evidence
+            )
         else:
             raise RuntimeError("RuntimeFacade.run_window() is required by single-world info builders")
         if collect_timing:

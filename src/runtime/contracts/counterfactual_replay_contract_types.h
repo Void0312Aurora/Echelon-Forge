@@ -132,6 +132,24 @@ struct ReplayRestoreSupportResult {
     std::string rejection_reason;
 };
 
+// T10 evidence spine, slice 5: result of the maintained-run replay-envelope
+// producer (RuntimeFacade::build_maintained_replay_envelope). Unlike the two
+// synthetic envelope assemblies (replay_envelope_from_experiment_request and
+// runtime_counterfactual_restore_boundary_for_snapshot, both file-local to
+// runtime_facade_counterfactual.cpp), the envelope carried here is built from
+// a maintained run's real window products; `admitted` is fail-closed and only
+// true when the producer's real-evidence gates passed AND the assembled
+// envelope passed validate_replay_envelope. On rejection the partially
+// assembled envelope is NOT exposed (envelope stays default-constructed) so a
+// rejected result cannot leak half-real evidence refs.
+struct MaintainedReplayEnvelopeResult {
+    bool admitted = false;
+    ReplayEnvelope envelope{};
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+    std::vector<std::string> evidence_refs;
+};
+
 struct WorldlineBranchSupportResult {
     bool supported = false;
     std::string child_worldline_id;
@@ -174,25 +192,15 @@ struct CounterfactualAdmissionResult {
 };
 
 struct ScenarioGenerationEvidenceMetadataRef {
-    std::string ref_id;
-    std::string evidence_kind;
-    std::string provenance_label;
+#define EF_SCENARIO_GENERATION_EVIDENCE_REF_FIELD(type, name, default_value)                       \
+    type name = default_value;
+#include "runtime/contracts/detail/scenario_generation_evidence_ref.inc"
 };
 
 struct ScenarioGenerationRequestMetadata {
-    std::string request_id;
-    std::string request_version = "1";
-    std::string contract_version = std::string(kScenarioGenerationContractVersionRequestV1);
-    std::string generation_kind;
-    std::string source;
-    std::string generator_version;
-    bool has_deterministic_seed = false;
-    std::uint64_t deterministic_seed = 0;
-    std::string baseline_scenario_ref;
-    std::string replay_envelope_ref;
-    std::string branch_point_ref;
-    std::vector<std::string> capability_refs;
-    std::vector<ScenarioGenerationEvidenceMetadataRef> evidence_refs;
+#define EF_SCENARIO_GENERATION_REQUEST_METADATA_FIELD(type, name, default_value)                   \
+    type name = default_value;
+#include "runtime/contracts/detail/scenario_generation_request_metadata.inc"
 };
 
 struct ScenarioGenerationArtifactMetadata {

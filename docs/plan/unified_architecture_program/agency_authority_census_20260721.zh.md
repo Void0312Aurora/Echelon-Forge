@@ -37,6 +37,22 @@
 （见 §3.2）。fixture 与 ratchet 门禁无需改动（该站点在 T9 扫描根之外，且合并策略
 字符串不是探测词）。语义收敛继续推迟。
 
+**A3 默认值名称归属更新（I68）。** 这是 I53 机械收敛的后续，结构上是同一类动作：
+维护端归一化层对未设置的任务指令所施加的 command-relationship / authority-scope
+默认值，其**名称**现由注册表声明，而不再在叶子提供者处就地拼写。这是一次
+**对已单源化的值做名称归属搬迁**，并非那项被推迟的 T9 语义收敛——后者整体继续推迟。
+§9 记录该裁定：**零行为**收敛（注册表现声明 `DEFAULT_COMMAND_RELATIONSHIP` /
+`DEFAULT_AUTHORITY_SCOPE`；A3 `common_core_defaults.py` 改为把这些声明名解析到
+编译枚举，而不再用本地 `"TACON"` / `"Tactical"` 字面量，取值逐字节相同）、一条
+防漂移/等价单测，以及对 A2/A3 的一处**前提纠正**：编译端 `authorize_maintained_*`
+门作用于 `AgentRole` / `AgentAuthorityScope` 的 *action-interface* 表示，**而非**
+`CommandRelationship` / `AuthorityScope` 梯级枚举，故“收敛到编译端默认值”不是对等
+目标——编译端的构造默认值是*未设置哨兵*（`None` / `Unspecified`），且没有任何编译
+站点产出 `TACON` / `Tactical`。A2 的默认推断分派仍为仅声明（控制流）。A3 的
+逐文件 token->count 指纹**未变**（该改动只是把字符串字面量换成拼写不同的导入常量；
+`ef_py.CommandRelationship` / `ef_py.AuthorityScope` 仍各出现恰好一次），故 ratchet
+门禁无需改 fixture。
+
 ## 1. 范围与方法
 
 维护权限面用 `rg` 普查了 `python/tasking_contracts/**`、`python/rl/tasking/**`、
@@ -215,7 +231,7 @@ ratchet 门禁无需改动。
 |---|---|---|---|---|
 | A1 | docstring 中的 prose 民俗 | 不可收敛 | 英文约定而非代码——无法成为 import；`SCOPE_FOLKLORE_RULES` 描述性镜像。 | 语义切片：将 C2 编写边界做成可强制数据（领域证据评审）。 |
 | A2 | 编译 `ef_py` 枚举访问 + 默认推断分派 | 不可收敛 | 编译枚举真源 + 控制流；注册表是 `ef_py` 镜像，重指向会倒退真源。 | 将默认推断接入编译 `authorize_maintained_*`（领域评审）。 |
-| A3 | `getattr(ef_py.CommandRelationship,'TACON')` / `AuthorityScope 'Tactical'` | 不可收敛 | 单个编译枚举成员访问；`COMMAND_RELATIONSHIPS[i]` 是对镜像的脆弱位置索引（排除：编译枚举）。 | 默认提供者收敛到编译默认（后续切片）。 |
+| A3 | `getattr(ef_py.CommandRelationship,'TACON')` / `AuthorityScope 'Tactical'` | 不可收敛 | 单个编译枚举成员访问；`COMMAND_RELATIONSHIPS[i]` 是对镜像的脆弱位置索引（排除：编译枚举）。本行记录变更前的调用点形态；默认*名字*此后已迁移至注册表声明——见第 9 节。 | 默认提供者收敛到编译默认（后续切片）。 |
 | A4 | 编译枚举 + DTO 键 + leader-vs-mission 优先级 | 不可收敛 | 编译枚举 + DTO 字段键 + 仲裁 `if/else`。 | 语义仲裁切片（领域评审）。 |
 | A5 | 编译枚举 + DTO 键 + `infer_command_relationship` + 优先级 | 不可收敛 | 编译枚举 + 委派/仲裁控制流（类别集已钉定）。 | 语义委派/仲裁切片。 |
 | A6 | `getattr(namespace,'ScreenCommander')` + 编译枚举 + DTO 键 | 不可收敛 | 编译枚举成员访问（作战角色推断）+ DTO 字段键。精度注记（I53 修复第二轮）：`naval_profile.py` 不含 `leader_intent`。其 `build_kernel_mission_command` 先从 `loader.mission_cmd` 填充权限/ROE 字段（`roe_state`、holder/grantor id、`authorization_to_fire`），再从 `scenario_data["mission_command"]` 重读同名字段；装载期二者绑定为**同一映射**（`loading.py:113-117`，`:242` 再同步），故常规路径上该重读是幂等而非优先级。运行期各重绑站点是否曾使两份映射分离成真实覆盖，**待裁定**。 | 语义作战角色/委派切片，外加裁定 `loader.mission_cmd` 与 `scenario_data["mission_command"]` 的运行期重绑是否形成真实优先级（或给出实际分离路径的证据）。 |
@@ -429,6 +445,70 @@ ghost 成员——`//` 或 `/* */`——不被还原）、
   仅改 fixture 的 `semantic` 字符串；`tokens`/`token_counts`/`categories`（因而
   ratchet 指纹）均未动，故 agency 门保持绿色。同一轮亦对其余 13 条 fixture
   `semantic` 注释按 §3 重新审计，结论一致。
+
+## 9. A3 默认值名称归属裁定（I68）
+
+本节记录页首所述 A3 默认值名称归属搬迁背后的裁定。其范围刻意收窄：只把一处权限
+默认值的*名称*搬入注册表声明层，并把等价关系钉住。它不改任何 C2 行为、不动编译
+代码、不动 `authorize_maintained_*` 门、不动 `DoctrineFamily` 机制。被推迟的 T9
+语义收敛（§7、§3.2）整体继续推迟。
+
+**该站点是什么。** A3（`python/rl/profile/common_core_defaults.py`）为两个梯级字段
+提供叶子默认值——当任务指令未设置它们时，维护端归一化层会做提升，即
+`command_relationship` 与 `authority_scope`。改动前该提供者把这项选择拼写为两个
+本地字符串字面量：`getattr(ef_py.CommandRelationship, "TACON")` 与
+`getattr(ef_py.AuthorityScope, "Tactical")`。
+
+**前提纠正（§3.2 中 A3 的held 前置条件此前表述有误）。** §3.2 表格 A3 行把前置条件
+记作“默认值提供者收敛到编译端默认值（后续切片）”。按其字面表述，该目标并不存在，
+理由有两条独立核验：
+
+- **没有任何编译站点产出这些值。** 在 `src/**` 全域内，`TACON` 与 `Tactical` 只
+  出现在 `src/components/tasking/common/core_tasking_enums.h` 的枚举成员定义
+  （`TACON = 3`、`Tactical = 3`）以及 `src/interfaces/python/bindings_command.cpp`
+  的 pybind 导出中。没有任何编译代码路径*赋值*过这两个值。
+- **编译端授权门是另一种表示。**
+  `authorize_maintained_action_intent` / `authorize_maintained_coordination_intent`
+  门（`src/runtime/contracts/policy_contracts.h`）作用于 `AgentRole` /
+  `AgentAuthorityScope` 的 action-interface 表示，而不作用于 `CommandRelationship` /
+  `AuthorityScope` 梯级枚举。所以“把 A3 默认值收敛到编译端默认值”不是对等目标：
+  这些字段的编译端*构造*默认值是未设置哨兵（`CommandRelationship::None` /
+  `AuthorityScope::Unspecified`，二者枚举值均为 0），而归一化默认值存在的意义正是
+  替换掉它。
+
+由此可知，该默认值的取值来源**本已单一**：Python A3 是唯一产出方。散落的不是取值，
+而是这项选择的*声明*——一条条令性决定以裸字面量形式待在叶子提供者内部，注册表里
+没有任何记录。
+
+**本次搬迁。** 注册表（`python/tasking_contracts/agency_registry.py`）现在在既有
+镜像元组旁声明 `DEFAULT_COMMAND_RELATIONSHIP = "TACON"` 与
+`DEFAULT_AUTHORITY_SCOPE = "Tactical"`，并把上述推理记录在声明处。A3 导入这些名称，
+并像此前一样把它们解析到编译枚举。这与获准的 I53 `agent_shim` 收敛结构同形——把
+一处本地拼写的词汇项重新指向拥有该词汇的注册表，走的是普查登记的合法依赖方向
+`python.rl -> python.tasking_contracts`——并且沿用同一道护栏：用防漂移测试，而不是
+靠信任。
+
+**逐字节等价证据。** 改动前后解析所得的运行期取值是同一个编译枚举成员，已在
+`is` 恒等层面核验：`command_relationship_default()` 与 `authority_scope_default()`
+返回的都是原字面量所产出的那个同一 pybind 枚举对象（整数 3）。钉定测试位于
+`tests/architecture/agency/test_authority_default_single_source.py`，断言
+(a) 注册表常量的取值，(b) 它们在镜像元组中处于编译枚举整数位序的成员身份，
+(c) A3 解析结果对 `ef_py.CommandRelationship.TACON` / `ef_py.AuthorityScope.Tactical`
+的相等性，以及 (d) A3 的模块级绑定**就是**（`is`）注册表常量对象本身，使单一来源
+无法悄悄分叉成陈旧的本地副本。该测试的承载力已通过双向注入漂移确认（改动注册表
+常量，以及在 A3 处恢复本地字面量）：任一注入都会让该模块变红。
+
+**Ratchet 指纹不变性。**
+`tests/architecture/fixtures/agency_authority_census_20260721.json` 中 A3 的逐文件
+token->count 指纹在改动前后均为 `{'AuthorityScope': 1, 'CommandRelationship': 1}`，
+因为该编辑只是把字符串字面量换成拼写不同的导入常量，而
+`ef_py.CommandRelationship` / `ef_py.AuthorityScope` 仍各出现恰好一次，且 §6 扫描器
+忽略注释与 `import`/`__all__` 再导出管线。因此无需改动 fixture，ratchet 门禁未经
+修改即保持绿色。
+
+**仍在推迟。** A2（`python/rl/tasking/common_core_profile.py`）未动：其默认推断分派
+是控制流而非词汇字面量，仍为仅声明。除上述 A3 held 前置条件纠正外，§3.2 的全部
+“not convergeable”裁定一如原记录。
 
 ## 相关
 

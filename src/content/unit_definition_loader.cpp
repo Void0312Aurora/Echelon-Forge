@@ -195,57 +195,30 @@ NavalWeaponType parse_naval_weapon_type(const std::string &type_str) {
 void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tuning) {
     if (!out_tuning || !src.is_object()) return;
     AeroTuning tuning = *out_tuning;
+    // Hand-written and deliberately NOT table-driven: `enabled` takes a literal
+    // `true` default (not the "missing key keeps existing value" form the other
+    // 44 keys use), which is load-bearing for the airframe.tuning / aero_tuning
+    // codec escape hatch. See the scope note in the .inc header.
     tuning.enabled = src.value("enabled", true);
-    tuning.cl_alpha_per_deg = src.value("cl_alpha_per_deg", tuning.cl_alpha_per_deg);
-    tuning.cl0 = src.value("cl0", tuning.cl0);
-    tuning.cd0_clean = src.value("cd0_clean", tuning.cd0_clean);
-    tuning.induced_drag_k = src.value("induced_drag_k", tuning.induced_drag_k);
-    tuning.cm_alpha_per_rad = src.value("cm_alpha_per_rad", tuning.cm_alpha_per_rad);
-    tuning.cm_q = src.value("cm_q", tuning.cm_q);
-    tuning.alpha_stall_clean_deg = src.value("alpha_stall_clean_deg", tuning.alpha_stall_clean_deg);
-    tuning.alpha_stall_flaps_full_deg =
-        src.value("alpha_stall_flaps_full_deg", tuning.alpha_stall_flaps_full_deg);
-    tuning.alpha_peak_offset_deg = src.value("alpha_peak_offset_deg", tuning.alpha_peak_offset_deg);
-    tuning.alpha_deep_offset_deg = src.value("alpha_deep_offset_deg", tuning.alpha_deep_offset_deg);
-    tuning.cl_peak_clean = src.value("cl_peak_clean", tuning.cl_peak_clean);
-    tuning.cl_peak_flaps_full = src.value("cl_peak_flaps_full", tuning.cl_peak_flaps_full);
-    tuning.cl_deep_clean = src.value("cl_deep_clean", tuning.cl_deep_clean);
-    tuning.cl_deep_flaps_full = src.value("cl_deep_flaps_full", tuning.cl_deep_flaps_full);
-    tuning.pitch_break_onset_deg = src.value("pitch_break_onset_deg", tuning.pitch_break_onset_deg);
-    tuning.pitch_break_full_deg = src.value("pitch_break_full_deg", tuning.pitch_break_full_deg);
-    tuning.pitch_break_cm_nose_down =
-        src.value("pitch_break_cm_nose_down", tuning.pitch_break_cm_nose_down);
-    tuning.post_stall_damp_floor = src.value("post_stall_damp_floor", tuning.post_stall_damp_floor);
-    tuning.aoa_rate_pitch_break_gain =
-        src.value("aoa_rate_pitch_break_gain", tuning.aoa_rate_pitch_break_gain);
-    tuning.elevator_max_deflection_deg =
-        src.value("elevator_max_deflection_deg", tuning.elevator_max_deflection_deg);
-    tuning.aileron_max_deflection_deg =
-        src.value("aileron_max_deflection_deg", tuning.aileron_max_deflection_deg);
-    tuning.rudder_max_deflection_deg =
-        src.value("rudder_max_deflection_deg", tuning.rudder_max_deflection_deg);
-    tuning.cm_delta_e_per_rad = src.value("cm_delta_e_per_rad", tuning.cm_delta_e_per_rad);
-    tuning.cl_delta_a_per_rad = src.value("cl_delta_a_per_rad", tuning.cl_delta_a_per_rad);
-    tuning.cn_delta_r_per_rad = src.value("cn_delta_r_per_rad", tuning.cn_delta_r_per_rad);
-    tuning.fbw_elevator_cmd_per_rate_err =
-        src.value("fbw_elevator_cmd_per_rate_err", tuning.fbw_elevator_cmd_per_rate_err);
-    tuning.fbw_aileron_cmd_per_rate_err =
-        src.value("fbw_aileron_cmd_per_rate_err", tuning.fbw_aileron_cmd_per_rate_err);
-    tuning.fbw_rudder_cmd_per_rate_err =
-        src.value("fbw_rudder_cmd_per_rate_err", tuning.fbw_rudder_cmd_per_rate_err);
-    tuning.ari_rudder_cmd_per_aileron_cmd =
-        src.value("ari_rudder_cmd_per_aileron_cmd", tuning.ari_rudder_cmd_per_aileron_cmd);
-    tuning.fbw_g_command_enabled = src.value("fbw_g_command_enabled", tuning.fbw_g_command_enabled);
-    tuning.fbw_g_command_neutral = src.value("fbw_g_command_neutral", tuning.fbw_g_command_neutral);
-    tuning.fbw_g_command_max = src.value("fbw_g_command_max", tuning.fbw_g_command_max);
-    tuning.fbw_g_command_min = src.value("fbw_g_command_min", tuning.fbw_g_command_min);
-    tuning.fbw_pitch_rate_per_g_err =
-        src.value("fbw_pitch_rate_per_g_err", tuning.fbw_pitch_rate_per_g_err);
-    tuning.actuator_tau_elevator_s =
-        src.value("actuator_tau_elevator_s", tuning.actuator_tau_elevator_s);
-    tuning.actuator_tau_aileron_s =
-        src.value("actuator_tau_aileron_s", tuning.actuator_tau_aileron_s);
-    tuning.actuator_tau_rudder_s = src.value("actuator_tau_rudder_s", tuning.actuator_tau_rudder_s);
+
+    // Table-driven reads over the single-source X-macro field list
+    // (content/detail/aero_tuning_fields.inc). Each expansion is token-identical
+    // to the previous hand-written body: scalar keys keep the
+    // src.value(key, current) "missing key preserves existing value" semantics,
+    // vector keys keep the parse_vector clear-then-fill semantics, and the read
+    // order is unchanged. `enabled` is excluded above because its default is a
+    // literal, not the current value.
+    //
+    // The list is consumed in TWO passes so the emitted statement order matches
+    // the pre-change body exactly: the 37 scalar reads came before the
+    // parse_vector lambda declaration and the 7 vector reads after it. Pass 1
+    // expands scalars only (vector rows to nothing), then the lambda is
+    // declared, then pass 2 expands vectors only. A single pass would have to
+    // hoist the lambda above every scalar read, reordering statements.
+#define EF_AERO_TUNING_FIELD(cpp_type, name, default_value)                                        \
+    tuning.name = src.value(#name, tuning.name);
+#define EF_AERO_TUNING_VECTOR_FIELD(cpp_type, name, default_value)
+#include "content/detail/aero_tuning_fields.inc"
 
     auto parse_vector = [&](const char *key, std::vector<double> *out_values) {
         if (!out_values || !src.contains(key) || !src[key].is_array()) {
@@ -258,14 +231,10 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
         }
     };
 
-    parse_vector("mach_breakpoints", &tuning.mach_breakpoints);
-    parse_vector("cl_alpha_scale_vs_mach", &tuning.cl_alpha_scale_vs_mach);
-    parse_vector("cd0_add_vs_mach", &tuning.cd0_add_vs_mach);
-    parse_vector("induced_drag_scale_vs_mach", &tuning.induced_drag_scale_vs_mach);
-    parse_vector("cm_alpha_scale_vs_mach", &tuning.cm_alpha_scale_vs_mach);
-    parse_vector("stall_alpha_delta_deg_vs_mach", &tuning.stall_alpha_delta_deg_vs_mach);
-    parse_vector("control_effectiveness_scale_vs_mach",
-                 &tuning.control_effectiveness_scale_vs_mach);
+#define EF_AERO_TUNING_FIELD(cpp_type, name, default_value)
+#define EF_AERO_TUNING_VECTOR_FIELD(cpp_type, name, default_value)                                 \
+    parse_vector(#name, &tuning.name);
+#include "content/detail/aero_tuning_fields.inc"
 
     *out_tuning = tuning;
 }
@@ -273,23 +242,25 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
 void parse_engine_tuning_json_fields(const nlohmann::json &src, EngineTuning *out_tuning) {
     if (!out_tuning || !src.is_object()) return;
     EngineTuning tuning = *out_tuning;
+    // Hand-written and deliberately NOT table-driven: `enabled` takes a literal
+    // `true` default (not the "missing key keeps existing value" form the other
+    // 16 keys use), which is load-bearing for the engine.tuning / engine_tuning
+    // codec escape hatch and for the top-level call site's re-seed branch. See
+    // the scope note in the .inc header.
     tuning.enabled = src.value("enabled", true);
-    tuning.mil_thrust_n = src.value("mil_thrust_n", tuning.mil_thrust_n);
-    tuning.ab_thrust_n = src.value("ab_thrust_n", tuning.ab_thrust_n);
-    tuning.throttle_ab_threshold = src.value("throttle_ab_threshold", tuning.throttle_ab_threshold);
-    tuning.throttle_idle_bias = src.value("throttle_idle_bias", tuning.throttle_idle_bias);
-    tuning.tau_spool_up_s = src.value("tau_spool_up_s", tuning.tau_spool_up_s);
-    tuning.tau_spool_down_s = src.value("tau_spool_down_s", tuning.tau_spool_down_s);
-    tuning.tau_ab_light_s = src.value("tau_ab_light_s", tuning.tau_ab_light_s);
-    tuning.tau_ab_extinguish_s = src.value("tau_ab_extinguish_s", tuning.tau_ab_extinguish_s);
-    tuning.ram_rise_gain = src.value("ram_rise_gain", tuning.ram_rise_gain);
-    tuning.ram_rise_mach_cap = src.value("ram_rise_mach_cap", tuning.ram_rise_mach_cap);
-    tuning.ram_decay_start_mach = src.value("ram_decay_start_mach", tuning.ram_decay_start_mach);
-    tuning.ram_decay_gain = src.value("ram_decay_gain", tuning.ram_decay_gain);
-    tuning.thrust_sigma_exponent = src.value("thrust_sigma_exponent", tuning.thrust_sigma_exponent);
-    tuning.thrust_theta_exponent = src.value("thrust_theta_exponent", tuning.thrust_theta_exponent);
-    tuning.tsfc_mil_kg_per_nh = src.value("tsfc_mil_kg_per_nh", tuning.tsfc_mil_kg_per_nh);
-    tuning.tsfc_ab_kg_per_nh = src.value("tsfc_ab_kg_per_nh", tuning.tsfc_ab_kg_per_nh);
+
+    // Table-driven reads over the single-source X-macro field list
+    // (content/detail/engine_tuning_fields.inc). Each expansion is
+    // token-identical to the previous hand-written body: every key keeps the
+    // src.value(key, current) "missing key preserves existing value" semantics
+    // and the read order (== declaration order) is unchanged. `enabled` is
+    // excluded above because its default is a literal, not the current value.
+    // EngineTuning has no vector members, so unlike the missile/aero siblings
+    // there is no parse_vector lambda and the list is consumed in one pass.
+#define EF_ENGINE_TUNING_FIELD(cpp_type, name, default_value)                                      \
+    tuning.name = src.value(#name, tuning.name);
+#include "content/detail/engine_tuning_fields.inc"
+
     *out_tuning = tuning;
 }
 
@@ -769,7 +740,15 @@ bool parse_unit_json(
     }
 
     def.name = entry.value("name", type_str);
-    def.mass_kg = entry.value("mass_kg", 0.0);
+    // Table-driven purely-mechanical direct top-level scalar reads
+    // (content/detail/unit_definition_direct_fields.inc, I61 / T11 slice 4
+    // bundle 2). The list is expanded at each field's original parse phase so
+    // malformed multi-key input keeps the same fail-first order. Each active
+    // expansion is token-identical to the previous hand-written statement.
+#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)                                  \
+    def.name = entry.value(#name, default_value);
+#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)
+#include "content/detail/unit_definition_direct_fields.inc"
     def.has_stall_state = false;
     def.stall_state = {};
     def.has_missile_tuning = false;
@@ -967,45 +946,16 @@ bool parse_unit_json(
     if (entry.contains("ship_platform") && entry["ship_platform"].is_object()) {
         def.has_ship_platform = true;
         const auto &sp = entry["ship_platform"];
-        def.ship_platform.displacement_light_kg =
-            sp.value("displacement_light_kg", def.ship_platform.displacement_light_kg);
-        def.ship_platform.displacement_full_load_kg =
-            sp.value("displacement_full_load_kg", def.ship_platform.displacement_full_load_kg);
-        def.ship_platform.length_m = sp.value("length_m", def.ship_platform.length_m);
-        def.ship_platform.beam_m = sp.value("beam_m", def.ship_platform.beam_m);
-        def.ship_platform.draft_m = sp.value("draft_m", def.ship_platform.draft_m);
-        def.ship_platform.height_above_waterline_m =
-            sp.value("height_above_waterline_m", def.ship_platform.height_above_waterline_m);
-        def.ship_platform.max_speed_mps =
-            sp.value("max_speed_mps", def.ship_platform.max_speed_mps);
-        def.ship_platform.economical_speed_mps =
-            sp.value("economical_speed_mps", def.ship_platform.economical_speed_mps);
-        def.ship_platform.range_nm = sp.value("range_nm", def.ship_platform.range_nm);
-        def.ship_platform.range_speed_mps =
-            sp.value("range_speed_mps", def.ship_platform.range_speed_mps);
-        def.ship_platform.max_accel_mps2 =
-            sp.value("max_accel_mps2", def.ship_platform.max_accel_mps2);
-        def.ship_platform.max_decel_mps2 =
-            sp.value("max_decel_mps2", def.ship_platform.max_decel_mps2);
-        def.ship_platform.max_turn_rate_deg_s =
-            sp.value("max_turn_rate_deg_s", def.ship_platform.max_turn_rate_deg_s);
-        def.ship_platform.low_speed_turn_factor =
-            sp.value("low_speed_turn_factor", def.ship_platform.low_speed_turn_factor);
-        def.ship_platform.steerageway_speed_mps =
-            sp.value("steerageway_speed_mps", def.ship_platform.steerageway_speed_mps);
-        def.ship_platform.sea_state = sp.value("sea_state", def.ship_platform.sea_state);
-        def.ship_platform.wave_heading_deg =
-            sp.value("wave_heading_deg", def.ship_platform.wave_heading_deg);
-        def.ship_platform.wave_period_s =
-            sp.value("wave_period_s", def.ship_platform.wave_period_s);
-        def.ship_platform.max_roll_deg_sea_state_6 =
-            sp.value("max_roll_deg_sea_state_6", def.ship_platform.max_roll_deg_sea_state_6);
-        def.ship_platform.max_pitch_deg_sea_state_6 =
-            sp.value("max_pitch_deg_sea_state_6", def.ship_platform.max_pitch_deg_sea_state_6);
-        def.ship_platform.added_resistance_fraction_sea_state_6 =
-            sp.value("added_resistance_fraction_sea_state_6",
-                     def.ship_platform.added_resistance_fraction_sea_state_6);
-        def.ship_platform.crew = sp.value("crew", def.ship_platform.crew);
+        // Table-driven ShipPlatform inner scalar reads
+        // (content/detail/ship_platform_fields.inc, T11 loader table-drive
+        // bundle, this iteration). Expanded at the original seam in the
+        // original read order so malformed multi-key input keeps the same
+        // fail-first order; each expansion is token-identical to the previous
+        // hand-written statement. The presence flag and sp binding above stay
+        // hand-written.
+#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value)                                      \
+    def.ship_platform.name = sp.value(#name, def.ship_platform.name);
+#include "content/detail/ship_platform_fields.inc"
     }
 
     def.has_submarine_platform = false;
@@ -1013,32 +963,16 @@ bool parse_unit_json(
     if (entry.contains("submarine_platform") && entry["submarine_platform"].is_object()) {
         def.has_submarine_platform = true;
         const auto &sp = entry["submarine_platform"];
-        def.submarine_platform.submerged_displacement_kg =
-            sp.value("submerged_displacement_kg", def.submarine_platform.submerged_displacement_kg);
-        def.submarine_platform.length_m = sp.value("length_m", def.submarine_platform.length_m);
-        def.submarine_platform.beam_m = sp.value("beam_m", def.submarine_platform.beam_m);
-        def.submarine_platform.draft_m = sp.value("draft_m", def.submarine_platform.draft_m);
-        def.submarine_platform.max_speed_submerged_mps =
-            sp.value("max_speed_submerged_mps", def.submarine_platform.max_speed_submerged_mps);
-        def.submarine_platform.quiet_speed_mps =
-            sp.value("quiet_speed_mps", def.submarine_platform.quiet_speed_mps);
-        def.submarine_platform.max_accel_mps2 =
-            sp.value("max_accel_mps2", def.submarine_platform.max_accel_mps2);
-        def.submarine_platform.max_decel_mps2 =
-            sp.value("max_decel_mps2", def.submarine_platform.max_decel_mps2);
-        def.submarine_platform.max_turn_rate_deg_s =
-            sp.value("max_turn_rate_deg_s", def.submarine_platform.max_turn_rate_deg_s);
-        def.submarine_platform.max_depth_rate_mps =
-            sp.value("max_depth_rate_mps", def.submarine_platform.max_depth_rate_mps);
-        def.submarine_platform.nominal_patrol_depth_m =
-            sp.value("nominal_patrol_depth_m", def.submarine_platform.nominal_patrol_depth_m);
-        def.submarine_platform.max_operating_depth_m =
-            sp.value("max_operating_depth_m", def.submarine_platform.max_operating_depth_m);
-        def.submarine_platform.acoustic_stealth_bias_db =
-            sp.value("acoustic_stealth_bias_db", def.submarine_platform.acoustic_stealth_bias_db);
-        def.submarine_platform.self_noise_per_speed_db =
-            sp.value("self_noise_per_speed_db", def.submarine_platform.self_noise_per_speed_db);
-        def.submarine_platform.crew = sp.value("crew", def.submarine_platform.crew);
+        // Table-driven SubmarinePlatform inner scalar reads
+        // (content/detail/submarine_platform_fields.inc, T11 loader
+        // table-drive bundle, this iteration). Expanded at the original seam
+        // in the original read order so malformed multi-key input keeps the
+        // same fail-first order; each expansion is token-identical to the
+        // previous hand-written statement. The presence flag and sp binding
+        // above stay hand-written.
+#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value)                                 \
+    def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);
+#include "content/detail/submarine_platform_fields.inc"
     }
 
     def.has_naval_stores = false;
@@ -1481,7 +1415,10 @@ bool parse_unit_json(
     }
 
     def.has_data_link = entry.value("has_data_link", false);
-    def.data_link_network_id = entry.value("data_link_network_id", 0);
+#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)
+#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)                              \
+    def.name = entry.value(#name, default_value);
+#include "content/detail/unit_definition_direct_fields.inc"
     def.data_link_max_reports_per_update =
         std::max(0, entry.value("data_link_max_reports_per_update", 16));
     def.data_link_max_messages_per_update =
