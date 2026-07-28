@@ -42,7 +42,7 @@ class LazyBindingResolutionTests(unittest.TestCase):
     # resolution API this lineage actually exposes -- `_ef_py()` must return the
     # same repo-build ef_py module object -- which preserves the original intent
     # ("common prefers the repo-build ef_py") without weakening it.
-    self.assertEqual(common._ef_py(), ef_py)
+    self.assertIs(common._ef_py(), ef_py)
     self.assertTrue(str(module_path).startswith(str(expected_root)))
     self.assertTrue(hasattr(ef_py, "ConditionalObjectiveProperty"))
     self.assertTrue(hasattr(ef_py, "WorldBatchRuntime"))
