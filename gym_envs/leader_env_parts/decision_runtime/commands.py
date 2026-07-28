@@ -5,23 +5,29 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.rl.control.mission_defs import (
+from python.tasking_contracts.mission_defs import (
     COMMAND_CODE_LANDING,
     COMMAND_CODE_ROUTE,
     COMMAND_CODE_TAKEOFF,
     COMMAND_CODE_VECTOR,
     normalize_phase_name,
 )
-from python.rl.tasking.bridge import (
+from python.tasking_contracts.bridge_views import (
     get_policy_agent_observation,
     get_policy_instrument_state,
+    resolve_loader_time_step,
+)
+# `infer_recovery_*`/`infer_route_ref_id`/`is_patrol_task`/`is_recover_task` stay
+# python.rl-resident: they dispatch through `tasking_profile_for_loader`, a
+# genuine entanglement point with the air/ground/naval profile modules (see
+# I24 report).
+from python.rl.tasking.bridge import (
     infer_recovery_approach_type,
     infer_recovery_base_id,
     infer_recovery_runway_id,
     infer_route_ref_id,
     is_patrol_task,
     is_recover_task,
-    resolve_loader_time_step,
 )
 
 from ..common import LeaderActionMapping, wrap_deg

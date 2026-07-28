@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.runners import run_pytest_suite
+from python.testing.suite_manifest import load_pytest_suite_manifest
 
 
 DEFAULT_PYTHON_SOURCES = ("gym_envs", "python")
@@ -38,30 +38,15 @@ def _resolve_repo_or_abs(path: str) -> Path:
 
 
 def _load_suite_paths(suite_path: Path) -> list[str]:
-    suite = json.loads(suite_path.read_text(encoding="utf-8"))
-    if not isinstance(suite, dict):
-        raise TypeError(f"expected suite JSON object at {suite_path}")
-    raw_paths = suite.get("paths")
-    if not isinstance(raw_paths, list) or not raw_paths:
-        raise ValueError(f"pytest suite {suite_path} has no non-empty 'paths' list")
-
-    resolved_paths: list[str] = []
-    missing_paths: list[str] = []
-    for raw in raw_paths:
-        if not isinstance(raw, str):
-            raise TypeError(f"pytest suite entry must be a string: {raw!r}")
-        resolved, check_path = run_pytest_suite._resolve_pytest_entry(raw)
-        if not Path(check_path).exists():
-            missing_paths.append(raw)
-            continue
-        resolved_paths.append(resolved)
-
-    if missing_paths:
-        missing = "\n".join(f"  - {path}" for path in missing_paths)
+    manifest = load_pytest_suite_manifest(suite_path, REPO_ROOT)
+    if manifest.missing_entries:
+        missing = "\n".join(
+            f"  - {entry.raw}" for entry in manifest.missing_entries
+        )
         raise FileNotFoundError(
             f"pytest suite {suite_path} has stale entries:\n{missing}"
         )
-    return resolved_paths
+    return [entry.resolved for entry in manifest.entries]
 
 
 def _module_available(name: str) -> bool:

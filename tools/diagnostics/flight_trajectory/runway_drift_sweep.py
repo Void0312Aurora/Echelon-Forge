@@ -20,11 +20,13 @@ from dataclasses import dataclass
 
 import numpy as np
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
-from python.testing.runtime import ensure_repo_imports
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports
 
 BASE_DIR = ensure_repo_imports()
 

@@ -1,25 +1,28 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import json
 import os
 import sys
-import zipfile
 from typing import Any
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.env_config import resolve_env_settings
+from python.env_config import (
+    ACTION_MODES,
+    EXECUTION_STEP_RUNTIME_MODES,
+    FLIGHT_SHAPING_BACKENDS,
+    STEP_INFO_MODES,
+    resolve_env_settings,
+)
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
+from python.rl.policy_checkpoint import load_sb3_policy
 
 
 def load_json_config(path: str) -> dict[str, Any]:
@@ -28,41 +31,6 @@ def load_json_config(path: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise TypeError(f"expected dict JSON at {path!r}")
     return data
-
-
-def _historical_policy_class_override(model_path: str):
-    zip_path = model_path if model_path.endswith(".zip") else f"{model_path}.zip"
-    try:
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            data = json.loads(zf.read("data").decode("utf-8"))
-            serialized = data.get("policy_class", {})
-            if not isinstance(serialized, dict) or ":serialized:" not in serialized:
-                return None
-            blob = base64.b64decode(serialized[":serialized:"])
-    except Exception:
-        return None
-
-    if b"HierarchicalMoEExecutionPolicy" in blob:
-        return HierarchicalMoEExecutionPolicy
-    if b"SquashedMultiInputPolicy" in blob:
-        return SquashedMultiInputPolicy
-    return None
-
-
-def load_sb3_policy(model_path: str, *, algo: str, device: str):
-    load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
-    algo_name = str(algo).strip()
-    policy_class = _historical_policy_class_override(model_path)
-    custom_objects = {"policy_class": policy_class} if policy_class is not None else None
-    if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
-        try:
-            return AdaptiveKLPPO.load(load_path, device=device, custom_objects=custom_objects)
-        except Exception:
-            if algo_name != "auto":
-                raise
-    from stable_baselines3 import PPO
-
-    return PPO.load(load_path, device=device, custom_objects=custom_objects)
 
 
 def make_env_settings(train_config: dict[str, Any], args: argparse.Namespace, *, include_runtime_overrides: bool) -> dict[str, Any]:
@@ -128,16 +96,21 @@ def add_common_sb3_eval_args(
         "--action_mode",
         type=str,
         default=None,
-        choices=["full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"],
+        choices=list(ACTION_MODES),
     )
     if include_runtime_overrides:
-        parser.add_argument("--execution_step_runtime_mode", type=str, default=None, choices=["compiled"])
-        parser.add_argument("--step_info_mode", type=str, default=None, choices=["full", "terminal", "off"])
+        parser.add_argument(
+            "--execution_step_runtime_mode",
+            type=str,
+            default=None,
+            choices=list(EXECUTION_STEP_RUNTIME_MODES),
+        )
+        parser.add_argument("--step_info_mode", type=str, default=None, choices=list(STEP_INFO_MODES))
         parser.add_argument(
             "--flight_shaping_backend",
             type=str,
             default=None,
-            choices=["auto", "compiled", "gpu_host"],
+            choices=list(FLIGHT_SHAPING_BACKENDS),
         )
     parser.add_argument("--json_out", default="", help="Optional JSON output path.")
 

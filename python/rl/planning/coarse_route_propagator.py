@@ -4,24 +4,23 @@ from dataclasses import dataclass
 import math
 from typing import Iterable, Mapping, Sequence
 
+from python.angles import distance_m, wrap_heading_deg, wrap_signed_deg
 
-def _wrap_deg(angle_deg: float) -> float:
-    out = float(angle_deg) % 360.0
-    if out < 0.0:
-        out += 360.0
-    return out
+# Local heading wrap preserved as a thin alias; semantics owned by python.angles.
+_wrap_deg = wrap_heading_deg
 
 
 def angle_diff_deg(target_deg: float, source_deg: float) -> float:
-    return ((float(target_deg) - float(source_deg) + 180.0) % 360.0) - 180.0
+    return wrap_signed_deg(float(target_deg) - float(source_deg))
 
 
 def bearing_deg(x0_m: float, y0_m: float, x1_m: float, y1_m: float) -> float:
+    # NOT an alias of python.angles.bearing_between_deg on purpose: this module
+    # historically wrapped the atan2 angle with plain % 360.0, and the owner's
+    # (+360.0) % 360.0 form differs by ~1e-13 deg on positive angles. The local
+    # form is kept bit-for-bit (pinned by tests/runtime/core/
+    # test_scalar_helper_owners.py).
     return _wrap_deg(math.degrees(math.atan2(float(x1_m) - float(x0_m), float(y1_m) - float(y0_m))))
-
-
-def distance_m(x0_m: float, y0_m: float, x1_m: float, y1_m: float) -> float:
-    return math.hypot(float(x1_m) - float(x0_m), float(y1_m) - float(y0_m))
 
 
 def _tailwind_component_mps(*, wind_from_deg: float, wind_speed_mps: float, desired_track_deg: float) -> float:

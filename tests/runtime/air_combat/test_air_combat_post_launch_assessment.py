@@ -4,13 +4,13 @@ import unittest
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
 
 from gym_envs.universal_env_parts.common import gym as _gym # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 
 
 _STAGE1_C2_SCENARIO = resolve_repo_path(

@@ -21,10 +21,15 @@ Language migration note:
   - Cooperative training and cooperative execution pipeline mainline documents.
 - [exact_runtime/README.md](exact_runtime/README.md)
   - Candidate special plans, checklists, and phase freeze records for exact runtime / GPU mainline.
+- [repository_consolidation/README.md](repository_consolidation/README.md)
+  - Active consolidation workline: iteration protocol, candidate routing, and the single iteration ledger.
+- [unified_architecture_program/README.md](unified_architecture_program/README.md)
+  - Active architecture-unification roadmap (DTO single-sourcing, runtime substrate, C++ boundaries, declarative configuration); iterations land in the consolidation ledger.
 - [archive/](archive/README.md)
   - Closed routes, historical traceability materials, and bilingual migration record.
 
-- Earlier archived design materials are mainly located in [docs/Archive/](../Archive).
+- Earlier archived design materials remain under the legacy `docs/Archive/`
+  path. It is retained history, not a current plan entry surface.
 
 ## 2. Recommended Reading Order
 

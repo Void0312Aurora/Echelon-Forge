@@ -4,7 +4,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()

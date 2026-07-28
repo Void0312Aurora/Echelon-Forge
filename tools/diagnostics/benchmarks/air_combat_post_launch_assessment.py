@@ -11,16 +11,21 @@ from typing import Any
 
 import numpy as np
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
 
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+from python.rl.runtime.single_world_batch_runtime import (  # noqa: E402
+    build_single_world_batch_execution_runtime,
+)
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
 
 
 DEFAULT_SCENARIO = resolve_repo_path(
@@ -50,25 +55,27 @@ def _managed_action() -> np.ndarray:
 
 
 def _make_env(args: argparse.Namespace, *, enabled: bool) -> WorldBatchVecEnv:
-    return WorldBatchVecEnv(
+    runtime = build_single_world_batch_execution_runtime(
         scenario_path=os.path.abspath(str(args.scenario)),
-        n_envs=1,
-        include_visual=False,
-        include_proprio=True,
-        action_mode="air_combat_hybrid_v1",
-        mission_obs_mode="air_combat_c2_roe_v2",
-        step_info_mode="full",
-        execution_step_runtime_mode="compiled",
-        flight_shaping_backend="compiled",
+        env_settings={
+            "include_visual": False,
+            "include_proprio": True,
+            "action_mode": "air_combat_hybrid_v1",
+            "mission_obs_mode": "air_combat_c2_roe_v2",
+            "step_info_mode": "full",
+            "execution_step_runtime_mode": "compiled",
+            "flight_shaping_backend": "compiled",
+            "batch_observation_backend": "compiled",
+            "batch_visual_backend": "compiled",
+            "observation_return_mode": "view",
+            "air_combat_post_launch_assessment_enabled": enabled,
+            "air_combat_post_launch_assessment_stages": ["A1-S1", "A1-S2"],
+            "air_combat_post_launch_assessment_max_steps": int(args.post_steps),
+            "air_combat_post_launch_assessment_gamma": float(args.gamma),
+        },
         worker_threads=int(args.worker_threads),
-        batch_observation_backend="compiled",
-        batch_visual_backend="compiled",
-        observation_return_mode="view",
-        air_combat_post_launch_assessment_enabled=enabled,
-        air_combat_post_launch_assessment_stages=["A1-S1", "A1-S2"],
-        air_combat_post_launch_assessment_max_steps=int(args.post_steps),
-        air_combat_post_launch_assessment_gamma=float(args.gamma),
     )
+    return runtime.world_vec
 
 
 def _run_episode(

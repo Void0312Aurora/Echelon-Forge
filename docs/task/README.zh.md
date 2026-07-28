@@ -17,8 +17,6 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
 - `docs/task/**` 下高频变更的 dated task 长文默认按英文主文维护，除非某个更小切片被明确提升到持续双语维护面。
 - 该策略位于
   [docs/standards/governance/bilingual_documentation_policy.zh.md](../standards/governance/bilingual_documentation_policy.zh.md)。
-- rollout 计划位于
-  [docs/plan/documentation_bilingual_migration_plan_20260518.zh.md](../plan/documentation_bilingual_migration_plan_20260518.zh.md)。
 
 此处大部分文件是特定分析、冻结计划、任务板、检查点或收敛过程的带日期快照。如需某个领域的最新上下文，请优先从该领域的 `README.md` 开始；更深层 dated 文档应视为支撑记录，而不是稳定根入口。
 
@@ -41,7 +39,7 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
   当前成熟度最高的领域执行切片。这里导航维护中的 `execution` / HMoE `1v1`
   路径、分阶段 `1v1` curriculum，以及空战 damage runtime。链接到的 archive
   快照只用于追溯；不要把旧空战快照当成全项目中心。
-- [cooperative/common 集成](archive/common_air_naval/README.zh.md)：`archived` —
+- [cooperative/common 集成](archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)：`archived` —
   WP0-WP8 已完成（common/air/naval DTO 拆分、profile dispatch seam、MissionCommand 兼容拆分）。
   后续 naval runtime 扩展和 air-first helper 迁移由独立任务单继续推进。
 - [仿真架构](simulation_architecture/README.zh.md)：`active` 的仿真系统架构与
@@ -71,7 +69,7 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
 - [viz](viz/README.zh.md)：`exploratory` / `active` 的可视化统一入口面。它负责
   展示、asset registry、loader/session 流程和 runtime inspection 便利性，不是
   realism 或 world-parameter 权威入口。
-- [game](game/README.zh.md)：`exploratory` 的外部游戏前端集成线。凡是评估
+- [game](../../game/README.md)：`exploratory` 的外部游戏前端集成线。凡是评估
   simulation-backed gameplay shell、被跟踪的 Arma proxy workspace 边界、
   本地-only 前端归档规则或 authoritative-backend proxy 实验，请先从这里进入。
 

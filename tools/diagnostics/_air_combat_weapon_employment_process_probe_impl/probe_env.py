@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 
 import ef_py
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 
 
 def _base_env(env):

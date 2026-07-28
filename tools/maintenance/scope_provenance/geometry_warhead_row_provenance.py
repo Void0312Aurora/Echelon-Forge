@@ -19,9 +19,20 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -29,7 +40,6 @@ PACKAGE_ID = (
 SCHEMA_VERSION = "a2.geometry_warhead_row_provenance_gate.v1"
 ARTIFACT_DATE = "20260531"
 RESIDUAL_IDS = ("RES-003", "RES-004")
-
 
 def _package_dir(repo_root: Path) -> Path:
   return (
@@ -43,7 +53,6 @@ def _package_dir(repo_root: Path) -> Path:
     / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
   )
 
-
 def _a2_root(repo_root: Path) -> Path:
   return (
     repo_root
@@ -54,7 +63,6 @@ def _a2_root(repo_root: Path) -> Path:
     / "a2_high_fidelity_damage_model"
   )
 
-
 def _default_retained_dir(repo_root: Path) -> Path:
   return (
     _package_dir(repo_root)
@@ -62,13 +70,11 @@ def _default_retained_dir(repo_root: Path) -> Path:
     / f"geometry_warhead_row_provenance_{ARTIFACT_DATE}"
   )
 
-
 def _default_doc_path(repo_root: Path) -> Path:
   return (
     _package_dir(repo_root)
     / f"validation_geometry_warhead_row_provenance_gate_{ARTIFACT_DATE}.zh.md"
   )
-
 
 def _input_refs(repo_root: Path) -> dict[str, tuple[Path, bool, str]]:
   package_dir = _package_dir(repo_root)
@@ -124,13 +130,12 @@ def _input_refs(repo_root: Path) -> dict[str, tuple[Path, bool, str]]:
     ),
   }
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving; differs from manifest_integrity._display_path.
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return path.as_posix()
-
 
 def _doc_link(path: Path, doc_path: Path, repo_root: Path) -> str:
   try:
@@ -138,18 +143,11 @@ def _doc_link(path: Path, doc_path: Path, repo_root: Path) -> str:
   except ValueError:
     return _rel(path, repo_root)
 
-
 def _read_text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
 
-
 def _sha256_bytes(data: bytes) -> str:
   return hashlib.sha256(data).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  return _sha256_bytes(path.read_bytes())
-
 
 def _input_record(
   *, key: str, path: Path, required: bool, role: str, repo_root: Path
@@ -173,14 +171,11 @@ def _input_record(
     )
   return record
 
-
 def _strip_cell(cell: str) -> str:
   return cell.strip().strip("`").strip()
 
-
 def _split_markdown_row(line: str) -> list[str]:
   return [_strip_cell(cell) for cell in line.strip().strip("|").split("|")]
-
 
 def _extract_field(text: str, field: str) -> str:
   for line in text.splitlines():
@@ -190,7 +185,6 @@ def _extract_field(text: str, field: str) -> str:
     if len(cells) >= 2 and cells[0] == field:
       return cells[1]
   return ""
-
 
 def _table_rows(text: str, first_column_prefixes: tuple[str, ...]) -> list[list[str]]:
   rows: list[list[str]] = []
@@ -203,7 +197,6 @@ def _table_rows(text: str, first_column_prefixes: tuple[str, ...]) -> list[list[
     if cells[0].startswith(first_column_prefixes):
       rows.append(cells)
   return rows
-
 
 def _residual_register_status(text: str, residual_id: str) -> dict[str, str]:
   for line in text.splitlines():
@@ -226,7 +219,6 @@ def _residual_register_status(text: str, residual_id: str) -> dict[str, str]:
     "register_status": "missing",
   }
 
-
 def _source_ids_from_cell(cell: str) -> list[str]:
   source_ids: list[str] = []
   pattern = re.compile(
@@ -238,7 +230,6 @@ def _source_ids_from_cell(cell: str) -> list[str]:
     for suffix in match.group("suffixes").split("/"):
       source_ids.append(f"{prefix}{suffix}")
   return source_ids
-
 
 def _target_geometry_rows(text: str) -> list[dict[str, Any]]:
   rows: list[dict[str, Any]] = []
@@ -285,7 +276,6 @@ def _target_geometry_rows(text: str) -> list[dict[str, Any]]:
     )
   return rows
 
-
 def _warhead_rows(text: str) -> list[dict[str, Any]]:
   rows: list[dict[str, Any]] = []
   for cells in _table_rows(
@@ -320,7 +310,6 @@ def _warhead_rows(text: str) -> list[dict[str, Any]]:
     )
   return rows
 
-
 PIN_COLUMNS = [
   "artifact_id",
   "source_id",
@@ -336,7 +325,6 @@ PIN_COLUMNS = [
   "residuals",
 ]
 
-
 def _pin_rows(text: str, residual_id: str) -> list[dict[str, str]]:
   rows: list[dict[str, str]] = []
   for line in text.splitlines():
@@ -347,7 +335,6 @@ def _pin_rows(text: str, residual_id: str) -> list[dict[str, str]]:
       continue
     rows.append(dict(zip(PIN_COLUMNS, cells[: len(PIN_COLUMNS)])))
   return rows
-
 
 def _pin_summary(pin_text: str, residual_id: str) -> dict[str, Any]:
   rows = _pin_rows(pin_text, residual_id)
@@ -377,7 +364,6 @@ def _pin_summary(pin_text: str, residual_id: str) -> dict[str, Any]:
     },
   }
 
-
 def _source_id_presence(ledger_text: str, source_ids: list[str]) -> dict[str, Any]:
   present = [source_id for source_id in source_ids if f"`{source_id}`" in ledger_text]
   return {
@@ -389,12 +375,10 @@ def _source_id_presence(ledger_text: str, source_ids: list[str]) -> dict[str, An
     "ledger_declares_non_authoritative": "non-authoritative" in ledger_text.lower(),
   }
 
-
 def _load_optional_json(path: Path) -> dict[str, Any]:
   if not path.is_file():
     return {}
   return json.loads(_read_text(path))
-
 
 def _authority_guard() -> dict[str, bool]:
   return {
@@ -410,7 +394,6 @@ def _authority_guard() -> dict[str, bool]:
     "deterministic_fuze_authority_granted": False,
     "fuze_authority_granted": False,
   }
-
 
 def _gate_check(
   *,
@@ -433,7 +416,6 @@ def _gate_check(
     "evidence": evidence,
     "release_blockers": blockers,
   }
-
 
 def generate_geometry_warhead_row_provenance_gate(
   *, repo_root: Path = REPO_ROOT
@@ -677,7 +659,6 @@ def generate_geometry_warhead_row_provenance_gate(
     ],
   }
 
-
 def _artifact_paths(
   *,
   repo_root: Path,
@@ -691,15 +672,12 @@ def _artifact_paths(
     doc_output or _default_doc_path(repo_root),
   )
 
-
 def _json_dump(data: dict[str, Any]) -> str:
   return json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-
 
 def _write_json(path: Path, data: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(_json_dump(data), encoding="utf-8")
-
 
 def _manifest(
   *,
@@ -726,7 +704,6 @@ def _manifest(
     "authority_guard": gate["authority_guard"],
     "release_grade_for_current_narrow_scope": False,
   }
-
 
 def _validation_doc(
   *,
@@ -799,7 +776,6 @@ def _validation_doc(
 - 如果忽略 source/pin 边界，candidate links 可能被误写为 release-grade rights、retention 或 authority。
 """
 
-
 def write_retained_artifacts(
   *,
   repo_root: Path = REPO_ROOT,
@@ -810,16 +786,14 @@ def write_retained_artifacts(
     repo_root=repo_root, retained_dir=retained_dir, doc_output=doc_output
   )
   gate = generate_geometry_warhead_row_provenance_gate(repo_root=repo_root)
-  _write_json(gate_path, gate)
-  gate_sha = _sha256_file(gate_path)
+  gate_sha = write_and_hash_json(gate_path, gate, ensure_ascii=False)
   manifest = _manifest(
     gate_path=gate_path,
     gate_sha256=gate_sha,
     gate=gate,
     repo_root=repo_root,
   )
-  _write_json(manifest_path, manifest)
-  manifest_sha = _sha256_file(manifest_path)
+  manifest_sha = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
   doc_path.parent.mkdir(parents=True, exist_ok=True)
   doc_path.write_text(
     _validation_doc(
@@ -840,7 +814,6 @@ def write_retained_artifacts(
     "manifest_sha256": manifest_sha,
     "doc_path": _rel(doc_path, repo_root),
   }
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -873,7 +846,6 @@ def main(argv: list[str] | None = None) -> int:
   )
   print(_json_dump(summary), end="")
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

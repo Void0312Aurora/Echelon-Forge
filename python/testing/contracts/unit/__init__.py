@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 from ..common import _load_spec
 from .comm import run_comm_contract

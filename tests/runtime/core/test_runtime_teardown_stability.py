@@ -7,7 +7,7 @@ import sys
 import unittest
 from textwrap import dedent
 
-from python.testing.runtime import build_dir, resolve_repo_path
+from python.runtime_bootstrap import build_dir, resolve_repo_path
 
 
 _REPO_ROOT = resolve_repo_path()
@@ -34,7 +34,7 @@ def _probe_prelude() -> str:
     f"""
     import json
     import os
-    from python.testing.runtime import configure_sim_log_level
+    from python.runtime_bootstrap import configure_sim_log_level
     configure_sim_log_level("error")
     import ef_py
 

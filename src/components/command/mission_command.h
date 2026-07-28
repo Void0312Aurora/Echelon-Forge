@@ -14,6 +14,10 @@ struct MissionCommand : MissionCommandCore,
                         MissionCommandNaval,
                         MissionCommandGround {};
 
+bool operator==(const MissionCommand &, const MissionCommand &) = delete;
+bool operator==(const MissionCommand &, const MissionCommandCore &) = delete;
+bool operator==(const MissionCommandCore &, const MissionCommand &) = delete;
+
 // Flat umbrella retained only as a compatibility/transport shell.
 // Shared-core and domain slices remain the maintained owner surfaces.
 using MissionCommandCompatibilityTransportShell = MissionCommand;
@@ -27,25 +31,7 @@ static_assert(kMissionCommandAirOwnedDomainSlice && kMissionCommandNavalOwnedDom
 static_assert(kMissionCommandSharedCoreOwnedSurface,
               "MissionCommand shared core must stay an explicit maintained owner surface.");
 
-struct MissionCommandSharedCoreDirective {
-    double cmd_heading_deg = 0.0;
-    double cmd_altitude_m = 0.0;
-    double cmd_speed_mps = 0.0;
-    int command_code = 0;
-    std::uint64_t route_ref_id = 0;
-    int roe_state = 0;
-    std::uint64_t engagement_authority_holder_id = 0;
-    std::uint64_t engagement_authority_grantor_id = 0;
-    std::uint64_t assigned_target_id = 0;
-    int threat_state = 0;
-    std::uint64_t assigned_target_track_id = 0;
-    std::uint64_t assigned_target_source_id = 0;
-    double assigned_target_snapshot_time_s = 0.0;
-    bool authorization_to_fire = false;
-    bool active = false;
-
-    bool operator==(const MissionCommandSharedCoreDirective &) const = default;
-};
+using MissionCommandSharedCoreDirective = MissionCommandCore;
 
 [[nodiscard]] inline const MissionCommandSharedCoreOwnerSlice &
 mission_command_shared_core(const MissionCommandCompatibilityTransportShell &command) noexcept {
@@ -59,23 +45,7 @@ mission_command_shared_core(MissionCommandCompatibilityTransportShell &command) 
 
 [[nodiscard]] inline MissionCommandSharedCoreDirective
 mission_command_shared_core_directive(const MissionCommandSharedCoreOwnerSlice &core) noexcept {
-    return {
-        .cmd_heading_deg = core.cmd_heading_deg,
-        .cmd_altitude_m = core.cmd_altitude_m,
-        .cmd_speed_mps = core.cmd_speed_mps,
-        .command_code = core.command_code,
-        .route_ref_id = core.route_ref_id,
-        .roe_state = core.roe_state,
-        .engagement_authority_holder_id = core.engagement_authority_holder_id,
-        .engagement_authority_grantor_id = core.engagement_authority_grantor_id,
-        .assigned_target_id = core.assigned_target_id,
-        .threat_state = core.threat_state,
-        .assigned_target_track_id = core.assigned_target_track_id,
-        .assigned_target_source_id = core.assigned_target_source_id,
-        .assigned_target_snapshot_time_s = core.assigned_target_snapshot_time_s,
-        .authorization_to_fire = core.authorization_to_fire,
-        .active = core.active,
-    };
+    return core;
 }
 
 [[nodiscard]] inline MissionCommandSharedCoreDirective mission_command_shared_core_directive(

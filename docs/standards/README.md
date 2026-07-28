@@ -248,6 +248,11 @@ Additional maintained supplements:
 - Standards changes that register, refresh, hold, or retire implementation
   contracts must follow
   [Standards Maintenance Policy](governance/standards_maintenance_policy.md).
+- Documentation kinds, lifecycle states, README boundaries, evidence packs,
+  generated output, config indexes, links, and archive transitions must follow
+  the [Document Lifecycle Policy](governance/document_lifecycle_policy.md).
+- Repository-wide code and documentation consolidation is sequenced through the
+  [Repository Consolidation Plan](../plan/repository_consolidation/README.md).
 - When work is split across subagents or workers, follow
   [Subagent Usage Policy](governance/subagent_usage_policy.md).
 - When a simulation-architecture WP is implementation-complete but still needs
@@ -258,6 +263,7 @@ Additional maintained supplements:
 
 - [Bilingual Documentation Policy](governance/bilingual_documentation_policy.md)
 - [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
+- [Document Lifecycle Policy](governance/document_lifecycle_policy.md)
 - [Standards Maintenance Policy](governance/standards_maintenance_policy.md)
 - [Release And Dependency Policy](governance/release_and_dependency_policy.md)
 - [Subagent Usage Policy](governance/subagent_usage_policy.md)
@@ -269,3 +275,4 @@ Additional maintained supplements:
 - [Scenario Configuration Guide](bridge/scenario_guide.md)
 - [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
 - [Modularization Plan](planning/modularization_plan.md)
+- [Repository Consolidation Plan](../plan/repository_consolidation/README.md)

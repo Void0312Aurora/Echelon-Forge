@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()
@@ -374,7 +374,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
 
-      from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+      from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
       from python.rl.runtime.leader_world_batch_runtime import ( # noqa: E402
         LeaderWorldBatchExecutionRuntimeGroup,
       )
@@ -424,7 +424,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
 
-      from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+      from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
       from python.rl.runtime.leader_world_batch_runtime import ( # noqa: E402
         LeaderWorldBatchExecutionRuntimeGroup,
       )
@@ -466,7 +466,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
 
-      from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+      from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
       from python.rl.runtime.leader_world_batch_runtime import ( # noqa: E402
         LeaderWorldBatchExecutionRuntimeGroup,
       )
@@ -497,7 +497,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
 
-      from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+      from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
       from python.rl.runtime.leader_world_batch_runtime import ( # noqa: E402
         LeaderWorldBatchExecutionRuntimeGroup,
       )
@@ -528,7 +528,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
 
-      from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+      from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
       from python.rl.runtime.leader_world_batch_runtime import ( # noqa: E402
         LeaderWorldBatchExecutionRuntimeGroup,
       )

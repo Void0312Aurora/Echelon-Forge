@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import csv
 import json
 import math
@@ -15,13 +14,18 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Callable
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.diagnostics.common import native_stdout_to_stderr
 from tools.diagnostics import kill_chain_decoupling_probe as probe  # noqa: E402
-
 
 SCHEMA_VERSION = "a2.kill_chain_guidance_mechanism_ablation.v1"
 EPSILON_GAIN = 1.0e-9
@@ -119,10 +123,8 @@ CONDITIONAL_EFFECTS: tuple[tuple[str, str, str], ...] = (
   ("third_order_autopilot", "full", "full_autopilot_order3"),
 )
 
-
 def _token(value: float) -> str:
   return f"{float(value):g}".replace("-", "m").replace(".", "p")
-
 
 def default_cases() -> list[dict[str, Any]]:
   cells = (
@@ -156,7 +158,6 @@ def default_cases() -> list[dict[str, Any]]:
       )
   return rows
 
-
 def selected_variants(variant_ids: tuple[str, ...] = ()) -> list[dict[str, Any]]:
   requested = set(variant_ids)
   rows = [dict(row) for row in VARIANTS if not requested or row["variant_id"] in requested]
@@ -165,14 +166,12 @@ def selected_variants(variant_ids: tuple[str, ...] = ()) -> list[dict[str, Any]]
     raise ValueError(f"unknown ablation variants: {sorted(missing)}")
   return rows
 
-
 def _finite(value: Any) -> float | None:
   try:
     result = float(value)
   except Exception:
     return None
   return result if math.isfinite(result) else None
-
 
 def _approach_observed(result: dict[str, Any]) -> dict[str, Any]:
   for row in list(result.get("stage_abstractions", []) or []):
@@ -181,19 +180,16 @@ def _approach_observed(result: dict[str, Any]) -> dict[str, Any]:
       return dict(observed) if isinstance(observed, dict) else {}
   return {}
 
-
 def _values(rows: list[dict[str, Any]], field: str) -> list[float]:
   values = [_finite(row.get(field)) for row in rows]
   return [value for value in values if value is not None]
 
-
 def _mean(values: list[float]) -> float | None:
+  # Kept local: empty -> None via statistics.fmean (≠ mean_finite).
   return statistics.fmean(values) if values else None
-
 
 def _max_abs(values: list[float]) -> float | None:
   return max((abs(value) for value in values), default=None)
-
 
 def summarize_runtime_trace(
   trace: list[dict[str, Any]],
@@ -252,7 +248,6 @@ def summarize_runtime_trace(
     ),
   }
 
-
 def _result_row(
   *,
   case: dict[str, Any],
@@ -289,7 +284,6 @@ def _result_row(
     **trace_summary,
   }
 
-
 def run_ablation_matrix(
   *,
   database_path: Path = probe.DEFAULT_DATABASE_PATH,
@@ -320,7 +314,6 @@ def run_ablation_matrix(
       )
       rows.append(_result_row(case=case, variant=variant, result=result))
   return rows
-
 
 def conditional_effect_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
   by_case: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
@@ -366,7 +359,6 @@ def conditional_effect_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
       )
   return effects
 
-
 def _effect_summary(effects: list[dict[str, Any]]) -> dict[str, Any]:
   grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
   for row in effects:
@@ -397,7 +389,6 @@ def _effect_summary(effects: list[dict[str, Any]]) -> dict[str, Any]:
     }
   return summary
 
-
 def _symmetry_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
   paired: dict[tuple[str, float, float], dict[int, float]] = defaultdict(dict)
   for row in rows:
@@ -418,7 +409,6 @@ def _symmetry_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     "max_abs_nearest_distance_difference_m": max(diffs, default=None),
     "mean_abs_nearest_distance_difference_m": _mean(diffs),
   }
-
 
 def generate_report(
   *,
@@ -488,12 +478,10 @@ def generate_report(
     ],
   }
 
-
 def _csv_value(value: Any) -> Any:
   if isinstance(value, (list, dict)):
     return json.dumps(value, sort_keys=True, ensure_ascii=True)
   return value
-
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
   fieldnames = sorted({key for row in rows for key in row})
@@ -502,7 +490,6 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     writer.writeheader()
     for row in rows:
       writer.writerow({key: _csv_value(row.get(key)) for key in fieldnames})
-
 
 def render_markdown(report: dict[str, Any]) -> str:
   summary = dict(report.get("summary", {}) or {})
@@ -585,7 +572,6 @@ def render_markdown(report: dict[str, Any]) -> str:
   )
   return "\n".join(lines)
 
-
 def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict[str, str]:
   output_dir.mkdir(parents=True, exist_ok=True)
   json_path = output_dir / f"{stem}.json"
@@ -607,20 +593,6 @@ def write_bundle(report: dict[str, Any], *, output_dir: Path, stem: str) -> dict
     path.chmod(0o644)
   return paths
 
-
-@contextlib.contextmanager
-def _native_stdout_to_stderr():
-  sys.stdout.flush()
-  saved_stdout_fd = os.dup(1)
-  try:
-    os.dup2(2, 1)
-    yield
-  finally:
-    sys.stdout.flush()
-    os.dup2(saved_stdout_fd, 1)
-    os.close(saved_stdout_fd)
-
-
 def build_arg_parser() -> argparse.ArgumentParser:
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument("--database", default=str(probe.DEFAULT_DATABASE_PATH))
@@ -635,14 +607,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
   )
   return parser
 
-
 def main(argv: list[str] | None = None) -> int:
   args = build_arg_parser().parse_args(argv)
   cases = default_cases()
   if int(args.case_limit) > 0:
     cases = cases[: int(args.case_limit)]
   variants = selected_variants(tuple(str(value) for value in list(args.variant or [])))
-  with _native_stdout_to_stderr():
+  with native_stdout_to_stderr():
     report = generate_report(
       database_path=Path(args.database),
       cases=cases,
@@ -658,7 +629,6 @@ def main(argv: list[str] | None = None) -> int:
     )
   print(json.dumps(report, indent=2, ensure_ascii=True))
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

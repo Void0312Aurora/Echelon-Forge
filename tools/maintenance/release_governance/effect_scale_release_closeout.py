@@ -16,10 +16,14 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+REPO_ROOT = Path(repo_root())
 from tools.maintenance.candidate_artifacts import scope_boundary_probe as scope_probe
 from tools.maintenance.candidate_artifacts import effect_scale_snapshot as snapshot
 from tools.maintenance.release_governance import effect_scale_release_readiness as readiness
@@ -45,6 +49,7 @@ PACKAGE_DIR = (
 
 
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:

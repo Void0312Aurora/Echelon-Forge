@@ -23,7 +23,7 @@ def ensure_repo_root_on_sys_path() -> None:
 
 
 def _candidate_build_dirs() -> list[Path]:
-  from python.testing.runtime import build_dirs
+  from python.runtime_bootstrap import build_dirs
 
   return [Path(path) for path in build_dirs(str(REPO_ROOT))]
 

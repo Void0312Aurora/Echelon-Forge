@@ -60,69 +60,21 @@ struct ConditionalObjectiveSpec {
 };
 
 struct ConditionalObjectiveInputs {
-    double altitude_m = 0.0;
-    double altitude_agl_m = 0.0;
-    double speed_mps = 0.0;
-    double ground_speed_mps = 0.0;
-    double gear_fraction = 0.0;
-    double heading_error_deg = 0.0;
-    double command_code = 0.0;
-    double ground_track_error_deg = 0.0;
-    bool has_runway_cross_m = false;
-    double runway_cross_m = 0.0;
-    bool has_runway_from_threshold_m = false;
-    double runway_from_threshold_m = 0.0;
-    bool on_runway_geom = false;
-    bool on_runway_task = false;
-    bool on_ground = false;
-    double sink_rate_abs_mps = 0.0;
-    double ils_localizer_abs = 0.0;
-    double ils_glideslope_abs = 0.0;
-    double dme_m = 0.0;
-    double heading_deg = 0.0;
-    double x_m = 0.0;
-    double y_m = 0.0;
-    double target_altitude_m = 0.0;
-    double target_speed_mps = 0.0;
-    double target_heading_deg = 0.0;
-    bool self_active = true;
-    bool target_active = false;
-    double self_health = 100.0;
-    double target_health = 0.0;
-    double missiles_remaining = 0.0;
-    bool has_target_range_m = false;
-    double target_range_m = 0.0;
+#define EF_OBJECTIVE_INPUT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/objective_inputs.inc"
 };
 
 struct ObjectiveShapingConfig {
-    double runway_cross_penalty_weight = 0.0;
-    double runway_cross_deadband_m = 0.0;
-    double runway_cross_norm_m = 20.0;
-    double runway_cross_power = 2.0;
-    double runway_cross_clip = 0.0;
-
-    double ground_track_penalty_weight = 0.0;
-    double ground_track_deadband_deg = 0.0;
-    double ground_track_norm_deg = 10.0;
-    double ground_track_power = 2.0;
-    double ground_track_clip = 0.0;
+#define EF_OBJECTIVE_SHAPING(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/objective_shaping.inc"
 };
 
 struct ConditionalObjectiveProducts {
-    bool valid = false;
-    bool matched = false;
-    bool unknown_property = false;
-    double status0 = 0.0;
-    double status1 = 0.0;
-    double status2 = 0.0;
-    int status_count = 0;
-    double success_runway_cross_penalty = 0.0;
-    double success_ground_track_error_penalty = 0.0;
-    double objective_bonus = 0.0;
+#define EF_OBJECTIVE_PRODUCT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/objective_products.inc"
 };
 
-ConditionalObjectiveProducts evaluate_conditional_objective(
-    const ConditionalObjectiveSpec& spec,
-    const ConditionalObjectiveInputs& inputs,
-    const ObjectiveShapingConfig& shaping
-);
+ConditionalObjectiveProducts
+evaluate_conditional_objective(const ConditionalObjectiveSpec &spec,
+                               const ConditionalObjectiveInputs &inputs,
+                               const ObjectiveShapingConfig &shaping);

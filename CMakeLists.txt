@@ -113,7 +113,6 @@ set(EF_CORE_MISSION_RUNTIME_SOURCES
     src/core/mission/runtime/execution_observation_runtime.cpp
     src/core/mission/runtime/mission_runtime.cpp
     src/core/mission/runtime/execution_step_runtime.cpp
-    src/core/mission/runtime/execution_frame_runtime.cpp
     src/core/mission/runtime/execution_episode_runtime.cpp
     src/core/mission/runtime/reward_runtime.cpp
     src/core/mission/runtime/objective_runtime.cpp

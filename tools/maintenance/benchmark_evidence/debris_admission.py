@@ -16,13 +16,22 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
-
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
 SCHEMA_VERSION = "a2.res005_tp21_debris_admission_gate.v1"
@@ -78,41 +87,22 @@ REQUIRED_PROVENANCE_LABELS = [
   },
 ]
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving; differs from manifest_integrity._display_path.
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return path.as_posix()
 
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
 
-
 def _load_json(path: Path) -> dict[str, Any]:
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _non_authoritative_guards() -> dict[str, bool]:
   return {
@@ -127,13 +117,11 @@ def _non_authoritative_guards() -> dict[str, bool]:
     "deterministic_fuze_authority_granted": False,
   }
 
-
 def _tp21_policy_row(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
   for row in source_rights_policy.get("payload_rights_inventory", []):
     if row.get("residual_id") == "RES-005":
       return row
   return {}
-
 
 def _criteria_vocabulary(
   mechanism_artifact: dict[str, Any],
@@ -147,7 +135,6 @@ def _criteria_vocabulary(
     for row in tp21.get("allowed_criteria_vocabulary", [])
   ]
   return tp21, criteria
-
 
 def _selected_output_requirements(
   criteria: list[dict[str, Any]],
@@ -173,7 +160,6 @@ def _selected_output_requirements(
       }
     )
   return requirements
-
 
 def _provenance_requirements(
   *,
@@ -202,7 +188,6 @@ def _provenance_requirements(
       }
     )
   return rows
-
 
 def _empty_anchor_set(
   *,
@@ -251,7 +236,6 @@ def _empty_anchor_set(
     "benchmark_consumed_for_release": False,
     "anchor_set_status": "empty_fail_closed_no_reviewer_selected_case",
   }
-
 
 def generate_tp21_debris_admission_gate(
   *,
@@ -368,7 +352,6 @@ def generate_tp21_debris_admission_gate(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -381,15 +364,13 @@ def write_retained_artifacts(
     mechanism_comparison_hashes_path=mechanism_comparison_hashes_path,
     source_rights_policy_path=source_rights_policy_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   anchor_set_path = retained_dir / ANCHOR_SET_FILENAME
-  _write_json(anchor_set_path, artifact["selected_debris_output_anchor_set"])
-  anchor_set_sha256 = _sha256_file(anchor_set_path)
+  anchor_set_sha256 = write_and_hash_json(
+    anchor_set_path, artifact["selected_debris_output_anchor_set"], ensure_ascii=False,
+  )
 
   artifact_path = retained_dir / GATE_FILENAME
-  _write_json(artifact_path, artifact)
-  artifact_sha256 = _sha256_file(artifact_path)
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact, ensure_ascii=False)
 
   manifest = {
     "schema_version": RETAINED_MANIFEST_SCHEMA_VERSION,
@@ -414,12 +395,11 @@ def write_retained_artifacts(
     "non_authoritative_guards": artifact["non_authoritative_guards"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
   artifact["retained_artifact_sha256"] = artifact_sha256
   artifact["retained_anchor_set_sha256"] = anchor_set_sha256
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -458,7 +438,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

@@ -6,7 +6,7 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     CompiledScenario,
     CompiledWorldLayoutTemplate,
     DEFAULT_TERRAIN_TYPE,

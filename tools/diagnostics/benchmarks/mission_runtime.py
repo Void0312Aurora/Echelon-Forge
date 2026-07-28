@@ -13,7 +13,8 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
-from python.testing.runtime import ensure_repo_imports
+from python.angles import wrap_signed_deg
+from python.runtime_bootstrap import ensure_repo_imports
 
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
@@ -21,8 +22,8 @@ os.chdir(REPO_ROOT)
 import ef_py  # noqa: E402
 
 
-def _wrap_angle_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
+# Local name preserved as a thin alias; semantics owned by python.angles.
+_wrap_angle_deg = wrap_signed_deg
 
 
 def _build_route_result() -> tuple[ef_py.SpatialRouteQueryResult, ef_py.MissionNavInputs]:

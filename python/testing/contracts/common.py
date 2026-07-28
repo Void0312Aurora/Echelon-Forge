@@ -7,18 +7,75 @@ import os
 import tempfile
 from typing import Any
 
-from python.testing.runtime import resolve_repo_path
+from python.angles import wrap_signed_deg
+from python.runtime_bootstrap import resolve_repo_path
 
 class ContractSkipped(RuntimeError):
     pass
 
 
+_MAX_SPEC_EXTENDS_DEPTH = 4
+
+
 def _load_spec(path: str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+    return _load_spec_recursive(path, chain=(), depth=0)
+
+
+def _load_spec_recursive(
+    path: str,
+    *,
+    chain: tuple[str, ...],
+    depth: int,
+) -> dict[str, Any]:
+    resolved_path = os.path.abspath(path)
+    canonical_path = os.path.normcase(os.path.realpath(resolved_path))
+    if canonical_path in chain:
+        cycle = " -> ".join((*chain, canonical_path))
+        raise ValueError(f"Contract spec extends cycle detected: {cycle}")
+
+    with open(resolved_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if not isinstance(data, dict):
-        raise ValueError(f"Contract spec must be a JSON object: {path}")
-    return data
+        raise ValueError(f"Contract spec must be a JSON object: {resolved_path}")
+    if "extends" not in data:
+        return data
+
+    extends = data.pop("extends")
+    if not isinstance(extends, str) or not extends.strip():
+        raise ValueError(
+            f"Contract spec 'extends' must be a non-empty string: {resolved_path}"
+        )
+    if depth >= _MAX_SPEC_EXTENDS_DEPTH:
+        raise ValueError(
+            "Contract spec maximum extends depth "
+            f"({_MAX_SPEC_EXTENDS_DEPTH}) exceeded: {resolved_path}"
+        )
+
+    base_path = _resolve_spec_extends_path(extends, resolved_path)
+    base = _load_spec_recursive(
+        base_path,
+        chain=(*chain, canonical_path),
+        depth=depth + 1,
+    )
+    return _deep_merge(base, data)
+
+
+def _resolve_spec_extends_path(extends: str, spec_path: str) -> str:
+    if os.path.isabs(extends):
+        candidate_paths = [os.path.abspath(extends)]
+    else:
+        candidate_paths = [
+            os.path.abspath(os.path.join(os.path.dirname(spec_path), extends)),
+            os.path.abspath(resolve_repo_path(extends)),
+        ]
+    for candidate_path in candidate_paths:
+        if os.path.isfile(candidate_path):
+            return candidate_path
+    resolved_candidates = ", ".join(candidate_paths)
+    raise FileNotFoundError(
+        f"Contract spec extends target {extends!r} was not found; "
+        f"checked {resolved_candidates}"
+    )
 
 
 def _write_inline_scenario(scenario: dict[str, Any]) -> str:
@@ -117,8 +174,8 @@ def _turn_budget_cost_m(turn_abs_deg: float, *, speed_mps: float, bank_limit_deg
     return float(radius_m) * math.radians(turn_abs_deg) * float(cost_scale)
 
 
-def _wrap_deg(angle_deg: float) -> float:
-    return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
+# Local name preserved as a thin alias; semantics owned by python.angles.
+_wrap_deg = wrap_signed_deg
 
 
 def _check_optional_range(value: float, bounds: dict[str, Any], *, label: str) -> str | None:

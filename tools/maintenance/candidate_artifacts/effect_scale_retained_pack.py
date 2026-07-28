@@ -16,16 +16,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 from tools.maintenance.candidate_artifacts import scope_boundary_probe as scope_probe
 from tools.maintenance.candidate_artifacts import effect_scale_snapshot as stage_b_snapshot
 from tools.maintenance.candidate_artifacts import effect_scale_result_pack as result_pack
 from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
-
 
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -87,36 +92,18 @@ ARTIFACT_RELEASE_BOUNDARIES = {
   },
 }
 
-
 def _artifact_status(payload: dict[str, Any]) -> str:
   return str(payload.get("status", payload.get("validation_status", "")))
-
 
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
-
 
 def load_retained_artifact_pack_manifest(
   *,
@@ -150,7 +137,6 @@ def load_retained_artifact_pack_manifest(
     for row in manifest.get("artifacts", [])
   )
   return manifest
-
 
 def generate_retained_artifact_pack(
   *,
@@ -229,7 +215,6 @@ def generate_retained_artifact_pack(
   manifest["retained_artifact_count"] = len(rows)
   return manifest
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description=(
@@ -248,7 +233,6 @@ def main(argv: list[str] | None = None) -> int:
   artifact = generate_retained_artifact_pack(output_dir=args.output_dir)
   print(_canonical_json(artifact))
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

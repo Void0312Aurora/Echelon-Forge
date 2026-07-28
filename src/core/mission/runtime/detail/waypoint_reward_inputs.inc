@@ -1,0 +1,42 @@
+// X-macro list of WaypointRewardInputs fields.
+//
+// Consumers define EF_WAYPOINT_INPUT(type, name, default_value) before
+// including this file; the macro is #undef'd here after expansion.
+
+EF_WAYPOINT_INPUT(bool, valid, false)
+EF_WAYPOINT_INPUT(int, waypoint_index, 0)
+EF_WAYPOINT_INPUT(int, waypoint_count, 0)
+EF_WAYPOINT_INPUT(bool, is_flyover, false)
+EF_WAYPOINT_INPUT(bool, has_guidance, false)
+EF_WAYPOINT_INPUT(bool, passed_fix, false)
+EF_WAYPOINT_INPUT(double, dist_m, 0.0)
+EF_WAYPOINT_INPUT(double, xtk_m, 0.0)
+EF_WAYPOINT_INPUT(double, dtg_m, 0.0)
+EF_WAYPOINT_INPUT(double, waypoint_radius_m, 500.0)
+EF_WAYPOINT_INPUT(double, leg_len_m, 0.0)
+EF_WAYPOINT_INPUT(double, lead_turn_m, 0.0)
+EF_WAYPOINT_INPUT(double, sequence_gate_m, 500.0)
+EF_WAYPOINT_INPUT(bool, has_prev_dist, false)
+EF_WAYPOINT_INPUT(double, prev_dist_m, 0.0)
+EF_WAYPOINT_INPUT(double, route_length_m, 0.0)
+EF_WAYPOINT_INPUT(double, turn_relief_activation, 0.0)
+EF_WAYPOINT_INPUT(double, progress_weight, 0.0)
+EF_WAYPOINT_INPUT(double, progress_negative_scale, 1.0)
+EF_WAYPOINT_INPUT(double, distance_weight, 0.0)
+EF_WAYPOINT_INPUT(double, distance_clip_m, 0.0)
+EF_WAYPOINT_INPUT(bool, distance_scale_by_route, false)
+EF_WAYPOINT_INPUT(double, distance_route_ref_m, 55000.0)
+EF_WAYPOINT_INPUT(double, distance_route_scale_min, 0.5)
+EF_WAYPOINT_INPUT(double, distance_route_scale_max, 1.0)
+EF_WAYPOINT_INPUT(double, cross_track_weight, 0.0)
+EF_WAYPOINT_INPUT(double, cross_track_deadband_m, 0.0)
+EF_WAYPOINT_INPUT(double, cross_track_norm_m, 1000.0)
+EF_WAYPOINT_INPUT(double, cross_track_power, 1.0)
+EF_WAYPOINT_INPUT(double, cross_track_clip, 0.0)
+EF_WAYPOINT_INPUT(double, turn_relief_max, 0.0)
+EF_WAYPOINT_INPUT(double, proximity_weight, 0.0)
+EF_WAYPOINT_INPUT(double, proximity_ref_m, 0.0)
+EF_WAYPOINT_INPUT(double, proximity_power, 1.0)
+EF_WAYPOINT_INPUT(double, reached_bonus, 0.0)
+
+#undef EF_WAYPOINT_INPUT

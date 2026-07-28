@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 
-from python.rl.tasking.bridge import mission_command_view
+from python.tasking_contracts.bridge_views import mission_command_view
 
 
 _C2_ROE_CONTRACT_FIELDS = {

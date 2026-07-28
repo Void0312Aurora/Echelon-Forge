@@ -56,7 +56,7 @@
   [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - 编译执行辅助函数：
   [execution_step_runtime.cpp](../../../src/core/mission/runtime/execution_step_runtime.cpp)
-  [execution_frame_runtime.cpp](../../../src/core/mission/runtime/execution_frame_runtime.cpp)
+  [execution_frame_runtime.h](../../../src/core/mission/runtime/execution_frame_runtime.h)
   [execution_episode_runtime.cpp](../../../src/core/mission/runtime/execution_episode_runtime.cpp)
 - 精确状态契约和实验性 GPU 后端：
   [exact_stage_inventory.cpp](../../../src/core/engine/exact_stage_inventory.cpp)

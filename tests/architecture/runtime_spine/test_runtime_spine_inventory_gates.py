@@ -99,6 +99,14 @@ def _entries_by_path() -> dict[str, dict]:
   return {entry["path"]: entry for entry in entries}
 
 
+def test_execution_frame_runtime_reuses_episode_owned_implementation() -> None:
+  episode_source = (REPO_ROOT / "src/core/mission/runtime/execution_episode_runtime.cpp").read_text(encoding="utf-8")
+  assert not (REPO_ROOT / "src/core/mission/runtime/execution_frame_runtime.cpp").exists()
+  assert "execution_frame_runtime.cpp" not in (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+  assert episode_source.count("void parallel_for_index(") == 1
+  assert episode_source.count("compute_common_execution_runtime<Execution") == 2
+
+
 def test_fixture_uses_only_canonical_classification_vocabulary() -> None:
   fixture = _load_fixture()
   allowed = set(fixture["allowed_classifications"])

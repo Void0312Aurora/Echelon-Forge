@@ -7,7 +7,7 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     CompiledScenario,
     _clone_runtime_mission_command,
     materialize_runtime_waypoint_cache,

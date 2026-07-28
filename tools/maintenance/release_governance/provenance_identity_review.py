@@ -18,15 +18,24 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.release_governance import provenance_closeout as release_closeout_gate # noqa: E402
 from tools.maintenance.candidate_artifacts import effect_scale_retained_pack as stage_b_retained # noqa: E402
 from tools.maintenance.candidate_artifacts import component_probability_retained_pack as stage_c_retained # noqa: E402
-
 
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -139,48 +148,27 @@ RELEASE_SIGNOFF_STATUSES = {
   "release_review_signed_off",
 }
 
-
 def _read_text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
-
 
 def _read_text_if_exists(path: Path) -> str:
   return _read_text(path) if path.exists() else ""
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
 
-
 def _strip_cell(cell: str) -> str:
   return cell.strip().strip("`").strip()
 
-
 def _split_markdown_row(line: str) -> list[str]:
   return [_strip_cell(cell) for cell in line.strip().strip("|").split("|")]
-
 
 def _extract_field(text: str, field: str) -> str:
   for line in text.splitlines():
@@ -190,7 +178,6 @@ def _extract_field(text: str, field: str) -> str:
     if len(cells) >= 2 and cells[0] == field:
       return cells[1].strip()
   return ""
-
 
 def _parse_artifact_pin_rows(text: str) -> list[dict[str, str]]:
   rows: list[dict[str, str]] = []
@@ -203,24 +190,19 @@ def _parse_artifact_pin_rows(text: str) -> list[dict[str, str]]:
     rows.append(dict(zip(PIN_TABLE_COLUMNS, cells[: len(PIN_TABLE_COLUMNS)])))
   return rows
 
-
 def _has_sha256(value: str) -> bool:
   return bool(re.search(r"\b[a-f0-9]{64}\b", value))
-
 
 def _sha256_values(value: str) -> list[str]:
   return re.findall(r"\b[a-f0-9]{64}\b", value)
 
-
 def _slug(value: str) -> str:
   return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "artifact"
-
 
 def _forbidden_outputs(identity_text: str) -> list[str]:
   value = _extract_field(identity_text, "forbidden_outputs")
   normalized = value.replace("`", "")
   return [part.strip() for part in normalized.split(",") if part.strip()]
-
 
 def _verified_source_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
   return [
@@ -228,7 +210,6 @@ def _verified_source_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     for row in rows
     if "verified_candidate_artifact" in row["artifact_status"]
   ]
-
 
 def _source_artifact_requirements(
   verified_rows: list[dict[str, str]],
@@ -265,7 +246,6 @@ def _source_artifact_requirements(
       )
   return requirements
 
-
 def _check_status(author_side_satisfied: bool, release_grade_satisfied: bool) -> str:
   if release_grade_satisfied:
     return "release_grade_satisfied_by_this_review"
@@ -273,12 +253,10 @@ def _check_status(author_side_satisfied: bool, release_grade_satisfied: bool) ->
     return "author_side_closed_release_grade_blocked"
   return "blocked_author_side_evidence_missing"
 
-
 def _load_json_if_exists(path: Path) -> dict[str, Any]:
   if not path.exists():
     return {}
   return json.loads(_read_text(path))
-
 
 def _resolve_artifact_path(row: dict[str, Any], repo_root: Path) -> Path | None:
   value = row.get("relative_path") or row.get("path")
@@ -286,7 +264,6 @@ def _resolve_artifact_path(row: dict[str, Any], repo_root: Path) -> Path | None:
     return None
   path = Path(str(value))
   return path if path.is_absolute() else repo_root / path
-
 
 def _source_artifact_pack_manifest_candidates(
   *,
@@ -300,7 +277,6 @@ def _source_artifact_pack_manifest_candidates(
   if fallback_path != canonical_path:
     candidates.append(("retained_review_dir_fallback", fallback_path))
   return candidates
-
 
 def _load_source_artifact_pack_manifest(
   *,
@@ -383,7 +359,6 @@ def _load_source_artifact_pack_manifest(
   )
   return manifest
 
-
 def _source_pack_payload_retention_summary(
   *,
   source_pack: dict[str, Any],
@@ -416,7 +391,6 @@ def _source_pack_payload_retention_summary(
       req["expected_sha256"] for req in missing_requirements
     ],
   }
-
 
 def _source_pack_release_grade_blocking_reasons(
   *,
@@ -484,7 +458,6 @@ def _source_pack_release_grade_blocking_reasons(
     )
   return reasons
 
-
 def _source_pack_release_grade_satisfied(
   *,
   source_pack: dict[str, Any],
@@ -529,7 +502,6 @@ def _source_pack_release_grade_satisfied(
     if any(token in allowed_use for token in forbidden_allowed_use_tokens):
       return False
   return True
-
 
 def _retained_source_artifact_pack_check(
   *,
@@ -623,7 +595,6 @@ def _retained_source_artifact_pack_check(
     "shortest_remaining_path": shortest_remaining_path,
   }
 
-
 def _allowed_output_policy_check(
   *,
   pin_text: str,
@@ -680,7 +651,6 @@ def _allowed_output_policy_check(
       "become source truth or runtime authority"
     ),
   }
-
 
 def _benchmark_consumption_trace_check(
   *,
@@ -749,7 +719,6 @@ def _benchmark_consumption_trace_check(
     ),
   }
 
-
 def _comparison_hash_hits(texts: list[str]) -> list[dict[str, str]]:
   hits: list[dict[str, str]] = []
   pattern = re.compile(
@@ -766,10 +735,8 @@ def _comparison_hash_hits(texts: list[str]) -> list[dict[str, str]]:
       )
   return hits
 
-
 def _artifact_hash_count(pack: dict[str, Any]) -> int:
   return sum(1 for row in pack.get("artifacts", []) if _has_sha256(row.get("sha256", "")))
-
 
 def _comparison_output_hash_check(
   *,
@@ -819,7 +786,6 @@ def _comparison_output_hash_check(
     ),
   }
 
-
 def _identity_summary(identity_text: str) -> dict[str, Any]:
   return {
     "model_ref": _extract_field(identity_text, "model_ref"),
@@ -836,7 +802,6 @@ def _identity_summary(identity_text: str) -> dict[str, Any]:
     ),
     "output_anchor_count": len(re.findall(r"/tmp/a2_[^|`]+\.json", identity_text)),
   }
-
 
 def _clean_release_identity_check(identity_summary: dict[str, Any]) -> dict[str, Any]:
   author_side_satisfied = (
@@ -868,7 +833,6 @@ def _clean_release_identity_check(identity_summary: dict[str, Any]) -> dict[str,
       "author-output anchors and with retained outputs referenced from repo artifacts"
     ),
   }
-
 
 def _release_validation_status_check(
   *,
@@ -903,7 +867,6 @@ def _release_validation_status_check(
     ),
   }
 
-
 def _pack_release_grade_identity(pack: dict[str, Any]) -> bool:
   origin = pack.get("retained_origin_summary", {})
   return (
@@ -914,7 +877,6 @@ def _pack_release_grade_identity(pack: dict[str, Any]) -> bool:
     and "author" not in str(pack.get("status", ""))
     and "candidate" not in str(pack.get("status", ""))
   )
-
 
 def _retained_identity_surface_check(
   *,
@@ -976,7 +938,6 @@ def _retained_identity_surface_check(
     ),
   }
 
-
 def _load_review_signoff_manifest(
   *,
   repo_root: Path,
@@ -995,7 +956,6 @@ def _load_review_signoff_manifest(
   manifest["manifest_relative_path"] = _display_path(path, repo_root)
   manifest["manifest_sha256"] = _sha256_file(path)
   return manifest
-
 
 def _review_signoff_check(signoff_manifest: dict[str, Any]) -> dict[str, Any]:
   signed_residual_ids = set(signoff_manifest.get("signed_residual_ids", []))
@@ -1031,10 +991,8 @@ def _review_signoff_check(signoff_manifest: dict[str, Any]) -> dict[str, Any]:
     ),
   }
 
-
 def _mentions_residual(row: dict[str, Any], residual_id: str) -> bool:
   return residual_id in row.get("residual_ids", [])
-
 
 def _residual_condition_trace(
   review_checks: list[dict[str, Any]],
@@ -1063,7 +1021,6 @@ def _residual_condition_trace(
     )
   return trace
 
-
 def _release_closeout_summary(artifact: dict[str, Any]) -> dict[str, Any]:
   return {
     "status": artifact["status"],
@@ -1076,7 +1033,6 @@ def _release_closeout_summary(artifact: dict[str, Any]) -> dict[str, Any]:
     ],
     "blocking_residual_ids": list(dict.fromkeys(artifact["blocking_residual_ids"])),
   }
-
 
 def _non_authoritative_guards() -> dict[str, bool]:
   return {
@@ -1091,7 +1047,6 @@ def _non_authoritative_guards() -> dict[str, bool]:
     "deterministic_fuze_authority_released": False,
     "deterministic_fuze_authority": False,
   }
-
 
 def _source_payload_pack_consumption_summary(
   *,
@@ -1127,7 +1082,6 @@ def _source_payload_pack_consumption_summary(
     ]["release_grade_satisfied"],
     "authority_release_included": False,
   }
-
 
 def generate_provenance_identity_review_gate(
   *,
@@ -1286,7 +1240,6 @@ def generate_provenance_identity_review_gate(
     "authority_guards_all_false": not any(guards.values()),
   }
 
-
 def write_retained_review_artifact(
   *,
   repo_root: Path = REPO_ROOT,
@@ -1298,8 +1251,8 @@ def write_retained_review_artifact(
     retained_review_dir=retained_review_dir,
   )
   artifact_path = retained_review_dir / REVIEW_ARTIFACT_FILENAME
-  artifact_text = _canonical_json(artifact) + "\n"
-  artifact_path.write_text(artifact_text, encoding="utf-8")
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact)
+  artifact_content_sha256 = _sha256_text(_canonical_json(artifact))
   source_payload_consumption = artifact["source_payload_pack_consumption"]
 
   manifest = {
@@ -1343,8 +1296,8 @@ def write_retained_review_artifact(
         "filename": REVIEW_ARTIFACT_FILENAME,
         "relative_path": _display_path(artifact_path, repo_root),
         "schema_version": REVIEW_GATE_SCHEMA_VERSION,
-        "sha256": _sha256_file(artifact_path),
-        "content_sha256": _sha256_text(artifact_text.rstrip("\n")),
+        "sha256": artifact_sha256,
+        "content_sha256": artifact_content_sha256,
         "status": artifact["status"],
         "allowed_claim": (
           "release-review blocker surface for RES-001/RES-002 is retained"
@@ -1360,13 +1313,12 @@ def write_retained_review_artifact(
     "non_authoritative_guards": _non_authoritative_guards(),
   }
   manifest_path = retained_review_dir / REVIEW_MANIFEST_FILENAME
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest)
   manifest["manifest_relative_path"] = _display_path(manifest_path, repo_root)
-  manifest["manifest_sha256"] = _sha256_file(manifest_path)
+  manifest["manifest_sha256"] = manifest_sha256
   manifest["retained_artifact_count"] = len(manifest["artifacts"])
   manifest["all_artifacts_exist"] = artifact_path.exists()
   return manifest
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -1412,7 +1364,6 @@ def main(argv: list[str] | None = None) -> int:
   else:
     print(text)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

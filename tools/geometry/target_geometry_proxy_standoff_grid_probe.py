@@ -13,11 +13,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import resolve_repo_path, ensure_repo_imports, repo_root
 
-from python.testing.runtime import resolve_repo_path
+ensure_repo_imports()
+REPO_ROOT = Path(repo_root())
 from tools.geometry import target_geometry_lethality_matrix_probe as matrix_probe
 
 
@@ -86,6 +88,7 @@ ASPECT_DIRECTIONS: tuple[tuple[str, tuple[float, float]], ...] = (
 
 
 def _relative_path(path: Path) -> str:
+  # Kept local: resolve+str fallback; differs from manifest_integrity._display_path.
   resolved = path.resolve()
   try:
     return str(resolved.relative_to(REPO_ROOT))
@@ -689,6 +692,7 @@ def _xy_position_class_matrix(cases: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _mean(values: list[float]) -> float:
+  # Kept local: empty -> math.nan without finite filter (≠ mean_finite).
   return sum(values) / len(values) if values else math.nan
 
 

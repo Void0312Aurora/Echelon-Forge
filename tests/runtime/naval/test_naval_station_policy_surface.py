@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()
@@ -21,7 +21,7 @@ from gym_envs.universal_env_parts import ( # noqa: E402
   NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE,
   NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE,
 )
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv # noqa: E402
 from python.rl.runtime.leader_world_batch_runtime import LeaderWorldBatchExecutionRuntimeGroup # noqa: E402
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime # noqa: E402

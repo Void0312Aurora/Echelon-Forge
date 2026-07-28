@@ -115,7 +115,7 @@ Primary code entrypoints:
 - [src/core/mission/README.md](../../../src/core/mission/README.md)
 - [src/core/mission/runtime/mission_runtime.cpp](../../../src/core/mission/runtime/mission_runtime.cpp)
 - [src/core/mission/runtime/execution_step_runtime.cpp](../../../src/core/mission/runtime/execution_step_runtime.cpp)
-- [src/core/mission/runtime/execution_frame_runtime.cpp](../../../src/core/mission/runtime/execution_frame_runtime.cpp)
+- Frame contract [execution_frame_runtime.h](../../../src/core/mission/runtime/execution_frame_runtime.h); implementation owner [execution_episode_runtime.cpp](../../../src/core/mission/runtime/execution_episode_runtime.cpp)
 - [src/core/mission/runtime/execution_observation_runtime.cpp](../../../src/core/mission/runtime/execution_observation_runtime.cpp)
 - [src/core/mission/runtime/termination_runtime.h](../../../src/core/mission/runtime/termination_runtime.h)
 

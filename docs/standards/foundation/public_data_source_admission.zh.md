@@ -108,6 +108,11 @@ Language:
 - 若 row 可被消费，则需要 row 级 `row_id`、`source_ref` 和 provenance；
 - 显式的逐 authority 授权。
 
+任何 runtime authority 放行都必须由未编写候选内容的 reviewer 给出 accepted
+verdict。作者侧 snapshot、result pack、自行验收和 review-readiness 标签都不能
+替代该审阅；独立审阅与 source authority 均未闭合前，相关声明仍只能是
+`candidate` 或 `non-authoritative`。
+
 Authority 按字段逐项授予。能支持几何的来源，不自动支持脆弱性。能支持 benchmark 的来源，不自动支持 Pk。能支持方法的来源，不自动支持确定性触发行为。
 
 ## Source Kind 边界

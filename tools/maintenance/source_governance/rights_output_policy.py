@@ -10,6 +10,7 @@ outputs, consume benchmark outputs, or release any stock/runtime authority.
 
 from __future__ import annotations
 
+import sys
 import argparse
 import hashlib
 import json
@@ -20,8 +21,21 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -61,45 +75,25 @@ RETAINED_MANIFEST_FILENAME = "manifest.json"
 POLICY_ID = "A2-RES001-SOURCE-RIGHTS-OUTPUT-POLICY-20260531"
 POLICY_STATUS = "release_candidate_fail_closed_policy_frozen"
 
-
 def _read_text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
-
 
 def _read_json(path: Path) -> dict[str, Any]:
   return json.loads(_read_text(path))
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
 
-
 def _resolve_repo_path(path_value: str, repo_root: Path) -> Path:
   path = Path(path_value)
   return path if path.is_absolute() else repo_root / path
-
 
 def _content_type_for_path(path: Path) -> str:
   suffix = path.suffix.lower()
@@ -109,10 +103,8 @@ def _content_type_for_path(path: Path) -> str:
     return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   return "application/octet-stream"
 
-
 def _normalize_statement_text(text: str) -> str:
   return re.sub(r"\s+", " ", text).strip().upper()
-
 
 def _public_distribution_statement(text: str) -> dict[str, Any]:
   normalized = _normalize_statement_text(text)
@@ -133,7 +125,6 @@ def _public_distribution_statement(text: str) -> dict[str, Any]:
     "has_public_release_phrase": has_public_release,
     "has_unlimited_distribution_phrase": has_unlimited_distribution,
   }
-
 
 def _pdf_text_probe(path: Path) -> dict[str, Any]:
   try:
@@ -176,7 +167,6 @@ def _pdf_text_probe(path: Path) -> dict[str, Any]:
   )
   return evidence
 
-
 def _xlsx_text_probe(path: Path) -> dict[str, Any]:
   chunks: list[str] = []
   try:
@@ -214,7 +204,6 @@ def _xlsx_text_probe(path: Path) -> dict[str, Any]:
   )
   return evidence
 
-
 def _extract_rights_evidence(path: Path, content_type: str) -> dict[str, Any]:
   if content_type == "application/pdf" or path.suffix.lower() == ".pdf":
     return _pdf_text_probe(path)
@@ -230,7 +219,6 @@ def _extract_rights_evidence(path: Path, content_type: str) -> dict[str, Any]:
     "has_unlimited_distribution_phrase": False,
   }
 
-
 def _non_authoritative_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -245,7 +233,6 @@ def _non_authoritative_guards() -> dict[str, bool]:
     "deterministic_fuze_authority_released": False,
     "deterministic_fuze_authority": False,
   }
-
 
 def _allowed_use_for_payload(label: str) -> str:
   if label == "BEC-O-V1.xlsx":
@@ -263,7 +250,6 @@ def _allowed_use_for_payload(label: str) -> str:
     "reference_only"
   )
 
-
 def _forbidden_use_for_payload(label: str) -> str:
   if label == "BEC-O-V1.xlsx":
     return (
@@ -278,7 +264,6 @@ def _forbidden_use_for_payload(label: str) -> str:
     "stock descriptor authority; effect-scale authority; component-probability "
     "authority; Pk authority; deterministic-fuze authority"
   )
-
 
 def _output_policy_for_payload(label: str) -> dict[str, Any]:
   copy_forbidden = [
@@ -330,7 +315,6 @@ def _output_policy_for_payload(label: str) -> dict[str, Any]:
     "benchmark_consumption_allowed": False,
     "release_authority_allowed": False,
   }
-
 
 def _payload_rights_row(
   *,
@@ -395,7 +379,6 @@ def _payload_rights_row(
     ),
   }
 
-
 def _release_signoff_fields() -> list[dict[str, str]]:
   return [
     {
@@ -435,7 +418,6 @@ def _release_signoff_fields() -> list[dict[str, str]]:
     },
   ]
 
-
 def _blocking_conditions(
   *,
   all_payloads_retained: bool,
@@ -457,7 +439,6 @@ def _blocking_conditions(
   )
   return blockers
 
-
 def _status_for_gate(
   *,
   all_payloads_retained: bool,
@@ -468,7 +449,6 @@ def _status_for_gate(
   if not all_rights_supported:
     return "blocked_public_distribution_statement_support_incomplete_fail_closed"
   return "blocked_release_candidate_rights_supported_policy_fail_closed"
-
 
 def generate_source_rights_output_policy_gate(
   *,
@@ -613,7 +593,6 @@ def generate_source_rights_output_policy_gate(
     "authority_guards_all_false": not any(guards.values()),
   }
 
-
 def _retained_manifest(
   *,
   artifact: dict[str, Any],
@@ -659,7 +638,6 @@ def _retained_manifest(
     "non_authoritative_guards": artifact["non_authoritative_guards"],
   }
 
-
 def write_retained_source_rights_output_policy_gate(
   *,
   repo_root: Path = REPO_ROOT,
@@ -674,7 +652,7 @@ def write_retained_source_rights_output_policy_gate(
   )
   artifact_path = output_dir / RIGHTS_POLICY_ARTIFACT_FILENAME
   artifact_text = _canonical_json(artifact) + "\n"
-  artifact_path.write_text(artifact_text, encoding="utf-8")
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact)
 
   manifest = _retained_manifest(
     artifact=artifact,
@@ -685,14 +663,12 @@ def write_retained_source_rights_output_policy_gate(
     output_dir=output_dir,
   )
   manifest_path = output_dir / RETAINED_MANIFEST_FILENAME
-  manifest_text = _canonical_json(manifest) + "\n"
-  manifest_path.write_text(manifest_text, encoding="utf-8")
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest)
 
-  artifact["source_rights_output_policy_gate_sha256"] = _sha256_file(artifact_path)
+  artifact["source_rights_output_policy_gate_sha256"] = artifact_sha256
   artifact["retained_manifest_ref"] = _display_path(manifest_path, repo_root)
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -742,7 +718,6 @@ def main(argv: list[str] | None = None) -> int:
   else:
     print(text)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

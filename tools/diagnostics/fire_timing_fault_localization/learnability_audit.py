@@ -10,16 +10,25 @@ from collections import Counter
 from types import SimpleNamespace
 from typing import Any
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
+from tools.diagnostics.common import (
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+    finite_float,
+    mean_finite,
+    write_json_output,
+)
 from tools.diagnostics import air_combat_weapon_employment_process_probe as process_probe  # noqa: E402
-
 
 DEFAULT_SCENARIO = resolve_repo_path(
     "scenarios",
@@ -36,15 +45,6 @@ DEFAULT_TRAIN_CONFIG = resolve_repo_path(
     "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json",
 )
 
-
-def _finite_float(value: Any, default: float = float("nan")) -> float:
-    try:
-        out = float(value)
-    except Exception:
-        return float(default)
-    return out if math.isfinite(out) else float(default)
-
-
 def _parse_delays(value: str) -> list[int]:
     delays: list[int] = []
     for item in str(value or "").split(","):
@@ -56,29 +56,19 @@ def _parse_delays(value: str) -> list[int]:
             delays.append(delay)
     return delays or [0]
 
-
-def _mean(values: list[float]) -> float:
-    finite = [float(value) for value in values if math.isfinite(float(value))]
-    if not finite:
-        return float("nan")
-    return float(sum(finite) / len(finite))
-
-
 def _spread(values: list[float]) -> float:
     finite = [float(value) for value in values if math.isfinite(float(value))]
     if not finite:
         return 0.0
     return float(max(finite) - min(finite))
 
-
 def _first_step_mean(episodes: list[dict[str, Any]], key: str) -> float:
     values = [
         float(ep[key])
         for ep in episodes
-        if ep.get(key) is not None and math.isfinite(_finite_float(ep.get(key)))
+        if ep.get(key) is not None and math.isfinite(finite_float(ep.get(key)))
     ]
-    return _mean(values)
-
+    return mean_finite(values)
 
 def _case_summary(case_name: str, payload: dict[str, Any]) -> dict[str, Any]:
     episodes = [ep for ep in payload.get("episode_summaries", []) if isinstance(ep, dict)]
@@ -97,27 +87,27 @@ def _case_summary(case_name: str, payload: dict[str, Any]) -> dict[str, Any]:
             except Exception:
                 pass
 
-    final_health = [_finite_float(ep.get("final_target_health", float("nan"))) for ep in episodes]
+    final_health = [finite_float(ep.get("final_target_health", float("nan"))) for ep in episodes]
     return {
         "case": str(case_name),
         "mode": str(payload.get("mode", "")),
         "fire_delay_steps": int(payload.get("fire_delay_steps", 0) or 0),
-        "legal_fire_range_m": _finite_float(payload.get("legal_fire_range_m", 0.0), 0.0),
+        "legal_fire_range_m": finite_float(payload.get("legal_fire_range_m", 0.0), 0.0),
         "episodes": int(len(episodes)),
-        "mean_total_reward": _mean([_finite_float(ep.get("total_reward", float("nan"))) for ep in episodes]),
-        "mean_final_target_health": _mean(final_health),
-        "mean_release_count": _mean([_finite_float(ep.get("release_count", 0.0), 0.0) for ep in episodes]),
-        "mean_fire_once_accepted_count": _mean(
-            [_finite_float(ep.get("fire_once_accepted_count", 0.0), 0.0) for ep in episodes]
+        "mean_total_reward": mean_finite([finite_float(ep.get("total_reward", float("nan"))) for ep in episodes]),
+        "mean_final_target_health": mean_finite(final_health),
+        "mean_release_count": mean_finite([finite_float(ep.get("release_count", 0.0), 0.0) for ep in episodes]),
+        "mean_fire_once_accepted_count": mean_finite(
+            [finite_float(ep.get("fire_once_accepted_count", 0.0), 0.0) for ep in episodes]
         ),
-        "mean_fire_once_rejected_count": _mean(
-            [_finite_float(ep.get("fire_once_rejected_count", 0.0), 0.0) for ep in episodes]
+        "mean_fire_once_rejected_count": mean_finite(
+            [finite_float(ep.get("fire_once_rejected_count", 0.0), 0.0) for ep in episodes]
         ),
-        "mean_effects_event_count": _mean(
-            [_finite_float(ep.get("effects_event_count", 0.0), 0.0) for ep in episodes]
+        "mean_effects_event_count": mean_finite(
+            [finite_float(ep.get("effects_event_count", 0.0), 0.0) for ep in episodes]
         ),
-        "mean_damage_report_count": _mean(
-            [_finite_float(ep.get("damage_report_count", 0.0), 0.0) for ep in episodes]
+        "mean_damage_report_count": mean_finite(
+            [finite_float(ep.get("damage_report_count", 0.0), 0.0) for ep in episodes]
         ),
         "release_episode_count": int(sum(int(ep.get("release_count", 0) or 0) > 0 for ep in episodes)),
         "effects_episode_count": int(sum(int(ep.get("effects_event_count", 0) or 0) > 0 for ep in episodes)),
@@ -125,7 +115,7 @@ def _case_summary(case_name: str, payload: dict[str, Any]) -> dict[str, Any]:
         "target_health_drop_episode_count": int(
             sum(
                 ep.get("first_target_health_drop_step") is not None
-                or _finite_float(ep.get("last_damage_system_health_delta", 0.0), 0.0) < 0.0
+                or finite_float(ep.get("last_damage_system_health_delta", 0.0), 0.0) < 0.0
                 for ep in episodes
             )
         ),
@@ -135,7 +125,6 @@ def _case_summary(case_name: str, payload: dict[str, Any]) -> dict[str, Any]:
         "rejected_reason_counts": dict(sorted(rejection_reasons.items())),
         "termination_reasons": dict(payload.get("termination_reasons", {}) or {}),
     }
-
 
 def _learnability_verdict(case_summaries: list[dict[str, Any]], *, reward_epsilon: float) -> dict[str, Any]:
     hold_cases = [case for case in case_summaries if case.get("mode") == "hold_fire"]
@@ -150,9 +139,9 @@ def _learnability_verdict(case_summaries: list[dict[str, Any]], *, reward_epsilo
         for case in legal_cases
     )
 
-    hold_reward = _mean([_finite_float(case.get("mean_total_reward", float("nan"))) for case in hold_cases])
-    legal_rewards = [_finite_float(case.get("mean_total_reward", float("nan"))) for case in legal_cases]
-    legal_reward_mean = _mean(legal_rewards)
+    hold_reward = mean_finite([finite_float(case.get("mean_total_reward", float("nan"))) for case in hold_cases])
+    legal_rewards = [finite_float(case.get("mean_total_reward", float("nan"))) for case in legal_cases]
+    legal_reward_mean = mean_finite(legal_rewards)
     legal_timing_reward_spread = _spread(legal_rewards)
     release_vs_hold_reward_delta = (
         legal_reward_mean - hold_reward
@@ -198,7 +187,6 @@ def _learnability_verdict(case_summaries: list[dict[str, Any]], *, reward_epsilo
         ),
     }
 
-
 def _probe_namespace(args: argparse.Namespace, *, mode: str, delay: int = 0) -> SimpleNamespace:
     return SimpleNamespace(
         scenario=str(args.scenario),
@@ -218,7 +206,6 @@ def _probe_namespace(args: argparse.Namespace, *, mode: str, delay: int = 0) -> 
         json_out="",
         plot_out="",
     )
-
 
 def run_audit(args: argparse.Namespace) -> dict[str, Any]:
     cases: list[tuple[str, SimpleNamespace]] = [
@@ -267,29 +254,28 @@ def run_audit(args: argparse.Namespace) -> dict[str, Any]:
         "cases": payload_cases,
     }
 
-
 def write_json(path: str, payload: dict[str, Any]) -> None:
-    out_path = os.path.abspath(path)
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=True)
-        f.write("\n")
-
+    write_json_output(path, payload, skip_empty_path=False)
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Audit one-shot fire-timing learnability.")
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--episodes", type=int, default=2)
-    parser.add_argument("--seed", type=int, default=31)
-    parser.add_argument("--max_steps", type=int, default=2000)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        include=("train_config",),
+        defaults={"train_config": DEFAULT_TRAIN_CONFIG},
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "seed", "max_steps"),
+        defaults={"episodes": 2, "seed": 31, "max_steps": 2000},
+    )
     parser.add_argument("--delays", default="0,31,63")
     parser.add_argument("--fire_range_m", type=float, default=12000.0)
     parser.add_argument("--legal_fire_range_m", type=float, default=0.0)
     parser.add_argument("--reward_epsilon", type=float, default=1.0)
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     return parser
-
 
 def main() -> int:
     args = build_arg_parser().parse_args()
@@ -298,7 +284,6 @@ def main() -> int:
         write_json(args.json_out, payload)
     print(json.dumps(payload, indent=2, ensure_ascii=True))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

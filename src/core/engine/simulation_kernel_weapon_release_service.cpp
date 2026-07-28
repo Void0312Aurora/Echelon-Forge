@@ -206,13 +206,16 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            !tuning.induced_drag_k_mach_breakpoints.empty() ||
            !tuning.induced_drag_k_mach_values.empty() || std::isfinite(tuning.propellant_mass_kg) ||
            std::isfinite(tuning.max_lateral_g) || std::isfinite(tuning.autopilot_tau_s) ||
+           std::isfinite(tuning.autopilot_damping) ||
+           (tuning.autopilot_order >= 1 &&
+            (tuning.has_autopilot_order_override() || tuning.autopilot_order != 1)) ||
            std::isfinite(tuning.max_accel_response_g_per_s) ||
            std::isfinite(tuning.mach_transonic_start) || std::isfinite(tuning.mach_transonic_end) ||
            std::isfinite(tuning.cd0_power_on_ratio) || std::isfinite(tuning.min_launch_range_m) ||
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
            tuning.midcourse_datalink_supported || tuning.use_kalman_seeker ||
-           std::isfinite(tuning.apn_target_accel_gain) || tuning.has_warhead_profile ||
-           tuning.has_fuze_profile;
+           tuning.explicit_overrides != 0 || std::isfinite(tuning.apn_target_accel_gain) ||
+           tuning.has_warhead_profile || tuning.has_fuze_profile;
 }
 
 std::string naval_weapon_type_name(NavalWeaponType weapon_type) {
@@ -362,7 +365,10 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (std::isfinite(overlay.autopilot_tau_s)) base->autopilot_tau_s = overlay.autopilot_tau_s;
     if (std::isfinite(overlay.autopilot_damping))
         base->autopilot_damping = overlay.autopilot_damping;
-    if (overlay.autopilot_order >= 1) base->autopilot_order = overlay.autopilot_order;
+    if (overlay.autopilot_order >= 1 &&
+        (overlay.has_autopilot_order_override() || overlay.autopilot_order != 1)) {
+        base->autopilot_order = overlay.autopilot_order;
+    }
     if (std::isfinite(overlay.max_accel_response_g_per_s))
         base->max_accel_response_g_per_s = overlay.max_accel_response_g_per_s;
     if (std::isfinite(overlay.mach_transonic_start))
@@ -375,9 +381,15 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
         base->min_launch_range_m = overlay.min_launch_range_m;
     if (std::isfinite(overlay.max_launch_off_boresight_deg))
         base->max_launch_off_boresight_deg = overlay.max_launch_off_boresight_deg;
-    if (overlay.lobl_required) base->lobl_required = true;
-    if (overlay.midcourse_datalink_supported) base->midcourse_datalink_supported = true;
-    if (overlay.use_kalman_seeker) base->use_kalman_seeker = true;
+    if (overlay.has_lobl_required_override() || overlay.lobl_required) {
+        base->lobl_required = overlay.lobl_required;
+    }
+    if (overlay.has_midcourse_datalink_override() || overlay.midcourse_datalink_supported) {
+        base->midcourse_datalink_supported = overlay.midcourse_datalink_supported;
+    }
+    if (overlay.has_kalman_seeker_override() || overlay.use_kalman_seeker) {
+        base->use_kalman_seeker = overlay.use_kalman_seeker;
+    }
     if (overlay.has_fuze_profile) {
         base->fuze_profile = overlay.fuze_profile;
         base->has_fuze_profile = true;

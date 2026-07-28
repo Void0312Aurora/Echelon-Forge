@@ -15,6 +15,15 @@ from pathlib import Path
 from typing import Iterable
 from urllib import error, request
 
+try:
+  from tools.maintenance.document_scope import (
+    filter_paths,
+    is_local_only_doc,
+    is_strict_bilingual_doc,
+  )
+except ModuleNotFoundError:  # Direct script execution from tools/maintenance.
+  from document_scope import filter_paths, is_local_only_doc, is_strict_bilingual_doc
+
 
 DEFAULT_BASE_URL_ENV = "DOCS_TRANSLATE_BASE_URL"
 DEFAULT_MODEL_ENV = "DOCS_TRANSLATE_MODEL"
@@ -36,16 +45,7 @@ FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
 INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
 URL_RE = re.compile(r"https?://\S+")
 WINDOWS_POSIX_ABS_RE = re.compile(r"^/[A-Za-z]:/")
-DEFAULT_EXCLUDE_SUBSTRINGS = (
-  "docs/forward/temp/",
-  "docs/temp/",
-  "docs/plan/results/",
-  "docs/plan/architecture/review/",
-)
-DEFAULT_EXCLUDE_DIR_NAMES = {"Archive", "archive"}
 DEFAULT_WORKSPACE_ROOT = "/home/void0312/Workshop/CMO"
-STRICT_PLAN_SUBTREES = {"architecture", "runtime_facade", "cooperative"}
-STRICT_TASK_SECOND_LEVEL_READMES = {"flight_dynamics"}
 
 
 @dataclass(frozen=True)
@@ -208,6 +208,16 @@ def parse_args() -> argparse.Namespace:
     action="store_true",
     help="Build the registry from the full shared docs tree instead of only the strict maintained bilingual surface.",
   )
+  clusters.add_argument(
+    "--pair",
+    dest="pair_ids",
+    action="append",
+    default=[],
+    help=(
+      "Refresh only the named pair_id while preserving every unselected registry "
+      "entry. Repeat for multiple reviewed pairs."
+    ),
+  )
 
   rewrite = subparsers.add_parser(
     "rewrite-links",
@@ -248,67 +258,6 @@ def map_target_path(path: Path, source_lang: str, target_lang: str) -> Path:
 
 def iter_markdown(root: Path) -> Iterable[Path]:
   return sorted(p for p in root.rglob("*.md") if p.is_file())
-
-
-def is_local_only_doc(path: Path) -> bool:
-  normalized = path.as_posix()
-  if any(part in normalized for part in DEFAULT_EXCLUDE_SUBSTRINGS):
-    return True
-  name_lower = path.name.lower()
-  if name_lower.startswith("temp-") or name_lower.startswith("scratch-"):
-    return True
-  return any(part in DEFAULT_EXCLUDE_DIR_NAMES for part in path.parts)
-
-
-def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
-  relative = path.relative_to(root).as_posix()
-  if relative in {"README.md", "README.zh.md"}:
-    return True
-  if relative.startswith("standards/") or relative.startswith("manual/"):
-    return True
-  if relative in {
-    "plan/README.md",
-    "plan/README.zh.md",
-    "plan/documentation_bilingual_migration_plan_20260518.md",
-    "plan/documentation_bilingual_migration_plan_20260518.zh.md",
-    "task/README.md",
-    "task/README.zh.md",
-    "task/task_archive_convergence_plan_20260518.md",
-    "task/task_archive_convergence_plan_20260518.zh.md",
-  }:
-    return True
-
-  parts = relative.split("/")
-  if len(parts) >= 2 and parts[0] == "plan" and parts[1] in STRICT_PLAN_SUBTREES:
-    return True
-  if len(parts) == 3 and parts[0] == "task" and parts[2] in {"README.md", "README.zh.md"}:
-    return True
-  if (
-    len(parts) == 4
-    and parts[0] == "task"
-    and parts[1] in STRICT_TASK_SECOND_LEVEL_READMES
-    and parts[3] in {"README.md", "README.zh.md"}
-  ):
-    return True
-  return False
-
-
-def filter_paths(
-  paths: Iterable[Path],
-  include_local_only: bool,
-  *,
-  root: Path | None = None,
-  strict_bilingual_only: bool = False,
-) -> list[Path]:
-  if include_local_only:
-    filtered = sorted(paths)
-  else:
-    filtered = sorted(p for p in paths if not is_local_only_doc(p))
-  if strict_bilingual_only:
-    if root is None:
-      raise ValueError("root is required when strict_bilingual_only=True")
-    filtered = [p for p in filtered if is_strict_bilingual_doc(p, root)]
-  return sorted(filtered)
 
 
 def classify_markdown_language(path: Path) -> str:
@@ -564,6 +513,44 @@ def load_cluster_registry(path: Path) -> dict[str, dict[str, str]]:
   return registry
 
 
+def load_cluster_registry_payload(path: Path) -> dict[str, object]:
+  if not path.exists():
+    raise ValueError(f"Registry does not exist for selective refresh: {path}")
+  data = json.loads(path.read_text(encoding="utf-8"))
+  if not isinstance(data, dict) or not isinstance(data.get("pairs"), list):
+    raise ValueError(f"Registry must be an object with a pairs list: {path}")
+  return data
+
+
+def merge_selected_cluster_records(
+  existing_payload: dict[str, object],
+  current_records: list[dict[str, str]],
+  pair_ids: Iterable[str],
+) -> dict[str, object]:
+  selected = sorted(set(pair_ids))
+  current_by_id = {record["pair_id"]: record for record in current_records}
+  unknown = sorted(set(selected) - set(current_by_id))
+  if unknown:
+    raise ValueError(f"Unknown bilingual pair_id(s): {', '.join(unknown)}")
+
+  existing_entries = existing_payload.get("pairs")
+  if not isinstance(existing_entries, list):
+    raise ValueError("Registry payload must contain a pairs list")
+
+  merged_by_id: dict[str, dict[str, object]] = {}
+  for entry in existing_entries:
+    if not isinstance(entry, dict) or not entry.get("pair_id"):
+      raise ValueError("Every registry pair entry must be an object with pair_id")
+    merged_by_id[str(entry["pair_id"])] = dict(entry)
+  for pair_id in selected:
+    merged_by_id[pair_id] = dict(current_by_id[pair_id])
+
+  merged = dict(existing_payload)
+  merged["generated_at"] = date.today().isoformat()
+  merged["pairs"] = [merged_by_id[pair_id] for pair_id in sorted(merged_by_id)]
+  return merged
+
+
 def build_cluster_records(
   root: Path,
   include_local_only: bool,
@@ -620,14 +607,23 @@ def run_clusters(args: argparse.Namespace) -> int:
     previous_registry=previous_registry,
     strict_bilingual_only=not args.full_tree,
   )
-  payload = {
-    "generated_at": date.today().isoformat(),
-    "root": root.as_posix(),
-    "pairs": records,
-  }
+  if args.pair_ids:
+    payload = merge_selected_cluster_records(
+      load_cluster_registry_payload(registry_path),
+      records,
+      args.pair_ids,
+    )
+  else:
+    payload = {
+      "generated_at": date.today().isoformat(),
+      "root": root.as_posix(),
+      "pairs": records,
+    }
   print(f"cluster_registry: {registry_path}")
   print(f"scope: {'full-tree' if args.full_tree else 'maintained-surface'}")
   print(f"pair_count: {len(records)}")
+  if args.pair_ids:
+    print(f"selected_pair_count: {len(set(args.pair_ids))}")
   if args.dry_run:
     return 0
   if args.write:

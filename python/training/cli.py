@@ -2,20 +2,13 @@ from __future__ import annotations
 
 import argparse
 
+from python.env_config import ACTION_MODES
+from python.mission_obs_taxonomy import MISSION_OBS_MODE_NAMES
 
-MISSION_OBS_MODE_CHOICES = [
-    "basic",
-    "nav_v1",
-    "nav_v2",
-    "nav_v2_formation_v1",
-    "nav_v2_formation_role_v1",
-    "nav_v2_cooperative_takeoff_v1",
-    "naval_screen_station_v1",
-    "air_combat_c2_roe_v1",
-    "air_combat_c2_roe_v2",
-]
 
-ACTION_MODE_CHOICES = ["full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"]
+MISSION_OBS_MODE_CHOICES = list(MISSION_OBS_MODE_NAMES)
+
+ACTION_MODE_CHOICES = list(ACTION_MODES)
 
 
 def build_train_arg_parser() -> argparse.ArgumentParser:

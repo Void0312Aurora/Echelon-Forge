@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+import sys
+from pathlib import Path
+
 from tools.runners import run_pytest_suite
 
 
@@ -36,3 +40,25 @@ def test_resolve_pytest_entry_keeps_missing_nodeid_check_on_base_path() -> None:
     "tests/runners/missing_runner_test.py"
   )
   assert resolved == f"{check_path}::test_missing"
+
+
+def test_main_reports_stale_manifest_entries_with_exit_code_2(
+  tmp_path: Path,
+  monkeypatch,
+  capsys,
+) -> None:
+  suite_path = tmp_path / "suite.json"
+  suite_path.write_text(
+    json.dumps({"name": "stale", "paths": ["tests/runners/missing.py"]}),
+    encoding="utf-8",
+  )
+  monkeypatch.setattr(
+    sys,
+    "argv",
+    ["run_pytest_suite.py", "--suite", str(suite_path)],
+  )
+
+  assert run_pytest_suite.main() == 2
+  stderr = capsys.readouterr().err
+  assert "[pytest-suite] stale: stale path entries detected:" in stderr
+  assert "tests/runners/missing.py" in stderr

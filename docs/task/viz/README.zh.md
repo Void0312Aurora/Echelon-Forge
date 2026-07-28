@@ -12,7 +12,7 @@
 - 战术地图界面重构现在是已归档的第一切片：地图优先壳、tabbed workspaces、分组战术图层、
   profile UI 默认值，以及验证/收口证据，都在文档边界内接受。原路径只保留轻量 pointer；
   完整包位于
-  [archive/archive/tactical_map_interface_refactor/](./archive/archive/tactical_map_interface_refactor/README.zh.md)。
+  [archive/tactical_map_interface_refactor/](./archive/tactical_map_interface_refactor/README.zh.md)。
 
 ## 推荐阅读顺序
 
@@ -21,7 +21,7 @@
 - 战术地图界面重构 pointer：
   [archive/tactical_map_interface_refactor/README.zh.md](./archive/tactical_map_interface_refactor/README.zh.md)
 - 已归档的战术地图界面证据包：
-  [archive/archive/tactical_map_interface_refactor/README.zh.md](./archive/archive/tactical_map_interface_refactor/README.zh.md)
+  [archive/tactical_map_interface_refactor/README.zh.md](./archive/tactical_map_interface_refactor/README.zh.md)
 - 活跃的纯地图查看 follow-on：
   [map_only_viewer_mode/README.zh.md](./map_only_viewer_mode/README.zh.md)
 - 活跃的环境 overlay 可视元素 follow-on：

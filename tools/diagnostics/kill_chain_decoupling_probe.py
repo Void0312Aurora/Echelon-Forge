@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import json
 import math
 import os
@@ -12,16 +11,16 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
-
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
-
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path, repo_root
 
 ensure_repo_imports()
 
+REPO_ROOT = Path(repo_root())
+
+from tools.diagnostics.common import finite_float, native_stdout_to_stderr
 import ef_py  # noqa: E402
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethality_abstraction import (  # noqa: E402
   _lethality_chain_decoupling_summary,
@@ -36,7 +35,6 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.lethalit
   _lethality_chain_scalar_ledger,
   _scalar_coupling_summary,
 )
-
 
 SCHEMA_VERSION = "a2.kill_chain_decoupling_probe.v1"
 FACADE_SCHEMA_VERSION = "a2.kill_chain_decoupled_facade.v1"
@@ -249,19 +247,9 @@ SUPPLEMENTAL_EVIDENCE_REQUIRED_FIELDS = (
   "residuals",
 )
 
-
-def _finite_float(value: Any, default: float = float("nan")) -> float:
-  try:
-    out = float(value)
-  except Exception:
-    return float(default)
-  return out if math.isfinite(out) else float(default)
-
-
 def _finite_or_none(value: Any) -> float | None:
-  out = _finite_float(value)
+  out = finite_float(value)
   return out if math.isfinite(out) else None
-
 
 def _apply_guidance_tuning_overrides(
   tuning: Any,
@@ -284,7 +272,6 @@ def _apply_guidance_tuning_overrides(
     applied[field] = value
   return applied
 
-
 def _normalize_guidance_mechanism_profile(
   profile: dict[str, int] | None,
 ) -> dict[str, int] | None:
@@ -306,7 +293,6 @@ def _normalize_guidance_mechanism_profile(
     normalized[field] = value
   return normalized
 
-
 def _guidance_runtime_trace_sample(
   runtime: dict[str, Any],
   *,
@@ -316,12 +302,12 @@ def _guidance_runtime_trace_sample(
   velocity_heading_deg: float,
 ) -> dict[str, Any]:
   target_accel = (
-    _finite_float(runtime.get("target_track_ax_mps2", 0.0), 0.0),
-    _finite_float(runtime.get("target_track_ay_mps2", 0.0), 0.0),
-    _finite_float(runtime.get("target_track_az_mps2", 0.0), 0.0),
+    finite_float(runtime.get("target_track_ax_mps2", 0.0), 0.0),
+    finite_float(runtime.get("target_track_ay_mps2", 0.0), 0.0),
+    finite_float(runtime.get("target_track_az_mps2", 0.0), 0.0),
   )
-  commanded = _finite_float(runtime.get("commanded_lateral_accel_mps2", 0.0), 0.0)
-  max_lateral_g = _finite_float(runtime.get("guidance_max_lateral_g", 0.0), 0.0)
+  commanded = finite_float(runtime.get("commanded_lateral_accel_mps2", 0.0), 0.0)
+  max_lateral_g = finite_float(runtime.get("guidance_max_lateral_g", 0.0), 0.0)
   max_lateral_accel = max(0.0, max_lateral_g * 9.80665)
   heading_error_deg = velocity_heading_deg - transform_heading_deg
   while heading_error_deg > 180.0:
@@ -329,23 +315,23 @@ def _guidance_runtime_trace_sample(
   while heading_error_deg < -180.0:
     heading_error_deg += 360.0
   capture = tuple(
-    _finite_float(runtime.get(f"guidance_capture_accel_{axis}_mps2", 0.0), 0.0)
+    finite_float(runtime.get(f"guidance_capture_accel_{axis}_mps2", 0.0), 0.0)
     for axis in ("x", "y", "z")
   )
   pn = tuple(
-    _finite_float(runtime.get(f"guidance_pn_accel_{axis}_mps2", 0.0), 0.0)
+    finite_float(runtime.get(f"guidance_pn_accel_{axis}_mps2", 0.0), 0.0)
     for axis in ("x", "y", "z")
   )
   apn = tuple(
-    _finite_float(runtime.get(f"guidance_apn_accel_{axis}_mps2", 0.0), 0.0)
+    finite_float(runtime.get(f"guidance_apn_accel_{axis}_mps2", 0.0), 0.0)
     for axis in ("x", "y", "z")
   )
   preclamp = tuple(
-    _finite_float(runtime.get(f"guidance_preclamp_accel_{axis}_mps2", 0.0), 0.0)
+    finite_float(runtime.get(f"guidance_preclamp_accel_{axis}_mps2", 0.0), 0.0)
     for axis in ("x", "y", "z")
   )
   postclamp = tuple(
-    _finite_float(runtime.get(f"guidance_postclamp_accel_{axis}_mps2", 0.0), 0.0)
+    finite_float(runtime.get(f"guidance_postclamp_accel_{axis}_mps2", 0.0), 0.0)
     for axis in ("x", "y", "z")
   )
   component_sum_error = math.sqrt(
@@ -370,7 +356,7 @@ def _guidance_runtime_trace_sample(
     "elevation_rate_deg_s": _finite_or_none(runtime.get("elevation_rate_deg_s")),
     "current_speed_mps": _finite_or_none(runtime.get("current_speed_mps")),
     "commanded_lateral_accel_mps2": commanded,
-    "achieved_lateral_accel_mps2": _finite_float(
+    "achieved_lateral_accel_mps2": finite_float(
       runtime.get("achieved_lateral_accel_mps2", 0.0),
       0.0,
     ),
@@ -409,39 +395,38 @@ def _guidance_runtime_trace_sample(
     ),
     "guidance_pn_source_used": int(runtime.get("guidance_pn_source_used", 0) or 0),
     "guidance_capture_accel_xyz_mps2": list(capture),
-    "guidance_capture_accel_mps2": _finite_float(
+    "guidance_capture_accel_mps2": finite_float(
       runtime.get("guidance_capture_accel_mps2", 0.0), 0.0
     ),
     "guidance_pn_accel_xyz_mps2": list(pn),
-    "guidance_pn_accel_mps2": _finite_float(
+    "guidance_pn_accel_mps2": finite_float(
       runtime.get("guidance_pn_accel_mps2", 0.0), 0.0
     ),
     "guidance_apn_accel_xyz_mps2": list(apn),
     "guidance_preclamp_accel_xyz_mps2": list(preclamp),
-    "guidance_preclamp_accel_mps2": _finite_float(
+    "guidance_preclamp_accel_mps2": finite_float(
       runtime.get("guidance_preclamp_accel_mps2", 0.0), 0.0
     ),
     "guidance_postclamp_accel_xyz_mps2": list(postclamp),
-    "guidance_postclamp_accel_mps2": _finite_float(
+    "guidance_postclamp_accel_mps2": finite_float(
       runtime.get("guidance_postclamp_accel_mps2", 0.0), 0.0
     ),
     "guidance_component_sum_error_mps2": component_sum_error,
     "guidance_los_rate_xyz_rad_s": [
-      _finite_float(runtime.get(f"guidance_los_rate_{axis}_rad_s", 0.0), 0.0)
+      finite_float(runtime.get(f"guidance_los_rate_{axis}_rad_s", 0.0), 0.0)
       for axis in ("x", "y", "z")
     ],
-    "guidance_los_rate_rad_s": _finite_float(
+    "guidance_los_rate_rad_s": finite_float(
       runtime.get("guidance_los_rate_rad_s", 0.0), 0.0
     ),
-    "guidance_closing_speed_used_mps": _finite_float(
+    "guidance_closing_speed_used_mps": finite_float(
       runtime.get("guidance_closing_speed_used_mps", 0.0), 0.0
     ),
     "guidance_achieved_accel_xyz_mps2": [
-      _finite_float(runtime.get(f"guidance_achieved_accel_{axis}_mps2", 0.0), 0.0)
+      finite_float(runtime.get(f"guidance_achieved_accel_{axis}_mps2", 0.0), 0.0)
       for axis in ("x", "y", "z")
     ],
   }
-
 
 def _runtime_projection_profile(runtime_state: dict[str, Any]) -> dict[str, Any]:
   family = str(runtime_state.get("warhead_family", "") or "blast_fragmentation")
@@ -506,25 +491,20 @@ def _runtime_projection_profile(runtime_state: dict[str, Any]) -> dict[str, Any]
     "source": "missile_runtime_state",
   }
 
-
 def _int_attr(obj: Any, name: str, default: int = 0) -> int:
   try:
     return int(getattr(obj, name, default) or default)
   except Exception:
     return int(default)
 
-
 def _float_attr(obj: Any, name: str, default: float = float("nan")) -> float | None:
   return _finite_or_none(getattr(obj, name, default))
-
 
 def _str_attr(obj: Any, name: str, default: str = "") -> str:
   return str(getattr(obj, name, default) or default)
 
-
 def _bool_attr(obj: Any, name: str, default: bool = False) -> bool:
   return bool(getattr(obj, name, default))
-
 
 def _safe_ratio(numerator: float | None, denominator: float | None) -> float | None:
   if numerator is None or denominator is None:
@@ -533,7 +513,6 @@ def _safe_ratio(numerator: float | None, denominator: float | None) -> float | N
     return None
   return float(numerator) / float(denominator)
 
-
 def _product_or_none(values: tuple[float | None, ...]) -> float | None:
   product = 1.0
   for value in values:
@@ -541,7 +520,6 @@ def _product_or_none(values: tuple[float | None, ...]) -> float | None:
       return None
     product *= float(value)
   return product
-
 
 def _field_present(value: Any) -> bool:
   if value is None:
@@ -554,10 +532,8 @@ def _field_present(value: Any) -> bool:
     return math.isfinite(float(value))
   return True
 
-
 def _present_fields(row: dict[str, Any], names: tuple[str, ...]) -> list[str]:
   return [name for name in names if _field_present(row.get(name))]
-
 
 def _load_row_response_fields(row: dict[str, Any]) -> list[str]:
   fields: list[str] = []
@@ -578,7 +554,6 @@ def _load_row_response_fields(row: dict[str, Any]) -> list[str]:
     fields.append("component_integrity_after")
   return fields
 
-
 def _make_kernel(database_path: Path, *, seed: int) -> ef_py.SimulationKernel:
   sim = ef_py.SimulationKernel()
   sim.reset(int(seed))
@@ -586,7 +561,6 @@ def _make_kernel(database_path: Path, *, seed: int) -> ef_py.SimulationKernel:
     raise RuntimeError(f"failed to load database: {database_path}")
   sim.set_time_step(1.0 / 60.0)
   return sim
-
 
 def _make_detection(
   target_id: int,
@@ -609,7 +583,6 @@ def _make_detection(
   det.local_sensor_hit = bool(local_sensor_hit)
   det.timestamp = float(timestamp)
   return det
-
 
 def _relative_detection_from_truth(
   sim: ef_py.SimulationKernel,
@@ -652,7 +625,6 @@ def _relative_detection_from_truth(
     closing_speed_mps=closing,
     timestamp=timestamp,
   )
-
 
 def _spawn_geometry_pair(
   sim: ef_py.SimulationKernel,
@@ -698,13 +670,11 @@ def _spawn_geometry_pair(
   sim.set_contact_list(blue_id, [_relative_detection_from_truth(sim, blue_id, red_id, timestamp=0.0)])
   return blue_id, red_id
 
-
 def _select_weapon_station(sim: ef_py.SimulationKernel, entity_id: int, station_id: int) -> None:
   pilot = ef_py.PilotAction()
   pilot.active = True
   pilot.weapon_select_id = int(station_id)
   sim.set_pilot_action(int(entity_id), pilot)
-
 
 def _set_unit_truth_state(
   sim: ef_py.SimulationKernel,
@@ -728,7 +698,6 @@ def _set_unit_truth_state(
     float(vy),
     0.0,
   )
-
 
 def _spawn_structured_f16_pair(sim: ef_py.SimulationKernel) -> tuple[int, int]:
   attacker_id = int(
@@ -763,7 +732,6 @@ def _spawn_structured_f16_pair(sim: ef_py.SimulationKernel) -> tuple[int, int]:
   )
   return attacker_id, target_id
 
-
 def _make_fuze_profile() -> ef_py.FuzeProfile:
   profile = ef_py.FuzeProfile()
   profile.type = "radar_proximity"
@@ -774,7 +742,6 @@ def _make_fuze_profile() -> ef_py.FuzeProfile:
   profile.synthetic = False
   profile.provenance = "kill_chain_decoupling_probe_aim120_offset"
   return profile
-
 
 def _make_warhead_profile(
   family: str,
@@ -793,7 +760,6 @@ def _make_warhead_profile(
   profile.provenance = "kill_chain_decoupling_probe_profile"
   return profile
 
-
 def missile_velocity_toward_origin(
   local_point_m: tuple[float, float, float],
   *,
@@ -804,7 +770,6 @@ def missile_velocity_toward_origin(
     return (0.0, 0.0, 0.0)
   return tuple(-float(value) / distance_m * float(speed_mps) for value in local_point_m)
 
-
 def _event_effect_summary(effect: Any | None) -> dict[str, Any]:
   if effect is None:
     return {}
@@ -814,7 +779,7 @@ def _event_effect_summary(effect: Any | None) -> dict[str, Any]:
   if response_rows:
     max_probability_row = max(
       response_rows,
-      key=lambda row: _finite_float(
+      key=lambda row: finite_float(
         getattr(row, "failure_probability", float("nan")),
         -1.0,
       ),
@@ -882,7 +847,6 @@ def _event_effect_summary(effect: Any | None) -> dict[str, Any]:
     ),
     "vulnerability_effect_scale": _float_attr(effect, "vulnerability_effect_scale"),
   }
-
 
 def _component_load_factor_rows(
   effect: Any | None,
@@ -968,7 +932,6 @@ def _component_load_factor_rows(
     factor_row["field_boundary_status"] = "diagnostic_boundary_only"
     out.append(factor_row)
   return out
-
 
 def _component_load_factor_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
   def finite_values(field: str) -> list[float]:
@@ -1058,7 +1021,6 @@ def _component_load_factor_summary(rows: list[dict[str, Any]]) -> dict[str, Any]
     },
   }
 
-
 def _stage_observed(
   stage_diagnostics: dict[str, Any],
   abstraction_stage: str,
@@ -1067,7 +1029,6 @@ def _stage_observed(
     if str(row.get("abstraction_stage", "") or "") == str(abstraction_stage):
       return dict(row.get("observed", {}) or {})
   return {}
-
 
 def _runtime_component_load_rows(runtime_facade: Any) -> list[dict[str, Any]]:
   warhead_load = getattr(runtime_facade, "warhead_load_field", None)
@@ -1117,7 +1078,6 @@ def _runtime_component_load_rows(runtime_facade: Any) -> list[dict[str, Any]]:
     for index, row in enumerate(rows)
   ]
 
-
 def _runtime_component_response_rows(runtime_facade: Any) -> list[dict[str, Any]]:
   rows = list(getattr(runtime_facade, "component_responses", []) or [])
   out: list[dict[str, Any]] = []
@@ -1161,7 +1121,6 @@ def _runtime_component_response_rows(runtime_facade: Any) -> list[dict[str, Any]
       }
     )
   return out
-
 
 def _runtime_component_response_scalar_ledger(
   runtime_facade: dict[str, Any] | None,
@@ -1221,7 +1180,6 @@ def _runtime_component_response_scalar_ledger(
         }
       )
   return out
-
 
 def _runtime_facade(effect: Any | None) -> dict[str, Any]:
   base = {
@@ -1402,7 +1360,6 @@ def _runtime_facade(effect: Any | None) -> dict[str, Any]:
     },
   }
 
-
 def _decoupled_facade(
   *,
   stage_diagnostics: dict[str, Any],
@@ -1467,7 +1424,6 @@ def _decoupled_facade(
     "effect_summary_event_id": effect_summary.get("event_id"),
   }
 
-
 def _facade_summary(cases: list[dict[str, Any]]) -> dict[str, Any]:
   component_response_rows = [
     row
@@ -1508,7 +1464,6 @@ def _facade_summary(cases: list[dict[str, Any]]) -> dict[str, Any]:
     },
   }
 
-
 def _stage_report_has_required_stages(case: dict[str, Any]) -> bool:
   stages = {
     str(row.get("abstraction_stage", "") or "")
@@ -1521,7 +1476,6 @@ def _stage_report_has_required_stages(case: dict[str, Any]) -> bool:
     "component_response",
     "consequence_projection",
   }.issubset(stages)
-
 
 def _case_has_no_legacy_fuze_damage_multiplier_surface(case: dict[str, Any]) -> bool:
   effect = dict(case.get("effect", {}) or {})
@@ -1540,13 +1494,11 @@ def _case_has_no_legacy_fuze_damage_multiplier_surface(case: dict[str, Any]) -> 
   )
   return not any(token in serialized for token in legacy_tokens)
 
-
 def _display_repo_path(path: Path) -> str:
   try:
     return str(path.resolve().relative_to(REPO_ROOT))
   except Exception:
     return str(path)
-
 
 def _external_calibration_evidence_status(
   report_path: Path | str | None,
@@ -1707,7 +1659,6 @@ def _external_calibration_evidence_status(
     "blocked_by": blockers,
   }
 
-
 def _authority_to_layer_map() -> dict[str, dict[str, str]]:
   mapping: dict[str, dict[str, str]] = {}
   for layer_id, owner_stage, _scope, _evidence, required_authorities in CALIBRATION_LAYER_SPECS:
@@ -1717,7 +1668,6 @@ def _authority_to_layer_map() -> dict[str, dict[str, str]]:
         "owner_stage": str(owner_stage),
       }
   return mapping
-
 
 def _external_evidence_unblock_queue(payload: dict[str, Any]) -> list[dict[str, Any]]:
   authority_to_layer = _authority_to_layer_map()
@@ -1808,7 +1758,6 @@ def _external_evidence_unblock_queue(payload: dict[str, Any]) -> list[dict[str, 
     ),
   )
 
-
 def _external_evidence_layer_gap_summary(
   payload: dict[str, Any],
   *,
@@ -1879,7 +1828,6 @@ def _external_evidence_layer_gap_summary(
     )
   return out
 
-
 def _calibration_layer_rows(
   *,
   response_fields_on_load_rows: int,
@@ -1919,7 +1867,6 @@ def _calibration_layer_rows(
       }
     )
   return rows
-
 
 def _single_layer_calibration_plan(
   *,
@@ -2006,7 +1953,6 @@ def _single_layer_calibration_plan(
     "plans": plans,
   }
 
-
 def external_evidence_preflight(
   report_path: Path | str | None = DEFAULT_EXTERNAL_EVIDENCE_REPORT_PATH,
 ) -> dict[str, Any]:
@@ -2063,7 +2009,6 @@ def external_evidence_preflight(
     },
   }
 
-
 def _audit_row(
   item_id: str,
   *,
@@ -2091,7 +2036,6 @@ def _audit_row(
     "blocked_by": blockers,
     "remaining_boundary": str(remaining_boundary),
   }
-
 
 def kill_chain_completion_audit(report: dict[str, Any]) -> dict[str, Any]:
   guidance_cases = list(report.get("guidance_cases", []) or [])
@@ -2301,14 +2245,12 @@ def kill_chain_completion_audit(report: dict[str, Any]) -> dict[str, Any]:
     },
   }
 
-
 def _supplemental_contract_authority_scope(authority_field: str) -> str:
   if authority_field == "deterministic_fuze_authority":
     return "fuze_decision_model_only"
   if authority_field == "pk_authority":
     return "simulation_consequence_projection_only"
   return "unsupported"
-
 
 def _layer_spec_by_id() -> dict[str, tuple[str, str, str, str, tuple[str, ...]]]:
   return {
@@ -2327,7 +2269,6 @@ def _layer_spec_by_id() -> dict[str, tuple[str, str, str, str, tuple[str, ...]]]
       required_authorities,
     ) in CALIBRATION_LAYER_SPECS
   }
-
 
 def _supplemental_contract_record_template(
   *,
@@ -2386,7 +2327,6 @@ def _supplemental_contract_record_template(
     "non_claims": list(MANDATORY_EVIDENCE_NON_CLAIMS),
     "residuals": [],
   }
-
 
 def _calibration_evidence_contract_surface() -> dict[str, Any]:
   layer_contracts: list[dict[str, Any]] = []
@@ -2453,7 +2393,6 @@ def _calibration_evidence_contract_surface() -> dict[str, Any]:
       "calibration_authority": False,
     },
   }
-
 
 def external_evidence_supplemental_contract() -> dict[str, Any]:
   records: list[dict[str, Any]] = []
@@ -2522,7 +2461,6 @@ def external_evidence_supplemental_contract() -> dict[str, Any]:
       "calibration_authority": False,
     },
   }
-
 
 def external_evidence_template() -> dict[str, Any]:
   layer_templates: list[dict[str, Any]] = []
@@ -2652,7 +2590,6 @@ def external_evidence_template() -> dict[str, Any]:
     },
   }
 
-
 def _placeholder_paths(value: Any, path: str = "$") -> list[str]:
   paths: list[str] = []
   if isinstance(value, str):
@@ -2668,14 +2605,12 @@ def _placeholder_paths(value: Any, path: str = "$") -> list[str]:
       paths.extend(_placeholder_paths(child, f"{path}[{idx}]"))
   return paths
 
-
 def _truthy_requested_authorities(authority_requests: dict[str, Any]) -> list[str]:
   return sorted(
     str(field)
     for field, value in authority_requests.items()
     if isinstance(value, bool) and value
   )
-
 
 def _evidence_record_template_check(record: dict[str, Any], *, record_index: int) -> dict[str, Any]:
   blockers: set[str] = set()
@@ -2803,7 +2738,6 @@ def _evidence_record_template_check(record: dict[str, Any], *, record_index: int
     "missing_non_claims": missing_non_claims,
   }
 
-
 def external_evidence_template_check(path: Path | str) -> dict[str, Any]:
   payload = _load_json_report(path)
   schema = str(payload.get("schema_version", "") or "")
@@ -2900,7 +2834,6 @@ def external_evidence_template_check(path: Path | str) -> dict[str, Any]:
       "calibration_authority": False,
     },
   }
-
 
 def _supplemental_contract_record_check(
   record: dict[str, Any],
@@ -3037,7 +2970,6 @@ def _supplemental_contract_record_check(
     "missing_non_claims": missing_non_claims,
   }
 
-
 def external_evidence_supplemental_contract_check(path: Path | str) -> dict[str, Any]:
   payload = _load_json_report(path)
   schema = str(payload.get("schema_version", "") or "")
@@ -3110,7 +3042,6 @@ def external_evidence_supplemental_contract_check(path: Path | str) -> dict[str,
     },
   }
 
-
 def _normalize_guard_value(value: Any) -> Any:
   if isinstance(value, float):
     if not math.isfinite(value):
@@ -3130,7 +3061,6 @@ def _normalize_guard_value(value: Any) -> Any:
     ]
   return value
 
-
 def _stage_rows_by_id(case: dict[str, Any]) -> dict[str, dict[str, Any]]:
   rows = list(case.get("stage_abstractions", []) or [])
   return {
@@ -3139,10 +3069,8 @@ def _stage_rows_by_id(case: dict[str, Any]) -> dict[str, dict[str, Any]]:
     if str(row.get("abstraction_stage", "") or "")
   }
 
-
 def _case_id(case: dict[str, Any]) -> str:
   return str(case.get("case_id", "") or "")
-
 
 def _report_cases_by_id(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
   cases = [
@@ -3150,7 +3078,6 @@ def _report_cases_by_id(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
     *list(report.get("proximity_sweep", []) or []),
   ]
   return {_case_id(case): dict(case) for case in cases if _case_id(case)}
-
 
 def _stage_guard_payload(row: dict[str, Any] | None) -> Any:
   if not row:
@@ -3164,7 +3091,6 @@ def _stage_guard_payload(row: dict[str, Any] | None) -> Any:
     }
   )
 
-
 def _plan_for_layer(report: dict[str, Any], layer_id: str) -> dict[str, Any] | None:
   plans = (
     report.get("calibration_admission", {})
@@ -3175,7 +3101,6 @@ def _plan_for_layer(report: dict[str, Any], layer_id: str) -> dict[str, Any] | N
     if isinstance(plan, dict) and str(plan.get("layer_id", "") or "") == str(layer_id):
       return dict(plan)
   return None
-
 
 def calibration_delta_guard(
   before_report: dict[str, Any],
@@ -3264,7 +3189,6 @@ def calibration_delta_guard(
       "calibration_authority": False,
     },
   }
-
 
 def _calibration_admission_report(
   cases: list[dict[str, Any]],
@@ -3399,7 +3323,6 @@ def _calibration_admission_report(
     },
   }
 
-
 def _stage_diagnostics_from_events(
   events: Any,
   *,
@@ -3443,11 +3366,9 @@ def _stage_diagnostics_from_events(
     "scalar_coupling_summary": _scalar_coupling_summary(scalar_ledger),
   }
 
-
 def _last_or_none(items: Any) -> Any | None:
   values = list(items or [])
   return values[-1] if values else None
-
 
 def run_guidance_case(
   *,
@@ -3544,7 +3465,7 @@ def run_guidance_case(
       runtime = dict(sim.debug_get_missile_runtime_state(missile_id))
       max_achieved_lateral_g = max(
         max_achieved_lateral_g,
-        _finite_float(runtime.get("achieved_lateral_accel_mps2", 0.0), 0.0) / 9.80665,
+        finite_float(runtime.get("achieved_lateral_accel_mps2", 0.0), 0.0) / 9.80665,
       )
       if collect_guidance_runtime_trace and step_idx % trace_stride == 0:
         missile_pos = tuple(float(value) for value in sim.get_unit_position(missile_id))
@@ -3625,7 +3546,6 @@ def run_guidance_case(
     result["guidance_runtime_trace"] = guidance_runtime_trace
   return result
 
-
 def run_proximity_case(
   *,
   database_path: Path = DEFAULT_DATABASE_PATH,
@@ -3697,7 +3617,6 @@ def run_proximity_case(
     "decoupled_facade": decoupled_facade,
     **stage_diagnostics,
   }
-
 
 def generate_report(
   *,
@@ -3775,12 +3694,10 @@ def generate_report(
   report["completion_audit"] = kill_chain_completion_audit(report)
   return report
 
-
 def _parse_distances(value: str) -> tuple[float, ...]:
   if not str(value).strip():
     return DEFAULT_PROXIMITY_DISTANCES_M
   return tuple(float(item.strip()) for item in str(value).split(",") if item.strip())
-
 
 def _load_json_report(path: Path | str) -> dict[str, Any]:
   with open(path, "r", encoding="utf-8") as handle:
@@ -3788,21 +3705,6 @@ def _load_json_report(path: Path | str) -> dict[str, Any]:
   if not isinstance(payload, dict):
     raise ValueError(f"JSON report must be an object: {path}")
   return payload
-
-
-@contextlib.contextmanager
-def _native_stdout_to_stderr():
-  """Keep CLI stdout machine-readable while native runtime logs are emitted."""
-  sys.stdout.flush()
-  saved_stdout_fd = os.dup(1)
-  try:
-    os.dup2(2, 1)
-    yield
-  finally:
-    sys.stdout.flush()
-    os.dup2(saved_stdout_fd, 1)
-    os.close(saved_stdout_fd)
-
 
 def build_arg_parser() -> argparse.ArgumentParser:
   parser = argparse.ArgumentParser(
@@ -3878,7 +3780,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
   parser.add_argument("--output", default="", help="Optional JSON output path.")
   return parser
 
-
 def main(argv: list[str] | None = None) -> int:
   args = build_arg_parser().parse_args(argv)
   if args.delta_guard_before or args.delta_guard_after or args.delta_guard_layer:
@@ -3910,7 +3811,7 @@ def main(argv: list[str] | None = None) -> int:
   elif bool(args.external_evidence_preflight):
     report = external_evidence_preflight(Path(args.external_evidence_report))
   else:
-    with _native_stdout_to_stderr():
+    with native_stdout_to_stderr():
       report = generate_report(
         database_path=Path(args.database),
         proximity_distances_m=_parse_distances(args.proximity_distances_m),
@@ -3928,7 +3829,6 @@ def main(argv: list[str] | None = None) -> int:
       handle.write("\n")
   print(text)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

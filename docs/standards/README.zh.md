@@ -93,18 +93,17 @@ action adapter 与 diagnostics 的模型/策略架构词汇，不负责军种或
 3. [联合命令链与汇报基线](joint/command_link_and_reporting_baseline.md)
 4. [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.md)
 5. [梯度真实性原则](foundation/gradient_realism_principles.zh.md)
-6. [真实性与 Authority 边界规则](foundation/realism_authority_boundary.zh.md)
-7. [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
-8. [军种画像总览](services/README.md)
-9. [美国空军画像](services/air_force.md)
-10. [美国陆军画像](services/army.md)
-11. [美国海军画像](services/navy.md)
-12. [文档对齐映射](overview/document_alignment_map.md)
-13. [场景配置指南](bridge/scenario_guide.md)
-14. [空中平台特化总览](air/README.md)
-15. [海军标准总览](naval/README.md)
-16. [Ground 标准总览](ground/README.zh.md)
-17. [模型架构标准总览](model/README.zh.md)
+6. [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
+7. [军种画像总览](services/README.md)
+8. [美国空军画像](services/air_force.md)
+9. [美国陆军画像](services/army.md)
+10. [美国海军画像](services/navy.md)
+11. [文档对齐映射](overview/document_alignment_map.md)
+12. [场景配置指南](bridge/scenario_guide.md)
+13. [空中平台特化总览](air/README.md)
+14. [海军标准总览](naval/README.md)
+15. [Ground 标准总览](ground/README.zh.md)
+16. [模型架构标准总览](model/README.zh.md)
 
 ## 与活跃任务树的关系
 
@@ -216,6 +215,11 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
 - 标准变更若登记、刷新、保持 held 或退役实现合同，必须遵循
   [标准维护政策](governance/standards_maintenance_policy.zh.md)。
+- 文档类型、生命周期、README 边界、evidence 包、generated 输出、config 索引、
+  链接和 archive 转换必须遵循
+  [文档生命周期规范](governance/document_lifecycle_policy.zh.md)。
+- 全仓代码与文档精简按照
+  [仓库精简与整合路线图](../plan/repository_consolidation/README.zh.md)分轮执行。
 - 当工作被拆分给多个 subagent 或 worker 时，应遵循
   [Subagent 使用规范](governance/subagent_usage_policy.zh.md)。
 - 当 simulation-architecture WP 已完成实现但仍需要发布收口时，使用
@@ -225,6 +229,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 
 - [双语文档政策](governance/bilingual_documentation_policy.zh.md)
 - [双语文档簇](governance/bilingual_document_clusters.zh.md)
+- [文档生命周期规范](governance/document_lifecycle_policy.zh.md)
 - [标准维护政策](governance/standards_maintenance_policy.zh.md)
 - [发布与依赖政策](governance/release_and_dependency_policy.zh.md)
 - [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
@@ -232,8 +237,8 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - [文档对齐映射](overview/document_alignment_map.zh.md)
 - [仿真约定](foundation/conventions.zh.md)
 - [梯度真实性原则](foundation/gradient_realism_principles.zh.md)
-- [真实性与 Authority 边界规则](foundation/realism_authority_boundary.zh.md)
 - [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
 - [场景配置指南](bridge/scenario_guide.zh.md)
 - [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.zh.md)
 - [模块化规划](planning/modularization_plan.zh.md)
+- [仓库精简与整合路线图](../plan/repository_consolidation/README.zh.md)

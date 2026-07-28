@@ -110,7 +110,7 @@ mission-command 等数据，但这不代表这些词全部都是 common-core ont
 - [src/core/mission/README.md](../../../src/core/mission/README.md)
 - [src/core/mission/runtime/mission_runtime.cpp](../../../src/core/mission/runtime/mission_runtime.cpp)
 - [src/core/mission/runtime/execution_step_runtime.cpp](../../../src/core/mission/runtime/execution_step_runtime.cpp)
-- [src/core/mission/runtime/execution_frame_runtime.cpp](../../../src/core/mission/runtime/execution_frame_runtime.cpp)
+- Frame 契约 [execution_frame_runtime.h](../../../src/core/mission/runtime/execution_frame_runtime.h)；实现 owner [execution_episode_runtime.cpp](../../../src/core/mission/runtime/execution_episode_runtime.cpp)
 - [src/core/mission/runtime/execution_observation_runtime.cpp](../../../src/core/mission/runtime/execution_observation_runtime.cpp)
 - [src/core/mission/runtime/termination_runtime.h](../../../src/core/mission/runtime/termination_runtime.h)
 

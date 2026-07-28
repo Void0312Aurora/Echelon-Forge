@@ -5,36 +5,13 @@
 #include "core/geometry/spatial_query_runtime.h"
 
 struct MissionNavInputs {
-    double own_altitude_m = 0.0;
-    double truth_heading_deg = 0.0;
-    double truth_speed_mps = 0.0;
-    double inst_heading_deg = 0.0;
-    double inst_ground_track_deg = 0.0;
-    double inst_ias_mps = 0.0;
-    double waypoint_altitude_m = 0.0;
-    double cdi_full_scale_m = 1500.0;
+#define EF_NAV_INPUT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/mission_nav_inputs.inc"
 };
 
 struct MissionNavProducts {
-    bool valid = false;
-    double active_wp_idx = 0.0;
-    double total_wps = 0.0;
-    double selected_steerpoint = 0.0;
-    double steerpoint_mode_code = 0.0;
-    double dist_m = 0.0;
-    double xtk_m = 0.0;
-    double dtg_m = 0.0;
-    double direct_bearing_deg = 0.0;
-    double desired_leg_track_deg = 0.0;
-    double bearing_rel_deg = 0.0;
-    double altitude_delta_m = 0.0;
-    double cdi_norm = 0.0;
-    double track_angle_error_deg = 0.0;
-    double next_turn_deg = 0.0;
-    double distance_to_turn_m = 0.0;
-    double own_heading_deg = 0.0;
-    double ground_track_deg = 0.0;
-    double reference_speed_mps = 0.0;
+#define EF_NAV_PRODUCT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/mission_nav_products.inc"
 };
 
 struct MissionObservationInputs {
@@ -81,30 +58,16 @@ struct StepInfoInputs {
 };
 
 struct StepInfoProducts {
-    bool valid = false;
-    bool on_runway = true;
-    bool gear_collapsed = false;
-    double gear_stress = 0.0;
-    bool on_ground = false;
-    bool airborne = false;
-    bool preliftoff = true;
-    bool has_runway_frame = false;
-    bool on_runway_geom = false;
-    double runway_cross_m = 0.0;
-    double runway_along_m = 0.0;
+#define EF_STEP_INFO_PRODUCT(type, name, default_value) type name = default_value;
+#include "core/mission/runtime/detail/step_info_products.inc"
 };
 
 double resolve_ground_track_deg(double fallback_heading_deg, double inst_ground_track_deg);
-double compute_ground_track_error_deg(double target_heading_deg, double fallback_heading_deg, double inst_ground_track_deg);
-double compute_command_tracking_error_deg(
-    double target_heading_deg,
-    double truth_heading_deg,
-    int command_code,
-    double inst_ground_track_deg
-);
-MissionNavProducts compute_waypoint_mission_nav(
-    const SpatialRouteQueryResult& route_result,
-    const MissionNavInputs& inputs
-);
-MissionObservationProducts compute_mission_observation(const MissionObservationInputs& inputs);
-StepInfoProducts compute_step_info_runtime(const StepInfoInputs& inputs);
+double compute_ground_track_error_deg(double target_heading_deg, double fallback_heading_deg,
+                                      double inst_ground_track_deg);
+double compute_command_tracking_error_deg(double target_heading_deg, double truth_heading_deg,
+                                          int command_code, double inst_ground_track_deg);
+MissionNavProducts compute_waypoint_mission_nav(const SpatialRouteQueryResult &route_result,
+                                                const MissionNavInputs &inputs);
+MissionObservationProducts compute_mission_observation(const MissionObservationInputs &inputs);
+StepInfoProducts compute_step_info_runtime(const StepInfoInputs &inputs);

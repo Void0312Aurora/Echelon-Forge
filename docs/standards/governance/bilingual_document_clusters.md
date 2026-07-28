@@ -60,6 +60,11 @@ Hash normalization rule:
 Whenever a translation batch lands, the touched pair records should be
 refreshed together so the registry baseline moves forward with the sync.
 
+Use repeated `clusters --write --pair <pair_id>` arguments for a bounded
+review. Unselected records, including their hashes and `last_verified` values,
+must remain unchanged. A full rewrite is reserved for a full-surface bilingual
+review.
+
 If one side is edited manually afterward, the audit command should show which
 peer is now stale.
 
@@ -70,9 +75,9 @@ peer is now stale.
 - Archived trees are outside the default verdict surface; if they appear in an
   audit, it usually means the scan was run with an explicit include override or
   before the exclusion rule was updated.
-- If the registry baseline is stale after a bulk doc sweep, rerun
-  `clusters --write` before deciding whether a reported gap is true drift or
-  ordinary follow-up maintenance.
+- If the registry baseline is stale after a bounded doc sweep, manually review
+  the changed pairs and selectively refresh only those records before deciding
+  whether a reported gap is true drift or ordinary follow-up maintenance.
 - `needs-en-update` / `needs-zh-update` usually means one-sided maintenance
   lag.
 - `diverged` means both sides changed relative to the recorded baseline and

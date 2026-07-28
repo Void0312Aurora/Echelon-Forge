@@ -4,7 +4,7 @@ from typing import Any
 
 import ef_py
 
-from python.scenario_compiler import _clone_runtime_mission_command
+from python.scenario.compiler import _clone_runtime_mission_command
 
 from .models import AppliedScenarioRosterMember, AppliedScenarioWorld, ScenarioRosterMemberLayout
 

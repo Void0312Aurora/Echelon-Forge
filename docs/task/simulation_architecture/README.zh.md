@@ -972,8 +972,8 @@ WP6 工作流地图：
 - `WP6-C Resident-State And Backend Capability Alignment`：
   [resident-state 边界规则](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)，以及
   [runtime facade layering 测试](../../../tests/architecture/runtime_facade)、
-  [runtime facade 测试](../../../tests/runtime/facade/test_runtime_facade.py) 和
-  [GPU runtime binding 测试](../../../tests/test_gpu_runtime_bindings.py) 中的 capability-projection guard。
+  [runtime facade 测试](../../../tests/runtime/facade/test_runtime_facade_core.py) 和
+  [GPU runtime binding 测试](../../../tests/gpu/test_gpu_runtime_bindings.py) 中的 capability-projection guard。
 - `WP6-D Integration And Index Sync`：
   [集成交接](archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.zh.md) 与
   [验收审查](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)。

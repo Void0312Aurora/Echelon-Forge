@@ -19,17 +19,22 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt  # noqa: E402
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.diagnostics.common import finite_float_or_none, write_json_output
 SCHEMA_VERSION = "a2.kill_chain_expectation_response_diagnosis.v2"
 DEFAULT_VARIANT = "REV-RUNTIME-PROJECTION"
 DEFAULT_TARGET_MOTION_LAYER = "nonmaneuvering_constant_velocity"
 LOW_RESPONSE_PROBABILITY_THRESHOLD = 0.05
 WEAK_COMPONENT_LOAD_THRESHOLD = 0.25
-
 
 def _nested_get(row: dict[str, Any], *path: str) -> Any:
   value: Any = row
@@ -39,29 +44,18 @@ def _nested_get(row: dict[str, Any], *path: str) -> Any:
     value = value.get(part)
   return value
 
-
-def _finite_float(value: Any) -> float | None:
-  try:
-    out = float(value)
-  except Exception:
-    return None
-  return out if math.isfinite(out) else None
-
-
 def _safe_ratio(numerator: Any, denominator: Any) -> float | None:
-  top = _finite_float(numerator)
-  bottom = _finite_float(denominator)
+  top = finite_float_or_none(numerator)
+  bottom = finite_float_or_none(denominator)
   if top is None or bottom is None or abs(bottom) <= 1.0e-12:
     return None
   return top / bottom
-
 
 def _int_or_zero(value: Any) -> int:
   try:
     return int(value)
   except Exception:
     return 0
-
 
 def _bool_or_none(value: Any) -> bool | None:
   if value is None:
@@ -76,7 +70,6 @@ def _bool_or_none(value: Any) -> bool | None:
       return False
   return bool(value)
 
-
 def _component_detail_rows(row: dict[str, Any]) -> list[dict[str, Any]]:
   detail = dict(row.get("component_detail", {}) or {})
   return [
@@ -84,7 +77,6 @@ def _component_detail_rows(row: dict[str, Any]) -> list[dict[str, Any]]:
     for item in list(detail.get("component_rows", []) or [])
     if isinstance(item, dict)
   ]
-
 
 def _weak_load_low_response_count(
   *,
@@ -95,12 +87,11 @@ def _weak_load_low_response_count(
   return sum(
     1
     for component_row in component_rows
-    if (_finite_float(component_row.get("effect_scale")) or 0.0)
+    if (finite_float_or_none(component_row.get("effect_scale")) or 0.0)
     < WEAK_COMPONENT_LOAD_THRESHOLD
-    and (_finite_float(component_row.get("failure_probability")) or 0.0)
+    and (finite_float_or_none(component_row.get("failure_probability")) or 0.0)
     < LOW_RESPONSE_PROBABILITY_THRESHOLD
   )
-
 
 def _read_report(path: Path) -> dict[str, Any]:
   with path.open("r", encoding="utf-8") as handle:
@@ -109,13 +100,8 @@ def _read_report(path: Path) -> dict[str, Any]:
     raise TypeError(f"expected object JSON at {path}")
   return data
 
-
 def _write_json(path: Path, data: dict[str, Any]) -> None:
-  path.parent.mkdir(parents=True, exist_ok=True)
-  with path.open("w", encoding="utf-8") as handle:
-    json.dump(data, handle, indent=2, sort_keys=True, ensure_ascii=True)
-    handle.write("\n")
-
+  write_json_output(path, data, sort_keys=True, skip_empty_path=False)
 
 def _selected_rows(
   report: dict[str, Any],
@@ -134,7 +120,6 @@ def _selected_rows(
     rows.append(raw)
   return rows
 
-
 def _row_view(row: dict[str, Any]) -> dict[str, Any]:
   detail = dict(row.get("component_detail", {}) or {})
   detail_summary = dict(detail.get("summary", {}) or {})
@@ -147,12 +132,12 @@ def _row_view(row: dict[str, Any]) -> dict[str, Any]:
   )
   return {
     "case_id": str(_nested_get(row, "identity", "case_id") or ""),
-    "range_km": _finite_float(_nested_get(row, "launch_window", "range_km")),
-    "signed_bearing_deg": _finite_float(
+    "range_km": finite_float_or_none(_nested_get(row, "launch_window", "range_km")),
+    "signed_bearing_deg": finite_float_or_none(
       _nested_get(row, "launch_window", "signed_bearing_deg")
     ),
     "abs_bearing_deg": abs(
-      _finite_float(_nested_get(row, "launch_window", "signed_bearing_deg")) or 0.0
+      finite_float_or_none(_nested_get(row, "launch_window", "signed_bearing_deg")) or 0.0
     ),
     "launch_class": str(_nested_get(row, "launch_window", "launch_class") or ""),
     "guidance_expectation_status": str(
@@ -161,31 +146,31 @@ def _row_view(row: dict[str, Any]) -> dict[str, Any]:
     "entered_R_fuze": _bool_or_none(
       _nested_get(row, "guidance_approach", "entered_R_fuze")
     ),
-    "rho_fuze": _finite_float(_nested_get(row, "guidance_approach", "rho_fuze")),
+    "rho_fuze": finite_float_or_none(_nested_get(row, "guidance_approach", "rho_fuze")),
     "detonated": _bool_or_none(_nested_get(row, "fuze_decision", "detonated")),
     "effect_band": str(_nested_get(row, "warhead_load_field", "effect_band") or ""),
-    "rho_effect_case": _finite_float(
+    "rho_effect_case": finite_float_or_none(
       _nested_get(row, "warhead_load_field", "rho_effect_case")
     ),
     "component_load_row_count": _int_or_zero(
       _nested_get(row, "warhead_load_field", "component_load_row_count")
     ),
-    "strongest_component_effect_scale": _finite_float(
+    "strongest_component_effect_scale": finite_float_or_none(
       _nested_get(row, "warhead_load_field", "strongest_component_effect_scale")
     ),
-    "weakest_component_effect_scale": _finite_float(
+    "weakest_component_effect_scale": finite_float_or_none(
       _nested_get(row, "warhead_load_field", "weakest_component_effect_scale")
     ),
     "component_response_row_count": _int_or_zero(
       _nested_get(row, "component_response", "component_response_row_count")
     ),
-    "max_failure_probability": _finite_float(
+    "max_failure_probability": finite_float_or_none(
       _nested_get(row, "component_response", "max_failure_probability")
     ),
     "sampled_failure_count": _int_or_zero(
       _nested_get(row, "component_response", "sampled_failure_count")
     ),
-    "min_integrity_delta": _finite_float(
+    "min_integrity_delta": finite_float_or_none(
       _nested_get(row, "component_response", "min_integrity_delta")
     ),
     "primary_failure_mode": str(
@@ -218,10 +203,10 @@ def _row_view(row: dict[str, Any]) -> dict[str, Any]:
     "detail_strongest_load_component_system": str(
       strongest_load_component.get("component_system", "") or ""
     ),
-    "detail_strongest_load_effect_scale": _finite_float(
+    "detail_strongest_load_effect_scale": finite_float_or_none(
       strongest_load_component.get("effect_scale")
     ),
-    "detail_strongest_load_rho_effect_component": _finite_float(
+    "detail_strongest_load_rho_effect_component": finite_float_or_none(
       strongest_load_component.get("rho_effect_component")
     ),
     "detail_max_probability_component_name": str(
@@ -230,17 +215,16 @@ def _row_view(row: dict[str, Any]) -> dict[str, Any]:
     "detail_max_probability_component_system": str(
       max_probability_component.get("component_system", "") or ""
     ),
-    "detail_max_probability": _finite_float(
+    "detail_max_probability": finite_float_or_none(
       max_probability_component.get("failure_probability")
     ),
-    "detail_max_probability_effect_scale": _finite_float(
+    "detail_max_probability_effect_scale": finite_float_or_none(
       max_probability_component.get("effect_scale")
     ),
     "detail_max_probability_sampled_failure": _bool_or_none(
       max_probability_component.get("sampled_failure")
     ),
   }
-
 
 def _is_component_response_candidate(row: dict[str, Any]) -> bool:
   view = _row_view(row)
@@ -260,7 +244,6 @@ def _is_component_response_candidate(row: dict[str, Any]) -> bool:
     "unclassified_component_response",
   }
 
-
 def _is_baseline_response(row: dict[str, Any]) -> bool:
   view = _row_view(row)
   return (
@@ -270,7 +253,6 @@ def _is_baseline_response(row: dict[str, Any]) -> bool:
     and view["detonated"] is True
     and int(view["sampled_failure_count"]) > 0
   )
-
 
 def _nearest_baseline(candidate: dict[str, Any], baselines: list[dict[str, Any]]) -> dict[str, Any] | None:
   c_view = _row_view(candidate)
@@ -308,7 +290,6 @@ def _nearest_baseline(candidate: dict[str, Any], baselines: list[dict[str, Any]]
     ),
   )
 
-
 def _diagnosis_bucket(candidate: dict[str, Any]) -> tuple[str, str]:
   effect_band = str(candidate["effect_band"])
   max_probability = candidate["max_failure_probability"] or 0.0
@@ -339,7 +320,6 @@ def _diagnosis_bucket(candidate: dict[str, Any]) -> tuple[str, str]:
     "response_curve_probability_cliff",
     "component load scale is present but response probability remains very low",
   )
-
 
 def _component_detail_projection_signal(candidate: dict[str, Any]) -> tuple[str, str]:
   detail_count = int(candidate.get("component_detail_row_count") or 0)
@@ -376,7 +356,6 @@ def _component_detail_projection_signal(candidate: dict[str, Any]) -> tuple[str,
     "response_curve_review_after_load",
     "component load detail is not weak enough to explain the low response alone",
   )
-
 
 def _diagnose_candidate(
   row: dict[str, Any],
@@ -420,7 +399,6 @@ def _diagnose_candidate(
     "max_probability_ratio_to_baseline": probability_ratio,
     "abs_integrity_delta_ratio_to_baseline": integrity_ratio,
   }
-
 
 def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -475,7 +453,6 @@ def _write_detail_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
     writer.writeheader()
     writer.writerows(rows)
 
-
 def _write_matrix_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   ranges = sorted({float(row["range_km"]) for row in rows if row.get("range_km") is not None})
@@ -499,7 +476,6 @@ def _write_matrix_csv(path: Path, *, rows: list[dict[str, Any]]) -> None:
         row = by_cell.get((range_km, bearing))
         values.append("" if row is None else row["diagnosis_bucket"])
       writer.writerow([f"{range_km:g}", *values])
-
 
 def _plot_probability_scatter(
   path_base: Path,
@@ -574,7 +550,6 @@ def _plot_probability_scatter(
   fig.savefig(svg_path)
   plt.close(fig)
   return {"png": str(png_path), "svg": str(svg_path)}
-
 
 def _summary_markdown(
   *,
@@ -653,7 +628,6 @@ def _summary_markdown(
       ]
     )
   return "\n".join(lines) + "\n"
-
 
 def generate_response_diagnosis(
   *,
@@ -735,7 +709,6 @@ def generate_response_diagnosis(
   )
   return manifest
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Diagnose KCES component-response review cells from a before report."
@@ -768,7 +741,6 @@ def main(argv: list[str] | None = None) -> int:
   json.dump(manifest, sys.stdout, indent=2, sort_keys=True, ensure_ascii=True)
   sys.stdout.write("\n")
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

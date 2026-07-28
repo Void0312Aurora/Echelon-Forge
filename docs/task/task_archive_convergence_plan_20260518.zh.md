@@ -72,13 +72,13 @@ completed evidence-package 原路径降为轻量指针。
 ### 已在原位归档
 
 - `code_redundancy/`：
-  [后续冻结计划](./code_redundancy/archive/code_redundancy_followup_freeze_20260516.zh.md)
+  [后续冻结计划](./archive/code_redundancy/archive/code_redundancy_followup_freeze_20260516.zh.md)
   已明确 `WP-A / WP-B / WP-C` 全部收口，且不再保留活动中的实现条目。该区域现在已有根级
   `README` 和本地 `archive/` 索引；后续若继续推进，应另起新冻结文档。
 - `diagnostics_eval/`：
-  [diagnostics 模块化](./diagnostics_eval/archive/diagnostics_modularization_20260515.zh.md)、
-  [eval 入口收敛](./diagnostics_eval/archive/eval_entrypoint_convergence_20260515.zh.md)、
-  [benchmark CLI 收敛](./diagnostics_eval/archive/diagnostics_benchmark_cli_convergence_20260515.zh.md)
+  [diagnostics 模块化](./archive/diagnostics_eval/archive/diagnostics_modularization_20260515.zh.md)、
+  [eval 入口收敛](./archive/diagnostics_eval/archive/eval_entrypoint_convergence_20260515.zh.md)、
+  [benchmark CLI 收敛](./archive/diagnostics_eval/archive/diagnostics_benchmark_cli_convergence_20260515.zh.md)
   都已标记阶段完成。该区域现在已有根级 `README` 和本地 `archive/` 索引。
 - `python_rl/`：
   现有文档基本都是子域迁移/收敛记录，且状态多为“已完成”“已关闭”。该区域现在已有根级

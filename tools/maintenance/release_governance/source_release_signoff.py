@@ -9,14 +9,24 @@ runtime authority.
 
 from __future__ import annotations
 
+import sys
 import argparse
 import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -78,30 +88,14 @@ REQUIRED_CHECKS = [
   "authority_guards_all_false",
 ]
 
-
 def _read_json(path: Path) -> dict[str, Any]:
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _read_json_if_exists(path: Path) -> dict[str, Any]:
   return _read_json(path) if path.exists() else {}
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
 
 def _display_path(path: Path, repo_root: Path = REPO_ROOT) -> str:
   try:
@@ -109,15 +103,12 @@ def _display_path(path: Path, repo_root: Path = REPO_ROOT) -> str:
   except ValueError:
     return str(path)
 
-
 def _resolve_repo_path(path_value: str, repo_root: Path) -> Path:
   path = Path(path_value)
   return path if path.is_absolute() else repo_root / path
 
-
 def _all_false(mapping: dict[str, Any]) -> bool:
   return bool(mapping) and not any(bool(value) for value in mapping.values())
-
 
 def _merged_authority_guards(*artifacts: dict[str, Any]) -> dict[str, bool]:
   guards = {
@@ -143,7 +134,6 @@ def _merged_authority_guards(*artifacts: dict[str, Any]) -> dict[str, bool]:
     for key, value in artifact.get("non_authoritative_guards", {}).items():
       guards[key] = bool(guards.get(key, False) or value)
   return guards
-
 
 def _payload_files_verified(
   *,
@@ -179,7 +169,6 @@ def _payload_files_verified(
   hashes_match = bool(rows) and all(row["hash_matches_expected"] for row in rows)
   return payloads_exist, hashes_match, rows
 
-
 def _public_distribution_supported(rights_gate: dict[str, Any]) -> bool:
   rows = rights_gate.get("payload_rights_inventory", [])
   if not rows:
@@ -188,7 +177,6 @@ def _public_distribution_supported(rights_gate: dict[str, Any]) -> bool:
     bool(row.get("rights_supported_by_public_distribution_statement"))
     for row in rows
   )
-
 
 def _release_grade_legal_rights_not_asserted(
   *,
@@ -207,7 +195,6 @@ def _release_grade_legal_rights_not_asserted(
     for row in rights_gate.get("payload_rights_inventory", [])
   )
 
-
 def _allowed_output_policy_frozen_fail_closed(rights_gate: dict[str, Any]) -> bool:
   policy = rights_gate.get("allowed_output_policy", {})
   forbidden_copy = set(policy.get("forbidden_copy_outputs", []))
@@ -221,7 +208,6 @@ def _allowed_output_policy_frozen_fail_closed(rights_gate: dict[str, Any]) -> bo
     and "comparison_output_values_without_review_admission" in forbidden_copy
     and "comparison_outputs_without_selected_sha256_and_signoff" in forbidden_consume
   )
-
 
 def _raw_payload_bodies_non_copyable(rights_gate: dict[str, Any]) -> bool:
   rows = rights_gate.get("payload_rights_inventory", [])
@@ -240,7 +226,6 @@ def _raw_payload_bodies_non_copyable(rights_gate: dict[str, Any]) -> bool:
       return False
   return True
 
-
 def _contains_disallowed_raw_comparison_values(value: Any) -> bool:
   forbidden_keys = {
     "cached_formula_value",
@@ -257,7 +242,6 @@ def _contains_disallowed_raw_comparison_values(value: Any) -> bool:
   if isinstance(value, list):
     return any(_contains_disallowed_raw_comparison_values(item) for item in value)
   return False
-
 
 def _benchmark_consumption_decision(
   *,
@@ -330,7 +314,6 @@ def _benchmark_consumption_decision(
     ),
   }
 
-
 def _provenance_res001_author_side_present(provenance_gate: dict[str, Any]) -> bool:
   if provenance_gate.get("residual_gate_results", {}).get("RES-001") != "blocked":
     return False
@@ -344,7 +327,6 @@ def _provenance_res001_author_side_present(provenance_gate: dict[str, Any]) -> b
       ]
   return False
 
-
 def _input_ref(path: Path, artifact: dict[str, Any], repo_root: Path) -> dict[str, Any]:
   return {
     "relative_path": _display_path(path, repo_root),
@@ -353,7 +335,6 @@ def _input_ref(path: Path, artifact: dict[str, Any], repo_root: Path) -> dict[st
     "schema_version": artifact.get("schema_version", ""),
     "status": artifact.get("status", ""),
   }
-
 
 def generate_res001_release_signoff_gate(
   *,
@@ -585,7 +566,6 @@ def generate_res001_release_signoff_gate(
     ],
   }
 
-
 def _retained_manifest(
   *,
   artifact: dict[str, Any],
@@ -619,7 +599,6 @@ def _retained_manifest(
       "non_authoritative_guards"
     ],
   }
-
 
 def _report_text(artifact: dict[str, Any], manifest: dict[str, Any]) -> str:
   decision = artifact["residual_decision"]
@@ -696,7 +675,6 @@ pytest -q tests/architecture/damage_model/test_release_signoff_gate.py
 ```
 """
 
-
 def write_retained_artifacts(
   *,
   repo_root: Path = REPO_ROOT,
@@ -766,7 +744,6 @@ def write_retained_artifacts(
   artifact["validation_report_sha256"] = _sha256_file(report_path)
   return artifact
 
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
     description="Write the bounded A2 RES-001 release signoff closeout gate."
@@ -795,7 +772,6 @@ def main(argv: list[str] | None = None) -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(_canonical_json(artifact) + "\n", encoding="utf-8")
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

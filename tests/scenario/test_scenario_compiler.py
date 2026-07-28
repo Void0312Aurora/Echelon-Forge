@@ -9,13 +9,15 @@ import unittest
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()
 
 import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
+import python.scenario.compiler as canonical_scenario_compiler # noqa: E402
+import python.scenario_compiler as compatibility_scenario_compiler # noqa: E402
 from python.scenario.compiler import ( # noqa: E402
   CompiledScenario as PackagedCompiledScenario,
 )
@@ -180,6 +182,17 @@ def _make_geometry() -> ef_py.CompiledScenarioGeometry:
 
 
 class ScenarioCompilerTests(unittest.TestCase):
+  def test_compatibility_facade_exports_the_canonical_surface(self) -> None:
+    self.assertEqual(
+      compatibility_scenario_compiler.__all__,
+      canonical_scenario_compiler.__all__,
+    )
+    for name in canonical_scenario_compiler.__all__:
+      self.assertIs(
+        getattr(compatibility_scenario_compiler, name),
+        getattr(canonical_scenario_compiler, name),
+      )
+
   def setUp(self) -> None:
     ScenarioCompiler.clear_cache()
     fd, self._scenario_path = tempfile.mkstemp(prefix="scenario_compiler_", suffix=".json")

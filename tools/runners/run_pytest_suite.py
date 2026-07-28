@@ -2,47 +2,37 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import subprocess
 import sys
-from typing import Any
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports
+from python.testing.suite_manifest import (
+    load_pytest_suite_manifest,
+    load_suite_object,
+    resolve_pytest_entry,
+    resolve_repo_or_abs,
+)
 
 
 ensure_repo_imports()
 
 
 def _resolve_repo_or_abs(path: str) -> str:
-    raw = str(path).strip()
-    if not raw:
-        raise ValueError("suite path entries must be non-empty")
-    if os.path.isabs(raw):
-        return os.path.abspath(raw)
-    return resolve_repo_path(*raw.replace("\\", "/").split("/"))
+    return resolve_repo_or_abs(path, REPO_ROOT)
 
 
 def _resolve_pytest_entry(entry: str) -> tuple[str, str]:
-    raw = str(entry).strip()
-    path_part, separator, node_part = raw.partition("::")
-    resolved_path = _resolve_repo_or_abs(path_part)
-    resolved_entry = resolved_path
-    if separator:
-        resolved_entry = f"{resolved_path}{separator}{node_part}"
-    return resolved_entry, resolved_path
+    resolved = resolve_pytest_entry(entry, REPO_ROOT)
+    return resolved.resolved, resolved.check_path
 
 
-def _load_suite(path: str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, dict):
-        raise TypeError(f"expected suite JSON object at {path!r}")
-    return data
+def _load_suite(path: str) -> dict[str, object]:
+    return load_suite_object(path)
 
 
 def parse_args() -> argparse.Namespace:
@@ -61,28 +51,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    suite_path = _resolve_repo_or_abs(str(args.suite))
-    suite = _load_suite(suite_path)
-    suite_name = str(suite.get("name", os.path.splitext(os.path.basename(suite_path))[0]))
-    raw_paths = suite.get("paths", [])
-    if not isinstance(raw_paths, list) or not raw_paths:
-        raise ValueError(f"pytest suite {suite_path!r} has no non-empty 'paths' list")
-
-    resolved_paths: list[str] = []
-    missing_paths: list[str] = []
-    for raw in raw_paths:
-        if not isinstance(raw, str):
-            raise TypeError("pytest suite path entries must be strings")
-        resolved, check_path = _resolve_pytest_entry(raw)
-        if not os.path.exists(check_path):
-            missing_paths.append(str(raw))
-            continue
-        resolved_paths.append(resolved)
-
-    if missing_paths:
-        print(f"[pytest-suite] {suite_name}: stale path entries detected:", file=sys.stderr)
-        for missing in missing_paths:
-            print(f"  - {missing}", file=sys.stderr)
+    manifest = load_pytest_suite_manifest(str(args.suite), REPO_ROOT)
+    if manifest.missing_entries:
+        print(f"[pytest-suite] {manifest.name}: stale path entries detected:", file=sys.stderr)
+        for missing in manifest.missing_entries:
+            print(f"  - {missing.raw}", file=sys.stderr)
         print(
             "[pytest-suite] update the checked-in suite manifest before relying on CI or docs references",
             file=sys.stderr,
@@ -90,6 +63,7 @@ def main() -> int:
         return 2
 
     pytest_args = list(args.pytest_args or [])
+    resolved_paths = [entry.resolved for entry in manifest.entries]
     cmd = [sys.executable, "-m", "pytest", "-q", *resolved_paths, *pytest_args]
     proc = subprocess.run(cmd, cwd=REPO_ROOT, check=False)
     return int(proc.returncode)

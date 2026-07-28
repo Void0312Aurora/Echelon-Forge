@@ -18,16 +18,20 @@
 - [plan/README.zh.md](plan/README.zh.md)
   - 架构/项目权威、runtime facade 与 exact-runtime 计划、协同计划材料、冻结
     执行范围和计划治理。
+  - [仓库精简路线图](plan/repository_consolidation/README.zh.md)记录仓库级精简
+    的审阅迭代协议、已接受提交、残余候选和完成条件。
 - [task/README.zh.md](task/README.zh.md)
   - 领域/任务工作线、实现包、进度 checkpoint 和 archive 索引。进入某个领域
     时先读局部 README，再继续进入带日期的深层文件。
 - [standards/README.zh.md](standards/README.zh.md)
   - 联合/军种/领域建模标准、平台基线、治理规则和 bridge contract。标准文档
     拥有共享词汇和层级归属的权威。
+  - [文档生命周期规范](standards/governance/document_lifecycle_policy.zh.md)定义
+    文档类型、生命周期、元数据、归档、证据、生成输出、配置索引与维护链接规则。
 - [agent/README.zh.md](agent/README.zh.md)
   - 面向 Agent 的文档权威索引和可复用项目启动提示词，用于索引维护中的标准、
     任务、手册、测试和治理表面。
-- [manual/](manual)
+- [manual/](manual/README.zh.md)
   - 维护者和操作员手册：代码层映射、引擎能力、物理清单、可视化指南和任务
     说明。
 - [reference_artifacts.zh.md](reference_artifacts.zh.md)
@@ -40,8 +44,8 @@
 
 - 空域与执行：
   [task/air_combat/](task/air_combat/README.zh.md)、
-  [task/flight_dynamics/](task/flight_dynamics/README.md)、
-  [task/performance_runtime/](task/performance_runtime/README.md)、
+  [task/flight_dynamics/](task/flight_dynamics/README.zh.md)、
+  [保留的 runtime 性能规划历史](task/archive/performance_runtime/README.zh.md)、
   [plan/runtime_facade/](plan/runtime_facade/README.zh.md)，以及
   [tests/runtime/execution/](../tests/runtime/execution)。
 - 协同：
@@ -60,8 +64,8 @@
   [tests/contracts/unit/ground/](../tests/contracts/unit/ground)。
 - 可视化与 game 代理：
   [task/viz/](task/viz/README.zh.md)、
-  [task/game/](task/game/README.zh.md)，以及
-  [manual/visualization_guide.zh.md](manual/visualization_guide.zh.md)。
+  [task/game/](../game/README.md)，以及
+  [manual/howto/visualization_guide.zh.md](manual/howto/visualization_guide.zh.md)。
 - 模型、策略与 world-model：
   [standards/model/](standards/model/README.zh.md)、
   [task/model/](task/model/README.zh.md)、
@@ -69,9 +73,9 @@
   [../python/world_model/](../python/world_model)，以及
   [tests/contracts/unit/world_model/](../tests/contracts/unit/world_model)。
 - Runtime contracts 与架构收口：
-  [task/simulation_architecture/](task/simulation_architecture/README.md)、
+  [task/simulation_architecture/](task/simulation_architecture/README.zh.md)、
   [plan/architecture/](plan/architecture/README.zh.md)、
-  [manual/src_layer_map.zh.md](manual/src_layer_map.zh.md)，以及
+  [manual/reference/src_layer_map.zh.md](manual/reference/src_layer_map.zh.md)，以及
   [../tests/contracts/](../tests/contracts)。
 
 ## 文档类别

@@ -4,7 +4,7 @@ from typing import Any
 
 import ef_py
 
-from python.rl.tasking.bridge import sync_loader_command_chain_reentrant
+from python.tasking_contracts.bridge_views import sync_loader_command_chain_reentrant
 
 from .contracts import clone_leader_intent, clone_pilot_report, clone_task_order
 

@@ -16,13 +16,22 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
-
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
 SCHEMA_VERSION = "a2.res005_tp21_selected_case_admission_review_gate.v1"
@@ -60,36 +69,18 @@ VALIDATION_NOTE_PATH = (
 GATE_FILENAME = "res005_tp21_selected_case_admission_review_gate.json"
 RETAINED_MANIFEST_FILENAME = "manifest.json"
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: resolve ok but fallback path.as_posix() != str(path).
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()
   except ValueError:
     return path.as_posix()
 
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
 def _load_json(path: Path) -> dict[str, Any]:
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -97,7 +88,6 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
   )
-
 
 def _artifact_ref(
   *,
@@ -118,7 +108,6 @@ def _artifact_ref(
     row["status"] = payload.get("status", "")
   return row
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "fragment_mechanism_authority_granted": False,
@@ -133,7 +122,6 @@ def _authority_guards() -> dict[str, bool]:
     "benchmark_consumption_authority_granted": False,
   }
 
-
 def _tp21_rights_row(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
   for row in source_rights_policy.get("payload_rights_inventory", []):
     if row.get("residual_id") == "RES-005":
@@ -145,7 +133,6 @@ def _tp21_rights_row(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
     if row.get("source_artifact_label") == "TP-21 PDF":
       return row
   return {}
-
 
 def _source_rights_summary(source_rights_policy: dict[str, Any]) -> dict[str, Any]:
   policy = source_rights_policy.get("allowed_output_policy", {})
@@ -179,7 +166,6 @@ def _source_rights_summary(source_rights_policy: dict[str, Any]) -> dict[str, An
     "forbidden_copy_outputs": policy.get("forbidden_copy_outputs", []),
     "forbidden_consume_outputs": policy.get("forbidden_consume_outputs", []),
   }
-
 
 def _prior_gate_summary(
   debris_gate: dict[str, Any],
@@ -228,7 +214,6 @@ def _prior_gate_summary(
     ),
   }
 
-
 def _required_item(
   *,
   item_id: str,
@@ -247,7 +232,6 @@ def _required_item(
     "current_status": "present" if present else "missing_fail_closed",
     "missing_reason": "" if present else missing_reason,
   }
-
 
 def _required_reviewer_items(
   *,
@@ -325,7 +309,6 @@ def _required_reviewer_items(
     ),
   ]
 
-
 def _current_missing_items(
   required_items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -339,7 +322,6 @@ def _current_missing_items(
     for row in required_items
     if not row["present"]
   ]
-
 
 def _input_refs(
   *,
@@ -409,7 +391,6 @@ def _input_refs(
       role="prior_validation_note_ref",
     ),
   ]
-
 
 def generate_selected_case_admission_gate(
   *,
@@ -567,7 +548,6 @@ def generate_selected_case_admission_gate(
     ),
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -592,11 +572,8 @@ def write_retained_artifacts(
     task_cluster_status_path=task_cluster_status_path,
     validation_note_path=validation_note_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   artifact_path = retained_dir / GATE_FILENAME
-  _write_json(artifact_path, artifact)
-  artifact_sha256 = _sha256_file(artifact_path)
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact, ensure_ascii=False)
 
   manifest = {
     "schema_version": RETAINED_MANIFEST_SCHEMA_VERSION,
@@ -620,14 +597,13 @@ def write_retained_artifacts(
     "authority_guards": artifact["authority_guards"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   artifact["retained_artifact_ref"] = _rel(artifact_path, repo_root)
   artifact["retained_artifact_sha256"] = artifact_sha256
   artifact["retained_manifest_ref"] = _rel(manifest_path, repo_root)
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -676,7 +652,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

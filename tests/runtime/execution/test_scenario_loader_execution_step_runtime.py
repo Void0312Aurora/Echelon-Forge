@@ -8,7 +8,7 @@ from unittest import mock
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
@@ -415,11 +415,13 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     loader.update_nonhierarchical_behaviors(truth=truth, inst=inst, sync_to_kernel=False)
     self.assertAlmostEqual(float(loader.mission_cmd["target_altitude"]), expected_altitude, places=6)
 
-  def test_prepare_step_evaluation_compact_cruise_skips_step_info(self) -> None:
+  def test_prepare_step_evaluation_compact_cruise_preserves_frame_fallback(self) -> None:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
     loader = ScenarioLoader(sim)
     loader.use_compiled_execution_step_runtime = True
+    loader._compiled_execution_episode_enabled = lambda: False
+    loader._compiled_execution_frame_enabled = lambda: True
     agent_id = loader.load_scenario_data(copy.deepcopy(_route_scenario()), seed=17)
     self.assertIsNotNone(agent_id)
 
@@ -455,9 +457,9 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     )
 
     self.assertTrue(bool(step_eval.get("_compact_output", False)))
-    self.assertIn(step_eval.get("_runtime_deferred_kind"), {"episode", "frame"})
+    self.assertEqual(step_eval.get("_runtime_deferred_kind"), "frame")
     runtime_inputs = step_eval.get("_runtime_deferred_inputs")
-    self.assertIsNotNone(runtime_inputs)
+    self.assertIs(type(runtime_inputs), ef_py.ExecutionFrameRuntimeInputs)
     self.assertFalse(bool(getattr(runtime_inputs, "has_step_info", True)))
 
   def test_compute_full_step_reuses_cached_step_evaluation(self) -> None:

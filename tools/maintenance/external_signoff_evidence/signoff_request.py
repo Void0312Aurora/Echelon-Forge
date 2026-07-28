@@ -16,12 +16,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
 
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -70,28 +79,12 @@ DEFAULT_RETAINED_DIR = (
 PACKET_FILENAME = "source_rights_signoff_request_packet.json"
 RETAINED_MANIFEST_FILENAME = "manifest.json"
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: resolve ok but fallback path.as_posix() != str(path).
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()
   except ValueError:
     return path.as_posix()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
 
 def _load_json_optional(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
@@ -101,14 +94,12 @@ def _load_json_optional(path: Path) -> dict[str, Any] | None:
   except json.JSONDecodeError:
     return None
 
-
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(
     json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
   )
-
 
 def _input_ref(
   *,
@@ -142,7 +133,6 @@ def _input_ref(
   ref["status"] = payload.get("status", "")
   return ref
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "allowed_output_release_authority_granted": False,
@@ -161,7 +151,6 @@ def _authority_guards() -> dict[str, bool]:
     "stock_database_authority_granted": False,
     "stock_descriptor_created": False,
   }
-
 
 def _source_payload_ref(
   source_manifest: dict[str, Any] | None,
@@ -192,7 +181,6 @@ def _source_payload_ref(
     "benchmark_consumed_for_release": False,
     "rights_status": "missing_fail_closed",
   }
-
 
 def _policy_summary(
   source_rights_policy: dict[str, Any] | None,
@@ -230,7 +218,6 @@ def _policy_summary(
     "blocking_conditions": result.get("blocking_conditions", []),
   }
 
-
 def _retained_payload_hash_review_items(
   source_manifest: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
@@ -260,7 +247,6 @@ def _retained_payload_hash_review_items(
       }
     )
   return rows
-
 
 def _tp21_hash_output_request(
   res005_gate: dict[str, Any] | None,
@@ -339,7 +325,6 @@ def _tp21_hash_output_request(
     "source_numeric_values_retained": False,
     "approval_granted": False,
   }
-
 
 def _beco_hash_output_request(
   res006_gate: dict[str, Any] | None,
@@ -423,7 +408,6 @@ def _beco_hash_output_request(
     "approval_granted": False,
   }
 
-
 def _requested_signoff_items(
   *,
   tp21_request: dict[str, Any],
@@ -490,7 +474,6 @@ def _requested_signoff_items(
     },
   ]
 
-
 def _explicit_forbidden_outputs(
   source_rights_policy: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
@@ -520,7 +503,6 @@ def _explicit_forbidden_outputs(
       }
     )
   return outputs
-
 
 def _hash_only_allowed_request_shape() -> dict[str, Any]:
   return {
@@ -562,7 +544,6 @@ def _hash_only_allowed_request_shape() -> dict[str, Any]:
     "release_grade_satisfied": False,
   }
 
-
 def _current_missing_items(signoffs: list[dict[str, Any]]) -> list[dict[str, str]]:
   return [
     {
@@ -573,7 +554,6 @@ def _current_missing_items(signoffs: list[dict[str, Any]]) -> list[dict[str, str
     for row in signoffs
     if not row["approval_granted"]
   ]
-
 
 def generate_source_rights_signoff_request_packet(
   *,
@@ -725,7 +705,6 @@ def generate_source_rights_signoff_request_packet(
     ),
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -747,11 +726,8 @@ def write_retained_artifacts(
     res005_selected_case_gate_path=res005_selected_case_gate_path,
     res006_replacement_tolerance_gate_path=res006_replacement_tolerance_gate_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   packet_path = retained_dir / PACKET_FILENAME
-  _write_json(packet_path, artifact)
-  packet_sha256 = _sha256_file(packet_path)
+  packet_sha256 = write_and_hash_json(packet_path, artifact, ensure_ascii=False)
   packet_artifact = {
     "artifact_key": "source_rights_signoff_request_packet",
     "filename": PACKET_FILENAME,
@@ -782,14 +758,13 @@ def write_retained_artifacts(
     "authority_guards_all_false": artifact["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   artifact["retained_artifact_ref"] = _rel(packet_path, repo_root)
   artifact["retained_artifact_sha256"] = packet_sha256
   artifact["retained_manifest_ref"] = _rel(manifest_path, repo_root)
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -845,7 +820,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

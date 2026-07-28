@@ -20,13 +20,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 from tools.maintenance.candidate_artifacts import scope_boundary_probe as boundary_probe
-
 
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -70,37 +78,28 @@ DEFAULT_RETAINED_DIR = (
   / "scope_bucket_independent_review_20260531"
 )
 
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
 def _payload_sha256(payload: dict[str, Any]) -> str:
   return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
-
-
-def _file_sha256(path: Path) -> str:
-  return hashlib.sha256(path.read_bytes()).hexdigest()
-
 
 def _load_json(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
     return None
   return json.loads(path.read_text(encoding="utf-8"))
 
-
 def _read_text(path: Path) -> str:
   if not path.is_file():
     return ""
   return path.read_text(encoding="utf-8")
-
 
 def _check(check_id: str, summary: str, passed: bool) -> dict[str, Any]:
   return {
@@ -108,7 +107,6 @@ def _check(check_id: str, summary: str, passed: bool) -> dict[str, Any]:
     "summary": summary,
     "pass": bool(passed),
   }
-
 
 def _missing_evidence(
   *,
@@ -125,7 +123,6 @@ def _missing_evidence(
     "blocker": blocker,
   }
 
-
 def _failed_check_blockers(
   *,
   residual_id: str,
@@ -140,7 +137,6 @@ def _failed_check_blockers(
     for check in checks
     if not check["pass"]
   ]
-
 
 def _scope_manifest_review(scope_manifest_text: str) -> dict[str, Any]:
   checks = [
@@ -175,7 +171,6 @@ def _scope_manifest_review(scope_manifest_text: str) -> dict[str, Any]:
     "status": "scope_manifest_complete" if all(row["pass"] for row in checks) else "scope_manifest_incomplete",
     "checks": checks,
   }
-
 
 def _probe_review(probe: dict[str, Any]) -> dict[str, Any]:
   miss_distance = probe["miss_distance_probe"]
@@ -299,7 +294,6 @@ def _probe_review(probe: dict[str, Any]) -> dict[str, Any]:
     "res008_checks": beam_high_checks,
   }
 
-
 def _result_pack_review(result_pack: dict[str, Any] | None) -> dict[str, Any]:
   if result_pack is None:
     return {
@@ -371,7 +365,6 @@ def _result_pack_review(result_pack: dict[str, Any] | None) -> dict[str, Any]:
     "scope_audit_summary": scope_audit,
     "release_readiness_interpretation": release,
   }
-
 
 def _independent_review_review(review_gate: dict[str, Any] | None) -> dict[str, Any]:
   if review_gate is None:
@@ -446,7 +439,6 @@ def _independent_review_review(review_gate: dict[str, Any] | None) -> dict[str, 
     "release_decision": release,
   }
 
-
 def _residual_decision(
   *,
   residual_id: str,
@@ -472,7 +464,6 @@ def _residual_decision(
     "checks": checks,
   }
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -487,7 +478,6 @@ def _authority_guards() -> dict[str, bool]:
     "formal_validation_manifest_promoted": False,
     "hard_gate_pass_is_release": False,
   }
-
 
 def generate_scope_bucket_independent_review_gate(
   *,
@@ -728,7 +718,6 @@ def generate_scope_bucket_independent_review_gate(
   }
   return gate, probe
 
-
 def write_retained_artifacts(
   *,
   output_dir: Path = DEFAULT_RETAINED_DIR,
@@ -739,19 +728,16 @@ def write_retained_artifacts(
     repo_root=repo_root,
     package_dir=package_dir,
   )
-  output_dir.mkdir(parents=True, exist_ok=True)
   artifact_paths = {
     "scope_bucket_independent_review_gate": output_dir
     / "scope_bucket_independent_review_gate.json",
     "scope_boundary_probe_rerun": output_dir / "scope_boundary_probe_rerun.json",
   }
-  artifact_paths["scope_bucket_independent_review_gate"].write_text(
-    _canonical_json(gate) + "\n",
-    encoding="utf-8",
+  write_and_hash_json(
+    artifact_paths["scope_bucket_independent_review_gate"], gate,
   )
-  artifact_paths["scope_boundary_probe_rerun"].write_text(
-    _canonical_json(probe) + "\n",
-    encoding="utf-8",
+  write_and_hash_json(
+    artifact_paths["scope_boundary_probe_rerun"], probe,
   )
 
   manifest = {
@@ -780,7 +766,7 @@ def write_retained_artifacts(
           if artifact_key == "scope_bucket_independent_review_gate"
           else probe["status"]
         ),
-        "content_sha256": _file_sha256(path),
+        "content_sha256": _sha256_file(path),
         "size_bytes": path.stat().st_size,
         "origin_class": (
           "scope_bucket_independent_review_gate_record_only"
@@ -803,7 +789,7 @@ def write_retained_artifacts(
     "authority_guards": _authority_guards(),
   }
   manifest_path = output_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  write_and_hash_json(manifest_path, manifest)
   return {
     "gate": gate,
     "probe": probe,
@@ -814,7 +800,6 @@ def write_retained_artifacts(
       "manifest": manifest_path,
     },
   }
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -853,7 +838,6 @@ def main(argv: list[str] | None = None) -> int:
       )
     )
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

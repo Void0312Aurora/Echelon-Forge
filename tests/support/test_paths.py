@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-from python.testing.runtime import repo_root as runtime_repo_root
+from python.runtime_bootstrap import repo_root as runtime_repo_root
 from tests.architecture import helpers as architecture_helpers
 from tests.support.paths import (
   PYTHON_EXECUTABLE,

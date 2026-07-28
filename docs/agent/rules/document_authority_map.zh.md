@@ -26,7 +26,7 @@
 | --- | --- | --- |
 | 1 | 当前用户任务、当前工作区和当前代码/测试 | 不覆盖无关本地改动；实现 claim 必须本地核验。 |
 | 2 | 维护中的代码、场景、配置、测试和 contract runner | 可执行证据优先于过期文字。窄 gate 通过不自动提升整个领域成熟度。 |
-| 3 | `docs/standards/` | 拥有命名、层级、军种/领域归属、公开来源准入、双语策略和治理规则。 |
+| 3 | `docs/standards/` | 拥有命名、层级、军种/领域归属、公开来源准入、文档生命周期、双语策略和治理规则。 |
 | 4 | 根 README、`docs/README*`、局部 README | 拥有当前导航和成熟度入口。进入带日期任务文件前先读这里。 |
 | 5 | `docs/plan/` 和活跃 `docs/task/` 入口 | 拥有架构方向、范围化实现计划、进度记录和残余。 |
 | 6 | `docs/manual/`、`docs/reference_artifacts*`、`tests/README*` | 描述代码边界、操作工作流、保留证据和测试系统意图。 |
@@ -38,10 +38,12 @@
 | --- | --- |
 | 哪些文档拥有命名和层级？ | [标准总览](../../standards/README.zh.md)、[文档对齐图](../../standards/overview/document_alignment_map.zh.md) |
 | 跨域约定是什么？ | [仿真约定](../../standards/foundation/conventions.zh.md)、[Runtime Workflow and Contract Baseline](../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../standards/bridge/scenario_guide.zh.md) |
-| 允许怎样声明真实性？ | [梯度真实性原则](../../standards/foundation/gradient_realism_principles.zh.md)、[公开来源准入标准](../../standards/foundation/public_data_source_admission.zh.md)、[真实性与 Authority 边界规则](../../standards/foundation/realism_authority_boundary.zh.md) |
+| 允许怎样声明真实性？ | [梯度真实性原则](../../standards/foundation/gradient_realism_principles.zh.md)、[公开来源准入标准](../../standards/foundation/public_data_source_admission.zh.md) |
 | 军种/领域术语如何路由？ | [联合标准总览](../../standards/joint/README.zh.md)、[军种 Profile 总览](../../standards/services/README.zh.md)、[空域标准](../../standards/air/README.zh.md)、[海军标准](../../standards/naval/README.zh.md)、[地面标准](../../standards/ground/README.zh.md) |
 | 架构/runtime 工作如何路由？ | [Runtime Workflow and Contract Baseline](../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../standards/bridge/scenario_guide.zh.md)、[标准总览](../../standards/README.zh.md) |
 | 双语文档如何处理？ | [双语文档策略](../../standards/governance/bilingual_documentation_policy.zh.md)、[双语文档簇](../../standards/governance/bilingual_document_clusters.zh.md) |
+| 文档类型、生命周期、evidence、generated 输出、config 索引、链接和 archive 如何治理？ | [文档生命周期规范](../../standards/governance/document_lifecycle_policy.zh.md) |
+| 全仓精简在哪里排序和验收？ | [仓库精简与整合路线图](../../plan/repository_consolidation/README.zh.md) |
 | 社区、许可或安全文本如何处理？ | [CONTRIBUTING](../../../CONTRIBUTING.md)、[LICENSE](../../../LICENSE)、[THIRD_PARTY_NOTICES](../../../THIRD_PARTY_NOTICES.md)、[SECURITY](../../../SECURITY.md)、[CODE_OF_CONDUCT](../../../CODE_OF_CONDUCT.md) |
 | 委派工作如何协调？ | [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)、[WP Closure Lane Policy](../../standards/governance/wp_closure_lane_policy.zh.md) |
 | 新任务子项目应如何创建？ | [子项目创建标准](subproject_creation_standard.zh.md)、[Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)、[任务索引](../../task/README.zh.md) |
@@ -68,7 +70,8 @@
 
 | 任务类型 | 必读 |
 | --- | --- |
-| 文档刷新 | 根 README、docs 索引、本索引、受影响局部 README、标准 owner。 |
+| 文档刷新 | 根 README、docs 索引、本索引、[文档生命周期规范](../../standards/governance/document_lifecycle_policy.zh.md)、受影响局部 README、标准 owner。 |
+| 仓库精简 | [仓库精简与整合路线图](../../plan/repository_consolidation/README.zh.md)、受影响 owner README、当前 callers/tests，以及必需的独立审阅协议。 |
 | 代码/runtime 修改 | 受影响的 `src/`、`python/` 或 `gym_envs` README；源码层级图；相关 plan/task 入口；相关测试。 |
 | 测试或 contract 修改 | tests README、局部 test README、reference artifacts、相关 standards/bridge contract。 |
 | 领域成熟度表述 | 领域 task README、领域 standards README、被索引的当前状态或验收文档、实现/测试证据。 |

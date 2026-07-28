@@ -24,9 +24,16 @@ Its positioning is not to replace the algorithm, policy, or vec-env logic in `py
   - `argparse` definitions reused by `train.py`.
 - [bootstrap.py](bootstrap.py)
   - Path validation, configuration loading, experiment directory preparation, lock file, seed / torch runtime initialization.
+- [deps.py](deps.py)
+  - Lazy loader for the heavyweight SB3/torch/policy/vec-env imports used by the training entry, plus `get_policy_kwargs`.
+- [action_bias.py](action_bias.py)
+  - Safe action-head bias initialization (`apply_safe_action_bias`, `apply_leader_action_bias`, `infer_full_action_safe_defaults`) and HMoE shared-head bootstrap (`maybe_initialize_hmoe_from_shared`). `train.py` re-exports these names for historical `from train import ...` callers.
+- [vec_env_factory.py](vec_env_factory.py)
+  - Vec-env backend selection (`resolve_vec_env_spec`) and per-agent-layer vec-env construction/runtime-summary printing for `train.py`.
 
 ## Boundary
 
-- This is the place for training entry argument parsing, experiment directory management, and runtime bootstrap.
-- Do not re-import SB3 algorithm, policy structure, or vec-env details here.
+- This is the place for training entry argument parsing, experiment directory management, runtime bootstrap, and entry-side orchestration (dependency loading, action-bias initialization, vec-env construction wiring).
+- Algorithm, policy, and vec-env *implementations* stay in `python/rl/`; this package only selects, constructs, and summarizes them for the entry. Do not duplicate those implementations here.
+- The maintained-execution `runtime.world_batch_vec_env=true` guard message stays in `train.py` (architecture tests scan the entry source for it).
 - The follow-up splitting of `world_model_train.py` is not within the scope of this sub-domain at the current stage.

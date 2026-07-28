@@ -47,11 +47,13 @@
 Tier A：严格双语维护面
 
 - 根导航：`docs/README.md`
+- `docs/agent/` 下的 Agent 权威、提示词与规则
+- 顶层前瞻导航：`docs/forward/README.md`
+- 保留参考索引：`docs/reference_artifacts.md`
 - `docs/standards/` 下的权威与治理树
 - `docs/manual/` 下的面向操作者说明
 - 稳定计划权威面：
   - `docs/plan/README.md`
-  - `docs/plan/documentation_bilingual_migration_plan_20260518.md`
   - `docs/plan/architecture/**`
   - `docs/plan/runtime_facade/**`
   - `docs/plan/cooperative/**`
@@ -126,7 +128,10 @@ Language:
 
 - `audit` 的结果只表示“相对当前基线”的状态，不是语义真相本身。
 - `docs/Archive/` 与 `docs/**/archive/` 默认不属于维护中的漂移判定面，即使其中保留了双语镜像，也只用于追溯。
-- 如果做过大批量文档改动或目录搬迁，应先用 `clusters --write` 重建注册表，再运行 `audit`。
+- 审阅变更文档对后，使用可重复的
+  `clusters --write --pair <pair_id>` 参数只刷新这些记录，再运行 `audit`。
+- 只有完成整个维护面的双语审阅后才能运行全量 `clusters --write`；不得用它
+  掩盖无关的历史分歧。
 - `needs-en-update` / `needs-zh-update` 通常表示单侧后续维护未跟上。
 - `diverged` 表示两侧都相对记录基线发生了变化，应先人工核对最新意图，再把它定性为真实漂移。
 
@@ -198,5 +203,5 @@ Language:
 ## 相关文档
 
 - [docs/README.md](../../README.md)
-- [docs/plan/documentation_bilingual_migration_plan_20260518.md](../../plan/documentation_bilingual_migration_plan_20260518.md)
+- [已归档的双语迁移记录](../../plan/archive/documentation_bilingual_migration_plan_20260518.zh.md)
 - [document_alignment_map.md](../overview/document_alignment_map.md)

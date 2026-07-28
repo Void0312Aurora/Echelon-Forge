@@ -5,8 +5,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from python.runtime_bootstrap import repo_root
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(repo_root())
 SCHEMA_VERSION = "a2.target_geometry_manifest.v1"
 MAPPING_SCHEMA_VERSION = "a2.target_geometry_mapping_candidate.v1"
 COMPONENT_BINDING_SCHEMA_VERSION = "a2.target_geometry_component_binding_report.v1"

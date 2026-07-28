@@ -4,7 +4,7 @@ import math
 import os
 from typing import Any
 
-from python.testing.runtime import resolve_repo_path
+from python.runtime_bootstrap import resolve_repo_path
 
 from ..common import _check_optional_range, _load_json_file, _materialize_scenario_path, _load_spec
 from .common import (

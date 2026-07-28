@@ -22,6 +22,9 @@ new work.
 - [plan/README.md](plan/README.md)
   - Architecture/program authority, runtime-facade and exact-runtime plans,
     cooperative plan material, frozen execution scopes, and plan governance.
+  - [Repository consolidation plan](plan/repository_consolidation/README.md)
+    records the reviewed iteration protocol, accepted commits, residual
+    candidates, and completion conditions for repository-wide simplification.
 - [task/README.md](task/README.md)
   - Domain/task worklines, implementation packages, progress checkpoints, and
     archive indexes. Start from each local README before following dated files.
@@ -29,10 +32,13 @@ new work.
   - Joint/service/domain modeling standards, platform baselines, governance
     rules, and bridge contracts. Standards own shared vocabulary and layer
     ownership.
+  - [Document lifecycle policy](standards/governance/document_lifecycle_policy.md)
+    defines document kinds, lifecycle states, metadata, archive, evidence,
+    generated-output, configuration-index, and maintained-link rules.
 - [agent/README.md](agent/README.md)
   - Agent-facing authority map and reusable project-orientation prompts that
     index the maintained standards, task, manual, test, and governance surfaces.
-- [manual/](manual)
+- [manual/](manual/README.md)
   - Maintainer and operator manuals: code layer map, engine capabilities,
     physics inventory, visualization guide, and task notes.
 - [reference_artifacts.md](reference_artifacts.md)
@@ -47,7 +53,7 @@ new work.
 - Air and execution:
   [task/air_combat/](task/air_combat/README.md),
   [task/flight_dynamics/](task/flight_dynamics/README.md),
-  [task/performance_runtime/](task/performance_runtime/README.md),
+  [retained performance-runtime planning history](task/archive/performance_runtime/README.md),
   [plan/runtime_facade/](plan/runtime_facade/README.md), and
   [tests/runtime/execution/](../tests/runtime/execution).
 - Cooperative:
@@ -66,8 +72,8 @@ new work.
   [tests/contracts/unit/ground/](../tests/contracts/unit/ground).
 - Visualization and game proxy work:
   [task/viz/](task/viz/README.md),
-  [task/game/](task/game/README.md), and
-  [manual/visualization_guide.md](manual/visualization_guide.md).
+  [task/game/](../game/README.md), and
+  [manual/howto/visualization_guide.md](manual/howto/visualization_guide.md).
 - Model, policy, and world-model work:
   [standards/model/](standards/model/README.md),
   [task/model/](task/model/README.md),
@@ -77,7 +83,7 @@ new work.
 - Runtime contracts and architecture closure:
   [task/simulation_architecture/](task/simulation_architecture/README.md),
   [plan/architecture/](plan/architecture/README.md),
-  [manual/src_layer_map.md](manual/src_layer_map.md), and
+  [manual/reference/src_layer_map.md](manual/reference/src_layer_map.md), and
   [../tests/contracts/](../tests/contracts).
 
 ## Document Classes

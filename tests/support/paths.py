@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from python.testing.runtime import repo_root as runtime_repo_root
+from python.runtime_bootstrap import repo_root as runtime_repo_root
 
 
 REPO_ROOT = Path(runtime_repo_root()).resolve()

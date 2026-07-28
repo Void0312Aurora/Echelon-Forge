@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from examples.agents import RedScriptedAgent
-from python.rl.tasking.bridge import loader_owned_scripted_opponent_kernel_view
+from python.tasking_contracts.bridge_views import loader_owned_scripted_opponent_kernel_view
 
 
 _RED_SCRIPTED_AGENT_ALIASES = frozenset({"red_scripted_agent", "red_scripted_baseline", "red_agent"})

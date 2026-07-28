@@ -38,7 +38,7 @@
 - [M2 Causal Transformer HMoE 目标架构](m2_causal_transformer_hmoe/README.zh.md)
 - [M3 Optimal-Stopping Model Selection](m3_optimal_stopping_model_selection/README.zh.md)
 - [M3-S1 Censored Optimal-Stopping Timing Contract](m3_s1_censored_optimal_stopping_timing_contract/README.zh.md)
-- [M3-S2 开火时机可学习性审计](m3_s2_fire_timing_learnability_audit/README.zh.md)
+- [M3-S2 开火时机可学习性审计](archive/m3_s2_fire_timing_learnability_audit/README.zh.md)
   archived pointer；完整包：
   [archive/m3_s2_fire_timing_learnability_audit](archive/m3_s2_fire_timing_learnability_audit/README.zh.md)
 - 英文主文：

@@ -23,4 +23,6 @@ struct MissionCommandCore {
     bool authorization_to_fire = false;
 
     bool active = false;
+
+    bool operator==(const MissionCommandCore &) const = default;
 };

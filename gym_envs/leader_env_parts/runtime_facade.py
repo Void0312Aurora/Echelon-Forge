@@ -6,7 +6,7 @@ from typing import Any
 import ef_py
 import numpy as np
 
-from python.rl.runtime.execution_runtime import coerce_timing_dict
+from python.tasking_contracts.timing_utils import coerce_timing_dict
 
 from .bridges import LeaderCommandBridge
 from .common import load_json_dict, make_args_stub

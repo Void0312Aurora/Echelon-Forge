@@ -10,17 +10,26 @@ from typing import Any
 
 import numpy as np
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+from python.rl.runtime.single_world_batch_runtime import (
+    build_single_world_batch_execution_runtime,
+)
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
+from tools.diagnostics.common import (
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+)
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.schema import (
     FIRE_MASK_COMPONENT_NAMES,
     ACTION_SIGNAL_NAMES,
@@ -119,6 +128,8 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.summariz
 )
 from tools.diagnostics import mlf9_statistical_trends
 
+_CANONICAL_WORLD_BATCH_VEC_ENV = WorldBatchVecEnv
+
 __all__ = (
     "FIRE_MASK_COMPONENT_NAMES",
     "ACTION_SIGNAL_NAMES",
@@ -215,24 +226,42 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
             "air-combat process diagnostics only supports maintained WorldBatchVecEnv "
             f"or MultiTimescaleActionWrapper controller configs; got {wrapper_class!r}"
         )
-    vec_env = WorldBatchVecEnv(
-        scenario_path=os.path.abspath(scenario_path),
-        n_envs=1,
-        include_visual=bool(env_cfg.get("include_visual", False)),
-        include_proprio=bool(env_cfg.get("include_proprio", True)),
-        action_mode=str(env_cfg.get("action_mode", "full")),
-        mission_obs_mode=str(env_cfg.get("mission_obs_mode", "basic")),
-        visual_downsample=int(env_cfg.get("visual_downsample", 1)),
-        visual_update_interval=int(env_cfg.get("visual_update_interval", 1)),
-        temporal_history_len=int(env_cfg.get("temporal_history_len", 1)),
-        execution_step_runtime_mode=str(env_cfg.get("execution_step_runtime_mode", "compiled")),
-        flight_shaping_backend=str(env_cfg.get("flight_shaping_backend", "compiled")),
-        step_info_mode="full",
-        worker_threads=1,
-        action_wrapper_kwargs=dict(wrapper_kwargs or {})
-        if wrapper_class is MultiTimescaleActionWrapper
-        else None,
-    )
+    env_settings = {
+        "include_visual": bool(env_cfg.get("include_visual", False)),
+        "include_proprio": bool(env_cfg.get("include_proprio", True)),
+        "action_mode": str(env_cfg.get("action_mode", "full")),
+        "mission_obs_mode": str(env_cfg.get("mission_obs_mode", "basic")),
+        "visual_downsample": int(env_cfg.get("visual_downsample", 1)),
+        "visual_update_interval": int(env_cfg.get("visual_update_interval", 1)),
+        "temporal_history_len": int(env_cfg.get("temporal_history_len", 1)),
+        "execution_step_runtime_mode": str(
+            env_cfg.get("execution_step_runtime_mode", "compiled")
+        ),
+        "flight_shaping_backend": str(
+            env_cfg.get("flight_shaping_backend", "compiled")
+        ),
+        "step_info_mode": "full",
+        "action_wrapper_kwargs": (
+            dict(wrapper_kwargs or {})
+            if wrapper_class is MultiTimescaleActionWrapper
+            else None
+        ),
+    }
+    if WorldBatchVecEnv is not _CANONICAL_WORLD_BATCH_VEC_ENV:
+        # Preserve the diagnostics module's constructor override seam.
+        vec_env = WorldBatchVecEnv(
+            scenario_path=os.path.abspath(scenario_path),
+            n_envs=1,
+            worker_threads=1,
+            **env_settings,
+        )
+    else:
+        runtime = build_single_world_batch_execution_runtime(
+            scenario_path=os.path.abspath(scenario_path),
+            env_settings=env_settings,
+            worker_threads=1,
+        )
+        vec_env = runtime.world_vec
     return _BatchSingleWorldProbeEnv(vec_env)
 
 
@@ -522,8 +551,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Trace air-combat weapon-employment and lethality process signals."
     )
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        include=("train_config",),
+        defaults={"train_config": DEFAULT_TRAIN_CONFIG},
+    )
     parser.add_argument(
         "--mode",
         choices=[
@@ -550,12 +583,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=0.0,
         help="For --mode legal_mask_fire, optional range gate in meters; <=0 disables the range gate.",
     )
-    parser.add_argument("--model", default="", help="SB3 model path for --mode model.")
-    parser.add_argument("--algo", default="auto")
-    parser.add_argument("--device", default="auto")
-    parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--seed", type=int, default=20260525)
-    parser.add_argument("--max_steps", type=int, default=0)
+    add_model_load_args(
+        parser,
+        include=("model", "algo", "device"),
+        defaults={"model": "", "algo": "auto", "device": "auto"},
+        helps={"model": "SB3 model path for --mode model."},
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "seed", "max_steps"),
+        defaults={"episodes": 1, "seed": 20260525, "max_steps": 0},
+    )
     parser.add_argument(
         "--stochastic",
         action="store_true",
@@ -601,7 +639,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=mlf9_statistical_trends.parse_confidence_level,
         default=0.95,
     )
-    parser.add_argument("--json_out", default="")
+    add_json_out_arg(parser)
     parser.add_argument("--plot_out", default="")
     return parser
 

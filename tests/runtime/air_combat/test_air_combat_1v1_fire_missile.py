@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
@@ -13,7 +13,7 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
 from python.rl.runtime.world_batch import RuntimeFacadeAdapter # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 from python.scenario_compiler import ScenarioCompiler # noqa: E402
 from python.scenario.runtime import load_compiled_scenario_for_setup_target # noqa: E402
 

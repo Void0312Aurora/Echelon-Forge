@@ -18,18 +18,24 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import resolve_repo_path, ensure_repo_imports, repo_root  # noqa: E402
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+ensure_repo_imports()
 
-from python.testing.runtime import resolve_repo_path # noqa: E402
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_text,
+  write_and_hash_json,
+)
 
 from tools.maintenance.candidate_artifacts import component_probability_surface_probe as surface_probe # noqa: E402
 from tools.maintenance.candidate_artifacts import ( # noqa: E402
   component_fragility_review_gate as fragility_review_gate,
 )
-
 
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -52,21 +58,15 @@ DEFAULT_RETAINED_DIR = (
   / "stage_c_fragility_benchmark_20260531"
 )
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
-def _sha256_text(payload: str) -> str:
-  return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
-
 
 def _synthetic_baseline_rows() -> list[dict[str, Any]]:
   source_db = resolve_repo_path("examples", "config", "database")
@@ -104,7 +104,6 @@ def _synthetic_baseline_rows() -> list[dict[str, Any]]:
       }
     )
   return rows
-
 
 def _candidate_curve(surface_artifact: dict[str, Any]) -> dict[str, Any]:
   points = []
@@ -171,7 +170,6 @@ def _candidate_curve(surface_artifact: dict[str, Any]) -> dict[str, Any]:
     "authority_role": "author_side_benchmark_candidate_only",
   }
 
-
 def _comparison_rows(
   *,
   candidate_curve: dict[str, Any],
@@ -218,10 +216,9 @@ def _comparison_rows(
     )
   return rows
 
-
 def _mean(values: list[float]) -> float:
+  # Kept local: empty -> 0.0 (≠ mean_finite nan).
   return sum(values) / float(len(values)) if values else 0.0
-
 
 def _comparison_metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
   absolute_differences = [
@@ -264,7 +261,6 @@ def _comparison_metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
       "but cannot prove accuracy without independent fragility truth"
     ),
   }
-
 
 def _uncertainty_and_calibration_metrics(
   *,
@@ -324,7 +320,6 @@ def _uncertainty_and_calibration_metrics(
     "authority_effect": "continues_to_block_res011_and_replacement",
   }
 
-
 def _independence_trace(
   *,
   review_artifact: dict[str, Any],
@@ -375,7 +370,6 @@ def _independence_trace(
     ),
     "authority_effect": "continues_to_block_res012",
   }
-
 
 def _residual_benchmark_evidence_status(
   *,
@@ -430,7 +424,6 @@ def _residual_benchmark_evidence_status(
     for residual_id in FOCUSED_RESIDUAL_IDS
   ]
 
-
 def _truth_inventory() -> dict[str, Any]:
   return {
     "external_truth_present": False,
@@ -449,7 +442,6 @@ def _truth_inventory() -> dict[str, Any]:
     ),
   }
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -459,7 +451,6 @@ def _authority_guards() -> dict[str, bool]:
     "deterministic_fuze_authority": False,
     "replacement_allowed": False,
   }
-
 
 def generate_stage_c_fragility_benchmark(
   *,
@@ -562,7 +553,6 @@ def generate_stage_c_fragility_benchmark(
     ],
   }
 
-
 def _comparison_artifact(artifact: dict[str, Any]) -> dict[str, Any]:
   return {
     "package_id": artifact["package_id"],
@@ -579,7 +569,6 @@ def _comparison_artifact(artifact: dict[str, Any]) -> dict[str, Any]:
     "authority_decision": artifact["authority_decision"],
     "authority_guards": artifact["authority_guards"],
   }
-
 
 def _retained_manifest(
   *,
@@ -631,32 +620,26 @@ def _retained_manifest(
     ],
   }
 
-
 def write_retained_artifacts(
   artifact: dict[str, Any],
   retained_dir: Path,
 ) -> dict[str, Any]:
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
-  artifact_payload = _canonical_json(artifact) + "\n"
   artifact_path = retained_dir / "stage_c_fragility_benchmark.json"
-  artifact_path.write_text(artifact_payload, encoding="utf-8")
+  write_and_hash_json(artifact_path, artifact)
 
   comparison = _comparison_artifact(artifact)
-  comparison_payload = _canonical_json(comparison) + "\n"
   comparison_path = retained_dir / "candidate_vs_synthetic_sigmoid_comparison.json"
-  comparison_path.write_text(comparison_payload, encoding="utf-8")
+  write_and_hash_json(comparison_path, comparison)
 
   manifest = _retained_manifest(
     artifact=artifact,
-    artifact_sha256=_sha256_text(artifact_payload),
-    comparison_sha256=_sha256_text(comparison_payload),
+    artifact_sha256=_sha256_text(_canonical_json(artifact) + "\n"),
+    comparison_sha256=_sha256_text(_canonical_json(comparison) + "\n"),
   )
   manifest_path = retained_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
+  write_and_hash_json(manifest_path, manifest)
   manifest["manifest_path"] = _display_path(manifest_path, REPO_ROOT)
   return manifest
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -693,7 +676,6 @@ def main(argv: list[str] | None = None) -> int:
   if not wrote_output:
     print(payload)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

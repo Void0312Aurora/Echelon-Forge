@@ -12,11 +12,12 @@ from typing import Any, Sequence
 import numpy as np
 import torch as th
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
@@ -26,6 +27,13 @@ from python.rl.policy_algo.grouped_stopping import (  # noqa: E402
     CENSOR_TIMEOUT,
     GroupedStoppingEvidence,
     compute_grouped_stopping_loss,
+)
+from tools.diagnostics.common import (  # noqa: E402
+    EpisodeStepTransition,
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+    collect_episode_steps,
 )
 from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     _concat_obs,
@@ -38,7 +46,7 @@ from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     _slice_obs,
     _to_serializable,
 )
-from tools.diagnostics.air_combat_weapon_employment_process_probe import _base_env, _build_env  # noqa: E402
+from tools.diagnostics.air_combat_weapon_employment_process_probe import _build_env  # noqa: E402
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy  # noqa: E402
 
 
@@ -254,52 +262,53 @@ def collect_real_batch(
     launch_window_open: list[bool] = []
     fire_once_accepted: list[bool] = []
     episode_ids: list[int] = []
-    episode_lengths: list[int] = []
-    try:
-        for ep in range(int(episodes)):
-            obs, _info = env.reset(seed=int(seed) + int(ep))
-            base_env = _base_env(env)
-            ep_max_steps = int(max_steps) if int(max_steps) > 0 else int(getattr(base_env, "max_steps", 0) or 1200)
-            steps_this_ep = 0
-            for _step in range(1, ep_max_steps + 1):
-                obs_tensor = _obs_to_cpu(model.policy, obs)
-                policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor, 1)
-                policy_launch_window = _policy_launch_window_from_obs(obs_tensor, 1, hyper=hyper)
-                action = _collector_action_for_m3s2(
-                    model,
-                    env,
-                    obs,
-                    collector_action=str(collector_action),
-                    stochastic=bool(stochastic),
-                )
-                new_obs, _reward, terminated, truncated, info = env.step(action)
-                row = info if isinstance(info, dict) else {}
-                mask_open = (
-                    bool(policy_fire_mask[0])
-                    if policy_fire_mask is not None and len(policy_fire_mask) >= 1
-                    else bool(row.get("fire_mask", row.get("authorization_to_fire", False)))
-                )
-                launch_open = (
-                    bool(policy_launch_window[0])
-                    if policy_launch_window is not None and len(policy_launch_window) >= 1
-                    else bool(mask_open)
-                )
-                accepted = bool(row.get("fire_once_accepted", False))
-                obs_items.append(obs_tensor)
-                fire_mask.append(bool(mask_open))
-                launch_window_open.append(bool(launch_open))
-                fire_once_accepted.append(bool(accepted))
-                episode_ids.append(int(ep))
-                steps_this_ep += 1
-                obs = new_obs
-                if bool(terminated or truncated):
-                    break
-            episode_lengths.append(int(steps_this_ep))
-    finally:
-        try:
-            env.close()
-        except Exception:
-            pass
+
+    def prepare_step(
+        _episode: int,
+        _step: int,
+        observation: Any,
+        _episode_state: Any,
+    ) -> tuple[np.ndarray, tuple[dict[str, th.Tensor], list[bool] | None, list[bool] | None]]:
+        obs_tensor = _obs_to_cpu(model.policy, observation)
+        policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor, 1)
+        policy_launch_window = _policy_launch_window_from_obs(obs_tensor, 1, hyper=hyper)
+        action = _collector_action_for_m3s2(
+            model,
+            env,
+            observation,
+            collector_action=str(collector_action),
+            stochastic=bool(stochastic),
+        )
+        return action, (obs_tensor, policy_fire_mask, policy_launch_window)
+
+    def append_step(transition: EpisodeStepTransition, _episode_state: Any) -> None:
+        obs_tensor, policy_fire_mask, policy_launch_window = transition.context
+        row = transition.info if isinstance(transition.info, dict) else {}
+        mask_open = (
+            bool(policy_fire_mask[0])
+            if policy_fire_mask is not None and len(policy_fire_mask) >= 1
+            else bool(row.get("fire_mask", row.get("authorization_to_fire", False)))
+        )
+        launch_open = (
+            bool(policy_launch_window[0])
+            if policy_launch_window is not None and len(policy_launch_window) >= 1
+            else bool(mask_open)
+        )
+        accepted = bool(row.get("fire_once_accepted", False))
+        obs_items.append(obs_tensor)
+        fire_mask.append(bool(mask_open))
+        launch_window_open.append(bool(launch_open))
+        fire_once_accepted.append(bool(accepted))
+        episode_ids.append(int(transition.episode))
+
+    episode_lengths = collect_episode_steps(
+        env,
+        episodes=int(episodes),
+        max_steps=int(max_steps),
+        seed=int(seed),
+        prepare_step=prepare_step,
+        on_step=append_step,
+    )
 
     groups = _build_groups_from_rows(
         fire_mask=fire_mask,
@@ -664,14 +673,22 @@ def _apply_loss_overrides(hyper: dict[str, Any], args: argparse.Namespace) -> No
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
-    parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--algo", default="auto")
-    parser.add_argument("--device", default="cuda")
-    parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--max-steps", type=int, default=2400)
-    parser.add_argument("--seed", type=int, default=20260525)
+    add_probe_run_args(parser, include=("scenario",), defaults={"scenario": DEFAULT_SCENARIO})
+    add_model_load_args(
+        parser,
+        defaults={
+            "train_config": DEFAULT_TRAIN_CONFIG,
+            "model": DEFAULT_MODEL,
+            "algo": "auto",
+            "device": "cuda",
+        },
+    )
+    add_probe_run_args(
+        parser,
+        include=("episodes", "max_steps", "seed"),
+        defaults={"episodes": 1, "max_steps": 2400, "seed": 20260525},
+        option_primary={"max_steps": "hyphen"},
+    )
     parser.add_argument("--collector-action", choices=("hold", "model", "model_event_hold"), default="hold")
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--scopes", default="current,current_plus_features")
@@ -700,7 +717,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--prewindow-logit-ceiling", type=float, default=None)
     parser.add_argument("--quality-logit-floor-coef", type=float, default=None)
     parser.add_argument("--quality-logit-floor", type=float, default=None)
-    parser.add_argument("--json-out", default="")
+    add_json_out_arg(parser, option_primary="hyphen")
     return parser.parse_args()
 
 

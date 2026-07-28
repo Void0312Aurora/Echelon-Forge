@@ -505,7 +505,7 @@ Platform =
   仍作为性能路线排序和后端取舍依据。
 - [../runtime_facade/runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
   仍作为 facade 契约输入。
-- [../../task/common_air_naval/README.zh.md](../../task/common_air_naval/README.zh.md)
+- [../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md](../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
   仍作为 `common / air / naval` 拆分的历史任务线。
 - [../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/README.zh.md)
   是把本文档转化为分阶段工作的执行子项目。
@@ -530,7 +530,7 @@ Platform =
 - [../../task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.zh.md](../../task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.zh.md)
   是独立的 `learning-face` 任务族，承接学习侧闭环、证据消费与能力演化
   的架构对齐，不重开仿真框架闭合。
-- [../../task/review/temp-02_review_20260519.zh.md](../../task/review/temp-02_review_20260519.zh.md)
+- [../../task/review/archive/wp-superseded/architecture_plan_review_20260519.zh.md](../../task/review/archive/wp-superseded/architecture_plan_review_20260519.zh.md)
   是将本基线从 lifecycle + DAG 提升到 SCAL、图之图、信息状态架构和仿真编译器定位的来源评审。
 
 后续架构任务单应优先引用本文档，再引用旧文档作为论据或证据来源。

@@ -4,13 +4,13 @@ import unittest
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
 
 from gym_envs.universal_env_parts import AIR_COMBAT_HYBRID_V1_ACTION_MODE # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(

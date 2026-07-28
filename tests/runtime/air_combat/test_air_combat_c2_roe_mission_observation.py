@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
@@ -18,7 +18,7 @@ from python.mission_obs_taxonomy import ( # noqa: E402
   mission_observation_dim,
   mission_observation_field_index,
 )
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 
 
 _DB_PATH = resolve_repo_path("examples", "config", "database")

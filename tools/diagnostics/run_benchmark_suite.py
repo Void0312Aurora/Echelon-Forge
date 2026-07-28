@@ -9,11 +9,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 from tools.diagnostics.benchmark_registry import BENCHMARK_FAMILIES
 from tools.diagnostics.common import load_json_config, write_json_output
 
@@ -21,6 +22,7 @@ from tools.diagnostics.common import load_json_config, write_json_output
 ensure_repo_imports()
 
 
+REPO_ROOT = ensure_repo_imports()
 def _resolve_repo_or_abs(path: str) -> str:
     raw = str(path).strip()
     if os.path.isabs(raw):

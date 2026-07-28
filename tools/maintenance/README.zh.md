@@ -122,6 +122,18 @@ Windows 范围：
   `validate-rl`。
 - 它有意与 `cmo_env.sh` 并存运行，不应替代 Linux CI 工作流。
 
+推荐的维护文档链接审计：
+
+```bash
+python3 tools/maintenance/document_link_audit.py
+python3 tools/maintenance/document_link_audit.py --format json
+```
+
+默认命令检查仓库根中英文 README 与严格维护文档面。archive、scratch、results
+和本地 review 文档不会作为扫描源，但维护页面指向保留 archive 的链接仍必须真实
+可解析。使用 `--full-tree` 可检查上述排除源之外的全部共享 Markdown 文档。缺失
+目标、逃出仓库的路径或本机绝对路径都会让命令以非零状态退出。
+
 推荐的双语文档审计：
 
 ```bash
@@ -141,11 +153,17 @@ python3 tools/maintenance/translate_docs_batch.py audit --root docs \
   --full-tree
 ```
 
-如果在一次大范围文档整理后结果看起来很嘈杂，先刷新注册表基线：
+独立核对某轮实际修改的文档对后，只刷新这些记录，避免把无关的历史分歧整体
+重置：
 
 ```bash
-python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs \
+  --registry docs/standards/bilingual_document_clusters.json --write \
+  --pair README --pair standards/governance/document_lifecycle_policy
 ```
+
+省略 `--pair` 会重建完整登记表。只有完成整个维护面双语审阅后才能这样做，否则
+未经审阅的遗留分歧也会被写入新哈希并显示为已同步。
 
 默认情况下，审计还会跳过仅在本地存在、通常不会进入共享远端的文档区域，包括：
 

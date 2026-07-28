@@ -3,12 +3,10 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from python.angles import wrap_heading_deg
 
-def _wrap_heading_deg(angle_deg: float) -> float:
-    wrapped = float(angle_deg) % 360.0
-    if wrapped < 0.0:
-        wrapped += 360.0
-    return wrapped
+# Local name preserved as a thin alias; semantics owned by python.angles.
+_wrap_heading_deg = wrap_heading_deg
 
 
 class RedScriptedAgent:

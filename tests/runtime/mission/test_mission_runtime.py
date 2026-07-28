@@ -10,7 +10,7 @@ from unittest import mock
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
@@ -20,7 +20,7 @@ import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
 from gym_envs.universal_env_parts import build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv # noqa: E402
 
 
 def _make_detection(

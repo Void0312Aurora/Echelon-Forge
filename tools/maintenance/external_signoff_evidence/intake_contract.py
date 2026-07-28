@@ -16,13 +16,22 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 from tools.maintenance.external_signoff_evidence import signoff_request # noqa: E402
-
 
 PACKAGE_ID = signoff_request.PACKAGE_ID
 SCHEMA_VERSION = "a2.blastfrag_signoff_intake_contract.v1"
@@ -81,32 +90,15 @@ FORBIDDEN_PACKET_KEYS = {
   "workbook_copy",
 }
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: resolve ok but fallback path.as_posix() != str(path).
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()
   except ValueError:
     return path.as_posix()
 
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -114,7 +106,6 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
   )
-
 
 def _load_json_optional(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
@@ -127,14 +118,12 @@ def _load_json_optional(path: Path) -> dict[str, Any] | None:
     return None
   return payload
 
-
 def _hex64(value: Any) -> bool:
   return (
     isinstance(value, str)
     and len(value) == 64
     and all(ch in "0123456789abcdef" for ch in value)
   )
-
 
 def _authority_guards() -> dict[str, bool]:
   return {
@@ -155,7 +144,6 @@ def _authority_guards() -> dict[str, bool]:
     "stock_descriptor_created": False,
   }
 
-
 def _iter_key_paths(value: Any, row_path: str = "$"):
   if isinstance(value, dict):
     for key, child in value.items():
@@ -165,7 +153,6 @@ def _iter_key_paths(value: Any, row_path: str = "$"):
   elif isinstance(value, list):
     for index, child in enumerate(value):
       yield from _iter_key_paths(child, f"{row_path}[{index}]")
-
 
 def _input_ref(
   *,
@@ -199,7 +186,6 @@ def _input_ref(
     ref["status"] = payload.get("status", "")
   return ref
 
-
 def _required_signoff_ids(request_packet: dict[str, Any] | None) -> list[str]:
   rows = (request_packet or {}).get("requested_signoff_items", [])
   return [
@@ -207,7 +193,6 @@ def _required_signoff_ids(request_packet: dict[str, Any] | None) -> list[str]:
     for row in rows
     if isinstance(row, dict) and row.get("signoff_id")
   ]
-
 
 def _candidate_packet_ref(
   *,
@@ -237,14 +222,12 @@ def _candidate_packet_ref(
   ref["status"] = "external_signoff_packet_loaded_for_shape_check_only"
   return ref
 
-
 def _finding(finding_id: str, detail: str) -> dict[str, str]:
   return {
     "finding_id": finding_id,
     "detail": detail,
     "effect": "intake_shape_rejected_fail_closed",
   }
-
 
 def _evaluate_external_signoff_packet(
   *,
@@ -439,7 +422,6 @@ def _evaluate_external_signoff_packet(
     "findings": findings,
   }
 
-
 def _intake_contract_shape(required_signoff_ids: list[str]) -> dict[str, Any]:
   return {
     "expected_external_schema_version": EXPECTED_EXTERNAL_SCHEMA_VERSION,
@@ -466,7 +448,6 @@ def _intake_contract_shape(required_signoff_ids: list[str]) -> dict[str, Any]:
     "forbidden_packet_keys": sorted(FORBIDDEN_PACKET_KEYS),
     "contract_effect": "shape_check_only_not_approval_not_admission",
   }
-
 
 def generate_signoff_intake_contract(
   *,
@@ -567,7 +548,6 @@ def generate_signoff_intake_contract(
     ),
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -583,11 +563,8 @@ def write_retained_artifacts(
     source_rights_signoff_request_packet_path=source_rights_signoff_request_packet_path,
     candidate_signoff_packet_path=candidate_signoff_packet_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   contract_path = retained_dir / CONTRACT_FILENAME
-  _write_json(contract_path, artifact)
-  contract_sha256 = _sha256_file(contract_path)
+  contract_sha256 = write_and_hash_json(contract_path, artifact, ensure_ascii=False)
   contract_artifact = {
     "artifact_key": "signoff_intake_contract",
     "filename": CONTRACT_FILENAME,
@@ -623,14 +600,13 @@ def write_retained_artifacts(
     "authority_guards_all_false": artifact["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   artifact["retained_artifact_ref"] = _rel(contract_path, repo_root)
   artifact["retained_artifact_sha256"] = contract_sha256
   artifact["retained_manifest_ref"] = _rel(manifest_path, repo_root)
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -671,7 +647,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

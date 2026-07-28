@@ -5,7 +5,7 @@ import socket
 import threading
 import unittest
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 HOST_FRAME_PAYLOAD = (

@@ -1,15 +1,42 @@
 from __future__ import annotations
 
+import json
 import math
 import unittest
-import json
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 
 ensure_repo_imports()
 
 import ef_py # noqa: E402
+
+
+def _build_execution_runtime_inputs(runtime_type, marker: int):
+  inputs = runtime_type()
+  (inputs.has_mission_observation, inputs.has_step_info,
+   inputs.has_execution_step, inputs.has_flight_shaping) = (
+    bool(marker & bit) for bit in (0x1, 0x2, 0x4, 0x8)
+  )
+  inputs.mission_observation.mode_code = 0
+  inputs.mission_observation.command_code = float(marker)
+  (inputs.execution_step.safety.finite_state_valid, inputs.execution_step.safety.health,
+   inputs.execution_step.safety.survival_reward) = (True, 100.0, 0.01 * marker)
+  inputs.flight_shaping.truth_speed_mps = 100.0 + marker
+  inputs.flight_shaping.speed_reward_weight = 0.01
+  return inputs
+
+
+def _common_execution_runtime_product_signature(products):
+  return (
+    tuple(bool(getattr(products, name)) for name in (
+      "valid", "mission_observation_evaluated", "step_info_evaluated",
+      "execution_step_evaluated", "flight_shaping_evaluated")),
+    tuple(float(value) for value in products.mission_observation.values),
+    (bool(products.execution_step.valid), float(products.execution_step.compiled_reward_total),
+     products.execution_step.reason_code),
+    (bool(products.flight_shaping.valid), float(products.flight_shaping.speed_reward)),
+  )
 
 
 class ExecutionStepRuntimeTests(unittest.TestCase):
@@ -198,6 +225,47 @@ class ExecutionStepRuntimeTests(unittest.TestCase):
 
 
 class ExecutionEpisodeRuntimeTests(unittest.TestCase):
+  def test_frame_compatibility_runtime_matches_episode_owner_across_batch_boundaries(self) -> None:
+    self.assertNotIsInstance(ef_py.ExecutionEpisodeRuntimeInputs(), ef_py.ExecutionFrameRuntimeInputs)
+    for marker in range(16):
+      frame_inputs = _build_execution_runtime_inputs(ef_py.ExecutionFrameRuntimeInputs, marker)
+      episode_inputs = _build_execution_runtime_inputs(ef_py.ExecutionEpisodeRuntimeInputs, marker)
+      frame_products = ef_py.compute_execution_frame_runtime(frame_inputs)
+      episode_products = ef_py.compute_execution_episode_runtime(episode_inputs)
+      frame_signature = _common_execution_runtime_product_signature(frame_products)
+      episode_signature = _common_execution_runtime_product_signature(episode_products)
+      with self.subTest(kind="scalar", marker=marker):
+        self.assertEqual(frame_signature, episode_signature)
+        self.assertEqual(frame_signature[0], (True, *(bool(marker & bit) for bit in (1, 2, 4, 8))))
+        self.assertEqual(bool(episode_products.outcome_evaluated), bool(marker & 0xC))
+
+    for batch_size in (0, 1, 63, 64, 65):
+      frame_inputs = [_build_execution_runtime_inputs(ef_py.ExecutionFrameRuntimeInputs, i)
+                      for i in range(batch_size)]
+      episode_inputs = [_build_execution_runtime_inputs(ef_py.ExecutionEpisodeRuntimeInputs, i)
+                        for i in range(batch_size)]
+      frame_batch = ef_py.compute_execution_frame_runtime_batch(frame_inputs)
+      episode_batch = ef_py.compute_execution_episode_runtime_batch(episode_inputs)
+      self.assertEqual((len(frame_batch), len(episode_batch)), (batch_size, batch_size))
+
+      for marker, (frame_products, episode_products) in enumerate(zip(frame_batch, episode_batch)):
+        expected = _common_execution_runtime_product_signature(ef_py.compute_execution_frame_runtime(frame_inputs[marker]))
+        with self.subTest(batch_size=batch_size, marker=marker):
+          self.assertEqual(_common_execution_runtime_product_signature(frame_products), expected)
+          self.assertEqual(_common_execution_runtime_product_signature(episode_products), expected)
+
+  def test_frame_and_episode_batches_rethrow_parallel_eligible_domain_errors(self) -> None:
+    for runtime_type, compute_batch in (
+      (ef_py.ExecutionFrameRuntimeInputs, ef_py.compute_execution_frame_runtime_batch),
+      (ef_py.ExecutionEpisodeRuntimeInputs, ef_py.compute_execution_episode_runtime_batch),
+    ):
+      inputs_batch = [_build_execution_runtime_inputs(runtime_type, marker) for marker in range(65)]
+      inputs_batch[63].has_mission_observation = True
+      inputs_batch[63].mission_observation.mode_code = 999
+      with self.subTest(runtime_type=runtime_type.__name__):
+        with self.assertRaisesRegex(ValueError, "^Unknown mission observation mode code$"):
+          compute_batch(inputs_batch)
+
   def test_episode_runtime_aggregates_shaping_and_populates_waypoint_status(self) -> None:
     inputs = ef_py.ExecutionEpisodeRuntimeInputs()
     inputs.has_execution_step = True

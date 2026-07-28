@@ -18,13 +18,14 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
-from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
+from python.env_config import FLIGHT_SHAPING_BACKENDS
+from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv  # noqa: E402
 import ef_py  # noqa: E402
 from tools.diagnostics.common import (  # noqa: E402
     flight_shaping_runtime_stats_dict,
@@ -290,7 +291,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--flight-shaping-backend",
-        choices=["case", "auto", "compiled", "gpu_host"],
+        # "case" is a benchmark-local sentinel; the real backend list derives from the owner.
+        choices=["case", *FLIGHT_SHAPING_BACKENDS],
         default="case",
         help="Override the benchmark case flight-shaping backend. Use 'case' to keep the built-in case default.",
     )

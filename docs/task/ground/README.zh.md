@@ -157,7 +157,7 @@
 - Ground 最小任务结构：
   [../../standards/ground/minimal_task_structure.zh.md](../../standards/ground/minimal_task_structure.zh.md)
 - `common / air / naval` 拆分（已归档）：
-  [../archive/common_air_naval/README.zh.md](../archive/common_air_naval/README.zh.md)
+  [../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md](../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
 
 ## 已封存 / 归档子项目记录
 
@@ -179,15 +179,15 @@ follow-on package，不要在这些已接受记录内继续追加实现任务。
 - G4 tasking runtime 切片：
   [archive/g4_runtime_slice/README.zh.md](archive/g4_runtime_slice/README.zh.md)
 - G5 MVP 场景 shell：
-  [archive/g5_mvp_scenario/README.zh.md](archive/g5_mvp_scenario/README.zh.md)
+  [archive/g5_mvp_scenario/README.md](archive/g5_mvp_scenario/README.md)
 - G6 realism-gradient 静态 fixture：
-  [archive/g6_realism_gradient_mvp_scenarios/README.zh.md](archive/g6_realism_gradient_mvp_scenarios/README.zh.md)
+  [archive/g6_realism_gradient_mvp_scenarios/README.md](archive/g6_realism_gradient_mvp_scenarios/README.md)
 - G6-C route-move boundary guardrails：
-  [archive/g6_route_move_boundary/README.zh.md](archive/g6_route_move_boundary/README.zh.md)
+  [archive/g6_route_move_boundary/README.md](archive/g6_route_move_boundary/README.md)
 - G6-D route-move release decision：
-  [archive/g6_route_move_release_decision/README.zh.md](archive/g6_route_move_release_decision/README.zh.md)
+  [archive/g6_route_move_release_decision/README.md](archive/g6_route_move_release_decision/README.md)
 - G6-E native ground platform schema 证据：
-  [archive/g6_native_ground_platform_schema/README.zh.md](archive/g6_native_ground_platform_schema/README.zh.md)
+  [archive/g6_native_ground_platform_schema/README.md](archive/g6_native_ground_platform_schema/README.md)
 - Environment substrate G0 architecture：
   [environment_substrate_g0_architecture/README.zh.md](environment_substrate_g0_architecture/README.zh.md)
 - Environment substrate G0-J static manifest contract：

@@ -19,9 +19,21 @@ from typing import Any
 from zipfile import BadZipFile, ZipFile
 import xml.etree.ElementTree as ET
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -189,41 +201,22 @@ XML_NS = {
   "rel": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
 }
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving; differs from manifest_integrity._display_path.
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return path.as_posix()
 
-
 def _canonical_json(payload: Any) -> str:
   return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
 
-
 def _local_name(tag: str) -> str:
   return tag.rsplit("}", 1)[-1]
-
 
 def _numeric(value: str) -> bool:
   try:
@@ -232,20 +225,17 @@ def _numeric(value: str) -> bool:
     return False
   return True
 
-
 def _column_row(cell_ref: str) -> tuple[str, int]:
   match = re.fullmatch(r"([A-Z]+)([0-9]+)", cell_ref)
   if not match:
     raise ValueError(f"unsupported cell reference: {cell_ref}")
   return match.group(1), int(match.group(2))
 
-
 def _payload_paths(source_payload_pack_dir: Path) -> dict[str, Path]:
   return {
     label: source_payload_pack_dir / "payloads" / details["filename"]
     for label, details in EXPECTED_PAYLOADS.items()
   }
-
 
 def _payload_inventory(
   *,
@@ -278,13 +268,11 @@ def _payload_inventory(
     "all_payload_hashes_match": all(row["hash_matches_expected"] for row in rows),
   }
 
-
 def _read_xml(zip_file: ZipFile, name: str) -> ET.Element | None:
   try:
     return ET.fromstring(zip_file.read(name))
   except KeyError:
     return None
-
 
 def _hashed_xml_properties(root: ET.Element | None) -> dict[str, Any]:
   if root is None:
@@ -307,7 +295,6 @@ def _hashed_xml_properties(root: ET.Element | None) -> dict[str, Any]:
     },
   }
 
-
 def _workbook_relationships(zip_file: ZipFile) -> dict[str, str]:
   rels_root = _read_xml(zip_file, "xl/_rels/workbook.xml.rels")
   if rels_root is None:
@@ -318,14 +305,12 @@ def _workbook_relationships(zip_file: ZipFile) -> dict[str, str]:
     if rel.attrib.get("Id") and rel.attrib.get("Target")
   }
 
-
 def _sheet_path(target: str) -> str:
   if target.startswith("/"):
     return target.lstrip("/")
   if target.startswith("xl/"):
     return target
   return f"xl/{target}"
-
 
 def _sheet_records(zip_file: ZipFile) -> tuple[list[dict[str, Any]], dict[str, str]]:
   workbook = _read_xml(zip_file, "xl/workbook.xml")
@@ -374,7 +359,6 @@ def _sheet_records(zip_file: ZipFile) -> tuple[list[dict[str, Any]], dict[str, s
     )
   return records, sheet_paths
 
-
 def _cell_record(zip_file: ZipFile, sheet_path: str, cell_ref: str) -> dict[str, str]:
   root = _read_xml(zip_file, sheet_path)
   if root is None:
@@ -391,7 +375,6 @@ def _cell_record(zip_file: ZipFile, sheet_path: str, cell_ref: str) -> dict[str,
       "type": cell.attrib.get("t", ""),
     }
   return {"exists": "false", "formula": "", "value": "", "type": ""}
-
 
 def _selected_output_hash_record(
   *,
@@ -441,7 +424,6 @@ def _selected_output_hash_record(
     "comparison_hash_is_calibration": False,
   }
 
-
 def _selected_output_requirements(
   selected_hashes: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -479,7 +461,6 @@ def _selected_output_requirements(
       }
     )
   return requirements
-
 
 def _parse_beco_workbook(
   *,
@@ -576,7 +557,6 @@ def _parse_beco_workbook(
     "cached_workbook_values_are_calibration": False,
   }
 
-
 def _tp20_reference(*, tp20_path: Path, repo_root: Path) -> dict[str, Any]:
   return {
     "source_artifact_label": "TP-20 PDF",
@@ -589,7 +569,6 @@ def _tp20_reference(*, tp20_path: Path, repo_root: Path) -> dict[str, Any]:
     "benchmark_consumed_for_release": False,
     "source_presence_is_calibration": False,
   }
-
 
 def _tp21_vocabulary(*, tp21_path: Path, repo_root: Path) -> dict[str, Any]:
   canonical_vocabulary = {
@@ -631,7 +610,6 @@ def _tp21_vocabulary(*, tp21_path: Path, repo_root: Path) -> dict[str, Any]:
     "criteria_vocabulary_is_calibration": False,
   }
 
-
 def _non_authoritative_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -644,7 +622,6 @@ def _non_authoritative_guards() -> dict[str, bool]:
     "pk_authority_granted": False,
     "deterministic_fuze_authority_granted": False,
   }
-
 
 def generate_mechanism_comparison_hashes(
   *,
@@ -749,7 +726,6 @@ def generate_mechanism_comparison_hashes(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -760,10 +736,8 @@ def write_retained_artifacts(
     repo_root=repo_root,
     source_payload_pack_dir=source_payload_pack_dir,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
   artifact_path = retained_dir / MECHANISM_COMPARISON_HASHES_FILENAME
-  _write_json(artifact_path, artifact)
-  artifact_sha256 = _sha256_file(artifact_path)
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact, ensure_ascii=False)
   manifest = {
     "schema_version": RETAINED_MANIFEST_SCHEMA_VERSION,
     "package_id": PACKAGE_ID,
@@ -787,11 +761,10 @@ def write_retained_artifacts(
     "non_authoritative_guards": artifact["non_authoritative_guards"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
   artifact["retained_artifact_sha256"] = artifact_sha256
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -836,7 +809,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

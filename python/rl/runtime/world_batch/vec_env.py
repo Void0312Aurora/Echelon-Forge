@@ -41,6 +41,7 @@ from gym_envs.universal_env import (
     reset_naval_station_action_state,
     validate_naval_action_mode_for_loader,
 )
+from python.env_config import EXECUTION_STEP_RUNTIME_MODES, VALID_STEP_INFO_MODES
 from python.rl.control.wrappers import MultiTimescaleActionController
 from python.rl.support.sb3_vec_env_compat import (
     VecEnv,
@@ -55,7 +56,7 @@ from python.scenario.runtime import (
     build_compiled_world_layout,
     load_compiled_scenario_for_setup_target,
 )
-from python.scenario_compiler import ScenarioCompiler
+from python.scenario.compiler import ScenarioCompiler
 
 from .adapter import RuntimeFacadeAdapter
 from .command_chain_cache import (
@@ -177,9 +178,9 @@ class WorldBatchVecEnv(
         self.flight_shaping_backend = _normalize_flight_shaping_backend(flight_shaping_backend)
         if self.execution_step_runtime_mode == "legacy":
             raise ValueError("execution_step_runtime_mode='legacy' has been removed from maintained VecEnv paths")
-        if self.execution_step_runtime_mode not in (None, "compiled"):
+        if self.execution_step_runtime_mode not in (None, *EXECUTION_STEP_RUNTIME_MODES):
             raise ValueError(f"Unknown execution_step_runtime_mode: {execution_step_runtime_mode!r}")
-        if self.step_info_mode not in ("full", "terminal", "off"):
+        if self.step_info_mode not in VALID_STEP_INFO_MODES:
             raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
         self.collect_step_timing = bool(collect_step_timing)
         self.batch_observation_backend = _normalize_batch_observation_backend(batch_observation_backend)

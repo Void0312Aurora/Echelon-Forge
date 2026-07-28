@@ -16,13 +16,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
-
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
 SCHEMA_VERSION = "a2.res006_beco_replacement_tolerance_admission_gate.v1"
@@ -65,24 +73,12 @@ DEFAULT_SOURCE_RIGHTS_OUTPUT_POLICY_GATE = (
   SOURCE_RIGHTS_OUTPUT_POLICY_DIR / SOURCE_RIGHTS_OUTPUT_POLICY_GATE_FILENAME
 )
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving; differs from manifest_integrity._display_path.
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return path.as_posix()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -91,10 +87,8 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     encoding="utf-8",
   )
 
-
 def _load_json(path: Path) -> dict[str, Any]:
   return json.loads(path.read_text(encoding="utf-8"))
-
 
 def _input_ref(
   *,
@@ -122,7 +116,6 @@ def _input_ref(
   ref["status"] = payload.get("status", "")
   return ref
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -139,7 +132,6 @@ def _authority_guards() -> dict[str, bool]:
     "replacement_anchor_authority_granted": False,
     "benchmark_consumption_authority_granted": False,
   }
-
 
 def _source_rights_summary(
   *,
@@ -175,7 +167,6 @@ def _source_rights_summary(
     "recording_level": "path_sha_status_only",
   }
 
-
 def _cached_rows(
   mechanism_comparison_hashes: dict[str, Any] | None,
 ) -> dict[str, dict[str, Any]]:
@@ -189,7 +180,6 @@ def _cached_rows(
     if row.get("comparison_id")
   }
 
-
 def _recalculated_rows(
   beco_recalculated_anchor_set: dict[str, Any] | None,
 ) -> dict[str, dict[str, Any]]:
@@ -201,7 +191,6 @@ def _recalculated_rows(
     for row in rows
     if row.get("comparison_id")
   }
-
 
 def _ordered_comparison_ids(
   *,
@@ -220,7 +209,6 @@ def _ordered_comparison_ids(
     if comparison_id and comparison_id not in ordered:
       ordered.append(comparison_id)
   return ordered
-
 
 def _cached_vs_recalculated_summary(
   *,
@@ -339,7 +327,6 @@ def _cached_vs_recalculated_summary(
     "stderr_retained": False,
   }
 
-
 def _replacement_candidate_summary(
   *,
   beco_recalculated_anchor_set: dict[str, Any] | None,
@@ -385,7 +372,6 @@ def _replacement_candidate_summary(
     "replacement_anchor_authority_granted": False,
     "benchmark_consumed_for_release": False,
   }
-
 
 def _required_signoff_items(
   *,
@@ -471,7 +457,6 @@ def _required_signoff_items(
     },
   ]
 
-
 def _admission_decision(
   *,
   cached_vs_recalculated_mismatch_summary: dict[str, Any],
@@ -517,7 +502,6 @@ def _admission_decision(
     "remaining_blockers": blockers,
   }
 
-
 def _load_existing_inputs(
   *,
   res006_recalculation_gate_path: Path,
@@ -538,7 +522,6 @@ def _load_existing_inputs(
       continue
     loaded[key] = _load_json(path)
   return loaded
-
 
 def generate_res006_beco_replacement_tolerance_admission_gate(
   *,
@@ -650,7 +633,6 @@ def generate_res006_beco_replacement_tolerance_admission_gate(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -670,11 +652,8 @@ def write_retained_artifacts(
     mechanism_comparison_hashes_path=mechanism_comparison_hashes_path,
     source_rights_output_policy_gate_path=source_rights_output_policy_gate_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   gate_path = retained_dir / GATE_FILENAME
-  _write_json(gate_path, artifact)
-  gate_sha256 = _sha256_file(gate_path)
+  gate_sha256 = write_and_hash_json(gate_path, artifact, ensure_ascii=False)
   gate_artifact = {
     "artifact_key": "res006_beco_replacement_tolerance_admission_gate",
     "filename": GATE_FILENAME,
@@ -701,12 +680,11 @@ def write_retained_artifacts(
     "authority_guards_all_false": artifact["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   artifact["retained_artifact_sha256"] = gate_sha256
-  artifact["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  artifact["retained_manifest_sha256"] = manifest_sha256
   return artifact
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -762,7 +740,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, artifact)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

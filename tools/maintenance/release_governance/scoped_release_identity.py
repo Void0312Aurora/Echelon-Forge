@@ -18,8 +18,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  _sha256_text,
+  write_and_hash_json,
+)
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
   "beam_high_near_miss_0_35m_v0"
@@ -156,36 +169,18 @@ REQUIRED_FORBIDDEN_OUTPUTS = [
   "deterministic_fuze_authority",
 ]
 
-
 def _canonical_json(payload: dict[str, Any]) -> str:
   return json.dumps(payload, indent=2, sort_keys=True)
 
-
-def _sha256_text(text: str) -> str:
-  return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
-
 def _display_path(path: Path, repo_root: Path) -> str:
+  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
   try:
     return path.relative_to(repo_root).as_posix()
   except ValueError:
     return str(path)
 
-
 def _read_text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
-
 
 def _run_git(repo_root: Path, *args: str) -> str:
   result = subprocess.run(
@@ -198,14 +193,11 @@ def _run_git(repo_root: Path, *args: str) -> str:
   )
   return result.stdout.strip()
 
-
 def _repo_commit(repo_root: Path) -> str:
   return _run_git(repo_root, "rev-parse", "HEAD")
 
-
 def _git_status_rows(repo_root: Path) -> list[str]:
   return _run_git(repo_root, "status", "--porcelain=v1").splitlines()
-
 
 def _dirty_status_by_path(repo_root: Path) -> dict[str, str]:
   statuses: dict[str, str] = {}
@@ -219,14 +211,11 @@ def _dirty_status_by_path(repo_root: Path) -> dict[str, str]:
     statuses[path_text] = status
   return statuses
 
-
 def _strip_cell(cell: str) -> str:
   return cell.strip().strip("`").strip()
 
-
 def _split_markdown_row(line: str) -> list[str]:
   return [_strip_cell(cell) for cell in line.strip().strip("|").split("|")]
-
 
 def _extract_field(text: str, field: str) -> str:
   for line in text.splitlines():
@@ -237,12 +226,10 @@ def _extract_field(text: str, field: str) -> str:
       return cells[1].strip()
   return ""
 
-
 def _forbidden_outputs(identity_text: str) -> list[str]:
   value = _extract_field(identity_text, "forbidden_outputs")
   normalized = value.replace("`", "")
   return [part.strip() for part in normalized.split(",") if part.strip()]
-
 
 def _relevant_file_hash_inventory(repo_root: Path) -> list[dict[str, Any]]:
   dirty_statuses = _dirty_status_by_path(repo_root)
@@ -261,7 +248,6 @@ def _relevant_file_hash_inventory(repo_root: Path) -> list[dict[str, Any]]:
       }
     )
   return rows
-
 
 def _retained_artifact_hash_inventory(repo_root: Path) -> list[dict[str, Any]]:
   rows: list[dict[str, Any]] = []
@@ -282,7 +268,6 @@ def _retained_artifact_hash_inventory(repo_root: Path) -> list[dict[str, Any]]:
       )
   return rows
 
-
 def _required_retained_dir_summary(repo_root: Path) -> list[dict[str, Any]]:
   rows: list[dict[str, Any]] = []
   for retained_key, retained_dir in REQUIRED_RETAINED_DIRS.items():
@@ -301,14 +286,12 @@ def _required_retained_dir_summary(repo_root: Path) -> list[dict[str, Any]]:
     )
   return rows
 
-
 def _is_under(path: Path, parent: Path) -> bool:
   try:
     path.resolve().relative_to(parent.resolve())
   except ValueError:
     return False
   return True
-
 
 def _status_summary(repo_root: Path, relevant_inventory: list[dict[str, Any]]) -> dict[str, Any]:
   status_rows = _git_status_rows(repo_root)
@@ -330,7 +313,6 @@ def _status_summary(repo_root: Path, relevant_inventory: list[dict[str, Any]]) -
       "policy is required."
     ),
   }
-
 
 def _standards_global_clean_policy(repo_root: Path) -> dict[str, Any]:
   policy_text = _read_text(DOC_REFS["subagent_usage_policy"])
@@ -355,7 +337,6 @@ def _standards_global_clean_policy(repo_root: Path) -> dict[str, Any]:
       else "A mandatory globally clean worktree rule matched the consumed governance policy."
     ),
   }
-
 
 def _source_payload_summary(repo_root: Path) -> dict[str, Any]:
   path = (
@@ -391,7 +372,6 @@ def _source_payload_summary(repo_root: Path) -> dict[str, Any]:
     ),
   }
 
-
 def _provenance_review_summary(repo_root: Path) -> dict[str, Any]:
   path = (
     PACKAGE_DIR
@@ -417,7 +397,6 @@ def _provenance_review_summary(repo_root: Path) -> dict[str, Any]:
     "prior_review_target": payload.get("review_target", "missing"),
   }
 
-
 def _non_authoritative_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -435,10 +414,8 @@ def _non_authoritative_guards() -> dict[str, bool]:
     "residual_register_edited": False,
   }
 
-
 def _temporary_anchor_count(value: Any) -> int:
   return _canonical_json(value).count(TEMP_ANCHOR)
-
 
 def _identity_summary(repo_root: Path) -> dict[str, Any]:
   identity_text = _read_text(DOC_REFS["surrogate_identity_manifest"])
@@ -461,7 +438,6 @@ def _identity_summary(repo_root: Path) -> dict[str, Any]:
       DOC_REFS["surrogate_identity_manifest"], repo_root
     ),
   }
-
 
 def generate_res002_scoped_release_identity_gate(
   *,
@@ -644,7 +620,6 @@ def generate_res002_scoped_release_identity_gate(
   )
   return scoped_surface
 
-
 def write_retained_scoped_identity_artifact(
   *,
   repo_root: Path = REPO_ROOT,
@@ -653,8 +628,8 @@ def write_retained_scoped_identity_artifact(
   retained_output_dir.mkdir(parents=True, exist_ok=True)
   artifact = generate_res002_scoped_release_identity_gate(repo_root=repo_root)
   artifact_path = retained_output_dir / GATE_FILENAME
-  artifact_text = _canonical_json(artifact) + "\n"
-  artifact_path.write_text(artifact_text, encoding="utf-8")
+  artifact_sha256 = write_and_hash_json(artifact_path, artifact)
+  artifact_content_sha256 = _sha256_text(_canonical_json(artifact))
 
   manifest = {
     "package_id": PACKAGE_ID,
@@ -683,8 +658,8 @@ def write_retained_scoped_identity_artifact(
         "filename": GATE_FILENAME,
         "relative_path": _display_path(artifact_path, repo_root),
         "schema_version": SCOPED_GATE_SCHEMA_VERSION,
-        "sha256": _sha256_file(artifact_path),
-        "content_sha256": _sha256_text(artifact_text.rstrip("\n")),
+        "sha256": artifact_sha256,
+        "content_sha256": artifact_content_sha256,
         "status": artifact["status"],
         "allowed_claim": (
           "bounded RES-002 scoped package identity surface is retained"
@@ -698,14 +673,12 @@ def write_retained_scoped_identity_artifact(
     ],
   }
   manifest_path = retained_output_dir / MANIFEST_FILENAME
-  manifest_text = _canonical_json(manifest) + "\n"
-  manifest_path.write_text(manifest_text, encoding="utf-8")
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest)
   manifest["manifest_relative_path"] = _display_path(manifest_path, repo_root)
-  manifest["manifest_sha256"] = _sha256_file(manifest_path)
+  manifest["manifest_sha256"] = manifest_sha256
   manifest["retained_artifact_count"] = len(manifest["artifacts"])
   manifest["all_artifacts_exist"] = artifact_path.exists()
   return manifest
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -746,7 +719,6 @@ def main(argv: list[str] | None = None) -> int:
   else:
     print(text)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

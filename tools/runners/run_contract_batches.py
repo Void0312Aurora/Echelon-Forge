@@ -23,7 +23,7 @@ def _repo_root() -> str:
 
 
 def _resolve_specs(group: str) -> tuple[str, list[str], str]:
-  from python.testing.runtime import resolve_repo_path
+  from python.runtime_bootstrap import resolve_repo_path
 
   if group == "chain":
     return ("subprocess", sorted(glob.glob(resolve_repo_path("tests", "contracts", "chain", "**", "*.json"), recursive=True)), "no chain contracts found")
@@ -52,7 +52,7 @@ def _resolve_specs(group: str) -> tuple[str, list[str], str]:
 
 
 def _subprocess_pythonpath_parts(repo_root: str) -> list[str]:
-  from python.testing.runtime import iter_build_dirs
+  from python.runtime_bootstrap import iter_build_dirs
 
   parts = list(iter_build_dirs(repo_root))
   parts.append(repo_root)
@@ -60,7 +60,7 @@ def _subprocess_pythonpath_parts(repo_root: str) -> list[str]:
 
 
 def _run_subprocess_specs(spec_paths: list[str]) -> int:
-  from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+  from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 
   repo_root = ensure_repo_imports()
   pythonpath_parts = _subprocess_pythonpath_parts(repo_root)
@@ -128,7 +128,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main() -> int:
-  from python.testing.runtime import ensure_repo_imports
+  from python.runtime_bootstrap import ensure_repo_imports
 
   ensure_repo_imports()
   args = parse_args()

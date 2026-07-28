@@ -14,7 +14,7 @@ repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
-from python.testing.runtime import ensure_repo_imports
+from python.runtime_bootstrap import ensure_repo_imports
 
 ensure_repo_imports()
 

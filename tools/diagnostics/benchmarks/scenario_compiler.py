@@ -15,7 +15,7 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
-from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
 from tools.diagnostics.common import write_json_output
 
 REPO_ROOT = ensure_repo_imports()
@@ -23,7 +23,7 @@ os.chdir(REPO_ROOT)
 
 import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
-from python.scenario_compiler import ScenarioCompiler  # noqa: E402
+from python.scenario.compiler import ScenarioCompiler  # noqa: E402
 
 
 DATABASE_PATH = resolve_repo_path("examples", "config", "database")

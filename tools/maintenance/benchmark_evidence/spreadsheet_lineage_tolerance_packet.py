@@ -16,13 +16,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-  sys.path.insert(0, str(REPO_ROOT))
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
+ensure_repo_imports()
+
+REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.retained_artifacts.manifest_integrity import (
+  _sha256_file,
+  write_and_hash_json,
+)
 from tools.maintenance.benchmark_evidence import comparison_hashes # noqa: E402
-
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
 SCHEMA_VERSION = "a2.res006_beco_lineage_tolerance_review_candidate_packet.v1"
@@ -81,24 +89,12 @@ SIGNOFF_IDS = [
   "replacement_anchor_signoff",
 ]
 
-
 def _rel(path: Path, repo_root: Path) -> str:
+  # Kept local: resolve ok but fallback path.as_posix() != str(path).
   try:
     return path.resolve().relative_to(repo_root.resolve()).as_posix()
   except ValueError:
     return path.as_posix()
-
-
-def _sha256_file(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open("rb") as handle:
-    while True:
-      chunk = handle.read(1024 * 1024)
-      if not chunk:
-        break
-      digest.update(chunk)
-  return digest.hexdigest()
-
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -106,7 +102,6 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
   )
-
 
 def _load_json(path: Path) -> dict[str, Any] | None:
   if not path.is_file():
@@ -118,7 +113,6 @@ def _load_json(path: Path) -> dict[str, Any] | None:
   if not isinstance(payload, dict):
     return None
   return payload
-
 
 def _input_ref(
   *,
@@ -147,7 +141,6 @@ def _input_ref(
   ref["status"] = payload.get("status", "")
   return ref
 
-
 def _authority_guards() -> dict[str, bool]:
   return {
     "stock_descriptor_created": False,
@@ -166,7 +159,6 @@ def _authority_guards() -> dict[str, bool]:
     "benchmark_consumption_authority_granted": False,
   }
 
-
 def _rows_by_id(
   rows: list[dict[str, Any]],
   *,
@@ -180,7 +172,6 @@ def _rows_by_id(
     if row.get(hash_field):
       indexed[str(comparison_id)] = row
   return indexed
-
 
 def _cached_rows(
   mechanism_comparison_hashes: dict[str, Any] | None,
@@ -196,7 +187,6 @@ def _cached_rows(
     hash_field="comparison_output_sha256",
   )
 
-
 def _recalculated_rows(
   beco_recalculated_anchor_set: dict[str, Any] | None,
 ) -> dict[str, dict[str, Any]]:
@@ -210,14 +200,12 @@ def _recalculated_rows(
     hash_field="recalculated_output_sha256",
   )
 
-
 def _add_ordered(target: list[str], values: list[Any]) -> None:
   for value in values:
     if not isinstance(value, str) or not value:
       continue
     if value not in target:
       target.append(value)
-
 
 def _comparison_ids_from_prior_summaries(
   *,
@@ -250,7 +238,6 @@ def _comparison_ids_from_prior_summaries(
 
   return ids
 
-
 def _ordered_comparison_ids(
   *,
   cached_by_id: dict[str, dict[str, Any]],
@@ -275,7 +262,6 @@ def _ordered_comparison_ids(
   _add_ordered(ids, list(cached_by_id))
   _add_ordered(ids, list(recalculated_by_id))
   return ids
-
 
 def _anchor_source_summary(
   *,
@@ -345,7 +331,6 @@ def _anchor_source_summary(
       "temporary_workbook_copy_retained": False,
     },
   }
-
 
 def _cached_vs_recalculated_summary(
   *,
@@ -430,7 +415,6 @@ def _cached_vs_recalculated_summary(
     "stderr_retained": False,
   }
 
-
 def _source_rights_summary(
   *,
   source_rights_output_policy_gate: dict[str, Any] | None,
@@ -464,7 +448,6 @@ def _source_rights_summary(
     "recording_level": "input_ref_sha_and_policy_status_only",
   }
 
-
 def _prior_signoff_items(
   replacement_tolerance_gate: dict[str, Any] | None,
 ) -> dict[str, dict[str, Any]]:
@@ -478,7 +461,6 @@ def _prior_signoff_items(
     for row in rows
     if isinstance(row, dict) and isinstance(row.get("signoff_id"), str)
   }
-
 
 def _required_signoffs(
   *,
@@ -576,7 +558,6 @@ def _required_signoffs(
       }
     )
   return signoffs
-
 
 def _lineage_tolerance_decision_inputs(
   *,
@@ -682,7 +663,6 @@ def _lineage_tolerance_decision_inputs(
     },
   }
 
-
 def _admission_decision(
   *,
   cached_vs_recalculated_summary: dict[str, Any],
@@ -725,7 +705,6 @@ def _admission_decision(
     "remaining_blockers": blockers,
   }
 
-
 def _load_existing_inputs(
   *,
   res006_recalculation_gate_path: Path,
@@ -745,7 +724,6 @@ def _load_existing_inputs(
     ),
     "replacement_tolerance_gate": _load_json(replacement_tolerance_gate_path),
   }
-
 
 def generate_res006_beco_lineage_tolerance_review_packet(
   *,
@@ -876,7 +854,6 @@ def generate_res006_beco_lineage_tolerance_review_packet(
     ],
   }
 
-
 def write_retained_artifacts(
   *,
   retained_dir: Path = DEFAULT_RETAINED_DIR,
@@ -898,11 +875,8 @@ def write_retained_artifacts(
     source_rights_output_policy_gate_path=source_rights_output_policy_gate_path,
     replacement_tolerance_gate_path=replacement_tolerance_gate_path,
   )
-  retained_dir.mkdir(parents=True, exist_ok=True)
-
   packet_path = retained_dir / PACKET_FILENAME
-  _write_json(packet_path, packet)
-  packet_sha256 = _sha256_file(packet_path)
+  packet_sha256 = write_and_hash_json(packet_path, packet, ensure_ascii=False)
   packet_artifact = {
     "artifact_key": "res006_beco_lineage_tolerance_review_candidate_packet",
     "filename": PACKET_FILENAME,
@@ -938,12 +912,11 @@ def write_retained_artifacts(
     "authority_guards_all_false": packet["authority_guards_all_false"],
   }
   manifest_path = retained_dir / RETAINED_MANIFEST_FILENAME
-  _write_json(manifest_path, manifest)
+  manifest_sha256 = write_and_hash_json(manifest_path, manifest, ensure_ascii=False)
 
   packet["retained_artifact_sha256"] = packet_sha256
-  packet["retained_manifest_sha256"] = _sha256_file(manifest_path)
+  packet["retained_manifest_sha256"] = manifest_sha256
   return packet
-
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
@@ -1006,7 +979,6 @@ def main(argv: list[str] | None = None) -> int:
   if args.output:
     _write_json(args.output, packet)
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

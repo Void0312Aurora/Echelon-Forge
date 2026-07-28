@@ -4,7 +4,8 @@ import os
 from typing import Any
 import ef_py
 import numpy as np
-from python.scenario_compiler import (
+from python.env_config import VALID_FLIGHT_SHAPING_BACKENDS
+from python.scenario.compiler import (
     ApproachRewardConfig,
     LNavRuntimeConfig,
     SafetyRewardConfig,
@@ -272,7 +273,7 @@ class ScenarioLoader:
 
     def set_flight_shaping_backend(self, backend: str | None) -> None:
         normalized = normalize_flight_shaping_backend(backend)
-        if normalized not in {"auto", "compiled", "gpu_host"}:
+        if normalized not in VALID_FLIGHT_SHAPING_BACKENDS:
             raise ValueError(f"Unknown flight_shaping_backend: {backend!r}")
         self.flight_shaping_backend = normalized
 

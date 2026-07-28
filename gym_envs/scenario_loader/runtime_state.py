@@ -2,19 +2,22 @@ from dataclasses import dataclass, field, fields
 from types import MappingProxyType
 from typing import Any
 
-from python.scenario_compiler import (
+from python.scenario.compiler import (
     _build_lnav_runtime_config,
     _clone_runtime_mission_command,
     _clone_scenario_value,
     cache_runtime_waypoint_cache,
     materialize_runtime_waypoint_cache,
 )
-from python.rl.tasking.bridge import (
-    build_kernel_mission_command,
+from python.tasking_contracts.bridge_views import (
     has_mission_command_dict,
     mission_command_dict,
     mission_command_view,
 )
+# `build_kernel_mission_command` stays python.rl-resident: it dispatches
+# through `tasking_profile_for_loader`, a genuine entanglement point with the
+# air/ground/naval profile modules (see I24 report).
+from python.rl.tasking.bridge import build_kernel_mission_command
 
 from .common import safe_json_dict_loads, stable_json_dumps
 

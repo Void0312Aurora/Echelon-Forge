@@ -13,13 +13,16 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
+_REPO_ROOT_HINT = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+_REPO_ROOT_HINT = os.path.dirname(_REPO_ROOT_HINT)
+if _REPO_ROOT_HINT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT_HINT)
 from gym_envs.leader_env import LeaderTrainingEnv  # noqa: E402
 from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
-from python.testing.runtime import configure_sim_log_level  # noqa: E402
+from python.runtime_bootstrap import configure_sim_log_level, ensure_repo_imports  # noqa: E402
+
+ensure_repo_imports()
 from tools.diagnostics.common import average_timing_sums, merge_timing_sums  # noqa: E402
 
 

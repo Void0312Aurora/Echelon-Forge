@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from python.testing.runtime import ensure_repo_imports
-from python.testing.runtime import resolve_repo_path
+from python.runtime_bootstrap import ensure_repo_imports
+from python.runtime_bootstrap import resolve_repo_path
 
 
 ensure_repo_imports()

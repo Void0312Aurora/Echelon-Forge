@@ -35,8 +35,8 @@ markers in the analysis docs, not `archive/program/` or `archive/`.
   early ground tasking/native-schema bootstrap line.
 - [simulation_architecture task track](../simulation_architecture/README.md):
   shared runtime, contract, facade, and architecture closure line.
-- [performance_runtime task track](../performance_runtime/README.md):
-  current runtime-performance planning entry.
+- [retained performance-runtime planning history](../archive/performance_runtime/README.md):
+  archived planning context only; it is not a current execution entry.
 
 ## Recommended Starting Points
 

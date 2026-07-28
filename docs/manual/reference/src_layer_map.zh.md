@@ -46,9 +46,9 @@ SimulationKernel / WorldBatchRuntime
 
 - [README.md](../../README.md)
   - 项目总入口，说明主线能力、常用命令和仓库级边界。
-- [src/README.md](../../src/README.md)
+- [src/README.md](../../../src/README.md)
   - `src/` 的分层边界和依赖方向。
-- [docs/plan/architecture/README.md](../plan/architecture/README.md)
+- [docs/plan/architecture/README.md](../../plan/architecture/README.md)
   - 当前架构主方案、分层冻结记录和性能 / 路线调研。
 
 ## 2. 哪些文档是“当前权威入口”
@@ -79,11 +79,11 @@ SimulationKernel / WorldBatchRuntime
 
 优先阅读：
 
-- [src/README.md](../../src/README.md)
-- [src/core/README.md](../../src/core/README.md)
-- [src/runtime/README.md](../../src/runtime/README.md)
-- [src/interfaces/README.md](../../src/interfaces/README.md)
-- [src/interfaces/python/README.md](../../src/interfaces/python/README.md)
+- [src/README.md](../../../src/README.md)
+- [src/core/README.md](../../../src/core/README.md)
+- [src/runtime/README.md](../../../src/runtime/README.md)
+- [src/interfaces/README.md](../../../src/interfaces/README.md)
+- [src/interfaces/python/README.md](../../../src/interfaces/python/README.md)
 
 ### `src/components/`
 
@@ -96,17 +96,17 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/components/README.md](../../src/components/README.md)
-- [src/components/domains/air/platform/README.md](../../src/components/domains/air/platform/README.md)
-- [src/components/command/README.md](../../src/components/command/README.md)
-- [src/components/command/common/README.md](../../src/components/command/common/README.md)
-- [src/components/domains/air/command/README.md](../../src/components/domains/air/command/README.md)
-- [src/components/domains/naval/command/README.md](../../src/components/domains/naval/command/README.md)
-- [src/components/domains/naval/platform/README.md](../../src/components/domains/naval/platform/README.md)
-- [src/components/tasking/README.md](../../src/components/tasking/README.md)
-- [src/components/tasking/common/README.md](../../src/components/tasking/common/README.md)
-- [src/components/domains/air/tasking/README.md](../../src/components/domains/air/tasking/README.md)
-- [src/components/domains/naval/tasking/README.md](../../src/components/domains/naval/tasking/README.md)
+- [src/components/README.md](../../../src/components/README.md)
+- [src/components/domains/air/platform/README.md](../../../src/components/domains/air/platform/README.md)
+- [src/components/command/README.md](../../../src/components/command/README.md)
+- [src/components/command/common/README.md](../../../src/components/command/common/README.md)
+- [src/components/domains/air/command/README.md](../../../src/components/domains/air/command/README.md)
+- [src/components/domains/naval/command/README.md](../../../src/components/domains/naval/command/README.md)
+- [src/components/domains/naval/platform/README.md](../../../src/components/domains/naval/platform/README.md)
+- [src/components/tasking/README.md](../../../src/components/tasking/README.md)
+- [src/components/tasking/common/README.md](../../../src/components/tasking/common/README.md)
+- [src/components/domains/air/tasking/README.md](../../../src/components/domains/air/tasking/README.md)
+- [src/components/domains/naval/tasking/README.md](../../../src/components/domains/naval/tasking/README.md)
 
 典型问题：
 
@@ -125,14 +125,14 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/systems/README.md](../../src/systems/README.md)
-- [src/systems/core/README.md](../../src/systems/core/README.md)
-- [src/systems/domains/air/README.md](../../src/systems/domains/air/README.md)
-- [src/systems/physics/README.md](../../src/systems/physics/README.md)
-- [src/systems/combat/README.md](../../src/systems/combat/README.md)
-- [src/systems/systems/README.md](../../src/systems/systems/README.md)
-- [src/systems/domains/naval/README.md](../../src/systems/domains/naval/README.md)
-- [src/systems/visual/README.md](../../src/systems/visual/README.md)
+- [src/systems/README.md](../../../src/systems/README.md)
+- [src/systems/core/README.md](../../../src/systems/core/README.md)
+- [src/systems/domains/air/README.md](../../../src/systems/domains/air/README.md)
+- [src/systems/physics/README.md](../../../src/systems/physics/README.md)
+- [src/systems/combat/README.md](../../../src/systems/combat/README.md)
+- [src/systems/systems/README.md](../../../src/systems/systems/README.md)
+- [src/systems/domains/naval/README.md](../../../src/systems/domains/naval/README.md)
+- [src/systems/visual/README.md](../../../src/systems/visual/README.md)
 
 典型问题：
 
@@ -150,12 +150,12 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/models/README.md](../../src/models/README.md)
-- [src/models/core/README.md](../../src/models/core/README.md)
-- [src/models/domains/air/README.md](../../src/models/domains/air/README.md)
-- [src/models/environment/README.md](../../src/models/environment/README.md)
-- [src/models/systems/README.md](../../src/models/systems/README.md)
-- [src/models/weapons/README.md](../../src/models/weapons/README.md)
+- [src/models/README.md](../../../src/models/README.md)
+- [src/models/core/README.md](../../../src/models/core/README.md)
+- [src/models/domains/air/README.md](../../../src/models/domains/air/README.md)
+- [src/models/environment/README.md](../../../src/models/environment/README.md)
+- [src/models/systems/README.md](../../../src/models/systems/README.md)
+- [src/models/weapons/README.md](../../../src/models/weapons/README.md)
 
 典型问题：
 
@@ -173,7 +173,7 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/content/README.md](../../src/content/README.md)
+- [src/content/README.md](../../../src/content/README.md)
 
 ### `src/core/`
 
@@ -188,14 +188,14 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/core/README.md](../../src/core/README.md)
-- [src/core/engine/README.md](../../src/core/engine/README.md)
-- [src/core/geometry/README.md](../../src/core/geometry/README.md)
-- [src/core/mission/README.md](../../src/core/mission/README.md)
-- [src/core/mission/runtime/README.md](../../src/core/mission/runtime/README.md)
-- [src/core/mission/episode/README.md](../../src/core/mission/episode/README.md)
-- [src/core/mission/episode/detail/README.md](../../src/core/mission/episode/detail/README.md)
-- [src/core/interfaces/README.md](../../src/core/interfaces/README.md)
+- [src/core/README.md](../../../src/core/README.md)
+- [src/core/engine/README.md](../../../src/core/engine/README.md)
+- [src/core/geometry/README.md](../../../src/core/geometry/README.md)
+- [src/core/mission/README.md](../../../src/core/mission/README.md)
+- [src/core/mission/runtime/README.md](../../../src/core/mission/runtime/README.md)
+- [src/core/mission/episode/README.md](../../../src/core/mission/episode/README.md)
+- [src/core/mission/episode/detail/README.md](../../../src/core/mission/episode/detail/README.md)
+- [src/core/interfaces/README.md](../../../src/core/interfaces/README.md)
 
 典型问题：
 
@@ -214,9 +214,9 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/runtime/README.md](../../src/runtime/README.md)
-- [src/runtime/contracts/README.md](../../src/runtime/contracts/README.md)
-- [src/runtime/facade/README.md](../../src/runtime/facade/README.md)
+- [src/runtime/README.md](../../../src/runtime/README.md)
+- [src/runtime/contracts/README.md](../../../src/runtime/contracts/README.md)
+- [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
 
 典型问题：
 
@@ -233,8 +233,8 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/interfaces/README.md](../../src/interfaces/README.md)
-- [src/interfaces/python/README.md](../../src/interfaces/python/README.md)
+- [src/interfaces/README.md](../../../src/interfaces/README.md)
+- [src/interfaces/python/README.md](../../../src/interfaces/python/README.md)
 
 典型问题：
 
@@ -251,8 +251,8 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/gpu/README.md](../../src/gpu/README.md)
-- [src/gpu/experimental/README.md](../../src/gpu/experimental/README.md)
+- [src/gpu/README.md](../../../src/gpu/README.md)
+- [src/gpu/experimental/README.md](../../../src/gpu/experimental/README.md)
 
 典型问题：
 
@@ -268,9 +268,9 @@ SimulationKernel / WorldBatchRuntime
 
 边界入口：
 
-- [src/tools/README.md](../../src/tools/README.md)
-- [src/tools/experimental/README.md](../../src/tools/experimental/README.md)
-- [src/tools/experimental/gpu_phase0/README.md](../../src/tools/experimental/gpu_phase0/README.md)
+- [src/tools/README.md](../../../src/tools/README.md)
+- [src/tools/experimental/README.md](../../../src/tools/experimental/README.md)
+- [src/tools/experimental/gpu_phase0/README.md](../../../src/tools/experimental/gpu_phase0/README.md)
 
 ## 4. `python/` 层
 
@@ -278,8 +278,8 @@ SimulationKernel / WorldBatchRuntime
 
 优先阅读：
 
-- [python/README.md](../../python/README.md)
-- [python/training/README.md](../../python/training/README.md)
+- [python/README.md](../../../python/README.md)
+- [python/training/README.md](../../../python/training/README.md)
 
 当前主线子域：
 
@@ -304,12 +304,12 @@ SimulationKernel / WorldBatchRuntime
 
 实现入口：
 
-- [python/scenario_compiler.py](../../python/scenario_compiler.py)
+- [python/scenario_compiler.py](../../../python/scenario_compiler.py)
   - 兼容性 shim，主实现已下沉到 `python/scenario/compiler/`。
-- [python/scenario/runtime/](../../python/scenario/runtime)
+- [python/scenario/runtime/](../../../python/scenario/runtime)
   - 当前 scenario-runtime 主实现。旧的 `python/scenario_runtime.py` shim 在当前
     checkout 中不存在。
-- [python/testing/scenario_contract_runner.py](../../python/testing/scenario_contract_runner.py)
+- [python/testing/contracts/](../../../python/testing/contracts/)
   - 兼容性 shim，主实现已下沉到 `python/testing/contracts/`。
 
 ## 5. `gym_envs/` 层
@@ -318,13 +318,13 @@ SimulationKernel / WorldBatchRuntime
 
 优先阅读：
 
-- [gym_envs/README.md](../../gym_envs/README.md)
+- [gym_envs/README.md](../../../gym_envs/README.md)
 
 主入口：
 
-- [gym_envs/universal_env.py](../../gym_envs/universal_env.py)
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
   - 执行层 / 单进程主环境。
-- [gym_envs/leader_env.py](../../gym_envs/leader_env.py)
+- [gym_envs/leader_env.py](../../../gym_envs/leader_env.py)
   - 长机层环境。
 
 关键子域：
@@ -345,7 +345,7 @@ SimulationKernel / WorldBatchRuntime
 
 优先阅读：
 
-- [tests/README.md](../../tests/README.md)
+- [tests/README.md](../../../tests/README.md)
 
 当前主线测试域：
 
@@ -381,9 +381,9 @@ SimulationKernel / WorldBatchRuntime
 
 优先阅读：
 
-- [tools/README.md](../../tools/README.md)
-- [tools/diagnostics/README.md](../../tools/diagnostics/README.md)
-- [tools/maintenance/README.md](../../tools/maintenance/README.md)
+- [tools/README.md](../../../tools/README.md)
+- [tools/diagnostics/README.md](../../../tools/diagnostics/README.md)
+- [tools/maintenance/README.md](../../../tools/maintenance/README.md)
 
 当前主线分工：
 
@@ -400,10 +400,10 @@ SimulationKernel / WorldBatchRuntime
 
 如果你要看“为什么这样分层”，而不是只看目录 README，优先读：
 
-1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../plan/architecture/architecture_and_performance_research_followup.zh.md)
-3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
-4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
+1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../../plan/architecture/architecture_and_performance_research_followup.zh.md)
+3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
+4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 这些文档回答的是：
 
@@ -439,22 +439,22 @@ SimulationKernel / WorldBatchRuntime
 
 1. [README.md](../../README.md)
 2. [docs/README.md](../README.md)
-3. [src/README.md](../../src/README.md)
-4. [src/core/README.md](../../src/core/README.md)
-5. [src/runtime/README.md](../../src/runtime/README.md)
-6. [src/interfaces/python/README.md](../../src/interfaces/python/README.md)
-7. [python/README.md](../../python/README.md)
-8. [gym_envs/README.md](../../gym_envs/README.md)
-9. [tests/README.md](../../tests/README.md)
-10. [tools/README.md](../../tools/README.md)
+3. [src/README.md](../../../src/README.md)
+4. [src/core/README.md](../../../src/core/README.md)
+5. [src/runtime/README.md](../../../src/runtime/README.md)
+6. [src/interfaces/python/README.md](../../../src/interfaces/python/README.md)
+7. [python/README.md](../../../python/README.md)
+8. [gym_envs/README.md](../../../gym_envs/README.md)
+9. [tests/README.md](../../../tests/README.md)
+10. [tools/README.md](../../../tools/README.md)
 
 如果主要做架构 / 边界工作，再继续读：
 
-1. [docs/plan/architecture/README.md](../plan/architecture/README.md)
-2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-3. [src/runtime/facade/README.md](../../src/runtime/facade/README.md)
-4. [src/core/mission/README.md](../../src/core/mission/README.md)
-5. [tests/architecture/runtime_facade](../../tests/architecture/runtime_facade)
+1. [docs/plan/architecture/README.md](../../plan/architecture/README.md)
+2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+3. [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
+4. [src/core/mission/README.md](../../../src/core/mission/README.md)
+5. [tests/architecture/runtime_facade](../../../tests/architecture/runtime_facade)
 
 ## 11. 维护说明
 

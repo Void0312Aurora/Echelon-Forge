@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from python.testing.runtime import build_dir, ensure_repo_imports
+from python.runtime_bootstrap import build_dir, ensure_repo_imports
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -36,7 +36,7 @@ class LazyBindingResolutionTests(unittest.TestCase):
     expected_root = Path(build_dir()).resolve()
     module_path = Path(str(getattr(ef_py, "__file__", ""))).resolve()
 
-    self.assertEqual(common.ef_py, ef_py)
+    self.assertIs(common._ef_py(), ef_py)
     self.assertTrue(str(module_path).startswith(str(expected_root)))
     self.assertTrue(hasattr(ef_py, "ConditionalObjectiveProperty"))
     self.assertTrue(hasattr(ef_py, "WorldBatchRuntime"))

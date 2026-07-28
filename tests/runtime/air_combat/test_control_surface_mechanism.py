@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import unittest
 
-from python.testing.runtime import configure_sim_log_level, resolve_repo_path
+from python.runtime_bootstrap import configure_sim_log_level, resolve_repo_path
 
 
 configure_sim_log_level("error")

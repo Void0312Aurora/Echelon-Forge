@@ -11,7 +11,14 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+_REPO_ROOT_HINT = str(Path(__file__).resolve().parents[3])
+if _REPO_ROOT_HINT not in sys.path:
+  sys.path.insert(0, _REPO_ROOT_HINT)
+
+from python.runtime_bootstrap import ensure_repo_imports, repo_root
+
+ensure_repo_imports()
+REPO_ROOT = Path(repo_root())
 A2_SOURCE_ROOT = Path("docs/task/air_combat/archive/a2_high_fidelity_damage_model")
 
 SOURCE_LEDGER_GLOB = "*/source_ledger*.zh.md"
