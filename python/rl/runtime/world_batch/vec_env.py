@@ -17,9 +17,13 @@ try:
 except Exception:  # pragma: no cover - training envs are expected to have torch
     torch = None
 
+from gym_envs import observation_view
 from gym_envs.scenario_loader import (
     ScenarioLoader,
     normalize_execution_step_runtime_mode,
+)
+from gym_envs.scenario_loader.behavior_runtime.scripted_opponents import (
+    scenario_declares_scripted_opponents,
 )
 from gym_envs.universal_env import (
     add_air_combat_event_action_info,
@@ -50,7 +54,7 @@ from python.rl.support.sb3_vec_env_compat import (
     VecEnvStepReturn,
     obs_space_info,
 )
-from python.rl.tasking.bridge import build_kernel_mission_command, resolve_loader_time_step
+from python.rl.tasking.bridge import resolve_loader_time_step
 from python.scenario.runtime import (
     BatchWorldApplyBuffer,
     build_compiled_world_layout,
@@ -59,17 +63,6 @@ from python.scenario.runtime import (
 from python.scenario.compiler import ScenarioCompiler
 
 from .adapter import RuntimeFacadeAdapter
-from .command_chain_cache import (
-    leader_intent_snapshot,
-    mission_command_snapshot,
-    pilot_report_snapshot,
-    project_world_leader_intent_maintained_assignment,
-    project_world_mission_command_maintained_assignment,
-    project_world_pilot_report_maintained_assignment,
-    project_world_task_order_maintained_assignment,
-    snapshot_changed,
-    task_order_snapshot,
-)
 from .common import (
     copy_obs,
     parse_reward_terms_json,
@@ -94,6 +87,15 @@ from ._vec_env_support import (
     _scenario_stage,
 )
 from ._visual_backend_mixin import _WorldBatchVecEnvVisualBackendMixin
+from .core import StandardExecutionPlugin, resolve_execution_mode
+from ._shared_ops import (
+    diff_single_entity_command_chain,
+    normalize_seed as _shared_normalize_seed,
+    resolve_batch_observation_backend_mode,
+    resolve_batch_visual_backend_mode,
+    save_obs_to_buffer,
+    submit_command_chain_assignments,
+)
 
 _copy_obs = copy_obs
 _parse_reward_terms_json = parse_reward_terms_json
@@ -106,6 +108,67 @@ _BatchWorldHandle = BatchWorldHandle
 _RuntimeFacadeAdapter = RuntimeFacadeAdapter
 _build_loader_step_info = build_loader_step_info
 _compute_loader_step_outcome = compute_loader_step_outcome
+
+# Runtime-owned episode controller APIs the shadow-compare and mainline
+# features require from the compiled module. Single-sourced so the default
+# resolution below and the explicit-request validation stay in lockstep.
+_EXECUTION_EPISODE_CONTROLLER_REQUIRED_RUNTIME_ATTRS: tuple[str, ...] = (
+    "WorldExecutionEpisodeStepRequest",
+    "RuntimeFacade",
+    "ExecutionBatchStepRequest",
+    "ExecutionBatchStepResult",
+)
+
+# Action modes whose default may resolve onto the compiled episode controller
+# (whitelist polarity: a new maintained action mode defaults to the Python
+# path until it earns its own cross-layer parity pin in
+# tests/runtime/exact/test_execution_controller_option_parity.py).
+# naval_station3 stays excluded with the air-combat modes: the naval reward
+# surface (e.g. naval_station_error_penalty) is Python/tier-1-owned and the
+# controller path does not reproduce it.
+_EXECUTION_EPISODE_CONTROLLER_DEFAULT_ON_ACTION_MODES: frozenset[str] = frozenset(
+    {"full", "takeoff2", "takeoff4"}
+)
+
+# HELD (owner-delegated ruling, 2026-07-27): the covered-cell default flip is
+# DISARMED. The exact-runtime plan's Acceptance Criteria require the compiled
+# episode cutover to improve maintained execution rollout wall-clock beyond
+# noise, and this slice's own hot-path measurement showed the controller path
+# 20-30% SLOWER on the inline micro fixture (medians 0.297 vs 0.244 s/100
+# steps at n_envs=1; 2.409 vs 1.869 at n_envs=8; details in
+# tests/runtime/exact/test_execution_controller_option_parity.py). While this
+# constant is False, an unset ``execution_episode_controller_mainline``
+# ALWAYS resolves to the Python-orchestrated path; the full covered-cell
+# resolution logic below stays in place and a cell the rule would have
+# flipped reports the named reason
+# 'default_off_covered_cell_flip-held-pending-performance' through the
+# resolution introspection attribute. Arming condition (owned by the
+# exact-runtime line per the program's performance boundary): a
+# representative-scenario wall-clock measurement showing the controller path
+# improves maintained rollout beyond noise. Explicit ``True``/``False``
+# requests are unaffected by this constant.
+_CONTROLLER_DEFAULT_FLIP_ARMED: bool = False
+
+
+def _scenario_declares_multiple_sides(scenario_data: Any) -> bool:
+    """True when the scenario declares entities on more than one side.
+
+    Hostile-content signal for the default resolution (this iteration): combat
+    products (e.g. air-combat ``combat_win``/``combat_timeout`` termination)
+    are computed by the Python/tier-1 orchestration, and the controller
+    mainline does not reproduce them, so any scenario with more than one
+    declared side keeps the Python-orchestrated default path.
+    """
+    if not isinstance(scenario_data, dict):
+        return False
+    entities = scenario_data.get("entities", [])
+    if not isinstance(entities, list):
+        return False
+    sides: set[str] = set()
+    for ent_cfg in entities:
+        if isinstance(ent_cfg, dict):
+            sides.add(str(ent_cfg.get("side", "") or "").strip().lower())
+    return len(sides) > 1
 
 
 class WorldBatchVecEnv(
@@ -144,10 +207,11 @@ class WorldBatchVecEnv(
         worker_threads: int | None = None,
         collect_step_timing: bool = False,
         batch_observation_backend: str | None = "auto",
+        use_typed_observation_view: bool = False,
         batch_visual_backend: str | None = "auto",
         execution_step_batch_prepare: bool = False,
         execution_episode_controller_shadow_compare: bool = False,
-        execution_episode_controller_mainline: bool = False,
+        execution_episode_controller_mainline: bool | None = None,
         policy_observation_torch_bridge: bool = True,
         observation_return_mode: str = "copy",
         action_wrapper_kwargs: dict[str, Any] | None = None,
@@ -187,7 +251,24 @@ class WorldBatchVecEnv(
         self.batch_visual_backend = _normalize_batch_visual_backend(batch_visual_backend)
         self.execution_step_batch_prepare = bool(execution_step_batch_prepare)
         self.execution_episode_controller_shadow_compare = bool(execution_episode_controller_shadow_compare)
-        self.execution_episode_controller_mainline = bool(execution_episode_controller_mainline)
+        # Compatibility shell (this iteration reworks the default resolution,
+        # not the surface): the public kwarg keeps its exact name, and explicit
+        # ``True``/``False`` keep their exact pre-flip semantics (explicit
+        # ``True`` still hard-rejects non-compiled flight shaping and missing
+        # runtime APIs; explicit ``False`` still pins the Python-orchestrated
+        # path). Only the unset ``None`` default is new: it resolves through
+        # ``_resolve_execution_episode_controller_mainline_default`` below,
+        # which evaluates the covered-cell ownership rule and reports a named
+        # resolution reason -- but the flip itself is HELD behind
+        # ``_CONTROLLER_DEFAULT_FLIP_ARMED`` (see the dated ruling at the
+        # constant), so while it stays ``False`` the unset default always
+        # rides the Python path and never errors on a previously-working
+        # configuration.
+        self.execution_episode_controller_mainline_requested: bool | None = (
+            None
+            if execution_episode_controller_mainline is None
+            else bool(execution_episode_controller_mainline)
+        )
         self.policy_observation_torch_bridge = bool(policy_observation_torch_bridge)
         self.observation_return_mode = _normalize_observation_return_mode(observation_return_mode)
         self._action_wrapper_kwargs = dict(action_wrapper_kwargs or {})
@@ -233,27 +314,6 @@ class WorldBatchVecEnv(
         self.last_execution_episode_controller_shadow_compare: list[dict[str, Any] | None] = [
             None for _ in range(self.n_envs)
         ]
-        if self.execution_episode_controller_shadow_compare or self.execution_episode_controller_mainline:
-            missing_runtime_attrs = []
-            required_names = [
-                "WorldExecutionEpisodeStepRequest",
-                "RuntimeFacade",
-                "ExecutionBatchStepRequest",
-                "ExecutionBatchStepResult",
-            ]
-            for name in required_names:
-                if not hasattr(ef_py, name):
-                    missing_runtime_attrs.append(name)
-            if missing_runtime_attrs:
-                raise RuntimeError(
-                    "execution episode controller runtime features require runtime-owned episode controller APIs: "
-                    + ", ".join(missing_runtime_attrs)
-                )
-        if self.execution_episode_controller_mainline and self.execution_episode_controller_shadow_compare:
-            raise RuntimeError(
-                "execution_episode_controller_mainline is not compatible with "
-                "execution_episode_controller_shadow_compare"
-            )
         self._db_path = (
             os.path.abspath(database_path)
             if database_path
@@ -262,7 +322,42 @@ class WorldBatchVecEnv(
             )
         )
         self._compiled_scenario = ScenarioCompiler.compile_path(self.scenario_path)
-        self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)
+        missing_episode_controller_runtime_attrs = [
+            name
+            for name in _EXECUTION_EPISODE_CONTROLLER_REQUIRED_RUNTIME_ATTRS
+            if not hasattr(ef_py, name)
+        ]
+        if self.execution_episode_controller_mainline_requested is None:
+            (
+                resolved_mainline,
+                self.execution_episode_controller_mainline_resolution,
+            ) = self._resolve_execution_episode_controller_mainline_default(
+                runtime_api_available=not missing_episode_controller_runtime_attrs,
+            )
+            self.execution_episode_controller_mainline = bool(resolved_mainline)
+        else:
+            self.execution_episode_controller_mainline = bool(
+                self.execution_episode_controller_mainline_requested
+            )
+            self.execution_episode_controller_mainline_resolution = "explicit"
+        if self.execution_episode_controller_shadow_compare or self.execution_episode_controller_mainline:
+            # Only explicitly-requested controller features may raise here: the
+            # default resolution above already degraded to the Python path when
+            # the runtime APIs are unavailable.
+            if missing_episode_controller_runtime_attrs:
+                raise RuntimeError(
+                    "execution episode controller runtime features require runtime-owned episode controller APIs: "
+                    + ", ".join(missing_episode_controller_runtime_attrs)
+                )
+        if self.execution_episode_controller_mainline and self.execution_episode_controller_shadow_compare:
+            raise RuntimeError(
+                "execution_episode_controller_mainline is not compatible with "
+                "execution_episode_controller_shadow_compare"
+            )
+        self._runtime_adapter = _RuntimeFacadeAdapter(
+            self.n_envs,
+            use_typed_observation_view=bool(use_typed_observation_view),
+        )
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
@@ -348,19 +443,96 @@ class WorldBatchVecEnv(
         self._policy_torch_bridge_enabled = bool(
             self.policy_observation_torch_bridge and torch is not None and hasattr(torch, "from_dlpack")
         )
+        self._mode_plugin: StandardExecutionPlugin = resolve_execution_mode(
+            "execution",
+            execution_episode_controller_mainline=bool(self.execution_episode_controller_mainline),
+            is_air_combat_hybrid=bool(is_air_combat_hybrid_action_mode(self.action_mode)),
+            air_combat_event_finalizer=finalize_air_combat_event_action_info,
+        )
+
+    def _resolve_execution_episode_controller_mainline_default(
+        self,
+        *,
+        runtime_api_available: bool,
+    ) -> tuple[bool, str]:
+        """Resolve the unset ``execution_episode_controller_mainline`` default.
+
+        Ownership rule (evaluated but HELD): the compiled episode controller is
+        the candidate default owner for exactly the option cells the
+        cross-layer parity gate covers
+        (tests/runtime/exact/test_execution_controller_option_parity.py).
+        While ``_CONTROLLER_DEFAULT_FLIP_ARMED`` is ``False`` (owner-delegated
+        held ruling, 2026-07-27, pending representative-scenario wall-clock
+        evidence), a covered cell still resolves to the Python path with the
+        reason ``default_off_covered_cell_flip-held-pending-performance``.
+        Every exclusion keeps the Python-orchestrated default path byte-for-byte
+        unchanged rather than erroring:
+
+        - ``gpu_host`` flight shaping is HELD on the Python path (the controller
+          mainline rejects it by construction when requested explicitly);
+        - post-launch-assessment-configured runs bind the red line: the
+          controller mainline hard-disables the assessment
+          (``_air_combat_post_launch_assessment_should_run``), so flipping them
+          would change behavior;
+        - action modes outside the parity-pinned whitelist stay on the Python
+          path (``air_combat_hybrid_v1``: the assessment and the event-action
+          machinery live there; ``naval_station3``: the naval reward surface
+          is Python/tier-1-owned; porting these into the controller is
+          separate future work);
+        - scenarios that declare scripted opponents stay on the Python path:
+          opponent stepping is Python-orchestrated behavior driven by
+          ``update_behaviors``, which the controller mainline replaces with
+          ``update_command_chain_only``;
+        - scenarios that declare entities on more than one side stay on the
+          Python path: combat products (e.g. ``combat_win`` termination) are
+          Python/tier-1-owned and the controller does not reproduce them;
+        - ``execution_step_batch_prepare`` is the tier-2 Python reward-tail
+          opt-in and keeps its Python-path semantics;
+        - shadow-compare is a Python-path diagnostic by definition;
+        - a runtime without the episode-controller APIs degrades silently.
+        """
+        if self.execution_episode_controller_shadow_compare:
+            return False, "default_off_shadow_compare"
+        if self.air_combat_post_launch_assessment_enabled:
+            return False, "default_off_post_launch_assessment_configured"
+        if self.action_mode not in _EXECUTION_EPISODE_CONTROLLER_DEFAULT_ON_ACTION_MODES:
+            return False, f"default_off_action_mode_{self.action_mode}"
+        if scenario_declares_scripted_opponents(self._compiled_scenario.merged_scenario_data):
+            return False, "default_off_scripted_opponents_declared"
+        if _scenario_declares_multiple_sides(self._compiled_scenario.merged_scenario_data):
+            return False, "default_off_multi_side_scenario"
+        if self.execution_step_batch_prepare:
+            return False, "default_off_execution_step_batch_prepare"
+        backend_mode = (
+            "compiled" if self.flight_shaping_backend == "auto" else str(self.flight_shaping_backend)
+        )
+        if backend_mode != "compiled":
+            return False, f"default_off_flight_shaping_backend_{backend_mode}"
+        if not runtime_api_available:
+            return False, "default_off_runtime_episode_controller_api_unavailable"
+        if not _CONTROLLER_DEFAULT_FLIP_ARMED:
+            # Covered cell, but the default flip is held pending the
+            # representative-scenario performance evidence recorded at
+            # ``_CONTROLLER_DEFAULT_FLIP_ARMED``.
+            return False, "default_off_covered_cell_flip-held-pending-performance"
+        return True, "default_on_covered_cells"
 
     @property
     def runtime_facade(self):
         return self._runtime_adapter.facade
+
+    @staticmethod
+    def _observation_own_ship_field_reader(truth: Any, field: str) -> Any:
+        """Inject the existing declared-view owner into lower batch helpers."""
+
+        return observation_view.own_ship_attr(truth, field)
 
     @property
     def last_runtime_window_evidence(self):
         return self._runtime_adapter.last_window_evidence
 
     def _normalize_seed(self, seed: int | None) -> int:
-        if seed is None:
-            seed = int(np.random.randint(0, np.iinfo(np.uint32).max, dtype=np.uint32))
-        return int(seed) & 0xFFFFFFFF
+        return _shared_normalize_seed(seed)
 
     def _build_refs(self, indices: Sequence[int] | None = None):
         target_indices = list(range(self.num_envs)) if indices is None else [int(i) for i in indices]
@@ -417,74 +589,40 @@ class WorldBatchVecEnv(
 
     def _sync_command_chain_batch(self, indices: Sequence[int] | None = None) -> None:
         target_indices = list(range(self.num_envs)) if indices is None else [int(i) for i in indices]
-        mission_assignments = []
-        task_assignments = []
-        intent_assignments = []
-        report_assignments = []
+        mission_assignments: list = []
+        task_assignments: list = []
+        intent_assignments: list = []
+        report_assignments: list = []
         for env_idx in target_indices:
             handle = self._handles[env_idx]
             if handle.agent_id is None:
                 continue
             if not self._command_chain_entity_active(handle):
                 continue
-
-            mission_command = build_kernel_mission_command(handle.loader)
-            mission_snapshot = mission_command_snapshot(mission_command)
-            if snapshot_changed(handle.last_mission_command_snapshot, mission_snapshot):
-                mission_assign = ef_py.WorldMissionCommandMaintainedAssignment()
-                project_world_mission_command_maintained_assignment(
-                    mission_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_mission_command_shell=mission_command,
-                )
-                mission_assignments.append(mission_assign)
-                handle.last_mission_command_snapshot = mission_snapshot
-
-            task_snapshot = task_order_snapshot(getattr(handle.loader, "task_order", None))
-            if task_snapshot is not None and snapshot_changed(handle.last_task_order_snapshot, task_snapshot):
-                task_assign = ef_py.WorldTaskOrderMaintainedAssignment()
-                project_world_task_order_maintained_assignment(
-                    task_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_task_order_shell=handle.loader.task_order,
-                )
-                task_assignments.append(task_assign)
-                handle.last_task_order_snapshot = task_snapshot
-
-            intent_snapshot = leader_intent_snapshot(getattr(handle.loader, "leader_intent", None))
-            if intent_snapshot is not None and snapshot_changed(handle.last_leader_intent_snapshot, intent_snapshot):
-                intent_assign = ef_py.WorldLeaderIntentMaintainedAssignment()
-                project_world_leader_intent_maintained_assignment(
-                    intent_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_intent_shell=handle.loader.leader_intent,
-                )
-                intent_assignments.append(intent_assign)
-                handle.last_leader_intent_snapshot = intent_snapshot
-
-            report_snapshot = pilot_report_snapshot(getattr(handle.loader, "pilot_report", None))
-            if report_snapshot is not None and snapshot_changed(handle.last_pilot_report_snapshot, report_snapshot):
-                report_assign = ef_py.WorldPilotReportMaintainedAssignment()
-                project_world_pilot_report_maintained_assignment(
-                    report_assign,
-                    world_index=int(env_idx),
-                    entity_id=int(handle.agent_id),
-                    compatibility_report_shell=handle.loader.pilot_report,
-                )
-                report_assignments.append(report_assign)
-                handle.last_pilot_report_snapshot = report_snapshot
-
-        if mission_assignments:
-            self._runtime_adapter.set_mission_commands_maintained_batch(mission_assignments)
-        if task_assignments:
-            self._runtime_adapter.set_task_orders_maintained_batch(task_assignments)
-        if intent_assignments:
-            self._runtime_adapter.set_leader_intents_maintained_batch(intent_assignments)
-        if report_assignments:
-            self._runtime_adapter.set_pilot_reports_maintained_batch(report_assignments)
+            new_m, new_t, new_i, new_r = diff_single_entity_command_chain(
+                int(env_idx),
+                int(handle.agent_id),
+                handle.loader,
+                handle.last_mission_command_snapshot,
+                handle.last_task_order_snapshot,
+                handle.last_leader_intent_snapshot,
+                handle.last_pilot_report_snapshot,
+                mission_assignments,
+                task_assignments,
+                intent_assignments,
+                report_assignments,
+            )
+            handle.last_mission_command_snapshot = new_m
+            handle.last_task_order_snapshot = new_t
+            handle.last_leader_intent_snapshot = new_i
+            handle.last_pilot_report_snapshot = new_r
+        submit_command_chain_assignments(
+            self._runtime_adapter,
+            mission_assignments,
+            task_assignments,
+            intent_assignments,
+            report_assignments,
+        )
 
     @staticmethod
     def _command_chain_entity_active(handle: _BatchWorldHandle) -> bool:
@@ -497,11 +635,7 @@ class WorldBatchVecEnv(
             return True
 
     def _save_obs(self, env_idx: int, obs: VecEnvObs) -> None:
-        for key in self.keys:
-            if key is None:
-                self.buf_obs[key][env_idx] = obs
-            else:
-                self.buf_obs[key][env_idx] = obs[key]  # type: ignore[index]
+        save_obs_to_buffer(self.buf_obs, self.keys, env_idx, obs)
 
 
 
@@ -637,6 +771,7 @@ class WorldBatchVecEnv(
 
         self._clear_policy_observation_device_cache()
         total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        # [stage:action_prepare]
         prepare_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         _, refs = self._build_refs()
         inst_now_list = None
@@ -691,57 +826,51 @@ class WorldBatchVecEnv(
             assignments.append(assign)
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
 
+        # [stage:physics_step]
         step_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         if naval_action_sync_indices:
+            # command_sync event-driven re-entry (naval station action mutation)
             self._sync_command_chain_batch(naval_action_sync_indices)
         self._set_pilot_actions_batch(assignments)
         self._step_runtime_batch()
         batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0
 
+        # [stage:state_read]
         read_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         _target_indices, truth_list, inst_list = self._read_truth_and_inst_batch()
         state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:behavior_update]
         behavior_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         for env_idx, handle in enumerate(self._handles):
             handle.steps += 1
             handle.loader.steps = int(handle.steps)
             handle.last_truth = truth_list[env_idx]
             handle.last_inst = inst_list[env_idx]
-            if is_air_combat_hybrid_action_mode(self.action_mode):
-                finalize_air_combat_event_action_info(
-                    handle.loader,
-                    truth_before=air_combat_truth_before[env_idx],
-                    truth_after=handle.last_truth,
-                )
+            self._mode_plugin.finalize_post_step_truth(
+                env_idx, handle, air_combat_truth_before[env_idx],
+            )
             sim_time = float(handle.steps) * float(
                 resolve_loader_time_step(handle.loader, default=self._world_time_step(env_idx))
             )
-            if self.execution_episode_controller_mainline:
-                handle.loader.update_command_chain_only(
-                    sim_time,
-                    truth=handle.last_truth,
-                    inst=handle.last_inst,
-                    sync_to_kernel=False,
-                )
-            else:
-                handle.loader.update_behaviors(
-                    sim_time,
-                    truth=handle.last_truth,
-                    inst=handle.last_inst,
-                    sync_to_kernel=False,
-                )
+            self._mode_plugin.update_post_step_behavior(
+                handle, sim_time, handle.last_truth, handle.last_inst,
+            )
         behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:command_sync]
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        if not self.execution_episode_controller_mainline:
+        if not self._mode_plugin.skip_post_behavior_command_sync:
             self._sync_command_chain_batch()
         command_sync_ms = (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
 
+        # [stage:observation_build]
         obs_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         obs_batch = self._build_observations_from_cached_state()
         obs_build_ms = (time.perf_counter() - obs_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:flight_shaping]
         shaping_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         self._prepare_batch_flight_shaping_overrides()
         flight_shaping_batch_ms = (time.perf_counter() - shaping_t0) * 1000.0 if self.collect_step_timing else 0.0
+        # [stage:reward_episode]
         reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         any_done = False
         shadow_reports: list[dict[str, Any] | None] = [None] * self.num_envs

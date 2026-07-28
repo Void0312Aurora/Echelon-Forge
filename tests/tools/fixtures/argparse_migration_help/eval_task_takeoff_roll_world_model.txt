@@ -1,0 +1,38 @@
+usage: eval_task.py [-h] --scenario SCENARIO [--episodes EPISODES]
+                    [--max_steps MAX_STEPS] [--seed SEED]
+                    [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}]
+                    [--include_visual] [--include_proprio]
+                    [--no_randomization] --checkpoint CHECKPOINT
+                    [--device DEVICE] [--stochastic_state] --task
+                    {stable_flight,takeoff_roll,centerline,waypoint_nav}
+                    --backend {world_model,scripted}
+                    [--wheel_off_alt_threshold WHEEL_OFF_ALT_THRESHOLD]
+                    [--liftoff_alt_threshold LIFTOFF_ALT_THRESHOLD]
+                    [--liftoff_ias_threshold LIFTOFF_IAS_THRESHOLD]
+
+Unified takeoff-roll task evaluator (task=takeoff_roll, backend=world_model)
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO
+  --episodes EPISODES
+  --max_steps MAX_STEPS
+  --seed SEED
+  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}
+  --include_visual
+  --include_proprio
+  --no_randomization
+  --checkpoint CHECKPOINT
+  --device DEVICE
+  --stochastic_state
+  --task {stable_flight,takeoff_roll,centerline,waypoint_nav}
+  --backend {world_model,scripted}
+  --wheel_off_alt_threshold WHEEL_OFF_ALT_THRESHOLD
+                        Override wheel-off altitude threshold (AGL). Default
+                        uses scenario on_ground_alt_threshold.
+  --liftoff_alt_threshold LIFTOFF_ALT_THRESHOLD
+                        Override liftoff altitude threshold (AGL). Default
+                        uses scenario liftoff_alt_threshold.
+  --liftoff_ias_threshold LIFTOFF_IAS_THRESHOLD
+                        Override liftoff IAS threshold. Default uses scenario
+                        liftoff_speed_threshold.

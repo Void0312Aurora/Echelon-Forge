@@ -4,8 +4,17 @@ import json
 import re
 from pathlib import Path
 
+from tests.support.xmacro_text import expand_binding_field_incs
+from tests.support.xmacro_text import expand_header_field_incs
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+_HEADER_FIELD_INC_OWNERS = {
+  "src/runtime/contracts/world_batch_contracts.h",
+  "src/runtime/facade/runtime_facade_types.h",
+  "src/runtime/contracts/platform_capability_contracts.h",
+}
+_BINDING_FIELD_INC_OWNERS = {"src/interfaces/python/bindings_runtime.cpp"}
 FIXTURE = (
   REPO_ROOT
   / "tests"
@@ -136,6 +145,14 @@ def test_fixture_entries_reference_real_files_and_code_markers() -> None:
     file_path = REPO_ROOT / path
     assert file_path.is_file(), f"missing inventory path: {path}"
     source = file_path.read_text(encoding="utf-8")
+    # Some field families under these paths are now schema-owned
+    # (tools/maintenance/dto_schema, I26): expand the X-macro #include so
+    # this fixture's evidence markers keep matching the compiled shape
+    # instead of the indirected #include line.
+    if path in _HEADER_FIELD_INC_OWNERS:
+      source = expand_header_field_incs(source)
+    elif path in _BINDING_FIELD_INC_OWNERS:
+      source = expand_binding_field_incs(source)
     normalized_source = re.sub(r"\s+", " ", source.replace("&", " & "))
     for marker in entry["evidence_markers"]:
       normalized_marker = re.sub(r"\s+", " ", marker.replace("&", " & "))

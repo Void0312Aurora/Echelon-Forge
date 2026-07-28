@@ -1,6 +1,7 @@
 import ef_py
 import numpy as np
 
+from gym_envs import observation_view
 from python.mission_obs_taxonomy import (
     MISSION_OBS_NAVAL_SCREEN_STATION_V1,
     mission_obs_mode_code,
@@ -18,6 +19,20 @@ from python.tasking_contracts.bridge_views import loader_owned_runtime_view, mis
 from .common import formation_role_code_from_member
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This adapter produces the policy
+# observation vector (Agent Observation). The Python-owned modes read
+# authoritative truth (truth.contacts / missiles_remaining / x,y) and the support
+# report chain. As of the T8 second slice those reads flow through the declared
+# observation view (observation_view own-ship / track / Shared-Tactical-Picture
+# faces), which owns the raw truth/runtime-view access; TL1/TL2 are converged and
+# TL3 (report chain) is routed through the view's Shared-Tactical-Picture face.
+# Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth", "Shared Tactical Picture")
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
+
 def mission_nav_inputs(loader, truth, inst, route_result):
     if route_result is None or not bool(getattr(route_result, "valid", False)):
         return None
@@ -27,9 +42,9 @@ def mission_nav_inputs(loader, truth, inst, route_result):
 
     wp = loader.waypoints[idx]
     inputs = ef_py.MissionNavInputs()
-    inputs.own_altitude_m = float(getattr(truth, "z", 0.0))
-    inputs.truth_heading_deg = float(getattr(truth, "heading", 0.0))
-    inputs.truth_speed_mps = float(getattr(truth, "speed", 0.0))
+    inputs.own_altitude_m = float(observation_view.own_ship_field(truth, "z", 0.0))
+    inputs.truth_heading_deg = float(observation_view.own_ship_field(truth, "heading", 0.0))
+    inputs.truth_speed_mps = float(observation_view.own_ship_field(truth, "speed", 0.0))
     inputs.inst_heading_deg = float("nan")
     inputs.inst_ground_track_deg = float("nan")
     inputs.inst_ias_mps = float("nan")
@@ -225,23 +240,11 @@ def _takeoff_vector(loader):
 
 
 def _target_track(truth, target_id: int):
-    if truth is None or int(target_id) <= 0:
-        return None
-    for track in getattr(truth, "contacts", []) or []:
-        try:
-            if int(getattr(track, "id", 0)) == int(target_id):
-                return track
-        except Exception:
-            continue
-    return None
+    return observation_view.target_track(truth, target_id)
 
 
 def _truth_missiles_remaining(truth) -> int | None:
-    try:
-        value = int(getattr(truth, "missiles_remaining", -1))
-    except Exception:
-        return None
-    return value if value >= 0 else None
+    return observation_view.own_missiles_remaining(truth)
 
 
 def _air_combat_observed_release_count(loader, truth) -> int:
@@ -484,7 +487,7 @@ def _support_has_target_track(runtime_view, support_ids: list[int], target_id: i
         return False
     for entity_id in support_ids:
         try:
-            obs = runtime_view.get_agent_observation(int(entity_id))
+            obs = observation_view.support_agent_observation(runtime_view, int(entity_id))
         except Exception:
             continue
         if _target_track(obs, int(target_id)) is not None:
@@ -496,7 +499,7 @@ def _support_received_target_report(runtime_view, support_ids: list[int], target
     if int(target_id) <= 0:
         return False
     for entity_id in support_ids:
-        messages = runtime_view.call_optional("get_unit_messages", int(entity_id), default=[]) or []
+        messages = observation_view.support_unit_messages_optional(runtime_view, int(entity_id)) or []
         for msg in messages:
             try:
                 if int(getattr(msg, "entity_ref", 0)) == int(target_id):
@@ -509,7 +512,7 @@ def _support_received_target_report(runtime_view, support_ids: list[int], target
 def _first_support_position(runtime_view, support_ids: list[int]) -> tuple[float, float] | None:
     for entity_id in support_ids:
         try:
-            pos = runtime_view.get_unit_position(int(entity_id))
+            pos = observation_view.support_unit_position(runtime_view, int(entity_id))
         except Exception:
             continue
         if pos is None or len(pos) < 2:
@@ -542,8 +545,8 @@ def _naval_screen_station_vector(loader, *, truth=None, inst=None) -> np.ndarray
     )
     support_ids = _support_entity_ids(loader)
     ref_pos = _first_support_position(runtime_view, support_ids)
-    own_x = float(getattr(truth, "x", 0.0)) if truth is not None else 0.0
-    own_y = float(getattr(truth, "y", 0.0)) if truth is not None else 0.0
+    own_x = float(observation_view.own_ship_field(truth, "x", 0.0)) if truth is not None else 0.0
+    own_y = float(observation_view.own_ship_field(truth, "y", 0.0)) if truth is not None else 0.0
     own_relative_x_m = 0.0
     own_relative_y_m = 0.0
     desired_relative_x_m = 0.0

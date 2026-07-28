@@ -1,0 +1,42 @@
+// X-macro list of KillChainComponentResponseFact fields.
+//
+// Consumers define EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(type,
+// name, default_value) before including this file; the macro is
+// #undef'd here after expansion.
+
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, owner_stage, "component_response")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, source_current_owner_stage, "component_response_row")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::uint32_t, source_row_index, 0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, component_name, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, component_system, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, component_redundancy_group_id, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, threshold_scale, 1.0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, failure_probability, 0.0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, failure_sample, 1.0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_source, "none")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(bool, failure_probability_calibrated, false)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_evidence_dataset_ref, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_evidence_row_id, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_evidence_source_ref, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_evidence_provenance, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(bool, failure_probability_authority, false)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(bool, failure_probability_component_specific, false)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_weapon_family, "unknown")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_aspect_bucket, "unknown")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_closure_bucket, "unknown")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_miss_distance_bucket, "unknown")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_evidence_component_name, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_evidence_component_system, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_probability_evidence_component_redundancy_group_id, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_mode, "none")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, failure_severity, 0.0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::vector<std::string>, failure_mode_names, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::vector<double>, failure_mode_severities, {})
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(std::string, failure_mode_source, "none")
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(bool, failure_mode_authority, false)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, integrity_before, 1.0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, integrity_after, 1.0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, redundancy_group_availability_before, 1.0)
+EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(double, redundancy_group_availability_after, 1.0)
+
+#undef EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD

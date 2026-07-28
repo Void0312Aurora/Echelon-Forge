@@ -103,7 +103,14 @@ def _content_type_for_path(path: Path) -> str:
     return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   return "application/octet-stream"
 
-def _normalize_statement_text(text: str) -> str:
+def _normalize_statement_text(text: str | None) -> str:
+  # Fail-closed on missing extraction text: a probe that recovered no text
+  # (None or empty) normalizes to "" so _public_distribution_statement reports
+  # statement_detected=False instead of raising on re.sub(None). This pins the
+  # caller contract's "no extractable statement" case to the same fail-closed
+  # verdict the pdftotext-missing/timeout branches already return.
+  if not text:
+    return ""
   return re.sub(r"\s+", " ", text).strip().upper()
 
 def _public_distribution_statement(text: str) -> dict[str, Any]:
@@ -132,7 +139,6 @@ def _pdf_text_probe(path: Path) -> dict[str, Any]:
       ["pdftotext", "-f", "1", "-l", "8", str(path), "-"],
       check=False,
       capture_output=True,
-      text=True,
       timeout=30,
     )
   except FileNotFoundError:
@@ -156,7 +162,29 @@ def _pdf_text_probe(path: Path) -> dict[str, Any]:
       "has_unlimited_distribution_phrase": False,
     }
 
-  evidence = _public_distribution_statement(result.stdout)
+  # pdftotext emits the retained payloads' page text as valid UTF-8 (verified
+  # against both retained PDFs: the 0x93 byte the GBK console codec chokes on
+  # is the final byte of the UTF-8 en dash e2 80 93). Capture raw bytes and
+  # decode them as *strict* UTF-8: text=True would decode with the console
+  # locale codec (GBK on the affected host), whose reader thread dies
+  # mid-sequence and hands the caller stdout=None -- the original defect. A
+  # lossy errors="ignore" decode is not acceptable either: silently dropping a
+  # malformed byte can splice a rights phrase back together
+  # (b"RE\xffLEASE" -> "RELEASE") and fail open, so undecodable output fails
+  # the probe closed instead of ever producing statement hits.
+  try:
+    stdout_text = (result.stdout or b"").decode("utf-8")
+  except UnicodeDecodeError:
+    return {
+      "extraction_status": "pdf_text_probe_decode_error_fail_closed",
+      "statement_locator": "pdf_first_8_pages",
+      "statement_detected": False,
+      "statement_id": "",
+      "has_distribution_statement_a_label": False,
+      "has_public_release_phrase": False,
+      "has_unlimited_distribution_phrase": False,
+    }
+  evidence = _public_distribution_statement(stdout_text)
   evidence.update(
     {
       "extraction_status": (

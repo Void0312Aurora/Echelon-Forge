@@ -1,0 +1,20 @@
+usage: takeoff_to_landing.py [-h] --scenario SCENARIO --train_config
+                             TRAIN_CONFIG [--model MODEL] [--algo ALGO]
+                             [--scripted] [--seed SEED]
+                             [--max_steps MAX_STEPS] [--zero_randomization]
+                             --output OUTPUT
+
+Export 2D trajectory diagnostics for the continuous takeoff-to-landing task.
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO
+  --train_config TRAIN_CONFIG
+  --model MODEL         SB3 model zip/path. Omit for scripted baseline.
+  --algo ALGO           auto / AdaptiveKLPPO / PPO
+  --scripted            Run the pure scripted baseline (wrapper residual scale
+                        forced to zero).
+  --seed SEED
+  --max_steps MAX_STEPS
+  --zero_randomization
+  --output OUTPUT       PNG output path

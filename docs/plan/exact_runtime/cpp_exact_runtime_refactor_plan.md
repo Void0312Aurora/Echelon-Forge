@@ -6,7 +6,11 @@ Navigation:
 - [system_layering_and_engine_encapsulation_plan.md](../architecture/system_layering_and_engine_encapsulation_plan.md)
 - [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
 
-Status: Draft follow-on implementation plan on 2026-04-03.  
+Status: Draft follow-on implementation plan on 2026-04-03; re-frozen on
+2026-07-21 (Unified Architecture Program T4, iteration I43) against the
+landed-fact census recorded below -- WP1-WP3 are landed, WP4 has a partial,
+opt-in landing. See "T4 Census (I43)" after Work Packages for the survey
+this re-freeze is based on.
 Document role:
 
 - This document describes a candidate next mainline acceleration/refactor path.
@@ -351,6 +355,16 @@ Acceptance:
 - the compiled state can represent the current Python episode bookkeeping
   without dropping fields
 
+Current progress on 2026-07-21 (I43): landed. `ExecutionEpisodeState`
+(`src/core/mission/episode/execution_episode_state.*`) is the canonical
+mutable-episode-state struct. `gym_envs/scenario_loader/runtime_state.py`'s
+`build_execution_episode_state`/`apply_execution_episode_state`/
+`apply_execution_episode_runtime_fields` mirror it bidirectionally between
+`ExecutionEpisodeState` and the `ScenarioLoader` instance fields; both the
+shadow-compare path (WP3) and the opt-in mainline path (WP4) drive through
+this same mirror, so it is load-bearing infrastructure for the ownership
+boundary itself, not a superseded duplicate (see "T4 Census (I43)" below).
+
 ### WP2. Replace the simplified batch-prepare layer with a real step-input builder
 
 Goal:
@@ -372,6 +386,19 @@ Acceptance:
 
 - batch-prepared episode inputs match the existing single-step Python path on
   curated test scenarios
+
+Current progress on 2026-07-21 (I43): landed for the declared scope.
+`execution_episode_batch_prepare.{h,cpp}` materializes
+`ExecutionEpisodeRuntimeInputs` from `StepEvaluationBatchConfig`/
+`StepEvaluationBatchEnvState`; the I41 register row (`t6_residual_ledger.md`
+§7.3) found `WorldBatchRuntime` already reads/writes the resulting
+`ExecutionEpisodeController` batch state through nine methods. The remaining
+gap sits upstream of this WP's own scope: Python
+(`gym_envs/scenario_loader/step_evaluation.py::build_step_evaluation_batch_env_state`)
+still hand-gathers `truth`/`inst` into `StepEvaluationBatchEnvState` every
+step, because WP2 was scoped to the prepare-from-env-state step, not the
+gather-env-state-from-truth step. That gather step is tracked as WP4/T4
+follow-on work, not a WP2 regression (see "T4 Census (I43)" below).
 
 ### WP3. Introduce the compiled episode controller in shadow mode
 
@@ -440,6 +467,22 @@ Acceptance:
 - maintained execution rollouts can run through the compiled episode controller
   with CPU truth stepping and no Python episode-state ownership
 
+Current progress on 2026-07-21 (I43): partially landed, opt-in.
+`WorldBatchRuntime` owns a pooled `ExecutionEpisodeController` per world, and
+Python has a working `execution_episode_controller_mainline` cutover
+constructor flag on `WorldBatchVecEnv`
+(`python/rl/runtime/world_batch/_execution_episode_mixin.py`) that steps
+batches through `WorldBatchRuntime.step_execution_batch(...)` and bypasses
+`ScenarioLoader.compute_full_step` entirely when enabled. It defaults to
+`False` and is not yet feature-complete relative to the default path --
+`_air_combat_post_launch_mixin.py` explicitly disables the post-launch
+assessment feature under it, and it requires the compiled flight-shaping
+backend. The exit criterion this section already states --  "maintained
+`p5` execution path no longer depends on Python-owned hot-path episode
+state" -- is therefore **not yet met**; `compute_full_step` remains the real
+default. See "T4 Census (I43)" below for the full dual-ownership survey this
+iteration ran before concluding no retirement was safe yet.
+
 ### WP5. Promote the compiled exact CPU backend
 
 Goal:
@@ -487,6 +530,191 @@ Acceptance:
 
 - maintained runtime can switch exact backend without changing Python episode
   ownership
+
+## T4 Census (I43, 2026-07-21): Python Per-Step Builder Dual-Ownership Survey
+
+Unified Architecture Program T4 ("Support WP4 hot-path switchover to
+`WorldBatchRuntime`; retire Python per-step builders superseded by C++
+ownership; re-freeze the exact-runtime plan document") opened with a
+repo-wide census of hand-written Python per-step DTO construction under
+`python/**` and `gym_envs/**`, cross-referenced against the C++ paths this
+plan describes above. This section is additive: it supersedes no earlier
+text and records the census plus its disposition for the next T4 slice.
+
+### What the census found: three coexisting tiers, not one legacy path
+
+The Python execution-step hot path
+(`gym_envs/scenario_loader/step_evaluation.py`,
+`execution_runtime/mainline.py`, `execution_runtime/shadow.py`, and the
+`python/rl/runtime/world_batch/_execution_episode_mixin.py`/
+`_observation_mixin.py` mixins) is not one Python-owned path with a single
+C++ replacement waiting to land. It is three coexisting tiers, each with
+real, distinct, currently-exercised consumers:
+
+1. **Per-term consumption of the aggregated compiled product** --
+   `ScenarioLoader.compute_full_step` is the real default orchestrator
+   (governed by `use_compiled_execution_step_runtime`, default `True`): on
+   the default path it consumes the sub-products of one aggregated
+   `compute_execution_episode_runtime` call (prepared inside
+   `_prepare_step_evaluation`) term by term, with per-term Python
+   bookkeeping around them; genuinely per-term compiled calls
+   (`compute_safety_runtime`/`compute_approach_reward_terms`/...) occur on
+   cache-miss/partial-product paths and on the escape hatch when the flag
+   is forced `False` -- a real, tested escape hatch
+   (`tests/runtime/execution/test_scenario_loader_execution_step_runtime.py`),
+   not a theoretical one, and the only tier that still functions there.
+2. **Batch frame-product prepare** (`execution_step_batch_prepare=True` on
+   `WorldBatchVecEnv`) -- Python hand-builds `StepEvaluationBatchConfig`/
+   `StepEvaluationBatchEnvState` per env and calls
+   `ef_py.prepare_step_evaluations_batch` once for the whole batch; the
+   reward/termination extraction (tier 1's term-by-term `_add_reward_term`
+   bookkeeping) still runs afterward in Python. Real and tested
+   (`test_world_batch_vec_env_reuses_cached_step_evaluation_for_reward_tail`).
+3. **Execution-episode-controller mainline**
+   (`execution_episode_controller_mainline=True`) -- this is the tier WP4
+   above describes, and it already exists in code: Python builds
+   `WorldExecutionEpisodeStepRequest` per env and
+   `WorldBatchRuntime.step_execution_batch(...)` owns the rest, with
+   `ScenarioLoader.compute_full_step` never called. It defaults to `False`
+   and `_air_combat_post_launch_mixin.py` explicitly disables the
+   post-launch-assessment feature under it, so tier 3 is not yet
+   feature-complete relative to tiers 1/2, and WP4's own exit criterion is
+   not yet met (see the WP4 progress note above).
+
+None of the three tiers is dead. Each has a distinct, named production
+trigger (a constructor flag) or a dedicated regression test, matching this
+plan's own Freeze Decision to "keep all current parity traces, stage
+comparators, and resident-state probes as regression infrastructure." The
+T4 double-ownership risk the program README names ("divergent
+double-ownership during migration") is therefore confirmed present and
+deliberate at this commit, not a defect to patch by this slice.
+
+### One narrower pair, investigated and closed as held (not retired)
+
+`gym_envs/scenario_loader/step_evaluation.py::prepare_step_evaluation`
+dispatches `if loader._compiled_execution_episode_enabled(): ... elif
+loader._compiled_execution_frame_enabled(): ...` between
+`ExecutionEpisodeRuntimeInputs`/`compute_execution_episode_runtime`
+(episode tier) and `ExecutionFrameRuntimeInputs`/
+`compute_execution_frame_runtime` (frame tier). Both enabler predicates
+share the identical gate (`use_compiled_execution_step_runtime` plus an
+`hasattr` check that is always true together against the same compiled
+`ef_py` binary, since both bindings live in the same translation unit with
+no conditional compilation between them), so the `elif` cannot be reached by
+any production configuration. A full-repo reference census confirmed this:
+the only caller that ever observes the frame branch is
+`test_scenario_loader_execution_step_runtime.py`, which monkeypatches
+`loader._compiled_execution_episode_enabled`/`_compiled_execution_frame_enabled`
+directly to force it, specifically to exercise the "frame" arm of the
+`defer_compiled_runtime`/`compact_output` mechanism. `ExecutionFrameRuntimeInputs`/
+`compute_execution_frame_runtime` remain real, separately used C++ assets:
+`tests/runtime/mission/test_mission_runtime.py` calls the compiled function
+directly, and
+`tests/runtime/execution/test_execution_step_runtime.py::ExecutionEpisodeRuntimeTests::test_frame_compatibility_runtime_matches_episode_owner_across_batch_boundaries`
+pins frame/episode numerical equivalence as a compatibility contract in its
+own right. Only the Python dispatch's `elif` arm is unreachable in
+production, and it is unreachable by construction (monkeypatch-only), not by
+accident or drift. Disposition: held, not retired -- deleting it would edit
+a directly-exercised test for zero behavior change on its own, so it is
+registered here as a named, understood residual for whichever iteration
+next revisits `prepare_step_evaluation`'s dispatch, rather than an isolated
+deletion this slice would have to justify alone.
+
+### Disposition and next-trigger condition
+
+None of the three hot-path tiers qualifies for retirement at this commit:
+every tier is either the real default consumer path (tier 1) or carries its
+own dedicated, currently-green regression/parity test (tiers 2-3, and the
+frame/episode dispatch above). The census's method-level sweep (a full
+reference count over the ~591 functions/methods defined in the 29
+stepping-layer modules) did, however, surface eight dead per-step builder
+*interfaces* -- zero references anywhere outside their definition sites
+(production, tests, tools, and fixtures all clean) -- and this slice retired
+them per the I14 dead-interface-removal precedent: five `ScenarioLoader`
+forwarding shells whose call sites had already sunk to the owning
+module-level free functions (`_build_mission_nav_products`,
+`_compute_mission_observation_products`, `_build_step_info_runtime_inputs`,
+`_consume_compiled_episode_runtime`, `_build_waypoint_reward_inputs`; the
+free functions themselves remain maintained tier-1/2 infrastructure), and
+three methods superseded by the C++-backed batch paths --
+`_WorldBatchVecEnvObservationMixin._collect_observations` (callers now drive
+`_read_truth_and_inst_batch` + `_build_observations_from_cached_state`
+directly), `_WorldBatchVecEnvExecutionEpisodeMixin.`
+`_execution_episode_controller_state_requires_reprime` (the reprime decision
+flows through the compiled `execution_episode_ready` instead of a
+Python-side state digest), and `CooperativeWorldBatchVecEnv.`
+`_build_slot_observation` (superseded by the batched
+`compute_execution_observation_batch` path riding
+`ef_py.compute_execution_observation_batch_numpy`). All eight are private
+names, so the Non-Goals public-surface clause is untouched, and the removal
+is zero-behavior-change by construction. The trigger condition for the next
+real (tier-level) retirement is explicit: once tier 3
+(`execution_episode_controller_mainline`) covers the post-launch-assessment
+path and every tier 1/2 `flight_shaping_backend` option, and is promoted
+from opt-in to default, tier 1's `compute_full_step` term-by-term
+orchestration becomes the retirement target this program's README already
+names.
+
+### Default-flip addendum (I82, 2026-07-27): covered cells resolved, flip HELD pending performance
+
+This addendum records a partial trigger of the condition above, with the
+flip itself HELD. With the coverage matrix landed (I80) and the disposition
+adjudicated (I81/I91), the `execution_episode_controller_mainline`
+constructor default moved from a hard `False` to an unset sentinel resolved
+at construction
+(`WorldBatchVecEnv._resolve_execution_episode_controller_mainline_default`).
+The resolver encodes the full covered-cell ownership rule -- compiled/auto
+flight shaping, post-launch assessment not configured, action mode in the
+parity-pinned whitelist (`full`/`takeoff2`/`takeoff4`, each with its own
+cross-layer parity pin; whitelist polarity, so new action modes default to
+the Python path), no scripted opponents declared in the scenario, no second
+entity side declared in the scenario, no tier-2
+`execution_step_batch_prepare` opt-in, and the runtime episode-controller
+APIs present -- but the flip is DISARMED behind the module constant
+`_CONTROLLER_DEFAULT_FLIP_ARMED = False`
+(python/rl/runtime/world_batch/vec_env.py): while it is `False`, every
+unset default resolves to the Python-orchestrated path, and a cell the rule
+would have flipped reports the named reason
+`default_off_covered_cell_flip-held-pending-performance` through the
+resolution introspection attribute.
+
+Held ruling (2026-07-27, issued under explicit owner delegation -- the
+owner's "允许代签" authorization -- and recorded as a delegated program
+ruling, not as human expert judgment): the plan's Acceptance Criteria
+require the compiled episode cutover to improve maintained execution
+rollout wall-clock beyond noise, and the slice's own hot-path measurement
+showed the controller path 20-30% SLOWER on the inline micro fixture
+(n_envs=1 medians 0.297 vs 0.244 s/100 steps; n_envs=8 medians 2.409 vs
+1.869). The default flip is therefore held pending representative-scenario
+wall-clock evidence; per the program's performance boundary, that
+performance work routes to the exact-runtime line, which owns the arming
+condition (a representative-scenario measurement showing the controller
+path improves maintained rollout beyond noise).
+
+Everything else the slice built is kept. Every non-covered configuration
+resolves to the Python-orchestrated path with a named reason and never
+errors (gpu_host stays HELD on the Python path; post-launch-configured runs
+bind the red line because the mainline hard-disables the assessment;
+`naval_station3` keeps the Python-owned naval reward surface -- direct
+evidence: the controller path does not produce
+`naval_station_error_penalty`; multi-side scenarios keep the Python-owned
+combat products -- direct evidence: the controller path reports generic
+`timeout` where tier 1 reports `combat_win`/`combat_timeout`; scripted
+opponents are Python-stepped by `update_behaviors`, which the mainline
+replaces with `update_command_chain_only`). Explicit `True`/`False` keep
+their exact pre-flip semantics -- the public kwarg name is unchanged, and
+the covered-cell cross-layer parity evidence (explicit controller vs
+explicit Python path) stays green as explicit-opt-in parity. Tier-1
+retirement did NOT happen in this slice: `compute_full_step` orchestration,
+the post-launch mixin, the shadow comparator, and the tier-2 reward tail
+all remain reachable from the excluded cells and from explicit `False`, so
+the shrink-only deletion list for this slice is empty by adjudication
+(deletion trails a later slice, after the excluded cells gain
+controller-side owners and the flip arms). Evidence:
+tests/runtime/exact/test_execution_controller_option_parity.py (held-flip
+default-resolution pins on the covered cells, explicit-opt-in cross-layer
+parity pins, excluded-cell resolution pins, and the recorded hot-path
+measurement).
 
 ## Phased Modification Plan
 

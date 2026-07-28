@@ -14,11 +14,6 @@ from python.tasking_contracts.bridge_views import (
     mission_command_dict,
     mission_command_view,
 )
-# `build_kernel_mission_command` stays python.rl-resident: it dispatches
-# through `tasking_profile_for_loader`, a genuine entanglement point with the
-# air/ground/naval profile modules (see I24 report).
-from python.rl.tasking.bridge import build_kernel_mission_command
-
 from .common import safe_json_dict_loads, stable_json_dumps
 
 
@@ -381,6 +376,9 @@ def build_execution_episode_state(loader):
         state.has_mission_command_json = True
         mission_json = _clone_runtime_mission_command(mission_cmd)
         try:
+            # Deferred: `build_kernel_mission_command` stays python.rl-resident (profile dispatch).
+            from python.rl.tasking.bridge import build_kernel_mission_command
+
             state.mission_command = build_kernel_mission_command(loader)
             state.has_mission_command = True
             mission_json = _canonical_runtime_mission_command_json(mission_cmd, state.mission_command)

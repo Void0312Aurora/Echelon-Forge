@@ -2,9 +2,29 @@ from __future__ import annotations
 
 import numpy as np
 
-from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
+from gym_envs import observation_view
 
 from .common import ef_py
+
+
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). build_universal_observation is the
+# active universal policy-observation assembly path — called by
+# CooperativeWorldBatchVecEnv and MultiAgentWorldRuntimeView, not the removed
+# fail-fast UniversalEnv class. It reads authoritative truth (truth.x/y for the
+# ILS query, and truth.contacts / truth.rwr_warnings on the Python fallback path)
+# and delegates the mission vector to get_mission_observation, producing the
+# policy observation (Agent Observation). As of the T8 second slice those leaf
+# field reads flow through the declared observation view (observation_view
+# own-ship / track / RWR faces), which owns the raw truth access; TL18 is
+# converged onto that declared view. The compiled path still passes the whole
+# truth object into ef_py.compute_execution_observation_runtime_numpy — a
+# whole-object transfer into the compiled kernel, not a leaf field read, so it
+# stays in place (out of scope for this slice). Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ("Agent Observation",)
+SEMANTIC_STAGE = ("P10 ObservationExport",)
+
 
 _NAVAL_INSTRUMENT_KEEP_INDICES = (
     8,   # roll/orientation sanity.
@@ -63,7 +83,11 @@ def build_universal_observation(
             loader.reset_runtime_eval_cache()
         except Exception:
             pass
-    ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
+    ils_vec = loader.get_ils_observation(
+        float(observation_view.own_ship_attr(truth, "x")),
+        float(observation_view.own_ship_attr(truth, "y")),
+        float(inst.alt_baro),
+    )
     compiled_obs_enabled = bool(getattr(loader, "use_compiled_execution_step_runtime", True)) and hasattr(
         ef_py, "compute_execution_observation_runtime_numpy"
     )
@@ -127,13 +151,13 @@ def build_universal_observation(
         )
 
         contacts = np.zeros((int(max_contacts), 5), dtype=np.float32)
-        for i, track in enumerate(getattr(truth, "contacts", [])):
+        for i, track in enumerate(observation_view.contacts(truth)):
             if i >= int(max_contacts):
                 break
             contacts[i] = [track.range, track.azimuth, track.elevation, track.closing_speed, track.time_since_update]
 
         rwr = np.zeros((int(max_rwr), 4), dtype=np.float32)
-        for i, warning in enumerate(getattr(truth, "rwr_warnings", [])):
+        for i, warning in enumerate(observation_view.rwr_warnings(truth)):
             if i >= int(max_rwr):
                 break
             rwr[i] = [
@@ -172,6 +196,9 @@ def build_universal_observation(
             miss_vec = loader.get_mission_observation(mission_obs_mode, truth=truth, inst=inst)
     else:
         miss_vec = loader.get_mission_observation(mission_obs_mode, truth=truth, inst=inst)
+
+    # Deferred: profile dispatch stays python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
 
     policy_inst_vec = (
         naval_policy_instruments(inst_vec)

@@ -1,7 +1,23 @@
 import ef_py
 
+from gym_envs import observation_view
+
 from ..common import OBJECTIVE_DYNAMIC_TARGET_MAP, OBJECTIVE_OP_MAP, OBJECTIVE_PROPERTY_MAP
 from .air_combat import combat_entity_terminal_state
+
+
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This objective/approach reward-input
+# builder consumes authoritative truth (own-ship z / health / heading / x,y /
+# missiles_remaining and target truth.contacts / liveness / unit health). As of
+# the T8 second slice those reads flow through the declared observation view
+# (observation_view own-ship/track/engagement-evidence faces), which owns the raw
+# truth/sim access; TL12 is converged onto that declared view. Reward inputs are
+# an output, not an information layer, so PRODUCED is empty. Pure metadata; no
+# runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
 
 
 def _objective_shaping_binding_error(exc: Exception) -> RuntimeError:
@@ -21,8 +37,8 @@ def _combat_target_snapshot(loader, truth):
             "target_health": 0.0,
             "target_range_m": None,
             "self_active": True,
-            "self_health": float(getattr(truth, "health", 100.0)),
-            "missiles_remaining": float(getattr(truth, "missiles_remaining", 0.0)),
+            "self_health": float(observation_view.own_ship_field(truth, "health", 100.0)),
+            "missiles_remaining": float(observation_view.own_ship_field(truth, "missiles_remaining", 0.0)),
         }
 
     sim = getattr(loader, "sim", None)
@@ -31,17 +47,17 @@ def _combat_target_snapshot(loader, truth):
     target_range_m = None
     if sim is not None and hasattr(sim, "is_unit_active"):
         try:
-            target_active = bool(sim.is_unit_active(int(target_id)))
+            target_active = bool(observation_view.unit_active(sim, int(target_id)))
         except Exception:
             target_active = False
     if sim is not None and hasattr(sim, "get_unit_health"):
         try:
-            health = sim.get_unit_health(int(target_id))
+            health = observation_view.unit_health(sim, int(target_id))
             if isinstance(health, list) and health:
                 target_health = float(health[0])
         except Exception:
             target_health = 0.0
-    for track in getattr(truth, "contacts", []) or []:
+    for track in observation_view.contacts(truth) or []:
         try:
             if int(getattr(track, "id", 0)) != int(target_id):
                 continue
@@ -61,8 +77,8 @@ def _combat_target_snapshot(loader, truth):
         "target_health": float(target_health),
         "target_range_m": target_range_m,
         "self_active": True,
-        "self_health": float(getattr(truth, "health", 100.0)),
-        "missiles_remaining": float(getattr(truth, "missiles_remaining", 0.0)),
+        "self_health": float(observation_view.own_ship_field(truth, "health", 100.0)),
+        "missiles_remaining": float(observation_view.own_ship_field(truth, "missiles_remaining", 0.0)),
     }
 
 
@@ -213,7 +229,7 @@ def build_conditional_objective_inputs(
     on_ground: bool,
 ):
     inputs = ef_py.ConditionalObjectiveInputs()
-    inputs.altitude_m = float(getattr(truth, "z", 0.0))
+    inputs.altitude_m = float(observation_view.own_ship_field(truth, "z", 0.0))
     inputs.altitude_agl_m = float(curr_alt_agl)
     inputs.speed_mps = float(curr_ias)
     inputs.ground_speed_mps = float(curr_ground_speed)
@@ -232,9 +248,9 @@ def build_conditional_objective_inputs(
     inputs.ils_localizer_abs = abs(loader._instrument_scalar(inst, "ils_loc", -3, float("inf")))
     inputs.ils_glideslope_abs = abs(loader._instrument_scalar(inst, "ils_gs", -2, float("inf")))
     inputs.dme_m = loader._instrument_scalar(inst, "ils_dme", -1, float("inf"))
-    inputs.heading_deg = float(getattr(truth, "heading", 0.0))
-    inputs.x_m = float(getattr(truth, "x", 0.0))
-    inputs.y_m = float(getattr(truth, "y", 0.0))
+    inputs.heading_deg = float(observation_view.own_ship_field(truth, "heading", 0.0))
+    inputs.x_m = float(observation_view.own_ship_field(truth, "x", 0.0))
+    inputs.y_m = float(observation_view.own_ship_field(truth, "y", 0.0))
     route_target_altitude_m = loader._current_route_target_altitude_m(truth=truth)
     inputs.target_altitude_m = float(
         loader.mission_cmd.get("target_altitude", 0.0)

@@ -1,0 +1,39 @@
+usage: ablate_visual_training_effect.py [-h] --scenario SCENARIO
+                                        --train_config TRAIN_CONFIG
+                                        [--factors FACTORS] [--seeds SEEDS]
+                                        [--total_timesteps TOTAL_TIMESTEPS]
+                                        [--device DEVICE]
+                                        [--visual_update_interval VISUAL_UPDATE_INTERVAL]
+                                        [--n_envs N_ENVS]
+                                        [--eval_episodes EVAL_EPISODES]
+                                        [--eval_seed EVAL_SEED]
+                                        [--eval_max_steps EVAL_MAX_STEPS]
+                                        [--algo ALGO]
+                                        [--output_base OUTPUT_BASE]
+                                        [--run_prefix RUN_PREFIX]
+                                        [--skip_existing]
+                                        [--json_out JSON_OUT]
+
+Train/evaluate a visual_downsample ablation matrix for execution-layer visual
+policies.
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO
+  --train_config TRAIN_CONFIG
+  --factors FACTORS     Comma-separated visual_downsample values.
+  --seeds SEEDS         Comma-separated training seeds.
+  --total_timesteps TOTAL_TIMESTEPS
+                        Override total_timesteps in copied configs.
+  --device DEVICE       Optional hyperparameters.device override for copied
+                        configs.
+  --visual_update_interval VISUAL_UPDATE_INTERVAL
+  --n_envs N_ENVS
+  --eval_episodes EVAL_EPISODES
+  --eval_seed EVAL_SEED
+  --eval_max_steps EVAL_MAX_STEPS
+  --algo ALGO
+  --output_base OUTPUT_BASE
+  --run_prefix RUN_PREFIX
+  --skip_existing       Skip training when final_model.zip already exists.
+  --json_out JSON_OUT   Optional aggregate JSON output path.

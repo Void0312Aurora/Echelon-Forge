@@ -5,6 +5,8 @@ import textwrap
 from pathlib import Path
 
 from tests.architecture.helpers import REPO_ROOT, compile_cpp_snippet
+from tests.support.xmacro_text import expand_binding_field_incs
+from tests.support.xmacro_text import expand_header_field_incs
 
 WORLD_BATCH_HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
 FACADE_TYPES_HEADER = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
@@ -27,7 +29,16 @@ WP20_B_DOC_CANDIDATES = (
 
 
 def _text(path: Path) -> str:
-  return path.read_text(encoding="utf-8")
+  text = path.read_text(encoding="utf-8")
+  # WorldSpawnRequest/TypedPlatformSpawnRequest/TypedPlatformSpawnResult and
+  # friends are now schema-owned (tools/maintenance/dto_schema, I26): expand
+  # the X-macro #include so this file's source-text field-shape assertions
+  # keep matching the compiled struct/binding instead of the #include line.
+  if path == BINDINGS_SOURCE:
+    return expand_binding_field_incs(text)
+  if path in (WORLD_BATCH_HEADER, FACADE_TYPES_HEADER):
+    return expand_header_field_incs(text)
+  return text
 
 
 def _wp20_doc_text() -> str:

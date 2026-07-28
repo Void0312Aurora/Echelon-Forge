@@ -454,7 +454,19 @@ def test_wp12_runtime_facade_does_not_gain_a_second_maintained_injection_api() -
   facade_header = RUNTIME_FACADE_HEADER.read_text(encoding="utf-8")
   coordinator_header = RUNTIME_WINDOW_COORDINATOR.read_text(encoding="utf-8")
 
-  assert "RuntimeWindowResult run_window(const RuntimeWindowRequest& request);" in facade_header
+  # NOTE(I57): this lineage's C++ style renders the reference parameter as
+  # `const RuntimeWindowRequest &request` (& bound to the name); the guard was
+  # authored against the `RuntimeWindowRequest& request` (& bound to the type)
+  # spelling. Both declare the identical run_window entry point, so compare with
+  # reference-parameter spacing normalized. The guard still requires exactly this
+  # signature to be present -- only the semantically irrelevant `&` binding style
+  # is tolerated, so intent is unchanged (not loosened).
+  def _collapse_ref_spacing(text: str) -> str:
+    return text.replace(" &", "&").replace("& ", "&")
+
+  assert _collapse_ref_spacing(
+    "RuntimeWindowResult run_window(const RuntimeWindowRequest& request);"
+  ) in _collapse_ref_spacing(facade_header)
   assert "runtime_compatibility_quarantine" not in facade_header
   assert "MaintainedActionIntentInjectionAuthorizationResult" not in facade_header
   assert "authorize_maintained_decision_belief_action_intent_injection" not in facade_header

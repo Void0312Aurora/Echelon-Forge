@@ -1,0 +1,171 @@
+{
+  "schema": "agency_authority_census/v1",
+  "baseline_commit": "8bd21d86",
+  "generated_by": "Unified Architecture Program track T9 slice 1 (I47, repair round 2)",
+  "description": "Fingerprint pin of every scattered authority-check ('who-may-command / who-may-fire / who-may-write') site on the maintained tasking surface. Each site is pinned by a per-file token->count fingerprint (a repeated occurrence of an already-present token drifts the fingerprint). Tokens are matched by WORD BOUNDARY (\\bTOKEN\\b) over the code/prose surface, so a token never double-counts inside a longer identifier (commander_id inside ground_commander_id; command_relationship inside _command_relationship_default; the gate name inside _hierarchical_command_chain_active_impl). Categories are per-site adjudications grounded in and covering the pinned tokens' candidate categories in python/tasking_contracts/agency_registry.py:AUTHORITY_TOKEN_CATEGORIES (a token maps to a set of legitimate categories, not one fixed category). The scanner ignores comments, docstrings, and import/__all__ re-export plumbing (code-surface tokens) and matches folklore phrases only in docstrings/comments (prose-surface tokens). Ratchet is shrink-only (I38 precedent): a new authority-bearing file or a per-file token-count drift fails the gate. Key re-adjudicated sites (A5, A7, A8, A9, A14) additionally pin their exact category set in the gate.",
+  "scan_roots": [
+    "python/tasking_contracts",
+    "python/rl/tasking",
+    "python/rl/profile",
+    "gym_envs/scenario_loader",
+    "gym_envs/universal_env_parts"
+  ],
+  "excluded_files": {
+    "python/tasking_contracts/agency_registry.py": "The registry is the vocabulary owner; it names the tokens definitionally and must not be scanned as scatter."
+  },
+  "scan_scope_boundary": {
+    "python/rl/runtime/world_batch/cooperative_director.py": "runtime/observation face (sibling worktree); is_leader role/leader arbitration + formation-role metadata. Out of the T9 scan roots; cross-referenced (R1), not gated by T9.",
+    "python/rl/runtime/world_batch/adapter.py": "runtime/observation face (sibling worktree); sets authorization_to_fire on the facade command path. Out of the T9 scan roots; cross-referenced (R2), not gated by T9.",
+    "python/rl/policy_algo/**": "policy-network / algorithm face; reads the authorization_to_fire mission column as a network input (policies.py, hmoe_routing.py, first_event_projection.py, _first_event_mixin.py). A consumer of the authority field, not a tasking-authority decision/delegation/arbitration site; out of the T9 scan roots.",
+    "re-export plumbing": "Pure import + __all__ re-exports are not authority sites. behavior_runtime/__init__.py (re-exports hierarchical_command_chain_active) and python/rl/tasking/ground_adapter.py (re-exports infer_command_relationship + build_kernel_mission_command) are treated identically: the scanner strips import/__all__ statements, so neither is counted. The authority logic is pinned at its definition/delegate site instead."
+  },
+  "detection_vocabulary_coverage_boundary": {
+    "policy": "The scanner matches the registered token vocabulary (agency_registry.py:AUTHORITY_TOKEN_CATEGORIES) by WORD BOUNDARY over the code/prose surface, so a token never double-counts inside a longer identifier. Repair round 2 promoted the previously-documented synonyms (commander_id, command_relationship, infer_command_relationship) and the loader-delegate spelling (_hierarchical_command_chain_active) to first-class tokens. What remains an honest boundary is the set of compound identifiers that embed a base token but are deliberately not separately tokenized because their file is already pinned via the base token.",
+    "leader_authorization_to_fire": "A local variable in air_profile.py holding the leader's authorization_to_fire value; word-boundary excluded from the authorization_to_fire count (air_profile.py is already pinned via the bare authorization_to_fire field access + string key).",
+    "infer_warfare_role_code": "The naval warfare-role inference function name; word-boundary excluded from the warfare_role_code count (naval_profile.py / common_core_profile.py already pinned via the bare warfare_role_code field).",
+    "command_relationship_default / _command_relationship_default / _support_command_relationship": "Default-provider / support helper function names; word-boundary excluded from the command_relationship count (their files are pinned via CommandRelationship and/or the bare command_relationship field).",
+    "_hierarchical_command_chain_active_impl": "The import alias for the behavior-runtime gate in core.py; word-boundary excluded (core.py is pinned via the loader delegate method _hierarchical_command_chain_active; the import line is stripped anyway)."
+  },
+  "entries": [
+    {
+      "file": "python/rl/tasking/leader_tasking.py",
+      "tokens": ["allowed to directly author"],
+      "token_counts": {"allowed to directly author": 1},
+      "categories": ["scope"],
+      "form": "docstring-convention",
+      "semantic": "ScriptedC2TaskManager authority-scope folklore: the C2 layer may consume shared situation data and pilot reports but is *not* allowed to directly author low-level mission commands (that authority belongs to the leader layer). Enforced only by prose today; matched on the prose (docstring) surface.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Prime example of authority as folklore rather than inspectable data. Prose-surface token."
+    },
+    {
+      "file": "python/rl/tasking/common_core_profile.py",
+      "tokens": ["AuthorityScope", "CommandRelationship", "NavalWarfareRole", "command_relationship", "commander_id", "ground_commander_id", "infer_command_relationship", "officer_in_tactical_command", "warfare_role_code"],
+      "token_counts": {"AuthorityScope": 3, "CommandRelationship": 3, "NavalWarfareRole": 3, "command_relationship": 11, "commander_id": 3, "ground_commander_id": 5, "infer_command_relationship": 4, "officer_in_tactical_command": 15, "warfare_role_code": 27},
+      "categories": ["delegation", "role", "scope"],
+      "form": "default-inference",
+      "semantic": "Cross-profile authority defaults applied to task orders / leader intents / pilot reports: command_relationship + authority_scope defaults, officer_in_tactical_command (OTC) delegation inference, naval warfare_role_code and ground_commander_id / commander_id role inference, and the infer_command_relationship delegation-inference dispatch. Default/identity inference only -- no cross-source conflict resolution.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Neutral dispatcher over the air/ground/naval/common profile authority defaults. Repair round 2: now also pins the snake_case command_relationship field, the bare commander_id local, and infer_command_relationship (word-boundary matched, so they never fold into ground_commander_id / _command_relationship_default)."
+    },
+    {
+      "file": "python/rl/profile/common_core_defaults.py",
+      "tokens": ["AuthorityScope", "CommandRelationship"],
+      "token_counts": {"AuthorityScope": 1, "CommandRelationship": 1},
+      "categories": ["delegation", "scope"],
+      "form": "default-provider",
+      "semantic": "Default-value providers for the CommandRelationship (delegation) and AuthorityScope (scope) tasking enums.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Leaf provider of the delegation/scope default vocabulary. Its command_relationship_default() function name is a compound word-boundary-excluded from the command_relationship token; the file stays pinned via CommandRelationship."
+    },
+    {
+      "file": "python/rl/profile/air_profile.py",
+      "tokens": ["AuthorityScope", "CommandRelationship", "authorization_to_fire", "command_relationship", "engagement_authority_grantor_id", "engagement_authority_holder_id", "roe_state"],
+      "token_counts": {"AuthorityScope": 1, "CommandRelationship": 1, "authorization_to_fire": 4, "command_relationship": 4, "engagement_authority_grantor_id": 2, "engagement_authority_holder_id": 2, "roe_state": 2},
+      "categories": ["arbitration", "delegation", "doctrine", "scope"],
+      "form": "default+precedence",
+      "semantic": "Air profile command-relationship/authority-scope defaults, ROE-state and engagement-authority holder/grantor field resolution, and the leader-intent-over-mission-command fire-authority precedence (if the leader assigns a target or authorizes fire, the leader wins). Arbitration grounded by the leader precedence and the engagement-authority holder field.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Carries an arbitration precedence rule inline (leader overrides mission_cmd). Repair round 2: pins the snake_case command_relationship token; the leader_authorization_to_fire local is word-boundary excluded from authorization_to_fire (file already pinned via the bare field)."
+    },
+    {
+      "file": "python/rl/profile/ground_profile.py",
+      "tokens": ["AuthorityScope", "CommandRelationship", "authorization_to_fire", "command_relationship", "ground_commander_id", "infer_command_relationship", "officer_in_tactical_command"],
+      "token_counts": {"AuthorityScope": 1, "CommandRelationship": 2, "authorization_to_fire": 5, "command_relationship": 6, "ground_commander_id": 3, "infer_command_relationship": 1, "officer_in_tactical_command": 1},
+      "categories": ["arbitration", "delegation", "role", "scope"],
+      "form": "default+delegation+precedence",
+      "semantic": "Ground profile command-relationship/authority-scope defaults, officer_in_tactical_command (OTC) and ground_commander_id delegation/role inference, the infer_command_relationship delegation rule, and a leader-intent-over-mission-command fire-authorization precedence in build_kernel_mission_command (leader_intent.authorization_to_fire wins over mission_cmd when the leader carries the field, lines 428-431). Arbitration grounded (I47 repair P1-2) by the leader-vs-mission fire-authorization priority, not only defaults/delegation.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Repair round 1: added arbitration (leader-vs-mission fire-authorization precedence, confirmed at build_kernel_mission_command lines 428-431). Repair round 2: pins the snake_case command_relationship + the infer_command_relationship definition; category set is pinned exactly in the gate."
+    },
+    {
+      "file": "python/rl/profile/naval_profile.py",
+      "tokens": ["AuthorityScope", "CommandRelationship", "NavalWarfareRole", "authorization_to_fire", "command_relationship", "engagement_authority_grantor_id", "engagement_authority_holder_id", "officer_in_tactical_command", "roe_state", "warfare_role_code"],
+      "token_counts": {"AuthorityScope": 1, "CommandRelationship": 1, "NavalWarfareRole": 2, "authorization_to_fire": 7, "command_relationship": 4, "engagement_authority_grantor_id": 7, "engagement_authority_holder_id": 9, "officer_in_tactical_command": 2, "roe_state": 7, "warfare_role_code": 2},
+      "categories": ["arbitration", "delegation", "doctrine", "role", "scope"],
+      "form": "default+delegation+precedence",
+      "semantic": "Naval profile warfare-role (NavalWarfareRole/warfare_role_code) role inference, command-relationship/authority-scope defaults, officer_in_tactical_command delegation, and ROE-state / engagement-authority field resolution. I53 correction (was 'leader-intent-over-mission-command fire-authorization precedence'): naval_profile carries no leader_intent -- build_kernel_mission_command fills the authority/ROE fields (roe_state, holder/grantor ids, authorization_to_fire) from loader.mission_cmd, then re-reads the same fields from scenario_data['mission_command']; on the regular load path the two names are bound to the same dict (loading.py:113-117, re-synced at :242), so the arbitration-shaped re-read is an idempotent pseudo-precedence, not a real one -- whether any runtime rebinding ever separates the two mappings into a real override is to-be-adjudicated (see census doc, A6 row and section 3.2). Densest single-file authority surface (all five gated dimensions except gating).",
+      "owner": "T9 tasking-authority surface",
+      "note": "Densest single-file authority surface. Repair round 2: pins the snake_case command_relationship token; warfare_role_code count is the word-boundary count (the infer_warfare_role_code function name is excluded)."
+    },
+    {
+      "file": "gym_envs/scenario_loader/core.py",
+      "tokens": ["_hierarchical_command_chain_active"],
+      "token_counts": {"_hierarchical_command_chain_active": 1},
+      "categories": ["gating"],
+      "form": "delegate-method",
+      "semantic": "ScenarioLoader._hierarchical_command_chain_active delegates to the behavior-runtime activation gate that decides whether the leader/command-chain authority path runs for this loader. Enable/disable activation only -- it resolves no conflict between competing authority sources.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Loader-side delegate of the command-chain activation gate. Repair round 1: reclassified arbitration -> gating (activation, not conflict resolution). Repair round 2: pinned via the loader-delegate spelling _hierarchical_command_chain_active -- word-boundary matching no longer counts the gate name inside the underscore-prefixed method, so the delegate spelling is a first-class gating token that keeps this site pinned; category set pinned exactly in the gate."
+    },
+    {
+      "file": "gym_envs/scenario_loader/runtime_state.py",
+      "tokens": ["authorization_to_fire", "engagement_authority_grantor_id", "engagement_authority_holder_id", "ground_commander_id", "roe_state"],
+      "token_counts": {"authorization_to_fire": 9, "engagement_authority_grantor_id": 2, "engagement_authority_holder_id": 2, "ground_commander_id": 2, "roe_state": 2},
+      "categories": ["delegation", "doctrine", "role"],
+      "form": "state-projection",
+      "semantic": "Pure state mirror: _canonical_runtime_mission_command_json / _sync_command_chain_runtime_mirror copy mission-command authority/ROE fields (authorization_to_fire, engagement-authority holder/grantor, roe_state) and the ground_commander_id role field into the loader's runtime-state JSON mirrors / onto leader_intent. It copies/mirrors fields; it makes no authority decision, delegation resolution, or conflict resolution. The engagement_authority_holder_id here is a mirrored role/delegation identity, not the who-may-fire arbitration gate.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Repair round 1: dropped arbitration (state-mirror, not a decision site; conflicts with the census's own 'distinct from pure DTO plumbing' admission rule). Kept as a pinned scatter with a domain reason: it is on T9's owned surface and pinning which authority fields it mirrors keeps a new mirrored authority field from appearing silently. Repair round 2: category set pinned exactly in the gate (arbitration cannot be silently re-added)."
+    },
+    {
+      "file": "gym_envs/scenario_loader/behavior_runtime/command_chain.py",
+      "tokens": ["hierarchical_command_chain_active"],
+      "token_counts": {"hierarchical_command_chain_active": 4},
+      "categories": ["gating"],
+      "form": "activation-gate",
+      "semantic": "hierarchical_command_chain_active() decides (from task_order/leader_intent/pilot_report/c2_task_name presence) whether the leader phase manager and command-chain kernel sync run -- the enable/disable activation gate for the whole command chain. It does not resolve which of several authority sources wins.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Definition site of the command-chain activation gate. Repair round 1: reclassified arbitration -> gating (only judges enabled-or-not; resolves no multi-source authority conflict). Repair round 2: category set pinned exactly in the gate."
+    },
+    {
+      "file": "gym_envs/scenario_loader/behavior_runtime/post_waypoint_transition.py",
+      "tokens": ["authorization_to_fire"],
+      "token_counts": {"authorization_to_fire": 3},
+      "categories": ["delegation"],
+      "form": "field-copy",
+      "semantic": "On a post-waypoint transition, copies leader_intent.authorization_to_fire from the mission command, propagating the fire-authority delegation. Field copy only -- no precedence/conflict resolution.",
+      "owner": "T9 tasking-authority surface",
+      "note": ""
+    },
+    {
+      "file": "gym_envs/scenario_loader/reward_runtime/air_combat.py",
+      "tokens": ["authorization_to_fire", "roe_state"],
+      "token_counts": {"authorization_to_fire": 10, "roe_state": 5},
+      "categories": ["delegation", "doctrine"],
+      "form": "reward-gate",
+      "semantic": "Air-combat reward shaping reads roe_state and authorization_to_fire to compute an 'authorized_candidate' ROE gate that conditions pre-fire reward terms. Reward-side reader of ROE/fire-authority state; authors no command.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Reward-side reader of ROE/fire-authority state (no command authorship). Repair round 2: roe_state count is the word-boundary count (the air_combat_c2_roe_state_from_* function names are compound-excluded)."
+    },
+    {
+      "file": "gym_envs/scenario_loader/reward_runtime/naval.py",
+      "tokens": ["authorization_to_fire", "roe_state"],
+      "token_counts": {"authorization_to_fire": 4, "roe_state": 3},
+      "categories": ["delegation", "doctrine"],
+      "form": "reward-gate",
+      "semantic": "Naval reward shaping reads roe_state and authorization_to_fire to gate a pre-fire ROE-hold bonus vs a pre-fire authorization penalty. Reward-side reader; authors no command.",
+      "owner": "T9 tasking-authority surface",
+      "note": "Reward-side reader of ROE/fire-authority state (no command authorship)."
+    },
+    {
+      "file": "gym_envs/universal_env_parts/air_combat_event_action.py",
+      "tokens": ["authorization_to_fire", "engagement_authority_holder_id"],
+      "token_counts": {"authorization_to_fire": 1, "engagement_authority_holder_id": 1},
+      "categories": ["arbitration", "delegation"],
+      "form": "fire-authority-gate",
+      "semantic": "The 'who-may-fire' gate: holder_id = engagement_authority_holder_id; holder_ok = (holder_id <= 0 or holder_id == agent_id); c2_authorized = authorization_to_fire AND holder_ok (lines 167-169). Scattered arbitration of engagement authority in a call site: the holder id keys which agent wins the fire authority (distinct from A14's holder-blind eligibility mask).",
+      "owner": "T9 tasking-authority surface",
+      "note": "Canonical T9 target: who-may-fire is folklore in a call site, not gated data. Reads the holder id to resolve which agent wins -- genuine arbitration (contrast A14)."
+    },
+    {
+      "file": "gym_envs/scenario_loader/mission_observation.py",
+      "tokens": ["authorization_to_fire", "engagement_authority_grantor_id", "engagement_authority_holder_id", "roe_state"],
+      "token_counts": {"authorization_to_fire": 8, "engagement_authority_grantor_id": 1, "engagement_authority_holder_id": 1, "roe_state": 2},
+      "categories": ["delegation", "doctrine", "gating"],
+      "form": "observation-projection+fire-mask",
+      "semantic": "Projects the C2/ROE authority fields (authorization_to_fire, engagement-authority holder/grantor, roe_state) into the air_combat_c2_roe mission observation vector AND computes the _air_combat_c2_roe_policy_fire_mask_open policy gate (fire_mask_open = target_contact_present AND authorization_to_fire AND wcs_state != 1 AND not engage_hold AND shot_policy_state > 0 AND shot_budget_remaining > 0 AND not pending_assessment, lines 281-300). The fire mask is an eligibility GATE (enable/disable whether the policy may fire); it reads authorization_to_fire (+ wcs/engage/shot state) but does NOT read the engagement_authority_holder_id/grantor_id (those are pure observation projection at lines 405-406), so it resolves no who-may-fire competition between agents. Write-excluded (I45 observation face); read-only census.",
+      "owner": "runtime/observation face (I45) -- write-excluded; read-only census, not converged by T9",
+      "note": "Listed for census completeness only; T9 must not modify this file (I45 owns the observation face). Repair round 1: semantic completed to record the fire_mask_open policy gate. Repair round 2 (P1-3): reclassified arbitration -> gating -- the mask is a holder-blind eligibility gate (grounded by the authorization_to_fire gating candidate), not the A13 who-may-fire arbitration; delegation/doctrine retained per the ROE/authorization fields it reads. Category set pinned exactly in the gate."
+    }
+  ]
+}

@@ -23,6 +23,7 @@ from python.env_config import (
 )
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.rl.policy_checkpoint import load_sb3_policy
+from tools.diagnostics.common import add_json_out_arg, add_model_load_args, add_probe_run_args
 
 
 def load_json_config(path: str) -> dict[str, Any]:
@@ -59,14 +60,28 @@ def add_common_sb3_eval_args(
     episodes_help: str | None = None,
     seed_help: str | None = None,
 ) -> None:
-    parser.add_argument("--scenario", required=True)
-    parser.add_argument("--train_config", required=True)
-    parser.add_argument("--model", required=True, help="Path to SB3 model zip.")
-    parser.add_argument("--algo", default="auto", help="auto / AdaptiveKLPPO / PPO")
-    parser.add_argument("--episodes", type=int, default=int(episodes_default), help=episodes_help)
-    parser.add_argument("--seed", type=int, default=int(seed_default), help=seed_help)
+    add_probe_run_args(parser, include=["scenario"], required={"scenario": True})
+    add_model_load_args(
+        parser,
+        include=["train_config", "model", "algo"],
+        required={"train_config": True, "model": True},
+        defaults={"algo": "auto"},
+        helps={"model": "Path to SB3 model zip.", "algo": "auto / AdaptiveKLPPO / PPO"},
+    )
+    add_probe_run_args(
+        parser,
+        include=["episodes", "seed"],
+        defaults={"episodes": int(episodes_default), "seed": int(seed_default)},
+        helps={"episodes": episodes_help, "seed": seed_help},
+    )
     parser.add_argument("--stochastic", action="store_true")
-    parser.add_argument("--device", type=str, default="auto", help="Policy inference device: auto / cpu / cuda")
+    add_model_load_args(
+        parser,
+        include=["device"],
+        defaults={"device": "auto"},
+        types={"device": str},
+        helps={"device": "Policy inference device: auto / cpu / cuda"},
+    )
     parser.add_argument(
         "--include_visual",
         action=argparse.BooleanOptionalAction,
@@ -112,7 +127,7 @@ def add_common_sb3_eval_args(
             default=None,
             choices=list(FLIGHT_SHAPING_BACKENDS),
         )
-    parser.add_argument("--json_out", default="", help="Optional JSON output path.")
+    add_json_out_arg(parser, help="Optional JSON output path.")
 
 
 def write_json_output(json_out: str, payload: dict[str, Any]) -> None:

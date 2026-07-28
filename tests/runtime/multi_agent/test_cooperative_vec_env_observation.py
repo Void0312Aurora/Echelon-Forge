@@ -22,7 +22,7 @@ try:
 except ModuleNotFoundError: # pragma: no cover
   CooperativeWorldBatchVecEnv = None
 
-import python.rl.runtime.cooperative_world_batch_vec_env as cooperative_vec_env_module # noqa: E402
+import python.rl.runtime.world_batch._shared_ops as shared_ops_module # noqa: E402
 from python.rl.runtime.multi_agent_runtime import MultiAgentWorldRuntimeView # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index # noqa: E402
 
@@ -780,10 +780,10 @@ class CooperativeVecEnvObservationTests(unittest.TestCase):
         original_set_task = vec_env._runtime_adapter.set_task_orders_maintained_batch
         original_set_intent = vec_env._runtime_adapter.set_leader_intents_maintained_batch
         original_set_report = vec_env._runtime_adapter.set_pilot_reports_maintained_batch
-        original_project_mission = cooperative_vec_env_module.project_world_mission_command_maintained_assignment
-        original_project_task = cooperative_vec_env_module.project_world_task_order_maintained_assignment
-        original_project_intent = cooperative_vec_env_module.project_world_leader_intent_maintained_assignment
-        original_project_report = cooperative_vec_env_module.project_world_pilot_report_maintained_assignment
+        original_project_mission = shared_ops_module.project_world_mission_command_maintained_assignment
+        original_project_task = shared_ops_module.project_world_task_order_maintained_assignment
+        original_project_intent = shared_ops_module.project_world_leader_intent_maintained_assignment
+        original_project_report = shared_ops_module.project_world_pilot_report_maintained_assignment
         projection_calls: list[tuple[str, int, int]] = []
 
         def _track_mission(assignments):
@@ -850,10 +850,10 @@ class CooperativeVecEnvObservationTests(unittest.TestCase):
         vec_env._runtime_adapter.set_task_orders_maintained_batch = _track_task # type: ignore[method-assign]
         vec_env._runtime_adapter.set_leader_intents_maintained_batch = _track_intent # type: ignore[method-assign]
         vec_env._runtime_adapter.set_pilot_reports_maintained_batch = _track_report # type: ignore[method-assign]
-        cooperative_vec_env_module.project_world_mission_command_maintained_assignment = _track_project_mission # type: ignore[assignment]
-        cooperative_vec_env_module.project_world_task_order_maintained_assignment = _track_project_task # type: ignore[assignment]
-        cooperative_vec_env_module.project_world_leader_intent_maintained_assignment = _track_project_intent # type: ignore[assignment]
-        cooperative_vec_env_module.project_world_pilot_report_maintained_assignment = _track_project_report # type: ignore[assignment]
+        shared_ops_module.project_world_mission_command_maintained_assignment = _track_project_mission # type: ignore[assignment]
+        shared_ops_module.project_world_task_order_maintained_assignment = _track_project_task # type: ignore[assignment]
+        shared_ops_module.project_world_leader_intent_maintained_assignment = _track_project_intent # type: ignore[assignment]
+        shared_ops_module.project_world_pilot_report_maintained_assignment = _track_project_report # type: ignore[assignment]
 
         try:
           world.command_chain_dirty = True
@@ -888,10 +888,10 @@ class CooperativeVecEnvObservationTests(unittest.TestCase):
           self.assertEqual(first_counts, second_counts)
           self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
         finally:
-          cooperative_vec_env_module.project_world_mission_command_maintained_assignment = original_project_mission # type: ignore[assignment]
-          cooperative_vec_env_module.project_world_task_order_maintained_assignment = original_project_task # type: ignore[assignment]
-          cooperative_vec_env_module.project_world_leader_intent_maintained_assignment = original_project_intent # type: ignore[assignment]
-          cooperative_vec_env_module.project_world_pilot_report_maintained_assignment = original_project_report # type: ignore[assignment]
+          shared_ops_module.project_world_mission_command_maintained_assignment = original_project_mission # type: ignore[assignment]
+          shared_ops_module.project_world_task_order_maintained_assignment = original_project_task # type: ignore[assignment]
+          shared_ops_module.project_world_leader_intent_maintained_assignment = original_project_intent # type: ignore[assignment]
+          shared_ops_module.project_world_pilot_report_maintained_assignment = original_project_report # type: ignore[assignment]
       finally:
         vec_env.close()
 

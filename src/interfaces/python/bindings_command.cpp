@@ -517,43 +517,27 @@ void bind_command(nb::module_ &m) {
         .def_rw("takeoff_interval_s", &TaskOrderAir::TakeoffDirective::takeoff_interval_s)
         .def_rw("runway_slot_id", &TaskOrderAir::TakeoffDirective::runway_slot_id);
 
-    nb::class_<TaskOrderAirTaskingIdentityDirective>(m, "TaskOrderAirTaskingIdentityDirective")
-        .def(nb::init<>())
-        .def_rw("task_type", &TaskOrderAirTaskingIdentityDirective::task_type)
-        .def_rw("element_id", &TaskOrderAirTaskingIdentityDirective::element_id)
-        .def_rw("package_id", &TaskOrderAirTaskingIdentityDirective::package_id)
-        .def_rw("lead_aircraft_id", &TaskOrderAirTaskingIdentityDirective::lead_aircraft_id);
+    nb::class_<TaskOrderAirTaskingIdentityDirective>
+        task_order_air_tasking_identity_directive_class(m, "TaskOrderAirTaskingIdentityDirective");
+    task_order_air_tasking_identity_directive_class.def(nb::init<>());
+#define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value)              \
+    task_order_air_tasking_identity_directive_class.def_rw(                                        \
+        #name, &TaskOrderAirTaskingIdentityDirective::name);
+#include "runtime/contracts/detail/task_order_air_tasking_identity_directive.inc"
 
-    nb::class_<TaskOrderAirStationingDirective>(m, "TaskOrderAirStationingDirective")
-        .def(nb::init<>())
-        .def_rw("anchor_x_m", &TaskOrderAirStationingDirective::anchor_x_m)
-        .def_rw("anchor_y_m", &TaskOrderAirStationingDirective::anchor_y_m)
-        .def_rw("anchor_z_m", &TaskOrderAirStationingDirective::anchor_z_m)
-        .def_rw("station_type", &TaskOrderAirStationingDirective::station_type)
-        .def_rw("station_radius_m", &TaskOrderAirStationingDirective::station_radius_m)
-        .def_rw("station_leg_length_m", &TaskOrderAirStationingDirective::station_leg_length_m)
-        .def_rw("station_heading_deg", &TaskOrderAirStationingDirective::station_heading_deg)
-        .def_rw("altitude_block_min_m", &TaskOrderAirStationingDirective::altitude_block_min_m)
-        .def_rw("altitude_block_max_m", &TaskOrderAirStationingDirective::altitude_block_max_m)
-        .def_rw("target_altitude_m", &TaskOrderAirStationingDirective::target_altitude_m)
-        .def_rw("speed_min_mps", &TaskOrderAirStationingDirective::speed_min_mps)
-        .def_rw("speed_max_mps", &TaskOrderAirStationingDirective::speed_max_mps)
-        .def_rw("target_speed_mps", &TaskOrderAirStationingDirective::target_speed_mps)
-        .def_rw("entry_condition_code", &TaskOrderAirStationingDirective::entry_condition_code)
-        .def_rw("exit_condition_code", &TaskOrderAirStationingDirective::exit_condition_code)
-        .def_rw("on_station_time_s", &TaskOrderAirStationingDirective::on_station_time_s)
-        .def_rw("fuel_bingo_override_kg", &TaskOrderAirStationingDirective::fuel_bingo_override_kg);
+    nb::class_<TaskOrderAirStationingDirective> task_order_air_stationing_directive_class(
+        m, "TaskOrderAirStationingDirective");
+    task_order_air_stationing_directive_class.def(nb::init<>());
+#define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                    \
+    task_order_air_stationing_directive_class.def_rw(#name, &TaskOrderAirStationingDirective::name);
+#include "runtime/contracts/detail/task_order_air_stationing_directive.inc"
 
-    nb::class_<TaskOrderAirFormationDirective>(m, "TaskOrderAirFormationDirective")
-        .def(nb::init<>())
-        .def_rw("formation_template_id", &TaskOrderAirFormationDirective::formation_template_id)
-        .def_rw("formation_contract_id", &TaskOrderAirFormationDirective::formation_contract_id)
-        .def_rw("formation_role_id", &TaskOrderAirFormationDirective::formation_role_id)
-        .def_rw("wingman_slot_id", &TaskOrderAirFormationDirective::wingman_slot_id)
-        .def_rw("join_policy_id", &TaskOrderAirFormationDirective::join_policy_id)
-        .def_rw("rejoin_policy_id", &TaskOrderAirFormationDirective::rejoin_policy_id)
-        .def_rw("mutual_support_mode", &TaskOrderAirFormationDirective::mutual_support_mode)
-        .def_rw("support_sector_id", &TaskOrderAirFormationDirective::support_sector_id);
+    nb::class_<TaskOrderAirFormationDirective> task_order_air_formation_directive_class(
+        m, "TaskOrderAirFormationDirective");
+    task_order_air_formation_directive_class.def(nb::init<>());
+#define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value)                     \
+    task_order_air_formation_directive_class.def_rw(#name, &TaskOrderAirFormationDirective::name);
+#include "runtime/contracts/detail/task_order_air_formation_directive.inc"
 
     nb::class_<TaskOrderAir>(m, "TaskOrderAir")
         .def(nb::init<>())
@@ -623,9 +607,13 @@ void bind_command(nb::module_ &m) {
         .def_rw("ground_commander_id", &TaskOrderGround::ground_commander_id)
         .def_rw("tactical_cadence_hz", &TaskOrderGround::tactical_cadence_hz);
 
-    nb::class_<TaskOrderNavalStationingDirective>(m, "TaskOrderNavalStationingDirective")
-        .def(nb::init<>())
-        .def_rw("naval_station_type", &TaskOrderNavalStationingDirective::naval_station_type);
+    nb::class_<TaskOrderNavalStationingDirective> task_order_naval_stationing_directive_class(
+        m, "TaskOrderNavalStationingDirective");
+    task_order_naval_stationing_directive_class.def(nb::init<>());
+#define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                  \
+    task_order_naval_stationing_directive_class.def_rw(#name,                                      \
+                                                       &TaskOrderNavalStationingDirective::name);
+#include "runtime/contracts/detail/task_order_naval_stationing_directive.inc"
 
     nb::class_<TaskOrder>(m, "TaskOrder")
         .def(nb::init<>())

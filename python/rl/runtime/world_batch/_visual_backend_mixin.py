@@ -14,18 +14,22 @@ from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_fo
 from gym_envs.universal_env import temporal_history_enabled
 
 from .observation_batching import refresh_visual_cache_batch
+from ._shared_ops import (
+    batch_observation_runtime_base_check,
+    resolve_batch_observation_backend_mode,
+    resolve_batch_visual_backend_mode,
+)
 
 
 class _WorldBatchVecEnvVisualBackendMixin:
     def _batch_observation_backend_mode(self) -> str:
-        if self.batch_observation_backend == "auto":
-            if self._batch_observation_runtime_available():
-                return "compiled"
-            raise RuntimeError("maintained observation batching requires compute_execution_observation_batch_numpy")
-        return self.batch_observation_backend
+        return resolve_batch_observation_backend_mode(
+            self.batch_observation_backend,
+            self._batch_observation_runtime_available(),
+        )
 
     def _batch_observation_runtime_available(self) -> bool:
-        if not hasattr(ef_py, "compute_execution_observation_batch_numpy"):
+        if not batch_observation_runtime_base_check():
             return False
         for handle in self._handles:
             if not bool(getattr(handle.loader, "use_compiled_execution_step_runtime", True)):
@@ -33,14 +37,7 @@ class _WorldBatchVecEnvVisualBackendMixin:
         return True
 
     def _batch_visual_backend_mode(self) -> str:
-        if self.batch_visual_backend == "auto":
-            if self._batch_visual_runtime_available():
-                return "compiled"
-            raise RuntimeError("maintained visual batching requires compute_world_batch_visual_observation_batch_numpy")
-        return self.batch_visual_backend
-
-    def _batch_visual_runtime_available(self) -> bool:
-        return hasattr(ef_py, "compute_world_batch_visual_observation_batch_numpy")
+        return resolve_batch_visual_backend_mode(self.batch_visual_backend)
 
     def _flight_shaping_backend_mode(self) -> str:
         modes = {

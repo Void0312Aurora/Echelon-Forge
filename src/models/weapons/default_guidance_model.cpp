@@ -15,6 +15,7 @@
 #include "core/interfaces/environment_model.h"
 #include "core/interfaces/engagement_event_recorder.h"
 #include "models/physics/aerodynamics_common.h"
+#include "models/weapons/kalman_seeker.h"
 #include "models/weapons/missile_guidance_math.h"
 #include "models/weapons/missile_guidance_types.h"
 

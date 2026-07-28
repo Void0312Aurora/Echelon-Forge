@@ -1,0 +1,44 @@
+usage: evaluate.py [-h] --scenario SCENARIO --model MODEL
+                   [--algo {PPO,AdaptiveKLPPO,PPOAdaptiveKL,PPO_AdaptiveKL}]
+                   [--episodes EPISODES] [--seed SEED] [--render]
+                   [--include_visual | --no-include_visual]
+                   [--include_proprio | --no-include_proprio]
+                   [--mission_obs_mode {basic,nav_v1,nav_v2,nav_v2_formation_v1,nav_v2_formation_role_v1,nav_v2_cooperative_takeoff_v1,naval_screen_station_v1,air_combat_c2_roe_v1,air_combat_c2_roe_v2}]
+                   [--visual_downsample VISUAL_DOWNSAMPLE]
+                   [--visual_update_interval VISUAL_UPDATE_INTERVAL]
+                   [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}]
+                   [--train_config TRAIN_CONFIG]
+
+Universal Evaluation for CMO
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO   Path to JSON scenario file
+  --model MODEL         Path to trained model (zip)
+  --algo {PPO,AdaptiveKLPPO,PPOAdaptiveKL,PPO_AdaptiveKL}
+                        Algorithm class used during training (must match
+                        checkpoint class).
+  --episodes EPISODES   Number of episodes to evaluate
+  --seed SEED           Optional seed for reproducible episode randomization
+  --render              Render simulation (if supported)
+  --include_visual, --no-include_visual
+                        Include visual observation in evaluation env (defaults
+                        to train_config/policy settings).
+  --include_proprio, --no-include_proprio
+                        Include previous action in observations (defaults to
+                        train_config env settings).
+  --mission_obs_mode {basic,nav_v1,nav_v2,nav_v2_formation_v1,nav_v2_formation_role_v1,nav_v2_cooperative_takeoff_v1,naval_screen_station_v1,air_combat_c2_roe_v1,air_combat_c2_roe_v2}
+                        Mission observation format (defaults to train_config
+                        env settings).
+  --visual_downsample VISUAL_DOWNSAMPLE
+                        Visual downsample factor (defaults to train_config env
+                        settings).
+  --visual_update_interval VISUAL_UPDATE_INTERVAL
+                        Visual refresh interval (defaults to train_config env
+                        settings).
+  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}
+                        Action space mode (defaults to train_config env
+                        settings).
+  --train_config TRAIN_CONFIG
+                        Optional training config JSON to apply the same action
+                        wrapper semantics used during training.

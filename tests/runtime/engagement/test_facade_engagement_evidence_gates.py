@@ -5,6 +5,7 @@ from pathlib import Path
 
 from python.runtime_bootstrap import ensure_repo_imports
 from python.runtime_bootstrap import resolve_repo_path
+from tests.support.xmacro_text import expand_header_field_incs
 
 
 ensure_repo_imports()
@@ -81,7 +82,12 @@ def _make_detection(target_id: int, *, range_m: float = 1500.0) -> ef_py.Detecti
 
 def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explicit() -> None:
   facade_source = _read_repo_text("src", "runtime", "facade", "runtime_facade.cpp")
-  facade_types = _read_repo_text("src", "runtime", "facade", "runtime_facade_types.h")
+  # EngagementEventPacket's field surface is owned by the tools/maintenance/
+  # dto_schema X-macro list (I33); expand the #include textually so this
+  # struct-body scan keeps pinning the exact field inventory.
+  facade_types = expand_header_field_incs(
+    _read_repo_text("src", "runtime", "facade", "runtime_facade_types.h")
+  )
 
   packet_block = re.search(
     r"struct EngagementEventPacket \{(?P<body>.*?)\};",

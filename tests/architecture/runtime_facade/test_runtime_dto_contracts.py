@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.support.xmacro_text import expand_header_field_incs
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DTO_HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "runtime_dto_contracts.h"
@@ -10,10 +12,23 @@ FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.
 
 
 def _text(path: Path) -> str:
-  return path.read_text(encoding="utf-8")
+  text = path.read_text(encoding="utf-8")
+  # DeviceResidentOutputDescriptor/RuntimeCapabilities and friends (and, as
+  # of I31, RewardReport/TerminationSpec/ObservationViewSpec/
+  # ObservationViewCompatibilityReport in DTO_HEADER) are now schema-owned
+  # (tools/maintenance/dto_schema, I26/I31): expand the X-macro #include so
+  # this file's field-shape assertions keep matching the compiled struct
+  # instead of the #include line. The expansion is a no-op for files with
+  # no matching #include line, so it is safe to apply unconditionally.
+  return expand_header_field_incs(text)
 
 
 def _struct_body(header: str, struct_name: str) -> str:
+  # expand_header_field_incs() (I37) preserves the #include line's own
+  # newline, so a fully macro-owned struct's last expanded field always
+  # keeps a newline before the struct's "};" -- same as a hand-written
+  # struct. The closing-brace form can therefore stay strict without
+  # risking a greedy over-match into a neighbouring struct's body.
   pattern = rf"\bstruct\s+{re.escape(struct_name)}\b[^{{;]*\{{(?P<body>.*?)\n\}};"
   match = re.search(pattern, header, flags=re.DOTALL)
   assert match is not None, f"{struct_name} missing from {DTO_HEADER}"
@@ -66,6 +81,11 @@ def test_observation_view_spec_exposes_versioned_checkpoint_compatibility_surfac
     "optional_fields",
     "reject_major_mismatch",
     "allow_minor_version_drift",
+    # T8/I60 additive structural-fact declaration fields (append-only).
+    "view_id",
+    "information_layer_produced",
+    "information_layer_consumed",
+    "semantic_stage",
   ):
     assert field in view_spec
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import textwrap
 import uuid
@@ -121,7 +122,10 @@ def test_runtime_facade_exposes_window_loop_api() -> None:
   source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
 
   assert '#include "runtime/facade/runtime_window_coordinator.h"' in source
-  assert "RuntimeWindowResult run_window(const RuntimeWindowRequest& request);" in header
+  assert re.search(
+    r"RuntimeWindowResult\s+run_window\(\s*const\s+RuntimeWindowRequest\s+&request\s*\);",
+    header,
+  )
 
   body = _method_body(
     source,

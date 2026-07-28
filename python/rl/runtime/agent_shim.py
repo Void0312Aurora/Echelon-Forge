@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Mapping
 
+from python.tasking_contracts.agency_registry import MERGE_POLICIES as _REGISTRY_MERGE_POLICIES
+
 
 MAINTAINED = "maintained"
 ADAPTER_PROJECTION = "adapter_projection"
@@ -15,19 +17,18 @@ ALLOWED_MAINTAINED_STATUSES = (
     DIAGNOSTICS_ONLY,
 )
 
+# Named merge-policy constants keep their literal spellings for greppability and
+# stable keyword-argument call sites; the allowed *set* is owned by the T9
+# vocabulary registry (I53 P1-1 mechanical convergence). A unit test in
+# tests/runtime/test_agent_shim.py pins each name against the registry tuple so
+# neither side can drift silently.
 MERGE_LAST_WRITE_WINS = "last_write_wins"
 MERGE_PRIORITY_OVERRIDE = "priority_override"
 MERGE_REJECT_ON_CONFLICT = "reject_on_conflict"
 MERGE_BY_FIELD = "merge_by_field"
 MERGE_APPEND_ONLY = "append_only"
 
-ALLOWED_MERGE_POLICIES = (
-    MERGE_LAST_WRITE_WINS,
-    MERGE_PRIORITY_OVERRIDE,
-    MERGE_REJECT_ON_CONFLICT,
-    MERGE_BY_FIELD,
-    MERGE_APPEND_ONLY,
-)
+ALLOWED_MERGE_POLICIES = _REGISTRY_MERGE_POLICIES
 
 OBS_FACADE_OBSERVATION_PACKET = "facade_observation_packet"
 OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION = "agent_observation_adapter_projection"

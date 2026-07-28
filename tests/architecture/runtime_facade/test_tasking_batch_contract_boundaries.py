@@ -1,14 +1,23 @@
 from __future__ import annotations
 
 from tests.architecture.runtime_facade.helpers import *
+from tests.support.xmacro_text import expand_binding_field_incs
+from tests.support.xmacro_text import expand_header_field_incs
 
 
 def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wiring_while_compatibility_shells_are_removed() -> None:
   contracts_text = (RUNTIME_CONTRACTS / "world_batch_contracts.h").read_text(encoding="utf-8")
   facade_header = (RUNTIME_FACADE / "runtime_facade.h").read_text(encoding="utf-8")
-  facade_types = (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
+  # ObservationBatchRequest/TaskingBatchRequest/ObservationBatchPacket/
+  # TaskingBatchPacket field blocks are schema-owned (I31): expand the
+  # X-macro #include lines so this file's source-text section splits keep
+  # matching the compiled struct/binding shape instead of the #include
+  # line and the named-variable nb::class_<T> binding declaration style.
+  facade_types = expand_header_field_incs(
+    (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
+  )
   facade_cpp = runtime_facade_source_text()
-  bindings_runtime = RUNTIME_BINDINGS.read_text(encoding="utf-8")
+  bindings_runtime = expand_binding_field_incs(RUNTIME_BINDINGS.read_text(encoding="utf-8"))
   runtime_header = WORLD_BATCH_RUNTIME_H.read_text(encoding="utf-8")
   runtime_header_single_line = " ".join(runtime_header.split())
   facade_header_single_line = " ".join(facade_header.split())
@@ -159,10 +168,16 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert '"get_pilot_reports_batch"' not in facade_binding_section
   assert '"WorldTaskOrderAssignment"' not in bindings_runtime
   assert '"WorldTaskOrderCompatibilityAssignment"' not in bindings_runtime
-  observation_request_binding_section = bindings_runtime.split('nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")', 1)[1].split('nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")', 1)[0]
-  tasking_request_binding_section = bindings_runtime.split('nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")', 1)[1].split('nb::class_<EngagementBatchRequest>(m, "EngagementBatchRequest")', 1)[0]
-  observation_packet_binding_section = bindings_runtime.split('nb::class_<ObservationBatchPacket>(m, "ObservationBatchPacket")', 1)[1].split('nb::class_<TaskingBatchPacket>(m, "TaskingBatchPacket")', 1)[0]
-  tasking_packet_binding_section = bindings_runtime.split('nb::class_<TaskingBatchPacket>(m, "TaskingBatchPacket")', 1)[1].split('nb::class_<EngagementEventPacket>(m, "EngagementEventPacket")', 1)[0]
+  # ObservationBatchRequest/TaskingBatchRequest/ObservationBatchPacket/
+  # TaskingBatchPacket are schema-owned as of I31 and now declare their
+  # nb::class_<T> via a named local variable (matching the established
+  # I26 macro-binding style) instead of an inline fluent
+  # nb::class_<T>(m, "T") chain, so these section markers only match on
+  # the type-only prefix that both binding styles share.
+  observation_request_binding_section = bindings_runtime.split('nb::class_<ObservationBatchRequest>', 1)[1].split('nb::class_<TaskingBatchRequest>', 1)[0]
+  tasking_request_binding_section = bindings_runtime.split('nb::class_<TaskingBatchRequest>', 1)[1].split('nb::class_<EngagementBatchRequest>(m, "EngagementBatchRequest")', 1)[0]
+  observation_packet_binding_section = bindings_runtime.split('nb::class_<ObservationBatchPacket>', 1)[1].split('nb::class_<TaskingBatchPacket>', 1)[0]
+  tasking_packet_binding_section = bindings_runtime.split('nb::class_<TaskingBatchPacket>', 1)[1].split('nb::class_<EngagementEventPacket>(m, "EngagementEventPacket")', 1)[0]
   assert '"include_task_order_contracts"' not in observation_request_binding_section
   assert '"include_task_order_contracts"' in tasking_request_binding_section
   assert '"include_mission_command_contracts"' in tasking_request_binding_section
@@ -191,10 +206,15 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert 'nb::class_<MissionCommandMaintainedBatchContract>(' in bindings_runtime
   assert 'nb::class_<LeaderIntentMaintainedBatchContract>(' in bindings_runtime
   assert 'nb::class_<PilotReportMaintainedBatchContract>(' in bindings_runtime
-  assert 'nb::class_<WorldMissionCommandMaintainedAssignment>(' in bindings_runtime
-  assert 'nb::class_<WorldTaskOrderMaintainedAssignment>(' in bindings_runtime
-  assert 'nb::class_<WorldLeaderIntentMaintainedAssignment>(' in bindings_runtime
-  assert 'nb::class_<WorldPilotReportMaintainedAssignment>(' in bindings_runtime
+  # NOTE(I35): the four World*MaintainedAssignment classes are schema-owned
+  # as of I35 and now declare their nb::class_<T> via a named local variable
+  # (matching the established I26 macro-binding style) instead of an inline
+  # fluent nb::class_<T>(m, "T") chain, so these markers match only on the
+  # type-only prefix that both binding styles share.
+  assert 'nb::class_<WorldMissionCommandMaintainedAssignment>' in bindings_runtime
+  assert 'nb::class_<WorldTaskOrderMaintainedAssignment>' in bindings_runtime
+  assert 'nb::class_<WorldLeaderIntentMaintainedAssignment>' in bindings_runtime
+  assert 'nb::class_<WorldPilotReportMaintainedAssignment>' in bindings_runtime
   assert '"set_mission_commands_maintained_batch"' in bindings_runtime
   assert '"get_mission_commands_maintained_batch"' in bindings_runtime
   assert '"set_task_orders_maintained_batch"' in bindings_runtime
@@ -244,10 +264,24 @@ def test_wp24_python_command_chain_business_writes_use_maintained_contracts() ->
   command_chain_cache = (
     REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "command_chain_cache.py"
   ).read_text(encoding="utf-8")
-  world_batch_vec_env = world_batch_vec_env_source_text()
+  # NOTE(I39): I34 sank both vec-env consumers' per-entity command-chain diff
+  # and batch-submit calls into the shared `world_batch/_shared_ops.py`
+  # module (imported by `world_batch/vec_env.py` and
+  # `cooperative_world_batch_vec_env.py` as
+  # `diff_single_entity_command_chain`/`submit_command_chain_assignments`),
+  # so neither consumer's own source text still names the maintained
+  # assignment classes/setters directly -- only `_shared_ops.py` does now.
+  # Folding its text into both scan variables keeps this guard watching the
+  # code that actually issues the writes for the positive-token checks below
+  # without weakening the forbidden-legacy-writer checks that follow
+  # (`_shared_ops.py` contains none of those forbidden tokens either).
+  shared_ops = (
+    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "_shared_ops.py"
+  ).read_text(encoding="utf-8")
+  world_batch_vec_env = world_batch_vec_env_source_text() + "\n" + shared_ops
   cooperative_vec_env = (
     REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
-  ).read_text(encoding="utf-8")
+  ).read_text(encoding="utf-8") + "\n" + shared_ops
   multi_agent_runtime = (
     REPO_ROOT / "python" / "rl" / "runtime" / "multi_agent_runtime.py"
   ).read_text(encoding="utf-8")

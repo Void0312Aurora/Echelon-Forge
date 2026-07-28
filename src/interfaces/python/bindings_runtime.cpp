@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include "core/engine/world_batch_runtime.h"
+#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 #include "runtime/contracts/platform_capability_contracts.h"
@@ -15,130 +16,51 @@
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime(nb::module_ &m) {
-    nb::class_<RuntimeCapabilities>(m, "RuntimeCapabilities")
-        .def(nb::init<>())
-        .def_rw("supports_batch_runtime", &RuntimeCapabilities::supports_batch_runtime)
-        .def_rw("supports_compiled_episode_controller",
-                &RuntimeCapabilities::supports_compiled_episode_controller)
-        .def_rw("supports_compiled_execution_step",
-                &RuntimeCapabilities::supports_compiled_execution_step)
-        .def_rw("supports_gpu_visual", &RuntimeCapabilities::supports_gpu_visual)
-        .def_rw("supports_gpu_observation", &RuntimeCapabilities::supports_gpu_observation)
-        .def_rw("supports_gpu_flight_shaping", &RuntimeCapabilities::supports_gpu_flight_shaping)
-        .def_rw("supports_device_observation_view",
-                &RuntimeCapabilities::supports_device_observation_view)
-        .def_rw("supports_resident_state", &RuntimeCapabilities::supports_resident_state)
-        .def_rw("supports_exact_gpu_backend", &RuntimeCapabilities::supports_exact_gpu_backend)
-        .def_rw("supports_shadow_compare", &RuntimeCapabilities::supports_shadow_compare)
-        .def_rw("maintained_baseline_backend_profile_id",
-                &RuntimeCapabilities::maintained_baseline_backend_profile_id)
-        .def_rw("maintained_baseline_parity_budget_ref",
-                &RuntimeCapabilities::maintained_baseline_parity_budget_ref)
-        .def_rw("maintained_baseline_profile_status",
-                &RuntimeCapabilities::maintained_baseline_profile_status)
-        .def_rw("device_observation_view_candidate_profile_id",
-                &RuntimeCapabilities::device_observation_view_candidate_profile_id)
-        .def_rw("device_observation_view_rejection_reason",
-                &RuntimeCapabilities::device_observation_view_rejection_reason)
-        .def_rw("exact_gpu_backend_candidate_profile_id",
-                &RuntimeCapabilities::exact_gpu_backend_candidate_profile_id)
-        .def_rw("exact_gpu_backend_rejection_reason",
-                &RuntimeCapabilities::exact_gpu_backend_rejection_reason)
-        .def_rw("resident_state_candidate_profile_id",
-                &RuntimeCapabilities::resident_state_candidate_profile_id)
-        .def_rw("resident_state_candidate_parity_budget_ref",
-                &RuntimeCapabilities::resident_state_candidate_parity_budget_ref)
-        .def_rw("resident_state_rejection_reason",
-                &RuntimeCapabilities::resident_state_rejection_reason)
-        .def_rw("shadow_compare_candidate_profile_id",
-                &RuntimeCapabilities::shadow_compare_candidate_profile_id)
-        .def_rw("shadow_compare_candidate_parity_budget_ref",
-                &RuntimeCapabilities::shadow_compare_candidate_parity_budget_ref)
-        .def_rw("shadow_compare_rejection_reason",
-                &RuntimeCapabilities::shadow_compare_rejection_reason)
-        .def_rw("multi_fidelity_rejection_reason",
-                &RuntimeCapabilities::multi_fidelity_rejection_reason);
+    nb::class_<RuntimeCapabilities> runtime_capabilities_class(m, "RuntimeCapabilities");
+    runtime_capabilities_class.def(nb::init<>());
+#define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value)                                   \
+    runtime_capabilities_class.def_rw(#name, &RuntimeCapabilities::name);
+#include "runtime/facade/detail/runtime_capabilities.inc"
 
-    nb::class_<RuntimeBatchConfig>(m, "RuntimeBatchConfig")
-        .def(nb::init<>())
-        .def_rw("world_count", &RuntimeBatchConfig::world_count)
-        .def_rw("worker_threads", &RuntimeBatchConfig::worker_threads);
+    nb::class_<RuntimeBatchConfig> runtime_batch_config_class(m, "RuntimeBatchConfig");
+    runtime_batch_config_class.def(nb::init<>());
+#define EF_RUNTIME_BATCH_CONFIG_FIELD(type, name, default_value)                                   \
+    runtime_batch_config_class.def_rw(#name, &RuntimeBatchConfig::name);
+#include "runtime/facade/detail/runtime_batch_config.inc"
 
-    nb::class_<RuntimeFidelityRequest>(m, "RuntimeFidelityRequest")
-        .def(nb::init<>())
-        .def_rw("request_label", &RuntimeFidelityRequest::request_label)
-        .def_rw("backend_profile_id", &RuntimeFidelityRequest::backend_profile_id)
-        .def_rw("parity_budget_ref", &RuntimeFidelityRequest::parity_budget_ref)
-        .def_rw("provider_family", &RuntimeFidelityRequest::provider_family)
-        .def_rw("model_family_scope", &RuntimeFidelityRequest::model_family_scope)
-        .def_rw("validation_gate", &RuntimeFidelityRequest::validation_gate)
-        .def_rw("facade_evidence_refs", &RuntimeFidelityRequest::facade_evidence_refs);
+    nb::class_<RuntimeFidelityRequest> runtime_fidelity_request_class(m, "RuntimeFidelityRequest");
+    runtime_fidelity_request_class.def(nb::init<>());
+#define EF_RUNTIME_FIDELITY_REQUEST_FIELD(type, name, default_value)                               \
+    runtime_fidelity_request_class.def_rw(#name, &RuntimeFidelityRequest::name);
+#include "runtime/facade/detail/runtime_fidelity_request.inc"
 
-    nb::class_<RuntimeFidelityAdmission>(m, "RuntimeFidelityAdmission")
-        .def(nb::init<>())
-        .def_rw("admitted", &RuntimeFidelityAdmission::admitted)
-        .def_rw("baseline_exact_evaluation", &RuntimeFidelityAdmission::baseline_exact_evaluation)
-        .def_rw("request_label", &RuntimeFidelityAdmission::request_label)
-        .def_rw("backend_profile_id", &RuntimeFidelityAdmission::backend_profile_id)
-        .def_rw("parity_budget_ref", &RuntimeFidelityAdmission::parity_budget_ref)
-        .def_rw("requested_provider_family", &RuntimeFidelityAdmission::requested_provider_family)
-        .def_rw("selected_provider_family", &RuntimeFidelityAdmission::selected_provider_family)
-        .def_rw("selected_stage_node_id", &RuntimeFidelityAdmission::selected_stage_node_id)
-        .def_rw("rejection_reason", &RuntimeFidelityAdmission::rejection_reason)
-        .def_rw("errors", &RuntimeFidelityAdmission::errors)
-        .def_rw("evidence_refs", &RuntimeFidelityAdmission::evidence_refs);
+    nb::class_<RuntimeFidelityAdmission> runtime_fidelity_admission_class(
+        m, "RuntimeFidelityAdmission");
+    runtime_fidelity_admission_class.def(nb::init<>());
+#define EF_RUNTIME_FIDELITY_ADMISSION_FIELD(type, name, default_value)                             \
+    runtime_fidelity_admission_class.def_rw(#name, &RuntimeFidelityAdmission::name);
+#include "runtime/facade/detail/runtime_fidelity_admission.inc"
 
-    nb::class_<RuntimeCounterfactualSnapshot>(m, "RuntimeCounterfactualSnapshot")
-        .def(nb::init<>())
-        .def_rw("worldline_id", &RuntimeCounterfactualSnapshot::worldline_id)
-        .def_rw("parent_worldline_id", &RuntimeCounterfactualSnapshot::parent_worldline_id)
-        .def_rw("deterministic_seed", &RuntimeCounterfactualSnapshot::deterministic_seed)
-        .def_rw("world_index", &RuntimeCounterfactualSnapshot::world_index)
-        .def_rw("entity_id", &RuntimeCounterfactualSnapshot::entity_id)
-        .def_rw("x", &RuntimeCounterfactualSnapshot::x)
-        .def_rw("y", &RuntimeCounterfactualSnapshot::y)
-        .def_rw("z", &RuntimeCounterfactualSnapshot::z)
-        .def_rw("vx", &RuntimeCounterfactualSnapshot::vx)
-        .def_rw("vy", &RuntimeCounterfactualSnapshot::vy)
-        .def_rw("vz", &RuntimeCounterfactualSnapshot::vz)
-        .def_rw("heading", &RuntimeCounterfactualSnapshot::heading)
-        .def_rw("pitch", &RuntimeCounterfactualSnapshot::pitch)
-        .def_rw("roll", &RuntimeCounterfactualSnapshot::roll)
-        .def_rw("snapshot_version", &RuntimeCounterfactualSnapshot::snapshot_version)
-        .def_rw("barrier_id", &RuntimeCounterfactualSnapshot::barrier_id)
-        .def_rw("fidelity_profile_id", &RuntimeCounterfactualSnapshot::fidelity_profile_id)
-        .def_rw("provider_family", &RuntimeCounterfactualSnapshot::provider_family)
-        .def_rw("selected_stage_node_id", &RuntimeCounterfactualSnapshot::selected_stage_node_id)
-        .def_rw("cadence_reason", &RuntimeCounterfactualSnapshot::cadence_reason)
-        .def_rw("evidence_refs", &RuntimeCounterfactualSnapshot::evidence_refs);
+    nb::class_<RuntimeCounterfactualSnapshot> runtime_counterfactual_snapshot_class(
+        m, "RuntimeCounterfactualSnapshot");
+    runtime_counterfactual_snapshot_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_SNAPSHOT_FIELD(type, name, default_value)                        \
+    runtime_counterfactual_snapshot_class.def_rw(#name, &RuntimeCounterfactualSnapshot::name);
+#include "runtime/facade/detail/runtime_counterfactual_snapshot.inc"
 
-    nb::class_<RuntimeWorldlineComparison>(m, "RuntimeWorldlineComparison")
-        .def(nb::init<>())
-        .def_rw("comparable", &RuntimeWorldlineComparison::comparable)
-        .def_rw("comparison_id", &RuntimeWorldlineComparison::comparison_id)
-        .def_rw("parent_worldline_id", &RuntimeWorldlineComparison::parent_worldline_id)
-        .def_rw("branch_worldline_id", &RuntimeWorldlineComparison::branch_worldline_id)
-        .def_rw("barrier_id", &RuntimeWorldlineComparison::barrier_id)
-        .def_rw("dx", &RuntimeWorldlineComparison::dx)
-        .def_rw("dy", &RuntimeWorldlineComparison::dy)
-        .def_rw("dz", &RuntimeWorldlineComparison::dz)
-        .def_rw("dvx", &RuntimeWorldlineComparison::dvx)
-        .def_rw("dvy", &RuntimeWorldlineComparison::dvy)
-        .def_rw("dvz", &RuntimeWorldlineComparison::dvz)
-        .def_rw("dheading", &RuntimeWorldlineComparison::dheading)
-        .def_rw("evidence_refs", &RuntimeWorldlineComparison::evidence_refs);
+    nb::class_<RuntimeWorldlineComparison> runtime_worldline_comparison_class(
+        m, "RuntimeWorldlineComparison");
+    runtime_worldline_comparison_class.def(nb::init<>());
+#define EF_RUNTIME_WORLDLINE_COMPARISON_FIELD(type, name, default_value)                           \
+    runtime_worldline_comparison_class.def_rw(#name, &RuntimeWorldlineComparison::name);
+#include "runtime/facade/detail/runtime_worldline_comparison.inc"
 
-    nb::class_<DeviceResidentOutputDescriptor>(m, "DeviceResidentOutputDescriptor")
-        .def(nb::init<>())
-        .def_rw("output_shape", &DeviceResidentOutputDescriptor::output_shape)
-        .def_rw("dtype", &DeviceResidentOutputDescriptor::dtype)
-        .def_rw("element_count", &DeviceResidentOutputDescriptor::element_count)
-        .def_rw("source_snapshot", &DeviceResidentOutputDescriptor::source_snapshot)
-        .def_rw("sync_or_export_barrier", &DeviceResidentOutputDescriptor::sync_or_export_barrier)
-        .def_rw("host_visible_availability",
-                &DeviceResidentOutputDescriptor::host_visible_availability)
-        .def_rw("diagnostics_label", &DeviceResidentOutputDescriptor::diagnostics_label)
-        .def_rw("consumer_constraints", &DeviceResidentOutputDescriptor::consumer_constraints);
+    nb::class_<DeviceResidentOutputDescriptor> device_resident_output_descriptor_class(
+        m, "DeviceResidentOutputDescriptor");
+    device_resident_output_descriptor_class.def(nb::init<>());
+#define EF_RESIDENT_DEVICE_OUTPUT_DESCRIPTOR_FIELD(type, name, default_value)                      \
+    device_resident_output_descriptor_class.def_rw(#name, &DeviceResidentOutputDescriptor::name);
+#include "runtime/facade/detail/resident_device_output_descriptor.inc"
 
     nb::class_<runtime::fidelity::FidelityProfileRequest>(m, "FidelityProfileRequest")
         .def(nb::init<>())
@@ -180,477 +102,161 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("errors", &runtime::fidelity::FidelityProfileAdmissionResult::errors)
         .def_rw("evidence_refs", &runtime::fidelity::FidelityProfileAdmissionResult::evidence_refs);
 
-    nb::class_<runtime::platform_capabilities::Capability>(m, "PlatformCapability")
-        .def(nb::init<>())
-        .def_rw("capability_id", &runtime::platform_capabilities::Capability::capability_id)
-        .def_rw("family", &runtime::platform_capabilities::Capability::family)
-        .def_rw("capability_type", &runtime::platform_capabilities::Capability::capability_type)
-        .def_rw("implementation_ref",
-                &runtime::platform_capabilities::Capability::implementation_ref)
-        .def_rw("requires_capability_ids",
-                &runtime::platform_capabilities::Capability::requires_capability_ids)
-        .def_rw("evidence_refs", &runtime::platform_capabilities::Capability::evidence_refs)
-        .def_rw("required", &runtime::platform_capabilities::Capability::required)
-        .def_rw("supported", &runtime::platform_capabilities::Capability::supported)
-        .def_rw("unsupported_reason",
-                &runtime::platform_capabilities::Capability::unsupported_reason);
+    nb::class_<runtime::platform_capabilities::Capability> platform_capability_class(
+        m, "PlatformCapability");
+    platform_capability_class.def(nb::init<>());
+#define EF_PLATFORM_CAPABILITY_FIELD(type, name, default_value)                                    \
+    platform_capability_class.def_rw(#name, &runtime::platform_capabilities::Capability::name);
+#include "runtime/contracts/detail/platform_capability.inc"
 
-    nb::class_<runtime::platform_capabilities::CapabilityBundle>(m, "CapabilityBundle")
-        .def(nb::init<>())
-        .def_rw("bundle_id", &runtime::platform_capabilities::CapabilityBundle::bundle_id)
-        .def_rw("source_type_name",
-                &runtime::platform_capabilities::CapabilityBundle::source_type_name)
-        .def_rw("capabilities", &runtime::platform_capabilities::CapabilityBundle::capabilities)
-        .def_rw("template_evidence_ref",
-                &runtime::platform_capabilities::CapabilityBundle::template_evidence_ref)
-        .def_rw("evidence_refs", &runtime::platform_capabilities::CapabilityBundle::evidence_refs)
-        .def_rw("type_name_projection_preserved",
-                &runtime::platform_capabilities::CapabilityBundle::type_name_projection_preserved)
-        .def_rw("diagnostics_reason",
-                &runtime::platform_capabilities::CapabilityBundle::diagnostics_reason);
+    nb::class_<runtime::platform_capabilities::CapabilityBundle> capability_bundle_class(
+        m, "CapabilityBundle");
+    capability_bundle_class.def(nb::init<>());
+#define EF_CAPABILITY_BUNDLE_FIELD(type, name, default_value)                                      \
+    capability_bundle_class.def_rw(#name, &runtime::platform_capabilities::CapabilityBundle::name);
+#include "runtime/contracts/detail/capability_bundle.inc"
 
-    nb::class_<runtime::platform_capabilities::ResolvedPlatformSpawnPlan>(
-        m, "ResolvedPlatformSpawnPlan")
-        .def(nb::init<>())
-        .def_rw("plan_id", &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::plan_id)
-        .def_rw("source_request_kind",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::source_request_kind)
-        .def_rw("source_type_name",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::source_type_name)
-        .def_rw("capability_bundle_id",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::capability_bundle_id)
-        .def_rw("resolved_platform_definition_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::
-                    resolved_platform_definition_ref)
-        .def_rw(
-            "materialization_strategy",
-            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::materialization_strategy)
-        .def_rw("template_evidence_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::template_evidence_ref)
-        .def_rw("resolution_evidence_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolution_evidence_ref)
-        .def_rw("materialization_evidence_ref",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::
-                    materialization_evidence_ref)
-        .def_rw("evidence_refs",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::evidence_refs)
-        .def_rw("resolved_capabilities",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolved_capabilities)
-        .def_rw("rejected_capability_ids",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejected_capability_ids)
-        .def_rw("type_name_projection_preserved",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::
-                    type_name_projection_preserved)
-        .def_rw("admitted", &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::admitted)
-        .def_rw("rejection_reason",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejection_reason)
-        .def_rw("diagnostics_reason",
-                &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::diagnostics_reason);
+    nb::class_<runtime::platform_capabilities::ResolvedPlatformSpawnPlan>
+        resolved_platform_spawn_plan_class(m, "ResolvedPlatformSpawnPlan");
+    resolved_platform_spawn_plan_class.def(nb::init<>());
+#define EF_RESOLVED_PLATFORM_SPAWN_PLAN_FIELD(type, name, default_value)                           \
+    resolved_platform_spawn_plan_class.def_rw(                                                     \
+        #name, &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::name);
+#include "runtime/contracts/detail/resolved_platform_spawn_plan.inc"
 
-    nb::class_<TypedPlatformSpawnRequest>(m, "TypedPlatformSpawnRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &TypedPlatformSpawnRequest::world_index)
-        .def_rw("side", &TypedPlatformSpawnRequest::side)
-        .def_rw("request_id", &TypedPlatformSpawnRequest::request_id)
-        .def_rw("source_type_name", &TypedPlatformSpawnRequest::source_type_name)
-        .def_rw("entity_name", &TypedPlatformSpawnRequest::entity_name)
-        .def_rw("is_agent", &TypedPlatformSpawnRequest::is_agent)
-        .def_rw("x", &TypedPlatformSpawnRequest::x)
-        .def_rw("y", &TypedPlatformSpawnRequest::y)
-        .def_rw("z", &TypedPlatformSpawnRequest::z)
-        .def_rw("heading", &TypedPlatformSpawnRequest::heading)
-        .def_rw("pitch", &TypedPlatformSpawnRequest::pitch)
-        .def_rw("roll", &TypedPlatformSpawnRequest::roll)
-        .def_rw("vx", &TypedPlatformSpawnRequest::vx)
-        .def_rw("vy", &TypedPlatformSpawnRequest::vy)
-        .def_rw("vz", &TypedPlatformSpawnRequest::vz)
-        .def_rw("capability_bundle", &TypedPlatformSpawnRequest::capability_bundle)
-        .def_rw("resolved_spawn_plan", &TypedPlatformSpawnRequest::resolved_spawn_plan)
-        .def_rw("facade_evidence_refs", &TypedPlatformSpawnRequest::facade_evidence_refs)
-        .def_rw("type_name_projection_preserved",
-                &TypedPlatformSpawnRequest::type_name_projection_preserved);
+    nb::class_<TypedPlatformSpawnRequest> typed_platform_spawn_request_class(
+        m, "TypedPlatformSpawnRequest");
+    typed_platform_spawn_request_class.def(nb::init<>());
+#define EF_TYPED_PLATFORM_SPAWN_REQUEST_FIELD(type, name, default_value)                           \
+    typed_platform_spawn_request_class.def_rw(#name, &TypedPlatformSpawnRequest::name);
+#include "runtime/contracts/detail/typed_platform_spawn_request.inc"
 
-    nb::class_<TypedPlatformSpawnValidationResult>(m, "TypedPlatformSpawnValidationResult")
-        .def(nb::init<>())
-        .def_rw("valid", &TypedPlatformSpawnValidationResult::valid)
-        .def_rw("fail_closed", &TypedPlatformSpawnValidationResult::fail_closed)
-        .def_rw("rejection_reason", &TypedPlatformSpawnValidationResult::rejection_reason)
-        .def_rw("errors", &TypedPlatformSpawnValidationResult::errors);
+    nb::class_<TypedPlatformSpawnValidationResult> typed_platform_spawn_validation_result_class(
+        m, "TypedPlatformSpawnValidationResult");
+    typed_platform_spawn_validation_result_class.def(nb::init<>());
+#define EF_TYPED_PLATFORM_SPAWN_VALIDATION_RESULT_FIELD(type, name, default_value)                 \
+    typed_platform_spawn_validation_result_class.def_rw(                                           \
+        #name, &TypedPlatformSpawnValidationResult::name);
+#include "runtime/contracts/detail/typed_platform_spawn_validation_result.inc"
 
-    nb::class_<BatchResetRequest>(m, "BatchResetRequest")
-        .def(nb::init<>())
-        .def_rw("seeds", &BatchResetRequest::seeds);
+    nb::class_<BatchResetRequest> batch_reset_request_class(m, "BatchResetRequest");
+    batch_reset_request_class.def(nb::init<>());
+#define EF_BATCH_RESET_REQUEST_FIELD(type, name, default_value)                                    \
+    batch_reset_request_class.def_rw(#name, &BatchResetRequest::name);
+#include "runtime/facade/detail/batch_reset_request.inc"
 
-    nb::class_<EngagementEntityRef>(m, "EngagementEntityRef")
-        .def(nb::init<>())
-        .def_rw("world_index", &EngagementEntityRef::world_index)
-        .def_rw("entity_id", &EngagementEntityRef::entity_id);
+    nb::class_<EngagementEntityRef> engagement_entity_ref_class(m, "EngagementEntityRef");
+    engagement_entity_ref_class.def(nb::init<>());
+#define EF_ENGAGEMENT_ENTITY_REF_FIELD(type, name, default_value)                                  \
+    engagement_entity_ref_class.def_rw(#name, &EngagementEntityRef::name);
+#include "runtime/contracts/detail/engagement_entity_ref.inc"
 
-    nb::class_<LethalityChainHeader>(m, "LethalityChainHeader")
-        .def(nb::init<>())
-        .def_rw("schema_version", &LethalityChainHeader::schema_version)
-        .def_rw("chain_id", &LethalityChainHeader::chain_id)
-        .def_rw("event_id", &LethalityChainHeader::event_id)
-        .def_rw("parent_event_id", &LethalityChainHeader::parent_event_id)
-        .def_rw("stage", &LethalityChainHeader::stage)
-        .def_rw("status", &LethalityChainHeader::status)
-        .def_rw("reason", &LethalityChainHeader::reason)
-        .def_rw("source_time_s", &LethalityChainHeader::source_time_s)
-        .def_rw("source_frame", &LethalityChainHeader::source_frame)
-        .def_rw("munition", &LethalityChainHeader::munition)
-        .def_rw("shooter", &LethalityChainHeader::shooter)
-        .def_rw("target", &LethalityChainHeader::target)
-        .def_rw("producer_node_id", &LethalityChainHeader::producer_node_id)
-        .def_rw("fidelity_mode", &LethalityChainHeader::fidelity_mode)
-        .def_rw("evidence_level", &LethalityChainHeader::evidence_level)
-        .def_rw("observation_mode", &LethalityChainHeader::observation_mode)
-        .def_rw("consumer_visibility", &LethalityChainHeader::consumer_visibility)
-        .def_rw("confidence", &LethalityChainHeader::confidence);
+    nb::class_<LethalityChainHeader> lethality_chain_header_class(m, "LethalityChainHeader");
+    lethality_chain_header_class.def(nb::init<>());
+#define EF_LETHALITY_CHAIN_HEADER_FIELD(type, name, default_value)                                 \
+    lethality_chain_header_class.def_rw(#name, &LethalityChainHeader::name);
+#include "runtime/contracts/detail/lethality_chain_header.inc"
 
-    nb::class_<NearestApproachEvent>(m, "NearestApproachEvent")
-        .def(nb::init<>())
-        .def_rw("header", &NearestApproachEvent::header)
-        .def_rw("nearest_approach_time_s", &NearestApproachEvent::nearest_approach_time_s)
-        .def_rw("miss_distance_m", &NearestApproachEvent::miss_distance_m)
-        .def_rw("local_forward_m", &NearestApproachEvent::local_forward_m)
-        .def_rw("local_right_m", &NearestApproachEvent::local_right_m)
-        .def_rw("local_up_m", &NearestApproachEvent::local_up_m)
-        .def_rw("closure_mps", &NearestApproachEvent::closure_mps)
-        .def_rw("aspect_bucket", &NearestApproachEvent::aspect_bucket);
+    nb::class_<NearestApproachEvent> nearest_approach_event_class(m, "NearestApproachEvent");
+    nearest_approach_event_class.def(nb::init<>());
+#define EF_NEAREST_APPROACH_EVENT_FIELD(type, name, default_value)                                 \
+    nearest_approach_event_class.def_rw(#name, &NearestApproachEvent::name);
+#include "runtime/contracts/detail/nearest_approach_event.inc"
 
-    nb::class_<FuzeEvaluationEvent>(m, "FuzeEvaluationEvent")
-        .def(nb::init<>())
-        .def_rw("header", &FuzeEvaluationEvent::header)
-        .def_rw("fuze_type", &FuzeEvaluationEvent::fuze_type)
-        .def_rw("armed", &FuzeEvaluationEvent::armed)
-        .def_rw("triggered", &FuzeEvaluationEvent::triggered)
-        .def_rw("failure_reason", &FuzeEvaluationEvent::failure_reason)
-        .def_rw("delay_s", &FuzeEvaluationEvent::delay_s)
-        .def_rw("reliability", &FuzeEvaluationEvent::reliability)
-        .def_rw("sample", &FuzeEvaluationEvent::sample)
-        .def_rw("expected_detonation_probability",
-                &FuzeEvaluationEvent::expected_detonation_probability)
-        .def_rw("sampled_outcome", &FuzeEvaluationEvent::sampled_outcome)
-        .def_rw("trigger_radius_m", &FuzeEvaluationEvent::trigger_radius_m)
-        .def_rw("contact_surface_distance_m", &FuzeEvaluationEvent::contact_surface_distance_m)
-        .def_rw("contact_penetration_depth_m", &FuzeEvaluationEvent::contact_penetration_depth_m)
-        .def_rw("contact_surface_tolerance_m", &FuzeEvaluationEvent::contact_surface_tolerance_m)
-        .def_rw("contact_inside_hitbox", &FuzeEvaluationEvent::contact_inside_hitbox)
-        .def_rw("sensor_opportunity_source", &FuzeEvaluationEvent::sensor_opportunity_source)
-        .def_rw("sensor_opportunity_score", &FuzeEvaluationEvent::sensor_opportunity_score)
-        .def_rw("terminal_track_valid", &FuzeEvaluationEvent::terminal_track_valid)
-        .def_rw("target_detected", &FuzeEvaluationEvent::target_detected)
-        .def_rw("target_detection_source", &FuzeEvaluationEvent::target_detection_source)
-        .def_rw("target_detection_confidence", &FuzeEvaluationEvent::target_detection_confidence)
-        .def_rw("target_detection_threshold", &FuzeEvaluationEvent::target_detection_threshold)
-        .def_rw("detonation_point_source", &FuzeEvaluationEvent::detonation_point_source)
-        .def_rw("mechanism_coverage_score", &FuzeEvaluationEvent::mechanism_coverage_score)
-        .def_rw("direct_hitbox_intersection", &FuzeEvaluationEvent::direct_hitbox_intersection);
+    nb::class_<FuzeEvaluationEvent> fuze_evaluation_event_class(m, "FuzeEvaluationEvent");
+    fuze_evaluation_event_class.def(nb::init<>());
+#define EF_FUZE_EVALUATION_EVENT_FIELD(type, name, default_value)                                  \
+    fuze_evaluation_event_class.def_rw(#name, &FuzeEvaluationEvent::name);
+#include "runtime/contracts/detail/fuze_evaluation_event.inc"
 
-    nb::class_<WarheadMechanismEvent>(m, "WarheadMechanismEvent")
-        .def(nb::init<>())
-        .def_rw("header", &WarheadMechanismEvent::header)
-        .def_rw("mechanism_family", &WarheadMechanismEvent::mechanism_family)
-        .def_rw("warhead_mass_kg", &WarheadMechanismEvent::warhead_mass_kg)
-        .def_rw("lethal_radius_m", &WarheadMechanismEvent::lethal_radius_m)
-        .def_rw("fragment_energy_j", &WarheadMechanismEvent::fragment_energy_j)
-        .def_rw("fragment_density_per_m2", &WarheadMechanismEvent::fragment_density_per_m2)
-        .def_rw("blast_overpressure_kpa", &WarheadMechanismEvent::blast_overpressure_kpa)
-        .def_rw("blast_impulse_kpa_ms", &WarheadMechanismEvent::blast_impulse_kpa_ms)
-        .def_rw("blast_scaled_distance_m_kg13",
-                &WarheadMechanismEvent::blast_scaled_distance_m_kg13)
-        .def_rw("rod_cut_margin", &WarheadMechanismEvent::rod_cut_margin)
-        .def_rw("penetration_margin", &WarheadMechanismEvent::penetration_margin)
-        .def_rw("surface_incidence_cos", &WarheadMechanismEvent::surface_incidence_cos);
+    nb::class_<WarheadMechanismEvent> warhead_mechanism_event_class(m, "WarheadMechanismEvent");
+    warhead_mechanism_event_class.def(nb::init<>());
+#define EF_WARHEAD_MECHANISM_EVENT_FIELD(type, name, default_value)                                \
+    warhead_mechanism_event_class.def_rw(#name, &WarheadMechanismEvent::name);
+#include "runtime/contracts/detail/warhead_mechanism_event.inc"
 
-    nb::class_<SpatialCoverageEvent>(m, "SpatialCoverageEvent")
-        .def(nb::init<>())
-        .def_rw("header", &SpatialCoverageEvent::header)
-        .def_rw("projected_hitbox_count", &SpatialCoverageEvent::projected_hitbox_count)
-        .def_rw("sample_count", &SpatialCoverageEvent::sample_count)
-        .def_rw("hit_estimate", &SpatialCoverageEvent::hit_estimate)
-        .def_rw("hit_fraction", &SpatialCoverageEvent::hit_fraction)
-        .def_rw("energy_scale", &SpatialCoverageEvent::energy_scale)
-        .def_rw("pattern_scale", &SpatialCoverageEvent::pattern_scale)
-        .def_rw("orientation_axis_forward", &SpatialCoverageEvent::orientation_axis_forward)
-        .def_rw("orientation_axis_right", &SpatialCoverageEvent::orientation_axis_right)
-        .def_rw("orientation_axis_up", &SpatialCoverageEvent::orientation_axis_up);
+    nb::class_<SpatialCoverageEvent> spatial_coverage_event_class(m, "SpatialCoverageEvent");
+    spatial_coverage_event_class.def(nb::init<>());
+#define EF_SPATIAL_COVERAGE_EVENT_FIELD(type, name, default_value)                                 \
+    spatial_coverage_event_class.def_rw(#name, &SpatialCoverageEvent::name);
+#include "runtime/contracts/detail/spatial_coverage_event.inc"
 
-    nb::class_<ComponentLoadEvent>(m, "ComponentLoadEvent")
-        .def(nb::init<>())
-        .def_rw("header", &ComponentLoadEvent::header)
-        .def_rw("component_name", &ComponentLoadEvent::component_name)
-        .def_rw("component_system", &ComponentLoadEvent::component_system)
-        .def_rw("component_redundancy_group_id", &ComponentLoadEvent::component_redundancy_group_id)
-        .def_rw("direct_hit", &ComponentLoadEvent::direct_hit)
-        .def_rw("distance_m", &ComponentLoadEvent::distance_m)
-        .def_rw("effect_scale", &ComponentLoadEvent::effect_scale)
-        .def_rw("spatial_intersection_fraction", &ComponentLoadEvent::spatial_intersection_fraction)
-        .def_rw("pattern_weight", &ComponentLoadEvent::pattern_weight)
-        .def_rw("orientation_weight", &ComponentLoadEvent::orientation_weight)
-        .def_rw("receiver_exposure_fraction", &ComponentLoadEvent::receiver_exposure_fraction)
-        .def_rw("armor_transmission", &ComponentLoadEvent::armor_transmission)
-        .def_rw("sampling_confidence", &ComponentLoadEvent::sampling_confidence)
-        .def_rw("load_intensity_scale", &ComponentLoadEvent::load_intensity_scale)
-        .def_rw("fragment_energy_j", &ComponentLoadEvent::fragment_energy_j)
-        .def_rw("fragment_density_per_m2", &ComponentLoadEvent::fragment_density_per_m2)
-        .def_rw("penetration_margin", &ComponentLoadEvent::penetration_margin)
-        .def_rw("blast_overpressure_kpa", &ComponentLoadEvent::blast_overpressure_kpa)
-        .def_rw("blast_impulse_kpa_ms", &ComponentLoadEvent::blast_impulse_kpa_ms)
-        .def_rw("blast_scaled_distance_m_kg13", &ComponentLoadEvent::blast_scaled_distance_m_kg13)
-        .def_rw("rod_cut_margin", &ComponentLoadEvent::rod_cut_margin)
-        .def_rw("surface_incidence_cos", &ComponentLoadEvent::surface_incidence_cos)
-        .def_rw("load_source", &ComponentLoadEvent::load_source);
+    nb::class_<ComponentLoadEvent> component_load_event_class(m, "ComponentLoadEvent");
+    component_load_event_class.def(nb::init<>());
+#define EF_COMPONENT_LOAD_EVENT_FIELD(type, name, default_value)                                   \
+    component_load_event_class.def_rw(#name, &ComponentLoadEvent::name);
+#include "runtime/contracts/detail/component_load_event.inc"
 
-    nb::class_<ComponentDamageEvent>(m, "ComponentDamageEvent")
-        .def(nb::init<>())
-        .def_rw("header", &ComponentDamageEvent::header)
-        .def_rw("component_name", &ComponentDamageEvent::component_name)
-        .def_rw("component_system", &ComponentDamageEvent::component_system)
-        .def_rw("component_redundancy_group_id",
-                &ComponentDamageEvent::component_redundancy_group_id)
-        .def_rw("integrity_before", &ComponentDamageEvent::integrity_before)
-        .def_rw("integrity_after", &ComponentDamageEvent::integrity_after)
-        .def_rw("failure_mode", &ComponentDamageEvent::failure_mode)
-        .def_rw("failure_severity", &ComponentDamageEvent::failure_severity)
-        .def_rw("failure_probability", &ComponentDamageEvent::failure_probability)
-        .def_rw("failure_sample", &ComponentDamageEvent::failure_sample);
+    nb::class_<ComponentDamageEvent> component_damage_event_class(m, "ComponentDamageEvent");
+    component_damage_event_class.def(nb::init<>());
+#define EF_COMPONENT_DAMAGE_EVENT_FIELD(type, name, default_value)                                 \
+    component_damage_event_class.def_rw(#name, &ComponentDamageEvent::name);
+#include "runtime/contracts/detail/component_damage_event.inc"
 
-    nb::class_<PlatformConsequenceEvent>(m, "PlatformConsequenceEvent")
-        .def(nb::init<>())
-        .def_rw("header", &PlatformConsequenceEvent::header)
-        .def_rw("mission_capability_before", &PlatformConsequenceEvent::mission_capability_before)
-        .def_rw("mission_capability_after", &PlatformConsequenceEvent::mission_capability_after)
-        .def_rw("mobility_capability_before", &PlatformConsequenceEvent::mobility_capability_before)
-        .def_rw("mobility_capability_after", &PlatformConsequenceEvent::mobility_capability_after)
-        .def_rw("sensor_capability_before", &PlatformConsequenceEvent::sensor_capability_before)
-        .def_rw("sensor_capability_after", &PlatformConsequenceEvent::sensor_capability_after)
-        .def_rw("survivability_capability_before",
-                &PlatformConsequenceEvent::survivability_capability_before)
-        .def_rw("survivability_capability_after",
-                &PlatformConsequenceEvent::survivability_capability_after)
-        .def_rw("mission_kill", &PlatformConsequenceEvent::mission_kill)
-        .def_rw("mobility_kill", &PlatformConsequenceEvent::mobility_kill)
-        .def_rw("sensor_kill", &PlatformConsequenceEvent::sensor_kill)
-        .def_rw("survivability_kill", &PlatformConsequenceEvent::survivability_kill)
-        .def_rw("flight_control_kill", &PlatformConsequenceEvent::flight_control_kill)
-        .def_rw("propulsion_kill", &PlatformConsequenceEvent::propulsion_kill)
-        .def_rw("forced_landing", &PlatformConsequenceEvent::forced_landing)
-        .def_rw("crew_kill", &PlatformConsequenceEvent::crew_kill)
-        .def_rw("control_delta", &PlatformConsequenceEvent::control_delta)
-        .def_rw("engine_delta", &PlatformConsequenceEvent::engine_delta)
-        .def_rw("fuel_leak_delta", &PlatformConsequenceEvent::fuel_leak_delta)
-        .def_rw("fire_state", &PlatformConsequenceEvent::fire_state)
-        .def_rw("aircraft_damage_state_before",
-                &PlatformConsequenceEvent::aircraft_damage_state_before)
-        .def_rw("aircraft_damage_state_after",
-                &PlatformConsequenceEvent::aircraft_damage_state_after)
-        .def_rw("aircraft_damage_state_delta",
-                &PlatformConsequenceEvent::aircraft_damage_state_delta)
-        .def_rw("air_system_hit_flags", &PlatformConsequenceEvent::air_system_hit_flags)
-        .def_rw("air_system_spatial_scales", &PlatformConsequenceEvent::air_system_spatial_scales)
-        .def_rw("vulnerability_scale_trace", &PlatformConsequenceEvent::vulnerability_scale_trace)
-        .def_rw("loss_state_from", &PlatformConsequenceEvent::loss_state_from)
-        .def_rw("loss_state_to", &PlatformConsequenceEvent::loss_state_to);
+    nb::class_<PlatformConsequenceEvent> platform_consequence_event_class(
+        m, "PlatformConsequenceEvent");
+    platform_consequence_event_class.def(nb::init<>());
+#define EF_PLATFORM_CONSEQUENCE_EVENT_FIELD(type, name, default_value)                             \
+    platform_consequence_event_class.def_rw(#name, &PlatformConsequenceEvent::name);
+#include "runtime/contracts/detail/platform_consequence_event.inc"
 
-    nb::class_<StructuralBreakupEvent>(m, "StructuralBreakupEvent")
-        .def(nb::init<>())
-        .def_rw("header", &StructuralBreakupEvent::header)
-        .def_rw("breakup_state", &StructuralBreakupEvent::breakup_state)
-        .def_rw("break_mode", &StructuralBreakupEvent::break_mode)
-        .def_rw("detached_part_ref", &StructuralBreakupEvent::detached_part_ref)
-        .def_rw("detached_part_count", &StructuralBreakupEvent::detached_part_count)
-        .def_rw("airframe_breakup", &StructuralBreakupEvent::airframe_breakup)
-        .def_rw("cause_event_id", &StructuralBreakupEvent::cause_event_id);
+    nb::class_<StructuralBreakupEvent> structural_breakup_event_class(m, "StructuralBreakupEvent");
+    structural_breakup_event_class.def(nb::init<>());
+#define EF_STRUCTURAL_BREAKUP_EVENT_FIELD(type, name, default_value)                               \
+    structural_breakup_event_class.def_rw(#name, &StructuralBreakupEvent::name);
+#include "runtime/contracts/detail/structural_breakup_event.inc"
 
-    nb::class_<LifecycleTransitionEvent>(m, "LifecycleTransitionEvent")
-        .def(nb::init<>())
-        .def_rw("header", &LifecycleTransitionEvent::header)
-        .def_rw("lifecycle_from", &LifecycleTransitionEvent::lifecycle_from)
-        .def_rw("lifecycle_to", &LifecycleTransitionEvent::lifecycle_to)
-        .def_rw("ground_lifecycle", &LifecycleTransitionEvent::ground_lifecycle)
-        .def_rw("wreck_entity", &LifecycleTransitionEvent::wreck_entity)
-        .def_rw("debris_count", &LifecycleTransitionEvent::debris_count)
-        .def_rw("terminal", &LifecycleTransitionEvent::terminal)
-        .def_rw("terminal_projection_id", &LifecycleTransitionEvent::terminal_projection_id);
+    nb::class_<LifecycleTransitionEvent> lifecycle_transition_event_class(
+        m, "LifecycleTransitionEvent");
+    lifecycle_transition_event_class.def(nb::init<>());
+#define EF_LIFECYCLE_TRANSITION_EVENT_FIELD(type, name, default_value)                             \
+    lifecycle_transition_event_class.def_rw(#name, &LifecycleTransitionEvent::name);
+#include "runtime/contracts/detail/lifecycle_transition_event.inc"
 
-    nb::class_<TrainingProjectionEvent>(m, "TrainingProjectionEvent")
-        .def(nb::init<>())
-        .def_rw("header", &TrainingProjectionEvent::header)
-        .def_rw("consumed_event_ids", &TrainingProjectionEvent::consumed_event_ids)
-        .def_rw("consumer_node_id", &TrainingProjectionEvent::consumer_node_id)
-        .def_rw("consumer_version", &TrainingProjectionEvent::consumer_version)
-        .def_rw("projection_kind", &TrainingProjectionEvent::projection_kind)
-        .def_rw("reward_term", &TrainingProjectionEvent::reward_term)
-        .def_rw("reward_delta", &TrainingProjectionEvent::reward_delta)
-        .def_rw("terminal_reason", &TrainingProjectionEvent::terminal_reason)
-        .def_rw("fact_source", &TrainingProjectionEvent::fact_source);
+    nb::class_<TrainingProjectionEvent> training_projection_event_class(m,
+                                                                        "TrainingProjectionEvent");
+    training_projection_event_class.def(nb::init<>());
+#define EF_TRAINING_PROJECTION_EVENT_FIELD(type, name, default_value)                              \
+    training_projection_event_class.def_rw(#name, &TrainingProjectionEvent::name);
+#include "runtime/contracts/detail/training_projection_event.inc"
 
-    nb::class_<TrackPacket>(m, "TrackPacket")
-        .def(nb::init<>())
-        .def_rw("track_id", &TrackPacket::track_id)
-        .def_rw("correlated_entity", &TrackPacket::correlated_entity)
-        .def_rw("has_correlated_entity", &TrackPacket::has_correlated_entity)
-        .def_rw("correlation_policy", &TrackPacket::correlation_policy)
-        .def_rw("source", &TrackPacket::source)
-        .def_rw("classification", &TrackPacket::classification)
-        .def_rw("status", &TrackPacket::status)
-        .def_rw("quality", &TrackPacket::quality)
-        .def_rw("confidence", &TrackPacket::confidence)
-        .def_rw("usable", &TrackPacket::usable)
-        .def_rw("iff", &TrackPacket::iff)
-        .def_rw("source_time_s", &TrackPacket::source_time_s)
-        .def_rw("update_age_s", &TrackPacket::update_age_s)
-        .def_rw("snapshot_version", &TrackPacket::snapshot_version);
+    nb::class_<TrackPacket> track_packet_class(m, "TrackPacket");
+    track_packet_class.def(nb::init<>());
+#define EF_TRACK_PACKET_FIELD(type, name, default_value)                                           \
+    track_packet_class.def_rw(#name, &TrackPacket::name);
+#include "runtime/contracts/detail/track_packet.inc"
 
-    nb::class_<LaunchRequest>(m, "LaunchRequest")
-        .def(nb::init<>())
-        .def_rw("request_id", &LaunchRequest::request_id)
-        .def_rw("shooter", &LaunchRequest::shooter)
-        .def_rw("target_entity", &LaunchRequest::target_entity)
-        .def_rw("has_target_entity", &LaunchRequest::has_target_entity)
-        .def_rw("target_track_id", &LaunchRequest::target_track_id)
-        .def_rw("has_target_track", &LaunchRequest::has_target_track)
-        .def_rw("station_id", &LaunchRequest::station_id)
-        .def_rw("mount_id", &LaunchRequest::mount_id)
-        .def_rw("requested_munition_family", &LaunchRequest::requested_munition_family)
-        .def_rw("authority", &LaunchRequest::authority)
-        .def_rw("requested_time_s", &LaunchRequest::requested_time_s)
-        .def_rw("merge_policy", &LaunchRequest::merge_policy);
+    nb::class_<LaunchRequest> launch_request_class(m, "LaunchRequest");
+    launch_request_class.def(nb::init<>());
+#define EF_LAUNCH_REQUEST_FIELD(type, name, default_value)                                         \
+    launch_request_class.def_rw(#name, &LaunchRequest::name);
+#include "runtime/contracts/detail/launch_request.inc"
 
-    nb::class_<LaunchEvent>(m, "LaunchEvent")
-        .def(nb::init<>())
-        .def_rw("event_id", &LaunchEvent::event_id)
-        .def_rw("request_id", &LaunchEvent::request_id)
-        .def_rw("accepted", &LaunchEvent::accepted)
-        .def_rw("rejection_reason", &LaunchEvent::rejection_reason)
-        .def_rw("selected_launcher", &LaunchEvent::selected_launcher)
-        .def_rw("selected_munition", &LaunchEvent::selected_munition)
-        .def_rw("ammo_delta", &LaunchEvent::ammo_delta)
-        .def_rw("cooldown_delta_s", &LaunchEvent::cooldown_delta_s)
-        .def_rw("spawned_munition", &LaunchEvent::spawned_munition)
-        .def_rw("has_spawned_munition", &LaunchEvent::has_spawned_munition)
-        .def_rw("event_time_s", &LaunchEvent::event_time_s)
-        .def_rw("producer_node_id", &LaunchEvent::producer_node_id);
+    nb::class_<LaunchEvent> launch_event_class(m, "LaunchEvent");
+    launch_event_class.def(nb::init<>());
+#define EF_LAUNCH_EVENT_FIELD(type, name, default_value)                                           \
+    launch_event_class.def_rw(#name, &LaunchEvent::name);
+#include "runtime/contracts/detail/launch_event.inc"
 
-    nb::class_<MunitionLifecyclePacket>(m, "MunitionLifecyclePacket")
-        .def(nb::init<>())
-        .def_rw("packet_id", &MunitionLifecyclePacket::packet_id)
-        .def_rw("munition", &MunitionLifecyclePacket::munition)
-        .def_rw("attacker", &MunitionLifecyclePacket::attacker)
-        .def_rw("target_entity", &MunitionLifecyclePacket::target_entity)
-        .def_rw("has_target_entity", &MunitionLifecyclePacket::has_target_entity)
-        .def_rw("target_track_id", &MunitionLifecyclePacket::target_track_id)
-        .def_rw("has_target_track", &MunitionLifecyclePacket::has_target_track)
-        .def_rw("launch_event_id", &MunitionLifecyclePacket::launch_event_id)
-        .def_rw("active", &MunitionLifecyclePacket::active)
-        .def_rw("seeker_mode", &MunitionLifecyclePacket::seeker_mode)
-        .def_rw("guidance_cadence_s", &MunitionLifecyclePacket::guidance_cadence_s)
-        .def_rw("track_memory_state", &MunitionLifecyclePacket::track_memory_state)
-        .def_rw("fuel_remaining_fraction", &MunitionLifecyclePacket::fuel_remaining_fraction)
-        .def_rw("burnout", &MunitionLifecyclePacket::burnout)
-        .def_rw("max_flight_time_s", &MunitionLifecyclePacket::max_flight_time_s)
-        .def_rw("fuze_state", &MunitionLifecyclePacket::fuze_state)
-        .def_rw("source_time_s", &MunitionLifecyclePacket::source_time_s);
+    nb::class_<MunitionLifecyclePacket> munition_lifecycle_packet_class(m,
+                                                                        "MunitionLifecyclePacket");
+    munition_lifecycle_packet_class.def(nb::init<>());
+#define EF_MUNITION_LIFECYCLE_PACKET_FIELD(type, name, default_value)                              \
+    munition_lifecycle_packet_class.def_rw(#name, &MunitionLifecyclePacket::name);
+#include "runtime/contracts/detail/munition_lifecycle_packet.inc"
 
-    nb::class_<ComponentMechanismLoadRow>(m, "ComponentMechanismLoadRow")
-        .def(nb::init<>())
-        .def_rw("component_name", &ComponentMechanismLoadRow::component_name)
-        .def_rw("component_system", &ComponentMechanismLoadRow::component_system)
-        .def_rw("component_redundancy_group_id",
-                &ComponentMechanismLoadRow::component_redundancy_group_id)
-        .def_rw("direct_hit", &ComponentMechanismLoadRow::direct_hit)
-        .def_rw("distance_m", &ComponentMechanismLoadRow::distance_m)
-        .def_rw("effect_scale", &ComponentMechanismLoadRow::effect_scale)
-        .def_rw("component_dependency_propagation_count",
-                &ComponentMechanismLoadRow::component_dependency_propagation_count)
-        .def_rw("component_dependency_target_system",
-                &ComponentMechanismLoadRow::component_dependency_target_system)
-        .def_rw("component_dependency_edge_type",
-                &ComponentMechanismLoadRow::component_dependency_edge_type)
-        .def_rw("component_dependency_threshold",
-                &ComponentMechanismLoadRow::component_dependency_threshold)
-        .def_rw("component_dependency_delay_s",
-                &ComponentMechanismLoadRow::component_dependency_delay_s)
-        .def_rw("component_dependency_direction",
-                &ComponentMechanismLoadRow::component_dependency_direction)
-        .def_rw("component_dependency_provenance",
-                &ComponentMechanismLoadRow::component_dependency_provenance)
-        .def_rw("component_dependency_source_availability",
-                &ComponentMechanismLoadRow::component_dependency_source_availability)
-        .def_rw("component_dependency_effective_scale",
-                &ComponentMechanismLoadRow::component_dependency_effective_scale)
-        .def_rw("component_dependency_propagated",
-                &ComponentMechanismLoadRow::component_dependency_propagated)
-        .def_rw("mechanism_fragment_energy_j",
-                &ComponentMechanismLoadRow::mechanism_fragment_energy_j)
-        .def_rw("mechanism_fragment_areal_density_per_m2",
-                &ComponentMechanismLoadRow::mechanism_fragment_areal_density_per_m2)
-        .def_rw("mechanism_penetration_margin",
-                &ComponentMechanismLoadRow::mechanism_penetration_margin)
-        .def_rw("mechanism_blast_overpressure_kpa",
-                &ComponentMechanismLoadRow::mechanism_blast_overpressure_kpa)
-        .def_rw("mechanism_blast_impulse_kpa_ms",
-                &ComponentMechanismLoadRow::mechanism_blast_impulse_kpa_ms)
-        .def_rw("mechanism_blast_scaled_distance_m_kg13",
-                &ComponentMechanismLoadRow::mechanism_blast_scaled_distance_m_kg13)
-        .def_rw("mechanism_rod_cut_margin", &ComponentMechanismLoadRow::mechanism_rod_cut_margin)
-        .def_rw("mechanism_surface_incidence_cos",
-                &ComponentMechanismLoadRow::mechanism_surface_incidence_cos);
+    nb::class_<ComponentMechanismLoadRow> component_mechanism_load_row_class(
+        m, "ComponentMechanismLoadRow");
+    component_mechanism_load_row_class.def(nb::init<>());
+#define EF_COMPONENT_MECHANISM_LOAD_ROW_FIELD(type, name, default_value)                           \
+    component_mechanism_load_row_class.def_rw(#name, &ComponentMechanismLoadRow::name);
+#include "runtime/contracts/detail/component_mechanism_load_row.inc"
 
-    nb::class_<ComponentResponseRow>(m, "ComponentResponseRow")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &ComponentResponseRow::owner_stage)
-        .def_rw("source_current_owner_stage", &ComponentResponseRow::source_current_owner_stage)
-        .def_rw("source_row_index", &ComponentResponseRow::source_row_index)
-        .def_rw("component_name", &ComponentResponseRow::component_name)
-        .def_rw("component_system", &ComponentResponseRow::component_system)
-        .def_rw("component_redundancy_group_id",
-                &ComponentResponseRow::component_redundancy_group_id)
-        .def_rw("threshold_scale", &ComponentResponseRow::threshold_scale)
-        .def_rw("failure_probability", &ComponentResponseRow::failure_probability)
-        .def_rw("failure_sample", &ComponentResponseRow::failure_sample)
-        .def_rw("failure_probability_source", &ComponentResponseRow::failure_probability_source)
-        .def_rw("failure_probability_calibrated",
-                &ComponentResponseRow::failure_probability_calibrated)
-        .def_rw("failure_probability_evidence_dataset_ref",
-                &ComponentResponseRow::failure_probability_evidence_dataset_ref)
-        .def_rw("failure_probability_evidence_row_id",
-                &ComponentResponseRow::failure_probability_evidence_row_id)
-        .def_rw("failure_probability_evidence_source_ref",
-                &ComponentResponseRow::failure_probability_evidence_source_ref)
-        .def_rw("failure_probability_evidence_provenance",
-                &ComponentResponseRow::failure_probability_evidence_provenance)
-        .def_rw("failure_probability_authority",
-                &ComponentResponseRow::failure_probability_authority)
-        .def_rw("failure_probability_component_specific",
-                &ComponentResponseRow::failure_probability_component_specific)
-        .def_rw("failure_probability_weapon_family",
-                &ComponentResponseRow::failure_probability_weapon_family)
-        .def_rw("failure_probability_aspect_bucket",
-                &ComponentResponseRow::failure_probability_aspect_bucket)
-        .def_rw("failure_probability_closure_bucket",
-                &ComponentResponseRow::failure_probability_closure_bucket)
-        .def_rw("failure_probability_miss_distance_bucket",
-                &ComponentResponseRow::failure_probability_miss_distance_bucket)
-        .def_rw("failure_probability_evidence_component_name",
-                &ComponentResponseRow::failure_probability_evidence_component_name)
-        .def_rw("failure_probability_evidence_component_system",
-                &ComponentResponseRow::failure_probability_evidence_component_system)
-        .def_rw("failure_probability_evidence_component_redundancy_group_id",
-                &ComponentResponseRow::failure_probability_evidence_component_redundancy_group_id)
-        .def_rw("failure_mode", &ComponentResponseRow::failure_mode)
-        .def_rw("failure_severity", &ComponentResponseRow::failure_severity)
-        .def_rw("failure_mode_names", &ComponentResponseRow::failure_mode_names)
-        .def_rw("failure_mode_severities", &ComponentResponseRow::failure_mode_severities)
-        .def_rw("failure_mode_source", &ComponentResponseRow::failure_mode_source)
-        .def_rw("failure_mode_authority", &ComponentResponseRow::failure_mode_authority)
-        .def_rw("integrity_before", &ComponentResponseRow::integrity_before)
-        .def_rw("integrity_after", &ComponentResponseRow::integrity_after)
-        .def_rw("redundancy_group_availability_before",
-                &ComponentResponseRow::redundancy_group_availability_before)
-        .def_rw("redundancy_group_availability_after",
-                &ComponentResponseRow::redundancy_group_availability_after);
+    nb::class_<ComponentResponseRow> component_response_row_class(m, "ComponentResponseRow");
+    component_response_row_class.def(nb::init<>());
+#define EF_COMPONENT_RESPONSE_ROW_FIELD(type, name, default_value)                                 \
+    component_response_row_class.def_rw(#name, &ComponentResponseRow::name);
+#include "runtime/contracts/detail/component_response_row.inc"
 
     // The def_rw list is owned by the X-macro field list; exposed property
     // names and their order stay identical to the EffectsEvent declaration.
@@ -662,245 +268,72 @@ void bind_runtime(nb::module_ &m) {
 #undef EF_EFFECTS_EVENT_FIELD
         ;
 
-    nb::class_<KillChainApproachFact>(m, "KillChainApproachFact")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &KillChainApproachFact::owner_stage)
-        .def_rw("closest_distance_m", &KillChainApproachFact::closest_distance_m)
-        .def_rw("closest_point_local_forward_m",
-                &KillChainApproachFact::closest_point_local_forward_m)
-        .def_rw("closest_point_local_right_m", &KillChainApproachFact::closest_point_local_right_m)
-        .def_rw("closest_point_local_up_m", &KillChainApproachFact::closest_point_local_up_m)
-        .def_rw("closure_mps", &KillChainApproachFact::closure_mps)
-        .def_rw("nearest_approach_time_s", &KillChainApproachFact::nearest_approach_time_s);
+    nb::class_<KillChainApproachFact> kill_chain_approach_fact_class(m, "KillChainApproachFact");
+    kill_chain_approach_fact_class.def(nb::init<>());
+#define EF_KILL_CHAIN_APPROACH_FACT_FIELD(type, name, default_value)                               \
+    kill_chain_approach_fact_class.def_rw(#name, &KillChainApproachFact::name);
+#include "runtime/contracts/detail/kill_chain_approach_fact.inc"
 
-    nb::class_<KillChainFuzeDecision>(m, "KillChainFuzeDecision")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &KillChainFuzeDecision::owner_stage)
-        .def_rw("fuze_type", &KillChainFuzeDecision::fuze_type)
-        .def_rw("detonated", &KillChainFuzeDecision::detonated)
-        .def_rw("outcome_state", &KillChainFuzeDecision::outcome_state)
-        .def_rw("detonation_time_s", &KillChainFuzeDecision::detonation_time_s)
-        .def_rw("detonation_probability", &KillChainFuzeDecision::detonation_probability)
-        .def_rw("fuze_quality", &KillChainFuzeDecision::fuze_quality)
-        .def_rw("sensor_opportunity_score", &KillChainFuzeDecision::sensor_opportunity_score)
-        .def_rw("terminal_track_valid", &KillChainFuzeDecision::terminal_track_valid)
-        .def_rw("target_detected", &KillChainFuzeDecision::target_detected)
-        .def_rw("target_detection_confidence", &KillChainFuzeDecision::target_detection_confidence)
-        .def_rw("target_detection_threshold", &KillChainFuzeDecision::target_detection_threshold)
-        .def_rw("detonation_point_source", &KillChainFuzeDecision::detonation_point_source);
+    nb::class_<KillChainFuzeDecision> kill_chain_fuze_decision_class(m, "KillChainFuzeDecision");
+    kill_chain_fuze_decision_class.def(nb::init<>());
+#define EF_KILL_CHAIN_FUZE_DECISION_FIELD(type, name, default_value)                               \
+    kill_chain_fuze_decision_class.def_rw(#name, &KillChainFuzeDecision::name);
+#include "runtime/contracts/detail/kill_chain_fuze_decision.inc"
 
-    nb::class_<KillChainComponentLoadFact>(m, "KillChainComponentLoadFact")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &KillChainComponentLoadFact::owner_stage)
-        .def_rw("component_name", &KillChainComponentLoadFact::component_name)
-        .def_rw("component_system", &KillChainComponentLoadFact::component_system)
-        .def_rw("component_redundancy_group_id",
-                &KillChainComponentLoadFact::component_redundancy_group_id)
-        .def_rw("direct_hit", &KillChainComponentLoadFact::direct_hit)
-        .def_rw("distance_m", &KillChainComponentLoadFact::distance_m)
-        .def_rw("effect_scale", &KillChainComponentLoadFact::effect_scale)
-        .def_rw("spatial_intersection_fraction",
-                &KillChainComponentLoadFact::spatial_intersection_fraction)
-        .def_rw("pattern_weight", &KillChainComponentLoadFact::pattern_weight)
-        .def_rw("orientation_weight", &KillChainComponentLoadFact::orientation_weight)
-        .def_rw("receiver_exposure_fraction",
-                &KillChainComponentLoadFact::receiver_exposure_fraction)
-        .def_rw("armor_transmission", &KillChainComponentLoadFact::armor_transmission)
-        .def_rw("sampling_confidence", &KillChainComponentLoadFact::sampling_confidence)
-        .def_rw("load_intensity_scale", &KillChainComponentLoadFact::load_intensity_scale)
-        .def_rw("fragment_energy_j", &KillChainComponentLoadFact::fragment_energy_j)
-        .def_rw("fragment_areal_density_per_m2",
-                &KillChainComponentLoadFact::fragment_areal_density_per_m2)
-        .def_rw("penetration_margin", &KillChainComponentLoadFact::penetration_margin)
-        .def_rw("blast_overpressure_kpa", &KillChainComponentLoadFact::blast_overpressure_kpa)
-        .def_rw("blast_impulse_kpa_ms", &KillChainComponentLoadFact::blast_impulse_kpa_ms)
-        .def_rw("blast_scaled_distance_m_kg13",
-                &KillChainComponentLoadFact::blast_scaled_distance_m_kg13)
-        .def_rw("rod_cut_margin", &KillChainComponentLoadFact::rod_cut_margin)
-        .def_rw("surface_incidence_cos", &KillChainComponentLoadFact::surface_incidence_cos);
+    nb::class_<KillChainComponentLoadFact> kill_chain_component_load_fact_class(
+        m, "KillChainComponentLoadFact");
+    kill_chain_component_load_fact_class.def(nb::init<>());
+#define EF_KILL_CHAIN_COMPONENT_LOAD_FACT_FIELD(type, name, default_value)                         \
+    kill_chain_component_load_fact_class.def_rw(#name, &KillChainComponentLoadFact::name);
+#include "runtime/contracts/detail/kill_chain_component_load_fact.inc"
 
-    nb::class_<KillChainWarheadLoadField>(m, "KillChainWarheadLoadField")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &KillChainWarheadLoadField::owner_stage)
-        .def_rw("effect_family", &KillChainWarheadLoadField::effect_family)
-        .def_rw("warhead_mass_kg", &KillChainWarheadLoadField::warhead_mass_kg)
-        .def_rw("lethal_radius_m", &KillChainWarheadLoadField::lethal_radius_m)
-        .def_rw("spatial_effect_scale", &KillChainWarheadLoadField::spatial_effect_scale)
-        .def_rw("armor_transmission", &KillChainWarheadLoadField::armor_transmission)
-        .def_rw("receiver_exposure_fraction",
-                &KillChainWarheadLoadField::receiver_exposure_fraction)
-        .def_rw("mechanism_effect_scale", &KillChainWarheadLoadField::mechanism_effect_scale)
-        .def_rw("projected_hitbox_count", &KillChainWarheadLoadField::projected_hitbox_count)
-        .def_rw("spatial_sample_count", &KillChainWarheadLoadField::spatial_sample_count)
-        .def_rw("spatial_hit_estimate", &KillChainWarheadLoadField::spatial_hit_estimate)
-        .def_rw("spatial_hit_fraction", &KillChainWarheadLoadField::spatial_hit_fraction)
-        .def_rw("spatial_energy_scale", &KillChainWarheadLoadField::spatial_energy_scale)
-        .def_rw("spatial_pattern_scale", &KillChainWarheadLoadField::spatial_pattern_scale)
-        .def_rw("orientation_pattern_scale", &KillChainWarheadLoadField::orientation_pattern_scale)
-        .def_rw("fragment_energy_j", &KillChainWarheadLoadField::fragment_energy_j)
-        .def_rw("fragment_areal_density_per_m2",
-                &KillChainWarheadLoadField::fragment_areal_density_per_m2)
-        .def_rw("penetration_margin", &KillChainWarheadLoadField::penetration_margin)
-        .def_rw("blast_overpressure_kpa", &KillChainWarheadLoadField::blast_overpressure_kpa)
-        .def_rw("blast_impulse_kpa_ms", &KillChainWarheadLoadField::blast_impulse_kpa_ms)
-        .def_rw("blast_scaled_distance_m_kg13",
-                &KillChainWarheadLoadField::blast_scaled_distance_m_kg13)
-        .def_rw("rod_cut_margin", &KillChainWarheadLoadField::rod_cut_margin)
-        .def_rw("surface_incidence_cos", &KillChainWarheadLoadField::surface_incidence_cos)
-        .def_rw("component_loads", &KillChainWarheadLoadField::component_loads);
+    nb::class_<KillChainWarheadLoadField> kill_chain_warhead_load_field_class(
+        m, "KillChainWarheadLoadField");
+    kill_chain_warhead_load_field_class.def(nb::init<>());
+#define EF_KILL_CHAIN_WARHEAD_LOAD_FIELD_FIELD(type, name, default_value)                          \
+    kill_chain_warhead_load_field_class.def_rw(#name, &KillChainWarheadLoadField::name);
+#include "runtime/contracts/detail/kill_chain_warhead_load_field.inc"
 
-    nb::class_<KillChainTargetSusceptibility>(m, "KillChainTargetSusceptibility")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &KillChainTargetSusceptibility::owner_stage)
-        .def_rw("vulnerability_profile_present",
-                &KillChainTargetSusceptibility::vulnerability_profile_present)
-        .def_rw("vulnerability_profile_synthetic",
-                &KillChainTargetSusceptibility::vulnerability_profile_synthetic)
-        .def_rw("calibrated_evidence", &KillChainTargetSusceptibility::calibrated_evidence)
-        .def_rw("pk_authority", &KillChainTargetSusceptibility::pk_authority)
-        .def_rw("deterministic_fuze_authority",
-                &KillChainTargetSusceptibility::deterministic_fuze_authority)
-        .def_rw("calibration_status", &KillChainTargetSusceptibility::calibration_status)
-        .def_rw("aspect_bucket", &KillChainTargetSusceptibility::aspect_bucket)
-        .def_rw("family_scale", &KillChainTargetSusceptibility::family_scale)
-        .def_rw("aspect_scale", &KillChainTargetSusceptibility::aspect_scale)
-        .def_rw("closure_scale", &KillChainTargetSusceptibility::closure_scale)
-        .def_rw("miss_distance_scale", &KillChainTargetSusceptibility::miss_distance_scale)
-        .def_rw("effect_scale", &KillChainTargetSusceptibility::effect_scale);
+    nb::class_<KillChainTargetSusceptibility> kill_chain_target_susceptibility_class(
+        m, "KillChainTargetSusceptibility");
+    kill_chain_target_susceptibility_class.def(nb::init<>());
+#define EF_KILL_CHAIN_TARGET_SUSCEPTIBILITY_FIELD(type, name, default_value)                       \
+    kill_chain_target_susceptibility_class.def_rw(#name, &KillChainTargetSusceptibility::name);
+#include "runtime/contracts/detail/kill_chain_target_susceptibility.inc"
 
-    nb::class_<KillChainComponentResponseFact>(m, "KillChainComponentResponseFact")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &KillChainComponentResponseFact::owner_stage)
-        .def_rw("source_current_owner_stage",
-                &KillChainComponentResponseFact::source_current_owner_stage)
-        .def_rw("source_row_index", &KillChainComponentResponseFact::source_row_index)
-        .def_rw("component_name", &KillChainComponentResponseFact::component_name)
-        .def_rw("component_system", &KillChainComponentResponseFact::component_system)
-        .def_rw("component_redundancy_group_id",
-                &KillChainComponentResponseFact::component_redundancy_group_id)
-        .def_rw("threshold_scale", &KillChainComponentResponseFact::threshold_scale)
-        .def_rw("failure_probability", &KillChainComponentResponseFact::failure_probability)
-        .def_rw("failure_sample", &KillChainComponentResponseFact::failure_sample)
-        .def_rw("failure_probability_source",
-                &KillChainComponentResponseFact::failure_probability_source)
-        .def_rw("failure_probability_calibrated",
-                &KillChainComponentResponseFact::failure_probability_calibrated)
-        .def_rw("failure_probability_evidence_dataset_ref",
-                &KillChainComponentResponseFact::failure_probability_evidence_dataset_ref)
-        .def_rw("failure_probability_evidence_row_id",
-                &KillChainComponentResponseFact::failure_probability_evidence_row_id)
-        .def_rw("failure_probability_evidence_source_ref",
-                &KillChainComponentResponseFact::failure_probability_evidence_source_ref)
-        .def_rw("failure_probability_evidence_provenance",
-                &KillChainComponentResponseFact::failure_probability_evidence_provenance)
-        .def_rw("failure_probability_authority",
-                &KillChainComponentResponseFact::failure_probability_authority)
-        .def_rw("failure_probability_component_specific",
-                &KillChainComponentResponseFact::failure_probability_component_specific)
-        .def_rw("failure_probability_weapon_family",
-                &KillChainComponentResponseFact::failure_probability_weapon_family)
-        .def_rw("failure_probability_aspect_bucket",
-                &KillChainComponentResponseFact::failure_probability_aspect_bucket)
-        .def_rw("failure_probability_closure_bucket",
-                &KillChainComponentResponseFact::failure_probability_closure_bucket)
-        .def_rw("failure_probability_miss_distance_bucket",
-                &KillChainComponentResponseFact::failure_probability_miss_distance_bucket)
-        .def_rw("failure_probability_evidence_component_name",
-                &KillChainComponentResponseFact::failure_probability_evidence_component_name)
-        .def_rw("failure_probability_evidence_component_system",
-                &KillChainComponentResponseFact::failure_probability_evidence_component_system)
-        .def_rw("failure_probability_evidence_component_redundancy_group_id",
-                &KillChainComponentResponseFact::
-                    failure_probability_evidence_component_redundancy_group_id)
-        .def_rw("failure_mode", &KillChainComponentResponseFact::failure_mode)
-        .def_rw("failure_severity", &KillChainComponentResponseFact::failure_severity)
-        .def_rw("failure_mode_names", &KillChainComponentResponseFact::failure_mode_names)
-        .def_rw("failure_mode_severities", &KillChainComponentResponseFact::failure_mode_severities)
-        .def_rw("failure_mode_source", &KillChainComponentResponseFact::failure_mode_source)
-        .def_rw("failure_mode_authority", &KillChainComponentResponseFact::failure_mode_authority)
-        .def_rw("integrity_before", &KillChainComponentResponseFact::integrity_before)
-        .def_rw("integrity_after", &KillChainComponentResponseFact::integrity_after)
-        .def_rw("redundancy_group_availability_before",
-                &KillChainComponentResponseFact::redundancy_group_availability_before)
-        .def_rw("redundancy_group_availability_after",
-                &KillChainComponentResponseFact::redundancy_group_availability_after);
+    nb::class_<KillChainComponentResponseFact> kill_chain_component_response_fact_class(
+        m, "KillChainComponentResponseFact");
+    kill_chain_component_response_fact_class.def(nb::init<>());
+#define EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(type, name, default_value)                     \
+    kill_chain_component_response_fact_class.def_rw(#name, &KillChainComponentResponseFact::name);
+#include "runtime/contracts/detail/kill_chain_component_response_fact.inc"
 
-    nb::class_<KillChainConsequenceProjection>(m, "KillChainConsequenceProjection")
-        .def(nb::init<>())
-        .def_rw("owner_stage", &KillChainConsequenceProjection::owner_stage)
-        .def_rw("outcome_state", &KillChainConsequenceProjection::outcome_state)
-        .def_rw("component_hit_count", &KillChainConsequenceProjection::component_hit_count)
-        .def_rw("component_failure_count", &KillChainConsequenceProjection::component_failure_count)
-        .def_rw("primary_component_name", &KillChainConsequenceProjection::primary_component_name)
-        .def_rw("primary_component_system",
-                &KillChainConsequenceProjection::primary_component_system)
-        .def_rw("primary_component_integrity",
-                &KillChainConsequenceProjection::primary_component_integrity)
-        .def_rw("redundancy_group_availability",
-                &KillChainConsequenceProjection::redundancy_group_availability)
-        .def_rw("air_system_hit_flags", &KillChainConsequenceProjection::air_system_hit_flags)
-        .def_rw("air_system_spatial_scales",
-                &KillChainConsequenceProjection::air_system_spatial_scales)
-        .def_rw("vulnerability_scale_trace",
-                &KillChainConsequenceProjection::vulnerability_scale_trace);
+    nb::class_<KillChainConsequenceProjection> kill_chain_consequence_projection_class(
+        m, "KillChainConsequenceProjection");
+    kill_chain_consequence_projection_class.def(nb::init<>());
+#define EF_KILL_CHAIN_CONSEQUENCE_PROJECTION_FIELD(type, name, default_value)                      \
+    kill_chain_consequence_projection_class.def_rw(#name, &KillChainConsequenceProjection::name);
+#include "runtime/contracts/detail/kill_chain_consequence_projection.inc"
 
-    nb::class_<KillChainRuntimeFacade>(m, "KillChainRuntimeFacade")
-        .def(nb::init<>())
-        .def_rw("schema_version", &KillChainRuntimeFacade::schema_version)
-        .def_rw("schema_name", &KillChainRuntimeFacade::schema_name)
-        .def_rw("runtime_dto_authority", &KillChainRuntimeFacade::runtime_dto_authority)
-        .def_rw("runtime_parameter_retuning", &KillChainRuntimeFacade::runtime_parameter_retuning)
-        .def_rw("calibration_authority", &KillChainRuntimeFacade::calibration_authority)
-        .def_rw("real_world_pk", &KillChainRuntimeFacade::real_world_pk)
-        .def_rw("approach_fact", &KillChainRuntimeFacade::approach_fact)
-        .def_rw("fuze_decision", &KillChainRuntimeFacade::fuze_decision)
-        .def_rw("warhead_load_field", &KillChainRuntimeFacade::warhead_load_field)
-        .def_rw("target_susceptibility", &KillChainRuntimeFacade::target_susceptibility)
-        .def_rw("component_responses", &KillChainRuntimeFacade::component_responses)
-        .def_rw("consequence_projection", &KillChainRuntimeFacade::consequence_projection);
+    nb::class_<KillChainRuntimeFacade> kill_chain_runtime_facade_class(m, "KillChainRuntimeFacade");
+    kill_chain_runtime_facade_class.def(nb::init<>());
+#define EF_KILL_CHAIN_RUNTIME_FACADE_FIELD(type, name, default_value)                              \
+    kill_chain_runtime_facade_class.def_rw(#name, &KillChainRuntimeFacade::name);
+#include "runtime/contracts/detail/kill_chain_runtime_facade.inc"
 
     m.def("make_kill_chain_runtime_facade", &make_kill_chain_runtime_facade, nb::arg("effects"));
 
-    nb::class_<DamageReport>(m, "DamageReport")
-        .def(nb::init<>())
-        .def_rw("report_id", &DamageReport::report_id)
-        .def_rw("target", &DamageReport::target)
-        .def_rw("source_event_id", &DamageReport::source_event_id)
-        .def_rw("hp_delta", &DamageReport::hp_delta)
-        .def_rw("system_health_delta", &DamageReport::system_health_delta)
-        .def_rw("platform_damage_state_delta", &DamageReport::platform_damage_state_delta)
-        .def_rw("mission_kill", &DamageReport::mission_kill)
-        .def_rw("mobility_kill", &DamageReport::mobility_kill)
-        .def_rw("sensor_kill", &DamageReport::sensor_kill)
-        .def_rw("survivability_kill", &DamageReport::survivability_kill)
-        .def_rw("forced_landing", &DamageReport::forced_landing)
-        .def_rw("flight_control_kill", &DamageReport::flight_control_kill)
-        .def_rw("propulsion_kill", &DamageReport::propulsion_kill)
-        .def_rw("crew_kill", &DamageReport::crew_kill)
-        .def_rw("loss_state_from", &DamageReport::loss_state_from)
-        .def_rw("loss_state_to", &DamageReport::loss_state_to)
-        .def_rw("destroyed", &DamageReport::destroyed)
-        .def_rw("report_time_s", &DamageReport::report_time_s)
-        .def_rw("producer_node_id", &DamageReport::producer_node_id);
+    nb::class_<DamageReport> damage_report_class(m, "DamageReport");
+    damage_report_class.def(nb::init<>());
+#define EF_DAMAGE_REPORT_FIELD(type, name, default_value)                                          \
+    damage_report_class.def_rw(#name, &DamageReport::name);
+#include "runtime/contracts/detail/damage_report.inc"
 
-    nb::class_<DiagnosticsTrace>(m, "DiagnosticsTrace")
-        .def(nb::init<>())
-        .def_rw("trace_id", &DiagnosticsTrace::trace_id)
-        .def_rw("parent_trace_id", &DiagnosticsTrace::parent_trace_id)
-        .def_rw("chain_id", &DiagnosticsTrace::chain_id)
-        .def_rw("track_id", &DiagnosticsTrace::track_id)
-        .def_rw("launch_request_id", &DiagnosticsTrace::launch_request_id)
-        .def_rw("launch_event_id", &DiagnosticsTrace::launch_event_id)
-        .def_rw("munition", &DiagnosticsTrace::munition)
-        .def_rw("effects_event_id", &DiagnosticsTrace::effects_event_id)
-        .def_rw("damage_report_id", &DiagnosticsTrace::damage_report_id)
-        .def_rw("observation_packet_version", &DiagnosticsTrace::observation_packet_version)
-        .def_rw("source_snapshot_version", &DiagnosticsTrace::source_snapshot_version)
-        .def_rw("barrier_id", &DiagnosticsTrace::barrier_id)
-        .def_rw("barrier_detail", &DiagnosticsTrace::barrier_detail)
-        .def_rw("source_time_s", &DiagnosticsTrace::source_time_s)
-        .def_rw("source_node_id", &DiagnosticsTrace::source_node_id)
-        .def_rw("export_node_id", &DiagnosticsTrace::export_node_id);
+    nb::class_<DiagnosticsTrace> diagnostics_trace_class(m, "DiagnosticsTrace");
+    diagnostics_trace_class.def(nb::init<>());
+#define EF_DIAGNOSTICS_TRACE_FIELD(type, name, default_value)                                      \
+    diagnostics_trace_class.def_rw(#name, &DiagnosticsTrace::name);
+#include "runtime/contracts/detail/diagnostics_trace.inc"
 
     nb::class_<IntentTargetRef>(m, "IntentTargetRef")
         .def(nb::init<>())
@@ -1027,23 +460,23 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("uses_truth_state", &DecisionBelief::uses_truth_state)
         .def_rw("uses_raw_ecs", &DecisionBelief::uses_raw_ecs);
 
-    nb::class_<WorldEntityRef>(m, "WorldEntityRef")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldEntityRef::world_index)
-        .def_rw("entity_id", &WorldEntityRef::entity_id);
+    nb::class_<WorldEntityRef> world_entity_ref_class(m, "WorldEntityRef");
+    world_entity_ref_class.def(nb::init<>());
+#define EF_WORLD_ENTITY_REF_FIELD(type, name, default_value)                                       \
+    world_entity_ref_class.def_rw(#name, &WorldEntityRef::name);
+#include "runtime/contracts/detail/world_entity_ref.inc"
 
-    nb::class_<BatchWorldSetupRequest>(m, "BatchWorldSetupRequest")
-        .def(nb::init<>())
-        .def_rw("seeds", &BatchWorldSetupRequest::seeds)
-        .def_rw("terrain_assignments", &BatchWorldSetupRequest::terrain_assignments)
-        .def_rw("wind_assignments", &BatchWorldSetupRequest::wind_assignments)
-        .def_rw("sun_assignments", &BatchWorldSetupRequest::sun_assignments)
-        .def_rw("zones", &BatchWorldSetupRequest::zones)
-        .def_rw("spawn_requests", &BatchWorldSetupRequest::spawn_requests)
-        .def_rw("typed_platform_spawn_requests",
-                &BatchWorldSetupRequest::typed_platform_spawn_requests)
-        .def_rw("time_steps", &BatchWorldSetupRequest::time_steps);
+    nb::class_<BatchWorldSetupRequest> batch_world_setup_request_class(m, "BatchWorldSetupRequest");
+    batch_world_setup_request_class.def(nb::init<>());
+#define EF_BATCH_WORLD_SETUP_REQUEST_FIELD(type, name, default_value)                              \
+    batch_world_setup_request_class.def_rw(#name, &BatchWorldSetupRequest::name);
+#include "runtime/facade/detail/batch_world_setup_request.inc"
 
+    // NOTE(I26): the header field order (schema-owned, ABI/aggregate-init
+    // order) declares setup_surface before rejection_reason, but this
+    // binding has long registered rejection_reason first. That pre-existing
+    // divergence is preserved here (parity baseline) instead of being
+    // macro-expanded from the same X-macro as the header block.
     nb::class_<TypedPlatformSpawnResult>(m, "TypedPlatformSpawnResult")
         .def(nb::init<>())
         .def_rw("request_index", &TypedPlatformSpawnResult::request_index)
@@ -1061,214 +494,129 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("errors", &TypedPlatformSpawnResult::errors)
         .def_rw("evidence_refs", &TypedPlatformSpawnResult::evidence_refs);
 
-    nb::class_<BatchWorldSetupResult>(m, "BatchWorldSetupResult")
-        .def(nb::init<>())
-        .def_rw("entity_ids", &BatchWorldSetupResult::entity_ids)
-        .def_rw("typed_platform_spawn_results",
-                &BatchWorldSetupResult::typed_platform_spawn_results);
+    nb::class_<BatchWorldSetupResult> batch_world_setup_result_class(m, "BatchWorldSetupResult");
+    batch_world_setup_result_class.def(nb::init<>());
+#define EF_BATCH_WORLD_SETUP_RESULT_FIELD(type, name, default_value)                               \
+    batch_world_setup_result_class.def_rw(#name, &BatchWorldSetupResult::name);
+#include "runtime/facade/detail/batch_world_setup_result.inc"
 
-    nb::class_<RuntimeWorldLayoutRequest>(m, "RuntimeWorldLayoutRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &RuntimeWorldLayoutRequest::world_index)
-        .def_rw("seed", &RuntimeWorldLayoutRequest::seed)
-        .def_rw("terrain_type", &RuntimeWorldLayoutRequest::terrain_type)
-        .def_rw("wind_speed_mps", &RuntimeWorldLayoutRequest::wind_speed_mps)
-        .def_rw("wind_dir_from_deg", &RuntimeWorldLayoutRequest::wind_dir_from_deg)
-        .def_rw("wind_shear_mps_per_km", &RuntimeWorldLayoutRequest::wind_shear_mps_per_km)
-        .def_rw("sun_azimuth_deg", &RuntimeWorldLayoutRequest::sun_azimuth_deg)
-        .def_rw("sun_elevation_deg", &RuntimeWorldLayoutRequest::sun_elevation_deg)
-        .def_rw("maritime_configured", &RuntimeWorldLayoutRequest::maritime_configured)
-        .def_rw("sea_state", &RuntimeWorldLayoutRequest::sea_state)
-        .def_rw("wave_heading_deg", &RuntimeWorldLayoutRequest::wave_heading_deg)
-        .def_rw("wave_period_s", &RuntimeWorldLayoutRequest::wave_period_s)
-        .def_rw("zones", &RuntimeWorldLayoutRequest::zones)
-        .def_rw("spawn_requests", &RuntimeWorldLayoutRequest::spawn_requests)
-        .def_rw("time_steps", &RuntimeWorldLayoutRequest::time_steps);
+    nb::class_<RuntimeWorldLayoutRequest> runtime_world_layout_request_class(
+        m, "RuntimeWorldLayoutRequest");
+    runtime_world_layout_request_class.def(nb::init<>());
+#define EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD(type, name, default_value)                           \
+    runtime_world_layout_request_class.def_rw(#name, &RuntimeWorldLayoutRequest::name);
+#include "runtime/facade/detail/runtime_world_layout_request.inc"
 
-    nb::class_<RuntimeWorldLayoutResult>(m, "RuntimeWorldLayoutResult")
-        .def(nb::init<>())
-        .def_rw("world_index", &RuntimeWorldLayoutResult::world_index)
-        .def_rw("entity_ids", &RuntimeWorldLayoutResult::entity_ids);
+    nb::class_<RuntimeWorldLayoutResult> runtime_world_layout_result_class(
+        m, "RuntimeWorldLayoutResult");
+    runtime_world_layout_result_class.def(nb::init<>());
+#define EF_RUNTIME_WORLD_LAYOUT_RESULT_FIELD(type, name, default_value)                            \
+    runtime_world_layout_result_class.def_rw(#name, &RuntimeWorldLayoutResult::name);
+#include "runtime/facade/detail/runtime_world_layout_result.inc"
 
-    nb::class_<RuntimeCounterfactualBranchRequest>(m, "RuntimeCounterfactualBranchRequest")
-        .def(nb::init<>())
-        .def_rw("baseline_setup", &RuntimeCounterfactualBranchRequest::baseline_setup)
-        .def_rw("entity_ref", &RuntimeCounterfactualBranchRequest::entity_ref)
-        .def_rw("fidelity_request", &RuntimeCounterfactualBranchRequest::fidelity_request)
-        .def_rw("deterministic_seed", &RuntimeCounterfactualBranchRequest::deterministic_seed)
-        .def_rw("replay_envelope_id", &RuntimeCounterfactualBranchRequest::replay_envelope_id)
-        .def_rw("branch_point_id", &RuntimeCounterfactualBranchRequest::branch_point_id)
-        .def_rw("branch_worldline_id", &RuntimeCounterfactualBranchRequest::branch_worldline_id)
-        .def_rw("parent_worldline_id", &RuntimeCounterfactualBranchRequest::parent_worldline_id)
-        .def_rw("restore_barrier_id", &RuntimeCounterfactualBranchRequest::restore_barrier_id)
-        .def_rw("cadence_reason", &RuntimeCounterfactualBranchRequest::cadence_reason)
-        .def_rw("mutation_dx", &RuntimeCounterfactualBranchRequest::mutation_dx)
-        .def_rw("mutation_dy", &RuntimeCounterfactualBranchRequest::mutation_dy)
-        .def_rw("mutation_dz", &RuntimeCounterfactualBranchRequest::mutation_dz)
-        .def_rw("mutation_dvx", &RuntimeCounterfactualBranchRequest::mutation_dvx)
-        .def_rw("mutation_dvy", &RuntimeCounterfactualBranchRequest::mutation_dvy)
-        .def_rw("mutation_dvz", &RuntimeCounterfactualBranchRequest::mutation_dvz)
-        .def_rw("mutation_dheading", &RuntimeCounterfactualBranchRequest::mutation_dheading)
-        .def_rw("allow_raw_authoritative_state_mutation",
-                &RuntimeCounterfactualBranchRequest::allow_raw_authoritative_state_mutation)
-        .def_rw("evidence_refs", &RuntimeCounterfactualBranchRequest::evidence_refs);
+    nb::class_<RuntimeCounterfactualBranchRequest> runtime_counterfactual_branch_request_class(
+        m, "RuntimeCounterfactualBranchRequest");
+    runtime_counterfactual_branch_request_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_REQUEST_FIELD(type, name, default_value)                  \
+    runtime_counterfactual_branch_request_class.def_rw(#name,                                      \
+                                                       &RuntimeCounterfactualBranchRequest::name);
+#include "runtime/facade/detail/runtime_counterfactual_branch_request.inc"
 
-    nb::class_<RuntimeCounterfactualRestoreRequest>(m, "RuntimeCounterfactualRestoreRequest")
-        .def(nb::init<>())
-        .def_rw("snapshot", &RuntimeCounterfactualRestoreRequest::snapshot)
-        .def_rw("expected_worldline_id",
-                &RuntimeCounterfactualRestoreRequest::expected_worldline_id)
-        .def_rw("target_worldline_id", &RuntimeCounterfactualRestoreRequest::target_worldline_id)
-        .def_rw("target_deterministic_seed",
-                &RuntimeCounterfactualRestoreRequest::target_deterministic_seed)
-        .def_rw("target_entity_ref", &RuntimeCounterfactualRestoreRequest::target_entity_ref)
-        .def_rw("restore_barrier_id", &RuntimeCounterfactualRestoreRequest::restore_barrier_id)
-        .def_rw("allow_raw_authoritative_state_mutation",
-                &RuntimeCounterfactualRestoreRequest::allow_raw_authoritative_state_mutation)
-        .def_rw("request_full_clone", &RuntimeCounterfactualRestoreRequest::request_full_clone)
-        .def_rw("request_resident_state_restore",
-                &RuntimeCounterfactualRestoreRequest::request_resident_state_restore)
-        .def_rw("request_exact_gpu_restore",
-                &RuntimeCounterfactualRestoreRequest::request_exact_gpu_restore)
-        .def_rw("evidence_refs", &RuntimeCounterfactualRestoreRequest::evidence_refs);
+    nb::class_<RuntimeCounterfactualRestoreRequest> runtime_counterfactual_restore_request_class(
+        m, "RuntimeCounterfactualRestoreRequest");
+    runtime_counterfactual_restore_request_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_REQUEST_FIELD(type, name, default_value)                 \
+    runtime_counterfactual_restore_request_class.def_rw(                                           \
+        #name, &RuntimeCounterfactualRestoreRequest::name);
+#include "runtime/facade/detail/runtime_counterfactual_restore_request.inc"
 
-    nb::class_<RuntimeCounterfactualRestoreResult>(m, "RuntimeCounterfactualRestoreResult")
-        .def(nb::init<>())
-        .def_rw("restored", &RuntimeCounterfactualRestoreResult::restored)
-        .def_rw("rejection_reason", &RuntimeCounterfactualRestoreResult::rejection_reason)
-        .def_rw("restored_snapshot", &RuntimeCounterfactualRestoreResult::restored_snapshot)
-        .def_rw("evidence_refs", &RuntimeCounterfactualRestoreResult::evidence_refs);
+    nb::class_<RuntimeCounterfactualRestoreResult> runtime_counterfactual_restore_result_class(
+        m, "RuntimeCounterfactualRestoreResult");
+    runtime_counterfactual_restore_result_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_RESULT_FIELD(type, name, default_value)                  \
+    runtime_counterfactual_restore_result_class.def_rw(#name,                                      \
+                                                       &RuntimeCounterfactualRestoreResult::name);
+#include "runtime/facade/detail/runtime_counterfactual_restore_result.inc"
 
-    nb::class_<RuntimeCounterfactualBranchResult>(m, "RuntimeCounterfactualBranchResult")
-        .def(nb::init<>())
-        .def_rw("admitted", &RuntimeCounterfactualBranchResult::admitted)
-        .def_rw("rejection_reason", &RuntimeCounterfactualBranchResult::rejection_reason)
-        .def_rw("fidelity_admission", &RuntimeCounterfactualBranchResult::fidelity_admission)
-        .def_rw("parent_snapshot", &RuntimeCounterfactualBranchResult::parent_snapshot)
-        .def_rw("branch_snapshot", &RuntimeCounterfactualBranchResult::branch_snapshot)
-        .def_rw("comparison", &RuntimeCounterfactualBranchResult::comparison)
-        .def_rw("restore_result", &RuntimeCounterfactualBranchResult::restore_result)
-        .def_rw("evidence_refs", &RuntimeCounterfactualBranchResult::evidence_refs);
+    nb::class_<RuntimeCounterfactualBranchResult> runtime_counterfactual_branch_result_class(
+        m, "RuntimeCounterfactualBranchResult");
+    runtime_counterfactual_branch_result_class.def(nb::init<>());
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_RESULT_FIELD(type, name, default_value)                   \
+    runtime_counterfactual_branch_result_class.def_rw(#name,                                       \
+                                                      &RuntimeCounterfactualBranchResult::name);
+#include "runtime/facade/detail/runtime_counterfactual_branch_result.inc"
 
-    nb::class_<RuntimeExperimentStepRequest>(m, "RuntimeExperimentStepRequest")
-        .def(nb::init<>())
-        .def_rw("state", &RuntimeExperimentStepRequest::state)
-        .def_rw("request", &RuntimeExperimentStepRequest::request)
-        .def_rw("observation_ref", &RuntimeExperimentStepRequest::observation_ref)
-        .def_rw("profile_ref", &RuntimeExperimentStepRequest::profile_ref)
-        .def_rw("claim_scope", &RuntimeExperimentStepRequest::claim_scope)
-        .def_rw("evidence_refs", &RuntimeExperimentStepRequest::evidence_refs);
+    nb::class_<RuntimeExperimentStepRequest> runtime_experiment_step_request_class(
+        m, "RuntimeExperimentStepRequest");
+    runtime_experiment_step_request_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_STEP_REQUEST_FIELD(type, name, default_value)                        \
+    runtime_experiment_step_request_class.def_rw(#name, &RuntimeExperimentStepRequest::name);
+#include "runtime/facade/detail/runtime_experiment_step_request.inc"
 
-    nb::class_<RuntimeExperimentRequest>(m, "RuntimeExperimentRequest")
-        .def(nb::init<>())
-        .def_rw("branch_request", &RuntimeExperimentRequest::branch_request)
-        .def_rw("parent_step_requests", &RuntimeExperimentRequest::parent_step_requests)
-        .def_rw("branch_step_requests", &RuntimeExperimentRequest::branch_step_requests)
-        .def_rw("trace_ids", &RuntimeExperimentRequest::trace_ids)
-        .def_rw("experiment_run_id", &RuntimeExperimentRequest::experiment_run_id)
-        .def_rw("comparison_id", &RuntimeExperimentRequest::comparison_id)
-        .def_rw("setup_ref", &RuntimeExperimentRequest::setup_ref)
-        .def_rw("generation_ref", &RuntimeExperimentRequest::generation_ref)
-        .def_rw("generated_input_ref", &RuntimeExperimentRequest::generated_input_ref)
-        .def_rw("generated_input_kind", &RuntimeExperimentRequest::generated_input_kind)
-        .def_rw("generated_input_source", &RuntimeExperimentRequest::generated_input_source)
-        .def_rw("generated_input_generator_version",
-                &RuntimeExperimentRequest::generated_input_generator_version)
-        .def_rw("generated_input_baseline_scenario_ref",
-                &RuntimeExperimentRequest::generated_input_baseline_scenario_ref)
-        .def_rw("generated_input_evidence_refs",
-                &RuntimeExperimentRequest::generated_input_evidence_refs)
-        .def_rw("capability_refs", &RuntimeExperimentRequest::capability_refs)
-        .def_rw("include_observations", &RuntimeExperimentRequest::include_observations)
-        .def_rw("include_diagnostics_traces", &RuntimeExperimentRequest::include_diagnostics_traces)
-        .def_rw("include_generated_input_ref",
-                &RuntimeExperimentRequest::include_generated_input_ref)
-        .def_rw("truth_claim", &RuntimeExperimentRequest::truth_claim)
-        .def_rw("promoted_to_support", &RuntimeExperimentRequest::promoted_to_support)
-        .def_rw("evidence_refs", &RuntimeExperimentRequest::evidence_refs);
+    nb::class_<RuntimeExperimentRequest> runtime_experiment_request_class(
+        m, "RuntimeExperimentRequest");
+    runtime_experiment_request_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_REQUEST_FIELD(type, name, default_value)                             \
+    runtime_experiment_request_class.def_rw(#name, &RuntimeExperimentRequest::name);
+#include "runtime/facade/detail/runtime_experiment_request.inc"
 
-    nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")
-        .def(nb::init<>())
-        .def_rw("refs", &ObservationBatchRequest::refs)
-        .def_rw("include_agent_observations", &ObservationBatchRequest::include_agent_observations)
-        .def_rw("include_instrument_states", &ObservationBatchRequest::include_instrument_states);
+    nb::class_<ObservationBatchRequest> observation_batch_request_class(m,
+                                                                        "ObservationBatchRequest");
+    observation_batch_request_class.def(nb::init<>());
+#define EF_OBSERVATION_BATCH_REQUEST_FIELD(type, name, default_value)                              \
+    observation_batch_request_class.def_rw(#name, &ObservationBatchRequest::name);
+#include "runtime/facade/detail/observation_batch_request.inc"
 
-    nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")
-        .def(nb::init<>())
-        .def_rw("refs", &TaskingBatchRequest::refs)
-        .def_rw("include_mission_command_contracts",
-                &TaskingBatchRequest::include_mission_command_contracts)
-        .def_rw("include_task_order_contracts", &TaskingBatchRequest::include_task_order_contracts)
-        .def_rw("include_leader_intent_contracts",
-                &TaskingBatchRequest::include_leader_intent_contracts)
-        .def_rw("include_pilot_report_contracts",
-                &TaskingBatchRequest::include_pilot_report_contracts);
+    nb::class_<TaskingBatchRequest> tasking_batch_request_class(m, "TaskingBatchRequest");
+    tasking_batch_request_class.def(nb::init<>());
+#define EF_TASKING_BATCH_REQUEST_FIELD(type, name, default_value)                                  \
+    tasking_batch_request_class.def_rw(#name, &TaskingBatchRequest::name);
+#include "runtime/facade/detail/tasking_batch_request.inc"
 
-    nb::class_<EngagementBatchRequest>(m, "EngagementBatchRequest")
-        .def(nb::init<>())
-        .def_rw("refs", &EngagementBatchRequest::refs)
-        .def_rw("trace_ids", &EngagementBatchRequest::trace_ids)
-        .def_rw("include_track_packets", &EngagementBatchRequest::include_track_packets)
-        .def_rw("include_launch_requests", &EngagementBatchRequest::include_launch_requests)
-        .def_rw("include_launch_events", &EngagementBatchRequest::include_launch_events)
-        .def_rw("include_munition_lifecycle_packets",
-                &EngagementBatchRequest::include_munition_lifecycle_packets)
-        .def_rw("include_effects_events", &EngagementBatchRequest::include_effects_events)
-        .def_rw("include_damage_reports", &EngagementBatchRequest::include_damage_reports)
-        .def_rw("include_diagnostics_traces", &EngagementBatchRequest::include_diagnostics_traces);
+    nb::class_<EngagementBatchRequest> engagement_batch_request_class(m, "EngagementBatchRequest");
+    engagement_batch_request_class.def(nb::init<>());
+#define EF_ENGAGEMENT_BATCH_REQUEST_FIELD(type, name, default_value)                               \
+    engagement_batch_request_class.def_rw(#name, &EngagementBatchRequest::name);
+#include "runtime/facade/detail/engagement_batch_request.inc"
 
-    nb::class_<ExecutionBatchStepRequest>(m, "ExecutionBatchStepRequest")
-        .def(nb::init<>())
-        .def_rw("step_requests", &ExecutionBatchStepRequest::step_requests)
-        .def_rw("include_agent_observations",
-                &ExecutionBatchStepRequest::include_agent_observations)
-        .def_rw("include_instrument_states", &ExecutionBatchStepRequest::include_instrument_states);
+    nb::class_<ExecutionBatchStepRequest> execution_batch_step_request_class(
+        m, "ExecutionBatchStepRequest");
+    execution_batch_step_request_class.def(nb::init<>());
+#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value)                           \
+    execution_batch_step_request_class.def_rw(#name, &ExecutionBatchStepRequest::name);
+#include "runtime/facade/detail/execution_batch_step_request.inc"
 
-    nb::class_<RewardTerm>(m, "RewardTerm")
-        .def(nb::init<>())
-        .def_rw("name", &RewardTerm::name)
-        .def_rw("value", &RewardTerm::value)
-        .def_rw("term_owner", &RewardTerm::term_owner);
+    nb::class_<RewardTerm> reward_term_class(m, "RewardTerm");
+    reward_term_class.def(nb::init<>());
+#define EF_REWARD_TERM_FIELD(type, name, default_value)                                            \
+    reward_term_class.def_rw(#name, &RewardTerm::name);
+#include "runtime/contracts/detail/reward_term.inc"
 
-    nb::class_<RewardReport>(m, "RewardReport")
-        .def(nb::init<>())
-        .def_rw("fact_terms", &RewardReport::fact_terms)
-        .def_rw("shaping_terms", &RewardReport::shaping_terms)
-        .def_rw("fact_snapshot_version", &RewardReport::fact_snapshot_version)
-        .def_rw("term_owner", &RewardReport::term_owner);
+    nb::class_<RewardReport> reward_report_class(m, "RewardReport");
+    reward_report_class.def(nb::init<>());
+#define EF_REWARD_REPORT_FIELD(type, name, default_value)                                          \
+    reward_report_class.def_rw(#name, &RewardReport::name);
+#include "runtime/contracts/detail/reward_report.inc"
 
-    nb::class_<TerminationSpec>(m, "TerminationSpec")
-        .def(nb::init<>())
-        .def_rw("reason", &TerminationSpec::reason)
-        .def_rw("reason_source", &TerminationSpec::reason_source)
-        .def_rw("snapshot_version", &TerminationSpec::snapshot_version);
+    nb::class_<TerminationSpec> termination_spec_class(m, "TerminationSpec");
+    termination_spec_class.def(nb::init<>());
+#define EF_TERMINATION_SPEC_FIELD(type, name, default_value)                                       \
+    termination_spec_class.def_rw(#name, &TerminationSpec::name);
+#include "runtime/contracts/detail/termination_spec.inc"
 
-    nb::class_<ObservationViewSpec>(m, "ObservationViewSpec")
-        .def(nb::init<>())
-        .def_rw("schema_version", &ObservationViewSpec::schema_version)
-        .def_rw("required_fields", &ObservationViewSpec::required_fields)
-        .def_rw("optional_fields", &ObservationViewSpec::optional_fields)
-        .def_rw("reject_major_mismatch", &ObservationViewSpec::reject_major_mismatch)
-        .def_rw("allow_minor_version_drift", &ObservationViewSpec::allow_minor_version_drift)
-        .def_rw("allow_unknown_optional_fields",
-                &ObservationViewSpec::allow_unknown_optional_fields)
-        .def_rw("allow_missing_optional_fields",
-                &ObservationViewSpec::allow_missing_optional_fields);
+    nb::class_<ObservationViewSpec> observation_view_spec_class(m, "ObservationViewSpec");
+    observation_view_spec_class.def(nb::init<>());
+#define EF_OBSERVATION_VIEW_SPEC_FIELD(type, name, default_value)                                  \
+    observation_view_spec_class.def_rw(#name, &ObservationViewSpec::name);
+#include "runtime/contracts/detail/observation_view_spec.inc"
 
-    nb::class_<ObservationViewCompatibilityReport>(m, "ObservationViewCompatibilityReport")
-        .def(nb::init<>())
-        .def_rw("compatible", &ObservationViewCompatibilityReport::compatible)
-        .def_rw("major_compatible", &ObservationViewCompatibilityReport::major_compatible)
-        .def_rw("required_fields_satisfied",
-                &ObservationViewCompatibilityReport::required_fields_satisfied)
-        .def_rw("optional_field_drift_allowed",
-                &ObservationViewCompatibilityReport::optional_field_drift_allowed)
-        .def_rw("missing_required_fields",
-                &ObservationViewCompatibilityReport::missing_required_fields)
-        .def_rw("unknown_optional_fields",
-                &ObservationViewCompatibilityReport::unknown_optional_fields)
-        .def_rw("missing_optional_fields",
-                &ObservationViewCompatibilityReport::missing_optional_fields);
+    nb::class_<ObservationViewCompatibilityReport> observation_view_compatibility_report_class(
+        m, "ObservationViewCompatibilityReport");
+    observation_view_compatibility_report_class.def(nb::init<>());
+#define EF_OBSERVATION_VIEW_COMPATIBILITY_REPORT_FIELD(type, name, default_value)                  \
+    observation_view_compatibility_report_class.def_rw(#name,                                      \
+                                                       &ObservationViewCompatibilityReport::name);
+#include "runtime/contracts/detail/observation_view_compatibility_report.inc"
 
     m.def("evaluate_observation_view_checkpoint_compatibility",
           &evaluate_observation_view_checkpoint_compatibility, nb::arg("checkpoint"),
@@ -1294,57 +642,23 @@ void bind_runtime(nb::module_ &m) {
     m.def("decision_belief_has_valid_provenance", &decision_belief_has_valid_provenance,
           nb::arg("belief"));
 
-    nb::class_<ObservationBatchPacket>(m, "ObservationBatchPacket")
-        .def(nb::init<>())
-        .def_rw("snapshot_version", &ObservationBatchPacket::snapshot_version)
-        .def_rw("barrier_id", &ObservationBatchPacket::barrier_id)
-        .def_rw("source_time_s", &ObservationBatchPacket::source_time_s)
-        .def_rw("provenance", &ObservationBatchPacket::provenance)
-        .def_rw("refs", &ObservationBatchPacket::refs)
-        .def_rw("agent_observations", &ObservationBatchPacket::agent_observations)
-        .def_rw("instrument_states", &ObservationBatchPacket::instrument_states);
+    nb::class_<ObservationBatchPacket> observation_batch_packet_class(m, "ObservationBatchPacket");
+    observation_batch_packet_class.def(nb::init<>());
+#define EF_OBSERVATION_BATCH_PACKET_FIELD(type, name, default_value)                               \
+    observation_batch_packet_class.def_rw(#name, &ObservationBatchPacket::name);
+#include "runtime/facade/detail/observation_batch_packet.inc"
 
-    nb::class_<TaskingBatchPacket>(m, "TaskingBatchPacket")
-        .def(nb::init<>())
-        .def_rw("snapshot_version", &TaskingBatchPacket::snapshot_version)
-        .def_rw("barrier_id", &TaskingBatchPacket::barrier_id)
-        .def_rw("source_time_s", &TaskingBatchPacket::source_time_s)
-        .def_rw("provenance", &TaskingBatchPacket::provenance)
-        .def_rw("refs", &TaskingBatchPacket::refs)
-        .def_rw("mission_command_contracts", &TaskingBatchPacket::mission_command_contracts)
-        .def_rw("task_order_contracts", &TaskingBatchPacket::task_order_contracts)
-        .def_rw("leader_intent_contracts", &TaskingBatchPacket::leader_intent_contracts)
-        .def_rw("pilot_report_contracts", &TaskingBatchPacket::pilot_report_contracts);
+    nb::class_<TaskingBatchPacket> tasking_batch_packet_class(m, "TaskingBatchPacket");
+    tasking_batch_packet_class.def(nb::init<>());
+#define EF_TASKING_BATCH_PACKET_FIELD(type, name, default_value)                                   \
+    tasking_batch_packet_class.def_rw(#name, &TaskingBatchPacket::name);
+#include "runtime/facade/detail/tasking_batch_packet.inc"
 
-    nb::class_<EngagementEventPacket>(m, "EngagementEventPacket")
-        .def(nb::init<>())
-        .def_rw("snapshot_version", &EngagementEventPacket::snapshot_version)
-        .def_rw("barrier_id", &EngagementEventPacket::barrier_id)
-        .def_rw("barrier_sequence", &EngagementEventPacket::barrier_sequence)
-        .def_rw("barrier_detail", &EngagementEventPacket::barrier_detail)
-        .def_rw("source_time_s", &EngagementEventPacket::source_time_s)
-        .def_rw("producer_node_id", &EngagementEventPacket::producer_node_id)
-        .def_rw("packet_provenance", &EngagementEventPacket::packet_provenance)
-        .def_rw("diagnostics_provenance", &EngagementEventPacket::diagnostics_provenance)
-        .def_rw("refs", &EngagementEventPacket::refs)
-        .def_rw("trace_ids", &EngagementEventPacket::trace_ids)
-        .def_rw("track_packets", &EngagementEventPacket::track_packets)
-        .def_rw("launch_requests", &EngagementEventPacket::launch_requests)
-        .def_rw("launch_events", &EngagementEventPacket::launch_events)
-        .def_rw("munition_lifecycle_packets", &EngagementEventPacket::munition_lifecycle_packets)
-        .def_rw("effects_events", &EngagementEventPacket::effects_events)
-        .def_rw("nearest_approach_events", &EngagementEventPacket::nearest_approach_events)
-        .def_rw("fuze_evaluation_events", &EngagementEventPacket::fuze_evaluation_events)
-        .def_rw("warhead_mechanism_events", &EngagementEventPacket::warhead_mechanism_events)
-        .def_rw("spatial_coverage_events", &EngagementEventPacket::spatial_coverage_events)
-        .def_rw("component_load_events", &EngagementEventPacket::component_load_events)
-        .def_rw("component_damage_events", &EngagementEventPacket::component_damage_events)
-        .def_rw("platform_consequence_events", &EngagementEventPacket::platform_consequence_events)
-        .def_rw("structural_breakup_events", &EngagementEventPacket::structural_breakup_events)
-        .def_rw("lifecycle_transition_events", &EngagementEventPacket::lifecycle_transition_events)
-        .def_rw("training_projection_events", &EngagementEventPacket::training_projection_events)
-        .def_rw("damage_reports", &EngagementEventPacket::damage_reports)
-        .def_rw("diagnostics_traces", &EngagementEventPacket::diagnostics_traces);
+    nb::class_<EngagementEventPacket> engagement_event_packet_class(m, "EngagementEventPacket");
+    engagement_event_packet_class.def(nb::init<>());
+#define EF_ENGAGEMENT_EVENT_PACKET_FIELD(type, name, default_value)                                \
+    engagement_event_packet_class.def_rw(#name, &EngagementEventPacket::name);
+#include "runtime/facade/detail/engagement_event_packet.inc"
 
     nb::class_<ExecutionBatchStepResult>(m, "ExecutionBatchStepResult")
         .def(nb::init<>())
@@ -1465,6 +779,15 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("officer_in_tactical_command",
                 &PilotReportNaval::CommandAuthorityDirective::officer_in_tactical_command);
 
+    // NOTE(I35): MissionCommandMaintainedBatchContract/TaskOrderMaintainedBatchContract/
+    // LeaderIntentMaintainedBatchContract/PilotReportMaintainedBatchContract header
+    // field blocks are schema-owned (tools/maintenance/dto_schema), but each of these
+    // four bindings has long registered every field except its own trailing
+    // ground_static_task/ground_static_status field (a pre-existing binding-surface
+    // omission; TaskOrder's slice stays reachable through the
+    // task_order_maintained_ground_static_task free function). That never-bound
+    // field is preserved here as-is (parity baseline) instead of being
+    // macro-expanded from the same X-macro as the header block.
     nb::class_<MissionCommandMaintainedBatchContract>(m, "MissionCommandMaintainedBatchContract")
         .def(nb::init<>())
         .def_rw("shared_core", &MissionCommandMaintainedBatchContract::shared_core)
@@ -1522,43 +845,31 @@ void bind_runtime(nb::module_ &m) {
         [](const PilotReport &report) { return pilot_report_maintained_batch_contract(report); },
         nb::arg("report"));
 
-    nb::class_<RuntimeExperimentAncestry>(m, "RuntimeExperimentAncestry")
-        .def(nb::init<>())
-        .def_rw("evidence_bridge_valid", &RuntimeExperimentAncestry::evidence_bridge_valid)
-        .def_rw("evidence_bridge_fail_closed",
-                &RuntimeExperimentAncestry::evidence_bridge_fail_closed)
-        .def_rw("evidence_bridge_rejection_reason",
-                &RuntimeExperimentAncestry::evidence_bridge_rejection_reason)
-        .def_rw("evidence_bridge_errors", &RuntimeExperimentAncestry::evidence_bridge_errors)
-        .def_rw("counterfactual_request_ref",
-                &RuntimeExperimentAncestry::counterfactual_request_ref)
-        .def_rw("counterfactual_admission_ref",
-                &RuntimeExperimentAncestry::counterfactual_admission_ref)
-        .def_rw("setup_ref", &RuntimeExperimentAncestry::setup_ref)
-        .def_rw("generation_ref", &RuntimeExperimentAncestry::generation_ref)
-        .def_rw("replay_envelope_ref", &RuntimeExperimentAncestry::replay_envelope_ref)
-        .def_rw("branch_point_ref", &RuntimeExperimentAncestry::branch_point_ref)
-        .def_rw("generated_input_ref", &RuntimeExperimentAncestry::generated_input_ref)
-        .def_rw("backend_profile_ref", &RuntimeExperimentAncestry::backend_profile_ref)
-        .def_rw("fidelity_profile_ref", &RuntimeExperimentAncestry::fidelity_profile_ref)
-        .def_rw("capability_refs", &RuntimeExperimentAncestry::capability_refs)
-        .def_rw("profile_observation_refs", &RuntimeExperimentAncestry::profile_observation_refs)
-        .def_rw("evidence_refs", &RuntimeExperimentAncestry::evidence_refs);
+    nb::class_<RuntimeExperimentAncestry> runtime_experiment_ancestry_class(
+        m, "RuntimeExperimentAncestry");
+    runtime_experiment_ancestry_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_ANCESTRY_FIELD(type, name, default_value)                            \
+    runtime_experiment_ancestry_class.def_rw(#name, &RuntimeExperimentAncestry::name);
+#include "runtime/facade/detail/runtime_experiment_ancestry.inc"
 
-    nb::class_<RuntimeExperimentResult>(m, "RuntimeExperimentResult")
-        .def(nb::init<>())
-        .def_rw("admitted", &RuntimeExperimentResult::admitted)
-        .def_rw("rejection_reason", &RuntimeExperimentResult::rejection_reason)
-        .def_rw("branch_result", &RuntimeExperimentResult::branch_result)
-        .def_rw("parent_observation_packet", &RuntimeExperimentResult::parent_observation_packet)
-        .def_rw("branch_observation_packet", &RuntimeExperimentResult::branch_observation_packet)
-        .def_rw("parent_step_result", &RuntimeExperimentResult::parent_step_result)
-        .def_rw("branch_step_result", &RuntimeExperimentResult::branch_step_result)
-        .def_rw("parent_diagnostics_traces", &RuntimeExperimentResult::parent_diagnostics_traces)
-        .def_rw("branch_diagnostics_traces", &RuntimeExperimentResult::branch_diagnostics_traces)
-        .def_rw("ancestry", &RuntimeExperimentResult::ancestry)
-        .def_rw("evidence_refs", &RuntimeExperimentResult::evidence_refs);
+    nb::class_<RuntimeExperimentResult> runtime_experiment_result_class(m,
+                                                                        "RuntimeExperimentResult");
+    runtime_experiment_result_class.def(nb::init<>());
+#define EF_RUNTIME_EXPERIMENT_RESULT_FIELD(type, name, default_value)                              \
+    runtime_experiment_result_class.def_rw(#name, &RuntimeExperimentResult::name);
+#include "runtime/facade/detail/runtime_experiment_result.inc"
 
+    // NOTE(I26): RuntimeWindowActionRequest is not schema-generated. Its
+    // header field list (runtime_facade_types.h) is ABI-ordered as
+    // action_intent, source_layer, input_snapshot_version,
+    // clock_domain_metadata, cadence_control -- but clock_domain_metadata
+    // is a nested, never-bound type (no Python duplication to unify) and
+    // this binding's registration order/coverage already diverges from
+    // that ABI order (cadence_control before source_layer/
+    // input_snapshot_version; clock_domain_metadata omitted). Left
+    // hand-written and skipped from schema ownership; see the I26
+    // sub-family report for the recorded skip rationale. Its nested
+    // CadenceControl type is independently schema-owned below.
     nb::class_<RuntimeWindowActionRequest>(m, "RuntimeWindowActionRequest")
         .def(nb::init<>())
         .def_rw("action_intent", &RuntimeWindowActionRequest::action_intent)
@@ -1566,34 +877,43 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("source_layer", &RuntimeWindowActionRequest::source_layer)
         .def_rw("input_snapshot_version", &RuntimeWindowActionRequest::input_snapshot_version);
 
-    nb::class_<RuntimeWindowInputRecord>(m, "RuntimeWindowInputRecord")
-        .def(nb::init<>())
-        .def_rw("request", &RuntimeWindowInputRecord::request)
-        .def_rw("reason", &RuntimeWindowInputRecord::reason);
+    nb::class_<RuntimeWindowInputRecord> runtime_window_input_record_class(
+        m, "RuntimeWindowInputRecord");
+    runtime_window_input_record_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_INPUT_RECORD_FIELD(type, name, default_value)                            \
+    runtime_window_input_record_class.def_rw(#name, &RuntimeWindowInputRecord::name);
+#include "runtime/facade/detail/runtime_window_input_record.inc"
 
-    nb::class_<RuntimeWindowSchedulingContext>(m, "RuntimeWindowSchedulingContext")
-        .def(nb::init<>())
-        .def_rw("window_id", &RuntimeWindowSchedulingContext::window_id)
-        .def_rw("world_id", &RuntimeWindowSchedulingContext::world_id)
-        .def_rw("source_time_s", &RuntimeWindowSchedulingContext::source_time_s)
-        .def_rw("barrier_sequence", &RuntimeWindowSchedulingContext::barrier_sequence)
-        .def_rw("current_barrier_id", &RuntimeWindowSchedulingContext::current_barrier_id)
-        .def_rw("accepted_inputs", &RuntimeWindowSchedulingContext::accepted_inputs)
-        .def_rw("deferred_inputs", &RuntimeWindowSchedulingContext::deferred_inputs)
-        .def_rw("rejected_inputs", &RuntimeWindowSchedulingContext::rejected_inputs)
-        .def_rw("expired_inputs", &RuntimeWindowSchedulingContext::expired_inputs);
+    nb::class_<RuntimeWindowSchedulingContext> runtime_window_scheduling_context_class(
+        m, "RuntimeWindowSchedulingContext");
+    runtime_window_scheduling_context_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_SCHEDULING_CONTEXT_FIELD(type, name, default_value)                      \
+    runtime_window_scheduling_context_class.def_rw(#name, &RuntimeWindowSchedulingContext::name);
+#include "runtime/facade/detail/runtime_window_scheduling_context.inc"
 
-    nb::class_<RuntimeWindowBarrierRecord>(m, "RuntimeWindowBarrierRecord")
-        .def(nb::init<>())
-        .def_rw("sequence", &RuntimeWindowBarrierRecord::sequence)
-        .def_rw("barrier_id", &RuntimeWindowBarrierRecord::barrier_id)
-        .def_rw("node_id", &RuntimeWindowBarrierRecord::node_id);
+    nb::class_<RuntimeWindowBarrierRecord> runtime_window_barrier_record_class(
+        m, "RuntimeWindowBarrierRecord");
+    runtime_window_barrier_record_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_BARRIER_RECORD_FIELD(type, name, default_value)                          \
+    runtime_window_barrier_record_class.def_rw(#name, &RuntimeWindowBarrierRecord::name);
+#include "runtime/facade/detail/runtime_window_barrier_record.inc"
 
-    nb::class_<RuntimeWindowVisibilityRecord>(m, "RuntimeWindowVisibilityRecord")
-        .def(nb::init<>())
-        .def_rw("barrier_id", &RuntimeWindowVisibilityRecord::barrier_id)
-        .def_rw("visible_input_count", &RuntimeWindowVisibilityRecord::visible_input_count);
+    nb::class_<RuntimeWindowVisibilityRecord> runtime_window_visibility_record_class(
+        m, "RuntimeWindowVisibilityRecord");
+    runtime_window_visibility_record_class.def(nb::init<>());
+#define EF_RUNTIME_WINDOW_VISIBILITY_RECORD_FIELD(type, name, default_value)                       \
+    runtime_window_visibility_record_class.def_rw(#name, &RuntimeWindowVisibilityRecord::name);
+#include "runtime/facade/detail/runtime_window_visibility_record.inc"
 
+    // NOTE(I26): the RuntimeWindowNodeExecutionRecord/CadenceControl/
+    // Cadence/CadenceConfig/CadenceTraceRecord/Request/Result bindings
+    // below have long registered properties out of the header's ABI
+    // declaration order (several alphabetically); left hand-written and
+    // skipped from binding-side schema ownership so registration order/
+    // dir() sequence stays byte-for-byte unchanged. Each struct's C++
+    // field list is still schema-owned on the header side (see
+    // runtime_facade_types.h); see the I26 sub-family report for the
+    // recorded partial-coverage rationale.
     nb::class_<RuntimeWindowNodeExecutionRecord>(m, "RuntimeWindowNodeExecutionRecord")
         .def(nb::init<>())
         .def_rw("barrier_order", &RuntimeWindowNodeExecutionRecord::barrier_order)
@@ -1679,17 +999,177 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("engagement_packet", &RuntimeWindowResult::engagement_packet)
         .def_rw("diagnostics_traces", &RuntimeWindowResult::diagnostics_traces);
 
-    nb::class_<WorldTerrainAssignment>(m, "WorldTerrainAssignment")
+    // T10 evidence spine, slice 5: additive read surface for the WP15 replay
+    // contract types plus the fail-closed validator, so the maintained Python
+    // run can validate the envelope its own window products assembled
+    // (RuntimeFacade::build_maintained_replay_envelope). Nothing on an
+    // existing path constructs or consumes these bindings.
+    nb::class_<runtime::counterfactual::ReplaySnapshotRef>(m, "ReplaySnapshotRef")
         .def(nb::init<>())
-        .def_rw("world_index", &WorldTerrainAssignment::world_index)
-        .def_rw("terrain_type", &WorldTerrainAssignment::terrain_type);
+        .def_rw("snapshot_version_ref",
+                &runtime::counterfactual::ReplaySnapshotRef::snapshot_version_ref);
 
-    nb::class_<WorldWindAssignment>(m, "WorldWindAssignment")
+    nb::class_<runtime::counterfactual::ReplayBarrierRef>(m, "ReplayBarrierRef")
         .def(nb::init<>())
-        .def_rw("world_index", &WorldWindAssignment::world_index)
-        .def_rw("speed_mps", &WorldWindAssignment::speed_mps)
-        .def_rw("dir_from_deg", &WorldWindAssignment::dir_from_deg)
-        .def_rw("shear_mps_per_km", &WorldWindAssignment::shear_mps_per_km);
+        .def_rw("barrier_id", &runtime::counterfactual::ReplayBarrierRef::barrier_id)
+        .def_rw("barrier_sequence", &runtime::counterfactual::ReplayBarrierRef::barrier_sequence)
+        .def_rw("barrier_detail", &runtime::counterfactual::ReplayBarrierRef::barrier_detail);
+
+    nb::class_<runtime::counterfactual::ReplayEventOrderRef>(m, "ReplayEventOrderRef")
+        .def(nb::init<>())
+        .def_rw("sort_key", &runtime::counterfactual::ReplayEventOrderRef::sort_key)
+        .def_rw("event_id", &runtime::counterfactual::ReplayEventOrderRef::event_id)
+        .def_rw("producer_node_id",
+                &runtime::counterfactual::ReplayEventOrderRef::producer_node_id);
+
+    nb::class_<runtime::counterfactual::ReplayFacadeProvenanceRef>(m, "ReplayFacadeProvenanceRef")
+        .def(nb::init<>())
+        .def_rw("packet_ref", &runtime::counterfactual::ReplayFacadeProvenanceRef::packet_ref)
+        .def_rw("packet_kind", &runtime::counterfactual::ReplayFacadeProvenanceRef::packet_kind)
+        .def_rw("information_state_source",
+                &runtime::counterfactual::ReplayFacadeProvenanceRef::information_state_source);
+
+    nb::class_<runtime::counterfactual::ReplayEnvelope>(m, "ReplayEnvelope")
+        .def(nb::init<>())
+        .def_rw("replay_envelope_id", &runtime::counterfactual::ReplayEnvelope::replay_envelope_id)
+        .def_rw("run_id", &runtime::counterfactual::ReplayEnvelope::run_id)
+        .def_rw("episode_id", &runtime::counterfactual::ReplayEnvelope::episode_id)
+        .def_rw("has_deterministic_seed",
+                &runtime::counterfactual::ReplayEnvelope::has_deterministic_seed)
+        .def_rw("deterministic_seed", &runtime::counterfactual::ReplayEnvelope::deterministic_seed)
+        .def_rw("has_source_time", &runtime::counterfactual::ReplayEnvelope::has_source_time)
+        .def_rw("source_time_s", &runtime::counterfactual::ReplayEnvelope::source_time_s)
+        .def_rw("snapshot_ref", &runtime::counterfactual::ReplayEnvelope::snapshot_ref)
+        .def_rw("barrier_ref", &runtime::counterfactual::ReplayEnvelope::barrier_ref)
+        .def_rw("event_order_ref", &runtime::counterfactual::ReplayEnvelope::event_order_ref)
+        .def_rw("facade_provenance_ref",
+                &runtime::counterfactual::ReplayEnvelope::facade_provenance_ref)
+        .def_rw("snapshot_restore_supported",
+                &runtime::counterfactual::ReplayEnvelope::snapshot_restore_supported)
+        .def_rw("restore_support_boundary",
+                &runtime::counterfactual::ReplayEnvelope::restore_support_boundary);
+
+    nb::class_<runtime::counterfactual::ReplayContractValidationResult>(
+        m, "ReplayContractValidationResult")
+        .def(nb::init<>())
+        .def_rw("valid", &runtime::counterfactual::ReplayContractValidationResult::valid)
+        .def_rw("errors", &runtime::counterfactual::ReplayContractValidationResult::errors)
+        .def_rw("rejection_reason",
+                &runtime::counterfactual::ReplayContractValidationResult::rejection_reason);
+
+    nb::class_<runtime::counterfactual::MaintainedReplayEnvelopeResult>(
+        m, "MaintainedReplayEnvelopeResult")
+        .def(nb::init<>())
+        .def_rw("admitted", &runtime::counterfactual::MaintainedReplayEnvelopeResult::admitted)
+        .def_rw("envelope", &runtime::counterfactual::MaintainedReplayEnvelopeResult::envelope)
+        .def_rw("rejection_reason",
+                &runtime::counterfactual::MaintainedReplayEnvelopeResult::rejection_reason)
+        .def_rw("errors", &runtime::counterfactual::MaintainedReplayEnvelopeResult::errors)
+        .def_rw("evidence_refs",
+                &runtime::counterfactual::MaintainedReplayEnvelopeResult::evidence_refs);
+
+    m.def("validate_replay_envelope", &runtime::counterfactual::validate_replay_envelope,
+          nb::arg("envelope"));
+
+    // T10 evidence spine, slice 6A (this iteration): additive read surface for
+    // the maintained engagement-packet ancestry producer
+    // (RuntimeFacade::build_maintained_packet_ancestry). Nothing on an existing
+    // path constructs or consumes these bindings. The typed lineage ref reuses
+    // the shared VA-5/VA-6 vocabulary (ref_id / evidence_kind /
+    // provenance_label) already owned by the C++ contract type.
+    nb::class_<runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef>(
+        m, "ScenarioGenerationEvidenceMetadataRef")
+        .def(nb::init<>())
+        .def_rw("ref_id", &runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef::ref_id)
+        .def_rw("evidence_kind",
+                &runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef::evidence_kind)
+        .def_rw("provenance_label",
+                &runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef::provenance_label);
+
+    nb::class_<MaintainedEngagementPacketAncestry>(m, "MaintainedEngagementPacketAncestry")
+        .def(nb::init<>())
+        .def_rw("packet_ancestry_id", &MaintainedEngagementPacketAncestry::packet_ancestry_id)
+        .def_rw("run_id", &MaintainedEngagementPacketAncestry::run_id)
+        .def_rw("episode_id", &MaintainedEngagementPacketAncestry::episode_id)
+        .def_rw("anchor_trace_id", &MaintainedEngagementPacketAncestry::anchor_trace_id)
+        .def_rw("parent_trace_id", &MaintainedEngagementPacketAncestry::parent_trace_id)
+        .def_rw("replay_envelope_ref", &MaintainedEngagementPacketAncestry::replay_envelope_ref)
+        .def_rw("parent_event_order_ref",
+                &MaintainedEngagementPacketAncestry::parent_event_order_ref)
+        .def_rw("lineage_refs", &MaintainedEngagementPacketAncestry::lineage_refs)
+        .def_rw("ancestral_traces", &MaintainedEngagementPacketAncestry::ancestral_traces);
+
+    nb::class_<MaintainedPacketAncestryResult>(m, "MaintainedPacketAncestryResult")
+        .def(nb::init<>())
+        .def_rw("admitted", &MaintainedPacketAncestryResult::admitted)
+        .def_rw("ancestry", &MaintainedPacketAncestryResult::ancestry)
+        .def_rw("rejection_reason", &MaintainedPacketAncestryResult::rejection_reason)
+        .def_rw("errors", &MaintainedPacketAncestryResult::errors)
+        .def_rw("evidence_refs", &MaintainedPacketAncestryResult::evidence_refs);
+
+    // T10 evidence spine, slice 7 (this iteration): additive read surface for
+    // the maintained worldline/counterfactual comparison producer
+    // (RuntimeFacade::build_maintained_worldline_comparison). Nothing on an
+    // existing path constructs or consumes these bindings. The DTO carries
+    // evidence ids only (no truth-state copies -- the no-truth-promotion red
+    // line documented on the C++ type in runtime_facade_types.h).
+    nb::class_<MaintainedWorldlineComparison>(m, "MaintainedWorldlineComparison")
+        .def(nb::init<>())
+        .def_rw("comparison_id", &MaintainedWorldlineComparison::comparison_id)
+        .def_rw("run_id", &MaintainedWorldlineComparison::run_id)
+        .def_rw("episode_id", &MaintainedWorldlineComparison::episode_id)
+        .def_rw("baseline_worldline_id", &MaintainedWorldlineComparison::baseline_worldline_id)
+        .def_rw("candidate_worldline_id", &MaintainedWorldlineComparison::candidate_worldline_id)
+        .def_rw("baseline_anchor_trace_id",
+                &MaintainedWorldlineComparison::baseline_anchor_trace_id)
+        .def_rw("candidate_anchor_trace_id",
+                &MaintainedWorldlineComparison::candidate_anchor_trace_id)
+        .def_rw("baseline_replay_envelope_ref",
+                &MaintainedWorldlineComparison::baseline_replay_envelope_ref)
+        .def_rw("candidate_replay_envelope_ref",
+                &MaintainedWorldlineComparison::candidate_replay_envelope_ref)
+        .def_rw("baseline_packet_ancestry_ref",
+                &MaintainedWorldlineComparison::baseline_packet_ancestry_ref)
+        .def_rw("candidate_packet_ancestry_ref",
+                &MaintainedWorldlineComparison::candidate_packet_ancestry_ref)
+        .def_rw("baseline_event_order_ref",
+                &MaintainedWorldlineComparison::baseline_event_order_ref)
+        .def_rw("candidate_event_order_ref",
+                &MaintainedWorldlineComparison::candidate_event_order_ref)
+        .def_rw("baseline_snapshot_version_ref",
+                &MaintainedWorldlineComparison::baseline_snapshot_version_ref)
+        .def_rw("candidate_snapshot_version_ref",
+                &MaintainedWorldlineComparison::candidate_snapshot_version_ref)
+        .def_rw("baseline_deterministic_seed",
+                &MaintainedWorldlineComparison::baseline_deterministic_seed)
+        .def_rw("candidate_deterministic_seed",
+                &MaintainedWorldlineComparison::candidate_deterministic_seed)
+        .def_rw("deterministic_seed_matched",
+                &MaintainedWorldlineComparison::deterministic_seed_matched)
+        .def_rw("claim_scope", &MaintainedWorldlineComparison::claim_scope)
+        .def_rw("truth_claim", &MaintainedWorldlineComparison::truth_claim)
+        .def_rw("promoted_to_support", &MaintainedWorldlineComparison::promoted_to_support)
+        .def_rw("lineage_refs", &MaintainedWorldlineComparison::lineage_refs);
+
+    nb::class_<MaintainedWorldlineComparisonResult>(m, "MaintainedWorldlineComparisonResult")
+        .def(nb::init<>())
+        .def_rw("admitted", &MaintainedWorldlineComparisonResult::admitted)
+        .def_rw("comparison", &MaintainedWorldlineComparisonResult::comparison)
+        .def_rw("rejection_reason", &MaintainedWorldlineComparisonResult::rejection_reason)
+        .def_rw("errors", &MaintainedWorldlineComparisonResult::errors)
+        .def_rw("evidence_refs", &MaintainedWorldlineComparisonResult::evidence_refs);
+
+    nb::class_<WorldTerrainAssignment> world_terrain_assignment_class(m, "WorldTerrainAssignment");
+    world_terrain_assignment_class.def(nb::init<>());
+#define EF_WORLD_TERRAIN_ASSIGNMENT_FIELD(type, name, default_value)                               \
+    world_terrain_assignment_class.def_rw(#name, &WorldTerrainAssignment::name);
+#include "runtime/contracts/detail/world_terrain_assignment.inc"
+
+    nb::class_<WorldWindAssignment> world_wind_assignment_class(m, "WorldWindAssignment");
+    world_wind_assignment_class.def(nb::init<>());
+#define EF_WORLD_WIND_ASSIGNMENT_FIELD(type, name, default_value)                                  \
+    world_wind_assignment_class.def_rw(#name, &WorldWindAssignment::name);
+#include "runtime/contracts/detail/world_wind_assignment.inc"
 
     nb::class_<WorldSunAssignment>(m, "WorldSunAssignment")
         .def(nb::init<>())
@@ -1697,96 +1177,86 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("azimuth_deg", &WorldSunAssignment::azimuth_deg)
         .def_rw("elevation_deg", &WorldSunAssignment::elevation_deg);
 
-    nb::class_<WorldZoneDefinition>(m, "WorldZoneDefinition")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldZoneDefinition::world_index)
-        .def_rw("name", &WorldZoneDefinition::name)
-        .def_rw("x", &WorldZoneDefinition::x)
-        .def_rw("y", &WorldZoneDefinition::y)
-        .def_rw("width", &WorldZoneDefinition::width)
-        .def_rw("length", &WorldZoneDefinition::length)
-        .def_rw("heading", &WorldZoneDefinition::heading)
-        .def_rw("surface_type", &WorldZoneDefinition::surface_type);
+    nb::class_<WorldZoneDefinition> world_zone_definition_class(m, "WorldZoneDefinition");
+    world_zone_definition_class.def(nb::init<>());
+#define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value)                                  \
+    world_zone_definition_class.def_rw(#name, &WorldZoneDefinition::name);
+#include "runtime/contracts/detail/world_zone_definition.inc"
 
-    nb::class_<WorldSpawnRequest>(m, "WorldSpawnRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldSpawnRequest::world_index)
-        .def_rw("side", &WorldSpawnRequest::side)
-        .def_rw("type_name", &WorldSpawnRequest::type_name)
-        .def_rw("entity_name", &WorldSpawnRequest::entity_name)
-        .def_rw("is_agent", &WorldSpawnRequest::is_agent)
-        .def_rw("x", &WorldSpawnRequest::x)
-        .def_rw("y", &WorldSpawnRequest::y)
-        .def_rw("z", &WorldSpawnRequest::z)
-        .def_rw("heading", &WorldSpawnRequest::heading)
-        .def_rw("pitch", &WorldSpawnRequest::pitch)
-        .def_rw("roll", &WorldSpawnRequest::roll)
-        .def_rw("vx", &WorldSpawnRequest::vx)
-        .def_rw("vy", &WorldSpawnRequest::vy)
-        .def_rw("vz", &WorldSpawnRequest::vz)
-        .def_rw("ammo_override_enabled", &WorldSpawnRequest::ammo_override_enabled)
-        .def_rw("missiles_remaining", &WorldSpawnRequest::missiles_remaining)
-        .def_rw("max_missiles", &WorldSpawnRequest::max_missiles)
-        .def_rw("weapon_cooldown_override_enabled",
-                &WorldSpawnRequest::weapon_cooldown_override_enabled)
-        .def_rw("weapon_cooldown_s", &WorldSpawnRequest::weapon_cooldown_s)
-        .def_rw("weapon_last_fire_time", &WorldSpawnRequest::weapon_last_fire_time);
+    nb::class_<WorldSpawnRequest> world_spawn_request_class(m, "WorldSpawnRequest");
+    world_spawn_request_class.def(nb::init<>());
+#define EF_WORLD_SPAWN_REQUEST_FIELD(type, name, default_value)                                    \
+    world_spawn_request_class.def_rw(#name, &WorldSpawnRequest::name);
+#include "runtime/contracts/detail/world_spawn_request.inc"
 
-    nb::class_<WorldPilotActionAssignment>(m, "WorldPilotActionAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldPilotActionAssignment::world_index)
-        .def_rw("entity_id", &WorldPilotActionAssignment::entity_id)
-        .def_rw("action", &WorldPilotActionAssignment::action);
+    nb::class_<WorldPilotActionAssignment> world_pilot_action_assignment_class(
+        m, "WorldPilotActionAssignment");
+    world_pilot_action_assignment_class.def(nb::init<>());
+#define EF_WORLD_PILOT_ACTION_ASSIGNMENT_FIELD(type, name, default_value)                          \
+    world_pilot_action_assignment_class.def_rw(#name, &WorldPilotActionAssignment::name);
+#include "runtime/contracts/detail/world_pilot_action_assignment.inc"
 
-    nb::class_<WorldMissionCommandAssignment>(m, "WorldMissionCommandAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldMissionCommandAssignment::world_index)
-        .def_rw("entity_id", &WorldMissionCommandAssignment::entity_id)
-        .def_rw("command", &WorldMissionCommandAssignment::command);
+    nb::class_<WorldMissionCommandAssignment> world_mission_command_assignment_class(
+        m, "WorldMissionCommandAssignment");
+    world_mission_command_assignment_class.def(nb::init<>());
+#define EF_WORLD_MISSION_COMMAND_ASSIGNMENT_FIELD(type, name, default_value)                       \
+    world_mission_command_assignment_class.def_rw(#name, &WorldMissionCommandAssignment::name);
+#include "runtime/contracts/detail/world_mission_command_assignment.inc"
 
-    nb::class_<WorldMissionCommandMaintainedAssignment>(m,
-                                                        "WorldMissionCommandMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldMissionCommandMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldMissionCommandMaintainedAssignment::entity_id)
-        .def_rw("mission_command", &WorldMissionCommandMaintainedAssignment::mission_command);
+    nb::class_<WorldMissionCommandMaintainedAssignment>
+        world_mission_command_maintained_assignment_class(
+            m, "WorldMissionCommandMaintainedAssignment");
+    world_mission_command_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_MISSION_COMMAND_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)            \
+    world_mission_command_maintained_assignment_class.def_rw(                                      \
+        #name, &WorldMissionCommandMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_mission_command_maintained_assignment.inc"
 
-    nb::class_<WorldTaskOrderMaintainedAssignment>(m, "WorldTaskOrderMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldTaskOrderMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldTaskOrderMaintainedAssignment::entity_id)
-        .def_rw("task_order", &WorldTaskOrderMaintainedAssignment::task_order);
+    nb::class_<WorldTaskOrderMaintainedAssignment> world_task_order_maintained_assignment_class(
+        m, "WorldTaskOrderMaintainedAssignment");
+    world_task_order_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_TASK_ORDER_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)                 \
+    world_task_order_maintained_assignment_class.def_rw(                                           \
+        #name, &WorldTaskOrderMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_task_order_maintained_assignment.inc"
 
-    nb::class_<WorldLeaderIntentAssignment>(m, "WorldLeaderIntentAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldLeaderIntentAssignment::world_index)
-        .def_rw("entity_id", &WorldLeaderIntentAssignment::entity_id)
-        .def_rw("intent", &WorldLeaderIntentAssignment::intent);
+    nb::class_<WorldLeaderIntentAssignment> world_leader_intent_assignment_class(
+        m, "WorldLeaderIntentAssignment");
+    world_leader_intent_assignment_class.def(nb::init<>());
+#define EF_WORLD_LEADER_INTENT_ASSIGNMENT_FIELD(type, name, default_value)                         \
+    world_leader_intent_assignment_class.def_rw(#name, &WorldLeaderIntentAssignment::name);
+#include "runtime/contracts/detail/world_leader_intent_assignment.inc"
 
-    nb::class_<WorldLeaderIntentMaintainedAssignment>(m, "WorldLeaderIntentMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldLeaderIntentMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldLeaderIntentMaintainedAssignment::entity_id)
-        .def_rw("leader_intent", &WorldLeaderIntentMaintainedAssignment::leader_intent);
+    nb::class_<WorldLeaderIntentMaintainedAssignment>
+        world_leader_intent_maintained_assignment_class(m, "WorldLeaderIntentMaintainedAssignment");
+    world_leader_intent_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_LEADER_INTENT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)              \
+    world_leader_intent_maintained_assignment_class.def_rw(                                        \
+        #name, &WorldLeaderIntentMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_leader_intent_maintained_assignment.inc"
 
-    nb::class_<WorldPilotReportAssignment>(m, "WorldPilotReportAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldPilotReportAssignment::world_index)
-        .def_rw("entity_id", &WorldPilotReportAssignment::entity_id)
-        .def_rw("report", &WorldPilotReportAssignment::report);
+    nb::class_<WorldPilotReportAssignment> world_pilot_report_assignment_class(
+        m, "WorldPilotReportAssignment");
+    world_pilot_report_assignment_class.def(nb::init<>());
+#define EF_WORLD_PILOT_REPORT_ASSIGNMENT_FIELD(type, name, default_value)                          \
+    world_pilot_report_assignment_class.def_rw(#name, &WorldPilotReportAssignment::name);
+#include "runtime/contracts/detail/world_pilot_report_assignment.inc"
 
-    nb::class_<WorldPilotReportMaintainedAssignment>(m, "WorldPilotReportMaintainedAssignment")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldPilotReportMaintainedAssignment::world_index)
-        .def_rw("entity_id", &WorldPilotReportMaintainedAssignment::entity_id)
-        .def_rw("pilot_report", &WorldPilotReportMaintainedAssignment::pilot_report);
+    nb::class_<WorldPilotReportMaintainedAssignment> world_pilot_report_maintained_assignment_class(
+        m, "WorldPilotReportMaintainedAssignment");
+    world_pilot_report_maintained_assignment_class.def(nb::init<>());
+#define EF_WORLD_PILOT_REPORT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)               \
+    world_pilot_report_maintained_assignment_class.def_rw(                                         \
+        #name, &WorldPilotReportMaintainedAssignment::name);
+#include "runtime/contracts/detail/world_pilot_report_maintained_assignment.inc"
 
-    nb::class_<WorldExecutionEpisodeStepRequest>(m, "WorldExecutionEpisodeStepRequest")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldExecutionEpisodeStepRequest::world_index)
-        .def_rw("entity_id", &WorldExecutionEpisodeStepRequest::entity_id)
-        .def_rw("config", &WorldExecutionEpisodeStepRequest::config)
-        .def_rw("env_state", &WorldExecutionEpisodeStepRequest::env_state);
+    nb::class_<WorldExecutionEpisodeStepRequest> world_execution_episode_step_request_class(
+        m, "WorldExecutionEpisodeStepRequest");
+    world_execution_episode_step_request_class.def(nb::init<>());
+#define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value)                   \
+    world_execution_episode_step_request_class.def_rw(#name,                                       \
+                                                      &WorldExecutionEpisodeStepRequest::name);
+#include "runtime/contracts/detail/world_execution_episode_step_request.inc"
 
     nb::class_<WorldBatchRuntime>(m, "WorldBatchRuntime")
         .def(nb::init<size_t>(), nb::arg("world_count") = 0)
@@ -1997,5 +1467,54 @@ void bind_runtime(nb::module_ &m) {
              nb::arg("request"))
         .def("export_diagnostics_traces", &RuntimeFacade::export_diagnostics_traces,
              nb::arg("request"))
-        .def("run_window", &RuntimeFacade::run_window, nb::arg("request"));
+        .def("run_window", &RuntimeFacade::run_window, nb::arg("request"))
+        // T10 evidence spine, slice 3 / I54: new additive run-global producers
+        // (VA-2 snapshot version, VA-8 trace-id allocator). Not wired into any
+        // existing export path in this slice.
+        .def("allocate_run_snapshot_version", &RuntimeFacade::allocate_run_snapshot_version)
+        .def("peek_next_run_snapshot_version", &RuntimeFacade::peek_next_run_snapshot_version)
+        .def("allocate_trace_id", &RuntimeFacade::allocate_trace_id)
+        .def("peek_next_trace_id", &RuntimeFacade::peek_next_trace_id)
+        // T8 information-state architecture, slice 4 / I60: additive read-only
+        // declaration export of the maintained observation view at the TL13 seam.
+        // Not wired into any existing export path; gated against the Python
+        // registry by the G4 export-parity architecture test.
+        .def("describe_maintained_observation_view",
+             &RuntimeFacade::describe_maintained_observation_view)
+        // T10 evidence spine, slice 5: additive read-only maintained-run
+        // replay-envelope producer. Not wired into any existing path; only
+        // meaningful against window evidence stamped by the I59 opt-in
+        // (use_facade_evidence_producers=True) adapter path. See the
+        // declaration comment in runtime_facade.h for the field sources, the
+        // "replay:maintained:*" id namespace, and the opt-in
+        // `run_snapshot_version` VA-2 qualification (default 0 = off, keeping
+        // the packet's per-export provenance string byte-identical).
+        .def("build_maintained_replay_envelope", &RuntimeFacade::build_maintained_replay_envelope,
+             nb::arg("window_result"), nb::arg("run_id"), nb::arg("episode_id"),
+             nb::arg("deterministic_seed"), nb::arg("run_snapshot_version") = 0)
+        // T10 evidence spine, slice 6A (this iteration): additive read-only
+        // maintained engagement-packet ancestry producer. Not wired into any
+        // existing path; only meaningful against window evidence stamped by
+        // the I59 opt-in (use_facade_evidence_producers=True) adapter path.
+        // See the declaration comment in runtime_facade.h for the gate order,
+        // the "ancestry:maintained:*" id namespace, and the root semantics of
+        // parent_trace_id = 0 (default = no parent linkage, keeping every
+        // trace copy's parent_trace_id at the pre-slice default 0).
+        .def("build_maintained_packet_ancestry", &RuntimeFacade::build_maintained_packet_ancestry,
+             nb::arg("window_result"), nb::arg("run_id"), nb::arg("episode_id"),
+             nb::arg("deterministic_seed"), nb::arg("parent_trace_id") = 0)
+        // T10 evidence spine, slice 7 (this iteration): additive read-only
+        // maintained worldline/counterfactual comparison producer. Not wired
+        // into any existing path; only meaningful against window evidence
+        // stamped by the I59 opt-in (use_facade_evidence_producers=True)
+        // adapter path. See the declaration comment in runtime_facade.h for
+        // the gate order, the "comparison:maintained:*" /
+        // "worldline:maintained:*" id namespaces, and the no-truth-promotion
+        // red line (evidence ids only, never copies of truth state).
+        .def("build_maintained_worldline_comparison",
+             &RuntimeFacade::build_maintained_worldline_comparison,
+             nb::arg("baseline_window_result"), nb::arg("candidate_window_result"),
+             nb::arg("run_id"), nb::arg("episode_id"), nb::arg("baseline_deterministic_seed"),
+             nb::arg("candidate_deterministic_seed"), nb::arg("baseline_parent_trace_id") = 0,
+             nb::arg("candidate_parent_trace_id") = 0);
 }

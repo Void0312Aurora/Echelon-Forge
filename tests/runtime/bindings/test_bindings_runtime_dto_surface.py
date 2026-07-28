@@ -272,10 +272,15 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         "allow_minor_version_drift",
         "allow_missing_optional_fields",
         "allow_unknown_optional_fields",
+        # T8/I60 additive structural-fact declaration fields (append-only).
+        "information_layer_consumed",
+        "information_layer_produced",
         "optional_fields",
         "reject_major_mismatch",
         "required_fields",
         "schema_version",
+        "semantic_stage",
+        "view_id",
       ),
     )
 
@@ -701,6 +706,7 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         "visibility_trace",
       ),
     )
+    self.assertFalse(hasattr(ef_py.RuntimeWindowResult(), "identity_token_"))
 
   def test_packet_provenance_nested_fields_round_trip(self) -> None:
     observation_packet = ef_py.ObservationBatchPacket()

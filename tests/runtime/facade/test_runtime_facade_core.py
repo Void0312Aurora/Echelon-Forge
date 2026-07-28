@@ -7,6 +7,8 @@ from pathlib import Path
 
 from python.runtime_bootstrap import ensure_repo_imports
 from python.runtime_bootstrap import resolve_repo_path
+from tests.support.xmacro_text import expand_binding_field_incs
+from tests.support.xmacro_text import expand_header_field_incs
 
 
 ensure_repo_imports()
@@ -347,7 +349,12 @@ def _repo_text(*parts: str) -> str:
       Path(resolve_repo_path(*source_parts)).read_text(encoding="utf-8")
       for source_parts in _RUNTIME_FACADE_SOURCE_PARTS
     )
-  return Path(resolve_repo_path(*parts)).read_text(encoding="utf-8")
+  text = Path(resolve_repo_path(*parts)).read_text(encoding="utf-8")
+  if parts == ("src", "runtime", "facade", "runtime_facade_types.h"):
+    return expand_header_field_incs(text)
+  if parts == ("src", "interfaces", "python", "bindings_runtime.cpp"):
+    return expand_binding_field_incs(text)
+  return text
 
 
 def _signature_match(source: str, signature: str) -> re.Match[str]:

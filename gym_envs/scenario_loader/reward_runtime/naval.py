@@ -5,7 +5,22 @@ from typing import Any
 
 import numpy as np
 
+from gym_envs import observation_view
 from python.tasking_contracts.bridge_views import mission_command_dict
+
+
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This reward surface consumes
+# authoritative truth (own truth.x,y, target truth.contacts) plus other-unit
+# position/observation reads and the support report chain. As of the T8 second
+# slice those reads flow through the declared observation view (observation_view
+# own-ship / track / Shared-Tactical-Picture faces), which owns the raw truth/sim
+# access; TL8 is converged and TL9 (report chain) is routed through the view's
+# Shared-Tactical-Picture face. Reward is an output, not an information layer, so
+# PRODUCED is empty. Pure metadata; no runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth", "Shared Tactical Picture")
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P10 ObservationExport",)
 
 
 def _is_naval_profile(loader: Any) -> bool:
@@ -43,7 +58,7 @@ def _entity_position(sim: Any, entity_id: int) -> tuple[float, float] | None:
     if sim is None or entity_id <= 0:
         return None
     try:
-        pos = sim.get_unit_position(int(entity_id))
+        pos = observation_view.support_unit_position(sim, int(entity_id))
     except Exception:
         return None
     if pos is None or len(pos) < 2:
@@ -52,15 +67,9 @@ def _entity_position(sim: Any, entity_id: int) -> tuple[float, float] | None:
 
 
 def _target_track(truth: Any, target_id: int) -> Any | None:
-    if truth is None or target_id <= 0:
-        return None
-    for track in getattr(truth, "contacts", []) or []:
-        try:
-            if int(getattr(track, "id", 0)) == int(target_id):
-                return track
-        except Exception:
-            continue
-    return None
+    # Naval guard variant (target_id <= 0, uncoerced) -- distinct from the
+    # mission-observation variant; see observation_view.naval_target_track.
+    return observation_view.naval_target_track(truth, target_id)
 
 
 def _support_entity_ids(loader: Any) -> list[int]:
@@ -84,7 +93,7 @@ def _support_has_target_track(sim: Any, support_ids: list[int], target_id: int) 
         return False
     for entity_id in support_ids:
         try:
-            obs = sim.get_agent_observation(int(entity_id))
+            obs = observation_view.support_agent_observation(sim, int(entity_id))
         except Exception:
             continue
         if _target_track(obs, target_id) is not None:
@@ -97,7 +106,7 @@ def _support_has_shared_target_track(sim: Any, support_ids: list[int], target_id
         return False
     for entity_id in support_ids:
         try:
-            obs = sim.get_agent_observation(int(entity_id))
+            obs = observation_view.support_agent_observation(sim, int(entity_id))
         except Exception:
             continue
         track = _target_track(obs, target_id)
@@ -118,7 +127,7 @@ def _support_received_target_report(sim: Any, support_ids: list[int], target_id:
         return False
     for entity_id in support_ids:
         try:
-            messages = list(sim.get_unit_messages(int(entity_id)))
+            messages = list(observation_view.support_unit_messages(sim, int(entity_id)))
         except Exception:
             continue
         for msg in messages:
@@ -154,8 +163,8 @@ def _station_reward_terms(loader: Any, sim: Any, truth: Any, cfg: dict[str, Any]
     heading_rad = math.radians(station_heading_deg)
     desired_x = float(ref_pos[0]) + math.sin(heading_rad) * station_radius_m
     desired_y = float(ref_pos[1]) + math.cos(heading_rad) * station_radius_m
-    own_x = float(getattr(truth, "x", 0.0))
-    own_y = float(getattr(truth, "y", 0.0))
+    own_x = float(observation_view.own_ship_field(truth, "x", 0.0))
+    own_y = float(observation_view.own_ship_field(truth, "y", 0.0))
     station_error_m = math.hypot(desired_x - own_x, desired_y - own_y)
 
     terms: dict[str, float] = {}

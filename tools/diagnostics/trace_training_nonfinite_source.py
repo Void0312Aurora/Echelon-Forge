@@ -50,6 +50,7 @@ from python.rl.policy_algo.policies import SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 from python.training_callbacks import ScenarioCurriculumCallback
+from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 
 
 class NonFiniteTraceError(RuntimeError):
@@ -774,15 +775,17 @@ def _print_summary(report: dict[str, Any]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Trace the first non-finite tensor during resumed PPO training.")
-    parser.add_argument(
-        "--scenario",
-        default="experiments/coop_takeoff_to_cruise_formal_fixed_20260513/scenario_backup.json",
-        help="Scenario JSON used for the failing run.",
+    add_probe_run_args(
+        parser,
+        include=["scenario"],
+        defaults={"scenario": "experiments/coop_takeoff_to_cruise_formal_fixed_20260513/scenario_backup.json"},
+        helps={"scenario": "Scenario JSON used for the failing run."},
     )
-    parser.add_argument(
-        "--train_config",
-        default="experiments/coop_takeoff_to_cruise_formal_fixed_20260513/train_config_backup.json",
-        help="Train config JSON used for the failing run.",
+    add_model_load_args(
+        parser,
+        include=["train_config"],
+        defaults={"train_config": "experiments/coop_takeoff_to_cruise_formal_fixed_20260513/train_config_backup.json"},
+        helps={"train_config": "Train config JSON used for the failing run."},
     )
     parser.add_argument(
         "--resume_path",
@@ -795,11 +798,11 @@ def main() -> int:
         default=8192,
         help="Additional timesteps to train after loading the checkpoint.",
     )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Optional global seed. Defaults to the train config seed when present.",
+    add_probe_run_args(
+        parser,
+        include=["seed"],
+        defaults={"seed": None},
+        helps={"seed": "Optional global seed. Defaults to the train config seed when present."},
     )
     parser.add_argument(
         "--report_path",

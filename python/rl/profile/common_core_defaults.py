@@ -9,6 +9,10 @@ from python.rl.profile.common_core_base import (
     enum_value,
     is_default_enum,
 )
+from python.tasking_contracts.agency_registry import (
+    DEFAULT_AUTHORITY_SCOPE as _DEFAULT_AUTHORITY_SCOPE,
+    DEFAULT_COMMAND_RELATIONSHIP as _DEFAULT_COMMAND_RELATIONSHIP,
+)
 
 
 def service_profile_default() -> Any:
@@ -24,11 +28,17 @@ def tactical_unit_type_default() -> Any:
 
 
 def command_relationship_default() -> Any:
-    return getattr(ef_py.CommandRelationship, "TACON")
+    # Default relationship name is owned by the agency registry (declaration
+    # layer); resolved against the compiled enum here so the runtime value stays
+    # byte-identical to the former ``"TACON"`` literal (census EN/ZH §9).
+    return getattr(ef_py.CommandRelationship, _DEFAULT_COMMAND_RELATIONSHIP)
 
 
 def authority_scope_default() -> Any:
-    return getattr(ef_py.AuthorityScope, "Tactical")
+    # Default scope name is owned by the agency registry (declaration layer);
+    # resolved against the compiled enum here so the runtime value stays
+    # byte-identical to the former ``"Tactical"`` literal (census EN/ZH §9).
+    return getattr(ef_py.AuthorityScope, _DEFAULT_AUTHORITY_SCOPE)
 
 
 def coordination_mode_default() -> Any:

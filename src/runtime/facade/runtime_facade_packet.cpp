@@ -3,7 +3,9 @@
 #include "runtime/facade/runtime_window_coordinator.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -11,6 +13,40 @@
 namespace {
 
 using namespace runtime_facade_internal;
+
+constexpr std::string_view kRunSnapshotVersionPrefix = "snapshot:";
+
+std::optional<std::uint64_t> parse_run_snapshot_version(std::string_view value) noexcept {
+    if (!value.starts_with(kRunSnapshotVersionPrefix)) {
+        return std::nullopt;
+    }
+    value.remove_prefix(kRunSnapshotVersionPrefix.size());
+    if (value.empty()) {
+        return std::nullopt;
+    }
+    std::uint64_t parsed = 0;
+    const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), parsed);
+    if (error != std::errc{} || end != value.data() + value.size() || parsed == 0) {
+        return std::nullopt;
+    }
+    return parsed;
+}
+
+RuntimeWindowEvidenceSnapshot sealed_window_evidence(const RuntimeWindowResult &result) {
+    RuntimeWindowEvidenceSnapshot sealed{};
+    sealed.source_time_s = result.context.source_time_s;
+    sealed.observation_provenance = result.observation_packet.provenance;
+    sealed.engagement_trace_ids = result.engagement_packet.trace_ids;
+    sealed.engagement_producer_node_id = result.engagement_packet.producer_node_id;
+    sealed.engagement_barrier_detail = result.engagement_packet.barrier_detail;
+    sealed.barrier_trace = result.barrier_trace;
+    sealed.diagnostics_traces = result.diagnostics_traces;
+    sealed.execution_source_snapshot_versions.reserve(result.executed_nodes.size());
+    for (const auto &record : result.executed_nodes) {
+        sealed.execution_source_snapshot_versions.push_back(record.source_snapshot_version);
+    }
+    return sealed;
+}
 
 std::string track_source_name(int source) {
     switch (source) {
@@ -385,6 +421,40 @@ bool contains_world_index(const std::vector<std::uint64_t> &world_indices,
            world_indices.end();
 }
 
+// Shared dedupe-and-accumulate walk behind both export_diagnostics_traces
+// and export_engagement_event_packet below.
+template <typename AccumulateFn>
+void for_each_distinct_export_world_index(const WorldBatchRuntime &runtime,
+                                          const std::vector<EngagementEntityRef> &refs,
+                                          AccumulateFn &&accumulate) {
+    std::vector<std::uint64_t> exported_world_indices;
+    for (const auto &ref : refs) {
+        if (!valid_runtime_world_index(runtime, ref.world_index)) {
+            continue;
+        }
+        if (contains_world_index(exported_world_indices, ref.world_index)) {
+            continue;
+        }
+        exported_world_indices.push_back(ref.world_index);
+        accumulate(ref.world_index);
+    }
+}
+
+// Shared valid-ref filter behind both export_diagnostics_traces and
+// export_engagement_event_packet below.
+std::vector<EngagementEntityRef>
+filter_valid_world_refs(const WorldBatchRuntime &runtime,
+                        const std::vector<EngagementEntityRef> &refs) {
+    std::vector<EngagementEntityRef> valid_refs;
+    valid_refs.reserve(refs.size());
+    for (const auto &ref : refs) {
+        if (valid_runtime_world_index(runtime, ref.world_index)) {
+            valid_refs.push_back(ref);
+        }
+    }
+    return valid_refs;
+}
+
 void assign_world_index(EngagementEntityRef &ref, std::uint64_t world_index) {
     if (ref.entity_id != 0) {
         ref.world_index = world_index;
@@ -668,20 +738,12 @@ std::vector<DiagnosticsTrace>
 RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) const {
     std::vector<DiagnosticsTrace> traces;
 
-    std::vector<std::uint64_t> exported_world_indices;
-    for (const auto &ref : request.refs) {
-        if (!valid_runtime_world_index(*runtime_, ref.world_index)) {
-            continue;
-        }
-        if (contains_world_index(exported_world_indices, ref.world_index)) {
-            continue;
-        }
-        exported_world_indices.push_back(ref.world_index);
+    for_each_distinct_export_world_index(*runtime_, request.refs, [&](std::uint64_t world_index) {
         append_recent_diagnostics_traces(
             traces, with_world_index(export_recent_engagement_events_for_world(
-                                         static_cast<std::size_t>(ref.world_index)),
-                                     ref.world_index));
-    }
+                                         static_cast<std::size_t>(world_index)),
+                                     world_index));
+    });
 
     const bool needs_observations =
         request.include_track_packets || request.include_diagnostics_traces;
@@ -689,13 +751,8 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
         return traces;
     }
 
-    std::vector<EngagementEntityRef> valid_refs;
-    valid_refs.reserve(request.refs.size());
-    for (const auto &ref : request.refs) {
-        if (valid_runtime_world_index(*runtime_, ref.world_index)) {
-            valid_refs.push_back(ref);
-        }
-    }
+    const std::vector<EngagementEntityRef> valid_refs =
+        filter_valid_world_refs(*runtime_, request.refs);
     if (valid_refs.empty()) {
         return traces;
     }
@@ -722,7 +779,11 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
 }
 
 RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &request) {
-    return execute_runtime_window(
+    if (identity_ != nullptr) {
+        identity_->prune_expired_window_identity_registries();
+    }
+
+    RuntimeWindowResult result = execute_runtime_window(
         request,
         RuntimeWindowCoordinatorCallbacks{
             .apply_pilot_actions =
@@ -747,6 +808,50 @@ RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &reques
                     return export_diagnostics_traces(engagement_request);
                 },
         });
+
+    // The identity is intentionally attached only at the public facade seam,
+    // after the coordinator has produced the result.  Synthetic results made
+    // through the binding have no identity, and a result from another facade
+    // carries a different shared identity object even when its numeric trace
+    // ids overlap this run.
+    if (identity_ == nullptr || next_window_identity_ == kInvalidatedEvidenceCursor) {
+        return result;
+    }
+    const std::uint64_t window_sequence = next_window_identity_++;
+    RuntimeWindowEvidenceSnapshot sealed = sealed_window_evidence(result);
+    const std::shared_ptr<const RuntimeWindowIdentity> window_identity =
+        std::make_shared<RuntimeWindowIdentity>(
+            RuntimeWindowIdentity{identity_, window_sequence, std::move(sealed)});
+    identity_->recorded_window_sequences.try_emplace(window_sequence, window_identity);
+
+    for (const std::uint64_t trace_id : window_identity->evidence.engagement_trace_ids) {
+        if (trace_id >= 1U && trace_id < next_trace_id_) {
+            identity_->recorded_trace_window_sequences.try_emplace(trace_id, window_identity);
+        }
+    }
+    if (!window_identity->evidence.engagement_trace_ids.empty()) {
+        const std::uint64_t anchor_trace_id = window_identity->evidence.engagement_trace_ids.back();
+        const auto trace_it = identity_->recorded_trace_window_sequences.find(anchor_trace_id);
+        const std::shared_ptr<const RuntimeWindowIdentity> recorded_trace =
+            trace_it == identity_->recorded_trace_window_sequences.end() ? nullptr
+                                                                         : trace_it->second.lock();
+        if (recorded_trace != nullptr && recorded_trace.get() == window_identity.get()) {
+            identity_->recorded_anchor_window_sequences.try_emplace(anchor_trace_id,
+                                                                    window_identity);
+        }
+    }
+
+    for (const std::string &source_version :
+         window_identity->evidence.execution_source_snapshot_versions) {
+        const std::optional<std::uint64_t> parsed = parse_run_snapshot_version(source_version);
+        if (parsed.has_value() && *parsed < next_run_snapshot_version_) {
+            identity_->recorded_snapshot_window_sequences.try_emplace(*parsed, window_identity);
+        }
+    }
+
+    identity_->retain_recent_window_identity(window_identity);
+    result.identity_token_.identity_ = window_identity;
+    return result;
 }
 
 EngagementEventPacket
@@ -758,22 +863,13 @@ RuntimeFacade::export_engagement_event_packet(const EngagementBatchRequest &requ
     packet.barrier_sequence = kExportBarrierSequence;
     packet.barrier_detail = std::string(kExportBarrierDetail);
 
-    std::vector<std::uint64_t> exported_world_indices;
-    for (const auto &ref : request.refs) {
-        if (!valid_runtime_world_index(*runtime_, ref.world_index)) {
-            continue;
-        }
-        if (contains_world_index(exported_world_indices, ref.world_index)) {
-            continue;
-        }
-        exported_world_indices.push_back(ref.world_index);
-        append_recent_engagement_events(
-            packet,
-            with_world_index(export_recent_engagement_events_for_world(
-                                 static_cast<std::size_t>(ref.world_index)),
-                             ref.world_index),
-            request);
-    }
+    for_each_distinct_export_world_index(*runtime_, request.refs, [&](std::uint64_t world_index) {
+        append_recent_engagement_events(packet,
+                                        with_world_index(export_recent_engagement_events_for_world(
+                                                             static_cast<std::size_t>(world_index)),
+                                                         world_index),
+                                        request);
+    });
 
     const bool needs_observations =
         request.include_track_packets || request.include_diagnostics_traces;
@@ -787,13 +883,8 @@ RuntimeFacade::export_engagement_event_packet(const EngagementBatchRequest &requ
         return packet;
     }
 
-    std::vector<EngagementEntityRef> valid_refs;
-    valid_refs.reserve(request.refs.size());
-    for (const auto &ref : request.refs) {
-        if (valid_runtime_world_index(*runtime_, ref.world_index)) {
-            valid_refs.push_back(ref);
-        }
-    }
+    const std::vector<EngagementEntityRef> valid_refs =
+        filter_valid_world_refs(*runtime_, request.refs);
     if (valid_refs.empty()) {
         apply_export_packet_metadata(&packet, resolve_engagement_snapshot_version(packet),
                                      resolve_engagement_source_time(packet));

@@ -17,19 +17,6 @@ from python.tasking_contracts.bridge_views import (
     get_policy_instrument_state,
     resolve_loader_time_step,
 )
-# `infer_recovery_*`/`infer_route_ref_id`/`is_patrol_task`/`is_recover_task` stay
-# python.rl-resident: they dispatch through `tasking_profile_for_loader`, a
-# genuine entanglement point with the air/ground/naval profile modules (see
-# I24 report).
-from python.rl.tasking.bridge import (
-    infer_recovery_approach_type,
-    infer_recovery_base_id,
-    infer_recovery_runway_id,
-    infer_route_ref_id,
-    is_patrol_task,
-    is_recover_task,
-)
-
 from ..common import LeaderActionMapping, wrap_deg
 from ..contracts import clone_leader_intent, clone_pilot_report, clone_task_order
 
@@ -176,6 +163,9 @@ def station_metrics(
 
 
 def resolve_report_type(env: Any, mapping: LeaderActionMapping, *, phase_bucket: str):
+    # Deferred: profile-dispatch helpers stay python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import is_patrol_task, is_recover_task
+
     report_bucket = str(mapping.report_bucket)
     if report_bucket == "wilco":
         return getattr(ef_py.CommMsgType, "REP_WILCO")
@@ -269,6 +259,9 @@ def terminal_context(env: Any) -> dict[str, float | bool | str]:
 
 
 def terminal_feasible(env: Any, baseline: dict[str, Any], terminal_ctx: dict[str, Any]) -> bool:
+    # Deferred: profile-dispatch helpers stay python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import is_recover_task
+
     phase_name = str(terminal_ctx.get("phase_name", ""))
     if phase_name in {"approach_armed", "landing_final", "rollout", "abort"}:
         return True
@@ -340,6 +333,9 @@ def sanitize_action_mapping(
     mapping: LeaderActionMapping,
     baseline: dict[str, Any],
 ) -> tuple[LeaderActionMapping, dict[str, Any]]:
+    # Deferred: profile-dispatch helpers stay python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import is_recover_task
+
     term_ctx = terminal_context(env)
     phase_name = str(term_ctx.get("phase_name", ""))
     alt_agl_m = float(term_ctx.get("alt_agl_m", 0.0))
@@ -433,6 +429,15 @@ def sanitize_action_mapping(
 
 
 def apply_leader_command(env: Any, *, mapping: LeaderActionMapping, baseline: dict[str, Any]) -> None:
+    # Deferred: profile-dispatch helpers stay python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import (
+        infer_recovery_approach_type,
+        infer_recovery_base_id,
+        infer_recovery_runway_id,
+        infer_route_ref_id,
+        is_recover_task,
+    )
+
     loader = env.unwrapped.loader
     task = clone_task_order(getattr(loader, "task_order", None))
     intent = clone_leader_intent(getattr(loader, "leader_intent", None))

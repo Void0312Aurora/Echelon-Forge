@@ -1,0 +1,27 @@
+usage: eval_task.py [-h] --scenario SCENARIO [--episodes EPISODES]
+                    [--max_steps MAX_STEPS] [--seed SEED]
+                    [--action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}]
+                    [--include_visual] [--include_proprio]
+                    [--no_randomization] --checkpoint CHECKPOINT
+                    [--device DEVICE] [--stochastic_state] --task
+                    {stable_flight,takeoff_roll,centerline,waypoint_nav}
+                    --backend {world_model,scripted}
+
+Unified waypoint navigation task evaluator (task=waypoint_nav,
+backend=world_model)
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO
+  --episodes EPISODES
+  --max_steps MAX_STEPS
+  --seed SEED
+  --action_mode {full,takeoff2,takeoff4,naval_station3,air_combat_hybrid_v1}
+  --include_visual
+  --include_proprio
+  --no_randomization
+  --checkpoint CHECKPOINT
+  --device DEVICE
+  --stochastic_state
+  --task {stable_flight,takeoff_roll,centerline,waypoint_nav}
+  --backend {world_model,scripted}

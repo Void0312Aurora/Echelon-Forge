@@ -70,6 +70,14 @@ def dependency_include_path(dependency: str) -> Path:
   )
 
 
+def _dependency_platform_link_args(dependency: str) -> list[str]:
+  # MinGW static flecs builds retain their Winsock imports; CMake normally
+  # supplies this transitive dependency, while standalone snippet links do not.
+  if dependency == "flecs" and os.name == "nt":
+    return ["-lws2_32"]
+  return []
+
+
 def dependency_link_args(dependency: str) -> list[str]:
   for build_dir in _candidate_build_dirs():
     library_dirs = [build_dir / "_deps" / f"{dependency}-build", build_dir]
@@ -80,10 +88,16 @@ def dependency_link_args(dependency: str) -> list[str]:
       for static_name in static_names:
         static_lib = lib_dir / static_name
         if static_lib.is_file():
-          return [str(static_lib)]
+          return [str(static_lib), *_dependency_platform_link_args(dependency)]
       shared_lib = lib_dir / f"lib{dependency}.so"
       if shared_lib.is_file():
-        return ["-L", str(lib_dir), f"-l{dependency}", f"-Wl,-rpath,{lib_dir}"]
+        return [
+          "-L",
+          str(lib_dir),
+          f"-l{dependency}",
+          f"-Wl,-rpath,{lib_dir}",
+          *_dependency_platform_link_args(dependency),
+        ]
   return []
 
 

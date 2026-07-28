@@ -3,6 +3,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.support.xmacro_text import expand_binding_field_incs
+from tests.support.xmacro_text import expand_header_field_incs
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -31,8 +34,21 @@ RL_WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch"
 EXAMPLES_CONFIG = REPO_ROOT / "examples" / "config"
 
 
+_HEADER_FIELD_INC_OWNERS = (WORLD_BATCH_CONTRACTS, RUNTIME_FACADE_TYPES)
+
+
 def _text(path: Path) -> str:
-  return path.read_text(encoding="utf-8")
+  text = path.read_text(encoding="utf-8")
+  # Several field families under these paths are now schema-owned
+  # (tools/maintenance/dto_schema, I18/I23/I26): the struct/binding body is
+  # an X-macro #include rather than inline field text. Expand it here so
+  # this file's source-text boundary guards keep matching the compiled
+  # shape instead of the indirected #include line.
+  if path == BINDINGS_RUNTIME:
+    return expand_binding_field_incs(text)
+  if path in _HEADER_FIELD_INC_OWNERS:
+    return expand_header_field_incs(text)
+  return text
 
 
 def _runtime_facade_source_text() -> str:
@@ -89,8 +105,8 @@ def test_wp14_boundary_guard_runtime_capabilities_remains_backend_fidelity_only(
     )
 
   binding_source = _text(BINDINGS_RUNTIME)
-  runtime_caps_binding_start = binding_source.index('nb::class_<RuntimeCapabilities>(m, "RuntimeCapabilities")')
-  runtime_batch_config_start = binding_source.index('nb::class_<RuntimeBatchConfig>(m, "RuntimeBatchConfig")')
+  runtime_caps_binding_start = binding_source.index('nb::class_<RuntimeCapabilities>')
+  runtime_batch_config_start = binding_source.index('nb::class_<RuntimeBatchConfig>')
   runtime_capabilities_binding_block = binding_source[
     runtime_caps_binding_start:runtime_batch_config_start
   ]
@@ -166,8 +182,15 @@ def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation
   world_batch_source = _text(WORLD_BATCH_SOURCE)
   facade_types = _text(RUNTIME_FACADE_TYPES)
 
-  assert "std::vector<uint64_t> apply_world_setup_batch(" in facade_header
-  assert "const std::vector<WorldSpawnRequest>& requests," in facade_header
+  assert re.search(
+    r"std::vector<uint64_t>\s+apply_world_setup_batch\(\s*"
+    r"const\s+std::vector<uint32_t>\s+&seeds\s*,",
+    facade_header,
+  )
+  assert re.search(
+    r"const\s+std::vector<WorldSpawnRequest>\s+&requests\s*,",
+    facade_header,
+  )
   assert "std::vector<WorldSpawnRequest> spawn_requests;" in facade_types
   assert "std::vector<TypedPlatformSpawnRequest> typed_platform_spawn_requests;" in facade_types, (
     "WP20 validation-first publicization must remain additive on BatchWorldSetupRequest "
@@ -195,7 +218,11 @@ def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation
     r"spawn_units_batch\(\s*const\s+std::vector<WorldSpawnRequest>\s*&\s*requests\s*\)",
     world_batch_source,
   )
-  assert "std::uint64_t spawn_typed_platform_unit(" in world_batch_header, (
+  assert re.search(
+    r"std::uint64_t\s+spawn_typed_platform_unit\(\s*"
+    r"const\s+TypedPlatformSpawnRequest\s+&request\s*\);",
+    world_batch_header,
+  ), (
     "WP22 maintained typed setup promotion requires a batch-owned typed spawn helper "
     "instead of rematerializing maintained requests into WorldSpawnRequest"
   )

@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -15,338 +16,162 @@
 #include "runtime/contracts/runtime_dto_contracts.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
+// These types are intentionally incomplete at the public DTO boundary.  The
+// runtime facade attaches an opaque, non-bindable identity to results returned
+// by RuntimeFacade::run_window. Maintained evidence producers use it to reject
+// synthetic/foreign results and to verify that every consumed public evidence
+// field still matches the immutable snapshot sealed for that exact window.
+struct RuntimeFacadeIdentity;
+struct RuntimeWindowIdentity;
+
+// Public storage keeps RuntimeWindowResult an aggregate (existing designated
+// initialization is a source-compatibility contract), while the incomplete
+// pointee and private payload keep the token opaque. RuntimeFacade is the only
+// producer that can attach or inspect a non-empty token; Python bindings omit
+// this holder entirely.
+class RuntimeWindowIdentityToken {
+  public:
+    RuntimeWindowIdentityToken() = default;
+    RuntimeWindowIdentityToken(const RuntimeWindowIdentityToken &) = default;
+    RuntimeWindowIdentityToken(RuntimeWindowIdentityToken &&) noexcept = default;
+    RuntimeWindowIdentityToken &operator=(const RuntimeWindowIdentityToken &) = default;
+    RuntimeWindowIdentityToken &operator=(RuntimeWindowIdentityToken &&) noexcept = default;
+
+  private:
+    friend class RuntimeFacade;
+    std::shared_ptr<const RuntimeWindowIdentity> identity_;
+};
+
 struct RuntimeCapabilities {
-    bool supports_batch_runtime = false;
-    bool supports_compiled_episode_controller = false;
-    bool supports_compiled_execution_step = false;
-    bool supports_gpu_visual = false;
-    bool supports_gpu_observation = false;
-    bool supports_gpu_flight_shaping = false;
-    bool supports_device_observation_view = false;
-    bool supports_resident_state = false;
-    bool supports_exact_gpu_backend = false;
-    bool supports_shadow_compare = false;
-    std::string maintained_baseline_backend_profile_id;
-    std::string maintained_baseline_parity_budget_ref;
-    std::string maintained_baseline_profile_status;
-    std::string device_observation_view_candidate_profile_id;
-    std::string device_observation_view_rejection_reason;
-    std::string exact_gpu_backend_candidate_profile_id;
-    std::string exact_gpu_backend_rejection_reason;
-    std::string resident_state_candidate_profile_id;
-    std::string resident_state_candidate_parity_budget_ref;
-    std::string resident_state_rejection_reason;
-    std::string shadow_compare_candidate_profile_id;
-    std::string shadow_compare_candidate_parity_budget_ref;
-    std::string shadow_compare_rejection_reason;
-    std::string multi_fidelity_rejection_reason;
+#define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_capabilities.inc"
 };
 
 struct RuntimeBatchConfig {
-    std::size_t world_count = 0;
-    std::size_t worker_threads = 1;
+#define EF_RUNTIME_BATCH_CONFIG_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_batch_config.inc"
 };
 
 struct RuntimeFidelityRequest {
-    std::string request_label;
-    std::string backend_profile_id;
-    std::string parity_budget_ref;
-    std::string provider_family = "none";
-    std::vector<std::string> model_family_scope;
-    std::string validation_gate;
-    std::vector<std::string> facade_evidence_refs;
+#define EF_RUNTIME_FIDELITY_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_fidelity_request.inc"
 };
 
 struct RuntimeFidelityAdmission {
-    bool admitted = false;
-    bool baseline_exact_evaluation = false;
-    std::string request_label;
-    std::string backend_profile_id;
-    std::string parity_budget_ref;
-    std::string requested_provider_family = "none";
-    std::string selected_provider_family = "none";
-    std::string selected_stage_node_id;
-    std::string rejection_reason;
-    std::vector<std::string> errors;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_FIDELITY_ADMISSION_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_fidelity_admission.inc"
 };
 
 struct RuntimeCounterfactualSnapshot {
-    std::string worldline_id;
-    std::string parent_worldline_id;
-    std::uint64_t deterministic_seed = 0;
-    std::uint64_t world_index = 0;
-    std::uint64_t entity_id = 0;
-    double x = 0.0;
-    double y = 0.0;
-    double z = 0.0;
-    double vx = 0.0;
-    double vy = 0.0;
-    double vz = 0.0;
-    double heading = 0.0;
-    double pitch = 0.0;
-    double roll = 0.0;
-    std::uint64_t snapshot_version = 0;
-    std::string barrier_id = "counterfactual_selected_slice";
-    std::string fidelity_profile_id;
-    std::string provider_family;
-    std::string selected_stage_node_id;
-    std::string cadence_reason;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_SNAPSHOT_FIELD(type, name, default_value)                        \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_snapshot.inc"
 };
 
 struct RuntimeWorldlineComparison {
-    bool comparable = false;
-    std::string comparison_id;
-    std::string parent_worldline_id;
-    std::string branch_worldline_id;
-    std::string barrier_id = "counterfactual_selected_slice";
-    double dx = 0.0;
-    double dy = 0.0;
-    double dz = 0.0;
-    double dvx = 0.0;
-    double dvy = 0.0;
-    double dvz = 0.0;
-    double dheading = 0.0;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_WORLDLINE_COMPARISON_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_worldline_comparison.inc"
 };
 
 struct BatchResetRequest {
-    std::vector<std::uint32_t> seeds;
+#define EF_BATCH_RESET_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/batch_reset_request.inc"
 };
 
 struct BatchWorldSetupRequest {
-    std::vector<std::uint32_t> seeds;
-    std::vector<WorldTerrainAssignment> terrain_assignments;
-    std::vector<WorldWindAssignment> wind_assignments;
-    std::vector<WorldSunAssignment> sun_assignments;
-    std::vector<WorldZoneDefinition> zones;
-    std::vector<WorldSpawnRequest> spawn_requests;
-    std::vector<TypedPlatformSpawnRequest> typed_platform_spawn_requests;
-    std::vector<double> time_steps;
+#define EF_BATCH_WORLD_SETUP_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/batch_world_setup_request.inc"
 };
 
 struct BatchWorldSetupResult {
-    std::vector<std::uint64_t> entity_ids;
-    std::vector<TypedPlatformSpawnResult> typed_platform_spawn_results;
+#define EF_BATCH_WORLD_SETUP_RESULT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/batch_world_setup_result.inc"
 };
 
 struct RuntimeWorldLayoutRequest {
-    std::uint64_t world_index = 0;
-    std::uint32_t seed = 42;
-    std::string terrain_type;
-    double wind_speed_mps = 0.0;
-    double wind_dir_from_deg = 0.0;
-    double wind_shear_mps_per_km = 0.0;
-    // Defaults preserve the historical fixed sun vector (north, 45 deg up).
-    double sun_azimuth_deg = 0.0;
-    double sun_elevation_deg = 45.0;
-    bool maritime_configured = false;
-    double sea_state = 0.0;
-    double wave_heading_deg = 0.0;
-    double wave_period_s = 8.0;
-    std::vector<WorldZoneDefinition> zones;
-    std::vector<WorldSpawnRequest> spawn_requests;
-    std::vector<double> time_steps;
+#define EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_world_layout_request.inc"
 };
 
 struct RuntimeWorldLayoutResult {
-    std::uint64_t world_index = 0;
-    std::vector<std::uint64_t> entity_ids;
+#define EF_RUNTIME_WORLD_LAYOUT_RESULT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_world_layout_result.inc"
 };
 
 struct RuntimeCounterfactualBranchRequest {
-    BatchWorldSetupRequest baseline_setup;
-    WorldEntityRef entity_ref;
-    RuntimeFidelityRequest fidelity_request;
-    std::uint64_t deterministic_seed = 0;
-    std::string replay_envelope_id;
-    std::string branch_point_id;
-    std::string branch_worldline_id;
-    std::string parent_worldline_id;
-    std::string restore_barrier_id = "counterfactual_selected_slice";
-    std::string cadence_reason = "selected_slice_cadence_trace_runtime_window";
-    double mutation_dx = 0.0;
-    double mutation_dy = 0.0;
-    double mutation_dz = 0.0;
-    double mutation_dvx = 0.0;
-    double mutation_dvy = 0.0;
-    double mutation_dvz = 0.0;
-    double mutation_dheading = 0.0;
-    bool allow_raw_authoritative_state_mutation = false;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_REQUEST_FIELD(type, name, default_value)                  \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_branch_request.inc"
 };
 
 struct RuntimeCounterfactualRestoreRequest {
-    RuntimeCounterfactualSnapshot snapshot;
-    std::string expected_worldline_id;
-    std::string target_worldline_id;
-    std::uint64_t target_deterministic_seed = 0;
-    WorldEntityRef target_entity_ref;
-    std::string restore_barrier_id = "counterfactual_selected_slice";
-    bool allow_raw_authoritative_state_mutation = false;
-    bool request_full_clone = false;
-    bool request_resident_state_restore = false;
-    bool request_exact_gpu_restore = false;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_REQUEST_FIELD(type, name, default_value)                 \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_restore_request.inc"
 };
 
 struct RuntimeCounterfactualRestoreResult {
-    bool restored = false;
-    std::string rejection_reason;
-    RuntimeCounterfactualSnapshot restored_snapshot;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_RESTORE_RESULT_FIELD(type, name, default_value)                  \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_restore_result.inc"
 };
 
 struct RuntimeCounterfactualBranchResult {
-    bool admitted = false;
-    std::string rejection_reason;
-    RuntimeFidelityAdmission fidelity_admission;
-    RuntimeCounterfactualSnapshot parent_snapshot;
-    RuntimeCounterfactualSnapshot branch_snapshot;
-    RuntimeWorldlineComparison comparison;
-    RuntimeCounterfactualRestoreResult restore_result;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_COUNTERFACTUAL_BRANCH_RESULT_FIELD(type, name, default_value)                   \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_counterfactual_branch_result.inc"
 };
 
 struct RuntimeExperimentStepRequest {
-    ExecutionEpisodeState state;
-    WorldExecutionEpisodeStepRequest request;
-    std::string observation_ref;
-    std::string profile_ref;
-    std::string claim_scope =
-        std::string(runtime::counterfactual::kExperimentProfileClaimScopeDescriptive);
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_EXPERIMENT_STEP_REQUEST_FIELD(type, name, default_value)                        \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_experiment_step_request.inc"
 };
 
 struct RuntimeExperimentRequest {
-    RuntimeCounterfactualBranchRequest branch_request;
-    std::vector<RuntimeExperimentStepRequest> parent_step_requests;
-    std::vector<RuntimeExperimentStepRequest> branch_step_requests;
-    std::vector<std::uint64_t> trace_ids;
-    std::string experiment_run_id;
-    std::string comparison_id;
-    std::string setup_ref;
-    std::string generation_ref;
-    std::string generated_input_ref;
-    std::string generated_input_kind =
-        std::string(runtime::counterfactual::kScenarioGenerationKindScenarioVariation);
-    std::string generated_input_source =
-        std::string(runtime::counterfactual::kScenarioGenerationSourceCounterfactualBranch);
-    std::string generated_input_generator_version =
-        "RuntimeFacade.run_counterfactual_experiment.counterfactual";
-    std::string generated_input_baseline_scenario_ref;
-    std::vector<std::string> generated_input_evidence_refs;
-    std::vector<std::string> capability_refs;
-    bool include_observations = true;
-    bool include_diagnostics_traces = true;
-    bool include_generated_input_ref = true;
-    bool truth_claim = false;
-    bool promoted_to_support = false;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_EXPERIMENT_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_experiment_request.inc"
 };
 
 struct ObservationBatchRequest {
-    std::vector<WorldEntityRef> refs;
-    bool include_agent_observations = true;
-    bool include_instrument_states = false;
+#define EF_OBSERVATION_BATCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/observation_batch_request.inc"
 };
 
 struct TaskingBatchRequest {
-    std::vector<WorldEntityRef> refs;
-    bool include_mission_command_contracts = false;
-    bool include_task_order_contracts = false;
-    bool include_leader_intent_contracts = false;
-    bool include_pilot_report_contracts = false;
+#define EF_TASKING_BATCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/tasking_batch_request.inc"
 };
 
 struct EngagementBatchRequest {
-    std::vector<EngagementEntityRef> refs;
-    std::vector<std::uint64_t> trace_ids;
-    bool include_track_packets = true;
-    bool include_launch_requests = true;
-    bool include_launch_events = true;
-    bool include_munition_lifecycle_packets = true;
-    bool include_effects_events = true;
-    bool include_damage_reports = true;
-    bool include_diagnostics_traces = true;
+#define EF_ENGAGEMENT_BATCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/engagement_batch_request.inc"
 };
 
 struct ExecutionBatchStepRequest {
-    std::vector<WorldExecutionEpisodeStepRequest> step_requests;
-    bool include_agent_observations = true;
-    bool include_instrument_states = false;
+#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/execution_batch_step_request.inc"
 };
 
 struct DeviceResidentOutputDescriptor {
-    std::vector<std::uint64_t> output_shape;
-    std::string dtype;
-    std::size_t element_count = 0;
-    std::uint64_t source_snapshot = 0;
-    std::string sync_or_export_barrier;
-    std::string host_visible_availability = "unavailable";
-    std::string diagnostics_label = "diagnostics_only";
-    std::vector<std::string> consumer_constraints;
+#define EF_RESIDENT_DEVICE_OUTPUT_DESCRIPTOR_FIELD(type, name, default_value)                      \
+    type name = default_value;
+#include "runtime/facade/detail/resident_device_output_descriptor.inc"
 };
 
 struct ObservationBatchPacket {
-    std::uint64_t snapshot_version = 0;
-    std::string barrier_id = "export";
-    double source_time_s = 0.0;
-    InformationStateSource provenance = make_information_state_source(
-        kPolicyInformationStateAgentObservation, kPolicySourceLabelFacadeObservationPacket,
-        kPolicyMaintainedStatusMaintained);
-    std::vector<WorldEntityRef> refs;
-    std::vector<AgentObservation> agent_observations;
-    std::vector<InstrumentState> instrument_states;
+#define EF_OBSERVATION_BATCH_PACKET_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/observation_batch_packet.inc"
 };
 
 struct EngagementEventPacket {
-    std::uint64_t snapshot_version = 0;
-    std::string barrier_id = "export";
-    std::uint64_t barrier_sequence = 0;
-    std::string barrier_detail = "maintained_facade_export";
-    double source_time_s = 0.0;
-    std::string producer_node_id;
-    InformationStateSource packet_provenance = make_information_state_source(
-        kPolicyInformationStateTrackState, kPolicySourceLabelTrackStatePacket,
-        kPolicyMaintainedStatusMaintained);
-    InformationStateSource diagnostics_provenance = make_information_state_source(
-        kPolicyInformationStateDecisionBelief, kPolicySourceLabelWorldTruthDiagnostics,
-        kPolicyMaintainedStatusDiagnosticsOnly);
-    std::vector<EngagementEntityRef> refs;
-    std::vector<std::uint64_t> trace_ids;
-    std::vector<TrackPacket> track_packets;
-    std::vector<LaunchRequest> launch_requests;
-    std::vector<LaunchEvent> launch_events;
-    std::vector<MunitionLifecyclePacket> munition_lifecycle_packets;
-    std::vector<EffectsEvent> effects_events;
-    std::vector<NearestApproachEvent> nearest_approach_events;
-    std::vector<FuzeEvaluationEvent> fuze_evaluation_events;
-    std::vector<WarheadMechanismEvent> warhead_mechanism_events;
-    std::vector<SpatialCoverageEvent> spatial_coverage_events;
-    std::vector<ComponentLoadEvent> component_load_events;
-    std::vector<ComponentDamageEvent> component_damage_events;
-    std::vector<PlatformConsequenceEvent> platform_consequence_events;
-    std::vector<StructuralBreakupEvent> structural_breakup_events;
-    std::vector<LifecycleTransitionEvent> lifecycle_transition_events;
-    std::vector<TrainingProjectionEvent> training_projection_events;
-    std::vector<DamageReport> damage_reports;
-    std::vector<DiagnosticsTrace> diagnostics_traces;
+#define EF_ENGAGEMENT_EVENT_PACKET_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/engagement_event_packet.inc"
 };
 
 struct TaskingBatchPacket {
-    std::uint64_t snapshot_version = 0;
-    std::string barrier_id = "tasking_export";
-    double source_time_s = 0.0;
-    InformationStateSource provenance = make_information_state_source(
-        kPolicyInformationStateDecisionBelief, "facade_tasking_packet",
-        kPolicyMaintainedStatusAdapterProjection);
-    std::vector<WorldEntityRef> refs;
-    std::vector<MissionCommandMaintainedBatchContract> mission_command_contracts;
-    std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;
-    std::vector<LeaderIntentMaintainedBatchContract> leader_intent_contracts;
-    std::vector<PilotReportMaintainedBatchContract> pilot_report_contracts;
+#define EF_TASKING_BATCH_PACKET_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/tasking_batch_packet.inc"
 };
 
 struct ExecutionBatchStepResult {
@@ -368,46 +193,20 @@ struct ExecutionBatchStepResult {
 };
 
 struct RuntimeExperimentAncestry {
-    bool evidence_bridge_valid = false;
-    bool evidence_bridge_fail_closed = false;
-    std::string evidence_bridge_rejection_reason;
-    std::vector<std::string> evidence_bridge_errors;
-    std::string counterfactual_request_ref;
-    std::string counterfactual_admission_ref;
-    std::string setup_ref;
-    std::string generation_ref;
-    std::string replay_envelope_ref;
-    std::string branch_point_ref;
-    std::string generated_input_ref;
-    std::string backend_profile_ref;
-    std::string fidelity_profile_ref;
-    std::vector<std::string> capability_refs;
-    std::vector<std::string> profile_observation_refs;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_EXPERIMENT_ANCESTRY_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_experiment_ancestry.inc"
 };
 
 struct RuntimeExperimentResult {
-    bool admitted = false;
-    std::string rejection_reason;
-    RuntimeCounterfactualBranchResult branch_result;
-    ObservationBatchPacket parent_observation_packet;
-    ObservationBatchPacket branch_observation_packet;
-    ExecutionBatchStepResult parent_step_result;
-    ExecutionBatchStepResult branch_step_result;
-    std::vector<DiagnosticsTrace> parent_diagnostics_traces;
-    std::vector<DiagnosticsTrace> branch_diagnostics_traces;
-    RuntimeExperimentAncestry ancestry;
-    std::vector<std::string> evidence_refs;
+#define EF_RUNTIME_EXPERIMENT_RESULT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_experiment_result.inc"
 };
 
 struct RuntimeWindowActionRequest {
     struct CadenceControl {
-        ActionHoldPolicy hold_policy{};
-        bool enabled = false;
-        bool has_expiry_time = false;
-        double expiry_time_s = 0.0;
-        std::string source_cadence_domain = "control";
-        std::uint32_t source_tick = 0;
+#define EF_RUNTIME_WINDOW_CADENCE_CONTROL_FIELD(type, name, default_value)                         \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_window_cadence_control.inc"
     };
 
     ActionIntentPacket action_intent{};
@@ -429,103 +228,202 @@ struct RuntimeWindowActionRequest {
 };
 
 struct RuntimeWindowInputRecord {
-    RuntimeWindowActionRequest request{};
-    std::string reason;
+#define EF_RUNTIME_WINDOW_INPUT_RECORD_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_window_input_record.inc"
 };
 
 struct RuntimeWindowSchedulingContext {
-    std::string window_id;
-    std::uint64_t world_id = 0;
-    double source_time_s = 0.0;
-    std::uint64_t barrier_sequence = 0;
-    std::string current_barrier_id;
-    std::vector<RuntimeWindowInputRecord> accepted_inputs;
-    std::vector<RuntimeWindowInputRecord> deferred_inputs;
-    std::vector<RuntimeWindowInputRecord> rejected_inputs;
-    std::vector<RuntimeWindowInputRecord> expired_inputs;
+#define EF_RUNTIME_WINDOW_SCHEDULING_CONTEXT_FIELD(type, name, default_value)                      \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_window_scheduling_context.inc"
 };
 
 struct RuntimeWindowBarrierRecord {
-    std::uint64_t sequence = 0;
-    std::string barrier_id;
-    std::string node_id;
+#define EF_RUNTIME_WINDOW_BARRIER_RECORD_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_window_barrier_record.inc"
 };
 
 struct RuntimeWindowVisibilityRecord {
-    std::string barrier_id;
-    std::size_t visible_input_count = 0;
+#define EF_RUNTIME_WINDOW_VISIBILITY_RECORD_FIELD(type, name, default_value)                       \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_window_visibility_record.inc"
 };
 
 struct RuntimeWindowNodeExecutionRecord {
-    std::string node_id;
-    std::string clock_domain;
-    std::string read_snapshot_policy;
-    std::string write_commit_policy;
-    std::size_t visible_input_count = 0;
-    std::string execution_state = "skipped";
-    std::string decision_reason;
-    std::string trigger_source;
-    std::string decision_barrier_id;
-    std::string clock_merge_policy;
-    std::string source_snapshot_version;
-    double source_time_s = 0.0;
-    std::string target_window_id;
-    std::vector<std::string> barrier_order;
+#define EF_RUNTIME_WINDOW_NODE_EXECUTION_RECORD_FIELD(type, name, default_value)                   \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_window_node_execution_record.inc"
 };
 
 struct RuntimeWindowCadence {
-    std::string domain = "control";
-    std::uint32_t tick_count = 1;
-    double interval_s = 0.0;
-    std::string merge_policy = "nested_slot";
-    std::string barrier_id;
+#define EF_RUNTIME_WINDOW_CADENCE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_window_cadence.inc"
 };
 
 struct RuntimeWindowCadenceConfig {
-    double window_duration_s = 0.0;
-    std::vector<RuntimeWindowCadence> domains;
+#define EF_RUNTIME_WINDOW_CADENCE_CONFIG_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_window_cadence_config.inc"
 };
 
 struct RuntimeWindowCadenceTraceRecord {
-    std::string domain;
-    std::uint32_t tick = 0;
-    std::string node_id;
-    std::string decision = "skipped";
-    std::string decision_reason;
-    std::string source;
-    std::string barrier_id;
-    std::string clock_domain;
-    std::string clock_merge_policy;
-    std::string cadence_merge_policy;
-    std::string relation;
-    bool held = false;
-    bool expired = false;
-    bool deferred = false;
-    bool diagnostics_only = false;
+#define EF_RUNTIME_WINDOW_CADENCE_TRACE_RECORD_FIELD(type, name, default_value)                    \
+    type name = default_value;
+#include "runtime/facade/detail/runtime_window_cadence_trace_record.inc"
 };
 
 struct RuntimeWindowRequest {
-    std::string window_id;
-    std::uint64_t world_id = 0;
-    double source_time_s = 0.0;
-    std::vector<RuntimeWindowActionRequest> action_requests;
-    ObservationBatchRequest observation_request;
-    EngagementBatchRequest engagement_request;
-    RuntimeWindowCadenceConfig cadence_config;
-    bool export_observation = true;
-    bool export_engagement = true;
-    bool export_diagnostics = true;
+#define EF_RUNTIME_WINDOW_REQUEST_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_window_request.inc"
 };
 
 struct RuntimeWindowResult {
-    RuntimeWindowSchedulingContext context;
-    std::vector<RuntimeWindowBarrierRecord> barrier_trace;
-    std::vector<RuntimeWindowVisibilityRecord> visibility_trace;
-    std::vector<RuntimeWindowNodeExecutionRecord> executed_nodes;
-    RuntimeWindowCadenceConfig cadence_config;
-    std::vector<RuntimeWindowCadenceTraceRecord> cadence_trace;
-    std::vector<RuntimeWindowInputRecord> injected_inputs;
-    ObservationBatchPacket observation_packet;
-    EngagementEventPacket engagement_packet;
-    std::vector<DiagnosticsTrace> diagnostics_traces;
+#define EF_RUNTIME_WINDOW_RESULT_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/facade/detail/runtime_window_result.inc"
+    // Trailing additive storage: existing field order and offsets stay fixed,
+    // and the result remains an aggregate for designated initialization.
+    RuntimeWindowIdentityToken identity_token_{};
+};
+
+// --- T10 evidence spine, slice 6A (this iteration) -------------------------
+//
+// Additive result DTOs of the maintained engagement-packet ancestry producer
+// (RuntimeFacade::build_maintained_packet_ancestry). Hand-written next to the
+// window DTOs they reference, following the slice-5 precedent
+// (MaintainedReplayEnvelopeResult in counterfactual_replay_contract_types.h);
+// appended at the end of this header, so no existing member order moves.
+//
+// The ancestry carries parent-linked COPIES of a real window's exported
+// DiagnosticsTrace family (census slice-6 gap: parent_trace_id is hardcoded 0
+// on the facade export path) -- the window products themselves are never
+// mutated, so every default-path serialized value stays byte-identical.
+// Lineage refs use the shared typed-ref vocabulary
+// (ScenarioGenerationEvidenceMetadataRef: ref_id / evidence_kind /
+// provenance_label, the VA-5/VA-6 field names the lineage schema modules pin).
+struct MaintainedEngagementPacketAncestry {
+    // "ancestry:maintained:{run_id}:trace:{anchor_trace_id}" -- reserved
+    // namespace, disjoint from "replay:maintained:*" and "replay:facade:*".
+    std::string packet_ancestry_id;
+    std::string run_id;
+    std::string episode_id;
+    // The window's own run-minted VA-8 anchor (engagement packet trace_ids
+    // tail, same anchor the slice-5 envelope id embeds).
+    std::uint64_t anchor_trace_id = 0;
+    // The PREVIOUS window's run-minted anchor; 0 = root window (no parent),
+    // which is exactly the pre-slice default value of parent_trace_id.
+    std::uint64_t parent_trace_id = 0;
+    // The admitted maintained replay envelope of the SAME window
+    // ("replay:maintained:{run_id}:trace:{anchor}"), validated by
+    // validate_replay_envelope before this ancestry can be admitted.
+    std::string replay_envelope_ref;
+    // "event:trace:{parent_trace_id}" (the slice-5 event-order embedding) or
+    // empty at the root.
+    std::string parent_event_order_ref;
+    // Typed lineage refs (VA-5 vocabulary): replay envelope + anchor trace
+    // (+ parent trace when linked).
+    std::vector<runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef> lineage_refs;
+    // Parent-linked copies of the window's exported diagnostics traces.
+    // Copies whose trace_id is one of the packet's run-minted tags carry
+    // parent_trace_id = the ancestry parent; copies from the kernel
+    // engagement-event id space are left untouched (the census's disjoint-id
+    // warning: a VA-8 parent must not be grafted onto a kernel-space trace).
+    std::vector<DiagnosticsTrace> ancestral_traces;
+};
+
+// Fail-closed result: `admitted` is only true when the slice-5 envelope gates
+// (including validate_replay_envelope) passed AND the ancestry-specific parent
+// gates passed. On rejection the ancestry stays default-constructed, so a
+// rejected result cannot leak half-real lineage.
+struct MaintainedPacketAncestryResult {
+    bool admitted = false;
+    MaintainedEngagementPacketAncestry ancestry{};
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+    std::vector<std::string> evidence_refs;
+};
+
+// --- T10 evidence spine, slice 7 (this iteration) ---------------------------
+//
+// Additive result DTOs of the maintained worldline/counterfactual comparison
+// producer (RuntimeFacade::build_maintained_worldline_comparison). Hand-written
+// next to the slice-6A ancestry DTOs they consume, following the slice-5/6A
+// precedent; appended at the end of this header, so no existing member order
+// moves (member order is ABI for every DTO above).
+//
+// NO TRUTH PROMOTION -- the slice red line. Unlike the raw counterfactual
+// surface's RuntimeWorldlineComparison (which carries kinematic truth deltas
+// dx/dy/dz/dvx/dvy/dvz/dheading), this DTO carries evidence REFERENCES only:
+// ids minted by the slice-5/6A producers of THIS facade (replay envelope ids,
+// packet ancestry ids, VA-8 anchor trace ids, event-order refs, snapshot
+// version refs) plus the caller-owned run identity and seeds. No field copies
+// truth state, so an admitted comparison can never promote a counterfactual
+// worldline's state into support -- there is nothing state-shaped to promote.
+// truth_claim / promoted_to_support are structurally always false (the
+// producer takes no flag that could set them) and claim_scope is always the
+// contract-owned "comparative" (kExperimentProfileClaimScopeComparative),
+// mirroring the WP17 experiment surface's descriptive-claims discipline.
+struct MaintainedWorldlineComparison {
+    // "comparison:maintained:{run_id}:trace:{baseline_anchor}:vs:{candidate_anchor}"
+    // -- reserved namespace, disjoint from the raw-facade
+    // "counterfactual:selected_slice*" comparison ids and from
+    // "replay:maintained:*" / "ancestry:maintained:*".
+    std::string comparison_id;
+    std::string run_id;
+    std::string episode_id;
+    // Maintained worldline identity, minted by THIS producer as
+    // "worldline:maintained:{run_id}:trace:{anchor}": a worldline here is the
+    // evidence chain named by its window's run-minted VA-8 anchor, not a
+    // registered counterfactual snapshot (no worldline registry entry is
+    // created or read; the counterfactual restore path stays untouched).
+    std::string baseline_worldline_id;
+    std::string candidate_worldline_id;
+    // The two windows' run-minted VA-8 anchors (engagement packet trace_ids
+    // tails), admitted by the slice-5 gates; distinct by the comparison gate.
+    std::uint64_t baseline_anchor_trace_id = 0;
+    std::uint64_t candidate_anchor_trace_id = 0;
+    // Deterministic replay refs: each side's admitted maintained replay
+    // envelope ("replay:maintained:{run_id}:trace:{anchor}", I69 producer,
+    // validated by validate_replay_envelope which requires the deterministic
+    // seed and the deterministic event-order sort key).
+    std::string baseline_replay_envelope_ref;
+    std::string candidate_replay_envelope_ref;
+    // Each side's admitted maintained packet ancestry
+    // ("ancestry:maintained:{run_id}:trace:{anchor}", I79 producer).
+    std::string baseline_packet_ancestry_ref;
+    std::string candidate_packet_ancestry_ref;
+    // "event:trace:{anchor}" -- the envelopes' deterministic event-order ids.
+    std::string baseline_event_order_ref;
+    std::string candidate_event_order_ref;
+    // The envelopes' snapshot identities (the packets' run-produced
+    // "global:{n}" provenance strings; slice-5 default VA-2 qualification off).
+    std::string baseline_snapshot_version_ref;
+    std::string candidate_snapshot_version_ref;
+    // Caller-owned run identity seeds of the two worldlines (the run
+    // orchestrator owns them, exactly as on the envelope producer), echoed so
+    // a consumer can pick the same-seed replay pair without re-deriving.
+    std::uint64_t baseline_deterministic_seed = 0;
+    std::uint64_t candidate_deterministic_seed = 0;
+    bool deterministic_seed_matched = false;
+    // Always "comparative" / false / false -- see the no-truth-promotion block
+    // comment above.
+    std::string claim_scope;
+    bool truth_claim = false;
+    bool promoted_to_support = false;
+    // Typed lineage refs (VA-5 vocabulary: ref_id / evidence_kind /
+    // provenance_label): envelope + ancestry + anchor per side, labels
+    // "baseline" / "candidate". Deterministic order.
+    std::vector<runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef> lineage_refs;
+};
+
+// Fail-closed result: `admitted` is only true when BOTH windows' slice-5
+// envelope gates and slice-6A ancestry gates passed (their rejections are
+// wrapped in side-naming reasons, underlying detail in `errors`) AND the
+// comparison-specific distinct-anchor gate passed. On rejection the comparison
+// stays default-constructed, so a rejected result cannot leak a half-real
+// evidence join.
+struct MaintainedWorldlineComparisonResult {
+    bool admitted = false;
+    MaintainedWorldlineComparison comparison{};
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+    std::vector<std::string> evidence_refs;
 };

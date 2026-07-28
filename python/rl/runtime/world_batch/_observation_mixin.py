@@ -22,17 +22,10 @@ from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_fo
 from .common import observation_timing_snapshot
 from .observation_batching import ExecutionObservationBatch, compute_execution_observation_batch
 from ._vec_env_support import _float32_view
+from ._shared_ops import assemble_observation_dict
 
 
 class _WorldBatchVecEnvObservationMixin:
-    def _collect_observations(self, indices: Sequence[int] | None = None) -> list[dict[str, np.ndarray]]:
-        target_indices, truth_list, inst_list = self._read_truth_and_inst_batch(indices)
-        for batch_idx, env_idx in enumerate(target_indices):
-            handle = self._handles[env_idx]
-            handle.last_inst = inst_list[batch_idx]
-            handle.last_truth = truth_list[batch_idx]
-        return self._build_observations_from_cached_state(target_indices)
-
     def _prepare_step_evaluations_batch(
         self,
         target_indices: list[int],
@@ -127,6 +120,7 @@ class _WorldBatchVecEnvObservationMixin:
             raise RuntimeError("maintained observation batching requires compute_execution_observation_batch_numpy")
 
         allow_execution_device_export = self._execution_observation_device_export_allowed(target_indices)
+        typed_view_spec = self._runtime_adapter.typed_observation_view_spec
         obs_batch_data: ExecutionObservationBatch = compute_execution_observation_batch(
             states=[self._handles[env_idx] for env_idx in target_indices],
             mission_obs_mode=self.mission_obs_mode,
@@ -135,6 +129,8 @@ class _WorldBatchVecEnvObservationMixin:
             backend=backend,
             allow_device_export=bool(allow_execution_device_export),
             torch_bridge_enabled=bool(self._policy_torch_bridge_enabled),
+            observation_view_spec=typed_view_spec,
+            own_ship_field_reader=self._observation_own_ship_field_reader,
         )
         inst_batch = obs_batch_data.inst_batch
         truth_batch = obs_batch_data.truth_batch
@@ -211,18 +207,17 @@ class _WorldBatchVecEnvObservationMixin:
                 if tasking_profile_for_loader(handle.loader) is resolve_tasking_profile("naval")
                 else inst_vec
             )
-            obs = {
-                "instruments": policy_inst_vec,
-                "contacts": contacts,
-                "rwr": rwr,
-                "mission": miss_vec,
-            }
-            if self.include_proprio:
-                if handle.last_action is None:
-                    proprio = np.zeros((int(self.action_space.shape[0]),), dtype=np.float32)
-                else:
-                    proprio = _float32_view(handle.last_action).reshape(-1)
-                obs["proprio"] = proprio
+            obs = assemble_observation_dict(
+                inst_vec=policy_inst_vec,
+                contacts=contacts,
+                rwr=rwr,
+                miss_vec=miss_vec,
+                max_contacts=int(self.max_contacts),
+                max_rwr=int(self.max_rwr),
+                include_proprio=self.include_proprio,
+                last_action=handle.last_action,
+                action_dim=int(self.action_space.shape[0]),
+            )
             obs_batch.append(self._attach_temporal_history(env_idx, self._attach_visual_observation(env_idx, obs)))
         return obs_batch
 

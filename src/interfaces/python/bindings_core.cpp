@@ -568,22 +568,11 @@ void bind_core(nb::module_ &m) {
         .def_ro("throttle", &AgentObservation::throttle)
         .def_ro("total_reward", &AgentObservation::total_reward);
 
-    nb::class_<RecentEngagementEvents>(m, "RecentEngagementEvents")
-        .def(nb::init<>())
-        .def_rw("launch_events", &RecentEngagementEvents::launch_events)
-        .def_rw("effects_events", &RecentEngagementEvents::effects_events)
-        .def_rw("nearest_approach_events", &RecentEngagementEvents::nearest_approach_events)
-        .def_rw("fuze_evaluation_events", &RecentEngagementEvents::fuze_evaluation_events)
-        .def_rw("warhead_mechanism_events", &RecentEngagementEvents::warhead_mechanism_events)
-        .def_rw("spatial_coverage_events", &RecentEngagementEvents::spatial_coverage_events)
-        .def_rw("component_load_events", &RecentEngagementEvents::component_load_events)
-        .def_rw("component_damage_events", &RecentEngagementEvents::component_damage_events)
-        .def_rw("platform_consequence_events", &RecentEngagementEvents::platform_consequence_events)
-        .def_rw("structural_breakup_events", &RecentEngagementEvents::structural_breakup_events)
-        .def_rw("lifecycle_transition_events", &RecentEngagementEvents::lifecycle_transition_events)
-        .def_rw("training_projection_events", &RecentEngagementEvents::training_projection_events)
-        .def_rw("damage_reports", &RecentEngagementEvents::damage_reports)
-        .def_rw("diagnostics_traces", &RecentEngagementEvents::diagnostics_traces);
+    nb::class_<RecentEngagementEvents> recent_engagement_events_class(m, "RecentEngagementEvents");
+    recent_engagement_events_class.def(nb::init<>());
+#define EF_RECENT_ENGAGEMENT_EVENTS_FIELD(type, name, default_value)                               \
+    recent_engagement_events_class.def_rw(#name, &RecentEngagementEvents::name);
+#include "core/engine/detail/recent_engagement_events.inc"
 
     nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");
     simulation_kernel.def(nb::init<>());

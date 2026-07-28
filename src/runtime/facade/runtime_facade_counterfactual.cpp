@@ -2,11 +2,13 @@
 
 #include "components/basic/common.h"
 #include "runtime/contracts/counterfactual_replay_contracts.h"
+#include "runtime/facade/runtime_window_coordinator.h"
 
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace {
@@ -893,5 +895,536 @@ RuntimeFacade::run_counterfactual_experiment(const RuntimeExperimentRequest &req
     result.admitted = true;
     result.evidence_refs.insert(result.evidence_refs.end(), result.ancestry.evidence_refs.begin(),
                                 result.ancestry.evidence_refs.end());
+    return result;
+}
+
+// T10 evidence spine, slice 5: maintained-run replay-envelope producer.
+//
+// Assembles a ReplayEnvelope from the REAL products of one maintained window
+// (the RuntimeWindowResult the caller got back from run_window) rather than
+// from request/snapshot fields the way the two synthetic assemblies above do
+// (replay_envelope_from_experiment_request,
+// runtime_counterfactual_restore_boundary_for_snapshot -- both unchanged).
+// Field sources, the "replay:maintained:*" id namespace, the I59 opt-in truth
+// linkage (window trace ids must have been minted by THIS facade's VA-8
+// allocator), and the honest restore_unsupported claim are documented on the
+// declaration in runtime_facade.h. Read-only: the method only peeks the
+// allocator cursor (mints nothing), so it is idempotent and perturbs no
+// existing serialized value.
+runtime::counterfactual::MaintainedReplayEnvelopeResult
+RuntimeFacade::build_maintained_replay_envelope(const RuntimeWindowResult &window_result,
+                                                const std::string &run_id,
+                                                const std::string &episode_id,
+                                                std::uint64_t deterministic_seed,
+                                                std::uint64_t run_snapshot_version) const {
+    using namespace runtime::counterfactual;
+
+    MaintainedReplayEnvelopeResult result{};
+
+    // Provenance gate 0: only a RuntimeWindowResult returned by this facade's
+    // run_window seam may enter the maintained evidence producers.  The
+    // identity is opaque and is not a bound DTO field, so a hand-built result
+    // cannot pass by copying a locally allocated numeric trace id; a result
+    // returned by another facade is rejected even when both allocators are at
+    // the same cursor (the common overlapping-id case).
+    if (window_result.identity_token_.identity_ == nullptr) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeWindowIdentityMissing);
+        return result;
+    }
+    if (!runtime_window_result_belongs_to_this_facade(window_result)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeWindowIdentityForeign);
+        return result;
+    }
+    if (!runtime_window_result_evidence_matches_identity(window_result)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeWindowEvidenceMismatch);
+        return result;
+    }
+
+    // From this point on, assemble only from the immutable evidence sealed by
+    // run_window. The public RuntimeWindowResult remains copyable for DTO
+    // compatibility, but a copied token cannot authenticate substituted fields.
+    const RuntimeWindowEvidenceSnapshot &sealed = window_result.identity_token_.identity_->evidence;
+
+    if (runtime_string_blank(run_id)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeRunIdRequired);
+        return result;
+    }
+    if (runtime_string_blank(episode_id)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeEpisodeIdRequired);
+        return result;
+    }
+
+    // Real export provenance: the observation packet must carry the
+    // run-produced id/version embedding strings ("obs:{n}" / "global:{n}",
+    // apply_observation_packet_provenance). A default-constructed packet (no
+    // export in this window) fails closed here.
+    const InformationStateSource &observation_provenance = sealed.observation_provenance;
+    if (observation_provenance.observation_packet_ids.empty() ||
+        observation_provenance.source_observation_versions.empty() ||
+        runtime_string_blank(observation_provenance.observation_packet_ids.front()) ||
+        runtime_string_blank(observation_provenance.source_observation_versions.front())) {
+        result.rejection_reason =
+            std::string(kMaintainedReplayEnvelopeMissingObservationProvenance);
+        return result;
+    }
+
+    // Real event tags: the engagement packet's trace_ids anchor the envelope's
+    // event-order ref and the envelope id.
+    const std::vector<std::uint64_t> &trace_ids = sealed.engagement_trace_ids;
+    if (trace_ids.empty()) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeMissingTraceIds);
+        return result;
+    }
+
+    // I59 opt-in truth linkage: every window trace id must have been minted by
+    // THIS facade's VA-8 allocator (allocator sequences start at 1, so a
+    // minted id is always in [1, peek_next_trace_id())). The default
+    // maintained path's placeholder trace_ids = [1] against an untouched
+    // allocator (peek == 1) fails exactly here, which is what makes this
+    // producer meaningful only on the use_facade_evidence_producers=True
+    // adapter path (or an equivalent allocator-stamping caller).
+    const std::uint64_t next_unminted_trace_id = peek_next_trace_id();
+    const bool all_trace_ids_run_minted =
+        std::all_of(trace_ids.begin(), trace_ids.end(), [&](std::uint64_t trace_id) {
+            return trace_id >= 1U && trace_id < next_unminted_trace_id;
+        });
+    if (!all_trace_ids_run_minted ||
+        !runtime_window_trace_ids_recorded_by_this_window(window_result)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeTraceIdsNotRunMinted);
+        return result;
+    }
+
+    // Real window barrier: the last "window_commit" record of the window's
+    // own barrier trace (sequence + id are the run's actual barrier values).
+    const RuntimeWindowBarrierRecord *window_commit_record = nullptr;
+    for (const auto &record : sealed.barrier_trace) {
+        if (record.barrier_id == kRuntimeWindowBarrierWindowCommit) {
+            window_commit_record = &record;
+        }
+    }
+    if (window_commit_record == nullptr) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeMissingWindowCommitBarrier);
+        return result;
+    }
+
+    // Real producer node: the engagement packet's manifest-stamped export node
+    // (apply_export_packet_metadata); blank means the run produced no export
+    // provenance for the event order, so fail closed instead of inventing one.
+    if (runtime_string_blank(sealed.engagement_producer_node_id)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeMissingProducerNode);
+        return result;
+    }
+
+    if (!replay_contract_has_finite_time(sealed.source_time_s)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeSourceTimeNotFinite);
+        return result;
+    }
+
+    // VA-2 snapshot identity. Default (run_snapshot_version == 0): the packet's
+    // own per-export provenance string, byte-identical to the pre-slice value.
+    // Opt-in: qualify it with the run-global monotone version, which must have
+    // been minted by THIS facade's VA-2 allocator -- so an arbitrary caller
+    // number cannot become the envelope's snapshot identity.
+    std::string snapshot_version_ref = observation_provenance.source_observation_versions.front();
+    if (run_snapshot_version != 0) {
+        if (run_snapshot_version >= peek_next_run_snapshot_version() ||
+            !runtime_window_snapshot_recorded_by_this_window(window_result, run_snapshot_version)) {
+            result.rejection_reason = std::string(kMaintainedReplayEnvelopeRunSnapshotNotRunMinted);
+            return result;
+        }
+        snapshot_version_ref += std::string(kMaintainedReplayEnvelopeRunSnapshotInfix) +
+                                std::to_string(run_snapshot_version);
+    }
+
+    const std::uint64_t anchor_trace_id = trace_ids.back();
+    ReplayEnvelope envelope{
+        // "replay:maintained:*" namespace -- disjoint from the snapshot-derived
+        // "replay:facade:*" restore-boundary space and from caller-authored
+        // spaces (see the declaration comment in runtime_facade.h).
+        .replay_envelope_id =
+            "replay:maintained:" + run_id + ":trace:" + std::to_string(anchor_trace_id),
+        .run_id = run_id,
+        .episode_id = episode_id,
+        .has_deterministic_seed = true,
+        .deterministic_seed = deterministic_seed,
+        .has_source_time = true,
+        .source_time_s = sealed.source_time_s,
+        .snapshot_ref =
+            ReplaySnapshotRef{
+                // The run-produced "global:{snapshot_version}" string carried
+                // on the real observation packet, optionally qualified with the
+                // run-global monotone VA-2 version (see the declaration).
+                .snapshot_version_ref = snapshot_version_ref,
+            },
+        .barrier_ref =
+            ReplayBarrierRef{
+                .barrier_id = window_commit_record->barrier_id,
+                .barrier_sequence = window_commit_record->sequence,
+                .barrier_detail = sealed.engagement_barrier_detail,
+            },
+        .event_order_ref =
+            ReplayEventOrderRef{
+                .sort_key = std::string(kDeterministicReplayEventOrderSortKey),
+                // "event:trace:{id}" embeds the run-minted VA-8 trace id tail
+                // (textual uint64-into-string embedding per the T10 glossary).
+                .event_id = "event:trace:" + std::to_string(anchor_trace_id),
+                .producer_node_id = sealed.engagement_producer_node_id,
+            },
+        .facade_provenance_ref =
+            ReplayFacadeProvenanceRef{
+                // The run-produced "obs:{snapshot_version}" packet id string.
+                .packet_ref = observation_provenance.observation_packet_ids.front(),
+                .packet_kind = "ObservationBatchPacket",
+                // The real packet's own provenance struct (WP11 label plus the
+                // run-produced id/version lists), not a fresh synthetic label.
+                .information_state_source = observation_provenance,
+            },
+        // Honest restore claim: the maintained window registers no
+        // counterfactual worldline snapshot, so restore support stays
+        // unclaimed behind the fail-closed boundary.
+        .snapshot_restore_supported = false,
+        .restore_support_boundary = std::string(kReplayRestoreSupportBoundaryUnsupported),
+    };
+
+    const ReplayContractValidationResult validation = validate_replay_envelope(envelope);
+    if (!validation.valid) {
+        result.rejection_reason = validation.rejection_reason;
+        result.errors = validation.errors;
+        return result;
+    }
+
+    result.admitted = true;
+    result.envelope = std::move(envelope);
+    result.evidence_refs.push_back(std::string(kMaintainedReplayEnvelopeProducerEvidenceLabel));
+    const std::vector<std::string> ordered_refs =
+        ordered_replay_envelope_evidence_refs(result.envelope);
+    result.evidence_refs.insert(result.evidence_refs.end(), ordered_refs.begin(),
+                                ordered_refs.end());
+    return result;
+}
+
+// T10 evidence spine, slice 6A (this iteration): maintained engagement-packet
+// ancestry producer. Contract, gate order, and the root/parent semantics are
+// documented on the declaration in runtime_facade.h; the fail-closed reason
+// strings live in runtime_facade_internal.h (kMaintainedPacketAncestry*).
+// Read-only like the slice-5 producer: it peeks the VA-8 cursor (via the
+// internal envelope build and the parent admission check) and mints nothing,
+// so calling it is idempotent and perturbs no existing serialized value.
+MaintainedPacketAncestryResult RuntimeFacade::build_maintained_packet_ancestry(
+    const RuntimeWindowResult &window_result, const std::string &run_id,
+    const std::string &episode_id, std::uint64_t deterministic_seed,
+    std::uint64_t parent_trace_id) const {
+    using runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef;
+
+    MaintainedPacketAncestryResult result{};
+
+    // Keep the window/facade association explicit at this producer boundary as
+    // well as in the replay-envelope producer below.  This prevents a future
+    // refactor from accidentally bypassing the identity gate while retaining
+    // the same fail-closed reasons for synthetic and foreign windows.
+    if (window_result.identity_token_.identity_ == nullptr) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeWindowIdentityMissing);
+        return result;
+    }
+    if (!runtime_window_result_belongs_to_this_facade(window_result)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeWindowIdentityForeign);
+        return result;
+    }
+    if (!runtime_window_result_evidence_matches_identity(window_result)) {
+        result.rejection_reason = std::string(kMaintainedReplayEnvelopeWindowEvidenceMismatch);
+        return result;
+    }
+
+    // Gate 1: the same window must assemble an ADMITTED maintained replay
+    // envelope. This reuses all nine slice-5 real-evidence gates (run/episode
+    // id, real export provenance, VA-8 trace-id admission -- the gate that
+    // fail-closes foreign-facade and default-placeholder evidence -- window
+    // barrier, producer node, finite time) plus validate_replay_envelope, and
+    // binds the ancestry to a validator-accepted envelope id. Default VA-2
+    // qualification (run_snapshot_version = 0) keeps the envelope's snapshot
+    // ref byte-identical to the slice-5 default.
+    const runtime::counterfactual::MaintainedReplayEnvelopeResult envelope_result =
+        build_maintained_replay_envelope(window_result, run_id, episode_id, deterministic_seed);
+    if (!envelope_result.admitted) {
+        result.rejection_reason = envelope_result.rejection_reason;
+        result.errors = envelope_result.errors;
+        return result;
+    }
+
+    // Non-empty and all run-minted: gate 1 admitted them.
+    const RuntimeWindowEvidenceSnapshot &sealed = window_result.identity_token_.identity_->evidence;
+    const std::vector<std::uint64_t> &window_trace_tags = sealed.engagement_trace_ids;
+    const std::uint64_t anchor_trace_id = window_trace_tags.back();
+
+    // Gates 2 + 3: parent linkage must come from THIS facade's VA-8 allocator,
+    // point strictly backwards (below every window tag), and name an anchor
+    // recorded by an earlier genuine window. Keep the numeric chronology gate
+    // before the registry gate so a self/forward parent retains its dedicated
+    // rejection reason even though it cannot be an earlier recorded anchor.
+    if (parent_trace_id != 0U) {
+        if (parent_trace_id >= peek_next_trace_id()) {
+            result.rejection_reason = std::string(kMaintainedPacketAncestryParentNotRunMinted);
+            return result;
+        }
+        const std::uint64_t window_min_trace_tag =
+            *std::min_element(window_trace_tags.begin(), window_trace_tags.end());
+        if (parent_trace_id >= window_min_trace_tag) {
+            result.rejection_reason = std::string(kMaintainedPacketAncestryParentNotBeforeWindow);
+            return result;
+        }
+        if (!runtime_window_parent_trace_recorded_before_this_window(window_result,
+                                                                     parent_trace_id)) {
+            result.rejection_reason = std::string(kMaintainedPacketAncestryParentNotRunMinted);
+            return result;
+        }
+    }
+
+    // Gate 4: the packet family must actually carry exported traces, and at
+    // least one must be tagged with a run-minted packet tag. Kernel-space
+    // trace ids are value-indistinguishable from VA-8 ids (census VA-8), so
+    // membership in the admitted tag set is the discriminator.
+    const std::vector<DiagnosticsTrace> &window_traces = sealed.diagnostics_traces;
+    if (window_traces.empty()) {
+        result.rejection_reason = std::string(kMaintainedPacketAncestryMissingDiagnosticsTraces);
+        return result;
+    }
+    const auto is_run_minted_tag = [&window_trace_tags](std::uint64_t trace_id) {
+        return std::find(window_trace_tags.begin(), window_trace_tags.end(), trace_id) !=
+               window_trace_tags.end();
+    };
+    std::uint64_t linked_trace_count = 0;
+    for (const auto &trace : window_traces) {
+        if (is_run_minted_tag(trace.trace_id)) {
+            ++linked_trace_count;
+        }
+    }
+    if (linked_trace_count == 0U) {
+        result.rejection_reason = std::string(kMaintainedPacketAncestryNoRunMintedTraces);
+        return result;
+    }
+
+    // Populate: parent-linked COPIES only. The window product is const and
+    // never mutated; copies whose trace_id is a run-minted packet tag carry
+    // the ancestry parent, kernel-space copies stay untouched, and at the
+    // root (parent_trace_id == 0) every copy keeps the pre-slice default 0.
+    MaintainedEngagementPacketAncestry ancestry{};
+    ancestry.packet_ancestry_id = std::string(kMaintainedPacketAncestryIdPrefix) + run_id +
+                                  ":trace:" + std::to_string(anchor_trace_id);
+    ancestry.run_id = run_id;
+    ancestry.episode_id = episode_id;
+    ancestry.anchor_trace_id = anchor_trace_id;
+    ancestry.parent_trace_id = parent_trace_id;
+    ancestry.replay_envelope_ref = envelope_result.envelope.replay_envelope_id;
+    ancestry.parent_event_order_ref =
+        parent_trace_id == 0U ? std::string() : "event:trace:" + std::to_string(parent_trace_id);
+    ancestry.ancestral_traces = window_traces;
+    if (parent_trace_id != 0U) {
+        for (auto &trace : ancestry.ancestral_traces) {
+            if (is_run_minted_tag(trace.trace_id)) {
+                trace.parent_trace_id = parent_trace_id;
+            }
+        }
+    }
+
+    // Typed lineage refs (VA-5 vocabulary: ref_id / evidence_kind /
+    // provenance_label): the validated envelope, this window's anchor, and the
+    // parent edge when linked. Deterministic order.
+    ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+        .ref_id = ancestry.replay_envelope_ref,
+        .evidence_kind =
+            std::string(runtime::counterfactual::kScenarioGenerationEvidenceKindReplayEnvelope),
+        .provenance_label = "replay",
+    });
+    ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+        .ref_id = "event:trace:" + std::to_string(anchor_trace_id),
+        .evidence_kind = std::string(kMaintainedPacketAncestryEvidenceKindAnchorTrace),
+        .provenance_label = "anchor",
+    });
+    if (parent_trace_id != 0U) {
+        ancestry.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = ancestry.parent_event_order_ref,
+            .evidence_kind = std::string(kMaintainedPacketAncestryEvidenceKindParentTrace),
+            .provenance_label = "parent",
+        });
+    }
+
+    result.admitted = true;
+    result.ancestry = std::move(ancestry);
+    result.evidence_refs.push_back(std::string(kMaintainedPacketAncestryProducerEvidenceLabel));
+    result.evidence_refs.push_back("packet_ancestry_id=" + result.ancestry.packet_ancestry_id);
+    result.evidence_refs.push_back("replay_envelope_ref=" + result.ancestry.replay_envelope_ref);
+    result.evidence_refs.push_back("anchor_trace_id=" + std::to_string(anchor_trace_id));
+    if (parent_trace_id != 0U) {
+        result.evidence_refs.push_back("parent_trace_id=" + std::to_string(parent_trace_id));
+    }
+    result.evidence_refs.push_back("linked_trace_count=" + std::to_string(linked_trace_count));
+    return result;
+}
+
+// T10 evidence spine, slice 7 (this iteration): maintained worldline /
+// counterfactual comparison producer. Contract, gate order, the worldline
+// semantics, and the no-truth-promotion red line are documented on the
+// declaration in runtime_facade.h; the fail-closed reason strings live in
+// runtime_facade_internal.h (kMaintainedWorldlineComparison*). Read-only like
+// the slice-5/6A producers it consumes: every inner call only peeks the
+// allocator cursors and mints nothing, no counterfactual worldline snapshot
+// is registered, so calling it is idempotent and perturbs no existing
+// serialized value. (Each side's ancestry build re-runs that side's envelope
+// build internally; both are deterministic over the same const inputs, so the
+// ancestry's replay_envelope_ref equals the directly built envelope id by
+// construction.)
+MaintainedWorldlineComparisonResult RuntimeFacade::build_maintained_worldline_comparison(
+    const RuntimeWindowResult &baseline_window_result,
+    const RuntimeWindowResult &candidate_window_result, const std::string &run_id,
+    const std::string &episode_id, std::uint64_t baseline_deterministic_seed,
+    std::uint64_t candidate_deterministic_seed, std::uint64_t baseline_parent_trace_id,
+    std::uint64_t candidate_parent_trace_id) const {
+    using runtime::counterfactual::MaintainedReplayEnvelopeResult;
+    using runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef;
+
+    MaintainedWorldlineComparisonResult result{};
+
+    // Side-naming rejection wrapper: the comparison-level reason names the
+    // failed side/surface; the underlying slice-5/6A reason (and its errors)
+    // go to result.errors so nothing is lost and nothing half-real leaks.
+    const auto reject_side = [&result](std::string_view comparison_reason,
+                                       const std::string &inner_reason,
+                                       const std::vector<std::string> &inner_errors) {
+        result.rejection_reason = std::string(comparison_reason);
+        if (!inner_reason.empty()) {
+            result.errors.push_back(inner_reason);
+        }
+        result.errors.insert(result.errors.end(), inner_errors.begin(), inner_errors.end());
+    };
+
+    // Gates 1 + 2: both windows admit a maintained replay envelope in strict
+    // baseline-then-candidate order.  The replay producer owns the opaque
+    // window/facade identity gate as well as the remaining slice-5
+    // real-evidence gates, so this comparison cannot bypass provenance while
+    // preserving side-specific error attribution.
+    const MaintainedReplayEnvelopeResult baseline_envelope = build_maintained_replay_envelope(
+        baseline_window_result, run_id, episode_id, baseline_deterministic_seed);
+    if (!baseline_envelope.admitted) {
+        reject_side(kMaintainedWorldlineComparisonBaselineEnvelopeRejected,
+                    baseline_envelope.rejection_reason, baseline_envelope.errors);
+        return result;
+    }
+    const MaintainedReplayEnvelopeResult candidate_envelope = build_maintained_replay_envelope(
+        candidate_window_result, run_id, episode_id, candidate_deterministic_seed);
+    if (!candidate_envelope.admitted) {
+        reject_side(kMaintainedWorldlineComparisonCandidateEnvelopeRejected,
+                    candidate_envelope.rejection_reason, candidate_envelope.errors);
+        return result;
+    }
+
+    // Gates 3 + 4: both windows admit a maintained packet ancestry (slice-6A
+    // parent gates guard each side's lineage contribution).
+    const MaintainedPacketAncestryResult baseline_ancestry =
+        build_maintained_packet_ancestry(baseline_window_result, run_id, episode_id,
+                                         baseline_deterministic_seed, baseline_parent_trace_id);
+    if (!baseline_ancestry.admitted) {
+        reject_side(kMaintainedWorldlineComparisonBaselineAncestryRejected,
+                    baseline_ancestry.rejection_reason, baseline_ancestry.errors);
+        return result;
+    }
+    const MaintainedPacketAncestryResult candidate_ancestry =
+        build_maintained_packet_ancestry(candidate_window_result, run_id, episode_id,
+                                         candidate_deterministic_seed, candidate_parent_trace_id);
+    if (!candidate_ancestry.admitted) {
+        reject_side(kMaintainedWorldlineComparisonCandidateAncestryRejected,
+                    candidate_ancestry.rejection_reason, candidate_ancestry.errors);
+        return result;
+    }
+
+    // Gate 5: distinct anchors -- a window joined against itself is not a
+    // worldline comparison, and identical anchors would collapse the two
+    // worldline ids into one.
+    const std::uint64_t baseline_anchor = baseline_ancestry.ancestry.anchor_trace_id;
+    const std::uint64_t candidate_anchor = candidate_ancestry.ancestry.anchor_trace_id;
+    if (baseline_anchor == candidate_anchor) {
+        result.rejection_reason = std::string(kMaintainedWorldlineComparisonAnchorsNotDistinct);
+        return result;
+    }
+
+    // Populate: evidence ids only (no truth-state copy anywhere below).
+    MaintainedWorldlineComparison comparison{};
+    comparison.comparison_id = std::string(kMaintainedWorldlineComparisonIdPrefix) + run_id +
+                               ":trace:" + std::to_string(baseline_anchor) +
+                               ":vs:" + std::to_string(candidate_anchor);
+    comparison.run_id = run_id;
+    comparison.episode_id = episode_id;
+    comparison.baseline_worldline_id =
+        std::string(kMaintainedWorldlineComparisonWorldlineIdPrefix) + run_id +
+        ":trace:" + std::to_string(baseline_anchor);
+    comparison.candidate_worldline_id =
+        std::string(kMaintainedWorldlineComparisonWorldlineIdPrefix) + run_id +
+        ":trace:" + std::to_string(candidate_anchor);
+    comparison.baseline_anchor_trace_id = baseline_anchor;
+    comparison.candidate_anchor_trace_id = candidate_anchor;
+    comparison.baseline_replay_envelope_ref = baseline_envelope.envelope.replay_envelope_id;
+    comparison.candidate_replay_envelope_ref = candidate_envelope.envelope.replay_envelope_id;
+    comparison.baseline_packet_ancestry_ref = baseline_ancestry.ancestry.packet_ancestry_id;
+    comparison.candidate_packet_ancestry_ref = candidate_ancestry.ancestry.packet_ancestry_id;
+    comparison.baseline_event_order_ref = baseline_envelope.envelope.event_order_ref.event_id;
+    comparison.candidate_event_order_ref = candidate_envelope.envelope.event_order_ref.event_id;
+    comparison.baseline_snapshot_version_ref =
+        baseline_envelope.envelope.snapshot_ref.snapshot_version_ref;
+    comparison.candidate_snapshot_version_ref =
+        candidate_envelope.envelope.snapshot_ref.snapshot_version_ref;
+    comparison.baseline_deterministic_seed = baseline_deterministic_seed;
+    comparison.candidate_deterministic_seed = candidate_deterministic_seed;
+    comparison.deterministic_seed_matched =
+        baseline_deterministic_seed == candidate_deterministic_seed;
+    comparison.claim_scope =
+        std::string(runtime::counterfactual::kExperimentProfileClaimScopeComparative);
+    comparison.truth_claim = false;
+    comparison.promoted_to_support = false;
+
+    // Typed lineage refs (VA-5 vocabulary): envelope + ancestry + anchor per
+    // side. Deterministic order, baseline first.
+    const auto push_side_lineage = [&comparison](const std::string &envelope_ref,
+                                                 const std::string &ancestry_ref,
+                                                 const std::string &event_order_ref,
+                                                 const char *side_label) {
+        comparison.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = envelope_ref,
+            .evidence_kind =
+                std::string(runtime::counterfactual::kScenarioGenerationEvidenceKindReplayEnvelope),
+            .provenance_label = side_label,
+        });
+        comparison.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = ancestry_ref,
+            .evidence_kind = std::string(kMaintainedWorldlineComparisonEvidenceKindPacketAncestry),
+            .provenance_label = side_label,
+        });
+        comparison.lineage_refs.push_back(ScenarioGenerationEvidenceMetadataRef{
+            .ref_id = event_order_ref,
+            .evidence_kind = std::string(kMaintainedPacketAncestryEvidenceKindAnchorTrace),
+            .provenance_label = side_label,
+        });
+    };
+    push_side_lineage(comparison.baseline_replay_envelope_ref,
+                      comparison.baseline_packet_ancestry_ref, comparison.baseline_event_order_ref,
+                      "baseline");
+    push_side_lineage(comparison.candidate_replay_envelope_ref,
+                      comparison.candidate_packet_ancestry_ref,
+                      comparison.candidate_event_order_ref, "candidate");
+
+    result.admitted = true;
+    result.comparison = std::move(comparison);
+    result.evidence_refs.push_back(
+        std::string(kMaintainedWorldlineComparisonProducerEvidenceLabel));
+    result.evidence_refs.push_back("comparison_id=" + result.comparison.comparison_id);
+    result.evidence_refs.push_back("baseline_replay_envelope_ref=" +
+                                   result.comparison.baseline_replay_envelope_ref);
+    result.evidence_refs.push_back("candidate_replay_envelope_ref=" +
+                                   result.comparison.candidate_replay_envelope_ref);
+    result.evidence_refs.push_back("baseline_packet_ancestry_ref=" +
+                                   result.comparison.baseline_packet_ancestry_ref);
+    result.evidence_refs.push_back("candidate_packet_ancestry_ref=" +
+                                   result.comparison.candidate_packet_ancestry_ref);
+    result.evidence_refs.push_back(
+        std::string("deterministic_seed_matched=") +
+        (result.comparison.deterministic_seed_matched ? "true" : "false"));
     return result;
 }

@@ -8,7 +8,7 @@
 - 性能路线调研：[architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
 - 任务执行入口：[../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/README.zh.md)
 
-状态：`2026-05-19` 严格架构基线。
+状态：2026-07-20 严格架构基线（修订：实验面、阶段契约、内核不变式、表示策略、学习面）。
 
 本文档是维护中的仿真系统架构权威入口。它把此前的分层方案和性能路线调研收敛为更严格的所有权规则、规范化语义生命周期、多率执行图模型，以及后续领域扩展应遵循的插件族模型。
 
@@ -34,6 +34,27 @@ Echelon Forge 是一个语义-因果仿真编译器与学习平台。它的长�
 领域特定行为应通过明确的模型族、能力契约和阶段契约进入架构，而不是通过 `air stack`、`naval stack`、`weapon stack` 这类纵向军种或功能烟囱进入。
 
 项目上限取决于语义、因果、智能体与学习四个面能否相互闭合。局部武器、海军或空军功能可以很有价值，但不应创建私有的端到端运行时路径。
+
+## 1.5 实验面
+
+实验面拥有跨仿真、策略与评估维度的组合所有权。它是架构中缺失的第五个组织面，是 scenario-by-config-by-seed 组合空间的一等归属地。
+
+| 问题 | 架构职责 |
+|------|----------|
+| 一个 experiment 指定什么？ | Scenario reference、配置组合（base + deltas）、seed strategy、evaluation protocol、curriculum stage 与 comparability constraints。 |
+
+Experiment 不是一次训练 run。它是一份 typed specification，一个或多个训练、评估或诊断 run 均由它派生而来。其关系为：
+
+    Experiment = ScenarioRef x ConfigComposition x Seeds x EvaluationProtocol
+
+Run configuration 是 Experiment definition 的投影。维护中的 scenario x config 矩阵（air-combat 24 文件集合、naval screening 集合）是 typed Experiment ownership 的首批候选对象。
+
+设计规则：
+
+1. Experiment definition 是声明式数据，不是命令式代码。
+2. 一个 run configuration 只继承自唯一一个 Experiment definition。
+3. Curriculum 与 evaluation protocol 挂接在 Experiment 上，而不是环境 wrapper 上。
+4. 扩展通过注册完成：新的 scenario、config 或 evaluation protocol 挂接到 Experiment registry。
 
 ## 二、图之图架构
 
@@ -157,6 +178,19 @@ RuntimeFacade 治理规则：
 
 阶段名是架构词汇。仓库迁移期间可以继续使用现有函数和文件名，但新增文档和测试应把本地行为映射回这张表。
 
+## 6.1 阶段契约修订
+
+`P0-P10` 生命周期表由 stage contract 补充。每个维护中的 stage 都声明一个 sub-graph，而不是假设线性执行。一个 stage contract 包含：
+
+- `semantic_stage`：对应的 P0-P10 标识。
+- `sub_graph`：语义边界内可选的 sub-stage DAG（例如：P9 lethality pipeline 声明 P9.1-P9.7 子阶段）。
+- `read_set` / `write_set`：state 与 packet 依赖。
+- `clock_domain`：该 stage 或 sub-stage 的节奏规则。
+- `information_layer_consumed` / `information_layer_produced`：G4 层声明。
+- `extension_points`：领域族挂接的具名插槽。
+
+包含 event-driven sub-pipeline 的 stage（P6 sensor scan、P8 munition lifecycle、P9 effects）应声明拥有自身 barrier 的内部 sub-graph。声明的 sub-graph 在一个调度窗口内必须无环；跨窗口反馈使用 versioned state。
+
 ## 七、因果-时序执行模型
 
 执行模型是因果-时序架构：因果图定义合法依赖，temporal DAG 调度每个调度窗口内当前可见的切片。反馈通过 versioned state 和 timestamped event 传递。
@@ -233,6 +267,14 @@ Temporal DAG = execution projection and scheduler
 StateStore/EventQueue = feedback boundary
 Contracts = packet/state/event vocabulary
 ```
+
+## 7.1 阶段契约强制执行
+
+因果-时序执行模型新增一层 contract-enforcement layer：
+
+1. runtime-spine fixture 中每个维护中的 stage node 都必须声明与其实际数据访问一致的 `read_set` 与 `write_set`。
+2. 架构测试验证没有 node 读取其声明 `read_set` 之外的 state。
+3. Stage contract 是 `WP4` C++ 迁移的基本单元：一个 Python-owned 的 stage 通过迁移其 contract 实现变为 C++-owned，而不是重新实现未规定的行为。
 
 ## 八、系统层耦合模型
 
@@ -534,3 +576,34 @@ Platform =
   是将本基线从 lifecycle + DAG 提升到 SCAL、图之图、信息状态架构和仿真编译器定位的来源评审。
 
 后续架构任务单应优先引用本文档，再引用旧文档作为论据或证据来源。
+
+## 十五、内核不变式
+
+以下不变式具有规范性。架构测试强制执行它们；违反某条不变式的新工作需要一份书面例外说明。
+
+- **G1.** 跨边界路径数是一项架构健康度指标。其维护中的取值由 escape-hatch gates 跟踪；目标值为一（仅 facade）。Diagnostic 与 test 路径计入统计，但不计入该维护指标。
+- **G2.** 层环是单向的。Python 侧：contracts -> substrate -> domain semantics -> experiment orchestration。C++ 侧：contracts -> engine -> mission -> facade。维护中的模块不允许反向 import。
+- **G3.** 每一份维护中的 state 恰好只有一个 owner。Conformance census 建立初始 ownership map。Ownership 只能向内核方向迁移（即 exact-runtime 方向）。
+- **G4.** 每个 observation/reward consumer 都必须声明自己的 information-state layer。一旦声明机制上线，强制方式将从文档约定转为 AST gate。
+- **G5.** 扩展即注册。任何需要修改共享代码才能接入的 domain、mode、probe 或 config，都是设计缺陷。
+- **G6.** 跨边界的数据形状由 schema 生成。`dto_schema` 系统是当前的实现；手工同步是已被计量的技术债。
+
+## 十六、表示策略
+
+跨边界数据形状是 schema-owned 字段描述的投影。本节规定 `dto_schema` 系统与架构 packet 词汇之间的关系。
+
+1. 一个 packet（observation、command、track、engagement 等）都是一个 schema 投影。它的字段、顺序、类型与版本都从一个 `dto_schema` group 派生。
+2. Schema group 携带 stage-contract metadata：它们由哪个 semantic stage 拥有、代表哪个 information layer，以及投影到哪个 facade surface 上。
+3. 其他布局（SoA、packed GPU view、observation-batch tensor）都是同一个 schema group 生成的投影。它们共享字段语义，只在内存布局上不同。
+4. 维护中的生成管线是唯一的 single source of truth。Freshness gate 防止手写代码产生 drift。
+5. Schema 演进遵循 `ObservationViewSpec` 的版本化规则：minor 变化是可加的，major 变化要求 consumer 拒绝加载。
+
+## 十七、学习面架构说明
+
+学习面拥有「实验如何改进未来行为」这一职责。它与仿真层之间维护中的边界由三份契约定义：
+
+1. **Env-as-View 契约。** RL environment（`WorldBatchVecEnv` 及其派生类）是仿真 facade 之上的一个 view adapter，不是权威 runtime owner。它消费 observation packet，通过 facade contract 注入 action，并 mirror episode state。它不得拥有权威仿真 truth 或 episode phase。
+2. **Rollout collection 契约。** Rollout 数据（observations、actions、rewards、dones、infos）在 facade 声明的 barrier 处采集。采集节奏是一个 policy clock domain。Rollout provenance 必须记录 observation snapshot version 与 action effective time。
+3. **Policy bridge 契约。** policy 是挂接在 `AgentRole` 上的可替换 decision model。bridge 在 policy 的内部 tensor space 与 facade 的 typed packet 词汇之间做转换。bridge 必须声明自己的 information-state source、observation version 要求与 action interface。
+
+学习面不拥有 curriculum、evaluation protocol 或 experiment composition；这些属于实验面。学习面拥有 policy 训练机制：gradient computation、replay buffer、model checkpointing 与 hyperparameter schedule。

@@ -36,6 +36,7 @@ REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from tools.diagnostics.common import add_model_load_args, add_probe_run_args
 from tools.diagnostics.cooperative_trajectory_base import (
     SLOT_COLORS,
     apply_curriculum_stage,
@@ -448,12 +449,19 @@ def _save_plot(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Export one cooperative trajectory diagnostic episode.")
     parser.add_argument("--task", required=True, choices=[TASK_TAKEOFF, TASK_TAKEOFF_TO_CRUISE])
-    parser.add_argument("--scenario", required=True)
-    parser.add_argument("--train_config", required=True)
-    parser.add_argument("--model", default=None, help="Path to SB3 model zip/path. Omit when using --scripted.")
-    parser.add_argument("--algo", default="auto", help="auto / AdaptiveKLPPO / PPO")
+    add_probe_run_args(parser, include=["scenario"], required={"scenario": True})
+    add_model_load_args(parser, include=["train_config"], required={"train_config": True})
+    add_model_load_args(
+        parser,
+        include=["model", "algo"],
+        defaults={"algo": "auto"},
+        helps={
+            "model": "Path to SB3 model zip/path. Omit when using --scripted.",
+            "algo": "auto / AdaptiveKLPPO / PPO",
+        },
+    )
     parser.add_argument("--scripted", action="store_true", help="Run the scripted residual-zero baseline.")
-    parser.add_argument("--seed", type=int, default=0)
+    add_probe_run_args(parser, include=["seed"], defaults={"seed": 0})
     parser.add_argument("--curriculum_stage", type=int, default=None)
     parser.add_argument("--max_world_steps", type=int, default=None)
     parser.add_argument("--output", required=True, help="PNG output path")

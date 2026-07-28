@@ -25,10 +25,6 @@ from python.tasking_contracts.bridge_views import (
     mission_command_dict,
     mission_command_view,
 )
-# `normalize_task_order_spec` stays python.rl-resident: it dispatches through
-# `tasking_profile_for_loader`, a genuine entanglement point with the
-# air/ground/naval profile modules (see I24 report).
-from python.rl.tasking.bridge import normalize_task_order_spec
 
 
 def get_active_roster_member(loader, *, entity_id=None, entity_name=None, role_code=None, formation_role_id=None):
@@ -49,6 +45,9 @@ def get_active_roster_refs(loader, *, world_index: int | None = None):
 
 
 def task_order_spec(loader) -> dict:
+    # Deferred: `normalize_task_order_spec` stays python.rl-resident (profile dispatch).
+    from python.rl.tasking.bridge import normalize_task_order_spec
+
     task_cfg = loader.scenario_data.get("task_order", None)
     return normalize_task_order_spec(task_cfg if isinstance(task_cfg, dict) else {}, loader=loader)
 

@@ -1,0 +1,26 @@
+usage: trace_training_nonfinite_source.py [-h] [--scenario SCENARIO]
+                                          [--train_config TRAIN_CONFIG]
+                                          [--resume_path RESUME_PATH]
+                                          [--timesteps TIMESTEPS]
+                                          [--seed SEED]
+                                          [--report_path REPORT_PATH]
+                                          [--sim_log_level {debug,info,warn,error}]
+
+Trace the first non-finite tensor during resumed PPO training.
+
+options:
+  -h, --help            show this help message and exit
+  --scenario SCENARIO   Scenario JSON used for the failing run.
+  --train_config TRAIN_CONFIG
+                        Train config JSON used for the failing run.
+  --resume_path RESUME_PATH
+                        Checkpoint to resume from.
+  --timesteps TIMESTEPS
+                        Additional timesteps to train after loading the
+                        checkpoint.
+  --seed SEED           Optional global seed. Defaults to the train config
+                        seed when present.
+  --report_path REPORT_PATH
+                        Path to the JSON report.
+  --sim_log_level {debug,info,warn,error}
+                        Simulator log level for the diagnostic run.

@@ -8,7 +8,7 @@ Navigation:
 - Performance follow-up: [architecture_and_performance_research_followup.md](architecture_and_performance_research_followup.md)
 - Task execution entry: [../../task/simulation_architecture/README.md](../../task/simulation_architecture/README.md)
 
-Status: `2026-05-19` strict architecture baseline.
+Status: 2026-07-20 strict architecture baseline (amended: experiment face, stage contracts, kernel invariants, representation strategy, learning face).
 
 This document is the architecture authority for the maintained simulation
 system shape. It turns the earlier layering and performance research documents
@@ -48,6 +48,36 @@ service branches such as `air stack`, `naval stack`, or `weapon stack`.
 The project ceiling is set by how well the semantic, causal, agentic, and
 learning faces cohere. A local weapon, naval, or air feature may be useful, but
 it should not create a private end-to-end runtime path.
+
+## 1.5 Experiment Face
+
+The Experiment face owns composition across simulation, policy, and
+evaluation dimensions. It is the missing fifth organizational face of the
+architecture and the first-class home for scenario-by-config-by-seed
+combinatorics.
+
+| Question | Architecture responsibility |
+|----------|---------------------------|
+| What does an experiment specify? | Scenario reference, configuration composition (base + deltas), seed strategy, evaluation protocol, curriculum stage, and comparability constraints. |
+
+An experiment is not a training run. It is the typed specification from
+which one or more training, evaluation, or diagnostic runs derive. The
+relationship is:
+
+    Experiment = ScenarioRef x ConfigComposition x Seeds x EvaluationProtocol
+
+Run configurations are projections of an Experiment definition. The
+maintained scenario x config matrices (air-combat 24-file set, naval
+screening set) are the first candidates for typed Experiment ownership.
+
+Design rules:
+
+1. Experiment definitions are declarative data, not imperative code.
+2. A run configuration inherits from exactly one Experiment definition.
+3. Curriculum and evaluation protocol attach to the Experiment, not to
+   the environment wrapper.
+4. Extension is by registration: new scenarios, configs, or evaluation
+   protocols attach to the Experiment registry.
 
 ## 2. Graph-of-Graphs Architecture
 
@@ -221,6 +251,26 @@ The stage names are architecture vocabulary. The repository may continue to use
 existing function and file names while it migrates, but new docs and tests
 should map local behavior back to this table.
 
+## 6.1 Stage Contract Amendment
+
+The P0-P10 lifecycle table is supplemented with stage contracts. Each
+maintained stage declares a sub-graph rather than assuming linear
+execution. A stage contract contains:
+
+- `semantic_stage`: the P0-P10 identifier.
+- `sub_graph`: optional DAG of sub-stages within the semantic boundary
+  (example: the P9 lethality pipeline declares P9.1-P9.7 sub-stages).
+- `read_set` / `write_set`: state and packet dependencies.
+- `clock_domain`: cadence rule for the stage or sub-stage.
+- `information_layer_consumed` / `information_layer_produced`: G4 layer
+  declarations.
+- `extension_points`: named sockets where domain families attach.
+
+Stages that contain event-driven sub-pipelines (P6 sensor scan, P8
+munition lifecycle, P9 effects) declare internal sub-graphs with their own
+barriers. The declared sub-graph must be acyclic within a scheduling
+window; cross-window feedback uses versioned state.
+
 ## 7. Causal-Temporal Execution Model
 
 The execution model is causal-temporal architecture: a causal graph defines
@@ -323,6 +373,18 @@ Temporal DAG = execution projection and scheduler
 StateStore/EventQueue = feedback boundary
 Contracts = packet/state/event vocabulary
 ```
+
+## 7.1 Stage Contract Enforcement
+
+The causal-temporal execution model gains a contract-enforcement layer:
+
+1. Every maintained stage node in the runtime-spine fixture must declare
+   `read_set` and `write_set` that match its actual data access.
+2. Architecture tests verify that no node reads state outside its
+   declared `read_set`.
+3. Stage contracts are the unit of WP4 C++ migration: a Python-owned
+   stage becomes C++-owned by moving its contract implementation, not by
+   reimplementing unspecified behavior.
 
 ## 8. System Layer Coupling Model
 
@@ -721,3 +783,73 @@ This document does not delete the earlier plans. It repositions them:
 
 Future architecture task sheets should cite this document first, then cite the
 older documents only for rationale or evidence.
+
+## 15. Kernel Invariants
+
+The following invariants are normative. Architecture tests enforce them;
+new work that violates an invariant requires a documented exception.
+
+- **G1.** Cross-boundary path count is an architecture health metric.
+  Its maintained value is tracked by the escape-hatch gates; the target
+  is one (facade only). Diagnostic and test paths are counted but do not
+  increase the maintained metric.
+- **G2.** Layer rings are one-way. Python: contracts -> substrate ->
+  domain semantics -> experiment orchestration. C++: contracts ->
+  engine -> mission -> facade. No reverse imports in maintained modules.
+- **G3.** Every piece of maintained state has exactly one owner. The
+  conformance census establishes the initial ownership map. Ownership
+  only migrates toward the kernel (exact-runtime direction).
+- **G4.** Every observation/reward consumer declares its
+  information-state layer. Enforcement moves from documentation to AST
+  gates once the declaration mechanism ships.
+- **G5.** Extension is registration. A domain, mode, probe, or config
+  that requires editing shared code is a design defect.
+- **G6.** Cross-boundary shapes are generated from schemas. The
+  dto_schema system is the active implementation; manual synchronization
+  is measured debt.
+
+## 16. Representation Strategy
+
+Cross-boundary data shapes are projections of schema-owned field
+descriptions. This section codifies the relationship between the
+dto_schema system and the architecture's packet vocabulary.
+
+1. A packet (observation, command, track, engagement, and so on) is a
+   schema projection. Its fields, order, types, and versioning derive
+   from a dto_schema group.
+2. Schema groups carry stage-contract metadata: which semantic stage owns
+   them, which information layer they represent, and which facade surface
+   they project onto.
+3. Alternative layouts (SoA, packed GPU views, observation-batch tensors)
+   are generated projections of the same schema group. They share field
+   semantics and differ only in memory layout.
+4. The maintained generation pipeline is the single source of truth.
+   Freshness gates prevent hand-written drift.
+5. Schema evolution follows the ObservationViewSpec versioning rule:
+   minor changes are additive; major changes require consumer rejection.
+
+## 17. Learning Face Architecture Note
+
+The Learning face owns how experiments improve future behavior. Its
+maintained boundary with the simulation layer is defined by three
+contracts:
+
+1. **Env-as-View contract.** The RL environment (WorldBatchVecEnv and
+   derivatives) is a view adapter over the simulation facade, not an
+   authoritative runtime owner. It consumes observation packets, injects
+   actions through facade contracts, and mirrors episode state. It must
+   not own authoritative simulation truth or episode phase.
+2. **Rollout collection contract.** Rollout data (observations, actions,
+   rewards, dones, infos) is collected at facade-declared barriers. The
+   collection cadence is a policy clock domain. Rollout provenance must
+   record observation snapshot versions and action effective times.
+3. **Policy bridge contract.** A policy is a replaceable decision model
+   attached to an AgentRole. The bridge translates between the policy's
+   internal tensor space and the facade's typed packet vocabulary. The
+   bridge declares its information-state source, observation version
+   requirements, and action interface.
+
+The Learning face does not own curriculum, evaluation protocol, or
+experiment composition; those belong to the Experiment face. The Learning
+face owns policy training mechanics: gradient computation, replay
+buffers, model checkpointing, and hyperparameter schedules.

@@ -27,11 +27,13 @@ from python.rl.runtime.execution_runtime import (
 )
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
 from python.rl.runtime.world_batch import (
+    WorldBatchCore,
     WorldBatchVecEnvAccess,
     build_loader_step_info,
     compute_loader_step_outcome,
     copy_obs_batch_item,
 )
+from python.rl.runtime.world_batch.core import LeaderPlugin, resolve_execution_mode
 from python.rl.runtime.world_batch.vec_env import WorldBatchVecEnv
 
 
@@ -101,6 +103,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
     def __init__(self, world_vec: WorldBatchVecEnv, leader_envs: Sequence[Any] | None = None):
         self.world_vec = world_vec
         self.access = WorldBatchVecEnvAccess(world_vec)
+        self._mode_plugin: LeaderPlugin = resolve_execution_mode("leader")
         self._leader_envs = [
             None if env is None else unwrap_nested_env(env)
             for env in (list(leader_envs) if leader_envs is not None else [None] * int(self.world_vec.num_envs))
@@ -219,47 +222,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
 
     @staticmethod
     def _runtime_window_evidence_info(window_evidence: Any) -> dict[str, Any]:
-        engagement_barrier_id = ""
-        if window_evidence.engagement_packet is not None:
-            engagement_barrier_id = str(
-                getattr(window_evidence.engagement_packet, "barrier_id", "") or ""
-            )
-        return {
-            "barrier_ids": [
-                str(getattr(record, "barrier_id", "") or "")
-                for record in list(window_evidence.barrier_trace)
-            ],
-            "event_barrier_id": engagement_barrier_id,
-            "observation_barrier_id": str(
-                getattr(window_evidence.observation_packet, "barrier_id", "") or ""
-            ),
-            "observation_provenance": str(
-                getattr(
-                    getattr(window_evidence.observation_packet, "provenance", None),
-                    "source_label",
-                    "",
-                )
-                or ""
-            ),
-            "engagement_provenance": str(
-                getattr(
-                    getattr(window_evidence.engagement_packet, "packet_provenance", None),
-                    "source_label",
-                    "",
-                )
-                or ""
-            ),
-            "diagnostics_provenance": str(
-                getattr(
-                    getattr(window_evidence.engagement_packet, "diagnostics_provenance", None),
-                    "source_label",
-                    "",
-                )
-                or ""
-            ),
-            "cadence_reason": str(window_evidence.cadence_reason),
-            "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
-        }
+        return WorldBatchCore.runtime_window_evidence_info(window_evidence)
 
     def max_decision_interval_steps(self, env_indices: Sequence[int] | None = None) -> int:
         if env_indices is None:
@@ -482,14 +445,14 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                 if window_evidence is None:
                     window_evidence_by_env = {}
                     break
-                observation_packet = window_evidence.observation_packet
-                truth_items = list(getattr(observation_packet, "agent_observations", []) or [])
-                inst_items = list(getattr(observation_packet, "instrument_states", []) or [])
-                if not truth_items or not inst_items:
-                    raise RuntimeError(
-                        "RuntimeFacade.run_window() did not return the maintained observation packet payload "
-                        "required by leader runtime consumers"
-                    )
+                truth_items, inst_items = WorldBatchCore.extract_observation_batch(
+                    window_evidence.observation_packet,
+                    consumer="leader runtime consumers",
+                    missing_message=(
+                        "RuntimeFacade.run_window() did not return the maintained "
+                        "observation packet payload required by leader runtime consumers"
+                    ),
+                )
                 window_evidence_by_env[int(env_idx)] = window_evidence
                 truth_list.append(truth_items[0])
                 inst_list.append(inst_items[0])
@@ -508,18 +471,19 @@ class LeaderWorldBatchExecutionRuntimeGroup:
         for batch_idx, env_idx in enumerate(target_indices):
             handle = self.access.state(env_idx)
             handle.steps += 1
-            handle.last_truth = truth_list[batch_idx]
-            handle.last_inst = inst_list[batch_idx]
+            WorldBatchCore.record_observation_state(
+                handle,
+                truth=truth_list[batch_idx],
+                inst=inst_list[batch_idx],
+            )
             sim_time = float(handle.steps) * self._world_time_step(env_idx)
-            handle.loader.update_behaviors(
-                sim_time,
-                truth=handle.last_truth,
-                inst=handle.last_inst,
-                sync_to_kernel=False,
+            self._mode_plugin.update_post_step_behavior(
+                handle, sim_time, handle.last_truth, handle.last_inst,
             )
         behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if collect_timing else 0.0
         sync_t0 = time.perf_counter() if collect_timing else 0.0
-        self.access.sync_command_chain(target_indices)
+        if not self._mode_plugin.skip_post_behavior_command_sync:
+            self.access.sync_command_chain(target_indices)
         if collect_timing:
             command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 

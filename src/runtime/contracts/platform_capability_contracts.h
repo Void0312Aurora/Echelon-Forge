@@ -78,71 +78,37 @@ inline constexpr std::string_view
 inline constexpr std::string_view
     kResolvedPlatformSpawnPlanRejectionUnsupportedMaterializationStrategy =
         "resolved_platform_spawn_plan_materialization_strategy_not_maintained";
-inline constexpr std::string_view
-    kResolvedPlatformSpawnPlanRejectionMissingTemplateEvidence =
-        "resolved_platform_spawn_plan_template_evidence_required";
-inline constexpr std::string_view
-    kResolvedPlatformSpawnPlanRejectionMissingResolutionEvidence =
-        "resolved_platform_spawn_plan_resolution_evidence_required";
+inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionMissingTemplateEvidence =
+    "resolved_platform_spawn_plan_template_evidence_required";
+inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionMissingResolutionEvidence =
+    "resolved_platform_spawn_plan_resolution_evidence_required";
 inline constexpr std::string_view
     kResolvedPlatformSpawnPlanRejectionMissingMaterializationEvidence =
         "resolved_platform_spawn_plan_materialization_evidence_required";
 inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionMissingPlanEvidence =
     "resolved_platform_spawn_plan_evidence_required";
-inline constexpr std::string_view
-    kResolvedPlatformSpawnPlanRejectionMissingResolvedCapabilities =
-        "resolved_platform_spawn_plan_requires_resolved_capabilities";
-inline constexpr std::string_view
-    kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability =
-        "resolved_spawn_plan_contains_unsupported_required_capability";
-inline constexpr std::string_view
-    kResolvedPlatformSpawnPlanRejectionTypeNameProjectionRequired =
-        "resolved_spawn_plan_requires_type_name_projection_path";
-inline constexpr std::string_view
-    kResolvedPlatformSpawnPlanRejectionMissingRejectionReason =
-        "rejected_resolved_spawn_plan_requires_reason";
+inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionMissingResolvedCapabilities =
+    "resolved_platform_spawn_plan_requires_resolved_capabilities";
+inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability =
+    "resolved_spawn_plan_contains_unsupported_required_capability";
+inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionTypeNameProjectionRequired =
+    "resolved_spawn_plan_requires_type_name_projection_path";
+inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionMissingRejectionReason =
+    "rejected_resolved_spawn_plan_requires_reason";
 
 struct Capability {
-    std::string capability_id;
-    std::string family;
-    std::string capability_type;
-    std::string implementation_ref;
-    std::vector<std::string> requires_capability_ids;
-    std::vector<std::string> evidence_refs;
-    bool required = true;
-    bool supported = true;
-    std::string unsupported_reason;
+#define EF_PLATFORM_CAPABILITY_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/platform_capability.inc"
 };
 
 struct CapabilityBundle {
-    std::string bundle_id;
-    std::string source_type_name;
-    std::vector<Capability> capabilities;
-    std::string template_evidence_ref;
-    std::vector<std::string> evidence_refs;
-    bool type_name_projection_preserved = true;
-    std::string diagnostics_reason;
+#define EF_CAPABILITY_BUNDLE_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/capability_bundle.inc"
 };
 
 struct ResolvedPlatformSpawnPlan {
-    std::string plan_id;
-    std::string source_request_kind =
-        std::string(kPlatformSpawnRequestKindTypeNameProjection);
-    std::string source_type_name;
-    std::string capability_bundle_id;
-    std::string resolved_platform_definition_ref;
-    std::string materialization_strategy =
-        std::string(kPlatformMaterializationStrategyFactoryProjection);
-    std::string template_evidence_ref;
-    std::string resolution_evidence_ref;
-    std::string materialization_evidence_ref;
-    std::vector<std::string> evidence_refs;
-    std::vector<Capability> resolved_capabilities;
-    std::vector<std::string> rejected_capability_ids;
-    bool type_name_projection_preserved = true;
-    bool admitted = false;
-    std::string rejection_reason;
-    std::string diagnostics_reason;
+#define EF_RESOLVED_PLATFORM_SPAWN_PLAN_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/resolved_platform_spawn_plan.inc"
 };
 
 struct PlatformCapabilityValidationResult {
@@ -159,32 +125,23 @@ struct PlatformCapabilityValidationResult {
         }
     }
 
-    void add_error(std::string error) {
-        errors.push_back(std::move(error));
-    }
+    void add_error(std::string error) { errors.push_back(std::move(error)); }
 };
 
 [[nodiscard]] inline bool is_blank(std::string_view value) {
-    return value.empty() ||
-        std::all_of(value.begin(), value.end(), [](unsigned char ch) {
-            return std::isspace(ch) != 0;
-        });
+    return value.empty() || std::all_of(value.begin(), value.end(),
+                                        [](unsigned char ch) { return std::isspace(ch) != 0; });
 }
 
-[[nodiscard]] inline bool contains_blank_value(const std::vector<std::string>& values) {
-    return std::any_of(values.begin(), values.end(), [](const std::string& value) {
-        return is_blank(value);
-    });
+[[nodiscard]] inline bool contains_blank_value(const std::vector<std::string> &values) {
+    return std::any_of(values.begin(), values.end(),
+                       [](const std::string &value) { return is_blank(value); });
 }
 
 [[nodiscard]] inline std::vector<std::string_view> platform_capability_family_vocabulary() {
     return {
-        kCapabilityFamilyMobility,
-        kCapabilityFamilySensing,
-        kCapabilityFamilyCommunication,
-        kCapabilityFamilyLaunching,
-        kCapabilityFamilySurvivability,
-        kCapabilityFamilyCommand,
+        kCapabilityFamilyMobility,  kCapabilityFamilySensing,       kCapabilityFamilyCommunication,
+        kCapabilityFamilyLaunching, kCapabilityFamilySurvivability, kCapabilityFamilyCommand,
         kCapabilityFamilyDoctrine,
     };
 }
@@ -196,22 +153,18 @@ struct PlatformCapabilityValidationResult {
 
 [[nodiscard]] inline bool is_known_platform_spawn_request_kind(std::string_view kind) {
     return kind == kPlatformSpawnRequestKindTypeNameProjection ||
-        kind == kPlatformSpawnRequestKindTypedPlatformRequest;
+           kind == kPlatformSpawnRequestKindTypedPlatformRequest;
 }
 
-[[nodiscard]] inline bool is_known_platform_materialization_strategy(
-    std::string_view strategy
-) {
+[[nodiscard]] inline bool is_known_platform_materialization_strategy(std::string_view strategy) {
     return strategy == kPlatformMaterializationStrategyFactoryProjection ||
-        strategy == kPlatformMaterializationStrategyResolvedSpawnBridge;
+           strategy == kPlatformMaterializationStrategyResolvedSpawnBridge;
 }
 
-[[nodiscard]] inline bool capability_ids_are_unique(
-    const std::vector<Capability>& capabilities
-) {
+[[nodiscard]] inline bool capability_ids_are_unique(const std::vector<Capability> &capabilities) {
     std::vector<std::string> ids;
     ids.reserve(capabilities.size());
-    for (const auto& capability : capabilities) {
+    for (const auto &capability : capabilities) {
         if (!is_blank(capability.capability_id)) {
             ids.push_back(capability.capability_id);
         }
@@ -221,20 +174,17 @@ struct PlatformCapabilityValidationResult {
     return std::adjacent_find(ids.begin(), ids.end()) == ids.end();
 }
 
-[[nodiscard]] inline Capability make_unsupported_capability(
-    Capability capability,
-    std::string_view reason
-) {
+[[nodiscard]] inline Capability make_unsupported_capability(Capability capability,
+                                                            std::string_view reason) {
     capability.supported = false;
     capability.unsupported_reason = std::string(reason);
     return capability;
 }
 
-[[nodiscard]] inline ResolvedPlatformSpawnPlan make_rejected_resolved_platform_spawn_plan(
-    ResolvedPlatformSpawnPlan plan,
-    std::string_view rejection_reason,
-    std::string diagnostics_reason = {}
-) {
+[[nodiscard]] inline ResolvedPlatformSpawnPlan
+make_rejected_resolved_platform_spawn_plan(ResolvedPlatformSpawnPlan plan,
+                                           std::string_view rejection_reason,
+                                           std::string diagnostics_reason = {}) {
     plan.admitted = false;
     plan.rejection_reason = std::string(rejection_reason);
     if (plan.diagnostics_reason.empty()) {
@@ -243,9 +193,8 @@ struct PlatformCapabilityValidationResult {
     return plan;
 }
 
-[[nodiscard]] inline PlatformCapabilityValidationResult validate_capability(
-    const Capability& capability
-) {
+[[nodiscard]] inline PlatformCapabilityValidationResult
+validate_capability(const Capability &capability) {
     PlatformCapabilityValidationResult result{};
 
     if (is_blank(capability.capability_id)) {
@@ -283,9 +232,8 @@ struct PlatformCapabilityValidationResult {
     return result;
 }
 
-[[nodiscard]] inline PlatformCapabilityValidationResult validate_capability_bundle(
-    const CapabilityBundle& bundle
-) {
+[[nodiscard]] inline PlatformCapabilityValidationResult
+validate_capability_bundle(const CapabilityBundle &bundle) {
     PlatformCapabilityValidationResult result{};
 
     if (is_blank(bundle.bundle_id)) {
@@ -319,11 +267,11 @@ struct PlatformCapabilityValidationResult {
         return result;
     }
 
-    for (const auto& capability : bundle.capabilities) {
+    for (const auto &capability : bundle.capabilities) {
         const auto capability_result = validate_capability(capability);
         if (!capability_result.valid) {
             result.reject(capability_result.rejection_reason);
-            for (const auto& error : capability_result.errors) {
+            for (const auto &error : capability_result.errors) {
                 result.add_error("capability[" + capability.capability_id + "]: " + error);
             }
             return result;
@@ -334,9 +282,8 @@ struct PlatformCapabilityValidationResult {
     return result;
 }
 
-[[nodiscard]] inline PlatformCapabilityValidationResult validate_resolved_platform_spawn_plan(
-    const ResolvedPlatformSpawnPlan& plan
-) {
+[[nodiscard]] inline PlatformCapabilityValidationResult
+validate_resolved_platform_spawn_plan(const ResolvedPlatformSpawnPlan &plan) {
     PlatformCapabilityValidationResult result{};
 
     if (is_blank(plan.plan_id)) {
@@ -345,16 +292,12 @@ struct PlatformCapabilityValidationResult {
         return result;
     }
     if (is_blank(plan.source_request_kind)) {
-        result.reject(
-            std::string(kResolvedPlatformSpawnPlanRejectionMissingSourceRequestKind)
-        );
+        result.reject(std::string(kResolvedPlatformSpawnPlanRejectionMissingSourceRequestKind));
         result.add_error("source_request_kind is required");
         return result;
     }
     if (!is_known_platform_spawn_request_kind(plan.source_request_kind)) {
-        result.reject(
-            std::string(kResolvedPlatformSpawnPlanRejectionUnsupportedSourceRequestKind)
-        );
+        result.reject(std::string(kResolvedPlatformSpawnPlanRejectionUnsupportedSourceRequestKind));
         result.add_error("source_request_kind is outside the maintained WP14-A vocabulary");
         return result;
     }
@@ -370,18 +313,15 @@ struct PlatformCapabilityValidationResult {
     }
     if (plan.source_request_kind == kPlatformSpawnRequestKindTypeNameProjection &&
         !plan.type_name_projection_preserved) {
-        result.reject(
-            std::string(kResolvedPlatformSpawnPlanRejectionTypeNameProjectionRequired)
-        );
-        result.add_error("type_name projection requests must preserve the type_name projection path");
+        result.reject(std::string(kResolvedPlatformSpawnPlanRejectionTypeNameProjectionRequired));
+        result.add_error(
+            "type_name projection requests must preserve the type_name projection path");
         return result;
     }
 
     if (!plan.admitted) {
         if (is_blank(plan.rejection_reason)) {
-            result.reject(
-                std::string(kResolvedPlatformSpawnPlanRejectionMissingRejectionReason)
-            );
+            result.reject(std::string(kResolvedPlatformSpawnPlanRejectionMissingRejectionReason));
             result.add_error("rejected plans must declare rejection_reason");
             return result;
         }
@@ -397,44 +337,29 @@ struct PlatformCapabilityValidationResult {
     }
     if (is_blank(plan.materialization_strategy)) {
         result.reject(
-            std::string(
-                kResolvedPlatformSpawnPlanRejectionMissingMaterializationStrategy
-            )
-        );
+            std::string(kResolvedPlatformSpawnPlanRejectionMissingMaterializationStrategy));
         result.add_error("materialization_strategy is required");
         return result;
     }
     if (!is_known_platform_materialization_strategy(plan.materialization_strategy)) {
         result.reject(
-            std::string(
-                kResolvedPlatformSpawnPlanRejectionUnsupportedMaterializationStrategy
-            )
-        );
-        result.add_error(
-            "materialization_strategy is outside the maintained WP14-A vocabulary"
-        );
+            std::string(kResolvedPlatformSpawnPlanRejectionUnsupportedMaterializationStrategy));
+        result.add_error("materialization_strategy is outside the maintained WP14-A vocabulary");
         return result;
     }
     if (is_blank(plan.template_evidence_ref)) {
-        result.reject(
-            std::string(kResolvedPlatformSpawnPlanRejectionMissingTemplateEvidence)
-        );
+        result.reject(std::string(kResolvedPlatformSpawnPlanRejectionMissingTemplateEvidence));
         result.add_error("template_evidence_ref is required");
         return result;
     }
     if (is_blank(plan.resolution_evidence_ref)) {
-        result.reject(
-            std::string(kResolvedPlatformSpawnPlanRejectionMissingResolutionEvidence)
-        );
+        result.reject(std::string(kResolvedPlatformSpawnPlanRejectionMissingResolutionEvidence));
         result.add_error("resolution_evidence_ref is required");
         return result;
     }
     if (is_blank(plan.materialization_evidence_ref)) {
         result.reject(
-            std::string(
-                kResolvedPlatformSpawnPlanRejectionMissingMaterializationEvidence
-            )
-        );
+            std::string(kResolvedPlatformSpawnPlanRejectionMissingMaterializationEvidence));
         result.add_error("materialization_evidence_ref is required");
         return result;
     }
@@ -444,20 +369,16 @@ struct PlatformCapabilityValidationResult {
         return result;
     }
     if (plan.resolved_capabilities.empty()) {
-        result.reject(
-            std::string(
-                kResolvedPlatformSpawnPlanRejectionMissingResolvedCapabilities
-            )
-        );
+        result.reject(std::string(kResolvedPlatformSpawnPlanRejectionMissingResolvedCapabilities));
         result.add_error("resolved_capabilities cannot be empty for admitted plans");
         return result;
     }
 
-    for (const auto& capability : plan.resolved_capabilities) {
+    for (const auto &capability : plan.resolved_capabilities) {
         const auto capability_result = validate_capability(capability);
         if (!capability_result.valid) {
             result.reject(capability_result.rejection_reason);
-            for (const auto& error : capability_result.errors) {
+            for (const auto &error : capability_result.errors) {
                 result.add_error("resolved_capability[" + capability.capability_id + "]: " + error);
             }
             return result;
@@ -465,14 +386,9 @@ struct PlatformCapabilityValidationResult {
 
         if (capability.required && !capability.supported) {
             result.reject(
-                std::string(
-                    kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability
-                )
-            );
-            result.add_error(
-                "required capability is unsupported: " + capability.capability_id +
-                " (" + capability.unsupported_reason + ")"
-            );
+                std::string(kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability));
+            result.add_error("required capability is unsupported: " + capability.capability_id +
+                             " (" + capability.unsupported_reason + ")");
             return result;
         }
     }
@@ -481,4 +397,4 @@ struct PlatformCapabilityValidationResult {
     return result;
 }
 
-}  // namespace runtime::platform_capabilities
+} // namespace runtime::platform_capabilities

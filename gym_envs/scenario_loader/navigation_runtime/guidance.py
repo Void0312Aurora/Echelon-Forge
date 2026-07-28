@@ -4,6 +4,24 @@ import ef_py
 import numpy as np
 
 
+# G4 information-state declaration (architecture design doc §3/§15; facility in
+# python/architecture/information_layer.py). This module is the shared
+# route-guidance geometry helper (query_route_guidance_result /
+# compute_waypoint_guidance_state / apply_waypoint_guidance_update / ...): it reads
+# own-ship authoritative truth (x/y/speed via the get_policy_agent_observation
+# fallback) and produces route-guidance geometry that feeds both the autopilot
+# command target (command delivery) and the waypoint reward support. Guidance
+# geometry / command targets are not an information layer, so PRODUCED is empty.
+# As a mixed command/reward helper its reads are declared here (T8 third slice,
+# I56) but kept: an observation view is not the right owner for command-delivery
+# reads, so migration awaits a command/guidance read owner. Declared-but-open
+# (t8_g4_truth_leak_inventory.md §7, TL20); NOT ban-gated. Pure metadata; no
+# runtime cost.
+INFORMATION_LAYER_CONSUMED = ("World Truth",)
+INFORMATION_LAYER_PRODUCED = ()
+SEMANTIC_STAGE = ("P3 CommandDelivery", "P4 PlatformControl", "P10 ObservationExport")
+
+
 def normalize_waypoint_mode(mode_value) -> str:
     mode = str(mode_value if mode_value is not None else "flyby").strip().lower()
     if mode in ("fly-over", "fly_over", "overfly"):

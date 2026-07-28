@@ -17,6 +17,12 @@ consumer and has been removed.
 from __future__ import annotations
 
 from python.rl.runtime.world_batch._observation_mixin import compute_execution_observation_batch
+from python.rl.runtime.world_batch.command_chain_cache import (
+    project_world_leader_intent_maintained_assignment,
+    project_world_mission_command_maintained_assignment,
+    project_world_pilot_report_maintained_assignment,
+    project_world_task_order_maintained_assignment,
+)
 from python.rl.runtime.world_batch.vec_env import (
     WorldBatchVecEnv,
     _BatchWorldHandle,
@@ -36,10 +42,6 @@ from python.rl.runtime.world_batch.vec_env import (
     _scenario_stage,
     _step_info_products_to_info_fields,
     build_compiled_world_layout,
-    project_world_leader_intent_maintained_assignment,
-    project_world_mission_command_maintained_assignment,
-    project_world_pilot_report_maintained_assignment,
-    project_world_task_order_maintained_assignment,
 )
 
 __all__ = [

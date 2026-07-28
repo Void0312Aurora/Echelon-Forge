@@ -102,8 +102,30 @@ class GroundRuntimeSourceBridgeTests(unittest.TestCase):
       REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "vec_env.py",
       REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py",
     ]
+    # NOTE(I42): I34 sank both vec-env consumers' per-entity command-chain
+    # diff and batch-submit calls -- including the `build_kernel_mission_command`
+    # call this guard watches for -- into the shared
+    # `world_batch/_shared_ops.py` module (imported by both consumers as
+    # `diff_single_entity_command_chain`/`submit_command_chain_assignments`).
+    # Neither consumer's own source text names `build_kernel_mission_command`
+    # or the maintained batch setters directly anymore -- only
+    # `_shared_ops.py` does now. Folding its text onto each per-file scan
+    # below (same local-splice pattern as I39's wp24 guard repair in
+    # `tests/architecture/runtime_facade/test_tasking_batch_contract_boundaries.py`)
+    # keeps this guard watching the code that actually issues the
+    # tasking-bridge call and the maintained-batch writes; the "vec_env/
+    # cooperative import directly from bridge.py" framing is now satisfied
+    # via their shared `_shared_ops.py` dependency rather than a same-file
+    # import, but no assertion below is loosened -- every positive check
+    # still requires the real token to be present somewhere in the sunk
+    # call chain, and every forbidden-legacy-token check is strengthened
+    # (not weakened) because it now also covers the module that physically
+    # performs the writes.
+    shared_ops_text = (
+      REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "_shared_ops.py"
+    ).read_text(encoding="utf-8")
     for path in runtime_paths:
-      text = path.read_text(encoding="utf-8")
+      text = path.read_text(encoding="utf-8") + "\n" + shared_ops_text
       self.assertIn("from python.rl.tasking.bridge import build_kernel_mission_command", text)
       self.assertNotIn("from python.rl.tasking.leader_tasking import build_kernel_mission_command", text)
       self.assertIn("mission_command = build_kernel_mission_command(", text)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from tests.architecture.runtime_facade.helpers import *
+from tests.support.xmacro_text import expand_header_field_incs
 
 
 def test_runtime_contract_headers_do_not_include_engine_headers() -> None:
@@ -92,9 +93,9 @@ def test_runtime_facade_capabilities_stay_independent_from_cuda_experiment_signa
 
 def test_runtime_binding_capability_surface_keeps_gpu_helper_signals_separate() -> None:
   source = RUNTIME_BINDINGS.read_text(encoding="utf-8")
-  runtime_capabilities_block = source.split('nb::class_<RuntimeCapabilities>(m, "RuntimeCapabilities")', 1)[1]
+  runtime_capabilities_block = source.split('nb::class_<RuntimeCapabilities>', 1)[1]
   runtime_capabilities_block = runtime_capabilities_block.split(
-    'nb::class_<RuntimeBatchConfig>(m, "RuntimeBatchConfig")',
+    'nb::class_<RuntimeBatchConfig>',
     1,
   )[0]
   assert "cuda_runtime_available" not in runtime_capabilities_block
@@ -161,7 +162,11 @@ def test_core_runtime_does_not_probe_gpu_for_facade_capability_projection() -> N
 
 def test_resident_state_candidate_stays_fail_closed_and_exports_remain_host_visible() -> None:
   contracts = (RUNTIME_CONTRACTS / "backend_profile_contracts.h").read_text(encoding="utf-8")
-  facade_types = (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
+  # ObservationBatchPacket's provenance field is schema-owned (I31): expand
+  # the X-macro #include so this still matches the compiled field shape.
+  facade_types = expand_header_field_incs(
+    (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
+  )
   facade_cpp = runtime_facade_source_text()
 
   assert "kBackendProfileIdResidentStateUnmaintainedCandidate" in contracts

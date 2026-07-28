@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/plan/unified_architecture_program/README.md`
 Owner: `unified architecture program workline`
-Last verified: `2026-07-20`
+Last verified: `2026-07-27`
 
 Status: active program on branch `codex/redundancy-consolidation`, extending
 the completed text-level consolidation phases (I1-I19) and the blueprint
@@ -240,8 +240,14 @@ and are not scheduled by this program.
 
 ## Related Authority
 
+- [I89 Residual Disposition (2026-07-27)](t7_i89_residual_disposition_20260727.md) (I88 finding classifications and owner-gated held surfaces)
+- [I90 Final Residual Audit (2026-07-27)](t7_i90_final_residual_audit_20260727.md) (T7 final clean-pass evidence and held-surface closure boundary)
+- [I72+ Iteration Queue (2026-07-26)](iteration_queue_i72_plus_20260726.md)
+  (dependency-ordered execution design after the I61-I71 landing wave)
 - [Repository Consolidation Plan](../repository_consolidation/README.md)
   (iteration ledger and protocol)
 - [Exact Runtime Refactor Plan](../exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [Document Lifecycle Policy](../../standards/governance/document_lifecycle_policy.md)
 - [Agent Document Authority Map](../../agent/rules/document_authority_map.md)
+- [SCAL Conformance Census (2026-07-20)](scal_conformance_census_20260720.md) (T0 output; violation register and amendment basis)
+- [T6 Residual Ledger (2026-07-20)](t6_residual_ledger.md) (T6 output; indexes the I28/I31/I33 machine-red and DTO-migration residuals registered in prose in the iteration ledger)

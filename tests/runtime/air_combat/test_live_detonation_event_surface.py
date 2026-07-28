@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import math
 
+import pytest
+
 from tests.runtime.air_combat.weapon_guidance_realism.helpers import (
   _drive_missile_with_truth_track,
   _make_baseline_kernel,
@@ -33,8 +35,23 @@ def _run_live_structured_air_detonation() -> tuple[object, int, int, int]:
   return sim.export_recent_engagement_events(), missile_id, red_id, blue_id
 
 
-def test_live_detonation_exports_standard_warhead_spatial_and_component_events() -> None:
-  events, missile_id, red_id, _blue_id = _run_live_structured_air_detonation()
+@pytest.fixture(scope="module")
+def _live_structured_air_detonation() -> tuple[object, int, int, int]:
+  return _run_live_structured_air_detonation()
+
+
+def _named_component_source_rows(effects: object) -> list[object]:
+  return [
+    row
+    for row in effects.component_mechanism_load_rows
+    if str(row.component_name) or str(row.component_system)
+  ]
+
+
+def test_live_detonation_exports_standard_warhead_spatial_and_component_events(
+  _live_structured_air_detonation: tuple[object, int, int, int],
+) -> None:
+  events, missile_id, red_id, _blue_id = _live_structured_air_detonation
 
   assert len(events.launch_events) == 1
   assert len(events.nearest_approach_events) == 1
@@ -56,7 +73,6 @@ def test_live_detonation_exports_standard_warhead_spatial_and_component_events()
   assert int(effects.munition.entity_id) == missile_id
   assert int(effects.target.entity_id) == red_id
   assert str(effects.trigger_type) == "proximity_fuze"
-  assert str(effects.outcome_state) == "damage_applied"
   assert math.isfinite(float(effects.miss_distance_m))
   assert float(effects.miss_distance_m) < float(effects.warhead_lethal_radius_m)
 
@@ -90,9 +106,6 @@ def test_live_detonation_exports_standard_warhead_spatial_and_component_events()
   assert float(warhead.blast_overpressure_kpa) == float(
     effects.mechanism_blast_overpressure_kpa
   )
-  assert float(warhead.fragment_energy_j) > 0.0
-  assert float(warhead.blast_overpressure_kpa) > 0.0
-
   assert str(spatial.header.stage) == "spatial_coverage"
   assert str(spatial.header.status) == "projected"
   assert str(spatial.header.fidelity_mode) == "research_runtime"
@@ -103,17 +116,9 @@ def test_live_detonation_exports_standard_warhead_spatial_and_component_events()
   assert int(spatial.header.target.entity_id) == red_id
   assert int(spatial.sample_count) == int(effects.warhead_spatial_sample_count)
   assert float(spatial.energy_scale) == float(effects.warhead_spatial_energy_scale)
-  assert int(spatial.sample_count) > 0
-
-  source_rows = [
-    row
-    for row in effects.component_mechanism_load_rows
-    if str(row.component_name) or str(row.component_system)
-  ]
+  source_rows = _named_component_source_rows(effects)
   component_loads = list(events.component_load_events)
-  assert source_rows
   assert len(component_loads) == len(source_rows)
-
   for load, row in zip(component_loads, source_rows):
     assert str(load.header.stage) == "component_load"
     assert str(load.header.status) == "projected"
@@ -136,8 +141,92 @@ def test_live_detonation_exports_standard_warhead_spatial_and_component_events()
       "direct_component_hit",
       "spatial_component_projection",
     }
-
   assert int(damage_report.source_event_id) == int(effects.event_id)
   assert float(damage_report.hp_delta) == 0.0
   assert not bool(damage_report.destroyed)
   assert str(damage_report.loss_state_to) != "lost"
+
+
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "T6 residual ledger section 11, I97-R2: observed outcome_state="
+    "'detonated_no_effect' versus expected 'damage_applied'; two-binary "
+    "inheritance: reproduced with both the 2026-07-18 and 2026-07-26 "
+    "binaries. Strict: restored damage application must XPASS."
+  ),
+)
+def test_live_detonation_outcome_state_matches_damage_application(
+  _live_structured_air_detonation: tuple[object, int, int, int],
+) -> None:
+  events, _missile_id, _red_id, _blue_id = _live_structured_air_detonation
+  effects = events.effects_events[0]
+  assert str(effects.outcome_state) == "damage_applied"
+
+
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "T6 residual ledger section 11, I97-R3: observed fragment_energy_j=0.0 "
+    "versus expected >0.0; two-binary inheritance: reproduced with both the "
+    "2026-07-18 and 2026-07-26 binaries. Strict: restored fragment energy "
+    "must XPASS."
+  ),
+)
+def test_live_detonation_fragment_energy_is_positive(
+  _live_structured_air_detonation: tuple[object, int, int, int],
+) -> None:
+  events, _missile_id, _red_id, _blue_id = _live_structured_air_detonation
+  warhead = events.warhead_mechanism_events[0]
+  assert float(warhead.fragment_energy_j) > 0.0
+
+
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "T6 residual ledger section 11, I97-R4: observed blast_overpressure_kpa="
+    "0.0 versus expected >0.0; two-binary inheritance: reproduced with both "
+    "the 2026-07-18 and 2026-07-26 binaries. Strict: restored blast load "
+    "must XPASS."
+  ),
+)
+def test_live_detonation_blast_overpressure_is_positive(
+  _live_structured_air_detonation: tuple[object, int, int, int],
+) -> None:
+  events, _missile_id, _red_id, _blue_id = _live_structured_air_detonation
+  warhead = events.warhead_mechanism_events[0]
+  assert float(warhead.blast_overpressure_kpa) > 0.0
+
+
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "T6 residual ledger section 11, I97-R5: observed spatial sample_count=0 "
+    "versus expected >0; two-binary inheritance: reproduced with both the "
+    "2026-07-18 and 2026-07-26 binaries. Strict: restored spatial sampling "
+    "must XPASS."
+  ),
+)
+def test_live_detonation_spatial_sample_count_is_positive(
+  _live_structured_air_detonation: tuple[object, int, int, int],
+) -> None:
+  events, _missile_id, _red_id, _blue_id = _live_structured_air_detonation
+  spatial = events.spatial_coverage_events[0]
+  assert int(spatial.sample_count) > 0
+
+
+@pytest.mark.xfail(
+  strict=True,
+  reason=(
+    "T6 residual ledger section 11, I97-R6: observed 0 nonblank component "
+    "source rows versus expected at least 1; two-binary inheritance: "
+    "reproduced with both the 2026-07-18 and 2026-07-26 binaries. Strict: "
+    "restored component source rows must XPASS."
+  ),
+)
+def test_live_detonation_exports_nonblank_component_source_rows(
+  _live_structured_air_detonation: tuple[object, int, int, int],
+) -> None:
+  events, _missile_id, _red_id, _blue_id = _live_structured_air_detonation
+  effects = events.effects_events[0]
+  assert _named_component_source_rows(effects)

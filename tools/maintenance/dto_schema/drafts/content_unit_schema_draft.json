@@ -1,0 +1,2162 @@
+{
+  "_draft": {
+    "status": "draft, not wired",
+    "not_wired": "Static, machine-readable DRAFT survey artifact. NOT registered in tools/maintenance/dto_schema/schemas/__init__.py (SCHEMA_MODULES); NOT imported or consumed by generate.py, model.DtoSchema, python_builder, or any build/test. generate.py --check output and every generated artifact are byte-unchanged by this file.",
+    "purpose": "T11 second slice: formalize the 106 recognized content top-level keys of face (i).",
+    "source_survey": "docs/plan/unified_architecture_program/t11_content_schema_survey_20260721.md",
+    "source_census": "docs/plan/unified_architecture_program/t11_content_pipeline_census_20260721.md",
+    "baseline_commit": "1d25c4d1",
+    "precedent": "T1 dto_schema codec escape hatch (Field.json_key / hidden / readonly reserved metadata in model.py).",
+    "loader": "src/content/unit_definition_loader.cpp",
+    "target_structs": {
+      "UnitDefinition": "src/content/unit_definition.h:177-265 (58 direct members)",
+      "MissileTuningDefinition": "src/content/unit_definition.h:63-122 (56 fields)"
+    },
+    "counts": {
+      "direct_top_level_keys": 54,
+      "missile_tuning_helper_keys": 52,
+      "semantic_total": 106,
+      "definition_files": 27
+    }
+  },
+  "escape_hatch_families": {
+    "REQ": "required discriminant (type); error/return false if missing or unknown",
+    "ID": "identity",
+    "MASS": "generic scalar mass",
+    "REF": "component reference string (resolved by name at spawn)",
+    "ENG": "engine dual representation: nested `engine` object OR flat mil/ab_thrust etc.; `engine_tuning` aliases `engine.tuning`",
+    "LOAD": "hardpoints and default_loadout (int-keyed map)",
+    "HP": "health",
+    "SEN": "sensor variants: sensor_ref is an independent if (:889-893) and can coexist with the chain; sensor_refs | inline sensor | has_sensor form a mutually-exclusive if/else-if chain (:894-907); inline sensor accepts an object only and merges over the make_unit_definition_default_sensor() preset (:883)",
+    "SON": "sonar inline/mounted",
+    "FLT": "flight model",
+    "LG": "landing gear",
+    "SCORE": "score",
+    "AERO": "airframe with nested tuning vs top-level aero_tuning alias; stall_state",
+    "NAV": "naval platform blocks (ship/submarine/stores/logistics/weapon_system/embarked_air_ops)",
+    "DMG": "damage model; hitboxes[].components[].dependencies[] is polymorphic string-or-object (:1232-1254); components[].failure_modes is dual-form array-of-names or object-of-weights (:1305-1331) with a failure_mode_weights object overlay (:1332-1345); component geometry is a nested geometry object vs flat geometry_* keys dual path (parse_damage_component_geometry_json_fields :84-154, call :1351) with legacy size/offset box fallback (:1352-1360)",
+    "AMMO": "ammo",
+    "MSL": "missile-tuning triple-source merge: flat top-level entry + nested missile_tuning + nested guidance (with per-key aliases active_seek_range->seeker_lock_range, off_boresight_cap->max_launch_off_boresight_deg, and guidance.type->seeker_type)",
+    "WAR": "warhead profile block",
+    "FUZ": "fuze/fuse dual spelling (both -> parse_fuze_json_fields); nested trigger-radius alias chain trigger_radius_m | trigger_radius | radius_m (:476-482) and trigger_logic falling back to trigger_mode (:485-486)",
+    "EW": "EW blocks rwr/jammer/countermeasures/esm",
+    "CMD": "command link",
+    "DL": "data link scalars"
+  },
+  "sentinel_legend": {
+    "REQ": "required (error/return false if missing)",
+    "type_str": "optional; falls back to the type string (entry.value(\"name\", type_str), :818); the single-object load_file path additionally gates on name presence (:1617) while the units[] path does not",
+    "0": "numeric zero default",
+    "16": "int default 16",
+    "-1": "negative int sentinel",
+    "1": "nonzero int default (autopilot_order)",
+    "true": "boolean true default",
+    "false": "boolean false default",
+    "NaN": "std::numeric_limits<double>::quiet_NaN() unset marker",
+    "FLAG": "has_* presence flag gates factory defaults",
+    "PRESET": "merged over a named codec preset, not plain value-init: make_unit_definition_default_sensor() 30 km (:883, :914, :1491), make_default_sonar_definition() 25 km (:886, :931), flight_dynamics::default_engine_tuning() (:838, :850), flight_dynamics::default_aero_tuning() (:996, :1003), loader-literal paved-only landing gear (:959)",
+    "{}": "struct value-initialized / zero-literal default (no named codec preset)",
+    "{100}": "loader-literal health preset {100,100} (:875)",
+    "[]": "empty container / absent-key no-op",
+    "unset": "empty string / left at prior value"
+  },
+  "direct_top_level_keys": [
+    {
+      "key": "type",
+      "json_type": "string",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "type",
+        "decl": "src/content/unit_definition.h:178"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:807,812",
+      "default_or_sentinel": "REQ",
+      "escape_hatch_family": "REQ",
+      "forms_aliases": "discriminant",
+      "distribution": {
+        "total_files": 27,
+        "by_category": {
+          "U": 11,
+          "M": 12,
+          "W": 3,
+          "F": 1
+        }
+      }
+    },
+    {
+      "key": "name",
+      "json_type": "string",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "name",
+        "decl": "src/content/unit_definition.h:179"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:818",
+      "default_or_sentinel": "type_str",
+      "escape_hatch_family": "ID",
+      "forms_aliases": "optional: falls back to the type string (:818); single-object load_file path gates on presence (:1617) but the units[] path does not",
+      "distribution": {
+        "total_files": 27,
+        "by_category": {
+          "U": 11,
+          "M": 12,
+          "W": 3,
+          "F": 1
+        }
+      }
+    },
+    {
+      "key": "mass_kg",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "mass_kg",
+        "decl": "src/content/unit_definition.h:250"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:819",
+      "default_or_sentinel": "0",
+      "escape_hatch_family": "MASS",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 4,
+        "by_category": {
+          "U": 1,
+          "W": 3
+        }
+      }
+    },
+    {
+      "key": "engine_ref",
+      "json_type": "string",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_ref",
+        "decl": "src/content/unit_definition.h:184"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:825,826",
+      "default_or_sentinel": "unset",
+      "escape_hatch_family": "REF",
+      "forms_aliases": "unchecked get<string>",
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "U": 2
+        }
+      }
+    },
+    {
+      "key": "engine",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_data",
+        "decl": "src/content/unit_definition.h:193"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:829,830",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "ENG",
+      "forms_aliases": "nested form; nested tuning -> default_engine_tuning() preset (:836-839)",
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "M": 2
+        }
+      }
+    },
+    {
+      "key": "mil_thrust_n",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_data.mil_thrust_n",
+        "decl": "src/content/unit_definition.h:193"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:842",
+      "default_or_sentinel": "0",
+      "escape_hatch_family": "ENG",
+      "forms_aliases": "flat form",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "ab_thrust_n",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_data.ab_thrust_n",
+        "decl": "src/content/unit_definition.h:193"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:843",
+      "default_or_sentinel": "0",
+      "escape_hatch_family": "ENG",
+      "forms_aliases": "flat form",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sfc_mil",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_data.sfc_mil",
+        "decl": "src/content/unit_definition.h:193"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:844",
+      "default_or_sentinel": "0",
+      "escape_hatch_family": "ENG",
+      "forms_aliases": "flat form",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sfc_ab",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_data.sfc_ab",
+        "decl": "src/content/unit_definition.h:193"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:845",
+      "default_or_sentinel": "0",
+      "escape_hatch_family": "ENG",
+      "forms_aliases": "flat form",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "bypass_ratio",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_data.bypass_ratio",
+        "decl": "src/content/unit_definition.h:193"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:846",
+      "default_or_sentinel": "0",
+      "escape_hatch_family": "ENG",
+      "forms_aliases": "flat form",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "engine_tuning",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "engine_data.tuning",
+        "decl": "src/content/unit_definition.h:193"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:847,852",
+      "default_or_sentinel": "PRESET",
+      "escape_hatch_family": "ENG",
+      "forms_aliases": "alias of engine.tuning; default_engine_tuning() preset-then-merge (:848-852)",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "hardpoints",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "hardpoints",
+        "decl": "src/content/unit_definition.h:189"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:855,856",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "LOAD",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "U": 2
+        }
+      }
+    },
+    {
+      "key": "default_loadout",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "default_loadout",
+        "decl": "src/content/unit_definition.h:190"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:869,870",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "LOAD",
+      "forms_aliases": "int-key map; std::stoi(key); COMMA-BLOCKER",
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "U": 2
+        }
+      }
+    },
+    {
+      "key": "health",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "health",
+        "decl": "src/content/unit_definition.h:230"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:876,877",
+      "default_or_sentinel": "{100}",
+      "escape_hatch_family": "HP",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 11,
+        "by_category": {
+          "U": 10,
+          "F": 1
+        }
+      }
+    },
+    {
+      "key": "sensor_ref",
+      "json_type": "string",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "sensor_ref",
+        "decl": "src/content/unit_definition.h:182"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:889,890",
+      "default_or_sentinel": "unset",
+      "escape_hatch_family": "SEN",
+      "forms_aliases": "independent if (:889-893), can coexist with the chain; unchecked get<string>",
+      "distribution": {
+        "total_files": 5,
+        "by_category": {
+          "U": 5
+        }
+      }
+    },
+    {
+      "key": "sensor_refs",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "sensor_refs",
+        "decl": "src/content/unit_definition.h:183"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:894,895",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "SEN",
+      "forms_aliases": "three-way chain head (if, :894)",
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "U": 2
+        }
+      }
+    },
+    {
+      "key": "sensor",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "sensor",
+        "decl": "src/content/unit_definition.h:232"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:899,901;1490",
+      "default_or_sentinel": "PRESET+FLAG",
+      "escape_hatch_family": "SEN",
+      "forms_aliases": "three-way chain else-if (:899); object form only; merges over make_unit_definition_default_sensor() 30 km preset (:883, missile re-preset :1491)",
+      "distribution": {
+        "total_files": 8,
+        "by_category": {
+          "U": 1,
+          "M": 6,
+          "F": 1
+        }
+      }
+    },
+    {
+      "key": "has_sensor",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "has_sensor",
+        "decl": "src/content/unit_definition.h:231"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:905,906",
+      "default_or_sentinel": "FLAG",
+      "escape_hatch_family": "SEN",
+      "forms_aliases": "three-way chain tail (else-if, :905)",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "mounted_sensors",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "mounted_sensors",
+        "decl": "src/content/unit_definition.h:233"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:909,910",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "SEN",
+      "forms_aliases": "per-mount make_unit_definition_default_sensor() preset (:914)",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "sonar",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "sonar",
+        "decl": "src/content/unit_definition.h:235"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:922,924",
+      "default_or_sentinel": "PRESET+FLAG",
+      "escape_hatch_family": "SON",
+      "forms_aliases": "inline; merges over make_default_sonar_definition() 25 km preset (:886)",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "M": 1
+        }
+      }
+    },
+    {
+      "key": "mounted_sonars",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "mounted_sonars",
+        "decl": "src/content/unit_definition.h:236"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:926,927",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "SON",
+      "forms_aliases": "per-mount make_default_sonar_definition() preset (:931)",
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "U": 2
+        }
+      }
+    },
+    {
+      "key": "has_flight_model",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "has_flight_model",
+        "decl": "src/content/unit_definition.h:238"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:939",
+      "default_or_sentinel": "FLAG",
+      "escape_hatch_family": "FLT",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "flight_model",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "flight_model",
+        "decl": "src/content/unit_definition.h:239"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:941,943",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "FLT",
+      "forms_aliases": "in-block literals when key present: min_g -3.0 (:951), takeoff 80 / landing 70 / taxi 15 (:953-955)",
+      "distribution": {
+        "total_files": 8,
+        "by_category": {
+          "U": 5,
+          "W": 3
+        }
+      }
+    },
+    {
+      "key": "has_landing_gear",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "has_landing_gear",
+        "decl": "src/content/unit_definition.h:243"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:958",
+      "default_or_sentinel": "FLAG",
+      "escape_hatch_family": "LG",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "landing_gear",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "landing_gear",
+        "decl": "src/content/unit_definition.h:244"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:960,962",
+      "default_or_sentinel": "PRESET+FLAG",
+      "escape_hatch_family": "LG",
+      "forms_aliases": "loader-literal paved-only preset {false,0.02,3.0,2.0,1.0,false,5.0} (:959)",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "has_score",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "has_score",
+        "decl": "src/content/unit_definition.h:246"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:973",
+      "default_or_sentinel": "true",
+      "escape_hatch_family": "SCORE",
+      "forms_aliases": "default true",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "score",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "score",
+        "decl": "src/content/unit_definition.h:247"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:975,976",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "SCORE",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "airframe",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "airframe",
+        "decl": "src/content/unit_definition.h:212"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:983,984",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "AERO",
+      "forms_aliases": "nested tuning -> default_aero_tuning() preset (:994-997)",
+      "distribution": {
+        "total_files": 5,
+        "by_category": {
+          "U": 5
+        }
+      }
+    },
+    {
+      "key": "aero_tuning",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "airframe.tuning",
+        "decl": "src/content/unit_definition.h:212"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1000,1005",
+      "default_or_sentinel": "PRESET",
+      "escape_hatch_family": "AERO",
+      "forms_aliases": "alias of airframe.tuning; default_aero_tuning() preset-then-merge (:1001-1005)",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "stall_state",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "stall_state",
+        "decl": "src/content/unit_definition.h:241"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1007,1009",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "AERO",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "ship_platform",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "ship_platform",
+        "decl": "src/content/unit_definition.h:214"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1014,1016",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "NAV",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 4,
+        "by_category": {
+          "U": 4
+        }
+      }
+    },
+    {
+      "key": "submarine_platform",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "submarine_platform",
+        "decl": "src/content/unit_definition.h:216"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1060,1062",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "NAV",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "naval_stores",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "naval_stores",
+        "decl": "src/content/unit_definition.h:218"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1093,1095",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "NAV",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "U": 2
+        }
+      }
+    },
+    {
+      "key": "naval_logistics",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "naval_logistics",
+        "decl": "src/content/unit_definition.h:220"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1116,1118",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "NAV",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "naval_weapon_system",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "naval_weapon_system",
+        "decl": "src/content/unit_definition.h:222"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1139,1140",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "NAV",
+      "forms_aliases": "mounts[] required",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "embarked_air_ops",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "embarked_air_ops",
+        "decl": "src/content/unit_definition.h:224"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1169,1171",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "NAV",
+      "forms_aliases": "in-block enabled defaults true (:1184)",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "damage_model",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "damage_model",
+        "decl": "src/content/unit_definition.h:225"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1189,1190",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "DMG",
+      "forms_aliases": "poly dependencies[]: string|object (:1232-1254); failure_modes array|object (:1305-1331) + failure_mode_weights overlay (:1332-1345); geometry nested-object|flat-key dual path (:84-154, call :1351) with size/offset box fallback (:1352-1360)",
+      "distribution": {
+        "total_files": 9,
+        "by_category": {
+          "U": 8,
+          "F": 1
+        }
+      }
+    },
+    {
+      "key": "has_ammo",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "has_ammo",
+        "decl": "src/content/unit_definition.h:252"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1435",
+      "default_or_sentinel": "FLAG",
+      "escape_hatch_family": "AMMO",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "U": 2
+        }
+      }
+    },
+    {
+      "key": "ammo",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "ammo",
+        "decl": "src/content/unit_definition.h:253"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1437,1439",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "AMMO",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    },
+    {
+      "key": "missile_tuning",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "missile_tuning",
+        "decl": "src/content/unit_definition.h:264"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1452,1453",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "merge source 2 (nested)",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "guidance",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "missile_tuning",
+        "decl": "src/content/unit_definition.h:264"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1455,1456",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "merge source 3; alias active_seek_range,off_boresight_cap; type->seeker_type",
+      "distribution": {
+        "total_files": 3,
+        "by_category": {
+          "W": 3
+        }
+      }
+    },
+    {
+      "key": "warhead",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "warhead_profile",
+        "decl": "src/content/unit_definition.h:118"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1481,1482",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "WAR",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 3,
+        "by_category": {
+          "W": 3
+        }
+      }
+    },
+    {
+      "key": "fuze",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "fuze_profile",
+        "decl": "src/content/unit_definition.h:120"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1484,1485",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "FUZ",
+      "forms_aliases": "spelling A; radius alias trigger_radius_m|trigger_radius|radius_m (:476-482); trigger_logic|trigger_mode fallback (:485-486)",
+      "distribution": {
+        "total_files": 3,
+        "by_category": {
+          "W": 3
+        }
+      }
+    },
+    {
+      "key": "fuse",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "fuze_profile",
+        "decl": "src/content/unit_definition.h:120"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1487,1488",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "FUZ",
+      "forms_aliases": "spelling B (alias of fuze); same nested radius/logic aliases (:476-482, :485-486)",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "has_command_link",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "has_command_link",
+        "decl": "src/content/unit_definition.h:255"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1521",
+      "default_or_sentinel": "FLAG",
+      "escape_hatch_family": "CMD",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 9,
+        "by_category": {
+          "U": 9
+        }
+      }
+    },
+    {
+      "key": "command_link",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "command_link",
+        "decl": "src/content/unit_definition.h:256"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1523,1525",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "CMD",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 8,
+        "by_category": {
+          "U": 8
+        }
+      }
+    },
+    {
+      "key": "has_data_link",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "has_data_link",
+        "decl": "src/content/unit_definition.h:258"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1530",
+      "default_or_sentinel": "FLAG",
+      "escape_hatch_family": "DL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 11,
+        "by_category": {
+          "U": 10,
+          "F": 1
+        }
+      }
+    },
+    {
+      "key": "data_link_network_id",
+      "json_type": "int",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "data_link_network_id",
+        "decl": "src/content/unit_definition.h:259"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1531",
+      "default_or_sentinel": "0",
+      "escape_hatch_family": "DL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 8,
+        "by_category": {
+          "U": 8
+        }
+      }
+    },
+    {
+      "key": "data_link_max_reports_per_update",
+      "json_type": "int",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "data_link_max_reports_per_update",
+        "decl": "src/content/unit_definition.h:260"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1533",
+      "default_or_sentinel": "16",
+      "escape_hatch_family": "DL",
+      "forms_aliases": "max(0,x)",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "data_link_max_messages_per_update",
+      "json_type": "int",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "data_link_max_messages_per_update",
+        "decl": "src/content/unit_definition.h:261"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1535,1536",
+      "default_or_sentinel": "-1",
+      "escape_hatch_family": "DL",
+      "forms_aliases": "falls back to reports value",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "rwr",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "rwr_data",
+        "decl": "src/content/unit_definition.h:203"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1540,1541",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "EW",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "M": 1
+        }
+      }
+    },
+    {
+      "key": "jammer",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "jammer_data",
+        "decl": "src/content/unit_definition.h:202"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1545,1546",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "EW",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "M": 1
+        }
+      }
+    },
+    {
+      "key": "countermeasures",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "cms_data",
+        "decl": "src/content/unit_definition.h:206"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1563,1564",
+      "default_or_sentinel": "{}",
+      "escape_hatch_family": "EW",
+      "forms_aliases": "member is cms_data",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "M": 1
+        }
+      }
+    },
+    {
+      "key": "esm",
+      "json_type": "object",
+      "polymorphic": false,
+      "target": {
+        "struct": "UnitDefinition",
+        "member": "esm_data",
+        "decl": "src/content/unit_definition.h:205"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:1574,1575",
+      "default_or_sentinel": "{}+FLAG",
+      "escape_hatch_family": "EW",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      }
+    }
+  ],
+  "missile_tuning_helper_keys": [
+    {
+      "key": "max_speed",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "max_speed",
+        "decl": "src/content/unit_definition.h:64"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:365 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "seed=flight_model.max_speed",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "turn_rate",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "turn_rate",
+        "decl": "src/content/unit_definition.h:65"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:366 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "seed=flight_model.max_turn_rate",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "fuse_distance",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "fuse_distance",
+        "decl": "src/content/unit_definition.h:66"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:367 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "also set by warhead/fuze radius",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "damage",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "damage",
+        "decl": "src/content/unit_definition.h:67"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:368 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "also set by warhead",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "seeker_fov_deg",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "seeker_fov_deg",
+        "decl": "src/content/unit_definition.h:68"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:369 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "seeker_lock_range",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "seeker_lock_range",
+        "decl": "src/content/unit_definition.h:69"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:370 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "alias active_seek_range@guidance:1469",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "guidance_delay_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "guidance_delay_s",
+        "decl": "src/content/unit_definition.h:70"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:371 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "guidance_update_period_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "guidance_update_period_s",
+        "decl": "src/content/unit_definition.h:71"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:373 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "max_flight_time_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "max_flight_time_s",
+        "decl": "src/content/unit_definition.h:72"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:374 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "W": 2
+        }
+      }
+    },
+    {
+      "key": "nav_gain",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "nav_gain",
+        "decl": "src/content/unit_definition.h:73"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:375 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "used nested@guidance",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "apn_target_accel_gain",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "apn_target_accel_gain",
+        "decl": "src/content/unit_definition.h:74"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:376 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "used nested@guidance",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sensor_max_range",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sensor_max_range",
+        "decl": "src/content/unit_definition.h:75"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:377 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "alias@guidance:1471; entry.sensor.max_range",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sensor_fov_deg",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sensor_fov_deg",
+        "decl": "src/content/unit_definition.h:76"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:378 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "entry.sensor.fov_deg",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sensor_scan_period",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sensor_scan_period",
+        "decl": "src/content/unit_definition.h:77"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:379 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sensor_detection_prob",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sensor_detection_prob",
+        "decl": "src/content/unit_definition.h:78"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:380 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sensor_bearing_noise_std",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sensor_bearing_noise_std",
+        "decl": "src/content/unit_definition.h:79"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:382 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sensor_range_noise_std",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sensor_range_noise_std",
+        "decl": "src/content/unit_definition.h:80"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:384 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sensor_track_memory_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sensor_track_memory_s",
+        "decl": "src/content/unit_definition.h:81"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:385 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "seeker_type",
+      "json_type": "int",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "seeker_type",
+        "decl": "src/content/unit_definition.h:82"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:386 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "-1",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "inferred from guidance.type",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "seeker_activation_range_m",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "seeker_activation_range_m",
+        "decl": "src/content/unit_definition.h:83"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:388 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "seeker_gimbal_limit_deg",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "seeker_gimbal_limit_deg",
+        "decl": "src/content/unit_definition.h:84"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:390 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "seeker_ifov_deg",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "seeker_ifov_deg",
+        "decl": "src/content/unit_definition.h:85"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:391 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "bearing_filter_tau_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "bearing_filter_tau_s",
+        "decl": "src/content/unit_definition.h:86"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:392 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "elevation_filter_tau_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "elevation_filter_tau_s",
+        "decl": "src/content/unit_definition.h:87"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:394 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "range_filter_tau_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "range_filter_tau_s",
+        "decl": "src/content/unit_definition.h:88"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:395 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "track_break_time_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "track_break_time_s",
+        "decl": "src/content/unit_definition.h:89"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:396 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "boost_time_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "boost_time_s",
+        "decl": "src/content/unit_definition.h:90"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:397 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sustain_time_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sustain_time_s",
+        "decl": "src/content/unit_definition.h:91"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:398 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "boost_thrust_n",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "boost_thrust_n",
+        "decl": "src/content/unit_definition.h:92"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:399 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "sustain_thrust_n",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "sustain_thrust_n",
+        "decl": "src/content/unit_definition.h:93"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:400 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "reference_area_m2",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "reference_area_m2",
+        "decl": "src/content/unit_definition.h:94"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:401 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "cd0_subsonic",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "cd0_subsonic",
+        "decl": "src/content/unit_definition.h:95"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:402 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "cd0_supersonic",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "cd0_supersonic",
+        "decl": "src/content/unit_definition.h:96"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:403 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "induced_drag_k",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "induced_drag_k",
+        "decl": "src/content/unit_definition.h:97"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:404 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "cd0_mach_breakpoints",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "cd0_mach_breakpoints",
+        "decl": "src/content/unit_definition.h:98"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:405 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "parse_vector",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "cd0_mach_values",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "cd0_mach_values",
+        "decl": "src/content/unit_definition.h:99"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:406 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "parse_vector",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "induced_drag_k_mach_breakpoints",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "induced_drag_k_mach_breakpoints",
+        "decl": "src/content/unit_definition.h:100"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:407 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "parse_vector",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "induced_drag_k_mach_values",
+      "json_type": "array",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "induced_drag_k_mach_values",
+        "decl": "src/content/unit_definition.h:101"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:408 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "[]",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "parse_vector",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "propellant_mass_kg",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "propellant_mass_kg",
+        "decl": "src/content/unit_definition.h:102"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:409 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "max_lateral_g",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "max_lateral_g",
+        "decl": "src/content/unit_definition.h:103"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:410 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "seed=flight_model.max_g",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "autopilot_tau_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "autopilot_tau_s",
+        "decl": "src/content/unit_definition.h:104"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:411 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "used nested@guidance",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "autopilot_damping",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "autopilot_damping",
+        "decl": "src/content/unit_definition.h:105"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:412 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "autopilot_order",
+      "json_type": "int",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "autopilot_order",
+        "decl": "src/content/unit_definition.h:108"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:413 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "1",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "nonzero default sentinel",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "max_accel_response_g_per_s",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "max_accel_response_g_per_s",
+        "decl": "src/content/unit_definition.h:109"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:415 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "used nested@guidance",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "mach_transonic_start",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "mach_transonic_start",
+        "decl": "src/content/unit_definition.h:110"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:416 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "mach_transonic_end",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "mach_transonic_end",
+        "decl": "src/content/unit_definition.h:111"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:417 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "cd0_power_on_ratio",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "cd0_power_on_ratio",
+        "decl": "src/content/unit_definition.h:112"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:418 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "min_launch_range_m",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "min_launch_range_m",
+        "decl": "src/content/unit_definition.h:113"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:419 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "alias@guidance:1475",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "max_launch_off_boresight_deg",
+      "json_type": "number",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "max_launch_off_boresight_deg",
+        "decl": "src/content/unit_definition.h:114"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:421 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "NaN",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "alias off_boresight_cap@guidance:1473",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "lobl_required",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "lobl_required",
+        "decl": "src/content/unit_definition.h:115"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:422 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "false",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "also@guidance:1479",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "midcourse_datalink_supported",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "midcourse_datalink_supported",
+        "decl": "src/content/unit_definition.h:116"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:424 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "false",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": "also@guidance:1477",
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    },
+    {
+      "key": "use_kalman_seeker",
+      "json_type": "bool",
+      "polymorphic": false,
+      "target": {
+        "struct": "MissileTuningDefinition",
+        "member": "use_kalman_seeker",
+        "decl": "src/content/unit_definition.h:117"
+      },
+      "read_site": "src/content/unit_definition_loader.cpp:425 (invoked on top-level entry at src/content/unit_definition_loader.cpp:1450)",
+      "default_or_sentinel": "false",
+      "escape_hatch_family": "MSL",
+      "forms_aliases": null,
+      "distribution": {
+        "total_files": 0,
+        "by_category": {}
+      }
+    }
+  ],
+  "present_but_unread_top_level_keys": [
+    {
+      "key": "_deferred_runtime_claims",
+      "kind": "underscore_annotation",
+      "json_type": "array",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      },
+      "note": "Underscore-prefixed provenance/schema annotation; not read by the parser by convention."
+    },
+    {
+      "key": "_ground_schema",
+      "kind": "underscore_annotation",
+      "json_type": "object",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      },
+      "note": "Underscore-prefixed provenance/schema annotation; not read by the parser by convention."
+    },
+    {
+      "key": "_provenance",
+      "kind": "underscore_annotation",
+      "json_type": "object",
+      "distribution": {
+        "total_files": 12,
+        "by_category": {
+          "U": 7,
+          "M": 5
+        }
+      },
+      "note": "Underscore-prefixed provenance/schema annotation; not read by the parser by convention."
+    },
+    {
+      "key": "_real_world",
+      "kind": "underscore_annotation",
+      "json_type": "object",
+      "distribution": {
+        "total_files": 3,
+        "by_category": {
+          "U": 3
+        }
+      },
+      "note": "Underscore-prefixed provenance/schema annotation; not read by the parser by convention."
+    },
+    {
+      "key": "ew_suite_ref",
+      "kind": "semantic_unread_by_parser",
+      "json_type": "string",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      },
+      "note": "UnitDefinition::ew_suite_ref (unit_definition.h:185) is resolved at spawn in default_unit_factory.h but NEVER assigned by parse_unit_json; the data key is silently dropped."
+    },
+    {
+      "key": "rcs",
+      "kind": "semantic_unread_by_parser",
+      "json_type": "object",
+      "distribution": {
+        "total_files": 2,
+        "by_category": {
+          "M": 2
+        }
+      },
+      "note": "RCSProfile module payload; parse_unit_json never reads 'rcs', so RCSProfile modules load with only name+type (rcs_data stays default-initialized)."
+    },
+    {
+      "key": "rcs_profile_ref",
+      "kind": "semantic_unread_by_parser",
+      "json_type": "string",
+      "distribution": {
+        "total_files": 1,
+        "by_category": {
+          "U": 1
+        }
+      },
+      "note": "UnitDefinition::rcs_profile_ref (unit_definition.h:186) is resolved at spawn in default_unit_factory.h but NEVER assigned by parse_unit_json; the data key is silently dropped."
+    }
+  ],
+  "xmacro_comma_blockers": [
+    {
+      "struct": "UnitDefinition",
+      "member": "default_loadout",
+      "type": "std::unordered_map<int, std::string>",
+      "decl": "src/content/unit_definition.h:190",
+      "verdict_suggestion": "HELD (hand-written) per I31 ExecutionBatchStepResult precedent; adjudicate before any X-macro list inclusion."
+    }
+  ]
+}

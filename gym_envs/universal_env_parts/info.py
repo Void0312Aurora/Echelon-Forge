@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
-
-
 def _base_step_info(
     loader,
     *,
@@ -49,6 +46,9 @@ def build_step_info(
         terminated=terminated,
         truncated=truncated,
     )
+    # Deferred: profile dispatch stays python.rl-resident (see I24/I27).
+    from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
+
     if tasking_profile_for_loader(loader) is resolve_tasking_profile("naval"):
         return info
     compiled_runtime_enabled = bool(

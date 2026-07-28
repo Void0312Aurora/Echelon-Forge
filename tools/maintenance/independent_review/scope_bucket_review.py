@@ -32,6 +32,7 @@ REPO_ROOT = Path(repo_root())
 
 from tools.maintenance.retained_artifacts.manifest_integrity import (
   _sha256_file,
+  add_retained_gate_output_args,
   write_and_hash_json,
 )
 from tools.maintenance.candidate_artifacts import scope_boundary_probe as boundary_probe
@@ -808,16 +809,10 @@ def main(argv: list[str] | None = None) -> int:
       "gate artifacts for the A2 blast-fragmentation candidate package."
     )
   )
-  parser.add_argument(
-    "--output-dir",
-    type=Path,
-    default=DEFAULT_RETAINED_DIR,
-    help="Directory for retained JSON artifacts. Defaults to the candidate retained-artifacts gate directory.",
-  )
-  parser.add_argument(
-    "--stdout",
-    action="store_true",
-    help="Also print the gate JSON to stdout after writing retained artifacts.",
+  add_retained_gate_output_args(
+    parser,
+    retained_dir_default=DEFAULT_RETAINED_DIR,
+    output_dir_help="Directory for retained JSON artifacts. Defaults to the candidate retained-artifacts gate directory.",
   )
   args = parser.parse_args(argv)
 

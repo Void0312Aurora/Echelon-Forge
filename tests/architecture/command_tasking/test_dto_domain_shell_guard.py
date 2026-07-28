@@ -5,6 +5,7 @@ import textwrap
 from pathlib import Path
 
 from tests.architecture.helpers import REPO_ROOT, compile_cpp_snippet
+from tests.support.xmacro_text import expand_header_field_incs
 
 MISSION_COMMAND_HEADER = REPO_ROOT / "src" / "components" / "command" / "mission_command.h"
 MISSION_COMMAND_AIR_HEADER = (
@@ -67,7 +68,15 @@ BINDINGS_COMMAND_CPP = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_c
 
 
 def _text(path: Path) -> str:
-  return path.read_text(encoding="utf-8")
+  text = path.read_text(encoding="utf-8")
+  # The command/tasking maintained-batch-contract and standalone directive
+  # field blocks under WORLD_BATCH_CONTRACTS_HEADER are schema-owned (I35):
+  # expand the X-macro #include lines so this file's source-text boundary
+  # checks keep matching the compiled struct shape instead of the #include
+  # line.
+  if path == WORLD_BATCH_CONTRACTS_HEADER:
+    return expand_header_field_incs(text)
+  return text
 
 
 def _compile_and_run(source: str):
@@ -385,15 +394,19 @@ def test_wp22_task_order_maintained_batch_contract_stays_controlled_and_slice_ba
     "using naval_stationing_type = TaskOrderNavalStationingDirective;",
     "using ground_static_task_type = TaskOrderGround::StaticTaskDirective;",
     "static constexpr bool kMaintainedBatchTruth = true;",
-    "shared_core_type shared_core{};",
-    "air_tasking_identity_type air_tasking_identity{};",
-    "air_stationing_type air_stationing{};",
-    "air_recovery_type air_recovery{};",
-    "air_takeoff_type air_takeoff{};",
-    "air_formation_type air_formation{};",
-    "naval_command_authority_type naval_command_authority{};",
-    "naval_stationing_type naval_stationing{};",
-    "ground_static_task_type ground_static_task{};",
+    # NOTE(I35): the field block is now schema-owned and expanded via
+    # expand_header_field_incs(), whose bare-declaration convention for
+    # value-initialized (default == "{}") fields omits the trailing
+    # braces (see tests/support/xmacro_text.py).
+    "shared_core_type shared_core;",
+    "air_tasking_identity_type air_tasking_identity;",
+    "air_stationing_type air_stationing;",
+    "air_recovery_type air_recovery;",
+    "air_takeoff_type air_takeoff;",
+    "air_formation_type air_formation;",
+    "naval_command_authority_type naval_command_authority;",
+    "naval_stationing_type naval_stationing;",
+    "ground_static_task_type ground_static_task;",
     "TaskOrderMaintainedBatchContract is the controlled TaskOrder maintained batch read/write shape.",
     "task_order_maintained_batch_contract(",
     ".shared_core = task_order_shared_core_directive(order),",

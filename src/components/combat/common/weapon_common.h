@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
+#include "components/combat/common/missile_seeker_state.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
-#include "models/weapons/kalman_seeker.h"
 
 struct WarheadProfile {
     std::string family = "blast_fragmentation";

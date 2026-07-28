@@ -2,9 +2,26 @@ from __future__ import annotations
 
 import copy
 import json
+import shutil
 import subprocess
 import unittest
 from pathlib import Path
+
+
+def _has_usable_bash() -> bool:
+  executable = shutil.which("bash")
+  if executable is None:
+    return False
+  probe = subprocess.run(
+    [executable, "--version"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    text=True,
+    encoding="utf-8",
+    errors="replace",
+    check=False,
+  )
+  return probe.returncode == 0
 
 
 class PolicyControlConfigParityTests(unittest.TestCase):
@@ -64,6 +81,10 @@ class PolicyControlConfigParityTests(unittest.TestCase):
       self._strip_policy_specific_fields(hmoe_cfg),
     )
 
+  @unittest.skipUnless(
+    _has_usable_bash(),
+    "requires a usable POSIX bash; the Windows WSL launcher has no installed distribution",
+  )
   def test_control_script_has_valid_shell_syntax(self) -> None:
     repo_root = Path(__file__).resolve().parents[2]
     script_path = repo_root / "scripts" / "run_hmoe_cooperative_takeoff_to_cruise_control.sh"
@@ -73,6 +94,8 @@ class PolicyControlConfigParityTests(unittest.TestCase):
       stdout=subprocess.PIPE,
       stderr=subprocess.STDOUT,
       text=True,
+      encoding="utf-8",
+      errors="replace",
       check=False,
     )
     self.assertEqual(proc.returncode, 0, msg=proc.stdout)
