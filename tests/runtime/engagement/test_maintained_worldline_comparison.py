@@ -94,6 +94,9 @@ _EPISODE_ID = "episode:maintained_worldline_comparison"
 # (setup.seeds = [123]) and the two-world pair's second seed.
 _SEED = 123
 _CANDIDATE_SEED = 456
+_WINDOW_EVIDENCE_MISMATCH = (
+    "maintained_replay_envelope_window_evidence_does_not_match_minted_window"
+)
 
 _HAS_SLICE5_BINDING = hasattr(ef_py.RuntimeFacade, "build_maintained_replay_envelope")
 _HAS_SLICE7_BINDING = hasattr(ef_py.RuntimeFacade, "build_maintained_worldline_comparison")
@@ -580,6 +583,27 @@ def test_gate_foreign_facade_candidate_evidence_fails_closed(real_run) -> None:
         "maintained_replay_envelope_window_identity_not_minted_by_this_facade"
     )
     assert result.comparison.comparison_id == ""
+    assert list(result.evidence_refs) == []
+
+
+@_requires_binding
+def test_gate_mutated_candidate_evidence_reports_the_candidate_side(real_run) -> None:
+    """A genuine token cannot authenticate candidate fields changed after run_window."""
+    adapter, _shooter_id, _source_time_s = real_run
+    baseline = _real_window(real_run, "gate:mutated_candidate_baseline")
+    candidate = _real_window(real_run, "gate:mutated_candidate")
+    candidate.window_result.context.source_time_s = (
+        float(candidate.window_result.context.source_time_s) + 1.0
+    )
+
+    result = _compare(adapter, baseline, candidate)
+    assert result.admitted is False
+    assert result.rejection_reason == (
+        "maintained_worldline_comparison_candidate_envelope_rejected"
+    )
+    assert list(result.errors) == [_WINDOW_EVIDENCE_MISMATCH]
+    assert result.comparison.comparison_id == ""
+    assert list(result.comparison.lineage_refs) == []
     assert list(result.evidence_refs) == []
 
 

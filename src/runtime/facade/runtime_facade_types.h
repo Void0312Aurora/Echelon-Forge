@@ -18,8 +18,9 @@
 
 // These types are intentionally incomplete at the public DTO boundary.  The
 // runtime facade attaches an opaque, non-bindable identity to results returned
-// by RuntimeFacade::run_window; maintained evidence producers use it to reject
-// synthetic results and results returned by another facade instance.
+// by RuntimeFacade::run_window. Maintained evidence producers use it to reject
+// synthetic/foreign results and to verify that every consumed public evidence
+// field still matches the immutable snapshot sealed for that exact window.
 struct RuntimeFacadeIdentity;
 struct RuntimeWindowIdentity;
 

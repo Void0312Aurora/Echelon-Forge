@@ -13,17 +13,38 @@
 #include <string_view>
 #include <vector>
 
-// Opaque provenance objects for maintained runtime-window products.  They are
+// Opaque provenance objects for maintained runtime-window products. They are
 // defined only in the facade implementation boundary and are deliberately not
-// exposed through the nanobind RuntimeWindowResult surface.  Pointer identity
-// binds a result to the RuntimeFacade run that returned it; a default-constructed
-// or foreign-facade result therefore cannot pass the maintained evidence gates
-// merely by copying overlapping numeric trace ids.
-struct RuntimeFacadeIdentity {};
+// exposed through the nanobind RuntimeWindowResult surface. Pointer identity
+// binds a result to the RuntimeFacade run that returned it, while the immutable
+// snapshot below binds the token to the exact evidence consumed by the
+// maintained replay/ancestry/worldline producers. Copying a genuine token onto
+// substituted public DTO fields therefore cannot authenticate the substitute.
+struct RuntimeFacadeIdentity {
+    // Only ids observed on a genuine run_window result while they were already
+    // below their facade allocator cursor enter these registries. The mapped
+    // sequence is the immutable window anchor that recorded the id.
+    std::map<std::uint64_t, bool> recorded_window_sequences;
+    std::map<std::uint64_t, std::uint64_t> recorded_trace_window_sequences;
+    std::map<std::uint64_t, std::uint64_t> recorded_anchor_window_sequences;
+    std::map<std::uint64_t, std::uint64_t> recorded_snapshot_window_sequences;
+};
+
+struct RuntimeWindowEvidenceSnapshot {
+    double source_time_s = 0.0;
+    InformationStateSource observation_provenance{};
+    std::vector<std::uint64_t> engagement_trace_ids;
+    std::string engagement_producer_node_id;
+    std::string engagement_barrier_detail;
+    std::vector<RuntimeWindowBarrierRecord> barrier_trace;
+    std::vector<DiagnosticsTrace> diagnostics_traces;
+    std::vector<std::string> execution_source_snapshot_versions;
+};
 
 struct RuntimeWindowIdentity {
     std::shared_ptr<const RuntimeFacadeIdentity> facade_identity;
     std::uint64_t window_sequence = 0;
+    RuntimeWindowEvidenceSnapshot evidence{};
 };
 
 namespace runtime_facade_internal {
@@ -152,6 +173,8 @@ inline constexpr std::string_view kMaintainedReplayEnvelopeWindowIdentityMissing
     "maintained_replay_envelope_window_identity_missing";
 inline constexpr std::string_view kMaintainedReplayEnvelopeWindowIdentityForeign =
     "maintained_replay_envelope_window_identity_not_minted_by_this_facade";
+inline constexpr std::string_view kMaintainedReplayEnvelopeWindowEvidenceMismatch =
+    "maintained_replay_envelope_window_evidence_does_not_match_minted_window";
 inline constexpr std::string_view kMaintainedReplayEnvelopeEpisodeIdRequired =
     "maintained_replay_envelope_episode_id_required";
 inline constexpr std::string_view kMaintainedReplayEnvelopeMissingObservationProvenance =

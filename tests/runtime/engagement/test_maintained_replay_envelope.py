@@ -27,24 +27,20 @@ What is pinned:
 * the adapter seam's opt-in contract: ``use_facade_evidence_producers=False``
   raises the named ``RuntimeError``, ``True`` over a real run succeeds;
 * the missing-window error path (no window run, and explicit ``None`` evidence);
-* each of the producer's fail-closed gates, **negatively**, by perturbing exactly
-  one field of an otherwise-real window product -- proving each gate actually
-  rejects rather than being dead code;
+* post-return mutation of every producer-relevant public window field rejects at
+  the sealed-evidence identity gate, before substituted evidence can reach a
+  semantic gate;
 * the census VA-2 snapshot-identity decision: the default ref is the packet's
   per-export string (byte-identical to the pre-slice value and provably NOT
   run-globally unique), and the opt-in qualification makes it unique additively;
 * the default (non-opt-in) maintained path is unchanged and still carries the
   placeholder evidence, so nothing this slice adds perturbs existing output.
 
-Gate reachability note: all eight of the producer's original fail-closed gates
-plus the ninth VA-2 gate added by this repair are triggerable from Python against
-a real run, because the nanobind bindings expose the window products as mutable
-(``def_rw``) fields -- so no gate is left unproven here. The one contract the
-producer has that this file cannot reach is the post-assembly
-``validate_replay_envelope`` rejection branch: with all nine input gates passed,
-every field the validator requires is non-blank by construction, so the branch is
-unreachable without a synthetic input. It is covered on the C++ side, and the
-validator itself is independently pinned by the WP15 contract suite.
+Gate boundary note: the binding remains ``def_rw`` for DTO compatibility, but a
+mutation after ``run_window`` now fails the earlier sealed-evidence identity
+gate. The lower semantic gates and post-assembly validator remain independently
+pinned by C++ contract tests; Python must not bypass identity merely to reach
+them.
 """
 
 from __future__ import annotations
@@ -73,6 +69,9 @@ _RUN_ID = "run:maintained_replay_envelope"
 _EPISODE_ID = "episode:maintained_replay_envelope"
 # The real deterministic seed the scenario is set up with (setup.seeds = [123]).
 _SEED = 123
+_WINDOW_EVIDENCE_MISMATCH = (
+    "maintained_replay_envelope_window_evidence_does_not_match_minted_window"
+)
 
 
 # --- Real-run fixtures ------------------------------------------------------
@@ -329,11 +328,11 @@ def test_seam_defaults_to_the_last_real_window(real_run) -> None:
     assert implicit.envelope.replay_envelope_id == explicit.envelope.replay_envelope_id
 
 
-# --- Negative gates: each fail-closed gate, proven to actually reject -------
+# --- Negative gates: caller identity plus sealed-evidence rejection ----------
 #
-# Each case starts from a REAL run window and perturbs exactly one real product
-# field, so a passing case proves the named gate rejects rather than that some
-# synthetic scaffold was malformed.
+# Each mutation starts from a REAL run window. The token binds the exact evidence
+# returned by run_window, so a passing case proves substituted public DTO fields
+# cannot borrow that genuine token.
 
 
 def test_gate_run_id_required(real_run) -> None:
@@ -350,42 +349,32 @@ def test_gate_episode_id_required(real_run) -> None:
     assert result.rejection_reason == "maintained_replay_envelope_episode_id_required"
 
 
-def test_gate_observation_packet_provenance_missing(real_run) -> None:
+def test_mutated_observation_packet_provenance_is_rejected(real_run) -> None:
     evidence = _real_window(real_run, "gate:provenance")
     # Drop the real exported provenance ids; everything else stays real.
     evidence.window_result.observation_packet.provenance.observation_packet_ids = []
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == (
-        "maintained_replay_envelope_observation_packet_provenance_missing"
-    )
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
-def test_gate_observation_packet_versions_missing(real_run) -> None:
+def test_mutated_observation_packet_versions_are_rejected(real_run) -> None:
     evidence = _real_window(real_run, "gate:versions")
     evidence.window_result.observation_packet.provenance.source_observation_versions = []
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == (
-        "maintained_replay_envelope_observation_packet_provenance_missing"
-    )
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
-def test_gate_engagement_trace_ids_missing(real_run) -> None:
+def test_mutated_engagement_trace_ids_are_rejected(real_run) -> None:
     evidence = _real_window(real_run, "gate:trace_missing")
     evidence.window_result.engagement_packet.trace_ids = []
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == "maintained_replay_envelope_engagement_trace_ids_missing"
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
-def test_gate_trace_ids_not_minted_by_this_run(real_run) -> None:
-    """The decisive opt-in truth gate, on a real run.
-
-    A real window carries genuinely minted ids; replacing them with an id the
-    run's allocator never handed out is rejected. This is the same gate that
-    makes the default path's placeholder ``[1]`` inadmissible.
-    """
+def test_substituted_unminted_trace_id_cannot_borrow_a_genuine_token(real_run) -> None:
     adapter, _shooter_id, _source_time_s = real_run
     evidence = _real_window(real_run, "gate:trace_foreign")
     real_ids = [int(value) for value in evidence.window_result.engagement_packet.trace_ids]
@@ -396,15 +385,13 @@ def test_gate_trace_ids_not_minted_by_this_run(real_run) -> None:
     evidence.window_result.engagement_packet.trace_ids = real_ids + [cursor]
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == (
-        "maintained_replay_envelope_trace_ids_not_minted_by_this_run"
-    )
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
     # Rejection leaks no partially assembled evidence.
     assert result.envelope.replay_envelope_id == ""
     assert list(result.evidence_refs) == []
 
 
-def test_gate_window_commit_barrier_missing(real_run) -> None:
+def test_mutated_window_commit_barrier_is_rejected(real_run) -> None:
     evidence = _real_window(real_run, "gate:barrier")
     real_trace = list(evidence.window_result.barrier_trace)
     assert any(record.barrier_id == "window_commit" for record in real_trace)
@@ -414,29 +401,25 @@ def test_gate_window_commit_barrier_missing(real_run) -> None:
     ]
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == (
-        "maintained_replay_envelope_window_commit_barrier_missing"
-    )
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
-def test_gate_engagement_producer_node_missing(real_run) -> None:
+def test_mutated_engagement_producer_node_is_rejected(real_run) -> None:
     evidence = _real_window(real_run, "gate:producer")
     assert evidence.window_result.engagement_packet.producer_node_id
     evidence.window_result.engagement_packet.producer_node_id = ""
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == (
-        "maintained_replay_envelope_engagement_producer_node_missing"
-    )
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
-def test_gate_source_time_not_finite(real_run) -> None:
+def test_mutated_source_time_is_rejected(real_run) -> None:
     evidence = _real_window(real_run, "gate:time")
     assert math.isfinite(float(evidence.window_result.context.source_time_s))
     evidence.window_result.context.source_time_s = float("nan")
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == "maintained_replay_envelope_source_time_not_finite"
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
 def test_gate_run_snapshot_version_not_minted_by_this_run(real_run) -> None:
@@ -456,6 +439,27 @@ def test_gate_run_snapshot_version_not_minted_by_this_run(real_run) -> None:
         "maintained_replay_envelope_run_snapshot_version_not_minted_by_this_run"
     )
     assert result.envelope.snapshot_ref.snapshot_version_ref == ""
+
+
+def test_gate_allocated_but_unrecorded_snapshot_version_is_rejected(real_run) -> None:
+    """Allocator membership is insufficient without this window recording the version."""
+    adapter, _shooter_id, _source_time_s = real_run
+    allocated_without_window = int(adapter.facade.allocate_run_snapshot_version())
+    evidence = _real_window(real_run, "gate:run_snapshot_allocated_without_window")
+
+    result = adapter.facade.build_maintained_replay_envelope(
+        evidence.window_result,
+        _RUN_ID,
+        _EPISODE_ID,
+        _SEED,
+        allocated_without_window,
+    )
+    assert result.admitted is False
+    assert result.rejection_reason == (
+        "maintained_replay_envelope_run_snapshot_version_not_minted_by_this_run"
+    )
+    assert result.envelope.snapshot_ref.snapshot_version_ref == ""
+    assert list(result.evidence_refs) == []
 
 
 # --- Census VA-2: the snapshot-identity decision ---------------------------

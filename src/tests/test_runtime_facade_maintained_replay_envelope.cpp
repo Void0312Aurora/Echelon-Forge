@@ -8,15 +8,17 @@
 #include <limits>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 // T10 slice 5: contract gates for the maintained-run replay-envelope producer
 // (RuntimeFacade::build_maintained_replay_envelope). These cases pin the
 // assembly and fail-closed contract over identity-backed RuntimeWindowResult
-// inputs whose individual evidence fields are adjusted for precise gate
-// control.  Each positive fixture still originates at RuntimeFacade::run_window
-// so it carries the opaque facade/window association; the dedicated negative
-// cases below prove that a hand-built or foreign result cannot borrow numeric
-// ids to enter the producer. The real-run end-to-end proof -- actual scenario, actual maintained
+// inputs. Positive fixtures configure their evidence on RuntimeWindowRequest
+// before RuntimeFacade::run_window seals it; post-return mutation is now a
+// provenance failure rather than a way to steer later semantic gates. The
+// dedicated negative cases prove that a hand-built, foreign, or token-copying
+// result cannot borrow evidence to enter the producer. The real-run end-to-end
+// proof -- actual scenario, actual maintained
 // windows, real exported packets, over the I59 opt-in adapter path -- lives in
 // tests/runtime/engagement/test_maintained_replay_envelope.py, which also pins
 // the adapter seam's opt-in contract and the unchanged default path.
@@ -31,27 +33,18 @@ static_assert(std::is_aggregate_v<RuntimeWindowResult>,
 // produces: real-format provenance strings on the observation packet, minted
 // trace ids on the engagement packet, a window_commit barrier record, and the
 // manifest-stamped export node id.
-RuntimeWindowResult minted_window_result(RuntimeFacade &facade, std::uint64_t anchor_trace_id) {
-    RuntimeWindowResult window_result = facade.run_window(RuntimeWindowRequest{});
-    window_result.context.source_time_s = 12.5;
-    window_result.observation_packet.snapshot_version = 1;
-    window_result.observation_packet.provenance.observation_packet_ids = {"obs:1"};
-    window_result.observation_packet.provenance.source_observation_versions = {"global:1"};
-    window_result.engagement_packet.trace_ids = {anchor_trace_id};
-    window_result.engagement_packet.producer_node_id = "observation_export.v1";
-    window_result.barrier_trace.push_back(RuntimeWindowBarrierRecord{
-        .sequence = 2,
-        .barrier_id = "input_injection",
-    });
-    window_result.barrier_trace.push_back(RuntimeWindowBarrierRecord{
-        .sequence = 3,
-        .barrier_id = "window_commit",
-    });
-    window_result.barrier_trace.push_back(RuntimeWindowBarrierRecord{
-        .sequence = 4,
-        .barrier_id = "export",
-    });
-    return window_result;
+RuntimeWindowResult minted_window_result(RuntimeFacade &facade, std::uint64_t anchor_trace_id,
+                                         std::uint64_t run_snapshot_version = 0) {
+    RuntimeWindowRequest request{};
+    request.window_id = "window:cpp";
+    request.source_time_s = 12.5;
+    request.engagement_request.trace_ids = {anchor_trace_id};
+    if (run_snapshot_version != 0) {
+        RuntimeWindowActionRequest action{};
+        action.input_snapshot_version = "snapshot:" + std::to_string(run_snapshot_version);
+        request.action_requests = {std::move(action)};
+    }
+    return facade.run_window(request);
 }
 
 } // namespace
@@ -86,10 +79,9 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         // Every evidence field maps to the window product it came from.
         CHECK(result.envelope.has_source_time);
         CHECK(result.envelope.source_time_s == window_result.context.source_time_s);
-        CHECK(result.envelope.snapshot_ref.snapshot_version_ref ==
-              window_result.observation_packet.provenance.source_observation_versions.front());
+        CHECK(result.envelope.snapshot_ref.snapshot_version_ref == "global:0");
         CHECK(result.envelope.barrier_ref.barrier_id == "window_commit");
-        CHECK(result.envelope.barrier_ref.barrier_sequence == 3);
+        CHECK(result.envelope.barrier_ref.barrier_sequence == 2);
         CHECK(result.envelope.barrier_ref.barrier_detail ==
               window_result.engagement_packet.barrier_detail);
         CHECK(result.envelope.event_order_ref.sort_key == "timestamp_priority_event_id");
@@ -118,10 +110,10 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         // Evidence refs: producer label first, then the canonical ordered refs.
         REQUIRE(result.evidence_refs.size() == 5);
         CHECK(result.evidence_refs[0] == "RuntimeFacade.build_maintained_replay_envelope");
-        CHECK(result.evidence_refs[1] == "snapshot_version_ref=global:1");
+        CHECK(result.evidence_refs[1] == "snapshot_version_ref=global:0");
         CHECK(result.evidence_refs[2] == "barrier_id=window_commit");
         CHECK(result.evidence_refs[3] == "event_order_ref=event:trace:1");
-        CHECK(result.evidence_refs[4] == "facade_provenance_ref=obs:1");
+        CHECK(result.evidence_refs[4] == "facade_provenance_ref=obs:0");
     }
 
     TEST_CASE("window identity rejects a foreign facade with overlapping numeric ids") {
@@ -169,6 +161,20 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         CHECK(synthetic.rejection_reason == "maintained_replay_envelope_window_identity_missing");
     }
 
+    TEST_CASE("copied genuine token cannot authenticate substituted evidence") {
+        RuntimeFacade facade(0);
+        const std::uint64_t trace_id = facade.allocate_trace_id();
+        const RuntimeWindowResult genuine = minted_window_result(facade, trace_id);
+        RuntimeWindowResult synthetic = genuine;
+        synthetic.context.source_time_s += 1.0;
+
+        const auto result = facade.build_maintained_replay_envelope(synthetic, "run:token-copy",
+                                                                    "episode:token-copy", 7);
+        CHECK_FALSE(result.admitted);
+        CHECK(result.rejection_reason ==
+              "maintained_replay_envelope_window_evidence_does_not_match_minted_window");
+    }
+
     TEST_CASE("producer is read-only and idempotent over the allocator cursors") {
         RuntimeFacade facade(0);
         (void)facade.allocate_trace_id();
@@ -179,8 +185,9 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
 
         const MaintainedReplayEnvelopeResult first = facade.build_maintained_replay_envelope(
             window_result, "run:idempotent", "episode:idempotent", 7);
+        const RuntimeWindowResult copied_window_result = window_result;
         const MaintainedReplayEnvelopeResult second = facade.build_maintained_replay_envelope(
-            window_result, "run:idempotent", "episode:idempotent", 7);
+            copied_window_result, "run:idempotent", "episode:idempotent", 7);
 
         REQUIRE(first.admitted);
         REQUIRE(second.admitted);
@@ -208,7 +215,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         CHECK(result.evidence_refs.empty());
     }
 
-    TEST_CASE("trace ids at or beyond the allocator cursor fail closed") {
+    TEST_CASE("post-return trace substitution fails the sealed evidence gate") {
         RuntimeFacade facade(0);
         const std::uint64_t minted = facade.allocate_trace_id();
         RuntimeWindowResult window_result = minted_window_result(facade, minted);
@@ -220,10 +227,10 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
 
         CHECK_FALSE(result.admitted);
         CHECK(result.rejection_reason ==
-              "maintained_replay_envelope_trace_ids_not_minted_by_this_run");
+              "maintained_replay_envelope_window_evidence_does_not_match_minted_window");
     }
 
-    TEST_CASE("missing evidence inputs fail closed with stable named reasons") {
+    TEST_CASE("caller-owned identity inputs fail closed with stable named reasons") {
         RuntimeFacade facade(0);
         const std::uint64_t minted = facade.allocate_trace_id();
 
@@ -239,14 +246,21 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
             CHECK_FALSE(result.admitted);
             CHECK(result.rejection_reason == "maintained_replay_envelope_episode_id_required");
         }
+    }
+
+    TEST_CASE("sealed identity rejects every producer-relevant evidence mutation") {
+        RuntimeFacade facade(0);
+        const std::uint64_t minted = facade.allocate_trace_id();
+        constexpr const char *mismatch =
+            "maintained_replay_envelope_window_evidence_does_not_match_minted_window";
+
         SUBCASE("missing observation packet provenance") {
             RuntimeWindowResult window_result = minted_window_result(facade, minted);
             window_result.observation_packet.provenance.observation_packet_ids.clear();
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
-            CHECK(result.rejection_reason ==
-                  "maintained_replay_envelope_observation_packet_provenance_missing");
+            CHECK(result.rejection_reason == mismatch);
         }
         SUBCASE("missing engagement trace ids") {
             RuntimeWindowResult window_result = minted_window_result(facade, minted);
@@ -254,8 +268,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
-            CHECK(result.rejection_reason ==
-                  "maintained_replay_envelope_engagement_trace_ids_missing");
+            CHECK(result.rejection_reason == mismatch);
         }
         SUBCASE("missing window_commit barrier record") {
             RuntimeWindowResult window_result = minted_window_result(facade, minted);
@@ -267,8 +280,7 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
-            CHECK(result.rejection_reason ==
-                  "maintained_replay_envelope_window_commit_barrier_missing");
+            CHECK(result.rejection_reason == mismatch);
         }
         SUBCASE("missing engagement producer node") {
             RuntimeWindowResult window_result = minted_window_result(facade, minted);
@@ -276,8 +288,15 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
-            CHECK(result.rejection_reason ==
-                  "maintained_replay_envelope_engagement_producer_node_missing");
+            CHECK(result.rejection_reason == mismatch);
+        }
+        SUBCASE("mutated engagement barrier detail") {
+            RuntimeWindowResult window_result = minted_window_result(facade, minted);
+            window_result.engagement_packet.barrier_detail += ":tampered";
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
+            CHECK_FALSE(result.admitted);
+            CHECK(result.rejection_reason == mismatch);
         }
         SUBCASE("non-finite window source time") {
             RuntimeWindowResult window_result = minted_window_result(facade, minted);
@@ -285,7 +304,17 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
             CHECK_FALSE(result.admitted);
-            CHECK(result.rejection_reason == "maintained_replay_envelope_source_time_not_finite");
+            CHECK(result.rejection_reason == mismatch);
+        }
+        SUBCASE("mutated executed-node snapshot evidence") {
+            const std::uint64_t snapshot = facade.allocate_run_snapshot_version();
+            RuntimeWindowResult window_result = minted_window_result(facade, minted, snapshot);
+            REQUIRE_FALSE(window_result.executed_nodes.empty());
+            window_result.executed_nodes.front().source_snapshot_version += ":tampered";
+            const auto result =
+                facade.build_maintained_replay_envelope(window_result, "run:x", "episode:x", 7);
+            CHECK_FALSE(result.admitted);
+            CHECK(result.rejection_reason == mismatch);
         }
     }
 
@@ -293,24 +322,37 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         RuntimeFacade facade(0);
         const std::uint64_t minted_trace = facade.allocate_trace_id();
         const std::uint64_t minted_snapshot = facade.allocate_run_snapshot_version();
-        const RuntimeWindowResult window_result = minted_window_result(facade, minted_trace);
 
         SUBCASE("default (0) leaves the packet's per-export string byte-identical") {
+            const RuntimeWindowResult window_result =
+                minted_window_result(facade, minted_trace, minted_snapshot);
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:va2", "episode:va2", 7);
             REQUIRE(result.admitted);
-            CHECK(result.envelope.snapshot_ref.snapshot_version_ref == "global:1");
+            CHECK(result.envelope.snapshot_ref.snapshot_version_ref == "global:0");
         }
         SUBCASE("opt-in qualifies additively, keeping the per-export value as the prefix") {
+            const RuntimeWindowResult window_result =
+                minted_window_result(facade, minted_trace, minted_snapshot);
             const auto result = facade.build_maintained_replay_envelope(
                 window_result, "run:va2", "episode:va2", 7, minted_snapshot);
             REQUIRE(result.admitted);
-            CHECK(result.envelope.snapshot_ref.snapshot_version_ref == "global:1:run_snapshot:1");
+            CHECK(result.envelope.snapshot_ref.snapshot_version_ref == "global:0:run_snapshot:1");
             // The pre-existing field meaning survives as the exact prefix.
-            CHECK(result.envelope.snapshot_ref.snapshot_version_ref.rfind("global:1", 0) == 0);
-            CHECK(result.evidence_refs[1] == "snapshot_version_ref=global:1:run_snapshot:1");
+            CHECK(result.envelope.snapshot_ref.snapshot_version_ref.rfind("global:0", 0) == 0);
+            CHECK(result.evidence_refs[1] == "snapshot_version_ref=global:0:run_snapshot:1");
+        }
+        SUBCASE("an allocated but unrecorded version fails closed") {
+            const RuntimeWindowResult window_result = minted_window_result(facade, minted_trace);
+            const auto result = facade.build_maintained_replay_envelope(
+                window_result, "run:va2", "episode:va2", 7, minted_snapshot);
+            CHECK_FALSE(result.admitted);
+            CHECK(result.rejection_reason ==
+                  "maintained_replay_envelope_run_snapshot_version_not_minted_by_this_run");
         }
         SUBCASE("a version at or beyond the allocator cursor fails closed") {
+            const RuntimeWindowResult window_result =
+                minted_window_result(facade, minted_trace, minted_snapshot);
             const auto result =
                 facade.build_maintained_replay_envelope(window_result, "run:va2", "episode:va2", 7,
                                                         facade.peek_next_run_snapshot_version());
@@ -319,5 +361,20 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
                   "maintained_replay_envelope_run_snapshot_version_not_minted_by_this_run");
             CHECK(result.envelope.snapshot_ref.snapshot_version_ref.empty());
         }
+    }
+
+    TEST_CASE("an allocated but unrecorded ancestry parent fails closed") {
+        RuntimeFacade facade(0);
+        const std::uint64_t unrecorded_parent = facade.allocate_trace_id();
+        const std::uint64_t child_anchor = facade.allocate_trace_id();
+        REQUIRE(unrecorded_parent == 1);
+        REQUIRE(child_anchor == 2);
+        const RuntimeWindowResult child = minted_window_result(facade, child_anchor);
+
+        const auto result = facade.build_maintained_packet_ancestry(
+            child, "run:ancestry", "episode:ancestry", 7, unrecorded_parent);
+        CHECK_FALSE(result.admitted);
+        CHECK(result.rejection_reason ==
+              "maintained_packet_ancestry_parent_trace_id_not_minted_by_this_run");
     }
 }

@@ -3,7 +3,9 @@
 #include "runtime/facade/runtime_window_coordinator.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -11,6 +13,40 @@
 namespace {
 
 using namespace runtime_facade_internal;
+
+constexpr std::string_view kRunSnapshotVersionPrefix = "snapshot:";
+
+std::optional<std::uint64_t> parse_run_snapshot_version(std::string_view value) noexcept {
+    if (!value.starts_with(kRunSnapshotVersionPrefix)) {
+        return std::nullopt;
+    }
+    value.remove_prefix(kRunSnapshotVersionPrefix.size());
+    if (value.empty()) {
+        return std::nullopt;
+    }
+    std::uint64_t parsed = 0;
+    const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), parsed);
+    if (error != std::errc{} || end != value.data() + value.size() || parsed == 0) {
+        return std::nullopt;
+    }
+    return parsed;
+}
+
+RuntimeWindowEvidenceSnapshot sealed_window_evidence(const RuntimeWindowResult &result) {
+    RuntimeWindowEvidenceSnapshot sealed{};
+    sealed.source_time_s = result.context.source_time_s;
+    sealed.observation_provenance = result.observation_packet.provenance;
+    sealed.engagement_trace_ids = result.engagement_packet.trace_ids;
+    sealed.engagement_producer_node_id = result.engagement_packet.producer_node_id;
+    sealed.engagement_barrier_detail = result.engagement_packet.barrier_detail;
+    sealed.barrier_trace = result.barrier_trace;
+    sealed.diagnostics_traces = result.diagnostics_traces;
+    sealed.execution_source_snapshot_versions.reserve(result.executed_nodes.size());
+    for (const auto &record : result.executed_nodes) {
+        sealed.execution_source_snapshot_versions.push_back(record.source_snapshot_version);
+    }
+    return sealed;
+}
 
 std::string track_source_name(int source) {
     switch (source) {
@@ -778,8 +814,33 @@ RuntimeWindowResult RuntimeFacade::run_window(const RuntimeWindowRequest &reques
         return result;
     }
     const std::uint64_t window_sequence = next_window_identity_++;
-    result.identity_token_.identity_ =
-        std::make_shared<RuntimeWindowIdentity>(RuntimeWindowIdentity{identity_, window_sequence});
+    RuntimeWindowEvidenceSnapshot sealed = sealed_window_evidence(result);
+    identity_->recorded_window_sequences.try_emplace(window_sequence, true);
+
+    for (const std::uint64_t trace_id : sealed.engagement_trace_ids) {
+        if (trace_id >= 1U && trace_id < next_trace_id_) {
+            identity_->recorded_trace_window_sequences.try_emplace(trace_id, window_sequence);
+        }
+    }
+    if (!sealed.engagement_trace_ids.empty()) {
+        const std::uint64_t anchor_trace_id = sealed.engagement_trace_ids.back();
+        const auto trace_it = identity_->recorded_trace_window_sequences.find(anchor_trace_id);
+        if (trace_it != identity_->recorded_trace_window_sequences.end() &&
+            trace_it->second == window_sequence) {
+            identity_->recorded_anchor_window_sequences.try_emplace(anchor_trace_id,
+                                                                    window_sequence);
+        }
+    }
+
+    for (const std::string &source_version : sealed.execution_source_snapshot_versions) {
+        const std::optional<std::uint64_t> parsed = parse_run_snapshot_version(source_version);
+        if (parsed.has_value() && *parsed < next_run_snapshot_version_) {
+            identity_->recorded_snapshot_window_sequences.try_emplace(*parsed, window_sequence);
+        }
+    }
+
+    result.identity_token_.identity_ = std::make_shared<RuntimeWindowIdentity>(
+        RuntimeWindowIdentity{identity_, window_sequence, std::move(sealed)});
     return result;
 }
 

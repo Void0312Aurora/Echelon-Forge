@@ -257,11 +257,11 @@ class RuntimeFacade {
     // "global:{packet_version}:run_snapshot:{run_global_version}" -- additive by
     // construction: the existing per-export substring keeps its exact meaning
     // and position as the prefix, and nothing is renamed, retyped, or dropped.
-    // The value must have been minted by THIS facade's VA-2 allocator (in
-    // [1, peek_next_run_snapshot_version())) or the producer fails closed with
-    // kMaintainedReplayEnvelopeRunSnapshotNotRunMinted -- the caller cannot
-    // inject an arbitrary snapshot identity. The maintained run recovers its
-    // own minted value from the window's real
+    // The value must have been minted by THIS facade's VA-2 allocator AND
+    // recorded by this exact run_window result; allocation without a matching
+    // window anchor is insufficient. Otherwise the producer fails closed with
+    // kMaintainedReplayEnvelopeRunSnapshotNotRunMinted. The maintained run
+    // recovers its own recorded value from the window's real
     // RuntimeWindowNodeExecutionRecord.source_snapshot_version ("snapshot:{n}",
     // stamped by the I59 opt-in path), so this stays run-produced evidence
     // rather than a caller-invented number.
@@ -305,9 +305,9 @@ class RuntimeFacade {
     //      The admitted envelope id becomes ancestry.replay_envelope_ref, so
     //      an ancestry record always names a validator-accepted envelope.
     //   3. parent_trace_id (when non-zero) must have been minted by THIS
-    //      facade's VA-8 allocator (in [1, peek_next_trace_id())) --
-    //      kMaintainedPacketAncestryParentNotRunMinted otherwise, which is how
-    //      foreign-facade parent linkage fails closed.
+    //      facade's VA-8 allocator and recorded by an earlier genuine window --
+    //      kMaintainedPacketAncestryParentNotRunMinted otherwise. Allocation
+    //      without a window anchor and foreign-facade linkage both fail closed.
     //   4. parent_trace_id (when non-zero) must be strictly below every one of
     //      the window's own trace tags (ancestry points backwards; no self or
     //      forward links, hence no cycles) --
@@ -431,6 +431,15 @@ class RuntimeFacade {
   private:
     bool runtime_window_result_belongs_to_this_facade(
         const RuntimeWindowResult &window_result) const noexcept;
+    bool runtime_window_result_evidence_matches_identity(
+        const RuntimeWindowResult &window_result) const noexcept;
+    bool runtime_window_trace_ids_recorded_by_this_window(
+        const RuntimeWindowResult &window_result) const noexcept;
+    bool runtime_window_snapshot_recorded_by_this_window(
+        const RuntimeWindowResult &window_result,
+        std::uint64_t run_snapshot_version) const noexcept;
+    bool runtime_window_parent_trace_recorded_before_this_window(
+        const RuntimeWindowResult &window_result, std::uint64_t parent_trace_id) const noexcept;
     bool counterfactual_world_index_valid(std::uint64_t world_index) const noexcept;
     bool apply_counterfactual_delta(const WorldEntityRef &ref,
                                     const RuntimeCounterfactualBranchRequest &request);
@@ -459,7 +468,7 @@ class RuntimeFacade {
     // Opaque run identity used to bind RuntimeWindowResult products to the
     // facade instance that returned them.  It is intentionally not a DTO field
     // and is not exported through Python bindings.
-    std::shared_ptr<const RuntimeFacadeIdentity> identity_;
+    std::shared_ptr<RuntimeFacadeIdentity> identity_;
     // T10 slice 3 / I54 run-global evidence allocators (see the public
     // producer declarations above for the run-global boundary adjudication
     // and move semantics). Appended after the existing members; a fresh

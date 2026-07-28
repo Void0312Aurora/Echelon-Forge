@@ -1,8 +1,71 @@
 #include "runtime/facade/runtime_facade_internal.h"
 
+#include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
+
+namespace {
+
+bool exact_double_equal(double lhs, double rhs) noexcept {
+    return std::bit_cast<std::uint64_t>(lhs) == std::bit_cast<std::uint64_t>(rhs);
+}
+
+bool information_state_source_equal(const InformationStateSource &lhs,
+                                    const InformationStateSource &rhs) noexcept {
+    return lhs.information_state_layer == rhs.information_state_layer &&
+           lhs.source_label == rhs.source_label && lhs.maintained_status == rhs.maintained_status &&
+           lhs.observation_packet_ids == rhs.observation_packet_ids &&
+           lhs.source_observation_versions == rhs.source_observation_versions &&
+           lhs.diagnostics_reason == rhs.diagnostics_reason;
+}
+
+bool barrier_record_equal(const RuntimeWindowBarrierRecord &lhs,
+                          const RuntimeWindowBarrierRecord &rhs) noexcept {
+    return lhs.sequence == rhs.sequence && lhs.barrier_id == rhs.barrier_id &&
+           lhs.node_id == rhs.node_id;
+}
+
+bool diagnostics_trace_equal(const DiagnosticsTrace &lhs, const DiagnosticsTrace &rhs) noexcept {
+    return lhs.trace_id == rhs.trace_id && lhs.parent_trace_id == rhs.parent_trace_id &&
+           lhs.chain_id == rhs.chain_id && lhs.track_id == rhs.track_id &&
+           lhs.launch_request_id == rhs.launch_request_id &&
+           lhs.launch_event_id == rhs.launch_event_id &&
+           lhs.munition.world_index == rhs.munition.world_index &&
+           lhs.munition.entity_id == rhs.munition.entity_id &&
+           lhs.effects_event_id == rhs.effects_event_id &&
+           lhs.damage_report_id == rhs.damage_report_id &&
+           lhs.observation_packet_version == rhs.observation_packet_version &&
+           lhs.source_snapshot_version == rhs.source_snapshot_version &&
+           lhs.barrier_id == rhs.barrier_id && lhs.barrier_detail == rhs.barrier_detail &&
+           exact_double_equal(lhs.source_time_s, rhs.source_time_s) &&
+           lhs.source_node_id == rhs.source_node_id && lhs.export_node_id == rhs.export_node_id;
+}
+
+template <typename T, typename Equal>
+bool vector_equal_by(const std::vector<T> &lhs, const std::vector<T> &rhs, Equal equal) noexcept {
+    return lhs.size() == rhs.size() &&
+           std::equal(lhs.begin(), lhs.end(), rhs.begin(), std::move(equal));
+}
+
+bool execution_source_snapshot_versions_equal(
+    const std::vector<RuntimeWindowNodeExecutionRecord> &executed_nodes,
+    const std::vector<std::string> &sealed_versions) noexcept {
+    if (executed_nodes.size() != sealed_versions.size()) {
+        return false;
+    }
+    for (std::size_t index = 0; index < executed_nodes.size(); ++index) {
+        if (executed_nodes[index].source_snapshot_version != sealed_versions[index]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+} // namespace
 
 RuntimeFacade::RuntimeFacade(std::size_t world_count)
     : runtime_(std::make_unique<WorldBatchRuntime>(world_count)),
@@ -26,7 +89,7 @@ RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config)
 // The tripwire below fires if the member set changes without this file
 // being revisited.
 static_assert(sizeof(RuntimeFacade) == 2 * sizeof(std::unique_ptr<WorldBatchRuntime>) +
-                                           sizeof(std::shared_ptr<const RuntimeFacadeIdentity>) +
+                                           sizeof(std::shared_ptr<RuntimeFacadeIdentity>) +
                                            3 * sizeof(std::uint64_t),
               "RuntimeFacade member set changed: update the user-defined move constructor and "
               "move assignment in runtime_facade.cpp to transfer every member");
@@ -59,7 +122,66 @@ RuntimeFacade::~RuntimeFacade() = default;
 
 bool RuntimeFacade::runtime_window_result_belongs_to_this_facade(
     const RuntimeWindowResult &window_result) const noexcept {
-    return identity_ != nullptr && window_result.identity_token_.identity_ != nullptr &&
-           window_result.identity_token_.identity_->facade_identity.get() == identity_.get() &&
-           window_result.identity_token_.identity_->window_sequence != 0;
+    if (identity_ == nullptr || window_result.identity_token_.identity_ == nullptr) {
+        return false;
+    }
+    const RuntimeWindowIdentity &window_identity = *window_result.identity_token_.identity_;
+    return window_identity.facade_identity.get() == identity_.get() &&
+           window_identity.window_sequence != 0 &&
+           identity_->recorded_window_sequences.contains(window_identity.window_sequence);
+}
+
+bool RuntimeFacade::runtime_window_result_evidence_matches_identity(
+    const RuntimeWindowResult &window_result) const noexcept {
+    if (!runtime_window_result_belongs_to_this_facade(window_result)) {
+        return false;
+    }
+    const RuntimeWindowEvidenceSnapshot &sealed = window_result.identity_token_.identity_->evidence;
+    return exact_double_equal(window_result.context.source_time_s, sealed.source_time_s) &&
+           information_state_source_equal(window_result.observation_packet.provenance,
+                                          sealed.observation_provenance) &&
+           window_result.engagement_packet.trace_ids == sealed.engagement_trace_ids &&
+           window_result.engagement_packet.producer_node_id == sealed.engagement_producer_node_id &&
+           window_result.engagement_packet.barrier_detail == sealed.engagement_barrier_detail &&
+           vector_equal_by(window_result.barrier_trace, sealed.barrier_trace,
+                           barrier_record_equal) &&
+           vector_equal_by(window_result.diagnostics_traces, sealed.diagnostics_traces,
+                           diagnostics_trace_equal) &&
+           execution_source_snapshot_versions_equal(window_result.executed_nodes,
+                                                    sealed.execution_source_snapshot_versions);
+}
+
+bool RuntimeFacade::runtime_window_trace_ids_recorded_by_this_window(
+    const RuntimeWindowResult &window_result) const noexcept {
+    if (!runtime_window_result_belongs_to_this_facade(window_result)) {
+        return false;
+    }
+    const RuntimeWindowIdentity &window_identity = *window_result.identity_token_.identity_;
+    const std::uint64_t sequence = window_identity.window_sequence;
+    return std::all_of(
+        window_identity.evidence.engagement_trace_ids.begin(),
+        window_identity.evidence.engagement_trace_ids.end(), [&](std::uint64_t trace_id) {
+            const auto it = identity_->recorded_trace_window_sequences.find(trace_id);
+            return it != identity_->recorded_trace_window_sequences.end() && it->second == sequence;
+        });
+}
+
+bool RuntimeFacade::runtime_window_snapshot_recorded_by_this_window(
+    const RuntimeWindowResult &window_result, std::uint64_t run_snapshot_version) const noexcept {
+    if (!runtime_window_result_belongs_to_this_facade(window_result) || run_snapshot_version == 0) {
+        return false;
+    }
+    const auto it = identity_->recorded_snapshot_window_sequences.find(run_snapshot_version);
+    return it != identity_->recorded_snapshot_window_sequences.end() &&
+           it->second == window_result.identity_token_.identity_->window_sequence;
+}
+
+bool RuntimeFacade::runtime_window_parent_trace_recorded_before_this_window(
+    const RuntimeWindowResult &window_result, std::uint64_t parent_trace_id) const noexcept {
+    if (!runtime_window_result_belongs_to_this_facade(window_result) || parent_trace_id == 0) {
+        return false;
+    }
+    const auto it = identity_->recorded_anchor_window_sequences.find(parent_trace_id);
+    return it != identity_->recorded_anchor_window_sequences.end() &&
+           it->second < window_result.identity_token_.identity_->window_sequence;
 }

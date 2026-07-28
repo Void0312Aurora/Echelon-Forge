@@ -26,9 +26,10 @@ What is pinned:
   nothing (both run-global cursors are untouched by building ancestry), and the
   default (non-opt-in) maintained path still carries the placeholder evidence
   with all exported trace parents at the pre-slice default ``0``;
-* fail-closed foreign-facade evidence handling: window evidence produced by a
-  DIFFERENT facade is rejected by the opaque window/facade identity gate, a
-  parent id this run never minted is rejected, and
+* fail-closed identity/evidence handling: window evidence produced by a
+  DIFFERENT facade is rejected by the opaque window/facade identity gate,
+  post-return mutation is rejected by the sealed-evidence gate, an allocated
+  but unrecorded parent id is rejected, and
   a parent that does not strictly precede the window's own tags is rejected --
   each with a named reason and with no partially assembled lineage leaked;
 * the seam's opt-in contract: ``use_facade_evidence_producers=False`` raises the
@@ -73,6 +74,9 @@ _RUN_ID = "run:maintained_packet_ancestry"
 _EPISODE_ID = "episode:maintained_packet_ancestry"
 # The real deterministic seed the scenario is set up with (setup.seeds = [123]).
 _SEED = 123
+_WINDOW_EVIDENCE_MISMATCH = (
+    "maintained_replay_envelope_window_evidence_does_not_match_minted_window"
+)
 
 _HAS_SLICE6A_BINDING = hasattr(ef_py.RuntimeFacade, "build_maintained_packet_ancestry")
 
@@ -316,6 +320,25 @@ def test_gate_parent_trace_id_not_minted_by_this_run(real_run) -> None:
 
 
 @_requires_binding
+def test_gate_allocated_but_unrecorded_parent_trace_id_is_rejected(real_run) -> None:
+    """Allocation alone is not ancestry evidence; a prior window must record the anchor."""
+    adapter, _shooter_id, _source_time_s = real_run
+    allocated_without_window = int(adapter.facade.allocate_trace_id())
+    evidence = _real_window(real_run, "gate:parent_allocated_without_window")
+    assert allocated_without_window < _anchor(evidence)
+
+    result = _build(real_run, evidence, parent_trace_id=allocated_without_window)
+    assert result.admitted is False
+    assert result.rejection_reason == (
+        "maintained_packet_ancestry_parent_trace_id_not_minted_by_this_run"
+    )
+    assert result.ancestry.packet_ancestry_id == ""
+    assert list(result.ancestry.ancestral_traces) == []
+    assert list(result.ancestry.lineage_refs) == []
+    assert list(result.evidence_refs) == []
+
+
+@_requires_binding
 def test_gate_parent_must_strictly_precede_the_window(real_run) -> None:
     """Ancestry points backwards: a self-parent (or forward parent) is rejected."""
     evidence = _real_window(real_run, "gate:parent_self")
@@ -383,24 +406,17 @@ def test_gate_default_placeholder_evidence_is_inadmissible(real_run) -> None:
 
 
 @_requires_binding
-def test_gate_window_diagnostics_traces_missing(real_run) -> None:
+def test_mutated_window_diagnostics_traces_are_rejected(real_run) -> None:
     evidence = _real_window(real_run, "gate:traces_missing")
     evidence.window_result.diagnostics_traces = []
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == (
-        "maintained_packet_ancestry_window_diagnostics_traces_missing"
-    )
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
 @_requires_binding
-def test_gate_no_window_trace_carries_a_run_minted_tag(real_run) -> None:
-    """Kernel-space-only traces cannot anchor an ancestry.
-
-    The two uint64 id spaces are value-indistinguishable (census VA-8), so the
-    producer requires tag-set membership; retagging every real exported trace
-    with an id outside the packet's run-minted tags trips the gate.
-    """
+def test_mutated_window_trace_tags_are_rejected(real_run) -> None:
+    """A copied genuine token cannot authenticate retagged diagnostics traces."""
     evidence = _real_window(real_run, "gate:untagged")
     retagged = list(evidence.window_result.diagnostics_traces)
     assert retagged
@@ -409,9 +425,7 @@ def test_gate_no_window_trace_carries_a_run_minted_tag(real_run) -> None:
     evidence.window_result.diagnostics_traces = retagged
     result = _build(real_run, evidence)
     assert result.admitted is False
-    assert result.rejection_reason == (
-        "maintained_packet_ancestry_no_window_trace_carries_a_run_minted_tag"
-    )
+    assert result.rejection_reason == _WINDOW_EVIDENCE_MISMATCH
 
 
 # --- The adapter seam's opt-in contract (runs on any build) -----------------
