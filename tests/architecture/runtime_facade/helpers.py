@@ -37,7 +37,7 @@ WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / 
 WORLD_BATCH_RUNTIME_ACCESS = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "runtime_access.py"
 LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
 TASKING_BRIDGE = REPO_ROOT / "python" / "rl" / "tasking" / "bridge.py"
-TASKING_BRIDGE_VIEWS = REPO_ROOT / "python" / "tasking_contracts" / "bridge_views.py"
+TASKING_BRIDGE_CANONICAL = REPO_ROOT / "python" / "tasking_contracts" / "bridge_views.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
 RUNTIME_FACADE_SOURCE_FILES = (
@@ -78,25 +78,6 @@ def _runtime_access_source() -> str:
 
 def _gpu_bindings_source() -> str:
   return GPU_BINDINGS.read_text(encoding="utf-8")
-
-
-def _tasking_bridge_source() -> str:
-  # NOTE(I57): I24 relocated the loader-owned runtime views and the
-  # profile-independent command-chain/mission-command seam helpers out of
-  # python/rl/tasking/bridge.py into the neutral
-  # python/tasking_contracts/bridge_views.py module (bridge.py now imports and
-  # re-exports the identical objects -- see that module's own compat-shim
-  # assertIs test). The wp22 quarantine guards assert those seam definitions
-  # stay named and localized; fold the neutral module's text in so the guards
-  # track the definitions at their post-I24 home. No assertion is weakened:
-  # every positive token is still required to be present in the combined seam
-  # text, and every forbidden/legacy token is now required absent from both
-  # files, which strengthens (not loosens) the negative checks.
-  return (
-    TASKING_BRIDGE.read_text(encoding="utf-8")
-    + "\n"
-    + TASKING_BRIDGE_VIEWS.read_text(encoding="utf-8")
-  )
 
 
 def runtime_facade_source_text() -> str:
