@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/plan/repository_consolidation/README.md`
 Owner: `repository consolidation workline`
-Last verified: `2026-07-18`
+Last verified: `2026-07-28`
 
 状态：在分支 `codex/redundancy-consolidation` 上执行中的仓库精简路线图。
 
@@ -185,6 +185,7 @@ claim。
 | I96 PR-bot 修复：畸形 capability-bundle bool flag | `accepted` | `0a50ff8c`（`codex/redundancy-consolidation`） | PR-bot 修复，不是重新编号的 I72-I90 队列项：bool field 必须为真实 boolean，unsupported 结果必须携带非空 `unsupported_reason`。 | 落地前独立 agent 评审 PASS（候选 `37ab60a1`）：核对 bool 类型与 `unsupported_reason`；28 个聚焦测试、ruff 与 `git diff --check` 通过。 |
 | I97 PR-bot 修复：T6 校准残差 xfail | `accepted` | `cbc72768`（`codex/redundancy-consolidation`） | PR-bot 修复，不是重新编号的 I72-I90 队列项：聚焦七项校准后的残差预期，并记录与 T6 §11 的关系。 | 评审证据有意保留限制：实际序列为 3 pass + 7 xfail，`runxfail` 输出 `FFFFFFF`。Windows binding 进程退出时挂起，pytest 未打印 summary；本行不声称套件完成或干净退出。 |
 | I98 PR-bot 修复：opaque facade evidence identity | `accepted` | `b2cf3021`（`codex/redundancy-consolidation`） | PR-bot 修复，不是重新编号的 I72-I90 队列项：将 maintained-window evidence 绑定到 opaque facade identity，不改变原 I72-I90 队列映射。 | 两轮修复后的独立 agent 评审 PASS：先前的 worldline error masking 与 private-field aggregate 问题均已修复；最终候选为 143/143 C++ cases（19,147 assertions）及 engagement/bindings Python 91 passed / 2 expected skips，ruff、`git diff --check`、clang-format 均干净。landing integration smoke 覆盖该接缝。`727193b2` 是谱系 CI gate 的前置/核验修复，不是新迭代编号。 |
+| I98-P1 PR20 后续：精确封存维护窗口证据身份 | `accepted` | `fdd4a6bc`（`codex/redundancy-consolidation`） | I98 后续，不是新的 I72-I90 队列项：`run_window` 封存生产者实际消费的精确证据投影（位级 source time、observation provenance、engagement trace IDs、producer 与 barrier 元数据、barrier trace、diagnostics traces、executed-node snapshot versions）；replay、ancestry、worldline 生产者将公开 DTO 与该不可变快照比较。facade ledger 只登记真实窗口拥有的 trace、anchor、snapshot ID，ancestry parent 必须来自更早的已登记窗口。默认序列化与 I72-I90 映射不变。 | 对候选 `c5c9a0df` 的独立 committed review：PASS，无 P0/P1/P2 finding。落地验证：`ef_test` 146 cases / 19,160 assertions，CTest 8/8；focused replay 22 passed，ancestry 14 passed + 1 个预期 missing-binding skip，worldline 16 passed + 1 个预期 missing-binding skip，trace wiring 9 passed；Ruff、`git diff --check`、clang-format 干净。 |
 
 ### 落地树验证记录（2026-07-26/27 落地波次）
 
@@ -192,7 +193,7 @@ claim。
 | I90 T7 终局残余审计：两轮收口 | `accepted` | `5b728ac2`（落地提交；审计源 head 为 `5a2c75f7`） | I89 之后在新 checkout 上执行 T7 终局审计：连续两轮修复后 clean、D-01..D-15 全部分类、不删除或规范化工作树，并明确未来 held 项的重开边界。 | 独立 `i90_bounded_review` 与候选文档评审均 PASS/CLEAN；maintained smoke 753 passed / 4 skipped / 45 subtests；`ef_test` 143 cases / 19,147 assertions；CTest 8/8；双语 registry 91/91；链接审计 184 文档 / 2,820 链接 / 0 issues。 |
 上表中写"落地树 maintained smoke 见下文"的行即指本记录。波次头 `9ab17d455ea3cf7f3e3d8fb606a8d2a8f672c999`（26 个迭代：I61-I63、I65-I81、I85、I91-I95 及 I70 构建修复，2026-07-26/27 落地）：maintained smoke 701 passed, 4 gap-matrix skips, 0 failed (exit 0)；ef_test 137 用例 / 19,137 断言；ctest 8/8；dto_schema 与实验矩阵生成器 --check 干净（空战 24/24、协同 12/12）；文档链接审计 0 issues；全仓 ruff 干净；`git diff --check` 干净。每个迭代均携带独立评审结论落地；needs-repair 结论按评审纪律在提交前修复并通过确认轮。
 
-当前结算 head `18abf5e7` 包含谱系 CI gate 前置/核验修复 `727193b2`：maintained smoke 752 passed / 4 skipped / 45 subtests；`ef_test` 143 cases / 19,147 assertions；文档登记 89/89 synced；文档链接审计 180 documents / 2,782 links / 0 issues。
+代码结算 head `fdd4a6bc` 携带 I98-P1 证据封存修复（已评审候选 `c5c9a0df`）：maintained smoke 753 passed / 4 skipped / 45 subtests；`ef_test` 146 cases / 19,160 assertions；CTest 8/8；文档登记 91/91 synced；文档链接审计 184 documents / 2,820 links / 0 issues。
 
 ### I2 残余在 I3 的处置
 
