@@ -49,7 +49,7 @@
 7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
    - P8 协同执行管线的设施盘点与下一步方向。
 8. `exact_runtime/` 下的专项文档
-   - 仅当任务明确进入 GPU / exact runtime 主线时再继续深入，并应先从 `exact_runtime/README.md` 看当前仍存在的候选草案。
+   - 仅当任务明确进入 GPU / exact runtime 主线时再继续深入。应先从 `exact_runtime/README.md` 查看当前候选；独立 CUDA 驻留后端的候选执行冻结已登记于该入口。
 
 ## 三、历史冻结记录
 
@@ -84,6 +84,7 @@
 
 | 文档 | 当前状态 | 说明 |
 |------|-----------|------|
+| [exact_runtime/cuda_resident_backend_program_20260729.zh.md](exact_runtime/cuda_resident_backend_program_20260729.zh.md) | RB0 accepted/frozen | 独立 CUDA 驻留后端的单一执行权威；当前授权 RB1，更后行及 capability 晋级继续受依赖门控 |
 | [exact_runtime/cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md) | Draft follow-on implementation plan | 后续 C++ exact runtime 候选计划 |
 | [exact_runtime/gpu_execution_mainline_integration_checklist.md](exact_runtime/gpu_execution_mainline_integration_checklist.md) | Open | GPU execution 主线一致性检查清单 |
 | [exact_runtime/README.md](exact_runtime/README.md) | 候选专项索引 | 通过局部 README 确认当前仍存在的 exact-runtime 草案 |

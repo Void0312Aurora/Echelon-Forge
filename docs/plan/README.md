@@ -48,7 +48,7 @@ Language migration note:
 7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.md)
    - P8 cooperative execution pipeline facility review and next steps.
 8. Special documents under `exact_runtime/`
-   - Only delve deeper when the task explicitly enters the GPU / exact runtime mainline, and start from `exact_runtime/README.md` rather than assuming every candidate draft still exists.
+   - Only delve deeper when the task explicitly enters the GPU / exact runtime mainline. Start from `exact_runtime/README.md`; the current candidate execution freeze for the independent CUDA-resident backend is listed there.
 
 ## 3. Historical Freeze Records
 
@@ -84,6 +84,7 @@ for execution history only:
 
 | Document | Current Status | Notes |
 |----------|----------------|-------|
+| [exact_runtime/cuda_resident_backend_program_20260729.md](exact_runtime/cuda_resident_backend_program_20260729.md) | RB0 accepted/frozen | Single execution authority for an independent CUDA-resident backend; RB1 is authorized, while later rows and capability promotion remain dependency-gated |
 | [exact_runtime/cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md) | Draft follow-on implementation plan | Subsequent C++ exact runtime candidate plan |
 | [exact_runtime/gpu_execution_mainline_integration_checklist.md](exact_runtime/gpu_execution_mainline_integration_checklist.md) | Open | GPU execution mainline consistency checklist |
 | [exact_runtime/README.md](exact_runtime/README.md) | Candidate-plan index | Use the local README to see which exact-runtime drafts are still present |

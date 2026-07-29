@@ -106,9 +106,9 @@
       "english": "docs/plan/README.md",
       "chinese": "docs/plan/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-07-20",
-      "english_hash": "662f7a73a2917f212fb87686c96568328cfb8ec92e488685c4c21ab89c5934e7",
-      "chinese_hash": "2ec8dfc8c94551d69f1d40f1d812e991a054eecc88d1ef4d3e7236e5ee7d56a9"
+      "last_verified": "2026-07-29",
+      "english_hash": "8442e3d2a5676ffb9be26f5425965f2a7e9422d7037ad562864620ca7ba7a866",
+      "chinese_hash": "657fb568069e42b54ef698b193c3f4394621bfab168026b72e8498bd5c964f62"
     },
     {
       "pair_id": "plan/architecture/README",
