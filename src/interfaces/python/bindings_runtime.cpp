@@ -28,6 +28,27 @@ void bind_runtime(nb::module_ &m) {
     runtime_batch_config_class.def_rw(#name, &RuntimeBatchConfig::name);
 #include "runtime/facade/detail/runtime_batch_config.inc"
 
+    nb::class_<RuntimeBackendRequest>(m, "RuntimeBackendRequest")
+        .def(nb::init<>())
+        .def_rw("backend_profile_id", &RuntimeBackendRequest::backend_profile_id)
+        .def_rw("capability_manifest_id", &RuntimeBackendRequest::capability_manifest_id)
+        .def_rw("parity_budget_ref", &RuntimeBackendRequest::parity_budget_ref)
+        .def_rw("requested_feature_ids", &RuntimeBackendRequest::requested_feature_ids)
+        .def_rw("allow_unmaintained_candidate",
+                &RuntimeBackendRequest::allow_unmaintained_candidate);
+
+    nb::class_<RuntimeBackendAdmission>(m, "RuntimeBackendAdmission")
+        .def(nb::init<>())
+        .def_rw("admitted", &RuntimeBackendAdmission::admitted)
+        .def_rw("maintained_selection", &RuntimeBackendAdmission::maintained_selection)
+        .def_rw("experimental_selection", &RuntimeBackendAdmission::experimental_selection)
+        .def_rw("backend_profile_id", &RuntimeBackendAdmission::backend_profile_id)
+        .def_rw("capability_manifest_id", &RuntimeBackendAdmission::capability_manifest_id)
+        .def_rw("parity_budget_ref", &RuntimeBackendAdmission::parity_budget_ref)
+        .def_rw("admitted_feature_ids", &RuntimeBackendAdmission::admitted_feature_ids)
+        .def_rw("rejection_reason", &RuntimeBackendAdmission::rejection_reason)
+        .def_rw("errors", &RuntimeBackendAdmission::errors);
+
     nb::class_<RuntimeFidelityRequest> runtime_fidelity_request_class(m, "RuntimeFidelityRequest");
     runtime_fidelity_request_class.def(nb::init<>());
 #define EF_RUNTIME_FIDELITY_REQUEST_FIELD(type, name, default_value)                               \
@@ -1371,6 +1392,7 @@ void bind_runtime(nb::module_ &m) {
         .def("configure_batch", &RuntimeFacade::configure_batch, nb::arg("config"))
         .def("batch_config", &RuntimeFacade::batch_config)
         .def("capabilities", &RuntimeFacade::capabilities)
+        .def("admit_backend_request", &RuntimeFacade::admit_backend_request, nb::arg("request"))
         .def("admit_fidelity_request", &RuntimeFacade::admit_fidelity_request, nb::arg("request"))
         .def("snapshot_counterfactual_entity", &RuntimeFacade::snapshot_counterfactual_entity,
              nb::arg("ref"), nb::arg("fidelity_admission"), nb::arg("cadence_reason"),

@@ -29,6 +29,7 @@ class RuntimeFacade {
     void configure_batch(const RuntimeBatchConfig &config);
     RuntimeBatchConfig batch_config() const noexcept;
     RuntimeCapabilities capabilities() const noexcept;
+    RuntimeBackendAdmission admit_backend_request(const RuntimeBackendRequest &request) const;
     RuntimeFidelityAdmission admit_fidelity_request(const RuntimeFidelityRequest &request) const;
     RuntimeCounterfactualSnapshot snapshot_counterfactual_entity(
         const WorldEntityRef &ref, const RuntimeFidelityAdmission &fidelity_admission,

@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 and RB1 are accepted. RB2 is the only currently authorized
-implementation iteration. RB3-RB11 remain dependency-gated.**
+Status: **RB0 through RB2 are accepted. RB3 is the only currently authorized
+implementation iteration. RB4-RB11 remain dependency-gated.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -103,3 +103,86 @@ Verdict: **accepted for one RB1 commit**. The next authorized work is RB2 only:
 explicit backend request/admission, the candidate capability manifest/profile,
 and the profile-owned selected-slice parity/barrier budget. CUDA lifecycle and
 dynamics remain forbidden until their later rows are opened.
+
+## RB2 - Candidate Admission And Frozen Parity Contract
+
+### Frozen write set
+
+- explicit backend request/admission DTOs and the facade preflight;
+- the bounded fixed-step air-execution capability manifest;
+- the existing `resident_state.unmaintained_candidate` profile-owned parity
+  budget, selected-slice field descriptors, and barrier rules;
+- typed future clock, snapshot, event-order, and export-envelope contracts;
+- Python bindings, build registration, C++/Python contract tests, and this
+  program/ledger status update.
+
+### Non-goals
+
+- no CUDA backend object, device allocation, store, kernel, or dynamics;
+- no active-backend replacement, implicit CPU fallback, or
+  `RuntimeBatchConfig` expansion;
+- no manifest advertisement by a compiled backend and no public support-flag,
+  maintained-profile, or capability promotion;
+- no empirical accuracy or performance claim from the preimplementation
+  comparator thresholds.
+
+### Result
+
+- CPU reference selection remains the maintained default. Candidate selection
+  requires explicit opt-in, exact profile/budget/manifest ownership, a trusted
+  compiled-backend signal, and exact supported-manifest advertisement.
+  `RuntimeFacade` supplies neither experimental availability nor a supported
+  manifest, so candidate selection remains fail-closed.
+- The bounded manifest has canonical required, supported, and forbidden feature
+  vectors. The known manifest must equal the full canonical object, so deleting
+  `communications` from the forbidden set and adding it to supported features
+  is rejected.
+- The parity budget freezes 11 families and 93 complete descriptors: field
+  path, surface owner, current/future status, value kind, and shard. Current DTO
+  members and future typed-contract members are compile-time probed.
+- `observation.id`, event order, snapshot identity, termination identity, and
+  export-envelope identity use exact comparison. Approximate comparators accept
+  floating fields only. Kinematics uses `1e-9` absolute / `1e-12` relative;
+  instrument, observation, and reward numeric families use `1e-8` / `1e-10`.
+  These are frozen parity gates for later measurement, not validated model-error
+  bounds.
+- Snapshot identity explicitly maps `world_id`, `global_version`, `barrier_id`,
+  `barrier_sequence`, `shard_versions`, and typed `lineage`.
+- `input_injection`, `stage_publish`, disabled `partial_sync_commit`,
+  `window_commit`, and `export` are exact canonical rules. Event and export
+  envelope fields are visible/comparable only at `export`; host truth exists
+  only there.
+
+### Validation
+
+- CUDA-off Release builds of `ef_test` and `ef_py`: pass.
+- `ef_test`: `153/153` test cases and `19,297` assertions passed.
+- RB2 C++ selection: `5/5`, `127` assertions; RB2 Python selection: `7 passed`.
+- Changed C++ `clang-format --dry-run -Werror`, changed Python `ruff`, and
+  `git diff --check`: pass.
+- A wider facade selection reported `41 passed, 6 failed`: one unchanged stale
+  source-text expectation and five snippet compiles whose existing test helper
+  hard-codes a missing worktree-local `build-local-win` Flecs path. Independent
+  review reproduced and classified them as outside the RB2 change surface.
+
+### Independent review and repair history
+
+1. Initial review blocked an approximate comparator containing
+   `observation.id`, premature event/export visibility, incomplete barrier
+   semantics, and string-only selected fields. The contract was replaced by
+   typed descriptors, exact canonical barriers, member probes, and mutation
+   tests.
+2. Re-review found three reproducible false greens: optional manifest expansion,
+   incomplete exact snapshot identity, and tests that did not compare full
+   descriptor objects. Canonical manifest equality, the complete typed snapshot
+   identity, and an independent 93-object expected inventory closed them.
+3. `/root/rb2_contract_review` independently reran the repaired candidate and
+   approved staged raw hash `c9355e69644a81262df23ebe47e802225b6371c3`
+   (stable patch-id `8e3531b8fd071579ac6ea431c18d93f540001e6b`) with
+   zero blockers.
+
+Verdict: **accepted for one RB2 commit**. The next authorized work is RB3 only:
+an instance-owned `CudaWorldStore`, `CudaResidentBackend` lifecycle shell, and
+CUDA-off stubs. RB3 must not advertise the bounded manifest, implement
+simulation dynamics, or reuse the global singleton caches in older GPU helper
+experiments.

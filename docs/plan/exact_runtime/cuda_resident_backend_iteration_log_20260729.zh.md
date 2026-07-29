@@ -10,7 +10,7 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0、RB1 已 accepted。当前仅授权 RB2 实现；RB3-RB11 仍受依赖门控。**
+状态：**RB0 至 RB2 已 accepted。当前仅授权 RB3 实现；RB4-RB11 仍受依赖门控。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -88,3 +88,73 @@
 request/admission、候选 capability manifest/profile，以及 profile-owned
 selected-slice parity/barrier budget。CUDA 生命周期与 dynamics 在后续行开启前仍
 禁止实现。
+
+## RB2 - 候选准入与冻结 parity 契约
+
+### 冻结 write set
+
+- 显式 backend request/admission DTO 与 facade preflight；
+- 有界 fixed-step air-execution capability manifest；
+- 既有 `resident_state.unmaintained_candidate` profile 所有的 parity budget、
+  selected-slice 字段描述与 barrier 规则；
+- 未来 clock、snapshot、event-order 与 export-envelope 的类型化契约；
+- Python binding、构建登记、C++/Python 契约测试及本计划/账本状态更新。
+
+### 非目标
+
+- 不增加 CUDA backend object、device allocation、store、kernel 或 dynamics；
+- 不替换 active backend，不增加隐式 CPU fallback 或扩展 `RuntimeBatchConfig`；
+- 不让 compiled backend 宣称 manifest，不晋级公开 support flag、maintained
+  profile 或 capability；
+- 不把实现前 comparator threshold 表述成经验 accuracy 或 performance 结论。
+
+### 结果
+
+- CPU reference selection 继续是 maintained 默认。候选选择要求显式 opt-in、
+  profile/budget/manifest 所有权精确匹配、受信 compiled-backend 信号，以及精确
+  supported-manifest 声明。`RuntimeFacade` 不提供 experimental availability 或
+  supported manifest，因此候选继续 fail-closed。
+- 有界 manifest 拥有 canonical required、supported、forbidden feature vector；
+  已知 manifest 必须与完整 canonical object 相等，所以从 forbidden 删除
+  `communications` 再把它加入 supported 会被拒绝。
+- parity budget 冻结 11 个 family 与 93 个完整 descriptor：field path、surface
+  owner、current/future status、value kind 与 shard。当前 DTO 成员及未来类型化
+  contract 成员均有编译期探针。
+- `observation.id`、event order、snapshot identity、termination identity 与
+  export-envelope identity 使用 exact comparator；近似 comparator 只接受浮点
+  字段。kinematics 使用 `1e-9` absolute / `1e-12` relative；instrument、
+  observation、reward numeric family 使用 `1e-8` / `1e-10`。这些数值是冻结给
+  后续实测的 parity gate，不是已验证的模型误差界。
+- Snapshot identity 显式映射 `world_id`、`global_version`、`barrier_id`、
+  `barrier_sequence`、`shard_versions` 与类型化 `lineage`。
+- `input_injection`、`stage_publish`、禁用的 `partial_sync_commit`、
+  `window_commit`、`export` 是精确 canonical rule；event 与 export envelope 字段
+  只在 `export` 可见/可比较，也只有该处存在 host truth。
+
+### 验证
+
+- CUDA-off Release 的 `ef_test` 与 `ef_py` 构建：通过。
+- `ef_test`：`153/153` test case、`19,297` assertion 通过。
+- RB2 C++ 选择：`5/5`、`127` assertion；RB2 Python 选择：`7 passed`。
+- 变更 C++ 的 `clang-format --dry-run -Werror`、变更 Python 的 `ruff` 以及
+  `git diff --check`：通过。
+- 更宽 facade 选择为 `41 passed, 6 failed`：一项是未修改的旧 source-text
+  expectation，五项是既有测试 helper 硬编码了工作树中不存在的
+  `build-local-win` Flecs 路径。独立审阅已复现并判定它们不属于 RB2 因果面。
+
+### 独立审阅与修复历史
+
+1. 初审阻断了包含 `observation.id` 的近似 comparator、过早的 event/export
+   visibility、不完整 barrier 语义及 string-only selected field；契约改为类型化
+   descriptor、精确 canonical barrier、成员探针及 mutation test。
+2. 复审发现三个可复现假绿：可选 manifest 扩张、exact snapshot identity 不完整、
+   测试没有比较完整 descriptor object。canonical manifest equality、完整类型化
+   snapshot identity 与独立 93-object 预期清单关闭了这些缺口。
+3. `/root/rb2_contract_review` 独立复跑修复候选，并以零 blocker 批准 staged raw
+   hash `c9355e69644a81262df23ebe47e802225b6371c3`（stable patch-id
+   `8e3531b8fd071579ac6ea431c18d93f540001e6b`）。
+
+结论：**允许形成一个 RB2 提交**。下一步只授权 RB3：实例拥有的
+`CudaWorldStore`、`CudaResidentBackend` 生命周期壳与 CUDA-off stub。RB3 不得宣称
+有界 manifest，不得实现 simulation dynamics，也不得复用旧 GPU helper experiment
+中的全局 singleton cache。
