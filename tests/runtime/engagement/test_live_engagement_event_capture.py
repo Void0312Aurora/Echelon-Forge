@@ -137,10 +137,13 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
   header = _read("src/core/engine/simulation_kernel.h")
   observation_api = _read("src/core/engine/simulation_kernel_observation_api.cpp")
   event_types_header = _read("src/core/engine/engagement_event_types.h")
+  engagement_contracts_header = _read("src/runtime/contracts/engagement_contracts.h")
   store_header = _read("src/core/engine/simulation_kernel_engagement_event_store.h")
   store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
 
-  assert "struct RecentEngagementEvents" in event_types_header
+  assert '#include "runtime/contracts/engagement_contracts.h"' in event_types_header
+  assert "struct RecentEngagementEvents" not in event_types_header
+  assert "struct RecentEngagementEvents" in engagement_contracts_header
   assert "RecentEngagementEvents export_recent_engagement_events() const" in header
   assert "core/engine/engagement_event_types.h" in header
   assert "core/engine/simulation_kernel_engagement_event_store.h" not in header

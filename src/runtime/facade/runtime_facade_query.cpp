@@ -1,24 +1,29 @@
 #include "runtime/facade/runtime_facade_internal.h"
 
+#include "core/engine/world_batch_visual_binding_compatibility_types.h"
+
 #include <cstdint>
 #include <vector>
 
 std::vector<std::vector<std::uint64_t>>
 RuntimeFacade::get_sensor_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                               bool use_gpu) const {
-    return runtime_->get_sensor_candidate_ids_batch(refs, use_gpu);
+    return runtime_facade_internal::require_compatibility_port(*runtime_)
+        .get_sensor_candidate_ids_batch(refs, use_gpu);
 }
 
 std::vector<std::vector<std::uint64_t>>
 RuntimeFacade::get_visual_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                               double range_m, bool use_gpu) const {
-    return runtime_->get_visual_candidate_ids_batch(refs, range_m, use_gpu);
+    return runtime_facade_internal::require_compatibility_port(*runtime_)
+        .get_visual_candidate_ids_batch(refs, range_m, use_gpu);
 }
 
 std::vector<std::vector<std::uint64_t>>
 RuntimeFacade::get_comm_candidate_ids_batch(const std::vector<WorldEntityRef> &refs,
                                             bool use_gpu) const {
-    return runtime_->get_comm_candidate_ids_batch(refs, use_gpu);
+    return runtime_facade_internal::require_compatibility_port(*runtime_)
+        .get_comm_candidate_ids_batch(refs, use_gpu);
 }
 
 std::vector<WorldBatchVisualBindingCompatibilityScene>
@@ -33,18 +38,29 @@ std::vector<WorldBatchVisualBindingCompatibilityScene>
 RuntimeFacade::collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
     const std::vector<WorldEntityRef> &refs,
     const std::vector<std::vector<std::uint64_t>> &candidate_ids_batch, int downsample) const {
-    return runtime_->collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
-        refs, downsample, candidate_ids_batch);
+    return runtime_facade_internal::require_compatibility_port(*runtime_)
+        .collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(refs, downsample,
+                                                                              candidate_ids_batch);
 }
 
 std::vector<AgentObservation>
 RuntimeFacade::get_agent_observations_batch(const std::vector<WorldEntityRef> &refs) const {
-    return runtime_->get_agent_observations_batch(refs);
+    return runtime_
+        ->export_state(runtime::backend::ExportRequest{
+            .refs = refs,
+            .include_agent_observations = true,
+        })
+        .agent_observations;
 }
 
 std::vector<InstrumentState>
 RuntimeFacade::get_instrument_states_batch(const std::vector<WorldEntityRef> &refs) const {
-    return runtime_->get_instrument_states_batch(refs);
+    return runtime_
+        ->export_state(runtime::backend::ExportRequest{
+            .refs = refs,
+            .include_instrument_states = true,
+        })
+        .instrument_states;
 }
 
 // T8 information-state architecture, fourth slice / I60. Additive, read-only

@@ -424,7 +424,7 @@ bool contains_world_index(const std::vector<std::uint64_t> &world_indices,
 // Shared dedupe-and-accumulate walk behind both export_diagnostics_traces
 // and export_engagement_event_packet below.
 template <typename AccumulateFn>
-void for_each_distinct_export_world_index(const WorldBatchRuntime &runtime,
+void for_each_distinct_export_world_index(const IWorldBatchBackend &runtime,
                                           const std::vector<EngagementEntityRef> &refs,
                                           AccumulateFn &&accumulate) {
     std::vector<std::uint64_t> exported_world_indices;
@@ -443,7 +443,7 @@ void for_each_distinct_export_world_index(const WorldBatchRuntime &runtime,
 // Shared valid-ref filter behind both export_diagnostics_traces and
 // export_engagement_event_packet below.
 std::vector<EngagementEntityRef>
-filter_valid_world_refs(const WorldBatchRuntime &runtime,
+filter_valid_world_refs(const IWorldBatchBackend &runtime,
                         const std::vector<EngagementEntityRef> &refs) {
     std::vector<EngagementEntityRef> valid_refs;
     valid_refs.reserve(refs.size());
@@ -713,7 +713,12 @@ void stable_sort_engagement_packet(EngagementEventPacket *packet) {
 
 RecentEngagementEvents
 RuntimeFacade::export_recent_engagement_events_for_world(std::size_t world_index) const {
-    return runtime_->export_recent_engagement_events(world_index);
+    return runtime_
+        ->export_state(runtime::backend::ExportRequest{
+            .world_index = world_index,
+            .include_recent_engagement_events = true,
+        })
+        .recent_engagement_events;
 }
 
 ObservationBatchPacket
@@ -757,8 +762,14 @@ RuntimeFacade::export_diagnostics_traces(const EngagementBatchRequest &request) 
         return traces;
     }
 
-    const auto observations =
-        runtime_->get_agent_observations_batch(world_refs_from_engagement_refs(valid_refs));
+    const std::vector<WorldEntityRef> observation_refs =
+        world_refs_from_engagement_refs(valid_refs);
+    const auto observations = runtime_
+                                  ->export_state(runtime::backend::ExportRequest{
+                                      .refs = observation_refs,
+                                      .include_agent_observations = true,
+                                  })
+                                  .agent_observations;
 
     std::uint64_t next_snapshot_version = 1;
     for (std::size_t ref_index = 0; ref_index < valid_refs.size(); ++ref_index) {
@@ -891,8 +902,14 @@ RuntimeFacade::export_engagement_event_packet(const EngagementBatchRequest &requ
         return packet;
     }
 
-    const auto observations =
-        runtime_->get_agent_observations_batch(world_refs_from_engagement_refs(valid_refs));
+    const std::vector<WorldEntityRef> observation_refs =
+        world_refs_from_engagement_refs(valid_refs);
+    const auto observations = runtime_
+                                  ->export_state(runtime::backend::ExportRequest{
+                                      .refs = observation_refs,
+                                      .include_agent_observations = true,
+                                  })
+                                  .agent_observations;
 
     std::size_t observation_trace_index = packet.diagnostics_traces.size();
     std::uint64_t next_snapshot_version = 1;
@@ -937,12 +954,14 @@ RuntimeFacade::build_observation_packet(const ObservationBatchRequest &request) 
         return packet;
     }
 
-    if (request.include_agent_observations) {
-        packet.agent_observations = runtime_->get_agent_observations_batch(request.refs);
-    }
-    if (request.include_instrument_states) {
-        packet.instrument_states = runtime_->get_instrument_states_batch(request.refs);
-    }
+    runtime::backend::ExportRequest export_request{
+        .refs = request.refs,
+        .include_agent_observations = request.include_agent_observations,
+        .include_instrument_states = request.include_instrument_states,
+    };
+    runtime::backend::ExportResult exported = runtime_->export_state(export_request);
+    packet.agent_observations = std::move(exported.agent_observations);
+    packet.instrument_states = std::move(exported.instrument_states);
     packet.snapshot_version = next_snapshot_version(packet.refs.size() - 1);
     packet.source_time_s =
         resolve_observation_source_time(packet.agent_observations, packet.refs.size());
@@ -960,20 +979,18 @@ TaskingBatchPacket RuntimeFacade::build_tasking_packet(const TaskingBatchRequest
         return packet;
     }
 
-    if (request.include_mission_command_contracts) {
-        packet.mission_command_contracts =
-            runtime_->get_mission_commands_maintained_batch(request.refs);
-    }
-    if (request.include_task_order_contracts) {
-        packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);
-    }
-    if (request.include_leader_intent_contracts) {
-        packet.leader_intent_contracts =
-            runtime_->get_leader_intents_maintained_batch(request.refs);
-    }
-    if (request.include_pilot_report_contracts) {
-        packet.pilot_report_contracts = runtime_->get_pilot_reports_maintained_batch(request.refs);
-    }
+    runtime::backend::ExportResult exported =
+        runtime_->export_state(runtime::backend::ExportRequest{
+            .refs = request.refs,
+            .include_mission_commands = request.include_mission_command_contracts,
+            .include_task_orders = request.include_task_order_contracts,
+            .include_leader_intents = request.include_leader_intent_contracts,
+            .include_pilot_reports = request.include_pilot_report_contracts,
+        });
+    packet.mission_command_contracts = std::move(exported.mission_commands);
+    packet.task_order_contracts = std::move(exported.task_orders);
+    packet.leader_intent_contracts = std::move(exported.leader_intents);
+    packet.pilot_report_contracts = std::move(exported.pilot_reports);
     packet.snapshot_version = next_snapshot_version(packet.refs.size() - 1);
     packet.source_time_s = packet.refs.empty() ? 0.0 : static_cast<double>(packet.refs.size() - 1);
     apply_tasking_packet_provenance(&packet);

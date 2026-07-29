@@ -115,39 +115,74 @@ termination_spec_from_step_result(const ExecutionEpisodeControllerStepResult &st
 } // namespace
 
 void RuntimeFacade::clear_execution_episode_batch() noexcept {
-    runtime_->clear_execution_episode_controller_batch();
+    (void)runtime_->inject(runtime::backend::InputBatch{
+        .clear_execution_episode_controller = true,
+    });
 }
 
 void RuntimeFacade::prime_execution_episode_batch(
     const std::vector<WorldEntityRef> &refs, const std::vector<ExecutionEpisodeState> &states) {
-    runtime_->prime_execution_episode_controller_batch(refs, states);
+    (void)runtime_->inject(runtime::backend::InputBatch{
+        .prime_execution_episode_controller = true,
+        .execution_episode_refs = refs,
+        .execution_episode_states = states,
+    });
 }
 
 bool RuntimeFacade::execution_episode_ready(std::size_t world_index) const noexcept {
-    return runtime_->execution_episode_controller_ready(world_index);
+    return runtime_
+        ->export_state(runtime::backend::ExportRequest{
+            .world_index = world_index,
+            .include_execution_episode_ready = true,
+        })
+        .execution_episode_ready;
 }
 
 std::vector<ExecutionEpisodeState>
 RuntimeFacade::export_execution_episode_states(const std::vector<WorldEntityRef> &refs) const {
-    return runtime_->export_execution_episode_states_batch(refs);
+    return runtime_
+        ->export_state(runtime::backend::ExportRequest{
+            .refs = refs,
+            .include_execution_episode_states = true,
+        })
+        .execution_episode_states;
 }
 
 std::vector<ExecutionEpisodeRuntimeProducts> RuntimeFacade::evaluate_execution_batch(
     const std::vector<WorldExecutionEpisodeStepRequest> &requests) const {
-    return runtime_->evaluate_execution_episode_batch(requests);
+    return runtime_
+        ->evaluate(runtime::backend::EvaluationRequest{
+            .execution_episode_requests = requests,
+        })
+        .execution_episode_products;
 }
 
 std::vector<ExecutionEpisodeRuntimeProducts> RuntimeFacade::step_execution_products_batch(
     const std::vector<WorldExecutionEpisodeStepRequest> &requests) {
-    return runtime_->step_execution_episode_batch(requests);
+    return runtime_
+        ->advance(runtime::backend::AdvanceRequest{
+            .kind = runtime::backend::AdvanceKind::StepExecutionProducts,
+            .execution_episode_requests = requests,
+        })
+        .execution_episode_products;
 }
 
 ExecutionBatchStepResult
 RuntimeFacade::step_execution_batch(const ExecutionBatchStepRequest &request) {
     ExecutionBatchStepResult result{};
-    result.step_results = runtime_->step_execution_episode_results_batch(request.step_requests);
-    result.execution_episode_states = runtime_->export_execution_episode_states_batch(
-        refs_from_step_requests(request.step_requests));
+    result.step_results = runtime_
+                              ->advance(runtime::backend::AdvanceRequest{
+                                  .kind = runtime::backend::AdvanceKind::StepExecutionResults,
+                                  .execution_episode_requests = request.step_requests,
+                              })
+                              .execution_episode_step_results;
+    const std::vector<WorldEntityRef> step_refs = refs_from_step_requests(request.step_requests);
+    result.execution_episode_states = runtime_
+                                          ->export_state(runtime::backend::ExportRequest{
+                                              .refs = step_refs,
+                                              .include_execution_episode_states = true,
+                                          })
+                                          .execution_episode_states;
     result.rewards.reserve(result.step_results.size());
     result.terminated.reserve(result.step_results.size());
     result.truncated.reserve(result.step_results.size());

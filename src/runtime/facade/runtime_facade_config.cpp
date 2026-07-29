@@ -51,14 +51,17 @@ RuntimeFidelityAdmission runtime_fidelity_admission_from_contract(
 } // namespace
 
 void RuntimeFacade::configure_batch(const RuntimeBatchConfig &config) {
-    runtime_->resize(config.world_count);
-    runtime_->set_worker_threads(config.worker_threads);
+    runtime_->configure(runtime::backend::ConfigureRequest{
+        .world_count = config.world_count,
+        .worker_threads = config.worker_threads,
+    });
 }
 
 RuntimeBatchConfig RuntimeFacade::batch_config() const noexcept {
+    const runtime::backend::Configuration config = runtime_->configuration();
     return RuntimeBatchConfig{
-        .world_count = runtime_->world_count(),
-        .worker_threads = runtime_->worker_threads(),
+        .world_count = config.world_count,
+        .worker_threads = config.worker_threads,
     };
 }
 
@@ -152,31 +155,44 @@ RuntimeFacade::admit_fidelity_request(const RuntimeFidelityRequest &request) con
 }
 
 std::size_t RuntimeFacade::world_count() const noexcept {
-    return runtime_->world_count();
+    return runtime_->configuration().world_count;
 }
 
 void RuntimeFacade::resize(std::size_t world_count) {
-    runtime_->resize(world_count);
+    runtime_->configure(runtime::backend::ConfigureRequest{.world_count = world_count});
 }
 
 void RuntimeFacade::set_worker_threads(std::size_t worker_threads) noexcept {
-    runtime_->set_worker_threads(worker_threads);
+    runtime_->configure(runtime::backend::ConfigureRequest{.worker_threads = worker_threads});
 }
 
 std::size_t RuntimeFacade::worker_threads() const noexcept {
-    return runtime_->worker_threads();
+    return runtime_->configuration().worker_threads;
 }
 
 std::size_t RuntimeFacade::effective_worker_threads() const noexcept {
-    return runtime_->effective_worker_threads();
+    return runtime_->configuration().effective_worker_threads;
 }
 
 bool RuntimeFacade::load_database(const std::string &path) {
-    return runtime_->load_database(path);
+    return runtime_
+        ->load_content(runtime::backend::ContentRequest{
+            .kind = runtime::backend::ContentKind::Database,
+            .path = &path,
+        })
+        .loaded;
 }
 
 bool RuntimeFacade::load_unit_definitions(const std::string &path, std::string *error) {
-    return runtime_->load_unit_definitions(path, error);
+    runtime::backend::ContentResult result =
+        runtime_->load_content(runtime::backend::ContentRequest{
+            .kind = runtime::backend::ContentKind::UnitDefinitions,
+            .path = &path,
+        });
+    if (error != nullptr) {
+        *error = result.error;
+    }
+    return result.loaded;
 }
 
 namespace {

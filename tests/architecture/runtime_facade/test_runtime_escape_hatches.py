@@ -389,11 +389,11 @@ def test_runtime_facade_cpp_maintained_paths_do_not_drill_through_raw_runtime_or
   assert "runtime_compatibility_quarantine().world_raw_quarantine(" not in source
   assert "runtime()->world_raw_quarantine(" not in source
   assert "facade->runtime_compatibility_quarantine().world_raw_quarantine(" not in source
-  assert "runtime_->apply_world_layout(" in source
-  assert "runtime_->world_time_step(" in source
-  assert "runtime_->get_visual_candidate_ids_batch(" in source
+  assert ".kind = runtime::backend::SetupKind::Layout" in source
+  assert ".include_world_time_step = true" in source
+  assert "require_compatibility_port(*runtime_)" in source
   assert "collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(" in source
-  assert "runtime_->collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(" in source
+  assert ".get_visual_candidate_ids_batch(" in source
   assert "runtime_->collect_visual_binding_compatibility_scenes_batch(" not in source
 
 def test_wp22_gpu_visual_binding_routes_through_named_world_batch_compatibility_helper() -> None:

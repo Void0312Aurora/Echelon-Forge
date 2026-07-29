@@ -23,8 +23,10 @@ def test_runtime_contract_headers_do_not_include_engine_headers() -> None:
 def test_runtime_facade_public_header_hides_engine_owner_storage() -> None:
   header = (RUNTIME_FACADE / "runtime_facade.h").read_text(encoding="utf-8")
   assert '#include "core/engine/world_batch_runtime.h"' not in header
-  assert "class WorldBatchRuntime;" in header
-  assert "std::unique_ptr<WorldBatchRuntime>" in header
+  assert "class IWorldBatchBackend;" in header
+  assert "class WorldBatchRuntime;" not in header
+  assert "std::unique_ptr<IWorldBatchBackend>" in header
+  assert "std::unique_ptr<WorldBatchRuntime>" not in header
 
 def test_runtime_facade_does_not_include_or_call_gpu_helpers() -> None:
   gpu_markers = (

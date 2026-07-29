@@ -386,3 +386,11 @@ struct DiagnosticsTrace {
 #define EF_DIAGNOSTICS_TRACE_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/contracts/detail/diagnostics_trace.inc"
 };
+
+// Backend-neutral event batch shared by the simulation engine and facade SPI.
+// Keeping the field list here prevents adapter conversions from silently
+// dropping newly added event families.
+struct RecentEngagementEvents {
+#define EF_RECENT_ENGAGEMENT_EVENTS_FIELD(type, name, default_value) type name = default_value;
+#include "runtime/contracts/detail/recent_engagement_events.inc"
+};

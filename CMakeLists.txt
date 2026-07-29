@@ -161,6 +161,7 @@ set(EF_CORE_MISSION_SOURCES
 )
 
 set(EF_RUNTIME_FACADE_SOURCES
+    src/runtime/facade/internal/flecs_cpu_backend.cpp
     src/runtime/facade/runtime_facade.cpp
     src/runtime/facade/runtime_facade_config.cpp
     src/runtime/facade/runtime_facade_counterfactual.cpp
@@ -439,6 +440,7 @@ set(EF_TEST_SOURCES
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
+    src/tests/test_world_batch_backend_contract.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
     src/tests/test_runtime_facade_maintained_replay_envelope.cpp

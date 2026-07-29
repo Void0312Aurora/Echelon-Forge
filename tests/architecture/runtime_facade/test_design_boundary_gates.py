@@ -52,11 +52,12 @@ def test_facade_contract_and_types_headers_do_not_name_runtime_owner_types() -> 
   assert not violations, f"facade contract/type headers expose runtime owner types: {violations}"
 
 
-def test_runtime_facade_header_keeps_world_batch_runtime_private_only() -> None:
+def test_runtime_facade_header_owns_only_the_backend_interface() -> None:
   header = _read(RUNTIME_FACADE / "runtime_facade.h")
 
   assert '#include "core/engine/world_batch_runtime.h"' not in header
-  assert "class WorldBatchRuntime;" in header
+  assert "class IWorldBatchBackend;" in header
+  assert "class WorldBatchRuntime;" not in header
   assert "runtime_compatibility_quarantine" not in header
 
   public_section = header.split("public:", 1)[1].split("private:", 1)[0]
@@ -68,7 +69,68 @@ def test_runtime_facade_header_keeps_world_batch_runtime_private_only() -> None:
   assert public_owner_lines == []
 
   private_section = header.split("private:", 1)[1]
-  assert "std::unique_ptr<WorldBatchRuntime> runtime_;" in private_section
+  assert "std::unique_ptr<IWorldBatchBackend> runtime_;" in private_section
+  assert "std::unique_ptr<WorldBatchRuntime>" not in private_section
+
+
+def test_world_batch_backend_seam_is_used_without_exposing_engine_or_gpu_owners() -> None:
+  interface = _read(RUNTIME_FACADE / "internal/world_batch_backend.h")
+  compatibility = _read(RUNTIME_FACADE / "internal/world_batch_compatibility_port.h")
+  runtime = _read(REPO_ROOT / "src/core/engine/world_batch_runtime.h")
+  cpu_backend = _read(RUNTIME_FACADE / "internal/flecs_cpu_backend.h")
+  probe = _read(REPO_ROOT / "src/tests/test_world_batch_backend_contract.cpp")
+  facade_source = _read(RUNTIME_FACADE / "runtime_facade.cpp")
+
+  assert "class IWorldBatchBackend" in interface
+  for operation in (
+    "configuration()",
+    "configure(",
+    "load_content(",
+    "reset(",
+    "setup(",
+    "inject(",
+    "evaluate(",
+    "advance(",
+    "export_state(",
+    "diagnostics()",
+  ):
+    assert operation in interface
+  assert "WorldBatchRuntime" not in interface
+  assert "SimulationKernel" not in interface
+  assert "WorldBatchVisualBindingCompatibilityScene" not in interface
+  assert "bool use_gpu" not in interface
+  assert "gpu::" not in interface
+  assert "IEnvironmentModel" not in interface
+  assert '#include "core/engine/' not in interface
+  assert "bool use_gpu" in compatibility
+  assert "WorldBatchVisualBindingCompatibilityScene" in compatibility
+  assert "class WorldBatchRuntime : public IWorldBatchBackend" not in runtime
+  assert "~WorldBatchRuntime() = default;" in runtime
+  assert "class FlecsCpuBackend final : public IWorldBatchBackend" in cpu_backend
+  assert "WorldBatchRuntime runtime_;" in cpu_backend
+  assert "public WorldBatchRuntime" not in cpu_backend
+  assert "std::make_unique<FlecsCpuBackend>" in facade_source
+  assert '#include "runtime/facade/internal/world_batch_backend.h"' in probe
+  assert "class IndependentBackendProbe final : public IWorldBatchBackend" in probe
+  assert "world_batch_runtime.h" not in probe.lower()
+  assert "gpu/" not in probe.lower()
+
+  for request_marker, next_marker in (
+    ("struct ResetRequest", "enum class SetupKind"),
+    ("struct SetupRequest", "struct SetupResult"),
+    ("struct InputBatch", "struct InputResult"),
+    ("struct AdvanceRequest", "struct AdvanceResult"),
+    ("struct EvaluationRequest", "struct EvaluationResult"),
+    ("struct ExportRequest", "struct ExportResult"),
+  ):
+    section = interface.split(request_marker, 1)[1].split(next_marker, 1)[0]
+    assert "std::vector<" not in section, f"{request_marker} must remain a non-owning view"
+
+  normalized_interface = " ".join(interface.split())
+  assert (
+    "evaluate(const runtime::backend::EvaluationRequest &request) const = 0;"
+    in normalized_interface
+  )
 
 
 def test_runtime_facade_docs_do_not_describe_raw_runtime_as_maintained_path() -> None:

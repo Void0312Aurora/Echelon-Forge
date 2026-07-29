@@ -60,7 +60,7 @@ std::uint64_t counterfactual_spawned_entity_id(const BatchWorldSetupResult &setu
 }
 
 RuntimeCounterfactualSnapshot
-counterfactual_snapshot_from_runtime(const WorldBatchRuntime &runtime, const WorldEntityRef &ref,
+counterfactual_snapshot_from_runtime(const IWorldBatchBackend &runtime, const WorldEntityRef &ref,
                                      const RuntimeFidelityAdmission &fidelity_admission,
                                      const std::string &cadence_reason,
                                      std::vector<std::string> evidence_refs) {
@@ -68,10 +68,15 @@ counterfactual_snapshot_from_runtime(const WorldBatchRuntime &runtime, const Wor
         throw std::out_of_range(std::string(kRuntimeCounterfactualInvalidWorld));
     }
 
-    WorldEntityKinematics kinematics{};
-    if (!runtime.try_get_entity_kinematics(ref, &kinematics)) {
+    const ::runtime::backend::ExportResult exported =
+        runtime.export_state(::runtime::backend::ExportRequest{
+            .kinematics_ref = &ref,
+            .include_kinematics = true,
+        });
+    if (exported.kinematics.empty() || !exported.kinematics.front().found) {
         throw std::runtime_error(std::string(kRuntimeCounterfactualInvalidEntity));
     }
+    const ::runtime::backend::EntityKinematics &kinematics = exported.kinematics.front().state;
 
     evidence_refs.push_back("RuntimeFacade.snapshot_counterfactual_entity");
     evidence_refs.push_back("RuntimeFacade.admit_fidelity_request");
@@ -418,10 +423,15 @@ bool RuntimeFacade::counterfactual_world_index_valid(std::uint64_t world_index) 
 
 bool RuntimeFacade::apply_counterfactual_delta(const WorldEntityRef &ref,
                                                const RuntimeCounterfactualBranchRequest &request) {
-    WorldEntityKinematics state{};
-    if (!runtime_->try_get_entity_kinematics(ref, &state)) {
+    const runtime::backend::ExportResult exported =
+        runtime_->export_state(runtime::backend::ExportRequest{
+            .kinematics_ref = &ref,
+            .include_kinematics = true,
+        });
+    if (exported.kinematics.empty() || !exported.kinematics.front().found) {
         return false;
     }
+    runtime::backend::EntityKinematics state = exported.kinematics.front().state;
 
     state.x += request.mutation_dx;
     state.y += request.mutation_dy;
@@ -430,12 +440,20 @@ bool RuntimeFacade::apply_counterfactual_delta(const WorldEntityRef &ref,
     state.vx += request.mutation_dvx;
     state.vy += request.mutation_dvy;
     state.vz += request.mutation_dvz;
-    return runtime_->try_set_entity_kinematics(ref, state);
+    const runtime::backend::InputResult input_result =
+        runtime_->inject(runtime::backend::InputBatch{
+            .kinematics_write =
+                runtime::backend::EntityKinematicsWrite{
+                    .ref = ref,
+                    .state = state,
+                },
+        });
+    return input_result.kinematics_write_result.value_or(false);
 }
 
 bool RuntimeFacade::restore_counterfactual_entity(const WorldEntityRef &target_ref,
                                                   const RuntimeCounterfactualSnapshot &snapshot) {
-    WorldEntityKinematics state{};
+    runtime::backend::EntityKinematics state{};
     state.x = snapshot.x;
     state.y = snapshot.y;
     state.z = snapshot.z;
@@ -445,7 +463,15 @@ bool RuntimeFacade::restore_counterfactual_entity(const WorldEntityRef &target_r
     state.vx = snapshot.vx;
     state.vy = snapshot.vy;
     state.vz = snapshot.vz;
-    return runtime_->try_set_entity_kinematics(target_ref, state);
+    const runtime::backend::InputResult input_result =
+        runtime_->inject(runtime::backend::InputBatch{
+            .kinematics_write =
+                runtime::backend::EntityKinematicsWrite{
+                    .ref = target_ref,
+                    .state = state,
+                },
+        });
+    return input_result.kinematics_write_result.value_or(false);
 }
 
 void RuntimeFacade::register_counterfactual_worldline_snapshot(

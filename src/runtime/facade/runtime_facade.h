@@ -8,7 +8,7 @@
 
 #include "runtime/facade/runtime_facade_types.h"
 
-class WorldBatchRuntime;
+class IWorldBatchBackend;
 struct WorldBatchVisualBindingCompatibilityScene;
 struct RecentEngagementEvents;
 
@@ -468,7 +468,9 @@ class RuntimeFacade {
     static constexpr std::uint64_t kInvalidatedEvidenceCursor = 0;
 
     struct CounterfactualWorldlineRegistry;
-    std::unique_ptr<WorldBatchRuntime> runtime_;
+    // Single execution owner. The maintained implementation is
+    // FlecsCpuBackend, but the facade depends only on the internal backend SPI.
+    std::unique_ptr<IWorldBatchBackend> runtime_;
     std::unique_ptr<CounterfactualWorldlineRegistry> counterfactual_worldlines_;
     // Opaque run identity used to bind RuntimeWindowResult products to the
     // facade instance that returned them.  It is intentionally not a DTO field

@@ -12,8 +12,9 @@
 - 基线：`origin/main` 的 `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-29`
 
-状态：**RB0 已经独立只读复核并 accepted/frozen。当前状态只授权进入 RB1；
-更后的 RB 行仍受前序依赖门控。**
+状态：**RB0、RB1 已经独立只读复核并 accepted。当前状态只授权进入 RB2；
+更后的 RB 行仍受前序依赖门控。** 分支证据与唯一下一授权记录在
+[迭代账本](cuda_resident_backend_iteration_log_20260729.zh.md)中。
 
 ## 1. 决策
 
