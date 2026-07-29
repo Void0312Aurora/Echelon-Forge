@@ -12,7 +12,7 @@ Language versions:
 - Baseline: `origin/main` at `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-29`
 
-Status: **RB0 through RB2 are accepted after independent read-only review. RB3 is
+Status: **RB0 through RB3 are accepted after independent read-only review. RB4 is
 the only implementation iteration authorized by this status; later RB rows
 remain dependency-gated.** Branch-local evidence and the sole next
 authorization are recorded in the

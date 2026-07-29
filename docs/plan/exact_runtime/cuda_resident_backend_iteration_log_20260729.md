@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB2 are accepted. RB3 is the only currently authorized
-implementation iteration. RB4-RB11 remain dependency-gated.**
+Status: **RB0 through RB3 are accepted. RB4 is the only currently authorized
+implementation iteration. RB5-RB11 remain dependency-gated.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -186,3 +186,88 @@ an instance-owned `CudaWorldStore`, `CudaResidentBackend` lifecycle shell, and
 CUDA-off stubs. RB3 must not advertise the bounded manifest, implement
 simulation dynamics, or reuse the global singleton caches in older GPU helper
 experiments.
+
+## RB3 - Instance-Owned CUDA Lifecycle Shell
+
+### Frozen write set
+
+- a separate `ef_cuda_resident_backend` target and target-private CUDA compile
+  switch;
+- the instance-owned `CudaWorldStore` allocation/reset/teardown owner and its
+  CUDA-off stub;
+- the `CudaResidentBackend` lifecycle shell implementing the internal backend
+  SPI while rejecting every semantic operation;
+- the CUDA lifecycle metadata allocator, exact test readback/fault seam,
+  focused C++ target, architecture tests, and this bilingual status update.
+
+### Non-goals
+
+- no facade takeover, bounded-manifest advertisement, support-flag promotion,
+  or implicit Flecs/CPU fallback;
+- no content load, setup, input injection, evaluation, advance, export,
+  simulation dynamics, kernel graph, or physics state;
+- no reuse of older GPU-helper global caches and no claim that lifecycle
+  metadata is a maintained runtime backend.
+
+### Result
+
+- `CudaWorldStore` has one non-copyable/non-movable PIMPL owner per backend
+  instance. CUDA-off configure/reset fail closed without changing capacity or
+  generation.
+- CUDA-on lifecycle metadata uses one guarded device allocation containing two
+  epochs. Reset first constructs a complete host epoch, copies it once into the
+  inactive slot, and switches the active slot only after a successful copy.
+  Seed and reset-generation metadata therefore cannot become observably mixed.
+- Allocation/release/reset faults are injected per store, not globally. Exact
+  device readback proves explicit seeds, empty-seed zeroing, generation values,
+  successful reconfiguration, and preservation of the old active allocation
+  after failed allocation, reset-copy, or release paths.
+- Release clears an owner only after synchronization and `cudaFree` succeed.
+  Failed active release preserves the old owner; a replacement that also
+  cannot be released remains reachable through `pending_cleanup` for later
+  configure/teardown/destructor retry.
+- Allocation and reset generations fail closed before `uint64_t` wraparound.
+  The backend's required `configuration() noexcept` reads only the scalar
+  capacity accessor and cannot copy the diagnostic error string.
+- All semantic backend operations remain explicit `logic_error` rejections,
+  the compatibility port remains null, and `RuntimeFacade` continues to expose
+  no compiled experimental backend or supported manifest.
+
+### Validation
+
+- CUDA-off Release builds of `ef_test`, `ef_py`, and the focused lifecycle
+  target: pass. Focused lifecycle: `2/2`, `32` assertions; full `ef_test`:
+  `155/155`, `19,329` assertions.
+- Related admission/lifecycle Python selection: `9 passed`.
+- CUDA-on MSVC/NVCC focused target, which compiles every RB3 production source:
+  `2/2`, `95` assertions. Compute Sanitizer memcheck reports `0 errors` and
+  `0 bytes leaked in 0 allocations`.
+- Changed C++ `clang-format --dry-run -Werror`, changed Python `ruff`, and
+  `git diff --check`: pass.
+- A CUDA-on build of the full `ef_test` graph remains blocked by pre-existing
+  MSVC portability debt in `ef_core` (`__builtin_ctz`, `M_PI`, and related
+  existing diagnostics). The focused target deliberately excludes that graph
+  while compiling the complete RB3 target; this is an environment/baseline
+  limit, not evidence that the full CUDA-on suite passed.
+
+### Independent review and repair history
+
+1. Initial review blocked ignored `cudaFree` results/owner loss, a two-copy
+   reset that could expose new seeds with an old generation, host-only tests
+   that could not detect no-op device writes, an allocating path under
+   `configuration() noexcept`, and generation wraparound.
+2. The allocator was replaced by the single-allocation double-buffer design;
+   release ownership became status-aware and retryable; exact device readback,
+   per-instance allocation/reset-copy/release faults, and exhaustion tests were
+   added. This structurally removed the second-`cudaMalloc` leak window rather
+   than merely masking it.
+3. `/root/rb3_lifecycle_review` independently reran the repaired candidate and
+   approved staged raw hash `7ce020d5e055302d3ac38c85e85e42ab2af37f0c`
+   (stable patch-id `1c6bc2c884077796b2dc97341d10f999fcb98b7c`) with
+   zero blocking or non-blocking findings.
+
+Verdict: **accepted for one RB3 commit**. The next authorized work is RB4 only:
+setup/reset, input injection, device clock and shard versions, the RB2-frozen
+partial-sync/window/export barriers, and explicit minimal-fixture snapshot
+reconstruction. RB4 must retain zero hidden Flecs stepping/fallback and may not
+implement RB5-RB7 dynamics or advertise the bounded manifest early.

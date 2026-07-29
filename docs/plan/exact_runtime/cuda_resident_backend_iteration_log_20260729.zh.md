@@ -10,7 +10,7 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB2 已 accepted。当前仅授权 RB3 实现；RB4-RB11 仍受依赖门控。**
+状态：**RB0 至 RB3 已 accepted。当前仅授权 RB4 实现；RB5-RB11 仍受依赖门控。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -158,3 +158,74 @@ selected-slice parity/barrier budget。CUDA 生命周期与 dynamics 在后续�
 `CudaWorldStore`、`CudaResidentBackend` 生命周期壳与 CUDA-off stub。RB3 不得宣称
 有界 manifest，不得实现 simulation dynamics，也不得复用旧 GPU helper experiment
 中的全局 singleton cache。
+
+## RB3 - 实例拥有的 CUDA 生命周期壳
+
+### 冻结 write set
+
+- 独立的 `ef_cuda_resident_backend` target 与 target-private CUDA 编译开关；
+- 实例拥有的 `CudaWorldStore` allocation/reset/teardown owner 及 CUDA-off stub；
+- 实现内部 backend SPI、但拒绝所有语义操作的 `CudaResidentBackend` 生命周期壳；
+- CUDA 生命周期元数据 allocator、精确测试 readback/fault seam、聚焦 C++ target、
+  架构测试及本双语状态更新。
+
+### 非目标
+
+- 不接管 facade，不宣称有界 manifest，不晋级 support flag，不增加隐式 Flecs/CPU
+  fallback；
+- 不实现 content load、setup、input injection、evaluation、advance、export、
+  simulation dynamics、kernel graph 或 physics state；
+- 不复用旧 GPU helper 全局 cache，也不宣称生命周期元数据已构成 maintained
+  runtime backend。
+
+### 结果
+
+- `CudaWorldStore` 为每个 backend 实例提供一个不可复制/移动的 PIMPL owner。
+  CUDA-off configure/reset fail closed，且不改变 capacity 或 generation。
+- CUDA-on 生命周期元数据由一块有边界检查的 device allocation 持有两个 epoch。
+  Reset 先在 host 构造完整新 epoch，再以一次 copy 写入 inactive slot，只有 copy
+  成功才切换 active slot，因此 seed 与 reset-generation 不会形成可见混合状态。
+- allocation/release/reset fault 按 store 注入，不使用全局状态。精确 device readback
+  证明显式 seed、空 seed 归零、generation、成功 reconfigure，以及 allocation、
+  reset-copy 或 release 失败后旧 active allocation 仍被保留。
+- 仅在同步与 `cudaFree` 都成功后才清空 owner。active release 失败保留旧 owner；
+  replacement 若也不能释放，则由 `pending_cleanup` 保持可达，供后续
+  configure/teardown/destructor 重试。
+- allocation/reset generation 在 `uint64_t` 回绕前 fail closed。backend 必须提供的
+  `configuration() noexcept` 只读标量 capacity accessor，不再复制 diagnostic error
+  string。
+- 所有语义 backend 操作继续明确抛出 `logic_error`，compatibility port 继续为空，
+  `RuntimeFacade` 也继续不暴露 compiled experimental backend 或 supported manifest。
+
+### 验证
+
+- CUDA-off Release 的 `ef_test`、`ef_py` 与聚焦 lifecycle target 构建通过。聚焦
+  lifecycle：`2/2`、`32` assertions；完整 `ef_test`：`155/155`、`19,329`
+  assertions。
+- 相关 admission/lifecycle Python 选择：`9 passed`。
+- CUDA-on MSVC/NVCC 聚焦 target 编译全部 RB3 production source：`2/2`、`95`
+  assertions。Compute Sanitizer memcheck：`0 errors`、`0 bytes leaked in 0
+  allocations`。
+- 变更 C++ 的 `clang-format --dry-run -Werror`、变更 Python 的 `ruff` 与
+  `git diff --check`：通过。
+- CUDA-on 完整 `ef_test` graph 仍受 `ef_core` 既存 MSVC portability debt 阻断
+  （`__builtin_ctz`、`M_PI` 及相关既有诊断）。聚焦 target 有意隔离该 graph，但
+  编译完整 RB3 target；这是环境/基线限制，不代表完整 CUDA-on suite 已通过。
+
+### 独立审阅与修复历史
+
+1. 初审阻断了忽略 `cudaFree` 结果/owner 丢失、可能暴露新 seed 与旧 generation 的
+   两次 copy reset、无法发现 device no-op 的 host-only 测试、
+   `configuration() noexcept` 下的 allocating 路径及 generation 回绕。
+2. allocator 改为单 allocation 双缓冲设计；release ownership 改为感知状态且可
+   重试；增加精确 device readback、按实例 allocation/reset-copy/release fault 与
+   exhaustion 测试。第二次 `cudaMalloc` 的泄漏窗口由结构性删除，而不是遮蔽。
+3. `/root/rb3_lifecycle_review` 独立复跑修复候选，并批准 staged raw hash
+   `7ce020d5e055302d3ac38c85e85e42ab2af37f0c`（stable patch-id
+   `1c6bc2c884077796b2dc97341d10f999fcb98b7c`），无 blocking 或 non-blocking
+   finding。
+
+结论：**允许形成一个 RB3 提交**。下一步只授权 RB4：setup/reset、input
+injection、device clock 与 shard version、RB2 已冻结的 partial-sync/window/export
+barrier，以及最小 fixture 的显式 snapshot reconstruction。RB4 必须维持零隐藏
+Flecs step/fallback，不得提前实现 RB5-RB7 dynamics 或宣称有界 manifest。
