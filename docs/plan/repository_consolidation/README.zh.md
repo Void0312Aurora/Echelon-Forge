@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/plan/repository_consolidation/README.md`
 Owner: `repository consolidation workline`
-Last verified: `2026-07-28`
+Last verified: `2026-07-29`
 
 状态：在分支 `codex/redundancy-consolidation` 上执行中的仓库精简路线图。
 
@@ -194,6 +194,30 @@ claim。
 上表中写"落地树 maintained smoke 见下文"的行即指本记录。波次头 `9ab17d455ea3cf7f3e3d8fb606a8d2a8f672c999`（26 个迭代：I61-I63、I65-I81、I85、I91-I95 及 I70 构建修复，2026-07-26/27 落地）：maintained smoke 701 passed, 4 gap-matrix skips, 0 failed (exit 0)；ef_test 137 用例 / 19,137 断言；ctest 8/8；dto_schema 与实验矩阵生成器 --check 干净（空战 24/24、协同 12/12）；文档链接审计 0 issues；全仓 ruff 干净；`git diff --check` 干净。每个迭代均携带独立评审结论落地；needs-repair 结论按评审纪律在提交前修复并通过确认轮。
 
 代码结算 head `fdd4a6bc` 携带 I98-P1 证据封存修复（已评审候选 `c5c9a0df`）：maintained smoke 753 passed / 4 skipped / 45 subtests；`ef_test` 146 cases / 19,160 assertions；CTest 8/8；文档登记 91/91 synced；文档链接审计 184 documents / 2,820 links / 0 issues。
+
+### 落地拓扑与并行领域边界（2026-07-29）
+
+登记表记录的是已接受的落地提交，而不是每一个候选分支引用。已核验的
+堆叠拓扑是：PR18（`67ed92ed`，来自
+`consolidation/pr1-text-level-i1-i25`）、PR19（`3c3fbf45`，来自
+`consolidation/pr2-program-tracks-i26-i64`）和 PR20（`492f1a6f`，来自
+`consolidation/pr3-landing-wave-i61-i95`）。由于每个 PR 都合并到下一条
+分支，最终 `main` 整合提交为 `d7effb84`（第一父为 `67ed92e`，第二父为
+`492f1a6f`）；PR19 merge commit 本身不是 `main` 祖先，但其内容由 PR20
+堆栈的 `465c32d6` 基线携带。I83/I87/I89/I90/I96/I97/I98 行是该堆栈中
+后续的落地与修复登记，并不表示 PR19 被遗漏。因此，候选分支即使不是
+`main` 祖先，只要其聚合树或触及文件的 blob 与 squash 落地提交完全一致，
+也不能据每个提交的 `git cherry` 输出判定为遗漏。
+
+预期的领域支线有意位于 T 系列落地波之外；接受前必须各自建立迭代/登记行：
+
+- `codex/kill-chain-calibration-five-stage`：空战制导与杀伤链校准线，远端
+  tip 为 `fda18daf`。
+- `codex/ground-environment-scene-pipeline`：陆军/Arnis 环境基座线，远端
+  tip 为 `8423fa89`；本地 WIP 在落地前必须重新审计。
+
+这里登记的是范围与依赖边界，不是验收声明，也不授权把领域载荷整体并入
+架构主脊柱。
 
 ### I2 残余在 I3 的处置
 

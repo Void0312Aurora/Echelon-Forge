@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/plan/repository_consolidation/README.md`
 Owner: `repository consolidation workline`
-Last verified: `2026-07-28`
+Last verified: `2026-07-29`
 
 Status: active consolidation plan on branch `codex/redundancy-consolidation`.
 
@@ -204,6 +204,34 @@ fresh source and caller audit when its iteration begins.
 The rows above that say "Landed-tree maintained smoke recorded below" refer to this record. Wave head `9ab17d455ea3cf7f3e3d8fb606a8d2a8f672c999` (26 iterations: I61-I63, I65-I81, I85, I91-I95 plus the I70 build fix, landed 2026-07-26/27): maintained smoke 701 passed, 4 gap-matrix skips, 0 failed (exit 0); ef_test 137 cases / 19,137 assertions; ctest 8/8; dto_schema and experiment-matrix generators --check clean (air-combat 24/24, cooperative 12/12); document link audit 0 issues; full-repo ruff clean; `git diff --check` clean. Every iteration landed with an independent review verdict recorded in its row; needs-repair verdicts were repaired and confirmation-passed before commit per the review discipline.
 
 Code settlement head `fdd4a6bc` carries the I98-P1 evidence-sealing repair (reviewed candidate `c5c9a0df`): maintained smoke 753 passed / 4 skipped / 45 subtests; `ef_test` 146 cases / 19,160 assertions; CTest 8/8; documentation registry 91/91 synced; document-link audit 184 documents / 2,820 links / 0 issues.
+
+### Landing topology and parallel domain boundaries (2026-07-29)
+
+The register records accepted landing commits, not every candidate branch ref.
+The verified stacked topology was PR18 (`67ed92ed`, from
+`consolidation/pr1-text-level-i1-i25`), PR19 (`3c3fbf45`, from
+`consolidation/pr2-program-tracks-i26-i64`), and PR20 (`492f1a6f`, from
+`consolidation/pr3-landing-wave-i61-i95`). Because each PR merged into the
+next branch, the final `main` integration is `d7effb84` (first parent
+`67ed92e`, second parent `492f1a6f`); the PR19 merge commit itself is not an
+ancestor of `main`, while its content is carried by the PR20 stack's
+`465c32d6` base. The I83/I87/I89/I90/I96/I97/I98 rows are later landing and
+remediation rows in that stack, not evidence that PR19 was omitted. A
+candidate branch can therefore be non-ancestor even when its aggregate tree
+or touched-file blobs exactly match a squash landing commit; per-commit
+`git cherry` output is not sufficient evidence of a gap.
+
+The expected domain side lines are intentionally outside the T-series
+landing wave and require their own iteration/register entry before acceptance:
+
+- `codex/kill-chain-calibration-five-stage`: air-combat guidance and
+  kill-chain calibration line, remote tip `fda18daf`.
+- `codex/ground-environment-scene-pipeline`: Ground/Arnis environment-substrate
+  line, remote tip `8423fa89`; local WIP must be audited before landing.
+
+Their presence here is a scope and dependency declaration, not an acceptance
+claim or permission to merge their domain payloads wholesale into the
+architecture spine.
 
 ### I2 Residual Disposition In I3
 
