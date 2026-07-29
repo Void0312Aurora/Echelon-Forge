@@ -205,7 +205,7 @@ The rows above that say "Landed-tree maintained smoke recorded below" refer to t
 
 Code settlement head `fdd4a6bc` carries the I98-P1 evidence-sealing repair (reviewed candidate `c5c9a0df`): maintained smoke 753 passed / 4 skipped / 45 subtests; `ef_test` 146 cases / 19,160 assertions; CTest 8/8; documentation registry 91/91 synced; document-link audit 184 documents / 2,820 links / 0 issues.
 
-### Landing topology and parallel domain boundaries (2026-07-29)
+### Landing topology (2026-07-29)
 
 The register records accepted landing commits, not every candidate branch ref.
 The verified stacked topology was PR18 (`67ed92ed`, from
@@ -220,18 +220,6 @@ remediation rows in that stack, not evidence that PR19 was omitted. A
 candidate branch can therefore be non-ancestor even when its aggregate tree
 or touched-file blobs exactly match a squash landing commit; per-commit
 `git cherry` output is not sufficient evidence of a gap.
-
-The expected domain side lines are intentionally outside the T-series
-landing wave and require their own iteration/register entry before acceptance:
-
-- `codex/kill-chain-calibration-five-stage`: air-combat guidance and
-  kill-chain calibration line, remote tip `fda18daf`.
-- `codex/ground-environment-scene-pipeline`: Ground/Arnis environment-substrate
-  line, remote tip `8423fa89`; local WIP must be audited before landing.
-
-Their presence here is a scope and dependency declaration, not an acceptance
-claim or permission to merge their domain payloads wholesale into the
-architecture spine.
 
 ### I2 Residual Disposition In I3
 

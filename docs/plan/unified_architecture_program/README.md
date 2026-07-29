@@ -15,23 +15,6 @@ the completed text-level consolidation phases (I1-I19) and the blueprint
 waves W1-W2 (I20-I24) into a single frozen roadmap for the remaining
 architecture-level unification work.
 
-## Parallel Domain Delivery Lines
-
-The T0-T11 rows are the architecture-consolidation spine. Two domain delivery
-lines run beside that spine and are deliberately not implied by the PR19/PR20
-landing wave. Registering the boundary here prevents an active domain branch
-from being mistaken for a missing T-series landing or for an accepted
-architecture iteration.
-
-| Line | Branch and observed boundary | Scope | Landing rule |
-| --- | --- | --- | --- |
-| Air-combat kill-chain calibration | `codex/kill-chain-calibration-five-stage` (remote tip `fda18daf`) | Guidance, weapon-employment calibration, and review packets | Separate domain review, evidence/fixture gates, and a new iteration/register row before landing; do not bulk-merge calibration artifacts into the T-series spine. |
-| Ground/Arnis environment substrate | `codex/ground-environment-scene-pipeline` (remote tip `8423fa89`; a local worktree may carry additional WIP) | Ground scene/environment-substrate import, provenance, and fixtures | Preserve WIP, then run byte-stable fixture/provenance review and a dedicated landing row before merging to `main`. |
-
-These lines may consume the maintained architecture contracts, but their
-domain payloads remain separate until their own evidence and landing gates
-are satisfied.
-
 ## Objective
 
 Replace the remaining hand-maintained parallel infrastructure with owned,

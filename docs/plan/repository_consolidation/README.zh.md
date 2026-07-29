@@ -195,7 +195,7 @@ claim。
 
 代码结算 head `fdd4a6bc` 携带 I98-P1 证据封存修复（已评审候选 `c5c9a0df`）：maintained smoke 753 passed / 4 skipped / 45 subtests；`ef_test` 146 cases / 19,160 assertions；CTest 8/8；文档登记 91/91 synced；文档链接审计 184 documents / 2,820 links / 0 issues。
 
-### 落地拓扑与并行领域边界（2026-07-29）
+### 落地拓扑（2026-07-29）
 
 登记表记录的是已接受的落地提交，而不是每一个候选分支引用。已核验的
 堆叠拓扑是：PR18（`67ed92ed`，来自
@@ -208,16 +208,6 @@ claim。
 后续的落地与修复登记，并不表示 PR19 被遗漏。因此，候选分支即使不是
 `main` 祖先，只要其聚合树或触及文件的 blob 与 squash 落地提交完全一致，
 也不能据每个提交的 `git cherry` 输出判定为遗漏。
-
-预期的领域支线有意位于 T 系列落地波之外；接受前必须各自建立迭代/登记行：
-
-- `codex/kill-chain-calibration-five-stage`：空战制导与杀伤链校准线，远端
-  tip 为 `fda18daf`。
-- `codex/ground-environment-scene-pipeline`：陆军/Arnis 环境基座线，远端
-  tip 为 `8423fa89`；本地 WIP 在落地前必须重新审计。
-
-这里登记的是范围与依赖边界，不是验收声明，也不授权把领域载荷整体并入
-架构主脊柱。
 
 ### I2 残余在 I3 的处置
 
