@@ -55,7 +55,7 @@ TEST_CASE("RB3 CUDA world store lifecycle is instance owned and fail closed") {
     } else if (first_configured) {
         CHECK(first.diagnostics().state == CudaWorldStoreState::ready);
         CHECK(first.diagnostics().world_capacity == 4);
-        CHECK(first.diagnostics().device_bytes == 4 * 2 * 16);
+        CHECK(first.diagnostics().device_bytes > 4 * 2 * 16);
         CHECK(first.diagnostics().allocation_generation == 1);
 
         const std::vector<std::uint32_t> first_seeds = {1, 2, 3, 4};
@@ -141,11 +141,11 @@ TEST_CASE("RB3 CUDA world store lifecycle is instance owned and fail closed") {
     CHECK(second.teardown());
 }
 
-TEST_CASE("RB3 backend shell exposes lifecycle only and advertises no semantics") {
+TEST_CASE("RB4 backend shell keeps unsupported semantics fail closed") {
     using namespace runtime::cuda_resident;
 
     CudaResidentBackend backend;
-    CHECK(backend.diagnostics().backend_id == "cuda_resident.lifecycle_shell");
+    CHECK(backend.diagnostics().backend_id == std::string(kCudaResidentRb4BackendId));
     CHECK(backend.configuration().world_count == 0);
     CHECK(backend.configuration().worker_threads == 1);
     CHECK(backend.configuration().effective_worker_threads == 1);
@@ -172,9 +172,14 @@ TEST_CASE("RB3 backend shell exposes lifecycle only and advertises no semantics"
     }
 
     CHECK_THROWS_AS(backend.load_content({}), std::logic_error);
-    CHECK_THROWS_AS(backend.setup({}), std::logic_error);
-    CHECK_THROWS_AS(backend.inject({}), std::logic_error);
+    CHECK_THROWS_AS(backend.setup({.kind = runtime::backend::SetupKind::Layout}), std::logic_error);
+    runtime::backend::InputBatch unsupported_input{};
+    unsupported_input.kinematics_write = runtime::backend::EntityKinematicsWrite{};
+    CHECK_THROWS_AS(backend.inject(unsupported_input), std::logic_error);
     CHECK_THROWS_AS(backend.evaluate({}), std::logic_error);
-    CHECK_THROWS_AS(backend.advance({}), std::logic_error);
-    CHECK_THROWS_AS(backend.export_state({}), std::logic_error);
+    CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::StepExecutionProducts}),
+                    std::logic_error);
+    CHECK_NOTHROW(backend.export_state({}));
+    CHECK_THROWS_AS(backend.export_state({.include_recent_engagement_events = true}),
+                    std::logic_error);
 }

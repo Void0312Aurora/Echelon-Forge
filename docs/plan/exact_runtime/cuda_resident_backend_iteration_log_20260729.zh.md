@@ -10,7 +10,7 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB3 已 accepted。当前仅授权 RB4 实现；RB5-RB11 仍受依赖门控。**
+状态：**RB0 至 RB4 已 accepted。当前仅授权 RB5 实现；RB6-RB11 仍受依赖门控。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -229,3 +229,85 @@ selected-slice parity/barrier budget。CUDA 生命周期与 dynamics 在后续�
 injection、device clock 与 shard version、RB2 已冻结的 partial-sync/window/export
 barrier，以及最小 fixture 的显式 snapshot reconstruction。RB4 必须维持零隐藏
 Flecs step/fallback，不得提前实现 RB5-RB7 dynamics 或宣称有界 manifest。
+
+## RB4 - 固定空战驻留状态与 barrier 壳
+
+### 冻结 write set
+
+- CPU reference 测试与 CUDA candidate 独立消费的共享固定空战 fixture
+  identity/schema contract；
+- backend-private 双 slot SoA 状态：identity、选定 pilot controls、kinematics、
+  clock、snapshot/barrier identity 与 shard versions；
+- setup/reset、选定 input injection、stage publish、禁用 partial sync、window
+  commit 与显式最小 snapshot reconstruction；
+- CUDA-on/CUDA-off 聚焦测试、CPU reference identity 测试、架构守卫、kernel
+  resource 报告、CMake 接线与本双语状态更新。
+
+### 非目标
+
+- 不实现 Phase A/B/D dynamics、instruments、observation、reward、termination、
+  event production、learner device view、facade takeover 或 manifest/support 宣传；
+- 不调用 Flecs step 或 `WorldBatchRuntime`，不增加 CPU fallback，不逐 stage host
+  write-back，也不声称当前局部 export 已满足完整 RB2 comparison/host-truth contract；
+- 不宣称 zero-copy：完整 slot D2D staging 是明确的 RB4 事务基线，留待后续实测
+  迭代优化。
+
+### 结果
+
+- Setup 产生与独立 `FlecsCpuBackend` reference 相同的基线锁定
+  `(world_index, entity_id, generation)` identity，且两侧测试互不调用；重复 setup
+  递增 entity generation。
+- 一块 device allocation 持有两个 lifecycle epoch 与两个 packed SoA state slot。
+  每次 reset、input、stage 与 window mutation 都先在 inactive slot 构造；各操作仅在
+  其适用的 copy 成功后切换 active slot，其中 input、stage 与 window 还要求窄
+  barrier kernel、同步与 overflow status readback 全部成功。
+- input barrier 提交选定 pilot controls；stage publish 只推进 barrier identity；
+  partial sync 保持禁用；window commit 推进 device clock，且只递增 RB4 已实际物化
+  的版本，未实现 dynamics/episode/output shard 保持 version `0`。
+- 显式 export 重建类型化 clock、snapshot identity、lineage、kinematics 与 exact
+  field-set envelope。它同时报告 RB2 required visible shards 与较小的 RB4
+  materialized set，因此在后续 phase 补齐完整 contract 前，contract satisfaction、
+  comparison eligibility 与 host truth 均明确为 false。pilot controls 不经 export 泄漏。
+- state readback 仅对 export/testing 私有，并在任何 D2H 前检查 host setup 状态。
+  configure-only、reset-only 与 failed-setup 状态均 fail closed，不读取未初始化 device
+  storage；zero capacity 明确产生空 snapshot。
+- `RuntimeFacade` 仍不宣称 compiled experimental backend、supported manifest、
+  resident-state support、exact-GPU support 或 device observation view。
+
+### 验证与资源证据
+
+- CUDA-on MSVC/NVCC 聚焦 target：`4/4`、`233` assertions；Compute Sanitizer
+  memcheck：`0 errors`、`0 bytes leaked in 0 allocations`。
+- `apply_barrier_kernel` 的 `ptxas`：每 thread `30` registers、`0` spill stores、
+  `0` spill loads、`0`-byte stack frame、`0` barriers。本机 RTX 3090 的 runtime API
+  报告 128 threads/block、每 SM 12 active blocks、48 active warps、theoretical
+  occupancy `1.0`。这些是 resource/theoretical 值，不是 achieved counter 实测。
+- 聚焦且 readback-heavy 的 fault-test workload 下，Nsight Systems 记录 3 次 barrier
+  kernel、总计 `6,176 ns`（median `1,984 ns`）；4 次 D2D、总计 `5,409 ns`；18 次
+  H2D、总计 `11,170 ns`；38 次 D2H、总计 `59,522 ns`。cold allocation 与
+  diagnostic export 主导该测试 trace，不能作为 production performance 证据。
+- Nsight Compute counter collection 受 `ERR_NVGPUCTRPERM` 阻断，因此不推断
+  achieved occupancy、divergence 或 memory counter，留待权限可用后补测。
+- CUDA-off 完整 `ef_test`：`158/158`、`19,346` assertions；CUDA-off 聚焦 target：
+  `4/4`、`35` assertions；相关 admission/lifecycle 架构选择：`7 passed`。变更 C++
+  clang-format、变更 Python ruff 与 `git diff --check` 均通过。
+- CUDA-on 聚焦 target 编译全部 RB4 production source。完整 CUDA-on `ef_test`
+  graph 仍不纳入本轮通过声明，因为存在 RB3 已记录的既有 MSVC portability debt。
+
+### 独立审阅与修复历史
+
+1. `/root/rb4_state_review` 初审阻断了给空 dynamics/episode shard 分配版本，以及把
+   RB2 完整 required set 误标为已 materialized 的 export evidence。修复后
+   required/materialized evidence 分离，空 shard version 保持 0，且不完整 host truth
+   明确可见。
+2. 复审阻断了 post-configure 未初始化 slot 的 D2H，以及遗漏 `seed`、
+   `reset_generation` 与 `source_barrier_id` 的 export envelope。host setup gate 加
+   configure/reset/failed-setup 拒绝测试关闭前者；exact field-set equality 关闭后者。
+3. 审阅者批准 implementation raw hash
+   `a65387063425f2fe867b2eaee9898acfbe29716d`（stable patch-id
+   `f2deb2a3ade9a6ddf810631ff8024a0d39aa59e9`），零 blocking、零 non-blocking finding。
+
+结论：**允许形成一个 RB4 提交**。下一步只授权 RB5：为同一有界 fixed-air slice
+实现 Phase A，形成 stage-local CPU-reference parity 与新的 register/spill 报告，并
+继续拒绝 unsupported control feature。RB5 不得吸收 Phase B airframe dynamics 或
+Phase D output projection，也不得提前宣称有界 manifest。

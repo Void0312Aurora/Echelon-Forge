@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB3 are accepted. RB4 is the only currently authorized
-implementation iteration. RB5-RB11 remain dependency-gated.**
+Status: **RB0 through RB4 are accepted. RB5 is the only currently authorized
+implementation iteration. RB6-RB11 remain dependency-gated.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -271,3 +271,103 @@ setup/reset, input injection, device clock and shard versions, the RB2-frozen
 partial-sync/window/export barriers, and explicit minimal-fixture snapshot
 reconstruction. RB4 must retain zero hidden Flecs stepping/fallback and may not
 implement RB5-RB7 dynamics or advertise the bounded manifest early.
+
+## RB4 - Fixed-Air Resident State And Barrier Shell
+
+### Frozen write set
+
+- the shared fixed-air fixture identity/schema contract consumed independently
+  by the CPU reference test and the CUDA candidate;
+- backend-private double-slot SoA state for identity, selected pilot controls,
+  kinematics, clock, snapshot/barrier identity, and shard versions;
+- setup/reset, selected input injection, stage publish, disabled partial sync,
+  window commit, and explicit minimal snapshot reconstruction;
+- focused CUDA-on/CUDA-off tests, the CPU reference identity test, architecture
+  guards, kernel resource reporting, CMake wiring, and this bilingual status
+  update.
+
+### Non-goals
+
+- no Phase A/B/D dynamics, instruments, observation, reward, termination, event
+  production, learner device view, facade takeover, or manifest/support
+  advertisement;
+- no Flecs stepping, `WorldBatchRuntime` call, CPU fallback, per-stage host
+  write-back, or claim that the current partial export satisfies the complete
+  RB2 comparison/host-truth contract;
+- no zero-copy claim: full-slot D2D staging is the explicit transactional RB4
+  baseline and remains an optimization target for later measured iterations.
+
+### Result
+
+- Setup creates the same baseline-locked `(world_index, entity_id, generation)`
+  identity as an independent `FlecsCpuBackend` reference without either test
+  calling the other backend. Repeated setup increments entity generation.
+- One device allocation owns two lifecycle epochs and two packed SoA state
+  slots. Every reset, input, stage, and window mutation is constructed in an
+  inactive slot. Each operation changes the active slot only after its
+  applicable copies succeed; input, stage, and window additionally require the
+  narrow barrier kernel, synchronization, and overflow status readback to
+  succeed.
+- The input barrier commits selected pilot controls. Stage publish advances only
+  barrier identity. Partial sync remains disabled. Window commit advances the
+  device clock and only versions actually materialized in RB4; unimplemented
+  dynamics/episode/output shards remain version `0`.
+- Explicit export reconstructs typed clock, snapshot identity, lineage,
+  kinematics, and an exact field-set envelope. It reports both the RB2-required
+  visible shards and the smaller materialized RB4 set, so contract satisfaction,
+  comparison eligibility, and host truth remain false until later phases fill
+  the complete contract. Pilot controls do not leak through export.
+- State readback is private to export/testing and checks host setup state before
+  any D2H. Configure-only, reset-only, and failed-setup states therefore fail
+  closed instead of reading uninitialized device storage; zero capacity yields
+  an explicit empty snapshot.
+- `RuntimeFacade` still advertises no compiled experimental backend, supported
+  manifest, resident-state support, exact-GPU support, or device observation
+  view.
+
+### Validation and resource evidence
+
+- CUDA-on MSVC/NVCC focused target: `4/4`, `233` assertions. Compute Sanitizer
+  memcheck: `0 errors`, `0 bytes leaked in 0 allocations`.
+- `ptxas` for `apply_barrier_kernel`: `30` registers/thread, `0` spill stores,
+  `0` spill loads, `0`-byte stack frame, `0` barriers. Runtime API reports 128
+  threads/block, 12 active blocks and 48 active warps per SM, with theoretical
+  occupancy `1.0` on the local RTX 3090. These are resource/theoretical values,
+  not achieved-counter measurements.
+- Nsight Systems on the focused, readback-heavy fault-test workload recorded 3
+  barrier kernels totaling `6,176 ns` (median `1,984 ns`), 4 D2D copies totaling
+  `5,409 ns`, 18 H2D copies totaling `11,170 ns`, and 38 D2H copies totaling
+  `59,522 ns`. Cold allocation and diagnostic exports dominate this test trace;
+  it is not production performance evidence.
+- Nsight Compute counter collection was blocked by `ERR_NVGPUCTRPERM`; achieved
+  occupancy, divergence, and memory-counter claims are therefore deliberately
+  deferred rather than inferred.
+- CUDA-off full `ef_test`: `158/158`, `19,346` assertions; CUDA-off focused
+  target: `4/4`, `35` assertions. Related admission/lifecycle architecture
+  selection: `7 passed`. Changed C++ clang-format, changed Python ruff, and
+  `git diff --check`: pass.
+- The focused CUDA-on target compiles every RB4 production source. The full
+  CUDA-on `ef_test` graph remains outside this claim because of the pre-existing
+  MSVC portability debt already recorded under RB3.
+
+### Independent review and repair history
+
+1. `/root/rb4_state_review` first blocked versions assigned to empty
+   dynamics/episode shards and export evidence that mislabeled the complete RB2
+   required set as already materialized. Required/materialized evidence was
+   separated, empty shard versions remain zero, and incomplete host truth is
+   explicit.
+2. Re-review blocked D2H from uninitialized post-configure slots and an export
+   envelope that omitted `seed`, `reset_generation`, and `source_barrier_id`.
+   Host setup gating plus configure/reset/failed-setup rejection tests closed the
+   first path; exact field-set equality closed the second.
+3. The reviewer approved implementation raw hash
+   `a65387063425f2fe867b2eaee9898acfbe29716d` (stable patch-id
+   `f2deb2a3ade9a6ddf810631ff8024a0d39aa59e9`) with zero blocking and zero
+   non-blocking findings.
+
+Verdict: **accepted for one RB4 commit**. The next authorized work is RB5 only:
+implement Phase A for the same bounded fixed-air slice, produce stage-local
+CPU-reference parity and a fresh register/spill report, and continue rejecting
+unsupported control features. RB5 must not absorb Phase B airframe dynamics or
+Phase D output projection and must not advertise the bounded manifest early.

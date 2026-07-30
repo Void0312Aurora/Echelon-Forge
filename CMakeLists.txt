@@ -368,6 +368,9 @@ target_compile_definitions(ef_cuda_resident_backend PRIVATE
 )
 if (EF_ENABLE_CUDA_EXPERIMENTS)
     target_link_libraries(ef_cuda_resident_backend PUBLIC CUDA::cudart)
+    target_compile_options(ef_cuda_resident_backend PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>
+    )
 endif()
 
 add_library(ef_gpu_experiments STATIC ${EF_GPU_EXPERIMENT_SOURCES})
@@ -471,6 +474,8 @@ set(EF_TEST_SOURCES
     src/tests/test_world_batch_backend_contract.cpp
     src/tests/test_cuda_resident_backend_admission.cpp
     src/tests/test_cuda_resident_backend_lifecycle.cpp
+    src/tests/test_cuda_resident_backend_state.cpp
+    src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
     src/tests/test_runtime_facade_maintained_replay_envelope.cpp
@@ -496,6 +501,7 @@ target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_executable(ef_cuda_resident_lifecycle_test
     src/tests/test_main.cpp
     src/tests/test_cuda_resident_backend_lifecycle.cpp
+    src/tests/test_cuda_resident_backend_state.cpp
 )
 target_link_libraries(ef_cuda_resident_lifecycle_test PRIVATE
     ef_cuda_resident_backend

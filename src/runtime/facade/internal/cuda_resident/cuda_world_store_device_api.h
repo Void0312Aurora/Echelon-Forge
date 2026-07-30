@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "runtime/facade/internal/cuda_resident/cuda_world_store.h"
+
 namespace runtime::cuda_resident::detail {
 
 struct CudaWorldStoreDeviceAllocation;
@@ -13,6 +15,8 @@ struct CudaWorldStoreDeviceFaultInjection {
     bool fail_next_allocation = false;
     bool fail_next_reset_copy = false;
     bool fail_next_release = false;
+    bool fail_next_state_transfer = false;
+    bool fail_next_barrier_commit = false;
 };
 
 struct CudaWorldStoreDeviceSnapshot {
@@ -40,6 +44,25 @@ allocate_cuda_world_store_metadata(std::size_t world_capacity,
                                                   std::size_t world_capacity,
                                                   CudaWorldStoreDeviceSnapshot *snapshot,
                                                   std::string *error);
+[[nodiscard]] bool setup_cuda_world_store_fixed_air_fixture(
+    CudaWorldStoreDeviceAllocation *allocation, const std::vector<CudaFixedAirWorldSetup> &setups,
+    CudaWorldStoreDeviceFaultInjection *faults, std::string *error);
+[[nodiscard]] bool inject_cuda_world_store_flight_controls(
+    CudaWorldStoreDeviceAllocation *allocation,
+    const std::vector<CudaWorldFlightControlAssignment> &assignments,
+    CudaWorldStoreDeviceFaultInjection *faults, std::string *error);
+[[nodiscard]] bool publish_cuda_world_store_stage(CudaWorldStoreDeviceAllocation *allocation,
+                                                  CudaWorldStoreDeviceFaultInjection *faults,
+                                                  std::string *error);
+[[nodiscard]] bool commit_cuda_world_store_window(CudaWorldStoreDeviceAllocation *allocation,
+                                                  CudaWorldStoreDeviceFaultInjection *faults,
+                                                  std::string *error);
+[[nodiscard]] bool read_cuda_world_store_state(const CudaWorldStoreDeviceAllocation *allocation,
+                                               CudaWorldStoreStateSnapshot *snapshot,
+                                               std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_barrier_kernel_resources(CudaBarrierKernelResources *resources,
+                                                std::string *error);
 [[nodiscard]] bool
 release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,
                                   CudaWorldStoreDeviceFaultInjection *faults) noexcept;
