@@ -10,7 +10,7 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB4 已 accepted。当前仅授权 RB5 实现；RB6-RB11 仍受依赖门控。**
+状态：**RB0 至 RB5 已 accepted。当前仅授权 RB6 实现；RB7-RB11 仍受依赖门控。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -311,3 +311,78 @@ Flecs step/fallback，不得提前实现 RB5-RB7 dynamics 或宣称有界 manife
 实现 Phase A，形成 stage-local CPU-reference parity 与新的 register/spill 报告，并
 继续拒绝 unsupported control feature。RB5 不得吸收 Phase B airframe dynamics 或
 Phase D output projection，也不得提前宣称有界 manifest。
+
+## RB5 - Phase A 直接飞行员控制准备
+
+### 冻结 write set
+
+- 共享的 direct-pilot Phase A fixture contract：冻结输入、滤波期望、deadband、
+  rudder 符号以及 CPU `ecs_ftime_t` 精度规则；
+- backend-private prepared-control SoA、valid/manual-takeover 标志、phase version、
+  kernel resource query 与 Phase A stage 事务；
+- 与维护 CPU command surface 一致的 assignment `active` 规范化，同时保持 raw
+  controls 与 prepared controls 分离；
+- input、stage publish、window commit 之间的 `phase_a_ready` freshness gate；
+- CUDA-on/CUDA-off CPU 与 CUDA 测试、不支持 radar/weapon 拒绝、架构守卫、CMake
+  接线与本双语账本更新。
+
+### 非目标
+
+- 不实现 Phase B airframe dynamics、propulsion、forces、surfaces/actuators、
+  instruments、observation、reward、termination、events、mission commands 或
+  learner/device projection；
+- 不从 CUDA candidate 步进 Flecs，不加 CPU fallback、不逐阶段 host write-back，
+  不接管 facade、不晋级 capability manifest、不改变 support flags；
+- 不从本阶段局部 trace 声称性能收益，不在端到端证据前使用 `--maxrregcount` 或
+  launch-bound tuning。
+
+### 结果
+
+- `prepare_phase_a_controls_kernel` 读取既有 `[pitch, roll, rudder, throttle, brake]`
+  raw SoA，写入独立语义 `[roll, pitch, yaw, yaw_cmd]` prepared SoA。manual takeover
+  使用维护 CPU 的严格 `> 0.05` primary-axis deadband；rudder 取负；一阶滤波
+  `tau=.15 s`，并显式镜像 Flecs 当前 `float` 时间标量边界。
+- 一次 pilot assignment 会规范化为 `active=true`，与维护中的
+  `SimulationKernel::set_pilot_action` 一致；exact-deadband 与 payload 规范化案例
+  都进入共享 trace。prepared 值携带 valid、takeover 与单调 phase-version 元数据，
+  但不进入 RB2 export shard contract。
+- stage publish 先复制 active slot 到 inactive slot，再运行一个专用 Phase A kernel，
+  检查 device status/同步，最后执行现有 stage barrier 才切换 active。overflow 与
+  non-finite fail closed；copy、kernel status 或 barrier 失败都保留旧 active slot。
+  window commit 在成功 Phase A publish 前拒绝；成功 window 消费 freshness token。
+- radar、weapon 及其他未声明 controls 仍拒绝；facade 仍不宣称 experimental backend、
+  supported manifest 或 fallback path。
+
+### 验证与资源证据
+
+- CUDA-off Release 完整 `ef_test`：`159/159` test cases、`19,374` assertions；RB5
+  CPU oracle：`1/1`、`28` assertions。
+- CUDA-on MSVC/NVCC 聚焦 target：`5/5` test cases、`276` assertions。`sm_86` 的
+  `ptxas`：`apply_barrier_kernel` 为 `30` registers/thread，
+  `prepare_phase_a_controls_kernel` 为 `34`，两者均为零 spill stores、零 spill loads、
+  零字节 stack frame。runtime API 报告 128 threads/block、12 active blocks、48 active
+  warps、theoretical occupancy `1.0`（本机 RTX 3090）；这些是 theoretical 值，不是
+  achieved counters。
+- 最终 RB5 Compute Sanitizer memcheck：`0 errors`、`0 bytes leaked in 0 allocations`。
+  相关架构选择：`10 passed`；变更 C++ clang-format、变更 Python ruff、`git diff --check`
+  均通过。Python 选择绑定到隔离 CUDA-off 构建目录中的本地 `ef_py` artifact。
+- CUDA-on 聚焦 target 是本轮编译通过证据；完整 CUDA-on `ef_test` graph 仍不纳入通过声明，
+  因为 RB3 已记录的既有 MSVC portability debt 仍在。
+
+### 独立审阅与修复历史
+
+1. 第一轮长时间运行的审阅未修改工作树且未返回结论，随后启动新的独立只读审阅，避免
+   把不可观测进程当作批准。
+2. `/root/rb5_review_final` 独立检查未提交 candidate，返回 `APPROVE`，零 blocking finding；
+   明确核验 SoA 顺序、rudder 符号、deadband、float time-step parity、active 规范化、
+   inactive-slot 事务、freshness gate、fail-closed guards、测试隔离与无 manifest/fallback
+   晋级。
+3. reviewer 提出一个 non-blocking 文档机会：新 input 失败后保留旧的成功 active stage 是
+   有意的事务语义。本节已明确记录该行为。
+
+经审阅的 code/test staged raw hash 为
+`fc23a4d34173c0de2b70bc14b70b44caf4b7cf8d`（stable patch-id
+`6a8101f6cbaaa4ea63bbf83b1006682a07295722`）；唯一提交身份由本分支历史记录。
+
+结论：**允许形成一个 RB5 提交**。下一步只授权 RB6：实现有界 Phase B airframe-dynamics
+切片，不吸收 Phase D projection，也不改变 facade support 声明。

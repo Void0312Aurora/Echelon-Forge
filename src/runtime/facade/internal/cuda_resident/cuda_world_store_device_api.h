@@ -64,6 +64,9 @@ allocate_cuda_world_store_metadata(std::size_t world_capacity,
 query_cuda_world_store_barrier_kernel_resources(CudaBarrierKernelResources *resources,
                                                 std::string *error);
 [[nodiscard]] bool
+query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources *resources,
+                                                std::string *error);
+[[nodiscard]] bool
 release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,
                                   CudaWorldStoreDeviceFaultInjection *faults) noexcept;
 

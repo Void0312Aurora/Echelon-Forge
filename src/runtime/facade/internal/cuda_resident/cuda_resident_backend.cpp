@@ -88,7 +88,9 @@ CudaWorldFlightControls to_cuda_controls(const PilotAction &action) {
         .speedbrake = action.speedbrake,
         .brake_left = action.brake_left,
         .brake_right = action.brake_right,
-        .active = action.active,
+        // Match SimulationKernel::set_pilot_action: submitting an assignment
+        // activates the component even if the incoming payload flag is false.
+        .active = true,
     };
 }
 
@@ -156,7 +158,7 @@ void CudaResidentBackend::reset(const runtime::backend::ResetRequest &request) {
 runtime::backend::SetupResult
 CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
     if (request.kind != runtime::backend::SetupKind::Batch) {
-        throw std::logic_error("CUDA RB4 supports only canonical batch setup");
+        throw std::logic_error("CUDA RB5 supports only canonical batch setup");
     }
     const std::size_t world_count = store_.world_capacity();
     const auto &seeds = request.seeds.get();
@@ -167,7 +169,7 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
         !request.wind_assignments.empty() || !request.zones.empty() ||
         !request.sun_assignments.empty()) {
         throw std::invalid_argument(
-            "CUDA RB4 fixed-air setup requires one seed/spawn/time-step per world and no "
+            "CUDA RB5 fixed-air setup requires one seed/spawn/time-step per world and no "
             "dynamic environment assignments");
     }
 
@@ -177,7 +179,7 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
         if (spawns[world].world_index != world || !fixed_air_spawn_is_supported(spawns[world]) ||
             !std::isfinite(time_steps[world]) || time_steps[world] <= 0.0) {
             throw std::invalid_argument(
-                "CUDA RB4 setup is outside the fixed-air fixture capability");
+                "CUDA RB5 setup is outside the fixed-air fixture capability");
         }
         fixed_worlds.push_back({
             .world_index = world,
@@ -206,12 +208,12 @@ CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
         input.clear_execution_episode_controller || input.prime_execution_episode_controller ||
         !input.execution_episode_refs.empty() || !input.execution_episode_states.empty()) {
         throw std::logic_error(
-            "CUDA RB4 input injection supports only selected pilot flight controls");
+            "CUDA RB5 input injection supports only selected pilot flight controls");
     }
     const auto &actions = input.pilot_actions.get();
     if (actions.size() != store_.world_capacity()) {
         throw std::invalid_argument(
-            "CUDA RB4 requires one pilot flight-control assignment per world");
+            "CUDA RB5 requires one pilot flight-control assignment per world");
     }
     std::vector<CudaWorldFlightControlAssignment> assignments;
     assignments.reserve(actions.size());
@@ -219,7 +221,7 @@ CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
         if (actions[world].world_index != world ||
             !flight_controls_are_supported(actions[world].action)) {
             throw std::invalid_argument(
-                "CUDA RB4 pilot input is outside the bounded flight-control capability");
+                "CUDA RB5 pilot input is outside the bounded flight-control capability");
         }
         assignments.push_back({
             .world_index = actions[world].world_index,
@@ -243,7 +245,7 @@ runtime::backend::AdvanceResult
 CudaResidentBackend::advance(const runtime::backend::AdvanceRequest &request) {
     if (request.kind != runtime::backend::AdvanceKind::WorldBatch ||
         !request.execution_episode_requests.empty()) {
-        throw std::logic_error("CUDA RB4 advances only the device clock/window barrier");
+        throw std::logic_error("CUDA RB5 advances only a published Phase A device window");
     }
     if (!store_.commit_window()) {
         throw std::runtime_error("CUDA resident backend window commit failed: " +
@@ -259,7 +261,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
         request.include_instrument_states || request.include_mission_commands ||
         request.include_task_orders || request.include_leader_intents ||
         request.include_pilot_reports) {
-        throw std::logic_error("CUDA RB4 export supports only fixed-air kinematics/time-step");
+        throw std::logic_error("CUDA RB5 export supports only fixed-air kinematics/time-step");
     }
     runtime::backend::ExportResult result{};
     if (!request.include_kinematics && !request.include_world_time_step) {
@@ -268,7 +270,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
     const CudaWorldStoreStateSnapshot snapshot = store_.state_snapshot();
     if (request.include_kinematics) {
         if (request.kinematics_ref == nullptr) {
-            throw std::invalid_argument("CUDA RB4 kinematics export requires kinematics_ref");
+            throw std::invalid_argument("CUDA RB5 kinematics export requires kinematics_ref");
         }
         const WorldEntityRef ref = *request.kinematics_ref;
         const CudaWorldResidentState &world =
@@ -283,7 +285,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
     }
     if (request.include_world_time_step) {
         if (!request.world_index.has_value()) {
-            throw std::invalid_argument("CUDA RB4 time-step export requires world_index");
+            throw std::invalid_argument("CUDA RB5 time-step export requires world_index");
         }
         result.world_time_step = required_world(snapshot, *request.world_index).time_step_s;
     }
@@ -292,7 +294,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
 
 runtime::backend::Diagnostics CudaResidentBackend::diagnostics() const {
     return {
-        .backend_id = std::string(kCudaResidentRb4BackendId),
+        .backend_id = std::string(kCudaResidentRb5BackendId),
         .world_count = store_.world_capacity(),
     };
 }
@@ -380,7 +382,7 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
         }
         snapshot.identity.lineage = {
             .source_snapshot_version = world.global_version,
-            .source_backend_id = std::string(kCudaResidentRb4BackendId),
+            .source_backend_id = std::string(kCudaResidentRb5BackendId),
             .source_request_id = request_id,
         };
         snapshot.kinematics = world.kinematics;
@@ -393,7 +395,7 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
 
 void CudaResidentBackend::reject_unimplemented_operation(const char *operation) {
     throw std::logic_error(std::string("CUDA resident backend ") + operation +
-                           " is outside the RB4 state/barrier shell");
+                           " is outside the RB5 Phase A shell");
 }
 
 CudaWorldStore &

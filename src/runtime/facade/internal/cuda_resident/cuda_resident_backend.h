@@ -15,7 +15,7 @@ namespace testing {
 class CudaResidentBackendTestAccess;
 }
 
-inline constexpr std::string_view kCudaResidentRb4BackendId = "cuda_resident.rb4_state_shell";
+inline constexpr std::string_view kCudaResidentRb5BackendId = "cuda_resident.rb5_phase_a";
 
 struct CudaResidentBarrierEvidence {
     std::string barrier_id;
@@ -43,9 +43,9 @@ struct CudaResidentExportSnapshot {
     CudaResidentBarrierEvidence barrier{};
 };
 
-// RB4 fixed-air state/barrier shell. Only setup, selected pilot input, clock
-// commit, and explicit minimal reconstruction are implemented; later phase
-// semantics remain fail-closed until their owning iterations.
+// RB5 fixed-air Phase A shell. Setup, selected pilot input, compact prepared
+// controls, clock commit, and explicit minimal reconstruction are implemented;
+// later phase semantics remain fail-closed until their owning iterations.
 class CudaResidentBackend final : public IWorldBatchBackend {
   public:
     CudaResidentBackend() = default;

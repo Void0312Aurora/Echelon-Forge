@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB4 are accepted. RB5 is the only currently authorized
-implementation iteration. RB6-RB11 remain dependency-gated.**
+Status: **RB0 through RB5 are accepted. RB6 is the only currently authorized
+implementation iteration. RB7-RB11 remain dependency-gated.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -371,3 +371,92 @@ implement Phase A for the same bounded fixed-air slice, produce stage-local
 CPU-reference parity and a fresh register/spill report, and continue rejecting
 unsupported control features. RB5 must not absorb Phase B airframe dynamics or
 Phase D output projection and must not advertise the bounded manifest early.
+
+## RB5 - Phase A Direct-Pilot Preparation
+
+### Frozen write set
+
+- a shared direct-pilot Phase A fixture contract with frozen inputs, expected
+  filtered outputs, deadband, rudder sign, and CPU `ecs_ftime_t` precision rule;
+- backend-private prepared-control SoA fields, validity/manual-takeover flags,
+  phase versions, device kernel resource query, and the Phase A stage transaction;
+- backend active-assignment canonicalization matching the maintained CPU command
+  surface, while keeping raw controls separate from prepared controls;
+- `phase_a_ready` freshness gating between input, stage publish, and window commit;
+- CUDA-on/CUDA-off CPU and CUDA tests, unsupported radar/weapon rejection,
+  architecture guards, CMake wiring, and this bilingual ledger update.
+
+### Non-goals
+
+- no Phase B airframe dynamics, propulsion, forces, surfaces/actuators,
+  instruments, observation, reward, termination, events, mission commands, or
+  learner/device projection;
+- no Flecs stepping from the CUDA candidate, CPU fallback, per-stage host
+  write-back, facade takeover, capability-manifest promotion, or support-flag
+  changes;
+- no performance claim from this stage-local trace and no `--maxrregcount` or
+  launch-bound tuning before end-to-end evidence.
+
+### Result
+
+- `prepare_phase_a_controls_kernel` consumes the existing `[pitch, roll, rudder,
+  throttle, brake]` raw SoA and writes a separate semantic `[roll, pitch, yaw,
+  yaw_cmd]` prepared SoA. Manual takeover uses the maintained strict `> 0.05`
+  primary-axis deadband; rudder is negated; the first-order filter uses `tau=.15 s`
+  and explicitly mirrors Flecs' current `float` time scalar boundary.
+- A submitted pilot assignment canonicalizes `active=true`, matching
+  `SimulationKernel::set_pilot_action`; exact-deadband and canonicalized payload
+  cases are covered by the shared trace. Prepared values carry validity,
+  takeover, and monotonic phase-version metadata without entering the RB2 export
+  shard contract.
+- Stage publish clones the active slot, runs one specialized Phase A kernel,
+  checks device status/synchronization, then applies the existing stage barrier
+  before swapping active state. Overflow and non-finite results fail closed.
+  Failed copies, kernel status, or barrier commits leave the previous active slot
+  visible. A window commit is rejected until a successful Phase A publish; a
+  successful window consumes that freshness token.
+- Radar, weapon, and other undeclared controls remain rejected. The facade still
+  advertises no experimental backend, supported manifest, or fallback path.
+
+### Validation and resource evidence
+
+- CUDA-off Release full `ef_test`: `159/159` test cases and `19,374`
+  assertions; RB5 CPU oracle: `1/1`, `28` assertions.
+- CUDA-on MSVC/NVCC focused target: `5/5` test cases and `276` assertions.
+  `sm_86` `ptxas` reports `apply_barrier_kernel` at `30` registers/thread and
+  `prepare_phase_a_controls_kernel` at `34`, both with zero spill stores,
+  zero spill loads, and a zero-byte stack frame. Runtime API reports 128
+  threads/block, 12 active blocks, 48 active warps, and theoretical occupancy
+  `1.0` for Phase A on the local RTX 3090; these are theoretical values, not
+  achieved counters.
+- Final RB5 Compute Sanitizer memcheck: `0 errors`, `0 bytes leaked in 0
+  allocations`. Related architecture selection: `10 passed`; changed C++
+  clang-format, changed Python ruff, and `git diff --check`: pass. The Python
+  selection was run against the local `ef_py` artifact in the isolated
+  CUDA-off build directory.
+- The focused CUDA-on target is the supported compilation evidence. The full
+  CUDA-on `ef_test` graph remains outside the pass claim because of the
+  pre-existing MSVC portability debt recorded under RB3.
+
+### Independent review and repair history
+
+1. The first long-running review attempt was stopped without modifying the
+   worktree; a fresh independent read-only review was then run to avoid treating
+   an unreturned process as approval.
+2. `/root/rb5_review_final` independently inspected the uncommitted candidate and
+   returned `APPROVE` with zero blocking findings. It explicitly verified SoA
+   order, rudder sign, deadband, float time-step parity, active canonicalization,
+   inactive-slot transaction, freshness gate, fail-closed guards, test
+   separation, and no manifest/fallback promotion.
+3. The reviewer noted one non-blocking documentation opportunity: after a failed
+   new input, retaining the old successful active stage is intentional
+   transactional behavior. This ledger records that behavior explicitly.
+
+The reviewed code/test staged raw hash is
+`fc23a4d34173c0de2b70bc14b70b44caf4b7cf8d` (stable patch-id
+`6a8101f6cbaaa4ea63bbf83b1006682a07295722`). The single commit identity is
+recorded by the enclosing branch history.
+
+Verdict: **accepted for one RB5 commit**. The next authorized work is RB6 only:
+implement the bounded Phase B airframe-dynamics slice without absorbing Phase D
+projection or changing facade support claims.

@@ -147,7 +147,7 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
                   .shard_versions[static_cast<std::size_t>(CudaResidentShard::export_envelope)]
                   .version == 1);
         CHECK(state.identity.lineage.source_snapshot_version == 1);
-        CHECK(state.identity.lineage.source_backend_id == std::string(kCudaResidentRb4BackendId));
+        CHECK(state.identity.lineage.source_backend_id == std::string(kCudaResidentRb5BackendId));
         CHECK(state.identity.lineage.source_request_id == "rb4.setup");
         CHECK(state.source_barrier_id == "input_injection");
         CHECK(state.kinematics.x == doctest::Approx(fixture.spawns[world].x));
@@ -298,6 +298,9 @@ TEST_CASE("RB4 fixed-air boundary rejects undeclared setup input advance and exp
     const auto setup = backend.setup(fixture.request());
     auto unsupported_actions = make_actions(setup.entity_ids);
     unsupported_actions[0].action.fire_weapon = true;
+    CHECK_THROWS_AS(backend.inject({.pilot_actions = unsupported_actions}), std::invalid_argument);
+    unsupported_actions[0].action.fire_weapon = false;
+    unsupported_actions[0].action.radar_active = true;
     CHECK_THROWS_AS(backend.inject({.pilot_actions = unsupported_actions}), std::invalid_argument);
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::StepExecutionResults}),
                     std::logic_error);

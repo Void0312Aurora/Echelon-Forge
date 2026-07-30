@@ -79,6 +79,16 @@ struct CudaWorldFlightControlAssignment {
     CudaWorldFlightControls controls{};
 };
 
+struct CudaWorldPreparedControls {
+    double stick_roll_filt = 0.0;
+    double stick_pitch_filt = 0.0;
+    double stick_yaw_filt = 0.0;
+    double stick_yaw_cmd = 0.0;
+    bool valid = false;
+    bool manual_takeover = false;
+    std::uint64_t phase_version = 0;
+};
+
 struct CudaWorldResidentState {
     std::uint64_t world_index = 0;
     std::uint32_t seed = 0;
@@ -89,6 +99,7 @@ struct CudaWorldResidentState {
     double time_step_s = 0.0;
     CudaWorldKinematicsState kinematics{};
     CudaWorldFlightControls controls{};
+    CudaWorldPreparedControls prepared_controls{};
     std::uint64_t clock_tick = 0;
     double simulation_time_s = 0.0;
     std::uint64_t global_version = 0;
@@ -111,8 +122,8 @@ struct CudaBarrierKernelResources {
     double theoretical_occupancy = 0.0;
 };
 
-// Instance-owned lifecycle plus RB4 fixed-air state/barrier store. Phase A/B/D
-// dynamics and learner outputs remain absent until their owning iterations.
+// Instance-owned lifecycle plus RB5 fixed-air state/barrier store. Phase A is
+// the only prepared semantic slice; B/D remain absent until their owners.
 class CudaWorldStore final {
   public:
     CudaWorldStore();
@@ -149,7 +160,7 @@ class CudaWorldStore final {
 
 namespace testing {
 
-// Narrow, per-instance fault/readback seam for RB3/RB4 CUDA tests.
+// Narrow, per-instance fault/readback seam for RB3-RB5 CUDA tests.
 // It is not a runtime capability and is never surfaced by RuntimeFacade.
 class CudaWorldStoreTestAccess final {
   public:
@@ -163,6 +174,7 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaWorldStoreLifecycleSnapshot readback(const CudaWorldStore &store);
     [[nodiscard]] static CudaWorldStoreStateSnapshot read_state(const CudaWorldStore &store);
     [[nodiscard]] static CudaBarrierKernelResources barrier_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_a_kernel_resources();
 };
 
 } // namespace testing

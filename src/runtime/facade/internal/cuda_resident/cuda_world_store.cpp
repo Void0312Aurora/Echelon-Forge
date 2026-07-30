@@ -21,6 +21,7 @@ struct CudaWorldStore::Impl {
     std::vector<std::uint32_t> entity_generations;
     std::vector<std::uint8_t> setup_active;
     std::vector<std::uint64_t> entity_ids;
+    bool phase_a_ready = false;
 #endif
 };
 
@@ -112,6 +113,7 @@ bool CudaWorldStore::configure(std::size_t world_capacity) {
     impl_->entity_generations.swap(next_entity_generations);
     impl_->setup_active.swap(next_setup_active);
     impl_->entity_ids.swap(next_entity_ids);
+    impl_->phase_a_ready = false;
     return true;
 #else
     (void)world_capacity;
@@ -165,6 +167,7 @@ bool CudaWorldStore::reset(const std::vector<std::uint32_t> &seeds) {
     impl_->entity_generations.swap(next_entity_generations);
     impl_->setup_active.swap(next_setup_active);
     impl_->entity_ids.swap(next_entity_ids);
+    impl_->phase_a_ready = false;
     return true;
 #else
     (void)seeds;
@@ -215,6 +218,7 @@ bool CudaWorldStore::setup_fixed_air_fixture(std::vector<CudaFixedAirWorldSetup>
         impl_->entity_ids[world] = next_setups[world].entity_id;
     }
     *setups = std::move(next_setups);
+    impl_->phase_a_ready = false;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -250,6 +254,7 @@ bool CudaWorldStore::inject_flight_controls(
         impl_->diagnostics.last_error = std::move(error);
         return false;
     }
+    impl_->phase_a_ready = false;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -272,6 +277,7 @@ bool CudaWorldStore::publish_stage() {
         impl_->diagnostics.last_error = std::move(error);
         return false;
     }
+    impl_->phase_a_ready = true;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -294,11 +300,17 @@ bool CudaWorldStore::commit_window() {
             "CUDA window commit requires every fixed-air world to be setup";
         return false;
     }
+    if (!impl_->phase_a_ready) {
+        impl_->diagnostics.last_error =
+            "CUDA window commit requires a successful Phase A stage publish";
+        return false;
+    }
     std::string error;
     if (!detail::commit_cuda_world_store_window(impl_->allocation, &impl_->faults, &error)) {
         impl_->diagnostics.last_error = std::move(error);
         return false;
     }
+    impl_->phase_a_ready = false;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -324,6 +336,7 @@ bool CudaWorldStore::teardown() noexcept {
     impl_->entity_generations.clear();
     impl_->setup_active.clear();
     impl_->entity_ids.clear();
+    impl_->phase_a_ready = false;
 #endif
     return true;
 }
@@ -442,6 +455,19 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::barrier_kernel_res
     return resources;
 #else
     throw std::logic_error("CUDA barrier kernel resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_a_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_a_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase A kernel resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA Phase A kernel resource query requires CUDA experiments");
 #endif
 }
 
