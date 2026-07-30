@@ -481,6 +481,7 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     src/tests/test_cuda_resident_replay.cpp
+    src/tests/test_cuda_resident_performance.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
     src/tests/test_runtime_facade_maintained_replay_envelope.cpp
@@ -511,6 +512,7 @@ add_executable(ef_cuda_resident_lifecycle_test
     src/tests/test_cuda_resident_phase_b.cpp
     src/tests/test_cuda_resident_phase_d.cpp
     src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/tests/test_cuda_resident_performance.cpp
 )
 target_link_libraries(ef_cuda_resident_lifecycle_test PRIVATE
     ef_cuda_resident_backend
@@ -536,6 +538,46 @@ target_link_libraries(ef_cuda_resident_replay_test PRIVATE
 target_include_directories(ef_cuda_resident_replay_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# RB9 measures the same frozen trace through two separately built Release
+# probes. The CUDA-on probe keeps the existing ef_core/MSVC debt out of its
+# graph; the CUDA-off probe uses the real FlecsCpuBackend instead of the RB8
+# fixture oracle. Neither target is a maintained backend or admission surface.
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    add_executable(ef_cuda_resident_rb9_cuda_probe
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_rb9_cuda_probe PRIVATE
+        ef_cuda_resident_backend
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_rb9_cuda_probe PRIVATE
+        EF_RB9_CUDA_PROBE=1
+        EF_RB9_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_rb9_cuda_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+else()
+    add_executable(ef_cuda_resident_rb9_cpu_probe
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_rb9_cpu_probe PRIVATE
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_rb9_cpu_probe PRIVATE
+        EF_RB9_CPU_PROBE=1
+        EF_RB9_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_rb9_cpu_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+endif()
 
 # CTest entries for all doctest suites plus focused structural-failure lanes.
 add_test(NAME ef_test_all COMMAND ef_test)
@@ -570,6 +612,8 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_test
     ef_cuda_resident_lifecycle_test
     ef_cuda_resident_replay_test
+    ef_cuda_resident_rb9_cpu_probe
+    ef_cuda_resident_rb9_cuda_probe
 )
 
 foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)

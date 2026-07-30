@@ -1543,6 +1543,7 @@ allocate_cuda_world_store_metadata(std::size_t world_capacity,
     allocation->barrier_status =
         reinterpret_cast<std::uint32_t *>(allocation->storage + status_offset);
     result.device_bytes = total_bytes;
+    result.state_slot_bytes = allocation->state_layout.slot_bytes;
 
     // No potentially-throwing operation follows the successful cudaMalloc;
     // ownership transfers directly into the opaque result.
@@ -2488,6 +2489,18 @@ bool query_cuda_world_store_phase_d_configuration_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error) {
     return query_phase_b_kernel_resources(phase_d_configuration_kernel,
                                           "phase_d_configuration_kernel", resources, error);
+}
+
+bool query_cuda_world_store_phase_d_pack_kernel_resources(CudaBarrierKernelResources *resources,
+                                                          std::string *error) {
+    return query_phase_b_kernel_resources(phase_d_pack_observation_kernel,
+                                          "phase_d_pack_observation_kernel", resources, error);
+}
+
+bool query_cuda_world_store_phase_d_consumer_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error) {
+    return query_phase_b_kernel_resources(phase_d_consumer_smoke_kernel,
+                                          "phase_d_consumer_smoke_kernel", resources, error);
 }
 
 bool release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,

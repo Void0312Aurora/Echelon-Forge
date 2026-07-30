@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB8 are accepted after independent review. RB9 is the
-current candidate iteration; RB10-RB11 remain dependency-gated.**
+Status: **RB0 through RB9 are accepted after independent review. RB10 is the
+current decision-record candidate; RB11 remains dependency-gated.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -676,3 +676,124 @@ status and ledger text, has raw Git diff hash
 `382b1dc1fa56e54488bd65346494c86e021e2d48` and stable patch-id
 `b3475cebbcdadd45d4d6887d645fee4d9a7015d0`. RB9 is the only next iteration
 opened by this verdict.
+
+## RB9 candidate — production-shaped performance evidence (held, pending review)
+
+### Frozen write set and non-goals
+
+This iteration adds only a performance-evidence contract, a diagnostics-only
+CPU/CUDA probe pair, a comparison script, resource-query coverage for the two
+existing Phase-D consumer kernels, focused contract/architecture tests, and
+branch-local evidence JSON. It does not add a RuntimeFacade promotion, change
+the admission manifest or support projection, add semantic systems, alter the
+RB2 parity budget, or optimize a kernel. The CUDA probe deliberately remains
+outside `ef_core`; the CPU probe is the real Release `FlecsCpuBackend` lane in a
+separate CUDA-off build.
+
+### Measurement surface and protocol
+
+- The frozen matrix is worlds `1/4/16/64/256` × four modes:
+  `no_export_no_device`, `host_export_no_device`,
+  `no_export_device_consumer`, and `host_export_device_consumer`. Smaller
+  traces are deterministic prefixes of the 256-world trace and every row
+  carries the same replay trace-signature construction.
+- The probe emits the full RB8 canonical trace signature, but the committed lane
+  evidence stores its SHA-256 content identity
+  (`sha256_over_rb8_canonical_trace_v1`) instead of copying the same long
+  canonical string into every row. This removes about 1.19 MB of duplicated
+  JSON while retaining every `raw_ms` sample and the generator/source contract
+  needed to reproduce the signature.
+- The CUDA invocation surface is explicitly
+  `backend_private_phase_sequence`: `inject -> publish_stage -> advance`.
+  `publish_stage` is not in `IWorldBatchBackend`, so neither lane is claimed to
+  be a full CUDA RuntimeFacade window. The device consumer is the existing
+  diagnostics smoke consumer, not learner consumption; its report marks the
+  hidden host validation readback and D2D ownership allocation.
+- The controlled Release evidence run used 10 reset/setup first-window
+  samples, 32 warmup windows, 100 warmed windows, and 10 independent
+  64-window rollouts. Cold samples intentionally reuse one loaded backend and
+  reset/setup it; `fresh_process_cold_available=false` is recorded rather than
+  silently calling this a fresh-process cold result. CPU device-consumer rows
+  are present and explicitly `not_applicable`.
+- A static operation ledger is frozen from the current CUDA source: a warmed
+  private window has 3 H2D copies (55 bytes/world of flight controls), 3 D2D
+  state-slot copies, 5 status D2H copies, 10 kernel launches, and 5 device
+  synchronizations before optional host/device collection. Host export adds a
+  full state/lifecycle D2H readback; device view adds pack/consumer launches,
+  allocations, validation, and readback. Nsight Systems captured the
+  representative world=1 smoke trace and reported CUDA API/memory classes
+  consistent with this ledger; the report does not confuse aggregate profiler
+  counts with per-window modeled counts. The ledger's synchronization count is
+  limited to explicit `cudaDeviceSynchronize` calls; it does not claim to count
+  `cudaMemset`, allocation/free, or implicit blocking in copy operations.
+- Every available row records `determinism.scope=identity_inclusive_reset_diagnostic`.
+  The current reset path allocates fresh entity IDs, so `matched=false` is an
+  identity diagnostic and is not interpreted as physical-state nondeterminism;
+  it is also retained as a hold reason.
+
+### Resource and availability evidence
+
+- `sm_86` Release `ptxas` reports: barrier `30`, Phase A `34`, Phase-B
+  forces/aerodynamics/integrate `66/66/64`, Phase-D instruments/configuration/
+  projection `64/34/40`, and observation pack/consumer `16/14`
+  registers/thread. All report zero spill stores/loads; the known instrument
+  and Phase-B kernels retain their 40-byte local stack frame. Runtime queries
+  record theoretical occupancy only.
+- Nsight Compute was actually attempted on the probe and failed closed with
+  `ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU
+  Performance Counters`. Achieved occupancy, divergence, and global/local/
+  shared traffic therefore remain `unavailable`, never numeric zero.
+- The local environment recorded by the CUDA lane is RTX 3090, compute `8.6`,
+  CUDA runtime/driver `13.0` (`13020`), 24 GiB class device memory.
+
+### Controlled comparison result
+
+The committed evidence directory is
+`cuda_resident_rb9_evidence_20260730/` (`cpu_lane.json`, `cuda_lane.json`,
+`comparison.json`). The host-export/no-device provisional internal comparison
+is:
+
+| worlds | P50 speedup | P95 speedup | rollout P50 speedup |
+| ---: | ---: | ---: | ---: |
+| 1 | -1227.4% | -1286.0% | -944.3% |
+| 4 | 76.9% | 84.5% | 78.5% |
+| 16 | 92.5% | 88.9% | 91.9% |
+| 64 | 89.1% | 84.5% | 88.9% |
+| 256 | 89.9% | 94.1% | 83.4% |
+
+The first provisional threshold satisfying the program's 15% heuristic is
+worlds `4`; it is explicitly **not** a promotion gate. World `1` regresses,
+and the measurements are not an apples-to-apples maintained end-to-end claim:
+the CUDA lane is private, learner consumption is absent, RB8 selected-slice
+parity remains quarantined, the device consumer is smoke-only, and required
+achieved GPU counters are unavailable. The comparison summary therefore sets
+`required_metrics_complete=false`, `break_even_eligible=false`,
+`maintained_claim=false`, and `promotion_allowed=false` with decision input
+`hold_required`.
+
+The compact evidence files are approximately `110 KB` (CPU lane), `211 KB`
+(CUDA lane), and `5 KB` (comparison); the previous raw layout was about
+`1.51 MB`, mostly repeated trace text. Evidence file SHA-256 values are:
+
+- `cpu_lane.json`: `1a5bd2d1970621d8f808774b90c85953583d4151fc5d9dd1392adefafe28b4be`
+- `cuda_lane.json`: `f03fc930f0781fc8f79aaf09d5bff4d1042c954e0a07516ad85642099d5dd94c`
+- `comparison.json`: `cd3d444a6171c32c0bc34d8e2ec23cd17d964d48a162a0c1f12979fa567e9840`
+
+### Validation and independent review gate
+
+- CUDA-off Release `ef_test`: `167/167` test cases,
+  `19,498/19,498` assertions.
+- CUDA-on Release focused lifecycle/performance target: `11/11` test cases,
+  `527/527` assertions; Compute Sanitizer memcheck: `0 errors`. A world=1
+  CUDA probe smoke under Compute Sanitizer also reported `0 errors`.
+- Focused architecture checks: `35 passed`; Ruff passed; `git diff --check`
+  passed. The full CUDA-on `ef_test` graph remains outside scope because of the
+  pre-existing MSVC portability debt recorded under RB3.
+- The independent `/root/rb9_perf_review` returned `APPROVE` after the repair
+  round. It verified the complete matrix and all fail-closed mutation probes,
+  compact evidence hashes, and byte-identical raw-to-compact replay. No
+  promotion or RB10 optimization recommendation was authorized.
+
+RB9 is therefore accepted for one held-evidence commit. The next authorized
+iteration is RB10: record the hold decision and its owner/action boundary only;
+do not add a promotion path or kernel tuning.

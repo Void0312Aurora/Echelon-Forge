@@ -1,3 +1,7 @@
 # Preserve byte-addressed Arnis artifacts exactly across platforms.
 tools/environment/arnis/patches/*.patch -text
 tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text
+
+# Evidence hashes in the RB9 ledger are over committed bytes, not a platform
+# newline representation.
+docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730/** -text

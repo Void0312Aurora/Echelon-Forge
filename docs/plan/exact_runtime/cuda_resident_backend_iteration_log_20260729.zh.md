@@ -10,8 +10,8 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB8 已经独立复核并 accepted。当前进入 RB9 candidate；RB10-RB11
-仍受依赖门控。**
+状态：**RB0 至 RB9 已经独立复核并 accepted。当前进入 RB10 decision-record
+candidate；RB11 仍受依赖门控。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -567,3 +567,109 @@ candidate 原始 Git diff hash 为
 `382b1dc1fa56e54488bd65346494c86e021e2d48`，stable patch-id 为
 `b3475cebbcdadd45d4d6887d645fee4d9a7015d0`。允许形成一个 RB8 提交；该结论
 只打开 RB9。
+
+## RB9 candidate —— production-shaped 性能证据（held，等待复核）
+
+### 冻结 write set 与非目标
+
+本轮只增加 performance-evidence contract、diagnostics-only CPU/CUDA probe
+pair、comparison script、现有两个 Phase-D consumer kernel 的 resource-query
+覆盖、focused contract/architecture tests 与分支内 evidence JSON。不增加
+RuntimeFacade 晋级，不修改 admission manifest/support projection、语义系统、
+RB2 parity budget，也不做 kernel 优化。CUDA probe 继续不进入 `ef_core`；CPU
+probe 在独立 CUDA-off Release build 中使用真实 `FlecsCpuBackend`。
+
+### 测量边界与协议
+
+- 冻结矩阵为 worlds `1/4/16/64/256` × 四种 mode：
+  `no_export_no_device`、`host_export_no_device`、
+  `no_export_device_consumer`、`host_export_device_consumer`。小 trace 是
+  256-world trace 的确定性 prefix，每行带同一套 replay trace signature。
+- probe 运行时生成完整 RB8 canonical trace signature，但提交的 lane evidence
+  只保存其 SHA-256 content identity
+  (`sha256_over_rb8_canonical_trace_v1`)，不在每一行重复复制长字符串；全部
+  `raw_ms` 样本和可重现 signature 所需的 generator/source contract 均保留。
+  这使 JSON 约从旧布局的 `1.51 MB` 降至约 `0.32 MB`，删除的是重复文本而非
+  测量样本。
+- CUDA invocation surface 明确是 `backend_private_phase_sequence`：
+  `inject -> publish_stage -> advance`。`publish_stage` 尚不在
+  `IWorldBatchBackend`，所以不能声称完整 CUDA RuntimeFacade window。device
+  consumer 只是现有 diagnostics smoke consumer，不是 learner consumption；报告
+  标明 hidden host validation readback 与 D2D ownership allocation。
+- 受控 Release evidence run 使用 10 个 reset/setup first-window 样本、32 个
+  warmup window、100 个 warmed window、10 个独立 64-window rollout。cold 样本
+  复用一个已加载 backend 后 reset/setup，字段写为
+  `fresh_process_cold_available=false`，没有把它伪称 fresh-process cold。CPU 的
+  device-consumer 行仍保留，并明确 `not_applicable`。
+- 当前 CUDA 源码冻结的 static operation ledger：一个 warmed private window 有
+  3 个 H2D（flight control 每 world 55 bytes）、3 个 D2D state-slot copy、5 个
+  status D2H、10 个 kernel launch、5 次 device synchronization；host export 再加
+  完整 state/lifecycle D2H，device view 再加 pack/consumer launch、allocation、
+  validation 与 readback。Nsight Systems 已对 world=1 smoke 采集 CUDA API/memory
+  类别，与 ledger 一致；报告不把 profiler 的 aggregate count 冒充每-window 实测。
+  ledger 的 synchronization count 只统计显式 `cudaDeviceSynchronize`，不声称
+  覆盖 `cudaMemset`、allocation/free 或 copy 的隐式 blocking。
+- 每个 available row 都带
+  `determinism.scope=identity_inclusive_reset_diagnostic`。当前 reset 会分配新的
+  entity ID，因此 `matched=false` 只是 identity 诊断，不能解读为物理状态不确定性；
+  该诊断仍列为 hold reason。
+
+### 资源与可用性证据
+
+- `sm_86` Release `ptxas`：barrier `30`、Phase A `34`、Phase-B
+  forces/aerodynamics/integrate `66/66/64`、Phase-D instruments/configuration/
+  projection `64/34/40`、observation pack/consumer `16/14` registers/thread；全部
+  zero spill stores/loads；已知 instrument 与 Phase-B kernel 仍有 40-byte local
+  stack frame。runtime query 只记录 theoretical occupancy。
+- 已实际尝试 Nsight Compute，失败并 fail closed：
+  `ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU
+  Performance Counters`。因此 achieved occupancy、divergence、global/local/shared
+  traffic 仍为 `unavailable`，绝不写成数值零。
+- CUDA lane 记录本机 RTX 3090、compute `8.6`、CUDA runtime/driver `13.0`
+  (`13020`)、24 GiB 级设备内存。
+
+### 受控 comparison 结果
+
+提交的 evidence 目录为 `cuda_resident_rb9_evidence_20260730/`，包含
+`cpu_lane.json`、`cuda_lane.json`、`comparison.json`。host-export/no-device 的
+provisional internal comparison：
+
+| worlds | P50 speedup | P95 speedup | rollout P50 speedup |
+| ---: | ---: | ---: | ---: |
+| 1 | -1227.4% | -1286.0% | -944.3% |
+| 4 | 76.9% | 84.5% | 78.5% |
+| 16 | 92.5% | 88.9% | 91.9% |
+| 64 | 89.1% | 84.5% | 88.9% |
+| 256 | 89.9% | 94.1% | 83.4% |
+
+首个满足计划中 15% heuristic 的 provisional threshold 是 worlds `4`，但明确
+**不是** promotion gate。world `1` 有回归；而且这不是 apples-to-apples 的
+maintained end-to-end claim：CUDA lane 仍是私有调用面、没有 learner consumption、
+RB8 selected-slice parity 仍 quarantine、device consumer 只是 smoke，且必需的
+achieved GPU counter 不可用。因此 summary 设置
+`required_metrics_complete=false`、`break_even_eligible=false`、
+`maintained_claim=false`、`promotion_allowed=false`，decision input 为
+`hold_required`。
+
+compact evidence 文件约为 `110 KB`（CPU lane）、`211 KB`（CUDA lane）、`5 KB`
+（comparison）；旧布局约 `1.51 MB`，主要是重复 trace 文本。Evidence 文件
+SHA-256：
+
+- `cpu_lane.json`：`1a5bd2d1970621d8f808774b90c85953583d4151fc5d9dd1392adefafe28b4be`
+- `cuda_lane.json`：`f03fc930f0781fc8f79aaf09d5bff4d1042c954e0a07516ad85642099d5dd94c`
+- `comparison.json`：`cd3d444a6171c32c0bc34d8e2ec23cd17d964d48a162a0c1f12979fa567e9840`
+
+### 验证与独立复核门
+
+- CUDA-off Release `ef_test`：`167/167` test cases、`19,498/19,498` assertions。
+- CUDA-on Release focused lifecycle/performance：`11/11` test cases、`527/527`
+  assertions；Compute Sanitizer memcheck：`0 errors`。world=1 CUDA probe 在
+  Compute Sanitizer 下也为 `0 errors`。
+- 聚焦 architecture：`35 passed`；Ruff passed；`git diff --check` passed。完整
+  CUDA-on `ef_test` 仍因 RB3 已记录的 MSVC portability debt 不在声明内。
+- 独立 `/root/rb9_perf_review` 在修复轮后返回 `APPROVE`，核对了完整矩阵、所有
+  fail-closed mutation probe、compact evidence hash，以及 raw-to-compact 的逐字节
+  重放；没有授权 promotion 或 RB10 kernel optimization 建议。
+
+因此 RB9 允许形成一个 held-evidence commit。下一授权迭代仅为 RB10：记录 hold
+决策及 owner/action boundary；不得增加 promotion 路径或 kernel tuning。

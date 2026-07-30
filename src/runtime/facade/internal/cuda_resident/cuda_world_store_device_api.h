@@ -27,6 +27,7 @@ struct CudaWorldStoreDeviceSnapshot {
 struct CudaWorldStoreDeviceAllocationResult {
     CudaWorldStoreDeviceAllocation *allocation = nullptr;
     std::size_t device_bytes = 0;
+    std::size_t state_slot_bytes = 0;
     std::string error;
 };
 
@@ -91,6 +92,12 @@ query_cuda_world_store_phase_d_instruments_kernel_resources(CudaBarrierKernelRes
 [[nodiscard]] bool
 query_cuda_world_store_phase_d_configuration_kernel_resources(CudaBarrierKernelResources *resources,
                                                               std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_phase_d_pack_kernel_resources(CudaBarrierKernelResources *resources,
+                                                      std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_phase_d_consumer_kernel_resources(CudaBarrierKernelResources *resources,
+                                                         std::string *error);
 [[nodiscard]] bool
 release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,
                                   CudaWorldStoreDeviceFaultInjection *faults) noexcept;

@@ -108,6 +108,7 @@ bool CudaWorldStore::configure(std::size_t world_capacity) {
     impl_->diagnostics.runtime_available = true;
     impl_->diagnostics.world_capacity = world_capacity;
     impl_->diagnostics.device_bytes = allocation.device_bytes;
+    impl_->diagnostics.state_slot_bytes = allocation.state_slot_bytes;
     ++impl_->diagnostics.allocation_generation;
     impl_->diagnostics.last_error.clear();
     impl_->entity_generations.swap(next_entity_generations);
@@ -351,6 +352,7 @@ bool CudaWorldStore::teardown() noexcept {
     impl_->diagnostics.runtime_available = false;
     impl_->diagnostics.world_capacity = 0;
     impl_->diagnostics.device_bytes = 0;
+    impl_->diagnostics.state_slot_bytes = 0;
     impl_->diagnostics.last_error.clear();
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     impl_->entity_generations.clear();
@@ -571,6 +573,34 @@ testing::CudaWorldStoreTestAccess::phase_d_configuration_kernel_resources() {
     return resources;
 #else
     throw std::logic_error("CUDA Phase D configuration resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources
+testing::CudaWorldStoreTestAccess::phase_d_pack_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_d_pack_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase D pack resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA Phase D pack resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources
+testing::CudaWorldStoreTestAccess::phase_d_consumer_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_d_consumer_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase D consumer resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA Phase D consumer resource query requires CUDA experiments");
 #endif
 }
 

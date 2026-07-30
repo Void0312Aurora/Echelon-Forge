@@ -31,6 +31,7 @@ struct CudaWorldStoreDiagnostics {
     bool runtime_available = false;
     std::size_t world_capacity = 0;
     std::size_t device_bytes = 0;
+    std::size_t state_slot_bytes = 0;
     std::uint64_t allocation_generation = 0;
     std::uint64_t reset_generation = 0;
     std::string last_error;
@@ -322,6 +323,8 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaBarrierKernelResources phase_d_instruments_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources phase_d_configuration_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources phase_d_projection_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_d_pack_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_d_consumer_kernel_resources();
     [[nodiscard]] static bool consume_device_observation_view(
         const CudaResidentDeviceObservationView &view, std::vector<float> *first_values,
         std::vector<std::uint64_t> *ids);

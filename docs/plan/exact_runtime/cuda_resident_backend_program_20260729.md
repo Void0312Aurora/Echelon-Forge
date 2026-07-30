@@ -12,8 +12,8 @@ Language versions:
 - Baseline: `origin/main` at `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-29`
 
-Status: **RB0 through RB8 are accepted after independent review. RB9 is the
-current candidate iteration; RB10-RB11 remain dependency-gated.** Branch-local evidence and
+Status: **RB0 through RB9 are accepted after independent review. RB10 is the
+current decision-record candidate; RB11 remains dependency-gated.** Branch-local evidence and
 the sole next authorization are recorded in the
 [iteration log](cuda_resident_backend_iteration_log_20260729.md).
 
