@@ -477,6 +477,7 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_backend_state.cpp
     src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp
     src/tests/test_cuda_resident_phase_a_cpu_reference.cpp
+    src/tests/test_cuda_resident_phase_b_cpu_reference.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
     src/tests/test_runtime_facade_maintained_replay_envelope.cpp
@@ -498,12 +499,13 @@ target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Focused target for CUDA-on resident-backend validation. It deliberately avoids
 # the full ef_core graph, whose current MSVC portability debt is unrelated to the
-# RB3-RB5 lifecycle, state-barrier, and Phase A contracts.
+# RB3-RB6 lifecycle, state-barrier, Phase A, and Phase B contracts.
 add_executable(ef_cuda_resident_lifecycle_test
     src/tests/test_main.cpp
     src/tests/test_cuda_resident_backend_lifecycle.cpp
     src/tests/test_cuda_resident_backend_state.cpp
     src/tests/test_cuda_resident_phase_a.cpp
+    src/tests/test_cuda_resident_phase_b.cpp
 )
 target_link_libraries(ef_cuda_resident_lifecycle_test PRIVATE
     ef_cuda_resident_backend

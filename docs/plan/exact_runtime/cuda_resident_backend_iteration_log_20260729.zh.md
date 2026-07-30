@@ -10,7 +10,7 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB5 已 accepted。当前仅授权 RB6 实现；RB7-RB11 仍受依赖门控。**
+状态：**RB0 至 RB6 已 accepted。当前仅授权 RB7 实现；RB8-RB11 仍受依赖门控。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -386,3 +386,70 @@ Phase D output projection，也不得提前宣称有界 manifest。
 
 结论：**允许形成一个 RB5 提交**。下一步只授权 RB6：实现有界 Phase B airframe-dynamics
 切片，不吸收 Phase D projection，也不改变 facade support 声明。
+
+## RB6 —— 有界 Phase B airframe dynamics（独立复核后 accepted）
+
+### 已冻结的写集与非目标
+
+本 candidate 的写集仅限 resident-store device layout/API、CUDA resident
+backend 的私有 RB6 export identity、新 Phase-B fixture contract、CPU/CUDA
+聚焦测试、CMake 接线、架构守卫与本双语账本。不修改 public capability
+manifest、facade support projection、CPU backend，也不接管 Phase-D
+instrument/observation/reward/termination owner。
+
+准入 envelope 是 airborne fixed-step 切片：`Aircraft`、高度
+`100..10000 m`、速度 `50..350 m/s`、受限横向/垂向速度与姿态、标准大气且
+不接受 environment assignment、attached-flow `|alpha| <= 14 deg`，不做
+ground/damage/fuel/mass update，不支持 dynamic entity families。post-stall
+表、terrain/ground effect、wind assignment、mission autopilot、instrument
+与 learner projection 仍 fail-closed 或不在本轮范围。
+
+### 实现
+
+- `CudaWorldDynamicsState` 是独立 resident SoA shard，保存角速度、实际舵面
+  位置、发动机 spool/current thrust、气动缓存与起落架伸出量。setup 从专用
+  Phase-B contract 初始化 cold F-16 fixture 常数；状态不会通过 Flecs 重建。
+- 一个 window 复制 active slot 后连续 launch 三个 kernel，中间不做 host
+  synchronization：控制/气动状态/推进加重力与推力；气动力/力矩累加；旋转与
+  leapfrog 积分。只有在声明的 window barrier 前做一次 status synchronization；
+  inactive-slot 失败会保留上一个已提交状态。
+- export reconstruction 现在携带 dynamics，使用显式 v2 schema 与 RB6
+  provenance，并在 `window_commit` 增加冻结的 `dynamics` 与 `episode`
+  shard version；Phase-D shards 不会被虚假标记为完成。
+
+### 验证与资源证据
+
+- CUDA-off Release 完整 `ef_test`：`160/160` test cases、`19,456`
+  assertions。独立 RB6 CPU oracle 运行维护 CPU 的完整阶段顺序，并按 RB2
+  kinematics comparator 固定两世界结果。
+- CUDA-on MSVC/NVCC 聚焦 target：`6/6` test cases、`353` assertions，覆盖
+  inactive-slot 事务重试、dynamics export 与 envelope 拒绝。Compute Sanitizer
+  memcheck：`0 errors`。
+- `sm_86` `ptxas`：barrier `30`、Phase A `34`、Phase-B control/propulsion
+  `66`、Phase-B aerodynamics `66`、Phase-B integration `64`
+  registers/thread；全部 zero spill stores/loads。runtime resource query 在
+  128 threads/block 下给出三个 Phase-B kernel 理论 occupancy 约
+  `0.5833`、`0.5833`、`0.6667`。kernel 仍有 ptxas/runtime 报告的 40-byte
+  stack frame；没有使用 `--maxrregcount` 或 launch-bound 约束。
+- 聚焦 architecture/ruff/style 检查：`13` 个 architecture tests passed，
+  Ruff passed，`git diff --check` passed。完整 CUDA-on `ef_test` graph 仍不纳入
+  通过声明，因为 RB3 已记录的既有 MSVC portability debt。
+
+### 独立复核与修复记录
+
+1. `/root/rb6_phase_b_review` 独立检查 candidate，返回 `APPROVE` 且无
+   blocking finding；核验了精确写集、CPU/CUDA 测试分离、三 launch/无中间
+   host sync、envelope guard、shard/export 语义与寄存器/资源证据。
+2. reviewer 指出两处 non-blocking 文档漂移：CUDA 注释仍写 two launches，
+   focused CMake 注释仍停在 RB5。两处均已修复，未改变行为。
+3. 同一 reviewer 对修复后的树再次只读复核并再次返回 `APPROVE`，复查了
+   launch 顺序、零中间 host sync、三个 architecture guard 与精确写集，未
+   发现新问题。
+
+经审阅的 code/test staged raw hash 为
+`2b07c57f67b7d868ff20b130d8761c0ee2a6bfef`（stable patch-id
+`e86033b1a304cb1c4c0d37b762ba0275338b025e`）；唯一提交身份由本分支历史记录。
+
+结论：**允许形成一个 RB6 提交**。该提交后只授权 RB7：有界 Phase D
+instrument/observation/reward/termination projection 与 lifetime-safe device
+observation export；不提前打开 replay harness 或性能声明。

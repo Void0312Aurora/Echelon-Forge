@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
 
 namespace runtime::cuda_resident {
 
@@ -89,6 +90,32 @@ struct CudaWorldPreparedControls {
     std::uint64_t phase_version = 0;
 };
 
+struct CudaWorldDynamicsState {
+    // Body angular rates and realized control-surface positions.
+    double p = 0.0;
+    double q = 0.0;
+    double r = 0.0;
+    double elevator_pos = 0.0;
+    double aileron_pos = 0.0;
+    double rudder_pos = 0.0;
+    // Propulsion spool state.
+    double throttle_state = 0.0;
+    double dry_thrust_state_n = 0.0;
+    double ab_state = 0.0;
+    double current_thrust_n = 0.0;
+    // Cached aerodynamic state used by the next control pass.
+    double dynamic_pressure = 0.0;
+    double angle_of_attack = 0.0;
+    double angle_of_attack_rate_dps = 0.0;
+    double previous_angle_of_attack = 0.0;
+    double sideslip_angle = 0.0;
+    double mach_number = 0.0;
+    double lift_coefficient = 0.0;
+    double drag_coefficient = 0.0;
+    double stall_progress = 0.0;
+    double gear_extension = 1.0;
+};
+
 struct CudaWorldResidentState {
     std::uint64_t world_index = 0;
     std::uint32_t seed = 0;
@@ -98,6 +125,7 @@ struct CudaWorldResidentState {
     std::uint32_t entity_generation = 0;
     double time_step_s = 0.0;
     CudaWorldKinematicsState kinematics{};
+    CudaWorldDynamicsState dynamics{};
     CudaWorldFlightControls controls{};
     CudaWorldPreparedControls prepared_controls{};
     std::uint64_t clock_tick = 0;
@@ -122,8 +150,8 @@ struct CudaBarrierKernelResources {
     double theoretical_occupancy = 0.0;
 };
 
-// Instance-owned lifecycle plus RB5 fixed-air state/barrier store. Phase A is
-// the only prepared semantic slice; B/D remain absent until their owners.
+// Instance-owned lifecycle plus the bounded RB5/RB6 fixed-air resident store.
+// Phase D remains absent until its owning iteration.
 class CudaWorldStore final {
   public:
     CudaWorldStore();
@@ -160,7 +188,7 @@ class CudaWorldStore final {
 
 namespace testing {
 
-// Narrow, per-instance fault/readback seam for RB3-RB5 CUDA tests.
+// Narrow, per-instance fault/readback seam for RB3-RB6 CUDA tests.
 // It is not a runtime capability and is never surfaced by RuntimeFacade.
 class CudaWorldStoreTestAccess final {
   public:
@@ -175,6 +203,9 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaWorldStoreStateSnapshot read_state(const CudaWorldStore &store);
     [[nodiscard]] static CudaBarrierKernelResources barrier_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources phase_a_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_b_forces_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_b_aerodynamics_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_b_integrate_kernel_resources();
 };
 
 } // namespace testing

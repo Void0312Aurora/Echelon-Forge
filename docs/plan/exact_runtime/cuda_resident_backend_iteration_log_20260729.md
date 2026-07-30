@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB5 are accepted. RB6 is the only currently authorized
-implementation iteration. RB7-RB11 remain dependency-gated.**
+Status: **RB0 through RB6 are accepted. RB7 is the only currently authorized
+implementation iteration. RB8-RB11 remain dependency-gated.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -460,3 +460,84 @@ recorded by the enclosing branch history.
 Verdict: **accepted for one RB5 commit**. The next authorized work is RB6 only:
 implement the bounded Phase B airframe-dynamics slice without absorbing Phase D
 projection or changing facade support claims.
+
+## RB6 — bounded Phase B airframe dynamics (accepted after independent review)
+
+### Frozen write set and non-goals
+
+The candidate write set is limited to the resident-store device layout/API,
+the CUDA resident backend's private RB6 export identity, a new Phase-B fixture
+contract, focused CPU/CUDA tests, CMake test wiring, architecture guards, and
+this bilingual ledger. It does not change the public capability manifest,
+facade support projection, CPU backend, or any Phase-D instrument/observation/
+reward/termination owner.
+
+The admitted envelope is an airborne fixed-step slice: `Aircraft`, altitude
+`100..10000 m`, speed `50..350 m/s`, bounded lateral/vertical velocity and
+attitude, standard-atmosphere/no-environment-assignment, attached-flow
+`|alpha| <= 14 deg`, no ground/damage/fuel/mass update, and no dynamic entity
+families. Post-stall tables, terrain/ground effect, wind assignments, mission
+autopilot, instruments, and learner projection remain fail-closed or out of
+scope.
+
+### Implementation
+
+- `CudaWorldDynamicsState` is a separate resident SoA shard carrying angular
+  rates, realized actuator positions, engine spool/current thrust, cached
+  aerodynamic values, and gear extension. Setup initializes the cold F-16
+  fixture constants from a dedicated Phase-B contract; the state is never
+  reconstructed through Flecs.
+- A window clones the active slot and launches three kernels without a host
+  synchronization between them: control/aero-state/propulsion plus gravity and
+  thrust; aerodynamic force/moment accumulation; and rotational plus
+  leapfrog integration. One status synchronization precedes the declared
+  window barrier, and failed inactive-slot work leaves the prior committed
+  state visible.
+- The export reconstruction now carries dynamics, uses an explicit v2 schema
+  and RB6 provenance, and increments the frozen `dynamics` and `episode`
+  shard versions at `window_commit`. Phase-D shards are still not falsely
+  marked complete.
+
+### Validation and resource evidence
+
+- CUDA-off Release full `ef_test`: `160/160` test cases, `19,456`
+  assertions. The independent RB6 CPU oracle runs the exact maintained stage
+  sequence and pins both worlds against the RB2 kinematics comparator.
+- CUDA-on MSVC/NVCC focused target: `6/6` test cases, `353` assertions,
+  including inactive-slot transaction retry, export dynamics, and bounded
+  setup rejection. Compute Sanitizer memcheck: `0 errors`.
+- `sm_86` `ptxas`: barrier `30`, Phase A `34`, Phase-B control/propulsion
+  `66`, Phase-B aerodynamics `66`, and Phase-B integration `64`
+  registers/thread; all report zero spill stores/loads. Runtime resource
+  queries report theoretical occupancy approximately `0.5833`, `0.5833`, and
+  `0.6667` for the three Phase-B kernels at 128 threads/block. The kernels
+  retain a 40-byte stack frame reported by ptxas/runtime; no `--maxrregcount`
+  or launch-bound constraint is used.
+- Focused architecture/ruff/style checks: `13` architecture tests passed,
+  Ruff passed, and `git diff --check` passed. The full CUDA-on `ef_test` graph
+  remains outside the claim because of the pre-existing MSVC portability debt
+  recorded under RB3.
+
+### Independent review and repair history
+
+1. `/root/rb6_phase_b_review` independently inspected the candidate and returned
+   `APPROVE` with no blocking finding. It verified the exact write set,
+   CPU/CUDA test separation, the three-launch/no-intermediate-host-sync rule,
+   envelope guards, shard/export semantics, and the register/resource evidence.
+2. The reviewer identified two non-blocking documentation drifts: the CUDA
+   comment said two launches, and the focused CMake comment stopped at RB5.
+   Both comments were repaired without changing behavior.
+3. The same reviewer performed a read-only follow-up and returned `APPROVE`
+   again. The follow-up rechecked launch order, zero intermediate host sync,
+   the focused architecture guards, and the exact write set; no new finding was
+   raised.
+
+The reviewed code/test staged raw hash is
+`2b07c57f67b7d868ff20b130d8761c0ee2a6bfef` (stable patch-id
+`e86033b1a304cb1c4c0d37b762ba0275338b025e`). The single commit identity is
+recorded by the enclosing branch history.
+
+Verdict: **accepted for one RB6 commit**. After that commit, RB7 is the only
+authorized work: the bounded Phase D instruments/observation/reward/termination
+projection and lifetime-safe device observation export. No replay harness or
+performance claim is opened by this verdict.

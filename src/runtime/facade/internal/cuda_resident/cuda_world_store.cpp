@@ -471,4 +471,47 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_a_kernel_res
 #endif
 }
 
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_b_forces_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_b_forces_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase B forces kernel resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA Phase B forces kernel resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources
+testing::CudaWorldStoreTestAccess::phase_b_aerodynamics_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_b_aerodynamics_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase B aerodynamics kernel resource query failed: " +
+                                 error);
+    }
+    return resources;
+#else
+    throw std::logic_error(
+        "CUDA Phase B aerodynamics kernel resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_b_integrate_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_b_integrate_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase B integrate kernel resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error(
+        "CUDA Phase B integrate kernel resource query requires CUDA experiments");
+#endif
+}
+
 } // namespace runtime::cuda_resident

@@ -57,7 +57,7 @@ def test_rb5_phase_a_stays_private_and_does_not_promote_backend_support() -> Non
     ).read_text(encoding="utf-8")
     cmake = CMAKE.read_text(encoding="utf-8")
 
-    assert "kCudaResidentRb5BackendId" in backend
+    assert "kCudaResidentRb6BackendId" in backend
     assert "reject_unimplemented_operation" in backend
     assert ".compiled_experimental_backend = false" in facade_config
     assert ".supported_manifest_ids" not in facade_config
