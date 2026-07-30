@@ -12,8 +12,8 @@
 - 基线：`origin/main` 的 `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-29`
 
-状态：**RB0 至 RB6 已经独立只读复核并 accepted。当前状态只授权进入 RB7；
-RB8-RB11 仍受前序依赖门控。** 分支证据与唯一下一授权记录在
+状态：**RB0 至 RB8 已经独立复核并 accepted。当前进入 RB9 candidate；
+RB10-RB11 仍受前序依赖门控。** 分支证据与唯一下一授权记录在
 [迭代账本](cuda_resident_backend_iteration_log_20260729.zh.md)中。
 
 ## 1. 决策

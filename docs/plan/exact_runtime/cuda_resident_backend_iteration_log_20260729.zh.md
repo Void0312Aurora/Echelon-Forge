@@ -10,7 +10,8 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB6 已 accepted。当前仅授权 RB7 实现；RB8-RB11 仍受依赖门控。**
+状态：**RB0 至 RB8 已经独立复核并 accepted。当前进入 RB9 candidate；RB10-RB11
+仍受依赖门控。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -513,3 +514,56 @@ instrument/observation/reward/termination SoA 与 readback 类型、CUDA project
 
 结论：**允许形成一个 RB7 提交**。该提交后只授权 RB8；replay、dynamic entity
 与性能晋级仍保持关闭。
+
+## RB8 accepted —— 独立 replay/shadow comparison harness
+
+### 已冻结的写集与非目标
+
+本 candidate 仅增加 RB8 replay contract、内部 diagnostics-only comparison
+harness、独立 focused replay test target、architecture checks，以及本双语账本和
+权威状态更新。不修改 CUDA resident dynamics、device-view ownership、capability
+manifest、RuntimeFacade support projection/ABI、parity budget 内容、默认 backend
+选择或任何 maintained CPU state。RB9 性能工作与语义扩展不在范围内。
+
+### 实现
+
+- harness 只消费已经冻结的 resident-state parity budget：11 个 field family、93
+  个 selected field definition，并在声明的 eligible barrier
+  (`input_injection`、`window_commit`、`export`) 上逐项比较。它检查 frame/field
+  cardinality、重复/缺失、typed value kind、source-snapshot version，以及禁用或
+  diagnostics-only barrier 规则。
+- 同一冻结 input trace 独立送入 CPU fixture oracle lane 与真实
+  `CudaResidentBackend` lane。CPU lane 明确是 diagnostics-only fixed-air oracle，
+  不是 CUDA-on target 中完整 Flecs backend 可用性的声明；RB5/RB6 CPU-reference
+  suites 已独立钉住相同 fixture 常量。comparator 不调用 backend method，也不把
+  shadow 结果写回任一 lane。
+- 空 events 对四个冻结 event field 使用 typed `[]` sentinel。报告携带 run/profile/
+  budget/version/source snapshot、first-divergence barrier/family/path/code、
+  quarantine 状态与绑定 input trace 的 stable signature。runner 异常、不完整
+  coverage、mismatch 或 rerun trace identity 改变均 fail closed 并阻止晋级。
+- CUDA-on target 刻意不链接已知存在 MSVC portability debt 的 `ef_core` graph；
+  CUDA-off `ef_test` 继续承担完整仓库回归与独立 CPU-reference suites。
+
+### 验证与已知缺口
+
+- CUDA-on replay target：`3/3` test cases、`47/47` assertions；Compute Sanitizer
+  memcheck：`0 errors`。
+- RB3-RB7 CUDA focused target 仍为 `8/8` test cases、`497/497` assertions。
+- RB8 接线后的 CUDA-off `ef_test`：`164/164` test cases、`19,475/19,475`
+  assertions。
+- 聚焦 architecture/ruff：`28` 个 pytest cases passed，Ruff passed；
+  `git diff --check` 仍为提交门。
+- 链接 `ef_core` 的完整 CUDA-on target 仍受 RB3 已记录的 MSVC portability errors
+  阻塞；本 candidate 不扩大该债务，也不声称完整 CUDA-on `ef_test` 通过。
+
+### 独立复核与结论
+
+`/root/rb8_replay_review` 在 trace identity、typed event、source snapshot 与账本
+修复后完成最终独立只读复核，返回 `APPROVE`，无 blocking finding。复核确认精确
+write set、11 个 family/93 个 field 在 eligible barrier 上完整消费、拓扑与类型
+fail-closed、CPU-oracle 边界、quarantine/deterministic rerun、comparator 不写回、
+CMake 接线及验证证据。除双语状态与账本文本外，经审阅的 staged code/test
+candidate 原始 Git diff hash 为
+`382b1dc1fa56e54488bd65346494c86e021e2d48`，stable patch-id 为
+`b3475cebbcdadd45d4d6887d645fee4d9a7015d0`。允许形成一个 RB8 提交；该结论
+只打开 RB9。

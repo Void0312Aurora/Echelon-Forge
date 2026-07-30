@@ -479,6 +479,8 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_phase_a_cpu_reference.cpp
     src/tests/test_cuda_resident_phase_b_cpu_reference.cpp
     src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    src/tests/test_cuda_resident_replay.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
     src/tests/test_runtime_facade_maintained_replay_envelope.cpp
@@ -518,6 +520,23 @@ target_include_directories(ef_cuda_resident_lifecycle_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# RB8 replay/shadow validation keeps the CUDA-on target independent of ef_core's
+# pre-existing MSVC portability debt. Its CPU lane is the separately pinned
+# fixed-air fixture oracle used by the CUDA CPU-reference tests, not a second
+# maintained backend. Shadow results never route into RuntimeFacade or state.
+add_executable(ef_cuda_resident_replay_test
+    src/tests/test_main.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    src/tests/test_cuda_resident_replay.cpp
+)
+target_link_libraries(ef_cuda_resident_replay_test PRIVATE
+    ef_cuda_resident_backend
+    doctest::doctest
+)
+target_include_directories(ef_cuda_resident_replay_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # CTest entries for all doctest suites plus focused structural-failure lanes.
 add_test(NAME ef_test_all COMMAND ef_test)
 set_tests_properties(ef_test_all PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
@@ -528,6 +547,7 @@ add_test(NAME structural_consequence COMMAND ef_test --test-suite=structural_con
 add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_damage_lifecycle)
 add_test(NAME world_batch_runtime COMMAND ef_test --test-suite=world_batch_runtime)
 add_test(NAME cuda_resident_lifecycle COMMAND ef_cuda_resident_lifecycle_test)
+add_test(NAME cuda_resident_replay COMMAND ef_cuda_resident_replay_test)
 add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
 set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 endif()
@@ -549,6 +569,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_gpu_visual_candidate_phase0_probe
     ef_test
     ef_cuda_resident_lifecycle_test
+    ef_cuda_resident_replay_test
 )
 
 foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)

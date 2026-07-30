@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB6 are accepted. RB7 is the only currently authorized
-implementation iteration. RB8-RB11 remain dependency-gated.**
+Status: **RB0 through RB8 are accepted after independent review. RB9 is the
+current candidate iteration; RB10-RB11 remain dependency-gated.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -615,3 +615,64 @@ recorded by the enclosing branch history.
 Verdict: **accepted for one RB7 commit**. After that commit, RB8 is the only
 authorized next iteration; replay, dynamic entities, and performance promotion
 remain closed.
+
+## RB8 accepted — independent replay/shadow comparison harness
+
+### Frozen write set and non-goals
+
+The candidate write set is limited to the RB8 replay contract, an internal
+diagnostics-only comparison harness, a separate focused replay test target,
+focused architecture checks, and this bilingual ledger plus the authoritative
+status update. It does not change the CUDA resident dynamics, device-view
+ownership, capability manifest, RuntimeFacade support projection/ABI, parity
+budget contents, default backend selection, or any maintained CPU state. RB9
+performance work and semantic expansion remain out of scope.
+
+### Implementation
+
+- The harness consumes the already-frozen resident-state parity budget: all 11
+  field families and 93 selected field definitions, at each declared eligible
+  barrier (`input_injection`, `window_commit`, `export`). It validates exact
+  frame/field cardinality, duplicate/missing entries, typed value kinds,
+  source-snapshot versions, and the disabled/diagnostics-only barrier rules.
+- A frozen input trace is passed independently to a CPU fixture oracle lane and
+  to an actual `CudaResidentBackend` lane. The CPU lane is explicitly a
+  diagnostics-only fixed-air oracle, not a claim that the full Flecs backend is
+  available in the CUDA-on target; the existing RB5/RB6 CPU-reference suites
+  pin the same fixture constants independently. The comparator never invokes
+  backend methods and never writes shadow results back to either lane.
+- Empty events are represented as typed `[]` sentinels for all four frozen
+  event fields. Reports carry run/profile/budget/version/source snapshots,
+  first-divergence barrier/family/path/code, quarantine status, and a stable
+  signature bound to the input trace. Runner failures, incomplete coverage,
+  mismatches, and rerun trace identity changes fail closed and block promotion.
+- The CUDA-on target deliberately does not link the known MSVC-portability-
+  debt `ef_core` graph. CUDA-off `ef_test` remains the regression lane for the
+  full repository and the independent CPU-reference suites.
+
+### Validation and known gap
+
+- CUDA-on replay target: `3/3` test cases, `47/47` assertions; Compute
+  Sanitizer memcheck: `0 errors`.
+- RB3-RB7 CUDA focused target remains `8/8` test cases, `497/497` assertions.
+- CUDA-off `ef_test` after RB8 wiring: `164/164` test cases, `19,475/19,475`
+  assertions.
+- Focused architecture/ruff checks: `28` pytest cases passed and Ruff passed;
+  `git diff --check` remains a submission gate.
+- A full CUDA-on target that links `ef_core` is still blocked by the pre-existing
+  MSVC portability errors recorded under RB3; this candidate does not widen that
+  debt or claim a full CUDA-on `ef_test`.
+
+### Independent review and verdict
+
+`/root/rb8_replay_review` performed the final independent read-only review after
+the trace-identity, typed-event, source-snapshot, and ledger repairs. It returned
+`APPROVE` with no blocking finding, confirming the exact write set, complete
+11-family/93-field eligible-barrier consumption, fail-closed topology and type
+checks, CPU-oracle boundary, quarantine/deterministic rerun behavior, no-write-
+back comparator boundary, CMake wiring, and validation evidence. One RB8 commit
+is authorized. The reviewed staged code/test candidate, excluding the bilingual
+status and ledger text, has raw Git diff hash
+`382b1dc1fa56e54488bd65346494c86e021e2d48` and stable patch-id
+`b3475cebbcdadd45d4d6887d645fee4d9a7015d0`. RB9 is the only next iteration
+opened by this verdict.
