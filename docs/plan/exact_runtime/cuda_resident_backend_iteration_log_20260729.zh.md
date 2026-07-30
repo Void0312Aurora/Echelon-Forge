@@ -453,3 +453,63 @@ ground/damage/fuel/mass update，不支持 dynamic entity families。post-stall
 结论：**允许形成一个 RB6 提交**。该提交后只授权 RB7：有界 Phase D
 instrument/observation/reward/termination projection 与 lifetime-safe device
 observation export；不提前打开 replay harness 或性能声明。
+
+## RB7 accepted —— 有界 Phase D projection 与 device observation lease
+
+### 已冻结的写集与非目标
+
+本 candidate 的写集仅限新的 Phase-D fixture contract、resident 私有
+instrument/observation/reward/termination SoA 与 readback 类型、CUDA projection
+及显式 device-view staging API、聚焦 CUDA/CPU 测试、CMake 接线、架构守卫与本双语
+账本。不修改 public capability manifest、RuntimeFacade support projection 或公开的
+`DeviceResidentOutputDescriptor` schema。mission command、contacts、sensors、带 payload
+的 events、fuel/mass update、dynamic entity、replay 与性能晋级均不在本轮范围。
+
+### 实现
+
+- 有界 projection 物化 23 个 selected instrument 值、15 个 observation 数值与独立
+  device id buffer、两个固定 reward term、termination flag/reason code，以及明确为空
+  的 events shard。值保持 backend-private；只有在 Phase-D window 已 commit 后，host
+  export 才把选定 instrument/observation 字段转换为既有 DTO。
+- 一个 window 在同一 stream 连续执行六个 device launch：RB6 的三个 dynamics kernel、
+  flight/load instruments、propulsion/configuration instruments，以及
+  observation/reward/termination。launch 之间没有 host synchronization 或 D2H；现有
+  window barrier 前只有一次 status synchronization。instrument live range 已拆分，
+  `sm_86` ptxas 报告 flight kernel `64`、configuration `34` registers/thread。
+- 只有在 committed Phase-D shards 存在后，export 才使用 schema v3 与 provenance
+  `cuda_resident.rb7.explicit_phase_d_projection`；此前保持 fail-closed，并保留 RB6
+  兼容的 partial export evidence。
+- device observation view 是显式 D2D ownership copy，写入独立 float/id allocation。
+  `shared_ptr` lease 在 consumer 释放前持有两块 allocation；descriptor 明确写出
+  `ownership_copy_d2d` 与 `not_zero_copy`，不把 snapshot D2D copy 伪称 zero-copy。
+
+### 验证与资源证据
+
+- CUDA-off Release `ef_test`：`161/161` test cases、`19,461/19,461` assertions。
+- CUDA-on 聚焦 target：`8/8` test cases、`497/497` assertions。Compute Sanitizer
+  memcheck：`0 errors`。
+- `sm_86` ptxas：Phase-D flight instruments `64`、configuration `34`、episode
+  projection `40`、pack `16`、consumer smoke `14` registers/thread；全部 zero spill
+  stores/loads。instrument 与 RB6 math kernel 仍有报告的 40-byte stack frame；没有
+  使用 `--maxrregcount` 或 launch-bound 约束。
+- 聚焦 architecture/ruff 检查：`23` 个 pytest cases passed，Ruff passed，且 staged
+  diff check 仍为提交门。完整 CUDA-on `ef_test` 因 RB3 已记录的 MSVC portability
+  debt 仍不纳入通过声明。
+
+### 独立复核与结论
+
+独立 reviewer `rb7_phase_d_review` 首先发现一个 blocking 的 double-release 路径：
+`shared_ptr` 已接管 raw device buffer 后，catch 仍可能手动释放。现已删除该 catch，
+由 `shared_ptr` 构造器与正常栈展开保证 allocation 恰好释放一次。reviewer 随后重新
+阅读修复后的树并给出 **APPROVE**：精确写集、Phase-D shard/version 语义、六 launch/
+无中间 host sync、host export barrier、显式 D2D lease lifetime、CPU/CUDA oracle 分离
+及资源证据均通过。reviewer 将 root 在活动工作树上运行的结果作为独立审阅证据，未声称
+其自身环境另行完成 CUDA runtime。现允许形成一个 RB7 commit；在该提交记录前 RB8 仍
+保持关闭。
+
+经审阅的 code/test staged raw hash 为
+`e1e51b2cd21d3d80a7a7d682b1bbbee3bb81722c`（stable patch-id
+`8e2607802951cd1b3bd994174b67288d64d59616`）；唯一提交身份由本分支历史记录。
+
+结论：**允许形成一个 RB7 提交**。该提交后只授权 RB8；replay、dynamic entity
+与性能晋级仍保持关闭。

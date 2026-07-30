@@ -320,6 +320,26 @@ bool CudaWorldStore::commit_window() {
 #endif
 }
 
+bool CudaWorldStore::export_device_observation_raw(
+    CudaWorldStoreDeviceObservationRaw *raw, std::string *error) const {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    if (impl_->diagnostics.state != CudaWorldStoreState::ready) {
+        if (error != nullptr) *error = "device observation export requires a ready allocation";
+        return false;
+    }
+    if (std::any_of(impl_->setup_active.begin(), impl_->setup_active.end(),
+                    [](std::uint8_t active) { return active == 0; })) {
+        if (error != nullptr) *error = "device observation export requires completed setup";
+        return false;
+    }
+    return detail::export_cuda_world_store_device_observation(impl_->allocation, raw, error);
+#else
+    (void)raw;
+    if (error != nullptr) *error = "device observation export requires CUDA experiments";
+    return false;
+#endif
+}
+
 bool CudaWorldStore::teardown() noexcept {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     if (!detail::release_cuda_world_store_metadata(impl_->pending_cleanup, &impl_->faults) ||
@@ -511,6 +531,68 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_b_integrate_
 #else
     throw std::logic_error(
         "CUDA Phase B integrate kernel resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_projection_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_d_projection_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase D projection kernel resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA Phase D resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_instruments_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_d_instruments_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase D instruments resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA Phase D instruments resource query requires CUDA experiments");
+#endif
+}
+
+CudaBarrierKernelResources
+testing::CudaWorldStoreTestAccess::phase_d_configuration_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_phase_d_configuration_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA Phase D configuration resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA Phase D configuration resource query requires CUDA experiments");
+#endif
+}
+
+bool testing::CudaWorldStoreTestAccess::consume_device_observation_view(
+    const CudaResidentDeviceObservationView &view, std::vector<float> *first_values,
+    std::vector<std::uint64_t> *ids) {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    if (!view.valid()) return false;
+    std::string error;
+    return detail::consume_cuda_world_store_device_observation(
+        view.values, view.ids, view.descriptor.output_shape.empty()
+            ? 0
+            : static_cast<std::size_t>(view.descriptor.output_shape.front()),
+        view.descriptor.output_shape.size() < 2
+            ? 0
+            : static_cast<std::size_t>(view.descriptor.output_shape.back()),
+        first_values, ids, &error);
+#else
+    (void)view;
+    (void)first_values;
+    (void)ids;
+    return false;
 #endif
 }
 

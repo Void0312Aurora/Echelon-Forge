@@ -17,6 +17,7 @@ class CudaResidentBackendTestAccess;
 
 inline constexpr std::string_view kCudaResidentRb5BackendId = "cuda_resident.rb5_phase_a";
 inline constexpr std::string_view kCudaResidentRb6BackendId = "cuda_resident.rb6_phase_b";
+inline constexpr std::string_view kCudaResidentRb7BackendId = "cuda_resident.rb7_phase_d";
 
 struct CudaResidentBarrierEvidence {
     std::string barrier_id;
@@ -36,6 +37,7 @@ struct CudaResidentWorldSnapshot {
     SnapshotIdentityContract identity{};
     CudaWorldKinematicsState kinematics{};
     CudaWorldDynamicsState dynamics{};
+    CudaWorldPhaseDState phase_d{};
     std::string source_barrier_id;
 };
 
@@ -45,9 +47,8 @@ struct CudaResidentExportSnapshot {
     CudaResidentBarrierEvidence barrier{};
 };
 
-// RB6 fixed-air Phase A/B shell. Setup, selected pilot input, compact prepared
-// controls, resident airframe dynamics, clock commit, and explicit reconstruction
-// are implemented; Phase D semantics remain fail-closed until their owner.
+// RB7 fixed-air Phase A/B/D shell. Phase-D values stay backend-private and are
+// exposed only through explicit host reconstruction or a lease-scoped device view.
 class CudaResidentBackend final : public IWorldBatchBackend {
   public:
     CudaResidentBackend() = default;
@@ -77,6 +78,8 @@ class CudaResidentBackend final : public IWorldBatchBackend {
     void publish_stage();
     [[nodiscard]] bool partial_sync_commit();
     [[nodiscard]] CudaResidentExportSnapshot export_snapshot(const std::string &request_id) const;
+    [[nodiscard]] CudaResidentDeviceObservationView
+    export_device_observation_view(const std::string &request_id) const;
 
   private:
     friend class testing::CudaResidentBackendTestAccess;

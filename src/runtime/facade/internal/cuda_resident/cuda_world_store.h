@@ -9,6 +9,7 @@
 
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
 #include "runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
 
 namespace runtime::cuda_resident {
 
@@ -116,6 +117,116 @@ struct CudaWorldDynamicsState {
     double gear_extension = 1.0;
 };
 
+// RB7 keeps the Phase-D projection in backend-private value types. The public
+// InstrumentState/AgentObservation/RewardReport DTOs remain facade surfaces and
+// are not copied into the resident device layout.
+struct CudaWorldInstrumentState {
+    double alt_baro_m = 0.0;
+    double alt_radar_m = 0.0;
+    double ias_mps = 0.0;
+    double mach = 0.0;
+    double vvi_mps = 0.0;
+    double pitch_deg = 0.0;
+    double roll_deg = 0.0;
+    double heading_deg = 0.0;
+    double aoa_deg = 0.0;
+    double beta_deg = 0.0;
+    double g_load_normal = 0.0;
+    double g_load_axial = 0.0;
+    double p_deg_s = 0.0;
+    double q_deg_s = 0.0;
+    double r_deg_s = 0.0;
+    double engine_rpm_pct = 0.0;
+    double fuel_flow_kg_h = 0.0;
+    double throttle_pos = 0.0;
+    double fuel_internal_kg = 0.0;
+    double fuel_external_kg = 0.0;
+    double gear_pos = 0.0;
+    double flaps_pos = 0.0;
+    double speedbrake_pos = 0.0;
+};
+
+struct CudaWorldObservationState {
+    std::uint64_t id = 0;
+    double sim_time = 0.0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    double vx = 0.0;
+    double vy = 0.0;
+    double vz = 0.0;
+    double heading = 0.0;
+    double pitch = 0.0;
+    double roll = 0.0;
+    double speed = 0.0;
+    double health = 0.0;
+    double gear_state = 0.0;
+    double throttle = 0.0;
+    double total_reward = 0.0;
+};
+
+struct CudaWorldRewardState {
+    double survival_term = 0.0;
+    double speed_term = 0.0;
+    double total_reward = 0.0;
+    std::uint64_t fact_snapshot_version = 0;
+};
+
+enum class CudaResidentTerminationCode : std::uint8_t {
+    running = 0,
+    nan_guard = 1,
+    envelope_violation = 2,
+};
+
+struct CudaWorldTerminationState {
+    bool terminated = false;
+    bool truncated = false;
+    CudaResidentTerminationCode reason_code = CudaResidentTerminationCode::running;
+    std::uint64_t snapshot_version = 0;
+};
+
+struct CudaWorldPhaseDState {
+    CudaWorldInstrumentState instrument{};
+    CudaWorldObservationState observation{};
+    CudaWorldRewardState reward{};
+    CudaWorldTerminationState termination{};
+    bool events_empty = true;
+};
+
+struct CudaWorldStoreDeviceObservationRaw {
+    void *values = nullptr;
+    void *ids = nullptr;
+    std::size_t world_count = 0;
+    std::size_t values_per_world = 0;
+    std::uint64_t source_snapshot = 0;
+};
+
+struct CudaResidentDeviceObservationDescriptor {
+    std::vector<std::uint64_t> output_shape;
+    std::string dtype = "float32";
+    std::size_t element_count = 0;
+    std::uint64_t source_snapshot = 0;
+    std::string sync_or_export_barrier = "export";
+    std::string host_visible_availability = "host_snapshot_available";
+    std::string diagnostics_label = "resident_phase_d";
+    std::vector<std::string> consumer_constraints;
+};
+
+// The view owns an explicit D2D staging allocation through `lifetime`. A
+// consumer must retain this value for its complete device call; raw pointers
+// are never published through RuntimeCapabilities or host packets.
+struct CudaResidentDeviceObservationView {
+    std::shared_ptr<void> lifetime;
+    const float *values = nullptr;
+    const std::uint64_t *ids = nullptr;
+    CudaResidentDeviceObservationDescriptor descriptor{};
+
+    [[nodiscard]] bool valid() const noexcept {
+        return lifetime != nullptr && values != nullptr && ids != nullptr &&
+               descriptor.element_count != 0;
+    }
+};
+
 struct CudaWorldResidentState {
     std::uint64_t world_index = 0;
     std::uint32_t seed = 0;
@@ -126,6 +237,7 @@ struct CudaWorldResidentState {
     double time_step_s = 0.0;
     CudaWorldKinematicsState kinematics{};
     CudaWorldDynamicsState dynamics{};
+    CudaWorldPhaseDState phase_d{};
     CudaWorldFlightControls controls{};
     CudaWorldPreparedControls prepared_controls{};
     std::uint64_t clock_tick = 0;
@@ -150,8 +262,7 @@ struct CudaBarrierKernelResources {
     double theoretical_occupancy = 0.0;
 };
 
-// Instance-owned lifecycle plus the bounded RB5/RB6 fixed-air resident store.
-// Phase D remains absent until its owning iteration.
+// Instance-owned lifecycle plus the bounded RB5-RB7 fixed-air resident store.
 class CudaWorldStore final {
   public:
     CudaWorldStore();
@@ -171,6 +282,8 @@ class CudaWorldStore final {
     [[nodiscard]] bool publish_stage();
     [[nodiscard]] bool partial_sync_commit();
     [[nodiscard]] bool commit_window();
+    [[nodiscard]] bool export_device_observation_raw(
+        CudaWorldStoreDeviceObservationRaw *raw, std::string *error) const;
     [[nodiscard]] bool teardown() noexcept;
 
     [[nodiscard]] CudaWorldStoreDiagnostics diagnostics() const;
@@ -188,7 +301,7 @@ class CudaWorldStore final {
 
 namespace testing {
 
-// Narrow, per-instance fault/readback seam for RB3-RB6 CUDA tests.
+// Narrow, per-instance fault/readback seam for RB3-RB7 CUDA tests.
 // It is not a runtime capability and is never surfaced by RuntimeFacade.
 class CudaWorldStoreTestAccess final {
   public:
@@ -206,6 +319,12 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaBarrierKernelResources phase_b_forces_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources phase_b_aerodynamics_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources phase_b_integrate_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_d_instruments_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_d_configuration_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources phase_d_projection_kernel_resources();
+    [[nodiscard]] static bool consume_device_observation_view(
+        const CudaResidentDeviceObservationView &view, std::vector<float> *first_values,
+        std::vector<std::uint64_t> *ids);
 };
 
 } // namespace testing

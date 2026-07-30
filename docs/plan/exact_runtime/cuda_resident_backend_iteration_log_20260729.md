@@ -541,3 +541,77 @@ Verdict: **accepted for one RB6 commit**. After that commit, RB7 is the only
 authorized work: the bounded Phase D instruments/observation/reward/termination
 projection and lifetime-safe device observation export. No replay harness or
 performance claim is opened by this verdict.
+
+## RB7 accepted — bounded Phase D projection and device observation lease
+
+### Frozen write set and non-goals
+
+The candidate write set is limited to a new Phase-D fixture contract, private
+resident instrument/observation/reward/termination SoA and readback types, the
+CUDA projection and explicit device-view staging API, focused CUDA/CPU tests,
+CMake wiring, architecture guards, and this bilingual ledger. It does not
+change the public capability manifest, RuntimeFacade support projection, or
+the public `DeviceResidentOutputDescriptor` schema. Mission commands, contacts,
+sensors, events with payloads, fuel/mass updates, dynamic entities, replay, and
+performance promotion remain out of scope.
+
+### Implementation
+
+- The bounded projection materializes 23 selected instrument values, 15
+  observation values plus a separate device id buffer, two fixed reward terms,
+  termination flags/reason code, and an explicitly empty events shard. These
+  values remain backend-private; host export converts only the selected
+  instrument/observation fields to existing DTOs after a committed Phase-D
+  window.
+- A window now runs six device launches in one stream: the three RB6 dynamics
+  kernels, flight/load instruments, propulsion/configuration instruments, and
+  observation/reward/termination. There is no host synchronization or D2H
+  transfer between launches; one status synchronization precedes the existing
+  window barrier. The instrument live range is split so `sm_86` ptxas reports
+  64 registers/thread for the flight kernel and 34 for configuration.
+- Export uses schema v3/provenance `cuda_resident.rb7.explicit_phase_d_projection`
+  only once the committed Phase-D shards exist. Before that barrier it remains
+  fail-closed and retains the RB6-compatible partial export evidence.
+- The device observation view is an explicit D2D ownership copy into a separate
+  float/id allocation. A `shared_ptr` lease owns both allocations until the
+  consumer releases it; descriptor constraints say `ownership_copy_d2d` and
+  `not_zero_copy`, so no snapshot D2D copy is mislabeled as zero-copy.
+
+### Validation and resource evidence
+
+- CUDA-off Release `ef_test`: `161/161` test cases, `19,461/19,461`
+  assertions.
+- CUDA-on focused target: `8/8` test cases, `497/497` assertions. Compute
+  Sanitizer memcheck: `0 errors`.
+- `sm_86` ptxas reports Phase-D flight instruments `64`, configuration `34`,
+  episode projection `40`, pack `16`, and consumer smoke `14`
+  registers/thread; all have zero spill stores/loads. The instrument and RB6
+  math kernels retain the reported 40-byte stack frame. No `--maxrregcount` or
+  launch-bound constraint is used.
+- Focused architecture/ruff checks: `23` pytest cases passed, Ruff passed,
+  and the staged diff check remains required. Full CUDA-on `ef_test` remains
+  outside the claim because of the pre-existing MSVC portability debt recorded
+  under RB3.
+
+### Independent review and verdict
+
+Independent reviewer `rb7_phase_d_review` first identified a blocking
+double-release path: a catch block could manually free the raw device buffers
+after `shared_ptr` had already taken ownership. The catch was removed so the
+`shared_ptr` constructor and normal stack unwinding own the allocations exactly
+once. The reviewer then re-read the repaired tree and reported **APPROVE**:
+the exact write set, Phase-D shard/version semantics, six-launch/no-intermediate
+host-sync rule, host export barrier, explicit D2D lease lifetime, CPU/CUDA oracle
+separation, and resource evidence were all accepted. The root-run validation
+was independently reviewed as evidence; the reviewer did not claim a separate
+CUDA runtime in its own environment. This permits one RB7 commit; RB8 remains
+closed until that commit is recorded.
+
+The reviewed code/test staged raw hash is
+`e1e51b2cd21d3d80a7a7d682b1bbbee3bb81722c` (stable patch-id
+`8e2607802951cd1b3bd994174b67288d64d59616`). The single commit identity is
+recorded by the enclosing branch history.
+
+Verdict: **accepted for one RB7 commit**. After that commit, RB8 is the only
+authorized next iteration; replay, dynamic entities, and performance promotion
+remain closed.

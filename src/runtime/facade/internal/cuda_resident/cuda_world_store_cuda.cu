@@ -2,6 +2,7 @@
 
 #include <cuda_runtime_api.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <limits>
@@ -38,6 +39,9 @@ inline constexpr std::size_t kPreparedDoubleFieldCount = 4;
 inline constexpr std::size_t kPreparedFlagFieldCount = 2;
 inline constexpr std::size_t kDynamicsDoubleFieldCount = 20;
 inline constexpr std::size_t kPhaseBForceFieldCount = 6;
+inline constexpr std::size_t kPhaseDInstrumentFieldCount = 23;
+inline constexpr std::size_t kPhaseDObservationFieldCount = 15;
+inline constexpr std::size_t kPhaseDRewardFieldCount = 3;
 
 struct CudaWorldStateSlotLayout {
     std::size_t setup_complete = 0;
@@ -47,6 +51,14 @@ struct CudaWorldStateSlotLayout {
     std::size_t kinematics = 0;
     std::size_t dynamics = 0;
     std::size_t phase_b_forces = 0;
+    std::size_t phase_d_instruments = 0;
+    std::size_t phase_d_observations = 0;
+    std::size_t phase_d_observation_ids = 0;
+    std::size_t phase_d_rewards = 0;
+    std::size_t phase_d_reward_versions = 0;
+    std::size_t phase_d_termination_flags = 0;
+    std::size_t phase_d_termination_codes = 0;
+    std::size_t phase_d_event_empty = 0;
     std::size_t control_doubles = 0;
     std::size_t control_floats = 0;
     std::size_t control_flags = 0;
@@ -119,6 +131,9 @@ bool build_state_layout(std::size_t world_capacity, CudaWorldStateSlotLayout *la
     std::size_t prepared_flag_count = 0;
     std::size_t dynamics_count = 0;
     std::size_t phase_b_force_count = 0;
+    std::size_t phase_d_instrument_count = 0;
+    std::size_t phase_d_observation_count = 0;
+    std::size_t phase_d_reward_count = 0;
     std::size_t shard_version_count = 0;
     if (!checked_product(world_capacity, kKinematicsFieldCount, &kinematics_count) ||
         !checked_product(world_capacity, kControlDoubleFieldCount, &control_double_count) ||
@@ -128,6 +143,9 @@ bool build_state_layout(std::size_t world_capacity, CudaWorldStateSlotLayout *la
         !checked_product(world_capacity, kPreparedFlagFieldCount, &prepared_flag_count) ||
         !checked_product(world_capacity, kDynamicsDoubleFieldCount, &dynamics_count) ||
         !checked_product(world_capacity, kPhaseBForceFieldCount, &phase_b_force_count) ||
+        !checked_product(world_capacity, kPhaseDInstrumentFieldCount, &phase_d_instrument_count) ||
+        !checked_product(world_capacity, kPhaseDObservationFieldCount, &phase_d_observation_count) ||
+        !checked_product(world_capacity, kPhaseDRewardFieldCount, &phase_d_reward_count) ||
         !checked_product(world_capacity, kCudaResidentShardCount, &shard_version_count)) {
         return false;
     }
@@ -138,6 +156,14 @@ bool build_state_layout(std::size_t world_capacity, CudaWorldStateSlotLayout *la
         !append_array<double>(kinematics_count, &cursor, &layout->kinematics) ||
         !append_array<double>(dynamics_count, &cursor, &layout->dynamics) ||
         !append_array<double>(phase_b_force_count, &cursor, &layout->phase_b_forces) ||
+        !append_array<double>(phase_d_instrument_count, &cursor, &layout->phase_d_instruments) ||
+        !append_array<double>(phase_d_observation_count, &cursor, &layout->phase_d_observations) ||
+        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->phase_d_observation_ids) ||
+        !append_array<double>(phase_d_reward_count, &cursor, &layout->phase_d_rewards) ||
+        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->phase_d_reward_versions) ||
+        !append_array<std::uint8_t>(world_capacity, &cursor, &layout->phase_d_termination_flags) ||
+        !append_array<std::uint8_t>(world_capacity, &cursor, &layout->phase_d_termination_codes) ||
+        !append_array<std::uint8_t>(world_capacity, &cursor, &layout->phase_d_event_empty) ||
         !append_array<double>(control_double_count, &cursor, &layout->control_doubles) ||
         !append_array<float>(control_float_count, &cursor, &layout->control_floats) ||
         !append_array<std::uint8_t>(control_flag_count, &cursor, &layout->control_flags) ||
@@ -268,6 +294,56 @@ enum PhaseBForceField : std::size_t {
     kTorqueRoll,
     kTorquePitch,
     kTorqueYaw,
+};
+
+enum PhaseDInstrumentField : std::size_t {
+    kInstAltBaro = 0,
+    kInstAltRadar,
+    kInstIas,
+    kInstMach,
+    kInstVvi,
+    kInstPitch,
+    kInstRoll,
+    kInstHeading,
+    kInstAoa,
+    kInstBeta,
+    kInstGNormal,
+    kInstGAxial,
+    kInstP,
+    kInstQ,
+    kInstR,
+    kInstEngineRpm,
+    kInstFuelFlow,
+    kInstThrottle,
+    kInstFuelInternal,
+    kInstFuelExternal,
+    kInstGear,
+    kInstFlaps,
+    kInstSpeedbrake,
+};
+
+enum PhaseDObservationField : std::size_t {
+    kObsSimTime = 0,
+    kObsX,
+    kObsY,
+    kObsZ,
+    kObsVx,
+    kObsVy,
+    kObsVz,
+    kObsHeading,
+    kObsPitch,
+    kObsRoll,
+    kObsSpeed,
+    kObsHealth,
+    kObsGear,
+    kObsThrottle,
+    kObsTotalReward,
+};
+
+enum PhaseDRewardField : std::size_t {
+    kRewardSurvival = 0,
+    kRewardSpeed,
+    kRewardTotal,
 };
 
 __device__ inline double phase_b_clamp(double value, double lo, double hi) {
@@ -810,6 +886,173 @@ __global__ void phase_b_integrate_kernel(std::size_t world_capacity, const doubl
     dynamics[kDynR * dyn + world] = r;
 }
 
+__global__ void phase_d_instruments_kernel(
+    std::size_t world_capacity, const double *kinematics, const double *dynamics,
+    const double *phase_b_forces, double *instruments, std::uint32_t *status) {
+    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (world >= world_capacity) return;
+    const double z = kinematics[2 * world_capacity + world];
+    const double vx = kinematics[3 * world_capacity + world];
+    const double vy = kinematics[4 * world_capacity + world];
+    const double vz = kinematics[5 * world_capacity + world];
+    const double heading = kinematics[6 * world_capacity + world];
+    const double pitch = kinematics[7 * world_capacity + world];
+    const double roll = kinematics[8 * world_capacity + world];
+    const double qbar = dynamics[kDynDynamicPressure * world_capacity + world];
+    const double mach = dynamics[kDynMach * world_capacity + world];
+    const double alpha = dynamics[kDynAlpha * world_capacity + world];
+    const double beta = dynamics[kDynBeta * world_capacity + world];
+    const double p = dynamics[kDynP * world_capacity + world];
+    const double q_rate = dynamics[kDynQ * world_capacity + world];
+    const double r = dynamics[kDynR * world_capacity + world];
+    const double mass = kPhaseBEmptyMassKg + kPhaseBFuelMassKg + kPhaseBStoresMassKg;
+    const PhaseBRotation rotation = phase_b_rotation(heading, pitch, roll);
+    double body_x = 0.0;
+    double body_y = 0.0;
+    double body_z = 0.0;
+    phase_b_world_to_body(
+        phase_b_forces[kForceX * world_capacity + world],
+        phase_b_forces[kForceY * world_capacity + world],
+        phase_b_forces[kForceZ * world_capacity + world] + mass * kPhaseBGravityMps2,
+        rotation, &body_x, &body_y, &body_z);
+    const double g_normal = body_z / (mass * kPhaseBGravityMps2);
+    const double g_axial = body_x / (mass * kPhaseBGravityMps2);
+    const double ias = sqrt(fmax(0.0, 2.0 * qbar / kPhaseBSeaLevelDensityKgM3));
+    const double p_deg = phase_b_rad_to_deg(p);
+    const double q_deg = phase_b_rad_to_deg(q_rate);
+    const double r_deg = phase_b_rad_to_deg(r);
+    instruments[kInstAltBaro * world_capacity + world] = z;
+    instruments[kInstAltRadar * world_capacity + world] = z;
+    instruments[kInstIas * world_capacity + world] = ias;
+    instruments[kInstMach * world_capacity + world] = mach;
+    instruments[kInstVvi * world_capacity + world] = vz;
+    instruments[kInstPitch * world_capacity + world] = pitch;
+    instruments[kInstRoll * world_capacity + world] = roll;
+    instruments[kInstHeading * world_capacity + world] = heading;
+    instruments[kInstAoa * world_capacity + world] = alpha;
+    instruments[kInstBeta * world_capacity + world] = beta;
+    instruments[kInstGNormal * world_capacity + world] = g_normal;
+    instruments[kInstGAxial * world_capacity + world] = g_axial;
+    instruments[kInstP * world_capacity + world] = p_deg;
+    instruments[kInstQ * world_capacity + world] = q_deg;
+    instruments[kInstR * world_capacity + world] = r_deg;
+    bool invalid = !isfinite(vx) || !isfinite(vy) || !isfinite(ias) || !isfinite(p_deg) ||
+                   !isfinite(q_deg) || !isfinite(r_deg) || !isfinite(g_normal) ||
+                   !isfinite(g_axial);
+    if (invalid) atomicExch(status, 1U);
+}
+
+__global__ void phase_d_configuration_kernel(
+    std::size_t world_capacity, const double *dynamics, const double *control_doubles,
+    const float *control_floats, double *instruments, std::uint32_t *status) {
+    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (world >= world_capacity) return;
+    const double engine_rpm = dynamics[kDynThrottleState * world_capacity + world] * 100.0 +
+                              dynamics[kDynAbState * world_capacity + world] * 10.0;
+    const double fuel_flow = dynamics[kDynCurrentThrust * world_capacity + world] *
+                             kPhaseDFuelFlowTsfcNhPerN;
+    const double throttle = control_doubles[3 * world_capacity + world];
+    const double gear = dynamics[kDynGearExtension * world_capacity + world];
+    const double flaps = static_cast<double>(control_floats[world_capacity + world]);
+    const double speedbrake = static_cast<double>(control_floats[2 * world_capacity + world]);
+    instruments[kInstEngineRpm * world_capacity + world] = engine_rpm;
+    instruments[kInstFuelFlow * world_capacity + world] = fuel_flow;
+    instruments[kInstThrottle * world_capacity + world] = throttle;
+    instruments[kInstFuelInternal * world_capacity + world] = kPhaseBFuelMassKg;
+    instruments[kInstFuelExternal * world_capacity + world] = 0.0;
+    instruments[kInstGear * world_capacity + world] = gear;
+    instruments[kInstFlaps * world_capacity + world] = flaps;
+    instruments[kInstSpeedbrake * world_capacity + world] = speedbrake;
+    if (!isfinite(engine_rpm) || !isfinite(fuel_flow) || !isfinite(throttle) || !isfinite(gear) ||
+        !isfinite(flaps) || !isfinite(speedbrake)) {
+        atomicExch(status, 1U);
+    }
+}
+
+__global__ void phase_d_episode_kernel(
+    std::size_t world_capacity, const double *time_steps, const double *simulation_times,
+    const double *kinematics,
+    const double *dynamics, const double *instruments, const std::uint64_t *entity_ids,
+    const std::uint64_t *global_versions, double *observations, std::uint64_t *observation_ids,
+    double *rewards, std::uint64_t *reward_versions, std::uint8_t *termination_flags,
+    std::uint8_t *termination_codes, std::uint8_t *event_empty, std::uint32_t *status) {
+    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (world >= world_capacity) return;
+    const double dt = static_cast<double>(static_cast<float>(time_steps[world]));
+    const double x = kinematics[0 * world_capacity + world];
+    const double y = kinematics[1 * world_capacity + world];
+    const double z = kinematics[2 * world_capacity + world];
+    const double vx = kinematics[3 * world_capacity + world];
+    const double vy = kinematics[4 * world_capacity + world];
+    const double vz = kinematics[5 * world_capacity + world];
+    const double heading = kinematics[6 * world_capacity + world];
+    const double pitch = kinematics[7 * world_capacity + world];
+    const double roll = kinematics[8 * world_capacity + world];
+    const double speed = sqrt(fmax(0.0, vx * vx + vy * vy + vz * vz));
+    const double survival = kPhaseDSurvivalReward;
+    const double speed_term = speed * kPhaseDSpeedRewardWeight;
+    const double total = survival + speed_term;
+    const bool finite = isfinite(dt) && isfinite(x) && isfinite(y) && isfinite(z) &&
+                        isfinite(vx) && isfinite(vy) && isfinite(vz) && isfinite(heading) &&
+                        isfinite(pitch) && isfinite(roll) && isfinite(speed) &&
+                        isfinite(total);
+    const bool envelope = z < 100.0 || z > 10000.0 || speed < 50.0 || speed > 350.0 ||
+                          fabs(vy) > 50.0 || fabs(vz) > 50.0 || fabs(pitch) > 10.0 ||
+                          fabs(roll) > 10.0 || fabs(dynamics[kDynAlpha * world_capacity + world]) > 14.0;
+    const std::uint8_t reason = !finite
+                                    ? static_cast<std::uint8_t>(CudaResidentTerminationCode::nan_guard)
+                                    : envelope
+                                          ? static_cast<std::uint8_t>(CudaResidentTerminationCode::envelope_violation)
+                                          : static_cast<std::uint8_t>(CudaResidentTerminationCode::running);
+    const std::uint8_t terminated = static_cast<std::uint8_t>(reason != 0);
+    const double obs[kPhaseDObservationFieldCount] = {
+        simulation_times[world] + time_steps[world], x, y, z, vx, vy, vz, heading, pitch, roll,
+        speed, kPhaseDHealth,
+        instruments[kInstGear * world_capacity + world],
+        instruments[kInstThrottle * world_capacity + world], total,
+    };
+    for (std::size_t field = 0; field < kPhaseDObservationFieldCount; ++field) {
+        observations[field * world_capacity + world] = obs[field];
+    }
+    observation_ids[world] = entity_ids[world];
+    rewards[kRewardSurvival * world_capacity + world] = survival;
+    rewards[kRewardSpeed * world_capacity + world] = speed_term;
+    rewards[kRewardTotal * world_capacity + world] = total;
+    reward_versions[world] = global_versions[world] + 1U;
+    termination_flags[world] = terminated;
+    termination_codes[world] = reason;
+    event_empty[world] = 1;
+    if (!finite || !isfinite(obs[kObsTotalReward])) atomicExch(status, 1U);
+}
+
+__device__ inline float phase_d_to_float(double value) {
+    if (!isfinite(value)) return 0.0F;
+    return static_cast<float>(fmin(fmax(value, -kPhaseDObservationFloatClip),
+                                   kPhaseDObservationFloatClip));
+}
+
+__global__ void phase_d_pack_observation_kernel(
+    std::size_t world_capacity, const double *observations, const std::uint64_t *observation_ids,
+    float *values, std::uint64_t *ids) {
+    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (world >= world_capacity) return;
+    const std::size_t base = world * kPhaseDObservationFieldCount;
+    for (std::size_t field = 0; field < kPhaseDObservationFieldCount; ++field) {
+        values[base + field] =
+            phase_d_to_float(observations[field * world_capacity + world]);
+    }
+    ids[world] = observation_ids[world];
+}
+
+__global__ void phase_d_consumer_smoke_kernel(
+    const float *values, const std::uint64_t *ids, std::size_t world_capacity,
+    std::size_t values_per_world, float *first_values, std::uint64_t *out_ids) {
+    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (world >= world_capacity) return;
+    first_values[world] = values[world * values_per_world];
+    out_ids[world] = ids[world];
+}
+
 __global__ void apply_barrier_kernel(std::size_t world_capacity, CudaResidentBarrierCode barrier,
                                      double *simulation_times, const double *time_steps,
                                      std::uint64_t *clock_ticks, std::uint64_t *global_versions,
@@ -845,6 +1088,16 @@ __global__ void apply_barrier_kernel(std::size_t world_capacity, CudaResidentBar
         static_cast<std::size_t>(CudaResidentShard::dynamics) * world_capacity + world_index;
     const std::size_t episode_index =
         static_cast<std::size_t>(CudaResidentShard::episode) * world_capacity + world_index;
+    const std::size_t instrument_index =
+        static_cast<std::size_t>(CudaResidentShard::instrument) * world_capacity + world_index;
+    const std::size_t observation_index =
+        static_cast<std::size_t>(CudaResidentShard::observation) * world_capacity + world_index;
+    const std::size_t reward_index =
+        static_cast<std::size_t>(CudaResidentShard::reward) * world_capacity + world_index;
+    const std::size_t termination_index =
+        static_cast<std::size_t>(CudaResidentShard::termination) * world_capacity + world_index;
+    const std::size_t events_index =
+        static_cast<std::size_t>(CudaResidentShard::events) * world_capacity + world_index;
     if (barrier == CudaResidentBarrierCode::input_injection) {
         overflow = overflow || increment_would_overflow(shard_versions[identity_index]) ||
                    increment_would_overflow(shard_versions[controls_index]);
@@ -854,7 +1107,12 @@ __global__ void apply_barrier_kernel(std::size_t world_capacity, CudaResidentBar
                    increment_would_overflow(shard_versions[snapshot_index]) ||
                    increment_would_overflow(shard_versions[kinematics_index]) ||
                    increment_would_overflow(shard_versions[dynamics_index]) ||
-                   increment_would_overflow(shard_versions[episode_index]);
+                   increment_would_overflow(shard_versions[episode_index]) ||
+                   increment_would_overflow(shard_versions[instrument_index]) ||
+                   increment_would_overflow(shard_versions[observation_index]) ||
+                   increment_would_overflow(shard_versions[reward_index]) ||
+                   increment_would_overflow(shard_versions[termination_index]) ||
+                   increment_would_overflow(shard_versions[events_index]);
     }
     if (overflow) {
         atomicExch(status, 1U);
@@ -881,6 +1139,11 @@ __global__ void apply_barrier_kernel(std::size_t world_capacity, CudaResidentBar
     ++shard_versions[kinematics_index];
     ++shard_versions[dynamics_index];
     ++shard_versions[episode_index];
+    ++shard_versions[instrument_index];
+    ++shard_versions[observation_index];
+    ++shard_versions[reward_index];
+    ++shard_versions[termination_index];
+    ++shard_versions[events_index];
 }
 
 } // namespace
@@ -1140,8 +1403,48 @@ bool commit_phase_b_window(CudaWorldStoreDeviceAllocation *allocation,
             allocation->barrier_status);
         status = cudaGetLastError();
     }
-    // The three Phase-B launches form one device graph. This is the only host
-    // synchronization before the declared window barrier.
+    if (status == cudaSuccess) {
+        phase_d_instruments_kernel<<<blocks, threads>>>(
+            allocation->world_capacity,
+            device_field<double>(slot, allocation->state_layout.kinematics),
+            device_field<double>(slot, allocation->state_layout.dynamics),
+            device_field<double>(slot, allocation->state_layout.phase_b_forces),
+            device_field<double>(slot, allocation->state_layout.phase_d_instruments),
+            allocation->barrier_status);
+        status = cudaGetLastError();
+    }
+    if (status == cudaSuccess) {
+        phase_d_configuration_kernel<<<blocks, threads>>>(
+            allocation->world_capacity,
+            device_field<double>(slot, allocation->state_layout.dynamics),
+            device_field<double>(slot, allocation->state_layout.control_doubles),
+            device_field<float>(slot, allocation->state_layout.control_floats),
+            device_field<double>(slot, allocation->state_layout.phase_d_instruments),
+            allocation->barrier_status);
+        status = cudaGetLastError();
+    }
+    if (status == cudaSuccess) {
+        phase_d_episode_kernel<<<blocks, threads>>>(
+            allocation->world_capacity,
+            device_field<double>(slot, allocation->state_layout.time_steps),
+            device_field<double>(slot, allocation->state_layout.simulation_times),
+            device_field<double>(slot, allocation->state_layout.kinematics),
+            device_field<double>(slot, allocation->state_layout.dynamics),
+            device_field<double>(slot, allocation->state_layout.phase_d_instruments),
+            device_field<std::uint64_t>(slot, allocation->state_layout.entity_ids),
+            device_field<std::uint64_t>(slot, allocation->state_layout.global_versions),
+            device_field<double>(slot, allocation->state_layout.phase_d_observations),
+            device_field<std::uint64_t>(slot, allocation->state_layout.phase_d_observation_ids),
+            device_field<double>(slot, allocation->state_layout.phase_d_rewards),
+            device_field<std::uint64_t>(slot, allocation->state_layout.phase_d_reward_versions),
+            device_field<std::uint8_t>(slot, allocation->state_layout.phase_d_termination_flags),
+            device_field<std::uint8_t>(slot, allocation->state_layout.phase_d_termination_codes),
+            device_field<std::uint8_t>(slot, allocation->state_layout.phase_d_event_empty),
+            allocation->barrier_status);
+        status = cudaGetLastError();
+    }
+    // The six Phase-B/D launches form one device graph. This is the only
+    // host synchronization before the declared window barrier.
     if (status == cudaSuccess) status = cudaDeviceSynchronize();
     if (status != cudaSuccess) {
         if (error != nullptr) *error = cuda_error_message("run Phase B airframe dynamics", status);
@@ -1390,6 +1693,21 @@ bool setup_cuda_world_store_fixed_air_fixture(CudaWorldStoreDeviceAllocation *al
     auto *kinematics = host_field<double>(host_slot, allocation->state_layout.kinematics);
     auto *dynamics = host_field<double>(host_slot, allocation->state_layout.dynamics);
     auto *phase_b_forces = host_field<double>(host_slot, allocation->state_layout.phase_b_forces);
+    auto *phase_d_instruments =
+        host_field<double>(host_slot, allocation->state_layout.phase_d_instruments);
+    auto *phase_d_observations =
+        host_field<double>(host_slot, allocation->state_layout.phase_d_observations);
+    auto *phase_d_observation_ids =
+        host_field<std::uint64_t>(host_slot, allocation->state_layout.phase_d_observation_ids);
+    auto *phase_d_rewards = host_field<double>(host_slot, allocation->state_layout.phase_d_rewards);
+    auto *phase_d_reward_versions =
+        host_field<std::uint64_t>(host_slot, allocation->state_layout.phase_d_reward_versions);
+    auto *phase_d_termination_flags =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_termination_flags);
+    auto *phase_d_termination_codes =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_termination_codes);
+    auto *phase_d_event_empty =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_event_empty);
     auto *global_versions =
         host_field<std::uint64_t>(host_slot, allocation->state_layout.global_versions);
     auto *barrier_sequences =
@@ -1420,6 +1738,21 @@ bool setup_cuda_world_store_fixed_air_fixture(CudaWorldStoreDeviceAllocation *al
         for (std::size_t field = 0; field < kPhaseBForceFieldCount; ++field) {
             phase_b_forces[field * setups.size() + world] = 0.0;
         }
+        for (std::size_t field = 0; field < kPhaseDInstrumentFieldCount; ++field) {
+            phase_d_instruments[field * setups.size() + world] = 0.0;
+        }
+        for (std::size_t field = 0; field < kPhaseDObservationFieldCount; ++field) {
+            phase_d_observations[field * setups.size() + world] = 0.0;
+        }
+        phase_d_observation_ids[world] = setup.entity_id;
+        for (std::size_t field = 0; field < kPhaseDRewardFieldCount; ++field) {
+            phase_d_rewards[field * setups.size() + world] = 0.0;
+        }
+        phase_d_reward_versions[world] = 0;
+        phase_d_termination_flags[world] = 0;
+        phase_d_termination_codes[world] =
+            static_cast<std::uint8_t>(CudaResidentTerminationCode::running);
+        phase_d_event_empty[world] = 1;
         global_versions[world] = 1;
         barrier_sequences[world] = 1;
         barrier_codes[world] = static_cast<std::uint8_t>(CudaResidentBarrierCode::input_injection);
@@ -1561,6 +1894,125 @@ bool commit_cuda_world_store_window(CudaWorldStoreDeviceAllocation *allocation,
     return commit_phase_b_window(allocation, faults, error);
 }
 
+bool export_cuda_world_store_device_observation(
+    const CudaWorldStoreDeviceAllocation *allocation, CudaWorldStoreDeviceObservationRaw *raw,
+    std::string *error) {
+    if (allocation == nullptr || raw == nullptr) {
+        if (error != nullptr) *error = "CUDA device observation export requires an allocation";
+        return false;
+    }
+    *raw = {};
+    raw->world_count = allocation->world_capacity;
+    raw->values_per_world = kPhaseDObservationFieldCount;
+    if (allocation->world_capacity == 0) {
+        if (error != nullptr) error->clear();
+        return true;
+    }
+    const std::size_t value_count =
+        allocation->world_capacity * kPhaseDObservationFieldCount;
+    float *values = nullptr;
+    std::uint64_t *ids = nullptr;
+    cudaError_t status = cudaMalloc(reinterpret_cast<void **>(&values), value_count * sizeof(float));
+    if (status == cudaSuccess) {
+        status = cudaMalloc(reinterpret_cast<void **>(&ids),
+                            allocation->world_capacity * sizeof(std::uint64_t));
+    }
+    if (status != cudaSuccess) {
+        if (values != nullptr) cudaFree(values);
+        if (ids != nullptr) cudaFree(ids);
+        if (error != nullptr) *error = cuda_error_message("allocate device observation view", status);
+        return false;
+    }
+    constexpr unsigned int threads = 128;
+    const unsigned int blocks = static_cast<unsigned int>(
+        (allocation->world_capacity + threads - 1) / threads);
+    const std::uint8_t *slot = allocation->state_slots[allocation->active_state_slot];
+    phase_d_pack_observation_kernel<<<blocks, threads>>>(
+        allocation->world_capacity,
+        device_field<double>(slot, allocation->state_layout.phase_d_observations),
+        device_field<std::uint64_t>(slot, allocation->state_layout.phase_d_observation_ids), values,
+        ids);
+    status = cudaGetLastError();
+    if (status == cudaSuccess) status = cudaDeviceSynchronize();
+    std::vector<std::uint64_t> versions(allocation->world_capacity, 0);
+    if (status == cudaSuccess) {
+        status = cudaMemcpy(versions.data(),
+                            device_field<std::uint64_t>(slot, allocation->state_layout.global_versions),
+                            versions.size() * sizeof(std::uint64_t), cudaMemcpyDeviceToHost);
+    }
+    if (status != cudaSuccess || versions.empty() ||
+        std::any_of(versions.begin(), versions.end(), [&](std::uint64_t value) {
+            return value != versions.front();
+        })) {
+        if (values != nullptr) cudaFree(values);
+        if (ids != nullptr) cudaFree(ids);
+        if (error != nullptr) {
+            *error = status != cudaSuccess
+                         ? cuda_error_message("materialize device observation view", status)
+                         : "resident device observation worlds have divergent snapshots";
+        }
+        return false;
+    }
+    raw->values = values;
+    raw->ids = ids;
+    raw->source_snapshot = versions.front();
+    if (error != nullptr) error->clear();
+    return true;
+}
+
+void release_cuda_world_store_device_observation(void *values, void *ids) noexcept {
+    if (values != nullptr) cudaFree(values);
+    if (ids != nullptr) cudaFree(ids);
+}
+
+bool consume_cuda_world_store_device_observation(
+    const void *values, const void *ids, std::size_t world_count, std::size_t values_per_world,
+    std::vector<float> *first_values, std::vector<std::uint64_t> *ids_out, std::string *error) {
+    if (values == nullptr || ids == nullptr || first_values == nullptr || ids_out == nullptr ||
+        world_count == 0 || values_per_world == 0) {
+        if (error != nullptr) *error = "device observation consumer requires a valid lease";
+        return false;
+    }
+    float *device_first_values = nullptr;
+    std::uint64_t *device_ids = nullptr;
+    cudaError_t status = cudaMalloc(reinterpret_cast<void **>(&device_first_values),
+                                     world_count * sizeof(float));
+    if (status == cudaSuccess) {
+        status = cudaMalloc(reinterpret_cast<void **>(&device_ids),
+                            world_count * sizeof(std::uint64_t));
+    }
+    if (status == cudaSuccess) {
+        constexpr unsigned int threads = 128;
+        const unsigned int blocks =
+            static_cast<unsigned int>((world_count + threads - 1) / threads);
+        phase_d_consumer_smoke_kernel<<<blocks, threads>>>(
+            static_cast<const float *>(values), static_cast<const std::uint64_t *>(ids), world_count,
+            values_per_world, device_first_values, device_ids);
+        status = cudaGetLastError();
+    }
+    if (status == cudaSuccess) status = cudaDeviceSynchronize();
+    std::vector<float> next_values(world_count, 0.0F);
+    std::vector<std::uint64_t> next_ids(world_count, 0);
+    if (status == cudaSuccess) {
+        status = cudaMemcpy(next_values.data(), device_first_values,
+                            world_count * sizeof(float), cudaMemcpyDeviceToHost);
+    }
+    if (status == cudaSuccess) {
+        status = cudaMemcpy(next_ids.data(), device_ids, world_count * sizeof(std::uint64_t),
+                            cudaMemcpyDeviceToHost);
+    }
+    if (device_first_values != nullptr) cudaFree(device_first_values);
+    if (device_ids != nullptr) cudaFree(device_ids);
+    if (status != cudaSuccess) {
+        if (error != nullptr) *error = cuda_error_message("consume device observation view", status);
+        return false;
+    }
+    *first_values = std::move(next_values);
+    *ids_out = std::move(next_ids);
+    if (error != nullptr) error->clear();
+    return true;
+}
+
 bool read_cuda_world_store_state(const CudaWorldStoreDeviceAllocation *allocation,
                                  CudaWorldStoreStateSnapshot *snapshot, std::string *error) {
     if (allocation == nullptr || snapshot == nullptr) {
@@ -1604,6 +2056,22 @@ bool read_cuda_world_store_state(const CudaWorldStoreDeviceAllocation *allocatio
     const auto *time_steps = host_field<double>(host_slot, allocation->state_layout.time_steps);
     const auto *kinematics = host_field<double>(host_slot, allocation->state_layout.kinematics);
     const auto *dynamics = host_field<double>(host_slot, allocation->state_layout.dynamics);
+    const auto *phase_d_instruments =
+        host_field<double>(host_slot, allocation->state_layout.phase_d_instruments);
+    const auto *phase_d_observations =
+        host_field<double>(host_slot, allocation->state_layout.phase_d_observations);
+    const auto *phase_d_observation_ids =
+        host_field<std::uint64_t>(host_slot, allocation->state_layout.phase_d_observation_ids);
+    const auto *phase_d_rewards =
+        host_field<double>(host_slot, allocation->state_layout.phase_d_rewards);
+    const auto *phase_d_reward_versions =
+        host_field<std::uint64_t>(host_slot, allocation->state_layout.phase_d_reward_versions);
+    const auto *phase_d_termination_flags =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_termination_flags);
+    const auto *phase_d_termination_codes =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_termination_codes);
+    const auto *phase_d_event_empty =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_event_empty);
     const auto *control_doubles =
         host_field<double>(host_slot, allocation->state_layout.control_doubles);
     const auto *control_floats =
@@ -1680,6 +2148,96 @@ bool read_cuda_world_store_state(const CudaWorldStoreDeviceAllocation *allocatio
             dynamics[kDynStallProgress * allocation->world_capacity + world];
         state.dynamics.gear_extension =
             dynamics[kDynGearExtension * allocation->world_capacity + world];
+        state.phase_d.instrument.alt_baro_m =
+            phase_d_instruments[kInstAltBaro * allocation->world_capacity + world];
+        state.phase_d.instrument.alt_radar_m =
+            phase_d_instruments[kInstAltRadar * allocation->world_capacity + world];
+        state.phase_d.instrument.ias_mps =
+            phase_d_instruments[kInstIas * allocation->world_capacity + world];
+        state.phase_d.instrument.mach =
+            phase_d_instruments[kInstMach * allocation->world_capacity + world];
+        state.phase_d.instrument.vvi_mps =
+            phase_d_instruments[kInstVvi * allocation->world_capacity + world];
+        state.phase_d.instrument.pitch_deg =
+            phase_d_instruments[kInstPitch * allocation->world_capacity + world];
+        state.phase_d.instrument.roll_deg =
+            phase_d_instruments[kInstRoll * allocation->world_capacity + world];
+        state.phase_d.instrument.heading_deg =
+            phase_d_instruments[kInstHeading * allocation->world_capacity + world];
+        state.phase_d.instrument.aoa_deg =
+            phase_d_instruments[kInstAoa * allocation->world_capacity + world];
+        state.phase_d.instrument.beta_deg =
+            phase_d_instruments[kInstBeta * allocation->world_capacity + world];
+        state.phase_d.instrument.g_load_normal =
+            phase_d_instruments[kInstGNormal * allocation->world_capacity + world];
+        state.phase_d.instrument.g_load_axial =
+            phase_d_instruments[kInstGAxial * allocation->world_capacity + world];
+        state.phase_d.instrument.p_deg_s =
+            phase_d_instruments[kInstP * allocation->world_capacity + world];
+        state.phase_d.instrument.q_deg_s =
+            phase_d_instruments[kInstQ * allocation->world_capacity + world];
+        state.phase_d.instrument.r_deg_s =
+            phase_d_instruments[kInstR * allocation->world_capacity + world];
+        state.phase_d.instrument.engine_rpm_pct =
+            phase_d_instruments[kInstEngineRpm * allocation->world_capacity + world];
+        state.phase_d.instrument.fuel_flow_kg_h =
+            phase_d_instruments[kInstFuelFlow * allocation->world_capacity + world];
+        state.phase_d.instrument.throttle_pos =
+            phase_d_instruments[kInstThrottle * allocation->world_capacity + world];
+        state.phase_d.instrument.fuel_internal_kg =
+            phase_d_instruments[kInstFuelInternal * allocation->world_capacity + world];
+        state.phase_d.instrument.fuel_external_kg =
+            phase_d_instruments[kInstFuelExternal * allocation->world_capacity + world];
+        state.phase_d.instrument.gear_pos =
+            phase_d_instruments[kInstGear * allocation->world_capacity + world];
+        state.phase_d.instrument.flaps_pos =
+            phase_d_instruments[kInstFlaps * allocation->world_capacity + world];
+        state.phase_d.instrument.speedbrake_pos =
+            phase_d_instruments[kInstSpeedbrake * allocation->world_capacity + world];
+        state.phase_d.observation.id = phase_d_observation_ids[world];
+        state.phase_d.observation.sim_time =
+            phase_d_observations[kObsSimTime * allocation->world_capacity + world];
+        state.phase_d.observation.x =
+            phase_d_observations[kObsX * allocation->world_capacity + world];
+        state.phase_d.observation.y =
+            phase_d_observations[kObsY * allocation->world_capacity + world];
+        state.phase_d.observation.z =
+            phase_d_observations[kObsZ * allocation->world_capacity + world];
+        state.phase_d.observation.vx =
+            phase_d_observations[kObsVx * allocation->world_capacity + world];
+        state.phase_d.observation.vy =
+            phase_d_observations[kObsVy * allocation->world_capacity + world];
+        state.phase_d.observation.vz =
+            phase_d_observations[kObsVz * allocation->world_capacity + world];
+        state.phase_d.observation.heading =
+            phase_d_observations[kObsHeading * allocation->world_capacity + world];
+        state.phase_d.observation.pitch =
+            phase_d_observations[kObsPitch * allocation->world_capacity + world];
+        state.phase_d.observation.roll =
+            phase_d_observations[kObsRoll * allocation->world_capacity + world];
+        state.phase_d.observation.speed =
+            phase_d_observations[kObsSpeed * allocation->world_capacity + world];
+        state.phase_d.observation.health =
+            phase_d_observations[kObsHealth * allocation->world_capacity + world];
+        state.phase_d.observation.gear_state =
+            phase_d_observations[kObsGear * allocation->world_capacity + world];
+        state.phase_d.observation.throttle =
+            phase_d_observations[kObsThrottle * allocation->world_capacity + world];
+        state.phase_d.observation.total_reward =
+            phase_d_observations[kObsTotalReward * allocation->world_capacity + world];
+        state.phase_d.reward.survival_term =
+            phase_d_rewards[kRewardSurvival * allocation->world_capacity + world];
+        state.phase_d.reward.speed_term =
+            phase_d_rewards[kRewardSpeed * allocation->world_capacity + world];
+        state.phase_d.reward.total_reward =
+            phase_d_rewards[kRewardTotal * allocation->world_capacity + world];
+        state.phase_d.reward.fact_snapshot_version = phase_d_reward_versions[world];
+        state.phase_d.termination.terminated = phase_d_termination_flags[world] != 0;
+        state.phase_d.termination.truncated = false;
+        state.phase_d.termination.reason_code = static_cast<CudaResidentTerminationCode>(
+            phase_d_termination_codes[world]);
+        state.phase_d.termination.snapshot_version = phase_d_reward_versions[world];
+        state.phase_d.events_empty = phase_d_event_empty[world] != 0;
         state.controls.stick_pitch = control_doubles[world];
         state.controls.stick_roll = control_doubles[allocation->world_capacity + world];
         state.controls.rudder = control_doubles[2 * allocation->world_capacity + world];
@@ -1912,6 +2470,24 @@ bool query_cuda_world_store_phase_b_integrate_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error) {
     return query_phase_b_kernel_resources(phase_b_integrate_kernel, "phase_b_integrate_kernel",
                                           resources, error);
+}
+
+bool query_cuda_world_store_phase_d_projection_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error) {
+    return query_phase_b_kernel_resources(phase_d_episode_kernel, "phase_d_episode_kernel",
+                                          resources, error);
+}
+
+bool query_cuda_world_store_phase_d_instruments_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error) {
+    return query_phase_b_kernel_resources(phase_d_instruments_kernel, "phase_d_instruments_kernel",
+                                          resources, error);
+}
+
+bool query_cuda_world_store_phase_d_configuration_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error) {
+    return query_phase_b_kernel_resources(phase_d_configuration_kernel,
+                                          "phase_d_configuration_kernel", resources, error);
 }
 
 bool release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,

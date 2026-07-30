@@ -57,6 +57,13 @@ allocate_cuda_world_store_metadata(std::size_t world_capacity,
 [[nodiscard]] bool commit_cuda_world_store_window(CudaWorldStoreDeviceAllocation *allocation,
                                                   CudaWorldStoreDeviceFaultInjection *faults,
                                                   std::string *error);
+[[nodiscard]] bool export_cuda_world_store_device_observation(
+    const CudaWorldStoreDeviceAllocation *allocation,
+    CudaWorldStoreDeviceObservationRaw *raw, std::string *error);
+void release_cuda_world_store_device_observation(void *values, void *ids) noexcept;
+[[nodiscard]] bool consume_cuda_world_store_device_observation(
+    const void *values, const void *ids, std::size_t world_count, std::size_t values_per_world,
+    std::vector<float> *first_values, std::vector<std::uint64_t> *ids_out, std::string *error);
 [[nodiscard]] bool read_cuda_world_store_state(const CudaWorldStoreDeviceAllocation *allocation,
                                                CudaWorldStoreStateSnapshot *snapshot,
                                                std::string *error);
@@ -75,6 +82,15 @@ query_cuda_world_store_phase_b_aerodynamics_kernel_resources(CudaBarrierKernelRe
 [[nodiscard]] bool
 query_cuda_world_store_phase_b_integrate_kernel_resources(CudaBarrierKernelResources *resources,
                                                           std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_phase_d_projection_kernel_resources(CudaBarrierKernelResources *resources,
+                                                           std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_phase_d_instruments_kernel_resources(CudaBarrierKernelResources *resources,
+                                                            std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_phase_d_configuration_kernel_resources(CudaBarrierKernelResources *resources,
+                                                              std::string *error);
 [[nodiscard]] bool
 release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,
                                   CudaWorldStoreDeviceFaultInjection *faults) noexcept;
