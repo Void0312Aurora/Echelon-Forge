@@ -10,8 +10,8 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB9 are accepted after independent review. RB10 is the
-current decision-record candidate; RB11 remains dependency-gated.**
+Status: **RB0 through RB10 are accepted after independent review. RB11 is the
+current closure candidate; no promotion is authorized.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -797,3 +797,45 @@ The compact evidence files are approximately `110 KB` (CPU lane), `211 KB`
 RB9 is therefore accepted for one held-evidence commit. The next authorized
 iteration is RB10: record the hold decision and its owner/action boundary only;
 do not add a promotion path or kernel tuning.
+
+## RB10 accepted — continuation decision: hold
+
+### Frozen scope
+
+RB10 applies the already-frozen continuation gates to accepted RB9 commit
+`c21757908bcd4c7c323215bba2e8c3afbbfa7e2c`. Its write set is limited to a
+small machine-readable decision, an English/Chinese decision pair, an
+architecture guard, the bilingual exact-runtime README index, and this ledger.
+It changes no runtime, CUDA kernel, admission manifest, support projection,
+public ABI, or performance evidence.
+
+### Decision
+
+The candidate decision is `hold_backend`, recorded as
+`rb10.hold.cuda_resident.20260731`. All six required gates remain false: no
+full facade-equivalent window, unequal invocation surfaces, no learner
+consumption, incomplete achieved metrics, quarantined selected-slice parity,
+and world-1 regression. The provisional world-4 threshold is retained as a
+diagnostic and remains explicitly non-promotional.
+
+The decision record is [JSON](cuda_resident_rb10_hold_decision_20260731.json),
+[English](cuda_resident_rb10_hold_decision_20260731.md), and
+[Chinese](cuda_resident_rb10_hold_decision_20260731.zh.md).
+
+No human promotion approval is recorded. The decision is the fail-closed,
+mechanical result of the frozen program gates. It authorizes only preserving
+the branch-local candidate/evidence and performing RB11 closure without
+promotion. Kernel/launch tuning, register-pressure experiments, semantic
+expansion, CPU fallback, support changes, and RuntimeFacade promotion are all
+forbidden in this workline.
+
+### Independent review and verdict
+
+`/root/rb10_hold_review` independently reconciled the JSON against the
+byte-stable RB9 hashes and comparison flags, verified the maintained runtime
+support flags remain false, checked both language records, architecture guard,
+README links, and all six raw-gate mappings. It returned `APPROVE` with no
+blocking finding. RB10 is accepted for one decision-record commit.
+
+The sole next authorization is RB11 closure without promotion. No runtime,
+support, ABI, fallback, tuning, or semantic-expansion work is opened.

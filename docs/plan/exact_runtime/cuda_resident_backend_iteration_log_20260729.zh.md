@@ -10,8 +10,8 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB9 已经独立复核并 accepted。当前进入 RB10 decision-record
-candidate；RB11 仍受依赖门控。**
+状态：**RB0 至 RB10 已经独立复核并 accepted。当前进入 RB11 closure
+candidate；不授权 promotion。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -673,3 +673,39 @@ SHA-256：
 
 因此 RB9 允许形成一个 held-evidence commit。下一授权迭代仅为 RB10：记录 hold
 决策及 owner/action boundary；不得增加 promotion 路径或 kernel tuning。
+
+## RB10 accepted —— 后续决策：hold
+
+### 冻结范围
+
+RB10 把既有冻结 continuation gates 应用于已 accepted 的 RB9 commit
+`c21757908bcd4c7c323215bba2e8c3afbbfa7e2c`。写集只包含小型机器可读 decision、
+中英文 decision pair、architecture guard、双语 exact-runtime README index 与本账本；
+不修改 runtime、CUDA kernel、admission manifest、support projection、公开 ABI 或性能证据。
+
+### 决策
+
+candidate 决策为 `hold_backend`，ID 是
+`rb10.hold.cuda_resident.20260731`。六个 required gate 全部仍为 false：没有完整
+facade-equivalent window、两侧 invocation surface 不等价、没有 learner
+consumption、achieved metrics 不完整、selected-slice parity 仍 quarantine，且
+world 1 退化。provisional world-4 threshold 只保留为 diagnostics，明确不构成晋级。
+
+决策记录见 [JSON](cuda_resident_rb10_hold_decision_20260731.json)、
+[英文](cuda_resident_rb10_hold_decision_20260731.md) 与
+[中文](cuda_resident_rb10_hold_decision_20260731.zh.md)。
+
+当前没有 human promotion approval。该决策是冻结 gates 的机械、fail-closed 结果。
+它只授权保留分支内 candidate/evidence，并执行不晋级的 RB11 closure。当前工作线
+禁止 kernel/launch tuning、寄存器压力实验、语义扩张、CPU fallback、support
+变化与 RuntimeFacade 晋级。
+
+### 独立复核与结论
+
+`/root/rb10_hold_review` 独立把 JSON 与字节稳定的 RB9 hash/comparison flags 对账，
+确认 maintained runtime support flags 仍为 false，并检查双语记录、architecture
+guard、README links 与六项 raw-gate mapping，返回 `APPROVE`，无 blocking finding。
+RB10 允许形成一个 decision-record commit。
+
+唯一下一授权是无晋级的 RB11 closure；不开放 runtime、support、ABI、fallback、
+tuning 或语义扩张工作。

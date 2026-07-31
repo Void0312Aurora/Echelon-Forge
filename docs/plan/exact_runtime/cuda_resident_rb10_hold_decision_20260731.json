@@ -1,0 +1,58 @@
+{
+  "allowed_actions": [
+    "preserve_branch_local_candidate_and_rb9_evidence",
+    "perform_rb11_closure_audit_without_promotion"
+  ],
+  "authority": "branch_local_cuda_resident_program",
+  "date": "2026-07-31",
+  "decision": {
+    "continuation_option": "hold_backend",
+    "kernel_or_launch_tuning_authorized": false,
+    "maintained_profile_change_allowed": false,
+    "promotion_allowed": false,
+    "rb11_disposition": "closure_without_promotion",
+    "semantic_expansion_authorized": false,
+    "support_projection_change_allowed": false
+  },
+  "decision_basis": "mechanical_application_of_frozen_rb10_gates_to_rb9_evidence",
+  "decision_id": "rb10.hold.cuda_resident.20260731",
+  "evidence": {
+    "comparison_path": "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730/comparison.json",
+    "comparison_sha256": "cd3d444a6171c32c0bc34d8e2ec23cd17d964d48a162a0c1f12979fa567e9840",
+    "cpu_lane_sha256": "1a5bd2d1970621d8f808774b90c85953583d4151fc5d9dd1392adefafe28b4be",
+    "cuda_lane_sha256": "f03fc930f0781fc8f79aaf09d5bff4d1042c954e0a07516ad85642099d5dd94c",
+    "rb9_commit": "c21757908bcd4c7c323215bba2e8c3afbbfa7e2c"
+  },
+  "forbidden_actions": [
+    "runtime_facade_promotion",
+    "capability_manifest_expansion",
+    "support_flag_change",
+    "kernel_or_launch_tuning_under_current_workline",
+    "spatial_sensor_or_communications_slice",
+    "cpu_fallback_inside_cuda_window"
+  ],
+  "human_promotion_approval_recorded": false,
+  "maintained_state": {
+    "cpu_backend_remains_default": true,
+    "cuda_candidate_remains_unmaintained": true,
+    "public_abi_changed": false,
+    "runtime_support_flags_changed": false
+  },
+  "observations": {
+    "decision_input": "hold_required",
+    "provisional_internal_threshold_world_count": 4,
+    "threshold_is_promotion_gate": false,
+    "world_1_regresses": true
+  },
+  "owner": "exact-runtime / CUDA-resident backend workline",
+  "required_gates": {
+    "full_facade_window_available": false,
+    "invocation_surfaces_equivalent": false,
+    "learner_consumption_available": false,
+    "required_metrics_complete": false,
+    "selected_slice_parity_promotable": false,
+    "small_batch_no_regression": false
+  },
+  "schema_version": "cuda_resident.continuation_decision.v1",
+  "status": "hold"
+}
