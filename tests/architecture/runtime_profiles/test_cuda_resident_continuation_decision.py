@@ -190,7 +190,9 @@ def test_rb10_hold_keeps_maintained_runtime_and_bilingual_record_unchanged() -> 
     log_chinese = (
         ROOT / "docs/plan/exact_runtime/cuda_resident_backend_iteration_log_20260729.zh.md"
     ).read_text(encoding="utf-8")
-    assert "RB0 through RB10 are accepted" in program_english
-    assert "RB0 至 RB10" in program_chinese
+    assert "RB0 through RB11 are accepted" in program_english
+    assert "closed without promotion" in program_english
+    assert "RB0 至 RB11" in program_chinese
+    assert "无晋级关闭" in program_chinese
     assert "RB10 accepted" in log_english
     assert "RB10 accepted" in log_chinese

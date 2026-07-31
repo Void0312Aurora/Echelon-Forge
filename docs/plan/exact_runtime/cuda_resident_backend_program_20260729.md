@@ -12,9 +12,9 @@ Language versions:
 - Baseline: `origin/main` at `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-29`
 
-Status: **RB0 through RB10 are accepted after independent review. RB11 is the
-current closure candidate; no promotion is authorized.** Branch-local evidence and
-the sole next authorization are recorded in the
+Status: **RB0 through RB11 are accepted after independent review. The
+CUDA-resident program is closed without promotion; future work requires a new
+explicit program.** Branch-local evidence and the closure boundary are recorded in the
 [iteration log](cuda_resident_backend_iteration_log_20260729.md).
 
 ## 1. Decision

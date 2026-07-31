@@ -12,8 +12,8 @@
 - 基线：`origin/main` 的 `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-29`
 
-状态：**RB0 至 RB10 已经独立复核并 accepted。当前进入 RB11 closure
-candidate；不授权 promotion。** 分支证据与唯一下一授权记录在
+状态：**RB0 至 RB11 已经独立复核并 accepted。CUDA 驻留计划无晋级关闭；
+未来工作必须建立新的显式计划。** 分支证据与 closure boundary 记录在
 [迭代账本](cuda_resident_backend_iteration_log_20260729.zh.md)中。
 
 ## 1. 决策

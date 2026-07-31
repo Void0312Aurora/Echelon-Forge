@@ -10,8 +10,8 @@
 - 计划权威：[cuda_resident_backend_program_20260729.zh.md](cuda_resident_backend_program_20260729.zh.md)
 - 基线：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**RB0 至 RB10 已经独立复核并 accepted。当前进入 RB11 closure
-candidate；不授权 promotion。**
+状态：**RB0 至 RB11 已经独立复核并 accepted。CUDA 驻留计划无晋级关闭；
+未来工作必须建立新的显式计划。**
 
 本账本只记录分支内证据，不分配中央 `I<n>` 验收行，也不声称分支提交已经落入
 维护分支。每行的最终提交身份以本分支历史为准。
@@ -709,3 +709,34 @@ RB10 允许形成一个 decision-record commit。
 
 唯一下一授权是无晋级的 RB11 closure；不开放 runtime、support、ABI、fallback、
 tuning 或语义扩张工作。
+
+## RB11 accepted —— 无晋级 closure
+
+### 冻结范围
+
+RB11 是对已 accepted 的 RB0-RB10 chain 做只读 closure audit。写集只包含机器可读
+closure record、中英文 closure pair、双语 exact-runtime README index、双语 parent
+plan README row、双语 program 终态状态、本账本、新 closure architecture guard、
+既有 RB10 continuation guard 的终态断言，以及使 decision/closure JSON 字节稳定的
+`.gitattributes` 规则；不包含 runtime 代码。不删除 worktree/branch，不 merge/push，
+不修改 runtime/CUDA/support/ABI 行为，也不重新开放性能工作。
+
+### Closure 边界
+
+维护中的 `main` worktree 仍在 baseline
+`395e02b7dfeaa87baedb2611ec503d14ab137ce3`；candidate branch 仍是本地保留的研究
+分支，收口前 HEAD 为 `e5ea624fc1688d6e9d8b00ae64670ddcc2e3bd02`。closure record
+明确 remote 观察只覆盖未 fetch 的本地 remote-tracking refs，并记录没有 merge/push。
+branch、worktree、compact RB9 evidence 与 commit chain 均保留，未来删除必须得到
+用户明确授权。
+
+closure status 为 `closed_without_promotion`；所有 maintained support flags 继续
+为 false，CPU 继续是 default。重新开放必须建立新的显式计划，并补充新的完整
+facade、learner、counter、parity 与 small-batch 证据。
+
+### 独立复核与 closure 结论
+
+`/root/rb10_hold_review` 作为独立于 RB11 实现的 reviewer，核对了收口前 topology、
+commit chain、RB10/RB9 hash、maintained flags、字节稳定 JSON attributes、双语 links
+以及没有 destructive cleanup，返回 `APPROVE`，无 blocking finding。RB11 允许形成一个
+closure commit。计划现已完成并无晋级关闭；未来 CUDA 驻留实现必须建立新的显式计划。

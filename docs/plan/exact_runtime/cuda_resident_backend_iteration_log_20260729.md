@@ -10,8 +10,9 @@ Language versions:
 - Program authority: [cuda_resident_backend_program_20260729.md](cuda_resident_backend_program_20260729.md)
 - Baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **RB0 through RB10 are accepted after independent review. RB11 is the
-current closure candidate; no promotion is authorized.**
+Status: **RB0 through RB11 are accepted after independent review. The
+CUDA-resident program is closed without promotion; future work requires a new
+explicit program.**
 
 This ledger records branch-local evidence. It does not allocate a central
 `I<n>` acceptance row and does not claim that a branch commit has landed on the
@@ -839,3 +840,43 @@ blocking finding. RB10 is accepted for one decision-record commit.
 
 The sole next authorization is RB11 closure without promotion. No runtime,
 support, ABI, fallback, tuning, or semantic-expansion work is opened.
+
+## RB11 accepted — closure without promotion
+
+### Frozen scope
+
+RB11 is a read-only closure audit over the accepted RB0-RB10 chain. Its write
+set is limited to a machine-readable closure record, an English/Chinese
+closure pair, the bilingual exact-runtime README index, the bilingual parent
+plan README row, the bilingual program terminal-status lines, this ledger, a
+new closure architecture guard, the terminal-state assertions in the existing
+RB10 continuation guard, and `.gitattributes`. It does not include runtime
+code; the attribute additions only make the decision and closure JSON bytes
+stable for hash verification. It does not
+delete the worktree or branch, merge or push, modify runtime/CUDA/support/ABI
+behavior, or reopen any performance work.
+
+### Closure boundary
+
+The maintained `main` worktree remains at baseline
+`395e02b7dfeaa87baedb2611ec503d14ab137ce3`; the candidate branch remains a
+local retained research branch with pre-closure head
+`e5ea624fc1688d6e9d8b00ae64670ddcc2e3bd02`. The closure record scopes the
+remote observation to existing local remote-tracking refs without a fetch and
+records no merge/push. It preserves the rollback/recovery path by retaining the
+branch, worktree, compact RB9 evidence, and commit chain. Future deletion
+requires explicit user authorization.
+
+The closure status is `closed_without_promotion`; all maintained support flags
+remain false and CPU remains the default. Reopening requires a new explicit
+program and new full-facade, learner, counter, parity, and small-batch evidence.
+
+### Independent review and closure verdict
+
+`/root/rb10_hold_review` independently verified the pre-closure topology, commit
+chain, RB10/RB9 hashes, maintained flags, byte-stable JSON attributes, bilingual
+links, parent-plan status, and absence of destructive cleanup. It returned
+`APPROVE` with no blocking finding. RB11 is accepted for one closure commit.
+
+The plan is now complete and closed without promotion. Any future CUDA-resident
+implementation requires a new explicit program and fresh gates.
