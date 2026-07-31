@@ -20,11 +20,14 @@ def _policy() -> dict[str, object]:
     return value
 
 
-def _tracked_scope() -> list[str]:
+def _scope_paths() -> list[str]:
     completed = subprocess.run(
         [
             "git",
             "ls-files",
+            "--cached",
+            "--others",
+            "--exclude-standard",
             "--",
             "src/runtime/facade/internal/cuda_resident/**",
             "src/runtime/contracts/cuda_resident*",
@@ -53,7 +56,7 @@ def _tracked_scope() -> list[str]:
     return [
         path
         for path in completed.stdout.splitlines()
-        if Path(path).suffix in extensions
+        if Path(path).suffix in extensions and (ROOT / path).is_file()
     ]
 
 
@@ -124,20 +127,18 @@ def test_cr2_size_policy_is_explicit_and_self_consistent() -> None:
     assert thresholds["tracked_artifact_hard_bytes"] == 1_048_576
 
 
-def test_cr2_baseline_exceptions_and_watch_items_match_tracked_lines() -> None:
+def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
     policy = _policy()
     exceptions = policy["baseline_exceptions"]
     watch_items = policy["watch_items"]
     assert isinstance(exceptions, list)
     assert isinstance(watch_items, list)
-    tracked = _tracked_scope()
-    counts = {path: _line_count(path) for path in tracked}
+    assert exceptions == []
+    scope = _scope_paths()
+    counts = {path: _line_count(path) for path in scope}
     thresholds = policy["thresholds"]
     assert isinstance(thresholds, dict)
 
-    exception_map = {
-        str(entry["path"]): entry for entry in exceptions if isinstance(entry, dict)
-    }
     watch_map = {
         str(entry["path"]): entry for entry in watch_items if isinstance(entry, dict)
     }
@@ -151,22 +152,37 @@ def test_cr2_baseline_exceptions_and_watch_items_match_tracked_lines() -> None:
         path for path, lines in counts.items() if lines >= _line_limits(path, thresholds)[1]
     }
 
-    assert hard_violations == set(exception_map)
-    assert soft_or_higher == set(exception_map) | set(watch_map)
+    assert hard_violations == set()
+    assert soft_or_higher == set(watch_map)
     assert review_or_higher == {
-        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu",
         "src/tests/test_cuda_resident_replay.cpp",
         "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp",
     }
-    for path, entry in exception_map.items():
-        assert counts[path] == entry["observed_lines"]
-        assert entry["expires_after_iteration"] == "CR2-1"
-        assert entry["required_action"] == (
-            "split_by_layout_phase_barrier_and_device_api_before_semantic_growth"
-        )
     for path, entry in watch_map.items():
         assert counts[path] == entry["observed_lines"]
         assert entry["required_action"] == "no_growth_before_split_or_reclassification"
+
+    inventory = policy["module_inventory"]
+    assert isinstance(inventory, list)
+    inventory_map = {
+        str(entry["path"]): entry for entry in inventory if isinstance(entry, dict)
+    }
+    expected_inventory = {
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh": 291,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_math.cuh": 139,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu": 547,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu": 264,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_a.cu": 204,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_b.cu": 497,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_d.cu": 231,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu": 174,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu": 271,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu": 69,
+    }
+    assert set(inventory_map) == set(expected_inventory)
+    for path, expected_lines in expected_inventory.items():
+        assert counts[path] == expected_lines == inventory_map[path]["observed_lines"]
+    assert not (ROOT / "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu").exists()
 
 
 def test_cr2_tracked_cuda_evidence_and_plan_artifacts_stay_below_byte_cap() -> None:

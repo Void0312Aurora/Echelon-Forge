@@ -7,7 +7,8 @@ CUDA_RESIDENT_DIR = REPO_ROOT / "src/runtime/facade/internal/cuda_resident"
 PHASE_CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
 CUDA_PHASE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_phase_b.cpp"
 CPU_PHASE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_phase_b_cpu_reference.cpp"
-DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda.cu"
+DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_phase_b.cu"
+WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
 STORE_HEADER = CUDA_RESIDENT_DIR / "cuda_world_store.h"
 BACKEND_SOURCE = CUDA_RESIDENT_DIR / "cuda_resident_backend.cpp"
 FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
@@ -36,10 +37,10 @@ def test_rb6_phase_b_uses_resident_dynamics_soa_and_split_live_ranges() -> None:
     ):
         assert kernel in device
 
-    window = device.split("bool commit_phase_b_window", 1)[1].split("} // namespace", 1)[0]
-    force_launch = window.index("phase_b_forces_kernel<<<")
-    aero_launch = window.index("phase_b_aerodynamics_kernel<<<")
-    integrate_launch = window.index("phase_b_integrate_kernel<<<")
+    window = WINDOW_SOURCE.read_text(encoding="utf-8")
+    force_launch = window.index("launch_phase_b_forces")
+    aero_launch = window.index("launch_phase_b_aerodynamics")
+    integrate_launch = window.index("launch_phase_b_integrate")
     sync = window.index("cudaDeviceSynchronize()")
     assert force_launch < aero_launch < integrate_launch < sync
     assert window[:sync].count("cudaDeviceSynchronize()") == 0

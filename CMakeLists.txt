@@ -352,7 +352,14 @@ set(EF_CUDA_RESIDENT_BACKEND_SOURCES
 )
 if (EF_ENABLE_CUDA_EXPERIMENTS)
     list(APPEND EF_CUDA_RESIDENT_BACKEND_SOURCES
-        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_a.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_b.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_d.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu
     )
 endif()
 

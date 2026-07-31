@@ -20,9 +20,10 @@ inline constexpr std::string_view kCudaResidentPerformanceUnavailableCountersRea
     "ERR_NVGPUCTRPERM";
 
 // These constants describe the fixed-air device layout and the operations in
-// cuda_world_store_cuda.cu. They are a diagnostic ledger, not a claim that the
-// candidate is a full RuntimeFacade backend. The architecture test keeps this
-// ledger synchronized with the declared phase sequence.
+// the split cuda_world_store_cuda_* translation units. They are a diagnostic
+// ledger, not a claim that the candidate is a full RuntimeFacade backend. The
+// architecture test keeps this ledger synchronized with the declared phase
+// sequence.
 inline constexpr std::size_t kFlightControlH2dBytesPerWorld = 55;
 inline constexpr std::size_t kLifecycleRecordBytesPerWorld = 16;
 inline constexpr std::size_t kObservationFieldsPerWorld = 15;

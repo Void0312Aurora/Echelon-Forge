@@ -13,9 +13,10 @@ Language versions:
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-31`
 
-Status: **CR2-0 is a candidate freeze. The previous RB0-RB11 program remains
-closed without promotion. This program may either produce promotion-grade
-evidence or close again; it does not reopen maintained support by itself.**
+Status: **CR2-1 implementation is independently approved; its single commit is
+pending. The previous RB0-RB11 program remains closed without
+promotion. This program may either produce promotion-grade evidence or close
+again; it does not reopen maintained support by itself.**
 
 ## 1. Objective and boundary
 
@@ -62,10 +63,27 @@ log; crossing the review band blocks unrelated semantic growth. A module that
 already exceeds the hard limit can exist only as a named, expiring migration
 exception and must be the first structural work item.
 
-The CR2 baseline has one hard-limit exception:
+CR2-0 recorded one hard-limit migration exception for the 2528-line
+`cuda_world_store_cuda.cu`. CR2-1 removes that file from the current tree and
+does not carry the exception forward. The current CUDA implementation inventory
+is:
 
-- `src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu` — 2528
-  lines; must be decomposed in CR2-1 before new behavior is added.
+| Module | Role | Lines |
+| --- | --- | ---: |
+| `cuda_world_store_cuda_internal.cuh` | shared layout, allocation, and wrapper contract | 291 |
+| `cuda_world_store_cuda_math.cuh` | shared device math helpers | 139 |
+| `cuda_world_store_cuda_storage.cu` | allocation/layout, metadata, and fixture storage | 547 |
+| `cuda_world_store_cuda_barrier.cu` | barrier kernel and resource query | 264 |
+| `cuda_world_store_cuda_phase_a.cu` | Phase A kernel and publication | 204 |
+| `cuda_world_store_cuda_phase_b.cu` | Phase B kernels and launch wrappers | 497 |
+| `cuda_world_store_cuda_phase_d.cu` | Phase D kernels and launch wrappers | 231 |
+| `cuda_world_store_cuda_observation.cu` | observation pack and consumer | 174 |
+| `cuda_world_store_cuda_state_readback.cu` | host state readback | 271 |
+| `cuda_world_store_cuda_window.cu` | private full-window orchestration | 69 |
+
+All current CR2-owned CUDA modules are below the 700-line soft target. The old
+monolith remains a historical baseline only; it is not a source or an active
+exception.
 
 The following files are watch items and may not grow until split or explicitly
 reclassified:
@@ -101,8 +119,8 @@ exception may be used to hide semantic implementation growth.
 
 | ID | Scope | Exit gate |
 | --- | --- | --- |
-| CR2-0 | Freeze this program, size policy, exception manifest, and architecture guard. | Policy parses; baseline violations are explicit and bounded; independent review approves the write set. |
-| CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | No CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, and parity tests remain green; independent review approves. |
+| CR2-0 | Freeze this program, size policy, exception manifest, and architecture guard. | Completed in `2f34fac6`; policy parses and the reviewed write set is committed. |
+| CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | Independently approved by `/root/cr2_split_review`; no CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, parity, and architecture tests are green; one commit remains. |
 | CR2-2 | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Both lanes consume the same trace through the declared surface; private-only performance invocation is no longer the sole evidence path. |
 | CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured path. | Consumer smoke becomes an explicit contract; ownership/lifetime and failure behavior are tested; no public support promotion. |
 | CR2-4 | Release selected-slice parity and deterministic reset identity from quarantine. | Identity policy is stable or explicitly excluded; full replay comparison passes the frozen budget at every declared barrier. |

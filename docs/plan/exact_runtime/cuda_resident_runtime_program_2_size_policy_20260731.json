@@ -51,14 +51,57 @@
     "tracked_artifact_soft_bytes": 524288,
     "tracked_artifact_hard_bytes": 1048576
   },
-  "baseline_exceptions": [
+  "baseline_exceptions": [],
+  "module_inventory": [
     {
-      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu",
-      "observed_lines": 2528,
-      "kind": "hard_limit_migration",
-      "reason": "pre-existing monolithic CUDA layout, kernels, barrier orchestration, and device API implementation",
-      "expires_after_iteration": "CR2-1",
-      "required_action": "split_by_layout_phase_barrier_and_device_api_before_semantic_growth"
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh",
+      "role": "shared_cuda_resident_layout_and_host_wrapper_contract",
+      "observed_lines": 291
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_math.cuh",
+      "role": "shared_device_math_helpers",
+      "observed_lines": 139
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu",
+      "role": "allocation_layout_metadata_and_fixture_storage",
+      "observed_lines": 547
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu",
+      "role": "barrier_kernel_and_resource_query",
+      "observed_lines": 264
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_a.cu",
+      "role": "phase_a_kernel_and_stage_publication",
+      "observed_lines": 204
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_b.cu",
+      "role": "phase_b_kernels_and_launch_wrappers",
+      "observed_lines": 497
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_d.cu",
+      "role": "phase_d_kernels_and_launch_wrappers",
+      "observed_lines": 231
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu",
+      "role": "phase_d_observation_pack_and_consumer",
+      "observed_lines": 174
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu",
+      "role": "host_state_readback",
+      "observed_lines": 271
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu",
+      "role": "private_phase_window_orchestration",
+      "observed_lines": 69
     }
   ],
   "watch_items": [

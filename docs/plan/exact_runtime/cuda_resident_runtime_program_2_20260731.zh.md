@@ -13,9 +13,9 @@
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-31`
 
-状态：**CR2-0 是 candidate freeze。前一套 RB0-RB11 计划仍保持无晋级关闭。
-本计划可能产出可晋级证据，也可能再次 closure；它不会自行重新开放 maintained
-support。**
+状态：**CR2-1 implementation 已获独立批准；单一 commit 待完成。前一套
+RB0-RB11 计划仍保持无晋级关闭。本计划可能产出可晋级证据，也可能再次 closure；
+它不会自行重新开放 maintained support。**
 
 ## 1. 目标与边界
 
@@ -52,10 +52,25 @@ promotion proposal，不能静默 merge 或 publish。
 记录拆分决定；进入 review band 后禁止继续添加无关语义。已经超过硬上限的模块
 只能以带期限的显式 migration exception 存在，并必须成为第一项结构性工作。
 
-CR2 baseline 有一个硬上限例外：
+CR2-0 记录过一个 2528 行单体 `cuda_world_store_cuda.cu` 的硬上限迁移例外。
+CR2-1 已从当前树移除该文件，不再延续例外。当前 CUDA implementation inventory
+如下：
 
-- `src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu`：2528 行；
-  必须在 CR2-1 拆分，之后才能增加新行为。
+| 模块 | 作用 | 行数 |
+| --- | --- | ---: |
+| `cuda_world_store_cuda_internal.cuh` | shared layout、allocation 与 wrapper contract | 291 |
+| `cuda_world_store_cuda_math.cuh` | shared device math helpers | 139 |
+| `cuda_world_store_cuda_storage.cu` | allocation/layout、metadata 与 fixture storage | 547 |
+| `cuda_world_store_cuda_barrier.cu` | barrier kernel 与 resource query | 264 |
+| `cuda_world_store_cuda_phase_a.cu` | Phase A kernel 与 publication | 204 |
+| `cuda_world_store_cuda_phase_b.cu` | Phase B kernels 与 launch wrappers | 497 |
+| `cuda_world_store_cuda_phase_d.cu` | Phase D kernels 与 launch wrappers | 231 |
+| `cuda_world_store_cuda_observation.cu` | observation pack 与 consumer | 174 |
+| `cuda_world_store_cuda_state_readback.cu` | host state readback | 271 |
+| `cuda_world_store_cuda_window.cu` | private full-window orchestration | 69 |
+
+当前 CR2-owned CUDA 模块全部低于 700 行 soft target。旧单体只作为历史 baseline
+保留，不是当前 source，也不是活动中的 exception。
 
 以下文件是 watch item；在拆分或显式重新分类前不得继续增长：
 
@@ -82,8 +97,8 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 
 | ID | 范围 | 退出门 |
 | --- | --- | --- |
-| CR2-0 | 冻结本计划、size policy、exception manifest 与 architecture guard。 | policy 可解析；baseline violations 明确且有边界；独立复核批准 write set。 |
-| CR2-1 | 在不改变语义下按 layout/allocation、Phase A、Phase B、Phase D、barrier、device API orchestration 拆分 `cuda_world_store_cuda.cu`。 | CR2-owned module 不超过 1000 行；聚焦 C++/CUDA lifecycle、replay、parity 测试保持通过；独立复核批准。 |
+| CR2-0 | 冻结本计划、size policy、exception manifest 与 architecture guard。 | 已在 `2f34fac6` 完成；policy 可解析且复核过的 write set 已提交。 |
+| CR2-1 | 在不改变语义下按 layout/allocation、Phase A、Phase B、Phase D、barrier、device API orchestration 拆分 `cuda_world_store_cuda.cu`。 | 已由 `/root/cr2_split_review` 独立批准；CR2-owned module 不超过 1000 行；聚焦 C++/CUDA lifecycle、replay、parity 与 architecture 测试通过；还需一个 commit。 |
 | CR2-2 | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 两侧消费同一 trace；private-only performance invocation 不再是唯一证据路径。 |
 | CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured path 的 hidden host validation。 | consumer smoke 成为显式 contract；ownership/lifetime/failure 有测试；不晋级 public support。 |
 | CR2-4 | 将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | identity policy 稳定或明确排除；每个声明 barrier 上的 frozen budget replay 通过。 |

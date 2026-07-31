@@ -11,7 +11,7 @@
 - 父级：`935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**CR2-0 candidate freeze；独立复核与提交尚未完成。** RB0-RB11 计划仍是
+状态：**CR2-1 implementation candidate；独立复核与提交待完成。** RB0-RB11 计划仍是
 无晋级关闭。本账本只记录新分支内计划，不改变 maintained support flags。
 
 ## CR2-0 candidate —— 计划与规模治理冻结
@@ -51,3 +51,79 @@ worktree candidate 文件；独立 reviewer 还会核对完整的 staged/untrack
 独立 reviewer 必须核对 branch base、精确 write set、行数/字节阈值、baseline
 exception expiry，以及没有 runtime 变更。只有 `APPROVE` 才允许形成一个 CR2-0
 commit。CR2-1 是唯一下一授权，且必须先消除 2528 行例外，再进行语义工作。
+
+## CR2-1 candidate —— CUDA translation unit 物理拆分
+
+CR2-1 保留原有 kernel body、host-visible error 行为和 private window trace，
+只把实现移入独立 translation unit。删除的 `cuda_world_store_cuda.cu` 没有被另一个
+更大的 coordinator 替代；新的 coordinator 文件只有 69 行 host wrapper。
+
+### 精确 write set
+
+- 在 `CMakeLists.txt` 中把 resident CUDA source 替换为八个 `.cu` 文件；
+- 增加一个 shared internal `.cuh` contract 和一个 shared device-math `.cuh`；
+- 增加 storage、barrier、Phase A、Phase B、Phase D、observation、state
+  readback、window 八个 `.cu` 文件；
+- 更新 CUDA architecture guards 与 RB9 ledger source label；
+- 更新 performance contract comment，指向拆分后的 source family；
+- 删除旧的 2528 行 monolith。
+
+没有修改 public facade、support flag、ABI、DTO、runtime selection 或 CUDA
+separable compilation。跨 translation unit 只有 host wrapper；kernel 与 device helper
+仍私有于各自 `.cu`。
+
+### 结构不变量
+
+- 保留 10 个 kernel：Phase A 1 个、Phase B 3 个、Phase D 3 个、observation 2 个、
+  barrier 1 个；
+- private window 仍按相同顺序 launch 六个 B/D kernel，在序列后执行一次
+  `cudaDeviceSynchronize()`，并保留 status/error 检查与 barrier publication；
+- resource-query helper 保留固定 128-thread occupancy 语义和原错误字符串；
+- resident target 不启用 CUDA separable compilation/RDC。
+
+### 规模证据
+
+| 模块 | 行数 |
+| --- | ---: |
+| `cuda_world_store_cuda_internal.cuh` | 291 |
+| `cuda_world_store_cuda_math.cuh` | 139 |
+| `cuda_world_store_cuda_storage.cu` | 547 |
+| `cuda_world_store_cuda_barrier.cu` | 264 |
+| `cuda_world_store_cuda_phase_a.cu` | 204 |
+| `cuda_world_store_cuda_phase_b.cu` | 497 |
+| `cuda_world_store_cuda_phase_d.cu` | 231 |
+| `cuda_world_store_cuda_observation.cu` | 174 |
+| `cuda_world_store_cuda_state_readback.cu` | 271 |
+| `cuda_world_store_cuda_window.cu` | 69 |
+
+CR2-0 的 2528 行 exception 已在机器策略中清空；919 行 replay test 与 804 行
+RB9 probe 仍是冻结的 watch item。
+
+### 验证证据
+
+- Visual Studio/CUDA 13.0、`CMAKE_CUDA_ARCHITECTURES=86`、Release 构建：
+  `ef_cuda_resident_lifecycle_test`、`ef_cuda_resident_replay_test`、
+  `ef_cuda_resident_rb9_cuda_probe` 均编译并链接成功；
+- lifecycle executable：11/11 test cases，527/527 assertions 通过；
+- replay executable：3/3 test cases，47/47 assertions 通过；
+- RB9 CUDA probe 在 NVIDIA GeForce RTX 3090（SM 8.6）上运行。既有 hold reasons
+  仍明确报告：full-facade invocation 不可用、learner/device consumption 不可用、
+  GPU counters 为 `ERR_NVGPUCTRPERM`，以及 identity-inclusive reset determinism
+  仍是 diagnostic；
+- CUDA-off 配置成功；CPU lifecycle/replay target 已构建并通过（11/11，66 个
+  assertions；3/3，14 个 assertions）。完整 CUDA-off probe target 未构建，原因是
+  未修改的 `ef_core` 图当前在 MSVC 下存在 `__builtin_ctz`、`M_PI` 等既有 portability
+  编译错误；
+- architecture/size/performance/Phase A/B/D 聚焦测试 31 项通过；Ruff 与
+  `git diff --check` 通过。
+- 完整 `tests/architecture/runtime_profiles` 运行结果为 52 passed、15 failures；
+  15 项全部是 Windows snippet 环境找不到 `g++`（`WinError 2`），不涉及 CR2-1
+  修改路径。
+
+### 独立复核门
+
+新的 reviewer `/root/cr2_split_review` 在核对完整 staged/unstaged/untracked
+write set、与 RB11 单体的归一化 kernel/function body 比对、CMake device-link
+拓扑、size policy 及聚焦构建/测试证据后返回 **`APPROVE`**，没有 CR2-1 blocker。
+上述精确 write set 现获授权形成一个 CR2-1 commit；该 commit 不包含 merge、push
+或 promotion。

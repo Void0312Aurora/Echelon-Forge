@@ -5,7 +5,9 @@ from tests.architecture.helpers import REPO_ROOT
 
 CUDA_RESIDENT_DIR = REPO_ROOT / "src/runtime/facade/internal/cuda_resident"
 CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
-DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda.cu"
+DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_phase_d.cu"
+OBSERVATION_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_observation.cu"
+WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
 STORE_HEADER = CUDA_RESIDENT_DIR / "cuda_world_store.h"
 BACKEND_HEADER = CUDA_RESIDENT_DIR / "cuda_resident_backend.h"
 BACKEND_SOURCE = CUDA_RESIDENT_DIR / "cuda_resident_backend.cpp"
@@ -16,7 +18,12 @@ FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
 
 def test_rb7_phase_d_contract_and_split_kernels_are_present() -> None:
   contract = CONTRACT.read_text(encoding="utf-8")
-  device = DEVICE_SOURCE.read_text(encoding="utf-8")
+  device = "\n".join(
+    (
+      DEVICE_SOURCE.read_text(encoding="utf-8"),
+      OBSERVATION_SOURCE.read_text(encoding="utf-8"),
+    )
+  )
   store = STORE_HEADER.read_text(encoding="utf-8")
 
   assert '"cuda_resident.phase_d.projection.v1"' in contract
@@ -34,14 +41,14 @@ def test_rb7_phase_d_contract_and_split_kernels_are_present() -> None:
   ):
     assert kernel in device
 
-  window = device.split("bool commit_phase_b_window", 1)[1].split("} // namespace", 1)[0]
+  window = WINDOW_SOURCE.read_text(encoding="utf-8")
   for launch in (
-    "phase_b_forces_kernel<<<",
-    "phase_b_aerodynamics_kernel<<<",
-    "phase_b_integrate_kernel<<<",
-    "phase_d_instruments_kernel<<<",
-    "phase_d_configuration_kernel<<<",
-    "phase_d_episode_kernel<<<",
+    "launch_phase_b_forces",
+    "launch_phase_b_aerodynamics",
+    "launch_phase_b_integrate",
+    "launch_phase_d_instruments",
+    "launch_phase_d_configuration",
+    "launch_phase_d_episode",
   ):
     assert launch in window
   sync = window.index("cudaDeviceSynchronize()")

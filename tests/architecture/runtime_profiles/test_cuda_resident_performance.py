@@ -21,13 +21,29 @@ from scripts.benchmark_cuda_resident_rb9 import (
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = ROOT / "src/runtime/contracts/cuda_resident_performance_contract.h"
 PROBE = ROOT / "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp"
-DEVICE = ROOT / "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu"
+CUDA_RESIDENT_DIR = ROOT / "src/runtime/facade/internal/cuda_resident"
+DEVICE_SOURCES = tuple(
+    CUDA_RESIDENT_DIR / name
+    for name in (
+        "cuda_world_store_cuda_barrier.cu",
+        "cuda_world_store_cuda_phase_a.cu",
+        "cuda_world_store_cuda_phase_b.cu",
+        "cuda_world_store_cuda_phase_d.cu",
+        "cuda_world_store_cuda_observation.cu",
+        "cuda_world_store_cuda_window.cu",
+    )
+)
+WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
 CMAKE = ROOT / "CMakeLists.txt"
 EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730"
 
 
 def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _device_text() -> str:
+    return "\n".join(_text(path) for path in DEVICE_SOURCES)
 
 
 def _stats(value: float, sample_count: int) -> dict[str, float | int | list[float]]:
@@ -170,9 +186,12 @@ def test_rb9_freezes_private_invocation_and_complete_world_mode_matrix() -> None
 
 def test_rb9_static_ledger_matches_current_cuda_phase_graph() -> None:
     contract = _text(CONTRACT)
-    device = _text(DEVICE)
-    phase_window = device.split("bool commit_phase_b_window", 1)[1].split("} // namespace", 1)[0]
-    assert phase_window.count("<<<blocks, threads>>>") == 6
+    device = _device_text()
+    phase_window = _text(WINDOW_SOURCE)
+    assert device.count("<<<blocks, threads>>>") == 10
+    assert phase_window.index("launch_phase_b_forces") < phase_window.index("launch_phase_d_episode")
+    assert phase_window.count("launch_phase_b_") == 3
+    assert phase_window.count("launch_phase_d_") == 3
     assert "kFlightControlH2dBytesPerWorld = 55" in contract
     assert ".kernel_launch_count = 10" in contract
     assert ".synchronization_count = 5" in contract

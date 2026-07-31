@@ -454,7 +454,7 @@ Json statistics_json(const std::vector<double> &samples) {
 #if defined(EF_RB9_CUDA_PROBE)
 Json ledger_json(const runtime::cuda_resident::performance::WindowTransferLedger &ledger) {
     return {
-        {"source", "static_operation_ledger_validated_against_cuda_world_store_cuda.cu"},
+        {"source", "static_operation_ledger_validated_against_cuda_world_store_split.v1"},
         {"h2d_copy_count", ledger.h2d_copy_count},
         {"h2d_bytes", ledger.h2d_bytes},
         {"d2h_copy_count", ledger.d2h_copy_count},

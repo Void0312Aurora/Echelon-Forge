@@ -8,7 +8,7 @@ PHASE_CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_phase_a_fixtur
 CUDA_PHASE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_phase_a.cpp"
 CPU_PHASE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_phase_a_cpu_reference.cpp"
 STORE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store.cpp"
-DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda.cu"
+DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_phase_a.cu"
 BACKEND_SOURCE = CUDA_RESIDENT_DIR / "cuda_resident_backend.cpp"
 CMAKE = REPO_ROOT / "CMakeLists.txt"
 
