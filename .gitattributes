@@ -7,3 +7,4 @@ tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text
 docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730/** -text
 docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.json -text
 docs/plan/exact_runtime/cuda_resident_rb11_closure_20260731.json -text
+docs/plan/exact_runtime/cuda_resident_runtime_program_2_size_policy_20260731.json -text

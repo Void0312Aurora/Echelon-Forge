@@ -1,0 +1,91 @@
+{
+  "schema_version": "cuda_resident.program2.size_policy.v1",
+  "policy_id": "cr2.size_governance.20260731",
+  "date": "2026-07-31",
+  "branch": "codex/cuda-resident-runtime-program-2",
+  "base_commit": "935926e83b18187c79a6e0be2ca010276c1a6fc4",
+  "measurement": {
+    "line_definition": "physical lines from tracked file bytes after checkout",
+    "counter": "Python str.splitlines()",
+    "compression_or_multistatement_lines_waive_policy": false
+  },
+  "scope": {
+    "implementation_and_test_roots": [
+      "src/runtime/facade/internal/cuda_resident",
+      "src/runtime/contracts/cuda_resident*",
+      "src/tools/experimental/cuda_resident",
+      "src/tests/test_cuda_resident*",
+      "tests/architecture/runtime_profiles/test_cuda_resident*",
+      "tests/runtime/facade/test_cuda_resident*"
+    ],
+    "extensions": [
+      ".c",
+      ".cc",
+      ".cpp",
+      ".cxx",
+      ".cu",
+      ".cuh",
+      ".h",
+      ".hh",
+      ".hpp",
+      ".py"
+    ],
+    "artifact_path_prefixes": [
+      "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730/",
+      "docs/plan/exact_runtime/cuda_resident_runtime_program_2_",
+      "docs/plan/exact_runtime/cuda_resident_cr2_"
+    ],
+    "documentation_and_evidence_are_not_modules": true,
+    "generated_or_vendor_requires_manifest": true
+  },
+  "thresholds": {
+    "implementation_soft_lines": 700,
+    "implementation_review_lines": 800,
+    "implementation_hard_lines": 1000,
+    "header_soft_lines": 600,
+    "header_review_lines": 800,
+    "header_hard_lines": 1000,
+    "test_soft_lines": 700,
+    "test_review_lines": 800,
+    "test_hard_lines": 1000,
+    "tracked_artifact_soft_bytes": 524288,
+    "tracked_artifact_hard_bytes": 1048576
+  },
+  "baseline_exceptions": [
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu",
+      "observed_lines": 2528,
+      "kind": "hard_limit_migration",
+      "reason": "pre-existing monolithic CUDA layout, kernels, barrier orchestration, and device API implementation",
+      "expires_after_iteration": "CR2-1",
+      "required_action": "split_by_layout_phase_barrier_and_device_api_before_semantic_growth"
+    }
+  ],
+  "watch_items": [
+    {
+      "path": "src/tests/test_cuda_resident_replay.cpp",
+      "observed_lines": 919,
+      "reason": "test module is in the review band",
+      "required_action": "no_growth_before_split_or_reclassification"
+    },
+    {
+      "path": "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp",
+      "observed_lines": 804,
+      "reason": "probe is above the soft target",
+      "required_action": "no_growth_before_split_or_reclassification"
+    }
+  ],
+  "gates": [
+    "every_hard_limit_violation_is_an_explicit_expiring_exception",
+    "no_watch_item_grows_without_a_recorded_split_decision",
+    "cr2_owned_new_modules_are_at_or_below_soft_target_when_created",
+    "tracked_and_worktree_evidence_and_generated_artifacts_stay_below_byte_hard_limit",
+    "cr2-1_removes_the_cuda_world_store_hard_limit_exception"
+  ],
+  "exception_policy": {
+    "allowed": true,
+    "requires_path_reason_observed_count_expiry_and_next_action": true,
+    "may_hide_new_semantic_growth": false,
+    "does_not_authorize_runtime_or_support_promotion": true
+  }
+}

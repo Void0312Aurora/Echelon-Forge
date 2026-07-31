@@ -1,0 +1,127 @@
+# CUDA-Resident Runtime Program 2
+
+Language versions:
+
+- English canonical: `cuda_resident_runtime_program_2_20260731.md`
+- Chinese companion: [cuda_resident_runtime_program_2_20260731.zh.md](cuda_resident_runtime_program_2_20260731.zh.md)
+- Size policy: [cuda_resident_runtime_program_2_size_policy_20260731.json](cuda_resident_runtime_program_2_size_policy_20260731.json)
+- Iteration log: [cuda_resident_runtime_program_2_iteration_log_20260731.md](cuda_resident_runtime_program_2_iteration_log_20260731.md)
+
+- Document type: new explicit continuation program after RB11 closure
+- Branch: `codex/cuda-resident-runtime-program-2`
+- Parent closure: `935926e83b18187c79a6e0be2ca010276c1a6fc4`
+- Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
+- Date: `2026-07-31`
+
+Status: **CR2-0 is a candidate freeze. The previous RB0-RB11 program remains
+closed without promotion. This program may either produce promotion-grade
+evidence or close again; it does not reopen maintained support by itself.**
+
+## 1. Objective and boundary
+
+The objective is to turn the branch-local CUDA-resident experiment into a
+measurable, facade-equivalent candidate, while preserving the architectural
+decision that this is a second backend with its own device-native state and
+scheduling. It is not a sequence of Flecs systems rewritten as CUDA helpers.
+
+The program must prove, in order:
+
+1. the resident implementation can be decomposed into reviewable modules;
+2. CPU and CUDA can execute the same declared full-window contract through
+   equivalent invocation surfaces;
+3. learner/device consumers can consume the result without hidden host
+   validation readback;
+4. selected-slice parity and reset identity are releasable rather than
+   quarantined diagnostics;
+5. register, spill, occupancy, memory, and divergence evidence exists for the
+   actual end-to-end window; and
+6. any performance decision includes small batches and rollout cost, not only
+   an isolated kernel or a private phase sequence.
+
+Until every gate is accepted, the maintained CPU backend remains the default,
+all resident support flags remain false, and RuntimeFacade does not select this
+branch. A successful CR2 gate authorizes a separate promotion proposal; it
+does not silently merge or publish one.
+
+## 2. Size governance (mandatory)
+
+The physical line count is measured from tracked file bytes after checkout,
+using `splitlines()`; formatting or line-compression tricks do not waive the
+rule. The policy is machine-readable and guarded by
+`test_cuda_resident_program_2_size_policy.py`.
+
+| Scope | Soft target | Review band | Hard limit |
+| --- | ---: | ---: | ---: |
+| `.cpp`, `.cc`, `.cu`, `.cxx` implementation module | 700 lines | 800 lines | 1000 lines |
+| `.h`, `.hpp`, `.cuh` contract/header module | 600 lines | 800 lines | 1000 lines |
+| CUDA-resident test/probe module | 700 lines | 800 lines | 1000 lines |
+
+The 1000-line value is a hard ceiling for CR2-owned modules, not a target.
+Crossing the soft target requires an explicit split decision in the iteration
+log; crossing the review band blocks unrelated semantic growth. A module that
+already exceeds the hard limit can exist only as a named, expiring migration
+exception and must be the first structural work item.
+
+The CR2 baseline has one hard-limit exception:
+
+- `src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu` — 2528
+  lines; must be decomposed in CR2-1 before new behavior is added.
+
+The following files are watch items and may not grow until split or explicitly
+reclassified:
+
+- `src/tests/test_cuda_resident_replay.cpp` — 919 lines;
+- `src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp` — 804
+  lines.
+
+Generated/vendor files and historical documents are outside the module line
+limit only when an explicit manifest entry records their provenance. New
+tracked evidence, reports, or generated artifacts have a 512 KiB soft limit
+and a 1 MiB hard limit; repeated raw traces must remain outside the tracked
+write set. CR2 evidence/report/generated files must use one of the declared
+`cuda_resident_runtime_program_2_` or `cuda_resident_cr2_` prefixes; the guard
+scans both tracked files and on-disk candidate files before staging. No
+exception may be used to hide semantic implementation growth.
+
+## 3. Engineering invariants
+
+- The backend owns resident state during an admitted window; no stage-by-stage
+  Flecs write-back and no CPU fallback inside a CUDA window.
+- Public DTOs and RuntimeFacade contracts are reused at the boundary; private
+  SoA types may remain device-owned behind explicit export/consumer leases.
+- Every iteration has one bounded semantic scope, an exact write set, focused
+  validation, an independent reviewer, and one commit.
+- Runtime/support/ABI changes remain fail-closed until the final decision gate.
+- `--maxrregcount` is not a substitute for a layout or scheduling fix. Any
+  tuning must follow measured resource evidence and preserve the frozen trace.
+- Existing RB9 evidence is provenance, not a promotion result; CR2 must rerun
+  the missing gates rather than relabeling the old private threshold.
+
+## 4. Iteration queue
+
+| ID | Scope | Exit gate |
+| --- | --- | --- |
+| CR2-0 | Freeze this program, size policy, exception manifest, and architecture guard. | Policy parses; baseline violations are explicit and bounded; independent review approves the write set. |
+| CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | No CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, and parity tests remain green; independent review approves. |
+| CR2-2 | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Both lanes consume the same trace through the declared surface; private-only performance invocation is no longer the sole evidence path. |
+| CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured path. | Consumer smoke becomes an explicit contract; ownership/lifetime and failure behavior are tested; no public support promotion. |
+| CR2-4 | Release selected-slice parity and deterministic reset identity from quarantine. | Identity policy is stable or explicitly excluded; full replay comparison passes the frozen budget at every declared barrier. |
+| CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Counters are complete or a documented external blocker stops the gate; no tuning claim is made from incomplete counters. |
+| CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | End-to-end benefit survives cold, warm, rollout, export, device-consumer, and small-batch cases; selection policy is evidence-backed. |
+| CR2-7 | Make a separately reviewed promotion or closure decision. | Promotion requires a new explicit authorization and integration plan; otherwise record a second closure without changing maintained behavior. |
+
+CR2-1 through CR2-6 may be repeated as narrowly scoped sub-iterations, but a
+single commit may not combine structural decomposition, semantic expansion,
+and performance tuning.
+
+## 5. Promotion and recovery boundary
+
+Promotion is blocked if any of the following remains true: invocation surfaces
+are not equivalent; learner/device consumption is unavailable; parity is only a
+diagnostic; required counters are unavailable; world-1 or declared small-batch
+cases regress without an explicit policy; or the implementation requires a
+second public facade/duplicated DTO set.
+
+The branch and worktree remain recoverable throughout CR2. No merge, push,
+branch deletion, or worktree deletion is part of this program. A future
+cleanup requires a fresh ref/worktree audit and explicit user authorization.
