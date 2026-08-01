@@ -154,12 +154,28 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
         CHECK(state.kinematics.heading == doctest::Approx(fixture.spawns[world].heading));
     }
 
-    std::vector<WorldPilotActionAssignment> actions = make_actions(setup.entity_ids);
-    backend.inject({.pilot_actions = actions});
-    snapshot = backend.export_snapshot("rb4.input");
     CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
+    std::vector<WorldPilotActionAssignment> changed_actions = make_actions(setup.entity_ids, 0.1);
+    testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
+    CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
+    snapshot = backend.export_snapshot("rb4.after_transfer_failure");
     CudaWorldStoreStateSnapshot resident_state =
         testing::CudaWorldStoreTestAccess::read_state(store);
+    CHECK(snapshot.worlds[0].identity.global_version == 1);
+    CHECK(resident_state.worlds[0].controls.throttle == doctest::Approx(0.0));
+
+    testing::CudaWorldStoreTestAccess::fail_next_barrier_commit(store);
+    CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
+    snapshot = backend.export_snapshot("rb4.after_barrier_failure");
+    resident_state = testing::CudaWorldStoreTestAccess::read_state(store);
+    CHECK(snapshot.worlds[0].identity.global_version == 1);
+    CHECK(resident_state.worlds[0].controls.throttle == doctest::Approx(0.0));
+
+    std::vector<WorldPilotActionAssignment> actions = make_actions(setup.entity_ids);
+    backend.inject({.pilot_actions = actions});
+    CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
+    snapshot = backend.export_snapshot("rb4.input");
+    resident_state = testing::CudaWorldStoreTestAccess::read_state(store);
     for (std::size_t world = 0; world < snapshot.worlds.size(); ++world) {
         const auto &state = snapshot.worlds[world];
         CHECK(state.identity.global_version == 2);
@@ -175,23 +191,6 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
                 .shard_versions[static_cast<std::size_t>(CudaResidentShard::pilot_flight_controls)]
                 .version == 2);
     }
-
-    testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
-    std::vector<WorldPilotActionAssignment> changed_actions = make_actions(setup.entity_ids, 0.1);
-    CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
-    snapshot = backend.export_snapshot("rb4.after_transfer_failure");
-    resident_state = testing::CudaWorldStoreTestAccess::read_state(store);
-    CHECK(snapshot.worlds[0].identity.global_version == 2);
-    CHECK(resident_state.worlds[0].controls.throttle ==
-          doctest::Approx(actions[0].action.throttle));
-
-    testing::CudaWorldStoreTestAccess::fail_next_barrier_commit(store);
-    CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
-    snapshot = backend.export_snapshot("rb4.after_barrier_failure");
-    resident_state = testing::CudaWorldStoreTestAccess::read_state(store);
-    CHECK(snapshot.worlds[0].identity.global_version == 2);
-    CHECK(resident_state.worlds[0].controls.throttle ==
-          doctest::Approx(actions[0].action.throttle));
 
     backend.publish_stage();
     snapshot = backend.export_snapshot("rb4.stage");

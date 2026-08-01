@@ -13,8 +13,8 @@
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-31`
 
-状态：**CR2-2a 已获独立批准并以 bf695071 提交。CR2-2p 是 CR2-2b 之前
-隔离的 CPU portability 前置 candidate。前一套
+状态：**CR2-2a 已获独立批准并以 bf695071 提交；CR2-2p 已获独立批准并以
+dee02146 提交；CR2-2b 是当前 active full-window candidate。前一套
 RB0-RB11 计划仍保持无晋级关闭。本计划可能产出可晋级证据，也可能再次 closure；
 它不会自行重新开放 maintained support。**
 
@@ -119,6 +119,24 @@ mode matrix、private phase sequence、JSON key、trace signature、unavailable 
 cuda_resident_rb9_probe_session.cpp，通过小型 header 暴露；两个 CMake target
 都编译该模块。本 sub-iteration 不引入 full-window SPI、public facade、support flag、
 learner contract 或新的性能结论。
+
+### CR2-2p 边界
+
+CR2-2p 只做前置 portability repair：替换一个 GCC-only bit intrinsic，恢复预期的
+全局 `IEnvironmentModel` type boundary，并让 `ef_core` 在 MSVC 下启用既有 `M_PI`
+定义。它有自己的 architecture guard 和 `dee02146` commit，不包含 full-window
+runner 或 resident 语义变化。
+
+### CR2-2b 边界
+
+CR2-2b 是第一个 full-window 语义 slice。唯一统一 surface 仍是现有
+`IWorldBatchBackend`；同步 runner 固定执行
+`setup → inject → evaluate(empty) → advance(WorldBatch) → export`。CPU database
+load 在 runner 外部完成。CUDA `advance` 在显式三态 window machine 后方完成 stage
+publish 与 commit，runner 只报告共同的 input/window/export barrier。失败会 poison
+runner，不增加 retry、fallback、device pointer、learner lease、support flag 或
+facade selection。两个真实 lane 编译同一 trace source，独立 comparator 检查纯 JSON
+的 surface/trace/operation 相等性。
 
 ## 5. 晋级与恢复边界
 

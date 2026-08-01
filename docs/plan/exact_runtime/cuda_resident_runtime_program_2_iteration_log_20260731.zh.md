@@ -11,8 +11,8 @@
 - 父级：`935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**CR2-2a 已以 bf695071 提交。CR2-2p 是单独限定的 CPU portability
-前置 candidate，等待独立复核。CR2-2b 仍未提交，不进入 CR2-2p staged write set。**
+状态：**CR2-2a 已以 bf695071 提交，CR2-2p 已以 dee02146 提交。
+CR2-2b 是当前 active、可独立复核的 full-window candidate。**
 RB0-RB11 计划仍是无晋级关闭。本账本只记录新分支内计划，
 不改变 maintained support flags。
 
@@ -204,6 +204,54 @@ portability unblock；该债务继续明确保留。
 
 ### 独立复核门
 
-独立 reviewer 必须核对精确 staged subset、API/type 意图、bit-scan 等价性、MSVC
-definition 范围、聚焦构建证据，以及 CR2-2b 语义文件未进入提交。只有
-`APPROVE` 才允许形成一个 CR2-2p commit。
+独立 reviewer 已核对精确 staged subset、API/type 意图、bit-scan 等价性、MSVC
+definition 范围、聚焦构建证据，以及 CR2-2b 语义文件未进入提交，并返回
+**`APPROVE`**。CR2-2p 已以 `dee02146` 提交；该提交不授权 merge、push、promotion
+或 CR2-2b 本身。
+
+## CR2-2b candidate —— 两个真实 lane 共用一套 full-window SPI
+
+### 范围与精确 write set
+
+CR2-2b 在现有 `IWorldBatchBackend` 之上增加 backend-neutral、同步 runner，
+不增加第二套 facade，也不增加 support/admission surface。唯一声明的序列是：
+
+```text
+setup → input_injection → evaluation(empty) → advance(WorldBatch) → export
+```
+
+CUDA backend 的 `advance` 调用 `CudaWorldStore::advance_window()`，由 store 自动
+完成 injected stage 的 publish 与 window commit。store 的显式状态机为
+`awaiting_input → input_injected → stage_published → awaiting_input`；publish 失败
+停在 `input_injected`，commit 失败停在 `stage_published`，因此 retry 不会重复
+publish；直到 commit/reset/setup 前禁止再次 inject。runner 在任何失败后 poison
+session，并记录稳定 operation/failure code 与最后完成的 surface barrier。
+
+write set 仅包含 full-window contract/runner、CUDA backend/store 状态迁移、conformance
+测试、使用同一 probe source 的两个 lane target、纯 JSON CPU/CUDA comparator、聚焦
+architecture guard 与本计划/账本更新。CPU database load 保留在 runner 外部。历史
+RB9 probe/session 和 `cuda_resident_rb9_evidence_20260730` 不修改；不引入 learner
+lease 或性能结论。
+
+### 规模与验证证据
+
+所有新增 CR2-2b implementation/test/probe module 均低于 700 行 soft target：contract
+105，runner 242/30，probe 179，comparator 76，conformance test 365，architecture
+guard 87 行。已有 919 行 replay test 没有增长。修改后的 resident host module 为
+665 行（`cuda_world_store.cpp`）和 586 行（`cuda_resident_backend.cpp`），均低于
+soft target。
+
+CUDA Release（VS2022、CUDA 13.0、SM86）已构建并运行 full-window probe，完成两个
+window 与九个 surface operation。CPU Release 在 CR2-2p 之后成功构建 `ef_core`、
+`ef_facade` 与真实 `FlecsCpuBackend` probe；它在 runner 外加载 database，并消费同一
+trace。自动 comparator 将两侧 stdout 解析为纯 JSON，确认 surface id、trace signature
+以及全部九条 operation/request/window/success/barrier record 完全一致；lane/backend
+标识按设计不同。CUDA full-window doctest 为 5/5 case、122/122 assertions，CUDA-off
+stub 为 5/5 case、105/105 assertions；更严格的 injection guard 下 lifecycle suite
+为 11/11、528/528，replay 为 3/3、47/47。
+
+### 独立复核门
+
+必须由新的独立 agent 审阅完整 staged/unstaged/untracked CR2-2b write set，核对共同
+序列、状态机 retry 语义、纯 JSON 比较证据、精确 CMake lane 拓扑、support flag 不变、
+历史 evidence 保留与全部规模限制。只有 `APPROVE` 才允许形成一个 CR2-2b commit。

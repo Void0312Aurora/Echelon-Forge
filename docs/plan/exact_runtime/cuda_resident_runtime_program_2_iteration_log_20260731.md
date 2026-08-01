@@ -11,9 +11,8 @@ Language versions:
 - Parent: `935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **CR2-2a is committed as bf695071. CR2-2p is a separately bounded
-CPU-portability prerequisite candidate awaiting independent review. CR2-2b
-remains uncommitted and outside the CR2-2p staged write set.**
+Status: **CR2-2a is committed as bf695071 and CR2-2p is committed as dee02146.
+CR2-2b is the active, independently reviewable full-window candidate.**
 The RB0-RB11 program remains closed without promotion. This ledger records only
 the new branch-local program and does not alter maintained support flags.
 
@@ -227,6 +226,62 @@ the narrow portability unblock; the debt remains explicitly visible.
 
 ### Independent review gate
 
-An independent reviewer must verify the exact staged subset, API/type intent,
+An independent reviewer verified the exact staged subset, API/type intent,
 bit-scan equivalence, MSVC definition scope, focused build evidence, and the
-absence of CR2-2b semantic files. Only `APPROVE` permits one CR2-2p commit.
+absence of CR2-2b semantic files, returning **`APPROVE`**. CR2-2p was committed
+as `dee02146`; it does not authorize merge, push, promotion, or CR2-2b itself.
+
+## CR2-2b candidate — one full-window SPI for both real lanes
+
+### Scope and exact write set
+
+CR2-2b adds a backend-neutral, synchronous runner over the existing
+`IWorldBatchBackend`; it does not add a second facade or a support/admission
+surface. The runner owns the one declared sequence:
+
+```text
+setup → input_injection → evaluation(empty) → advance(WorldBatch) → export
+```
+
+The CUDA backend's `advance` calls `CudaWorldStore::advance_window()`, which
+automatically publishes an injected stage and commits the window. The store's
+explicit state machine is `awaiting_input → input_injected → stage_published →
+awaiting_input`; failed publish stays `input_injected`, failed commit stays
+`stage_published` so retry cannot republish, and reinjection is rejected until
+commit/reset/setup. The runner poisons a session after any failure and records a
+stable operation/failure code and last completed surface barrier.
+
+The write set is limited to the full-window contract/runner, CUDA backend/store
+state transition, conformance tests, two lane probe targets using one probe
+source, the pure-JSON CPU/CUDA comparator, focused architecture guards, and
+this plan/ledger update. CPU database loading remains outside the runner.
+The historical RB9 probe/session and `cuda_resident_rb9_evidence_20260730`
+remain untouched; no learner lease or performance claim is introduced.
+
+### Size and validation evidence
+
+All new CR2-2b implementation/test/probe modules are below the 700-line soft
+target: contract 105, runner 242/30, probe 179, comparator 76, conformance test
+365, and architecture guard 87 lines. The existing 919-line replay test did not
+grow. The changed resident host modules are 665 (`cuda_world_store.cpp`) and 586
+(`cuda_resident_backend.cpp`), both below the soft target.
+
+The CUDA Release target (VS2022, CUDA 13.0, SM86) built and ran the full-window
+probe, which completed two windows and nine surface operations. The CPU Release
+target built `ef_core`, `ef_facade`, and the real `FlecsCpuBackend` probe after
+CR2-2p; it loaded the database outside the runner and completed the same trace.
+The automated comparator parsed both stdout streams as pure JSON and confirmed
+equal surface id, trace signature, and all nine operation/request/window/
+success/barrier records; lane/backend identifiers remained intentionally
+different. The full-window doctest passed 5/5 cases and 122/122 assertions on
+CUDA and 5/5 cases and 105/105 assertions on the CUDA-off stub; the lifecycle
+suite passed 11/11 and 528/528 after the stricter injection guard, and replay
+passed 3/3 and 47/47.
+
+### Independent review gate
+
+The complete staged/unstaged/untracked CR2-2b write set must be reviewed by a
+fresh independent agent for the common sequence, state-machine retry semantics,
+pure-JSON comparison evidence, exact CMake lane topology, support-flag
+invariance, historical evidence preservation, and all size limits. Only
+`APPROVE` permits one CR2-2b commit.

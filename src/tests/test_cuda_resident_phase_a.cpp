@@ -111,23 +111,20 @@ TEST_CASE("RB5 Phase A prepares direct pilot controls in a resident SoA") {
 
     PhaseAFixture fixture;
     const auto setup = backend.setup(fixture.request());
-    const auto first_actions = make_actions(setup.entity_ids, kCudaResidentPhaseAFirstInputs);
-    backend.inject({.pilot_actions = first_actions});
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),
                     std::runtime_error);
-
+    const auto first_actions = make_actions(setup.entity_ids, kCudaResidentPhaseAFirstInputs);
+    backend.inject({.pilot_actions = first_actions});
     backend.publish_stage();
     CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
     check_prepared(testing::CudaWorldStoreTestAccess::read_state(store),
                    kCudaResidentPhaseAFirstExpected);
+    backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
 
     const auto edge_actions = make_actions(setup.entity_ids, kCudaResidentPhaseAEdgeInputs);
     backend.inject({.pilot_actions = edge_actions});
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.publish_stage(), std::runtime_error);
-    CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),
-                    std::runtime_error);
-
     backend.publish_stage();
     const CudaWorldStoreStateSnapshot edge_state =
         testing::CudaWorldStoreTestAccess::read_state(store);

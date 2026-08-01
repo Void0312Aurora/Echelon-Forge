@@ -281,6 +281,7 @@ class CudaWorldStore final {
     [[nodiscard]] bool
     inject_flight_controls(const std::vector<CudaWorldFlightControlAssignment> &assignments);
     [[nodiscard]] bool publish_stage();
+    [[nodiscard]] bool advance_window();
     [[nodiscard]] bool partial_sync_commit();
     [[nodiscard]] bool commit_window();
     [[nodiscard]] bool export_device_observation_raw(

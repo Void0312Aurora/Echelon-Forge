@@ -387,6 +387,17 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     )
 endif()
 
+add_library(ef_cuda_resident_full_window_runner STATIC
+    src/runtime/facade/internal/cuda_resident/cuda_resident_full_window_runner.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+)
+target_include_directories(ef_cuda_resident_full_window_runner PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(ef_cuda_resident_full_window_runner PUBLIC
+    flecs::flecs
+)
+
 add_library(ef_gpu_experiments STATIC ${EF_GPU_EXPERIMENT_SOURCES})
 target_include_directories(ef_gpu_experiments PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -553,6 +564,56 @@ target_include_directories(ef_cuda_resident_replay_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+add_executable(ef_cuda_resident_full_window_test
+    src/tests/test_main.cpp
+    src/tests/test_cuda_resident_full_window.cpp
+)
+target_link_libraries(ef_cuda_resident_full_window_test PRIVATE
+    ef_cuda_resident_backend
+    ef_cuda_resident_full_window_runner
+    doctest::doctest
+)
+target_include_directories(ef_cuda_resident_full_window_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# CR2-2b compiles one probe source twice so the real Flecs CPU adapter and the
+# CUDA-resident backend consume the same owned trace through the same Runner.
+# CPU database loading remains outside the runner's semantic window surface.
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    add_executable(ef_cuda_resident_full_window_cuda_probe
+        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
+    )
+    target_link_libraries(ef_cuda_resident_full_window_cuda_probe PRIVATE
+        ef_cuda_resident_backend
+        ef_cuda_resident_full_window_runner
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_full_window_cuda_probe PRIVATE
+        EF_CR2_FULL_WINDOW_CUDA_PROBE=1
+    )
+    target_include_directories(ef_cuda_resident_full_window_cuda_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+else()
+    add_executable(ef_cuda_resident_full_window_cpu_probe
+        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
+    )
+    target_link_libraries(ef_cuda_resident_full_window_cpu_probe PRIVATE
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        ef_cuda_resident_full_window_runner
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_full_window_cpu_probe PRIVATE
+        EF_CR2_FULL_WINDOW_CPU_PROBE=1
+    )
+    target_include_directories(ef_cuda_resident_full_window_cpu_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+endif()
+
 # RB9 measures the same frozen trace through two separately built Release
 # probes. The CUDA-on probe keeps the existing ef_core/MSVC debt out of its
 # graph; the CUDA-off probe uses the real FlecsCpuBackend instead of the RB8
@@ -606,6 +667,7 @@ add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_da
 add_test(NAME world_batch_runtime COMMAND ef_test --test-suite=world_batch_runtime)
 add_test(NAME cuda_resident_lifecycle COMMAND ef_cuda_resident_lifecycle_test)
 add_test(NAME cuda_resident_replay COMMAND ef_cuda_resident_replay_test)
+add_test(NAME cuda_resident_full_window COMMAND ef_cuda_resident_full_window_test)
 add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
 set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 endif()
@@ -617,6 +679,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_app
     ef_py
     ef_cuda_resident_backend
+    ef_cuda_resident_full_window_runner
     ef_gpu_experiments
     ef_gpu_visual_phase0_probe
     ef_gpu_execution_observation_phase0_probe
@@ -628,6 +691,9 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_test
     ef_cuda_resident_lifecycle_test
     ef_cuda_resident_replay_test
+    ef_cuda_resident_full_window_test
+    ef_cuda_resident_full_window_cpu_probe
+    ef_cuda_resident_full_window_cuda_probe
     ef_cuda_resident_rb9_cpu_probe
     ef_cuda_resident_rb9_cuda_probe
 )

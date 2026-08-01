@@ -296,8 +296,12 @@ CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
 }
 
 runtime::backend::EvaluationResult
-CudaResidentBackend::evaluate(const runtime::backend::EvaluationRequest &) const {
-    reject_unimplemented_operation("evaluate");
+CudaResidentBackend::evaluate(const runtime::backend::EvaluationRequest &request) const {
+    if (!request.execution_episode_requests.empty()) {
+        throw std::logic_error(
+            "CUDA resident backend evaluation supports only an empty execution request");
+    }
+    return {};
 }
 
 runtime::backend::AdvanceResult
@@ -306,7 +310,7 @@ CudaResidentBackend::advance(const runtime::backend::AdvanceRequest &request) {
         !request.execution_episode_requests.empty()) {
         throw std::logic_error("CUDA RB7 advances only a published Phase A/B/D device window");
     }
-    if (!store_.commit_window()) {
+    if (!store_.advance_window()) {
         throw std::runtime_error("CUDA resident backend window commit failed: " +
                                  store_.diagnostics().last_error);
     }

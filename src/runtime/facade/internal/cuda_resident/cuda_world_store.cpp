@@ -13,7 +13,14 @@
 namespace runtime::cuda_resident {
 
 struct CudaWorldStore::Impl {
+    enum class WindowState : std::uint8_t {
+        awaiting_input,
+        input_injected,
+        stage_published,
+    };
+
     CudaWorldStoreDiagnostics diagnostics{};
+    WindowState window_state = WindowState::awaiting_input;
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     detail::CudaWorldStoreDeviceAllocation *allocation = nullptr;
     detail::CudaWorldStoreDeviceAllocation *pending_cleanup = nullptr;
@@ -115,6 +122,7 @@ bool CudaWorldStore::configure(std::size_t world_capacity) {
     impl_->setup_active.swap(next_setup_active);
     impl_->entity_ids.swap(next_entity_ids);
     impl_->phase_a_ready = false;
+    impl_->window_state = Impl::WindowState::awaiting_input;
     return true;
 #else
     (void)world_capacity;
@@ -169,6 +177,7 @@ bool CudaWorldStore::reset(const std::vector<std::uint32_t> &seeds) {
     impl_->setup_active.swap(next_setup_active);
     impl_->entity_ids.swap(next_entity_ids);
     impl_->phase_a_ready = false;
+    impl_->window_state = Impl::WindowState::awaiting_input;
     return true;
 #else
     (void)seeds;
@@ -220,6 +229,7 @@ bool CudaWorldStore::setup_fixed_air_fixture(std::vector<CudaFixedAirWorldSetup>
     }
     *setups = std::move(next_setups);
     impl_->phase_a_ready = false;
+    impl_->window_state = Impl::WindowState::awaiting_input;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -240,6 +250,11 @@ bool CudaWorldStore::inject_flight_controls(
             "CUDA flight-control assignment count must equal world capacity";
         return false;
     }
+    if (impl_->window_state != Impl::WindowState::awaiting_input) {
+        impl_->diagnostics.last_error =
+            "CUDA flight-control injection requires an awaiting-input window";
+        return false;
+    }
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     for (std::size_t world = 0; world < assignments.size(); ++world) {
         if (impl_->setup_active[world] == 0 || assignments[world].world_index != world ||
@@ -256,6 +271,7 @@ bool CudaWorldStore::inject_flight_controls(
         return false;
     }
     impl_->phase_a_ready = false;
+    impl_->window_state = Impl::WindowState::input_injected;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -267,6 +283,11 @@ bool CudaWorldStore::inject_flight_controls(
 
 bool CudaWorldStore::publish_stage() {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+    if (impl_->window_state != Impl::WindowState::input_injected) {
+        impl_->diagnostics.last_error =
+            "CUDA stage publish requires successfully injected flight controls";
+        return false;
+    }
     if (std::any_of(impl_->setup_active.begin(), impl_->setup_active.end(),
                     [](std::uint8_t active) { return active == 0; })) {
         impl_->diagnostics.last_error =
@@ -279,6 +300,7 @@ bool CudaWorldStore::publish_stage() {
         return false;
     }
     impl_->phase_a_ready = true;
+    impl_->window_state = Impl::WindowState::stage_published;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -312,6 +334,7 @@ bool CudaWorldStore::commit_window() {
         return false;
     }
     impl_->phase_a_ready = false;
+    impl_->window_state = Impl::WindowState::awaiting_input;
     impl_->diagnostics.last_error.clear();
     return true;
 #else
@@ -319,6 +342,18 @@ bool CudaWorldStore::commit_window() {
         "CUDA resident backend was compiled without EF_ENABLE_CUDA_EXPERIMENTS";
     return false;
 #endif
+}
+
+bool CudaWorldStore::advance_window() {
+    if (impl_->window_state == Impl::WindowState::awaiting_input) {
+        impl_->diagnostics.last_error =
+            "CUDA window advance requires successfully injected flight controls";
+        return false;
+    }
+    if (impl_->window_state == Impl::WindowState::input_injected && !publish_stage()) {
+        return false;
+    }
+    return commit_window();
 }
 
 bool CudaWorldStore::export_device_observation_raw(
@@ -354,6 +389,7 @@ bool CudaWorldStore::teardown() noexcept {
     impl_->diagnostics.device_bytes = 0;
     impl_->diagnostics.state_slot_bytes = 0;
     impl_->diagnostics.last_error.clear();
+    impl_->window_state = Impl::WindowState::awaiting_input;
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     impl_->entity_generations.clear();
     impl_->setup_active.clear();

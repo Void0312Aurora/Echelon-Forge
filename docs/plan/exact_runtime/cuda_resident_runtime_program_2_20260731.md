@@ -13,9 +13,9 @@ Language versions:
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-31`
 
-Status: **CR2-2a is independently approved and committed as bf695071.
-CR2-2p is an isolated CPU-portability prerequisite candidate before CR2-2b.
-The previous RB0-RB11 program remains
+Status: **CR2-2a is independently approved and committed as bf695071;
+CR2-2p is independently approved and committed as dee02146; CR2-2b is the
+active full-window candidate. The previous RB0-RB11 program remains
 closed without promotion. This program may either produce promotion-grade
 evidence or close again; it does not reopen maintained support by itself.**
 
@@ -142,6 +142,26 @@ Only the lane-specific ProbeSession storage/operation implementation moves to
 cuda_resident_rb9_probe_session.cpp behind its small header. The CMake targets
 compile that module in both lanes. No full-window SPI, public facade, support
 flag, learner contract, or performance claim is introduced by this sub-iteration.
+
+### CR2-2p boundary
+
+CR2-2p is a prerequisite-only portability repair. It replaces one GCC-only bit
+intrinsic, restores the intended global `IEnvironmentModel` type boundary, and
+opts `ef_core` into its existing MSVC `M_PI` definitions. It has its own
+architecture guard and commit `dee02146`; it does not contain the full-window
+runner or any resident semantic change.
+
+### CR2-2b boundary
+
+CR2-2b is the first semantic full-window slice. The existing
+`IWorldBatchBackend` is the only unified surface; a synchronous runner owns
+`setup → inject → evaluate(empty) → advance(WorldBatch) → export`. CPU database
+loading is external to the runner. CUDA `advance` performs stage publication
+and commit behind an explicit three-state window machine, while the runner
+reports only the common input/window/export barriers. Failures poison the
+runner, and no retry, fallback, device pointer, learner lease, support flag, or
+facade selection is added. Two real lane probes compile the same trace source,
+and a separate comparator checks pure JSON surface/trace/operation equality.
 
 ## 5. Promotion and recovery boundary
 
