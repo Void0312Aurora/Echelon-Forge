@@ -509,6 +509,8 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_device_consumer.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     src/tests/test_cuda_resident_replay.cpp
+    src/tests/test_cuda_resident_replay_projection.cpp
+    src/tests/test_cuda_resident_replay_support.cpp
     src/tests/test_cuda_resident_performance.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
@@ -559,6 +561,8 @@ add_executable(ef_cuda_resident_replay_test
     src/tests/test_main.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     src/tests/test_cuda_resident_replay.cpp
+    src/tests/test_cuda_resident_replay_projection.cpp
+    src/tests/test_cuda_resident_replay_support.cpp
 )
 target_link_libraries(ef_cuda_resident_replay_test PRIVATE
     ef_cuda_resident_backend

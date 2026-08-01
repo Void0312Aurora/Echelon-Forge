@@ -79,9 +79,11 @@ CR2-3 将 host/device lease 边界拆在小型 owner 中：
 `cuda_world_store_host_internal.h` 为 33 行。已有 host owner 仍低于 soft target：
 `cuda_world_store.cpp` 661 行，`cuda_resident_backend.cpp` 636 行；没有新增规模例外。
 
-以下文件仍是 watch item；在拆分或显式重新分类前不得继续增长：
-
-- `src/tests/test_cuda_resident_replay.cpp`：919 行。
+CR2-4a 将 replay test 做零语义拆分，移除原 watch item：
+`test_cuda_resident_replay_projection.cpp` 611 行、
+`test_cuda_resident_replay_support.cpp` 175 行、
+`test_cuda_resident_replay_support.h` 58 行，断言/test owner
+`test_cuda_resident_replay.cpp` 139 行。当前不再有 CR2 watch item。
 
 generated/vendor 文件与历史文档只有在 manifest 明确记录 provenance 时才可排除模块
 行数限制。新 tracked evidence/report/generated artifact 的 soft limit 为 512 KiB，
@@ -108,8 +110,9 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | CR2-2a | 在不改变 invocation surface、JSON schema、错误文本和 phase 顺序的前提下，将 RB9 probe 的 lane-specific session 移到独立实现模块。 | 独立批准后已以 `bf695071` 完成；probe/session 均低于 soft limit，历史 evidence 未改。 |
 | CR2-2p | 只用 portable bit scan、预期的全局 environment-model type 与 MSVC core 数学常量 opt-in，解除真实 Flecs CPU lane 在 VS2022 的阻塞。 | 真实 `FlecsCpuBackend` 图可编译；聚焦 guard 通过；独立复核与单独 commit 必须先于 CR2-2b。 |
 | CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 已独立批准并以 `607c1f33` 提交；两个真实 lane 通过声明的共同 surface 消费同一 trace。 |
-| CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured consumer path 的 hidden host validation。 | 活动 candidate：显式 consumer smoke、ownership/lifetime/failure、延迟 diagnostic readback 与 CUDA-on/off 验证已完成；仍需独立提交审阅，public support 保持关闭。 |
-| CR2-4 | 将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | identity policy 稳定或明确排除；每个声明 barrier 上的 frozen budget replay 通过。 |
+| CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured consumer path 的 hidden host validation。 | 已独立批准并以 `7da41a2a` 提交；显式 consumer smoke、ownership/lifetime/failure、延迟 diagnostic readback 与 CUDA-on/off 验证通过，public support 保持关闭。 |
+| CR2-4a | 将 919 行 RB8 replay test 拆为受限 support/projection/test owner，不改变 oracle、quarantine、93-field budget 或历史 evidence。 | CUDA-on replay 3/3、47/47，CUDA-off 3/3、14/14；旧 failure semantics、CMake topology 与 size policy 保持等价；需独立复核与一个 commit。 |
+| CR2-4b | 基于真实 payload evidence 与显式 identity policy，将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | 每个 released field 都是真实数据或显式 normalized/excluded；每个声明 barrier 的 frozen-budget replay 通过；public support 保持关闭。 |
 | CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | counters 完整或记录外部 blocker 并停止 gate；不以不完整 counters 声称 tuning 成功。 |
 | CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | cold、warm、rollout、export、device-consumer、small-batch 均支持端到端决策。 |
 | CR2-7 | 独立作 promotion 或 closure 决策。 | promotion 需要新授权与 integration plan；否则记录第二次 closure，维护行为不变。 |

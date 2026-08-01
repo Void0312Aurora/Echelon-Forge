@@ -326,3 +326,32 @@ size architecture 测试为 25/25，new guard 的 Ruff check/format 通过。
 epoch 与 cross-destruction 语义、deferred timing 与 rollout peak accounting、CUDA-on/off
 结果、support/evidence 不变和全部规模限制。只有 `APPROVE` 才允许一个 CR2-3
 commit；这不授权 merge、push、RuntimeFacade promotion 或 CR2-4。
+
+## CR2-4a candidate —— 零语义拆分 replay watch item
+
+CR2-4a 只做结构拆分。原 919 行的
+`src/tests/test_cuda_resident_replay.cpp` 被拆成断言 owner
+（`test_cuda_resident_replay.cpp`，139 行）、projection/frame support
+（`test_cuda_resident_replay_projection.cpp`，611 行）、lane runner/trace
+support（`test_cuda_resident_replay_support.cpp`，175 行）与声明 header（58
+行）。四者都继续进入 size-policy 扫描，并低于 700 行 test 与 600 行 header
+soft limit。
+旧 RB8 frozen 93-field budget、手工 CPU fixture oracle、显式 CUDA
+`publish_stage()` seam、预期 quarantine、failure tests、trace-signature 检查与
+历史 RB9 evidence 均不变。
+
+精确 write set 仅包含三个新 support owner、原 test、CMake source list、replay
+architecture guard、机器可读 size inventory 与中英文计划/迭代记录。不改 runtime
+backend、parity budget、JSON evidence、support flag、admission、RuntimeFacade、
+learner lease 或 kernel path。CR2-4b 是后续独立语义迭代；本拆分不声称
+selected-slice parity 或 deterministic reset release。
+
+candidate gate：CUDA-on/off focused replay target 重建，保持 CUDA-on 3/3 case、
+47/47 assertions 与 CUDA-off 3/3 case、14/14 assertions；replay/size/runtime
+architecture guard 与 Ruff 通过；没有模块进入
+watch band；并由独立 agent 审阅完整 staged write set 后才允许一个 commit。
+
+staged review 前，VS2022 Release 已重建两个 focused target：CUDA-on 通过 3/3
+case、47/47 assertions，CUDA-off 通过 3/3、14/14。完整 runtime-profile
+architecture selection 通过 63 项，改动的 Python guard 通过 Ruff check/format。
+working write set 不含 runtime 或历史 evidence 文件。

@@ -102,16 +102,29 @@
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu",
       "role": "private_phase_window_orchestration",
       "observed_lines": 69
-    }
-  ],
-  "watch_items": [
+    },
     {
       "path": "src/tests/test_cuda_resident_replay.cpp",
-      "observed_lines": 919,
-      "reason": "test module is in the review band",
-      "required_action": "no_growth_before_split_or_reclassification"
+      "role": "RB8 replay assertions and failure-policy tests",
+      "observed_lines": 139
+    },
+    {
+      "path": "src/tests/test_cuda_resident_replay_projection.cpp",
+      "role": "RB8 fixture projection and frame construction support",
+      "observed_lines": 611
+    },
+    {
+      "path": "src/tests/test_cuda_resident_replay_support.cpp",
+      "role": "RB8 fixture lane runners and trace construction support",
+      "observed_lines": 175
+    },
+    {
+      "path": "src/tests/test_cuda_resident_replay_support.h",
+      "role": "RB8 replay support DTO and helper declarations",
+      "observed_lines": 58
     }
   ],
+  "watch_items": [],
   "gates": [
     "every_hard_limit_violation_is_an_explicit_expiring_exception",
     "no_watch_item_grows_without_a_recorded_split_decision",

@@ -370,3 +370,35 @@ write set, RAII/event cleanup, epoch and cross-destruction semantics, deferred
 timing and rollout peak accounting, CUDA-on/off results, support/evidence
 invariance, and all size limits. Only `APPROVE` permits one CR2-3 commit; it
 does not authorize merge, push, RuntimeFacade promotion, or CR2-4.
+
+## CR2-4a candidate — split the replay watch item without semantic change
+
+CR2-4a is a structural-only sub-iteration. The former 919-line
+`src/tests/test_cuda_resident_replay.cpp` is divided into the assertion owner
+(`test_cuda_resident_replay.cpp`, 139 lines), projection/frame support
+(`test_cuda_resident_replay_projection.cpp`, 611), lane runners/trace support
+(`test_cuda_resident_replay_support.cpp`, 175), and a declaration header (58).
+All four remain in the size-policy scan and below the 700-line test and
+600-line header soft limits. The old RB8 frozen 93-field budget, handcrafted CPU fixture oracle,
+explicit CUDA `publish_stage()` seam, expected quarantine, failure tests,
+trace-signature checks, and historical RB9 evidence are unchanged.
+
+The exact write set is limited to those three new support owners plus the
+existing test, CMake source lists, the replay architecture guard, the
+machine-readable size inventory, and the bilingual program/iteration records.
+No runtime backend, parity budget, JSON evidence, support flag, admission,
+RuntimeFacade, learner lease, or kernel path is changed. CR2-4b remains a
+separate future semantic iteration; this split does not claim selected-slice
+parity or deterministic reset release.
+
+The candidate gate is: rebuild the focused replay target with CUDA on and off,
+run the unchanged CUDA-on 3/3-case 47/47-assertion and CUDA-off 3/3-case
+14/14-assertion suites, run the replay/size/runtime
+architecture guards and Ruff, prove no module reaches a watch band, and have
+an independent agent inspect the complete staged write set before one commit.
+
+Before staged review, VS2022 Release rebuilt both focused targets. CUDA-on
+passed 3/3 cases and 47/47 assertions; CUDA-off passed 3/3 and 14/14. The
+complete runtime-profile architecture selection passed 63 tests, and the
+touched Python guards passed Ruff check/format. No runtime or historical
+evidence file appears in the working write set.

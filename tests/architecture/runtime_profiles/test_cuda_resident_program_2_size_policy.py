@@ -9,8 +9,7 @@ ROOT = Path(__file__).resolve().parents[3]
 HEADER_EXTENSIONS = {".cuh", ".h", ".hh", ".hpp"}
 TEST_PATH_MARKERS = ("src/tests/", "tests/", "_probe.cpp")
 POLICY_PATH = (
-    ROOT
-    / "docs/plan/exact_runtime/cuda_resident_runtime_program_2_size_policy_20260731.json"
+    ROOT / "docs/plan/exact_runtime/cuda_resident_runtime_program_2_size_policy_20260731.json"
 )
 
 
@@ -139,9 +138,7 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
     thresholds = policy["thresholds"]
     assert isinstance(thresholds, dict)
 
-    watch_map = {
-        str(entry["path"]): entry for entry in watch_items if isinstance(entry, dict)
-    }
+    watch_map = {str(entry["path"]): entry for entry in watch_items if isinstance(entry, dict)}
     hard_violations = {
         path for path, lines in counts.items() if lines > _line_limits(path, thresholds)[2]
     }
@@ -154,18 +151,14 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
 
     assert hard_violations == set()
     assert soft_or_higher == set(watch_map)
-    assert review_or_higher == {
-        "src/tests/test_cuda_resident_replay.cpp",
-    }
+    assert review_or_higher == set()
     for path, entry in watch_map.items():
         assert counts[path] == entry["observed_lines"]
         assert entry["required_action"] == "no_growth_before_split_or_reclassification"
 
     inventory = policy["module_inventory"]
     assert isinstance(inventory, list)
-    inventory_map = {
-        str(entry["path"]): entry for entry in inventory if isinstance(entry, dict)
-    }
+    inventory_map = {str(entry["path"]): entry for entry in inventory if isinstance(entry, dict)}
     expected_inventory = {
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh": 291,
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_math.cuh": 139,
@@ -177,11 +170,17 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu": 441,
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu": 271,
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu": 69,
+        "src/tests/test_cuda_resident_replay.cpp": 139,
+        "src/tests/test_cuda_resident_replay_projection.cpp": 611,
+        "src/tests/test_cuda_resident_replay_support.cpp": 175,
+        "src/tests/test_cuda_resident_replay_support.h": 58,
     }
     assert set(inventory_map) == set(expected_inventory)
     for path, expected_lines in expected_inventory.items():
         assert counts[path] == expected_lines == inventory_map[path]["observed_lines"]
-    assert not (ROOT / "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu").exists()
+    assert not (
+        ROOT / "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu"
+    ).exists()
 
 
 def test_cr2_tracked_cuda_evidence_and_plan_artifacts_stay_below_byte_cap() -> None:
@@ -190,6 +189,8 @@ def test_cr2_tracked_cuda_evidence_and_plan_artifacts_stay_below_byte_cap() -> N
     paths = _artifact_paths(policy)
     assert paths
     oversized = {
-        path: (ROOT / path).stat().st_size for path in paths if (ROOT / path).stat().st_size > hard_bytes
+        path: (ROOT / path).stat().st_size
+        for path in paths
+        if (ROOT / path).stat().st_size > hard_bytes
     }
     assert oversized == {}

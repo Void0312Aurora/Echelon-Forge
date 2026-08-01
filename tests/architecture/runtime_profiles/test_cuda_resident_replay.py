@@ -7,6 +7,9 @@ ROOT = Path(__file__).resolve().parents[3]
 HARNESS = ROOT / "src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp"
 CONTRACT = ROOT / "src/runtime/contracts/cuda_resident_replay_contract.h"
 TEST = ROOT / "src/tests/test_cuda_resident_replay.cpp"
+PROJECTION = ROOT / "src/tests/test_cuda_resident_replay_projection.cpp"
+SUPPORT = ROOT / "src/tests/test_cuda_resident_replay_support.cpp"
+SUPPORT_HEADER = ROOT / "src/tests/test_cuda_resident_replay_support.h"
 CMAKE = ROOT / "CMakeLists.txt"
 
 
@@ -66,14 +69,17 @@ def test_rb8_trace_identity_covers_forbidden_control_fields() -> None:
 
 def test_rb8_empty_events_are_typed_sentinels_and_cpu_lane_is_oracle_only() -> None:
     test = _text(TEST)
-    assert '"events.timestamp"' in test
-    assert '"events.priority"' in test
-    assert '"events.event_id"' in test
-    assert '"events.event_family_membership"' in test
-    assert 'ParityBudgetValueKind::signed_integer' in test
-    assert 'ParityBudgetValueKind::unsigned_integer' in test
-    assert '"fixed_air_cpu_fixture_oracle"' in test
-    cpu_section = test.split("ReplayLaneResult run_cpu_reference", 1)[1].split(
+    support = _text(SUPPORT)
+    projection = _text(PROJECTION)
+    combined = "\n".join((test, support, projection))
+    assert '"events.timestamp"' in combined
+    assert '"events.priority"' in combined
+    assert '"events.event_id"' in combined
+    assert '"events.event_family_membership"' in combined
+    assert "ParityBudgetValueKind::signed_integer" in combined
+    assert "ParityBudgetValueKind::unsigned_integer" in combined
+    assert '"fixed_air_cpu_fixture_oracle"' in support
+    cpu_section = support.split("ReplayLaneResult run_cpu_reference", 1)[1].split(
         "ReplayLaneResult run_cuda_resident", 1
     )[0]
     assert "CudaWorldStore" not in cpu_section
@@ -85,8 +91,15 @@ def test_rb8_has_a_separate_diagnostics_target_and_no_capability_promotion() -> 
     assert "ef_cuda_resident_replay_test" in cmake
     assert "cuda_resident_replay_harness.cpp" in cmake
     assert "test_cuda_resident_replay.cpp" in cmake
+    assert "test_cuda_resident_replay_projection.cpp" in cmake
+    assert "test_cuda_resident_replay_support.cpp" in cmake
     assert "add_test(NAME cuda_resident_replay" in cmake
     assert "RuntimeFacade" in cmake
     # RB8 must not silently turn on the public support projection.
     config = _text(ROOT / "src/runtime/facade/runtime_facade_config.cpp")
     assert ".supports_shadow_compare = false" in config
+
+
+def test_rb8_replay_support_split_stays_below_the_test_soft_limit() -> None:
+    for path in (TEST, PROJECTION, SUPPORT, SUPPORT_HEADER):
+        assert len(path.read_text(encoding="utf-8").splitlines()) < 700

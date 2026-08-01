@@ -93,10 +93,11 @@ CR2-3 keeps the host/device lease boundary split into small owners:
 the soft target at 661 lines for `cuda_world_store.cpp` and 636 for
 `cuda_resident_backend.cpp`; no size exception is added.
 
-The following file remains a watch item and may not grow until split or
-explicitly reclassified:
-
-- `src/tests/test_cuda_resident_replay.cpp` — 919 lines.
+CR2-4a removes the replay-test watch item by splitting its zero-semantic-change
+support into `test_cuda_resident_replay_projection.cpp` (611 lines),
+`test_cuda_resident_replay_support.cpp` (175), and
+`test_cuda_resident_replay_support.h` (58); the assertion/test owner is now
+`test_cuda_resident_replay.cpp` (139). No current CR2 watch item remains.
 
 Generated/vendor files and historical documents are outside the module line
 limit only when an explicit manifest entry records their provenance. New
@@ -130,8 +131,9 @@ exception may be used to hide semantic implementation growth.
 | CR2-2a | Split the RB9 probe's lane-specific session into a private implementation module without changing its invocation surface, JSON schema, errors, or phase order. | Completed after independent approval in `bf695071`; probe/session modules are below the soft limit and historical evidence remains untouched. |
 | CR2-2p | Unblock the real Flecs CPU lane on VS2022 with only the portable bit scan, intended global environment-model type, and MSVC core math-constant opt-in. | Real `FlecsCpuBackend` graph compiles; focused guard passes; independent review and a separate commit precede CR2-2b. |
 | CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Independently approved and committed as `607c1f33`; both real lanes consume the same trace through the declared surface. |
-| CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured consumer path. | Active candidate: explicit consumer smoke, ownership/lifetime/failure tests, deferred diagnostic readback, and CUDA-on/off validation are complete; independent commit review remains required and public support stays closed. |
-| CR2-4 | Release selected-slice parity and deterministic reset identity from quarantine. | Identity policy is stable or explicitly excluded; full replay comparison passes the frozen budget at every declared barrier. |
+| CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured consumer path. | Independently approved and committed as `7da41a2a`; explicit consumer smoke, ownership/lifetime/failure tests, deferred diagnostic readback, and CUDA-on/off validation pass; public support stays closed. |
+| CR2-4a | Split the 919-line RB8 replay test into bounded support/projection/test owners without changing its oracle, quarantine, 93-field budget, or historical evidence. | Candidate write set keeps CUDA-on replay 3/3 and 47/47, CUDA-off 3/3 and 14/14, old failure semantics, CMake topology, and size policy equivalent; independent review and one commit required. |
+| CR2-4b | Release selected-slice parity and deterministic reset identity from quarantine using real payload evidence and an explicit identity policy. | Identity policy is stable or explicitly excluded; every released field is real or explicitly normalized/excluded; frozen-budget replay passes at each declared barrier; public support remains closed. |
 | CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Counters are complete or a documented external blocker stops the gate; no tuning claim is made from incomplete counters. |
 | CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | End-to-end benefit survives cold, warm, rollout, export, device-consumer, and small-batch cases; selection policy is evidence-backed. |
 | CR2-7 | Make a separately reviewed promotion or closure decision. | Promotion requires a new explicit authorization and integration plan; otherwise record a second closure without changing maintained behavior. |
