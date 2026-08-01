@@ -11,8 +11,9 @@ Language versions:
 - Parent: `935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **CR2-1 is committed as db7e6ad4. CR2-2a is independently approved;
-its single commit is pending.**
+Status: **CR2-2a is committed as bf695071. CR2-2p is a separately bounded
+CPU-portability prerequisite candidate awaiting independent review. CR2-2b
+remains uncommitted and outside the CR2-2p staged write set.**
 The RB0-RB11 program remains closed without promotion. This ledger records only
 the new branch-local program and does not alter maintained support flags.
 
@@ -188,3 +189,44 @@ counts, focused tests/build evidence, and the untouched historical RB9
 evidence. No CR2-2a blocker was found. This verdict authorizes one CR2-2a
 commit; it does not authorize merge, push, promotion, CR2-2b semantics, or a
 historical evidence rewrite.
+
+## CR2-2p candidate — real Flecs CPU lane portability prerequisite
+
+### Scope and exact write set
+
+CR2-2b cannot claim a real CPU/CUDA common surface while the maintained
+`FlecsCpuBackend` graph does not compile under the selected VS2022 toolchain.
+This prerequisite is isolated from the full-window semantics and contains only:
+
+- replace GCC-only `__builtin_ctz` with the C++20 `std::countr_zero` equivalent;
+- move `environment_model.h` out of the `IControlModel` class body and update
+  the two stale nested-type spellings to the intended global interface;
+- enable the existing `M_PI` formulas for `ef_core` on MSVC without changing
+  their values; and
+- add a focused architecture guard plus this English/Chinese ledger update.
+
+No CUDA source, resident contract, support flag, facade selection, performance
+result, or CR2-2b runner/probe file belongs to this commit.
+
+### Validation and size evidence
+
+VS2022 Release successfully built `ef_core`, `ef_facade`, and the candidate real
+Flecs full-window CPU probe. That probe loaded `examples/config/database` outside
+the runner and completed two windows with exit code zero. The wider `ef_test`
+build advanced past the corrected core/control-model units but remains blocked
+by separate pre-existing MSVC issues in test-owned headers (for example
+`kalman_seeker.h` uses `M_PI` outside `ef_core`). These unrelated failures are
+not expanded into this prerequisite.
+
+`control_model.h` is 28 lines and `default_control_model.cpp` is 542 lines.
+`world_batch_runtime.cpp` was already 1207 lines before this candidate and is
+1208 after adding `<bit>`; it is a pre-existing non-CR2-owned hard-limit debt,
+not a new module or an exception hidden by the CR2 policy. This prerequisite
+does not split that owner because doing so would mix structural refactoring with
+the narrow portability unblock; the debt remains explicitly visible.
+
+### Independent review gate
+
+An independent reviewer must verify the exact staged subset, API/type intent,
+bit-scan equivalence, MSVC definition scope, focused build evidence, and the
+absence of CR2-2b semantic files. Only `APPROVE` permits one CR2-2p commit.

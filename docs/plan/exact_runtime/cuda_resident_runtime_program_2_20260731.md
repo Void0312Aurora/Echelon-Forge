@@ -13,9 +13,9 @@ Language versions:
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-31`
 
-Status: **CR2-1 is independently approved and committed as db7e6ad4.
-CR2-2a (RB9 probe session split) is independently approved and awaits its
-single commit. The previous RB0-RB11 program remains
+Status: **CR2-2a is independently approved and committed as bf695071.
+CR2-2p is an isolated CPU-portability prerequisite candidate before CR2-2b.
+The previous RB0-RB11 program remains
 closed without promotion. This program may either produce promotion-grade
 evidence or close again; it does not reopen maintained support by itself.**
 
@@ -121,6 +121,7 @@ exception may be used to hide semantic implementation growth.
 | CR2-0 | Freeze this program, size policy, exception manifest, and architecture guard. | Completed in `2f34fac6`; policy parses and the reviewed write set is committed. |
 | CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | Independently approved by `/root/cr2_split_review` and committed as `db7e6ad4`; no CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, parity, and architecture tests are green. |
 | CR2-2a | Split the RB9 probe's lane-specific session into a private implementation module without changing its invocation surface, JSON schema, errors, or phase order. | Independent reviewer confirms structural equivalence; probe/session modules are below the soft limit; CUDA smoke and focused architecture tests pass; one commit. |
+| CR2-2p | Unblock the real Flecs CPU lane on VS2022 with only the portable bit scan, intended global environment-model type, and MSVC core math-constant opt-in. | Real `FlecsCpuBackend` graph compiles; focused guard passes; independent review and a separate commit precede CR2-2b. |
 | CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Both lanes consume the same trace through the declared surface; private-only performance invocation is no longer the sole evidence path. |
 | CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured path. | Consumer smoke becomes an explicit contract; ownership/lifetime and failure behavior are tested; no public support promotion. |
 | CR2-4 | Release selected-slice parity and deterministic reset identity from quarantine. | Identity policy is stable or explicitly excluded; full replay comparison passes the frozen budget at every declared barrier. |

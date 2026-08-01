@@ -6,12 +6,11 @@
 
 #include "components/basic/common.h"
 #include "components/physics/performance.h"
+#include "core/interfaces/environment_model.h"
 
 class IControlModel {
 public:
     virtual ~IControlModel() = default;
-
-#include "core/interfaces/environment_model.h"
 
     virtual void update(flecs::world world,
                         flecs::entity entity,

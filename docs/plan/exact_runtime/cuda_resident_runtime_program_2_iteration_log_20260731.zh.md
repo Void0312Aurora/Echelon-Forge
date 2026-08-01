@@ -11,7 +11,8 @@
 - 父级：`935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**CR2-1 已以 db7e6ad4 提交。CR2-2a 已获独立批准；单一 commit 待完成。**
+状态：**CR2-2a 已以 bf695071 提交。CR2-2p 是单独限定的 CPU portability
+前置 candidate，等待独立复核。CR2-2b 仍未提交，不进入 CR2-2p staged write set。**
 RB0-RB11 计划仍是无晋级关闭。本账本只记录新分支内计划，
 不改变 maintained support flags。
 
@@ -170,3 +171,39 @@ set、迁移的全部 10 个可观察字符串、CPU/CUDA 操作顺序和计时�
 lane、行数、聚焦测试/构建证据以及未改动的历史 RB9 evidence 后返回
 **APPROVE**，没有 CR2-2a blocker。该结论授权形成一个 CR2-2a commit；不授权
 merge、push、promotion、CR2-2b 语义或历史 evidence 改写。
+
+## CR2-2p candidate —— 真实 Flecs CPU lane 可移植性前置
+
+### 范围与精确 write set
+
+只要 maintained `FlecsCpuBackend` 图无法在选定 VS2022 工具链编译，CR2-2b 就
+不能声称 CPU/CUDA 共同 surface。本前置迭代与 full-window 语义隔离，仅包含：
+
+- 用 C++20 等价的 `std::countr_zero` 替换 GCC-only `__builtin_ctz`；
+- 把 `environment_model.h` 从 `IControlModel` class body 移到外部，并把两处陈旧的
+  nested type 拼写改回预期的全局 interface；
+- 只为 MSVC 下的 `ef_core` 启用既有 `M_PI` 公式，不改变常量值；
+- 增加聚焦 architecture guard，并更新本中英文账本。
+
+本 commit 不包含 CUDA source、resident contract、support flag、facade selection、
+性能结果或 CR2-2b runner/probe 文件。
+
+### 验证与规模证据
+
+VS2022 Release 已成功构建 `ef_core`、`ef_facade` 与 candidate 真实 Flecs
+full-window CPU probe。该 probe 在 runner 外加载 `examples/config/database`，完成
+两个窗口并以 0 退出。更宽的 `ef_test` 构建已越过本次修正的 core/control-model
+单元，但仍被 test-owned header 中另一些既有 MSVC 问题阻塞，例如
+`kalman_seeker.h` 在 `ef_core` 之外使用 `M_PI`；本前置迭代不扩张处理这些问题。
+
+`control_model.h` 为 28 行，`default_control_model.cpp` 为 542 行。
+`world_batch_runtime.cpp` 在本 candidate 前已是 1207 行，增加 `<bit>` 后为 1208
+行；这是既有的、非 CR2-owned hard-limit debt，不是新模块，也没有被 CR2 policy
+的 exception 隐藏。本迭代不拆分该 owner，因为这会把结构重构混入窄范围
+portability unblock；该债务继续明确保留。
+
+### 独立复核门
+
+独立 reviewer 必须核对精确 staged subset、API/type 意图、bit-scan 等价性、MSVC
+definition 范围、聚焦构建证据，以及 CR2-2b 语义文件未进入提交。只有
+`APPROVE` 才允许形成一个 CR2-2p commit。

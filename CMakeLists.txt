@@ -232,6 +232,13 @@ target_include_directories(ef_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# The legacy core still uses the standard M_PI extension in several translation
+# units. Opt in on MSVC so the real Flecs CPU backend can be built without
+# changing the model formulas or their constants.
+if (MSVC)
+    target_compile_definitions(ef_core PRIVATE _USE_MATH_DEFINES)
+endif()
+
 # ef_content is listed first: ef_core's engine/model TUs call into the content
 # loader (e.g. simulation_kernel.cpp -> default_unit_factory.h ->
 # load_unit_definitions_json), and content never calls back, so ef_content must

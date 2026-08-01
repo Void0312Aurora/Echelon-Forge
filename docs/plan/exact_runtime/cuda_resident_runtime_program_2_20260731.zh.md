@@ -13,8 +13,8 @@
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-31`
 
-状态：**CR2-1 已获独立批准并以 db7e6ad4 提交。当前 CR2-2a（RB9 probe
-session 拆分）已获独立批准，等待单一 commit。前一套
+状态：**CR2-2a 已获独立批准并以 bf695071 提交。CR2-2p 是 CR2-2b 之前
+隔离的 CPU portability 前置 candidate。前一套
 RB0-RB11 计划仍保持无晋级关闭。本计划可能产出可晋级证据，也可能再次 closure；
 它不会自行重新开放 maintained support。**
 
@@ -100,6 +100,7 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | CR2-0 | 冻结本计划、size policy、exception manifest 与 architecture guard。 | 已在 `2f34fac6` 完成；policy 可解析且复核过的 write set 已提交。 |
 | CR2-1 | 在不改变语义下按 layout/allocation、Phase A、Phase B、Phase D、barrier、device API orchestration 拆分 `cuda_world_store_cuda.cu`。 | 已由 `/root/cr2_split_review` 独立批准并以 `db7e6ad4` 提交；CR2-owned module 不超过 1000 行；聚焦 C++/CUDA lifecycle、replay、parity 与 architecture 测试通过。 |
 | CR2-2a | 在不改变 invocation surface、JSON schema、错误文本和 phase 顺序的前提下，将 RB9 probe 的 lane-specific session 移到独立实现模块。 | 独立 reviewer 确认结构等价；probe/session 均低于 soft limit；CUDA smoke 与聚焦 architecture 测试通过；形成一个 commit。 |
+| CR2-2p | 只用 portable bit scan、预期的全局 environment-model type 与 MSVC core 数学常量 opt-in，解除真实 Flecs CPU lane 在 VS2022 的阻塞。 | 真实 `FlecsCpuBackend` 图可编译；聚焦 guard 通过；独立复核与单独 commit 必须先于 CR2-2b。 |
 | CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 两侧消费同一 trace；private-only performance invocation 不再是唯一证据路径。 |
 | CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured path 的 hidden host validation。 | consumer smoke 成为显式 contract；ownership/lifetime/failure 有测试；不晋级 public support。 |
 | CR2-4 | 将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | identity policy 稳定或明确排除；每个声明 barrier 上的 frozen budget replay 通过。 |

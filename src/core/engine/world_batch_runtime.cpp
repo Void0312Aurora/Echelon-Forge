@@ -9,6 +9,7 @@
 #include "gpu/gpu_interaction_broadphase_runtime.h"
 
 #include <algorithm>
+#include <bit>
 #include <atomic>
 #include <cmath>
 #include <exception>
@@ -171,7 +172,7 @@ decode_broadphase_candidate_ids(const std::vector<std::uint32_t> &words,
             std::uint32_t mask = src[word_index];
             while (mask != 0u) {
                 const std::uint32_t bit = mask & (~mask + 1u);
-                const int bit_index = static_cast<int>(__builtin_ctz(mask));
+                const int bit_index = static_cast<int>(std::countr_zero(mask));
                 const int local_index = static_cast<int>(word_index * 32u) + bit_index;
                 if (local_index >= 0 && static_cast<std::size_t>(local_index) < ids.size()) {
                     dst.push_back(ids[static_cast<std::size_t>(local_index)]);
