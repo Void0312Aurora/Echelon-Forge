@@ -66,12 +66,18 @@ CR2-1 已从当前树移除该文件，不再延续例外。当前 CUDA implemen
 | `cuda_world_store_cuda_phase_a.cu` | Phase A kernel 与 publication | 204 |
 | `cuda_world_store_cuda_phase_b.cu` | Phase B kernels 与 launch wrappers | 497 |
 | `cuda_world_store_cuda_phase_d.cu` | Phase D kernels 与 launch wrappers | 231 |
-| `cuda_world_store_cuda_observation.cu` | observation pack 与 consumer | 174 |
+| `cuda_world_store_cuda_observation.cu` | diagnostic 与 CR2-3 lease pack/consumer | 441 |
 | `cuda_world_store_cuda_state_readback.cu` | host state readback | 271 |
 | `cuda_world_store_cuda_window.cu` | private full-window orchestration | 69 |
 
 当前 CR2-owned CUDA 模块全部低于 700 行 soft target。旧单体只作为历史 baseline
 保留，不是当前 source，也不是活动中的 exception。
+
+CR2-3 将 host/device lease 边界拆在小型 owner 中：
+`cuda_resident_device_consumer.cpp/.h` 为 246/49 行，
+`cuda_world_store_device_lease.cpp` 为 66 行，
+`cuda_world_store_host_internal.h` 为 33 行。已有 host owner 仍低于 soft target：
+`cuda_world_store.cpp` 661 行，`cuda_resident_backend.cpp` 636 行；没有新增规模例外。
 
 以下文件仍是 watch item；在拆分或显式重新分类前不得继续增长：
 
@@ -99,10 +105,10 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | --- | --- | --- |
 | CR2-0 | 冻结本计划、size policy、exception manifest 与 architecture guard。 | 已在 `2f34fac6` 完成；policy 可解析且复核过的 write set 已提交。 |
 | CR2-1 | 在不改变语义下按 layout/allocation、Phase A、Phase B、Phase D、barrier、device API orchestration 拆分 `cuda_world_store_cuda.cu`。 | 已由 `/root/cr2_split_review` 独立批准并以 `db7e6ad4` 提交；CR2-owned module 不超过 1000 行；聚焦 C++/CUDA lifecycle、replay、parity 与 architecture 测试通过。 |
-| CR2-2a | 在不改变 invocation surface、JSON schema、错误文本和 phase 顺序的前提下，将 RB9 probe 的 lane-specific session 移到独立实现模块。 | 独立 reviewer 确认结构等价；probe/session 均低于 soft limit；CUDA smoke 与聚焦 architecture 测试通过；形成一个 commit。 |
+| CR2-2a | 在不改变 invocation surface、JSON schema、错误文本和 phase 顺序的前提下，将 RB9 probe 的 lane-specific session 移到独立实现模块。 | 独立批准后已以 `bf695071` 完成；probe/session 均低于 soft limit，历史 evidence 未改。 |
 | CR2-2p | 只用 portable bit scan、预期的全局 environment-model type 与 MSVC core 数学常量 opt-in，解除真实 Flecs CPU lane 在 VS2022 的阻塞。 | 真实 `FlecsCpuBackend` 图可编译；聚焦 guard 通过；独立复核与单独 commit 必须先于 CR2-2b。 |
-| CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 两侧消费同一 trace；private-only performance invocation 不再是唯一证据路径。 |
-| CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured path 的 hidden host validation。 | consumer smoke 成为显式 contract；ownership/lifetime/failure 有测试；不晋级 public support。 |
+| CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 已独立批准并以 `607c1f33` 提交；两个真实 lane 通过声明的共同 surface 消费同一 trace。 |
+| CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured consumer path 的 hidden host validation。 | 活动 candidate：显式 consumer smoke、ownership/lifetime/failure、延迟 diagnostic readback 与 CUDA-on/off 验证已完成；仍需独立提交审阅，public support 保持关闭。 |
 | CR2-4 | 将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | identity policy 稳定或明确排除；每个声明 barrier 上的 frozen budget replay 通过。 |
 | CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | counters 完整或记录外部 blocker 并停止 gate；不以不完整 counters 声称 tuning 成功。 |
 | CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | cold、warm、rollout、export、device-consumer、small-batch 均支持端到端决策。 |
@@ -138,9 +144,37 @@ runner，不增加 retry、fallback、device pointer、learner lease、support f
 facade selection。两个真实 lane 编译同一 trace source，独立 comparator 检查纯 JSON
 的 surface/trace/operation 相等性。
 
+### CR2-3 边界
+
+CR2-3 增加 private `cuda_resident.device_observation_lease.v1` 输入和真实
+`cuda_resident.device_consumer_smoke.v1` kernel submit。lease 自有 D2D-packed
+values、ids、ready event、device/default-stream identity、以 element 为单位的 tensor
+shape/stride，以及 allocation/reset/committed-window/source epoch。receipt 持有输入
+lease，直到自身 event 与 output buffer 被释放。允许重复 submit/await；保留的 lease
+在 reset 乃至 backend 销毁后仍可读取。backend/store 仍是 single-owner runtime
+对象，lease/receipt 的 shared ownership 则显式声明。
+
+计时中的 consumer path 是 acquire → submit → event await。它不做 consumer-validation
+D2H，也不调用 `state_snapshot()` 或读取 device global version。diagnostic
+materialization 恰好执行两次 D2H，而且只在对应 cold、warm 或 rollout timer 记录后
+发生。rollout 会把本 sample 的全部 receipt diagnostic 延迟到 timer 关闭之后，因此
+reported peak requested bytes 按 `rollout_windows` 个 lease/output owner 计。一般 window
+仍包含既有的五次 barrier-status D2H；选择 host export 时为七次。因此“0”字段只描述
+device-consumer 增量路径，不代表整个 window 没有 D2H。`cudaMalloc` 可能隐式同步，
+in-flight RAII release 也可能等待 event；allocation risk 与
+`device_consumer_release_outside_measured_path = true` 都显式报告。该问题留给
+CR2-5 证据与 tuning，不伪装成 zero-sync。
+
+稳定 failure 覆盖 invalid request/lease/receipt、缺少 committed window、epoch/device/
+stream/layout mismatch、lease allocation/pack/event record、consumer allocation/launch/
+event record、wait 与 diagnostic materialize。该 seam 仍是 backend-private：CR2-3
+不改 `IWorldBatchBackend`、RuntimeCapabilities、admission、support flag 或
+RuntimeFacade selection。历史 RB9 evidence 目录不重写，也不声称 learner update、
+performance promotion 或 tuning 已完成。
+
 ## 5. 晋级与恢复边界
 
-只要 invocation surface 不等价、learner/device consumption 缺失、parity 仍是
+只要 invocation surface 不等价、真实 learner update loop 缺失、parity 仍是
 diagnostic、required counters 缺失、world-1 或声明的 small-batch 回归没有明确
 策略，或需要第二套 public facade/重复 DTO，promotion 就保持关闭。
 

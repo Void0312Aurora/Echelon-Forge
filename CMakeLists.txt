@@ -355,7 +355,9 @@ endif()
 # added when CUDA experiments are explicitly enabled.
 set(EF_CUDA_RESIDENT_BACKEND_SOURCES
     src/runtime/facade/internal/cuda_resident/cuda_resident_backend.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_device_consumer.cpp
     src/runtime/facade/internal/cuda_resident/cuda_world_store.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_world_store_device_lease.cpp
 )
 if (EF_ENABLE_CUDA_EXPERIMENTS)
     list(APPEND EF_CUDA_RESIDENT_BACKEND_SOURCES
@@ -504,6 +506,7 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_phase_a_cpu_reference.cpp
     src/tests/test_cuda_resident_phase_b_cpu_reference.cpp
     src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/tests/test_cuda_resident_device_consumer.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     src/tests/test_cuda_resident_replay.cpp
     src/tests/test_cuda_resident_performance.cpp
@@ -538,6 +541,7 @@ add_executable(ef_cuda_resident_lifecycle_test
     src/tests/test_cuda_resident_phase_d.cpp
     src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
     src/tests/test_cuda_resident_performance.cpp
+    src/tests/test_cuda_resident_device_consumer.cpp
 )
 target_link_libraries(ef_cuda_resident_lifecycle_test PRIVATE
     ef_cuda_resident_backend

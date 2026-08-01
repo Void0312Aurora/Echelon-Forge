@@ -91,7 +91,7 @@
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu",
       "role": "phase_d_observation_pack_and_consumer",
-      "observed_lines": 174
+      "observed_lines": 441
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu",

@@ -110,6 +110,273 @@ void release_cuda_world_store_device_observation(void *values, void *ids) noexce
     if (ids != nullptr) cudaFree(ids);
 }
 
+namespace {
+
+void set_lease_failure(device_consumer::FailureCode *failure,
+                       device_consumer::FailureCode value) noexcept {
+    if (failure != nullptr) *failure = value;
+}
+
+void release_async_device_buffers(void *values, void *ids, cudaEvent_t ready_event,
+                                  int device_ordinal, bool synchronize_stream) noexcept {
+    int previous_device = -1;
+    (void)cudaGetDevice(&previous_device);
+    if (device_ordinal >= 0 && previous_device != device_ordinal) {
+        (void)cudaSetDevice(device_ordinal);
+    }
+    if (synchronize_stream) {
+        (void)cudaDeviceSynchronize();
+    } else if (ready_event != nullptr) {
+        (void)cudaEventSynchronize(ready_event);
+    }
+    if (ready_event != nullptr) (void)cudaEventDestroy(ready_event);
+    if (values != nullptr) (void)cudaFree(values);
+    if (ids != nullptr) (void)cudaFree(ids);
+    if (device_ordinal >= 0 && previous_device >= 0 && previous_device != device_ordinal) {
+        (void)cudaSetDevice(previous_device);
+    }
+}
+
+} // namespace
+
+bool acquire_cuda_world_store_device_observation_lease(
+    const CudaWorldStoreDeviceAllocation *allocation,
+    const device_consumer::LeaseEpoch &epoch,
+    CudaWorldStoreDeviceObservationLeaseRaw *raw,
+    CudaWorldStoreDeviceFaultInjection *faults,
+    device_consumer::FailureCode *failure,
+    std::string *error) {
+    if (raw == nullptr || allocation == nullptr || !epoch.valid() ||
+        allocation->world_capacity == 0) {
+        set_lease_failure(failure, device_consumer::FailureCode::invalid_request);
+        if (error != nullptr) *error = "CUDA observation lease requires a non-empty allocation";
+        return false;
+    }
+    *raw = {};
+    set_lease_failure(failure, device_consumer::FailureCode::none);
+    if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_device_lease_allocation)) {
+        set_lease_failure(failure, device_consumer::FailureCode::lease_allocation_failed);
+        if (error != nullptr) *error = "injected CUDA observation lease allocation failure";
+        return false;
+    }
+
+    int device_ordinal = -1;
+    cudaError_t status = cudaGetDevice(&device_ordinal);
+    float *values = nullptr;
+    std::uint64_t *ids = nullptr;
+    cudaEvent_t ready_event = nullptr;
+    const std::size_t value_count = allocation->world_capacity * kPhaseDObservationFieldCount;
+    if (status == cudaSuccess) {
+        status = cudaMalloc(reinterpret_cast<void **>(&values), value_count * sizeof(float));
+    }
+    if (status == cudaSuccess) {
+        status = cudaMalloc(reinterpret_cast<void **>(&ids),
+                            allocation->world_capacity * sizeof(std::uint64_t));
+    }
+    if (status == cudaSuccess) {
+        status = cudaEventCreateWithFlags(&ready_event, cudaEventDisableTiming);
+    }
+    if (status != cudaSuccess) {
+        release_async_device_buffers(values, ids, ready_event, device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::lease_allocation_failed);
+        if (error != nullptr) *error = cuda_error_message("allocate observation lease", status);
+        return false;
+    }
+
+    constexpr unsigned int threads = 128;
+    const unsigned int blocks = static_cast<unsigned int>(
+        (allocation->world_capacity + threads - 1) / threads);
+    const std::uint8_t *slot = allocation->state_slots[allocation->active_state_slot];
+    phase_d_pack_observation_kernel<<<blocks, threads>>>(
+        allocation->world_capacity,
+        device_field<double>(slot, allocation->state_layout.phase_d_observations),
+        device_field<std::uint64_t>(slot, allocation->state_layout.phase_d_observation_ids),
+        values, ids);
+    status = cudaGetLastError();
+    if (status != cudaSuccess) {
+        release_async_device_buffers(values, ids, ready_event, device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::lease_pack_failed);
+        if (error != nullptr) *error = cuda_error_message("launch observation lease pack", status);
+        return false;
+    }
+    if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_device_lease_event_record)) {
+        release_async_device_buffers(values, ids, ready_event, device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::lease_event_record_failed);
+        if (error != nullptr) *error = "injected CUDA observation lease event-record failure";
+        return false;
+    }
+    status = cudaEventRecord(ready_event, nullptr);
+    if (status != cudaSuccess) {
+        release_async_device_buffers(values, ids, ready_event, device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::lease_event_record_failed);
+        if (error != nullptr) *error = cuda_error_message("record observation lease event", status);
+        return false;
+    }
+    raw->values = values;
+    raw->ids = ids;
+    raw->ready_event = reinterpret_cast<void *>(ready_event);
+    raw->world_count = allocation->world_capacity;
+    raw->values_per_world = kPhaseDObservationFieldCount;
+    raw->device_ordinal = device_ordinal;
+    raw->producer_stream = 0;
+    raw->epoch = epoch;
+    if (error != nullptr) error->clear();
+    return true;
+}
+
+void release_cuda_world_store_device_observation_lease(void *values, void *ids,
+                                                        void *ready_event,
+                                                        int device_ordinal) noexcept {
+    release_async_device_buffers(values, ids, reinterpret_cast<cudaEvent_t>(ready_event),
+                                 device_ordinal, false);
+}
+
+bool submit_cuda_world_store_device_observation_consumer(
+    const CudaWorldStoreDeviceObservationLeaseRaw &lease,
+    CudaWorldStoreDeviceConsumerRaw *raw,
+    bool fail_allocation,
+    bool fail_launch,
+    bool fail_event_record,
+    device_consumer::FailureCode *failure,
+    std::string *error) {
+    if (raw == nullptr || lease.values == nullptr || lease.ids == nullptr ||
+        lease.ready_event == nullptr || lease.world_count == 0 || lease.values_per_world == 0 ||
+        lease.device_ordinal < 0 || lease.producer_stream != 0) {
+        set_lease_failure(failure, device_consumer::FailureCode::invalid_lease);
+        if (error != nullptr) *error = "CUDA observation consumer requires a valid lease";
+        return false;
+    }
+    *raw = {};
+    set_lease_failure(failure, device_consumer::FailureCode::none);
+    int current_device = -1;
+    cudaError_t status = cudaGetDevice(&current_device);
+    if (status == cudaSuccess && current_device != lease.device_ordinal) {
+        set_lease_failure(failure, device_consumer::FailureCode::device_mismatch);
+        if (error != nullptr) *error = "CUDA observation consumer device ordinal mismatch";
+        return false;
+    }
+    if (status == cudaSuccess) {
+        status = cudaStreamWaitEvent(nullptr, reinterpret_cast<cudaEvent_t>(lease.ready_event), 0);
+    }
+    float *first_values = nullptr;
+    std::uint64_t *ids = nullptr;
+    cudaEvent_t ready_event = nullptr;
+    if (status == cudaSuccess && fail_allocation) {
+        status = cudaErrorMemoryAllocation;
+    }
+    if (status == cudaSuccess) {
+        status = cudaMalloc(reinterpret_cast<void **>(&first_values),
+                            lease.world_count * sizeof(float));
+    }
+    if (status == cudaSuccess) {
+        status = cudaMalloc(reinterpret_cast<void **>(&ids),
+                            lease.world_count * sizeof(std::uint64_t));
+    }
+    if (status == cudaSuccess) status = cudaEventCreateWithFlags(&ready_event, cudaEventDisableTiming);
+    if (status != cudaSuccess) {
+        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::consumer_allocation_failed);
+        if (error != nullptr) *error = cuda_error_message("allocate device consumer output", status);
+        return false;
+    }
+    constexpr unsigned int threads = 128;
+    const unsigned int blocks =
+        static_cast<unsigned int>((lease.world_count + threads - 1) / threads);
+    if (fail_launch) {
+        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::consumer_launch_failed);
+        if (error != nullptr) *error = "injected CUDA device consumer launch failure";
+        return false;
+    }
+    phase_d_consumer_smoke_kernel<<<blocks, threads>>>(
+        static_cast<const float *>(lease.values),
+        static_cast<const std::uint64_t *>(lease.ids), lease.world_count,
+        lease.values_per_world, first_values, ids);
+    status = cudaGetLastError();
+    if (status != cudaSuccess) {
+        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::consumer_launch_failed);
+        if (error != nullptr) *error = cuda_error_message("launch device consumer", status);
+        return false;
+    }
+    if (fail_event_record) {
+        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::consumer_event_record_failed);
+        if (error != nullptr) *error = "injected CUDA device consumer event-record failure";
+        return false;
+    }
+    status = cudaEventRecord(ready_event, nullptr);
+    if (status != cudaSuccess) {
+        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        set_lease_failure(failure, device_consumer::FailureCode::consumer_event_record_failed);
+        if (error != nullptr) *error = cuda_error_message("record device consumer event", status);
+        return false;
+    }
+    raw->first_values = first_values;
+    raw->ids = ids;
+    raw->ready_event = reinterpret_cast<void *>(ready_event);
+    raw->device_ordinal = lease.device_ordinal;
+    raw->world_count = lease.world_count;
+    if (error != nullptr) error->clear();
+    return true;
+}
+
+bool await_cuda_world_store_device_observation_consumer(
+    const CudaWorldStoreDeviceConsumerRaw &raw, bool fail_wait, std::string *error) {
+    if (raw.ready_event == nullptr || raw.world_count == 0) {
+        if (error != nullptr) *error = "CUDA device consumer wait requires a valid receipt";
+        return false;
+    }
+    if (fail_wait) {
+        if (error != nullptr) *error = "injected CUDA device consumer wait failure";
+        return false;
+    }
+    const cudaError_t status =
+        cudaEventSynchronize(reinterpret_cast<cudaEvent_t>(raw.ready_event));
+    if (status != cudaSuccess) {
+        if (error != nullptr) *error = cuda_error_message("wait for device consumer", status);
+        return false;
+    }
+    if (error != nullptr) error->clear();
+    return true;
+}
+
+bool materialize_cuda_world_store_device_observation_consumer(
+    const CudaWorldStoreDeviceConsumerRaw &raw, std::vector<float> *first_values,
+    std::vector<std::uint64_t> *ids, bool fail_materialize, std::string *error) {
+    if (raw.first_values == nullptr || raw.ids == nullptr || raw.world_count == 0 ||
+        first_values == nullptr || ids == nullptr) {
+        if (error != nullptr) *error = "CUDA device consumer diagnostic requires a valid receipt";
+        return false;
+    }
+    if (fail_materialize) {
+        if (error != nullptr) *error = "injected CUDA device consumer diagnostic failure";
+        return false;
+    }
+    first_values->assign(raw.world_count, 0.0F);
+    ids->assign(raw.world_count, 0);
+    cudaError_t status = cudaMemcpy(first_values->data(), raw.first_values,
+                                    raw.world_count * sizeof(float), cudaMemcpyDeviceToHost);
+    if (status == cudaSuccess) {
+        status = cudaMemcpy(ids->data(), raw.ids, raw.world_count * sizeof(std::uint64_t),
+                            cudaMemcpyDeviceToHost);
+    }
+    if (status != cudaSuccess) {
+        first_values->clear();
+        ids->clear();
+        if (error != nullptr) *error = cuda_error_message("materialize device consumer", status);
+        return false;
+    }
+    if (error != nullptr) error->clear();
+    return true;
+}
+
+void release_cuda_world_store_device_consumer(void *first_values, void *ids, void *ready_event,
+                                              int device_ordinal) noexcept {
+    release_async_device_buffers(first_values, ids, reinterpret_cast<cudaEvent_t>(ready_event),
+                                 device_ordinal, false);
+}
+
 bool consume_cuda_world_store_device_observation(
     const void *values, const void *ids, std::size_t world_count, std::size_t values_per_world,
     std::vector<float> *first_values, std::vector<std::uint64_t> *ids_out, std::string *error) {

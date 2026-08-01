@@ -285,3 +285,88 @@ fresh independent agent for the common sequence, state-machine retry semantics,
 pure-JSON comparison evidence, exact CMake lane topology, support-flag
 invariance, historical evidence preservation, and all size limits. Only
 `APPROVE` permits one CR2-2b commit.
+
+The independent reviewer returned **`FINAL APPROVE`** for the exact 18-file
+write set, common sequence, retry semantics, real CPU/CUDA probes, comparator,
+support boundary, and size evidence. CR2-2b was committed as `607c1f33`; this
+did not authorize merge, push, support promotion, or historical evidence edits.
+
+## CR2-3 candidate — owned device lease and explicit consumer boundary
+
+### Scope and exact write set
+
+CR2-3 adds the private `cuda_resident.device_observation_lease.v1` contract and
+the `cuda_resident.device_consumer_smoke.v1` CUDA kernel path. The lease owns
+D2D-packed observation values, ids, a ready event, device/default-stream
+identity, element-stride tensor descriptors, and an
+allocation/reset/committed-window/source epoch. The consumer receipt retains
+the input lease and independently owns output buffers plus its completion
+event. Copying a lease or receipt shares the explicit owner; repeated submit
+and await are supported. Tests retain a lease across reset and backend
+destruction, and retain a receipt across consumer destruction.
+
+The store uses only host lifecycle/window state to admit acquisition. Setup is
+not a committed window; only a successful commit increments the host epoch.
+No acquisition call performs `state_snapshot()` or reads device global
+versions. The legacy device-view API remains an explicit diagnostic path for
+RB7 compatibility, but the RB9 measured consumer mode no longer calls it.
+
+The write set is limited to the new contract/consumer/lease owners, narrow
+backend/store host epoch plumbing, the existing observation CUDA unit, focused
+C++ and architecture tests, the RB9 session/ledger timing boundary, CMake,
+size-policy inventory, and this English/Chinese plan/acceptance record. It does
+not change `IWorldBatchBackend`, RuntimeCapabilities, admission, support flags,
+RuntimeFacade selection, or the historical RB9 evidence directory.
+
+### Measurement and transfer boundary
+
+The device-consumer measurement is acquire → submit → explicit event await.
+The acquisition and submit success paths contain no D2H and no explicit
+`cudaDeviceSynchronize`; await uses only `cudaEventSynchronize`. Diagnostic
+materialization is rejected before await, then performs exactly two D2H copies
+after the corresponding sample timer is recorded. Cold and warm samples drain
+one receipt after their recorded times. Rollout samples retain all receipts
+until the rollout timer closes, then validate and release them; reported peak
+requested bytes therefore multiply lease/output bytes by `rollout_windows`.
+
+The transfer ledger deliberately names
+`device_consumer_measured_path_d2h_copy_count = 0`: it is the consumer
+increment, not a claim that the full window has no D2H. The resident window
+still records five barrier-status D2H copies, or seven with host export.
+Diagnostic copies are separately reported as two. `cudaMalloc` can implicitly
+synchronize, so `device_consumer_allocation_may_synchronize = true` remains an
+explicit CR2-5 risk; CR2-3 makes no allocation-pool or tuning claim.
+
+### Failure, size, and validation evidence
+
+Stable failure codes cover request/lease/receipt validity, missing committed
+window, epoch/device/stream/layout mismatch, lease allocation/pack/event,
+consumer allocation/launch/event, wait, and diagnostic materialization.
+One-shot fault seams cover allocation, launch, event record, wait, and
+diagnostic failures without double-free; failed operations can be retried with
+the same retained lease/receipt where the contract permits it. CUDA-off builds
+fail closed.
+
+All CR2-3 modules remain below the soft limits: contract 209 lines, consumer
+246/49, host-internal/lease wrapper 33/66, observation CUDA 441, C++ test 292,
+architecture guard 197, RB9 probe/session/header 597/304/46, store 661, and
+backend 636. The 919-line replay watch item did not grow and no exception was
+added.
+
+VS2022 Release with CUDA 13.0/SM86 passed 14/14 lifecycle cases and 599/599
+assertions on the RTX 3090; CUDA-off passed 14/14 and 91/91. The live RB9 smoke
+for two worlds produced four available rows. Device-consumer rows reported
+consumer measured D2H 0, diagnostic D2H 2, one event wait, allocation sync risk
+true, deferred receipt count 2, and peak bytes including both deferred owners.
+The new pack/consumer kernels compiled at 16/14 registers with zero reported
+spill in this build log; this is a compile sanity fact, not the CR2-5 full
+resource gate. Focused CR2-3/performance/size architecture tests passed 25/25,
+and Ruff check/format passed for the new guard.
+
+### Independent review gate
+
+A fresh independent agent must review the complete staged/unstaged/untracked
+write set, RAII/event cleanup, epoch and cross-destruction semantics, deferred
+timing and rollout peak accounting, CUDA-on/off results, support/evidence
+invariance, and all size limits. Only `APPROVE` permits one CR2-3 commit; it
+does not authorize merge, push, RuntimeFacade promotion, or CR2-4.

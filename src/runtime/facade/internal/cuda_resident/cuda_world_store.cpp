@@ -1,4 +1,5 @@
 #include "runtime/facade/internal/cuda_resident/cuda_world_store.h"
+#include "runtime/facade/internal/cuda_resident/cuda_world_store_host_internal.h"
 
 #include <algorithm>
 #include <exception>
@@ -11,26 +12,6 @@
 #endif
 
 namespace runtime::cuda_resident {
-
-struct CudaWorldStore::Impl {
-    enum class WindowState : std::uint8_t {
-        awaiting_input,
-        input_injected,
-        stage_published,
-    };
-
-    CudaWorldStoreDiagnostics diagnostics{};
-    WindowState window_state = WindowState::awaiting_input;
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
-    detail::CudaWorldStoreDeviceAllocation *allocation = nullptr;
-    detail::CudaWorldStoreDeviceAllocation *pending_cleanup = nullptr;
-    detail::CudaWorldStoreDeviceFaultInjection faults{};
-    std::vector<std::uint32_t> entity_generations;
-    std::vector<std::uint8_t> setup_active;
-    std::vector<std::uint64_t> entity_ids;
-    bool phase_a_ready = false;
-#endif
-};
 
 CudaWorldStore::CudaWorldStore() : impl_(std::make_unique<Impl>()) {
     impl_->diagnostics.compiled_with_cuda = compiled_with_cuda();
@@ -122,6 +103,8 @@ bool CudaWorldStore::configure(std::size_t world_capacity) {
     impl_->setup_active.swap(next_setup_active);
     impl_->entity_ids.swap(next_entity_ids);
     impl_->phase_a_ready = false;
+    impl_->committed_window_epoch = 0;
+    impl_->committed_source_snapshot = 0;
     impl_->window_state = Impl::WindowState::awaiting_input;
     return true;
 #else
@@ -177,6 +160,8 @@ bool CudaWorldStore::reset(const std::vector<std::uint32_t> &seeds) {
     impl_->setup_active.swap(next_setup_active);
     impl_->entity_ids.swap(next_entity_ids);
     impl_->phase_a_ready = false;
+    impl_->committed_window_epoch = 0;
+    impl_->committed_source_snapshot = 0;
     impl_->window_state = Impl::WindowState::awaiting_input;
     return true;
 #else
@@ -229,6 +214,8 @@ bool CudaWorldStore::setup_fixed_air_fixture(std::vector<CudaFixedAirWorldSetup>
     }
     *setups = std::move(next_setups);
     impl_->phase_a_ready = false;
+    impl_->committed_window_epoch = 0;
+    impl_->committed_source_snapshot = 1;
     impl_->window_state = Impl::WindowState::awaiting_input;
     impl_->diagnostics.last_error.clear();
     return true;
@@ -328,11 +315,18 @@ bool CudaWorldStore::commit_window() {
             "CUDA window commit requires a successful Phase A stage publish";
         return false;
     }
+    if (impl_->committed_window_epoch == std::numeric_limits<std::uint64_t>::max() ||
+        impl_->committed_source_snapshot > std::numeric_limits<std::uint64_t>::max() - 2) {
+        impl_->diagnostics.last_error = "CUDA committed window epoch exhausted";
+        return false;
+    }
     std::string error;
     if (!detail::commit_cuda_world_store_window(impl_->allocation, &impl_->faults, &error)) {
         impl_->diagnostics.last_error = std::move(error);
         return false;
     }
+    ++impl_->committed_window_epoch;
+    impl_->committed_source_snapshot += 2;
     impl_->phase_a_ready = false;
     impl_->window_state = Impl::WindowState::awaiting_input;
     impl_->diagnostics.last_error.clear();
@@ -395,6 +389,8 @@ bool CudaWorldStore::teardown() noexcept {
     impl_->setup_active.clear();
     impl_->entity_ids.clear();
     impl_->phase_a_ready = false;
+    impl_->committed_window_epoch = 0;
+    impl_->committed_source_snapshot = 0;
 #endif
     return true;
 }

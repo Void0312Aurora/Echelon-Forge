@@ -32,6 +32,7 @@ class ProbeSession final {
 
     void reset_fixture();
     [[nodiscard]] WindowTiming run_window(const Mode &mode);
+    void validate_pending_device_consumers();
     [[nodiscard]] std::string state_digest() const;
     [[nodiscard]] double setup_ms() const noexcept;
     [[nodiscard]] std::size_t device_bytes() const noexcept;

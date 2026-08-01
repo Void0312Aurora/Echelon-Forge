@@ -255,3 +255,74 @@ stub 为 5/5 case、105/105 assertions；更严格的 injection guard 下 lifecy
 必须由新的独立 agent 审阅完整 staged/unstaged/untracked CR2-2b write set，核对共同
 序列、状态机 retry 语义、纯 JSON 比较证据、精确 CMake lane 拓扑、support flag 不变、
 历史 evidence 保留与全部规模限制。只有 `APPROVE` 才允许形成一个 CR2-2b commit。
+
+独立 reviewer 对精确的 18-file write set、共同序列、retry 语义、真实 CPU/CUDA
+probe、comparator、support 边界与规模证据返回 **`FINAL APPROVE`**。CR2-2b 已以
+`607c1f33` 提交；这不授权 merge、push、support promotion 或历史 evidence 修改。
+
+## CR2-3 candidate —— 自有 device lease 与显式 consumer 边界
+
+### 范围与精确 write set
+
+CR2-3 增加 private `cuda_resident.device_observation_lease.v1` contract 与
+`cuda_resident.device_consumer_smoke.v1` CUDA kernel path。lease 自有 D2D-packed
+observation values、ids、ready event、device/default-stream identity、以 element
+为单位的 tensor descriptor，以及 allocation/reset/committed-window/source epoch。
+consumer receipt 持有 input lease，并独立拥有 output buffer 与 completion event。
+复制 lease/receipt 会共享显式 owner；允许重复 submit/await。测试覆盖 lease 跨 reset、
+backend 销毁，以及 receipt 跨 consumer 销毁。
+
+store 只用 host lifecycle/window state 判定 acquisition。setup 不等于 committed
+window；只有成功 commit 才递增 host epoch。acquisition 不调用 `state_snapshot()`，
+也不读取 device global version。旧 device-view API 保留为 RB7 compatibility 的显式
+diagnostic path，但 RB9 measured consumer mode 不再调用它。
+
+write set 仅包含新 contract/consumer/lease owner、窄范围 backend/store host epoch
+plumbing、已有 observation CUDA unit、聚焦 C++/architecture 测试、RB9 session/ledger
+计时边界、CMake、size-policy inventory 与本中英文计划/acceptance 记录。它不改
+`IWorldBatchBackend`、RuntimeCapabilities、admission、support flag、RuntimeFacade
+selection 或历史 RB9 evidence 目录。
+
+### 计时与 transfer 边界
+
+device-consumer measurement 是 acquire → submit → 显式 event await。acquisition 与
+submit 成功路径没有 D2H，也没有显式 `cudaDeviceSynchronize`；await 只使用
+`cudaEventSynchronize`。diagnostic materialization 在 await 前会被拒绝；await 后
+恰好执行两次 D2H，而且发生在对应 sample timer 记录之后。cold/warm sample 在记录
+时间后 drain 一个 receipt；rollout sample 在 rollout timer 关闭前保留全部 receipt，
+随后统一验证与释放，因此 reported peak requested bytes 按 `rollout_windows` 倍的
+lease/output bytes 计。
+
+transfer ledger 明确使用 `device_consumer_measured_path_d2h_copy_count = 0`；它表示
+consumer 增量，不是说整个 window 没有 D2H。resident window 仍记录五次 barrier-status
+D2H，选择 host export 时为七次；diagnostic 两次 D2H 单独报告。`cudaMalloc` 可能
+隐式同步，因此 `device_consumer_allocation_may_synchronize = true` 继续作为 CR2-5
+risk 显式保留；CR2-3 不声称已完成 allocation pool 或 tuning。
+
+### Failure、规模与验证证据
+
+稳定 failure code 覆盖 request/lease/receipt validity、缺 committed window、epoch/
+device/stream/layout mismatch、lease allocation/pack/event、consumer allocation/
+launch/event、wait 与 diagnostic materialize。一次性 fault seam 覆盖 allocation、
+launch、event record、wait 与 diagnostic failure，并避免 double-free；contract 允许的
+场景可用同一 retained lease/receipt retry。CUDA-off 明确 fail-closed。
+
+全部 CR2-3 module 低于 soft limit：contract 209 行，consumer 246/49，host-internal/
+lease wrapper 33/66，observation CUDA 441，C++ test 292，architecture guard 197，
+RB9 probe/session/header 597/304/46，store 661，backend 636。919 行 replay watch item
+没有增长，也没有新增例外。
+
+VS2022 Release、CUDA 13.0/SM86 在 RTX 3090 上通过 14/14 lifecycle case、599/599
+assertions；CUDA-off 为 14/14、91/91。真实两世界 RB9 smoke 生成四个 available row。
+device-consumer row 报告 consumer measured D2H 0、diagnostic D2H 2、一次 event wait、
+allocation sync risk 为 true、deferred receipt 2，并在 peak bytes 中计入两个 owner。
+本次 build log 中新 pack/consumer kernel 分别为 16/14 registers、reported spill 0；
+这只是 compile sanity fact，不是 CR2-5 full resource gate。聚焦 CR2-3/performance/
+size architecture 测试为 25/25，new guard 的 Ruff check/format 通过。
+
+### 独立复核门
+
+新的独立 agent 必须审阅完整 staged/unstaged/untracked write set、RAII/event cleanup、
+epoch 与 cross-destruction 语义、deferred timing 与 rollout peak accounting、CUDA-on/off
+结果、support/evidence 不变和全部规模限制。只有 `APPROVE` 才允许一个 CR2-3
+commit；这不授权 merge、push、RuntimeFacade promotion 或 CR2-4。

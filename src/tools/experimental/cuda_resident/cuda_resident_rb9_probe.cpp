@@ -1,5 +1,6 @@
 #include "runtime/contracts/cuda_resident_performance_contract.h"
 #include "runtime/contracts/cuda_resident_replay_contract.h"
+#include "runtime/contracts/cuda_resident_device_consumer_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.h"
 #include "tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.h"
 
@@ -229,10 +230,19 @@ Json ledger_json(const runtime::cuda_resident::performance::WindowTransferLedger
         {"device_observation_pack_bytes", ledger.device_observation_pack_bytes},
         {"device_observation_consumer_bytes", ledger.device_observation_consumer_bytes},
         {"device_observation_view_bytes", ledger.device_observation_view_bytes},
+        {"device_consumer_measured_path_d2h_copy_count",
+         ledger.device_consumer_measured_path_d2h_copy_count},
+        {"device_consumer_diagnostic_d2h_copy_count",
+         ledger.device_consumer_diagnostic_d2h_copy_count},
+        {"device_consumer_event_wait_count", ledger.device_consumer_event_wait_count},
         {"host_snapshot_includes_full_state_d2h",
          ledger.host_snapshot_includes_full_state_d2h},
         {"device_consumer_includes_host_validation_d2h",
          ledger.device_consumer_includes_host_validation_d2h},
+        {"device_consumer_allocation_may_synchronize",
+         ledger.device_consumer_allocation_may_synchronize},
+        {"device_consumer_release_outside_measured_path",
+         ledger.device_consumer_release_outside_measured_path},
     };
 }
 #endif
@@ -249,6 +259,8 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         {"available", true},
         {"unavailable_reason", ""},
         {"learner_equivalent", false},
+        {"device_consumer_validation_boundary",
+         mode.device_consumer ? "deferred_after_sample_timer" : "not_applicable"},
         {"parity_status", "rb8_selected_slice_quarantined"},
         {"promotion_eligible", false},
     };
@@ -286,6 +298,7 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         const WindowTiming timing = cold_session.run_window(mode);
         cold_window_samples.push_back(timing.end_to_end_ms);
         cold_total_samples.push_back(elapsed_ms(total_begin, Clock::now()));
+        cold_session.validate_pending_device_consumers();
     }
 
     ProbeSession warmed(trace, args.database_path);
@@ -295,6 +308,7 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
 #endif
     for (std::size_t window = 0; window < args.warmup_windows; ++window) {
         (void)warmed.run_window(mode);
+        warmed.validate_pending_device_consumers();
     }
     std::vector<double> end_to_end_samples;
     std::vector<double> advance_samples;
@@ -307,6 +321,7 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         end_to_end_samples.push_back(timing.end_to_end_ms);
         advance_samples.push_back(timing.advance_ms);
         collection_samples.push_back(timing.collection_ms);
+        warmed.validate_pending_device_consumers();
     }
 
     std::vector<double> rollout_samples;
@@ -319,14 +334,17 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
             (void)rollout_session.run_window(mode);
         }
         rollout_samples.push_back(elapsed_ms(begin, Clock::now()));
+        rollout_session.validate_pending_device_consumers();
     }
 
     ProbeSession deterministic(trace, args.database_path);
     deterministic.reset_fixture();
     (void)deterministic.run_window(mode);
+    deterministic.validate_pending_device_consumers();
     const std::string first_digest = deterministic.state_digest();
     deterministic.reset_fixture();
     (void)deterministic.run_window(mode);
+    deterministic.validate_pending_device_consumers();
     const std::string second_digest = deterministic.state_digest();
 
     row["latency"] = {
@@ -360,8 +378,12 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         {"resident_bytes", device_bytes},
         {"state_slot_bytes", state_slot_bytes},
         {"peak_candidate_requested_bytes",
-         device_bytes + ledger.device_observation_view_bytes +
-             ledger.device_observation_consumer_bytes},
+         device_bytes +
+             (mode.device_consumer ? args.rollout_windows : std::size_t{1}) *
+                 (ledger.device_observation_view_bytes +
+                  ledger.device_observation_consumer_bytes)},
+        {"deferred_device_consumer_receipts",
+         mode.device_consumer ? args.rollout_windows : std::size_t{0}},
     };
 #else
     row["operation_ledger"] = {
@@ -460,10 +482,12 @@ Json run_probe(const Args &args) {
 #if defined(EF_RB9_CPU_PROBE)
     const std::string lane = "flecs_cpu_reference";
     const std::string invocation_surface = "backend_spi_world_batch";
+    constexpr bool learner_facing_device_lease_available = false;
 #else
     const std::string lane = "cuda_resident";
     const std::string invocation_surface =
         std::string(runtime::cuda_resident::performance::kCudaResidentPerformanceInvocationSurface);
+    constexpr bool learner_facing_device_lease_available = true;
 #endif
 
     Json report = {
@@ -480,6 +504,12 @@ Json run_probe(const Args &args) {
         {"full_facade_available", false},
         {"complete_rollout_collection_available", true},
         {"learner_consumption_available", false},
+        {"learner_facing_device_lease_available", learner_facing_device_lease_available},
+        {"device_consumer_contract_id",
+         learner_facing_device_lease_available
+             ? Json(std::string(runtime::cuda_resident::device_consumer::
+                                   kCudaResidentDeviceConsumerSurfaceV1))
+             : Json(nullptr)},
         {"maintained_claim", false},
         {"promotion_allowed", false},
         {"required_metrics_complete", false},

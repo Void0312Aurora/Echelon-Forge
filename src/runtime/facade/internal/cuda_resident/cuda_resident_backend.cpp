@@ -573,6 +573,56 @@ CudaResidentBackend::export_device_observation_view(const std::string &request_i
     return view;
 }
 
+device_consumer::AcquireResult
+CudaResidentBackend::acquire_device_observation_lease(const std::string &request_id) const {
+    device_consumer::AcquireResult result{};
+    if (request_id.empty()) {
+        result.failure = device_consumer::FailureCode::invalid_request;
+        result.detail = "CUDA device observation lease requires request_id";
+        return result;
+    }
+    CudaWorldStoreDeviceObservationLeaseRaw raw{};
+    if (!store_.acquire_device_observation_lease_raw(&raw, &result.failure, &result.detail)) {
+        return result;
+    }
+    auto &lease = result.lease;
+    lease.lifetime = std::shared_ptr<void>(
+        raw.values,
+        [ids = raw.ids, event = raw.ready_event, device = raw.device_ordinal](void *values) {
+#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+            detail::release_cuda_world_store_device_observation_lease(values, ids, event, device);
+#else
+            (void)values;
+            (void)ids;
+            (void)event;
+            (void)device;
+#endif
+        });
+    lease.values = static_cast<const float *>(raw.values);
+    lease.ids = static_cast<const std::uint64_t *>(raw.ids);
+    lease.ready_event = raw.ready_event;
+    lease.device_ordinal = raw.device_ordinal;
+    lease.producer_stream = raw.producer_stream;
+    lease.epoch = raw.epoch;
+    lease.observations = {
+        .shape = {static_cast<std::uint64_t>(raw.world_count),
+                  static_cast<std::uint64_t>(raw.values_per_world)},
+        .strides = {static_cast<std::uint64_t>(raw.values_per_world), 1},
+        .dtype = "float32",
+        .element_count = raw.world_count * raw.values_per_world,
+    };
+    lease.ids_tensor = {
+        .shape = {static_cast<std::uint64_t>(raw.world_count)},
+        .strides = {1},
+        .dtype = "uint64",
+        .element_count = raw.world_count,
+    };
+    lease.source_request_id = request_id;
+    result.failure = device_consumer::FailureCode::none;
+    result.detail.clear();
+    return result;
+}
+
 void CudaResidentBackend::reject_unimplemented_operation(const char *operation) {
     throw std::logic_error(std::string("CUDA resident backend ") + operation +
                            " is outside the RB7 Phase A/B/D shell");

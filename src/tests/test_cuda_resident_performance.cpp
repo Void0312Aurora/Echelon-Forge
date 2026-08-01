@@ -33,16 +33,22 @@ TEST_CASE("RB9 performance contract freezes the private-window operation ledger"
     const WindowTransferLedger device =
         modeled_window_ledger(worlds, slot_bytes, false, true);
     CHECK(device.kernel_launch_count == 12);
-    CHECK(device.synchronization_count == 7);
-    CHECK(device.d2h_copy_count == 10);
+    CHECK(device.synchronization_count == 6);
+    CHECK(device.d2h_copy_count == 5);
+    CHECK(device.d2h_bytes == 20);
     CHECK(device.device_observation_pack_bytes == worlds * (15 * sizeof(float) + sizeof(std::uint64_t)));
     CHECK(device.device_observation_consumer_bytes ==
           worlds * (sizeof(float) + sizeof(std::uint64_t)));
-    CHECK(device.device_consumer_includes_host_validation_d2h);
+    CHECK(device.device_consumer_measured_path_d2h_copy_count == 0);
+    CHECK(device.device_consumer_diagnostic_d2h_copy_count == 2);
+    CHECK(device.device_consumer_event_wait_count == 1);
+    CHECK_FALSE(device.device_consumer_includes_host_validation_d2h);
+    CHECK(device.device_consumer_allocation_may_synchronize);
+    CHECK(device.device_consumer_release_outside_measured_path);
 
     const WindowTransferLedger both =
         modeled_window_ledger(worlds, slot_bytes, true, true);
-    CHECK(both.d2h_copy_count == 12);
+    CHECK(both.d2h_copy_count == 7);
     CHECK(both.d2h_bytes == device.d2h_bytes + slot_bytes + worlds * 16);
 }
 

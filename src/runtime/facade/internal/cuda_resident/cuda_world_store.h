@@ -10,6 +10,7 @@
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
 #include "runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
 #include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_device_consumer_contract.h"
 
 namespace runtime::cuda_resident {
 
@@ -202,6 +203,21 @@ struct CudaWorldStoreDeviceObservationRaw {
     std::uint64_t source_snapshot = 0;
 };
 
+// Async CR2-3 acquisition result. Unlike the legacy diagnostic raw export
+// above, this path never performs host version validation or a device-wide
+// synchronization. The event and allocations are released by the consumer
+// lease owner in a later, explicit lifetime boundary.
+struct CudaWorldStoreDeviceObservationLeaseRaw {
+    void *values = nullptr;
+    void *ids = nullptr;
+    void *ready_event = nullptr;
+    std::size_t world_count = 0;
+    std::size_t values_per_world = 0;
+    int device_ordinal = -1;
+    std::uintptr_t producer_stream = 0;
+    device_consumer::LeaseEpoch epoch{};
+};
+
 struct CudaResidentDeviceObservationDescriptor {
     std::vector<std::uint64_t> output_shape;
     std::string dtype = "float32";
@@ -286,6 +302,9 @@ class CudaWorldStore final {
     [[nodiscard]] bool commit_window();
     [[nodiscard]] bool export_device_observation_raw(
         CudaWorldStoreDeviceObservationRaw *raw, std::string *error) const;
+    [[nodiscard]] bool acquire_device_observation_lease_raw(
+        CudaWorldStoreDeviceObservationLeaseRaw *raw,
+        device_consumer::FailureCode *failure, std::string *error) const;
     [[nodiscard]] bool teardown() noexcept;
 
     [[nodiscard]] CudaWorldStoreDiagnostics diagnostics() const;
@@ -312,6 +331,8 @@ class CudaWorldStoreTestAccess final {
     static void fail_next_release(CudaWorldStore &store) noexcept;
     static void fail_next_state_transfer(CudaWorldStore &store) noexcept;
     static void fail_next_barrier_commit(CudaWorldStore &store) noexcept;
+    static void fail_next_device_lease_allocation(CudaWorldStore &store) noexcept;
+    static void fail_next_device_lease_event_record(CudaWorldStore &store) noexcept;
     static void set_allocation_generation(CudaWorldStore &store, std::uint64_t generation) noexcept;
     static void set_reset_generation(CudaWorldStore &store, std::uint64_t generation) noexcept;
     [[nodiscard]] static CudaWorldStoreLifecycleSnapshot readback(const CudaWorldStore &store);

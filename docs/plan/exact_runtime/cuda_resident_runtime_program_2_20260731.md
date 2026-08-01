@@ -78,13 +78,20 @@ is:
 | `cuda_world_store_cuda_phase_a.cu` | Phase A kernel and publication | 204 |
 | `cuda_world_store_cuda_phase_b.cu` | Phase B kernels and launch wrappers | 497 |
 | `cuda_world_store_cuda_phase_d.cu` | Phase D kernels and launch wrappers | 231 |
-| `cuda_world_store_cuda_observation.cu` | observation pack and consumer | 174 |
+| `cuda_world_store_cuda_observation.cu` | diagnostic plus CR2-3 lease pack and consumer | 441 |
 | `cuda_world_store_cuda_state_readback.cu` | host state readback | 271 |
 | `cuda_world_store_cuda_window.cu` | private full-window orchestration | 69 |
 
 All current CR2-owned CUDA modules are below the 700-line soft target. The old
 monolith remains a historical baseline only; it is not a source or an active
 exception.
+
+CR2-3 keeps the host/device lease boundary split into small owners:
+`cuda_resident_device_consumer.cpp/.h` (246/49 lines),
+`cuda_world_store_device_lease.cpp` (66), and
+`cuda_world_store_host_internal.h` (33). The existing host owners remain below
+the soft target at 661 lines for `cuda_world_store.cpp` and 636 for
+`cuda_resident_backend.cpp`; no size exception is added.
 
 The following file remains a watch item and may not grow until split or
 explicitly reclassified:
@@ -120,10 +127,10 @@ exception may be used to hide semantic implementation growth.
 | --- | --- | --- |
 | CR2-0 | Freeze this program, size policy, exception manifest, and architecture guard. | Completed in `2f34fac6`; policy parses and the reviewed write set is committed. |
 | CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | Independently approved by `/root/cr2_split_review` and committed as `db7e6ad4`; no CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, parity, and architecture tests are green. |
-| CR2-2a | Split the RB9 probe's lane-specific session into a private implementation module without changing its invocation surface, JSON schema, errors, or phase order. | Independent reviewer confirms structural equivalence; probe/session modules are below the soft limit; CUDA smoke and focused architecture tests pass; one commit. |
+| CR2-2a | Split the RB9 probe's lane-specific session into a private implementation module without changing its invocation surface, JSON schema, errors, or phase order. | Completed after independent approval in `bf695071`; probe/session modules are below the soft limit and historical evidence remains untouched. |
 | CR2-2p | Unblock the real Flecs CPU lane on VS2022 with only the portable bit scan, intended global environment-model type, and MSVC core math-constant opt-in. | Real `FlecsCpuBackend` graph compiles; focused guard passes; independent review and a separate commit precede CR2-2b. |
-| CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Both lanes consume the same trace through the declared surface; private-only performance invocation is no longer the sole evidence path. |
-| CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured path. | Consumer smoke becomes an explicit contract; ownership/lifetime and failure behavior are tested; no public support promotion. |
+| CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Independently approved and committed as `607c1f33`; both real lanes consume the same trace through the declared surface. |
+| CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured consumer path. | Active candidate: explicit consumer smoke, ownership/lifetime/failure tests, deferred diagnostic readback, and CUDA-on/off validation are complete; independent commit review remains required and public support stays closed. |
 | CR2-4 | Release selected-slice parity and deterministic reset identity from quarantine. | Identity policy is stable or explicitly excluded; full replay comparison passes the frozen budget at every declared barrier. |
 | CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Counters are complete or a documented external blocker stops the gate; no tuning claim is made from incomplete counters. |
 | CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | End-to-end benefit survives cold, warm, rollout, export, device-consumer, and small-batch cases; selection policy is evidence-backed. |
@@ -163,10 +170,43 @@ runner, and no retry, fallback, device pointer, learner lease, support flag, or
 facade selection is added. Two real lane probes compile the same trace source,
 and a separate comparator checks pure JSON surface/trace/operation equality.
 
+### CR2-3 boundary
+
+CR2-3 adds a private `cuda_resident.device_observation_lease.v1` input and a
+real `cuda_resident.device_consumer_smoke.v1` kernel submission. A lease owns
+its D2D-packed values, ids, ready event, device/default-stream identity,
+element-stride tensor layout, and allocation/reset/committed-window/source
+epoch. A receipt retains the input lease until its own event and output buffers
+are released. Repeated submit and await are allowed; retained leases remain
+readable across reset and backend destruction. The backend/store remain
+single-owner runtime objects, while lease/receipt shared ownership is explicit.
+
+The measured consumer path is acquire → submit → event await. It performs no
+consumer-validation D2H and does not call `state_snapshot()` or read device
+global versions. The diagnostic materialization performs exactly two D2H
+copies only after the relevant cold, warm, or rollout timer is recorded. A
+rollout defers all receipt diagnostics until its sample timer closes, so its
+reported peak requested bytes include `rollout_windows` lease/output owners.
+The general window still has its pre-existing five barrier-status D2H copies
+(seven when host export is selected); the zero field therefore names the
+device-consumer incremental path, not the whole window. `cudaMalloc` may
+implicitly synchronize, and in-flight RAII release can wait on its event. Both
+allocation risk and `device_consumer_release_outside_measured_path = true` are
+reported explicitly; the issue is left for CR2-5 evidence/tuning rather than
+hidden by a zero-sync claim.
+
+Stable failures cover invalid request/lease/receipt, missing committed window,
+epoch/device/stream/layout mismatch, lease allocation/pack/event recording,
+consumer allocation/launch/event recording, wait, and diagnostic materialize.
+The seam remains backend-private: no `IWorldBatchBackend`, RuntimeCapabilities,
+admission, support flag, or RuntimeFacade selection change is part of CR2-3.
+The historical RB9 evidence directory is not rewritten and no learner-update,
+performance-promotion, or tuning conclusion is claimed.
+
 ## 5. Promotion and recovery boundary
 
 Promotion is blocked if any of the following remains true: invocation surfaces
-are not equivalent; learner/device consumption is unavailable; parity is only a
+are not equivalent; a real learner update loop is unavailable; parity is only a
 diagnostic; required counters are unavailable; world-1 or declared small-batch
 cases regress without an explicit policy; or the implementation requires a
 second public facade/duplicated DTO set.

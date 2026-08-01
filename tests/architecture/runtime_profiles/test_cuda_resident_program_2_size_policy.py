@@ -174,7 +174,7 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_a.cu": 204,
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_b.cu": 497,
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_d.cu": 231,
-        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu": 174,
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu": 441,
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu": 271,
         "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu": 69,
     }

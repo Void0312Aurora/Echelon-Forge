@@ -205,16 +205,24 @@ def test_rb9_static_ledger_matches_current_cuda_phase_graph() -> None:
     contract = _text(CONTRACT)
     device = _device_text()
     phase_window = _text(WINDOW_SOURCE)
-    assert device.count("<<<blocks, threads>>>") == 10
+    # Ten resident-window launches remain the base path; the legacy diagnostic
+    # and CR2-3 measured wrappers each contain pack/consumer call sites.
+    assert device.count("<<<blocks, threads>>>") == 12
     assert phase_window.index("launch_phase_b_forces") < phase_window.index("launch_phase_d_episode")
     assert phase_window.count("launch_phase_b_") == 3
     assert phase_window.count("launch_phase_d_") == 3
     assert "kFlightControlH2dBytesPerWorld = 55" in contract
     assert ".kernel_launch_count = 10" in contract
+    assert "ledger.kernel_launch_count += 2" in contract
     assert ".synchronization_count = 5" in contract
     assert "phase_d_pack_observation_kernel" in device
     assert "phase_d_consumer_smoke_kernel" in device
     assert "device_consumer_includes_host_validation_d2h" in contract
+    assert "ledger.device_consumer_measured_path_d2h_copy_count = 0" in contract
+    assert "ledger.device_consumer_diagnostic_d2h_copy_count = 2" in contract
+    assert "ledger.device_consumer_event_wait_count = 1" in contract
+    assert "ledger.device_consumer_allocation_may_synchronize = true" in contract
+    assert "ledger.device_consumer_release_outside_measured_path = true" in contract
 
 
 def test_rb9_comparison_remains_held_even_when_internal_speedup_exceeds_target() -> None:
