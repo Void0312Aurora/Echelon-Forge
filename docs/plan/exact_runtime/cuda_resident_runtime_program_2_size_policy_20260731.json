@@ -110,12 +110,6 @@
       "observed_lines": 919,
       "reason": "test module is in the review band",
       "required_action": "no_growth_before_split_or_reclassification"
-    },
-    {
-      "path": "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp",
-      "observed_lines": 804,
-      "reason": "probe is above the soft target",
-      "required_action": "no_growth_before_split_or_reclassification"
     }
   ],
   "gates": [

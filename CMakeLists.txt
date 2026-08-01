@@ -553,6 +553,7 @@ target_include_directories(ef_cuda_resident_replay_test PRIVATE
 if (EF_ENABLE_CUDA_EXPERIMENTS)
     add_executable(ef_cuda_resident_rb9_cuda_probe
         src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
         src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     )
     target_link_libraries(ef_cuda_resident_rb9_cuda_probe PRIVATE
@@ -569,6 +570,7 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
 else()
     add_executable(ef_cuda_resident_rb9_cpu_probe
         src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
         src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     )
     target_link_libraries(ef_cuda_resident_rb9_cpu_probe PRIVATE

@@ -13,7 +13,8 @@
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-31`
 
-状态：**CR2-1 implementation 已获独立批准；单一 commit 待完成。前一套
+状态：**CR2-1 已获独立批准并以 db7e6ad4 提交。当前 CR2-2a（RB9 probe
+session 拆分）已获独立批准，等待单一 commit。前一套
 RB0-RB11 计划仍保持无晋级关闭。本计划可能产出可晋级证据，也可能再次 closure；
 它不会自行重新开放 maintained support。**
 
@@ -72,10 +73,9 @@ CR2-1 已从当前树移除该文件，不再延续例外。当前 CUDA implemen
 当前 CR2-owned CUDA 模块全部低于 700 行 soft target。旧单体只作为历史 baseline
 保留，不是当前 source，也不是活动中的 exception。
 
-以下文件是 watch item；在拆分或显式重新分类前不得继续增长：
+以下文件仍是 watch item；在拆分或显式重新分类前不得继续增长：
 
-- `src/tests/test_cuda_resident_replay.cpp`：919 行；
-- `src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp`：804 行。
+- `src/tests/test_cuda_resident_replay.cpp`：919 行。
 
 generated/vendor 文件与历史文档只有在 manifest 明确记录 provenance 时才可排除模块
 行数限制。新 tracked evidence/report/generated artifact 的 soft limit 为 512 KiB，
@@ -98,8 +98,9 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | ID | 范围 | 退出门 |
 | --- | --- | --- |
 | CR2-0 | 冻结本计划、size policy、exception manifest 与 architecture guard。 | 已在 `2f34fac6` 完成；policy 可解析且复核过的 write set 已提交。 |
-| CR2-1 | 在不改变语义下按 layout/allocation、Phase A、Phase B、Phase D、barrier、device API orchestration 拆分 `cuda_world_store_cuda.cu`。 | 已由 `/root/cr2_split_review` 独立批准；CR2-owned module 不超过 1000 行；聚焦 C++/CUDA lifecycle、replay、parity 与 architecture 测试通过；还需一个 commit。 |
-| CR2-2 | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 两侧消费同一 trace；private-only performance invocation 不再是唯一证据路径。 |
+| CR2-1 | 在不改变语义下按 layout/allocation、Phase A、Phase B、Phase D、barrier、device API orchestration 拆分 `cuda_world_store_cuda.cu`。 | 已由 `/root/cr2_split_review` 独立批准并以 `db7e6ad4` 提交；CR2-owned module 不超过 1000 行；聚焦 C++/CUDA lifecycle、replay、parity 与 architecture 测试通过。 |
+| CR2-2a | 在不改变 invocation surface、JSON schema、错误文本和 phase 顺序的前提下，将 RB9 probe 的 lane-specific session 移到独立实现模块。 | 独立 reviewer 确认结构等价；probe/session 均低于 soft limit；CUDA smoke 与聚焦 architecture 测试通过；形成一个 commit。 |
+| CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 两侧消费同一 trace；private-only performance invocation 不再是唯一证据路径。 |
 | CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured path 的 hidden host validation。 | consumer smoke 成为显式 contract；ownership/lifetime/failure 有测试；不晋级 public support。 |
 | CR2-4 | 将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | identity policy 稳定或明确排除；每个声明 barrier 上的 frozen budget replay 通过。 |
 | CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | counters 完整或记录外部 blocker 并停止 gate；不以不完整 counters 声称 tuning 成功。 |
@@ -108,6 +109,15 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 
 CR2-1 至 CR2-6 可以拆成窄范围 sub-iteration，但单个 commit 不得把结构拆分、
 语义扩展与性能 tuning 合并。
+
+### CR2-2a 边界
+
+CR2-2a 只做结构迁移。可执行文件仍是历史 RB9 probe；CPU/CUDA lane 选择、
+mode matrix、private phase sequence、JSON key、trace signature、unavailable reason
+与 hold reason 全部冻结。只将 lane-specific ProbeSession 的状态与操作实现移至
+cuda_resident_rb9_probe_session.cpp，通过小型 header 暴露；两个 CMake target
+都编译该模块。本 sub-iteration 不引入 full-window SPI、public facade、support flag、
+learner contract 或新的性能结论。
 
 ## 5. 晋级与恢复边界
 

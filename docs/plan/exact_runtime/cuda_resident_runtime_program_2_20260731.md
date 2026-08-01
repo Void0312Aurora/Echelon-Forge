@@ -13,10 +13,11 @@ Language versions:
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-31`
 
-Status: **CR2-1 implementation is independently approved; its single commit is
-pending. The previous RB0-RB11 program remains closed without
-promotion. This program may either produce promotion-grade evidence or close
-again; it does not reopen maintained support by itself.**
+Status: **CR2-1 is independently approved and committed as db7e6ad4.
+CR2-2a (RB9 probe session split) is independently approved and awaits its
+single commit. The previous RB0-RB11 program remains
+closed without promotion. This program may either produce promotion-grade
+evidence or close again; it does not reopen maintained support by itself.**
 
 ## 1. Objective and boundary
 
@@ -85,12 +86,10 @@ All current CR2-owned CUDA modules are below the 700-line soft target. The old
 monolith remains a historical baseline only; it is not a source or an active
 exception.
 
-The following files are watch items and may not grow until split or explicitly
-reclassified:
+The following file remains a watch item and may not grow until split or
+explicitly reclassified:
 
-- `src/tests/test_cuda_resident_replay.cpp` — 919 lines;
-- `src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp` — 804
-  lines.
+- `src/tests/test_cuda_resident_replay.cpp` — 919 lines.
 
 Generated/vendor files and historical documents are outside the module line
 limit only when an explicit manifest entry records their provenance. New
@@ -120,8 +119,9 @@ exception may be used to hide semantic implementation growth.
 | ID | Scope | Exit gate |
 | --- | --- | --- |
 | CR2-0 | Freeze this program, size policy, exception manifest, and architecture guard. | Completed in `2f34fac6`; policy parses and the reviewed write set is committed. |
-| CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | Independently approved by `/root/cr2_split_review`; no CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, parity, and architecture tests are green; one commit remains. |
-| CR2-2 | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Both lanes consume the same trace through the declared surface; private-only performance invocation is no longer the sole evidence path. |
+| CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | Independently approved by `/root/cr2_split_review` and committed as `db7e6ad4`; no CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, parity, and architecture tests are green. |
+| CR2-2a | Split the RB9 probe's lane-specific session into a private implementation module without changing its invocation surface, JSON schema, errors, or phase order. | Independent reviewer confirms structural equivalence; probe/session modules are below the soft limit; CUDA smoke and focused architecture tests pass; one commit. |
+| CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Both lanes consume the same trace through the declared surface; private-only performance invocation is no longer the sole evidence path. |
 | CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured path. | Consumer smoke becomes an explicit contract; ownership/lifetime and failure behavior are tested; no public support promotion. |
 | CR2-4 | Release selected-slice parity and deterministic reset identity from quarantine. | Identity policy is stable or explicitly excluded; full replay comparison passes the frozen budget at every declared barrier. |
 | CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Counters are complete or a documented external blocker stops the gate; no tuning claim is made from incomplete counters. |
@@ -131,6 +131,16 @@ exception may be used to hide semantic implementation growth.
 CR2-1 through CR2-6 may be repeated as narrowly scoped sub-iterations, but a
 single commit may not combine structural decomposition, semantic expansion,
 and performance tuning.
+
+### CR2-2a boundary
+
+CR2-2a is a structural-only migration. The executable remains the historical
+RB9 probe: CPU and CUDA lane selection, mode matrix, private phase sequence,
+JSON keys, trace signatures, unavailable reasons, and hold reasons are frozen.
+Only the lane-specific ProbeSession storage/operation implementation moves to
+cuda_resident_rb9_probe_session.cpp behind its small header. The CMake targets
+compile that module in both lanes. No full-window SPI, public facade, support
+flag, learner contract, or performance claim is introduced by this sub-iteration.
 
 ## 5. Promotion and recovery boundary
 

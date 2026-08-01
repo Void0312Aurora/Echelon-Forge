@@ -156,7 +156,6 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
     assert soft_or_higher == set(watch_map)
     assert review_or_higher == {
         "src/tests/test_cuda_resident_replay.cpp",
-        "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp",
     }
     for path, entry in watch_map.items():
         assert counts[path] == entry["observed_lines"]

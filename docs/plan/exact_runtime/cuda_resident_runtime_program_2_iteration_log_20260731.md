@@ -11,8 +11,8 @@ Language versions:
 - Parent: `935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **CR2-1 implementation candidate; independent review and commit are
-pending.**
+Status: **CR2-1 is committed as db7e6ad4. CR2-2a is independently approved;
+its single commit is pending.**
 The RB0-RB11 program remains closed without promotion. This ledger records only
 the new branch-local program and does not alter maintained support flags.
 
@@ -140,3 +140,51 @@ comparisons against the RB11 monolith, CMake device-link topology, size policy,
 and the focused build/test evidence. The reviewer found no CR2-1 blocker. The
 exact write set above is now authorized for one CR2-1 commit; no merge, push, or
 promotion follows from this commit.
+
+## CR2-2a candidate — RB9 probe session split
+
+### Scope and frozen behavior
+
+This sub-iteration is structural only. The RB9 executable keeps its existing
+CPU/CUDA lane selection, mode matrix, private phase sequence, JSON schema,
+trace signatures, unavailable reasons, and hold reasons. Historical evidence
+under cuda_resident_rb9_evidence_20260730 is untouched. No full-window SPI,
+facade, support flag, learner contract, or performance claim is added.
+
+### Exact write set
+
+- add cuda_resident_rb9_probe_session.h with the small ProbeSession/Mode/
+  WindowTiming interface;
+- add cuda_resident_rb9_probe_session.cpp with the lane-specific session
+  storage, setup/reset, window execution, digest, and diagnostics;
+- remove the duplicated session implementation and helper functions from
+  cuda_resident_rb9_probe.cpp;
+- compile the new implementation in both RB9 CMake targets;
+- update the performance architecture guard to inspect the moved CUDA sequence;
+- remove the resolved probe watch item from the machine-readable size policy;
+- update the English/Chinese program plans and this iteration ledger.
+
+### Size and validation evidence
+
+The probe is 567 physical lines, the new session implementation is 255 lines,
+and the interface header is 45 lines. Both implementation files are below the
+700-line soft target; the replay test remains the sole review-band watch item.
+Focused architecture tests passed: 27 size/performance/Phase A/B/D tests and
+20 contract/lifecycle/closure/replay tests. CUDA Release (VS2022, CUDA 13.0,
+SM86) reconfigured and built the probe, lifecycle, and replay targets; lifecycle
+passed 11/11 cases and 527/527 assertions, replay passed 3/3 and 47/47, and the
+probe smoke run returned zero on the RTX 3090 with the existing private-surface
+hold reasons unchanged. The CUDA-off probe target remains blocked by unrelated
+ef_core MSVC portability errors (__builtin_ctz, M_PI, and follow-on diagnostics).
+An isolated MSBuild ClCompile pass with project references disabled successfully
+compiled the CPU probe, the new session implementation, and the replay harness.
+
+### Independent review gate
+
+Fresh reviewer /root/cr2_2a_review returned **APPROVE** after checking the
+complete staged/unstaged/untracked write set, all ten migrated observable
+strings, CPU/CUDA operation order and timing boundary, both CMake lanes, line
+counts, focused tests/build evidence, and the untouched historical RB9
+evidence. No CR2-2a blocker was found. This verdict authorizes one CR2-2a
+commit; it does not authorize merge, push, promotion, CR2-2b semantics, or a
+historical evidence rewrite.

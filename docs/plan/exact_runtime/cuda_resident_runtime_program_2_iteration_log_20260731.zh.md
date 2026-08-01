@@ -11,8 +11,9 @@
 - 父级：`935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**CR2-1 implementation candidate；独立复核与提交待完成。** RB0-RB11 计划仍是
-无晋级关闭。本账本只记录新分支内计划，不改变 maintained support flags。
+状态：**CR2-1 已以 db7e6ad4 提交。CR2-2a 已获独立批准；单一 commit 待完成。**
+RB0-RB11 计划仍是无晋级关闭。本账本只记录新分支内计划，
+不改变 maintained support flags。
 
 ## CR2-0 candidate —— 计划与规模治理冻结
 
@@ -127,3 +128,45 @@ write set、与 RB11 单体的归一化 kernel/function body 比对、CMake devi
 拓扑、size policy 及聚焦构建/测试证据后返回 **`APPROVE`**，没有 CR2-1 blocker。
 上述精确 write set 现获授权形成一个 CR2-1 commit；该 commit 不包含 merge、push
 或 promotion。
+
+## CR2-2a candidate —— RB9 probe session 拆分
+
+### 范围与冻结行为
+
+本 sub-iteration 只做结构迁移。RB9 executable 保持既有 CPU/CUDA lane 选择、
+mode matrix、private phase sequence、JSON schema、trace signature、unavailable
+reason 与 hold reason。cuda_resident_rb9_evidence_20260730 下的历史证据不修改。
+不增加 full-window SPI、facade、support flag、learner contract 或性能结论。
+
+### 精确 write set
+
+- 增加 cuda_resident_rb9_probe_session.h，提供小型 ProbeSession/Mode/
+  WindowTiming interface；
+- 增加 cuda_resident_rb9_probe_session.cpp，承载 lane-specific session 的
+  storage、setup/reset、window execution、digest 与 diagnostics；
+- 从 cuda_resident_rb9_probe.cpp 删除重复 session 实现和 helper；
+- 两个 RB9 CMake target 都编译新实现；
+- 更新 performance architecture guard，使其检查迁移后的 CUDA sequence；
+- 从机器可读 size policy 移除已解决的 probe watch item；
+- 更新中英文计划与本账本。
+
+### 规模与验证证据
+
+probe 为 567 个物理行，新 session implementation 为 255 行，interface header
+为 45 行；两个实现文件都低于 700 行 soft target，replay test 是唯一 review-band
+watch item。聚焦 architecture 测试通过：size/performance/Phase A/B/D 共 27 项，
+contract/lifecycle/closure/replay 共 20 项。CUDA Release（VS2022、CUDA 13.0、
+SM86）已重新配置并构建 probe、lifecycle、replay target；lifecycle 为 11/11
+case、527/527 assertions，replay 为 3/3、47/47；RTX 3090 上 probe smoke 返回
+0，原有 private-surface hold reason 未变化。CUDA-off probe target 仍被未修改的
+ef_core MSVC portability 错误阻塞（__builtin_ctz、M_PI 及其后续诊断）。在关闭
+project references 的独立 MSBuild ClCompile 中，CPU probe、新 session 实现与
+replay harness 均已成功编译。
+
+### 独立复核门
+
+新的 reviewer /root/cr2_2a_review 在核对完整 staged/unstaged/untracked write
+set、迁移的全部 10 个可观察字符串、CPU/CUDA 操作顺序和计时边界、两个 CMake
+lane、行数、聚焦测试/构建证据以及未改动的历史 RB9 evidence 后返回
+**APPROVE**，没有 CR2-2a blocker。该结论授权形成一个 CR2-2a commit；不授权
+merge、push、promotion、CR2-2b 语义或历史 evidence 改写。
