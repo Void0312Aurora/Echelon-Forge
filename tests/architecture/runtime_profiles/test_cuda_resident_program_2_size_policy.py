@@ -182,6 +182,11 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "src/tests/test_cuda_resident_full_window.cpp": 417,
         "tools/diagnostics/cuda_resident_cr2_parity_compare.py": 494,
         "tests/architecture/runtime_profiles/test_cuda_resident_cr2_parity.py": 239,
+        "src/runtime/contracts/cuda_resident_resource_evidence_contract.h": 93,
+        "src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp": 350,
+        "tools/diagnostics/cuda_resident_cr2_resource_evidence.py": 655,
+        "tools/diagnostics/cuda_resident_cr2_resource_static.py": 116,
+        "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py": 382,
     }
     assert set(inventory_map) == set(expected_inventory)
     for path, expected_lines in expected_inventory.items():

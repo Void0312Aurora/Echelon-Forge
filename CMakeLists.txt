@@ -643,6 +643,24 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     target_include_directories(ef_cuda_resident_rb9_cuda_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
+
+    # CR2-5 captures exactly one production-shaped CUDA-resident full-window
+    # body under cudaProfilerApi. Setup, resource queries, diagnostic readback,
+    # and destruction remain outside the profiler range.
+    add_executable(ef_cuda_resident_resource_probe
+        src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_resource_probe PRIVATE
+        ef_cuda_resident_backend
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_resource_probe PRIVATE
+        EF_CR2_RESOURCE_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_resource_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
 else()
     add_executable(ef_cuda_resident_rb9_cpu_probe
         src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
@@ -704,6 +722,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_cuda_resident_full_window_cuda_probe
     ef_cuda_resident_rb9_cpu_probe
     ef_cuda_resident_rb9_cuda_probe
+    ef_cuda_resident_resource_probe
 )
 
 foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)

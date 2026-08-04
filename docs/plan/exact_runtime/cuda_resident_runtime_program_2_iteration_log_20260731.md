@@ -483,3 +483,79 @@ policy, barrier/provenance boundary, negative tests, real probe evidence,
 support/history invariance, and every size limit. Only `FINAL APPROVE` permits
 one CR2-4b commit; it does not authorize merge, push, promotion, CR2-5 tuning,
 or rewriting old evidence.
+
+## CR2-5a candidate — static resources and achieved launch topology
+
+### Contract and capture boundary
+
+CR2-5a introduces the separate
+`cr2.resource.steady_full_window_body.sm86.v1` profile. Its CUDA-only Release
+probe sets up 256 worlds and queries all ten kernel attributes before entering
+one `cudaProfilerApi` range. The captured body is exactly
+`inject → evaluate(empty) → advance(WorldBatch) → public export → lease acquire
+→ consumer submit → event await`. Receipt/lease/backend destruction and
+resource-query side effects stay outside the captured body; diagnostic
+materialization is never called.
+
+Nsight Systems 2025.3.2 exported a single-window SQLite trace with exactly 12
+launch instances in the contract order, ten unique symbols, grid `2×1×1` and
+block `128×1×1` for every instance. Runtime tables contain 12 launch APIs, five
+device synchronizes, one event synchronize, one stream wait, and 3 H2D / 7 D2H
+/ 3 D2D transfers. The seven D2H operations prove public export is included
+while the two consumer diagnostic copies are excluded.
+Two event create/record pairs, four allocations, and zero frees also remain
+inside the range; receipt/lease/backend release remains outside it.
+
+### Static resource evidence and interpretation
+
+The compact JSON cross-checks explicit ptxas entries, runtime attributes,
+cuobjdump resources, and SASS for all ten kernels. Registers are
+`30/34/66/66/64/64/34/40/16/14`; the four 66/66/64/64-register kernels have
+40-byte stack frames and theoretical occupancy 58.33/58.33/66.67/66.67%, while
+the other six report zero stack and 100% theoretical occupancy. All ptxas
+entries explicitly report zero spill stores/loads. Each 40-byte kernel contains
+three `LDL.64` and two `STL.64`; these remain stack/local instructions rather
+than being relabeled as spills.
+
+Nsight Systems reported zero `localMemoryPerThread` metadata for all launch
+rows and 16 register metadata for the consumer where the three static sources
+agree on 14. Those instrument fields are retained, but they do not override the
+static cross-check and are not achieved local traffic. `-maxrregcount=0` is
+recorded as no cap. The tracked evidence is about 19 KiB. The raw `.nsys-rep`
+is untracked and is not a compact collector input. SQLite/build-log raw bytes
+and derived cuobjdump resource/SASS outputs are addressed by SHA-256; raw input
+bytes are not retained in the repository.
+
+### Gate status
+
+Static resource and launch-topology sub-gates are complete. Achieved occupancy,
+divergence, and kernel global/local/shared traffic remain null with
+`pending_cr2_5b`; the overall CR2-5 counter gate, tuning, promotion, support,
+and maintained claims remain false. Negative tests reject extra/missing probe
+payload, trace drift, missing ptxas spill fields, wrong launch order/count,
+exact-symbol/unique-count drift, conflicting register caps, invalid runtime
+occupancy metadata, extra diagnostic D2H, theoretical-to-achieved substitution,
+and support flag changes.
+
+The new contract/probe/orchestrator/static-parser/architecture-test modules are
+93/350/655/116/382 lines respectively. No module enters a watch band and the
+compact tracked artifact is below the 512 KiB soft cap.
+
+Before staged review, the Release resource probe rebuilt and completed on the
+RTX 3090, and regenerating the compact artifact from the same untracked inputs
+produced the same SHA-256. CUDA-on lifecycle/replay/full-window suites passed
+14/14 cases and 599/599 assertions, 3/3 and 47/47, and 6/6 and 153/153. The
+CUDA-off counterparts passed 14/14 and 91/91, 3/3 and 14/14, and 6/6 and
+136/136. The full CUDA-resident runtime-profile architecture selection passed
+89 tests with 21 deselected; focused Ruff check/format and `git diff --check`
+passed. The build repeated the pre-existing MSVC C4819 warning in
+`src/tests/test_main.cpp`; CR2-5a does not modify that file.
+
+### Independent review gate
+
+A fresh independent agent must review the complete staged CR2-5a snapshot,
+the profiler range and RAII cleanup, all four resource sources, SQLite topology
+queries, stack-versus-spill terminology, null achieved fields, negative tests,
+historical evidence invariance, and every size limit. Only `FINAL APPROVE`
+permits one CR2-5a commit. It does not authorize merge, push, tuning, promotion,
+or beginning CR2-5b in the same commit.

@@ -138,8 +138,8 @@ exception may be used to hide semantic implementation growth.
 | CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Independently approved and committed as `607c1f33`; both real lanes consume the same trace through the declared surface. |
 | CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured consumer path. | Independently approved and committed as `7da41a2a`; explicit consumer smoke, ownership/lifetime/failure tests, deferred diagnostic readback, and CUDA-on/off validation pass; public support stays closed. |
 | CR2-4a | Split the 919-line RB8 replay test into bounded support/projection/test owners without changing its oracle, quarantine, 93-field budget, or historical evidence. | Independently approved and committed as `d778c67c`; CUDA-on/off replay and architecture guards passed with no remaining watch item. |
-| CR2-4b | Release selected-slice parity and deterministic reset identity from quarantine using real payload evidence and an explicit identity policy. | Identity policy is stable or explicitly excluded; every released field is real or explicitly normalized/excluded; frozen-budget replay passes at each declared barrier; public support remains closed. |
-| CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Counters are complete or a documented external blocker stops the gate; no tuning claim is made from incomplete counters. |
+| CR2-4b | Release selected-slice parity and deterministic reset identity from quarantine using real payload evidence and an explicit identity policy. | Independently approved and committed as `08b48f29`; the 12-field real projection and exact same-backend reset pass while public support remains closed. |
+| CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Split into CR2-5a static/topology evidence and CR2-5b achieved-counter collection; no tuning claim is made from either incomplete half. |
 | CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | End-to-end benefit survives cold, warm, rollout, export, device-consumer, and small-batch cases; selection policy is evidence-backed. |
 | CR2-7 | Make a separately reviewed promotion or closure decision. | Promotion requires a new explicit authorization and integration plan; otherwise record a second closure without changing maintained behavior. |
 
@@ -236,6 +236,37 @@ true, `maintained_claim_allowed` and `public_support_enabled` are false, and no
 RuntimeFacade selection, admission, public ABI, old 93-field budget, historical
 evidence, performance threshold, or kernel scheduling change belongs to this
 iteration.
+
+### CR2-5a boundary
+
+CR2-5a adds a CUDA-only `cudaProfilerApi` probe for exactly one 256-world,
+one-window Release/SM86 body. Setup, runtime resource queries, and owner
+destruction are outside the capture range. The range contains only
+`inject → evaluate(empty) → advance(WorldBatch) → public export → device lease
+acquire → consumer submit → event await`; diagnostic materialization is absent.
+Nsight Systems SQLite must therefore contain exactly 12 launch instances in the
+declared order, ten unique kernel symbols, a `2×1×1` grid and `128×1×1` block
+for every instance, five `cudaDeviceSynchronize` calls, one event synchronize,
+one stream event wait, and the expected 3 H2D / 7 D2H / 3 D2D copies.
+It also freezes two event create/record pairs, four in-range allocations, and
+zero in-range frees; owner release remains outside the capture body.
+
+The compact resource artifact cross-checks explicit ptxas records, runtime
+`cudaFuncGetAttributes`/occupancy queries, cubin resource usage, and SASS. A
+40-byte stack frame and its `LDL`/`STL` instructions remain distinct from
+compiler-reported spills. Nsight Systems launch metadata is retained as
+instrument output, but its zero local-memory field is not treated as achieved
+local traffic and does not erase the 40-byte static result. Likewise,
+`-maxrregcount=0` is recorded as no cap, not a zero-register cap. The raw
+`.nsys-rep` is untracked and is not a compact collector input. SQLite/build-log
+raw bytes and derived cuobjdump resource/SASS outputs are identified by
+SHA-256; the repository retains the collector and compact facts, not raw inputs.
+
+CR2-5a does not collect achieved occupancy, divergence, or kernel global/local/
+shared traffic. Those fields remain null with status `pending_cr2_5b`; tuning,
+promotion, public support, and maintained claims remain false. CR2-5b must make
+a separate real Nsight Compute attempt and either provide complete counters or
+record the external blocker without substituting theoretical values.
 
 ## 5. Promotion and recovery boundary
 

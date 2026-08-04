@@ -117,8 +117,8 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 已独立批准并以 `607c1f33` 提交；两个真实 lane 通过声明的共同 surface 消费同一 trace。 |
 | CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured consumer path 的 hidden host validation。 | 已独立批准并以 `7da41a2a` 提交；显式 consumer smoke、ownership/lifetime/failure、延迟 diagnostic readback 与 CUDA-on/off 验证通过，public support 保持关闭。 |
 | CR2-4a | 将 919 行 RB8 replay test 拆为受限 support/projection/test owner，不改变 oracle、quarantine、93-field budget 或历史 evidence。 | 已获独立批准并以 `d778c67c` 提交；CUDA-on/off replay 与 architecture guard 通过，当前无 watch item。 |
-| CR2-4b | 基于真实 payload evidence 与显式 identity policy，将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | 每个 released field 都是真实数据或显式 normalized/excluded；每个声明 barrier 的 frozen-budget replay 通过；public support 保持关闭。 |
-| CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | counters 完整或记录外部 blocker 并停止 gate；不以不完整 counters 声称 tuning 成功。 |
+| CR2-4b | 基于真实 payload evidence 与显式 identity policy，将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | 已独立批准并以 `08b48f29` 提交；真实 12 字段投影与同 backend exact reset 通过，public support 仍关闭。 |
+| CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | 拆分为 CR2-5a 静态/拓扑证据和 CR2-5b achieved-counter 采集；任一不完整部分都不能产生 tuning 结论。 |
 | CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | cold、warm、rollout、export、device-consumer、small-batch 均支持端到端决策。 |
 | CR2-7 | 独立作 promotion 或 closure 决策。 | promotion 需要新授权与 integration plan；否则记录第二次 closure，维护行为不变。 |
 
@@ -201,6 +201,33 @@ value 要求 exact。payload 只在 `window_commit` 后通过 host diagnostic ex
 `maintained_claim_allowed=false`，`public_support_enabled=false`。本迭代不改
 RuntimeFacade selection、admission、public ABI、旧 93 字段 budget、历史 evidence、
 性能阈值或 kernel 调度。
+
+### CR2-5a 边界
+
+CR2-5a 增加 CUDA-only `cudaProfilerApi` probe，只捕获一次 256-world、单 window、
+Release/SM86 body。setup、运行时资源查询与 owner 析构都在 capture range 外；range
+内只有 `inject → evaluate(empty) → advance(WorldBatch) → public export → device
+lease acquire → consumer submit → event await`，不调用 diagnostic materialization。
+因此 Nsight Systems SQLite 必须恰好包含按声明顺序排列的 12 个 launch instance、
+10 个 unique kernel symbol；每个实例的 grid 为 `2×1×1`、block 为 `128×1×1`；
+并实测 5 次 `cudaDeviceSynchronize`、1 次 event synchronize、1 次 stream event
+wait，以及 3 H2D / 7 D2H / 3 D2D copy。
+同时冻结两组 event create/record、四次 range 内 allocation 与零次 range 内 free；
+owner release 仍位于 capture body 外。
+
+compact resource artifact 会交叉校验显式 ptxas record、运行时
+`cudaFuncGetAttributes`/occupancy query、cubin resource usage 与 SASS。40-byte stack
+frame 及其 `LDL`/`STL` 指令与 compiler-reported spill 是不同事实。Nsight Systems
+launch metadata 会保留为仪器输出，但其中为零的 local-memory 字段既不是 achieved
+local traffic，也不能抹除 40-byte 静态结果。同理，`-maxrregcount=0` 明确解释为
+no cap，而不是 zero-register cap。raw `.nsys-rep` 不跟踪，也不是 compact collector
+input。SQLite/build-log raw bytes 与派生的 cuobjdump resource/SASS output 以 SHA-256
+标识；仓库保留 collector 与 compact facts，不保留 raw input。
+
+CR2-5a 不采集 achieved occupancy、divergence 或 kernel global/local/shared traffic；
+这些字段以 `pending_cr2_5b` 状态保持 null，tuning、promotion、public support 与
+maintained claim 全部为 false。CR2-5b 必须单独真实运行 Nsight Compute：要么提供
+完整 counters，要么记录外部 blocker，不能用 theoretical value 替代。
 
 ## 5. 晋级与恢复边界
 

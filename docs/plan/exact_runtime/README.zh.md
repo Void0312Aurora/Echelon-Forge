@@ -18,10 +18,12 @@
 5. [cuda_resident_runtime_program_2_20260731.zh.md](cuda_resident_runtime_program_2_20260731.zh.md)
 6. [cuda_resident_runtime_program_2_iteration_log_20260731.zh.md](cuda_resident_runtime_program_2_iteration_log_20260731.zh.md)
 7. [cuda_resident_runtime_program_2_size_policy_20260731.json](cuda_resident_runtime_program_2_size_policy_20260731.json)
-8. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
-9. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
-10. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
-11. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
+8. [cuda_resident_cr2_resource_evidence_20260804.zh.md](cuda_resident_cr2_resource_evidence_20260804.zh.md)
+9. [cuda_resident_cr2_resource_evidence_20260804.json](cuda_resident_cr2_resource_evidence_20260804.json)
+10. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
+11. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
+12. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
+13. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
 
 使用规则：
 

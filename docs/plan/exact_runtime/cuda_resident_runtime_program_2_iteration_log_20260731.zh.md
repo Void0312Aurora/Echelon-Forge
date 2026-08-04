@@ -424,3 +424,67 @@ assertions；CUDA-on 为 6/6、153/153。未修改的 replay suite 为 CUDA-off 
 双 Runner reset 语义、raw-id policy、barrier/provenance 边界、negative test、真实
 probe evidence、support/history 不变和全部规模限制。只有 `FINAL APPROVE` 才允许
 一个 CR2-4b commit；不授权 merge、push、promotion、CR2-5 tuning 或改写旧 evidence。
+
+## CR2-5a candidate —— 静态资源与实测 launch topology
+
+### 契约与 capture 边界
+
+CR2-5a 增加独立的 `cr2.resource.steady_full_window_body.sm86.v1` profile。CUDA-only
+Release probe 在进入唯一 `cudaProfilerApi` range 前 setup 256 个 world，并查询十个
+kernel attribute。capture body 恰好是
+`inject → evaluate(empty) → advance(WorldBatch) → public export → lease acquire →
+consumer submit → event await`。receipt、lease、backend 析构和 resource-query side
+effect 都在 range 外；diagnostic materialization 从未调用。
+
+Nsight Systems 2025.3.2 导出的 single-window SQLite trace 恰好包含按 contract 顺序
+排列的 12 个 launch instance 和 10 个 unique symbol；每个实例的 grid 为 `2×1×1`，
+block 为 `128×1×1`。runtime table 包含 12 次 launch API、5 次 device synchronize、
+1 次 event synchronize、1 次 stream wait，以及 3 H2D / 7 D2H / 3 D2D transfer。
+七次 D2H 证明 public export 已包含，而 consumer diagnostic 的两次 copy 已排除。
+range 内还包含两组 event create/record、四次 allocation 与零次 free；receipt/lease/
+backend release 仍在 range 外。
+
+### 静态资源证据与解释
+
+compact JSON 对十个 kernel 的显式 ptxas entry、runtime attribute、cuobjdump resource
+与 SASS 做交叉核验。register 依次为 `30/34/66/66/64/64/34/40/16/14`；其中
+66/66/64/64-register 的四个 kernel 有 40-byte stack frame，理论 occupancy 为
+58.33/58.33/66.67/66.67%，其余六个 zero stack、100% theoretical occupancy。
+全部 ptxas entry 显式报告 zero spill store/load。每个 40-byte kernel 含三条
+`LDL.64` 与两条 `STL.64`；它们保持 stack/local instruction 语义，不改称 spill。
+
+Nsight Systems 对所有 launch row 报告 zero `localMemoryPerThread` metadata，并在三个
+静态源一致报告 consumer 14 registers 时记录 16-register metadata。这些仪器字段会
+保留，但不覆盖静态 cross-check，也不是 achieved local traffic。
+`-maxrregcount=0` 记录为 no cap。tracked evidence 约 19 KiB。raw `.nsys-rep`
+不跟踪，也不是 compact collector input。SQLite/build-log raw bytes 与派生的
+cuobjdump resource/SASS output 以 SHA-256 标识；仓库不保留 raw input bytes。
+
+### Gate 状态
+
+static resource 与 launch-topology sub-gate 已完成。achieved occupancy、divergence、
+kernel global/local/shared traffic 以 `pending_cr2_5b` 保持 null；整体 CR2-5 counter
+gate、tuning、promotion、support 与 maintained claim 均为 false。negative test 会
+拒绝 probe payload 额外/缺失、trace drift、ptxas spill field 缺失、launch 顺序或
+数量错误、exact-symbol/unique-count drift、冲突 register cap、无效 runtime occupancy
+metadata、额外 diagnostic D2H、theoretical-to-achieved substitution 与 support flag 变化。
+
+新 contract/probe/orchestrator/static-parser/architecture-test 模块分别为
+93/350/655/116/382 行。没有模块进入 watch band，compact tracked artifact 低于
+512 KiB soft cap。
+
+staged review 前，Release resource probe 已在 RTX 3090 上重建并完成；用同一组
+untracked 输入重新生成 compact artifact 得到相同 SHA-256。CUDA-on
+lifecycle/replay/full-window suite 分别通过 14/14 case、599/599 assertion，3/3、
+47/47，以及 6/6、153/153；CUDA-off 对应结果为 14/14、91/91，3/3、14/14，
+以及 6/6、136/136。完整 CUDA-resident runtime-profile architecture selection 为
+89 passed、21 deselected；focused Ruff check/format 与 `git diff --check` 通过。
+构建重复出现 `src/tests/test_main.cpp` 既有的 MSVC C4819 warning；CR2-5a 不修改
+该文件。
+
+### 独立复核门
+
+新的独立 agent 必须审阅完整 staged CR2-5a snapshot、profiler range 与 RAII cleanup、
+四类 resource source、SQLite topology query、stack/spill 术语、null achieved field、
+negative test、历史 evidence 不变及全部规模限制。只有 `FINAL APPROVE` 才允许一个
+CR2-5a commit；不授权 merge、push、tuning、promotion，或把 CR2-5b 合入同一 commit。
