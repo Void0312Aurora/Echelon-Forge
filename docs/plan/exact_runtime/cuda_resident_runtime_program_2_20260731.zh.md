@@ -229,6 +229,20 @@ CR2-5a 不采集 achieved occupancy、divergence 或 kernel global/local/shared 
 maintained claim 全部为 false。CR2-5b 必须单独真实运行 Nsight Compute：要么提供
 完整 counters，要么记录外部 blocker，不能用 theoretical value 替代。
 
+### CR2-5b 边界
+
+CR2-5b 通过 fail-closed collector，对未修改的 CR2-5a Release/SM86 binary 与 profile
+运行这次独立尝试。实际 Nsight Compute 2025.3.1.0 运行完成了应用 body，但以退出码 1
+结束，唯一 error 是 `ERR_NVGPUCTRPERM`，并且没有生成 counter report。因此 achieved
+occupancy、divergence 与 global/local/shared traffic family 继续保持 null；零代表
+取得的 counter record 数量，而不是伪造的零值 measurement。
+
+真实尝试 sub-gate 以 documented external blocker 完成，但 achieved-counter gate 仍未
+完成。CR2-5 的 disposition 是 `documented_external_blocker`，不是 tuning result。
+compact artifact 对实际 invocation、profiler、binary、log、probe output、父证据、
+collector 与 contract 做 hash；raw profiler file 不跟踪。本迭代不修改 kernel、runtime
+selection、tuning、support、maintained 或 promotion 状态。
+
 ## 5. 晋级与恢复边界
 
 只要 invocation surface 不等价、真实 learner update loop 缺失、parity 仍是

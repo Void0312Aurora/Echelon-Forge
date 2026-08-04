@@ -559,3 +559,59 @@ queries, stack-versus-spill terminology, null achieved fields, negative tests,
 historical evidence invariance, and every size limit. Only `FINAL APPROVE`
 permits one CR2-5a commit. It does not authorize merge, push, tuning, promotion,
 or beginning CR2-5b in the same commit.
+
+## CR2-5b candidate — achieved-counter permission blocker
+
+### Actual attempt and provenance
+
+The dedicated collector executed Nsight Compute 2025.3.1.0 against the unchanged
+CR2-5a Release/SM86 resource-probe binary. The invocation used application-only
+targeting, `cudaProfilerApi` range control, kernel replay, demangled kernel names,
+the `full` counter set, and a 12-launch limit. It records SHA-256 for the actual
+absolute argument vector while exposing only a path-redacted command template.
+It also hashes the NCU executable, probe binary, attempt log, probe output,
+CR2-5a parent evidence, collector, and contract.
+
+NCU connected to one process, reported exactly one profiler error, and
+disconnected from the same process. It exited 1 with `ERR_NVGPUCTRPERM` and did
+not create an `.ncu-rep`. The probe application still completed its 256-world,
+one-window body, awaited the device consumer, and produced the same binary and
+probe-output hashes frozen by CR2-5a. The attempt is therefore classified as
+`external_blocked`, not as a kernel failure or a successful zero measurement.
+
+### Counter and gate status
+
+Achieved occupancy, branch divergence, and kernel global/local/shared-memory
+traffic all remain null. The required counter-launch count is 12 and the
+collected hardware-counter record count is 0. Negative validation rejects a
+zero or non-null field in a blocked state, exit-zero/blocker contradictions,
+wrong or additional profiler errors, a claimed report, partial launch coverage,
+missing metric names, theoretical-occupancy provenance, source/hash drift, and
+support, tuning, maintained, or promotion changes.
+
+The real-attempt sub-gate is complete because the external permission blocker
+is reproduced and documented. The achieved-counter gate remains false and
+CR2-5 closes with `documented_external_blocker`; it produces no tuning result.
+Raw logs, probe output, and profiler reports remain untracked. Enabling GPU
+performance counters is an external host-policy operation outside this iteration.
+
+### Size and validation evidence
+
+The new contract/collector/architecture-test modules are 58/657/255 lines,
+below their 600/700/700 soft targets. The tracked compact JSON is 4,555 bytes.
+Focused CR2-5a/5b/size architecture tests passed 34/34. The full CUDA-resident
+runtime-profile selection passed 104 tests with 21 deselected; focused Ruff
+check/format and `git diff --check` passed. Existing CUDA-on lifecycle/replay/
+full-window executables passed 14/14 cases and 599/599 assertions, 3/3 and
+47/47, and 6/6 and 153/153. CUDA-off counterparts passed 14/14 and 91/91,
+3/3 and 14/14, and 6/6 and 136/136.
+
+### Independent review gate
+
+A fresh independent agent must inspect the exact staged CR2-5b snapshot,
+including the real invocation and error provenance, application completion,
+absence of an NCU report, CR2-5a binary/probe linkage, null achieved families,
+state contradictions and available-state negative tests, historical evidence
+invariance, and every size limit. Only `FINAL APPROVE` permits one CR2-5b commit.
+It does not authorize merge, push, host permission changes, tuning, promotion,
+or beginning CR2-6 in the same commit.

@@ -268,6 +268,23 @@ promotion, public support, and maintained claims remain false. CR2-5b must make
 a separate real Nsight Compute attempt and either provide complete counters or
 record the external blocker without substituting theoretical values.
 
+### CR2-5b boundary
+
+CR2-5b runs that separate attempt through a fail-closed collector against the
+unchanged CR2-5a Release/SM86 binary and profile. The actual Nsight Compute
+2025.3.1.0 run completed the application body but exited 1 with the sole error
+`ERR_NVGPUCTRPERM`; it created no counter report. The achieved occupancy,
+divergence, and global/local/shared traffic families therefore remain null,
+with zero collected counter records rather than fabricated zero measurements.
+
+The real-attempt sub-gate is complete as a documented external blocker, while
+the achieved-counter gate remains incomplete. CR2-5 ends with disposition
+`documented_external_blocker`, not a tuning result. The compact artifact hashes
+the actual invocation, profiler, binary, log, probe output, parent evidence,
+collector, and contract; raw profiler files remain untracked. No kernel,
+runtime-selection, tuning, support, maintained, or promotion change belongs to
+CR2-5b.
+
 ## 5. Promotion and recovery boundary
 
 Promotion is blocked if any of the following remains true: invocation surfaces

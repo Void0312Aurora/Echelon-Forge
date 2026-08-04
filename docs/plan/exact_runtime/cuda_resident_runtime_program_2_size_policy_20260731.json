@@ -183,6 +183,21 @@
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
       "role": "CR2-5a evidence, fail-closed parser, and topology guards",
       "observed_lines": 382
+    },
+    {
+      "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",
+      "role": "CR2-5b achieved-counter families, states, and fail-closed policy",
+      "observed_lines": 58
+    },
+    {
+      "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
+      "role": "CR2-5b Nsight Compute attempt and external-blocker evidence collector",
+      "observed_lines": 657
+    },
+    {
+      "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
+      "role": "CR2-5b evidence provenance, state, negative, and size guards",
+      "observed_lines": 255
     }
   ],
   "watch_items": [],

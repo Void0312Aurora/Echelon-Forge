@@ -488,3 +488,51 @@ lifecycle/replay/full-window suite 分别通过 14/14 case、599/599 assertion�
 四类 resource source、SQLite topology query、stack/spill 术语、null achieved field、
 negative test、历史 evidence 不变及全部规模限制。只有 `FINAL APPROVE` 才允许一个
 CR2-5a commit；不授权 merge、push、tuning、promotion，或把 CR2-5b 合入同一 commit。
+
+## CR2-5b candidate —— achieved-counter 权限 blocker
+
+### 真实尝试与 provenance
+
+独立 collector 对未修改的 CR2-5a Release/SM86 resource-probe binary 执行 Nsight
+Compute 2025.3.1.0。invocation 使用 application-only target、`cudaProfilerApi` range
+control、kernel replay、demangled kernel name、`full` counter set 与 12-launch limit。
+collector 对实际 absolute argument vector 记录 SHA-256，对外只保留路径遮蔽的 command
+template；同时对 NCU executable、probe binary、attempt log、probe output、CR2-5a 父
+evidence、collector 与 contract 做 hash。
+
+NCU 连接一个进程，只报告一个 profiler error，并从同一个进程断开。它以退出码 1
+结束，错误为 `ERR_NVGPUCTRPERM`，没有生成 `.ncu-rep`。probe 应用仍完成 256-world、
+单-window body，等待 device consumer，并产生与 CR2-5a 冻结值相同的 binary/probe
+output hash。因此状态是 `external_blocked`，不是 kernel failure，也不是成功采得零值。
+
+### Counter 与 gate 状态
+
+achieved occupancy、branch divergence 与 kernel global/local/shared-memory traffic 全部
+保持 null。required counter-launch count 是 12，取得的 hardware-counter record count
+是 0。negative validation 会拒绝 blocked 状态中的零或非空字段、exit-zero/blocker
+矛盾、错误或额外 profiler error、虚构 report、部分 launch coverage、缺少 metric name、
+theoretical-occupancy provenance、source/hash drift，以及 support、tuning、maintained 或
+promotion 状态变化。
+
+外部权限 blocker 已经复现并记录，因此 real-attempt sub-gate 完成；achieved-counter
+gate 仍为 false，CR2-5 以 `documented_external_blocker` 收束，不产生 tuning result。
+raw log、probe output 与 profiler report 不跟踪。开启 GPU performance counter 是本迭代
+范围外的外部 host-policy 操作。
+
+### 规模与验证证据
+
+新增 contract/collector/architecture-test 模块分别为 58/657/255 行，低于对应
+600/700/700 软阈值；tracked compact JSON 为 4,555 bytes。聚焦 CR2-5a/5b/size
+architecture test 为 34/34；完整 CUDA-resident runtime-profile selection 为 104 passed、
+21 deselected；聚焦 Ruff check/format 与 `git diff --check` 通过。既有 CUDA-on
+lifecycle/replay/full-window executable 分别通过 14/14 case、599/599 assertion，3/3、
+47/47，以及 6/6、153/153；CUDA-off 对应结果为 14/14、91/91，3/3、14/14，以及
+6/6、136/136。
+
+### 独立复核门
+
+新的独立 agent 必须审阅精确 staged CR2-5b snapshot，包括真实 invocation/error
+provenance、应用完成、NCU report 缺失、CR2-5a binary/probe link、全 null achieved
+family、状态矛盾与 available-state negative test、历史 evidence 不变和全部规模限制。
+只有 `FINAL APPROVE` 才允许一个 CR2-5b commit；不授权 merge、push、修改 host
+permission、tuning、promotion，或在同一 commit 开始 CR2-6。
