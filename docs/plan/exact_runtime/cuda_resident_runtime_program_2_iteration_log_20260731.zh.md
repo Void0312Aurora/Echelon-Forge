@@ -536,3 +536,78 @@ provenance、应用完成、NCU report 缺失、CR2-5a binary/probe link、全 n
 family、状态矛盾与 available-state negative test、历史 evidence 不变和全部规模限制。
 只有 `FINAL APPROVE` 才允许一个 CR2-5b commit；不授权 merge、push、修改 host
 permission、tuning、promotion，或在同一 commit 开始 CR2-6。
+
+## CR2-6a candidate —— common-SPI production matrix probe
+
+### Surface 与 matrix contract
+
+CR2-6a 新建 probe，不修改或重新标记历史 RB9 probe/evidence。同一组 probe/session
+source 分别编译为 Release CPU 与 CUDA target。两者的 timed common sequence 都通过
+`IWorldBatchBackend` 执行
+`inject → evaluate(empty) → advance(WorldBatch) → optional public export`。matrix
+projection 使用独立 surface ID，并通过 `full_window::kSurfaceId` 权威常量直接引用
+完整 full-window surface；不调用 `publish_stage()` 或 private
+`export_snapshot()`。optional device lease/consumer suffix
+明确是 CUDA-only；CPU device-consumer row 以一个稳定 reason 标记 unavailable，不生成
+虚假 timing。
+
+冻结 production matrix 为 `1/4/16/64/256` worlds 乘四种 export/consumer mode；protocol
+为 10 个 reset-cold sample、32 个 warmup window、100 个 measured window，以及 10 组
+各 64 window 的 rollout。latency family 分开记录 setup、cold total/first window、warmed
+end-to-end、common compute、collection 与 rollout total。device-consumer await 位于
+suffix timer 内，diagnostic materialization 与 receipt release 位于 sample/rollout timer
+之后；schema 会校验 receipt、materialization 与 deferred-rollout count。
+
+same-lane reset correctness 在计时后 export CR2-4b 的 12-field selected payload，检查
+lane-local entity identity，从 digest 排除 allocator ID，并要求不同 reset/mode 的 exact
+digest 稳定。第一次 CUDA smoke 正确暴露 replay harness 返回的是很长的 canonical trace；
+现在 probe 会先把 canonical form 内容寻址为 FNV-1a-64，再输出 row/master signature，
+从而限制 report size。report 直接引用 CR2-4b 权威 selected-slice schema、policy 与
+source trace profile；这种复用仅限 same-lane reset 的 field projection，并显式保持
+matrix profile 未 release。
+CPU 显式请求 `worker_threads=0`，表示按各 world count 截断的自动 hardware
+concurrency；每个 available row 会记录 effective count。CUDA 记录一个 host
+orchestrator，并从 CR2-5a resource-evidence contract 直接别名 128-thread block size，
+因此后续比较不能静默改变 host 或 device 并行度。
+
+### 真实构建与 smoke 证据
+
+CUDA-on 与 CUDA-off tree 都已重新配置，并以 Release 构建
+`ef_cuda_resident_cr2_matrix_cuda_probe` 和
+`ef_cuda_resident_cr2_matrix_cpu_probe`。真实 `--smoke` 覆盖 world 1/4；每个 available
+row 使用 1 cold、1 warmup、2 measured 与一组 2-window rollout。两 lane 的 common
+master/row trace digest 一致。CUDA 8/8 row available；CPU 有四个 common available row
+与四个 device-consumer N/A row。所有 available row 的 same-lane exact reset 通过，两个
+raw smoke report 也都通过同一 fail-closed validator。world count 1/4 的 CPU row 分别
+记录 1/4 个 effective worker；全部 CUDA row 记录一个 host orchestrator，而 CPU N/A row
+的 effective worker count 为 null。未跟踪 CPU/CUDA report 分别为 16,241/26,449 bytes。
+
+CPU probe 在创建任何 session 前把 logging 设为 warning，因此 database/reset info log
+不进入 cold/setup measurement。CPU build 重复出现
+`src/components/combat/common/missile_seeker_state.h` 既有的 MSVC C4819 warning；
+CR2-6a 不修改该文件。
+
+### 规模、negative test 与复核门
+
+新增 contract/session-header/session/probe/validator/architecture-test 模块分别为
+107/53/288/475/603/450 行，全部低于 soft target。contract 固化标准 FNV-1a-64
+offset/prime 与 empty/`a`/`foobar` known vector；trace 和 selected-payload reset digest
+共用这些常量。negative test 会拒绝 private
+invocation surface、缺少 empty evaluation、不完整 matrix、CPU consumer availability
+或 worker-policy claim、跨 mode effective-worker drift、timing/raw-stat drift、
+receipt/deferred-owner drift、trace/reset-digest disagreement、allocator identity
+进入 reset scope、重复 JSON key、configuration/mode/row/statistics/
+diagnostics/memory/environment/gate 中的 integer/boolean/float JSON 类型别名，以及
+warmed/cold timing decomposition drift、master/world-256 trace mismatch、跨 mode
+CUDA-memory drift，以及 support/matrix-complete/promotion gate 变化。
+
+聚焦 matrix/size architecture test 为 39/39；完整 CUDA-resident runtime-profile
+selection 为 140 passed、21 deselected；Ruff/format 与 `git diff --check` 通过。既有
+CUDA-on lifecycle/replay/full-window 仍为 14/14、599/599，3/3、47/47，以及 6/6、
+153/153；CUDA-off 仍为 14/14、91/91，3/3、14/14，以及 6/6、136/136。
+
+新的独立 agent 必须审阅精确 staged CR2-6a snapshot、两个真实 smoke report、
+common-SPI/timing boundary、compact trace derivation、CPU N/A 语义、receipt ownership、
+validator negative coverage、历史 RB9 不变和全部规模限制。只有 `FINAL APPROVE` 才
+允许一个 CR2-6a commit；不授权 merge、push、production evidence、selection-policy
+claim、tuning、promotion，或在同一 commit 开始 CR2-6b。

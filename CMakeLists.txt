@@ -603,6 +603,26 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     target_include_directories(ef_cuda_resident_full_window_cuda_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
+
+    # CR2-6 compiles the production matrix probe separately for the current
+    # CUDA-resident lane. Both lanes use the same backend SPI window sequence;
+    # the device-consumer suffix remains an explicit CUDA-only mode.
+    add_executable(ef_cuda_resident_cr2_matrix_cuda_probe
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
+        ef_cuda_resident_backend
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
+        EF_CR2_MATRIX_CUDA_PROBE=1
+        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
 else()
     add_executable(ef_cuda_resident_full_window_cpu_probe
         src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
@@ -618,6 +638,25 @@ else()
         EF_CR2_FULL_WINDOW_CPU_PROBE=1
     )
     target_include_directories(ef_cuda_resident_full_window_cpu_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+
+    add_executable(ef_cuda_resident_cr2_matrix_cpu_probe
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
+        EF_CR2_MATRIX_CPU_PROBE=1
+        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 endif()
@@ -720,6 +759,8 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_cuda_resident_full_window_test
     ef_cuda_resident_full_window_cpu_probe
     ef_cuda_resident_full_window_cuda_probe
+    ef_cuda_resident_cr2_matrix_cpu_probe
+    ef_cuda_resident_cr2_matrix_cuda_probe
     ef_cuda_resident_rb9_cpu_probe
     ef_cuda_resident_rb9_cuda_probe
     ef_cuda_resident_resource_probe

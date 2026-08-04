@@ -190,6 +190,12 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "src/runtime/contracts/cuda_resident_counter_evidence_contract.h": 58,
         "tools/diagnostics/cuda_resident_cr2_counter_evidence.py": 657,
         "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py": 255,
+        "src/runtime/contracts/cuda_resident_matrix_contract.h": 107,
+        "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.h": 53,
+        "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp": 288,
+        "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp": 475,
+        "tools/diagnostics/cuda_resident_cr2_matrix_probe.py": 603,
+        "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py": 450,
     }
     assert set(inventory_map) == set(expected_inventory)
     for path, expected_lines in expected_inventory.items():

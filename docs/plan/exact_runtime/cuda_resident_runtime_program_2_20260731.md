@@ -140,7 +140,7 @@ exception may be used to hide semantic implementation growth.
 | CR2-4a | Split the 919-line RB8 replay test into bounded support/projection/test owners without changing its oracle, quarantine, 93-field budget, or historical evidence. | Independently approved and committed as `d778c67c`; CUDA-on/off replay and architecture guards passed with no remaining watch item. |
 | CR2-4b | Release selected-slice parity and deterministic reset identity from quarantine using real payload evidence and an explicit identity policy. | Independently approved and committed as `08b48f29`; the 12-field real projection and exact same-backend reset pass while public support remains closed. |
 | CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Split into CR2-5a static/topology evidence and CR2-5b achieved-counter collection; no tuning claim is made from either incomplete half. |
-| CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | End-to-end benefit survives cold, warm, rollout, export, device-consumer, and small-batch cases; selection policy is evidence-backed. |
+| CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | Split into CR2-6a common-SPI probe/validator and CR2-6b real evidence/selection policy; small-batch regressions require an explicit CPU-selection policy rather than being hidden. |
 | CR2-7 | Make a separately reviewed promotion or closure decision. | Promotion requires a new explicit authorization and integration plan; otherwise record a second closure without changing maintained behavior. |
 
 CR2-1 through CR2-6 may be repeated as narrowly scoped sub-iterations, but a
@@ -284,6 +284,37 @@ the actual invocation, profiler, binary, log, probe output, parent evidence,
 collector, and contract; raw profiler files remain untracked. No kernel,
 runtime-selection, tuning, support, maintained, or promotion change belongs to
 CR2-5b.
+
+### CR2-6a boundary
+
+CR2-6a creates a new production-matrix probe rather than modifying or relabeling
+the historical RB9 probe/evidence. One source set is compiled separately for the
+Flecs CPU reference and CUDA-resident lanes. Both execute the current backend SPI
+sequence `inject → evaluate(empty) → advance(WorldBatch) → optional public
+export`; the optional device lease/consumer suffix is explicitly CUDA-only and
+the corresponding CPU rows remain N/A.
+
+The frozen matrix is world counts `1/4/16/64/256` across no-export/export and
+no-device/device-consumer modes. The production protocol records 10 reset-cold
+samples, 32 warmup windows, 100 measured windows, and 10 rollouts of 64 windows.
+Consumer await is inside the measured suffix; diagnostic materialization and
+receipt release are outside timers. Same-lane reset correctness hashes the 12
+CR2-4b released numeric fields with allocator identity excluded, and trace
+payloads are compacted to FNV-1a-64 digests before JSON output. Schema, policy,
+and source-profile references bind directly to the CR2-4b authority, while an
+explicit field-projection-only disposition keeps the matrix profile unreleased.
+The report freezes CPU `worker_threads=0` as automatic hardware concurrency
+capped by world count, records the effective count per row, and distinguishes it
+from the CUDA lane's single host orchestrator plus the CR2-5a-authoritative
+128-thread device blocks.
+
+CR2-6a owns only the probe, schema validator, real CPU/CUDA smoke verification,
+and fail-closed gates. It does not commit production timings, choose a threshold,
+or claim a performance result. CR2-6b must run both Release binaries under the
+full protocol, content-address their raw reports, compare only common available
+modes, treat CUDA-only consumer rows separately, and derive an explicit
+small-batch selection policy. Counter, support, maintained, tuning, and promotion
+gates remain false.
 
 ## 5. Promotion and recovery boundary
 

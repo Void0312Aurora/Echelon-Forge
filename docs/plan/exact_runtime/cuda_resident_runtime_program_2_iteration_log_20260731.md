@@ -615,3 +615,88 @@ state contradictions and available-state negative tests, historical evidence
 invariance, and every size limit. Only `FINAL APPROVE` permits one CR2-5b commit.
 It does not authorize merge, push, host permission changes, tuning, promotion,
 or beginning CR2-6 in the same commit.
+
+## CR2-6a candidate — common-SPI production matrix probe
+
+### Surface and matrix contract
+
+CR2-6a introduces a new probe instead of changing or relabeling the historical
+RB9 probe/evidence. The same probe/session sources compile into separate Release
+CPU and CUDA targets. Their timed common sequence is
+`inject → evaluate(empty) → advance(WorldBatch) → optional public export` over
+`IWorldBatchBackend`; the matrix projection has its own surface ID and separately
+references the authoritative complete full-window surface directly through
+`full_window::kSurfaceId`. `publish_stage()` and private
+`export_snapshot()` are absent.
+An optional device lease/consumer suffix is CUDA-only, and CPU device-consumer
+rows are explicitly unavailable with one stable reason rather than fake timings.
+
+The frozen production matrix is `1/4/16/64/256` worlds by four export/consumer
+modes. Its production protocol is 10 reset-cold samples, 32 warmup windows, 100
+measured windows, and 10 rollouts of 64 windows. Latency families separate setup,
+cold total/first window, warmed end-to-end, common compute, collection, and
+rollout total. Device-consumer await remains inside the suffix timer, while
+diagnostic materialization and receipt release occur after the sample or rollout
+timer. Receipt/materialization/deferred-rollout counts are schema-validated.
+
+Same-lane reset correctness exports the CR2-4b 12-field selected payload after
+timing, validates lane-local entity identity, excludes allocator IDs from the
+digest, and requires exact digest stability across resets and modes. The first
+CUDA smoke correctly exposed that the replay harness returns a long canonical
+trace. The probe now content-addresses that canonical form as FNV-1a-64 before
+emitting row/master signatures, so report size is bounded. The report directly
+references CR2-4b's authoritative selected-slice schema, policy, and source
+trace profile; that reuse is limited to a same-lane-reset field projection, and
+the matrix profile remains explicitly unreleased.
+CPU explicitly requests `worker_threads=0`, meaning automatic hardware
+concurrency capped by each world count; every available row records the effective
+count. CUDA records one host orchestrator and aliases its 128-thread block size
+directly from the CR2-5a resource-evidence contract, so future comparisons cannot
+silently change either host or device parallelism.
+
+### Real build and smoke evidence
+
+The CUDA-on and CUDA-off trees reconfigured and built
+`ef_cuda_resident_cr2_matrix_cuda_probe` and
+`ef_cuda_resident_cr2_matrix_cpu_probe` in Release. Real `--smoke` runs covered
+world counts 1 and 4 with 1 cold, 1 warmup, 2 measured, and one 2-window rollout
+per available row. The common master/row trace digests matched across lanes.
+CUDA produced 8/8 available rows; CPU produced 4 common available rows and four
+device-consumer N/A rows. All available rows passed exact same-lane reset checks
+and both raw smoke reports passed the same fail-closed validator. CPU rows
+recorded 1 and 4 effective workers for world counts 1 and 4; every CUDA row
+recorded one host orchestrator, while CPU N/A rows recorded a null effective
+worker count. The untracked CPU/CUDA reports were 16,241/26,449 bytes.
+
+CPU probe logging is set to warning before any session is created, so database
+and reset info logs do not enter cold/setup measurements. The CPU build repeats
+the pre-existing MSVC C4819 warning from
+`src/components/combat/common/missile_seeker_state.h`; CR2-6a does not modify it.
+
+### Size, negative tests, and review gate
+
+New contract/session-header/session/probe/validator/architecture-test modules are
+107/53/288/475/603/450 lines, all below their soft targets. The contract freezes
+the standard FNV-1a-64 offset/prime and empty/`a`/`foobar` known vectors; trace
+and selected-payload reset digests share those constants. Negative tests reject
+private invocation surfaces, a missing empty evaluation, incomplete matrices,
+CPU consumer availability, worker-policy claims, or cross-mode effective-worker
+drift, timing/raw-stat drift, receipt/deferred-owner drift, trace/reset-digest
+disagreement, allocator identity entering the reset
+scope, duplicate JSON keys, integer/boolean/float JSON type aliases across
+configuration, modes, rows, statistics, diagnostics, memory, environment, and
+gates, warmed/cold timing decomposition drift, master/world-256 trace mismatch,
+cross-mode CUDA-memory drift, and support/matrix-complete/promotion gate changes.
+
+Focused matrix/size architecture tests passed 39/39. The full CUDA-resident
+runtime-profile selection passed 140 tests with 21 deselected; Ruff/format and
+`git diff --check` passed. Existing CUDA-on lifecycle/replay/full-window suites
+remain 14/14 and 599/599, 3/3 and 47/47, and 6/6 and 153/153. CUDA-off results
+remain 14/14 and 91/91, 3/3 and 14/14, and 6/6 and 136/136.
+
+A fresh independent agent must review the exact staged CR2-6a snapshot, both
+real smoke reports, common-SPI/timing boundaries, compact trace derivation,
+CPU N/A semantics, receipt ownership, validator negative coverage, historical
+RB9 invariance, and every size limit. Only `FINAL APPROVE` permits one CR2-6a
+commit. It does not authorize merge, push, production evidence, selection-policy
+claims, tuning, promotion, or beginning CR2-6b in the same commit.

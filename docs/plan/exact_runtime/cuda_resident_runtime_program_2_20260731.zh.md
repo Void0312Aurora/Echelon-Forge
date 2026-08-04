@@ -119,7 +119,7 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | CR2-4a | 将 919 行 RB8 replay test 拆为受限 support/projection/test owner，不改变 oracle、quarantine、93-field budget 或历史 evidence。 | 已获独立批准并以 `d778c67c` 提交；CUDA-on/off replay 与 architecture guard 通过，当前无 watch item。 |
 | CR2-4b | 基于真实 payload evidence 与显式 identity policy，将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | 已独立批准并以 `08b48f29` 提交；真实 12 字段投影与同 backend exact reset 通过，public support 仍关闭。 |
 | CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | 拆分为 CR2-5a 静态/拓扑证据和 CR2-5b achieved-counter 采集；任一不完整部分都不能产生 tuning 结论。 |
-| CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | cold、warm、rollout、export、device-consumer、small-batch 均支持端到端决策。 |
+| CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | 拆分为 CR2-6a common-SPI probe/validator 与 CR2-6b 真实 evidence/selection policy；small-batch 回归必须形成显式 CPU selection policy，不能隐藏。 |
 | CR2-7 | 独立作 promotion 或 closure 决策。 | promotion 需要新授权与 integration plan；否则记录第二次 closure，维护行为不变。 |
 
 CR2-1 至 CR2-6 可以拆成窄范围 sub-iteration，但单个 commit 不得把结构拆分、
@@ -242,6 +242,31 @@ occupancy、divergence 与 global/local/shared traffic family 继续保持 null�
 compact artifact 对实际 invocation、profiler、binary、log、probe output、父证据、
 collector 与 contract 做 hash；raw profiler file 不跟踪。本迭代不修改 kernel、runtime
 selection、tuning、support、maintained 或 promotion 状态。
+
+### CR2-6a 边界
+
+CR2-6a 新建 production-matrix probe，不修改或重新标记历史 RB9 probe/evidence。同一组
+source 分别编译为 Flecs CPU reference 与 CUDA-resident lane；两者都执行当前 backend
+SPI sequence：`inject → evaluate(empty) → advance(WorldBatch) → optional public
+export`。optional device lease/consumer suffix 明确是 CUDA-only，对应 CPU row 保持 N/A。
+
+冻结矩阵为 world count `1/4/16/64/256`，覆盖 no-export/export 与
+no-device/device-consumer mode。production protocol 包含 10 个 reset-cold sample、32 个
+warmup window、100 个 measured window，以及 10 组各 64 window 的 rollout。consumer
+await 位于 measured suffix 内，diagnostic materialization 与 receipt release 位于 timer
+外。same-lane reset correctness 对 CR2-4b release 的 12 个 numeric field 做 hash，排除
+allocator identity；trace payload 在写入 JSON 前压缩为 FNV-1a-64 digest。schema、
+policy 与 source-profile ref 直接绑定 CR2-4b 权威契约，同时用显式 field-projection-only
+disposition 保持 matrix profile 未 release。
+report 还冻结 CPU `worker_threads=0` 为按 world count 截断的自动 hardware
+concurrency，并逐 row 记录 effective count；它与 CUDA lane 的单 host orchestrator 加
+CR2-5a 权威 128-thread device block 明确区分。
+
+CR2-6a 只负责 probe、schema validator、真实 CPU/CUDA smoke 与 fail-closed gate，不提交
+production timing、不选择 threshold，也不声称性能结论。CR2-6b 必须以完整 protocol
+运行两个 Release binary，对 raw report 做内容寻址，只比较共同 available mode，将
+CUDA-only consumer row 分开处理，并形成显式 small-batch selection policy。counter、
+support、maintained、tuning 与 promotion gate 继续为 false。
 
 ## 5. 晋级与恢复边界
 

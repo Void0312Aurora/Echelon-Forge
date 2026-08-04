@@ -198,6 +198,36 @@
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
       "role": "CR2-5b evidence provenance, state, negative, and size guards",
       "observed_lines": 255
+    },
+    {
+      "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",
+      "role": "CR2-6a production world-count, mode, protocol, and gate contract",
+      "observed_lines": 107
+    },
+    {
+      "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.h",
+      "role": "CR2-6a lane session and timing interface",
+      "observed_lines": 53
+    },
+    {
+      "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp",
+      "role": "CR2-6a common-SPI CPU/CUDA session and device-consumer suffix",
+      "observed_lines": 288
+    },
+    {
+      "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp",
+      "role": "CR2-6a production protocol timing and compact probe report",
+      "observed_lines": 475
+    },
+    {
+      "path": "tools/diagnostics/cuda_resident_cr2_matrix_probe.py",
+      "role": "CR2-6a fail-closed probe report validator",
+      "observed_lines": 603
+    },
+    {
+      "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py",
+      "role": "CR2-6a surface, timing boundary, schema, negative, and size guards",
+      "observed_lines": 450
     }
   ],
   "watch_items": [],
