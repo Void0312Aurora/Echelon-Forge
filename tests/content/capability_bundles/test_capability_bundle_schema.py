@@ -126,7 +126,9 @@ def test_bundle_shape_rejections_reuse_the_wp14a_vocabulary() -> None:
   assert diagnostics.rejection_reason == REJECTION_MISSING_BUNDLE_EVIDENCE
 
 
-@pytest.mark.parametrize("invalid", ["true", 1, None])
+@pytest.mark.parametrize(
+  "invalid", ["true", "false", "", 1, 0, 3.5, None, [], {}], ids=repr
+)
 def test_required_rejects_non_boolean_json_values(invalid: object) -> None:
   document = _load_bundle_document()
   document["capabilities"][0]["required"] = invalid
@@ -135,7 +137,9 @@ def test_required_rejects_non_boolean_json_values(invalid: object) -> None:
   assert diagnostics.fail_closed
 
 
-@pytest.mark.parametrize("invalid", ["false", 0, None])
+@pytest.mark.parametrize(
+  "invalid", ["false", "true", "", 1, 0, 3.5, None, [], {}], ids=repr
+)
 def test_supported_rejects_non_boolean_json_values(invalid: object) -> None:
   document = _load_bundle_document()
   document["capabilities"][0]["supported"] = invalid
@@ -144,7 +148,7 @@ def test_supported_rejects_non_boolean_json_values(invalid: object) -> None:
   assert diagnostics.fail_closed
 
 
-@pytest.mark.parametrize("invalid", [1, 0.0, None, []])
+@pytest.mark.parametrize("invalid", [1, 0.0, None, True, [], {}], ids=repr)
 def test_unsupported_reason_rejects_non_string_json_values(invalid: object) -> None:
   document = _load_bundle_document()
   entry = document["capabilities"][0]
@@ -182,6 +186,24 @@ def test_validated_capability_flags_are_copied_without_coercion() -> None:
   assert capability.required is False
   assert capability.supported is False
   assert capability.unsupported_reason == "pilot backend unavailable"
+
+
+def test_string_supported_false_fails_before_typed_request_expansion() -> None:
+  import python.content.capability_bundles.submarine  # noqa: F401
+
+  document = _load_bundle_document()
+  document["capabilities"][0]["required"] = True
+  document["capabilities"][0]["supported"] = "false"
+
+  expansion = expand_typed_platform_request(
+    document, "content-typed:coercion-red", _placement()
+  )
+
+  assert expansion.request is None
+  assert not expansion.diagnostics.valid
+  assert expansion.diagnostics.fail_closed
+  assert expansion.diagnostics.rejection_reason == REJECTION_SUPPORTED_TYPE
+  assert expansion.diagnostics.schema_version == CONTENT_CAPABILITY_BUNDLE_SCHEMA_VERSION
 
 
 def test_registry_is_an_empty_opt_in_socket_until_a_family_registers() -> None:
@@ -235,6 +257,10 @@ def test_submarine_expansion_produces_maintained_typed_setup_semantics() -> None
     "BatchWorldSetupRequest.typed_platform_spawn_requests" in request.facade_evidence_refs
   )
   assert len(request.capability_bundle.capabilities) == 6
+  for capability in request.capability_bundle.capabilities:
+    assert capability.required is True
+    assert capability.supported is True
+    assert capability.unsupported_reason == ""
 
 
 def test_bundle_document_matches_the_reference_definition_field_for_field() -> None:
