@@ -175,6 +175,70 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
               "maintained_replay_envelope_window_evidence_does_not_match_minted_window");
     }
 
+    TEST_CASE("window identity follows the run through facade move construction") {
+        RuntimeFacade source(0);
+        const RuntimeWindowResult before_move =
+            minted_window_result(source, source.allocate_trace_id());
+
+        RuntimeFacade destination(std::move(source));
+
+        const auto adopted = destination.build_maintained_replay_envelope(
+            before_move, "run:move-construct", "episode:move-construct", 7);
+        CHECK(adopted.admitted);
+
+        const auto rejected_by_source = source.build_maintained_replay_envelope(
+            before_move, "run:move-construct", "episode:move-construct", 7);
+        CHECK_FALSE(rejected_by_source.admitted);
+        CHECK(rejected_by_source.rejection_reason ==
+              "maintained_replay_envelope_window_identity_not_minted_by_this_facade");
+
+        const RuntimeWindowResult after_move =
+            minted_window_result(destination, destination.allocate_trace_id());
+        const auto continued = destination.build_maintained_replay_envelope(
+            after_move, "run:move-construct", "episode:move-construct", 7);
+        CHECK(continued.admitted);
+    }
+
+    TEST_CASE("move assignment replaces the target window identity with the source run") {
+        RuntimeFacade source(0);
+        const RuntimeWindowResult source_window =
+            minted_window_result(source, source.allocate_trace_id());
+
+        RuntimeFacade target(0);
+        const RuntimeWindowResult replaced_target_window =
+            minted_window_result(target, target.allocate_trace_id());
+
+        target = std::move(source);
+
+        const auto adopted = target.build_maintained_replay_envelope(
+            source_window, "run:move-assign", "episode:move-assign", 7);
+        CHECK(adopted.admitted);
+
+        const auto old_target_rejected = target.build_maintained_replay_envelope(
+            replaced_target_window, "run:move-assign", "episode:move-assign", 7);
+        CHECK_FALSE(old_target_rejected.admitted);
+        CHECK(old_target_rejected.rejection_reason ==
+              "maintained_replay_envelope_window_identity_not_minted_by_this_facade");
+
+        const auto moved_from_rejected = source.build_maintained_replay_envelope(
+            source_window, "run:move-assign", "episode:move-assign", 7);
+        CHECK_FALSE(moved_from_rejected.admitted);
+        CHECK(moved_from_rejected.rejection_reason ==
+              "maintained_replay_envelope_window_identity_not_minted_by_this_facade");
+    }
+
+    TEST_CASE("self move assignment preserves the minted window identity") {
+        RuntimeFacade facade(0);
+        const RuntimeWindowResult window = minted_window_result(facade, facade.allocate_trace_id());
+
+        RuntimeFacade &alias = facade;
+        facade = std::move(alias);
+
+        const auto result = facade.build_maintained_replay_envelope(window, "run:self-move",
+                                                                    "episode:self-move", 7);
+        CHECK(result.admitted);
+    }
+
     TEST_CASE("producer is read-only and idempotent over the allocator cursors") {
         RuntimeFacade facade(0);
         (void)facade.allocate_trace_id();
