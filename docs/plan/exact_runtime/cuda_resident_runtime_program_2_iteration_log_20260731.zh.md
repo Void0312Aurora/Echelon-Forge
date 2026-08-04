@@ -11,8 +11,8 @@
 - 父级：`935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-状态：**CR2-2a 已以 bf695071 提交，CR2-2p 已以 dee02146 提交。
-CR2-2b 是当前 active、可独立复核的 full-window candidate。**
+状态：**CR2-4a 已以 d778c67c 提交。CR2-4b 是当前 active、可独立复核的
+selected-payload parity candidate。**
 RB0-RB11 计划仍是无晋级关闭。本账本只记录新分支内计划，
 不改变 maintained support flags。
 
@@ -355,3 +355,72 @@ staged review 前，VS2022 Release 已重建两个 focused target：CUDA-on 通�
 case、47/47 assertions，CUDA-off 通过 3/3、14/14。完整 runtime-profile
 architecture selection 通过 63 项，改动的 Python guard 通过 Ruff check/format。
 working write set 不含 runtime 或历史 evidence 文件。
+
+## CR2-4b candidate —— 冻结 selected-payload parity release
+
+### 契约与精确边界
+
+CR2-4b 增加独立 release overlay，不修改 1399 行的历史 parity-budget owner，也
+不把 RB8 手工 93 字段 oracle 改称为通过。冻结
+`cr2.full_window.fixed_air.v1` profile 只 release 12 个真实公共 DTO value：
+`AgentObservation` 的 `sim_time`、`x/y/z`、`vx/vy/vz`、`heading`、`roll`、
+`speed`、`gear_state`，以及 `InstrumentState.throttle_pos`。raw inventory 共
+66 个标量/计数字段；契约用 static invariant 将其无遗漏、无重叠地分为 12 个
+released、1 个 lane-local identity diagnostic 与 53 个带明确原因的 excluded 字段。
+
+`AgentObservation.id` 在 export 时必须等于各 lane 自己的 setup ref；它不要求跨
+lane 或 reset 相同，也不进入 digest。canonical identity 是
+`(session_index, window_index, world_slot, field_path)`，其中 `world_slot` 在 JSON
+中显式保存。每个 lane 在相同 backend/configuration/content 上新建两个 `Runner`
+顺序运行，不插入显式 reset shortcut。released projection 不含 excluded DTO
+field；comparator 会拒绝额外、缺失、非有限数或标签错误的 payload。
+
+payload 只在 committed window 后的真实公共 export 捕获。`input_injection` 仅由
+trace signature 证明；`window_commit` 因没有共同 host-visible payload 而只保留
+metadata。CUDA 捕获路径是 host diagnostic export，不属于 CR2-3 measured consumer
+path。lane/backend label 与其他 backend provenance 是 outer 或 diagnostic-only
+证据，不进入 physical digest。
+
+### 真实 lane 与 reset 证据
+
+重建后的两个 probe 都保留默认 `cuda_resident.full_window_probe.v1` 输出和旧
+operation-only comparator；`--parity-release` 才增加 policy-bound 的双 session
+投影。冻结 trace signature 的 SHA-256 是
+`54c0a905d07bf19212da7fa0dee1baa23599d4f80dc84e38f1f9957c41b28e3c`；
+seed/action signature 变化会 hard-fail。
+
+真实两世界、两窗口 CPU/CUDA 比较中，每个 released field 都有四次匹配。最大
+absolute difference：`sim_time` 为 `8.94e-10`、`x` 为 `1.689e-4`、`z` 为
+`8.12e-6`、`vx` 为 `1.689e-2`、`vz` 为 `8.12e-4`、`speed` 为
+`1.689e-2`，均在各字段 absolute/relative budget 内。`y`、`vy`、`heading`、
+`roll`、`gear_state`、`throttle_pos` exact。两个 lane 的两次同 backend session
+对全部 12 字段都 exact。raw allocator id 在 CPU/CUDA 的四个 reset position 中
+均发生变化；该事实只作为 diagnostic 报告，不影响 canonical world-slot identity。
+
+candidate promotion 仍关闭。release JSON 与 comparator 固定
+`maintained_claim_allowed=false`、`public_support_enabled=false`、
+`measured_consumer_path_unchanged=true`。本迭代不改 RuntimeFacade selection、
+admission/support flag、public ABI、历史 RB9 evidence、旧 93 字段 quarantine、
+device lease、kernel 或性能阈值。
+
+### 规模与验证证据
+
+CR2-4b owner 全部低于 soft limit：parity release contract 244 行、full-window
+contract/runner 118/257 行、probe 337 行、C++ conformance test 417 行、comparator
+494 行、architecture guard 239 行。comparator 已纳入机器规模扫描；
+`watch_items` 和 hard-limit exception 仍为空。
+
+VS2022 Release 已重建两个真实 probe 和两个 full-window test target。旧 comparator
+仍确认九条 operation surface 相等；新 comparator 对 12 个跨 lane field 和两侧
+exact reset session 全部通过。CUDA-off full-window doctest 为 6/6 case、136/136
+assertions；CUDA-on 为 6/6、153/153。未修改的 replay suite 为 CUDA-off 3/3、
+14/14 与 CUDA-on 3/3、47/47；lifecycle 为 CUDA-off 14/14、91/91 与 CUDA-on
+14/14、599/599。完整 CUDA-resident runtime-profile architecture selection 为
+73 passed、21 deselected；Ruff check/format 与 `git diff --check` 通过。
+
+### 独立复核门
+
+新的独立 agent 必须审阅精确 staged CR2-4b snapshot，包括字段 partition/tolerance、
+双 Runner reset 语义、raw-id policy、barrier/provenance 边界、negative test、真实
+probe evidence、support/history 不变和全部规模限制。只有 `FINAL APPROVE` 才允许
+一个 CR2-4b commit；不授权 merge、push、promotion、CR2-5 tuning 或改写旧 evidence。

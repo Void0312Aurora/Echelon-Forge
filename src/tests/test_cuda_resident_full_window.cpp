@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "runtime/contracts/cuda_resident_parity_release_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.h"
 
@@ -139,6 +140,12 @@ class FakeBackend final : public IWorldBatchBackend {
             : request.refs.get().size();
         result.agent_observations.resize(count);
         result.instrument_states.resize(count);
+        for (std::size_t world = 0; world < count; ++world) {
+            result.agent_observations[world].id = request.refs.get()[world].entity_id;
+        }
+        if (bad_export_identity_ && !result.agent_observations.empty()) {
+            ++result.agent_observations.front().id;
+        }
         return result;
     }
 
@@ -152,6 +159,10 @@ class FakeBackend final : public IWorldBatchBackend {
 
     void set_bad_export_cardinality(bool value) noexcept {
         bad_export_cardinality_ = value;
+    }
+
+    void set_bad_export_identity(bool value) noexcept {
+        bad_export_identity_ = value;
     }
 
     [[nodiscard]] const std::vector<Operation> &calls() const noexcept {
@@ -171,6 +182,7 @@ class FakeBackend final : public IWorldBatchBackend {
     bool fail_ = false;
     bool unexpected_evaluation_ = false;
     bool bad_export_cardinality_ = false;
+    bool bad_export_identity_ = false;
     std::size_t world_count_ = 0;
     mutable std::vector<Operation> calls_;
 };
@@ -210,6 +222,7 @@ TEST_CASE("CR2-2 full-window runner records one common multi-window SPI") {
     CHECK(result.trace_signature ==
           replay::CudaResidentReplayHarness::trace_signature(trace));
     REQUIRE(result.operations.size() == 9);
+    REQUIRE(result.export_frames.size() == trace.windows.size());
     CHECK(result.operations[0].operation == Operation::setup);
     CHECK(result.operations[0].barrier_id.empty());
     for (std::size_t window = 0; window < trace.windows.size(); ++window) {
@@ -222,12 +235,39 @@ TEST_CASE("CR2-2 full-window runner records one common multi-window SPI") {
         CHECK(result.operations[offset + 2].barrier_id == full_window::kWindowBarrier);
         CHECK(result.operations[offset + 3].operation == Operation::export_state);
         CHECK(result.operations[offset + 3].barrier_id == full_window::kExportBarrier);
+        const auto &frame = result.export_frames[window];
+        CHECK(frame.window_index == window);
+        CHECK(frame.request_id == trace.windows[window].request_id);
+        CHECK(frame.source_barrier == full_window::kWindowBarrier);
+        CHECK(frame.capture_barrier == full_window::kExportBarrier);
+        REQUIRE(frame.agent_observations.size() == trace.seeds.size());
+        REQUIRE(frame.instrument_states.size() == trace.seeds.size());
+        for (std::size_t world = 0; world < trace.seeds.size(); ++world) {
+            CHECK(frame.agent_observations[world].id == 1000 + world);
+        }
         for (std::size_t step = 0; step < 4; ++step) {
             CHECK(result.operations[offset + step].window_index == window);
             CHECK(result.operations[offset + step].request_id ==
                   trace.windows[window].request_id);
         }
     }
+}
+
+TEST_CASE("CR2-4b release contract partitions raw DTO fields and stays fail-closed") {
+    namespace parity_release = runtime::cuda_resident::parity_release;
+    CHECK(parity_release::partition_is_complete());
+    CHECK(parity_release::kReleasedNumericFields.size() == 12);
+    CHECK(parity_release::kIdentityDiagnosticFields.size() == 1);
+    CHECK(parity_release::kExcludedFields.size() == 53);
+    CHECK(parity_release::kRawObservationFields.size() +
+              parity_release::kRawInstrumentFields.size() ==
+          parity_release::kReleasedNumericFields.size() +
+              parity_release::kIdentityDiagnosticFields.size() +
+              parity_release::kExcludedFields.size());
+    CHECK(parity_release::kCandidatePromotionBlocked);
+    CHECK_FALSE(parity_release::kMaintainedClaimAllowed);
+    CHECK_FALSE(parity_release::kPublicSupportEnabled);
+    CHECK(parity_release::kMeasuredConsumerPathUnchanged);
 }
 
 TEST_CASE("CR2-2 full-window runner fails closed at each operation and poisons") {
@@ -290,6 +330,18 @@ TEST_CASE("CR2-2 full-window runner rejects output shape drift before advance or
     CHECK(cardinality.failure->code == FailureCode::export_cardinality_mismatch);
     CHECK(cardinality.failure->last_completed_barrier == full_window::kWindowBarrier);
     CHECK(export_backend.calls().size() == 5);
+
+    FakeBackend identity_backend;
+    identity_backend.set_bad_export_identity(true);
+    full_window::Runner identity_runner(
+        identity_backend, {.lane = replay::ReplayLaneKind::cuda_resident,
+                           .backend_id = "fake_cuda_resident"});
+    const auto identity = identity_runner.run(trace);
+    REQUIRE(identity.failure.has_value());
+    CHECK(identity.failure->code == FailureCode::export_identity_mismatch);
+    CHECK(identity.failure->last_completed_barrier == full_window::kWindowBarrier);
+    CHECK(identity.export_frames.empty());
+    CHECK(identity_backend.calls().size() == 5);
 }
 
 TEST_CASE("CR2-2 CUDA backend accepts empty evaluation and auto-advances the common SPI") {

@@ -34,6 +34,7 @@ def _scope_paths() -> list[str]:
             "src/tests/test_cuda_resident*",
             "tests/architecture/runtime_profiles/test_cuda_resident*",
             "tests/runtime/facade/test_cuda_resident*",
+            "tools/diagnostics/cuda_resident_cr2*",
         ],
         cwd=ROOT,
         check=True,
@@ -174,6 +175,13 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "src/tests/test_cuda_resident_replay_projection.cpp": 611,
         "src/tests/test_cuda_resident_replay_support.cpp": 175,
         "src/tests/test_cuda_resident_replay_support.h": 58,
+        "src/runtime/contracts/cuda_resident_parity_release_contract.h": 244,
+        "src/runtime/contracts/cuda_resident_full_window_contract.h": 118,
+        "src/runtime/facade/internal/cuda_resident/cuda_resident_full_window_runner.cpp": 257,
+        "src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp": 337,
+        "src/tests/test_cuda_resident_full_window.cpp": 417,
+        "tools/diagnostics/cuda_resident_cr2_parity_compare.py": 494,
+        "tests/architecture/runtime_profiles/test_cuda_resident_cr2_parity.py": 239,
     }
     assert set(inventory_map) == set(expected_inventory)
     for path, expected_lines in expected_inventory.items():

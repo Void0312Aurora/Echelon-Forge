@@ -13,9 +13,8 @@ Language versions:
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-31`
 
-Status: **CR2-2a is independently approved and committed as bf695071;
-CR2-2p is independently approved and committed as dee02146; CR2-2b is the
-active full-window candidate. The previous RB0-RB11 program remains
+Status: **CR2-4a is independently approved and committed as d778c67c;
+CR2-4b is the active selected-payload parity candidate. The previous RB0-RB11 program remains
 closed without promotion. This program may either produce promotion-grade
 evidence or close again; it does not reopen maintained support by itself.**
 
@@ -99,6 +98,12 @@ support into `test_cuda_resident_replay_projection.cpp` (611 lines),
 `test_cuda_resident_replay_support.h` (58); the assertion/test owner is now
 `test_cuda_resident_replay.cpp` (139). No current CR2 watch item remains.
 
+CR2-4b keeps its semantic owners below the soft targets: parity release
+contract 244 lines, full-window contract/runner 118/257, opt-in probe 337,
+C++ conformance test 417, comparator 494, and architecture guard 239. The
+comparator is now included in the machine size scope; no exception or watch
+item is added.
+
 Generated/vendor files and historical documents are outside the module line
 limit only when an explicit manifest entry records their provenance. New
 tracked evidence, reports, or generated artifacts have a 512 KiB soft limit
@@ -132,7 +137,7 @@ exception may be used to hide semantic implementation growth.
 | CR2-2p | Unblock the real Flecs CPU lane on VS2022 with only the portable bit scan, intended global environment-model type, and MSVC core math-constant opt-in. | Real `FlecsCpuBackend` graph compiles; focused guard passes; independent review and a separate commit precede CR2-2b. |
 | CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Independently approved and committed as `607c1f33`; both real lanes consume the same trace through the declared surface. |
 | CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured consumer path. | Independently approved and committed as `7da41a2a`; explicit consumer smoke, ownership/lifetime/failure tests, deferred diagnostic readback, and CUDA-on/off validation pass; public support stays closed. |
-| CR2-4a | Split the 919-line RB8 replay test into bounded support/projection/test owners without changing its oracle, quarantine, 93-field budget, or historical evidence. | Candidate write set keeps CUDA-on replay 3/3 and 47/47, CUDA-off 3/3 and 14/14, old failure semantics, CMake topology, and size policy equivalent; independent review and one commit required. |
+| CR2-4a | Split the 919-line RB8 replay test into bounded support/projection/test owners without changing its oracle, quarantine, 93-field budget, or historical evidence. | Independently approved and committed as `d778c67c`; CUDA-on/off replay and architecture guards passed with no remaining watch item. |
 | CR2-4b | Release selected-slice parity and deterministic reset identity from quarantine using real payload evidence and an explicit identity policy. | Identity policy is stable or explicitly excluded; every released field is real or explicitly normalized/excluded; frozen-budget replay passes at each declared barrier; public support remains closed. |
 | CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Counters are complete or a documented external blocker stops the gate; no tuning claim is made from incomplete counters. |
 | CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | End-to-end benefit survives cold, warm, rollout, export, device-consumer, and small-batch cases; selection policy is evidence-backed. |
@@ -204,6 +209,33 @@ The seam remains backend-private: no `IWorldBatchBackend`, RuntimeCapabilities,
 admission, support flag, or RuntimeFacade selection change is part of CR2-3.
 The historical RB9 evidence directory is not rewritten and no learner-update,
 performance-promotion, or tuning conclusion is claimed.
+
+### CR2-4b boundary
+
+CR2-4b releases only a frozen 12-field public-DTO projection for
+`cr2.full_window.fixed_air.v1`: 11 scalar `AgentObservation` fields and
+`InstrumentState.throttle_pos`. It does not relabel the old RB8 handcrafted
+93-field oracle or RB9 evidence as passing. The remaining 53 raw scalar/count
+fields have explicit exclusion reasons, while `AgentObservation.id` remains a
+lane-local allocator diagnostic. Cross-lane identity uses the canonical
+`(session_index, window_index, world_slot, field_path)` key; raw allocator ids
+are validated against each lane's setup refs but excluded from parity and reset
+digests.
+
+Each real lane runs the same frozen trace through two newly constructed
+full-window `Runner` objects over one unchanged backend. Cross-lane comparison
+uses declared absolute/relative tolerances, requires finite values, and
+normalizes signed zero. Same-backend reset comparison is exact for the 12
+released values. Payload is captured only through the host diagnostic export
+after `window_commit`; `input_injection` remains trace-only and
+`window_commit` metadata-only. This capture does not modify or contribute to
+the CR2-3 measured device-consumer path.
+
+The release remains candidate evidence only. `candidate_promotion_blocked` is
+true, `maintained_claim_allowed` and `public_support_enabled` are false, and no
+RuntimeFacade selection, admission, public ABI, old 93-field budget, historical
+evidence, performance threshold, or kernel scheduling change belongs to this
+iteration.
 
 ## 5. Promotion and recovery boundary
 

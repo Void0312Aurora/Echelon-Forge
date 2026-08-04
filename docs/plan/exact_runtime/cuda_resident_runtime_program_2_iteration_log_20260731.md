@@ -11,8 +11,8 @@ Language versions:
 - Parent: `935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 
-Status: **CR2-2a is committed as bf695071 and CR2-2p is committed as dee02146.
-CR2-2b is the active, independently reviewable full-window candidate.**
+Status: **CR2-4a is committed as d778c67c. CR2-4b is the active,
+independently reviewable selected-payload parity candidate.**
 The RB0-RB11 program remains closed without promotion. This ledger records only
 the new branch-local program and does not alter maintained support flags.
 
@@ -402,3 +402,84 @@ passed 3/3 cases and 47/47 assertions; CUDA-off passed 3/3 and 14/14. The
 complete runtime-profile architecture selection passed 63 tests, and the
 touched Python guards passed Ruff check/format. No runtime or historical
 evidence file appears in the working write set.
+
+## CR2-4b candidate — frozen selected-payload parity release
+
+### Contract and exact boundary
+
+CR2-4b adds a separate release overlay instead of changing the 1,399-line
+historical parity-budget owner or relabeling the RB8 handcrafted 93-field
+oracle. The frozen `cr2.full_window.fixed_air.v1` profile releases 12 real
+public-DTO values: `sim_time`, `x/y/z`, `vx/vy/vz`, `heading`, `roll`, `speed`,
+and `gear_state` from `AgentObservation`, plus
+`InstrumentState.throttle_pos`. The raw inventory has 66 scalar/count fields;
+the contract statically partitions it into 12 released, one lane-local
+identity diagnostic, and 53 explicitly excluded fields with no overlap or
+omission.
+
+`AgentObservation.id` must match each lane's own setup ref at export. It is not
+required to match across lanes or resets and never enters the digest. The
+canonical identity is `(session_index, window_index, world_slot, field_path)`,
+where `world_slot` is serialized explicitly. Each lane uses two newly
+constructed `Runner` objects over the same backend/configuration/content; no
+explicit reset shortcut is inserted. The released projection contains no
+excluded DTO field, and the comparator rejects extra, missing, non-finite, or
+wrongly labelled payload.
+
+The payload is captured at the real common public export after a committed
+window. `input_injection` is trace-signature evidence only;
+`window_commit` is metadata-only because there is no common host-visible
+payload at that boundary. CUDA capture uses the host diagnostic export and is
+not part of the CR2-3 measured consumer path. Lane/backend labels and other
+backend provenance remain outer or diagnostic-only evidence and are excluded
+from the physical digest.
+
+### Real lane and reset evidence
+
+Both rebuilt probes preserve the default `cuda_resident.full_window_probe.v1`
+output and the old operation-only comparator. `--parity-release` adds the
+policy-bound two-session projection. The frozen trace signature hashes to
+`54c0a905d07bf19212da7fa0dee1baa23599d4f80dc84e38f1f9957c41b28e3c`;
+changing a seed/action signature is a hard failure.
+
+The real two-world/two-window CPU/CUDA comparison produced four matches per
+released field. Maximum absolute differences were `8.94e-10` for `sim_time`,
+`1.689e-4` for `x`, `8.12e-6` for `z`, `1.689e-2` for `vx`, `8.12e-4` for
+`vz`, and `1.689e-2` for `speed`; these remain within the field-owned
+absolute/relative budgets. `y`, `vy`, `heading`, `roll`, `gear_state`, and
+`throttle_pos` were exact. Two same-backend sessions were exact for all 12
+released fields in both lanes. Raw allocator ids changed in all four reset
+positions for both lanes, which is reported diagnostically and does not affect
+the canonical world-slot identity.
+
+Candidate promotion remains blocked. The release JSON and comparator keep
+`maintained_claim_allowed=false`, `public_support_enabled=false`, and
+`measured_consumer_path_unchanged=true`. No RuntimeFacade selection,
+admission/support flag, public ABI, historical RB9 evidence, old 93-field
+quarantine, device lease, kernel, or performance threshold is changed.
+
+### Size and validation evidence
+
+The CR2-4b owners are below their soft limits: parity release contract 244
+lines, full-window contract/runner 118/257, probe 337, C++ conformance test
+417, comparator 494, and architecture guard 239. The comparator is now in the
+machine size scope; `watch_items` and hard-limit exceptions remain empty.
+
+VS2022 Release rebuilt both real probes and both full-window test targets. The
+legacy comparator still confirmed the equal nine-operation surface. The new
+comparator passed all 12 cross-lane fields and both exact reset sessions.
+CUDA-off full-window doctest passed 6/6 cases and 136/136 assertions; CUDA-on
+passed 6/6 and 153/153. The unchanged replay suites passed 3/3 and 14/14
+CUDA-off plus 3/3 and 47/47 CUDA-on; lifecycle passed 14/14 and 91/91
+CUDA-off plus 14/14 and 599/599 CUDA-on. The complete CUDA-resident
+runtime-profile architecture selection passed 73 tests with 21 deselected,
+and Ruff check/format plus `git diff --check` passed.
+
+### Independent review gate
+
+A fresh independent agent must inspect the exact staged CR2-4b snapshot,
+including the field partition/tolerances, two-Runner reset semantics, raw-id
+policy, barrier/provenance boundary, negative tests, real probe evidence,
+support/history invariance, and every size limit. Only `FINAL APPROVE` permits
+one CR2-4b commit; it does not authorize merge, push, promotion, CR2-5 tuning,
+or rewriting old evidence.

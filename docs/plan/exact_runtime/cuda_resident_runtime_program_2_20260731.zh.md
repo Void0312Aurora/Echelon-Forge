@@ -13,8 +13,8 @@
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-31`
 
-状态：**CR2-2a 已获独立批准并以 bf695071 提交；CR2-2p 已获独立批准并以
-dee02146 提交；CR2-2b 是当前 active full-window candidate。前一套
+状态：**CR2-4a 已获独立批准并以 d778c67c 提交；CR2-4b 是当前 active 的
+selected-payload parity candidate。前一套
 RB0-RB11 计划仍保持无晋级关闭。本计划可能产出可晋级证据，也可能再次 closure；
 它不会自行重新开放 maintained support。**
 
@@ -85,6 +85,11 @@ CR2-4a 将 replay test 做零语义拆分，移除原 watch item：
 `test_cuda_resident_replay_support.h` 58 行，断言/test owner
 `test_cuda_resident_replay.cpp` 139 行。当前不再有 CR2 watch item。
 
+CR2-4b 的语义 owner 也都低于 soft target：parity release contract 244 行、
+full-window contract/runner 118/257 行、opt-in probe 337 行、C++ conformance
+test 417 行、comparator 494 行、architecture guard 239 行。comparator 已纳入
+机器规模扫描；没有新增 exception 或 watch item。
+
 generated/vendor 文件与历史文档只有在 manifest 明确记录 provenance 时才可排除模块
 行数限制。新 tracked evidence/report/generated artifact 的 soft limit 为 512 KiB，
 hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例外不能用来
@@ -111,7 +116,7 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | CR2-2p | 只用 portable bit scan、预期的全局 environment-model type 与 MSVC core 数学常量 opt-in，解除真实 Flecs CPU lane 在 VS2022 的阻塞。 | 真实 `FlecsCpuBackend` 图可编译；聚焦 guard 通过；独立复核与单独 commit 必须先于 CR2-2b。 |
 | CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 已独立批准并以 `607c1f33` 提交；两个真实 lane 通过声明的共同 surface 消费同一 trace。 |
 | CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured consumer path 的 hidden host validation。 | 已独立批准并以 `7da41a2a` 提交；显式 consumer smoke、ownership/lifetime/failure、延迟 diagnostic readback 与 CUDA-on/off 验证通过，public support 保持关闭。 |
-| CR2-4a | 将 919 行 RB8 replay test 拆为受限 support/projection/test owner，不改变 oracle、quarantine、93-field budget 或历史 evidence。 | CUDA-on replay 3/3、47/47，CUDA-off 3/3、14/14；旧 failure semantics、CMake topology 与 size policy 保持等价；需独立复核与一个 commit。 |
+| CR2-4a | 将 919 行 RB8 replay test 拆为受限 support/projection/test owner，不改变 oracle、quarantine、93-field budget 或历史 evidence。 | 已获独立批准并以 `d778c67c` 提交；CUDA-on/off replay 与 architecture guard 通过，当前无 watch item。 |
 | CR2-4b | 基于真实 payload evidence 与显式 identity policy，将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | 每个 released field 都是真实数据或显式 normalized/excluded；每个声明 barrier 的 frozen-budget replay 通过；public support 保持关闭。 |
 | CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | counters 完整或记录外部 blocker 并停止 gate；不以不完整 counters 声称 tuning 成功。 |
 | CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | cold、warm、rollout、export、device-consumer、small-batch 均支持端到端决策。 |
@@ -174,6 +179,28 @@ event record、wait 与 diagnostic materialize。该 seam 仍是 backend-private
 不改 `IWorldBatchBackend`、RuntimeCapabilities、admission、support flag 或
 RuntimeFacade selection。历史 RB9 evidence 目录不重写，也不声称 learner update、
 performance promotion 或 tuning 已完成。
+
+### CR2-4b 边界
+
+CR2-4b 只 release `cr2.full_window.fixed_air.v1` 的冻结 12 字段公共 DTO
+投影：11 个 `AgentObservation` 标量和 `InstrumentState.throttle_pos`。它不把旧
+RB8 手工 93 字段 oracle 或 RB9 evidence 改称为通过。其余 53 个 raw 标量/计数
+字段逐一声明排除原因；`AgentObservation.id` 保留为 lane-local allocator 诊断。
+跨 lane 身份键是
+`(session_index, window_index, world_slot, field_path)`；raw allocator id 会与各
+lane 的 setup ref 做本地一致性检查，但不进入 parity/reset digest。
+
+每个真实 lane 在同一个未替换 backend 上，顺序构造两个新的 full-window
+`Runner` 并运行同一冻结 trace。跨 lane 比较采用逐字段 absolute/relative
+tolerance，要求有限数并规范化 signed zero；同 backend reset 对 12 个 released
+value 要求 exact。payload 只在 `window_commit` 后通过 host diagnostic export
+捕获；`input_injection` 只由 trace 证明，`window_commit` 只提供 metadata。该捕获
+既不修改也不计入 CR2-3 measured device-consumer path。
+
+此 release 仍只是 candidate evidence：`candidate_promotion_blocked=true`，
+`maintained_claim_allowed=false`，`public_support_enabled=false`。本迭代不改
+RuntimeFacade selection、admission、public ABI、旧 93 字段 budget、历史 evidence、
+性能阈值或 kernel 调度。
 
 ## 5. 晋级与恢复边界
 

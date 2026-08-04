@@ -208,7 +208,7 @@ RunResult Runner::run(const ReplayTrace &trace) {
         }
 
         try {
-            const auto exported = backend_->export_state({
+            auto exported = backend_->export_state({
                 .refs = refs,
                 .include_agent_observations = true,
                 .include_instrument_states = true,
@@ -219,6 +219,21 @@ RunResult Runner::run(const ReplayTrace &trace) {
                             FailureCode::export_cardinality_mismatch, last_barrier,
                             "full-window export cardinality does not match setup", request_id);
             }
+            for (std::size_t world = 0; world < refs.size(); ++world) {
+                if (exported.agent_observations[world].id != refs[world].entity_id) {
+                    return fail(Operation::export_state, window_index,
+                                FailureCode::export_identity_mismatch, last_barrier,
+                                "full-window observation identity does not match setup", request_id);
+                }
+            }
+            result.export_frames.push_back({
+                .window_index = window_index,
+                .request_id = request_id,
+                .source_barrier = std::string(kWindowBarrier),
+                .capture_barrier = std::string(kExportBarrier),
+                .agent_observations = std::move(exported.agent_observations),
+                .instrument_states = std::move(exported.instrument_states),
+            });
             result.operations.push_back({
                 .window_index = window_index,
                 .request_id = request_id,

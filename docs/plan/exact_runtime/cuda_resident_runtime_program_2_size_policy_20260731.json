@@ -16,7 +16,8 @@
       "src/tools/experimental/cuda_resident",
       "src/tests/test_cuda_resident*",
       "tests/architecture/runtime_profiles/test_cuda_resident*",
-      "tests/runtime/facade/test_cuda_resident*"
+      "tests/runtime/facade/test_cuda_resident*",
+      "tools/diagnostics/cuda_resident_cr2*"
     ],
     "extensions": [
       ".c",
@@ -122,6 +123,41 @@
       "path": "src/tests/test_cuda_resident_replay_support.h",
       "role": "RB8 replay support DTO and helper declarations",
       "observed_lines": 58
+    },
+    {
+      "path": "src/runtime/contracts/cuda_resident_parity_release_contract.h",
+      "role": "CR2-4b selected payload field partition and release policy",
+      "observed_lines": 244
+    },
+    {
+      "path": "src/runtime/contracts/cuda_resident_full_window_contract.h",
+      "role": "full-window export frame and identity failure contract",
+      "observed_lines": 118
+    },
+    {
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_resident_full_window_runner.cpp",
+      "role": "full-window export capture and lane-local identity validation",
+      "observed_lines": 257
+    },
+    {
+      "path": "src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp",
+      "role": "real-lane release projection and reset evidence probe",
+      "observed_lines": 337
+    },
+    {
+      "path": "src/tests/test_cuda_resident_full_window.cpp",
+      "role": "full-window frame identity and release contract conformance tests",
+      "observed_lines": 417
+    },
+    {
+      "path": "tools/diagnostics/cuda_resident_cr2_parity_compare.py",
+      "role": "frozen selected payload parity comparator",
+      "observed_lines": 494
+    },
+    {
+      "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_parity.py",
+      "role": "selected payload comparator and quarantine guard tests",
+      "observed_lines": 239
     }
   ],
   "watch_items": [],

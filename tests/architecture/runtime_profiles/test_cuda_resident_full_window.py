@@ -24,8 +24,8 @@ def test_full_window_probe_has_two_real_lane_build_definitions() -> None:
     assert "ef_cuda_resident_full_window_cuda_probe" in cmake
     assert "EF_CR2_FULL_WINDOW_CPU_PROBE=1" in cmake
     assert "EF_CR2_FULL_WINDOW_CUDA_PROBE=1" in cmake
-    assert "FlecsCpuBackend backend" in probe
-    assert "CudaResidentBackend backend" in probe
+    assert "make_unique<FlecsCpuBackend>" in probe
+    assert "make_unique<runtime::cuda_resident::CudaResidentBackend>" in probe
 
 
 def test_full_window_runner_owns_common_sequence_and_poison_contract() -> None:
@@ -41,6 +41,9 @@ def test_full_window_runner_owns_common_sequence_and_poison_contract() -> None:
     assert "backend_->evaluate({})" in runner
     assert "backend_->advance" in runner
     assert "backend_->export_state" in runner
+    assert "export_identity_mismatch" in contract
+    assert "source_barrier" in contract
+    assert "capture_barrier" in contract
     assert "poisoned_ = true" in runner
     assert "publish_stage" not in runner
 
