@@ -6,6 +6,7 @@ Language versions:
 - Chinese companion: [cuda_resident_runtime_program_2_20260731.zh.md](cuda_resident_runtime_program_2_20260731.zh.md)
 - Size policy: [cuda_resident_runtime_program_2_size_policy_20260731.json](cuda_resident_runtime_program_2_size_policy_20260731.json)
 - Iteration log: [cuda_resident_runtime_program_2_iteration_log_20260731.md](cuda_resident_runtime_program_2_iteration_log_20260731.md)
+- CR2-6b evidence: [cuda_resident_cr2_matrix_evidence_20260804.md](cuda_resident_cr2_matrix_evidence_20260804.md)
 
 - Document type: new explicit continuation program after RB11 closure
 - Branch: `codex/cuda-resident-runtime-program-2`
@@ -13,8 +14,9 @@ Language versions:
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-31`
 
-Status: **CR2-4a is independently approved and committed as d778c67c;
-CR2-4b is the active selected-payload parity candidate. The previous RB0-RB11 program remains
+Status: **CR2-6a is independently approved and committed as `0c24a075`;
+CR2-6b is the active production-matrix evidence and selection-advisory candidate.
+The previous RB0-RB11 program remains
 closed without promotion. This program may either produce promotion-grade
 evidence or close again; it does not reopen maintained support by itself.**
 
@@ -140,7 +142,7 @@ exception may be used to hide semantic implementation growth.
 | CR2-4a | Split the 919-line RB8 replay test into bounded support/projection/test owners without changing its oracle, quarantine, 93-field budget, or historical evidence. | Independently approved and committed as `d778c67c`; CUDA-on/off replay and architecture guards passed with no remaining watch item. |
 | CR2-4b | Release selected-slice parity and deterministic reset identity from quarantine using real payload evidence and an explicit identity policy. | Independently approved and committed as `08b48f29`; the 12-field real projection and exact same-backend reset pass while public support remains closed. |
 | CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Split into CR2-5a static/topology evidence and CR2-5b achieved-counter collection; no tuning claim is made from either incomplete half. |
-| CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | Split into CR2-6a common-SPI probe/validator and CR2-6b real evidence/selection policy; small-batch regressions require an explicit CPU-selection policy rather than being hidden. |
+| CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | CR2-6a was independently approved and committed as `0c24a075`; CR2-6b now carries two order-balanced production campaigns, fresh parity confirmation, and a host-specific fail-closed selection advisory pending independent review. |
 | CR2-7 | Make a separately reviewed promotion or closure decision. | Promotion requires a new explicit authorization and integration plan; otherwise record a second closure without changing maintained behavior. |
 
 CR2-1 through CR2-6 may be repeated as narrowly scoped sub-iterations, but a

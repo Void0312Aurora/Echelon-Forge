@@ -611,3 +611,65 @@ common-SPI/timing boundary、compact trace derivation、CPU N/A 语义、receipt
 validator negative coverage、历史 RB9 不变和全部规模限制。只有 `FINAL APPROVE` 才
 允许一个 CR2-6a commit；不授权 merge、push、production evidence、selection-policy
 claim、tuning、promotion，或在同一 commit 开始 CR2-6b。
+
+## CR2-6b candidate —— order-balanced production evidence 与 selection advisory
+
+### Evidence 边界与 provenance
+
+CR2-6b 不修改 runtime、contract、probe 或 CMake 行为；source commit 是已经独立批准的
+CR2-6a commit `0c24a075`。四份未修改 production report 跟踪在
+`cuda_resident_cr2_matrix_evidence_20260804/`：campaign 1 为 CPU→CUDA，campaign 2
+反向执行，lane 从不重叠。每条 lane 使用冻结的五 world/四 mode production protocol，
+并通过 CR2-6a production validator。raw report 分别为 103,773/194,834 与
+103,948/194,684 bytes，均低于 1 MiB artifact cap，并由 manifest 内容寻址。
+
+manifest 记录 exact matrix/full-window binary、CR2-6a source owner、validator、
+comparator、CR2-5a/5b evidence、host topology、balanced power scheme、report 完成时间、
+process duration 与所有 hash。它也记录未固定 affinity、未使用 GPU exclusive mode、
+background load 未受控。因此本证据只是 host-specific experimental routing advice，
+不是受控 tuning 或 support benchmark。
+
+collector 重新运行真实 CR2-4b full-window comparator；12 个 released field 全部通过
+cross-lane budget 与 same-backend exact reset，canonical parity artifact 已跟踪并 hash。
+CR2-5a static/topology gate 保持 complete。CR2-5b 仍是已记录的
+`ERR_NVGPUCTRPERM` external blocker，collected launch 为 0，achieved counter 为 null，
+所以不授权 tuning。
+
+### 派生比较与显式 small-batch policy
+
+共同 mode ratio 定义为 CPU ms/CUDA ms，覆盖两轮 campaign 的 warmed p50/p95 与
+rollout-per-window p50/p95。world 1 的两个共同 mode 选择 CPU；world 4 no-export 选择
+CUDA。world 4 host-export 为 mixed：CUDA 在两轮都赢得两个 p50，但 rollout p95 随
+run order 从 CPU-faster 反转为 CUDA-faster；其保守 default 为 CPU，只为 median
+throughput 显式 opt in CUDA。world 16/64/256 的两个共同 mode 选择 CUDA。
+device-consumer mode 因 CPU N/A 必须使用 CUDA，不产生比较性能 claim。未测 world count
+不外推。
+
+setup/cold family 保留在 raw evidence 中，但不是 routing 输入。10-sample rollout 的
+nearest-rank p95 明确视为观测最大值，而不是高样本量 tail estimate。
+
+maintained default 继续为 `flecs_cpu_reference`，不实现 runtime selector。
+`cr2_6_matrix_evidence_complete` 与 `cr2_6_selection_advisory_complete` 只在本 evidence
+artifact 中为 true。maintained claim、public support、achieved-counter、tuning 与
+promotion gate 继续为 false。
+
+### 拆分、验证与复核门
+
+620 行 collector 负责 provenance、fresh parity execution、raw-report validation 与
+comparison derivation；450 行 schema 模块负责严格 JSON type、ratio 重算、固定
+selection rule、limitation 与 gate；207 行 architecture test 从四份 raw report 重新
+派生 tracked comparison，并攻击 policy、ratio、campaign order、blocker 与 gate drift。
+三者均低于 700 行 soft target。exact evidence artifact 使用 `-text`，source 与
+prior-evidence hash 使用 `utf8_lf` canonicalization；全部 tracked evidence artifact
+均低于 1 MiB。
+
+focused matrix-probe/evidence/size test 为 57/57；完整 CUDA-resident runtime-profile
+selection 为 158 passed、21 deselected；Ruff check/format 与 `git diff --check` 通过。
+既有 CUDA-on lifecycle/replay/full-window 仍为 14/14、599/599，3/3、47/47，以及
+6/6、153/153；CUDA-off 仍为 14/14、91/91，3/3、14/14，以及 6/6、136/136。
+连续两次 collector run 生成相同 evidence 与 parity hash。
+
+commit 前，新的独立 agent 必须审阅 exact staged snapshot、四份 raw report、manifest、
+generated evidence、fresh parity artifact、selection derivation、CR2-5 blocker binding、
+documentation 与 size inventory。只有 `FINAL APPROVE` 才允许一个 CR2-6b commit；不授权
+merge、push、runtime selection、tuning、promotion，或在同一 commit 开始 CR2-7。

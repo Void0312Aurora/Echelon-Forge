@@ -700,3 +700,75 @@ CPU N/A semantics, receipt ownership, validator negative coverage, historical
 RB9 invariance, and every size limit. Only `FINAL APPROVE` permits one CR2-6a
 commit. It does not authorize merge, push, production evidence, selection-policy
 claims, tuning, promotion, or beginning CR2-6b in the same commit.
+
+## CR2-6b candidate — order-balanced production evidence and selection advisory
+
+### Evidence boundary and provenance
+
+CR2-6b does not modify runtime, contract, probe, or CMake behavior. Its source
+commit is the independently approved CR2-6a commit `0c24a075`. Four unmodified
+production reports are tracked under
+`cuda_resident_cr2_matrix_evidence_20260804/`: campaign 1 ran CPU then CUDA;
+campaign 2 reversed the order; lanes never overlapped. Each lane used the frozen
+five-world/four-mode production protocol and passed the CR2-6a production
+validator. Raw reports are 103,773/194,834 and 103,948/194,684 bytes, each below
+the 1 MiB artifact cap and content-addressed by the manifest.
+
+The manifest records the exact matrix and full-window binaries, CR2-6a source
+owners, validator, comparator, CR2-5a/5b evidence, host topology, balanced power
+scheme, report completion times, process durations, and every hash. It also
+records that affinity, GPU exclusive mode, and background-load control were not
+available. The evidence is therefore host-specific experimental routing advice,
+not a controlled tuning or support benchmark.
+
+The collector reruns the real CR2-4b full-window comparator. All 12 released
+fields pass cross-lane budgets and same-backend exact reset; the canonical parity
+artifact is tracked and hashed. CR2-5a static/topology gates remain complete.
+CR2-5b remains a documented `ERR_NVGPUCTRPERM` external blocker with zero
+collected launches and null achieved counters, so tuning remains unauthorized.
+
+### Derived comparison and explicit small-batch policy
+
+Common-mode ratios are CPU milliseconds divided by CUDA milliseconds across
+warmed p50/p95 and rollout-per-window p50/p95 in both campaigns. World 1 selects
+CPU for both common modes. World 4 no-export selects CUDA. World 4 host-export is
+mixed: CUDA wins both p50 metrics in both campaigns, but rollout p95 reverses
+from CPU-faster to CUDA-faster with run order. Its conservative default is CPU,
+with an explicit CUDA opt-in for median throughput. Worlds 16/64/256 select CUDA
+for both common modes. Device-consumer modes require CUDA because CPU is N/A and
+carry no comparative performance claim. Unmeasured world counts are not
+extrapolated.
+
+Setup and cold families remain in raw evidence but are not routing inputs. The
+10-sample rollout nearest-rank p95 is explicitly treated as the observed maximum,
+not as a high-sample tail estimate.
+
+The maintained default remains `flecs_cpu_reference`; no runtime selector is
+implemented. `cr2_6_matrix_evidence_complete` and
+`cr2_6_selection_advisory_complete` are true only in this evidence artifact.
+Maintained claim, public support, achieved-counter, tuning, and promotion gates
+remain false.
+
+### Split, validation, and review gate
+
+The 620-line collector owns provenance, fresh parity execution, raw-report
+validation, and comparison derivation. The 450-line schema module owns strict
+JSON types, ratio recomputation, fixed selection rules, limitations, and gates.
+The 207-line architecture test rederives the tracked comparison from the four
+raw reports and attacks policy, ratio, campaign-order, blocker, and gate drift.
+All three remain below the 700-line soft target. Exact evidence artifacts use
+`-text`, while source and prior-evidence hashes use `utf8_lf` canonicalization;
+every tracked evidence artifact remains below 1 MiB.
+
+Focused matrix-probe/evidence/size tests pass 57/57. The full CUDA-resident
+runtime-profile selection passes 158 tests with 21 deselected. Ruff check/format
+and `git diff --check` pass. Existing CUDA-on lifecycle/replay/full-window suites
+remain 14/14 and 599/599, 3/3 and 47/47, and 6/6 and 153/153; CUDA-off remains
+14/14 and 91/91, 3/3 and 14/14, and 6/6 and 136/136. Two consecutive collector
+runs produce identical evidence and parity hashes.
+
+Before commit, the exact staged snapshot, four raw reports, manifest, generated
+evidence, fresh parity artifact, selection derivation, CR2-5 blocker binding,
+documentation, and size inventory require a new independent agent review. Only
+`FINAL APPROVE` permits one CR2-6b commit. It does not authorize merge, push,
+runtime selection, tuning, promotion, or beginning CR2-7 in the same commit.

@@ -6,6 +6,7 @@
 - 中文伴随版：`cuda_resident_runtime_program_2_20260731.zh.md`
 - 规模策略：[cuda_resident_runtime_program_2_size_policy_20260731.json](cuda_resident_runtime_program_2_size_policy_20260731.json)
 - 迭代账本：[cuda_resident_runtime_program_2_iteration_log_20260731.zh.md](cuda_resident_runtime_program_2_iteration_log_20260731.zh.md)
+- CR2-6b 证据：[cuda_resident_cr2_matrix_evidence_20260804.zh.md](cuda_resident_cr2_matrix_evidence_20260804.zh.md)
 
 - 文档类型：RB11 closure 之后的新显式 continuation program
 - 分支：`codex/cuda-resident-runtime-program-2`
@@ -13,8 +14,8 @@
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-31`
 
-状态：**CR2-4a 已获独立批准并以 d778c67c 提交；CR2-4b 是当前 active 的
-selected-payload parity candidate。前一套
+状态：**CR2-6a 已获独立批准并以 `0c24a075` 提交；CR2-6b 是当前 active 的
+production-matrix evidence 与 selection-advisory candidate。前一套
 RB0-RB11 计划仍保持无晋级关闭。本计划可能产出可晋级证据，也可能再次 closure；
 它不会自行重新开放 maintained support。**
 
@@ -119,7 +120,7 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | CR2-4a | 将 919 行 RB8 replay test 拆为受限 support/projection/test owner，不改变 oracle、quarantine、93-field budget 或历史 evidence。 | 已获独立批准并以 `d778c67c` 提交；CUDA-on/off replay 与 architecture guard 通过，当前无 watch item。 |
 | CR2-4b | 基于真实 payload evidence 与显式 identity policy，将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | 已独立批准并以 `08b48f29` 提交；真实 12 字段投影与同 backend exact reset 通过，public support 仍关闭。 |
 | CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | 拆分为 CR2-5a 静态/拓扑证据和 CR2-5b achieved-counter 采集；任一不完整部分都不能产生 tuning 结论。 |
-| CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | 拆分为 CR2-6a common-SPI probe/validator 与 CR2-6b 真实 evidence/selection policy；small-batch 回归必须形成显式 CPU selection policy，不能隐藏。 |
+| CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | CR2-6a 已获独立批准并以 `0c24a075` 提交；CR2-6b 已形成两轮 order-balanced production campaign、fresh parity confirmation 与 host-specific fail-closed selection advisory，等待独立复核。 |
 | CR2-7 | 独立作 promotion 或 closure 决策。 | promotion 需要新授权与 integration plan；否则记录第二次 closure，维护行为不变。 |
 
 CR2-1 至 CR2-6 可以拆成窄范围 sub-iteration，但单个 commit 不得把结构拆分、
