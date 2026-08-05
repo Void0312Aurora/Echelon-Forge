@@ -1,7 +1,5 @@
 #include "runtime/facade/runtime_facade_internal.h"
 
-#include "core/engine/world_batch_visual_binding_compatibility_types.h"
-
 #include <cstdint>
 #include <vector>
 

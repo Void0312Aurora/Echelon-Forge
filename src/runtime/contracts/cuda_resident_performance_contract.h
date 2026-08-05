@@ -43,9 +43,10 @@ struct WindowTransferLedger {
     bool device_consumer_includes_host_validation_d2h = false;
 };
 
-[[nodiscard]] inline WindowTransferLedger modeled_window_ledger(
-    std::size_t world_count, std::size_t state_slot_bytes, bool host_snapshot,
-    bool device_consumer) noexcept {
+[[nodiscard]] inline WindowTransferLedger modeled_window_ledger(std::size_t world_count,
+                                                                std::size_t state_slot_bytes,
+                                                                bool host_snapshot,
+                                                                bool device_consumer) noexcept {
     WindowTransferLedger ledger{
         .h2d_copy_count = 3,
         .h2d_bytes = world_count * kFlightControlH2dBytesPerWorld,
@@ -60,8 +61,7 @@ struct WindowTransferLedger {
         // state_snapshot() reconstructs the host-visible state and also reads
         // the lifecycle metadata. Both copies are synchronous D2H operations.
         ledger.d2h_copy_count += 2;
-        ledger.d2h_bytes += state_slot_bytes +
-                            world_count * kLifecycleRecordBytesPerWorld;
+        ledger.d2h_bytes += state_slot_bytes + world_count * kLifecycleRecordBytesPerWorld;
     };
     if (host_snapshot) {
         add_state_snapshot_readback();

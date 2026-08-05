@@ -58,9 +58,10 @@ allocate_cuda_world_store_metadata(std::size_t world_capacity,
 [[nodiscard]] bool commit_cuda_world_store_window(CudaWorldStoreDeviceAllocation *allocation,
                                                   CudaWorldStoreDeviceFaultInjection *faults,
                                                   std::string *error);
-[[nodiscard]] bool export_cuda_world_store_device_observation(
-    const CudaWorldStoreDeviceAllocation *allocation,
-    CudaWorldStoreDeviceObservationRaw *raw, std::string *error);
+[[nodiscard]] bool
+export_cuda_world_store_device_observation(const CudaWorldStoreDeviceAllocation *allocation,
+                                           CudaWorldStoreDeviceObservationRaw *raw,
+                                           std::string *error);
 void release_cuda_world_store_device_observation(void *values, void *ids) noexcept;
 [[nodiscard]] bool consume_cuda_world_store_device_observation(
     const void *values, const void *ids, std::size_t world_count, std::size_t values_per_world,
@@ -94,7 +95,7 @@ query_cuda_world_store_phase_d_configuration_kernel_resources(CudaBarrierKernelR
                                                               std::string *error);
 [[nodiscard]] bool
 query_cuda_world_store_phase_d_pack_kernel_resources(CudaBarrierKernelResources *resources,
-                                                      std::string *error);
+                                                     std::string *error);
 [[nodiscard]] bool
 query_cuda_world_store_phase_d_consumer_kernel_resources(CudaBarrierKernelResources *resources,
                                                          std::string *error);

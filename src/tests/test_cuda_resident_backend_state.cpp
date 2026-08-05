@@ -310,8 +310,9 @@ TEST_CASE("RB4 fixed-air boundary rejects undeclared setup input advance and exp
     CHECK_THROWS_AS(backend.inject({.pilot_actions = unsupported_actions}), std::invalid_argument);
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::StepExecutionResults}),
                     std::logic_error);
-    CHECK_THROWS_AS(backend.export_state({.include_agent_observations = true,
-                                          .include_instrument_states = true}), std::logic_error);
+    CHECK_THROWS_AS(backend.export_state(
+                        {.include_agent_observations = true, .include_instrument_states = true}),
+                    std::logic_error);
     CHECK_THROWS_AS((void)backend.export_snapshot(""), std::invalid_argument);
     CHECK(backend.compatibility_port() == nullptr);
 }

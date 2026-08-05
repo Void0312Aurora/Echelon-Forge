@@ -102,8 +102,7 @@ void add_string(ReplayLaneFrame &frame, std::size_t world, std::string_view fami
 
 void add_structured(ReplayLaneFrame &frame, std::size_t world, std::string_view family,
                     std::string_view path, std::string value) {
-    add_value(frame, world, family, path, ParityBudgetValueKind::structured,
-              std::move(value));
+    add_value(frame, world, family, path, ParityBudgetValueKind::structured, std::move(value));
 }
 
 std::string canonical_shard_versions(const std::vector<ShardVersionContract> &versions) {
@@ -151,16 +150,15 @@ std::vector<ShardVersionContract> expected_shard_versions(std::size_t window) {
         } else if (shard == static_cast<std::size_t>(CudaResidentShard::export_envelope)) {
             version = global_version;
         }
-        versions.push_back({.shard_id = std::string(kCudaResidentShardIds[shard]),
-                            .version = version});
+        versions.push_back(
+            {.shard_id = std::string(kCudaResidentShardIds[shard]), .version = version});
     }
     return versions;
 }
 
 ProjectedWorld make_projection_metadata(std::size_t world, std::uint64_t entity_id,
                                         std::size_t window, std::string_view barrier_id,
-                                        std::string_view backend_id,
-                                        std::string_view request_id,
+                                        std::string_view backend_id, std::string_view request_id,
                                         std::string_view provenance) {
     using namespace runtime::cuda_resident;
     ProjectedWorld projected{};
@@ -171,8 +169,7 @@ ProjectedWorld make_projection_metadata(std::size_t world, std::uint64_t entity_
     projected.snapshot.world_id = world;
     projected.snapshot.global_version = global_version;
     projected.snapshot.barrier_id = std::string(barrier_id);
-    projected.snapshot.barrier_sequence =
-        window_sequence + (barrier_id == "export" ? 1U : 0U);
+    projected.snapshot.barrier_sequence = window_sequence + (barrier_id == "export" ? 1U : 0U);
     projected.snapshot.shard_versions = expected_shard_versions(window);
     projected.snapshot.lineage = {
         .source_snapshot_version = global_version,
@@ -181,10 +178,9 @@ ProjectedWorld make_projection_metadata(std::size_t world, std::uint64_t entity_
     };
     projected.envelope.schema_version = std::string(kCudaResidentPhaseDSnapshotSchemaV3);
     projected.envelope.field_set = {
-        "entity_ref", "seed",       "reset_generation", "clock",
-        "snapshot",   "kinematics", "dynamics",         "instrument",
-        "observation", "reward",    "termination",       "events",
-        "source_barrier_id",
+        "entity_ref",  "seed",     "reset_generation",  "clock",       "snapshot",
+        "kinematics",  "dynamics", "instrument",        "observation", "reward",
+        "termination", "events",   "source_barrier_id",
     };
     projected.envelope.visibility_label = "export";
     projected.envelope.provenance = std::string(provenance);
@@ -224,8 +220,7 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
              projected.ref.world_index);
     add_uint(frame, world, "world_identity_clock_and_versions", "entity_ref.entity_id",
              projected.ref.entity_id);
-    add_uint(frame, world, "world_identity_clock_and_versions", "clock.tick",
-             projected.clock.tick);
+    add_uint(frame, world, "world_identity_clock_and_versions", "clock.tick", projected.clock.tick);
     add_double(frame, world, "world_identity_clock_and_versions", "clock.simulation_time_s",
                projected.clock.simulation_time_s);
     add_uint(frame, world, "world_identity_clock_and_versions", "snapshot.world_id",
@@ -237,7 +232,7 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
     add_uint(frame, world, "world_identity_clock_and_versions", "snapshot.barrier_sequence",
              projected.snapshot.barrier_sequence);
     add_structured(frame, world, "world_identity_clock_and_versions", "snapshot.shard_versions",
-                    canonical_shard_versions(projected.snapshot.shard_versions));
+                   canonical_shard_versions(projected.snapshot.shard_versions));
     add_structured(frame, world, "world_identity_clock_and_versions", "snapshot.lineage",
                    canonical_lineage(projected.snapshot));
 
@@ -267,7 +262,8 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
     add_double(frame, world, "air_execution_instruments", "instrument.heading_deg",
                instrument.heading_deg);
     add_double(frame, world, "air_execution_instruments", "instrument.aoa_deg", instrument.aoa_deg);
-    add_double(frame, world, "air_execution_instruments", "instrument.beta_deg", instrument.beta_deg);
+    add_double(frame, world, "air_execution_instruments", "instrument.beta_deg",
+               instrument.beta_deg);
     add_double(frame, world, "air_execution_instruments", "instrument.g_load_normal",
                instrument.g_load_normal);
     add_double(frame, world, "air_execution_instruments", "instrument.g_load_axial",
@@ -327,9 +323,8 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
                kPhaseDRewardTermOwners[0]);
     add_string(frame, world, "reward_termination_identity", "reward_report.shaping_terms[].name",
                kPhaseDRewardTermNames[1]);
-    add_string(frame, world,
-               "reward_termination_identity", "reward_report.shaping_terms[].term_owner",
-               kPhaseDRewardTermOwners[1]);
+    add_string(frame, world, "reward_termination_identity",
+               "reward_report.shaping_terms[].term_owner", kPhaseDRewardTermOwners[1]);
     add_uint(frame, world, "reward_termination_identity", "reward_report.fact_snapshot_version",
              projected.reward_snapshot_version);
     add_bool(frame, world, "reward_termination_identity", "execution_episode_step.terminated",
@@ -363,8 +358,8 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
              projected.envelope.source_snapshot_version);
 }
 
-InstrumentState to_public_instrument(
-    const runtime::cuda_resident::CudaWorldInstrumentState &source) {
+InstrumentState
+to_public_instrument(const runtime::cuda_resident::CudaWorldInstrumentState &source) {
     InstrumentState result{};
     result.alt_baro_m = source.alt_baro_m;
     result.alt_radar_m = source.alt_radar_m;
@@ -392,8 +387,8 @@ InstrumentState to_public_instrument(
     return result;
 }
 
-AgentObservation to_public_observation(
-    const runtime::cuda_resident::CudaWorldObservationState &source) {
+AgentObservation
+to_public_observation(const runtime::cuda_resident::CudaWorldObservationState &source) {
     AgentObservation result{};
     result.id = source.id;
     result.sim_time = source.sim_time;
@@ -414,8 +409,8 @@ AgentObservation to_public_observation(
     return result;
 }
 
-runtime::backend::EntityKinematics to_public_kinematics(
-    const runtime::cuda_resident::CudaWorldKinematicsState &source) {
+runtime::backend::EntityKinematics
+to_public_kinematics(const runtime::cuda_resident::CudaWorldKinematicsState &source) {
     return {
         .x = source.x,
         .y = source.y,
@@ -439,16 +434,15 @@ void derive_cpu_reward_and_termination(ProjectedWorld &projected) {
     const bool finite = std::isfinite(speed) && std::isfinite(projected.observation.z) &&
                         std::isfinite(projected.observation.pitch) &&
                         std::isfinite(projected.observation.roll);
-    const bool envelope = projected.observation.z < 100.0 || projected.observation.z > 10000.0 ||
-                          speed < 50.0 || speed > 350.0 ||
-                          std::abs(projected.observation.vy) > 50.0 ||
-                          std::abs(projected.observation.vz) > 50.0 ||
-                          std::abs(projected.observation.pitch) > 10.0 ||
-                          std::abs(projected.observation.roll) > 10.0;
+    const bool envelope =
+        projected.observation.z < 100.0 || projected.observation.z > 10000.0 || speed < 50.0 ||
+        speed > 350.0 || std::abs(projected.observation.vy) > 50.0 ||
+        std::abs(projected.observation.vz) > 50.0 || std::abs(projected.observation.pitch) > 10.0 ||
+        std::abs(projected.observation.roll) > 10.0;
     projected.terminated = !finite || envelope;
     projected.truncated = false;
-    projected.termination_reason = !finite ? "nan_guard"
-                                           : (envelope ? "envelope_violation" : "running");
+    projected.termination_reason =
+        !finite ? "nan_guard" : (envelope ? "envelope_violation" : "running");
     projected.termination_reason_source = "cuda_resident.phase_d";
     projected.termination_snapshot_version = projected.snapshot.global_version;
 }
@@ -498,9 +492,9 @@ ProjectedWorld project_cuda_state(const runtime::cuda_resident::CudaWorldResiden
     return projected;
 }
 
-ProjectedWorld project_cuda_snapshot(
-    const runtime::cuda_resident::CudaResidentWorldSnapshot &snapshot, std::size_t window,
-    std::string_view request_id) {
+ProjectedWorld
+project_cuda_snapshot(const runtime::cuda_resident::CudaResidentWorldSnapshot &snapshot,
+                      std::size_t window, std::string_view request_id) {
     using namespace runtime::cuda_resident;
     ProjectedWorld projected = make_projection_metadata(
         static_cast<std::size_t>(snapshot.entity_ref.world_index), snapshot.entity_ref.entity_id,
@@ -531,9 +525,8 @@ ProjectedWorld project_cuda_snapshot(
     }
     projected.termination_reason_source = "cuda_resident.phase_d";
     projected.termination_snapshot_version = snapshot.phase_d.termination.snapshot_version;
-    projected.envelope = snapshot.identity.global_version == 0
-                             ? projected.envelope
-                             : projected.envelope;
+    projected.envelope =
+        snapshot.identity.global_version == 0 ? projected.envelope : projected.envelope;
     return projected;
 }
 
@@ -642,14 +635,16 @@ ReplayLaneFrame make_projection_frame(const ReplayTrace &trace, std::size_t wind
         .source_snapshot_version = worlds.empty() ? 0 : worlds.front().snapshot.global_version,
     };
     (void)trace;
-    for (const auto &world : worlds) append_projection_fields(frame, world);
+    for (const auto &world : worlds)
+        append_projection_fields(frame, world);
     return frame;
 }
 
 ReplayLaneResult run_cpu_reference(const ReplayTrace &trace) {
     using namespace runtime::cuda_resident;
     using namespace runtime::cuda_resident::replay;
-    if (trace.windows.size() != 1 || trace.seeds.size() != kCudaResidentPhaseBFirstExpected.size()) {
+    if (trace.windows.size() != 1 ||
+        trace.seeds.size() != kCudaResidentPhaseBFirstExpected.size()) {
         throw std::invalid_argument("RB8 fixed CPU oracle owns exactly one two-world window");
     }
     const std::vector<std::uint64_t> entity_ids(trace.seeds.size(), fixed_air_fixture_entity_id(0));
@@ -667,12 +662,11 @@ ReplayLaneResult run_cpu_reference(const ReplayTrace &trace) {
         window_worlds.reserve(entity_ids.size());
         export_worlds.reserve(entity_ids.size());
         for (std::size_t world = 0; world < entity_ids.size(); ++world) {
-            window_worlds.push_back(project_cpu_oracle(
-                trace, world, entity_ids[world], window, "window_commit",
-                trace.windows[window].request_id));
-            export_worlds.push_back(project_cpu_oracle(
-                trace, world, entity_ids[world], window, "export",
-                trace.windows[window].request_id));
+            window_worlds.push_back(project_cpu_oracle(trace, world, entity_ids[world], window,
+                                                       "window_commit",
+                                                       trace.windows[window].request_id));
+            export_worlds.push_back(project_cpu_oracle(trace, world, entity_ids[world], window,
+                                                       "export", trace.windows[window].request_id));
         }
         result.frames.push_back(
             make_projection_frame(trace, window, "window_commit", window_worlds));
@@ -724,8 +718,8 @@ ReplayLaneResult run_cuda_resident(const ReplayTrace &trace) {
         std::vector<ProjectedWorld> window_worlds;
         window_worlds.reserve(resident.worlds.size());
         for (const auto &state : resident.worlds) {
-            window_worlds.push_back(project_cuda_state(
-                state, window, "window_commit", trace.windows[window].request_id));
+            window_worlds.push_back(project_cuda_state(state, window, "window_commit",
+                                                       trace.windows[window].request_id));
         }
         result.frames.push_back(
             make_projection_frame(trace, window, "window_commit", window_worlds));
@@ -896,21 +890,16 @@ TEST_CASE("RB8 malformed frame topology is rejected instead of being partially c
         };
     };
     CudaResidentReplayHarness harness(
-        [&](const ReplayTrace &input) {
-            return malformed(input, ReplayLaneKind::cpu_reference);
-        },
-        [&](const ReplayTrace &input) {
-            return malformed(input, ReplayLaneKind::cuda_resident);
-        });
+        [&](const ReplayTrace &input) { return malformed(input, ReplayLaneKind::cpu_reference); },
+        [&](const ReplayTrace &input) { return malformed(input, ReplayLaneKind::cuda_resident); });
     const ReplayComparisonReport report = harness.run(trace);
     CHECK(report.status == ReplayRunStatus::rejected);
     CHECK(report.rejection_reason == "incomplete_selected_slice");
     CHECK(report.quarantined);
     CHECK_FALSE(report.complete_selected_slice);
-    CHECK(std::any_of(report.mismatches.begin(), report.mismatches.end(),
-                      [](const auto &mismatch) {
-                          return mismatch.mismatch_code == "missing_frame";
-                      }));
+    CHECK(std::any_of(report.mismatches.begin(), report.mismatches.end(), [](const auto &mismatch) {
+        return mismatch.mismatch_code == "missing_frame";
+    }));
 
     ReplayTrace forbidden_input = trace;
     forbidden_input.windows[0].actions[0].radar_active = true;

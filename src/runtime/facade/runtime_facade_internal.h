@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/engine/world_batch_runtime.h"
 #include "runtime/facade/runtime_facade.h"
 
 #include "runtime/contracts/stage_node_manifest_registry.h"
