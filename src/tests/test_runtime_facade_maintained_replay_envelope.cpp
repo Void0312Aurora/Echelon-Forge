@@ -203,7 +203,12 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         RuntimeFacade source(0);
         const RuntimeWindowResult source_window =
             minted_window_result(source, source.allocate_trace_id());
+        const RuntimeWindowResult second_source_window =
+            minted_window_result(source, source.allocate_trace_id());
 
+        // Keep the source cursor ahead of target so move-assignment must carry
+        // its next window identity into the destination. Without that transfer,
+        // the post-move mint reuses sequence 2 already held by second_source_window.
         RuntimeFacade target(0);
         const RuntimeWindowResult replaced_target_window =
             minted_window_result(target, target.allocate_trace_id());
@@ -220,11 +225,21 @@ TEST_SUITE("runtime_facade_maintained_replay_envelope") {
         CHECK(old_target_rejected.rejection_reason ==
               "maintained_replay_envelope_window_identity_not_minted_by_this_facade");
 
+        const auto second_adopted = target.build_maintained_replay_envelope(
+            second_source_window, "run:move-assign", "episode:move-assign", 7);
+        CHECK(second_adopted.admitted);
+
         const auto moved_from_rejected = source.build_maintained_replay_envelope(
             source_window, "run:move-assign", "episode:move-assign", 7);
         CHECK_FALSE(moved_from_rejected.admitted);
         CHECK(moved_from_rejected.rejection_reason ==
               "maintained_replay_envelope_window_identity_not_minted_by_this_facade");
+
+        const RuntimeWindowResult after_move =
+            minted_window_result(target, target.allocate_trace_id());
+        const auto continued = target.build_maintained_replay_envelope(
+            after_move, "run:move-assign", "episode:move-assign", 7);
+        CHECK(continued.admitted);
     }
 
     TEST_CASE("self move assignment preserves the minted window identity") {

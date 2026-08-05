@@ -195,8 +195,15 @@ def test_string_supported_false_fails_before_typed_request_expansion() -> None:
   document["capabilities"][0]["required"] = True
   document["capabilities"][0]["supported"] = "false"
 
+  fresh = CapabilityBundleFamilyRegistry()
+
+  def sentinel_expander(document, request_id, placement):
+    pytest.fail("submarine expander must not be called after schema rejection")
+
+  fresh.register("submarine", sentinel_expander)
+
   expansion = expand_typed_platform_request(
-    document, "content-typed:coercion-red", _placement()
+    document, "content-typed:coercion-red", _placement(), registry=fresh
   )
 
   assert expansion.request is None
