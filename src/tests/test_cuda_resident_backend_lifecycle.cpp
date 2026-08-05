@@ -178,9 +178,8 @@ TEST_CASE("RB4 backend shell keeps unsupported semantics fail closed") {
     CHECK_THROWS_AS(backend.inject(unsupported_input), std::logic_error);
     CHECK(backend.evaluate({}).execution_episode_products.empty());
     const std::vector<WorldExecutionEpisodeStepRequest> evaluation_requests(1);
-    CHECK_THROWS_AS(
-        (void)backend.evaluate({.execution_episode_requests = evaluation_requests}),
-        std::logic_error);
+    CHECK_THROWS_AS((void)backend.evaluate({.execution_episode_requests = evaluation_requests}),
+                    std::logic_error);
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::StepExecutionProducts}),
                     std::logic_error);
     CHECK_NOTHROW(backend.export_state({}));

@@ -26,13 +26,12 @@ device_consumer::SubmitResult submit_failure(device_consumer::FailureCode failur
     return {.failure = failure, .detail = std::move(detail)};
 }
 
-device_consumer::Status status_failure(device_consumer::FailureCode failure,
-                                       std::string detail) {
+device_consumer::Status status_failure(device_consumer::FailureCode failure, std::string detail) {
     return {.failure = failure, .detail = std::move(detail)};
 }
 
-device_consumer::DiagnosticResult diagnostic_failure(
-    device_consumer::FailureCode failure, std::string detail) {
+device_consumer::DiagnosticResult diagnostic_failure(device_consumer::FailureCode failure,
+                                                     std::string detail) {
     return {.failure = failure, .detail = std::move(detail)};
 }
 
@@ -40,12 +39,12 @@ bool layout_is_supported(const device_consumer::ObservationLease &lease) noexcep
     const auto &observations = lease.observations;
     const auto &ids = lease.ids_tensor;
     if (observations.shape.size() != 2 || observations.strides.size() != 2 ||
-        ids.shape.size() != 1 || ids.strides.size() != 1 ||
-        observations.dtype != "float32" || ids.dtype != "uint64" ||
-        observations.stride_units != "elements" || ids.stride_units != "elements" ||
-        observations.shape[0] == 0 || observations.shape[1] == 0 ||
-        observations.shape[0] != ids.shape[0] || observations.strides[1] != 1 ||
-        observations.strides[0] != observations.shape[1] || ids.strides[0] != 1) {
+        ids.shape.size() != 1 || ids.strides.size() != 1 || observations.dtype != "float32" ||
+        ids.dtype != "uint64" || observations.stride_units != "elements" ||
+        ids.stride_units != "elements" || observations.shape[0] == 0 ||
+        observations.shape[1] == 0 || observations.shape[0] != ids.shape[0] ||
+        observations.strides[1] != 1 || observations.strides[0] != observations.shape[1] ||
+        ids.strides[0] != 1) {
         return false;
     }
     if (observations.shape[0] > std::numeric_limits<std::size_t>::max() ||
@@ -55,8 +54,7 @@ bool layout_is_supported(const device_consumer::ObservationLease &lease) noexcep
     const auto worlds = static_cast<std::size_t>(observations.shape[0]);
     const auto values_per_world = static_cast<std::size_t>(observations.shape[1]);
     return values_per_world <= std::numeric_limits<std::size_t>::max() / worlds &&
-           observations.element_count == worlds * values_per_world &&
-           ids.element_count == worlds;
+           observations.element_count == worlds * values_per_world && ids.element_count == worlds;
 }
 
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
@@ -76,8 +74,8 @@ bool current_device_matches(int expected, std::string *detail) {
     return true;
 }
 
-detail::CudaWorldStoreDeviceConsumerRaw raw_receipt(
-    const device_consumer::ConsumerReceipt &receipt) noexcept {
+detail::CudaWorldStoreDeviceConsumerRaw
+raw_receipt(const device_consumer::ConsumerReceipt &receipt) noexcept {
     return {
         .first_values = const_cast<float *>(receipt.first_values),
         .ids = const_cast<std::uint64_t *>(receipt.ids),
@@ -90,9 +88,9 @@ detail::CudaWorldStoreDeviceConsumerRaw raw_receipt(
 
 } // namespace
 
-device_consumer::SubmitResult CudaResidentDeviceConsumer::submit(
-    const device_consumer::ObservationLease &lease,
-    const device_consumer::ConsumerRequest &request) {
+device_consumer::SubmitResult
+CudaResidentDeviceConsumer::submit(const device_consumer::ObservationLease &lease,
+                                   const device_consumer::ConsumerRequest &request) {
     if (request.request_id.empty() || !request.expected_epoch.valid()) {
         return submit_failure(device_consumer::FailureCode::invalid_request,
                               "CUDA device consumer requires request_id and expected epoch");
@@ -138,9 +136,8 @@ device_consumer::SubmitResult CudaResidentDeviceConsumer::submit(
     device_consumer::SubmitResult result{};
     auto &receipt = result.receipt;
     receipt.lifetime = std::shared_ptr<void>(
-        raw.first_values,
-        [ids = raw.ids, event = raw.ready_event, device = raw.device_ordinal,
-         input_lifetime = lease.lifetime](void *first_values) {
+        raw.first_values, [ids = raw.ids, event = raw.ready_event, device = raw.device_ordinal,
+                           input_lifetime = lease.lifetime](void *first_values) {
             detail::release_cuda_world_store_device_consumer(first_values, ids, event, device);
             (void)input_lifetime;
         });
@@ -173,8 +170,8 @@ CudaResidentDeviceConsumer::await(const device_consumer::ConsumerReceipt &receip
         return status_failure(device_consumer::FailureCode::device_mismatch, std::move(error));
     }
     const bool fail_wait = std::exchange(faults_.fail_next_wait, false);
-    if (!detail::await_cuda_world_store_device_observation_consumer(
-            raw_receipt(receipt), fail_wait, &error)) {
+    if (!detail::await_cuda_world_store_device_observation_consumer(raw_receipt(receipt), fail_wait,
+                                                                    &error)) {
         return status_failure(device_consumer::FailureCode::wait_failed, std::move(error));
     }
     std::static_pointer_cast<CompletionState>(receipt.completion_state)
@@ -200,21 +197,21 @@ device_consumer::DiagnosticResult CudaResidentDeviceConsumer::materialize_for_di
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     std::string error;
     if (!current_device_matches(receipt.device_ordinal, &error)) {
-        return diagnostic_failure(device_consumer::FailureCode::device_mismatch,
-                                  std::move(error));
+        return diagnostic_failure(device_consumer::FailureCode::device_mismatch, std::move(error));
     }
     device_consumer::DiagnosticResult result{};
     const bool fail_materialize = std::exchange(faults_.fail_next_materialize, false);
     if (!detail::materialize_cuda_world_store_device_observation_consumer(
-            raw_receipt(receipt), &result.materialized.first_values,
-            &result.materialized.ids, fail_materialize, &error)) {
+            raw_receipt(receipt), &result.materialized.first_values, &result.materialized.ids,
+            fail_materialize, &error)) {
         return diagnostic_failure(device_consumer::FailureCode::diagnostic_failed,
                                   std::move(error));
     }
     return result;
 #else
-    return diagnostic_failure(device_consumer::FailureCode::cuda_unavailable,
-                              "CUDA device consumer diagnostic requires EF_ENABLE_CUDA_EXPERIMENTS");
+    return diagnostic_failure(
+        device_consumer::FailureCode::cuda_unavailable,
+        "CUDA device consumer diagnostic requires EF_ENABLE_CUDA_EXPERIMENTS");
 #endif
 }
 

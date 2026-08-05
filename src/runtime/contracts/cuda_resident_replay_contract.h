@@ -13,12 +13,11 @@
 
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
 #include "runtime/contracts/parity_budget_contracts.h"
-#include "runtime/facade/runtime_facade_types.h"
+#include "runtime/contracts/world_batch_contracts.h"
 
 namespace runtime::cuda_resident::replay {
 
-inline constexpr std::string_view kCudaResidentReplayHarnessId =
-    "cuda_resident.rb8.replay_shadow";
+inline constexpr std::string_view kCudaResidentReplayHarnessId = "cuda_resident.rb8.replay_shadow";
 inline constexpr std::string_view kCudaResidentReplaySchemaV1 =
     "cuda_resident.replay_shadow_report.v1";
 inline constexpr std::string_view kCudaResidentReplayProfileId =
@@ -150,9 +149,9 @@ struct ReplayComparisonReport {
     if (std::isnan(value)) return "nan";
     if (std::isinf(value)) return value < 0.0 ? "-inf" : "inf";
     char buffer[64]{};
-    const auto result = std::to_chars(buffer, buffer + sizeof(buffer), value,
-                                      std::chars_format::general,
-                                      std::numeric_limits<double>::max_digits10);
+    const auto result =
+        std::to_chars(buffer, buffer + sizeof(buffer), value, std::chars_format::general,
+                      std::numeric_limits<double>::max_digits10);
     if (result.ec == std::errc{}) return std::string(buffer, result.ptr);
     return "<unrepresentable>";
 }

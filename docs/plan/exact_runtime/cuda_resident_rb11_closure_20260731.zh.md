@@ -40,6 +40,19 @@ merge 进去。现有本地 remote-tracking ref 均不包含收口前 HEAD。该
 branch 与独立 worktree 均保留。RB11 不删除、archive、merge 或 push 它们，从而
 保留完整 RB0-RB11 证据，且不改变 maintained worktree 即可继续审阅。
 
+## 关闭后的发布授权
+
+在 `2026-08-05`，仓库所有者明确授权发布该保留分支，并向 `main` 提交 pull
+request。该后续授权只改变分发状态：它不重新开启 RB0-RB11，不授权
+RuntimeFacade 晋级，不宣称维护中支持，不把 CUDA 后端设为默认，也不把 held
+测量结果转化为晋级证据。任何 pull request 都必须把该实现描述为未维护、
+fail-closed 的研究候选，并保持 CPU 后端为维护中的默认实现。
+
+上面的仓库与发布快照仍是 RB11 当时的历史快照。其可执行门禁因此改为从不可变
+commit id 重建冻结基线、RB10 祖先关系、提交数量以及关闭前不存在 merge commit
+的事实；它不再断言当前 `main`、worktree 或远端 ref 状态，因为这些操作性 ref
+会在另行授权的发布之后发生变化。
+
 ## 收口提交前的 accepted chain
 
 | 迭代 | Commit | 结果 |

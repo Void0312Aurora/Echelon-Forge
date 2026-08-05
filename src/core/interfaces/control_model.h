@@ -9,20 +9,16 @@
 #include "core/interfaces/environment_model.h"
 
 class IControlModel {
-public:
+  public:
     virtual ~IControlModel() = default;
 
-    virtual void update(flecs::world world,
-                        flecs::entity entity,
-                        Velocity& velocity,
-                        Transform& transform,
-                        const FlightModel& flight_model,
-                        double dt,
-                        IEnvironmentModel* env_model = nullptr) = 0;
+    virtual void update(flecs::world world, flecs::entity entity, Velocity &velocity,
+                        Transform &transform, const FlightModel &flight_model, double dt,
+                        IEnvironmentModel *env_model = nullptr) = 0;
 };
 
 struct ControlModelRef {
-    IControlModel* model;
+    IControlModel *model;
 };
 
 std::unique_ptr<IControlModel> make_default_control_model();

@@ -68,40 +68,29 @@ allocate_cuda_world_store_metadata(std::size_t world_capacity,
 [[nodiscard]] bool commit_cuda_world_store_window(CudaWorldStoreDeviceAllocation *allocation,
                                                   CudaWorldStoreDeviceFaultInjection *faults,
                                                   std::string *error);
-[[nodiscard]] bool export_cuda_world_store_device_observation(
-    const CudaWorldStoreDeviceAllocation *allocation,
-    CudaWorldStoreDeviceObservationRaw *raw, std::string *error);
+[[nodiscard]] bool
+export_cuda_world_store_device_observation(const CudaWorldStoreDeviceAllocation *allocation,
+                                           CudaWorldStoreDeviceObservationRaw *raw,
+                                           std::string *error);
 [[nodiscard]] bool acquire_cuda_world_store_device_observation_lease(
-    const CudaWorldStoreDeviceAllocation *allocation,
-    const device_consumer::LeaseEpoch &epoch,
-    CudaWorldStoreDeviceObservationLeaseRaw *raw,
-    CudaWorldStoreDeviceFaultInjection *faults,
-    device_consumer::FailureCode *failure,
-    std::string *error);
+    const CudaWorldStoreDeviceAllocation *allocation, const device_consumer::LeaseEpoch &epoch,
+    CudaWorldStoreDeviceObservationLeaseRaw *raw, CudaWorldStoreDeviceFaultInjection *faults,
+    device_consumer::FailureCode *failure, std::string *error);
 void release_cuda_world_store_device_observation(void *values, void *ids) noexcept;
-void release_cuda_world_store_device_observation_lease(void *values, void *ids,
-                                                       void *ready_event,
+void release_cuda_world_store_device_observation_lease(void *values, void *ids, void *ready_event,
                                                        int device_ordinal) noexcept;
 [[nodiscard]] bool submit_cuda_world_store_device_observation_consumer(
-    const CudaWorldStoreDeviceObservationLeaseRaw &lease,
-    CudaWorldStoreDeviceConsumerRaw *raw,
-    bool fail_allocation,
-    bool fail_launch,
-    bool fail_event_record,
-    device_consumer::FailureCode *failure,
-    std::string *error);
-[[nodiscard]] bool await_cuda_world_store_device_observation_consumer(
-    const CudaWorldStoreDeviceConsumerRaw &raw,
-    bool fail_wait,
-    std::string *error);
+    const CudaWorldStoreDeviceObservationLeaseRaw &lease, CudaWorldStoreDeviceConsumerRaw *raw,
+    bool fail_allocation, bool fail_launch, bool fail_event_record,
+    device_consumer::FailureCode *failure, std::string *error);
+[[nodiscard]] bool
+await_cuda_world_store_device_observation_consumer(const CudaWorldStoreDeviceConsumerRaw &raw,
+                                                   bool fail_wait, std::string *error);
 [[nodiscard]] bool materialize_cuda_world_store_device_observation_consumer(
-    const CudaWorldStoreDeviceConsumerRaw &raw,
-    std::vector<float> *first_values,
-    std::vector<std::uint64_t> *ids,
-    bool fail_materialize,
-    std::string *error);
-void release_cuda_world_store_device_consumer(void *first_values, void *ids,
-                                              void *ready_event, int device_ordinal) noexcept;
+    const CudaWorldStoreDeviceConsumerRaw &raw, std::vector<float> *first_values,
+    std::vector<std::uint64_t> *ids, bool fail_materialize, std::string *error);
+void release_cuda_world_store_device_consumer(void *first_values, void *ids, void *ready_event,
+                                              int device_ordinal) noexcept;
 [[nodiscard]] bool consume_cuda_world_store_device_observation(
     const void *values, const void *ids, std::size_t world_count, std::size_t values_per_world,
     std::vector<float> *first_values, std::vector<std::uint64_t> *ids_out, std::string *error);
@@ -134,7 +123,7 @@ query_cuda_world_store_phase_d_configuration_kernel_resources(CudaBarrierKernelR
                                                               std::string *error);
 [[nodiscard]] bool
 query_cuda_world_store_phase_d_pack_kernel_resources(CudaBarrierKernelResources *resources,
-                                                      std::string *error);
+                                                     std::string *error);
 [[nodiscard]] bool
 query_cuda_world_store_phase_d_consumer_kernel_resources(CudaBarrierKernelResources *resources,
                                                          std::string *error);

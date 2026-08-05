@@ -192,11 +192,12 @@ jobs:
             });
 
   comment-task:
-    name: Codex @codex comment task
+    name: Codex /codex comment task
     if: >-
       github.actor == 'Void0312Aurora' &&
       github.event_name == 'issue_comment' &&
-      contains(github.event.comment.body, '@codex') &&
+      (github.event.comment.body == '/codex' ||
+       startsWith(github.event.comment.body, '/codex ')) &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
     timeout-minutes: 30

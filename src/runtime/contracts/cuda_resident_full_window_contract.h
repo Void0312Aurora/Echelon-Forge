@@ -9,6 +9,9 @@
 
 #include "runtime/contracts/cuda_resident_replay_contract.h"
 
+struct AgentObservation;
+struct InstrumentState;
+
 namespace runtime::cuda_resident::full_window {
 
 inline constexpr std::string_view kSurfaceId = "cuda_resident.full_window_spi.v1";

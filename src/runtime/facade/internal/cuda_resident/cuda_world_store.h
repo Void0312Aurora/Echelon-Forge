@@ -300,11 +300,12 @@ class CudaWorldStore final {
     [[nodiscard]] bool advance_window();
     [[nodiscard]] bool partial_sync_commit();
     [[nodiscard]] bool commit_window();
-    [[nodiscard]] bool export_device_observation_raw(
-        CudaWorldStoreDeviceObservationRaw *raw, std::string *error) const;
-    [[nodiscard]] bool acquire_device_observation_lease_raw(
-        CudaWorldStoreDeviceObservationLeaseRaw *raw,
-        device_consumer::FailureCode *failure, std::string *error) const;
+    [[nodiscard]] bool export_device_observation_raw(CudaWorldStoreDeviceObservationRaw *raw,
+                                                     std::string *error) const;
+    [[nodiscard]] bool
+    acquire_device_observation_lease_raw(CudaWorldStoreDeviceObservationLeaseRaw *raw,
+                                         device_consumer::FailureCode *failure,
+                                         std::string *error) const;
     [[nodiscard]] bool teardown() noexcept;
 
     [[nodiscard]] CudaWorldStoreDiagnostics diagnostics() const;
@@ -347,9 +348,10 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaBarrierKernelResources phase_d_projection_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources phase_d_pack_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources phase_d_consumer_kernel_resources();
-    [[nodiscard]] static bool consume_device_observation_view(
-        const CudaResidentDeviceObservationView &view, std::vector<float> *first_values,
-        std::vector<std::uint64_t> *ids);
+    [[nodiscard]] static bool
+    consume_device_observation_view(const CudaResidentDeviceObservationView &view,
+                                    std::vector<float> *first_values,
+                                    std::vector<std::uint64_t> *ids);
 };
 
 } // namespace testing

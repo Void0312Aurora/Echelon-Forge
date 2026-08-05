@@ -30,26 +30,25 @@ struct ProjectedWorld {
     ExportEnvelopeContract envelope{};
 };
 
-[[nodiscard]] ReplayLaneFrame
-make_input_frame(const ReplayTrace &trace, std::size_t window,
-                 const std::vector<std::uint64_t> &entity_ids);
+[[nodiscard]] ReplayLaneFrame make_input_frame(const ReplayTrace &trace, std::size_t window,
+                                               const std::vector<std::uint64_t> &entity_ids);
 
-[[nodiscard]] ReplayLaneFrame
-make_projection_frame(const ReplayTrace &trace, std::size_t window,
-                      std::string_view barrier_id, const std::vector<ProjectedWorld> &worlds);
+[[nodiscard]] ReplayLaneFrame make_projection_frame(const ReplayTrace &trace, std::size_t window,
+                                                    std::string_view barrier_id,
+                                                    const std::vector<ProjectedWorld> &worlds);
 
-[[nodiscard]] ProjectedWorld
-project_cuda_state(const CudaWorldResidentState &state, std::size_t window,
-                   std::string_view barrier_id, std::string_view request_id);
+[[nodiscard]] ProjectedWorld project_cuda_state(const CudaWorldResidentState &state,
+                                                std::size_t window, std::string_view barrier_id,
+                                                std::string_view request_id);
 
-[[nodiscard]] ProjectedWorld
-project_cuda_snapshot(const CudaResidentWorldSnapshot &snapshot, std::size_t window,
-                      std::string_view request_id);
+[[nodiscard]] ProjectedWorld project_cuda_snapshot(const CudaResidentWorldSnapshot &snapshot,
+                                                   const ExportEnvelopeContract &envelope,
+                                                   std::size_t window, std::string_view request_id);
 
-[[nodiscard]] ProjectedWorld
-project_cpu_oracle(const ReplayTrace &trace, std::size_t world, std::uint64_t entity_id,
-                   std::size_t window, std::string_view barrier_id,
-                   std::string_view request_id);
+[[nodiscard]] ProjectedWorld project_cpu_oracle(const ReplayTrace &trace, std::size_t world,
+                                                std::uint64_t entity_id, std::size_t window,
+                                                std::string_view barrier_id,
+                                                std::string_view request_id);
 
 [[nodiscard]] ReplayLaneResult run_cpu_reference(const ReplayTrace &trace);
 [[nodiscard]] ReplayLaneResult run_cuda_resident(const ReplayTrace &trace);

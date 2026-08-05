@@ -430,6 +430,7 @@ def test_cr2_6a_keeps_historical_rb9_evidence_unchanged() -> None:
             "diff",
             "--quiet",
             "05b05c5a",
+            "0c24a075",
             "--",
             "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730",
             "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp",

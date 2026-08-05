@@ -14,6 +14,7 @@ from tools.diagnostics import cuda_resident_cr2_closure as closure_validator
 ROOT = Path(__file__).resolve().parents[3]
 CLOSURE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.json"
 PRE_CLOSURE_HEAD = "356bcd56a61e40f1327d16b6a2dda335d7fdd553"
+CLOSURE_COMMIT = closure_validator.CLOSURE_COMMIT
 
 
 def _load(path: Path) -> dict[str, object]:
@@ -174,6 +175,7 @@ def test_cr2_7_is_evidence_only_and_preserves_the_maintained_boundary() -> None:
             "diff",
             "--quiet",
             PRE_CLOSURE_HEAD,
+            CLOSURE_COMMIT,
             "--",
             "CMakeLists.txt",
             "cmake",

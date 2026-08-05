@@ -6,10 +6,8 @@
 
 namespace runtime::cuda_resident::counter_evidence {
 
-inline constexpr std::string_view kSchemaVersion =
-    "cuda_resident.cr2.achieved_counter_evidence.v1";
-inline constexpr std::string_view kProfileId =
-    "cr2.resource.steady_full_window_body.sm86.v1";
+inline constexpr std::string_view kSchemaVersion = "cuda_resident.cr2.achieved_counter_evidence.v1";
+inline constexpr std::string_view kProfileId = "cr2.resource.steady_full_window_body.sm86.v1";
 inline constexpr std::string_view kPermissionBlockerCode = "ERR_NVGPUCTRPERM";
 inline constexpr std::size_t kRequiredLaunchCount = 12;
 

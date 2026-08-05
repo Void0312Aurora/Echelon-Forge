@@ -79,9 +79,8 @@ std::vector<std::size_t> parse_world_counts(std::string_view value) {
     std::size_t begin = 0;
     while (begin <= value.size()) {
         const std::size_t comma = value.find(',', begin);
-        const std::string token(value.substr(begin, comma == std::string_view::npos
-                                                        ? value.size() - begin
-                                                        : comma - begin));
+        const std::string token(value.substr(
+            begin, comma == std::string_view::npos ? value.size() - begin : comma - begin));
         counts.push_back(parse_positive_size(token.c_str(), "--worlds"));
         if (comma == std::string_view::npos) break;
         begin = comma + 1;
@@ -128,17 +127,16 @@ Args parse_args(int argc, char **argv) {
             args.rollout_samples = 1;
             args.rollout_windows = 2;
         } else if (flag == "--help" || flag == "-h") {
-            std::cout
-                << "Usage: RB9 probe [options]\n"
-                << "  --worlds 1,4,16,64,256\n"
-                << "  --cold-samples N       reset/setup first-window samples (default 50)\n"
-                << "  --warmup N             warmup windows (default 32)\n"
-                << "  --samples N            measured warm windows (default 200)\n"
-                << "  --rollouts N           independent rollout samples (default 30)\n"
-                << "  --rollout-windows N    windows per rollout (default 128)\n"
-                << "  --database PATH        CPU database path\n"
-                << "  --output PATH          JSON output (stdout when omitted)\n"
-                << "  --smoke                minimal validation protocol\n";
+            std::cout << "Usage: RB9 probe [options]\n"
+                      << "  --worlds 1,4,16,64,256\n"
+                      << "  --cold-samples N       reset/setup first-window samples (default 50)\n"
+                      << "  --warmup N             warmup windows (default 32)\n"
+                      << "  --samples N            measured warm windows (default 200)\n"
+                      << "  --rollouts N           independent rollout samples (default 30)\n"
+                      << "  --rollout-windows N    windows per rollout (default 128)\n"
+                      << "  --database PATH        CPU database path\n"
+                      << "  --output PATH          JSON output (stdout when omitted)\n"
+                      << "  --smoke                minimal validation protocol\n";
             std::exit(0);
         } else {
             throw std::invalid_argument("unknown flag: " + flag);
@@ -193,7 +191,6 @@ ReplayTrace make_trace(std::size_t world_count) {
     return trace;
 }
 
-
 Json statistics_json(const std::vector<double> &samples) {
     if (samples.empty()) return nullptr;
     std::vector<double> sorted = samples;
@@ -235,8 +232,7 @@ Json ledger_json(const runtime::cuda_resident::performance::WindowTransferLedger
         {"device_consumer_diagnostic_d2h_copy_count",
          ledger.device_consumer_diagnostic_d2h_copy_count},
         {"device_consumer_event_wait_count", ledger.device_consumer_event_wait_count},
-        {"host_snapshot_includes_full_state_d2h",
-         ledger.host_snapshot_includes_full_state_d2h},
+        {"host_snapshot_includes_full_state_d2h", ledger.host_snapshot_includes_full_state_d2h},
         {"device_consumer_includes_host_validation_d2h",
          ledger.device_consumer_includes_host_validation_d2h},
         {"device_consumer_allocation_may_synchronize",
@@ -364,9 +360,8 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         {"second_digest", second_digest},
         {"scope", "identity_inclusive_reset_diagnostic"},
         {"identity_inclusive", true},
-        {"mismatch_reason", first_digest == second_digest
-                                 ? "none"
-                                 : "reset_allocates_fresh_entity_ids"},
+        {"mismatch_reason",
+         first_digest == second_digest ? "none" : "reset_allocates_fresh_entity_ids"},
     };
 
 #if defined(EF_RB9_CUDA_PROBE)
@@ -380,8 +375,7 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         {"peak_candidate_requested_bytes",
          device_bytes +
              (mode.device_consumer ? args.rollout_windows : std::size_t{1}) *
-                 (ledger.device_observation_view_bytes +
-                  ledger.device_observation_consumer_bytes)},
+                 (ledger.device_observation_view_bytes + ledger.device_observation_consumer_bytes)},
         {"deferred_device_consumer_receipts",
          mode.device_consumer ? args.rollout_windows : std::size_t{0}},
     };
@@ -425,8 +419,7 @@ Json kernel_resource_json(std::string_view kernel_id,
 Json cuda_kernel_resources() {
     using runtime::cuda_resident::testing::CudaWorldStoreTestAccess;
     return Json::array({
-        kernel_resource_json("apply_barrier",
-                             CudaWorldStoreTestAccess::barrier_kernel_resources()),
+        kernel_resource_json("apply_barrier", CudaWorldStoreTestAccess::barrier_kernel_resources()),
         kernel_resource_json("phase_a_controls",
                              CudaWorldStoreTestAccess::phase_a_kernel_resources()),
         kernel_resource_json("phase_b_forces",
@@ -461,8 +454,8 @@ Json cuda_environment() {
     }
     return {
         {"device_name", properties.name},
-        {"compute_capability", std::to_string(properties.major) + "." +
-                                   std::to_string(properties.minor)},
+        {"compute_capability",
+         std::to_string(properties.major) + "." + std::to_string(properties.minor)},
         {"total_global_memory_bytes", properties.totalGlobalMem},
         {"driver_version", driver_version},
         {"runtime_version", runtime_version},
@@ -491,8 +484,7 @@ Json run_probe(const Args &args) {
 #endif
 
     Json report = {
-        {"schema_version",
-         runtime::cuda_resident::performance::kCudaResidentPerformanceSchemaV1},
+        {"schema_version", runtime::cuda_resident::performance::kCudaResidentPerformanceSchemaV1},
         {"harness_id", runtime::cuda_resident::performance::kCudaResidentPerformanceHarnessId},
         {"profile_id", runtime::cuda_resident::performance::kCudaResidentPerformanceProfileId},
         {"parity_budget_ref",
@@ -507,16 +499,15 @@ Json run_probe(const Args &args) {
         {"learner_facing_device_lease_available", learner_facing_device_lease_available},
         {"device_consumer_contract_id",
          learner_facing_device_lease_available
-             ? Json(std::string(runtime::cuda_resident::device_consumer::
-                                   kCudaResidentDeviceConsumerSurfaceV1))
+             ? Json(std::string(
+                   runtime::cuda_resident::device_consumer::kCudaResidentDeviceConsumerSurfaceV1))
              : Json(nullptr)},
         {"maintained_claim", false},
         {"promotion_allowed", false},
         {"required_metrics_complete", false},
         {"break_even_eligible", false},
         {"world_counts", args.world_counts},
-        {"master_trace_signature",
-         CudaResidentReplayHarness::trace_signature(make_trace(256))},
+        {"master_trace_signature", CudaResidentReplayHarness::trace_signature(make_trace(256))},
         {"protocol",
          {
              {"cold_samples", args.cold_samples},
@@ -529,11 +520,10 @@ Json run_probe(const Args &args) {
              {"cold_semantics", "same_backend_reset_setup_then_first_window"},
              {"fresh_process_cold_available", false},
          }},
-        {"hold_reasons",
-         Json::array({"cuda_candidate_not_on_full_runtime_facade_window",
-                      "learner_consumption_unavailable",
-                      "achieved_gpu_counters_unavailable:ERR_NVGPUCTRPERM",
-                      "identity_inclusive_reset_determinism_is_diagnostic"})},
+        {"hold_reasons", Json::array({"cuda_candidate_not_on_full_runtime_facade_window",
+                                      "learner_consumption_unavailable",
+                                      "achieved_gpu_counters_unavailable:ERR_NVGPUCTRPERM",
+                                      "identity_inclusive_reset_determinism_is_diagnostic"})},
         {"rows", Json::array()},
     };
 
@@ -556,12 +546,9 @@ Json run_probe(const Args &args) {
     report["cpu_worker_threads_semantics"] = "auto";
     report["kernel_resources"] = Json::array();
     report["achieved_hardware_counters"] = {
-        {"availability", "not_applicable"},
-        {"reason", "cpu_reference_lane"},
-        {"achieved_occupancy", nullptr},
-        {"branch_divergence", nullptr},
-        {"global_memory_traffic", nullptr},
-        {"local_memory_traffic", nullptr},
+        {"availability", "not_applicable"}, {"reason", "cpu_reference_lane"},
+        {"achieved_occupancy", nullptr},    {"branch_divergence", nullptr},
+        {"global_memory_traffic", nullptr}, {"local_memory_traffic", nullptr},
         {"shared_memory_traffic", nullptr},
     };
 #endif

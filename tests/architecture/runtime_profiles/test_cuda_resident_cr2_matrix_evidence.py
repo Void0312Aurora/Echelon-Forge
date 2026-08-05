@@ -190,6 +190,7 @@ def test_cr2_6b_is_evidence_only_and_modules_remain_below_soft_limits() -> None:
             "diff",
             "--quiet",
             "0c24a075",
+            "356bcd56",
             "--",
             "src/runtime/contracts",
             "src/runtime/facade/internal/cuda_resident",

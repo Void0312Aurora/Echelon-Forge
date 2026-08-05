@@ -3,13 +3,92 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
+#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
 #include "tests/test_cuda_resident_replay_support.h"
 
 using namespace runtime::cuda_resident::replay::test_support;
+
+TEST_CASE("RB8 CUDA export projection detects every envelope-field mutation") {
+    using namespace runtime::cuda_resident;
+    using namespace runtime::cuda_resident::replay;
+
+    const ReplayTrace trace = make_trace();
+    const ReplayLaneResult reference = run_cpu_reference(trace);
+    const ProjectedWorld expected_world = project_cpu_oracle(
+        trace, 0, fixed_air_fixture_entity_id(0), 0, "export", trace.windows[0].request_id);
+    CudaResidentWorldSnapshot snapshot{};
+    snapshot.entity_ref = expected_world.ref;
+    snapshot.identity = expected_world.snapshot;
+
+    struct MutationCase {
+        std::string_view field_path;
+        void (*mutate)(ExportEnvelopeContract &);
+    };
+    const std::array<MutationCase, 5> mutations{{
+        {"export.schema_version",
+         [](ExportEnvelopeContract &value) { value.schema_version += ".mutated"; }},
+        {"export.field_set",
+         [](ExportEnvelopeContract &value) { value.field_set.push_back("mutated"); }},
+        {"export.visibility_label",
+         [](ExportEnvelopeContract &value) { value.visibility_label = "mutated"; }},
+        {"export.provenance",
+         [](ExportEnvelopeContract &value) { value.provenance += ".mutated"; }},
+        {"export.source_snapshot_version",
+         [](ExportEnvelopeContract &value) { ++value.source_snapshot_version; }},
+    }};
+
+    for (const auto &mutation : mutations) {
+        CAPTURE(std::string(mutation.field_path));
+        ExportEnvelopeContract envelope = expected_world.envelope;
+        mutation.mutate(envelope);
+        const ProjectedWorld projected =
+            project_cuda_snapshot(snapshot, envelope, 0, trace.windows[0].request_id);
+        ReplayLaneFrame projected_frame = make_projection_frame(trace, 0, "export", {projected});
+        const auto projected_field =
+            std::find_if(projected_frame.fields.begin(), projected_frame.fields.end(),
+                         [&](const ReplayFieldValue &field) {
+                             return field.field_family == "exact_export_envelope" &&
+                                    field.field_path == mutation.field_path;
+                         });
+        REQUIRE(projected_field != projected_frame.fields.end());
+
+        ReplayLaneResult shadow = reference;
+        shadow.lane = ReplayLaneKind::cuda_resident;
+        shadow.backend_id = "synthetic.cuda_envelope_mutation";
+        const auto export_frame =
+            std::find_if(shadow.frames.begin(), shadow.frames.end(), [](const auto &frame) {
+                return frame.window_index == 0 && frame.barrier_id == "export";
+            });
+        REQUIRE(export_frame != shadow.frames.end());
+        const auto shadow_field =
+            std::find_if(export_frame->fields.begin(), export_frame->fields.end(),
+                         [&](const ReplayFieldValue &field) {
+                             return field.world_index == 0 &&
+                                    field.field_family == "exact_export_envelope" &&
+                                    field.field_path == mutation.field_path;
+                         });
+        REQUIRE(shadow_field != export_frame->fields.end());
+        *shadow_field = *projected_field;
+
+        CudaResidentReplayHarness harness([&](const ReplayTrace &) { return reference; },
+                                          [&](const ReplayTrace &) { return shadow; });
+        const ReplayComparisonReport report = harness.run(trace);
+        CHECK(report.status == ReplayRunStatus::quarantined);
+        CHECK(report.coverage.mismatched_field_instances == 1);
+        CHECK(std::any_of(report.mismatches.begin(), report.mismatches.end(),
+                          [&](const auto &mismatch) {
+                              return mismatch.field_family == "exact_export_envelope" &&
+                                     mismatch.field_path == mutation.field_path &&
+                                     mismatch.mismatch_code == "value_mismatch";
+                          }));
+    }
+}
 
 TEST_CASE("RB8 independent CPU/GPU replay consumes the frozen 93-field budget") {
     using namespace runtime::cuda_resident;
@@ -116,21 +195,16 @@ TEST_CASE("RB8 malformed frame topology is rejected instead of being partially c
         };
     };
     CudaResidentReplayHarness harness(
-        [&](const ReplayTrace &input) {
-            return malformed(input, ReplayLaneKind::cpu_reference);
-        },
-        [&](const ReplayTrace &input) {
-            return malformed(input, ReplayLaneKind::cuda_resident);
-        });
+        [&](const ReplayTrace &input) { return malformed(input, ReplayLaneKind::cpu_reference); },
+        [&](const ReplayTrace &input) { return malformed(input, ReplayLaneKind::cuda_resident); });
     const ReplayComparisonReport report = harness.run(trace);
     CHECK(report.status == ReplayRunStatus::rejected);
     CHECK(report.rejection_reason == "incomplete_selected_slice");
     CHECK(report.quarantined);
     CHECK_FALSE(report.complete_selected_slice);
-    CHECK(std::any_of(report.mismatches.begin(), report.mismatches.end(),
-                      [](const auto &mismatch) {
-                          return mismatch.mismatch_code == "missing_frame";
-                      }));
+    CHECK(std::any_of(report.mismatches.begin(), report.mismatches.end(), [](const auto &mismatch) {
+        return mismatch.mismatch_code == "missing_frame";
+    }));
 
     ReplayTrace forbidden_input = trace;
     forbidden_input.windows[0].actions[0].radar_active = true;

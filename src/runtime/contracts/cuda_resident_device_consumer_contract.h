@@ -13,10 +13,8 @@ inline constexpr std::string_view kCudaResidentDeviceLeaseSchemaV1 =
     "cuda_resident.device_observation_lease.v1";
 inline constexpr std::string_view kCudaResidentDeviceConsumerSurfaceV1 =
     "cuda_resident.device_consumer_smoke.v1";
-inline constexpr std::string_view kCudaResidentDeviceLeaseOwnership =
-    "owned_d2d_snapshot_copy";
-inline constexpr std::string_view kCudaResidentDeviceLeaseStream =
-    "legacy_default_stream";
+inline constexpr std::string_view kCudaResidentDeviceLeaseOwnership = "owned_d2d_snapshot_copy";
+inline constexpr std::string_view kCudaResidentDeviceLeaseStream = "legacy_default_stream";
 inline constexpr bool kDeviceConsumerMeasuredPathIncludesHostValidationReadback = false;
 inline constexpr bool kDeviceConsumerDiagnosticReadbackIsOutsideMeasuredPath = true;
 inline constexpr bool kSubmissionMaySynchronizeForDeviceAllocation = true;
@@ -95,8 +93,8 @@ struct LeaseEpoch {
     std::uint64_t source_snapshot = 0;
 
     [[nodiscard]] bool valid() const noexcept {
-        return allocation_generation != 0 && reset_generation != 0 &&
-               committed_window != 0 && source_snapshot != 0;
+        return allocation_generation != 0 && reset_generation != 0 && committed_window != 0 &&
+               source_snapshot != 0;
     }
     friend constexpr bool operator==(const LeaseEpoch &, const LeaseEpoch &) = default;
 };
@@ -110,8 +108,7 @@ struct TensorDescriptor {
 
     [[nodiscard]] bool valid() const noexcept {
         return !shape.empty() && shape.size() == strides.size() && !dtype.empty() &&
-               stride_units == "elements" &&
-               element_count != 0;
+               stride_units == "elements" && element_count != 0;
     }
 };
 
@@ -131,8 +128,8 @@ struct ObservationLease {
 
     [[nodiscard]] bool valid() const noexcept {
         return lifetime != nullptr && values != nullptr && ids != nullptr &&
-               ready_event != nullptr && device_ordinal >= 0 &&
-               epoch.valid() && observations.valid() && ids_tensor.valid();
+               ready_event != nullptr && device_ordinal >= 0 && epoch.valid() &&
+               observations.valid() && ids_tensor.valid();
     }
 };
 
@@ -168,8 +165,8 @@ struct ConsumerReceipt {
 
     [[nodiscard]] bool valid() const noexcept {
         return lifetime != nullptr && completion_state != nullptr && first_values != nullptr &&
-               ids != nullptr && ready_event != nullptr && device_ordinal >= 0 && producer_stream == 0 &&
-               world_count != 0 && source_epoch.valid();
+               ids != nullptr && ready_event != nullptr && device_ordinal >= 0 &&
+               producer_stream == 0 && world_count != 0 && source_epoch.valid();
     }
 };
 

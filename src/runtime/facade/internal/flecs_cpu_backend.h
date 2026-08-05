@@ -2,9 +2,9 @@
 
 #include <cstddef>
 
-#include "core/engine/world_batch_runtime.h"
 #include "runtime/facade/internal/world_batch_backend.h"
 #include "runtime/facade/internal/world_batch_compatibility_port.h"
+#include "runtime/facade/runtime_facade_internal.h"
 
 // CPU reference adapter. Composition preserves WorldBatchRuntime's existing
 // layout/compatibility ABI and makes all translation into the semantic backend

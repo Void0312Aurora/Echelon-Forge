@@ -47,8 +47,8 @@ void append_pilot_action(std::string &out, const PilotAction &action) {
 
 std::size_t count_frames(const ReplayLaneResult &result, std::size_t window_index,
                          std::string_view barrier_id) {
-    return static_cast<std::size_t>(
-        std::count_if(result.frames.begin(), result.frames.end(), [&](const ReplayLaneFrame &frame) {
+    return static_cast<std::size_t>(std::count_if(
+        result.frames.begin(), result.frames.end(), [&](const ReplayLaneFrame &frame) {
             return frame.window_index == window_index && frame.barrier_id == barrier_id;
         }));
 }
@@ -56,8 +56,8 @@ std::size_t count_frames(const ReplayLaneResult &result, std::size_t window_inde
 const ReplayLaneFrame *find_unique_frame(const ReplayLaneResult &result, std::size_t window_index,
                                          std::string_view barrier_id) {
     if (count_frames(result, window_index, barrier_id) != 1) return nullptr;
-    const auto found = std::find_if(
-        result.frames.begin(), result.frames.end(), [&](const ReplayLaneFrame &frame) {
+    const auto found =
+        std::find_if(result.frames.begin(), result.frames.end(), [&](const ReplayLaneFrame &frame) {
             return frame.window_index == window_index && frame.barrier_id == barrier_id;
         });
     return found == result.frames.end() ? nullptr : &(*found);
@@ -66,8 +66,8 @@ const ReplayLaneFrame *find_unique_frame(const ReplayLaneResult &result, std::si
 std::size_t count_fields(const ReplayLaneFrame *frame, std::size_t world_index,
                          std::string_view field_family, std::string_view field_path) {
     if (frame == nullptr) return 0;
-    return static_cast<std::size_t>(
-        std::count_if(frame->fields.begin(), frame->fields.end(), [&](const ReplayFieldValue &field) {
+    return static_cast<std::size_t>(std::count_if(
+        frame->fields.begin(), frame->fields.end(), [&](const ReplayFieldValue &field) {
             return field.world_index == world_index && field.field_family == field_family &&
                    field.field_path == field_path;
         }));
@@ -87,8 +87,8 @@ const ReplayFieldValue *find_unique_field(const ReplayLaneFrame *frame, std::siz
 
 const parity::ParityBudgetBarrierRule *find_barrier_rule(std::string_view barrier_id) {
     const auto &rules = parity::resident_candidate_barrier_contract();
-    const auto found = std::find_if(
-        rules.begin(), rules.end(), [&](const parity::ParityBudgetBarrierRule &rule) {
+    const auto found =
+        std::find_if(rules.begin(), rules.end(), [&](const parity::ParityBudgetBarrierRule &rule) {
             return rule.barrier_id == barrier_id;
         });
     return found == rules.end() ? nullptr : &(*found);
@@ -106,23 +106,21 @@ bool values_match(const parity::ParityBudgetSelectedFieldFamily &family,
     if (family.comparator == parity::kParityComparatorExact) {
         return reference.canonical_value == shadow.canonical_value;
     }
-    if (family.comparator != parity::kParityComparatorAbsoluteOrRelative ||
-        !reference.numeric || !shadow.numeric || !std::isfinite(reference.numeric_value) ||
+    if (family.comparator != parity::kParityComparatorAbsoluteOrRelative || !reference.numeric ||
+        !shadow.numeric || !std::isfinite(reference.numeric_value) ||
         !std::isfinite(shadow.numeric_value)) {
         return false;
     }
     const double difference = std::abs(reference.numeric_value - shadow.numeric_value);
-    const double scale = std::max(std::abs(reference.numeric_value),
-                                  std::abs(shadow.numeric_value));
-    return difference <=
-           std::max(family.absolute_tolerance, family.relative_tolerance * scale);
+    const double scale =
+        std::max(std::abs(reference.numeric_value), std::abs(shadow.numeric_value));
+    return difference <= std::max(family.absolute_tolerance, family.relative_tolerance * scale);
 }
 
 void append_mismatch(ReplayComparisonReport &report, std::size_t window_index,
                      std::size_t world_index, std::string_view barrier_id,
                      std::string_view field_family, std::string_view field_path,
-                     std::string_view code, std::string_view expected,
-                     std::string_view actual) {
+                     std::string_view code, std::string_view expected, std::string_view actual) {
     report.mismatches.push_back({
         .window_index = window_index,
         .world_index = world_index,
@@ -201,8 +199,9 @@ void validate_trace(const ReplayTrace &trace) {
     const auto validation = parity::validate_profile_owned_parity_budget(
         trace.backend_profile_id, parity::kParityBudgetProfileClassResidentState,
         trace.parity_budget_ref);
-    if (!validation.valid || budget->selected_slice_fields !=
-                                parity::resident_candidate_selected_slice_field_contract() ||
+    if (!validation.valid ||
+        budget->selected_slice_fields !=
+            parity::resident_candidate_selected_slice_field_contract() ||
         budget->barrier_rules != parity::resident_candidate_barrier_contract()) {
         throw std::invalid_argument("RB8 replay budget failed its frozen contract");
     }
@@ -223,7 +222,8 @@ std::string CudaResidentReplayHarness::trace_signature(const ReplayTrace &trace)
     append_token(signature, trace.run_id);
     append_token(signature, trace.backend_profile_id);
     append_token(signature, trace.parity_budget_ref);
-    for (const auto seed : trace.seeds) append_token(signature, std::to_string(seed));
+    for (const auto seed : trace.seeds)
+        append_token(signature, std::to_string(seed));
     for (const auto &spawn : trace.spawns) {
         append_token(signature, std::to_string(spawn.world_index));
         append_token(signature, std::to_string(static_cast<int>(spawn.side)));
@@ -246,10 +246,12 @@ std::string CudaResidentReplayHarness::trace_signature(const ReplayTrace &trace)
         append_double_token(signature, spawn.weapon_cooldown_s);
         append_double_token(signature, spawn.weapon_last_fire_time);
     }
-    for (const double time_step : trace.time_steps) append_double_token(signature, time_step);
+    for (const double time_step : trace.time_steps)
+        append_double_token(signature, time_step);
     for (const auto &window : trace.windows) {
         append_token(signature, window.request_id);
-        for (const auto &action : window.actions) append_pilot_action(signature, action);
+        for (const auto &action : window.actions)
+            append_pilot_action(signature, action);
     }
     return signature;
 }
@@ -273,8 +275,8 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
         report.sync_barrier_id = "input_injection";
         report.mismatch_domain = "trace_identity";
         report.mismatch_summary = "invalid_trace";
-        append_mismatch(report, 0, 0, "input_injection", "trace_identity", "trace",
-                        "invalid_trace", "valid_frozen_trace", error.what());
+        append_mismatch(report, 0, 0, "input_injection", "trace_identity", "trace", "invalid_trace",
+                        "valid_frozen_trace", error.what());
         report.stable_signature = build_stable_signature(report);
         return report;
     }
@@ -324,8 +326,8 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
         report.sync_barrier_id = "input_injection";
         report.mismatch_domain = "shadow_runner";
         report.mismatch_summary = "shadow_runner_failed";
-        append_mismatch(report, 0, 0, "input_injection", "shadow_runner", "runner",
-                        "runner_failed", "completed", error.what());
+        append_mismatch(report, 0, 0, "input_injection", "shadow_runner", "runner", "runner_failed",
+                        "completed", error.what());
         report.stable_signature = build_stable_signature(report);
         return report;
     } catch (...) {
@@ -391,9 +393,9 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
                 std::find(expected_barriers.begin(), expected_barriers.end(), frame.barrier_id) ==
                     expected_barriers.end()) {
                 frame_structure_valid = false;
-                append_mismatch(report, frame.window_index, 0, frame.barrier_id,
-                                "frame_structure", "frame_identity", "unexpected_frame",
-                                "declared_window_and_barrier", std::string(lane_name));
+                append_mismatch(report, frame.window_index, 0, frame.barrier_id, "frame_structure",
+                                "frame_identity", "unexpected_frame", "declared_window_and_barrier",
+                                std::string(lane_name));
             }
         }
         for (std::size_t window = 0; window < trace.windows.size(); ++window) {
@@ -402,13 +404,12 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
                 if (count != 1) {
                     frame_structure_valid = false;
                     append_mismatch(report, window, 0, barrier_id, "frame_structure",
-                                    "frame_identity", count == 0 ? "missing_frame"
-                                                                 : "duplicate_frame",
-                                    "exactly_one", std::to_string(count));
+                                    "frame_identity",
+                                    count == 0 ? "missing_frame" : "duplicate_frame", "exactly_one",
+                                    std::to_string(count));
                 }
             }
-            const ReplayLaneFrame *window_frame =
-                find_unique_frame(lane, window, "window_commit");
+            const ReplayLaneFrame *window_frame = find_unique_frame(lane, window, "window_commit");
             const ReplayLaneFrame *export_frame = find_unique_frame(lane, window, "export");
             if (window_frame != nullptr && export_frame != nullptr &&
                 window_frame->source_snapshot_version != export_frame->source_snapshot_version) {
@@ -424,8 +425,8 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
     validate_lane_frames(shadow, "shadow");
 
     for (std::size_t window = 0; window < trace.windows.size(); ++window) {
-        for (const std::string_view barrier_id : {std::string_view("window_commit"),
-                                                  std::string_view("export")}) {
+        for (const std::string_view barrier_id :
+             {std::string_view("window_commit"), std::string_view("export")}) {
             const ReplayLaneFrame *reference_frame =
                 find_unique_frame(reference, window, barrier_id);
             const ReplayLaneFrame *shadow_frame = find_unique_frame(shadow, window, barrier_id);
@@ -458,29 +459,24 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
             for (std::size_t window = 0; window < trace.windows.size(); ++window) {
                 const ReplayLaneFrame *reference_frame =
                     find_unique_frame(reference, window, barrier_id);
-                const ReplayLaneFrame *shadow_frame =
-                    find_unique_frame(shadow, window, barrier_id);
+                const ReplayLaneFrame *shadow_frame = find_unique_frame(shadow, window, barrier_id);
                 for (std::size_t world = 0; world < trace.seeds.size(); ++world) {
                     for (const auto &selected : family.selected_fields) {
                         ++report.coverage.selected_field_instances;
-                        const std::size_t reference_count =
-                            count_fields(reference_frame, world, family.field_family,
-                                         selected.field_path);
-                        const std::size_t shadow_count =
-                            count_fields(shadow_frame, world, family.field_family,
-                                         selected.field_path);
-                        const ReplayFieldValue *reference_value =
-                            find_unique_field(reference_frame, world, family.field_family,
-                                              selected.field_path);
-                        const ReplayFieldValue *shadow_value =
-                            find_unique_field(shadow_frame, world, family.field_family,
-                                              selected.field_path);
+                        const std::size_t reference_count = count_fields(
+                            reference_frame, world, family.field_family, selected.field_path);
+                        const std::size_t shadow_count = count_fields(
+                            shadow_frame, world, family.field_family, selected.field_path);
+                        const ReplayFieldValue *reference_value = find_unique_field(
+                            reference_frame, world, family.field_family, selected.field_path);
+                        const ReplayFieldValue *shadow_value = find_unique_field(
+                            shadow_frame, world, family.field_family, selected.field_path);
                         if (reference_value == nullptr || shadow_value == nullptr ||
                             !reference_value->available || !shadow_value->available) {
                             ++report.coverage.unavailable_field_instances;
-                            const std::string code =
-                                reference_count > 1 || shadow_count > 1 ? "duplicate_field"
-                                                                        : "field_unavailable";
+                            const std::string code = reference_count > 1 || shadow_count > 1
+                                                         ? "duplicate_field"
+                                                         : "field_unavailable";
                             append_mismatch(
                                 report, window, world, barrier_id, family.field_family,
                                 selected.field_path, code,
@@ -493,10 +489,9 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
                         if (reference_value->value_kind != selected.value_kind ||
                             shadow_value->value_kind != selected.value_kind) {
                             ++report.coverage.unavailable_field_instances;
-                            append_mismatch(report, window, world, barrier_id,
-                                            family.field_family, selected.field_path,
-                                            "value_kind_mismatch", "frozen_value_kind",
-                                            "lane_value_kind");
+                            append_mismatch(report, window, world, barrier_id, family.field_family,
+                                            selected.field_path, "value_kind_mismatch",
+                                            "frozen_value_kind", "lane_value_kind");
                             continue;
                         }
                         ++report.coverage.available_field_instances;
@@ -525,10 +520,10 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
         report.coverage.unavailable_field_instances == 0 &&
         report.coverage.consumed_barriers.size() == report.coverage.expected_barrier_count;
     report.quarantined = !report.complete_selected_slice || !report.mismatches.empty();
-    report.status = !report.complete_selected_slice
-                        ? ReplayRunStatus::rejected
-                        : (report.quarantined ? ReplayRunStatus::quarantined
-                                              : ReplayRunStatus::passed);
+    report.status =
+        !report.complete_selected_slice
+            ? ReplayRunStatus::rejected
+            : (report.quarantined ? ReplayRunStatus::quarantined : ReplayRunStatus::passed);
     report.rejection_reason = !report.complete_selected_slice
                                   ? "incomplete_selected_slice"
                                   : (report.quarantined ? "parity_mismatch" : "");
@@ -545,8 +540,8 @@ ReplayComparisonReport CudaResidentReplayHarness::run(const ReplayTrace &trace) 
     return report;
 }
 
-ReplayComparisonReport CudaResidentReplayHarness::rerun(
-    const ReplayTrace &trace, const ReplayComparisonReport &prior) const {
+ReplayComparisonReport CudaResidentReplayHarness::rerun(const ReplayTrace &trace,
+                                                        const ReplayComparisonReport &prior) const {
     const std::string requested_trace_signature = trace_signature(trace);
     if (prior.run_id != trace.run_id || prior.backend_profile_id != trace.backend_profile_id ||
         prior.parity_budget_ref != trace.parity_budget_ref ||
@@ -557,8 +552,8 @@ ReplayComparisonReport CudaResidentReplayHarness::rerun(
         rejected.deterministic = false;
         rejected.quarantined = true;
         rejected.candidate_promotion_blocked = true;
-        append_mismatch(rejected, 0, 0, "input_injection", "diagnostics_trace",
-                        "trace_signature", "rerun_trace_identity_mismatch", prior.trace_signature,
+        append_mismatch(rejected, 0, 0, "input_injection", "diagnostics_trace", "trace_signature",
+                        "rerun_trace_identity_mismatch", prior.trace_signature,
                         requested_trace_signature);
         rejected.mismatch_domain = "diagnostics_trace";
         rejected.sync_barrier_id = "input_injection";

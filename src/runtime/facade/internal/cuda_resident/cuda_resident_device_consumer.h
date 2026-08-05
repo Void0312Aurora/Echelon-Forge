@@ -16,8 +16,7 @@ class CudaResidentDeviceConsumer final {
     [[nodiscard]] device_consumer::SubmitResult
     submit(const device_consumer::ObservationLease &lease,
            const device_consumer::ConsumerRequest &request);
-    [[nodiscard]] device_consumer::Status
-    await(const device_consumer::ConsumerReceipt &receipt);
+    [[nodiscard]] device_consumer::Status await(const device_consumer::ConsumerReceipt &receipt);
     [[nodiscard]] device_consumer::DiagnosticResult
     materialize_for_diagnostics(const device_consumer::ConsumerReceipt &receipt);
 

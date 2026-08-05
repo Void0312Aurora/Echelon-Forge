@@ -6,12 +6,9 @@
 
 namespace runtime::cuda_resident::resource_evidence {
 
-inline constexpr std::string_view kSchemaV1 =
-    "cuda_resident.cr2.kernel_resource_evidence.v1";
-inline constexpr std::string_view kProbeSchemaV1 =
-    "cuda_resident.cr2.resource_capture_probe.v1";
-inline constexpr std::string_view kProfileId =
-    "cr2.resource.steady_full_window_body.sm86.v1";
+inline constexpr std::string_view kSchemaV1 = "cuda_resident.cr2.kernel_resource_evidence.v1";
+inline constexpr std::string_view kProbeSchemaV1 = "cuda_resident.cr2.resource_capture_probe.v1";
+inline constexpr std::string_view kProfileId = "cr2.resource.steady_full_window_body.sm86.v1";
 inline constexpr std::string_view kCaptureRange = "cudaProfilerApi";
 inline constexpr std::string_view kBuildConfig = "Release";
 inline constexpr std::string_view kCudaArchitecture = "sm_86";

@@ -48,6 +48,24 @@ The branch and its independent worktree are retained. RB11 does not delete,
 archive, merge, or push them. This preserves the complete RB0-RB11 evidence and
 makes later inspection recoverable without altering the maintained worktree.
 
+## Post-closure publication authorization
+
+On `2026-08-05`, the repository owner explicitly authorized publishing the
+retained branch and opening a pull request against `main`. This later
+authorization changes distribution state only: it does not reopen RB0-RB11,
+authorize RuntimeFacade promotion, advertise maintained support, select the
+CUDA backend by default, or convert the held measurements into promotion
+evidence. Any pull request must describe the implementation as an unmaintained,
+fail-closed research candidate and preserve the CPU backend as the maintained
+default.
+
+The repository and publication snapshot above remains the historical RB11
+snapshot. Its executable guard therefore reconstructs the frozen baseline,
+RB10 ancestry, commit count, and absence of pre-closure merge commits from
+immutable commit ids. It no longer asserts the current `main`, worktree, or
+remote-ref state, because those operational refs are expected to change after
+the separately authorized publication.
+
 ## Accepted chain before the closure commit
 
 | Iteration | Commit | Outcome |

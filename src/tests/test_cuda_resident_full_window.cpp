@@ -33,8 +33,7 @@ replay::ReplayTrace make_trace() {
     for (std::size_t world = 0; world < trace.seeds.size(); ++world) {
         WorldSpawnRequest spawn{};
         spawn.world_index = world;
-        spawn.type_name =
-            std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
+        spawn.type_name = std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
         spawn.entity_name = "CR2FullWindow" + std::to_string(world);
         spawn.is_agent = true;
         spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
@@ -97,8 +96,7 @@ class FakeBackend final : public IWorldBatchBackend {
 
     void reset(const runtime::backend::ResetRequest &) override {}
 
-    runtime::backend::SetupResult
-    setup(const runtime::backend::SetupRequest &request) override {
+    runtime::backend::SetupResult setup(const runtime::backend::SetupRequest &request) override {
         record(Operation::setup);
         world_count_ = request.seeds.get().size();
         runtime::backend::SetupResult result{};
@@ -108,8 +106,7 @@ class FakeBackend final : public IWorldBatchBackend {
         return result;
     }
 
-    runtime::backend::InputResult
-    inject(const runtime::backend::InputBatch &) override {
+    runtime::backend::InputResult inject(const runtime::backend::InputBatch &) override {
         record(Operation::input_injection);
         return {};
     }
@@ -124,8 +121,7 @@ class FakeBackend final : public IWorldBatchBackend {
         return result;
     }
 
-    runtime::backend::AdvanceResult
-    advance(const runtime::backend::AdvanceRequest &) override {
+    runtime::backend::AdvanceResult advance(const runtime::backend::AdvanceRequest &) override {
         record(Operation::advance);
         return {};
     }
@@ -134,10 +130,9 @@ class FakeBackend final : public IWorldBatchBackend {
     export_state(const runtime::backend::ExportRequest &request) const override {
         record(Operation::export_state);
         runtime::backend::ExportResult result{};
-        const std::size_t count =
-            bad_export_cardinality_ && !request.refs.get().empty()
-            ? request.refs.get().size() - 1
-            : request.refs.get().size();
+        const std::size_t count = bad_export_cardinality_ && !request.refs.get().empty()
+                                      ? request.refs.get().size() - 1
+                                      : request.refs.get().size();
         result.agent_observations.resize(count);
         result.instrument_states.resize(count);
         for (std::size_t world = 0; world < count; ++world) {
@@ -153,28 +148,20 @@ class FakeBackend final : public IWorldBatchBackend {
         return {.backend_id = "fake_backend", .world_count = world_count_};
     }
 
-    void set_unexpected_evaluation(bool value) noexcept {
-        unexpected_evaluation_ = value;
-    }
+    void set_unexpected_evaluation(bool value) noexcept { unexpected_evaluation_ = value; }
 
-    void set_bad_export_cardinality(bool value) noexcept {
-        bad_export_cardinality_ = value;
-    }
+    void set_bad_export_cardinality(bool value) noexcept { bad_export_cardinality_ = value; }
 
-    void set_bad_export_identity(bool value) noexcept {
-        bad_export_identity_ = value;
-    }
+    void set_bad_export_identity(bool value) noexcept { bad_export_identity_ = value; }
 
-    [[nodiscard]] const std::vector<Operation> &calls() const noexcept {
-        return calls_;
-    }
+    [[nodiscard]] const std::vector<Operation> &calls() const noexcept { return calls_; }
 
   private:
     void record(Operation operation) const {
         calls_.push_back(operation);
         if (fail_ && failure_ == operation) {
-            throw std::runtime_error(
-                "fake failure at " + std::string(full_window::operation_name(operation)));
+            throw std::runtime_error("fake failure at " +
+                                     std::string(full_window::operation_name(operation)));
         }
     }
 
@@ -194,9 +181,8 @@ struct FailureCase {
     std::size_t expected_calls;
 };
 
-runtime::backend::SetupResult
-setup_cuda(runtime::cuda_resident::CudaResidentBackend &backend,
-           const replay::ReplayTrace &trace) {
+runtime::backend::SetupResult setup_cuda(runtime::cuda_resident::CudaResidentBackend &backend,
+                                         const replay::ReplayTrace &trace) {
     return backend.setup({
         .kind = runtime::backend::SetupKind::Batch,
         .seeds = trace.seeds,
@@ -209,9 +195,8 @@ setup_cuda(runtime::cuda_resident::CudaResidentBackend &backend,
 
 TEST_CASE("CR2-2 full-window runner records one common multi-window SPI") {
     FakeBackend backend;
-    full_window::Runner runner(
-        backend, {.lane = replay::ReplayLaneKind::cpu_reference,
-                  .backend_id = "fake_cpu_reference"});
+    full_window::Runner runner(backend, {.lane = replay::ReplayLaneKind::cpu_reference,
+                                         .backend_id = "fake_cpu_reference"});
     const auto trace = make_trace();
     const auto result = runner.run(trace);
 
@@ -219,8 +204,7 @@ TEST_CASE("CR2-2 full-window runner records one common multi-window SPI") {
     CHECK_FALSE(result.failure.has_value());
     CHECK(result.surface_id == full_window::kSurfaceId);
     CHECK(result.backend_id == "fake_cpu_reference");
-    CHECK(result.trace_signature ==
-          replay::CudaResidentReplayHarness::trace_signature(trace));
+    CHECK(result.trace_signature == replay::CudaResidentReplayHarness::trace_signature(trace));
     REQUIRE(result.operations.size() == 9);
     REQUIRE(result.export_frames.size() == trace.windows.size());
     CHECK(result.operations[0].operation == Operation::setup);
@@ -247,8 +231,7 @@ TEST_CASE("CR2-2 full-window runner records one common multi-window SPI") {
         }
         for (std::size_t step = 0; step < 4; ++step) {
             CHECK(result.operations[offset + step].window_index == window);
-            CHECK(result.operations[offset + step].request_id ==
-                  trace.windows[window].request_id);
+            CHECK(result.operations[offset + step].request_id == trace.windows[window].request_id);
         }
     }
 }
@@ -276,17 +259,16 @@ TEST_CASE("CR2-2 full-window runner fails closed at each operation and poisons")
         {Operation::input_injection, FailureCode::input_failed, "", 2},
         {Operation::evaluation, FailureCode::evaluation_failed,
          std::string(full_window::kInputBarrier), 3},
-        {Operation::advance, FailureCode::advance_failed,
-         std::string(full_window::kInputBarrier), 4},
+        {Operation::advance, FailureCode::advance_failed, std::string(full_window::kInputBarrier),
+         4},
         {Operation::export_state, FailureCode::export_failed,
          std::string(full_window::kWindowBarrier), 5},
     };
     for (const auto &failure : cases) {
         CAPTURE(full_window::operation_name(failure.operation));
         FakeBackend backend(failure.operation, true);
-        full_window::Runner runner(
-            backend, {.lane = replay::ReplayLaneKind::cpu_reference,
-                      .backend_id = "fake_cpu_reference"});
+        full_window::Runner runner(backend, {.lane = replay::ReplayLaneKind::cpu_reference,
+                                             .backend_id = "fake_cpu_reference"});
         const auto trace = make_trace();
         const auto result = runner.run(trace);
         REQUIRE_FALSE(result.completed);
@@ -312,8 +294,8 @@ TEST_CASE("CR2-2 full-window runner rejects output shape drift before advance or
     FakeBackend evaluation_backend;
     evaluation_backend.set_unexpected_evaluation(true);
     full_window::Runner evaluation_runner(
-        evaluation_backend, {.lane = replay::ReplayLaneKind::cpu_reference,
-                             .backend_id = "fake_cpu_reference"});
+        evaluation_backend,
+        {.lane = replay::ReplayLaneKind::cpu_reference, .backend_id = "fake_cpu_reference"});
     const auto unexpected = evaluation_runner.run(trace);
     REQUIRE(unexpected.failure.has_value());
     CHECK(unexpected.failure->code == FailureCode::unexpected_evaluation_output);
@@ -323,8 +305,8 @@ TEST_CASE("CR2-2 full-window runner rejects output shape drift before advance or
     FakeBackend export_backend;
     export_backend.set_bad_export_cardinality(true);
     full_window::Runner export_runner(
-        export_backend, {.lane = replay::ReplayLaneKind::cuda_resident,
-                         .backend_id = "fake_cuda_resident"});
+        export_backend,
+        {.lane = replay::ReplayLaneKind::cuda_resident, .backend_id = "fake_cuda_resident"});
     const auto cardinality = export_runner.run(trace);
     REQUIRE(cardinality.failure.has_value());
     CHECK(cardinality.failure->code == FailureCode::export_cardinality_mismatch);
@@ -334,8 +316,8 @@ TEST_CASE("CR2-2 full-window runner rejects output shape drift before advance or
     FakeBackend identity_backend;
     identity_backend.set_bad_export_identity(true);
     full_window::Runner identity_runner(
-        identity_backend, {.lane = replay::ReplayLaneKind::cuda_resident,
-                           .backend_id = "fake_cuda_resident"});
+        identity_backend,
+        {.lane = replay::ReplayLaneKind::cuda_resident, .backend_id = "fake_cuda_resident"});
     const auto identity = identity_runner.run(trace);
     REQUIRE(identity.failure.has_value());
     CHECK(identity.failure->code == FailureCode::export_identity_mismatch);
@@ -356,13 +338,11 @@ TEST_CASE("CR2-2 CUDA backend accepts empty evaluation and auto-advances the com
 
     CHECK(backend.evaluate({}).execution_episode_products.empty());
     const std::vector<WorldExecutionEpisodeStepRequest> nonempty_evaluation(1);
-    CHECK_THROWS_AS(
-        (void)backend.evaluate({.execution_episode_requests = nonempty_evaluation}),
-        std::logic_error);
+    CHECK_THROWS_AS((void)backend.evaluate({.execution_episode_requests = nonempty_evaluation}),
+                    std::logic_error);
 
-    full_window::Runner runner(
-        backend, {.lane = replay::ReplayLaneKind::cuda_resident,
-                  .backend_id = std::string(kCudaResidentRb7BackendId)});
+    full_window::Runner runner(backend, {.lane = replay::ReplayLaneKind::cuda_resident,
+                                         .backend_id = std::string(kCudaResidentRb7BackendId)});
     const auto result = runner.run(trace);
     REQUIRE(result.completed);
     CHECK_FALSE(result.failure.has_value());
@@ -387,9 +367,8 @@ TEST_CASE("CR2-2 CUDA window state rejects missing input and retries commit with
     const auto setup = setup_cuda(backend, trace);
     REQUIRE(setup.entity_ids.size() == trace.seeds.size());
 
-    CHECK_THROWS_AS(
-        backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),
-        std::runtime_error);
+    CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),
+                    std::runtime_error);
     const auto assignments = make_assignments(trace.windows.front(), setup.entity_ids);
     backend.inject({.pilot_actions = assignments});
     CHECK_THROWS_AS(backend.inject({.pilot_actions = assignments}), std::runtime_error);
@@ -398,20 +377,17 @@ TEST_CASE("CR2-2 CUDA window state rejects missing input and retries commit with
     auto &store = testing::CudaResidentBackendTestAccess::world_store(backend);
     const auto before_failure = testing::CudaWorldStoreTestAccess::read_state(store);
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
-    CHECK_THROWS_AS(
-        backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),
-        std::runtime_error);
+    CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),
+                    std::runtime_error);
     const auto after_failure = testing::CudaWorldStoreTestAccess::read_state(store);
     REQUIRE(after_failure.worlds.size() == before_failure.worlds.size());
-    CHECK(after_failure.worlds[0].barrier_sequence ==
-          before_failure.worlds[0].barrier_sequence);
+    CHECK(after_failure.worlds[0].barrier_sequence == before_failure.worlds[0].barrier_sequence);
     CHECK(after_failure.worlds[0].barrier == CudaResidentBarrierCode::stage_publish);
 
     CHECK_THROWS_AS(backend.inject({.pilot_actions = assignments}), std::runtime_error);
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
     const auto retried = testing::CudaWorldStoreTestAccess::read_state(store);
-    CHECK(retried.worlds[0].barrier_sequence ==
-          before_failure.worlds[0].barrier_sequence + 1);
+    CHECK(retried.worlds[0].barrier_sequence == before_failure.worlds[0].barrier_sequence + 1);
     CHECK(retried.worlds[0].clock_tick == before_failure.worlds[0].clock_tick + 1);
     CHECK(retried.worlds[0].barrier == CudaResidentBarrierCode::window_commit);
 }

@@ -350,8 +350,8 @@ bool CudaWorldStore::advance_window() {
     return commit_window();
 }
 
-bool CudaWorldStore::export_device_observation_raw(
-    CudaWorldStoreDeviceObservationRaw *raw, std::string *error) const {
+bool CudaWorldStore::export_device_observation_raw(CudaWorldStoreDeviceObservationRaw *raw,
+                                                   std::string *error) const {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     if (impl_->diagnostics.state != CudaWorldStoreState::ready) {
         if (error != nullptr) *error = "device observation export requires a ready allocation";
@@ -568,7 +568,8 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_b_integrate_
 #endif
 }
 
-CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_projection_kernel_resources() {
+CudaBarrierKernelResources
+testing::CudaWorldStoreTestAccess::phase_d_projection_kernel_resources() {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     CudaBarrierKernelResources resources;
     std::string error;
@@ -581,7 +582,8 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_projection
 #endif
 }
 
-CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_instruments_kernel_resources() {
+CudaBarrierKernelResources
+testing::CudaWorldStoreTestAccess::phase_d_instruments_kernel_resources() {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     CudaBarrierKernelResources resources;
     std::string error;
@@ -599,7 +601,8 @@ testing::CudaWorldStoreTestAccess::phase_d_configuration_kernel_resources() {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     CudaBarrierKernelResources resources;
     std::string error;
-    if (!detail::query_cuda_world_store_phase_d_configuration_kernel_resources(&resources, &error)) {
+    if (!detail::query_cuda_world_store_phase_d_configuration_kernel_resources(&resources,
+                                                                               &error)) {
         throw std::runtime_error("CUDA Phase D configuration resource query failed: " + error);
     }
     return resources;
@@ -608,8 +611,7 @@ testing::CudaWorldStoreTestAccess::phase_d_configuration_kernel_resources() {
 #endif
 }
 
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::phase_d_pack_kernel_resources() {
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_pack_kernel_resources() {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     CudaBarrierKernelResources resources;
     std::string error;
@@ -622,8 +624,7 @@ testing::CudaWorldStoreTestAccess::phase_d_pack_kernel_resources() {
 #endif
 }
 
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::phase_d_consumer_kernel_resources() {
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_consumer_kernel_resources() {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     CudaBarrierKernelResources resources;
     std::string error;
@@ -643,7 +644,8 @@ bool testing::CudaWorldStoreTestAccess::consume_device_observation_view(
     if (!view.valid()) return false;
     std::string error;
     return detail::consume_cuda_world_store_device_observation(
-        view.values, view.ids, view.descriptor.output_shape.empty()
+        view.values, view.ids,
+        view.descriptor.output_shape.empty()
             ? 0
             : static_cast<std::size_t>(view.descriptor.output_shape.front()),
         view.descriptor.output_shape.size() < 2

@@ -5,8 +5,7 @@
 namespace runtime::cuda_resident {
 
 bool CudaWorldStore::acquire_device_observation_lease_raw(
-    CudaWorldStoreDeviceObservationLeaseRaw *raw,
-    device_consumer::FailureCode *failure,
+    CudaWorldStoreDeviceObservationLeaseRaw *raw, device_consumer::FailureCode *failure,
     std::string *error) const {
 #if defined(EF_ENABLE_CUDA_EXPERIMENTS)
     if (raw == nullptr) {

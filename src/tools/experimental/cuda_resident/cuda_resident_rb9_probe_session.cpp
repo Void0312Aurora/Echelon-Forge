@@ -112,8 +112,7 @@ struct ProbeSession::Impl {
 #else
 
 struct ProbeSession::Impl {
-    Impl(const replay::ReplayTrace &trace, const std::string &)
-        : trace(trace) {
+    Impl(const replay::ReplayTrace &trace, const std::string &) : trace(trace) {
         const auto setup_start = Clock::now();
         backend.configure({.world_count = trace.seeds.size()});
         setup_fixture();
@@ -152,8 +151,7 @@ ProbeSession::~ProbeSession() = default;
 void ProbeSession::reset_fixture() {
 #if defined(EF_RB9_CUDA_PROBE)
     if (!impl_->pending_device_consumer_receipts.empty()) {
-        throw std::logic_error(
-            "RB9 CUDA reset requires pending device diagnostics to be drained");
+        throw std::logic_error("RB9 CUDA reset requires pending device diagnostics to be drained");
     }
 #endif
     const auto setup_start = Clock::now();
@@ -196,29 +194,32 @@ WindowTiming ProbeSession::run_window(const Mode &mode) {
         }
     }
     if (mode.device_consumer) {
-        const auto acquired = impl_->backend.acquire_device_observation_lease(
-            "rb9.device_consumer");
+        const auto acquired =
+            impl_->backend.acquire_device_observation_lease("rb9.device_consumer");
         if (!acquired.success()) {
             throw std::runtime_error(
                 "RB9 CUDA device lease failed [" +
-                std::string(runtime::cuda_resident::device_consumer::failure_code_id(
-                    acquired.failure)) + "]: " + acquired.detail);
+                std::string(
+                    runtime::cuda_resident::device_consumer::failure_code_id(acquired.failure)) +
+                "]: " + acquired.detail);
         }
-        const auto submitted = impl_->device_consumer.submit(
-            acquired.lease,
-            {.request_id = "rb9.device_consumer", .expected_epoch = acquired.lease.epoch});
+        const auto submitted =
+            impl_->device_consumer.submit(acquired.lease, {.request_id = "rb9.device_consumer",
+                                                           .expected_epoch = acquired.lease.epoch});
         if (!submitted.success()) {
             throw std::runtime_error(
                 "RB9 CUDA device consumer submit failed [" +
-                std::string(runtime::cuda_resident::device_consumer::failure_code_id(
-                    submitted.failure)) + "]: " + submitted.detail);
+                std::string(
+                    runtime::cuda_resident::device_consumer::failure_code_id(submitted.failure)) +
+                "]: " + submitted.detail);
         }
         const auto waited = impl_->device_consumer.await(submitted.receipt);
         if (!waited.success()) {
             throw std::runtime_error(
                 "RB9 CUDA device consumer wait failed [" +
-                std::string(runtime::cuda_resident::device_consumer::failure_code_id(
-                    waited.failure)) + "]: " + waited.detail);
+                std::string(
+                    runtime::cuda_resident::device_consumer::failure_code_id(waited.failure)) +
+                "]: " + waited.detail);
         }
         const auto collected = Clock::now();
         impl_->pending_device_consumer_receipts.push_back(submitted.receipt);
@@ -242,10 +243,9 @@ void ProbeSession::validate_pending_device_consumers() {
     auto pending = std::move(impl_->pending_device_consumer_receipts);
     impl_->pending_device_consumer_receipts.clear();
     for (const auto &receipt : pending) {
-        const auto diagnostic =
-            impl_->device_consumer.materialize_for_diagnostics(receipt);
-        if (!diagnostic.success() || diagnostic.materialized.first_values.size() !=
-                                          impl_->trace.seeds.size() ||
+        const auto diagnostic = impl_->device_consumer.materialize_for_diagnostics(receipt);
+        if (!diagnostic.success() ||
+            diagnostic.materialized.first_values.size() != impl_->trace.seeds.size() ||
             diagnostic.materialized.ids.size() != impl_->trace.seeds.size()) {
             throw std::runtime_error("RB9 CUDA device consumer diagnostic failed");
         }
@@ -283,7 +283,9 @@ std::string ProbeSession::state_digest() const {
     return digest_hex(digest);
 }
 
-double ProbeSession::setup_ms() const noexcept { return impl_->setup_duration_ms; }
+double ProbeSession::setup_ms() const noexcept {
+    return impl_->setup_duration_ms;
+}
 
 std::size_t ProbeSession::device_bytes() const noexcept {
 #if defined(EF_RB9_CPU_PROBE)

@@ -14,8 +14,7 @@ namespace {
 using replay::ReplayTrace;
 
 void validate_trace(const ReplayTrace &trace) {
-    if (trace.run_id.empty() || trace.seeds.empty() ||
-        trace.seeds.size() != trace.spawns.size() ||
+    if (trace.run_id.empty() || trace.seeds.empty() || trace.seeds.size() != trace.spawns.size() ||
         trace.seeds.size() != trace.time_steps.size() || trace.windows.empty()) {
         throw std::invalid_argument("full-window trace setup/window cardinalities are invalid");
     }
@@ -30,8 +29,7 @@ std::string exception_detail() {
     return "backend operation failed without a standard exception detail";
 }
 
-template <typename Exception>
-std::string exception_detail(const Exception &error) {
+template <typename Exception> std::string exception_detail(const Exception &error) {
     return error.what();
 }
 
@@ -84,9 +82,9 @@ RunResult Runner::run(const ReplayTrace &trace) {
         return result;
     }
 
-    const auto fail = [&](Operation operation, std::size_t window_index,
-                         FailureCode code, std::string_view last_barrier,
-                         std::string detail, std::string request_id = std::string{}) {
+    const auto fail = [&](Operation operation, std::size_t window_index, FailureCode code,
+                          std::string_view last_barrier, std::string detail,
+                          std::string request_id = std::string{}) {
         result.operations.push_back({
             .window_index = window_index,
             .request_id = std::move(request_id),
@@ -108,11 +106,11 @@ RunResult Runner::run(const ReplayTrace &trace) {
     try {
         validate_trace(trace);
     } catch (const std::exception &error) {
-        return fail(Operation::setup, 0, FailureCode::invalid_trace, {},
-                    exception_detail(error), trace.run_id);
+        return fail(Operation::setup, 0, FailureCode::invalid_trace, {}, exception_detail(error),
+                    trace.run_id);
     } catch (...) {
-        return fail(Operation::setup, 0, FailureCode::invalid_trace, {},
-                    exception_detail(), trace.run_id);
+        return fail(Operation::setup, 0, FailureCode::invalid_trace, {}, exception_detail(),
+                    trace.run_id);
     }
 
     std::vector<std::uint64_t> entity_ids;
@@ -135,11 +133,11 @@ RunResult Runner::run(const ReplayTrace &trace) {
             .barrier_id = {},
         });
     } catch (const std::exception &error) {
-        return fail(Operation::setup, 0, FailureCode::setup_failed, {},
-                    exception_detail(error), trace.run_id);
+        return fail(Operation::setup, 0, FailureCode::setup_failed, {}, exception_detail(error),
+                    trace.run_id);
     } catch (...) {
-        return fail(Operation::setup, 0, FailureCode::setup_failed, {},
-                    exception_detail(), trace.run_id);
+        return fail(Operation::setup, 0, FailureCode::setup_failed, {}, exception_detail(),
+                    trace.run_id);
     }
 
     const std::vector<WorldEntityRef> refs = make_refs(entity_ids);
@@ -223,7 +221,8 @@ RunResult Runner::run(const ReplayTrace &trace) {
                 if (exported.agent_observations[world].id != refs[world].entity_id) {
                     return fail(Operation::export_state, window_index,
                                 FailureCode::export_identity_mismatch, last_barrier,
-                                "full-window observation identity does not match setup", request_id);
+                                "full-window observation identity does not match setup",
+                                request_id);
                 }
             }
             result.export_frames.push_back({

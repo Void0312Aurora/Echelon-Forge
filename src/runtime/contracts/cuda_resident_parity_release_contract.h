@@ -5,14 +5,11 @@
 
 namespace runtime::cuda_resident::parity_release {
 
-inline constexpr std::string_view kSchemaV1 =
-    "cuda_resident.selected_slice_parity.v1";
-inline constexpr std::string_view kPolicyId =
-    "cuda_resident.cr2.selected_payload_release.v1";
+inline constexpr std::string_view kSchemaV1 = "cuda_resident.selected_slice_parity.v1";
+inline constexpr std::string_view kPolicyId = "cuda_resident.cr2.selected_payload_release.v1";
 inline constexpr std::string_view kSourceBudgetRef =
     "parity_budget.resident_state.unmaintained_candidate.v1";
-inline constexpr std::string_view kTraceProfileId =
-    "cr2.full_window.fixed_air.v1";
+inline constexpr std::string_view kTraceProfileId = "cr2.full_window.fixed_air.v1";
 inline constexpr std::string_view kTraceSignatureSha256 =
     "54c0a905d07bf19212da7fa0dee1baa23599d4f80dc84e38f1f9957c41b28e3c";
 inline constexpr std::string_view kPayloadBarrier = "export";
@@ -21,8 +18,7 @@ inline constexpr std::string_view kCanonicalWorldKey =
     "(session_index,window_index,world_slot,field_path)";
 inline constexpr std::string_view kIdentityPolicy =
     "allocator_id_lane_local_diagnostic_excluded_from_digest.v1";
-inline constexpr std::string_view kResetPolicy =
-    "same_backend_two_runner_released_value_exact.v1";
+inline constexpr std::string_view kResetPolicy = "same_backend_two_runner_released_value_exact.v1";
 
 struct NumericFieldRule {
     std::string_view path;
@@ -72,38 +68,74 @@ inline constexpr auto kIdentityDiagnosticFields = std::to_array<IdentityFieldRul
 });
 
 inline constexpr auto kRawObservationFields = std::to_array<std::string_view>({
-    "agent_observations.sim_time", "agent_observations.id", "agent_observations.x",
-    "agent_observations.y", "agent_observations.z", "agent_observations.vx",
-    "agent_observations.vy", "agent_observations.vz", "agent_observations.heading",
-    "agent_observations.pitch", "agent_observations.roll", "agent_observations.speed",
-    "agent_observations.health", "agent_observations.contact_count",
-    "agent_observations.rwr_warning_count", "agent_observations.missiles_remaining",
-    "agent_observations.can_fire", "agent_observations.gear_state",
-    "agent_observations.throttle", "agent_observations.total_reward",
+    "agent_observations.sim_time",
+    "agent_observations.id",
+    "agent_observations.x",
+    "agent_observations.y",
+    "agent_observations.z",
+    "agent_observations.vx",
+    "agent_observations.vy",
+    "agent_observations.vz",
+    "agent_observations.heading",
+    "agent_observations.pitch",
+    "agent_observations.roll",
+    "agent_observations.speed",
+    "agent_observations.health",
+    "agent_observations.contact_count",
+    "agent_observations.rwr_warning_count",
+    "agent_observations.missiles_remaining",
+    "agent_observations.can_fire",
+    "agent_observations.gear_state",
+    "agent_observations.throttle",
+    "agent_observations.total_reward",
 });
 
 inline constexpr auto kRawInstrumentFields = std::to_array<std::string_view>({
-    "instrument_states.alt_baro_m", "instrument_states.alt_radar_m",
-    "instrument_states.ias_mps", "instrument_states.mach", "instrument_states.vvi_mps",
-    "instrument_states.pitch_deg", "instrument_states.roll_deg",
-    "instrument_states.heading_deg", "instrument_states.aoa_deg",
-    "instrument_states.beta_deg", "instrument_states.g_load_normal",
-    "instrument_states.g_load_axial", "instrument_states.p_deg_s", "instrument_states.q_deg_s",
-    "instrument_states.r_deg_s", "instrument_states.engine_rpm_pct",
-    "instrument_states.engine_temp_c", "instrument_states.fuel_flow_kg_h",
-    "instrument_states.throttle_pos", "instrument_states.fuel_internal_kg",
-    "instrument_states.fuel_external_kg", "instrument_states.gear_pos",
-    "instrument_states.flaps_pos", "instrument_states.speedbrake_pos",
-    "instrument_states.master_arm", "instrument_states.oat_c",
-    "instrument_states.cmd_heading_deg", "instrument_states.cmd_alt_m",
-    "instrument_states.cmd_speed_mps", "instrument_states.rwr_active",
-    "instrument_states.weapon_selected", "instrument_states.missiles_remaining",
-    "instrument_states.lat_deg", "instrument_states.lon_deg", "instrument_states.vn_mps",
-    "instrument_states.ve_mps", "instrument_states.vd_mps",
-    "instrument_states.ground_speed_mps", "instrument_states.ground_track_deg",
-    "instrument_states.wind_speed_mps", "instrument_states.wind_dir_deg",
-    "instrument_states.gps_available", "instrument_states.position_uncertainty_m",
-    "instrument_states.gear_stress", "instrument_states.gear_collapsed",
+    "instrument_states.alt_baro_m",
+    "instrument_states.alt_radar_m",
+    "instrument_states.ias_mps",
+    "instrument_states.mach",
+    "instrument_states.vvi_mps",
+    "instrument_states.pitch_deg",
+    "instrument_states.roll_deg",
+    "instrument_states.heading_deg",
+    "instrument_states.aoa_deg",
+    "instrument_states.beta_deg",
+    "instrument_states.g_load_normal",
+    "instrument_states.g_load_axial",
+    "instrument_states.p_deg_s",
+    "instrument_states.q_deg_s",
+    "instrument_states.r_deg_s",
+    "instrument_states.engine_rpm_pct",
+    "instrument_states.engine_temp_c",
+    "instrument_states.fuel_flow_kg_h",
+    "instrument_states.throttle_pos",
+    "instrument_states.fuel_internal_kg",
+    "instrument_states.fuel_external_kg",
+    "instrument_states.gear_pos",
+    "instrument_states.flaps_pos",
+    "instrument_states.speedbrake_pos",
+    "instrument_states.master_arm",
+    "instrument_states.oat_c",
+    "instrument_states.cmd_heading_deg",
+    "instrument_states.cmd_alt_m",
+    "instrument_states.cmd_speed_mps",
+    "instrument_states.rwr_active",
+    "instrument_states.weapon_selected",
+    "instrument_states.missiles_remaining",
+    "instrument_states.lat_deg",
+    "instrument_states.lon_deg",
+    "instrument_states.vn_mps",
+    "instrument_states.ve_mps",
+    "instrument_states.vd_mps",
+    "instrument_states.ground_speed_mps",
+    "instrument_states.ground_track_deg",
+    "instrument_states.wind_speed_mps",
+    "instrument_states.wind_dir_deg",
+    "instrument_states.gps_available",
+    "instrument_states.position_uncertainty_m",
+    "instrument_states.gear_stress",
+    "instrument_states.gear_collapsed",
     "instrument_states.on_runway",
 });
 

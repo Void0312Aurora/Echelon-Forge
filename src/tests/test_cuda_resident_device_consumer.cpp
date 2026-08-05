@@ -34,8 +34,7 @@ std::vector<WorldSpawnRequest> make_spawns() {
     return spawns;
 }
 
-std::vector<WorldPilotActionAssignment>
-make_actions(const std::vector<std::uint64_t> &entity_ids) {
+std::vector<WorldPilotActionAssignment> make_actions(const std::vector<std::uint64_t> &entity_ids) {
     std::vector<WorldPilotActionAssignment> actions(entity_ids.size());
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
         actions[world].world_index = world;
@@ -89,16 +88,15 @@ TEST_CASE("CR2-3 device-consumer contract is private, explicit, and fail-closed"
     CHECK(kDeviceConsumerDiagnosticReadbackIsOutsideMeasuredPath);
     CHECK(kSubmissionMaySynchronizeForDeviceAllocation);
     CHECK(kInFlightReleaseMaySynchronize);
-    CHECK(failure_code_id(FailureCode::lease_event_record_failed) ==
-          "lease_event_record_failed");
+    CHECK(failure_code_id(FailureCode::lease_event_record_failed) == "lease_event_record_failed");
     CHECK(failure_code_id(FailureCode::wait_required) == "wait_required");
 
     CudaResidentDeviceConsumer consumer;
-    const auto invalid_submit = consumer.submit(
-        {}, {.request_id = "invalid", .expected_epoch = {.allocation_generation = 1,
-                                                           .reset_generation = 1,
-                                                           .committed_window = 1,
-                                                           .source_snapshot = 3}});
+    const auto invalid_submit = consumer.submit({}, {.request_id = "invalid",
+                                                     .expected_epoch = {.allocation_generation = 1,
+                                                                        .reset_generation = 1,
+                                                                        .committed_window = 1,
+                                                                        .source_snapshot = 3}});
     CHECK(invalid_submit.failure == FailureCode::invalid_lease);
     CHECK(consumer.await({}).failure == FailureCode::invalid_receipt);
     CHECK(consumer.materialize_for_diagnostics({}).failure == FailureCode::invalid_receipt);
@@ -156,8 +154,8 @@ TEST_CASE("CR2-3 lease survives backend reset and supports repeat submit and awa
     CHECK(lease.producer_stream == 0);
 
     CudaResidentDeviceConsumer consumer;
-    auto submitted = consumer.submit(
-        lease, {.request_id = "consume-1", .expected_epoch = lease.epoch});
+    auto submitted =
+        consumer.submit(lease, {.request_id = "consume-1", .expected_epoch = lease.epoch});
     REQUIRE(submitted.success());
     CHECK(consumer.materialize_for_diagnostics(submitted.receipt).failure ==
           FailureCode::wait_required);
@@ -171,8 +169,8 @@ TEST_CASE("CR2-3 lease survives backend reset and supports repeat submit and awa
     CHECK(diagnostic.materialized.ids == fixture.entity_ids);
     CHECK(consumer.materialize_for_diagnostics(submitted.receipt).success());
 
-    const auto repeated = consumer.submit(
-        lease, {.request_id = "consume-repeat", .expected_epoch = lease.epoch});
+    const auto repeated =
+        consumer.submit(lease, {.request_id = "consume-repeat", .expected_epoch = lease.epoch});
     REQUIRE(repeated.success());
     CHECK(consumer.await(repeated.receipt).success());
 
@@ -182,13 +180,12 @@ TEST_CASE("CR2-3 lease survives backend reset and supports repeat submit and awa
     submitted = {};
     CHECK(backend.acquire_device_observation_lease("after-reset").failure ==
           FailureCode::no_committed_window);
-    const auto retained_submit = consumer.submit(
-        retained_lease,
-        {.request_id = "consume-after-reset", .expected_epoch = retained_lease.epoch});
+    const auto retained_submit =
+        consumer.submit(retained_lease, {.request_id = "consume-after-reset",
+                                         .expected_epoch = retained_lease.epoch});
     REQUIRE(retained_submit.success());
     CHECK(consumer.await(retained_submit.receipt).success());
-    const auto retained_diagnostic =
-        consumer.materialize_for_diagnostics(retained_submit.receipt);
+    const auto retained_diagnostic = consumer.materialize_for_diagnostics(retained_submit.receipt);
     REQUIRE(retained_diagnostic.success());
     CHECK(retained_diagnostic.materialized.ids == fixture.entity_ids);
 
@@ -207,16 +204,15 @@ TEST_CASE("CR2-3 lease survives backend reset and supports repeat submit and awa
     device_consumer::ConsumerReceipt detached_receipt;
     {
         CudaResidentDeviceConsumer submitter;
-        auto detached_submit = submitter.submit(
-            detached_lease,
-            {.request_id = "detached-consumer", .expected_epoch = detached_lease.epoch});
+        auto detached_submit =
+            submitter.submit(detached_lease, {.request_id = "detached-consumer",
+                                              .expected_epoch = detached_lease.epoch});
         REQUIRE(detached_submit.success());
         detached_receipt = detached_submit.receipt;
     }
     CudaResidentDeviceConsumer finisher;
     CHECK(finisher.await(detached_receipt).success());
-    const auto detached_diagnostic =
-        finisher.materialize_for_diagnostics(detached_receipt);
+    const auto detached_diagnostic = finisher.materialize_for_diagnostics(detached_receipt);
     REQUIRE(detached_diagnostic.success());
     CHECK(detached_diagnostic.materialized.ids == detached_ids);
 }
@@ -246,41 +242,40 @@ TEST_CASE("CR2-3 lease and consumer failures are stable and retryable") {
     CudaResidentDeviceConsumer consumer;
     auto mismatched_epoch = acquired.lease.epoch;
     ++mismatched_epoch.committed_window;
-    CHECK(consumer.submit(acquired.lease,
-                          {.request_id = "stale", .expected_epoch = mismatched_epoch})
-              .failure == FailureCode::stale_epoch);
+    CHECK(
+        consumer.submit(acquired.lease, {.request_id = "stale", .expected_epoch = mismatched_epoch})
+            .failure == FailureCode::stale_epoch);
     auto bad_layout = acquired.lease;
     bad_layout.observations.strides[0] = 1;
-    CHECK(consumer.submit(bad_layout,
-                          {.request_id = "layout", .expected_epoch = bad_layout.epoch})
+    CHECK(consumer.submit(bad_layout, {.request_id = "layout", .expected_epoch = bad_layout.epoch})
               .failure == FailureCode::incompatible_layout);
     auto bad_stream = acquired.lease;
     bad_stream.producer_stream = 7;
-    CHECK(consumer.submit(bad_stream,
-                          {.request_id = "stream", .expected_epoch = bad_stream.epoch})
+    CHECK(consumer.submit(bad_stream, {.request_id = "stream", .expected_epoch = bad_stream.epoch})
               .failure == FailureCode::stream_mismatch);
     auto bad_device = acquired.lease;
     ++bad_device.device_ordinal;
-    CHECK(consumer.submit(bad_device,
-                          {.request_id = "device", .expected_epoch = bad_device.epoch})
+    CHECK(consumer.submit(bad_device, {.request_id = "device", .expected_epoch = bad_device.epoch})
               .failure == FailureCode::device_mismatch);
 
     testing::CudaResidentDeviceConsumerTestAccess::fail_next_allocation(consumer);
-    CHECK(consumer.submit(acquired.lease,
-                          {.request_id = "allocation", .expected_epoch = acquired.lease.epoch})
+    CHECK(consumer
+              .submit(acquired.lease,
+                      {.request_id = "allocation", .expected_epoch = acquired.lease.epoch})
               .failure == FailureCode::consumer_allocation_failed);
     testing::CudaResidentDeviceConsumerTestAccess::fail_next_launch(consumer);
-    CHECK(consumer.submit(acquired.lease,
-                          {.request_id = "launch", .expected_epoch = acquired.lease.epoch})
+    CHECK(consumer
+              .submit(acquired.lease,
+                      {.request_id = "launch", .expected_epoch = acquired.lease.epoch})
               .failure == FailureCode::consumer_launch_failed);
     testing::CudaResidentDeviceConsumerTestAccess::fail_next_event_record(consumer);
-    CHECK(consumer.submit(acquired.lease,
-                          {.request_id = "event", .expected_epoch = acquired.lease.epoch})
-              .failure == FailureCode::consumer_event_record_failed);
+    CHECK(
+        consumer
+            .submit(acquired.lease, {.request_id = "event", .expected_epoch = acquired.lease.epoch})
+            .failure == FailureCode::consumer_event_record_failed);
 
     const auto submitted = consumer.submit(
-        acquired.lease,
-        {.request_id = "retryable", .expected_epoch = acquired.lease.epoch});
+        acquired.lease, {.request_id = "retryable", .expected_epoch = acquired.lease.epoch});
     REQUIRE(submitted.success());
     testing::CudaResidentDeviceConsumerTestAccess::fail_next_wait(consumer);
     CHECK(consumer.await(submitted.receipt).failure == FailureCode::wait_failed);

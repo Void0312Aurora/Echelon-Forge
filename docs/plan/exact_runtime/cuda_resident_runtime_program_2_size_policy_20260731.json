@@ -106,13 +106,13 @@
     },
     {
       "path": "src/tests/test_cuda_resident_replay.cpp",
-      "role": "RB8 replay assertions and failure-policy tests",
-      "observed_lines": 139
+      "role": "RB8 replay assertions, envelope mutation guard, and failure-policy tests",
+      "observed_lines": 213
     },
     {
       "path": "src/tests/test_cuda_resident_replay_projection.cpp",
       "role": "RB8 fixture projection and frame construction support",
-      "observed_lines": 611
+      "observed_lines": 605
     },
     {
       "path": "src/tests/test_cuda_resident_replay_support.cpp",
@@ -122,32 +122,32 @@
     {
       "path": "src/tests/test_cuda_resident_replay_support.h",
       "role": "RB8 replay support DTO and helper declarations",
-      "observed_lines": 58
+      "observed_lines": 57
     },
     {
       "path": "src/runtime/contracts/cuda_resident_parity_release_contract.h",
       "role": "CR2-4b selected payload field partition and release policy",
-      "observed_lines": 244
+      "observed_lines": 276
     },
     {
       "path": "src/runtime/contracts/cuda_resident_full_window_contract.h",
       "role": "full-window export frame and identity failure contract",
-      "observed_lines": 118
+      "observed_lines": 121
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_resident_full_window_runner.cpp",
       "role": "full-window export capture and lane-local identity validation",
-      "observed_lines": 257
+      "observed_lines": 256
     },
     {
       "path": "src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp",
       "role": "real-lane release projection and reset evidence probe",
-      "observed_lines": 337
+      "observed_lines": 331
     },
     {
       "path": "src/tests/test_cuda_resident_full_window.cpp",
       "role": "full-window frame identity and release contract conformance tests",
-      "observed_lines": 417
+      "observed_lines": 393
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_parity_compare.py",
@@ -162,12 +162,12 @@
     {
       "path": "src/runtime/contracts/cuda_resident_resource_evidence_contract.h",
       "role": "CR2-5a kernel catalog, launch topology, and capture boundary contract",
-      "observed_lines": 93
+      "observed_lines": 90
     },
     {
       "path": "src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp",
       "role": "single-window CUDA profiler capture and runtime resource probe",
-      "observed_lines": 350
+      "observed_lines": 340
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_evidence.py",
@@ -187,7 +187,7 @@
     {
       "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",
       "role": "CR2-5b achieved-counter families, states, and fail-closed policy",
-      "observed_lines": 58
+      "observed_lines": 56
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
@@ -197,7 +197,7 @@
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
       "role": "CR2-5b evidence provenance, state, negative, and size guards",
-      "observed_lines": 255
+      "observed_lines": 256
     },
     {
       "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",
@@ -227,7 +227,7 @@
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py",
       "role": "CR2-6a surface, timing boundary, schema, negative, and size guards",
-      "observed_lines": 450
+      "observed_lines": 451
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py",
@@ -242,22 +242,22 @@
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_evidence.py",
       "role": "CR2-6b provenance, derivation, negative, and size guards",
-      "observed_lines": 207
+      "observed_lines": 208
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_closure.py",
       "role": "CR2-7 strict closure, evidence, topology, and maintained-boundary validator",
-      "observed_lines": 546
+      "observed_lines": 547
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_closure.py",
       "role": "RB11 frozen snapshot and immutable historical topology guards",
-      "observed_lines": 143
+      "observed_lines": 151
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_closure.py",
       "role": "CR2-7 decision, provenance, negative, bilingual, and size guards",
-      "observed_lines": 232
+      "observed_lines": 234
     }
   ],
   "watch_items": [],

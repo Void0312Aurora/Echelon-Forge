@@ -78,8 +78,7 @@ Args parse_args(int argc, char **argv) {
             std::cout << "Usage: CUDA resident resource probe [--output PATH]\n";
             std::exit(0);
         } else {
-            throw std::invalid_argument(
-                "usage: CUDA resident resource probe [--output PATH]");
+            throw std::invalid_argument("usage: CUDA resident resource probe [--output PATH]");
         }
     }
     return args;
@@ -122,8 +121,7 @@ replay::ReplayTrace make_trace() {
 }
 
 std::vector<WorldPilotActionAssignment>
-make_assignments(const replay::ReplayTrace &trace,
-                 const std::vector<std::uint64_t> &entity_ids) {
+make_assignments(const replay::ReplayTrace &trace, const std::vector<std::uint64_t> &entity_ids) {
     std::vector<WorldPilotActionAssignment> assignments;
     assignments.reserve(entity_ids.size());
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
@@ -145,18 +143,15 @@ std::vector<WorldEntityRef> make_refs(const std::vector<std::uint64_t> &entity_i
     return refs;
 }
 
-Json resource_json(std::string_view kernel_id,
-                   const CudaBarrierKernelResources &resources) {
+Json resource_json(std::string_view kernel_id, const CudaBarrierKernelResources &resources) {
     return {
         {"kernel_id", kernel_id},
         {"registers_per_thread", resources.registers_per_thread},
         {"local_bytes_per_thread", resources.local_bytes_per_thread},
         {"static_shared_bytes", resources.static_shared_bytes},
         {"threads_per_block", resources.threads_per_block},
-        {"active_blocks_per_multiprocessor",
-         resources.active_blocks_per_multiprocessor},
-        {"active_warps_per_multiprocessor",
-         resources.active_warps_per_multiprocessor},
+        {"active_blocks_per_multiprocessor", resources.active_blocks_per_multiprocessor},
+        {"active_warps_per_multiprocessor", resources.active_warps_per_multiprocessor},
         {"theoretical_occupancy", resources.theoretical_occupancy},
     };
 }
@@ -257,16 +252,12 @@ Json run_probe() {
         });
         acquired = backend.acquire_device_observation_lease("cr2.resource.lease");
         if (!acquired.success()) {
-            throw std::runtime_error("resource probe lease acquisition failed: " +
-                                     acquired.detail);
+            throw std::runtime_error("resource probe lease acquisition failed: " + acquired.detail);
         }
-        submitted = consumer.submit(
-            acquired.lease,
-            {.request_id = "cr2.resource.consumer",
-             .expected_epoch = acquired.lease.epoch});
+        submitted = consumer.submit(acquired.lease, {.request_id = "cr2.resource.consumer",
+                                                     .expected_epoch = acquired.lease.epoch});
         if (!submitted.success()) {
-            throw std::runtime_error("resource probe consumer submit failed: " +
-                                     submitted.detail);
+            throw std::runtime_error("resource probe consumer submit failed: " + submitted.detail);
         }
         const auto waited = consumer.await(submitted.receipt);
         if (!waited.success()) {
@@ -306,9 +297,8 @@ Json run_probe() {
              {"diagnostic_materialization_inside",
               evidence::kDiagnosticMaterializationInsideCapture},
              {"operation_sequence",
-              Json::array({"inject", "evaluate_empty", "advance_world_batch",
-                           "public_export", "acquire_device_lease", "consumer_submit",
-                           "consumer_event_await"})},
+              Json::array({"inject", "evaluate_empty", "advance_world_batch", "public_export",
+                           "acquire_device_lease", "consumer_submit", "consumer_event_await"})},
          }},
         {"result",
          {

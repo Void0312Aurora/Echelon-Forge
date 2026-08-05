@@ -237,6 +237,7 @@ def test_cr2_5b_does_not_rewrite_cr2_5a_or_historical_rb9_evidence() -> None:
             "diff",
             "--quiet",
             BASELINE,
+            "05b05c5a",
             "--",
             "docs/plan/exact_runtime/cuda_resident_cr2_resource_evidence_20260804.json",
             "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730",

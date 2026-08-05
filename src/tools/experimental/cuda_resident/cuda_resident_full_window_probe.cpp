@@ -32,8 +32,7 @@ namespace parity_release = runtime::cuda_resident::parity_release;
 namespace replay = runtime::cuda_resident::replay;
 using full_window::Operation;
 
-inline constexpr std::string_view kProbeSchema =
-    "cuda_resident.full_window_probe.v1";
+inline constexpr std::string_view kProbeSchema = "cuda_resident.full_window_probe.v1";
 
 struct Args {
     std::string database_path = "examples/config/database";
@@ -49,8 +48,7 @@ replay::ReplayTrace make_trace() {
     for (std::size_t world = 0; world < trace.seeds.size(); ++world) {
         WorldSpawnRequest spawn{};
         spawn.world_index = world;
-        spawn.type_name =
-            std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
+        spawn.type_name = std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
         spawn.entity_name = "CR2FullWindow" + std::to_string(world);
         spawn.is_agent = true;
         spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
@@ -93,8 +91,7 @@ Args args_from_command_line(int argc, char **argv) {
     return args;
 }
 
-void verify_common_sequence(const full_window::RunResult &result,
-                            std::size_t window_count) {
+void verify_common_sequence(const full_window::RunResult &result, std::size_t window_count) {
     const std::vector<Operation> per_window{
         Operation::input_injection,
         Operation::evaluation,
@@ -103,7 +100,8 @@ void verify_common_sequence(const full_window::RunResult &result,
     };
     if (!result.completed || result.operations.size() != 1 + per_window.size() * window_count ||
         result.operations.front().operation != Operation::setup) {
-        throw std::runtime_error("full-window probe did not complete the common operation sequence");
+        throw std::runtime_error(
+            "full-window probe did not complete the common operation sequence");
     }
     for (std::size_t window = 0; window < window_count; ++window) {
         for (std::size_t operation = 0; operation < per_window.size(); ++operation) {
@@ -144,8 +142,7 @@ nlohmann::json failure_json(const full_window::RunResult &result) {
 }
 
 nlohmann::json released_world_json(const AgentObservation &observation,
-                                   const InstrumentState &instrument,
-                                   std::size_t world_slot) {
+                                   const InstrumentState &instrument, std::size_t world_slot) {
     return {
         {"world_slot", world_slot},
         {"released",
@@ -174,8 +171,8 @@ nlohmann::json released_frames_json(const full_window::RunResult &result) {
         }
         nlohmann::json worlds = nlohmann::json::array();
         for (std::size_t world = 0; world < frame.agent_observations.size(); ++world) {
-            worlds.push_back(released_world_json(
-                frame.agent_observations[world], frame.instrument_states[world], world));
+            worlds.push_back(released_world_json(frame.agent_observations[world],
+                                                 frame.instrument_states[world], world));
         }
         frames.push_back({
             {"window_index", frame.window_index},
@@ -241,21 +238,18 @@ nlohmann::json parity_contract_json() {
         {"declared_barriers", std::move(barriers)},
         {"outer_lane_evidence_fields", std::move(lane_evidence)},
         {"diagnostic_only_metadata_fields", std::move(diagnostic_metadata)},
-        {"raw_field_count",
-         parity_release::kRawObservationFields.size() +
-             parity_release::kRawInstrumentFields.size()},
+        {"raw_field_count", parity_release::kRawObservationFields.size() +
+                                parity_release::kRawInstrumentFields.size()},
         {"partition_complete", parity_release::partition_is_complete()},
         {"candidate_promotion_blocked", parity_release::kCandidatePromotionBlocked},
         {"maintained_claim_allowed", parity_release::kMaintainedClaimAllowed},
         {"public_support_enabled", parity_release::kPublicSupportEnabled},
-        {"measured_consumer_path_unchanged",
-         parity_release::kMeasuredConsumerPathUnchanged},
+        {"measured_consumer_path_unchanged", parity_release::kMeasuredConsumerPathUnchanged},
     };
 }
 
 nlohmann::json released_session_json(const full_window::RunResult &result,
-                                     std::size_t session_index,
-                                     std::string_view session_label) {
+                                     std::size_t session_index, std::string_view session_label) {
     return {
         {"session_index", session_index},
         {"session_label", session_label},

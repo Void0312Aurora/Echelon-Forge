@@ -33,25 +33,24 @@ inline constexpr std::size_t kPhaseDRewardTermCount = 2;
 
 inline constexpr std::array<std::string_view, kPhaseDInstrumentValueCount>
     kPhaseDInstrumentFieldNames = {
-        "alt_baro_m",       "alt_radar_m",       "ias_mps",          "mach",
-        "vvi_mps",          "pitch_deg",        "roll_deg",         "heading_deg",
-        "aoa_deg",          "beta_deg",          "g_load_normal",    "g_load_axial",
-        "p_deg_s",          "q_deg_s",           "r_deg_s",          "engine_rpm_pct",
-        "fuel_flow_kg_h",   "throttle_pos",      "fuel_internal_kg",  "fuel_external_kg",
-        "gear_pos",         "flaps_pos",         "speedbrake_pos",
-    };
+        "alt_baro_m",     "alt_radar_m",  "ias_mps",          "mach",
+        "vvi_mps",        "pitch_deg",    "roll_deg",         "heading_deg",
+        "aoa_deg",        "beta_deg",     "g_load_normal",    "g_load_axial",
+        "p_deg_s",        "q_deg_s",      "r_deg_s",          "engine_rpm_pct",
+        "fuel_flow_kg_h", "throttle_pos", "fuel_internal_kg", "fuel_external_kg",
+        "gear_pos",       "flaps_pos",    "speedbrake_pos",
+};
 
 inline constexpr std::array<std::string_view, kPhaseDObservationValueCount>
     kPhaseDObservationFieldNames = {
-        "sim_time", "x",       "y",       "z",       "vx",
-        "vy",       "vz",      "heading", "pitch",   "roll",
-        "speed",    "health",  "gear_state", "throttle", "total_reward",
-    };
+        "sim_time", "x",    "y",     "z",      "vx",         "vy",       "vz",           "heading",
+        "pitch",    "roll", "speed", "health", "gear_state", "throttle", "total_reward",
+};
 
-inline constexpr std::array<std::string_view, kPhaseDRewardTermCount>
-    kPhaseDRewardTermNames = {"survival", "speed"};
-inline constexpr std::array<std::string_view, kPhaseDRewardTermCount>
-    kPhaseDRewardTermOwners = {"simulation", "simulation"};
+inline constexpr std::array<std::string_view, kPhaseDRewardTermCount> kPhaseDRewardTermNames = {
+    "survival", "speed"};
+inline constexpr std::array<std::string_view, kPhaseDRewardTermCount> kPhaseDRewardTermOwners = {
+    "simulation", "simulation"};
 
 inline constexpr double phase_d_speed_reward(double speed_mps) noexcept {
     return speed_mps * kPhaseDSpeedRewardWeight;

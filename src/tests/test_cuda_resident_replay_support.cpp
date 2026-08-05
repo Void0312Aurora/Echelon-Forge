@@ -32,7 +32,8 @@ make_assignments(const ReplayTrace &trace, std::size_t window,
 ReplayLaneResult run_cpu_reference(const ReplayTrace &trace) {
     using namespace runtime::cuda_resident;
     using namespace runtime::cuda_resident::replay;
-    if (trace.windows.size() != 1 || trace.seeds.size() != kCudaResidentPhaseBFirstExpected.size()) {
+    if (trace.windows.size() != 1 ||
+        trace.seeds.size() != kCudaResidentPhaseBFirstExpected.size()) {
         throw std::invalid_argument("RB8 fixed CPU oracle owns exactly one two-world window");
     }
     const std::vector<std::uint64_t> entity_ids(trace.seeds.size(), fixed_air_fixture_entity_id(0));
@@ -50,12 +51,11 @@ ReplayLaneResult run_cpu_reference(const ReplayTrace &trace) {
         window_worlds.reserve(entity_ids.size());
         export_worlds.reserve(entity_ids.size());
         for (std::size_t world = 0; world < entity_ids.size(); ++world) {
-            window_worlds.push_back(project_cpu_oracle(
-                trace, world, entity_ids[world], window, "window_commit",
-                trace.windows[window].request_id));
-            export_worlds.push_back(project_cpu_oracle(
-                trace, world, entity_ids[world], window, "export",
-                trace.windows[window].request_id));
+            window_worlds.push_back(project_cpu_oracle(trace, world, entity_ids[world], window,
+                                                       "window_commit",
+                                                       trace.windows[window].request_id));
+            export_worlds.push_back(project_cpu_oracle(trace, world, entity_ids[world], window,
+                                                       "export", trace.windows[window].request_id));
         }
         result.frames.push_back(
             make_projection_frame(trace, window, "window_commit", window_worlds));
@@ -107,8 +107,8 @@ ReplayLaneResult run_cuda_resident(const ReplayTrace &trace) {
         std::vector<ProjectedWorld> window_worlds;
         window_worlds.reserve(resident.worlds.size());
         for (const auto &state : resident.worlds) {
-            window_worlds.push_back(project_cuda_state(
-                state, window, "window_commit", trace.windows[window].request_id));
+            window_worlds.push_back(project_cuda_state(state, window, "window_commit",
+                                                       trace.windows[window].request_id));
         }
         result.frames.push_back(
             make_projection_frame(trace, window, "window_commit", window_worlds));
@@ -117,8 +117,8 @@ ReplayLaneResult run_cuda_resident(const ReplayTrace &trace) {
         std::vector<ProjectedWorld> export_worlds;
         export_worlds.reserve(snapshot.worlds.size());
         for (const auto &world : snapshot.worlds) {
-            export_worlds.push_back(
-                project_cuda_snapshot(world, window, trace.windows[window].request_id));
+            export_worlds.push_back(project_cuda_snapshot(world, snapshot.envelope, window,
+                                                          trace.windows[window].request_id));
         }
         result.frames.push_back(make_projection_frame(trace, window, "export", export_worlds));
     }

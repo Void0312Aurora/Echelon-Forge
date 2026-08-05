@@ -14,6 +14,7 @@ CLOSURE_ID = "cr2_7.closed_without_promotion.cuda_resident.20260805"
 BASELINE = "395e02b7dfeaa87baedb2611ec503d14ab137ce3"
 PARENT_CLOSURE = "935926e83b18187c79a6e0be2ca010276c1a6fc4"
 PRE_CLOSURE_HEAD = "356bcd56a61e40f1327d16b6a2dda335d7fdd553"
+CLOSURE_COMMIT = "7efd36033c22a613bf7368bf0aa6fe8320e60e12"
 BRANCH = "codex/cuda-resident-runtime-program-2"
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
@@ -453,7 +454,7 @@ def _validate_runtime_boundary(root: Path, *, check_repository: bool) -> None:
         "src/tests",
     ]
     completed = subprocess.run(
-        ["git", "diff", "--quiet", PRE_CLOSURE_HEAD, "--", *paths],
+        ["git", "diff", "--quiet", PRE_CLOSURE_HEAD, CLOSURE_COMMIT, "--", *paths],
         cwd=root,
         check=False,
     )
