@@ -523,7 +523,7 @@ convergence and changes no verdict (TL13 stays *exempt-as-seam*).
 - **Write set (I60).** Declaration `src/runtime/facade/runtime_facade.h`;
   implementation `src/runtime/facade/runtime_facade_query.cpp`; binding
   `src/interfaces/python/bindings_runtime.cpp`; DTO schema
-  `src/runtime/contracts/detail/observation_view_spec.inc` (+ its generated
+  `src/runtime/contracts/detail/learning/observation_view_spec.inc` (+ its generated
   builder/schema); and the opt-in parity helpers in
   `python/architecture/information_layer.py`
   (`read_maintained_observation_view_export`,

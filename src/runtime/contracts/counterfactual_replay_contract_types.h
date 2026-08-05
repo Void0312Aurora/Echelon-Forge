@@ -194,13 +194,13 @@ struct CounterfactualAdmissionResult {
 struct ScenarioGenerationEvidenceMetadataRef {
 #define EF_SCENARIO_GENERATION_EVIDENCE_REF_FIELD(type, name, default_value)                       \
     type name = default_value;
-#include "runtime/contracts/detail/scenario_generation_evidence_ref.inc"
+#include "runtime/contracts/detail/scenario/scenario_generation_evidence_ref.inc"
 };
 
 struct ScenarioGenerationRequestMetadata {
 #define EF_SCENARIO_GENERATION_REQUEST_METADATA_FIELD(type, name, default_value)                   \
     type name = default_value;
-#include "runtime/contracts/detail/scenario_generation_request_metadata.inc"
+#include "runtime/contracts/detail/scenario/scenario_generation_request_metadata.inc"
 };
 
 struct ScenarioGenerationArtifactMetadata {

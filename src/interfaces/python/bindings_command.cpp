@@ -523,21 +523,21 @@ void bind_command(nb::module_ &m) {
 #define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value)              \
     task_order_air_tasking_identity_directive_class.def_rw(                                        \
         #name, &TaskOrderAirTaskingIdentityDirective::name);
-#include "runtime/contracts/detail/task_order_air_tasking_identity_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_air_tasking_identity_directive.inc"
 
     nb::class_<TaskOrderAirStationingDirective> task_order_air_stationing_directive_class(
         m, "TaskOrderAirStationingDirective");
     task_order_air_stationing_directive_class.def(nb::init<>());
 #define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                    \
     task_order_air_stationing_directive_class.def_rw(#name, &TaskOrderAirStationingDirective::name);
-#include "runtime/contracts/detail/task_order_air_stationing_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_air_stationing_directive.inc"
 
     nb::class_<TaskOrderAirFormationDirective> task_order_air_formation_directive_class(
         m, "TaskOrderAirFormationDirective");
     task_order_air_formation_directive_class.def(nb::init<>());
 #define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value)                     \
     task_order_air_formation_directive_class.def_rw(#name, &TaskOrderAirFormationDirective::name);
-#include "runtime/contracts/detail/task_order_air_formation_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_air_formation_directive.inc"
 
     nb::class_<TaskOrderAir>(m, "TaskOrderAir")
         .def(nb::init<>())
@@ -613,7 +613,7 @@ void bind_command(nb::module_ &m) {
 #define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                  \
     task_order_naval_stationing_directive_class.def_rw(#name,                                      \
                                                        &TaskOrderNavalStationingDirective::name);
-#include "runtime/contracts/detail/task_order_naval_stationing_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_naval_stationing_directive.inc"
 
     nb::class_<TaskOrder>(m, "TaskOrder")
         .def(nb::init<>())

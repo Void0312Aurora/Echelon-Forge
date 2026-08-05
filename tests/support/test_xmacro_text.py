@@ -22,7 +22,7 @@ from tests.support.xmacro_text import expand_header_field_incs
 # A real, already-macro-owned .inc fragment with exactly two fields
 # (world_index, entity_id) -- small and stable enough to use as read-only
 # fixture input without inventing a new schema/generated artifact.
-_ENTITY_REF_INC = "runtime/contracts/detail/engagement_entity_ref.inc"
+_ENTITY_REF_INC = "runtime/contracts/detail/engagement/engagement_entity_ref.inc"
 
 
 def _strict_struct_body(text: str, struct_name: str) -> str:
