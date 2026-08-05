@@ -7,17 +7,18 @@
 - 规模策略：[cuda_resident_runtime_program_2_size_policy_20260731.json](cuda_resident_runtime_program_2_size_policy_20260731.json)
 - 迭代账本：[cuda_resident_runtime_program_2_iteration_log_20260731.zh.md](cuda_resident_runtime_program_2_iteration_log_20260731.zh.md)
 - CR2-6b 证据：[cuda_resident_cr2_matrix_evidence_20260804.zh.md](cuda_resident_cr2_matrix_evidence_20260804.zh.md)
+- CR2-7 closure：[cuda_resident_cr2_closure_20260805.zh.md](cuda_resident_cr2_closure_20260805.zh.md)
 
 - 文档类型：RB11 closure 之后的新显式 continuation program
 - 分支：`codex/cuda-resident-runtime-program-2`
 - 父级 closure：`935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - maintained baseline：`395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - 日期：`2026-07-31`
+- closure 日期：`2026-08-05`
 
-状态：**CR2-6a 已获独立批准并以 `0c24a075` 提交；CR2-6b 是当前 active 的
-production-matrix evidence 与 selection-advisory candidate。前一套
-RB0-RB11 计划仍保持无晋级关闭。本计划可能产出可晋级证据，也可能再次 closure；
-它不会自行重新开放 maintained support。**
+状态：**CR2-0 至 CR2-6b 均已独立批准并提交。CR2-7 在包含 closure record 的
+commit 中将 Runtime Program 2 无晋级关闭。CUDA-resident 第二后端及证据作为未维护的
+研究 candidate 保留；maintained support 继续关闭。**
 
 ## 1. 目标与边界
 
@@ -114,14 +115,14 @@ hard limit 为 1 MiB；重复的 raw trace 不得进入 tracked write set。例�
 | CR2-0 | 冻结本计划、size policy、exception manifest 与 architecture guard。 | 已在 `2f34fac6` 完成；policy 可解析且复核过的 write set 已提交。 |
 | CR2-1 | 在不改变语义下按 layout/allocation、Phase A、Phase B、Phase D、barrier、device API orchestration 拆分 `cuda_world_store_cuda.cu`。 | 已由 `/root/cr2_split_review` 独立批准并以 `db7e6ad4` 提交；CR2-owned module 不超过 1000 行；聚焦 C++/CUDA lifecycle、replay、parity 与 architecture 测试通过。 |
 | CR2-2a | 在不改变 invocation surface、JSON schema、错误文本和 phase 顺序的前提下，将 RB9 probe 的 lane-specific session 移到独立实现模块。 | 独立批准后已以 `bf695071` 完成；probe/session 均低于 soft limit，历史 evidence 未改。 |
-| CR2-2p | 只用 portable bit scan、预期的全局 environment-model type 与 MSVC core 数学常量 opt-in，解除真实 Flecs CPU lane 在 VS2022 的阻塞。 | 真实 `FlecsCpuBackend` 图可编译；聚焦 guard 通过；独立复核与单独 commit 必须先于 CR2-2b。 |
+| CR2-2p | 只用 portable bit scan、预期的全局 environment-model type 与 MSVC core 数学常量 opt-in，解除真实 Flecs CPU lane 在 VS2022 的阻塞。 | 已独立批准并以 `dee02146` 提交；真实 `FlecsCpuBackend` 图可在 VS2022 编译。 |
 | CR2-2b | 定义一套 full-window trace 与等价 CPU/CUDA invocation surface，覆盖 setup、input、evaluation、advance、export、error/barrier。 | 已独立批准并以 `607c1f33` 提交；两个真实 lane 通过声明的共同 surface 消费同一 trace。 |
 | CR2-3 | 增加真实 device consumer/learner-facing lease，移除 measured consumer path 的 hidden host validation。 | 已独立批准并以 `7da41a2a` 提交；显式 consumer smoke、ownership/lifetime/failure、延迟 diagnostic readback 与 CUDA-on/off 验证通过，public support 保持关闭。 |
 | CR2-4a | 将 919 行 RB8 replay test 拆为受限 support/projection/test owner，不改变 oracle、quarantine、93-field budget 或历史 evidence。 | 已获独立批准并以 `d778c67c` 提交；CUDA-on/off replay 与 architecture guard 通过，当前无 watch item。 |
 | CR2-4b | 基于真实 payload evidence 与显式 identity policy，将 selected-slice parity 与 deterministic reset identity 从 quarantine 中 release。 | 已独立批准并以 `08b48f29` 提交；真实 12 字段投影与同 backend exact reset 通过，public support 仍关闭。 |
-| CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | 拆分为 CR2-5a 静态/拓扑证据和 CR2-5b achieved-counter 采集；任一不完整部分都不能产生 tuning 结论。 |
-| CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | CR2-6a 已获独立批准并以 `0c24a075` 提交；CR2-6b 已形成两轮 order-balanced production campaign、fresh parity confirmation 与 host-specific fail-closed selection advisory，等待独立复核。 |
-| CR2-7 | 独立作 promotion 或 closure 决策。 | promotion 需要新授权与 integration plan；否则记录第二次 closure，维护行为不变。 |
+| CR2-5 | 为 full window 采集 ptxas/Nsight resource evidence：register、spill、local/shared/global traffic、occupancy、divergence、launch topology。 | CR2-5a/5b 已独立批准并以 `6d7ec7dd`、`05b05c5a` 提交；静态/拓扑证据完整，achieved counter 以已记录的 `ERR_NVGPUCTRPERM` 收口，不产生 tuning 结论。 |
+| CR2-6 | 运行 production-shaped world-count/mode matrix，包含 rollout 与 small-batch。 | CR2-6a/6b 已独立批准并以 `0c24a075`、`356bcd56` 提交；保留两轮 order-balanced campaign、fresh parity 与 host-specific fail-closed advisory。 |
+| CR2-7 | 独立作 promotion 或 closure 决策。 | 在包含 `cuda_resident_cr2_closure_20260805.json` 的 commit 中无晋级关闭；maintained 行为不变，未来工作需要新显式计划。 |
 
 CR2-1 至 CR2-6 可以拆成窄范围 sub-iteration，但单个 commit 不得把结构拆分、
 语义扩展与性能 tuning 合并。
@@ -268,6 +269,23 @@ production timing、不选择 threshold，也不声称性能结论。CR2-6b 必�
 运行两个 Release binary，对 raw report 做内容寻址，只比较共同 available mode，将
 CUDA-only consumer row 分开处理，并形成显式 small-batch selection policy。counter、
 support、maintained、tuning 与 promotion gate 继续为 false。
+
+### CR2-6b 边界
+
+CR2-6b 跟踪两轮顺序平衡且不重叠 campaign 的四份未修改 production report，并重算
+统计与 policy。world 1 采用 CPU reference；world 4 无 export 采用 CUDA；world 4 有
+host export 时因 rollout p95 在两轮间反转而保守默认 CPU；world 16/64/256 的共同 mode
+采用 CUDA。device-consumer mode 仅 CUDA 可用，不作 CPU 比较。advisory 只适用于五个
+已测 world count，并保持 host-specific，不成为 runtime selector。fresh 12-field parity
+通过，但 achieved counter、tuning、support、maintained 与 promotion gate 继续为 false。
+
+### CR2-7 终态边界
+
+CR2-7 是 evidence-only closure。achieved-counter gate 仍被 `ERR_NVGPUCTRPERM` 阻断，
+且不存在显式 promotion 授权或 integration plan。因此机器记录为
+`closed_without_promotion`；不修改 runtime、contract、probe、CMake、kernel、launch、
+C++ test、support flag 或 public ABI。branch、worktree、12-commit CR2 chain 与全部证据
+继续可恢复。重新开启工作必须建立新的显式计划并取得用户授权。
 
 ## 5. 晋级与恢复边界
 

@@ -24,10 +24,14 @@ Recommended reading order:
 9. [cuda_resident_cr2_resource_evidence_20260804.json](cuda_resident_cr2_resource_evidence_20260804.json)
 10. [cuda_resident_cr2_counter_evidence_20260804.md](cuda_resident_cr2_counter_evidence_20260804.md)
 11. [cuda_resident_cr2_counter_evidence_20260804.json](cuda_resident_cr2_counter_evidence_20260804.json)
-12. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
-13. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
-14. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
-15. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
+12. [cuda_resident_cr2_matrix_evidence_20260804.md](cuda_resident_cr2_matrix_evidence_20260804.md)
+13. [cuda_resident_cr2_matrix_evidence_20260804.json](cuda_resident_cr2_matrix_evidence_20260804.json)
+14. [cuda_resident_cr2_closure_20260805.md](cuda_resident_cr2_closure_20260805.md)
+15. [cuda_resident_cr2_closure_20260805.json](cuda_resident_cr2_closure_20260805.json)
+16. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
+17. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
+18. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
+19. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
 
 Usage rules:
 
@@ -35,9 +39,10 @@ Usage rules:
   for that new workline. The companion iteration log records accepted branch
   evidence and the RB10 hold decision/RB11 closure record the no-promotion
   boundary. The plan is complete; future work requires a new explicit program.
-- The CR2 program is that new explicit continuation program. It owns the
-  full-window, size-governance, consumer, parity, resource, and small-batch
-  gates; it does not authorize promotion until its final decision row.
+- The CR2 continuation program completed those full-window, size-governance,
+  consumer, parity, resource, and small-batch gates and then closed without
+  promotion in CR2-7. Its retained advisory is not a runtime selector; future
+  CUDA-resident work requires another explicit program and user authorization.
 - Except for frozen phase plans, the remaining documents are by default candidate special drafts or checklists.
 - The current repository structure has evolved; some code paths in the text still carry historical semantics. When using, cross-reference with the current code tree.
 - Earlier GPU mainline discussions and experimental routes have been moved to `../archive/exact_runtime/`.

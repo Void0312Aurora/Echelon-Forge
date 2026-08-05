@@ -38,9 +38,7 @@ def _git(*args: str) -> str:
 
 def test_rb11_closure_is_bound_to_rb10_and_the_retained_evidence() -> None:
     closure = _json(CLOSURE_PATH)
-    rb10 = _json(
-        ROOT / "docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.json"
-    )
+    rb10 = _json(ROOT / "docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.json")
     retained = closure["retained_artifacts"]
     assert isinstance(retained, dict)
     rb10_ref = retained["rb10_decision"]
@@ -110,15 +108,11 @@ def test_rb11_closure_preserves_baseline_branch_and_maintained_flags() -> None:
     }
 
 
-def test_rb11_git_snapshot_matches_the_preclosure_commit() -> None:
-    assert _git("rev-parse", "main") == BASELINE
-    assert _git("merge-base", "main", RB10_COMMIT) == BASELINE
+def test_rb11_historical_snapshot_preserves_the_immutable_commit_graph() -> None:
+    assert _git("cat-file", "-t", RB10_COMMIT) == "commit"
+    assert _git("merge-base", BASELINE, RB10_COMMIT) == BASELINE
     assert _git("rev-list", "--count", f"{BASELINE}..{RB10_COMMIT}") == "11"
-    assert _git("rev-list", "--left-right", "--count", f"main...{RB10_COMMIT}") == "0\t11"
-    assert _git("branch", "-r", "--contains", RB10_COMMIT) == ""
-    assert "codex/cuda-resident-backend" in _git("branch", "--contains", RB10_COMMIT)
-    worktrees = _git("worktree", "list", "--porcelain")
-    assert "branch refs/heads/codex/cuda-resident-backend" in worktrees
+    assert _git("rev-list", "--left-right", "--count", f"{BASELINE}...{RB10_COMMIT}") == "0\t11"
 
 
 def test_rb11_closure_has_bilingual_links_and_byte_stable_json_guards() -> None:
@@ -128,9 +122,9 @@ def test_rb11_closure_has_bilingual_links_and_byte_stable_json_guards() -> None:
     assert "cuda_resident_rb10_hold_decision_20260731.json -text" in attributes
     assert "cuda_resident_rb11_closure_20260731.json -text" in attributes
 
-    english = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_rb11_closure_20260731.md"
-    ).read_text(encoding="utf-8")
+    english = (ROOT / "docs/plan/exact_runtime/cuda_resident_rb11_closure_20260731.md").read_text(
+        encoding="utf-8"
+    )
     chinese = (
         ROOT / "docs/plan/exact_runtime/cuda_resident_rb11_closure_20260731.zh.md"
     ).read_text(encoding="utf-8")

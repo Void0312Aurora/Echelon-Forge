@@ -7,18 +7,19 @@ Language versions:
 - Size policy: [cuda_resident_runtime_program_2_size_policy_20260731.json](cuda_resident_runtime_program_2_size_policy_20260731.json)
 - Iteration log: [cuda_resident_runtime_program_2_iteration_log_20260731.md](cuda_resident_runtime_program_2_iteration_log_20260731.md)
 - CR2-6b evidence: [cuda_resident_cr2_matrix_evidence_20260804.md](cuda_resident_cr2_matrix_evidence_20260804.md)
+- CR2-7 closure: [cuda_resident_cr2_closure_20260805.md](cuda_resident_cr2_closure_20260805.md)
 
 - Document type: new explicit continuation program after RB11 closure
 - Branch: `codex/cuda-resident-runtime-program-2`
 - Parent closure: `935926e83b18187c79a6e0be2ca010276c1a6fc4`
 - Maintained baseline: `395e02b7dfeaa87baedb2611ec503d14ab137ce3`
 - Date: `2026-07-31`
+- Closure date: `2026-08-05`
 
-Status: **CR2-6a is independently approved and committed as `0c24a075`;
-CR2-6b is the active production-matrix evidence and selection-advisory candidate.
-The previous RB0-RB11 program remains
-closed without promotion. This program may either produce promotion-grade
-evidence or close again; it does not reopen maintained support by itself.**
+Status: **CR2-0 through CR2-6b are independently approved and committed. Runtime
+Program 2 is closed without promotion by CR2-7 in the commit containing the
+closure record. The CUDA-resident second backend and its evidence are retained
+as an unmaintained research candidate; maintained support remains closed.**
 
 ## 1. Objective and boundary
 
@@ -136,14 +137,14 @@ exception may be used to hide semantic implementation growth.
 | CR2-0 | Freeze this program, size policy, exception manifest, and architecture guard. | Completed in `2f34fac6`; policy parses and the reviewed write set is committed. |
 | CR2-1 | Split `cuda_world_store_cuda.cu` by layout/allocation, Phase A, Phase B, Phase D, barriers, and device API orchestration without semantic change. | Independently approved by `/root/cr2_split_review` and committed as `db7e6ad4`; no CR2-owned module exceeds 1000 lines; focused C++/CUDA lifecycle, replay, parity, and architecture tests are green. |
 | CR2-2a | Split the RB9 probe's lane-specific session into a private implementation module without changing its invocation surface, JSON schema, errors, or phase order. | Completed after independent approval in `bf695071`; probe/session modules are below the soft limit and historical evidence remains untouched. |
-| CR2-2p | Unblock the real Flecs CPU lane on VS2022 with only the portable bit scan, intended global environment-model type, and MSVC core math-constant opt-in. | Real `FlecsCpuBackend` graph compiles; focused guard passes; independent review and a separate commit precede CR2-2b. |
+| CR2-2p | Unblock the real Flecs CPU lane on VS2022 with only the portable bit scan, intended global environment-model type, and MSVC core math-constant opt-in. | Independently approved and committed as `dee02146`; the real `FlecsCpuBackend` graph compiles on VS2022. |
 | CR2-2b | Define one full-window trace and equivalent CPU/CUDA invocation surface, including setup, input, evaluation, advance, export, and error/barrier semantics. | Independently approved and committed as `607c1f33`; both real lanes consume the same trace through the declared surface. |
 | CR2-3 | Add a real device consumer/learner-facing lease and remove hidden host validation from the measured consumer path. | Independently approved and committed as `7da41a2a`; explicit consumer smoke, ownership/lifetime/failure tests, deferred diagnostic readback, and CUDA-on/off validation pass; public support stays closed. |
 | CR2-4a | Split the 919-line RB8 replay test into bounded support/projection/test owners without changing its oracle, quarantine, 93-field budget, or historical evidence. | Independently approved and committed as `d778c67c`; CUDA-on/off replay and architecture guards passed with no remaining watch item. |
 | CR2-4b | Release selected-slice parity and deterministic reset identity from quarantine using real payload evidence and an explicit identity policy. | Independently approved and committed as `08b48f29`; the 12-field real projection and exact same-backend reset pass while public support remains closed. |
-| CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | Split into CR2-5a static/topology evidence and CR2-5b achieved-counter collection; no tuning claim is made from either incomplete half. |
-| CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | CR2-6a was independently approved and committed as `0c24a075`; CR2-6b now carries two order-balanced production campaigns, fresh parity confirmation, and a host-specific fail-closed selection advisory pending independent review. |
-| CR2-7 | Make a separately reviewed promotion or closure decision. | Promotion requires a new explicit authorization and integration plan; otherwise record a second closure without changing maintained behavior. |
+| CR2-5 | Collect ptxas/Nsight resource evidence for the full window: registers, spills, local/shared/global traffic, occupancy, divergence, and launch topology. | CR2-5a and CR2-5b were independently approved and committed as `6d7ec7dd` and `05b05c5a`; static/topology evidence is complete, while achieved counters close with documented `ERR_NVGPUCTRPERM` and no tuning claim. |
+| CR2-6 | Run production-shaped world-count/mode matrix with rollout and small-batch measurements. | CR2-6a and CR2-6b were independently approved and committed as `0c24a075` and `356bcd56`; two order-balanced campaigns, fresh parity, and the host-specific fail-closed advisory are retained. |
+| CR2-7 | Make a separately reviewed promotion or closure decision. | Closed without promotion in the commit containing `cuda_resident_cr2_closure_20260805.json`; maintained behavior is unchanged and future work requires a new explicit program. |
 
 CR2-1 through CR2-6 may be repeated as narrowly scoped sub-iterations, but a
 single commit may not combine structural decomposition, semantic expansion,
@@ -317,6 +318,28 @@ full protocol, content-address their raw reports, compare only common available
 modes, treat CUDA-only consumer rows separately, and derive an explicit
 small-batch selection policy. Counter, support, maintained, tuning, and promotion
 gates remain false.
+
+### CR2-6b boundary
+
+CR2-6b tracks four unmodified production reports from two order-balanced,
+non-overlapping campaigns and rederives their statistics and policy. World 1
+uses the CPU reference; world 4 without export uses CUDA; world 4 with host
+export keeps a conservative CPU default because rollout p95 reverses between
+campaigns; world 16/64/256 use CUDA for common modes. Device-consumer modes are
+CUDA-only and make no CPU comparison. The advisory applies only to the five
+measured world counts and remains host-specific rather than becoming a runtime
+selector. Fresh 12-field parity passes, while achieved counters, tuning,
+support, maintained, and promotion gates remain false.
+
+### CR2-7 terminal boundary
+
+CR2-7 is an evidence-only closure. The achieved-counter gate remains blocked by
+`ERR_NVGPUCTRPERM`, and no explicit promotion authorization or integration plan
+exists. The machine-readable decision therefore records
+`closed_without_promotion`; it does not modify runtime, contracts, probes,
+CMake, kernels, launches, C++ tests, support flags, or public ABI. The branch,
+worktree, 12-commit CR2 chain, and all evidence remain recoverable. Reopening
+requires a new explicit program and user-authorized scope.
 
 ## 5. Promotion and recovery boundary
 

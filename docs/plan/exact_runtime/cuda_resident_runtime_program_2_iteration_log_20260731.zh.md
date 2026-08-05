@@ -673,3 +673,61 @@ commit 前，新的独立 agent 必须审阅 exact staged snapshot、四份 raw 
 generated evidence、fresh parity artifact、selection derivation、CR2-5 blocker binding、
 documentation 与 size inventory。只有 `FINAL APPROVE` 才允许一个 CR2-6b commit；不授权
 merge、push、runtime selection、tuning、promotion，或在同一 commit 开始 CR2-7。
+
+## CR2-7 candidate —— 第二次无晋级 closure
+
+### 机械决策与保留证据
+
+CR2-7 在收口前 HEAD `356bcd56a61e40f1327d16b6a2dda335d7fdd553` 上评估已接受的
+CR2-0 至 CR2-6b chain。common-SPI full-window 路径、device-consumer boundary、
+12-field parity、static resource/launch topology 与两轮 production matrix 已完成。
+achieved-counter gate 未完成：真实 CR2-5b 尝试仍被 `ERR_NVGPUCTRPERM` 外部阻断，
+collected launch 为零，全部 achieved family 为 null。不存在显式 promotion 授权或
+integration plan。
+
+因此计划内唯一结果是 `closed_without_promotion`。CUDA-resident 实现作为未维护的
+研究型第二后端保留。CR2-6b host-specific advisory 原样保留，不转化为 RuntimeFacade
+selector、maintained performance contract 或 tuning 权限。不以 theoretical/zero 值
+替代 blocked counter，也不外推未测 world count。
+
+### 仓库、写集与恢复边界
+
+最终 pre-commit snapshot 中，原 maintained baseline 与 candidate/main merge base 仍为
+`395e02b7dfeaa87baedb2611ec503d14ab137ce3`。maintained `main` 由独立 PR #21 推进至
+`a4365cf6`；main 与 candidate 分别有 4 和 24 个独有提交，其中 parent closure
+`935926e8` 之后有 12 个线性 CR2 commit。在未 fetch 的本地 remote-tracking ref 范围内，
+没有 ref 包含收口前 HEAD。branch、worktree、commit chain、raw report 与 compact
+evidence 均保留。可变 ref 与 worktree presence 是有日期的观测，不是永久 architecture pin。
+
+CR2-7 写集仅包括精确 closure JSON、双语 closure pair、双语 plan/log/index 终态、
+parent plan index pair、严格 closure validator 与 architecture guard、size inventory
+更新，以及 closure JSON 的 `-text` 规则。既有 RB11 closure guard 从可变 live ref
+收窄为冻结快照与不可变提交图。runtime、contract、probe、CMake、kernel、launch、
+C++ test、support flag 与 public ABI 均不变。不执行 merge、push、删除、清理、权限修改
+或 maintained rollback。
+
+### 规模、验证与复核门
+
+新 validator 为 546 行，新 architecture guard 为 232 行，调整后的 RB11 guard 为 143
+行；均低于 700 行 soft target 与 1000 行 hard ceiling。CR2-7 不增加大型 raw artifact。
+保留的四份 CR2-6b report 合计 597,239 bytes，作为可重新推导证据仍有保留价值；每件
+均低于 512 KiB artifact soft cap 与 1 MiB hard cap。
+
+严格 validator 检查 JSON type、exact/canonical descriptor、gate/advisory invariant、
+不可变线性提交链、maintained flag 与 evidence-only 写边界。`--check-live-snapshot`
+在 acceptance 时单独比对可变本地 ref/worktree；持久 architecture test 不 pin 未来仓库
+操作。review 前必须通过 focused closure/size test、完整 CUDA-resident runtime-profile
+selection、Ruff/format、diff check，以及已接受的 CUDA-on/off lifecycle/replay/full-window
+套件。
+
+focused closure/size test 为 24/24；完整 CUDA-resident runtime-profile selection 为
+179 passed、21 deselected；Ruff check/format、严格 JSON 解析、live closure validator
+与 `git diff --check` 通过。CUDA-on lifecycle/replay/full-window 保持 14/14、599/599，
+3/3、47/47，以及 6/6、153/153；CUDA-off 保持 14/14、91/91，3/3、14/14，以及
+6/6、136/136。
+
+新的独立 agent 必须审阅精确 staged CR2-7 snapshot、机器记录、保留证据 hash、blocker
+与授权逻辑、selection-advisory 边界、Git topology、maintained flag、双语链接、写集与
+全部规模限制。只有 `FINAL APPROVE` 才允许形成一个 CR2-7 closure commit；不授权
+merge、push、promotion、tuning、host permission 修改、cleanup，也不允许在本已关闭
+program 下继续下一轮 CUDA-resident 迭代。

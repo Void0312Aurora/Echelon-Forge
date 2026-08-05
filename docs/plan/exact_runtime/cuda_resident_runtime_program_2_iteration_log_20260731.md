@@ -772,3 +772,73 @@ evidence, fresh parity artifact, selection derivation, CR2-5 blocker binding,
 documentation, and size inventory require a new independent agent review. Only
 `FINAL APPROVE` permits one CR2-6b commit. It does not authorize merge, push,
 runtime selection, tuning, promotion, or beginning CR2-7 in the same commit.
+
+## CR2-7 candidate — second closure without promotion
+
+### Mechanical decision and retained evidence
+
+CR2-7 evaluates the accepted CR2-0 through CR2-6b chain at pre-closure head
+`356bcd56a61e40f1327d16b6a2dda335d7fdd553`. The common-SPI full-window path,
+device-consumer boundary, 12-field parity, static resources/launch topology,
+and two-campaign production matrix are complete. The achieved-counter gate is
+not complete: the real CR2-5b attempt remains externally blocked by
+`ERR_NVGPUCTRPERM`, with zero collected launches and all achieved families null.
+No explicit promotion authorization or integration plan exists.
+
+The only in-program outcome is therefore `closed_without_promotion`. The
+CUDA-resident implementation remains a retained, unmaintained research second
+backend. The CR2-6b host-specific advisory is preserved exactly; it is not
+converted into a RuntimeFacade selector, maintained performance contract, or
+permission to tune. No theoretical or zero value substitutes for the blocked
+counters, and no unmeasured world count is extrapolated.
+
+### Repository, write, and recovery boundary
+
+At the final pre-commit snapshot, the original maintained baseline and
+candidate/main merge base remain `395e02b7dfeaa87baedb2611ec503d14ab137ce3`.
+Maintained `main` independently advanced through PR #21 to `a4365cf6`; main and
+the candidate have 4 and 24 unique commits respectively, including 12 linear
+CR2 commits after parent closure `935926e8`. No local remote-tracking ref
+contains the pre-closure head without fetching. The branch, worktree, commit
+chain, raw reports, and compact evidence remain retained. Variable refs and
+worktree presence are a dated observation, not a permanent architecture pin.
+
+The CR2-7 write set is limited to the exact closure JSON, bilingual closure
+pair, bilingual plan/log/index terminal status, the parent plan index pair, a
+strict closure validator and architecture guard, size inventory updates, and a
+`-text` rule for the closure JSON. The existing RB11 closure guard is narrowed
+from mutable live refs to its frozen snapshot and immutable commit graph.
+Runtime, contracts, probes, CMake, kernels, launches, C++ tests, support flags,
+and public ABI are unchanged. No merge, push, deletion, cleanup, permission
+change, or maintained rollback is performed.
+
+### Size, validation, and review gate
+
+The new validator is 546 lines, the new architecture guard is 232 lines, and the
+adjusted RB11 guard is 143 lines. All are below the 700-line soft target and
+1000-line hard ceiling. CR2-7 adds no large raw artifact. The four retained
+CR2-6b reports total 597,239 bytes and remain justified as rederivable evidence,
+with every file below the 512 KiB artifact soft cap and 1 MiB hard cap.
+
+The strict validator checks JSON types, exact/canonical descriptors, gate and
+advisory invariants, the immutable linear commit chain, maintained flags, and
+the evidence-only write boundary. `--check-live-snapshot` separately compares
+variable local refs/worktrees during acceptance; persistent architecture tests
+do not pin future repository operations. Focused closure/size tests, the complete
+CUDA-resident runtime-profile selection, Ruff/format, diff checks, and the
+accepted CUDA-on/off lifecycle/replay/full-window suites must pass before review.
+
+Focused closure/size tests pass 24/24. The complete CUDA-resident
+runtime-profile selection passes 179 tests with 21 deselected. Ruff check/format,
+strict JSON parsing, the live closure validator, and `git diff --check` pass.
+CUDA-on lifecycle/replay/full-window remain 14/14 and 599/599, 3/3 and 47/47,
+and 6/6 and 153/153; CUDA-off remains 14/14 and 91/91, 3/3 and 14/14, and 6/6
+and 136/136.
+
+A fresh independent agent must inspect the exact staged CR2-7 snapshot,
+machine record, retained evidence hashes, blocker and authorization logic,
+selection-advisory boundary, Git topology, maintained flags, bilingual links,
+write scope, and every size limit. Only `FINAL APPROVE` permits one CR2-7
+closure commit. It does not authorize merge, push, promotion, tuning, host
+permission changes, cleanup, or another CUDA-resident iteration under this
+closed program.
