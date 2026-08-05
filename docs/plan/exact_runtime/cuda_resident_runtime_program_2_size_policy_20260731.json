@@ -172,7 +172,7 @@
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_evidence.py",
       "role": "CR2-5a resource evidence validation and report orchestrator",
-      "observed_lines": 655
+      "observed_lines": 599
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_static.py",
@@ -180,9 +180,14 @@
       "observed_lines": 116
     },
     {
+      "path": "tools/diagnostics/cuda_resident_cr2_resource_schema.py",
+      "role": "complete CR2-5a report schema and cross-section invariant validator",
+      "observed_lines": 406
+    },
+    {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
       "role": "CR2-5a evidence, fail-closed parser, and topology guards",
-      "observed_lines": 382
+      "observed_lines": 432
     },
     {
       "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",
@@ -197,7 +202,7 @@
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
       "role": "CR2-5b evidence provenance, state, negative, and size guards",
-      "observed_lines": 256
+      "observed_lines": 276
     },
     {
       "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",

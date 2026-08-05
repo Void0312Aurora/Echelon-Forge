@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
+import subprocess
 from copy import deepcopy
 from pathlib import Path
 
@@ -15,8 +17,25 @@ CONTRACT = ROOT / "src/runtime/contracts/cuda_resident_resource_evidence_contrac
 PROBE = ROOT / "src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp"
 COLLECTOR = ROOT / "tools/diagnostics/cuda_resident_cr2_resource_evidence.py"
 STATIC_PARSER = ROOT / "tools/diagnostics/cuda_resident_cr2_resource_static.py"
+SCHEMA_VALIDATOR = ROOT / "tools/diagnostics/cuda_resident_cr2_resource_schema.py"
 EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_resource_evidence_20260804.json"
 CMAKE = ROOT / "CMakeLists.txt"
+EVIDENCE_COMMIT = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
+
+
+def _git_blob(commit: str, path: Path) -> bytes:
+    relative = path.relative_to(ROOT).as_posix()
+    return subprocess.run(
+        ["git", "show", f"{commit}:{relative}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+def _git_source_sha256(commit: str, path: Path) -> str:
+    content = _git_blob(commit, path).replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def _valid_probe() -> dict[str, object]:
@@ -225,11 +244,15 @@ def test_cr2_5a_evidence_records_static_resources_without_counter_or_tuning_clai
     resource.validate_report(evidence)
     assert evidence["source"]["baseline_commit"] == "08b48f299484428e7297f328ca860f8fadc31cc4"
     assert evidence["inputs"]["source_hash_canonicalization"] == "utf8_lf"
-    assert evidence["inputs"]["probe_source_sha256"] == resource.source_sha256(PROBE)
-    assert evidence["inputs"]["contract_source_sha256"] == resource.source_sha256(CONTRACT)
-    assert evidence["inputs"]["collector_source_sha256"] == resource.source_sha256(COLLECTOR)
-    assert evidence["inputs"]["static_parser_source_sha256"] == resource.source_sha256(
-        STATIC_PARSER
+    assert evidence["inputs"]["probe_source_sha256"] == _git_source_sha256(EVIDENCE_COMMIT, PROBE)
+    assert evidence["inputs"]["contract_source_sha256"] == _git_source_sha256(
+        EVIDENCE_COMMIT, CONTRACT
+    )
+    assert evidence["inputs"]["collector_source_sha256"] == _git_source_sha256(
+        EVIDENCE_COMMIT, COLLECTOR
+    )
+    assert evidence["inputs"]["static_parser_source_sha256"] == _git_source_sha256(
+        EVIDENCE_COMMIT, STATIC_PARSER
     )
     assert EVIDENCE.stat().st_size < 524_288
     assert evidence["launch_topology"]["launch_instance_count"] == 12
@@ -373,10 +396,37 @@ def test_cr2_5a_report_rejects_theoretical_values_copied_into_achieved_fields() 
         resource.validate_report(mutated)
 
 
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda value: value["launch_topology"].pop("launches"),
+        lambda value: value.update({"static_kernel_resources": []}),
+        lambda value: value["capture"].pop("range"),
+        lambda value: value["inputs"].pop("nsys_sqlite_sha256"),
+        lambda value: value["launch_topology"].pop("cuda_api_counts"),
+        lambda value: value["launch_topology"].pop("cuda_memcpy_transfers"),
+    ],
+    ids=(
+        "launch-inventory",
+        "static-resource-inventory",
+        "capture-provenance",
+        "input-provenance",
+        "cuda-api-inventory",
+        "cuda-copy-inventory",
+    ),
+)
+def test_cr2_5a_report_rejects_incomplete_evidence_sections(mutation) -> None:
+    evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+    mutation(evidence)
+    with pytest.raises(resource.EvidenceError):
+        resource.validate_report(evidence)
+
+
 def test_cr2_5a_new_modules_remain_below_soft_size_targets() -> None:
     assert len(CONTRACT.read_text(encoding="utf-8").splitlines()) <= 600
     assert len(PROBE.read_text(encoding="utf-8").splitlines()) <= 700
     assert len(COLLECTOR.read_text(encoding="utf-8").splitlines()) <= 700
     assert len(STATIC_PARSER.read_text(encoding="utf-8").splitlines()) <= 700
+    assert len(SCHEMA_VALIDATOR.read_text(encoding="utf-8").splitlines()) <= 700
     this_file = Path(__file__)
     assert len(this_file.read_text(encoding="utf-8").splitlines()) <= 700

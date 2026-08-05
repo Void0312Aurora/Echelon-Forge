@@ -20,10 +20,22 @@ RESOURCE_EVIDENCE = (
 )
 EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_counter_evidence_20260804.json"
 BASELINE = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
+EVIDENCE_COMMIT = "05b05c5a1f7968c603a4a933531bb52bdc30b9c4"
+RESOURCE_EVIDENCE_COMMIT = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
+
+def _git_blob(commit: str, path: Path) -> bytes:
+    relative = path.relative_to(ROOT).as_posix()
+    return subprocess.run(
+        ["git", "show", f"{commit}:{relative}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
 
 
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def _git_source_sha256(commit: str, path: Path) -> str:
+    content = _git_blob(commit, path).replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def _evidence() -> dict[str, object]:
@@ -127,11 +139,14 @@ def test_cr2_5b_evidence_records_real_permission_block_without_counter_claims() 
 
     inputs = evidence["inputs"]
     assert inputs["source_hash_canonicalization"] == "utf8_lf"
-    assert inputs["resource_evidence_sha256"] == _sha256(RESOURCE_EVIDENCE)
+    captured_resource_bytes = _git_blob(RESOURCE_EVIDENCE_COMMIT, RESOURCE_EVIDENCE).replace(
+        b"\n", b"\r\n"
+    )
+    assert inputs["resource_evidence_sha256"] == hashlib.sha256(captured_resource_bytes).hexdigest()
     assert inputs["binary_sha256"] == parent["inputs"]["binary_sha256"]
     assert inputs["probe_output_sha256"] == parent["inputs"]["probe_sha256"]
-    assert inputs["collector_source_sha256"] == resource.source_sha256(COLLECTOR)
-    assert inputs["contract_source_sha256"] == resource.source_sha256(CONTRACT)
+    assert inputs["collector_source_sha256"] == _git_source_sha256(EVIDENCE_COMMIT, COLLECTOR)
+    assert inputs["contract_source_sha256"] == _git_source_sha256(EVIDENCE_COMMIT, CONTRACT)
     for key, value in inputs.items():
         if key.endswith("_sha256") and value is not None:
             assert isinstance(value, str) and len(value) == 64
@@ -228,6 +243,11 @@ def test_cr2_5b_parent_link_rejects_binary_or_probe_hash_drift() -> None:
         counter.validate_parent_link(parent, "0" * 64, probe_sha256)
     with pytest.raises(counter.CounterEvidenceError, match="probe output differs"):
         counter.validate_parent_link(parent, binary_sha256, "0" * 64)
+
+    incomplete_parent = deepcopy(parent)
+    incomplete_parent["launch_topology"]["launches"] = []
+    with pytest.raises(resource.EvidenceError, match="launch inventory"):
+        counter.validate_parent_link(incomplete_parent, binary_sha256, probe_sha256)
 
 
 def test_cr2_5b_does_not_rewrite_cr2_5a_or_historical_rb9_evidence() -> None:

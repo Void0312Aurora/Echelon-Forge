@@ -11,6 +11,14 @@ from pathlib import Path
 from typing import Any
 
 if __package__:
+    from .cuda_resident_cr2_resource_schema import (
+        ACHIEVED_FIELDS,
+        LAUNCH_SEQUENCE,
+        PROFILE,
+        REPORT_KEYS,
+        SCHEMA,
+        validate_report as _validate_report,
+    )
     from .cuda_resident_cr2_resource_static import (
         EvidenceError,
         KERNELS,
@@ -21,6 +29,14 @@ if __package__:
         require as _require,
     )
 else:
+    from cuda_resident_cr2_resource_schema import (  # type: ignore[no-redef]
+        ACHIEVED_FIELDS,
+        LAUNCH_SEQUENCE,
+        PROFILE,
+        REPORT_KEYS,
+        SCHEMA,
+        validate_report as _validate_report,
+    )
     from cuda_resident_cr2_resource_static import (  # type: ignore[no-redef]
         EvidenceError,
         KERNELS,
@@ -32,25 +48,7 @@ else:
     )
 
 
-SCHEMA = "cuda_resident.cr2.kernel_resource_evidence.v1"
 PROBE_SCHEMA = "cuda_resident.cr2.resource_capture_probe.v1"
-PROFILE = "cr2.resource.steady_full_window_body.sm86.v1"
-
-
-LAUNCH_SEQUENCE = (
-    ("apply_barrier", "input_injection"),
-    ("phase_a_controls", "phase_a_controls"),
-    ("apply_barrier", "stage_publish"),
-    ("phase_b_forces", "phase_b_forces"),
-    ("phase_b_aerodynamics", "phase_b_aerodynamics"),
-    ("phase_b_integrate", "phase_b_integrate"),
-    ("phase_d_instruments", "phase_d_instruments"),
-    ("phase_d_configuration", "phase_d_configuration"),
-    ("phase_d_projection", "phase_d_projection"),
-    ("apply_barrier", "window_commit"),
-    ("phase_d_pack", "device_observation_pack"),
-    ("phase_d_consumer", "device_consumer"),
-)
 PROBE_KEYS = {
     "backend_id",
     "blocks",
@@ -72,27 +70,6 @@ PROBE_KEYS = {
     "tuning_authorized",
     "window_count",
     "world_count",
-}
-ACHIEVED_FIELDS = (
-    "achieved_occupancy",
-    "branch_divergence",
-    "global_memory_traffic",
-    "local_memory_traffic",
-    "shared_memory_traffic",
-)
-REPORT_KEYS = {
-    "schema_version",
-    "profile_id",
-    "evidence_date",
-    "source",
-    "inputs",
-    "toolchain",
-    "capture",
-    "launch_topology",
-    "static_kernel_resources",
-    "interpretation",
-    "achieved_counters",
-    "gates",
 }
 
 
@@ -494,40 +471,7 @@ def _git_head(path: Path) -> str:
 
 
 def validate_report(report: dict[str, Any]) -> None:
-    _require(set(report) == REPORT_KEYS, "resource evidence top-level keys drifted")
-    _require(report.get("schema_version") == SCHEMA, "resource evidence schema mismatch")
-    _require(report.get("profile_id") == PROFILE, "resource evidence profile mismatch")
-    topology = report.get("launch_topology")
-    _require(isinstance(topology, dict), "launch topology must be an object")
-    _require(topology.get("unique_kernel_count") == len(KERNELS), "unique kernel count drifted")
-    symbols = topology.get("kernel_symbols")
-    _require(isinstance(symbols, list) and len(symbols) == len(KERNELS), "symbol inventory drifted")
-    _require(
-        len({row.get("demangled_symbol_sha256") for row in symbols if isinstance(row, dict)})
-        == len(KERNELS),
-        "symbol inventory is not unique",
-    )
-    achieved = report.get("achieved_counters")
-    _require(isinstance(achieved, dict), "achieved counter state must be an object")
-    _require(
-        set(achieved) == {"status", *ACHIEVED_FIELDS},
-        "achieved counter fields do not match the fail-closed schema",
-    )
-    _require(achieved["status"] == "pending_cr2_5b", "CR2-5a cannot close counter capture")
-    for field in ACHIEVED_FIELDS:
-        _require(achieved[field] is None, f"CR2-5a must leave {field} null")
-    gates = report.get("gates")
-    _require(isinstance(gates, dict), "resource evidence gates must be an object")
-    for flag in (
-        "cr2_5_achieved_counter_gate_complete",
-        "maintained_claim_allowed",
-        "public_support_enabled",
-        "promotion_allowed",
-        "tuning_authorized",
-    ):
-        _require(gates.get(flag) is False, f"CR2-5a must keep {flag}=false")
-    _require(gates.get("cr2_5a_static_resource_complete") is True, "static gate incomplete")
-    _require(gates.get("cr2_5a_launch_topology_complete") is True, "topology gate incomplete")
+    _validate_report(report)
 
 
 def build_report(args: argparse.Namespace) -> dict[str, Any]:

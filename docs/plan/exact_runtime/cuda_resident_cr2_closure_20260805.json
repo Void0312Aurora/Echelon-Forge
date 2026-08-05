@@ -62,7 +62,7 @@
     "matrix_evidence": {
       "path": "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804.json",
       "bytes": 41059,
-      "sha256": "556e0af9a55370be0408f4a59078603e9c37c58df9ec5204bc0301c729ff3880"
+      "sha256": "6f9f3af1c59c629cb1e0b7a6f30da5c6287df303762a0320e36a7a73a03b494e"
     },
     "parity_confirmation": {
       "path": "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804/parity-comparison.json",
@@ -73,13 +73,13 @@
       "path": "docs/plan/exact_runtime/cuda_resident_cr2_counter_evidence_20260804.json",
       "canonicalization": "utf8_lf",
       "canonical_bytes": 4431,
-      "sha256": "8dd54b3586d435dd5c75d6a878a92ab735d367d561fad6ff3d3fb7e2235df3e4"
+      "sha256": "ac21f899bd8307e976a9fde3a7d8fd46382b57b56c2a2fdd1a4bd94e09915d92"
     },
     "resource_evidence": {
       "path": "docs/plan/exact_runtime/cuda_resident_cr2_resource_evidence_20260804.json",
       "canonicalization": "utf8_lf",
       "canonical_bytes": 18354,
-      "sha256": "71383c50b207f9d74120849d1e00afa72bb3165379dd974e32daa4a26d46b8e6"
+      "sha256": "baf413a550864ccd71028afed7ea1c48c4a6157deba82a0a31826b7779486530"
     }
   },
   "selection_advisory_summary": {
