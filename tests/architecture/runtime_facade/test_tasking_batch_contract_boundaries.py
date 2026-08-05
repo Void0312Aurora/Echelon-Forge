@@ -136,20 +136,17 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert "runtime_->get_task_orders_batch(" not in build_observation_packet_section
   assert "runtime_->get_task_orders_compatibility_batch(request.refs);" not in build_observation_packet_section
   build_tasking_packet_section = facade_cpp.split("RuntimeFacade::build_tasking_packet", 1)[1]
-  assert "if (request.include_task_order_contracts)" in build_tasking_packet_section
-  assert "if (request.include_mission_command_contracts)" in build_tasking_packet_section
-  assert "if (request.include_leader_intent_contracts)" in build_tasking_packet_section
-  assert "if (request.include_pilot_report_contracts)" in build_tasking_packet_section
+  assert ".include_task_orders = request.include_task_order_contracts" in build_tasking_packet_section
+  assert ".include_mission_commands = request.include_mission_command_contracts" in build_tasking_packet_section
+  assert ".include_leader_intents = request.include_leader_intent_contracts" in build_tasking_packet_section
+  assert ".include_pilot_reports = request.include_pilot_report_contracts" in build_tasking_packet_section
   assert "if (request.include_mission_commands)" not in build_tasking_packet_section
   assert "if (request.include_leader_intents)" not in build_tasking_packet_section
   assert "if (request.include_pilot_reports)" not in build_tasking_packet_section
-  assert "packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);" in build_tasking_packet_section
-  assert "packet.mission_command_contracts =" in build_tasking_packet_section
-  assert "runtime_->get_mission_commands_maintained_batch(request.refs);" in build_tasking_packet_section
-  assert "packet.leader_intent_contracts =" in build_tasking_packet_section
-  assert "runtime_->get_leader_intents_maintained_batch(request.refs);" in build_tasking_packet_section
-  assert "packet.pilot_report_contracts =" in build_tasking_packet_section
-  assert "runtime_->get_pilot_reports_maintained_batch(request.refs);" in build_tasking_packet_section
+  assert "packet.task_order_contracts = std::move(exported.task_orders);" in build_tasking_packet_section
+  assert "packet.mission_command_contracts = std::move(exported.mission_commands);" in build_tasking_packet_section
+  assert "packet.leader_intent_contracts = std::move(exported.leader_intents);" in build_tasking_packet_section
+  assert "packet.pilot_report_contracts = std::move(exported.pilot_reports);" in build_tasking_packet_section
   assert "packet.mission_commands = runtime_->get_mission_commands_batch(request.refs);" not in build_tasking_packet_section
   assert "packet.leader_intents = runtime_->get_leader_intents_batch(request.refs);" not in build_tasking_packet_section
   assert "packet.pilot_reports = runtime_->get_pilot_reports_batch(request.refs);" not in build_tasking_packet_section

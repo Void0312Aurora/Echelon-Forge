@@ -1,5 +1,7 @@
 #include "runtime/facade/runtime_facade_internal.h"
 
+#include "runtime/facade/internal/flecs_cpu_backend.h"
+
 #include <algorithm>
 #include <bit>
 #include <cstdint>
@@ -68,12 +70,12 @@ bool execution_source_snapshot_versions_equal(
 } // namespace
 
 RuntimeFacade::RuntimeFacade(std::size_t world_count)
-    : runtime_(std::make_unique<WorldBatchRuntime>(world_count)),
+    : runtime_(std::make_unique<FlecsCpuBackend>(world_count)),
       counterfactual_worldlines_(std::make_unique<CounterfactualWorldlineRegistry>()),
       identity_(std::make_shared<RuntimeFacadeIdentity>()) {}
 
 RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config)
-    : runtime_(std::make_unique<WorldBatchRuntime>(config.world_count)),
+    : runtime_(std::make_unique<FlecsCpuBackend>(config.world_count)),
       counterfactual_worldlines_(std::make_unique<CounterfactualWorldlineRegistry>()),
       identity_(std::make_shared<RuntimeFacadeIdentity>()) {
     configure_batch(config);
@@ -83,12 +85,12 @@ RuntimeFacade::RuntimeFacade(const RuntimeBatchConfig &config)
 // uint64 evidence cursors would otherwise be *copied* on move, letting a
 // moved-from facade silently mint ids that duplicate (or, via move
 // assignment, rewind) the destination's run. Each operation transfers every
-// member of RuntimeFacade -- runtime_, counterfactual_worldlines_,
+// member of RuntimeFacade -- runtime_, counterfactual_worldlines_, identity_,
 // next_run_snapshot_version_, next_trace_id_ -- and leaves the source's
 // cursors at kInvalidatedEvidenceCursor so the producer methods fail fast.
 // The tripwire below fires if the member set changes without this file
 // being revisited.
-static_assert(sizeof(RuntimeFacade) == 2 * sizeof(std::unique_ptr<WorldBatchRuntime>) +
+static_assert(sizeof(RuntimeFacade) == 2 * sizeof(std::unique_ptr<IWorldBatchBackend>) +
                                            sizeof(std::shared_ptr<RuntimeFacadeIdentity>) +
                                            3 * sizeof(std::uint64_t),
               "RuntimeFacade member set changed: update the user-defined move constructor and "

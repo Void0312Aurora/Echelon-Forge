@@ -1,3 +1,9 @@
 # Preserve byte-addressed Arnis artifacts exactly across platforms.
 tools/environment/arnis/patches/*.patch -text
 tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text
+
+# RB9-RB11 evidence and decision hashes are over committed bytes, not a
+# platform newline representation.
+docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730/** -text
+docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.json -text
+docs/plan/exact_runtime/cuda_resident_rb11_closure_20260731.json -text

@@ -1,9 +1,11 @@
 #pragma once
 
+#include "core/engine/world_batch_runtime.h"
 #include "runtime/facade/runtime_facade.h"
 
-#include "core/engine/world_batch_runtime.h"
 #include "runtime/contracts/stage_node_manifest_registry.h"
+#include "runtime/facade/internal/world_batch_backend.h"
+#include "runtime/facade/internal/world_batch_compatibility_port.h"
 
 #include <algorithm>
 #include <cctype>
@@ -12,6 +14,7 @@
 #include <deque>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -122,8 +125,18 @@ world_refs_from_engagement_refs(const std::vector<EngagementEntityRef> &refs) {
     return out;
 }
 
-inline bool valid_runtime_world_index(const WorldBatchRuntime &runtime, std::uint64_t world_index) {
-    return world_index < runtime.world_count();
+inline bool valid_runtime_world_index(const IWorldBatchBackend &runtime,
+                                      std::uint64_t world_index) {
+    return world_index < runtime.configuration().world_count;
+}
+
+inline const IWorldBatchCompatibilityPort &
+require_compatibility_port(const IWorldBatchBackend &runtime) {
+    const IWorldBatchCompatibilityPort *port = runtime.compatibility_port();
+    if (port == nullptr) {
+        throw std::logic_error("selected backend does not expose the legacy compatibility port");
+    }
+    return *port;
 }
 
 inline constexpr std::string_view kObservationExportNodeId = "observation_export.v1";

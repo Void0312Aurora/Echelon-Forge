@@ -1,7 +1,7 @@
 {
-  "allowlist_version": "i41.cpp_include_direction_allowlist.v3",
+  "allowlist_version": "i41.cpp_include_direction_allowlist.v4",
   "generated_at": "2026-07-20",
-  "amended_at": "2026-07-27",
+  "amended_at": "2026-08-05",
   "baseline_commit": "b618971f",
   "program_track": "T3 (unified_architecture_program) I38 slice 1, amended I41 slice 2, (f) re-adjudicated under the T1 schema-ownership option 2026-07-27",
   "description": "Ratchet allowlist for tests/architecture/governance/test_cpp_include_direction.py. Each entry is a pre-existing include-direction violation against the fine-grained layer policy in tools/architecture/cpp_include_graph.py, identified by an exact (file, line, include spelling) fingerprint. The gate fails on any violation NOT in this list (including a line-shifted or re-worded version of a listed one, which forces a conscious re-review) and fails if a listed entry is no longer reproduced (stale-allowlist rot). None of these are include-path-only mistakes; each is a structural ownership coupling that the deferred T3 physical link-unit split (ef_core -> engine/mission/facade/content targets) is expected to resolve by relocating types or inverting the dependency, not by editing an include path. See the I38 registration entry in docs/plan/repository_consolidation/README.md for the full census. I41 (T3 second slice) re-evaluated all six entries and converged one (the components/weapon_common.h -> models/kalman_seeker.h entry below is removed; see docs/plan/unified_architecture_program/t6_residual_ledger.md section 7 for the full six-item evaluation matrix and the I41 registration entry in docs/plan/repository_consolidation/README.md for the landing summary); the remaining five keep their I38 fingerprints unchanged and gain an I41 evaluated-and-deferred attribution recorded in each entry's reason field below. Amended 2026-07-27: the runtime_contracts entry, (f), was re-adjudicated under the T1 schema-ownership option and held (see its reason field and docs/plan/unified_architecture_program/t6_residual_ledger.md section 7.5); its line field moved 16 -> 34 because the held adjudication is now recorded in a comment at the include site, and the entry is additionally pinned by a dedicated held-edge test in the gate file.",
@@ -18,23 +18,23 @@
     },
     {
       "file": "src/core/engine/world_batch_runtime.h",
-      "line": 12,
+      "line": 13,
       "include": "core/mission/episode/execution_episode_controller.h",
       "from_group": "core_engine",
       "to_group": "core_mission_episode",
       "owner": "T3 physical link-unit split (re-evaluated I41, deferred; design-gap pointer: T4 exact-runtime alignment)",
       "next_gate": "Move batch-of-episode-controller ownership out of WorldBatchRuntime (engine) into a facade/mission-owned batch wrapper so engine stops holding core/mission/episode types by value.",
-      "reason": "WorldBatchRuntime owns std::vector<ExecutionEpisodeController> execution_episode_controllers_ directly and calls clear_state()/import_state()/has_state() on it; the engine-layer batch owner embeds a mission-layer object instead of mission depending on engine, inverting the documented core/mission README direction ('may consume ... the public API of core/engine'). Re-evaluated at I41 (T3 second slice): confirmed a genuine design gap -- ExecutionEpisodeController batch ownership is read/written by nine WorldBatchRuntime methods (clear/prime/ready/export/evaluate/step/step_result plus the private checked_execution_episode_controller accessors), so relocating ownership needs the facade/mission-owned batch wrapper named above, which is itself a WP4 hot-path design decision, not a type move. Deferred to T4 (Exact-runtime alignment)/the next T3 physical-split slice; not attempted this iteration to keep the write set bounded to the low-risk subset."
+      "reason": "WorldBatchRuntime owns std::vector<ExecutionEpisodeController> execution_episode_controllers_ directly and calls clear_state()/import_state()/has_state() on it; the engine-layer batch owner embeds a mission-layer object instead of mission depending on engine, inverting the documented core/mission README direction ('may consume ... the public API of core/engine'). Re-evaluated at I41 (T3 second slice): confirmed a genuine design gap -- ExecutionEpisodeController batch ownership is read/written by nine WorldBatchRuntime methods (clear/prime/ready/export/evaluate/step/step_result plus the private checked_execution_episode_controller accessors), so relocating ownership needs the facade/mission-owned batch wrapper named above, which is itself a WP4 hot-path design decision, not a type move. Deferred to T4 (Exact-runtime alignment)/the next T3 physical-split slice; not attempted this iteration to keep the write set bounded to the low-risk subset. Re-adjudicated 2026-08-05 after the compatibility-types extraction inserted one include above this edge: only the exact line fingerprint moved from 12 to 13; ownership, consumers, and the deferred next gate are unchanged."
     },
     {
-      "file": "src/core/engine/world_batch_runtime.h",
-      "line": 13,
+      "file": "src/core/engine/world_batch_visual_binding_compatibility_types.h",
+      "line": 5,
       "include": "gpu/gpu_visual_runtime.h",
       "from_group": "core_engine",
       "to_group": "gpu",
       "owner": "T3 physical link-unit split (re-evaluated I41, deferred; design-gap pointer: T4 exact-runtime alignment)",
       "next_gate": "Same GPU/engine integration seam as the interaction-broadphase entry above; WorldBatchVisualBindingCompatibilityScene stores gpu::VisualRenderRequest/VisibleObjectPacked by value in an engine-owned public struct.",
-      "reason": "WorldBatchVisualBindingCompatibilityScene (declared in this header) stores gpu::VisualRenderRequest and std::vector<gpu::VisibleObjectPacked> by value, so the engine-owned compatibility struct's shape depends on the gpu packet layout directly. Re-evaluated at I41 (T3 second slice): confirmed the same design gap as the other two gpu entries -- this struct is also the return/parameter type of two public WorldBatchRuntime batch methods (collect_visual_binding_compatibility_scenes_from_candidate_ids_batch/collect_visual_binding_compatibility_scenes_batch), so it cannot be relocated without the same GPU/engine integration seam. Deferred to T4 (Exact-runtime alignment)/the next T3 physical-split slice; not attempted this iteration to keep the write set bounded to the low-risk subset."
+      "reason": "WorldBatchVisualBindingCompatibilityScene (declared in this header) stores gpu::VisualRenderRequest and std::vector<gpu::VisibleObjectPacked> by value, so the engine-owned compatibility struct's shape depends on the gpu packet layout directly. Re-evaluated at I41 (T3 second slice): confirmed the same design gap as the other two gpu entries -- this struct is also the return/parameter type of two public WorldBatchRuntime batch methods (collect_visual_binding_compatibility_scenes_from_candidate_ids_batch/collect_visual_binding_compatibility_scenes_batch), so it cannot be relocated without the same GPU/engine integration seam. Deferred to T4 (Exact-runtime alignment)/the next T3 physical-split slice; not attempted this iteration to keep the write set bounded to the low-risk subset. Re-adjudicated 2026-08-05 after the flat-directory cleanup moved this compatibility DTO from world_batch_runtime.h into its dedicated types header: the engine-owned struct and its by-value GPU packet coupling are unchanged, so the held edge follows the declaration to the new exact fingerprint."
     },
     {
       "file": "src/core/engine/world_batch_visual_binding_compatibility_helper.h",

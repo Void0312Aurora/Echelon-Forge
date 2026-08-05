@@ -570,10 +570,8 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
     self.assertIn("apply_export_packet_metadata(", body)
     self.assertIn("finalize_recent_event_metadata(&packet)", body)
     self.assertIn("finalize_diagnostics_ancestry(&packet)", body)
-    self.assertTrue(
-      "get_agent_observations_batch" in body or "build_observation_packet" in body,
-      "engagement export should read live AgentObservation contacts via the facade/runtime observation path",
-    )
+    self.assertIn("export_state(runtime::backend::ExportRequest", _normalized_cpp_source(body))
+    self.assertIn(".include_agent_observations = true", body)
     self.assertIn("include_track_packets", body)
     self.assertIn("include_diagnostics_traces", body)
     self.assertIn("packet.track_packets.push_back", body)
@@ -602,7 +600,8 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
     self.assertIn("std::vector<DiagnosticsTrace> traces", body)
     self.assertIn("append_recent_diagnostics_traces", body)
     self.assertIn("request.include_track_packets || request.include_diagnostics_traces", body)
-    self.assertIn("runtime_->get_agent_observations_batch", body)
+    self.assertIn("export_state(runtime::backend::ExportRequest", _normalized_cpp_source(body))
+    self.assertIn(".include_agent_observations = true", body)
     self.assertIn("diagnostics_trace_from_track_packet", body)
     self.assertIn("stable_sort_diagnostics_traces(&traces)", body)
     self.assertNotIn("EngagementEventPacket packet{}", body)

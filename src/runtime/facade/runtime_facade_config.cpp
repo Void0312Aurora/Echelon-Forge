@@ -1,5 +1,6 @@
 #include "runtime/facade/runtime_facade_internal.h"
 
+#include "runtime/contracts/cuda_resident_backend_admission.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 
 #include <stdexcept>
@@ -48,17 +49,46 @@ RuntimeFidelityAdmission runtime_fidelity_admission_from_contract(
     return admission;
 }
 
+runtime::cuda_resident::BackendRequest
+backend_contract_request_from_facade(const RuntimeBackendRequest &request) {
+    return runtime::cuda_resident::BackendRequest{
+        .backend_profile_id = request.backend_profile_id,
+        .capability_manifest_id = request.capability_manifest_id,
+        .parity_budget_ref = request.parity_budget_ref,
+        .requested_feature_ids = request.requested_feature_ids,
+        .allow_unmaintained_candidate = request.allow_unmaintained_candidate,
+    };
+}
+
+RuntimeBackendAdmission backend_admission_from_contract(
+    const runtime::cuda_resident::BackendAdmissionResult &contract_result) {
+    return RuntimeBackendAdmission{
+        .admitted = contract_result.admitted,
+        .maintained_selection = contract_result.maintained_selection,
+        .experimental_selection = contract_result.experimental_selection,
+        .backend_profile_id = contract_result.backend_profile_id,
+        .capability_manifest_id = contract_result.capability_manifest_id,
+        .parity_budget_ref = contract_result.parity_budget_ref,
+        .admitted_feature_ids = contract_result.admitted_feature_ids,
+        .rejection_reason = contract_result.rejection_reason,
+        .errors = contract_result.errors,
+    };
+}
+
 } // namespace
 
 void RuntimeFacade::configure_batch(const RuntimeBatchConfig &config) {
-    runtime_->resize(config.world_count);
-    runtime_->set_worker_threads(config.worker_threads);
+    runtime_->configure(runtime::backend::ConfigureRequest{
+        .world_count = config.world_count,
+        .worker_threads = config.worker_threads,
+    });
 }
 
 RuntimeBatchConfig RuntimeFacade::batch_config() const noexcept {
+    const runtime::backend::Configuration config = runtime_->configuration();
     return RuntimeBatchConfig{
-        .world_count = runtime_->world_count(),
-        .worker_threads = runtime_->worker_threads(),
+        .world_count = config.world_count,
+        .worker_threads = config.worker_threads,
     };
 }
 
@@ -93,6 +123,18 @@ RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {
         .shadow_compare_rejection_reason = std::string(kShadowCompareRejectionReason),
         .multi_fidelity_rejection_reason = std::string(kMultiFidelityRejectionReason),
     };
+}
+
+RuntimeBackendAdmission
+RuntimeFacade::admit_backend_request(const RuntimeBackendRequest &request) const {
+    // RB2 freezes the request/admission contract but does not construct a CUDA
+    // backend. Keeping availability false here makes candidate selection fail
+    // closed even in builds that contain older CUDA helper experiments.
+    const runtime::cuda_resident::BackendAvailability availability{
+        .compiled_experimental_backend = false,
+    };
+    return backend_admission_from_contract(runtime::cuda_resident::admit_backend_request(
+        backend_contract_request_from_facade(request), availability));
 }
 
 RuntimeFidelityAdmission
@@ -152,31 +194,44 @@ RuntimeFacade::admit_fidelity_request(const RuntimeFidelityRequest &request) con
 }
 
 std::size_t RuntimeFacade::world_count() const noexcept {
-    return runtime_->world_count();
+    return runtime_->configuration().world_count;
 }
 
 void RuntimeFacade::resize(std::size_t world_count) {
-    runtime_->resize(world_count);
+    runtime_->configure(runtime::backend::ConfigureRequest{.world_count = world_count});
 }
 
 void RuntimeFacade::set_worker_threads(std::size_t worker_threads) noexcept {
-    runtime_->set_worker_threads(worker_threads);
+    runtime_->configure(runtime::backend::ConfigureRequest{.worker_threads = worker_threads});
 }
 
 std::size_t RuntimeFacade::worker_threads() const noexcept {
-    return runtime_->worker_threads();
+    return runtime_->configuration().worker_threads;
 }
 
 std::size_t RuntimeFacade::effective_worker_threads() const noexcept {
-    return runtime_->effective_worker_threads();
+    return runtime_->configuration().effective_worker_threads;
 }
 
 bool RuntimeFacade::load_database(const std::string &path) {
-    return runtime_->load_database(path);
+    return runtime_
+        ->load_content(runtime::backend::ContentRequest{
+            .kind = runtime::backend::ContentKind::Database,
+            .path = &path,
+        })
+        .loaded;
 }
 
 bool RuntimeFacade::load_unit_definitions(const std::string &path, std::string *error) {
-    return runtime_->load_unit_definitions(path, error);
+    runtime::backend::ContentResult result =
+        runtime_->load_content(runtime::backend::ContentRequest{
+            .kind = runtime::backend::ContentKind::UnitDefinitions,
+            .path = &path,
+        });
+    if (error != nullptr) {
+        *error = result.error;
+    }
+    return result.loaded;
 }
 
 namespace {

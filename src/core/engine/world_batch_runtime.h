@@ -8,10 +8,9 @@
 
 #include "components/physics/instruments.h"
 #include "core/engine/simulation_kernel.h"
+#include "core/engine/world_batch_visual_binding_compatibility_types.h"
 #include "core/interfaces/observation.h"
 #include "core/mission/episode/execution_episode_controller.h"
-#include "gpu/gpu_visual_runtime.h"
-#include "models/environment/default_environment_snapshot.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
 struct WorldEntityKinematics {
@@ -24,13 +23,6 @@ struct WorldEntityKinematics {
     double heading = 0.0;
     double pitch = 0.0;
     double roll = 0.0;
-};
-
-struct WorldBatchVisualBindingCompatibilityScene {
-    gpu::VisualRenderRequest request{};
-    std::vector<gpu::VisibleObjectPacked> objects;
-    IEnvironmentModel *environment = nullptr;
-    DefaultEnvironmentSnapshot environment_snapshot{};
 };
 
 class WorldBatchRuntime {

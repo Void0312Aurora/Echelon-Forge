@@ -161,6 +161,7 @@ set(EF_CORE_MISSION_SOURCES
 )
 
 set(EF_RUNTIME_FACADE_SOURCES
+    src/runtime/facade/internal/flecs_cpu_backend.cpp
     src/runtime/facade/runtime_facade.cpp
     src/runtime/facade/runtime_facade_config.cpp
     src/runtime/facade/runtime_facade_counterfactual.cpp
@@ -341,6 +342,37 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     )
 endif()
 
+# The resident backend is a separate experimental runtime target, not another
+# Flecs/GPU-helper implementation. Its C++ lifecycle shell and CUDA-off stub
+# are always compiled; only the instance-owned device metadata allocator is
+# added when CUDA experiments are explicitly enabled.
+set(EF_CUDA_RESIDENT_BACKEND_SOURCES
+    src/runtime/facade/internal/cuda_resident/cuda_resident_backend.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_world_store.cpp
+)
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    list(APPEND EF_CUDA_RESIDENT_BACKEND_SOURCES
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu
+    )
+endif()
+
+add_library(ef_cuda_resident_backend STATIC ${EF_CUDA_RESIDENT_BACKEND_SOURCES})
+target_include_directories(ef_cuda_resident_backend PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(ef_cuda_resident_backend PUBLIC
+    flecs::flecs
+)
+target_compile_definitions(ef_cuda_resident_backend PRIVATE
+    $<$<BOOL:${EF_ENABLE_CUDA_EXPERIMENTS}>:EF_ENABLE_CUDA_EXPERIMENTS=1>
+)
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    target_link_libraries(ef_cuda_resident_backend PUBLIC CUDA::cudart)
+    target_compile_options(ef_cuda_resident_backend PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>
+    )
+endif()
+
 add_library(ef_gpu_experiments STATIC ${EF_GPU_EXPERIMENT_SOURCES})
 target_include_directories(ef_gpu_experiments PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -439,6 +471,17 @@ set(EF_TEST_SOURCES
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
+    src/tests/test_world_batch_backend_contract.cpp
+    src/tests/test_cuda_resident_backend_admission.cpp
+    src/tests/test_cuda_resident_backend_lifecycle.cpp
+    src/tests/test_cuda_resident_backend_state.cpp
+    src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp
+    src/tests/test_cuda_resident_phase_a_cpu_reference.cpp
+    src/tests/test_cuda_resident_phase_b_cpu_reference.cpp
+    src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    src/tests/test_cuda_resident_replay.cpp
+    src/tests/test_cuda_resident_performance.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
     src/tests/test_runtime_facade_maintained_replay_envelope.cpp
@@ -449,8 +492,92 @@ add_executable(ef_test ${EF_TEST_SOURCES})
 # test_runtime_facade_*.cpp reference RuntimeFacade symbols, so ef_test links
 # ef_facade ahead of ef_core; the remaining suites keep their direct ef_core /
 # ef_gpu_experiments edges unchanged.
-target_link_libraries(ef_test PRIVATE ef_facade ef_core ef_gpu_experiments doctest::doctest)
+target_link_libraries(ef_test PRIVATE
+    ef_facade
+    ef_core
+    ef_cuda_resident_backend
+    ef_gpu_experiments
+    doctest::doctest
+)
 target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# Focused target for CUDA-on resident-backend validation. It deliberately avoids
+# the full ef_core graph, whose current MSVC portability debt is unrelated to the
+# RB3-RB7 lifecycle, state-barrier, Phase A/B, Phase-D, and device-view contracts.
+add_executable(ef_cuda_resident_lifecycle_test
+    src/tests/test_main.cpp
+    src/tests/test_cuda_resident_backend_lifecycle.cpp
+    src/tests/test_cuda_resident_backend_state.cpp
+    src/tests/test_cuda_resident_phase_a.cpp
+    src/tests/test_cuda_resident_phase_b.cpp
+    src/tests/test_cuda_resident_phase_d.cpp
+    src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/tests/test_cuda_resident_performance.cpp
+)
+target_link_libraries(ef_cuda_resident_lifecycle_test PRIVATE
+    ef_cuda_resident_backend
+    doctest::doctest
+)
+target_include_directories(ef_cuda_resident_lifecycle_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# RB8 replay/shadow validation keeps the CUDA-on target independent of ef_core's
+# pre-existing MSVC portability debt. Its CPU lane is the separately pinned
+# fixed-air fixture oracle used by the CUDA CPU-reference tests, not a second
+# maintained backend. Shadow results never route into RuntimeFacade or state.
+add_executable(ef_cuda_resident_replay_test
+    src/tests/test_main.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    src/tests/test_cuda_resident_replay.cpp
+)
+target_link_libraries(ef_cuda_resident_replay_test PRIVATE
+    ef_cuda_resident_backend
+    doctest::doctest
+)
+target_include_directories(ef_cuda_resident_replay_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# RB9 measures the same frozen trace through two separately built Release
+# probes. The CUDA-on probe keeps the existing ef_core/MSVC debt out of its
+# graph; the CUDA-off probe uses the real FlecsCpuBackend instead of the RB8
+# fixture oracle. Neither target is a maintained backend or admission surface.
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    add_executable(ef_cuda_resident_rb9_cuda_probe
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_rb9_cuda_probe PRIVATE
+        ef_cuda_resident_backend
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_rb9_cuda_probe PRIVATE
+        EF_RB9_CUDA_PROBE=1
+        EF_RB9_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_rb9_cuda_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+else()
+    add_executable(ef_cuda_resident_rb9_cpu_probe
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_rb9_cpu_probe PRIVATE
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_rb9_cpu_probe PRIVATE
+        EF_RB9_CPU_PROBE=1
+        EF_RB9_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_rb9_cpu_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+endif()
 
 # CTest entries for all doctest suites plus focused structural-failure lanes.
 add_test(NAME ef_test_all COMMAND ef_test)
@@ -461,6 +588,8 @@ add_test(NAME structural_failure_break_modes COMMAND ef_test --test-suite=struct
 add_test(NAME structural_consequence COMMAND ef_test --test-suite=structural_consequence)
 add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_damage_lifecycle)
 add_test(NAME world_batch_runtime COMMAND ef_test --test-suite=world_batch_runtime)
+add_test(NAME cuda_resident_lifecycle COMMAND ef_cuda_resident_lifecycle_test)
+add_test(NAME cuda_resident_replay COMMAND ef_cuda_resident_replay_test)
 add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
 set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 endif()
@@ -471,6 +600,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_facade
     ef_app
     ef_py
+    ef_cuda_resident_backend
     ef_gpu_experiments
     ef_gpu_visual_phase0_probe
     ef_gpu_execution_observation_phase0_probe
@@ -480,6 +610,10 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_gpu_comm_candidate_phase0_probe
     ef_gpu_visual_candidate_phase0_probe
     ef_test
+    ef_cuda_resident_lifecycle_test
+    ef_cuda_resident_replay_test
+    ef_cuda_resident_rb9_cpu_probe
+    ef_cuda_resident_rb9_cuda_probe
 )
 
 foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)

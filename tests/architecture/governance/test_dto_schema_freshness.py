@@ -579,7 +579,7 @@ EXPECTED_REGISTRATIONS = {
     3,
   ),
   "tools/maintenance/dto_schema/schemas/recent_engagement_events_fields.py": (
-    "src/core/engine/detail/recent_engagement_events.inc",
+    "src/runtime/contracts/detail/recent_engagement_events.inc",
     f"{_BUILDER_DIR}/recent_engagement_events_builder.py",
     14,
   ),

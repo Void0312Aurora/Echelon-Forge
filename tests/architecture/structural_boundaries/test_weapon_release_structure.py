@@ -8,6 +8,9 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   helper_text = _text(PILOT_WEAPON_RELEASE_SYSTEM)
   naval_helper_text = _text(NAVAL_MISSION_WEAPON_RELEASE_SYSTEM)
   engagement_event_types_text = _text(ENGAGEMENT_EVENT_TYPES)
+  engagement_contracts_text = _text(
+    REPO_ROOT / "src" / "runtime" / "contracts" / "engagement_contracts.h"
+  )
   kernel_header_text = _text(SIMULATION_KERNEL_HEADER)
   kernel_cpp_text = _text(SIMULATION_KERNEL_CPP)
   kernel_services_text = _text(SIMULATION_KERNEL_SERVICES)
@@ -56,7 +59,9 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
   assert "struct RecentEngagementEvents" not in kernel_header_text
   assert '#include "core/engine/simulation_kernel_engagement_event_store.h"' not in kernel_header_text
   assert '#include "core/engine/engagement_event_types.h"' in kernel_header_text
-  assert "struct RecentEngagementEvents" in engagement_event_types_text
+  assert '#include "runtime/contracts/engagement_contracts.h"' in engagement_event_types_text
+  assert "struct RecentEngagementEvents" not in engagement_event_types_text
+  assert "struct RecentEngagementEvents" in engagement_contracts_text
   assert "next_engagement_event_id_" not in kernel_header_text
   assert "pending_effects_launch_event_id_" not in kernel_header_text
   assert "record_legacy_launch_event(" not in kernel_header_text

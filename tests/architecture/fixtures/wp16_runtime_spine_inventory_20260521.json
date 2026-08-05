@@ -110,7 +110,7 @@
       "evidence_markers": [
         "RuntimeWindowResult run_window(const RuntimeWindowRequest& request);",
         "TaskingBatchPacket export_tasking_packet(const TaskingBatchRequest& request) const;",
-        "std::unique_ptr<WorldBatchRuntime> runtime_;"
+        "std::unique_ptr<IWorldBatchBackend> runtime_;"
       ]
     },
     {

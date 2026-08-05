@@ -52,6 +52,29 @@ struct RuntimeBatchConfig {
 #include "runtime/facade/detail/runtime_batch_config.inc"
 };
 
+// Explicit backend-selection preflight. This is deliberately separate from
+// RuntimeBatchConfig so the maintained two-field CPU default keeps its bytes
+// and behavior. Admission does not mutate or replace the active backend.
+struct RuntimeBackendRequest {
+    std::string backend_profile_id;
+    std::string capability_manifest_id;
+    std::string parity_budget_ref;
+    std::vector<std::string> requested_feature_ids;
+    bool allow_unmaintained_candidate = false;
+};
+
+struct RuntimeBackendAdmission {
+    bool admitted = false;
+    bool maintained_selection = false;
+    bool experimental_selection = false;
+    std::string backend_profile_id;
+    std::string capability_manifest_id;
+    std::string parity_budget_ref;
+    std::vector<std::string> admitted_feature_ids;
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+};
+
 struct RuntimeFidelityRequest {
 #define EF_RUNTIME_FIDELITY_REQUEST_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/runtime_fidelity_request.inc"

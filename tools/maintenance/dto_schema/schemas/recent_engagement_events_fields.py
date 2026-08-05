@@ -21,7 +21,7 @@ FILE_FOOTER = (
 
 SCHEMA = DtoSchema(
     name='recent_engagement_events',
-    output_path='src/core/engine/detail/recent_engagement_events.inc',
+    output_path='src/runtime/contracts/detail/recent_engagement_events.inc',
     file_header=FILE_HEADER,
     fields=(
         Field(name='launch_events', cpp_type='std::vector<LaunchEvent>', default='{}', group='EF_RECENT_ENGAGEMENT_EVENTS_FIELD'),

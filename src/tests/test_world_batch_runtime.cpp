@@ -4,6 +4,10 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <type_traits>
+
+static_assert(!std::is_polymorphic_v<WorldBatchRuntime>,
+              "WorldBatchRuntime compatibility ABI must remain non-polymorphic");
 
 TEST_SUITE("world_batch_runtime") {
 
