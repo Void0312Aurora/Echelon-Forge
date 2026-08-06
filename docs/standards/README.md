@@ -248,6 +248,9 @@ Additional maintained supplements:
 - Standards changes that register, refresh, hold, or retire implementation
   contracts must follow
   [Standards Maintenance Policy](governance/standards_maintenance_policy.md).
+- Project-internal work codes and implementation-stage aliases must follow the
+  [Internal Code Naming Policy](governance/internal_code_policy.md); stable
+  interfaces and runtime diagnostics lead with semantic capability names.
 - Documentation kinds, lifecycle states, README boundaries, evidence packs,
   generated output, config indexes, links, and archive transitions must follow
   the [Document Lifecycle Policy](governance/document_lifecycle_policy.md).
@@ -265,6 +268,7 @@ Additional maintained supplements:
 - [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
 - [Document Lifecycle Policy](governance/document_lifecycle_policy.md)
 - [Standards Maintenance Policy](governance/standards_maintenance_policy.md)
+- [Internal Code Naming Policy](governance/internal_code_policy.md)
 - [Release And Dependency Policy](governance/release_and_dependency_policy.md)
 - [Subagent Usage Policy](governance/subagent_usage_policy.md)
 - [WP Closure Lane Policy](governance/wp_closure_lane_policy.md)

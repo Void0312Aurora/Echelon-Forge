@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29",
+  "generated_at": "2026-08-07",
   "root": "docs",
   "pairs": [
     {
@@ -340,9 +340,9 @@
       "english": "docs/standards/README.md",
       "chinese": "docs/standards/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-07-18",
-      "english_hash": "1e8d2f28e47edf36e6d8a5318b7d96c04b6d774bc5b1e1cafc5879315db9af7c",
-      "chinese_hash": "41aeb44a943f3e600bec1ac153b611c338d329ebf7e12dcfe87e9aa2c2267f8d"
+      "last_verified": "2026-08-07",
+      "english_hash": "0498b6cd911a87cda3c7175e8237512f5b4fb04214d5c64cb65aa1dc84400f5c",
+      "chinese_hash": "c99c73f56dbf72499ec66015f280a0c648f514c2ad1f34d38e420b4907614a44"
     },
     {
       "pair_id": "standards/air/README",
@@ -478,6 +478,15 @@
       "last_verified": "2026-07-18",
       "english_hash": "57d9f9f50c0db131e2e6b97d9839a083bd1c290e57845d12371139e4c33dad22",
       "chinese_hash": "892f30e7fb428c1de0a45013383231cf7bae928b5b69c283a8cf6297b141a777"
+    },
+    {
+      "pair_id": "standards/governance/internal_code_policy",
+      "english": "docs/standards/governance/internal_code_policy.md",
+      "chinese": "docs/standards/governance/internal_code_policy.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-08-07",
+      "english_hash": "e443df9b447da57923b84cb99329de4782b86045d53af692f9fd663cfc7cd933",
+      "chinese_hash": "c0707fa3855d61b6013f21957ad6f362e0e6e21f943402186b73150ec0357504"
     },
     {
       "pair_id": "standards/governance/release_and_dependency_policy",
