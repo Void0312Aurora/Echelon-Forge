@@ -23,6 +23,7 @@ BASELINE = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
 EVIDENCE_COMMIT = "05b05c5a1f7968c603a4a933531bb52bdc30b9c4"
 RESOURCE_EVIDENCE_COMMIT = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
 
+
 def _git_blob(commit: str, path: Path) -> bytes:
     relative = path.relative_to(ROOT).as_posix()
     return subprocess.run(
@@ -36,6 +37,35 @@ def _git_blob(commit: str, path: Path) -> bytes:
 def _git_source_sha256(commit: str, path: Path) -> str:
     content = _git_blob(commit, path).replace(b"\r\n", b"\n").replace(b"\r", b"\n")
     return hashlib.sha256(content).hexdigest()
+
+
+def _numeric_paths(value, path=()):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from _numeric_paths(child, (*path, key))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _numeric_paths(child, (*path, index))
+    elif type(value) in {int, float}:
+        yield path, value
+
+
+def _set_path(value, path, replacement) -> None:
+    target = value
+    for part in path[:-1]:
+        target = target[part]
+    target[path[-1]] = replacement
+
+
+def _type_mutations(value):
+    if type(value) is int:
+        yield float(value)
+        if value in {0, 1}:
+            yield bool(value)
+    elif type(value) is float and value.is_integer():
+        yield int(value)
+        if value in {0.0, 1.0}:
+            yield bool(value)
 
 
 def _evidence() -> dict[str, object]:
@@ -248,6 +278,23 @@ def test_cr2_5b_parent_link_rejects_binary_or_probe_hash_drift() -> None:
     incomplete_parent["launch_topology"]["launches"] = []
     with pytest.raises(resource.EvidenceError, match="launch inventory"):
         counter.validate_parent_link(incomplete_parent, binary_sha256, probe_sha256)
+
+
+def test_resource_parent_link_rejects_equal_valued_non_integer_numeric_types() -> None:
+    parent = json.loads(RESOURCE_EVIDENCE.read_text(encoding="utf-8"))
+    binary_sha256 = parent["inputs"]["binary_sha256"]
+    probe_sha256 = parent["inputs"]["probe_sha256"]
+    mutation_count = 0
+    for path, original in _numeric_paths(parent):
+        for replacement in _type_mutations(original):
+            mutated = deepcopy(parent)
+            _set_path(mutated, path, replacement)
+            with pytest.raises(resource.EvidenceError):
+                resource.validate_report(mutated)
+            with pytest.raises(resource.EvidenceError):
+                counter.validate_parent_link(mutated, binary_sha256, probe_sha256)
+            mutation_count += 1
+    assert mutation_count >= 100
 
 
 def test_cr2_5b_does_not_rewrite_cr2_5a_or_historical_rb9_evidence() -> None:

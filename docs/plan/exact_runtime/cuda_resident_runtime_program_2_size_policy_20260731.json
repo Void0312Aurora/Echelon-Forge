@@ -182,7 +182,7 @@
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_schema.py",
       "role": "complete CR2-5a report schema and cross-section invariant validator",
-      "observed_lines": 406
+      "observed_lines": 432
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
@@ -202,7 +202,7 @@
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
       "role": "CR2-5b evidence provenance, state, negative, and size guards",
-      "observed_lines": 276
+      "observed_lines": 323
     },
     {
       "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",

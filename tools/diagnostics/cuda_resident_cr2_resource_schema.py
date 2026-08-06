@@ -187,6 +187,33 @@ def _positive_integer(value: Any, label: str) -> int:
     return result
 
 
+def _exact_integer(value: Any, expected: int, label: str) -> int:
+    require(type(value) is int and value == expected, f"{label} must be exactly integer {expected}")
+    assert isinstance(value, int)
+    return value
+
+
+def _exact_integer_list(value: Any, expected: list[int], label: str) -> list[int]:
+    require(type(value) is list and len(value) == len(expected), f"{label} shape drifted")
+    assert isinstance(value, list)
+    for index, (actual, wanted) in enumerate(zip(value, expected, strict=True)):
+        _exact_integer(actual, wanted, f"{label}[{index}]")
+    return value
+
+
+def _exact_integer_map(value: Any, expected: dict[str, int], label: str) -> dict[str, Any]:
+    result = _object(value, set(expected), label)
+    for key, wanted in expected.items():
+        _exact_integer(result[key], wanted, f"{label}.{key}")
+    return result
+
+
+def _validate_transfer_map(value: Any) -> None:
+    transfers = _object(value, set(EXPECTED_TRANSFERS), "CUDA copy inventory")
+    for direction, expected in EXPECTED_TRANSFERS.items():
+        _exact_integer_map(transfers[direction], expected, f"CUDA copy inventory.{direction}")
+
+
 def _validate_source_and_inputs(report: dict[str, Any]) -> None:
     source = _object(report["source"], SOURCE_KEYS, "resource evidence source")
     require(source["baseline_commit"] == BASELINE_COMMIT, "resource baseline commit drifted")
@@ -209,7 +236,7 @@ def _validate_toolchain_and_capture(report: dict[str, Any]) -> None:
     toolchain = _object(report["toolchain"], TOOLCHAIN_KEYS, "resource toolchain")
     require(toolchain["build_config"] == "Release", "resource build config drifted")
     require(toolchain["cuda_architecture"] == "sm_86", "resource architecture drifted")
-    require(toolchain["maxrregcount_argument"] == 0, "resource register argument drifted")
+    _exact_integer(toolchain["maxrregcount_argument"], 0, "resource register argument")
     require(toolchain["register_cap"] is None, "resource register cap must remain absent")
     require(
         toolchain["maxrregcount_zero_interpretation"] == "no_cap",
@@ -222,8 +249,8 @@ def _validate_toolchain_and_capture(report: dict[str, Any]) -> None:
 
     capture = _object(report["capture"], CAPTURE_KEYS, "resource capture")
     require(capture["range"] == "cudaProfilerApi", "resource capture range drifted")
-    require(capture["world_count"] == 256, "resource capture world count drifted")
-    require(capture["window_count"] == 1, "resource capture window count drifted")
+    _exact_integer(capture["world_count"], 256, "resource capture world count")
+    _exact_integer(capture["window_count"], 1, "resource capture window count")
     require(capture["trace_signature_algorithm"] == "fnv1a64", "trace algorithm drifted")
     require(capture["trace_signature_digest"] == "cb31675ee34e5015", "trace digest drifted")
     for key in ("setup_outside", "public_export_inside", "device_consumer_inside"):
@@ -239,33 +266,27 @@ def _validate_launch_topology(report: dict[str, Any]) -> tuple[dict[str, Any], l
     require(topology["source"] == "nsight_systems_sqlite_cuda_trace", "topology source drifted")
     launches = _list(topology["launches"], "launch inventory")
     require(len(launches) == len(LAUNCH_SEQUENCE), "launch inventory cardinality drifted")
-    require(
-        topology["launch_instance_count"] == len(launches),
-        "launch instance count contradicts inventory",
-    )
+    _exact_integer(topology["launch_instance_count"], len(launches), "launch instance count")
 
     for index, (row_value, expected) in enumerate(zip(launches, LAUNCH_SEQUENCE, strict=True)):
         row = _object(row_value, LAUNCH_KEYS, f"launch row {index}")
-        require(row["launch_index"] == index, f"launch index drifted at row {index}")
+        _exact_integer(row["launch_index"], index, f"launch index at row {index}")
         require(
             (row["kernel_id"], row["semantic_stage"]) == expected,
             f"launch sequence drifted at row {index}",
         )
-        require(row["grid"] == [2, 1, 1], f"launch grid drifted at row {index}")
-        require(row["block"] == [128, 1, 1], f"launch block drifted at row {index}")
+        _exact_integer_list(row["grid"], [2, 1, 1], f"launch grid at row {index}")
+        _exact_integer_list(row["block"], [128, 1, 1], f"launch block at row {index}")
         _positive_integer(row["registers_per_thread_metadata"], "launch register metadata")
         for key in (
             "dynamic_shared_bytes_metadata",
             "local_bytes_per_thread_metadata",
             "static_shared_bytes_metadata",
         ):
-            require(row[key] == 0, f"launch {key} drifted at row {index}")
+            _exact_integer(row[key], 0, f"launch {key} at row {index}")
 
     expected_ids = [spec.kernel_id for spec in KERNELS]
-    require(
-        topology["unique_kernel_count"] == len(set(expected_ids)),
-        "unique kernel count drifted",
-    )
+    _exact_integer(topology["unique_kernel_count"], len(set(expected_ids)), "unique kernel count")
     require(
         {row["kernel_id"] for row in launches} == set(expected_ids), "launch kernel set drifted"
     )
@@ -284,9 +305,9 @@ def _validate_launch_topology(report: dict[str, Any]) -> tuple[dict[str, Any], l
         )
     require(symbol_ids == expected_ids, "kernel symbol order or identity drifted")
     require(len(set(symbol_hashes)) == len(KERNELS), "kernel symbol hashes are not unique")
-    require(topology["cuda_api_counts"] == EXPECTED_API_COUNTS, "CUDA API inventory drifted")
-    require(topology["cuda_memcpy_transfers"] == EXPECTED_TRANSFERS, "CUDA copy inventory drifted")
-    require(topology["synchronization_activity_rows"] == 8, "synchronization rows drifted")
+    _exact_integer_map(topology["cuda_api_counts"], EXPECTED_API_COUNTS, "CUDA API inventory")
+    _validate_transfer_map(topology["cuda_memcpy_transfers"])
+    _exact_integer(topology["synchronization_activity_rows"], 8, "synchronization activity rows")
     return topology, launches
 
 
@@ -307,23 +328,28 @@ def _validate_static_resources(report: dict[str, Any], launches: list[Any]) -> N
         require(
             row["symbol_fragment"] == spec.symbol_fragment, f"symbol drift for {spec.kernel_id}"
         )
+        _exact_integer(
+            row["launch_instance_count"],
+            spec.launch_count,
+            f"launch cardinality for {spec.kernel_id}",
+        )
         require(
-            row["launch_instance_count"] == spec.launch_count == len(launch_rows),
+            row["launch_instance_count"] == len(launch_rows),
             f"launch cardinality drift for {spec.kernel_id}",
         )
         require(
             row["register_sources_agree"] is True, f"register sources disagree for {spec.kernel_id}"
         )
         _positive_integer(row["registers_per_thread"], f"registers for {spec.kernel_id}")
-        require(
-            row["nsys_register_metadata_values"]
-            == sorted({item["registers_per_thread_metadata"] for item in launch_rows}),
-            f"Nsight register metadata drift for {spec.kernel_id}",
+        _exact_integer_list(
+            row["nsys_register_metadata_values"],
+            sorted({item["registers_per_thread_metadata"] for item in launch_rows}),
+            f"Nsight register metadata for {spec.kernel_id}",
         )
-        require(
-            row["nsys_local_bytes_metadata_values"]
-            == sorted({item["local_bytes_per_thread_metadata"] for item in launch_rows}),
-            f"Nsight local metadata drift for {spec.kernel_id}",
+        _exact_integer_list(
+            row["nsys_local_bytes_metadata_values"],
+            sorted({item["local_bytes_per_thread_metadata"] for item in launch_rows}),
+            f"Nsight local metadata for {spec.kernel_id}",
         )
         shared_values = {item["static_shared_bytes_metadata"] for item in launch_rows}
         require(
@@ -361,7 +387,7 @@ def _validate_static_resources(report: dict[str, Any], launches: list[Any]) -> N
         require(warps == blocks * 4, f"active block/warp relation drift for {spec.kernel_id}")
         occupancy = row["theoretical_occupancy"]
         require(
-            type(occupancy) in {int, float} and math.isfinite(occupancy) and 0.0 < occupancy <= 1.0,
+            type(occupancy) is float and math.isfinite(occupancy) and 0.0 < occupancy <= 1.0,
             f"theoretical occupancy is invalid for {spec.kernel_id}",
         )
         require(
