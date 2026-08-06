@@ -9,7 +9,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/project/documentation_architecture.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
 ## Objective
 
@@ -45,6 +45,10 @@ are created only when they contain maintained material:
 - `work/issues/` for unresolved gaps;
 - `reviews/` for current review and acceptance decisions.
 
+The [documentation structure examples](../engineering/documentation/structure_examples.md)
+define the reusable skeleton for each surface and for nested owners. They are
+shape guidance, not technical or normative content for an owner.
+
 Document kind and lifecycle remain explicit metadata. Completed task facts are
 promoted to a maintained standard/reference/README; the remaining package is
 archived rather than kept indefinitely as an active task.
@@ -53,8 +57,9 @@ archived rather than kept indefinitely as an active task.
 
 - Phase 1: create the ownership roots; migrate `manual` to `operations`, `agent`
   to `engineering/automation`, and `book` to `research/sources`.
-- Phase 2: eliminate `forward`, `evaluation`, and `log` by routing each document
-  to its content owner, research, or archive.
+- Phase 2 (completed 2026-08-07): retire the maintained `forward`,
+  `evaluation`, and `log` surfaces by routing plans and reviews to their content
+  owners. Existing `evaluation/archive/` content remains frozen and untouched.
 - Phase 3: split `standards`, `plan`, and `task` by content ownership. Do not
   move those trees wholesale into new global buckets.
 - Phase 4: switch all maintained entry points and disallow new writes to legacy

@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/operations/README.md`
 Owner: `operations documentation`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
 面向开发者和用户的参考文档与操作指南，按类别组织。
 
@@ -27,6 +27,12 @@ Last verified: `2026-08-06`
 | 文档 | 说明 |
 |------|------|
 | [远程可视化](howto/visualization_guide.zh.md) | SSH 端口转发 + Web 实时查看仿真 |
+
+### 规划与开放问题
+
+| 文档 | 说明 |
+|------|------|
+| [可视化技术栈演进](visualization/work/issues/viz_stack_evolution.zh.md) | 维护中的北极星计划；不是实施权威 |
 
 ### 遗留归档
 

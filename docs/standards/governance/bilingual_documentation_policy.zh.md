@@ -5,7 +5,7 @@
 - 英文主文：`governance/bilingual_documentation_policy.md`
 - 中文辅文：[bilingual_documentation_policy.zh.md](bilingual_documentation_policy.zh.md)
 
-状态：`2026-08-06`，当前维护中文档语言布局的权威规则。
+状态：`2026-08-07`，当前维护中文档语言布局的权威规则。
 
 本文档定义仓库如何拆分英文与中文文档，使主线文档保持可读、可批处理翻译、可审计。
 
@@ -51,7 +51,6 @@ Tier A：严格双语维护面
   `docs/learning/`、`docs/operations/`、`docs/engineering/` 和 `docs/research/`
   下的项目级与 owner 根导航
 - `docs/engineering/automation/` 下的 Agent 权威、提示词与规则
-- 顶层前瞻导航：`docs/forward/README.md`
 - 保留参考索引：`docs/reference_artifacts.md`
 - `docs/standards/` 下的权威与治理树
 - `docs/operations/` 下的面向操作者 reference 与 how-to
@@ -68,7 +67,7 @@ Tier A：严格双语维护面
 
 Tier B：英文主文，中文辅文可选或延后
 
-- `docs/forward/` 下的前瞻性想法与 backlog
+- `docs/*/work/issues/` 下归属于 owner 的草拟计划和开放问题
 - `docs/plan/exact_runtime/**` 这类非权威计划分支
 - 仍处于高频变更中的 task 计划、checkpoint、freeze、analysis 长文
 

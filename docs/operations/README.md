@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/operations/README.md`
 Owner: `operations documentation`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
 Reference documentation and how-to guides for developers and users, organized by category.
 
@@ -27,6 +27,12 @@ Current-state descriptions of system capabilities, code structure, and physics i
 | Document | Description |
 |----------|-------------|
 | [Remote Visualization](howto/visualization_guide.md) | SSH port forwarding + Web real-time simulation view |
+
+### Planning And Open Issues
+
+| Document | Description |
+|----------|-------------|
+| [Visualization Stack Evolution](visualization/work/issues/viz_stack_evolution.md) | Maintained north-star plan; not implementation authority |
 
 ### Legacy Archive
 

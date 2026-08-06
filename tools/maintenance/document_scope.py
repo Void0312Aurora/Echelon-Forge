@@ -12,7 +12,6 @@ from typing import Iterable
 
 
 DEFAULT_EXCLUDE_SUBSTRINGS = (
-  "docs/forward/temp/",
   "docs/temp/",
   "docs/plan/results/",
   "docs/plan/architecture/review/",
@@ -62,6 +61,7 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
     return True
   if (
     relative.startswith("engineering/automation/")
+    or relative.startswith("engineering/documentation/")
     or relative.startswith("operations/")
     or relative.startswith("research/sources/")
     or relative.startswith("standards/")
@@ -70,8 +70,6 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
   if relative in STRICT_OWNER_DOCUMENTS:
     return True
   if relative in {
-    "forward/README.md",
-    "forward/README.zh.md",
     "plan/README.md",
     "plan/README.zh.md",
     "reference_artifacts.md",

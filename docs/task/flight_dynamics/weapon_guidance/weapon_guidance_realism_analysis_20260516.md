@@ -16,7 +16,7 @@ Related Files:
 - [DefaultEffectsModel (Hit Effects)](../../../../src/models/weapons/default_effects_model.cpp)
 - [DamageSystem (Proximity Fuze)](../../../../src/systems/combat/damage_system.h)
 - [SimulationKernel Weapon API (Firing Logic)](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
-- [Weapons and Engagement Rules Roadmap](../../../forward/weapons_engagement.md)
+- [Weapons and Engagement Rules Roadmap](../../../systems/weapons/work/issues/weapons_engagement.md)
 - [Sensor and Situational Awareness Realism Analysis (Related)](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
 - [Flight Dynamics Realism Analysis (Related)](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
 

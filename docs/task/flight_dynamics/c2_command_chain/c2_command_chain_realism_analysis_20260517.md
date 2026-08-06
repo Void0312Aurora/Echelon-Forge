@@ -32,7 +32,7 @@ Related Files:
 - [LeaderEnv commands.py](../../../../gym_envs/leader_env_parts/decision_runtime/commands.py)
 - [AirProfile (Air Command Construction)](../../../../python/rl/profile/air_profile.py)
 - [NavalProfile (Naval Command Construction)](../../../../python/rl/profile/naval_profile.py)
-- [C2 Communication Forward Look Document](../../../forward/c2_communication.md)
+- [C2 Communication and Command Chain Roadmap](../../../systems/command-tasking/work/issues/c2_communication.md)
 - [Naval Mission Minimal Structure](../../../standards/naval/minimal_task_structure.md)
 
 Document Positioning:

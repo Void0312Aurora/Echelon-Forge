@@ -15,7 +15,7 @@
 - [动力学组件定义](../../../../src/components/physics/dynamics.h)
 - [力/力矩/惯量组件](../../../../src/components/physics/forces.h)
 - [气动参考几何组件](../../../../src/components/systems/logistics.h)（MassProperties）
-- [物理引擎升级路线图](../../../forward/physics_engine_roadmap.md)
+- [物理引擎升级路线图](../../../systems/physics/work/issues/physics_engine_roadmap.zh.md)
 - [引擎能力清单](../../../operations/reference/engine_capabilities.zh.md)
 - [物理引擎库存](../../../operations/reference/physics_engine_inventory.zh.md)
 - [空战 1v1 切入分析](../../air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)

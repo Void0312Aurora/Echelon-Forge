@@ -15,15 +15,15 @@ TARGET_ROOTS = {
   "research",
   "systems",
 }
-TRANSITIONAL_ROOTS = {
-  "Archive",
-  "evaluation",
-  "forward",
-  "log",
-  "manual",
+ACTIVE_LEGACY_ROOTS = {
   "plan",
   "standards",
   "task",
+}
+ARCHIVE_ONLY_ROOTS = {
+  "Archive",
+  "evaluation",
+  "manual",
 }
 
 
@@ -47,14 +47,38 @@ def test_tracked_docs_use_registered_top_level_roots() -> None:
   }
 
   assert TARGET_ROOTS <= roots
-  assert roots <= TARGET_ROOTS | TRANSITIONAL_ROOTS
-  assert {"agent", "book", "archive"}.isdisjoint(roots)
+  assert roots <= TARGET_ROOTS | ACTIVE_LEGACY_ROOTS | ARCHIVE_ONLY_ROOTS
+  assert {"agent", "archive", "book", "forward", "log"}.isdisjoint(roots)
 
 
-def test_legacy_manual_contains_archives_only() -> None:
-  legacy_manual = [
-    path for path in _tracked_docs_paths() if path.startswith("docs/manual/")
+def test_archive_only_legacy_roots_contain_archives_only() -> None:
+  tracked = _tracked_docs_paths()
+
+  for root in ("evaluation", "manual"):
+    legacy_paths = [
+      path for path in tracked if path.startswith(f"docs/{root}/")
+    ]
+    assert legacy_paths
+    assert all(path.startswith(f"docs/{root}/archive/") for path in legacy_paths)
+
+
+def test_owner_local_work_and_reviews_declare_minimum_metadata() -> None:
+  governed = [
+    path
+    for path in _tracked_docs_paths()
+    if path.endswith(".md")
+    and Path(path).parts[1] in TARGET_ROOTS
+    and ("/work/issues/" in path or "/reviews/" in path)
   ]
 
-  assert legacy_manual
-  assert all(path.startswith("docs/manual/archive/") for path in legacy_manual)
+  assert governed
+  for relative in governed:
+    text = (REPO_ROOT / relative).read_text(encoding="utf-8")
+    for field in (
+      "Document kind:",
+      "Lifecycle:",
+      "Canonical:",
+      "Owner:",
+      "Last verified:",
+    ):
+      assert field in text, f"{relative} is missing {field}"

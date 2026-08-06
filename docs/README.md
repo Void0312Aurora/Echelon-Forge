@@ -9,7 +9,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
 `docs/` is organized by content ownership. Document kind is expressed inside
 the owning area; archive is a lifecycle endpoint rather than a competing
@@ -20,12 +20,12 @@ current authority.
 | Area | Ownership | Migration status |
 | --- | --- | --- |
 | [project](project/README.md) | Purpose, maturity, global status, roadmap, project decisions | Active; owns the migration plan |
-| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Route established; legacy plan/task sources remain authoritative until migrated |
-| [domains](domains/README.md) | Air, naval, ground, joint | Route established; content migration pending |
-| [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Route established; content migration pending |
-| [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Route established; content migration pending |
-| [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Phase-1 manual migration complete |
-| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation | Phase-1 automation migration complete |
+| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Phase-2 reviews migrated; legacy plan/task sources remain authoritative until migrated |
+| [domains](domains/README.md) | Air, naval, ground, joint | Phase-2 Air issue route active; broader migration pending |
+| [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Phase-2 system issue and review routes active |
+| [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Phase-2 policy and training issue routes active |
+| [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Manual and visualization routes migrated |
+| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation | Automation and review routes migrated |
 | [research](research/README.md) | Questions, methods, results, publications, external sources | Phase-1 source-index migration complete |
 
 The [documentation information architecture](project/documentation_architecture.md)
@@ -37,12 +37,14 @@ The following roots still contain maintained sources during the transition:
 
 - [standards](standards/README.md): normative vocabulary and governance;
 - [plan](plan/README.md): active/frozen direction and migration plans;
-- [task](task/README.md): scoped implementation work and status;
-- [forward](forward/README.md): unpromoted ideas and backlogs;
-- `evaluation/`: reviews awaiting owner routing.
+- [task](task/README.md): scoped implementation work and status.
 
 Do not add new top-level categories or expand these legacy roots. A document
 moves only after its content owner and current authority are identified.
+
+Legacy `Archive/`, `evaluation/archive/`, and `manual/archive/` containers are
+frozen historical storage, not maintained routes, and remain outside this
+migration's tracking surface.
 
 ## Direct Operational Routes
 
@@ -51,6 +53,7 @@ moves only after its content owner and current authority are identified.
 - [Physics engine inventory](operations/reference/physics_engine_inventory.md)
 - [Visualization guide](operations/howto/visualization_guide.md)
 - [Automation and agent guidance](engineering/automation/README.md)
+- [Documentation engineering and examples](engineering/documentation/README.md)
 - [Retained artifact provenance](reference_artifacts.md)
 - [Test-system orientation](../tests/README.md)
 

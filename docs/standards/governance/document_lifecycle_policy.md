@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/standards/governance/document_lifecycle_policy.md`
 Owner: `docs/standards/governance`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
-Status: `2026-07-18` authoritative policy for classifying, maintaining,
+Status: `2026-08-07` authoritative policy for classifying, maintaining,
 reviewing, generating, and archiving repository documentation.
 
 ## Purpose
@@ -68,10 +68,15 @@ Document kind: `<kind>`
 Lifecycle: `<lifecycle>`
 Canonical: `<repo-relative path or self>`
 Owner: `<component, domain, or governance surface>`
-Last verified: `<YYYY-MM-DD>`
+Last verified: `<YYYY-MM-DD>` or `not established`
 ```
 
 Additional requirements:
+
+- `not established` is allowed only for migrated legacy material or draft work
+  whose factual baseline was not reverified. It must include a visible content
+  status, and it cannot be promoted to `accepted`, `reference`, or `standard`
+  until an owner supplies a dated verification boundary;
 
 - `plan` and `task`: scope, non-goals, acceptance evidence, and residuals;
 - `reference`: implementation sources and the verification boundary;
@@ -84,6 +89,25 @@ Additional requirements:
 Legacy documents do not need a repository-wide metadata rewrite in one commit.
 When a legacy document is promoted, moved, or substantially edited, it must be
 brought into compliance in that same change.
+
+## Minimum Content Contracts
+
+Metadata alone is not a compliant document. Each maintained surface must make
+the following content explicit; headings may vary, but the information may not
+be omitted or replaced by a link to an unrelated ledger.
+
+| Surface | Required content |
+| --- | --- |
+| Owner README | What the owner owns; what it does not own; current authoritative entries; temporary legacy routes; maintenance trigger. |
+| Standard | Normative scope; defined terms; mandatory and prohibited behavior; compliance evidence; change procedure. |
+| Plan or `work/issues` page | Objective; evidence baseline; scope and non-goals; proposed decisions or sequence; acceptance evidence; residuals or next review trigger. |
+| Task or `work/active` page | Authorized outcome; current status; owned surfaces; validation commands/evidence; blockers; closure condition. |
+| Reference | Implementation/configuration sources of truth; last verification boundary; current supported behavior; known limitations; update trigger. |
+| How-to | Intended outcome; prerequisites; exact procedure; observable success result; rollback or recovery path when applicable. |
+| Review | Reviewed revision/date; evidence inspected; findings and severity; verdict or decision state; authority boundary; follow-up owner. |
+
+The [documentation authoring examples](../../engineering/documentation/structure_examples.md)
+show compliant shapes without creating a second normative policy.
 
 ## README Boundary
 

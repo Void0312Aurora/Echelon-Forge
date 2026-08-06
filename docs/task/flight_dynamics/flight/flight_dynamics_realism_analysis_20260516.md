@@ -17,7 +17,7 @@ Related files:
 - [Dynamics Component Definitions](../../../../src/components/physics/dynamics.h)
 - [Force/Moment/Inertia Components](../../../../src/components/physics/forces.h)
 - [Aerodynamic Reference Geometry Component](../../../../src/components/systems/logistics.h) (MassProperties)
-- [Physics Engine Upgrade Roadmap](../../../forward/physics_engine_roadmap.md)
+- [Physics Engine Upgrade Roadmap](../../../systems/physics/work/issues/physics_engine_roadmap.md)
 - [Engine Capability List](../../../operations/reference/engine_capabilities.md)
 - [Physics Engine Inventory](../../../operations/reference/physics_engine_inventory.md)
 - [Air Combat 1v1 Cut-in Analysis](../../air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)

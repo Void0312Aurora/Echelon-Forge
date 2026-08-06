@@ -9,7 +9,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/project/documentation_architecture.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
 ## 目标
 
@@ -41,6 +41,9 @@ Last verified: `2026-08-06`
 - `work/issues/`：未解决缺口；
 - `reviews/`：当前审查与验收决定。
 
+[文档结构实例](../engineering/documentation/structure_examples.zh.md)定义每种表面和
+嵌套 owner 的可复用骨架。它们只指导形态，不为 owner 提供技术或规范内容。
+
 文档类型和生命周期继续由显式元数据表达。任务完成后，将仍需维护的事实提升到
 standard、reference 或 README；其余任务包归档，不得永久保持 active task 身份。
 
@@ -48,8 +51,8 @@ standard、reference 或 README；其余任务包归档，不得永久保持 act
 
 - 第一阶段：建立所有权根；迁移 `manual → operations`、
   `agent → engineering/automation`、`book → research/sources`。
-- 第二阶段：取消 `forward`、`evaluation`、`log`，逐文档路由到内容 owner、
-  research 或 archive。
+- 第二阶段（2026-08-07 完成）：取消维护中的 `forward`、`evaluation`、`log`
+  表面，将计划和评审路由到内容 owner；既有 `evaluation/archive/` 保持冻结且不修改。
 - 第三阶段：按内容所有权拆分 `standards`、`plan`、`task`，不得把它们整体移动成
   新的全局桶。
 - 第四阶段：切换全部维护入口并禁止继续写入旧根；只有旧根不再含维护源时才删除。

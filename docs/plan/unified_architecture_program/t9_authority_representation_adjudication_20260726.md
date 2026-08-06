@@ -193,7 +193,7 @@ authority:
   problem built around authority delegation that is **explicit**
   (`docs/standards/services/air_force.md` — AFDP 3-0.1's commander-centered
   function with *explicit delegation of authority*); nothing in
-  `docs/forward/c2/` (command-link roadmap, operation layer) derives an
+  `docs/systems/command-tasking/work/issues/` (command-link roadmap, operation layer) derives an
   execution-agent capability from an echelon annotation.
 - The echelon defaults are ubiquitous carried data: A3 defaults **every**
   normalized task order to `TACON`/`Tactical` (census §9), and no compiled

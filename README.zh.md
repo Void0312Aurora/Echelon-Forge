@@ -53,7 +53,7 @@ Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞
 | Ground | 早期 tasking/runtime bootstrap。当前 fixture 验证共享 command/status 语义和 native platform-schema 证据，不声明完整地面 movement、sensing、fires 或 damage。 | `scenarios/ground/`、`docs/task/ground/`、`docs/standards/ground/` |
 | Air combat / A2 | 聚焦的战斗与高保真毁伤模型工作线，已有 retained evidence gate。它是一个领域线，不是整个项目身份。 | `scenarios/air_combat/`、`docs/task/air_combat/` |
 | Visualization / game | 探索性的操作员与前端表面；维护路径应以后端仿真 runtime 真值为准。 | `examples/viz/`、`docs/task/viz/`、`docs/task/game/` |
-| Model / world model | 策略/模型侧规划与实验线，包括 temporal HMoE 和世界模型工具。 | `docs/task/model/`、`docs/forward/models/`、`world_model_train.py` |
+| Model / world model | 策略/模型侧规划与实验线，包括 temporal HMoE 和世界模型工具。 | `docs/task/model/`、`docs/learning/work/issues/`、`world_model_train.py` |
 
 ## 命名与包标识
 
@@ -317,13 +317,11 @@ cmo_python -m pytest -q \
 - [docs/operations/reference/src_layer_map.zh.md](docs/operations/reference/src_layer_map.zh.md)
 - [docs/reference_artifacts.zh.md](docs/reference_artifacts.zh.md)
 
-## 前瞻工作
+## 规划与开放问题
 
-前瞻性说明位于 [docs/forward](docs/forward/README.md) 下。
-
-其中包括新添加的关于执行策略的 HMoE 设计说明：
-
-- [docs/forward/models/hierarchical_moe_execution_policy.md](docs/forward/models/hierarchical_moe_execution_policy.md)
+尚未提升的计划和未解决缺口现在归入各自内容 owner。HMoE 设计方向位于
+[docs/learning/work/issues/hierarchical_moe_execution_policy.zh.md](docs/learning/work/issues/hierarchical_moe_execution_policy.zh.md)，
+其余路由从[文档索引](docs/README.zh.md)进入。
 
 ## 许可
 

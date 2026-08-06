@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/architecture/README.md`
 Owner: `cross-domain architecture`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
 This is the target owner for cross-domain system architecture, runtime layers,
 contracts, backends, and architecture decisions. During migration, current
@@ -14,3 +14,14 @@ authorities remain under [plan/architecture](../plan/architecture/README.md),
 [plan/runtime_facade](../plan/runtime_facade/README.md), and
 [plan/exact_runtime](../plan/exact_runtime/README.md). A route moves here only
 in a separately reviewed migration slice.
+
+## Reviews
+
+- [Architecture review — 2026-06-03](reviews/architecture_review_20260603.md)
+- [Architecture norms and correctness review — 2026-06-03 (Chinese only)](reviews/architecture_norms_correctness_review_20260603.zh.md)
+
+These are retained review snapshots. They do not replace current standards,
+plans, implementation, or executable evidence.
+
+Use the [shared documentation structures](../engineering/documentation/structure_examples.md)
+for future architecture standards, references, work, and reviews.

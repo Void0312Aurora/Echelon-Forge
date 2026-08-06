@@ -18,7 +18,7 @@ Related files:
 - [EWSystem (Electronic Warfare)](../../../../src/systems/systems/ew_system.h)
 - [IEnvironmentModel Interface](../../../../src/core/interfaces/environment_model.h)
 - [DefaultEnvironmentModel (Atmosphere/LOS/Weather)](../../../../src/models/environment/default_environment_model.cpp)
-- [Sensor and Situational Awareness Roadmap](../../../forward/sensor_situation.md)
+- [Sensor and Situational Awareness Plan](../../../systems/sensing/work/issues/sensor_situation.md)
 - [Flight Dynamics Reality Analysis (Related)](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
 
 Document positioning:

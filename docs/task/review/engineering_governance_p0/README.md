@@ -10,8 +10,8 @@ Language:
 Inputs:
 
 - [Review task area](../README.md)
-- [Engineering discipline review](../../../evaluation/engineering_discipline_review_20260603.md)
-- [Engineering discipline claim verification](../../../evaluation/engineering_discipline_claim_verification_20260603.zh.md)
+- [Engineering discipline review](../../../engineering/reviews/engineering_discipline_review_20260603.zh.md)
+- [Engineering discipline claim verification](../../../evaluation/archive/engineering_discipline_claim_verification_20260603.zh.md)
 - [Agent subproject standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 - [Subagent usage policy](../../../standards/governance/subagent_usage_policy.md)
 

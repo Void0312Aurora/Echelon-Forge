@@ -16,7 +16,7 @@
 - [EWSystem（电子战）](../../../../src/systems/systems/ew_system.h)
 - [IEnvironmentModel 接口](../../../../src/core/interfaces/environment_model.h)
 - [DefaultEnvironmentModel（大气/LOS/天气）](../../../../src/models/environment/default_environment_model.cpp)
-- [传感器与态势感知路线图](../../../forward/sensor_situation.md)
+- [传感器与态势感知计划](../../../systems/sensing/work/issues/sensor_situation.zh.md)
 - [飞行动力学现实性分析（关联）](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
 
 文档定位：

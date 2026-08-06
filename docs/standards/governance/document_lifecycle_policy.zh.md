@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/standards/governance/document_lifecycle_policy.md`
 Owner: `docs/standards/governance`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
-状态：`2026-07-18`，仓库文档分类、维护、审阅、生成和归档的权威规范。
+状态：`2026-08-07`，仓库文档分类、维护、审阅、生成和归档的权威规范。
 
 ## 目的
 
@@ -63,10 +63,14 @@ Document kind: `<kind>`
 Lifecycle: `<lifecycle>`
 Canonical: `<仓库相对路径或 self>`
 Owner: `<组件、领域或治理表面>`
-Last verified: `<YYYY-MM-DD>`
+Last verified: `<YYYY-MM-DD>` 或 `not established`
 ```
 
 额外要求：
+
+- `not established` 只允许用于事实基线未重新核验的迁移旧材料或 draft work；
+  必须附带醒目的 content status，而且在 owner 给出带日期的核验边界前，不得提升为
+  `accepted`、`reference` 或 `standard`；
 
 - `plan` 与 `task`：范围、非目标、验收证据和残余；
 - `reference`：实现来源和核验边界；
@@ -78,6 +82,24 @@ Last verified: `<YYYY-MM-DD>`
 
 旧文档不需要一次性进行全仓元数据重写。旧文档被提升、移动或实质修改时，必须在
 同一变更中完成合规迁移。
+
+## 最低内容契约
+
+只有元数据并不足以构成合规文档。每种维护表面必须显式包含下列信息；标题名称
+可以调整，但不能省略，也不能用指向无关流水账的链接替代。
+
+| 表面 | 必需内容 |
+| --- | --- |
+| Owner README | owner 负责什么、不负责什么、当前权威入口、临时旧路由、维护触发条件。 |
+| Standard | 规范范围、术语定义、强制与禁止行为、合规证据、变更流程。 |
+| Plan 或 `work/issues` 页面 | 目标、证据基线、范围与非目标、拟议决策或顺序、验收证据、残余或下次评审触发条件。 |
+| Task 或 `work/active` 页面 | 已授权结果、当前状态、负责表面、验证命令/证据、阻塞项、关闭条件。 |
+| Reference | 实现/配置事实源、最后核验边界、当前支持行为、已知限制、更新触发条件。 |
+| How-to | 预期结果、前置条件、准确步骤、可观察成功结果、适用时的回滚或恢复路径。 |
+| Review | 被审 revision/日期、检查证据、发现与严重度、结论或决策状态、权威边界、后续 owner。 |
+
+[文档编写实例](../../engineering/documentation/structure_examples.zh.md)展示合规形状，
+但不会建立第二套规范权威。
 
 ## README 边界
 

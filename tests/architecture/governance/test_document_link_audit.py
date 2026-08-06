@@ -25,19 +25,19 @@ def test_translate_docs_batch_reexports_shared_scope_helpers(tmp_path: Path) -> 
   readme = docs_root / "README.md"
   consolidation_plan = docs_root / "plan/repository_consolidation/README.md"
   authority_map = docs_root / "engineering/automation/rules/document_authority_map.md"
-  forward_readme = docs_root / "forward/README.md"
+  examples_readme = docs_root / "engineering/documentation/structure_examples.md"
   reference_artifacts = docs_root / "reference_artifacts.md"
   retired_migration_path = docs_root / "plan/documentation_bilingual_migration_plan_20260518.md"
   _write(readme)
   _write(consolidation_plan)
   _write(authority_map)
-  _write(forward_readme)
+  _write(examples_readme)
   _write(reference_artifacts)
 
   assert translate_docs_batch.is_strict_bilingual_doc(readme, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(consolidation_plan, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(authority_map, docs_root)
-  assert translate_docs_batch.is_strict_bilingual_doc(forward_readme, docs_root)
+  assert translate_docs_batch.is_strict_bilingual_doc(examples_readme, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(reference_artifacts, docs_root)
   assert not translate_docs_batch.is_strict_bilingual_doc(retired_migration_path, docs_root)
   assert not translate_docs_batch.is_local_only_doc(readme)
@@ -233,13 +233,13 @@ def test_archive_sources_are_excluded_but_maintained_archive_targets_are_validat
 def test_full_tree_adds_non_strict_docs_without_adding_archive_sources(tmp_path: Path) -> None:
   _write(tmp_path / "README.md")
   _write(tmp_path / "docs/README.md")
-  _write(tmp_path / "docs/forward/note.md", "[missing](missing.md)\n")
+  _write(tmp_path / "docs/project/work/issues/note.md", "[missing](missing.md)\n")
   _write(tmp_path / "docs/archive/old.md", "[missing](missing.md)\n")
 
   assert audit.audit_repository(tmp_path).issues == []
   full = audit.audit_repository(tmp_path, full_tree=True)
   assert [(issue.source, issue.code) for issue in full.issues] == [
-    ("docs/forward/note.md", "missing-target")
+    ("docs/project/work/issues/note.md", "missing-target")
   ]
 
 

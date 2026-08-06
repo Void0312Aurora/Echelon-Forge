@@ -186,6 +186,6 @@ still not accepted.
 - MLF-8 debris/wreck lifecycle accepted archive:
   [a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.md](a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.md)
 - High-fidelity damage-system baseline:
-  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat/air_combat_damage_model_evaluation_20260522.md)
+  [air_combat_damage_model_evaluation_20260522.md](../../systems/effects/reviews/air_combat_damage_model_evaluation_20260522.md)
 
 Historical dated snapshots now live under [archive/README.md](archive/README.md).

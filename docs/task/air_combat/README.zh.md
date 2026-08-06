@@ -158,7 +158,7 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - 飞行控制面模型 implemented 归档：
   [archive/flight_control_surface_model_implemented_20260620/README.md](archive/flight_control_surface_model_implemented_20260620/README.md)
 - 高保真毁伤系统基线：
-  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat/air_combat_damage_model_evaluation_20260522.md)
+  [air_combat_damage_model_evaluation_20260522.md](../../systems/effects/reviews/air_combat_damage_model_evaluation_20260522.md)
 
 历史带日期快照现统一放入 [archive/README.zh.md](archive/README.zh.md)。
 

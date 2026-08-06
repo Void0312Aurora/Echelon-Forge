@@ -56,7 +56,7 @@ the table below as an entry-map, not as a release promise.
 | Ground | Early tasking/runtime bootstrap. Current fixtures validate shared command/status semantics and native platform-schema evidence, not full ground movement, sensing, fires, or damage. | `scenarios/ground/`, `docs/task/ground/`, `docs/standards/ground/` |
 | Air combat / A2 | Focused combat and high-fidelity damage-model workline with retained evidence gates. It is one domain line, not the whole project identity. | `scenarios/air_combat/`, `docs/task/air_combat/` |
 | Visualization / game | Exploratory operator and frontend surfaces backed by simulation runtime truth where maintained. | `examples/viz/`, `docs/task/viz/`, `docs/task/game/` |
-| Model / world model | Planning and experimental policy/model work, including temporal HMoE and world-model utilities. | `docs/task/model/`, `docs/forward/models/`, `world_model_train.py` |
+| Model / world model | Planning and experimental policy/model work, including temporal HMoE and world-model utilities. | `docs/task/model/`, `docs/learning/work/issues/`, `world_model_train.py` |
 
 ## Naming And Package Identity
 
@@ -346,13 +346,12 @@ Diagnostic and benchmark scripts are centered under
 - [docs/operations/reference/src_layer_map.md](docs/operations/reference/src_layer_map.md)
 - [docs/reference_artifacts.md](docs/reference_artifacts.md)
 
-## Forward Work
+## Planning And Open Issues
 
-Forward-looking notes live under [docs/forward](docs/forward/README.md).
-
-That includes the newly added HMoE design note for the execution policy:
-
-- [docs/forward/models/hierarchical_moe_execution_policy.md](docs/forward/models/hierarchical_moe_execution_policy.md)
+Unpromoted plans and unresolved gaps now live under their content owners. The
+HMoE design direction is at
+[docs/learning/work/issues/hierarchical_moe_execution_policy.md](docs/learning/work/issues/hierarchical_moe_execution_policy.md);
+other routes start from the [documentation index](docs/README.md).
 
 ## License
 

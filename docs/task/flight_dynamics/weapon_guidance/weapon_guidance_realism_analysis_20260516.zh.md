@@ -14,7 +14,7 @@
 - [DefaultEffectsModel（命中效果）](../../../../src/models/weapons/default_effects_model.cpp)
 - [DamageSystem（近炸引信）](../../../../src/systems/combat/damage_system.h)
 - [SimulationKernel 武器 API（发射逻辑）](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
-- [武器与交战规则路线图](../../../forward/weapons_engagement.md)
+- [武器与交战规则路线图](../../../systems/weapons/work/issues/weapons_engagement.zh.md)
 - [传感器与态势感知现实性分析（关联）](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
 - [飞行动力学现实性分析（关联）](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
 
