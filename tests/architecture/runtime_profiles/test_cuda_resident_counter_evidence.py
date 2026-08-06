@@ -46,7 +46,7 @@ def _numeric_paths(value, path=()):
     elif isinstance(value, list):
         for index, child in enumerate(value):
             yield from _numeric_paths(child, (*path, index))
-    elif type(value) in {int, float}:
+    elif type(value) in {bool, int, float}:
         yield path, value
 
 
@@ -58,13 +58,26 @@ def _set_path(value, path, replacement) -> None:
 
 
 def _type_mutations(value):
-    if type(value) is int:
+    if type(value) is bool:
+        yield int(value)
+        yield float(value)
+    elif type(value) is int:
         yield float(value)
         if value in {0, 1}:
             yield bool(value)
     elif type(value) is float and value.is_integer():
         yield int(value)
         if value in {0.0, 1.0}:
+            yield bool(value)
+
+
+def _fixed_counter_type_mutations(value):
+    if type(value) is bool:
+        yield int(value)
+        yield float(value)
+    elif type(value) is int:
+        yield float(value)
+        if value in {0, 1}:
             yield bool(value)
 
 
@@ -295,6 +308,26 @@ def test_resource_parent_link_rejects_equal_valued_non_integer_numeric_types() -
                 counter.validate_parent_link(mutated, binary_sha256, probe_sha256)
             mutation_count += 1
     assert mutation_count >= 100
+
+
+@pytest.mark.parametrize(
+    ("factory", "expected_mutation_count"),
+    ((_evidence, 47), (_available_report, 46)),
+    ids=("blocked", "available"),
+)
+def test_cr2_5b_counter_reports_reject_equal_valued_non_json_types(
+    factory, expected_mutation_count: int
+) -> None:
+    report = factory()
+    mutation_count = 0
+    for path, original in _numeric_paths(report):
+        for replacement in _fixed_counter_type_mutations(original):
+            mutated = deepcopy(report)
+            _set_path(mutated, path, replacement)
+            with pytest.raises(counter.CounterEvidenceError):
+                counter.validate_report(mutated)
+            mutation_count += 1
+    assert mutation_count == expected_mutation_count
 
 
 def test_cr2_5b_does_not_rewrite_cr2_5a_or_historical_rb9_evidence() -> None:

@@ -180,9 +180,14 @@
       "observed_lines": 116
     },
     {
+      "path": "tools/diagnostics/cuda_resident_cr2_json_types.py",
+      "role": "shared exact JSON scalar and container type contract for CR2 evidence validators",
+      "observed_lines": 99
+    },
+    {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_schema.py",
       "role": "complete CR2-5a report schema and cross-section invariant validator",
-      "observed_lines": 432
+      "observed_lines": 396
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
@@ -197,12 +202,12 @@
     {
       "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
       "role": "CR2-5b Nsight Compute attempt and external-blocker evidence collector",
-      "observed_lines": 657
+      "observed_lines": 635
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
       "role": "CR2-5b evidence provenance, state, negative, and size guards",
-      "observed_lines": 323
+      "observed_lines": 356
     },
     {
       "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",

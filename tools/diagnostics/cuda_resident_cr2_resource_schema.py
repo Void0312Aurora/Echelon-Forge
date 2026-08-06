@@ -5,8 +5,10 @@ import re
 from typing import Any
 
 if __package__:
+    from .cuda_resident_cr2_json_types import StrictJson
     from .cuda_resident_cr2_resource_static import KERNELS, require
 else:
+    from cuda_resident_cr2_json_types import StrictJson  # type: ignore[no-redef]
     from cuda_resident_cr2_resource_static import KERNELS, require  # type: ignore[no-redef]
 
 
@@ -160,52 +162,14 @@ GATE_KEYS = {
     "tuning_authorized",
 }
 _SHA256 = re.compile(r"[0-9a-f]{64}")
-
-
-def _object(value: Any, keys: set[str], label: str) -> dict[str, Any]:
-    require(isinstance(value, dict), f"{label} must be an object")
-    assert isinstance(value, dict)
-    require(set(value) == keys, f"{label} keys drifted")
-    return value
-
-
-def _list(value: Any, label: str) -> list[Any]:
-    require(isinstance(value, list), f"{label} must be a list")
-    assert isinstance(value, list)
-    return value
-
-
-def _nonnegative_integer(value: Any, label: str) -> int:
-    require(type(value) is int and value >= 0, f"{label} must be a non-negative integer")
-    assert isinstance(value, int)
-    return value
-
-
-def _positive_integer(value: Any, label: str) -> int:
-    result = _nonnegative_integer(value, label)
-    require(result > 0, f"{label} must be positive")
-    return result
-
-
-def _exact_integer(value: Any, expected: int, label: str) -> int:
-    require(type(value) is int and value == expected, f"{label} must be exactly integer {expected}")
-    assert isinstance(value, int)
-    return value
-
-
-def _exact_integer_list(value: Any, expected: list[int], label: str) -> list[int]:
-    require(type(value) is list and len(value) == len(expected), f"{label} shape drifted")
-    assert isinstance(value, list)
-    for index, (actual, wanted) in enumerate(zip(value, expected, strict=True)):
-        _exact_integer(actual, wanted, f"{label}[{index}]")
-    return value
-
-
-def _exact_integer_map(value: Any, expected: dict[str, int], label: str) -> dict[str, Any]:
-    result = _object(value, set(expected), label)
-    for key, wanted in expected.items():
-        _exact_integer(result[key], wanted, f"{label}.{key}")
-    return result
+_STRICT = StrictJson(require)
+_object = _STRICT.object
+_list = _STRICT.list
+_nonnegative_integer = _STRICT.nonnegative_integer
+_positive_integer = _STRICT.positive_integer
+_exact_integer = _STRICT.exact_integer
+_exact_integer_list = _STRICT.exact_integer_list
+_exact_integer_map = _STRICT.exact_integer_map
 
 
 def _validate_transfer_map(value: Any) -> None:

@@ -11,14 +11,50 @@ from typing import Any
 
 if __package__:
     from . import cuda_resident_cr2_resource_evidence as resource
+    from .cuda_resident_cr2_json_types import StrictJson
 else:
     import cuda_resident_cr2_resource_evidence as resource  # type: ignore[no-redef]
+    from cuda_resident_cr2_json_types import StrictJson  # type: ignore[no-redef]
 
 
 SCHEMA = "cuda_resident.cr2.achieved_counter_evidence.v1"
 PROFILE = resource.PROFILE
 PERMISSION_CODE = "ERR_NVGPUCTRPERM"
 REQUIRED_LAUNCH_COUNT = 12
+COMMAND_TEMPLATE = (
+    "ncu",
+    "--target-processes=application-only",
+    "--profile-from-start=off",
+    "--replay-mode=kernel",
+    "--kernel-name-base=demangled",
+    "--set=full",
+    "--launch-count=12",
+    "--force-overwrite",
+    "--export=<raw>/full-window-256",
+    "--log-file=<raw>/attempt.log",
+    "<resource-probe>",
+    "--output=<raw>/probe-output.json",
+)
+EXPECTED_TOOLCHAIN = {
+    "target_processes": "application-only",
+    "profile_from_start": False,
+    "replay_mode": "kernel",
+    "kernel_name_base": "demangled",
+    "counter_set": "full",
+    "launch_count_limit": REQUIRED_LAUNCH_COUNT,
+    "command_paths": "absolute_paths_hashed_and_redacted",
+}
+EXPECTED_CAPTURE = {
+    "range": "cudaProfilerApi",
+    "world_count": 256,
+    "window_count": 1,
+    "build_config": "Release",
+    "cuda_architecture": "sm_86",
+    "trace_signature_algorithm": "fnv1a64",
+    "trace_signature_digest": "cb31675ee34e5015",
+    "consumer_await_completed": True,
+    "diagnostic_materialization_called": False,
+}
 COUNTER_FAMILIES = {
     "achieved_occupancy": "ratio",
     "branch_divergence": "ratio",
@@ -117,6 +153,9 @@ class CounterEvidenceError(ValueError):
 def _require(condition: bool, message: str) -> None:
     if not condition:
         raise CounterEvidenceError(message)
+
+
+_STRICT = StrictJson(_require)
 
 
 def _sha256(path: Path) -> str:
@@ -218,39 +257,34 @@ def _empty_counter_families() -> dict[str, dict[str, Any]]:
 
 
 def _validate_families(status: str, families: object) -> None:
-    _require(isinstance(families, dict), "counter families must be an object")
-    _require(set(families) == set(COUNTER_FAMILIES), "counter family inventory drifted")
+    families = _STRICT.object(families, set(COUNTER_FAMILIES), "counter families")
     for family, unit in COUNTER_FAMILIES.items():
-        row = families[family]
-        _require(isinstance(row, dict) and set(row) == FAMILY_KEYS, f"{family} schema drifted")
-        _require(row["unit"] == unit, f"{family} unit drifted")
+        row = _STRICT.object(families[family], FAMILY_KEYS, family)
+        _STRICT.exact_scalar(row["unit"], unit, f"{family}.unit")
         if status != "available":
             for field in ("provenance", "metric_names", "values_by_launch"):
                 _require(row[field] is None, f"unavailable {family}.{field} must remain null")
             continue
         _require(
-            row["provenance"] == "nsight_compute_hardware_counter",
+            type(row["provenance"]) is str
+            and row["provenance"] == "nsight_compute_hardware_counter",
             f"{family} has non-hardware provenance",
         )
-        names = row["metric_names"]
+        names = _STRICT.list(row["metric_names"], f"{family}.metric_names")
         _require(
-            isinstance(names, list)
-            and bool(names)
-            and all(isinstance(name, str) and name for name in names)
+            bool(names)
+            and all(type(name) is str and name for name in names)
             and len(names) == len(set(names)),
             f"{family} metric names are incomplete",
         )
-        values = row["values_by_launch"]
+        values = _STRICT.list(row["values_by_launch"], f"{family}.values_by_launch")
         _require(
-            isinstance(values, list) and len(values) == REQUIRED_LAUNCH_COUNT,
+            len(values) == REQUIRED_LAUNCH_COUNT,
             f"{family} must contain all launch values",
         )
         for value in values:
             _require(
-                isinstance(value, (int, float))
-                and not isinstance(value, bool)
-                and math.isfinite(value)
-                and value >= 0,
+                type(value) in {int, float} and math.isfinite(value) and value >= 0,
                 f"{family} contains an invalid achieved value",
             )
             if unit == "ratio":
@@ -258,181 +292,138 @@ def _validate_families(status: str, families: object) -> None:
 
 
 def validate_report(report: dict[str, Any]) -> None:
-    _require(set(report) == TOP_LEVEL_KEYS, "counter evidence top-level keys drifted")
-    _require(report["schema_version"] == SCHEMA, "counter evidence schema mismatch")
-    _require(report["profile_id"] == PROFILE, "counter evidence profile mismatch")
+    report = _STRICT.object(report, TOP_LEVEL_KEYS, "counter evidence")
+    _STRICT.exact_scalar(report["schema_version"], SCHEMA, "counter evidence schema")
+    _STRICT.exact_scalar(report["profile_id"], PROFILE, "counter evidence profile")
     _require(
-        isinstance(report["evidence_date"], str)
+        type(report["evidence_date"]) is str
         and re.fullmatch(r"\d{4}-\d{2}-\d{2}", report["evidence_date"]) is not None,
         "evidence date is invalid",
     )
-    source = report["source"]
-    _require(
-        isinstance(source, dict) and set(source) == {"baseline_commit", "candidate_state"},
-        "counter evidence source schema drifted",
+    source = _STRICT.object(
+        report["source"], {"baseline_commit", "candidate_state"}, "counter evidence source"
     )
     _require(
-        re.fullmatch(r"[0-9a-f]{40}", source["baseline_commit"]) is not None,
+        type(source["baseline_commit"]) is str
+        and re.fullmatch(r"[0-9a-f]{40}", source["baseline_commit"]) is not None,
         "baseline commit is invalid",
     )
-    _require(
-        source["candidate_state"] == "cr2_5b_unpromoted_worktree",
-        "candidate state drifted",
+    _STRICT.exact_scalar(
+        source["candidate_state"],
+        "cr2_5b_unpromoted_worktree",
+        "counter candidate state",
     )
-    inputs = report["inputs"]
-    _require(isinstance(inputs, dict) and set(inputs) == INPUT_KEYS, "input schema drifted")
-    _require(inputs["source_hash_canonicalization"] == "utf8_lf", "source hash mode drifted")
+    inputs = _STRICT.object(report["inputs"], INPUT_KEYS, "counter inputs")
+    _STRICT.exact_scalar(
+        inputs["source_hash_canonicalization"], "utf8_lf", "counter source hash mode"
+    )
     for key in INPUT_KEYS - {"source_hash_canonicalization", "ncu_report_sha256"}:
         _require(
-            re.fullmatch(r"[0-9a-f]{64}", inputs[key]) is not None,
+            type(inputs[key]) is str and re.fullmatch(r"[0-9a-f]{64}", inputs[key]) is not None,
             f"{key} is not a SHA-256 digest",
         )
     _require(
         inputs["ncu_report_sha256"] is None
-        or re.fullmatch(r"[0-9a-f]{64}", inputs["ncu_report_sha256"]) is not None,
+        or (
+            type(inputs["ncu_report_sha256"]) is str
+            and re.fullmatch(r"[0-9a-f]{64}", inputs["ncu_report_sha256"]) is not None
+        ),
         "NCU report hash is invalid",
     )
-    toolchain = report["toolchain"]
+    toolchain = _STRICT.object(report["toolchain"], TOOLCHAIN_KEYS, "counter toolchain")
     _require(
-        isinstance(toolchain, dict) and set(toolchain) == TOOLCHAIN_KEYS,
-        "toolchain schema drifted",
-    )
-    _require(
-        isinstance(toolchain["nsight_compute_version"], str)
+        type(toolchain["nsight_compute_version"]) is str
         and toolchain["nsight_compute_version"].startswith("2025.3.1.0 "),
         "Nsight Compute version drifted",
     )
-    expected_toolchain = {
-        "target_processes": "application-only",
-        "profile_from_start": False,
-        "replay_mode": "kernel",
-        "kernel_name_base": "demangled",
-        "counter_set": "full",
-        "launch_count_limit": REQUIRED_LAUNCH_COUNT,
-        "command_paths": "absolute_paths_hashed_and_redacted",
-    }
-    for key, value in expected_toolchain.items():
-        _require(toolchain[key] == value, f"toolchain option drifted: {key}")
-    _require(
-        isinstance(toolchain["command_template"], list)
-        and len(toolchain["command_template"]) == 12,
-        "command template drifted",
-    )
-    capture = report["capture"]
-    _require(isinstance(capture, dict) and set(capture) == CAPTURE_KEYS, "capture schema drifted")
-    expected_capture = {
-        "range": "cudaProfilerApi",
-        "world_count": 256,
-        "window_count": 1,
-        "build_config": "Release",
-        "cuda_architecture": "sm_86",
-        "trace_signature_algorithm": "fnv1a64",
-        "trace_signature_digest": "cb31675ee34e5015",
-        "consumer_await_completed": True,
-        "diagnostic_materialization_called": False,
-    }
-    _require(capture == expected_capture, "capture facts drifted")
-    interpretation = report["interpretation"]
-    _require(
-        isinstance(interpretation, dict) and set(interpretation) == INTERPRETATION_KEYS,
-        "interpretation schema drifted",
+    _STRICT.exact_members(toolchain, EXPECTED_TOOLCHAIN, "counter toolchain")
+    _STRICT.exact_list(toolchain["command_template"], COMMAND_TEMPLATE, "command template")
+    capture = _STRICT.object(report["capture"], CAPTURE_KEYS, "counter capture")
+    _STRICT.exact_members(capture, EXPECTED_CAPTURE, "counter capture")
+    interpretation = _STRICT.object(
+        report["interpretation"], INTERPRETATION_KEYS, "counter interpretation"
     )
     _require(all(value is True for value in interpretation.values()), "interpretation weakened")
-    attempt = report["attempt"]
-    _require(isinstance(attempt, dict) and set(attempt) == ATTEMPT_KEYS, "attempt schema drifted")
+    attempt = _STRICT.object(report["attempt"], ATTEMPT_KEYS, "counter attempt")
     status = attempt["status"]
     _require(
-        status in {"available", "external_blocked", "collection_failed"},
+        type(status) is str and status in {"available", "external_blocked", "collection_failed"},
         "attempt status is invalid",
     )
-    _require(
-        isinstance(attempt["exit_code"], int) and not isinstance(attempt["exit_code"], bool),
-        "attempt exit code is invalid",
+    exit_code = _STRICT.integer(attempt["exit_code"], "attempt exit code")
+    _STRICT.boolean(attempt["application_completed"], "application completed", True)
+    connected_pid = _STRICT.positive_integer(attempt["connected_pid"], "connected PID")
+    disconnected_pid = _STRICT.positive_integer(attempt["disconnected_pid"], "disconnected PID")
+    _require(disconnected_pid == connected_pid, "profiled process lifecycle is invalid")
+    report_created = _STRICT.boolean(attempt["report_created"], "report created")
+    _STRICT.exact_integer(
+        attempt["required_launch_count"], REQUIRED_LAUNCH_COUNT, "required launch count"
     )
-    _require(attempt["application_completed"] is True, "profile application did not complete")
+    error_codes = _STRICT.list(attempt["log_error_codes"], "log error code inventory")
     _require(
-        isinstance(attempt["connected_pid"], int)
-        and attempt["connected_pid"] > 0
-        and attempt["disconnected_pid"] == attempt["connected_pid"],
-        "profiled process lifecycle is invalid",
-    )
-    _require(isinstance(attempt["report_created"], bool), "report-created flag is invalid")
-    _require(
-        attempt["required_launch_count"] == REQUIRED_LAUNCH_COUNT,
-        "required launch count drifted",
-    )
-    _require(
-        isinstance(attempt["log_error_codes"], list)
-        and all(isinstance(code, str) and code for code in attempt["log_error_codes"]),
+        all(type(code) is str and code for code in error_codes),
         "log error code inventory is invalid",
     )
     if status == "available":
-        _require(attempt["exit_code"] == 0, "available evidence requires exit code zero")
-        _require(attempt["report_created"] is True, "available evidence requires an NCU report")
-        _require(
-            attempt["collected_launch_count"] == REQUIRED_LAUNCH_COUNT,
-            "available evidence requires all launch counters",
+        _require(exit_code == 0, "available evidence requires exit code zero")
+        _require(report_created is True, "available evidence requires an NCU report")
+        _STRICT.exact_integer(
+            attempt["collected_launch_count"],
+            REQUIRED_LAUNCH_COUNT,
+            "available collected launch count",
         )
         for field in ("blocker_code", "blocker_kind", "recognized_error_line_sha256"):
             _require(attempt[field] is None, f"available attempt must clear {field}")
-        _require(attempt["log_error_codes"] == [], "available attempt contains profiler errors")
+        _STRICT.exact_list(error_codes, (), "available log errors")
         _require(inputs["ncu_report_sha256"] is not None, "available report hash is missing")
     elif status == "external_blocked":
-        _require(attempt["exit_code"] != 0, "blocked evidence cannot have exit code zero")
-        _require(attempt["report_created"] is False, "blocked evidence cannot claim a report")
-        _require(attempt["collected_launch_count"] == 0, "blocked counters cannot claim launches")
-        _require(attempt["blocker_code"] == PERMISSION_CODE, "permission blocker code drifted")
-        _require(
-            attempt["blocker_kind"] == "external_permission",
-            "permission blocker kind drifted",
+        _require(exit_code != 0, "blocked evidence cannot have exit code zero")
+        _require(report_created is False, "blocked evidence cannot claim a report")
+        _STRICT.exact_integer(
+            attempt["collected_launch_count"], 0, "blocked collected launch count"
         )
-        _require(
-            attempt["log_error_codes"] == [PERMISSION_CODE],
-            "permission attempt contains a different profiler error",
+        _STRICT.exact_scalar(attempt["blocker_code"], PERMISSION_CODE, "permission blocker code")
+        _STRICT.exact_scalar(
+            attempt["blocker_kind"], "external_permission", "permission blocker kind"
         )
+        _STRICT.exact_list(error_codes, (PERMISSION_CODE,), "permission attempt errors")
         _require(
-            re.fullmatch(r"[0-9a-f]{64}", attempt["recognized_error_line_sha256"]) is not None,
+            type(attempt["recognized_error_line_sha256"]) is str
+            and re.fullmatch(r"[0-9a-f]{64}", attempt["recognized_error_line_sha256"]) is not None,
             "permission error provenance is missing",
         )
         _require(inputs["ncu_report_sha256"] is None, "blocked attempt cannot hash an NCU report")
     else:
-        _require(attempt["exit_code"] != 0, "failed collection cannot have exit code zero")
-        _require(attempt["collected_launch_count"] == 0, "failed collection cannot claim launches")
+        _require(exit_code != 0, "failed collection cannot have exit code zero")
+        _STRICT.exact_integer(attempt["collected_launch_count"], 0, "failed collected launch count")
         for field in ("blocker_code", "blocker_kind", "recognized_error_line_sha256"):
             _require(attempt[field] is None, f"generic failure must clear {field}")
     _validate_families(status, report["achieved_counters"])
-    gates = report["gates"]
-    _require(isinstance(gates, dict) and set(gates) == GATE_KEYS, "counter gate schema drifted")
+    gates = _STRICT.object(report["gates"], GATE_KEYS, "counter gates")
     expected_gate = status == "available"
-    _require(
-        gates.get("cr2_5a_static_resource_complete") is True,
-        "CR2-5a static resource gate regressed",
+    _STRICT.boolean(gates["cr2_5a_static_resource_complete"], "static resource gate", True)
+    _STRICT.boolean(gates["cr2_5a_launch_topology_complete"], "launch topology gate", True)
+    _STRICT.boolean(
+        gates["cr2_5b_counter_attempt_complete"],
+        "counter attempt gate",
+        status != "collection_failed",
     )
-    _require(
-        gates.get("cr2_5a_launch_topology_complete") is True,
-        "CR2-5a launch topology gate regressed",
-    )
-    _require(
-        gates.get("cr2_5b_counter_attempt_complete") is (status != "collection_failed"),
-        "counter-attempt gate contradicts status",
-    )
-    _require(
-        gates.get("cr2_5_achieved_counter_gate_complete") is expected_gate,
-        "achieved-counter gate contradicts status",
+    _STRICT.boolean(
+        gates["cr2_5_achieved_counter_gate_complete"], "achieved counter gate", expected_gate
     )
     dispositions = {
         "available": "achieved_counter_evidence_complete",
         "external_blocked": "documented_external_blocker",
         "collection_failed": "collection_failed",
     }
-    _require(gates.get("cr2_5_disposition") == dispositions[status], "CR2-5 disposition drifted")
+    _STRICT.exact_scalar(gates["cr2_5_disposition"], dispositions[status], "CR2-5 disposition")
     for flag in (
         "maintained_claim_allowed",
         "public_support_enabled",
         "promotion_allowed",
         "tuning_authorized",
     ):
-        _require(gates.get(flag) is False, f"CR2-5b must keep {flag}=false")
+        _STRICT.boolean(gates[flag], flag, False)
 
 
 def validate_parent_link(parent: dict[str, Any], binary_sha256: str, probe_sha256: str) -> None:
@@ -573,20 +564,7 @@ def build_report(
             "counter_set": "full",
             "launch_count_limit": REQUIRED_LAUNCH_COUNT,
             "command_paths": "absolute_paths_hashed_and_redacted",
-            "command_template": [
-                "ncu",
-                "--target-processes=application-only",
-                "--profile-from-start=off",
-                "--replay-mode=kernel",
-                "--kernel-name-base=demangled",
-                "--set=full",
-                "--launch-count=12",
-                "--force-overwrite",
-                "--export=<raw>/full-window-256",
-                "--log-file=<raw>/attempt.log",
-                "<resource-probe>",
-                "--output=<raw>/probe-output.json",
-            ],
+            "command_template": list(COMMAND_TEMPLATE),
         },
         "capture": {
             "range": probe["capture"]["range"],
