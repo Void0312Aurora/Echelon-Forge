@@ -268,6 +268,6 @@ provenance，并证明更小的保留集合仍支撑同一有界 claim。
 ## 相关权威
 
 - [文档生命周期规范](../../standards/governance/document_lifecycle_policy.zh.md)
-- [Agent 文档权威索引](../../agent/rules/document_authority_map.zh.md)
+- [Agent 文档权威索引](../../engineering/automation/rules/document_authority_map.zh.md)
 - [标准维护政策](../../standards/governance/standards_maintenance_policy.zh.md)
 - [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)

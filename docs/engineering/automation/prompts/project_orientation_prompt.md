@@ -29,11 +29,11 @@ Before acting, read:
 
 1. README.md
 2. docs/README.md
-3. docs/agent/rules/document_authority_map.md
+3. docs/engineering/automation/rules/document_authority_map.md
 4. The local README and standard/task documents named by the authority map for
    this task.
 5. If creating or reviving a task subproject:
-   docs/agent/rules/subproject_creation_standard.md.
+   docs/engineering/automation/rules/subproject_creation_standard.md.
 
 Repository rules:
 

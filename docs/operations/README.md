@@ -1,4 +1,12 @@
-# Manual
+# Operations Documentation
+
+Language: English canonical; [Chinese companion](README.zh.md).
+
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/operations/README.md`
+Owner: `operations documentation`
+Last verified: `2026-08-06`
 
 Reference documentation and how-to guides for developers and users, organized by category.
 
@@ -20,16 +28,18 @@ Current-state descriptions of system capabilities, code structure, and physics i
 |----------|-------------|
 | [Remote Visualization](howto/visualization_guide.md) | SSH port forwarding + Web real-time simulation view |
 
-### Archive
+### Legacy Archive
 
 Outdated historical design notes.
 
 | Document | Description |
 |----------|-------------|
-| [Takeoff to Cruise Mixed Mode](archive/takeoff_to_cruise_mixedmode_notes.md) | Historical P3 experiment baseline, references 20260316 experiment artifacts |
+| [Takeoff to Cruise Mixed Mode](../manual/archive/takeoff_to_cruise_mixedmode_notes.md) | Frozen historical P3 experiment baseline; archive sources are not part of the maintained migration |
 
-Landing task design moved to [docs/task/flight_dynamics/landing_task_notes.md](../task/flight_dynamics/landing_task_notes.md).
+Landing task design remains at [docs/task/flight_dynamics/landing_task_notes.md](../task/flight_dynamics/landing_task_notes.md) until the Air owner migration.
 
 ---
 
-Maintenance rules: reference docs should be updated alongside code changes. How-to docs should be updated when tooling changes. Historical design notes move to `archive/` once the implementation lands.
+Maintenance rules: reference docs follow code changes and how-to docs follow
+workflow or tooling changes. Completed operational work is promoted to a
+maintained reference or closed through the owning area's archive route.

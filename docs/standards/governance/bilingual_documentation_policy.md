@@ -4,7 +4,7 @@ Language:
 - English canonical: `governance/bilingual_documentation_policy.md`
 - Chinese companion: [bilingual_documentation_policy.zh.md](bilingual_documentation_policy.zh.md)
 
-Status: `2026-05-18` authoritative for maintained documentation language layout.
+Status: `2026-08-06` authoritative for maintained documentation language layout.
 
 This policy defines how the repository separates English and Chinese
 documentation so the mainline stays readable, batch-translation friendly, and
@@ -56,11 +56,14 @@ This repo follows a layered maintenance model rather than treating the entire
 Tier A: strict bilingual maintained surface
 
 - root navigation: `docs/README.md`
-- agent-facing authority, prompts, and rules under `docs/agent/`
+- project and ownership-root navigation under `docs/project/`,
+  `docs/architecture/`, `docs/domains/`, `docs/systems/`, `docs/learning/`,
+  `docs/operations/`, `docs/engineering/`, and `docs/research/`
+- agent-facing authority, prompts, and rules under `docs/engineering/automation/`
 - top-level forward navigation: `docs/forward/README.md`
 - retained-reference index: `docs/reference_artifacts.md`
 - authority and governance trees under `docs/standards/`
-- operator-facing manuals under `docs/manual/`
+- operator-facing reference and how-to material under `docs/operations/`
 - stable plan authority under:
   - `docs/plan/README.md`
   - `docs/plan/architecture/**`

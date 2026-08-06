@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/standards/governance/document_lifecycle_policy.md`
 Owner: `docs/standards/governance`
-Last verified: `2026-07-18`
+Last verified: `2026-08-06`
 
 状态：`2026-07-18`，仓库文档分类、维护、审阅、生成和归档的权威规范。
 
@@ -34,8 +34,8 @@ Last verified: `2026-07-18`
 | `standard` | 稳定术语、所有权、治理规则和强制约束 | `docs/standards/` | 在声明范围内具有规范性；不能覆盖当前代码或可执行证据所证明的实现事实。 |
 | `plan` | 有界架构方向、顺序、迁移和验收设计 | `docs/plan/` | 只授权明确冻结或显式 active 的范围。 |
 | `task` | 当前实现工作、状态、残余和验收包 | `docs/task/` | 拥有范围化执行状态；不能重定义由 standards 拥有的跨项目术语。 |
-| `reference` | 经核验的当前结构、API、能力或清单说明 | `docs/manual/reference/` 或组件 README | 只对最后核验状态具有描述权威。 |
-| `howto` | 可复现的操作员或维护者流程 | `docs/manual/howto/` | 只对注明的平台、前置条件和已核验命令路径有效。 |
+| `reference` | 经核验的当前结构、API、能力或清单说明 | owner 的 `reference/` 子树或组件 README | 只对最后核验状态具有描述权威。 |
+| `howto` | 可复现的操作员或维护者流程 | `docs/operations/howto/` 或 owner 本地 how-to 表面 | 只对注明的平台、前置条件和已核验命令路径有效。 |
 | `review` | 独立发现、风险评估、验收决定或否决 | 当前为 `docs/task/review/` | 记录判断；行动项必须转入 task 或 issue，review 本身不实现变更。 |
 | `evidence` | 不可变的输入、测量、清单、图表或验收证明 | 紧邻所属任务的本地 `evidence/` 包 | 只支撑有界 claim；不是当前行为或政策权威。 |
 | `generated` | 由明确的 tracked 输入可复现生成的输出 | 本地 `generated/` 目录 | 不可手工成为规范；producer 和输入才是权威。 |
@@ -223,8 +223,8 @@ python tools/maintenance/translate_docs_batch.py audit --root docs \
 
 ## 相关文档
 
-- [Agent 文档权威索引](../../agent/rules/document_authority_map.zh.md)
+- [Agent 文档权威索引](../../engineering/automation/rules/document_authority_map.zh.md)
 - [双语文档政策](bilingual_documentation_policy.zh.md)
 - [标准维护政策](standards_maintenance_policy.zh.md)
-- [子项目创建标准](../../agent/rules/subproject_creation_standard.zh.md)
+- [子项目创建标准](../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - [仓库精简与整合路线图](../../plan/repository_consolidation/README.zh.md)

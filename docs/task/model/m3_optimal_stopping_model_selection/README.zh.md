@@ -18,7 +18,7 @@
 - A7 event-policy margin 修复：
   [A7 Event-Policy Margin 修复](../../air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.zh.md)
 - 子项目标准：
-  [子项目创建标准](../../../agent/rules/subproject_creation_standard.zh.md)
+  [子项目创建标准](../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - 分发规则：
   [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)
 

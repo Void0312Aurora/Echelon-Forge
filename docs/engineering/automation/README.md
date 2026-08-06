@@ -7,6 +7,12 @@ Language:
 Status: `2026-06-01` maintained entry point for repository-facing AI/agent
 orientation.
 
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/automation/README.md`
+Owner: `engineering/automation`
+Last verified: `2026-08-06`
+
 This directory turns the maintained documentation tree into a compact operating
 surface for AI agents. It does not replace the root README, standards, code, or
 tests. Its job is to tell an agent which documents to load first, which
@@ -20,11 +26,11 @@ they can be repeated.
 | [rules/document_authority_map.md](rules/document_authority_map.md) | Rule index for repository documentation authority, standard references, task-specific reading paths, and capability-claim gates. |
 | [rules/subproject_creation_standard.md](rules/subproject_creation_standard.md) | Standard for creating task subprojects with README, phase plan, task clusters, current status, acceptance, residuals, and archive boundaries. |
 | [prompts/project_orientation_prompt.md](prompts/project_orientation_prompt.md) | Copyable task-start prompt for agents working on this repository. |
-| [../standards/governance/subagent_usage_policy.md](../standards/governance/subagent_usage_policy.md) | Repository policy for delegated subagent or worker activity when the execution environment allows it. |
+| [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md) | Repository policy for delegated subagent or worker activity when the execution environment allows it. |
 
 ## How Agents Should Use This
 
-1. Read the root [README.md](../../README.md), [docs/README.md](../README.md),
+1. Read the root [README.md](../../../README.md), [docs/README.md](../../README.md),
    and [rules/document_authority_map.md](rules/document_authority_map.md).
 2. Select the task lane: documentation, code/runtime, tests/contracts, domain
    maturity, contribution/governance, or release/maintenance.
@@ -40,7 +46,7 @@ they can be repeated.
 
 The ignored `.agent/` directory may exist as a local runtime or personal agent
 workspace. It is not the tracked project documentation system. Tracked
-agent-facing guidance lives under `docs/agent/`.
+agent-facing guidance lives under `docs/engineering/automation/`.
 
 ## Maintenance Rules
 

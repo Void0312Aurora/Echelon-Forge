@@ -18,7 +18,7 @@ evidence 已通过；不声明 learned-policy acceptance。
 - A7 当前经验堵塞：
   [A7 当前状态](../../air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.zh.md)
 - 子项目标准：
-  [子项目创建标准](../../../agent/rules/subproject_creation_standard.zh.md)
+  [子项目创建标准](../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 
 ## 目的
 

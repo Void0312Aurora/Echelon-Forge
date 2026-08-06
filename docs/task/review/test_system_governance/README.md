@@ -13,8 +13,8 @@ Inputs:
 
 - Parent review index: [../README.md](../README.md)
 - Test-system intent: [../../../tests/README.md](../../../../tests/README.md)
-- Agent authority map: [../../../agent/rules/document_authority_map.md](../../../agent/rules/document_authority_map.md)
-- Subproject creation standard: [../../../agent/rules/subproject_creation_standard.md](../../../agent/rules/subproject_creation_standard.md)
+- Agent authority map: [../../../engineering/automation/rules/document_authority_map.md](../../../engineering/automation/rules/document_authority_map.md)
+- Subproject creation standard: [../../../engineering/automation/rules/subproject_creation_standard.md](../../../engineering/automation/rules/subproject_creation_standard.md)
 - Audit runner: [../../../../tools/runners/audit_test_system.py](../../../../tools/runners/audit_test_system.py)
 
 ## Purpose

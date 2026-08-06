@@ -11,7 +11,7 @@
 
 本标准抽取维护中任务切片的通用结构，但不把任何历史子项目提升为当前权威。
 委派工作应使用
-[Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)。
+[Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)。
 
 ## 何时创建子项目
 
@@ -221,7 +221,7 @@ Status: `<YYYY-MM-DD>` finite task-cluster plan for `<Subproject README.md>`.
 - Keep acceptance/closure clusters serial.
 - If a cluster exceeds its round cap, stop and re-scope before adding a follow-up
   wave.
-- Follow [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

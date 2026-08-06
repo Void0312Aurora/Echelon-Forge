@@ -17,7 +17,7 @@ Inputs:
 - [Common / air / naval split plan (archived)](../../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md)
 - [Command boundary README](../../../../src/components/command/README.md)
 - [Naval standards](../../../standards/naval/README.md)
-- [Subproject creation standard](../../../agent/rules/subproject_creation_standard.md)
+- [Subproject creation standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 
 ## Purpose
 

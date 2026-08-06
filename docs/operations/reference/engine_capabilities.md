@@ -66,4 +66,5 @@ for complete naval or ground combat runtime.
 - `ef_py.SimulationKernel.set_action(...)`: normalized autopilot actions (turn/accel/climb)
 - `ef_py.SimulationKernel.set_stick_command(...)`: direct stick commands (roll/pitch/throttle/gear)
 
-For a more detailed "physics engine inventory", see: `docs/manual/physics_engine_inventory.md`.
+For a more detailed physics-engine inventory, see
+[Physics Engine Inventory](physics_engine_inventory.md).

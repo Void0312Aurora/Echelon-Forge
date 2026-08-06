@@ -1,4 +1,12 @@
-# 手册
+# 操作文档
+
+语言：英文为规范页；[中文配套](README.md)。
+
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/operations/README.md`
+Owner: `operations documentation`
+Last verified: `2026-08-06`
 
 面向开发者和用户的参考文档与操作指南，按类别组织。
 
@@ -20,16 +28,17 @@
 |------|------|
 | [远程可视化](howto/visualization_guide.zh.md) | SSH 端口转发 + Web 实时查看仿真 |
 
-### 归档
+### 遗留归档
 
 已过时的历史设计笔记。
 
 | 文档 | 说明 |
 |------|------|
-| [起飞到巡航混合模式](archive/takeoff_to_cruise_mixedmode_notes.zh.md) | 历史 P3 实验基线，引用 20260316 实验制品 |
+| [起飞到巡航混合模式](../manual/archive/takeoff_to_cruise_mixedmode_notes.zh.md) | 冻结的历史 P3 实验基线；归档源不进入维护树迁移 |
 
-着陆任务设计已迁至 [docs/task/flight_dynamics/landing_task_notes.zh.md](../task/flight_dynamics/landing_task_notes.zh.md)。
+着陆任务设计在 Air owner 迁移前仍位于 [docs/task/flight_dynamics/landing_task_notes.zh.md](../task/flight_dynamics/landing_task_notes.zh.md)。
 
 ---
 
-维护规则：参考指南应随代码变更同步更新。操作指南在工具链变化时更新。历史设计笔记在实现落地后移入 `archive/`。
+维护规则：reference 随代码变更更新，how-to 随工作流或工具变化更新。已完成的
+操作工作应提升为维护 reference，或通过所属区域的归档路由收口。

@@ -7,9 +7,9 @@ Status: `2026-06-05` read-only diagnostics dispatch record for
 
 Dispatch follows:
 
-- [Subproject creation standard](../../../agent/rules/subproject_creation_standard.md)
+- [Subproject creation standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 - [Subagent usage policy](../../../standards/governance/subagent_usage_policy.md)
-- [Document authority map](../../../agent/rules/document_authority_map.md)
+- [Document authority map](../../../engineering/automation/rules/document_authority_map.md)
 
 The main thread owns integration and final scope decisions. Subagents are
 diagnostics-only for this G0 pass.

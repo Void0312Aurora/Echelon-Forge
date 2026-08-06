@@ -24,7 +24,7 @@ def test_translate_docs_batch_reexports_shared_scope_helpers(tmp_path: Path) -> 
   docs_root = tmp_path / "docs"
   readme = docs_root / "README.md"
   consolidation_plan = docs_root / "plan/repository_consolidation/README.md"
-  authority_map = docs_root / "agent/rules/document_authority_map.md"
+  authority_map = docs_root / "engineering/automation/rules/document_authority_map.md"
   forward_readme = docs_root / "forward/README.md"
   reference_artifacts = docs_root / "reference_artifacts.md"
   retired_migration_path = docs_root / "plan/documentation_bilingual_migration_plan_20260518.md"
@@ -49,8 +49,8 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
   docs_root = tmp_path / "docs"
   _write(docs_root / "README.md", "# Current English\n")
   _write(docs_root / "README.zh.md", "# 当前中文\n")
-  _write(docs_root / "manual/README.md", "# Changed English\n")
-  _write(docs_root / "manual/README.zh.md", "# 已更新中文\n")
+  _write(docs_root / "operations/README.md", "# Changed English\n")
+  _write(docs_root / "operations/README.zh.md", "# 已更新中文\n")
   current = translate_docs_batch.build_cluster_records(
     docs_root,
     include_local_only=False,
@@ -71,9 +71,9 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
         "chinese_hash": "unreviewed-zh",
       },
       {
-        "pair_id": "manual/README",
-        "english": "docs/manual/README.md",
-        "chinese": "docs/manual/README.zh.md",
+        "pair_id": "operations/README",
+        "english": "docs/operations/README.md",
+        "chinese": "docs/operations/README.zh.md",
         "source_of_truth": "english",
         "last_verified": "2026-01-01",
         "english_hash": "stale-en",
@@ -85,7 +85,7 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
   merged = translate_docs_batch.merge_selected_cluster_records(
     existing,
     current,
-    ["manual/README"],
+    ["operations/README"],
   )
   by_id = {entry["pair_id"]: entry for entry in merged["pairs"]}
 
@@ -93,8 +93,8 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
   assert merged["review_note"] == "preserve top-level metadata"
   assert by_id["README"]["english_hash"] == "unreviewed-en"
   assert by_id["README"]["chinese_hash"] == "unreviewed-zh"
-  assert by_id["manual/README"]["english_hash"] != "stale-en"
-  assert by_id["manual/README"]["chinese_hash"] != "stale-zh"
+  assert by_id["operations/README"]["english_hash"] != "stale-en"
+  assert by_id["operations/README"]["chinese_hash"] != "stale-zh"
 
 
 def test_selective_cluster_refresh_rejects_unknown_pair(tmp_path: Path) -> None:
@@ -158,7 +158,7 @@ def test_audit_accepts_relative_files_directories_fragments_and_external_links(t
     "\n".join(
       (
         "[file](guide.md#section)",
-        "[dir](manual/README.md)",
+        "[dir](operations/README.md)",
         "[encoded](space%20name.md?view=1)",
         "[web](https://example.com/missing)",
         "[anchor](#local-heading)",
@@ -169,7 +169,7 @@ def test_audit_accepts_relative_files_directories_fragments_and_external_links(t
     ),
   )
   _write(tmp_path / "docs/guide.md")
-  _write(tmp_path / "docs/manual/README.md")
+  _write(tmp_path / "docs/operations/README.md")
   _write(tmp_path / "docs/space name.md")
 
   result = audit.audit_repository(tmp_path)

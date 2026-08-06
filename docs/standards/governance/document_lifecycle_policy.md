@@ -8,7 +8,7 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/standards/governance/document_lifecycle_policy.md`
 Owner: `docs/standards/governance`
-Last verified: `2026-07-18`
+Last verified: `2026-08-06`
 
 Status: `2026-07-18` authoritative policy for classifying, maintaining,
 reviewing, generating, and archiving repository documentation.
@@ -38,8 +38,8 @@ deliberately admitted into the tracked tree.
 | `standard` | Stable terminology, ownership, governance, and mandatory constraints | `docs/standards/` | Normative within its declared scope; it cannot overrule current code or executable evidence about implemented behavior. |
 | `plan` | Bounded architecture direction, sequencing, migration, and acceptance design | `docs/plan/` | Authorizes only the frozen or explicitly active scope it names. |
 | `task` | Current implementation work, status, residuals, and acceptance packages | `docs/task/` | Owns scoped execution status; it does not redefine cross-project terminology owned by standards. |
-| `reference` | Verified description of current structure, API, capability, or inventory | `docs/manual/reference/` or a component README | Descriptive authority only for the last-verified state. |
-| `howto` | Reproducible operator or maintainer procedure | `docs/manual/howto/` | Valid only for the named platform, prerequisites, and verified command path. |
+| `reference` | Verified description of current structure, API, capability, or inventory | an owner's `reference/` subtree or component README | Descriptive authority only for the last-verified state. |
+| `howto` | Reproducible operator or maintainer procedure | `docs/operations/howto/` or an owner-local how-to surface | Valid only for the named platform, prerequisites, and verified command path. |
 | `review` | Independent findings, risk assessment, acceptance decision, or rejection | currently `docs/task/review/` | Records a judgment. Action items must move to a task or issue; a review does not itself implement a change. |
 | `evidence` | Immutable retained inputs, measurements, manifests, figures, or acceptance proof | a local `evidence/` package beside the owning task | Supports a bounded claim only; it is not current behavior or policy authority. |
 | `generated` | Reproducible output produced from named tracked inputs | a local `generated/` directory | Never manually normative. The producer and inputs are authoritative. |
@@ -254,8 +254,8 @@ Repository-wide consolidation sequencing is tracked in the
 
 ## Related Documents
 
-- [Agent Document Authority Map](../../agent/rules/document_authority_map.md)
+- [Agent Document Authority Map](../../engineering/automation/rules/document_authority_map.md)
 - [Bilingual Documentation Policy](bilingual_documentation_policy.md)
 - [Standards Maintenance Policy](standards_maintenance_policy.md)
-- [Subproject Creation Standard](../../agent/rules/subproject_creation_standard.md)
+- [Subproject Creation Standard](../../engineering/automation/rules/subproject_creation_standard.md)
 - [Repository Consolidation Plan](../../plan/repository_consolidation/README.md)

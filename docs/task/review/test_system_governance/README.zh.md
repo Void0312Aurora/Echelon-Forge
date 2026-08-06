@@ -14,8 +14,8 @@
 
 - 父级 review 索引：[../README.zh.md](../README.zh.md)
 - 测试系统意图：[../../../tests/README.md](../../../../tests/README.md)
-- Agent authority map：[../../../agent/rules/document_authority_map.md](../../../agent/rules/document_authority_map.md)
-- 子项目创建标准：[../../../agent/rules/subproject_creation_standard.md](../../../agent/rules/subproject_creation_standard.md)
+- Agent authority map：[../../../engineering/automation/rules/document_authority_map.md](../../../engineering/automation/rules/document_authority_map.md)
+- 子项目创建标准：[../../../engineering/automation/rules/subproject_creation_standard.md](../../../engineering/automation/rules/subproject_creation_standard.md)
 - 审计 runner：[../../../../tools/runners/audit_test_system.py](../../../../tools/runners/audit_test_system.py)
 
 ## 目的

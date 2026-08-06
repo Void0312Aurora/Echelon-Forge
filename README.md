@@ -227,7 +227,7 @@ See also:
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/manual/reference/src_layer_map.md](docs/manual/reference/src_layer_map.md)
+- [docs/operations/reference/src_layer_map.md](docs/operations/reference/src_layer_map.md)
 - [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 ## Scenarios and Training Configs
@@ -341,9 +341,9 @@ Diagnostic and benchmark scripts are centered under
 
 ## Current Reference Documents
 
-- [docs/manual/reference/engine_capabilities.md](docs/manual/reference/engine_capabilities.md)
-- [docs/manual/reference/physics_engine_inventory.md](docs/manual/reference/physics_engine_inventory.md)
-- [docs/manual/reference/src_layer_map.md](docs/manual/reference/src_layer_map.md)
+- [docs/operations/reference/engine_capabilities.md](docs/operations/reference/engine_capabilities.md)
+- [docs/operations/reference/physics_engine_inventory.md](docs/operations/reference/physics_engine_inventory.md)
+- [docs/operations/reference/src_layer_map.md](docs/operations/reference/src_layer_map.md)
 - [docs/reference_artifacts.md](docs/reference_artifacts.md)
 
 ## Forward Work

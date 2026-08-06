@@ -26,6 +26,24 @@ STRICT_PLAN_SUBTREES = {
   "unified_architecture_program",
 }
 STRICT_TASK_SECOND_LEVEL_READMES = {"flight_dynamics"}
+STRICT_OWNER_DOCUMENTS = {
+  "architecture/README.md",
+  "architecture/README.zh.md",
+  "domains/README.md",
+  "domains/README.zh.md",
+  "engineering/README.md",
+  "engineering/README.zh.md",
+  "learning/README.md",
+  "learning/README.zh.md",
+  "project/README.md",
+  "project/README.zh.md",
+  "project/documentation_architecture.md",
+  "project/documentation_architecture.zh.md",
+  "research/README.md",
+  "research/README.zh.md",
+  "systems/README.md",
+  "systems/README.zh.md",
+}
 
 
 def is_local_only_doc(path: Path) -> bool:
@@ -43,10 +61,13 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
   if relative in {"README.md", "README.zh.md"}:
     return True
   if (
-    relative.startswith("agent/")
+    relative.startswith("engineering/automation/")
+    or relative.startswith("operations/")
+    or relative.startswith("research/sources/")
     or relative.startswith("standards/")
-    or relative.startswith("manual/")
   ):
+    return True
+  if relative in STRICT_OWNER_DOCUMENTS:
     return True
   if relative in {
     "forward/README.md",

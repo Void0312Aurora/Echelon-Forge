@@ -331,7 +331,7 @@ ctest --test-dir build-workshop -R ef_test_all --output-on-failure
 
 优点：
 
-- 文档权威层级清楚：`docs/plan`、`docs/standards`、`docs/task`、`docs/manual` 责任不同。
+- 文档权威层级清楚：`docs/plan`、`docs/standards`、`docs/task`、`docs/operations` 责任不同。
 - `tests/README.md` 明确 architecture/runtime/contracts/suites 的职责。
 - release/dependency policy 区分 optional dependency groups 与 smoke constraints。
 - 文档多处主动声明 accepted/held/deferred，避免把进展夸大为完成。

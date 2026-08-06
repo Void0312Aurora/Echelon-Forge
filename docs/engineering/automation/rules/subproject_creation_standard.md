@@ -13,7 +13,7 @@ bounded work slice.
 
 This standard abstracts recurring structure from maintained task slices without
 promoting any historical subproject as current authority. For delegated work,
-use [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md).
+use [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
 
 ## When To Create A Subproject
 
@@ -231,7 +231,7 @@ Status: `<YYYY-MM-DD>` finite task-cluster plan for `<Subproject README.md>`.
 - Keep acceptance/closure clusters serial.
 - If a cluster exceeds its round cap, stop and re-scope before adding a follow-up
   wave.
-- Follow [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

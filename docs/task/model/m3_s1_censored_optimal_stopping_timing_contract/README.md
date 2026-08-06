@@ -18,7 +18,7 @@ Inputs:
 - A7 current empirical blocker:
   [A7 Current Status](../../air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.md)
 - Subproject standard:
-  [Subproject Creation Standard](../../../agent/rules/subproject_creation_standard.md)
+  [Subproject Creation Standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 
 ## Purpose
 

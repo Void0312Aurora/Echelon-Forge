@@ -28,10 +28,10 @@
 
 1. README.md
 2. docs/README.zh.md
-3. docs/agent/rules/document_authority_map.zh.md
+3. docs/engineering/automation/rules/document_authority_map.zh.md
 4. authority map 为本任务指定的局部 README、标准文档和任务文档。
 5. 如果创建或重新启用任务子项目：
-   docs/agent/rules/subproject_creation_standard.zh.md。
+   docs/engineering/automation/rules/subproject_creation_standard.zh.md。
 
 仓库规则：
 

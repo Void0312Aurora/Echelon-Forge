@@ -18,7 +18,7 @@ Inputs:
 - A7 event-policy margin repair:
   [A7 Event-Policy Margin Repair](../../air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md)
 - Subproject standard:
-  [Subproject Creation Standard](../../../agent/rules/subproject_creation_standard.md)
+  [Subproject Creation Standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 - Distributed-work rule:
   [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
 

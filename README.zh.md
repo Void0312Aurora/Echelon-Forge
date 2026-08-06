@@ -202,7 +202,7 @@ interfaces/python
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/manual/reference/src_layer_map.zh.md](docs/manual/reference/src_layer_map.zh.md)
+- [docs/operations/reference/src_layer_map.zh.md](docs/operations/reference/src_layer_map.zh.md)
 - [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 ## 场景与训练配置
@@ -312,9 +312,9 @@ cmo_python -m pytest -q \
 
 ## 当前参考文档
 
-- [docs/manual/reference/engine_capabilities.zh.md](docs/manual/reference/engine_capabilities.zh.md)
-- [docs/manual/reference/physics_engine_inventory.zh.md](docs/manual/reference/physics_engine_inventory.zh.md)
-- [docs/manual/reference/src_layer_map.zh.md](docs/manual/reference/src_layer_map.zh.md)
+- [docs/operations/reference/engine_capabilities.zh.md](docs/operations/reference/engine_capabilities.zh.md)
+- [docs/operations/reference/physics_engine_inventory.zh.md](docs/operations/reference/physics_engine_inventory.zh.md)
+- [docs/operations/reference/src_layer_map.zh.md](docs/operations/reference/src_layer_map.zh.md)
 - [docs/reference_artifacts.zh.md](docs/reference_artifacts.zh.md)
 
 ## 前瞻工作
