@@ -4,6 +4,20 @@ from tests.architecture.helpers import REPO_ROOT
 
 
 CUDA_RESIDENT_DIR = REPO_ROOT / "src/runtime/facade/internal/cuda_resident"
+DEVICE_SOURCES = tuple(
+    CUDA_RESIDENT_DIR / name
+    for name in (
+        "cuda_world_store_cuda_internal.cuh",
+        "cuda_world_store_cuda_storage.cu",
+        "cuda_world_store_cuda_barrier.cu",
+        "cuda_world_store_cuda_phase_a.cu",
+        "cuda_world_store_cuda_phase_b.cu",
+        "cuda_world_store_cuda_phase_d.cu",
+        "cuda_world_store_cuda_observation.cu",
+        "cuda_world_store_cuda_state_readback.cu",
+        "cuda_world_store_cuda_window.cu",
+    )
+)
 CMAKE = REPO_ROOT / "CMakeLists.txt"
 FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
 FIXTURE_CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
@@ -11,11 +25,46 @@ STATE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_backend_state.cpp"
 CPU_REFERENCE_TEST = REPO_ROOT / "src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp"
 
 
+def _device_source() -> str:
+    return "\n".join(path.read_text(encoding="utf-8") for path in DEVICE_SOURCES)
+
+
+def test_cr2_split_manifest_keeps_private_cuda_translation_units_non_rdc() -> None:
+    cmake = CMAKE.read_text(encoding="utf-8")
+    source_manifest = cmake.split("set(EF_CUDA_RESIDENT_BACKEND_SOURCES", 1)[1].split(
+        "add_library(ef_cuda_resident_backend", 1
+    )[0]
+    resident_target = cmake.split("add_library(ef_cuda_resident_backend", 1)[1].split(
+        "add_library(ef_gpu_experiments", 1
+    )[0]
+    device_source = _device_source()
+
+    assert "cuda_world_store_cuda.cu" not in source_manifest
+    assert "CUDA_SEPARABLE_COMPILATION" not in resident_target
+    for path in DEVICE_SOURCES[1:]:
+        assert path.name in source_manifest
+    assert "#include \"cuda_world_store_cuda_" not in device_source
+    assert device_source.count("__global__") == 10
+    for kernel in (
+        "prepare_phase_a_controls_kernel",
+        "phase_b_forces_kernel",
+        "phase_b_aerodynamics_kernel",
+        "phase_b_integrate_kernel",
+        "phase_d_instruments_kernel",
+        "phase_d_configuration_kernel",
+        "phase_d_episode_kernel",
+        "phase_d_pack_observation_kernel",
+        "phase_d_consumer_smoke_kernel",
+        "apply_barrier_kernel",
+    ):
+        assert kernel in device_source
+
+
 def test_rb3_store_is_separate_instance_owned_target() -> None:
     cmake = CMAKE.read_text(encoding="utf-8")
     store_header = (CUDA_RESIDENT_DIR / "cuda_world_store.h").read_text(encoding="utf-8")
     store_source = (CUDA_RESIDENT_DIR / "cuda_world_store.cpp").read_text(encoding="utf-8")
-    device_source = (CUDA_RESIDENT_DIR / "cuda_world_store_cuda.cu").read_text(encoding="utf-8")
+    device_source = _device_source()
 
     assert "add_library(ef_cuda_resident_backend STATIC" in cmake
     assert "std::unique_ptr<Impl> impl_" in store_header
@@ -50,7 +99,7 @@ def test_rb3_shell_remains_fail_closed_and_does_not_advertise_manifest() -> None
 
 
 def test_rb4_state_layout_is_device_owned_soa_with_narrow_barrier_kernel() -> None:
-    device_source = (CUDA_RESIDENT_DIR / "cuda_world_store_cuda.cu").read_text(encoding="utf-8")
+    device_source = _device_source()
     store_header = (CUDA_RESIDENT_DIR / "cuda_world_store.h").read_text(encoding="utf-8")
     backend_source = (CUDA_RESIDENT_DIR / "cuda_resident_backend.cpp").read_text(encoding="utf-8")
     cmake = CMAKE.read_text(encoding="utf-8")

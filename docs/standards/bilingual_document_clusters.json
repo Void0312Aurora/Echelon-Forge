@@ -107,8 +107,8 @@
       "chinese": "docs/plan/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-08-05",
-      "english_hash": "d082f14f01a23870175d5a58c7bb03b12aa39d9a017446520d06866123820586",
-      "chinese_hash": "eaa9e138dc95627b756aebd3969bd8a5b95e7866fca74a03303c01d380e84d6f"
+      "english_hash": "827a998a019a8790208392360682e6f47aa954de1b410df8ed85fddd5b581b77",
+      "chinese_hash": "c4d873c92c47a7f101ef9c3dc793da969ca3bee5e4d880ab2008249db9788fe7"
     },
     {
       "pair_id": "plan/architecture/README",

@@ -232,6 +232,13 @@ target_include_directories(ef_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# The legacy core still uses the standard M_PI extension in several translation
+# units. Opt in on MSVC so the real Flecs CPU backend can be built without
+# changing the model formulas or their constants.
+if (MSVC)
+    target_compile_definitions(ef_core PRIVATE _USE_MATH_DEFINES)
+endif()
+
 # ef_content is listed first: ef_core's engine/model TUs call into the content
 # loader (e.g. simulation_kernel.cpp -> default_unit_factory.h ->
 # load_unit_definitions_json), and content never calls back, so ef_content must
@@ -348,11 +355,20 @@ endif()
 # added when CUDA experiments are explicitly enabled.
 set(EF_CUDA_RESIDENT_BACKEND_SOURCES
     src/runtime/facade/internal/cuda_resident/cuda_resident_backend.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_device_consumer.cpp
     src/runtime/facade/internal/cuda_resident/cuda_world_store.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_world_store_device_lease.cpp
 )
 if (EF_ENABLE_CUDA_EXPERIMENTS)
     list(APPEND EF_CUDA_RESIDENT_BACKEND_SOURCES
-        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_a.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_b.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_d.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu
     )
 endif()
 
@@ -372,6 +388,17 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
         $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>
     )
 endif()
+
+add_library(ef_cuda_resident_full_window_runner STATIC
+    src/runtime/facade/internal/cuda_resident/cuda_resident_full_window_runner.cpp
+    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+)
+target_include_directories(ef_cuda_resident_full_window_runner PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(ef_cuda_resident_full_window_runner PUBLIC
+    flecs::flecs
+)
 
 add_library(ef_gpu_experiments STATIC ${EF_GPU_EXPERIMENT_SOURCES})
 target_include_directories(ef_gpu_experiments PUBLIC
@@ -479,8 +506,11 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_phase_a_cpu_reference.cpp
     src/tests/test_cuda_resident_phase_b_cpu_reference.cpp
     src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/tests/test_cuda_resident_device_consumer.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     src/tests/test_cuda_resident_replay.cpp
+    src/tests/test_cuda_resident_replay_projection.cpp
+    src/tests/test_cuda_resident_replay_support.cpp
     src/tests/test_cuda_resident_performance.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_runtime_facade_evidence_allocators.cpp
@@ -513,6 +543,7 @@ add_executable(ef_cuda_resident_lifecycle_test
     src/tests/test_cuda_resident_phase_d.cpp
     src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
     src/tests/test_cuda_resident_performance.cpp
+    src/tests/test_cuda_resident_device_consumer.cpp
 )
 target_link_libraries(ef_cuda_resident_lifecycle_test PRIVATE
     ef_cuda_resident_backend
@@ -530,6 +561,8 @@ add_executable(ef_cuda_resident_replay_test
     src/tests/test_main.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     src/tests/test_cuda_resident_replay.cpp
+    src/tests/test_cuda_resident_replay_projection.cpp
+    src/tests/test_cuda_resident_replay_support.cpp
 )
 target_link_libraries(ef_cuda_resident_replay_test PRIVATE
     ef_cuda_resident_backend
@@ -539,6 +572,95 @@ target_include_directories(ef_cuda_resident_replay_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+add_executable(ef_cuda_resident_full_window_test
+    src/tests/test_main.cpp
+    src/tests/test_cuda_resident_full_window.cpp
+)
+target_link_libraries(ef_cuda_resident_full_window_test PRIVATE
+    ef_cuda_resident_backend
+    ef_cuda_resident_full_window_runner
+    doctest::doctest
+)
+target_include_directories(ef_cuda_resident_full_window_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# CR2-2b compiles one probe source twice so the real Flecs CPU adapter and the
+# CUDA-resident backend consume the same owned trace through the same Runner.
+# CPU database loading remains outside the runner's semantic window surface.
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    add_executable(ef_cuda_resident_full_window_cuda_probe
+        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
+    )
+    target_link_libraries(ef_cuda_resident_full_window_cuda_probe PRIVATE
+        ef_cuda_resident_backend
+        ef_cuda_resident_full_window_runner
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_full_window_cuda_probe PRIVATE
+        EF_CR2_FULL_WINDOW_CUDA_PROBE=1
+    )
+    target_include_directories(ef_cuda_resident_full_window_cuda_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+
+    # CR2-6 compiles the production matrix probe separately for the current
+    # CUDA-resident lane. Both lanes use the same backend SPI window sequence;
+    # the device-consumer suffix remains an explicit CUDA-only mode.
+    add_executable(ef_cuda_resident_cr2_matrix_cuda_probe
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
+        ef_cuda_resident_backend
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
+        EF_CR2_MATRIX_CUDA_PROBE=1
+        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+else()
+    add_executable(ef_cuda_resident_full_window_cpu_probe
+        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
+    )
+    target_link_libraries(ef_cuda_resident_full_window_cpu_probe PRIVATE
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        ef_cuda_resident_full_window_runner
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_full_window_cpu_probe PRIVATE
+        EF_CR2_FULL_WINDOW_CPU_PROBE=1
+    )
+    target_include_directories(ef_cuda_resident_full_window_cpu_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+
+    add_executable(ef_cuda_resident_cr2_matrix_cpu_probe
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
+        ef_facade
+        ef_core
+        ef_gpu_experiments
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
+        EF_CR2_MATRIX_CPU_PROBE=1
+        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+endif()
+
 # RB9 measures the same frozen trace through two separately built Release
 # probes. The CUDA-on probe keeps the existing ef_core/MSVC debt out of its
 # graph; the CUDA-off probe uses the real FlecsCpuBackend instead of the RB8
@@ -546,6 +668,7 @@ target_include_directories(ef_cuda_resident_replay_test PRIVATE
 if (EF_ENABLE_CUDA_EXPERIMENTS)
     add_executable(ef_cuda_resident_rb9_cuda_probe
         src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
         src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     )
     target_link_libraries(ef_cuda_resident_rb9_cuda_probe PRIVATE
@@ -559,9 +682,28 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     target_include_directories(ef_cuda_resident_rb9_cuda_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
+
+    # CR2-5 captures exactly one production-shaped CUDA-resident full-window
+    # body under cudaProfilerApi. Setup, resource queries, diagnostic readback,
+    # and destruction remain outside the profiler range.
+    add_executable(ef_cuda_resident_resource_probe
+        src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_resource_probe PRIVATE
+        ef_cuda_resident_backend
+        nlohmann_json::nlohmann_json
+    )
+    target_compile_definitions(ef_cuda_resident_resource_probe PRIVATE
+        EF_CR2_RESOURCE_BUILD_CONFIG="$<CONFIG>"
+    )
+    target_include_directories(ef_cuda_resident_resource_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
 else()
     add_executable(ef_cuda_resident_rb9_cpu_probe
         src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
+        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
         src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     )
     target_link_libraries(ef_cuda_resident_rb9_cpu_probe PRIVATE
@@ -590,6 +732,7 @@ add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_da
 add_test(NAME world_batch_runtime COMMAND ef_test --test-suite=world_batch_runtime)
 add_test(NAME cuda_resident_lifecycle COMMAND ef_cuda_resident_lifecycle_test)
 add_test(NAME cuda_resident_replay COMMAND ef_cuda_resident_replay_test)
+add_test(NAME cuda_resident_full_window COMMAND ef_cuda_resident_full_window_test)
 add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
 set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 endif()
@@ -601,6 +744,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_app
     ef_py
     ef_cuda_resident_backend
+    ef_cuda_resident_full_window_runner
     ef_gpu_experiments
     ef_gpu_visual_phase0_probe
     ef_gpu_execution_observation_phase0_probe
@@ -612,8 +756,14 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_test
     ef_cuda_resident_lifecycle_test
     ef_cuda_resident_replay_test
+    ef_cuda_resident_full_window_test
+    ef_cuda_resident_full_window_cpu_probe
+    ef_cuda_resident_full_window_cuda_probe
+    ef_cuda_resident_cr2_matrix_cpu_probe
+    ef_cuda_resident_cr2_matrix_cuda_probe
     ef_cuda_resident_rb9_cpu_probe
     ef_cuda_resident_rb9_cuda_probe
+    ef_cuda_resident_resource_probe
 )
 
 foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)

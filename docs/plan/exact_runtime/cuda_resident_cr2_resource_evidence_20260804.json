@@ -1,0 +1,613 @@
+{
+  "achieved_counters": {
+    "achieved_occupancy": null,
+    "branch_divergence": null,
+    "global_memory_traffic": null,
+    "local_memory_traffic": null,
+    "shared_memory_traffic": null,
+    "status": "pending_cr2_5b"
+  },
+  "capture": {
+    "device_consumer_inside": true,
+    "diagnostic_materialization_inside": false,
+    "public_export_inside": true,
+    "range": "cudaProfilerApi",
+    "setup_outside": true,
+    "trace_signature_algorithm": "fnv1a64",
+    "trace_signature_digest": "cb31675ee34e5015",
+    "window_count": 1,
+    "world_count": 256
+  },
+  "evidence_date": "2026-08-04",
+  "gates": {
+    "cr2_5_achieved_counter_gate_complete": false,
+    "cr2_5a_launch_topology_complete": true,
+    "cr2_5a_static_resource_complete": true,
+    "maintained_claim_allowed": false,
+    "promotion_allowed": false,
+    "public_support_enabled": false,
+    "tuning_authorized": false
+  },
+  "inputs": {
+    "binary_sha256": "8a9125304a44e6d0290bb8b2a2e1be2e7695f4c724e78719a9ec6bade1270f9e",
+    "collector_source_sha256": "eac772e8c7c7e394c79982d64b4a64418545768900a763105d89a83904d67406",
+    "contract_source_sha256": "c7797dff2c79a84d8b0c019af622c890982de2ea18d67c21b6c10a7da1ab4ed6",
+    "cuobjdump_resource_output_sha256": "a57798e71b02c508a978e44de0e276320c166841941488193c9ccb45fcd5c584",
+    "cuobjdump_sass_output_sha256": "49dd46aadabd8982f17787449e68228772d46bbab1619e70a4b98c9506cd24fb",
+    "nsys_sqlite_sha256": "ae65b1435dd4d4d959dcd6c77bf3d8b952f456a547cab3f6b03c9a2162315dee",
+    "probe_sha256": "79943b322a77039cf173beee95e3c51054b2ea23d3d6d82aa6c7f3de34dc9d32",
+    "probe_source_sha256": "a0885a169ed6f0f52374ff52b1c5aa5cf68fac2a1be8b0b8fb581caefb41f8df",
+    "ptxas_build_log_sha256": "c1864b2de399d979a49d4f7a300c7956d37def6850e7450203a8ce2f35965b94",
+    "source_hash_canonicalization": "utf8_lf",
+    "static_parser_source_sha256": "768130a5851cf2a81ea2bca194ac9d6edf267bacc1039edfcda5469d6de6e3d0"
+  },
+  "interpretation": {
+    "compiler_spills_are_not_inferred_from_stack_or_sass_local_instructions": true,
+    "cuda_memcpy_api_bytes_are_not_kernel_global_memory_traffic": true,
+    "launch_topology_complete": true,
+    "nsys_local_memory_metadata_is_not_an_achieved_traffic_counter": true,
+    "static_resource_sources_complete": true,
+    "theoretical_occupancy_is_not_achieved_occupancy": true
+  },
+  "launch_topology": {
+    "cuda_api_counts": {
+      "cudaDeviceSynchronize": 5,
+      "cudaEventCreateWithFlags": 2,
+      "cudaEventRecord": 2,
+      "cudaEventSynchronize": 1,
+      "cudaFree": 0,
+      "cudaLaunchKernel": 12,
+      "cudaMalloc": 4,
+      "cudaMemcpy": 13,
+      "cudaMemset": 5,
+      "cudaProfilerStart": 1,
+      "cudaStreamWaitEvent": 1
+    },
+    "cuda_memcpy_transfers": {
+      "device_to_device": {
+        "bytes": 677376,
+        "copy_count": 3
+      },
+      "device_to_host": {
+        "bytes": 229908,
+        "copy_count": 7
+      },
+      "host_to_device": {
+        "bytes": 14080,
+        "copy_count": 3
+      }
+    },
+    "kernel_symbols": [
+      {
+        "demangled_symbol_sha256": "d37ec77b5c3b8a4749897aa91b33999aba34f06f66ed1ac47538e777bfbf2032",
+        "kernel_id": "apply_barrier"
+      },
+      {
+        "demangled_symbol_sha256": "01d6882ff40680fc714463dac184084c3f6cace835601cdef25fee49887d8396",
+        "kernel_id": "phase_a_controls"
+      },
+      {
+        "demangled_symbol_sha256": "639b63d61fc8920453a4063733750cf1b37d9bc8045db5441215161e621975d8",
+        "kernel_id": "phase_b_forces"
+      },
+      {
+        "demangled_symbol_sha256": "f406aaf57966a2ad961589cbfa79b02346aed288a05041b4dce605ba5c4d9184",
+        "kernel_id": "phase_b_aerodynamics"
+      },
+      {
+        "demangled_symbol_sha256": "1398beb8c3e00fe86258b3c4cb9656b790bda426751252b0bfaa2b03567aba23",
+        "kernel_id": "phase_b_integrate"
+      },
+      {
+        "demangled_symbol_sha256": "4cf52569711831df1b09c3dc2ab30ad1049dd0445d4dec450c620b798dd16cf7",
+        "kernel_id": "phase_d_instruments"
+      },
+      {
+        "demangled_symbol_sha256": "512114c464ffc53ae3b9b7409b435124d7893e215a7a255c02fdbe23321da53d",
+        "kernel_id": "phase_d_configuration"
+      },
+      {
+        "demangled_symbol_sha256": "257c839acac192c854391a5d20eab022130ce609a9c459233b3318767d2df0c7",
+        "kernel_id": "phase_d_projection"
+      },
+      {
+        "demangled_symbol_sha256": "c01a56504b40a944174873632099257e68f85e0b38d7e637ee88375a58e5ace6",
+        "kernel_id": "phase_d_pack"
+      },
+      {
+        "demangled_symbol_sha256": "186933de306ada009b2e53b99147d0b71fd14387b8692e0b80cbad5b053352e2",
+        "kernel_id": "phase_d_consumer"
+      }
+    ],
+    "launch_instance_count": 12,
+    "launches": [
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "apply_barrier",
+        "launch_index": 0,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 30,
+        "semantic_stage": "input_injection",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_a_controls",
+        "launch_index": 1,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 34,
+        "semantic_stage": "phase_a_controls",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "apply_barrier",
+        "launch_index": 2,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 30,
+        "semantic_stage": "stage_publish",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_b_forces",
+        "launch_index": 3,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 66,
+        "semantic_stage": "phase_b_forces",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_b_aerodynamics",
+        "launch_index": 4,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 66,
+        "semantic_stage": "phase_b_aerodynamics",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_b_integrate",
+        "launch_index": 5,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 64,
+        "semantic_stage": "phase_b_integrate",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_d_instruments",
+        "launch_index": 6,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 64,
+        "semantic_stage": "phase_d_instruments",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_d_configuration",
+        "launch_index": 7,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 34,
+        "semantic_stage": "phase_d_configuration",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_d_projection",
+        "launch_index": 8,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 40,
+        "semantic_stage": "phase_d_projection",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "apply_barrier",
+        "launch_index": 9,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 30,
+        "semantic_stage": "window_commit",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_d_pack",
+        "launch_index": 10,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 16,
+        "semantic_stage": "device_observation_pack",
+        "static_shared_bytes_metadata": 0
+      },
+      {
+        "block": [
+          128,
+          1,
+          1
+        ],
+        "dynamic_shared_bytes_metadata": 0,
+        "grid": [
+          2,
+          1,
+          1
+        ],
+        "kernel_id": "phase_d_consumer",
+        "launch_index": 11,
+        "local_bytes_per_thread_metadata": 0,
+        "registers_per_thread_metadata": 16,
+        "semantic_stage": "device_consumer",
+        "static_shared_bytes_metadata": 0
+      }
+    ],
+    "source": "nsight_systems_sqlite_cuda_trace",
+    "synchronization_activity_rows": 8,
+    "unique_kernel_count": 10
+  },
+  "profile_id": "cr2.resource.steady_full_window_body.sm86.v1",
+  "schema_version": "cuda_resident.cr2.kernel_resource_evidence.v1",
+  "source": {
+    "baseline_commit": "08b48f299484428e7297f328ca860f8fadc31cc4",
+    "candidate_state": "cr2_5a_unpromoted_worktree"
+  },
+  "static_kernel_resources": [
+    {
+      "active_blocks_per_multiprocessor": 12,
+      "active_warps_per_multiprocessor": 48,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "apply_barrier",
+      "launch_instance_count": 3,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        30
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 30,
+      "runtime_local_bytes_per_thread": 0,
+      "sass_ldl_instruction_count": 0,
+      "sass_stl_instruction_count": 0,
+      "stack_frame_bytes": 0,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "apply_barrier_kernel",
+      "theoretical_occupancy": 1.0
+    },
+    {
+      "active_blocks_per_multiprocessor": 12,
+      "active_warps_per_multiprocessor": 48,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_a_controls",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        34
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 34,
+      "runtime_local_bytes_per_thread": 0,
+      "sass_ldl_instruction_count": 0,
+      "sass_stl_instruction_count": 0,
+      "stack_frame_bytes": 0,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "prepare_phase_a_controls_kernel",
+      "theoretical_occupancy": 1.0
+    },
+    {
+      "active_blocks_per_multiprocessor": 7,
+      "active_warps_per_multiprocessor": 28,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_b_forces",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        66
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 66,
+      "runtime_local_bytes_per_thread": 40,
+      "sass_ldl_instruction_count": 3,
+      "sass_stl_instruction_count": 2,
+      "stack_frame_bytes": 40,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_b_forces_kernel",
+      "theoretical_occupancy": 0.5833333333333334
+    },
+    {
+      "active_blocks_per_multiprocessor": 7,
+      "active_warps_per_multiprocessor": 28,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_b_aerodynamics",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        66
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 66,
+      "runtime_local_bytes_per_thread": 40,
+      "sass_ldl_instruction_count": 3,
+      "sass_stl_instruction_count": 2,
+      "stack_frame_bytes": 40,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_b_aerodynamics_kernel",
+      "theoretical_occupancy": 0.5833333333333334
+    },
+    {
+      "active_blocks_per_multiprocessor": 8,
+      "active_warps_per_multiprocessor": 32,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_b_integrate",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        64
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 64,
+      "runtime_local_bytes_per_thread": 40,
+      "sass_ldl_instruction_count": 3,
+      "sass_stl_instruction_count": 2,
+      "stack_frame_bytes": 40,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_b_integrate_kernel",
+      "theoretical_occupancy": 0.6666666666666666
+    },
+    {
+      "active_blocks_per_multiprocessor": 8,
+      "active_warps_per_multiprocessor": 32,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_d_instruments",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        64
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 64,
+      "runtime_local_bytes_per_thread": 40,
+      "sass_ldl_instruction_count": 3,
+      "sass_stl_instruction_count": 2,
+      "stack_frame_bytes": 40,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_d_instruments_kernel",
+      "theoretical_occupancy": 0.6666666666666666
+    },
+    {
+      "active_blocks_per_multiprocessor": 12,
+      "active_warps_per_multiprocessor": 48,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_d_configuration",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        34
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 34,
+      "runtime_local_bytes_per_thread": 0,
+      "sass_ldl_instruction_count": 0,
+      "sass_stl_instruction_count": 0,
+      "stack_frame_bytes": 0,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_d_configuration_kernel",
+      "theoretical_occupancy": 1.0
+    },
+    {
+      "active_blocks_per_multiprocessor": 12,
+      "active_warps_per_multiprocessor": 48,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_d_projection",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        40
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 40,
+      "runtime_local_bytes_per_thread": 0,
+      "sass_ldl_instruction_count": 0,
+      "sass_stl_instruction_count": 0,
+      "stack_frame_bytes": 0,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_d_episode_kernel",
+      "theoretical_occupancy": 1.0
+    },
+    {
+      "active_blocks_per_multiprocessor": 12,
+      "active_warps_per_multiprocessor": 48,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_d_pack",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        16
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 16,
+      "runtime_local_bytes_per_thread": 0,
+      "sass_ldl_instruction_count": 0,
+      "sass_stl_instruction_count": 0,
+      "stack_frame_bytes": 0,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_d_pack_observation_kernel",
+      "theoretical_occupancy": 1.0
+    },
+    {
+      "active_blocks_per_multiprocessor": 12,
+      "active_warps_per_multiprocessor": 48,
+      "compiler_spill_load_bytes": 0,
+      "compiler_spill_store_bytes": 0,
+      "cuobjdump_local_bytes": 0,
+      "kernel_id": "phase_d_consumer",
+      "launch_instance_count": 1,
+      "nsys_local_bytes_metadata_values": [
+        0
+      ],
+      "nsys_register_metadata_values": [
+        16
+      ],
+      "register_sources_agree": true,
+      "registers_per_thread": 14,
+      "runtime_local_bytes_per_thread": 0,
+      "sass_ldl_instruction_count": 0,
+      "sass_stl_instruction_count": 0,
+      "stack_frame_bytes": 0,
+      "static_shared_bytes": 0,
+      "symbol_fragment": "phase_d_consumer_smoke_kernel",
+      "theoretical_occupancy": 1.0
+    }
+  ],
+  "toolchain": {
+    "build_config": "Release",
+    "cuda_architecture": "sm_86",
+    "maxrregcount_argument": 0,
+    "maxrregcount_zero_interpretation": "no_cap",
+    "nsight_systems_version": "2025.3.2",
+    "register_cap": null
+  }
+}

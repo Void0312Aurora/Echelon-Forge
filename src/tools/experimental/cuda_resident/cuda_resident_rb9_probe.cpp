@@ -1,22 +1,21 @@
 #include "runtime/contracts/cuda_resident_performance_contract.h"
 #include "runtime/contracts/cuda_resident_replay_contract.h"
+#include "runtime/contracts/cuda_resident_device_consumer_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.h"
+#include "tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.h"
 
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
-#include <bit>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <numeric>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -25,12 +24,10 @@
 
 #if defined(EF_RB9_CPU_PROBE) && defined(EF_RB9_CUDA_PROBE)
 #error "RB9 probe must select exactly one lane"
-#elif defined(EF_RB9_CPU_PROBE)
-#include "runtime/facade/internal/flecs_cpu_backend.h"
 #elif defined(EF_RB9_CUDA_PROBE)
 #include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
 #include <cuda_runtime_api.h>
-#else
+#elif !defined(EF_RB9_CPU_PROBE)
 #error "RB9 probe lane is not configured"
 #endif
 
@@ -42,6 +39,9 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 using Json = nlohmann::json;
+using runtime::cuda_resident::performance::probe::Mode;
+using runtime::cuda_resident::performance::probe::ProbeSession;
+using runtime::cuda_resident::performance::probe::WindowTiming;
 using runtime::cuda_resident::replay::CudaResidentReplayHarness;
 using runtime::cuda_resident::replay::ReplayActionWindow;
 using runtime::cuda_resident::replay::ReplayTrace;
@@ -55,18 +55,6 @@ struct Args {
     std::size_t rollout_windows = 128;
     std::string database_path = "examples/config/database";
     std::string output_path;
-};
-
-struct Mode {
-    bool host_snapshot = false;
-    bool device_consumer = false;
-    std::string id;
-};
-
-struct WindowTiming {
-    double end_to_end_ms = 0.0;
-    double advance_ms = 0.0;
-    double collection_ms = 0.0;
 };
 
 double elapsed_ms(Clock::time_point start, Clock::time_point end) {
@@ -203,231 +191,6 @@ ReplayTrace make_trace(std::size_t world_count) {
     return trace;
 }
 
-std::vector<WorldPilotActionAssignment>
-make_assignments(const ReplayTrace &trace, const std::vector<std::uint64_t> &entity_ids) {
-    std::vector<WorldPilotActionAssignment> assignments;
-    assignments.reserve(entity_ids.size());
-    for (std::size_t world = 0; world < entity_ids.size(); ++world) {
-        assignments.push_back({
-            .world_index = world,
-            .entity_id = entity_ids[world],
-            .action = trace.windows.front().actions[world],
-        });
-    }
-    return assignments;
-}
-
-std::vector<WorldEntityRef> make_refs(const std::vector<std::uint64_t> &entity_ids) {
-    std::vector<WorldEntityRef> refs;
-    refs.reserve(entity_ids.size());
-    for (std::size_t world = 0; world < entity_ids.size(); ++world) {
-        refs.push_back({.world_index = world, .entity_id = entity_ids[world]});
-    }
-    return refs;
-}
-
-void digest_mix(std::uint64_t &digest, std::uint64_t value) {
-    for (unsigned int shift = 0; shift < 64; shift += 8) {
-        digest ^= (value >> shift) & 0xffU;
-        digest *= 1099511628211ULL;
-    }
-}
-
-void digest_mix(std::uint64_t &digest, double value) {
-    digest_mix(digest, std::bit_cast<std::uint64_t>(value));
-}
-
-std::string digest_hex(std::uint64_t value) {
-    std::ostringstream stream;
-    stream << std::hex << std::setfill('0') << std::setw(16) << value;
-    return stream.str();
-}
-
-#if defined(EF_RB9_CPU_PROBE)
-
-class ProbeSession final {
-  public:
-    ProbeSession(const ReplayTrace &trace, const std::string &database_path)
-        : trace_(trace), backend_(trace.seeds.size()) {
-        const auto setup_start = Clock::now();
-        backend_.configure({.worker_threads = 0});
-        const auto content = backend_.load_content({
-            .kind = runtime::backend::ContentKind::Database,
-            .path = &database_path,
-        });
-        if (!content.loaded) throw std::runtime_error("RB9 CPU database load failed");
-        setup_fixture();
-        setup_ms_ = elapsed_ms(setup_start, Clock::now());
-    }
-
-    void reset_fixture() {
-        const auto setup_start = Clock::now();
-        backend_.reset({.seeds = trace_.seeds});
-        setup_fixture();
-        setup_ms_ = elapsed_ms(setup_start, Clock::now());
-    }
-
-    WindowTiming run_window(const Mode &mode) {
-        if (mode.device_consumer) {
-            throw std::logic_error("CPU reference has no device observation consumer");
-        }
-        const auto begin = Clock::now();
-        backend_.inject({.pilot_actions = assignments_});
-        backend_.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
-        const auto advanced = Clock::now();
-        if (mode.host_snapshot) {
-            const auto output = backend_.export_state({
-                .refs = refs_,
-                .include_agent_observations = true,
-                .include_instrument_states = true,
-            });
-            if (output.agent_observations.size() != refs_.size() ||
-                output.instrument_states.size() != refs_.size()) {
-                throw std::runtime_error("RB9 CPU host collection cardinality mismatch");
-            }
-        }
-        const auto collected = Clock::now();
-        return {
-            .end_to_end_ms = elapsed_ms(begin, collected),
-            .advance_ms = elapsed_ms(begin, advanced),
-            .collection_ms = elapsed_ms(advanced, collected),
-        };
-    }
-
-    std::string state_digest() const {
-        const auto output = backend_.export_state({
-            .refs = refs_,
-            .include_agent_observations = true,
-            .include_instrument_states = true,
-        });
-        std::uint64_t digest = 1469598103934665603ULL;
-        for (const auto &observation : output.agent_observations) {
-            digest_mix(digest, observation.id);
-            digest_mix(digest, observation.sim_time);
-            digest_mix(digest, observation.x);
-            digest_mix(digest, observation.y);
-            digest_mix(digest, observation.z);
-            digest_mix(digest, observation.total_reward);
-        }
-        return digest_hex(digest);
-    }
-
-    [[nodiscard]] double setup_ms() const noexcept { return setup_ms_; }
-    [[nodiscard]] std::size_t device_bytes() const noexcept { return 0; }
-    [[nodiscard]] std::size_t state_slot_bytes() const noexcept { return 0; }
-
-  private:
-    void setup_fixture() {
-        const auto setup = backend_.setup({
-            .kind = runtime::backend::SetupKind::Batch,
-            .seeds = trace_.seeds,
-            .spawn_requests = trace_.spawns,
-            .time_steps = trace_.time_steps,
-        });
-        if (setup.entity_ids.size() != trace_.seeds.size()) {
-            throw std::runtime_error("RB9 CPU setup cardinality mismatch");
-        }
-        assignments_ = make_assignments(trace_, setup.entity_ids);
-        refs_ = make_refs(setup.entity_ids);
-    }
-    ReplayTrace trace_;
-    FlecsCpuBackend backend_;
-    std::vector<WorldPilotActionAssignment> assignments_;
-    std::vector<WorldEntityRef> refs_;
-    double setup_ms_ = 0.0;
-};
-
-#else
-
-class ProbeSession final {
-  public:
-    ProbeSession(const ReplayTrace &trace, const std::string &) : trace_(trace) {
-        const auto setup_start = Clock::now();
-        backend_.configure({.world_count = trace_.seeds.size()});
-        setup_fixture();
-        setup_ms_ = elapsed_ms(setup_start, Clock::now());
-    }
-
-    void reset_fixture() {
-        const auto setup_start = Clock::now();
-        backend_.reset({.seeds = trace_.seeds});
-        setup_fixture();
-        setup_ms_ = elapsed_ms(setup_start, Clock::now());
-    }
-
-    WindowTiming run_window(const Mode &mode) {
-        const auto begin = Clock::now();
-        backend_.inject({.pilot_actions = assignments_});
-        backend_.publish_stage();
-        backend_.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
-        const auto advanced = Clock::now();
-        if (mode.host_snapshot) {
-            const auto snapshot = backend_.export_snapshot("rb9.host_snapshot");
-            if (snapshot.worlds.size() != trace_.seeds.size()) {
-                throw std::runtime_error("RB9 CUDA host collection cardinality mismatch");
-            }
-        }
-        if (mode.device_consumer) {
-            const auto view = backend_.export_device_observation_view("rb9.device_consumer");
-            std::vector<float> values;
-            std::vector<std::uint64_t> ids;
-            if (!runtime::cuda_resident::testing::CudaWorldStoreTestAccess::
-                    consume_device_observation_view(view, &values, &ids) ||
-                values.size() != trace_.seeds.size() || ids.size() != trace_.seeds.size()) {
-                throw std::runtime_error("RB9 CUDA device consumer failed");
-            }
-        }
-        const auto collected = Clock::now();
-        return {
-            .end_to_end_ms = elapsed_ms(begin, collected),
-            .advance_ms = elapsed_ms(begin, advanced),
-            .collection_ms = elapsed_ms(advanced, collected),
-        };
-    }
-
-    std::string state_digest() const {
-        const auto snapshot = backend_.export_snapshot("rb9.determinism");
-        std::uint64_t digest = 1469598103934665603ULL;
-        for (const auto &world : snapshot.worlds) {
-            digest_mix(digest, world.entity_ref.entity_id);
-            digest_mix(digest, world.clock.simulation_time_s);
-            digest_mix(digest, world.kinematics.x);
-            digest_mix(digest, world.kinematics.y);
-            digest_mix(digest, world.kinematics.z);
-            digest_mix(digest, world.phase_d.reward.total_reward);
-        }
-        return digest_hex(digest);
-    }
-
-    [[nodiscard]] double setup_ms() const noexcept { return setup_ms_; }
-    [[nodiscard]] std::size_t device_bytes() const noexcept {
-        return backend_.store_diagnostics().device_bytes;
-    }
-    [[nodiscard]] std::size_t state_slot_bytes() const noexcept {
-        return backend_.store_diagnostics().state_slot_bytes;
-    }
-
-  private:
-    void setup_fixture() {
-        const auto setup = backend_.setup({
-            .kind = runtime::backend::SetupKind::Batch,
-            .seeds = trace_.seeds,
-            .spawn_requests = trace_.spawns,
-            .time_steps = trace_.time_steps,
-        });
-        if (setup.entity_ids.size() != trace_.seeds.size()) {
-            throw std::runtime_error("RB9 CUDA setup cardinality mismatch");
-        }
-        assignments_ = make_assignments(trace_, setup.entity_ids);
-    }
-    ReplayTrace trace_;
-    runtime::cuda_resident::CudaResidentBackend backend_;
-    std::vector<WorldPilotActionAssignment> assignments_;
-    double setup_ms_ = 0.0;
-};
-
-#endif
-
 Json statistics_json(const std::vector<double> &samples) {
     if (samples.empty()) return nullptr;
     std::vector<double> sorted = samples;
@@ -452,7 +215,7 @@ Json statistics_json(const std::vector<double> &samples) {
 #if defined(EF_RB9_CUDA_PROBE)
 Json ledger_json(const runtime::cuda_resident::performance::WindowTransferLedger &ledger) {
     return {
-        {"source", "static_operation_ledger_validated_against_cuda_world_store_cuda.cu"},
+        {"source", "static_operation_ledger_validated_against_cuda_world_store_split.v1"},
         {"h2d_copy_count", ledger.h2d_copy_count},
         {"h2d_bytes", ledger.h2d_bytes},
         {"d2h_copy_count", ledger.d2h_copy_count},
@@ -464,9 +227,18 @@ Json ledger_json(const runtime::cuda_resident::performance::WindowTransferLedger
         {"device_observation_pack_bytes", ledger.device_observation_pack_bytes},
         {"device_observation_consumer_bytes", ledger.device_observation_consumer_bytes},
         {"device_observation_view_bytes", ledger.device_observation_view_bytes},
+        {"device_consumer_measured_path_d2h_copy_count",
+         ledger.device_consumer_measured_path_d2h_copy_count},
+        {"device_consumer_diagnostic_d2h_copy_count",
+         ledger.device_consumer_diagnostic_d2h_copy_count},
+        {"device_consumer_event_wait_count", ledger.device_consumer_event_wait_count},
         {"host_snapshot_includes_full_state_d2h", ledger.host_snapshot_includes_full_state_d2h},
         {"device_consumer_includes_host_validation_d2h",
          ledger.device_consumer_includes_host_validation_d2h},
+        {"device_consumer_allocation_may_synchronize",
+         ledger.device_consumer_allocation_may_synchronize},
+        {"device_consumer_release_outside_measured_path",
+         ledger.device_consumer_release_outside_measured_path},
     };
 }
 #endif
@@ -483,6 +255,8 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         {"available", true},
         {"unavailable_reason", ""},
         {"learner_equivalent", false},
+        {"device_consumer_validation_boundary",
+         mode.device_consumer ? "deferred_after_sample_timer" : "not_applicable"},
         {"parity_status", "rb8_selected_slice_quarantined"},
         {"promotion_eligible", false},
     };
@@ -520,6 +294,7 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         const WindowTiming timing = cold_session.run_window(mode);
         cold_window_samples.push_back(timing.end_to_end_ms);
         cold_total_samples.push_back(elapsed_ms(total_begin, Clock::now()));
+        cold_session.validate_pending_device_consumers();
     }
 
     ProbeSession warmed(trace, args.database_path);
@@ -529,6 +304,7 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
 #endif
     for (std::size_t window = 0; window < args.warmup_windows; ++window) {
         (void)warmed.run_window(mode);
+        warmed.validate_pending_device_consumers();
     }
     std::vector<double> end_to_end_samples;
     std::vector<double> advance_samples;
@@ -541,6 +317,7 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         end_to_end_samples.push_back(timing.end_to_end_ms);
         advance_samples.push_back(timing.advance_ms);
         collection_samples.push_back(timing.collection_ms);
+        warmed.validate_pending_device_consumers();
     }
 
     std::vector<double> rollout_samples;
@@ -553,14 +330,17 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
             (void)rollout_session.run_window(mode);
         }
         rollout_samples.push_back(elapsed_ms(begin, Clock::now()));
+        rollout_session.validate_pending_device_consumers();
     }
 
     ProbeSession deterministic(trace, args.database_path);
     deterministic.reset_fixture();
     (void)deterministic.run_window(mode);
+    deterministic.validate_pending_device_consumers();
     const std::string first_digest = deterministic.state_digest();
     deterministic.reset_fixture();
     (void)deterministic.run_window(mode);
+    deterministic.validate_pending_device_consumers();
     const std::string second_digest = deterministic.state_digest();
 
     row["latency"] = {
@@ -592,8 +372,12 @@ Json run_row(const Args &args, std::size_t world_count, const Mode &mode) {
         {"availability", "candidate_owned_requested_bytes"},
         {"resident_bytes", device_bytes},
         {"state_slot_bytes", state_slot_bytes},
-        {"peak_candidate_requested_bytes", device_bytes + ledger.device_observation_view_bytes +
-                                               ledger.device_observation_consumer_bytes},
+        {"peak_candidate_requested_bytes",
+         device_bytes +
+             (mode.device_consumer ? args.rollout_windows : std::size_t{1}) *
+                 (ledger.device_observation_view_bytes + ledger.device_observation_consumer_bytes)},
+        {"deferred_device_consumer_receipts",
+         mode.device_consumer ? args.rollout_windows : std::size_t{0}},
     };
 #else
     row["operation_ledger"] = {
@@ -691,10 +475,12 @@ Json run_probe(const Args &args) {
 #if defined(EF_RB9_CPU_PROBE)
     const std::string lane = "flecs_cpu_reference";
     const std::string invocation_surface = "backend_spi_world_batch";
+    constexpr bool learner_facing_device_lease_available = false;
 #else
     const std::string lane = "cuda_resident";
     const std::string invocation_surface =
         std::string(runtime::cuda_resident::performance::kCudaResidentPerformanceInvocationSurface);
+    constexpr bool learner_facing_device_lease_available = true;
 #endif
 
     Json report = {
@@ -710,6 +496,12 @@ Json run_probe(const Args &args) {
         {"full_facade_available", false},
         {"complete_rollout_collection_available", true},
         {"learner_consumption_available", false},
+        {"learner_facing_device_lease_available", learner_facing_device_lease_available},
+        {"device_consumer_contract_id",
+         learner_facing_device_lease_available
+             ? Json(std::string(
+                   runtime::cuda_resident::device_consumer::kCudaResidentDeviceConsumerSurfaceV1))
+             : Json(nullptr)},
         {"maintained_claim", false},
         {"promotion_allowed", false},
         {"required_metrics_complete", false},

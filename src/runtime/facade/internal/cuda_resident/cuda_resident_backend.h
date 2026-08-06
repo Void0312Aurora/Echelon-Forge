@@ -80,6 +80,8 @@ class CudaResidentBackend final : public IWorldBatchBackend {
     [[nodiscard]] CudaResidentExportSnapshot export_snapshot(const std::string &request_id) const;
     [[nodiscard]] CudaResidentDeviceObservationView
     export_device_observation_view(const std::string &request_id) const;
+    [[nodiscard]] device_consumer::AcquireResult
+    acquire_device_observation_lease(const std::string &request_id) const;
 
   private:
     friend class testing::CudaResidentBackendTestAccess;

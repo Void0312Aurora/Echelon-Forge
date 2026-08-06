@@ -20,9 +20,10 @@ inline constexpr std::string_view kCudaResidentPerformanceUnavailableCountersRea
     "ERR_NVGPUCTRPERM";
 
 // These constants describe the fixed-air device layout and the operations in
-// cuda_world_store_cuda.cu. They are a diagnostic ledger, not a claim that the
-// candidate is a full RuntimeFacade backend. The architecture test keeps this
-// ledger synchronized with the declared phase sequence.
+// the split cuda_world_store_cuda_* translation units. They are a diagnostic
+// ledger, not a claim that the candidate is a full RuntimeFacade backend. The
+// architecture test keeps this ledger synchronized with the declared phase
+// sequence.
 inline constexpr std::size_t kFlightControlH2dBytesPerWorld = 55;
 inline constexpr std::size_t kLifecycleRecordBytesPerWorld = 16;
 inline constexpr std::size_t kObservationFieldsPerWorld = 15;
@@ -39,8 +40,13 @@ struct WindowTransferLedger {
     std::size_t device_observation_pack_bytes = 0;
     std::size_t device_observation_consumer_bytes = 0;
     std::size_t device_observation_view_bytes = 0;
+    std::size_t device_consumer_measured_path_d2h_copy_count = 0;
+    std::size_t device_consumer_diagnostic_d2h_copy_count = 0;
+    std::size_t device_consumer_event_wait_count = 0;
     bool host_snapshot_includes_full_state_d2h = false;
     bool device_consumer_includes_host_validation_d2h = false;
+    bool device_consumer_allocation_may_synchronize = false;
+    bool device_consumer_release_outside_measured_path = false;
 };
 
 [[nodiscard]] inline WindowTransferLedger modeled_window_ledger(std::size_t world_count,
@@ -68,22 +74,23 @@ struct WindowTransferLedger {
         ledger.host_snapshot_includes_full_state_d2h = true;
     }
     if (device_consumer) {
-        // export_device_observation_view() currently performs a separate host
-        // reconstruction before allocating and packing the device view.
-        add_state_snapshot_readback();
         const std::size_t observation_values =
             world_count * kObservationFieldsPerWorld * sizeof(float);
         const std::size_t observation_ids = world_count * sizeof(std::uint64_t);
         const std::size_t consumer_values = world_count * sizeof(float);
         const std::size_t consumer_ids = world_count * sizeof(std::uint64_t);
-        ledger.kernel_launch_count += 2; // pack + consumer smoke
-        ledger.synchronization_count += 2;
-        ledger.d2h_copy_count += 3; // version check + consumer values + ids
-        ledger.d2h_bytes += world_count * sizeof(std::uint64_t) + consumer_values + consumer_ids;
+        ledger.kernel_launch_count += 2;   // pack + consumer smoke
+        ledger.synchronization_count += 1; // explicit receipt event wait
+        ledger.device_consumer_event_wait_count = 1;
+        ledger.device_consumer_measured_path_d2h_copy_count = 0;
+        ledger.device_consumer_diagnostic_d2h_copy_count = 2;
+        ledger.d2h_copy_count += 0; // diagnostics are explicitly outside the measured path
+        ledger.d2h_bytes += 0;
         ledger.device_observation_pack_bytes = observation_values + observation_ids;
         ledger.device_observation_consumer_bytes = consumer_values + consumer_ids;
         ledger.device_observation_view_bytes = ledger.device_observation_pack_bytes;
-        ledger.device_consumer_includes_host_validation_d2h = true;
+        ledger.device_consumer_allocation_may_synchronize = true;
+        ledger.device_consumer_release_outside_measured_path = true;
     }
     return ledger;
 }

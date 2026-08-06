@@ -85,6 +85,7 @@ for execution history only:
 | Document | Current Status | Notes |
 |----------|----------------|-------|
 | [exact_runtime/cuda_resident_backend_program_20260729.md](exact_runtime/cuda_resident_backend_program_20260729.md) | RB0-RB11 closed without promotion | Single execution authority for an independent CUDA-resident backend; the branch-local candidate is retained for research and future work requires a new program |
+| [exact_runtime/cuda_resident_runtime_program_2_20260731.md](exact_runtime/cuda_resident_runtime_program_2_20260731.md) | CR2-0 through CR2-7 closed without promotion | Second-backend implementation and evidence are retained; the achieved-counter gate and explicit promotion/integration authorization remain absent, so future work requires a new program |
 | [exact_runtime/cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md) | Draft follow-on implementation plan | Subsequent C++ exact runtime candidate plan |
 | [exact_runtime/gpu_execution_mainline_integration_checklist.md](exact_runtime/gpu_execution_mainline_integration_checklist.md) | Open | GPU execution mainline consistency checklist |
 | [exact_runtime/README.md](exact_runtime/README.md) | Candidate-plan index | Use the local README to see which exact-runtime drafts are still present |

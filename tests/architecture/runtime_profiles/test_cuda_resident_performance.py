@@ -21,13 +21,32 @@ from scripts.benchmark_cuda_resident_rb9 import (
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = ROOT / "src/runtime/contracts/cuda_resident_performance_contract.h"
 PROBE = ROOT / "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp"
-DEVICE = ROOT / "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda.cu"
+PROBE_SESSION = (
+    ROOT / "src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp"
+)
+CUDA_RESIDENT_DIR = ROOT / "src/runtime/facade/internal/cuda_resident"
+DEVICE_SOURCES = tuple(
+    CUDA_RESIDENT_DIR / name
+    for name in (
+        "cuda_world_store_cuda_barrier.cu",
+        "cuda_world_store_cuda_phase_a.cu",
+        "cuda_world_store_cuda_phase_b.cu",
+        "cuda_world_store_cuda_phase_d.cu",
+        "cuda_world_store_cuda_observation.cu",
+        "cuda_world_store_cuda_window.cu",
+    )
+)
+WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
 CMAKE = ROOT / "CMakeLists.txt"
 EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730"
 
 
 def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _device_text() -> str:
+    return "\n".join(_text(path) for path in DEVICE_SOURCES)
 
 
 def _stats(value: float, sample_count: int) -> dict[str, float | int | list[float]]:
@@ -149,36 +168,61 @@ def test_rb9_probe_keeps_cpu_and_cuda_release_targets_separate() -> None:
         "endif()", 1
     )[0]
     assert "ef_facade" in cpu_target
+    assert cmake.count("cuda_resident_rb9_probe_session.cpp") == 2
 
 
 def test_rb9_freezes_private_invocation_and_complete_world_mode_matrix() -> None:
     contract = _text(CONTRACT)
     probe = _text(PROBE)
+    session = _text(PROBE_SESSION)
     assert '"backend_private_phase_sequence"' in contract
     assert "{1, 4, 16, 64, 256}" in probe
     for mode in MODES:
         assert f'"{mode}"' in probe
-    private_sequence = probe.split("WindowTiming run_window", 2)[2].split(
-        "const auto advanced", 1
-    )[0]
-    assert private_sequence.index("backend_.inject") < private_sequence.index("backend_.publish_stage")
-    assert private_sequence.index("backend_.publish_stage") < private_sequence.index("backend_.advance")
+    run_window = session.split("WindowTiming ProbeSession::run_window", 1)[1]
+    private_sequence = run_window.split("#else", 1)[1].split("const auto advanced", 1)[0]
+    assert private_sequence.index("impl_->backend.inject") < private_sequence.index(
+        "impl_->backend.publish_stage"
+    )
+    assert private_sequence.index("impl_->backend.publish_stage") < private_sequence.index(
+        "impl_->backend.advance"
+    )
     assert '{"full_facade_available", false}' in probe
     assert '{"promotion_allowed", false}' in probe
     assert '{"break_even_eligible", false}' in probe
 
 
+def test_rb9_probe_session_split_stays_structural_and_below_soft_limit() -> None:
+    probe = _text(PROBE)
+    session = _text(PROBE_SESSION)
+    assert "class ProbeSession final" not in probe
+    assert '#include "tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.h"' in probe
+    assert len(probe.splitlines()) <= 700
+    assert len(session.splitlines()) <= 700
+
+
 def test_rb9_static_ledger_matches_current_cuda_phase_graph() -> None:
     contract = _text(CONTRACT)
-    device = _text(DEVICE)
-    phase_window = device.split("bool commit_phase_b_window", 1)[1].split("} // namespace", 1)[0]
-    assert phase_window.count("<<<blocks, threads>>>") == 6
+    device = _device_text()
+    phase_window = _text(WINDOW_SOURCE)
+    # Ten resident-window launches remain the base path; the legacy diagnostic
+    # and CR2-3 measured wrappers each contain pack/consumer call sites.
+    assert device.count("<<<blocks, threads>>>") == 12
+    assert phase_window.index("launch_phase_b_forces") < phase_window.index("launch_phase_d_episode")
+    assert phase_window.count("launch_phase_b_") == 3
+    assert phase_window.count("launch_phase_d_") == 3
     assert "kFlightControlH2dBytesPerWorld = 55" in contract
     assert ".kernel_launch_count = 10" in contract
+    assert "ledger.kernel_launch_count += 2" in contract
     assert ".synchronization_count = 5" in contract
     assert "phase_d_pack_observation_kernel" in device
     assert "phase_d_consumer_smoke_kernel" in device
     assert "device_consumer_includes_host_validation_d2h" in contract
+    assert "ledger.device_consumer_measured_path_d2h_copy_count = 0" in contract
+    assert "ledger.device_consumer_diagnostic_d2h_copy_count = 2" in contract
+    assert "ledger.device_consumer_event_wait_count = 1" in contract
+    assert "ledger.device_consumer_allocation_may_synchronize = true" in contract
+    assert "ledger.device_consumer_release_outside_measured_path = true" in contract
 
 
 def test_rb9_comparison_remains_held_even_when_internal_speedup_exceeds_target() -> None:

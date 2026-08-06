@@ -48,9 +48,9 @@ bool pilot_action_requests_manual_takeover(const PilotAction &pilot) {
            std::abs(pilot.rudder) > kPrimaryAxisDeadband;
 }
 
-bool is_runway_like_surface(IControlModel::IEnvironmentModel::SurfaceType surface) {
-    return surface == IControlModel::IEnvironmentModel::SurfaceType::Concrete ||
-           surface == IControlModel::IEnvironmentModel::SurfaceType::Asphalt;
+bool is_runway_like_surface(IEnvironmentModel::SurfaceType surface) {
+    return surface == IEnvironmentModel::SurfaceType::Concrete ||
+           surface == IEnvironmentModel::SurfaceType::Asphalt;
 }
 
 double landing_bank_limit_deg(const MissionCommand &mission) {
@@ -72,7 +72,7 @@ double landing_bank_limit_deg(const MissionCommand &mission) {
 }
 
 double landing_heading_reference_deg(const MissionCommand &mission, const Transform &transform,
-                                     IControlModel::IEnvironmentModel *env_model) {
+                                     IEnvironmentModel *env_model) {
     if (env_model) {
         const auto terrain = env_model->get_terrain_at(transform.x, transform.y);
         if (is_runway_like_surface(terrain.type) && std::isfinite(terrain.runway_heading)) {

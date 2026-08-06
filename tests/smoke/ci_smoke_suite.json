@@ -100,6 +100,7 @@
     "tests/runtime/air_combat/test_weapon_roe_runtime.py",
     "tests/scenario/test_scenario_compiler.py",
     "tests/scenario/test_scenario_generation_contracts.py",
+    "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py::test_cr2_5b_counter_reports_reject_equal_valued_non_json_types",
     "tests/runners/test_pytest_suite_manifests.py",
     "tests/runners/test_suite_manifest.py",
     "tests/runners/test_run_pytest_suite.py",

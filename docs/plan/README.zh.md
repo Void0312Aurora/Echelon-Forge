@@ -85,6 +85,7 @@
 | 文档 | 当前状态 | 说明 |
 |------|-----------|------|
 | [exact_runtime/cuda_resident_backend_program_20260729.zh.md](exact_runtime/cuda_resident_backend_program_20260729.zh.md) | RB0-RB11 无晋级关闭 | 独立 CUDA 驻留后端的单一执行权威；分支内 candidate 保留作研究，未来工作必须建立新计划 |
+| [exact_runtime/cuda_resident_runtime_program_2_20260731.zh.md](exact_runtime/cuda_resident_runtime_program_2_20260731.zh.md) | CR2-0 至 CR2-7 无晋级关闭 | 保留第二后端实现与证据；achieved-counter gate、显式 promotion/integration 授权仍缺失，未来工作需建立新计划 |
 | [exact_runtime/cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md) | Draft follow-on implementation plan | 后续 C++ exact runtime 候选计划 |
 | [exact_runtime/gpu_execution_mainline_integration_checklist.md](exact_runtime/gpu_execution_mainline_integration_checklist.md) | Open | GPU execution 主线一致性检查清单 |
 | [exact_runtime/README.md](exact_runtime/README.md) | 候选专项索引 | 通过局部 README 确认当前仍存在的 exact-runtime 草案 |
