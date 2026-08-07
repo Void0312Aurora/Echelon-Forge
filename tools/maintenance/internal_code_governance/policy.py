@@ -44,11 +44,15 @@ TRACKING_CODE_RE = re.compile(
   re.IGNORECASE,
 )
 PHASE_IDENTIFIER_RE = re.compile(
-  r"(?<![A-Za-z0-9])(?:phase_[a-d](?:_[A-Za-z0-9_]+)?|k?Phase[A-D][A-Za-z0-9_]*)",
-  re.IGNORECASE,
+  r"(?<![A-Za-z0-9])(?:"
+  r"phase_[a-d](?:_[A-Za-z0-9_]+)?|"
+  r"PHASE_[A-D](?:_[A-Za-z0-9_]+)?|"
+  r"[kK]?Phase[A-D](?![a-z])(?:[A-Z0-9_][A-Za-z0-9_]*)?|"
+  r"phase[A-D](?![a-z])(?:[A-Z0-9_][A-Za-z0-9_]*)?"
+  r")",
 )
 PHASE_PROSE_RE = re.compile(
-  r"(?<![A-Za-z0-9])Phase\s+[A-D](?:/[A-D])*(?![A-Za-z0-9])",
+  r"(?<![A-Za-z0-9])Phase(?:\s+|-)[A-D](?:/[A-D])*(?![A-Za-z0-9])",
   re.IGNORECASE,
 )
 STRING_LITERAL_RE = re.compile(

@@ -56,6 +56,18 @@ def test_comment_markers_inside_strings_do_not_hide_runtime_codes() -> None:
   ]
 
 
+def test_actual_comments_after_string_markers_remain_comments() -> None:
+  result = scan_text(
+    "python/rl/runtime/backend.py",
+    'marker = "#"  # RB8 introduced the old replay path\n',
+  )
+
+  assert result.errors == ()
+  assert [(finding.code, finding.token) for finding in result.warnings] == [
+    ("source-tracking-code-comment", "RB8")
+  ]
+
+
 def test_phase_identifiers_require_an_explicit_compatibility_marker() -> None:
   blocked = scan_text(
     "src/runtime/contracts/schema.h",
@@ -81,6 +93,26 @@ def test_phase_runtime_text_and_uppercase_identifiers_are_blocked() -> None:
   assert [(finding.code, finding.token) for finding in result.errors] == [
     ("opaque-phase-runtime-string", "Phase A/B/D"),
     ("opaque-phase-identifier", "PHASE_B_STATE"),
+  ]
+
+
+def test_semantic_phase_words_do_not_match_lettered_phase_codes() -> None:
+  result = scan_text(
+    "src/runtime/contracts/schema.h",
+    "int phaseBoundary = 0;\nint broadphase_batch = 0;\n",
+  )
+
+  assert result.findings == ()
+
+
+def test_hyphenated_phase_runtime_text_is_blocked() -> None:
+  result = scan_text(
+    "src/runtime/contracts/schema.h",
+    'const char* message = "requires a committed Phase-D window";\n',
+  )
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("opaque-phase-runtime-string", "Phase-D")
   ]
 
 

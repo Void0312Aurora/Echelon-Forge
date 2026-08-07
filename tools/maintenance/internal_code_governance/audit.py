@@ -65,12 +65,16 @@ def _inside_string_literal(line: str, offset: int) -> bool:
 def _comment_offset(path: str, line: str) -> int | None:
   suffix = Path(path).suffix.lower()
   markers = ("#",) if suffix == ".py" else ("//",)
-  positions = [
-    offset
-    for marker in markers
-    for offset in (line.find(marker),)
-    if offset >= 0 and not _inside_string_literal(line, offset)
-  ]
+  positions: list[int] = []
+  for marker in markers:
+    start = 0
+    while True:
+      offset = line.find(marker, start)
+      if offset < 0:
+        break
+      if not _inside_string_literal(line, offset):
+        positions.append(offset)
+      start = offset + len(marker)
   return min(positions) if positions else None
 
 
