@@ -1,12 +1,21 @@
 # 美国空军画像
 
 Language:
-- English canonical: `air_force.md`
-- Chinese companion: [air_force.zh.md](air_force.zh.md)
+- English canonical: [air_force_profile.md](air_force_profile.md)
+- Chinese companion: `air_force_profile.zh.md`
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/air_force_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
 
 状态：`2026-05-18`，USAF 军种画像层权威版本。
 
 本文档定义仓库在进入 `air/` 特化之前，如何解释美国空军的组织概念。
+
+本画像负责解释 Joint common core 在空军组织和任务编组中的含义，不拥有空中领域
+执行合同。
 
 它不是完整条令摘要，而是回答三个标准化问题：
 
@@ -53,7 +62,7 @@ common 层只保留跨军种共享的骨架：
 
 这些字段保持中立，不会因为仓库当前偏 air 而自动变成 USAF 专属术语。
 
-### `services/air_force`
+### 空军 Service-profile 解释
 
 空军画像层负责给这套共享骨架赋予 USAF 口径：
 
@@ -64,7 +73,7 @@ common 层只保留跨军种共享的骨架：
 
 这一层定义的是解释权与归属，不负责 runway 几何、动作向量或 mission-observation 数组布局。
 
-### `air`
+### 空中领域特化
 
 专门的 `air/` 目录负责当前维护中的空中执行合同：
 
@@ -149,7 +158,9 @@ common 层只保留跨军种共享的骨架：
 
 - common tasking 字段通过 `TaskOrder`、`LeaderIntent`、`PilotReport` 流动
 - 可执行命令通过 `MissionCommand` 流动
-- 架次级观测与动作合同由 `air/obs.md` 和 `air/act.md` 定义
+- 架次级观测与动作合同由
+  `docs/domains/air/standards/pilot_observation_contract.md` 和
+  `docs/domains/air/standards/pilot_action_contract.md` 定义
 
 因此，本文档的作用就是守住边界：
 
@@ -159,8 +170,8 @@ common 层只保留跨军种共享的骨架：
 
 ## 相关文档
 
-- [军种画像总览](README.md)
-- [空中平台特化](../air/README.md)
-- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
-- [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-- [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
+- [军种画像总览](../README.zh.md)
+- [空中平台特化](../../../air/README.zh.md)
+- [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)
+- [运行时工作流与合同基线](../../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)

@@ -1,8 +1,21 @@
 # US Navy Profile
 
+Language:
+- English canonical: [navy_profile.md](navy_profile.md)
+- Chinese companion: `navy_profile.zh.md`
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/navy_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
+
+状态：`2026-08-08`，Navy 军种画像归口的权威标准。
+
 本文档定义项目在海战与海上行动建模时使用的 Navy service profile。
 
-它不再是早期占位文档。它的职责是说明 Navy 如何映射到共享的 `common` 合同，以及专门的 `naval` specialization 应如何读取这些字段。
+它不再是早期占位文档。它的职责是说明 Navy 如何解释共享的 Joint common-core
+合同，以及应在何处移交给专门的 naval specialization。它不拥有海上领域执行语义。
 
 ## 1. 现实基础
 
@@ -23,7 +36,7 @@ Navy 公开资料显示，海军战术组织是任务编组化的，通常会以
 
 ## 2. 层级边界
 
-### 2.1 `common`
+### 2.1 Joint common core
 
 `common` 应保留所有军种可共享的骨架：
 
@@ -39,9 +52,9 @@ Navy 公开资料显示，海军战术组织是任务编组化的，通常会以
 
 对 Navy 来说，这些字段仍保持共享形状，但其含义由海军组织口径解释，而不是空战术语解释。
 
-### 2.2 `services/navy`
+### 2.2 Navy Service-profile 解释
 
-`services/navy` 负责说明 Navy 对共享骨架的专属读法：
+Navy service profile 负责说明 Navy 对共享骨架的专属读法：
 
 - `task_group` / `task_unit` 层级
 - `officer_in_tactical_command`
@@ -50,7 +63,7 @@ Navy 公开资料显示，海军战术组织是任务编组化的，通常会以
 
 这一层应该定义所有权与语义，不应定义执行细节。
 
-### 2.3 `naval`
+### 2.3 海上领域特化
 
 `naval` 是 tight-loop 海上运行时语义的专层：
 
@@ -61,20 +74,24 @@ Navy 公开资料显示，海军战术组织是任务编组化的，通常会以
 
 这一层不应重新声明共享合同字段，除非是在澄清它们的海军含义。
 
-## 3. 最小语义集
+## 3. 最小解释集
 
-Navy profile 应吸收以下最小语义作为一等术语：
+Navy profile 拥有以下军种层解释：
 
 - `task_group`
 - `task_unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
+
+下列执行语义归 naval owner，而不归本画像：
+
 - `screen`
 - `support`
 - `station`
 - `recover`
 
-这些就是当前海军任务计划与运行时桥接所需的最小有效术语。
+这些共同构成当前海军任务计划与 runtime bridge 所需的最小军种/领域术语集，
+但两层之间的所有权保持分离。
 
 ### 3.1 术语含义
 
@@ -93,14 +110,14 @@ Navy profile 应吸收以下最小语义作为一等术语：
 
 1. 保持 common 合同稳定。
 2. 用 `task_group / task_unit` 与 `officer_in_tactical_command` 绑定 Navy 的任务规划。
-3. 把 `screen / support / station / recover` 作为最小海军控制词汇接入。
+3. 要求 naval owner 把 `screen / support / station / recover` 定义为最小海军控制词汇。
 4. 再往下扩展更深的舰艇或编队行为。
 
 这样可以避免把空军优先的假设写入 naval runtime。
 
 ## 5. 所有权与桥接职责
 
-`services/navy` 负责说明：
+Navy service profile 负责说明：
 
 - Navy 依赖哪些 common 字段
 - 这些字段由哪一层解释
@@ -108,4 +125,12 @@ Navy profile 应吸收以下最小语义作为一等术语：
 
 它不负责定义平台级执行命令、传感器行为或武器逻辑。
 
-专门的 `naval` 层应在 common 骨架就位后承担这些运行时语义。
+专门的 naval owner 在 common 骨架就位后拥有这些运行时语义。
+
+## 相关文档
+
+- [军种画像总览](../README.zh.md)
+- [海军标准总览](../../../../standards/naval/README.zh.md)
+- [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)
+- [场景配置指南](../../../../standards/bridge/scenario_guide.zh.md)

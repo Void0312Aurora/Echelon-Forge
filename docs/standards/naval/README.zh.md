@@ -8,7 +8,9 @@ Language:
 
 本目录收纳专门的 `naval` specialization 标准文档。
 
-这里已经不是占位目录，而是当前海军任务计划的标准入口。目标是把 `common`、`services/navy` 与 `naval` 清楚分层，避免空军优先的语义继续泄漏到海上运行时。
+这里不是占位目录，而是当前海军任务计划的 legacy 标准入口。目标是把 Joint
+common core、owner-local Navy service profile 与 Naval 特化清楚分层，避免空军
+优先语义继续泄漏到海上 runtime。
 
 ## 维护中文档
 
@@ -38,9 +40,10 @@ Language:
 
 这些都是军种无关的形状，不是海军执行语义。
 
-### `services/navy`
+### Navy service profile
 
-Navy service profile 负责说明共享合同在海战语境下应如何阅读。
+[Navy service profile](../../domains/joint/service_profiles/standards/navy_profile.zh.md)
+负责说明共享合同在海战语境下应如何阅读。
 
 它负责这些语义：
 
@@ -88,7 +91,7 @@ Navy service profile 负责说明共享合同在海战语境下应如何阅读�
 
 ## 4. 这里不应该写什么
 
-以下内容应继续留在 `common` 或 `services/navy`：
+以下内容应继续留在 Joint common core 或 Navy service profile：
 
 - `command_relationship`
 - `authority_scope`
@@ -111,7 +114,7 @@ Navy service profile 负责说明共享合同在海战语境下应如何阅读�
 - `CAP`
 - 对 `MissionCommand.command_code` 的 air-style 读法
 
-如果某个概念只适用于空战 sortie 级运行时，就应保留在 `docs/standards/air/`。
+如果某个概念只适用于空战 sortie 级运行时，就应保留在 `docs/domains/air/`。
 
 ## 6. 当前最小海军语义
 

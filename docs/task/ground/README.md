@@ -65,7 +65,8 @@ without creating a new vertical runtime path.
   [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md).
 - The original bootstrap plan met its planning-lane success criteria and is now
   an accepted archived baseline, not an active dispatch surface.
-- `services/army` already exists as the authoritative service-profile boundary.
+- The owner-local Army service profile already exists as the authoritative
+  service-profile boundary.
 - The task tree now maintains a dedicated ground execution-specialization lane:
   G0-G4 tasking lifecycle evidence and G6-E native schema evidence are
   accepted, while movement, sensing, terrain, fires, damage, combat, and full
@@ -74,7 +75,8 @@ without creating a new vertical runtime path.
   the first tight-loop tactical unit, and `move / occupy / support` as the first
   task family default.
 - `army` and `land` are accepted aliases that normalize to `ground`; navigation
-  routes through `services/army` plus `ground/`, not a new `army` runtime stack.
+  routes through the Army service profile plus `docs/domains/ground/`, not a
+  new `army` runtime stack.
 - The workline is split into G0-G6 phases so subagents can take bounded,
   non-overlapping tasks.
 - G0 is accepted by main-thread G0-D.
@@ -167,11 +169,11 @@ without creating a new vertical runtime path.
 - Architecture baseline:
   [../../plan/architecture/simulation_system_architecture_design.md](../../plan/architecture/simulation_system_architecture_design.md)
 - Army service profile:
-  [../../standards/services/army.md](../../standards/services/army.md)
+  [../../domains/joint/service_profiles/standards/army_profile.md](../../domains/joint/service_profiles/standards/army_profile.md)
 - Ground standards overview:
-  [../../standards/ground/README.md](../../standards/ground/README.md)
+  [../../domains/ground/README.md](../../domains/ground/README.md)
 - Ground minimal task structure:
-  [../../standards/ground/minimal_task_structure.md](../../standards/ground/minimal_task_structure.md)
+  [../../domains/ground/standards/minimal_task_structure.md](../../domains/ground/standards/minimal_task_structure.md)
 - Common/air/naval split (archived):
   [../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md](../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md)
 

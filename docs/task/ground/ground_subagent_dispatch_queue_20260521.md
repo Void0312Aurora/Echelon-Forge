@@ -144,8 +144,8 @@ phase releases only two `G1` realism fixtures.
 
 | Stream | Agent type | Historical dispatch record / reasoning | Task | Write scope |
 |--------|------------|-------------------|------|-------------|
-| `G0-A` | worker | `gpt-5.4-mini`, xhigh | Audit/tighten the ground standards overview. | `docs/standards/ground/README*.md` only. No code. |
-| `G0-B` | worker | `gpt-5.4-mini`, xhigh | Audit/tighten the minimal ground task vocabulary. | `docs/standards/ground/minimal_task_structure*.md` only. No code. |
+| `G0-A` | worker | `gpt-5.4-mini`, xhigh | Audit/tighten the ground standards overview. | `docs/domains/ground/README*.md` only. No code. |
+| `G0-B` | worker | `gpt-5.4-mini`, xhigh | Audit/tighten the minimal ground task vocabulary. | `docs/domains/ground/standards/minimal_task_structure*.md` only. No code. |
 | `G0-C` | worker / integration worker | `gpt-5.4-mini`, xhigh | Integrate G0 navigation, dispatch docs, and bilingual registry after G0-A/G0-B. | Standards indexes, `docs/task/ground/**`, registry. No code. |
 | `G1-A` | worker | `gpt-5.4`, high | Preflight profile resolver, ground profile shell, starter defaults, and focused test scope. Implementation requires follow-on approval. | Read/source inventory and focused preflight notes first; code edits only after follow-on approval. |
 | `G1-B` | worker | `gpt-5.4`, high | Implement the Python-profile-only ground resolver/profile/adapter slice and focused tests from G1-A. | `python/rl/tasking/bridge.py`, `python/rl/tasking/common_core_profile.py`, `python/rl/tasking/ground_adapter.py`, `python/rl/profile/ground_profile.py`, focused `tests/leader` only. No C++/runtime/bindings. |
@@ -183,7 +183,7 @@ phase releases only two `G1` realism fixtures.
 
 Task:
 
-- Audit/tighten `docs/standards/ground/README*.md`.
+- Audit/tighten `docs/domains/ground/README*.md`.
 - Confirm layer model, G0 defaults, stage coverage, capability path, agency,
   and information-state rules.
 - Stop as `blocked` instead of changing frozen defaults.
@@ -199,7 +199,7 @@ Return:
 
 Task:
 
-- Audit/tighten `docs/standards/ground/minimal_task_structure*.md`.
+- Audit/tighten `docs/domains/ground/standards/minimal_task_structure*.md`.
 - Confirm `TASK_MOVE`, `TASK_OCCUPY`, and `TASK_SUPPORT` as the only starter
   task shapes.
 - Keep movement dynamics, sensing, fires, logistics, terrain, observation, and

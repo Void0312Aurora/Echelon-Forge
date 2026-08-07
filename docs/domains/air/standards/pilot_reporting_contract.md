@@ -1,10 +1,16 @@
 # Pilot Reporting Contract
 
 Language:
-- English canonical: `rep.md`
-- Chinese companion: [rep.zh.md](rep.zh.md)
+- English canonical: `pilot_reporting_contract.md`
+- Chinese companion: [pilot_reporting_contract.zh.md](pilot_reporting_contract.zh.md)
 
-Status: `2026-05-18` specialization baseline for maintained air reporting semantics.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/pilot_reporting_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+Status: specialization baseline for maintained air reporting semantics.
 
 This document defines the maintained air reporting contract for the current
 repository. It does not serve as a full brevity-code handbook.
@@ -20,10 +26,12 @@ The maintained reporting surface is split into:
 
 Primary references:
 
-- [src/components/tasking/common/pilot_report_core.h](../../../src/components/tasking/common/pilot_report_core.h)
-- [src/components/domains/air/tasking/pilot_report_air.h](../../../src/components/domains/air/tasking/pilot_report_air.h)
-- [python/rl/tasking/leader_tasking.py](../../../python/rl/tasking/leader_tasking.py)
-- [src/runtime/contracts/world_batch_contracts.h](../../../src/runtime/contracts/world_batch_contracts.h)
+- [src/components/tasking/common/pilot_report_core.h](../../../../src/components/tasking/common/pilot_report_core.h)
+- [src/components/domains/air/tasking/pilot_report_air.h](../../../../src/components/domains/air/tasking/pilot_report_air.h)
+- [src/components/tasking/pilot_report.h](../../../../src/components/tasking/pilot_report.h)
+- [python/rl/tasking/leader_tasking.py](../../../../python/rl/tasking/leader_tasking.py)
+- [src/runtime/contracts/world_batch_contracts.h](../../../../src/runtime/contracts/world_batch_contracts.h)
+- [tests/runtime/bindings/test_bindings_command_surface.py](../../../../tests/runtime/bindings/test_bindings_command_surface.py)
 
 ## Core Report Fields
 

@@ -112,7 +112,7 @@ Post-P5 补充：[组件响应量化阈值附录](kill_chain_component_response_
 附录只为后续 before/after report 提供可复用的 `component_response` 量化口径。
 
 标准化期望包络：
-[空空杀伤链期望包络](../../../../standards/air/kill_chain_expectation_envelope.zh.md)
+[空空杀伤链期望包络](../../../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)
 使用本 P3 字段映射和 P5 后 response bands，定义 standards-layer planning-supplement
 labels，例如 `envelope_cell_status` 和 `envelope_owner_stage`。该包络不是当前
 runtime contract，也不授予 calibration authority。

@@ -233,4 +233,4 @@ timing，否则它是单独 closure。
 
 它也不替代 air action 标准。`air_combat_hybrid_v1`、`event_action_mask`、
 `fire_once` 与 runtime trigger interpretation 仍归
-[Pilot Action Contract](../air/act.md)；本文档只说明模型侧必须如何与该合同交互。
+[Pilot Action Contract](../../domains/air/standards/pilot_action_contract.md)；本文档只说明模型侧必须如何与该合同交互。

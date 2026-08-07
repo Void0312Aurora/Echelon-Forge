@@ -1,8 +1,22 @@
 # US Navy Profile
 
+Language:
+- English canonical: `navy_profile.md`
+- Chinese companion: [navy_profile.zh.md](navy_profile.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/navy_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
+
+Status: `2026-08-08` authoritative for Navy service-profile placement.
+
 This document defines the Navy service profile used when the project models naval warfare and maritime operations.
 
-It is no longer a placeholder. Its job is to describe how the Navy maps onto the shared `common` contract and how the dedicated `naval` specialization should read that contract.
+It is no longer a placeholder. Its job is to describe how the Navy interprets
+the shared Joint common-core contract and where it hands off to the dedicated
+naval specialization. It does not own naval execution semantics.
 
 ## 1. Real-World Basis
 
@@ -23,7 +37,7 @@ These sources support three conclusions:
 
 ## 2. Layer Boundaries
 
-### 2.1 `common`
+### 2.1 Joint common core
 
 `common` should keep the cross-service skeleton that all services can share:
 
@@ -39,9 +53,10 @@ These sources support three conclusions:
 
 For Navy, these fields keep their shared shape, but their meaning is interpreted through naval organization rather than air sortie terminology.
 
-### 2.2 `services/navy`
+### 2.2 Navy service-profile interpretation
 
-`services/navy` explains the Navy-specific reading of the shared skeleton:
+The Navy service profile explains the Navy-specific reading of the shared
+skeleton:
 
 - `task_group` / `task_unit` hierarchy
 - `officer_in_tactical_command`
@@ -50,7 +65,7 @@ For Navy, these fields keep their shared shape, but their meaning is interpreted
 
 This layer should define ownership and meaning, not execution mechanics.
 
-### 2.3 `naval`
+### 2.3 Naval domain specialization
 
 `naval` is the dedicated specialization for tight-loop maritime runtime semantics:
 
@@ -61,20 +76,25 @@ This layer should define ownership and meaning, not execution mechanics.
 
 This layer should not re-declare shared contract fields unless it is clarifying their naval interpretation.
 
-## 3. Minimal Semantic Set
+## 3. Minimal Interpretation Set
 
-The Navy profile should absorb the following minimal semantics as first-class terms:
+The Navy profile owns these service-level interpretations:
 
 - `task_group`
 - `task_unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
+
+The naval owner, not this profile, owns the execution meaning of:
+
 - `screen`
 - `support`
 - `station`
 - `recover`
 
-These are the smallest useful terms for the current naval task plan and runtime bridge.
+Together these are the smallest useful service and domain terms for the current
+naval task plan and runtime bridge; their ownership remains split across the two
+layers.
 
 ### 3.1 Meaning of the minimal terms
 
@@ -93,14 +113,15 @@ For current task planning, the Navy profile should guide the order of implementa
 
 1. Keep the common contract stable.
 2. Bind Navy task planning to `task_group / task_unit` and `officer_in_tactical_command`.
-3. Add `screen / support / station / recover` as the minimal naval control vocabulary.
+3. Require the naval owner to define `screen / support / station / recover` as
+   the minimal naval control vocabulary.
 4. Only then extend deeper ship-specific or formation-specific behavior.
 
 This avoids forcing air-first assumptions into the naval runtime.
 
 ## 5. Ownership and Bridge Responsibilities
 
-`services/navy` is responsible for stating:
+The Navy service profile is responsible for stating:
 
 - which common fields the Navy profile depends on
 - which semantic layer interprets them
@@ -108,4 +129,13 @@ This avoids forcing air-first assumptions into the naval runtime.
 
 It is not responsible for defining platform-specific command execution, sensor behavior, or weapon logic.
 
-The dedicated `naval` layer should own those runtime semantics once the common skeleton is in place.
+The dedicated naval owner owns those runtime semantics once the common skeleton
+is in place.
+
+## Related Documents
+
+- [Service Profile Overview](../README.md)
+- [Naval Standards Overview](../../../../standards/naval/README.md)
+- [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)
+- [Scenario Configuration Guide](../../../../standards/bridge/scenario_guide.md)

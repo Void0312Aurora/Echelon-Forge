@@ -6,19 +6,22 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/README.md`
 Owner: `mission-domain documentation`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 The maintained mission-domain taxonomy has four owners: `air`, `naval`,
 `ground`, and `joint`. Flight dynamics, sensors, weapons, learning, and
-visualization are not additional mission domains. Joint common-core standards
-have moved to their content owner; the remaining domain routes stay in
-[task](../task/README.md) and the legacy [standards](../standards/README.md)
-until their owner-specific migration slices land.
+visualization are not additional mission domains. Joint common-core and service
+profiles plus Air and Ground standards have moved to their content owners.
+Naval standards remain on the legacy [standards](../standards/README.md) route
+until their separate migration slice lands.
 
 ## Current Owner Routes
 
-- Air: [open improvement backlog](air/work/issues/improvement_backlog.md).
-- Joint: [owner index and maintained standards](joint/README.md).
+- Air: [owner index, standards, and open issues](air/README.md).
+- Ground: [owner index and maintained standards](ground/README.md).
+- Joint: [owner index and common-core standards](joint/README.md).
+- Service profiles: [nested owner index](joint/service_profiles/README.md).
+- Naval: current [legacy standards route](../standards/naval/README.md).
 
 An item under `work/issues` is a candidate or unresolved gap, not authorized
 implementation. Cross-owner items in the Air backlog must be split when their

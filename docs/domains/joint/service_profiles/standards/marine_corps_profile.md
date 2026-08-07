@@ -1,8 +1,14 @@
 # US Marine Corps Profile
 
 Language:
-- English canonical: `marine_corps.md`
-- Chinese companion: [marine_corps.zh.md](marine_corps.zh.md)
+- English canonical: `marine_corps_profile.md`
+- Chinese companion: [marine_corps_profile.zh.md](marine_corps_profile.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/marine_corps_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
 
 Status: `2026-05-18` authoritative for USMC service-profile placement.
 
@@ -12,6 +18,10 @@ organization as a service profile.
 The goal is not to claim that a dedicated Marine runtime already exists. The
 goal is to define how Marine Corps force packaging and command relationships
 should constrain future standardization work.
+
+This profile interprets the Joint common core for Marine Corps force packaging
+and command relationships. It does not own air, naval, or ground execution
+contracts.
 
 ## Real-World Basis
 
@@ -54,7 +64,7 @@ The common layer should retain the cross-service skeleton:
 These fields remain shared. The Marine Corps profile explains how a MAGTF-style
 force package reads them.
 
-### `services/marine_corps`
+### Marine Corps service-profile interpretation
 
 The USMC service profile owns the Marine reading of the shared skeleton:
 
@@ -149,7 +159,7 @@ Examples:
 - later ground maneuver semantics should wait for the dedicated ground layer
 
 That keeps the MAGTF profile honest and prevents a second parallel command
-surface from emerging in `services/`.
+surface from emerging inside the service-profile owner.
 
 ## Relationship To Current Repository Contracts
 
@@ -157,18 +167,18 @@ In the current repository, the Marine profile mainly serves as a coordination
 boundary:
 
 - joint/common fields provide the shared command skeleton
-- Air Force and Navy profiles show how service-specific execution layers can sit
-  below that skeleton
+- Air Force and Navy profiles show how service interpretations route into
+  separate domain execution layers below that skeleton
 - the Marine profile ensures future expeditionary standards can compose those
   layers without collapsing back into an air-first ontology
 
-This is why `services/marine_corps` should stay focused on ownership and
+This is why the Marine Corps profile must stay focused on ownership and
 cross-domain interpretation.
 
 ## Related Documents
 
-- [Service Profile Overview](README.md)
-- [Air Platform Specialization](../air/README.md)
-- [Naval Specialization](../naval/README.md)
-- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
+- [Service Profile Overview](../README.md)
+- [Air Platform Specialization](../../../air/README.md)
+- [Naval Specialization](../../../../standards/naval/README.md)
+- [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)

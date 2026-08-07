@@ -8,7 +8,11 @@ Status: `2026-06-10` specialization entrypoint for maintained naval semantics.
 
 This directory contains the authoritative standards for the dedicated `naval` specialization.
 
-It is the standard landing point for the current naval task plan, not a placeholder. The goal is to separate `common`, `services/navy`, and `naval` cleanly enough that the current runtime and planning work can continue without air-first assumptions leaking into maritime semantics.
+It is the legacy standard landing point for the current naval task plan, not a
+placeholder. The goal is to separate Joint common core, the owner-local Navy
+service profile, and Naval specialization cleanly enough that runtime and
+planning work can continue without air-first assumptions leaking into maritime
+semantics.
 
 ## Maintained Documents
 
@@ -38,9 +42,10 @@ It owns fields such as:
 
 These are service-neutral shapes. They are not naval execution semantics.
 
-### `services/navy`
+### Navy service profile
 
-The Navy service profile explains how the shared contract should be read for naval warfare.
+The [Navy service profile](../../domains/joint/service_profiles/standards/navy_profile.md)
+explains how the shared contract should be read for naval warfare.
 
 It owns the interpretation of:
 
@@ -88,7 +93,7 @@ Documents in this directory should describe naval-specific semantics, such as:
 
 ## 4. What Does Not Belong Here
 
-The following should remain in `common` or `services/navy`:
+The following should remain in Joint common core or the Navy service profile:
 
 - `command_relationship`
 - `authority_scope`
@@ -111,7 +116,7 @@ Naval documentation should avoid default air concepts such as:
 - `CAP`
 - air-style reading of `MissionCommand.command_code`
 
-If a concept is only valid for air sortie-level runtime, it should stay in `docs/standards/air/`.
+If a concept is only valid for air sortie-level runtime, it should stay in `docs/domains/air/`.
 
 ## 6. Current Minimal Naval Meaning
 

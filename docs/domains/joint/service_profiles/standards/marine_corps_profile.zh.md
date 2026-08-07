@@ -1,14 +1,23 @@
 # 美国海军陆战队画像
 
 Language:
-- English canonical: `marine_corps.md`
-- Chinese companion: [marine_corps.zh.md](marine_corps.zh.md)
+- English canonical: [marine_corps_profile.md](marine_corps_profile.md)
+- Chinese companion: `marine_corps_profile.zh.md`
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/marine_corps_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
 
 状态：`2026-05-18`，USMC 军种画像层权威版本。
 
 本文档定义仓库应如何把美国海军陆战队解释为一个独立的军种画像。
 
 它的目标不是宣称当前已经存在独立的 Marine runtime，而是规定海军陆战队的兵力包装与指挥关系应如何约束后续标准化工作。
+
+本画像负责解释 Joint common core 在海军陆战队兵力编组和指挥关系中的含义，
+不拥有 air、naval 或 ground 执行合同。
 
 ## 现实基础
 
@@ -47,7 +56,7 @@ common 层保留跨军种共享骨架：
 
 这些字段保持共享形状，而 Marine profile 负责解释 MAGTF 式兵力包装如何读取它们。
 
-### `services/marine_corps`
+### 海军陆战队 Service-profile 解释
 
 USMC 画像层负责 Marine 口径的共享骨架解释：
 
@@ -130,22 +139,24 @@ Marine 标准化最合适的共享锚点是：
 - ship、screen、recovery 或 sea-based positioning 语义必须继续通过 `naval/`
 - 后续 ground maneuver 语义应等待 dedicated ground layer
 
-这样才能让 MAGTF 画像保持诚实，避免 `services/` 里再出现第二套平行命令面。
+这样才能让 MAGTF 画像保持诚实，避免在 service-profile owner 中再出现第二套
+平行命令面。
 
 ## 与当前仓库合同的关系
 
 在当前仓库里，Marine profile 主要承担协调边界职责：
 
 - `joint/common` 字段提供共享命令骨架
-- Air Force 与 Navy profile 展示了军种执行层如何挂接在该骨架之下
+- Air Force 与 Navy profile 展示了军种解释如何路由到该骨架之下相互独立的
+  领域执行层
 - Marine profile 保证未来远征标准可以组合这些层，而不会重新塌缩回 air-first ontology
 
-也正因此，`services/marine_corps` 必须始终聚焦在所有权与跨域解释上。
+也正因此，海军陆战队画像必须始终聚焦在所有权与跨域解释上。
 
 ## 相关文档
 
-- [军种画像总览](README.md)
-- [空中平台特化](../air/README.md)
-- [海军特化](../naval/README.md)
-- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
-- [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
+- [军种画像总览](../README.zh.md)
+- [空中平台特化](../../../air/README.zh.md)
+- [海军特化](../../../../standards/naval/README.zh.md)
+- [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)

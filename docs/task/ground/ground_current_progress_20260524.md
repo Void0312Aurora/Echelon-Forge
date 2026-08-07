@@ -17,7 +17,7 @@ Current positioning:
   elevation-anchor admission and offline static-scene derivation now resolve
   `403` of `509` vector objects while keeping `106` missing vertical profiles
   held. Runtime terrain setup and ground movement remain unreleased.
-- `services/army` is the service-profile boundary.
+- The owner-local Army service profile is the service-profile boundary.
 - `ground` is the maintained execution-specialization name; `army` and `land`
   are accepted aliases that normalize to `ground`.
 - G0-G4 are sealed as the accepted tasking baseline.
@@ -102,7 +102,8 @@ not yet a maintained ground-combat runtime.
 
 What is already real:
 
-- a standards split between `joint/common core`, `services/army`, and `ground`;
+- a standards split between Joint common core, the Army service profile, and
+  the Ground owner;
 - ground aliases and Army service-profile inference in Python tasking dispatch;
 - starter ground task semantics for `TASK_MOVE`, `TASK_OCCUPY`, and
   `TASK_SUPPORT`;
@@ -216,9 +217,9 @@ Current ground placement:
 
 Standards and planning:
 
-- [US Army profile](../../standards/services/army.md)
-- [Ground standards overview](../../standards/ground/README.md)
-- [Ground minimal task structure](../../standards/ground/minimal_task_structure.md)
+- [US Army profile](../../domains/joint/service_profiles/standards/army_profile.md)
+- [Ground standards overview](../../domains/ground/README.md)
+- [Ground minimal task structure](../../domains/ground/standards/minimal_task_structure.md)
 - [Accepted ground bootstrap baseline](archive/ground_domain_bootstrap_plan_20260521.md)
 - [Ground bootstrap plan acceptance](archive/ground_domain_bootstrap_plan_acceptance_20260605.md)
 - [Environment substrate G0 architecture](environment_substrate_g0_architecture/README.md)
@@ -377,8 +378,8 @@ Declared but not implemented runtime characteristics:
 
 Boundaries:
 
-- `services/army` explains Army interpretation of shared contracts; it is not a
-  runtime stack.
+- The Army service profile explains Army interpretation of shared contracts;
+  it is not a runtime stack.
 - `ground` owns future execution semantics; current implementation stops at
   static task/status plus static command authoring.
 - The G5 scenario cannot be used as evidence for ground movement, route

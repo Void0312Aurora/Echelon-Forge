@@ -9,7 +9,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 `docs/` is organized by content ownership. Document kind is expressed inside
 the owning area; archive is a lifecycle endpoint rather than a competing
@@ -21,7 +21,7 @@ current authority.
 | --- | --- | --- |
 | [project](project/README.md) | Purpose, maturity, global status, roadmap, project decisions | Active; owns the migration plan |
 | [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Phase-2 reviews migrated; legacy plan/task sources remain authoritative until migrated |
-| [domains](domains/README.md) | Air, naval, ground, joint | Joint common-core standards and Phase-2 Air issue route migrated; other domain routes pending |
+| [domains](domains/README.md) | Air, naval, ground, joint | Joint common-core/service profiles plus Air and Ground standards migrated; Naval remains on its legacy route |
 | [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Phase-2 system issue and review routes active |
 | [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Phase-2 policy and training issue routes active |
 | [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Manual and visualization routes migrated |
@@ -35,7 +35,8 @@ defines target boundaries, migration phases, and cutover gates.
 
 The following roots still contain maintained sources during the transition:
 
-- [standards](standards/README.md): domain and modeling vocabulary pending owner migration;
+- [standards](standards/README.md): remaining Naval, model, cross-domain,
+  overview, and planning sources pending owner classification;
 - [plan](plan/README.md): active/frozen direction and migration plans;
 - [task](task/README.md): scoped implementation work and status.
 

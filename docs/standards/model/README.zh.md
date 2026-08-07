@@ -30,8 +30,8 @@ reward、probe 与 runtime action adapter。它是标准面，不是任务追踪
 - 低层物理、武器效应或毁伤模型参数；
 - 活跃训练实验的验收状态。
 
-这些内容归对应的 `joint/`、`services/`、领域特化、`bridge/`、task 或 runtime
-文档所有。
+这些内容归 `docs/domains/joint/`、其嵌套 service-profile owner、相关领域特化
+owner，或适用的 architecture、task、runtime 文档所有。
 
 对当前空战训练而言，“模型学会发射”是模型侧行为声明：executable event path 在既有
 A3/A5 gate 下产生合法且被接受的 `fire_once` release。它不是 missile probability

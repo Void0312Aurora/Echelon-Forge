@@ -24,7 +24,7 @@
 
 | Surface | Status | Evidence | Residual |
 | --- | --- | --- | --- |
-| Action contract | pass | `docs/standards/air/act*.md`、action adapter tests | 后续不能把 flat transport 误写成 Gym `Dict` 迁移。 |
+| Action contract | pass | `docs/domains/air/standards/pilot_action_contract*.md`、action adapter tests | 后续不能把 flat transport 误写成 Gym `Dict` 迁移。 |
 | Runtime wiring | pass | `UniversalEnv`、`WorldBatchVecEnv` 聚焦测试 | cooperative world-batch 不是当前 active air-combat route。 |
 | HMoE hybrid policy | pass | HMoE forward/evaluate 与 tiny PPO smoke | 连续轴熵沿用 `-log_prob` sampled fallback。 |
 | Active config migration | pass | training-entry tests、JSON bootstrap、32-step train smoke、1000-step load/predict smoke、Stage-1 range-gate diagnostics | learned policy 仍未通过。 |
@@ -43,7 +43,7 @@ python -m py_compile gym_envs/universal_env_parts/spaces.py gym_envs/universal_e
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/core/test_air_combat_hybrid_action.py tests/runtime/core/test_env_config.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_air_combat_training_entry_contracts.py
 # 40 passed
 
-git diff --check -- docs/task/model docs/standards/air gym_envs python examples/config/training/active/air_combat tests train.py
+git diff --check -- docs/task/model docs/domains/air gym_envs python examples/config/training/active/air_combat tests train.py
 # pass
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/training/test_training_bootstrap_contracts.py tests/runtime/core/test_air_combat_hybrid_action.py tests/runtime/core/test_env_config.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_air_combat_training_entry_contracts.py

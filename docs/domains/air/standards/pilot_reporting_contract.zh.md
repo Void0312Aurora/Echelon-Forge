@@ -1,10 +1,16 @@
 # 飞行员汇报合同
 
 Language:
-- English canonical: `rep.md`
-- Chinese companion: [rep.zh.md](rep.zh.md)
+- English canonical: [pilot_reporting_contract.md](pilot_reporting_contract.md)
+- Chinese companion: `pilot_reporting_contract.zh.md`
 
-状态：`2026-05-18`，当前维护中的 air reporting semantics 特化基线。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/pilot_reporting_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+状态：当前维护中的 air reporting semantics 特化基线。
 
 本文档定义仓库当前维护中的 air reporting contract，它不是完整 brevity-code 手册。
 
@@ -18,10 +24,12 @@ Language:
 
 主要依据：
 
-- [src/components/tasking/common/pilot_report_core.h](../../../src/components/tasking/common/pilot_report_core.h)
-- [src/components/domains/air/tasking/pilot_report_air.h](../../../src/components/domains/air/tasking/pilot_report_air.h)
-- [python/rl/tasking/leader_tasking.py](../../../python/rl/tasking/leader_tasking.py)
-- [src/runtime/contracts/world_batch_contracts.h](../../../src/runtime/contracts/world_batch_contracts.h)
+- [src/components/tasking/common/pilot_report_core.h](../../../../src/components/tasking/common/pilot_report_core.h)
+- [src/components/domains/air/tasking/pilot_report_air.h](../../../../src/components/domains/air/tasking/pilot_report_air.h)
+- [src/components/tasking/pilot_report.h](../../../../src/components/tasking/pilot_report.h)
+- [python/rl/tasking/leader_tasking.py](../../../../python/rl/tasking/leader_tasking.py)
+- [src/runtime/contracts/world_batch_contracts.h](../../../../src/runtime/contracts/world_batch_contracts.h)
+- [tests/runtime/bindings/test_bindings_command_surface.py](../../../../tests/runtime/bindings/test_bindings_command_surface.py)
 
 ## Core Report 字段
 

@@ -161,7 +161,13 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
   status = _governance_text("standards_documentation_governance_current_status_20260610.md")
   dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
-  air_obs = _text("docs", "standards", "air", "obs.md")
+  air_obs = _text(
+    "docs",
+    "domains",
+    "air",
+    "standards",
+    "pilot_observation_contract.md",
+  )
   naval_obs = _text("docs", "standards", "naval", "obs.md")
   naval_readme = _text("docs", "standards", "naval", "README.md")
   alignment_map = _text("docs", "standards", "overview", "document_alignment_map.md")
@@ -199,7 +205,13 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
   status = _governance_text("standards_documentation_governance_current_status_20260610.md")
   dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
-  air_act = _text("docs", "standards", "air", "act.md")
+  air_act = _text(
+    "docs",
+    "domains",
+    "air",
+    "standards",
+    "pilot_action_contract.md",
+  )
   bridge = _text("docs", "standards", "bridge", "runtime_workflow_and_contract_baseline.md")
   joint = _text(
     "docs",
@@ -217,7 +229,7 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
   assert sdg_b2_row.endswith("| pass |")
   assert sg_g4_row.endswith("| pass |")
 
-  assert "Status: `2026-06-10` specialization baseline for maintained air action input" in air_act
+  assert "Status: specialization baseline for maintained air action input" in air_act
   assert "learned-policy behavior" in air_act
   assert "Status: `2026-06-10` authoritative for maintained runtime workflow ownership" in bridge
   assert "air_combat_c2_roe_v2" in bridge

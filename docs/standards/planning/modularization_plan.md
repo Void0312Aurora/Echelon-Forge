@@ -13,7 +13,7 @@ standards tree:
 - [Standards Overview](../README.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
-- [Service Profile Overview](../services/README.md)
+- [Service Profile Overview](../../domains/joint/service_profiles/README.md)
 
 This page is a roadmap for how the project could be modularized further for
 maintainability and model replacement.

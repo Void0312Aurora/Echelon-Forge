@@ -18,11 +18,11 @@ It belongs to the standards-tree foundation layer. It does not own:
 
 Those belong in:
 
-- [Service Profile Overview](../services/README.md)
+- [Service Profile Overview](../../domains/joint/service_profiles/README.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
-- [Air Platform Specialization](../air/README.md)
+- [Air Platform Specialization](../../domains/air/README.md)
 - [Naval Specialization](../naval/README.md)
 
 ## Coordinate And Unit Conventions
@@ -155,7 +155,7 @@ and runtime-workflow documents.
 ## Action-Surface Conventions
 
 This document does not redefine the maintained `PilotAction` field list. That
-belongs in [air/act.md](../air/act.md).
+belongs in [air/act.md](../../domains/air/standards/pilot_action_contract.md).
 
 The neutral rules that do belong here are:
 
@@ -183,4 +183,4 @@ Those workflow boundaries are documented in more detail in
 - [Standards Overview](../README.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
-- [Air Platform Specialization](../air/README.md)
+- [Air Platform Specialization](../../domains/air/README.md)

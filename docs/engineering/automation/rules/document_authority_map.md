@@ -4,7 +4,13 @@ Language:
 - English canonical: `document_authority_map.md`
 - Chinese companion: [document_authority_map.zh.md](document_authority_map.zh.md)
 
-Status: `2026-06-01` maintained rule index for agents reading repository
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/automation/rules/document_authority_map.md`
+Owner: `engineering/automation-governance`
+Last verified: `2026-08-08`
+
+Status: `2026-08-08` maintained rule index for agents reading repository
 documentation.
 
 Scope: repository documentation and project-specific operating rules. This file
@@ -41,7 +47,7 @@ Then choose the task-specific path below.
 | Which maintained standard owns names and layers? | Start from the applicable owner README and its owner-local `standards/`; use the migration-era [Standards Overview](../../../standards/README.md) and [Document Alignment Map](../../../standards/overview/document_alignment_map.md) for domain and modeling routes that have not moved yet. |
 | What are the cross-domain conventions? | [Simulation Conventions](../../../standards/foundation/conventions.md), [Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.md), [Scenario Configuration Guide](../../../standards/bridge/scenario_guide.md) |
 | What realism claims are allowed? | [Gradient Realism Principles](../../../standards/foundation/gradient_realism_principles.md), [Public Data Source Admission Standard](../../../standards/foundation/public_data_source_admission.md) |
-| How should service/domain terms be routed? | [Joint Standards Overview](../../../domains/joint/README.md), [Service Profile Overview](../../../standards/services/README.md), [Air Standards](../../../standards/air/README.md), [Naval Standards](../../../standards/naval/README.md), [Ground Standards](../../../standards/ground/README.md) |
+| How should service/domain terms be routed? | [Joint Standards Overview](../../../domains/joint/README.md), [Service Profile Overview](../../../domains/joint/service_profiles/README.md), [Air Standards](../../../domains/air/README.md), [Naval Standards](../../../standards/naval/README.md), [Ground Standards](../../../domains/ground/README.md) |
 | How should architecture/runtime work be routed? | [Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.md), [Scenario Configuration Guide](../../../standards/bridge/scenario_guide.md), [Standards Overview](../../../standards/README.md) |
 | How should bilingual documentation be handled? | [Bilingual Documentation Policy](../../documentation/standards/bilingual_documentation_policy.md), [Bilingual Document Clusters](../../documentation/reference/bilingual_document_clusters.md) |
 | How are document kinds, lifecycle, evidence, generated output, config indexes, links, and archives governed? | [Document Lifecycle Policy](../../documentation/standards/document_lifecycle_policy.md) |

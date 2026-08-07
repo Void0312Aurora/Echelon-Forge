@@ -57,14 +57,14 @@
   [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md)。
 - 原始 bootstrap 计划已经满足其 planning-lane 成功标准，现作为 accepted
   archived baseline 保留，不再是 active dispatch surface。
-- `services/army` 已经存在，并且是权威的军种画像边界文档。
+- Owner-local Army service profile 已经存在，并且是权威的军种画像边界文档。
 - 当前任务树已经维护专门的 ground 执行特化规划线：G0-G4 tasking lifecycle
   证据与 G6-E native schema 证据已经接受；movement、sensing、terrain、fires、
   damage、combat 与完整 ground runtime 行为仍保持 held。
 - G0 现已冻结 `ground` 作为维护中的特化名、`platoon` 作为第一批
   tight-loop 战术单元、`move / occupy / support` 作为第一任务族默认值。
-- `army` 与 `land` 是可接受别名，并会规范化为 `ground`；导航通过
-  `services/army` 加 `ground/`，而不是新的 `army` runtime stack。
+- `army` 与 `land` 是可接受别名，并会规范化为 `ground`；导航通过 Army
+  service profile 加 `docs/domains/ground/`，而不是新的 `army` runtime stack。
 - 当前工作线已拆成 G0-G6 阶段，便于 subagent 接收边界清楚、互不重叠的任务。
 - G0 已由 main-thread G0-D 验收。
 - G1 已验收一个窄范围 Python-profile-only 切片：`army`、`ground`、`land`
@@ -151,11 +151,11 @@
 - 架构基线：
   [../../plan/architecture/simulation_system_architecture_design.md](../../plan/architecture/simulation_system_architecture_design.md)
 - 陆军画像：
-  [../../standards/services/army.zh.md](../../standards/services/army.zh.md)
+  [../../domains/joint/service_profiles/standards/army_profile.zh.md](../../domains/joint/service_profiles/standards/army_profile.zh.md)
 - Ground 标准总览：
-  [../../standards/ground/README.zh.md](../../standards/ground/README.zh.md)
+  [../../domains/ground/README.zh.md](../../domains/ground/README.zh.md)
 - Ground 最小任务结构：
-  [../../standards/ground/minimal_task_structure.zh.md](../../standards/ground/minimal_task_structure.zh.md)
+  [../../domains/ground/standards/minimal_task_structure.zh.md](../../domains/ground/standards/minimal_task_structure.zh.md)
 - `common / air / naval` 拆分（已归档）：
   [../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md](../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
 

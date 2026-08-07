@@ -9,9 +9,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
-状态：`2026-08-07`，当前维护中文档语言布局的权威规则。
+状态：`2026-08-08`，当前维护中文档语言布局的权威规则。
 
 本文档定义仓库如何拆分英文与中文文档，使主线文档保持可读、可批处理翻译、可审计。
 
@@ -63,7 +63,9 @@ Tier A：严格双语维护面
 - 已准入严格维护面的 owner-local standards 与 reference，包括
   `docs/engineering/documentation/standards/` 和
   `docs/engineering/documentation/reference/`
-- `docs/domains/joint/` 下已迁移的 Joint common-core 权威
+- `docs/domains/air/standards/` 与 `docs/domains/ground/standards/` 下已迁移的
+  Air 和 Ground 标准
+- `docs/domains/joint/` 下已迁移的 Joint common-core 与 service-profile 权威
 - 迁移期遗留根 `docs/standards/` 下尚未迁往内容 owner 的维护中标准
 - `docs/operations/` 下的面向操作者 reference 与 how-to
 - 仍通过迁移期遗留 plan 表面路由的稳定计划权威：

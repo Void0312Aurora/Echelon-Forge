@@ -1,14 +1,23 @@
 # US Air Force Profile
 
 Language:
-- English canonical: `air_force.md`
-- Chinese companion: [air_force.zh.md](air_force.zh.md)
+- English canonical: `air_force_profile.md`
+- Chinese companion: [air_force_profile.zh.md](air_force_profile.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/air_force_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
 
 Status: `2026-05-18` authoritative for USAF service-profile placement.
 
 This document defines how the repository interprets U.S. Air Force organizational
 concepts before they are mapped into common-core tasking or the maintained
-`air/` specialization.
+air specialization owner.
+
+This profile interprets the Joint common core for Air Force organization and
+task packaging. It does not own air-domain execution contracts.
 
 It is not a full doctrine digest. Its job is to answer:
 
@@ -61,7 +70,7 @@ The common layer should keep only the cross-service skeleton:
 These fields stay neutral. They do not become USAF-specific just because the
 current repository is air-heavy.
 
-### `services/air_force`
+### Air Force service-profile interpretation
 
 The Air Force service profile owns the USAF reading of that shared skeleton:
 
@@ -74,7 +83,7 @@ The Air Force service profile owns the USAF reading of that shared skeleton:
 This layer defines interpretation and ownership. It does not define runway
 geometry, action vectors, or mission-observation array layouts.
 
-### `air`
+### Air domain specialization
 
 The dedicated `air/` specialization owns the maintained air execution contract:
 
@@ -86,7 +95,7 @@ The dedicated `air/` specialization owns the maintained air execution contract:
 - `PilotAction` mapping and report taxonomy
 
 If a term only becomes meaningful once it touches runway, formation, recovery,
-or pilot-control surfaces, it belongs in `air/`, not here.
+or pilot-control surfaces, it belongs to the air domain owner, not here.
 
 ## Runtime Boundary
 
@@ -165,8 +174,9 @@ The maintained repository already reflects an air-first tactical bridge:
 - common tasking fields flow through `TaskOrder`, `LeaderIntent`, and
   `PilotReport`
 - executable commands flow through `MissionCommand`
-- sortie-level observation and action contracts are defined in `air/obs.md` and
-  `air/act.md`
+- sortie-level observation and action contracts are defined in
+  `docs/domains/air/standards/pilot_observation_contract.md` and
+  `docs/domains/air/standards/pilot_action_contract.md`
 
 This document therefore acts as a guardrail:
 
@@ -176,8 +186,8 @@ This document therefore acts as a guardrail:
 
 ## Related Documents
 
-- [Service Profile Overview](README.md)
-- [Air Platform Specialization](../air/README.md)
-- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
-- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
+- [Service Profile Overview](../README.md)
+- [Air Platform Specialization](../../../air/README.md)
+- [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)
+- [Runtime Workflow and Contract Baseline](../../../../standards/bridge/runtime_workflow_and_contract_baseline.md)

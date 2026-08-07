@@ -40,7 +40,7 @@ A2 follow-on surface does not flatten into a long list of completed projects.
   heatmap visualization, first-review-stage attribution, component-response
   local diagnosis, a post-P5 docs-only component-response quantization addendum,
   and a standards-layer air planning supplement for the v0 expectation envelope:
-  [Air-To-Air Kill-Chain Expectation Envelope](../../../standards/air/kill_chain_expectation_envelope.md).
+  [Air-To-Air Kill-Chain Expectation Envelope](../../../domains/air/work/issues/kill_chain_expectation_envelope.md).
   The current tracked follow-on point is to emit the addendum's read-only
   quantized fields and the envelope's `envelope_cell_status` /
   `envelope_owner_stage` labels in future harness summaries if machine

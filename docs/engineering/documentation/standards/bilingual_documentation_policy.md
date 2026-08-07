@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
-Status: `2026-08-07` authoritative for maintained documentation language layout.
+Status: `2026-08-08` authoritative for maintained documentation language layout.
 
 This policy defines how the repository separates English and Chinese
 documentation so the mainline stays readable, batch-translation friendly, and
@@ -73,7 +73,10 @@ Tier A: strict bilingual maintained surface
 - owner-local standards and references admitted to the strict maintained
   surface, including `docs/engineering/documentation/standards/` and
   `docs/engineering/documentation/reference/`
-- migrated Joint common-core authority under `docs/domains/joint/`
+- migrated Air and Ground standards under `docs/domains/air/standards/` and
+  `docs/domains/ground/standards/`
+- migrated Joint common-core and service-profile authority under
+  `docs/domains/joint/`
 - maintained standards under the migration-era legacy `docs/standards/` root
   until their content owners move them
 - operator-facing reference and how-to material under `docs/operations/`

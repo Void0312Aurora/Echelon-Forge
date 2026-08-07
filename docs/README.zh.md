@@ -9,7 +9,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 `docs/` 按内容所有权组织。文档类型在所属区域内表达；archive 是生命周期终点，
 不是与当前权威竞争的内容域。
@@ -20,7 +20,7 @@ Last verified: `2026-08-07`
 | --- | --- | --- |
 | [project](project/README.zh.md) | 目标、成熟度、全局状态、路线图、项目决策 | 已启用；拥有迁移计划 |
 | [architecture](architecture/README.zh.md) | 跨领域架构、runtime、contracts、后端、ADR | 第二阶段评审已迁移；旧 plan/task 来源迁移前仍具权威 |
-| [domains](domains/README.zh.md) | Air、Naval、Ground、Joint | Joint common-core 标准与第二阶段 Air issue 路由已迁移；其余领域待迁移 |
+| [domains](domains/README.zh.md) | Air、Naval、Ground、Joint | Joint common-core/service profiles 以及 Air、Ground 标准已迁移；Naval 仍在旧路由 |
 | [systems](systems/README.zh.md) | Environment、physics、sensing、command/tasking、weapons、effects | 第二阶段 system issue 与 review 路由已启用 |
 | [learning](learning/README.zh.md) | RL、模型、训练、评估协议、实验 | 第二阶段策略与训练 issue 路由已启用 |
 | [operations](operations/README.zh.md) | How-to、当前 reference、可视化和集成操作 | manual 与 visualization 路由已迁移 |
@@ -34,7 +34,8 @@ Last verified: `2026-08-07`
 
 迁移期间，下列旧根仍包含维护源：
 
-- [standards](standards/README.zh.md)：等待迁入 owner 的领域与建模词汇；
+- [standards](standards/README.zh.md)：等待 owner 分类的剩余 Naval、model、跨域、
+  overview 与 planning 来源；
 - [plan](plan/README.zh.md)：活跃/冻结方向和迁移计划；
 - [task](task/README.zh.md)：有界实施工作和状态。
 

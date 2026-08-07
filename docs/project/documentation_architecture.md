@@ -9,7 +9,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/project/documentation_architecture.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 ## Objective
 
@@ -63,9 +63,11 @@ archived rather than kept indefinitely as an active task.
 - Phase 3 (started 2026-08-07): split `standards`, `plan`, and `task` by content
   ownership. The first slice moves documentation, automation, dependency, and
   release governance into `engineering/`; the second slice moves the Joint
-  common-core README and standards into `domains/joint/`. All remaining legacy
-  standards plus the plan/task trees remain for later owner slices. Do not move
-  legacy trees wholesale into new global buckets.
+  common-core README and standards into `domains/joint/`; the third parallel
+  wave moves service profiles, Air standards, and Ground standards to their
+  owner-local surfaces. Naval, model, cross-domain, overview, and planning
+  legacy sources plus the plan/task trees remain for later owner slices. Do not
+  move legacy trees wholesale into new global buckets.
 - Phase 4: switch all maintained entry points and disallow new writes to legacy
   roots; remove a legacy root only after it has no maintained sources.
 

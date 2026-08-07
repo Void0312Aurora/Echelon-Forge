@@ -1,261 +1,66 @@
-# 标准化文档总览
+# 旧标准迁移索引
 
-语言版本：
-
-- 英文主文：[README.md](README.md)
-- 中文辅文：`README.zh.md`
+语言：[英文规范页](README.md)；本页为中文配套。
 
 Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/standards/README.md`
-Owner: `legacy/domain-and-modeling-standards`
-Last verified: `2026-08-07`
+Owner: `legacy/standards-migration-index`
+Last verified: `2026-08-08`
 
-状态：`2026-08-07`，剩余旧标准及其已迁移 owner 路由的迁移期索引。
+状态：尚未迁入内容 owner 的标准所使用的迁移期索引。
 
-本索引用于路由项目后续采用的标准化建模基线。Joint common-core 权威已经迁入
-`docs/domains/joint/`；本目录其余子树是迁移期来源。它的职责不是重复每一份活跃任务文档，而是回答：
+`docs/standards/` 不是目标所有权根。下列既有文档在各自迁移切片落地前保留当前
+权威，但不得在此旧根下新增文档。稳定规则必须写入适用 owner 的 `standards/`
+表面。
 
-- 哪些概念属于 `joint/common core`
-- 哪些概念属于 `service profile`
-- 哪些概念属于领域特化
-- 哪些跨域 runtime / bridge / foundation 约束必须被所有层遵守
-- 当前代码、测试与任务计划应如何对齐到这套分层
+## 已迁移 Owner 路由
 
-这是领域与建模标准在迁移期保留的旧根。新的文档、自动化、依赖与发布治理应进入
-对应的[工程 owner](../engineering/README.zh.md)，不得在此重新建立 `governance/`
-子树。
+| 内容 | 当前 owner 路由 | 状态 |
+| --- | --- | --- |
+| Joint common core | [Joint owner](../domains/joint/README.zh.md) | 已迁移 |
+| Service profiles | [Service-profile owner](../domains/joint/service_profiles/README.zh.md) | 已迁移 |
+| Air 特化 | [Air owner](../domains/air/README.zh.md) | 已迁移 |
+| Ground 特化 | [Ground owner](../domains/ground/README.zh.md) | 已迁移 |
+| 文档治理 | [文档工程](../engineering/documentation/README.zh.md) | 已迁移 |
+| 自动化治理 | [自动化工程](../engineering/automation/README.zh.md) | 已迁移 |
+| 发布与依赖治理 | [发布工程](../engineering/release/README.zh.md) | 已迁移 |
 
-## 目录定位
+已迁移内容的当前路由由这些 owner-local 文档定义，而不是本旧目录。
 
-维护中的标准树要同时约束三件事，避免它们彼此漂移：
+## 剩余 Legacy 来源
 
-- 公开可引用的现实条令与参考资料
-- 仓库当前 runtime 与测试合同
-- `docs/task/` 下的活跃任务规划
+| Legacy 子树 | 当前维护用途 | 目标处置 |
+| --- | --- | --- |
+| [`naval/`](naval/README.zh.md) | Naval 特化标准与 reference 数据 | `docs/domains/naval/` |
+| [`model/`](model/README.zh.md) | Policy/model execution architecture | `docs/learning/` |
+| [`foundation/`](foundation/conventions.zh.md) | 混合的 architecture、system-realism 与 research-source 规则 | 拆分到 `docs/architecture/`、`docs/systems/`、`docs/research/` |
+| [`bridge/`](bridge/runtime_workflow_and_contract_baseline.zh.md) | Runtime/workflow contracts 与场景指南 | 拆分到 `docs/architecture/` 与 `docs/operations/` |
+| [`overview/`](overview/document_alignment_map.zh.md) | 文档对齐 reference | `docs/engineering/documentation/reference/` |
+| [`planning/`](planning/modularization_plan.zh.md) | 带当前 `src/*/domains` 布局说明的 draft modularization issue | 经事实刷新后迁入 `docs/architecture/work/issues/` |
 
-在领域与建模语义范围内，本迁移期索引及其路由到的 owner-local standards 共同构成
-当前 ownership map，而不是任务板。任务计划可以描述当前执行波次，但不应重新定义
-`authority_scope`、`task_group_id`、`runway_slot_code` 或 `warfare_role_code`
-归谁所有。
-任务区的实现成熟度是有用的状态信息，但它不是标准所有权层级。
+目标列是迁移裁决，不表示目标文件已经存在。`foundation/` 与 `bridge/` 混合多个
+owner，必须拆分；整体移动任一目录都会重新制造当前分类问题。
 
-## 当前结构
+## 路由规则
 
-从 `2026-03-23` 起，标准化文档不再沿用“空战先行，再尝试泛化”的组织方式，
-而改为以下分布式所有权主干：
+1. 移动或实质改写 legacy 来源前，先确定内容 owner。
+2. 保留 document kind 与 lifecycle。Draft planning supplement 不会因为进入 owner
+   目录就自动变成 standard。
+3. 同一切片更新所有非归档 consumer。既有 archive 文件保持冻结，不进入默认裁决面。
+4. 不得在 `docs/standards/` 下新增文档或子目录。
+5. 只有旧根不再包含维护源，且所有当前入口都直接路由到 owner 后，才删除本索引。
 
-1. 已迁移的 `docs/domains/joint/`
-2. 旧 `services/`
-3. 旧 `air/`
-4. 旧 `naval/`
-5. 旧 `ground/`
-6. 旧 `model/`
+## 与 Work 文档的关系
 
-这条主干需要与 `foundation/` 和 `bridge/` 下的跨域标准一起阅读，包括 runtime
-workflow 与合同基线。这些文档约束所有领域，不构成一条单独的军种或平台栈。
+旧 [plans](../plan/README.zh.md) 和 [tasks](../task/README.zh.md) 可以记录实现状态、
+证据或未解决工作，但必须引用相关 owner standard，不能重新定义稳定词汇。任务中形成
+稳定合同后，应将其提升到 owner 的 `standards/` 表面，不得复制回本目录。
 
-`model/` 层是跨域标准层。它负责强化学习组件、辅助头、loss ownership、runtime
-action adapter 与 diagnostics 的模型/策略架构词汇，不负责军种或领域语义。
+## 治理依据
 
-维护中的标准树对应一套明确的分层：
-
-- `docs/domains/joint/` 负责跨军种仍成立的关系、授权、任务下达、汇报和工作流边界。
-- `services/` 负责解释空军、陆军、海军、海军陆战队如何读取这些共通对象。
-- `air/` 负责空中平台专用语义，例如 sortie phase、runway recovery、takeoff procedure、
-  air mission observation。
-- `naval/` 负责海军专用语义，例如 task-group、station、screen、support、recover、
-  maritime command-role extension。
-- `ground/` 负责地面域专用语义，例如以 platoon 为中心的 tasking、
-  move/occupy/support 语义、terrain-masked information 假设，以及 land
-  command/support extension。
-- `model/` 负责可被 air、naval、ground、cooperative 与 world-model 工作复用的
-  policy/model architecture 边界，不把任何单一领域的任务状态提升为模型标准。
-
-第三域导航必须同时经过这两层：`services/army.md` 负责 Army 军种画像解释，
-`ground/` 负责维护中的 ground 特化语义。`army` 与 `land` 作为别名会规范化为
-维护名 `ground`，不会形成一条单独的 `army runtime stack`。
-
-## 所有权层级
-
-判断稳定概念应落在哪一层时，按下面层级处理：
-
-1. `foundation/` 与 runtime/bridge 约束负责跨域规则：坐标与时间约定、真实性门槛、
-   公开来源准入、场景/runtime 工作流边界、DTO 对齐，以及当前可测试合同。它们约束
-   所有军种和领域特化。
-2. `docs/domains/joint/` 负责共享语义对象，例如 command relationship、authority scope、
-   task/report identifier、support relationship，以及其他必须在跨军种语境中保持同义的命名。
-3. `services/` 负责军种画像解释：空军、陆军、海军、海军陆战队如何读取共享对象，
-   哪些梯队或单位形态可进入 runtime tight loop，以及军种术语在变成领域机制前应停在哪里。
-4. `air/`、`naval/`、`ground/` 负责领域特化。它们可以定义平台、任务、环境和执行语义；
-   某一领域先实现了某个概念，不代表这个概念应提升为 common core。
-5. `model/` 负责跨域模型/策略架构词汇：executable branches、auxiliary heads、
-   action adapters、loss ownership、rollout labels 与 diagnostic surfaces。
-
-这是一套所有权层级，不是成熟度阶梯。空战或飞行动力学实现更成熟，不会让 air 概念自动变成
-项目级 common core。海军或地面 bootstrap 还早，也可以为其 service/profile 与 specialization
-概念建立权威归口。runtime 支持缺失或不完整，应作为实现任务追踪，而不是被解释成更低标准层级。
-
-## 推荐阅读顺序
-
-建议按下面顺序进入：
-
-1. [联合标准总览](../domains/joint/README.zh.md)
-2. [联合指挥与建模基线](../domains/joint/standards/command_and_modeling_baseline.zh.md)
-3. [联合命令链与汇报基线](../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-4. [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.md)
-5. [梯度真实性原则](foundation/gradient_realism_principles.zh.md)
-6. [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
-7. [军种画像总览](services/README.md)
-8. [美国空军画像](services/air_force.md)
-9. [美国陆军画像](services/army.md)
-10. [美国海军画像](services/navy.md)
-11. [文档对齐映射](overview/document_alignment_map.md)
-12. [场景配置指南](bridge/scenario_guide.md)
-13. [空中平台特化总览](air/README.md)
-14. [海军标准总览](naval/README.md)
-15. [Ground 标准总览](ground/README.zh.md)
-16. [模型架构标准总览](model/README.zh.md)
-
-## 与活跃任务树的关系
-
-`docs/task/` 当前包含 flight dynamics、air combat、common air/naval split、
-naval realism、ground bootstrap、simulation architecture、runtime/performance、
-model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
-
-这种组织方式对执行、backlog 归属和成熟度追踪有用，但它不是标准所有权地图。某条任务线可以
-更成熟、较不成熟、已经归档，或刚启动 bootstrap；这些状态都不改变稳定概念归属的标准层级。
-特别是：
-
-- `flight_dynamics/flight`、`sensor_situation`、`weapon_guidance` 和 `air_combat`
-  主要推动实现真实性与 air specialization；它们不使 air 成为默认 common core。
-- `flight_dynamics/c2_command_chain`、`simulation_architecture` 以及跨域
-  runtime/performance 工作，经常会产出必须路由到相关 owner-local standards 的合同。
-  Joint common-core 合同进入 `docs/domains/joint/standards/`；现有 `foundation/` 与
-  `bridge/` 文档在各自分类切片落地前仍是 legacy 来源。
-- `common_air_naval` 与 naval 任务计划里的概念，可能分属共享语义、`services/navy.md`
-  和 `naval/`。
-- `ground` 任务计划里的概念，可能分属共享语义、`services/army.md` 和 `ground/`；
-  `army` 与 `land` 别名应通过这套分层归口，而不是形成新的 runtime stack。
-- model、training、evaluation 与 issue-board 任务可以依赖标准合同，但应引用或推动对应的
-  标准归口，而不是定义一套平行层级。模型架构词汇归 `model/`。
-- 相关 owner-local standards 表面应吸收任务文档里已经稳定下来的共享合同，而不是照搬
-  任务目录结构，或照搬各领域当前 rollout 成熟度。
-
-若任务文档和适用的维护 standard 在“概念归属”上冲突，以该内容 owner 的 standard
-为准。
-
-## 调研与依据
-
-本轮标准化重建采用：
-
-- 官方或官方托管公开资料
-- 仓库内当前 runtime/测试代码作为合同依据
-
-当前关键外部来源包括：
-
-- [联合参谋部 doctrine publications](https://www.jcs.mil/Doctrine/Service-Publications/)
-- [CJCSM 3150.13C，联合报告结构](https://www.jcs.mil/Portals/36/Documents/Library/Manuals/m315013.pdf)
-- [AFDP 3-0.1，指挥与控制](https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-0_1/AFDP3-0.1CommandandControl.pdf)
-- [美国第七舰队，CTF 71 建立](https://www.c7f.navy.mil/Media/News/Display/Article/2641477/ctf-71-establishment-enhances-readiness-in-7th-fleet/)
-- [TTGP Warfare Commanders Conference I](https://www.ttgp.navy.mil/OFRP-Syllabus/Warfare-Commanders-Conference-I/)
-- [NAVIFOR，IW Has a Seat at the Table](https://www.navifor.usff.navy.mil/Press-Room/News-Stories/Article/2395110/iw-has-a-seat-at-the-table/)
-- [MCDP 1-0](https://www.marines.mil/News/Publications/MCPEL/Electronic-Library-Display/Article/1323621/mcdp-1-0-w-ch-1-3/)
-
-当前关键仓库内依据包括：
-
-- [docs/task/README.md](../task/README.md)
-- [docs/task/flight_dynamics/README.md](../task/flight_dynamics/README.md)
-- [docs/task/air_combat/README.md](../task/air_combat/README.md)
-- [docs/task/naval/README.md](../task/naval/README.md)
-- [docs/task/ground/README.md](../task/ground/README.md)
-- [docs/task/simulation_architecture/README.md](../task/simulation_architecture/README.md)
-- [docs/standards/model/README.md](model/README.md)
-- [docs/task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md)
-- [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
-- [src/core/mission/README.md](../../src/core/mission/README.md)
-- [tests/runtime/README.md](../../tests/runtime/README.md)
-
-## 状态分类
-
-维护中的标准树使用三类状态：
-
-- `Authoritative`
-  - 当前维护工作的主标准
-- `Specialization`
-  - 平台或领域特化补充
-- `Archived`
-  - 仅保留作历史参考的旧路线
-
-这些分类描述文档权威性与特化归属，不表示每个被归口的概念都已经在 runtime、测试、场景、
-模型或 UI 表面达到相同实现程度。
-
-当前划分：
-
-- `foundation/*.md`：`Authoritative foundation`
-- `docs/domains/joint/standards/*.md`：`Authoritative`
-- `services/*.md`：`Authoritative`
-- `runtime_workflow_and_contract_baseline.md`：`Authoritative`
-- `scenario_guide.md`：`Authoritative bridge`
-- `air/*.md`：`Specialization`
-- `naval/*.md`：`Specialization`
-- `ground/*.md`：`Specialization`
-- `model/*.md`：`Authoritative model architecture`
-- `docs/Archive/**`：`Archived`
-- `docs/task/flight_dynamics/archive/**`：任务历史归档，不是活跃标准来源
-
-额外维护中的补充页：
-
-- [air/kill_chain_expectation_envelope.md](air/kill_chain_expectation_envelope.zh.md)
-  - 空空杀伤链期望包络 review labels 的活跃规划补充页；不是当前 runtime contract，
-    也不授予 calibration authority
-- [naval/ship_unit_references.md](naval/ship_unit_references.md)
-  - 第一批海军单位与公开来源可追溯性的参考基准补充页
-- [naval/obs.md](naval/obs.md)
-  - 当前维护中的 naval screen/station mode 的 mission-observation 合同
-- [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
-  - 第一批 ground tasking 语汇与架构约束的 G0 基线
-- [model/policy_execution_architecture.md](model/policy_execution_architecture.md)
-  - 跨域 policy execution、auxiliary-head、loss、reward、adapter 与 probe ownership
-    基线
-- [modularization_plan.md](planning/modularization_plan.md)
-  - 面向未来代码结构的活跃规划补充页，带当前 `src/*/domains` 布局说明；不是当前
-    runtime 合同
-
-## 维护规则
-
-- 英文 `.md` 是 canonical，中文 `.zh.md` 是 companion。
-- 维护中的英文主文不应继续保留机器翻译草稿标记。
-- 新的 Joint common-core 合同应落在 `docs/domains/joint/standards/`。新的跨域 runtime
-  或 workflow 合同应使用 owner-local `docs/architecture/` 表面。旧 `bridge/` 子树只维护
-  既有权威，等待独立迁移；不得在其中新增文档。
-- 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
-- 标准变更若登记、刷新、保持 held 或退役实现合同，必须遵循
-  [标准维护政策](../engineering/documentation/standards/standards_maintenance_policy.zh.md)。
-- 文档类型、生命周期、README 边界、evidence 包、generated 输出、config 索引、
-  链接和 archive 转换必须遵循
-  [文档生命周期规范](../engineering/documentation/standards/document_lifecycle_policy.zh.md)。
-- 全仓代码与文档精简按照
-  [仓库精简与整合路线图](../plan/repository_consolidation/README.zh.md)分轮执行。
-- 当工作被拆分给多个 subagent 或 worker 时，应遵循
-  [Subagent 使用规范](../engineering/automation/standards/subagent_usage_policy.zh.md)。
-- 当 simulation-architecture WP 已完成实现但仍需要发布收口时，使用
-  [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.zh.md)。
-
-## 相关文档
-
-- [双语文档政策](../engineering/documentation/standards/bilingual_documentation_policy.zh.md)
-- [双语文档簇](../engineering/documentation/reference/bilingual_document_clusters.zh.md)
-- [文档生命周期规范](../engineering/documentation/standards/document_lifecycle_policy.zh.md)
 - [标准维护政策](../engineering/documentation/standards/standards_maintenance_policy.zh.md)
-- [发布与依赖政策](../engineering/release/standards/release_and_dependency_policy.zh.md)
-- [Subagent 使用规范](../engineering/automation/standards/subagent_usage_policy.zh.md)
-- [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.zh.md)
+- [文档生命周期规范](../engineering/documentation/standards/document_lifecycle_policy.zh.md)
+- [双语文档政策](../engineering/documentation/standards/bilingual_documentation_policy.zh.md)
+- [文档信息架构](../project/documentation_architecture.zh.md)
 - [文档对齐映射](overview/document_alignment_map.zh.md)
-- [仿真约定](foundation/conventions.zh.md)
-- [梯度真实性原则](foundation/gradient_realism_principles.zh.md)
-- [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
-- [场景配置指南](bridge/scenario_guide.zh.md)
-- [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.zh.md)
-- [模块化规划](planning/modularization_plan.zh.md)
-- [仓库精简与整合路线图](../plan/repository_consolidation/README.zh.md)

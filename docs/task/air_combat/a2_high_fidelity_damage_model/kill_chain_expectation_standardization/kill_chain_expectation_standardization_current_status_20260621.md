@@ -75,7 +75,7 @@ Chinese companion:
   trace-response cells are `outside_effect` and satisfy the negative-control
   ceiling under the corrected runtime projection.
 - Added a standardized v0 expectation envelope:
-  [Air-To-Air Kill-Chain Expectation Envelope](../../../../standards/air/kill_chain_expectation_envelope.md),
+  [Air-To-Air Kill-Chain Expectation Envelope](../../../../domains/air/work/issues/kill_chain_expectation_envelope.md),
   registering human-defined profile/grid/radius/band/tolerance inputs with
   derived report fields, launch/guidance envelope rules, effect-to-response
   floors and ceilings, distribution tolerances, continuity rules, cell status
@@ -133,7 +133,7 @@ Chinese companion:
 | Standard promotion decision | pass | [kill_chain_standard_promotion_decision_20260623.md](kill_chain_standard_promotion_decision_20260623.md) | Original P1-P4 decision retained the task-local workstream; the later v0 envelope is a planning supplement, not a runtime contract. |
 | Harness initial implementation | partial | [kill_chain_harness_implementation_20260623.md](kill_chain_harness_implementation_20260623.md) | Full constant-velocity `78` case anchor before report, per-component `component_detail`, visualization heatmaps, first-review-stage attribution, and response local diagnosis exist; full `93` anchor/main grid, worker parallelism, and maneuver runtime support remain incomplete. |
 | Component-response quantization thresholds | pass | [kill_chain_component_response_quantization_20260705.md](kill_chain_component_response_quantization_20260705.md) | Task-local docs-only diagnostic bands; grants no component-failure, Pk, or deterministic-fuze authority. |
-| Standardized expectation envelope v0 | pass | [docs/standards/air/kill_chain_expectation_envelope.md](../../../../standards/air/kill_chain_expectation_envelope.md) | Air-specialization planning supplement; not a current runtime contract, no runtime parameter changes, and no calibration authority. |
+| Standardized expectation envelope v0 | pass | [docs/domains/air/work/issues/kill_chain_expectation_envelope.md](../../../../domains/air/work/issues/kill_chain_expectation_envelope.md) | Air-specialization planning supplement; not a current runtime contract, no runtime parameter changes, and no calibration authority. |
 | Expectation-envelope audit postprocessor | pass | [kces_anchor_cv_expectation_envelope_summary_20260706.md](../review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) | Reads existing before report only; envelope fields are not yet emitted inline by the harness. |
 | Exact guidance mechanism ablation | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md](../review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.md) | Exact controls, vector closure, world PN, track/truth-CV, and positive/negative controls are complete; this is diagnostic closure, not production mechanism admission. |
 

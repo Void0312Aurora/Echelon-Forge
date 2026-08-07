@@ -4,16 +4,28 @@ Language:
 - English canonical: [kill_chain_expectation_envelope.md](kill_chain_expectation_envelope.md)
 - Chinese companion: `kill_chain_expectation_envelope.zh.md`
 
-状态：`2026-07-06` active planning supplement，不是当前 runtime contract，用于空空杀伤链期望包络。
+Document kind: `plan`
+Lifecycle: `draft`
+Canonical: `docs/domains/air/work/issues/kill_chain_expectation_envelope.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
 
-Owner layer：`air` specialization。本文标准化空空杀伤链期望检查的 review 词汇和包络形状。
-它不声明真实 AIM-120C、真实 F-16C、确定性引信、Pk 或 runtime calibration authority。
+状态：空空杀伤链期望包络的 draft planning issue；不是当前 runtime 或 test contract。
+
+本 draft 记录空空杀伤链期望检查的候选 review 词汇和包络形状。它不声明真实
+AIM-120C、真实 F-16C、确定性引信、Pk 或 runtime calibration authority。
+
+## 授权边界
+
+本 draft 不授权实现、runtime retuning、descriptor 修改、harness 或 schema 变更、
+calibration、reward 修改或 training acceptance。任何此类工作都需要单独授权的
+owner-local work package，并具备自身的 scope、测试、评审和验收证据。
 
 ## 范围
 
-本标准负责定义用于判断 air-to-air kill-chain 诊断分布是否落在工程代理期望范围内的包络。
-它目前是 standards-layer planning supplement，因为当前 harness 已能产生 before-report facts，
-但尚未把本包络对象作为维护中的 runtime/test contract 输出。
+本 draft 记录一个候选包络，用于评审 air-to-air kill-chain 诊断分布是否落在工程代理
+期望范围内。它仍是 owner-local issue plan，因为当前 harness 已能产生 before-report
+facts，但尚未把本包络对象作为维护中的 runtime/test contract 输出。
 
 纳入：
 
@@ -38,11 +50,11 @@ Owner layer：`air` specialization。本文标准化空空杀伤链期望检查�
 
 当前任务证据位于：
 
-- [KCES 任务入口](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/README.zh.md)
-- [KCES 理想化期望合同](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_idealized_expectation_contract_20260621.zh.md)
-- [KCES 场景期望矩阵](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_scenario_expectation_matrix_20260622.zh.md)
-- [KCES 指标映射](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_metric_mapping_20260623.zh.md)
-- [KCES component-response 量化补充](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_component_response_quantization_20260705.zh.md)
+- [KCES 任务入口](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/README.zh.md)
+- [KCES 理想化期望合同](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_idealized_expectation_contract_20260621.zh.md)
+- [KCES 场景期望矩阵](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_scenario_expectation_matrix_20260622.zh.md)
+- [KCES 指标映射](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_metric_mapping_20260623.zh.md)
+- [KCES component-response 量化补充](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_component_response_quantization_20260705.zh.md)
 
 当前 schema label：
 
@@ -64,10 +76,10 @@ a2.kill_chain_expectation_envelope.v0
 | `R_effect_m` | variant-specific effective-load radius | derived or harness-declared |
 | `effect_band_thresholds` | `rho_effect` 到 effect-band 的映射 | KCES contract/metric mapping |
 | `response_band_thresholds` | `p_max` 和 `delta_abs` 到 response-band 的映射 | KCES quantization addendum |
-| `distribution_tolerance` | satisfied share 和 negative-control tolerance | 本文 |
-| `owner_rules` | deviation type 到 review-stage 的映射 | 本文 |
+| `distribution_tolerance` | 候选 satisfied share 和 negative-control tolerance | 本 draft |
+| `owner_rules` | deviation type 到 review-stage 的映射 | 本 draft |
 
-修改这些 policy input 就等于修改包络，必须记录为新版本或 addendum。
+修改这些拟议 policy input 就等于修改候选包络，必须记录为新的 draft 版本或 addendum。
 
 ## 派生报告字段
 
@@ -124,7 +136,8 @@ nontrivial_response < material_response < severe_response
 
 ## 分布容忍度
 
-v0 anchor-grid report 在 repeated seeds 提供 confidence metadata 前使用 cell-count gates：
+下列 v0 cell-count 数值在 repeated seeds 提供 confidence metadata 前只是候选 review
+threshold；它们不对 runtime release 作 pass/fail 判定，也不授权参数修改：
 
 | Group | v0 tolerance |
 | --- | --- |
@@ -173,7 +186,7 @@ v0 anchor-grid report 在 repeated seeds 提供 confidence metadata 前使用 ce
 
 ## 最小包络对象
 
-未来 harness summary 可以输出：
+经过单独授权的实现后，未来 harness summary 可以输出：
 
 ```json
 {
@@ -194,7 +207,7 @@ v0 anchor-grid report 在 repeated seeds 提供 confidence metadata 前使用 ce
 }
 ```
 
-该对象是 standards review label，不是 calibration result。
+该对象是拟议的 planning/review label，不是 calibration result，也不是已承诺实现的 schema。
 
 ## 当前 Held 边界
 
@@ -202,6 +215,6 @@ v0 anchor-grid report 在 repeated seeds 提供 confidence metadata 前使用 ce
 `R_effect_m=9.0`。因此 `4/6/8 km +/-30 deg` 的 trace-response rows 属于
 `outside_effect`，满足 negative-control 上限，不再是当前
 `outer_effective -> trace_response` residual。本包络仍为其他显式 variant（例如
-`REV-EQ-FUZE`）保留该 residual label；但在 maintained harness 输出该对象并由
-focused tests 固定 schema 前，本标准仍是 planning supplement。Runtime retuning
+`REV-EQ-FUZE`）保留该 residual label；但在单独授权工作让 maintained harness 输出
+该对象并由 focused tests 固定 schema 前，本计划仍保持 draft。Runtime retuning
 继续受 KCES P6 single-layer admission gate 约束并保持 held。

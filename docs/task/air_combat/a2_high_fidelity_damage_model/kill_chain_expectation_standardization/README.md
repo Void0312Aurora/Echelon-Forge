@@ -104,7 +104,7 @@ Out of scope:
 - Component-response quantization threshold addendum:
   [kill_chain_component_response_quantization_20260705.md](kill_chain_component_response_quantization_20260705.md)
 - Standardized expectation envelope:
-  [Air-To-Air Kill-Chain Expectation Envelope](../../../../standards/air/kill_chain_expectation_envelope.md)
+  [Air-To-Air Kill-Chain Expectation Envelope](../../../../domains/air/work/issues/kill_chain_expectation_envelope.md)
 - Calibration harness plan:
   [kill_chain_calibration_harness_plan_20260623.md](kill_chain_calibration_harness_plan_20260623.md)
 - Standard promotion decision:
@@ -144,7 +144,7 @@ This subproject can be marked accepted only when:
   stage or explicitly mark it as cross-stage.
 - P5 has recorded the standard-promotion decision: the original P1-P4
   workstream remains retained, while the later v0 expectation envelope is
-  registered under `docs/standards/air` as a planning supplement and does not
+  registered under `docs/domains/air` as a planning supplement and does not
   become a runtime contract.
 - Real weapon, real target, deterministic fuze, and Pk authority remain refused
   unless a future admission gate explicitly grants them.
@@ -195,7 +195,7 @@ This subproject can be marked accepted only when:
   `severe_response` using `p_max`, `delta_abs`, and an independent
   `sampled_failure_observed` flag; it remains docs-only and grants no runtime
   calibration authority. On `2026-07-06`, the
-  [standardized expectation envelope](../../../../standards/air/kill_chain_expectation_envelope.md)
+  [standardized expectation envelope](../../../../domains/air/work/issues/kill_chain_expectation_envelope.md)
   registered the P1/P2/P3/addendum pieces as an air-specialization planning
   supplement covering
   human-defined inputs, derived report fields, response floors/ceilings,

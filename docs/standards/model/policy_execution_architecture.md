@@ -250,5 +250,5 @@ only defines the vocabulary and ownership map that such work must use.
 
 It also does not replace the air action standard. `air_combat_hybrid_v1`,
 `event_action_mask`, `fire_once`, and runtime trigger interpretation remain
-owned by [Pilot Action Contract](../air/act.md); this document explains how the
+owned by [Pilot Action Contract](../../domains/air/standards/pilot_action_contract.md); this document explains how the
 model side must interact with that contract.

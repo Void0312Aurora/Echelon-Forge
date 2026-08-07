@@ -1,10 +1,16 @@
 # Pilot Observation Contract
 
 Language:
-- English canonical: `obs.md`
-- Chinese companion: [obs.zh.md](obs.zh.md)
+- English canonical: `pilot_observation_contract.md`
+- Chinese companion: [pilot_observation_contract.zh.md](pilot_observation_contract.zh.md)
 
-Status: `2026-06-10` specialization baseline for maintained air mission observation.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/pilot_observation_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+Status: specialization baseline for maintained air mission observation.
 
 This document defines the maintained air observation contract exposed through
 the mission-observation surface. It does not attempt to describe every raw
@@ -17,10 +23,11 @@ by the current runtime and tests.
 
 Primary references:
 
-- [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
-- [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
-- [src/core/mission/runtime/mission_runtime.h](../../../src/core/mission/runtime/mission_runtime.h)
-- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
+- [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py)
+- [gym_envs/scenario_loader/mission_observation.py](../../../../gym_envs/scenario_loader/mission_observation.py)
+- [src/core/mission/runtime/mission_runtime.h](../../../../src/core/mission/runtime/mission_runtime.h)
+- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
+- [tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py](../../../../tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py)
 
 This document does not define:
 
@@ -30,7 +37,7 @@ This document does not define:
 
 ## Mode-Based Contract
 
-The maintained mission-observation modes are:
+The Air-consumed mission-observation modes covered by this standard are:
 
 | Mode | Dim | Purpose |
 | :--- | ---: | :--- |
@@ -44,6 +51,16 @@ The maintained mission-observation modes are:
 | `air_combat_c2_roe_v2` | 29 | `air_combat_c2_roe_v1` plus state-completion and window fields |
 
 Field order is part of the contract.
+
+The repository taxonomy also registers `naval_screen_station_v1`; that mode is
+owned by the naval specialization and is intentionally outside this Air
+standard.
+
+Implementation ownership is mode-dependent. The base navigation, formation,
+and cooperative-takeoff modes use the compiled core. The two air-combat modes
+use a Python policy adapter with `basic` as their compiled fallback. That
+implementation split does not transfer their Air-specific field semantics to
+the common core.
 
 ## Shared Core Fields
 
@@ -82,7 +99,7 @@ These are the maintained command-following anchors for the air runtime.
 - `distance_to_turn_m`
 
 The authoritative index labels for these fields are defined by
-[python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py).
+[python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py).
 
 ## Formation Fields
 
@@ -167,8 +184,10 @@ track fusion, missile-release policy, or target-assessment timing.
 - Field visibility is mode-dependent.
 - Formation and takeoff fields are not assumed to exist outside the modes that
   declare them.
+- Air-combat C2/ROE modes are Python policy-adapter products; callers must not
+  treat their compiled `basic` fallback as the full air-combat contract.
 - Air-combat C2/ROE modes keep the field order defined by
-  [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py);
+  [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py);
   policy, reward, and probe code must treat that order as contract data.
 
 ## Ownership Boundary
@@ -177,14 +196,17 @@ Keep in common core:
 
 - abstract command-following anchors
 - role/slot semantics that survive across services
+- `roe_state`, authorization, authority-holder/grantor, and assigned-target
+  provenance carried from the Joint command context
 
 Keep in air specialization:
 
 - runway- and takeoff-specific fields
 - route/LNAV/ILS semantics
 - formation offsets and air role details
-- ROE/WCS, shot policy, launch-window, and target-assessment fields that are
-  specific to air-combat release discipline
+- the Air observation projection of shared authority fields
+- WCS, shot-policy, launch-window, and target-assessment fields specific to
+  air-combat release discipline
 
 ## Non-Goals
 

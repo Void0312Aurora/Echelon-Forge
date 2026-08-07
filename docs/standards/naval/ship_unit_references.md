@@ -18,7 +18,7 @@ semantics. Its purpose is narrower:
 
 Semantic ownership remains in:
 
-- [US Navy Profile](../services/navy.md)
+- [US Navy Profile](../../domains/joint/service_profiles/standards/navy_profile.md)
 - [Naval Standards](README.md)
 - [Naval Minimal Task Structure](minimal_task_structure.md)
 
@@ -150,5 +150,5 @@ in scenario/task documents rather than migrating into this reference page.
 
 - [Naval Standards](README.md)
 - [Naval Minimal Task Structure](minimal_task_structure.md)
-- [US Navy Profile](../services/navy.md)
+- [US Navy Profile](../../domains/joint/service_profiles/standards/navy_profile.md)
 - [Document Alignment Map](../overview/document_alignment_map.md)

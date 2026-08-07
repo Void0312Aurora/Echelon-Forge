@@ -1,10 +1,16 @@
 # 空中任务命令与 Tasking 合同
 
 Language:
-- English canonical: `aim.md`
-- Chinese companion: [aim.zh.md](aim.zh.md)
+- English canonical: [mission_command_and_tasking_contract.md](mission_command_and_tasking_contract.md)
+- Chinese companion: `mission_command_and_tasking_contract.zh.md`
 
-状态：`2026-05-18`，当前维护中的 air tasking 与 executable command 特化基线。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/mission_command_and_tasking_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+状态：当前维护中的 air tasking 与 executable command 特化基线。
 
 本文档定义下列 air 侧合同：
 
@@ -18,12 +24,12 @@ Language:
 
 主要依据：
 
-- [src/components/domains/air/tasking/task_order_air.h](../../../src/components/domains/air/tasking/task_order_air.h)
-- [src/components/domains/air/tasking/leader_intent_air.h](../../../src/components/domains/air/tasking/leader_intent_air.h)
-- [src/components/command/common/mission_command_core.h](../../../src/components/command/common/mission_command_core.h)
-- [src/components/domains/air/command/mission_command_air.h](../../../src/components/domains/air/command/mission_command_air.h)
-- [gym_envs/scenario_loader/runtime_state.py](../../../gym_envs/scenario_loader/runtime_state.py)
-- [tests/runtime/mission/test_mission_command_air_fields_roundtrip.py](../../../tests/runtime/mission/test_mission_command_air_fields_roundtrip.py)
+- [src/components/domains/air/tasking/task_order_air.h](../../../../src/components/domains/air/tasking/task_order_air.h)
+- [src/components/domains/air/tasking/leader_intent_air.h](../../../../src/components/domains/air/tasking/leader_intent_air.h)
+- [src/components/command/common/mission_command_core.h](../../../../src/components/command/common/mission_command_core.h)
+- [src/components/domains/air/command/mission_command_air.h](../../../../src/components/domains/air/command/mission_command_air.h)
+- [gym_envs/scenario_loader/runtime_state.py](../../../../gym_envs/scenario_loader/runtime_state.py)
+- [tests/runtime/mission/test_mission_command_air_fields_roundtrip.py](../../../../tests/runtime/mission/test_mission_command_air_fields_roundtrip.py)
 
 ## 分层
 
@@ -53,6 +59,10 @@ Language:
 - `engagement_authority_holder_id`
 - `engagement_authority_grantor_id`
 - `assigned_target_id`
+- `threat_state`
+- `assigned_target_track_id`
+- `assigned_target_source_id`
+- `assigned_target_snapshot_time_s`
 - `authorization_to_fire`
 - `active`
 
@@ -109,7 +119,7 @@ Language:
 
 ## 当前维护中的 `command_code` 语义
 
-当前 runtime 与测试实际使用的数值合同是：
+Air runtime 与测试实际使用的维护中基础 command 值是：
 
 - `0`: idle / hold
 - `1`: takeoff
@@ -117,7 +127,9 @@ Language:
 - `3`: waypoint 或 LNAV-style route navigation
 - `4`: landing / final approach
 
-这是当前维护中的实现合同。更大的宏命令目录如果还没有形成稳定 runtime 行为，不应在这里写成既成事实。
+这是 Air 消费的基础集合，不是全项目完整的 command-code 目录。其他领域 owner
+可以定义各自经过测试的扩展；本 Air 标准既不拥有、也不禁止这些 code。尚未测试的
+Air 宏命令目录不得在这里写成稳定 runtime 行为。
 
 ## Roundtrip 要求
 

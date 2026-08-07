@@ -13,7 +13,7 @@ Arnis adapter 第一阶段静态环境 bundle follow-on。
   水系 bundle，并 strict-import 为 CMO static manifest；elevation-anchor admission
   与离线静态场景派生已解析 `509` 个矢量对象中的 `403` 个，其余 `106` 个缺少垂直
   剖面的对象保持 held。这不是 runtime terrain setup 或地面机动能力释放。
-- `services/army` 是军种画像边界。
+- Owner-local Army service profile 是军种画像边界。
 - `ground` 是维护中的执行特化名称；`army` 和 `land` 是可接受别名，都会规范化为 `ground`。
 - G0-G4 已封存为 accepted tasking baseline。
 - G5 已有规范 MVP 场景壳，只证明 loader 加 tasking 状态链参与。
@@ -86,7 +86,7 @@ Arnis adapter 第一阶段静态环境 bundle follow-on。
 
 已经落地的内容：
 
-- `joint/common core`、`services/army` 和 `ground` 的标准分层；
+- Joint common core、Army service profile 和 Ground owner 的标准分层；
 - Python tasking dispatch 中的 ground 别名和 Army service-profile 推断；
 - `TASK_MOVE`、`TASK_OCCUPY`、`TASK_SUPPORT` 三个 starter ground task 语义；
 - 一个以排为中心的非 runtime 内容种子；
@@ -177,9 +177,9 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 
 标准与规划：
 
-- [陆军画像](../../standards/services/army.zh.md)
-- [Ground 标准总览](../../standards/ground/README.zh.md)
-- [Ground 最小任务结构](../../standards/ground/minimal_task_structure.zh.md)
+- [陆军画像](../../domains/joint/service_profiles/standards/army_profile.zh.md)
+- [Ground 标准总览](../../domains/ground/README.zh.md)
+- [Ground 最小任务结构](../../domains/ground/standards/minimal_task_structure.zh.md)
 - [已接受 ground bootstrap 基线](archive/ground_domain_bootstrap_plan_20260521.zh.md)
 - [Ground bootstrap 计划验收](archive/ground_domain_bootstrap_plan_acceptance_20260605.zh.md)
 - [Environment substrate G0 architecture](environment_substrate_g0_architecture/README.zh.md)
@@ -325,7 +325,7 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 
 边界：
 
-- `services/army` 解释共享 contract 的 Army 含义；它不是 runtime stack。
+- Army service profile 解释共享 contract 的 Army 含义；它不是 runtime stack。
 - `ground` 负责未来执行语义；当前实现停在 static task/status 与 static
   command authoring。
 - G5 场景不能作为 ground movement、route traversal、terrain masking、cover、sensing、track fusion、fires、effects、suppression、damage 或 combat 的证据。

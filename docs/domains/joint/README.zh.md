@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/joint/README.md`
 Owner: `domains/joint`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 联合 owner 定义必须在空中、海上和地面工作中保持相同含义的跨域授权关系、
 任务组织词汇以及意图/命令/汇报接口。它不拥有军种条令，也不拥有任何领域的
@@ -18,6 +18,8 @@ Last verified: `2026-08-07`
   定义 common core 的命名、授权和建模边界。
 - [联合命令链与汇报基线](standards/command_link_and_reporting_baseline.zh.md)：
   定义最小命令投递、汇报、数据链和 ROE 闭环。
+- [军种 Profiles](service_profiles/README.zh.md)：解释 Air Force、Army、Navy 和
+  Marine Corps 如何使用 common-core 词汇，但不重新定义领域执行语义。
 
 ## Owner 边界
 
@@ -27,17 +29,14 @@ Last verified: `2026-08-07`
 - `wingman`、`runway`、`destroyer screen` 和 `platoon wedge` 等词不得提升为
   Joint common core 概念。
 
-## 待迁移 Owner
+## 相关领域 Owner
 
-Service profile 和领域特化标准在各自迁移切片落地前，仍位于当前维护中的
-legacy 路径：
-
-- [军种 Profile](../../standards/services/README.zh.md)
-- [空中特化](../../standards/air/README.zh.md)
+- [空中特化](../air/README.zh.md)
+- [地面特化](../ground/README.zh.md)
 - [海上特化](../../standards/naval/README.zh.md)
-- [地面特化](../../standards/ground/README.zh.md)
 
-这些链接只是迁移期路由，并不表示 Joint 拥有所链接的执行语义。
+Naval 链接在其独立 owner 迁移落地前属于过渡路由。这些路由均不表示 Joint
+拥有所链接的执行语义。
 
 ## 参考依据
 

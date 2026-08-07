@@ -191,7 +191,7 @@ authority:
 
 - The repository's own doctrine reference frames C2 as a mission-command
   problem built around authority delegation that is **explicit**
-  (`docs/standards/services/air_force.md` — AFDP 3-0.1's commander-centered
+  (`docs/domains/joint/service_profiles/domains/air_force_profile.md` — AFDP 3-0.1's commander-centered
   function with *explicit delegation of authority*); nothing in
   `docs/systems/command-tasking/work/issues/` (command-link roadmap, operation layer) derives an
   execution-agent capability from an echelon annotation.

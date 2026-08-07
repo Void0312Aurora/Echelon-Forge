@@ -30,7 +30,7 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
   `component_detail` 共享投影保留、reviewable heatmap 可视化、first-review-stage
   归因、component-response 局部诊断、P5 后 docs-only 的 component-response
   量化阈值补充，以及 standards-layer air planning supplement：
-  [空空杀伤链期望包络](../../../standards/air/kill_chain_expectation_envelope.zh.md)。
+  [空空杀伤链期望包络](../../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)。
   当前可追踪 follow-on 点是：如果后续需要机器消费，应在 harness summary 中只读输出
   该补充定义的量化字段，以及包络定义的 `envelope_cell_status` /
   `envelope_owner_stage` labels。KCES 不重新维护部件归因规则；仍不声明真实武器、

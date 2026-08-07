@@ -98,7 +98,7 @@ AIM-120C 性能声明。
 - 组件响应量化阈值附录：
   [kill_chain_component_response_quantization_20260705.zh.md](kill_chain_component_response_quantization_20260705.zh.md)
 - 标准化期望包络：
-  [空空杀伤链期望包络](../../../../standards/air/kill_chain_expectation_envelope.zh.md)
+  [空空杀伤链期望包络](../../../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)
 - 校准 harness 计划：
   [kill_chain_calibration_harness_plan_20260623.zh.md](kill_chain_calibration_harness_plan_20260623.zh.md)
 - 标准提升决策：
@@ -132,7 +132,7 @@ AIM-120C 性能声明。
   而不是凭空断言。
 - 后续校准能把每个期望映射到唯一杀伤链阶段，或显式标为跨阶段。
 - P5 已记录标准提升决策：原 P1-P4 workstream 继续 retained；后续 v0 期望包络
-  注册在 `docs/standards/air` 下作为 planning supplement，但不成为 runtime
+  注册在 `docs/domains/air` 下作为 planning supplement，但不成为 runtime
   contract。
 - 真实武器、真实目标、确定性引信和 Pk 权威仍保持拒绝，除非未来 admission gate
   显式授予。
@@ -153,7 +153,7 @@ AIM-120C 性能声明。
   `32` worker pilot batch、`48-64` worker 上调条件、P6 delta guard 和 frozen-stage
   规则；`guidance_approach` 在本 harness 中保持只读诊断层。
 - `P5` 已按 pass 收口：原 P1-P4 workstream 继续 accepted / retained；后续 v0
-  expectation envelope 已注册到 `docs/standards/air` 作为 planning supplement，
+  expectation envelope 已注册到 `docs/domains/air` 作为 planning supplement，
   仍不是 runtime contract，未来 runtime-contract promotion 仍需验收
   runtime/test/admission 证据。
 - P5 后已启动 initial harness implementation：`tools/diagnostics/kill_chain_expectation_harness.py`
@@ -175,7 +175,7 @@ AIM-120C 性能声明。
   用 `p_max`、`delta_abs` 和独立 `sampled_failure_observed` 标记定义
   `trace_response` 到 `severe_response` 的 task-local 诊断分区；该附录仍是
   docs-only 标准完善，不授予 runtime calibration authority。`2026-07-06`
-  的 [标准化期望包络](../../../../standards/air/kill_chain_expectation_envelope.zh.md)
+  的 [标准化期望包络](../../../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)
   把 P1/P2/P3/addendum 注册为空中特化 planning supplement，覆盖人为定义输入、派生报告字段、
   response floor/ceiling、分布容忍度、连续性规则、cell status 和 owner-stage
   归因。只读

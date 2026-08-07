@@ -53,9 +53,10 @@ contract by itself.
 
 Under the maintained split:
 
-- `joint/common core` owns shared tasking/task-organization vocabulary
-- `services/*` owns service-specific interpretation
-- `air/` and `naval/` own execution-level specialization
+- `docs/domains/joint/` owns shared tasking/task-organization vocabulary
+- `docs/domains/joint/service_profiles/` owns service-specific interpretation
+- `docs/domains/air/` and the current legacy Naval owner route own
+  execution-level specialization
 
 Scenario files may temporarily carry a mix of these concepts because the current
 runtime is still a bridge. When that happens, use these rules:
@@ -154,8 +155,9 @@ Current maintained practice includes fields such as:
 - naval-specific station/reference fields where currently supported
 
 This object sits at the bridge between scenario JSON and runtime command state.
-Its shared semantics are governed by the joint/common-core command baseline; its
-service/platform extensions belong to `air/` or `naval/`.
+Its shared semantics are governed by the joint/common-core command baseline;
+its service/platform extensions belong to the applicable owner-local domain
+standard or the current legacy Naval owner route.
 
 ## `objectives`
 
@@ -210,6 +212,6 @@ When authoring or revising maintained scenarios:
 - [Runtime Workflow and Contract Baseline](runtime_workflow_and_contract_baseline.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
-- [US Navy Profile](../services/navy.md)
-- [Air Standards Overview](../air/README.md)
+- [US Navy Profile](../../domains/joint/service_profiles/standards/navy_profile.md)
+- [Air Standards Overview](../../domains/air/README.md)
 - [Naval Standards Overview](../naval/README.md)

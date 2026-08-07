@@ -16,7 +16,7 @@ Language:
 
 语义所有权继续归属于：
 
-- [美国海军画像](../services/navy.md)
+- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.md)
 - [Naval 标准](README.md)
 - [海军最小任务结构](minimal_task_structure.md)
 
@@ -134,5 +134,5 @@ Language:
 
 - [Naval 标准](README.md)
 - [海军最小任务结构](minimal_task_structure.md)
-- [美国海军画像](../services/navy.md)
+- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.md)
 - [文档对齐映射](../overview/document_alignment_map.md)

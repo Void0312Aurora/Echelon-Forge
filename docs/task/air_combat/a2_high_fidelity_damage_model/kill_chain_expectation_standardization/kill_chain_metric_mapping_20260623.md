@@ -117,7 +117,7 @@ P3 boundary; P3 remains a field mapping, and the addendum only supplies a
 reusable `component_response` quantization rule for future before/after reports.
 
 Standardized expectation envelope:
-[Air-To-Air Kill-Chain Expectation Envelope](../../../../standards/air/kill_chain_expectation_envelope.md)
+[Air-To-Air Kill-Chain Expectation Envelope](../../../../domains/air/work/issues/kill_chain_expectation_envelope.md)
 uses this P3 field mapping plus the post-P5 response bands to define
 standards-layer planning-supplement labels such as `envelope_cell_status` and
 `envelope_owner_stage`. The envelope is not a current runtime contract and does

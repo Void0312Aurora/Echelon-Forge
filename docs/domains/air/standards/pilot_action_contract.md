@@ -1,10 +1,16 @@
 # Pilot Action Contract
 
 Language:
-- English canonical: `act.md`
-- Chinese companion: [act.zh.md](act.zh.md)
+- English canonical: `pilot_action_contract.md`
+- Chinese companion: [pilot_action_contract.zh.md](pilot_action_contract.zh.md)
 
-Status: `2026-06-10` specialization baseline for maintained air action input,
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/pilot_action_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+Status: specialization baseline for maintained air action input,
 including the A5 runtime event-action overlay; this page does not by itself
 accept learned-policy behavior.
 
@@ -20,14 +26,17 @@ The maintained action surface has two layers:
 
 Primary references:
 
-- [gym_envs/universal_env_parts/actions.py](../../../gym_envs/universal_env_parts/actions.py)
-- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
-- [src/components/command/pilot_action.h](../../../src/components/command/pilot_action.h)
-- [src/components/domains/air/command/control_input_resolution.h](../../../src/components/domains/air/command/control_input_resolution.h)
+- [gym_envs/universal_env_parts/actions.py](../../../../gym_envs/universal_env_parts/actions.py)
+- [gym_envs/universal_env_parts/spaces.py](../../../../gym_envs/universal_env_parts/spaces.py)
+- [gym_envs/universal_env_parts/air_combat_event_action.py](../../../../gym_envs/universal_env_parts/air_combat_event_action.py)
+- [src/components/command/pilot_action.h](../../../../src/components/command/pilot_action.h)
+- [src/components/domains/air/command/control_input_resolution.h](../../../../src/components/domains/air/command/control_input_resolution.h)
+- [tests/runtime/core/test_air_combat_hybrid_action.py](../../../../tests/runtime/core/test_air_combat_hybrid_action.py)
+- [tests/runtime/air_combat/test_fire_action_release_gate.py](../../../../tests/runtime/air_combat/test_fire_action_release_gate.py)
 
 ## Action Modes
 
-The maintained environment modes are:
+The Air action modes covered by this standard are:
 
 | Mode | Dim | Purpose |
 | :--- | ---: | :--- |
@@ -94,9 +103,9 @@ Status: `2026-06-10` implementation contract for the A5 S1 C2/ROE
 event-action runtime surface. This section freezes field names for the runtime
 surface; it does not mark learned-policy behavior as accepted.
 
-For accepted A5 S1 C2/ROE training/eval entries, `fire_weapon` must no longer
-be treated as a raw policy-facing per-step threshold. Weapon release is modeled
-as an event action:
+For scenarios that opt into the maintained A5 S1 C2/ROE contract,
+`fire_weapon` is not treated as a raw policy-facing per-step threshold. Weapon
+release is modeled as an event action:
 
 ```text
 event_action in {hold, fire_once}

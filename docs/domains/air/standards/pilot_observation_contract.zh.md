@@ -1,10 +1,16 @@
 # 飞行员观测合同
 
 Language:
-- English canonical: `obs.md`
-- Chinese companion: [obs.zh.md](obs.zh.md)
+- English canonical: [pilot_observation_contract.md](pilot_observation_contract.md)
+- Chinese companion: `pilot_observation_contract.zh.md`
 
-状态：`2026-06-10`，当前维护中的 air mission observation 特化基线。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/pilot_observation_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+状态：当前维护中的 air mission observation 特化基线。
 
 本文档定义的是当前 runtime 和测试实际使用的 air mission-observation 合同，而不是试图覆盖
 “真实飞行员可能看到的全部仪表、雷达页面或感知信息”。
@@ -15,10 +21,11 @@ Language:
 
 主要依据：
 
-- [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
-- [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
-- [src/core/mission/runtime/mission_runtime.h](../../../src/core/mission/runtime/mission_runtime.h)
-- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
+- [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py)
+- [gym_envs/scenario_loader/mission_observation.py](../../../../gym_envs/scenario_loader/mission_observation.py)
+- [src/core/mission/runtime/mission_runtime.h](../../../../src/core/mission/runtime/mission_runtime.h)
+- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
+- [tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py](../../../../tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py)
 
 本文档不定义：
 
@@ -28,7 +35,7 @@ Language:
 
 ## Mode 合同
 
-当前维护中的 `mission_observation` mode 有：
+本标准覆盖的 Air-consumed `mission_observation` mode 有：
 
 | Mode | 维度 | 作用 |
 | :--- | ---: | :--- |
@@ -42,6 +49,13 @@ Language:
 | `air_combat_c2_roe_v2` | 29 | 在 `air_combat_c2_roe_v1` 上追加 state-completion 与 window 字段 |
 
 字段顺序本身就是合同的一部分。
+
+仓库 taxonomy 还登记了 `naval_screen_station_v1`；该 mode 由 naval
+specialization 所有，明确不属于本 Air 标准。
+
+实现 owner 随 mode 变化。基础 navigation、formation 与 cooperative-takeoff mode
+使用 compiled core；两个 air-combat mode 使用 Python policy adapter，并以 `basic`
+作为 compiled fallback。这种实现分层不会把 Air-specific 字段语义转交给 common core。
 
 ## 共享基础字段
 
@@ -80,7 +94,7 @@ Language:
 - `distance_to_turn_m`
 
 这些字段的权威索引标签以
-[python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py) 为准。
+[python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py) 为准。
 
 ## Formation 字段
 
@@ -163,8 +177,10 @@ target-assessment timing。
 - 当 route guidance 不可用时，导航段按零填充。
 - 字段可见性取决于 mode。
 - formation 与 takeoff 字段只在声明它们的 mode 中出现。
+- Air-combat C2/ROE mode 是 Python policy-adapter product；调用者不得把它们的
+  compiled `basic` fallback 当成完整 air-combat 合同。
 - Air-combat C2/ROE mode 的字段顺序以
-  [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py) 为准；
+  [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py) 为准；
   policy、reward 与 probe 代码必须把这个顺序视为合同数据。
 
 ## 归属边界
@@ -173,14 +189,17 @@ target-assessment timing。
 
 - 抽象的 command-following 锚点
 - 能跨军种成立的 role/slot 语义
+- 来自 Joint command context 的 `roe_state`、授权、authority holder/grantor 与
+  assigned-target provenance
 
 应继续保留在 air specialization 的内容：
 
 - runway / takeoff 专用字段
 - route / LNAV / ILS 语义
 - formation offset 与空中 role 细节
-- air-combat release discipline 专用的 ROE/WCS、shot policy、launch-window
-  与 target-assessment 字段
+- 共享 authority 字段在 Air observation 中的投影
+- air-combat release discipline 专用的 WCS、shot policy、launch-window 与
+  target-assessment 字段
 
 ## 非目标
 

@@ -1,10 +1,16 @@
 # 飞行员动作合同
 
 Language:
-- English canonical: `act.md`
-- Chinese companion: [act.zh.md](act.zh.md)
+- English canonical: [pilot_action_contract.md](pilot_action_contract.md)
+- Chinese companion: `pilot_action_contract.zh.md`
 
-状态：`2026-06-10`，当前维护中的 air action input 特化基线，包含 A5 runtime
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/pilot_action_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+状态：当前维护中的 air action input 特化基线，包含 A5 runtime
 event-action overlay；本文档本身不接受 learned-policy behavior。
 
 本文档定义仓库当前维护中的 air action surface。它是一份接口合同，不是座舱控件百科。
@@ -18,14 +24,17 @@ event-action overlay；本文档本身不接受 learned-policy behavior。
 
 主要依据：
 
-- [gym_envs/universal_env_parts/actions.py](../../../gym_envs/universal_env_parts/actions.py)
-- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
-- [src/components/command/pilot_action.h](../../../src/components/command/pilot_action.h)
-- [src/components/domains/air/command/control_input_resolution.h](../../../src/components/domains/air/command/control_input_resolution.h)
+- [gym_envs/universal_env_parts/actions.py](../../../../gym_envs/universal_env_parts/actions.py)
+- [gym_envs/universal_env_parts/spaces.py](../../../../gym_envs/universal_env_parts/spaces.py)
+- [gym_envs/universal_env_parts/air_combat_event_action.py](../../../../gym_envs/universal_env_parts/air_combat_event_action.py)
+- [src/components/command/pilot_action.h](../../../../src/components/command/pilot_action.h)
+- [src/components/domains/air/command/control_input_resolution.h](../../../../src/components/domains/air/command/control_input_resolution.h)
+- [tests/runtime/core/test_air_combat_hybrid_action.py](../../../../tests/runtime/core/test_air_combat_hybrid_action.py)
+- [tests/runtime/air_combat/test_fire_action_release_gate.py](../../../../tests/runtime/air_combat/test_fire_action_release_gate.py)
 
 ## Action Mode
 
-当前维护中的环境 action mode 为：
+本标准覆盖的 Air action mode 为：
 
 | Mode | 维度 | 作用 |
 | :--- | ---: | :--- |
@@ -87,8 +96,8 @@ transport action，而不是 raw policy intent。因此对于 pulse 维度，pol
 状态：`2026-06-10`，A5 S1 C2/ROE event-action runtime surface 的 implementation
 contract。本节冻结 runtime surface 所需的字段名；它本身不接受 learned-policy behavior。
 
-对于 accepted A5 S1 C2/ROE training/eval entries，`fire_weapon` 不得继续被视为
-policy-facing 的逐帧 raw threshold。武器释放建模为事件动作：
+对于选择启用维护中 A5 S1 C2/ROE 合同的场景，`fire_weapon` 不作为 policy-facing
+逐帧 raw threshold，而是把武器释放建模为事件动作：
 
 ```text
 event_action in {hold, fire_once}

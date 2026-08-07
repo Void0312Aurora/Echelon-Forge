@@ -134,8 +134,8 @@ flowchart TD
 
 | 流 | 代理类型 | 历史派发记录/推理 | 任务 | 写入范围 |
 |--------|------------|-------------------|------|-------------|
-| `G0-A` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧地面标准概述。 | 仅 `docs/standards/ground/README*.md`。无代码。 |
-| `G0-B` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧最小地面任务词汇。 | 仅 `docs/standards/ground/minimal_task_structure*.md`。无代码。 |
+| `G0-A` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧地面标准概述。 | 仅 `docs/domains/ground/README*.md`。无代码。 |
+| `G0-B` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧最小地面任务词汇。 | 仅 `docs/domains/ground/standards/minimal_task_structure*.md`。无代码。 |
 | `G0-C` | 工作者/集成工作者 | `gpt-5.4-mini`，极高 | 在 G0-A/G0-B 之后集成 G0 导航、调度文档和双语注册表。 | 标准索引、`docs/task/ground/**`、注册表。无代码。 |
 | `G1-A` | 工作者 | `gpt-5.4`，高 | 预检配置文件解析器、地面配置文件外壳、起始默认值和聚焦测试范围。实现需要后续批准。 | 首先读取/源清单和聚焦预检说明；仅在后续批准后进行代码编辑。 |
 | `G1-B` | 工作者 | `gpt-5.4`，高 | 实现仅 Python 配置文件的地面解析器/配置文件/适配器切片以及来自 G1-A 的聚焦测试。 | `python/rl/tasking/bridge.py`、`python/rl/tasking/common_core_profile.py`、`python/rl/tasking/ground_adapter.py`、`python/rl/profile/ground_profile.py`、仅聚焦 `tests/leader`。无 C++/运行时/绑定。 |
@@ -173,7 +173,7 @@ flowchart TD
 
 任务：
 
-- 审计/收紧 `docs/standards/ground/README*.md`。
+- 审计/收紧 `docs/domains/ground/README*.md`。
 - 确认层级模型、G0 默认值、阶段覆盖、能力路径、代理和信息状态规则。
 - 以 `blocked` 停止，而不是更改冻结的默认值。
 
@@ -188,7 +188,7 @@ flowchart TD
 
 任务：
 
-- 审计/收紧 `docs/standards/ground/minimal_task_structure*.md`。
+- 审计/收紧 `docs/domains/ground/standards/minimal_task_structure*.md`。
 - 确认 `TASK_MOVE`、`TASK_OCCUPY` 和 `TASK_SUPPORT` 作为唯一的起始任务形状。
 - 将移动动力学、感知、火力、后勤、地形、观测和伤害保持推迟。
 

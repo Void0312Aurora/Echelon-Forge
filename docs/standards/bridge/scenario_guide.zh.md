@@ -51,9 +51,9 @@ Language:
 
 在维护中的分层下：
 
-- `joint/common core` 负责共享任务组织与 tasking vocabulary
-- `services/*` 负责军种解释
-- `air/` 与 `naval/` 负责执行级特化
+- `docs/domains/joint/` 负责共享任务组织与 tasking vocabulary
+- `docs/domains/joint/service_profiles/` 负责军种解释
+- `docs/domains/air/` 与当前 legacy Naval owner 路由负责执行级特化
 
 当前 runtime 仍处于桥接阶段，所以一个场景文件中可能混合出现这几层对象。此时应遵循：
 
@@ -144,7 +144,8 @@ authority 或 task organization。
 - 当前已支持的 naval station/reference 字段
 
 它位于 scenario JSON 和 runtime command state 的桥接边界。其共享语义由
-joint/common-core command baseline 约束，其服务/平台扩展则由 `air/` 或 `naval/` 约束。
+joint/common-core command baseline 约束，其服务/平台扩展则由适用的 owner-local
+领域标准或当前 legacy Naval owner 路由约束。
 
 ## `objectives`
 
@@ -200,6 +201,6 @@ reward config 属于 runtime workflow bridge，不应用来偷偷承载军种 do
 - [运行时工作流与合同基线](runtime_workflow_and_contract_baseline.md)
 - [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-- [美国海军画像](../services/navy.md)
-- [空中平台标准总览](../air/README.md)
+- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.md)
+- [空中平台标准总览](../../domains/air/README.md)
 - [海军标准总览](../naval/README.md)

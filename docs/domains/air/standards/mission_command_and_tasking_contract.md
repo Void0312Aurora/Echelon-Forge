@@ -1,10 +1,17 @@
 # Air Mission Command and Tasking Contract
 
 Language:
-- English canonical: `aim.md`
-- Chinese companion: [aim.zh.md](aim.zh.md)
+- English canonical: `mission_command_and_tasking_contract.md`
+- Chinese companion: [mission_command_and_tasking_contract.zh.md](mission_command_and_tasking_contract.zh.md)
 
-Status: `2026-05-18` specialization baseline for maintained air tasking and executable command semantics.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/air/standards/mission_command_and_tasking_contract.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
+
+Status: maintained specialization baseline for air tasking and executable
+command semantics.
 
 This document defines the maintained air-side contract for:
 
@@ -19,12 +26,12 @@ project-wide command standard.
 
 Primary references:
 
-- [src/components/domains/air/tasking/task_order_air.h](../../../src/components/domains/air/tasking/task_order_air.h)
-- [src/components/domains/air/tasking/leader_intent_air.h](../../../src/components/domains/air/tasking/leader_intent_air.h)
-- [src/components/command/common/mission_command_core.h](../../../src/components/command/common/mission_command_core.h)
-- [src/components/domains/air/command/mission_command_air.h](../../../src/components/domains/air/command/mission_command_air.h)
-- [gym_envs/scenario_loader/runtime_state.py](../../../gym_envs/scenario_loader/runtime_state.py)
-- [tests/runtime/mission/test_mission_command_air_fields_roundtrip.py](../../../tests/runtime/mission/test_mission_command_air_fields_roundtrip.py)
+- [src/components/domains/air/tasking/task_order_air.h](../../../../src/components/domains/air/tasking/task_order_air.h)
+- [src/components/domains/air/tasking/leader_intent_air.h](../../../../src/components/domains/air/tasking/leader_intent_air.h)
+- [src/components/command/common/mission_command_core.h](../../../../src/components/command/common/mission_command_core.h)
+- [src/components/domains/air/command/mission_command_air.h](../../../../src/components/domains/air/command/mission_command_air.h)
+- [gym_envs/scenario_loader/runtime_state.py](../../../../gym_envs/scenario_loader/runtime_state.py)
+- [tests/runtime/mission/test_mission_command_air_fields_roundtrip.py](../../../../tests/runtime/mission/test_mission_command_air_fields_roundtrip.py)
 
 ## Layer Split
 
@@ -55,6 +62,10 @@ Air runtime still depends on the shared `MissionCommandCore` fields:
 - `engagement_authority_holder_id`
 - `engagement_authority_grantor_id`
 - `assigned_target_id`
+- `threat_state`
+- `assigned_target_track_id`
+- `assigned_target_source_id`
+- `assigned_target_snapshot_time_s`
 - `authorization_to_fire`
 - `active`
 
@@ -115,7 +126,7 @@ This is the air leader's intermediate decision surface before final mapping into
 
 ## Maintained `command_code` Semantics
 
-The currently maintained numeric command contract used by runtime/tests is:
+The Air runtime and tests use the following maintained base command values:
 
 - `0`: idle / hold
 - `1`: takeoff
@@ -123,8 +134,10 @@ The currently maintained numeric command contract used by runtime/tests is:
 - `3`: waypoint or LNAV-style route navigation
 - `4`: landing / final approach
 
-This is the maintained implementation contract. Broader macro-command catalogs
-should not be documented here as if they were already stable runtime behavior.
+This is the Air-consumed base set, not an exhaustive project-wide command-code
+catalog. Other domain owners may define separately tested extensions; this Air
+standard neither owns nor forbids those codes. Untested Air macro-command
+catalogs must not be presented here as stable runtime behavior.
 
 ## Roundtrip Requirements
 

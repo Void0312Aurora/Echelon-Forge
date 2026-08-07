@@ -4,13 +4,19 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-状态：`2026-06-07`，文档归属与分层权威说明。
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/standards/overview/document_alignment_map.md`
+Owner: `engineering/documentation-governance`
+Last verified: `2026-08-08`
+
+状态：`2026-08-08`，文档归属与分层的迁移期权威映射。
 
 本文档用于明确：
 
 - 哪些标准文档是当前主依据
 - 哪些文档属于特化补充
-- 活跃任务/工作流文档应如何映射回维护中的标准树
+- 活跃任务/工作流文档应如何映射回分布式 owner standards 与剩余 legacy 标准树
 
 ## 当前主依据
 
@@ -38,11 +44,11 @@ Language:
 
 当前军种画像主依据：
 
-- [军种画像总览](../services/README.md)
-- [美国空军画像](../services/air_force.md)
-- [美国陆军画像](../services/army.md)
-- [美国海军画像](../services/navy.md)
-- [美国海军陆战队画像](../services/marine_corps.md)
+- [军种画像总览](../../domains/joint/service_profiles/README.zh.md)
+- [美国空军画像](../../domains/joint/service_profiles/standards/air_force_profile.zh.md)
+- [美国陆军画像](../../domains/joint/service_profiles/standards/army_profile.zh.md)
+- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.zh.md)
+- [美国海军陆战队画像](../../domains/joint/service_profiles/standards/marine_corps_profile.zh.md)
 
 它们负责定义：
 
@@ -80,12 +86,12 @@ Language:
 
 以下文档仍有效，但不属于全项目 common core：
 
-- [空中平台标准总览](../air/README.md)
-- [飞行员观测空间标准](../air/obs.md)
-- [飞行员操作空间标准](../air/act.md)
-- [空中任务命令标准](../air/aim.md)
-- [飞行员汇报标准](../air/rep.md)
-- [空空杀伤链期望包络](../air/kill_chain_expectation_envelope.zh.md)
+- [空中平台标准总览](../../domains/air/README.zh.md)
+- [飞行员观测空间标准](../../domains/air/standards/pilot_observation_contract.zh.md)
+- [飞行员操作空间标准](../../domains/air/standards/pilot_action_contract.zh.md)
+- [空中任务命令标准](../../domains/air/standards/mission_command_and_tasking_contract.zh.md)
+- [飞行员汇报标准](../../domains/air/standards/pilot_reporting_contract.zh.md)
+- [空空杀伤链期望包络](../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)
   - active planning supplement，不是当前 runtime contract
 
 它们负责：
@@ -118,8 +124,9 @@ Language:
 
 当前维护中的 ground 特化入口：
 
-- [Ground 标准总览](../ground/README.zh.md)
-- [Ground 最小任务结构](../ground/minimal_task_structure.zh.md)
+- [Ground 标准总览](../../domains/ground/README.zh.md)
+- [Ground 特化基线](../../domains/ground/standards/specialization_baseline.zh.md)
+- [Ground 最小任务结构](../../domains/ground/standards/minimal_task_structure.zh.md)
 
 它们负责：
 
@@ -132,15 +139,16 @@ Language:
 它们不负责跨军种 authority 定义、Army service-profile 解释，也不负责完整的
 terrain/mobility/fires/runtime 行为。
 
-路由规则：`services/army.md` 负责 Army profile 解释，`ground/` 负责维护中的
-ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，不得被写成
-单独的 `army runtime stack`。
+路由规则：`docs/domains/joint/service_profiles/standards/army_profile.md` 负责
+Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。已接受的
+`army` 与 `land` 别名会规范化为 `ground`，不得被写成单独的
+`army runtime stack`。
 
 ## 活跃规划补充页
 
 以下文档当前作为活跃规划补充页维护，而不是当前 runtime 合同：
 
-- [模块化规划](../planning/modularization_plan.md)
+- [模块化规划](../planning/modularization_plan.zh.md)
 
 它的职责是描述 standards tree 重建之后，代码库未来可能采用的目标拆分方向。
 它现在也记录当前 `src/components/domains`、`src/systems/domains` 与
@@ -178,8 +186,8 @@ ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，
 
 归属规则：
 
-- `joint/` 负责命名、最小语义和禁止混淆项
-- `services/` 负责各军种解释
+- `docs/domains/joint/` 负责命名、最小语义和禁止混淆项
+- `docs/domains/joint/service_profiles/` 负责各军种解释
 - bridge 文档负责说明当前 runtime 如何表达这些对象
 - 特化文档不得把它们重新写成 air-only 或 naval-only 的 core
 
@@ -241,12 +249,14 @@ ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，
 建议按下面方式回映：
 
 - `c2_command_chain/`
-  - 主要对齐到 `joint/`
-  - 涉及 ship authority/report 时，次级对齐到 `services/navy.md` 和 `naval/`
+  - 主要对齐到 `docs/domains/joint/`
+  - 涉及 ship authority/report 时，次级对齐到 Navy service profile 与旧
+    `naval/` 子树
 - `naval/`
-  - 对齐到 `services/navy.md` 与 `naval/`
+  - 对齐到 Navy service profile 与旧 `naval/` 子树
 - `ground/` 或未来 land-domain task work
-  - 对齐到 `services/army.md` 的军种画像解释，以及 `ground/` 的特化语义
+  - 对齐到 Army service profile 的军种画像解释，以及 `docs/domains/ground/`
+    的特化语义
   - 不得新增一条单独的 `army runtime stack`
 - `sensor_situation/`
   - 当前主要对齐到 workflow bridge，以及后续共享的 `track / IFF / report` 标准
@@ -262,9 +272,12 @@ ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，
 
 新增一份维护中的标准文档时：
 
-1. 跨军种共通关系放 `joint/`
-2. 军种组织与控制口径放 `services/`
-3. 平台或任务特化放 `air/`、`naval/` 或 `ground/`
-4. 场景/runtime bridge 说明放在 `bridge/`
-5. 模型/策略架构词汇放 `model/`
-6. 过时路线放入 `docs/Archive/` 或对应任务归档树
+1. 跨军种共通关系放 `docs/domains/joint/standards/`
+2. 军种组织与控制解释放
+   `docs/domains/joint/service_profiles/standards/`
+3. Air 或 Ground 特化放到对应 owner-local `standards/` 表面；Naval 在独立迁移
+   落地前仍通过当前 legacy owner 路由
+4. 新的跨域 runtime/workflow 合同放到 `docs/architecture/`，不得扩张旧
+   `bridge/` 子树
+5. 新的模型/策略架构词汇放到 `docs/learning/`；当前旧 model 标准等待独立迁移
+6. 过时工作依照文档生命周期政策退役；标准迁移不得改写既有 archive

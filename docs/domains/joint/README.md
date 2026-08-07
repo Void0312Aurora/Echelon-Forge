@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/domains/joint/README.md`
 Owner: `domains/joint`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 The Joint owner defines cross-domain authority relationships, task-organization
 vocabulary, and intent/order/report interfaces that must retain the same meaning
@@ -19,6 +19,9 @@ domain's execution geometry, timing, control, sensing, or weapon semantics.
   defines the common-core naming, authority, and modeling boundary.
 - [Joint Command-Link and Reporting Baseline](standards/command_link_and_reporting_baseline.md):
   defines the minimum command-delivery, reporting, data-link, and ROE loop.
+- [Service Profiles](service_profiles/README.md): interprets the common-core
+  vocabulary for the Air Force, Army, Navy, and Marine Corps without redefining
+  domain execution semantics.
 
 ## Owner Boundary
 
@@ -30,18 +33,14 @@ domain's execution geometry, timing, control, sensing, or weapon semantics.
 - Terms such as `wingman`, `runway`, `destroyer screen`, and `platoon wedge`
   must not be promoted into the Joint common core.
 
-## Pending Owner Migration
+## Related Domain Owners
 
-Service profiles and domain-specific standards remain on their maintained
-legacy routes until their separate migration slices land:
-
-- [Service profiles](../../standards/services/README.md)
-- [Air specialization](../../standards/air/README.md)
+- [Air specialization](../air/README.md)
+- [Ground specialization](../ground/README.md)
 - [Naval specialization](../../standards/naval/README.md)
-- [Ground specialization](../../standards/ground/README.md)
 
-These links are transitional routes, not a claim that Joint owns the linked
-execution semantics.
+The Naval link is transitional until its separate owner migration lands. None
+of these routes implies that Joint owns the linked execution semantics.
 
 ## Reference Basis
 

@@ -4,21 +4,33 @@ Language:
 - English canonical: `kill_chain_expectation_envelope.md`
 - Chinese companion: [kill_chain_expectation_envelope.zh.md](kill_chain_expectation_envelope.zh.md)
 
-Status: `2026-07-06` active planning supplement, not a current runtime contract,
-for air-to-air kill-chain expectation envelopes.
+Document kind: `plan`
+Lifecycle: `draft`
+Canonical: `docs/domains/air/work/issues/kill_chain_expectation_envelope.md`
+Owner: `domains/air`
+Last verified: `2026-08-08`
 
-Owner layer: `air` specialization. This document standardizes the review
-vocabulary and envelope shape for air-to-air kill-chain expectation checks. It
-does not claim real AIM-120C, real F-16C, deterministic-fuze, Pk, or runtime
-calibration authority.
+Status: draft planning issue for air-to-air kill-chain expectation envelopes;
+not a current runtime or test contract.
+
+This draft records candidate review vocabulary and an envelope shape for
+air-to-air kill-chain expectation checks. It does not claim real AIM-120C, real
+F-16C, deterministic-fuze, Pk, or runtime calibration authority.
+
+## Authorization Boundary
+
+This draft does not authorize implementation, runtime retuning, descriptor
+edits, harness or schema changes, calibration, reward changes, or training
+acceptance. Any such work requires a separately authorized owner-local work
+package with its own scope, tests, review, and acceptance evidence.
 
 ## Scope
 
-This standard owns the envelope used to judge whether air-to-air kill-chain
-diagnostic distributions fall inside an engineering-proxy expectation range.
-It is a standards-layer planning supplement because the current harness can
-produce before-report facts, but it does not yet emit this envelope object as a
-maintained runtime/test contract.
+This draft records a candidate envelope for reviewing whether air-to-air
+kill-chain diagnostic distributions fall inside an engineering-proxy
+expectation range. It remains an owner-local issue plan because the current
+harness can produce before-report facts but does not emit this envelope object
+as a maintained runtime/test contract.
 
 In scope:
 
@@ -43,11 +55,11 @@ Out of scope:
 
 The current task evidence lives under:
 
-- [KCES task entry](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/README.md)
-- [KCES idealized expectation contract](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_idealized_expectation_contract_20260621.md)
-- [KCES scenario expectation matrix](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_scenario_expectation_matrix_20260622.md)
-- [KCES metric mapping](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_metric_mapping_20260623.md)
-- [KCES component-response quantization addendum](../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_component_response_quantization_20260705.md)
+- [KCES task entry](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/README.md)
+- [KCES idealized expectation contract](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_idealized_expectation_contract_20260621.md)
+- [KCES scenario expectation matrix](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_scenario_expectation_matrix_20260622.md)
+- [KCES metric mapping](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_metric_mapping_20260623.md)
+- [KCES component-response quantization addendum](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_component_response_quantization_20260705.md)
 
 Current schema label:
 
@@ -70,11 +82,11 @@ report:
 | `R_effect_m` | variant-specific effective-load radius | derived or harness-declared |
 | `effect_band_thresholds` | `rho_effect` to effect-band mapping | KCES contract/metric mapping |
 | `response_band_thresholds` | `p_max` and `delta_abs` to response-band mapping | KCES quantization addendum |
-| `distribution_tolerance` | satisfied share and negative-control tolerance | this document |
-| `owner_rules` | deviation type to review-stage mapping | this document |
+| `distribution_tolerance` | candidate satisfied share and negative-control tolerance | this draft |
+| `owner_rules` | deviation type to review-stage mapping | this draft |
 
-Changing any of these policy inputs changes the envelope and must be recorded as
-a new version or addendum.
+Changing any of these proposed policy inputs changes the candidate envelope and
+must be recorded as a new draft version or addendum.
 
 ## Derived Report Fields
 
@@ -132,8 +144,9 @@ satisfy or fail the envelope.
 
 ## Distribution Tolerances
 
-The v0 anchor-grid report uses cell-count gates until repeated seeds provide
-confidence metadata:
+The following v0 cell-count values are candidate review thresholds until
+repeated seeds provide confidence metadata. They do not pass or fail a runtime
+release and do not authorize parameter changes:
 
 | Group | v0 tolerance |
 | --- | --- |
@@ -184,7 +197,7 @@ confidence metadata:
 
 ## Minimal Envelope Object
 
-Future harness summaries may emit:
+After separately authorized implementation, a future harness summary may emit:
 
 ```json
 {
@@ -205,7 +218,8 @@ Future harness summaries may emit:
 }
 ```
 
-This object is a standards review label, not a calibration result.
+This object is a proposed planning/review label, not a calibration result or an
+implemented schema commitment.
 
 ## Current Held Boundary
 
@@ -214,6 +228,6 @@ from the launch-time runtime snapshot. Its `4/6/8 km +/-30 deg` trace-response
 rows are therefore `outside_effect` and satisfy the negative-control ceiling;
 they are not a current `outer_effective -> trace_response` residual. The
 envelope still retains that residual label for other declared variants, such as
-`REV-EQ-FUZE`, but the standard remains a planning supplement until a maintained
-harness emits the object and focused tests pin the schema. Runtime retuning
-remains held behind the KCES P6 single-layer admission gate.
+`REV-EQ-FUZE`, but this plan remains draft until a maintained harness emits the
+object and focused tests pin the schema through separately authorized work.
+Runtime retuning remains held behind the KCES P6 single-layer admission gate.

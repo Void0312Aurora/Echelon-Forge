@@ -4,11 +4,18 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-Status: `2026-06-07` authoritative for document ownership and layering.
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/standards/overview/document_alignment_map.md`
+Owner: `engineering/documentation-governance`
+Last verified: `2026-08-08`
+
+Status: `2026-08-08` migration-time authority map for document ownership and
+layering.
 
 This document clarifies which standards documents are primary, which are
-specialized supplements, and how active task/workflow documents map back to the
-maintained standards tree.
+specialized supplements, and how active task/workflow documents map back to
+distributed owner standards and the remaining legacy standards tree.
 
 ## Active Primary References
 
@@ -37,11 +44,11 @@ They define:
 
 Current service-profile primary references:
 
-- [Service Profile Overview](../services/README.md)
-- [USAF Profile](../services/air_force.md)
-- [US Army Profile](../services/army.md)
-- [US Navy Profile](../services/navy.md)
-- [US Marine Corps Profile](../services/marine_corps.md)
+- [Service Profile Overview](../../domains/joint/service_profiles/README.md)
+- [USAF Profile](../../domains/joint/service_profiles/standards/air_force_profile.md)
+- [US Army Profile](../../domains/joint/service_profiles/standards/army_profile.md)
+- [US Navy Profile](../../domains/joint/service_profiles/standards/navy_profile.md)
+- [US Marine Corps Profile](../../domains/joint/service_profiles/standards/marine_corps_profile.md)
 
 They define:
 
@@ -81,12 +88,12 @@ They define:
 
 These remain valid, but they are not project-wide common-core standards:
 
-- [Air Standards Overview](../air/README.md)
-- [Pilot Observation Space Standard](../air/obs.md)
-- [Pilot Action Space Standard](../air/act.md)
-- [Air Mission Command Standard](../air/aim.md)
-- [Pilot Report Standard](../air/rep.md)
-- [Air-To-Air Kill-Chain Expectation Envelope](../air/kill_chain_expectation_envelope.md)
+- [Air Standards Overview](../../domains/air/README.md)
+- [Pilot Observation Space Standard](../../domains/air/standards/pilot_observation_contract.md)
+- [Pilot Action Space Standard](../../domains/air/standards/pilot_action_contract.md)
+- [Air Mission Command Standard](../../domains/air/standards/mission_command_and_tasking_contract.md)
+- [Pilot Report Standard](../../domains/air/standards/pilot_reporting_contract.md)
+- [Air-To-Air Kill-Chain Expectation Envelope](../../domains/air/work/issues/kill_chain_expectation_envelope.md)
   - active planning supplement, not a current runtime contract
 
 They own:
@@ -121,8 +128,9 @@ They do not own cross-service authority or generic tasking DTO boundaries.
 
 The maintained ground specialization entrypoints are:
 
-- [Ground Standards Overview](../ground/README.md)
-- [Ground Minimal Task Structure](../ground/minimal_task_structure.md)
+- [Ground Standards Overview](../../domains/ground/README.md)
+- [Ground Specialization Baseline](../../domains/ground/standards/specialization_baseline.md)
+- [Ground Minimal Task Structure](../../domains/ground/standards/minimal_task_structure.md)
 
 They own:
 
@@ -135,10 +143,10 @@ They own:
 They do not own cross-service authority definitions, Army service-profile
 interpretation, or full terrain/mobility/fires/runtime behavior.
 
-Routing rule: `services/army.md` owns Army profile interpretation; `ground/`
-owns maintained ground specialization. The accepted aliases `army` and `land`
-normalize to `ground` and must not be documented as a separate `army` runtime
-stack.
+Routing rule: `docs/domains/joint/service_profiles/standards/army_profile.md`
+owns Army profile interpretation; `docs/domains/ground/` owns maintained ground
+specialization. The accepted aliases `army` and `land` normalize to `ground`
+and must not be documented as a separate `army` runtime stack.
 
 ## Active Planning Supplements
 
@@ -258,14 +266,14 @@ the standards ownership map itself.
 Map those workstreams back as follows:
 
 - `c2_command_chain/`
-  - primarily aligns to `joint/`
-  - secondarily to `services/navy.md` and `naval/` where ship authority/report
-    semantics appear
+  - primarily aligns to `docs/domains/joint/`
+  - secondarily to the Navy service profile and the legacy `naval/` subtree
+    where ship authority/report semantics appear
 - `naval/`
-  - aligns to `services/navy.md` and `naval/`
+  - aligns to the Navy service profile and the legacy `naval/` subtree
 - `ground/` or future land-domain task work
-  - aligns to `services/army.md` for service-profile interpretation and
-    `ground/` for specialization
+  - aligns to the Army service profile for service-profile interpretation and
+    `docs/domains/ground/` for specialization
   - must not introduce a separate `army` runtime stack
 - `sensor_situation/`
   - currently aligns to the workflow bridge and future shared standards that
@@ -282,9 +290,15 @@ they should not decide where stable shared contracts live.
 
 When adding a new maintained standards document:
 
-1. Put cross-service relationships in `joint/`.
-2. Put service organization/control interpretation in `services/`.
-3. Put platform or mission specialization in `air/`, `naval/`, or `ground/`.
-4. Put scenario/runtime bridge documentation in `bridge/`.
-5. Put model/policy architecture vocabulary in `model/`.
-6. Put superseded work in `docs/Archive/` or the relevant task archive tree.
+1. Put cross-service relationships in `docs/domains/joint/standards/`.
+2. Put service organization/control interpretation in
+   `docs/domains/joint/service_profiles/standards/`.
+3. Put Air or Ground specialization in the matching owner-local `standards/`
+   surface. Route Naval changes through its current legacy owner until its
+   separate migration lands.
+4. Put new cross-domain runtime/workflow contracts under `docs/architecture/`;
+   do not expand the legacy `bridge/` subtree.
+5. Put new model/policy architecture vocabulary under `docs/learning/` while
+   the current legacy model standard awaits migration.
+6. Retire superseded work through the document lifecycle policy; do not rewrite
+   existing archives as part of a standards migration.

@@ -36,8 +36,9 @@ It does not own:
 - low-level physics, weapon effects, or damage-model parameters;
 - the acceptance status of active training experiments.
 
-Those belong to the relevant `joint/`, `services/`, domain-specialization,
-`bridge/`, task, or runtime documents.
+Those belong to `docs/domains/joint/`, its nested service-profile owner, the
+relevant domain-specialization owner, or the applicable architecture, task, or
+runtime document.
 
 For active air-combat training, this means "the model learned to fire" is a
 model-side behavioral claim about the executable event path producing legal

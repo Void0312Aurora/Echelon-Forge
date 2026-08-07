@@ -1,8 +1,14 @@
 # US Army Profile
 
 Language:
-- English canonical: `army.md`
-- Chinese companion: [army.zh.md](army.zh.md)
+- English canonical: `army_profile.md`
+- Chinese companion: [army_profile.zh.md](army_profile.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/army_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
 
 Status: `2026-06-01` authoritative for Army service-profile placement.
 
@@ -13,6 +19,9 @@ started, without treating the Army service profile as the execution layer.
 It is intentionally narrower than a full Army doctrine summary. Its purpose is
 to prevent air-first runtime assumptions from leaking into current or future
 land modeling.
+
+This profile interprets the Joint common core for Army organization and command
+relationships. It does not own ground-domain execution contracts.
 
 ## Real-World Basis
 
@@ -60,7 +69,7 @@ The common layer should keep the shared cross-service skeleton:
 These fields are portable. They should not be renamed into air-only or
 ship-only language.
 
-### `services/army`
+### Army service-profile interpretation
 
 The Army service profile explains the Army reading of that skeleton:
 
@@ -84,7 +93,8 @@ execution vocabulary that does not belong in the Army service profile:
 
 The current ground line has accepted tasking/schema evidence, but movement,
 terrain, sensing, fires, damage, and combat behavior remain held. Therefore
-`services/army` remains a boundary document, not a speculative runtime API.
+the Army service profile remains a boundary standard, not a speculative runtime
+API.
 
 ## Runtime Boundary
 
@@ -162,21 +172,23 @@ The current repository maintains early ground tasking/profile/schema evidence,
 but it does not yet maintain a full Army execution layer or ground-combat
 runtime. That means the Army profile remains a standardization guardrail:
 
-- the accepted ground tasking status flow currently stops at
-  `TaskOrder -> LeaderIntent -> PilotReport`
-- formal ground command delivery through `MissionCommand` or a narrower
-  command packet remains a future ground-specialization release
+- the accepted ground tasking/status flow covers
+  `TaskOrderGround -> LeaderIntentGround -> PilotReportGround`
+- the ground profile projects G0/G1 static task metadata into
+  `MissionCommandGround`; this is command authoring and command-chain sync, not
+  released dynamic command delivery
+- formal ground command delivery remains a future ground-owner release
 - common fields should remain portable enough for land use
 - air-specific command details should not be promoted into the Army baseline
 
-This is exactly why `services/army` remains a boundary document while ground
-runtime behavior is still held behind later task gates.
+This is exactly why the Army profile remains a boundary standard while broader
+ground runtime behavior is still held behind later task gates.
 
 ## Related Documents
 
-- [Service Profile Overview](README.md)
-- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
-- [Simulation Conventions](../foundation/conventions.md)
-- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
-- [Ground Standards Overview](../ground/README.md)
+- [Service Profile Overview](../README.md)
+- [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)
+- [Simulation Conventions](../../../../standards/foundation/conventions.md)
+- [Runtime Workflow and Contract Baseline](../../../../standards/bridge/runtime_workflow_and_contract_baseline.md)
+- [Ground Standards Overview](../../../ground/README.md)

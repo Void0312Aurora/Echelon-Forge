@@ -1,298 +1,76 @@
-# Standards Documentation Overview
+# Legacy Standards Migration Index
 
-Language:
-- English canonical: `README.md`
-- Chinese companion: [README.zh.md](README.zh.md)
+Language: English canonical; [Chinese companion](README.zh.md).
 
 Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/standards/README.md`
-Owner: `legacy/domain-and-modeling-standards`
-Last verified: `2026-08-07`
+Owner: `legacy/standards-migration-index`
+Last verified: `2026-08-08`
 
-Status: `2026-08-07` migration-time index for remaining legacy standards and
-their migrated owner routes.
+Status: migration-time index for the standards that have not yet moved to a
+content owner.
 
-This index routes the standardized modeling baseline the project intends to use
-going forward. Joint common-core authority has moved to `docs/domains/joint/`;
-the remaining subtrees here are migration-time sources. Its job is not to
-restate every active implementation task.
-Its job is to tell contributors which concepts belong to the joint/common core,
-which belong to service profiles, which belong to domain specializations, which
-cross-domain runtime/bridge/foundation constraints every layer must honor, and
-how the current code/runtime should align with that split.
+`docs/standards/` is not a target ownership root. Existing documents listed
+below retain their current authority until their separate migration slices
+land, but no new document may be created under this legacy root. Stable rules
+must be written under the applicable owner's `standards/` surface.
 
-This is a migration-time legacy root for domain and modeling standards. New
-documentation, automation, dependency, and release governance belongs under
-the relevant [engineering owner](../engineering/README.md), not in a recreated
-`governance/` subtree here.
+## Migrated Owner Routes
 
-## Purpose
+| Content | Current owner route | Status |
+| --- | --- | --- |
+| Joint common core | [Joint owner](../domains/joint/README.md) | migrated |
+| Service profiles | [Service-profile owner](../domains/joint/service_profiles/README.md) | migrated |
+| Air specialization | [Air owner](../domains/air/README.md) | migrated |
+| Ground specialization | [Ground owner](../domains/ground/README.md) | migrated |
+| Documentation governance | [Documentation engineering](../engineering/documentation/README.md) | migrated |
+| Automation governance | [Automation engineering](../engineering/automation/README.md) | migrated |
+| Release and dependency governance | [Release engineering](../engineering/release/README.md) | migrated |
 
-The maintained standards tree exists to keep three things from drifting apart:
+These owner-local documents, not this legacy directory, define the current
+route for migrated content.
 
-- real-world public doctrine and reference material
-- the repository's current runtime and test contracts
-- active task planning under `docs/task/`
+## Remaining Legacy Sources
 
-Within domain and modeling semantics, this migration-time index and the
-owner-local standards it routes to form the current ownership map. Task plans
-may describe current implementation waves, but they should not redefine which
-layer owns
-`authority_scope`, `task_group_id`, `runway_slot_code`, or `warfare_role_code`.
-Implementation maturity in a task area is useful status context, but it is not
-the standard ownership hierarchy.
+| Legacy subtree | Maintained purpose | Target disposition |
+| --- | --- | --- |
+| [`naval/`](naval/README.md) | Naval specialization standards and reference data | `docs/domains/naval/` |
+| [`model/`](model/README.md) | Policy/model execution architecture | `docs/learning/` |
+| [`foundation/`](foundation/conventions.md) | Mixed architecture, system-realism, and research-source rules | split among `docs/architecture/`, `docs/systems/`, and `docs/research/` |
+| [`bridge/`](bridge/runtime_workflow_and_contract_baseline.md) | Runtime/workflow contracts and scenario guidance | split between `docs/architecture/` and `docs/operations/` |
+| [`overview/`](overview/document_alignment_map.md) | Documentation alignment reference | `docs/engineering/documentation/reference/` |
+| [`planning/`](planning/modularization_plan.md) | Draft modularization issue with current `src/*/domains` layout notes | `docs/architecture/work/issues/` after factual refresh |
 
-## Tree Structure
+The target column is a migration decision, not evidence that the target file
+already exists. `foundation/` and `bridge/` contain mixed owners and must be
+split; moving either directory wholesale would recreate the current taxonomy
+problem.
 
-Since `2026-03-23`, the standards documentation is no longer organized around
-an "air first, generalize later" line. Its distributed ownership spine now
-follows:
+## Routing Rules
 
-1. migrated `docs/domains/joint/`
-2. legacy `services/`
-3. legacy `air/`
-4. legacy `naval/`
-5. legacy `ground/`
-6. legacy `model/`
+1. Determine the content owner before moving or substantially rewriting a
+   legacy source.
+2. Preserve document kind and lifecycle. A draft planning supplement does not
+   become a standard merely because it moves below an owner.
+3. Update every non-archive consumer in the same slice. Existing archive files
+   remain frozen and outside the default verdict surface.
+4. Do not add documents or subdirectories under `docs/standards/`.
+5. Remove this index only after no maintained source remains below the legacy
+   root and every current entry point routes directly to an owner.
 
-This spine is read together with the cross-domain standards under `foundation/`
-and `bridge/`, including runtime workflow and contract baselines. Those
-documents constrain every domain; they do not form a separate service or
-platform stack.
+## Relationship To Work Documents
 
-The `model/` layer is cross-domain. It owns model/policy architecture vocabulary
-for reinforcement-learning components, auxiliary heads, loss ownership, runtime
-action adapters, and diagnostics. It does not own service or domain semantics.
+Legacy [plans](../plan/README.md) and [tasks](../task/README.md) may record
+implementation state, evidence, or unresolved work. They must cite the relevant
+owner standard and cannot redefine its stable vocabulary. When a stable
+contract emerges from a task, promote it to the owner's `standards/` surface;
+do not copy it back into this directory.
 
-The maintained tree therefore reflects a deliberate modeling split:
+## Governance
 
-- `docs/domains/joint/` defines common relationships, authority, tasking, reporting, and
-  workflow seams that remain valid across services.
-- `services/` explains how those common objects map onto the Air Force, Army,
-  Navy, and Marine Corps.
-- `air/` defines air-platform specialization such as sortie phases, runway
-  recovery, takeoff procedures, and air-specific mission observation semantics.
-- `naval/` defines naval specialization such as task-group semantics, station,
-  screen, support, recovery, and maritime command-role extensions.
-- `ground/` defines ground specialization such as platoon-centered tasking,
-  move/occupy/support semantics, terrain-masked information assumptions, and
-  land command/support extensions.
-- `model/` defines policy/model architecture boundaries that can be reused by
-  air, naval, ground, cooperative, and world-model work without promoting any
-  single domain's task status into a model standard.
-
-Third-domain navigation must route through both layers: `services/army.md`
-owns Army service-profile interpretation, while `ground/` owns maintained
-ground specialization semantics. The aliases `army` and `land` normalize to
-the maintained `ground` specialization and do not create a separate `army`
-runtime stack.
-
-## Ownership Hierarchy
-
-Use this hierarchy when deciding where a stable concept belongs:
-
-1. `foundation/` and runtime/bridge constraints define cross-domain rules:
-   coordinate and time conventions, realism gates, public-source admission,
-   scenario/runtime workflow boundaries, DTO alignment, and current testable
-   contracts. They constrain every service and specialization.
-2. `docs/domains/joint/` owns shared semantic objects such as command relationships,
-   authority scopes, task/report identifiers, support relationships, and other
-   names that must mean the same thing across services.
-3. `services/` owns service-profile interpretation: how the Air Force, Army,
-   Navy, and Marine Corps read the shared objects, which echelons or unit
-   forms are admissible, and where service-specific terminology stops before
-   becoming domain mechanics.
-4. `air/`, `naval/`, and `ground/` own domain specialization. They can define
-   platform, mission, environment, and execution semantics that should not be
-   promoted into the common core just because one domain implemented them first.
-5. `model/` owns cross-domain model/policy architecture vocabulary: executable
-   branches, auxiliary heads, action adapters, loss ownership, rollout labels,
-   and diagnostic surfaces.
-
-This is an ownership hierarchy, not a maturity ladder. A mature air-combat or
-flight-dynamics implementation does not make air concepts project-wide common
-core. An early naval or ground bootstrap can still establish the authoritative
-owner for its service/profile and specialization concepts. Missing or partial
-runtime support should be tracked as implementation work, not as a lower
-standard layer.
-
-## Recommended Reading Order
-
-For new work, read in this order:
-
-1. [Joint Standards Overview](../domains/joint/README.md)
-2. [Joint Command and Modeling Baseline](../domains/joint/standards/command_and_modeling_baseline.md)
-3. [Joint Command-Link and Reporting Baseline](../domains/joint/standards/command_link_and_reporting_baseline.md)
-4. [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
-5. [Gradient Realism Principles](foundation/gradient_realism_principles.md)
-6. [Public Data Source Admission Standard](foundation/public_data_source_admission.md)
-7. [Service Profile Overview](services/README.md)
-8. [USAF Profile](services/air_force.md)
-9. [US Army Profile](services/army.md)
-10. [US Navy Profile](services/navy.md)
-11. [Document Alignment Map](overview/document_alignment_map.md)
-12. [Scenario Configuration Guide](bridge/scenario_guide.md)
-13. [Air Platform Specialization Overview](air/README.md)
-14. [Naval Standards Overview](naval/README.md)
-15. [Ground Standards Overview](ground/README.md)
-16. [Model Architecture Standards Overview](model/README.md)
-
-## Relationship to Active Task Plans
-
-The current task tree under `docs/task/` contains active or recently active
-execution workstreams for flight dynamics, air combat, common air/naval splits,
-naval realism, ground bootstrap, simulation architecture, runtime/performance,
-model work, and cross-cutting issue tracking.
-
-That task-tree layout is useful for execution, backlog ownership, and maturity
-tracking, but it is not the ownership map for the standardized model. A task
-area may be more implemented, less implemented, archived, or newly bootstrapped
-without changing the standards layer that owns its stable concepts. In
-particular:
-
-- `flight_dynamics/flight`, `sensor_situation`, `weapon_guidance`, and
-  `air_combat` mostly exercise implementation realism and air specialization;
-  they do not make air the default common core.
-- `flight_dynamics/c2_command_chain`, `simulation_architecture`, and
-  cross-cutting runtime/performance work often produce contracts that must be
-  routed to the relevant owner-local standards. Joint common-core contracts go
-  to `docs/domains/joint/standards/`; existing `foundation/` and `bridge/`
-  documents remain legacy sources until their separate classification slices.
-- `common_air_naval` and naval task plans contain concepts split across shared
-  semantics, `services/navy.md`, and `naval/`.
-- `ground` task plans contain concepts split across shared semantics,
-  `services/army.md`, and `ground/`; the `army` and `land` aliases route
-  through that split rather than through a new runtime stack.
-- model, training, evaluation, and issue-board tasks may depend on standards
-  contracts, but they should cite or pressure the relevant standard owner
-  instead of defining a parallel hierarchy. Model-architecture vocabulary belongs
-  in `model/`.
-- the relevant owner-local standards surface should absorb stable shared
-  contracts from task documents instead of mirroring the task folder layout or
-  the current rollout maturity of each domain.
-
-If a task document and an applicable maintained standard disagree on ownership,
-the standard belonging to that content owner wins for naming and layering.
-
-## Research Baseline
-
-This standards slice uses only official or officially hosted public material as
-its real-world baseline, plus repository-internal code/tests for current
-contract alignment.
-
-Current key external references include:
-
-- [Joint Chiefs doctrine publications](https://www.jcs.mil/Doctrine/Service-Publications/)
-- [CJCSM 3150.13C, Joint Reporting Structure](https://www.jcs.mil/Portals/36/Documents/Library/Manuals/m315013.pdf)
-- [AFDP 3-0.1, Command and Control](https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-0_1/AFDP3-0.1CommandandControl.pdf)
-- [U.S. 7th Fleet, CTF 71 establishment](https://www.c7f.navy.mil/Media/News/Display/Article/2641477/ctf-71-establishment-enhances-readiness-in-7th-fleet/)
-- [TTGP Warfare Commanders Conference I](https://www.ttgp.navy.mil/OFRP-Syllabus/Warfare-Commanders-Conference-I/)
-- [NAVIFOR, IW Has a Seat at the Table](https://www.navifor.usff.navy.mil/Press-Room/News-Stories/Article/2395110/iw-has-a-seat-at-the-table/)
-- [MCDP 1-0](https://www.marines.mil/News/Publications/MCPEL/Electronic-Library-Display/Article/1323621/mcdp-1-0-w-ch-1-3/)
-
-Current key repository references include:
-
-- [docs/task/README.md](../task/README.md)
-- [docs/task/flight_dynamics/README.md](../task/flight_dynamics/README.md)
-- [docs/task/air_combat/README.md](../task/air_combat/README.md)
-- [docs/task/naval/README.md](../task/naval/README.md)
-- [docs/task/ground/README.md](../task/ground/README.md)
-- [docs/task/simulation_architecture/README.md](../task/simulation_architecture/README.md)
-- [docs/standards/model/README.md](model/README.md)
-- [docs/task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md)
-- [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
-- [src/core/mission/README.md](../../src/core/mission/README.md)
-- [tests/runtime/README.md](../../tests/runtime/README.md)
-
-## Status Categories
-
-The maintained standards tree uses three status categories:
-
-- `Authoritative`
-  - current primary standard for maintained work
-- `Specialization`
-  - platform- or domain-specific supplement
-- `Archived`
-  - historical path retained for reference only
-
-These categories describe documentation authority and specialization ownership.
-They do not claim that every owned concept is equally implemented in runtime,
-tests, scenarios, models, or UI surfaces.
-
-Current status mapping:
-
-- `foundation/*.md`: `Authoritative foundation`
-- `docs/domains/joint/standards/*.md`: `Authoritative`
-- `services/*.md`: `Authoritative`
-- `runtime_workflow_and_contract_baseline.md`: `Authoritative`
-- `scenario_guide.md`: `Authoritative bridge`
-- `air/*.md`: `Specialization`
-- `naval/*.md`: `Specialization`
-- `ground/*.md`: `Specialization`
-- `model/*.md`: `Authoritative model architecture`
-- `docs/Archive/**`: `Archived`
-- `docs/task/flight_dynamics/archive/**`: task-history archive, not an active standard source
-
-Additional maintained supplements:
-
-- [air/kill_chain_expectation_envelope.md](air/kill_chain_expectation_envelope.md)
-  - active planning supplement for air-to-air kill-chain expectation-envelope
-    review labels; not a current runtime contract or calibration authority
-- [naval/ship_unit_references.md](naval/ship_unit_references.md)
-  - reference-baseline supplement for first-batch naval units and public-source
-    traceability
-- [naval/obs.md](naval/obs.md)
-  - mission-observation contract for the maintained naval screen/station mode
-- [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
-  - G0 baseline for the first ground tasking vocabulary and architecture
-    constraints
-- [model/policy_execution_architecture.md](model/policy_execution_architecture.md)
-  - cross-domain policy execution, auxiliary-head, loss, reward, adapter, and
-    probe ownership baseline
-- [modularization_plan.md](planning/modularization_plan.md)
-  - active planning supplement for future codebase structure, with current
-    `src/*/domains` layout notes; not a current runtime contract
-
-## Maintained Rules
-
-- English `.md` files are canonical. Chinese `.zh.md` files are companions.
-- Maintained canonical docs should not keep machine-translation draft markers.
-- New Joint common-core contracts should land in
-  `docs/domains/joint/standards/`. New cross-domain runtime or workflow
-  contracts should use the owner-local `docs/architecture/` surface. The legacy
-  `bridge/` subtree maintains its existing authority until its separate
-  migration; it must not receive new documents.
-- Service-specific or platform-specific terms must not be promoted into the
-  common core just because the current implementation started in one domain.
-- Standards changes that register, refresh, hold, or retire implementation
-  contracts must follow
-  [Standards Maintenance Policy](../engineering/documentation/standards/standards_maintenance_policy.md).
-- Documentation kinds, lifecycle states, README boundaries, evidence packs,
-  generated output, config indexes, links, and archive transitions must follow
-  the [Document Lifecycle Policy](../engineering/documentation/standards/document_lifecycle_policy.md).
-- Repository-wide code and documentation consolidation is sequenced through the
-  [Repository Consolidation Plan](../plan/repository_consolidation/README.md).
-- When work is split across subagents or workers, follow
-  [Subagent Usage Policy](../engineering/automation/standards/subagent_usage_policy.md).
-- When a simulation-architecture WP is implementation-complete but still needs
-  publication cleanup, use
-  [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.md).
-
-## Related Documents
-
-- [Bilingual Documentation Policy](../engineering/documentation/standards/bilingual_documentation_policy.md)
-- [Bilingual Document Clusters](../engineering/documentation/reference/bilingual_document_clusters.md)
-- [Document Lifecycle Policy](../engineering/documentation/standards/document_lifecycle_policy.md)
 - [Standards Maintenance Policy](../engineering/documentation/standards/standards_maintenance_policy.md)
-- [Release And Dependency Policy](../engineering/release/standards/release_and_dependency_policy.md)
-- [Subagent Usage Policy](../engineering/automation/standards/subagent_usage_policy.md)
-- [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.md)
+- [Document Lifecycle Policy](../engineering/documentation/standards/document_lifecycle_policy.md)
+- [Bilingual Documentation Policy](../engineering/documentation/standards/bilingual_documentation_policy.md)
+- [Documentation Information Architecture](../project/documentation_architecture.md)
 - [Document Alignment Map](overview/document_alignment_map.md)
-- [Simulation Conventions](foundation/conventions.md)
-- [Gradient Realism Principles](foundation/gradient_realism_principles.md)
-- [Public Data Source Admission Standard](foundation/public_data_source_admission.md)
-- [Scenario Configuration Guide](bridge/scenario_guide.md)
-- [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
-- [Modularization Plan](planning/modularization_plan.md)
-- [Repository Consolidation Plan](../plan/repository_consolidation/README.md)

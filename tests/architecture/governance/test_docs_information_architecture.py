@@ -103,6 +103,71 @@ def test_legacy_joint_standards_have_moved_to_the_domain_owner() -> None:
     assert required in tracked
 
 
+def test_air_ground_and_service_profile_standards_are_owner_local() -> None:
+  tracked = _tracked_docs_paths()
+
+  for legacy_prefix in (
+    "docs/standards/air/",
+    "docs/standards/ground/",
+    "docs/standards/services/",
+  ):
+    assert not any(path.startswith(legacy_prefix) for path in tracked)
+
+  for required in (
+    "docs/domains/air/README.md",
+    "docs/domains/air/README.zh.md",
+    "docs/domains/air/standards/mission_command_and_tasking_contract.md",
+    "docs/domains/air/standards/mission_command_and_tasking_contract.zh.md",
+    "docs/domains/air/standards/pilot_action_contract.md",
+    "docs/domains/air/standards/pilot_action_contract.zh.md",
+    "docs/domains/air/standards/pilot_observation_contract.md",
+    "docs/domains/air/standards/pilot_observation_contract.zh.md",
+    "docs/domains/air/standards/pilot_reporting_contract.md",
+    "docs/domains/air/standards/pilot_reporting_contract.zh.md",
+    "docs/domains/air/work/issues/kill_chain_expectation_envelope.md",
+    "docs/domains/air/work/issues/kill_chain_expectation_envelope.zh.md",
+    "docs/domains/ground/README.md",
+    "docs/domains/ground/README.zh.md",
+    "docs/domains/ground/standards/minimal_task_structure.md",
+    "docs/domains/ground/standards/minimal_task_structure.zh.md",
+    "docs/domains/ground/standards/specialization_baseline.md",
+    "docs/domains/ground/standards/specialization_baseline.zh.md",
+    "docs/domains/joint/service_profiles/README.md",
+    "docs/domains/joint/service_profiles/README.zh.md",
+    "docs/domains/joint/service_profiles/standards/air_force_profile.md",
+    "docs/domains/joint/service_profiles/standards/air_force_profile.zh.md",
+    "docs/domains/joint/service_profiles/standards/army_profile.md",
+    "docs/domains/joint/service_profiles/standards/army_profile.zh.md",
+    "docs/domains/joint/service_profiles/standards/marine_corps_profile.md",
+    "docs/domains/joint/service_profiles/standards/marine_corps_profile.zh.md",
+    "docs/domains/joint/service_profiles/standards/navy_profile.md",
+    "docs/domains/joint/service_profiles/standards/navy_profile.zh.md",
+  ):
+    assert required in tracked
+
+
+def test_owner_local_domain_standards_declare_minimum_metadata() -> None:
+  governed = [
+    path
+    for path in _tracked_docs_paths()
+    if path.endswith(".md")
+    and path.startswith("docs/domains/")
+    and "/standards/" in path
+  ]
+
+  assert governed
+  for relative in governed:
+    text = (REPO_ROOT / relative).read_text(encoding="utf-8")
+    for field in (
+      "Document kind:",
+      "Lifecycle:",
+      "Canonical:",
+      "Owner:",
+      "Last verified:",
+    ):
+      assert field in text, f"{relative} is missing {field}"
+
+
 def test_owner_local_work_and_reviews_declare_minimum_metadata() -> None:
   governed = [
     path

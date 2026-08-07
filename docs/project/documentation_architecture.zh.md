@@ -9,7 +9,7 @@ Document kind: `plan`
 Lifecycle: `maintained`
 Canonical: `docs/project/documentation_architecture.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 ## 目标
 
@@ -55,8 +55,10 @@ standard、reference 或 README；其余任务包归档，不得永久保持 act
   表面，将计划和评审路由到内容 owner；既有 `evaluation/archive/` 保持冻结且不修改。
 - 第三阶段（2026-08-07 启动）：按内容所有权拆分 `standards`、`plan`、`task`。
   首个切片将文档、自动化、依赖与发布治理迁入 `engineering/`；第二个切片将 Joint
-  common-core README 与标准迁入 `domains/joint/`。所有剩余旧标准以及 plan/task 树
-  留给后续 owner 切片。不得把旧树整体移动成新的全局桶。
+  common-core README 与标准迁入 `domains/joint/`；第三个并行波次将 service profiles、
+  Air 标准和 Ground 标准迁入 owner-local 表面。Naval、model、跨域、overview 与
+  planning legacy 来源以及 plan/task 树留给后续 owner 切片。不得把旧树整体移动成
+  新的全局桶。
 - 第四阶段：切换全部维护入口并禁止继续写入旧根；只有旧根不再含维护源时才删除。
 
 ## 门禁

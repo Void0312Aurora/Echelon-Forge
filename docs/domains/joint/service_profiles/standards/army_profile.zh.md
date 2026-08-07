@@ -1,8 +1,14 @@
 # 美国陆军画像
 
 Language:
-- English canonical: `army.md`
-- Chinese companion: [army.zh.md](army.zh.md)
+- English canonical: [army_profile.md](army_profile.md)
+- Chinese companion: `army_profile.zh.md`
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/service_profiles/standards/army_profile.md`
+Owner: `domains/joint/service-profiles`
+Last verified: `2026-08-08`
 
 状态：`2026-06-01`，Army 军种画像层权威版本。
 
@@ -11,6 +17,9 @@ Language:
 
 它刻意比完整陆军条令摘要更窄，目标是防止 air-first 的 runtime 假设继续渗入
 当前或未来的陆战建模。
+
+本画像负责解释 Joint common core 在陆军组织和指挥关系中的含义，不拥有地面领域
+执行合同。
 
 ## 现实基础
 
@@ -54,7 +63,7 @@ common 层应保留跨军种共享的骨架：
 
 这些字段是可移植的，不应被重命名成空军专用或舰队专用术语。
 
-### `services/army`
+### 陆军 Service-profile 解释
 
 陆军画像层负责给这套骨架赋予陆军口径：
 
@@ -77,8 +86,8 @@ common 层应保留跨军种共享的骨架：
 - 领域专属 observation、action、reporting 扩展
 
 当前 ground 线已有 tasking/schema 证据，但 movement、terrain、sensing、fires、
-damage 与 combat 行为仍保持 held。因此，`services/army` 继续扮演边界文档，
-而不是假想 runtime API。
+damage 与 combat 行为仍保持 held。因此，陆军画像继续扮演边界标准，而不是
+假想 runtime API。
 
 ## Runtime 边界
 
@@ -149,21 +158,23 @@ battalion 级控制仍可存在于场景与 tasking 图景里，但真正的可�
 当前仓库已有早期 ground tasking/profile/schema 证据，但还没有维护中的完整
 Army 执行层或 ground-combat runtime。因此，陆军画像仍主要是标准化护栏：
 
-- 已接受的 ground tasking 状态流当前止于
-  `TaskOrder -> LeaderIntent -> PilotReport`
-- formal ground command delivery 经由 `MissionCommand` 或更窄 command packet
-  的路径，仍属于未来 ground-specialization release
+- 已接受的 ground tasking/status 流覆盖
+  `TaskOrderGround -> LeaderIntentGround -> PilotReportGround`
+- ground profile 会把 G0/G1 static task metadata 投影到
+  `MissionCommandGround`；这是 command authoring 与 command-chain sync，
+  不是已经释放的动态 command delivery
+- formal ground command delivery 仍属于未来 ground-owner release
 - common 字段应持续保持对陆战可移植
 - air-specific 的命令细节不应被提升为 Army 基线
 
-也正因如此，在 ground runtime 行为仍被后续任务 gate 持有时，`services/army`
-仍是边界文档。
+也正因如此，在更广泛的 ground runtime 行为仍被后续任务 gate 持有时，陆军画像
+仍是边界标准。
 
 ## 相关文档
 
-- [军种画像总览](README.md)
-- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
-- [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-- [仿真约定](../foundation/conventions.md)
-- [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
-- [Ground 标准总览](../ground/README.zh.md)
+- [军种画像总览](../README.zh.md)
+- [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)
+- [仿真约定](../../../../standards/foundation/conventions.zh.md)
+- [运行时工作流与合同基线](../../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)
+- [Ground 标准总览](../../../ground/README.zh.md)

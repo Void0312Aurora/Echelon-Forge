@@ -11,7 +11,7 @@ Language:
 - [标准概览](../README.md)
 - [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
-- [军种画像总览](../services/README.md)
+- [军种画像总览](../../domains/joint/service_profiles/README.md)
 
 这页文档的职责，是回答“后续如果继续拆分代码库，应怎样模块化”，而不是描述当前 runtime 已经如何稳定工作。
 
