@@ -13,6 +13,7 @@
     "implementation_and_test_roots": [
       "src/runtime/facade/internal/cuda_resident",
       "src/runtime/contracts/cuda_resident*",
+      "src/runtime/contracts/parity_budget*",
       "src/tools/experimental/cuda_resident",
       "src/tests/test_cuda_resident*",
       "tests/architecture/runtime_profiles/test_cuda_resident*",
@@ -128,6 +129,31 @@
       "path": "src/runtime/contracts/cuda_resident_parity_release_contract.h",
       "role": "CR2-4b selected payload field partition and release policy",
       "observed_lines": 276
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_contracts.h",
+      "role": "parity budget compatibility include surface",
+      "observed_lines": 6
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_types.h",
+      "role": "parity budget constants, value types, and common helpers",
+      "observed_lines": 221
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_selected_slice.h",
+      "role": "resident selected-slice fields, barriers, and contract validation",
+      "observed_lines": 572
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_profiles.h",
+      "role": "profile-owned parity budget record definitions",
+      "observed_lines": 521
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_registry.h",
+      "role": "parity budget registry lookup and validation",
+      "observed_lines": 115
     },
     {
       "path": "src/runtime/contracts/cuda_resident_full_window_contract.h",

@@ -75,5 +75,8 @@ trace signature rather than relabeling historical evidence.
 ## Size Boundary
 
 Every changed implementation module remains below 1000 physical lines. The
-oversized parity-budget contract is outside this slice and must be split before
-its remaining internal-code identifiers are changed.
+former 1399-line parity-budget contract is now a 6-line compatibility include
+surface backed by types (221 lines), selected-slice rules (572), profile-owned
+records (521), and registry operations (115). The split also replaces the last
+runtime-facing review-batch label in that contract with the semantic
+`selected resident-state slice` description.

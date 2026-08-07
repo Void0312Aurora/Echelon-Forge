@@ -101,6 +101,12 @@ The replay-test split removes its former watch item without changing behavior:
 `test_cuda_resident_replay_support.h` (58); the assertion/test owner is now
 `test_cuda_resident_replay.cpp` (139). No current CR2 watch item remains.
 
+The parity-budget contract now keeps its existing aggregate include while
+splitting ownership into `parity_budget_types.h` (221 lines),
+`parity_budget_selected_slice.h` (572), `parity_budget_profiles.h` (521), and
+`parity_budget_registry.h` (115). The aggregate is 6 lines, and every resulting
+header remains below the 600-line header soft target.
+
 CR2-4b keeps its semantic owners below the soft targets: parity release
 contract 244 lines, full-window contract/runner 118/257, opt-in probe 337,
 C++ conformance test 417, comparator 494, and architecture guard 239. The

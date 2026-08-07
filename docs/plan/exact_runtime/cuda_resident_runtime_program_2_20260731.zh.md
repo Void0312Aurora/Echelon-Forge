@@ -87,6 +87,11 @@ replay test 的拆分在不改变行为的前提下移除原 watch item：
 `test_cuda_resident_replay_support.h` 58 行，断言/test owner
 `test_cuda_resident_replay.cpp` 139 行。当前不再有 CR2 watch item。
 
+parity-budget 合同保留原聚合 include，同时按责任拆为 `parity_budget_types.h`（221 行）、
+`parity_budget_selected_slice.h`（572 行）、`parity_budget_profiles.h`（521 行）和
+`parity_budget_registry.h`（115 行）。聚合头为 6 行，拆分后的全部 header 均低于
+600 行 header soft target。
+
 CR2-4b 的语义 owner 也都低于 soft target：parity release contract 244 行、
 full-window contract/runner 118/257 行、opt-in probe 337 行、C++ conformance
 test 417 行、comparator 494 行、architecture guard 239 行。comparator 已纳入

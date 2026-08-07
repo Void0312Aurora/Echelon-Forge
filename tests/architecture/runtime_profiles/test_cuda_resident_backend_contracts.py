@@ -4,7 +4,16 @@ from tests.architecture.helpers import REPO_ROOT
 
 
 ADMISSION_HEADER = REPO_ROOT / "src/runtime/contracts/cuda_resident_backend_admission.h"
-PARITY_HEADER = REPO_ROOT / "src/runtime/contracts/parity_budget_contracts.h"
+PARITY_HEADERS = tuple(
+    REPO_ROOT / f"src/runtime/contracts/{name}"
+    for name in (
+        "parity_budget_contracts.h",
+        "parity_budget_types.h",
+        "parity_budget_selected_slice.h",
+        "parity_budget_profiles.h",
+        "parity_budget_registry.h",
+    )
+)
 SELECTED_SLICE_HEADER = REPO_ROOT / "src/runtime/contracts/cuda_resident_selected_slice_contract.h"
 RUNTIME_CONFIG_FIELDS = REPO_ROOT / "src/runtime/facade/detail/runtime_batch_config.inc"
 FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
@@ -48,7 +57,7 @@ def test_candidate_manifest_is_bounded_and_backend_neutral() -> None:
 
 
 def test_selected_slice_budget_declares_typed_surfaces_and_all_barriers() -> None:
-    text = PARITY_HEADER.read_text(encoding="utf-8")
+    text = "\n".join(path.read_text(encoding="utf-8") for path in PARITY_HEADERS)
     selected_slice_text = SELECTED_SLICE_HEADER.read_text(encoding="utf-8")
 
     for barrier in (
@@ -66,7 +75,7 @@ def test_selected_slice_budget_declares_typed_surfaces_and_all_barriers() -> Non
     assert ".relative_tolerance = 1.0e-12" in text
     assert ".absolute_tolerance = 1.0e-8" in text
     assert ".relative_tolerance = 1.0e-10" in text
-    assert '"disabled for the RB2 selected slice' in text
+    assert '"disabled for the selected resident-state slice' in text
     assert ".enabled = false" in text
     assert '"agent_observation_identity"' in text
     assert '"agent_observation_numeric"' in text
