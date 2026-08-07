@@ -102,7 +102,7 @@
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu",
       "role": "private_phase_window_orchestration",
-      "observed_lines": 69
+      "observed_lines": 72
     },
     {
       "path": "src/tests/test_cuda_resident_replay.cpp",

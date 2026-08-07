@@ -32,7 +32,7 @@ def test_rb5_phase_a_keeps_raw_and_prepared_controls_as_distinct_device_soa() ->
     assert "const double raw_roll = control_doubles[world_capacity + world_index]" in device
     assert "phase_a_ready = false" in store
     assert "phase_a_ready = true" in store
-    assert "requires a successful Phase A stage publish" in store
+    assert "requires a successful control-preparation publish" in store
     assert ".active = true" in BACKEND_SOURCE.read_text(encoding="utf-8")
 
 

@@ -110,7 +110,7 @@ def test_rb4_state_layout_is_device_owned_soa_with_narrow_barrier_kernel() -> No
     assert "CudaWorldStateRecord" not in device_source
     assert "__global__ void apply_barrier_kernel" in device_source
     assert "--ptxas-options=-v" in cmake
-    assert "partial_sync_commit is disabled for the RB2 selected slice" in (
+    assert "partial_sync_commit is disabled for the selected CUDA-resident slice" in (
         CUDA_RESIDENT_DIR / "cuda_world_store.cpp"
     ).read_text(encoding="utf-8")
     assert "required_visible_shards" in backend_source

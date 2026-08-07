@@ -63,7 +63,7 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
                           CudaWorldStoreDeviceFaultInjection *faults, std::string *error) {
     if (allocation == nullptr) {
         if (error != nullptr) {
-            *error = "CUDA Phase A stage requires an allocation";
+            *error = "CUDA control-preparation stage requires an allocation";
         }
         return false;
     }
@@ -74,7 +74,7 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
     }
     if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_state_transfer)) {
         if (error != nullptr) {
-            *error = "injected CUDA Phase A state transfer failure";
+            *error = "injected CUDA control-preparation state transfer failure";
         }
         return false;
     }
@@ -84,14 +84,14 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
                                     allocation->state_layout.slot_bytes, cudaMemcpyDeviceToDevice);
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("copy state for Phase A preparation", status);
+            *error = cuda_error_message("copy state for control preparation", status);
         }
         return false;
     }
     status = cudaMemset(allocation->barrier_status, 0, sizeof(std::uint32_t));
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("clear Phase A status", status);
+            *error = cuda_error_message("clear control-preparation status", status);
         }
         return false;
     }
@@ -113,7 +113,7 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
     }
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("run Phase A control preparation", status);
+            *error = cuda_error_message("run control preparation", status);
         }
         return false;
     }
@@ -123,8 +123,8 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
     if (status != cudaSuccess || phase_status != 0) {
         if (error != nullptr) {
             *error = status == cudaSuccess
-                         ? "CUDA Phase A control preparation overflow or non-finite state"
-                         : cuda_error_message("read Phase A status", status);
+                         ? "CUDA control preparation overflow or non-finite state"
+                         : cuda_error_message("read control-preparation status", status);
         }
         return false;
     }
@@ -140,7 +140,7 @@ bool query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources 
                                                      std::string *error) {
     if (resources == nullptr) {
         if (error != nullptr) {
-            *error = "CUDA Phase A kernel resource query requires an output";
+            *error = "CUDA control-preparation kernel resource query requires an output";
         }
         return false;
     }
@@ -159,8 +159,8 @@ bool query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources 
         &active_blocks, prepare_phase_a_controls_kernel, threads_per_block, 0);
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("cudaOccupancyMaxActiveBlocksPerMultiprocessor(Phase A)",
-                                        status);
+            *error = cuda_error_message(
+                "cudaOccupancyMaxActiveBlocksPerMultiprocessor(control preparation)", status);
         }
         return false;
     }
@@ -172,13 +172,14 @@ bool query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources 
     }
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("query CUDA Phase A occupancy properties", status);
+            *error =
+                cuda_error_message("query CUDA control-preparation occupancy properties", status);
         }
         return false;
     }
     if (properties.warpSize <= 0 || properties.maxThreadsPerMultiProcessor <= 0) {
         if (error != nullptr) {
-            *error = "CUDA device returned invalid Phase A occupancy properties";
+            *error = "CUDA device returned invalid control-preparation occupancy properties";
         }
         return false;
     }
@@ -199,6 +200,5 @@ bool query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources 
     }
     return true;
 }
-
 
 } // namespace runtime::cuda_resident::detail

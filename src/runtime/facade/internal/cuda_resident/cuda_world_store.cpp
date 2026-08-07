@@ -298,7 +298,8 @@ bool CudaWorldStore::publish_stage() {
 }
 
 bool CudaWorldStore::partial_sync_commit() {
-    impl_->diagnostics.last_error = "partial_sync_commit is disabled for the RB2 selected slice";
+    impl_->diagnostics.last_error =
+        "partial_sync_commit is disabled for the selected CUDA-resident slice";
     return false;
 }
 
@@ -312,7 +313,7 @@ bool CudaWorldStore::commit_window() {
     }
     if (!impl_->phase_a_ready) {
         impl_->diagnostics.last_error =
-            "CUDA window commit requires a successful Phase A stage publish";
+            "CUDA window commit requires a successful control-preparation publish";
         return false;
     }
     if (impl_->committed_window_epoch == std::numeric_limits<std::uint64_t>::max() ||
@@ -517,11 +518,12 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_a_kernel_res
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_a_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase A kernel resource query failed: " + error);
+        throw std::runtime_error("CUDA control-preparation kernel resource query failed: " + error);
     }
     return resources;
 #else
-    throw std::logic_error("CUDA Phase A kernel resource query requires CUDA experiments");
+    throw std::logic_error(
+        "CUDA control-preparation kernel resource query requires CUDA experiments");
 #endif
 }
 
@@ -530,11 +532,13 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_b_forces_ker
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_b_forces_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase B forces kernel resource query failed: " + error);
+        throw std::runtime_error("CUDA flight-dynamics forces kernel resource query failed: " +
+                                 error);
     }
     return resources;
 #else
-    throw std::logic_error("CUDA Phase B forces kernel resource query requires CUDA experiments");
+    throw std::logic_error(
+        "CUDA flight-dynamics forces kernel resource query requires CUDA experiments");
 #endif
 }
 
@@ -544,13 +548,13 @@ testing::CudaWorldStoreTestAccess::phase_b_aerodynamics_kernel_resources() {
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_b_aerodynamics_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase B aerodynamics kernel resource query failed: " +
-                                 error);
+        throw std::runtime_error(
+            "CUDA flight-dynamics aerodynamics kernel resource query failed: " + error);
     }
     return resources;
 #else
     throw std::logic_error(
-        "CUDA Phase B aerodynamics kernel resource query requires CUDA experiments");
+        "CUDA flight-dynamics aerodynamics kernel resource query requires CUDA experiments");
 #endif
 }
 
@@ -559,12 +563,13 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_b_integrate_
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_b_integrate_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase B integrate kernel resource query failed: " + error);
+        throw std::runtime_error("CUDA flight-dynamics integration kernel resource query failed: " +
+                                 error);
     }
     return resources;
 #else
     throw std::logic_error(
-        "CUDA Phase B integrate kernel resource query requires CUDA experiments");
+        "CUDA flight-dynamics integration kernel resource query requires CUDA experiments");
 #endif
 }
 
@@ -574,11 +579,12 @@ testing::CudaWorldStoreTestAccess::phase_d_projection_kernel_resources() {
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_d_projection_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase D projection kernel resource query failed: " + error);
+        throw std::runtime_error("CUDA observation-projection kernel resource query failed: " +
+                                 error);
     }
     return resources;
 #else
-    throw std::logic_error("CUDA Phase D resource query requires CUDA experiments");
+    throw std::logic_error("CUDA observation-projection resource query requires CUDA experiments");
 #endif
 }
 
@@ -588,11 +594,11 @@ testing::CudaWorldStoreTestAccess::phase_d_instruments_kernel_resources() {
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_d_instruments_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase D instruments resource query failed: " + error);
+        throw std::runtime_error("CUDA instrument-projection resource query failed: " + error);
     }
     return resources;
 #else
-    throw std::logic_error("CUDA Phase D instruments resource query requires CUDA experiments");
+    throw std::logic_error("CUDA instrument-projection resource query requires CUDA experiments");
 #endif
 }
 
@@ -603,11 +609,12 @@ testing::CudaWorldStoreTestAccess::phase_d_configuration_kernel_resources() {
     std::string error;
     if (!detail::query_cuda_world_store_phase_d_configuration_kernel_resources(&resources,
                                                                                &error)) {
-        throw std::runtime_error("CUDA Phase D configuration resource query failed: " + error);
+        throw std::runtime_error("CUDA observation-configuration resource query failed: " + error);
     }
     return resources;
 #else
-    throw std::logic_error("CUDA Phase D configuration resource query requires CUDA experiments");
+    throw std::logic_error(
+        "CUDA observation-configuration resource query requires CUDA experiments");
 #endif
 }
 
@@ -616,11 +623,11 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_pack_kerne
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_d_pack_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase D pack resource query failed: " + error);
+        throw std::runtime_error("CUDA observation-packing resource query failed: " + error);
     }
     return resources;
 #else
-    throw std::logic_error("CUDA Phase D pack resource query requires CUDA experiments");
+    throw std::logic_error("CUDA observation-packing resource query requires CUDA experiments");
 #endif
 }
 
@@ -629,11 +636,13 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::phase_d_consumer_k
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_phase_d_consumer_kernel_resources(&resources, &error)) {
-        throw std::runtime_error("CUDA Phase D consumer resource query failed: " + error);
+        throw std::runtime_error("CUDA device-observation consumer resource query failed: " +
+                                 error);
     }
     return resources;
 #else
-    throw std::logic_error("CUDA Phase D consumer resource query requires CUDA experiments");
+    throw std::logic_error(
+        "CUDA device-observation consumer resource query requires CUDA experiments");
 #endif
 }
 
