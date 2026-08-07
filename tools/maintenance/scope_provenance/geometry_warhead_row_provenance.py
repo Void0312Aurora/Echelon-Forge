@@ -84,7 +84,12 @@ def _input_refs(repo_root: Path) -> dict[str, tuple[Path, bool, str]]:
   )
   return {
     "subagent_usage_policy": (
-      repo_root / "docs" / "standards" / "governance" / "subagent_usage_policy.md",
+      repo_root
+      / "docs"
+      / "engineering"
+      / "automation"
+      / "standards"
+      / "subagent_usage_policy.md",
       True,
       "governance_boundary",
     ),

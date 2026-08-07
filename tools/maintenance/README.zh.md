@@ -138,18 +138,18 @@ python3 tools/maintenance/document_link_audit.py --format json
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py audit --root docs \
-  --registry docs/standards/bilingual_document_clusters.json
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json
 ```
 
-默认情况下，这个审计只检查“严格维护的双语表面”
-（入口/导航页、治理文档、manual、稳定计划权威层），而不是 `docs/`
-下每一份历史任务长文。
+默认情况下，这个审计只检查“严格维护的双语表面”：入口/导航页、owner-local
+工程标准、维护中的旧 standards、operations 指引、research 来源和稳定计划权威层，
+而不是 `docs/` 下每一份历史任务长文。
 
 如果你想有意检查更宽的共享文档树，请显式使用：
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py audit --root docs \
-  --registry docs/standards/bilingual_document_clusters.json \
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json \
   --full-tree
 ```
 
@@ -158,8 +158,8 @@ python3 tools/maintenance/translate_docs_batch.py audit --root docs \
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py clusters --root docs \
-  --registry docs/standards/bilingual_document_clusters.json --write \
-  --pair README --pair standards/governance/document_lifecycle_policy
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json --write \
+  --pair README --pair engineering/documentation/standards/document_lifecycle_policy
 ```
 
 省略 `--pair` 会重建完整登记表。只有完成整个维护面双语审阅后才能这样做，否则

@@ -1,13 +1,30 @@
 # Bilingual Document Clusters
 
 Language:
-- English canonical: `governance/bilingual_document_clusters.md`
+- English canonical: `bilingual_document_clusters.md`
 - Chinese companion: [bilingual_document_clusters.zh.md](bilingual_document_clusters.zh.md)
 
-Status: `2026-05-18` machine-readable bilingual sync registry.
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/documentation/reference/bilingual_document_clusters.md`
+Owner: `engineering/documentation-governance`
+Last verified: `2026-08-07`
+
+Status: `2026-08-07` reference for the machine-readable bilingual sync registry.
 
 This document defines the lightweight cluster record used to tell whether a
 matched `name.md` / `name.zh.md` pair is still in sync.
+
+## Verification Boundary
+
+- Canonical registry data:
+  [bilingual_document_clusters.json](bilingual_document_clusters.json)
+- Producer and auditor:
+  [tools/maintenance/translate_docs_batch.py](../../../../tools/maintenance/translate_docs_batch.py)
+- Verified scope: the strict maintained bilingual surface selected by the
+  shared documentation-scope rules as of `2026-08-07`.
+- The registry verifies path membership and baseline-relative file hashes. It
+  does not prove that two languages are semantically equivalent.
 
 Archive rule:
 
@@ -23,8 +40,10 @@ Archive rule:
 
 ## What A Cluster Records
 
-Each bilingual pair is tracked by a stable `pair_id` derived from the
-canonical English path without the `.md` suffix.
+Each bilingual pair is tracked by a `pair_id` derived from the canonical
+English path without the `.md` suffix. The identifier is stable while that
+canonical path is stable; moving the pair changes its `pair_id` and requires
+the old record to be removed and the new record to be registered together.
 
 Each record stores:
 
@@ -55,7 +74,7 @@ Hash normalization rule:
 - `missing-en`
 - `missing-zh`
 
-## Update Rule
+## Update And Reverification Triggers
 
 Whenever a translation batch lands, the touched pair records should be
 refreshed together so the registry baseline moves forward with the sync.
@@ -63,12 +82,14 @@ refreshed together so the registry baseline moves forward with the sync.
 Use repeated `clusters --write --pair <pair_id>` arguments for a bounded
 review. Unselected records, including their hashes and `last_verified` values,
 must remain unchanged. A full rewrite is reserved for a full-surface bilingual
-review.
+review. A canonical-path or registry-path migration may also require a full
+rewrite to remove obsolete identifiers, but the resulting diff must be audited
+to confirm that unrelated pair records did not drift.
 
 If one side is edited manually afterward, the audit command should show which
 peer is now stale.
 
-## Interpretation Rule
+## Limitations And Interpretation
 
 - Treat `audit` output as relative to the current registry baseline, not as a
   semantic truth oracle.
@@ -86,5 +107,7 @@ peer is now stale.
 
 ## Tooling
 
-- `tools/maintenance/translate_docs_batch.py clusters`
-- `tools/maintenance/translate_docs_batch.py audit`
+- [Cluster writer](../../../../tools/maintenance/translate_docs_batch.py):
+  `clusters`
+- [Registry auditor](../../../../tools/maintenance/translate_docs_batch.py):
+  `audit`

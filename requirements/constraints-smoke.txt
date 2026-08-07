@@ -1,14 +1,14 @@
-# Lightweight constraints for CI/smoke dependency resolution.
+# Lightweight constraints for CI smoke/lint/coverage dependency resolution.
 #
 # This is not a full lockfile. Keep this file limited to packages installed by
-# the smoke workflow and the Python build backend packages that may be needed
-# when an explicit package build/install smoke is exercised.
+# consuming smoke/lint/coverage workflows and the Python build backend packages
+# that may be needed when an explicit package build/install smoke is exercised.
 #
 # Typical use:
 #   python -m pip install --upgrade pip -c requirements/constraints-smoke.txt
 #   python -m pip install -c requirements/constraints-smoke.txt pytest numpy ruff gymnasium
 
-# Current CI smoke/lint direct installs.
+# Current CI smoke/lint/coverage direct installs.
 pytest>=7.4,<9
 coverage>=7.4,<8
 gcovr>=8,<9

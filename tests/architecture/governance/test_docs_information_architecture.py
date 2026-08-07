@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -60,6 +61,33 @@ def test_archive_only_legacy_roots_contain_archives_only() -> None:
     ]
     assert legacy_paths
     assert all(path.startswith(f"docs/{root}/archive/") for path in legacy_paths)
+
+
+def test_legacy_governance_root_has_moved_to_engineering_owners() -> None:
+  tracked = _tracked_docs_paths()
+
+  assert not any(path.startswith("docs/standards/governance/") for path in tracked)
+  assert "docs/standards/bilingual_document_clusters.json" not in tracked
+  for required in (
+    "docs/engineering/automation/standards/subagent_usage_policy.md",
+    "docs/engineering/documentation/reference/bilingual_document_clusters.json",
+    "docs/engineering/documentation/standards/document_lifecycle_policy.md",
+    "docs/engineering/release/standards/release_and_dependency_policy.md",
+  ):
+    assert required in tracked
+
+
+def test_automation_governance_uses_capability_tiers_not_versioned_model_ids() -> None:
+  automation_docs = [
+    path
+    for path in _tracked_docs_paths()
+    if path.startswith("docs/engineering/automation/") and path.endswith(".md")
+  ]
+
+  assert automation_docs
+  for relative in automation_docs:
+    text = (REPO_ROOT / relative).read_text(encoding="utf-8")
+    assert re.search(r"\bgpt-\d", text, re.IGNORECASE) is None, relative
 
 
 def test_owner_local_work_and_reviews_declare_minimum_metadata() -> None:

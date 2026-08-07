@@ -2,13 +2,28 @@
 
 语言版本：
 
-- 英文主文：[governance/bilingual_document_clusters.md](bilingual_document_clusters.md)
+- 英文主文：[bilingual_document_clusters.md](bilingual_document_clusters.md)
 - 中文辅文：`bilingual_document_clusters.zh.md`
 
-状态：`2026-05-18` 双语同步的机器可读注册表。
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/documentation/reference/bilingual_document_clusters.md`
+Owner: `engineering/documentation-governance`
+Last verified: `2026-08-07`
+
+状态：`2026-08-07`，双语同步机器可读注册表的参考说明。
 
 本文档定义一个轻量的 cluster 记录，用于判断配对的 `name.md` / `name.zh.md`
 是否仍然同步。
+
+## 核验边界
+
+- Canonical 注册表数据：
+  [bilingual_document_clusters.json](bilingual_document_clusters.json)
+- Producer 与 auditor：
+  [tools/maintenance/translate_docs_batch.py](../../../../tools/maintenance/translate_docs_batch.py)
+- 已核验范围：截至 `2026-08-07`，由共享文档范围规则选出的严格双语维护面。
+- 注册表核验路径成员关系和相对基线的文件哈希；它不能证明两种语言在语义上等价。
 
 归档规则：
 
@@ -19,8 +34,9 @@
 
 ## 簇记录内容
 
-每个双语配对使用稳定的 `pair_id` 跟踪，`pair_id` 由英文 canonical 路径去掉
-`.md` 后得到。
+每个双语配对使用由英文 canonical 路径去掉 `.md` 后得到的 `pair_id` 跟踪。
+canonical 路径稳定时，该标识符保持稳定；移动文档对会改变 `pair_id`，必须在同一
+变更中删除旧记录并登记新记录。
 
 每条记录存放：
 
@@ -43,16 +59,18 @@
 - `missing-en`
 - `missing-zh`
 
-## 更新规则
+## 更新与重新核验触发条件
 
 当一批翻译落地时，应同时刷新受影响的 pair 记录，让注册表基线跟着同步前进。
 
 有界审阅应使用可重复的 `clusters --write --pair <pair_id>` 参数。未选择记录的
-哈希和 `last_verified` 必须保持不变。全量重写只用于整个维护面的双语审阅。
+哈希和 `last_verified` 必须保持不变。全量重写通常只用于整个维护面的双语审阅。
+canonical 路径或注册表路径迁移也可能需要通过全量重写删除失效标识符，但必须审计
+结果 diff，确认无关文档对的记录没有漂移。
 
 如果之后有人手工只改了一侧，审计命令就应该能立刻指出哪一侧已经落后。
 
-## 解释规则
+## 限制与解释规则
 
 - `audit` 的结果是“相对当前注册表基线”的判断，不是语义真相本身。
 - 归档树默认不在判定面内；如果审计里出现 archive，通常意味着使用了显式包含覆盖，或者扫描规则还没刷新到最新口径。
@@ -63,5 +81,5 @@
 
 ## 工具
 
-- `tools/maintenance/translate_docs_batch.py clusters`
-- `tools/maintenance/translate_docs_batch.py audit`
+- [簇写入工具](../../../../tools/maintenance/translate_docs_batch.py)：`clusters`
+- [注册表审计工具](../../../../tools/maintenance/translate_docs_batch.py)：`audit`

@@ -78,7 +78,7 @@
     `TM01-C` 与 `TM01-D` 已完成并验证，而 `TM01-B` 的 launch bridge 已作为有
     源码锚点的 residual 记录，并交由后续架构工作负责。
 21. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
-    [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
+    [Subagent 使用规范](../../engineering/automation/standards/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
     拆写同一张规范性表格。
 22. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
@@ -686,7 +686,7 @@ vocabulary 之间缺失的桥。它不替代 `WP8`；它负责把维护中的训
 同时必须保持现有 facade 与信息状态规则不被破坏。
 
 `WP7.5` 在拆分给多个 worker 时，应使用
-[Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)。
+[Subagent 使用规范](../../engineering/automation/standards/subagent_usage_policy.zh.md)。
 
 ## WP8 SCAL Learning Face
 

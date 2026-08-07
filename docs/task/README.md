@@ -22,7 +22,7 @@ Language note:
   default unless a narrower slice is explicitly promoted into the maintained
   bilingual surface.
 - The policy lives in
-  [docs/standards/governance/bilingual_documentation_policy.md](../standards/governance/bilingual_documentation_policy.md).
+  [docs/engineering/documentation/standards/bilingual_documentation_policy.md](../engineering/documentation/standards/bilingual_documentation_policy.md).
 
 Most files here are dated snapshots of a specific analysis, freeze plan,
 taskboard, checkpoint, or convergence pass. For the latest context in an area,

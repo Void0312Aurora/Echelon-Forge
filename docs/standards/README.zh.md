@@ -5,7 +5,13 @@
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-状态：`2026-06-10`，当前维护中的标准树权威入口。
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/standards/README.md`
+Owner: `legacy/domain-and-modeling-standards`
+Last verified: `2026-08-07`
+
+状态：`2026-08-07`，维护中的旧领域与建模标准的迁移期索引。
 
 本目录用于定义项目后续采用的标准化建模基线。它的职责不是重复每一份活跃任务文档，而是回答：
 
@@ -15,6 +21,10 @@
 - 哪些跨域 runtime / bridge / foundation 约束必须被所有层遵守
 - 当前代码、测试与任务计划应如何对齐到这套分层
 
+这是领域与建模标准在迁移期保留的旧根。新的文档、自动化、依赖与发布治理应进入
+对应的[工程 owner](../engineering/README.zh.md)，不得在此重新建立 `governance/`
+子树。
+
 ## 目录定位
 
 维护中的标准树要同时约束三件事，避免它们彼此漂移：
@@ -23,7 +33,8 @@
 - 仓库当前 runtime 与测试合同
 - `docs/task/` 下的活跃任务规划
 
-因此，标准树是 ownership map，不是任务板。任务计划可以描述当前执行波次，但不应重新定义
+在领域与建模语义范围内，本树是当前 ownership map，而不是任务板。任务计划可以描述
+当前执行波次，但不应重新定义
 `authority_scope`、`task_group_id`、`runway_slot_code` 或 `warfare_role_code`
 归谁所有。
 任务区的实现成熟度是有用的状态信息，但它不是标准所有权层级。
@@ -128,7 +139,8 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - 标准树应吸收任务文档里已经稳定下来的共享合同，而不是照搬任务目录结构，或照搬各领域当前
   rollout 成熟度。
 
-若任务文档和标准文档在“概念归属”上冲突，以标准树为准。
+若任务文档和适用的维护 standard 在“概念归属”上冲突，以该内容 owner 的 standard
+为准。
 
 ## 调研与依据
 
@@ -214,26 +226,26 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - 新的共享合同应先落在 `joint/` 或 `bridge/` 下的 workflow bridge 文档，再扩散到任务计划。
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
 - 标准变更若登记、刷新、保持 held 或退役实现合同，必须遵循
-  [标准维护政策](governance/standards_maintenance_policy.zh.md)。
+  [标准维护政策](../engineering/documentation/standards/standards_maintenance_policy.zh.md)。
 - 文档类型、生命周期、README 边界、evidence 包、generated 输出、config 索引、
   链接和 archive 转换必须遵循
-  [文档生命周期规范](governance/document_lifecycle_policy.zh.md)。
+  [文档生命周期规范](../engineering/documentation/standards/document_lifecycle_policy.zh.md)。
 - 全仓代码与文档精简按照
   [仓库精简与整合路线图](../plan/repository_consolidation/README.zh.md)分轮执行。
 - 当工作被拆分给多个 subagent 或 worker 时，应遵循
-  [Subagent 使用规范](governance/subagent_usage_policy.zh.md)。
+  [Subagent 使用规范](../engineering/automation/standards/subagent_usage_policy.zh.md)。
 - 当 simulation-architecture WP 已完成实现但仍需要发布收口时，使用
-  [WP Closure Lane Policy](governance/wp_closure_lane_policy.zh.md)。
+  [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.zh.md)。
 
 ## 相关文档
 
-- [双语文档政策](governance/bilingual_documentation_policy.zh.md)
-- [双语文档簇](governance/bilingual_document_clusters.zh.md)
-- [文档生命周期规范](governance/document_lifecycle_policy.zh.md)
-- [标准维护政策](governance/standards_maintenance_policy.zh.md)
-- [发布与依赖政策](governance/release_and_dependency_policy.zh.md)
-- [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
-- [WP Closure Lane Policy](governance/wp_closure_lane_policy.zh.md)
+- [双语文档政策](../engineering/documentation/standards/bilingual_documentation_policy.zh.md)
+- [双语文档簇](../engineering/documentation/reference/bilingual_document_clusters.zh.md)
+- [文档生命周期规范](../engineering/documentation/standards/document_lifecycle_policy.zh.md)
+- [标准维护政策](../engineering/documentation/standards/standards_maintenance_policy.zh.md)
+- [发布与依赖政策](../engineering/release/standards/release_and_dependency_policy.zh.md)
+- [Subagent 使用规范](../engineering/automation/standards/subagent_usage_policy.zh.md)
+- [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.zh.md)
 - [文档对齐映射](overview/document_alignment_map.zh.md)
 - [仿真约定](foundation/conventions.zh.md)
 - [梯度真实性原则](foundation/gradient_realism_principles.zh.md)

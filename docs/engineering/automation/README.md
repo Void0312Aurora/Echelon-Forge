@@ -11,7 +11,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/automation/README.md`
 Owner: `engineering/automation`
-Last verified: `2026-08-06`
+Last verified: `2026-08-07`
 
 This directory turns the maintained documentation tree into a compact operating
 surface for AI agents. It does not replace the root README, standards, code, or
@@ -26,7 +26,8 @@ they can be repeated.
 | [rules/document_authority_map.md](rules/document_authority_map.md) | Rule index for repository documentation authority, standard references, task-specific reading paths, and capability-claim gates. |
 | [rules/subproject_creation_standard.md](rules/subproject_creation_standard.md) | Standard for creating task subprojects with README, phase plan, task clusters, current status, acceptance, residuals, and archive boundaries. |
 | [prompts/project_orientation_prompt.md](prompts/project_orientation_prompt.md) | Copyable task-start prompt for agents working on this repository. |
-| [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md) | Repository policy for delegated subagent or worker activity when the execution environment allows it. |
+| [Subagent Usage Policy](standards/subagent_usage_policy.md) | Repository policy for delegated subagent or worker activity when the execution environment allows it. |
+| [WP Closure Lane Policy](standards/wp_closure_lane_policy.md) | Separates mergeable implementation work from serial documentation and publication closure. |
 
 ## How Agents Should Use This
 

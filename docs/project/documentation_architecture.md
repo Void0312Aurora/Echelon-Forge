@@ -25,7 +25,7 @@ The target maintained roots are:
 4. `systems/` — environment, physics, sensing, command/tasking, weapons, and effects.
 5. `learning/` — RL, models, training, evaluation protocols, and experiments.
 6. `operations/` — operator/maintainer how-to material, current references, visualization, and integrations.
-7. `engineering/` — contributing, build, test, tooling, documentation governance, and automation.
+7. `engineering/` — contributing, build, test, tooling, documentation governance, automation, dependency, and release.
 8. `research/` — research questions, methods, results, publications, and external sources.
 
 `archive/` is the single logical lifecycle endpoint and is excluded from the
@@ -60,8 +60,11 @@ archived rather than kept indefinitely as an active task.
 - Phase 2 (completed 2026-08-07): retire the maintained `forward`,
   `evaluation`, and `log` surfaces by routing plans and reviews to their content
   owners. Existing `evaluation/archive/` content remains frozen and untouched.
-- Phase 3: split `standards`, `plan`, and `task` by content ownership. Do not
-  move those trees wholesale into new global buckets.
+- Phase 3 (started 2026-08-07): split `standards`, `plan`, and `task` by content
+  ownership. The first slice moves documentation, automation, dependency, and
+  release governance into `engineering/`; domain and modeling standards plus
+  the plan/task trees remain for later owner slices. Do not move legacy trees
+  wholesale into new global buckets.
 - Phase 4: switch all maintained entry points and disallow new writes to legacy
   roots; remove a legacy root only after it has no maintained sources.
 

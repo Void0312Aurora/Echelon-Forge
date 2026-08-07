@@ -28,7 +28,7 @@ surface and the worktree already contains unrelated concurrent changes.
   `requirements/constraints-smoke.txt`, or the same status table concurrently.
 - If any cluster exceeds its round cap, stop and re-scope before adding a
   follow-up wave.
-- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../engineering/automation/standards/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

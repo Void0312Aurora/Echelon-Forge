@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+import shlex
 from pathlib import Path
 
 
@@ -22,6 +24,40 @@ def _governance_text(filename: str) -> str:
   return _text(*GOVERNANCE_ARCHIVE_PARTS, filename)
 
 
+def _constrained_workflow_packages(workflow: str) -> set[str]:
+  commands: list[str] = []
+  current = ""
+  for raw_line in workflow.splitlines():
+    line = raw_line.strip()
+    command_part = line[:-1].rstrip() if line.endswith("\\") else line
+    if current:
+      current = f"{current} {command_part}"
+      if not line.endswith("\\"):
+        commands.append(current)
+        current = ""
+    elif "-m pip install" in line:
+      current = command_part
+      if not line.endswith("\\"):
+        commands.append(current)
+        current = ""
+
+  packages: set[str] = set()
+  for command in commands:
+    if "-c requirements/constraints-smoke.txt" not in command:
+      continue
+    tokens = shlex.split(command)
+    install_index = tokens.index("install")
+    skip_constraint_path = False
+    for token in tokens[install_index + 1:]:
+      if skip_constraint_path:
+        skip_constraint_path = False
+      elif token in {"-c", "--constraint"}:
+        skip_constraint_path = True
+      elif not token.startswith("-"):
+        packages.add(token.lower().replace("_", "-"))
+  return packages
+
+
 def test_standards_maintenance_policy_is_registered() -> None:
   standards_readme = _text("docs", "standards", "README.md")
   standards_readme_zh = _text("docs", "standards", "README.zh.md")
@@ -32,8 +68,8 @@ def test_standards_maintenance_policy_is_registered() -> None:
   review_archive_registry = _text("docs", "task", "review", "archive_registry.md")
   review_archive_registry_zh = _text("docs", "task", "review", "archive_registry.zh.md")
 
-  assert "governance/standards_maintenance_policy.md" in standards_readme
-  assert "governance/standards_maintenance_policy.zh.md" in standards_readme_zh
+  assert "../engineering/documentation/standards/standards_maintenance_policy.md" in standards_readme
+  assert "../engineering/documentation/standards/standards_maintenance_policy.zh.md" in standards_readme_zh
   assert "archive/standards_documentation_governance/README.md" in review_readme
   assert "archive/standards_documentation_governance/README.zh.md" in review_readme_zh
   assert "standards_documentation_governance/README.md" in review_archive
@@ -222,7 +258,13 @@ def test_standards_governance_batch_c_modularization_plan_tracks_domain_roots() 
 
 
 def test_standards_policy_defines_drift_and_empty_owner_rules() -> None:
-  policy = _text("docs", "standards", "governance", "standards_maintenance_policy.md")
+  policy = _text(
+    "docs",
+    "engineering",
+    "documentation",
+    "standards",
+    "standards_maintenance_policy.md",
+  )
 
   for required in (
     "Semantic mismatch",
@@ -238,12 +280,35 @@ def test_standards_policy_defines_drift_and_empty_owner_rules() -> None:
 
 def test_standards_maintenance_policy_has_bilingual_registry_entry() -> None:
   registry = json.loads(
-    _text("docs", "standards", "bilingual_document_clusters.json")
+    _text(
+      "docs",
+      "engineering",
+      "documentation",
+      "reference",
+      "bilingual_document_clusters.json",
+    )
   )
 
   pairs = {record["pair_id"]: record for record in registry["pairs"]}
-  record = pairs["standards/governance/standards_maintenance_policy"]
+  record = pairs["engineering/documentation/standards/standards_maintenance_policy"]
 
-  assert record["english"] == "docs/standards/governance/standards_maintenance_policy.md"
-  assert record["chinese"] == "docs/standards/governance/standards_maintenance_policy.zh.md"
+  assert record["english"] == "docs/engineering/documentation/standards/standards_maintenance_policy.md"
+  assert record["chinese"] == "docs/engineering/documentation/standards/standards_maintenance_policy.zh.md"
   assert record["source_of_truth"] == "english"
+
+
+def test_smoke_constraints_cover_packages_installed_by_consuming_ci_lanes() -> None:
+  constraints = _text("requirements", "constraints-smoke.txt")
+  constrained = {
+    match.group(1).lower().replace("_", "-")
+    for line in constraints.splitlines()
+    if (match := re.match(r"^([A-Za-z0-9_.-]+)", line))
+  }
+  installed: set[str] = set()
+  for workflow in ("ci-smoke.yml", "coverage-baseline.yml"):
+    installed |= _constrained_workflow_packages(
+      _text(".github", "workflows", workflow)
+    )
+
+  assert {"pip", "pytest", "numpy", "ruff", "gymnasium", "coverage", "gcovr"} <= installed
+  assert installed <= constrained

@@ -322,7 +322,7 @@
 - `python tools/maintenance/document_link_audit.py` —— 0 issues。
 - `python tools/maintenance/translate_docs_batch.py audit` —— 新配对
   `plan/unified_architecture_program/t11_content_schema_survey_20260721` 报告为 `unregistered`
-  （其 `pair_id` 尚未进入 `docs/standards/bilingual_document_clusters.json`）；`pair_count` 从
+  （其 `pair_id` 尚未进入 `docs/engineering/documentation/reference/bilingual_document_clusters.json`）；`pair_count` 从
   84 升到 85，而 `synced` 保持 84，`diverged`/`missing` 保持 0。注册表刷新（`clusters --write`）
   与迭代台账登记是落地方的步骤，遵循普查第 5 节的范围裁定先例。
 - `git diff --check` —— 干净（仅新增未跟踪文件；无跟踪文件空白改动）。`ruff` 不适用于草案

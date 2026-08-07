@@ -11,7 +11,7 @@
 
 本标准抽取维护中任务切片的通用结构，但不把任何历史子项目提升为当前权威。
 委派工作应使用
-[Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)。
+[Subagent 使用规范](../standards/subagent_usage_policy.zh.md)。
 
 ## 何时创建子项目
 
@@ -186,7 +186,7 @@ subproject has a replacement current-status or closeout surface.
 | --- | --- |
 | `Cluster` | 稳定任务簇 id，例如 `P1-A`、`D2-B` 或 `INT-C`。 |
 | `Owner` | main thread、具名 worker、future worker、integration worker 或只读 diagnostics worker。 |
-| `Model / reasoning` | 仅当派发工具暴露这些控制项时必需。 |
+| `Capability tier / model ID / reasoning` | 记录能力档与可用 reasoning 控制；只有当前执行环境明确暴露精确 model ID 时才填写，否则使用 `n/a`。 |
 | `Goal` | 一个有边界结果。 |
 | `Write set` | 该任务簇可修改的精确文件或文件族。 |
 | `Non-goals` | 明确排除项和禁止能力声明。 |
@@ -209,9 +209,9 @@ Status: `<YYYY-MM-DD>` finite task-cluster plan for `<Subproject README.md>`.
 
 ## Finite Task Cluster List
 
-| Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
+| Cluster | Owner | Capability tier / model ID / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `<ID>` | <owner> | <model/reasoning or n/a> | <goal> | <files> | <excluded work> | <commands> | <gate> | <dependency/parallel rule> | <round cap> | <status> |
+| `<ID>` | <owner> | <tier / 当前明确可用的 model ID 或 n/a / reasoning> | <goal> | <files> | <excluded work> | <commands> | <gate> | <dependency/parallel rule> | <round cap> | <status> |
 
 ## Dispatch Rules
 
@@ -221,7 +221,7 @@ Status: `<YYYY-MM-DD>` finite task-cluster plan for `<Subproject README.md>`.
 - Keep acceptance/closure clusters serial.
 - If a cluster exceeds its round cap, stop and re-scope before adding a follow-up
   wave.
-- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- 遵循 [Subagent 使用规范](../standards/subagent_usage_policy.zh.md)。
 
 ## Worker Packet Requirements
 

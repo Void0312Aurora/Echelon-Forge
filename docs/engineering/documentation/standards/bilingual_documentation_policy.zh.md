@@ -2,12 +2,20 @@
 
 语言版本：
 
-- 英文主文：`governance/bilingual_documentation_policy.md`
-- 中文辅文：[bilingual_documentation_policy.zh.md](bilingual_documentation_policy.zh.md)
+- 英文主文：[bilingual_documentation_policy.md](bilingual_documentation_policy.md)
+- 中文辅文：`bilingual_documentation_policy.zh.md`
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
+Owner: `engineering/documentation-governance`
+Last verified: `2026-08-07`
 
 状态：`2026-08-07`，当前维护中文档语言布局的权威规则。
 
 本文档定义仓库如何拆分英文与中文文档，使主线文档保持可读、可批处理翻译、可审计。
+
+本规范适用于 Git 跟踪的维护中文档。归档、临时稿与仅本地材料默认不进入双语维护判定。
 
 ## 目标
 
@@ -25,10 +33,10 @@
 
 示例：
 
-- `docs/task/flight_dynamics/README.md`
-- `docs/task/flight_dynamics/README.zh.md`
-- `docs/plan/runtime_facade/runtime_facade_contract_plan.md`
-- `docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md`
+- `docs/engineering/documentation/README.md`
+- `docs/engineering/documentation/README.zh.md`
+- `docs/systems/physics/work/issues/physics_engine_roadmap.md`
+- `docs/systems/physics/work/issues/physics_engine_roadmap.zh.md`
 
 ## 权威规则
 
@@ -52,14 +60,17 @@ Tier A：严格双语维护面
   下的项目级与 owner 根导航
 - `docs/engineering/automation/` 下的 Agent 权威、提示词与规则
 - 保留参考索引：`docs/reference_artifacts.md`
-- `docs/standards/` 下的权威与治理树
+- 已准入严格维护面的 owner-local standards 与 reference，包括
+  `docs/engineering/documentation/standards/` 和
+  `docs/engineering/documentation/reference/`
+- 迁移期遗留根 `docs/standards/` 下尚未迁往内容 owner 的维护中标准
 - `docs/operations/` 下的面向操作者 reference 与 how-to
-- 稳定计划权威面：
+- 仍通过迁移期遗留 plan 表面路由的稳定计划权威：
   - `docs/plan/README.md`
   - `docs/plan/architecture/**`
   - `docs/plan/runtime_facade/**`
   - `docs/plan/cooperative/**`
-- 稳定任务导航面：
+- 仍通过迁移期遗留 task 表面路由的稳定任务导航：
   - `docs/task/README.md`
   - `docs/task/task_archive_convergence_plan_20260518.md`
   - `docs/task/*/README.md` 下的子项目导航页
@@ -105,7 +116,7 @@ Tier A 需要双语配对。Tier B 可以先维护英文主文。Tier C 默认�
 ```md
 Language:
 - English canonical: `README.md`
-- Chinese companion: [README.zh.md](../README.zh.md)
+- Chinese companion: [README.zh.md](README.zh.md)
 ```
 
 如果辅文尚未补齐，应明确写明，而不是在正文里继续大段混排。
@@ -114,8 +125,8 @@ Language:
 
 维护中的双语配对还应进入机器可读的簇注册表：
 
-- [双语文档簇](bilingual_document_clusters.md)
-- 注册表文件：`../bilingual_document_clusters.json`
+- [双语文档簇](../reference/bilingual_document_clusters.zh.md)
+- 注册表文件：`../reference/bilingual_document_clusters.json`
 
 每条簇记录跟踪：
 
@@ -132,7 +143,9 @@ Language:
 - `docs/Archive/` 与 `docs/**/archive/` 默认不属于维护中的漂移判定面，即使其中保留了双语镜像，也只用于追溯。
 - 审阅变更文档对后，使用可重复的
   `clusters --write --pair <pair_id>` 参数只刷新这些记录，再运行 `audit`。
-- 只有完成整个维护面的双语审阅后才能运行全量 `clusters --write`；不得用它
+- 完成整个维护面的双语审阅后，可以运行全量 `clusters --write`。canonical 路径或
+  registry 路径迁移也可以执行全量重建，但前提是迁移前的基线 audit 为 clean，且
+  registry diff 能证明无关记录的路径、hash 与核验日期保持不变。不得用全量重建
   掩盖无关的历史分歧。
 - `needs-en-update` / `needs-zh-update` 通常表示单侧后续维护未跟上。
 - `diverged` 表示两侧都相对记录基线发生了变化，应先人工核对最新意图，再把它定性为真实漂移。
@@ -162,7 +175,8 @@ Language:
 - 一次只处理一个目录
 - 每批 `4-8` 个文件
 - 每批保持单一主题，例如
-  `docs/plan/architecture/` 或 `docs/standards/joint/`
+  `docs/engineering/documentation/standards/` 或迁移期遗留的
+  `docs/standards/joint/`
 - 每批结束后做一次链接和路径检查
 
 这样更容易保持术语一致，也便于人工复核。
@@ -171,7 +185,7 @@ Language:
 
 本仓库维护中的批量翻译工具是：
 
-- [tools/maintenance/translate_docs_batch.py](../../../tools/maintenance/translate_docs_batch.py)
+- [tools/maintenance/translate_docs_batch.py](../../../../tools/maintenance/translate_docs_batch.py)
 
 工具要求：
 
@@ -204,6 +218,6 @@ Language:
 
 ## 相关文档
 
-- [docs/README.md](../../README.md)
-- [已归档的双语迁移记录](../../plan/archive/documentation_bilingual_migration_plan_20260518.zh.md)
-- [document_alignment_map.md](../overview/document_alignment_map.md)
+- [docs/README.md](../../../README.zh.md)
+- [已归档的双语迁移记录](../../../plan/archive/documentation_bilingual_migration_plan_20260518.zh.md)
+- [document_alignment_map.md](../../../standards/overview/document_alignment_map.zh.md)

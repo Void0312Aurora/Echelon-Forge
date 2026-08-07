@@ -1,13 +1,20 @@
 # Release And Dependency Policy
 
-Language:
-- English canonical: `release_and_dependency_policy.md`
+Language: English canonical; [Chinese companion](release_and_dependency_policy.zh.md).
 
-Status: `2026-06-02` baseline for dependency and release governance.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/release/standards/release_and_dependency_policy.md`
+Owner: `engineering/release`
+Last verified: `2026-08-07`
+
+Status: verified baseline for dependency and release governance.
 
 This policy defines the minimum release governance surface for Echelon Forge.
 It is intentionally lightweight because the repository does not currently carry
-a full lockfile.
+a repository-wide or training-environment lockfile. Scoped lock artifacts may
+exist for individual tools or imported resources; they do not establish a fully
+resolved project environment.
 
 ## Scope
 
@@ -31,17 +38,19 @@ training, world-model, or dev convenience. They do not prove an exact resolved
 environment.
 
 `requirements/constraints-smoke.txt` is the CI/smoke reproducibility entry
-point. It may constrain:
-
-- direct packages installed by the current CI smoke lane, currently `pytest`
-  and `numpy`;
-- Python build frontend/backend packages relevant when package build/install
-  smoke is deliberately exercised, currently `pip`, `scikit-build-core`, and
-  `nanobind`.
+point. The constraints file and the CI workflows that consume it are the
+authoritative package inventory; prose must not maintain a narrower duplicate
+list. As verified on `2026-08-07`, the constrained surface covers direct
+smoke/lint/coverage dependencies such as `pytest`, `numpy`, `ruff`, `gymnasium`,
+`coverage`, and `gcovr`, plus Python build frontend/backend packages used when
+package build/install smoke is deliberately exercised.
 
 It must not grow into a hidden training lockfile. Do not add hard pins for
-`torch`, `stable-baselines3`, `gymnasium`, `tensorboard`, or similar optional
-training/experiment packages unless a separate training lock policy is approved.
+`torch`, `stable-baselines3`, `tensorboard`, or similar optional
+training/experiment packages unless a consuming CI lane requires them or a
+separate training lock policy is approved. Constraining `gymnasium` for current
+smoke and coverage lanes proves only that interface dependency boundary; it does
+not resolve or lock a training environment.
 
 Training and experiment reproducibility must record the resolved environment
 with the run artifact until a dedicated lockfile exists. At minimum, record:
@@ -62,10 +71,10 @@ For a release tag, the CMake project version and Python distribution version
 must either match or carry an explicit release-note exception explaining why the
 native and Python artifacts are intentionally versioned differently.
 
-As of this policy baseline, the repository has a known version-sync gap:
-`CMakeLists.txt` declares `0.1.0`, while `pyproject.toml` declares `0.2.0`.
-A release checklist must close or explicitly waive that mismatch before a
-release tag is cut.
+As verified on `2026-08-07`, `CMakeLists.txt` and `pyproject.toml` both declare
+`0.2.0`. This observation is not a permanent waiver: every release checklist
+must re-read both files and either confirm synchronization or record an approved
+exception before a release tag is cut.
 
 ## Release Gate
 
@@ -105,7 +114,8 @@ it out of the release bundle and document the exclusion.
 ## Maintenance Rules
 
 - Keep smoke constraints small and scoped to the smoke lane.
-- Treat new lockfiles as separate governance artifacts with explicit ownership.
+- Treat every lockfile as a separately scoped governance artifact with explicit
+  ownership; do not infer repository-wide reproducibility from a tool-local lock.
 - Update this policy when CI dependency installation, release packaging, or
   third-party asset handling changes.
 - Do not treat a passing local training run as release dependency evidence

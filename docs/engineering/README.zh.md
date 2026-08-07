@@ -1,14 +1,21 @@
 # 工程文档
 
-语言：英文为规范页；[中文配套](README.md)。
+语言：[英文规范页](README.md)；本页为中文配套。
 
 Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/README.md`
-Owner: `engineering governance`
+Owner: `engineering`
 Last verified: `2026-08-07`
 
-本区域拥有贡献、构建、测试、工具、文档治理和自动化说明。第一批已迁移入口为
-[automation](automation/README.zh.md)。具体编写形状见[文档实例](documentation/structure_examples.zh.md)，
-保留的工程评估位于 [reviews](reviews/engineering_discipline_review_20260603.zh.md)。
-治理标准在后续迭代前仍位于 [standards](../standards/README.zh.md)。
+本区域拥有贡献、构建、测试、工具、文档治理、自动化、依赖与发布说明。当前 owner
+入口为：
+
+- [automation](automation/README.zh.md)：Agent 导航、委派与 WP 收口规则；
+- [documentation](documentation/README.zh.md)：生命周期、双语维护、结构实例与标准维护；
+- [release](release/README.zh.md)：依赖与发布治理；
+- [reviews](reviews/engineering_discipline_review_20260603.zh.md)：保留的工程评估，
+  其证据属性不会因迁移而变成 standard。
+
+仍在[旧 standards 根](../standards/README.zh.md)下的领域与建模标准将在后续 owner
+切片中迁移。

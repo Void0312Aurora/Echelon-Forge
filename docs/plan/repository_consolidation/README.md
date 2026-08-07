@@ -303,7 +303,7 @@ line-count target.
 
 ## Related Authority
 
-- [Document Lifecycle Policy](../../standards/governance/document_lifecycle_policy.md)
+- [Document Lifecycle Policy](../../engineering/documentation/standards/document_lifecycle_policy.md)
 - [Agent Document Authority Map](../../engineering/automation/rules/document_authority_map.md)
-- [Standards Maintenance Policy](../../standards/governance/standards_maintenance_policy.md)
-- [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md)
+- [Standards Maintenance Policy](../../engineering/documentation/standards/standards_maintenance_policy.md)
+- [Subagent Usage Policy](../../engineering/automation/standards/subagent_usage_policy.md)

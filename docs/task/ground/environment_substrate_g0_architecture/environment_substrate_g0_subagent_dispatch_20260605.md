@@ -8,7 +8,7 @@ Status: `2026-06-05` read-only diagnostics dispatch record for
 Dispatch follows:
 
 - [Subproject creation standard](../../../engineering/automation/rules/subproject_creation_standard.md)
-- [Subagent usage policy](../../../standards/governance/subagent_usage_policy.md)
+- [Subagent usage policy](../../../engineering/automation/standards/subagent_usage_policy.md)
 - [Document authority map](../../../engineering/automation/rules/document_authority_map.md)
 
 The main thread owns integration and final scope decisions. Subagents are

@@ -6,8 +6,8 @@ Language:
 
 Document kind: `standard`
 Lifecycle: `maintained`
-Canonical: `docs/standards/governance/document_lifecycle_policy.md`
-Owner: `docs/standards/governance`
+Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
+Owner: `engineering/documentation-governance`
 Last verified: `2026-08-07`
 
 Status: `2026-08-07` authoritative policy for classifying, maintaining,
@@ -35,15 +35,20 @@ deliberately admitted into the tracked tree.
 
 | Kind | Purpose | Normal location | Authority boundary |
 | --- | --- | --- | --- |
-| `standard` | Stable terminology, ownership, governance, and mandatory constraints | `docs/standards/` | Normative within its declared scope; it cannot overrule current code or executable evidence about implemented behavior. |
-| `plan` | Bounded architecture direction, sequencing, migration, and acceptance design | `docs/plan/` | Authorizes only the frozen or explicitly active scope it names. |
-| `task` | Current implementation work, status, residuals, and acceptance packages | `docs/task/` | Owns scoped execution status; it does not redefine cross-project terminology owned by standards. |
+| `standard` | Stable terminology, ownership, governance, and mandatory constraints | the content owner's `standards/` subtree | Normative within its declared scope; it cannot overrule current code or executable evidence about implemented behavior. |
+| `plan` | Bounded architecture direction, sequencing, migration, and acceptance design | the content owner's `work/issues/` subtree, or `docs/project/` for a project-wide program | Authorizes only the frozen or explicitly active scope it names. |
+| `task` | Current implementation work, status, residuals, and acceptance packages | the content owner's `work/active/` subtree | Owns scoped execution status; it does not redefine cross-project terminology owned by the applicable standards owner. |
 | `reference` | Verified description of current structure, API, capability, or inventory | an owner's `reference/` subtree or component README | Descriptive authority only for the last-verified state. |
 | `howto` | Reproducible operator or maintainer procedure | `docs/operations/howto/` or an owner-local how-to surface | Valid only for the named platform, prerequisites, and verified command path. |
-| `review` | Independent findings, risk assessment, acceptance decision, or rejection | currently `docs/task/review/` | Records a judgment. Action items must move to a task or issue; a review does not itself implement a change. |
-| `evidence` | Immutable retained inputs, measurements, manifests, figures, or acceptance proof | a local `evidence/` package beside the owning task | Supports a bounded claim only; it is not current behavior or policy authority. |
-| `generated` | Reproducible output produced from named tracked inputs | a local `generated/` directory | Never manually normative. The producer and inputs are authoritative. |
-| `config-index` | Human-readable index of canonical scenarios or configuration inputs | near the owning config surface or under `docs/` | Points to configuration truth; it must not duplicate the payload. |
+| `review` | Independent findings, risk assessment, acceptance decision, or rejection | the content owner's `reviews/` subtree | Records a judgment. Action items must move to `work/active/` or `work/issues/`; a review does not itself implement a change. |
+| `evidence` | Immutable retained inputs, measurements, manifests, figures, or acceptance proof | an `evidence/` package beside the owner-local active work or review | Supports a bounded claim only; it is not current behavior or policy authority. |
+| `generated` | Reproducible output produced from named tracked inputs | an owner-local `generated/` directory | Never manually normative. The producer and inputs are authoritative. |
+| `config-index` | Human-readable index of canonical scenarios or configuration inputs | the owning reference or configuration surface | Points to configuration truth; it must not duplicate the payload. |
+
+`docs/standards/`, `docs/plan/`, `docs/task/`, and `docs/task/review/` remain
+migration-era legacy surfaces while their maintained documents are assigned to
+content owners. Their temporary location does not change document kind or
+authority, and new work must not expand them when an owner-local route exists.
 
 ### Lifecycle States
 
@@ -106,7 +111,7 @@ be omitted or replaced by a link to an unrelated ledger.
 | How-to | Intended outcome; prerequisites; exact procedure; observable success result; rollback or recovery path when applicable. |
 | Review | Reviewed revision/date; evidence inspected; findings and severity; verdict or decision state; authority boundary; follow-up owner. |
 
-The [documentation authoring examples](../../engineering/documentation/structure_examples.md)
+The [documentation authoring examples](../structure_examples.md)
 show compliant shapes without creating a second normative policy.
 
 ## README Boundary
@@ -233,6 +238,10 @@ Canonical configuration payloads do not live under `docs/`:
 - frozen and archived inputs retain their declared lifecycle where the config
   system owns it.
 
+Machine-readable documentation-maintenance registries may live beside their
+owner's reference material when documentation tooling is their only consumer;
+they are governance indexes, not runtime configuration payloads.
+
 Documentation may contain a `config-index` that links to those files and states
 their purpose, lifecycle, compatibility boundary, and validation command. Do
 not paste full JSON payloads into Markdown or keep a second editable config copy
@@ -264,7 +273,7 @@ Every documentation iteration must run, at minimum:
 ```bash
 git diff --check
 python tools/maintenance/translate_docs_batch.py audit --root docs \
-  --registry docs/standards/bilingual_document_clusters.json
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json
 ```
 
 It must also run the maintained link/document audit once that gate exists.
@@ -273,13 +282,13 @@ then repair links, then move or remove redundant material. A large path move,
 archive collapse, evidence deletion, or bilingual rewrite requires its own
 reviewed iteration.
 
-Repository-wide consolidation sequencing is tracked in the
-[Repository Consolidation Plan](../../plan/repository_consolidation/README.md).
+Repository-wide consolidation sequencing is still tracked in the migration-era
+[Repository Consolidation Plan](../../../plan/repository_consolidation/README.md).
 
 ## Related Documents
 
-- [Agent Document Authority Map](../../engineering/automation/rules/document_authority_map.md)
+- [Agent Document Authority Map](../../automation/rules/document_authority_map.md)
 - [Bilingual Documentation Policy](bilingual_documentation_policy.md)
 - [Standards Maintenance Policy](standards_maintenance_policy.md)
-- [Subproject Creation Standard](../../engineering/automation/rules/subproject_creation_standard.md)
-- [Repository Consolidation Plan](../../plan/repository_consolidation/README.md)
+- [Subproject Creation Standard](../../automation/rules/subproject_creation_standard.md)
+- [Repository Consolidation Plan](../../../plan/repository_consolidation/README.md)

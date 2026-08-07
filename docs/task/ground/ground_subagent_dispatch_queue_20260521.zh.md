@@ -14,17 +14,22 @@ setup plus compiler ingestion，以及 G0-M metadata-only derived products 已�
 runtime setup application、runtime consumers、movement、LOS、cover、fires、damage
 和 combat 继续 held。
 
-启动子代理时使用此队列。主线程拥有集成和最终验收。
+本队列是已记录 ground 工作的 accepted dispatch 与 status ledger。已完成行中的
+model ID 保留当时的实际执行记录，属于历史证据，不是当前选择指引。启动 planned
+或 reopened cluster 前，必须按照
+[Subagent 使用规范](../../engineering/automation/standards/subagent_usage_policy.zh.md)
+新建当前 packet，并重新选择 capability/risk tier、当前可用模型和 reasoning budget。
+主线程拥有集成和最终验收。
 
 详细的 G0 工作包位于
 [archive/g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md](archive/g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md)。
 
 规则：
 
-- 遵循[子代理使用策略](../../standards/governance/subagent_usage_policy.md)。
+- 遵循[子代理使用策略](../../engineering/automation/standards/subagent_usage_policy.zh.md)。
 - 保持写入范围不相交。
 - 不要将同一规范表分给多个并发作者。
-- 标准和层级以标准树为准。
+- naming 与 layering 以适用内容 owner 在自身职责范围内维护的 `standards/` 为准。
 - 工作者不得撤销无关编辑或其他工作者所做的编辑。
 - 如果下一个切片不合理，工作者可以在 `preflight-only` 处停止。
 - G1 实现仅针对 G1-B 的仅 Python 配置文件切片被接受。后续已有面向 G0/G1
@@ -102,7 +107,7 @@ flowchart TD
 
 ## 当前 Follow-On Wave
 
-| 流 | 代理类型 | 模型/推理 | 任务 | 写入范围 |
+| 流 | 代理类型 | 历史派发记录/推理 | 任务 | 写入范围 |
 | --- | --- | --- | --- | --- |
 | `ENV-G0-A` | 主线程 diagnostics | 当前主线程 | 已完成 package construction：清点当前 environment/query/setup/scenario surfaces，并记录它们不证明什么。 | 仅 `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_source_inventory_20260605*.md`。 |
 | `ENV-G0-B` | 主线程 architecture | 当前主线程 | 已完成 package construction：定义 generic manifest、branch registry、component registry、开放 layer semantics、catalog composition、validators、projection boundary 与 derived-product placeholders。 | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_architecture_plan_20260605*.md` 加 package README/task-cluster sync。 |
@@ -127,7 +132,7 @@ flowchart TD
 
 ## 第一波
 
-| 流 | 代理类型 | 模型/推理 | 任务 | 写入范围 |
+| 流 | 代理类型 | 历史派发记录/推理 | 任务 | 写入范围 |
 |--------|------------|-------------------|------|-------------|
 | `G0-A` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧地面标准概述。 | 仅 `docs/standards/ground/README*.md`。无代码。 |
 | `G0-B` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧最小地面任务词汇。 | 仅 `docs/standards/ground/minimal_task_structure*.md`。无代码。 |

@@ -13,18 +13,24 @@ ingestion, and G0-M metadata-only derived products are accepted, while runtime
 setup application, runtime consumers, movement, LOS, cover, fires, damage, and
 combat remain held.
 
-Use this queue when launching subagents. The main thread owns integration and
-final acceptance.
+This queue is the accepted dispatch and status ledger for the recorded ground
+work. Model IDs in completed rows preserve the execution record from the time
+of dispatch; they are historical evidence, not current selection guidance.
+Before launching a planned or reopened cluster, create a current packet and
+select its capability/risk tier, model availability, and reasoning budget under
+the [Subagent Usage Policy](../../engineering/automation/standards/subagent_usage_policy.md).
+The main thread owns integration and final acceptance.
 
 Detailed G0 worker packets live in
 [archive/g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md](archive/g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md).
 
 Rules:
 
-- Follow the [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md).
+- Follow the [Subagent Usage Policy](../../engineering/automation/standards/subagent_usage_policy.md).
 - Keep write scopes disjoint.
 - Do not split the same normative table across concurrent authors.
-- The standards tree wins for naming and layering.
+- The applicable content owner's maintained `standards/` entries win for naming
+  and layering within that owner's scope.
 - Workers must not revert unrelated edits or edits made by other workers.
 - A worker may stop at `preflight-only` if the next slice is not justified.
 - G1 implementation is accepted only for G1-B's Python-profile-only slice.
@@ -111,7 +117,7 @@ phase releases only two `G1` realism fixtures.
 
 ## Current Follow-On Wave
 
-| Stream | Agent type | Model / reasoning | Task | Write scope |
+| Stream | Agent type | Historical dispatch record / reasoning | Task | Write scope |
 | --- | --- | --- | --- | --- |
 | `ENV-G0-A` | main-thread diagnostics | current main thread | Completed for package construction: inventory current environment/query/setup/scenario surfaces and record what they do not prove. | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_source_inventory_20260605*.md` only. |
 | `ENV-G0-B` | main-thread architecture | current main thread | Completed for package construction: define generic manifest, branch registry, component registry, open layer semantics, catalog composition, validators, projection boundary, and derived-product placeholders. | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_architecture_plan_20260605*.md` plus package README/task-cluster sync only. |
@@ -136,7 +142,7 @@ phase releases only two `G1` realism fixtures.
 
 ## First Wave
 
-| Stream | Agent type | Model / reasoning | Task | Write scope |
+| Stream | Agent type | Historical dispatch record / reasoning | Task | Write scope |
 |--------|------------|-------------------|------|-------------|
 | `G0-A` | worker | `gpt-5.4-mini`, xhigh | Audit/tighten the ground standards overview. | `docs/standards/ground/README*.md` only. No code. |
 | `G0-B` | worker | `gpt-5.4-mini`, xhigh | Audit/tighten the minimal ground task vocabulary. | `docs/standards/ground/minimal_task_structure*.md` only. No code. |

@@ -160,18 +160,19 @@ Recommended bilingual doc audit:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py audit --root docs \
-  --registry docs/standards/bilingual_document_clusters.json
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json
 ```
 
-By default this audits only the strict maintained bilingual surface
-(entry/navigation pages, standards/governance, manuals, and stable plan
-authority), not every dated task/history document under `docs/`.
+By default this audits only the strict maintained bilingual surface: entry and
+navigation pages, owner-local engineering standards, maintained legacy
+standards, operations guidance, research sources, and stable plan authority.
+It does not audit every dated task or history document under `docs/`.
 
 To audit the broader shared docs tree on purpose:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py audit --root docs \
-  --registry docs/standards/bilingual_document_clusters.json \
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json \
   --full-tree
 ```
 
@@ -180,8 +181,8 @@ those records without resetting unrelated historical divergence:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py clusters --root docs \
-  --registry docs/standards/bilingual_document_clusters.json --write \
-  --pair README --pair standards/governance/document_lifecycle_policy
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json --write \
+  --pair README --pair engineering/documentation/standards/document_lifecycle_policy
 ```
 
 The audit compares current file hashes against the registry baseline, so a

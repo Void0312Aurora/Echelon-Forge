@@ -26,7 +26,7 @@ Inputs:
 - Public source admission rule:
   [../../../../standards/foundation/public_data_source_admission.md](../../../../standards/foundation/public_data_source_admission.md)
 - Standards maintenance policy:
-  [../../../../standards/governance/standards_maintenance_policy.md](../../../../standards/governance/standards_maintenance_policy.md)
+  [../../../../engineering/documentation/standards/standards_maintenance_policy.md](../../../../engineering/documentation/standards/standards_maintenance_policy.md)
 - Repository AIM-120C-like proxy descriptor:
   [../../../../../examples/config/database/weapons/air_to_air/aim_120c.json](../../../../../examples/config/database/weapons/air_to_air/aim_120c.json)
 - Repository F-16C-like synthetic target descriptor:

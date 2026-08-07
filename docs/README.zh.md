@@ -24,7 +24,7 @@ Last verified: `2026-08-07`
 | [systems](systems/README.zh.md) | Environment、physics、sensing、command/tasking、weapons、effects | 第二阶段 system issue 与 review 路由已启用 |
 | [learning](learning/README.zh.md) | RL、模型、训练、评估协议、实验 | 第二阶段策略与训练 issue 路由已启用 |
 | [operations](operations/README.zh.md) | How-to、当前 reference、可视化和集成操作 | manual 与 visualization 路由已迁移 |
-| [engineering](engineering/README.zh.md) | 贡献、构建、测试、工具、文档治理、自动化 | automation 与 review 路由已迁移 |
+| [engineering](engineering/README.zh.md) | 贡献、构建、测试、工具、文档治理、自动化、发布 | documentation、automation、release 与 review 路由已迁移 |
 | [research](research/README.zh.md) | 问题、方法、结果、出版物、外部来源 | 第一阶段来源索引迁移完成 |
 
 [文档信息架构](project/documentation_architecture.zh.md)定义目标边界、迁移阶段和
@@ -34,7 +34,7 @@ Last verified: `2026-08-07`
 
 迁移期间，下列旧根仍包含维护源：
 
-- [standards](standards/README.zh.md)：规范词汇和治理；
+- [standards](standards/README.zh.md)：等待迁入 owner 的领域与建模词汇；
 - [plan](plan/README.zh.md)：活跃/冻结方向和迁移计划；
 - [task](task/README.zh.md)：有界实施工作和状态。
 
@@ -51,6 +51,7 @@ Last verified: `2026-08-07`
 - [可视化指南](operations/howto/visualization_guide.zh.md)
 - [自动化与 Agent 指引](engineering/automation/README.zh.md)
 - [文档工程与实例](engineering/documentation/README.zh.md)
+- [发布与依赖治理](engineering/release/README.zh.md)
 - [保留制品来源](reference_artifacts.zh.md)
 - [测试系统入口](../tests/README.zh.md)
 

@@ -17,7 +17,7 @@ Chinese companion:
 - P4 harness plan:
   [kill_chain_calibration_harness_plan_20260623.md](kill_chain_calibration_harness_plan_20260623.md)
 - Standards maintenance policy:
-  [../../../../standards/governance/standards_maintenance_policy.md](../../../../standards/governance/standards_maintenance_policy.md)
+  [../../../../engineering/documentation/standards/standards_maintenance_policy.md](../../../../engineering/documentation/standards/standards_maintenance_policy.md)
 - Standards tree overview:
   [../../../../standards/README.md](../../../../standards/README.md)
 

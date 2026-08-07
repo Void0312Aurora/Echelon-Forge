@@ -13,7 +13,7 @@ bounded work slice.
 
 This standard abstracts recurring structure from maintained task slices without
 promoting any historical subproject as current authority. For delegated work,
-use [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+use [Subagent Usage Policy](../standards/subagent_usage_policy.md).
 
 ## When To Create A Subproject
 
@@ -196,7 +196,7 @@ Required cluster table columns:
 | --- | --- |
 | `Cluster` | Stable cluster id, such as `P1-A`, `D2-B`, or `INT-C`. |
 | `Owner` | Main thread, named worker, future worker, integration worker, or read-only diagnostics worker. |
-| `Model / reasoning` | Required only when dispatch tooling exposes those controls. |
+| `Capability tier / model ID / reasoning` | Record the tier and available reasoning control; include an exact model ID only when the current execution environment explicitly exposes it, otherwise use `n/a`. |
 | `Goal` | One bounded result. |
 | `Write set` | Exact files or file families the cluster may modify. |
 | `Non-goals` | Explicit exclusions and forbidden capability claims. |
@@ -219,9 +219,9 @@ Status: `<YYYY-MM-DD>` finite task-cluster plan for `<Subproject README.md>`.
 
 ## Finite Task Cluster List
 
-| Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
+| Cluster | Owner | Capability tier / model ID / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `<ID>` | <owner> | <model/reasoning or n/a> | <goal> | <files> | <excluded work> | <commands> | <gate> | <dependency/parallel rule> | <round cap> | <status> |
+| `<ID>` | <owner> | <tier / explicit available model ID or n/a / reasoning> | <goal> | <files> | <excluded work> | <commands> | <gate> | <dependency/parallel rule> | <round cap> | <status> |
 
 ## Dispatch Rules
 
@@ -231,7 +231,7 @@ Status: `<YYYY-MM-DD>` finite task-cluster plan for `<Subproject README.md>`.
 - Keep acceptance/closure clusters serial.
 - If a cluster exceeds its round cap, stop and re-scope before adding a follow-up
   wave.
-- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../standards/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

@@ -59,7 +59,12 @@ TEMP_ANCHOR = "/tmp"
 
 DOC_REFS = {
   "subagent_usage_policy": (
-    REPO_ROOT / "docs" / "standards" / "governance" / "subagent_usage_policy.md"
+    REPO_ROOT
+    / "docs"
+    / "engineering"
+    / "automation"
+    / "standards"
+    / "subagent_usage_policy.md"
   ),
   "residual_register": PACKAGE_DIR / "residual_register.zh.md",
   "surrogate_identity_manifest": (

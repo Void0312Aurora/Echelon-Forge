@@ -49,7 +49,8 @@ Repository rules:
   packet or dated record define broader project maturity.
 - Preserve unrelated dirty worktree changes.
 - If subagents or workers are allowed by the current execution environment and
-  user request, follow docs/standards/governance/subagent_usage_policy.md.
+  user request, follow
+  docs/engineering/automation/standards/subagent_usage_policy.md.
 - If creating a `docs/task/**` subproject, include a README, finite task-cluster
   document, phase/status/acceptance/residual sections, parent index links, and
   archive/current boundaries as required by the subproject creation standard.

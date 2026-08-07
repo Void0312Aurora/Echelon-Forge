@@ -3,6 +3,11 @@
 Status: `2026-06-12`; `P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` accepted; finite
 task-cluster plan for [Naval Domain Surface Split](README.md).
 
+Model IDs on accepted rows preserve the historical dispatch record. They are
+not current selection guidance. Any planned or reopened cluster must choose a
+current capability/risk tier, available model, and reasoning budget under the
+[Subagent Usage Policy](../../../engineering/automation/standards/subagent_usage_policy.md).
+
 ## Boundary Decision
 
 This subproject may modify naval task documentation, active naval training-entry
@@ -16,7 +21,7 @@ air takeoff, runway, formation, gear, or flight-control fields.
 
 ## Finite Task Cluster List
 
-| Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
+| Cluster | Owner | Historical dispatch record / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `P0-A` | main thread | current | Create the subproject, status, queue, acceptance, and parent naval index links. | `docs/task/naval/naval_domain_surface_split/**`, `docs/task/naval/README*` | runtime code, tests, capability promotion | `git diff --check -- docs/task/naval` | required files exist and parent README links the project | serial first cluster | 1 | pass |
 | `P1-A` | worker `Linnaeus` | `gpt-5.4-mini` / `xhigh` | Inventory every air-first dependency still on the active naval policy/runtime path. | `naval_domain_surface_split_current_status_20260601*.md`, optional diagnostics notes | code changes, refactors | read-only `rg` inventory plus cited file/line evidence | inventory classifies each dependency as accepted shared, compatibility adapter, or blocker | after `P0-A`; read-only can run alone | 1 + 1 repair | accepted |
@@ -38,7 +43,7 @@ air takeoff, runway, formation, gear, or flight-control fields.
 - Keep acceptance and parent README closure serial.
 - If a cluster exceeds its round cap, stop and re-scope before adding another
   wave.
-- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../engineering/automation/standards/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

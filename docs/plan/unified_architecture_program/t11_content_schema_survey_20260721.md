@@ -389,7 +389,7 @@ the two target structs — the prerequisite adjudication for slice 4
 - `python tools/maintenance/translate_docs_batch.py audit` — the new pair
   `plan/unified_architecture_program/t11_content_schema_survey_20260721` reports
   as `unregistered` (its `pair_id` is not yet in
-  `docs/standards/bilingual_document_clusters.json`); `pair_count` rises 84 → 85
+  `docs/engineering/documentation/reference/bilingual_document_clusters.json`); `pair_count` rises 84 → 85
   while `synced` stays 84 and `diverged`/`missing` stay 0. The registry refresh
   (`clusters --write`) and iteration-ledger registration are the landing party's
   step, per the census section 5 scoping precedent.

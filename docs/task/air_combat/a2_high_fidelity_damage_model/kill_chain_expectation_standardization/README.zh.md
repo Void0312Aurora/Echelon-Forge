@@ -25,7 +25,7 @@ post-P5 KCES harness diagnostics、component-response 量化、standards-layer v
 - 公开来源准入标准：
   [../../../../standards/foundation/public_data_source_admission.zh.md](../../../../standards/foundation/public_data_source_admission.zh.md)
 - 标准维护政策：
-  [../../../../standards/governance/standards_maintenance_policy.zh.md](../../../../standards/governance/standards_maintenance_policy.zh.md)
+  [../../../../engineering/documentation/standards/standards_maintenance_policy.zh.md](../../../../engineering/documentation/standards/standards_maintenance_policy.zh.md)
 - 仓库 AIM-120C-like 代理描述：
   [../../../../../examples/config/database/weapons/air_to_air/aim_120c.json](../../../../../examples/config/database/weapons/air_to_air/aim_120c.json)
 - 仓库 F-16C-like synthetic 目标描述：

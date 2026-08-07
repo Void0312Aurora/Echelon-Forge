@@ -8,7 +8,7 @@ dispatch record。
 派发遵循：
 
 - [子项目创建标准](../../../engineering/automation/rules/subproject_creation_standard.zh.md)
-- [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)
+- [Subagent 使用规范](../../../engineering/automation/standards/subagent_usage_policy.zh.md)
 - [文档权威索引](../../../engineering/automation/rules/document_authority_map.zh.md)
 
 主线程拥有 integration 和最终 scope decisions。本轮 G0 中 subagents 只做 diagnostics。

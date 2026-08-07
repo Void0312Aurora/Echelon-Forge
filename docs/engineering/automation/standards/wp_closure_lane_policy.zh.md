@@ -7,6 +7,12 @@
 
 状态：`2026-05-20`，用于降低主实现路径上的 WP 文档同步工作量。
 
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/automation/standards/wp_closure_lane_policy.md`
+Owner: `engineering/automation`
+Last verified: `2026-08-07`
+
 本规范把实现进展和发布闭合分开。目标是在保持 WP 记录可追踪的同时，
 避免 README、review、双语和归档同步拖慢架构/代码工作。
 

@@ -18,7 +18,7 @@ authority 规则，也不得扩张成第三套并行规范。
 - 来源准入、research/candidate 口径与逐字段 authority gate：
   [公开数据来源准入标准](public_data_source_admission.zh.md)
 - 任务 owner、规则抽取边界与归档处理：
-  [文档生命周期策略](../governance/document_lifecycle_policy.zh.md)
+  [文档生命周期策略](../../engineering/documentation/standards/document_lifecycle_policy.zh.md)
 
 具体任务状态仍由当前任务 README、validation manifest 和 residual register 所有。
 把稳定规则抽取到 standards 不得扩大任务范围、验收状态、时间表或 authority。

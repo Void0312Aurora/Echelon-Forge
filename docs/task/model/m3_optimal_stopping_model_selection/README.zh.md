@@ -20,7 +20,7 @@
 - 子项目标准：
   [子项目创建标准](../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - 分发规则：
-  [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)
+  [Subagent 使用规范](../../../engineering/automation/standards/subagent_usage_policy.zh.md)
 
 ## 目的
 

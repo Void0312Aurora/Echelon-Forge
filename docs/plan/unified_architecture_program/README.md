@@ -247,7 +247,7 @@ and are not scheduled by this program.
 - [Repository Consolidation Plan](../repository_consolidation/README.md)
   (iteration ledger and protocol)
 - [Exact Runtime Refactor Plan](../exact_runtime/cpp_exact_runtime_refactor_plan.md)
-- [Document Lifecycle Policy](../../standards/governance/document_lifecycle_policy.md)
+- [Document Lifecycle Policy](../../engineering/documentation/standards/document_lifecycle_policy.md)
 - [Agent Document Authority Map](../../engineering/automation/rules/document_authority_map.md)
 - [SCAL Conformance Census (2026-07-20)](scal_conformance_census_20260720.md) (T0 output; violation register and amendment basis)
 - [T6 Residual Ledger (2026-07-20)](t6_residual_ledger.md) (T6 output; indexes the I28/I31/I33 machine-red and DTO-migration residuals registered in prose in the iteration ledger)

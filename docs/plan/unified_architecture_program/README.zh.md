@@ -191,7 +191,7 @@ exact-runtime WP4/WP5 进展为门，不由本计划排期。
 - [I72+ 迭代队列（2026-07-26）](iteration_queue_i72_plus_20260726.zh.md)（I61-I71 落地波次后的依赖序执行设计）
 - [仓库整合计划](../repository_consolidation/README.zh.md)（迭代台账与协议）
 - [exact runtime 重构计划](../exact_runtime/cpp_exact_runtime_refactor_plan.zh.md)
-- [文档生命周期政策](../../standards/governance/document_lifecycle_policy.zh.md)
+- [文档生命周期政策](../../engineering/documentation/standards/document_lifecycle_policy.zh.md)
 - [Agent 文档权威地图](../../engineering/automation/rules/document_authority_map.zh.md)
 - [SCAL 一致性普查（2026-07-20）](scal_conformance_census_20260720.zh.md)（T0 产出；违例登记与修订依据）
 - [T6 残差台账（2026-07-20）](t6_residual_ledger.zh.md)（T6 产出；索引迭代台账中以自然语言散落登记的 I28/I31/I33 本机红与 DTO 迁移残差）

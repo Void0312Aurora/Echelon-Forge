@@ -19,7 +19,7 @@ policy surface.
 - Source admission, research/candidate language, and per-field authority gates:
   [Public Data Source Admission Standard](public_data_source_admission.md)
 - Task ownership, extraction limits, and archive handling:
-  [Document Lifecycle Policy](../governance/document_lifecycle_policy.md)
+  [Document Lifecycle Policy](../../engineering/documentation/standards/document_lifecycle_policy.md)
 
 The current task README, validation manifest, and residual register own the
 task-specific state. Moving a stable rule into standards does not expand task

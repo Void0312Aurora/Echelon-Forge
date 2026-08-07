@@ -25,7 +25,7 @@ current authority.
 | [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Phase-2 system issue and review routes active |
 | [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Phase-2 policy and training issue routes active |
 | [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Manual and visualization routes migrated |
-| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation | Automation and review routes migrated |
+| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation, release | Documentation, automation, release, and review routes migrated |
 | [research](research/README.md) | Questions, methods, results, publications, external sources | Phase-1 source-index migration complete |
 
 The [documentation information architecture](project/documentation_architecture.md)
@@ -35,7 +35,7 @@ defines target boundaries, migration phases, and cutover gates.
 
 The following roots still contain maintained sources during the transition:
 
-- [standards](standards/README.md): normative vocabulary and governance;
+- [standards](standards/README.md): domain and modeling vocabulary pending owner migration;
 - [plan](plan/README.md): active/frozen direction and migration plans;
 - [task](task/README.md): scoped implementation work and status.
 
@@ -54,6 +54,7 @@ migration's tracking surface.
 - [Visualization guide](operations/howto/visualization_guide.md)
 - [Automation and agent guidance](engineering/automation/README.md)
 - [Documentation engineering and examples](engineering/documentation/README.md)
+- [Release and dependency governance](engineering/release/README.md)
 - [Retained artifact provenance](reference_artifacts.md)
 - [Test-system orientation](../tests/README.md)
 

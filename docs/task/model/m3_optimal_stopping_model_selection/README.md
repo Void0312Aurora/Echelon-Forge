@@ -20,7 +20,7 @@ Inputs:
 - Subproject standard:
   [Subproject Creation Standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 - Distributed-work rule:
-  [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+  [Subagent Usage Policy](../../../engineering/automation/standards/subagent_usage_policy.md)
 
 ## Purpose
 

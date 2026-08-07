@@ -22,7 +22,7 @@
 - G0-K 验收：
   [environment_substrate_g0_generator_catalog_acceptance_20260606.zh.md](environment_substrate_g0_generator_catalog_acceptance_20260606.zh.md)
 - Subagent 使用规范：
-  [../../../standards/governance/subagent_usage_policy.zh.md](../../../standards/governance/subagent_usage_policy.zh.md)
+  [../../../engineering/automation/standards/subagent_usage_policy.zh.md](../../../engineering/automation/standards/subagent_usage_policy.zh.md)
 
 ## 目的
 

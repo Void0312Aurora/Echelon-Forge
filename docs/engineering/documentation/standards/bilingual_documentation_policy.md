@@ -1,14 +1,23 @@
 # Bilingual Documentation Policy
 
 Language:
-- English canonical: `governance/bilingual_documentation_policy.md`
+- English canonical: `bilingual_documentation_policy.md`
 - Chinese companion: [bilingual_documentation_policy.zh.md](bilingual_documentation_policy.zh.md)
+
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
+Owner: `engineering/documentation-governance`
+Last verified: `2026-08-07`
 
 Status: `2026-08-07` authoritative for maintained documentation language layout.
 
 This policy defines how the repository separates English and Chinese
 documentation so the mainline stays readable, batch-translation friendly, and
 easy to audit.
+
+It applies to tracked maintained documentation. Archived, scratch, and
+local-only material remains outside the default bilingual maintenance verdict.
 
 ## Goals
 
@@ -28,10 +37,10 @@ easy to audit.
 
 Examples:
 
-- `docs/task/flight_dynamics/README.md`
-- `docs/task/flight_dynamics/README.zh.md`
-- `docs/plan/runtime_facade/runtime_facade_contract_plan.md`
-- `docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md`
+- `docs/engineering/documentation/README.md`
+- `docs/engineering/documentation/README.zh.md`
+- `docs/systems/physics/work/issues/physics_engine_roadmap.md`
+- `docs/systems/physics/work/issues/physics_engine_roadmap.zh.md`
 
 ## Authority Rules
 
@@ -45,8 +54,8 @@ Examples:
 Transitional rule during migration:
 
 - If a maintained document currently exists only as `.zh.md`, it may still be
-- used as a working source, but it should be queued for an English companion in
-- the next relevant batch.
+  used as a working source, but it should be queued for an English companion in
+  the next relevant batch.
 
 ## Maintained Surface Tiers
 
@@ -61,14 +70,20 @@ Tier A: strict bilingual maintained surface
   `docs/operations/`, `docs/engineering/`, and `docs/research/`
 - agent-facing authority, prompts, and rules under `docs/engineering/automation/`
 - retained-reference index: `docs/reference_artifacts.md`
-- authority and governance trees under `docs/standards/`
+- owner-local standards and references admitted to the strict maintained
+  surface, including `docs/engineering/documentation/standards/` and
+  `docs/engineering/documentation/reference/`
+- maintained standards under the migration-era legacy `docs/standards/` root
+  until their content owners move them
 - operator-facing reference and how-to material under `docs/operations/`
-- stable plan authority under:
+- stable plan authority still routed through the migration-era legacy plan
+  surface:
   - `docs/plan/README.md`
   - `docs/plan/architecture/**`
   - `docs/plan/runtime_facade/**`
   - `docs/plan/cooperative/**`
-- stable task navigation only:
+- stable task navigation still routed through the migration-era legacy task
+  surface:
   - `docs/task/README.md`
   - `docs/task/task_archive_convergence_plan_20260518.md`
   - subproject README navigation pages under `docs/task/*/README.md`
@@ -118,7 +133,7 @@ Maintained bilingual pairs should include a short language block near the top:
 ```md
 Language:
 - English canonical: `README.md`
-- Chinese companion: [README.zh.md](../README.zh.md)
+- Chinese companion: [README.zh.md](README.zh.md)
 ```
 
 If a companion is not available yet, say so explicitly rather than mixing both
@@ -129,8 +144,8 @@ languages throughout the body.
 Maintained bilingual pairs should also participate in the machine-readable
 cluster registry:
 
-- [Bilingual Document Clusters](bilingual_document_clusters.md)
-- registry file: `../bilingual_document_clusters.json`
+- [Bilingual Document Clusters](../reference/bilingual_document_clusters.md)
+- registry file: `../reference/bilingual_document_clusters.json`
 
 Each cluster record tracks:
 
@@ -157,8 +172,11 @@ Audit interpretation rule:
   drift verdict, even if they retain mirrored bilingual files for traceability.
 - After reviewing changed pairs, refresh only those pair records with repeated
   `clusters --write --pair <pair_id>` arguments, then rerun `audit`.
-- A full `clusters --write` is allowed only after a full-surface bilingual
-  review; it must not be used to hide unrelated legacy divergence.
+- A full `clusters --write` is allowed after a full-surface bilingual review.
+  It is also allowed for a canonical-path or registry-path migration when the
+  pre-migration baseline audit is clean and the registry diff proves that
+  unrelated records retain their paths, hashes, and verification dates. It must
+  not be used to hide unrelated legacy divergence.
 - `needs-en-update` / `needs-zh-update` usually indicates one-sided follow-up
   work.
 - `diverged` means both sides changed relative to the recorded baseline and
@@ -191,7 +209,8 @@ Recommended batch shape:
 - one directory at a time
 - `4-8` files per translation batch
 - keep one batch within a single subject area such as
-  `docs/plan/architecture/` or `docs/standards/joint/`
+  `docs/engineering/documentation/standards/` or the migration-era legacy
+  `docs/standards/joint/`
 - run a link/path sanity check after each batch
 
 This keeps terminology more consistent and makes review easier.
@@ -200,7 +219,7 @@ This keeps terminology more consistent and makes review easier.
 
 The maintained batch translator for this repo is:
 
-- [tools/maintenance/translate_docs_batch.py](../../../tools/maintenance/translate_docs_batch.py)
+- [tools/maintenance/translate_docs_batch.py](../../../../tools/maintenance/translate_docs_batch.py)
 
 Tool requirements:
 
@@ -234,6 +253,6 @@ acceptance bar:
 
 ## Related Docs
 
-- [docs/README.md](../../README.md)
-- [Archived bilingual migration record](../../plan/archive/documentation_bilingual_migration_plan_20260518.md)
-- [document_alignment_map.md](../overview/document_alignment_map.md)
+- [docs/README.md](../../../README.md)
+- [Archived bilingual migration record](../../../plan/archive/documentation_bilingual_migration_plan_20260518.md)
+- [document_alignment_map.md](../../../standards/overview/document_alignment_map.md)

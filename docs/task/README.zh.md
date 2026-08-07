@@ -16,7 +16,7 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
 - 当前只有稳定任务导航面在朝着“英文规范 `.md` 为主、中文 `.zh.md` 为辅”的方向发展。
 - `docs/task/**` 下高频变更的 dated task 长文默认按英文主文维护，除非某个更小切片被明确提升到持续双语维护面。
 - 该策略位于
-  [docs/standards/governance/bilingual_documentation_policy.zh.md](../standards/governance/bilingual_documentation_policy.zh.md)。
+  [docs/engineering/documentation/standards/bilingual_documentation_policy.zh.md](../engineering/documentation/standards/bilingual_documentation_policy.zh.md)。
 
 此处大部分文件是特定分析、冻结计划、任务板、检查点或收敛过程的带日期快照。如需某个领域的最新上下文，请优先从该领域的 `README.md` 开始；更深层 dated 文档应视为支撑记录，而不是稳定根入口。
 

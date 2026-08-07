@@ -117,7 +117,7 @@ def test_selective_cluster_refresh_rejects_unknown_pair(tmp_path: Path) -> None:
 
 def test_repository_bilingual_registry_matches_the_maintained_surface() -> None:
   docs_root = REPO_ROOT / "docs"
-  registry_path = docs_root / "standards/bilingual_document_clusters.json"
+  registry_path = docs_root / "engineering/documentation/reference/bilingual_document_clusters.json"
   entries = json.loads(registry_path.read_text(encoding="utf-8"))["pairs"]
   registered = {
     entry["pair_id"]: entry

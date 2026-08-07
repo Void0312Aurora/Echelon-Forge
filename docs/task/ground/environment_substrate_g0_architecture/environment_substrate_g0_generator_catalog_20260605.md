@@ -23,7 +23,7 @@ Inputs:
 - G0-K acceptance:
   [environment_substrate_g0_generator_catalog_acceptance_20260606.md](environment_substrate_g0_generator_catalog_acceptance_20260606.md)
 - Subagent usage policy:
-  [../../../standards/governance/subagent_usage_policy.md](../../../standards/governance/subagent_usage_policy.md)
+  [../../../engineering/automation/standards/subagent_usage_policy.md](../../../engineering/automation/standards/subagent_usage_policy.md)
 
 ## Purpose
 

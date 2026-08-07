@@ -4,7 +4,14 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-06-10` authoritative for the maintained standards tree.
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/standards/README.md`
+Owner: `legacy/domain-and-modeling-standards`
+Last verified: `2026-08-07`
+
+Status: `2026-08-07` migration-time index for maintained legacy domain and
+modeling standards.
 
 This directory defines the standardized modeling baseline the project intends to
 use going forward. Its job is not to restate every active implementation task.
@@ -12,6 +19,11 @@ Its job is to tell contributors which concepts belong to the joint/common core,
 which belong to service profiles, which belong to domain specializations, which
 cross-domain runtime/bridge/foundation constraints every layer must honor, and
 how the current code/runtime should align with that split.
+
+This is a migration-time legacy root for domain and modeling standards. New
+documentation, automation, dependency, and release governance belongs under
+the relevant [engineering owner](../engineering/README.md), not in a recreated
+`governance/` subtree here.
 
 ## Purpose
 
@@ -21,8 +33,9 @@ The maintained standards tree exists to keep three things from drifting apart:
 - the repository's current runtime and test contracts
 - active task planning under `docs/task/`
 
-The standards tree is therefore the ownership map. Task plans may describe
-current implementation waves, but they should not redefine which layer owns
+Within domain and modeling semantics, this tree is the current ownership map.
+Task plans may describe current implementation waves, but they should not
+redefine which layer owns
 `authority_scope`, `task_group_id`, `runway_slot_code`, or `warfare_role_code`.
 Implementation maturity in a task area is useful status context, but it is not
 the standard ownership hierarchy.
@@ -154,8 +167,8 @@ particular:
   instead of mirroring the task folder layout or the current rollout maturity of
   each domain.
 
-If a task document and a standards document appear to disagree on ownership, the
-standards tree wins for naming and layering.
+If a task document and an applicable maintained standard disagree on ownership,
+the standard belonging to that content owner wins for naming and layering.
 
 ## Research Baseline
 
@@ -247,27 +260,27 @@ Additional maintained supplements:
   common core just because the current implementation started in one domain.
 - Standards changes that register, refresh, hold, or retire implementation
   contracts must follow
-  [Standards Maintenance Policy](governance/standards_maintenance_policy.md).
+  [Standards Maintenance Policy](../engineering/documentation/standards/standards_maintenance_policy.md).
 - Documentation kinds, lifecycle states, README boundaries, evidence packs,
   generated output, config indexes, links, and archive transitions must follow
-  the [Document Lifecycle Policy](governance/document_lifecycle_policy.md).
+  the [Document Lifecycle Policy](../engineering/documentation/standards/document_lifecycle_policy.md).
 - Repository-wide code and documentation consolidation is sequenced through the
   [Repository Consolidation Plan](../plan/repository_consolidation/README.md).
 - When work is split across subagents or workers, follow
-  [Subagent Usage Policy](governance/subagent_usage_policy.md).
+  [Subagent Usage Policy](../engineering/automation/standards/subagent_usage_policy.md).
 - When a simulation-architecture WP is implementation-complete but still needs
   publication cleanup, use
-  [WP Closure Lane Policy](governance/wp_closure_lane_policy.md).
+  [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.md).
 
 ## Related Documents
 
-- [Bilingual Documentation Policy](governance/bilingual_documentation_policy.md)
-- [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
-- [Document Lifecycle Policy](governance/document_lifecycle_policy.md)
-- [Standards Maintenance Policy](governance/standards_maintenance_policy.md)
-- [Release And Dependency Policy](governance/release_and_dependency_policy.md)
-- [Subagent Usage Policy](governance/subagent_usage_policy.md)
-- [WP Closure Lane Policy](governance/wp_closure_lane_policy.md)
+- [Bilingual Documentation Policy](../engineering/documentation/standards/bilingual_documentation_policy.md)
+- [Bilingual Document Clusters](../engineering/documentation/reference/bilingual_document_clusters.md)
+- [Document Lifecycle Policy](../engineering/documentation/standards/document_lifecycle_policy.md)
+- [Standards Maintenance Policy](../engineering/documentation/standards/standards_maintenance_policy.md)
+- [Release And Dependency Policy](../engineering/release/standards/release_and_dependency_policy.md)
+- [Subagent Usage Policy](../engineering/automation/standards/subagent_usage_policy.md)
+- [WP Closure Lane Policy](../engineering/automation/standards/wp_closure_lane_policy.md)
 - [Document Alignment Map](overview/document_alignment_map.md)
 - [Simulation Conventions](foundation/conventions.md)
 - [Gradient Realism Principles](foundation/gradient_realism_principles.md)

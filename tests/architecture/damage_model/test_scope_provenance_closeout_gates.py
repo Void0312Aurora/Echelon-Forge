@@ -582,6 +582,9 @@ def test_geometry_warhead_row_provenance_consumes_required_inputs(
     "target_geometry_source_ledger",
     "warhead_source_ledger",
   }
+  assert required_inputs["subagent_usage_policy"]["path"] == (
+    "docs/engineering/automation/standards/subagent_usage_policy.md"
+  )
   for row in required_inputs.values():
     assert row["exists"] is True
     assert len(row["sha256"]) == 64

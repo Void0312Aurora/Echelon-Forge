@@ -6,6 +6,12 @@ Language:
 
 状态：`2026-05-23`，适用于维护中文档与实现任务中的分布式工作。
 
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/automation/standards/subagent_usage_policy.md`
+Owner: `engineering/automation`
+Last verified: `2026-08-07`
+
 在分发实施 worker 时使用这些规则。
 
 ## 目的与范围
@@ -35,7 +41,8 @@ Language:
 - 同一个文件通常只应有一个写作者，除非编辑范围明确不重叠且非常小。
 - 除非负责 integration pass，worker 不得回滚、改写或重排其他 worker 已完成
   的编辑。
-- naming 与 layering 以 standards tree 为准。
+- 在相关 owner 的职责范围内，naming 与 layering 以该 owner 接受并维护在
+  `docs/<owner>/standards/` 下的标准为准。
 - 只有在子任务彼此独立、且不互相等待时才并行分发。
 - 不要把当前立即阻塞的那一步交出去。
 - 如果两个子任务可能碰到同一段行范围或同一套 canonical 术语，就改为串行。
@@ -83,29 +90,33 @@ sidecar plans、双语 companion、dispatch queue、ledger 或 acceptance files 
 
 ## 模型与思考预算规则
 
-当工具支持模型选择与 reasoning budget 时，subagent 派发必须记录两者。
+当工具支持相关控制时，subagent 派发必须记录 capability/risk tier 与 reasoning
+budget。只有当前执行环境明确列出某个 model ID 可用时，才能记录该精确 ID；不得
+从历史任务 packet 或仓库文字中复制 model ID。
 
 默认复杂度阶梯：
 
-- 轻量、局部或 diagnostics-only 任务应使用 `gpt-5.4-mini`，reasoning 为
-  `xhigh`。这包括文档审计、source fact ledger、聚焦验证、状态同步，以及不拥有
-  复杂代码的 closure-lane chores。
-- 中等实现或集成任务应使用 `gpt-5.4`，reasoning 至少为 `medium`。如果任务触及
-  public APIs、bindings、architecture guards、compatibility behavior，或多个紧密相关
-  的文件族，应使用 `high`。
-- 复杂重构、架构关键 seam、public contracts、scheduler semantics、runtime
+- 低风险、局部或 diagnostics-only 任务，应使用能够可靠检查被分配证据的、成本最低
+  的当前通用能力档。这包括文档审计、source fact ledger、聚焦验证、状态同步，以及
+  不拥有复杂代码的 closure-lane chores。
+- 中风险实现或集成任务，应使用具备实施能力的档位，并在控制可用时至少使用
+  medium-equivalent reasoning。若任务触及 public APIs、bindings、architecture guards、
+  compatibility behavior，或多个紧密相关的文件族，应提高 reasoning budget。
+- 高风险重构、架构关键 seam、public contracts、scheduler semantics、runtime
   materialization、capability/spawn/fidelity paths，以及 counterfactual 或 replay
-  semantics，应使用 `gpt-5.4`，reasoning 为 `high` 或 `xhigh`。如果错误设计会导致
-  后续返工或扩大架构边界，应使用 `xhigh`。
-- 如果任务复杂度难以判定，应选择更强的模型/预算，或把立即阻塞的工作留在主线程。
+  semantics，应使用当前可用且适合任务的最强 coding/reasoning 能力档，并采用
+  high-equivalent 或更强 reasoning。如果错误设计会导致后续返工或扩大架构边界，
+  应使用有充分理由的最高预算。
+- 如果任务复杂度难以判定，应归入更高风险档，或把立即阻塞的工作留在主线程。
 
 最低规则：
 
-- 非平凡 implementation、refactor、public-surface 或 architecture 工作不得低于
-  `medium` reasoning。
-- 不要把复杂跨文件设计或高风险代码所有权交给 mini-model worker，即使 reasoning 为
-  `xhigh`。
-- dispatch queue 与 worker packet 应包含 `Model / reasoning` 列或等价字段。任何偏离
+- 当 reasoning 控制可用时，非平凡 implementation、refactor、public-surface 或
+  architecture 工作不得低于 medium-equivalent reasoning。
+- 不要仅因为较低能力或速度优化档允许更大 reasoning budget，就把复杂跨文件设计或
+  高风险代码所有权交给该档位。
+- dispatch queue 与 worker packet 应包含 `Capability tier / model ID / reasoning`
+  列或等价字段。若当前环境不暴露可选择的精确 ID，则记录 `model ID: n/a`。任何偏离
   本规范的派发都必须在 dispatch packet 中显式说明。
 
 ## 派发生命周期与后台执行

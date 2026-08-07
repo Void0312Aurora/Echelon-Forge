@@ -17,7 +17,7 @@
 - P4 harness 计划：
   [kill_chain_calibration_harness_plan_20260623.zh.md](kill_chain_calibration_harness_plan_20260623.zh.md)
 - 标准维护政策：
-  [../../../../standards/governance/standards_maintenance_policy.zh.md](../../../../standards/governance/standards_maintenance_policy.zh.md)
+  [../../../../engineering/documentation/standards/standards_maintenance_policy.zh.md](../../../../engineering/documentation/standards/standards_maintenance_policy.zh.md)
 - 标准树总览：
   [../../../../standards/README.zh.md](../../../../standards/README.zh.md)
 

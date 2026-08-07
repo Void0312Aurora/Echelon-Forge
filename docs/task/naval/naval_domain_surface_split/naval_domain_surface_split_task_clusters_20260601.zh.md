@@ -3,6 +3,11 @@
 状态：`2026-06-12`，`P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` 已验收；面向
 [海军领域执行面拆分](README.zh.md) 的有限任务簇计划。
 
+accepted 行中的 model ID 保留历史派发记录，不是当前选择指引。任何 planned 或
+reopened cluster 都必须按照
+[Subagent 使用规范](../../../engineering/automation/standards/subagent_usage_policy.zh.md)
+重新选择当前 capability/risk tier、可用模型和 reasoning budget。
+
 ## Boundary Decision
 
 本子项目可以修改海军任务文档、active naval training-entry guard、command/action/
@@ -15,7 +20,7 @@ surface 所有，不能归 air takeoff、runway、formation、gear 或 flight-co
 
 ## Finite Task Cluster List
 
-| Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
+| Cluster | Owner | 历史派发记录 / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `P0-A` | main thread | current | 创建子项目、状态、队列、验收和父级海军索引链接。 | `docs/task/naval/naval_domain_surface_split/**`, `docs/task/naval/README*` | runtime code、测试、能力提升声明 | `git diff --check -- docs/task/naval` | 必需文件存在且父 README 链接本项目 | 第一个串行簇 | 1 | pass |
 | `P1-A` | worker `Linnaeus` | `gpt-5.4-mini` / `xhigh` | 盘点 active naval policy/runtime 路径上仍存在的所有 air-first 依赖。 | `naval_domain_surface_split_current_status_20260601*.md`, optional diagnostics notes | 代码改动、重构 | 只读 `rg` inventory 加文件/行证据 | 每项依赖被分类为 accepted shared、compatibility adapter 或 blocker | `P0-A` 后；只读可单独运行 | 1 + 1 repair | accepted |
@@ -34,7 +39,7 @@ surface 所有，不能归 air takeoff、runway、formation、gear 或 flight-co
 - 触及 `src/runtime/contracts/**` 的 command/action contract 工作保持串行。
 - acceptance 和父级 README closure 保持串行。
 - 如果 cluster 超过 round cap，先停止并重新划分范围，不能直接加下一波。
-- 遵循 [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)。
+- 遵循 [Subagent 使用规范](../../../engineering/automation/standards/subagent_usage_policy.zh.md)。
 
 ## Worker Packet Requirements
 

@@ -8,6 +8,12 @@ Language:
 Status: `2026-05-20` authoritative for reducing WP documentation synchronization
 work on the main implementation path.
 
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/automation/standards/wp_closure_lane_policy.md`
+Owner: `engineering/automation`
+Last verified: `2026-08-07`
+
 This policy separates implementation progress from publication closure. It is
 intended to keep architecture and code work moving while preserving traceable WP
 records.

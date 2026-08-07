@@ -6,8 +6,8 @@
 
 Document kind: `standard`
 Lifecycle: `maintained`
-Canonical: `docs/standards/governance/document_lifecycle_policy.md`
-Owner: `docs/standards/governance`
+Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
+Owner: `engineering/documentation-governance`
 Last verified: `2026-08-07`
 
 状态：`2026-08-07`，仓库文档分类、维护、审阅、生成和归档的权威规范。
@@ -31,15 +31,19 @@ Last verified: `2026-08-07`
 
 | Kind | 用途 | 通常位置 | 权威边界 |
 | --- | --- | --- | --- |
-| `standard` | 稳定术语、所有权、治理规则和强制约束 | `docs/standards/` | 在声明范围内具有规范性；不能覆盖当前代码或可执行证据所证明的实现事实。 |
-| `plan` | 有界架构方向、顺序、迁移和验收设计 | `docs/plan/` | 只授权明确冻结或显式 active 的范围。 |
-| `task` | 当前实现工作、状态、残余和验收包 | `docs/task/` | 拥有范围化执行状态；不能重定义由 standards 拥有的跨项目术语。 |
+| `standard` | 稳定术语、所有权、治理规则和强制约束 | 内容 owner 的 `standards/` 子树 | 在声明范围内具有规范性；不能覆盖当前代码或可执行证据所证明的实现事实。 |
+| `plan` | 有界架构方向、顺序、迁移和验收设计 | 内容 owner 的 `work/issues/` 子树；全项目计划进入 `docs/project/` | 只授权明确冻结或显式 active 的范围。 |
+| `task` | 当前实现工作、状态、残余和验收包 | 内容 owner 的 `work/active/` 子树 | 拥有范围化执行状态；不能重定义由适用 standards owner 拥有的跨项目术语。 |
 | `reference` | 经核验的当前结构、API、能力或清单说明 | owner 的 `reference/` 子树或组件 README | 只对最后核验状态具有描述权威。 |
 | `howto` | 可复现的操作员或维护者流程 | `docs/operations/howto/` 或 owner 本地 how-to 表面 | 只对注明的平台、前置条件和已核验命令路径有效。 |
-| `review` | 独立发现、风险评估、验收决定或否决 | 当前为 `docs/task/review/` | 记录判断；行动项必须转入 task 或 issue，review 本身不实现变更。 |
-| `evidence` | 不可变的输入、测量、清单、图表或验收证明 | 紧邻所属任务的本地 `evidence/` 包 | 只支撑有界 claim；不是当前行为或政策权威。 |
-| `generated` | 由明确的 tracked 输入可复现生成的输出 | 本地 `generated/` 目录 | 不可手工成为规范；producer 和输入才是权威。 |
-| `config-index` | canonical scenario 或配置输入的人类可读索引 | 配置 owner 附近或 `docs/` 下 | 指向配置真值，不得复制 payload。 |
+| `review` | 独立发现、风险评估、验收决定或否决 | 内容 owner 的 `reviews/` 子树 | 记录判断；行动项必须转入 `work/active/` 或 `work/issues/`，review 本身不实现变更。 |
+| `evidence` | 不可变的输入、测量、清单、图表或验收证明 | 紧邻 owner-local active work 或 review 的 `evidence/` 包 | 只支撑有界 claim；不是当前行为或政策权威。 |
+| `generated` | 由明确的 tracked 输入可复现生成的输出 | owner-local `generated/` 目录 | 不可手工成为规范；producer 和输入才是权威。 |
+| `config-index` | canonical scenario 或配置输入的人类可读索引 | 所属 reference 或配置表面 | 指向配置真值，不得复制 payload。 |
+
+`docs/standards/`、`docs/plan/`、`docs/task/` 和 `docs/task/review/` 在维护文档
+完成内容 owner 归属前，仍是迁移期遗留表面。临时位置不会改变文档类型或权威；已有
+owner-local 路由时，不得继续向这些遗留表面扩张新工作。
 
 ### 生命周期状态
 
@@ -98,7 +102,7 @@ Last verified: `<YYYY-MM-DD>` 或 `not established`
 | How-to | 预期结果、前置条件、准确步骤、可观察成功结果、适用时的回滚或恢复路径。 |
 | Review | 被审 revision/日期、检查证据、发现与严重度、结论或决策状态、权威边界、后续 owner。 |
 
-[文档编写实例](../../engineering/documentation/structure_examples.zh.md)展示合规形状，
+[文档编写实例](../structure_examples.zh.md)展示合规形状，
 但不会建立第二套规范权威。
 
 ## README 边界
@@ -205,6 +209,9 @@ Canonical 配置 payload 不进入 `docs/`：
 - 训练和 runtime 配置保持在 `examples/config/` 或对应维护配置表面；
 - frozen 与 archived 输入由配置系统保留其声明的生命周期。
 
+如果机器可读的文档维护注册表只由文档工具消费，它可以与所属 owner 的 reference
+材料放在一起；这种文件属于治理索引，不是 runtime 配置 payload。
+
 文档可以提供 `config-index`，链接这些文件并说明用途、生命周期、兼容边界和验证
 命令。禁止把完整 JSON payload 粘贴进 Markdown，也不得在 review 或 task 包中维护
 第二份可编辑配置副本。
@@ -233,20 +240,20 @@ Archived 文件除链接修复、许可/权利修正或显式 erratum 外不可�
 ```bash
 git diff --check
 python tools/maintenance/translate_docs_batch.py audit --root docs \
-  --registry docs/standards/bilingual_document_clusters.json
+  --registry docs/engineering/documentation/reference/bilingual_document_clusters.json
 ```
 
 维护中的链接/文档 gate 建立后还必须运行该 gate。迁移采用渐进顺序：先建立合规
 入口和替代者，再修复链接，最后移动或删除冗余材料。大规模路径迁移、archive
 折叠、evidence 删除或双语重写必须分别进入独立审阅迭代。
 
-全仓精简顺序记录在
-[仓库精简与整合路线图](../../plan/repository_consolidation/README.zh.md)。
+全仓精简顺序仍记录在迁移期遗留的
+[仓库精简与整合路线图](../../../plan/repository_consolidation/README.zh.md)。
 
 ## 相关文档
 
-- [Agent 文档权威索引](../../engineering/automation/rules/document_authority_map.zh.md)
+- [Agent 文档权威索引](../../automation/rules/document_authority_map.zh.md)
 - [双语文档政策](bilingual_documentation_policy.zh.md)
 - [标准维护政策](standards_maintenance_policy.zh.md)
-- [子项目创建标准](../../engineering/automation/rules/subproject_creation_standard.zh.md)
-- [仓库精简与整合路线图](../../plan/repository_consolidation/README.zh.md)
+- [子项目创建标准](../../automation/rules/subproject_creation_standard.zh.md)
+- [仓库精简与整合路线图](../../../plan/repository_consolidation/README.zh.md)

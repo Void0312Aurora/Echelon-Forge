@@ -104,7 +104,7 @@ The active design conclusion is:
     focused maintained path, while the `TM01-B` launch bridge was recorded as a
     source-backed residual for later architecture ownership.
 21. When this subproject is split across subagents or workers, follow the
-    [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
+    [Subagent Usage Policy](../../engineering/automation/standards/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
 22. Commit messages for implementation closure should use capability/result
@@ -775,7 +775,7 @@ the maintained training mainline while preserving current facade and
 information-state rules.
 
 `WP7.5` work should use the project subagent rules in
-[Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md)
+[Subagent Usage Policy](../../engineering/automation/standards/subagent_usage_policy.md)
 when it is split across workers.
 
 ## WP8 SCAL Learning Face
