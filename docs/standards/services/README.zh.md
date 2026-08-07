@@ -83,7 +83,7 @@ Language:
 
 ## 相关文档
 
-- [联合标准总览](../joint/README.md)
+- [联合标准总览](../../domains/joint/README.zh.md)
 - [文档对齐映射](../overview/document_alignment_map.md)
 - [场景配置指南](../bridge/scenario_guide.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)

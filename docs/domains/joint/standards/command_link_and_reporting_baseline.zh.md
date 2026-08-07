@@ -4,6 +4,12 @@
 - 英文主文：[command_link_and_reporting_baseline.md](command_link_and_reporting_baseline.md)
 - 中文辅文：`command_link_and_reporting_baseline.zh.md`
 
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/standards/command_link_and_reporting_baseline.md`
+Owner: `domains/joint`
+Last verified: `2026-08-07`
+
 状态：`2026-06-10`，与活跃 `MissionCommandCore` target metadata 对齐的权威 joint command-link contract。
 
 本文档记录 `MissionCommand`、`CommandLink`、`DataLink` 和 `ROE` 在 joint/common core 中的最小闭环。

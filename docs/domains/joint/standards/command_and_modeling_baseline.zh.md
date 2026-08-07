@@ -4,6 +4,12 @@ Language:
 - English canonical: [command_and_modeling_baseline.md](command_and_modeling_baseline.md)
 - Chinese companion: `command_and_modeling_baseline.zh.md`
 
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/standards/command_and_modeling_baseline.md`
+Owner: `domains/joint`
+Last verified: `2026-08-07`
+
 状态：`2026-06-10`，当前维护中的 joint command 与 modeling boundary 权威说明。
 
 本文档定义项目中 joint/common core 的边界，用来统一指挥关系、authority scope、intent / order / report，以及可跨空海陆复用的最小数据模型。
@@ -73,7 +79,7 @@ authority 模型要保持显式，不要把它藏进平台运动参数里。
 
 joint 层应该保留组织骨架，而不是军种 doctrine 细节。
 
-建议保留在 common core 的字段有：
+必须保留在 common core 的字段有：
 
 - `task_family`
 - `service_profile`
@@ -128,7 +134,8 @@ common 层可以描述一个单元被 support 或 supporting，但不应写死�
 - service profile 定义这些名词在特定任务域中的解释方式
 - platform/task specialization 定义具体几何、时序和控制细节
 
-因此 `docs/standards/joint/*` 应负责命名边界和禁止项，而军种与平台文档应负责具体执行词汇。
+因此 `docs/domains/joint/standards/*` 应负责命名边界和禁止项，而军种与平台文档
+应负责具体执行词汇。
 
 ## 8. 实现含义
 

@@ -133,8 +133,9 @@ def test_standards_governance_batch_a_closure_is_backed_by_code_and_standard() -
   bindings = _text("src", "interfaces", "python", "bindings_command.cpp")
   command_standard = _text(
     "docs",
-    "standards",
+    "domains",
     "joint",
+    "standards",
     "command_link_and_reporting_baseline.md",
   )
 
@@ -200,7 +201,13 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
   air_act = _text("docs", "standards", "air", "act.md")
   bridge = _text("docs", "standards", "bridge", "runtime_workflow_and_contract_baseline.md")
-  joint = _text("docs", "standards", "joint", "command_and_modeling_baseline.md")
+  joint = _text(
+    "docs",
+    "domains",
+    "joint",
+    "standards",
+    "command_and_modeling_baseline.md",
+  )
   naval = _text("docs", "standards", "naval", "minimal_task_structure.md")
 
   assert "GAP-004" in status

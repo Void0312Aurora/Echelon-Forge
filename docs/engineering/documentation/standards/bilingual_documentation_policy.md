@@ -73,6 +73,7 @@ Tier A: strict bilingual maintained surface
 - owner-local standards and references admitted to the strict maintained
   surface, including `docs/engineering/documentation/standards/` and
   `docs/engineering/documentation/reference/`
+- migrated Joint common-core authority under `docs/domains/joint/`
 - maintained standards under the migration-era legacy `docs/standards/` root
   until their content owners move them
 - operator-facing reference and how-to material under `docs/operations/`
@@ -209,8 +210,7 @@ Recommended batch shape:
 - one directory at a time
 - `4-8` files per translation batch
 - keep one batch within a single subject area such as
-  `docs/engineering/documentation/standards/` or the migration-era legacy
-  `docs/standards/joint/`
+  `docs/engineering/documentation/standards/` or `docs/domains/joint/`
 - run a link/path sanity check after each batch
 
 This keeps terminology more consistent and makes review easier.

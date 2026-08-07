@@ -18,9 +18,9 @@ Language:
 
 当前联合层主依据：
 
-- [联合标准总览](../joint/README.md)
-- [联合指挥与建模基线](../joint/command_and_modeling_baseline.md)
-- [联合命令链与汇报基线](../joint/command_link_and_reporting_baseline.md)
+- [联合标准总览](../../domains/joint/README.zh.md)
+- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
 - [仿真约定](../foundation/conventions.md)
 - [梯度真实性原则](../foundation/gradient_realism_principles.zh.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)

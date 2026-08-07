@@ -147,5 +147,5 @@ Marine 标准化最合适的共享锚点是：
 - [军种画像总览](README.md)
 - [空中平台特化](../air/README.md)
 - [海军特化](../naval/README.md)
-- [联合指挥与建模基线](../joint/command_and_modeling_baseline.md)
-- [联合命令链与汇报基线](../joint/command_link_and_reporting_baseline.md)
+- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)

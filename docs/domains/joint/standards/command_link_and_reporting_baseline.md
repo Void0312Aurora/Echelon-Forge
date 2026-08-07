@@ -4,6 +4,12 @@ Language:
 - English canonical: `command_link_and_reporting_baseline.md`
 - Chinese companion: [command_link_and_reporting_baseline.zh.md](command_link_and_reporting_baseline.zh.md)
 
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/standards/command_link_and_reporting_baseline.md`
+Owner: `domains/joint`
+Last verified: `2026-08-07`
+
 Status: `2026-06-10` authoritative joint command-link contract aligned with active `MissionCommandCore` targeting metadata.
 
 This document captures the minimum closed loop for `MissionCommand`, `CommandLink`, `DataLink`, and `ROE` in the joint/common core.

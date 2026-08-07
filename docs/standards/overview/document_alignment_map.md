@@ -16,9 +16,9 @@ maintained standards tree.
 
 The current joint-layer primary references are:
 
-- [Joint Standards Overview](../joint/README.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [Joint Standards Overview](../../domains/joint/README.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [Simulation Conventions](../foundation/conventions.md)
 - [Gradient Realism Principles](../foundation/gradient_realism_principles.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)

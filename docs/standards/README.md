@@ -10,11 +10,13 @@ Canonical: `docs/standards/README.md`
 Owner: `legacy/domain-and-modeling-standards`
 Last verified: `2026-08-07`
 
-Status: `2026-08-07` migration-time index for maintained legacy domain and
-modeling standards.
+Status: `2026-08-07` migration-time index for remaining legacy standards and
+their migrated owner routes.
 
-This directory defines the standardized modeling baseline the project intends to
-use going forward. Its job is not to restate every active implementation task.
+This index routes the standardized modeling baseline the project intends to use
+going forward. Joint common-core authority has moved to `docs/domains/joint/`;
+the remaining subtrees here are migration-time sources. Its job is not to
+restate every active implementation task.
 Its job is to tell contributors which concepts belong to the joint/common core,
 which belong to service profiles, which belong to domain specializations, which
 cross-domain runtime/bridge/foundation constraints every layer must honor, and
@@ -33,9 +35,10 @@ The maintained standards tree exists to keep three things from drifting apart:
 - the repository's current runtime and test contracts
 - active task planning under `docs/task/`
 
-Within domain and modeling semantics, this tree is the current ownership map.
-Task plans may describe current implementation waves, but they should not
-redefine which layer owns
+Within domain and modeling semantics, this migration-time index and the
+owner-local standards it routes to form the current ownership map. Task plans
+may describe current implementation waves, but they should not redefine which
+layer owns
 `authority_scope`, `task_group_id`, `runway_slot_code`, or `warfare_role_code`.
 Implementation maturity in a task area is useful status context, but it is not
 the standard ownership hierarchy.
@@ -43,15 +46,15 @@ the standard ownership hierarchy.
 ## Tree Structure
 
 Since `2026-03-23`, the standards documentation is no longer organized around
-an "air first, generalize later" line. Its maintained ownership spine now
+an "air first, generalize later" line. Its distributed ownership spine now
 follows:
 
-1. `joint/`
-2. `services/`
-3. `air/`
-4. `naval/`
-5. `ground/`
-6. `model/`
+1. migrated `docs/domains/joint/`
+2. legacy `services/`
+3. legacy `air/`
+4. legacy `naval/`
+5. legacy `ground/`
+6. legacy `model/`
 
 This spine is read together with the cross-domain standards under `foundation/`
 and `bridge/`, including runtime workflow and contract baselines. Those
@@ -64,7 +67,7 @@ action adapters, and diagnostics. It does not own service or domain semantics.
 
 The maintained tree therefore reflects a deliberate modeling split:
 
-- `joint/` defines common relationships, authority, tasking, reporting, and
+- `docs/domains/joint/` defines common relationships, authority, tasking, reporting, and
   workflow seams that remain valid across services.
 - `services/` explains how those common objects map onto the Air Force, Army,
   Navy, and Marine Corps.
@@ -93,7 +96,7 @@ Use this hierarchy when deciding where a stable concept belongs:
    coordinate and time conventions, realism gates, public-source admission,
    scenario/runtime workflow boundaries, DTO alignment, and current testable
    contracts. They constrain every service and specialization.
-2. `joint/` owns shared semantic objects such as command relationships,
+2. `docs/domains/joint/` owns shared semantic objects such as command relationships,
    authority scopes, task/report identifiers, support relationships, and other
    names that must mean the same thing across services.
 3. `services/` owns service-profile interpretation: how the Air Force, Army,
@@ -118,9 +121,9 @@ standard layer.
 
 For new work, read in this order:
 
-1. [Joint Standards Overview](joint/README.md)
-2. [Joint Command and Modeling Baseline](joint/command_and_modeling_baseline.md)
-3. [Joint Command-Link and Reporting Baseline](joint/command_link_and_reporting_baseline.md)
+1. [Joint Standards Overview](../domains/joint/README.md)
+2. [Joint Command and Modeling Baseline](../domains/joint/standards/command_and_modeling_baseline.md)
+3. [Joint Command-Link and Reporting Baseline](../domains/joint/standards/command_link_and_reporting_baseline.md)
 4. [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
 5. [Gradient Realism Principles](foundation/gradient_realism_principles.md)
 6. [Public Data Source Admission Standard](foundation/public_data_source_admission.md)
@@ -152,8 +155,10 @@ particular:
   `air_combat` mostly exercise implementation realism and air specialization;
   they do not make air the default common core.
 - `flight_dynamics/c2_command_chain`, `simulation_architecture`, and
-  cross-cutting runtime/performance work often produce contracts that belong in
-  `joint/`, `foundation/`, or `bridge/`.
+  cross-cutting runtime/performance work often produce contracts that must be
+  routed to the relevant owner-local standards. Joint common-core contracts go
+  to `docs/domains/joint/standards/`; existing `foundation/` and `bridge/`
+  documents remain legacy sources until their separate classification slices.
 - `common_air_naval` and naval task plans contain concepts split across shared
   semantics, `services/navy.md`, and `naval/`.
 - `ground` task plans contain concepts split across shared semantics,
@@ -163,9 +168,9 @@ particular:
   contracts, but they should cite or pressure the relevant standard owner
   instead of defining a parallel hierarchy. Model-architecture vocabulary belongs
   in `model/`.
-- the standards tree should absorb stable shared contracts from task documents
-  instead of mirroring the task folder layout or the current rollout maturity of
-  each domain.
+- the relevant owner-local standards surface should absorb stable shared
+  contracts from task documents instead of mirroring the task folder layout or
+  the current rollout maturity of each domain.
 
 If a task document and an applicable maintained standard disagree on ownership,
 the standard belonging to that content owner wins for naming and layering.
@@ -218,7 +223,7 @@ tests, scenarios, models, or UI surfaces.
 Current status mapping:
 
 - `foundation/*.md`: `Authoritative foundation`
-- `joint/*.md`: `Authoritative`
+- `docs/domains/joint/standards/*.md`: `Authoritative`
 - `services/*.md`: `Authoritative`
 - `runtime_workflow_and_contract_baseline.md`: `Authoritative`
 - `scenario_guide.md`: `Authoritative bridge`
@@ -253,9 +258,11 @@ Additional maintained supplements:
 
 - English `.md` files are canonical. Chinese `.zh.md` files are companions.
 - Maintained canonical docs should not keep machine-translation draft markers.
-- New shared contracts should land in `joint/` or the `bridge/` workflow
-  documents before
-  they are repeated in task plans.
+- New Joint common-core contracts should land in
+  `docs/domains/joint/standards/`. New cross-domain runtime or workflow
+  contracts should use the owner-local `docs/architecture/` surface. The legacy
+  `bridge/` subtree maintains its existing authority until its separate
+  migration; it must not receive new documents.
 - Service-specific or platform-specific terms must not be promoted into the
   common core just because the current implementation started in one domain.
 - Standards changes that register, refresh, hold, or retire implementation

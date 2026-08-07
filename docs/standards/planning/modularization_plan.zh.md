@@ -9,7 +9,7 @@ Language:
 本文档仍然有效，但现在必须放在新的 standards tree 下阅读：
 
 - [标准概览](../README.md)
-- [联合指挥与建模基线](../joint/command_and_modeling_baseline.md)
+- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
 - [军种画像总览](../services/README.md)
 

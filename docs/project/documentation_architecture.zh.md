@@ -54,8 +54,9 @@ standard、reference 或 README；其余任务包归档，不得永久保持 act
 - 第二阶段（2026-08-07 完成）：取消维护中的 `forward`、`evaluation`、`log`
   表面，将计划和评审路由到内容 owner；既有 `evaluation/archive/` 保持冻结且不修改。
 - 第三阶段（2026-08-07 启动）：按内容所有权拆分 `standards`、`plan`、`task`。
-  首个切片将文档、自动化、依赖与发布治理迁入 `engineering/`；领域与建模标准以及
-  plan/task 树留给后续 owner 切片。不得把旧树整体移动成新的全局桶。
+  首个切片将文档、自动化、依赖与发布治理迁入 `engineering/`；第二个切片将 Joint
+  common-core README 与标准迁入 `domains/joint/`。所有剩余旧标准以及 plan/task 树
+  留给后续 owner 切片。不得把旧树整体移动成新的全局桶。
 - 第四阶段：切换全部维护入口并禁止继续写入旧根；只有旧根不再含维护源时才删除。
 
 ## 门禁

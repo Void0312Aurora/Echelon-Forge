@@ -63,6 +63,7 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
     relative.startswith("engineering/automation/")
     or relative.startswith("engineering/documentation/")
     or relative.startswith("engineering/release/")
+    or relative.startswith("domains/joint/")
     or relative.startswith("operations/")
     or relative.startswith("research/sources/")
     or relative.startswith("standards/")

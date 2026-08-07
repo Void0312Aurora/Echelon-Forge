@@ -63,6 +63,7 @@ Tier A：严格双语维护面
 - 已准入严格维护面的 owner-local standards 与 reference，包括
   `docs/engineering/documentation/standards/` 和
   `docs/engineering/documentation/reference/`
+- `docs/domains/joint/` 下已迁移的 Joint common-core 权威
 - 迁移期遗留根 `docs/standards/` 下尚未迁往内容 owner 的维护中标准
 - `docs/operations/` 下的面向操作者 reference 与 how-to
 - 仍通过迁移期遗留 plan 表面路由的稳定计划权威：
@@ -175,8 +176,7 @@ Language:
 - 一次只处理一个目录
 - 每批 `4-8` 个文件
 - 每批保持单一主题，例如
-  `docs/engineering/documentation/standards/` 或迁移期遗留的
-  `docs/standards/joint/`
+  `docs/engineering/documentation/standards/` 或 `docs/domains/joint/`
 - 每批结束后做一次链接和路径检查
 
 这样更容易保持术语一致，也便于人工复核。

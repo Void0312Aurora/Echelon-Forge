@@ -199,7 +199,7 @@ mission-command 等数据，但这不代表这些词全部都是 common-core ont
 ## 相关文档
 
 - [场景配置指南](scenario_guide.md)
-- [联合指挥与建模基线](../joint/command_and_modeling_baseline.md)
-- [联合命令链与汇报基线](../joint/command_link_and_reporting_baseline.md)
+- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
 - [仿真约定](../foundation/conventions.md)
 - [src/core/mission/README.md](../../../src/core/mission/README.md)

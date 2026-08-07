@@ -90,7 +90,7 @@ is promoted into common core or sunk into specialization.
 
 ## Related Documents
 
-- [Joint Standards Overview](../joint/README.md)
+- [Joint Standards Overview](../../domains/joint/README.md)
 - [Document Alignment Map](../overview/document_alignment_map.md)
 - [Scenario Configuration Guide](../bridge/scenario_guide.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)

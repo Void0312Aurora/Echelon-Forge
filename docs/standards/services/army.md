@@ -175,8 +175,8 @@ runtime behavior is still held behind later task gates.
 ## Related Documents
 
 - [Service Profile Overview](README.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [Simulation Conventions](../foundation/conventions.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [Ground Standards Overview](../ground/README.md)

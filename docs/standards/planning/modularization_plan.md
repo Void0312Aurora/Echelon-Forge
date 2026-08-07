@@ -11,7 +11,7 @@ This document remains active, but it must now be read under the maintained
 standards tree:
 
 - [Standards Overview](../README.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [Service Profile Overview](../services/README.md)
 

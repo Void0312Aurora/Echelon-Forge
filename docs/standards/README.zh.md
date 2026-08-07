@@ -11,9 +11,10 @@ Canonical: `docs/standards/README.md`
 Owner: `legacy/domain-and-modeling-standards`
 Last verified: `2026-08-07`
 
-状态：`2026-08-07`，维护中的旧领域与建模标准的迁移期索引。
+状态：`2026-08-07`，剩余旧标准及其已迁移 owner 路由的迁移期索引。
 
-本目录用于定义项目后续采用的标准化建模基线。它的职责不是重复每一份活跃任务文档，而是回答：
+本索引用于路由项目后续采用的标准化建模基线。Joint common-core 权威已经迁入
+`docs/domains/joint/`；本目录其余子树是迁移期来源。它的职责不是重复每一份活跃任务文档，而是回答：
 
 - 哪些概念属于 `joint/common core`
 - 哪些概念属于 `service profile`
@@ -33,8 +34,8 @@ Last verified: `2026-08-07`
 - 仓库当前 runtime 与测试合同
 - `docs/task/` 下的活跃任务规划
 
-在领域与建模语义范围内，本树是当前 ownership map，而不是任务板。任务计划可以描述
-当前执行波次，但不应重新定义
+在领域与建模语义范围内，本迁移期索引及其路由到的 owner-local standards 共同构成
+当前 ownership map，而不是任务板。任务计划可以描述当前执行波次，但不应重新定义
 `authority_scope`、`task_group_id`、`runway_slot_code` 或 `warfare_role_code`
 归谁所有。
 任务区的实现成熟度是有用的状态信息，但它不是标准所有权层级。
@@ -42,14 +43,14 @@ Last verified: `2026-08-07`
 ## 当前结构
 
 从 `2026-03-23` 起，标准化文档不再沿用“空战先行，再尝试泛化”的组织方式，
-而改为以下维护中的所有权主干：
+而改为以下分布式所有权主干：
 
-1. `joint/`
-2. `services/`
-3. `air/`
-4. `naval/`
-5. `ground/`
-6. `model/`
+1. 已迁移的 `docs/domains/joint/`
+2. 旧 `services/`
+3. 旧 `air/`
+4. 旧 `naval/`
+5. 旧 `ground/`
+6. 旧 `model/`
 
 这条主干需要与 `foundation/` 和 `bridge/` 下的跨域标准一起阅读，包括 runtime
 workflow 与合同基线。这些文档约束所有领域，不构成一条单独的军种或平台栈。
@@ -59,7 +60,7 @@ action adapter 与 diagnostics 的模型/策略架构词汇，不负责军种或
 
 维护中的标准树对应一套明确的分层：
 
-- `joint/` 负责跨军种仍成立的关系、授权、任务下达、汇报和工作流边界。
+- `docs/domains/joint/` 负责跨军种仍成立的关系、授权、任务下达、汇报和工作流边界。
 - `services/` 负责解释空军、陆军、海军、海军陆战队如何读取这些共通对象。
 - `air/` 负责空中平台专用语义，例如 sortie phase、runway recovery、takeoff procedure、
   air mission observation。
@@ -82,7 +83,7 @@ action adapter 与 diagnostics 的模型/策略架构词汇，不负责军种或
 1. `foundation/` 与 runtime/bridge 约束负责跨域规则：坐标与时间约定、真实性门槛、
    公开来源准入、场景/runtime 工作流边界、DTO 对齐，以及当前可测试合同。它们约束
    所有军种和领域特化。
-2. `joint/` 负责共享语义对象，例如 command relationship、authority scope、
+2. `docs/domains/joint/` 负责共享语义对象，例如 command relationship、authority scope、
    task/report identifier、support relationship，以及其他必须在跨军种语境中保持同义的命名。
 3. `services/` 负责军种画像解释：空军、陆军、海军、海军陆战队如何读取共享对象，
    哪些梯队或单位形态可进入 runtime tight loop，以及军种术语在变成领域机制前应停在哪里。
@@ -99,9 +100,9 @@ action adapter 与 diagnostics 的模型/策略架构词汇，不负责军种或
 
 建议按下面顺序进入：
 
-1. [联合标准总览](joint/README.md)
-2. [联合指挥与建模基线](joint/command_and_modeling_baseline.md)
-3. [联合命令链与汇报基线](joint/command_link_and_reporting_baseline.md)
+1. [联合标准总览](../domains/joint/README.zh.md)
+2. [联合指挥与建模基线](../domains/joint/standards/command_and_modeling_baseline.zh.md)
+3. [联合命令链与汇报基线](../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
 4. [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.md)
 5. [梯度真实性原则](foundation/gradient_realism_principles.zh.md)
 6. [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
@@ -129,15 +130,17 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - `flight_dynamics/flight`、`sensor_situation`、`weapon_guidance` 和 `air_combat`
   主要推动实现真实性与 air specialization；它们不使 air 成为默认 common core。
 - `flight_dynamics/c2_command_chain`、`simulation_architecture` 以及跨域
-  runtime/performance 工作，经常会产出应落在 `joint/`、`foundation/` 或 `bridge/` 的合同。
+  runtime/performance 工作，经常会产出必须路由到相关 owner-local standards 的合同。
+  Joint common-core 合同进入 `docs/domains/joint/standards/`；现有 `foundation/` 与
+  `bridge/` 文档在各自分类切片落地前仍是 legacy 来源。
 - `common_air_naval` 与 naval 任务计划里的概念，可能分属共享语义、`services/navy.md`
   和 `naval/`。
 - `ground` 任务计划里的概念，可能分属共享语义、`services/army.md` 和 `ground/`；
   `army` 与 `land` 别名应通过这套分层归口，而不是形成新的 runtime stack。
 - model、training、evaluation 与 issue-board 任务可以依赖标准合同，但应引用或推动对应的
   标准归口，而不是定义一套平行层级。模型架构词汇归 `model/`。
-- 标准树应吸收任务文档里已经稳定下来的共享合同，而不是照搬任务目录结构，或照搬各领域当前
-  rollout 成熟度。
+- 相关 owner-local standards 表面应吸收任务文档里已经稳定下来的共享合同，而不是照搬
+  任务目录结构，或照搬各领域当前 rollout 成熟度。
 
 若任务文档和适用的维护 standard 在“概念归属”上冲突，以该内容 owner 的 standard
 为准。
@@ -190,7 +193,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 当前划分：
 
 - `foundation/*.md`：`Authoritative foundation`
-- `joint/*.md`：`Authoritative`
+- `docs/domains/joint/standards/*.md`：`Authoritative`
 - `services/*.md`：`Authoritative`
 - `runtime_workflow_and_contract_baseline.md`：`Authoritative`
 - `scenario_guide.md`：`Authoritative bridge`
@@ -223,7 +226,9 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 
 - 英文 `.md` 是 canonical，中文 `.zh.md` 是 companion。
 - 维护中的英文主文不应继续保留机器翻译草稿标记。
-- 新的共享合同应先落在 `joint/` 或 `bridge/` 下的 workflow bridge 文档，再扩散到任务计划。
+- 新的 Joint common-core 合同应落在 `docs/domains/joint/standards/`。新的跨域 runtime
+  或 workflow 合同应使用 owner-local `docs/architecture/` 表面。旧 `bridge/` 子树只维护
+  既有权威，等待独立迁移；不得在其中新增文档。
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
 - 标准变更若登记、刷新、保持 held 或退役实现合同，必须遵循
   [标准维护政策](../engineering/documentation/standards/standards_maintenance_policy.zh.md)。

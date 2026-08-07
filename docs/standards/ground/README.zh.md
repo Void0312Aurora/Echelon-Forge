@@ -219,6 +219,6 @@ ground 文档也不应把 `station`、`task group` 或海上 `screen` 等 naval 
 
 - [Ground 最小任务结构](minimal_task_structure.zh.md)
 - [美国陆军画像](../services/army.zh.md)
-- [联合指挥与建模基线](../joint/command_and_modeling_baseline.zh.md)
+- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.zh.md)
 - [Ground 域启动计划](../../task/ground/archive/ground_domain_bootstrap_plan_20260521.zh.md)

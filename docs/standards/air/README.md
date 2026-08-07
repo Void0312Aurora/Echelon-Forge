@@ -32,8 +32,8 @@ It does not own:
 Those belong in:
 
 - [Standards Documentation Overview](../README.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [USAF Profile](../services/air_force.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 

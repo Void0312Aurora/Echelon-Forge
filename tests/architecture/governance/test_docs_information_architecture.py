@@ -90,6 +90,19 @@ def test_automation_governance_uses_capability_tiers_not_versioned_model_ids() -
     assert re.search(r"\bgpt-\d", text, re.IGNORECASE) is None, relative
 
 
+def test_legacy_joint_standards_have_moved_to_the_domain_owner() -> None:
+  tracked = _tracked_docs_paths()
+
+  assert not any(path.startswith("docs/standards/joint/") for path in tracked)
+  for required in (
+    "docs/domains/joint/README.md",
+    "docs/domains/joint/README.zh.md",
+    "docs/domains/joint/standards/command_and_modeling_baseline.md",
+    "docs/domains/joint/standards/command_link_and_reporting_baseline.md",
+  ):
+    assert required in tracked
+
+
 def test_owner_local_work_and_reviews_declare_minimum_metadata() -> None:
   governed = [
     path

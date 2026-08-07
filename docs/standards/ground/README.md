@@ -239,6 +239,6 @@ document explicitly redefines the land-specific meaning.
 
 - [Ground Minimal Task Structure](minimal_task_structure.md)
 - [US Army Profile](../services/army.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [Ground Domain Bootstrap Plan](../../task/ground/archive/ground_domain_bootstrap_plan_20260521.md)

@@ -19,8 +19,8 @@ It belongs to the standards-tree foundation layer. It does not own:
 Those belong in:
 
 - [Service Profile Overview](../services/README.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [Air Platform Specialization](../air/README.md)
 - [Naval Specialization](../naval/README.md)
@@ -181,6 +181,6 @@ Those workflow boundaries are documented in more detail in
 ## Related Documents
 
 - [Standards Overview](../README.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [Air Platform Specialization](../air/README.md)

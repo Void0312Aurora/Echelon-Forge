@@ -39,7 +39,7 @@
 | 哪一份维护 standard 拥有命名与层级？ | 先从适用的 owner README 及其 owner-local `standards/` 开始；尚未迁移的领域与建模路由使用迁移期[标准总览](../../../standards/README.zh.md)和[文档对齐图](../../../standards/overview/document_alignment_map.zh.md)。 |
 | 跨域约定是什么？ | [仿真约定](../../../standards/foundation/conventions.zh.md)、[Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../../standards/bridge/scenario_guide.zh.md) |
 | 允许怎样声明真实性？ | [梯度真实性原则](../../../standards/foundation/gradient_realism_principles.zh.md)、[公开来源准入标准](../../../standards/foundation/public_data_source_admission.zh.md) |
-| 军种/领域术语如何路由？ | [联合标准总览](../../../standards/joint/README.zh.md)、[军种 Profile 总览](../../../standards/services/README.zh.md)、[空域标准](../../../standards/air/README.zh.md)、[海军标准](../../../standards/naval/README.zh.md)、[地面标准](../../../standards/ground/README.zh.md) |
+| 军种/领域术语如何路由？ | [联合标准总览](../../../domains/joint/README.zh.md)、[军种 Profile 总览](../../../standards/services/README.zh.md)、[空域标准](../../../standards/air/README.zh.md)、[海军标准](../../../standards/naval/README.zh.md)、[地面标准](../../../standards/ground/README.zh.md) |
 | 架构/runtime 工作如何路由？ | [Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../../standards/bridge/scenario_guide.zh.md)、[标准总览](../../../standards/README.zh.md) |
 | 双语文档如何处理？ | [双语文档策略](../../documentation/standards/bilingual_documentation_policy.zh.md)、[双语文档簇](../../documentation/reference/bilingual_document_clusters.zh.md) |
 | 文档类型、生命周期、evidence、generated 输出、config 索引、链接和 archive 如何治理？ | [文档生命周期规范](../../documentation/standards/document_lifecycle_policy.zh.md) |

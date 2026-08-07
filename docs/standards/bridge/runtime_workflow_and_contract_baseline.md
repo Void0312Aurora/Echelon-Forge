@@ -209,7 +209,7 @@ the repository converges them.
 ## Related Documents
 
 - [Scenario Configuration Guide](scenario_guide.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [Simulation Conventions](../foundation/conventions.md)
 - [src/core/mission/README.md](../../../src/core/mission/README.md)

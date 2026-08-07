@@ -62,9 +62,10 @@ archived rather than kept indefinitely as an active task.
   owners. Existing `evaluation/archive/` content remains frozen and untouched.
 - Phase 3 (started 2026-08-07): split `standards`, `plan`, and `task` by content
   ownership. The first slice moves documentation, automation, dependency, and
-  release governance into `engineering/`; domain and modeling standards plus
-  the plan/task trees remain for later owner slices. Do not move legacy trees
-  wholesale into new global buckets.
+  release governance into `engineering/`; the second slice moves the Joint
+  common-core README and standards into `domains/joint/`. All remaining legacy
+  standards plus the plan/task trees remain for later owner slices. Do not move
+  legacy trees wholesale into new global buckets.
 - Phase 4: switch all maintained entry points and disallow new writes to legacy
   roots; remove a legacy root only after it has no maintained sources.
 

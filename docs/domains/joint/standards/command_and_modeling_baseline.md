@@ -4,6 +4,12 @@ Language:
 - English canonical: `command_and_modeling_baseline.md`
 - Chinese companion: [command_and_modeling_baseline.zh.md](command_and_modeling_baseline.zh.md)
 
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/joint/standards/command_and_modeling_baseline.md`
+Owner: `domains/joint`
+Last verified: `2026-08-07`
+
 Status: `2026-06-10` authoritative for maintained joint command and modeling
 boundaries.
 
@@ -129,7 +135,9 @@ The boundary is simple:
 - Service profiles define how those nouns are interpreted in a specific mission domain
 - Platform/task specialization defines the actual geometry, timing, and control details
 
-This is the reason `docs/standards/joint/*` should describe naming boundaries and prohibitions, while service- and platform-specific documents should define the detailed execution vocabulary.
+This is the reason `docs/domains/joint/standards/*` should describe naming
+boundaries and prohibitions, while service- and platform-specific documents
+should define the detailed execution vocabulary.
 
 ## 8. Implementation Implication
 

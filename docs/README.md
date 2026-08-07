@@ -21,7 +21,7 @@ current authority.
 | --- | --- | --- |
 | [project](project/README.md) | Purpose, maturity, global status, roadmap, project decisions | Active; owns the migration plan |
 | [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Phase-2 reviews migrated; legacy plan/task sources remain authoritative until migrated |
-| [domains](domains/README.md) | Air, naval, ground, joint | Phase-2 Air issue route active; broader migration pending |
+| [domains](domains/README.md) | Air, naval, ground, joint | Joint common-core standards and Phase-2 Air issue route migrated; other domain routes pending |
 | [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Phase-2 system issue and review routes active |
 | [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Phase-2 policy and training issue routes active |
 | [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Manual and visualization routes migrated |

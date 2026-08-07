@@ -170,5 +170,5 @@ cross-domain interpretation.
 - [Service Profile Overview](README.md)
 - [Air Platform Specialization](../air/README.md)
 - [Naval Specialization](../naval/README.md)
-- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
-- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
