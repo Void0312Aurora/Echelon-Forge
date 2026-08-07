@@ -2,8 +2,8 @@
 #include <cuda_runtime_api.h>
 namespace runtime::cuda_resident::detail {
 
-bool commit_phase_b_window(CudaWorldStoreDeviceAllocation *allocation,
-                           CudaWorldStoreDeviceFaultInjection *faults, std::string *error) {
+bool commit_flight_dynamics_window(CudaWorldStoreDeviceAllocation *allocation,
+                                   CudaWorldStoreDeviceFaultInjection *faults, std::string *error) {
     if (allocation == nullptr) {
         if (error != nullptr) *error = "CUDA flight-dynamics window requires an allocation";
         return false;
@@ -32,14 +32,14 @@ bool commit_phase_b_window(CudaWorldStoreDeviceAllocation *allocation,
         return false;
     }
 
-    status = launch_phase_b_forces(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_phase_b_aerodynamics(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_phase_b_integrate(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_phase_d_instruments(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_phase_d_configuration(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_phase_d_episode(allocation, next_slot);
+    status = launch_flight_dynamics_forces(allocation, next_slot);
+    if (status == cudaSuccess) status = launch_flight_dynamics_aerodynamics(allocation, next_slot);
+    if (status == cudaSuccess) status = launch_flight_dynamics_integrate(allocation, next_slot);
+    if (status == cudaSuccess) status = launch_instrument_projection(allocation, next_slot);
+    if (status == cudaSuccess) status = launch_configuration_projection(allocation, next_slot);
+    if (status == cudaSuccess) status = launch_episode_projection(allocation, next_slot);
 
-    // The six Phase-B/D launches form one device graph. This is the only
+    // The six flight-dynamics/D launches form one device graph. This is the only
     // host synchronization before the declared window barrier.
     if (status == cudaSuccess) status = cudaDeviceSynchronize();
     if (status != cudaSuccess) {
@@ -66,7 +66,7 @@ bool commit_phase_b_window(CudaWorldStoreDeviceAllocation *allocation,
 bool commit_cuda_world_store_window(CudaWorldStoreDeviceAllocation *allocation,
                                     CudaWorldStoreDeviceFaultInjection *faults,
                                     std::string *error) {
-    return commit_phase_b_window(allocation, faults, error);
+    return commit_flight_dynamics_window(allocation, faults, error);
 }
 
 } // namespace runtime::cuda_resident::detail

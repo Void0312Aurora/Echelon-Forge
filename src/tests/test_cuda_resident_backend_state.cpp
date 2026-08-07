@@ -120,9 +120,11 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
     CHECK_FALSE(snapshot.barrier.contract_satisfied);
     CHECK_FALSE(snapshot.barrier.comparison_eligible);
     CHECK_FALSE(snapshot.barrier.host_truth_available);
-    CHECK(snapshot.envelope.schema_version == std::string(kCudaResidentPhaseBSnapshotSchemaV2));
+    CHECK(snapshot.envelope.schema_version ==
+          std::string(kCudaResidentFlightDynamicsSnapshotSchemaV2));
     CHECK(snapshot.envelope.visibility_label == "export");
-    CHECK(snapshot.envelope.provenance == std::string(kCudaResidentPhaseBSnapshotProvenance));
+    CHECK(snapshot.envelope.provenance ==
+          std::string(kCudaResidentFlightDynamicsSnapshotProvenance));
     CHECK(snapshot.envelope.source_snapshot_version == 1);
     CHECK(snapshot.envelope.field_set ==
           std::vector<std::string>{"entity_ref", "seed", "reset_generation", "clock", "snapshot",
@@ -147,7 +149,8 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
                   .shard_versions[static_cast<std::size_t>(CudaResidentShard::export_envelope)]
                   .version == 1);
         CHECK(state.identity.lineage.source_snapshot_version == 1);
-        CHECK(state.identity.lineage.source_backend_id == std::string(kCudaResidentRb6BackendId));
+        CHECK(state.identity.lineage.source_backend_id ==
+              std::string(kCudaResidentFlightDynamicsBackendId));
         CHECK(state.identity.lineage.source_request_id == "rb4.setup");
         CHECK(state.source_barrier_id == "input_injection");
         CHECK(state.kinematics.x == doctest::Approx(fixture.spawns[world].x));
@@ -296,9 +299,10 @@ TEST_CASE("RB4 fixed-air boundary rejects undeclared setup input advance and exp
     unsupported_setup.terrain_assignments = terrain;
     CHECK_THROWS_AS(backend.setup(unsupported_setup), std::invalid_argument);
 
-    FixedAirFixtureInputs outside_phase_b_envelope;
-    outside_phase_b_envelope.spawns[0].z = 50.0;
-    CHECK_THROWS_AS(backend.setup(outside_phase_b_envelope.request()), std::invalid_argument);
+    FixedAirFixtureInputs outside_flight_dynamics_envelope;
+    outside_flight_dynamics_envelope.spawns[0].z = 50.0;
+    CHECK_THROWS_AS(backend.setup(outside_flight_dynamics_envelope.request()),
+                    std::invalid_argument);
 
     const auto setup = backend.setup(fixture.request());
     auto unsupported_actions = make_actions(setup.entity_ids);

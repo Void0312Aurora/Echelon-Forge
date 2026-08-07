@@ -9,7 +9,7 @@
 #include <string>
 #include <string_view>
 
-#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 #include "tests/test_cuda_resident_replay_support.h"
 
 using namespace runtime::cuda_resident::replay::test_support;

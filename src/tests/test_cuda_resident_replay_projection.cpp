@@ -9,7 +9,7 @@
 #include <string_view>
 #include <vector>
 
-#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 
 namespace runtime::cuda_resident::replay::test_support {
 
@@ -110,7 +110,7 @@ std::vector<ShardVersionContract> expected_shard_versions(std::size_t window) {
     const std::uint64_t global_version = 3 + static_cast<std::uint64_t>(window) * 2;
     const std::uint64_t legacy_version = 2 + static_cast<std::uint64_t>(window);
     const std::uint64_t control_version = 2 + static_cast<std::uint64_t>(window);
-    const std::uint64_t phase_d_version = 1 + static_cast<std::uint64_t>(window);
+    const std::uint64_t observation_projection_version = 1 + static_cast<std::uint64_t>(window);
     std::vector<ShardVersionContract> versions;
     versions.reserve(kCudaResidentShardCount);
     for (std::size_t shard = 0; shard < kCudaResidentShardCount; ++shard) {
@@ -121,7 +121,7 @@ std::vector<ShardVersionContract> expected_shard_versions(std::size_t window) {
             version = control_version;
         } else if (shard >= static_cast<std::size_t>(CudaResidentShard::instrument) &&
                    shard <= static_cast<std::size_t>(CudaResidentShard::events)) {
-            version = phase_d_version;
+            version = observation_projection_version;
         } else if (shard == static_cast<std::size_t>(CudaResidentShard::export_envelope)) {
             version = global_version;
         }
@@ -151,7 +151,8 @@ ProjectedWorld make_projection_metadata(std::size_t world, std::uint64_t entity_
         .source_backend_id = std::string(backend_id),
         .source_request_id = std::string(request_id),
     };
-    projected.envelope.schema_version = std::string(kCudaResidentPhaseDSnapshotSchemaV3);
+    projected.envelope.schema_version =
+        std::string(kCudaResidentObservationProjectionSnapshotSchemaV3);
     projected.envelope.field_set = {
         "entity_ref",  "seed",     "reset_generation",  "clock",       "snapshot",
         "kinematics",  "dynamics", "instrument",        "observation", "reward",
@@ -293,13 +294,14 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
     add_double(frame, world, "reward_numeric", "reward_report.shaping_terms[].value",
                projected.speed_reward);
     add_string(frame, world, "reward_termination_identity", "reward_report.fact_terms[].name",
-               kPhaseDRewardTermNames[0]);
+               kObservationProjectionRewardTermNames[0]);
     add_string(frame, world, "reward_termination_identity", "reward_report.fact_terms[].term_owner",
-               kPhaseDRewardTermOwners[0]);
+               kObservationProjectionRewardTermOwners[0]);
     add_string(frame, world, "reward_termination_identity", "reward_report.shaping_terms[].name",
-               kPhaseDRewardTermNames[1]);
+               kObservationProjectionRewardTermNames[1]);
     add_string(frame, world, "reward_termination_identity",
-               "reward_report.shaping_terms[].term_owner", kPhaseDRewardTermOwners[1]);
+               "reward_report.shaping_terms[].term_owner",
+               kObservationProjectionRewardTermOwners[1]);
     add_uint(frame, world, "reward_termination_identity", "reward_report.fact_snapshot_version",
              projected.reward_snapshot_version);
     add_bool(frame, world, "reward_termination_identity", "execution_episode_step.terminated",
@@ -402,8 +404,8 @@ to_public_kinematics(const runtime::cuda_resident::CudaWorldKinematicsState &sou
 void derive_cpu_reward_and_termination(ProjectedWorld &projected) {
     using namespace runtime::cuda_resident;
     const double speed = projected.observation.speed;
-    projected.survival_reward = kPhaseDSurvivalReward;
-    projected.speed_reward = phase_d_speed_reward(speed);
+    projected.survival_reward = kObservationProjectionSurvivalReward;
+    projected.speed_reward = observation_projection_speed_reward(speed);
     projected.total_reward = projected.survival_reward + projected.speed_reward;
     projected.reward_snapshot_version = projected.snapshot.global_version;
     const bool finite = std::isfinite(speed) && std::isfinite(projected.observation.z) &&
@@ -418,7 +420,7 @@ void derive_cpu_reward_and_termination(ProjectedWorld &projected) {
     projected.truncated = false;
     projected.termination_reason =
         !finite ? "nan_guard" : (envelope ? "envelope_violation" : "running");
-    projected.termination_reason_source = "cuda_resident.phase_d";
+    projected.termination_reason_source = "cuda_resident.observation_projection";
     projected.termination_snapshot_version = projected.snapshot.global_version;
 }
 
@@ -428,9 +430,10 @@ ProjectedWorld project_cuda_state(const runtime::cuda_resident::CudaWorldResiden
                                   std::size_t window, std::string_view barrier_id,
                                   std::string_view request_id) {
     using namespace runtime::cuda_resident;
-    ProjectedWorld projected = make_projection_metadata(
-        static_cast<std::size_t>(state.world_index), state.entity_id, window, barrier_id,
-        kCudaResidentRb7BackendId, request_id, kCudaResidentPhaseDSnapshotProvenance);
+    ProjectedWorld projected =
+        make_projection_metadata(static_cast<std::size_t>(state.world_index), state.entity_id,
+                                 window, barrier_id, kCudaResidentObservationProjectionBackendId,
+                                 request_id, kCudaResidentObservationProjectionSnapshotProvenance);
     projected.clock = {.tick = state.clock_tick, .simulation_time_s = state.simulation_time_s};
     projected.snapshot.global_version = state.global_version;
     projected.snapshot.barrier_sequence =
@@ -445,15 +448,15 @@ ProjectedWorld project_cuda_state(const runtime::cuda_resident::CudaWorldResiden
             {.shard_id = std::string(kCudaResidentShardIds[shard]), .version = version});
     }
     projected.kinematics = to_public_kinematics(state.kinematics);
-    projected.instrument = to_public_instrument(state.phase_d.instrument);
-    projected.observation = to_public_observation(state.phase_d.observation);
-    projected.survival_reward = state.phase_d.reward.survival_term;
-    projected.speed_reward = state.phase_d.reward.speed_term;
-    projected.total_reward = state.phase_d.reward.total_reward;
-    projected.reward_snapshot_version = state.phase_d.reward.fact_snapshot_version;
-    projected.terminated = state.phase_d.termination.terminated;
-    projected.truncated = state.phase_d.termination.truncated;
-    switch (state.phase_d.termination.reason_code) {
+    projected.instrument = to_public_instrument(state.observation_projection.instrument);
+    projected.observation = to_public_observation(state.observation_projection.observation);
+    projected.survival_reward = state.observation_projection.reward.survival_term;
+    projected.speed_reward = state.observation_projection.reward.speed_term;
+    projected.total_reward = state.observation_projection.reward.total_reward;
+    projected.reward_snapshot_version = state.observation_projection.reward.fact_snapshot_version;
+    projected.terminated = state.observation_projection.termination.terminated;
+    projected.truncated = state.observation_projection.termination.truncated;
+    switch (state.observation_projection.termination.reason_code) {
     case CudaResidentTerminationCode::running:
         projected.termination_reason = "running";
         break;
@@ -464,8 +467,9 @@ ProjectedWorld project_cuda_state(const runtime::cuda_resident::CudaWorldResiden
         projected.termination_reason = "envelope_violation";
         break;
     }
-    projected.termination_reason_source = "cuda_resident.phase_d";
-    projected.termination_snapshot_version = state.phase_d.termination.snapshot_version;
+    projected.termination_reason_source = "cuda_resident.observation_projection";
+    projected.termination_snapshot_version =
+        state.observation_projection.termination.snapshot_version;
     return projected;
 }
 
@@ -476,21 +480,22 @@ project_cuda_snapshot(const runtime::cuda_resident::CudaResidentWorldSnapshot &s
     using namespace runtime::cuda_resident;
     ProjectedWorld projected = make_projection_metadata(
         static_cast<std::size_t>(snapshot.entity_ref.world_index), snapshot.entity_ref.entity_id,
-        window, "export", kCudaResidentRb7BackendId, request_id,
-        kCudaResidentPhaseDSnapshotProvenance);
+        window, "export", kCudaResidentObservationProjectionBackendId, request_id,
+        kCudaResidentObservationProjectionSnapshotProvenance);
     projected.ref = snapshot.entity_ref;
     projected.clock = snapshot.clock;
     projected.snapshot = snapshot.identity;
     projected.kinematics = to_public_kinematics(snapshot.kinematics);
-    projected.instrument = to_public_instrument(snapshot.phase_d.instrument);
-    projected.observation = to_public_observation(snapshot.phase_d.observation);
-    projected.survival_reward = snapshot.phase_d.reward.survival_term;
-    projected.speed_reward = snapshot.phase_d.reward.speed_term;
-    projected.total_reward = snapshot.phase_d.reward.total_reward;
-    projected.reward_snapshot_version = snapshot.phase_d.reward.fact_snapshot_version;
-    projected.terminated = snapshot.phase_d.termination.terminated;
-    projected.truncated = snapshot.phase_d.termination.truncated;
-    switch (snapshot.phase_d.termination.reason_code) {
+    projected.instrument = to_public_instrument(snapshot.observation_projection.instrument);
+    projected.observation = to_public_observation(snapshot.observation_projection.observation);
+    projected.survival_reward = snapshot.observation_projection.reward.survival_term;
+    projected.speed_reward = snapshot.observation_projection.reward.speed_term;
+    projected.total_reward = snapshot.observation_projection.reward.total_reward;
+    projected.reward_snapshot_version =
+        snapshot.observation_projection.reward.fact_snapshot_version;
+    projected.terminated = snapshot.observation_projection.termination.terminated;
+    projected.truncated = snapshot.observation_projection.termination.truncated;
+    switch (snapshot.observation_projection.termination.reason_code) {
     case CudaResidentTerminationCode::running:
         projected.termination_reason = "running";
         break;
@@ -501,8 +506,9 @@ project_cuda_snapshot(const runtime::cuda_resident::CudaResidentWorldSnapshot &s
         projected.termination_reason = "envelope_violation";
         break;
     }
-    projected.termination_reason_source = "cuda_resident.phase_d";
-    projected.termination_snapshot_version = snapshot.phase_d.termination.snapshot_version;
+    projected.termination_reason_source = "cuda_resident.observation_projection";
+    projected.termination_snapshot_version =
+        snapshot.observation_projection.termination.snapshot_version;
     projected.envelope = envelope;
     return projected;
 }
@@ -514,7 +520,7 @@ ProjectedWorld project_cpu_oracle(const ReplayTrace &trace, std::size_t world,
     ProjectedWorld projected = make_projection_metadata(
         world, entity_id, window, barrier_id, "fixed_air_cpu_fixture_oracle", request_id,
         "fixed_air_cpu_fixture_oracle.rb8.diagnostics_only");
-    const auto &expected = kCudaResidentPhaseBFirstExpected[world];
+    const auto &expected = kCudaResidentFlightDynamicsFirstExpected[world];
     projected.kinematics = {
         .x = expected.kinematics[0],
         .y = expected.kinematics[1],
@@ -548,7 +554,7 @@ ProjectedWorld project_cpu_oracle(const ReplayTrace &trace, std::size_t world,
     projected.instrument.engine_rpm_pct = trace.windows[window].actions[world].throttle * 100.0;
     projected.instrument.fuel_flow_kg_h = 0.0;
     projected.instrument.throttle_pos = trace.windows[window].actions[world].throttle;
-    projected.instrument.fuel_internal_kg = kPhaseBFuelMassKg;
+    projected.instrument.fuel_internal_kg = kFlightDynamicsFuelMassKg;
     projected.instrument.fuel_external_kg = 0.0;
     projected.instrument.gear_pos = trace.windows[window].actions[world].gear_handle;
     projected.instrument.flaps_pos = trace.windows[window].actions[world].flaps;
@@ -565,11 +571,12 @@ ProjectedWorld project_cpu_oracle(const ReplayTrace &trace, std::size_t world,
     projected.observation.pitch = projected.kinematics.pitch;
     projected.observation.roll = projected.kinematics.roll;
     projected.observation.speed = speed;
-    projected.observation.health = kPhaseDHealth;
+    projected.observation.health = kObservationProjectionHealth;
     projected.observation.gear_state = trace.windows[window].actions[world].gear_handle;
     projected.observation.throttle = trace.windows[window].actions[world].throttle;
     projected.observation.total_reward =
-        kPhaseDSurvivalReward + phase_d_speed_reward(projected.observation.speed);
+        kObservationProjectionSurvivalReward +
+        observation_projection_speed_reward(projected.observation.speed);
     projected.clock.simulation_time_s = trace.time_steps[world];
     derive_cpu_reward_and_termination(projected);
     return projected;

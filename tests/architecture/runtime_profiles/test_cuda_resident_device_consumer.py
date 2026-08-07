@@ -70,7 +70,7 @@ def test_cr2_3_acquisition_uses_host_epoch_and_has_no_success_path_readback() ->
         "CudaResidentBackend::acquire_device_observation_lease(",
         "void CudaResidentBackend::reject_unimplemented_operation",
     )
-    assert "phase_d_pack_observation_kernel<<<blocks, threads>>>" in acquisition
+    assert "pack_device_observation_kernel<<<blocks, threads>>>" in acquisition
     assert "cudaEventRecord" in acquisition
     assert "cudaMemcpyDeviceToHost" not in acquisition
     assert "cudaDeviceSynchronize" not in acquisition
@@ -93,7 +93,7 @@ def test_cr2_3_submit_wait_and_diagnostic_have_separate_transfer_boundaries() ->
         "bool materialize_cuda_world_store_device_observation_consumer(",
         "void release_cuda_world_store_device_consumer(",
     )
-    assert "phase_d_consumer_smoke_kernel<<<blocks, threads>>>" in submit
+    assert "device_observation_consumer_smoke_kernel<<<blocks, threads>>>" in submit
     assert "cudaEventRecord" in submit
     assert "cudaMemcpyDeviceToHost" not in submit
     assert "cudaDeviceSynchronize" not in submit

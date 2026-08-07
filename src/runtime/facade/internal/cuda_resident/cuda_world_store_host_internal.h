@@ -24,7 +24,7 @@ struct CudaWorldStore::Impl {
     std::vector<std::uint32_t> entity_generations;
     std::vector<std::uint8_t> setup_active;
     std::vector<std::uint64_t> entity_ids;
-    bool phase_a_ready = false;
+    bool control_preparation_ready = false;
     std::uint64_t committed_window_epoch = 0;
     std::uint64_t committed_source_snapshot = 0;
 #endif

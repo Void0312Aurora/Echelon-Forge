@@ -237,8 +237,8 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
     fixed_worlds.reserve(world_count);
     for (std::size_t world = 0; world < world_count; ++world) {
         if (spawns[world].world_index != world || !fixed_air_spawn_is_supported(spawns[world]) ||
-            !std::isfinite(time_steps[world]) || time_steps[world] < kPhaseBMinTimeStepS ||
-            time_steps[world] > kPhaseBMaxTimeStepS) {
+            !std::isfinite(time_steps[world]) || time_steps[world] < kFlightDynamicsMinTimeStepS ||
+            time_steps[world] > kFlightDynamicsMaxTimeStepS) {
             throw std::invalid_argument(
                 "CUDA resident setup is outside the fixed-air fixture capability");
         }
@@ -389,10 +389,11 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
             }
             if (request.include_agent_observations) {
                 result.agent_observations.push_back(
-                    to_public_observation(world.phase_d.observation));
+                    to_public_observation(world.observation_projection.observation));
             }
             if (request.include_instrument_states) {
-                result.instrument_states.push_back(to_public_instrument(world.phase_d.instrument));
+                result.instrument_states.push_back(
+                    to_public_instrument(world.observation_projection.instrument));
             }
         }
     }
@@ -401,7 +402,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
 
 runtime::backend::Diagnostics CudaResidentBackend::diagnostics() const {
     return {
-        .backend_id = std::string(kCudaResidentRb7BackendId),
+        .backend_id = std::string(kCudaResidentObservationProjectionBackendId),
         .world_count = store_.world_capacity(),
     };
 }
@@ -428,7 +429,7 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
     }
     const CudaWorldStoreStateSnapshot source = store_.state_snapshot();
     CudaResidentExportSnapshot result{};
-    const bool phase_d_ready =
+    const bool observation_projection_ready =
         !source.worlds.empty() &&
         std::all_of(source.worlds.begin(), source.worlds.end(), [](const auto &world) {
             return world.barrier == CudaResidentBarrierCode::window_commit &&
@@ -442,7 +443,7 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
                    world.shard_versions[static_cast<std::size_t>(CudaResidentShard::events)] >= 1;
         });
     const std::vector<std::string> materialized_shards =
-        phase_d_ready
+        observation_projection_ready
             ? std::vector<std::string>{"identity",    "clock",      "snapshot",       "kinematics",
                                        "dynamics",    "instrument", "observation",    "reward",
                                        "termination", "events",     "export_envelope"}
@@ -450,21 +451,24 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
                                        "kinematics", "dynamics", "export_envelope"};
     result.barrier = barrier_evidence("export", materialized_shards);
     result.envelope.schema_version = std::string(
-        phase_d_ready ? kCudaResidentPhaseDSnapshotSchemaV3 : kCudaResidentPhaseBSnapshotSchemaV2);
+        observation_projection_ready ? kCudaResidentObservationProjectionSnapshotSchemaV3
+                                     : kCudaResidentFlightDynamicsSnapshotSchemaV2);
     result.envelope.field_set =
-        phase_d_ready ? std::vector<std::string>{"entity_ref",       "seed",
-                                                 "reset_generation", "clock",
-                                                 "snapshot",         "kinematics",
-                                                 "dynamics",         "instrument",
-                                                 "observation",      "reward",
-                                                 "termination",      "events",
-                                                 "source_barrier_id"}
-                      : std::vector<std::string>{
-                            "entity_ref", "seed",       "reset_generation", "clock",
-                            "snapshot",   "kinematics", "dynamics",         "source_barrier_id"};
+        observation_projection_ready
+            ? std::vector<std::string>{"entity_ref",       "seed",
+                                       "reset_generation", "clock",
+                                       "snapshot",         "kinematics",
+                                       "dynamics",         "instrument",
+                                       "observation",      "reward",
+                                       "termination",      "events",
+                                       "source_barrier_id"}
+            : std::vector<std::string>{
+                  "entity_ref", "seed",       "reset_generation", "clock",
+                  "snapshot",   "kinematics", "dynamics",         "source_barrier_id"};
     result.envelope.visibility_label = "export";
-    result.envelope.provenance = std::string(phase_d_ready ? kCudaResidentPhaseDSnapshotProvenance
-                                                           : kCudaResidentPhaseBSnapshotProvenance);
+    result.envelope.provenance = std::string(
+        observation_projection_ready ? kCudaResidentObservationProjectionSnapshotProvenance
+                                     : kCudaResidentFlightDynamicsSnapshotProvenance);
     result.worlds.reserve(source.worlds.size());
 
     std::optional<std::uint64_t> common_snapshot_version;
@@ -517,13 +521,14 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
         }
         snapshot.identity.lineage = {
             .source_snapshot_version = world.global_version,
-            .source_backend_id =
-                std::string(phase_d_ready ? kCudaResidentRb7BackendId : kCudaResidentRb6BackendId),
+            .source_backend_id = std::string(observation_projection_ready
+                                                 ? kCudaResidentObservationProjectionBackendId
+                                                 : kCudaResidentFlightDynamicsBackendId),
             .source_request_id = request_id,
         };
         snapshot.kinematics = world.kinematics;
         snapshot.dynamics = world.dynamics;
-        snapshot.phase_d = world.phase_d;
+        snapshot.observation_projection = world.observation_projection;
         snapshot.source_barrier_id = std::string(cuda_resident_barrier_id(world.barrier));
         result.worlds.push_back(std::move(snapshot));
     }

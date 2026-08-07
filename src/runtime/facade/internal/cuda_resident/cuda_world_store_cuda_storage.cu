@@ -1,6 +1,6 @@
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh"
-#include "runtime/contracts/cuda_resident_phase_a_fixture_contract.h"
-#include "runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_control_preparation_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_flight_dynamics_fixture_contract.h"
 
 #include <algorithm>
 #include <limits>
@@ -53,10 +53,10 @@ bool build_state_layout(std::size_t world_capacity, CudaWorldStateSlotLayout *la
     std::size_t prepared_double_count = 0;
     std::size_t prepared_flag_count = 0;
     std::size_t dynamics_count = 0;
-    std::size_t phase_b_force_count = 0;
-    std::size_t phase_d_instrument_count = 0;
-    std::size_t phase_d_observation_count = 0;
-    std::size_t phase_d_reward_count = 0;
+    std::size_t flight_dynamics_force_count = 0;
+    std::size_t observation_projection_instrument_count = 0;
+    std::size_t observation_projection_observation_count = 0;
+    std::size_t observation_projection_reward_count = 0;
     std::size_t shard_version_count = 0;
     if (!checked_product(world_capacity, kKinematicsFieldCount, &kinematics_count) ||
         !checked_product(world_capacity, kControlDoubleFieldCount, &control_double_count) ||
@@ -65,10 +65,14 @@ bool build_state_layout(std::size_t world_capacity, CudaWorldStateSlotLayout *la
         !checked_product(world_capacity, kPreparedDoubleFieldCount, &prepared_double_count) ||
         !checked_product(world_capacity, kPreparedFlagFieldCount, &prepared_flag_count) ||
         !checked_product(world_capacity, kDynamicsDoubleFieldCount, &dynamics_count) ||
-        !checked_product(world_capacity, kPhaseBForceFieldCount, &phase_b_force_count) ||
-        !checked_product(world_capacity, kPhaseDInstrumentFieldCount, &phase_d_instrument_count) ||
-        !checked_product(world_capacity, kPhaseDObservationFieldCount, &phase_d_observation_count) ||
-        !checked_product(world_capacity, kPhaseDRewardFieldCount, &phase_d_reward_count) ||
+        !checked_product(world_capacity, kFlightDynamicsForceFieldCount,
+                         &flight_dynamics_force_count) ||
+        !checked_product(world_capacity, kObservationProjectionInstrumentFieldCount,
+                         &observation_projection_instrument_count) ||
+        !checked_product(world_capacity, kObservationProjectionObservationFieldCount,
+                         &observation_projection_observation_count) ||
+        !checked_product(world_capacity, kObservationProjectionRewardFieldCount,
+                         &observation_projection_reward_count) ||
         !checked_product(world_capacity, kCudaResidentShardCount, &shard_version_count)) {
         return false;
     }
@@ -78,21 +82,27 @@ bool build_state_layout(std::size_t world_capacity, CudaWorldStateSlotLayout *la
         !append_array<double>(world_capacity, &cursor, &layout->time_steps) ||
         !append_array<double>(kinematics_count, &cursor, &layout->kinematics) ||
         !append_array<double>(dynamics_count, &cursor, &layout->dynamics) ||
-        !append_array<double>(phase_b_force_count, &cursor, &layout->phase_b_forces) ||
-        !append_array<double>(phase_d_instrument_count, &cursor, &layout->phase_d_instruments) ||
-        !append_array<double>(phase_d_observation_count, &cursor, &layout->phase_d_observations) ||
-        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->phase_d_observation_ids) ||
-        !append_array<double>(phase_d_reward_count, &cursor, &layout->phase_d_rewards) ||
-        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->phase_d_reward_versions) ||
-        !append_array<std::uint8_t>(world_capacity, &cursor, &layout->phase_d_termination_flags) ||
-        !append_array<std::uint8_t>(world_capacity, &cursor, &layout->phase_d_termination_codes) ||
-        !append_array<std::uint8_t>(world_capacity, &cursor, &layout->phase_d_event_empty) ||
+        !append_array<double>(flight_dynamics_force_count, &cursor,
+                              &layout->flight_dynamics_forces) ||
+        !append_array<double>(observation_projection_instrument_count, &cursor,
+                              &layout->projected_instruments) ||
+        !append_array<double>(observation_projection_observation_count, &cursor,
+                              &layout->projected_observations) ||
+        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->projected_observation_ids) ||
+        !append_array<double>(observation_projection_reward_count, &cursor,
+                              &layout->projected_rewards) ||
+        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->projected_reward_versions) ||
+        !append_array<std::uint8_t>(world_capacity, &cursor,
+                                    &layout->projected_termination_flags) ||
+        !append_array<std::uint8_t>(world_capacity, &cursor,
+                                    &layout->projected_termination_codes) ||
+        !append_array<std::uint8_t>(world_capacity, &cursor, &layout->projected_event_empty) ||
         !append_array<double>(control_double_count, &cursor, &layout->control_doubles) ||
         !append_array<float>(control_float_count, &cursor, &layout->control_floats) ||
         !append_array<std::uint8_t>(control_flag_count, &cursor, &layout->control_flags) ||
         !append_array<double>(prepared_double_count, &cursor, &layout->prepared_doubles) ||
         !append_array<std::uint8_t>(prepared_flag_count, &cursor, &layout->prepared_flags) ||
-        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->phase_versions) ||
+        !append_array<std::uint64_t>(world_capacity, &cursor, &layout->prepared_control_versions) ||
         !append_array<std::uint64_t>(world_capacity, &cursor, &layout->clock_ticks) ||
         !append_array<double>(world_capacity, &cursor, &layout->simulation_times) ||
         !append_array<std::uint64_t>(world_capacity, &cursor, &layout->global_versions) ||
@@ -331,22 +341,24 @@ bool setup_cuda_world_store_fixed_air_fixture(CudaWorldStoreDeviceAllocation *al
     auto *time_steps = host_field<double>(host_slot, allocation->state_layout.time_steps);
     auto *kinematics = host_field<double>(host_slot, allocation->state_layout.kinematics);
     auto *dynamics = host_field<double>(host_slot, allocation->state_layout.dynamics);
-    auto *phase_b_forces = host_field<double>(host_slot, allocation->state_layout.phase_b_forces);
-    auto *phase_d_instruments =
-        host_field<double>(host_slot, allocation->state_layout.phase_d_instruments);
-    auto *phase_d_observations =
-        host_field<double>(host_slot, allocation->state_layout.phase_d_observations);
-    auto *phase_d_observation_ids =
-        host_field<std::uint64_t>(host_slot, allocation->state_layout.phase_d_observation_ids);
-    auto *phase_d_rewards = host_field<double>(host_slot, allocation->state_layout.phase_d_rewards);
-    auto *phase_d_reward_versions =
-        host_field<std::uint64_t>(host_slot, allocation->state_layout.phase_d_reward_versions);
-    auto *phase_d_termination_flags =
-        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_termination_flags);
-    auto *phase_d_termination_codes =
-        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_termination_codes);
-    auto *phase_d_event_empty =
-        host_field<std::uint8_t>(host_slot, allocation->state_layout.phase_d_event_empty);
+    auto *flight_dynamics_forces =
+        host_field<double>(host_slot, allocation->state_layout.flight_dynamics_forces);
+    auto *projected_instruments =
+        host_field<double>(host_slot, allocation->state_layout.projected_instruments);
+    auto *projected_observations =
+        host_field<double>(host_slot, allocation->state_layout.projected_observations);
+    auto *projected_observation_ids =
+        host_field<std::uint64_t>(host_slot, allocation->state_layout.projected_observation_ids);
+    auto *projected_rewards =
+        host_field<double>(host_slot, allocation->state_layout.projected_rewards);
+    auto *projected_reward_versions =
+        host_field<std::uint64_t>(host_slot, allocation->state_layout.projected_reward_versions);
+    auto *projected_termination_flags =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.projected_termination_flags);
+    auto *projected_termination_codes =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.projected_termination_codes);
+    auto *projected_event_empty =
+        host_field<std::uint8_t>(host_slot, allocation->state_layout.projected_event_empty);
     auto *global_versions =
         host_field<std::uint64_t>(host_slot, allocation->state_layout.global_versions);
     auto *barrier_sequences =
@@ -374,24 +386,24 @@ bool setup_cuda_world_store_fixed_air_fixture(CudaWorldStoreDeviceAllocation *al
             dynamics[field * setups.size() + world] = 0.0;
         }
         dynamics[kDynGearExtension * setups.size() + world] = 1.0;
-        for (std::size_t field = 0; field < kPhaseBForceFieldCount; ++field) {
-            phase_b_forces[field * setups.size() + world] = 0.0;
+        for (std::size_t field = 0; field < kFlightDynamicsForceFieldCount; ++field) {
+            flight_dynamics_forces[field * setups.size() + world] = 0.0;
         }
-        for (std::size_t field = 0; field < kPhaseDInstrumentFieldCount; ++field) {
-            phase_d_instruments[field * setups.size() + world] = 0.0;
+        for (std::size_t field = 0; field < kObservationProjectionInstrumentFieldCount; ++field) {
+            projected_instruments[field * setups.size() + world] = 0.0;
         }
-        for (std::size_t field = 0; field < kPhaseDObservationFieldCount; ++field) {
-            phase_d_observations[field * setups.size() + world] = 0.0;
+        for (std::size_t field = 0; field < kObservationProjectionObservationFieldCount; ++field) {
+            projected_observations[field * setups.size() + world] = 0.0;
         }
-        phase_d_observation_ids[world] = setup.entity_id;
-        for (std::size_t field = 0; field < kPhaseDRewardFieldCount; ++field) {
-            phase_d_rewards[field * setups.size() + world] = 0.0;
+        projected_observation_ids[world] = setup.entity_id;
+        for (std::size_t field = 0; field < kObservationProjectionRewardFieldCount; ++field) {
+            projected_rewards[field * setups.size() + world] = 0.0;
         }
-        phase_d_reward_versions[world] = 0;
-        phase_d_termination_flags[world] = 0;
-        phase_d_termination_codes[world] =
+        projected_reward_versions[world] = 0;
+        projected_termination_flags[world] = 0;
+        projected_termination_codes[world] =
             static_cast<std::uint8_t>(CudaResidentTerminationCode::running);
-        phase_d_event_empty[world] = 1;
+        projected_event_empty[world] = 1;
         global_versions[world] = 1;
         barrier_sequences[world] = 1;
         barrier_codes[world] = static_cast<std::uint8_t>(CudaResidentBarrierCode::input_injection);
@@ -542,6 +554,5 @@ bool release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocati
     allocation = nullptr;
     return true;
 }
-
 
 } // namespace runtime::cuda_resident::detail

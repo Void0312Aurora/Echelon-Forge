@@ -73,30 +73,30 @@ is:
 
 | Module | Role | Lines |
 | --- | --- | ---: |
-| `cuda_world_store_cuda_internal.cuh` | shared layout, allocation, and wrapper contract | 291 |
-| `cuda_world_store_cuda_math.cuh` | shared device math helpers | 139 |
-| `cuda_world_store_cuda_storage.cu` | allocation/layout, metadata, and fixture storage | 547 |
+| `cuda_world_store_cuda_internal.cuh` | shared layout, allocation, and wrapper contract | 293 |
+| `cuda_world_store_cuda_math.cuh` | shared device math helpers | 143 |
+| `cuda_world_store_cuda_storage.cu` | allocation/layout, metadata, and fixture storage | 558 |
 | `cuda_world_store_cuda_barrier.cu` | barrier kernel and resource query | 264 |
-| `cuda_world_store_cuda_phase_a.cu` | Phase A kernel and publication | 204 |
-| `cuda_world_store_cuda_phase_b.cu` | Phase B kernels and launch wrappers | 497 |
-| `cuda_world_store_cuda_phase_d.cu` | Phase D kernels and launch wrappers | 231 |
-| `cuda_world_store_cuda_observation.cu` | diagnostic plus CR2-3 lease pack and consumer | 441 |
-| `cuda_world_store_cuda_state_readback.cu` | host state readback | 271 |
-| `cuda_world_store_cuda_window.cu` | private full-window orchestration | 69 |
+| `cuda_world_store_cuda_control_preparation.cu` | control-preparation kernel and publication | 207 |
+| `cuda_world_store_cuda_flight_dynamics.cu` | flight-dynamics kernels and launch wrappers | 518 |
+| `cuda_world_store_cuda_observation_projection.cu` | observation-projection kernels and launch wrappers | 239 |
+| `cuda_world_store_cuda_observation.cu` | device-observation lease packing and consumer | 439 |
+| `cuda_world_store_cuda_state_readback.cu` | host state readback | 273 |
+| `cuda_world_store_cuda_window.cu` | private full-window orchestration | 72 |
 
 All current CR2-owned CUDA modules are below the 700-line soft target. The old
 monolith remains a historical baseline only; it is not a source or an active
 exception.
 
-CR2-3 keeps the host/device lease boundary split into small owners:
+The device-observation lease boundary remains split into small owners:
 `cuda_resident_device_consumer.cpp/.h` (246/49 lines),
 `cuda_world_store_device_lease.cpp` (66), and
 `cuda_world_store_host_internal.h` (33). The existing host owners remain below
-the soft target at 661 lines for `cuda_world_store.cpp` and 636 for
+the soft target at 684 lines for `cuda_world_store.cpp` and 652 for
 `cuda_resident_backend.cpp`; no size exception is added.
 
-CR2-4a removes the replay-test watch item by splitting its zero-semantic-change
-support into `test_cuda_resident_replay_projection.cpp` (611 lines),
+The replay-test split removes its former watch item without changing behavior:
+`test_cuda_resident_replay_projection.cpp` is 612 lines,
 `test_cuda_resident_replay_support.cpp` (175), and
 `test_cuda_resident_replay_support.h` (58); the assertion/test owner is now
 `test_cuda_resident_replay.cpp` (139). No current CR2 watch item remains.

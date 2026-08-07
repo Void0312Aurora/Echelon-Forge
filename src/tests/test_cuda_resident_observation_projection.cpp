@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 #include "runtime/contracts/parity_budget_contracts.h"
 
 namespace {
@@ -21,7 +21,7 @@ std::vector<WorldSpawnRequest> make_spawns() {
         WorldSpawnRequest spawn{};
         spawn.world_index = world;
         spawn.type_name = std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
-        spawn.entity_name = "RB7PhaseD" + std::to_string(world);
+        spawn.entity_name = "CudaObservationProjection" + std::to_string(world);
         spawn.is_agent = true;
         spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
         spawn.z = 1500.0;
@@ -57,7 +57,7 @@ void check_resource(const runtime::cuda_resident::CudaBarrierKernelResources &re
 
 } // namespace
 
-TEST_CASE("RB7 Phase D projects host export and a lease-scoped device view") {
+TEST_CASE("CUDA observation projection produces host export and a lease-scoped device view") {
     using namespace runtime::cuda_resident;
     if (!CudaWorldStore::compiled_with_cuda()) {
         CHECK(true);
@@ -66,9 +66,9 @@ TEST_CASE("RB7 Phase D projects host export and a lease-scoped device view") {
 
     CudaResidentBackend backend;
     backend.configure({.world_count = 2});
-    check_resource(testing::CudaWorldStoreTestAccess::phase_d_instruments_kernel_resources());
-    check_resource(testing::CudaWorldStoreTestAccess::phase_d_configuration_kernel_resources());
-    check_resource(testing::CudaWorldStoreTestAccess::phase_d_projection_kernel_resources());
+    check_resource(testing::CudaWorldStoreTestAccess::instrument_projection_kernel_resources());
+    check_resource(testing::CudaWorldStoreTestAccess::configuration_projection_kernel_resources());
+    check_resource(testing::CudaWorldStoreTestAccess::observation_projection_kernel_resources());
 
     const std::vector<std::uint32_t> seeds = {101, 202};
     const std::vector<WorldSpawnRequest> spawns = make_spawns();
@@ -88,69 +88,93 @@ TEST_CASE("RB7 Phase D projects host export and a lease-scoped device view") {
     const auto state = testing::CudaWorldStoreTestAccess::read_state(store);
     REQUIRE(state.worlds.size() == 2);
     for (std::size_t world = 0; world < state.worlds.size(); ++world) {
-        const auto &phase_d = state.worlds[world].phase_d;
+        const auto &observation_projection = state.worlds[world].observation_projection;
         const auto &resident = state.worlds[world];
-        CHECK(phase_d.instrument.alt_baro_m == doctest::Approx(state.worlds[world].kinematics.z));
-        CHECK(phase_d.instrument.alt_radar_m == doctest::Approx(phase_d.instrument.alt_baro_m));
-        CHECK(phase_d.instrument.ias_mps ==
+        CHECK(observation_projection.instrument.alt_baro_m ==
+              doctest::Approx(state.worlds[world].kinematics.z));
+        CHECK(observation_projection.instrument.alt_radar_m ==
+              doctest::Approx(observation_projection.instrument.alt_baro_m));
+        CHECK(observation_projection.instrument.ias_mps ==
               doctest::Approx(std::sqrt(2.0 * resident.dynamics.dynamic_pressure /
-                                        kPhaseBSeaLevelDensityKgM3)));
-        CHECK(phase_d.instrument.mach == doctest::Approx(resident.dynamics.mach_number));
-        CHECK(phase_d.instrument.vvi_mps == doctest::Approx(resident.kinematics.vz));
-        CHECK(phase_d.instrument.pitch_deg == doctest::Approx(resident.kinematics.pitch));
-        CHECK(phase_d.instrument.roll_deg == doctest::Approx(resident.kinematics.roll));
-        CHECK(phase_d.instrument.heading_deg == doctest::Approx(resident.kinematics.heading));
-        CHECK(phase_d.instrument.aoa_deg == doctest::Approx(resident.dynamics.angle_of_attack));
-        CHECK(phase_d.instrument.beta_deg == doctest::Approx(resident.dynamics.sideslip_angle));
-        CHECK(phase_d.instrument.p_deg_s == doctest::Approx(resident.dynamics.p * 180.0 / kPi));
-        CHECK(phase_d.instrument.q_deg_s == doctest::Approx(resident.dynamics.q * 180.0 / kPi));
-        CHECK(phase_d.instrument.r_deg_s == doctest::Approx(resident.dynamics.r * 180.0 / kPi));
-        CHECK(phase_d.instrument.engine_rpm_pct ==
+                                        kFlightDynamicsSeaLevelDensityKgM3)));
+        CHECK(observation_projection.instrument.mach ==
+              doctest::Approx(resident.dynamics.mach_number));
+        CHECK(observation_projection.instrument.vvi_mps == doctest::Approx(resident.kinematics.vz));
+        CHECK(observation_projection.instrument.pitch_deg ==
+              doctest::Approx(resident.kinematics.pitch));
+        CHECK(observation_projection.instrument.roll_deg ==
+              doctest::Approx(resident.kinematics.roll));
+        CHECK(observation_projection.instrument.heading_deg ==
+              doctest::Approx(resident.kinematics.heading));
+        CHECK(observation_projection.instrument.aoa_deg ==
+              doctest::Approx(resident.dynamics.angle_of_attack));
+        CHECK(observation_projection.instrument.beta_deg ==
+              doctest::Approx(resident.dynamics.sideslip_angle));
+        CHECK(observation_projection.instrument.p_deg_s ==
+              doctest::Approx(resident.dynamics.p * 180.0 / kPi));
+        CHECK(observation_projection.instrument.q_deg_s ==
+              doctest::Approx(resident.dynamics.q * 180.0 / kPi));
+        CHECK(observation_projection.instrument.r_deg_s ==
+              doctest::Approx(resident.dynamics.r * 180.0 / kPi));
+        CHECK(observation_projection.instrument.engine_rpm_pct ==
               doctest::Approx(resident.dynamics.throttle_state * 100.0 +
                               resident.dynamics.ab_state * 10.0));
-        CHECK(phase_d.instrument.fuel_flow_kg_h ==
-              doctest::Approx(resident.dynamics.current_thrust_n * kPhaseDFuelFlowTsfcNhPerN));
-        CHECK(phase_d.instrument.throttle_pos == doctest::Approx(actions[world].action.throttle));
-        CHECK(phase_d.instrument.fuel_internal_kg == doctest::Approx(kPhaseBFuelMassKg));
-        CHECK(phase_d.instrument.fuel_external_kg == doctest::Approx(0.0));
-        CHECK(phase_d.instrument.flaps_pos == doctest::Approx(actions[world].action.flaps));
-        CHECK(phase_d.instrument.speedbrake_pos ==
+        CHECK(observation_projection.instrument.fuel_flow_kg_h ==
+              doctest::Approx(resident.dynamics.current_thrust_n *
+                              kObservationProjectionFuelFlowTsfcNhPerN));
+        CHECK(observation_projection.instrument.throttle_pos ==
+              doctest::Approx(actions[world].action.throttle));
+        CHECK(observation_projection.instrument.fuel_internal_kg ==
+              doctest::Approx(kFlightDynamicsFuelMassKg));
+        CHECK(observation_projection.instrument.fuel_external_kg == doctest::Approx(0.0));
+        CHECK(observation_projection.instrument.flaps_pos ==
+              doctest::Approx(actions[world].action.flaps));
+        CHECK(observation_projection.instrument.speedbrake_pos ==
               doctest::Approx(actions[world].action.speedbrake));
-        CHECK(phase_d.instrument.gear_pos > 0.0);
-        CHECK(phase_d.instrument.gear_pos <= 1.0);
-        CHECK(phase_d.observation.id == setup.entity_ids[world]);
-        CHECK(phase_d.observation.sim_time ==
+        CHECK(observation_projection.instrument.gear_pos > 0.0);
+        CHECK(observation_projection.instrument.gear_pos <= 1.0);
+        CHECK(observation_projection.observation.id == setup.entity_ids[world]);
+        CHECK(observation_projection.observation.sim_time ==
               doctest::Approx(std::vector<double>{0.05, 0.125}[world]));
-        CHECK(phase_d.observation.x == doctest::Approx(resident.kinematics.x));
-        CHECK(phase_d.observation.y == doctest::Approx(resident.kinematics.y));
-        CHECK(phase_d.observation.z == doctest::Approx(resident.kinematics.z));
-        CHECK(phase_d.observation.vx == doctest::Approx(resident.kinematics.vx));
-        CHECK(phase_d.observation.vy == doctest::Approx(resident.kinematics.vy));
-        CHECK(phase_d.observation.vz == doctest::Approx(resident.kinematics.vz));
-        CHECK(phase_d.observation.heading == doctest::Approx(resident.kinematics.heading));
-        CHECK(phase_d.observation.pitch == doctest::Approx(resident.kinematics.pitch));
-        CHECK(phase_d.observation.roll == doctest::Approx(resident.kinematics.roll));
-        CHECK(phase_d.observation.speed ==
+        CHECK(observation_projection.observation.x == doctest::Approx(resident.kinematics.x));
+        CHECK(observation_projection.observation.y == doctest::Approx(resident.kinematics.y));
+        CHECK(observation_projection.observation.z == doctest::Approx(resident.kinematics.z));
+        CHECK(observation_projection.observation.vx == doctest::Approx(resident.kinematics.vx));
+        CHECK(observation_projection.observation.vy == doctest::Approx(resident.kinematics.vy));
+        CHECK(observation_projection.observation.vz == doctest::Approx(resident.kinematics.vz));
+        CHECK(observation_projection.observation.heading ==
+              doctest::Approx(resident.kinematics.heading));
+        CHECK(observation_projection.observation.pitch ==
+              doctest::Approx(resident.kinematics.pitch));
+        CHECK(observation_projection.observation.roll == doctest::Approx(resident.kinematics.roll));
+        CHECK(observation_projection.observation.speed ==
               doctest::Approx(std::sqrt(resident.kinematics.vx * resident.kinematics.vx +
                                         resident.kinematics.vy * resident.kinematics.vy +
                                         resident.kinematics.vz * resident.kinematics.vz)));
-        CHECK(phase_d.observation.health == doctest::Approx(kPhaseDHealth));
-        CHECK(phase_d.observation.gear_state == doctest::Approx(phase_d.instrument.gear_pos));
-        CHECK(phase_d.observation.throttle == doctest::Approx(actions[world].action.throttle));
-        CHECK(phase_d.observation.total_reward == doctest::Approx(phase_d.reward.total_reward));
-        CHECK(phase_d.reward.survival_term == doctest::Approx(kPhaseDSurvivalReward));
-        CHECK(phase_d.reward.speed_term == doctest::Approx(0.0));
-        CHECK(phase_d.reward.total_reward == doctest::Approx(kPhaseDSurvivalReward));
-        CHECK_FALSE(phase_d.termination.terminated);
-        CHECK(phase_d.termination.reason_code == CudaResidentTerminationCode::running);
-        CHECK(phase_d.events_empty);
+        CHECK(observation_projection.observation.health ==
+              doctest::Approx(kObservationProjectionHealth));
+        CHECK(observation_projection.observation.gear_state ==
+              doctest::Approx(observation_projection.instrument.gear_pos));
+        CHECK(observation_projection.observation.throttle ==
+              doctest::Approx(actions[world].action.throttle));
+        CHECK(observation_projection.observation.total_reward ==
+              doctest::Approx(observation_projection.reward.total_reward));
+        CHECK(observation_projection.reward.survival_term ==
+              doctest::Approx(kObservationProjectionSurvivalReward));
+        CHECK(observation_projection.reward.speed_term == doctest::Approx(0.0));
+        CHECK(observation_projection.reward.total_reward ==
+              doctest::Approx(kObservationProjectionSurvivalReward));
+        CHECK_FALSE(observation_projection.termination.terminated);
+        CHECK(observation_projection.termination.reason_code ==
+              CudaResidentTerminationCode::running);
+        CHECK(observation_projection.events_empty);
         CHECK(state.worlds[world]
                   .shard_versions[static_cast<std::size_t>(CudaResidentShard::instrument)] == 1);
         CHECK(state.worlds[world]
                   .shard_versions[static_cast<std::size_t>(CudaResidentShard::observation)] == 1);
     }
 
-    const auto snapshot = backend.export_snapshot("rb7.phase_d");
+    const auto snapshot = backend.export_snapshot("observation_projection");
     REQUIRE(snapshot.worlds.size() == 2);
     CHECK(snapshot.barrier.contract_satisfied);
     CHECK(snapshot.barrier.comparison_eligible);
@@ -159,11 +183,13 @@ TEST_CASE("RB7 Phase D projects host export and a lease-scoped device view") {
           std::vector<std::string>{"identity", "clock", "snapshot", "kinematics", "dynamics",
                                    "instrument", "observation", "reward", "termination", "events",
                                    "export_envelope"});
-    CHECK(snapshot.envelope.schema_version == std::string(kCudaResidentPhaseDSnapshotSchemaV3));
-    CHECK(snapshot.envelope.provenance == std::string(kCudaResidentPhaseDSnapshotProvenance));
+    CHECK(snapshot.envelope.schema_version ==
+          std::string(kCudaResidentObservationProjectionSnapshotSchemaV3));
+    CHECK(snapshot.envelope.provenance ==
+          std::string(kCudaResidentObservationProjectionSnapshotProvenance));
     CHECK(snapshot.worlds[0].identity.lineage.source_backend_id ==
-          std::string(kCudaResidentRb7BackendId));
-    CHECK(snapshot.worlds[0].phase_d.observation.id == setup.entity_ids[0]);
+          std::string(kCudaResidentObservationProjectionBackendId));
+    CHECK(snapshot.worlds[0].observation_projection.observation.id == setup.entity_ids[0]);
 
     const std::vector<WorldEntityRef> refs = {
         {.world_index = 0, .entity_id = setup.entity_ids[0]},
@@ -176,15 +202,16 @@ TEST_CASE("RB7 Phase D projects host export and a lease-scoped device view") {
     REQUIRE(host_export.agent_observations.size() == 1);
     REQUIRE(host_export.instrument_states.size() == 1);
     CHECK(host_export.agent_observations[0].id == setup.entity_ids[0]);
-    CHECK(host_export.agent_observations[0].total_reward == doctest::Approx(kPhaseDSurvivalReward));
+    CHECK(host_export.agent_observations[0].total_reward ==
+          doctest::Approx(kObservationProjectionSurvivalReward));
     CHECK(host_export.instrument_states[0].ias_mps ==
-          doctest::Approx(snapshot.worlds[0].phase_d.instrument.ias_mps));
+          doctest::Approx(snapshot.worlds[0].observation_projection.instrument.ias_mps));
 
     const auto view = backend.export_device_observation_view("rb7.device_view");
     REQUIRE(view.valid());
     CHECK(view.descriptor.output_shape ==
-          std::vector<std::uint64_t>{2, kPhaseDObservationValueCount});
-    CHECK(view.descriptor.element_count == 2 * kPhaseDObservationValueCount);
+          std::vector<std::uint64_t>{2, kObservationProjectionObservationValueCount});
+    CHECK(view.descriptor.element_count == 2 * kObservationProjectionObservationValueCount);
     CHECK(view.descriptor.source_snapshot == snapshot.envelope.source_snapshot_version);
     CHECK(view.descriptor.dtype == "float32");
     CHECK(std::find(view.descriptor.consumer_constraints.begin(),

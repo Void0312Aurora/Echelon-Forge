@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.h"
 
 namespace runtime::cuda_resident::replay::test_support {
@@ -33,7 +33,7 @@ ReplayLaneResult run_cpu_reference(const ReplayTrace &trace) {
     using namespace runtime::cuda_resident;
     using namespace runtime::cuda_resident::replay;
     if (trace.windows.size() != 1 ||
-        trace.seeds.size() != kCudaResidentPhaseBFirstExpected.size()) {
+        trace.seeds.size() != kCudaResidentFlightDynamicsFirstExpected.size()) {
         throw std::invalid_argument("RB8 fixed CPU oracle owns exactly one two-world window");
     }
     const std::vector<std::uint64_t> entity_ids(trace.seeds.size(), fixed_air_fixture_entity_id(0));
@@ -71,7 +71,7 @@ ReplayLaneResult run_cuda_resident(const ReplayTrace &trace) {
     if (!CudaWorldStore::compiled_with_cuda()) {
         return {
             .lane = ReplayLaneKind::cuda_resident,
-            .backend_id = std::string(kCudaResidentRb7BackendId),
+            .backend_id = std::string(kCudaResidentObservationProjectionBackendId),
             .trace_signature = CudaResidentReplayHarness::trace_signature(trace),
             .completed = false,
             .failure_code = "cuda_not_compiled",
@@ -91,7 +91,7 @@ ReplayLaneResult run_cuda_resident(const ReplayTrace &trace) {
 
     ReplayLaneResult result{
         .lane = ReplayLaneKind::cuda_resident,
-        .backend_id = std::string(kCudaResidentRb7BackendId),
+        .backend_id = std::string(kCudaResidentObservationProjectionBackendId),
         .trace_signature = CudaResidentReplayHarness::trace_signature(trace),
         .completed = false,
     };
@@ -156,10 +156,10 @@ ReplayTrace make_trace() {
         };
         for (std::size_t world = 0; world < trace.seeds.size(); ++world) {
             PilotAction action{};
-            action.stick_pitch = kCudaResidentPhaseBFirstInputs[world].stick_pitch;
-            action.stick_roll = kCudaResidentPhaseBFirstInputs[world].stick_roll;
-            action.rudder = kCudaResidentPhaseBFirstInputs[world].rudder;
-            action.throttle = kCudaResidentPhaseBFirstInputs[world].throttle;
+            action.stick_pitch = kCudaResidentFlightDynamicsFirstInputs[world].stick_pitch;
+            action.stick_roll = kCudaResidentFlightDynamicsFirstInputs[world].stick_roll;
+            action.rudder = kCudaResidentFlightDynamicsFirstInputs[world].rudder;
+            action.throttle = kCudaResidentFlightDynamicsFirstInputs[world].throttle;
             action.gear_handle = 0.0F;
             action.flaps = 0.1F;
             action.speedbrake = 0.0F;

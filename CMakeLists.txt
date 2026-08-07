@@ -363,9 +363,9 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     list(APPEND EF_CUDA_RESIDENT_BACKEND_SOURCES
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu
-        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_a.cu
-        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_b.cu
-        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_d.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_control_preparation.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_flight_dynamics.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation_projection.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu
@@ -503,9 +503,9 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_backend_lifecycle.cpp
     src/tests/test_cuda_resident_backend_state.cpp
     src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp
-    src/tests/test_cuda_resident_phase_a_cpu_reference.cpp
-    src/tests/test_cuda_resident_phase_b_cpu_reference.cpp
-    src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/tests/test_cuda_resident_control_preparation_cpu_reference.cpp
+    src/tests/test_cuda_resident_flight_dynamics_cpu_reference.cpp
+    src/tests/test_cuda_resident_observation_projection_cpu_reference.cpp
     src/tests/test_cuda_resident_device_consumer.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
     src/tests/test_cuda_resident_replay.cpp
@@ -538,10 +538,10 @@ add_executable(ef_cuda_resident_lifecycle_test
     src/tests/test_main.cpp
     src/tests/test_cuda_resident_backend_lifecycle.cpp
     src/tests/test_cuda_resident_backend_state.cpp
-    src/tests/test_cuda_resident_phase_a.cpp
-    src/tests/test_cuda_resident_phase_b.cpp
-    src/tests/test_cuda_resident_phase_d.cpp
-    src/tests/test_cuda_resident_phase_d_cpu_reference.cpp
+    src/tests/test_cuda_resident_control_preparation.cpp
+    src/tests/test_cuda_resident_flight_dynamics.cpp
+    src/tests/test_cuda_resident_observation_projection.cpp
+    src/tests/test_cuda_resident_observation_projection_cpu_reference.cpp
     src/tests/test_cuda_resident_performance.cpp
     src/tests/test_cuda_resident_device_consumer.cpp
 )

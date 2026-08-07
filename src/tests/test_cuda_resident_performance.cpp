@@ -55,8 +55,9 @@ TEST_CASE("RB9 CUDA resource inventory includes pack and consumer kernels") {
         CHECK(true);
         return;
     }
-    const auto pack = testing::CudaWorldStoreTestAccess::phase_d_pack_kernel_resources();
-    const auto consumer = testing::CudaWorldStoreTestAccess::phase_d_consumer_kernel_resources();
+    const auto pack = testing::CudaWorldStoreTestAccess::device_observation_pack_kernel_resources();
+    const auto consumer =
+        testing::CudaWorldStoreTestAccess::device_observation_consumer_kernel_resources();
     CHECK(pack.registers_per_thread > 0);
     CHECK(pack.threads_per_block == 128);
     CHECK(pack.theoretical_occupancy > 0.0);
