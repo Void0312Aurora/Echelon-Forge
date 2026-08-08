@@ -198,10 +198,15 @@ def _write_nsys(
         connection.close()
 
 
-def test_legacy_resource_probe_is_retired_after_semantic_kernel_migration() -> None:
+def test_frozen_v1_capture_identity_survives_the_semantic_kernel_migration() -> None:
+    """The v1 capture identity is frozen historical record.
+
+    The semantic stage migration renamed every phase-lettered kernel. The v1
+    catalog, trace digest, and profile id must NOT follow that rename: the
+    retained static-capture evidence hashes against them, so editing them to
+    look semantic would invalidate the evidence rather than improve it.
+    """
     contract = CONTRACT.read_text(encoding="utf-8")
-    probe = PROBE.read_text(encoding="utf-8")
-    cmake = CMAKE.read_text(encoding="utf-8")
     assert resource.SCHEMA in contract
     assert resource.PROBE_SCHEMA in contract
     assert resource.PROFILE in contract
@@ -209,35 +214,145 @@ def test_legacy_resource_probe_is_retired_after_semantic_kernel_migration() -> N
     assert "kWorldCount = 256" in contract
     assert "kThreadsPerBlock = 128" in contract
     assert "kBlocks = 2" in contract
+    # The v1 probe stays retired. v2 supersedes it; it is never revived.
     assert "kCaptureProbeV1Retired = true" in contract
     assert "kCaptureProbeV1RetirementReason" in contract
     for spec in resource.KERNELS:
         assert f'{{"{spec.kernel_id}", "{spec.symbol_fragment}", {spec.launch_count}}}' in contract
     for index, (kernel_id, stage) in enumerate(resource.LAUNCH_SEQUENCE):
         assert f'{{{index}, "{kernel_id}", "{stage}"}}' in contract
+
+
+def test_v2_capture_supersedes_v1_without_reviving_the_retired_probe() -> None:
+    """The recapture must supersede v1, not revert its retirement.
+
+    A v2 capture is only comparable to the frozen v1 evidence if it measures the
+    same execution graph. That is asserted structurally here: a versioned v2
+    catalog exists, the migration table is a total 1:1 map, launch order is
+    checked position-by-position, and the shared workload identity (the trace
+    digest) is unchanged.
+    """
+    contract = CONTRACT.read_text(encoding="utf-8")
+    probe = PROBE.read_text(encoding="utf-8")
+
+    # v2 identity is distinct from v1 and declares what it replaces.
+    assert "cuda_resident.cp.resource_capture_probe.v2" in contract
+    assert "cuda_resident.cp.kernel_resource_evidence.v2" in contract
+    assert "cp.resource.steady_full_window_body.sm86.v2" in contract
+    assert "kProbeSchemaV2Predecessor = kProbeSchemaV1" in contract
+
+    # The retirement marker survives: v2 does not flip it back.
+    assert "kCaptureProbeV1Retired = true" in contract
     assert "static_assert(evidence::kCaptureProbeV1Retired);" in probe
-    assert "kCaptureProbeV1RetirementReason" in probe
-    assert "return EXIT_FAILURE;" in probe
-    for stale_capture_symbol in (
-        "ProfilerRange",
-        "query_kernel_resources",
-        "backend.setup",
-        "write_report",
-        "runtime_kernel_resources",
+
+    # Compile-time enforcement that v2 describes the same graph as v1.
+    for guard in (
+        "static_assert(kKernelSpecsV2.size() == 10);",
+        "static_assert(kLaunchSequenceV2.size() == 12);",
+        "static_assert(kernel_catalog_v2_is_complete());",
+        "static_assert(kernel_migration_is_total());",
+        "static_assert(launch_sequences_correspond());",
     ):
-        assert stale_capture_symbol not in probe
+        assert guard in contract
+
+    # Every v2 kernel must name the symbol the current sources actually emit.
+    cuda_dir = ROOT / "src/runtime/facade/internal/cuda_resident"
+    emitted_blob = "\n".join(
+        source.read_text(encoding="utf-8") for source in cuda_dir.glob("*.cu")
+    )
+    v2_symbols = [
+        "apply_barrier_kernel",
+        "control_preparation_kernel",
+        "flight_dynamics_forces_kernel",
+        "flight_dynamics_aerodynamics_kernel",
+        "flight_dynamics_integrate_kernel",
+        "instrument_projection_kernel",
+        "configuration_projection_kernel",
+        "episode_projection_kernel",
+        "pack_device_observation_kernel",
+        "device_observation_consumer_smoke_kernel",
+    ]
+    for symbol in v2_symbols:
+        assert f'"{symbol}"' in contract, f"v2 catalog is missing {symbol}"
+        assert f"{symbol}(" in emitted_blob, (
+            f"v2 catalog names {symbol}, which no .cu source emits"
+        )
+
+    # The probe must fail closed on catalog drift rather than emit a plausible
+    # report -- the exact gap that let the rename go unnoticed.
+    assert "require_catalog_alignment" in probe
+    assert "kKernelSpecsV2" in probe
+    # A static capture must never be mistaken for a counter capture.
+    assert '"achieved_counters_present", false' in probe
+    # A recapture grants no new authority.
+    for withheld in (
+        "kMaintainedClaimAllowed",
+        "kPublicSupportEnabled",
+        "kPromotionAllowed",
+        "kTuningAuthorized",
+    ):
+        assert withheld in probe
+
+
+def test_python_kernel_catalog_has_no_second_owner() -> None:
+    """The Python collector must derive its catalog from the C++ contract.
+
+    This module previously hard-coded its own copy of the kernel catalog. When
+    the semantic stage migration renamed the kernels, the C++ side moved and
+    nothing forced the Python side to follow, so the collector silently kept
+    validating against symbols that no longer existed. Parsing the contract
+    removes the second owner; this test keeps it removed.
+    """
+    from tools.diagnostics import cuda_resident_cr2_resource_static as static
+
+    source = STATIC_PARSER.read_text(encoding="utf-8")
+    # No literal kernel catalog may be reintroduced.
+    assert 'KernelSpec("apply_barrier"' not in source, "kernel catalog was re-hard-coded"
+    assert "kKernelSpecs" in source and "kKernelSpecsV2" in source
+
+    contract = CONTRACT.read_text(encoding="utf-8")
+    for version, array_name in ((1, "kKernelSpecs"), (2, "kKernelSpecsV2")):
+        catalog = static.kernel_catalog(version)
+        assert len(catalog) == 10, f"v{version} catalog should hold 10 kernels"
+        assert sum(spec.launch_count for spec in catalog) == 12
+        for spec in catalog:
+            entry = f'{{"{spec.kernel_id}", "{spec.symbol_fragment}", {spec.launch_count}}}'
+            assert entry in contract, f"v{version} entry not found in contract: {entry}"
+
+    # v1 and v2 must agree on shape while differing on names -- that is what
+    # makes the two evidence generations comparable.
+    v1, v2 = static.kernel_catalog(1), static.kernel_catalog(2)
+    assert [spec.launch_count for spec in v1] == [spec.launch_count for spec in v2]
+    assert {spec.symbol_fragment for spec in v1} != {spec.symbol_fragment for spec in v2}
+
+    # The retained v1 alias must keep pointing at v1 so existing validators and
+    # the frozen evidence they check are unaffected.
+    assert static.KERNELS == v1
+
+    with pytest.raises(static.EvidenceError):
+        static.kernel_catalog(3)
+
+
+    """CMake restores capture dependencies only against a versioned catalog.
+
+    The retirement made restoring backend/profiler dependencies conditional on a
+    versioned kernel catalog existing first. That precondition is now met, so the
+    dependencies are present -- but the target must stay inside the CUDA-on block
+    and must say why it is allowed to have them.
+    """
+    cmake = CMAKE.read_text(encoding="utf-8")
     target_index = cmake.index("add_executable(ef_cuda_resident_resource_probe")
     assert cmake.rfind("if (EF_ENABLE_CUDA_EXPERIMENTS)", 0, target_index) >= 0
     assert cmake.find("else()", target_index) > target_index
     target = cmake[target_index : cmake.index("else()", target_index)]
-    assert "A future capture must introduce a versioned kernel" in cmake
-    for obsolete_capture_dependency in (
+    assert "kKernelSpecsV2" in cmake
+    for restored_capture_dependency in (
         "cuda_resident_replay_harness.cpp",
         "ef_cuda_resident_backend",
         "nlohmann_json::nlohmann_json",
-        "EF_CR2_RESOURCE_BUILD_CONFIG",
+        "EF_RESOURCE_CAPTURE_BUILD_CONFIG",
     ):
-        assert obsolete_capture_dependency not in target
+        assert restored_capture_dependency in target
 
 
 def test_cr2_5a_evidence_records_static_resources_without_counter_or_tuning_claims() -> None:

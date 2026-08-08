@@ -238,15 +238,41 @@ necessarily contain phase-lettered identifiers, which the internal-code gate
 flags. Each is annotated `internal-code: compatibility` per-line with its reason
 rather than renamed — renaming them would invalidate the evidence they key.
 
+### CP-4b result: the duplicate catalog is gone
+
+The static-resource parser under `tools/diagnostics/` held its own hard-coded
+copy of the kernel catalog. Its filename is
+`cuda_resident_cr2_resource_static.py`, where `cr2` means the historical
+runtime-program-2 label, kept because renaming the module is out of scope.
+That second owner is the direct cause of the drift:
+when the migration renamed the kernels, the C++ contract moved and nothing forced
+the Python side to follow, so the collector kept validating against symbols that
+no longer existed and reported nothing wrong.
+
+The module now parses both catalogs out of the C++ contract, which becomes the
+single owner. `kernel_catalog(1)` and `kernel_catalog(2)` return the frozen and
+semantic catalogs respectively; the retained `KERNELS` alias still resolves to v1
+so every existing v1 validator and the frozen evidence it checks are unaffected.
+An unknown version raises rather than silently returning something plausible.
+
+Three tests replace the single retirement test, which asserted the probe stays a
+stub and so was falsified by CP-4a by design:
+
+- `test_frozen_v1_capture_identity_survives_the_semantic_kernel_migration` —
+  v1's catalog, digest, and profile id must not follow the rename.
+- `test_v2_capture_supersedes_v1_without_reviving_the_retired_probe` — v2 exists,
+  the retirement marker survives, all five `static_assert`s are present, and
+  every v2 symbol is one the current `.cu` sources actually emit.
+- `test_python_kernel_catalog_has_no_second_owner` — a literal catalog cannot be
+  reintroduced, both parsed catalogs match the contract, and v1/v2 agree on shape
+  while differing on names.
+
+The third test is the one that would have caught the original drift.
+
 ### Remaining CP-4 work
 
-- **CP-4b:** `tools/diagnostics/cuda_resident_cr2_resource_static.py` keeps its
-  own copy of the kernel catalog (`KERNELS`), still holding the v1 symbols. It is
-  a second owner of the same facts and is the reason the drift went unnoticed;
-  the Python collector must consume the v2 catalog before it can validate a v2
-  report. Kept as a separate iteration rather than mixed into CP-4a.
-- **CP-4c:** achieved counters under elevation. Unblocked from the code side now;
-  needs an elevated shell.
+- **CP-4c:** achieved counters under elevation. Code-side blockers are now clear;
+  this needs an elevated shell and is the last step before G-D closes.
 
 This is a real cost increase over the CP-0 estimate, and it is worth stating
 why it happened: the semantic migration correctly refused to relabel frozen

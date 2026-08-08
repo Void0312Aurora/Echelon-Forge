@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 
 
 class EvidenceError(ValueError):
@@ -15,18 +17,63 @@ class KernelSpec:
     launch_count: int
 
 
-KERNELS = (
-    KernelSpec("apply_barrier", "apply_barrier_kernel", 3),
-    KernelSpec("phase_a_controls", "prepare_phase_a_controls_kernel", 1),
-    KernelSpec("phase_b_forces", "phase_b_forces_kernel", 1),
-    KernelSpec("phase_b_aerodynamics", "phase_b_aerodynamics_kernel", 1),
-    KernelSpec("phase_b_integrate", "phase_b_integrate_kernel", 1),
-    KernelSpec("phase_d_instruments", "phase_d_instruments_kernel", 1),
-    KernelSpec("phase_d_configuration", "phase_d_configuration_kernel", 1),
-    KernelSpec("phase_d_projection", "phase_d_episode_kernel", 1),
-    KernelSpec("phase_d_pack", "phase_d_pack_observation_kernel", 1),
-    KernelSpec("phase_d_consumer", "phase_d_consumer_smoke_kernel", 1),
+CONTRACT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "src/runtime/contracts/cuda_resident_resource_evidence_contract.h"
 )
+
+_KERNEL_ENTRY_RE = re.compile(r'\{"([a-z0-9_]+)",\s*"([a-z0-9_]+)",\s*(\d+)\}')
+
+
+def _parse_catalog(array_name: str) -> tuple[KernelSpec, ...]:
+    """Read one kernel catalog out of the C++ evidence contract.
+
+    The contract is the single owner of the kernel catalog. This module used to
+    keep its own copy, which is precisely how it went stale when the semantic
+    stage migration renamed the kernels: the C++ side moved and nothing forced
+    the Python side to follow. Parsing keeps one owner instead of two.
+    """
+    try:
+        text = CONTRACT_PATH.read_text(encoding="utf-8")
+    except OSError as error:  # pragma: no cover - environment fault
+        raise EvidenceError(f"kernel resource contract is unreadable: {error}") from error
+    marker = f"inline constexpr auto {array_name} = std::to_array<KernelSpec>({{"
+    start = text.find(marker)
+    if start < 0:
+        raise EvidenceError(f"kernel resource contract does not declare {array_name}")
+    end = text.find("});", start)
+    if end < 0:
+        raise EvidenceError(f"{array_name} in the resource contract is unterminated")
+    specs = tuple(
+        KernelSpec(kernel_id, symbol_fragment, int(launch_count))
+        for kernel_id, symbol_fragment, launch_count in _KERNEL_ENTRY_RE.findall(
+            text[start:end]
+        )
+    )
+    if not specs:
+        raise EvidenceError(f"{array_name} in the resource contract parsed to no kernels")
+    if len({spec.kernel_id for spec in specs}) != len(specs):
+        raise EvidenceError(f"{array_name} in the resource contract has duplicate kernel ids")
+    return specs
+
+
+@lru_cache(maxsize=None)
+def kernel_catalog(schema_version: int) -> tuple[KernelSpec, ...]:
+    """Kernel catalog for a capture schema version.
+
+    v1 describes the pre-rename binary and stays available so the retained
+    static-capture evidence remains verifiable. v2 is the current catalog.
+    """
+    if schema_version == 1:
+        return _parse_catalog("kKernelSpecs")
+    if schema_version == 2:
+        return _parse_catalog("kKernelSpecsV2")
+    raise EvidenceError(f"unknown kernel catalog schema version: {schema_version}")
+
+
+# Retained name for the v1 validators in this module and its callers. New code
+# should ask for a version explicitly via kernel_catalog().
+KERNELS = kernel_catalog(1)
 
 
 def require(condition: bool, message: str) -> None:

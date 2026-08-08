@@ -208,13 +208,33 @@ v2 重捕获已落地，且精确复现了冻结捕获。
 它们。每一处都按行标注 `internal-code: compatibility` 并写明理由，而不是重命名——重命名
 会使它们所索引的证据失效。
 
+### CP-4b 结果：重复目录已消除
+
+`tools/diagnostics/` 下的静态资源解析器自带一份硬编码的 kernel 目录副本。其文件名为
+`cuda_resident_cr2_resource_static.py`，其中 `cr2` 表示历史上的 runtime program 2
+标签，因重命名模块超出本次范围而保留。这个第二所有者正是漂移的直接成因：迁移重命名 kernel 时，C++ 契约动了，却没有任何
+机制强制 Python 侧跟随，于是采集器继续针对已不存在的符号做校验，并且不报任何异常。
+
+该模块现在从 C++ 契约解析两份目录，使契约成为单一所有者。`kernel_catalog(1)` 与
+`kernel_catalog(2)` 分别返回冻结目录与语义目录；保留的 `KERNELS` 别名仍指向 v1，因此
+所有现存 v1 校验器及其检查的冻结证据都不受影响。未知版本会抛错，而不是静默返回一个看似
+合理的结果。
+
+三条测试替换了原先那条退役测试——后者断言探针保持存根状态，因此按设计被 CP-4a 推翻：
+
+- `test_frozen_v1_capture_identity_survives_the_semantic_kernel_migration`——
+  v1 的目录、摘要与 profile id 不得跟随重命名。
+- `test_v2_capture_supersedes_v1_without_reviving_the_retired_probe`——v2 存在、
+  退役标记存续、五条 `static_assert` 齐备，且每个 v2 符号都是当前 `.cu` 源码真实产出的。
+- `test_python_kernel_catalog_has_no_second_owner`——字面目录不可被重新引入、两份解析出的
+  目录与契约一致、v1/v2 形状相同而命名不同。
+
+第三条测试正是原本能抓住这次漂移的那一条。
+
 ### CP-4 剩余工作
 
-- **CP-4b：** `tools/diagnostics/cuda_resident_cr2_resource_static.py` 自带一份 kernel
-  目录副本（`KERNELS`），仍持有 v1 符号。它是同一批事实的第二个所有者，也正是这次漂移
-  未被发现的原因；Python 采集器必须先消费 v2 目录才能校验 v2 报告。作为独立迭代处理，
-  不混入 CP-4a。
-- **CP-4c：** 提权下的 achieved 计数器。代码侧障碍已清除，需要一个提权 shell。
+- **CP-4c：** 提权下的 achieved 计数器。代码侧阻塞现已全部清除；这一步需要提权 shell，
+  也是 G-D 关闭前的最后一步。
 
 这相对 CP-0 的估计是一次真实的成本上升，值得说明它为何发生：语义迁移正确地拒绝了给冻结
 证据重新贴标签，但它在没有替代物的情况下退役了唯一的捕获工具，于是下一次计数器尝试继承了
