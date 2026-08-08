@@ -133,7 +133,7 @@
             "draft 30 ft -> 9.14 m"
         ],
         "sources": [
-            "docs/standards/naval/ship_unit_references.md"
+            "docs/domains/naval/reference/ship_unit_references.md"
         ],
         "modeling_notes": [
             "Health is scaled as one HP per metric tonne of full-load displacement until naval damage effects are calibrated.",

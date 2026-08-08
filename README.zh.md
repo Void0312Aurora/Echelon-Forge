@@ -49,7 +49,7 @@ Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞
 | --- | --- | --- |
 | Air / execution | 最成熟的 runtime 和训练线，也是当前最适合作为 correctness hardening 的基线。 | `scenarios/takeoff/`、`scenarios/cruise/`、`scenarios/landing/`、`examples/config/training/frozen/` |
 | Cooperative / combined | 活跃集成主线，用于验证 multi-agent、leader/execution 和 world-batch 行为。 | `scenarios/combined/`、`python/rl/runtime/cooperative_world_batch_vec_env.py`、`gym_envs/leader_env.py` |
-| Naval | 活跃领域，已有 N4 风格的 pre-fire tasking、contact/reporting、screen/station 与评估 gate；武器/毁伤结果 authority 仍是后续工作。 | `scenarios/naval/`、`docs/task/naval/`、`docs/standards/naval/` |
+| Naval | 活跃领域，已有 N4 风格的 pre-fire tasking、contact/reporting、screen/station 与评估 gate；武器/毁伤结果 authority 仍是后续工作。 | `scenarios/naval/`、`docs/task/naval/`、`docs/domains/naval/` |
 | Ground | 早期 tasking/runtime bootstrap。当前 fixture 验证共享 command/status 语义和 native platform-schema 证据，不声明完整地面 movement、sensing、fires 或 damage。 | `scenarios/ground/`、`docs/task/ground/`、`docs/domains/ground/` |
 | Air combat / A2 | 聚焦的战斗与高保真毁伤模型工作线，已有 retained evidence gate。它是一个领域线，不是整个项目身份。 | `scenarios/air_combat/`、`docs/task/air_combat/` |
 | Visualization / game | 探索性的操作员与前端表面；维护路径应以后端仿真 runtime 真值为准。 | `examples/viz/`、`docs/task/viz/`、`docs/task/game/` |

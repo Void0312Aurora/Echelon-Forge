@@ -63,9 +63,11 @@ Tier A：严格双语维护面
 - 已准入严格维护面的 owner-local standards 与 reference，包括
   `docs/engineering/documentation/standards/` 和
   `docs/engineering/documentation/reference/`
-- `docs/domains/air/standards/` 与 `docs/domains/ground/standards/` 下已迁移的
-  Air 和 Ground 标准
+- `docs/domains/air/standards/`、`docs/domains/ground/standards/` 与
+  `docs/domains/naval/{standards,reference}/` 下已迁移的 Air、Ground、Naval
+  标准/reference
 - `docs/domains/joint/` 下已迁移的 Joint common-core 与 service-profile 权威
+- `docs/learning/standards/` 下已迁移的 policy/model architecture 标准
 - 迁移期遗留根 `docs/standards/` 下尚未迁往内容 owner 的维护中标准
 - `docs/operations/` 下的面向操作者 reference 与 how-to
 - 仍通过迁移期遗留 plan 表面路由的稳定计划权威：

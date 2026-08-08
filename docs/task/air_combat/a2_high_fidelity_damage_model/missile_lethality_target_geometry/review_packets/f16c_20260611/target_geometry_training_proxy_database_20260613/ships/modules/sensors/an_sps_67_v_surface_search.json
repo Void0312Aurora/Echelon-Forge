@@ -30,7 +30,7 @@
     "_provenance": {
         "modeling_note": "Public sources identify AN/SPS-67(V) as a two-dimensional surface-search/navigation radar. The 46.3 km range is a conservative radar-horizon runtime value for surface targets, derived from 25 m owner antenna height and 5 m target height using 3.57*(sqrt(h1)+sqrt(h2)) km; it is not a claimed maximum instrumented range. Sea-clutter and ducting fields are community-derived approximation / engineering calibration inputs for the current maritime runtime proxy, not authoritative performance disclosures.",
         "sources": [
-            "docs/standards/naval/ship_unit_references.md"
+            "docs/domains/naval/reference/ship_unit_references.md"
         ]
     }
 }

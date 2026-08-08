@@ -33,7 +33,7 @@ Related Files:
 - [AirProfile (Air Command Construction)](../../../../python/rl/profile/air_profile.py)
 - [NavalProfile (Naval Command Construction)](../../../../python/rl/profile/naval_profile.py)
 - [C2 Communication and Command Chain Roadmap](../../../systems/command-tasking/work/issues/c2_communication.md)
-- [Naval Mission Minimal Structure](../../../standards/naval/minimal_task_structure.md)
+- [Naval Mission Minimal Structure](../../../domains/naval/standards/minimal_task_structure.md)
 
 Document Positioning:
 

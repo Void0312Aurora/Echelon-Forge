@@ -33,10 +33,9 @@ Last verified: `2026-08-08`
 
 - [空中特化](../air/README.zh.md)
 - [地面特化](../ground/README.zh.md)
-- [海上特化](../../standards/naval/README.zh.md)
+- [海上特化](../naval/README.zh.md)
 
-Naval 链接在其独立 owner 迁移落地前属于过渡路由。这些路由均不表示 Joint
-拥有所链接的执行语义。
+这些路由均不表示 Joint 拥有所链接的执行语义。
 
 ## 参考依据
 

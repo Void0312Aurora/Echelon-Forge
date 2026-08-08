@@ -70,8 +70,8 @@ workflow stages, and DTOs line up with the maintained standards tree.
 
 The current maintained model-architecture references are:
 
-- [Model Architecture Standards Overview](../model/README.md)
-- [Policy Execution Architecture Baseline](../model/policy_execution_architecture.md)
+- [Model Architecture Standards Overview](../../learning/README.md)
+- [Policy Execution Architecture Baseline](../../learning/standards/policy_execution_architecture.md)
 
 They define:
 
@@ -108,17 +108,17 @@ They own:
 
 The maintained naval specialization entrypoints are:
 
-- [Naval Standards Overview](../naval/README.md)
-- [Naval Minimal Task Structure](../naval/minimal_task_structure.md)
-- [Ship Unit References](../naval/ship_unit_references.md)
-- [Naval Observation Contract](../naval/obs.md)
+- [Naval Standards Overview](../../domains/naval/README.md)
+- [Naval Minimal Task Structure](../../domains/naval/standards/minimal_task_structure.md)
+- [Ship Unit References](../../domains/naval/reference/ship_unit_references.md)
+- [Naval Observation Contract](../../domains/naval/standards/observation_contract.md)
 
 They own:
 
 - maritime task/station/screen/support/recovery semantics
 - ship- and task-group-level naval role interpretation
 - first-batch naval data/reference boundaries, with
-  [Ship Unit References](../naval/ship_unit_references.md) acting as the current
+  [Ship Unit References](../../domains/naval/reference/ship_unit_references.md) acting as the current
   reference-baseline supplement
 - `naval_screen_station_v1` mission-observation ownership and field order
 
@@ -148,19 +148,16 @@ owns Army profile interpretation; `docs/domains/ground/` owns maintained ground
 specialization. The accepted aliases `army` and `land` normalize to `ground`
 and must not be documented as a separate `army` runtime stack.
 
-## Active Planning Supplements
+## Open Architecture Issues
 
-The following document is maintained as an active planning supplement, not as a
-current runtime contract:
+The following draft records unresolved architecture residuals. It is not a
+current runtime contract and does not authorize implementation:
 
-- [Modularization Plan](../planning/modularization_plan.md)
+- [Modularization Plan](../../architecture/work/issues/modularization_plan.md)
 
-It exists to describe target codebase structure and future split direction after
-the standards-tree rebuild. It now also records the current
-`src/components/domains`, `src/systems/domains`, and `src/models/domains` roots
-so readers can distinguish realized owner roots from still-planned interfaces.
-It should not be cited as proof that every planned module boundary or every
-domain runtime owner is already implemented.
+It records current domain roots, landed extension interfaces, and remaining
+dependency-boundary questions. It should not be cited as proof that every
+proposed module boundary or domain runtime owner is implemented or accepted.
 
 ## Archived Documents
 
@@ -267,10 +264,10 @@ Map those workstreams back as follows:
 
 - `c2_command_chain/`
   - primarily aligns to `docs/domains/joint/`
-  - secondarily to the Navy service profile and the legacy `naval/` subtree
+  - secondarily to the Navy service profile and `docs/domains/naval/`
     where ship authority/report semantics appear
 - `naval/`
-  - aligns to the Navy service profile and the legacy `naval/` subtree
+  - aligns to the Navy service profile and `docs/domains/naval/`
 - `ground/` or future land-domain task work
   - aligns to the Army service profile for service-profile interpretation and
     `docs/domains/ground/` for specialization
@@ -293,12 +290,10 @@ When adding a new maintained standards document:
 1. Put cross-service relationships in `docs/domains/joint/standards/`.
 2. Put service organization/control interpretation in
    `docs/domains/joint/service_profiles/standards/`.
-3. Put Air or Ground specialization in the matching owner-local `standards/`
-   surface. Route Naval changes through its current legacy owner until its
-   separate migration lands.
+3. Put Air, Ground, or Naval specialization in the matching owner-local
+   `standards/` surface.
 4. Put new cross-domain runtime/workflow contracts under `docs/architecture/`;
    do not expand the legacy `bridge/` subtree.
-5. Put new model/policy architecture vocabulary under `docs/learning/` while
-   the current legacy model standard awaits migration.
+5. Put model/policy architecture vocabulary under `docs/learning/standards/`.
 6. Retire superseded work through the document lifecycle policy; do not rewrite
    existing archives as part of a standards migration.

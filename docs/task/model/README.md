@@ -15,7 +15,7 @@ simulation systems.
 Current route:
 
 - Standards baseline: model-architecture vocabulary and implementation ownership
-  live under [Model Architecture Standards](../../standards/model/README.md);
+  live under [Model Architecture Standards](../../learning/README.md);
   active tasks should cite that layer before adding or reinterpreting model
   branches, adapters, losses, buffers, or probes.
 - Target architecture: Path C, sequence-native causal Transformer HMoE/PPO.

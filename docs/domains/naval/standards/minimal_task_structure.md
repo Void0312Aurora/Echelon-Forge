@@ -4,8 +4,14 @@ Language:
 - English canonical: `minimal_task_structure.md`
 - Chinese companion: [minimal_task_structure.zh.md](minimal_task_structure.zh.md)
 
-Status: `2026-06-10` specialization baseline for the maintained minimal naval
-tasking structure.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/standards/minimal_task_structure.md`
+Owner: `domains/naval`
+Last verified: `2026-08-08`
+
+Status: maintained specialization baseline for the minimal naval tasking
+structure.
 
 This note freezes the smallest useful naval tasking structure that the current runtime and task plan must support.
 
@@ -33,12 +39,15 @@ When `tasking_profile = naval` or `service_profile = Navy`:
 - `officer_in_tactical_command` defaults to the `task_group` owner, then the `parent_node_id` fallback.
 - `tactical_unit_type` remains a shared type label and can still default to `CommandNode` when the mission is group-owned.
 
+The [Navy service profile](../../joint/service_profiles/standards/navy_profile.md)
+owns how `task_group`, `task_unit`, `warfare_role_code`, and
+`officer_in_tactical_command` interpret the Joint common core. This standard
+owns the naval execution mapping layered on those service-profile meanings.
+
 ## Minimal Semantic Map
 
-The minimal semantic set absorbed by the naval specialization is:
+The minimal execution vocabulary owned by the naval specialization is:
 
-- `warfare_role_code`
-- `officer_in_tactical_command`
 - `screen`
 - `support`
 - `station`
@@ -70,9 +79,9 @@ The minimal semantic set absorbed by the naval specialization is:
 ### `TASK_RECOVER`
 
 - `task_family = Recover`
-- `coordination_mode = Recover`
-- `warfare_role_code = RecoverCoordinator`
-- `naval_station_type = Recover`
+- `coordination_mode = Detached`
+- `warfare_role_code = Unspecified` unless supplied explicitly or by an override.
+- `naval_station_type = Unspecified` unless supplied explicitly or by an override.
 - `officer_in_tactical_command` is the recovery-owning task group or unit.
 
 ## Semantic Notes
@@ -93,3 +102,14 @@ This document does not define:
 - full carrier or surface-action workflow
 
 It exists to freeze the minimum useful contract, not to describe the whole doctrine.
+
+## Verification Evidence
+
+- [Naval tasking profile](../../../../python/rl/profile/naval_profile.py)
+- [Tasking profile contract tests](../../../../tests/leader/test_tasking_profile_contracts.py)
+
+## Related Documents
+
+- [Naval owner entrypoint](../README.md)
+- [Naval Observation Contract](observation_contract.md)
+- [Navy service profile](../../joint/service_profiles/standards/navy_profile.md)

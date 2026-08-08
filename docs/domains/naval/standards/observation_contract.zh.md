@@ -1,10 +1,16 @@
 # 海军观测合同
 
 Language:
-- English canonical: [obs.md](obs.md)
-- Chinese companion: `obs.zh.md`
+- English canonical: [observation_contract.md](observation_contract.md)
+- Chinese companion: `observation_contract.zh.md`
 
-状态：`2026-06-12`，当前维护中的 naval mission observation 特化基线。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/standards/observation_contract.md`
+Owner: `domains/naval`
+Last verified: `2026-08-08`
+
+状态：naval mission observation 的维护中特化基线。
 
 本文档定义当前 mode-based observation surface 暴露的 naval mission-observation
 合同。它登记的是 `python/mission_obs_taxonomy.py` 中已经存在的 runtime 合同；
@@ -17,10 +23,10 @@ Language:
 
 主要依据：
 
-- [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
-- [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
-- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
-- [tests/runtime/naval/test_naval_station_policy_surface.py](../../../tests/runtime/naval/test_naval_station_policy_surface.py)
+- [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py)
+- [gym_envs/scenario_loader/mission_observation.py](../../../../gym_envs/scenario_loader/mission_observation.py)
+- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
+- [tests/runtime/naval/test_naval_station_policy_surface.py](../../../../tests/runtime/naval/test_naval_station_policy_surface.py)
 
 本文档不定义：
 
@@ -108,7 +114,7 @@ Relative role 与 slot 字段：
 
 - Mode 长度固定为 23 个字段。
 - 字段顺序以
-  [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py) 为准。
+  [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py) 为准。
 - 缺失 contact 或 support-track 状态通过已声明字段表达；本 mode 不临时扩张 contact array。
 - 在当前 runtime taxonomy 中，本 mode 由 maintained Python adapter
   `naval_screen_station_v1_maintained_adapter` 拥有，并由 scenario-loader 的
@@ -146,3 +152,9 @@ Relative role 与 slot 字段：
 - naval weapon effects
 - fleet-level command-and-control behavior
 - air-style altitude、runway 或 sortie-phase 字段
+
+## 相关文档
+
+- [Naval owner 入口](../README.zh.md)
+- [海军最小任务结构](minimal_task_structure.zh.md)
+- [Navy service profile](../../joint/service_profiles/standards/navy_profile.zh.md)

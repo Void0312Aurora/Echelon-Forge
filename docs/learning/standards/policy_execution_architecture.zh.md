@@ -1,10 +1,14 @@
 # 策略执行架构基线
 
-语言：
-- 英文规范页：[policy_execution_architecture.md](policy_execution_architecture.md)
-- 中文配套页：`policy_execution_architecture.zh.md`
+语言：[英文规范页](policy_execution_architecture.md)；本页为中文配套。
 
-状态：`2026-06-08`，维护中的策略执行架构与模型组件 ownership 基线。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/learning/standards/policy_execution_architecture.md`
+Owner: `learning/policy-architecture`
+Last verified: `2026-08-08`
+
+状态：维护中的策略执行架构与模型组件 ownership 基线。
 
 本文档记录当前 PPO/HMoE 工作使用的标准模型拆解。它不声明任何活跃训练已经解决
 开火时机、记忆或弹药管理。它的目标是防止把模型机制、runtime 约束、reward、
@@ -74,12 +78,17 @@ flowchart LR
 | A6 first-event labels/losses | `python/rl/policy_algo/first_event_hazard.py` | 拥有 first-event label field/source constants 与纯 hazard/credit/policy-margin helper losses。 |
 | A6 rollout storage | `python/rl/policy_algo/first_event_rollout_buffer.py` | 在 policy observations 之外携带 event labels。 |
 | A7 event-credit head | `policies.py` 中的 `hybrid_event_credit_head` | Q-style hold/fire auxiliary values；只有通过成文 action-path coupling 才能算 executable。 |
-| M3-S1 grouped stopping | `policies.py` 中的 `m3_stopping_head` 与 `m3s1_grouped_stopping.py` | 一次性时机分支。Evidence 必须命名 `route_source` 与 `censoring_kind`；行为成功需要 executable event-action wiring 与 probes。 |
-| M3-S2 event-window objective | `ppo_adaptive_kl.py` 中的 `m3s2_event_window_*` update path | 独立 auxiliary objective。默认训练 executable fire-event logit deltas；`m3s2_event_window_use_stopping_head=true` 时训练 `m3_stopping_head`。 |
-| M3 window-prior classifier | `policies.py` 中的 `m3_window_classifier_head` 与 standardization buffers | 高质量窗口证据分支；storage mode、balanced replay/calibration population、detach setting、best-restore 行为和 adapter coupling 都是 model contract 的一部分。 |
-| M3-S2 support-preserving collect | `ppo_adaptive_kl.py` 中的 collection path | Rollout-collection intervention，可以强制 event index 9 为 hold 并重算 log-prob 以保留监督 support；它不只是 probe。 |
-| PPO/update integration | `python/rl/policy_algo/ppo_adaptive_kl.py` | 采集 rollout metadata、构造并附加 first-event labels，拥有 A6/A7 weighting、cross-rollout context、shadow-quality/projection use、minibatch attachment、update scheduling 与 diagnostics。 |
+| Grouped stopping | `policies.py` 中的 `stopping_head`、`grouped_stopping.py`、`_grouped_stopping_mixin.py` 与 `grouped_stopping_*` constructor 设置 | 一次性时机分支，历史上按 M3-S1 追踪。Evidence 必须命名 `route_source` 与 `censoring_kind`；行为成功需要 executable event-action wiring 与 probes。 |
+| Event-window objective | `event_window_*` constructor 设置与 `_event_window_mixin.py` | 独立 auxiliary objective。默认训练 executable fire-event logit deltas；`event_window_use_stopping_head=true` 时训练 `stopping_head`。 |
+| Window-prior classifier | `window_classifier_head`、standardization buffers、`window_classifier_*` 设置与 `_event_window_mixin.py` | 高质量窗口证据分支；storage mode、balanced replay/calibration population、detach setting、best-restore 行为和 adapter coupling 都是 model contract 的一部分。 |
+| Direct fire-boundary objective | `fire_boundary_*` 设置与 `_event_window_mixin.py` | 当前历史上按 M3-S2 追踪的 active config 通过该 dedicated objective 写入 executable `hybrid_event_head`。 |
+| Support-preserving collect | `_event_window_mixin.py` 中的 `event_window_support_preserving_*` 或 `fire_boundary_support_preserving_*` 设置 | Rollout intervention，可以强制 event index 9 为 hold 并重算 log-prob 以保留监督 support；它不只是 probe。 |
+| PPO/update integration | `python/rl/policy_algo/ppo_adaptive_kl.py` 组合 `_first_event_mixin.py`、`_event_credit_mixin.py`、`_grouped_stopping_mixin.py` 与 `_event_window_mixin.py` | 拥有 core PPO loop、KL control、rollout plumbing、constructor surface 与交错 subdomain logging；各 mixin 拥有各自 subdomain logic。 |
 | Process/chain probes | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`, `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint` | 仅用于评估与定位；除非任务明确声明某条会改变 action 的 collection intervention，否则不是模型组件。 |
+
+可复用实现 API 按角色命名。`M3-S1` 与 `M3-S2` 仍是有效的历史实验标签及
+metric/mechanism namespace，包括 `m3s1/`、`m3s2/` 与既有 mechanism ID；不得把
+它们描述为当前 module、head、configuration field 或 active config 文件名的前缀。
 
 ## Executable 与 Auxiliary Branches
 
@@ -106,15 +115,17 @@ flowchart LR
 - `hybrid_event_credit_head` 是 auxiliary，除非有成文 action adapter 使用它的
   hold/fire values。在当前路径中，Q-style values 只是挂到 loss/diagnostic 访问面，
   本身不会改变 sampled/mode actions。
-- `m3_stopping_head` 是 auxiliary，除非 `hybrid_event_use_m3_stopping_head` 把它
+- `stopping_head` 是 auxiliary，除非 `hybrid_event_use_stopping_head` 把它
   接到 hybrid event logits，并且 probe 验证 executable pulses。
-- `m3_window_classifier_head` 在 `hybrid_event_use_m3_window_classifier_head` 打开
+- `window_classifier_head` 在 `hybrid_event_use_window_classifier_head` 打开
   时可以成为 adapter-coupled；它的 detach 设置和 input-standardization support
-  population 仍属于合同。当 M3 window-classifier adapter 与 M3 stopping adapter 同时
+  population 仍属于合同。当 window-classifier adapter 与 stopping adapter 同时
   打开时，当前 event adapter 让 window-classifier path 优先。
-- `m3s2_event_window` 是 side objective，但当它配置为直接使用 event logits 时，可以
+- `event_window_*` 定义一条 side objective；当它配置为直接使用 event logits 时，可以
   训练 executable event-logit residual path。其 optimizer 与 target-head selection
   属于 loss ownership。
+- `fire_boundary_*` 是历史上按 M3-S2 追踪的 active config 所用 direct
+  executable-head objective。
 - Support-preserving collect 是 rollout-collection intervention，可能改变已采集的
   actions/log-probs；它必须和 diagnostic probes 分开记录。
 
@@ -164,11 +175,11 @@ Learned-firing 声明的范围：
 
 Release-behavior ownership 边界：
 
-- active M3-S2 路线是通过 `m3s2_event_window_*` updates 与 `hybrid_event_head`
-  直接拥有 executable event-logit behavior 的 direct fire-boundary owner；
+- 历史上按 M3-S2 追踪的 active config 通过 `fire_boundary_*` updates 与
+  `hybrid_event_head` 直接拥有 executable event-logit behavior；
   support-preserving collection 作为会改变 rollout action 的 collection
   intervention 单独记录。
-- `m3_stopping_head`、`m3_window_classifier_head` 与
+- `stopping_head`、`window_classifier_head` 与
   `hybrid_event_credit_head` 只有在任务启用并记录它们接入 executable event path 的
   adapter coupling 时，才能成为 release behavior 的 authority。
 - A3/A5 合法性强于模型学习证据。Learned firing run 不得削弱 masks、authority
@@ -228,9 +239,11 @@ timing，否则它是单独 closure。
 
 ## 非目标
 
-本标准不把 M2、M3 或任何未来架构选为已验收方案。它只定义这些工作必须使用的词汇
-和 ownership map。
+本标准不把 M2、M3 或任何未来架构选为已验收方案。这些标签标识历史 task/evidence
+路线，而不是可复用 API ownership。本标准只定义这些工作必须使用的词汇与
+ownership map。
 
 它也不替代 air action 标准。`air_combat_hybrid_v1`、`event_action_mask`、
 `fire_once` 与 runtime trigger interpretation 仍归
-[Pilot Action Contract](../../domains/air/standards/pilot_action_contract.md)；本文档只说明模型侧必须如何与该合同交互。
+[Pilot Action Contract](../../domains/air/standards/pilot_action_contract.zh.md)；本文档只说明
+模型侧必须如何与该合同交互。

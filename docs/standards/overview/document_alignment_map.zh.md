@@ -64,14 +64,14 @@ Last verified: `2026-08-08`
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
 
 它们不重新定义 doctrine，而是说明当前仓库中的输入、工作流阶段和 DTO
-如何对齐到维护中的标准树。
+如何对齐到分布式 owner standards。
 
 ### 模型架构
 
 当前维护中的模型架构依据：
 
-- [模型架构标准总览](../model/README.zh.md)
-- [策略执行架构基线](../model/policy_execution_architecture.zh.md)
+- [模型架构标准总览](../../learning/README.zh.md)
+- [策略执行架构基线](../../learning/standards/policy_execution_architecture.zh.md)
 
 它们负责定义：
 
@@ -105,17 +105,17 @@ Last verified: `2026-08-08`
 
 当前维护中的海军特化入口：
 
-- [海军标准总览](../naval/README.md)
-- [海军最小任务结构](../naval/minimal_task_structure.md)
-- [舰艇单位参考](../naval/ship_unit_references.md)
-- [海军观测合同](../naval/obs.md)
+- [海军标准总览](../../domains/naval/README.zh.md)
+- [海军最小任务结构](../../domains/naval/standards/minimal_task_structure.zh.md)
+- [舰艇单位参考](../../domains/naval/reference/ship_unit_references.zh.md)
+- [海军观测合同](../../domains/naval/standards/observation_contract.zh.md)
 
 它们负责：
 
 - maritime task / station / screen / support / recovery 语义
 - ship 与 task-group 层的 naval role 解释
 - 第一批海军建模数据/来源边界，其中
-  [舰艇单位参考](../naval/ship_unit_references.md) 当前承担参考基准补充页角色
+  [舰艇单位参考](../../domains/naval/reference/ship_unit_references.zh.md) 当前承担 reference 基准角色
 - `naval_screen_station_v1` mission-observation 的归属与字段顺序
 
 它们不负责跨军种授权关系或 generic tasking DTO 边界。
@@ -144,16 +144,15 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 `army` 与 `land` 别名会规范化为 `ground`，不得被写成单独的
 `army runtime stack`。
 
-## 活跃规划补充页
+## 开放架构问题
 
-以下文档当前作为活跃规划补充页维护，而不是当前 runtime 合同：
+以下 draft 记录尚未解决的 architecture residual；它不是当前 runtime contract，也不
+授权实施：
 
-- [模块化规划](../planning/modularization_plan.zh.md)
+- [模块化规划](../../architecture/work/issues/modularization_plan.zh.md)
 
-它的职责是描述 standards tree 重建之后，代码库未来可能采用的目标拆分方向。
-它现在也记录当前 `src/components/domains`、`src/systems/domains` 与
-`src/models/domains` roots，让读者区分已经实现的 owner root 和仍处于规划中的接口。
-它不能被当作“每个规划模块边界或每个域 runtime owner 都已完成实现”的证据。
+它记录当前 domain roots、已落地 extension interfaces 和剩余依赖边界问题。它不能
+被当作每个拟议模块边界或 domain runtime owner 已实现、已验收的证据。
 
 ## 已归档文档
 
@@ -250,10 +249,10 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 
 - `c2_command_chain/`
   - 主要对齐到 `docs/domains/joint/`
-  - 涉及 ship authority/report 时，次级对齐到 Navy service profile 与旧
-    `naval/` 子树
+  - 涉及 ship authority/report 时，次级对齐到 Navy service profile 与
+    `docs/domains/naval/`
 - `naval/`
-  - 对齐到 Navy service profile 与旧 `naval/` 子树
+  - 对齐到 Navy service profile 与 `docs/domains/naval/`
 - `ground/` 或未来 land-domain task work
   - 对齐到 Army service profile 的军种画像解释，以及 `docs/domains/ground/`
     的特化语义
@@ -275,9 +274,8 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 1. 跨军种共通关系放 `docs/domains/joint/standards/`
 2. 军种组织与控制解释放
    `docs/domains/joint/service_profiles/standards/`
-3. Air 或 Ground 特化放到对应 owner-local `standards/` 表面；Naval 在独立迁移
-   落地前仍通过当前 legacy owner 路由
+3. Air、Ground 或 Naval 特化放到对应 owner-local `standards/` 表面
 4. 新的跨域 runtime/workflow 合同放到 `docs/architecture/`，不得扩张旧
    `bridge/` 子树
-5. 新的模型/策略架构词汇放到 `docs/learning/`；当前旧 model 标准等待独立迁移
+5. 模型/策略架构词汇放到 `docs/learning/standards/`
 6. 过时工作依照文档生命周期政策退役；标准迁移不得改写既有 archive

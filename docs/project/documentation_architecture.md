@@ -65,9 +65,11 @@ archived rather than kept indefinitely as an active task.
   release governance into `engineering/`; the second slice moves the Joint
   common-core README and standards into `domains/joint/`; the third parallel
   wave moves service profiles, Air standards, and Ground standards to their
-  owner-local surfaces. Naval, model, cross-domain, overview, and planning
-  legacy sources plus the plan/task trees remain for later owner slices. Do not
-  move legacy trees wholesale into new global buckets.
+  owner-local surfaces; the fourth parallel wave moves Naval standards and
+  references, the policy-architecture standard, and the modularization issue to
+  their owners. Mixed cross-domain and overview legacy sources plus the
+  plan/task trees remain for later owner slices. Do not move legacy trees
+  wholesale into new global buckets.
 - Phase 4: switch all maintained entry points and disallow new writes to legacy
   roots; remove a legacy root only after it has no maintained sources.
 

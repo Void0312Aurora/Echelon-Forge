@@ -22,6 +22,9 @@ Last verified: `2026-08-08`
 | Service profiles | [Service-profile owner](../domains/joint/service_profiles/README.zh.md) | 已迁移 |
 | Air 特化 | [Air owner](../domains/air/README.zh.md) | 已迁移 |
 | Ground 特化 | [Ground owner](../domains/ground/README.zh.md) | 已迁移 |
+| Naval 特化 | [Naval owner](../domains/naval/README.zh.md) | 已迁移 |
+| Policy/model architecture | [Learning owner](../learning/README.zh.md) | Policy standard 已迁移 |
+| 系统模块化 issue | [Architecture issue](../architecture/work/issues/modularization_plan.zh.md) | 以 `plan/draft` 迁移 |
 | 文档治理 | [文档工程](../engineering/documentation/README.zh.md) | 已迁移 |
 | 自动化治理 | [自动化工程](../engineering/automation/README.zh.md) | 已迁移 |
 | 发布与依赖治理 | [发布工程](../engineering/release/README.zh.md) | 已迁移 |
@@ -32,12 +35,9 @@ Last verified: `2026-08-08`
 
 | Legacy 子树 | 当前维护用途 | 目标处置 |
 | --- | --- | --- |
-| [`naval/`](naval/README.zh.md) | Naval 特化标准与 reference 数据 | `docs/domains/naval/` |
-| [`model/`](model/README.zh.md) | Policy/model execution architecture | `docs/learning/` |
 | [`foundation/`](foundation/conventions.zh.md) | 混合的 architecture、system-realism 与 research-source 规则 | 拆分到 `docs/architecture/`、`docs/systems/`、`docs/research/` |
 | [`bridge/`](bridge/runtime_workflow_and_contract_baseline.zh.md) | Runtime/workflow contracts 与场景指南 | 拆分到 `docs/architecture/` 与 `docs/operations/` |
 | [`overview/`](overview/document_alignment_map.zh.md) | 文档对齐 reference | `docs/engineering/documentation/reference/` |
-| [`planning/`](planning/modularization_plan.zh.md) | 带当前 `src/*/domains` 布局说明的 draft modularization issue | 经事实刷新后迁入 `docs/architecture/work/issues/` |
 
 目标列是迁移裁决，不表示目标文件已经存在。`foundation/` 与 `bridge/` 混合多个
 owner，必须拆分；整体移动任一目录都会重新制造当前分类问题。

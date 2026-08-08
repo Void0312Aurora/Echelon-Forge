@@ -73,10 +73,12 @@ Tier A: strict bilingual maintained surface
 - owner-local standards and references admitted to the strict maintained
   surface, including `docs/engineering/documentation/standards/` and
   `docs/engineering/documentation/reference/`
-- migrated Air and Ground standards under `docs/domains/air/standards/` and
-  `docs/domains/ground/standards/`
+- migrated Air, Ground, and Naval standards/reference under
+  `docs/domains/air/standards/`, `docs/domains/ground/standards/`, and
+  `docs/domains/naval/{standards,reference}/`
 - migrated Joint common-core and service-profile authority under
   `docs/domains/joint/`
+- migrated policy/model architecture standards under `docs/learning/standards/`
 - maintained standards under the migration-era legacy `docs/standards/` root
   until their content owners move them
 - operator-facing reference and how-to material under `docs/operations/`

@@ -168,8 +168,14 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
     "standards",
     "pilot_observation_contract.md",
   )
-  naval_obs = _text("docs", "standards", "naval", "obs.md")
-  naval_readme = _text("docs", "standards", "naval", "README.md")
+  naval_obs = _text(
+    "docs",
+    "domains",
+    "naval",
+    "standards",
+    "observation_contract.md",
+  )
+  naval_readme = _text("docs", "domains", "naval", "README.md")
   alignment_map = _text("docs", "standards", "overview", "document_alignment_map.md")
 
   assert "GAP-002" in status
@@ -197,8 +203,8 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
   ):
     assert required in naval_obs
 
-  assert "Naval Observation Contract](obs.md)" in naval_readme
-  assert "Naval Observation Contract](../naval/obs.md)" in alignment_map
+  assert "Naval Observation Contract](standards/observation_contract.md)" in naval_readme
+  assert "Naval Observation Contract](../../domains/naval/standards/observation_contract.md)" in alignment_map
 
 
 def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
@@ -220,7 +226,13 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
     "standards",
     "command_and_modeling_baseline.md",
   )
-  naval = _text("docs", "standards", "naval", "minimal_task_structure.md")
+  naval = _text(
+    "docs",
+    "domains",
+    "naval",
+    "standards",
+    "minimal_task_structure.md",
+  )
 
   assert "GAP-004" in status
   assert "Closed by refreshing stale or missing status lines" in status
@@ -235,14 +247,14 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
   assert "air_combat_c2_roe_v2" in bridge
   assert "naval_screen_station_v1" in bridge
   assert "Status: `2026-06-10` authoritative for maintained joint command and modeling" in joint
-  assert "Status: `2026-06-10` specialization baseline for the maintained minimal naval" in naval
+  assert "Status: maintained specialization baseline for the minimal naval" in naval
 
 
-def test_standards_governance_batch_c_modularization_plan_tracks_domain_roots() -> None:
+def test_modularization_issue_tracks_landed_interfaces_and_residuals() -> None:
   status = _governance_text("standards_documentation_governance_current_status_20260610.md")
   dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
-  plan = _text("docs", "standards", "planning", "modularization_plan.md")
+  plan = _text("docs", "architecture", "work", "issues", "modularization_plan.md")
   standards_readme = _text("docs", "standards", "README.md")
   alignment_map = _text("docs", "standards", "overview", "document_alignment_map.md")
 
@@ -261,19 +273,31 @@ def test_standards_governance_batch_c_modularization_plan_tracks_domain_roots() 
     assert REPO_ROOT.joinpath(*root).is_dir()
     assert "/".join(root) in plan
 
+  for interface in (
+    "unit_factory.h",
+    "effects_model.h",
+    "sensor_model.h",
+  ):
+    assert REPO_ROOT.joinpath("src", "core", "interfaces", interface).is_file()
+    assert interface in plan
+
+  assert not REPO_ROOT.joinpath("src", "systems", "domains", "ground").exists()
+
   for required in (
-    "Current Implemented Domain Roots",
+    "Verified Current Domain Roots",
+    "Existing Replaceable Interfaces",
     "`src/components/domains/`",
     "`src/systems/domains/`",
     "`src/models/domains/`",
-    "Do not add empty production owner roots",
-    "there is no released `ground/` runtime system owner",
+    "does not authorize code moves",
+    "There is no `src/systems/domains/ground/` owner",
+    "consumer -> provider",
   ):
     assert required in plan
 
-  assert "with current" in standards_readme
-  assert "`src/*/domains` layout notes" in standards_readme
-  assert "realized owner roots from still-planned interfaces" in alignment_map
+  assert "../architecture/work/issues/modularization_plan.md" in standards_readme
+  assert "`plan/draft`" in standards_readme
+  assert "does not authorize implementation" in alignment_map
 
 
 def test_standards_policy_defines_drift_and_empty_owner_rules() -> None:

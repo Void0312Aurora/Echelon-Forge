@@ -37,10 +37,9 @@ domain's execution geometry, timing, control, sensing, or weapon semantics.
 
 - [Air specialization](../air/README.md)
 - [Ground specialization](../ground/README.md)
-- [Naval specialization](../../standards/naval/README.md)
+- [Naval specialization](../naval/README.md)
 
-The Naval link is transitional until its separate owner migration lands. None
-of these routes implies that Joint owns the linked execution semantics.
+None of these routes implies that Joint owns the linked execution semantics.
 
 ## Reference Basis
 

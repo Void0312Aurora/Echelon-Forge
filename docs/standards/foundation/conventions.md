@@ -23,7 +23,7 @@ Those belong in:
 - [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [Air Platform Specialization](../../domains/air/README.md)
-- [Naval Specialization](../naval/README.md)
+- [Naval Specialization](../../domains/naval/README.md)
 
 ## Coordinate And Unit Conventions
 

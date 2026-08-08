@@ -1,10 +1,16 @@
 # 舰艇单位参考基准
 
 Language:
-- English canonical: `ship_unit_references.md`
-- Chinese companion: [ship_unit_references.zh.md](ship_unit_references.zh.md)
+- English canonical: [ship_unit_references.md](ship_unit_references.md)
+- Chinese companion: `ship_unit_references.zh.md`
 
-状态：`2026-05-18`，naval specialization 的参考基准补充页。
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/reference/ship_unit_references.md`
+Owner: `domains/naval`
+Last verified: `2026-08-08`
+
+状态：naval specialization 的维护中舰艇单位参考基线。
 
 本文档记录当前海军特化首批采用的、可由公开资料追溯的舰艇单位基准。
 
@@ -16,9 +22,12 @@ Language:
 
 语义所有权继续归属于：
 
-- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.md)
-- [Naval 标准](README.md)
-- [海军最小任务结构](minimal_task_structure.md)
+- [美国海军画像](../../joint/service_profiles/standards/navy_profile.zh.md)
+- [Naval owner 入口](../README.zh.md)
+- [海军最小任务结构](../standards/minimal_task_structure.zh.md)
+
+Navy service profile 拥有军种层组织与权限解释。本 Naval 参考页为海上执行提供
+单位与配置证据；它不会把执行所有权转移给军种画像。
 
 ## 参考配对
 
@@ -54,7 +63,7 @@ Language:
   `Mk 41 VLS`、`5-inch/54 gun`、Harpoon launchers，以及早期舰型的 CIWS
 
 运行时转换见
-[examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json](../../../examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)：
+[examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json](../../../../examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)：
 
 - 满载排水量：`8,230 long tons -> 8,362,000 kg`
 - 轻载排水量：`6,711 long tons -> 6,819,000 kg`
@@ -83,7 +92,7 @@ Language:
 - 编制：`53 civilian`
 
 运行时转换见
-[examples/config/database/ships/units/take1_usns_lewis_and_clark.json](../../../examples/config/database/ships/units/take1_usns_lewis_and_clark.json)：
+[examples/config/database/ships/units/take1_usns_lewis_and_clark.json](../../../../examples/config/database/ships/units/take1_usns_lewis_and_clark.json)：
 
 - 满载排水量：`41,000 metric tons -> 41,000,000 kg`
 - 长度：`689 ft -> 210.0 m`
@@ -108,7 +117,10 @@ Language:
 - `height_above_waterline_m` 仍是用于视距与未来雷达地平线计算的估算值，因为公开资料通常给出吃水，而不会给出精确传感器或桅杆高度
 - 水面搜索雷达的运行时范围目前由雷达地平线推算约束，而不是来自任何宣称保密或无来源的最大雷达距离
 - 舰船 `health` 当前按“每公吨满载排水量对应 1 HP”缩放，直到海军伤害与杀伤标定被标准化
-- 战斗系统武器库存目前仍保留在 metadata 中，因为当前 runtime 的 `Ammo` 只是一种通用导弹数量载体
+- `DDG-51` 现在带有由 naval runtime 消费的 MVP `naval_weapon_system`
+  挂载库存。备弹量、交战距离、命中概率、冷却时间与伤害值仍是工程标定值或
+  社区资料推算值，并非公开性能权威；通用 `Ammo` 组件仍存在于其他位置，但它
+  已不是唯一的 naval 库存 surface
 
 当前基于地平线的运行时示例：
 
@@ -118,6 +130,11 @@ Language:
   `3.57 * (sqrt(15 m owner antenna) + sqrt(5 m target)) = 19.6 nmi = 36.3 km`
 
 这些内容应被理解为维护中的建模假设，而不是条令主张。
+
+当前实现依据：
+
+- [Naval weapon-system 组件](../../../../src/components/domains/naval/combat/weapon_naval.h)
+- [武器释放 runtime service](../../../../src/core/engine/simulation_kernel_weapon_release_service.cpp)
 
 ## 参考用途
 
@@ -132,7 +149,8 @@ Language:
 
 ## 相关文档
 
-- [Naval 标准](README.md)
-- [海军最小任务结构](minimal_task_structure.md)
-- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.md)
-- [文档对齐映射](../overview/document_alignment_map.md)
+- [Naval owner 入口](../README.zh.md)
+- [海军最小任务结构](../standards/minimal_task_structure.zh.md)
+- [海军观测合同](../standards/observation_contract.zh.md)
+- [美国海军画像](../../joint/service_profiles/standards/navy_profile.zh.md)
+- [文档对齐映射](../../../standards/overview/document_alignment_map.zh.md)

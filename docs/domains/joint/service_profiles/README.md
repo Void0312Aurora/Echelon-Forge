@@ -44,10 +44,7 @@ Use the current domain-owner routes for execution semantics:
 
 - [Air specialization](../../air/README.md)
 - [Ground specialization](../../ground/README.md)
-
-The naval standards remain on their maintained
-[legacy route](../../../standards/naval/README.md) until that owner migration
-lands.
+- [Naval specialization](../../naval/README.md)
 
 Directory placement under Joint is an information-architecture decision. It
 does not collapse service-profile interpretation into the Joint common core or

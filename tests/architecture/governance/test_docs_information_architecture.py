@@ -146,12 +146,40 @@ def test_air_ground_and_service_profile_standards_are_owner_local() -> None:
     assert required in tracked
 
 
-def test_owner_local_domain_standards_declare_minimum_metadata() -> None:
+def test_naval_model_and_modularization_sources_are_owner_local() -> None:
+  tracked = _tracked_docs_paths()
+
+  for legacy_prefix in (
+    "docs/standards/model/",
+    "docs/standards/naval/",
+    "docs/standards/planning/",
+  ):
+    assert not any(path.startswith(legacy_prefix) for path in tracked)
+
+  for required in (
+    "docs/architecture/work/issues/modularization_plan.md",
+    "docs/architecture/work/issues/modularization_plan.zh.md",
+    "docs/domains/naval/README.md",
+    "docs/domains/naval/README.zh.md",
+    "docs/domains/naval/reference/ship_unit_references.md",
+    "docs/domains/naval/reference/ship_unit_references.zh.md",
+    "docs/domains/naval/standards/minimal_task_structure.md",
+    "docs/domains/naval/standards/minimal_task_structure.zh.md",
+    "docs/domains/naval/standards/observation_contract.md",
+    "docs/domains/naval/standards/observation_contract.zh.md",
+    "docs/learning/standards/policy_execution_architecture.md",
+    "docs/learning/standards/policy_execution_architecture.zh.md",
+  ):
+    assert required in tracked
+
+
+def test_owner_local_standards_declare_minimum_metadata() -> None:
   governed = [
     path
     for path in _tracked_docs_paths()
     if path.endswith(".md")
-    and path.startswith("docs/domains/")
+    and len(Path(path).parts) > 2
+    and Path(path).parts[1] in TARGET_ROOTS
     and "/standards/" in path
   ]
 
@@ -166,6 +194,20 @@ def test_owner_local_domain_standards_declare_minimum_metadata() -> None:
       "Last verified:",
     ):
       assert field in text, f"{relative} is missing {field}"
+
+
+def test_domain_chinese_companions_point_to_english_canonical() -> None:
+  companions = [
+    path
+    for path in _tracked_docs_paths()
+    if path.startswith("docs/domains/") and path.endswith(".zh.md")
+  ]
+
+  assert companions
+  for relative in companions:
+    expected = relative.removesuffix(".zh.md") + ".md"
+    text = (REPO_ROOT / relative).read_text(encoding="utf-8")
+    assert f"Canonical: `{expected}`" in text, relative
 
 
 def test_owner_local_work_and_reviews_declare_minimum_metadata() -> None:

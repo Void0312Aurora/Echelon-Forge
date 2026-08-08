@@ -24,6 +24,9 @@ must be written under the applicable owner's `standards/` surface.
 | Service profiles | [Service-profile owner](../domains/joint/service_profiles/README.md) | migrated |
 | Air specialization | [Air owner](../domains/air/README.md) | migrated |
 | Ground specialization | [Ground owner](../domains/ground/README.md) | migrated |
+| Naval specialization | [Naval owner](../domains/naval/README.md) | migrated |
+| Policy/model architecture | [Learning owner](../learning/README.md) | policy standard migrated |
+| System modularization issue | [Architecture issue](../architecture/work/issues/modularization_plan.md) | migrated as `plan/draft` |
 | Documentation governance | [Documentation engineering](../engineering/documentation/README.md) | migrated |
 | Automation governance | [Automation engineering](../engineering/automation/README.md) | migrated |
 | Release and dependency governance | [Release engineering](../engineering/release/README.md) | migrated |
@@ -35,12 +38,9 @@ route for migrated content.
 
 | Legacy subtree | Maintained purpose | Target disposition |
 | --- | --- | --- |
-| [`naval/`](naval/README.md) | Naval specialization standards and reference data | `docs/domains/naval/` |
-| [`model/`](model/README.md) | Policy/model execution architecture | `docs/learning/` |
 | [`foundation/`](foundation/conventions.md) | Mixed architecture, system-realism, and research-source rules | split among `docs/architecture/`, `docs/systems/`, and `docs/research/` |
 | [`bridge/`](bridge/runtime_workflow_and_contract_baseline.md) | Runtime/workflow contracts and scenario guidance | split between `docs/architecture/` and `docs/operations/` |
 | [`overview/`](overview/document_alignment_map.md) | Documentation alignment reference | `docs/engineering/documentation/reference/` |
-| [`planning/`](planning/modularization_plan.md) | Draft modularization issue with current `src/*/domains` layout notes | `docs/architecture/work/issues/` after factual refresh |
 
 The target column is a migration decision, not evidence that the target file
 already exists. `foundation/` and `bridge/` contain mixed owners and must be

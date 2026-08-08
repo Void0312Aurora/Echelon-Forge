@@ -17,7 +17,7 @@
     "_provenance": {
         "modeling_note": "Generic navigation/surface-search radar for a MSC auxiliary. The 36.3 km range is a radar-horizon runtime value for surface targets, derived from 15 m owner antenna height and 5 m target height using 3.57*(sqrt(h1)+sqrt(h2)) km.",
         "sources": [
-            "docs/standards/naval/ship_unit_references.md"
+            "docs/domains/naval/reference/ship_unit_references.md"
         ]
     }
 }

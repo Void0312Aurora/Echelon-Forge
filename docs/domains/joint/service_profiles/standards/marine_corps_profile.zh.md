@@ -71,9 +71,10 @@ USMC 画像层负责 Marine 口径的共享骨架解释：
 
 当前各领域执行语义继续放在专门目录中：
 
-- air 执行合同属于 `air/`
-- maritime 执行合同属于 `naval/`
-- 超出 shared tasking/schema bootstrap 的 land 执行合同属于专门的 ground 层
+- air 执行合同属于 `docs/domains/air/`
+- maritime 执行合同属于 `docs/domains/naval/`
+- 超出 shared tasking/schema bootstrap 的 land 执行合同属于
+  `docs/domains/ground/` 层
 
 因此，Marine profile 的职责是通过 shared fields 协调这些层，而不是重写它们的命令面或传感器面。
 
@@ -100,8 +101,8 @@ USMC 画像层负责 Marine 口径的共享骨架解释：
 今天，Marine 概念只有通过已维护的 shared 或 specialized contract 才能进入可执行边界：
 
 - `joint/common core` 中的共享命令与汇报骨架
-- 通过 `air/` 合同进入的 air tactical units
-- 通过 `naval/` 合同进入的 naval tactical units
+- 通过 `docs/domains/air/` 合同进入的 air tactical units
+- 通过 `docs/domains/naval/` 合同进入的 naval tactical units
 
 当前并不存在维护中的独立 Marine execution DTO 集。本文档不应暗示相反结论。
 
@@ -135,9 +136,10 @@ Marine 标准化最合适的共享锚点是：
 
 例如：
 
-- aviation command 语义必须继续通过 `air/`
-- ship、screen、recovery 或 sea-based positioning 语义必须继续通过 `naval/`
-- 后续 ground maneuver 语义应等待 dedicated ground layer
+- aviation command 语义必须继续通过 `docs/domains/air/`
+- ship、screen、recovery 或 sea-based positioning 语义必须继续通过
+  `docs/domains/naval/`
+- 后续 ground maneuver 语义应等待 `docs/domains/ground/`
 
 这样才能让 MAGTF 画像保持诚实，避免在 service-profile owner 中再出现第二套
 平行命令面。
@@ -157,6 +159,6 @@ Marine 标准化最合适的共享锚点是：
 
 - [军种画像总览](../README.zh.md)
 - [空中平台特化](../../../air/README.zh.md)
-- [海军特化](../../../../standards/naval/README.zh.md)
+- [海军特化](../../../../domains/naval/README.zh.md)
 - [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)

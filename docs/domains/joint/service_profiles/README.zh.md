@@ -41,9 +41,7 @@ Service profile 不拥有平台控制、观测/动作布局、运动、站位几
 
 - [空中特化](../../air/README.zh.md)
 - [地面特化](../../ground/README.zh.md)
-
-Naval 标准在其 owner 迁移落地前，仍使用当前维护中的
-[legacy 路径](../../../standards/naval/README.zh.md)。
+- [海上特化](../../naval/README.zh.md)
 
 本目录位于 Joint 之下只是信息架构决策；它不把 service-profile 解释合并进 Joint
 common core，也不授予 Joint 对领域执行语义的所有权。

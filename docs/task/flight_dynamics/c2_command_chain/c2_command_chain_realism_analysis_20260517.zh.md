@@ -31,7 +31,7 @@
 - [AirProfile（空中命令构建）](../../../../python/rl/profile/air_profile.py)
 - [NavalProfile（海军命令构建）](../../../../python/rl/profile/naval_profile.py)
 - [C2 通信与指挥链前瞻](../../../systems/command-tasking/work/issues/c2_communication.zh.md)
-- [海军任务最小结构](../../../standards/naval/minimal_task_structure.md)
+- [海军任务最小结构](../../../domains/naval/standards/minimal_task_structure.md)
 
 文档定位：
 

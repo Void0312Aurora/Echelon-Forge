@@ -28,7 +28,7 @@
     "_provenance": {
         "modeling_note": "This is an engineering calibration for a public-role SPY-1D volume-search proxy. It is intentionally conservative and not a statement of authoritative classified performance.",
         "sources": [
-            "docs/standards/naval/ship_unit_references.md"
+            "docs/domains/naval/reference/ship_unit_references.md"
         ]
     }
 }

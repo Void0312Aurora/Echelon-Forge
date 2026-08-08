@@ -20,10 +20,10 @@ current authority.
 | Area | Ownership | Migration status |
 | --- | --- | --- |
 | [project](project/README.md) | Purpose, maturity, global status, roadmap, project decisions | Active; owns the migration plan |
-| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Phase-2 reviews migrated; legacy plan/task sources remain authoritative until migrated |
-| [domains](domains/README.md) | Air, naval, ground, joint | Joint common-core/service profiles plus Air and Ground standards migrated; Naval remains on its legacy route |
+| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Reviews and modularization issue migrated; legacy plan/task authorities remain pending |
+| [domains](domains/README.md) | Air, naval, ground, joint | Joint/service-profile, Air, Ground, and Naval standards routed to owners |
 | [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Phase-2 system issue and review routes active |
-| [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Phase-2 policy and training issue routes active |
+| [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Policy architecture standard plus policy/training issue routes active |
 | [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Manual and visualization routes migrated |
 | [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation, release | Documentation, automation, release, and review routes migrated |
 | [research](research/README.md) | Questions, methods, results, publications, external sources | Phase-1 source-index migration complete |
@@ -35,8 +35,8 @@ defines target boundaries, migration phases, and cutover gates.
 
 The following roots still contain maintained sources during the transition:
 
-- [standards](standards/README.md): remaining Naval, model, cross-domain,
-  overview, and planning sources pending owner classification;
+- [standards](standards/README.md): remaining mixed cross-domain and overview
+  sources pending owner classification;
 - [plan](plan/README.md): active/frozen direction and migration plans;
 - [task](task/README.md): scoped implementation work and status.
 

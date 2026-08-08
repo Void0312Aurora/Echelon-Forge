@@ -23,7 +23,7 @@
     "_provenance": {
         "modeling_note": "Passive ESM range and bearing-noise values are community-derived approximation / engineering calibration values intended only for a bearing-only maritime ESM MVP.",
         "sources": [
-            "docs/standards/naval/ship_unit_references.md"
+            "docs/domains/naval/reference/ship_unit_references.md"
         ]
     }
 }

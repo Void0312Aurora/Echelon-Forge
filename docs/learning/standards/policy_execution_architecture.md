@@ -1,11 +1,16 @@
 # Policy Execution Architecture Baseline
 
-Language:
-- English canonical: `policy_execution_architecture.md`
-- Chinese companion: [policy_execution_architecture.zh.md](policy_execution_architecture.zh.md)
+Language: English canonical;
+[Chinese companion](policy_execution_architecture.zh.md).
 
-Status: `2026-06-08` authoritative baseline for maintained policy execution
-architecture and model-component ownership.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/learning/standards/policy_execution_architecture.md`
+Owner: `learning/policy-architecture`
+Last verified: `2026-08-08`
+
+Status: maintained baseline for policy execution architecture and
+model-component ownership.
 
 This document records the standard model decomposition used by current
 PPO/HMoE work. It is not a claim that any active training run has solved
@@ -77,12 +82,19 @@ flowchart LR
 | A6 first-event labels/losses | `python/rl/policy_algo/first_event_hazard.py` | Owns first-event label field/source constants and pure hazard/credit/policy-margin helper losses. |
 | A6 rollout storage | `python/rl/policy_algo/first_event_rollout_buffer.py` | Carries event labels outside policy observations. |
 | A7 event-credit head | `hybrid_event_credit_head` in `policies.py` | Auxiliary Q-style hold/fire values; executable only through documented action-path coupling. |
-| M3-S1 grouped stopping | `m3_stopping_head` in `policies.py` plus `m3s1_grouped_stopping.py` | One-shot timing branch. Evidence must name `route_source` and `censoring_kind`; behavior success requires executable event-action wiring and probes. |
-| M3-S2 event-window objective | `m3s2_event_window_*` update path in `ppo_adaptive_kl.py` | Distinct auxiliary objective. By default it trains executable fire-event logit deltas; with `m3s2_event_window_use_stopping_head=true`, it trains `m3_stopping_head`. |
-| M3 window-prior classifier | `m3_window_classifier_head` and standardization buffers in `policies.py` | Quality-window evidence branch. Storage mode, balanced replay/calibration population, detach setting, best-restore behavior, and adapter coupling are part of the model contract. |
-| M3-S2 support-preserving collect | Collection path in `ppo_adaptive_kl.py` | Rollout-collection intervention that can force event index 9 to hold and recompute log-prob to preserve supervised support; not merely a probe. |
-| PPO/update integration | `python/rl/policy_algo/ppo_adaptive_kl.py` | Collects rollout metadata, constructs and attaches first-event labels, owns A6/A7 weighting, cross-rollout context, shadow-quality/projection use, minibatch attachment, update scheduling, and diagnostics. |
+| Grouped stopping | `stopping_head` in `policies.py`, `grouped_stopping.py`, `_grouped_stopping_mixin.py`, and `grouped_stopping_*` constructor settings | One-shot timing branch, historically tracked as M3-S1. Evidence must name `route_source` and `censoring_kind`; behavior success requires executable event-action wiring and probes. |
+| Event-window objective | `event_window_*` constructor settings plus `_event_window_mixin.py` | Distinct auxiliary objective. By default it trains executable fire-event logit deltas; with `event_window_use_stopping_head=true`, it trains `stopping_head`. |
+| Window-prior classifier | `window_classifier_head`, standardization buffers, `window_classifier_*` settings, and `_event_window_mixin.py` | Quality-window evidence branch. Storage mode, balanced replay/calibration population, detach setting, best-restore behavior, and adapter coupling are part of the model contract. |
+| Direct fire-boundary objective | `fire_boundary_*` settings plus `_event_window_mixin.py` | The current active configuration historically tracked as M3-S2 writes the executable `hybrid_event_head` through this dedicated objective. |
+| Support-preserving collect | `event_window_support_preserving_*` or `fire_boundary_support_preserving_*` settings in `_event_window_mixin.py` | Rollout intervention that can force event index 9 to hold and recompute log-prob to preserve supervised support; not merely a probe. |
+| PPO/update integration | `python/rl/policy_algo/ppo_adaptive_kl.py` composing `_first_event_mixin.py`, `_event_credit_mixin.py`, `_grouped_stopping_mixin.py`, and `_event_window_mixin.py` | Owns the core PPO loop, KL control, rollout plumbing, constructor surface, and interleaved subdomain logging; the mixins own their subdomain logic. |
 | Process/chain probes | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`, `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint` | Evaluation and localization only unless a task explicitly documents an action-changing collect intervention. |
+
+The reusable implementation API is role-based. `M3-S1` and `M3-S2` remain
+valid historical experiment labels and metric/mechanism namespaces, including
+`m3s1/`, `m3s2/`, and existing mechanism IDs. They MUST NOT be presented as
+the prefixes of current modules, heads, configuration fields, or active config
+filenames.
 
 ## Executable Vs Auxiliary Branches
 
@@ -110,16 +122,18 @@ Current important classifications:
 - `hybrid_event_credit_head` is auxiliary unless a documented action adapter uses
   its hold/fire values. In the current path, Q-style values are attached for
   loss/diagnostic access and do not by themselves change sampled/mode actions.
-- `m3_stopping_head` is auxiliary unless `hybrid_event_use_m3_stopping_head`
+- `stopping_head` is auxiliary unless `hybrid_event_use_stopping_head`
   connects it to the hybrid event logits and probes validate executable pulses.
-- `m3_window_classifier_head` can become adapter-coupled when
-  `hybrid_event_use_m3_window_classifier_head` is enabled; its detach setting and
+- `window_classifier_head` can become adapter-coupled when
+  `hybrid_event_use_window_classifier_head` is enabled; its detach setting and
   input-standardization support population remain part of the contract. When
-  both the M3 window-classifier adapter and M3 stopping adapter are enabled, the
+  both the window-classifier adapter and stopping adapter are enabled, the
   current event adapter gives the window-classifier path precedence.
-- `m3s2_event_window` is a side objective, but it can train an executable
+- `event_window_*` defines a side objective that can train an executable
   event-logit residual path when configured to use direct event logits. Its
   optimizer and target-head selection are part of loss ownership.
+- `fire_boundary_*` is the direct executable-head objective used by the active
+  configuration historically tracked as M3-S2.
 - Support-preserving collect is a rollout-collection intervention that may
   change collected actions/log-probs. It must be documented separately from
   diagnostic probes.
@@ -174,11 +188,12 @@ Scope of the learned-firing claim:
 
 Release-behavior ownership boundary:
 
-- The active M3-S2 route is direct fire-boundary ownership of executable
-  event-logit behavior through `m3s2_event_window_*` updates and
+- The active configuration historically tracked as M3-S2 uses direct
+  fire-boundary ownership of executable event-logit behavior through
+  `fire_boundary_*` updates and
   `hybrid_event_head`, with support-preserving collection documented as an
   action-changing rollout intervention.
-- `m3_stopping_head`, `m3_window_classifier_head`, and
+- `stopping_head`, `window_classifier_head`, and
   `hybrid_event_credit_head` are not release-behavior authority unless a task
   enables and documents their adapter coupling into the executable event path.
 - A3/A5 legality remains stronger than model learning evidence. A learned
@@ -245,10 +260,13 @@ Any new model mechanism must document:
 
 ## Non-Goals
 
-This standard does not select M2, M3, or any future architecture as accepted. It
-only defines the vocabulary and ownership map that such work must use.
+This standard does not select M2, M3, or any future architecture as accepted.
+Those labels identify historical task/evidence lanes, not reusable API
+ownership. This standard only defines the vocabulary and ownership map that
+such work must use.
 
 It also does not replace the air action standard. `air_combat_hybrid_v1`,
 `event_action_mask`, `fire_once`, and runtime trigger interpretation remain
-owned by [Pilot Action Contract](../../domains/air/standards/pilot_action_contract.md); this document explains how the
-model side must interact with that contract.
+owned by the
+[Pilot Action Contract](../../domains/air/standards/pilot_action_contract.md);
+this document explains how the model side must interact with that contract.

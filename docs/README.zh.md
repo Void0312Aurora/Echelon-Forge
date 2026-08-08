@@ -19,10 +19,10 @@ Last verified: `2026-08-08`
 | 区域 | 所有权 | 迁移状态 |
 | --- | --- | --- |
 | [project](project/README.zh.md) | 目标、成熟度、全局状态、路线图、项目决策 | 已启用；拥有迁移计划 |
-| [architecture](architecture/README.zh.md) | 跨领域架构、runtime、contracts、后端、ADR | 第二阶段评审已迁移；旧 plan/task 来源迁移前仍具权威 |
-| [domains](domains/README.zh.md) | Air、Naval、Ground、Joint | Joint common-core/service profiles 以及 Air、Ground 标准已迁移；Naval 仍在旧路由 |
+| [architecture](architecture/README.zh.md) | 跨领域架构、runtime、contracts、后端、ADR | Reviews 与 modularization issue 已迁移；旧 plan/task 权威仍待迁移 |
+| [domains](domains/README.zh.md) | Air、Naval、Ground、Joint | Joint/service-profile、Air、Ground、Naval 标准均已路由到 owner |
 | [systems](systems/README.zh.md) | Environment、physics、sensing、command/tasking、weapons、effects | 第二阶段 system issue 与 review 路由已启用 |
-| [learning](learning/README.zh.md) | RL、模型、训练、评估协议、实验 | 第二阶段策略与训练 issue 路由已启用 |
+| [learning](learning/README.zh.md) | RL、模型、训练、评估协议、实验 | Policy architecture standard 及 policy/training issue 路由已启用 |
 | [operations](operations/README.zh.md) | How-to、当前 reference、可视化和集成操作 | manual 与 visualization 路由已迁移 |
 | [engineering](engineering/README.zh.md) | 贡献、构建、测试、工具、文档治理、自动化、发布 | documentation、automation、release 与 review 路由已迁移 |
 | [research](research/README.zh.md) | 问题、方法、结果、出版物、外部来源 | 第一阶段来源索引迁移完成 |
@@ -34,8 +34,7 @@ Last verified: `2026-08-08`
 
 迁移期间，下列旧根仍包含维护源：
 
-- [standards](standards/README.zh.md)：等待 owner 分类的剩余 Naval、model、跨域、
-  overview 与 planning 来源；
+- [standards](standards/README.zh.md)：等待 owner 分类的剩余混合跨域与 overview 来源；
 - [plan](plan/README.zh.md)：活跃/冻结方向和迁移计划；
 - [task](task/README.zh.md)：有界实施工作和状态。
 

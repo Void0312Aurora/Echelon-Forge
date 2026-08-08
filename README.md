@@ -52,7 +52,7 @@ the table below as an entry-map, not as a release promise.
 | --- | --- | --- |
 | Air / execution | Most mature runtime and training line; current best baseline for correctness hardening. | `scenarios/takeoff/`, `scenarios/cruise/`, `scenarios/landing/`, `examples/config/training/frozen/` |
 | Cooperative / combined | Active integration line for multi-agent, leader/execution, and world-batch behavior. | `scenarios/combined/`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, `gym_envs/leader_env.py` |
-| Naval | Active domain with maintained N4-style pre-fire tasking, contact/reporting, screen/station, and evaluation gates. Weapon/damage outcome authority is still future work. | `scenarios/naval/`, `docs/task/naval/`, `docs/standards/naval/` |
+| Naval | Active domain with maintained N4-style pre-fire tasking, contact/reporting, screen/station, and evaluation gates. Weapon/damage outcome authority is still future work. | `scenarios/naval/`, `docs/task/naval/`, `docs/domains/naval/` |
 | Ground | Early tasking/runtime bootstrap. Current fixtures validate shared command/status semantics and native platform-schema evidence, not full ground movement, sensing, fires, or damage. | `scenarios/ground/`, `docs/task/ground/`, `docs/domains/ground/` |
 | Air combat / A2 | Focused combat and high-fidelity damage-model workline with retained evidence gates. It is one domain line, not the whole project identity. | `scenarios/air_combat/`, `docs/task/air_combat/` |
 | Visualization / game | Exploratory operator and frontend surfaces backed by simulation runtime truth where maintained. | `examples/viz/`, `docs/task/viz/`, `docs/task/game/` |

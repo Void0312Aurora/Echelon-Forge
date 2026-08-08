@@ -4,7 +4,13 @@ Language:
 - English canonical: [minimal_task_structure.md](minimal_task_structure.md)
 - Chinese companion: `minimal_task_structure.zh.md`
 
-状态：`2026-06-10`，当前维护中的最小 naval tasking structure 特化基线。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/standards/minimal_task_structure.md`
+Owner: `domains/naval`
+Last verified: `2026-08-08`
+
+状态：最小 naval tasking structure 的维护中特化基线。
 
 本说明冻结当前运行时与任务计划必须支持的最小有用海军任务结构。
 
@@ -32,12 +38,15 @@ Language:
 - `officer_in_tactical_command` 默认指向 `task_group` 所有者，然后回退到 `parent_node_id`。
 - `tactical_unit_type` 仍是共享类型标签；当任务由编组拥有时，可继续默认为 `CommandNode`。
 
+[Navy service profile](../../joint/service_profiles/standards/navy_profile.zh.md)
+拥有 `task_group`、`task_unit`、`warfare_role_code` 与
+`officer_in_tactical_command` 对 Joint common core 的解释。本标准拥有叠加于
+这些军种画像语义之上的 naval 执行映射。
+
 ## 最小语义映射
 
-海军 specialization 吸收的最小语义集是：
+naval specialization 拥有的最小执行词汇是：
 
-- `warfare_role_code`
-- `officer_in_tactical_command`
 - `screen`
 - `support`
 - `station`
@@ -69,9 +78,9 @@ Language:
 ### `TASK_RECOVER`
 
 - `task_family = Recover`
-- `coordination_mode = Recover`
-- `warfare_role_code = RecoverCoordinator`
-- `naval_station_type = Recover`
+- `coordination_mode = Detached`
+- 除非显式提供或由 override 注入，否则 `warfare_role_code = Unspecified`。
+- 除非显式提供或由 override 注入，否则 `naval_station_type = Unspecified`。
 - `officer_in_tactical_command` 是承担 recovery 的任务编组或任务单元。
 
 ## 语义说明
@@ -92,3 +101,14 @@ Language:
 - 完整的航母或水面行动工作流
 
 它存在的目的是冻结最小有用合同，而不是描述完整 doctrine。
+
+## 验证依据
+
+- [Naval tasking profile](../../../../python/rl/profile/naval_profile.py)
+- [Tasking profile 合同测试](../../../../tests/leader/test_tasking_profile_contracts.py)
+
+## 相关文档
+
+- [Naval owner 入口](../README.zh.md)
+- [海军观测合同](observation_contract.zh.md)
+- [Navy service profile](../../joint/service_profiles/standards/navy_profile.zh.md)

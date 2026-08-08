@@ -130,7 +130,7 @@ Navy service profile 负责说明：
 ## 相关文档
 
 - [军种画像总览](../README.zh.md)
-- [海军标准总览](../../../../standards/naval/README.zh.md)
+- [海军标准总览](../../../../domains/naval/README.zh.md)
 - [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)
 - [场景配置指南](../../../../standards/bridge/scenario_guide.zh.md)

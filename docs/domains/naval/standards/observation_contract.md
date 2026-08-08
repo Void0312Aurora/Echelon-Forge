@@ -1,10 +1,16 @@
 # Naval Observation Contract
 
 Language:
-- English canonical: `obs.md`
-- Chinese companion: [obs.zh.md](obs.zh.md)
+- English canonical: `observation_contract.md`
+- Chinese companion: [observation_contract.zh.md](observation_contract.zh.md)
 
-Status: `2026-06-12` specialization baseline for maintained naval mission observation.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/standards/observation_contract.md`
+Owner: `domains/naval`
+Last verified: `2026-08-08`
+
+Status: maintained specialization baseline for naval mission observation.
 
 This document defines the maintained naval mission-observation contract exposed
 through the current mode-based observation surface. It describes the runtime
@@ -18,10 +24,10 @@ naval screen/station runtime and tests.
 
 Primary references:
 
-- [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
-- [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
-- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
-- [tests/runtime/naval/test_naval_station_policy_surface.py](../../../tests/runtime/naval/test_naval_station_policy_surface.py)
+- [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py)
+- [gym_envs/scenario_loader/mission_observation.py](../../../../gym_envs/scenario_loader/mission_observation.py)
+- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
+- [tests/runtime/naval/test_naval_station_policy_surface.py](../../../../tests/runtime/naval/test_naval_station_policy_surface.py)
 
 This document does not define:
 
@@ -109,7 +115,7 @@ Relative role and slot fields:
 
 - Mode length stays fixed at 23 fields.
 - Field order is defined by
-  [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py).
+  [python/mission_obs_taxonomy.py](../../../../python/mission_obs_taxonomy.py).
 - Missing contact or support-track state is represented in the declared fields;
   the mode does not grow ad hoc contact arrays.
 - This mode is owned by the maintained Python adapter
@@ -150,3 +156,9 @@ This document does not standardize:
 - naval weapon effects
 - fleet-level command-and-control behavior
 - air-style altitude, runway, or sortie-phase fields
+
+## Related Documents
+
+- [Naval owner entrypoint](../README.md)
+- [Naval Minimal Task Structure](minimal_task_structure.md)
+- [Navy service profile](../../joint/service_profiles/standards/navy_profile.md)

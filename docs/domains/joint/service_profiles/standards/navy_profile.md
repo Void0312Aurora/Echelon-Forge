@@ -135,7 +135,7 @@ is in place.
 ## Related Documents
 
 - [Service Profile Overview](../README.md)
-- [Naval Standards Overview](../../../../standards/naval/README.md)
+- [Naval Standards Overview](../../../../domains/naval/README.md)
 - [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)
 - [Scenario Configuration Guide](../../../../standards/bridge/scenario_guide.md)

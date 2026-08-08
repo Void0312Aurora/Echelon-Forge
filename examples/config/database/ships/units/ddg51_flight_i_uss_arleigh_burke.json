@@ -217,7 +217,7 @@
             "20 knots -> 10.29 m/s"
         ],
         "sources": [
-            "docs/standards/naval/ship_unit_references.md"
+            "docs/domains/naval/reference/ship_unit_references.md"
         ],
         "modeling_notes": [
             "Health is scaled as one HP per metric tonne of full-load displacement until naval damage effects are calibrated.",

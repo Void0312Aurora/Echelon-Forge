@@ -4,7 +4,13 @@ Language:
 - English canonical: `ship_unit_references.md`
 - Chinese companion: [ship_unit_references.zh.md](ship_unit_references.zh.md)
 
-Status: `2026-05-18` reference-baseline supplement for the naval specialization.
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/reference/ship_unit_references.md`
+Owner: `domains/naval`
+Last verified: `2026-08-08`
+
+Status: maintained ship-unit reference baseline for the naval specialization.
 
 This document records the first publicly traceable ship-unit baselines selected
 for the maintained naval specialization.
@@ -18,9 +24,13 @@ semantics. Its purpose is narrower:
 
 Semantic ownership remains in:
 
-- [US Navy Profile](../../domains/joint/service_profiles/standards/navy_profile.md)
-- [Naval Standards](README.md)
-- [Naval Minimal Task Structure](minimal_task_structure.md)
+- [US Navy Profile](../../joint/service_profiles/standards/navy_profile.md)
+- [Naval owner entrypoint](../README.md)
+- [Naval Minimal Task Structure](../standards/minimal_task_structure.md)
+
+The Navy service profile owns service-level organization and authority
+interpretation. This Naval reference supplies unit/configuration evidence for
+maritime execution; it does not transfer execution ownership to the profile.
 
 ## Reference Pairing
 
@@ -61,7 +71,7 @@ Recorded public values:
   early-flight ships
 
 Runtime conversions in
-[examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json](../../../examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json):
+[examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json](../../../../examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json):
 
 - full-load displacement: `8,230 long tons -> 8,362,000 kg`
 - light displacement: `6,711 long tons -> 6,819,000 kg`
@@ -90,7 +100,7 @@ Recorded public values:
 - listed crewing: `53 civilian`
 
 Runtime conversions in
-[examples/config/database/ships/units/take1_usns_lewis_and_clark.json](../../../examples/config/database/ships/units/take1_usns_lewis_and_clark.json):
+[examples/config/database/ships/units/take1_usns_lewis_and_clark.json](../../../../examples/config/database/ships/units/take1_usns_lewis_and_clark.json):
 
 - full-load displacement: `41,000 metric tons -> 41,000,000 kg`
 - length: `689 ft -> 210.0 m`
@@ -120,8 +130,12 @@ The following remain explicit runtime estimates or temporary modeling rules:
   reasoning rather than by any claimed classified or unsourced maximum range
 - ship `health` is currently scaled at one HP per metric tonne of full-load
   displacement until naval damage and lethality calibration is standardized
-- combat-system weapon inventories remain metadata, because current runtime
-  `Ammo` is only a generic missile-count carrier
+- `DDG-51` now carries an MVP `naval_weapon_system` mount inventory consumed by
+  the naval runtime. Ready counts, engagement ranges, hit probabilities,
+  cooldowns, and damage values remain engineering calibrations or
+  community-derived approximations rather than public performance authority;
+  the generic `Ammo` component still exists elsewhere but is not the sole naval
+  inventory surface
 
 Current horizon-based runtime examples:
 
@@ -131,6 +145,11 @@ Current horizon-based runtime examples:
   `3.57 * (sqrt(15 m owner antenna) + sqrt(5 m target)) = 19.6 nmi = 36.3 km`
 
 These should be read as maintained modeling assumptions, not as doctrine claims.
+
+Current implementation evidence:
+
+- [Naval weapon-system component](../../../../src/components/domains/naval/combat/weapon_naval.h)
+- [Weapon-release runtime service](../../../../src/core/engine/simulation_kernel_weapon_release_service.cpp)
 
 ## Reference Usage
 
@@ -148,7 +167,8 @@ in scenario/task documents rather than migrating into this reference page.
 
 ## Related Documents
 
-- [Naval Standards](README.md)
-- [Naval Minimal Task Structure](minimal_task_structure.md)
-- [US Navy Profile](../../domains/joint/service_profiles/standards/navy_profile.md)
-- [Document Alignment Map](../overview/document_alignment_map.md)
+- [Naval owner entrypoint](../README.md)
+- [Naval Minimal Task Structure](../standards/minimal_task_structure.md)
+- [Naval Observation Contract](../standards/observation_contract.md)
+- [US Navy Profile](../../joint/service_profiles/standards/navy_profile.md)
+- [Document Alignment Map](../../../standards/overview/document_alignment_map.md)

@@ -34,6 +34,8 @@ STRICT_OWNER_DOCUMENTS = {
   "domains/air/README.zh.md",
   "domains/ground/README.md",
   "domains/ground/README.zh.md",
+  "domains/naval/README.md",
+  "domains/naval/README.zh.md",
   "engineering/README.md",
   "engineering/README.zh.md",
   "learning/README.md",
@@ -70,6 +72,9 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
     or relative.startswith("domains/air/standards/")
     or relative.startswith("domains/ground/standards/")
     or relative.startswith("domains/joint/")
+    or relative.startswith("domains/naval/reference/")
+    or relative.startswith("domains/naval/standards/")
+    or relative.startswith("learning/standards/")
     or relative.startswith("operations/")
     or relative.startswith("research/sources/")
     or relative.startswith("standards/")

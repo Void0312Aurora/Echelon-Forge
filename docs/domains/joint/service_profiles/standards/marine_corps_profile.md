@@ -80,10 +80,10 @@ This layer owns service interpretation, not execution mechanics.
 
 Current domain execution semantics continue to live elsewhere:
 
-- air execution contracts belong in `air/`
-- maritime execution contracts belong in `naval/`
+- air execution contracts belong in `docs/domains/air/`
+- maritime execution contracts belong in `docs/domains/naval/`
 - land execution contracts beyond shared tasking/schema bootstrap belong in the
-  dedicated ground layer
+  dedicated `docs/domains/ground/` layer
 
 The Marine profile should therefore coordinate those layers through shared
 fields rather than redefining their command or sensor surfaces.
@@ -114,8 +114,8 @@ Today, Marine concepts can only enter the executable boundary through maintained
 shared or specialized contracts:
 
 - shared command-and-report skeleton in `joint/common core`
-- air tactical units routed through the maintained `air/` contracts
-- naval tactical units routed through the maintained `naval/` contracts
+- air tactical units routed through maintained `docs/domains/air/` contracts
+- naval tactical units routed through maintained `docs/domains/naval/` contracts
 
 There is no maintained standalone Marine execution DTO set yet. This document
 should not imply otherwise.
@@ -153,10 +153,10 @@ surface.
 
 Examples:
 
-- aviation command semantics must flow through `air/`
+- aviation command semantics must flow through `docs/domains/air/`
 - ship, screen, recovery, or sea-based positioning semantics must flow through
-  `naval/`
-- later ground maneuver semantics should wait for the dedicated ground layer
+  `docs/domains/naval/`
+- later ground maneuver semantics should wait for `docs/domains/ground/`
 
 That keeps the MAGTF profile honest and prevents a second parallel command
 surface from emerging inside the service-profile owner.
@@ -179,6 +179,6 @@ cross-domain interpretation.
 
 - [Service Profile Overview](../README.md)
 - [Air Platform Specialization](../../../air/README.md)
-- [Naval Specialization](../../../../standards/naval/README.md)
+- [Naval Specialization](../../../../domains/naval/README.md)
 - [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)
