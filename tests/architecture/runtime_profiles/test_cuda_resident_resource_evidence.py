@@ -230,7 +230,14 @@ def test_legacy_resource_probe_is_retired_after_semantic_kernel_migration() -> N
     assert cmake.rfind("if (EF_ENABLE_CUDA_EXPERIMENTS)", 0, target_index) >= 0
     assert cmake.find("else()", target_index) > target_index
     target = cmake[target_index : cmake.index("else()", target_index)]
-    assert "ef_cuda_resident_backend" in target
+    assert "A future capture must introduce a versioned kernel" in cmake
+    for obsolete_capture_dependency in (
+        "cuda_resident_replay_harness.cpp",
+        "ef_cuda_resident_backend",
+        "nlohmann_json::nlohmann_json",
+        "EF_CR2_RESOURCE_BUILD_CONFIG",
+    ):
+        assert obsolete_capture_dependency not in target
 
 
 def test_cr2_5a_evidence_records_static_resources_without_counter_or_tuning_claims() -> None:

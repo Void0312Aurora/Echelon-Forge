@@ -683,19 +683,11 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
-    # CR2-5 captures exactly one production-shaped CUDA-resident full-window
-    # body under cudaProfilerApi. Setup, resource queries, diagnostic readback,
-    # and destruction remain outside the profiler range.
+    # The v1 resource-capture entry point is retained only as a fail-closed
+    # retirement notice. A future capture must introduce a versioned kernel
+    # catalog before restoring backend or profiler dependencies.
     add_executable(ef_cuda_resident_resource_probe
         src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_resource_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_resource_probe PRIVATE
-        EF_CR2_RESOURCE_BUILD_CONFIG="$<CONFIG>"
     )
     target_include_directories(ef_cuda_resident_resource_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src

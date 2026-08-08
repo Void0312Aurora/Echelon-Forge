@@ -207,7 +207,7 @@ TEST_CASE("CUDA observation projection produces host export and a lease-scoped d
     CHECK(host_export.instrument_states[0].ias_mps ==
           doctest::Approx(snapshot.worlds[0].observation_projection.instrument.ias_mps));
 
-    const auto view = backend.export_device_observation_view("rb7.device_view");
+    const auto view = backend.export_device_observation_view("observation_projection.device_view");
     REQUIRE(view.valid());
     CHECK(view.descriptor.output_shape ==
           std::vector<std::uint64_t>{2, kObservationProjectionObservationValueCount});

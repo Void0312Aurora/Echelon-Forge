@@ -218,7 +218,7 @@
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
       "role": "resource evidence, retired-capture, fail-closed parser, and topology guards",
-      "observed_lines": 426
+      "observed_lines": 433
     },
     {
       "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",

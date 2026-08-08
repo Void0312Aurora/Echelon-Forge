@@ -29,7 +29,7 @@
 
 ## 源码与运行时规则
 
-`src/`、`python/`、`gym_envs/` 下维护中的生产源码遵循以下规则：
+`src/`、`python/`、`gym_envs/` 下维护中的生产源码（包括参与编译的 `.inc` 片段）遵循以下规则：
 
 1. 公共和内部接口都以语义能力名称为主。
 2. 异常、日志、计数器、trace 标签和校验消息不暴露工作包、审阅批次或迭代编号。
@@ -73,8 +73,8 @@ python -m tools.maintenance.internal_code_governance \
   --changed-from <base-revision>
 ```
 
-扫描器只检查相对指定基线新增的行，从而阻止新增的高置信债务，而不会让无关修改因已有历史
-积压而失败。
+扫描器检查相对指定基线新增的行，并完整检查新增或重命名后的生产源码文件，从而阻止新增的
+高置信债务，而不会让未触及的无关文件因已有历史积压而失败。
 
 当前严重程度：
 
@@ -86,7 +86,8 @@ python -m tools.maintenance.internal_code_governance \
 源码匹配会拆解 snake case 与 CamelCase/PascalCase 标识符，并检查生产路径的每个组成部分。
 仅在语义词内部包含 `phase` 字母的名称（例如 `broadphase_batch`）不会被当作实现阶段别名。
 C/C++ 行注释和块注释都保持为注释告警；即使被选中的变更行位于从未变更行开始的块注释中，
-分类也不会升级为源码错误。
+分类也不会升级为源码错误。Python 三引号字符串和 C++ raw string 的字面量状态会跨行保持，
+因此运行时文本内部的注释标记不会把错误降级为告警。
 
 历史文档和长尾文档积压中的告警继续保持非阻断。维护入口基线采用更严格规则：根 README
 中英文对、`docs/README`、`docs/plan/README`、`docs/task/README`、

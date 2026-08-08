@@ -24,6 +24,23 @@ MAINTAINED_ENTRY_POINT_DOCUMENTS = (
 )
 
 
+def _initialize_git_repository(path: Path) -> None:
+  subprocess.run(["git", "init", "-q"], cwd=path, check=True)
+  subprocess.run(
+    ["git", "config", "user.email", "governance-test@example.invalid"],
+    cwd=path,
+    check=True,
+  )
+  subprocess.run(
+    ["git", "config", "user.name", "Governance Test"],
+    cwd=path,
+    check=True,
+  )
+  (path / "README.md").write_text("# Test\n", encoding="utf-8")
+  subprocess.run(["git", "add", "README.md"], cwd=path, check=True)
+  subprocess.run(["git", "commit", "-qm", "baseline"], cwd=path, check=True)
+
+
 def test_runtime_strings_reject_work_tracking_codes() -> None:
   result = scan_text(
     "src/runtime/backend.cpp",
@@ -68,6 +85,15 @@ def test_acronym_identifiers_reject_embedded_tracking_and_phase_codes() -> None:
     ("source-tracking-code", "RB7"),
     ("opaque-phase-identifier", "PHASEB"),
   ]
+
+
+def test_technical_abbreviations_do_not_match_embedded_internal_codes() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    "I18nFormatter formatter;\nVectorI32 lanes;\nBROADPHASEBatch batch;\n",
+  )
+
+  assert result.findings == ()
 
 
 def test_production_paths_reject_tracking_and_camel_phase_codes() -> None:
@@ -150,6 +176,32 @@ def test_block_comment_markers_inside_strings_remain_runtime_text() -> None:
   ]
 
 
+def test_python_triple_quoted_comment_markers_remain_runtime_text() -> None:
+  result = scan_text(
+    "python/rl/runtime/backend.py",
+    'message = """\n# RB7 remains runtime text\n"""\n',
+    line_numbers={2},
+  )
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("runtime-tracking-code", "RB7")
+  ]
+  assert result.warnings == ()
+
+
+def test_cpp_raw_string_comment_markers_remain_runtime_text() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    'const char* message = R"tag(\n/* RB7 remains runtime text */\n)tag";\n',
+    line_numbers={2},
+  )
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("runtime-tracking-code", "RB7")
+  ]
+  assert result.warnings == ()
+
+
 def test_comment_markers_inside_strings_do_not_hide_runtime_codes() -> None:
   result = scan_text(
     "python/rl/runtime/backend.py",
@@ -204,10 +256,18 @@ def test_phase_runtime_text_and_uppercase_identifiers_are_blocked() -> None:
 def test_semantic_phase_words_do_not_match_lettered_phase_codes() -> None:
   result = scan_text(
     "src/runtime/contracts/schema.h",
-    "int phaseBoundary = 0;\nint broadphase_batch = 0;\n",
+    "int phaseBoundary = 0;\n"
+    "int broadphase_batch = 0;\n"
+    "int phase_bucket = 0;\n"
+    "int phase_default = 0;\n"
+    "int phase_command_expectations = 0;\n",
+  )
+  path_findings = audit_module.scan_path_name(
+    "src/runtime/phase_bucket/phase_default/phase_command_expectations.inc"
   )
 
   assert result.findings == ()
+  assert path_findings == ()
 
 
 def test_hyphenated_phase_runtime_text_is_blocked() -> None:
@@ -284,20 +344,7 @@ def test_name_status_parser_selects_added_and_rename_destinations() -> None:
 
 
 def test_incremental_audit_includes_untracked_production_files(tmp_path: Path) -> None:
-  subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
-  subprocess.run(
-    ["git", "config", "user.email", "governance-test@example.invalid"],
-    cwd=tmp_path,
-    check=True,
-  )
-  subprocess.run(
-    ["git", "config", "user.name", "Governance Test"],
-    cwd=tmp_path,
-    check=True,
-  )
-  (tmp_path / "README.md").write_text("# Test\n", encoding="utf-8")
-  subprocess.run(["git", "add", "README.md"], cwd=tmp_path, check=True)
-  subprocess.run(["git", "commit", "-qm", "baseline"], cwd=tmp_path, check=True)
+  _initialize_git_repository(tmp_path)
   source = tmp_path / "src/runtime/new_backend.cpp"
   source.parent.mkdir(parents=True)
   source.write_text('throw_error("RB7 leaked");\n', encoding="utf-8")
@@ -307,6 +354,46 @@ def test_incremental_audit_includes_untracked_production_files(tmp_path: Path) -
   assert [(finding.code, finding.token) for finding in result.errors] == [
     ("runtime-tracking-code", "RB7")
   ]
+
+
+def test_incremental_audit_scans_changed_inc_source(tmp_path: Path) -> None:
+  _initialize_git_repository(tmp_path)
+  source = tmp_path / "src/runtime/detail/schema.inc"
+  source.parent.mkdir(parents=True)
+  source.write_text("EF_FIELD(int, semantic_budget)\n", encoding="utf-8")
+  subprocess.run(["git", "add", source.relative_to(tmp_path)], cwd=tmp_path, check=True)
+  subprocess.run(["git", "commit", "-qm", "add schema"], cwd=tmp_path, check=True)
+  source.write_text("EF_FIELD(int, rb7_budget)\n", encoding="utf-8")
+
+  result = audit_module.audit_changed_lines(tmp_path, "HEAD")
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("source-tracking-code", "rb7")
+  ]
+  assert result.files_checked == 1
+
+
+def test_incremental_audit_scans_complete_renamed_inc_source(tmp_path: Path) -> None:
+  _initialize_git_repository(tmp_path)
+  source = tmp_path / "src/runtime/detail/schema.inc"
+  source.parent.mkdir(parents=True)
+  source.write_text("EF_FIELD(int, phase_b_state)\n", encoding="utf-8")
+  subprocess.run(["git", "add", source.relative_to(tmp_path)], cwd=tmp_path, check=True)
+  subprocess.run(["git", "commit", "-qm", "add legacy schema"], cwd=tmp_path, check=True)
+  destination = source.with_name("renamed_schema.inc")
+  subprocess.run(
+    ["git", "mv", source.relative_to(tmp_path), destination.relative_to(tmp_path)],
+    cwd=tmp_path,
+    check=True,
+  )
+
+  result = audit_module.audit_changed_lines(tmp_path, "HEAD")
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("opaque-phase-identifier", "phase_b_state")
+  ]
+  assert result.files_checked == 1
+  assert result.lines_checked == 1
 
 
 def test_selected_line_scan_does_not_block_legacy_context() -> None:

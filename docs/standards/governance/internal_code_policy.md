@@ -33,8 +33,8 @@ decision. Repeated use does not make a work-tracking code semantic.
 
 ## Source And Runtime Rules
 
-Maintained production source under `src/`, `python/`, and `gym_envs/` follows
-these rules:
+Maintained production source under `src/`, `python/`, and `gym_envs/`, including
+compiled `.inc` fragments, follows these rules:
 
 1. Public and internal interfaces lead with semantic capability names.
 2. Exceptions, log messages, counters, trace labels, and validation messages do
@@ -92,9 +92,9 @@ python -m tools.maintenance.internal_code_governance \
   --changed-from <base-revision>
 ```
 
-It audits only added lines relative to the selected base. This prevents new
-high-confidence debt without making unrelated changes fail on the existing
-historical backlog.
+It audits added lines relative to the selected base and complete files at added
+or renamed production paths. This prevents new high-confidence debt without
+making unrelated, untouched files fail on the existing historical backlog.
 
 Current severity:
 
@@ -107,7 +107,9 @@ Source matching decomposes snake case and CamelCase/PascalCase identifiers and
 checks every production path component. Semantic words that merely contain the
 letters `phase`, such as `broadphase_batch`, are not implementation-stage
 aliases. C and C++ line and block comments remain comment warnings even when a
-selected changed line is inside a block that began on an unchanged line.
+selected changed line is inside a block that began on an unchanged line. Python
+triple-quoted strings and C++ raw strings retain literal state across lines, so
+comment markers inside runtime text cannot downgrade a finding to a warning.
 
 Documentation warnings remain non-blocking for the historical and long-tail
 documentation backlog. The maintained entry-point baseline is stricter: the

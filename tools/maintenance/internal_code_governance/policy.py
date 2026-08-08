@@ -14,6 +14,7 @@ SOURCE_SUFFIXES = {
   ".cuh",
   ".h",
   ".hpp",
+  ".inc",
   ".py",
 }
 DOCUMENT_SUFFIXES = {".md"}
@@ -50,8 +51,8 @@ TRACKING_CODE_TOKEN_RE = re.compile(
 )
 PHASE_IDENTIFIER_RE = re.compile(
   r"(?<![A-Za-z0-9])(?:"
-  r"phase_[a-d](?:_[A-Za-z0-9_]+)?|"
-  r"PHASE_[A-D](?:_[A-Za-z0-9_]+)?|"
+  r"phase_[a-d](?![A-Za-z0-9])(?:_[A-Za-z0-9_]+)?|"
+  r"PHASE_[A-D](?![A-Za-z0-9])(?:_[A-Za-z0-9_]+)?|"
   r"[kK]?Phase[A-D](?![a-z])(?:[A-Z0-9_][A-Za-z0-9_]*)?|"
   r"phase[A-D](?![a-z])(?:[A-Z0-9_][A-Za-z0-9_]*)?"
   r")",

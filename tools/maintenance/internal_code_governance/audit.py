@@ -15,7 +15,6 @@ from .policy import (
   PHASE_PROSE_RE,
   POLICY_DOCUMENTS,
   SOURCE_SUFFIXES,
-  STRING_LITERAL_RE,
   TRACKING_CODE_RE,
   TRACKING_CODE_TOKEN_RE,
   is_document,
@@ -66,6 +65,12 @@ class _TextSpan:
   token: str
 
 
+@dataclass(frozen=True)
+class _LineLexicalRanges:
+  comments: tuple[tuple[int, int], ...]
+  strings: tuple[tuple[int, int], ...]
+
+
 _IDENTIFIER_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 _IDENTIFIER_SEGMENT_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*")
 _CAMEL_BOUNDARY_RE = re.compile(
@@ -73,74 +78,155 @@ _CAMEL_BOUNDARY_RE = re.compile(
 )
 _ACRONYM_TRACKING_CODE_RE = re.compile(r"(?:RB|CR|WP|TM|MLF|RES)\d+|I\d{2,}")
 _ACRONYM_PHASE_RE = re.compile(r"PHASE[A-D]")
+_CPP_RAW_STRING_START_RE = re.compile(
+  r'R"(?P<delimiter>[^ ()\\\t\r\n]{0,16})\('
+)
 
 
-def _inside_string_literal(line: str, offset: int) -> bool:
-  return any(match.start() <= offset < match.end() for match in STRING_LITERAL_RE.finditer(line))
+def _find_unescaped(text: str, needle: str, start: int) -> int:
+  offset = text.find(needle, start)
+  while offset >= 0:
+    backslashes = 0
+    cursor = offset - 1
+    while cursor >= 0 and text[cursor] == "\\":
+      backslashes += 1
+      cursor -= 1
+    if backslashes % 2 == 0:
+      return offset
+    offset = text.find(needle, offset + 1)
+  return -1
 
 
-def _line_comment_offset(line: str, marker: str) -> int | None:
-  positions: list[int] = []
-  start = 0
-  while True:
-    offset = line.find(marker, start)
-    if offset < 0:
-      break
-    if not _inside_string_literal(line, offset):
-      positions.append(offset)
-    start = offset + len(marker)
-  return min(positions) if positions else None
+def _quoted_string_end(line: str, start: int) -> int:
+  quote = line[start]
+  cursor = start + 1
+  while cursor < len(line):
+    if line[cursor] == "\\":
+      cursor += 2
+      continue
+    if line[cursor] == quote:
+      return cursor + 1
+    cursor += 1
+  return len(line)
 
 
-def _source_comment_ranges(path: str, lines: list[str]) -> list[tuple[tuple[int, int], ...]]:
-  if Path(path).suffix.lower() == ".py":
-    result: list[tuple[tuple[int, int], ...]] = []
-    for line in lines:
-      offset = _line_comment_offset(line, "#")
-      result.append(((offset, len(line)),) if offset is not None else ())
-    return result
-
-  result = []
-  in_block_comment = False
+def _python_lexical_ranges(lines: list[str]) -> list[_LineLexicalRanges]:
+  result: list[_LineLexicalRanges] = []
+  triple_delimiter: str | None = None
   for line in lines:
-    ranges: list[tuple[int, int]] = []
-    string_ends = {match.start(): match.end() for match in STRING_LITERAL_RE.finditer(line)}
+    comments: list[tuple[int, int]] = []
+    strings: list[tuple[int, int]] = []
     cursor = 0
     while cursor < len(line):
+      if triple_delimiter is not None:
+        end = _find_unescaped(line, triple_delimiter, cursor)
+        if end < 0:
+          strings.append((cursor, len(line)))
+          cursor = len(line)
+        else:
+          strings.append((cursor, end + len(triple_delimiter)))
+          cursor = end + len(triple_delimiter)
+          triple_delimiter = None
+        continue
+      delimiter = next(
+        (candidate for candidate in ('"""', "'''") if line.startswith(candidate, cursor)),
+        None,
+      )
+      if delimiter is not None:
+        end = _find_unescaped(line, delimiter, cursor + len(delimiter))
+        if end < 0:
+          strings.append((cursor, len(line)))
+          triple_delimiter = delimiter
+          cursor = len(line)
+        else:
+          strings.append((cursor, end + len(delimiter)))
+          cursor = end + len(delimiter)
+        continue
+      if line[cursor] in {'"', "'"}:
+        end = _quoted_string_end(line, cursor)
+        strings.append((cursor, end))
+        cursor = end
+        continue
+      if line[cursor] == "#":
+        comments.append((cursor, len(line)))
+        break
+      cursor += 1
+    result.append(_LineLexicalRanges(tuple(comments), tuple(strings)))
+  return result
+
+
+def _cpp_lexical_ranges(lines: list[str]) -> list[_LineLexicalRanges]:
+  result: list[_LineLexicalRanges] = []
+  in_block_comment = False
+  raw_string_end: str | None = None
+  for line in lines:
+    comments: list[tuple[int, int]] = []
+    strings: list[tuple[int, int]] = []
+    cursor = 0
+    while cursor < len(line):
+      if raw_string_end is not None:
+        end = line.find(raw_string_end, cursor)
+        if end < 0:
+          strings.append((cursor, len(line)))
+          cursor = len(line)
+        else:
+          strings.append((cursor, end + len(raw_string_end)))
+          cursor = end + len(raw_string_end)
+          raw_string_end = None
+        continue
       if in_block_comment:
         end = line.find("*/", cursor)
         if end < 0:
-          ranges.append((cursor, len(line)))
+          comments.append((cursor, len(line)))
           cursor = len(line)
         else:
-          ranges.append((cursor, end + 2))
+          comments.append((cursor, end + 2))
           in_block_comment = False
           cursor = end + 2
         continue
-      string_end = string_ends.get(cursor)
-      if string_end is not None:
-        cursor = string_end
+      raw_start = _CPP_RAW_STRING_START_RE.match(line, cursor)
+      if raw_start is not None:
+        raw_string_end = f'){raw_start.group("delimiter")}"'
+        end = line.find(raw_string_end, raw_start.end())
+        if end < 0:
+          strings.append((cursor, len(line)))
+          cursor = len(line)
+        else:
+          strings.append((cursor, end + len(raw_string_end)))
+          cursor = end + len(raw_string_end)
+          raw_string_end = None
+        continue
+      if line[cursor] in {'"', "'"}:
+        end = _quoted_string_end(line, cursor)
+        strings.append((cursor, end))
+        cursor = end
         continue
       if line.startswith("//", cursor):
-        ranges.append((cursor, len(line)))
+        comments.append((cursor, len(line)))
         break
       if line.startswith("/*", cursor):
         end = line.find("*/", cursor + 2)
         if end < 0:
-          ranges.append((cursor, len(line)))
+          comments.append((cursor, len(line)))
           in_block_comment = True
           cursor = len(line)
         else:
-          ranges.append((cursor, end + 2))
+          comments.append((cursor, end + 2))
           cursor = end + 2
         continue
       cursor += 1
-    result.append(tuple(ranges))
+    result.append(_LineLexicalRanges(tuple(comments), tuple(strings)))
   return result
 
 
-def _inside_comment(comment_ranges: tuple[tuple[int, int], ...], offset: int) -> bool:
-  return any(start <= offset < end for start, end in comment_ranges)
+def _source_lexical_ranges(path: str, lines: list[str]) -> list[_LineLexicalRanges]:
+  if Path(path).suffix.lower() == ".py":
+    return _python_lexical_ranges(lines)
+  return _cpp_lexical_ranges(lines)
+
+
+def _inside_ranges(ranges: tuple[tuple[int, int], ...], offset: int) -> bool:
+  return any(start <= offset < end for start, end in ranges)
 
 
 def _identifier_token_groups(text: str) -> tuple[tuple[_TextSpan, ...], ...]:
@@ -165,6 +251,19 @@ def _overlaps(span: _TextSpan, others: list[_TextSpan]) -> bool:
   return any(span.start < other.end and other.start < span.end for other in others)
 
 
+def _has_high_confidence_acronym_context(
+  identifier: str,
+  match: re.Match[str],
+) -> bool:
+  prefix = identifier[:match.start()]
+  suffix = identifier[match.end():]
+  return (
+    len(prefix) >= 2
+    and prefix.isupper()
+    and (not suffix or suffix[0].isupper())
+  )
+
+
 def _tracking_code_spans(text: str) -> tuple[_TextSpan, ...]:
   spans = [
     _TextSpan(match.start(), match.end(), match.group(0))
@@ -172,10 +271,17 @@ def _tracking_code_spans(text: str) -> tuple[_TextSpan, ...]:
   ]
   for group in _identifier_token_groups(text):
     for token in group:
+      if (
+        len(group) > 1
+        and re.fullmatch(r"I\d{2,}", token.token, re.IGNORECASE)
+      ):
+        continue
       if TRACKING_CODE_TOKEN_RE.fullmatch(token.token) and not _overlaps(token, spans):
         spans.append(token)
   for identifier in _IDENTIFIER_RE.finditer(text):
     for match in _ACRONYM_TRACKING_CODE_RE.finditer(identifier.group(0)):
+      if not _has_high_confidence_acronym_context(identifier.group(0), match):
+        continue
       candidate = _TextSpan(
         identifier.start() + match.start(),
         identifier.start() + match.end(),
@@ -200,6 +306,8 @@ def _phase_identifier_spans(text: str) -> tuple[_TextSpan, ...]:
         spans.append(candidate)
   for identifier in _IDENTIFIER_RE.finditer(text):
     for match in _ACRONYM_PHASE_RE.finditer(identifier.group(0)):
+      if not _has_high_confidence_acronym_context(identifier.group(0), match):
+        continue
       candidate = _TextSpan(
         identifier.start() + match.start(),
         identifier.start() + match.end(),
@@ -242,7 +350,7 @@ def _source_findings(
   path: str,
   lines: list[str],
   index: int,
-  comment_ranges: tuple[tuple[int, int], ...],
+  lexical_ranges: _LineLexicalRanges,
 ) -> list[Finding]:
   line = lines[index]
   line_number = index + 1
@@ -252,11 +360,11 @@ def _source_findings(
   for match in _tracking_code_spans(line):
     if compatibility:
       continue
-    if _inside_comment(comment_ranges, match.start):
+    if _inside_ranges(lexical_ranges.comments, match.start):
       severity = "warning"
       code = "source-tracking-code-comment"
       message = "source comments should explain behavior without work-tracking codes"
-    elif _inside_string_literal(line, match.start):
+    elif _inside_ranges(lexical_ranges.strings, match.start):
       severity = "error"
       code = "runtime-tracking-code"
       message = "runtime or diagnostic strings must use semantic capability names"
@@ -271,7 +379,7 @@ def _source_findings(
   for match in _phase_identifier_spans(line):
     if compatibility:
       continue
-    in_comment = _inside_comment(comment_ranges, match.start)
+    in_comment = _inside_ranges(lexical_ranges.comments, match.start)
     findings.append(
       Finding(
         "opaque-phase-comment" if in_comment else "opaque-phase-identifier",
@@ -289,8 +397,8 @@ def _source_findings(
   for match in PHASE_PROSE_RE.finditer(line):
     if compatibility:
       continue
-    in_comment = _inside_comment(comment_ranges, match.start())
-    in_string = _inside_string_literal(line, match.start())
+    in_comment = _inside_ranges(lexical_ranges.comments, match.start())
+    in_string = _inside_ranges(lexical_ranges.strings, match.start())
     if in_comment:
       code = "opaque-phase-comment"
       severity = "warning"
@@ -343,11 +451,11 @@ def scan_text(
   requested = set(range(1, len(lines) + 1)) if line_numbers is None else line_numbers
   selected = {number for number in requested if 1 <= number <= len(lines)}
   findings: list[Finding] = []
-  comment_ranges = _source_comment_ranges(normalized, lines) if is_production_source(normalized) else []
+  lexical_ranges = _source_lexical_ranges(normalized, lines) if is_production_source(normalized) else []
   for line_number in sorted(selected):
     index = line_number - 1
     if is_production_source(normalized):
-      findings.extend(_source_findings(normalized, lines, index, comment_ranges[index]))
+      findings.extend(_source_findings(normalized, lines, index, lexical_ranges[index]))
     elif is_document(normalized):
       findings.extend(_document_findings(normalized, lines[index], line_number))
   return AuditResult(
@@ -544,7 +652,7 @@ def audit_changed_lines(repo_root: Path, base_ref: str) -> AuditResult:
     result = scan_text(
       relative,
       path.read_text(encoding="utf-8", errors="ignore"),
-      line_numbers=changed.get(relative, set()),
+      line_numbers=None if relative in new_paths else changed.get(relative, set()),
     )
     if result.files_checked:
       results.append(result)

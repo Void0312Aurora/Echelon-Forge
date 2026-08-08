@@ -485,8 +485,8 @@
       "chinese": "docs/standards/governance/internal_code_policy.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-08-08",
-      "english_hash": "f1214c290e70750224c7af0187b6e062796ac4c656548421b88bdf7a48ea0f83",
-      "chinese_hash": "b8d0b17f7cf9cd2df6d9b150cef04bf90fae40e382a379ffa1710129c5c70f7e"
+      "english_hash": "70676a2d315bff1c4b5f6d2c1ec364b94a9ef481127b93aba6b11e6cf6f49eda",
+      "chinese_hash": "0583b17e9ff75c4d941f955fd105f90d1c47eacc796e7d029e3e6158c94ddf81"
     },
     {
       "pair_id": "standards/governance/release_and_dependency_policy",

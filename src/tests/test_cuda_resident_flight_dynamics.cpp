@@ -13,7 +13,7 @@
 
 namespace {
 
-bool within_rb2_kinematics_budget(double actual, double expected) {
+bool within_flight_dynamics_kinematics_budget(double actual, double expected) {
     return std::abs(actual - expected) <=
            std::max(1.0e-9, 1.0e-12 * std::max(std::abs(actual), std::abs(expected)));
 }
@@ -114,7 +114,7 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
             CAPTURE(field);
             CAPTURE(kinematics[field]);
             CAPTURE(kCudaResidentFlightDynamicsFirstExpected[world].kinematics[field]);
-            CHECK(within_rb2_kinematics_budget(
+            CHECK(within_flight_dynamics_kinematics_budget(
                 kinematics[field],
                 kCudaResidentFlightDynamicsFirstExpected[world].kinematics[field]));
         }
@@ -123,7 +123,7 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
             CAPTURE(field);
             CAPTURE(dynamics[field]);
             CAPTURE(kCudaResidentFlightDynamicsFirstExpected[world].dynamics[field]);
-            CHECK(within_rb2_kinematics_budget(
+            CHECK(within_flight_dynamics_kinematics_budget(
                 dynamics[field], kCudaResidentFlightDynamicsFirstExpected[world].dynamics[field]));
         }
         CHECK(actual.clock_tick == 1);

@@ -19,7 +19,7 @@ lines:
 
 ```powershell
 $paths = git ls-files gym_envs python src |
-  Where-Object { $_ -match '\.(c|cc|cpp|cu|cuh|h|hpp|py)$' }
+  Where-Object { $_ -match '\.(c|cc|cpp|cu|cuh|h|hpp|inc|py)$' }
 python -m tools.maintenance.internal_code_governance `
   --paths $paths --format text --fail-on never
 ```
@@ -31,6 +31,7 @@ python -m tools.maintenance.internal_code_governance `
 | Before active-source cleanup | 692 | 162,383 | 488 | 133 | 621 |
 | After active-source cleanup | 692 | 162,384 | 368 | 106 | 474 |
 | After detector hardening and probe retirement | 692 | 162,064 | 375 | 106 | 481 |
+| After compiled-fragment and literal hardening | 824 | 169,975 | 315 | 146 | 461 |
 
 The one-line increase is the direct standard-library include required to
 compile the candidate-admission test as an independent MSVC object. The cleanup
@@ -38,17 +39,21 @@ removed 147 findings without suppressing or reclassifying detector output.
 The final snapshot is not a regression delta against 474: it uses the hardened
 detector, which newly covers CamelCase/PascalCase identifiers and all production
 path components. Retiring the obsolete resource-capture implementation accounts
-for the lower line count.
+for the lower line count. The latest snapshot adds all 132 tracked `.inc`
+fragments (7,911 lines) and 40 comment warnings. Tight phase-letter boundaries
+remove 53 semantic-word false positives, high-confidence acronym boundaries
+remove 7 technical-abbreviation false positives, and multiline-literal state
+reclassifies 37 runtime strings that previously appeared as source tokens.
 
-The current 481 findings break down as follows:
+The current 461 findings break down as follows:
 
 | Finding class | Count | Meaning |
 | --- | ---: | --- |
-| Runtime tracking labels | 172 | A runtime string still exposes a work-tracking label. |
-| Source tracking labels | 109 | An identifier or non-comment source token still uses a work-tracking label. |
-| Lettered implementation-stage identifiers | 87 | An implementation identifier still names a lettered stage rather than a capability. |
+| Runtime tracking labels | 209 | A runtime string still exposes a work-tracking label. |
+| Source tracking labels | 65 | An identifier or non-comment source token still uses a work-tracking label. |
+| Lettered implementation-stage identifiers | 34 | An implementation identifier still names a lettered stage rather than a capability. |
 | Production-path tracking labels | 7 | An existing production path still includes a work-tracking label; new and renamed paths are blocked. |
-| Source-comment tracking labels | 106 | A comment still depends on plan-local shorthand. |
+| Source-comment tracking labels | 146 | A comment still depends on plan-local shorthand. |
 
 ## Remediated In This Pass
 
