@@ -46,6 +46,59 @@ def test_production_identifiers_reject_work_tracking_codes() -> None:
   ]
 
 
+def test_camel_case_identifiers_reject_tracking_and_phase_codes() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    "class CudaResidentRB7Backend {};\nstruct CudaResidentPhaseBState {};\n",
+  )
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("source-tracking-code", "RB7"),
+    ("opaque-phase-identifier", "PhaseB"),
+  ]
+
+
+def test_acronym_identifiers_reject_embedded_tracking_and_phase_codes() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    "class CUDARB7Backend {};\nstruct CUDAPHASEBState {};\n",
+  )
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("source-tracking-code", "RB7"),
+    ("opaque-phase-identifier", "PHASEB"),
+  ]
+
+
+def test_production_paths_reject_tracking_and_camel_phase_codes() -> None:
+  tracking = audit_module.scan_path_name(
+    "src/CudaResidentRB7Backend/runtime.cpp"
+  )
+  phase = audit_module.scan_path_name(
+    "src/runtime/CudaResidentPhaseBState.cpp"
+  )
+
+  assert [(finding.code, finding.token) for finding in tracking] == [
+    ("source-tracking-code-path", "RB7")
+  ]
+  assert [(finding.code, finding.token) for finding in phase] == [
+    ("opaque-phase-path", "PhaseB")
+  ]
+
+
+def test_broadphase_batch_is_not_a_lettered_phase_identifier() -> None:
+  source = scan_text(
+    "src/runtime/broadphase_batch.cpp",
+    "auto broadphase_batch = build_interaction_broadphase_batch();\n",
+  )
+  path_findings = audit_module.scan_path_name(
+    "src/runtime/broadphase_batch.cpp"
+  )
+
+  assert source.findings == ()
+  assert path_findings == ()
+
+
 def test_source_comments_warn_without_blocking() -> None:
   result = scan_text(
     "src/runtime/backend.cpp",
@@ -55,6 +108,45 @@ def test_source_comments_warn_without_blocking() -> None:
   assert result.errors == ()
   assert [(finding.code, finding.token) for finding in result.warnings] == [
     ("source-tracking-code-comment", "RB7")
+  ]
+
+
+def test_cpp_block_comments_warn_without_becoming_source_errors() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    "/* RB7 originally introduced this path.\n"
+    " * Phase B was the old local name. */\n"
+    "run_semantic_stage();\n",
+  )
+
+  assert result.errors == ()
+  assert [(finding.code, finding.token) for finding in result.warnings] == [
+    ("source-tracking-code-comment", "RB7"),
+    ("opaque-phase-comment", "Phase B"),
+  ]
+
+
+def test_selected_line_scan_preserves_multiline_block_comment_state() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    "/* historical note\n * RB7 introduced the old path.\n */\n",
+    line_numbers={2},
+  )
+
+  assert result.errors == ()
+  assert [(finding.code, finding.token) for finding in result.warnings] == [
+    ("source-tracking-code-comment", "RB7")
+  ]
+
+
+def test_block_comment_markers_inside_strings_remain_runtime_text() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    'const char* message = "/* RB7 */";\n',
+  )
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("runtime-tracking-code", "RB7")
   ]
 
 

@@ -31,8 +31,7 @@ EXCLUDED_PARTS = {
 # These families identify work packages, review batches, or iterations rather
 # than stable runtime/domain concepts. Short domain abbreviations such as C2 are
 # deliberately excluded because they need semantic ownership, not a global ban.
-TRACKING_CODE_RE = re.compile(
-  r"(?<![A-Za-z0-9])(?:"
+TRACKING_CODE_PATTERN = (
   r"RB\d+[A-Za-z]?|"
   r"CR\d+(?:[-.]\d+[A-Za-z]?)?|"
   r"WP\d+(?:[-.]\d+[A-Za-z]?)?|"
@@ -40,7 +39,13 @@ TRACKING_CODE_RE = re.compile(
   r"MLF(?:[-.]?\d+[A-Za-z]?)|"
   r"RES\d+(?:[-.]\d+[A-Za-z]?)?|"
   r"I\d{2,}"
-  r")(?![A-Za-z0-9])",
+)
+TRACKING_CODE_RE = re.compile(
+  rf"(?<![A-Za-z0-9])(?:{TRACKING_CODE_PATTERN})(?![A-Za-z0-9])",
+  re.IGNORECASE,
+)
+TRACKING_CODE_TOKEN_RE = re.compile(
+  rf"^(?:{TRACKING_CODE_PATTERN})$",
   re.IGNORECASE,
 )
 PHASE_IDENTIFIER_RE = re.compile(

@@ -187,13 +187,13 @@
     },
     {
       "path": "src/runtime/contracts/cuda_resident_resource_evidence_contract.h",
-      "role": "CR2-5a kernel catalog, launch topology, and capture boundary contract",
-      "observed_lines": 90
+      "role": "frozen kernel catalog, launch topology, and capture retirement contract",
+      "observed_lines": 93
     },
     {
       "path": "src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp",
-      "role": "single-window CUDA profiler capture and runtime resource probe",
-      "observed_lines": 343
+      "role": "fail-closed retirement stub for the legacy resource capture schema",
+      "observed_lines": 18
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_evidence.py",
@@ -217,8 +217,8 @@
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
-      "role": "CR2-5a evidence, fail-closed parser, and topology guards",
-      "observed_lines": 432
+      "role": "resource evidence, retired-capture, fail-closed parser, and topology guards",
+      "observed_lines": 426
     },
     {
       "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",

@@ -6,7 +6,7 @@ import json
 import re
 import subprocess
 from dataclasses import asdict, dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Iterable
 
 from .policy import (
@@ -17,6 +17,7 @@ from .policy import (
   SOURCE_SUFFIXES,
   STRING_LITERAL_RE,
   TRACKING_CODE_RE,
+  TRACKING_CODE_TOKEN_RE,
   is_document,
   is_production_source,
   normalize_path,
@@ -58,29 +59,155 @@ class AuditResult:
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
+@dataclass(frozen=True)
+class _TextSpan:
+  start: int
+  end: int
+  token: str
+
+
+_IDENTIFIER_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
+_IDENTIFIER_SEGMENT_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*")
+_CAMEL_BOUNDARY_RE = re.compile(
+  r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])"
+)
+_ACRONYM_TRACKING_CODE_RE = re.compile(r"(?:RB|CR|WP|TM|MLF|RES)\d+|I\d{2,}")
+_ACRONYM_PHASE_RE = re.compile(r"PHASE[A-D]")
+
+
 def _inside_string_literal(line: str, offset: int) -> bool:
   return any(match.start() <= offset < match.end() for match in STRING_LITERAL_RE.finditer(line))
 
 
-def _comment_offset(path: str, line: str) -> int | None:
-  suffix = Path(path).suffix.lower()
-  markers = ("#",) if suffix == ".py" else ("//",)
+def _line_comment_offset(line: str, marker: str) -> int | None:
   positions: list[int] = []
-  for marker in markers:
-    start = 0
-    while True:
-      offset = line.find(marker, start)
-      if offset < 0:
-        break
-      if not _inside_string_literal(line, offset):
-        positions.append(offset)
-      start = offset + len(marker)
+  start = 0
+  while True:
+    offset = line.find(marker, start)
+    if offset < 0:
+      break
+    if not _inside_string_literal(line, offset):
+      positions.append(offset)
+    start = offset + len(marker)
   return min(positions) if positions else None
 
 
-def _inside_comment(path: str, line: str, offset: int) -> bool:
-  comment_offset = _comment_offset(path, line)
-  return comment_offset is not None and comment_offset <= offset
+def _source_comment_ranges(path: str, lines: list[str]) -> list[tuple[tuple[int, int], ...]]:
+  if Path(path).suffix.lower() == ".py":
+    result: list[tuple[tuple[int, int], ...]] = []
+    for line in lines:
+      offset = _line_comment_offset(line, "#")
+      result.append(((offset, len(line)),) if offset is not None else ())
+    return result
+
+  result = []
+  in_block_comment = False
+  for line in lines:
+    ranges: list[tuple[int, int]] = []
+    string_ends = {match.start(): match.end() for match in STRING_LITERAL_RE.finditer(line)}
+    cursor = 0
+    while cursor < len(line):
+      if in_block_comment:
+        end = line.find("*/", cursor)
+        if end < 0:
+          ranges.append((cursor, len(line)))
+          cursor = len(line)
+        else:
+          ranges.append((cursor, end + 2))
+          in_block_comment = False
+          cursor = end + 2
+        continue
+      string_end = string_ends.get(cursor)
+      if string_end is not None:
+        cursor = string_end
+        continue
+      if line.startswith("//", cursor):
+        ranges.append((cursor, len(line)))
+        break
+      if line.startswith("/*", cursor):
+        end = line.find("*/", cursor + 2)
+        if end < 0:
+          ranges.append((cursor, len(line)))
+          in_block_comment = True
+          cursor = len(line)
+        else:
+          ranges.append((cursor, end + 2))
+          cursor = end + 2
+        continue
+      cursor += 1
+    result.append(tuple(ranges))
+  return result
+
+
+def _inside_comment(comment_ranges: tuple[tuple[int, int], ...], offset: int) -> bool:
+  return any(start <= offset < end for start, end in comment_ranges)
+
+
+def _identifier_token_groups(text: str) -> tuple[tuple[_TextSpan, ...], ...]:
+  groups: list[tuple[_TextSpan, ...]] = []
+  for identifier in _IDENTIFIER_RE.finditer(text):
+    tokens: list[_TextSpan] = []
+    for segment in _IDENTIFIER_SEGMENT_RE.finditer(identifier.group(0)):
+      segment_text = segment.group(0)
+      boundaries = [0]
+      boundaries.extend(match.start() for match in _CAMEL_BOUNDARY_RE.finditer(segment_text))
+      boundaries.append(len(segment_text))
+      for start, end in zip(boundaries, boundaries[1:]):
+        absolute_start = identifier.start() + segment.start() + start
+        absolute_end = identifier.start() + segment.start() + end
+        tokens.append(_TextSpan(absolute_start, absolute_end, text[absolute_start:absolute_end]))
+    if tokens:
+      groups.append(tuple(tokens))
+  return tuple(groups)
+
+
+def _overlaps(span: _TextSpan, others: list[_TextSpan]) -> bool:
+  return any(span.start < other.end and other.start < span.end for other in others)
+
+
+def _tracking_code_spans(text: str) -> tuple[_TextSpan, ...]:
+  spans = [
+    _TextSpan(match.start(), match.end(), match.group(0))
+    for match in TRACKING_CODE_RE.finditer(text)
+  ]
+  for group in _identifier_token_groups(text):
+    for token in group:
+      if TRACKING_CODE_TOKEN_RE.fullmatch(token.token) and not _overlaps(token, spans):
+        spans.append(token)
+  for identifier in _IDENTIFIER_RE.finditer(text):
+    for match in _ACRONYM_TRACKING_CODE_RE.finditer(identifier.group(0)):
+      candidate = _TextSpan(
+        identifier.start() + match.start(),
+        identifier.start() + match.end(),
+        match.group(0),
+      )
+      if not _overlaps(candidate, spans):
+        spans.append(candidate)
+  return tuple(sorted(spans, key=lambda span: (span.start, span.end, span.token)))
+
+
+def _phase_identifier_spans(text: str) -> tuple[_TextSpan, ...]:
+  spans = [
+    _TextSpan(match.start(), match.end(), match.group(0))
+    for match in PHASE_IDENTIFIER_RE.finditer(text)
+  ]
+  for group in _identifier_token_groups(text):
+    for first, second in zip(group, group[1:]):
+      if first.token.lower() != "phase" or second.token.lower() not in {"a", "b", "c", "d"}:
+        continue
+      candidate = _TextSpan(first.start, second.end, text[first.start:second.end])
+      if not _overlaps(candidate, spans):
+        spans.append(candidate)
+  for identifier in _IDENTIFIER_RE.finditer(text):
+    for match in _ACRONYM_PHASE_RE.finditer(identifier.group(0)):
+      candidate = _TextSpan(
+        identifier.start() + match.start(),
+        identifier.start() + match.end(),
+        match.group(0),
+      )
+      if not _overlaps(candidate, spans):
+        spans.append(candidate)
+  return tuple(sorted(spans, key=lambda span: (span.start, span.end, span.token)))
 
 
 def _has_compatibility_marker(lines: list[str], index: int) -> bool:
@@ -111,20 +238,25 @@ def _is_document_definition(line: str, match: re.Match[str]) -> bool:
   )
 
 
-def _source_findings(path: str, lines: list[str], index: int) -> list[Finding]:
+def _source_findings(
+  path: str,
+  lines: list[str],
+  index: int,
+  comment_ranges: tuple[tuple[int, int], ...],
+) -> list[Finding]:
   line = lines[index]
   line_number = index + 1
   compatibility = _has_compatibility_marker(lines, index)
   findings: list[Finding] = []
 
-  for match in TRACKING_CODE_RE.finditer(line):
+  for match in _tracking_code_spans(line):
     if compatibility:
       continue
-    if _inside_comment(path, line, match.start()):
+    if _inside_comment(comment_ranges, match.start):
       severity = "warning"
       code = "source-tracking-code-comment"
       message = "source comments should explain behavior without work-tracking codes"
-    elif _inside_string_literal(line, match.start()):
+    elif _inside_string_literal(line, match.start):
       severity = "error"
       code = "runtime-tracking-code"
       message = "runtime or diagnostic strings must use semantic capability names"
@@ -133,20 +265,20 @@ def _source_findings(path: str, lines: list[str], index: int) -> list[Finding]:
       code = "source-tracking-code"
       message = "production identifiers must not encode work packages or iterations"
     findings.append(
-      Finding(code, severity, path, line_number, match.group(0), message)
+      Finding(code, severity, path, line_number, match.token, message)
     )
 
-  for match in PHASE_IDENTIFIER_RE.finditer(line):
+  for match in _phase_identifier_spans(line):
     if compatibility:
       continue
-    in_comment = _inside_comment(path, line, match.start())
+    in_comment = _inside_comment(comment_ranges, match.start)
     findings.append(
       Finding(
         "opaque-phase-comment" if in_comment else "opaque-phase-identifier",
         "warning" if in_comment else "error",
         path,
         line_number,
-        match.group(0),
+        match.token,
         (
           "source comments should lead with the semantic stage name"
           if in_comment
@@ -157,7 +289,7 @@ def _source_findings(path: str, lines: list[str], index: int) -> list[Finding]:
   for match in PHASE_PROSE_RE.finditer(line):
     if compatibility:
       continue
-    in_comment = _inside_comment(path, line, match.start())
+    in_comment = _inside_comment(comment_ranges, match.start())
     in_string = _inside_string_literal(line, match.start())
     if in_comment:
       code = "opaque-phase-comment"
@@ -211,10 +343,11 @@ def scan_text(
   requested = set(range(1, len(lines) + 1)) if line_numbers is None else line_numbers
   selected = {number for number in requested if 1 <= number <= len(lines)}
   findings: list[Finding] = []
+  comment_ranges = _source_comment_ranges(normalized, lines) if is_production_source(normalized) else []
   for line_number in sorted(selected):
     index = line_number - 1
     if is_production_source(normalized):
-      findings.extend(_source_findings(normalized, lines, index))
+      findings.extend(_source_findings(normalized, lines, index, comment_ranges[index]))
     elif is_document(normalized):
       findings.extend(_document_findings(normalized, lines[index], line_number))
   return AuditResult(
@@ -228,19 +361,41 @@ def scan_path_name(path: str) -> tuple[Finding, ...]:
   normalized = normalize_path(path)
   if not is_production_source(normalized):
     return ()
-  match = PHASE_IDENTIFIER_RE.search(Path(normalized).stem)
-  if match is None:
-    return ()
-  return (
-    Finding(
-      "opaque-phase-path",
-      "error",
-      normalized,
-      0,
-      match.group(0),
-      "new production paths must lead with a semantic stage name",
-    ),
-  )
+  findings: list[Finding] = []
+  for component in PurePosixPath(normalized).parts:
+    for match in _tracking_code_spans(component):
+      findings.append(
+        Finding(
+          "source-tracking-code-path",
+          "error",
+          normalized,
+          0,
+          match.token,
+          "new production paths must not encode work packages or iterations",
+        )
+      )
+    phase_spans = list(_phase_identifier_spans(component))
+    phase_spans.extend(
+      _TextSpan(match.start(), match.end(), match.group(0))
+      for match in PHASE_PROSE_RE.finditer(component)
+    )
+    seen_phase_spans: set[tuple[int, int]] = set()
+    for match in sorted(phase_spans, key=lambda span: (span.start, span.end, span.token)):
+      location = (match.start, match.end)
+      if location in seen_phase_spans:
+        continue
+      seen_phase_spans.add(location)
+      findings.append(
+        Finding(
+          "opaque-phase-path",
+          "error",
+          normalized,
+          0,
+          match.token,
+          "new production paths must lead with a semantic stage name",
+        )
+      )
+  return tuple(findings)
 
 
 def _combine(results: Iterable[AuditResult]) -> AuditResult:

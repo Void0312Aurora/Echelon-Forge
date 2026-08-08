@@ -664,7 +664,7 @@ void bind_gpu(nb::module_ &m) {
           nb::arg("entities_per_world"));
     m.def("last_interaction_broadphase_stats", &gpu::last_interaction_broadphase_stats);
     m.def(
-        "build_interaction_broadflight_dynamicsatch_numpy",
+        "build_interaction_broadphase_batch_numpy",
         [](const std::vector<gpu::InteractionEntityPacked> &entities,
            const std::vector<gpu::InteractionQueryPacked> &queries,
            const gpu::InteractionBroadphaseConfig &config, bool use_gpu) {

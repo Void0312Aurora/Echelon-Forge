@@ -83,6 +83,11 @@ python -m tools.maintenance.internal_code_governance \
 - 告警：源码注释包含任务追踪代号
 - 告警：维护中文档包含未就地展开的内部代号
 
+源码匹配会拆解 snake case 与 CamelCase/PascalCase 标识符，并检查生产路径的每个组成部分。
+仅在语义词内部包含 `phase` 字母的名称（例如 `broadphase_batch`）不会被当作实现阶段别名。
+C/C++ 行注释和块注释都保持为注释告警；即使被选中的变更行位于从未变更行开始的块注释中，
+分类也不会升级为源码错误。
+
 历史文档和长尾文档积压中的告警继续保持非阻断。维护入口基线采用更严格规则：根 README
 中英文对、`docs/README`、`docs/plan/README`、`docs/task/README`、
 `docs/standards/README` 中英文对，以及 `tools/README.md` 必须保持零 finding。

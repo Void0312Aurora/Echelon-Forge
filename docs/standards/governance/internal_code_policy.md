@@ -103,6 +103,12 @@ Current severity:
 - warning: work-tracking codes in source comments
 - warning: bare internal codes in maintained documentation
 
+Source matching decomposes snake case and CamelCase/PascalCase identifiers and
+checks every production path component. Semantic words that merely contain the
+letters `phase`, such as `broadphase_batch`, are not implementation-stage
+aliases. C and C++ line and block comments remain comment warnings even when a
+selected changed line is inside a block that began on an unchanged line.
+
 Documentation warnings remain non-blocking for the historical and long-tail
 documentation backlog. The maintained entry-point baseline is stricter: the
 root README pair, `docs/README`, `docs/plan/README`, `docs/task/README`,

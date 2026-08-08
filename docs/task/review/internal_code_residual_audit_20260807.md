@@ -30,18 +30,24 @@ python -m tools.maintenance.internal_code_governance `
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Before active-source cleanup | 692 | 162,383 | 488 | 133 | 621 |
 | After active-source cleanup | 692 | 162,384 | 368 | 106 | 474 |
+| After detector hardening and probe retirement | 692 | 162,064 | 375 | 106 | 481 |
 
 The one-line increase is the direct standard-library include required to
 compile the candidate-admission test as an independent MSVC object. The cleanup
 removed 147 findings without suppressing or reclassifying detector output.
+The final snapshot is not a regression delta against 474: it uses the hardened
+detector, which newly covers CamelCase/PascalCase identifiers and all production
+path components. Retiring the obsolete resource-capture implementation accounts
+for the lower line count.
 
-The remaining 474 findings break down as follows:
+The current 481 findings break down as follows:
 
 | Finding class | Count | Meaning |
 | --- | ---: | --- |
-| Runtime tracking labels | 169 | A runtime string still exposes a work-tracking label. |
-| Source tracking labels | 112 | An identifier or non-comment source token still uses a work-tracking label. |
+| Runtime tracking labels | 172 | A runtime string still exposes a work-tracking label. |
+| Source tracking labels | 109 | An identifier or non-comment source token still uses a work-tracking label. |
 | Lettered implementation-stage identifiers | 87 | An implementation identifier still names a lettered stage rather than a capability. |
+| Production-path tracking labels | 7 | An existing production path still includes a work-tracking label; new and renamed paths are blocked. |
 | Source-comment tracking labels | 106 | A comment still depends on plan-local shorthand. |
 
 ## Remediated In This Pass
@@ -64,6 +70,9 @@ versioned schema values, captured symbols, and recorded source hashes. Renaming
 those values without a new capture would make historical evidence appear
 current when it is not. Their cleanup requires a versioned evidence recapture,
 updated readers, and an explicit retirement condition for the old records.
+The legacy resource-capture executable now exits with failure before collection;
+historical readers remain available for the frozen artifacts, while any new
+capture requires a new schema and kernel catalog.
 
 ### Historical Provenance
 
