@@ -30,20 +30,32 @@
 
 ## 前序程序为何关闭
 
-RB10 对 RB9 套用六条冻结门禁，六条全部 Fail。CR2 在结构上修掉了其中几条，但因两项
-仍然缺失而关闭。合并两次关闭结论，本程序起点的实际阻塞集是：
+RB10 对 RB9 套用六条冻结门禁，六条全部 Fail。随后 CR2 在结构上修掉了其中大部分。
+CR2-7 关闭记录（`cuda_resident_cr2_closure_20260805.json`）是由此产生状态的权威依据，
+它报告 `common_spi_full_window_available=true`、
+`device_consumer_boundary_available=true`、`selected_slice_parity_complete=true`、
+`resource_static_topology_complete=true`、`production_matrix_complete=true`、
+`small_batch_selection_advisory_complete=true`，测量类门禁中仅
+`achieved_counter_gate_complete=false`。
 
-| # | 门禁 | 前序状态 | 性质 |
+对照基线 `a4a2b932` 上的实际代码合并两次关闭结论：
+
+| # | 门禁 | 本程序起点状态 | 核实依据 |
 | --- | --- | --- | --- |
-| G-A | 整窗推进经公共 SPI 测量 | CUDA 走私有 `inject -> publish_stage -> advance`；`publish_stage` 不在 `IWorldBatchBackend` 上 | 架构性 |
-| G-B | CPU 与 CUDA 调用面等价 | `backend_spi_world_batch` 对 `backend_private_phase_sequence` | 架构性 |
-| G-C | 测量 learner 等价消费 | device consumer 只是带隐藏 host 回读的诊断 smoke；CR2-3 加了 lease 边界 | 部分修复 |
-| G-D | achieved 硬件计数器完整 | 两次独立尝试均 `ERR_NVGPUCTRPERM`（RB9、CR2-5b） | 主机权限 |
-| G-E | selected-slice parity 出隔离区 | CR2-4b 已释放 12 个字段 | **CR2 已修复** |
-| G-F | 小批量默认不退化 | world 1 退化 7-36 倍；CR2-6b 建议把 world 1 路由到 CPU | 未决（需修复或冻结显式选择规则） |
+| G-A | 整窗推进经公共 SPI 测量 | **CR2 已修复** | `cuda_resident_cr2_matrix_session.cpp` 只跑 `inject -> evaluate -> advance -> export_state`；surface id 为 `cuda_resident.full_window_spi.v1`；探针声明 `operation_sequence = [inject, evaluate_empty, advance_world_batch, ...]` |
+| G-B | CPU 与 CUDA 调用面等价 | **CR2 已修复** | 同一条纯 SPI 会话驱动两条 lane。`CudaWorldStore::advance_window()` 在窗口仅为 `input_injected` 时自行 publish（`cuda_world_store.cpp:348`），因此调用方无需公共 `publish_stage` |
+| G-C | 测量 learner 等价消费 | 边界已存在（CR2-3 lease），真实 learner 消费者不存在 | `cuda_resident_device_consumer.cpp` 已就位；CR2-7 该门禁为 true 指的是**边界**，不是 learner 等价消费 |
+| G-D | achieved 硬件计数器完整 | **未决——唯一的硬阻塞** | 两次独立尝试均 `ERR_NVGPUCTRPERM`（RB9、CR2-5b） |
+| G-E | selected-slice parity 出隔离区 | **CR2-4b 已修复** | 已释放 12 个字段 |
+| G-F | 小批量默认不退化 | 有建议，无修复 | world 1 退化 7-36 倍；CR2-6b 把 world 1 路由到 CPU |
 
-**G-B 是根门禁。** 只要两条 lane 调用面不同，RB9 和 CR2-6b 的所有时间比值都是在比较
-非等价路径，无论数字多好看都不能支撑晋升。
+对本程序自身范围的一处更正：G-A 与 G-B **不是**未决的架构工作。`publish_stage` 作为
+`CudaResidentBackend` 的公共方法仍然存在，但其剩余调用方只有 C++ 测试和已被取代的
+RB9 探针——不是产出关闭证据的 CR2 矩阵或整窗路径。RB10 对这两条门禁的裁定在写下时是
+正确的，如今已过期。
+
+实际后果是本程序比「修六条门禁」短得多。真正剩余的工作是 G-D（主机权限问题，不是代码
+问题）、G-C、G-F，以及晋升授权本身。
 
 ## 计数器阻塞的确认根因
 
@@ -88,8 +100,9 @@ CUDA 13.0，这 6,229 行仍可编译，其 CUDA-on 测试套件仍全部通过�
 尚未发生，这让 CP-1（编译通道）成为便宜的保险，而不是补救工程。
 
 范围说明：这些套件覆盖固定空域 fixture 的生命周期、状态屏障、Phase A/B/D 的
-CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 facade 等价窗口、learner
-消费者或 achieved 计数器——这三项正是下文的 G-A/G-B、G-C 与 G-D 门禁。
+CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消费者或 achieved
+计数器——即下文的 G-C 与 G-D 门禁。SPI 等价整窗由独立的 CR2 矩阵与整窗探针覆盖，
+而非由这两个套件覆盖。
 
 ## 迭代计划
 
@@ -98,19 +111,23 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 facade 等�
 
 | 迭代 | 范围 | 出口门禁 |
 | --- | --- | --- |
-| CP-0 | 本冻结文档；核实基线上 CUDA-on 仍可编译；记录主机/工具链身份 | 程序冻结；CUDA-on 编译结果被如实记录 |
+| CP-0 | 本冻结文档；核实基线上 CUDA-on 仍可编译；记录主机/工具链身份；对照现行代码复核 RB10 的门禁裁定 | 程序冻结；CUDA-on 编译结果被如实记录；过期裁定被更正 |
 | CP-1 | CUDA-on 编译通道，让这 6,229 行停止腐烂：一个 CI 任务；若无 GPU runner，则为文档化的本地检查点加一条断言 CUDA 源集仍在接线上的架构测试 | 编译回归无法静默落地 |
 | CP-2 | 把 `EF_ENABLE_CUDA_EXPERIMENTS` 拆成助手面开关与常驻后端开关，使两个语义地位不同的面可独立选择 | 打开其一不再强制打开另一个 |
-| CP-3 | **G-B/G-A 根因修复**：把常驻后端的整窗推进搬上公共 SPI。要么把 stage-publish 概念提升进 `IWorldBatchBackend` 供所有后端使用，要么让 CUDA lane 通过现有 `inject/evaluate/advance/export` 序列达到同一可观测状态。CPU lane 不得退化 | 两条 lane 经同一调用面测量 |
-| CP-4 | 在已等价的调用面上重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | 时间证据成为同类比较 |
-| CP-5 | 提权下采集 achieved 计数器：全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
-| CP-6 | 由 CP-5 结果驱动的 kernel 层优化，已知候选见下 | 相对 CP-4 基线有实测改善 |
-| CP-7 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | 真实消费者，而非诊断 smoke |
-| CP-8 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | world 1 不再是静默退化 |
+| CP-3 | 清退使 RB10 的 G-A/G-B 裁定得以成立的私有序列残留：既然只有测试与已被取代的 RB9 探针还在调用，就降级或移除 `CudaResidentBackend` 上的公共 `publish_stage`/`partial_sync_commit`，并加一条断言常驻后端不暴露任何非 SPI 整窗推进入口的门禁 | 没有调用方能绕过 SPI 推进窗口；等价性主张从偶然变为结构强制 |
+| CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
+| CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | 相对 CR2-6b 基线有实测改善 |
+| CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | 真实消费者，而非诊断 smoke |
+| CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | world 1 不再是静默退化 |
+| CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | 优化后证据可与 CR2-6b 比较 |
 | CP-9 | 晋升决策：全部门禁加独立评审，或记录带确切缺失授权的 hold | 显式、有证据支撑的裁定 |
 
-CP-1 与 CP-2 与其余项独立，可任意顺序落地。CP-3 是 CP-4 的前置；CP-5 是 CP-6 的前置。
-CP-9 需要 CP-3 至 CP-8 全部完成。
+CP-1、CP-2、CP-3 与其余项独立，可任意顺序落地。CP-4 是 CP-5 的前置。CP-8 跟随 CP-5
+与 CP-7。CP-9 需要 CP-3 至 CP-8 全部完成。
+
+**若按价值排序，CP-4 应当最先做。** 因为 CR2 已经修复了调用面门禁，achieved 计数器
+阻塞是现有证据基础与「在测量层面作出晋升决策」之间唯一的障碍。它同时也是成本最低的
+一项：需要的是一个提权 shell，而不是代码改动。
 
 ## 已知优化空间（来自 CR2-5a 静态证据）
 

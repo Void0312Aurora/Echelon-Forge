@@ -33,22 +33,38 @@ CPU stays the default, `compiled_experimental_backend` /
 
 ## Why the predecessors closed
 
-RB10 applied six frozen gates to RB9 and recorded six failures. CR2 repaired
-several of them structurally but closed on two remaining absences. Consolidating
-both closures, the live blocker set at this program's start is:
+RB10 applied six frozen gates to RB9 and recorded six failures. CR2 then
+repaired most of them structurally. The CR2-7 closure record
+(`cuda_resident_cr2_closure_20260805.json`) is the authority on the resulting
+state, and it reports `common_spi_full_window_available=true`,
+`device_consumer_boundary_available=true`,
+`selected_slice_parity_complete=true`, `resource_static_topology_complete=true`,
+`production_matrix_complete=true`, and
+`small_batch_selection_advisory_complete=true`, with only
+`achieved_counter_gate_complete=false` among the measurement gates.
 
-| # | Gate | Predecessor status | Nature |
+Consolidating both closures against the code as it stands on baseline
+`a4a2b932`:
+
+| # | Gate | Status at this program's start | Verification |
 | --- | --- | --- | --- |
-| G-A | Full facade/window advance measured through the public SPI | CUDA used private `inject -> publish_stage -> advance`; `publish_stage` absent from `IWorldBatchBackend` | Architectural |
-| G-B | CPU and CUDA invocation surfaces equivalent | `backend_spi_world_batch` vs `backend_private_phase_sequence` | Architectural |
-| G-C | Learner-equivalent consumption measured | Device consumer was diagnostics smoke with hidden host readback; CR2-3 added a lease boundary | Partially repaired |
-| G-D | Achieved hardware counters complete | `ERR_NVGPUCTRPERM` on two separate attempts (RB9, CR2-5b) | Host permission |
-| G-E | Selected-slice parity out of quarantine | CR2-4b released 12 fields | **Repaired by CR2** |
-| G-F | Small-batch default does not regress | World 1 regresses 7-36x; CR2-6b advisory routes world 1 to CPU | Open (needs either a fix or a documented selection rule) |
+| G-A | Full facade/window advance measured through the public SPI | **Repaired by CR2** | `cuda_resident_cr2_matrix_session.cpp` runs `inject -> evaluate -> advance -> export_state` only; surface id `cuda_resident.full_window_spi.v1`; the probe declares `operation_sequence = [inject, evaluate_empty, advance_world_batch, ...]` |
+| G-B | CPU and CUDA invocation surfaces equivalent | **Repaired by CR2** | Same SPI-only session drives both lanes. `CudaWorldStore::advance_window()` self-publishes when the window is merely `input_injected` (`cuda_world_store.cpp:348`), so no caller needs the public `publish_stage` |
+| G-C | Learner-equivalent consumption measured | Boundary exists (CR2-3 lease); a real learner consumer does not | `cuda_resident_device_consumer.cpp` present; CR2-7 gate true is for the *boundary*, not for learner-equivalent consumption |
+| G-D | Achieved hardware counters complete | **Open — the one hard blocker** | `ERR_NVGPUCTRPERM` on two separate attempts (RB9, CR2-5b) |
+| G-E | Selected-slice parity out of quarantine | **Repaired by CR2-4b** | 12 fields released |
+| G-F | Small-batch default does not regress | Advisory exists, no fix | World 1 regresses 7-36x; CR2-6b routes world 1 to CPU |
 
-G-B is the root gate. While the two lanes call different surfaces, every timing
-ratio in RB9 and CR2-6b compares non-equivalent paths, so no performance number
-can support promotion regardless of how favorable it looks.
+Correction to an earlier reading of this program's own scope: G-A and G-B are
+**not** open architectural work. `publish_stage` survives as a public method on
+`CudaResidentBackend`, but its only remaining callers are C++ tests and the
+superseded RB9 probe — not the CR2 matrix or full-window paths that produced the
+closing evidence. The RB10 verdict on those two gates was correct when written
+and is now stale.
+
+The practical consequence is that this program is much shorter than a
+six-gate repair. The real remaining work is G-D (a host-permission problem, not
+a code problem), G-C, G-F, and the promotion authorization itself.
 
 ## Confirmed root cause of the counter blocker
 
@@ -100,8 +116,9 @@ insurance rather than a repair job.
 
 Scope note: these suites cover the fixed-air fixture lifecycle, state barriers,
 phase A/B/D CPU-reference parity, and the replay/shadow harness. They do not
-exercise a facade-equivalent window, a learner consumer, or achieved counters —
-those are exactly gates G-A/G-B, G-C, and G-D below.
+exercise a learner consumer or achieved counters — gates G-C and G-D below. The
+SPI-equivalent full window is exercised by the separate CR2 matrix and
+full-window probes rather than by these two suites.
 
 ## Iteration plan
 
@@ -111,19 +128,24 @@ commit). Critical phases get one independent review before landing.
 
 | Iteration | Scope | Exit gate |
 | --- | --- | --- |
-| CP-0 | This freeze; verify CUDA-on build still compiles on the baseline; record host/toolchain identity | Program frozen; CUDA-on build result recorded honestly |
+| CP-0 | This freeze; verify CUDA-on build still compiles on the baseline; record host/toolchain identity; re-verify the RB10 gate verdicts against current code | Program frozen; CUDA-on build result recorded honestly; stale gate verdicts corrected |
 | CP-1 | CUDA-on compile lane so the 6,229-line surface stops rotting: a CI job (or, if no GPU runner is available, a documented local checkpoint plus an architecture test asserting the CUDA source set stays wired) | Compile regression cannot land silently |
 | CP-2 | Split `EF_ENABLE_CUDA_EXPERIMENTS` into a helper-surface flag and a resident-backend flag, so the two semantically different surfaces are independently selectable | Enabling one no longer forces the other |
-| CP-3 | **G-B/G-A root fix**: bring the resident backend's window advance onto the public SPI. Either lift a stage-publish concept into `IWorldBatchBackend` for all backends, or make the CUDA lane reach the same observable state through the existing `inject/evaluate/advance/export` sequence. CPU lane must not regress | Both lanes measured through one identical call surface |
-| CP-4 | Re-measure the 1/4/16/64/256 matrix on the now-equivalent surface, order-balanced, two campaigns | Timing evidence is a like-for-like comparison |
-| CP-5 | Achieved counters under elevation: occupancy, divergence, global/local/shared traffic for all 10 kernels | G-D closed with real counters, or a recorded second external blocker |
-| CP-6 | Kernel-level optimization driven by CP-5 findings. Known candidates below | Measured improvement against the CP-4 baseline |
-| CP-7 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | A real consumer, not diagnostics smoke |
-| CP-8 | G-F disposition: either fix small-batch overhead or freeze an explicit selection rule with world-count thresholds | World 1 no longer a silent regression |
+| CP-3 | Retire the private-sequence residue that made RB10's G-A/G-B verdicts possible: demote or remove the public `publish_stage`/`partial_sync_commit` from `CudaResidentBackend` now that only tests and the superseded RB9 probe call them, and add a gate asserting the resident backend exposes no non-SPI window-advance entry point | No caller can advance a window off the SPI; the equivalence claim becomes structurally enforced rather than incidental |
+| CP-4 | **G-D: achieved counters under elevation** — occupancy, divergence, global/local/shared traffic for all 10 kernels. This is the one hard blocker and the highest-value iteration | G-D closed with real counters, or a recorded second external blocker |
+| CP-5 | Kernel-level optimization driven by CP-4 findings. Known candidates below | Measured improvement against the CR2-6b baseline |
+| CP-6 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | A real consumer, not diagnostics smoke |
+| CP-7 | G-F disposition: either fix small-batch overhead or freeze an explicit selection rule with world-count thresholds | World 1 no longer a silent regression |
+| CP-8 | Re-measure the 1/4/16/64/256 matrix after CP-5/CP-7 land, order-balanced, two campaigns | Post-optimization evidence comparable to CR2-6b |
 | CP-9 | Promotion decision: all gates + independent review, or a recorded hold with the exact missing authority | Explicit, evidence-backed verdict |
 
-CP-1 and CP-2 are independent of the rest and can land in any order. CP-3 gates
-CP-4; CP-5 gates CP-6. CP-9 requires CP-3 through CP-8.
+CP-1, CP-2, and CP-3 are independent of the rest and can land in any order.
+CP-4 gates CP-5. CP-8 follows CP-5 and CP-7. CP-9 requires CP-3 through CP-8.
+
+**CP-4 first if sequencing by value.** Because CR2 already repaired the
+call-surface gates, the achieved-counter blocker is the only thing standing
+between the existing evidence base and a promotion decision on measurement
+grounds. It is also the cheapest: it needs an elevated shell, not a code change.
 
 ## Known optimization space (from CR2-5a static evidence)
 
