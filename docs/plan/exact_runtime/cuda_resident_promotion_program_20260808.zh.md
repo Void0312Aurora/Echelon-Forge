@@ -112,7 +112,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | 迭代 | 范围 | 出口门禁 |
 | --- | --- | --- |
 | CP-0 | 本冻结文档；核实基线上 CUDA-on 仍可编译；记录主机/工具链身份；对照现行代码复核 RB10 的门禁裁定 | 程序冻结；CUDA-on 编译结果被如实记录；过期裁定被更正 |
-| CP-1 | CUDA-on 编译通道，让这 6,229 行停止腐烂：一个 CI 任务；若无 GPU runner，则为文档化的本地检查点加一条断言 CUDA 源集仍在接线上的架构测试 | 编译回归无法静默落地 |
+| CP-1 | CUDA-on 编译通道，让这 6,229 行停止腐烂：一个 CI 任务；若无 GPU runner，则为文档化的本地检查点加一条断言 CUDA 源集仍在接线上的架构测试。还须断言每个 CUDA 探针仍能**执行**而非仅能链接——已退役的资源探针作为存根可以正常编译 | 编译回归无法静默落地；被退役成存根的探针能被检出 |
 | CP-2 | 把 `EF_ENABLE_CUDA_EXPERIMENTS` 拆成助手面开关与常驻后端开关，使两个语义地位不同的面可独立选择 | 打开其一不再强制打开另一个 |
 | CP-3 | 清退使 RB10 的 G-A/G-B 裁定得以成立的私有序列残留：既然只有测试与已被取代的 RB9 探针还在调用，就降级或移除 `CudaResidentBackend` 上的公共 `publish_stage`/`partial_sync_commit`，并加一条断言常驻后端不暴露任何非 SPI 整窗推进入口的门禁 | 没有调用方能绕过 SPI 推进窗口；等价性主张从偶然变为结构强制 |
 | CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
@@ -128,6 +128,70 @@ CP-1、CP-2、CP-3 与其余项独立，可任意顺序落地。CP-4 是 CP-5 �
 **若按价值排序，CP-4 应当最先做。** 因为 CR2 已经修复了调用面门禁，achieved 计数器
 阻塞是现有证据基础与「在测量层面作出晋升决策」之间唯一的障碍。它同时也是成本最低的
 一项：需要的是一个提权 shell，而不是代码改动。
+
+## 发现的 CP-4 阻塞：资源探针在 CR2 关闭后被退役
+
+尝试采集计数器时发现，在 G-D 之前还横着第二个阻塞，两份关闭文档都没有记录它——因为它
+是在两者都关闭之后才引入的。
+
+`ef_cuda_resident_resource_probe`——CR2-5a 与 CR2-5b 所剖析的那个冻结 Release/SM86
+二进制——**已不再是一个可用的探针**。语义阶段迁移
+（`cuda_resident_semantic_stage_migration_20260807.md`，随 PR #25 以 `8884146b` 落地）
+把它 350 行的主体替换成了一个 18 行的 fail-closed 存根：
+
+```
+CUDA resident resource probe retired: semantic kernel catalog requires a
+versioned resource-evidence recapture
+```
+
+`src/runtime/contracts/cuda_resident_resource_evidence_contract.h` 中的
+`kCaptureProbeV1Retired = true` 以 `static_assert` 强制这一点。
+
+**这次退役是正确的，不得简单回退。** 迁移记录把理由写得很清楚：冻结的证据契约及其
+捕获的 JSON「描述的是一个历史二进制，而不是被重命名后的当前源码。新的资源主张需要新的
+schema 版本和新的捕获；现有探针必须在旧的 trace signature 上 fail closed，而不是把历史
+证据重新贴标签。」
+
+### 实际改变了什么，以及没有改变什么
+
+这次重命名是同一批十个 kernel 的纯 1:1 relabel。把契约的冻结目录与当前 `.cu` 源码对照：
+
+| 契约目录（冻结，历史） | 当前源码符号 |
+| --- | --- |
+| `prepare_phase_a_controls_kernel` | `control_preparation_kernel` |
+| `phase_b_forces_kernel` | `flight_dynamics_forces_kernel` |
+| `phase_b_aerodynamics_kernel` | `flight_dynamics_aerodynamics_kernel` |
+| `phase_b_integrate_kernel` | `flight_dynamics_integrate_kernel` |
+| `phase_d_instruments_kernel` | `instrument_projection_kernel` |
+| `phase_d_configuration_kernel` | `configuration_projection_kernel` |
+| `phase_d_episode_kernel` | `episode_projection_kernel` |
+| `phase_d_pack_observation_kernel` | `pack_device_observation_kernel` |
+| `phase_d_consumer_smoke_kernel` | `device_observation_consumer_smoke_kernel` |
+| `apply_barrier_kernel` | `apply_barrier_kernel`（未变） |
+
+之前十个 kernel，之后仍是十个；契约中的 launch 次数（12）、grid（`2x1x1`）、
+block（`128x1x1`）与 world 数（256）均未改变。因此重捕获是针对重命名符号的重新冻结，
+不是重新推导执行图。契约中的 trace signature `cb31675ee34e5015` / 80,469 字节仍与
+CR2-5a 的证据 JSON 相符——这正是它必须 fail closed 的原因：该摘要描述的是重命名之前的
+二进制。
+
+### 修订后的 CP-4 范围
+
+因此 CP-4 必须先完成重捕获，才能尝试计数器：
+
+1. 把探针 schema 提升为带新 profile id 的 `v2` 捕获，依照语义 kernel 目录恢复探针主体。
+2. 把资源证据契约的 kernel 目录更新为当前符号，并在新 schema 版本下记录新的 trace
+   signature，同时保留 `v1` 冻结值作为历史记录。
+3. 重跑等价于 CR2-5a 的静态捕获（ptxas / runtime attributes / cuobjdump 三源交叉核对），
+   为重命名后的 kernel 重建寄存器、栈与理论 occupancy 表。
+4. 在此之后才尝试提权下的 achieved 计数器。
+
+第 1-3 步是常规代码工作。第 4 步需要提权 shell。
+
+这相对 CP-0 的估计是一次真实的成本上升，值得说明它为何发生：语义迁移正确地拒绝了给冻结
+证据重新贴标签，但它在没有替代物的情况下退役了唯一的捕获工具，于是下一次计数器尝试继承了
+一笔重捕获债务。CP-1 的编译通道**抓不到**这个问题——存根本身编译正常。探针可执行性检查
+应当纳入 CP-1 的范围。
 
 ## 已知优化空间（来自 CR2-5a 静态证据）
 
@@ -149,7 +213,9 @@ CR2-5a 已测得全部十个 kernel 的静态资源。三条具体线索，全�
 小批量开销（G-F）另有可疑成因：每个被捕获窗口有 5 次 `cudaDeviceSynchronize` 与
 13 次 `cudaMemcpy`。在 world 1 上这笔固定成本占主导，与观测到的 7-36 倍退化吻合。
 
-CR2-5a 的理论 occupancy 不得在任何 CP-6 论证中替代 achieved occupancy。
+CR2-5a 的理论 occupancy 不得在任何 CP-5 论证中替代 achieved occupancy。另需注意，上述
+三条线索都是针对**重命名之前**的 kernel 名陈述的，因为 CR2-5a 是现存唯一的静态捕获；
+CP-4 的重捕获必须先针对当前符号重建它们，CP-5 才能据此行动。
 
 ## 约束
 

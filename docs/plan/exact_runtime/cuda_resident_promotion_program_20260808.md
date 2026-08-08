@@ -129,7 +129,7 @@ commit). Critical phases get one independent review before landing.
 | Iteration | Scope | Exit gate |
 | --- | --- | --- |
 | CP-0 | This freeze; verify CUDA-on build still compiles on the baseline; record host/toolchain identity; re-verify the RB10 gate verdicts against current code | Program frozen; CUDA-on build result recorded honestly; stale gate verdicts corrected |
-| CP-1 | CUDA-on compile lane so the 6,229-line surface stops rotting: a CI job (or, if no GPU runner is available, a documented local checkpoint plus an architecture test asserting the CUDA source set stays wired) | Compile regression cannot land silently |
+| CP-1 | CUDA-on compile lane so the 6,229-line surface stops rotting: a CI job (or, if no GPU runner is available, a documented local checkpoint plus an architecture test asserting the CUDA source set stays wired). Must also assert each CUDA probe still *executes*, not merely links -- the retired resource probe compiles cleanly as a stub | Compile regression cannot land silently; a retired-to-stub probe is detected |
 | CP-2 | Split `EF_ENABLE_CUDA_EXPERIMENTS` into a helper-surface flag and a resident-backend flag, so the two semantically different surfaces are independently selectable | Enabling one no longer forces the other |
 | CP-3 | Retire the private-sequence residue that made RB10's G-A/G-B verdicts possible: demote or remove the public `publish_stage`/`partial_sync_commit` from `CudaResidentBackend` now that only tests and the superseded RB9 probe call them, and add a gate asserting the resident backend exposes no non-SPI window-advance entry point | No caller can advance a window off the SPI; the equivalence claim becomes structurally enforced rather than incidental |
 | CP-4 | **G-D: achieved counters under elevation** — occupancy, divergence, global/local/shared traffic for all 10 kernels. This is the one hard blocker and the highest-value iteration | G-D closed with real counters, or a recorded second external blocker |
@@ -146,6 +146,80 @@ CP-4 gates CP-5. CP-8 follows CP-5 and CP-7. CP-9 requires CP-3 through CP-8.
 call-surface gates, the achieved-counter blocker is the only thing standing
 between the existing evidence base and a promotion decision on measurement
 grounds. It is also the cheapest: it needs an elevated shell, not a code change.
+
+## CP-4 blocker discovered: the resource probe was retired after CR2 closed
+
+Attempting the counter collection revealed a second blocker in front of G-D that
+neither closure records, because it was introduced after both closed.
+
+`ef_cuda_resident_resource_probe` — the frozen Release/SM86 binary that CR2-5a
+and CR2-5b profiled — **no longer exists as a working probe**. The semantic stage
+migration (`cuda_resident_semantic_stage_migration_20260807.md`, landed in PR #25
+as `8884146b`) replaced its 350-line body with an 18-line stub that fails closed:
+
+```
+CUDA resident resource probe retired: semantic kernel catalog requires a
+versioned resource-evidence recapture
+```
+
+`kCaptureProbeV1Retired = true` in
+`src/runtime/contracts/cuda_resident_resource_evidence_contract.h` enforces this
+with a `static_assert`.
+
+**This retirement is correct and must not simply be reverted.** The migration
+record states the reasoning plainly: the frozen evidence contract and its
+captured JSON "describe a historical binary, not the renamed current source. A
+fresh resource claim requires a new schema version and a new capture; the
+existing probe must fail closed on the old trace signature rather than relabeling
+historical evidence."
+
+### What actually changed, and what did not
+
+The renaming was a pure 1:1 relabel of the same ten kernels. Comparing the
+contract's frozen catalog against the current `.cu` sources:
+
+| Contract catalog (frozen, historical) | Current source symbol |
+| --- | --- |
+| `prepare_phase_a_controls_kernel` | `control_preparation_kernel` |
+| `phase_b_forces_kernel` | `flight_dynamics_forces_kernel` |
+| `phase_b_aerodynamics_kernel` | `flight_dynamics_aerodynamics_kernel` |
+| `phase_b_integrate_kernel` | `flight_dynamics_integrate_kernel` |
+| `phase_d_instruments_kernel` | `instrument_projection_kernel` |
+| `phase_d_configuration_kernel` | `configuration_projection_kernel` |
+| `phase_d_episode_kernel` | `episode_projection_kernel` |
+| `phase_d_pack_observation_kernel` | `pack_device_observation_kernel` |
+| `phase_d_consumer_smoke_kernel` | `device_observation_consumer_smoke_kernel` |
+| `apply_barrier_kernel` | `apply_barrier_kernel` (unchanged) |
+
+Ten kernels before, ten after; the launch count (12), grid (`2x1x1`), block
+(`128x1x1`), and world count (256) are unchanged in the contract. So the
+recapture is a re-freeze against renamed symbols, not a re-derivation of the
+execution graph. The trace signature `cb31675ee34e5015` / 80,469 bytes in the
+contract still matches the CR2-5a evidence JSON, which is exactly why it must
+fail closed: that digest describes the pre-rename binary.
+
+### Revised CP-4 scope
+
+CP-4 therefore has to do the recapture before it can attempt counters:
+
+1. Bump the probe schema to a `v2` capture with a new profile id, restoring the
+   probe body against the semantic kernel catalog.
+2. Update the resource-evidence contract's kernel catalog to the current symbols
+   and record a fresh trace signature under the new schema version, leaving the
+   `v1` frozen values intact as historical record.
+3. Re-run CR2-5a-equivalent static capture (ptxas / runtime attributes /
+   cuobjdump cross-check) to re-establish the register, stack, and theoretical
+   occupancy table for the renamed kernels.
+4. Only then attempt achieved counters under elevation.
+
+Steps 1-3 are ordinary code work. Step 4 needs an elevated shell.
+
+This is a real cost increase over the CP-0 estimate, and it is worth stating
+why it happened: the semantic migration correctly refused to relabel frozen
+evidence, but it retired the only capture tool without a replacement, so the
+next counter attempt inherits a recapture obligation. CP-1's compile lane would
+not have caught this — the stub compiles fine. A probe-executability check
+belongs in CP-1's scope.
 
 ## Known optimization space (from CR2-5a static evidence)
 
@@ -174,7 +248,10 @@ Small-batch overhead (G-F) has a separate suspected cause: 5
 1 that fixed cost dominates, which matches the observed 7-36x regression.
 
 Theoretical occupancy from CR2-5a must not be substituted for achieved
-occupancy in any CP-6 justification.
+occupancy in any CP-5 justification. Note also that all three leads are stated
+against the *pre-rename* kernel names, because CR2-5a is the only static capture
+that exists; the CP-4 recapture must re-establish them against the current
+symbols before CP-5 acts on any of them.
 
 ## Constraints
 
