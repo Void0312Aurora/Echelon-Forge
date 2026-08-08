@@ -269,10 +269,51 @@ stub and so was falsified by CP-4a by design:
 
 The third test is the one that would have caught the original drift.
 
-### Remaining CP-4 work
+### CP-4c blockers found before spending an elevated run
 
-- **CP-4c:** achieved counters under elevation. Code-side blockers are now clear;
-  this needs an elevated shell and is the last step before G-D closes.
+Elevation alone will not produce usable counter evidence. Checking the collector
+chain against the v2 probe surfaced two further blockers, both worth recording
+before an operator-assisted step is requested.
+
+**1. Both collectors are pinned to v1 identity.** The counter collector sets
+`PROFILE = resource.PROFILE`, which resolves to the frozen v1 profile id
+`cr2.resource.steady_full_window_body.sm86.v1` -- its leading `cr2` means the
+historical runtime-program-2 label. It then validates
+`parent["profile_id"] == PROFILE`. The v2 probe emits
+`cp.resource.steady_full_window_body.sm86.v2`, so the run would be rejected on
+profile mismatch. The counter collector also requires a *parent resource-evidence
+JSON* and checks the v2 report's `binary_sha256` / `probe_sha256` against it — and
+no v2 parent artifact exists yet, because producing one needs its own collector
+run first.
+
+So the real chain is: v2 static evidence JSON must be produced and accepted
+before a v2 counter attempt can be validated at all. Both collectors need a
+version-aware identity path, mirroring what CP-4b did for the kernel catalog.
+
+**2. The installed Nsight Systems is older than the pinned version.** The
+resource schema validator requires `nsight_systems_version == "2025.3.2"`
+exactly. This host has 2024.6.2 (and a 2022.4.2). Nsight Compute is fine — 2025.3.1
+installed, and the collector requires exactly `2025.3.1.0`. So the counter side is
+ready and the *resource* side is not, which matters because the resource capture
+is the parent artifact the counter capture must link to.
+
+Three ways forward, none of which should be chosen silently:
+
+- install Nsight Systems 2025.3.2 to match the pin;
+- relax the resource validator to accept a version range and record the actual
+  version in the evidence, treating the exact pin as over-constrained;
+- restrict CP-4c to the Nsight Compute counter path and defer any v2 static
+  capture that requires an `nsys` SQLite trace, accepting that the achieved
+  counters would then not link to a v2 parent.
+
+The first is cleanest for evidence integrity; the second is the smallest change
+but weakens a deliberate provenance gate; the third gets counters soonest but
+leaves them unparented. This is a judgment call about evidence standards, so it
+is left to the owner rather than assumed.
+
+Note what did *not* block: the CUDA-on build, the probe, the semantic catalog,
+and the trace-signature equivalence are all working. The remaining obstacles are
+tooling-version and evidence-plumbing, not the backend.
 
 This is a real cost increase over the CP-0 estimate, and it is worth stating
 why it happened: the semantic migration correctly refused to relabel frozen
