@@ -683,11 +683,24 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
-    # The v1 resource-capture entry point is retained only as a fail-closed
-    # retirement notice. A future capture must introduce a versioned kernel
-    # catalog before restoring backend or profiler dependencies.
+    # CP-4 restores the capture entry point as a v2 probe. The precondition
+    # stated at retirement is met: the evidence contract now carries a versioned
+    # kernel catalog (kKernelSpecsV2 / kLaunchSequenceV2) plus a static-asserted
+    # 1:1 migration from the frozen v1 catalog, so backend and profiler
+    # dependencies are restored here. v1's identifiers stay frozen and
+    # kCaptureProbeV1Retired stays true; the probe supersedes v1 rather than
+    # reviving it.
     add_executable(ef_cuda_resident_resource_probe
         src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp
+        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
+    )
+    target_link_libraries(ef_cuda_resident_resource_probe PRIVATE
+        ef_cuda_resident_backend
+        nlohmann_json::nlohmann_json
+        CUDA::cudart
+    )
+    target_compile_definitions(ef_cuda_resident_resource_probe PRIVATE
+        EF_RESOURCE_CAPTURE_BUILD_CONFIG="$<CONFIG>"
     )
     target_include_directories(ef_cuda_resident_resource_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src

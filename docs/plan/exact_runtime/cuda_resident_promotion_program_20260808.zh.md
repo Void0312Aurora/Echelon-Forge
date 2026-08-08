@@ -175,18 +175,46 @@ block（`128x1x1`）与 world 数（256）均未改变。因此重捕获是针�
 CR2-5a 的证据 JSON 相符——这正是它必须 fail closed 的原因：该摘要描述的是重命名之前的
 二进制。
 
-### 修订后的 CP-4 范围
+### CP-4a 结果：重捕获完成并已验证
 
-因此 CP-4 必须先完成重捕获，才能尝试计数器：
+v2 重捕获已落地，且精确复现了冻结捕获。
 
-1. 把探针 schema 提升为带新 profile id 的 `v2` 捕获，依照语义 kernel 目录恢复探针主体。
-2. 把资源证据契约的 kernel 目录更新为当前符号，并在新 schema 版本下记录新的 trace
-   signature，同时保留 `v1` 冻结值作为历史记录。
-3. 重跑等价于 CR2-5a 的静态捕获（ptxas / runtime attributes / cuobjdump 三源交叉核对），
-   为重命名后的 kernel 重建寄存器、栈与理论 occupancy 表。
-4. 在此之后才尝试提权下的 achieved 计数器。
+契约：`kKernelSpecsV2` / `kLaunchSequenceV2` 承载语义符号，
+`kKernelSpecsV2Migration` 钉住与 v1 的 1:1 对应。四条新增 `static_assert` 在编译期强制
+它——v2 目录完整性、迁移表双向双射、以及相同索引上的 launch 逐一对应。v1 目录、trace
+摘要与 profile id 均未改动。
 
-第 1-3 步是常规代码工作。第 4 步需要提权 shell。
+探针：依照语义访问器恢复，输出 schema `cuda_resident.cp.resource_capture_probe.v2`，
+并以 `supersedes_schema_version` 指向 v1。相比 v1 探针增加了两点：
+`require_catalog_alignment` 在输出行与 v2 目录漂移时 fail closed；报告携带
+`achieved_counters_present: false`，使静态捕获永远不会被误认为计数器捕获。CMake 恢复了
+后端、profiler 与 JSON 依赖——退役时提出的前置条件（「带版本的 kernel 目录」）现已满足。
+
+在 RTX 3090 / CUDA 13.0.88 上的验证：
+
+| 检查项 | 结果 |
+| --- | --- |
+| Trace signature | `cb31675ee34e5015` / 80,469 字节——**与 v1 完全一致** |
+| Kernel 资源表 vs 冻结 v1 | **10 个 kernel 零差异**（寄存器、栈字节、共享内存、理论 occupancy、每 SM 块/warp 数） |
+| `ef_cuda_resident_lifecycle_test` | 14 用例 / 599 断言通过 |
+| `ef_cuda_resident_replay_test` | 4 用例 / 77 断言通过 |
+| 内部代号治理审计 | **0 error、0 warning**（这两个文件的基线为 37 error） |
+
+零差异这个结果是承重的：它意味着重命名确实只是表面的，v2 捕获测量的是同一张执行图，
+下文三条优化线索可以原样沿用而无需重新推导。它同时确认工具链升到 CUDA 13.0 并未改变
+寄存器分配或 occupancy。
+
+治理说明：冻结的 v1 目录以及迁移表的 v1 一侧必然包含字母阶段标识符，内部代号门禁会标记
+它们。每一处都按行标注 `internal-code: compatibility` 并写明理由，而不是重命名——重命名
+会使它们所索引的证据失效。
+
+### CP-4 剩余工作
+
+- **CP-4b：** `tools/diagnostics/cuda_resident_cr2_resource_static.py` 自带一份 kernel
+  目录副本（`KERNELS`），仍持有 v1 符号。它是同一批事实的第二个所有者，也正是这次漂移
+  未被发现的原因；Python 采集器必须先消费 v2 目录才能校验 v2 报告。作为独立迭代处理，
+  不混入 CP-4a。
+- **CP-4c：** 提权下的 achieved 计数器。代码侧障碍已清除，需要一个提权 shell。
 
 这相对 CP-0 的估计是一次真实的成本上升，值得说明它为何发生：语义迁移正确地拒绝了给冻结
 证据重新贴标签，但它在没有替代物的情况下退役了唯一的捕获工具，于是下一次计数器尝试继承了
@@ -213,9 +241,9 @@ CR2-5a 已测得全部十个 kernel 的静态资源。三条具体线索，全�
 小批量开销（G-F）另有可疑成因：每个被捕获窗口有 5 次 `cudaDeviceSynchronize` 与
 13 次 `cudaMemcpy`。在 world 1 上这笔固定成本占主导，与观测到的 7-36 倍退化吻合。
 
-CR2-5a 的理论 occupancy 不得在任何 CP-5 论证中替代 achieved occupancy。另需注意，上述
-三条线索都是针对**重命名之前**的 kernel 名陈述的，因为 CR2-5a 是现存唯一的静态捕获；
-CP-4 的重捕获必须先针对当前符号重建它们，CP-5 才能据此行动。
+理论 occupancy 不得在任何 CP-5 论证中替代 achieved occupancy。上述三条线索是针对重命名
+之前的 kernel 名陈述的；CP-4a 已针对当前符号逐一重建，数值零漂移，因此它们可以直接沿用
+（把 `Phase B forces` 读作 `flight_dynamics_forces`，其余按迁移表类推）。
 
 ## 约束
 

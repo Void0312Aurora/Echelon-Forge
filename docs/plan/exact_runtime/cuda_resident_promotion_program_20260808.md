@@ -198,21 +198,55 @@ execution graph. The trace signature `cb31675ee34e5015` / 80,469 bytes in the
 contract still matches the CR2-5a evidence JSON, which is exactly why it must
 fail closed: that digest describes the pre-rename binary.
 
-### Revised CP-4 scope
+### CP-4a result: recapture complete and validated
 
-CP-4 therefore has to do the recapture before it can attempt counters:
+The v2 recapture landed and reproduces the frozen capture exactly.
 
-1. Bump the probe schema to a `v2` capture with a new profile id, restoring the
-   probe body against the semantic kernel catalog.
-2. Update the resource-evidence contract's kernel catalog to the current symbols
-   and record a fresh trace signature under the new schema version, leaving the
-   `v1` frozen values intact as historical record.
-3. Re-run CR2-5a-equivalent static capture (ptxas / runtime attributes /
-   cuobjdump cross-check) to re-establish the register, stack, and theoretical
-   occupancy table for the renamed kernels.
-4. Only then attempt achieved counters under elevation.
+Contract: `kKernelSpecsV2` / `kLaunchSequenceV2` carry the semantic symbols, and
+`kKernelSpecsV2Migration` pins the 1:1 correspondence to v1. Four new
+`static_assert`s enforce it at compile time — v2 catalog completeness, migration
+bijection in both directions, and launch-for-launch correspondence at identical
+indices. The v1 catalog, trace digest, and profile id are untouched.
 
-Steps 1-3 are ordinary code work. Step 4 needs an elevated shell.
+Probe: restored against the semantic accessors, emitting schema
+`cuda_resident.cp.resource_capture_probe.v2` with `supersedes_schema_version`
+pointing at v1. Two additions the v1 probe lacked: `require_catalog_alignment`
+fails closed if the emitted rows ever drift from the v2 catalog, and the report
+carries `achieved_counters_present: false` so a static capture can never be
+mistaken for a counter capture. CMake restores the backend, profiler, and JSON
+dependencies — the precondition stated at retirement ("a versioned kernel
+catalog") is now met.
+
+Validation on the RTX 3090 under CUDA 13.0.88:
+
+| Check | Result |
+| --- | --- |
+| Trace signature | `cb31675ee34e5015` / 80,469 bytes — **identical to v1** |
+| Kernel resource table vs frozen v1 | **0 mismatches across 10 kernels** (registers, stack bytes, shared bytes, theoretical occupancy, blocks/warps per SM) |
+| `ef_cuda_resident_lifecycle_test` | 14 cases / 599 assertions passed |
+| `ef_cuda_resident_replay_test` | 4 cases / 77 assertions passed |
+| Internal-code governance | **0 errors, 0 warnings** (baseline for these two files was 37 errors) |
+
+The zero-mismatch result is the load-bearing one: it means the rename really was
+cosmetic, the v2 capture measures the same execution graph, and the three
+optimization leads below carry over unchanged rather than needing re-derivation.
+It also confirms the toolchain move to CUDA 13.0 did not shift register
+allocation or occupancy.
+
+Governance note: the frozen v1 catalog and the v1 side of the migration table
+necessarily contain phase-lettered identifiers, which the internal-code gate
+flags. Each is annotated `internal-code: compatibility` per-line with its reason
+rather than renamed — renaming them would invalidate the evidence they key.
+
+### Remaining CP-4 work
+
+- **CP-4b:** `tools/diagnostics/cuda_resident_cr2_resource_static.py` keeps its
+  own copy of the kernel catalog (`KERNELS`), still holding the v1 symbols. It is
+  a second owner of the same facts and is the reason the drift went unnoticed;
+  the Python collector must consume the v2 catalog before it can validate a v2
+  report. Kept as a separate iteration rather than mixed into CP-4a.
+- **CP-4c:** achieved counters under elevation. Unblocked from the code side now;
+  needs an elevated shell.
 
 This is a real cost increase over the CP-0 estimate, and it is worth stating
 why it happened: the semantic migration correctly refused to relabel frozen
@@ -247,11 +281,11 @@ Small-batch overhead (G-F) has a separate suspected cause: 5
 `cudaDeviceSynchronize` and 13 `cudaMemcpy` calls per captured window. At world
 1 that fixed cost dominates, which matches the observed 7-36x regression.
 
-Theoretical occupancy from CR2-5a must not be substituted for achieved
-occupancy in any CP-5 justification. Note also that all three leads are stated
-against the *pre-rename* kernel names, because CR2-5a is the only static capture
-that exists; the CP-4 recapture must re-establish them against the current
-symbols before CP-5 acts on any of them.
+Theoretical occupancy must not be substituted for achieved occupancy in any
+CP-5 justification. The leads above are stated against the pre-rename kernel
+names; CP-4a re-established every one of them against the current symbols with
+zero numeric drift, so they carry over directly (read `flight_dynamics_forces`
+for `Phase B forces`, and so on through the migration table).
 
 ## Constraints
 
