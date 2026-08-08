@@ -24,7 +24,7 @@ struct FixedAirFixtureInputs {
             WorldSpawnRequest spawn{};
             spawn.world_index = world;
             spawn.type_name = std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
-            spawn.entity_name = "RB4Lead" + std::to_string(world);
+            spawn.entity_name = "CudaResidentLead" + std::to_string(world);
             spawn.is_agent = true;
             spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
             spawn.y = -50.0 * static_cast<double>(world);
@@ -75,14 +75,14 @@ const runtime::parity::ParityBudgetBarrierRule &required_barrier_rule(std::strin
     const auto found = std::find_if(rules.begin(), rules.end(),
                                     [id](const auto &rule) { return rule.barrier_id == id; });
     if (found == rules.end()) {
-        throw std::logic_error("missing RB2 barrier rule");
+        throw std::logic_error("missing selected-slice barrier rule");
     }
     return *found;
 }
 
 } // namespace
 
-TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact device state") {
+TEST_CASE("fixed-air setup input barriers and export reconstruct exact device state") {
     using namespace runtime::cuda_resident;
 
     CudaResidentBackend backend;
@@ -108,7 +108,7 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
     CHECK(setup.entity_ids[0] == fixed_air_fixture_entity_id(0));
     CHECK(setup.entity_ids[1] == fixed_air_fixture_entity_id(0));
 
-    CudaResidentExportSnapshot snapshot = backend.export_snapshot("rb4.setup");
+    CudaResidentExportSnapshot snapshot = backend.export_snapshot("resident_state.setup");
     REQUIRE(snapshot.worlds.size() == 2);
     const auto &export_rule = required_barrier_rule("export");
     CHECK(snapshot.barrier.barrier_id == export_rule.barrier_id);
@@ -120,9 +120,11 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
     CHECK_FALSE(snapshot.barrier.contract_satisfied);
     CHECK_FALSE(snapshot.barrier.comparison_eligible);
     CHECK_FALSE(snapshot.barrier.host_truth_available);
-    CHECK(snapshot.envelope.schema_version == std::string(kCudaResidentPhaseBSnapshotSchemaV2));
+    CHECK(snapshot.envelope.schema_version ==
+          std::string(kCudaResidentFlightDynamicsSnapshotSchemaV2));
     CHECK(snapshot.envelope.visibility_label == "export");
-    CHECK(snapshot.envelope.provenance == std::string(kCudaResidentPhaseBSnapshotProvenance));
+    CHECK(snapshot.envelope.provenance ==
+          std::string(kCudaResidentFlightDynamicsSnapshotProvenance));
     CHECK(snapshot.envelope.source_snapshot_version == 1);
     CHECK(snapshot.envelope.field_set ==
           std::vector<std::string>{"entity_ref", "seed", "reset_generation", "clock", "snapshot",
@@ -147,8 +149,9 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
                   .shard_versions[static_cast<std::size_t>(CudaResidentShard::export_envelope)]
                   .version == 1);
         CHECK(state.identity.lineage.source_snapshot_version == 1);
-        CHECK(state.identity.lineage.source_backend_id == std::string(kCudaResidentRb6BackendId));
-        CHECK(state.identity.lineage.source_request_id == "rb4.setup");
+        CHECK(state.identity.lineage.source_backend_id ==
+              std::string(kCudaResidentFlightDynamicsBackendId));
+        CHECK(state.identity.lineage.source_request_id == "resident_state.setup");
         CHECK(state.source_barrier_id == "input_injection");
         CHECK(state.kinematics.x == doctest::Approx(fixture.spawns[world].x));
         CHECK(state.kinematics.heading == doctest::Approx(fixture.spawns[world].heading));
@@ -158,7 +161,7 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
     std::vector<WorldPilotActionAssignment> changed_actions = make_actions(setup.entity_ids, 0.1);
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
-    snapshot = backend.export_snapshot("rb4.after_transfer_failure");
+    snapshot = backend.export_snapshot("resident_state.after_transfer_failure");
     CudaWorldStoreStateSnapshot resident_state =
         testing::CudaWorldStoreTestAccess::read_state(store);
     CHECK(snapshot.worlds[0].identity.global_version == 1);
@@ -166,7 +169,7 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
 
     testing::CudaWorldStoreTestAccess::fail_next_barrier_commit(store);
     CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
-    snapshot = backend.export_snapshot("rb4.after_barrier_failure");
+    snapshot = backend.export_snapshot("resident_state.after_barrier_failure");
     resident_state = testing::CudaWorldStoreTestAccess::read_state(store);
     CHECK(snapshot.worlds[0].identity.global_version == 1);
     CHECK(resident_state.worlds[0].controls.throttle == doctest::Approx(0.0));
@@ -174,7 +177,7 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
     std::vector<WorldPilotActionAssignment> actions = make_actions(setup.entity_ids);
     backend.inject({.pilot_actions = actions});
     CHECK_THROWS_AS(backend.inject({.pilot_actions = changed_actions}), std::runtime_error);
-    snapshot = backend.export_snapshot("rb4.input");
+    snapshot = backend.export_snapshot("resident_state.input");
     resident_state = testing::CudaWorldStoreTestAccess::read_state(store);
     for (std::size_t world = 0; world < snapshot.worlds.size(); ++world) {
         const auto &state = snapshot.worlds[world];
@@ -193,7 +196,7 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
     }
 
     backend.publish_stage();
-    snapshot = backend.export_snapshot("rb4.stage");
+    snapshot = backend.export_snapshot("resident_state.stage");
     CHECK(snapshot.worlds[0].identity.global_version == 2);
     CHECK(snapshot.worlds[0].identity.barrier_sequence == 4);
     CHECK(snapshot.worlds[0].source_barrier_id == "stage_publish");
@@ -206,13 +209,13 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
               .version == 2);
     const auto before_partial_sync = snapshot.worlds[0].identity;
     CHECK_FALSE(backend.partial_sync_commit());
-    snapshot = backend.export_snapshot("rb4.partial_disabled");
+    snapshot = backend.export_snapshot("resident_state.partial_disabled");
     CHECK(snapshot.worlds[0].identity.global_version == before_partial_sync.global_version);
     CHECK(snapshot.worlds[0].identity.barrier_sequence == before_partial_sync.barrier_sequence);
     CHECK(required_barrier_rule("partial_sync_commit").enabled == false);
 
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
-    snapshot = backend.export_snapshot("rb4.window");
+    snapshot = backend.export_snapshot("resident_state.window");
     resident_state = testing::CudaWorldStoreTestAccess::read_state(store);
     for (std::size_t world = 0; world < snapshot.worlds.size(); ++world) {
         const auto &state = snapshot.worlds[world];
@@ -255,13 +258,13 @@ TEST_CASE("RB4 fixed-air setup input barriers and export reconstruct exact devic
     const runtime::backend::SetupResult repeated = backend.setup(fixture.request());
     CHECK(repeated.entity_ids == std::vector<std::uint64_t>{fixed_air_fixture_entity_id(1),
                                                             fixed_air_fixture_entity_id(1)});
-    snapshot = backend.export_snapshot("rb4.repeated_setup");
+    snapshot = backend.export_snapshot("resident_state.repeated_setup");
     CHECK(snapshot.worlds[0].reset_generation == 2);
     CHECK(snapshot.worlds[0].clock.tick == 0);
     CHECK(snapshot.worlds[0].identity.global_version == 1);
 }
 
-TEST_CASE("RB4 fixed-air boundary rejects undeclared setup input advance and export features") {
+TEST_CASE("fixed-air boundary rejects undeclared setup input advance and export features") {
     using namespace runtime::cuda_resident;
 
     if (!CudaWorldStore::compiled_with_cuda()) {
@@ -275,19 +278,20 @@ TEST_CASE("RB4 fixed-air boundary rejects undeclared setup input advance and exp
     CHECK_THROWS_AS(backend.publish_stage(), std::runtime_error);
     CHECK_THROWS_AS(backend.export_state({.world_index = 0, .include_world_time_step = true}),
                     std::logic_error);
-    CHECK_THROWS_AS((void)backend.export_snapshot("rb4.before_reset"), std::logic_error);
+    CHECK_THROWS_AS((void)backend.export_snapshot("resident_state.before_reset"), std::logic_error);
 
     backend.reset({.seeds = fixture.seeds});
     CHECK_THROWS_AS(backend.export_state({.world_index = 0, .include_world_time_step = true}),
                     std::logic_error);
-    CHECK_THROWS_AS((void)backend.export_snapshot("rb4.after_reset"), std::logic_error);
+    CHECK_THROWS_AS((void)backend.export_snapshot("resident_state.after_reset"), std::logic_error);
 
     CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.setup(fixture.request()), std::runtime_error);
     CHECK_THROWS_AS(backend.export_state({.world_index = 0, .include_world_time_step = true}),
                     std::logic_error);
-    CHECK_THROWS_AS((void)backend.export_snapshot("rb4.after_failed_setup"), std::logic_error);
+    CHECK_THROWS_AS((void)backend.export_snapshot("resident_state.after_failed_setup"),
+                    std::logic_error);
 
     std::vector<WorldTerrainAssignment> terrain(1);
     terrain[0].world_index = 0;
@@ -296,9 +300,10 @@ TEST_CASE("RB4 fixed-air boundary rejects undeclared setup input advance and exp
     unsupported_setup.terrain_assignments = terrain;
     CHECK_THROWS_AS(backend.setup(unsupported_setup), std::invalid_argument);
 
-    FixedAirFixtureInputs outside_phase_b_envelope;
-    outside_phase_b_envelope.spawns[0].z = 50.0;
-    CHECK_THROWS_AS(backend.setup(outside_phase_b_envelope.request()), std::invalid_argument);
+    FixedAirFixtureInputs outside_flight_dynamics_envelope;
+    outside_flight_dynamics_envelope.spawns[0].z = 50.0;
+    CHECK_THROWS_AS(backend.setup(outside_flight_dynamics_envelope.request()),
+                    std::invalid_argument);
 
     const auto setup = backend.setup(fixture.request());
     auto unsupported_actions = make_actions(setup.entity_ids);

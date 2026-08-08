@@ -177,25 +177,29 @@ std::string build_stable_signature(const ReplayComparisonReport &report) {
 }
 
 void validate_trace(const ReplayTrace &trace) {
-    if (trace.run_id.empty()) throw std::invalid_argument("RB8 replay requires run_id");
+    if (trace.run_id.empty()) throw std::invalid_argument("CUDA resident replay requires run_id");
     if (trace.backend_profile_id != kCudaResidentReplayProfileId) {
-        throw std::invalid_argument("RB8 replay profile is not the frozen resident candidate");
+        throw std::invalid_argument(
+            "CUDA resident replay profile is not the frozen resident candidate");
     }
     if (trace.parity_budget_ref != kCudaResidentReplayBudgetRef) {
-        throw std::invalid_argument("RB8 replay budget is not the frozen resident candidate");
+        throw std::invalid_argument(
+            "CUDA resident replay budget is not the frozen resident candidate");
     }
     if (trace.seeds.empty() || trace.seeds.size() != trace.spawns.size() ||
         trace.seeds.size() != trace.time_steps.size() || trace.windows.empty()) {
-        throw std::invalid_argument("RB8 replay setup/window cardinalities are invalid");
+        throw std::invalid_argument("CUDA resident replay setup/window cardinalities are invalid");
     }
     for (std::size_t window = 0; window < trace.windows.size(); ++window) {
         if (trace.windows[window].actions.size() != trace.seeds.size() ||
             trace.windows[window].request_id.empty()) {
-            throw std::invalid_argument("RB8 replay action window is incomplete");
+            throw std::invalid_argument("CUDA resident replay action window is incomplete");
         }
     }
     const auto *budget = parity::find_parity_budget_record(trace.parity_budget_ref);
-    if (budget == nullptr) throw std::invalid_argument("RB8 replay budget is not registered");
+    if (budget == nullptr) {
+        throw std::invalid_argument("CUDA resident replay budget is not registered");
+    }
     const auto validation = parity::validate_profile_owned_parity_budget(
         trace.backend_profile_id, parity::kParityBudgetProfileClassResidentState,
         trace.parity_budget_ref);
@@ -203,7 +207,7 @@ void validate_trace(const ReplayTrace &trace) {
         budget->selected_slice_fields !=
             parity::resident_candidate_selected_slice_field_contract() ||
         budget->barrier_rules != parity::resident_candidate_barrier_contract()) {
-        throw std::invalid_argument("RB8 replay budget failed its frozen contract");
+        throw std::invalid_argument("CUDA resident replay budget failed its frozen contract");
     }
 }
 
@@ -213,7 +217,8 @@ CudaResidentReplayHarness::CudaResidentReplayHarness(ReplayLaneRunner reference_
                                                      ReplayLaneRunner shadow_runner)
     : reference_runner_(std::move(reference_runner)), shadow_runner_(std::move(shadow_runner)) {
     if (!reference_runner_ || !shadow_runner_) {
-        throw std::invalid_argument("RB8 replay requires independent reference and shadow runners");
+        throw std::invalid_argument(
+            "CUDA resident replay requires independent reference and shadow runners");
     }
 }
 

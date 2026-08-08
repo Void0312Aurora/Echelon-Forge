@@ -1,14 +1,15 @@
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh"
-#include "runtime/contracts/cuda_resident_phase_a_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_control_preparation_fixture_contract.h"
 
 #include <cmath>
 namespace runtime::cuda_resident::detail {
 namespace {
-__global__ void
-prepare_phase_a_controls_kernel(std::size_t world_capacity, const double *time_steps,
-                                const double *control_doubles, const std::uint8_t *control_flags,
-                                double *prepared_doubles, std::uint8_t *prepared_flags,
-                                std::uint64_t *phase_versions, std::uint32_t *status) {
+__global__ void control_preparation_kernel(std::size_t world_capacity, const double *time_steps,
+                                           const double *control_doubles,
+                                           const std::uint8_t *control_flags,
+                                           double *prepared_doubles, std::uint8_t *prepared_flags,
+                                           std::uint64_t *prepared_control_versions,
+                                           std::uint32_t *status) {
     const std::size_t world_index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world_index >= world_capacity) {
         return;
@@ -16,7 +17,7 @@ prepare_phase_a_controls_kernel(std::size_t world_capacity, const double *time_s
 
     // Match the maintained CPU FlightControl stage's ecs_ftime_t=float boundary.
     const double dt = static_cast<double>(static_cast<float>(time_steps[world_index]));
-    const double tau = kCudaResidentPhaseAStickTauS;
+    const double tau = kCudaResidentControlPreparationStickTauS;
     const double alpha = dt / (tau + dt);
     const bool active = control_flags[2 * world_capacity + world_index] != 0;
     // The frozen flight-control SoA preserves the maintained CPU component order:
@@ -24,9 +25,10 @@ prepare_phase_a_controls_kernel(std::size_t world_capacity, const double *time_s
     const double raw_pitch = control_doubles[world_index];
     const double raw_roll = control_doubles[world_capacity + world_index];
     const double raw_rudder = control_doubles[2 * world_capacity + world_index];
-    const bool manual_takeover = active && (fabs(raw_roll) > kCudaResidentPhaseAManualDeadband ||
-                                            fabs(raw_pitch) > kCudaResidentPhaseAManualDeadband ||
-                                            fabs(raw_rudder) > kCudaResidentPhaseAManualDeadband);
+    const bool manual_takeover =
+        active && (fabs(raw_roll) > kCudaResidentControlPreparationManualDeadband ||
+                   fabs(raw_pitch) > kCudaResidentControlPreparationManualDeadband ||
+                   fabs(raw_rudder) > kCudaResidentControlPreparationManualDeadband);
     const double target_roll = manual_takeover ? raw_roll : 0.0;
     const double target_pitch = manual_takeover ? raw_pitch : 0.0;
     const double target_yaw = manual_takeover ? -raw_rudder : 0.0;
@@ -36,7 +38,7 @@ prepare_phase_a_controls_kernel(std::size_t world_capacity, const double *time_s
     const std::size_t yaw_cmd_index = 3 * world_capacity + world_index;
 
     bool invalid = !isfinite(dt) || !(dt > 0.0) || !isfinite(alpha) ||
-                   increment_would_overflow(phase_versions[world_index]);
+                   increment_would_overflow(prepared_control_versions[world_index]);
     const double next_roll =
         prepared_doubles[roll_index] + alpha * (target_roll - prepared_doubles[roll_index]);
     const double next_pitch =
@@ -55,15 +57,16 @@ prepare_phase_a_controls_kernel(std::size_t world_capacity, const double *time_s
     prepared_doubles[yaw_cmd_index] = next_yaw;
     prepared_flags[world_index] = 1;
     prepared_flags[world_capacity + world_index] = static_cast<std::uint8_t>(manual_takeover);
-    ++phase_versions[world_index];
+    ++prepared_control_versions[world_index];
 }
 } // namespace
 
-bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
-                          CudaWorldStoreDeviceFaultInjection *faults, std::string *error) {
+bool commit_control_preparation_stage(CudaWorldStoreDeviceAllocation *allocation,
+                                      CudaWorldStoreDeviceFaultInjection *faults,
+                                      std::string *error) {
     if (allocation == nullptr) {
         if (error != nullptr) {
-            *error = "CUDA Phase A stage requires an allocation";
+            *error = "CUDA control-preparation stage requires an allocation";
         }
         return false;
     }
@@ -74,7 +77,7 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
     }
     if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_state_transfer)) {
         if (error != nullptr) {
-            *error = "injected CUDA Phase A state transfer failure";
+            *error = "injected CUDA control-preparation state transfer failure";
         }
         return false;
     }
@@ -84,14 +87,14 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
                                     allocation->state_layout.slot_bytes, cudaMemcpyDeviceToDevice);
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("copy state for Phase A preparation", status);
+            *error = cuda_error_message("copy state for control preparation", status);
         }
         return false;
     }
     status = cudaMemset(allocation->barrier_status, 0, sizeof(std::uint32_t));
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("clear Phase A status", status);
+            *error = cuda_error_message("clear control-preparation status", status);
         }
         return false;
     }
@@ -99,13 +102,13 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
     const unsigned int blocks =
         static_cast<unsigned int>((allocation->world_capacity + threads - 1) / threads);
     std::uint8_t *slot = allocation->state_slots[next_slot];
-    prepare_phase_a_controls_kernel<<<blocks, threads>>>(
+    control_preparation_kernel<<<blocks, threads>>>(
         allocation->world_capacity, device_field<double>(slot, allocation->state_layout.time_steps),
         device_field<double>(slot, allocation->state_layout.control_doubles),
         device_field<std::uint8_t>(slot, allocation->state_layout.control_flags),
         device_field<double>(slot, allocation->state_layout.prepared_doubles),
         device_field<std::uint8_t>(slot, allocation->state_layout.prepared_flags),
-        device_field<std::uint64_t>(slot, allocation->state_layout.phase_versions),
+        device_field<std::uint64_t>(slot, allocation->state_layout.prepared_control_versions),
         allocation->barrier_status);
     status = cudaGetLastError();
     if (status == cudaSuccess) {
@@ -113,7 +116,7 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
     }
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("run Phase A control preparation", status);
+            *error = cuda_error_message("run control preparation", status);
         }
         return false;
     }
@@ -123,8 +126,8 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
     if (status != cudaSuccess || phase_status != 0) {
         if (error != nullptr) {
             *error = status == cudaSuccess
-                         ? "CUDA Phase A control preparation overflow or non-finite state"
-                         : cuda_error_message("read Phase A status", status);
+                         ? "CUDA control preparation overflow or non-finite state"
+                         : cuda_error_message("read control-preparation status", status);
         }
         return false;
     }
@@ -134,33 +137,33 @@ bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
 bool publish_cuda_world_store_stage(CudaWorldStoreDeviceAllocation *allocation,
                                     CudaWorldStoreDeviceFaultInjection *faults,
                                     std::string *error) {
-    return commit_phase_a_stage(allocation, faults, error);
+    return commit_control_preparation_stage(allocation, faults, error);
 }
-bool query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources *resources,
-                                                     std::string *error) {
+bool query_cuda_world_store_control_preparation_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error) {
     if (resources == nullptr) {
         if (error != nullptr) {
-            *error = "CUDA Phase A kernel resource query requires an output";
+            *error = "CUDA control-preparation kernel resource query requires an output";
         }
         return false;
     }
     cudaFuncAttributes attributes{};
-    cudaError_t status = cudaFuncGetAttributes(&attributes, prepare_phase_a_controls_kernel);
+    cudaError_t status = cudaFuncGetAttributes(&attributes, control_preparation_kernel);
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("cudaFuncGetAttributes(prepare_phase_a_controls_kernel)",
-                                        status);
+            *error =
+                cuda_error_message("cudaFuncGetAttributes(control_preparation_kernel)", status);
         }
         return false;
     }
     constexpr int threads_per_block = 128;
     int active_blocks = 0;
     status = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
-        &active_blocks, prepare_phase_a_controls_kernel, threads_per_block, 0);
+        &active_blocks, control_preparation_kernel, threads_per_block, 0);
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("cudaOccupancyMaxActiveBlocksPerMultiprocessor(Phase A)",
-                                        status);
+            *error = cuda_error_message(
+                "cudaOccupancyMaxActiveBlocksPerMultiprocessor(control preparation)", status);
         }
         return false;
     }
@@ -172,13 +175,14 @@ bool query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources 
     }
     if (status != cudaSuccess) {
         if (error != nullptr) {
-            *error = cuda_error_message("query CUDA Phase A occupancy properties", status);
+            *error =
+                cuda_error_message("query CUDA control-preparation occupancy properties", status);
         }
         return false;
     }
     if (properties.warpSize <= 0 || properties.maxThreadsPerMultiProcessor <= 0) {
         if (error != nullptr) {
-            *error = "CUDA device returned invalid Phase A occupancy properties";
+            *error = "CUDA device returned invalid control-preparation occupancy properties";
         }
         return false;
     }
@@ -199,6 +203,5 @@ bool query_cuda_world_store_phase_a_kernel_resources(CudaBarrierKernelResources 
     }
     return true;
 }
-
 
 } // namespace runtime::cuda_resident::detail

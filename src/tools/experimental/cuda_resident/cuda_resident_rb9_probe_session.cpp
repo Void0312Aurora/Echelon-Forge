@@ -277,7 +277,7 @@ std::string ProbeSession::state_digest() const {
         digest_mix(digest, world.kinematics.x);
         digest_mix(digest, world.kinematics.y);
         digest_mix(digest, world.kinematics.z);
-        digest_mix(digest, world.phase_d.reward.total_reward);
+        digest_mix(digest, world.observation_projection.reward.total_reward);
     }
 #endif
     return digest_hex(digest);

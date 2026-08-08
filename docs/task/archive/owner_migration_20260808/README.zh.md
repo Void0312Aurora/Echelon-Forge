@@ -40,7 +40,7 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
   路径、分阶段 `1v1` curriculum，以及空战 damage runtime。链接到的 archive
   快照只用于追溯；不要把旧空战快照当成全项目中心。
 - [cooperative/common 集成](../common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)：`archived` —
-  WP0-WP8 已完成（common/air/naval DTO 拆分、profile dispatch seam、MissionCommand 兼容拆分）。
+  common/air/naval 模块拆分已完成（DTO 拆分、profile dispatch seam、MissionCommand 兼容拆分）。
   后续 naval runtime 扩展和 air-first helper 迁移由独立任务单继续推进。
 - [仿真架构](../../simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md)：`active` 的仿真系统架构与
   runtime lifecycle 主干。开始武器、海军、传感器/航迹、facade、backend 或跨域

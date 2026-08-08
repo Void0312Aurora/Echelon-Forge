@@ -52,6 +52,7 @@
     "tests/architecture/agency/test_authority_representation_boundary.py",
     "tests/architecture/governance/test_document_link_audit.py",
     "tests/architecture/governance/test_docs_information_architecture.py",
+    "tests/architecture/governance/test_internal_code_governance.py",
     "tests/architecture/governance/test_cpp_include_direction.py",
     "tests/architecture/information_state/test_g4_truth_read_ban.py",
     "tests/architecture/information_state/test_g4_inventory_consistency.py",

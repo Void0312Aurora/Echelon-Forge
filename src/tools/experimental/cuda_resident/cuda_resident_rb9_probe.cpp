@@ -420,24 +420,27 @@ Json cuda_kernel_resources() {
     using runtime::cuda_resident::testing::CudaWorldStoreTestAccess;
     return Json::array({
         kernel_resource_json("apply_barrier", CudaWorldStoreTestAccess::barrier_kernel_resources()),
-        kernel_resource_json("phase_a_controls",
-                             CudaWorldStoreTestAccess::phase_a_kernel_resources()),
-        kernel_resource_json("phase_b_forces",
-                             CudaWorldStoreTestAccess::phase_b_forces_kernel_resources()),
-        kernel_resource_json("phase_b_aerodynamics",
-                             CudaWorldStoreTestAccess::phase_b_aerodynamics_kernel_resources()),
-        kernel_resource_json("phase_b_integrate",
-                             CudaWorldStoreTestAccess::phase_b_integrate_kernel_resources()),
-        kernel_resource_json("phase_d_instruments",
-                             CudaWorldStoreTestAccess::phase_d_instruments_kernel_resources()),
-        kernel_resource_json("phase_d_configuration",
-                             CudaWorldStoreTestAccess::phase_d_configuration_kernel_resources()),
-        kernel_resource_json("phase_d_projection",
-                             CudaWorldStoreTestAccess::phase_d_projection_kernel_resources()),
-        kernel_resource_json("phase_d_pack",
-                             CudaWorldStoreTestAccess::phase_d_pack_kernel_resources()),
-        kernel_resource_json("phase_d_consumer",
-                             CudaWorldStoreTestAccess::phase_d_consumer_kernel_resources()),
+        kernel_resource_json("control_preparation_controls",
+                             CudaWorldStoreTestAccess::control_preparation_kernel_resources()),
+        kernel_resource_json("flight_dynamics_forces",
+                             CudaWorldStoreTestAccess::flight_dynamics_forces_kernel_resources()),
+        kernel_resource_json(
+            "flight_dynamics_aerodynamics",
+            CudaWorldStoreTestAccess::flight_dynamics_aerodynamics_kernel_resources()),
+        kernel_resource_json(
+            "flight_dynamics_integrate",
+            CudaWorldStoreTestAccess::flight_dynamics_integrate_kernel_resources()),
+        kernel_resource_json("projected_instruments",
+                             CudaWorldStoreTestAccess::instrument_projection_kernel_resources()),
+        kernel_resource_json("observation_projection_configuration",
+                             CudaWorldStoreTestAccess::configuration_projection_kernel_resources()),
+        kernel_resource_json("observation_projection",
+                             CudaWorldStoreTestAccess::observation_projection_kernel_resources()),
+        kernel_resource_json("observation_projection_pack",
+                             CudaWorldStoreTestAccess::device_observation_pack_kernel_resources()),
+        kernel_resource_json(
+            "observation_projection_consumer",
+            CudaWorldStoreTestAccess::device_observation_consumer_kernel_resources()),
     });
 }
 

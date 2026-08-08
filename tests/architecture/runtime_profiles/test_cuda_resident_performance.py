@@ -29,9 +29,9 @@ DEVICE_SOURCES = tuple(
     CUDA_RESIDENT_DIR / name
     for name in (
         "cuda_world_store_cuda_barrier.cu",
-        "cuda_world_store_cuda_phase_a.cu",
-        "cuda_world_store_cuda_phase_b.cu",
-        "cuda_world_store_cuda_phase_d.cu",
+        "cuda_world_store_cuda_control_preparation.cu",
+        "cuda_world_store_cuda_flight_dynamics.cu",
+        "cuda_world_store_cuda_observation_projection.cu",
         "cuda_world_store_cuda_observation.cu",
         "cuda_world_store_cuda_window.cu",
     )
@@ -201,22 +201,26 @@ def test_rb9_probe_session_split_stays_structural_and_below_soft_limit() -> None
     assert len(session.splitlines()) <= 700
 
 
-def test_rb9_static_ledger_matches_current_cuda_phase_graph() -> None:
+def test_rb9_static_ledger_matches_current_cuda_execution_graph() -> None:
     contract = _text(CONTRACT)
     device = _device_text()
-    phase_window = _text(WINDOW_SOURCE)
+    execution_window = _text(WINDOW_SOURCE)
     # Ten resident-window launches remain the base path; the legacy diagnostic
     # and CR2-3 measured wrappers each contain pack/consumer call sites.
     assert device.count("<<<blocks, threads>>>") == 12
-    assert phase_window.index("launch_phase_b_forces") < phase_window.index("launch_phase_d_episode")
-    assert phase_window.count("launch_phase_b_") == 3
-    assert phase_window.count("launch_phase_d_") == 3
+    assert execution_window.index("launch_flight_dynamics_forces") < execution_window.index(
+        "launch_episode_projection"
+    )
+    assert execution_window.count("launch_flight_dynamics_") == 3
+    assert execution_window.count("launch_instrument_projection") == 1
+    assert execution_window.count("launch_configuration_projection") == 1
+    assert execution_window.count("launch_episode_projection") == 1
     assert "kFlightControlH2dBytesPerWorld = 55" in contract
     assert ".kernel_launch_count = 10" in contract
     assert "ledger.kernel_launch_count += 2" in contract
     assert ".synchronization_count = 5" in contract
-    assert "phase_d_pack_observation_kernel" in device
-    assert "phase_d_consumer_smoke_kernel" in device
+    assert "pack_device_observation_kernel" in device
+    assert "device_observation_consumer_smoke_kernel" in device
     assert "device_consumer_includes_host_validation_d2h" in contract
     assert "ledger.device_consumer_measured_path_d2h_copy_count = 0" in contract
     assert "ledger.device_consumer_diagnostic_d2h_copy_count = 2" in contract

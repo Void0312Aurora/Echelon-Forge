@@ -323,8 +323,8 @@
       "chinese": "docs/engineering/documentation/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-08-08",
-      "english_hash": "7abee33effdcd7a68ef5141a37dc34718e28e313a7d032af13b7eabae0bf57fd",
-      "chinese_hash": "0f1c2a902638ecf197a781010fb74297e9f21e0006d5c6652ff2dc92dd9b2026"
+      "english_hash": "0398be12946f789246ee951105f6c17ec890ea4051c4149a413c9a12c63e8c5f",
+      "chinese_hash": "64aab9006baf1e46b15b4e6f846bb9881f902eafa11c7918e2460b69bc3bed93"
     },
     {
       "pair_id": "engineering/documentation/reference/bilingual_document_clusters",
@@ -345,6 +345,15 @@
       "chinese_hash": "999cd50e4b1dc6dc26412dc0276f1d6c0dd6d726f30a03777b76dc06617697cb"
     },
     {
+      "pair_id": "engineering/documentation/reviews/internal_code_residual_audit_20260807",
+      "english": "docs/engineering/documentation/reviews/internal_code_residual_audit_20260807.md",
+      "chinese": "docs/engineering/documentation/reviews/internal_code_residual_audit_20260807.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-08-08",
+      "english_hash": "8c77cec52e21d98b11e00d741c6502a24ac69db255667ab1a71aa247e262c7c3",
+      "chinese_hash": "bbde61ad9d9d2bfa492d80e186d6c8da9bed664768d536f320df107b2d4c29a5"
+    },
+    {
       "pair_id": "engineering/documentation/standards/bilingual_documentation_policy",
       "english": "docs/engineering/documentation/standards/bilingual_documentation_policy.md",
       "chinese": "docs/engineering/documentation/standards/bilingual_documentation_policy.zh.md",
@@ -361,6 +370,15 @@
       "last_verified": "2026-08-08",
       "english_hash": "6be5a4c7f26ba710bdb33e6fc811aef10d0a5d8a27d2b5d9223f7b49686cc748",
       "chinese_hash": "954110f73b600202f5888d6291f67244275c3df3275fd7b5c5c37c74719ea3dc"
+    },
+    {
+      "pair_id": "engineering/documentation/standards/internal_code_policy",
+      "english": "docs/engineering/documentation/standards/internal_code_policy.md",
+      "chinese": "docs/engineering/documentation/standards/internal_code_policy.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-08-08",
+      "english_hash": "03b1b4776a02f6964c880cafe076759e53ee6fd34988a467585500e8b44b9007",
+      "chinese_hash": "c53cabf2b40ba66ebc494cd665a8d8602b8d739b706d807dcd188d337887cd6f"
     },
     {
       "pair_id": "engineering/documentation/standards/standards_maintenance_policy",

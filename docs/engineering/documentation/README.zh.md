@@ -21,6 +21,10 @@ Last verified: `2026-08-08`
   语言、配对与维护表面的规范规则。
 - [标准维护政策](standards/standards_maintenance_policy.zh.md)：
   owner-local standard 的提升与漂移规则。
+- [内部代号命名规范](standards/internal_code_policy.zh.md)：
+  防止计划期简写进入运行期接口、诊断与入口文档。
+- [内部代号残余审计（2026-08-07）](reviews/internal_code_residual_audit_20260807.zh.md)：
+  首轮治理后的残余实测清单；这是基线，不代表 finding 已清零。
 - [双语文档簇](reference/bilingual_document_clusters.zh.md)：
   机器可读同步注册表的人类可读合同。
 - [文档对齐映射](reference/document_alignment_map.zh.md)：当前分布式 owner 与 authority

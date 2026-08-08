@@ -9,11 +9,11 @@
 #include <string>
 #include <vector>
 
-#include "runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_flight_dynamics_fixture_contract.h"
 
 namespace {
 
-bool within_rb2_kinematics_budget(double actual, double expected) {
+bool within_flight_dynamics_kinematics_budget(double actual, double expected) {
     return std::abs(actual - expected) <=
            std::max(1.0e-9, 1.0e-12 * std::max(std::abs(actual), std::abs(expected)));
 }
@@ -35,7 +35,7 @@ void check_kernel_resources(const runtime::cuda_resident::CudaBarrierKernelResou
 
 } // namespace
 
-TEST_CASE("RB6 Phase B commits CPU-parity airframe dynamics from resident state") {
+TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from resident state") {
     using namespace runtime::cuda_resident;
     if (!CudaWorldStore::compiled_with_cuda()) {
         CHECK(true);
@@ -43,17 +43,19 @@ TEST_CASE("RB6 Phase B commits CPU-parity airframe dynamics from resident state"
     }
     CudaResidentBackend backend;
     backend.configure({.world_count = 2});
-    check_kernel_resources(testing::CudaWorldStoreTestAccess::phase_b_forces_kernel_resources());
     check_kernel_resources(
-        testing::CudaWorldStoreTestAccess::phase_b_aerodynamics_kernel_resources());
-    check_kernel_resources(testing::CudaWorldStoreTestAccess::phase_b_integrate_kernel_resources());
+        testing::CudaWorldStoreTestAccess::flight_dynamics_forces_kernel_resources());
+    check_kernel_resources(
+        testing::CudaWorldStoreTestAccess::flight_dynamics_aerodynamics_kernel_resources());
+    check_kernel_resources(
+        testing::CudaWorldStoreTestAccess::flight_dynamics_integrate_kernel_resources());
     const std::vector<std::uint32_t> seeds = {101, 202};
     std::vector<WorldSpawnRequest> spawns;
     for (std::size_t world = 0; world < seeds.size(); ++world) {
         WorldSpawnRequest spawn{};
         spawn.world_index = world;
         spawn.type_name = std::string(kFixedAirFixtureTypeName);
-        spawn.entity_name = "RB6PhaseB" + std::to_string(world);
+        spawn.entity_name = "CudaFlightDynamics" + std::to_string(world);
         spawn.is_agent = true;
         spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
         spawn.z = 1500.0;
@@ -61,8 +63,8 @@ TEST_CASE("RB6 Phase B commits CPU-parity airframe dynamics from resident state"
         spawn.heading = 90.0;
         spawns.push_back(spawn);
     }
-    const std::vector<double> time_steps(kCudaResidentPhaseBFixtureTimeSteps.begin(),
-                                         kCudaResidentPhaseBFixtureTimeSteps.end());
+    const std::vector<double> time_steps(kCudaResidentFlightDynamicsFixtureTimeSteps.begin(),
+                                         kCudaResidentFlightDynamicsFixtureTimeSteps.end());
     const auto setup = backend.setup({
         .kind = runtime::backend::SetupKind::Batch,
         .seeds = seeds,
@@ -75,10 +77,10 @@ TEST_CASE("RB6 Phase B commits CPU-parity airframe dynamics from resident state"
         action.world_index = world;
         action.entity_id = setup.entity_ids[world];
         action.action.active = true;
-        action.action.stick_roll = kCudaResidentPhaseBFirstInputs[world].stick_roll;
-        action.action.stick_pitch = kCudaResidentPhaseBFirstInputs[world].stick_pitch;
-        action.action.rudder = kCudaResidentPhaseBFirstInputs[world].rudder;
-        action.action.throttle = kCudaResidentPhaseBFirstInputs[world].throttle;
+        action.action.stick_roll = kCudaResidentFlightDynamicsFirstInputs[world].stick_roll;
+        action.action.stick_pitch = kCudaResidentFlightDynamicsFirstInputs[world].stick_pitch;
+        action.action.rudder = kCudaResidentFlightDynamicsFirstInputs[world].rudder;
+        action.action.throttle = kCudaResidentFlightDynamicsFirstInputs[world].throttle;
         actions.push_back(action);
     }
     backend.inject({.pilot_actions = actions});
@@ -111,17 +113,18 @@ TEST_CASE("RB6 Phase B commits CPU-parity airframe dynamics from resident state"
             CAPTURE(world);
             CAPTURE(field);
             CAPTURE(kinematics[field]);
-            CAPTURE(kCudaResidentPhaseBFirstExpected[world].kinematics[field]);
-            CHECK(within_rb2_kinematics_budget(
-                kinematics[field], kCudaResidentPhaseBFirstExpected[world].kinematics[field]));
+            CAPTURE(kCudaResidentFlightDynamicsFirstExpected[world].kinematics[field]);
+            CHECK(within_flight_dynamics_kinematics_budget(
+                kinematics[field],
+                kCudaResidentFlightDynamicsFirstExpected[world].kinematics[field]));
         }
         for (std::size_t field = 0; field < dynamics.size(); ++field) {
             CAPTURE(world);
             CAPTURE(field);
             CAPTURE(dynamics[field]);
-            CAPTURE(kCudaResidentPhaseBFirstExpected[world].dynamics[field]);
-            CHECK(within_rb2_kinematics_budget(
-                dynamics[field], kCudaResidentPhaseBFirstExpected[world].dynamics[field]));
+            CAPTURE(kCudaResidentFlightDynamicsFirstExpected[world].dynamics[field]);
+            CHECK(within_flight_dynamics_kinematics_budget(
+                dynamics[field], kCudaResidentFlightDynamicsFirstExpected[world].dynamics[field]));
         }
         CHECK(actual.clock_tick == 1);
         CHECK(actual.shard_versions[static_cast<std::size_t>(CudaResidentShard::dynamics)] == 2);
@@ -147,7 +150,7 @@ TEST_CASE("RB6 Phase B commits CPU-parity airframe dynamics from resident state"
               before_failed_window.worlds[world].dynamics.q);
     }
     // A failed inactive-slot transaction does not consume the successfully
-    // published Phase A input; retry commits that exact window.
+    // published control preparation input; retry commits that exact window.
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
     const auto retried_window = testing::CudaWorldStoreTestAccess::read_state(store);
     CHECK(retried_window.worlds[0].clock_tick == 2);

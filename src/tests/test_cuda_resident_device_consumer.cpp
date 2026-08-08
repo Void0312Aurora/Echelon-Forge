@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "runtime/contracts/cuda_resident_device_consumer_contract.h"
-#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_device_consumer.h"
 

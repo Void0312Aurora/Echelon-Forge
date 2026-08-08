@@ -15,11 +15,11 @@
 #include "components/physics/forces.h"
 #include "components/physics/performance.h"
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
-#include "runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_flight_dynamics_fixture_contract.h"
 
 namespace {
 
-bool within_rb2_kinematics_budget(double actual, double expected) {
+bool within_flight_dynamics_kinematics_budget(double actual, double expected) {
     return std::abs(actual - expected) <=
            std::max(1.0e-9, 1.0e-12 * std::max(std::abs(actual), std::abs(expected)));
 }
@@ -30,7 +30,7 @@ std::vector<WorldSpawnRequest> make_spawns() {
         WorldSpawnRequest spawn{};
         spawn.world_index = world;
         spawn.type_name = std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
-        spawn.entity_name = "RB6CpuPhaseB" + std::to_string(world);
+        spawn.entity_name = "CpuFlightDynamics" + std::to_string(world);
         spawn.is_agent = true;
         spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
         spawn.z = 1500.0;
@@ -49,12 +49,13 @@ std::vector<WorldPilotActionAssignment> make_actions(const std::vector<std::uint
         action.entity_id = entity_ids[world];
         action.action.active = true;
         action.action.stick_roll =
-            runtime::cuda_resident::kCudaResidentPhaseBFirstInputs[world].stick_roll;
+            runtime::cuda_resident::kCudaResidentFlightDynamicsFirstInputs[world].stick_roll;
         action.action.stick_pitch =
-            runtime::cuda_resident::kCudaResidentPhaseBFirstInputs[world].stick_pitch;
-        action.action.rudder = runtime::cuda_resident::kCudaResidentPhaseBFirstInputs[world].rudder;
+            runtime::cuda_resident::kCudaResidentFlightDynamicsFirstInputs[world].stick_pitch;
+        action.action.rudder =
+            runtime::cuda_resident::kCudaResidentFlightDynamicsFirstInputs[world].rudder;
         action.action.throttle =
-            runtime::cuda_resident::kCudaResidentPhaseBFirstInputs[world].throttle;
+            runtime::cuda_resident::kCudaResidentFlightDynamicsFirstInputs[world].throttle;
         actions.push_back(action);
     }
     return actions;
@@ -62,13 +63,13 @@ std::vector<WorldPilotActionAssignment> make_actions(const std::vector<std::uint
 
 } // namespace
 
-TEST_CASE("RB6 CPU reference pins the fixed airborne Phase B window") {
+TEST_CASE("CPU reference pins the fixed airborne flight-dynamics window") {
     using namespace runtime::cuda_resident;
     WorldBatchRuntime runtime(2);
     REQUIRE(runtime.load_database("examples/config/database"));
     const std::vector<std::uint32_t> seeds = {101, 202};
-    const std::vector<double> time_steps(kCudaResidentPhaseBFixtureTimeSteps.begin(),
-                                         kCudaResidentPhaseBFixtureTimeSteps.end());
+    const std::vector<double> time_steps(kCudaResidentFlightDynamicsFixtureTimeSteps.begin(),
+                                         kCudaResidentFlightDynamicsFixtureTimeSteps.end());
     const auto ids =
         runtime.apply_world_setup_batch(seeds, {}, {}, {}, make_spawns(), time_steps, {});
     REQUIRE(ids.size() == 2);
@@ -102,10 +103,11 @@ TEST_CASE("RB6 CPU reference pins the fixed airborne Phase B window") {
         REQUIRE(aero != nullptr);
         REQUIRE(mass != nullptr);
         REQUIRE(inertia != nullptr);
-        CHECK(mass->get_total_kg() == doctest::Approx(kPhaseBEmptyMassKg + kPhaseBFuelMassKg));
-        CHECK(inertia->ixx == doctest::Approx(kPhaseBInertiaRollKgM2));
-        CHECK(inertia->iyy == doctest::Approx(kPhaseBInertiaPitchKgM2));
-        CHECK(inertia->izz == doctest::Approx(kPhaseBInertiaYawKgM2));
+        CHECK(mass->get_total_kg() ==
+              doctest::Approx(kFlightDynamicsEmptyMassKg + kFlightDynamicsFuelMassKg));
+        CHECK(inertia->ixx == doctest::Approx(kFlightDynamicsInertiaRollKgM2));
+        CHECK(inertia->iyy == doctest::Approx(kFlightDynamicsInertiaPitchKgM2));
+        CHECK(inertia->izz == doctest::Approx(kFlightDynamicsInertiaYawKgM2));
         const std::array<double, 9> kinematics = {
             transform->x, transform->y,       transform->z,     velocity->vx,    velocity->vy,
             velocity->vz, transform->heading, transform->pitch, transform->roll,
@@ -127,17 +129,18 @@ TEST_CASE("RB6 CPU reference pins the fixed airborne Phase B window") {
             CAPTURE(world);
             CAPTURE(field);
             CAPTURE(kinematics[field]);
-            CAPTURE(kCudaResidentPhaseBFirstExpected[world].kinematics[field]);
-            CHECK(within_rb2_kinematics_budget(
-                kinematics[field], kCudaResidentPhaseBFirstExpected[world].kinematics[field]));
+            CAPTURE(kCudaResidentFlightDynamicsFirstExpected[world].kinematics[field]);
+            CHECK(within_flight_dynamics_kinematics_budget(
+                kinematics[field],
+                kCudaResidentFlightDynamicsFirstExpected[world].kinematics[field]));
         }
         for (std::size_t field = 0; field < dynamics.size(); ++field) {
             CAPTURE(world);
             CAPTURE(field);
             CAPTURE(dynamics[field]);
-            CAPTURE(kCudaResidentPhaseBFirstExpected[world].dynamics[field]);
-            CHECK(within_rb2_kinematics_budget(
-                dynamics[field], kCudaResidentPhaseBFirstExpected[world].dynamics[field]));
+            CAPTURE(kCudaResidentFlightDynamicsFirstExpected[world].dynamics[field]);
+            CHECK(within_flight_dynamics_kinematics_budget(
+                dynamics[field], kCudaResidentFlightDynamicsFirstExpected[world].dynamics[field]));
         }
     }
 }

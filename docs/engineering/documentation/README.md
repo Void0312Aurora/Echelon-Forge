@@ -24,6 +24,11 @@ owner's documents.
   language, pairing, and maintained-surface rules.
 - [Standards maintenance policy](standards/standards_maintenance_policy.md):
   promotion and drift rules for owner-local standards.
+- [Internal code naming policy](standards/internal_code_policy.md): keeps
+  planning shorthand out of runtime interfaces, diagnostics, and entry points.
+- [Internal-code residual audit (2026-08-07)](reviews/internal_code_residual_audit_20260807.md):
+  measured residual inventory after the first governance pass; a baseline, not
+  a finding-free claim.
 - [Bilingual document clusters](reference/bilingual_document_clusters.md):
   the human-readable contract for the machine-readable sync registry.
 - [Document alignment map](reference/document_alignment_map.md): current

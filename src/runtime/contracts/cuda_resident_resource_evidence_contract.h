@@ -18,6 +18,9 @@ inline constexpr std::size_t kTraceSignatureBytes = 80469;
 inline constexpr std::size_t kWorldCount = 256;
 inline constexpr std::size_t kThreadsPerBlock = 128;
 inline constexpr std::size_t kBlocks = 2;
+inline constexpr bool kCaptureProbeV1Retired = true;
+inline constexpr std::string_view kCaptureProbeV1RetirementReason =
+    "semantic kernel catalog requires a versioned resource-evidence recapture";
 
 struct KernelSpec {
     std::string_view kernel_id;
