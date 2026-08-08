@@ -202,7 +202,7 @@ Content status: 迁移后的检查清单快照；激活前须依据当前代码�
 - 维护的 CUDA 训练过程在同一进程中使用 `torch` 和 `ef_py` 时，必须首先导入 `torch`；直接的 DLPack 桥现在依赖于该导入顺序。
 - `tools/diagnostics/benchmark.py --family policy_observation_bridge` 是用于“桥开/关”rollout 对比的维护 A/B 框架。
 - 该同一框架现在还记录请求/生效的 `flight_shaping_backend` 以及最新的视觉/飞行塑形运行时统计信息，并支持 `--flight-shaping-backend` 覆盖，用于维护的类似 `p5` 的 A/B 测量。
-- 本阶段的下一个冻结后续工作是 [gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../plan/archive/exact_runtime/completed_programs_20260729_20260805/gpu_execution_phase4_rollout_hot_path_freeze.md)，该文件在任何进一步默认更改之前，隔离了 `WorldBatchVecEnv` 的主机拷贝语义。
+- 本阶段的下一个冻结后续工作是 [gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../../tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md)，该文件在任何进一步默认更改之前，隔离了 `WorldBatchVecEnv` 的主机拷贝语义。
 - 来自该冻结的初始 Phase 4C 结果显示 `observation_return_mode=view` 是有效的，有时稍快，但维护的 `p5` 增益在较大批量下趋于噪声，因此维护的默认值暂时保持为 `copy`。
 - 在引入设备驻留 rollout 缓冲区后的当前 A/B 运行显示出更清晰的分化：
   - `collect_rollouts()` 仍然混合到负面，因为精确的环境步进、动作传递、奖励/完成以及 VecEnv 兼容路径仍然偏向主机。

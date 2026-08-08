@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-CLOSURE_PATH = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb11_closure_20260731.json"
-EVIDENCE = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb9_evidence_20260730"
+CLOSURE_PATH = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb11_closure_20260731.json"
+EVIDENCE = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb9_evidence_20260730"
 BASELINE = "395e02b7dfeaa87baedb2611ec503d14ab137ce3"
 RB10_COMMIT = "e5ea624fc1688d6e9d8b00ae64670ddcc2e3bd02"
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
@@ -39,7 +39,7 @@ def _git(*args: str) -> str:
 def test_rb11_closure_is_bound_to_rb10_and_the_retained_evidence() -> None:
     closure = _json(CLOSURE_PATH)
     rb10 = _json(
-        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb10_hold_decision_20260731.json"
+        ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb10_hold_decision_20260731.json"
     )
     retained = closure["retained_artifacts"]
     assert isinstance(retained, dict)
@@ -55,7 +55,7 @@ def test_rb11_closure_is_bound_to_rb10_and_the_retained_evidence() -> None:
     assert closure["decision"]["runtime_mutation_allowed"] is False
     assert rb10["status"] == "hold"
     assert rb10_ref["sha256"] == _sha256(
-        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb10_hold_decision_20260731.json"
+        ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb10_hold_decision_20260731.json"
     )
     assert rb9_ref["sha256"] == _sha256(EVIDENCE / "comparison.json")
     assert retained["rb9_cpu_lane_sha256"] == _sha256(EVIDENCE / "cpu_lane.json")
@@ -131,13 +131,13 @@ def test_rb11_closure_has_bilingual_links_and_byte_stable_json_guards() -> None:
     assert "cuda_resident_rb11_closure_20260731.json -text" in attributes
 
     english = (
-        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb11_closure_20260731.md"
+        ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb11_closure_20260731.md"
     ).read_text(encoding="utf-8")
     chinese = (
-        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb11_closure_20260731.zh.md"
+        ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_rb11_closure_20260731.zh.md"
     ).read_text(encoding="utf-8")
-    english_index = (ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/README.md").read_text(encoding="utf-8")
-    chinese_index = (ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/README.zh.md").read_text(encoding="utf-8")
+    english_index = (ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/README.md").read_text(encoding="utf-8")
+    chinese_index = (ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/README.zh.md").read_text(encoding="utf-8")
     parent_english = (ROOT / "docs/plan/archive/owner_migration_20260808/README.md").read_text(encoding="utf-8")
     parent_chinese = (ROOT / "docs/plan/archive/owner_migration_20260808/README.zh.md").read_text(encoding="utf-8")
     for text in (english, chinese):

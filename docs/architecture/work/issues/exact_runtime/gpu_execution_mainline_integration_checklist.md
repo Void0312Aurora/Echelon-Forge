@@ -265,7 +265,7 @@ Notes:
   and supports a `--flight-shaping-backend` override for maintained `p5`-like
   A/B measurement.
 - The next frozen follow-on for this phase is
-  [gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../plan/archive/exact_runtime/completed_programs_20260729_20260805/gpu_execution_phase4_rollout_hot_path_freeze.md),
+  [gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../../tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md),
   which isolates `WorldBatchVecEnv` host-copy semantics before any further
   default changes.
 - Initial Phase 4C results from that freeze show `observation_return_mode=view`

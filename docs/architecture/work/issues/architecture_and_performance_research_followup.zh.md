@@ -132,7 +132,7 @@ Content status: 迁移后的调研快照；建议和实现盘点须以新证据�
 
 ### 3. rollout 热路径瓶颈已经被进一步定位
 
-[gpu_execution_phase4_rollout_hot_path_freeze.md](../../../plan/archive/exact_runtime/completed_programs_20260729_20260805/gpu_execution_phase4_rollout_hot_path_freeze.md)
+[gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md)
 进一步确认了：
 
 - learner 侧 device-resident minibatch 已经有收益
