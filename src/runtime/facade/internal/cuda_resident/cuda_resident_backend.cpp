@@ -167,7 +167,8 @@ CudaResidentBarrierEvidence barrier_evidence(std::string_view barrier_id,
         return candidate.barrier_id == barrier_id;
     });
     if (rule == rules.end()) {
-        throw std::logic_error("CUDA resident barrier is not owned by the RB2 contract");
+        throw std::logic_error(
+            "CUDA resident barrier is not owned by the selected-slice parity contract");
     }
     const bool contract_satisfied = rule->enabled && materialized_shards == rule->visible_shards;
     return {
@@ -216,7 +217,8 @@ void CudaResidentBackend::reset(const runtime::backend::ResetRequest &request) {
 runtime::backend::SetupResult
 CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
     if (request.kind != runtime::backend::SetupKind::Batch) {
-        throw std::logic_error("CUDA RB6 supports only canonical batch setup");
+        throw std::logic_error(
+            "CUDA fixed-air resident backend supports only canonical batch setup");
     }
     const std::size_t world_count = store_.world_capacity();
     const auto &seeds = request.seeds.get();
@@ -227,7 +229,7 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
         !request.wind_assignments.empty() || !request.zones.empty() ||
         !request.sun_assignments.empty()) {
         throw std::invalid_argument(
-            "CUDA RB7 fixed-air setup requires one seed/spawn/time-step per world and no "
+            "CUDA fixed-air resident setup requires one seed/spawn/time-step per world and no "
             "dynamic environment assignments");
     }
 
@@ -235,10 +237,10 @@ CudaResidentBackend::setup(const runtime::backend::SetupRequest &request) {
     fixed_worlds.reserve(world_count);
     for (std::size_t world = 0; world < world_count; ++world) {
         if (spawns[world].world_index != world || !fixed_air_spawn_is_supported(spawns[world]) ||
-            !std::isfinite(time_steps[world]) || time_steps[world] < kPhaseBMinTimeStepS ||
-            time_steps[world] > kPhaseBMaxTimeStepS) {
+            !std::isfinite(time_steps[world]) || time_steps[world] < kFlightDynamicsMinTimeStepS ||
+            time_steps[world] > kFlightDynamicsMaxTimeStepS) {
             throw std::invalid_argument(
-                "CUDA RB7 setup is outside the fixed-air fixture capability");
+                "CUDA resident setup is outside the fixed-air fixture capability");
         }
         fixed_worlds.push_back({
             .world_index = world,
@@ -267,12 +269,12 @@ CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
         input.clear_execution_episode_controller || input.prime_execution_episode_controller ||
         !input.execution_episode_refs.empty() || !input.execution_episode_states.empty()) {
         throw std::logic_error(
-            "CUDA RB6 input injection supports only selected pilot flight controls");
+            "CUDA fixed-air resident input injection supports only selected pilot flight controls");
     }
     const auto &actions = input.pilot_actions.get();
     if (actions.size() != store_.world_capacity()) {
         throw std::invalid_argument(
-            "CUDA RB7 requires one pilot flight-control assignment per world");
+            "CUDA fixed-air resident input requires one pilot flight-control assignment per world");
     }
     std::vector<CudaWorldFlightControlAssignment> assignments;
     assignments.reserve(actions.size());
@@ -280,7 +282,7 @@ CudaResidentBackend::inject(const runtime::backend::InputBatch &input) {
         if (actions[world].world_index != world ||
             !flight_controls_are_supported(actions[world].action)) {
             throw std::invalid_argument(
-                "CUDA RB7 pilot input is outside the bounded flight-control capability");
+                "CUDA resident pilot input is outside the bounded flight-control capability");
         }
         assignments.push_back({
             .world_index = actions[world].world_index,
@@ -308,7 +310,9 @@ runtime::backend::AdvanceResult
 CudaResidentBackend::advance(const runtime::backend::AdvanceRequest &request) {
     if (request.kind != runtime::backend::AdvanceKind::WorldBatch ||
         !request.execution_episode_requests.empty()) {
-        throw std::logic_error("CUDA RB7 advances only a published Phase A/B/D device window");
+        throw std::logic_error(
+            "CUDA fixed-air resident backend advances only a published control-preparation, "
+            "flight-dynamics, and observation-projection device window");
     }
     if (!store_.advance_window()) {
         throw std::runtime_error("CUDA resident backend window commit failed: " +
@@ -324,7 +328,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
         request.include_task_orders || request.include_leader_intents ||
         request.include_pilot_reports) {
         throw std::logic_error(
-            "CUDA RB7 export supports only fixed-air kinematics/instruments/observation");
+            "CUDA resident export supports only fixed-air kinematics/instruments/observation");
     }
     runtime::backend::ExportResult result{};
     if (!request.include_kinematics && !request.include_world_time_step &&
@@ -334,7 +338,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
     const CudaWorldStoreStateSnapshot snapshot = store_.state_snapshot();
     if (request.include_kinematics) {
         if (request.kinematics_ref == nullptr) {
-            throw std::invalid_argument("CUDA RB6 kinematics export requires kinematics_ref");
+            throw std::invalid_argument("CUDA resident kinematics export requires kinematics_ref");
         }
         const WorldEntityRef ref = *request.kinematics_ref;
         const CudaWorldResidentState &world =
@@ -349,7 +353,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
     }
     if (request.include_world_time_step) {
         if (!request.world_index.has_value()) {
-            throw std::invalid_argument("CUDA RB6 time-step export requires world_index");
+            throw std::invalid_argument("CUDA resident time-step export requires world_index");
         }
         result.world_time_step = required_world(snapshot, *request.world_index).time_step_s;
     }
@@ -359,8 +363,8 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
                        world.shard_versions[static_cast<std::size_t>(
                            CudaResidentShard::observation)] < 1;
             })) {
-            throw std::logic_error(
-                "CUDA RB7 projection export requires a committed Phase-D window");
+            throw std::logic_error("CUDA resident projection export requires a committed "
+                                   "observation-projection window");
         }
         std::vector<std::size_t> worlds;
         if (!request.refs.empty()) {
@@ -369,7 +373,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
                 const std::size_t world_index = static_cast<std::size_t>(ref.world_index);
                 if (required_world(snapshot, world_index).entity_id != ref.entity_id) {
                     throw std::invalid_argument(
-                        "CUDA RB7 projection export ref does not match resident identity");
+                        "CUDA resident projection export ref does not match resident identity");
                 }
                 worlds.push_back(world_index);
             }
@@ -381,14 +385,15 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
         for (std::size_t world_index : worlds) {
             const CudaWorldResidentState &world = required_world(snapshot, world_index);
             if (!world.setup_complete) {
-                throw std::logic_error("CUDA RB7 projection export requires completed setup");
+                throw std::logic_error("CUDA resident projection export requires completed setup");
             }
             if (request.include_agent_observations) {
                 result.agent_observations.push_back(
-                    to_public_observation(world.phase_d.observation));
+                    to_public_observation(world.observation_projection.observation));
             }
             if (request.include_instrument_states) {
-                result.instrument_states.push_back(to_public_instrument(world.phase_d.instrument));
+                result.instrument_states.push_back(
+                    to_public_instrument(world.observation_projection.instrument));
             }
         }
     }
@@ -397,7 +402,7 @@ CudaResidentBackend::export_state(const runtime::backend::ExportRequest &request
 
 runtime::backend::Diagnostics CudaResidentBackend::diagnostics() const {
     return {
-        .backend_id = std::string(kCudaResidentRb7BackendId),
+        .backend_id = std::string(kCudaResidentObservationProjectionBackendId),
         .world_count = store_.world_capacity(),
     };
 }
@@ -424,7 +429,7 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
     }
     const CudaWorldStoreStateSnapshot source = store_.state_snapshot();
     CudaResidentExportSnapshot result{};
-    const bool phase_d_ready =
+    const bool observation_projection_ready =
         !source.worlds.empty() &&
         std::all_of(source.worlds.begin(), source.worlds.end(), [](const auto &world) {
             return world.barrier == CudaResidentBarrierCode::window_commit &&
@@ -438,7 +443,7 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
                    world.shard_versions[static_cast<std::size_t>(CudaResidentShard::events)] >= 1;
         });
     const std::vector<std::string> materialized_shards =
-        phase_d_ready
+        observation_projection_ready
             ? std::vector<std::string>{"identity",    "clock",      "snapshot",       "kinematics",
                                        "dynamics",    "instrument", "observation",    "reward",
                                        "termination", "events",     "export_envelope"}
@@ -446,21 +451,24 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
                                        "kinematics", "dynamics", "export_envelope"};
     result.barrier = barrier_evidence("export", materialized_shards);
     result.envelope.schema_version = std::string(
-        phase_d_ready ? kCudaResidentPhaseDSnapshotSchemaV3 : kCudaResidentPhaseBSnapshotSchemaV2);
+        observation_projection_ready ? kCudaResidentObservationProjectionSnapshotSchemaV3
+                                     : kCudaResidentFlightDynamicsSnapshotSchemaV2);
     result.envelope.field_set =
-        phase_d_ready ? std::vector<std::string>{"entity_ref",       "seed",
-                                                 "reset_generation", "clock",
-                                                 "snapshot",         "kinematics",
-                                                 "dynamics",         "instrument",
-                                                 "observation",      "reward",
-                                                 "termination",      "events",
-                                                 "source_barrier_id"}
-                      : std::vector<std::string>{
-                            "entity_ref", "seed",       "reset_generation", "clock",
-                            "snapshot",   "kinematics", "dynamics",         "source_barrier_id"};
+        observation_projection_ready
+            ? std::vector<std::string>{"entity_ref",       "seed",
+                                       "reset_generation", "clock",
+                                       "snapshot",         "kinematics",
+                                       "dynamics",         "instrument",
+                                       "observation",      "reward",
+                                       "termination",      "events",
+                                       "source_barrier_id"}
+            : std::vector<std::string>{
+                  "entity_ref", "seed",       "reset_generation", "clock",
+                  "snapshot",   "kinematics", "dynamics",         "source_barrier_id"};
     result.envelope.visibility_label = "export";
-    result.envelope.provenance = std::string(phase_d_ready ? kCudaResidentPhaseDSnapshotProvenance
-                                                           : kCudaResidentPhaseBSnapshotProvenance);
+    result.envelope.provenance = std::string(
+        observation_projection_ready ? kCudaResidentObservationProjectionSnapshotProvenance
+                                     : kCudaResidentFlightDynamicsSnapshotProvenance);
     result.worlds.reserve(source.worlds.size());
 
     std::optional<std::uint64_t> common_snapshot_version;
@@ -513,13 +521,14 @@ CudaResidentBackend::export_snapshot(const std::string &request_id) const {
         }
         snapshot.identity.lineage = {
             .source_snapshot_version = world.global_version,
-            .source_backend_id =
-                std::string(phase_d_ready ? kCudaResidentRb7BackendId : kCudaResidentRb6BackendId),
+            .source_backend_id = std::string(observation_projection_ready
+                                                 ? kCudaResidentObservationProjectionBackendId
+                                                 : kCudaResidentFlightDynamicsBackendId),
             .source_request_id = request_id,
         };
         snapshot.kinematics = world.kinematics;
         snapshot.dynamics = world.dynamics;
-        snapshot.phase_d = world.phase_d;
+        snapshot.observation_projection = world.observation_projection;
         snapshot.source_barrier_id = std::string(cuda_resident_barrier_id(world.barrier));
         result.worlds.push_back(std::move(snapshot));
     }
@@ -545,7 +554,8 @@ CudaResidentBackend::export_device_observation_view(const std::string &request_i
                        1 ||
                    world.shard_versions[static_cast<std::size_t>(CudaResidentShard::events)] < 1;
         })) {
-        throw std::logic_error("CUDA device observation view requires a committed Phase-D window");
+        throw std::logic_error(
+            "CUDA device observation view requires a committed observation-projection window");
     }
     CudaWorldStoreDeviceObservationRaw raw{};
     std::string error;
@@ -631,7 +641,7 @@ CudaResidentBackend::acquire_device_observation_lease(const std::string &request
 
 void CudaResidentBackend::reject_unimplemented_operation(const char *operation) {
     throw std::logic_error(std::string("CUDA resident backend ") + operation +
-                           " is outside the RB7 Phase A/B/D shell");
+                           " is outside the fixed-air resident execution shell");
 }
 
 CudaWorldStore &

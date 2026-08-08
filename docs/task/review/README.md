@@ -13,6 +13,7 @@ Status: active review record.
 
 ## Project Implementation Reviews
 
+- [Internal-Code Residual Audit 2026-08-07](internal_code_residual_audit_20260807.md): measured production-source baseline, retained evidence boundary, and no-growth enforcement. ([中文](internal_code_residual_audit_20260807.zh.md))
 - [Project Implementation Review And Action Assessment 2026-06-01](project_implementation_review_20260601.zh.md) (中文)
 - [Documentation System Readiness Review 2026-06-01](documentation_system_readiness_review_20260601.md) ([中文](documentation_system_readiness_review_20260601.zh.md))
 - [Engineering Governance P0](engineering_governance_p0/README.md): active remediation slice for CI lint gates, smoke dependency constraints, C++ warning policy, and version alignment.

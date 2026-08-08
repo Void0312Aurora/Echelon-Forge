@@ -57,6 +57,12 @@ jobs:
           else
             echo "No changed C/C++ files for clang-format gate."
           fi
+          if [[ -n "${base_ref}" && "${base_ref}" != "0000000000000000000000000000000000000000" ]] && git cat-file -e "${base_ref}^{commit}" 2>/dev/null; then
+            ./.venv/bin/python -m tools.maintenance.internal_code_governance \
+              --changed-from "${base_ref}"
+          else
+            echo "No stable base commit found; skipping incremental internal-code gate."
+          fi
 
       - name: Configure CMake
         run: |

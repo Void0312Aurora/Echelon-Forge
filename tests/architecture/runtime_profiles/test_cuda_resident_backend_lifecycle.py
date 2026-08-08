@@ -10,9 +10,9 @@ DEVICE_SOURCES = tuple(
         "cuda_world_store_cuda_internal.cuh",
         "cuda_world_store_cuda_storage.cu",
         "cuda_world_store_cuda_barrier.cu",
-        "cuda_world_store_cuda_phase_a.cu",
-        "cuda_world_store_cuda_phase_b.cu",
-        "cuda_world_store_cuda_phase_d.cu",
+        "cuda_world_store_cuda_control_preparation.cu",
+        "cuda_world_store_cuda_flight_dynamics.cu",
+        "cuda_world_store_cuda_observation_projection.cu",
         "cuda_world_store_cuda_observation.cu",
         "cuda_world_store_cuda_state_readback.cu",
         "cuda_world_store_cuda_window.cu",
@@ -46,15 +46,15 @@ def test_cr2_split_manifest_keeps_private_cuda_translation_units_non_rdc() -> No
     assert "#include \"cuda_world_store_cuda_" not in device_source
     assert device_source.count("__global__") == 10
     for kernel in (
-        "prepare_phase_a_controls_kernel",
-        "phase_b_forces_kernel",
-        "phase_b_aerodynamics_kernel",
-        "phase_b_integrate_kernel",
-        "phase_d_instruments_kernel",
-        "phase_d_configuration_kernel",
-        "phase_d_episode_kernel",
-        "phase_d_pack_observation_kernel",
-        "phase_d_consumer_smoke_kernel",
+        "control_preparation_kernel",
+        "flight_dynamics_forces_kernel",
+        "flight_dynamics_aerodynamics_kernel",
+        "flight_dynamics_integrate_kernel",
+        "instrument_projection_kernel",
+        "configuration_projection_kernel",
+        "episode_projection_kernel",
+        "pack_device_observation_kernel",
+        "device_observation_consumer_smoke_kernel",
         "apply_barrier_kernel",
     ):
         assert kernel in device_source
@@ -110,7 +110,7 @@ def test_rb4_state_layout_is_device_owned_soa_with_narrow_barrier_kernel() -> No
     assert "CudaWorldStateRecord" not in device_source
     assert "__global__ void apply_barrier_kernel" in device_source
     assert "--ptxas-options=-v" in cmake
-    assert "partial_sync_commit is disabled for the RB2 selected slice" in (
+    assert "partial_sync_commit is disabled for the selected CUDA-resident slice" in (
         CUDA_RESIDENT_DIR / "cuda_world_store.cpp"
     ).read_text(encoding="utf-8")
     assert "required_visible_shards" in backend_source

@@ -145,7 +145,8 @@ TEST_CASE("RB4 backend shell keeps unsupported semantics fail closed") {
     using namespace runtime::cuda_resident;
 
     CudaResidentBackend backend;
-    CHECK(backend.diagnostics().backend_id == std::string(kCudaResidentRb7BackendId));
+    CHECK(backend.diagnostics().backend_id ==
+          std::string(kCudaResidentObservationProjectionBackendId));
     CHECK(backend.configuration().world_count == 0);
     CHECK(backend.configuration().worker_threads == 1);
     CHECK(backend.configuration().effective_worker_threads == 1);

@@ -1,5 +1,5 @@
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh"
-#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 
 #include <algorithm>
 #include <cmath>
@@ -9,28 +9,30 @@
 #include <vector>
 namespace runtime::cuda_resident::detail {
 namespace {
-__device__ inline float phase_d_to_float(double value) {
+__device__ inline float observation_projection_to_float(double value) {
     if (!isfinite(value)) return 0.0F;
-    return static_cast<float>(fmin(fmax(value, -kPhaseDObservationFloatClip),
-                                   kPhaseDObservationFloatClip));
+    return static_cast<float>(fmin(fmax(value, -kObservationProjectionObservationFloatClip),
+                                   kObservationProjectionObservationFloatClip));
 }
 
-__global__ void phase_d_pack_observation_kernel(
-    std::size_t world_capacity, const double *observations, const std::uint64_t *observation_ids,
-    float *values, std::uint64_t *ids) {
+__global__ void pack_device_observation_kernel(std::size_t world_capacity,
+                                               const double *observations,
+                                               const std::uint64_t *observation_ids, float *values,
+                                               std::uint64_t *ids) {
     const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world >= world_capacity) return;
-    const std::size_t base = world * kPhaseDObservationFieldCount;
-    for (std::size_t field = 0; field < kPhaseDObservationFieldCount; ++field) {
+    const std::size_t base = world * kObservationProjectionObservationFieldCount;
+    for (std::size_t field = 0; field < kObservationProjectionObservationFieldCount; ++field) {
         values[base + field] =
-            phase_d_to_float(observations[field * world_capacity + world]);
+            observation_projection_to_float(observations[field * world_capacity + world]);
     }
     ids[world] = observation_ids[world];
 }
 
-__global__ void phase_d_consumer_smoke_kernel(
-    const float *values, const std::uint64_t *ids, std::size_t world_capacity,
-    std::size_t values_per_world, float *first_values, std::uint64_t *out_ids) {
+__global__ void
+device_observation_consumer_smoke_kernel(const float *values, const std::uint64_t *ids,
+                                         std::size_t world_capacity, std::size_t values_per_world,
+                                         float *first_values, std::uint64_t *out_ids) {
     const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world >= world_capacity) return;
     first_values[world] = values[world * values_per_world];
@@ -39,25 +41,26 @@ __global__ void phase_d_consumer_smoke_kernel(
 
 } // namespace
 
-bool export_cuda_world_store_device_observation(
-    const CudaWorldStoreDeviceAllocation *allocation, CudaWorldStoreDeviceObservationRaw *raw,
-    std::string *error) {
+bool export_cuda_world_store_device_observation(const CudaWorldStoreDeviceAllocation *allocation,
+                                                CudaWorldStoreDeviceObservationRaw *raw,
+                                                std::string *error) {
     if (allocation == nullptr || raw == nullptr) {
         if (error != nullptr) *error = "CUDA device observation export requires an allocation";
         return false;
     }
     *raw = {};
     raw->world_count = allocation->world_capacity;
-    raw->values_per_world = kPhaseDObservationFieldCount;
+    raw->values_per_world = kObservationProjectionObservationFieldCount;
     if (allocation->world_capacity == 0) {
         if (error != nullptr) error->clear();
         return true;
     }
     const std::size_t value_count =
-        allocation->world_capacity * kPhaseDObservationFieldCount;
+        allocation->world_capacity * kObservationProjectionObservationFieldCount;
     float *values = nullptr;
     std::uint64_t *ids = nullptr;
-    cudaError_t status = cudaMalloc(reinterpret_cast<void **>(&values), value_count * sizeof(float));
+    cudaError_t status =
+        cudaMalloc(reinterpret_cast<void **>(&values), value_count * sizeof(float));
     if (status == cudaSuccess) {
         status = cudaMalloc(reinterpret_cast<void **>(&ids),
                             allocation->world_capacity * sizeof(std::uint64_t));
@@ -65,30 +68,31 @@ bool export_cuda_world_store_device_observation(
     if (status != cudaSuccess) {
         if (values != nullptr) cudaFree(values);
         if (ids != nullptr) cudaFree(ids);
-        if (error != nullptr) *error = cuda_error_message("allocate device observation view", status);
+        if (error != nullptr)
+            *error = cuda_error_message("allocate device observation view", status);
         return false;
     }
     constexpr unsigned int threads = 128;
-    const unsigned int blocks = static_cast<unsigned int>(
-        (allocation->world_capacity + threads - 1) / threads);
+    const unsigned int blocks =
+        static_cast<unsigned int>((allocation->world_capacity + threads - 1) / threads);
     const std::uint8_t *slot = allocation->state_slots[allocation->active_state_slot];
-    phase_d_pack_observation_kernel<<<blocks, threads>>>(
+    pack_device_observation_kernel<<<blocks, threads>>>(
         allocation->world_capacity,
-        device_field<double>(slot, allocation->state_layout.phase_d_observations),
-        device_field<std::uint64_t>(slot, allocation->state_layout.phase_d_observation_ids), values,
-        ids);
+        device_field<double>(slot, allocation->state_layout.projected_observations),
+        device_field<std::uint64_t>(slot, allocation->state_layout.projected_observation_ids),
+        values, ids);
     status = cudaGetLastError();
     if (status == cudaSuccess) status = cudaDeviceSynchronize();
     std::vector<std::uint64_t> versions(allocation->world_capacity, 0);
     if (status == cudaSuccess) {
-        status = cudaMemcpy(versions.data(),
-                            device_field<std::uint64_t>(slot, allocation->state_layout.global_versions),
-                            versions.size() * sizeof(std::uint64_t), cudaMemcpyDeviceToHost);
+        status =
+            cudaMemcpy(versions.data(),
+                       device_field<std::uint64_t>(slot, allocation->state_layout.global_versions),
+                       versions.size() * sizeof(std::uint64_t), cudaMemcpyDeviceToHost);
     }
     if (status != cudaSuccess || versions.empty() ||
-        std::any_of(versions.begin(), versions.end(), [&](std::uint64_t value) {
-            return value != versions.front();
-        })) {
+        std::any_of(versions.begin(), versions.end(),
+                    [&](std::uint64_t value) { return value != versions.front(); })) {
         if (values != nullptr) cudaFree(values);
         if (ids != nullptr) cudaFree(ids);
         if (error != nullptr) {
@@ -140,12 +144,9 @@ void release_async_device_buffers(void *values, void *ids, cudaEvent_t ready_eve
 } // namespace
 
 bool acquire_cuda_world_store_device_observation_lease(
-    const CudaWorldStoreDeviceAllocation *allocation,
-    const device_consumer::LeaseEpoch &epoch,
-    CudaWorldStoreDeviceObservationLeaseRaw *raw,
-    CudaWorldStoreDeviceFaultInjection *faults,
-    device_consumer::FailureCode *failure,
-    std::string *error) {
+    const CudaWorldStoreDeviceAllocation *allocation, const device_consumer::LeaseEpoch &epoch,
+    CudaWorldStoreDeviceObservationLeaseRaw *raw, CudaWorldStoreDeviceFaultInjection *faults,
+    device_consumer::FailureCode *failure, std::string *error) {
     if (raw == nullptr || allocation == nullptr || !epoch.valid() ||
         allocation->world_capacity == 0) {
         set_lease_failure(failure, device_consumer::FailureCode::invalid_request);
@@ -165,7 +166,8 @@ bool acquire_cuda_world_store_device_observation_lease(
     float *values = nullptr;
     std::uint64_t *ids = nullptr;
     cudaEvent_t ready_event = nullptr;
-    const std::size_t value_count = allocation->world_capacity * kPhaseDObservationFieldCount;
+    const std::size_t value_count =
+        allocation->world_capacity * kObservationProjectionObservationFieldCount;
     if (status == cudaSuccess) {
         status = cudaMalloc(reinterpret_cast<void **>(&values), value_count * sizeof(float));
     }
@@ -184,13 +186,13 @@ bool acquire_cuda_world_store_device_observation_lease(
     }
 
     constexpr unsigned int threads = 128;
-    const unsigned int blocks = static_cast<unsigned int>(
-        (allocation->world_capacity + threads - 1) / threads);
+    const unsigned int blocks =
+        static_cast<unsigned int>((allocation->world_capacity + threads - 1) / threads);
     const std::uint8_t *slot = allocation->state_slots[allocation->active_state_slot];
-    phase_d_pack_observation_kernel<<<blocks, threads>>>(
+    pack_device_observation_kernel<<<blocks, threads>>>(
         allocation->world_capacity,
-        device_field<double>(slot, allocation->state_layout.phase_d_observations),
-        device_field<std::uint64_t>(slot, allocation->state_layout.phase_d_observation_ids),
+        device_field<double>(slot, allocation->state_layout.projected_observations),
+        device_field<std::uint64_t>(slot, allocation->state_layout.projected_observation_ids),
         values, ids);
     status = cudaGetLastError();
     if (status != cudaSuccess) {
@@ -216,7 +218,7 @@ bool acquire_cuda_world_store_device_observation_lease(
     raw->ids = ids;
     raw->ready_event = reinterpret_cast<void *>(ready_event);
     raw->world_count = allocation->world_capacity;
-    raw->values_per_world = kPhaseDObservationFieldCount;
+    raw->values_per_world = kObservationProjectionObservationFieldCount;
     raw->device_ordinal = device_ordinal;
     raw->producer_stream = 0;
     raw->epoch = epoch;
@@ -224,21 +226,16 @@ bool acquire_cuda_world_store_device_observation_lease(
     return true;
 }
 
-void release_cuda_world_store_device_observation_lease(void *values, void *ids,
-                                                        void *ready_event,
-                                                        int device_ordinal) noexcept {
+void release_cuda_world_store_device_observation_lease(void *values, void *ids, void *ready_event,
+                                                       int device_ordinal) noexcept {
     release_async_device_buffers(values, ids, reinterpret_cast<cudaEvent_t>(ready_event),
                                  device_ordinal, false);
 }
 
 bool submit_cuda_world_store_device_observation_consumer(
-    const CudaWorldStoreDeviceObservationLeaseRaw &lease,
-    CudaWorldStoreDeviceConsumerRaw *raw,
-    bool fail_allocation,
-    bool fail_launch,
-    bool fail_event_record,
-    device_consumer::FailureCode *failure,
-    std::string *error) {
+    const CudaWorldStoreDeviceObservationLeaseRaw &lease, CudaWorldStoreDeviceConsumerRaw *raw,
+    bool fail_allocation, bool fail_launch, bool fail_event_record,
+    device_consumer::FailureCode *failure, std::string *error) {
     if (raw == nullptr || lease.values == nullptr || lease.ids == nullptr ||
         lease.ready_event == nullptr || lease.world_count == 0 || lease.values_per_world == 0 ||
         lease.device_ordinal < 0 || lease.producer_stream != 0) {
@@ -265,18 +262,20 @@ bool submit_cuda_world_store_device_observation_consumer(
         status = cudaErrorMemoryAllocation;
     }
     if (status == cudaSuccess) {
-        status = cudaMalloc(reinterpret_cast<void **>(&first_values),
-                            lease.world_count * sizeof(float));
+        status =
+            cudaMalloc(reinterpret_cast<void **>(&first_values), lease.world_count * sizeof(float));
     }
     if (status == cudaSuccess) {
-        status = cudaMalloc(reinterpret_cast<void **>(&ids),
-                            lease.world_count * sizeof(std::uint64_t));
+        status =
+            cudaMalloc(reinterpret_cast<void **>(&ids), lease.world_count * sizeof(std::uint64_t));
     }
-    if (status == cudaSuccess) status = cudaEventCreateWithFlags(&ready_event, cudaEventDisableTiming);
+    if (status == cudaSuccess)
+        status = cudaEventCreateWithFlags(&ready_event, cudaEventDisableTiming);
     if (status != cudaSuccess) {
         release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
         set_lease_failure(failure, device_consumer::FailureCode::consumer_allocation_failed);
-        if (error != nullptr) *error = cuda_error_message("allocate device consumer output", status);
+        if (error != nullptr)
+            *error = cuda_error_message("allocate device consumer output", status);
         return false;
     }
     constexpr unsigned int threads = 128;
@@ -288,10 +287,9 @@ bool submit_cuda_world_store_device_observation_consumer(
         if (error != nullptr) *error = "injected CUDA device consumer launch failure";
         return false;
     }
-    phase_d_consumer_smoke_kernel<<<blocks, threads>>>(
-        static_cast<const float *>(lease.values),
-        static_cast<const std::uint64_t *>(lease.ids), lease.world_count,
-        lease.values_per_world, first_values, ids);
+    device_observation_consumer_smoke_kernel<<<blocks, threads>>>(
+        static_cast<const float *>(lease.values), static_cast<const std::uint64_t *>(lease.ids),
+        lease.world_count, lease.values_per_world, first_values, ids);
     status = cudaGetLastError();
     if (status != cudaSuccess) {
         release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
@@ -321,8 +319,8 @@ bool submit_cuda_world_store_device_observation_consumer(
     return true;
 }
 
-bool await_cuda_world_store_device_observation_consumer(
-    const CudaWorldStoreDeviceConsumerRaw &raw, bool fail_wait, std::string *error) {
+bool await_cuda_world_store_device_observation_consumer(const CudaWorldStoreDeviceConsumerRaw &raw,
+                                                        bool fail_wait, std::string *error) {
     if (raw.ready_event == nullptr || raw.world_count == 0) {
         if (error != nullptr) *error = "CUDA device consumer wait requires a valid receipt";
         return false;
@@ -331,8 +329,7 @@ bool await_cuda_world_store_device_observation_consumer(
         if (error != nullptr) *error = "injected CUDA device consumer wait failure";
         return false;
     }
-    const cudaError_t status =
-        cudaEventSynchronize(reinterpret_cast<cudaEvent_t>(raw.ready_event));
+    const cudaError_t status = cudaEventSynchronize(reinterpret_cast<cudaEvent_t>(raw.ready_event));
     if (status != cudaSuccess) {
         if (error != nullptr) *error = cuda_error_message("wait for device consumer", status);
         return false;
@@ -387,27 +384,27 @@ bool consume_cuda_world_store_device_observation(
     }
     float *device_first_values = nullptr;
     std::uint64_t *device_ids = nullptr;
-    cudaError_t status = cudaMalloc(reinterpret_cast<void **>(&device_first_values),
-                                     world_count * sizeof(float));
+    cudaError_t status =
+        cudaMalloc(reinterpret_cast<void **>(&device_first_values), world_count * sizeof(float));
     if (status == cudaSuccess) {
-        status = cudaMalloc(reinterpret_cast<void **>(&device_ids),
-                            world_count * sizeof(std::uint64_t));
+        status =
+            cudaMalloc(reinterpret_cast<void **>(&device_ids), world_count * sizeof(std::uint64_t));
     }
     if (status == cudaSuccess) {
         constexpr unsigned int threads = 128;
         const unsigned int blocks =
             static_cast<unsigned int>((world_count + threads - 1) / threads);
-        phase_d_consumer_smoke_kernel<<<blocks, threads>>>(
-            static_cast<const float *>(values), static_cast<const std::uint64_t *>(ids), world_count,
-            values_per_world, device_first_values, device_ids);
+        device_observation_consumer_smoke_kernel<<<blocks, threads>>>(
+            static_cast<const float *>(values), static_cast<const std::uint64_t *>(ids),
+            world_count, values_per_world, device_first_values, device_ids);
         status = cudaGetLastError();
     }
     if (status == cudaSuccess) status = cudaDeviceSynchronize();
     std::vector<float> next_values(world_count, 0.0F);
     std::vector<std::uint64_t> next_ids(world_count, 0);
     if (status == cudaSuccess) {
-        status = cudaMemcpy(next_values.data(), device_first_values,
-                            world_count * sizeof(float), cudaMemcpyDeviceToHost);
+        status = cudaMemcpy(next_values.data(), device_first_values, world_count * sizeof(float),
+                            cudaMemcpyDeviceToHost);
     }
     if (status == cudaSuccess) {
         status = cudaMemcpy(next_ids.data(), device_ids, world_count * sizeof(std::uint64_t),
@@ -416,7 +413,8 @@ bool consume_cuda_world_store_device_observation(
     if (device_first_values != nullptr) cudaFree(device_first_values);
     if (device_ids != nullptr) cudaFree(device_ids);
     if (status != cudaSuccess) {
-        if (error != nullptr) *error = cuda_error_message("consume device observation view", status);
+        if (error != nullptr)
+            *error = cuda_error_message("consume device observation view", status);
         return false;
     }
     *first_values = std::move(next_values);
@@ -425,17 +423,17 @@ bool consume_cuda_world_store_device_observation(
     return true;
 }
 
-bool query_cuda_world_store_phase_d_pack_kernel_resources(CudaBarrierKernelResources *resources,
-                                                          std::string *error) {
-    return query_phase_b_kernel_resources(phase_d_pack_observation_kernel,
-                                          "phase_d_pack_observation_kernel", resources, error);
-}
-
-bool query_cuda_world_store_phase_d_consumer_kernel_resources(
+bool query_cuda_world_store_device_observation_pack_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error) {
-    return query_phase_b_kernel_resources(phase_d_consumer_smoke_kernel,
-                                          "phase_d_consumer_smoke_kernel", resources, error);
+    return query_cuda_kernel_resources(pack_device_observation_kernel,
+                                       "pack_device_observation_kernel", resources, error);
 }
 
+bool query_cuda_world_store_device_observation_consumer_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error) {
+    return query_cuda_kernel_resources(device_observation_consumer_smoke_kernel,
+                                       "device_observation_consumer_smoke_kernel", resources,
+                                       error);
+}
 
 } // namespace runtime::cuda_resident::detail

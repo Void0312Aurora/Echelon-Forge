@@ -210,13 +210,14 @@ validate_capability_manifest(const CapabilityManifest &manifest) {
         result.add_error("fixture_scope is required");
     }
     if (!manifest.fixed_step_only) {
-        result.add_error("the RB2 candidate manifest must remain fixed-step only");
+        result.add_error("the CUDA-resident candidate manifest must remain fixed-step only");
     }
     if (manifest.dynamic_entity_families) {
-        result.add_error("the RB2 candidate manifest must reject dynamic entity families");
+        result.add_error(
+            "the CUDA-resident candidate manifest must reject dynamic entity families");
     }
     if (manifest.implicit_cpu_fallback) {
-        result.add_error("the RB2 candidate manifest must forbid implicit CPU fallback");
+        result.add_error("the CUDA-resident candidate manifest must forbid implicit CPU fallback");
     }
     if (manifest.required_feature_ids.empty() || manifest.supported_feature_ids.empty()) {
         result.add_error("required and supported feature sets are required");
@@ -312,7 +313,8 @@ admit_backend_request(const BackendRequest &request, const BackendAvailability &
     if (request.backend_profile_id !=
         backend_profiles::kBackendProfileIdResidentStateUnmaintainedCandidate) {
         result.reject(std::string(kBackendAdmissionRejectionUnsupportedProfile),
-                      "RB2 only selects the CPU reference or bounded CUDA-resident candidate");
+                      "backend admission selects only the CPU reference or bounded "
+                      "CUDA-resident candidate");
         return result;
     }
     if (!request.allow_unmaintained_candidate) {

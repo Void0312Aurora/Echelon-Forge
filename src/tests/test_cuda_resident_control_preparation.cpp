@@ -9,23 +9,23 @@
 #include <utility>
 #include <vector>
 
-#include "runtime/contracts/cuda_resident_phase_a_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_control_preparation_fixture_contract.h"
 
 namespace {
 
-struct PhaseAFixture {
+struct ControlPreparationFixture {
     std::vector<std::uint32_t> seeds = {101, 202};
     std::vector<WorldSpawnRequest> spawns;
-    std::vector<double> time_steps =
-        std::vector<double>(runtime::cuda_resident::kCudaResidentPhaseAFixtureTimeSteps.begin(),
-                            runtime::cuda_resident::kCudaResidentPhaseAFixtureTimeSteps.end());
+    std::vector<double> time_steps = std::vector<double>(
+        runtime::cuda_resident::kCudaResidentControlPreparationFixtureTimeSteps.begin(),
+        runtime::cuda_resident::kCudaResidentControlPreparationFixtureTimeSteps.end());
 
-    PhaseAFixture() {
+    ControlPreparationFixture() {
         for (std::size_t world = 0; world < seeds.size(); ++world) {
             WorldSpawnRequest spawn{};
             spawn.world_index = world;
             spawn.type_name = std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
-            spawn.entity_name = "RB5PhaseA" + std::to_string(world);
+            spawn.entity_name = "CudaControlPreparation" + std::to_string(world);
             spawn.is_agent = true;
             spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
             spawn.z = 1500.0;
@@ -47,7 +47,8 @@ struct PhaseAFixture {
 
 std::vector<WorldPilotActionAssignment>
 make_actions(const std::vector<std::uint64_t> &entity_ids,
-             const std::array<runtime::cuda_resident::CudaResidentPhaseAFixtureInput, 2> &inputs) {
+             const std::array<runtime::cuda_resident::CudaResidentControlPreparationFixtureInput, 2>
+                 &inputs) {
     std::vector<WorldPilotActionAssignment> actions;
     actions.reserve(entity_ids.size());
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
@@ -65,14 +66,15 @@ make_actions(const std::vector<std::uint64_t> &entity_ids,
 
 void check_prepared(
     const runtime::cuda_resident::CudaWorldStoreStateSnapshot &state,
-    const std::array<runtime::cuda_resident::CudaResidentPhaseAFixtureExpected, 2> &expected) {
+    const std::array<runtime::cuda_resident::CudaResidentControlPreparationFixtureExpected, 2>
+        &expected) {
     REQUIRE(state.worlds.size() == expected.size());
     for (std::size_t world = 0; world < expected.size(); ++world) {
         const auto &actual = state.worlds[world].prepared_controls;
         const auto &want = expected[world];
         CHECK(actual.valid);
         CHECK(actual.manual_takeover == want.manual_takeover);
-        CHECK(actual.phase_version == want.phase_version);
+        CHECK(actual.control_version == want.control_version);
         CHECK(actual.stick_roll_filt == doctest::Approx(want.stick_roll_filt).epsilon(1e-12));
         CHECK(actual.stick_pitch_filt == doctest::Approx(want.stick_pitch_filt).epsilon(1e-12));
         CHECK(actual.stick_yaw_filt == doctest::Approx(want.stick_yaw_filt).epsilon(1e-12));
@@ -82,7 +84,7 @@ void check_prepared(
 
 } // namespace
 
-TEST_CASE("RB5 Phase A prepares direct pilot controls in a resident SoA") {
+TEST_CASE("CUDA control preparation prepares direct pilot controls in a resident SoA") {
     using namespace runtime::cuda_resident;
     if (!CudaWorldStore::compiled_with_cuda()) {
         CHECK(true);
@@ -92,7 +94,7 @@ TEST_CASE("RB5 Phase A prepares direct pilot controls in a resident SoA") {
     CudaResidentBackend backend;
     backend.configure({.world_count = 2});
     const CudaBarrierKernelResources resources =
-        testing::CudaWorldStoreTestAccess::phase_a_kernel_resources();
+        testing::CudaWorldStoreTestAccess::control_preparation_kernel_resources();
     CAPTURE(resources.registers_per_thread);
     CAPTURE(resources.local_bytes_per_thread);
     CAPTURE(resources.static_shared_bytes);
@@ -109,26 +111,28 @@ TEST_CASE("RB5 Phase A prepares direct pilot controls in a resident SoA") {
     CHECK(resources.theoretical_occupancy > 0.0);
     CHECK(resources.theoretical_occupancy <= 1.0);
 
-    PhaseAFixture fixture;
+    ControlPreparationFixture fixture;
     const auto setup = backend.setup(fixture.request());
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),
                     std::runtime_error);
-    const auto first_actions = make_actions(setup.entity_ids, kCudaResidentPhaseAFirstInputs);
+    const auto first_actions =
+        make_actions(setup.entity_ids, kCudaResidentControlPreparationFirstInputs);
     backend.inject({.pilot_actions = first_actions});
     backend.publish_stage();
     CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
     check_prepared(testing::CudaWorldStoreTestAccess::read_state(store),
-                   kCudaResidentPhaseAFirstExpected);
+                   kCudaResidentControlPreparationFirstExpected);
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
 
-    const auto edge_actions = make_actions(setup.entity_ids, kCudaResidentPhaseAEdgeInputs);
+    const auto edge_actions =
+        make_actions(setup.entity_ids, kCudaResidentControlPreparationEdgeInputs);
     backend.inject({.pilot_actions = edge_actions});
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.publish_stage(), std::runtime_error);
     backend.publish_stage();
     const CudaWorldStoreStateSnapshot edge_state =
         testing::CudaWorldStoreTestAccess::read_state(store);
-    check_prepared(edge_state, kCudaResidentPhaseAEdgeExpected);
+    check_prepared(edge_state, kCudaResidentControlPreparationEdgeExpected);
     CHECK(edge_state.worlds[1].controls.active);
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
 }

@@ -52,7 +52,7 @@ For lifecycle cleanup across this tree, see the
   runtime. Use linked archive snapshots only for traceability; do not treat old
   air-combat snapshots as the whole-project center.
 - [common_air_naval/](archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md): `archived` —
-  WP0-WP8 complete (common/air/naval DTO split, profile dispatch seam,
+  the common/air/naval modular split is complete (DTO split, profile dispatch seam,
   MissionCommand compatibility split). Residual naval runtime expansion and
   air-first helper migration continue via standalone task sheets.
   analysis in archive.

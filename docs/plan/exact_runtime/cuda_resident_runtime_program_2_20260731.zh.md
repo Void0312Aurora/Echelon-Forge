@@ -61,31 +61,36 @@ CR2-1 已从当前树移除该文件，不再延续例外。当前 CUDA implemen
 
 | 模块 | 作用 | 行数 |
 | --- | --- | ---: |
-| `cuda_world_store_cuda_internal.cuh` | shared layout、allocation 与 wrapper contract | 291 |
-| `cuda_world_store_cuda_math.cuh` | shared device math helpers | 139 |
-| `cuda_world_store_cuda_storage.cu` | allocation/layout、metadata 与 fixture storage | 547 |
+| `cuda_world_store_cuda_internal.cuh` | shared layout、allocation 与 wrapper contract | 293 |
+| `cuda_world_store_cuda_math.cuh` | shared device math helpers | 143 |
+| `cuda_world_store_cuda_storage.cu` | allocation/layout、metadata 与 fixture storage | 558 |
 | `cuda_world_store_cuda_barrier.cu` | barrier kernel 与 resource query | 264 |
-| `cuda_world_store_cuda_phase_a.cu` | Phase A kernel 与 publication | 204 |
-| `cuda_world_store_cuda_phase_b.cu` | Phase B kernels 与 launch wrappers | 497 |
-| `cuda_world_store_cuda_phase_d.cu` | Phase D kernels 与 launch wrappers | 231 |
-| `cuda_world_store_cuda_observation.cu` | diagnostic 与 CR2-3 lease pack/consumer | 441 |
-| `cuda_world_store_cuda_state_readback.cu` | host state readback | 271 |
-| `cuda_world_store_cuda_window.cu` | private full-window orchestration | 69 |
+| `cuda_world_store_cuda_control_preparation.cu` | 控制预处理 kernel 与发布 | 207 |
+| `cuda_world_store_cuda_flight_dynamics.cu` | 飞行动力学 kernels 与启动包装 | 518 |
+| `cuda_world_store_cuda_observation_projection.cu` | 观测投影 kernels 与启动包装 | 239 |
+| `cuda_world_store_cuda_observation.cu` | 设备观测 lease 打包与 consumer | 439 |
+| `cuda_world_store_cuda_state_readback.cu` | host state readback | 273 |
+| `cuda_world_store_cuda_window.cu` | private full-window orchestration | 72 |
 
 当前 CR2-owned CUDA 模块全部低于 700 行 soft target。旧单体只作为历史 baseline
 保留，不是当前 source，也不是活动中的 exception。
 
-CR2-3 将 host/device lease 边界拆在小型 owner 中：
+设备观测 lease 边界继续拆在小型 owner 中：
 `cuda_resident_device_consumer.cpp/.h` 为 246/49 行，
 `cuda_world_store_device_lease.cpp` 为 66 行，
 `cuda_world_store_host_internal.h` 为 33 行。已有 host owner 仍低于 soft target：
-`cuda_world_store.cpp` 661 行，`cuda_resident_backend.cpp` 636 行；没有新增规模例外。
+`cuda_world_store.cpp` 684 行，`cuda_resident_backend.cpp` 652 行；没有新增规模例外。
 
-CR2-4a 将 replay test 做零语义拆分，移除原 watch item：
-`test_cuda_resident_replay_projection.cpp` 611 行、
+replay test 的拆分在不改变行为的前提下移除原 watch item：
+`test_cuda_resident_replay_projection.cpp` 612 行、
 `test_cuda_resident_replay_support.cpp` 175 行、
 `test_cuda_resident_replay_support.h` 58 行，断言/test owner
 `test_cuda_resident_replay.cpp` 139 行。当前不再有 CR2 watch item。
+
+parity-budget 合同保留原聚合 include，同时按责任拆为 `parity_budget_types.h`（221 行）、
+`parity_budget_selected_slice.h`（572 行）、`parity_budget_profiles.h`（521 行）和
+`parity_budget_registry.h`（115 行）。聚合头为 6 行，拆分后的全部 header 均低于
+600 行 header soft target。
 
 CR2-4b 的语义 owner 也都低于 soft target：parity release contract 244 行、
 full-window contract/runner 118/257 行、opt-in probe 337 行、C++ conformance

@@ -10,6 +10,15 @@ BACKEND_PROFILE_HEADER = (
 PARITY_BUDGET_HEADER = (
   REPO_ROOT / "src" / "runtime" / "contracts" / "parity_budget_contracts.h"
 )
+PARITY_BUDGET_MODULES = tuple(
+  REPO_ROOT / "src" / "runtime" / "contracts" / name
+  for name in (
+    "parity_budget_types.h",
+    "parity_budget_selected_slice.h",
+    "parity_budget_profiles.h",
+    "parity_budget_registry.h",
+  )
+)
 FIDELITY_PROFILE_HEADER = (
   REPO_ROOT / "src" / "runtime" / "contracts" / "fidelity_profile_contracts.h"
 )
@@ -309,10 +318,22 @@ def test_maintained_backend_profile_validation_fails_closed_on_missing_required_
 
 def test_parity_budget_contract_header_exists_in_runtime_contracts() -> None:
   assert PARITY_BUDGET_HEADER.is_file()
+  assert all(path.is_file() for path in PARITY_BUDGET_MODULES)
+  assert all(
+    len(path.read_text(encoding="utf-8").splitlines()) < 1000
+    for path in PARITY_BUDGET_MODULES
+  )
+
+
+def _parity_budget_text() -> str:
+  return "\n".join(
+    path.read_text(encoding="utf-8")
+    for path in (PARITY_BUDGET_HEADER, *PARITY_BUDGET_MODULES)
+  )
 
 
 def test_header_encodes_required_budget_ids_and_rejection_reasons() -> None:
-  header = PARITY_BUDGET_HEADER.read_text(encoding="utf-8")
+  header = _parity_budget_text()
 
   for token in (
     "parity_budget.cpu_exact.reference.v1",
@@ -330,7 +351,7 @@ def test_header_encodes_required_budget_ids_and_rejection_reasons() -> None:
 
 
 def test_header_carries_required_comparison_domain_metadata_fields() -> None:
-  header = PARITY_BUDGET_HEADER.read_text(encoding="utf-8")
+  header = _parity_budget_text()
 
   for token in (
     "event_order",

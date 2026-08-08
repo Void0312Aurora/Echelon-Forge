@@ -15,9 +15,15 @@ namespace testing {
 class CudaResidentBackendTestAccess;
 }
 
-inline constexpr std::string_view kCudaResidentRb5BackendId = "cuda_resident.rb5_phase_a";
-inline constexpr std::string_view kCudaResidentRb6BackendId = "cuda_resident.rb6_phase_b";
-inline constexpr std::string_view kCudaResidentRb7BackendId = "cuda_resident.rb7_phase_d";
+inline constexpr std::string_view kCudaResidentControlPreparationBackendId =
+    // internal-code: compatibility -- backend identity emitted by stored snapshots
+    "cuda_resident.rb5_phase_a";
+inline constexpr std::string_view kCudaResidentFlightDynamicsBackendId =
+    // internal-code: compatibility -- backend identity emitted by stored snapshots
+    "cuda_resident.rb6_phase_b";
+inline constexpr std::string_view kCudaResidentObservationProjectionBackendId =
+    // internal-code: compatibility -- backend identity emitted by stored snapshots
+    "cuda_resident.rb7_phase_d";
 
 struct CudaResidentBarrierEvidence {
     std::string barrier_id;
@@ -37,7 +43,7 @@ struct CudaResidentWorldSnapshot {
     SnapshotIdentityContract identity{};
     CudaWorldKinematicsState kinematics{};
     CudaWorldDynamicsState dynamics{};
-    CudaWorldPhaseDState phase_d{};
+    CudaWorldObservationProjectionState observation_projection{};
     std::string source_barrier_id;
 };
 
@@ -47,8 +53,8 @@ struct CudaResidentExportSnapshot {
     CudaResidentBarrierEvidence barrier{};
 };
 
-// RB7 fixed-air Phase A/B/D shell. Phase-D values stay backend-private and are
-// exposed only through explicit host reconstruction or a lease-scoped device view.
+// The fixed-air resident shell keeps observation-projection values backend-private;
+// they are exposed only through explicit host reconstruction or a lease-scoped device view.
 class CudaResidentBackend final : public IWorldBatchBackend {
   public:
     CudaResidentBackend() = default;

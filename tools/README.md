@@ -114,6 +114,10 @@
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - Audits bilingual coverage and batch-translates Markdown doc peers with an OpenAI-compatible API.
+- [internal_code_governance](maintenance/internal_code_governance/)
+  - Audits added production and documentation lines for work-tracking codes or
+    opaque lettered-phase identifiers; CI blocks high-confidence source/runtime
+    violations while documentation findings remain warnings during remediation.
 - [damage_model.py](maintenance/damage_model.py)
   - Unified external signoff evidence CLI for source-rights signoff requests, intake contracts, packet templates, and admission preflight checks.
 - [damage_model.py](maintenance/damage_model.py)

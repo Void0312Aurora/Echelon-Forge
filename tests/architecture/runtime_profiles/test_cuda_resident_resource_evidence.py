@@ -198,7 +198,7 @@ def _write_nsys(
         connection.close()
 
 
-def test_cr2_5a_probe_has_one_bounded_profiler_window_and_cuda_only_target() -> None:
+def test_legacy_resource_probe_is_retired_after_semantic_kernel_migration() -> None:
     contract = CONTRACT.read_text(encoding="utf-8")
     probe = PROBE.read_text(encoding="utf-8")
     cmake = CMAKE.read_text(encoding="utf-8")
@@ -209,34 +209,35 @@ def test_cr2_5a_probe_has_one_bounded_profiler_window_and_cuda_only_target() -> 
     assert "kWorldCount = 256" in contract
     assert "kThreadsPerBlock = 128" in contract
     assert "kBlocks = 2" in contract
+    assert "kCaptureProbeV1Retired = true" in contract
+    assert "kCaptureProbeV1RetirementReason" in contract
     for spec in resource.KERNELS:
         assert f'{{"{spec.kernel_id}", "{spec.symbol_fragment}", {spec.launch_count}}}' in contract
     for index, (kernel_id, stage) in enumerate(resource.LAUNCH_SEQUENCE):
         assert f'{{{index}, "{kernel_id}", "{stage}"}}' in contract
-    assert probe.count("ProfilerRange capture") == 1
-    assert probe.index("backend.setup") < probe.index("ProfilerRange capture")
-    assert probe.index("query_kernel_resources") < probe.index("ProfilerRange capture")
-    captured = probe.split("ProfilerRange capture", 1)[1].split("capture.stop()", 1)[0]
-    operations = (
-        "backend.inject",
-        "backend.evaluate",
-        "backend.advance",
-        "backend.export_state",
-        "backend.acquire_device_observation_lease",
-        "consumer.submit",
-        "consumer.await",
-    )
-    for operation in operations:
-        assert operation in captured
-    assert [captured.index(operation) for operation in operations] == sorted(
-        captured.index(operation) for operation in operations
-    )
-    assert "materialize_for_diagnostics" not in probe
+    assert "static_assert(evidence::kCaptureProbeV1Retired);" in probe
+    assert "kCaptureProbeV1RetirementReason" in probe
+    assert "return EXIT_FAILURE;" in probe
+    for stale_capture_symbol in (
+        "ProfilerRange",
+        "query_kernel_resources",
+        "backend.setup",
+        "write_report",
+        "runtime_kernel_resources",
+    ):
+        assert stale_capture_symbol not in probe
     target_index = cmake.index("add_executable(ef_cuda_resident_resource_probe")
     assert cmake.rfind("if (EF_ENABLE_CUDA_EXPERIMENTS)", 0, target_index) >= 0
     assert cmake.find("else()", target_index) > target_index
     target = cmake[target_index : cmake.index("else()", target_index)]
-    assert "ef_cuda_resident_backend" in target
+    assert "A future capture must introduce a versioned kernel" in cmake
+    for obsolete_capture_dependency in (
+        "cuda_resident_replay_harness.cpp",
+        "ef_cuda_resident_backend",
+        "nlohmann_json::nlohmann_json",
+        "EF_CR2_RESOURCE_BUILD_CONFIG",
+    ):
+        assert obsolete_capture_dependency not in target
 
 
 def test_cr2_5a_evidence_records_static_resources_without_counter_or_tuning_claims() -> None:

@@ -215,6 +215,9 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
 - 标准变更若登记、刷新、保持 held 或退役实现合同，必须遵循
   [标准维护政策](governance/standards_maintenance_policy.zh.md)。
+- 项目内部任务代号与实现阶段别名必须遵循
+  [内部代号命名规范](governance/internal_code_policy.zh.md)；稳定接口和运行时诊断应以
+  语义能力名称为主。
 - 文档类型、生命周期、README 边界、evidence 包、generated 输出、config 索引、
   链接和 archive 转换必须遵循
   [文档生命周期规范](governance/document_lifecycle_policy.zh.md)。
@@ -231,6 +234,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - [双语文档簇](governance/bilingual_document_clusters.zh.md)
 - [文档生命周期规范](governance/document_lifecycle_policy.zh.md)
 - [标准维护政策](governance/standards_maintenance_policy.zh.md)
+- [内部代号命名规范](governance/internal_code_policy.zh.md)
 - [发布与依赖政策](governance/release_and_dependency_policy.zh.md)
 - [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
 - [WP Closure Lane Policy](governance/wp_closure_lane_policy.zh.md)

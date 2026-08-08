@@ -34,10 +34,10 @@ inline constexpr std::size_t kControlFlagFieldCount = 3;
 inline constexpr std::size_t kPreparedDoubleFieldCount = 4;
 inline constexpr std::size_t kPreparedFlagFieldCount = 2;
 inline constexpr std::size_t kDynamicsDoubleFieldCount = 20;
-inline constexpr std::size_t kPhaseBForceFieldCount = 6;
-inline constexpr std::size_t kPhaseDInstrumentFieldCount = 23;
-inline constexpr std::size_t kPhaseDObservationFieldCount = 15;
-inline constexpr std::size_t kPhaseDRewardFieldCount = 3;
+inline constexpr std::size_t kFlightDynamicsForceFieldCount = 6;
+inline constexpr std::size_t kObservationProjectionInstrumentFieldCount = 23;
+inline constexpr std::size_t kObservationProjectionObservationFieldCount = 15;
+inline constexpr std::size_t kObservationProjectionRewardFieldCount = 3;
 
 struct CudaWorldStateSlotLayout {
     std::size_t setup_complete = 0;
@@ -46,21 +46,21 @@ struct CudaWorldStateSlotLayout {
     std::size_t time_steps = 0;
     std::size_t kinematics = 0;
     std::size_t dynamics = 0;
-    std::size_t phase_b_forces = 0;
-    std::size_t phase_d_instruments = 0;
-    std::size_t phase_d_observations = 0;
-    std::size_t phase_d_observation_ids = 0;
-    std::size_t phase_d_rewards = 0;
-    std::size_t phase_d_reward_versions = 0;
-    std::size_t phase_d_termination_flags = 0;
-    std::size_t phase_d_termination_codes = 0;
-    std::size_t phase_d_event_empty = 0;
+    std::size_t flight_dynamics_forces = 0;
+    std::size_t projected_instruments = 0;
+    std::size_t projected_observations = 0;
+    std::size_t projected_observation_ids = 0;
+    std::size_t projected_rewards = 0;
+    std::size_t projected_reward_versions = 0;
+    std::size_t projected_termination_flags = 0;
+    std::size_t projected_termination_codes = 0;
+    std::size_t projected_event_empty = 0;
     std::size_t control_doubles = 0;
     std::size_t control_floats = 0;
     std::size_t control_flags = 0;
     std::size_t prepared_doubles = 0;
     std::size_t prepared_flags = 0;
-    std::size_t phase_versions = 0;
+    std::size_t prepared_control_versions = 0;
     std::size_t clock_ticks = 0;
     std::size_t simulation_times = 0;
     std::size_t global_versions = 0;
@@ -70,7 +70,7 @@ struct CudaWorldStateSlotLayout {
     std::size_t slot_bytes = 0;
 };
 
-enum PhaseBDynamicsField : std::size_t {
+enum FlightDynamicsStateField : std::size_t {
     kDynP = 0,
     kDynQ,
     kDynR,
@@ -93,7 +93,7 @@ enum PhaseBDynamicsField : std::size_t {
     kDynGearExtension,
 };
 
-enum PhaseBForceField : std::size_t {
+enum FlightDynamicsForceField : std::size_t {
     kForceX = 0,
     kForceY,
     kForceZ,
@@ -102,7 +102,7 @@ enum PhaseBForceField : std::size_t {
     kTorqueYaw,
 };
 
-enum PhaseDInstrumentField : std::size_t {
+enum ObservationProjectionInstrumentField : std::size_t {
     kInstAltBaro = 0,
     kInstAltRadar,
     kInstIas,
@@ -128,7 +128,7 @@ enum PhaseDInstrumentField : std::size_t {
     kInstSpeedbrake,
 };
 
-enum PhaseDObservationField : std::size_t {
+enum ObservationProjectionObservationField : std::size_t {
     kObsSimTime = 0,
     kObsX,
     kObsY,
@@ -146,7 +146,7 @@ enum PhaseDObservationField : std::size_t {
     kObsTotalReward,
 };
 
-enum PhaseDRewardField : std::size_t {
+enum ObservationProjectionRewardField : std::size_t {
     kRewardSurvival = 0,
     kRewardSpeed,
     kRewardTotal,
@@ -192,8 +192,7 @@ inline std::vector<HostStateBlock> make_host_slot(std::size_t slot_bytes) {
                                        sizeof(HostStateBlock));
 }
 
-template <typename T>
-inline T *device_field(std::uint8_t *slot_base, std::size_t offset) noexcept {
+template <typename T> inline T *device_field(std::uint8_t *slot_base, std::size_t offset) noexcept {
     return reinterpret_cast<T *>(slot_base + offset);
 }
 
@@ -210,37 +209,38 @@ __device__ inline bool increment_would_overflow(std::uint64_t value) {
                                       CudaWorldStateSlotLayout *layout) noexcept;
 
 [[nodiscard]] bool finalize_staged_barrier(CudaWorldStoreDeviceAllocation *allocation,
-                                           std::uint8_t next_slot,
-                                           CudaResidentBarrierCode barrier,
+                                           std::uint8_t next_slot, CudaResidentBarrierCode barrier,
                                            CudaWorldStoreDeviceFaultInjection *faults,
                                            std::string *error);
 [[nodiscard]] bool commit_barrier(CudaWorldStoreDeviceAllocation *allocation,
                                   CudaResidentBarrierCode barrier,
-                                  CudaWorldStoreDeviceFaultInjection *faults,
-                                  std::string *error);
-[[nodiscard]] bool commit_phase_a_stage(CudaWorldStoreDeviceAllocation *allocation,
-                                        CudaWorldStoreDeviceFaultInjection *faults,
-                                        std::string *error);
-[[nodiscard]] bool commit_phase_b_window(CudaWorldStoreDeviceAllocation *allocation,
-                                         CudaWorldStoreDeviceFaultInjection *faults,
-                                         std::string *error);
+                                  CudaWorldStoreDeviceFaultInjection *faults, std::string *error);
+[[nodiscard]] bool commit_control_preparation_stage(CudaWorldStoreDeviceAllocation *allocation,
+                                                    CudaWorldStoreDeviceFaultInjection *faults,
+                                                    std::string *error);
+[[nodiscard]] bool commit_flight_dynamics_window(CudaWorldStoreDeviceAllocation *allocation,
+                                                 CudaWorldStoreDeviceFaultInjection *faults,
+                                                 std::string *error);
 
-[[nodiscard]] cudaError_t launch_phase_b_forces(CudaWorldStoreDeviceAllocation *allocation,
-                                                std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t launch_phase_b_aerodynamics(
-    CudaWorldStoreDeviceAllocation *allocation, std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t launch_phase_b_integrate(CudaWorldStoreDeviceAllocation *allocation,
-                                                   std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t launch_phase_d_instruments(
-    CudaWorldStoreDeviceAllocation *allocation, std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t launch_phase_d_configuration(
-    CudaWorldStoreDeviceAllocation *allocation, std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t launch_phase_d_episode(CudaWorldStoreDeviceAllocation *allocation,
-                                                 std::uint8_t slot) noexcept;
+[[nodiscard]] cudaError_t launch_flight_dynamics_forces(CudaWorldStoreDeviceAllocation *allocation,
+                                                        std::uint8_t slot) noexcept;
+[[nodiscard]] cudaError_t
+launch_flight_dynamics_aerodynamics(CudaWorldStoreDeviceAllocation *allocation,
+                                    std::uint8_t slot) noexcept;
+[[nodiscard]] cudaError_t
+launch_flight_dynamics_integrate(CudaWorldStoreDeviceAllocation *allocation,
+                                 std::uint8_t slot) noexcept;
+[[nodiscard]] cudaError_t launch_instrument_projection(CudaWorldStoreDeviceAllocation *allocation,
+                                                       std::uint8_t slot) noexcept;
+[[nodiscard]] cudaError_t
+launch_configuration_projection(CudaWorldStoreDeviceAllocation *allocation,
+                                std::uint8_t slot) noexcept;
+[[nodiscard]] cudaError_t launch_episode_projection(CudaWorldStoreDeviceAllocation *allocation,
+                                                    std::uint8_t slot) noexcept;
 
 template <typename Kernel>
-bool query_phase_b_kernel_resources(Kernel kernel, const char *name,
-                                    CudaBarrierKernelResources *resources, std::string *error) {
+bool query_cuda_kernel_resources(Kernel kernel, const char *name,
+                                 CudaBarrierKernelResources *resources, std::string *error) {
     if (resources == nullptr) {
         if (error != nullptr)
             *error = std::string("CUDA ") + name + " resource query requires an output";
@@ -257,7 +257,8 @@ bool query_phase_b_kernel_resources(Kernel kernel, const char *name,
     status =
         cudaOccupancyMaxActiveBlocksPerMultiprocessor(&active_blocks, kernel, threads_per_block, 0);
     if (status != cudaSuccess) {
-        if (error != nullptr) *error = cuda_error_message("query Phase B active blocks", status);
+        if (error != nullptr)
+            *error = cuda_error_message("query flight dynamics active blocks", status);
         return false;
     }
     int device = 0;
@@ -267,9 +268,10 @@ bool query_phase_b_kernel_resources(Kernel kernel, const char *name,
     if (status != cudaSuccess || properties.warpSize <= 0 ||
         properties.maxThreadsPerMultiProcessor <= 0) {
         if (error != nullptr) {
-            *error = status == cudaSuccess
-                         ? "CUDA device returned invalid Phase B occupancy properties"
-                         : cuda_error_message("query CUDA Phase B occupancy properties", status);
+            *error =
+                status == cudaSuccess
+                    ? "CUDA device returned invalid flight dynamics occupancy properties"
+                    : cuda_error_message("query CUDA flight dynamics occupancy properties", status);
         }
         return false;
     }

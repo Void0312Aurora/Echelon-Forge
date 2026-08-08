@@ -493,7 +493,7 @@ void bind_runtime(nb::module_ &m) {
     batch_world_setup_request_class.def_rw(#name, &BatchWorldSetupRequest::name);
 #include "runtime/facade/detail/batch_world_setup_request.inc"
 
-    // NOTE(I26): the header field order (schema-owned, ABI/aggregate-init
+    // Field-order note: the header field order (schema-owned, ABI/aggregate-init
     // order) declares setup_surface before rejection_reason, but this
     // binding has long registered rejection_reason first. That pre-existing
     // divergence is preserved here (parity baseline) instead of being
@@ -800,12 +800,13 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("officer_in_tactical_command",
                 &PilotReportNaval::CommandAuthorityDirective::officer_in_tactical_command);
 
-    // NOTE(I35): MissionCommandMaintainedBatchContract/TaskOrderMaintainedBatchContract/
+    // Binding-coverage note: MissionCommandMaintainedBatchContract/
+    // TaskOrderMaintainedBatchContract/
     // LeaderIntentMaintainedBatchContract/PilotReportMaintainedBatchContract header
     // field blocks are schema-owned (tools/maintenance/dto_schema), but each of these
     // four bindings has long registered every field except its own trailing
     // ground_static_task/ground_static_status field (a pre-existing binding-surface
-    // omission; TaskOrder's slice stays reachable through the
+    // omission; TaskOrder's omitted field stays reachable through the
     // task_order_maintained_ground_static_task free function). That never-bound
     // field is preserved here as-is (parity baseline) instead of being
     // macro-expanded from the same X-macro as the header block.
@@ -880,7 +881,7 @@ void bind_runtime(nb::module_ &m) {
     runtime_experiment_result_class.def_rw(#name, &RuntimeExperimentResult::name);
 #include "runtime/facade/detail/runtime_experiment_result.inc"
 
-    // NOTE(I26): RuntimeWindowActionRequest is not schema-generated. Its
+    // Schema-ownership note: RuntimeWindowActionRequest is not schema-generated. Its
     // header field list (runtime_facade_types.h) is ABI-ordered as
     // action_intent, source_layer, input_snapshot_version,
     // clock_domain_metadata, cadence_control -- but clock_domain_metadata
@@ -888,8 +889,8 @@ void bind_runtime(nb::module_ &m) {
     // this binding's registration order/coverage already diverges from
     // that ABI order (cadence_control before source_layer/
     // input_snapshot_version; clock_domain_metadata omitted). Left
-    // hand-written and skipped from schema ownership; see the I26
-    // sub-family report for the recorded skip rationale. Its nested
+    // hand-written and skipped from schema ownership; see the binding-schema
+    // audit for the recorded skip rationale. Its nested
     // CadenceControl type is independently schema-owned below.
     nb::class_<RuntimeWindowActionRequest>(m, "RuntimeWindowActionRequest")
         .def(nb::init<>())
@@ -926,14 +927,14 @@ void bind_runtime(nb::module_ &m) {
     runtime_window_visibility_record_class.def_rw(#name, &RuntimeWindowVisibilityRecord::name);
 #include "runtime/facade/detail/runtime_window_visibility_record.inc"
 
-    // NOTE(I26): the RuntimeWindowNodeExecutionRecord/CadenceControl/
+    // Binding-order note: the RuntimeWindowNodeExecutionRecord/CadenceControl/
     // Cadence/CadenceConfig/CadenceTraceRecord/Request/Result bindings
     // below have long registered properties out of the header's ABI
     // declaration order (several alphabetically); left hand-written and
     // skipped from binding-side schema ownership so registration order/
     // dir() sequence stays byte-for-byte unchanged. Each struct's C++
     // field list is still schema-owned on the header side (see
-    // runtime_facade_types.h); see the I26 sub-family report for the
+    // runtime_facade_types.h); see the binding-schema audit for the
     // recorded partial-coverage rationale.
     nb::class_<RuntimeWindowNodeExecutionRecord>(m, "RuntimeWindowNodeExecutionRecord")
         .def(nb::init<>())
@@ -1020,9 +1021,9 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("engagement_packet", &RuntimeWindowResult::engagement_packet)
         .def_rw("diagnostics_traces", &RuntimeWindowResult::diagnostics_traces);
 
-    // T10 evidence spine, slice 5: additive read surface for the WP15 replay
-    // contract types plus the fail-closed validator, so the maintained Python
-    // run can validate the envelope its own window products assembled
+    // Additive read surface for the replay contract types plus the fail-closed
+    // validator, allowing the maintained Python run to validate the envelope
+    // assembled from its own window products
     // (RuntimeFacade::build_maintained_replay_envelope). Nothing on an
     // existing path constructs or consumes these bindings.
     nb::class_<runtime::counterfactual::ReplaySnapshotRef>(m, "ReplaySnapshotRef")
@@ -1092,11 +1093,11 @@ void bind_runtime(nb::module_ &m) {
     m.def("validate_replay_envelope", &runtime::counterfactual::validate_replay_envelope,
           nb::arg("envelope"));
 
-    // T10 evidence spine, slice 6A (this iteration): additive read surface for
-    // the maintained engagement-packet ancestry producer
+    // Additive read surface for the maintained engagement-packet ancestry
+    // producer.
     // (RuntimeFacade::build_maintained_packet_ancestry). Nothing on an existing
     // path constructs or consumes these bindings. The typed lineage ref reuses
-    // the shared VA-5/VA-6 vocabulary (ref_id / evidence_kind /
+    // the shared typed-lineage vocabulary (ref_id / evidence_kind /
     // provenance_label) already owned by the C++ contract type.
     nb::class_<runtime::counterfactual::ScenarioGenerationEvidenceMetadataRef>(
         m, "ScenarioGenerationEvidenceMetadataRef")
@@ -1128,8 +1129,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("errors", &MaintainedPacketAncestryResult::errors)
         .def_rw("evidence_refs", &MaintainedPacketAncestryResult::evidence_refs);
 
-    // T10 evidence spine, slice 7 (this iteration): additive read surface for
-    // the maintained worldline/counterfactual comparison producer
+    // Additive read surface for the maintained worldline/counterfactual
+    // comparison producer
     // (RuntimeFacade::build_maintained_worldline_comparison). Nothing on an
     // existing path constructs or consumes these bindings. The DTO carries
     // evidence ids only (no truth-state copies -- the no-truth-promotion red
@@ -1490,45 +1491,44 @@ void bind_runtime(nb::module_ &m) {
         .def("export_diagnostics_traces", &RuntimeFacade::export_diagnostics_traces,
              nb::arg("request"))
         .def("run_window", &RuntimeFacade::run_window, nb::arg("request"))
-        // T10 evidence spine, slice 3 / I54: new additive run-global producers
-        // (VA-2 snapshot version, VA-8 trace-id allocator). Not wired into any
-        // existing export path in this slice.
+        // Additive run-global snapshot-version and trace-id producers. They are
+        // not wired into any existing export path without explicit opt-in.
         .def("allocate_run_snapshot_version", &RuntimeFacade::allocate_run_snapshot_version)
         .def("peek_next_run_snapshot_version", &RuntimeFacade::peek_next_run_snapshot_version)
         .def("allocate_trace_id", &RuntimeFacade::allocate_trace_id)
         .def("peek_next_trace_id", &RuntimeFacade::peek_next_trace_id)
-        // T8 information-state architecture, slice 4 / I60: additive read-only
-        // declaration export of the maintained observation view at the TL13 seam.
+        // Additive read-only declaration export of the maintained observation
+        // view.
         // Not wired into any existing export path; gated against the Python
-        // registry by the G4 export-parity architecture test.
+        // registry by the export-parity architecture test.
         .def("describe_maintained_observation_view",
              &RuntimeFacade::describe_maintained_observation_view)
-        // T10 evidence spine, slice 5: additive read-only maintained-run
-        // replay-envelope producer. Not wired into any existing path; only
-        // meaningful against window evidence stamped by the I59 opt-in
+        // Additive read-only maintained-run replay-envelope producer. Not wired
+        // into any existing path; only meaningful against window evidence
+        // stamped by the facade-evidence opt-in
         // (use_facade_evidence_producers=True) adapter path. See the
         // declaration comment in runtime_facade.h for the field sources, the
         // "replay:maintained:*" id namespace, and the opt-in
-        // `run_snapshot_version` VA-2 qualification (default 0 = off, keeping
+        // `run_snapshot_version` qualification (default 0 = off, keeping
         // the packet's per-export provenance string byte-identical).
         .def("build_maintained_replay_envelope", &RuntimeFacade::build_maintained_replay_envelope,
              nb::arg("window_result"), nb::arg("run_id"), nb::arg("episode_id"),
              nb::arg("deterministic_seed"), nb::arg("run_snapshot_version") = 0)
-        // T10 evidence spine, slice 6A (this iteration): additive read-only
-        // maintained engagement-packet ancestry producer. Not wired into any
-        // existing path; only meaningful against window evidence stamped by
-        // the I59 opt-in (use_facade_evidence_producers=True) adapter path.
+        // Additive read-only maintained engagement-packet ancestry producer. It
+        // is not wired into any existing path and is only meaningful against
+        // window evidence stamped by the facade-evidence opt-in
+        // (use_facade_evidence_producers=True) adapter path.
         // See the declaration comment in runtime_facade.h for the gate order,
         // the "ancestry:maintained:*" id namespace, and the root semantics of
         // parent_trace_id = 0 (default = no parent linkage, keeping every
-        // trace copy's parent_trace_id at the pre-slice default 0).
+        // trace copy's parent_trace_id at the existing default 0).
         .def("build_maintained_packet_ancestry", &RuntimeFacade::build_maintained_packet_ancestry,
              nb::arg("window_result"), nb::arg("run_id"), nb::arg("episode_id"),
              nb::arg("deterministic_seed"), nb::arg("parent_trace_id") = 0)
-        // T10 evidence spine, slice 7 (this iteration): additive read-only
-        // maintained worldline/counterfactual comparison producer. Not wired
-        // into any existing path; only meaningful against window evidence
-        // stamped by the I59 opt-in (use_facade_evidence_producers=True)
+        // Additive read-only maintained worldline/counterfactual comparison
+        // producer. It is not wired into any existing path and is only
+        // meaningful against window evidence
+        // stamped by the facade-evidence opt-in (use_facade_evidence_producers=True)
         // adapter path. See the declaration comment in runtime_facade.h for
         // the gate order, the "comparison:maintained:*" /
         // "worldline:maintained:*" id namespaces, and the no-truth-promotion

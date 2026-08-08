@@ -262,11 +262,11 @@ inline constexpr bool partition_is_complete() {
 }
 
 static_assert(partition_is_complete(),
-              "CR2-4b raw DTO fields must have exactly one release disposition");
+              "CUDA-resident raw DTO fields must have exactly one release disposition");
 static_assert(kRawObservationFields.size() + kRawInstrumentFields.size() ==
                   kReleasedNumericFields.size() + kIdentityDiagnosticFields.size() +
                       kExcludedFields.size(),
-              "CR2-4b release disposition must not add duplicate or unknown fields");
+              "CUDA-resident release disposition must not add duplicate or unknown fields");
 
 inline constexpr bool kCandidatePromotionBlocked = true;
 inline constexpr bool kMaintainedClaimAllowed = false;

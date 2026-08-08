@@ -13,6 +13,7 @@
 
 ## 项目实现审查
 
+- [内部代号残余审计 2026-08-07](internal_code_residual_audit_20260807.zh.md)：生产源码实测基线、保留证据边界与阻止增长规则。([English](internal_code_residual_audit_20260807.md))
 - [项目实现审查与行动评价 2026-06-01](project_implementation_review_20260601.zh.md)
 - [文档系统就绪度审查 2026-06-01](documentation_system_readiness_review_20260601.zh.md) ([English](documentation_system_readiness_review_20260601.md))
 - [Engineering Governance P0](engineering_governance_p0/README.zh.md)：active remediation slice，用于 CI lint gate、smoke dependency constraints、C++ warning policy 和版本号对齐。

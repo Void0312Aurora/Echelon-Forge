@@ -13,6 +13,7 @@
     "implementation_and_test_roots": [
       "src/runtime/facade/internal/cuda_resident",
       "src/runtime/contracts/cuda_resident*",
+      "src/runtime/contracts/parity_budget*",
       "src/tools/experimental/cuda_resident",
       "src/tests/test_cuda_resident*",
       "tests/architecture/runtime_profiles/test_cuda_resident*",
@@ -57,17 +58,17 @@
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh",
       "role": "shared_cuda_resident_layout_and_host_wrapper_contract",
-      "observed_lines": 291
+      "observed_lines": 293
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_math.cuh",
       "role": "shared_device_math_helpers",
-      "observed_lines": 139
+      "observed_lines": 143
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu",
       "role": "allocation_layout_metadata_and_fixture_storage",
-      "observed_lines": 547
+      "observed_lines": 558
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu",
@@ -75,34 +76,34 @@
       "observed_lines": 264
     },
     {
-      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_a.cu",
-      "role": "phase_a_kernel_and_stage_publication",
-      "observed_lines": 204
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_control_preparation.cu",
+      "role": "control_preparation_kernel_and_stage_publication",
+      "observed_lines": 207
     },
     {
-      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_b.cu",
-      "role": "phase_b_kernels_and_launch_wrappers",
-      "observed_lines": 497
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_flight_dynamics.cu",
+      "role": "flight_dynamics_kernels_and_launch_wrappers",
+      "observed_lines": 518
     },
     {
-      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_phase_d.cu",
-      "role": "phase_d_kernels_and_launch_wrappers",
-      "observed_lines": 231
+      "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation_projection.cu",
+      "role": "observation_projection_kernels_and_launch_wrappers",
+      "observed_lines": 239
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu",
       "role": "phase_d_observation_pack_and_consumer",
-      "observed_lines": 441
+      "observed_lines": 439
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu",
       "role": "host_state_readback",
-      "observed_lines": 271
+      "observed_lines": 273
     },
     {
       "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu",
       "role": "private_phase_window_orchestration",
-      "observed_lines": 69
+      "observed_lines": 72
     },
     {
       "path": "src/tests/test_cuda_resident_replay.cpp",
@@ -112,7 +113,7 @@
     {
       "path": "src/tests/test_cuda_resident_replay_projection.cpp",
       "role": "RB8 fixture projection and frame construction support",
-      "observed_lines": 605
+      "observed_lines": 612
     },
     {
       "path": "src/tests/test_cuda_resident_replay_support.cpp",
@@ -128,6 +129,31 @@
       "path": "src/runtime/contracts/cuda_resident_parity_release_contract.h",
       "role": "CR2-4b selected payload field partition and release policy",
       "observed_lines": 276
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_contracts.h",
+      "role": "parity budget compatibility include surface",
+      "observed_lines": 6
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_types.h",
+      "role": "parity budget constants, value types, and common helpers",
+      "observed_lines": 221
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_selected_slice.h",
+      "role": "resident selected-slice fields, barriers, and contract validation",
+      "observed_lines": 572
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_profiles.h",
+      "role": "profile-owned parity budget record definitions",
+      "observed_lines": 521
+    },
+    {
+      "path": "src/runtime/contracts/parity_budget_registry.h",
+      "role": "parity budget registry lookup and validation",
+      "observed_lines": 115
     },
     {
       "path": "src/runtime/contracts/cuda_resident_full_window_contract.h",
@@ -147,7 +173,7 @@
     {
       "path": "src/tests/test_cuda_resident_full_window.cpp",
       "role": "full-window frame identity and release contract conformance tests",
-      "observed_lines": 393
+      "observed_lines": 394
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_parity_compare.py",
@@ -161,13 +187,13 @@
     },
     {
       "path": "src/runtime/contracts/cuda_resident_resource_evidence_contract.h",
-      "role": "CR2-5a kernel catalog, launch topology, and capture boundary contract",
-      "observed_lines": 90
+      "role": "frozen kernel catalog, launch topology, and capture retirement contract",
+      "observed_lines": 93
     },
     {
       "path": "src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp",
-      "role": "single-window CUDA profiler capture and runtime resource probe",
-      "observed_lines": 340
+      "role": "fail-closed retirement stub for the legacy resource capture schema",
+      "observed_lines": 18
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_evidence.py",
@@ -191,8 +217,8 @@
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
-      "role": "CR2-5a evidence, fail-closed parser, and topology guards",
-      "observed_lines": 432
+      "role": "resource evidence, retired-capture, fail-closed parser, and topology guards",
+      "observed_lines": 433
     },
     {
       "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",

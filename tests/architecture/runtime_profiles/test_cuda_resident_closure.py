@@ -146,6 +146,6 @@ def test_rb11_closure_has_bilingual_links_and_byte_stable_json_guards() -> None:
         assert "e5ea624fc1688d6e9d8b00ae64670ddcc2e3bd02" in text
     assert "cuda_resident_rb11_closure_20260731.md" in english_index
     assert "cuda_resident_rb11_closure_20260731.zh.md" in chinese_index
-    assert "RB0-RB11 closed without promotion" in parent_english
-    assert "RB0-RB11 无晋级关闭" in parent_chinese
+    assert "Independent-backend program closed without promotion" in parent_english
+    assert "独立后端计划无晋级关闭" in parent_chinese
     assert closure["validation"]["final_independent_review_required"] is True

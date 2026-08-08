@@ -4,19 +4,19 @@ from tests.architecture.helpers import REPO_ROOT
 
 
 CUDA_RESIDENT_DIR = REPO_ROOT / "src/runtime/facade/internal/cuda_resident"
-CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
-DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_phase_d.cu"
+CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
+DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_observation_projection.cu"
 OBSERVATION_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_observation.cu"
 WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
 STORE_HEADER = CUDA_RESIDENT_DIR / "cuda_world_store.h"
 BACKEND_HEADER = CUDA_RESIDENT_DIR / "cuda_resident_backend.h"
 BACKEND_SOURCE = CUDA_RESIDENT_DIR / "cuda_resident_backend.cpp"
-CUDA_TEST = REPO_ROOT / "src/tests/test_cuda_resident_phase_d.cpp"
-CPU_TEST = REPO_ROOT / "src/tests/test_cuda_resident_phase_d_cpu_reference.cpp"
+CUDA_TEST = REPO_ROOT / "src/tests/test_cuda_resident_observation_projection.cpp"
+CPU_TEST = REPO_ROOT / "src/tests/test_cuda_resident_observation_projection_cpu_reference.cpp"
 FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
 
 
-def test_rb7_phase_d_contract_and_split_kernels_are_present() -> None:
+def test_rb7_observation_projection_contract_and_split_kernels_are_present() -> None:
   contract = CONTRACT.read_text(encoding="utf-8")
   device = "\n".join(
     (
@@ -34,21 +34,21 @@ def test_rb7_phase_d_contract_and_split_kernels_are_present() -> None:
   assert "struct CudaWorldRewardState" in store
   assert "CudaWorldTerminationState" in store
   for kernel in (
-    "phase_d_instruments_kernel",
-    "phase_d_configuration_kernel",
-    "phase_d_episode_kernel",
-    "phase_d_pack_observation_kernel",
+    "instrument_projection_kernel",
+    "configuration_projection_kernel",
+    "episode_projection_kernel",
+    "pack_device_observation_kernel",
   ):
     assert kernel in device
 
   window = WINDOW_SOURCE.read_text(encoding="utf-8")
   for launch in (
-    "launch_phase_b_forces",
-    "launch_phase_b_aerodynamics",
-    "launch_phase_b_integrate",
-    "launch_phase_d_instruments",
-    "launch_phase_d_configuration",
-    "launch_phase_d_episode",
+    "launch_flight_dynamics_forces",
+    "launch_flight_dynamics_aerodynamics",
+    "launch_flight_dynamics_integrate",
+    "launch_instrument_projection",
+    "launch_configuration_projection",
+    "launch_episode_projection",
   ):
     assert launch in window
   sync = window.index("cudaDeviceSynchronize()")
@@ -63,11 +63,11 @@ def test_rb7_cpu_and_cuda_projection_oracles_are_separate() -> None:
   assert "WorldBatchRuntime" not in cpu
   assert "flecs" not in cpu.lower()
   assert "CudaResidentBackend" in cuda
-  assert "phase_d_projection_kernel_resources" in cuda
-  assert "phase_d_instruments_kernel_resources" in cuda
-  assert "phase_d_configuration_kernel_resources" in cuda
+  assert "observation_projection_kernel_resources" in cuda
+  assert "instrument_projection_kernel_resources" in cuda
+  assert "configuration_projection_kernel_resources" in cuda
   assert "consume_device_observation_view" in cuda
-  assert "kPhaseDSurvivalReward" in cuda
+  assert "kObservationProjectionSurvivalReward" in cuda
 
 
 def test_rb7_device_view_is_explicitly_lease_scoped_and_private() -> None:
@@ -78,7 +78,7 @@ def test_rb7_device_view_is_explicitly_lease_scoped_and_private() -> None:
   assert "std::shared_ptr<void> lifetime" in (STORE_HEADER.read_text(encoding="utf-8"))
   assert "ownership_copy_d2d" in backend
   assert "not_zero_copy" in backend
-  assert "kCudaResidentRb7BackendId" in backend
+  assert "kCudaResidentObservationProjectionBackendId" in backend
   assert "WorldBatchRuntime" not in backend
   assert "FlecsCpuBackend" not in backend
   assert ".compiled_experimental_backend = false" in facade

@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
-#include "runtime/contracts/cuda_resident_phase_b_fixture_contract.h"
-#include "runtime/contracts/cuda_resident_phase_d_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_flight_dynamics_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 #include "runtime/contracts/cuda_resident_device_consumer_contract.h"
 
 namespace runtime::cuda_resident {
@@ -90,7 +90,7 @@ struct CudaWorldPreparedControls {
     double stick_yaw_cmd = 0.0;
     bool valid = false;
     bool manual_takeover = false;
-    std::uint64_t phase_version = 0;
+    std::uint64_t control_version = 0;
 };
 
 struct CudaWorldDynamicsState {
@@ -119,7 +119,7 @@ struct CudaWorldDynamicsState {
     double gear_extension = 1.0;
 };
 
-// RB7 keeps the Phase-D projection in backend-private value types. The public
+// The observation projection stays in backend-private value types. The public
 // InstrumentState/AgentObservation/RewardReport DTOs remain facade surfaces and
 // are not copied into the resident device layout.
 struct CudaWorldInstrumentState {
@@ -187,7 +187,7 @@ struct CudaWorldTerminationState {
     std::uint64_t snapshot_version = 0;
 };
 
-struct CudaWorldPhaseDState {
+struct CudaWorldObservationProjectionState {
     CudaWorldInstrumentState instrument{};
     CudaWorldObservationState observation{};
     CudaWorldRewardState reward{};
@@ -225,7 +225,7 @@ struct CudaResidentDeviceObservationDescriptor {
     std::uint64_t source_snapshot = 0;
     std::string sync_or_export_barrier = "export";
     std::string host_visible_availability = "host_snapshot_available";
-    std::string diagnostics_label = "resident_phase_d";
+    std::string diagnostics_label = "resident_observation_projection";
     std::vector<std::string> consumer_constraints;
 };
 
@@ -254,7 +254,7 @@ struct CudaWorldResidentState {
     double time_step_s = 0.0;
     CudaWorldKinematicsState kinematics{};
     CudaWorldDynamicsState dynamics{};
-    CudaWorldPhaseDState phase_d{};
+    CudaWorldObservationProjectionState observation_projection{};
     CudaWorldFlightControls controls{};
     CudaWorldPreparedControls prepared_controls{};
     std::uint64_t clock_tick = 0;
@@ -339,15 +339,15 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaWorldStoreLifecycleSnapshot readback(const CudaWorldStore &store);
     [[nodiscard]] static CudaWorldStoreStateSnapshot read_state(const CudaWorldStore &store);
     [[nodiscard]] static CudaBarrierKernelResources barrier_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_a_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_b_forces_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_b_aerodynamics_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_b_integrate_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_d_instruments_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_d_configuration_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_d_projection_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_d_pack_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources phase_d_consumer_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources control_preparation_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources flight_dynamics_forces_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources flight_dynamics_aerodynamics_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources flight_dynamics_integrate_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources instrument_projection_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources configuration_projection_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources observation_projection_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources device_observation_pack_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources device_observation_consumer_kernel_resources();
     [[nodiscard]] static bool
     consume_device_observation_view(const CudaResidentDeviceObservationView &view,
                                     std::vector<float> *first_values,

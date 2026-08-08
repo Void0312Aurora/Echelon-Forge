@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "runtime/contracts/cuda_resident_fixed_air_fixture_contract.h"
-#include "runtime/contracts/cuda_resident_phase_a_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_control_preparation_fixture_contract.h"
 
 namespace {
 
@@ -20,7 +20,7 @@ std::vector<WorldSpawnRequest> make_spawns() {
         WorldSpawnRequest spawn{};
         spawn.world_index = world;
         spawn.type_name = std::string(runtime::cuda_resident::kFixedAirFixtureTypeName);
-        spawn.entity_name = "RB5CpuPhaseA" + std::to_string(world);
+        spawn.entity_name = "CpuControlPreparation" + std::to_string(world);
         spawn.is_agent = true;
         spawn.x = 1000.0 + static_cast<double>(world) * 100.0;
         spawn.z = 1500.0;
@@ -33,7 +33,8 @@ std::vector<WorldSpawnRequest> make_spawns() {
 
 std::vector<WorldPilotActionAssignment>
 make_actions(const std::vector<std::uint64_t> &entity_ids,
-             const std::array<runtime::cuda_resident::CudaResidentPhaseAFixtureInput, 2> &inputs) {
+             const std::array<runtime::cuda_resident::CudaResidentControlPreparationFixtureInput, 2>
+                 &inputs) {
     std::vector<WorldPilotActionAssignment> actions;
     actions.reserve(entity_ids.size());
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
@@ -51,7 +52,8 @@ make_actions(const std::vector<std::uint64_t> &entity_ids,
 
 void check_control_law_state(
     const WorldBatchRuntime &runtime, const std::vector<std::uint64_t> &entity_ids,
-    const std::array<runtime::cuda_resident::CudaResidentPhaseAFixtureExpected, 2> &expected) {
+    const std::array<runtime::cuda_resident::CudaResidentControlPreparationFixtureExpected, 2>
+        &expected) {
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
         const auto &kernel = runtime.world_raw_quarantine(world);
         const auto entity = kernel.get_world().entity(entity_ids[world]);
@@ -70,28 +72,30 @@ void check_control_law_state(
 
 } // namespace
 
-TEST_CASE("RB5 CPU reference pins the direct-pilot Phase A stage trace") {
+TEST_CASE("CPU reference pins the direct-pilot control-preparation stage trace") {
     using namespace runtime::cuda_resident;
     WorldBatchRuntime runtime(2);
     REQUIRE(runtime.load_database("examples/config/database"));
     const std::vector<std::uint32_t> seeds = {101, 202};
-    const std::vector<double> time_steps(kCudaResidentPhaseAFixtureTimeSteps.begin(),
-                                         kCudaResidentPhaseAFixtureTimeSteps.end());
+    const std::vector<double> time_steps(kCudaResidentControlPreparationFixtureTimeSteps.begin(),
+                                         kCudaResidentControlPreparationFixtureTimeSteps.end());
     const auto entity_ids =
         runtime.apply_world_setup_batch(seeds, {}, {}, {}, make_spawns(), time_steps, {});
     REQUIRE(entity_ids.size() == 2);
     CHECK(entity_ids[0] == fixed_air_fixture_entity_id(0));
     CHECK(entity_ids[1] == fixed_air_fixture_entity_id(0));
 
-    runtime.set_pilot_actions_batch(make_actions(entity_ids, kCudaResidentPhaseAFirstInputs));
+    runtime.set_pilot_actions_batch(
+        make_actions(entity_ids, kCudaResidentControlPreparationFirstInputs));
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
         REQUIRE(runtime.world_raw_quarantine(world).run_exact_stage_direct("FlightControl"));
     }
-    check_control_law_state(runtime, entity_ids, kCudaResidentPhaseAFirstExpected);
+    check_control_law_state(runtime, entity_ids, kCudaResidentControlPreparationFirstExpected);
 
-    runtime.set_pilot_actions_batch(make_actions(entity_ids, kCudaResidentPhaseAEdgeInputs));
+    runtime.set_pilot_actions_batch(
+        make_actions(entity_ids, kCudaResidentControlPreparationEdgeInputs));
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
         REQUIRE(runtime.world_raw_quarantine(world).run_exact_stage_direct("FlightControl"));
     }
-    check_control_law_state(runtime, entity_ids, kCudaResidentPhaseAEdgeExpected);
+    check_control_law_state(runtime, entity_ids, kCudaResidentControlPreparationEdgeExpected);
 }

@@ -341,8 +341,9 @@ TEST_CASE("CR2-2 CUDA backend accepts empty evaluation and auto-advances the com
     CHECK_THROWS_AS((void)backend.evaluate({.execution_episode_requests = nonempty_evaluation}),
                     std::logic_error);
 
-    full_window::Runner runner(backend, {.lane = replay::ReplayLaneKind::cuda_resident,
-                                         .backend_id = std::string(kCudaResidentRb7BackendId)});
+    full_window::Runner runner(
+        backend, {.lane = replay::ReplayLaneKind::cuda_resident,
+                  .backend_id = std::string(kCudaResidentObservationProjectionBackendId)});
     const auto result = runner.run(trace);
     REQUIRE(result.completed);
     CHECK_FALSE(result.failure.has_value());
