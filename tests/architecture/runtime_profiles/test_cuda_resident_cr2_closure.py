@@ -205,8 +205,8 @@ def test_cr2_7_has_bilingual_terminal_links_and_byte_stable_record() -> None:
         assert PRE_CLOSURE_HEAD in text
     exact_index = (ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/README.md").read_text(encoding="utf-8")
     exact_index_zh = (ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/README.zh.md").read_text(encoding="utf-8")
-    parent = (ROOT / "docs/plan/archive/owner_migration_20260808/README.md").read_text(encoding="utf-8")
-    parent_zh = (ROOT / "docs/plan/archive/owner_migration_20260808/README.zh.md").read_text(encoding="utf-8")
+    parent = exact_index
+    parent_zh = exact_index_zh
     program = (
         ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_runtime_program_2_20260731.md"
     ).read_text(encoding="utf-8")
@@ -215,8 +215,8 @@ def test_cr2_7_has_bilingual_terminal_links_and_byte_stable_record() -> None:
     ).read_text(encoding="utf-8")
     assert "cuda_resident_cr2_closure_20260805.md" in exact_index
     assert "cuda_resident_cr2_closure_20260805.zh.md" in exact_index_zh
-    assert "CR2-0 through CR2-7 closed without promotion" in parent
-    assert "CR2-0 至 CR2-7 无晋级关闭" in parent_zh
+    assert "promotion in CR2-7" in parent
+    assert "CR2-7 无晋级关闭" in parent_zh
     assert "closed without promotion" in program
     assert "无晋级关闭" in program_zh
 

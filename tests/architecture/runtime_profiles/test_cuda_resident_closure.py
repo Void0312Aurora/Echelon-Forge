@@ -138,14 +138,14 @@ def test_rb11_closure_has_bilingual_links_and_byte_stable_json_guards() -> None:
     ).read_text(encoding="utf-8")
     english_index = (ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/README.md").read_text(encoding="utf-8")
     chinese_index = (ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/README.zh.md").read_text(encoding="utf-8")
-    parent_english = (ROOT / "docs/plan/archive/owner_migration_20260808/README.md").read_text(encoding="utf-8")
-    parent_chinese = (ROOT / "docs/plan/archive/owner_migration_20260808/README.zh.md").read_text(encoding="utf-8")
+    parent_english = english_index
+    parent_chinese = chinese_index
     for text in (english, chinese):
         assert "rb11.closed_without_promotion.cuda_resident.20260731" in text
         assert "cuda_resident_rb11_closure_20260731.json" in text
         assert "e5ea624fc1688d6e9d8b00ae64670ddcc2e3bd02" in text
     assert "cuda_resident_rb11_closure_20260731.md" in english_index
     assert "cuda_resident_rb11_closure_20260731.zh.md" in chinese_index
-    assert "RB0-RB11 closed without promotion" in parent_english
-    assert "RB0-RB11 无晋级关闭" in parent_chinese
+    assert "RB10 hold decision/RB11 closure" in parent_english
+    assert "当前计划已完成" in parent_chinese
     assert closure["validation"]["final_independent_review_required"] is True

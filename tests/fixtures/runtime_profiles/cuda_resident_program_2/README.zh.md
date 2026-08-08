@@ -1,13 +1,12 @@
-# `exact_runtime/`
+# CUDA Resident Program 2 测试夹具
 
 语言版本：
 
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-该目录包含精确运行时 / GPU 主线的候选专项计划、检查清单以及阶段冻结记录。
-
-并非所有历史 exact-runtime 草案都还保留在当前活跃目录中。应结合本 README 与 `../archive/exact_runtime/README.md` 判断哪些文档仍活跃、哪些已转为历史记录。
+该目录保存 CUDA 驻留 runtime-profile 测试消费的字节稳定证据、裁决和阶段冻结
+记录。它是测试夹具，不是当前计划或文档权威。
 
 建议阅读顺序：
 
@@ -26,10 +25,7 @@
 13. [cuda_resident_cr2_matrix_evidence_20260804.json](cuda_resident_cr2_matrix_evidence_20260804.json)
 14. [cuda_resident_cr2_closure_20260805.zh.md](cuda_resident_cr2_closure_20260805.zh.md)
 15. [cuda_resident_cr2_closure_20260805.json](cuda_resident_cr2_closure_20260805.json)
-16. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
-17. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
-18. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
-19. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
+16. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
 
 使用规则：
 
@@ -39,6 +35,7 @@
 - CR2 continuation program 已完成 full-window、规模治理、consumer、parity、resource
   与 small-batch gates，并在 CR2-7 无晋级关闭。保留的 advisory 不是 runtime selector；
   未来 CUDA-resident 工作需要另一套显式计划和用户授权。
-- 除冻结的阶段计划外，其余文档默认作为候选专项草案或检查清单。
-- 当前仓库结构已有演变，文中部分代码路径仍保留历史语义。使用时请与当前代码树交叉对照。
-- 早期的 GPU 主线讨论及实验性路线已移至 `../archive/exact_runtime/`。
+- 验证器要求字节稳定 provenance 时，本夹具保留历史路径和哈希。当前架构权威
+  仍位于 `docs/architecture/`。
+- 冻结证据内部的相对链接可能描述历史布局，不是当前仓库路由。
+- 不得在此新增计划材料。新的 runtime 工作必须进入当前 owner-local work 结构。

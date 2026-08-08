@@ -1,15 +1,12 @@
-# `exact_runtime/`
+# CUDA Resident Program 2 Test Fixture
 
 Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-This directory holds candidate special plans, checklists, and phase freeze
-records for the exact runtime / GPU mainline.
-
-Not every historical exact-runtime draft still lives in this active directory.
-Use this README plus `../archive/exact_runtime/README.md` to determine which
-documents remain active versus historical.
+This directory preserves the byte-stable evidence, decisions, and phase-freeze
+records consumed by the CUDA-resident runtime-profile tests. It is a test
+fixture, not an active planning or documentation authority.
 
 Recommended reading order:
 
@@ -28,10 +25,7 @@ Recommended reading order:
 13. [cuda_resident_cr2_matrix_evidence_20260804.json](cuda_resident_cr2_matrix_evidence_20260804.json)
 14. [cuda_resident_cr2_closure_20260805.md](cuda_resident_cr2_closure_20260805.md)
 15. [cuda_resident_cr2_closure_20260805.json](cuda_resident_cr2_closure_20260805.json)
-16. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
-17. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
-18. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
-19. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
+16. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
 
 Usage rules:
 
@@ -43,6 +37,10 @@ Usage rules:
   consumer, parity, resource, and small-batch gates and then closed without
   promotion in CR2-7. Its retained advisory is not a runtime selector; future
   CUDA-resident work requires another explicit program and user authorization.
-- Except for frozen phase plans, the remaining documents are by default candidate special drafts or checklists.
-- The current repository structure has evolved; some code paths in the text still carry historical semantics. When using, cross-reference with the current code tree.
-- Earlier GPU mainline discussions and experimental routes have been moved to `../archive/exact_runtime/`.
+- The fixture preserves historical paths and hashes where validators require
+  byte-stable provenance. Current architecture authority remains under
+  `docs/architecture/`.
+- Relative links embedded in frozen evidence may describe the historical
+  layout and are not current repository routes.
+- Do not add new planning material here. New runtime work must use the current
+  owner-local work structure.
