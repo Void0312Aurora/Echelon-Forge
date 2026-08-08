@@ -64,10 +64,10 @@
 | contract dispatch 只看 `type` | `python/testing/contracts/__init__.py:14-30` |
 | shell helper build artifact 选择 | `tools/maintenance/cmo_env.sh:8-31` |
 | Python runtime build dir 选择 | `python/testing/runtime.py:22-49` |
-| gradient realism 总规则 | `docs/standards/foundation/gradient_realism_principles.md:14-18` |
-| 低 gate 不隐含高 gate | `docs/standards/foundation/gradient_realism_principles.md:52` |
-| evidence 只需覆盖当前 claim | `docs/standards/foundation/gradient_realism_principles.md:160-173` |
-| runtime workflow stable contracts | `docs/standards/bridge/runtime_workflow_and_contract_baseline.md:153-168` |
+| gradient realism 总规则 | `docs/systems/standards/gradient_realism_principles.md:14-18` |
+| 低 gate 不隐含高 gate | `docs/systems/standards/gradient_realism_principles.md:52` |
+| evidence 只需覆盖当前 claim | `docs/systems/standards/gradient_realism_principles.md:160-173` |
+| runtime workflow stable contracts | `docs/architecture/standards/runtime_workflow_and_contract_baseline.md:153-168` |
 | task docs 深层文件是 supporting records | `docs/task/README.md:18-21` |
 | training active/frozen taxonomy | `examples/config/training/README.md:5-17` |
 | naval active entries 是 runtime gate | `examples/config/training/active/naval/README.md:14-21` |
@@ -183,7 +183,7 @@
 以下内容是项目设计边界，不应简单作为测试缺失：
 
 - `README.md` 明确项目是 active research/engineering codebase，不是 polished product release。
-- `docs/standards/foundation/gradient_realism_principles.md` 规定场景只能声明已实现、runtime contract 可见、证据覆盖的 realism level；低 gate 通过不代表高 gate 通过。
+- `docs/systems/standards/gradient_realism_principles.md` 规定场景只能声明已实现、runtime contract 可见、证据覆盖的 realism level；低 gate 通过不代表高 gate 通过。
 - `docs/task/ground/ground_current_progress_20260524.md` 明确 ground 当前是 tasking/planning baseline，不是 ground-combat runtime。
 - `docs/task/naval/naval_current_progress_20260524.md` 明确 naval 当前主要在 N1-N4，N5/N6 weapon/damage 仍需 scenario-level gates。
 - `examples/config/training/active/naval/README.md` 明确 active naval N4 entries 是 pre-fire entry/runtime gate，不是 weapon release、damage/kill reward 或 learned behavior claim。

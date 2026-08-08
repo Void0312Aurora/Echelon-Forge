@@ -1,15 +1,22 @@
 # Gradient Realism Principles
 
 Language:
-- English canonical: `foundation/gradient_realism_principles.md`
+- English canonical: `gradient_realism_principles.md`
 - Chinese companion: [gradient_realism_principles.zh.md](gradient_realism_principles.zh.md)
 
-Status: `2026-05-24` authoritative foundation rule for multi-domain realism gating.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/systems/standards/gradient_realism_principles.md`
+Owner: `systems/realism-governance`
+Last verified: `2026-08-08`
+
+Status: maintained cross-domain system-realism gate.
 
 This document defines how the project treats domain realism as scenario
-complexity increases. It is a standards-tree foundation document because the
-rule applies across air, naval, ground, joint command, sensors, weapons, and
-future domains.
+complexity increases. It is a cross-domain systems standard because the rule
+gates claims against implemented mechanisms, runtime visibility, and evidence
+across domains. The G0-G7 vocabulary is a policy and evidence scale; it does
+not mean every level is implemented or enforced by every repository lane.
 
 The central rule is:
 

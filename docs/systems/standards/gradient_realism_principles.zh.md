@@ -1,14 +1,21 @@
 # 梯度真实性原则
 
 Language:
-- English canonical: `foundation/gradient_realism_principles.md`
+- English canonical: `docs/systems/standards/gradient_realism_principles.md`
 - Chinese companion: [gradient_realism_principles.zh.md](gradient_realism_principles.zh.md)
 
-状态：`2026-05-24`，多域真实性门控的基础层权威规则。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/systems/standards/gradient_realism_principles.md`
+Owner: `systems/realism-governance`
+Last verified: `2026-08-08`
+
+状态：维护中的跨域系统真实性门控。
 
 本文档定义项目在场景复杂度提升时如何处理领域真实性。它属于标准树的
-foundation 层，因为该规则同时适用于 air、naval、ground、joint command、
-sensor、weapon 以及未来领域。
+systems 标准层，因为该规则同时适用于 air、naval、ground、joint command、
+sensor、weapon 以及未来领域。G0-G7 是政策与证据尺度，不表示每个等级都已
+实现，也不表示每条仓库流水线都强制执行全部等级。
 
 核心规则是：
 

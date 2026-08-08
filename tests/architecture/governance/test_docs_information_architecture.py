@@ -18,7 +18,6 @@ TARGET_ROOTS = {
 }
 ACTIVE_LEGACY_ROOTS = {
   "plan",
-  "standards",
   "task",
 }
 ARCHIVE_ONLY_ROOTS = {
@@ -171,6 +170,33 @@ def test_naval_model_and_modularization_sources_are_owner_local() -> None:
     "docs/learning/standards/policy_execution_architecture.zh.md",
   ):
     assert required in tracked
+
+
+def test_cross_domain_legacy_standards_root_is_retired() -> None:
+  tracked = _tracked_docs_paths()
+
+  assert not any(path.startswith("docs/standards/") for path in tracked)
+  required_paths = (
+    "docs/architecture/standards/runtime_workflow_and_contract_baseline.md",
+    "docs/architecture/standards/runtime_workflow_and_contract_baseline.zh.md",
+    "docs/architecture/standards/simulation_conventions.md",
+    "docs/architecture/standards/simulation_conventions.zh.md",
+    "docs/engineering/documentation/reference/document_alignment_map.md",
+    "docs/engineering/documentation/reference/document_alignment_map.zh.md",
+    "docs/operations/howto/scenario_configuration_guide.md",
+    "docs/operations/howto/scenario_configuration_guide.zh.md",
+    "docs/research/standards/public_data_source_admission.md",
+    "docs/research/standards/public_data_source_admission.zh.md",
+    "docs/systems/standards/gradient_realism_principles.md",
+    "docs/systems/standards/gradient_realism_principles.zh.md",
+  )
+  for required in required_paths:
+    assert required in tracked
+
+  for companion in (path for path in required_paths if path.endswith(".zh.md")):
+    canonical = companion.removesuffix(".zh.md") + ".md"
+    text = (REPO_ROOT / companion).read_text(encoding="utf-8")
+    assert f"Canonical: `{canonical}`" in text, companion
 
 
 def test_owner_local_standards_declare_minimum_metadata() -> None:

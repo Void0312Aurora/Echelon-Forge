@@ -32,7 +32,7 @@ Last verified: `2026-08-08`
 | --- | --- | --- |
 | 1 | 当前用户任务、当前工作区和当前代码/测试 | 不覆盖无关本地改动；实现 claim 必须本地核验。 |
 | 2 | 维护中的代码、场景、配置、测试和 contract runner | 可执行证据优先于过期文字。窄 gate 通过不自动提升整个领域成熟度。 |
-| 3 | `docs/<owner>/standards/` 下维护中的 owner-local 标准，以及仍由 `docs/standards/` 索引的维护中共享标准 | 在对应职责范围内，以相关 owner-local 标准为准；其余共享标准在 owner 接受并迁移前继续保持权威。 |
+| 3 | `docs/<owner>/standards/` 下维护中的 owner-local 标准 | 在声明职责范围内以相关 owner-local 标准为准；跨 owner 路由查看对齐映射。 |
 | 4 | 根 README、`docs/README*`、局部 README | 拥有当前导航和成熟度入口。进入带日期任务文件前先读这里。 |
 | 5 | `docs/plan/` 和活跃 `docs/task/` 入口 | 拥有架构方向、范围化实现计划、进度记录和残余。 |
 | 6 | `docs/operations/`、`docs/reference_artifacts*`、`tests/README*` | 描述代码边界、操作工作流、保留证据和测试系统意图。 |
@@ -42,12 +42,12 @@ Last verified: `2026-08-08`
 
 | 问题 | 阅读 |
 | --- | --- |
-| 哪一份维护 standard 拥有命名与层级？ | 先从适用的 owner README 及其 owner-local `standards/` 开始；只有剩余混合跨域路由使用迁移期[标准总览](../../../standards/README.zh.md)和[文档对齐图](../../../standards/overview/document_alignment_map.zh.md)。 |
-| 跨域约定是什么？ | [仿真约定](../../../standards/foundation/conventions.zh.md)、[Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../../standards/bridge/scenario_guide.zh.md) |
-| 允许怎样声明真实性？ | [梯度真实性原则](../../../standards/foundation/gradient_realism_principles.zh.md)、[公开来源准入标准](../../../standards/foundation/public_data_source_admission.zh.md) |
+| 哪一份维护 standard 拥有命名与层级？ | 先从适用的 owner README 及其 owner-local `standards/` 开始；跨 owner 路由使用[文档对齐图](../../documentation/reference/document_alignment_map.zh.md)。 |
+| 跨域约定是什么？ | [仿真约定](../../../architecture/standards/simulation_conventions.zh.md)、[Runtime Workflow and Contract Baseline](../../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../../operations/howto/scenario_configuration_guide.zh.md) |
+| 允许怎样声明真实性？ | [梯度真实性原则](../../../systems/standards/gradient_realism_principles.zh.md)、[公开来源准入标准](../../../research/standards/public_data_source_admission.zh.md) |
 | 军种/领域术语如何路由？ | [联合标准总览](../../../domains/joint/README.zh.md)、[军种 Profile 总览](../../../domains/joint/service_profiles/README.zh.md)、[空域标准](../../../domains/air/README.zh.md)、[海军标准](../../../domains/naval/README.zh.md)、[地面标准](../../../domains/ground/README.zh.md) |
 | Policy/model architecture 在哪里定义？ | [Learning owner](../../../learning/README.zh.md)、[Policy Execution Architecture](../../../learning/standards/policy_execution_architecture.zh.md) |
-| 架构/runtime 工作如何路由？ | [Architecture owner](../../../architecture/README.zh.md)、[Modularization issue](../../../architecture/work/issues/modularization_plan.zh.md)、[Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../../standards/bridge/scenario_guide.zh.md) |
+| 架构/runtime 工作如何路由？ | [Architecture owner](../../../architecture/README.zh.md)、[Modularization issue](../../../architecture/work/issues/modularization_plan.zh.md)、[Runtime Workflow and Contract Baseline](../../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)、[场景配置指南](../../../operations/howto/scenario_configuration_guide.zh.md) |
 | 双语文档如何处理？ | [双语文档策略](../../documentation/standards/bilingual_documentation_policy.zh.md)、[双语文档簇](../../documentation/reference/bilingual_document_clusters.zh.md) |
 | 文档类型、生命周期、evidence、generated 输出、config 索引、链接和 archive 如何治理？ | [文档生命周期规范](../../documentation/standards/document_lifecycle_policy.zh.md) |
 | release 与依赖变更如何治理？ | [发布与依赖规范](../../release/standards/release_and_dependency_policy.zh.md) |
@@ -81,7 +81,7 @@ Last verified: `2026-08-08`
 | 文档刷新 | 根 README、docs 索引、本索引、[文档生命周期规范](../../documentation/standards/document_lifecycle_policy.zh.md)、受影响局部 README、标准 owner。 |
 | 仓库精简 | [仓库精简与整合路线图](../../../plan/repository_consolidation/README.zh.md)、受影响 owner README、当前 callers/tests，以及必需的独立审阅协议。 |
 | 代码/runtime 修改 | 受影响的 `src/`、`python/` 或 `gym_envs` README；源码层级图；相关 plan/task 入口；相关测试。 |
-| 测试或 contract 修改 | tests README、局部 test README、reference artifacts、相关 standards/bridge contract。 |
+| 测试或 contract 修改 | tests README、局部 test README、reference artifacts，以及相关 owner-local architecture 或 domain contract。 |
 | 领域成熟度表述 | 领域 task README、领域 standards README、被索引的当前状态或验收文档、实现/测试证据。 |
 | 社区/治理/许可文本 | CONTRIBUTING、LICENSE、THIRD_PARTY_NOTICES、SECURITY，以及相关 owner 索引路由的维护中标准。 |
 | release 或依赖变更 | [发布与依赖规范](../../release/standards/release_and_dependency_policy.zh.md)、受影响 manifest/lockfile、release tooling 与聚焦测试。 |

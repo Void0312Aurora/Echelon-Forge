@@ -21,9 +21,9 @@ post-P5 KCES harness diagnostics、component-response 量化、standards-layer v
 - 校准 admission gate：
   [../kill_chain_calibration_admission_gate_20260621.zh.md](../kill_chain_calibration_admission_gate_20260621.zh.md)
 - 梯度真实性原则：
-  [../../../../standards/foundation/gradient_realism_principles.zh.md](../../../../standards/foundation/gradient_realism_principles.zh.md)
+  [../../../../systems/standards/gradient_realism_principles.zh.md](../../../../systems/standards/gradient_realism_principles.zh.md)
 - 公开来源准入标准：
-  [../../../../standards/foundation/public_data_source_admission.zh.md](../../../../standards/foundation/public_data_source_admission.zh.md)
+  [../../../../research/standards/public_data_source_admission.zh.md](../../../../research/standards/public_data_source_admission.zh.md)
 - 标准维护政策：
   [../../../../engineering/documentation/standards/standards_maintenance_policy.zh.md](../../../../engineering/documentation/standards/standards_maintenance_policy.zh.md)
 - 仓库 AIM-120C-like 代理描述：

@@ -48,7 +48,7 @@ common core，也不授予 Joint 对领域执行语义的所有权。
 
 ## 相关 Legacy 路由
 
-- [仿真约定](../../../standards/foundation/conventions.zh.md)
-- [文档对齐映射](../../../standards/overview/document_alignment_map.zh.md)
-- [场景配置指南](../../../standards/bridge/scenario_guide.zh.md)
-- [运行时工作流与合同基线](../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)
+- [仿真约定](../../../architecture/standards/simulation_conventions.zh.md)
+- [文档对齐映射](../../../engineering/documentation/reference/document_alignment_map.zh.md)
+- [场景配置指南](../../../operations/howto/scenario_configuration_guide.zh.md)
+- [运行时工作流与合同基线](../../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)

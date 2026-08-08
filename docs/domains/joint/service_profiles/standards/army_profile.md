@@ -189,6 +189,6 @@ ground runtime behavior is still held behind later task gates.
 - [Service Profile Overview](../README.md)
 - [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)
-- [Simulation Conventions](../../../../standards/foundation/conventions.md)
-- [Runtime Workflow and Contract Baseline](../../../../standards/bridge/runtime_workflow_and_contract_baseline.md)
+- [Simulation Conventions](../../../../architecture/standards/simulation_conventions.md)
+- [Runtime Workflow and Contract Baseline](../../../../architecture/standards/runtime_workflow_and_contract_baseline.md)
 - [Ground Standards Overview](../../../ground/README.md)

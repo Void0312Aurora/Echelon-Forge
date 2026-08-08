@@ -48,5 +48,5 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
   relationship。
 - [美国陆军 service profile](../joint/service_profiles/standards/army_profile.zh.md)：
   Army 组织和军种级解释。
-- [Runtime workflow 与合同基线](../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)：
+- [Runtime workflow 与合同基线](../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)：
   共享 stage 与 runtime 边界，等待其独立 owner 迁移。

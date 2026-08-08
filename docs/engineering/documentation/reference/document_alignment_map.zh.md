@@ -1,12 +1,12 @@
 # 文档对齐映射
 
 Language:
-- English canonical: `overview/document_alignment_map.md`
+- English canonical: `docs/engineering/documentation/reference/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
 Document kind: `reference`
 Lifecycle: `maintained`
-Canonical: `docs/standards/overview/document_alignment_map.md`
+Canonical: `docs/engineering/documentation/reference/document_alignment_map.md`
 Owner: `engineering/documentation-governance`
 Last verified: `2026-08-08`
 
@@ -16,7 +16,9 @@ Last verified: `2026-08-08`
 
 - 哪些标准文档是当前主依据
 - 哪些文档属于特化补充
-- 活跃任务/工作流文档应如何映射回分布式 owner standards 与剩余 legacy 标准树
+- 活跃任务/工作流文档应如何映射回分布式 owner standards
+
+本文档是路由图，不是技术 standard。
 
 ## 当前主依据
 
@@ -24,12 +26,12 @@ Last verified: `2026-08-08`
 
 当前联合层主依据：
 
-- [联合标准总览](../../domains/joint/README.zh.md)
-- [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
-- [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-- [仿真约定](../foundation/conventions.md)
-- [梯度真实性原则](../foundation/gradient_realism_principles.zh.md)
-- [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
+- [联合标准总览](../../../domains/joint/README.zh.md)
+- [联合指挥与建模基线](../../../domains/joint/standards/command_and_modeling_baseline.zh.md)
+- [联合命令链与汇报基线](../../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
+- [仿真约定](../../../architecture/standards/simulation_conventions.zh.md)
+- [梯度真实性原则](../../../systems/standards/gradient_realism_principles.zh.md)
+- [运行时工作流与合同基线](../../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)
 
 它们负责定义：
 
@@ -44,11 +46,11 @@ Last verified: `2026-08-08`
 
 当前军种画像主依据：
 
-- [军种画像总览](../../domains/joint/service_profiles/README.zh.md)
-- [美国空军画像](../../domains/joint/service_profiles/standards/air_force_profile.zh.md)
-- [美国陆军画像](../../domains/joint/service_profiles/standards/army_profile.zh.md)
-- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.zh.md)
-- [美国海军陆战队画像](../../domains/joint/service_profiles/standards/marine_corps_profile.zh.md)
+- [军种画像总览](../../../domains/joint/service_profiles/README.zh.md)
+- [美国空军画像](../../../domains/joint/service_profiles/standards/air_force_profile.zh.md)
+- [美国陆军画像](../../../domains/joint/service_profiles/standards/army_profile.zh.md)
+- [美国海军画像](../../../domains/joint/service_profiles/standards/navy_profile.zh.md)
+- [美国海军陆战队画像](../../../domains/joint/service_profiles/standards/marine_corps_profile.zh.md)
 
 它们负责定义：
 
@@ -56,12 +58,12 @@ Last verified: `2026-08-08`
 - 哪些概念在进入平台特化前仍应保留为军种特有概念
 - common core 在各军种中的解释口径
 
-### 桥接文档
+### Runtime 与编写路由
 
-当前维护中的桥接文档是：
+当前维护中的跨 owner 路由是：
 
-- [场景配置指南](../bridge/scenario_guide.md)
-- [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
+- [场景配置指南](../../../operations/howto/scenario_configuration_guide.zh.md)
+- [运行时工作流与合同基线](../../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)
 
 它们不重新定义 doctrine，而是说明当前仓库中的输入、工作流阶段和 DTO
 如何对齐到分布式 owner standards。
@@ -70,8 +72,8 @@ Last verified: `2026-08-08`
 
 当前维护中的模型架构依据：
 
-- [模型架构标准总览](../../learning/README.zh.md)
-- [策略执行架构基线](../../learning/standards/policy_execution_architecture.zh.md)
+- [模型架构标准总览](../../../learning/README.zh.md)
+- [策略执行架构基线](../../../learning/standards/policy_execution_architecture.zh.md)
 
 它们负责定义：
 
@@ -86,12 +88,12 @@ Last verified: `2026-08-08`
 
 以下文档仍有效，但不属于全项目 common core：
 
-- [空中平台标准总览](../../domains/air/README.zh.md)
-- [飞行员观测空间标准](../../domains/air/standards/pilot_observation_contract.zh.md)
-- [飞行员操作空间标准](../../domains/air/standards/pilot_action_contract.zh.md)
-- [空中任务命令标准](../../domains/air/standards/mission_command_and_tasking_contract.zh.md)
-- [飞行员汇报标准](../../domains/air/standards/pilot_reporting_contract.zh.md)
-- [空空杀伤链期望包络](../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)
+- [空中平台标准总览](../../../domains/air/README.zh.md)
+- [飞行员观测空间标准](../../../domains/air/standards/pilot_observation_contract.zh.md)
+- [飞行员操作空间标准](../../../domains/air/standards/pilot_action_contract.zh.md)
+- [空中任务命令标准](../../../domains/air/standards/mission_command_and_tasking_contract.zh.md)
+- [飞行员汇报标准](../../../domains/air/standards/pilot_reporting_contract.zh.md)
+- [空空杀伤链期望包络](../../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)
   - active planning supplement，不是当前 runtime contract
 
 它们负责：
@@ -105,17 +107,17 @@ Last verified: `2026-08-08`
 
 当前维护中的海军特化入口：
 
-- [海军标准总览](../../domains/naval/README.zh.md)
-- [海军最小任务结构](../../domains/naval/standards/minimal_task_structure.zh.md)
-- [舰艇单位参考](../../domains/naval/reference/ship_unit_references.zh.md)
-- [海军观测合同](../../domains/naval/standards/observation_contract.zh.md)
+- [海军标准总览](../../../domains/naval/README.zh.md)
+- [海军最小任务结构](../../../domains/naval/standards/minimal_task_structure.zh.md)
+- [舰艇单位参考](../../../domains/naval/reference/ship_unit_references.zh.md)
+- [海军观测合同](../../../domains/naval/standards/observation_contract.zh.md)
 
 它们负责：
 
 - maritime task / station / screen / support / recovery 语义
 - ship 与 task-group 层的 naval role 解释
 - 第一批海军建模数据/来源边界，其中
-  [舰艇单位参考](../../domains/naval/reference/ship_unit_references.zh.md) 当前承担 reference 基准角色
+  [舰艇单位参考](../../../domains/naval/reference/ship_unit_references.zh.md) 当前承担 reference 基准角色
 - `naval_screen_station_v1` mission-observation 的归属与字段顺序
 
 它们不负责跨军种授权关系或 generic tasking DTO 边界。
@@ -124,9 +126,9 @@ Last verified: `2026-08-08`
 
 当前维护中的 ground 特化入口：
 
-- [Ground 标准总览](../../domains/ground/README.zh.md)
-- [Ground 特化基线](../../domains/ground/standards/specialization_baseline.zh.md)
-- [Ground 最小任务结构](../../domains/ground/standards/minimal_task_structure.zh.md)
+- [Ground 标准总览](../../../domains/ground/README.zh.md)
+- [Ground 特化基线](../../../domains/ground/standards/specialization_baseline.zh.md)
+- [Ground 最小任务结构](../../../domains/ground/standards/minimal_task_structure.zh.md)
 
 它们负责：
 
@@ -149,7 +151,7 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 以下 draft 记录尚未解决的 architecture residual；它不是当前 runtime contract，也不
 授权实施：
 
-- [模块化规划](../../architecture/work/issues/modularization_plan.zh.md)
+- [模块化规划](../../../architecture/work/issues/modularization_plan.zh.md)
 
 它记录当前 domain roots、已落地 extension interfaces 和剩余依赖边界问题。它不能
 被当作每个拟议模块边界或 domain runtime owner 已实现、已验收的证据。
@@ -258,9 +260,9 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
     的特化语义
   - 不得新增一条单独的 `army runtime stack`
 - `sensor_situation/`
-  - 当前主要对齐到 workflow bridge，以及后续共享的 `track / IFF / report` 标准
+  - 当前主要对齐到 architecture workflow standard，以及后续共享的 `track / IFF / report` 标准
 - `weapon_guidance/`
-  - 当前主要对齐到 workflow bridge，以及未来的 weapon specialization
+  - 当前主要对齐到 architecture workflow standard，以及未来的 weapon specialization
 - `flight/`
   - 对齐到 air specialization 与 runtime workflow 约束
 
@@ -275,7 +277,7 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 2. 军种组织与控制解释放
    `docs/domains/joint/service_profiles/standards/`
 3. Air、Ground 或 Naval 特化放到对应 owner-local `standards/` 表面
-4. 新的跨域 runtime/workflow 合同放到 `docs/architecture/`，不得扩张旧
-   `bridge/` 子树
+4. 新的跨域 runtime/workflow 合同放到 `docs/architecture/standards/`，
+   不得重建共享 `bridge/` 根
 5. 模型/策略架构词汇放到 `docs/learning/standards/`
 6. 过时工作依照文档生命周期政策退役；标准迁移不得改写既有 archive

@@ -20,13 +20,13 @@ current authority.
 | Area | Ownership | Migration status |
 | --- | --- | --- |
 | [project](project/README.md) | Purpose, maturity, global status, roadmap, project decisions | Active; owns the migration plan |
-| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Reviews and modularization issue migrated; legacy plan/task authorities remain pending |
+| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Conventions/runtime standards, reviews, and modularization issue migrated; legacy plan/task authorities remain pending |
 | [domains](domains/README.md) | Air, naval, ground, joint | Joint/service-profile, Air, Ground, and Naval standards routed to owners |
-| [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Phase-2 system issue and review routes active |
+| [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | System issue/review routes plus gradient-realism standard active |
 | [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Policy architecture standard plus policy/training issue routes active |
-| [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Manual and visualization routes migrated |
-| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation, release | Documentation, automation, release, and review routes migrated |
-| [research](research/README.md) | Questions, methods, results, publications, external sources | Phase-1 source-index migration complete |
+| [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Scenario, manual, and visualization routes migrated |
+| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation, release | Documentation alignment, automation, release, and review routes migrated |
+| [research](research/README.md) | Questions, methods, results, publications, external sources | Source index and public-data admission standard migrated |
 
 The [documentation information architecture](project/documentation_architecture.md)
 defines target boundaries, migration phases, and cutover gates.
@@ -35,8 +35,9 @@ defines target boundaries, migration phases, and cutover gates.
 
 The following roots still contain maintained sources during the transition:
 
-- [standards](standards/README.md): remaining mixed cross-domain and overview
-  sources pending owner classification;
+- owner-local `standards/` and `reference/` surfaces now hold the migrated
+  cross-domain and domain rules; use the [Document Alignment Map](engineering/documentation/reference/document_alignment_map.md)
+  for the current distributed route;
 - [plan](plan/README.md): active/frozen direction and migration plans;
 - [task](task/README.md): scoped implementation work and status.
 

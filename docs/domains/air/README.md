@@ -39,11 +39,11 @@ It does not own:
 
 Those belong in:
 
-- [Standards Documentation Overview](../../standards/README.md)
+- [Simulation Conventions](../../architecture/standards/simulation_conventions.md)
 - [Joint Command and Modeling Baseline](../joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../joint/standards/command_link_and_reporting_baseline.md)
 - [USAF Profile](../joint/service_profiles/standards/air_force_profile.md)
-- [Runtime Workflow and Contract Baseline](../../standards/bridge/runtime_workflow_and_contract_baseline.md)
+- [Runtime Workflow and Contract Baseline](../../architecture/standards/runtime_workflow_and_contract_baseline.md)
 
 ## How To Read This Directory
 
@@ -111,7 +111,7 @@ That layering matters:
 
 ## Related Documents
 
-- [Scenario Configuration Guide](../../standards/bridge/scenario_guide.md)
-- [Runtime Workflow and Contract Baseline](../../standards/bridge/runtime_workflow_and_contract_baseline.md)
+- [Scenario Configuration Guide](../../operations/howto/scenario_configuration_guide.md)
+- [Runtime Workflow and Contract Baseline](../../architecture/standards/runtime_workflow_and_contract_baseline.md)
 - [USAF Profile](../joint/service_profiles/standards/air_force_profile.md)
 - [Air-To-Air Kill-Chain Expectation Envelope](work/issues/kill_chain_expectation_envelope.md)

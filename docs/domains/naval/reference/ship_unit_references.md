@@ -171,4 +171,4 @@ in scenario/task documents rather than migrating into this reference page.
 - [Naval Minimal Task Structure](../standards/minimal_task_structure.md)
 - [Naval Observation Contract](../standards/observation_contract.md)
 - [US Navy Profile](../../joint/service_profiles/standards/navy_profile.md)
-- [Document Alignment Map](../../../standards/overview/document_alignment_map.md)
+- [Document Alignment Map](../../../engineering/documentation/reference/document_alignment_map.md)

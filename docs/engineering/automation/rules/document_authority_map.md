@@ -34,7 +34,7 @@ Then choose the task-specific path below.
 | --- | --- | --- |
 | 1 | Current user task, current worktree, and current code/tests | Do not overwrite unrelated local changes; verify implementation claims locally. |
 | 2 | Maintained code, scenarios, configs, tests, and contract runners | Executable evidence wins over stale prose. Passing a narrow gate does not promote a whole domain. |
-| 3 | Maintained owner-local standards under `docs/<owner>/standards/`, plus maintained shared standards still indexed under `docs/standards/` | The relevant owner-local standard wins within its scope; remaining shared standards retain authority until their owner accepts and relocates them. |
+| 3 | Maintained owner-local standards under `docs/<owner>/standards/` | The relevant owner-local standard wins within its declared scope; use the alignment map for cross-owner routing. |
 | 4 | Root README, `docs/README*`, local README files | Own current navigation and maturity entry points. Start there before reading dated task files. |
 | 5 | `docs/plan/` and active `docs/task/` entries | Own architecture direction, scoped implementation plans, progress records, and residuals. |
 | 6 | `docs/operations/`, `docs/reference_artifacts*`, `tests/README*` | Describe code boundaries, operator workflows, retained evidence, and test-system intent. |
@@ -44,12 +44,12 @@ Then choose the task-specific path below.
 
 | Question | Read |
 | --- | --- |
-| Which maintained standard owns names and layers? | Start from the applicable owner README and its owner-local `standards/`; use the migration-era [Standards Overview](../../../standards/README.md) and [Document Alignment Map](../../../standards/overview/document_alignment_map.md) only for remaining mixed cross-domain routes. |
-| What are the cross-domain conventions? | [Simulation Conventions](../../../standards/foundation/conventions.md), [Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.md), [Scenario Configuration Guide](../../../standards/bridge/scenario_guide.md) |
-| What realism claims are allowed? | [Gradient Realism Principles](../../../standards/foundation/gradient_realism_principles.md), [Public Data Source Admission Standard](../../../standards/foundation/public_data_source_admission.md) |
+| Which maintained standard owns names and layers? | Start from the applicable owner README and its owner-local `standards/`; use the [Document Alignment Map](../../documentation/reference/document_alignment_map.md) for cross-owner routing. |
+| What are the cross-domain conventions? | [Simulation Conventions](../../../architecture/standards/simulation_conventions.md), [Runtime Workflow and Contract Baseline](../../../architecture/standards/runtime_workflow_and_contract_baseline.md), [Scenario Configuration Guide](../../../operations/howto/scenario_configuration_guide.md) |
+| What realism claims are allowed? | [Gradient Realism Principles](../../../systems/standards/gradient_realism_principles.md), [Public Data Source Admission Standard](../../../research/standards/public_data_source_admission.md) |
 | How should service/domain terms be routed? | [Joint Standards Overview](../../../domains/joint/README.md), [Service Profile Overview](../../../domains/joint/service_profiles/README.md), [Air Standards](../../../domains/air/README.md), [Naval Standards](../../../domains/naval/README.md), [Ground Standards](../../../domains/ground/README.md) |
 | Where is policy/model architecture defined? | [Learning owner](../../../learning/README.md), [Policy Execution Architecture](../../../learning/standards/policy_execution_architecture.md) |
-| How should architecture/runtime work be routed? | [Architecture owner](../../../architecture/README.md), [Modularization issue](../../../architecture/work/issues/modularization_plan.md), [Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.md), [Scenario Configuration Guide](../../../standards/bridge/scenario_guide.md) |
+| How should architecture/runtime work be routed? | [Architecture owner](../../../architecture/README.md), [Modularization issue](../../../architecture/work/issues/modularization_plan.md), [Runtime Workflow and Contract Baseline](../../../architecture/standards/runtime_workflow_and_contract_baseline.md), [Scenario Configuration Guide](../../../operations/howto/scenario_configuration_guide.md) |
 | How should bilingual documentation be handled? | [Bilingual Documentation Policy](../../documentation/standards/bilingual_documentation_policy.md), [Bilingual Document Clusters](../../documentation/reference/bilingual_document_clusters.md) |
 | How are document kinds, lifecycle, evidence, generated output, config indexes, links, and archives governed? | [Document Lifecycle Policy](../../documentation/standards/document_lifecycle_policy.md) |
 | How are releases and dependency changes governed? | [Release and Dependency Policy](../../release/standards/release_and_dependency_policy.md) |
@@ -85,7 +85,7 @@ Generic negative boundaries:
 | Documentation refresh | Root README, docs index, this map, [Document Lifecycle Policy](../../documentation/standards/document_lifecycle_policy.md), affected local README, standards owner. |
 | Repository consolidation | [Repository Consolidation Plan](../../../plan/repository_consolidation/README.md), affected owner READMEs, current callers/tests, and the required independent-review protocol. |
 | Code/runtime change | Affected `src/`, `python/`, or `gym_envs` README; source layer map; relevant plan/task entry; relevant tests. |
-| Test or contract change | Tests README, local test README, reference artifacts, relevant standards/bridge contract. |
+| Test or contract change | Tests README, local test README, reference artifacts, and the relevant owner-local architecture or domain contract. |
 | Domain maturity statement | Domain task README, domain standards README, current local status or acceptance doc if indexed, implementation/test evidence. |
 | Community/governance/license text | CONTRIBUTING, LICENSE, THIRD_PARTY_NOTICES, SECURITY, and the maintained standards routed by the relevant owner index. |
 | Release or dependency change | [Release and Dependency Policy](../../release/standards/release_and_dependency_policy.md), affected manifests/lockfiles, release tooling, and focused tests. |

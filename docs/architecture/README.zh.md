@@ -14,6 +14,13 @@ Last verified: `2026-08-08`
 [plan/exact_runtime](../plan/exact_runtime/README.zh.md)。只有经过单独评审的迁移
 迭代才能把入口移入本区域。
 
+## Standards
+
+- [仿真约定](standards/simulation_conventions.zh.md)：维护中的引擎中立坐标、单位、观测、
+  array、action 与确定性约定。
+- [Runtime workflow 与 contract 基线](standards/runtime_workflow_and_contract_baseline.zh.md)：
+  维护 loader 到 runtime 的阶段归属与 roundtrip seam，并服从严格仿真架构基线。
+
 ## 开放问题
 
 - [系统模块化 issue](work/issues/modularization_plan.zh.md)：draft residual 分析；

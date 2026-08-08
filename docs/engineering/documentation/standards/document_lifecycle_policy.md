@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
-Status: `2026-08-07` authoritative policy for classifying, maintaining,
+Status: `2026-08-08` authoritative policy for classifying, maintaining,
 reviewing, generating, and archiving repository documentation.
 
 ## Purpose
@@ -45,10 +45,11 @@ deliberately admitted into the tracked tree.
 | `generated` | Reproducible output produced from named tracked inputs | an owner-local `generated/` directory | Never manually normative. The producer and inputs are authoritative. |
 | `config-index` | Human-readable index of canonical scenarios or configuration inputs | the owning reference or configuration surface | Points to configuration truth; it must not duplicate the payload. |
 
-`docs/standards/`, `docs/plan/`, `docs/task/`, and `docs/task/review/` remain
-migration-era legacy surfaces while their maintained documents are assigned to
-content owners. Their temporary location does not change document kind or
-authority, and new work must not expand them when an owner-local route exists.
+`docs/plan/`, `docs/task/`, and `docs/task/review/` remain migration-era legacy
+surfaces while their maintained documents are assigned to content owners. The
+retired `docs/standards/` root must not be recreated. Temporary legacy location
+does not change document kind or authority, and new work must not expand a
+legacy surface when an owner-local route exists.
 
 ### Lifecycle States
 

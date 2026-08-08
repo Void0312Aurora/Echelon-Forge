@@ -15,6 +15,15 @@ authorities remain under [plan/architecture](../plan/architecture/README.md),
 [plan/exact_runtime](../plan/exact_runtime/README.md). A route moves here only
 in a separately reviewed migration slice.
 
+## Standards
+
+- [Simulation conventions](standards/simulation_conventions.md): maintained
+  engine-neutral coordinate, unit, observation, array, action, and determinism
+  conventions.
+- [Runtime workflow and contract baseline](standards/runtime_workflow_and_contract_baseline.md):
+  maintained loader-to-runtime stage ownership and roundtrip seams, subordinate
+  to the strict simulation architecture baseline.
+
 ## Open Issues
 
 - [System modularization issue](work/issues/modularization_plan.md): draft

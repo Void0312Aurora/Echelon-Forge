@@ -22,9 +22,9 @@ Inputs:
 - Calibration admission gate:
   [../kill_chain_calibration_admission_gate_20260621.zh.md](../kill_chain_calibration_admission_gate_20260621.zh.md)
 - Foundation realism rule:
-  [../../../../standards/foundation/gradient_realism_principles.md](../../../../standards/foundation/gradient_realism_principles.md)
+  [../../../../systems/standards/gradient_realism_principles.md](../../../../systems/standards/gradient_realism_principles.md)
 - Public source admission rule:
-  [../../../../standards/foundation/public_data_source_admission.md](../../../../standards/foundation/public_data_source_admission.md)
+  [../../../../research/standards/public_data_source_admission.md](../../../../research/standards/public_data_source_admission.md)
 - Standards maintenance policy:
   [../../../../engineering/documentation/standards/standards_maintenance_policy.md](../../../../engineering/documentation/standards/standards_maintenance_policy.md)
 - Repository AIM-120C-like proxy descriptor:

@@ -1,11 +1,17 @@
 # 运行时工作流与合同基线
 
 Language:
-- English canonical: `bridge/runtime_workflow_and_contract_baseline.md`
+- English canonical: `docs/architecture/standards/runtime_workflow_and_contract_baseline.md`
 - Chinese companion: [runtime_workflow_and_contract_baseline.zh.md](runtime_workflow_and_contract_baseline.zh.md)
 
-状态：`2026-06-10`，当前维护中的 runtime workflow ownership 权威说明，包含当前
-mission-observation mode 归属与 episode roundtrip seam。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/runtime_workflow_and_contract_baseline.md`
+Owner: `architecture/runtime-workflow`
+Last verified: `2026-08-08`
+
+状态：维护中的 runtime workflow 与 contract 基线，服从
+[严格仿真架构基线](../../plan/architecture/simulation_system_architecture_design.zh.md)。
 
 本文档固定下面几层之间的边界：
 
@@ -198,8 +204,8 @@ mission-command 等数据，但这不代表这些词全部都是 common-core ont
 
 ## 相关文档
 
-- [场景配置指南](scenario_guide.md)
+- [场景配置指南](../../operations/howto/scenario_configuration_guide.zh.md)
 - [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-- [仿真约定](../foundation/conventions.md)
+- [仿真约定](simulation_conventions.zh.md)
 - [src/core/mission/README.md](../../../src/core/mission/README.md)

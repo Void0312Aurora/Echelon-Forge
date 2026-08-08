@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/README.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 This area owns the reusable structure and maintenance guidance for repository
 documentation. It does not own the technical claims inside another content
@@ -26,6 +26,9 @@ owner's documents.
   promotion and drift rules for owner-local standards.
 - [Bilingual document clusters](reference/bilingual_document_clusters.md):
   the human-readable contract for the machine-readable sync registry.
+- [Document alignment map](reference/document_alignment_map.md): current
+  distributed owner and authority routing; it does not own another owner’s
+  technical rules.
 
 The examples describe required shape. They do not promote a draft, review, or
 reference into a standard and must not be copied with placeholder claims intact.

@@ -174,4 +174,4 @@ common 层只保留跨军种共享的骨架：
 - [空中平台特化](../../../air/README.zh.md)
 - [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)
-- [运行时工作流与合同基线](../../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)
+- [运行时工作流与合同基线](../../../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)

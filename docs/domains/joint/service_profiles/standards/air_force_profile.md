@@ -190,4 +190,4 @@ This document therefore acts as a guardrail:
 - [Air Platform Specialization](../../../air/README.md)
 - [Joint Command and Modeling Baseline](../../standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../standards/command_link_and_reporting_baseline.md)
-- [Runtime Workflow and Contract Baseline](../../../../standards/bridge/runtime_workflow_and_contract_baseline.md)
+- [Runtime Workflow and Contract Baseline](../../../../architecture/standards/runtime_workflow_and_contract_baseline.md)

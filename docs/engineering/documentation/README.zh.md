@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/README.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 本区域拥有仓库文档的可复用结构与维护指导，不拥有其他内容 owner 文档中的技术结论。
 
@@ -23,6 +23,8 @@ Last verified: `2026-08-07`
   owner-local standard 的提升与漂移规则。
 - [双语文档簇](reference/bilingual_document_clusters.zh.md)：
   机器可读同步注册表的人类可读合同。
+- [文档对齐映射](reference/document_alignment_map.zh.md)：当前分布式 owner 与 authority
+  路由；它不拥有其他 owner 的技术规则。
 
 结构实例只描述必需形态，不能把 draft、review 或 reference 提升为 standard，
 也不得保留占位 claim 后直接复制发布。

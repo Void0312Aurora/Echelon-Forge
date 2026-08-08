@@ -67,6 +67,7 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
     return True
   if (
     relative.startswith("engineering/automation/")
+    or relative.startswith("architecture/standards/")
     or relative.startswith("engineering/documentation/")
     or relative.startswith("engineering/release/")
     or relative.startswith("domains/air/standards/")
@@ -76,8 +77,9 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
     or relative.startswith("domains/naval/standards/")
     or relative.startswith("learning/standards/")
     or relative.startswith("operations/")
+    or relative.startswith("research/standards/")
     or relative.startswith("research/sources/")
-    or relative.startswith("standards/")
+    or relative.startswith("systems/standards/")
   ):
     return True
   if relative in STRICT_OWNER_DOCUMENTS:

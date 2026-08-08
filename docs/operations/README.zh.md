@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/operations/README.md`
 Owner: `operations documentation`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 面向开发者和用户的参考文档与操作指南，按类别组织。
 
@@ -26,6 +26,7 @@ Last verified: `2026-08-07`
 
 | 文档 | 说明 |
 |------|------|
+| [场景配置指南](howto/scenario_configuration_guide.zh.md) | 维护中的场景 JSON 编写与 loader 映射；不拥有 doctrine 或 DTO |
 | [远程可视化](howto/visualization_guide.zh.md) | SSH 端口转发 + Web 实时查看仿真 |
 
 ### 规划与开放问题

@@ -1,10 +1,16 @@
 # 场景配置指南
 
 Language:
-- English canonical: `bridge/scenario_guide.md`
-- Chinese companion: [scenario_guide.zh.md](scenario_guide.zh.md)
+- English canonical: `docs/operations/howto/scenario_configuration_guide.md`
+- Chinese companion: [scenario_configuration_guide.zh.md](scenario_configuration_guide.zh.md)
 
-状态：`2026-05-18`，场景 JSON 到标准/运行时映射的权威桥接文档。
+Document kind: `howto`
+Lifecycle: `maintained`
+Canonical: `docs/operations/howto/scenario_configuration_guide.md`
+Owner: `operations/scenario-configuration`
+Last verified: `2026-08-08`
+
+状态：维护中的场景 JSON 编写与 loader 映射指南。
 
 本文档描述的是当前仓库中的场景 JSON 实现接口，而不是 doctrine 本体。它的职责是说明：
 
@@ -14,9 +20,9 @@ Language:
 
 建议与下列文档配合阅读：
 
-- [标准化文档总览](../README.md)
-- [文档对齐映射](../overview/document_alignment_map.md)
-- [运行时工作流与合同基线](runtime_workflow_and_contract_baseline.md)
+- [操作文档总览](../README.zh.md)
+- [文档对齐映射](../../engineering/documentation/reference/document_alignment_map.zh.md)
+- [运行时工作流与合同基线](../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)
 
 ## 本文档负责什么
 
@@ -198,9 +204,9 @@ reward config 属于 runtime workflow bridge，不应用来偷偷承载军种 do
 
 ## 相关文档
 
-- [运行时工作流与合同基线](runtime_workflow_and_contract_baseline.md)
+- [运行时工作流与合同基线](../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)
 - [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.md)
-- [空中平台标准总览](../../domains/air/README.md)
-- [海军标准总览](../../domains/naval/README.md)
+- [美国海军画像](../../domains/joint/service_profiles/standards/navy_profile.zh.md)
+- [空中平台标准总览](../../domains/air/README.zh.md)
+- [海军标准总览](../../domains/naval/README.zh.md)

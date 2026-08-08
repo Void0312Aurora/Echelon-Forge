@@ -17,5 +17,5 @@ Last verified: `2026-08-07`
 - [reviews](reviews/engineering_discipline_review_20260603.zh.md)：保留的工程评估，
   其证据属性不会因迁移而变成 standard。
 
-仍在[旧 standards 根](../standards/README.zh.md)下的领域与建模标准将在后续 owner
-切片中迁移。
+领域、runtime 与建模标准现在统一使用 owner-local `standards/` 或 `reference/`
+表面；分布式权威路由见[文档对齐映射](documentation/reference/document_alignment_map.zh.md)。

@@ -52,7 +52,7 @@ grant Joint ownership over domain execution.
 
 ## Related Legacy Routes
 
-- [Simulation Conventions](../../../standards/foundation/conventions.md)
-- [Document Alignment Map](../../../standards/overview/document_alignment_map.md)
-- [Scenario Configuration Guide](../../../standards/bridge/scenario_guide.md)
-- [Runtime Workflow and Contract Baseline](../../../standards/bridge/runtime_workflow_and_contract_baseline.md)
+- [Simulation Conventions](../../../architecture/standards/simulation_conventions.md)
+- [Document Alignment Map](../../../engineering/documentation/reference/document_alignment_map.md)
+- [Scenario Configuration Guide](../../../operations/howto/scenario_configuration_guide.md)
+- [Runtime Workflow and Contract Baseline](../../../architecture/standards/runtime_workflow_and_contract_baseline.md)

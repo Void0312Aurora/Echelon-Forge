@@ -1,15 +1,21 @@
 # Simulation Conventions
 
 Language:
-- English canonical: `foundation/conventions.md`
-- Chinese companion: [conventions.zh.md](conventions.zh.md)
+- English canonical: `simulation_conventions.md`
+- Chinese companion: [simulation_conventions.zh.md](simulation_conventions.zh.md)
 
-Status: `2026-05-18` authoritative for engine-neutral conventions.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/simulation_conventions.md`
+Owner: `architecture/runtime-contracts`
+Last verified: `2026-08-08`
+
+Status: maintained engine-neutral conventions.
 
 This document defines the lowest stable conventions shared across runtime truth
 carriers, observation assembly, and numeric interfaces.
 
-It belongs to the standards-tree foundation layer. It does not own:
+It belongs to the architecture owner’s runtime-contract standards. It does not own:
 
 - service-profile organization
 - joint command relationships or ROE semantics
@@ -21,7 +27,7 @@ Those belong in:
 - [Service Profile Overview](../../domains/joint/service_profiles/README.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
-- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
+- [Runtime Workflow and Contract Baseline](runtime_workflow_and_contract_baseline.md)
 - [Air Platform Specialization](../../domains/air/README.md)
 - [Naval Specialization](../../domains/naval/README.md)
 
@@ -176,11 +182,11 @@ specialized documents, not by this foundation layer.
   not reasons to redefine low-level units or numeric semantics
 
 Those workflow boundaries are documented in more detail in
-[Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md).
+[Runtime Workflow and Contract Baseline](runtime_workflow_and_contract_baseline.md).
 
 ## Related Documents
 
-- [Standards Overview](../README.md)
+- [Architecture Overview](../README.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
-- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
+- [Runtime Workflow and Contract Baseline](runtime_workflow_and_contract_baseline.md)
 - [Air Platform Specialization](../../domains/air/README.md)

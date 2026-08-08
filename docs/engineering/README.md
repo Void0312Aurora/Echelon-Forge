@@ -19,5 +19,6 @@ automation, dependency, and release guidance. Current owner routes are:
 - [reviews](reviews/engineering_discipline_review_20260603.zh.md): retained
   engineering assessments, which remain evidence rather than standards.
 
-Domain and modeling standards still under [the legacy standards root](../standards/README.md)
-will move in later owner slices.
+Domain, runtime, and modeling standards now use owner-local `standards/` or
+`reference/` surfaces. Use the [Document Alignment Map](documentation/reference/document_alignment_map.md)
+for the distributed authority route.

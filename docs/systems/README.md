@@ -11,8 +11,9 @@ Last verified: `2026-08-07`
 This target area owns environment, physics, sensing, command/tasking, weapons,
 and effects/damage documentation that applies across mission domains. It keeps
 shared mechanisms out of the `air`, `naval`, and `ground` ownership trees.
-Current normative and task routes remain under
-[standards](../standards/README.md) and scoped task owners during migration.
+Current normative routes use this owner’s `standards/` surface; scoped task
+owners retain task-specific state. The current cross-domain realism gate is
+[Gradient Realism Principles](standards/gradient_realism_principles.md).
 
 ## Current Owner Routes
 

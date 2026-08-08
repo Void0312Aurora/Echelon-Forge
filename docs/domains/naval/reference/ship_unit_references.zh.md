@@ -153,4 +153,4 @@ Navy service profile 拥有军种层组织与权限解释。本 Naval 参考页�
 - [海军最小任务结构](../standards/minimal_task_structure.zh.md)
 - [海军观测合同](../standards/observation_contract.zh.md)
 - [美国海军画像](../../joint/service_profiles/standards/navy_profile.zh.md)
-- [文档对齐映射](../../../standards/overview/document_alignment_map.zh.md)
+- [文档对齐映射](../../../engineering/documentation/reference/document_alignment_map.zh.md)

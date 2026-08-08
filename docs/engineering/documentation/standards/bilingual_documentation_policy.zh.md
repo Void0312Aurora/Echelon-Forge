@@ -68,7 +68,8 @@ Tier A：严格双语维护面
   标准/reference
 - `docs/domains/joint/` 下已迁移的 Joint common-core 与 service-profile 权威
 - `docs/learning/standards/` 下已迁移的 policy/model architecture 标准
-- 迁移期遗留根 `docs/standards/` 下尚未迁往内容 owner 的维护中标准
+- `docs/architecture/standards/`、`docs/systems/standards/` 和
+  `docs/research/standards/` 下的跨域 owner standards
 - `docs/operations/` 下的面向操作者 reference 与 how-to
 - 仍通过迁移期遗留 plan 表面路由的稳定计划权威：
   - `docs/plan/README.md`
@@ -224,4 +225,4 @@ Language:
 
 - [docs/README.md](../../../README.zh.md)
 - [已归档的双语迁移记录](../../../plan/archive/documentation_bilingual_migration_plan_20260518.zh.md)
-- [document_alignment_map.md](../../../standards/overview/document_alignment_map.zh.md)
+- [document_alignment_map.md](../reference/document_alignment_map.zh.md)

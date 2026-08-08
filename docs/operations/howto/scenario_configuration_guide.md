@@ -1,21 +1,27 @@
 # Scenario Configuration Guide
 
 Language:
-- English canonical: `bridge/scenario_guide.md`
-- Chinese companion: [scenario_guide.zh.md](scenario_guide.zh.md)
+- English canonical: `scenario_configuration_guide.md`
+- Chinese companion: [scenario_configuration_guide.zh.md](scenario_configuration_guide.zh.md)
 
-Status: `2026-05-18` authoritative bridge for scenario JSON to standards/runtime mapping.
+Document kind: `howto`
+Lifecycle: `maintained`
+Canonical: `docs/operations/howto/scenario_configuration_guide.md`
+Owner: `operations/scenario-configuration`
+Last verified: `2026-08-08`
+
+Status: maintained scenario JSON authoring and loader-mapping guide.
 
 This document describes the current repository JSON scenario implementation
-surface. It is not itself the doctrine baseline. Its job is to explain how
-maintained scenario JSONs map onto the standards tree and the current runtime
-workflow.
+surface. It is not itself the doctrine baseline or a DTO authority. Its job is
+to explain how maintained scenario JSONs map onto owner standards and the
+current runtime workflow.
 
 Read this after:
 
-- [Standards Documentation Overview](../README.md)
-- [Document Alignment Map](../overview/document_alignment_map.md)
-- [Runtime Workflow and Contract Baseline](runtime_workflow_and_contract_baseline.md)
+- [Operations Documentation Overview](../README.md)
+- [Document Alignment Map](../../engineering/documentation/reference/document_alignment_map.md)
+- [Runtime Workflow and Contract Baseline](../../architecture/standards/runtime_workflow_and_contract_baseline.md)
 
 ## Scope
 
@@ -209,7 +215,7 @@ When authoring or revising maintained scenarios:
 
 ## Related Documents
 
-- [Runtime Workflow and Contract Baseline](runtime_workflow_and_contract_baseline.md)
+- [Runtime Workflow and Contract Baseline](../../architecture/standards/runtime_workflow_and_contract_baseline.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
 - [US Navy Profile](../../domains/joint/service_profiles/standards/navy_profile.md)

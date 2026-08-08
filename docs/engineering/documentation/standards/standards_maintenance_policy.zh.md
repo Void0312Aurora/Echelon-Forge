@@ -8,15 +8,14 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/standards_maintenance_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
-状态：`2026-08-07`，用于保持维护中标准与实现证据对齐的权威政策。
+状态：`2026-08-08`，用于保持维护中标准与实现证据对齐的权威政策。
 
 本政策定义 implementation、active work、test、scenario 或治理发生变化后，
 各内容 owner 的维护中标准应如何更新。它补充
-[文档工程总览](../README.zh.md)、迁移期
-[标准化文档总览](../../../standards/README.zh.md)、
-[文档对齐映射](../../../standards/overview/document_alignment_map.zh.md) 和
+[文档工程总览](../README.zh.md)、
+[文档对齐映射](../reference/document_alignment_map.zh.md) 和
 [双语文档政策](bilingual_documentation_policy.zh.md)。
 
 ## 目的
@@ -26,8 +25,8 @@ research owner 所属的 standards 子树，共同定义仓库的命名、分层
 公开来源准入和治理规则。standards 子树不是任务板，但必须与实现保持足够接近，使
 贡献者在修改代码、测试、场景或计划时可以信任它。
 
-`docs/standards/` 仍是尚未迁往内容 owner 的维护中标准所使用的迁移期遗留表面。
-临时位置不会赋予它更广权威；内容 owner 已存在时，新标准必须使用 owner-local 路由。
+维护中的标准现在统一使用 owner-local 路由。已退役的 `docs/standards/`
+根不得重建为共享 ownership 表面。
 
 本维护政策防止两类失败：
 
@@ -43,8 +42,8 @@ research owner 所属的 standards 子树，共同定义仓库的命名、分层
    准入和治理规则。
 3. 适用 owner 的 `work/active/` 入口决定范围化工作状态、残余和验收证据。
 
-仍位于遗留 `docs/standards/` 与 `docs/task/` 的维护入口在迁移前继续承担相应角色，
-但这些根只是过渡路由，不是目标 ownership 模型。
+仍位于遗留 `docs/task/` 的维护入口在迁移前继续承担有界工作角色，
+但该根只是过渡路由，不是目标 ownership 模型。
 
 如果可执行证据和标准页面不一致，不要静默选择其一。应打开或使用 review/task
 治理通道，分类 drift，并通过明确的标准更新、实现更新或 held 决策收口。
@@ -150,8 +149,7 @@ build 或 contract 测试。
 ## 相关文档
 
 - [文档工程总览](../README.zh.md)
-- [迁移期标准化文档总览](../../../standards/README.zh.md)
-- [文档对齐映射](../../../standards/overview/document_alignment_map.zh.md)
+- [文档对齐映射](../reference/document_alignment_map.zh.md)
 - [双语文档政策](bilingual_documentation_policy.zh.md)
 - [双语文档簇](../reference/bilingual_document_clusters.zh.md)
 - [Subagent 使用规范](../../automation/standards/subagent_usage_policy.zh.md)

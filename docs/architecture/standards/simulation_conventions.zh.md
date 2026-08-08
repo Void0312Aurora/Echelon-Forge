@@ -1,14 +1,20 @@
 # 仿真约定
 
 Language:
-- English canonical: `foundation/conventions.md`
-- Chinese companion: [conventions.zh.md](conventions.zh.md)
+- English canonical: `docs/architecture/standards/simulation_conventions.md`
+- Chinese companion: [simulation_conventions.zh.md](simulation_conventions.zh.md)
 
-状态：`2026-05-18`，引擎中性基础约定权威版本。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/simulation_conventions.md`
+Owner: `architecture/runtime-contracts`
+Last verified: `2026-08-08`
+
+状态：维护中的引擎中性运行时约定。
 
 本文档定义 runtime 真值载体、观测拼装与数值接口之间共享的最低层稳定约定。
 
-它属于标准树的基础层，不负责：
+它属于 architecture owner 的 runtime-contract standards，不负责：
 
 - 军种画像层组织
 - 联合指挥关系或 ROE 语义
@@ -17,12 +23,12 @@ Language:
 
 这些内容分别属于：
 
-- [军种画像总览](../../domains/joint/service_profiles/README.md)
+- [军种画像总览](../../domains/joint/service_profiles/README.zh.md)
 - [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../domains/joint/standards/command_link_and_reporting_baseline.zh.md)
-- [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
-- [空中平台特化](../../domains/air/README.md)
-- [海军特化](../../domains/naval/README.md)
+- [运行时工作流与合同基线](runtime_workflow_and_contract_baseline.zh.md)
+- [空中平台特化](../../domains/air/README.zh.md)
+- [海军特化](../../domains/naval/README.zh.md)
 
 ## 坐标与单位约定
 
@@ -134,7 +140,7 @@ Python 环境会把观测拼成固定键：
 
 ## Action surface 约定
 
-本文档不重写 `PilotAction` 的字段列表。那部分属于 [air/act.md](../../domains/air/standards/pilot_action_contract.md)。
+本文档不重写 `PilotAction` 的字段列表。那部分属于 [air/act.md](../../domains/air/standards/pilot_action_contract.zh.md)。
 
 真正属于这里的中性规则只有：
 
@@ -151,11 +157,11 @@ Python 环境会把观测拼成固定键：
 - Python 侧的加载、归一化与 product application 属于 bridge stages，不应反过来重定义底层单位或数值语义
 
 这些工作流边界会在
-[运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md) 中进一步展开。
+[运行时工作流与合同基线](runtime_workflow_and_contract_baseline.zh.md) 中进一步展开。
 
 ## 相关文档
 
-- [标准概览](../README.md)
+- [架构概览](../README.zh.md)
 - [联合指挥与建模基线](../../domains/joint/standards/command_and_modeling_baseline.zh.md)
-- [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
-- [空中平台特化](../../domains/air/README.md)
+- [运行时工作流与合同基线](runtime_workflow_and_contract_baseline.zh.md)
+- [空中平台特化](../../domains/air/README.zh.md)

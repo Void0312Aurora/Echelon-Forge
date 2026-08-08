@@ -55,5 +55,5 @@ standards above.
   command relationships.
 - [US Army service profile](../joint/service_profiles/standards/army_profile.md):
   Army organization and service-level interpretation.
-- [Runtime workflow and contract baseline](../../standards/bridge/runtime_workflow_and_contract_baseline.md):
+- [Runtime workflow and contract baseline](../../architecture/standards/runtime_workflow_and_contract_baseline.md):
   shared stage and runtime boundaries, pending its separate owner migration.

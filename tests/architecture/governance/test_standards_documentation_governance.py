@@ -59,8 +59,8 @@ def _constrained_workflow_packages(workflow: str) -> set[str]:
 
 
 def test_standards_maintenance_policy_is_registered() -> None:
-  standards_readme = _text("docs", "standards", "README.md")
-  standards_readme_zh = _text("docs", "standards", "README.zh.md")
+  documentation_readme = _text("docs", "engineering", "documentation", "README.md")
+  documentation_readme_zh = _text("docs", "engineering", "documentation", "README.zh.md")
   review_readme = _text("docs", "task", "review", "README.md")
   review_readme_zh = _text("docs", "task", "review", "README.zh.md")
   review_archive = _text("docs", "task", "review", "archive", "README.md")
@@ -68,8 +68,8 @@ def test_standards_maintenance_policy_is_registered() -> None:
   review_archive_registry = _text("docs", "task", "review", "archive_registry.md")
   review_archive_registry_zh = _text("docs", "task", "review", "archive_registry.zh.md")
 
-  assert "../engineering/documentation/standards/standards_maintenance_policy.md" in standards_readme
-  assert "../engineering/documentation/standards/standards_maintenance_policy.zh.md" in standards_readme_zh
+  assert "standards/standards_maintenance_policy.md" in documentation_readme
+  assert "standards/standards_maintenance_policy.zh.md" in documentation_readme_zh
   assert "archive/standards_documentation_governance/README.md" in review_readme
   assert "archive/standards_documentation_governance/README.zh.md" in review_readme_zh
   assert "standards_documentation_governance/README.md" in review_archive
@@ -176,7 +176,9 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
     "observation_contract.md",
   )
   naval_readme = _text("docs", "domains", "naval", "README.md")
-  alignment_map = _text("docs", "standards", "overview", "document_alignment_map.md")
+  alignment_map = _text(
+    "docs", "engineering", "documentation", "reference", "document_alignment_map.md"
+  )
 
   assert "GAP-002" in status
   assert "Closed by registering `air_combat_c2_roe_v1/v2`" in status
@@ -204,7 +206,7 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
     assert required in naval_obs
 
   assert "Naval Observation Contract](standards/observation_contract.md)" in naval_readme
-  assert "Naval Observation Contract](../../domains/naval/standards/observation_contract.md)" in alignment_map
+  assert "Naval Observation Contract](../../../domains/naval/standards/observation_contract.md)" in alignment_map
 
 
 def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
@@ -218,7 +220,9 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
     "standards",
     "pilot_action_contract.md",
   )
-  bridge = _text("docs", "standards", "bridge", "runtime_workflow_and_contract_baseline.md")
+  bridge = _text(
+    "docs", "architecture", "standards", "runtime_workflow_and_contract_baseline.md"
+  )
   joint = _text(
     "docs",
     "domains",
@@ -243,7 +247,7 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
 
   assert "Status: specialization baseline for maintained air action input" in air_act
   assert "learned-policy behavior" in air_act
-  assert "Status: `2026-06-10` authoritative for maintained runtime workflow ownership" in bridge
+  assert "Status: maintained runtime workflow and contract baseline" in bridge
   assert "air_combat_c2_roe_v2" in bridge
   assert "naval_screen_station_v1" in bridge
   assert "Status: `2026-06-10` authoritative for maintained joint command and modeling" in joint
@@ -255,8 +259,10 @@ def test_modularization_issue_tracks_landed_interfaces_and_residuals() -> None:
   dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
   plan = _text("docs", "architecture", "work", "issues", "modularization_plan.md")
-  standards_readme = _text("docs", "standards", "README.md")
-  alignment_map = _text("docs", "standards", "overview", "document_alignment_map.md")
+  architecture_readme = _text("docs", "architecture", "README.md")
+  alignment_map = _text(
+    "docs", "engineering", "documentation", "reference", "document_alignment_map.md"
+  )
 
   assert "GAP-005" in status
   assert "Closed by retaining the plan as an active planning supplement" in status
@@ -295,8 +301,8 @@ def test_modularization_issue_tracks_landed_interfaces_and_residuals() -> None:
   ):
     assert required in plan
 
-  assert "../architecture/work/issues/modularization_plan.md" in standards_readme
-  assert "`plan/draft`" in standards_readme
+  assert "work/issues/modularization_plan.md" in architecture_readme
+  assert "draft" in architecture_readme
   assert "does not authorize implementation" in alignment_map
 
 

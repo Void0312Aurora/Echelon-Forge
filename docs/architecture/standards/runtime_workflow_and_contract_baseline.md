@@ -1,12 +1,17 @@
 # Runtime Workflow and Contract Baseline
 
 Language:
-- English canonical: `bridge/runtime_workflow_and_contract_baseline.md`
+- English canonical: `runtime_workflow_and_contract_baseline.md`
 - Chinese companion: [runtime_workflow_and_contract_baseline.zh.md](runtime_workflow_and_contract_baseline.zh.md)
 
-Status: `2026-06-10` authoritative for maintained runtime workflow ownership,
-including current mission-observation mode ownership and episode roundtrip
-seams.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/architecture/standards/runtime_workflow_and_contract_baseline.md`
+Owner: `architecture/runtime-workflow`
+Last verified: `2026-08-08`
+
+Status: maintained runtime workflow and contract baseline, subordinate to the
+[strict simulation architecture baseline](../../plan/architecture/simulation_system_architecture_design.md).
 
 This document fixes the maintained workflow boundary between:
 
@@ -208,8 +213,8 @@ the repository converges them.
 
 ## Related Documents
 
-- [Scenario Configuration Guide](scenario_guide.md)
+- [Scenario Configuration Guide](../../operations/howto/scenario_configuration_guide.md)
 - [Joint Command and Modeling Baseline](../../domains/joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../../domains/joint/standards/command_link_and_reporting_baseline.md)
-- [Simulation Conventions](../foundation/conventions.md)
+- [Simulation Conventions](simulation_conventions.md)
 - [src/core/mission/README.md](../../../src/core/mission/README.md)

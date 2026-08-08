@@ -79,8 +79,8 @@ Tier A: strict bilingual maintained surface
 - migrated Joint common-core and service-profile authority under
   `docs/domains/joint/`
 - migrated policy/model architecture standards under `docs/learning/standards/`
-- maintained standards under the migration-era legacy `docs/standards/` root
-  until their content owners move them
+- cross-domain owner standards under `docs/architecture/standards/`,
+  `docs/systems/standards/`, and `docs/research/standards/`
 - operator-facing reference and how-to material under `docs/operations/`
 - stable plan authority still routed through the migration-era legacy plan
   surface:
@@ -260,4 +260,4 @@ acceptance bar:
 
 - [docs/README.md](../../../README.md)
 - [Archived bilingual migration record](../../../plan/archive/documentation_bilingual_migration_plan_20260518.md)
-- [document_alignment_map.md](../../../standards/overview/document_alignment_map.md)
+- [document_alignment_map.md](../reference/document_alignment_map.md)

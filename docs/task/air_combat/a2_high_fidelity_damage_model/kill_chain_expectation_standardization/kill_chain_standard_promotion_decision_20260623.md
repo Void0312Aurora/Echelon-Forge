@@ -18,8 +18,8 @@ Chinese companion:
   [kill_chain_calibration_harness_plan_20260623.md](kill_chain_calibration_harness_plan_20260623.md)
 - Standards maintenance policy:
   [../../../../engineering/documentation/standards/standards_maintenance_policy.md](../../../../engineering/documentation/standards/standards_maintenance_policy.md)
-- Standards tree overview:
-  [../../../../standards/README.md](../../../../standards/README.md)
+- Distributed standards route:
+  [../../../../engineering/documentation/reference/document_alignment_map.md](../../../../engineering/documentation/reference/document_alignment_map.md)
 
 ## Decision Summary
 

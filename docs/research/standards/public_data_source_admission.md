@@ -1,10 +1,16 @@
 # Public Data Source Admission Standard
 
 Language:
-- English canonical: `foundation/public_data_source_admission.md`
+- English canonical: `public_data_source_admission.md`
 - Chinese companion: [public_data_source_admission.zh.md](public_data_source_admission.zh.md)
 
-Status: `2026-06-01` authoritative foundation rule for public-source admission, research candidate data, and runtime authority gates.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/research/standards/public_data_source_admission.md`
+Owner: `research/source-admission`
+Last verified: `2026-08-08`
+
+Status: maintained public-source admission and authority-gate standard.
 
 This standard defines how public data, papers, standards, reports, generated
 benchmarks, and source ledgers may enter the project. It applies across air,
@@ -245,7 +251,7 @@ authority gates.
 
 ## Relation To Gradient Realism
 
-This standard supports [Gradient Realism Principles](gradient_realism_principles.md).
+This standard supports [Gradient Realism Principles](../../systems/standards/gradient_realism_principles.md).
 A scenario or domain model cannot claim a realism gradient that depends on data
 or validation unless the relevant source admission and authority gates have
 passed.

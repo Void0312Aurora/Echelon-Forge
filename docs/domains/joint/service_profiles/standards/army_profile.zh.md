@@ -175,6 +175,6 @@ Army 执行层或 ground-combat runtime。因此，陆军画像仍主要是标�
 - [军种画像总览](../README.zh.md)
 - [联合指挥与建模基线](../../standards/command_and_modeling_baseline.zh.md)
 - [联合命令链与汇报基线](../../standards/command_link_and_reporting_baseline.zh.md)
-- [仿真约定](../../../../standards/foundation/conventions.zh.md)
-- [运行时工作流与合同基线](../../../../standards/bridge/runtime_workflow_and_contract_baseline.zh.md)
+- [仿真约定](../../../../architecture/standards/simulation_conventions.zh.md)
+- [运行时工作流与合同基线](../../../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)
 - [Ground 标准总览](../../../ground/README.zh.md)

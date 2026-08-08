@@ -19,13 +19,13 @@ Last verified: `2026-08-08`
 | 区域 | 所有权 | 迁移状态 |
 | --- | --- | --- |
 | [project](project/README.zh.md) | 目标、成熟度、全局状态、路线图、项目决策 | 已启用；拥有迁移计划 |
-| [architecture](architecture/README.zh.md) | 跨领域架构、runtime、contracts、后端、ADR | Reviews 与 modularization issue 已迁移；旧 plan/task 权威仍待迁移 |
+| [architecture](architecture/README.zh.md) | 跨领域架构、runtime、contracts、后端、ADR | Conventions/runtime standards、reviews 与 modularization issue 已迁移；旧 plan/task 权威仍待迁移 |
 | [domains](domains/README.zh.md) | Air、Naval、Ground、Joint | Joint/service-profile、Air、Ground、Naval 标准均已路由到 owner |
-| [systems](systems/README.zh.md) | Environment、physics、sensing、command/tasking、weapons、effects | 第二阶段 system issue 与 review 路由已启用 |
+| [systems](systems/README.zh.md) | Environment、physics、sensing、command/tasking、weapons、effects | System issue/review 路由与 gradient-realism standard 已启用 |
 | [learning](learning/README.zh.md) | RL、模型、训练、评估协议、实验 | Policy architecture standard 及 policy/training issue 路由已启用 |
-| [operations](operations/README.zh.md) | How-to、当前 reference、可视化和集成操作 | manual 与 visualization 路由已迁移 |
-| [engineering](engineering/README.zh.md) | 贡献、构建、测试、工具、文档治理、自动化、发布 | documentation、automation、release 与 review 路由已迁移 |
-| [research](research/README.zh.md) | 问题、方法、结果、出版物、外部来源 | 第一阶段来源索引迁移完成 |
+| [operations](operations/README.zh.md) | How-to、当前 reference、可视化和集成操作 | Scenario、manual 与 visualization 路由已迁移 |
+| [engineering](engineering/README.zh.md) | 贡献、构建、测试、工具、文档治理、自动化、发布 | Documentation alignment、automation、release 与 review 路由已迁移 |
+| [research](research/README.zh.md) | 问题、方法、结果、出版物、外部来源 | Source index 与 public-data admission standard 已迁移 |
 
 [文档信息架构](project/documentation_architecture.zh.md)定义目标边界、迁移阶段和
 切换门禁。
@@ -34,7 +34,8 @@ Last verified: `2026-08-08`
 
 迁移期间，下列旧根仍包含维护源：
 
-- [standards](standards/README.zh.md)：等待 owner 分类的剩余混合跨域与 overview 来源；
+- 迁移后的跨域与领域规则位于各 owner-local `standards/` 和 `reference/`
+  表面；当前分布式路由见[文档对齐映射](engineering/documentation/reference/document_alignment_map.zh.md)；
 - [plan](plan/README.zh.md)：活跃/冻结方向和迁移计划；
 - [task](task/README.zh.md)：有界实施工作和状态。
 

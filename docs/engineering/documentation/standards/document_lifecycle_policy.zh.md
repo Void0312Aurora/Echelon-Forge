@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
-状态：`2026-08-07`，仓库文档分类、维护、审阅、生成和归档的权威规范。
+状态：`2026-08-08`，仓库文档分类、维护、审阅、生成和归档的权威规范。
 
 ## 目的
 
@@ -41,9 +41,10 @@ Last verified: `2026-08-07`
 | `generated` | 由明确的 tracked 输入可复现生成的输出 | owner-local `generated/` 目录 | 不可手工成为规范；producer 和输入才是权威。 |
 | `config-index` | canonical scenario 或配置输入的人类可读索引 | 所属 reference 或配置表面 | 指向配置真值，不得复制 payload。 |
 
-`docs/standards/`、`docs/plan/`、`docs/task/` 和 `docs/task/review/` 在维护文档
-完成内容 owner 归属前，仍是迁移期遗留表面。临时位置不会改变文档类型或权威；已有
-owner-local 路由时，不得继续向这些遗留表面扩张新工作。
+`docs/plan/`、`docs/task/` 和 `docs/task/review/` 在维护文档完成内容
+owner 归属前，仍是迁移期遗留表面。已退役的 `docs/standards/` 根不得
+重建。临时遗留位置不会改变文档类型或权威；已有 owner-local 路由时，
+不得继续扩张遗留表面。
 
 ### 生命周期状态
 

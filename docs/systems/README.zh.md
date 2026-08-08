@@ -10,8 +10,8 @@ Last verified: `2026-08-07`
 
 本目标区域拥有跨任务领域复用的 environment、physics、sensing、command/tasking、
 weapons、effects/damage 文档，避免共享机制被重复塞入 air、naval、ground。
-迁移期间，当前规范和任务来源仍位于 [standards](../standards/README.zh.md)
-和有界任务 owner。
+当前规范位于本 owner 的 `standards/` 表面，任务特定状态仍由各 task owner
+维护。当前跨域真实性门控见[梯度真实性原则](standards/gradient_realism_principles.zh.md)。
 
 ## 当前 Owner 路由
 

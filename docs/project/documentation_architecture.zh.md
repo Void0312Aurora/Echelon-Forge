@@ -58,8 +58,10 @@ standard、reference 或 README；其余任务包归档，不得永久保持 act
   common-core README 与标准迁入 `domains/joint/`；第三个并行波次将 service profiles、
   Air 标准和 Ground 标准迁入 owner-local 表面；第四个并行波次将 Naval 标准与
   reference、policy-architecture standard 和 modularization issue 迁入各自 owner。
-  剩余混合跨域与 overview legacy 来源以及 plan/task 树留给后续 owner 切片。不得把
-  旧树整体移动成新的全局桶。
+  第五个波次将 runtime conventions/workflow 迁入 `architecture/`、gradient-realism gate 迁入
+  `systems/`、scenario authoring 迁入 `operations/`、source admission 迁入 `research/`、
+  alignment map 迁入 documentation engineering，随后删除已清空的旧 standards 根。
+  plan/task 树留给后续 owner 切片。不得把旧树整体移动成新的全局桶。
 - 第四阶段：切换全部维护入口并禁止继续写入旧根；只有旧根不再含维护源时才删除。
 
 ## 门禁

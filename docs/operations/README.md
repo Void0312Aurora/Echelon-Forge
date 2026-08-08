@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/operations/README.md`
 Owner: `operations documentation`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 Reference documentation and how-to guides for developers and users, organized by category.
 
@@ -26,6 +26,7 @@ Current-state descriptions of system capabilities, code structure, and physics i
 
 | Document | Description |
 |----------|-------------|
+| [Scenario Configuration Guide](howto/scenario_configuration_guide.md) | Maintained scenario JSON authoring and loader mapping; not doctrine or DTO authority |
 | [Remote Visualization](howto/visualization_guide.md) | SSH port forwarding + Web real-time simulation view |
 
 ### Planning And Open Issues

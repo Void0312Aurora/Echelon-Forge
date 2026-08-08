@@ -4,7 +4,13 @@ Language:
 - English canonical: [public_data_source_admission.md](public_data_source_admission.md)
 - Chinese companion: `public_data_source_admission.zh.md`
 
-状态：`2026-06-01`，公开来源准入、研究级候选数据和运行时权威门控的 foundation 层权威规则。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/research/standards/public_data_source_admission.md`
+Owner: `research/source-admission`
+Last verified: `2026-08-08`
+
+状态：维护中的公开来源准入与 authority gate 标准。
 
 本文定义公开数据、论文、标准、报告、生成 benchmark 和 source ledger 如何进入项目。它适用于 air、naval、ground、joint command、sensor、weapon、damage model、visualization 和未来领域。
 
@@ -171,6 +177,6 @@ Authority 按字段逐项授予。能支持几何的来源，不自动支持脆�
 
 ## 与梯度真实性的关系
 
-本标准支撑 [梯度真实性原则](gradient_realism_principles.zh.md)。如果某场景或领域模型依赖数据或验证来声明真实性梯度，则相应来源准入和 authority gate 必须先通过。
+本标准支撑 [梯度真实性原则](../../systems/standards/gradient_realism_principles.zh.md)。如果某场景或领域模型依赖数据或验证来声明真实性梯度，则相应来源准入和 authority gate 必须先通过。
 
 例如，武器释放场景可以在功能上达到 `G5` 链路接通，但杀伤模型仍保持非权威。只有数据来源、验证和 authority gate 通过后，才可以声明校准毁伤或确定性引信真实性。

@@ -8,15 +8,14 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/standards_maintenance_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
-Status: `2026-08-07` authoritative policy for keeping maintained standards aligned with implementation evidence.
+Status: `2026-08-08` authoritative policy for keeping maintained standards aligned with implementation evidence.
 
 This policy defines how maintained owner-local standards change after
 implementation, active work, tests, scenarios, or governance move. It
 complements the [Documentation Engineering Overview](../README.md), the
-migration-era [Standards Documentation Overview](../../../standards/README.md),
-the [Document Alignment Map](../../../standards/overview/document_alignment_map.md),
+[Document Alignment Map](../reference/document_alignment_map.md),
 and the [Bilingual Documentation Policy](bilingual_documentation_policy.md).
 
 ## Purpose
@@ -28,10 +27,8 @@ governance rules. A standards subtree is not a task board, but it must stay
 close enough to implementation that contributors can trust it when making
 code, test, scenario, or planning changes.
 
-`docs/standards/` remains a migration-era legacy surface for maintained
-standards that have not yet moved to their content owners. Its temporary
-location does not grant it broader authority, and new standards must use an
-owner-local route when that owner exists.
+Maintained standards now use owner-local routes. The retired
+`docs/standards/` root must not be recreated as a shared ownership surface.
 
 The maintenance policy prevents two failure modes:
 
@@ -50,9 +47,9 @@ Use this order when standards and implementation appear to disagree:
 3. The applicable owner's `work/active/` entries decide scoped work status,
    residuals, and acceptance evidence.
 
-Maintained entries still under legacy `docs/standards/` and `docs/task/`
-retain those roles until migrated, but those roots are transition routes rather
-than the target ownership model.
+Maintained entries still under legacy `docs/task/` retain their scoped work
+roles until migrated, but that root is a transition route rather than the
+target ownership model.
 
 If executable evidence and a standards page disagree, do not silently pick one.
 Open or use a review/task governance lane, classify the drift, and close it
@@ -170,8 +167,7 @@ runtime, architecture, build, or contract tests.
 ## Related Documents
 
 - [Documentation Engineering Overview](../README.md)
-- [Migration-era Standards Documentation Overview](../../../standards/README.md)
-- [Document Alignment Map](../../../standards/overview/document_alignment_map.md)
+- [Document Alignment Map](../reference/document_alignment_map.md)
 - [Bilingual Documentation Policy](bilingual_documentation_policy.md)
 - [Bilingual Document Clusters](../reference/bilingual_document_clusters.md)
 - [Subagent Usage Policy](../../automation/standards/subagent_usage_policy.md)
