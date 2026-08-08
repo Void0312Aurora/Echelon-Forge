@@ -16,8 +16,6 @@ Last verified: `2026-08-08`
 
 - [策略执行架构基线](standards/policy_execution_architecture.zh.md)：维护 executable
   policy path、auxiliary mechanism、loss、rollout label 与证据边界的标准。
-- [模型任务区](../task/model/README.zh.md)：活跃实验、证据、dispatch 与 held/pass
-  裁决。M3-S1、M3-S2 等任务标签不会重命名可复用实现 API。
 - [Air Pilot Action Contract](../domains/air/standards/pilot_action_contract.zh.md)：
   `air_combat_hybrid_v1`、`event_action_mask`、`fire_once` 与 runtime trigger
   interpretation 的 owner。
@@ -42,12 +40,36 @@ Last verified: `2026-08-08`
 `M3-S2` 标签仍可用于 task、mechanism-ID 和 `m3s1/`、`m3s2/` metric namespace；
 它们不是通用实现前缀。
 
+## 活跃工作
+
+- [空战 1v1 realism gradient](work/active/air_combat_1v1_realism_gradient/README.zh.md)
+- [Damage-consequence reward surface](work/active/air_combat_damage_consequence_reward/README.zh.md)
+- [Temporal-window HMoE](work/active/temporal_window_hmoe/README.zh.md)
+
+这些包只拥有范围化执行状态，不重定义 Air mission 语义、effects physics 或
+policy-architecture standard。
+
 ## 开放工作入口
 
 - [分层 MoE 执行策略](work/issues/hierarchical_moe_execution_policy.zh.md)：维护中的设计方向，不是实现标准。
 - [强化学习与自博弈](work/issues/rl_selfplay.zh.md)：草拟路线图。
+- [Temporal policy 路线图](work/issues/temporal_policy_roadmap.zh.md)
+- [Causal-transformer HMoE](work/issues/causal_transformer_hmoe/README.zh.md)
+- [Launch-window 标签失衡](work/issues/launch_window_label_imbalance/README.zh.md)
+- [HMoE 层级计算缺口](work/issues/hmoe_hierarchical_computation_gap/README.zh.md)
+- [Policy hold baseline drift](work/issues/policy_hold_baseline_drift/README.zh.md)
+- [协同训练基础与性能](work/issues/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+- [协同执行管线发现](work/issues/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
 
-两份页面都只是 `work/issues` 下的规划输入，路径本身不授予实施权威。
+这些页面都只是 `work/issues` 下的规划输入，路径本身不授予实施权威。
+
+## 保留评审
+
+- [空战 action-interface 拆分](reviews/air_combat_action_interface_split_20260602/README.zh.md)
+- [Optimal-stopping 模型选择](reviews/optimal_stopping_model_selection_20260605/README.zh.md)
+- [Grouped-stopping contract](reviews/grouped_stopping_contract_20260605/README.zh.md)
+
+这些是带日期的 accepted 或 retained evidence packet，不是 active work queue。
 
 未来 learning standard、reference、active work、issue 和 review 使用
 [共享文档结构](../engineering/documentation/structure_examples.zh.md)。

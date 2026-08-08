@@ -100,7 +100,7 @@ def _iter_text_files() -> list[Path]:
     "widened to include them without blessing the exact top-level sprawl this "
     "guard exists to forbid, so the guard intent is genuinely unmet here rather "
     "than merely relocated. See "
-    "docs/plan/unified_architecture_program/t6_residual_ledger.md section 5/8."
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md section 5/8."
   ),
 )
 def test_diagnostics_top_level_entrypoints_are_governed_by_function() -> None:
@@ -163,7 +163,7 @@ def test_tools_governance_docs_record_extension_points() -> None:
   tools_readme = (REPO_ROOT / "tools" / "README.md").read_text(encoding="utf-8")
   diagnostics_readme = (REPO_ROOT / "tools" / "diagnostics" / "README.md").read_text(encoding="utf-8")
   governance_matrix = (
-    REPO_ROOT / "docs" / "task" / "review" / "tools_script_governance_matrix_20260611.zh.md"
+    REPO_ROOT / "docs" / "engineering" / "automation" / "reviews" / "tools_script_governance_matrix_20260611.zh.md"
   ).read_text(encoding="utf-8")
 
   for text in (tools_readme, diagnostics_readme, governance_matrix):

@@ -1,13 +1,18 @@
 # Code Layer Map
 
-Status: multi-domain maintenance edition as of `2026-06-01`.
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/operations/reference/src_layer_map.md`
+Owner: `operations/code-navigation`
+Last verified: `2026-08-08`
 This document answers three questions:
 
 1. How the current mainline code path connects the C++ runtime to the Python training entry points.
 2. Which README files and design documents define the responsibility boundaries of each subsystem.
 3. Which directory you should inspect first when something breaks, instead of searching the whole repository blindly.
 
-If any historical task record, old plan, or archived document conflicts with this map, trust the active README files in the current code tree first, along with the architecture documents under `docs/plan/architecture/` that are still part of the mainline.
+If a historical task record, old plan, or archived document conflicts with this
+map, trust current code and the owner-local architecture entries first.
 
 ## 1. Current Mainline Overview
 
@@ -49,8 +54,8 @@ There are three primary authoritative entry points for this mainline:
   - The top-level project entry point, covering mainline capabilities, common commands, and repository-level boundaries.
 - [src/README.md](../../../src/README.md)
   - The layering boundaries and dependency directions inside `src/`.
-- [docs/plan/architecture/README.md](../../plan/architecture/README.md)
-  - The current primary architecture track, layering freeze records, and performance / roadmap research.
+- [Architecture owner](../../architecture/README.md)
+  - The current architecture standards, references, reviews, and open issues.
 
 ## 2. Which Documents Are the Current Authoritative Entry Points
 
@@ -58,8 +63,9 @@ If you need to decide whether a subsystem's responsibility boundary has been doc
 
 - README files under each `src/` directory
   - These are the most direct boundary descriptions and the closest to the code.
-- `docs/plan/architecture/`
-  - This is the primary "why the layers look like this" design track.
+- `docs/architecture/standards/`
+  - These are the primary maintained explanations for why the layers and
+    runtime contracts look this way.
 - `tests/README.md`
   - This is the entry point for understanding which constraints are already enforced automatically.
 - `python/README.md`, `gym_envs/README.md`, `tools/README.md`
@@ -401,9 +407,9 @@ Current mainline split:
 
 If you want to understand why the layers look this way, not just read directory README files, start with:
 
-1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../../plan/architecture/architecture_and_performance_research_followup.zh.md)
-3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
+1. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
+2. [docs/architecture/work/issues/architecture_and_performance_research_followup.zh.md](../../architecture/work/issues/architecture_and_performance_research_followup.zh.md)
+3. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
 4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 These documents answer:
@@ -430,7 +436,7 @@ If the problem you are facing is:
 - "Why is the binding surface inconsistent?"
   - Start from `src/interfaces/python/` and `tests/runtime/`.
 - "Why is the facade contract designed this way?"
-  - Start from `src/runtime/` and `docs/plan/runtime_facade/`.
+  - Start from `src/runtime/` and the [runtime facade issue](../../architecture/work/issues/runtime_facade_contract_plan.md).
 - "Why is batch rollout / world-batch slow?"
   - Start from `src/core/engine/`, `python/rl/runtime/`, and `tools/diagnostics/`.
 
@@ -451,8 +457,8 @@ When entering the repository for the first time, read in this order:
 
 If you are mainly working on architecture or boundary questions, continue with:
 
-1. [docs/plan/architecture/README.md](../../plan/architecture/README.md)
-2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+1. [Architecture owner](../../architecture/README.md)
+2. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
 3. [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
 4. [src/core/mission/README.md](../../../src/core/mission/README.md)
 5. [tests/architecture/runtime_facade](../../../tests/architecture/runtime_facade)
@@ -462,7 +468,7 @@ If you are mainly working on architecture or boundary questions, continue with:
 This map covers only the currently maintained mainline. It does not promise that:
 
 - every historical task document has already been synchronized to the current paths
-- every implementation pack under `docs/task/` is still a valid operational entry point
+- archived plan/task packets are current operational entry points
 - older designs in `Archive/` still match today's directory layout exactly
 
 If an active README is later moved, renamed, or given a different responsibility, update that directory's README first and then return to this map to repair the navigation.

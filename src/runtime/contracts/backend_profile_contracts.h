@@ -422,7 +422,7 @@ backend_profile_registry_seed() {
             .source_doc_provenance =
                 BackendProfileSourceProvenance{
                     .path =
-                        "docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
+                        "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
                     .section = "3. Initial Registry",
                     .row_label = std::string(kBackendProfileIdCpuExactReference),
                     .accepted_by =
@@ -463,7 +463,7 @@ backend_profile_registry_seed() {
             .source_doc_provenance =
                 BackendProfileSourceProvenance{
                     .path =
-                        "docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
+                        "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
                     .section = "3. Initial Registry",
                     .row_label =
                         std::string(kBackendProfileIdGpuHelpersDiagnosticsOnly),
@@ -507,7 +507,7 @@ backend_profile_registry_seed() {
             .source_doc_provenance =
                 BackendProfileSourceProvenance{
                     .path =
-                        "docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
+                        "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
                     .section = "3. Initial Registry",
                     .row_label =
                         std::string(
@@ -554,7 +554,7 @@ backend_profile_registry_seed() {
             .source_doc_provenance =
                 BackendProfileSourceProvenance{
                     .path =
-                        "docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
+                        "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
                     .section = "3. Initial Registry",
                     .row_label = std::string(
                         kBackendProfileIdResidentStateUnmaintainedCandidate
@@ -599,7 +599,7 @@ backend_profile_registry_seed() {
             .source_doc_provenance =
                 BackendProfileSourceProvenance{
                     .path =
-                        "docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
+                        "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md",
                     .section = "3. Initial Registry",
                     .row_label = std::string(
                         kBackendProfileIdShadowCompareUnmaintainedCandidate

@@ -1,13 +1,18 @@
 # 代码层地图
 
-状态：`2026-06-01` 多域维护版。
+Document kind: `reference`
+Lifecycle: `maintained`
+Canonical: `docs/operations/reference/src_layer_map.md`
+Owner: `operations/code-navigation`
+Last verified: `2026-08-08`
 本文档回答三个问题：
 
 1. 当前主线代码从 C++ 运行时到 Python 训练入口是怎样串起来的。
 2. 各个子系统的职责边界写在哪些 README / 方案文档里。
 3. 出问题时应该先看哪个目录，而不是在整个仓库里盲搜。
 
-如果某份历史任务记录、旧计划或归档文档与这里冲突，优先相信当前代码树中的活动 README，以及 `docs/plan/architecture/` 下仍作为主线的架构说明。
+如果历史任务记录、旧计划或归档文档与这里冲突，优先相信当前代码和 owner-local
+架构入口。
 
 ## 1. 当前主线总览
 
@@ -48,8 +53,8 @@ SimulationKernel / WorldBatchRuntime
   - 项目总入口，说明主线能力、常用命令和仓库级边界。
 - [src/README.md](../../../src/README.md)
   - `src/` 的分层边界和依赖方向。
-- [docs/plan/architecture/README.md](../../plan/architecture/README.md)
-  - 当前架构主方案、分层冻结记录和性能 / 路线调研。
+- [Architecture owner](../../architecture/README.zh.md)
+  - 当前架构 standards、reference、reviews 与开放 issues。
 
 ## 2. 哪些文档是“当前权威入口”
 
@@ -57,8 +62,8 @@ SimulationKernel / WorldBatchRuntime
 
 - `src/` 下各目录 README
   - 这是当前最直接、最接近代码的边界说明。
-- `docs/plan/architecture/`
-  - 这是回答“为什么这样分层”的主方案层。
+- `docs/architecture/standards/`
+  - 这是回答“为什么这样分层、runtime contract 为什么这样定义”的维护规范层。
 - `tests/README.md`
   - 这是回答“哪些约束已经进入自动验证”的入口。
 - `python/README.md`、`gym_envs/README.md`、`tools/README.md`
@@ -400,9 +405,9 @@ SimulationKernel / WorldBatchRuntime
 
 如果你要看“为什么这样分层”，而不是只看目录 README，优先读：
 
-1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../../plan/architecture/architecture_and_performance_research_followup.zh.md)
-3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
+1. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
+2. [docs/architecture/work/issues/architecture_and_performance_research_followup.zh.md](../../architecture/work/issues/architecture_and_performance_research_followup.zh.md)
+3. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
 4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 这些文档回答的是：
@@ -429,7 +434,7 @@ SimulationKernel / WorldBatchRuntime
 - “binding surface 为什么不一致”
   - 从 `src/interfaces/python/` 和 `tests/runtime/` 开始。
 - “facade contract 为什么这样设计”
-  - 从 `src/runtime/` 和 `docs/plan/runtime_facade/` 开始。
+  - 从 `src/runtime/` 和 [runtime facade issue](../../architecture/work/issues/runtime_facade_contract_plan.zh.md) 开始。
 - “批量 rollout / world-batch 为什么慢”
   - 从 `src/core/engine/`、`python/rl/runtime/`、`tools/diagnostics/` 开始。
 
@@ -450,8 +455,8 @@ SimulationKernel / WorldBatchRuntime
 
 如果主要做架构 / 边界工作，再继续读：
 
-1. [docs/plan/architecture/README.md](../../plan/architecture/README.md)
-2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+1. [Architecture owner](../../architecture/README.zh.md)
+2. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
 3. [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
 4. [src/core/mission/README.md](../../../src/core/mission/README.md)
 5. [tests/architecture/runtime_facade](../../../tests/architecture/runtime_facade)
@@ -461,7 +466,7 @@ SimulationKernel / WorldBatchRuntime
 这份地图只覆盖当前维护主线。它不承诺：
 
 - 所有历史任务文档都已经同步到当前路径。
-- 所有 `docs/task/` 下的实施包都仍可直接当作操作入口。
+- 归档的 plan/task 包仍是当前操作入口。
 - `Archive/` 中的旧设计仍与今天的目录组织完全一致。
 
 如果后续发现某份活动 README 已经迁移、改名或职责变化，优先更新对应目录 README，再回到本地图补导航。

@@ -1264,10 +1264,10 @@ DEFAULT_REGISTRY = REPO_ROOT / "examples" / "viz" / "assets" / "registry" / "def
 DEFAULT_OUTPUT_DIR = (
   REPO_ROOT
   / "docs"
-  / "task"
-  / "air_combat"
-  / "a2_high_fidelity_damage_model"
-  / "missile_lethality_target_geometry"
+  / "systems"
+  / "effects"
+  / "reviews"
+  / "f16c_target_geometry_20260614"
   / "review_packets"
   / "f16c_20260611"
 )

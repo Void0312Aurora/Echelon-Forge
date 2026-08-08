@@ -50,11 +50,11 @@ facts，但尚未把本包络对象作为维护中的 runtime/test contract 输�
 
 当前任务证据位于：
 
-- [KCES 任务入口](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/README.zh.md)
-- [KCES 理想化期望合同](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_idealized_expectation_contract_20260621.zh.md)
-- [KCES 场景期望矩阵](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_scenario_expectation_matrix_20260622.zh.md)
-- [KCES 指标映射](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_metric_mapping_20260623.zh.md)
-- [KCES component-response 量化补充](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_component_response_quantization_20260705.zh.md)
+- [KCES 任务入口](../../reviews/kill_chain_expectation_standardization_20260706/README.zh.md)
+- [KCES 理想化期望合同](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_idealized_expectation_contract_20260621.zh.md)
+- [KCES 场景期望矩阵](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_scenario_expectation_matrix_20260622.zh.md)
+- [KCES 指标映射](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_metric_mapping_20260623.zh.md)
+- [KCES component-response 量化补充](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_component_response_quantization_20260705.zh.md)
 
 当前 schema label：
 

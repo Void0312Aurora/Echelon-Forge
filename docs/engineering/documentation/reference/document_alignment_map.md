@@ -79,7 +79,7 @@ They define:
   heads, runtime action adapters, losses, rewards, rollout labels, and probes
 - the difference between runtime support constraints and learned stopping or
   timing mechanisms
-- how active `docs/task/model/` work maps back to stable architecture
+- how owner-local learning work and reviews map back to stable architecture
   vocabulary without turning task status into a standard
 
 ## Valid Specialized Supplements
@@ -255,10 +255,9 @@ land-specific meaning of those hooks.
 
 ## Mapping Historical Flight-Dynamics Work Back To Standards
 
-The `docs/task/flight_dynamics/` tree is now a historical/reference realism
-analysis entry, not the active project-planning root. Its subprojects should be
-read as execution-analysis records that map back to standards ownership, not as
-the standards ownership map itself.
+The former flight-dynamics task tree is now archive-only. Its frozen analyses
+are provenance, not a maintained realism entry. Current gaps route through the
+applicable physics, sensing, command/tasking, weapons, Naval, and Air owners.
 
 Map those workstreams back as follows:
 
@@ -280,8 +279,8 @@ Map those workstreams back as follows:
 - `flight/`
   - aligns to air specialization plus runtime workflow constraints
 
-This means archived or reference task folders may contain valid analysis, but
-they should not decide where stable shared contracts live.
+Archived task folders may contain valid historical analysis, but they do not
+decide where stable shared contracts live.
 
 ## Recommended Maintenance Rule
 

@@ -23,19 +23,19 @@ def _write(path: Path, text: str = "# Document\n") -> None:
 def test_translate_docs_batch_reexports_shared_scope_helpers(tmp_path: Path) -> None:
   docs_root = tmp_path / "docs"
   readme = docs_root / "README.md"
-  consolidation_plan = docs_root / "plan/repository_consolidation/README.md"
+  architecture_reference = docs_root / "architecture/reference/t8_g4_truth_leak_inventory.md"
   authority_map = docs_root / "engineering/automation/rules/document_authority_map.md"
   examples_readme = docs_root / "engineering/documentation/structure_examples.md"
   reference_artifacts = docs_root / "reference_artifacts.md"
   retired_migration_path = docs_root / "plan/documentation_bilingual_migration_plan_20260518.md"
   _write(readme)
-  _write(consolidation_plan)
+  _write(architecture_reference)
   _write(authority_map)
   _write(examples_readme)
   _write(reference_artifacts)
 
   assert translate_docs_batch.is_strict_bilingual_doc(readme, docs_root)
-  assert translate_docs_batch.is_strict_bilingual_doc(consolidation_plan, docs_root)
+  assert translate_docs_batch.is_strict_bilingual_doc(architecture_reference, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(authority_map, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(examples_readme, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(reference_artifacts, docs_root)
@@ -261,16 +261,11 @@ def test_repository_maintained_document_links_are_clean() -> None:
   assert result.issues == []
 
 
-def test_archived_document_routes_are_not_described_as_current_authority() -> None:
-  task_readme = (REPO_ROOT / "docs/task/README.md").read_text(encoding="utf-8")
-  flight_readme = (REPO_ROOT / "docs/task/flight_dynamics/README.md").read_text(
-    encoding="utf-8"
-  )
-  performance_archive = (
-    REPO_ROOT / "docs/task/archive/performance_runtime/README.md"
-  ).read_text(encoding="utf-8")
+def test_retired_plan_and_task_roots_are_outside_maintained_link_scope() -> None:
+  selected = {
+    path.relative_to(REPO_ROOT).as_posix()
+    for path in audit.select_documents(REPO_ROOT)
+  }
 
-  assert "The rollout plan lives in" not in task_readme
-  assert "current runtime-performance planning entry" not in flight_readme
-  assert "archived planning context only" in flight_readme
-  assert "no current execution authority" in performance_archive
+  assert not any(path.startswith("docs/plan/") for path in selected)
+  assert not any(path.startswith("docs/task/") for path in selected)

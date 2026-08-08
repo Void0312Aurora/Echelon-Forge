@@ -7,9 +7,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 DECISION_PATH = (
-    ROOT / "docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.json"
+    ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb10_hold_decision_20260731.json"
 )
-EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730"
+EVIDENCE = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb9_evidence_20260730"
 RB9_COMMIT = "c21757908bcd4c7c323215bba2e8c3afbbfa7e2c"
 
 
@@ -161,10 +161,10 @@ def test_rb10_hold_keeps_maintained_runtime_and_bilingual_record_unchanged() -> 
     assert ".supports_device_observation_view = false" in config
 
     english = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb10_hold_decision_20260731.md"
     ).read_text(encoding="utf-8")
     chinese = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.zh.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb10_hold_decision_20260731.zh.md"
     ).read_text(encoding="utf-8")
     for text in (english, chinese):
         assert "rb10.hold.cuda_resident.20260731" in text
@@ -173,22 +173,22 @@ def test_rb10_hold_keeps_maintained_runtime_and_bilingual_record_unchanged() -> 
     assert "without promotion" in english
     assert "无晋级" in chinese
     assert "cuda_resident_rb10_hold_decision_20260731.md" in (
-        ROOT / "docs/plan/exact_runtime/README.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/README.md"
     ).read_text(encoding="utf-8")
     assert "cuda_resident_rb10_hold_decision_20260731.zh.md" in (
-        ROOT / "docs/plan/exact_runtime/README.zh.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/README.zh.md"
     ).read_text(encoding="utf-8")
     program_english = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_backend_program_20260729.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_backend_program_20260729.md"
     ).read_text(encoding="utf-8")
     program_chinese = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_backend_program_20260729.zh.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_backend_program_20260729.zh.md"
     ).read_text(encoding="utf-8")
     log_english = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_backend_iteration_log_20260729.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_backend_iteration_log_20260729.md"
     ).read_text(encoding="utf-8")
     log_chinese = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_backend_iteration_log_20260729.zh.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_backend_iteration_log_20260729.zh.md"
     ).read_text(encoding="utf-8")
     assert "RB0 through RB11 are accepted" in program_english
     assert "closed without promotion" in program_english

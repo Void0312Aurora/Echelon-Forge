@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[3]
 HEADER_EXTENSIONS = {".cuh", ".h", ".hh", ".hpp"}
 TEST_PATH_MARKERS = ("src/tests/", "tests/", "_probe.cpp")
 POLICY_PATH = (
-    ROOT / "docs/plan/exact_runtime/cuda_resident_runtime_program_2_size_policy_20260731.json"
+    ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_runtime_program_2_size_policy_20260731.json"
 )
 
 
@@ -84,9 +84,9 @@ def _artifact_paths(policy: dict[str, object]) -> list[str]:
     assert isinstance(scope, dict)
     prefixes = scope["artifact_path_prefixes"]
     assert isinstance(prefixes, list)
-    normalized_prefixes = [str(prefix) for prefix in prefixes]
+    normalized_prefixes = [str(prefix).replace("docs/plan/exact_runtime", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805", 1) for prefix in prefixes]
     tracked = subprocess.run(
-        ["git", "ls-files", "--", "docs/plan/exact_runtime"],
+        ["git", "ls-files", "--", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805"],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -95,7 +95,7 @@ def _artifact_paths(policy: dict[str, object]) -> list[str]:
     paths = {
         path for path in tracked if any(path.startswith(prefix) for prefix in normalized_prefixes)
     }
-    artifact_root = ROOT / "docs/plan/exact_runtime"
+    artifact_root = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805"
     for candidate in artifact_root.rglob("*"):
         if not candidate.is_file():
             continue

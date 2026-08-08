@@ -34,9 +34,9 @@ Last verified: `2026-08-08`
 | 2 | 维护中的代码、场景、配置、测试和 contract runner | 可执行证据优先于过期文字。窄 gate 通过不自动提升整个领域成熟度。 |
 | 3 | `docs/<owner>/standards/` 下维护中的 owner-local 标准 | 在声明职责范围内以相关 owner-local 标准为准；跨 owner 路由查看对齐映射。 |
 | 4 | 根 README、`docs/README*`、局部 README | 拥有当前导航和成熟度入口。进入带日期任务文件前先读这里。 |
-| 5 | `docs/plan/` 和活跃 `docs/task/` 入口 | 拥有架构方向、范围化实现计划、进度记录和残余。 |
+| 5 | Owner-local `reference/`、`work/active/`、`work/issues/` 与 `reviews/` | 在 owner 边界内拥有已核验事实、已授权工作、未解决缺口和保留决定。 |
 | 6 | `docs/operations/`、`docs/reference_artifacts*`、`tests/README*` | 描述代码边界、操作工作流、保留证据和测试系统意图。 |
-| 7 | `forward/`、`archive`、`Archive`、`temp`、retained artifacts、带日期 cluster packet | 仅为支撑或历史记录，除非维护 README 明确提升。 |
+| 7 | `docs/plan/**/archive/`、`docs/task/**/archive/`、`forward/`、`Archive`、`temp`、retained artifacts、带日期 cluster packet | 仅为支撑或历史记录，除非维护 owner README 明确提升。 |
 
 ## 标准化文档索引
 
@@ -51,10 +51,10 @@ Last verified: `2026-08-08`
 | 双语文档如何处理？ | [双语文档策略](../../documentation/standards/bilingual_documentation_policy.zh.md)、[双语文档簇](../../documentation/reference/bilingual_document_clusters.zh.md) |
 | 文档类型、生命周期、evidence、generated 输出、config 索引、链接和 archive 如何治理？ | [文档生命周期规范](../../documentation/standards/document_lifecycle_policy.zh.md) |
 | release 与依赖变更如何治理？ | [发布与依赖规范](../../release/standards/release_and_dependency_policy.zh.md) |
-| 全仓精简在哪里排序和验收？ | [仓库精简与整合路线图](../../../plan/repository_consolidation/README.zh.md) |
+| 全仓精简在哪里排序和验收？ | [仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md) |
 | 社区、许可或安全文本如何处理？ | [CONTRIBUTING](../../../../CONTRIBUTING.md)、[LICENSE](../../../../LICENSE)、[THIRD_PARTY_NOTICES](../../../../THIRD_PARTY_NOTICES.md)、[SECURITY](../../../../SECURITY.md)、[CODE_OF_CONDUCT](../../../../CODE_OF_CONDUCT.md) |
 | 委派工作如何协调？ | [Subagent 使用规范](../standards/subagent_usage_policy.zh.md)、[WP Closure Lane Policy](../standards/wp_closure_lane_policy.zh.md) |
-| 新任务子项目应如何创建？ | [子项目创建标准](subproject_creation_standard.zh.md)、[Subagent 使用规范](../standards/subagent_usage_policy.zh.md)、[任务索引](../../../task/README.zh.md) |
+| 新的范围化工作如何创建？ | [子项目创建标准](subproject_creation_standard.zh.md)、[Subagent 使用规范](../standards/subagent_usage_policy.zh.md)，以及受影响 owner 的 `work/active/` 或 `work/issues/` 路由 |
 
 ## 能力声明门槛
 
@@ -71,7 +71,7 @@ Last verified: `2026-08-08`
   测试表面都这样说明。
 - 不要把 retained artifact、signoff packet 或带日期记录当作更广项目权威，除非
   维护入口明确提升它们。
-- 不要让 compatibility、diagnostics 或 exploratory 路径在没有标准或任务更新的
+- 不要让 compatibility、diagnostics 或 exploratory 路径在没有 owner-local 标准或工作入口更新的
   情况下重定义维护路径。
 
 ## 任务阅读配方
@@ -79,14 +79,14 @@ Last verified: `2026-08-08`
 | 任务类型 | 必读 |
 | --- | --- |
 | 文档刷新 | 根 README、docs 索引、本索引、[文档生命周期规范](../../documentation/standards/document_lifecycle_policy.zh.md)、受影响局部 README、标准 owner。 |
-| 仓库精简 | [仓库精简与整合路线图](../../../plan/repository_consolidation/README.zh.md)、受影响 owner README、当前 callers/tests，以及必需的独立审阅协议。 |
-| 代码/runtime 修改 | 受影响的 `src/`、`python/` 或 `gym_envs` README；源码层级图；相关 plan/task 入口；相关测试。 |
+| 仓库精简 | [仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md)、受影响 owner README、当前 callers/tests，以及必需的独立审阅协议。 |
+| 代码/runtime 修改 | 受影响的 `src/`、`python/` 或 `gym_envs` README；源码层级图；相关 owner-local 工作入口；相关测试。 |
 | 测试或 contract 修改 | tests README、局部 test README、reference artifacts，以及相关 owner-local architecture 或 domain contract。 |
-| 领域成熟度表述 | 领域 task README、领域 standards README、被索引的当前状态或验收文档、实现/测试证据。 |
+| 领域成熟度表述 | 领域 owner README、领域 standards、被索引的当前 owner-local 状态或验收记录、实现/测试证据。 |
 | 社区/治理/许可文本 | CONTRIBUTING、LICENSE、THIRD_PARTY_NOTICES、SECURITY，以及相关 owner 索引路由的维护中标准。 |
 | release 或依赖变更 | [发布与依赖规范](../../release/standards/release_and_dependency_policy.zh.md)、受影响 manifest/lockfile、release tooling 与聚焦测试。 |
 | 委派 Agent 工作 | 本索引、subagent 使用规范、被分配写集、必需输出 packet。 |
-| 新建 `docs/task/**` 子项目 | 本索引、子项目创建标准、父领域 README、相关 standards owner、任务簇计划。 |
+| 新建范围化工作包 | 本索引、子项目创建标准、owner README、相关 standards，以及 owner-local `work/active/` 或 `work/issues/` 入口。 |
 
 ## Agent 输出规则
 

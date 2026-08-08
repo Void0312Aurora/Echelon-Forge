@@ -114,4 +114,7 @@ That layering matters:
 - [Scenario Configuration Guide](../../operations/howto/scenario_configuration_guide.md)
 - [Runtime Workflow and Contract Baseline](../../architecture/standards/runtime_workflow_and_contract_baseline.md)
 - [USAF Profile](../joint/service_profiles/standards/air_force_profile.md)
+- [Landing Task Reference](reference/landing_task.md)
 - [Air-To-Air Kill-Chain Expectation Envelope](work/issues/kill_chain_expectation_envelope.md)
+- [Kill-chain expectation standardization review](reviews/kill_chain_expectation_standardization_20260706/README.md)
+- [Learning-owned active Air-combat work](../../learning/README.md)

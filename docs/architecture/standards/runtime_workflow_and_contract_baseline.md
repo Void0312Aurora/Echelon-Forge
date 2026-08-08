@@ -11,7 +11,7 @@ Owner: `architecture/runtime-workflow`
 Last verified: `2026-08-08`
 
 Status: maintained runtime workflow and contract baseline, subordinate to the
-[strict simulation architecture baseline](../../plan/architecture/simulation_system_architecture_design.md).
+[strict simulation architecture baseline](simulation_system_architecture_design.md).
 
 This document fixes the maintained workflow boundary between:
 

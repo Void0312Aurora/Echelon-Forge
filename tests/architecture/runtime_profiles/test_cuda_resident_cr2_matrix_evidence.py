@@ -14,9 +14,9 @@ from tools.diagnostics import cuda_resident_cr2_matrix_probe as matrix_probe
 
 
 ROOT = Path(__file__).resolve().parents[3]
-EVIDENCE_DIR = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804"
+EVIDENCE_DIR = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_matrix_evidence_20260804"
 MANIFEST = EVIDENCE_DIR / "manifest.json"
-EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804.json"
+EVIDENCE = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_matrix_evidence_20260804.json"
 PARITY = EVIDENCE_DIR / "parity-comparison.json"
 COLLECTOR = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py"
 SCHEMA = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence_schema.py"
@@ -36,7 +36,7 @@ def _canonical_source_descriptor(path: Path) -> dict[str, object]:
     payload = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
     encoded = payload.encode("utf-8")
     return {
-        "path": path.relative_to(ROOT).as_posix(),
+        "path": path.relative_to(ROOT).as_posix().replace("docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", "docs/plan/exact_runtime/", 1),
         "canonicalization": "utf8_lf",
         "canonical_bytes": len(encoded),
         "sha256": hashlib.sha256(encoded).hexdigest(),
@@ -48,7 +48,7 @@ def _tracked_reports() -> tuple[dict[str, object], dict[tuple[str, str], dict[st
     reports: dict[tuple[str, str], dict[str, object]] = {}
     for campaign in manifest["campaigns"]:
         for lane, descriptor in campaign["reports"].items():
-            path = ROOT / descriptor["path"]
+            path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1)
             report = matrix_probe.load_report(path)
             matrix_probe.validate_report(report, require_production=True)
             reports[(campaign["campaign_id"], lane)] = report
@@ -61,22 +61,22 @@ def test_tracked_manifest_reports_and_evidence_hashes_are_exact() -> None:
     schema.validate_evidence(evidence)
     assert evidence["source_commit"] == "0c24a07549e238222741da6b20100537e7a9be22"
     assert evidence["inputs"]["manifest"] == {
-        "path": MANIFEST.relative_to(ROOT).as_posix(),
+        "path": MANIFEST.relative_to(ROOT).as_posix().replace("docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", "docs/plan/exact_runtime/", 1),
         "bytes": MANIFEST.stat().st_size,
         "sha256": _sha256(MANIFEST),
     }
     assert evidence["inputs"]["collector_source"] == _canonical_source_descriptor(COLLECTOR)
     assert evidence["inputs"]["schema_source"] == _canonical_source_descriptor(SCHEMA)
     for descriptor in manifest["source_inputs"].values():
-        path = ROOT / descriptor["path"]
+        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1)
         assert descriptor == _canonical_source_descriptor(path)
     for descriptor in manifest["prior_evidence_inputs"].values():
-        path = ROOT / descriptor["path"]
+        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1)
         assert descriptor == _canonical_source_descriptor(path)
         assert descriptor["canonicalization"] == "utf8_lf"
     for campaign in manifest["campaigns"]:
         for descriptor in campaign["reports"].values():
-            path = ROOT / descriptor["path"]
+            path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1)
             assert path.stat().st_size == descriptor["bytes"] < 1_048_576
             assert _sha256(path) == descriptor["sha256"]
     assert PARITY.stat().st_size == evidence["parity_confirmation"]["bytes"]
@@ -115,7 +115,7 @@ def test_fresh_parity_and_counter_blocker_inputs_remain_fail_closed() -> None:
         assert all(row["matched_count"] == row["comparison_count"] > 0 for row in family)
     manifest = _load(MANIFEST)
     paths = {
-        name: ROOT / descriptor["path"]
+        name: ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1)
         for name, descriptor in manifest["prior_evidence_inputs"].items()
     }
     status = collector._validate_prior_evidence(paths)

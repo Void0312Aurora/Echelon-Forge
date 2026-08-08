@@ -20,33 +20,28 @@ current authority.
 | Area | Ownership | Migration status |
 | --- | --- | --- |
 | [project](project/README.md) | Purpose, maturity, global status, roadmap, project decisions | Active; owns the migration plan |
-| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Conventions/runtime standards, reviews, and modularization issue migrated; legacy plan/task authorities remain pending |
+| [architecture](architecture/README.md) | Cross-domain architecture, runtime, contracts, backends, ADRs | Standards, references, reviews, and open architecture work are owner-local |
 | [domains](domains/README.md) | Air, naval, ground, joint | Joint/service-profile, Air, Ground, and Naval standards routed to owners |
-| [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | System issue/review routes plus gradient-realism standard active |
-| [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Policy architecture standard plus policy/training issue routes active |
+| [systems](systems/README.md) | Environment, physics, sensing, command/tasking, weapons, effects | Environment, command/tasking, effects, weapons, and realism routes are owner-local |
+| [learning](learning/README.md) | RL, models, training, evaluation protocols, experiments | Standards, active work, issues, and retained reviews are owner-local |
 | [operations](operations/README.md) | How-to, current reference, visualization and integration operations | Scenario, manual, and visualization routes migrated |
-| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation, release | Documentation alignment, automation, release, and review routes migrated |
+| [engineering](engineering/README.md) | Contributing, build, tests, tooling, documentation governance, automation, release | Documentation, automation, release, and testing routes are owner-local |
 | [research](research/README.md) | Questions, methods, results, publications, external sources | Source index and public-data admission standard migrated |
 
 The [documentation information architecture](project/documentation_architecture.md)
 defines target boundaries, migration phases, and cutover gates.
 
-## Current Legacy Routes
+## Archive-only Legacy Containers
 
-The following roots still contain maintained sources during the transition:
+All maintained `standards`, `plan`, and `task` sources now route through their
+content owners. Use the [Document Alignment Map](engineering/documentation/reference/document_alignment_map.md)
+for the distributed authority map. The remaining `plan/` and `task/` paths all
+contain an `archive` component and are historical storage, not current routes.
 
-- owner-local `standards/` and `reference/` surfaces now hold the migrated
-  cross-domain and domain rules; use the [Document Alignment Map](engineering/documentation/reference/document_alignment_map.md)
-  for the current distributed route;
-- [plan](plan/README.md): active/frozen direction and migration plans;
-- [task](task/README.md): scoped implementation work and status.
-
-Do not add new top-level categories or expand these legacy roots. A document
-moves only after its content owner and current authority are identified.
-
-Legacy `Archive/`, `evaluation/archive/`, and `manual/archive/` containers are
-frozen historical storage, not maintained routes, and remain outside this
-migration's tracking surface.
+Do not add new maintained content under `docs/plan/`, `docs/task/`, legacy
+`Archive/`, `evaluation/archive/`, or `manual/archive/`. Existing archives are
+excluded from the maintained tracking surface and are changed only by a
+separately authorized historical migration.
 
 ## Direct Operational Routes
 
@@ -57,6 +52,7 @@ migration's tracking surface.
 - [Automation and agent guidance](engineering/automation/README.md)
 - [Documentation engineering and examples](engineering/documentation/README.md)
 - [Release and dependency governance](engineering/release/README.md)
+- [Testing engineering](engineering/testing/README.md)
 - [Retained artifact provenance](reference_artifacts.md)
 - [Test-system orientation](../tests/README.md)
 

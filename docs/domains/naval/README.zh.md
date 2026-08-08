@@ -75,6 +75,9 @@ Naval 可以约束这些形状在海上执行中的使用方式，但不重新�
 
 ## 活跃工作与相关文档
 
-- [Naval 任务线](../../task/naval/README.zh.md)
+- [Naval 领域表面拆分](work/active/naval_domain_surface_split/README.zh.md)：
+  当前有界工作包，P5 仍为 planned。
+- [Naval 进展快照 — 2026-05-27](reviews/naval_progress_snapshot_20260527.zh.md)：
+  带日期 review 证据，不是最新状态权威。
 - [Joint 指挥与建模基线](../joint/standards/command_and_modeling_baseline.zh.md)
 - [Joint 指挥链路与汇报基线](../joint/standards/command_link_and_reporting_baseline.zh.md)

@@ -22,9 +22,9 @@ scope、依赖影响、测试、兼容行为和验收证据。
 ## 权威与证据顺序
 
 本 issue 从属于当前
-[严格仿真系统架构基线](../../../plan/architecture/simulation_system_architecture_design.zh.md)。
+[严格仿真系统架构基线](../../standards/simulation_system_architecture_design.zh.md)。
 该基线定义规范性 architecture laws、分层所有权、domain extension 准入和验证门禁。
-迁移期间，[架构计划索引](../../../plan/architecture/README.zh.md)仍是权威入口，
+迁移期间，[架构计划索引](../../../plan/archive/owner_migration_20260808/architecture/README.zh.md)仍是权威入口，
 [Architecture owner README](../../README.zh.md)也记录了这一点。
 
 当本 issue 与其他来源冲突时，按以下顺序裁决：
@@ -35,7 +35,7 @@ scope、依赖影响、测试、兼容行为和验收证据。
 
 本 issue 不修订严格基线，也不把任何候选路线提升为 maintained architecture。
 候选项要转化为实现工作，必须在
-[simulation architecture](../../../task/simulation_architecture/README.zh.md)
+[simulation architecture](../../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md)
 下形成单独授权的任务。
 
 ## 目的与范围
@@ -189,9 +189,9 @@ packets、read/write sets、clock 与 latency policy、facade visibility、兼�
 
 ## 相关证据
 
-- [严格仿真系统架构基线](../../../plan/architecture/simulation_system_architecture_design.zh.md)
-- [架构计划索引](../../../plan/architecture/README.zh.md)
+- [严格仿真系统架构基线](../../standards/simulation_system_architecture_design.zh.md)
+- [架构计划索引](../../../plan/archive/owner_migration_20260808/architecture/README.zh.md)
 - [Architecture owner README](../../README.zh.md)
-- [Simulation architecture task owner](../../../task/simulation_architecture/README.zh.md)
+- [Simulation architecture task owner](../../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md)
 - [`SimulationKernel` composition](../../../../src/core/engine/simulation_kernel.cpp)
 - [Domain-separation architecture tests](../../../../tests/architecture/structural_boundaries/test_domain_separation_boundaries.py)

@@ -19,30 +19,26 @@ Last verified: `2026-08-08`
 | 区域 | 所有权 | 迁移状态 |
 | --- | --- | --- |
 | [project](project/README.zh.md) | 目标、成熟度、全局状态、路线图、项目决策 | 已启用；拥有迁移计划 |
-| [architecture](architecture/README.zh.md) | 跨领域架构、runtime、contracts、后端、ADR | Conventions/runtime standards、reviews 与 modularization issue 已迁移；旧 plan/task 权威仍待迁移 |
+| [architecture](architecture/README.zh.md) | 跨领域架构、runtime、contracts、后端、ADR | Standards、reference、reviews 与开放架构工作均已 owner-local 化 |
 | [domains](domains/README.zh.md) | Air、Naval、Ground、Joint | Joint/service-profile、Air、Ground、Naval 标准均已路由到 owner |
-| [systems](systems/README.zh.md) | Environment、physics、sensing、command/tasking、weapons、effects | System issue/review 路由与 gradient-realism standard 已启用 |
-| [learning](learning/README.zh.md) | RL、模型、训练、评估协议、实验 | Policy architecture standard 及 policy/training issue 路由已启用 |
+| [systems](systems/README.zh.md) | Environment、physics、sensing、command/tasking、weapons、effects | Environment、command/tasking、effects、weapons 与 realism 路由均已 owner-local 化 |
+| [learning](learning/README.zh.md) | RL、模型、训练、评估协议、实验 | Standards、active work、issues 与保留 reviews 均已 owner-local 化 |
 | [operations](operations/README.zh.md) | How-to、当前 reference、可视化和集成操作 | Scenario、manual 与 visualization 路由已迁移 |
-| [engineering](engineering/README.zh.md) | 贡献、构建、测试、工具、文档治理、自动化、发布 | Documentation alignment、automation、release 与 review 路由已迁移 |
+| [engineering](engineering/README.zh.md) | 贡献、构建、测试、工具、文档治理、自动化、发布 | Documentation、automation、release 与 testing 路由均已 owner-local 化 |
 | [research](research/README.zh.md) | 问题、方法、结果、出版物、外部来源 | Source index 与 public-data admission standard 已迁移 |
 
 [文档信息架构](project/documentation_architecture.zh.md)定义目标边界、迁移阶段和
 切换门禁。
 
-## 当前遗留路由
+## 仅归档遗留容器
 
-迁移期间，下列旧根仍包含维护源：
+所有维护中的 `standards`、`plan` 与 `task` 源现已路由到内容 owner。当前分布式
+权威映射见[文档对齐映射](engineering/documentation/reference/document_alignment_map.zh.md)。
+剩余 `plan/` 与 `task/` 路径均含 `archive` 组件，只是历史存储，不是当前入口。
 
-- 迁移后的跨域与领域规则位于各 owner-local `standards/` 和 `reference/`
-  表面；当前分布式路由见[文档对齐映射](engineering/documentation/reference/document_alignment_map.zh.md)；
-- [plan](plan/README.zh.md)：活跃/冻结方向和迁移计划；
-- [task](task/README.zh.md)：有界实施工作和状态。
-
-不得新增一级类别或继续扩张这些旧根。只有识别内容 owner 与当前权威后才能移动文档。
-
-旧 `Archive/`、`evaluation/archive/` 与 `manual/archive/` 容器属于冻结历史存储，
-不是维护路由，也不进入本次迁移的追踪范围。
+不得在 `docs/plan/`、`docs/task/`、旧 `Archive/`、`evaluation/archive/` 或
+`manual/archive/` 下新增维护内容。既有归档排除在维护追踪面之外，只有另行授权的
+历史迁移才能修改。
 
 ## 直接操作入口
 
@@ -53,6 +49,7 @@ Last verified: `2026-08-08`
 - [自动化与 Agent 指引](engineering/automation/README.zh.md)
 - [文档工程与实例](engineering/documentation/README.zh.md)
 - [发布与依赖治理](engineering/release/README.zh.md)
+- [测试工程](engineering/testing/README.zh.md)
 - [保留制品来源](reference_artifacts.zh.md)
 - [测试系统入口](../tests/README.zh.md)
 

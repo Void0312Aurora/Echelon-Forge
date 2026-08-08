@@ -101,4 +101,7 @@ Air 改进 backlog 同样属于 draft issue surface。其条目在被单独授�
 - [场景配置指南](../../operations/howto/scenario_configuration_guide.zh.md)
 - [运行时工作流与合同基线](../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)
 - [USAF 画像](../joint/service_profiles/standards/air_force_profile.zh.md)
+- [着陆任务 Reference](reference/landing_task.zh.md)
 - [空空杀伤链期望包络](work/issues/kill_chain_expectation_envelope.zh.md)
+- [Kill-chain 期望标准化评审](reviews/kill_chain_expectation_standardization_20260706/README.zh.md)
+- [Learning owner 的活跃空战工作](../../learning/README.zh.md)

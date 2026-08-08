@@ -91,4 +91,4 @@ runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给
 ## 非目标
 
 本标准不授权工作、不定义 Army 条令，也不把当前静态 MVP 提升为完整 land-warfare
-模型。Active work 与成熟度裁决属于 [Ground 任务区](../../../task/ground/README.zh.md)。
+模型。Active work 与成熟度裁决属于 [Ground 任务区](../../../task/ground/archive/owner_migration_20260808/README.zh.md)。

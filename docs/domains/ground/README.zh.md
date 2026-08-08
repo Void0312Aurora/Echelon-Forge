@@ -35,12 +35,15 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
 目录位置不会扩大上述声明。当前证据证明的是原生身份和静态 task/status 链，
 而不是完整 land-combat runtime。
 
-## 当前工作入口
+## 当前相关路由
 
-- [Ground 任务区](../../task/ground/README.zh.md)：当前实现状态、剩余 held
-  边界和执行规划。
+- [环境系统](../../systems/environment/README.zh.md)：跨域 substrate contract 与保留的
+  G0/Arnis 验收边界。
+- [Ground 缺陷清单](reviews/ground_domain_defect_inventory_20260522.zh.md)：带日期的
+  review 快照；开放项需要按当前状态重新核验。
 
-任务文档可以报告成熟度和证据，但不得重新定义以上标准。
+当前没有已授权的 Ground `work/active/` 包。归档记录可以提供 provenance，
+但不得重新定义以上标准。
 
 ## 相关 Owner
 
@@ -49,4 +52,4 @@ service-profile 解释以及跨域 runtime 架构仍由各自 owner 负责。
 - [美国陆军 service profile](../joint/service_profiles/standards/army_profile.zh.md)：
   Army 组织和军种级解释。
 - [Runtime workflow 与合同基线](../../architecture/standards/runtime_workflow_and_contract_baseline.zh.md)：
-  共享 stage 与 runtime 边界，等待其独立 owner 迁移。
+  共享 stage 与 runtime 边界。

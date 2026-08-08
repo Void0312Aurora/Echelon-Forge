@@ -38,7 +38,7 @@ DEVICE_SOURCES = tuple(
 )
 WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
 CMAKE = ROOT / "CMakeLists.txt"
-EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730"
+EVIDENCE = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb9_evidence_20260730"
 
 
 def _text(path: Path) -> str:
@@ -346,10 +346,10 @@ def test_rb9_committed_evidence_is_complete_but_held() -> None:
         EVIDENCE / "comparison.json",
     ]
     english_log = _text(
-        ROOT / "docs/plan/exact_runtime/cuda_resident_backend_iteration_log_20260729.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_backend_iteration_log_20260729.md"
     )
     chinese_log = _text(
-        ROOT / "docs/plan/exact_runtime/cuda_resident_backend_iteration_log_20260729.zh.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_backend_iteration_log_20260729.zh.md"
     )
     for path in evidence_paths:
         digest = hashlib.sha256(path.read_bytes()).hexdigest()

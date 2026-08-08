@@ -101,4 +101,4 @@ Current evidence anchors:
 
 This standard does not authorize work, define Army doctrine, or promote the
 current static MVP into a complete land-warfare model. Active work and maturity
-decisions belong in the [Ground task area](../../../task/ground/README.md).
+decisions belong in the [Ground task area](../../../task/ground/archive/owner_migration_20260808/README.md).

@@ -15,7 +15,7 @@ Used by:
   include-direction gate).
 
 Fine-grained groups follow the boundary rules already documented in each
-`src/**/README.md` (see `docs/plan/unified_architecture_program/README.md`
+`src/**/README.md` (see `docs/plan/archive/unified_architecture_program_completed_20260727/README.md`
 T3 and `simulation_system_architecture_design.md` S15 G2 for the program-level
 framing). Each fine group rolls up into one of the coarse layers named by the
 T3 work order: `engine`, `mission`, `facade`, `content`, or `other` (the

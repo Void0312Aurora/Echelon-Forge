@@ -47,9 +47,9 @@ Use this order when standards and implementation appear to disagree:
 3. The applicable owner's `work/active/` entries decide scoped work status,
    residuals, and acceptance evidence.
 
-Maintained entries still under legacy `docs/task/` retain their scoped work
-roles until migrated, but that root is a transition route rather than the
-target ownership model.
+The retired `docs/plan/` and `docs/task/` roots contain archives only. Current
+scoped work and residuals must be routed through the applicable owner's
+`work/active/` or `work/issues/` surface.
 
 If executable evidence and a standards page disagree, do not silently pick one.
 Open or use a review/task governance lane, classify the drift, and close it

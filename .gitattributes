@@ -4,12 +4,12 @@ tests/scenario/fixtures/environment_substrate/arnis_bundle_v1/** -text
 
 # RB9-RB11 evidence and decision hashes are over committed bytes, not a
 # platform newline representation.
-docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730/** -text
-docs/plan/exact_runtime/cuda_resident_rb10_hold_decision_20260731.json -text
-docs/plan/exact_runtime/cuda_resident_rb11_closure_20260731.json -text
-docs/plan/exact_runtime/cuda_resident_runtime_program_2_size_policy_20260731.json -text
+docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb9_evidence_20260730/** -text
+docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb10_hold_decision_20260731.json -text
+docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_rb11_closure_20260731.json -text
+docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_runtime_program_2_size_policy_20260731.json -text
 
 # CR2-6b content-addressed outputs use exact committed bytes.
-docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804/** -text
-docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804.json -text
-docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.json -text
+docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_matrix_evidence_20260804/** -text
+docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_matrix_evidence_20260804.json -text
+docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_closure_20260805.json -text

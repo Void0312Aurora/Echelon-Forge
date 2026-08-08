@@ -1,0 +1,68 @@
+{
+  "artifacts": {
+    "effect_band": {
+      "csv": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_effect_band_heatmap_20260623.csv",
+      "description": "Case-level band from nearest distance over the selected R_effect variant.",
+      "png": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_effect_band_heatmap_20260623.png",
+      "svg": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_effect_band_heatmap_20260623.svg"
+    },
+    "guidance_status": {
+      "csv": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_guidance_status_heatmap_20260623.csv",
+      "description": "Derived stage expectation status for the selected runtime rows.",
+      "png": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_guidance_status_heatmap_20260623.png",
+      "svg": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_guidance_status_heatmap_20260623.svg"
+    },
+    "launch_class": {
+      "csv": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_launch_class_heatmap_20260623.csv",
+      "description": "P2 engineering-proxy launch-window class.",
+      "png": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_launch_class_heatmap_20260623.png",
+      "svg": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_launch_class_heatmap_20260623.svg"
+    },
+    "max_failure_probability": {
+      "csv": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_max_failure_probability_heatmap_20260623.csv",
+      "description": "Maximum per-component failure probability observed in the response stage.",
+      "png": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_max_failure_probability_heatmap_20260623.png",
+      "svg": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_max_failure_probability_heatmap_20260623.svg"
+    },
+    "rho_fuze": {
+      "csv": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_rho_fuze_heatmap_20260623.csv",
+      "description": "Nearest distance divided by the declared fuze radius.",
+      "png": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_rho_fuze_heatmap_20260623.png",
+      "svg": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_rho_fuze_heatmap_20260623.svg"
+    }
+  },
+  "date_stamp": "20260623",
+  "input_path": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_before_report_20260623.json",
+  "manifest_path": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_visualization_manifest_20260623.json",
+  "output_dir": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623",
+  "prefix": "kces_anchor_cv",
+  "range_km_axis": [
+    4.0,
+    6.0,
+    8.0,
+    10.0,
+    12.0,
+    16.0
+  ],
+  "schema_version": "a2.kill_chain_expectation_visualization_manifest.v1",
+  "selected_row_count": 78,
+  "signed_bearing_deg_axis": [
+    -90.0,
+    -75.0,
+    -60.0,
+    -45.0,
+    -30.0,
+    -15.0,
+    0.0,
+    15.0,
+    30.0,
+    45.0,
+    60.0,
+    75.0,
+    90.0
+  ],
+  "status": "generated",
+  "summary_markdown": "docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_visualization_summary_20260623.md",
+  "target_motion_layer": "nonmaneuvering_constant_velocity",
+  "variant": "REV-RUNTIME-PROJECTION"
+}

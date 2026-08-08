@@ -292,7 +292,7 @@ class RuntimeFacadeAdapter:
     """Centralized compatibility adapter for facade-shaped runtime access.
 
     Evidence-producer opt-in (T10 evidence-spine census slice 4; see
-    ``docs/plan/unified_architecture_program/t10_evidence_spine_census_20260721.md``
+    ``docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.md``
     section 3 step 4 and the ``trace_ids`` / ``input_snapshot_version`` rows of
     ``t10_evidence_glossary_20260721.md``):
 

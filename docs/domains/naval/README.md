@@ -81,6 +81,9 @@ weapon and damage calibration.
 
 ## Active Work and Related Documents
 
-- [Naval task line](../../task/naval/README.md)
+- [Naval domain-surface split](work/active/naval_domain_surface_split/README.md):
+  current bounded package with P5 still planned.
+- [Naval progress snapshot — 2026-05-27](reviews/naval_progress_snapshot_20260527.md):
+  dated review evidence, not the latest status authority.
 - [Joint Command and Modeling Baseline](../joint/standards/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../joint/standards/command_link_and_reporting_baseline.md)

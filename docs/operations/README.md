@@ -35,6 +35,14 @@ Current-state descriptions of system capabilities, code structure, and physics i
 |----------|-------------|
 | [Visualization Stack Evolution](visualization/work/issues/viz_stack_evolution.md) | Maintained north-star plan; not implementation authority |
 
+### Accepted Visualization Reviews
+
+| Document | Description |
+|----------|-------------|
+| [Bilingual Display P1](visualization/reviews/bilingual_display_20260606/README.md) | Accepted bilingual display slice and bounded evidence |
+| [Environment Overlay P1](visualization/reviews/environment_overlay_visual_elements_20260606/README.md) | Accepted environment-overlay slice and held follow-ons |
+| [Map-only Viewer P1](visualization/reviews/map_only_viewer_mode_20260606/README.md) | Accepted map-only viewer slice and held follow-ons |
+
 ### Legacy Archive
 
 Outdated historical design notes.
@@ -43,7 +51,8 @@ Outdated historical design notes.
 |----------|-------------|
 | [Takeoff to Cruise Mixed Mode](../manual/archive/takeoff_to_cruise_mixedmode_notes.md) | Frozen historical P3 experiment baseline; archive sources are not part of the maintained migration |
 
-Landing task design remains at [docs/task/flight_dynamics/landing_task_notes.md](../task/flight_dynamics/landing_task_notes.md) until the Air owner migration.
+Landing task semantics route through the current
+[Air landing reference](../domains/air/reference/landing_task.md).
 
 ---
 

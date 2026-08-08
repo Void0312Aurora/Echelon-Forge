@@ -41,13 +41,15 @@ Directory placement does not broaden those claims. The current evidence proves
 native identity and a static task/status chain, not a complete land-combat
 runtime.
 
-## Current Work Route
+## Current Related Routes
 
-- [Ground task area](../../task/ground/README.md): current implementation status,
-  remaining held boundaries, and execution planning.
+- [Environment systems](../../systems/environment/README.md): cross-domain
+  substrate contracts and retained G0/Arnis acceptance boundaries.
+- [Ground defect inventory](reviews/ground_domain_defect_inventory_20260522.md):
+  dated review snapshot; open items require current reverification.
 
-Task documents may report maturity and evidence, but they do not redefine the
-standards above.
+There is no currently authorized Ground `work/active/` package. Archive records
+may provide provenance but do not redefine the standards above.
 
 ## Related Owners
 
@@ -56,4 +58,4 @@ standards above.
 - [US Army service profile](../joint/service_profiles/standards/army_profile.md):
   Army organization and service-level interpretation.
 - [Runtime workflow and contract baseline](../../architecture/standards/runtime_workflow_and_contract_baseline.md):
-  shared stage and runtime boundaries, pending its separate owner migration.
+  shared stage and runtime boundaries.

@@ -186,7 +186,7 @@ python3 tools/maintenance/translate_docs_batch.py audit --root docs --include-lo
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py translate \
-  --root docs/task/flight_dynamics \
+  --root docs/architecture/work/issues \
   --pattern '*.zh.md' \
   --source-lang zh \
   --target-lang en \
@@ -197,7 +197,7 @@ python3 tools/maintenance/translate_docs_batch.py translate \
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py rewrite-links \
-  --files docs/task/flight_dynamics/program/*.md
+  --files docs/architecture/work/issues/*.md
 ```
 
 分配或验收 closure lane 前，审计一个 WP closure package：

@@ -203,7 +203,8 @@ Timing-window quality 应与 firing gate 并列报告，但除非任务显式声
 timing，否则它是单独 closure。
 
 具体 run evidence、checkpoint 名称、release step、rejection reason 与 held/pass
-判定归 `docs/task/model/`。标准层只定义 gate 本身，以及任务文档必须报告的字段。
+判定归 owner-local learning work 或 reviews。标准层只定义 gate 本身，以及工作文档
+必须报告的字段。
 
 ## Loss 与 Reward Ownership
 

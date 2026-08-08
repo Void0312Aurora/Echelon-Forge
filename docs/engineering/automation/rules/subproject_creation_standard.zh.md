@@ -4,10 +4,14 @@
 - 英文规范页：[subproject_creation_standard.md](subproject_creation_standard.md)
 - 中文配套页：`subproject_creation_standard.zh.md`
 
-状态：`2026-06-01`，用于创建新任务子项目和子项目文档的维护规则。
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/automation/rules/subproject_creation_standard.md`
+Owner: `engineering/automation-governance`
+Last verified: `2026-08-08`
 
-范围：`docs/task/**` 下的新建或重新启用子项目，以及 Agent 用于规划、派发、
-实现、验证和收口有边界工作切片的任务簇文档。
+范围：新建或重新启用的 owner-local 工作包，以及 Agent 用于规划、派发、实现、
+验证和收口有边界工作切片的任务簇文档。
 
 本标准抽取维护中任务切片的通用结构，但不把任何历史子项目提升为当前权威。
 委派工作应使用
@@ -34,19 +38,21 @@
 使用以下位置模式：
 
 ```text
-docs/task/<domain>/<subproject_slug>/
+docs/<owner>/work/<active|issues>/<subproject_slug>/
 ```
 
 规则：
 
-- `<domain>` 必须已经存在，或同步加入 `docs/task/README*`。
+- `<owner>` 必须具备维护中的 owner README 和适用的技术或治理边界。
+- 只有显式授权的当前实现才能进入 `active`；未批准计划、held 工作和未解决缺口
+  进入 `issues`。
 - `<subproject_slug>` 应短、小写、稳定。
 - 当父领域已有阶段序列时，优先使用 `<phase>_<short_scope>` 或
   `<domain_phase>_<short_scope>` 这类前缀。
 - 避免名称暗示比已证明范围更高的成熟度。若历史名称存在误导，继续扩展前先在
   本地加 warning banner。
-- 新增顶层任务领域时，必须更新 `docs/task/README*` 和受影响的 standards 或
-  manual 入口。
+- 新增顶层 owner 必须经过文档信息架构审查。不得仅为绕开现有 owner README
+  的路由而创建新 owner。
 
 ## 必需最小文件集
 
@@ -101,7 +107,7 @@ Language:
 
 Inputs:
 
-- <parent task README>
+- <parent owner README>
 - <relevant standard>
 - <relevant code/test/scenario entry>
 
@@ -159,8 +165,8 @@ This subproject can be marked accepted only when:
 
 ## Archive
 
-Superseded or historical records move to `archive/README.md` when the
-subproject has a replacement current-status or closeout surface.
+将长期事实提升到 owner standards/reference，把 accepted 决定保留在 owner
+reviews，并依照仓库生命周期策略归档其余历史包。
 ```
 
 ## 任务簇文档必需章节
@@ -294,13 +300,13 @@ Deferred:
 - 仍然禁止的能力声明；
 - 已同步的索引。
 
-当当前 README、父 README、测试、reference artifacts 或 standards 链接仍指向过期
+当当前 README、owner README、测试、reference artifacts 或 standards 链接仍指向过期
 状态时，不得将子项目标为 `closed`。
 
 ## Archive 规则
 
-只有在已有当前 README、current status 或 acceptance 表面告诉读者从哪里开始时，
-才将被取代的本地记录移入 `archive/`。
+只有在 owner README、current status 或 acceptance 表面告诉读者从哪里开始时，
+才归档被取代的本地记录。已关闭包不得继续留在 `work/active/`。
 
 Archive 规则：
 

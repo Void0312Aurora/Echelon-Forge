@@ -10,7 +10,15 @@ LEADER_INTENT = REPO_ROOT / "src" / "components" / "tasking" / "leader_intent.h"
 PILOT_REPORT = REPO_ROOT / "src" / "components" / "tasking" / "pilot_report.h"
 COMPONENTS_README = REPO_ROOT / "src" / "components" / "README.md"
 TASKING_README = REPO_ROOT / "src" / "components" / "tasking" / "README.md"
-GROUND_PROGRESS = REPO_ROOT / "docs" / "task" / "ground" / "ground_current_progress_20260524.md"
+GROUND_PROGRESS = (
+  REPO_ROOT
+  / "docs"
+  / "task"
+  / "ground"
+  / "archive"
+  / "owner_migration_20260808"
+  / "ground_current_progress_20260524.md"
+)
 NATIVE_STATIC_SCENARIO = REPO_ROOT / "scenarios" / "ground" / "ground_platoon_native_static_occupy_v1.json"
 
 

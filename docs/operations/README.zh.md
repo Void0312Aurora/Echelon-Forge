@@ -35,6 +35,14 @@ Last verified: `2026-08-08`
 |------|------|
 | [可视化技术栈演进](visualization/work/issues/viz_stack_evolution.zh.md) | 维护中的北极星计划；不是实施权威 |
 
+### 已验收可视化评审
+
+| 文档 | 说明 |
+|------|------|
+| [双语显示 P1](visualization/reviews/bilingual_display_20260606/README.zh.md) | 已验收的双语显示切片与有界证据 |
+| [环境叠加 P1](visualization/reviews/environment_overlay_visual_elements_20260606/README.zh.md) | 已验收的环境叠加切片与 held 后续 |
+| [仅地图 Viewer P1](visualization/reviews/map_only_viewer_mode_20260606/README.zh.md) | 已验收的仅地图切片与 held 后续 |
+
 ### 遗留归档
 
 已过时的历史设计笔记。
@@ -43,7 +51,8 @@ Last verified: `2026-08-08`
 |------|------|
 | [起飞到巡航混合模式](../manual/archive/takeoff_to_cruise_mixedmode_notes.zh.md) | 冻结的历史 P3 实验基线；归档源不进入维护树迁移 |
 
-着陆任务设计在 Air owner 迁移前仍位于 [docs/task/flight_dynamics/landing_task_notes.zh.md](../task/flight_dynamics/landing_task_notes.zh.md)。
+着陆任务语义路由到当前
+[Air 着陆 reference](../domains/air/reference/landing_task.zh.md)。
 
 ---
 

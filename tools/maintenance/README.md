@@ -227,7 +227,7 @@ Recommended zh-to-en backfill for one maintained authority directory:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py translate \
-  --root docs/plan/architecture \
+  --root docs/architecture/work/issues \
   --pattern '*.zh.md' \
   --source-lang zh \
   --target-lang en \
@@ -238,7 +238,7 @@ Normalize repo-internal links in existing Markdown files:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py rewrite-links \
-  --files docs/task/flight_dynamics/program/*.md
+  --files docs/architecture/work/issues/*.md
 ```
 
 Audit a WP closure package before assigning or accepting a closure lane:

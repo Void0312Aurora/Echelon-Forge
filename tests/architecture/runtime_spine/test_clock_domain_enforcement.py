@@ -30,7 +30,7 @@ FLECS_INCLUDE = _optional_dependency_include("flecs")
 FLECS_LINK_ARGS = dependency_link_args("flecs")
 
 # Governs the local-environment red recorded in the T6 residual ledger
-# (docs/plan/unified_architecture_program/t6_residual_ledger.md, section 5
+# (docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md, section 5
 # "flecs static-lib link-signature reds"): CPU build snapshots that ship
 # only `_deps/flecs-build` without `_deps/flecs-src` cannot supply flecs
 # headers. Conditional on actual dependency presence, mirroring the

@@ -136,7 +136,7 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertEqual(runtime.get("observation_return_mode"), "copy")
     self.assertEqual(
       runtime.get("database_path"),
-      "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+      "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
     )
     proxy_cfg = runtime.get("target_geometry_proxy")
     self.assertIsInstance(proxy_cfg, dict)
@@ -198,7 +198,7 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertEqual(proxy_runtime, baseline_runtime)
     self.assertEqual(
       proxy_database_path,
-      "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+      "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
     )
     self.assertEqual(proxy_metadata.get("feature_flag"), "A2_TARGET_GEOMETRY_PROXY_F16C_R22")
     self.assertEqual(int(proxy_metadata.get("default_component_count")), 26)

@@ -205,7 +205,7 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def _resolve(root: Path, relative: object, label: str) -> Path:
     require(type(relative) is str and bool(relative), f"{label}.path invalid")
-    path = Path(relative)
+    path = Path(str(relative).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1))
     require(not path.is_absolute(), f"{label}.path must be repository-relative")
     resolved = (root / path).resolve()
     require(resolved.is_relative_to(root.resolve()), f"{label}.path escapes repository")
@@ -528,7 +528,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--record",
         type=Path,
-        default=Path("docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.json"),
+        default=Path("docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_closure_20260805.json"),
     )
     parser.add_argument("--check-live-snapshot", action="store_true")
     return parser.parse_args()

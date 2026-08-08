@@ -16,14 +16,13 @@ TARGET_ROOTS = {
   "research",
   "systems",
 }
-ACTIVE_LEGACY_ROOTS = {
-  "plan",
-  "task",
-}
+ACTIVE_LEGACY_ROOTS: set[str] = set()
 ARCHIVE_ONLY_ROOTS = {
   "Archive",
   "evaluation",
   "manual",
+  "plan",
+  "task",
 }
 
 
@@ -36,6 +35,20 @@ def _tracked_docs_paths() -> list[str]:
     text=True,
   )
   return [line for line in result.stdout.splitlines() if line]
+
+
+def _is_owner_local_work_or_review_entry(path: str) -> bool:
+  parts = Path(path).parts
+  for marker in (("work", "active"), ("work", "issues"), ("reviews",)):
+    width = len(marker)
+    for index in range(len(parts) - width + 1):
+      if parts[index:index + width] != marker:
+        continue
+      tail = parts[index + width:]
+      return len(tail) == 1 or (
+        len(tail) == 2 and tail[-1] in {"README.md", "README.zh.md"}
+      )
+  return False
 
 
 def test_tracked_docs_use_registered_top_level_roots() -> None:
@@ -54,12 +67,33 @@ def test_tracked_docs_use_registered_top_level_roots() -> None:
 def test_archive_only_legacy_roots_contain_archives_only() -> None:
   tracked = _tracked_docs_paths()
 
-  for root in ("evaluation", "manual"):
+  for root in ("evaluation", "manual", "plan", "task"):
     legacy_paths = [
       path for path in tracked if path.startswith(f"docs/{root}/")
     ]
     assert legacy_paths
-    assert all(path.startswith(f"docs/{root}/archive/") for path in legacy_paths)
+    assert all(
+      any(part.lower() == "archive" for part in Path(path).parts[2:])
+      for path in legacy_paths
+    )
+
+
+def test_plan_and_task_authority_is_routed_to_content_owners() -> None:
+  tracked = set(_tracked_docs_paths())
+
+  for required in (
+    "docs/architecture/standards/simulation_system_architecture_design.md",
+    "docs/architecture/reference/t8_g4_truth_leak_inventory.md",
+    "docs/domains/air/reference/landing_task.md",
+    "docs/domains/naval/work/active/naval_domain_surface_split/README.md",
+    "docs/engineering/testing/README.md",
+    "docs/engineering/testing/reference/known_test_infrastructure_residuals.md",
+    "docs/learning/work/active/air_combat_1v1_realism_gradient/README.md",
+    "docs/operations/visualization/reviews/map_only_viewer_mode_20260606/README.md",
+    "docs/systems/command-tasking/reference/agency_authority_census_20260721.md",
+    "docs/systems/environment/README.md",
+  ):
+    assert required in tracked
 
 
 def test_legacy_governance_root_has_moved_to_engineering_owners() -> None:
@@ -227,6 +261,12 @@ def test_domain_chinese_companions_point_to_english_canonical() -> None:
     path
     for path in _tracked_docs_paths()
     if path.startswith("docs/domains/") and path.endswith(".zh.md")
+    and (
+      "/standards/" in path
+      or "/reference/" in path
+      or _is_owner_local_work_or_review_entry(path)
+      or len(Path(path).parts) == 4
+    )
   ]
 
   assert companions
@@ -243,6 +283,7 @@ def test_owner_local_work_and_reviews_declare_minimum_metadata() -> None:
     if path.endswith(".md")
     and Path(path).parts[1] in TARGET_ROOTS
     and ("/work/issues/" in path or "/reviews/" in path)
+    and _is_owner_local_work_or_review_entry(path)
   ]
 
   assert governed

@@ -60,7 +60,7 @@ archived rather than kept indefinitely as an active task.
 - Phase 2 (completed 2026-08-07): retire the maintained `forward`,
   `evaluation`, and `log` surfaces by routing plans and reviews to their content
   owners. Existing `evaluation/archive/` content remains frozen and untouched.
-- Phase 3 (started 2026-08-07): split `standards`, `plan`, and `task` by content
+- Phase 3 (completed 2026-08-08): split `standards`, `plan`, and `task` by content
   ownership. The first slice moves documentation, automation, dependency, and
   release governance into `engineering/`; the second slice moves the Joint
   common-core README and standards into `domains/joint/`; the third parallel
@@ -71,17 +71,20 @@ archived rather than kept indefinitely as an active task.
   `architecture/`, gradient-realism gates into `systems/`, scenario authoring
   into `operations/`, source admission into `research/`, and the alignment map
   into documentation engineering; it then removes the empty legacy standards
-  root. The plan/task trees remain for later owner slices. Do not move legacy
-  trees wholesale into new global buckets.
-- Phase 4: switch all maintained entry points and disallow new writes to legacy
-  roots; remove a legacy root only after it has no maintained sources.
+  root. The final parallel owner slices route retained plan/task standards,
+  references, active work, issues, and reviews into their owners and place
+  completed packages in new archive containers. No maintained plan/task source
+  remains under the legacy roots.
+- Phase 4 (completed 2026-08-08): switch all maintained entry points, disallow
+  new maintained writes to legacy roots, and retain `plan/` and `task/` only as
+  archive containers because existing archives are outside migration scope.
 
 ## Gates
 
 Every migration slice must preserve bilingual pairs, pass the maintained link
 audit, update current routes, and keep archive sources excluded. The repository
-must reject unregistered top-level documentation roots. Large domain moves are
-separate reviewed iterations.
+must reject unregistered top-level documentation roots and any tracked
+non-archive source under the retired `standards`, `plan`, or `task` surfaces.
 
 ## Non-goals
 

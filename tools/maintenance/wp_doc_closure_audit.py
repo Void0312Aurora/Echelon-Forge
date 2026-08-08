@@ -21,6 +21,8 @@ from urllib.parse import unquote
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SIM_ARCH_DIR = Path("docs/task/simulation_architecture")
 REVIEW_DIR = Path("docs/task/review")
+SIM_ARCH_INDEX_DIR = SIM_ARCH_DIR / "archive/phase3c_closeout_20260808"
+REVIEW_INDEX_DIR = REVIEW_DIR / "archive/phase3c_closeout_20260808"
 WP_DECIMAL_LABELS = {
   "wp25": "WP2.5",
   "wp75": "WP7.5",
@@ -223,8 +225,8 @@ def acceptance_index_paths(repo_root: Path, reviews: list[Path]) -> list[Path]:
   if not reviews or any("archive/wp-acceptance" not in path.as_posix() for path in reviews):
     paths.extend(
       [
-        repo_root / REVIEW_DIR / "README.md",
-        repo_root / REVIEW_DIR / "README.zh.md",
+        repo_root / REVIEW_INDEX_DIR / "README.md",
+        repo_root / REVIEW_INDEX_DIR / "README.zh.md",
       ]
     )
   if any("archive/wp-acceptance" in path.as_posix() for path in reviews):
@@ -318,8 +320,8 @@ def build_readme_index_mentions(
   canonical_review_paths: list[Path],
 ) -> list[MentionStatus]:
   mentions: list[MentionStatus] = []
-  sim_readme_en = repo_root / SIM_ARCH_DIR / "README.md"
-  sim_readme_zh = repo_root / SIM_ARCH_DIR / "README.zh.md"
+  sim_readme_en = repo_root / SIM_ARCH_INDEX_DIR / "README.md"
+  sim_readme_zh = repo_root / SIM_ARCH_INDEX_DIR / "README.zh.md"
   readme_needles = [folder.name, audit.wp]
   mentions.append(
     MentionStatus(
@@ -511,8 +513,8 @@ def audit_wp(repo_root: Path, wp_label: str) -> WpAudit:
         )
       )
 
-  readme_en = repo_root / SIM_ARCH_DIR / "README.md"
-  readme_zh = repo_root / SIM_ARCH_DIR / "README.zh.md"
+  readme_en = repo_root / SIM_ARCH_INDEX_DIR / "README.md"
+  readme_zh = repo_root / SIM_ARCH_INDEX_DIR / "README.zh.md"
   readme_needles = [folder.name, wp]
   if not file_mentions_any(readme_en, readme_needles):
     issues.append(

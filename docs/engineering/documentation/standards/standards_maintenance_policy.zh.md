@@ -42,8 +42,8 @@ research owner 所属的 standards 子树，共同定义仓库的命名、分层
    准入和治理规则。
 3. 适用 owner 的 `work/active/` 入口决定范围化工作状态、残余和验收证据。
 
-仍位于遗留 `docs/task/` 的维护入口在迁移前继续承担有界工作角色，
-但该根只是过渡路由，不是目标 ownership 模型。
+已退役的 `docs/plan/` 与 `docs/task/` 根只包含归档。当前范围化工作与残余必须
+通过适用 owner 的 `work/active/` 或 `work/issues/` 表面路由。
 
 如果可执行证据和标准页面不一致，不要静默选择其一。应打开或使用 review/task
 治理通道，分类 drift，并通过明确的标准更新、实现更新或 held 决策收口。

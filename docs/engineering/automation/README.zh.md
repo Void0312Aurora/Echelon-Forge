@@ -10,7 +10,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/automation/README.md`
 Owner: `engineering/automation`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 本目录把维护中的文档树整理成一个紧凑的 Agent 操作面。它不替代根 README、
 标准文档、代码或测试。它的作用是告诉 Agent：先加载哪些文档，哪些文档具有
@@ -20,8 +20,8 @@ Last verified: `2026-08-07`
 
 | 文件 | 用途 |
 | --- | --- |
-| [rules/document_authority_map.zh.md](rules/document_authority_map.zh.md) | 仓库文档权威、标准引用、任务阅读路径和能力声明门槛的规则索引。 |
-| [rules/subproject_creation_standard.zh.md](rules/subproject_creation_standard.zh.md) | 创建任务子项目的标准：README、阶段计划、任务簇、当前状态、验收、残余和 archive 边界。 |
+| [rules/document_authority_map.zh.md](rules/document_authority_map.zh.md) | 仓库文档权威、标准引用、owner 阅读路径和能力声明门槛的规则索引。 |
+| [rules/subproject_creation_standard.zh.md](rules/subproject_creation_standard.zh.md) | 创建 owner-local 工作包的标准：README、阶段计划、任务簇、当前状态、验收、残余和 archive 边界。 |
 | [prompts/project_orientation_prompt.zh.md](prompts/project_orientation_prompt.zh.md) | 可复制给 Agent 的项目任务启动提示词。 |
 | [Subagent 使用规范](standards/subagent_usage_policy.zh.md) | 当执行环境允许 subagent/worker 时使用的仓库委派规范。 |
 | [WP Closure Lane Policy](standards/wp_closure_lane_policy.zh.md) | 将可合并实现工作与串行文档/发布闭合分开。 |
@@ -36,7 +36,7 @@ Last verified: `2026-08-07`
 4. 更新状态文字前，先对照当前代码、测试、场景、配置或保留制品核验证据。
 5. 需要给新 Agent 准备可复用提示词时，使用
    [prompts/project_orientation_prompt.zh.md](prompts/project_orientation_prompt.zh.md)。
-6. 如果任务会创建或重新启用 `docs/task/**` 子项目，遵循
+6. 如果任务会创建或重新启用 owner-local 工作包，遵循
    [rules/subproject_creation_standard.zh.md](rules/subproject_creation_standard.zh.md)。
 
 ## 仓库边界

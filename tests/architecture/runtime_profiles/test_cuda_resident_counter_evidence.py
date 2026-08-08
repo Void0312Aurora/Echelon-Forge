@@ -16,16 +16,16 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = ROOT / "src/runtime/contracts/cuda_resident_counter_evidence_contract.h"
 COLLECTOR = ROOT / "tools/diagnostics/cuda_resident_cr2_counter_evidence.py"
 RESOURCE_EVIDENCE = (
-    ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_resource_evidence_20260804.json"
+    ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_resource_evidence_20260804.json"
 )
-EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_counter_evidence_20260804.json"
+EVIDENCE = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_counter_evidence_20260804.json"
 BASELINE = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
 EVIDENCE_COMMIT = "05b05c5a1f7968c603a4a933531bb52bdc30b9c4"
 RESOURCE_EVIDENCE_COMMIT = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
 
 
 def _git_blob(commit: str, path: Path) -> bytes:
-    relative = path.relative_to(ROOT).as_posix()
+    relative = path.relative_to(ROOT).as_posix().replace("docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", "docs/plan/exact_runtime/", 1)
     return subprocess.run(
         ["git", "show", f"{commit}:{relative}"],
         cwd=ROOT,
@@ -346,7 +346,7 @@ def test_cr2_5b_does_not_rewrite_cr2_5a_or_historical_rb9_evidence() -> None:
         check=False,
     )
     assert completed.returncode == 0
-    assert not list((ROOT / "docs/plan/exact_runtime").glob("cuda_resident_cr2_counter_*.ncu-rep"))
+    assert not list((ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805").glob("cuda_resident_cr2_counter_*.ncu-rep"))
 
 
 def test_cr2_5b_new_modules_remain_below_soft_size_targets() -> None:

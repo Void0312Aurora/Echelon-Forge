@@ -55,11 +55,11 @@ Out of scope:
 
 The current task evidence lives under:
 
-- [KCES task entry](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/README.md)
-- [KCES idealized expectation contract](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_idealized_expectation_contract_20260621.md)
-- [KCES scenario expectation matrix](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_scenario_expectation_matrix_20260622.md)
-- [KCES metric mapping](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_metric_mapping_20260623.md)
-- [KCES component-response quantization addendum](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/kill_chain_component_response_quantization_20260705.md)
+- [KCES task entry](../../reviews/kill_chain_expectation_standardization_20260706/README.md)
+- [KCES idealized expectation contract](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_idealized_expectation_contract_20260621.md)
+- [KCES scenario expectation matrix](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_scenario_expectation_matrix_20260622.md)
+- [KCES metric mapping](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_metric_mapping_20260623.md)
+- [KCES component-response quantization addendum](../../reviews/kill_chain_expectation_standardization_20260706/kill_chain_component_response_quantization_20260705.md)
 
 Current schema label:
 

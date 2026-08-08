@@ -6,7 +6,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/README.md`
 Owner: `engineering`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 This area owns contributing, build, test, tooling, documentation governance,
 automation, dependency, and release guidance. Current owner routes are:
@@ -16,6 +16,8 @@ automation, dependency, and release guidance. Current owner routes are:
 - [documentation](documentation/README.md): lifecycle, bilingual maintenance,
   structure examples, and standards upkeep;
 - [release](release/README.md): dependency and release governance;
+- [testing](testing/README.md): repository-wide test organization,
+  infrastructure residuals, and retained governance reviews;
 - [reviews](reviews/engineering_discipline_review_20260603.zh.md): retained
   engineering assessments, which remain evidence rather than standards.
 

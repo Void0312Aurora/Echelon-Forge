@@ -11,7 +11,7 @@ Owner: `architecture/runtime-workflow`
 Last verified: `2026-08-08`
 
 状态：维护中的 runtime workflow 与 contract 基线，服从
-[严格仿真架构基线](../../plan/architecture/simulation_system_architecture_design.zh.md)。
+[严格仿真架构基线](simulation_system_architecture_design.zh.md)。
 
 本文档固定下面几层之间的边界：
 

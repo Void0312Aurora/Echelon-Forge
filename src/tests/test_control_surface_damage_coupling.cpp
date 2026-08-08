@@ -1,6 +1,7 @@
 // M5 mechanism regression: battle damage acts on CONTROL-SURFACE EFFECTIVENESS.
 //
-// Subproject: docs/task/air_combat/flight_control_surface_model/
+// Historical subproject:
+// docs/task/air_combat/archive/flight_control_surface_model_implemented_20260620/
 //
 // The control-surface model moved the damage coupling from a downstream torque
 // scale to the physical surface path: a degraded surface (reduced

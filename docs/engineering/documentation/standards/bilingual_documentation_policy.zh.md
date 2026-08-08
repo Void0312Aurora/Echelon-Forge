@@ -71,30 +71,23 @@ Tier A：严格双语维护面
 - `docs/architecture/standards/`、`docs/systems/standards/` 和
   `docs/research/standards/` 下的跨域 owner standards
 - `docs/operations/` 下的面向操作者 reference 与 how-to
-- 仍通过迁移期遗留 plan 表面路由的稳定计划权威：
-  - `docs/plan/README.md`
-  - `docs/plan/architecture/**`
-  - `docs/plan/runtime_facade/**`
-  - `docs/plan/cooperative/**`
-- 仍通过迁移期遗留 task 表面路由的稳定任务导航：
-  - `docs/task/README.md`
-  - `docs/task/task_archive_convergence_plan_20260518.md`
-  - `docs/task/*/README.md` 下的子项目导航页
-  - `docs/task/flight_dynamics/*/README.md` 下的更深层导航页
+- 完成 plan/task 迁移后形成的稳定 owner README、standards 与已准入 reference
+  入口，包括 architecture、domain、systems、learning、operations 与
+  engineering-testing 路由
 
 Tier B：英文主文，中文辅文可选或延后
 
 - `docs/*/work/issues/` 下归属于 owner 的草拟计划和开放问题
-- `docs/plan/exact_runtime/**` 这类非权威计划分支
-- 仍处于高频变更中的 task 计划、checkpoint、freeze、analysis 长文
+- 仍然当前有效但高频变更的 owner-local active work、详细计划、checkpoint 与
+  analysis 文档
 
 Tier C：历史、归档、临时稿与本地保留面
 
 - `docs/Archive/` 下的历史归档材料
 - `docs/**/archive/` 下的本地 archive 镜像
-- `docs/**/temp/`、`docs/temp/`、`docs/plan/results/`
-  下的临时稿、草稿和本地分析记录
-- `docs/plan/architecture/review/` 下的本地架构审查草稿
+- retired `docs/plan/` 与 `docs/task/` 根下的全部剩余材料；其路径必须含
+  `archive` 组件
+- `docs/**/temp/` 和 `docs/temp/` 下的临时稿、草稿和本地分析记录
 
 Tier A 需要双语配对。Tier B 可以先维护英文主文。Tier C 默认不纳入持续维护判定。
 

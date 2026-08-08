@@ -219,7 +219,7 @@ firing gate, but it is a separate closure unless the task explicitly claims
 learned fire timing.
 
 Run-specific evidence, checkpoint names, release steps, rejection reasons, and
-held/pass decisions belong in `docs/task/model/`. The standards layer should
+held/pass decisions belong in owner-local learning work or reviews. The standards layer should
 only define the gate and required fields those task documents must report.
 
 ## Loss And Reward Ownership

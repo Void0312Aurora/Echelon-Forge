@@ -61,21 +61,17 @@ def _constrained_workflow_packages(workflow: str) -> set[str]:
 def test_standards_maintenance_policy_is_registered() -> None:
   documentation_readme = _text("docs", "engineering", "documentation", "README.md")
   documentation_readme_zh = _text("docs", "engineering", "documentation", "README.zh.md")
-  review_readme = _text("docs", "task", "review", "README.md")
-  review_readme_zh = _text("docs", "task", "review", "README.zh.md")
-  review_archive = _text("docs", "task", "review", "archive", "README.md")
-  review_archive_zh = _text("docs", "task", "review", "archive", "README.zh.md")
-  review_archive_registry = _text("docs", "task", "review", "archive_registry.md")
-  review_archive_registry_zh = _text("docs", "task", "review", "archive_registry.zh.md")
+  policy = _text(
+    "docs", "engineering", "documentation", "standards", "standards_maintenance_policy.md"
+  )
+  policy_zh = _text(
+    "docs", "engineering", "documentation", "standards", "standards_maintenance_policy.zh.md"
+  )
 
   assert "standards/standards_maintenance_policy.md" in documentation_readme
   assert "standards/standards_maintenance_policy.zh.md" in documentation_readme_zh
-  assert "archive/standards_documentation_governance/README.md" in review_readme
-  assert "archive/standards_documentation_governance/README.zh.md" in review_readme_zh
-  assert "standards_documentation_governance/README.md" in review_archive
-  assert "standards_documentation_governance/README.zh.md" in review_archive_zh
-  assert "standards_documentation_governance/" in review_archive_registry
-  assert "standards_documentation_governance/" in review_archive_registry_zh
+  assert "retired `docs/plan/` and `docs/task/` roots contain archives only" in policy
+  assert "已退役的 `docs/plan/` 与 `docs/task/` 根只包含归档" in policy_zh
 
 
 def test_standards_governance_tracks_all_alignment_gaps() -> None:

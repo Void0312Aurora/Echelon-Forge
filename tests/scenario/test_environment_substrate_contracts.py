@@ -68,7 +68,7 @@ def _request(seed: int = 20260606) -> EnvironmentGeneratorRequest:
         ),
         realism_target="G1",
         constraints={"fixture": "g0-k"},
-        source_inputs=("docs/task/ground/environment_substrate_g0_architecture",),
+        source_inputs=("docs/systems/environment/reviews/environment_substrate_g0_closure_20260606",),
         evidence_refs=(
             EnvironmentGeneratorEvidenceRef(
                 ref_id="docs:environment-substrate-g0-k",

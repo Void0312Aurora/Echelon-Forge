@@ -4,7 +4,7 @@ This module is the single, layer-tagged *owner* of the raw World-Truth /
 Track-State / Shared-Tactical-Picture / engagement-evidence reads that the
 maintained observation and reward consumers used to perform inline. It realizes
 the T8 second slice ("declaration-view convergence") from the
-[G4 truth-leak inventory](../docs/plan/unified_architecture_program/t8_g4_truth_leak_inventory.md):
+[G4 truth-leak inventory](../docs/architecture/reference/t8_g4_truth_leak_inventory.md):
 the consumers declared their information-state layer in the first slice; this
 slice materializes a declarative view on the TL13 seam
 (``scenario_loader/core.py::get_policy_agent_observation`` /

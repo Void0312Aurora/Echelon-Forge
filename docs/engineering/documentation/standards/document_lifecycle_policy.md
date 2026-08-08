@@ -45,11 +45,11 @@ deliberately admitted into the tracked tree.
 | `generated` | Reproducible output produced from named tracked inputs | an owner-local `generated/` directory | Never manually normative. The producer and inputs are authoritative. |
 | `config-index` | Human-readable index of canonical scenarios or configuration inputs | the owning reference or configuration surface | Points to configuration truth; it must not duplicate the payload. |
 
-`docs/plan/`, `docs/task/`, and `docs/task/review/` remain migration-era legacy
-surfaces while their maintained documents are assigned to content owners. The
-retired `docs/standards/` root must not be recreated. Temporary legacy location
-does not change document kind or authority, and new work must not expand a
-legacy surface when an owner-local route exists.
+The retired `docs/standards/` root must not be recreated. The remaining
+`docs/plan/` and `docs/task/` paths are archive-only containers: every tracked
+path under them must include an `archive` component. New maintained work must
+use the content owner's `standards/`, `reference/`, `work/active/`,
+`work/issues/`, or `reviews/` surface.
 
 ### Lifecycle States
 
@@ -284,7 +284,7 @@ archive collapse, evidence deletion, or bilingual rewrite requires its own
 reviewed iteration.
 
 Repository-wide consolidation sequencing is still tracked in the migration-era
-[Repository Consolidation Plan](../../../plan/repository_consolidation/README.md).
+[Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md).
 
 ## Related Documents
 
@@ -292,4 +292,4 @@ Repository-wide consolidation sequencing is still tracked in the migration-era
 - [Bilingual Documentation Policy](bilingual_documentation_policy.md)
 - [Standards Maintenance Policy](standards_maintenance_policy.md)
 - [Subproject Creation Standard](../../automation/rules/subproject_creation_standard.md)
-- [Repository Consolidation Plan](../../../plan/repository_consolidation/README.md)
+- [Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md)

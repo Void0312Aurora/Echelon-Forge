@@ -41,10 +41,10 @@ Last verified: `2026-08-08`
 | `generated` | 由明确的 tracked 输入可复现生成的输出 | owner-local `generated/` 目录 | 不可手工成为规范；producer 和输入才是权威。 |
 | `config-index` | canonical scenario 或配置输入的人类可读索引 | 所属 reference 或配置表面 | 指向配置真值，不得复制 payload。 |
 
-`docs/plan/`、`docs/task/` 和 `docs/task/review/` 在维护文档完成内容
-owner 归属前，仍是迁移期遗留表面。已退役的 `docs/standards/` 根不得
-重建。临时遗留位置不会改变文档类型或权威；已有 owner-local 路由时，
-不得继续扩张遗留表面。
+已退役的 `docs/standards/` 根不得重建。剩余 `docs/plan/` 与 `docs/task/`
+路径只是归档容器：其每个 tracked 路径都必须含 `archive` 组件。新的维护工作
+必须进入内容 owner 的 `standards/`、`reference/`、`work/active/`、
+`work/issues/` 或 `reviews/` 表面。
 
 ### 生命周期状态
 
@@ -249,7 +249,7 @@ python tools/maintenance/translate_docs_batch.py audit --root docs \
 折叠、evidence 删除或双语重写必须分别进入独立审阅迭代。
 
 全仓精简顺序仍记录在迁移期遗留的
-[仓库精简与整合路线图](../../../plan/repository_consolidation/README.zh.md)。
+[仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md)。
 
 ## 相关文档
 
@@ -257,4 +257,4 @@ python tools/maintenance/translate_docs_batch.py audit --root docs \
 - [双语文档政策](bilingual_documentation_policy.zh.md)
 - [标准维护政策](standards_maintenance_policy.zh.md)
 - [子项目创建标准](../../automation/rules/subproject_creation_standard.zh.md)
-- [仓库精简与整合路线图](../../../plan/repository_consolidation/README.zh.md)
+- [仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md)

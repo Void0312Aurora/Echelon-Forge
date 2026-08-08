@@ -82,33 +82,23 @@ Tier A: strict bilingual maintained surface
 - cross-domain owner standards under `docs/architecture/standards/`,
   `docs/systems/standards/`, and `docs/research/standards/`
 - operator-facing reference and how-to material under `docs/operations/`
-- stable plan authority still routed through the migration-era legacy plan
-  surface:
-  - `docs/plan/README.md`
-  - `docs/plan/architecture/**`
-  - `docs/plan/runtime_facade/**`
-  - `docs/plan/cooperative/**`
-- stable task navigation still routed through the migration-era legacy task
-  surface:
-  - `docs/task/README.md`
-  - `docs/task/task_archive_convergence_plan_20260518.md`
-  - subproject README navigation pages under `docs/task/*/README.md`
-  - deeper README navigation pages under `docs/task/flight_dynamics/*/README.md`
+- stable owner README, standards, and admitted reference entry points created
+  by the completed plan/task migration, including architecture, domain,
+  systems, learning, operations, and engineering-testing routes
 
 Tier B: English canonical, Chinese companion optional or delayed
 
 - owner-local draft plans and open issues under `docs/*/work/issues/`
-- non-authoritative plan slices such as `docs/plan/exact_runtime/**`
-- detailed task plans, checkpoints, freeze docs, and analysis docs that remain
-  active but change quickly
+- owner-local active work, detailed plans, checkpoints, and analysis documents
+  that remain current but change quickly
 
 Tier C: history, archive, scratch, and local-only retention
 
 - archived material under `docs/Archive/`
 - archived material under local `docs/**/archive/` mirrors
-- temporary or scratch analysis under `docs/**/temp/`, `docs/temp/`,
-  and `docs/plan/results/`
-- local architecture review scratch under `docs/plan/architecture/review/`
+- all remaining material under retired `docs/plan/` and `docs/task/` roots,
+  which must contain an `archive` path component
+- temporary or scratch analysis under `docs/**/temp/` and `docs/temp/`
 
 Chinese companions are expected for Tier A. They are optional for Tier B and
 outside the default maintenance verdict for Tier C.

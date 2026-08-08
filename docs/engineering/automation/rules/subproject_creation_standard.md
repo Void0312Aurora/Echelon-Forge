@@ -4,12 +4,15 @@ Language:
 - English canonical: `subproject_creation_standard.md`
 - Chinese companion: [subproject_creation_standard.zh.md](subproject_creation_standard.zh.md)
 
-Status: `2026-06-01` maintained rule for creating new task subprojects and
-subproject documentation.
+Document kind: `standard`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/automation/rules/subproject_creation_standard.md`
+Owner: `engineering/automation-governance`
+Last verified: `2026-08-08`
 
-Scope: new or revived subprojects under `docs/task/**`, plus the task-cluster
-documents that agents use to plan, dispatch, implement, validate, and close a
-bounded work slice.
+Scope: new or revived owner-local work packages, plus the task-cluster documents
+that agents use to plan, dispatch, implement, validate, and close a bounded
+work slice.
 
 This standard abstracts recurring structure from maintained task slices without
 promoting any historical subproject as current authority. For delegated work,
@@ -39,20 +42,23 @@ unclear idea, or to avoid updating the nearest maintained README.
 Use this location pattern:
 
 ```text
-docs/task/<domain>/<subproject_slug>/
+docs/<owner>/work/<active|issues>/<subproject_slug>/
 ```
 
 Rules:
 
-- `<domain>` must already exist or be added to `docs/task/README*`.
+- `<owner>` must have a maintained owner README and an applicable technical or
+  governance boundary.
+- Use `active` only for explicitly authorized current implementation; use
+  `issues` for unapproved plans, held work, and unresolved gaps.
 - `<subproject_slug>` should be short, lowercase, and stable.
 - Prefer a prefix when the parent domain already uses a phase sequence, such as
   `<phase>_<short_scope>` or `<domain_phase>_<short_scope>`.
 - Avoid names that imply a higher maturity level than the scoped work proves.
   If a legacy name is misleading, add a local warning banner before expanding
   the directory.
-- New top-level task domains require updates to `docs/task/README*` and the
-  affected standards or manual entry points.
+- New top-level owners require documentation-architecture review. Do not create
+  a new owner merely to avoid routing through an existing owner README.
 
 ## Required Minimal File Set
 
@@ -110,7 +116,7 @@ Language:
 
 Inputs:
 
-- <parent task README>
+- <parent owner README>
 - <relevant standard>
 - <relevant code/test/scenario entry>
 
@@ -168,8 +174,9 @@ This subproject can be marked accepted only when:
 
 ## Archive
 
-Superseded or historical records move to `archive/README.md` when the
-subproject has a replacement current-status or closeout surface.
+Promote lasting facts to owner standards/reference, retain accepted decisions
+under owner reviews, and archive the remaining historical packet under the
+repository lifecycle policy.
 ```
 
 ## Task-Cluster Document Required Sections
@@ -306,13 +313,14 @@ Acceptance documents must name:
 - capability claims that are still forbidden;
 - indexes that were synchronized.
 
-Do not mark a subproject `closed` while current README, parent README, tests,
+Do not mark a subproject `closed` while current README, owner README, tests,
 reference artifacts, or standards links still point to superseded status.
 
 ## Archive Rules
 
-Use `archive/` for superseded local records only after there is a current README,
-current status, or acceptance surface that tells readers where to start.
+Archive superseded local records only after an owner README, current status, or
+acceptance surface tells readers where to start. A closed package must not stay
+under `work/active/`.
 
 Archive rules:
 

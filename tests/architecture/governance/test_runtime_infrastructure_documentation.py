@@ -39,8 +39,8 @@ def test_wp25_clock_merge_policy_name_is_distinct_from_cross_layer_merge_policy(
   )
   architecture = _text(
     "docs",
-    "plan",
     "architecture",
+    "standards",
     "simulation_system_architecture_design.md",
   )
 
@@ -114,14 +114,14 @@ def test_runtime_capabilities_trigger_stays_dormant_without_maintained_non_refer
   )
   architecture = _text(
     "docs",
-    "plan",
     "architecture",
+    "standards",
     "simulation_system_architecture_design.md",
   )
   architecture_zh = _text(
     "docs",
-    "plan",
     "architecture",
+    "standards",
     "simulation_system_architecture_design.zh.md",
   )
 

@@ -11,7 +11,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/automation/README.md`
 Owner: `engineering/automation`
-Last verified: `2026-08-07`
+Last verified: `2026-08-08`
 
 This directory turns the maintained documentation tree into a compact operating
 surface for AI agents. It does not replace the root README, standards, code, or
@@ -23,8 +23,8 @@ they can be repeated.
 
 | File | Use |
 | --- | --- |
-| [rules/document_authority_map.md](rules/document_authority_map.md) | Rule index for repository documentation authority, standard references, task-specific reading paths, and capability-claim gates. |
-| [rules/subproject_creation_standard.md](rules/subproject_creation_standard.md) | Standard for creating task subprojects with README, phase plan, task clusters, current status, acceptance, residuals, and archive boundaries. |
+| [rules/document_authority_map.md](rules/document_authority_map.md) | Rule index for repository documentation authority, standard references, owner-specific reading paths, and capability-claim gates. |
+| [rules/subproject_creation_standard.md](rules/subproject_creation_standard.md) | Standard for creating owner-local work packages with README, phase plan, task clusters, current status, acceptance, residuals, and archive boundaries. |
 | [prompts/project_orientation_prompt.md](prompts/project_orientation_prompt.md) | Copyable task-start prompt for agents working on this repository. |
 | [Subagent Usage Policy](standards/subagent_usage_policy.md) | Repository policy for delegated subagent or worker activity when the execution environment allows it. |
 | [WP Closure Lane Policy](standards/wp_closure_lane_policy.md) | Separates mergeable implementation work from serial documentation and publication closure. |
@@ -40,7 +40,7 @@ they can be repeated.
    artifacts before updating status text.
 5. Use [prompts/project_orientation_prompt.md](prompts/project_orientation_prompt.md)
    when preparing a reusable agent prompt for a new task.
-6. If the task creates or revives a `docs/task/**` subproject, follow
+6. If the task creates or revives an owner-local work package, follow
    [rules/subproject_creation_standard.md](rules/subproject_creation_standard.md).
 
 ## Repository Boundary

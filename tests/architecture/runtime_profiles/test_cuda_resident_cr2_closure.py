@@ -12,7 +12,7 @@ from tools.diagnostics import cuda_resident_cr2_closure as closure_validator
 
 
 ROOT = Path(__file__).resolve().parents[3]
-CLOSURE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.json"
+CLOSURE = ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_closure_20260805.json"
 PRE_CLOSURE_HEAD = "356bcd56a61e40f1327d16b6a2dda335d7fdd553"
 CLOSURE_COMMIT = closure_validator.CLOSURE_COMMIT
 
@@ -31,7 +31,7 @@ def _canonical_descriptor(path: Path) -> dict[str, object]:
     text = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
     payload = text.encode("utf-8")
     return {
-        "path": path.relative_to(ROOT).as_posix(),
+        "path": path.relative_to(ROOT).as_posix().replace("docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", "docs/plan/exact_runtime/", 1),
         "canonicalization": "utf8_lf",
         "canonical_bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
@@ -72,16 +72,16 @@ def test_cr2_7_is_bound_to_exact_and_canonical_evidence() -> None:
     for name in ("matrix_evidence", "parity_confirmation"):
         descriptor = evidence[name]
         assert isinstance(descriptor, dict)
-        path = ROOT / str(descriptor["path"])
+        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1)
         assert descriptor == {
-            "path": path.relative_to(ROOT).as_posix(),
+            "path": path.relative_to(ROOT).as_posix().replace("docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", "docs/plan/exact_runtime/", 1),
             "bytes": path.stat().st_size,
             "sha256": _sha256(path),
         }
     for name in ("counter_evidence", "resource_evidence"):
         descriptor = evidence[name]
         assert isinstance(descriptor, dict)
-        path = ROOT / str(descriptor["path"])
+        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/", 1)
         assert descriptor == _canonical_descriptor(path)
 
 
@@ -193,25 +193,25 @@ def test_cr2_7_is_evidence_only_and_preserves_the_maintained_boundary() -> None:
 def test_cr2_7_has_bilingual_terminal_links_and_byte_stable_record() -> None:
     attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
     assert "cuda_resident_cr2_closure_20260805.json -text" in attributes
-    english = (ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.md").read_text(
+    english = (ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_closure_20260805.md").read_text(
         encoding="utf-8"
     )
-    chinese = (ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.zh.md").read_text(
+    chinese = (ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_closure_20260805.zh.md").read_text(
         encoding="utf-8"
     )
     for text in (english, chinese):
         assert closure_validator.CLOSURE_ID in text
         assert "cuda_resident_cr2_closure_20260805.json" in text
         assert PRE_CLOSURE_HEAD in text
-    exact_index = (ROOT / "docs/plan/exact_runtime/README.md").read_text(encoding="utf-8")
-    exact_index_zh = (ROOT / "docs/plan/exact_runtime/README.zh.md").read_text(encoding="utf-8")
-    parent = (ROOT / "docs/plan/README.md").read_text(encoding="utf-8")
-    parent_zh = (ROOT / "docs/plan/README.zh.md").read_text(encoding="utf-8")
+    exact_index = (ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/README.md").read_text(encoding="utf-8")
+    exact_index_zh = (ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/README.zh.md").read_text(encoding="utf-8")
+    parent = (ROOT / "docs/plan/archive/owner_migration_20260808/README.md").read_text(encoding="utf-8")
+    parent_zh = (ROOT / "docs/plan/archive/owner_migration_20260808/README.zh.md").read_text(encoding="utf-8")
     program = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_runtime_program_2_20260731.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_runtime_program_2_20260731.md"
     ).read_text(encoding="utf-8")
     program_zh = (
-        ROOT / "docs/plan/exact_runtime/cuda_resident_runtime_program_2_20260731.zh.md"
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_runtime_program_2_20260731.zh.md"
     ).read_text(encoding="utf-8")
     assert "cuda_resident_cr2_closure_20260805.md" in exact_index
     assert "cuda_resident_cr2_closure_20260805.zh.md" in exact_index_zh
@@ -228,7 +228,7 @@ def test_cr2_7_new_modules_and_artifacts_remain_bounded() -> None:
     assert len(test.read_text(encoding="utf-8").splitlines()) <= 700
     for path in (
         CLOSURE,
-        ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.md",
-        ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.zh.md",
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_closure_20260805.md",
+        ROOT / "docs/plan/archive/exact_runtime/completed_programs_20260729_20260805/cuda_resident_cr2_closure_20260805.zh.md",
     ):
         assert path.stat().st_size < 524_288

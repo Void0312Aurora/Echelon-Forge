@@ -80,7 +80,7 @@ Last verified: `2026-08-08`
 - executable policy branches、auxiliary heads、runtime action adapters、losses、
   rewards、rollout labels 与 probes 之间的模型/策略组件 ownership
 - runtime support constraint 与 learned stopping/timing mechanism 的区别
-- 活跃 `docs/task/model/` 工作如何回映到稳定架构词汇，而不是把任务状态当成标准
+- owner-local learning 工作与 reviews 如何回映到稳定架构词汇，而不是把工作状态当成标准
 
 ## 当前有效的特化补充
 
@@ -244,8 +244,9 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 
 ## 将历史 flight_dynamics 工作流映射回标准树
 
-`docs/task/flight_dynamics/` 当前是历史/参考性质的真实性分析入口，不再是活跃的
-全项目规划根。其子项目应被视为可回映到标准树的执行分析记录，而不是标准归属图。
+原 flight-dynamics task 树现在只保留归档。其冻结分析是 provenance，不是维护中的
+真实性入口。当前缺口分别路由到 physics、sensing、command/tasking、weapons、Naval
+与 Air owner。
 
 建议按下面方式回映：
 
@@ -266,8 +267,7 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 - `flight/`
   - 对齐到 air specialization 与 runtime workflow 约束
 
-这意味着：已归档或参考性质的任务目录可以提供有效分析，但不负责决定稳定共享合同
-最终落在哪里。
+已归档任务目录可以提供有效历史分析，但不负责决定稳定共享合同最终落在哪里。
 
 ## 维护规则
 

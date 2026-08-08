@@ -46,7 +46,7 @@
 - 保留无关的 dirty worktree 改动。
 - 如果当前执行环境和用户请求允许 subagent/worker，则遵循
   docs/engineering/automation/standards/subagent_usage_policy.zh.md。
-- 如果创建 `docs/task/**` 子项目，必须按子项目创建标准包含 README、有限任务簇
+- 如果创建 owner-local 工作包，必须按子项目创建标准包含 README、有限任务簇
   文档、阶段/状态/验收/残余章节、父索引链接，以及 archive/current 边界。
 
 输出要求：

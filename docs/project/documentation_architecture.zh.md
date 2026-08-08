@@ -53,7 +53,7 @@ standard、reference 或 README；其余任务包归档，不得永久保持 act
   `agent → engineering/automation`、`book → research/sources`。
 - 第二阶段（2026-08-07 完成）：取消维护中的 `forward`、`evaluation`、`log`
   表面，将计划和评审路由到内容 owner；既有 `evaluation/archive/` 保持冻结且不修改。
-- 第三阶段（2026-08-07 启动）：按内容所有权拆分 `standards`、`plan`、`task`。
+- 第三阶段（2026-08-08 完成）：按内容所有权拆分 `standards`、`plan`、`task`。
   首个切片将文档、自动化、依赖与发布治理迁入 `engineering/`；第二个切片将 Joint
   common-core README 与标准迁入 `domains/joint/`；第三个并行波次将 service profiles、
   Air 标准和 Ground 标准迁入 owner-local 表面；第四个并行波次将 Naval 标准与
@@ -61,13 +61,16 @@ standard、reference 或 README；其余任务包归档，不得永久保持 act
   第五个波次将 runtime conventions/workflow 迁入 `architecture/`、gradient-realism gate 迁入
   `systems/`、scenario authoring 迁入 `operations/`、source admission 迁入 `research/`、
   alignment map 迁入 documentation engineering，随后删除已清空的旧 standards 根。
-  plan/task 树留给后续 owner 切片。不得把旧树整体移动成新的全局桶。
-- 第四阶段：切换全部维护入口并禁止继续写入旧根；只有旧根不再含维护源时才删除。
+  最终并行 owner 切片将保留的 plan/task standards、reference、active work、issues
+  和 reviews 路由到各自 owner，并把已完成包放入新增归档容器。旧根下不再保留维护源。
+- 第四阶段（2026-08-08 完成）：切换全部维护入口，禁止向旧根新增维护内容；由于
+  既有归档不在迁移范围，`plan/` 与 `task/` 仅作为归档容器保留。
 
 ## 门禁
 
 每一轮迁移都必须保持双语配对、通过维护链接审计、更新当前路由，并继续排除归档
-源。仓库必须拒绝未登记的 docs 一级目录；大型领域迁移分别评审。
+源。仓库必须拒绝未登记的 docs 一级目录，也必须拒绝 retired `standards`、`plan`
+或 `task` 表面下任何被追踪的非归档源；大型领域迁移分别评审。
 
 ## 非目标
 

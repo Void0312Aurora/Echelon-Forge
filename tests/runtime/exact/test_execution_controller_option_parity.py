@@ -1,7 +1,7 @@
 """Cross-layer option-cell parity gate for the opt-in execution episode controller.
 
 This suite closes the exact-runtime coverage precondition named by the
-"T4 Census" section of docs/plan/exact_runtime/cpp_exact_runtime_refactor_plan.md:
+"T4 Census" section of docs/architecture/work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md:
 before any Python stepping-layer retirement, every maintained
 ``flight_shaping_backend`` option and the post-launch evaluation feature must be
 exercised through the opt-in ``execution_episode_controller_mainline`` path and
@@ -482,8 +482,8 @@ def test_default_resolution_holds_python_path_on_covered_cells_while_flip_disarm
   assert _CONTROLLER_DEFAULT_FLIP_ARMED is False, (
     "the covered-cell default flip has been armed: restore the before/after "
     "controller-ownership parity pins for DEFAULT_FLIP_COVERED_CELLS and "
-    "update the plan-doc addendum (docs/plan/exact_runtime/"
-    "cpp_exact_runtime_refactor_plan.md and .zh.md) with the "
+    "update the owner-local issue addendum (docs/architecture/work/issues/"
+    "exact_runtime/cpp_exact_runtime_refactor_plan.md and .zh.md) with the "
     "representative-scenario wall-clock evidence that armed it"
   )
   with tempfile.TemporaryDirectory() as tmpdir:

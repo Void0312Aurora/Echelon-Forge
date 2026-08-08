@@ -36,9 +36,9 @@ Then choose the task-specific path below.
 | 2 | Maintained code, scenarios, configs, tests, and contract runners | Executable evidence wins over stale prose. Passing a narrow gate does not promote a whole domain. |
 | 3 | Maintained owner-local standards under `docs/<owner>/standards/` | The relevant owner-local standard wins within its declared scope; use the alignment map for cross-owner routing. |
 | 4 | Root README, `docs/README*`, local README files | Own current navigation and maturity entry points. Start there before reading dated task files. |
-| 5 | `docs/plan/` and active `docs/task/` entries | Own architecture direction, scoped implementation plans, progress records, and residuals. |
+| 5 | Owner-local `reference/`, `work/active/`, `work/issues/`, and `reviews/` | Own verified facts, authorized work, unresolved gaps, and retained decisions within the owner boundary. |
 | 6 | `docs/operations/`, `docs/reference_artifacts*`, `tests/README*` | Describe code boundaries, operator workflows, retained evidence, and test-system intent. |
-| 7 | `forward/`, `archive`, `Archive`, `temp`, retained artifacts, dated cluster packets | Supporting or historical records only unless a maintained README explicitly promotes them. |
+| 7 | `docs/plan/**/archive/`, `docs/task/**/archive/`, `forward/`, `Archive`, `temp`, retained artifacts, dated cluster packets | Supporting or historical records only unless a maintained owner README explicitly promotes them. |
 
 ## Standardized Document Index
 
@@ -53,10 +53,10 @@ Then choose the task-specific path below.
 | How should bilingual documentation be handled? | [Bilingual Documentation Policy](../../documentation/standards/bilingual_documentation_policy.md), [Bilingual Document Clusters](../../documentation/reference/bilingual_document_clusters.md) |
 | How are document kinds, lifecycle, evidence, generated output, config indexes, links, and archives governed? | [Document Lifecycle Policy](../../documentation/standards/document_lifecycle_policy.md) |
 | How are releases and dependency changes governed? | [Release and Dependency Policy](../../release/standards/release_and_dependency_policy.md) |
-| Where is repository-wide consolidation sequenced and accepted? | [Repository Consolidation Plan](../../../plan/repository_consolidation/README.md) |
+| Where is repository-wide consolidation sequenced and accepted? | [Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md) |
 | How should community, license, or security text be handled? | [Contributing](../../../../CONTRIBUTING.md), [License](../../../../LICENSE), [Third Party Notices](../../../../THIRD_PARTY_NOTICES.md), [Security](../../../../SECURITY.md), [Code of Conduct](../../../../CODE_OF_CONDUCT.md) |
 | How should delegated work be coordinated? | [Subagent Usage Policy](../standards/subagent_usage_policy.md), [WP Closure Lane Policy](../standards/wp_closure_lane_policy.md) |
-| How should a new task subproject be created? | [Subproject Creation Standard](subproject_creation_standard.md), [Subagent Usage Policy](../standards/subagent_usage_policy.md), [Task Index](../../../task/README.md) |
+| How should new scoped work be created? | [Subproject Creation Standard](subproject_creation_standard.md), [Subagent Usage Policy](../standards/subagent_usage_policy.md), and the affected owner's `work/active/` or `work/issues/` route |
 
 ## Capability Claim Gate
 
@@ -76,21 +76,21 @@ Generic negative boundaries:
 - Do not treat retained artifacts, signoff packets, or dated records as broader
   project authority unless a maintained entry promotes them.
 - Do not let compatibility, diagnostics, or exploratory paths redefine the
-  maintained path without a standards or task update.
+  maintained path without an owner-local standard or work-entry update.
 
 ## Task Reading Recipes
 
 | Task type | Required reading |
 | --- | --- |
 | Documentation refresh | Root README, docs index, this map, [Document Lifecycle Policy](../../documentation/standards/document_lifecycle_policy.md), affected local README, standards owner. |
-| Repository consolidation | [Repository Consolidation Plan](../../../plan/repository_consolidation/README.md), affected owner READMEs, current callers/tests, and the required independent-review protocol. |
-| Code/runtime change | Affected `src/`, `python/`, or `gym_envs` README; source layer map; relevant plan/task entry; relevant tests. |
+| Repository consolidation | [Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md), affected owner READMEs, current callers/tests, and the required independent-review protocol. |
+| Code/runtime change | Affected `src/`, `python/`, or `gym_envs` README; source layer map; relevant owner-local work entry; relevant tests. |
 | Test or contract change | Tests README, local test README, reference artifacts, and the relevant owner-local architecture or domain contract. |
-| Domain maturity statement | Domain task README, domain standards README, current local status or acceptance doc if indexed, implementation/test evidence. |
+| Domain maturity statement | Domain owner README, domain standards, current owner-local status or acceptance record if indexed, implementation/test evidence. |
 | Community/governance/license text | CONTRIBUTING, LICENSE, THIRD_PARTY_NOTICES, SECURITY, and the maintained standards routed by the relevant owner index. |
 | Release or dependency change | [Release and Dependency Policy](../../release/standards/release_and_dependency_policy.md), affected manifests/lockfiles, release tooling, and focused tests. |
 | Delegated-agent work | This map, subagent usage policy, assigned write set, required output packet. |
-| New `docs/task/**` subproject | This map, subproject creation standard, parent domain README, relevant standards owner, task-cluster plan. |
+| New scoped work package | This map, subproject creation standard, owner README, relevant standards, and an owner-local `work/active/` or `work/issues/` entry. |
 
 ## Agent Output Rule
 

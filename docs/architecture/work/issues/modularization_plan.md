@@ -24,10 +24,10 @@ acceptance evidence.
 ## Authority And Evidence Order
 
 This issue is subordinate to the current
-[strict simulation-system architecture baseline](../../../plan/architecture/simulation_system_architecture_design.md).
+[strict simulation-system architecture baseline](../../standards/simulation_system_architecture_design.md).
 The baseline defines normative architecture laws, layer ownership, domain
 extension admission, and validation gates. The
-[architecture plan index](../../../plan/architecture/README.md) remains the
+[architecture plan index](../../../plan/archive/owner_migration_20260808/architecture/README.md) remains the
 authority route during migration, as recorded by the
 [Architecture owner README](../../README.md).
 
@@ -40,7 +40,7 @@ Use the following order when this issue conflicts with another source:
 This issue neither amends the strict baseline nor promotes any candidate route
 to maintained architecture. Turning a candidate into implementation work must
 occur under a separately authorized task in
-[simulation architecture](../../../task/simulation_architecture/README.md).
+[simulation architecture](../../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.md).
 
 ## Purpose And Scope
 
@@ -208,9 +208,9 @@ shared core without a cross-domain contract.
 
 ## Related Evidence
 
-- [Strict simulation-system architecture baseline](../../../plan/architecture/simulation_system_architecture_design.md)
-- [Architecture plan index](../../../plan/architecture/README.md)
+- [Strict simulation-system architecture baseline](../../standards/simulation_system_architecture_design.md)
+- [Architecture plan index](../../../plan/archive/owner_migration_20260808/architecture/README.md)
 - [Architecture owner README](../../README.md)
-- [Simulation architecture task owner](../../../task/simulation_architecture/README.md)
+- [Simulation architecture task owner](../../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.md)
 - [`SimulationKernel` composition](../../../../src/core/engine/simulation_kernel.cpp)
 - [Domain-separation architecture tests](../../../../tests/architecture/structural_boundaries/test_domain_separation_boundaries.py)

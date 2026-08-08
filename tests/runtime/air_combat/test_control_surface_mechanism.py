@@ -1,6 +1,6 @@
 """RED-phase mechanism tests for the flight control-surface model.
 
-Subproject: docs/task/air_combat/flight_control_surface_model/
+Historical subproject: docs/task/air_combat/archive/flight_control_surface_model_implemented_20260620/
 
 These tests assert the CAUSAL MECHANISM that is currently missing, not the
 output behavior that already works. The existing FBW rate-command path already
