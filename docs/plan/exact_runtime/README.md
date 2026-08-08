@@ -28,10 +28,11 @@ Recommended reading order:
 13. [cuda_resident_cr2_matrix_evidence_20260804.json](cuda_resident_cr2_matrix_evidence_20260804.json)
 14. [cuda_resident_cr2_closure_20260805.md](cuda_resident_cr2_closure_20260805.md)
 15. [cuda_resident_cr2_closure_20260805.json](cuda_resident_cr2_closure_20260805.json)
-16. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
-17. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
-18. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
-19. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
+16. [cuda_resident_promotion_program_20260808.md](cuda_resident_promotion_program_20260808.md)
+17. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
+18. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
+19. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
+20. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
 
 Usage rules:
 
