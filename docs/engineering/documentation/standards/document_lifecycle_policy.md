@@ -284,7 +284,7 @@ archive collapse, evidence deletion, or bilingual rewrite requires its own
 reviewed iteration.
 
 Repository-wide consolidation sequencing is still tracked in the migration-era
-[Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md).
+Repository Consolidation Plan (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.md`).
 
 ## Related Documents
 
@@ -292,4 +292,4 @@ Repository-wide consolidation sequencing is still tracked in the migration-era
 - [Bilingual Documentation Policy](bilingual_documentation_policy.md)
 - [Standards Maintenance Policy](standards_maintenance_policy.md)
 - [Subproject Creation Standard](../../automation/rules/subproject_creation_standard.md)
-- [Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md)
+- Repository Consolidation Plan (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.md`)

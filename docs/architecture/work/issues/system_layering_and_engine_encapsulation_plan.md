@@ -26,7 +26,7 @@ Facade contract:
 [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
 
 Frozen execution record:
-[runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 
 Status: draft architecture issue based on the 2026-05-10 proposal; no active
 implementation authorization.

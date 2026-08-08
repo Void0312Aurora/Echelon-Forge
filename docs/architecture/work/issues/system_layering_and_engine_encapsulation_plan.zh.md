@@ -25,7 +25,7 @@ English version:
 [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
 
 冻结执行记录：
-[runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 
 状态：基于 `2026-05-10` 提案的 draft architecture issue；当前没有实施授权。
 文档定位：

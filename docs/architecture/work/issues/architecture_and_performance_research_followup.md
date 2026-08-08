@@ -17,7 +17,7 @@ Document Navigation:
 - [Architecture Documentation](../../README.md)
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+- runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 
 Status: draft issue based on the `2026-05-10` investigation snapshot. It is
 not an active implementation plan.

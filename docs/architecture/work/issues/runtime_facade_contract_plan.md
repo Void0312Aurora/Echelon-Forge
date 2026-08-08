@@ -17,8 +17,8 @@ Document Navigation:
 - [Architecture Documentation](../../README.md)
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](../../../plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
+- runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 
 Status: draft issue derived from the `2026-05-10` interface proposal; it is
 not an active execution contract.
@@ -36,7 +36,7 @@ Related Documents:
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
 - [cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](../../../plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 
 ## I. Document Purpose
 
@@ -614,10 +614,10 @@ Goal:
 ## XIII. First Batch Implementation Suggestions (Design Decomposition, Not Execution Freeze)
 
 Note: This section is used to decompose the interface landing order. The actual first batch execution scope is subject to the subsequent frozen document
-[runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md).
+runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`).
 
 Update note: The first batch `WP1-WP6` has been completed; the next batch candidate layering cleanup scope has been converged into
-[runtime_facade_layering_cleanup_freeze.zh.md](../../../plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md).
+runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`).
 
 It is suggested to split the implementation into four minimal work packages.
 

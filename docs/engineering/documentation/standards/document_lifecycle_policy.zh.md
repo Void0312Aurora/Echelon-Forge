@@ -249,7 +249,7 @@ python tools/maintenance/translate_docs_batch.py audit --root docs \
 折叠、evidence 删除或双语重写必须分别进入独立审阅迭代。
 
 全仓精简顺序仍记录在迁移期遗留的
-[仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md)。
+仓库精简与整合路线图 (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.zh.md`)。
 
 ## 相关文档
 
@@ -257,4 +257,4 @@ python tools/maintenance/translate_docs_batch.py audit --root docs \
 - [双语文档政策](bilingual_documentation_policy.zh.md)
 - [标准维护政策](standards_maintenance_policy.zh.md)
 - [子项目创建标准](../../automation/rules/subproject_creation_standard.zh.md)
-- [仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md)
+- 仓库精简与整合路线图 (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.zh.md`)

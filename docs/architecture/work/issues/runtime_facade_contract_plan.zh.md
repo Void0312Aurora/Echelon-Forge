@@ -16,8 +16,8 @@ Content status: 迁移后的接口提案；晋级为 active task 前必须重新
 - [架构文档](../../README.zh.md)
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](../../../plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
+- runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 
 状态：源自 `2026-05-10` 接口提案的 draft issue；当前不是生效中的执行契约。
 文档定位：
@@ -35,7 +35,7 @@ Content status: 迁移后的接口提案；晋级为 active task 前必须重新
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
 - [cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](../../../plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 
 ## 一、文档目的
 
@@ -613,11 +613,11 @@ facade 设计必须明确支持三种观测返回形态：
 ## 十三、第一批实施建议（设计分解，非执行冻结）
 
 说明：本节用于拆解接口落地顺序。实际第一批执行范围以后续冻结文档
-[runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 为准。
 
 更新说明：第一批 `WP1-WP6` 已完成；下一批候选分层清理范围已收敛到
-[runtime_facade_layering_cleanup_freeze.zh.md](../../../plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)。
+runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)。
 
 建议把实施拆成四个最小工作包。
 

@@ -249,5 +249,5 @@ acceptance bar:
 ## Related Docs
 
 - [docs/README.md](../../../README.md)
-- [Archived bilingual migration record](../../../plan/archive/documentation_bilingual_migration_plan_20260518.md)
+- Archived bilingual migration record (`git show 3dc34673:docs/plan/archive/documentation_bilingual_migration_plan_20260518.md`)
 - [document_alignment_map.md](../reference/document_alignment_map.md)

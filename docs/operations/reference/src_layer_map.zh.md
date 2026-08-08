@@ -408,7 +408,7 @@ SimulationKernel / WorldBatchRuntime
 1. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
 2. [docs/architecture/work/issues/architecture_and_performance_research_followup.zh.md](../../architecture/work/issues/architecture_and_performance_research_followup.zh.md)
 3. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
-4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
+4. docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
 
 这些文档回答的是：
 

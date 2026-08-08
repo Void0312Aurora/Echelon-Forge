@@ -51,7 +51,7 @@ Last verified: `2026-08-08`
 | 双语文档如何处理？ | [双语文档策略](../../documentation/standards/bilingual_documentation_policy.zh.md)、[双语文档簇](../../documentation/reference/bilingual_document_clusters.zh.md) |
 | 文档类型、生命周期、evidence、generated 输出、config 索引、链接和 archive 如何治理？ | [文档生命周期规范](../../documentation/standards/document_lifecycle_policy.zh.md) |
 | release 与依赖变更如何治理？ | [发布与依赖规范](../../release/standards/release_and_dependency_policy.zh.md) |
-| 全仓精简在哪里排序和验收？ | [仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md) |
+| 全仓精简在哪里排序和验收？ | 仓库精简与整合路线图 (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.zh.md`) |
 | 社区、许可或安全文本如何处理？ | [CONTRIBUTING](../../../../CONTRIBUTING.md)、[LICENSE](../../../../LICENSE)、[THIRD_PARTY_NOTICES](../../../../THIRD_PARTY_NOTICES.md)、[SECURITY](../../../../SECURITY.md)、[CODE_OF_CONDUCT](../../../../CODE_OF_CONDUCT.md) |
 | 委派工作如何协调？ | [Subagent 使用规范](../standards/subagent_usage_policy.zh.md)、[WP Closure Lane Policy](../standards/wp_closure_lane_policy.zh.md) |
 | 新的范围化工作如何创建？ | [子项目创建标准](subproject_creation_standard.zh.md)、[Subagent 使用规范](../standards/subagent_usage_policy.zh.md)，以及受影响 owner 的 `work/active/` 或 `work/issues/` 路由 |
@@ -79,7 +79,7 @@ Last verified: `2026-08-08`
 | 任务类型 | 必读 |
 | --- | --- |
 | 文档刷新 | 根 README、docs 索引、本索引、[文档生命周期规范](../../documentation/standards/document_lifecycle_policy.zh.md)、受影响局部 README、标准 owner。 |
-| 仓库精简 | [仓库精简与整合路线图](../../../plan/archive/repository_consolidation_completed_20260729/README.zh.md)、受影响 owner README、当前 callers/tests，以及必需的独立审阅协议。 |
+| 仓库精简 | 仓库精简与整合路线图 (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.zh.md`)、受影响 owner README、当前 callers/tests，以及必需的独立审阅协议。 |
 | 代码/runtime 修改 | 受影响的 `src/`、`python/` 或 `gym_envs` README；源码层级图；相关 owner-local 工作入口；相关测试。 |
 | 测试或 contract 修改 | tests README、局部 test README、reference artifacts，以及相关 owner-local architecture 或 domain contract。 |
 | 领域成熟度表述 | 领域 owner README、领域 standards、被索引的当前 owner-local 状态或验收记录、实现/测试证据。 |

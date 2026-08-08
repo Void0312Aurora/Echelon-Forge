@@ -16,7 +16,7 @@ Content status: 迁移后的调研快照；建议和实现盘点须以新证据�
 - [架构文档](../../README.zh.md)
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](../../../plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+- runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 
 状态：基于 `2026-05-10` 调研快照的 draft issue；当前没有实施授权。
 文档定位：

@@ -217,5 +217,5 @@ Language:
 ## 相关文档
 
 - [docs/README.md](../../../README.zh.md)
-- [已归档的双语迁移记录](../../../plan/archive/documentation_bilingual_migration_plan_20260518.zh.md)
+- 已归档的双语迁移记录 (`git show 3dc34673:docs/plan/archive/documentation_bilingual_migration_plan_20260518.zh.md`)
 - [document_alignment_map.md](../reference/document_alignment_map.zh.md)

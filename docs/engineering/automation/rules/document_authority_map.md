@@ -53,7 +53,7 @@ Then choose the task-specific path below.
 | How should bilingual documentation be handled? | [Bilingual Documentation Policy](../../documentation/standards/bilingual_documentation_policy.md), [Bilingual Document Clusters](../../documentation/reference/bilingual_document_clusters.md) |
 | How are document kinds, lifecycle, evidence, generated output, config indexes, links, and archives governed? | [Document Lifecycle Policy](../../documentation/standards/document_lifecycle_policy.md) |
 | How are releases and dependency changes governed? | [Release and Dependency Policy](../../release/standards/release_and_dependency_policy.md) |
-| Where is repository-wide consolidation sequenced and accepted? | [Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md) |
+| Where is repository-wide consolidation sequenced and accepted? | Repository Consolidation Plan (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.md`) |
 | How should community, license, or security text be handled? | [Contributing](../../../../CONTRIBUTING.md), [License](../../../../LICENSE), [Third Party Notices](../../../../THIRD_PARTY_NOTICES.md), [Security](../../../../SECURITY.md), [Code of Conduct](../../../../CODE_OF_CONDUCT.md) |
 | How should delegated work be coordinated? | [Subagent Usage Policy](../standards/subagent_usage_policy.md), [WP Closure Lane Policy](../standards/wp_closure_lane_policy.md) |
 | How should new scoped work be created? | [Subproject Creation Standard](subproject_creation_standard.md), [Subagent Usage Policy](../standards/subagent_usage_policy.md), and the affected owner's `work/active/` or `work/issues/` route |
@@ -83,7 +83,7 @@ Generic negative boundaries:
 | Task type | Required reading |
 | --- | --- |
 | Documentation refresh | Root README, docs index, this map, [Document Lifecycle Policy](../../documentation/standards/document_lifecycle_policy.md), affected local README, standards owner. |
-| Repository consolidation | [Repository Consolidation Plan](../../../plan/archive/repository_consolidation_completed_20260729/README.md), affected owner READMEs, current callers/tests, and the required independent-review protocol. |
+| Repository consolidation | Repository Consolidation Plan (`git show 3dc34673:docs/plan/archive/repository_consolidation_completed_20260729/README.md`), affected owner READMEs, current callers/tests, and the required independent-review protocol. |
 | Code/runtime change | Affected `src/`, `python/`, or `gym_envs` README; source layer map; relevant owner-local work entry; relevant tests. |
 | Test or contract change | Tests README, local test README, reference artifacts, and the relevant owner-local architecture or domain contract. |
 | Domain maturity statement | Domain owner README, domain standards, current owner-local status or acceptance record if indexed, implementation/test evidence. |

@@ -228,7 +228,7 @@ See also:
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
 - [docs/operations/reference/src_layer_map.md](docs/operations/reference/src_layer_map.md)
-- [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
+- docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
 
 ## Scenarios and Training Configs
 
