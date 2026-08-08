@@ -89,7 +89,8 @@ under elevation.
 | CUDA Toolkit | 13.0.88 (`nvcc` at `CUDA/v13.0`) |
 | Host compiler | MSVC 14.44.35207 (VS 2022 BuildTools) |
 | Generator | Ninja |
-| Nsight Compute | 2025.3.1 |
+| Nsight Compute | 2025.3.1 (collector requires `2025.3.1.0`) |
+| Nsight Systems | 2025.3.2.474 (validator requires `2025.3.2`) |
 | OS | Windows 11 build 26200 |
 
 ## CP-0 verified baseline result
@@ -290,30 +291,47 @@ So the real chain is: v2 static evidence JSON must be produced and accepted
 before a v2 counter attempt can be validated at all. Both collectors need a
 version-aware identity path, mirroring what CP-4b did for the kernel catalog.
 
-**2. The installed Nsight Systems is older than the pinned version.** The
-resource schema validator requires `nsight_systems_version == "2025.3.2"`
-exactly. This host has 2024.6.2 (and a 2022.4.2). Nsight Compute is fine — 2025.3.1
-installed, and the collector requires exactly `2025.3.1.0`. So the counter side is
-ready and the *resource* side is not, which matters because the resource capture
-is the parent artifact the counter capture must link to.
+**2. ~~The installed Nsight Systems is older than the pinned version.~~
+Withdrawn — this blocker was an error on my part.** The resource schema validator
+requires `nsight_systems_version == "2025.3.2"` exactly, and **2025.3.2.474 is
+installed on this host**. The original claim that only 2024.6.2 and 2022.4.2 were
+present came from listing the Nsight install root and reading the first two
+entries instead of enumerating all of them. Nsight Compute is likewise fine:
+2025.3.1 installed against a required `2025.3.1.0`.
 
-Three ways forward, none of which should be chosen silently:
+The three options that were offered — install 2025.3.2, relax the pin to a
+version range, or accept unparented counters — are therefore all moot. The pin
+matches reality and needs no change, and no provenance gate has to be weakened.
+Recorded rather than deleted because the owner selected the "install 2025.3.2"
+option in response, and the outcome should not silently look like an install
+happened.
 
-- install Nsight Systems 2025.3.2 to match the pin;
-- relax the resource validator to accept a version range and record the actual
-  version in the evidence, treating the exact pin as over-constrained;
-- restrict CP-4c to the Nsight Compute counter path and defer any v2 static
-  capture that requires an `nsys` SQLite trace, accepting that the achieved
-  counters would then not link to a v2 parent.
+### CP-4c-B result: collectors are version-aware
 
-The first is cleanest for evidence integrity; the second is the smallest change
-but weakens a deliberate provenance gate; the third gets counters soonest but
-leaves them unparented. This is a judgment call about evidence standards, so it
-is left to the owner rather than assumed.
+With blocker 2 withdrawn, blocker 1 was the only real prerequisite and is now
+closed.
 
-Note what did *not* block: the CUDA-on build, the probe, the semantic catalog,
-and the trace-signature equivalence are all working. The remaining obstacles are
-tooling-version and evidence-plumbing, not the backend.
+- The schema validator (`cuda_resident_cr2_resource_schema.py`: `cr2` means the
+  historical runtime-program-2 filename prefix, retained throughout) gains
+  `SCHEMA_V2` / `PROFILE_V2` and a
+  `schema_version_of()` dispatcher. `validate_report` now validates a report
+  against the generation it declares: v1 keeps its exact frozen `evidence_date`,
+  `baseline_commit`, and `candidate_state` pins, while v2 accepts its own ISO
+  date and commit but must still declare an `*_unpromoted_worktree` state — a
+  recapture grants no authority.
+- `LAUNCH_SEQUENCE` was a third duplicate of contract data and is now derived
+  from it via a new `launch_sequence(version)` in the static module, alongside
+  `kernel_catalog(version)`.
+- The evidence collector `cuda_resident_cr2_resource_evidence.py` means the
+  runtime-program-2-prefixed module: it gains `PROBE_SCHEMA_V2` and accepts
+  either generation's key set. A v2 probe must additionally declare the
+  schema it supersedes, assert `trace_signature_matches_v1`, and carry
+  `achieved_counters_present: false` so a static capture can never be read as a
+  counter capture.
+
+Verified: the frozen v1 evidence still validates byte-for-byte as v1, the v2
+probe output is now accepted by the collector, an unknown generation fails closed
+rather than defaulting to v1, and 25 tests pass.
 
 This is a real cost increase over the CP-0 estimate, and it is worth stating
 why it happened: the semantic migration correctly refused to relabel frozen

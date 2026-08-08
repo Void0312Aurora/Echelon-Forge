@@ -6,10 +6,15 @@ from typing import Any
 
 if __package__:
     from .cuda_resident_cr2_json_types import StrictJson
-    from .cuda_resident_cr2_resource_static import KERNELS, require
+    from .cuda_resident_cr2_resource_static import KERNELS, kernel_catalog, launch_sequence, require
 else:
     from cuda_resident_cr2_json_types import StrictJson  # type: ignore[no-redef]
-    from cuda_resident_cr2_resource_static import KERNELS, require  # type: ignore[no-redef]
+    from cuda_resident_cr2_resource_static import (  # type: ignore[no-redef]
+        KERNELS,
+        kernel_catalog,
+        launch_sequence,
+        require,
+    )
 
 
 SCHEMA = "cuda_resident.cr2.kernel_resource_evidence.v1"
@@ -17,20 +22,37 @@ PROFILE = "cr2.resource.steady_full_window_body.sm86.v1"
 BASELINE_COMMIT = "08b48f299484428e7297f328ca860f8fadc31cc4"
 EVIDENCE_DATE = "2026-08-04"
 
-LAUNCH_SEQUENCE = (
-    ("apply_barrier", "input_injection"),
-    ("phase_a_controls", "phase_a_controls"),
-    ("apply_barrier", "stage_publish"),
-    ("phase_b_forces", "phase_b_forces"),
-    ("phase_b_aerodynamics", "phase_b_aerodynamics"),
-    ("phase_b_integrate", "phase_b_integrate"),
-    ("phase_d_instruments", "phase_d_instruments"),
-    ("phase_d_configuration", "phase_d_configuration"),
-    ("phase_d_projection", "phase_d_projection"),
-    ("apply_barrier", "window_commit"),
-    ("phase_d_pack", "device_observation_pack"),
-    ("phase_d_consumer", "device_consumer"),
-)
+# v2 identity for the recapture against the semantic kernel catalog. v1 above
+# stays frozen: the retained static-capture evidence hashes against it.
+SCHEMA_V2 = "cuda_resident.cp.kernel_resource_evidence.v2"
+PROFILE_V2 = "cp.resource.steady_full_window_body.sm86.v2"
+
+_IDENTITY_BY_VERSION = {
+    1: (SCHEMA, PROFILE),
+    2: (SCHEMA_V2, PROFILE_V2),
+}
+
+
+def schema_version_of(report: dict[str, Any]) -> int:
+    """Which capture generation a report claims to be.
+
+    Reports are validated against the identity they declare rather than against
+    a single hard-coded generation, so a v2 capture is not rejected merely for
+    being newer than the frozen v1 evidence.
+    """
+    declared = report.get("schema_version")
+    for version, (schema, _) in _IDENTITY_BY_VERSION.items():
+        if declared == schema:
+            return version
+    raise_message = f"resource evidence schema is not a known generation: {declared!r}"
+    require(False, raise_message)
+    raise AssertionError(raise_message)  # pragma: no cover - require() always raises
+
+
+# The launch sequence is derived from the C++ contract rather than duplicated
+# here, for the same reason the kernel catalog is: a second copy is what let the
+# semantic rename go unnoticed.
+LAUNCH_SEQUENCE = launch_sequence(1)
 ACHIEVED_FIELDS = (
     "achieved_occupancy",
     "branch_divergence",
@@ -178,13 +200,28 @@ def _validate_transfer_map(value: Any) -> None:
         _exact_integer_map(transfers[direction], expected, f"CUDA copy inventory.{direction}")
 
 
-def _validate_source_and_inputs(report: dict[str, Any]) -> None:
+def _validate_source_and_inputs(report: dict[str, Any], version: int = 1) -> None:
     source = _object(report["source"], SOURCE_KEYS, "resource evidence source")
-    require(source["baseline_commit"] == BASELINE_COMMIT, "resource baseline commit drifted")
-    require(
-        source["candidate_state"] == "cr2_5a_unpromoted_worktree",
-        "resource candidate state drifted",
-    )
+    if version == 1:
+        require(source["baseline_commit"] == BASELINE_COMMIT, "resource baseline commit drifted")
+        require(
+            source["candidate_state"] == "cr2_5a_unpromoted_worktree",
+            "resource candidate state drifted",
+        )
+    else:
+        # A v2 capture records its own baseline commit. What must not drift is
+        # that the candidate is still unpromoted -- a recapture grants no
+        # authority, so the state must continue to say so.
+        require(
+            isinstance(source["baseline_commit"], str)
+            and re.fullmatch(r"[0-9a-f]{40}", source["baseline_commit"]) is not None,
+            "resource baseline commit is not a full commit id",
+        )
+        require(
+            isinstance(source["candidate_state"], str)
+            and source["candidate_state"].endswith("_unpromoted_worktree"),
+            "resource candidate state must remain unpromoted",
+        )
 
     inputs = _object(report["inputs"], INPUT_KEYS, "resource evidence inputs")
     require(inputs["source_hash_canonicalization"] == "utf8_lf", "source hash mode drifted")
@@ -225,14 +262,18 @@ def _validate_toolchain_and_capture(report: dict[str, Any]) -> None:
     )
 
 
-def _validate_launch_topology(report: dict[str, Any]) -> tuple[dict[str, Any], list[Any]]:
+def _validate_launch_topology(
+    report: dict[str, Any], version: int = 1
+) -> tuple[dict[str, Any], list[Any]]:
+    kernels = kernel_catalog(version)
+    sequence = launch_sequence(version)
     topology = _object(report["launch_topology"], TOPOLOGY_KEYS, "launch topology")
     require(topology["source"] == "nsight_systems_sqlite_cuda_trace", "topology source drifted")
     launches = _list(topology["launches"], "launch inventory")
-    require(len(launches) == len(LAUNCH_SEQUENCE), "launch inventory cardinality drifted")
+    require(len(launches) == len(sequence), "launch inventory cardinality drifted")
     _exact_integer(topology["launch_instance_count"], len(launches), "launch instance count")
 
-    for index, (row_value, expected) in enumerate(zip(launches, LAUNCH_SEQUENCE, strict=True)):
+    for index, (row_value, expected) in enumerate(zip(launches, sequence, strict=True)):
         row = _object(row_value, LAUNCH_KEYS, f"launch row {index}")
         _exact_integer(row["launch_index"], index, f"launch index at row {index}")
         require(
@@ -249,13 +290,13 @@ def _validate_launch_topology(report: dict[str, Any]) -> tuple[dict[str, Any], l
         ):
             _exact_integer(row[key], 0, f"launch {key} at row {index}")
 
-    expected_ids = [spec.kernel_id for spec in KERNELS]
+    expected_ids = [spec.kernel_id for spec in kernels]
     _exact_integer(topology["unique_kernel_count"], len(set(expected_ids)), "unique kernel count")
     require(
         {row["kernel_id"] for row in launches} == set(expected_ids), "launch kernel set drifted"
     )
     symbols = _list(topology["kernel_symbols"], "kernel symbol inventory")
-    require(len(symbols) == len(KERNELS), "kernel symbol inventory cardinality drifted")
+    require(len(symbols) == len(kernels), "kernel symbol inventory cardinality drifted")
     symbol_ids: list[str] = []
     symbol_hashes: list[str] = []
     for index, value in enumerate(symbols):
@@ -268,25 +309,28 @@ def _validate_launch_topology(report: dict[str, Any]) -> tuple[dict[str, Any], l
             f"symbol hash is invalid at row {index}",
         )
     require(symbol_ids == expected_ids, "kernel symbol order or identity drifted")
-    require(len(set(symbol_hashes)) == len(KERNELS), "kernel symbol hashes are not unique")
+    require(len(set(symbol_hashes)) == len(kernels), "kernel symbol hashes are not unique")
     _exact_integer_map(topology["cuda_api_counts"], EXPECTED_API_COUNTS, "CUDA API inventory")
     _validate_transfer_map(topology["cuda_memcpy_transfers"])
     _exact_integer(topology["synchronization_activity_rows"], 8, "synchronization activity rows")
     return topology, launches
 
 
-def _validate_static_resources(report: dict[str, Any], launches: list[Any]) -> None:
+def _validate_static_resources(
+    report: dict[str, Any], launches: list[Any], version: int = 1
+) -> None:
+    kernels = kernel_catalog(version)
     rows = _list(report["static_kernel_resources"], "static resource inventory")
-    require(len(rows) == len(KERNELS), "static resource inventory cardinality drifted")
+    require(len(rows) == len(kernels), "static resource inventory cardinality drifted")
     by_id: dict[str, dict[str, Any]] = {}
     for index, value in enumerate(rows):
         row = _object(value, STATIC_RESOURCE_KEYS, f"static resource row {index}")
         kernel_id = row["kernel_id"]
         require(isinstance(kernel_id, str) and kernel_id not in by_id, "duplicate kernel resource")
         by_id[kernel_id] = row
-    require(set(by_id) == {spec.kernel_id for spec in KERNELS}, "static kernel set drifted")
+    require(set(by_id) == {spec.kernel_id for spec in kernels}, "static kernel set drifted")
 
-    for spec in KERNELS:
+    for spec in kernels:
         row = by_id[spec.kernel_id]
         launch_rows = [item for item in launches if item["kernel_id"] == spec.kernel_id]
         require(
@@ -364,13 +408,28 @@ def validate_report(report: dict[str, Any]) -> None:
     require(
         isinstance(report, dict) and set(report) == REPORT_KEYS, "resource evidence keys drifted"
     )
-    require(report["schema_version"] == SCHEMA, "resource evidence schema mismatch")
-    require(report["profile_id"] == PROFILE, "resource evidence profile mismatch")
-    require(report["evidence_date"] == EVIDENCE_DATE, "resource evidence date drifted")
-    _validate_source_and_inputs(report)
+    # A report is validated against the generation it declares. The frozen v1
+    # evidence and a v2 recapture describe the same execution graph under
+    # different kernel names, so pinning one generation here would reject the
+    # other for no substantive reason.
+    version = schema_version_of(report)
+    expected_schema, expected_profile = _IDENTITY_BY_VERSION[version]
+    require(report["schema_version"] == expected_schema, "resource evidence schema mismatch")
+    require(report["profile_id"] == expected_profile, "resource evidence profile mismatch")
+    if version == 1:
+        # The frozen capture is pinned to its exact recorded date; a v2 capture
+        # carries its own collection date and must not be forced onto v1's.
+        require(report["evidence_date"] == EVIDENCE_DATE, "resource evidence date drifted")
+    else:
+        require(
+            isinstance(report["evidence_date"], str)
+            and re.fullmatch(r"\d{4}-\d{2}-\d{2}", report["evidence_date"]) is not None,
+            "resource evidence date is not an ISO date",
+        )
+    _validate_source_and_inputs(report, version)
     _validate_toolchain_and_capture(report)
-    _, launches = _validate_launch_topology(report)
-    _validate_static_resources(report, launches)
+    _, launches = _validate_launch_topology(report, version)
+    _validate_static_resources(report, launches, version)
 
     interpretation = _object(report["interpretation"], INTERPRETATION_KEYS, "interpretation")
     require(all(value is True for value in interpretation.values()), "interpretation gate drifted")

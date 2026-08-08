@@ -355,6 +355,66 @@ def test_python_kernel_catalog_has_no_second_owner() -> None:
         assert restored_capture_dependency in target
 
 
+def test_collectors_validate_against_the_generation_a_report_declares() -> None:
+    """A v2 capture must not be rejected merely for being newer than v1.
+
+    The collectors previously pinned a single generation, so the v2 probe would
+    have failed on profile mismatch and no counter attempt could have been
+    validated at all. Identity is now version-aware while the frozen v1 pins stay
+    exact.
+    """
+    from tools.diagnostics import cuda_resident_cr2_resource_evidence as collector
+    from tools.diagnostics import cuda_resident_cr2_resource_schema as schema
+    from tools.diagnostics import cuda_resident_cr2_resource_static as static
+
+    # v1 identity is unchanged and still exactly pinned.
+    assert schema.SCHEMA == "cuda_resident.cr2.kernel_resource_evidence.v1"
+    assert schema.PROFILE == "cr2.resource.steady_full_window_body.sm86.v1"
+    assert collector.PROBE_SCHEMA == "cuda_resident.cr2.resource_capture_probe.v1"
+
+    # v2 identity exists and is distinct.
+    assert schema.SCHEMA_V2 == "cuda_resident.cp.kernel_resource_evidence.v2"
+    assert schema.PROFILE_V2 == "cp.resource.steady_full_window_body.sm86.v2"
+    assert collector.PROBE_SCHEMA_V2 == "cuda_resident.cp.resource_capture_probe.v2"
+
+    # The frozen evidence must keep validating as v1, unchanged.
+    frozen = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+    assert schema.schema_version_of(frozen) == 1
+    schema.validate_report(frozen)
+
+    # An unknown generation fails closed rather than defaulting to v1.
+    with pytest.raises(static.EvidenceError):
+        schema.schema_version_of({"schema_version": "cuda_resident.made_up.v9"})
+
+    # The launch sequence is derived from the contract, not duplicated here.
+    v1_launches = static.launch_sequence(1)
+    v2_launches = static.launch_sequence(2)
+    assert schema.LAUNCH_SEQUENCE == v1_launches
+    assert len(v1_launches) == len(v2_launches) == 12
+    assert [kernel for kernel, _ in v1_launches] != [kernel for kernel, _ in v2_launches]
+    # Barrier placement is what makes the two generations comparable.
+    assert [
+        index for index, (kernel, _) in enumerate(v1_launches) if kernel == "apply_barrier"
+    ] == [index for index, (kernel, _) in enumerate(v2_launches) if kernel == "apply_barrier"]
+    with pytest.raises(static.EvidenceError):
+        static.launch_sequence(3)
+
+    # v2 probes carry the cross-generation link and must never claim counters.
+    assert collector.PROBE_KEYS_V2_ADDITIONS == {
+        "achieved_counters_present",
+        "expected_launch_sequence",
+        "kernel_id_migration",
+        "supersedes_schema_version",
+        "trace_signature_matches_v1",
+    }
+    collector_source = COLLECTOR.read_text(encoding="utf-8")
+    assert "a static capture must not claim achieved counters" in collector_source
+    assert "v2 probe workload diverged" in collector_source
+    # A recapture grants no authority: the unpromoted state must survive.
+    validator_source = SCHEMA_VALIDATOR.read_text(encoding="utf-8")
+    assert "resource candidate state must remain unpromoted" in validator_source
+
+
 def test_cr2_5a_evidence_records_static_resources_without_counter_or_tuning_claims() -> None:
     evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))
     resource.validate_report(evidence)

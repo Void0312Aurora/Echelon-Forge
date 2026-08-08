@@ -15,6 +15,7 @@ if __package__:
         ACHIEVED_FIELDS,
         LAUNCH_SEQUENCE,
         PROFILE,
+        PROFILE_V2,
         REPORT_KEYS,
         SCHEMA,
         validate_report as _validate_report,
@@ -33,6 +34,7 @@ else:
         ACHIEVED_FIELDS,
         LAUNCH_SEQUENCE,
         PROFILE,
+        PROFILE_V2,
         REPORT_KEYS,
         SCHEMA,
         validate_report as _validate_report,
@@ -49,6 +51,20 @@ else:
 
 
 PROBE_SCHEMA = "cuda_resident.cr2.resource_capture_probe.v1"
+PROBE_SCHEMA_V2 = "cuda_resident.cp.resource_capture_probe.v2"
+_PROBE_SCHEMA_BY_VERSION = {1: PROBE_SCHEMA, 2: PROBE_SCHEMA_V2}
+
+# Keys a v2 probe adds on top of the v1 set. They record the cross-generation
+# link (which schema it supersedes, whether the workload digest still matches
+# the frozen capture) and the semantic catalog it was captured against, plus an
+# explicit statement that this is a static capture carrying no achieved counters.
+PROBE_KEYS_V2_ADDITIONS = {
+    "achieved_counters_present",
+    "expected_launch_sequence",
+    "kernel_id_migration",
+    "supersedes_schema_version",
+    "trace_signature_matches_v1",
+}
 PROBE_KEYS = {
     "backend_id",
     "blocks",
@@ -95,9 +111,37 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 def load_probe(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_object)
     _require(isinstance(value, dict), "probe root must be an object")
-    _require(set(value) == PROBE_KEYS, "probe top-level keys do not match the frozen schema")
-    _require(value["schema_version"] == PROBE_SCHEMA, "probe schema mismatch")
-    _require(value["profile_id"] == PROFILE, "probe profile mismatch")
+    # A probe is checked against the generation it declares. v1 keeps its exact
+    # frozen key set; v2 adds the cross-generation link fields and is otherwise
+    # identical, so the workload invariants below apply unchanged to both.
+    declared = value.get("schema_version")
+    version = next(
+        (
+            candidate
+            for candidate, schema in _PROBE_SCHEMA_BY_VERSION.items()
+            if declared == schema
+        ),
+        None,
+    )
+    _require(version is not None, f"probe schema is not a known generation: {declared!r}")
+    expected_keys = PROBE_KEYS if version == 1 else PROBE_KEYS | PROBE_KEYS_V2_ADDITIONS
+    _require(set(value) == expected_keys, "probe top-level keys do not match the frozen schema")
+    _require(value["schema_version"] == _PROBE_SCHEMA_BY_VERSION[version], "probe schema mismatch")
+    if version == 1:
+        _require(value["profile_id"] == PROFILE, "probe profile mismatch")
+    else:
+        _require(value["profile_id"] == PROFILE_V2, "probe profile mismatch")
+        _require(
+            value["supersedes_schema_version"] == PROBE_SCHEMA,
+            "v2 probe must declare the schema it supersedes",
+        )
+        # A recapture is only comparable to the frozen evidence if it measured
+        # the same workload, and it must never masquerade as a counter capture.
+        _require(value["trace_signature_matches_v1"] is True, "v2 probe workload diverged")
+        _require(
+            value["achieved_counters_present"] is False,
+            "a static capture must not claim achieved counters",
+        )
     _require(value["build_config"] == "Release", "probe must be a Release build")
     _require(value["cuda_architecture"] == "sm_86", "probe must target sm_86")
     _require(value["world_count"] == 256, "probe must contain 256 worlds")

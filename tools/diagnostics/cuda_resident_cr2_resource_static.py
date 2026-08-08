@@ -23,6 +23,26 @@ CONTRACT_PATH = (
 )
 
 _KERNEL_ENTRY_RE = re.compile(r'\{"([a-z0-9_]+)",\s*"([a-z0-9_]+)",\s*(\d+)\}')
+_LAUNCH_ENTRY_RE = re.compile(r'\{(\d+),\s*"([a-z0-9_]+)",\s*"([a-z0-9_]+)"\}')
+
+
+def _contract_text() -> str:
+    try:
+        return CONTRACT_PATH.read_text(encoding="utf-8")
+    except OSError as error:  # pragma: no cover - environment fault
+        raise EvidenceError(f"kernel resource contract is unreadable: {error}") from error
+
+
+def _contract_array(array_name: str, element_type: str) -> str:
+    text = _contract_text()
+    marker = f"inline constexpr auto {array_name} = std::to_array<{element_type}>({{"
+    start = text.find(marker)
+    if start < 0:
+        raise EvidenceError(f"kernel resource contract does not declare {array_name}")
+    end = text.find("});", start)
+    if end < 0:
+        raise EvidenceError(f"{array_name} in the resource contract is unterminated")
+    return text[start:end]
 
 
 def _parse_catalog(array_name: str) -> tuple[KernelSpec, ...]:
@@ -33,21 +53,10 @@ def _parse_catalog(array_name: str) -> tuple[KernelSpec, ...]:
     stage migration renamed the kernels: the C++ side moved and nothing forced
     the Python side to follow. Parsing keeps one owner instead of two.
     """
-    try:
-        text = CONTRACT_PATH.read_text(encoding="utf-8")
-    except OSError as error:  # pragma: no cover - environment fault
-        raise EvidenceError(f"kernel resource contract is unreadable: {error}") from error
-    marker = f"inline constexpr auto {array_name} = std::to_array<KernelSpec>({{"
-    start = text.find(marker)
-    if start < 0:
-        raise EvidenceError(f"kernel resource contract does not declare {array_name}")
-    end = text.find("});", start)
-    if end < 0:
-        raise EvidenceError(f"{array_name} in the resource contract is unterminated")
     specs = tuple(
         KernelSpec(kernel_id, symbol_fragment, int(launch_count))
         for kernel_id, symbol_fragment, launch_count in _KERNEL_ENTRY_RE.findall(
-            text[start:end]
+            _contract_array(array_name, "KernelSpec")
         )
     )
     if not specs:
@@ -55,6 +64,22 @@ def _parse_catalog(array_name: str) -> tuple[KernelSpec, ...]:
     if len({spec.kernel_id for spec in specs}) != len(specs):
         raise EvidenceError(f"{array_name} in the resource contract has duplicate kernel ids")
     return specs
+
+
+def _parse_launch_sequence(array_name: str) -> tuple[tuple[str, str], ...]:
+    """Read one launch sequence out of the contract, ordered by launch index."""
+    rows = [
+        (int(index), kernel_id, stage)
+        for index, kernel_id, stage in _LAUNCH_ENTRY_RE.findall(
+            _contract_array(array_name, "LaunchSpec")
+        )
+    ]
+    if not rows:
+        raise EvidenceError(f"{array_name} in the resource contract parsed to no launches")
+    rows.sort()
+    if [index for index, _, _ in rows] != list(range(len(rows))):
+        raise EvidenceError(f"{array_name} in the resource contract has non-contiguous indices")
+    return tuple((kernel_id, stage) for _, kernel_id, stage in rows)
 
 
 @lru_cache(maxsize=None)
@@ -69,6 +94,16 @@ def kernel_catalog(schema_version: int) -> tuple[KernelSpec, ...]:
     if schema_version == 2:
         return _parse_catalog("kKernelSpecsV2")
     raise EvidenceError(f"unknown kernel catalog schema version: {schema_version}")
+
+
+@lru_cache(maxsize=None)
+def launch_sequence(schema_version: int) -> tuple[tuple[str, str], ...]:
+    """Expected (kernel_id, semantic_stage) launch order for a schema version."""
+    if schema_version == 1:
+        return _parse_launch_sequence("kLaunchSequence")
+    if schema_version == 2:
+        return _parse_launch_sequence("kLaunchSequenceV2")
+    raise EvidenceError(f"unknown launch sequence schema version: {schema_version}")
 
 
 # Retained name for the v1 validators in this module and its callers. New code
