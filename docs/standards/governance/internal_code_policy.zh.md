@@ -83,7 +83,11 @@ python -m tools.maintenance.internal_code_governance \
 - 告警：源码注释包含任务追踪代号
 - 告警：维护中文档包含未就地展开的内部代号
 
-只有在有关维护入口完成整改，并且聚焦基线证明规则精度可接受后，文档告警才升级为阻断项。
+历史文档和长尾文档积压中的告警继续保持非阻断。维护入口基线采用更严格规则：根 README
+中英文对、`docs/README`、`docs/plan/README`、`docs/task/README`、
+`docs/standards/README` 中英文对，以及 `tools/README.md` 必须保持零 finding。
+`test_maintained_entry_points_have_no_bare_internal_codes` 对该受限集合执行阻断。只有在完成某个
+新增入口的整改，并确认扫描器对完整文件的精度后，才可把它加入该集合。
 
 ## 实现大小与归属
 

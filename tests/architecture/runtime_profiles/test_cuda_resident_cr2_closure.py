@@ -215,8 +215,8 @@ def test_cr2_7_has_bilingual_terminal_links_and_byte_stable_record() -> None:
     ).read_text(encoding="utf-8")
     assert "cuda_resident_cr2_closure_20260805.md" in exact_index
     assert "cuda_resident_cr2_closure_20260805.zh.md" in exact_index_zh
-    assert "CR2-0 through CR2-7 closed without promotion" in parent
-    assert "CR2-0 至 CR2-7 无晋级关闭" in parent_zh
+    assert "Follow-up runtime program closed without promotion" in parent
+    assert "后续运行时计划无晋级关闭" in parent_zh
     assert "closed without promotion" in program
     assert "无晋级关闭" in program_zh
 

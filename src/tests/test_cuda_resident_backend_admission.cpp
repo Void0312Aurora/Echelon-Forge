@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -15,123 +16,120 @@
 
 static_assert(sizeof(RuntimeBatchConfig) == 2 * sizeof(std::size_t));
 
-#define EF_RB2_ASSERT_MEMBER_TYPE(owner, member, expected_type)                                    \
+#define EF_PARITY_ASSERT_TYPE(owner, member, expected_type)                                        \
     static_assert(std::is_same_v<decltype(owner::member), expected_type>)
 
-EF_RB2_ASSERT_MEMBER_TYPE(WorldPilotActionAssignment, world_index, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldPilotActionAssignment, entity_id, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldPilotActionAssignment, action, PilotAction);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, active, bool);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, stick_pitch, double);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, stick_roll, double);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, rudder, double);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, throttle, double);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, gear_handle, float);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, flaps, float);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, speedbrake, float);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, brake, double);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, brake_left, bool);
-EF_RB2_ASSERT_MEMBER_TYPE(PilotAction, brake_right, bool);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityRef, world_index, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityRef, entity_id, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, x, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, y, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, z, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, vx, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, vy, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, vz, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, heading, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, pitch, double);
-EF_RB2_ASSERT_MEMBER_TYPE(WorldEntityKinematics, roll, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, alt_baro_m, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, alt_radar_m, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, ias_mps, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, mach, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, vvi_mps, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, pitch_deg, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, roll_deg, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, heading_deg, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, aoa_deg, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, beta_deg, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, g_load_normal, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, g_load_axial, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, p_deg_s, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, q_deg_s, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, r_deg_s, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, engine_rpm_pct, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, fuel_flow_kg_h, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, throttle_pos, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, fuel_internal_kg, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, fuel_external_kg, double);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, gear_pos, float);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, flaps_pos, float);
-EF_RB2_ASSERT_MEMBER_TYPE(InstrumentState, speedbrake_pos, float);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, id, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, sim_time, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, x, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, y, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, z, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, vx, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, vy, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, vz, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, heading, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, pitch, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, roll, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, speed, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, health, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, gear_state, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, throttle, double);
-EF_RB2_ASSERT_MEMBER_TYPE(AgentObservation, total_reward, double);
-EF_RB2_ASSERT_MEMBER_TYPE(ExecutionEpisodeControllerStepResult, reward_total, double);
-EF_RB2_ASSERT_MEMBER_TYPE(ExecutionEpisodeControllerStepResult, terminated, bool);
-EF_RB2_ASSERT_MEMBER_TYPE(ExecutionEpisodeControllerStepResult, truncated, bool);
-EF_RB2_ASSERT_MEMBER_TYPE(RewardTerm, name, std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(RewardTerm, value, double);
-EF_RB2_ASSERT_MEMBER_TYPE(RewardTerm, term_owner, std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(RewardReport, fact_terms, std::vector<RewardTerm>);
-EF_RB2_ASSERT_MEMBER_TYPE(RewardReport, shaping_terms, std::vector<RewardTerm>);
-EF_RB2_ASSERT_MEMBER_TYPE(RewardReport, fact_snapshot_version, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(TerminationSpec, reason, std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(TerminationSpec, reason_source, std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(TerminationSpec, snapshot_version, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::DeviceClockContract, tick, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::DeviceClockContract, simulation_time_s, double);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::ShardVersionContract, shard_id, std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::ShardVersionContract, version, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotLineageContract, source_snapshot_version,
-                          std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotLineageContract, source_backend_id,
-                          std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotLineageContract, source_request_id,
-                          std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotIdentityContract, world_id,
-                          std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotIdentityContract, global_version,
-                          std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotIdentityContract, barrier_id,
-                          std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotIdentityContract, barrier_sequence,
-                          std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotIdentityContract, shard_versions,
-                          std::vector<runtime::cuda_resident::ShardVersionContract>);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::SnapshotIdentityContract, lineage,
-                          runtime::cuda_resident::SnapshotLineageContract);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::EventOrderKeyContract, timestamp, double);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::EventOrderKeyContract, priority, int);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::EventOrderKeyContract, event_id, std::uint64_t);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::EventOrderKeyContract, event_family_membership,
-                          std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::ExportEnvelopeContract, schema_version,
-                          std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::ExportEnvelopeContract, field_set,
-                          std::vector<std::string>);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::ExportEnvelopeContract, visibility_label,
-                          std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::ExportEnvelopeContract, provenance, std::string);
-EF_RB2_ASSERT_MEMBER_TYPE(runtime::cuda_resident::ExportEnvelopeContract, source_snapshot_version,
-                          std::uint64_t);
+EF_PARITY_ASSERT_TYPE(WorldPilotActionAssignment, world_index, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(WorldPilotActionAssignment, entity_id, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(WorldPilotActionAssignment, action, PilotAction);
+EF_PARITY_ASSERT_TYPE(PilotAction, active, bool);
+EF_PARITY_ASSERT_TYPE(PilotAction, stick_pitch, double);
+EF_PARITY_ASSERT_TYPE(PilotAction, stick_roll, double);
+EF_PARITY_ASSERT_TYPE(PilotAction, rudder, double);
+EF_PARITY_ASSERT_TYPE(PilotAction, throttle, double);
+EF_PARITY_ASSERT_TYPE(PilotAction, gear_handle, float);
+EF_PARITY_ASSERT_TYPE(PilotAction, flaps, float);
+EF_PARITY_ASSERT_TYPE(PilotAction, speedbrake, float);
+EF_PARITY_ASSERT_TYPE(PilotAction, brake, double);
+EF_PARITY_ASSERT_TYPE(PilotAction, brake_left, bool);
+EF_PARITY_ASSERT_TYPE(PilotAction, brake_right, bool);
+EF_PARITY_ASSERT_TYPE(WorldEntityRef, world_index, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(WorldEntityRef, entity_id, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, x, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, y, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, z, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, vx, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, vy, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, vz, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, heading, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, pitch, double);
+EF_PARITY_ASSERT_TYPE(WorldEntityKinematics, roll, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, alt_baro_m, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, alt_radar_m, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, ias_mps, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, mach, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, vvi_mps, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, pitch_deg, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, roll_deg, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, heading_deg, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, aoa_deg, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, beta_deg, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, g_load_normal, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, g_load_axial, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, p_deg_s, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, q_deg_s, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, r_deg_s, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, engine_rpm_pct, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, fuel_flow_kg_h, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, throttle_pos, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, fuel_internal_kg, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, fuel_external_kg, double);
+EF_PARITY_ASSERT_TYPE(InstrumentState, gear_pos, float);
+EF_PARITY_ASSERT_TYPE(InstrumentState, flaps_pos, float);
+EF_PARITY_ASSERT_TYPE(InstrumentState, speedbrake_pos, float);
+EF_PARITY_ASSERT_TYPE(AgentObservation, id, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(AgentObservation, sim_time, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, x, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, y, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, z, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, vx, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, vy, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, vz, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, heading, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, pitch, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, roll, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, speed, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, health, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, gear_state, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, throttle, double);
+EF_PARITY_ASSERT_TYPE(AgentObservation, total_reward, double);
+EF_PARITY_ASSERT_TYPE(ExecutionEpisodeControllerStepResult, reward_total, double);
+EF_PARITY_ASSERT_TYPE(ExecutionEpisodeControllerStepResult, terminated, bool);
+EF_PARITY_ASSERT_TYPE(ExecutionEpisodeControllerStepResult, truncated, bool);
+EF_PARITY_ASSERT_TYPE(RewardTerm, name, std::string);
+EF_PARITY_ASSERT_TYPE(RewardTerm, value, double);
+EF_PARITY_ASSERT_TYPE(RewardTerm, term_owner, std::string);
+EF_PARITY_ASSERT_TYPE(RewardReport, fact_terms, std::vector<RewardTerm>);
+EF_PARITY_ASSERT_TYPE(RewardReport, shaping_terms, std::vector<RewardTerm>);
+EF_PARITY_ASSERT_TYPE(RewardReport, fact_snapshot_version, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(TerminationSpec, reason, std::string);
+EF_PARITY_ASSERT_TYPE(TerminationSpec, reason_source, std::string);
+EF_PARITY_ASSERT_TYPE(TerminationSpec, snapshot_version, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::DeviceClockContract, tick, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::DeviceClockContract, simulation_time_s, double);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::ShardVersionContract, shard_id, std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::ShardVersionContract, version, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotLineageContract, source_snapshot_version,
+                      std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotLineageContract, source_backend_id,
+                      std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotLineageContract, source_request_id,
+                      std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotIdentityContract, world_id, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotIdentityContract, global_version,
+                      std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotIdentityContract, barrier_id, std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotIdentityContract, barrier_sequence,
+                      std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotIdentityContract, shard_versions,
+                      std::vector<runtime::cuda_resident::ShardVersionContract>);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::SnapshotIdentityContract, lineage,
+                      runtime::cuda_resident::SnapshotLineageContract);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::EventOrderKeyContract, timestamp, double);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::EventOrderKeyContract, priority, int);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::EventOrderKeyContract, event_id, std::uint64_t);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::EventOrderKeyContract, event_family_membership,
+                      std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::ExportEnvelopeContract, schema_version, std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::ExportEnvelopeContract, field_set,
+                      std::vector<std::string>);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::ExportEnvelopeContract, visibility_label,
+                      std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::ExportEnvelopeContract, provenance, std::string);
+EF_PARITY_ASSERT_TYPE(runtime::cuda_resident::ExportEnvelopeContract, source_snapshot_version,
+                      std::uint64_t);
 
-#undef EF_RB2_ASSERT_MEMBER_TYPE
+#undef EF_PARITY_ASSERT_TYPE
 
 runtime::parity::ParityBudgetSelectedField
 expected_current_field(std::string field_path, std::string surface_owner,
@@ -157,7 +155,7 @@ expected_future_field(std::string field_path, std::string surface_owner,
     };
 }
 
-TEST_CASE("RB2 bounded air manifest is valid and excludes broad capabilities") {
+TEST_CASE("bounded air manifest is valid and excludes broad capabilities") {
     using namespace runtime::cuda_resident;
 
     const CapabilityManifest &manifest = bounded_air_execution_manifest();
@@ -189,7 +187,8 @@ TEST_CASE("RB2 bounded air manifest is valid and excludes broad capabilities") {
     CHECK_FALSE(validate_capability_manifest(expanded_manifest).valid);
 }
 
-TEST_CASE("RB2 candidate admission requires compiled backend and exact manifest support") {
+TEST_CASE(
+    "CUDA resident candidate admission requires compiled backend and exact manifest support") {
     using namespace runtime::cuda_resident;
 
     const BackendRequest request = make_bounded_air_execution_candidate_request();
@@ -216,7 +215,7 @@ TEST_CASE("RB2 candidate admission requires compiled backend and exact manifest 
     CHECK(admitted.admitted_feature_ids == request.requested_feature_ids);
 }
 
-TEST_CASE("RB2 candidate admission rejects missing profile and unsupported features") {
+TEST_CASE("CUDA resident candidate admission rejects missing profile and unsupported features") {
     using namespace runtime::cuda_resident;
 
     const BackendAdmissionResult missing = admit_backend_request({}, {});
@@ -256,7 +255,7 @@ TEST_CASE("RB2 candidate admission rejects missing profile and unsupported featu
     CHECK(rejected.rejection_reason == kBackendAdmissionRejectionUnsupportedFeature);
 }
 
-TEST_CASE("RB2 parity budget freezes exact selected slice inventory and typed comparators") {
+TEST_CASE("parity budget freezes exact selected-slice inventory and typed comparators") {
     using namespace runtime::parity;
 
     const ParityBudgetRecord budget = make_resident_state_unmaintained_candidate_budget();
@@ -475,7 +474,7 @@ TEST_CASE("RB2 parity budget freezes exact selected slice inventory and typed co
     CHECK_FALSE(validate_parity_budget_record_contract(wrong_owner).valid);
 }
 
-TEST_CASE("RB2 parity budget freezes barrier visibility host truth and export-only surfaces") {
+TEST_CASE("parity budget freezes barrier visibility host truth and export-only surfaces") {
     using namespace runtime::parity;
 
     const ParityBudgetRecord budget = make_resident_state_unmaintained_candidate_budget();

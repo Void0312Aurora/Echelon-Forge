@@ -9,6 +9,19 @@ from tools.maintenance.internal_code_governance.__main__ import exit_code
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+MAINTAINED_ENTRY_POINT_DOCUMENTS = (
+  "README.md",
+  "README.zh.md",
+  "docs/README.md",
+  "docs/README.zh.md",
+  "docs/plan/README.md",
+  "docs/plan/README.zh.md",
+  "docs/task/README.md",
+  "docs/task/README.zh.md",
+  "docs/standards/README.md",
+  "docs/standards/README.zh.md",
+  "tools/README.md",
+)
 
 
 def test_runtime_strings_reject_work_tracking_codes() -> None:
@@ -135,6 +148,12 @@ def test_document_definitions_are_distinct_from_bare_references() -> None:
   assert [(finding.line, finding.token) for finding in result.warnings] == [
     (2, "RB7")
   ]
+
+
+def test_maintained_entry_points_have_no_bare_internal_codes() -> None:
+  result = audit_module.audit_paths(REPO_ROOT, MAINTAINED_ENTRY_POINT_DOCUMENTS)
+
+  assert result.findings == ()
 
 
 def test_policy_documents_can_define_the_examples_they_govern() -> None:

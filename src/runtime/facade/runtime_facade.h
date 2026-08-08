@@ -121,13 +121,13 @@ class RuntimeFacade {
     export_diagnostics_traces(const EngagementBatchRequest &request) const;
     RuntimeWindowResult run_window(const RuntimeWindowRequest &request);
 
-    // --- T10 evidence spine, slice 3 / I54: dedicated run-global producers ---
+    // --- Dedicated run-global evidence producers ---------------------------
     //
-    // NEW additive evidence producers (census VA-2, VA-8). They are built
-    // "producer first": nothing in this slice calls them from an existing
-    // export path, so every existing serialized value (packet snapshot_version,
+    // Additive snapshot-version and trace-id producers. They are built
+    // "producer first": no existing export path calls them, so every existing
+    // serialized value (packet snapshot_version,
     // trace_id, barrier metadata, replay envelopes) is byte-for-byte unchanged.
-    // Wiring these into the maintained run is deferred to slice 4.
+    // Wiring these into the maintained run requires an explicit adapter opt-in.
     //
     // Run-global boundary adjudication (from the run/episode/reset lifecycle):
     //   A "run" == the lifetime of a single RuntimeFacade instance. Both
@@ -144,11 +144,11 @@ class RuntimeFacade {
     //   next_engagement_event_id_) is per-world state beneath WorldBatchRuntime
     //   and is reset to 1 by clear() and by an event-clock rewind. These
     //   facade-owned counters live above that layer and cannot be reached by
-    //   it, which is precisely the VA-8 requirement: a dedicated allocator that
+    //   it, which satisfies the requirement for a dedicated allocator that
     //   does not share the resettable engagement-event id space. Only
     //   constructing a fresh RuntimeFacade restarts the sequences at 1.
     //
-    // Move semantics (I54-R): moving a RuntimeFacade transfers the run
+    // Move semantics: moving a RuntimeFacade transfers the run
     //   identity, including both allocator cursors, to the destination, which
     //   continues the sequences exactly where the source stopped. The
     //   moved-from facade's cursors are exchanged to the invalidated sentinel
@@ -159,7 +159,7 @@ class RuntimeFacade {
     //   copy the uint64 cursors and permit exactly that, so the move
     //   constructor/assignment are user-defined in runtime_facade.cpp.
     //
-    // Exhaustion boundary (I54-R2): the cursors are plain uint64
+    // Exhaustion boundary: the cursors are plain uint64
     //   post-increments with no dedicated overflow guard. Minting the final
     //   id UINT64_MAX wraps the cursor to 0, which is exactly the invalidated
     //   sentinel above, so every later allocate_*/peek_next_* on that counter
@@ -175,20 +175,20 @@ class RuntimeFacade {
     // value the next allocate_* would return without advancing. All four
     // throw std::logic_error once the counter is invalidated -- by move or
     // by exhaustion (see the two paragraphs above).
-    std::uint64_t allocate_run_snapshot_version(); // VA-2
+    std::uint64_t allocate_run_snapshot_version(); // Run-global snapshot sequence.
     std::uint64_t peek_next_run_snapshot_version() const;
-    std::uint64_t allocate_trace_id(); // VA-8
+    std::uint64_t allocate_trace_id(); // Run-global trace sequence.
     std::uint64_t peek_next_trace_id() const;
 
-    // --- T10 evidence spine, slice 5: maintained-run replay-envelope producer
+    // --- Maintained-run replay-envelope producer ---------------------------
     //
-    // NEW additive read-only producer (census section 3 step 5). It assembles a
+    // This additive read-only producer assembles a
     // runtime::counterfactual::ReplayEnvelope from a maintained run's REAL
     // window products -- the RuntimeWindowResult returned by run_window --
     // instead of the synthetic request/snapshot fields the two existing
     // envelope assemblies use (replay_envelope_from_experiment_request and
     // runtime_counterfactual_restore_boundary_for_snapshot, both file-local to
-    // runtime_facade_counterfactual.cpp and both untouched by this slice).
+    // runtime_facade_counterfactual.cpp, which both remain untouched).
     //
     // Real-evidence field sources (fail-closed when absent):
     //   * snapshot_ref.snapshot_version_ref / facade_provenance_ref.packet_ref
@@ -197,12 +197,13 @@ class RuntimeFacade {
     //     apply_observation_packet_provenance) -- the packet's real
     //     snapshot_version embedding, not a re-derived constant.
     //   * facade_provenance_ref.information_state_source copies the observation
-    //     packet's own provenance struct (the run's real WP11 label + id lists).
+    //     packet's own provenance struct (the run-produced information-state
+    //     label and id lists).
     //   * barrier_ref copies the window's real "window_commit" barrier record
     //     (barrier_id + sequence from RuntimeWindowResult.barrier_trace) plus
     //     the engagement packet's real barrier_detail.
     //   * event_order_ref anchors on the engagement packet's trace_ids tail --
-    //     which the I59 opt-in adapter path stamps from the VA-8
+    //     which the facade-evidence opt-in adapter path stamps from the
     //     allocate_trace_id producer -- as "event:trace:{id}", with the
     //     packet's real producer_node_id.
     //   * source_time_s echoes the window's real context.source_time_s.
@@ -210,11 +211,11 @@ class RuntimeFacade {
     //     identity (the run orchestrator owns them; the facade cannot mint a
     //     more-real run identity), validated non-blank.
     //
-    // Opt-in truth linkage (I59): the producer first REQUIRES the window result
+    // Opt-in truth linkage: the producer first REQUIRES the window result
     // to carry the opaque identity attached by THIS facade's run_window seam.
     // A hand-built result and a result returned by another facade fail closed
     // before numeric evidence admission, even when both allocators overlap.
-    // The window's trace ids must then have been minted by THIS facade's VA-8
+    // The window's trace ids must then have been minted by THIS facade's
     // allocator (every id must be < peek_next_trace_id()); the default
     // maintained path's placeholder trace_ids = [1] against an untouched
     // allocator (peek == 1) fails closed with a named reason. A meaningful
@@ -225,8 +226,8 @@ class RuntimeFacade {
     // Envelope id namespace: "replay:maintained:{run_id}:trace:{trace_id}".
     // Existing id spaces stay untouched and disjoint: "replay:facade:*" is the
     // snapshot-derived restore-boundary space and remaining spaces are
-    // caller-authored (e.g. "replay:wp17f:*" fixtures); "replay:maintained:*"
-    // is verified unused at this baseline and is reserved for this producer.
+    // caller-authored; "replay:maintained:*" is verified unused at this
+    // baseline and is reserved for this producer.
     //
     // Restore claim: the maintained window path registers no counterfactual
     // worldline snapshot, so the envelope honestly claims
@@ -242,33 +243,35 @@ class RuntimeFacade {
     // validate_replay_envelope before it is returned; rejection reasons are
     // stable named strings (see runtime_facade_internal.h
     // kMaintainedReplayEnvelope* constants).
-    // Snapshot identity (VA-2), opt-in and additive: by DEFAULT
+    // Snapshot identity is opt-in and additive: by DEFAULT
     // (`run_snapshot_version == 0`, the allocator's invalid sentinel)
     // snapshot_ref.snapshot_version_ref is exactly the observation packet's own
     // run-produced provenance string ("global:{packet.snapshot_version}").
     // That value is real, but packet.snapshot_version is the PER-EXPORT
     // sequence (next_snapshot_version(index) = index + 1, reset every export),
-    // which census VA-2 names explicitly: it is not run-globally unique, so two
+    // which the contract calls out explicitly: it is not run-globally unique,
+    // so two
     // exports of one run carry the same "global:1" and the envelope's snapshot
     // identity does not distinguish them.
     //
-    // Passing a non-zero `run_snapshot_version` qualifies the ref with the VA-2
-    // run-global monotone version built in slice 3
-    // (allocate_run_snapshot_version), yielding
+    // Passing a non-zero `run_snapshot_version` qualifies the ref with the
+    // run-global monotone version returned by allocate_run_snapshot_version,
+    // yielding
     // "global:{packet_version}:run_snapshot:{run_global_version}" -- additive by
     // construction: the existing per-export substring keeps its exact meaning
     // and position as the prefix, and nothing is renamed, retyped, or dropped.
-    // The value must have been minted by THIS facade's VA-2 allocator AND
+    // The value must have been minted by THIS facade's run-snapshot allocator
+    // AND
     // recorded by this exact run_window result; allocation without a matching
     // window anchor is insufficient. Otherwise the producer fails closed with
     // kMaintainedReplayEnvelopeRunSnapshotNotRunMinted. The maintained run
     // recovers its own recorded value from the window's real
     // RuntimeWindowNodeExecutionRecord.source_snapshot_version ("snapshot:{n}",
-    // stamped by the I59 opt-in path), so this stays run-produced evidence
-    // rather than a caller-invented number.
+    // stamped by the facade-evidence opt-in path), so this stays run-produced
+    // evidence rather than a caller-invented number.
     //
-    // Because qualifying changes a serialized string, it follows the I59
-    // discipline: default off (this parameter defaults to 0), reached only
+    // Because qualifying changes a serialized string, it follows the explicit
+    // opt-in discipline: default off (this parameter defaults to 0), reached only
     // through an explicit adapter opt-in, with a named fail-closed rejection.
     runtime::counterfactual::MaintainedReplayEnvelopeResult
     build_maintained_replay_envelope(const RuntimeWindowResult &window_result,
@@ -276,21 +279,20 @@ class RuntimeFacade {
                                      std::uint64_t deterministic_seed,
                                      std::uint64_t run_snapshot_version = 0) const;
 
-    // --- T10 evidence spine, slice 6A (this iteration) ---------------------
+    // --- Maintained engagement-packet ancestry producer --------------------
     //
-    // Maintained engagement-packet ancestry producer (census slice-6 anchor:
-    // "Set parent_trace_id (via the slice-3 allocator) and the *_ref
-    // lineage", scoped to the engagement-event packet family).
+    // This producer sets parent_trace_id from the run-global allocator and
+    // records reference lineage for the engagement-event packet family.
     //
     // Assembles a MaintainedPacketAncestryResult from the REAL products of one
     // maintained window, linking the window's exported DiagnosticsTrace family
-    // to the previous window's run-minted VA-8 anchor. Like the slice-5
-    // envelope producer it is read-only (peeks the allocator cursor, mints
+    // to the previous window's run-minted trace anchor. Like the replay-envelope
+    // producer it is read-only (peeks the allocator cursor, mints
     // nothing) and returns COPIES: the window products, the default export
     // path, and every existing serialized value stay byte-for-byte unchanged.
     // Nothing in the maintained runtime calls this method; the only Python
     // reach is the RuntimeFacadeAdapter.build_maintained_packet_ancestry seam,
-    // which requires the I59 use_facade_evidence_producers=True opt-in.
+    // which requires the use_facade_evidence_producers=True opt-in.
     //
     // Gates (fail-closed, named reasons in runtime_facade_internal.h):
     //
@@ -299,14 +301,15 @@ class RuntimeFacade {
     //      numeric evidence admission.
     //   2. The window must yield an ADMITTED maintained replay envelope: this
     //      producer internally runs build_maintained_replay_envelope (default
-    //      VA-2 qualification off) and propagates its rejection reasons
-    //      verbatim, so the slice-5 real-evidence gates -- including the VA-8
+    //      run-snapshot qualification off) and propagates its rejection reasons
+    //      verbatim, so the replay-envelope gates -- including the run-global
     //      trace-id admission that rejects the default placeholder [1] -- plus
     //      validate_replay_envelope guard this surface too.
     //      The admitted envelope id becomes ancestry.replay_envelope_ref, so
     //      an ancestry record always names a validator-accepted envelope.
     //   3. parent_trace_id (when non-zero) must have been minted by THIS
-    //      facade's VA-8 allocator and recorded by an earlier genuine window --
+    //      facade's trace-id allocator and recorded by an earlier genuine
+    //      window --
     //      kMaintainedPacketAncestryParentNotRunMinted otherwise. Allocation
     //      without a window anchor and foreign-facade linkage both fail closed.
     //      A numeric anchor remains usable while its RuntimeWindowResult is
@@ -325,7 +328,7 @@ class RuntimeFacade {
     //      tag-set membership is the only honest discriminator).
     //
     // parent_trace_id = 0 declares a root window: ancestral trace copies keep
-    // parent_trace_id = 0, byte-identical to the pre-slice default, so a root
+    // parent_trace_id = 0, byte-identical to the existing default, so a root
     // ancestry asserts lineage without inventing a parent.
     MaintainedPacketAncestryResult
     build_maintained_packet_ancestry(const RuntimeWindowResult &window_result,
@@ -333,38 +336,37 @@ class RuntimeFacade {
                                      std::uint64_t deterministic_seed,
                                      std::uint64_t parent_trace_id = 0) const;
 
-    // --- T10 evidence spine, slice 7 (this iteration) -----------------------
+    // --- Maintained worldline comparison producer --------------------------
     //
-    // Maintained worldline/counterfactual comparison producer (census section
-    // 3 step 7: "Surface worldline/counterfactual comparison through the
-    // maintained adapter (opt-in)"). It joins TWO maintained windows of THIS
+    // This opt-in producer surfaces worldline/counterfactual comparison through
+    // the maintained adapter. It joins TWO maintained windows of THIS
     // facade's run -- a baseline worldline and a candidate (counterfactual)
-    // worldline -- into an evidence-level comparison, consuming the slice-5
-    // (I69) replay-envelope producer and the slice-6A (I79) packet-ancestry
+    // worldline -- into an evidence-level comparison, consuming the
+    // replay-envelope producer and the packet-ancestry
     // producer for each side. Like both, it is read-only (peeks the allocator
     // cursors via the inner producers, mints nothing, registers no
     // counterfactual worldline snapshot) and additive: nothing in the
     // maintained runtime calls this method; the only Python reach is the
     // RuntimeFacadeAdapter.build_maintained_worldline_comparison seam, which
-    // requires the I59 use_facade_evidence_producers=True opt-in.
+    // requires the use_facade_evidence_producers=True opt-in.
     //
     // What a "worldline" is here: the evidence chain of one window sequence,
-    // named by its window's run-minted VA-8 anchor
+    // named by its window's run-minted trace anchor
     // ("worldline:maintained:{run_id}:trace:{anchor}"). Two worldlines of one
     // facade run are, e.g., two batch worlds set up with the same or different
     // seeds (parallel same-seed/different-seed runs) or two window sequences
     // separated by a counterfactual intervention. Evidence minted by a
     // DIFFERENT facade cannot enter: each side's opaque run_window identity
-    // association fail-closes it before the slice-5 numeric gates.
+    // association fail-closes it before the replay-envelope numeric gates.
     //
     // Gates (fail-closed; comparison-level reasons in runtime_facade_internal.h
-    // kMaintainedWorldlineComparison*, underlying slice-5/6A reasons carried in
+    // kMaintainedWorldlineComparison*, underlying producer reasons carried in
     // result.errors -- with two windows, verbatim propagation would not say
     // which side failed):
     //
     //   1./2. Each window must yield an ADMITTED maintained replay envelope
-    //      (build_maintained_replay_envelope, default VA-2 qualification off):
-    //      all slice-5 real-evidence gates (beginning with the opaque
+    //      (build_maintained_replay_envelope, default qualification off):
+    //      all replay-envelope real-evidence gates (beginning with the opaque
     //      window/facade association) plus validate_replay_envelope
     //      -- which requires the deterministic seed and the deterministic
     //      event-order sort key, so "deterministic replay refs present" is
@@ -372,7 +374,7 @@ class RuntimeFacade {
     //      *_baseline_envelope_rejected / *_candidate_envelope_rejected.
     //   3./4. Each window must yield an ADMITTED maintained packet ancestry
     //      (build_maintained_packet_ancestry with the side's parent id): the
-    //      slice-6A parent gates guard the lineage each side contributes.
+    //      packet-ancestry parent gates guard the lineage each side contributes.
     //      Rejection: *_baseline_ancestry_rejected /
     //      *_candidate_ancestry_rejected. (Each ancestry call re-runs its
     //      side's envelope build internally; both builds are deterministic
@@ -382,7 +384,7 @@ class RuntimeFacade {
     //      is not a worldline comparison) --
     //      *_windows_share_the_anchor_trace otherwise.
     //
-    // NO TRUTH PROMOTION (the slice red line, see the DTO comment in
+    // NO TRUTH PROMOTION (the contract boundary; see the DTO comment in
     // runtime_facade_types.h): the result references evidence ids only --
     // envelope ids, ancestry ids, anchor trace ids, event-order refs, snapshot
     // version refs -- never copies of truth state (no kinematic deltas, unlike
@@ -393,12 +395,12 @@ class RuntimeFacade {
     // sides are replay-comparable by construction and records their identity.
     //
     // run_id / episode_id are the shared caller-owned run identity (one facade
-    // == one run, the I54 boundary; both windows belong to it).
+    // == one run, the facade lifecycle boundary; both windows belong to it).
     // baseline/candidate deterministic seeds are the two worldlines' own
     // caller-owned setup seeds (they differ for a different-seed world pair);
     // deterministic_seed_matched records their equality.
     // baseline/candidate parent_trace_id (default 0 = root) are the sides'
-    // slice-6A ancestry parents.
+    // packet-ancestry parents.
     //
     // Zero-wiring byte parity: nothing on any existing path calls this method,
     // it only reads, and the default (non-opt-in) adapter path cannot reach it
@@ -411,9 +413,9 @@ class RuntimeFacade {
         std::uint64_t candidate_deterministic_seed, std::uint64_t baseline_parent_trace_id = 0,
         std::uint64_t candidate_parent_trace_id = 0) const;
 
-    // --- T8 information-state architecture, fourth slice / I60 -------------
+    // --- Maintained observation-view declaration ---------------------------
     //
-    // Additive, read-only declaration export for the TL13 maintained
+    // Additive, read-only declaration export for the maintained
     // observation read seam (scenario_loader/core.py::get_policy_agent_observation).
     // It materializes "what layer the seam produces" as a runtime-queryable
     // ObservationViewSpec instead of a documentation-only fact.
@@ -424,14 +426,15 @@ class RuntimeFacade {
     // the Python-owned single source of truth (gym_envs/observation_view.py and
     // python/architecture/information_layer.py). The detailed observation field
     // list is deliberately left Python-owned (required_fields / optional_fields
-    // stay empty here) so there is no dual-source field catalogue to drift; a G4
+    // stay empty here) so there is no dual-source field catalogue to drift; an
     // architecture test gates this C++ export against the Python registry.
     //
-    // Zero-wiring: this slice does not migrate any consumer and nothing in the
-    // maintained runtime calls this method, so the TL13 seam's behavior and
-    // every existing serialized value are byte-for-byte unchanged. The method is
-    // a pure constant producer (no facade instance state is read or mutated),
-    // hence const and callable on any facade including a zero-world one.
+    // Zero-wiring: this declaration does not migrate any consumer and nothing
+    // in the maintained runtime calls this method, so the observation seam's
+    // behavior and every existing serialized value are byte-for-byte unchanged.
+    // The method is a pure constant producer (no facade instance state is read
+    // or mutated), hence const and callable on any facade including a zero-world
+    // one.
     ObservationViewSpec describe_maintained_observation_view() const;
 
   private:
@@ -477,14 +480,14 @@ class RuntimeFacade {
     // facade instance that returned them.  It is intentionally not a DTO field
     // and is not exported through Python bindings.
     std::shared_ptr<RuntimeFacadeIdentity> identity_;
-    // T10 slice 3 / I54 run-global evidence allocators (see the public
+    // Run-global evidence allocators (see the public
     // producer declarations above for the run-global boundary adjudication
     // and move semantics). Appended after the existing members; a fresh
     // facade starts both at 1. NOTE: RuntimeFacade's move constructor and
     // move assignment are user-defined (runtime_facade.cpp) and must transfer
     // EVERY member listed here; a sizeof tripwire there fires when this
     // member set changes.
-    std::uint64_t next_run_snapshot_version_ = 1; // VA-2
-    std::uint64_t next_trace_id_ = 1;             // VA-8
+    std::uint64_t next_run_snapshot_version_ = 1;
+    std::uint64_t next_trace_id_ = 1;
     std::uint64_t next_window_identity_ = 1;
 };

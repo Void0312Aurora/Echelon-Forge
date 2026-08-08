@@ -103,9 +103,13 @@ Current severity:
 - warning: work-tracking codes in source comments
 - warning: bare internal codes in maintained documentation
 
-Documentation warnings become blocking only after the affected maintained
-entry-point set has been remediated and a focused baseline confirms that the
-rule has acceptable precision.
+Documentation warnings remain non-blocking for the historical and long-tail
+documentation backlog. The maintained entry-point baseline is stricter: the
+root README pair, `docs/README`, `docs/plan/README`, `docs/task/README`,
+`docs/standards/README` pairs, and `tools/README.md` must remain finding-free.
+`test_maintained_entry_points_have_no_bare_internal_codes` enforces that bounded
+set. Add another entry surface only after remediating it and confirming scanner
+precision on the complete file.
 
 ## Implementation Size And Ownership
 
