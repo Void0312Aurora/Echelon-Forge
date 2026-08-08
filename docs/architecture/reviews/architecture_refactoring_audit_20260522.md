@@ -26,7 +26,7 @@ The most severe systemic issues:
 
 ### F-001: `counterfactual_replay_contracts.h` — 2342 Lines
 
-**Severity:** CRITICAL | **File:** [src/runtime/contracts/counterfactual_replay_contracts.h](../../task/review/src/runtime/contracts/counterfactual_replay_contracts.h)
+**Severity:** CRITICAL | **File:** [src/runtime/contracts/counterfactual_replay_contracts.h](../../../src/runtime/contracts/counterfactual_replay_contracts.h)
 
 159 constants, 18 structs, 40 inline validation functions across 6 domains in 1 file:
 replay envelopes, branch points, worldline metadata, experiment requests, scenario generation, evidence bridge.
@@ -35,7 +35,7 @@ replay envelopes, branch points, worldline metadata, experiment requests, scenar
 
 ### F-002: `runtime_facade.cpp` — 2809 Lines
 
-**Severity:** CRITICAL | **File:** [src/runtime/facade/runtime_facade.cpp](../../task/review/src/runtime/facade/runtime_facade.cpp)
+**Severity:** CRITICAL | **File:** [src/runtime/facade/runtime_facade.cpp](../../../src/runtime/facade/runtime_facade.cpp)
 
 7+ responsibility areas: track helpers, fidelity/spawn translation, platform materialization, counterfactual replay, experiment evidence, event sorting/export, facade orchestration. Four scattered `using namespace runtime::counterfactual` blocks.
 
@@ -43,7 +43,7 @@ replay envelopes, branch points, worldline metadata, experiment requests, scenar
 
 ### F-003: `runtime_window_coordinator.h` — 1646 Lines (Header-Only)
 
-**Severity:** CRITICAL | **File:** [src/runtime/facade/runtime_window_coordinator.h](../../task/review/src/runtime/facade/runtime_window_coordinator.h)
+**Severity:** CRITICAL | **File:** [src/runtime/facade/runtime_window_coordinator.h](../../../src/runtime/facade/runtime_window_coordinator.h)
 
 125+ inline functions, zero .cpp counterpart. Any change recompiles `runtime_facade.cpp`.
 
@@ -51,7 +51,7 @@ replay envelopes, branch points, worldline metadata, experiment requests, scenar
 
 ### F-004: `default_unit_factory.h` — 1457 Lines, 35 #includes
 
-**Severity:** CRITICAL | **File:** [src/models/core/default_unit_factory.h](../../task/review/src/models/core/default_unit_factory.h)
+**Severity:** CRITICAL | **File:** [src/models/core/default_unit_factory.h](../../../src/models/core/default_unit_factory.h)
 
 Highest include count in any .h file. Single point of change for all unit definitions.
 
@@ -87,7 +87,7 @@ Structurally identical templates differing only in imported `*_profile` module.
 
 ### L-001: `legacy_command.h` — 11 Active System Consumers
 
-**Severity:** HIGH | **File:** [src/components/command/legacy_command.h](../../task/review/src/components/command/legacy_command.h)
+**Severity:** HIGH | **File:** [src/components/command/legacy_command.h](../../../src/components/command/legacy_command.h)
 
 11 C++ systems still actively use `MovementCommand` and `ActionCommand`. Each physics system independently implements dual-path resolution: "check PilotAction first, fall back to legacy MovementCommand." No centralized resolution.
 
@@ -139,7 +139,7 @@ Python reimplementations of C++ spatial queries in benchmark directory. Correctl
 
 ### L-008: `leader_tasking.py:210` Hardcodes Air Profile
 
-**Severity:** MEDIUM | **File:** [leader_tasking.py:210](../../task/review/python/rl/tasking/leader_tasking.py#L210)
+**Severity:** MEDIUM | **File:** [leader_tasking.py:210](../../../python/rl/tasking/leader_tasking.py#L210)
 
 `return _air_profile.build_kernel_mission_command(loader)` — always air, even for naval/ground.
 
@@ -157,7 +157,7 @@ Architecture Law 15 targets `spawn_platform({capabilities...})` but `TypedPlatfo
 
 ### A-002: Implicit ECS Ordering
 
-**Severity:** HIGH | **File:** [simulation_kernel_systems.cpp:164-166](../../task/review/src/core/engine/simulation_kernel_systems.cpp#L164-L166)
+**Severity:** HIGH | **File:** [simulation_kernel_systems.cpp:164-166](../../../src/core/engine/simulation_kernel_systems.cpp#L164-L166)
 
 Code admits design smell. No `depends_on` or custom pipeline phases used. Post-ECS manual query loop for naval weapon fire runs outside ECS frame.
 
@@ -169,7 +169,7 @@ Code admits design smell. No `depends_on` or custom pipeline phases used. Post-E
 
 ### A-004: `common_core_profile.py` Contains Air-Specific Logic
 
-**Severity:** MEDIUM | **File:** [common_core_profile.py](../../task/review/python/rl/tasking/common_core_profile.py)
+**Severity:** MEDIUM | **File:** [common_core_profile.py](../../../python/rl/tasking/common_core_profile.py)
 
 Line 76 defaults to `"air"`. Lines 182-208 define air-specific inference functions. Lines 446-488 repeat `if profile_name == "ground"` special-casing 3 times.
 
@@ -209,7 +209,7 @@ MissionCommandNaval: 7 fields. TaskOrderNaval: 3. LeaderIntentNaval: 2. PilotRep
 
 ### S-004: `WorldBatchRuntime` — 36 Methods, 7 Areas
 
-**Severity:** HIGH | **File:** [world_batch_runtime.h](../../task/review/src/core/engine/world_batch_runtime.h)
+**Severity:** HIGH | **File:** [world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
 
 Three spatial query methods share ~90% identical code. `apply_world_setup_batch` processes 6 operations in one closure.
 
@@ -217,7 +217,7 @@ Three spatial query methods share ~90% identical code. `apply_world_setup_batch`
 
 ### S-005: SimulationKernel Exposes 55+ Methods To Python
 
-**Severity:** MEDIUM | **File:** [bindings_core.cpp:431-956](../../task/review/src/interfaces/python/bindings_core.cpp#L431-L956)
+**Severity:** MEDIUM | **File:** [bindings_core.cpp:431-956](../../../src/interfaces/python/bindings_core.cpp#L431-L956)
 
 Python can read/write any ECS component directly through bindings.
 
