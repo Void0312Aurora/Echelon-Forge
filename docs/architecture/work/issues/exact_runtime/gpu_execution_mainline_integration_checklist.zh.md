@@ -17,12 +17,12 @@ Content status: 迁移后的检查清单快照；激活前须依据当前代码�
 本文记录一条把已关闭第 0-4 阶段 GPU 运行时工作转为维护中执行层加速的候选路线。
 它是一个 GPU 集成跟踪检查清单，不是通用架构权威，也不是当范围需要更改时单独冻结的任务边界的替代品。
 精确步骤迁移线现已拆分为
-[gpu_exact_world_step_rearchitecture_plan.md](../../../../plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md)，
+gpu_exact_world_step_rearchitecture_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md`)，
 该文档冻结了新的“CPU 真实来源→精确 GPU 后端”重新架构。
 
 ## 范围
 
-此检查清单特意比 [gpu_execution_runtime_research_and_design.md](../../../../plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md) 中的研究/设计文档范围更窄。
+此检查清单特意比 gpu_execution_runtime_research_and_design.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md`) 中的研究/设计文档范围更窄。
 它仅跟踪将 GPU 辅助执行集成到以下内容所需的工作：
 
 - 执行层 `train.py` 在维护的冻结后 `p5` 路径中的 rollout
@@ -237,7 +237,7 @@ Phase 3 在运行时边界可用，但只有视觉有真实的维护消费者。
 
 活跃的确切迁移后续工作：
 
-- [gpu_exact_world_step_migration_plan.md](../../../../plan/archive/exact_runtime/gpu_exact_world_step_migration_plan.md)
+- gpu_exact_world_step_migration_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_migration_plan.md`)
 - 截至 `2026-03-27` 的状态：新的重新架构线现在已经达到了对于确定性单世界、`world_count=4` 和 `world_count=16` 第一范围飞机夹具在 8 步固定种子扫描上的确切缓存会话等价（`first_cpu_divergence_step=0`，`final_cached_component_digests_match=true`）。相同的 `world_count=16` 夹具现在也通过显式的实验性 `WorldBatchExactStepBackend` 运行时切换路径（`--runtime-step-batch-backend`）匹配。`WorldBatchRuntime` 仍然将该后端保留为显式的选择加入实验，并且它仍然在维护的 `p5` 默认值之外，即使更广泛的批处理门现已关闭。最新的惰性同步后续工作还从该实验性运行时路径中移除了每步实时世界写回，并且最新的 `2026-03-27` 驻留快速路径后续工作还从覆盖的 `step_batch()` 主体中移除了步内 D2H 物化（在任何显式提取/实时世界访问之前 `chain_device_to_host_ms == 0.0`）。后来的 `2026-03-27` 静止路径后续工作现在也完全跳过了当前基准风格运行时步进夹具的 CPU 命令通道批处理（覆盖行上的 `chain_command_lane_ms == 0.0`）。最新的窄化传递还将该路径切换为更小的驻留 `pilot + world_time` 投影，而不是先克隆和重新打包整个缓存状态批处理。最新的 `2026-03-27` 无导弹后续工作然后教导驻留重放在上传的批处理没有导弹行时完全跳过指导计数器 memset、指导内核启动和计数器 D2H 复制。后来的 `2026-03-27` 静止后续工作然后将相同的 `pilot + world_time` 驻留同步与无导弹的仅飞机重放融合，将覆盖的运行时步进热路径收缩为一次 H2D 复制加上一次 CUDA 启动/同步。最新的矩阵现在报告大约 `0.194x`（world_count=1）、`0.197x`（world_count=4）和 `0.583x`（world_count=16）的温暖运行时步进加速比，`chain_host_to_device_ms` 降至约 `0.008-0.009 ms`，而温暖写回和 `chain_command_lane_ms` 保持为 `0.0`。随后的流转换现在还将驻留 CUDA 载体从 `cudaDeviceSynchronize()` 移动到具有可重用计时事件的专用缓存流上，但新的 `world_count=1,4,16` 矩阵仍然稳定在约 `0.096 ms`、`0.099 ms` 和 `0.108 ms` 的温暖运行时步进时间，只有约 `0.136x`、`0.190x` 和 `0.439x` 的温暖运行时步进加速比。最新的原始驻留投影后续工作然后用可重用的固定主机缓冲区替换热路径可分页投影向量，让无导弹图重用固定的 memcpy 源而无需每步节点参数更新，并在上传期间预分配该缓冲区，以便第一次运行时步进不再吸收多秒的惰性分配峰值。最新的矩阵现在稳定在约 `0.089 ms`、`0.092 ms` 和 `0.100 ms` 的温暖运行时步进时间，温暖链总计接近 `0.077 ms`、`0.080 ms` 和 `0.081 ms`，第一步冷成本回到约 `20.3 ms`，近似温暖运行时步进加速比约 `0.150x`、`0.200x` 和 `0.571x`。最新的静止/无导弹驻留后续工作现在还在设备载体内直接推进 `world_time_s`，以便覆盖的热路径可以完全跳过投影 H2D，随后的缓存图传递恢复来自该第一个直接内核版本的大部分增加的启动开销。稳定的重新运行矩阵现在稳定在约 `0.111 ms`、`0.096 ms` 和 `0.099 ms` 的温暖运行时步进时间，温暖链总计接近 `0.078 ms`、`0.079 ms` 和 `0.082 ms`，保持温暖写回、`chain_command_lane_ms` 和 `chain_host_to_device_ms` 为 `0.0`，并测量近似温暖运行时步进加速比约 `0.121x`、`0.193x` 和 `0.466x`。实验性运行时路径仍然不具备推广条件：剩余的阻塞因素现在更明确地是相对于 CPU 的运行时减速以及固定的重放/运行时粘合剂成本，而不是写回负担或 H2D 物化。
 
 检查清单：

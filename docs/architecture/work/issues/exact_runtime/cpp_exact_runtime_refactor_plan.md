@@ -54,8 +54,8 @@ Three facts are now stable across docs, code, and diagnostics:
 
 Relevant references:
 
-- [execution_coarse_grained_route_segments.md](../../../../plan/archive/exact_runtime/execution_coarse_grained_route_segments.md)
-- [gpu_exact_world_step_rearchitecture_plan.md](../../../../plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md)
+- execution_coarse_grained_route_segments.md (`git show 70c07a77:docs/plan/archive/exact_runtime/execution_coarse_grained_route_segments.md`)
+- gpu_exact_world_step_rearchitecture_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md`)
 - [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
 - [system_layering_and_engine_encapsulation_plan.md](../system_layering_and_engine_encapsulation_plan.md)
 - [architecture_and_performance_research_followup.zh.md](../architecture_and_performance_research_followup.zh.md)

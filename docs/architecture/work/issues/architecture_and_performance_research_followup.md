@@ -114,7 +114,7 @@ This is not a "perceived slowness" but a structural bottleneck confirmed by the 
 ### 2. Compilation Batch Helpers Can Bring Benefits, but Benefits Are Limited
 
 From measurements already in
-[gpu_execution_runtime_research_and_design.md](../../../plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md),
+gpu_execution_runtime_research_and_design.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md`),
 C++ batch helpers do bring benefits to the current CPU main line, but the benefits are not decisive:
 
 - `64 envs`
@@ -152,9 +152,9 @@ This again shows:
 ### 4. Exact GPU World-Step Is Still Not the Main Line Candidate
 
 From content in
-[gpu_exact_world_step_performance_and_parity_plan.md](../../../plan/archive/exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md)
+gpu_exact_world_step_performance_and_parity_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md`)
 and
-[gpu_exact_world_step_rearchitecture_plan.md](../../../plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md):
+gpu_exact_world_step_rearchitecture_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md`):
 
 - The current exact GPU prototype is still significantly slower than CPU at small world_count
 - Semantic drift still exists
@@ -188,7 +188,7 @@ And the build scaffold already exists:
 ### 2. CUDA Helper Value Has Been Proven by Benchmarks
 
 According to measurements in
-[gpu_execution_runtime_research_and_design.md](../../../plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md):
+gpu_execution_runtime_research_and_design.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md`):
 
 - object-only visual on device-resident path can achieve `16x` to `100x+` improvement relative to CPU
 - terrain-aware visual can achieve `2.8x` host-readback improvement, `15x+` to `50x+` device-resident improvement

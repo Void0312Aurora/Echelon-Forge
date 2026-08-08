@@ -22,13 +22,13 @@ It is a GPU integration tracking checklist, not the general architecture
 authority and not a substitute for a separately frozen task boundary when scope
 needs to change.
 The exact-step migration line is now split into
-[gpu_exact_world_step_rearchitecture_plan.md](../../../../plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md),
+gpu_exact_world_step_rearchitecture_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md`),
 which freezes the new "CPU truth source -> exact GPU backend" re-architecture.
 
 ## Scope
 
 This checklist is intentionally narrower than the research/design document in
-[gpu_execution_runtime_research_and_design.md](../../../../plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md).
+gpu_execution_runtime_research_and_design.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md`).
 It only tracks work needed to integrate GPU-assisted execution into:
 
 - execution-layer `train.py` rollouts for the maintained post-freeze `p5` path
@@ -317,7 +317,7 @@ not yet a drop-in replacement for exact `SimulationKernel::step()`.
 
 Active exact-migration follow-on:
 
-- [gpu_exact_world_step_migration_plan.md](../../../../plan/archive/exact_runtime/gpu_exact_world_step_migration_plan.md)
+- gpu_exact_world_step_migration_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_migration_plan.md`)
 - Current status as of `2026-03-27`: the new re-architecture line has now
   reached exact cached-session parity for deterministic single-world,
   `world_count=4`, and `world_count=16` first-scope aircraft fixtures on the

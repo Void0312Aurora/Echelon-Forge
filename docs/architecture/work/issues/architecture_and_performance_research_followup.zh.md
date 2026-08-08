@@ -114,7 +114,7 @@ Content status: 迁移后的调研快照；建议和实现盘点须以新证据�
 ### 2. 编译批处理 helper 已经能带来收益，但收益有限
 
 从
-[gpu_execution_runtime_research_and_design.md](../../../plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md)
+gpu_execution_runtime_research_and_design.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md`)
 里已有测量看，C++ batch helper 对当前 CPU 主线是有收益的，但收益不是决定性的：
 
 - `64 envs`
@@ -152,9 +152,9 @@ Content status: 迁移后的调研快照；建议和实现盘点须以新证据�
 ### 4. exact GPU world-step 目前仍未成为主线候选
 
 从
-[gpu_exact_world_step_performance_and_parity_plan.md](../../../plan/archive/exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md)
+gpu_exact_world_step_performance_and_parity_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md`)
 与
-[gpu_exact_world_step_rearchitecture_plan.md](../../../plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md)
+gpu_exact_world_step_rearchitecture_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md`)
 的内容看：
 
 - 当前 exact GPU 原型在小 world_count 下仍显著慢于 CPU
@@ -189,7 +189,7 @@ Content status: 迁移后的调研快照；建议和实现盘点须以新证据�
 ### 2. CUDA helper 的价值已经被 benchmark 证明
 
 根据
-[gpu_execution_runtime_research_and_design.md](../../../plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md)
+gpu_execution_runtime_research_and_design.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_execution_runtime_research_and_design.md`)
 中的测量：
 
 - object-only visual 在 device-resident 路径可达 `16x` 到 `100x+` 相对 CPU 的提升
