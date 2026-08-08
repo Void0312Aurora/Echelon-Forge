@@ -78,6 +78,8 @@ _CAMEL_BOUNDARY_RE = re.compile(
 )
 _ACRONYM_TRACKING_CODE_RE = re.compile(r"(?:RB|CR|WP|TM|MLF|RES)\d+|I\d{2,}")
 _ACRONYM_PHASE_RE = re.compile(r"PHASE[A-D]")
+_INTEGER_WIDTH_TOKEN_RE = re.compile(r"I(?:8|16|32|64|128)", re.IGNORECASE)
+_INTEGER_WIDTH_CONTEXT_TOKENS = {"matrix", "scalar", "simd", "vec", "vector"}
 _CPP_RAW_STRING_START_RE = re.compile(
   r'R"(?P<delimiter>[^ ()\\\t\r\n]{0,16})\('
 )
@@ -270,10 +272,11 @@ def _tracking_code_spans(text: str) -> tuple[_TextSpan, ...]:
     for match in TRACKING_CODE_RE.finditer(text)
   ]
   for group in _identifier_token_groups(text):
-    for token in group:
+    for index, token in enumerate(group):
       if (
-        len(group) > 1
-        and re.fullmatch(r"I\d{2,}", token.token, re.IGNORECASE)
+        index > 0
+        and _INTEGER_WIDTH_TOKEN_RE.fullmatch(token.token)
+        and group[index - 1].token.lower() in _INTEGER_WIDTH_CONTEXT_TOKENS
       ):
         continue
       if TRACKING_CODE_TOKEN_RE.fullmatch(token.token) and not _overlaps(token, spans):

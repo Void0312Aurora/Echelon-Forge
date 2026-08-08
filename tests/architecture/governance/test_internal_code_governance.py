@@ -96,6 +96,29 @@ def test_technical_abbreviations_do_not_match_embedded_internal_codes() -> None:
   assert result.findings == ()
 
 
+def test_camel_and_pascal_identifiers_reject_issue_tracking_codes() -> None:
+  result = scan_text(
+    "src/runtime/backend.cpp",
+    "auto cudaResidentI94Backend = make_backend();\n"
+    "class CudaResidentI94Backend {};\n",
+  )
+
+  assert [(finding.code, finding.token) for finding in result.errors] == [
+    ("source-tracking-code", "I94"),
+    ("source-tracking-code", "I94"),
+  ]
+
+
+def test_production_paths_reject_issue_tracking_codes() -> None:
+  findings = audit_module.scan_path_name(
+    "src/runtime/CudaResidentI94Backend.cpp"
+  )
+
+  assert [(finding.code, finding.token) for finding in findings] == [
+    ("source-tracking-code-path", "I94")
+  ]
+
+
 def test_production_paths_reject_tracking_and_camel_phase_codes() -> None:
   tracking = audit_module.scan_path_name(
     "src/CudaResidentRB7Backend/runtime.cpp"
