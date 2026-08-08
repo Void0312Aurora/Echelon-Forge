@@ -331,7 +331,7 @@ def test_maintained_entry_points_have_no_bare_internal_codes() -> None:
 
 def test_policy_documents_can_define_the_examples_they_govern() -> None:
   result = scan_text(
-    "docs/standards/governance/internal_code_policy.md",
+    "docs/engineering/documentation/standards/internal_code_policy.md",
     "Do not expose RB7 or phase_b.\n",
   )
 

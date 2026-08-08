@@ -44,7 +44,7 @@ from python.architecture.information_layer import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-_INVENTORY_DIR = REPO_ROOT / "docs" / "plan" / "unified_architecture_program"
+_INVENTORY_DIR = REPO_ROOT / "docs" / "architecture" / "reference"
 _INVENTORY_EN = _INVENTORY_DIR / "t8_g4_truth_leak_inventory.md"
 _INVENTORY_ZH = _INVENTORY_DIR / "t8_g4_truth_leak_inventory.zh.md"
 _VIEW_OWNER_DOTTED = MAINTAINED_INFORMATION_LAYER_VIEW_OWNERS[0]
