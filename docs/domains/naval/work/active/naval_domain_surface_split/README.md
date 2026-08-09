@@ -20,7 +20,7 @@ Inputs:
 - [Naval progress snapshot](../../../reviews/naval_progress_snapshot_20260527.md)
 - [N4 threat / ROE bridge](../../../../../task/naval/archive/n4_threat_roe_bridge/README.md)
 - [N5 RL action surface split](../../../../../task/naval/archive/n5_rl_action_surface_split/README.md)
-- [Common / air / naval split plan (archived)](../../../../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md)
+- [Domain owner index](../../../../README.md)
 - [Command boundary README](../../../../../../src/components/command/README.md)
 - [Naval standards](../../../README.md)
 - [Subproject creation standard](../../../../../engineering/automation/rules/subproject_creation_standard.md)

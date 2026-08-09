@@ -553,7 +553,7 @@ Platform =
 
 ## 十四、与既有文档的关系
 
-本文档不删除此前计划，而是重新定位它们：
+当前权威通过 owner-local 文档路由；历史证据仅在仍有维护门禁消费时保留：
 
 - [system_layering_and_engine_encapsulation_plan.zh.md](../work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
   仍作为分层动机和引擎封装背景。
@@ -561,8 +561,8 @@ Platform =
   仍作为性能路线排序和后端取舍依据。
 - [../runtime_facade/runtime_facade_contract_plan.zh.md](../work/issues/runtime_facade_contract_plan.zh.md)
   仍作为 facade 契约输入。
-- [../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md](../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
-  仍作为 `common / air / naval` 拆分的历史任务线。
+- [领域 owner 索引](../../domains/README.zh.md) 是 Air、Naval、Ground 与 Joint
+  ownership 拆分的当前路由。
 - [../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md)
   是把本文档转化为分阶段工作的执行子项目。
 - [../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md](../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md)

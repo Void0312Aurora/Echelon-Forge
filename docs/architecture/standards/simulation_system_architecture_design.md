@@ -753,7 +753,8 @@ future batch and training use.
 
 ## 14. Relationship To Existing Documents
 
-This document does not delete the earlier plans. It repositions them:
+Current authority routes through owner-local documents. Historical evidence is
+retained only where a maintained gate still consumes it:
 
 - [system_layering_and_engine_encapsulation_plan.md](../work/issues/system_layering_and_engine_encapsulation_plan.md)
   remains the source for layer motivation and engine encapsulation background.
@@ -761,8 +762,8 @@ This document does not delete the earlier plans. It repositions them:
   remains the source for performance route ordering and backend trade-offs.
 - [../runtime_facade/runtime_facade_contract_plan.md](../work/issues/runtime_facade_contract_plan.md)
   remains the facade contract input.
-- [../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md](../../task/archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md)
-  remains the historical task line for the `common / air / naval` split.
+- [Domain owner index](../../domains/README.md) is the current route for the
+  Air, Naval, Ground, and Joint ownership split.
 - [../../task/simulation_architecture/README.md](../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.md)
   is the execution subproject for turning this architecture into scoped work.
 - [../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md](../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md)

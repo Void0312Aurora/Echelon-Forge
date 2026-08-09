@@ -52,9 +52,9 @@
       "english": "docs/architecture/standards/simulation_system_architecture_design.md",
       "chinese": "docs/architecture/standards/simulation_system_architecture_design.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "1bb79ab8803ad986203668ea618288904481e79c480589882904f5150e48a6aa",
-      "chinese_hash": "4d94ec0398229cbb2e636bb4cf4c8ec67bdedd2c3ccc3984c93025acb25e52e3"
+      "last_verified": "2026-08-09",
+      "english_hash": "2b59e91befb3d5198a1b0bce2be42d73e84dcc6d90006099ad63ffa3627bb61d",
+      "chinese_hash": "6210fb35842825cb34cb6c5a984212a3fd1384156f65953fbee4a921f7f594dd"
     },
     {
       "pair_id": "domains/README",
