@@ -1,11 +1,17 @@
 # M3-S2 开火时机可学习性审计
 
-状态：`2026-06-08 已归档 / bounded firing gate accepted；timing、robustness、
-effects 与 kill-chain behavior held`。
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/README.md`
+Owner: `learning/policy-architecture`
+Last verified: `2026-08-09`
+Review basis: 保留的 M3-S2 evidence 与 bounded firing-gate closeout。
 
-本归档保留 M3-S2 证据包。原 live 路径
-`docs/task/model/m3_s2_fire_timing_learnability_audit/` 现在只保留轻量
-pointer README。
+状态：保留的 review 包；bounded firing gate 已接受，但 timing quality、
+robustness、effects 与 kill-chain behavior 仍保持 held。
+
+本文在 Learning owner-local review 面保留 M3-S2 证据包。它是 evidence，
+不是 active training authorization，也不替代 policy standard。
 
 语言：
 
@@ -14,10 +20,10 @@ pointer README。
 
 输入：
 
-- 父级归档索引：[模型任务归档](../README.zh.md)
-- active 模型任务索引：[模型任务](../../README.zh.md)
+- 父级 grouped review：[Grouped stopping contract](../README.zh.md)
+- Learning owner：[Learning README](../../../README.zh.md)
 - M3-S1 timing contract：
-  [M3-S1 Censored Optimal-Stopping Timing Contract](../../m3_s1_censored_optimal_stopping_timing_contract/README.zh.md)
+  [M3-S1 Censored Optimal-Stopping Timing Contract](../m3_s1_censored_optimal_stopping_timing_contract_task_clusters_20260605.zh.md)
 - Stage-1 C2/ROE shaped scenario：
   `scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json`
 - M3-S1 维护 probe config：
@@ -25,7 +31,7 @@ pointer README。
 - M3-S2 event-window 维护 probe config：
   `examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json`
 - 子项目标准：
-  [子项目创建标准](../../../../agent/rules/subproject_creation_standard.zh.md)
+  [子项目创建标准](../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 
 ## 目的
 
@@ -247,8 +253,7 @@ kill-chain behavior 不由本归档接受。
   audit、event-head 到 executable-pulse adapter、reward-contract repair，或仅在 stopping
   output 接入 executable event 后再释放 M2 memory/sequence。
 
-## Archive
+## 证据生命周期
 
-- Archive index：[模型任务归档](../README.zh.md)
-- Pointer README：
-  [m3_s2_fire_timing_learnability_audit](../../m3_s2_fire_timing_learnability_audit/README.zh.md)
+- 本包保留在 Learning review 面。后续变化必须通过新的 scoped review 或
+  policy-standard 更新进入，不得重新创建已退役的 `docs/task/model` 路由。

@@ -39,5 +39,5 @@
 
 ## 归档动作
 
-将本包移动到 `docs/task/model/archive/`，并在原
-`docs/task/model/m3_s2_fire_timing_learnability_audit/` 路径留下 pointer README。
+将本包移动到 `docs/learning/reviews/grouped_stopping_contract_20260605/`，并在原
+`docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/` 路径留下 pointer README。

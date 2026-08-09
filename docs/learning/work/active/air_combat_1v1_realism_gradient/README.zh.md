@@ -28,7 +28,7 @@ Stage-2 C2/ROE 入口已建立并完成第一轮 8k 续训；Stage-2 训练质�
 截至 `2026-06-08`：
 
 - 发射闭合不再按 A4-A7 历史子项目处理。当前权威是模型侧 M3-S2 归档包：
-  [M3-S2 开火时机可学习性审计](../../../../task/model/archive/m3_s2_fire_timing_learnability_audit/README.zh.md)。
+  [M3-S2 开火时机可学习性审计](../../../reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/README.zh.md)。
 - M3-S2 在 active Stage-1 C2/ROE scenario/config pair 上已通过有边界
   deterministic/stochastic batch：`16 / 16` 个 episode 都产生一次授权、被接受的
   `fire_once` release，且 rejected requests、violations 与

@@ -43,5 +43,5 @@ model cannot fire" as the first suspected blocker.
 
 ## Archive Action
 
-Move this package under `docs/task/model/archive/` and leave the original
-`docs/task/model/m3_s2_fire_timing_learnability_audit/` path as a pointer README.
+Move this package under `docs/learning/reviews/grouped_stopping_contract_20260605/` and leave the original
+`docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/` path as a pointer README.

@@ -139,7 +139,7 @@ This subproject can be marked accepted only when:
   flat, stochastic release remains sampling-driven, and the executable hybrid
   action branch is still separate from the M3 stopping head.
 - Follow-up root-cause audit moved to
-  [M3-S2 Fire-Timing Learnability Audit](../../../task/model/archive/m3_s2_fire_timing_learnability_audit/README.md),
+  [M3-S2 Fire-Timing Learnability Audit](m3_s2_fire_timing_learnability_audit/README.md),
   now archived as bounded firing-gate evidence: release execution is accepted
   for the active scenario/config pair, while legal timing quality and effects
   quality remain held.

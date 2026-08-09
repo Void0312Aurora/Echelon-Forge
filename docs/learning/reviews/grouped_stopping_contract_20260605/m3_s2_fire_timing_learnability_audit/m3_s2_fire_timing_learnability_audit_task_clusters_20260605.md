@@ -3,7 +3,7 @@
 Status: `archived historical task-cluster plan; dispatch closed on 2026-06-08`.
 
 The retained write scope is the archived evidence package. The original
-`docs/task/model/m3_s2_fire_timing_learnability_audit/` path is now a pointer
+`docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/` path is now a pointer
 README only.
 
 ## Boundary Decision
@@ -16,7 +16,7 @@ learned-policy success.
 
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `M3S2-P0 Boundary` | main thread | n/a | Define the masked edge-triggered stopping object and breakpoints. | `docs/task/model/archive/m3_s2_fire_timing_learnability_audit/**` | New algorithm claims; training changes. | Markdown inspection. | README names formal object, scope, and acceptance gate. | First; serial. | 1 | pass |
+| `M3S2-P0 Boundary` | main thread | n/a | Define the masked edge-triggered stopping object and breakpoints. | `docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/**` | New algorithm claims; training changes. | Markdown inspection. | README names formal object, scope, and acceptance gate. | First; serial. | 1 | pass |
 | `M3S2-P1 Diagnostic Tooling` | main thread | n/a | Add hold and legal-mask oracle pulse modes plus aggregate verdict runner. | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`; `tools/diagnostics/fire_timing_fault_localization_probe.py --mode learnability_audit`; focused tests | Reward tuning; policy changes; C2/ROE weakening. | `py_compile`; focused pytest. | Tooling can distinguish hold, early high, legal pulse, delayed legal pulse. | After P0; serial. | 2 | pass |
 | `M3S2-P2 Oracle Evidence` | read-only diagnostics worker | n/a | Run bounded Stage-1 oracle audit and retain artifact. | `experiments_tmp/air_combat_fire_timing_learnability_audit_20260605.json`; evidence note | Long training; model acceptance. | Audit command exits 0; JSON verdict present. | Verdict names release reachability, reward delta, timing spread, effects visibility, and edge hazard. | After P1; serial. | 1 | pass |
 | `M3S2-P3 Root-Cause Synthesis` | main thread | n/a | Decide whether current blocker is action adapter, reward/effects observability, or optimizer. | Current status and oracle evidence docs | Opening P4 remediation in the same packet. | Markdown inspection; evidence links. | Status names primary and secondary breakpoint without overclaim. | After P2; serial. | 1 | accepted |

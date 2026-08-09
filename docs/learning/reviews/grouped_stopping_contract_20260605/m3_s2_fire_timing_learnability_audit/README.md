@@ -1,11 +1,17 @@
 # M3-S2 Fire-Timing Learnability Audit
 
-Status: `archived on 2026-06-08 / bounded firing gate accepted; timing,
-robustness, effects, and kill-chain behavior held`.
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/README.md`
+Owner: `learning/policy-architecture`
+Last verified: `2026-08-09`
+Review basis: retained M3-S2 evidence and bounded firing-gate closeout.
 
-This archive preserves the M3-S2 evidence package. The original live path
-`docs/task/model/m3_s2_fire_timing_learnability_audit/` is now a lightweight
-pointer README only.
+Status: retained review package; the bounded firing gate is accepted while
+timing quality, robustness, effects, and kill-chain behavior remain held.
+
+This owner-local review preserves the M3-S2 evidence package. It is evidence,
+not an active training authorization or a replacement for the policy standard.
 
 Language:
 
@@ -14,10 +20,10 @@ Language:
 
 Inputs:
 
-- Parent archive index: [Model Task Archive](../README.md)
-- Active model task index: [Model Tasks](../../README.md)
+- Parent grouped review: [Grouped stopping contract](../README.md)
+- Learning owner: [Learning README](../../../README.md)
 - M3-S1 timing contract:
-  [M3-S1 Censored Optimal-Stopping Timing Contract](../../m3_s1_censored_optimal_stopping_timing_contract/README.md)
+  [M3-S1 Censored Optimal-Stopping Timing Contract](../m3_s1_censored_optimal_stopping_timing_contract_task_clusters_20260605.md)
 - Stage-1 C2/ROE shaped scenario:
   `scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json`
 - Maintained M3-S1 probe config:
@@ -25,7 +31,7 @@ Inputs:
 - Maintained M3-S2 event-window probe config:
   `examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json`
 - Subproject standard:
-  [Subproject Creation Standard](../../../../agent/rules/subproject_creation_standard.md)
+  [Subproject Creation Standard](../../../../engineering/automation/rules/subproject_creation_standard.md)
 
 ## Purpose
 
@@ -278,8 +284,8 @@ kill-chain behavior are not accepted by this archive.
   memory/sequence release only if its stopping output is wired into an
   executable event.
 
-## Archive
+## Evidence Lifecycle
 
-- Archive index: [Model Task Archive](../README.md)
-- Pointer README:
-  [m3_s2_fire_timing_learnability_audit](../../m3_s2_fire_timing_learnability_audit/README.md)
+- This package is retained under the Learning review surface. Future changes
+  require a new scoped review or policy-standard update; do not recreate the
+  retired `docs/task/model` route.

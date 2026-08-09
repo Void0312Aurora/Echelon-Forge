@@ -35,7 +35,7 @@ As of `2026-06-08`:
 
 - Firing closure is no longer owned by the historical A4-A7 subprojects. The
   current authority is the model-side M3-S2 archive:
-  [M3-S2 Fire Timing Learnability Audit](../../../../task/model/archive/m3_s2_fire_timing_learnability_audit/README.md).
+  [M3-S2 Fire Timing Learnability Audit](../../../reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/README.md).
 - M3-S2 passed the bounded deterministic/stochastic batch on the active Stage-1
   C2/ROE scenario/config pair: `16 / 16` checked episodes produced exactly one
   accepted authorized `fire_once` release, with zero rejected requests,

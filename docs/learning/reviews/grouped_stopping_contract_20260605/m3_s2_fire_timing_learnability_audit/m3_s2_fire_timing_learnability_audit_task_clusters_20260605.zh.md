@@ -3,7 +3,7 @@
 状态：`历史任务簇计划已归档；dispatch 已于 2026-06-08 关闭`。
 
 保留的写入范围是归档证据包。原
-`docs/task/model/m3_s2_fire_timing_learnability_audit/` 路径现在只保留
+`docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/` 路径现在只保留
 pointer README。
 
 ## 边界决定
@@ -15,7 +15,7 @@ training tune，不得削弱 C2/ROE，也不得宣称 learned-policy success。
 
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `M3S2-P0 Boundary` | main thread | n/a | 定义 masked edge-triggered stopping 对象与断点。 | `docs/task/model/archive/m3_s2_fire_timing_learnability_audit/**` | 新算法声明；训练修改。 | Markdown inspection。 | README 命名形式对象、范围与验收门。 | First；serial。 | 1 | pass |
+| `M3S2-P0 Boundary` | main thread | n/a | 定义 masked edge-triggered stopping 对象与断点。 | `docs/learning/reviews/grouped_stopping_contract_20260605/m3_s2_fire_timing_learnability_audit/**` | 新算法声明；训练修改。 | Markdown inspection。 | README 命名形式对象、范围与验收门。 | First；serial。 | 1 | pass |
 | `M3S2-P1 Diagnostic Tooling` | main thread | n/a | 增加 hold、legal-mask oracle pulse modes 与 aggregate verdict runner。 | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`；`tools/diagnostics/fire_timing_fault_localization_probe.py --mode learnability_audit`；focused tests | reward tuning；policy changes；C2/ROE weakening。 | `py_compile`；focused pytest。 | tooling 可区分 hold、early high、legal pulse、delayed legal pulse。 | After P0；serial。 | 2 | pass |
 | `M3S2-P2 Oracle Evidence` | read-only diagnostics worker | n/a | 运行有边界 Stage-1 oracle audit 并保留 artifact。 | `experiments_tmp/air_combat_fire_timing_learnability_audit_20260605.json`；evidence note | long training；model acceptance。 | Audit command exits 0；JSON verdict present。 | Verdict 命名 release reachability、reward delta、timing spread、effects visibility 与 edge hazard。 | After P1；serial。 | 1 | pass |
 | `M3S2-P3 Root-Cause Synthesis` | main thread | n/a | 判定当前 blocker 是 action adapter、reward/effects observability 还是 optimizer。 | current status 与 oracle evidence docs | 在同一 packet 打开 P4 remediation。 | Markdown inspection；evidence links。 | status 命名 primary 与 secondary breakpoint，不 overclaim。 | After P2；serial。 | 1 | accepted |
