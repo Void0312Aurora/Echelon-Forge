@@ -340,9 +340,9 @@
       "english": "docs/engineering/documentation/reference/document_alignment_map.md",
       "chinese": "docs/engineering/documentation/reference/document_alignment_map.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "1a2436de7bd9162dd8f279ccb7537eba3ae88507c653c0f26a790fc69ac39471",
-      "chinese_hash": "999cd50e4b1dc6dc26412dc0276f1d6c0dd6d726f30a03777b76dc06617697cb"
+      "last_verified": "2026-08-09",
+      "english_hash": "e72764c12cb67d5f558c0626c8852b8fc6fc4f2928052d315829f2a2cf8abedc",
+      "chinese_hash": "30e261367408f2000f558548eea366326800b21313248d43bf9dac6522134f1a"
     },
     {
       "pair_id": "engineering/documentation/reviews/internal_code_residual_audit_20260807",

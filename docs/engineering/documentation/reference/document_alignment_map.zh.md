@@ -164,7 +164,6 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 - `docs/Archive/air_first_standards/com/two_ship/*.md`
 - `docs/Archive/architecture/*.md`
 - `docs/Archive/architecture/layers/*.md`
-- `docs/task/flight_dynamics/archive/**`
 
 这些文档之所以归档，是因为它们描述了已被替代的执行路径、早期 air-first 泛化路线，
 或只作为任务历史快照存在，不再充当当前标准。

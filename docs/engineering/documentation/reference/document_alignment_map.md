@@ -167,7 +167,6 @@ The following are retained for historical reference only:
 - `docs/Archive/air_first_standards/com/two_ship/*.md`
 - `docs/Archive/architecture/*.md`
 - `docs/Archive/architecture/layers/*.md`
-- `docs/task/flight_dynamics/archive/**`
 
 These are archived because they describe superseded execution paths, older
 air-first generalization attempts, or task-history snapshots that no longer act
