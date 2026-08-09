@@ -19,6 +19,10 @@ else:
 
 SCHEMA = "cuda_resident.cr2.achieved_counter_evidence.v1"
 PROFILE = resource.PROFILE
+# A counter capture links to whichever resource-evidence generation produced the
+# binary it profiled. Both are acceptable parents: the hash checks below are what
+# actually bind the two artifacts together, not the profile string.
+PARENT_PROFILES = (resource.PROFILE, resource.PROFILE_V2)
 PERMISSION_CODE = "ERR_NVGPUCTRPERM"
 REQUIRED_LAUNCH_COUNT = 12
 COMMAND_TEMPLATE = (
@@ -428,14 +432,14 @@ def validate_report(report: dict[str, Any]) -> None:
 
 def validate_parent_link(parent: dict[str, Any], binary_sha256: str, probe_sha256: str) -> None:
     resource.validate_report(parent)
-    _require(parent["profile_id"] == PROFILE, "CR2-5a profile drifted")
+    _require(parent["profile_id"] in PARENT_PROFILES, "parent resource profile is not a known generation")
     _require(
         parent["inputs"]["binary_sha256"] == binary_sha256,
-        "binary differs from CR2-5a resource evidence",
+        "binary differs from the parent resource evidence",
     )
     _require(
         parent["inputs"]["probe_sha256"] == probe_sha256,
-        "probe output differs from CR2-5a resource evidence",
+        "probe output differs from the parent resource evidence",
     )
 
 
