@@ -16,7 +16,7 @@ Last verified: `2026-08-08`
 
 输入：
 
-- [海军任务 README](../../../../../task/naval/archive/owner_migration_20260808/README.zh.md)
+- [海军 owner README](../../../README.zh.md)
 - [海军进展快照](../../../reviews/naval_progress_snapshot_20260527.zh.md)
 - [N4 威胁 / ROE bridge](../../../../../task/naval/archive/n4_threat_roe_bridge/README.zh.md)
 - [N5 RL 动作面拆分](../../../../../task/naval/archive/n5_rl_action_surface_split/README.zh.md)

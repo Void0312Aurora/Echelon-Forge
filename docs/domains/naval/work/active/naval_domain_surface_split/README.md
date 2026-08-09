@@ -16,7 +16,7 @@ Language:
 
 Inputs:
 
-- [Naval task README](../../../../../task/naval/archive/owner_migration_20260808/README.md)
+- [Naval owner README](../../../README.md)
 - [Naval progress snapshot](../../../reviews/naval_progress_snapshot_20260527.md)
 - [N4 threat / ROE bridge](../../../../../task/naval/archive/n4_threat_roe_bridge/README.md)
 - [N5 RL action surface split](../../../../../task/naval/archive/n5_rl_action_surface_split/README.md)
