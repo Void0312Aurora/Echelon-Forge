@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from tools.diagnostics import cuda_resident_cr2_matrix_probe as matrix_probe
+    from tools.diagnostics import cuda_resident_cr2_matrix_probe as matrix_probe, cuda_resident_retained_evidence_paths as retained_paths
     from tools.diagnostics.cuda_resident_cr2_matrix_evidence_schema import (
         COMMIT,
         COMMON_MODES,
@@ -25,7 +25,7 @@ try:
         validate_evidence,
     )
 except ModuleNotFoundError:
-    import cuda_resident_cr2_matrix_probe as matrix_probe
+    import cuda_resident_cr2_matrix_probe as matrix_probe, cuda_resident_retained_evidence_paths as retained_paths
     from cuda_resident_cr2_matrix_evidence_schema import (
         COMMIT,
         COMMON_MODES,
@@ -76,7 +76,7 @@ def _canonical_source_descriptor(root: Path, path: Path) -> dict[str, Any]:
 
 def _resolve(root: Path, relative: object, label: str) -> Path:
     _require(type(relative) is str and bool(relative), f"{label} path is invalid")
-    candidate = Path(relative)
+    candidate = Path(retained_paths.physical_relative(str(relative)))
     _require(not candidate.is_absolute(), f"{label} path must be repository-relative")
     resolved = (root / candidate).resolve()
     _require(resolved.is_relative_to(root.resolve()), f"{label} path escapes the repository")
@@ -253,7 +253,7 @@ def _validate_manifest(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
                 else _verify_descriptor
             )
             paths[name] = verifier(root, value[name], f"{group}.{name}")
-    parity_path = Path(manifest["parity_output_path"])
+    parity_path = Path(retained_paths.physical_relative(str(manifest["parity_output_path"])))
     _require(
         not parity_path.is_absolute()
         and (root / parity_path).resolve().is_relative_to(root.resolve()),
@@ -366,7 +366,7 @@ def _run_parity(root: Path, manifest: dict[str, Any], paths: dict[str, Path]) ->
         and parity.get("public_support_enabled") is False,
         "fresh parity gates drifted",
     )
-    output_path = (root / manifest["parity_output_path"]).resolve()
+    output_path = (root / Path(retained_paths.physical_relative(str(manifest["parity_output_path"])))).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         json.dumps(parity, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

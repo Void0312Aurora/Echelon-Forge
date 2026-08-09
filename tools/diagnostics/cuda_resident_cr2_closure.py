@@ -8,7 +8,6 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-
 SCHEMA = "cuda_resident.program2_closure.v1"
 CLOSURE_ID = "cr2_7.closed_without_promotion.cuda_resident.20260805"
 BASELINE = "395e02b7dfeaa87baedb2611ec503d14ab137ce3"
@@ -205,7 +204,8 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def _resolve(root: Path, relative: object, label: str) -> Path:
     require(type(relative) is str and bool(relative), f"{label}.path invalid")
-    path = Path(str(relative).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1))
+    resolver = __import__(f"{__package__ + '.' if __package__ else ''}cuda_resident_retained_evidence_paths", fromlist=["physical_relative"]).physical_relative  # noqa: E501
+    path = Path(resolver(str(relative)))
     require(not path.is_absolute(), f"{label}.path must be repository-relative")
     resolved = (root / path).resolve()
     require(resolved.is_relative_to(root.resolve()), f"{label}.path escapes repository")

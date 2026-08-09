@@ -4,6 +4,8 @@ import json
 import subprocess
 from pathlib import Path
 
+from tools.diagnostics.cuda_resident_retained_evidence_paths import physical_relative
+
 
 ROOT = Path(__file__).resolve().parents[3]
 HEADER_EXTENSIONS = {".cuh", ".h", ".hh", ".hpp"}
@@ -85,7 +87,7 @@ def _artifact_paths(policy: dict[str, object]) -> list[str]:
     assert isinstance(scope, dict)
     prefixes = scope["artifact_path_prefixes"]
     assert isinstance(prefixes, list)
-    normalized_prefixes = [str(prefix).replace("docs/plan/exact_runtime", "tests/fixtures/runtime_profiles/cuda_resident_program_2", 1) for prefix in prefixes]
+    normalized_prefixes = [physical_relative(f"{prefix}/").rstrip("/") for prefix in prefixes]
     tracked = subprocess.run(
         ["git", "ls-files", "--", "tests/fixtures/runtime_profiles/cuda_resident_program_2"],
         cwd=ROOT,

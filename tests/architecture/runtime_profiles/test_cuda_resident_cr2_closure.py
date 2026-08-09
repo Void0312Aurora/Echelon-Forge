@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tools.diagnostics.cuda_resident_retained_evidence_paths import logical_relative, physical_relative
 from tools.diagnostics import cuda_resident_cr2_closure as closure_validator
-
 
 ROOT = Path(__file__).resolve().parents[3]
 CLOSURE = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_closure_20260805.json"
@@ -31,7 +31,7 @@ def _canonical_descriptor(path: Path) -> dict[str, object]:
     text = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
     payload = text.encode("utf-8")
     return {
-        "path": path.relative_to(ROOT).as_posix().replace("tests/fixtures/runtime_profiles/cuda_resident_program_2/", "docs/plan/exact_runtime/", 1),
+        "path": logical_relative(path.relative_to(ROOT).as_posix()),
         "canonicalization": "utf8_lf",
         "canonical_bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
@@ -72,16 +72,16 @@ def test_cr2_7_is_bound_to_exact_and_canonical_evidence() -> None:
     for name in ("matrix_evidence", "parity_confirmation"):
         descriptor = evidence[name]
         assert isinstance(descriptor, dict)
-        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1)
+        path = ROOT / physical_relative(str(descriptor["path"]))
         assert descriptor == {
-            "path": path.relative_to(ROOT).as_posix().replace("tests/fixtures/runtime_profiles/cuda_resident_program_2/", "docs/plan/exact_runtime/", 1),
+            "path": logical_relative(path.relative_to(ROOT).as_posix()),
             "bytes": path.stat().st_size,
             "sha256": _sha256(path),
         }
     for name in ("counter_evidence", "resource_evidence"):
         descriptor = evidence[name]
         assert isinstance(descriptor, dict)
-        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1)
+        path = ROOT / physical_relative(str(descriptor["path"]))
         assert descriptor == _canonical_descriptor(path)
 
 

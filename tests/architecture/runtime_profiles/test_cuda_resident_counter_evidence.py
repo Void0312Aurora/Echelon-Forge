@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
+from tools.diagnostics.cuda_resident_retained_evidence_paths import logical_relative
 from tools.diagnostics import cuda_resident_cr2_counter_evidence as counter
 from tools.diagnostics import cuda_resident_cr2_resource_evidence as resource
-
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = ROOT / "src/runtime/contracts/cuda_resident_counter_evidence_contract.h"
@@ -25,7 +25,7 @@ RESOURCE_EVIDENCE_COMMIT = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
 
 
 def _git_blob(commit: str, path: Path) -> bytes:
-    relative = path.relative_to(ROOT).as_posix().replace("tests/fixtures/runtime_profiles/cuda_resident_program_2/", "docs/plan/exact_runtime/", 1)
+    relative = logical_relative(path.relative_to(ROOT).as_posix())
     return subprocess.run(
         ["git", "show", f"{commit}:{relative}"],
         cwd=ROOT,

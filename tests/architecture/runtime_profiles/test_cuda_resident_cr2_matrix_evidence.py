@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from tools.diagnostics import cuda_resident_retained_evidence_paths as retained_paths
 from tools.diagnostics import cuda_resident_cr2_matrix_evidence as collector
 from tools.diagnostics import cuda_resident_cr2_matrix_evidence_schema as schema
 from tools.diagnostics import cuda_resident_cr2_matrix_probe as matrix_probe
@@ -20,6 +21,7 @@ EVIDENCE = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_
 PARITY = EVIDENCE_DIR / "parity-comparison.json"
 COLLECTOR = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py"
 SCHEMA = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence_schema.py"
+BASELINE_SOURCE_COMMIT = "356bcd56a61e40f1327d16b6a2dda335d7fdd553"
 
 
 def _load(path: Path) -> dict[str, object]:
@@ -32,11 +34,10 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _canonical_source_descriptor(path: Path) -> dict[str, object]:
-    payload = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
-    encoded = payload.encode("utf-8")
+def _canonical_source_descriptor(path: Path, commit: str | None = None) -> dict[str, object]:
+    encoded = retained_paths.canonical_source_bytes(path, ROOT, commit)
     return {
-        "path": path.relative_to(ROOT).as_posix().replace("tests/fixtures/runtime_profiles/cuda_resident_program_2/", "docs/plan/exact_runtime/", 1),
+        "path": retained_paths.logical_relative(path.relative_to(ROOT).as_posix()),
         "canonicalization": "utf8_lf",
         "canonical_bytes": len(encoded),
         "sha256": hashlib.sha256(encoded).hexdigest(),
@@ -48,7 +49,7 @@ def _tracked_reports() -> tuple[dict[str, object], dict[tuple[str, str], dict[st
     reports: dict[tuple[str, str], dict[str, object]] = {}
     for campaign in manifest["campaigns"]:
         for lane, descriptor in campaign["reports"].items():
-            path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1)
+            path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
             report = matrix_probe.load_report(path)
             matrix_probe.validate_report(report, require_production=True)
             reports[(campaign["campaign_id"], lane)] = report
@@ -61,22 +62,22 @@ def test_tracked_manifest_reports_and_evidence_hashes_are_exact() -> None:
     schema.validate_evidence(evidence)
     assert evidence["source_commit"] == "0c24a07549e238222741da6b20100537e7a9be22"
     assert evidence["inputs"]["manifest"] == {
-        "path": MANIFEST.relative_to(ROOT).as_posix().replace("tests/fixtures/runtime_profiles/cuda_resident_program_2/", "docs/plan/exact_runtime/", 1),
+        "path": retained_paths.logical_relative(MANIFEST.relative_to(ROOT).as_posix()),
         "bytes": MANIFEST.stat().st_size,
         "sha256": _sha256(MANIFEST),
     }
-    assert evidence["inputs"]["collector_source"] == _canonical_source_descriptor(COLLECTOR)
-    assert evidence["inputs"]["schema_source"] == _canonical_source_descriptor(SCHEMA)
+    assert evidence["inputs"]["collector_source"] == _canonical_source_descriptor(COLLECTOR, BASELINE_SOURCE_COMMIT)
+    assert evidence["inputs"]["schema_source"] == _canonical_source_descriptor(SCHEMA, BASELINE_SOURCE_COMMIT)
     for descriptor in manifest["source_inputs"].values():
-        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1)
+        path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
         assert descriptor == _canonical_source_descriptor(path)
     for descriptor in manifest["prior_evidence_inputs"].values():
-        path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1)
+        path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
         assert descriptor == _canonical_source_descriptor(path)
         assert descriptor["canonicalization"] == "utf8_lf"
     for campaign in manifest["campaigns"]:
         for descriptor in campaign["reports"].values():
-            path = ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1)
+            path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
             assert path.stat().st_size == descriptor["bytes"] < 1_048_576
             assert _sha256(path) == descriptor["sha256"]
     assert PARITY.stat().st_size == evidence["parity_confirmation"]["bytes"]
@@ -115,7 +116,7 @@ def test_fresh_parity_and_counter_blocker_inputs_remain_fail_closed() -> None:
         assert all(row["matched_count"] == row["comparison_count"] > 0 for row in family)
     manifest = _load(MANIFEST)
     paths = {
-        name: ROOT / str(descriptor["path"]).replace("docs/plan/exact_runtime/", "tests/fixtures/runtime_profiles/cuda_resident_program_2/", 1)
+        name: ROOT / retained_paths.physical_relative(str(descriptor["path"]))
         for name, descriptor in manifest["prior_evidence_inputs"].items()
     }
     status = collector._validate_prior_evidence(paths)
@@ -164,7 +165,6 @@ def test_policy_derivation_rejects_direction_or_ambiguity_drift() -> None:
     comparisons[0]["all_metric_direction"] = "cuda_resident"
     with pytest.raises(schema.MatrixEvidenceError, match="world 1"):
         collector._selection_policy(comparisons)
-
     comparisons = deepcopy(evidence["comparisons"])
     world4_export = next(
         row
