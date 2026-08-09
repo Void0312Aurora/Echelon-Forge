@@ -116,20 +116,22 @@ def require(condition: bool, message: str) -> None:
         raise EvidenceError(message)
 
 
-def kernel_id(symbol: str) -> str:
-    matches = [spec.kernel_id for spec in KERNELS if spec.symbol_fragment in symbol]
+def kernel_id(symbol: str, schema_version: int = 1) -> str:
+    catalog = kernel_catalog(schema_version)
+    matches = [spec.kernel_id for spec in catalog if spec.symbol_fragment in symbol]
     require(len(matches) == 1, f"kernel symbol is unknown or ambiguous: {symbol}")
     return matches[0]
 
 
-def parse_ptxas(text: str) -> dict[str, dict[str, int]]:
+def parse_ptxas(text: str, schema_version: int = 1) -> dict[str, dict[str, int]]:
+    catalog = kernel_catalog(schema_version)
     cap_values = {int(value) for value in re.findall(r"-maxrregcount(?:=|\s+)(\d+)", text)}
     require(cap_values == {0}, "ptxas build must contain only the explicit no-cap argument")
     entries = list(re.finditer(r"Compiling entry function '([^']+)' for '([^']+)'", text))
     parsed: dict[str, dict[str, int]] = {}
     for index, match in enumerate(entries):
         symbol = match.group(1)
-        matching = [spec for spec in KERNELS if spec.symbol_fragment in symbol]
+        matching = [spec for spec in catalog if spec.symbol_fragment in symbol]
         if not matching:
             continue
         require(len(matching) == 1, f"ambiguous ptxas kernel symbol: {symbol}")
@@ -151,11 +153,12 @@ def parse_ptxas(text: str) -> dict[str, dict[str, int]]:
         }
         previous = parsed.setdefault(matching[0].kernel_id, row)
         require(previous == row, f"conflicting ptxas records for {matching[0].kernel_id}")
-    require(set(parsed) == {spec.kernel_id for spec in KERNELS}, "ptxas kernel set incomplete")
+    require(set(parsed) == {spec.kernel_id for spec in catalog}, "ptxas kernel set incomplete")
     return parsed
 
 
-def parse_cuobjdump_resources(text: str) -> dict[str, dict[str, int]]:
+def parse_cuobjdump_resources(text: str, schema_version: int = 1) -> dict[str, dict[str, int]]:
+    catalog = kernel_catalog(schema_version)
     pattern = re.compile(
         r"Function\s+(\S+):\s+REG:(\d+) STACK:(\d+) SHARED:(\d+) LOCAL:(\d+)",
         re.MULTILINE,
@@ -163,9 +166,9 @@ def parse_cuobjdump_resources(text: str) -> dict[str, dict[str, int]]:
     parsed: dict[str, dict[str, int]] = {}
     for match in pattern.finditer(text):
         symbol = match.group(1)
-        if not any(spec.symbol_fragment in symbol for spec in KERNELS):
+        if not any(spec.symbol_fragment in symbol for spec in catalog):
             continue
-        identifier = kernel_id(symbol)
+        identifier = kernel_id(symbol, schema_version)
         row = {
             "registers_per_thread": int(match.group(2)),
             "stack_frame_bytes": int(match.group(3)),
@@ -174,16 +177,17 @@ def parse_cuobjdump_resources(text: str) -> dict[str, dict[str, int]]:
         }
         previous = parsed.setdefault(identifier, row)
         require(previous == row, f"conflicting cuobjdump records for {identifier}")
-    require(set(parsed) == {spec.kernel_id for spec in KERNELS}, "cuobjdump kernel set incomplete")
+    require(set(parsed) == {spec.kernel_id for spec in catalog}, "cuobjdump kernel set incomplete")
     return parsed
 
 
-def parse_sass(text: str) -> dict[str, dict[str, int]]:
+def parse_sass(text: str, schema_version: int = 1) -> dict[str, dict[str, int]]:
+    catalog = kernel_catalog(schema_version)
     headers = list(re.finditer(r"Function\s+:\s+(\S+)", text))
     parsed: dict[str, dict[str, int]] = {}
     for index, match in enumerate(headers):
         symbol = match.group(1)
-        if not any(spec.symbol_fragment in symbol for spec in KERNELS):
+        if not any(spec.symbol_fragment in symbol for spec in catalog):
             continue
         end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
         block = text[match.end() : end]
@@ -191,8 +195,8 @@ def parse_sass(text: str) -> dict[str, dict[str, int]]:
             "ldl_instruction_count": len(re.findall(r"\bLDL(?:\.\w+)?\b", block)),
             "stl_instruction_count": len(re.findall(r"\bSTL(?:\.\w+)?\b", block)),
         }
-        identifier = kernel_id(symbol)
+        identifier = kernel_id(symbol, schema_version)
         previous = parsed.setdefault(identifier, row)
         require(previous == row, f"conflicting SASS records for {identifier}")
-    require(set(parsed) == {spec.kernel_id for spec in KERNELS}, "SASS kernel set incomplete")
+    require(set(parsed) == {spec.kernel_id for spec in catalog}, "SASS kernel set incomplete")
     return parsed

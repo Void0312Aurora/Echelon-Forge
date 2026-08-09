@@ -384,8 +384,15 @@ target_compile_definitions(ef_cuda_resident_backend PRIVATE
 )
 if (EF_ENABLE_CUDA_EXPERIMENTS)
     target_link_libraries(ef_cuda_resident_backend PUBLIC CUDA::cudart)
+    # `-maxrregcount=0` is an explicit no-cap declaration, not a tuning knob: it
+    # is the value ptxas already uses by default. It is stated here because the
+    # resource-evidence contract records `maxrregcount_argument` as provenance
+    # and its collector requires the argument to be present and zero, so that a
+    # future register-pressure experiment cannot be mistaken for the baseline.
+    # Register counts are byte-identical with and without it.
     target_compile_options(ef_cuda_resident_backend PRIVATE
         $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>
+        $<$<COMPILE_LANGUAGE:CUDA>:-maxrregcount=0>
     )
 endif()
 

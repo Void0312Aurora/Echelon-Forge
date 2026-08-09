@@ -18,12 +18,15 @@ if __package__:
         PROFILE_V2,
         REPORT_KEYS,
         SCHEMA,
+        SCHEMA_V2,
         validate_report as _validate_report,
     )
     from .cuda_resident_cr2_resource_static import (
         EvidenceError,
         KERNELS,
+        kernel_catalog as _kernel_catalog,
         kernel_id as _kernel_id,
+        launch_sequence as _launch_sequence,
         parse_cuobjdump_resources,
         parse_ptxas,
         parse_sass,
@@ -37,12 +40,15 @@ else:
         PROFILE_V2,
         REPORT_KEYS,
         SCHEMA,
+        SCHEMA_V2,
         validate_report as _validate_report,
     )
     from cuda_resident_cr2_resource_static import (  # type: ignore[no-redef]
         EvidenceError,
         KERNELS,
+        kernel_catalog as _kernel_catalog,
         kernel_id as _kernel_id,
+        launch_sequence as _launch_sequence,
         parse_cuobjdump_resources,
         parse_ptxas,
         parse_sass,
@@ -239,7 +245,9 @@ def _table_columns(connection: sqlite3.Connection, table: str) -> set[str]:
     return {str(row[1]) for row in connection.execute(f"PRAGMA table_info({table})")}
 
 
-def parse_nsys(path: Path) -> dict[str, Any]:
+def parse_nsys(path: Path, schema_version: int = 1) -> dict[str, Any]:
+    catalog = _kernel_catalog(schema_version)
+    expected_launches = _launch_sequence(schema_version)
     connection = sqlite3.connect(path.resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
     try:
         kernel_columns = {
@@ -273,12 +281,12 @@ def parse_nsys(path: Path) -> dict[str, Any]:
                 """
             )
         )
-        _require(len(rows) == len(LAUNCH_SEQUENCE), "Nsight launch count is not exactly 12")
+        _require(len(rows) == len(expected_launches), "Nsight launch count is not exactly 12")
         launches: list[dict[str, Any]] = []
         symbols_by_kernel: dict[str, set[str]] = {}
-        for index, (row, expected) in enumerate(zip(rows, LAUNCH_SEQUENCE, strict=True)):
+        for index, (row, expected) in enumerate(zip(rows, expected_launches, strict=True)):
             symbol = str(row[2])
-            kernel_id = _kernel_id(symbol)
+            kernel_id = _kernel_id(symbol, schema_version)
             _require(kernel_id == expected[0], f"Nsight launch order drift at index {index}")
             _require(tuple(row[4:7]) == (2, 1, 1), f"Nsight grid drift at index {index}")
             _require(tuple(row[7:10]) == (128, 1, 1), f"Nsight block drift at index {index}")
@@ -297,13 +305,13 @@ def parse_nsys(path: Path) -> dict[str, Any]:
                     "local_bytes_per_thread_metadata": int(row[12]),
                 }
             )
-        for spec in KERNELS:
+        for spec in catalog:
             _require(
                 len(symbols_by_kernel.get(spec.kernel_id, set())) == 1,
                 f"Nsight exact symbol drift for {spec.kernel_id}",
             )
         raw_symbols = {symbol for values in symbols_by_kernel.values() for symbol in values}
-        _require(len(raw_symbols) == len(KERNELS), "Nsight raw unique kernel count is not 10")
+        _require(len(raw_symbols) == len(catalog), "Nsight raw unique kernel count is not 10")
         symbol_inventory = [
             {
                 "kernel_id": spec.kernel_id,
@@ -311,7 +319,7 @@ def parse_nsys(path: Path) -> dict[str, Any]:
                     next(iter(symbols_by_kernel[spec.kernel_id])).encode("utf-8")
                 ).hexdigest(),
             }
-            for spec in KERNELS
+            for spec in catalog
         ]
         api_counts: dict[str, int] = {}
         for name, count in connection.execute(
@@ -368,7 +376,7 @@ def parse_nsys(path: Path) -> dict[str, Any]:
         connection.close()
 
 
-def _runtime_resources(probe: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _runtime_resources(probe: dict[str, Any], schema_version: int = 1) -> dict[str, dict[str, Any]]:
     rows = probe["runtime_kernel_resources"]
     _require(isinstance(rows, list), "runtime resource inventory must be an array")
     parsed: dict[str, dict[str, Any]] = {}
@@ -382,6 +390,11 @@ def _runtime_resources(probe: dict[str, Any]) -> dict[str, dict[str, Any]]:
         "active_warps_per_multiprocessor",
         "theoretical_occupancy",
     }
+    if schema_version >= 2:
+        # v2 rows carry the mangled-symbol fragment the row was matched by, so a
+        # reader can tie a kernel_id back to the symbol without re-deriving it
+        # from the catalog. It is provenance, not a measurement.
+        required = required | {"symbol_fragment"}
     for row in rows:
         _require(isinstance(row, dict) and set(row) == required, "runtime resource row drift")
         kernel_id = str(row["kernel_id"])
@@ -425,7 +438,10 @@ def _runtime_resources(probe: dict[str, Any]) -> dict[str, dict[str, Any]]:
             f"runtime theoretical occupancy is invalid for {kernel_id}",
         )
         parsed[kernel_id] = row
-    _require(set(parsed) == {spec.kernel_id for spec in KERNELS}, "runtime kernel set incomplete")
+    _require(
+        set(parsed) == {spec.kernel_id for spec in _kernel_catalog(schema_version)},
+        "runtime kernel set incomplete",
+    )
     return parsed
 
 
@@ -435,10 +451,11 @@ def combine_resources(
     cubin: dict[str, dict[str, int]],
     sass: dict[str, dict[str, int]],
     launches: list[dict[str, Any]],
+    schema_version: int = 1,
 ) -> list[dict[str, Any]]:
-    runtime = _runtime_resources(probe)
+    runtime = _runtime_resources(probe, schema_version)
     result: list[dict[str, Any]] = []
-    for spec in KERNELS:
+    for spec in _kernel_catalog(schema_version):
         kernel_id = spec.kernel_id
         compiled = ptxas[kernel_id]
         runtime_row = runtime[kernel_id]
@@ -518,28 +535,59 @@ def validate_report(report: dict[str, Any]) -> None:
     _validate_report(report)
 
 
+def probe_generation(probe: dict[str, Any]) -> int:
+    """Return the catalog generation a validated probe belongs to.
+
+    The static parsers match mangled symbols against a per-generation kernel
+    catalog, so they need the same generation the probe declared. Deriving it
+    here keeps `load_probe` as the single place that maps a schema string to a
+    generation number.
+    """
+    declared = probe.get("schema_version")
+    version = next(
+        (
+            candidate
+            for candidate, schema in _PROBE_SCHEMA_BY_VERSION.items()
+            if declared == schema
+        ),
+        None,
+    )
+    _require(version is not None, f"probe schema is not a known generation: {declared!r}")
+    return version
+
+
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     _require(
         args.baseline_commit == _git_head(args.probe_source),
         "baseline commit does not match the candidate worktree HEAD",
     )
     probe = load_probe(args.probe)
+    # The symbol catalog is generation-specific: a v2 capture carries semantic
+    # kernel names, so parsing it against the v1 catalog would fail closed on an
+    # incomplete kernel set rather than silently mismatching.
+    generation = probe_generation(probe)
     ptxas_text = args.ptxas_log.read_text(encoding="utf-8", errors="replace")
     resource_text = _run_cuobjdump(args.cuobjdump, args.binary, "--dump-resource-usage")
     sass_text = _run_cuobjdump(args.cuobjdump, args.binary, "--dump-sass")
-    ptxas = parse_ptxas(ptxas_text)
-    cubin = parse_cuobjdump_resources(resource_text)
-    sass = parse_sass(sass_text)
-    nsys = parse_nsys(args.nsys_sqlite)
-    resources = combine_resources(probe, ptxas, cubin, sass, nsys["launches"])
+    ptxas = parse_ptxas(ptxas_text, generation)
+    cubin = parse_cuobjdump_resources(resource_text, generation)
+    sass = parse_sass(sass_text, generation)
+    nsys = parse_nsys(args.nsys_sqlite, generation)
+    resources = combine_resources(probe, ptxas, cubin, sass, nsys["launches"], generation)
     achieved = {field: None for field in ACHIEVED_FIELDS}
+    # The report declares the same generation as the probe it was built from, so
+    # the schema validator applies that generation's rules: v1 keeps its frozen
+    # date/commit pins, v2 accepts its own capture date but must still declare an
+    # unpromoted candidate state.
     report = {
-        "schema_version": SCHEMA,
-        "profile_id": PROFILE,
+        "schema_version": SCHEMA if generation == 1 else SCHEMA_V2,
+        "profile_id": PROFILE if generation == 1 else PROFILE_V2,
         "evidence_date": args.evidence_date,
         "source": {
             "baseline_commit": args.baseline_commit,
-            "candidate_state": "cr2_5a_unpromoted_worktree",
+            "candidate_state": (
+                "cr2_5a_unpromoted_worktree" if generation == 1 else "cp_unpromoted_worktree"
+            ),
         },
         "inputs": {
             "source_hash_canonicalization": "utf8_lf",
