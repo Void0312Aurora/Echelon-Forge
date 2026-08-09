@@ -14,8 +14,8 @@ contact-report、station-hold 和离站位恢复入口均已进入专门的海�
 
 - [N4 集成验收](naval_n4_integration_acceptance_20260525.zh.md)
 - [N4 RL 任务面预检](naval_n4_rl_task_surface_preflight_20260525.zh.md)
-- [海军 active 训练条目](../../../../examples/config/training/active/naval/README.zh.md)
-- [海军当前进展追踪](../naval_current_progress_20260524.zh.md)
+- [海军 active 训练条目](../../../../../examples/config/training/active/README.zh.md)
+- [海军当前进展追踪](../naval_progress_snapshot_20260527.zh.md)
 
 ## 决策
 
@@ -123,7 +123,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 
-git diff --check -- docs/task/naval examples/config/training/active/naval tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
+git diff --check -- docs/domains/naval examples/config/training/active/naval tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 ```
 
 ## 下一步

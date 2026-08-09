@@ -276,7 +276,7 @@ action/observation surface 修复。
 - 训练目标、奖励定义、curriculum 和评估 gate 仍待下一轮设计。
 
 N4 RL preflight 已记录在
-[naval_n4_rl_task_surface_preflight_20260525.zh.md](../../../task/naval/archive/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.zh.md)。
+[naval_n4_rl_task_surface_preflight_20260525.zh.md](n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525.zh.md)。
 已接受的下一步 RL 兼容任务候选是：
 
 - `naval_contact_report_threat_roe_v1`；
@@ -326,14 +326,14 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 N4 bridge 验收：
 
-- [N4 RL 任务面预检](../../../task/naval/archive/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.zh.md)
-- [N4 集成验收](../../../task/naval/archive/n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.zh.md)
-- [N4 闭合](../../../task/naval/archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)
+- [N4 RL 任务面预检](n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525.zh.md)
+- [N4 集成验收](n4_threat_roe_bridge_20260525/naval_n4_integration_acceptance_20260525.zh.md)
+- [N4 闭合](n4_threat_roe_bridge_20260525/naval_n4_closure_20260525.zh.md)
 
 文档验证：
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 # passed
 ```
 

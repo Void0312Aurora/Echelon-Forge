@@ -13,7 +13,7 @@ Inputs:
 - [N4 threat / ROE bridge task cluster](naval_n4_threat_roe_bridge_cluster_20260524.md)
 - [N4 threat / ROE dispatch queue](naval_n4_threat_roe_dispatch_queue_20260524.md)
 - [N4 integration acceptance](naval_n4_integration_acceptance_20260525.md)
-- [Naval current progress](../naval_current_progress_20260524.md)
+- [Naval current progress](../naval_progress_snapshot_20260527.md)
 
 ## Decision
 

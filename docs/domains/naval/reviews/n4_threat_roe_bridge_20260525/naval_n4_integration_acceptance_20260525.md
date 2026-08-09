@@ -13,7 +13,7 @@ Inputs:
 - [N4 threat / ROE bridge task cluster](naval_n4_threat_roe_bridge_cluster_20260524.md)
 - [N4 threat / ROE dispatch queue](naval_n4_threat_roe_dispatch_queue_20260524.md)
 - [N4 RL task surface preflight](naval_n4_rl_task_surface_preflight_20260525.md)
-- [Naval current progress](../naval_current_progress_20260524.md)
+- [Naval current progress](../naval_progress_snapshot_20260527.md)
 
 ## Decision
 
@@ -55,7 +55,7 @@ owner reuses that evidence and adds docs-only validation for the new D/E
 closure surface:
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 ```
 
 Relevant accepted implementation evidence from the queue:

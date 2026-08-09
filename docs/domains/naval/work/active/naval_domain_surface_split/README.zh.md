@@ -18,8 +18,8 @@ Last verified: `2026-08-08`
 
 - [海军 owner README](../../../README.zh.md)
 - [海军进展快照](../../../reviews/naval_progress_snapshot_20260527.zh.md)
-- [N4 威胁 / ROE bridge](../../../../../task/naval/archive/n4_threat_roe_bridge/README.zh.md)
-- [N5 RL 动作面拆分](../../../../../task/naval/archive/n5_rl_action_surface_split/README.zh.md)
+- [N4 威胁 / ROE bridge](../../../reviews/n4_threat_roe_bridge_20260525/README.zh.md)
+- [N5 RL 动作面拆分](../../../reviews/n5_rl_action_surface_split_20260527/README.zh.md)
 - [领域 owner 索引](../../../../README.zh.md)
 - [Command 边界 README](../../../../../../src/components/command/README.zh.md)
 - [海军标准](../../../README.zh.md)
@@ -123,7 +123,7 @@ adapter surface，并建立海军拥有的 command、action、observation 与配
 - `naval_limited_engagement_v1` 仍是独立的未来 N5 package。
 - 正式海军 policy 训练必须等 transport、observation、reward 和 eval gate 接受之后再做。
 
-## Archive
+## 证据生命周期
 
-当本子项目已有 accepted closeout 或替代 current-status surface 后，过期记录移入
-[archive/README.zh.md](../../../../../task/naval/naval_domain_surface_split/archive/README.zh.md)。
+已接受或被取代的记录迁入 owner-local `docs/domains/naval/reviews/`，不再留在
+已退役 task 根下。

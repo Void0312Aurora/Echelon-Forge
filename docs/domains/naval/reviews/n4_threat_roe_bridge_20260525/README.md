@@ -1,5 +1,12 @@
 # N4 Threat / ROE Bridge
 
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/README.md`
+Owner: `domains/naval/reviews`
+Last verified: `2026-08-09`
+Review basis: N4 preflight, integration acceptance, and closure records.
+
 Status: `2026-05-25` closed as the first post-MVP naval pre-fire
 scenario-expansion bridge and active-entry gate.
 
@@ -10,8 +17,8 @@ Language:
 
 Inputs:
 
-- [Naval current progress](../naval_current_progress_20260524.md)
-- [Subagent usage policy](../../../standards/governance/subagent_usage_policy.md)
+- [Naval progress snapshot](../naval_progress_snapshot_20260527.md)
+- [Subagent usage policy](../../../../engineering/automation/standards/subagent_usage_policy.md)
 
 ## Purpose
 
@@ -89,5 +96,5 @@ documents record:
 Validation for this docs-only slice:
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 ```

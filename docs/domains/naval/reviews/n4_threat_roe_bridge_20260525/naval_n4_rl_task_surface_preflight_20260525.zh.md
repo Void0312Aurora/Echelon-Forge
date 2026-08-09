@@ -13,7 +13,7 @@
 - [N4 威胁 / ROE 桥接任务簇](naval_n4_threat_roe_bridge_cluster_20260524.zh.md)
 - [N4 威胁 / ROE 分发队列](naval_n4_threat_roe_dispatch_queue_20260524.zh.md)
 - [N4 集成验收](naval_n4_integration_acceptance_20260525.zh.md)
-- [海军当前进展追踪](../naval_current_progress_20260524.zh.md)
+- [海军当前进展追踪](../naval_progress_snapshot_20260527.zh.md)
 
 ## 决策
 

@@ -1,5 +1,12 @@
 # N4 威胁 / ROE 桥接场景
 
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/README.md`
+Owner: `domains/naval/reviews`
+Last verified: `2026-08-09`
+Review basis: N4 preflight、integration acceptance 与 closure records。
+
 状态：`2026-05-25`，作为海军 MVP 之后第一个开火前场景扩大化桥接与
 active-entry gate 已闭合。
 
@@ -10,8 +17,8 @@ active-entry gate 已闭合。
 
 输入：
 
-- [海军当前进展追踪](../naval_current_progress_20260524.zh.md)
-- [子代理使用政策](../../../standards/governance/subagent_usage_policy.zh.md)
+- [海军进展快照](../naval_progress_snapshot_20260527.zh.md)
+- [子代理使用政策](../../../../engineering/automation/standards/subagent_usage_policy.zh.md)
 
 ## 目的
 
@@ -79,5 +86,5 @@ active-entry gate 已闭合。
 本文档片段的验证：
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 ```

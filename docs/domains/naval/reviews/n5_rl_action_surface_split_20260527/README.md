@@ -1,5 +1,12 @@
 # N5 RL Action Surface Split
 
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/reviews/n5_rl_action_surface_split_20260527/README.md`
+Owner: `domains/naval/reviews`
+Last verified: `2026-08-09`
+Review basis: accepted N4 action/observation repair and retained training-entry evidence.
+
 Status: `2026-05-27` implemented and retained as an accepted `N4` pre-fire
 training-entry repair record. It delivered the first maintained naval RL action
 and observation surface slices and promoted the active N4 entries to the
@@ -13,12 +20,12 @@ Language:
 
 Inputs:
 
-- [N4 threat / ROE bridge](../n4_threat_roe_bridge/README.md)
-- [N4 RL task surface preflight](../n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md)
-- [Common / air / naval split plan](../../common_air_naval/common_air_naval_modular_split_plan_20260515.md)
-- [Naval standards](../../../standards/naval/README.md)
-- [Air action contract](../../../standards/air/act.md)
-- [Subagent usage policy](../../../standards/governance/subagent_usage_policy.md)
+- [N4 threat / ROE bridge](../n4_threat_roe_bridge_20260525/README.md)
+- [N4 RL task surface preflight](../n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525.md)
+- [Domain owner index](../../../README.md)
+- [Naval owner](../../README.md)
+- [Air action contract](../../../air/standards/pilot_action_contract.md)
+- [Subagent usage policy](../../../../engineering/automation/standards/subagent_usage_policy.md)
 
 ## Purpose
 
@@ -42,7 +49,7 @@ provenance fields directly.
 This directory is now a closed evidence packet for the accepted N4 repair.
 Follow-on work that continues splitting naval action, command, observation, or
 configuration ownership should start from
-[Naval Domain Surface Split](../naval_domain_surface_split/README.md) rather
+[Naval Domain Surface Split](../../work/active/naval_domain_surface_split/README.md) rather
 than appending new N5/N6 claims here.
 
 ## Output

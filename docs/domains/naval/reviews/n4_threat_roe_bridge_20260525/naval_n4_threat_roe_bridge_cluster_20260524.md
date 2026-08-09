@@ -77,12 +77,12 @@ Expected N4 assertions:
 
 | Stream | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Parallel / dependency | Round cap | Status |
 |--------|-------|-------------------|------|-----------|-----------|------------|--------------|-----------------------|-----------|--------|
-| `N4-0 Planning Surface` | main thread | `gpt-5.4`, medium | Record the finite N4 bridge plan and distribution constraints. | `docs/task/naval/n4_threat_roe_bridge/**`, `docs/task/naval/README*.md` | scenarios, tests, runtime code, bindings, dispatch queues | `git diff --check -- docs/task/naval` | README and cluster docs record scenario decision, realism boundary, clusters, validation, gates, and residuals | current cluster; no dependency | 1 round | implemented |
+| `N4-0 Planning Surface` | main thread | `gpt-5.4`, medium | Record the finite N4 bridge plan and distribution constraints. | `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/**`, `docs/domains/naval/README*.md` | scenarios, tests, runtime code, bindings, dispatch queues | `git diff --check -- docs/domains/naval` | README and cluster docs record scenario decision, realism boundary, clusters, validation, gates, and residuals | current cluster; no dependency | 1 round | implemented |
 | `N4-A Scenario / Contract Boundary` | future worker | `gpt-5.4`, high | Add the scenario fixture and scenario-level contract for N4 threat/ROE. | `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`; `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json`; focused loader/contract test paths named in dispatch | weapon release, damage, RL rewards, runtime refactors | scenario contract runner for the new spec; existing naval screen contracts | new scenario loads, preserves N3 gates, and exposes N4 threat/ROE assertions without N5/N6 claims | dependency-gated by `N4-0`; can run before `N4-B`; downstream clusters depend on its accepted boundary | 2 rounds | pass / accepted |
 | `N4-B Threat / ROE Semantics` | future worker | `gpt-5.4`, high | Implement or bind maintained threat-state, ROE-state, and target-assignment provenance needed by the scenario. | narrowed dispatch packet required before work; expected families are naval tasking/profile, mission command, and focused tests | weapon effects, damage model, broad command-chain rewrites | focused runtime/leader tests plus existing naval mission-command tests | no fire without authorization; assigned target comes from a valid track; state is exposed through maintained contracts | depends on `N4-A`; may run in parallel with `N4-C` only if write scopes are disjoint | 2 rounds | pass / accepted |
 | `N4-C Runtime / Facade Evidence` | future worker | `gpt-5.4`, high | Prove N4 fields travel through maintained facade/world-batch surfaces rather than raw whole-shell rollback paths. | narrowed dispatch packet required before work; expected families are world-batch command-chain cache, vec-env tests, and facade guards | new scenario geometry, reward design, weapon behavior | world-batch naval command-chain tests; facade/architecture guards if touched | N4 fields survive batch sync and export through maintained assignments | depends on `N4-A`; parallel-safe with `N4-B` only after write scopes are checked | 2 rounds | pass / accepted |
-| `N4-D RL Task Surface Preflight` | main thread | `gpt-5.4`, medium | Sketch observation/action/reward/termination for a later `naval_contact_report` or `naval_screen_station_hold` curriculum using the N4 state. | `docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525*.md` | learned policy claims, trainer launch, reward tuning by experiment | `git diff --check -- docs/task/naval` | RL surface names N4 signals and termination rules while refusing N5/N6 claims | consumes accepted `N4-A/B/C`; no further dispatch in this wave | 1 round | pass / accepted |
-| `N4-E Integration / Acceptance` | main thread | `gpt-5.4`, high | Collect evidence, synchronize README/current-progress status, and decide whether to open N5 limited engagement. | `docs/task/naval/**` acceptance/status files explicitly named at dispatch | implementation changes, late feature additions | full command set recorded by completed workers; `git diff --check -- docs/task/naval` | all prior clusters returned complete packets; residuals and next gates are recorded | serial after `N4-A` through `N4-D` | 1 round | pass / accepted; N5 blocked |
+| `N4-D RL Task Surface Preflight` | main thread | `gpt-5.4`, medium | Sketch observation/action/reward/termination for a later `naval_contact_report` or `naval_screen_station_hold` curriculum using the N4 state. | `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525*.md` | learned policy claims, trainer launch, reward tuning by experiment | `git diff --check -- docs/domains/naval` | RL surface names N4 signals and termination rules while refusing N5/N6 claims | consumes accepted `N4-A/B/C`; no further dispatch in this wave | 1 round | pass / accepted |
+| `N4-E Integration / Acceptance` | main thread | `gpt-5.4`, high | Collect evidence, synchronize README/current-progress status, and decide whether to open N5 limited engagement. | `docs/domains/naval/**` acceptance/status files explicitly named at dispatch | implementation changes, late feature additions | full command set recorded by completed workers; `git diff --check -- docs/domains/naval` | all prior clusters returned complete packets; residuals and next gates are recorded | serial after `N4-A` through `N4-D` | 1 round | pass / accepted; N5 blocked |
 
 ## Dispatch Rules
 
@@ -90,7 +90,7 @@ Implementation dispatch now runs through
 [N4 dispatch queue](naval_n4_threat_roe_dispatch_queue_20260524.md). Every
 worker packet must map to one stream in the finite cluster list above and follow
 the authoritative
-[Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+[Subagent Usage Policy](../../../../engineering/automation/standards/subagent_usage_policy.md).
 
 Required worker result shape:
 
@@ -155,7 +155,7 @@ Termination candidates:
 Docs-only validation for this cluster:
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 ```
 
 Expected implementation validation after `N4-A`:

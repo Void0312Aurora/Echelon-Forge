@@ -15,8 +15,8 @@ Inputs:
 
 - [N4 integration acceptance](naval_n4_integration_acceptance_20260525.md)
 - [N4 RL task surface preflight](naval_n4_rl_task_surface_preflight_20260525.md)
-- [Naval active training entries](../../../../examples/config/training/active/naval/README.md)
-- [Naval current progress](../naval_current_progress_20260524.md)
+- [Naval active training entries](../../../../../examples/config/training/active/README.md)
+- [Naval current progress](../naval_progress_snapshot_20260527.md)
 
 ## Decision
 
@@ -136,7 +136,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 
-git diff --check -- docs/task/naval examples/config/training/active/naval tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
+git diff --check -- docs/domains/naval examples/config/training/active/naval tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 ```
 
 ## Next Work

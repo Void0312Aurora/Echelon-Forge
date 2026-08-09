@@ -13,7 +13,7 @@
 - [N4 威胁 / ROE 桥接任务簇](naval_n4_threat_roe_bridge_cluster_20260524.zh.md)
 - [N4 威胁 / ROE 分发队列](naval_n4_threat_roe_dispatch_queue_20260524.zh.md)
 - [N4 RL 任务面预检](naval_n4_rl_task_surface_preflight_20260525.zh.md)
-- [海军当前进展追踪](../naval_current_progress_20260524.zh.md)
+- [海军当前进展追踪](../naval_progress_snapshot_20260527.zh.md)
 
 ## 决策
 
@@ -52,7 +52,7 @@ N4 queue 已记录实现验证 packet。集成 owner 复用该证据，并为新
 文档验证：
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 ```
 
 队列中已接受的相关实现证据：

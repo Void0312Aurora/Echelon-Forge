@@ -88,7 +88,7 @@ N4 屏护保持任务的确定性训练探针追平零动作基线。随机策�
 ## 相关领域上下文
 
 - 海军 N5 动作 / 观测拆分：
-  [已归档 N4 action-surface repair](../../../../task/naval/archive/n5_rl_action_surface_split/README.zh.md)
+  [保留的 N4 action-surface repair](../../../../domains/naval/reviews/n5_rl_action_surface_split_20260527/README.zh.md)
 - 当前 N4 海军测试场景：
   `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`
 - 第一批短探针使用的训练配置：

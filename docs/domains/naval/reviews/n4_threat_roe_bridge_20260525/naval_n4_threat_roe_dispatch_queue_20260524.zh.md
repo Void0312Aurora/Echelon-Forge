@@ -12,7 +12,7 @@
 
 - [N4 威胁 / ROE 桥接 README](README.zh.md)
 - [N4 威胁 / ROE 桥接任务簇](naval_n4_threat_roe_bridge_cluster_20260524.zh.md)
-- [子代理使用政策](../../../standards/governance/subagent_usage_policy.zh.md)
+- [子代理使用政策](../../../../engineering/automation/standards/subagent_usage_policy.zh.md)
 
 ## 范围边界
 
@@ -266,7 +266,7 @@ worker。
 输出：
 
 - 新增
-  `docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md`
+  `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525.md`
   及中文伴随版。
 - 选择下一步 RL 兼容任务候选：
   `naval_contact_report_threat_roe_v1` 和
@@ -281,7 +281,7 @@ worker。
 输出：
 
 - 新增
-  `docs/task/naval/n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md`
+  `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/naval_n4_integration_acceptance_20260525.md`
   及中文伴随版。
 - 接受 `ddg51_take1_screen_threat_roe_v1` 作为具备 maintained threat/ROE、
   engagement-authority 和 assigned-target provenance 证据的 N4 bridge。
@@ -291,7 +291,7 @@ worker。
 最终文档验证：
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 # passed
 ```
 

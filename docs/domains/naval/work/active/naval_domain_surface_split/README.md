@@ -18,8 +18,8 @@ Inputs:
 
 - [Naval owner README](../../../README.md)
 - [Naval progress snapshot](../../../reviews/naval_progress_snapshot_20260527.md)
-- [N4 threat / ROE bridge](../../../../../task/naval/archive/n4_threat_roe_bridge/README.md)
-- [N5 RL action surface split](../../../../../task/naval/archive/n5_rl_action_surface_split/README.md)
+- [N4 threat / ROE bridge](../../../reviews/n4_threat_roe_bridge_20260525/README.md)
+- [N5 RL action surface split](../../../reviews/n5_rl_action_surface_split_20260527/README.md)
 - [Domain owner index](../../../../README.md)
 - [Command boundary README](../../../../../../src/components/command/README.md)
 - [Naval standards](../../../README.md)
@@ -136,7 +136,7 @@ This subproject can be marked accepted only when:
 - Formal naval policy training remains after transport, observation, reward, and
   eval gates are accepted.
 
-## Archive
+## Evidence Lifecycle
 
-Superseded records move to [archive/README.md](../../../../../task/naval/naval_domain_surface_split/archive/README.md) when this
-subproject has an accepted closeout or a replacement current-status surface.
+Accepted or superseded records move to owner-local `docs/domains/naval/reviews/`;
+they do not remain under the retired task root.

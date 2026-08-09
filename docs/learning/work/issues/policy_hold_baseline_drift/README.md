@@ -108,7 +108,7 @@ weapon release, or combat.
 ## Related Domain Context
 
 - Naval N5 action/observation split:
-  [archived N4 action-surface repair](../../../../task/naval/archive/n5_rl_action_surface_split/README.md)
+  [retained N4 action-surface repair](../../../../domains/naval/reviews/n5_rl_action_surface_split_20260527/README.md)
 - N4 naval scenario under test:
   `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`
 - Training config used for the first short probes:

@@ -1,5 +1,12 @@
 # N5 RL 动作面拆分
 
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/domains/naval/reviews/n5_rl_action_surface_split_20260527/README.md`
+Owner: `domains/naval/reviews`
+Last verified: `2026-08-09`
+Review basis: 已接受 N4 action/observation repair 与保留的 training-entry evidence。
+
 状态：`2026-05-27` 已实现，并保留为已接受的 `N4` pre-fire training-entry repair
 记录。它交付了第一段维护中的海军 RL action/observation surface，并将 active N4
 入口提升到单策略槽位 cooperative runtime；它不是 active `N5` weapon-engagement
@@ -12,12 +19,12 @@ release。
 
 输入：
 
-- [N4 threat / ROE bridge](../n4_threat_roe_bridge/README.md)
-- [N4 RL task surface preflight](../n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md)
-- [Common / air / naval split plan](../../common_air_naval/common_air_naval_modular_split_plan_20260515.md)
-- [海军标准](../../../standards/naval/README.md)
-- [空军动作契约](../../../standards/air/act.md)
-- [Subagent usage policy](../../../standards/governance/subagent_usage_policy.md)
+- [N4 threat / ROE bridge](../n4_threat_roe_bridge_20260525/README.zh.md)
+- [N4 RL task surface preflight](../n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525.zh.md)
+- [领域 owner 索引](../../../README.zh.md)
+- [海军 owner](../../README.zh.md)
+- [空军动作契约](../../../air/standards/pilot_action_contract.zh.md)
+- [Subagent usage policy](../../../../engineering/automation/standards/subagent_usage_policy.zh.md)
 
 ## 目的
 
@@ -36,7 +43,7 @@ N4 训练入口此前有价值，因为它证明了场景、奖励和维护中�
 
 本目录现在是已接受 N4 repair 的闭合 evidence packet。后续若继续拆分 naval action、
 command、observation 或 configuration ownership，应从
-[Naval Domain Surface Split](../naval_domain_surface_split/README.zh.md) 进入，而不是在这里继续追加新的 N5/N6 声明。
+[Naval Domain Surface Split](../../work/active/naval_domain_surface_split/README.zh.md) 进入，而不是在这里继续追加新的 N5/N6 声明。
 
 ## 输出
 

@@ -14,7 +14,7 @@ Inputs:
 
 - [N4 threat / ROE bridge README](README.md)
 - [N4 threat / ROE bridge task cluster](naval_n4_threat_roe_bridge_cluster_20260524.md)
-- [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+- [Subagent Usage Policy](../../../../engineering/automation/standards/subagent_usage_policy.md)
 
 ## Scope Boundary
 
@@ -277,7 +277,7 @@ surface; no worker was dispatched for this wave.
 Output:
 
 - Added
-  `docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md`
+  `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525.md`
   and the Chinese companion.
 - Selected the next RL-compatible task candidates:
   `naval_contact_report_threat_roe_v1` and
@@ -294,7 +294,7 @@ not opened by this queue.
 Output:
 
 - Added
-  `docs/task/naval/n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md`
+  `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/naval_n4_integration_acceptance_20260525.md`
   and the Chinese companion.
 - Accepted `ddg51_take1_screen_threat_roe_v1` as an N4 bridge with maintained
   threat/ROE, engagement-authority, and assigned-target provenance evidence.
@@ -305,7 +305,7 @@ Output:
 Final docs validation:
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 # passed
 ```
 

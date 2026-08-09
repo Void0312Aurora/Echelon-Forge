@@ -68,19 +68,19 @@ N5 已就绪的证据。
 
 | 流 | Owner | Model / reasoning | 目标 | 写入范围 | 非目标 | 验证 | 闭合门 | 并行 / 依赖 | 轮次上限 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `N4-0 Planning Surface` | main thread | `gpt-5.4`，medium | 记录有限 N4 桥接计划和分发约束。 | `docs/task/naval/n4_threat_roe_bridge/**`，`docs/task/naval/README*.md` | 场景、测试、runtime 代码、binding、dispatch queue | `git diff --check -- docs/task/naval` | README 和任务簇文档记录场景决策、真实性边界、簇、验证、闭合门和残留项 | 当前簇；无依赖 | 1 轮 | 已实现 |
+| `N4-0 Planning Surface` | main thread | `gpt-5.4`，medium | 记录有限 N4 桥接计划和分发约束。 | `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/**`，`docs/domains/naval/README*.md` | 场景、测试、runtime 代码、binding、dispatch queue | `git diff --check -- docs/domains/naval` | README 和任务簇文档记录场景决策、真实性边界、簇、验证、闭合门和残留项 | 当前簇；无依赖 | 1 轮 | 已实现 |
 | `N4-A Scenario / Contract Boundary` | future worker | `gpt-5.4`，high | 增加 N4 威胁/ROE 场景 fixture 和场景级合同。 | `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`；`tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json`；分发时命名的聚焦 loader/contract 测试路径 | 武器释放、毁伤、RL reward、runtime 重构 | 新 spec 的 scenario contract runner；既有海军 screen 合同 | 新场景可加载，保持 N3 守门，并暴露 N4 威胁/ROE 断言且不声明 N5/N6 | 依赖 `N4-0`；可先于 `N4-B`；下游簇依赖其边界被接受 | 2 轮 | pass / 已接受 |
 | `N4-B Threat / ROE Semantics` | future worker | `gpt-5.4`，high | 实现或绑定场景所需 maintained 威胁状态、ROE 状态和目标分配来源。 | 开工前需要更窄分发包；预期文件族为 naval tasking/profile、mission command 和聚焦测试 | 武器效果、毁伤模型、宽范围 command-chain 重写 | 聚焦 runtime/leader 测试，加既有 naval mission-command 测试 | 无授权不开火；assigned target 来自有效航迹；状态通过 maintained contract 暴露 | 依赖 `N4-A`；仅在写入范围不重叠后可与 `N4-C` 并行 | 2 轮 | pass / 已接受 |
 | `N4-C Runtime / Facade Evidence` | future worker | `gpt-5.4`，high | 证明 N4 字段通过 maintained facade/world-batch surface 运输，而不是回落到 raw whole-shell 路径。 | 开工前需要更窄分发包；预期文件族为 world-batch command-chain cache、vec-env 测试和 facade guards | 新场景几何、reward 设计、武器行为 | world-batch naval command-chain 测试；若触及则跑 facade/architecture guards | N4 字段在 batch sync 后仍通过 maintained assignment/export 存活 | 依赖 `N4-A`；与 `N4-B` 并行前必须检查写入范围 | 2 轮 | pass / 已接受 |
-| `N4-D RL Task Surface Preflight` | main thread | `gpt-5.4`，medium | 用 N4 状态草拟后续 `naval_contact_report` 或 `naval_screen_station_hold` curriculum 的 observation/action/reward/termination。 | `docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525*.md` | learned policy 声明、trainer launch、基于实验的 reward tuning | `git diff --check -- docs/task/naval` | RL surface 命名 N4 信号和终止规则，同时拒绝 N5/N6 声明 | 消费已接受的 `N4-A/B/C`；本轮不再分发 | 1 轮 | pass / 已接受 |
-| `N4-E Integration / Acceptance` | main thread | `gpt-5.4`，high | 汇总证据、同步 README/current-progress 状态，并决定是否打开 N5 limited engagement。 | 分发时明确命名的 `docs/task/naval/**` acceptance/status 文件 | 实现改动、临时追加功能 | 已完成 worker 记录的完整命令集；`git diff --check -- docs/task/naval` | 前序簇均返回完整 packet；残留项和下一阶段守门已记录 | 串行，位于 `N4-A` 到 `N4-D` 之后 | 1 轮 | pass / 已接受；N5 阻塞 |
+| `N4-D RL Task Surface Preflight` | main thread | `gpt-5.4`，medium | 用 N4 状态草拟后续 `naval_contact_report` 或 `naval_screen_station_hold` curriculum 的 observation/action/reward/termination。 | `docs/domains/naval/reviews/n4_threat_roe_bridge_20260525/naval_n4_rl_task_surface_preflight_20260525*.md` | learned policy 声明、trainer launch、基于实验的 reward tuning | `git diff --check -- docs/domains/naval` | RL surface 命名 N4 信号和终止规则，同时拒绝 N5/N6 声明 | 消费已接受的 `N4-A/B/C`；本轮不再分发 | 1 轮 | pass / 已接受 |
+| `N4-E Integration / Acceptance` | main thread | `gpt-5.4`，high | 汇总证据、同步 README/current-progress 状态，并决定是否打开 N5 limited engagement。 | 分发时明确命名的 `docs/domains/naval/**` acceptance/status 文件 | 实现改动、临时追加功能 | 已完成 worker 记录的完整命令集；`git diff --check -- docs/domains/naval` | 前序簇均返回完整 packet；残留项和下一阶段守门已记录 | 串行，位于 `N4-A` 到 `N4-D` 之后 | 1 轮 | pass / 已接受；N5 阻塞 |
 
 ## 分发规则
 
 实现分发现在通过
 [N4 分发队列](naval_n4_threat_roe_dispatch_queue_20260524.zh.md) 进行。每个
 worker packet 必须映射到上表中的一个流，并遵循权威
-[子代理使用政策](../../../standards/governance/subagent_usage_policy.zh.md)。
+[子代理使用政策](../../../../engineering/automation/standards/subagent_usage_policy.zh.md)。
 
 要求的 worker 结果形状：
 
@@ -139,7 +139,7 @@ Termination 候选：
 本任务簇的文档验证：
 
 ```bash
-git diff --check -- docs/task/naval
+git diff --check -- docs/domains/naval
 ```
 
 `N4-A` 之后预期的实现验证：
