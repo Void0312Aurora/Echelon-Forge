@@ -65,7 +65,7 @@ claims.
 Documentation validation for this dispatch:
 
 ```bash
-git diff --check -- docs/systems/environment/reviews/environment_substrate_g0_closure_20260606 docs/task/ground/archive/owner_migration_20260808/README.md docs/task/ground/archive/owner_migration_20260808/README.zh.md docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.md docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.zh.md docs/task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.md docs/task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.zh.md
+git diff --check -- docs/systems/environment/reviews/environment_substrate_g0_closure_20260606 docs/domains/ground/README.md docs/domains/ground/README.zh.md docs/systems/environment/README.md docs/systems/environment/README.zh.md docs/systems/environment/reviews/environment_substrate_g0_closure_20260606/README.md docs/systems/environment/reviews/environment_substrate_g0_closure_20260606/README.zh.md
 ```
 
 Current G0-K focused validation plus G0-J contract regression:

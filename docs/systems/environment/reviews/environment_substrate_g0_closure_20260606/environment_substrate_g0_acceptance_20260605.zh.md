@@ -25,7 +25,7 @@ data ingestion，以及 G0-M metadata-only derived products。
 | component registry、layer semantics、branch registry、manifest shape、validators、projection plan 与 consumer gates 已命名。 | [architecture plan](environment_substrate_g0_architecture_plan_20260605.zh.md) | pass |
 | 当前 `src` terrain/query primitives 被表述为 shared primitives，而不是完整 terrain runtime。 | [source inventory](environment_substrate_g0_source_inventory_20260605.zh.md) | pass |
 | terrain plan 将 shared layered/tiled data 与 compatibility projection/query consumers 分离。 | [terrain system architecture](environment_substrate_g0_terrain_system_architecture_20260605.zh.md) | pass |
-| ground 父 README、progress tracker 与 dispatch queue 都指向本包。 | [../README.zh.md](../../../../task/ground/archive/owner_migration_20260808/README.zh.md)、[../ground_current_progress_20260524.zh.md](../../../../task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.zh.md)、[../ground_subagent_dispatch_queue_20260521.zh.md](../../../../task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.zh.md) | pass |
+| 当前 Ground 所有者、环境边界和 closure 索引保持互链。 | [Ground 所有者](../../../../domains/ground/README.zh.md)、[环境所有者](../../../../systems/environment/README.zh.md)、[closure 索引](README.zh.md) | pass |
 | branch-expansion diagnostics 已被整合或本地拒绝。 | [subagent dispatch](environment_substrate_g0_subagent_dispatch_20260605.zh.md)、[task clusters](environment_substrate_g0_task_clusters_20260605.zh.md) | pass |
 | G0-J static manifest implementation 有限且已测试。 | [G0-J static contract](environment_substrate_g0_static_manifest_contract_20260605.zh.md)、[G0-J acceptance](environment_substrate_g0_static_manifest_contract_acceptance_20260605.zh.md) | pass |
 | G0-K generator/catalog contract 有限且已测试。 | [G0-K record](environment_substrate_g0_generator_catalog_20260605.zh.md)、[G0-K acceptance](environment_substrate_g0_generator_catalog_acceptance_20260606.zh.md) | pass |
@@ -39,7 +39,7 @@ data ingestion，以及 G0-M metadata-only derived products。
 Documentation validation：
 
 ```bash
-git diff --check -- docs/systems/environment/reviews/environment_substrate_g0_closure_20260606 docs/task/ground/archive/owner_migration_20260808/README.md docs/task/ground/archive/owner_migration_20260808/README.zh.md docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.md docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.zh.md docs/task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.md docs/task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.zh.md
+git diff --check -- docs/systems/environment/reviews/environment_substrate_g0_closure_20260606 docs/domains/ground/README.md docs/domains/ground/README.zh.md docs/systems/environment/README.md docs/systems/environment/README.zh.md docs/systems/environment/reviews/environment_substrate_g0_closure_20260606/README.md docs/systems/environment/reviews/environment_substrate_g0_closure_20260606/README.zh.md
 ```
 
 G0-J static contract implementation 的代码验证：

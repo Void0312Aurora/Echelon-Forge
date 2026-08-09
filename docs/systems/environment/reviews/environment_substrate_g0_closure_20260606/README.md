@@ -22,10 +22,10 @@ Language:
 
 Inputs:
 
-- Parent ground entry: [../README.md](../../../../task/ground/archive/owner_migration_20260808/README.md)
-- Archived ground progress snapshot: [ground_current_progress_20260524.md](../../../../task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.md)
-- Accepted bootstrap baseline:
-  [../archive/ground_domain_bootstrap_plan_20260521.md](../../../../task/ground/archive/ground_domain_bootstrap_plan_20260521.md)
+- Ground owner: [Ground Mission Domain](../../../../domains/ground/README.md)
+- Current environment boundary: [Environment Systems](../../../../systems/environment/README.md)
+- Ground specialization baseline:
+  [Ground Specialization Baseline](../../../../domains/ground/standards/specialization_baseline.md)
 - Runtime terrain/query primitives:
   [../../../../src/core/interfaces/environment_model.h](../../../../../src/core/interfaces/environment_model.h),
   [../../../../src/models/environment/default_environment_model.cpp](../../../../../src/models/environment/default_environment_model.cpp),
@@ -89,7 +89,7 @@ application, movement models, building LOS, or combat runtime.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Ground bootstrap | accepted | [accepted baseline](../../../../task/ground/archive/ground_domain_bootstrap_plan_20260521.md) | Does not release terrain-aware runtime behavior. |
+| Ground bootstrap | accepted | [accepted baseline](../../../../domains/ground/standards/specialization_baseline.md) | Does not release terrain-aware runtime behavior. |
 | Native ground schema | accepted | `Ground_Platoon_MVP`, `UnitType::Ground` evidence in current progress | Identity only; no movement or terrain behavior. |
 | Current C++ terrain model | available primitive | [source inventory](environment_substrate_g0_source_inventory_20260605.md) | Shared query/zone surface, not canonical terrain ownership. |
 | Scenario compiler/runtime setup | compiler data ingestion accepted; runtime setup held | [G0-L-F ingestion acceptance](environment_substrate_g0_scenario_ingestion_acceptance_20260606.md), [source inventory](environment_substrate_g0_source_inventory_20260605.md) | Compiler can ingest inert payloads into merged scenario zones; runtime setup application is not released. |

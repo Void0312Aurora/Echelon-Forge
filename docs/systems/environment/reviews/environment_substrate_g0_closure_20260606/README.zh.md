@@ -21,10 +21,10 @@ cover、fires、damage 或完整 terrain-runtime/domain behavior。
 
 输入：
 
-- Ground 父入口：[../README.zh.md](../../../../task/ground/archive/owner_migration_20260808/README.zh.md)
-- 已归档 Ground 进展快照：[ground_current_progress_20260524.zh.md](../../../../task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.zh.md)
-- 已接受 bootstrap 基线：
-  [../archive/ground_domain_bootstrap_plan_20260521.zh.md](../../../../task/ground/archive/ground_domain_bootstrap_plan_20260521.zh.md)
+- Ground 所有者：[Ground 任务域](../../../../domains/ground/README.zh.md)
+- 当前环境边界：[环境系统](../../../../systems/environment/README.zh.md)
+- Ground 特化基线：
+  [Ground 特化基线](../../../../domains/ground/standards/specialization_baseline.zh.md)
 - Runtime terrain/query primitives：
   [../../../../src/core/interfaces/environment_model.h](../../../../../src/core/interfaces/environment_model.h)、
   [../../../../src/models/environment/default_environment_model.cpp](../../../../../src/models/environment/default_environment_model.cpp)、
@@ -84,7 +84,7 @@ LOS 或 combat runtime 之前。
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Ground bootstrap | accepted | [accepted baseline](../../../../task/ground/archive/ground_domain_bootstrap_plan_20260521.zh.md) | 不释放 terrain-aware runtime behavior。 |
+| Ground bootstrap | accepted | [accepted baseline](../../../../domains/ground/standards/specialization_baseline.zh.md) | 不释放 terrain-aware runtime behavior。 |
 | Native ground schema | accepted | current progress 中的 `Ground_Platoon_MVP`、`UnitType::Ground` evidence | 只关闭 identity；没有 movement 或 terrain behavior。 |
 | 当前 C++ terrain model | available primitive | [source inventory](environment_substrate_g0_source_inventory_20260605.zh.md) | shared query/zone surface，不是 canonical terrain ownership。 |
 | Scenario compiler/runtime setup | compiler data ingestion accepted；runtime setup held | [G0-L-F ingestion acceptance](environment_substrate_g0_scenario_ingestion_acceptance_20260606.zh.md)、[source inventory](environment_substrate_g0_source_inventory_20260605.zh.md) | Compiler 可将 inert payloads ingest 到 merged scenario zones；runtime setup application 不释放。 |

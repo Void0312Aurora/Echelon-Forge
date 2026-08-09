@@ -77,7 +77,7 @@ Last verified: `2026-06-01`
 | task docs 深层文件是 supporting records | `docs/task/archive/owner_migration_20260808/README.md:18-21` |
 | training active/frozen taxonomy | `examples/config/training/README.md:5-17` |
 | naval active entries 是 runtime gate | `examples/config/training/active/naval/README.md:14-21` |
-| ground 当前 deferred 范围 | `docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.md:31-36` |
+| ground 当前 deferred 范围 | `docs/domains/ground/README.md:28-38` |
 | naval N4/N5/N6 边界 | `docs/domains/naval/reviews/naval_progress_snapshot_20260527.md:67-83` |
 | frozen training gating vs supplemental | `tests/contracts/unit/training/frozen/README.md:5-15` |
 | `pitch_hold_throttle_scan` 阈值 | `tests/contracts/unit/kernel/pitch_hold_throttle_scan.json:59-65` |
@@ -190,7 +190,7 @@ Last verified: `2026-06-01`
 
 - `README.md` 明确项目是 active research/engineering codebase，不是 polished product release。
 - `docs/systems/standards/gradient_realism_principles.md` 规定场景只能声明已实现、runtime contract 可见、证据覆盖的 realism level；低 gate 通过不代表高 gate 通过。
-- `docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.md` 明确 ground 当前是 tasking/planning baseline，不是 ground-combat runtime。
+- `docs/domains/ground/README.md` 明确 ground 当前是静态 task/status baseline，不是 ground-combat runtime。
 - `docs/domains/naval/reviews/naval_progress_snapshot_20260527.md` 明确 naval 当前主要在 N1-N4，N5/N6 weapon/damage 仍需 scenario-level gates。
 - `examples/config/training/active/naval/README.md` 明确 active naval N4 entries 是 pre-fire entry/runtime gate，不是 weapon release、damage/kill reward 或 learned behavior claim。
 - `tests/contracts/unit/training/frozen/README.md` 区分 frozen gating baseline 与 supplemental matrix。

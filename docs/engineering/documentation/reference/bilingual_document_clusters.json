@@ -142,9 +142,9 @@
       "english": "docs/domains/ground/standards/specialization_baseline.md",
       "chinese": "docs/domains/ground/standards/specialization_baseline.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "d6e6d17683e74a0ee2d3d6646048246236b9b48ef1caf615e4656650de3daff7",
-      "chinese_hash": "a3de64498735432181cebb580a4d40cf8ec2f2ee7a1fc6aee489adf4130f9a81"
+      "last_verified": "2026-08-09",
+      "english_hash": "8fbfecc745cf63bd6234a5761408937e31b557d03a90df0190829cb98acb7b2a",
+      "chinese_hash": "73a22b9fe8f20ca803af88d4064b592e0bccfc80299dc34780503977aa2c247a"
     },
     {
       "pair_id": "domains/joint/README",

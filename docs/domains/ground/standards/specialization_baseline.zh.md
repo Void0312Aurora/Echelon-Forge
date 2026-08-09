@@ -71,7 +71,7 @@ runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给
   concealment、obstacle 或 breach behavior；
 - Ground sensing、line-of-sight 计算、track fusion、data-link behavior 或
   observation export；
-- direct fire、indirect fire、effects、damage、suppression 或 attrition；
+- direct fire、indirect fire、effects、damage、suppression、attrition 或 combat runtime；
 - logistics、sustainment、recovery 或 learned Ground policy；
 - 正式 Ground `CommandPacket`、`ObservationPacket` 或 `TrackPacket` 特化。
 
@@ -91,4 +91,4 @@ runtime-system ownership 仍保持 held，并不把 Ground 执行语义授权给
 ## 非目标
 
 本标准不授权工作、不定义 Army 条令，也不把当前静态 MVP 提升为完整 land-warfare
-模型。Active work 与成熟度裁决属于 [Ground 任务区](../../../task/ground/archive/owner_migration_20260808/README.zh.md)。
+模型。Active work 与成熟度裁决属于 [Ground 所有者入口](../../../domains/ground/README.zh.md)。

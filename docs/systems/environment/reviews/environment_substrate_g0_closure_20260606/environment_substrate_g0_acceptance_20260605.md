@@ -27,7 +27,7 @@ and G0-M metadata-only derived products.
 | Component registry, layer semantics, branch registry, manifest shape, validators, projection plan, and consumer gates are named. | [architecture plan](environment_substrate_g0_architecture_plan_20260605.md) | pass |
 | Current `src` terrain/query primitives are represented as shared primitives, not a full terrain runtime. | [source inventory](environment_substrate_g0_source_inventory_20260605.md) | pass |
 | Terrain plan separates shared layered/tiled data from compatibility projection/query consumers. | [terrain system architecture](environment_substrate_g0_terrain_system_architecture_20260605.md) | pass |
-| Parent ground README, progress tracker, and dispatch queue point to this package. | [../README.md](../../../../task/ground/archive/owner_migration_20260808/README.md), [../ground_current_progress_20260524.md](../../../../task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.md), [../ground_subagent_dispatch_queue_20260521.md](../../../../task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.md) | pass |
+| Current Ground owner, environment boundary, and closure index remain linked. | [Ground owner](../../../../domains/ground/README.md), [environment owner](../../../../systems/environment/README.md), [closure index](README.md) | pass |
 | Branch-expansion diagnostics are integrated or rejected locally. | [subagent dispatch](environment_substrate_g0_subagent_dispatch_20260605.md), [task clusters](environment_substrate_g0_task_clusters_20260605.md) | pass |
 | G0-J static manifest implementation is finite and tested. | [G0-J static contract](environment_substrate_g0_static_manifest_contract_20260605.md), [G0-J acceptance](environment_substrate_g0_static_manifest_contract_acceptance_20260605.md) | pass |
 | G0-K generator/catalog contract is finite and tested. | [G0-K record](environment_substrate_g0_generator_catalog_20260605.md), [G0-K acceptance](environment_substrate_g0_generator_catalog_acceptance_20260606.md) | pass |
@@ -41,7 +41,7 @@ and G0-M metadata-only derived products.
 Documentation validation:
 
 ```bash
-git diff --check -- docs/systems/environment/reviews/environment_substrate_g0_closure_20260606 docs/task/ground/archive/owner_migration_20260808/README.md docs/task/ground/archive/owner_migration_20260808/README.zh.md docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.md docs/task/ground/archive/owner_migration_20260808/ground_current_progress_20260524.zh.md docs/task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.md docs/task/ground/archive/owner_migration_20260808/ground_subagent_dispatch_queue_20260521.zh.md
+git diff --check -- docs/systems/environment/reviews/environment_substrate_g0_closure_20260606 docs/domains/ground/README.md docs/domains/ground/README.zh.md docs/systems/environment/README.md docs/systems/environment/README.zh.md docs/systems/environment/reviews/environment_substrate_g0_closure_20260606/README.md docs/systems/environment/reviews/environment_substrate_g0_closure_20260606/README.zh.md
 ```
 
 Code validation for the G0-J static contract implementation:

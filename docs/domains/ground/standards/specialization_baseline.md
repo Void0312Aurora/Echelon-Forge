@@ -78,7 +78,7 @@ The current maintained surface does not establish:
   concealment, obstacles, or breach behavior;
 - Ground sensing, line-of-sight computation, track fusion, data-link behavior,
   or observation export;
-- direct fire, indirect fire, effects, damage, suppression, or attrition;
+- direct fire, indirect fire, effects, damage, suppression, attrition, or combat runtime;
 - logistics, sustainment, recovery, or a learned Ground policy;
 - formal Ground `CommandPacket`, `ObservationPacket`, or `TrackPacket`
   specializations.
@@ -101,4 +101,4 @@ Current evidence anchors:
 
 This standard does not authorize work, define Army doctrine, or promote the
 current static MVP into a complete land-warfare model. Active work and maturity
-decisions belong in the [Ground task area](../../../task/ground/archive/owner_migration_20260808/README.md).
+decisions belong with the [Ground owner](../../../domains/ground/README.md).
