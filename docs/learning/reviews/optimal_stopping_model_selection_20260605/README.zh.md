@@ -17,7 +17,7 @@ Review basis：`2026-06-05` 问题定义、研究包与综合结论。
 
 输入：
 
-- 父级模型任务索引：[模型任务](../../../task/model/archive/owner_migration_20260808/README.zh.md)
+- 父级模型任务索引：[模型任务](../../../learning/README.zh.md)
 - A7 当前证据：
   [A7 当前状态](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.zh.md)
 - A7 执行断点：

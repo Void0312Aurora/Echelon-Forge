@@ -17,7 +17,7 @@ Language:
 
 Inputs:
 
-- Parent model task index: [Model Tasks](../../../task/model/archive/owner_migration_20260808/README.md)
+- Parent model task index: [Model Tasks](../../../learning/README.md)
 - M3 model-selection synthesis:
   [m3_model_selection_synthesis_20260605.md](../optimal_stopping_model_selection_20260605/m3_model_selection_synthesis_20260605.md)
 - Current architecture boundary map:

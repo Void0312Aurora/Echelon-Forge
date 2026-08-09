@@ -17,13 +17,13 @@ repair。
 
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `M3S1-P0 Boundary Map` | main thread | current main thread | 固定 trunk/branch/loss/reward ownership 与第一批切入点。 | `README*`, `m3_s1_model_architecture_boundary_map_20260605*.md`, parent/M3 indexes | training code、reward tuning、M2 release | `git diff --check -- docs/task/model`；link inspection | Boundary map 足够清楚地命名 owners 与 forbidden couplings。 | serial first | 1 + 1 repair | pass |
+| `M3S1-P0 Boundary Map` | main thread | current main thread | 固定 trunk/branch/loss/reward ownership 与第一批切入点。 | `README*`, `m3_s1_model_architecture_boundary_map_20260605*.md`, parent/M3 indexes | training code、reward tuning、M2 release | `git diff --check -- docs/learning`；link inspection | Boundary map 足够清楚地命名 owners 与 forbidden couplings。 | serial first | 1 + 1 repair | pass |
 | `M3S1-P1 Data Censoring Contract` | main thread or diagnostics worker | high reasoning | 定义 wait-preserving timing evidence、early-event censoring 处理与必要 rollout metadata。 | new `m3_s1_data_censoring_contract_*.md`；必要时仅 probe tests | PPO loss implementation、reward changes、policy-head changes | markdown review；必要时 optional probe script/test | Contract 选择 data route，并命名 unsupported evidence assumptions。 | after P0；serial | 2 | pass |
 | `M3S1-P2 Grouped Objective Contract` | main thread | high reasoning | 定义基于 episode/window IDs 的 grouped survival/stopping objective。 | new objective contract doc；P1 后必要时可有 `python/rl/policy_algo` 设计注记 | per-row BCE tuning、A7 coefficient sweep | formula review；buffer grouping audit | Objective 保留 grouped windows，并包含 early-mass/censoring terms。 | after P1；serial | 2 | pass |
 | `M3S1-P3 Policy Head Boundary` | main thread plus focused implementation worker | high reasoning | 决定 reuse-vs-new-head 与 deterministic stop boundary contract。 | contract doc；若打开代码则仅后续 `policies.py` tests | broad HMoE redesign、M2 release | opened 后 focused policy-distribution tests | Stop boundary、event-time calibration 与 diagnostics 已指定。 | after P2；serial | 2 | pass |
 | `M3S1-P4 Minimal Integration` | implementation workers plus main-thread integration | high reasoning | 只实现 P1-P3 选中的 data/loss/head 最小改动。 | `python/rl/policy_algo/**`, focused tests, 必要 active config docs | reward-only fixes、legality weakening、broad training rewrites | focused unit/PPO/loss tests；compileall | Code path 有限，grouped labels 到达 loss，masks 继续权威。 | after P1-P3 accepted；P4-A/P4-B disjoint；P4-C serial | 2 | pass |
 | `M3S1-P5 Diagnostics And Short Training` | diagnostics worker plus read-only evidence explorer | high reasoning | 增加/报告 boundary crossing、cumulative prewindow mass、no-event mass、grouped-label persistence 与 one-shot legality。 | diagnostics docs、probe scripts/tests、active config logs | focused gates 前 long formal training；coefficient tuning | focused m3s1 tests；diagnostics 存在后才写 short-train command/evidence packet | deterministic boundary 与 stochastic legality 带边界说明地报告。 | after P4 | 2 | active |
-| `M3S1-P6 Closure And Archive Sync` | main thread | current main thread | 同步 model/A7/M3 indexes，并且只有在替代证据存在时归档旧 local repair docs。 | `docs/task/model/**`, selected A7 docs/archive pointers | deleting evidence、无 probes 宣称 success | `git diff --check -- docs/task/model docs/task/air_combat/a7_event_value_advantage_credit_head` | Docs 区分 accepted slices、held learned behavior 与 residuals。 | after P5 | 1 | held |
+| `M3S1-P6 Closure And Archive Sync` | main thread | current main thread | 同步 model/A7/M3 indexes，并且只有在替代证据存在时归档旧 local repair docs。 | `docs/learning/**`, selected A7 docs/archive pointers | deleting evidence、无 probes 宣称 success | `git diff --check -- docs/learning docs/task/air_combat/a7_event_value_advantage_credit_head` | Docs 区分 accepted slices、held learned behavior 与 residuals。 | after P5 | 1 | held |
 
 ## 分发规则
 
@@ -61,8 +61,8 @@ integration notes:
 ## 验证计划
 
 ```bash
-git diff --check -- docs/task/model
-rg -n "M3-S1|Boundary Map|Data/Censoring|Grouped Objective|reward-only|per-row" docs/task/model
+git diff --check -- docs/learning
+rg -n "M3-S1|Boundary Map|Data/Censoring|Grouped Objective|reward-only|per-row" docs/learning
 ```
 
 代码打开后，验证必须扩展到 focused unit tests：

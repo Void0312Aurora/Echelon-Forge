@@ -101,4 +101,4 @@ model artifacts.
 - [README.zh.md](README.zh.md)
 - [m1_action_interface_split_current_status_20260602.md](m1_action_interface_split_current_status_20260602.md)
 - [m1_action_interface_split_task_clusters_20260602.md](m1_action_interface_split_task_clusters_20260602.md)
-- [../README.md](../../../task/model/archive/owner_migration_20260808/README.md)
+- [../README.md](../../../learning/README.md)

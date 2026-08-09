@@ -17,7 +17,7 @@ evidence 已通过；不声明 learned-policy acceptance。
 
 输入：
 
-- 父级模型任务索引：[模型任务](../../../task/model/archive/owner_migration_20260808/README.zh.md)
+- 父级模型任务索引：[模型任务](../../../learning/README.zh.md)
 - M3 模型选择综合：
   [m3_model_selection_synthesis_20260605.md](../optimal_stopping_model_selection_20260605/m3_model_selection_synthesis_20260605.md)
 - 当前架构边界图：

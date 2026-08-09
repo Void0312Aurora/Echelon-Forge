@@ -17,7 +17,7 @@ Language:
 
 Inputs:
 
-- Parent model task index: [Model Tasks](../../../task/model/archive/owner_migration_20260808/README.md)
+- Parent model task index: [Model Tasks](../../../learning/README.md)
 - A7 current evidence:
   [A7 Current Status](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.md)
 - A7 execution breakpoint:

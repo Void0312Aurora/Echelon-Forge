@@ -52,7 +52,7 @@ python -m py_compile gym_envs/universal_env_parts/spaces.py gym_envs/universal_e
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/core/test_air_combat_hybrid_action.py tests/runtime/core/test_env_config.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_air_combat_training_entry_contracts.py
 # 40 passed
 
-git diff --check -- docs/task/model docs/domains/air gym_envs python examples/config/training/active/air_combat tests train.py
+git diff --check -- docs/learning docs/domains/air gym_envs python examples/config/training/active/air_combat tests train.py
 # pass
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/training/test_training_bootstrap_contracts.py tests/runtime/core/test_air_combat_hybrid_action.py tests/runtime/core/test_env_config.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_air_combat_training_entry_contracts.py
