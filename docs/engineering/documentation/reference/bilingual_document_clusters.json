@@ -520,45 +520,45 @@
       "english": "docs/operations/visualization/reviews/bilingual_display_20260606/bilingual_display_p1_acceptance_20260606.md",
       "chinese": "docs/operations/visualization/reviews/bilingual_display_20260606/bilingual_display_p1_acceptance_20260606.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "7eaa3b5b25c68567b48c0309ea7c00f355d862fc7e22eaf6f1bb34f425bd848f",
-      "chinese_hash": "4b33c3e1033dc3b2d018af728f6c3e0f8384f59a96cd7ec687d8fa23628933b5"
+      "last_verified": "2026-08-09",
+      "english_hash": "7cd76d72063a3e9f581510f7fb0e93564cf3db3bdbfc39fdb66736c3f0655394",
+      "chinese_hash": "3b86347600bc1094f559d8a498129e9d0ba9879a791913d8be07f3001cbf124e"
     },
     {
       "pair_id": "operations/visualization/reviews/environment_overlay_visual_elements_20260606/README",
       "english": "docs/operations/visualization/reviews/environment_overlay_visual_elements_20260606/README.md",
       "chinese": "docs/operations/visualization/reviews/environment_overlay_visual_elements_20260606/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "11d65974d380693ad4f2861d3eef5331770474f2806a74cb981200cdd6ad7692",
-      "chinese_hash": "8abe1cb779ff6e95e16849c10ae17ddff54e59bf92317b59fb9e06a2d99b799f"
+      "last_verified": "2026-08-09",
+      "english_hash": "b15961fb18c6ba18b8dcd1d1fe1987c224b197e063f469bdb5eccd7493584ac9",
+      "chinese_hash": "278fdcdd346cdb750a3dab8059f78bd21e72aa9e2fb5d19137a07974c75f76d3"
     },
     {
       "pair_id": "operations/visualization/reviews/environment_overlay_visual_elements_20260606/environment_overlay_visual_elements_p1_acceptance_20260606",
       "english": "docs/operations/visualization/reviews/environment_overlay_visual_elements_20260606/environment_overlay_visual_elements_p1_acceptance_20260606.md",
       "chinese": "docs/operations/visualization/reviews/environment_overlay_visual_elements_20260606/environment_overlay_visual_elements_p1_acceptance_20260606.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "fef53669a4703437daaebdaf6c0e7da492a24edca1b66968ed1af5f27a07232a",
-      "chinese_hash": "4acfd034bf24a311c90c283e217b44e0371ae6b7ab95434818fd1ec82037815b"
+      "last_verified": "2026-08-09",
+      "english_hash": "1646db1734654604b6fb482efb83f0c9cbc65cbe736abb3537e365957b25c68e",
+      "chinese_hash": "7cfdb0552324552d8fbbcfcd3ba6cef29232315f832eff5a0d5597b6f6bc91d5"
     },
     {
       "pair_id": "operations/visualization/reviews/map_only_viewer_mode_20260606/README",
       "english": "docs/operations/visualization/reviews/map_only_viewer_mode_20260606/README.md",
       "chinese": "docs/operations/visualization/reviews/map_only_viewer_mode_20260606/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "b84febec1f1306eb5fb0745315fbbf45325cbb656e0d2ac6498147c0b7573d4e",
-      "chinese_hash": "29fcefc0831b2ea1eb4b135fcaad1b8f248a65a394cc5d49dd2f42362d482899"
+      "last_verified": "2026-08-09",
+      "english_hash": "464966160fe74c90655bf02201f50a43f106971fc25a17f093114e916c9c8a3d",
+      "chinese_hash": "7a1ea5e1f081170deacd869f30eaecdf91c10d717d8e5356076e6106f8ad57b1"
     },
     {
       "pair_id": "operations/visualization/reviews/map_only_viewer_mode_20260606/map_only_viewer_mode_p1_acceptance_20260606",
       "english": "docs/operations/visualization/reviews/map_only_viewer_mode_20260606/map_only_viewer_mode_p1_acceptance_20260606.md",
       "chinese": "docs/operations/visualization/reviews/map_only_viewer_mode_20260606/map_only_viewer_mode_p1_acceptance_20260606.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "d76dcc9b2978c4114b2bebf40309e84d075df95d5cde76c8a77601d18c0cf52c",
-      "chinese_hash": "016c88dfa1814b497381b10e5a4a73fe9b104b039708f5e5b392e9c214995111"
+      "last_verified": "2026-08-09",
+      "english_hash": "a552a969b881b5927eecd9afe8ecbf4113c7b7eaa35232d5633227a8160090c8",
+      "chinese_hash": "54ac7bb2f0289f5f46396765986f43a1222727e963e0a83a6d5fad1c0be411db"
     },
     {
       "pair_id": "operations/visualization/work/issues/viz_stack_evolution",

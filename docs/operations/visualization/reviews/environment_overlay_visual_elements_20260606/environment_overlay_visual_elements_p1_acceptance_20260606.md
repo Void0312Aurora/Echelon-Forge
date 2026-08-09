@@ -27,7 +27,7 @@ Static and focused tests:
 ```bash
 perl -0ne 'while (/<script\s+type="module"[^>]*>(.*?)<\/script>/sg) { print $1, "\n" }' examples/viz/web_viz/templates/index.html | node --input-type=module --check -
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/viz/test_environment_overlays.py tests/viz/test_environment_overlay_visual_elements.py tests/viz/test_tactical_map_only_mode.py tests/viz/test_tactical_profile_ui_defaults.py
-git diff --check -- docs/task/viz examples/viz tests/viz
+git diff --check -- docs/operations/visualization examples/viz tests/viz
 ```
 
 Observed result: module syntax check passed; focused viz tests reported

@@ -17,8 +17,6 @@ Last verified: `2026-08-08`
 输入：
 
 - 父级 owner：[Operations](../../../README.zh.md)
-- 已归档的战术地图界面基线：
-  [../archive/tactical_map_interface_refactor/README.zh.md](../../../../task/viz/archive/tactical_map_interface_refactor/README.zh.md)
 - 当前前端壳：
   [index.html](../../../../../examples/viz/web_viz/templates/index.html)
 - 当前 profile loader：
@@ -62,7 +60,7 @@ Profile/object binding 不在本文实现。后续切片应把 visualization pro
 ```bash
 perl -0ne 'while (/<script\s+type="module"[^>]*>(.*?)<\/script>/sg) { print $1, "\n" }' examples/viz/web_viz/templates/index.html | node --input-type=module --check -
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/viz/test_tactical_map_workspace.py tests/viz/test_tactical_layer_model.py tests/viz/test_tactical_profile_ui_defaults.py tests/viz/test_tactical_map_only_mode.py
-git diff --check -- docs/task/viz examples/viz tests/viz
+git diff --check -- docs/operations/visualization examples/viz tests/viz
 ```
 
 浏览器 smoke 已验证 `MAP ONLY` 会隐藏 chrome、保留地图 canvas 交互，并能通过 `EXIT MAP`
