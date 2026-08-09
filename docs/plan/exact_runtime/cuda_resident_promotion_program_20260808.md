@@ -372,6 +372,64 @@ names; CP-4a re-established every one of them against the current symbols with
 zero numeric drift, so they carry over directly (read `flight_dynamics_forces`
 for `Phase B forces`, and so on through the migration table).
 
+## G-D closed: achieved counters collected (2026-08-09)
+
+The external blocker that stopped RB9 and CR2-5b is **resolved**. Under
+elevation, Nsight Compute 2025.3.1 profiled all 12 launches (42-43 replay passes
+each) and wrote a 19,049,324-byte report
+(`sha256 ebdec20b3f8b37a42ccb409855013112b6df196948ea1edd5c9d643baee59553`).
+No `ERR_NVGPUCTRPERM`. The unelevated run was executed first and reproduced the
+predecessor blocker exactly, so the difference is attributable to elevation
+alone.
+
+`--set full` captured 1,699 metric columns. Achieved values for all five
+required families, per launch, at 256 worlds:
+
+| Family | Metric | Result |
+| --- | --- | --- |
+| Achieved occupancy | `sm__warps_active.avg.pct_of_peak_sustained_active` | 8.33-10.89%, mean 9.24% |
+| Divergence | `smsp__thread_inst_executed_per_inst_executed.ratio` | 32.00 on every launch |
+| Local traffic | `l1tex__t_sectors_pipe_lsu_mem_local_op_{ld,st}.sum` | **0** across all 12 launches |
+| Global traffic | `l1tex__t_sectors_pipe_lsu_mem_global_op_{ld,st}.sum` | 64-3,664 ld / 72-3,904 st sectors |
+| Shared traffic | `l1tex__data_pipe_lsu_wavefronts_mem_shared.sum` | 8-24 wavefronts |
+
+### All three static leads are refuted, not confirmed
+
+1. **The 40-byte stack frames cost nothing measurable.** Local-memory sectors
+   are exactly zero on every launch, including the four kernels ptxas reported
+   with 40-byte stack frames and `LDL.64`/`STL.64` instructions. Those
+   instructions exist in the SASS but generate no measured local traffic —
+   consistent with the addresses resolving in L1 without reaching the local
+   memory path. Lead 1 is closed: there is no stack traffic to remove.
+2. **Occupancy is not register-limited.** `launch__occupancy_limit_registers`,
+   `_blocks`, and `_shared_mem` all report 16 while `_warps` reports 12, so
+   registers are not the binding constraint. A register-pressure experiment
+   would not move achieved occupancy. Lead 2 is closed as stated.
+3. **Lead 3 is the whole story, and it is a grid-size problem.** Every launch is
+   256 threads (2 blocks x 128) = 8 warps. An RTX 3090 has 82 SMs x 48 resident
+   warps = 3,936 warp slots, so this grid occupies 0.20% of the machine and
+   lands on 2 of 82 SMs. Achieved 9.24% is 6.3x below even CR2-5a's 58.33%
+   theoretical floor because theoretical occupancy is a per-SM-if-resident
+   figure and says nothing about whether the grid is large enough to occupy the
+   device.
+
+Divergence at 32.00 is the maximum on a 32-lane warp, i.e. **zero divergence** —
+full convergence, not 32x divergence. The one-thread-per-world decomposition is
+branch-efficient; it is simply far too small.
+
+### What this redirects
+
+CP-5 should not pursue register pressure or stack elimination. The measured
+finding is that the kernels are latency-bound on a nearly-empty device, so the
+CP-5 candidate becomes the decomposition itself: more parallelism per world
+(so a 256-world batch produces far more than 256 threads) or batching windows to
+raise grid size. This also plausibly bears on G-F, since a device this idle at
+256 worlds explains why world 1 loses to CPU by 7-36x.
+
+Both facts are measurements, not yet a validated optimization. CP-5 must
+re-measure after any change; this section records what the counters show, not a
+promise that a larger grid is faster.
+
 ## Constraints
 
 - CPU remains the maintained world-step truth for the entire program until CP-9

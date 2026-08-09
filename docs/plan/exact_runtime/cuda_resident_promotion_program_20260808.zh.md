@@ -306,6 +306,52 @@ CR2-5a 已测得全部十个 kernel 的静态资源。三条具体线索，全�
 之前的 kernel 名陈述的；CP-4a 已针对当前符号逐一重建，数值零漂移，因此它们可以直接沿用
 （把 `Phase B forces` 读作 `flight_dynamics_forces`，其余按迁移表类推）。
 
+## G-D 已关闭：achieved 计数器采集完成（2026-08-09）
+
+阻塞 RB9 与 CR2-5b 的外部障碍**已解决**。在提权下，Nsight Compute 2025.3.1 完成了
+全部 12 次 launch 的 profiling（每次 42-43 个 replay pass），写出 19,049,324 字节的
+报告（`sha256 ebdec20b3f8b37a42ccb409855013112b6df196948ea1edd5c9d643baee59553`），
+没有 `ERR_NVGPUCTRPERM`。未提权的一轮先行执行并精确复现了前序阻塞，因此差异可完全归因于
+提权本身。
+
+`--set full` 捕获了 1,699 个 metric 列。256 worlds 下五个必需族的逐 launch achieved 值：
+
+| 族 | Metric | 结果 |
+| --- | --- | --- |
+| achieved occupancy | `sm__warps_active.avg.pct_of_peak_sustained_active` | 8.33-10.89%，均值 9.24% |
+| divergence | `smsp__thread_inst_executed_per_inst_executed.ratio` | 每次 launch 均为 32.00 |
+| local 流量 | `l1tex__t_sectors_pipe_lsu_mem_local_op_{ld,st}.sum` | 全部 12 次 launch **为 0** |
+| global 流量 | `l1tex__t_sectors_pipe_lsu_mem_global_op_{ld,st}.sum` | 读 64-3,664 / 写 72-3,904 sector |
+| shared 流量 | `l1tex__data_pipe_lsu_wavefronts_mem_shared.sum` | 8-24 wavefront |
+
+### 三条静态线索全部被否证，而非被确认
+
+1. **40 字节栈帧没有可测代价。** 每次 launch 的 local-memory sector 精确为零，包括
+   ptxas 报告带 40 字节栈帧和 `LDL.64`/`STL.64` 指令的那四个 kernel。这些指令确实存在于
+   SASS 中，但不产生任何可测 local 流量——与地址在 L1 内解析、未触及 local memory 路径
+   一致。线索 1 关闭：没有栈流量可供消除。
+2. **occupancy 不受寄存器限制。** `launch__occupancy_limit_registers`、`_blocks`、
+   `_shared_mem` 均报告 16，而 `_warps` 报告 12，因此寄存器不是约束条件。寄存器压力实验
+   不会改变 achieved occupancy。线索 2 按原表述关闭。
+3. **线索 3 才是全部原因，且它是一个 grid 尺寸问题。** 每次 launch 都是 256 线程
+   （2 blocks x 128）= 8 个 warp。RTX 3090 有 82 个 SM x 48 驻留 warp = 3,936 个 warp
+   槽位，因此该 grid 只占用机器的 0.20%，落在 82 个 SM 中的 2 个上。achieved 9.24% 比
+   CR2-5a 的 58.33% 理论下限还低 6.3 倍，原因是理论 occupancy 是「若驻留则每 SM」的
+   指标，完全不说明 grid 是否大到足以占满设备。
+
+divergence 为 32.00 是 32 lane warp 上的最大值，即**零 divergence**——完全收敛，不是
+32 倍 divergence。一 world 一线程的分解在分支效率上是好的，它只是太小了。
+
+### 这对后续的重定向
+
+CP-5 不应追求寄存器压力或栈消除。实测结论是这些 kernel 在一台近乎空闲的设备上受延迟约束，
+因此 CP-5 的候选变成分解方式本身：每个 world 提供更多并行度（使 256-world 批次产生远多于
+256 个线程），或把多个窗口合批以提高 grid 尺寸。这一点也很可能关系到 G-F——设备在 256
+worlds 时就如此空闲，可以解释 world 1 为何以 7-36 倍落后于 CPU。
+
+以上两点都是测量结果，尚不是已验证的优化。CP-5 在任何改动后必须重新测量；本节记录的是
+计数器所显示的事实，不是「更大的 grid 一定更快」的承诺。
+
 ## 约束
 
 - 直到 CP-9 另有裁定，CPU 在整个程序期间保持维护版 world-step 真值。
