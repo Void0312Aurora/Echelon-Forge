@@ -15,8 +15,8 @@ its recorded source baseline.
 Baseline commit: `8bd21d86`
 
 Status: owner-local maintained census. It originated as the T9 (agency and
-doctrine architecture) slice-1 census for the completed
-[Unified Architecture Program](../../../plan/archive/unified_architecture_program_completed_20260727/README.md). This is a descriptive census
+doctrine architecture) slice-1 census for the completed Unified Architecture
+Program. This is a descriptive census
 register (`reference`), not an independent review: it enumerates the scattered
 authority-check ("who-may-command / who-may-fire / who-may-write") sites on the
 maintained tasking surface, classifies each into one or more authority
@@ -639,7 +639,8 @@ correction above stands as recorded.
 
 ## Related
 
-- [Unified Architecture Program](../../../plan/archive/unified_architecture_program_completed_20260727/README.md) (T9 track definition)
+- Historical origin: completed Unified Architecture Program T9 track; current
+  authority is the simulation architecture standard below.
 - [Simulation System Architecture Design](../../../architecture/standards/simulation_system_architecture_design.md)
   (Agency face; AgentRole schema; DoctrineFamily; merge/source-priority rule)
 - [SCAL Conformance Census (2026-07-20)](../../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md)

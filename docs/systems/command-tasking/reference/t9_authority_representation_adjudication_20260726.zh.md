@@ -13,8 +13,8 @@ Verification boundary: 已复核所有者路径、生命周期、no-mapping 裁�
 门禁路由；逐路径引证仍只对记录的基线负责。
 基线提交：`dd292f4b`
 
-状态：维护中的所有者本地裁定。本文源自已完成
-[统一架构计划](../../../plan/archive/unified_architecture_program_completed_20260727/README.zh.md)的 T9（Agency 与条令架构）裁定切片。I68 的
+状态：维护中的所有者本地裁定。本文源自已完成统一架构计划的 T9（Agency
+与条令架构）裁定切片。I68 的
 A3 默认值名称归属搬迁（[Agency 权限普查](agency_authority_census_20260721.zh.md)
 §9）带出一处前提纠正：编译端 `authorize_maintained_*` 门作用于 `AgentRole` /
 `AgentAuthorityScope` 的 **action-interface**（动作接口）权限表示，而非
@@ -256,7 +256,7 @@ no-mapping 判定成为承重结构：
 
 ## 相关
 
-- [统一架构计划](../../../plan/archive/unified_architecture_program_completed_20260727/README.zh.md)（T9 轨道定义）
+- 历史来源：已完成统一架构计划的 T9 裁定；当前权威见下方仿真系统架构标准。
 - [Agency 权限普查（2026-07-21）](agency_authority_census_20260721.zh.md)
   （A 路径登记；本裁定完成其 §9 的 I68 前提纠正）
 - [仿真系统架构设计](../../../architecture/standards/simulation_system_architecture_design.zh.md)

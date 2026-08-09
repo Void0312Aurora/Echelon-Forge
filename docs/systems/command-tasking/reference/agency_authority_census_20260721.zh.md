@@ -13,8 +13,8 @@ Verification boundary: 已复核所有者路径、生命周期、维护中的 ra
 语义边界；详细普查仍钉在其记录的源码基线上。
 基线提交：`8bd21d86`
 
-状态：维护中的所有者本地普查。本文源自已完成
-[统一架构计划](../../../plan/archive/unified_architecture_program_completed_20260727/README.zh.md)的 T9（Agency 与条令架构）第一切片。
+状态：维护中的所有者本地普查。本文源自已完成统一架构计划的 T9（Agency
+与条令架构）第一切片。
 本文档是描述性普查登记（`reference` 参考记录），非独立评审：它枚举维护面上
 散落的权限检查（“谁可指挥谁 / 谁可开火 / 谁可写什么”）站点，将每处归入一个或
 多个权限维度，并记录钉住这些站点的注册式词汇与 ratchet 门禁。依据 T9 的关键
@@ -515,7 +515,7 @@ token->count 指纹在改动前后均为 `{'AuthorityScope': 1, 'CommandRelation
 
 ## 相关
 
-- [统一架构计划](../../../plan/archive/unified_architecture_program_completed_20260727/README.zh.md)（T9 轨道定义）
+- 历史来源：已完成统一架构计划的 T9 轨道；当前权威见下方仿真系统架构标准。
 - [仿真系统架构设计](../../../architecture/standards/simulation_system_architecture_design.zh.md)
   （Agency 面；AgentRole schema；DoctrineFamily；合并/来源优先级规则）
 - [SCAL 一致性普查（2026-07-20）](../../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md)

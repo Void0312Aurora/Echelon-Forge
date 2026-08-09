@@ -25,9 +25,9 @@
       "english": "docs/architecture/reference/t8_g4_truth_leak_inventory.md",
       "chinese": "docs/architecture/reference/t8_g4_truth_leak_inventory.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "4ee8709346ab5392182627eb7930efac68664f3929d7921d04be02d1d1c2d3c9",
-      "chinese_hash": "79c6c3867fc60149c2d4197abeb0bb32ea02187d7c4b77f49ac12d1fbc932c1e"
+      "last_verified": "2026-08-09",
+      "english_hash": "78bd6b9f5bc03e1aac862f30eac5806a2e1fb80f4abfaff9827e6915ca3f0e72",
+      "chinese_hash": "1b7a97bd6d0aadea6256512c72dc8646dbaf28e56da6b1eaafc338c6d7f8eb83"
     },
     {
       "pair_id": "architecture/standards/runtime_workflow_and_contract_baseline",
@@ -637,18 +637,18 @@
       "english": "docs/systems/command-tasking/reference/agency_authority_census_20260721.md",
       "chinese": "docs/systems/command-tasking/reference/agency_authority_census_20260721.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "adca2a9e0156b2596f361d7b39c3d8c3e366903730090c0730f9dfaf66c29248",
-      "chinese_hash": "382fd2c7571987e457f72ea5fd124a4bdf39ee320a1bfa6de946d4318b69350b"
+      "last_verified": "2026-08-09",
+      "english_hash": "587ccec6421f7602d65938a99c675ad4a0ff152ac289bded94c5fc82958268c7",
+      "chinese_hash": "648b583dc866b47bc2e8e049b86ca2acc3c2956c3257c0b78c9c638e76d07fbd"
     },
     {
       "pair_id": "systems/command-tasking/reference/t9_authority_representation_adjudication_20260726",
       "english": "docs/systems/command-tasking/reference/t9_authority_representation_adjudication_20260726.md",
       "chinese": "docs/systems/command-tasking/reference/t9_authority_representation_adjudication_20260726.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "3fa3e4afb2b69114863b64b34787857205852a2e39c75d430a689a52f499ce14",
-      "chinese_hash": "759bc89843b89d0952d42449649c914ac4b7f5e7495cb8efbdf358abf215b442"
+      "last_verified": "2026-08-09",
+      "english_hash": "9fba25c06a56a524b5c5b68fe121e8833f8ecc3ac052ff15fd6e62f35c4e8958",
+      "chinese_hash": "61b56b0125207329e5c8fba5f5f4c79c85721aacb49ddd85cd5ecb003db95855"
     },
     {
       "pair_id": "systems/environment/README",

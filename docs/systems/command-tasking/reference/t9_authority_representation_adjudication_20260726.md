@@ -15,8 +15,8 @@ recorded baseline boundary.
 Baseline commit: `dd292f4b`
 
 Status: owner-local maintained adjudication. It originated as the T9 (agency
-and doctrine architecture) slice for the completed
-[Unified Architecture Program](../../../plan/archive/unified_architecture_program_completed_20260727/README.md). The I68 A3 default-name ownership
+and doctrine architecture) slice for the completed Unified Architecture
+Program. The I68 A3 default-name ownership
 move ([Agency Authority Census](agency_authority_census_20260721.md) §9)
 surfaced a premise correction: the compiled `authorize_maintained_*` gates
 operate on the `AgentRole` / `AgentAuthorityScope` **action-interface**
@@ -310,7 +310,8 @@ seconds).
 
 ## Related
 
-- [Unified Architecture Program](../../../plan/archive/unified_architecture_program_completed_20260727/README.md) (T9 track definition)
+- Historical origin: completed Unified Architecture Program T9 adjudication;
+  current authority is the simulation architecture standard below.
 - [Agency Authority Census (2026-07-21)](agency_authority_census_20260721.md)
   (A-path register; §9 I68 premise correction this adjudication completes)
 - [Simulation System Architecture Design](../../../architecture/standards/simulation_system_architecture_design.md)

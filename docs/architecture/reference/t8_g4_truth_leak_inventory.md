@@ -15,8 +15,8 @@ baseline boundaries.
 Baseline commit: `dd292f4b`
 
 Status: owner-local maintained information-state register. It originated as
-the T8 (information-state architecture) slice of the completed
-[Unified Architecture Program](../../plan/archive/unified_architecture_program_completed_20260727/README.md). It records (a) the maintained
+the T8 (information-state architecture) slice of the completed Unified
+Architecture Program. It records (a) the maintained
 observation/reward consumer census, (b) where the G4 layer-declaration
 mechanism was landed, and (c) the World-Truth direct reads on policy paths, each
 adjudicated. Per the
@@ -709,7 +709,8 @@ The accepted implementation is intentionally limited to C3/C20:
 
 ## Related
 
-- [Unified Architecture Program](../../plan/archive/unified_architecture_program_completed_20260727/README.md)
+- Historical origin: completed Unified Architecture Program T8 slice; current
+  authority is the simulation architecture standard below.
 - [SCAL Conformance Census (2026-07-20)](../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md)
   (V3–V7 register; first-batch consumer priority; structural precedent)
 - [T6 Residual Ledger (2026-07-20)](../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md) (sibling `reference`
