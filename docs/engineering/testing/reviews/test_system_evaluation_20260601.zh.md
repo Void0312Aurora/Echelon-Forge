@@ -74,7 +74,7 @@ Last verified: `2026-06-01`
 | 低 gate 不隐含高 gate | `docs/systems/standards/gradient_realism_principles.md:52` |
 | evidence 只需覆盖当前 claim | `docs/systems/standards/gradient_realism_principles.md:160-173` |
 | runtime workflow stable contracts | `docs/architecture/standards/runtime_workflow_and_contract_baseline.md:153-168` |
-| task docs 深层文件是 supporting records | `docs/task/archive/owner_migration_20260808/README.md:18-21` |
+| 已退役 task 根只保留非权威历史证据 | `docs/engineering/documentation/standards/document_lifecycle_policy.md` |
 | training active/frozen taxonomy | `examples/config/training/README.md:5-17` |
 | naval active entries 是 runtime gate | `examples/config/training/active/naval/README.md:14-21` |
 | ground 当前 deferred 范围 | `docs/domains/ground/README.md:28-38` |
