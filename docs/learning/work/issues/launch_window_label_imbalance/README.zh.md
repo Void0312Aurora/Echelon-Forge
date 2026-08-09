@@ -126,13 +126,13 @@ fire，而不仅仅是早期 fire。
 ## 相关领域上下文
 
 - A6 子项目：
-  [docs/task/air_combat/archive/a6_event_value_first_event_timing/README.zh.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/README.zh.md)
+  [docs/learning/reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.zh.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.zh.md)
 - A6-EVT-M launch-window 证据：
-  [a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.zh.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.zh.md)
+  [a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.zh.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.zh.md)
 - A6-EVT-L launch-window contract：
-  [a6_event_value_first_event_timing_launch_window_timing_contract_20260604.zh.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_launch_window_timing_contract_20260604.zh.md)
+  [a6_event_value_first_event_timing_launch_window_timing_contract_20260604.zh.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_launch_window_timing_contract_20260604.zh.md)
 - A6-EVT-K event-head 证据：
-  [a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.zh.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.zh.md)
+  [a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.zh.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.zh.md)
 - 标签构造器：
   [python/rl/policy_algo/first_event_hazard.py](../../../../../python/rl/policy_algo/first_event_hazard.py)
 - 训练入口：
@@ -141,7 +141,7 @@ fire，而不仅仅是早期 fire。
 ## 下一步门槛
 
 下一修复门是 A7
-（[air-combat A7](../../../../task/air_combat/archive/a7_event_value_advantage_credit_head/README.zh.md)）。
+（[air-combat A7](../../../reviews/optimal_stopping_model_selection_20260605/a7_event_value_advantage_credit_head_20260604/README.zh.md)）。
 标签密度发现转为 A7 objective 的 guardrail：
 
 1. **Window-balanced target mass**：按 first-shot window 限制正/负权重，避免密集

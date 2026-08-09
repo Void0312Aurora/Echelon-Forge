@@ -122,7 +122,6 @@ Recommended next direction:
 
 - keep A3/A5 legality unchanged;
 - keep M2 held;
-- follow
-  [root-cause re-scope](a6_event_value_first_event_timing_root_cause_rescope_20260604.md):
-  pause L parameter tuning and define an `A6-EVT-O` counterfactual event-time
-  objective before more training.
+- follow the retained boundary in [README.md](README.md): pause L parameter
+  tuning and define an `A6-EVT-O` counterfactual event-time objective before
+  more training.

@@ -136,7 +136,7 @@ subexpert = th.where(post_launch_assess, 2, subexpert)
 ## A7 关系
 
 A7
-（[air-combat A7](../../../../task/air_combat/archive/a7_event_value_advantage_credit_head/README.zh.md)）
+（[air-combat A7](../../../reviews/optimal_stopping_model_selection_20260605/a7_event_value_advantage_credit_head_20260604/README.zh.md)）
 将本 issue 作为 head placement 与 diagnostics 约束：
 
 - event-value / advantage-credit head 应作为 `hybrid_event_head` 的 policy-level sibling，
@@ -178,7 +178,7 @@ blocker。
 - 策略实现：
   [python/rl/policy_algo/policies.py](../../../../../python/rl/policy_algo/policies.py)
 - A6 子项目：
-  [docs/task/air_combat/archive/a6_event_value_first_event_timing/README.zh.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/README.zh.md)
+  [docs/learning/reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.zh.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.zh.md)
 - M1 temporal-window HMoE：
   [docs/learning/work/active/temporal_window_hmoe/README.zh.md](../../active/temporal_window_hmoe/README.zh.md)
 - M2 causal Transformer HMoE：

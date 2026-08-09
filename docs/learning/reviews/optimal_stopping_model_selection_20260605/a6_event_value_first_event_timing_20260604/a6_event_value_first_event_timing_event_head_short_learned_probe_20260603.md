@@ -2,8 +2,8 @@
 
 Status: `2026-06-03` completed; held timing residual.
 
-Parent: [README.md](README.md). Event-head lane:
-[a6_event_value_first_event_timing_event_head_optimization_lane_20260603.md](a6_event_value_first_event_timing_event_head_optimization_lane_20260603.md).
+Parent: [README.md](README.md). The event-head optimizer lane is retained only
+through this probe and the parent review boundary.
 
 ## Scope
 

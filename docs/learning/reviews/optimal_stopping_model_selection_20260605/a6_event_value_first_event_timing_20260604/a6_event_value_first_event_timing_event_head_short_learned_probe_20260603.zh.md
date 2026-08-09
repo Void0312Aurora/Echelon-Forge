@@ -2,8 +2,8 @@
 
 状态：`2026-06-03` 已完成；held timing residual。
 
-父级：[README.zh.md](README.zh.md)。事件头通道：
-[a6_event_value_first_event_timing_event_head_optimization_lane_20260603.zh.md](a6_event_value_first_event_timing_event_head_optimization_lane_20260603.zh.md)。
+父级：[README.zh.md](README.zh.md)。event-head optimizer lane 仅通过本 probe
+与父级 review 边界保留。
 
 ## 范围
 

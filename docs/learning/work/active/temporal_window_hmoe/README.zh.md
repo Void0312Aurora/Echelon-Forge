@@ -20,10 +20,10 @@ M1 对应路径 A。它不是最终正式架构，而是进入路径 C 前的证
 
 - [时间 HMoE 策略计划](../../issues/temporal_policy_roadmap.zh.md)
 - [空战 1v1 真实度梯度课程](../air_combat_1v1_realism_gradient/README.zh.md)
-- [A3 C2/ROE 发射纪律](../../../../task/air_combat/archive/a3_c2_roe_release_discipline/README.zh.md)
-- [A3 C2/ROE P4 探针证据 - 2026-06-03](../../../../task/air_combat/archive/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.zh.md)
-- [A3 C2/ROE Learned-Policy 探针证据 - 2026-06-03](../../../../task/air_combat/archive/a3_c2_roe_release_discipline/a3_c2_roe_learned_policy_probe_20260603.zh.md)
-- [A3 C2/ROE Reactive vs Temporal 对照证据 - 2026-06-03](../../../../task/air_combat/archive/a3_c2_roe_release_discipline/a3_c2_roe_reactive_temporal_comparison_20260603.zh.md)
+- [A3 C2/ROE 发射纪律](../../../reviews/air_combat_action_interface_split_20260602/a3_c2_roe_release_discipline_20260603/README.zh.md)
+- [A3 C2/ROE P4 探针证据 - 2026-06-03](../../../reviews/air_combat_action_interface_split_20260602/a3_c2_roe_release_discipline_20260603/a3_c2_roe_p4_probe_evidence_20260603.zh.md)
+- [A3 C2/ROE Learned-Policy 探针证据 - 2026-06-03](../../../reviews/air_combat_action_interface_split_20260602/a3_c2_roe_release_discipline_20260603/a3_c2_roe_learned_policy_probe_20260603.zh.md)
+- [A3 C2/ROE Reactive vs Temporal 对照证据 - 2026-06-03](../../../reviews/air_combat_action_interface_split_20260602/a3_c2_roe_release_discipline_20260603/a3_c2_roe_reactive_temporal_comparison_20260603.zh.md)
 - [M1-A4 Stage-1 短程证据 - 2026-06-02](m1_a4_stage1_evidence_20260602.zh.md)
 - [M1-A4 Hybrid Temporal Shaped 对照证据 - 2026-06-02](m1_a4_hybrid_temporal_shaped_pair_20260602.zh.md)
 - 当前空战训练配置：

@@ -117,6 +117,5 @@ window 设置还没有形成稳定 learned timing policy。
 
 - 保持 A3/A5 合法性不变；
 - M2 继续 held；
-- 参阅
-  [root-cause re-scope](a6_event_value_first_event_timing_root_cause_rescope_20260604.zh.md)：
-  暂停 L 参数调节，并在继续训练前定义 `A6-EVT-O` counterfactual event-time objective。
+- 遵循 [README.zh.md](README.zh.md) 保留的边界：暂停 L 参数调节，并在继续训练前
+  定义 `A6-EVT-O` counterfactual event-time objective。

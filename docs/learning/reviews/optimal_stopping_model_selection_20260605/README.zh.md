@@ -19,11 +19,11 @@ Review basis：`2026-06-05` 问题定义、研究包与综合结论。
 
 - 父级模型任务索引：[模型任务](../../../learning/README.zh.md)
 - A7 当前证据：
-  [A7 当前状态](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.zh.md)
+  [A7 当前状态](a7_event_value_advantage_credit_head_20260604/a7_event_value_advantage_credit_head_current_status_20260604.zh.md)
 - A7 执行断点：
-  [A7 执行断点分析](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.zh.md)
+  [A7 执行断点分析](a7_event_value_advantage_credit_head_20260604/a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.zh.md)
 - A7 event-policy margin 修复：
-  [A7 Event-Policy Margin 修复](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.zh.md)
+  [A7 Event-Policy Margin 修复](a7_event_value_advantage_credit_head_20260604/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.zh.md)
 - 子项目标准：
   [子项目创建标准](../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - 分发规则：

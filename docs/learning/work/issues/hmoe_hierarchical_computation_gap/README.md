@@ -152,7 +152,7 @@ structure.
 ## A7 Relationship
 
 A7
-([air-combat A7](../../../../task/air_combat/archive/a7_event_value_advantage_credit_head/README.md))
+([air-combat A7](../../../reviews/optimal_stopping_model_selection_20260605/a7_event_value_advantage_credit_head_20260604/README.md))
 uses this issue as a placement and diagnostics constraint:
 
 - the event-value / advantage-credit head should be a policy-level sibling of
@@ -205,7 +205,7 @@ This issue does not authorize an HMoE redesign inside A7.
 - Policy implementation:
   [python/rl/policy_algo/policies.py](../../../../../python/rl/policy_algo/policies.py)
 - A6 subproject:
-  [docs/task/air_combat/archive/a6_event_value_first_event_timing/README.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/README.md)
+  [docs/learning/reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.md)
 - M1 temporal-window HMoE:
   [docs/learning/work/active/temporal_window_hmoe/README.zh.md](../../active/temporal_window_hmoe/README.zh.md)
 - M2 causal Transformer HMoE:

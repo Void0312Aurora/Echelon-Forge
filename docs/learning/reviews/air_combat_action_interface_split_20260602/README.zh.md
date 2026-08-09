@@ -19,7 +19,7 @@ Review basis：`2026-06-02` 实现与 probe 证据；`2026-08-08` 迁移路径 o
 
 - [时间 HMoE 策略计划](../../work/issues/temporal_policy_roadmap.zh.md)
 - [M1 观测窗口 HMoE 验证](../../work/active/temporal_window_hmoe/README.zh.md)
-- [A3 C2/ROE 发射纪律](../../../task/air_combat/archive/a3_c2_roe_release_discipline/README.zh.md)
+- [A3 C2/ROE 发射纪律](a3_c2_roe_release_discipline_20260603/README.zh.md)
 - [Pilot Action Contract](../../../domains/air/standards/pilot_action_contract.md)
 - 当前动作适配：
   [actions.py](../../../../gym_envs/universal_env_parts/actions.py)

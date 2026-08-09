@@ -23,7 +23,7 @@ Inputs:
 - Current architecture boundary map:
   [m3_s1_model_architecture_boundary_map_20260605.md](m3_s1_model_architecture_boundary_map_20260605.md)
 - A7 current empirical blocker:
-  [A7 Current Status](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.md)
+  [A7 Current Status](../optimal_stopping_model_selection_20260605/a7_event_value_advantage_credit_head_20260604/a7_event_value_advantage_credit_head_current_status_20260604.md)
 - Subproject standard:
   [Subproject Creation Standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 

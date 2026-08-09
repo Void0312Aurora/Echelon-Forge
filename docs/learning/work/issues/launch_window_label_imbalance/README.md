@@ -139,13 +139,13 @@ enough to prevent any deterministic fire, not just early fire.
 ## Related Domain Context
 
 - A6 subproject:
-  [docs/task/air_combat/archive/a6_event_value_first_event_timing/README.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/README.md)
+  [docs/learning/reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/README.md)
 - A6-EVT-M launch-window evidence:
-  [docs/task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md)
+  [docs/learning/reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md)
 - A6-EVT-L launch-window contract:
-  [docs/task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md)
+  [docs/learning/reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md)
 - A6-EVT-K event-head evidence:
-  [docs/task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.md](../../../../task/air_combat/archive/a6_event_value_first_event_timing/a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.md)
+  [docs/learning/reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.md](../../../reviews/optimal_stopping_model_selection_20260605/a6_event_value_first_event_timing_20260604/a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.md)
 - Label builder:
   [python/rl/policy_algo/first_event_hazard.py](../../../../../python/rl/policy_algo/first_event_hazard.py)
 - Training entry:
@@ -154,7 +154,7 @@ enough to prevent any deterministic fire, not just early fire.
 ## Next Gates
 
 The next repair gate is A7
-([air-combat A7](../../../../task/air_combat/archive/a7_event_value_advantage_credit_head/README.md)).
+([air-combat A7](../../../reviews/optimal_stopping_model_selection_20260605/a7_event_value_advantage_credit_head_20260604/README.md)).
 The label-density finding becomes a guardrail for the A7 objective:
 
 1. **Window-balanced target mass**: cap positive and negative weight per

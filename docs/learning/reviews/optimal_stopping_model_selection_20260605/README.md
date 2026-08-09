@@ -19,11 +19,11 @@ Inputs:
 
 - Parent model task index: [Model Tasks](../../../learning/README.md)
 - A7 current evidence:
-  [A7 Current Status](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.md)
+  [A7 Current Status](a7_event_value_advantage_credit_head_20260604/a7_event_value_advantage_credit_head_current_status_20260604.md)
 - A7 execution breakpoint:
-  [A7 Execution Breakpoint Analysis](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md)
+  [A7 Execution Breakpoint Analysis](a7_event_value_advantage_credit_head_20260604/a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md)
 - A7 event-policy margin repair:
-  [A7 Event-Policy Margin Repair](../../../task/air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md)
+  [A7 Event-Policy Margin Repair](a7_event_value_advantage_credit_head_20260604/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md)
 - Subproject standard:
   [Subproject Creation Standard](../../../engineering/automation/rules/subproject_creation_standard.md)
 - Distributed-work rule:
