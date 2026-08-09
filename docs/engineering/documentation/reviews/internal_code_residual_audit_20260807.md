@@ -92,6 +92,24 @@ archived review evidence. These are provenance values, not active runtime
 terminology. They should change only with a migration that preserves lookup of
 the archived records.
 
+One such value is now stale. `src/runtime/contracts/backend_profile_contracts.h`
+records `source_doc_provenance.path` as
+`docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md`
+in five profiles, but the ownership migration moved that packet under an
+`archive/` component. The field is only checked for non-blankness and is never
+resolved against the filesystem, so the drift is documentary rather than
+functional and no reader breaks.
+
+It is left unfixed deliberately. Updating the five literals pushes them past the
+100-column limit, and the changed-file clang-format gate then also requires the
+283 pre-existing violations elsewhere in that file to be resolved — violations
+`main` never has to satisfy, because the file is outside its changed set.
+Reformatting to clear them rewrites nearly every line, which makes the
+internal-code scanner treat the file as newly added and fail on 17 pre-existing
+`WP6` provenance strings. Close this by pairing the path update with a scoped
+reformat of the file, so the formatting and annotation cost lands in a change
+that owns it.
+
 ### Active Long-Tail Source
 
 The remaining non-frozen findings are concentrated in decision-command

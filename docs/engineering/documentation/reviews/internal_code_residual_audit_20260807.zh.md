@@ -77,6 +77,18 @@ CUDA 资源证据合同和实验 probe session 保留了带版本的 schema 值�
 后端 profile 注册表保留了定位归档审阅证据的路径和变更原因。这些值是 provenance，而不是
 活跃运行时术语。只有在仍能定位旧归档记录的迁移中才能修改。
 
+其中一个值目前已过期。`src/runtime/contracts/backend_profile_contracts.h` 在五个 profile 中把
+`source_doc_provenance.path` 记为
+`docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md`，
+但所有权迁移已将该 packet 移入带 `archive/` 组件的路径。该字段只做非空校验，从不对文件系统
+解析，因此这是文档性漂移而非功能性问题，没有任何读取方因此失效。
+
+本轮刻意不修。更新这五个字面量会使其超过 100 列限制，而变更文件 clang-format 门禁随即要求
+连同该文件其余 283 个既有违规一起处理——这些违规 `main` 从不需要满足，因为该文件不在其变更
+集内。为消除它们而整体重排会重写几乎每一行，进而使内部代号扫描器将该文件视为新增文件，并对
+17 个既有 `WP6` provenance 字符串报错。关闭方式：将路径更新与该文件的有范围重排放在同一个
+变更中，让格式化与标注成本落在真正拥有它的改动里。
+
 ### 活跃长尾源码
 
 其余非冻结 finding 主要集中在决策命令 adapter、运行时 profile adapter、架构分类注册表和
