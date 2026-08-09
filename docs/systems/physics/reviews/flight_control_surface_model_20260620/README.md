@@ -1,11 +1,17 @@
 # Flight Control Surface Model
 
-Status: `2026-06-20` `archived / implemented / validation green` — platform-level FDM
-mechanism completion: the broken
+Document kind: `review`
+Lifecycle: `retained`
+Canonical: `docs/systems/physics/reviews/flight_control_surface_model_20260620/README.md`
+Owner: `systems/physics`
+Last verified: `2026-08-09`
+
+Status: `2026-06-20` `implemented / validation green` — retained platform-level
+FDM mechanism evidence. The broken
 `stick -> actuator -> control-surface deflection -> aerodynamic control moment`
-causal chain is closed for the maintained runtime. Not combat-specific; placed
-here because `air_combat/` is the active air/execution task entry per the task
-root.
+causal chain was closed for the maintained runtime. This record preserves the
+accepted mechanism boundary without becoming an active task or a calibration
+authority.
 
 Language:
 
@@ -14,10 +20,7 @@ Language:
 
 Inputs:
 
-- [air_combat task track](../../README.md)
-- [task root](../../../README.md)
-- [Gradient Realism Principles](../../../../standards/foundation/gradient_realism_principles.md)
-- [Realism Authority Boundary](../../../../standards/foundation/realism_authority_boundary.zh.md)
+- [Gradient Realism Principles](../../../standards/gradient_realism_principles.md)
 - Code entries:
   - `src/models/domains/air/default_control_model.cpp` (FBW law, now writes
     physical surface commands)
@@ -51,7 +54,7 @@ surface to carry the effect.
 This subproject restored the causal chain so control authority is produced by
 surface deflection acting through dynamic pressure and Mach, and so control
 degradation has a physical carrier. Per
-[Gradient Realism Principles](../../../../standards/foundation/gradient_realism_principles.md),
+[Gradient Realism Principles](../../../standards/gradient_realism_principles.md),
 this strengthens causal structure and consequence chains; it does not by itself
 raise any scenario's claimed gradient level.
 
@@ -130,8 +133,8 @@ This subproject can be marked accepted only when:
 - Velocity-Verlet second force evaluation, lift-axis transform, gyroscopic /
   thrust-offset moments remain separate FDM-mechanism residuals.
 
-## Archive
+## Retention Boundary
 
-This is the physical archive packet for the completed flight-control-surface
-mechanism slice. The parent registry entry is
-[../../archive_registry.md](../../archive_registry.md).
+This owner-local review retains the completed flight-control-surface mechanism
+evidence. It does not reopen implementation work, claim flight-test calibration,
+or supersede current runtime tests and code.

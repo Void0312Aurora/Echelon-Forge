@@ -8,7 +8,7 @@ Parent: [README.md](README.md)
 
 Inputs:
 
-- [Gradient realism principles](../../../../standards/foundation/gradient_realism_principles.md)
+- [Gradient realism principles](../../../standards/gradient_realism_principles.md)
   (regression rule: a scenario that still runs but is dominated by departure
   must not claim flight-stability realism until restored).
 - Mechanism tests: `tests/runtime/air_combat/test_control_surface_mechanism.py`
