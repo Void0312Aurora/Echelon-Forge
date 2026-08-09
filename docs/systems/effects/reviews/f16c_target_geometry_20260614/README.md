@@ -23,7 +23,7 @@ Language:
 
 Inputs:
 
-- A2 pointer: [../README.md](../../../../task/air_combat/archive/owner_migration_20260808/a2_high_fidelity_damage_model/README.md)
+- Systems owner: [../../../README.md](../../../README.md)
 - Geometry gap issue:
   [../../../issues/lethality_hitbox_geometry_fidelity_gap/README.md](../../work/issues/lethality_hitbox_geometry_fidelity_gap/README.md)
 - Geometry review design:

@@ -22,7 +22,7 @@ Language:
 
 Inputs:
 
-- Parent A2 index: [../README.md](../../../../task/air_combat/archive/owner_migration_20260808/a2_high_fidelity_damage_model/README.md)
+- Air owner: [../../README.md](../../README.md)
 - Existing kill-chain calibration note:
   [../kill_chain_guidance_lethality_calibration_20260621.zh.md](../../../../systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/kill_chain_guidance_lethality_calibration_20260621.zh.md)
 - Existing mechanism-decoupling record:

@@ -20,7 +20,7 @@ Review basis：`2026-06-14` geometry-only 验收与保留的 opt-in proxy 证据
 
 输入：
 
-- A2 指针：[../README.zh.md](../../../../task/air_combat/archive/owner_migration_20260808/a2_high_fidelity_damage_model/README.zh.md)
+- Systems owner：[../../../README.zh.md](../../../README.zh.md)
 - 几何缺口 issue：[../../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md](../../work/issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)
 - 几何审阅工具设计：[../../../issues/lethality_hitbox_geometry_fidelity_gap/geometry_visual_review_design_20260611.zh.md](../../work/issues/lethality_hitbox_geometry_fidelity_gap/geometry_visual_review_design_20260611.zh.md)
 - F-16 可视化 GLB：[../../../../../examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb](../../../../../examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb)

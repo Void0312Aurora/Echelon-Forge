@@ -21,7 +21,7 @@ post-P5 KCES harness diagnostics、component-response 量化、standards-layer v
 
 输入：
 
-- 父级 A2 入口：[../README.zh.md](../../../../task/air_combat/archive/owner_migration_20260808/a2_high_fidelity_damage_model/README.zh.md)
+- Air owner：[../../README.zh.md](../../README.zh.md)
 - 既有杀伤链校准记录：
   [../kill_chain_guidance_lethality_calibration_20260621.zh.md](../../../../systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/kill_chain_guidance_lethality_calibration_20260621.zh.md)
 - 既有机制解耦记录：

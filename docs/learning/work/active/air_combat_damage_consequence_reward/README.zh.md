@@ -18,10 +18,10 @@ diagnostics-only bridge 已具备。受控 fixed-fire bridge 能报告 release/e
 
 输入：
 
-- A2 指针：[../README.zh.md](../../../../task/air_combat/archive/owner_migration_20260808/a2_high_fidelity_damage_model/README.zh.md)
+- Learning owner：[../../../README.zh.md](../../../README.zh.md)
 - A2 封存包：[../../archive/a2_high_fidelity_damage_model/README.zh.md](../../../../task/air_combat/archive/a2_high_fidelity_damage_model/README.zh.md)
 - A8 损伤效果链：[../../archive/a8_damage_effect_chain/README.zh.md](../../../../task/air_combat/archive/a8_damage_effect_chain/README.zh.md)
-- 空战当前入口：[../../README.zh.md](../../../../task/air_combat/archive/owner_migration_20260808/README.zh.md)
+- Air execution owner：[../../../../domains/air/README.zh.md](../../../../domains/air/README.zh.md)
 - 奖励 runtime 入口：[../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)
 - 聚焦奖励测试：[../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py](../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py)
 
