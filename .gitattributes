@@ -13,3 +13,8 @@ docs/plan/exact_runtime/cuda_resident_runtime_program_2_size_policy_20260731.jso
 docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804/** -text
 docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804.json -text
 docs/plan/exact_runtime/cuda_resident_cr2_closure_20260805.json -text
+
+# CP achieved-counter evidence records hashes over committed bytes. The counter
+# report hashes its parent resource report, so both must be byte-stable.
+docs/plan/exact_runtime/cuda_resident_cp_resource_evidence_20260810.json -text
+docs/plan/exact_runtime/cuda_resident_cp_counter_evidence_20260810.json -text

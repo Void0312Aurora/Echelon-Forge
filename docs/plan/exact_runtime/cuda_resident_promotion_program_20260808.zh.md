@@ -45,7 +45,7 @@ CR2-7 关闭记录（`cuda_resident_cr2_closure_20260805.json`）是由此产生
 | G-A | 整窗推进经公共 SPI 测量 | **CR2 已修复** | `cuda_resident_cr2_matrix_session.cpp` 只跑 `inject -> evaluate -> advance -> export_state`；surface id 为 `cuda_resident.full_window_spi.v1`；探针声明 `operation_sequence = [inject, evaluate_empty, advance_world_batch, ...]` |
 | G-B | CPU 与 CUDA 调用面等价 | **CR2 已修复** | 同一条纯 SPI 会话驱动两条 lane。`CudaWorldStore::advance_window()` 在窗口仅为 `input_injected` 时自行 publish（`cuda_world_store.cpp:348`），因此调用方无需公共 `publish_stage` |
 | G-C | 测量 learner 等价消费 | 边界已存在（CR2-3 lease），真实 learner 消费者不存在 | `cuda_resident_device_consumer.cpp` 已就位；CR2-7 该门禁为 true 指的是**边界**，不是 learner 等价消费 |
-| G-D | achieved 硬件计数器完整 | **未决——唯一的硬阻塞** | 两次独立尝试均 `ERR_NVGPUCTRPERM`（RB9、CR2-5b） |
+| G-D | achieved 硬件计数器完整 | **已关闭 2026-08-10（CP-4c）** | 提权下采集完成，产物 `cuda_resident_cp_counter_evidence_20260810.json`，`cr2_5_achieved_counter_gate_complete=true` |
 | G-E | selected-slice parity 出隔离区 | **CR2-4b 已修复** | 已释放 12 个字段 |
 | G-F | 小批量默认不退化 | 有建议，无修复 | world 1 退化 7-36 倍；CR2-6b 把 world 1 路由到 CPU |
 
@@ -351,6 +351,29 @@ worlds 时就如此空闲，可以解释 world 1 为何以 7-36 倍落后于 CPU
 
 以上两点都是测量结果，尚不是已验证的优化。CP-5 在任何改动后必须重新测量；本节记录的是
 计数器所显示的事实，不是「更大的 grid 一定更快」的承诺。
+
+### 已入库产物与独立复现
+
+计数器现在是一对已入库的证据产物，不再是临时捕获：
+
+- [cuda_resident_cp_resource_evidence_20260810.json](cuda_resident_cp_resource_evidence_20260810.json)
+  —— v2 静态/拓扑父产物。
+- [cuda_resident_cp_counter_evidence_20260810.json](cuda_resident_cp_counter_evidence_20260810.json)
+  —— achieved 计数器捕获，`attempt.status=available`、
+  `collected_launch_count=12`、
+  `cr2_5_disposition=achieved_counter_evidence_complete`。
+
+计数器报告对其父产物做哈希，两个文件都标记 `-text`，因此该链接在 `core.autocrlf` 下
+checkout 后仍然成立。
+
+该捕获在两次独立的提权会话中各做了一次，中间还发生了一次 GPU 掉线驱动故障
+（`nvlddmkm` 事件 ID 153）与恢复。第二次运行独立复现了第一次：occupancy 为
+8.32-11.38% 对 8.33-10.89%，divergence、local、global、shared 数值完全相同。
+occupancy 在第三位有效数字上有浮动，因为它是采样比值；memory 与 divergence 计数器是
+精确值，没有变动。
+
+已入库产物中四个授权标志仍全部为 false。关闭一个测量门禁不授予晋升、维护支持或调优
+授权——那些需要 CP-9 的独立记录决策。
 
 ## 约束
 

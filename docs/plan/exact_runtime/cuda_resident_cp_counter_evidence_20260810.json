@@ -1,0 +1,199 @@
+{
+  "achieved_counters": {
+    "achieved_occupancy": {
+      "metric_names": [
+        "sm__warps_active.avg.pct_of_peak_sustained_active"
+      ],
+      "provenance": "nsight_compute_hardware_counter",
+      "unit": "ratio",
+      "values_by_launch": [
+        0.09853168,
+        0.09436164,
+        0.11379699,
+        0.08323754,
+        0.08383982,
+        0.08456153000000001,
+        0.08542441,
+        0.10092796,
+        0.08785018000000001,
+        0.08768217,
+        0.08547186999999999,
+        0.10365780000000001
+      ]
+    },
+    "branch_divergence": {
+      "metric_names": [
+        "smsp__thread_inst_executed_per_inst_executed.ratio"
+      ],
+      "provenance": "nsight_compute_hardware_counter",
+      "unit": "ratio",
+      "values_by_launch": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "global_memory_traffic": {
+      "metric_names": [
+        "l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum",
+        "l1tex__t_sectors_pipe_lsu_mem_global_op_st.sum"
+      ],
+      "provenance": "nsight_compute_hardware_counter",
+      "unit": "sector",
+      "values_by_launch": [
+        712.0,
+        920.0,
+        136.0,
+        5264.0,
+        2072.0,
+        3128.0,
+        2192.0,
+        896.0,
+        2328.0,
+        2952.0,
+        4928.0,
+        416.0
+      ]
+    },
+    "local_memory_traffic": {
+      "metric_names": [
+        "l1tex__t_sectors_pipe_lsu_mem_local_op_ld.sum",
+        "l1tex__t_sectors_pipe_lsu_mem_local_op_st.sum"
+      ],
+      "provenance": "nsight_compute_hardware_counter",
+      "unit": "sector",
+      "values_by_launch": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "shared_memory_traffic": {
+      "metric_names": [
+        "l1tex__data_pipe_lsu_wavefronts_mem_shared.sum"
+      ],
+      "provenance": "nsight_compute_hardware_counter",
+      "unit": "wavefront",
+      "values_by_launch": [
+        8.0,
+        8.0,
+        16.0,
+        24.0,
+        16.0,
+        24.0,
+        16.0,
+        8.0,
+        16.0,
+        8.0,
+        8.0,
+        8.0
+      ]
+    }
+  },
+  "attempt": {
+    "application_completed": true,
+    "blocker_code": null,
+    "blocker_kind": null,
+    "collected_launch_count": 12,
+    "connected_pid": 34692,
+    "disconnected_pid": 34692,
+    "exit_code": 0,
+    "log_error_codes": [],
+    "recognized_error_line_sha256": null,
+    "report_created": true,
+    "required_launch_count": 12,
+    "status": "available"
+  },
+  "capture": {
+    "build_config": "Release",
+    "consumer_await_completed": true,
+    "cuda_architecture": "sm_86",
+    "diagnostic_materialization_called": false,
+    "range": "cudaProfilerApi",
+    "trace_signature_algorithm": "fnv1a64",
+    "trace_signature_digest": "cb31675ee34e5015",
+    "window_count": 1,
+    "world_count": 256
+  },
+  "evidence_date": "2026-08-10",
+  "gates": {
+    "cr2_5_achieved_counter_gate_complete": true,
+    "cr2_5_disposition": "achieved_counter_evidence_complete",
+    "cr2_5a_launch_topology_complete": true,
+    "cr2_5a_static_resource_complete": true,
+    "cr2_5b_counter_attempt_complete": true,
+    "maintained_claim_allowed": false,
+    "promotion_allowed": false,
+    "public_support_enabled": false,
+    "tuning_authorized": false
+  },
+  "inputs": {
+    "attempt_log_sha256": "95749879d432e48fa2e05793ab9a2f31cbdecf77e04f18bd14689ae500c0bbd9",
+    "binary_sha256": "59f5fce53dcb079724f03253c32f512a37cc7c1b29482579888b942f21ceb941",
+    "collector_source_sha256": "a486c6ae06a9ba90ba369e67dc1160898ecd4487a5a3df182cdb88f4344d1eec",
+    "command_argv_sha256": "48f5f5e0e83f4acf7245a8d96100bd6d026648e1b0181dfad0f070b5d07db39b",
+    "contract_source_sha256": "40e4fe233c932d767cbe5bc83261d9d33e9a46c8449dfa93ed57df8e5bf60ff8",
+    "launcher_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "launcher_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ncu_executable_sha256": "4a19c0404681aa6566e28717e5f5c55887e64901c9c545b07955ddede65a0465",
+    "ncu_report_sha256": "f8434b8c2d61559ea810de60f333aecb503dd63d297424d8558373724a132b8c",
+    "probe_output_sha256": "a49e58fd0fea1641b3e72c0c137c85ce5144af6d71550fb9301118c9d1d92ec6",
+    "resource_evidence_sha256": "c55be8f94dc36e4b8e0d8e03ad805027c944e39171ee02543384d9e740fe08f6",
+    "source_hash_canonicalization": "utf8_lf"
+  },
+  "interpretation": {
+    "cr2_5a_resource_evidence_validated": true,
+    "external_permission_is_not_a_kernel_result": true,
+    "missing_counters_are_not_zero": true,
+    "nsys_launch_metadata_is_not_an_achieved_counter": true,
+    "theoretical_occupancy_is_not_achieved_occupancy": true
+  },
+  "profile_id": "cp.resource.steady_full_window_body.sm86.v2",
+  "schema_version": "cuda_resident.cr2.achieved_counter_evidence.v1",
+  "source": {
+    "baseline_commit": "57aa72f6d9ff7bf71bca56568991b1a01c6b5312",
+    "candidate_state": "cr2_5b_unpromoted_worktree"
+  },
+  "toolchain": {
+    "command_paths": "absolute_paths_hashed_and_redacted",
+    "command_template": [
+      "ncu",
+      "--target-processes=application-only",
+      "--profile-from-start=off",
+      "--replay-mode=kernel",
+      "--kernel-name-base=demangled",
+      "--set=full",
+      "--launch-count=12",
+      "--force-overwrite",
+      "--export=<raw>/full-window-256",
+      "--log-file=<raw>/attempt.log",
+      "<resource-probe>",
+      "--output=<raw>/probe-output.json"
+    ],
+    "counter_set": "full",
+    "kernel_name_base": "demangled",
+    "launch_count_limit": 12,
+    "nsight_compute_version": "2025.3.1.0 (build 36398880) (public-release)",
+    "profile_from_start": false,
+    "replay_mode": "kernel",
+    "target_processes": "application-only"
+  }
+}

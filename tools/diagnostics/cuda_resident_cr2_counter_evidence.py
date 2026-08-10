@@ -320,7 +320,13 @@ def _validate_families(status: str, families: object) -> None:
 def validate_report(report: dict[str, Any]) -> None:
     report = _STRICT.object(report, TOP_LEVEL_KEYS, "counter evidence")
     _STRICT.exact_scalar(report["schema_version"], SCHEMA, "counter evidence schema")
-    _STRICT.exact_scalar(report["profile_id"], PROFILE, "counter evidence profile")
+    # A counter capture carries the identity of the resource generation it
+    # inherits, so either known profile is valid here. The parent link checked in
+    # validate_parent_link is what binds a specific capture to a specific parent.
+    _require(
+        type(report["profile_id"]) is str and report["profile_id"] in PARENT_PROFILES,
+        "counter evidence profile is not a known generation",
+    )
     _require(
         type(report["evidence_date"]) is str
         and re.fullmatch(r"\d{4}-\d{2}-\d{2}", report["evidence_date"]) is not None,
@@ -577,7 +583,10 @@ def build_report(
     }
     report = {
         "schema_version": SCHEMA,
-        "profile_id": PROFILE,
+        # Inherit the parent resource capture's identity rather than hardcoding
+        # v1: a counter capture describes the same profile as the static capture
+        # it links to, and stamping v1 onto a v2 capture misreports provenance.
+        "profile_id": parent["profile_id"],
         "evidence_date": args.evidence_date,
         "source": {
             "baseline_commit": args.baseline_commit,

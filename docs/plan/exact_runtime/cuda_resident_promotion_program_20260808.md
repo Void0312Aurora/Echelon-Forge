@@ -51,7 +51,7 @@ Consolidating both closures against the code as it stands on baseline
 | G-A | Full facade/window advance measured through the public SPI | **Repaired by CR2** | `cuda_resident_cr2_matrix_session.cpp` runs `inject -> evaluate -> advance -> export_state` only; surface id `cuda_resident.full_window_spi.v1`; the probe declares `operation_sequence = [inject, evaluate_empty, advance_world_batch, ...]` |
 | G-B | CPU and CUDA invocation surfaces equivalent | **Repaired by CR2** | Same SPI-only session drives both lanes. `CudaWorldStore::advance_window()` self-publishes when the window is merely `input_injected` (`cuda_world_store.cpp:348`), so no caller needs the public `publish_stage` |
 | G-C | Learner-equivalent consumption measured | Boundary exists (CR2-3 lease); a real learner consumer does not | `cuda_resident_device_consumer.cpp` present; CR2-7 gate true is for the *boundary*, not for learner-equivalent consumption |
-| G-D | Achieved hardware counters complete | **Open — the one hard blocker** | `ERR_NVGPUCTRPERM` on two separate attempts (RB9, CR2-5b) |
+| G-D | Achieved hardware counters complete | **CLOSED 2026-08-10 (CP-4c)** | Collected under elevation; tracked in `cuda_resident_cp_counter_evidence_20260810.json` with `cr2_5_achieved_counter_gate_complete=true` |
 | G-E | Selected-slice parity out of quarantine | **Repaired by CR2-4b** | 12 fields released |
 | G-F | Small-batch default does not regress | Advisory exists, no fix | World 1 regresses 7-36x; CR2-6b routes world 1 to CPU |
 
@@ -429,6 +429,31 @@ raise grid size. This also plausibly bears on G-F, since a device this idle at
 Both facts are measurements, not yet a validated optimization. CP-5 must
 re-measure after any change; this section records what the counters show, not a
 promise that a larger grid is faster.
+
+### Tracked artifacts and independent reproduction
+
+The counters are now a tracked evidence pair rather than a scratch capture:
+
+- [cuda_resident_cp_resource_evidence_20260810.json](cuda_resident_cp_resource_evidence_20260810.json)
+  — the v2 static/topology parent.
+- [cuda_resident_cp_counter_evidence_20260810.json](cuda_resident_cp_counter_evidence_20260810.json)
+  — the achieved-counter capture, with `attempt.status=available`,
+  `collected_launch_count=12`, and
+  `cr2_5_disposition=achieved_counter_evidence_complete`.
+
+The counter report hashes its parent, and both files are marked `-text` so the
+link survives checkout under `core.autocrlf`.
+
+The capture was taken twice, in separate elevated sessions, with a GPU-lost
+driver fault (`nvlddmkm` Event ID 153) and a recovery in between. The second run
+reproduced the first independently: occupancy 8.32-11.38% versus 8.33-10.89%,
+and identical divergence, local, global, and shared values. Occupancy varies at
+the third significant figure because it is a sampled ratio; the memory and
+divergence counters are exact and did not move.
+
+All four authority flags remain false in the tracked artifact. Closing a
+measurement gate grants no promotion, maintained-support, or tuning authority —
+those require the separate recorded decision at CP-9.
 
 ## Constraints
 
