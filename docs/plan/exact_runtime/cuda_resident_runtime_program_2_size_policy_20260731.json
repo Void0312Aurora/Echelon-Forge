@@ -188,22 +188,22 @@
     {
       "path": "src/runtime/contracts/cuda_resident_resource_evidence_contract.h",
       "role": "frozen kernel catalog, launch topology, and capture retirement contract",
-      "observed_lines": 93
+      "observed_lines": 275
     },
     {
       "path": "src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp",
       "role": "fail-closed retirement stub for the legacy resource capture schema",
-      "observed_lines": 18
+      "observed_lines": 431
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_evidence.py",
       "role": "CR2-5a resource evidence validation and report orchestrator",
-      "observed_lines": 599
+      "observed_lines": 691
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_static.py",
       "role": "ptxas, cuobjdump resource, and SASS fail-closed parsers",
-      "observed_lines": 116
+      "observed_lines": 202
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_json_types.py",
@@ -213,12 +213,12 @@
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_schema.py",
       "role": "complete CR2-5a report schema and cross-section invariant validator",
-      "observed_lines": 396
+      "observed_lines": 455
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",
       "role": "resource evidence, retired-capture, fail-closed parser, and topology guards",
-      "observed_lines": 433
+      "observed_lines": 608
     },
     {
       "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",
@@ -228,7 +228,12 @@
     {
       "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
       "role": "CR2-5b Nsight Compute attempt and external-blocker evidence collector",
-      "observed_lines": 635
+      "observed_lines": 680
+    },
+    {
+      "path": "tools/diagnostics/cuda_resident_cr2_counter_parser.py",
+      "role": "CP-4c achieved-counter report parser and per-generation family units",
+      "observed_lines": 206
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",

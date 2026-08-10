@@ -11,9 +11,21 @@ from typing import Any
 
 if __package__:
     from . import cuda_resident_cr2_resource_evidence as resource
+    from .cuda_resident_cr2_counter_parser import (
+        COUNTER_FAMILIES,
+        COUNTER_FAMILY_UNITS,
+        export_counter_csv,
+        parse_counter_csv,
+    )
     from .cuda_resident_cr2_json_types import StrictJson
 else:
     import cuda_resident_cr2_resource_evidence as resource  # type: ignore[no-redef]
+    from cuda_resident_cr2_counter_parser import (  # type: ignore[no-redef]
+        COUNTER_FAMILIES,
+        COUNTER_FAMILY_UNITS,
+        export_counter_csv,
+        parse_counter_csv,
+    )
     from cuda_resident_cr2_json_types import StrictJson  # type: ignore[no-redef]
 
 
@@ -58,13 +70,6 @@ EXPECTED_CAPTURE = {
     "trace_signature_digest": "cb31675ee34e5015",
     "consumer_await_completed": True,
     "diagnostic_materialization_called": False,
-}
-COUNTER_FAMILIES = {
-    "achieved_occupancy": "ratio",
-    "branch_divergence": "ratio",
-    "global_memory_traffic": "bytes",
-    "local_memory_traffic": "bytes",
-    "shared_memory_traffic": "bytes",
 }
 TOP_LEVEL_KEYS = {
     "schema_version",
@@ -262,7 +267,24 @@ def _empty_counter_families() -> dict[str, dict[str, Any]]:
 
 def _validate_families(status: str, families: object) -> None:
     families = _STRICT.object(families, set(COUNTER_FAMILIES), "counter families")
-    for family, unit in COUNTER_FAMILIES.items():
+    # A report declares exactly one generation's unit map. Compare the observed
+    # map as a whole rather than per family: the two ratio families share a unit
+    # across generations, so a per-family scan would accept a report that mixed
+    # v1 and v2 memory units.
+    observed_units = {}
+    for family in COUNTER_FAMILIES:
+        row = families[family]
+        _require(isinstance(row, dict), f"{family} is not an object")
+        observed_units[family] = row.get("unit")  # type: ignore[union-attr]
+    candidates = [
+        units for units in COUNTER_FAMILY_UNITS.values() if observed_units == units
+    ]
+    _require(
+        len(candidates) == 1,
+        f"counter family units do not match exactly one generation: {observed_units}",
+    )
+    expected_units = candidates[0]
+    for family, unit in expected_units.items():
         row = _STRICT.object(families[family], FAMILY_KEYS, family)
         _STRICT.exact_scalar(row["unit"], unit, f"{family}.unit")
         if status != "available":
@@ -511,14 +533,29 @@ def build_report(
         len(connected) == 1 and disconnected == connected, "profiler process lifecycle drifted"
     )
     if completed.returncode == 0:
-        raise CounterEvidenceError(
-            "NCU completed successfully; a reviewed hardware-counter report parser is required"
+        _require(ncu_report.exists(), "NCU reported success without writing a report")
+        _require(
+            not parsed["permission_denied"],
+            "NCU reported success but the log still contains a permission denial",
         )
-    external = parsed["permission_denied"] and not ncu_report.exists()
-    status = "external_blocked" if external else "collection_failed"
-    blocker_code = PERMISSION_CODE if external else None
-    blocker_kind = "external_permission" if external else None
-    error_hash = parsed["permission_line_sha256"] if external else None
+        counters = parse_counter_csv(
+            export_counter_csv(args.ncu, ncu_report),
+            resource.probe_generation(probe),
+        )
+        status = "available"
+        collected_launch_count = REQUIRED_LAUNCH_COUNT
+        achieved_counters = counters["families"]
+        blocker_code = None
+        blocker_kind = None
+        error_hash = None
+    else:
+        external = parsed["permission_denied"] and not ncu_report.exists()
+        status = "external_blocked" if external else "collection_failed"
+        collected_launch_count = 0
+        achieved_counters = _empty_counter_families()
+        blocker_code = PERMISSION_CODE if external else None
+        blocker_kind = "external_permission" if external else None
+        error_hash = parsed["permission_line_sha256"] if external else None
     attempt = {
         "status": status,
         "exit_code": completed.returncode,
@@ -529,11 +566,12 @@ def build_report(
         "blocker_code": blocker_code,
         "blocker_kind": blocker_kind,
         "required_launch_count": REQUIRED_LAUNCH_COUNT,
-        "collected_launch_count": 0,
+        "collected_launch_count": collected_launch_count,
         "log_error_codes": parsed["error_codes"],
         "recognized_error_line_sha256": error_hash,
     }
     dispositions = {
+        "available": "achieved_counter_evidence_complete",
         "external_blocked": "documented_external_blocker",
         "collection_failed": "collection_failed",
     }
@@ -584,7 +622,7 @@ def build_report(
             ],
         },
         "attempt": attempt,
-        "achieved_counters": _empty_counter_families(),
+        "achieved_counters": achieved_counters,
         "interpretation": {
             "cr2_5a_resource_evidence_validated": True,
             "theoretical_occupancy_is_not_achieved_occupancy": True,
@@ -595,9 +633,12 @@ def build_report(
         "gates": {
             "cr2_5a_static_resource_complete": parent["gates"]["cr2_5a_static_resource_complete"],
             "cr2_5a_launch_topology_complete": parent["gates"]["cr2_5a_launch_topology_complete"],
-            "cr2_5b_counter_attempt_complete": status == "external_blocked",
-            "cr2_5_achieved_counter_gate_complete": False,
+            "cr2_5b_counter_attempt_complete": status in {"available", "external_blocked"},
+            "cr2_5_achieved_counter_gate_complete": status == "available",
             "cr2_5_disposition": dispositions[status],
+            # Collecting counters closes a measurement gate. It does not grant
+            # promotion, maintained support, or tuning authority: those need a
+            # separate recorded decision with an independent review.
             "maintained_claim_allowed": False,
             "public_support_enabled": False,
             "promotion_allowed": False,
