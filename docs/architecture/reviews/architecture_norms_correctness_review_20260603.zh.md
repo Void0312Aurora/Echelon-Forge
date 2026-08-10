@@ -111,7 +111,8 @@ interfaces/python
 
 ### 2.4 领域建模与 DDD-like 边界：文档设计强，代码处于兼容迁移期
 
-`docs/standards/README.zh.md` 明确区分：
+评审时的 `docs/standards/` 根（已于所有权迁移中退役，见
+`git show e8dc0b29~1:docs/standards/README.zh.md`）明确区分：
 
 - `foundation/` 与 `bridge/`：跨域规则、runtime workflow、DTO/contract 约束
 - `joint/`：跨军种共享语义、authority、command relationship

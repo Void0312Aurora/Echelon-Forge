@@ -41,7 +41,7 @@ P4 计划使用以下 artifact family。路径是后续 P4 执行或 review pack
 
 | Artifact | 建议路径 | Schema / 内容 |
 | --- | --- | --- |
-| case grid | `docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_p4/case_grid_*.jsonl` | 每行包含 P3 `identity` 和 `launch_window` 字段。 |
+| case grid | `docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/case_grid_*.jsonl` | 每行包含 P3 `identity` 和 `launch_window` 字段。 |
 | before report | `.../before/<batch_id>.json` 或 `.jsonl` | 未改参数前的 heatmap report rows。 |
 | after report | `.../after/<layer_id>/<batch_id>.json` 或 `.jsonl` | 仅单层候选变更后的 heatmap report rows；P4 默认不生成。 |
 | delta guard | `.../guard/<layer_id>/<batch_id>.json` | P6 `a2.kill_chain_calibration_delta_guard.v1` 输出。 |

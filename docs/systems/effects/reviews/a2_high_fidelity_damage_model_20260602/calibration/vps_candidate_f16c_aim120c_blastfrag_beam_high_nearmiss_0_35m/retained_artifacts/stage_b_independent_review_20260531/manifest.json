@@ -1,0 +1,34 @@
+{
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531",
+  "artifacts": [
+    {
+      "allowed_claim": "independent review gate record for RES-007/008/010/011/012 is retained",
+      "artifact_key": "stage_b_independent_review_gate",
+      "content_sha256": "7a32b7b5c2ea48d743392549333930c851be459d974570eee50e9e441d3c7ce3",
+      "filename": "stage_b_independent_review_gate.json",
+      "forbidden_claim": "release readiness, stock runtime authority, validation manifest promotion, component-probability release, Pk authority, or deterministic-fuze authority",
+      "origin_class": "independent_review_gate_record_only",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
+      "schema_version": "a2.stage_b_independent_review_gate.v1",
+      "size_bytes": 19884,
+      "status": "independent_review_passed_release_blocked"
+    }
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "retained_origin_summary": {
+    "formal_validation_manifest_promoted": false,
+    "review_surface": "stage_b_effect_scale_independent_review_gate_only",
+    "runtime_origin": "no_stock_runtime_descriptor_review_artifact_only",
+    "stock_runtime_authority_present": false
+  },
+  "retention_scope": "stage_b_effect_scale_independent_review_gate_only",
+  "schema_version": "a2.stage_b_independent_review_retained_artifact_pack.v1",
+  "status": "independent_review_retained_release_blocked"
+}

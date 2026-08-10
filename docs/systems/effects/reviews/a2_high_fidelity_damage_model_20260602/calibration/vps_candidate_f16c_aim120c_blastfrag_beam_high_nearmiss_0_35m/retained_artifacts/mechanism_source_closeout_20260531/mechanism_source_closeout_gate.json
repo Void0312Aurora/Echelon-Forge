@@ -1,0 +1,673 @@
+{
+  "behavior_risks": [
+    "engineering hitboxes could be mistaken for true vulnerability geometry if the RES-003 boundary is ignored",
+    "AIM-120C-class toy inputs could be mistaken for variant-specific warhead or fuze truth if RES-004 is ignored",
+    "fragment and blast toy probes could be mistaken for calibrated mechanism authority if Stage B/C author-side status is ignored"
+  ],
+  "closed_author_side_subitems": {
+    "RES-003": [
+      "public outer-dimension anchors and rough component-region assumptions are traceable",
+      "unsupported material, occlusion and exposed-area rows are explicitly marked out of authority"
+    ],
+    "RES-004": [
+      "AIM-120C-class blast-fragmentation family label is separated from variant-specific truth",
+      "third-party and game/forum warhead or fuze values are sanity-only or rejected"
+    ],
+    "RES-005": [
+      "fragment sampler, areal-density bookkeeping and source-trace hard gates pass in the author-side snapshot",
+      "Stage C component row gate band covers current fragment-energy and penetration proxy fields"
+    ],
+    "RES-006": [
+      "blast scaled-distance/unit/source-trace hard gates pass in the author-side snapshot",
+      "DENIX TP-20/BEC-O public artifact existence and sha256 are recorded as candidate-only evidence"
+    ]
+  },
+  "closeout_checks": [
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "public F-16 outer-dimension and rough component anchors are recorded, but internal geometry, material, occlusion and exposed-area truth remain unsupported; engineering hitboxes are not calibrated vulnerability geometry",
+      "check_id": "CLOSEOUT-RES003-001",
+      "closeout_surface": "target_geometry_source_and_assumption_trace",
+      "observed_author_side_evidence": {
+        "pin_evidence": {
+          "authority_boundaries": {
+            "PIN-F16-001": "\u4e0d\u662f\u5185\u90e8\u7ec4\u4ef6\u51e0\u4f55\u3001\u6750\u6599\u6216 vulnerability truth",
+            "PIN-F16-002": "\u4e0d\u662f F-16 \u5b89\u88c5\u8fb9\u754c\u3001\u9644\u4ef6\u3001\u7ba1\u8def\u6216 vulnerability truth",
+            "PIN-F16-003": "\u4e0d\u662f F-16C Block 50 geometry authority"
+          },
+          "pin_ids": [
+            "PIN-F16-001",
+            "PIN-F16-002",
+            "PIN-F16-003"
+          ],
+          "rejected_pin_ids": [],
+          "release_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [],
+          "sanity_only_pin_ids": [
+            "PIN-F16-003"
+          ],
+          "verified_candidate_artifact_ids": []
+        },
+        "source_evidence": {
+          "candidate_boundary_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ],
+          "ledger_has_non_authoritative_boundary": true,
+          "ledger_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+          "missing_source_ids": [],
+          "present_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ],
+          "rejected_or_pending_source_ids": [],
+          "rows": [
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "F16-TG-SRC-001"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "F16-TG-SRC-002"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "F16-TG-SRC-004"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "F16-TG-SRC-005"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "F16-TG-SRC-012"
+            }
+          ],
+          "selected_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ]
+        },
+        "source_trace_gate_pass": true,
+        "target_geometry_assumption_summary": {
+          "artifact_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+          "author_status": "frozen_for_stage_b_review_only",
+          "target_type": "F-16C_Block50",
+          "unsupported_row_count": 2,
+          "used_by_stage_b_yes_count": 2
+        }
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "row-level geometry provenance and uncertainty bounds for any witness or component projection",
+        "independent review that confirms repo hitboxes are engineering scaffolds, not F-16 vulnerability geometry",
+        "release-grade decision on whether unsupported material, occlusion and exposed-area truth stay out of scope"
+      ],
+      "residual_id": "RES-003",
+      "status": "blocked_release_grade_evidence_missing"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "the current assumption manifest marks unsupported geometry rows, but it has not converted hitbox assumptions into reviewed error bounds",
+      "check_id": "CLOSEOUT-RES003-002",
+      "closeout_surface": "engineering_hitbox_authority_boundary",
+      "observed_author_side_evidence": {
+        "forbidden_interpretation": "repo scaffold and beam witness geometry are bookkeeping inputs only",
+        "unsupported_row_count": 2,
+        "used_by_stage_b_yes_count": 2
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "reviewer-frozen hitbox usage policy for Stage B and Stage C",
+        "explicit error model for coarse witness geometry or a narrower no-geometry authority claim"
+      ],
+      "residual_id": "RES-003",
+      "status": "blocked_release_grade_evidence_missing"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "family-level blast-fragmentation scope and public TDD terminology are recorded, but no admitted source binds AIM-120C-class toy inputs to variant-specific warhead mass, fragment pattern, TNT equivalent or fuze truth",
+      "check_id": "CLOSEOUT-RES004-001",
+      "closeout_surface": "warhead_family_scope_and_public_terms",
+      "observed_author_side_evidence": {
+        "pin_evidence": {
+          "authority_boundaries": {
+            "PIN-AIM120-001": "\u4e0d\u652f\u6301 trigger threshold\u3001delay\u3001reliability \u6216 deterministic fuze",
+            "PIN-AIM120-002": "\u4e0d\u662f AIM-120C explosive truth \u6216 calibrated effect row",
+            "PIN-AIM120-TPC-001": "\u7edd\u4e0d\u5199\u6210 AIM-120C mass truth \u6216 runtime row",
+            "PIN-AIM120-TPC-REJ": "DCS / War Thunder / forum / tabletop values \u6c38\u4e0d\u8fdb\u5165 authority path"
+          },
+          "pin_ids": [
+            "PIN-AIM120-001",
+            "PIN-AIM120-002",
+            "PIN-AIM120-TPC-001",
+            "PIN-AIM120-TPC-REJ"
+          ],
+          "rejected_pin_ids": [
+            "PIN-AIM120-TPC-REJ"
+          ],
+          "release_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [],
+          "sanity_only_pin_ids": [
+            "PIN-AIM120-TPC-001"
+          ],
+          "verified_candidate_artifact_ids": [
+            "PIN-AIM120-001",
+            "PIN-AIM120-002"
+          ]
+        },
+        "source_evidence": {
+          "candidate_boundary_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-001",
+            "PHYS-BF-006"
+          ],
+          "ledger_has_non_authoritative_boundary": true,
+          "ledger_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+          "missing_source_ids": [],
+          "present_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-001",
+            "PHYS-BF-002",
+            "PHYS-BF-006"
+          ],
+          "rejected_or_pending_source_ids": [],
+          "rows": [
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "AIM120-WF-002"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "AIM120-WF-006"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "AIM120-WF-007"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "PHYS-BF-001"
+            },
+            {
+              "candidate_boundary_present": false,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "PHYS-BF-002"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "PHYS-BF-006"
+            }
+          ],
+          "selected_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-001",
+            "PHYS-BF-002",
+            "PHYS-BF-006"
+          ]
+        },
+        "warhead_scope_summary": {
+          "artifact_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+          "consumed_by_surrogate_yes_count": 3,
+          "rejected_rows": 1,
+          "weapon_class": "AIM-120C-class",
+          "weapon_family": "blast_fragmentation"
+        }
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "reviewer-frozen separation between AIM-120C-class family label and variant-specific warhead truth",
+        "release-grade sensitivity envelope that does not consume third-party mass claims as calibrated inputs",
+        "explicit no-fuze/no-Pk interlock for any warhead-scope closeout"
+      ],
+      "residual_id": "RES-004",
+      "status": "blocked_release_grade_evidence_missing"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "the scope manifest distinguishes toy numeric consumption from rejected community parameters, but the toy input is still not calibrated AIM-120C warhead authority",
+      "check_id": "CLOSEOUT-RES004-002",
+      "closeout_surface": "warhead_numeric_sensitivity_and_rejection_guard",
+      "observed_author_side_evidence": {
+        "candidate_input_boundary": "repo-authored AIM-120C-class family envelope scaffold; non-authoritative and not a claim of real C-model warhead/fuze truth",
+        "consumed_by_surrogate_yes_count": 3,
+        "forbidden_interpretation": "AIM-120C-class repo warhead values remain toy candidate inputs",
+        "rejected_rows": 1
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "hash-pinned sensitivity configuration for repo toy warhead inputs",
+        "reviewer signoff that third-party/forum/game values remain sanity-only or rejected"
+      ],
+      "residual_id": "RES-004",
+      "status": "blocked_release_grade_evidence_missing"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "Mott/Marsaglia/debris vocabulary and fragment bookkeeping sources are present, but the current fragment cloud remains a toy proxy without validated mass, velocity, direction pattern, areal density or penetration authority",
+      "check_id": "CLOSEOUT-RES005-001",
+      "closeout_surface": "fragment_method_source_chain",
+      "observed_author_side_evidence": {
+        "pin_evidence": {
+          "authority_boundaries": {
+            "PIN-BFM-002": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+          },
+          "pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "rejected_pin_ids": [],
+          "release_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "sanity_only_pin_ids": [],
+          "verified_candidate_artifact_ids": [
+            "PIN-BFM-002"
+          ]
+        },
+        "source_evidence": {
+          "candidate_boundary_source_ids": [
+            "VPS-BFM-001",
+            "VPS-BFM-010",
+            "VPS-BFM-015"
+          ],
+          "ledger_has_non_authoritative_boundary": true,
+          "ledger_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+          "missing_source_ids": [],
+          "present_source_ids": [
+            "VPS-BFM-001",
+            "VPS-BFM-006",
+            "VPS-BFM-010",
+            "VPS-BFM-011",
+            "VPS-BFM-013",
+            "VPS-BFM-015"
+          ],
+          "rejected_or_pending_source_ids": [],
+          "rows": [
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-001"
+            },
+            {
+              "candidate_boundary_present": false,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-006"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-010"
+            },
+            {
+              "candidate_boundary_present": false,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-011"
+            },
+            {
+              "candidate_boundary_present": false,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-013"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-015"
+            }
+          ],
+          "selected_source_ids": [
+            "VPS-BFM-001",
+            "VPS-BFM-006",
+            "VPS-BFM-010",
+            "VPS-BFM-011",
+            "VPS-BFM-013",
+            "VPS-BFM-015"
+          ]
+        },
+        "stage_b_reviewed_benchmarks": [
+          "BFM-BM-001",
+          "BFM-BM-003",
+          "BFM-BM-005",
+          "BFM-BM-006"
+        ]
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "official Gurney artifact or explicit exclusion from the release method chain",
+        "retained TP-21 artifact ref plus reviewer-frozen debris vocabulary usage boundary",
+        "fragment direction pattern, casing breakup and velocity attenuation assumptions with reviewable uncertainty"
+      ],
+      "residual_id": "RES-005",
+      "status": "blocked_release_grade_evidence_missing"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "author-side Stage B/C evidence exercises fragment load fields and gate bands, but those checks are explicitly toy/integration hygiene, not calibrated fragment mechanism validation",
+      "check_id": "CLOSEOUT-RES005-002",
+      "closeout_surface": "fragment_mechanism_load_evidence",
+      "observed_author_side_evidence": {
+        "bm005_audit_outcome": "candidate_hygiene_only_not_independent_validation",
+        "fragment_areal_density_cv": 0.013556475680557211,
+        "fragment_energy_cv": 0.0,
+        "mechanism_load_vector": {
+          "blast_scaled_distance_m_kg13": 0.12894110245241353,
+          "fragment_areal_density_per_m2": 2.2375438053115406,
+          "surface_incidence_cos": 1.0
+        },
+        "stage_c_gate_band_fragment_energy_pass": true,
+        "stage_c_gate_band_penetration_pass": true
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "fragment benchmark that compares retained public/reference outputs or measured data under frozen tolerances",
+        "independent review that the toy fragment probe is not being used as calibrated fragment authority"
+      ],
+      "residual_id": "RES-005",
+      "status": "blocked_release_grade_evidence_missing"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "IATG/UFC and DENIX TP-20/BEC-O candidate routes are recorded, but original-report acquisition, retained comparison outputs and scope-specific blast coupling remain open",
+      "check_id": "CLOSEOUT-RES006-001",
+      "closeout_surface": "blast_method_source_chain",
+      "observed_author_side_evidence": {
+        "pin_evidence": {
+          "authority_boundaries": {
+            "PIN-AIM120-002": "\u4e0d\u662f AIM-120C explosive truth \u6216 calibrated effect row",
+            "PIN-BFM-001": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+          },
+          "pin_ids": [
+            "PIN-AIM120-002",
+            "PIN-BFM-001"
+          ],
+          "rejected_pin_ids": [],
+          "release_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [
+            "PIN-BFM-001"
+          ],
+          "sanity_only_pin_ids": [],
+          "verified_candidate_artifact_ids": [
+            "PIN-AIM120-002",
+            "PIN-BFM-001"
+          ]
+        },
+        "source_evidence": {
+          "candidate_boundary_source_ids": [
+            "VPS-BFM-001",
+            "VPS-BFM-002",
+            "VPS-BFM-003",
+            "VPS-BFM-014"
+          ],
+          "ledger_has_non_authoritative_boundary": true,
+          "ledger_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+          "missing_source_ids": [],
+          "present_source_ids": [
+            "VPS-BFM-001",
+            "VPS-BFM-002",
+            "VPS-BFM-003",
+            "VPS-BFM-014"
+          ],
+          "rejected_or_pending_source_ids": [
+            "VPS-BFM-003"
+          ],
+          "rows": [
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-001"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-002"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": true,
+              "source_id": "VPS-BFM-003"
+            },
+            {
+              "candidate_boundary_present": true,
+              "present": true,
+              "rejected_or_pending": false,
+              "source_id": "VPS-BFM-014"
+            }
+          ],
+          "selected_source_ids": [
+            "VPS-BFM-001",
+            "VPS-BFM-002",
+            "VPS-BFM-003",
+            "VPS-BFM-014"
+          ]
+        },
+        "stage_b_reviewed_benchmarks": [
+          "BFM-BM-001",
+          "BFM-BM-003",
+          "BFM-BM-005",
+          "BFM-BM-006"
+        ]
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "Kingery-Bulmash official artifact or explicit exclusion from release comparison",
+        "canonical TP-20/BEC-O retained refs, package/version freeze and comparison-output hashes",
+        "reviewed blast applicability envelope for TNT equivalent, airburst geometry, reflection and aircraft coupling"
+      ],
+      "residual_id": "RES-006",
+      "status": "blocked_release_grade_evidence_missing"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "author-side blast scaled-distance and impulse checks pass the current toy hard gates, but the blast probe remains a proxy and cannot be treated as calibrated blast mechanism authority",
+      "check_id": "CLOSEOUT-RES006-002",
+      "closeout_surface": "blast_mechanism_load_evidence",
+      "observed_author_side_evidence": {
+        "blast_impulse_cv": 0.0,
+        "mechanism_load_vector": {
+          "blast_scaled_distance_m_kg13": 0.12894110245241353,
+          "fragment_areal_density_per_m2": 2.2375438053115406,
+          "surface_incidence_cos": 1.0
+        },
+        "source_trace_gate_pass": true,
+        "stage_b_all_hard_gates_pass": true,
+        "stage_c_gate_band_blast_impulse_pass": true,
+        "stage_c_gate_band_surface_incidence_pass": true
+      },
+      "release_grade_satisfied": false,
+      "remaining_release_grade_requirements": [
+        "blast curve comparison against retained public-tool or reviewed benchmark outputs",
+        "independent review that blast toy proxy outputs are not calibrated pressure/impulse authority"
+      ],
+      "residual_id": "RES-006",
+      "status": "blocked_release_grade_evidence_missing"
+    }
+  ],
+  "closeout_decision": {
+    "author_side_subitems_recorded": true,
+    "authority_release_included": false,
+    "closed_residual_ids_by_this_gate": [],
+    "mechanism_source_closeout_blocked": true,
+    "mechanism_source_closeout_ready": false
+  },
+  "current_gate_results": {
+    "RES-003": "blocked_author_side_review_ready",
+    "RES-004": "blocked_author_side_review_ready",
+    "RES-005": "blocked_author_side_review_ready",
+    "RES-006": "blocked_author_side_review_ready"
+  },
+  "doc_refs": {
+    "artifact_pin_manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
+    "mechanism_model_source_ledger": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+    "residual_register": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+    "source_trace_manifest_gate": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/validation/bfm_bm_006_source_trace_manifest_gate_20260528.zh.md",
+    "stage_b_result_pack": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_b_effect_scale_20260530.zh.md",
+    "stage_c_result_pack": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_c_component_probability_20260530.zh.md",
+    "target_geometry_assumptions": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+    "target_geometry_source_ledger": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+    "vps_blastfrag_source_ledger": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+    "warhead_scope_and_sensitivity": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+    "warhead_source_ledger": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/aim120c_warhead_fuze/source_ledger.zh.md"
+  },
+  "documentation_status": {
+    "placeholder_hits": [],
+    "ready_for_review": true
+  },
+  "integration_notes": [
+    "this gate does not update residual_register.zh.md; it records the current review lane result only",
+    "RES-013 Pk and RES-014 deterministic fuze remain outside this mechanism/source closeout lane",
+    "any future bundle integration should consume current_gate_results and non_authoritative_guards together"
+  ],
+  "mechanism_load_evidence_summary": {
+    "mechanism_load_vector": {
+      "blast_scaled_distance_m_kg13": 0.12894110245241353,
+      "fragment_areal_density_per_m2": 2.2375438053115406,
+      "surface_incidence_cos": 1.0
+    },
+    "stage_b_all_hard_gates_pass": true,
+    "stage_b_bm005_audit_outcome": "candidate_hygiene_only_not_independent_validation",
+    "stage_b_result_pack_status": "candidate_non_authoritative_stage_b_result_pack",
+    "stage_b_review_status": "author_snapshot_only_pending_independent_review",
+    "stage_b_snapshot_status": "candidate_non_authoritative_stage_b_snapshot",
+    "stage_c_baseline_component_probability_source": "synthetic_sigmoid",
+    "stage_c_result_pack_status": "candidate_non_authoritative_stage_c_component_probability_result_pack",
+    "validation_scaffold_status": "not_run"
+  },
+  "non_authoritative_guards": {
+    "aim120c_warhead_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "target_geometry_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "readiness_level": "author_side_evidence_present_but_calibrated_authority_blocked",
+  "remaining_release_grade_paths": {
+    "RES-003": [
+      "freeze row-level geometry provenance and uncertainty bounds",
+      "obtain independent review that repo hitboxes are not true F-16 vulnerability geometry"
+    ],
+    "RES-004": [
+      "freeze release-grade warhead class/sensitivity envelope without consuming toy mass as AIM-120C truth",
+      "keep deterministic fuze and Pk outside this gate unless a separate evidence chain exists"
+    ],
+    "RES-005": [
+      "resolve Gurney official artifact or explicitly exclude it from the release method chain",
+      "freeze fragment pattern, casing, velocity and TP-21 retained/reference-output evidence with reviewer signoff"
+    ],
+    "RES-006": [
+      "resolve Kingery-Bulmash official artifact or explicitly exclude it from release comparison",
+      "freeze TP-20/BEC-O retained refs, comparison-output hashes, tolerances and blast applicability envelope"
+    ]
+  },
+  "residual_condition_trace": [
+    {
+      "author_side_satisfied_check_ids": [
+        "CLOSEOUT-RES003-001",
+        "CLOSEOUT-RES003-002"
+      ],
+      "gate_result": "blocked_author_side_review_ready",
+      "release_grade_blocking_check_ids": [
+        "CLOSEOUT-RES003-001",
+        "CLOSEOUT-RES003-002"
+      ],
+      "residual_id": "RES-003"
+    },
+    {
+      "author_side_satisfied_check_ids": [
+        "CLOSEOUT-RES004-001",
+        "CLOSEOUT-RES004-002"
+      ],
+      "gate_result": "blocked_author_side_review_ready",
+      "release_grade_blocking_check_ids": [
+        "CLOSEOUT-RES004-001",
+        "CLOSEOUT-RES004-002"
+      ],
+      "residual_id": "RES-004"
+    },
+    {
+      "author_side_satisfied_check_ids": [
+        "CLOSEOUT-RES005-001",
+        "CLOSEOUT-RES005-002"
+      ],
+      "gate_result": "blocked_author_side_review_ready",
+      "release_grade_blocking_check_ids": [
+        "CLOSEOUT-RES005-001",
+        "CLOSEOUT-RES005-002"
+      ],
+      "residual_id": "RES-005"
+    },
+    {
+      "author_side_satisfied_check_ids": [
+        "CLOSEOUT-RES006-001",
+        "CLOSEOUT-RES006-002"
+      ],
+      "gate_result": "blocked_author_side_review_ready",
+      "release_grade_blocking_check_ids": [
+        "CLOSEOUT-RES006-001",
+        "CLOSEOUT-RES006-002"
+      ],
+      "residual_id": "RES-006"
+    }
+  ],
+  "review_target": "res_003_004_005_006_mechanism_source_closeout_lane",
+  "schema_version": "a2.mechanism_source_closeout_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "closure_bucket": "high",
+    "miss_distance_bucket": "near_miss_0_35m",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "blocked_non_authoritative_mechanism_source_closeout_candidate"
+}

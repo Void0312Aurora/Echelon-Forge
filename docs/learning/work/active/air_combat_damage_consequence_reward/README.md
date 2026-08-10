@@ -21,7 +21,7 @@ Language:
 Inputs:
 
 - Learning owner: [../../../README.md](../../../README.md)
-- A2 sealed package: [../../archive/a2_high_fidelity_damage_model/README.md](../../../../task/air_combat/archive/a2_high_fidelity_damage_model/README.md)
+- A2 sealed package: [../../archive/a2_high_fidelity_damage_model/README.md](../../../../../README.md)
 - A8 damage-effect chain: [../../archive/a8_damage_effect_chain/README.md](../../../../systems/effects/reviews/damage_effect_chain_20260608/README.md)
 - Air execution owner: [../../../../domains/air/README.md](../../../../domains/air/README.md)
 - Reward runtime entry: [../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)

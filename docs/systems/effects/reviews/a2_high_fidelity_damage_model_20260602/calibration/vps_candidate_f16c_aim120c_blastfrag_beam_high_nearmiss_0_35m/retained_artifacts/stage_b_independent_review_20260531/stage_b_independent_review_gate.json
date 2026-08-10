@@ -1,0 +1,521 @@
+{
+  "beam_high_scope_leakage_review": {
+    "accepted_scope_labels": [
+      "beam"
+    ],
+    "checks": [
+      {
+        "check_id": "IR-RES008-001",
+        "pass": true,
+        "summary": "author-side beam/high scope closeout is complete"
+      },
+      {
+        "check_id": "IR-RES008-002",
+        "pass": true,
+        "summary": "closure sensitivity uses the retained 700/900/1100 mps probe set"
+      },
+      {
+        "check_id": "IR-RES008-003",
+        "pass": true,
+        "summary": "closure response is active and not constant across retained rows"
+      },
+      {
+        "check_id": "IR-RES008-004",
+        "pass": true,
+        "summary": "closure probe remains inside the runtime near_miss bucket"
+      },
+      {
+        "check_id": "IR-RES008-005",
+        "pass": true,
+        "summary": "aspect guard accepts only beam"
+      },
+      {
+        "check_id": "IR-RES008-006",
+        "pass": true,
+        "summary": "aspect guard rejects all retained out-of-scope labels"
+      },
+      {
+        "check_id": "IR-RES008-007",
+        "pass": true,
+        "summary": "author-side probe did not self-close RES-008 or claim independent review"
+      }
+    ],
+    "closure_probe_id": "SCP-PROBE-002",
+    "closure_probe_mps": [
+      700.0,
+      900.0,
+      1100.0
+    ],
+    "register_status_after_review": "remains_open_release_blocked",
+    "rejected_scope_labels": [
+      "head_on",
+      "tail_chase",
+      "high_off_boresight",
+      "direct_hit",
+      "closure_bucket != high",
+      "weapon_family != blast_fragmentation"
+    ],
+    "release_dependency": "closure physics authority remains blocked by open target, warhead, fragment and blast mechanism-source residuals",
+    "release_gate_result": "blocked_by_mechanism_source_residuals",
+    "residual_id": "RES-008",
+    "review_area": "beam_high_scope_leakage",
+    "review_finding": "beam/high scope leakage checks pass: only the beam label is accepted and the retained closure probe stays inside the candidate scope",
+    "review_gate_result": "review_passed"
+  },
+  "benchmark_input_independence_review": {
+    "benchmark_independence_rows": [
+      {
+        "allowed_claim": "candidate blast unit/domain lock only",
+        "audit_outcome": "candidate_method_independence_only",
+        "benchmark_id": "BFM-BM-001",
+        "current_release_role": "unit_domain_lock",
+        "forbidden_claim": "external blast truth or missile-specific validation truth",
+        "independence_class": "partial_independent_method_only"
+      },
+      {
+        "allowed_claim": "toy fragment mass-energy sanity only",
+        "audit_outcome": "deferred_not_release_gating",
+        "benchmark_id": "BFM-BM-002",
+        "current_release_role": "deferred_fragment_sanity",
+        "forbidden_claim": "AIM-120C fragment truth or release gating",
+        "independence_class": "synthetic_only"
+      },
+      {
+        "allowed_claim": "sampling replay and convergence inside witness-geometry bookkeeping",
+        "audit_outcome": "candidate_sampling_hygiene_only",
+        "benchmark_id": "BFM-BM-003",
+        "current_release_role": "sampler_reproducibility_and_convergence",
+        "forbidden_claim": "true F-16 exposure geometry or direction-pattern truth",
+        "independence_class": "independent_for_sampler_replay_not_for_target_truth"
+      },
+      {
+        "allowed_claim": "formula-shape and domain-rejection hygiene only",
+        "audit_outcome": "deferred_not_release_gating",
+        "benchmark_id": "BFM-BM-004",
+        "current_release_role": "deferred_penetration_domain_hygiene",
+        "forbidden_claim": "aircraft component penetration truth or release gating",
+        "independence_class": "partial_independent_method_only"
+      },
+      {
+        "allowed_claim": "integrated mechanism-load bookkeeping hygiene only",
+        "audit_outcome": "candidate_hygiene_only_not_independent_validation",
+        "benchmark_id": "BFM-BM-005",
+        "current_release_role": "integrated_mechanism_load_hygiene_only",
+        "forbidden_claim": "independent surrogate validation or authority release by itself",
+        "independence_class": "not_independent_real_validation"
+      },
+      {
+        "allowed_claim": "administrative trace and rights gate only",
+        "audit_outcome": "administrative_gate_only",
+        "benchmark_id": "BFM-BM-006",
+        "current_release_role": "source_trace_and_rights_gate",
+        "forbidden_claim": "physics validation by itself",
+        "independence_class": "administratively_independent"
+      }
+    ],
+    "checks": [
+      {
+        "check_id": "IR-RES012-001",
+        "pass": true,
+        "summary": "author-side benchmark/input dependency trace is complete"
+      },
+      {
+        "check_id": "IR-RES012-002",
+        "pass": true,
+        "summary": "all six Stage B benchmark independence rows are retained"
+      },
+      {
+        "check_id": "IR-RES012-003",
+        "pass": true,
+        "summary": "integrated BFM-BM-005 remains explicitly not independent real validation"
+      },
+      {
+        "check_id": "IR-RES012-004",
+        "pass": true,
+        "summary": "administrative BFM-BM-006 is not used as physics validation"
+      },
+      {
+        "check_id": "IR-RES012-005",
+        "pass": true,
+        "summary": "independence closeout remains release-blocked rather than self-promoting"
+      }
+    ],
+    "register_status_after_review": "remains_open_release_blocked",
+    "release_dependency": "release-grade independence cannot be promoted until source provenance, surrogate identity and mechanism-source residuals close",
+    "release_gate_result": "blocked_by_provenance_identity_and_source_residuals",
+    "residual_id": "RES-012",
+    "review_area": "benchmark_input_independence",
+    "review_finding": "the retained benchmark/input separation audit is review-passing because it preserves limited roles and forbidden claims explicitly",
+    "review_gate_result": "review_passed"
+  },
+  "current_findings": [
+    "RES-007/008/010/011/012 have review-passing independent-review checks against the retained author-side Stage B closeout surface",
+    "the review pass does not promote validation_manifest_status and does not convert the hard-gate pass into release authority",
+    "release remains blocked by RES-001/002 plus target, warhead, fragment and blast mechanism-source residuals"
+  ],
+  "explicit_boundaries": [
+    "do not treat review_passed as release_ready",
+    "do not promote validation_manifest_status to validated from this gate",
+    "do not release stock runtime authority or create a stock descriptor",
+    "do not release Stage C component probability, Pk or deterministic fuze authority"
+  ],
+  "focused_residual_ids": [
+    "RES-007",
+    "RES-008",
+    "RES-010",
+    "RES-011",
+    "RES-012"
+  ],
+  "generated_on": "2026-05-31",
+  "model_reasoning_record": "inherited_from_parent_no_override_requested",
+  "near_miss_bucket_review": {
+    "checks": [
+      {
+        "check_id": "IR-RES007-001",
+        "pass": true,
+        "summary": "author-side near-miss bucket closeout is complete"
+      },
+      {
+        "check_id": "IR-RES007-002",
+        "pass": true,
+        "summary": "bucket sensitivity uses the retained 0.25/0.35/0.45 m probe set"
+      },
+      {
+        "check_id": "IR-RES007-003",
+        "pass": true,
+        "summary": "0.35 m anchor is present and retained in the probe rows"
+      },
+      {
+        "check_id": "IR-RES007-004",
+        "pass": true,
+        "summary": "blast scaled distance is monotonic increasing across the probe set"
+      },
+      {
+        "check_id": "IR-RES007-005",
+        "pass": true,
+        "summary": "fragment areal density is monotonic decreasing across the probe set"
+      },
+      {
+        "check_id": "IR-RES007-006",
+        "pass": true,
+        "summary": "all retained probe rows stay in the runtime coarse near_miss bucket"
+      },
+      {
+        "check_id": "IR-RES007-007",
+        "pass": true,
+        "summary": "author-side closeout still keeps release blocked rather than self-promoting"
+      }
+    ],
+    "probe_id": "SCP-PROBE-001",
+    "register_status_after_review": "remains_open_release_blocked",
+    "release_dependency": "release interpretation remains blocked by upstream provenance, identity, target/warhead and mechanism-source residuals",
+    "release_gate_result": "blocked_by_upstream_release_dependencies",
+    "residual_id": "RES-007",
+    "review_area": "bucket_sensitivity",
+    "review_finding": "the retained three-point near-miss bucket sensitivity probe is internally consistent for independent-review purposes",
+    "review_gate_result": "review_passed",
+    "runtime_bucket": "near_miss",
+    "standoff_probe_m": [
+      0.25,
+      0.35,
+      0.45
+    ]
+  },
+  "non_authoritative_guards": {
+    "candidate_bundle_role": "independent_review_record_only",
+    "component_failure_probability_authority_granted": false,
+    "component_failure_probability_authority_in_stock": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "effect_scale_authority_in_stock": false,
+    "pk_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "readiness_gate_snapshot": {
+    "blocking_residual_ids": [
+      "RES-010",
+      "RES-002",
+      "RES-001",
+      "RES-008",
+      "RES-010",
+      "RES-012",
+      "RES-007",
+      "RES-011",
+      "RES-013/014-boundary"
+    ],
+    "hard_gate_pass_is_release": false,
+    "note": "this independent review gate is a review record; release integration must still keep upstream blockers before any readiness promotion",
+    "readiness_level": "author_side_candidate_review_ready_but_not_release_ready",
+    "status": "blocked_non_authoritative_stage_b_release_candidate"
+  },
+  "release_blocking_conditions": [
+    {
+      "blocker_id": "BLOCK-IR-001",
+      "residual_id": "RES-001",
+      "summary": "release-grade source provenance remains open"
+    },
+    {
+      "blocker_id": "BLOCK-IR-002",
+      "residual_id": "RES-002",
+      "summary": "release-grade surrogate identity remains open"
+    },
+    {
+      "blocker_id": "BLOCK-IR-003",
+      "residual_id": "RES-003",
+      "summary": "target geometry source and assumptions remain unaudited for release authority"
+    },
+    {
+      "blocker_id": "BLOCK-IR-004",
+      "residual_id": "RES-004",
+      "summary": "warhead class scope and sensitivity remain source-blocked"
+    },
+    {
+      "blocker_id": "BLOCK-IR-005",
+      "residual_id": "RES-005",
+      "summary": "fragment mechanism source residual remains open"
+    },
+    {
+      "blocker_id": "BLOCK-IR-006",
+      "residual_id": "RES-006",
+      "summary": "blast mechanism source residual remains open"
+    },
+    {
+      "blocker_id": "BLOCK-IR-007",
+      "residual_id": "RES-013/014-boundary",
+      "summary": "stock runtime, Pk and deterministic-fuze authority remain outside this gate"
+    }
+  ],
+  "release_decision": {
+    "blocked_even_when_hard_gates_pass": true,
+    "current_hard_gate_snapshot_pass": true,
+    "hard_gate_pass_is_release": false,
+    "release_blocked": true,
+    "release_blocked_by_residual_ids": [
+      "RES-001",
+      "RES-002",
+      "RES-003",
+      "RES-004",
+      "RES-005",
+      "RES-006",
+      "RES-013/014-boundary"
+    ],
+    "release_ready": false,
+    "stage_c_component_probability_release_included": false,
+    "stock_runtime_authority_granted": false
+  },
+  "release_target": "effect_scale_authority_only",
+  "residual_review_gate_results": [
+    {
+      "all_review_checks_pass": true,
+      "register_status_after_review": "remains_open_release_blocked",
+      "release_dependency": "release interpretation remains blocked by upstream provenance, identity, target/warhead and mechanism-source residuals",
+      "release_gate_result": "blocked_by_upstream_release_dependencies",
+      "residual_id": "RES-007",
+      "review_area": "bucket_sensitivity",
+      "review_gate_result": "review_passed"
+    },
+    {
+      "all_review_checks_pass": true,
+      "register_status_after_review": "remains_open_release_blocked",
+      "release_dependency": "closure physics authority remains blocked by open target, warhead, fragment and blast mechanism-source residuals",
+      "release_gate_result": "blocked_by_mechanism_source_residuals",
+      "residual_id": "RES-008",
+      "review_area": "beam_high_scope_leakage",
+      "review_gate_result": "review_passed"
+    },
+    {
+      "all_review_checks_pass": true,
+      "register_status_after_review": "remains_open_release_blocked",
+      "release_dependency": "formal validation result promotion waits on release-grade provenance, identity, target/warhead assumptions and mechanism-source residual closure",
+      "release_gate_result": "blocked_formal_validation_promotion",
+      "residual_id": "RES-010",
+      "review_area": "validation_result_promotion",
+      "review_gate_result": "review_passed"
+    },
+    {
+      "all_review_checks_pass": true,
+      "register_status_after_review": "remains_open_release_blocked",
+      "release_dependency": "release-grade uncertainty coverage still depends on provenance, identity and mechanism-source residual closure",
+      "release_gate_result": "blocked_uncertainty_coverage_release",
+      "residual_id": "RES-011",
+      "review_area": "uncertainty_snapshot",
+      "review_gate_result": "review_passed"
+    },
+    {
+      "all_review_checks_pass": true,
+      "register_status_after_review": "remains_open_release_blocked",
+      "release_dependency": "release-grade independence cannot be promoted until source provenance, surrogate identity and mechanism-source residuals close",
+      "release_gate_result": "blocked_by_provenance_identity_and_source_residuals",
+      "residual_id": "RES-012",
+      "review_area": "benchmark_input_independence",
+      "review_gate_result": "review_passed"
+    }
+  ],
+  "retained_evidence_refs": {
+    "author_side_closeout": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json",
+    "author_side_retained_pack": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+    "review_doc": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_independent_review_stage_b_effect_scale_20260531.zh.md"
+  },
+  "review_decision": {
+    "focused_review_passed": true,
+    "formal_validation_manifest_promoted": false,
+    "hard_gate_pass_is_release": false,
+    "independent_review_complete": true,
+    "review_blocked_residual_ids": [],
+    "review_passed_residual_ids": [
+      "RES-007",
+      "RES-008",
+      "RES-010",
+      "RES-011",
+      "RES-012"
+    ],
+    "stock_runtime_authority_granted": false
+  },
+  "review_target": "stage_b_effect_scale_independent_review_only",
+  "reviewer_role": "A2-RC-STAGE-B-INDEPENDENT-REVIEW",
+  "schema_version": "a2.stage_b_independent_review_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "closure_bucket": "high",
+    "miss_distance_bucket": "near_miss_0_35m",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "independent_review_passed_release_blocked",
+  "uncertainty_review": {
+    "checks": [
+      {
+        "check_id": "IR-RES011-001",
+        "pass": true,
+        "summary": "author-side uncertainty closeout is complete"
+      },
+      {
+        "check_id": "IR-RES011-002",
+        "pass": true,
+        "summary": "seed-window CV gate passes"
+      },
+      {
+        "check_id": "IR-RES011-003",
+        "pass": true,
+        "summary": "all retained CV rows pass the <=0.05 threshold"
+      },
+      {
+        "check_id": "IR-RES011-004",
+        "pass": true,
+        "summary": "uncertainty review keeps the result at snapshot scope only"
+      }
+    ],
+    "coverage_release_blocked_by": [
+      "RES-001",
+      "RES-002",
+      "RES-003",
+      "RES-004",
+      "RES-005",
+      "RES-006"
+    ],
+    "coverage_release_result": "blocked",
+    "cv_rows": [
+      {
+        "actual": 0.013556475680557211,
+        "metric": "fragment_areal_density_per_m2.cv",
+        "pass": true,
+        "threshold": "<=0.05"
+      },
+      {
+        "actual": 0.0,
+        "metric": "blast_impulse_kpa_ms_proxy.cv",
+        "pass": true,
+        "threshold": "<=0.05"
+      },
+      {
+        "actual": 0.0,
+        "metric": "fragment_energy_j_proxy.cv",
+        "pass": true,
+        "threshold": "<=0.05"
+      },
+      {
+        "actual": 0.014953428348644477,
+        "metric": "penetration_margin_proxy.cv",
+        "pass": true,
+        "threshold": "<=0.05"
+      }
+    ],
+    "register_status_after_review": "remains_open_release_blocked",
+    "release_dependency": "release-grade uncertainty coverage still depends on provenance, identity and mechanism-source residual closure",
+    "release_gate_result": "blocked_uncertainty_coverage_release",
+    "residual_id": "RES-011",
+    "review_area": "uncertainty_snapshot",
+    "review_finding": "the retained seed-window CV snapshot is review-passing for the candidate evidence surface",
+    "review_gate_result": "review_passed",
+    "seed_window_cv_pass": true
+  },
+  "validation_result_promotion_review": {
+    "artifact_hash_count": 3,
+    "checks": [
+      {
+        "check_id": "IR-RES010-001",
+        "pass": true,
+        "summary": "all frozen Stage B hard-gate criteria pass in the retained execution record"
+      },
+      {
+        "check_id": "IR-RES010-002",
+        "pass": true,
+        "summary": "result execution record keeps hard_gate_pass_is_release=false"
+      },
+      {
+        "check_id": "IR-RES010-003",
+        "pass": true,
+        "summary": "three author-side evidence artifact hashes are retained"
+      },
+      {
+        "check_id": "IR-RES010-004",
+        "pass": true,
+        "summary": "reviewed benchmark set remains the frozen Stage B effect-scale set"
+      },
+      {
+        "check_id": "IR-RES010-005",
+        "pass": true,
+        "summary": "formal validation manifest is not promoted by this independent review"
+      },
+      {
+        "check_id": "IR-RES010-006",
+        "pass": true,
+        "summary": "author-side closeout remains release-blocked"
+      }
+    ],
+    "criteria_counts": {
+      "all_hard_gates_pass": true,
+      "criteria_count": 18,
+      "failed_criteria_count": 0,
+      "failed_criteria_ids": [],
+      "passed_criteria_count": 18
+    },
+    "formal_validation_promotion_blocked_by": [
+      "RES-001",
+      "RES-002",
+      "RES-003",
+      "RES-004",
+      "RES-005",
+      "RES-006"
+    ],
+    "formal_validation_promotion_result": "blocked",
+    "register_status_after_review": "remains_open_release_blocked",
+    "release_dependency": "formal validation result promotion waits on release-grade provenance, identity, target/warhead assumptions and mechanism-source residual closure",
+    "release_gate_result": "blocked_formal_validation_promotion",
+    "residual_id": "RES-010",
+    "review_area": "validation_result_promotion",
+    "review_finding": "the retained Stage B execution record is complete and review-passing, but this gate does not promote the validation manifest",
+    "review_gate_result": "review_passed",
+    "reviewed_benchmarks": [
+      "BFM-BM-001",
+      "BFM-BM-003",
+      "BFM-BM-005",
+      "BFM-BM-006"
+    ],
+    "validation_manifest_status": "not_promoted_to_validated"
+  }
+}

@@ -1,0 +1,664 @@
+{
+  "admission_granted": false,
+  "approval_granted": false,
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601",
+  "authority_guards": {
+    "allowed_output_release_authority_granted": false,
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "source_truth_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "authority_must_remain_false_before_signoff": [
+    "allowed_output_release_authority_granted",
+    "benchmark_consumption_authority_granted",
+    "blast_mechanism_authority_granted",
+    "component_authority_granted",
+    "component_failure_probability_authority_granted",
+    "deterministic_fuze_authority_granted",
+    "effect_scale_authority_granted",
+    "fragment_mechanism_authority_granted",
+    "fuze_authority_granted",
+    "pk_authority_granted",
+    "replacement_anchor_authority_granted",
+    "runtime_authority_granted",
+    "source_truth_authority_granted",
+    "stock_database_authority_granted",
+    "stock_descriptor_created"
+  ],
+  "behavior_risks": [
+    "this packet can be mistaken for approval because it lists requestable BEC-O hash rows",
+    "TP-21 empty selected-output anchor can be mistaken for selected-case evidence",
+    "formula sha256 values can be mistaken for permission to disclose formula text",
+    "source-rights policy remains release-candidate fail-closed until a separate reviewer signoff is retained"
+  ],
+  "current_missing_items": [
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "independent_rights_reviewer_or_release_owner",
+      "signoff_id": "source_rights_independent_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "allowed_output_policy_reviewer",
+      "signoff_id": "allowed_output_policy_release_grade_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "source_rights_reviewer",
+      "signoff_id": "tp21_selected_case_hash_only_allowed_output_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "source_rights_reviewer",
+      "signoff_id": "beco_hash_only_allowed_output_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "independent_lineage_reviewer_numeric_tolerance_owner_and_replacement_anchor_owner",
+      "signoff_id": "beco_lineage_tolerance_and_replacement_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "release_owner",
+      "signoff_id": "benchmark_consumption_release_decision"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "integration_owner",
+      "signoff_id": "authority_boundary_confirmation"
+    }
+  ],
+  "current_policy_status": {
+    "allowed_hash_outputs": [
+      "retained_payload_file_sha256",
+      "source_manifest_sha256",
+      "rights_policy_gate_sha256",
+      "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+    ],
+    "allowed_output_policy_release_grade_satisfied": false,
+    "approval_granted": false,
+    "benchmark_consumption_release_grade_satisfied": false,
+    "blocking_conditions": [
+      "independent_rights_reviewer_signoff_missing",
+      "allowed_output_policy_release_grade_signoff_missing",
+      "selected_comparison_output_hash_manifest_missing",
+      "benchmark_consumption_release_signoff_missing",
+      "authority_boundary_signoff_missing"
+    ],
+    "comparison_outputs_admitted": false,
+    "current_selected_comparison_output_hash_count": 0,
+    "fail_closed": true,
+    "forbidden_consume_outputs": [
+      "source_payloads_as_release_benchmark_inputs",
+      "spreadsheet_or_tool_outputs_as_release_benchmark_without_signoff",
+      "document_examples_as_release_benchmark",
+      "comparison_outputs_without_selected_sha256_and_signoff",
+      "effect_scale_authority",
+      "component_failure_probability_authority",
+      "pk_authority",
+      "deterministic_fuze_authority"
+    ],
+    "forbidden_copy_outputs": [
+      "source_payload_body_or_bulk_content",
+      "document_numeric_tables_or_figures",
+      "spreadsheet_formulas_or_cell_ranges",
+      "spreadsheet_tool_output_tables",
+      "comparison_output_values_without_review_admission",
+      "stock_descriptor_fields",
+      "runtime_authority_fields"
+    ],
+    "policy_frozen_by_existing_gate": true,
+    "policy_status": "release_candidate_fail_closed_policy_frozen",
+    "present": true,
+    "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+    "release_grade_satisfied": false,
+    "schema_version": "a2.source_rights_output_policy_gate.v1",
+    "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+    "source_gate_release_grade_satisfied": false,
+    "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+  },
+  "explicit_forbidden_outputs": [
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "source_payload_body_or_bulk_content",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "document_numeric_tables_or_figures",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "spreadsheet_formulas_or_cell_ranges",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "spreadsheet_tool_output_tables",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "comparison_output_values_without_review_admission",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "stock_descriptor_fields",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "runtime_authority_fields",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "source_payloads_as_release_benchmark_inputs",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "spreadsheet_or_tool_outputs_as_release_benchmark_without_signoff",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "document_examples_as_release_benchmark",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "comparison_outputs_without_selected_sha256_and_signoff",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "effect_scale_authority",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "component_failure_probability_authority",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "pk_authority",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "deterministic_fuze_authority",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "tp21_source_prose_tables_figures_or_numeric_values",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "tp21_raw_selected_output_payloads",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "tp21_selected_output_preimage_body",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "beco_spreadsheet_formulas_or_cell_ranges",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "beco_raw_cell_values_or_tool_output_tables",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "beco_temporary_workbook_copy_stdout_or_stderr",
+      "requestable": false
+    },
+    {
+      "approval_granted": false,
+      "current_status": "forbidden_fail_closed",
+      "output_id": "stock_descriptor_fields_or_runtime_authority_fields",
+      "requestable": false
+    }
+  ],
+  "fail_closed": true,
+  "forbidden_output_policy": {
+    "benchmark_consumed_for_release": false,
+    "copy_or_consume_forbidden_outputs": [
+      "source_payload_body_or_bulk_content",
+      "document_numeric_tables_or_figures",
+      "spreadsheet_formulas_or_cell_ranges",
+      "spreadsheet_tool_output_tables",
+      "comparison_output_values_without_review_admission",
+      "stock_descriptor_fields",
+      "runtime_authority_fields",
+      "source_payloads_as_release_benchmark_inputs",
+      "spreadsheet_or_tool_outputs_as_release_benchmark_without_signoff",
+      "document_examples_as_release_benchmark",
+      "comparison_outputs_without_selected_sha256_and_signoff",
+      "effect_scale_authority",
+      "component_failure_probability_authority",
+      "pk_authority",
+      "deterministic_fuze_authority",
+      "tp21_source_prose_tables_figures_or_numeric_values",
+      "tp21_raw_selected_output_payloads",
+      "tp21_selected_output_preimage_body",
+      "beco_spreadsheet_formulas_or_cell_ranges",
+      "beco_raw_cell_values_or_tool_output_tables",
+      "beco_temporary_workbook_copy_stdout_or_stderr",
+      "stock_descriptor_fields_or_runtime_authority_fields"
+    ],
+    "raw_outputs_retained": false,
+    "raw_source_text_tables_values_formulas_retained": false,
+    "selected_output_preimages_retained": false
+  },
+  "hash_only_allowed_request_shape": {
+    "allowed_retained_fields": [
+      "residual_id",
+      "source_artifact_label",
+      "source_id",
+      "requirement_id",
+      "input_artifact_relative_path",
+      "input_artifact_sha256",
+      "payload_sha256",
+      "comparison_id",
+      "output_role_label",
+      "unit_family_label",
+      "comparison_output_sha256",
+      "recalculated_output_sha256",
+      "formula_sha256",
+      "hash_set_sha256",
+      "hash_count",
+      "signoff_id",
+      "review_decision_ref"
+    ],
+    "approval_granted": false,
+    "release_grade_satisfied": false,
+    "request_may_reference_prior_retained_json_only": true,
+    "required_absences": [
+      "source prose",
+      "source tables",
+      "source figures",
+      "source numeric values",
+      "spreadsheet formulas",
+      "spreadsheet cell ranges",
+      "raw selected output values",
+      "selected output preimage bodies",
+      "temporary workbook copies",
+      "stdout",
+      "stderr"
+    ],
+    "shape_id": "hash_only_allowed_output_signoff_request_shape_v1"
+  },
+  "input_refs": [
+    {
+      "artifact_key": "source_rights_output_policy_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "required_for_request_packet": true,
+      "role": "current_fail_closed_allowed_output_policy_input",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    },
+    {
+      "artifact_key": "source_payload_pack_manifest",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "required_for_request_packet": true,
+      "role": "retained_source_payload_manifest_input",
+      "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
+      "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
+      "status": "partial_payloads_retained_release_review_blocked"
+    },
+    {
+      "artifact_key": "res005_tp21_selected_case_admission_review_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+      "required_for_request_packet": false,
+      "role": "optional_current_res005_tp21_hash_only_packet_input",
+      "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
+      "sha256": "9155ebfeef00c83518eb6ec772f9dd79874a0aaf7bcfdb4bef167e36e67ca84a",
+      "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
+    },
+    {
+      "artifact_key": "res006_beco_replacement_tolerance_admission_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "required_for_request_packet": false,
+      "role": "optional_current_res006_beco_hash_only_packet_input",
+      "schema_version": "a2.res006_beco_replacement_tolerance_admission_gate.v1",
+      "sha256": "7b9d2ab91bff50ed8f39becfebbb15d7abc1baccce205077ab9e191ad44012f9",
+      "status": "blocked_fail_closed_res006_beco_replacement_tolerance_admission_review"
+    }
+  ],
+  "integration_notes": [
+    "This request packet does not modify source-rights policy gates, source ledgers, source payloads, residual registers, or status docs.",
+    "RES-005 and RES-006 remain fail-closed; this packet only names the signoffs needed for later review.",
+    "No TP-21/BEC-O raw source text, tables, values, formulas, raw outputs, workbook copies, stdout, or stderr are retained here."
+  ],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "packet_sha256": "30f8b1b5a19ed506e0d053fdc49bd27225ea5a01c05cbc5e64cfc505b9d444b3",
+  "packet_type": "source_rights_allowed_output_signoff_request_checklist",
+  "release_grade_satisfied": false,
+  "request_id": "TC-A2-BF-003-RIGHTS-SIGNOFF-REQUEST-20260601",
+  "requested_hash_only_review_items": [
+    {
+      "approval_granted": false,
+      "benchmark_consumed_for_release": false,
+      "hash_only_outputs": {
+        "payload_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8"
+      },
+      "item_id": "RES-005-RETAINED-PAYLOAD-SHA256",
+      "raw_source_content_retained": false,
+      "request_review_allowed": true,
+      "request_review_status": "requestable_payload_hash_rights_evidence_only",
+      "residual_id": "RES-005",
+      "source_artifact_label": "TP-21 PDF"
+    },
+    {
+      "approval_granted": false,
+      "benchmark_consumed_for_release": false,
+      "hash_only_outputs": {
+        "payload_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc"
+      },
+      "item_id": "RES-006-RETAINED-PAYLOAD-SHA256",
+      "raw_source_content_retained": false,
+      "request_review_allowed": true,
+      "request_review_status": "requestable_payload_hash_rights_evidence_only",
+      "residual_id": "RES-006",
+      "source_artifact_label": "BEC-O-V1.xlsx"
+    },
+    {
+      "approval_granted": false,
+      "hash_only_outputs": {
+        "controlled_criteria_vocabulary_sha256": "6760351838bd84a24945a5459f53fffc8326edbaf447cb0e2223f7228a2b1969",
+        "payload_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+        "selected_debris_output_hash_count": 0,
+        "selected_debris_output_set_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "selected_output_preimage_sha256_present": false
+      },
+      "item_id": "RES-005-TP21-SELECTED-CASE-HASH-ONLY-OUTPUTS",
+      "raw_selected_outputs_retained": false,
+      "raw_source_content_retained": false,
+      "request_review_allowed": false,
+      "request_review_status": "blocked_missing_selected_case_hash_inputs_fail_closed",
+      "required_before_review_request": [
+        "TP21-SELECTED-CASE-LOCATOR",
+        "TP21-SELECTED-OUTPUT-PREIMAGE-SHA256",
+        "TP21-SELECTED-DEBRIS-OUTPUT-ANCHOR-SET"
+      ],
+      "residual_id": "RES-005",
+      "source_artifact_label": "TP-21 PDF",
+      "source_figures_retained": false,
+      "source_numeric_values_retained": false,
+      "source_tables_retained": false
+    },
+    {
+      "approval_granted": false,
+      "formula_text_retained": false,
+      "hash_only_outputs": {
+        "cached_anchor_count": 9,
+        "cached_selected_output_set_sha256": "93dcc54794dd391b88bd5a6c6a5e50ef80eb739dac18fbd645df4ec671218f21",
+        "comparison_row_count": 9,
+        "exact_hash_check_passed": false,
+        "mismatch_count": 9,
+        "payload_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+        "recalculated_anchor_count": 9,
+        "recalculated_selected_output_set_sha256": "64a5eeb77fa2cf38fe8ef39a01b81abbccf838ab49def9abf5df0acd50fc56b3",
+        "rows": [
+          {
+            "cached_anchor_sha256": "e1f06f693bd44bfb437fdc95ccf97e36e0edfda1e77e8cfca3124206ce1ac92c",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-001",
+            "formula_sha256": "c7158b274feacdb4d7aba630e09dfb10efc4e6c0c137be51a838f6600319ed08",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "scaled_distance_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "941491e05f4c6087814541eba6d98232869c61b9f8028a96099186e08f465e4f",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "scaled_distance"
+          },
+          {
+            "cached_anchor_sha256": "abf887eb1fbdafb1bda0f4d3352633f0239f59d2023ff2a93b5108e4d36f2783",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-002",
+            "formula_sha256": "b481fdacd38238da28754b7eb78db2dced6137ad211da2a2e28e2b94155e95b9",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "time_of_arrival_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "1d4b30946696298bb89c2efdd3d5fd27e424042ed351bbc122e492a045e21733",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "time"
+          },
+          {
+            "cached_anchor_sha256": "0dbe8724edceb81f592172adaee4fc2e0ceb9706117e9d947e12f60f7e7e6ac5",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-003",
+            "formula_sha256": "114b97cb44e38b863ac002d74ca465991233885b5700c2b74733194a8d207daf",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "incident_pressure_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "c0422753237a018558a6d274854f0ae2aa6c6fb8ad1287cf658bf826b31d9d96",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "pressure"
+          },
+          {
+            "cached_anchor_sha256": "8e3f33c1eddbf85ca61f17182d634bcac84eda471daf918f352816a8531d677c",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-004",
+            "formula_sha256": "b44c0e4cbf0a846b35d7cfa8cce1a6d7d630e67d4a10ef1f6e09c6bc2992e3ee",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "reflected_pressure_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "5373083fd30e13f5e12ea64a8ceef5124805d1db75dce3e1b22680e3f0982f7a",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "pressure"
+          },
+          {
+            "cached_anchor_sha256": "86d250933ff3f6225cb44759e8291ab6af98f4d7ed9864fea03868daac7e31dd",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-005",
+            "formula_sha256": "eb14d155a55b9ab39e545820b5b771d38a64b34687530974497993cd446e8214",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "positive_phase_duration_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "9294eb6ce83c48d788f541d8b634750412d77f76e8f983f5e93937c213d7060b",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "time"
+          },
+          {
+            "cached_anchor_sha256": "d6b5226f38a6eebad7dd3762d19c8b90447c53081fe1d604d109f3757208f181",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-006",
+            "formula_sha256": "ec81d7159800e0b68a337f4c769f8d32540572282b850b47609140a65608ea39",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "positive_phase_impulse_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "5d8796a712ccc431f64e77f2b6ecddb41c6cdcce0394f6a920b6cf7b11b76452",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "pressure_time"
+          },
+          {
+            "cached_anchor_sha256": "701916857eb03ed760f1423f9d6f4b3f339632f1a20fe8acf43cebcd87d814ad",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-007",
+            "formula_sha256": "3c7a2befc5339db47365ebc15d56bf727e6059dfedfb690b5be553b0086b28e6",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "reflected_impulse_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "050bdce838f1f5b518b9bd067ea0ab78701dc26b4a6fe431cf16a35a3309c25d",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "pressure_time"
+          },
+          {
+            "cached_anchor_sha256": "565ee6db32ed7a6721f69f07b303020218da7353be1f3a593caa7a86e3355560",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-008",
+            "formula_sha256": "54de00968979f2c682218607785ac39114a66c7fae8125a1b0a35b93dc636788",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "dynamic_overpressure_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "c51e558ae87790c2301f7a072f2b023cdedc4ed6b5691ee456aa61dab0fdb266",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "pressure"
+          },
+          {
+            "cached_anchor_sha256": "95b5a8c100ccda24a735d7cbdffb558a88c8f713d4e481d9639a0db54d8a1d68",
+            "comparison_id": "BEC-O-METRIC-DEFAULT-009",
+            "formula_sha256": "f45cb772910152e2e53c3a7ca85501a2d84139b53a7491d490b2d68259eee361",
+            "formula_text_disclosed": false,
+            "hashes_match": false,
+            "output_role": "dynamic_impulse_metric_default",
+            "raw_value_disclosed": false,
+            "recalculated_output_sha256": "f95b80d53d0a03e2a993459fdab8c06d60bda89c2ccb21213c9f62609dc95f38",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "unit_family": "pressure_time"
+          }
+        ]
+      },
+      "item_id": "RES-006-BECO-HASH-ONLY-OUTPUTS",
+      "raw_selected_values_retained": false,
+      "request_review_allowed": true,
+      "request_review_status": "requestable_for_allowed_output_and_replacement_review_not_admitted",
+      "residual_id": "RES-006",
+      "source_artifact_label": "BEC-O-V1.xlsx",
+      "stderr_retained": false,
+      "stdout_retained": false,
+      "temporary_workbook_copy_retained": false
+    }
+  ],
+  "requested_signoff_items": [
+    {
+      "approval_granted": false,
+      "current_status": "missing_fail_closed",
+      "request_scope": "retained TP-21 and BEC-O source payload hashes and public-distribution support",
+      "requested_from": "independent_rights_reviewer_or_release_owner",
+      "required_decision": "rights_reviewed_release_grade_or_explicitly_rejected",
+      "signoff_id": "source_rights_independent_review"
+    },
+    {
+      "approval_granted": false,
+      "current_status": "missing_fail_closed",
+      "request_scope": "hash-only output policy, forbidden-copy policy, and consume/do-not-consume boundaries",
+      "requested_from": "allowed_output_policy_reviewer",
+      "required_decision": "reviewer_frozen_release_grade_allowed_output_policy_or_rejected",
+      "signoff_id": "allowed_output_policy_release_grade_review"
+    },
+    {
+      "approval_granted": false,
+      "current_status": "missing_fail_closed",
+      "request_review_allowed": false,
+      "request_scope": "RES-005-TP21-SELECTED-CASE-HASH-ONLY-OUTPUTS",
+      "requested_from": "source_rights_reviewer",
+      "required_decision": "admit_or_reject_selected TP-21 comparison-output hashes only",
+      "signoff_id": "tp21_selected_case_hash_only_allowed_output_review"
+    },
+    {
+      "approval_granted": false,
+      "current_status": "missing_fail_closed",
+      "request_review_allowed": true,
+      "request_scope": "RES-006-BECO-HASH-ONLY-OUTPUTS",
+      "requested_from": "source_rights_reviewer",
+      "required_decision": "admit_or_reject_selected BEC-O comparison-output hashes only",
+      "signoff_id": "beco_hash_only_allowed_output_review"
+    },
+    {
+      "approval_granted": false,
+      "current_status": "missing_fail_closed",
+      "request_scope": "BEC-O cached-vs-recalculated hash mismatch, tolerance policy, and candidate replacement anchor set",
+      "requested_from": "independent_lineage_reviewer_numeric_tolerance_owner_and_replacement_anchor_owner",
+      "required_decision": "admit_or_reject_replacement_anchor_without_mutating_cached_anchors_in_place",
+      "signoff_id": "beco_lineage_tolerance_and_replacement_review"
+    },
+    {
+      "approval_granted": false,
+      "current_status": "missing_fail_closed",
+      "request_scope": "explicit consume-or-do-not-consume release decision for TP-21 and BEC-O hash-only outputs",
+      "requested_from": "release_owner",
+      "required_decision": "benchmark_consumption_allowed_or_explicitly_denied",
+      "signoff_id": "benchmark_consumption_release_decision"
+    },
+    {
+      "approval_granted": false,
+      "current_status": "missing_fail_closed",
+      "request_scope": "confirm all stock/runtime/effect/component/Pk/fuze/source-truth guards remain false before and after review",
+      "requested_from": "integration_owner",
+      "required_decision": "all_authority_guards_false_or_packet_rejected",
+      "signoff_id": "authority_boundary_confirmation"
+    }
+  ],
+  "schema_version": "a2.source_rights_signoff_request_packet.v1",
+  "signoff_preconditions": [
+    "source rights reviewer must admit only hash outputs, not raw TP-21 or BEC-O content",
+    "TP-21 selected case hashes cannot be reviewed until locator, preimage sha256, and selected output hashes exist",
+    "BEC-O cached/recalculated hash pairs can be reviewed as hash-only evidence but remain unadmitted",
+    "release-grade benchmark consumption requires explicit consume-or-do-not-consume decision",
+    "all authority guards must remain false until and unless a later retained approval packet says otherwise"
+  ],
+  "source_payload_hash_refs": {
+    "beco": {
+      "benchmark_consumed_for_release": false,
+      "hash_matches_expected": true,
+      "payload_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+      "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "BEC-O-V1.xlsx",
+      "source_id": "VPS-BFM-014"
+    },
+    "tp21": {
+      "benchmark_consumed_for_release": false,
+      "hash_matches_expected": true,
+      "payload_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+      "requirement_id": "PIN-BFM-002:tp-21-pdf",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "TP-21 PDF",
+      "source_id": "VPS-BFM-015"
+    }
+  },
+  "status": "retained_fail_closed_source_rights_signoff_request_packet"
+}

@@ -15,7 +15,7 @@
 
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `KCES-P0 Project Boundary` | main thread | n/a | 创建子项目、状态、队列、archive 入口和父级 A2 链接。 | `docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/**`；父级 A2 README | runtime/code/test 修改；标准提升 | `git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model` | 必需文件存在，父级 README 链接本项目，禁止声明明确。 | first, serial | 1 | pass |
+| `KCES-P0 Project Boundary` | main thread | n/a | 创建子项目、状态、队列、archive 入口和父级 A2 链接。 | `docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/**`；父级 A2 README | runtime/code/test 修改；标准提升 | `git diff --check -- docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602` | 必需文件存在，父级 README 链接本项目，禁止声明明确。 | first, serial | 1 | pass |
 | `KCES-P1 Expectation Contract` | main thread | n/a | 定义阶段合同、归一化分区、AIM-120C-like 种子画像和通用 row 模板。 | 本子项目内合同文档 | 概率数值校准；真实武器权威 | Markdown/link review 和 `git diff --check` | 合同只能通过已声明 profile 字段解释 10 m 量级歧义，并关闭 `R_effect_policy=independent_review_variable`。 | after P0 | 2 | pass |
 | `KCES-P2 Scenario Matrix` | main thread | n/a | 增加距离 x 偏置角 heatmap，覆盖 nominal、marginal 和 outside-envelope cells，并估算后续采样密度。 | 本子项目内新增矩阵文档 | runtime 仿真修改；learned-policy 证据 | 矩阵审阅加 `git diff --check` | heatmap 声明距离轴、偏置角轴、目标运动层、launch-window 类别、期望阶段分区、推荐主网格 / seed 预算和第一轮 `R_effect_variant` handoff。 | after P1 | 2 | pass |
 | `KCES-P3 Metric Mapping` | main thread | n/a | 将定性期望分区映射到既有或计划中的 stage-report 字段。 | 指标映射文档；可选 diagnostics-readiness checklist | 参数值；descriptor 编辑 | docs check 和字段引用审阅 | 每个指标由一个阶段拥有，或标为 cross-stage；heatmap report row schema 存在。 | after P2 | 2 | pass |
@@ -46,7 +46,7 @@ integration notes:
 ## 验证计划
 
 ```bash
-git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model
+git diff --check -- docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602
 ```
 
 未来 cluster 可增加链接检查、schema 检查或 diagnostics dry run；P0/P1 是 docs-only。

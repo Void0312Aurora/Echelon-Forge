@@ -48,7 +48,7 @@ execution or review packets; this P4 document does not create runtime artifacts.
 
 | Artifact | Proposed path | Schema / content |
 | --- | --- | --- |
-| case grid | `docs/task/air_combat/a2_high_fidelity_damage_model/review_packets/kill_chain_expectation_standardization_p4/case_grid_*.jsonl` | One row per P3 `identity` and `launch_window` field set. |
+| case grid | `docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/review_packets/kill_chain_expectation_standardization_harness_20260623/case_grid_*.jsonl` | One row per P3 `identity` and `launch_window` field set. |
 | before report | `.../before/<batch_id>.json` or `.jsonl` | Heatmap report rows before parameter changes. |
 | after report | `.../after/<layer_id>/<batch_id>.json` or `.jsonl` | Heatmap report rows after a single-layer candidate change; not produced by default in P4. |
 | delta guard | `.../guard/<layer_id>/<batch_id>.json` | P6 `a2.kill_chain_calibration_delta_guard.v1` output. |

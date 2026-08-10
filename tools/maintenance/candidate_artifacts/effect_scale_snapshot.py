@@ -241,7 +241,7 @@ def generate_stage_b_effect_scale_snapshot(*, repo_root: Path = REPO_ROOT) -> di
     "tools/maintenance/damage_model.py candidate-artifacts validation-scaffold"
       ),
       "criteria_ref": (
-        "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/"
+        "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/"
         "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/"
         "validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md"
       ),

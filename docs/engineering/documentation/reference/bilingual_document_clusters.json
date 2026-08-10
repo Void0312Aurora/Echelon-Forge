@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09",
+  "generated_at": "2026-08-11",
   "root": "docs",
   "pairs": [
     {
@@ -646,9 +646,9 @@
       "english": "docs/systems/command-tasking/reference/t9_authority_representation_adjudication_20260726.md",
       "chinese": "docs/systems/command-tasking/reference/t9_authority_representation_adjudication_20260726.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-09",
-      "english_hash": "9fba25c06a56a524b5c5b68fe121e8833f8ecc3ac052ff15fd6e62f35c4e8958",
-      "chinese_hash": "61b56b0125207329e5c8fba5f5f4c79c85721aacb49ddd85cd5ecb003db95855"
+      "last_verified": "2026-08-11",
+      "english_hash": "1fa55dac4bf4a99bb9d9ff1b144aa5d885796ca018140715ab75e63e7a897dc8",
+      "chinese_hash": "3f40a33abde52e5064df482ced55a2936cbbac34adf75695c0bca6590cc0b555"
     },
     {
       "pair_id": "systems/environment/README",

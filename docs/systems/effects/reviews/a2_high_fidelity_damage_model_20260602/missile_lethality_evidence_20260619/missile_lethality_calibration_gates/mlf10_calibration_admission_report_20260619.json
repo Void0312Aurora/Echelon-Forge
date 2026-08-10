@@ -1,0 +1,472 @@
+{
+  "schema_version": "mlf10.calibration_admission_report.v1",
+  "status": "calibration_admission_audit_complete",
+  "source_manifest_schema_version": "mlf10.calibration_evidence_manifest.v1",
+  "source_manifest_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
+  "report_surface": "mlf10_retained_diagnostics_artifact",
+  "record_count": 7,
+  "decision_counts": {
+    "engineering_proxy": 1,
+    "retained_non_authoritative": 1,
+    "calibration_candidate": 0,
+    "admitted": 0,
+    "rejected": 1,
+    "blocked": 4
+  },
+  "manifest_blocking_reasons": [],
+  "decisions": [
+    {
+      "evidence_id": "MLF10-CURRENT-BECO-RECALCULATED-BLAST",
+      "classification": "blocked",
+      "gate_status": "fail_closed",
+      "blocking_reasons": [
+        "blocking_residuals_open",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "residuals": [
+        "RES-006 independent lineage review missing",
+        "allowed-output signoff missing",
+        "replacement-anchor signoff missing"
+      ],
+      "scope": {
+        "target_type": "candidate_blast_comparison_scope",
+        "weapon_family": "blast_fragmentation_method_reference",
+        "mechanism_family": "blast",
+        "aspect_bucket": "selected_case_scope",
+        "closure_bucket": "selected_case_scope",
+        "miss_distance_bucket": "selected_case_scope"
+      },
+      "admitted_authority_fields": [],
+      "authority_decisions": {
+        "effect_scale_authority": {
+          "requested": true,
+          "decision": "blocked",
+          "reasons": [
+            "blocking_residuals_open",
+            "independent_review_not_passed",
+            "independent_reviewer_ref_missing",
+            "rights_not_release_grade_admitted",
+            "source_gate_not_passed",
+            "uncertainty_residuals_open",
+            "validation_not_passed"
+          ]
+        },
+        "component_failure_probability_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "pk_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "deterministic_fuze_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "reward_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "entity_deletion_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "evidence_id": "MLF10-CURRENT-MLF6-STRUCTURAL-PROXY",
+      "classification": "engineering_proxy",
+      "gate_status": "not_requested",
+      "blocking_reasons": [],
+      "residuals": [
+        "engineering proxy only"
+      ],
+      "scope": {
+        "target_type": "repository_aircraft_proxy",
+        "weapon_family": "repository_missile_proxy",
+        "mechanism_family": "structural_failure_proxy",
+        "aspect_bucket": "controlled_probe_scope",
+        "closure_bucket": "controlled_probe_scope",
+        "miss_distance_bucket": "controlled_probe_scope"
+      },
+      "admitted_authority_fields": [],
+      "authority_decisions": {
+        "effect_scale_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "component_failure_probability_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "pk_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "deterministic_fuze_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "reward_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "entity_deletion_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "evidence_id": "MLF10-CURRENT-MLF9-SYNTHETIC-TRENDS",
+      "classification": "retained_non_authoritative",
+      "gate_status": "not_requested",
+      "blocking_reasons": [],
+      "residuals": [
+        "real-world calibration population absent"
+      ],
+      "scope": {
+        "target_type": "synthetic_simulation_population",
+        "weapon_family": "synthetic_simulation_population",
+        "mechanism_family": "replay_row_trend",
+        "aspect_bucket": "report_defined",
+        "closure_bucket": "report_defined",
+        "miss_distance_bucket": "report_defined"
+      },
+      "admitted_authority_fields": [],
+      "authority_decisions": {
+        "effect_scale_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "component_failure_probability_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "pk_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "deterministic_fuze_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "reward_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "entity_deletion_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "evidence_id": "MLF10-CURRENT-REJECTED-SOURCE-CATEGORY",
+      "classification": "rejected",
+      "gate_status": "rejected",
+      "blocking_reasons": [
+        "evidence_explicitly_rejected"
+      ],
+      "residuals": [
+        "source is ineligible for consumption"
+      ],
+      "scope": {
+        "target_type": "not_eligible",
+        "weapon_family": "not_eligible",
+        "mechanism_family": "not_eligible",
+        "aspect_bucket": "not_eligible",
+        "closure_bucket": "not_eligible",
+        "miss_distance_bucket": "not_eligible"
+      },
+      "authority_decisions": {
+        "effect_scale_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "component_failure_probability_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "pk_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "deterministic_fuze_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "reward_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "entity_deletion_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "evidence_id": "MLF10-CURRENT-STAGE-B-EFFECT-SCALE",
+      "classification": "blocked",
+      "gate_status": "fail_closed",
+      "blocking_reasons": [
+        "blocking_residuals_open",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "residuals": [
+        "RES-001 source rights release-grade closeout incomplete",
+        "RES-002 release-grade identity incomplete",
+        "RES-005 fragment mechanism fail-closed",
+        "RES-006 blast mechanism fail-closed",
+        "independent review incomplete"
+      ],
+      "scope": {
+        "target_type": "F-16C_Block50",
+        "weapon_family": "AIM-120C-class",
+        "mechanism_family": "blast_fragmentation",
+        "aspect_bucket": "beam",
+        "closure_bucket": "high",
+        "miss_distance_bucket": "near_miss_0_35m"
+      },
+      "admitted_authority_fields": [],
+      "authority_decisions": {
+        "effect_scale_authority": {
+          "requested": true,
+          "decision": "blocked",
+          "reasons": [
+            "blocking_residuals_open",
+            "independent_review_not_passed",
+            "independent_reviewer_ref_missing",
+            "rights_not_release_grade_admitted",
+            "source_gate_not_passed",
+            "uncertainty_residuals_open",
+            "validation_not_passed"
+          ]
+        },
+        "component_failure_probability_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "pk_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "deterministic_fuze_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "reward_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "entity_deletion_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "evidence_id": "MLF10-CURRENT-STAGE-C-COMPONENT-PROBABILITY",
+      "classification": "blocked",
+      "gate_status": "fail_closed",
+      "blocking_reasons": [
+        "blocking_residuals_open",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "residuals": [
+        "RES-003 geometry truth incomplete",
+        "RES-005 fragment mechanism fail-closed",
+        "RES-006 blast mechanism fail-closed",
+        "RES-009 independent fragility truth absent",
+        "RES-011 probability uncertainty coverage missing",
+        "RES-012 result-level independence incomplete"
+      ],
+      "scope": {
+        "target_type": "F-16C_Block50",
+        "weapon_family": "AIM-120C-class",
+        "mechanism_family": "blast_fragmentation",
+        "aspect_bucket": "beam",
+        "closure_bucket": "high",
+        "miss_distance_bucket": "near_miss_0_35m"
+      },
+      "admitted_authority_fields": [],
+      "authority_decisions": {
+        "effect_scale_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "component_failure_probability_authority": {
+          "requested": true,
+          "decision": "blocked",
+          "reasons": [
+            "blocking_residuals_open",
+            "independent_review_not_passed",
+            "independent_reviewer_ref_missing",
+            "rights_not_release_grade_admitted",
+            "source_gate_not_passed",
+            "uncertainty_residuals_open",
+            "validation_not_passed"
+          ]
+        },
+        "pk_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "deterministic_fuze_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "reward_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "entity_deletion_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "evidence_id": "MLF10-CURRENT-TP21-SELECTED-DEBRIS",
+      "classification": "blocked",
+      "gate_status": "fail_closed",
+      "blocking_reasons": [
+        "blocking_residuals_open",
+        "component_fragility_provenance_missing",
+        "independent_review_not_passed",
+        "independent_reviewer_ref_missing",
+        "population_sample_count_invalid",
+        "rights_not_release_grade_admitted",
+        "source_gate_not_passed",
+        "uncertainty_coverage_missing",
+        "uncertainty_method_missing",
+        "uncertainty_residuals_open",
+        "validation_not_passed"
+      ],
+      "residuals": [
+        "RES-005 selected case locator missing",
+        "selected output preimage sha256 missing",
+        "allowed-output signoff missing",
+        "authority-boundary signoff missing"
+      ],
+      "scope": {
+        "target_type": "candidate_debris_comparison_scope",
+        "weapon_family": "blast_fragmentation_method_reference",
+        "mechanism_family": "fragment_debris",
+        "aspect_bucket": "selected_case_pending",
+        "closure_bucket": "selected_case_pending",
+        "miss_distance_bucket": "selected_case_pending"
+      },
+      "admitted_authority_fields": [],
+      "authority_decisions": {
+        "effect_scale_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "component_failure_probability_authority": {
+          "requested": true,
+          "decision": "blocked",
+          "reasons": [
+            "blocking_residuals_open",
+            "component_fragility_provenance_missing",
+            "independent_review_not_passed",
+            "independent_reviewer_ref_missing",
+            "population_sample_count_invalid",
+            "rights_not_release_grade_admitted",
+            "source_gate_not_passed",
+            "uncertainty_coverage_missing",
+            "uncertainty_method_missing",
+            "uncertainty_residuals_open",
+            "validation_not_passed"
+          ]
+        },
+        "pk_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "deterministic_fuze_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "reward_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        },
+        "entity_deletion_authority": {
+          "requested": false,
+          "decision": "not_requested",
+          "reasons": []
+        }
+      }
+    }
+  ],
+  "admitted_authorities": [],
+  "non_claims": [
+    "real_world_pk",
+    "deterministic_fuze_reliability",
+    "reward_authority",
+    "entity_deletion_authority",
+    "out_of_scope_weapon_truth",
+    "out_of_scope_target_truth"
+  ],
+  "authority_boundary": {
+    "admitted_record_count": 0,
+    "real_world_pk": false,
+    "deterministic_fuze_reliability": false,
+    "reward_authority": false,
+    "entity_deletion_authority": false
+  }
+}

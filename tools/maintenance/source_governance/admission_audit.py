@@ -19,7 +19,7 @@ from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
 ensure_repo_imports()
 REPO_ROOT = Path(repo_root())
-A2_SOURCE_ROOT = Path("docs/task/air_combat/archive/a2_high_fidelity_damage_model")
+A2_SOURCE_ROOT = Path("docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602")
 
 SOURCE_LEDGER_GLOB = "*/source_ledger*.zh.md"
 CALIBRATION_MARKDOWN_GLOB = "*/*.zh.md"

@@ -251,7 +251,7 @@ git diff --check    -> 干净
 `tools/maintenance/damage_model.py release-governance source-release-signoff`，
 于是 CLI 的 argparse 默认值（`DEFAULT_OUTPUT_DIR`/`DEFAULT_REPORT_PATH`）
 把写入目标直接指向真实的 retained 存档位置：
-`docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/{manifest.json,res001_release_signoff_gate.json}`
+`docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/{manifest.json,res001_release_signoff_gate.json}`
 及同级报告
 `validation_res001_release_signoff_gate_20260531.zh.md`。重新生成会基于磁
 盘上源 payload 的字节重算若干 `sha256` 字段；在本 CRLF checkout 下，重算出

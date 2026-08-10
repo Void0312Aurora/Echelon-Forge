@@ -286,7 +286,7 @@ was the only test in its file that did not use `tmp_path`; it invoked
 with no `--output-dir`/`--report` override, so the CLI's argparse defaults
 (`DEFAULT_OUTPUT_DIR`/`DEFAULT_REPORT_PATH`) pointed the write straight at
 the real retained-artifact location:
-`docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/{manifest.json,res001_release_signoff_gate.json}`
+`docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/{manifest.json,res001_release_signoff_gate.json}`
 plus the sibling report
 `validation_res001_release_signoff_gate_20260531.zh.md`. Re-running the
 generator recomputes several `sha256` fields against on-disk source-payload

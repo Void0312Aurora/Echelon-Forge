@@ -1,0 +1,416 @@
+{
+  "authority_guards": {
+    "component_failure_probability_authority_granted": false,
+    "component_failure_probability_authority_in_stock": false,
+    "component_failure_probability_authority_released": false,
+    "deterministic_fuze_authority_granted": false,
+    "deterministic_fuze_authority_released": false,
+    "effect_scale_authority_granted": false,
+    "effect_scale_authority_in_stock": false,
+    "effect_scale_authority_released": false,
+    "formal_validation_manifest_promoted": false,
+    "hard_gate_pass_is_release": false,
+    "pk_authority_granted": false,
+    "pk_authority_released": false,
+    "replacement_allowed": false,
+    "row_level_geometry_authority_granted": false,
+    "runtime_authority_granted": false,
+    "runtime_descriptor_created": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "stock_runtime_authority_granted": false,
+    "target_component_geometry_authority_granted": false,
+    "target_geometry_authority_granted": false,
+    "target_material_authority_granted": false,
+    "target_occlusion_authority_granted": false,
+    "witness_geometry_bookkeeping_promoted_to_truth": false
+  },
+  "behavior_risks": [
+    "coarse outer dimensions may be over-read as true F-16C section or station geometry",
+    "beam witness sampler bookkeeping may be over-read as real 3D exposure or occlusion truth",
+    "Stage B narrow closeout may be mistaken for Phase 5 component-geometry or fragility authority"
+  ],
+  "closeout_decision": {
+    "authority_release_included": false,
+    "closed_residual_ids_by_this_gate": [],
+    "closed_residual_subscopes_by_this_gate": [
+      "RES-003:stage_b_effect_scale_witness_geometry_bookkeeping"
+    ],
+    "component_material_occlusion_closeout_complete": false,
+    "global_res003_target_geometry_closeout_complete": false,
+    "real_f16_vulnerability_geometry_closeout_complete": false,
+    "release_blocked": true,
+    "release_ready": false,
+    "stage_b_effect_scale_closeout_is_release_authority": false,
+    "stage_b_effect_scale_witness_geometry_closeout_complete": true
+  },
+  "consumed_evidence": [
+    {
+      "content_hash": "sha256:8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
+      "content_sha256": "8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
+      "evidence_id": "residual_register",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "present": true,
+      "required": true,
+      "role": "canonical_residual_status",
+      "size_bytes": 9308
+    },
+    {
+      "content_hash": "sha256:ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
+      "content_sha256": "ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
+      "evidence_id": "target_geometry_assumptions",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+      "present": true,
+      "required": true,
+      "role": "res003_stage_b_assumption_surface",
+      "size_bytes": 5285
+    },
+    {
+      "content_hash": "sha256:46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e",
+      "content_sha256": "46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e",
+      "evidence_id": "geometry_warhead_row_provenance_gate",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
+      "present": true,
+      "required": true,
+      "role": "res003_row_provenance_interlock",
+      "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
+      "size_bytes": 32016,
+      "status": "blocked_non_authoritative_geometry_warhead_row_provenance_candidate"
+    },
+    {
+      "content_hash": "sha256:53a23aad1d5dd1d701e6df82b4877df6ae90581fc43edc4a03d650b64a671788",
+      "content_sha256": "53a23aad1d5dd1d701e6df82b4877df6ae90581fc43edc4a03d650b64a671788",
+      "evidence_id": "stage_b_independent_review_gate",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
+      "present": true,
+      "required": true,
+      "role": "stage_b_independent_review_boundary",
+      "schema_version": "a2.stage_b_independent_review_gate.v1",
+      "size_bytes": 20405,
+      "status": "independent_review_passed_release_blocked"
+    },
+    {
+      "content_hash": "sha256:ae4847e7018ca337e61769e35e909b0b826102b4e943203c6a5499c930afd8d8",
+      "content_sha256": "ae4847e7018ca337e61769e35e909b0b826102b4e943203c6a5499c930afd8d8",
+      "evidence_id": "scope_bucket_independent_review_gate",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/scope_bucket_independent_review_20260531/scope_bucket_independent_review_gate.json",
+      "present": true,
+      "required": true,
+      "role": "stage_b_scope_bucket_boundary",
+      "schema_version": "a2.scope_bucket_independent_review_gate.v1",
+      "size_bytes": 15815,
+      "status": "scope_bucket_independent_review_passed_release_blocked"
+    }
+  ],
+  "explicit_boundaries": [
+    "The closeout is limited to Stage B effect-scale witness-geometry bookkeeping.",
+    "outer_bbox is a coarse F-16 dimension anchor, not true section or station geometry.",
+    "beam_witness_panel is repo-authored sampler bookkeeping, not true 3D exposure geometry.",
+    "No real F-16 component coordinates, materials, armor, occlusion, or exposed vulnerable area authority is granted.",
+    "No stock descriptor, runtime authority, component probability, Pk, deterministic fuze, or formal validation promotion is granted.",
+    "Phase 5 component_failure_probability authority remains blocked until component geometry/material/occlusion evidence and independent fragility truth exist."
+  ],
+  "generated_on": "2026-05-31",
+  "integration_notes": [
+    "This gate supersedes RES-003 only for the bounded Stage B witness-geometry bookkeeping subscope.",
+    "Existing geometry/warhead provenance evidence remains valid and still blocks release-grade row-level geometry authority.",
+    "Main-thread acceptance should preserve RES-004/005/006 and Phase 5 authority blockers unless their own gates close.",
+    "RES-013 Pk and RES-014 deterministic-fuze boundaries remain outside this package."
+  ],
+  "minimum_gap_list": [
+    {
+      "gap_id": "RES003-PHASE5-AUTHORITY-001",
+      "minimum_next_step": "bind real component geometry/material/occlusion/exposed-area evidence before any release-grade component_failure_probability_authority or vulnerability authority claim",
+      "owner": "same_scope_phase5_component_probability_geometry_worker"
+    },
+    {
+      "gap_id": "RES003-GLOBAL-001",
+      "minimum_next_step": "if accepted, update the residual register only as a Stage B witness-geometry bookkeeping narrow closeout, not as global target-geometry authority",
+      "owner": "main_thread_acceptance_owner"
+    }
+  ],
+  "missing_evidence": [],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "provenance_interlock": {
+    "checks": [
+      {
+        "check_id": "RES003-PROV-001",
+        "pass": true,
+        "summary": "geometry/warhead provenance gate is present and keeps RES-003 non-authoritative"
+      },
+      {
+        "check_id": "RES003-PROV-002",
+        "pass": true,
+        "summary": "provenance gate marks the author-side RES-003 subslice ready but not release-grade"
+      },
+      {
+        "check_id": "RES003-PROV-003",
+        "pass": true,
+        "summary": "provenance gate explicitly blocks true 3D exposure, occlusion, and material authority"
+      },
+      {
+        "check_id": "RES003-PROV-004",
+        "pass": true,
+        "summary": "provenance gate grants no target, stock, effect-scale, component, Pk, or fuze authority"
+      }
+    ],
+    "release_blockers_preserved": [
+      "outer_bbox is only a coarse dimension anchor and has no reviewed row-level uncertainty bound",
+      "beam_witness_panel is repo-authored witness bookkeeping and lacks true 3D exposure/occlusion bounds",
+      "material, armor, occlusion and exposed-area truth are explicitly unsupported",
+      "target geometry ledgers support candidate/public anchors but not internal vulnerability geometry",
+      "PIN-F16 rows do not provide release-grade internal component geometry, materials or vulnerability area"
+    ],
+    "status": "row_provenance_interlock_preserved",
+    "upstream_res003_status": {
+      "author_side_subslice_ready": true,
+      "closed_by_this_gate": false,
+      "register": {
+        "area": "target geometry",
+        "blocked_authority": "effect scale / component probability",
+        "description": "Stage B witness-geometry bookkeeping 已窄域 closeout；真实 F-16C Block 50 组件几何、材料、遮挡和暴露面积来源仍未审计",
+        "register_status": "open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked",
+        "residual_id": "RES-003"
+      },
+      "release_grade": false,
+      "status": "blocked_row_level_bounds_missing",
+      "upstream_mechanism_gate_result": "blocked_author_side_review_ready"
+    },
+    "upstream_status": "blocked_non_authoritative_geometry_warhead_row_provenance_candidate"
+  },
+  "release_target": "stage_b_effect_scale_witness_geometry_bookkeeping_only",
+  "residual_closeout_decisions": {
+    "RES-003": {
+      "closed_residual_subscope": "stage_b_effect_scale_witness_geometry_bookkeeping",
+      "global_target_geometry_authority": "not_granted",
+      "main_thread_register_integration_note": "may mark only the Stage B witness-geometry bookkeeping subscope as closed if accepted; do not mark global RES-003 geometry authority closed",
+      "phase5_component_probability_geometry_dependency": "blocked",
+      "real_f16_component_geometry_material_occlusion": "blocked",
+      "residual_register_edit_required_by_this_gate": false,
+      "row_level_geometry_release_grade": "not_granted",
+      "stage_b_effect_scale_witness_geometry": "closed_narrow_non_authoritative"
+    }
+  },
+  "residual_register_snapshot": {
+    "area": "target geometry",
+    "blocked_authority": "effect scale / component probability",
+    "close_condition": "geometry 来源、假设和误差界限可追溯",
+    "description": "Stage B witness-geometry bookkeeping 已窄域 closeout；真实 F-16C Block 50 组件几何、材料、遮挡和暴露面积来源仍未审计",
+    "register_status": "open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked",
+    "residual_id": "RES-003",
+    "scope_impact": "Stage B 采样 bookkeeping 不再单独阻塞；仍可能把工程 hitbox 当成真实 vulnerability"
+  },
+  "review_target": "RES-003_target_geometry_closeout",
+  "schema_version": "a2.res003_target_geometry_closeout_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "stage_b_scope": "effect_scale_only",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "stage_b_assumption_review": {
+    "checks": [
+      {
+        "check_id": "RES003-ASSUME-001",
+        "pass": true,
+        "summary": "target geometry assumption manifest is frozen for Stage B review only"
+      },
+      {
+        "check_id": "RES003-ASSUME-002",
+        "pass": true,
+        "summary": "only outer_bbox and beam_witness_panel are used by Stage B"
+      },
+      {
+        "check_id": "RES003-ASSUME-003",
+        "pass": true,
+        "summary": "Stage B witness rows are candidate/bookkeeping rows with expected source IDs"
+      },
+      {
+        "check_id": "RES003-ASSUME-004",
+        "pass": true,
+        "summary": "component geometry, material, and occlusion truth are excluded or unsupported"
+      },
+      {
+        "check_id": "RES003-ASSUME-005",
+        "pass": true,
+        "summary": "documented current decision limits the claim to candidate effect-scale bookkeeping"
+      }
+    ],
+    "excluded_stage_b_geometry_items": [
+      "nose_radar_rough_region",
+      "engine_aft_region",
+      "wing_and_control_surface_regions",
+      "right_aileron_actuator_projection"
+    ],
+    "row_findings": {
+      "beam_witness_panel": {
+        "geometry_item": "beam_witness_panel",
+        "not_supported_claims": "真实 3D beam exposure、occlusion、局部曲面、局部 vulnerable area",
+        "residual": "RES-003",
+        "runtime_ref": "[a2_blastfrag_validation_scaffold.py](../../../../../../tools/maintenance/a2_blastfrag_validation_scaffold.py), `_bfm_bm_003()` witness length/height",
+        "source_ids": [
+          "F16-TG-SRC-001",
+          "F16-TG-SRC-002",
+          "F16-TG-SRC-012"
+        ],
+        "support_level": "repo_authored_witness_geometry",
+        "used_by_stage_b": "yes",
+        "value_or_bucket": "side-on rectangular witness area = length * height"
+      },
+      "engine_aft_region": {
+        "geometry_item": "engine_aft_region",
+        "not_supported_claims": "F110 installation boundary, accessory placement, fuel/hydraulic routing or vulnerability",
+        "residual": "RES-003",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), engine/component scaffold",
+        "source_ids": [
+          "F16-TG-SRC-002",
+          "F16-TG-SRC-004",
+          "F16-TG-SRC-012"
+        ],
+        "support_level": "rough_component_layout_candidate",
+        "used_by_stage_b": "no_direct_numeric_use_in_stage_b",
+        "value_or_bucket": "single-engine aft region candidate"
+      },
+      "internal_material_or_armor": {
+        "geometry_item": "internal_material_or_armor",
+        "not_supported_claims": "canopy thickness, armor, rib/spar counts, material percentages, protected bays",
+        "residual": "RES-003",
+        "runtime_ref": "none",
+        "source_ids": [],
+        "support_level": "unsupported",
+        "used_by_stage_b": "no",
+        "value_or_bucket": "not modeled as public truth"
+      },
+      "nose_radar_rough_region": {
+        "geometry_item": "nose_radar_rough_region",
+        "not_supported_claims": "APG-68 precise antenna size、radome thickness、material or fragility truth",
+        "residual": "RES-003",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), structured hitbox/component scaffold",
+        "source_ids": [
+          "F16-TG-SRC-002",
+          "F16-TG-SRC-005",
+          "F16-TG-SRC-012"
+        ],
+        "support_level": "rough_component_layout_candidate",
+        "used_by_stage_b": "no_direct_numeric_use_in_stage_b",
+        "value_or_bucket": "nose/radome/sensor candidate region"
+      },
+      "occlusion_and_exposed_area_truth": {
+        "geometry_item": "occlusion_and_exposed_area_truth",
+        "not_supported_claims": "true 3D shielding, masked fragments, projected vulnerable area or hit probability",
+        "residual": "RES-003",
+        "runtime_ref": "none",
+        "source_ids": [],
+        "support_level": "unsupported",
+        "used_by_stage_b": "no",
+        "value_or_bucket": "not modeled as public truth"
+      },
+      "outer_bbox": {
+        "geometry_item": "outer_bbox",
+        "not_supported_claims": "真实截面、站位、内部舱段与 vulnerability area",
+        "residual": "RES-003",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), `airframe.length_m/wingspan_m/height_m",
+        "source_ids": [
+          "F16-TG-SRC-001",
+          "F16-TG-SRC-002",
+          "F16-TG-SRC-012"
+        ],
+        "support_level": "candidate_dimension_anchor",
+        "used_by_stage_b": "yes",
+        "value_or_bucket": "length ~= 15 m`, `span ~= 10 m`, `height ~= 5 m` 量级"
+      },
+      "right_aileron_actuator_projection": {
+        "geometry_item": "right_aileron_actuator_projection",
+        "not_supported_claims": "real actuator size, exposure, redundancy or failure probability truth",
+        "residual": "RES-003`, `RES-009",
+        "runtime_ref": "runtime projected component path in [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp) + repo component scaffold",
+        "source_ids": [
+          "F16-TG-SRC-012",
+          "F16-TG-3P-006",
+          "F16-TG-3P-007"
+        ],
+        "support_level": "stage_c_only_component_projection_candidate",
+        "used_by_stage_b": "no_for_stage_b_effect_scale_only",
+        "value_or_bucket": "component-specific projection candidate"
+      },
+      "wing_and_control_surface_regions": {
+        "geometry_item": "wing_and_control_surface_regions",
+        "not_supported_claims": "mesh-derived hitboxes, spar/rib layout, fuel cell segmentation or surface-specific fragility",
+        "residual": "RES-003",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), wing/control components",
+        "source_ids": [
+          "F16-TG-SRC-012",
+          "F16-TG-3P-006",
+          "F16-TG-3P-007"
+        ],
+        "support_level": "internal_scaffold_plus_community_sanity",
+        "used_by_stage_b": "no_direct_numeric_use_in_stage_b",
+        "value_or_bucket": "rough wing/control-surface grouping"
+      }
+    },
+    "stage_b_source_ids": [
+      "F16-TG-SRC-001",
+      "F16-TG-SRC-002",
+      "F16-TG-SRC-012"
+    ],
+    "status": "stage_b_assumption_surface_bounded",
+    "unsupported_truth_items": [
+      "internal_material_or_armor",
+      "occlusion_and_exposed_area_truth"
+    ],
+    "used_by_stage_b_geometry_items": [
+      "outer_bbox",
+      "beam_witness_panel"
+    ]
+  },
+  "stage_b_review_interlock": {
+    "bfm_bm_003_independence_row": {
+      "allowed_claim": "sampling replay and convergence inside witness-geometry bookkeeping",
+      "audit_outcome": "candidate_sampling_hygiene_only",
+      "benchmark_id": "BFM-BM-003",
+      "current_release_role": "sampler_reproducibility_and_convergence",
+      "forbidden_claim": "true F-16 exposure geometry or direction-pattern truth",
+      "independence_class": "independent_for_sampler_replay_not_for_target_truth"
+    },
+    "checks": [
+      {
+        "check_id": "RES003-STAGEB-001",
+        "pass": true,
+        "summary": "retained Stage B independent review passed but remains release-blocked"
+      },
+      {
+        "check_id": "RES003-STAGEB-002",
+        "pass": true,
+        "summary": "BFM-BM-003 is limited to sampler replay inside witness-geometry bookkeeping"
+      },
+      {
+        "check_id": "RES003-STAGEB-003",
+        "pass": true,
+        "summary": "Stage B independent review does not convert hard-gate pass into release authority"
+      },
+      {
+        "check_id": "RES003-STAGEB-004",
+        "pass": true,
+        "summary": "scope bucket independent review is passed only as a review record and remains release-blocked"
+      },
+      {
+        "check_id": "RES003-STAGEB-005",
+        "pass": true,
+        "summary": "retained Stage B review gates grant no stock, effect-scale, component, Pk, or fuze authority"
+      }
+    ],
+    "independent_review_status": "independent_review_passed_release_blocked",
+    "scope_review_status": "scope_bucket_independent_review_passed_release_blocked",
+    "status": "stage_b_review_interlock_bounded"
+  },
+  "status": "res003_stage_b_effect_scale_witness_geometry_closeout_pass_release_blocked",
+  "worker_identity": {
+    "external_validation_claimed": false,
+    "independence_class": "project_internal_closeout_worker",
+    "nickname": "res003-geometry-closeout-worker",
+    "worker_id": "A2-RES003-GEOMETRY-CLOSEOUT"
+  }
+}

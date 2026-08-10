@@ -16,7 +16,7 @@ edit weapon/target descriptors, or claim real AIM-120C/F-16C/Pk authority.
 
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `KCES-P0 Project Boundary` | main thread | n/a | Create the subproject, status, queue, archive entry, and parent A2 links. | `docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/**`; parent A2 README files | Runtime/code/test changes; standards promotion | `git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model` | Required files exist, parent README links this project, and forbidden claims are explicit. | first, serial | 1 | pass |
+| `KCES-P0 Project Boundary` | main thread | n/a | Create the subproject, status, queue, archive entry, and parent A2 links. | `docs/domains/air/reviews/kill_chain_expectation_standardization_20260706/**`; parent A2 README files | Runtime/code/test changes; standards promotion | `git diff --check -- docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602` | Required files exist, parent README links this project, and forbidden claims are explicit. | first, serial | 1 | pass |
 | `KCES-P1 Expectation Contract` | main thread | n/a | Define stage contract, normalized bands, AIM-120C-like seed profile, and generic row template. | Contract docs inside this subproject | Numeric probability calibration; real weapon authority | Markdown/link review and `git diff --check` | Contract explains 10 m-class ambiguity only through declared profile fields and closes `R_effect_policy=independent_review_variable`. | after P0 | 2 | pass |
 | `KCES-P2 Scenario Matrix` | main thread | n/a | Add range x offset-angle heatmap covering nominal, marginal, and outside-envelope cells, plus a follow-on sampling-density estimate. | Scenario matrix docs inside this subproject | Runtime simulation changes; learned-policy evidence | Matrix review plus `git diff --check` | Heatmap declares range axis, offset-angle axis, target-motion layer, launch-window class, expected stage bands, recommended main-grid / seed budget, and first `R_effect_variant` handoff. | after P1 | 2 | pass |
 | `KCES-P3 Metric Mapping` | main thread | n/a | Map ordinal expectation bands to existing or planned stage-report fields. | Metric mapping doc; optional diagnostics-readiness checklist | Parameter values; descriptor edits | Docs check and field-reference review | Each metric is owned by one stage or marked cross-stage; heatmap report row schema exists. | after P2 | 2 | pass |
@@ -48,7 +48,7 @@ integration notes:
 ## Validation Plan
 
 ```bash
-git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model
+git diff --check -- docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602
 ```
 
 Future clusters may add link checks, schema checks, or diagnostics dry runs, but

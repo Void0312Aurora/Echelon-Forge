@@ -19,7 +19,7 @@ diagnostics-only bridge 已具备。受控 fixed-fire bridge 能报告 release/e
 输入：
 
 - Learning owner：[../../../README.zh.md](../../../README.zh.md)
-- A2 封存包：[../../archive/a2_high_fidelity_damage_model/README.zh.md](../../../../task/air_combat/archive/a2_high_fidelity_damage_model/README.zh.md)
+- A2 封存包：[../../archive/a2_high_fidelity_damage_model/README.zh.md](../../../../../README.zh.md)
 - A8 损伤效果链：[../../archive/a8_damage_effect_chain/README.zh.md](../../../../systems/effects/reviews/damage_effect_chain_20260608/README.zh.md)
 - Air execution owner：[../../../../domains/air/README.zh.md](../../../../domains/air/README.zh.md)
 - 奖励 runtime 入口：[../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)

@@ -56,7 +56,7 @@ a2.kill_chain_calibration_admission.v1
 - `prerequisites.load_rows_response_owner_clean = true`。
 - `prerequisites.external_calibration_evidence_present = true`。
 - `external_evidence.source_ref =
-  docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json`。
+  docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json`。
 - `external_evidence.admitted_record_count = 0`。
 - `external_evidence.engineering_proxy_record_count = 2`。
 - `external_evidence.engineering_proxy_record_ids =
@@ -203,7 +203,7 @@ external evidence preflight 也可通过 CLI 直接运行，不需要重新跑�
 ```bash
 ./.venv/bin/python tools/diagnostics/kill_chain_decoupling_probe.py \
   --external-evidence-preflight \
-  --external-evidence-report docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json \
+  --external-evidence-report docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json \
   --output docs/systems/effects/reviews/kill_chain_mechanism_decoupling_20260621/review_packets/kill_chain_decoupling_20260621/kill_chain_external_evidence_preflight_20260621.json
 ```
 
@@ -261,7 +261,7 @@ authority。
 
 ```bash
 ./.venv/bin/python tools/diagnostics/kill_chain_decoupling_probe.py \
-  --external-evidence-template-check docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json \
+  --external-evidence-template-check docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json \
   --output docs/systems/effects/reviews/kill_chain_mechanism_decoupling_20260621/review_packets/kill_chain_decoupling_20260621/kill_chain_current_manifest_readiness_check_20260621.json
 ```
 

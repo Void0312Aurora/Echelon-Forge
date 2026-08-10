@@ -1,0 +1,650 @@
+{
+  "authority_guard": {
+    "aim120c_warhead_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "row_level_geometry_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "target_geometry_authority_granted": false,
+    "warhead_class_authority_granted": false
+  },
+  "behavior_risks": [
+    "coarse F-16 dimensions or beam witness bookkeeping could be mistaken for true vulnerability geometry",
+    "repo AIM-120C-class toy warhead fields could be mistaken for variant-specific warhead or fuze truth",
+    "source links and source pins could be over-read as release-grade rights/retention or calibrated row authority"
+  ],
+  "consumed_inputs": [
+    {
+      "content_hash": "sha256:edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51",
+      "exists": true,
+      "input_id": "subagent_usage_policy",
+      "path": "docs/standards/governance/subagent_usage_policy.md",
+      "required": true,
+      "role": "governance_boundary",
+      "sha256": "edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51",
+      "size_bytes": 8935
+    },
+    {
+      "content_hash": "sha256:9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d",
+      "exists": true,
+      "input_id": "residual_register",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "required": true,
+      "role": "residual_status_source",
+      "sha256": "9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d",
+      "size_bytes": 14266
+    },
+    {
+      "content_hash": "sha256:5c651f7482abf7b025f9404d0ad3f4269c31483710ee8f4879f59fe3a3c79d31",
+      "exists": true,
+      "input_id": "target_geometry_assumptions",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+      "required": true,
+      "role": "res_003_assumption_surface",
+      "sha256": "5c651f7482abf7b025f9404d0ad3f4269c31483710ee8f4879f59fe3a3c79d31",
+      "size_bytes": 5222
+    },
+    {
+      "content_hash": "sha256:254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
+      "exists": true,
+      "input_id": "warhead_scope_and_sensitivity",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+      "required": true,
+      "role": "res_004_scope_surface",
+      "sha256": "254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
+      "size_bytes": 4716
+    },
+    {
+      "content_hash": "sha256:a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
+      "exists": true,
+      "input_id": "artifact_pin_manifest",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
+      "required": true,
+      "role": "source_pin_boundary",
+      "sha256": "a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
+      "size_bytes": 7676
+    },
+    {
+      "content_hash": "sha256:e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
+      "exists": true,
+      "input_id": "target_geometry_source_ledger",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+      "required": true,
+      "role": "res_003_source_ledger",
+      "sha256": "e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
+      "size_bytes": 15440
+    },
+    {
+      "content_hash": "sha256:26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
+      "exists": true,
+      "input_id": "warhead_source_ledger",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+      "required": true,
+      "role": "res_004_source_ledger",
+      "sha256": "26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
+      "size_bytes": 18747
+    },
+    {
+      "content_hash": "sha256:e9ef0c1a00fbc55f6b99975ad35e3077e22185c0d759d30cd4ff77e2f1268aca",
+      "exists": true,
+      "input_id": "mechanism_source_closeout_doc",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
+      "required": false,
+      "role": "optional_upstream_closeout_doc",
+      "sha256": "e9ef0c1a00fbc55f6b99975ad35e3077e22185c0d759d30cd4ff77e2f1268aca",
+      "size_bytes": 6253
+    },
+    {
+      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "exists": true,
+      "input_id": "mechanism_source_closeout_json",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "required": false,
+      "role": "optional_upstream_closeout_artifact",
+      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "size_bytes": 29136
+    },
+    {
+      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "exists": true,
+      "input_id": "mechanism_source_closeout_retained_file:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "required": false,
+      "role": "optional_upstream_closeout_retained_artifact",
+      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "size_bytes": 29136
+    }
+  ],
+  "decision": {
+    "authority_release_included": false,
+    "blocking_residual_ids": [
+      "RES-003",
+      "RES-004"
+    ],
+    "closed_residual_ids_by_this_gate": [],
+    "release_grade_for_current_narrow_scope": false,
+    "row_level_geometry_release_grade": false,
+    "warhead_provenance_bounds_release_grade": false
+  },
+  "gate_checks": [
+    {
+      "author_side_evidence_present": true,
+      "check_id": "ROWWAR-RES003-001",
+      "evidence": {
+        "author_status": "frozen_for_stage_b_review_only",
+        "row_findings": [
+          {
+            "blocker": "dimension_anchor_has_no_reviewed_row_level_error_bound",
+            "geometry_item": "outer_bbox",
+            "not_supported_claims": "真实截面、站位、内部舱段与 vulnerability area",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), `airframe.length_m/wingspan_m/height_m",
+            "source_ids": [
+              "F16-TG-SRC-001",
+              "F16-TG-SRC-002",
+              "F16-TG-SRC-012"
+            ],
+            "support_level": "candidate_dimension_anchor",
+            "used_by_stage_b": "yes",
+            "value_or_bucket": "length ~= 15 m`, `span ~= 10 m`, `height ~= 5 m` 量级"
+          },
+          {
+            "blocker": "repo_authored_witness_geometry_lacks_true_3d_exposure_bounds",
+            "geometry_item": "beam_witness_panel",
+            "not_supported_claims": "真实 3D beam exposure、occlusion、局部曲面、局部 vulnerable area",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "[a2_blastfrag_validation_scaffold.py](../../../../../../tools/maintenance/a2_blastfrag_validation_scaffold.py), `_bfm_bm_003()` witness length/height",
+            "source_ids": [
+              "F16-TG-SRC-001",
+              "F16-TG-SRC-002",
+              "F16-TG-SRC-012"
+            ],
+            "support_level": "repo_authored_witness_geometry",
+            "used_by_stage_b": "yes",
+            "value_or_bucket": "side-on rectangular witness area = length * height"
+          },
+          {
+            "blocker": "rough_candidate_layout_not_release_grade_vulnerability_geometry",
+            "geometry_item": "nose_radar_rough_region",
+            "not_supported_claims": "APG-68 precise antenna size、radome thickness、material or fragility truth",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), structured hitbox/component scaffold",
+            "source_ids": [
+              "F16-TG-SRC-002",
+              "F16-TG-SRC-005",
+              "F16-TG-SRC-012"
+            ],
+            "support_level": "rough_component_layout_candidate",
+            "used_by_stage_b": "no_direct_numeric_use_in_stage_b",
+            "value_or_bucket": "nose/radome/sensor candidate region"
+          },
+          {
+            "blocker": "rough_candidate_layout_not_release_grade_vulnerability_geometry",
+            "geometry_item": "engine_aft_region",
+            "not_supported_claims": "F110 installation boundary, accessory placement, fuel/hydraulic routing or vulnerability",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), engine/component scaffold",
+            "source_ids": [
+              "F16-TG-SRC-002",
+              "F16-TG-SRC-004",
+              "F16-TG-SRC-012"
+            ],
+            "support_level": "rough_component_layout_candidate",
+            "used_by_stage_b": "no_direct_numeric_use_in_stage_b",
+            "value_or_bucket": "single-engine aft region candidate"
+          },
+          {
+            "blocker": "rough_candidate_layout_not_release_grade_vulnerability_geometry",
+            "geometry_item": "wing_and_control_surface_regions",
+            "not_supported_claims": "mesh-derived hitboxes, spar/rib layout, fuel cell segmentation or surface-specific fragility",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), wing/control components",
+            "source_ids": [
+              "F16-TG-SRC-012",
+              "F16-TG-3P-006",
+              "F16-TG-3P-007"
+            ],
+            "support_level": "internal_scaffold_plus_community_sanity",
+            "used_by_stage_b": "no_direct_numeric_use_in_stage_b",
+            "value_or_bucket": "rough wing/control-surface grouping"
+          },
+          {
+            "blocker": "rough_candidate_layout_not_release_grade_vulnerability_geometry",
+            "geometry_item": "right_aileron_actuator_projection",
+            "not_supported_claims": "real actuator size, exposure, redundancy or failure probability truth",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "runtime projected component path in [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp) + repo component scaffold",
+            "source_ids": [
+              "F16-TG-SRC-012",
+              "F16-TG-3P-006",
+              "F16-TG-3P-007"
+            ],
+            "support_level": "stage_c_only_component_projection_candidate",
+            "used_by_stage_b": "no_for_stage_b_effect_scale_only",
+            "value_or_bucket": "component-specific projection candidate"
+          },
+          {
+            "blocker": "unsupported_public_truth",
+            "geometry_item": "internal_material_or_armor",
+            "not_supported_claims": "canopy thickness, armor, rib/spar counts, material percentages, protected bays",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "none",
+            "source_ids": [],
+            "support_level": "unsupported",
+            "used_by_stage_b": "no",
+            "value_or_bucket": "not modeled as public truth"
+          },
+          {
+            "blocker": "unsupported_public_truth",
+            "geometry_item": "occlusion_and_exposed_area_truth",
+            "not_supported_claims": "true 3D shielding, masked fragments, projected vulnerable area or hit probability",
+            "row_release_ready": false,
+            "row_status": "blocked_row_level_bounds_missing",
+            "runtime_ref": "none",
+            "source_ids": [],
+            "support_level": "unsupported",
+            "used_by_stage_b": "no",
+            "value_or_bucket": "not modeled as public truth"
+          }
+        ],
+        "target_type": "F-16C_Block50",
+        "unsupported_geometry_items": [
+          "internal_material_or_armor",
+          "occlusion_and_exposed_area_truth"
+        ],
+        "used_by_stage_b_geometry_items": [
+          "outer_bbox",
+          "beam_witness_panel"
+        ]
+      },
+      "release_blockers": [
+        "outer_bbox is only a coarse dimension anchor and has no reviewed row-level uncertainty bound",
+        "beam_witness_panel is repo-authored witness bookkeeping and lacks true 3D exposure/occlusion bounds",
+        "material, armor, occlusion and exposed-area truth are explicitly unsupported"
+      ],
+      "release_grade_satisfied": false,
+      "residual_id": "RES-003",
+      "status": "blocked_row_level_bounds_missing",
+      "surface": "target_geometry_assumption_row_trace"
+    },
+    {
+      "author_side_evidence_present": true,
+      "check_id": "ROWWAR-RES003-002",
+      "evidence": {
+        "pin_evidence": {
+          "authority_boundaries": {
+            "PIN-F16-001": "不是内部组件几何、材料或 vulnerability truth",
+            "PIN-F16-002": "不是 F-16 安装边界、附件、管路或 vulnerability truth",
+            "PIN-F16-003": "不是 F-16C Block 50 geometry authority"
+          },
+          "pin_ids": [
+            "PIN-F16-001",
+            "PIN-F16-002",
+            "PIN-F16-003"
+          ],
+          "rejected_pin_ids": [],
+          "release_consumed_pin_ids": [],
+          "sanity_only_pin_ids": [
+            "PIN-F16-003"
+          ],
+          "sha256_pinned_pin_ids": []
+        },
+        "source_evidence": {
+          "expected_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ],
+          "ledger_declares_non_authoritative": true,
+          "missing_source_ids": [],
+          "present_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ]
+        }
+      },
+      "release_blockers": [
+        "target geometry ledgers support candidate/public anchors but not internal vulnerability geometry",
+        "PIN-F16 rows do not provide release-grade internal component geometry, materials or vulnerability area"
+      ],
+      "release_grade_satisfied": false,
+      "residual_id": "RES-003",
+      "status": "blocked_source_retention_review_missing",
+      "surface": "target_geometry_source_and_pin_links"
+    },
+    {
+      "author_side_evidence_present": true,
+      "check_id": "ROWWAR-RES004-001",
+      "evidence": {
+        "consumed_by_surrogate_assumptions": [
+          "WAR-001",
+          "WAR-002",
+          "WAR-005"
+        ],
+        "rejected_assumptions": [
+          "WAR-007"
+        ],
+        "row_findings": [
+          {
+            "assumption_id": "WAR-001",
+            "blocker": "family_label_trace_present_but_variant_specific_bounds_missing",
+            "consumed_by_surrogate": "yes",
+            "forbidden_authority_claim": "不得外推到 AIM-120C variant-specific warhead internals or fragment pattern",
+            "row_release_ready": false,
+            "row_status": "blocked_warhead_bounds_missing",
+            "scope_claim": "weapon_family = blast_fragmentation` 只作为 family-level label",
+            "sensitivity_axis": "family gate / vocabulary",
+            "source_ids": [
+              "AIM120-WF-002",
+              "AIM120-WF-006"
+            ],
+            "third_party_candidates": "none required"
+          },
+          {
+            "assumption_id": "WAR-002",
+            "blocker": "repo_toy_numeric_input_not_calibrated_aim120c_truth",
+            "consumed_by_surrogate": "yes",
+            "forbidden_authority_claim": "不得把 repo `warhead.mass_kg` 写成 AIM-120C calibrated warhead mass、TNT equivalent 或 authority row",
+            "row_release_ready": false,
+            "row_status": "blocked_warhead_bounds_missing",
+            "scope_claim": "current scaffold consumes repo `warhead.mass_kg` as toy input, not as AIM-120C truth",
+            "sensitivity_axis": "blast scaled-distance proxy, toy fragment-count / energy proxy",
+            "source_ids": [
+              "AIM120-WF-002"
+            ],
+            "third_party_candidates": "AIM120-TPC-001/002/006` only as `sanity_check_only"
+          },
+          {
+            "assumption_id": "WAR-003",
+            "blocker": "repo_toy_numeric_input_not_calibrated_aim120c_truth",
+            "consumed_by_surrogate": "loaded_but_not_release_gating",
+            "forbidden_authority_claim": "不得把 repo `lethal_radius` 写成 fuze radius、kill radius 或 release threshold",
+            "row_release_ready": false,
+            "row_status": "blocked_warhead_bounds_missing",
+            "scope_claim": "current scaffold loads repo `lethal_radius` but Stage B hard-gate snapshot 不依赖该字段放行",
+            "sensitivity_axis": "bookkeeping only",
+            "source_ids": [],
+            "third_party_candidates": "none"
+          },
+          {
+            "assumption_id": "WAR-004",
+            "blocker": "method_or_term_route_not_missile_specific_truth",
+            "consumed_by_surrogate": "no_numeric_consumption",
+            "forbidden_authority_claim": "不得推出 trigger threshold、delay、reliability、safe-arm 或 deterministic fuze behavior",
+            "row_release_ready": false,
+            "row_status": "blocked_warhead_bounds_missing",
+            "scope_claim": "public TDD / target-detection / burst-point terminology 只支持字段命名和 residual 语言",
+            "sensitivity_axis": "field naming / evidence language",
+            "source_ids": [
+              "AIM120-WF-006"
+            ],
+            "third_party_candidates": "AIM120-TPC-001/002/008` 仅术语 sanity"
+          },
+          {
+            "assumption_id": "WAR-005",
+            "blocker": "method_or_term_route_not_missile_specific_truth",
+            "consumed_by_surrogate": "yes",
+            "forbidden_authority_claim": "不得把 toy method route 写成 AIM-120C fragment count/mass/velocity/directionality truth",
+            "row_release_ready": false,
+            "row_status": "blocked_warhead_bounds_missing",
+            "scope_claim": "PHYS-BF-*` 公开方法只支撑 blast / fragment toy proxy，不支撑 missile-specific truth",
+            "sensitivity_axis": "method route, monotonicity, unit and uncertainty hygiene",
+            "source_ids": [
+              "PHYS-BF-001",
+              "PHYS-BF-002",
+              "PHYS-BF-006",
+              "PHYS-BF-013",
+              "PHYS-BF-014",
+              "PHYS-BF-015"
+            ],
+            "third_party_candidates": "none"
+          },
+          {
+            "assumption_id": "WAR-006",
+            "blocker": "third_party_mass_cluster_sanity_only_not_authority",
+            "consumed_by_surrogate": "no_for_stage_b_release",
+            "forbidden_authority_claim": "不得写成 AIM-120C / C-7 / C-8 warhead truth",
+            "row_release_ready": false,
+            "row_status": "blocked_warhead_bounds_missing",
+            "scope_claim": "third-party 40 lb / 18 kg mass cluster 只允许做 sanity/sensitivity，不进入 authority row",
+            "sensitivity_axis": "mass-envelope sanity only",
+            "source_ids": [],
+            "third_party_candidates": "AIM120-TPC-001/002/005/006/007"
+          },
+          {
+            "assumption_id": "WAR-007",
+            "blocker": "forum_game_commercial_values_rejected",
+            "consumed_by_surrogate": "no",
+            "forbidden_authority_claim": "DCS / War Thunder / forum / RPG values 永不进入 Stage B authority path",
+            "row_release_ready": false,
+            "row_status": "blocked_warhead_bounds_missing",
+            "scope_claim": "forum / game / commercial sim proximity、damage、fragment 或 Pk 值全部拒绝",
+            "sensitivity_axis": "rejection guard only",
+            "source_ids": [],
+            "third_party_candidates": "rejected: `AIM120-TPC-REJ-001..005"
+          }
+        ],
+        "weapon_class": "AIM-120C-class",
+        "weapon_family": "blast_fragmentation"
+      },
+      "release_blockers": [
+        "AIM-120C-class blast-fragmentation family label is traceable, but variant-specific warhead internals remain out of scope",
+        "repo warhead.mass_kg and lethal_radius fields are toy inputs/bookkeeping, not calibrated AIM-120C truth",
+        "no release-grade sensitivity envelope binds mass, TNT equivalent, fragment pattern or casing assumptions"
+      ],
+      "release_grade_satisfied": false,
+      "residual_id": "RES-004",
+      "status": "blocked_warhead_class_bounds_missing",
+      "surface": "warhead_scope_row_trace"
+    },
+    {
+      "author_side_evidence_present": true,
+      "check_id": "ROWWAR-RES004-002",
+      "evidence": {
+        "pin_evidence": {
+          "authority_boundaries": {
+            "PIN-AIM120-001": "不支持 trigger threshold、delay、reliability 或 deterministic fuze",
+            "PIN-AIM120-002": "不是 AIM-120C explosive truth 或 calibrated effect row",
+            "PIN-AIM120-TPC-001": "绝不写成 AIM-120C mass truth 或 runtime row",
+            "PIN-AIM120-TPC-REJ": "DCS / War Thunder / forum / tabletop values 永不进入 authority path"
+          },
+          "pin_ids": [
+            "PIN-AIM120-001",
+            "PIN-AIM120-002",
+            "PIN-AIM120-TPC-001",
+            "PIN-AIM120-TPC-REJ"
+          ],
+          "rejected_pin_ids": [
+            "PIN-AIM120-TPC-REJ"
+          ],
+          "release_consumed_pin_ids": [],
+          "sanity_only_pin_ids": [
+            "PIN-AIM120-TPC-001"
+          ],
+          "sha256_pinned_pin_ids": [
+            "PIN-AIM120-001",
+            "PIN-AIM120-002"
+          ]
+        },
+        "source_evidence": {
+          "expected_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-001",
+            "PHYS-BF-002",
+            "PHYS-BF-006"
+          ],
+          "ledger_declares_non_authoritative": true,
+          "missing_source_ids": [],
+          "present_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-001",
+            "PHYS-BF-002",
+            "PHYS-BF-006"
+          ]
+        }
+      },
+      "release_blockers": [
+        "third-party 40 lb / 18 kg cluster remains sanity-only and not a runtime row",
+        "forum, game, commercial-sim, fuze-radius, damage and Pk values remain rejected",
+        "public TDD/burst-point terms do not authorize trigger threshold, delay, reliability or deterministic fuze behavior"
+      ],
+      "release_grade_satisfied": false,
+      "residual_id": "RES-004",
+      "status": "blocked_warhead_bounds_and_rights_review_missing",
+      "surface": "warhead_source_rights_rejection_guard"
+    }
+  ],
+  "integration_notes": [
+    "this gate does not edit residual_register.zh.md and does not close RES-003 or RES-004",
+    "RES-013 Pk and RES-014 deterministic fuze remain outside this gate and stay false in authority_guard",
+    "downstream consumers must read residual_status together with authority_guard; author-side trace presence is not release authority"
+  ],
+  "missing_inputs": [],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "release_blockers": {
+    "RES-003": [
+      "outer_bbox is only a coarse dimension anchor and has no reviewed row-level uncertainty bound",
+      "beam_witness_panel is repo-authored witness bookkeeping and lacks true 3D exposure/occlusion bounds",
+      "material, armor, occlusion and exposed-area truth are explicitly unsupported",
+      "target geometry ledgers support candidate/public anchors but not internal vulnerability geometry",
+      "PIN-F16 rows do not provide release-grade internal component geometry, materials or vulnerability area"
+    ],
+    "RES-004": [
+      "AIM-120C-class blast-fragmentation family label is traceable, but variant-specific warhead internals remain out of scope",
+      "repo warhead.mass_kg and lethal_radius fields are toy inputs/bookkeeping, not calibrated AIM-120C truth",
+      "no release-grade sensitivity envelope binds mass, TNT equivalent, fragment pattern or casing assumptions",
+      "third-party 40 lb / 18 kg cluster remains sanity-only and not a runtime row",
+      "forum, game, commercial-sim, fuze-radius, damage and Pk values remain rejected",
+      "public TDD/burst-point terms do not authorize trigger threshold, delay, reliability or deterministic fuze behavior"
+    ]
+  },
+  "required_inputs": [
+    {
+      "input_id": "subagent_usage_policy",
+      "path": "docs/standards/governance/subagent_usage_policy.md",
+      "required": true,
+      "role": "governance_boundary"
+    },
+    {
+      "input_id": "residual_register",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "required": true,
+      "role": "residual_status_source"
+    },
+    {
+      "input_id": "target_geometry_assumptions",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+      "required": true,
+      "role": "res_003_assumption_surface"
+    },
+    {
+      "input_id": "warhead_scope_and_sensitivity",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+      "required": true,
+      "role": "res_004_scope_surface"
+    },
+    {
+      "input_id": "artifact_pin_manifest",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
+      "required": true,
+      "role": "source_pin_boundary"
+    },
+    {
+      "input_id": "target_geometry_source_ledger",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+      "required": true,
+      "role": "res_003_source_ledger"
+    },
+    {
+      "input_id": "warhead_source_ledger",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+      "required": true,
+      "role": "res_004_source_ledger"
+    },
+    {
+      "input_id": "mechanism_source_closeout_doc",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
+      "required": false,
+      "role": "optional_upstream_closeout_doc"
+    },
+    {
+      "input_id": "mechanism_source_closeout_json",
+      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "required": false,
+      "role": "optional_upstream_closeout_artifact"
+    }
+  ],
+  "residual_status": {
+    "RES-003": {
+      "author_side_subslice_ready": true,
+      "closed_by_this_gate": false,
+      "register": {
+        "area": "target geometry",
+        "blocked_authority": "effect scale / component probability",
+        "description": "Stage B witness-geometry bookkeeping 已窄域 closeout；真实 F-16C Block 50 组件几何、材料、遮挡和暴露面积来源仍未审计",
+        "register_status": "research_closed_stage_b_witness_geometry_bookkeeping_authority_blocked_global_geometry",
+        "residual_id": "RES-003"
+      },
+      "release_grade": false,
+      "status": "blocked_row_level_bounds_missing",
+      "upstream_mechanism_gate_result": "blocked_author_side_review_ready"
+    },
+    "RES-004": {
+      "author_side_subslice_ready": true,
+      "closed_by_this_gate": false,
+      "register": {
+        "area": "warhead scope",
+        "blocked_authority": "effect scale / mechanism load",
+        "description": "Stage B AIM-120C-class blast-fragmentation family scope 已窄域 closeout；具体 AIM-120C 战斗部真值、质量、破片形态和 fuze 证据仍未关闭",
+        "register_status": "research_closed_stage_b_family_scope_authority_blocked_specific_warhead_truth",
+        "residual_id": "RES-004"
+      },
+      "release_grade": false,
+      "status": "blocked_warhead_class_bounds_missing",
+      "upstream_mechanism_gate_result": "blocked_author_side_review_ready"
+    }
+  },
+  "review_target": "res_003_004_geometry_warhead_row_provenance_lane",
+  "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "closure_bucket": "high",
+    "miss_distance_bucket": "near_miss_0_35m",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "blocked_non_authoritative_geometry_warhead_row_provenance_candidate",
+  "upstream_authority_guard_observed": {
+    "aim120c_warhead_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "target_geometry_authority_granted": false
+  }
+}

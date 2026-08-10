@@ -1,7 +1,7 @@
 {
   "schema_version": "a2.kill_chain_calibration_evidence_template_check.v1",
   "status": "blocked_or_template_only",
-  "source_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
+  "source_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
   "input_schema_version": "mlf10.calibration_evidence_manifest.v1",
   "ready_for_mlf10_audit": false,
   "record_count": 7,

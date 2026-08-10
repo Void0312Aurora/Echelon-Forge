@@ -1,0 +1,337 @@
+{
+  "admission_review_evidence_state": {
+    "admission_review_decision": "not_admitted_fail_closed",
+    "admission_review_status": "blocked_fail_closed_tp21_selected_case_admission_review_packet",
+    "allowed_output_signoff_present": false,
+    "independent_reviewer_signoff_present": false,
+    "release_grade_validated": false,
+    "reviewer_selected_case_locator_present": false,
+    "selected_debris_output_hash_count": 0,
+    "selected_output_preimage_sha256_present": false,
+    "selected_tp21_case_admitted": false
+  },
+  "authority_granted_by_this_packet": false,
+  "authority_guards": {
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "behavior_risks": [
+    "candidate locator labels can be mistaken for reviewer-selected source content",
+    "controlled criteria labels can be mistaken for raw TP-21 selected output values",
+    "hash-only candidate evidence can be mistaken for release evidence",
+    "this packet does not grant fragment, component, effect, stock, runtime, Pk, or fuze authority"
+  ],
+  "benchmark_consumed_for_release": false,
+  "candidate_evidence_guarantees": {
+    "benchmark_consumed_for_release": false,
+    "hash_only_ref_only_label_only": true,
+    "raw_tp21_source_content_copied": false,
+    "raw_tp21_source_content_retained": false,
+    "release_evidence": false,
+    "selected_output_preimages_retained": false,
+    "selected_output_raw_values_retained": false,
+    "source_figures_retained": false,
+    "source_numeric_values_retained": false,
+    "source_payload_body_retained": false,
+    "source_tables_retained": false
+  },
+  "candidate_locator_policy": {
+    "allowed_locator_label_keys": [
+      "tp21_page_locator_label",
+      "tp21_section_or_figure_locator_label",
+      "reviewer_case_selection_id"
+    ],
+    "candidate_locator_labels_retained": [],
+    "locator_labels_are_not_source_quotes": true,
+    "locator_status": "missing_fail_closed",
+    "missing_reason": "safe reviewer-selected TP-21 case locator label is absent",
+    "source_prose_tables_figures_or_raw_values_retained": false
+  },
+  "candidate_selection_status": {
+    "benchmark_consumed_for_release": false,
+    "decision": "not_ready_fail_closed",
+    "fail_closed": true,
+    "missing_item_count": 5,
+    "narrowly_closes_res005": false,
+    "release_grade_validated": false,
+    "residual_status_after_packet": "open_fail_closed_res005",
+    "selected_case_admitted_for_release": false,
+    "selected_case_candidate_packet_ready": false,
+    "status": "blocked"
+  },
+  "current_missing_items": [
+    {
+      "item_id": "TP21-REVIEWER-SELECTED-CASE-LOCATOR",
+      "missing_reason": "reviewer-selected case locator label is absent",
+      "retained_form_required": "label_only"
+    },
+    {
+      "item_id": "TP21-SELECTED-OUTPUT-PREIMAGE-SHA256",
+      "missing_reason": "selected-output preimage sha256 is absent",
+      "retained_form_required": "hash_only"
+    },
+    {
+      "item_id": "TP21-SELECTED-OUTPUT-HASH-ANCHORS",
+      "missing_reason": "selected-output hash anchor set is empty",
+      "retained_form_required": "hash_only"
+    },
+    {
+      "item_id": "TP21-INDEPENDENT-REVIEWER-SIGNOFF",
+      "missing_reason": "independent reviewer signoff is absent",
+      "retained_form_required": "signoff_ref_only"
+    },
+    {
+      "item_id": "TP21-ALLOWED-OUTPUT-SIGNOFF",
+      "missing_reason": "allowed-output signoff remains fail-closed or not release-grade",
+      "retained_form_required": "signoff_ref_only"
+    }
+  ],
+  "hash_only_preimage_policy": {
+    "benchmark_consumed_for_release": false,
+    "consume_forbidden_outputs": [
+      "source_payload_body_as_benchmark_input",
+      "spreadsheet_or_tool_outputs_as_release_benchmark",
+      "document_examples_as_release_benchmark",
+      "comparison_outputs_without_selected_sha256_and_signoff",
+      "effect_scale_authority",
+      "component_failure_probability_authority",
+      "pk_authority",
+      "deterministic_fuze_authority",
+      "stock_descriptor_authority",
+      "runtime_authority"
+    ],
+    "copy_forbidden_outputs": [
+      "payload_body_or_bulk_content",
+      "numeric_tables_or_figures",
+      "derived_calibration_values",
+      "runtime_or_stock_descriptor_fields"
+    ],
+    "hash_allowed_outputs": [
+      "retained_payload_file_sha256",
+      "source_manifest_sha256",
+      "rights_policy_gate_sha256",
+      "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+    ],
+    "preimage_policy_status": "missing_hash_fail_closed",
+    "raw_tp21_source_content_retained": false,
+    "selected_debris_output_hash_count": 0,
+    "selected_debris_output_set_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "selected_output_preimage_retained": false,
+    "selected_output_preimage_sha256_present": false,
+    "selected_output_raw_values_retained": false,
+    "source_figures_retained": false,
+    "source_numeric_values_retained": false,
+    "source_tables_retained": false
+  },
+  "hash_only_ref_only_label_only": true,
+  "input_refs": [
+    {
+      "artifact_id": "source_artifact_pack_manifest",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "role": "retained_tp21_payload_manifest_input",
+      "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
+      "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
+      "status": "partial_payloads_retained_release_review_blocked"
+    },
+    {
+      "artifact_id": "res005_tp21_debris_admission_gate",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
+      "role": "prior_res005_debris_fail_closed_gate_input",
+      "schema_version": "a2.res005_tp21_debris_admission_gate.v1",
+      "sha256": "d0f64487b4d71762e383f3420d81c31d66591c18e341b95996ec979d9505ff2b",
+      "status": "blocked_fail_closed_tp21_debris_admission_gate"
+    },
+    {
+      "artifact_id": "selected_debris_output_anchor_set",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
+      "role": "hash_only_selected_output_anchor_input",
+      "schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",
+      "sha256": "b17f164da8488bcf232d2e72492baa7febf70079a1cab13171d1de5e75c6b638",
+      "status": ""
+    },
+    {
+      "artifact_id": "source_rights_output_policy_gate",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "role": "source_rights_allowed_output_policy_input",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    },
+    {
+      "artifact_id": "res005_tp21_selected_case_admission_review_gate",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+      "role": "selected_case_review_gate_input",
+      "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
+      "sha256": "9155ebfeef00c83518eb6ec772f9dd79874a0aaf7bcfdb4bef167e36e67ca84a",
+      "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
+    }
+  ],
+  "integration_notes": [
+    "RES-005 remains open and fail-closed until safe locator labels, selected-output preimage sha256, hash anchors, independent review, and allowed-output signoff are present.",
+    "This packet is machine-readable candidate evidence only; it is not release evidence.",
+    "No TP-21 source prose, tables, figures, raw numeric values, raw selected outputs, stock fields, runtime fields, Pk fields, or fuze authority are retained."
+  ],
+  "non_authoritative_guards": {
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package": {
+    "authority_state": "candidate_non_authoritative_fail_closed",
+    "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+    "task_cluster": "TC-A2-BF-003-RES005-TP21",
+    "worker_id": "TC-A2-BF-003-RES005-TP21-CANDIDATE-SELECTION"
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "packet_sha256": "5ebe6fcf00f9a666d884085717fc4a58ab54d99ab90cf435699c6b4606f009bf",
+  "present_vs_missing": [
+    {
+      "current_status": "present",
+      "description": "retained TP-21 payload file exists and sha256 matches manifest",
+      "item_id": "TP21-PAYLOAD-RETAINED-HASH-MATCHED",
+      "missing_reason": "",
+      "present": true,
+      "retained_form": "ref_and_sha256_only"
+    },
+    {
+      "current_status": "present",
+      "description": "controlled debris selection criteria labels",
+      "item_id": "TP21-CONTROLLED-CRITERIA-VOCABULARY",
+      "missing_reason": "",
+      "present": true,
+      "retained_form": "label_and_sha256_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "description": "reviewer-selected TP-21 case locator label",
+      "item_id": "TP21-REVIEWER-SELECTED-CASE-LOCATOR",
+      "missing_reason": "reviewer-selected case locator label is absent",
+      "present": false,
+      "retained_form": "label_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "description": "sha256 of redacted selected-output preimage",
+      "item_id": "TP21-SELECTED-OUTPUT-PREIMAGE-SHA256",
+      "missing_reason": "selected-output preimage sha256 is absent",
+      "present": false,
+      "retained_form": "hash_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "description": "hash-only selected-output anchor evidence",
+      "item_id": "TP21-SELECTED-OUTPUT-HASH-ANCHORS",
+      "missing_reason": "selected-output hash anchor set is empty",
+      "present": false,
+      "retained_form": "hash_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "description": "independent reviewer signoff for selected case evidence",
+      "item_id": "TP21-INDEPENDENT-REVIEWER-SIGNOFF",
+      "missing_reason": "independent reviewer signoff is absent",
+      "present": false,
+      "retained_form": "signoff_ref_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "description": "allowed-output signoff for hash-only selected outputs",
+      "item_id": "TP21-ALLOWED-OUTPUT-SIGNOFF",
+      "missing_reason": "allowed-output signoff remains fail-closed or not release-grade",
+      "present": false,
+      "retained_form": "signoff_ref_only"
+    }
+  ],
+  "raw_tp21_source_content_retained": false,
+  "res005_closure_granted": false,
+  "residual_id": "RES-005",
+  "schema": {
+    "name": "res005_tp21_selected_case_candidate_packet",
+    "version": "v1"
+  },
+  "schema_version": "a2.res005_tp21_selected_case_candidate_packet.v1",
+  "selected_output_preimages_retained": false,
+  "selected_output_raw_values_retained": false,
+  "selection_criteria": {
+    "controlled_criteria_key_count": 8,
+    "controlled_criteria_keys": [
+      "debris_item_class",
+      "debris_mass_bin",
+      "debris_velocity_or_throw_bin",
+      "standoff_or_separation_bin",
+      "target_exposure_or_area_bin",
+      "unit_system",
+      "applicability_limit",
+      "exclusion_reason"
+    ],
+    "controlled_criteria_vocabulary_sha256": "6760351838bd84a24945a5459f53fffc8326edbaf447cb0e2223f7228a2b1969",
+    "criteria_are_labels_only": true,
+    "criteria_are_not_calibration_authority": true,
+    "criteria_are_not_raw_tp21_values": true,
+    "criteria_source": "res005_tp21_debris_admission_anchor_set"
+  },
+  "source_payload_summary": {
+    "allowed_use": "candidate_provenance_and_benchmark_design_reference_only",
+    "benchmark_consumed_for_release": false,
+    "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+    "hash_matches_expected": true,
+    "payload_exists": true,
+    "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+    "retention_status": "candidate_retained_not_release_reviewed",
+    "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+    "sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+    "source_artifact_label": "TP-21 PDF",
+    "source_id": "VPS-BFM-015"
+  },
+  "source_rights_policy_summary": {
+    "consume_forbidden_outputs": [
+      "source_payload_body_as_benchmark_input",
+      "spreadsheet_or_tool_outputs_as_release_benchmark",
+      "document_examples_as_release_benchmark",
+      "comparison_outputs_without_selected_sha256_and_signoff",
+      "effect_scale_authority",
+      "component_failure_probability_authority",
+      "pk_authority",
+      "deterministic_fuze_authority",
+      "stock_descriptor_authority",
+      "runtime_authority"
+    ],
+    "copy_forbidden_outputs": [
+      "payload_body_or_bulk_content",
+      "numeric_tables_or_figures",
+      "derived_calibration_values",
+      "runtime_or_stock_descriptor_fields"
+    ],
+    "current_selected_comparison_output_hash_count": 0,
+    "hash_allowed_outputs": [
+      "retained_payload_file_sha256",
+      "source_manifest_sha256",
+      "rights_policy_gate_sha256",
+      "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+    ],
+    "policy_status": "release_candidate_fail_closed_policy_frozen",
+    "release_grade_satisfied": false,
+    "schema_version": "a2.source_rights_output_policy_gate.v1",
+    "status": "blocked_release_candidate_rights_supported_policy_fail_closed",
+    "tp21_benchmark_consumed_for_release": false,
+    "tp21_current_comparison_outputs_admitted": false,
+    "tp21_release_consumption_allowed": false
+  },
+  "status": "blocked_fail_closed_tp21_selected_case_candidate_packet"
+}

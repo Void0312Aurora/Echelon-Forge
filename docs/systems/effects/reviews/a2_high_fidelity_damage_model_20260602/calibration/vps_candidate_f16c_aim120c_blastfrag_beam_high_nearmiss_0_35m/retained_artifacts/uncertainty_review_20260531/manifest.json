@@ -1,0 +1,45 @@
+{
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531",
+  "artifacts": [
+    {
+      "allowed_claim": "RES-011 uncertainty review state is retained",
+      "artifact_key": "uncertainty_review_gate",
+      "content_sha256": "0d6ae9053b2f6c4737cb01833ad320fdf532ff49a3b5bf36b88a39c32849dbe4",
+      "filename": "uncertainty_review_gate.json",
+      "forbidden_claim": "release readiness, stock runtime authority, component-probability authority, Pk authority, deterministic-fuze authority or release-grade uncertainty coverage",
+      "origin_class": "uncertainty_review_gate_record_only",
+      "payload_sha256": "a862db92498789001dc35e994cf427213ae775339f080b18130b260287c35ae8",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531/uncertainty_review_gate.json",
+      "schema_version": "a2.uncertainty_review_gate.v1",
+      "size_bytes": 9824,
+      "status": "uncertainty_review_stage_b_narrow_pass_stage_c_blocked_release_blocked"
+    }
+  ],
+  "authority_guards": {
+    "component_failure_probability_authority_granted": false,
+    "component_failure_probability_authority_in_stock": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "effect_scale_authority_in_stock": false,
+    "formal_validation_manifest_promoted": false,
+    "hard_gate_pass_is_release": false,
+    "pk_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "stock_runtime_authority_granted": false
+  },
+  "generated_on": "2026-05-31",
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "retention_scope": "RES-011_uncertainty_review_only",
+  "review_decision": {
+    "release_blocked": true,
+    "release_ready": false,
+    "res011_release_grade_complete": false,
+    "stage_b_author_side_uncertainty_closeout_complete": true,
+    "stage_b_release_grade_uncertainty_complete": false,
+    "stage_c_author_repeatability_present": true,
+    "stage_c_release_grade_uncertainty_complete": false
+  },
+  "schema_version": "a2.uncertainty_review_retained_artifacts.v1",
+  "status": "uncertainty_review_retained_release_blocked"
+}

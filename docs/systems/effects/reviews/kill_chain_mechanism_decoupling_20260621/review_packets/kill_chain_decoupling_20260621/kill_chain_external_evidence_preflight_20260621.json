@@ -1,13 +1,13 @@
 {
   "schema_version": "a2.kill_chain_calibration_evidence_preflight.v1",
   "status": "admitted_evidence_available",
-  "source_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json",
+  "source_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json",
   "blocked_by": [],
   "external_evidence": {
-    "source_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json",
+    "source_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json",
     "report_available": true,
     "report_schema_version": "mlf10.calibration_admission_report.v1",
-    "source_manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
+    "source_manifest_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
     "record_count": 7,
     "decision_counts": {
       "engineering_proxy": 1,

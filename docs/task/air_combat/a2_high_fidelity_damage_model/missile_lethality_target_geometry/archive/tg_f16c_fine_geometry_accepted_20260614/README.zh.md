@@ -44,7 +44,7 @@ review packet 保留在原稳定路径 `review_packets/f16c_20260611/`，没有�
 
 ```powershell
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py
-git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
+git diff --check -- docs/systems/effects/reviews/f16c_target_geometry_20260614 tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
 ```
 
 结果：几何审阅测试 `5 passed`；diff whitespace check 无输出。

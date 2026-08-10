@@ -1,0 +1,306 @@
+{
+  "artifact_provenance": {
+    "criteria_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md",
+    "sample_count": 4096,
+    "seed": 20260529,
+    "source_kind": "candidate_stage_b_effect_scale_snapshot",
+    "validation_scaffold_ref": "tools/maintenance/a2_blastfrag_validation_scaffold.py"
+  },
+  "benchmark_snapshot": {
+    "BFM-BM-001": {
+      "current_point": {
+        "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+        "blast_overpressure_kpa_proxy": 2990.19783601993,
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "standoff_m": 0.35
+      },
+      "metrics": {
+        "monotonic_impulse_pass": true,
+        "monotonic_overpressure_pass": true,
+        "unit_roundtrip_pass": true
+      },
+      "status": "toy_not_validated"
+    },
+    "BFM-BM-003": {
+      "current_point": {
+        "beam_witness_areal_density_per_m2": 2.2375438053115406,
+        "burst_offset_m": 0.35,
+        "hit_count": 1871,
+        "hit_fraction": 0.456787109375,
+        "mean_direction": {
+          "x": 0.0030945105370943004,
+          "y": -0.007624290435225162,
+          "z": -0.007040122039437772
+        },
+        "negative_y_hemisphere_fraction": 0.510498046875,
+        "sample_count": 4096,
+        "toy_fragment_count": 360,
+        "witness_area_m2": 73.4928
+      },
+      "metrics": {
+        "fixed_seed_replay_pass": true,
+        "isotropy_pass": true,
+        "sampling_convergence_pass": true
+      },
+      "sampling_convergence_summary": {
+        "comparison_beam_witness_areal_density_per_m2": 2.2357499433617987,
+        "comparison_sample_count": 8192,
+        "reference_beam_witness_areal_density_per_m2": 2.2375438053115406,
+        "reference_sample_count": 4096,
+        "relative_delta": 0.0008023535704733635
+      },
+      "status": "toy_not_validated"
+    },
+    "BFM-BM-005": {
+      "diagnostic_only_fields": {
+        "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+        "blast_overpressure_kpa_proxy": 2990.19783601993,
+        "fragment_energy_j_proxy": 8038.506154383306,
+        "fragment_mass_kg_proxy": 0.015,
+        "fragment_velocity_mps_proxy": 1284.2814124898239,
+        "penetration_margin_proxy": 474.2814124898239
+      },
+      "mechanism_load_vector": {
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "fragment_areal_density_per_m2": 2.2375438053115406,
+        "surface_incidence_cos": 1.0
+      },
+      "metrics": {
+        "forbidden_authority_fields_absent": true,
+        "seed_window_cv_pass": true,
+        "source_trace_completeness_pass": true,
+        "uncertainty_summary_present": true,
+        "unit_consistency_pass": true
+      },
+      "status": "toy_not_validated",
+      "uncertainty_summary": {
+        "blast_impulse_kpa_ms_proxy": {
+          "cv": 0.0,
+          "max": 1818.232969328465,
+          "mean": 1818.232969328465,
+          "min": 1818.232969328465,
+          "pstdev": 0.0
+        },
+        "evaluated_seeds": [
+          20260529,
+          20260630,
+          20260731,
+          20260832
+        ],
+        "fragment_areal_density_per_m2": {
+          "cv": 0.013556475680557211,
+          "max": 2.2794005841388545,
+          "mean": 2.2321622194623147,
+          "min": 2.202862474283195,
+          "pstdev": 0.030260252843199477
+        },
+        "fragment_energy_j_proxy": {
+          "cv": 0.0,
+          "max": 8038.506154383306,
+          "mean": 8038.506154383306,
+          "min": 8038.506154383306,
+          "pstdev": 0.0
+        },
+        "penetration_margin_proxy": {
+          "cv": 0.014953428348644477,
+          "max": 488.17637622405573,
+          "mean": 478.7925499524515,
+          "min": 469.84618188494005,
+          "pstdev": 7.159590089578765
+        }
+      }
+    },
+    "BFM-BM-006": {
+      "metrics": {
+        "checked_calibration_docs": 24,
+        "checked_candidate_docs": 29,
+        "checked_ledgers": 9,
+        "source_trace_error_count": 0,
+        "source_trace_warning_count": 0
+      },
+      "status": "administrative_gate"
+    }
+  },
+  "criteria_evaluation": [
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-001",
+      "criteria_id": "BFM-CRIT-ES-001",
+      "expected": true,
+      "field": "metrics.unit_roundtrip_pass",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-001",
+      "criteria_id": "BFM-CRIT-ES-002",
+      "expected": true,
+      "field": "metrics.monotonic_overpressure_pass",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-001",
+      "criteria_id": "BFM-CRIT-ES-003",
+      "expected": true,
+      "field": "metrics.monotonic_impulse_pass",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-003",
+      "criteria_id": "BFM-CRIT-ES-004",
+      "expected": true,
+      "field": "metrics.fixed_seed_replay_pass",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-003",
+      "criteria_id": "BFM-CRIT-ES-005",
+      "expected": true,
+      "field": "metrics.isotropy_pass",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-003",
+      "criteria_id": "BFM-CRIT-ES-006",
+      "expected": true,
+      "field": "metrics.sampling_convergence_pass",
+      "pass": true
+    },
+    {
+      "actual": 0.0008023535704733635,
+      "benchmark_id": "BFM-BM-003",
+      "criteria_id": "BFM-CRIT-ES-007",
+      "expected": "<=0.05",
+      "field": "sampling_convergence_summary.relative_delta",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-008",
+      "expected": true,
+      "field": "metrics.source_trace_completeness_pass",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-009",
+      "expected": true,
+      "field": "metrics.unit_consistency_pass",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-010",
+      "expected": true,
+      "field": "metrics.forbidden_authority_fields_absent",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-011",
+      "expected": true,
+      "field": "metrics.uncertainty_summary_present",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-012",
+      "expected": true,
+      "field": "metrics.seed_window_cv_pass",
+      "pass": true
+    },
+    {
+      "actual": 0.013556475680557211,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-013",
+      "expected": "<=0.05",
+      "field": "uncertainty_summary.fragment_areal_density_per_m2.cv",
+      "pass": true
+    },
+    {
+      "actual": 0.0,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-014",
+      "expected": "<=0.05",
+      "field": "uncertainty_summary.fragment_energy_j_proxy.cv",
+      "pass": true
+    },
+    {
+      "actual": 0.014953428348644477,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-015",
+      "expected": "<=0.05",
+      "field": "uncertainty_summary.penetration_margin_proxy.cv",
+      "pass": true
+    },
+    {
+      "actual": 0.0,
+      "benchmark_id": "BFM-BM-005",
+      "criteria_id": "BFM-CRIT-ES-016",
+      "expected": "<=0.05",
+      "field": "uncertainty_summary.blast_impulse_kpa_ms_proxy.cv",
+      "pass": true
+    },
+    {
+      "actual": 0,
+      "benchmark_id": "BFM-BM-006",
+      "criteria_id": "BFM-CRIT-ES-017",
+      "expected": "=0",
+      "field": "metrics.source_trace_error_count",
+      "pass": true
+    },
+    {
+      "actual": 0,
+      "benchmark_id": "BFM-BM-006",
+      "criteria_id": "BFM-CRIT-ES-018",
+      "expected": "=0",
+      "field": "metrics.source_trace_warning_count",
+      "pass": true
+    }
+  ],
+  "current_findings": [
+    "the current fixed-seed scaffold snapshot satisfies every frozen Stage B hard gate in BFM-BM-001/003/005/006",
+    "this remains a candidate benchmark snapshot generated from a non-authoritative scaffold; it is not an independent validation result",
+    "candidate closure-sensitive response is tracked by the scope probe, but this Stage B snapshot remains non-authoritative and does not close RES-008 or independent review"
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "schema_version": "a2.stage_b_effect_scale_snapshot.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "runtime_miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "candidate_non_authoritative_stage_b_snapshot",
+  "summary": {
+    "all_hard_gates_pass_in_current_snapshot": true,
+    "failed_criteria_ids": [],
+    "primary_release_scope": "effect_scale_authority_only",
+    "review_status": "author_snapshot_only_pending_independent_review",
+    "reviewed_benchmarks": [
+      "BFM-BM-001",
+      "BFM-BM-003",
+      "BFM-BM-005",
+      "BFM-BM-006"
+    ]
+  }
+}

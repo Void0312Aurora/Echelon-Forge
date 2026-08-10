@@ -161,7 +161,7 @@ no-mapping 判定作为维护契约成立。** 在本计划的条令模型中，
 作用域持有 `TACON` 并不隐式蕴含 `mission_command` action-interface 权限：
 
 - 仓库自身的条令参考把 C2 界定为围绕权限委派展开、且委派必须**显式**的
-  任务式指挥问题（`docs/domains/joint/service_profiles/domains/air_force_profile.md`——AFDP 3-0.1 以
+  任务式指挥问题（`docs/domains/joint/service_profiles/standards/air_force_profile.md`——AFDP 3-0.1 以
   指挥官为中心的职能与*显式权限委派*）；`docs/systems/command-tasking/work/issues/`（指挥链路
   路线图、操作层）中没有任何内容从梯级注记推导执行 Agent 能力。
 - 梯级默认值是无处不在的被携带数据：A3 把**每一份**归一化任务指令默认为

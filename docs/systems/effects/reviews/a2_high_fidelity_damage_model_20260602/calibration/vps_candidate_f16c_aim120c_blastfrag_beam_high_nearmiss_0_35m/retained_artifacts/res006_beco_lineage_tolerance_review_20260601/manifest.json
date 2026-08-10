@@ -1,0 +1,214 @@
+{
+  "admission_decision": {
+    "allowed_output_signoff_present": false,
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_packet": [],
+    "current_missing_items": [
+      "independent_lineage_review_signoff",
+      "allowed_output_policy_signoff",
+      "numeric_tolerance_policy_signoff",
+      "replacement_anchor_signoff"
+    ],
+    "decision": "res006_remains_blocked_fail_closed",
+    "exact_hash_check_passed": false,
+    "independent_lineage_review_present": false,
+    "numeric_tolerance_policy_admitted": false,
+    "raw_selected_values_retained": false,
+    "release_grade_validated": false,
+    "remaining_blockers": [
+      "cached-vs-recalculated selected hashes do not satisfy exact-hash admission",
+      "existing recalculation evidence is local retained evidence, not an independent lineage review",
+      "source rights policy remains fail-closed for selected comparison outputs",
+      "this packet retains hashes and topology only and admits no raw numeric tolerance",
+      "candidate recalculated anchor set is retained but not admitted"
+    ],
+    "replacement_anchor_set_admitted": false,
+    "res006_narrowly_closed": false,
+    "residual_closed": false,
+    "residual_id": "RES-006",
+    "status": "blocked_fail_closed"
+  },
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601",
+  "artifacts": [
+    {
+      "artifact_key": "res006_beco_lineage_tolerance_review_candidate_packet",
+      "filename": "res006_beco_lineage_tolerance_review_candidate_packet.json",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/res006_beco_lineage_tolerance_review_candidate_packet.json",
+      "schema_version": "a2.res006_beco_lineage_tolerance_review_candidate_packet.v1",
+      "sha256": "041c5890c85ba786733fee4ee4f63528f7c9fb4260bb5ff439f6d321471abe17"
+    }
+  ],
+  "authority_guards": {
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "cached_anchor_replacement_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "benchmark_consumed_for_release": false,
+  "cached_vs_recalculated_summary": {
+    "cached_anchor_count": 9,
+    "comparison_id_count": 9,
+    "counts_and_comparison_ids_only": true,
+    "exact_hash_check_passed": false,
+    "formula_text_retained": false,
+    "individual_row_hashes_retained_in_this_packet": false,
+    "matching_comparison_ids": [],
+    "matching_count": 0,
+    "mismatch_comparison_ids": [
+      "BEC-O-METRIC-DEFAULT-001",
+      "BEC-O-METRIC-DEFAULT-002",
+      "BEC-O-METRIC-DEFAULT-003",
+      "BEC-O-METRIC-DEFAULT-004",
+      "BEC-O-METRIC-DEFAULT-005",
+      "BEC-O-METRIC-DEFAULT-006",
+      "BEC-O-METRIC-DEFAULT-007",
+      "BEC-O-METRIC-DEFAULT-008",
+      "BEC-O-METRIC-DEFAULT-009"
+    ],
+    "mismatch_count": 9,
+    "missing_cached_comparison_ids": [],
+    "missing_cached_count": 0,
+    "missing_recalculated_comparison_ids": [],
+    "missing_recalculated_count": 0,
+    "raw_output_tables_retained": false,
+    "raw_selected_values_retained": false,
+    "recalculated_anchor_count": 9,
+    "status": "cached_vs_recalculated_hash_mismatch_fail_closed",
+    "stderr_retained": false,
+    "stdout_retained": false,
+    "temporary_workbook_copy_retained": false,
+    "topology": "zero_match_all_selected_comparison_ids_mismatched"
+  },
+  "current_missing_items": [
+    "independent_lineage_review_signoff",
+    "allowed_output_policy_signoff",
+    "numeric_tolerance_policy_signoff",
+    "replacement_anchor_signoff"
+  ],
+  "formula_text_retained": false,
+  "input_refs": [
+    {
+      "artifact_key": "res006_beco_recalculation_admission_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/res006_beco_recalculation_admission_gate.json",
+      "role": "local_recalculation_gate_and_cached_vs_recalculated_lineage",
+      "schema_version": "a2.res006_beco_recalculation_admission_gate.v1",
+      "sha256": "64e5ac9ced1fc4f96352bf6cac3f6cc670935dd42a43562d70ae62668621afa2",
+      "status": "partial_fail_closed_res006_beco_recalculation_admission"
+    },
+    {
+      "artifact_key": "beco_recalculated_hash_anchor_set",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/beco_recalculated_hash_anchor_set.json",
+      "role": "candidate_recalculated_hash_anchor_set_not_admitted",
+      "schema_version": "a2.res006_beco_recalculated_hash_anchor_set.v1",
+      "sha256": "2d26a10918223bfb2b229ed9d11fb0d378d473f0c3dd8674917b8dbb995550a5",
+      "status": "candidate_replacement_anchor_set_retained_not_admitted"
+    },
+    {
+      "artifact_key": "mechanism_comparison_hashes",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "role": "cached_hash_anchor_source",
+      "schema_version": "a2.mechanism_comparison_hashes.v1",
+      "sha256": "2e4edadbc5e34a95c764be645442dd4e26de9b2c3f67c2431fc083bbd3e044d3",
+      "status": "partial_fail_closed_mechanism_comparison_hash_manifest"
+    },
+    {
+      "artifact_key": "source_rights_output_policy_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "role": "allowed_output_policy_source",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    },
+    {
+      "artifact_key": "res006_beco_replacement_tolerance_admission_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "role": "prior_fail_closed_tolerance_replacement_gate",
+      "schema_version": "a2.res006_beco_replacement_tolerance_admission_gate.v1",
+      "sha256": "67a955685b43ed3acaf9bb3c811cb779cd3feb1ff554e8200a7a79ba51301a2d",
+      "status": "blocked_fail_closed_res006_beco_replacement_tolerance_admission_review"
+    }
+  ],
+  "lineage_tolerance_required_signoffs": [
+    {
+      "admitted": false,
+      "category": "lineage",
+      "current_status": "missing",
+      "fail_closed_reason": "existing recalculation evidence is local retained evidence, not an independent lineage review",
+      "owner_input_needed": "named independent reviewer acceptance of BEC-O recalculation runtime/version lineage and retained hash-only evidence",
+      "required": true,
+      "review_input_refs": [
+        "res006_beco_recalculation_admission_gate",
+        "beco_recalculated_hash_anchor_set"
+      ],
+      "signed_off": false,
+      "signoff_id": "independent_lineage_review_signoff"
+    },
+    {
+      "admitted": false,
+      "category": "allowed_output",
+      "current_status": "missing",
+      "fail_closed_reason": "source rights policy remains fail-closed for selected comparison outputs",
+      "owner_input_needed": "release owner or rights reviewer must explicitly admit selected BEC-O comparison output hashes under the allowed-output policy",
+      "required": true,
+      "review_input_refs": [
+        "source_rights_output_policy_gate",
+        "res006_beco_replacement_tolerance_admission_gate"
+      ],
+      "signed_off": false,
+      "signoff_id": "allowed_output_policy_signoff"
+    },
+    {
+      "admitted": false,
+      "category": "numeric_tolerance",
+      "current_status": "missing",
+      "fail_closed_reason": "this packet retains hashes and topology only and admits no raw numeric tolerance",
+      "owner_input_needed": "release-grade numeric tolerance policy or exact-hash replacement policy for cached-vs-recalculated BEC-O output differences",
+      "required": true,
+      "review_input_refs": [
+        "res006_beco_recalculation_admission_gate",
+        "res006_beco_replacement_tolerance_admission_gate"
+      ],
+      "signed_off": false,
+      "signoff_id": "numeric_tolerance_policy_signoff"
+    },
+    {
+      "admitted": false,
+      "category": "replacement_anchor",
+      "current_status": "missing",
+      "fail_closed_reason": "candidate recalculated anchor set is retained but not admitted",
+      "owner_input_needed": "explicit retained decision promoting or rejecting the recalculated hash anchor set without mutating cached anchors in place",
+      "required": true,
+      "review_input_refs": [
+        "beco_recalculated_hash_anchor_set",
+        "res006_beco_replacement_tolerance_admission_gate"
+      ],
+      "signed_off": false,
+      "signoff_id": "replacement_anchor_signoff"
+    }
+  ],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "raw_output_tables_retained": false,
+  "raw_selected_values_retained": false,
+  "residual_id": "RES-006",
+  "schema_version": "a2.res006_beco_lineage_tolerance_review_retained_manifest.v1",
+  "status": "blocked_fail_closed_res006_beco_lineage_tolerance_review_candidate",
+  "stderr_retained": false,
+  "stdout_retained": false,
+  "temporary_workbook_copy_retained": false
+}
