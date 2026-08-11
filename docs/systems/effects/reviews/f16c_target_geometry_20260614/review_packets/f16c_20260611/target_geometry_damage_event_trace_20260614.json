@@ -1,0 +1,2527 @@
+{
+  "acceptance_gate": [
+    "default_database_component_count_equals_26",
+    "proxy_database_component_count_equals_32",
+    "proxy_split_receiver_count_equals_8",
+    "proxy_retired_parent_count_equals_0",
+    "default_split_receiver_count_equals_0",
+    "all_8_split_receivers_observed_in_proxy_component_event_names",
+    "no_split_receivers_observed_in_default_component_event_names",
+    "proxy_events_do_not_fall_back_to_retired_parent_component_names",
+    "trace_events_remain_synthetic_non_authoritative_damage_probes"
+  ],
+  "authority_boundary": {
+    "debug_profiled_local_hit": true,
+    "default_database_modified": false,
+    "deterministic_fuze_authority": false,
+    "proxy_database_opt_in_only": true,
+    "real_weapon_pk_authority": false,
+    "synthetic_blast_fragmentation_warhead": true,
+    "true_internal_component_geometry": false
+  },
+  "component_inventory": {
+    "component_count_delta": 6,
+    "default_database_component_count": 26,
+    "default_retired_parent_count": 2,
+    "default_split_receiver_count": 0,
+    "duplicate_proxy_component_names": [],
+    "proxy_database_component_count": 32,
+    "proxy_retired_parent_count": 0,
+    "proxy_split_receiver_count": 8
+  },
+  "database_paths": {
+    "default_database_path": "examples/config/database",
+    "proxy_database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613"
+  },
+  "generated_on": "2026-06-14",
+  "metrics": {
+    "all_expected_split_receivers_observed_in_proxy": true,
+    "all_trace_cases_pass": true,
+    "default_observed_split_receivers": [],
+    "no_expected_split_receiver_observed_in_default": true,
+    "proxy_observed_retired_parent_components": [],
+    "proxy_observed_split_receiver_count": 8,
+    "proxy_observed_split_receivers": [
+      "engine_core_afterburner_segment",
+      "engine_core_forward_compressor_segment",
+      "engine_core_hot_section_segment",
+      "wing_spar_center_carrythrough_segment",
+      "wing_spar_center_left_inner_wing_segment",
+      "wing_spar_center_left_root_segment",
+      "wing_spar_center_right_inner_wing_segment",
+      "wing_spar_center_right_root_segment"
+    ],
+    "proxy_retired_parent_rows_absent": true,
+    "split_receiver_component_count": 8,
+    "trace_case_count": 8
+  },
+  "schema_version": "a2.target_geometry_damage_event_trace.v1",
+  "seed": 20260614,
+  "status": "target_geometry_damage_event_trace_generated_tg_p7_r5",
+  "target_unit": "F-16C_Block50",
+  "trace_cases": [
+    {
+      "case_id": "engine_afterburner_segment_direct_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [],
+        "component_damage_events": [],
+        "component_failure_count": 2,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 0,
+        "component_load_event_names": [],
+        "component_load_events": [],
+        "component_mechanism_load_rows": [],
+        "component_mechanism_row_names": [],
+        "component_primary_name": "",
+        "component_primary_system": "",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": true,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 0,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "engine_core_afterburner_segment",
+      "local_point_m": [
+        -5.525512,
+        -0.5,
+        -0.304381
+      ],
+      "missile_velocity_body_mps": [
+        250.0,
+        900.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "engine_core_afterburner_segment"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "engine_core_afterburner_segment",
+            "component_redundancy_group_id": "engine_core_afterburner_segment",
+            "component_system": "engine",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.6813600000000001,
+            "failure_sample": 0.5520806921176995,
+            "failure_severity": 0.8071749269970017,
+            "integrity_after": 0.8141553186336652,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 1,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 1,
+        "component_load_event_names": [
+          "engine_core_afterburner_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "engine_core_afterburner_segment",
+            "component_redundancy_group_id": "engine_core_afterburner_segment",
+            "component_system": "engine",
+            "direct_hit": true,
+            "distance_m": 0.0,
+            "effect_scale": 0.6859332937312603,
+            "load_source": "direct_component_hit"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.6813600000000001,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5520806921176995,
+            "component_name": "engine_core_afterburner_segment",
+            "component_redundancy_group_id": "engine_core_afterburner_segment",
+            "component_system": "engine",
+            "direct_hit": true,
+            "distance_m": 0.0,
+            "effect_scale": 0.6859332937312603,
+            "mechanism_blast_impulse_kpa_ms": 1054.61686110331,
+            "mechanism_blast_overpressure_kpa": 602.770520668046,
+            "mechanism_fragment_areal_density_per_m2": 14.76911410488825,
+            "mechanism_fragment_energy_j": 12353.941610713824,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "engine_core_afterburner_segment"
+        ],
+        "component_primary_name": "engine_core_afterburner_segment",
+        "component_primary_system": "engine",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": true,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 0,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "engine_core"
+    },
+    {
+      "case_id": "engine_hot_section_spatial_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [
+          "electrical_power_bus",
+          "engine_fuel_control_unit",
+          "wing_spar_center"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35223999999999994,
+            "failure_sample": 0.06305498107678376,
+            "failure_severity": 0.5505887831958354,
+            "integrity_after": 0.8481366935607879,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35056,
+            "failure_sample": 0.09621002232520282,
+            "failure_severity": 0.5477556760443292,
+            "integrity_after": 0.8475748978184475,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.2852084656146572,
+            "failure_sample": 0.2634853364766726,
+            "failure_severity": 0.24634341271871388,
+            "integrity_after": 0.9403245331832455,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 4,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "engine_fuel_control_unit",
+          "wing_spar_center"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.6973253971970965,
+            "effect_scale": 0.6004898949739711,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 2.3191748864564405,
+            "effect_scale": 0.3513432642208961,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.9989822340613366,
+            "effect_scale": 0.7213004752770573,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 2.531430578540591,
+            "effect_scale": 0.39360376467059616,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.06305498107678376,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.6973253971970965,
+            "effect_scale": 0.6004898949739711,
+            "mechanism_blast_impulse_kpa_ms": 326.32162789948427,
+            "mechanism_blast_overpressure_kpa": 193.44541598178967,
+            "mechanism_fragment_areal_density_per_m2": 5.07042729285885,
+            "mechanism_fragment_energy_j": 10097.273720207531,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.33648528292072544,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.8345828255488923,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 2.3191748864564405,
+            "effect_scale": 0.3513432642208961,
+            "mechanism_blast_impulse_kpa_ms": 133.77579254416233,
+            "mechanism_blast_overpressure_kpa": 78.46358985708558,
+            "mechanism_fragment_areal_density_per_m2": 2.255357634875781,
+            "mechanism_fragment_energy_j": 9344.808559790119,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.09621002232520282,
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.9989822340613366,
+            "effect_scale": 0.7213004752770573,
+            "mechanism_blast_impulse_kpa_ms": 987.7796582740954,
+            "mechanism_blast_overpressure_kpa": 576.0079854963446,
+            "mechanism_fragment_areal_density_per_m2": 16.436193428302847,
+            "mechanism_fragment_energy_j": 10989.167770719505,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.2852084656146572,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.2634853364766726,
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 2.531430578540591,
+            "effect_scale": 0.39360376467059616,
+            "mechanism_blast_impulse_kpa_ms": 115.71000494865869,
+            "mechanism_blast_overpressure_kpa": 63.482333910631105,
+            "mechanism_fragment_areal_density_per_m2": 2.1960386545642745,
+            "mechanism_fragment_energy_j": 9096.782475571676,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "engine_fuel_control_unit",
+          "wing_spar_center"
+        ],
+        "component_primary_name": "engine_fuel_control_unit",
+        "component_primary_system": "engine",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "engine_core_hot_section_segment",
+      "local_point_m": [
+        -4.193053,
+        -0.5,
+        -1.354381
+      ],
+      "missile_velocity_body_mps": [
+        250.0,
+        900.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "electrical_power_bus",
+          "engine_core_hot_section_segment"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35223999999999994,
+            "failure_sample": 0.06305498107678376,
+            "failure_severity": 0.5505887831958354,
+            "integrity_after": 0.8481366935607879,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "engine_core_hot_section_segment",
+            "component_redundancy_group_id": "engine_core_hot_section_segment",
+            "component_system": "engine",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35056,
+            "failure_sample": 0.09621002232520282,
+            "failure_severity": 0.517108204029335,
+            "integrity_after": 0.8882974861703998,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 3,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "engine_core_hot_section_segment",
+          "wing_spar_center_carrythrough_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.6973253971970965,
+            "effect_scale": 0.6004898949739711,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 2.3191748864564405,
+            "effect_scale": 0.3513432642208961,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_core_hot_section_segment",
+            "component_redundancy_group_id": "engine_core_hot_section_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.20945000000010294,
+            "effect_scale": 0.6990662751833439,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center_carrythrough_segment",
+            "component_redundancy_group_id": "wing_spar_center_carrythrough_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 3.023144055906893,
+            "effect_scale": 0.27703075177968517,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.06305498107678376,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.6973253971970965,
+            "effect_scale": 0.6004898949739711,
+            "mechanism_blast_impulse_kpa_ms": 326.32162789948427,
+            "mechanism_blast_overpressure_kpa": 193.44541598178967,
+            "mechanism_fragment_areal_density_per_m2": 5.07042729285885,
+            "mechanism_fragment_energy_j": 10097.273720207531,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.33648528292072544,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.8345828255488923,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 2.3191748864564405,
+            "effect_scale": 0.3513432642208961,
+            "mechanism_blast_impulse_kpa_ms": 133.77579254416233,
+            "mechanism_blast_overpressure_kpa": 78.46358985708558,
+            "mechanism_fragment_areal_density_per_m2": 2.255357634875781,
+            "mechanism_fragment_energy_j": 9344.808559790119,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.09621002232520282,
+            "component_name": "engine_core_hot_section_segment",
+            "component_redundancy_group_id": "engine_core_hot_section_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.20945000000010294,
+            "effect_scale": 0.6990662751833439,
+            "mechanism_blast_impulse_kpa_ms": 1044.7995499229455,
+            "mechanism_blast_overpressure_kpa": 597.1593968656466,
+            "mechanism_fragment_areal_density_per_m2": 17.382329857213303,
+            "mechanism_fragment_energy_j": 12058.956584558126,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.23678370895618311,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.2634853364766726,
+            "component_name": "wing_spar_center_carrythrough_segment",
+            "component_redundancy_group_id": "wing_spar_center_carrythrough_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 3.023144055906893,
+            "effect_scale": 0.27703075177968517,
+            "mechanism_blast_impulse_kpa_ms": 92.56674289122351,
+            "mechanism_blast_overpressure_kpa": 57.09139486684818,
+            "mechanism_fragment_areal_density_per_m2": 1.0256184997656386,
+            "mechanism_fragment_energy_j": 8539.115872071494,
+            "mechanism_penetration_margin": 0.14985047283449204
+          }
+        ],
+        "component_mechanism_row_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "engine_core_hot_section_segment",
+          "wing_spar_center_carrythrough_segment"
+        ],
+        "component_primary_name": "engine_core_hot_section_segment",
+        "component_primary_system": "engine",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "engine_core"
+    },
+    {
+      "case_id": "engine_forward_compressor_spatial_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "wing_spar_center"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35223999999999994,
+            "failure_sample": 0.24934802953951063,
+            "failure_severity": 0.5699175719974083,
+            "integrity_after": 0.8175852450534891,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "failure_mode": "fire_source",
+            "failure_probability": 0.35028000000000004,
+            "failure_sample": 0.17281514588532065,
+            "failure_severity": 0.3871221252345097,
+            "integrity_after": 0.8872276547750684,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.34832,
+            "failure_sample": 0.022638895129417413,
+            "failure_severity": 0.5158529037056526,
+            "integrity_after": 0.8871361949199137,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 4,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "wing_spar_center",
+          "engine_fuel_control_unit"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.4112280266353991,
+            "effect_scale": 0.7212948249838022,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1387017565267574,
+            "effect_scale": 0.5825666072196881,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 1.5251918929489585,
+            "effect_scale": 0.6451606481603283,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 1.9017018799794185,
+            "effect_scale": 0.44168681757307326,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.24934802953951063,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.4112280266353991,
+            "effect_scale": 0.7212948249838022,
+            "mechanism_blast_impulse_kpa_ms": 485.988708739801,
+            "mechanism_blast_overpressure_kpa": 283.67848017970175,
+            "mechanism_fragment_areal_density_per_m2": 8.04801618880396,
+            "mechanism_fragment_energy_j": 10456.595288421648,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.17281514588532065,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1387017565267574,
+            "effect_scale": 0.5825666072196881,
+            "mechanism_blast_impulse_kpa_ms": 719.5539544867587,
+            "mechanism_blast_overpressure_kpa": 412.45082033556537,
+            "mechanism_fragment_areal_density_per_m2": 11.702223311098493,
+            "mechanism_fragment_energy_j": 10806.692475153908,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.022638895129417413,
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 1.5251918929489585,
+            "effect_scale": 0.6451606481603283,
+            "mechanism_blast_impulse_kpa_ms": 421.69759241050696,
+            "mechanism_blast_overpressure_kpa": 224.41022609318338,
+            "mechanism_fragment_areal_density_per_m2": 7.473481652311161,
+            "mechanism_fragment_energy_j": 10312.460907428042,
+            "mechanism_penetration_margin": 0.05098222166725552
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.4586561083678926,
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 1.9017018799794185,
+            "effect_scale": 0.44168681757307326,
+            "mechanism_blast_impulse_kpa_ms": 244.51300255191666,
+            "mechanism_blast_overpressure_kpa": 146.625472549638,
+            "mechanism_fragment_areal_density_per_m2": 3.517940837272515,
+            "mechanism_fragment_energy_j": 9845.68504570544,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "wing_spar_center",
+          "engine_fuel_control_unit"
+        ],
+        "component_primary_name": "electrical_power_bus",
+        "component_primary_system": "avionics",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "engine_core_forward_compressor_segment",
+      "local_point_m": [
+        -2.852966,
+        -0.5,
+        -1.354381
+      ],
+      "missile_velocity_body_mps": [
+        250.0,
+        900.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "wing_spar_center_carrythrough_segment"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35223999999999994,
+            "failure_sample": 0.24934802953951063,
+            "failure_severity": 0.5699175719974083,
+            "integrity_after": 0.8175852450534891,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "failure_mode": "fire_source",
+            "failure_probability": 0.35028000000000004,
+            "failure_sample": 0.17281514588532065,
+            "failure_severity": 0.3871221252345097,
+            "integrity_after": 0.8872276547750684,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "wing_spar_center_carrythrough_segment",
+            "component_redundancy_group_id": "wing_spar_center_carrythrough_segment",
+            "component_system": "wings",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.34832,
+            "failure_sample": 0.022638895129417413,
+            "failure_severity": 0.4619023201576719,
+            "integrity_after": 0.9416158642539415,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 4,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "wing_spar_center_carrythrough_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.4112280266353991,
+            "effect_scale": 0.7212948249838022,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1387017565267574,
+            "effect_scale": 0.5825666072196881,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center_carrythrough_segment",
+            "component_redundancy_group_id": "wing_spar_center_carrythrough_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 1.6933233281390747,
+            "effect_scale": 0.38546950098544913,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.20945000000010294,
+            "effect_scale": 0.6990662751833439,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.24934802953951063,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.4112280266353991,
+            "effect_scale": 0.7212948249838022,
+            "mechanism_blast_impulse_kpa_ms": 485.988708739801,
+            "mechanism_blast_overpressure_kpa": 283.67848017970175,
+            "mechanism_fragment_areal_density_per_m2": 8.04801618880396,
+            "mechanism_fragment_energy_j": 10456.595288421648,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.17281514588532065,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1387017565267574,
+            "effect_scale": 0.5825666072196881,
+            "mechanism_blast_impulse_kpa_ms": 719.5539544867587,
+            "mechanism_blast_overpressure_kpa": 412.45082033556537,
+            "mechanism_fragment_areal_density_per_m2": 11.702223311098493,
+            "mechanism_fragment_energy_j": 10806.692475153908,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.022638895129417413,
+            "component_name": "wing_spar_center_carrythrough_segment",
+            "component_redundancy_group_id": "wing_spar_center_carrythrough_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 1.6933233281390747,
+            "effect_scale": 0.38546950098544913,
+            "mechanism_blast_impulse_kpa_ms": 322.9260900822088,
+            "mechanism_blast_overpressure_kpa": 194.39828164897676,
+            "mechanism_fragment_areal_density_per_m2": 3.815251662986597,
+            "mechanism_fragment_energy_j": 10102.24252605449,
+            "mechanism_penetration_margin": 0.2131119144159047
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.4586561083678926,
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.20945000000010294,
+            "effect_scale": 0.6990662751833439,
+            "mechanism_blast_impulse_kpa_ms": 1044.7995499229455,
+            "mechanism_blast_overpressure_kpa": 597.1593968656466,
+            "mechanism_fragment_areal_density_per_m2": 17.382329857213303,
+            "mechanism_fragment_energy_j": 12058.956584558126,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "electrical_power_bus",
+          "center_fuselage_fuel_cell",
+          "wing_spar_center_carrythrough_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_primary_name": "electrical_power_bus",
+        "component_primary_system": "avionics",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "engine_core"
+    },
+    {
+      "case_id": "left_inner_wing_spar_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [
+          "center_fuselage_fuel_cell"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "failure_mode": "fire_source",
+            "failure_probability": 0.35028000000000004,
+            "failure_sample": 0.14869357369518177,
+            "failure_severity": 0.3667635140174077,
+            "integrity_after": 0.9142808015308855,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 3,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "left_wing_fuel_cell",
+          "wing_spar_center",
+          "center_fuselage_fuel_cell",
+          "left_horizontal_tail_actuator_or_surface_component"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "left_wing_fuel_cell",
+            "component_redundancy_group_id": "wing_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.1499570000003223,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.6450429999996777,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.8798568062086305,
+            "effect_scale": 0.44281372818965775,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "left_horizontal_tail_actuator_or_surface_component",
+            "component_redundancy_group_id": "horizontal_tail_control_surfaces",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 3.811258153000534,
+            "effect_scale": 0.21348890730923184,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.39817584290443253,
+            "component_name": "left_wing_fuel_cell",
+            "component_redundancy_group_id": "wing_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.1499570000003223,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1042.421098353143,
+            "mechanism_blast_overpressure_kpa": 598.7532024916899,
+            "mechanism_fragment_areal_density_per_m2": 17.314402472738987,
+            "mechanism_fragment_energy_j": 12142.26304047504,
+            "mechanism_penetration_margin": 0.8553839880516696
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5848734178571268,
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.6450429999996777,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1113.7861545304079,
+            "mechanism_blast_overpressure_kpa": 585.489947114131,
+            "mechanism_fragment_areal_density_per_m2": 18.990480443085072,
+            "mechanism_fragment_energy_j": 11460.56853478585,
+            "mechanism_penetration_margin": 0.09450686531101819
+          },
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.14869357369518177,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.8798568062086305,
+            "effect_scale": 0.44281372818965775,
+            "mechanism_blast_impulse_kpa_ms": 236.08274802020583,
+            "mechanism_blast_overpressure_kpa": 136.54703727201272,
+            "mechanism_fragment_areal_density_per_m2": 4.07136386197715,
+            "mechanism_fragment_energy_j": 9872.375035564644,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.03373328465666728,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.4681573732346488,
+            "component_name": "left_horizontal_tail_actuator_or_surface_component",
+            "component_redundancy_group_id": "horizontal_tail_control_surfaces",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 3.811258153000534,
+            "effect_scale": 0.21348890730923184,
+            "mechanism_blast_impulse_kpa_ms": 31.05972262066903,
+            "mechanism_blast_overpressure_kpa": 19.78308858247964,
+            "mechanism_fragment_areal_density_per_m2": 0.6377214345410093,
+            "mechanism_fragment_energy_j": 7693.534609964931,
+            "mechanism_penetration_margin": 0.13986705718538495
+          }
+        ],
+        "component_mechanism_row_names": [
+          "left_wing_fuel_cell",
+          "wing_spar_center",
+          "center_fuselage_fuel_cell",
+          "left_horizontal_tail_actuator_or_surface_component"
+        ],
+        "component_primary_name": "left_wing_fuel_cell",
+        "component_primary_system": "fuel",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "wing_spar_center_left_inner_wing_segment",
+      "local_point_m": [
+        -1.292842,
+        -2.375,
+        -0.735043
+      ],
+      "missile_velocity_body_mps": [
+        900.0,
+        250.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "center_fuselage_fuel_cell"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "failure_mode": "fire_source",
+            "failure_probability": 0.35028000000000004,
+            "failure_sample": 0.14869357369518177,
+            "failure_severity": 0.3667635140174077,
+            "integrity_after": 0.9142808015308855,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 3,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "left_wing_fuel_cell",
+          "wing_spar_center_left_inner_wing_segment",
+          "center_fuselage_fuel_cell",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "left_wing_fuel_cell",
+            "component_redundancy_group_id": "wing_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.1499570000003223,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center_left_inner_wing_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_inner_wing_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.19416487838974555,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.8798568062086305,
+            "effect_scale": 0.44281372818965775,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 1.8078740274090577,
+            "effect_scale": 0.48239548487544304,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.39817584290443253,
+            "component_name": "left_wing_fuel_cell",
+            "component_redundancy_group_id": "wing_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.1499570000003223,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1042.421098353143,
+            "mechanism_blast_overpressure_kpa": 598.7532024916899,
+            "mechanism_fragment_areal_density_per_m2": 17.314402472738987,
+            "mechanism_fragment_energy_j": 12142.26304047504,
+            "mechanism_penetration_margin": 0.8553839880516696
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5848734178571268,
+            "component_name": "wing_spar_center_left_inner_wing_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_inner_wing_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.19416487838974555,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1024.7538248560015,
+            "mechanism_blast_overpressure_kpa": 597.5688822306043,
+            "mechanism_fragment_areal_density_per_m2": 16.703300055628834,
+            "mechanism_fragment_energy_j": 12080.323495640381,
+            "mechanism_penetration_margin": 0.38303912196179835
+          },
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.14869357369518177,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.8798568062086305,
+            "effect_scale": 0.44281372818965775,
+            "mechanism_blast_impulse_kpa_ms": 236.08274802020583,
+            "mechanism_blast_overpressure_kpa": 136.54703727201272,
+            "mechanism_fragment_areal_density_per_m2": 4.07136386197715,
+            "mechanism_fragment_energy_j": 9872.375035564644,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.4681573732346488,
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 1.8078740274090577,
+            "effect_scale": 0.48239548487544304,
+            "mechanism_blast_impulse_kpa_ms": 296.743336153792,
+            "mechanism_blast_overpressure_kpa": 169.60485066687392,
+            "mechanism_fragment_areal_density_per_m2": 4.6315177297316685,
+            "mechanism_fragment_energy_j": 9960.663202145035,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "left_wing_fuel_cell",
+          "wing_spar_center_left_inner_wing_segment",
+          "center_fuselage_fuel_cell",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_primary_name": "left_wing_fuel_cell",
+        "component_primary_system": "fuel",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "wing_spar_center"
+    },
+    {
+      "case_id": "left_root_spar_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [
+          "wing_spar_center",
+          "left_leading_edge_flap_actuator"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.34832,
+            "failure_sample": 0.10227592405108676,
+            "failure_severity": 0.5374272000000001,
+            "integrity_after": 0.86354752384,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "left_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35168000000000005,
+            "failure_sample": 0.04657336256085132,
+            "failure_severity": 0.45159748395849697,
+            "integrity_after": 0.9667017873621555,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 3,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "wing_spar_center",
+          "left_leading_edge_flap_actuator",
+          "center_fuselage_fuel_cell",
+          "engine_fuel_control_unit"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.7950430000002234,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "left_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 0.5026186912690935,
+            "effect_scale": 0.46960136837496347,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.9918414751607876,
+            "effect_scale": 0.5637493575002644,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.625308979771666,
+            "effect_scale": 0.2929014941592963,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.10227592405108676,
+            "component_name": "wing_spar_center",
+            "component_redundancy_group_id": "primary_wing_spar",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.7950430000002234,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1106.1417595686532,
+            "mechanism_blast_overpressure_kpa": 581.4714769763295,
+            "mechanism_fragment_areal_density_per_m2": 18.869705189501534,
+            "mechanism_fragment_energy_j": 11259.178541540608,
+            "mechanism_penetration_margin": 0.08886951475832738
+          },
+          {
+            "component_failure_probability": 0.35168000000000005,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.04657336256085132,
+            "component_name": "left_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 0.5026186912690935,
+            "effect_scale": 0.46960136837496347,
+            "mechanism_blast_impulse_kpa_ms": 664.7331129831543,
+            "mechanism_blast_overpressure_kpa": 403.14364871233226,
+            "mechanism_fragment_areal_density_per_m2": 12.846688598204324,
+            "mechanism_fragment_energy_j": 11653.993126167474,
+            "mechanism_penetration_margin": 0.29547664267111706
+          },
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.7362855619635136,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.9918414751607876,
+            "effect_scale": 0.5637493575002644,
+            "mechanism_blast_impulse_kpa_ms": 987.9941417713626,
+            "mechanism_blast_overpressure_kpa": 562.8439871503954,
+            "mechanism_fragment_areal_density_per_m2": 15.551136830653357,
+            "mechanism_fragment_energy_j": 10998.548362509295,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.10249324149253695,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5851438962555529,
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.625308979771666,
+            "effect_scale": 0.2929014941592963,
+            "mechanism_blast_impulse_kpa_ms": 51.89937339839927,
+            "mechanism_blast_overpressure_kpa": 32.61427164921526,
+            "mechanism_fragment_areal_density_per_m2": 0.8047477257772604,
+            "mechanism_fragment_energy_j": 7887.771960056144,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "wing_spar_center",
+          "left_leading_edge_flap_actuator",
+          "center_fuselage_fuel_cell",
+          "engine_fuel_control_unit"
+        ],
+        "component_primary_name": "wing_spar_center",
+        "component_primary_system": "wings",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "wing_spar_center_left_root_segment",
+      "local_point_m": [
+        -1.092842,
+        -1.45,
+        -0.885043
+      ],
+      "missile_velocity_body_mps": [
+        900.0,
+        250.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "wing_spar_center_left_inner_wing_segment",
+          "wing_spar_center_left_root_segment"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "wing_spar_center_left_inner_wing_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_inner_wing_segment",
+            "component_system": "wings",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.34832,
+            "failure_sample": 0.10227592405108676,
+            "failure_severity": 0.5250272,
+            "integrity_after": 0.881859328,
+            "integrity_before": 1.0
+          },
+          {
+            "component_name": "wing_spar_center_left_root_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_root_segment",
+            "component_system": "wings",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.34832,
+            "failure_sample": 0.04657336256085132,
+            "failure_severity": 0.5250272,
+            "integrity_after": 0.881859328,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 3,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "wing_spar_center_left_inner_wing_segment",
+          "wing_spar_center_left_root_segment",
+          "center_fuselage_fuel_cell",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "wing_spar_center_left_inner_wing_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_inner_wing_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.009999999999776632,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center_left_root_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_root_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.009999999999776632,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.9918414751607876,
+            "effect_scale": 0.5637493575002644,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.9893599946330109,
+            "effect_scale": 0.5821988587468011,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.10227592405108676,
+            "component_name": "wing_spar_center_left_inner_wing_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_inner_wing_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.009999999999776632,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1033.214555535008,
+            "mechanism_blast_overpressure_kpa": 602.5026226588661,
+            "mechanism_fragment_areal_density_per_m2": 17.07724169649325,
+            "mechanism_fragment_energy_j": 12339.7498122666,
+            "mechanism_penetration_margin": 0.39819474691805845
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.04657336256085132,
+            "component_name": "wing_spar_center_left_root_segment",
+            "component_redundancy_group_id": "wing_spar_center_left_root_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.009999999999776632,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1011.5746091038067,
+            "mechanism_blast_overpressure_kpa": 602.5026226588661,
+            "mechanism_fragment_areal_density_per_m2": 16.206156271830103,
+            "mechanism_fragment_energy_j": 12339.7498122666,
+            "mechanism_penetration_margin": 0.39819474691805845
+          },
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.4596813875809951,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.9918414751607876,
+            "effect_scale": 0.5637493575002644,
+            "mechanism_blast_impulse_kpa_ms": 987.9941417713626,
+            "mechanism_blast_overpressure_kpa": 562.8439871503954,
+            "mechanism_fragment_areal_density_per_m2": 15.551136830653357,
+            "mechanism_fragment_energy_j": 10998.548362509295,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.9269382408407163,
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.9893599946330109,
+            "effect_scale": 0.5821988587468011,
+            "mechanism_blast_impulse_kpa_ms": 1008.2437174570407,
+            "mechanism_blast_overpressure_kpa": 576.2657633750204,
+            "mechanism_fragment_areal_density_per_m2": 16.123803671550217,
+            "mechanism_fragment_energy_j": 11001.809453356133,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "wing_spar_center_left_inner_wing_segment",
+          "wing_spar_center_left_root_segment",
+          "center_fuselage_fuel_cell",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_primary_name": "wing_spar_center_left_inner_wing_segment",
+        "component_primary_system": "wings",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "wing_spar_center"
+    },
+    {
+      "case_id": "center_carrythrough_spar_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [
+          "engine_fuel_control_unit"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "failure_mode": "puncture",
+            "failure_probability": 0.13173399401905528,
+            "failure_sample": 0.1083033438604768,
+            "failure_severity": 0.2241216622133228,
+            "integrity_after": 0.9634139967708081,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 2,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "left_leading_edge_flap_actuator",
+          "engine_fuel_control_unit"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1850429999998595,
+            "effect_scale": 0.7381461368965635,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 2.076161481872865,
+            "effect_scale": 0.5473313293068607,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "left_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.2689916267701429,
+            "effect_scale": 0.7609761566950756,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.489352289295618,
+            "effect_scale": 0.32069828177180965,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.3759076077266895,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1850429999998595,
+            "effect_scale": 0.7381461368965635,
+            "mechanism_blast_impulse_kpa_ms": 716.1549031888371,
+            "mechanism_blast_overpressure_kpa": 406.6171842184477,
+            "mechanism_fragment_areal_density_per_m2": 11.976960228219037,
+            "mechanism_fragment_energy_j": 10746.618695329864,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.6964350396905193,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 2.076161481872865,
+            "effect_scale": 0.5473313293068607,
+            "mechanism_blast_impulse_kpa_ms": 211.57043778123415,
+            "mechanism_blast_overpressure_kpa": 126.9359376214461,
+            "mechanism_fragment_areal_density_per_m2": 3.2999058789129303,
+            "mechanism_fragment_energy_j": 9634.25392164153,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35168000000000005,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.35371926866255676,
+            "component_name": "left_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.2689916267701429,
+            "effect_scale": 0.7609761566950756,
+            "mechanism_blast_impulse_kpa_ms": 605.6952515069755,
+            "mechanism_blast_overpressure_kpa": 353.2015452260142,
+            "mechanism_fragment_areal_density_per_m2": 9.815092267302855,
+            "mechanism_fragment_energy_j": 10638.35993182254,
+            "mechanism_penetration_margin": 0.3288873880981229
+          },
+          {
+            "component_failure_probability": 0.13173399401905528,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.1083033438604768,
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.489352289295618,
+            "effect_scale": 0.32069828177180965,
+            "mechanism_blast_impulse_kpa_ms": 60.75963734839063,
+            "mechanism_blast_overpressure_kpa": 37.81031779222281,
+            "mechanism_fragment_areal_density_per_m2": 0.9013831435136542,
+            "mechanism_fragment_energy_j": 8031.834555328155,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "left_leading_edge_flap_actuator",
+          "engine_fuel_control_unit"
+        ],
+        "component_primary_name": "left_leading_edge_flap_actuator",
+        "component_primary_system": "flight_control",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "wing_spar_center_carrythrough_segment",
+      "local_point_m": [
+        -1.292842,
+        -0.5,
+        -1.785043
+      ],
+      "missile_velocity_body_mps": [
+        900.0,
+        -250.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35056,
+            "failure_sample": 0.1083033438604768,
+            "failure_severity": 0.5127699382888418,
+            "integrity_after": 0.8926300080470526,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 2,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "wing_spar_center_carrythrough_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1850429999998595,
+            "effect_scale": 0.7381461368965635,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 2.076161481872865,
+            "effect_scale": 0.5473313293068607,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center_carrythrough_segment",
+            "component_redundancy_group_id": "wing_spar_center_carrythrough_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.7184705978673047,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.702773127704856,
+            "effect_scale": 0.671952114305261,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.3759076077266895,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.1850429999998595,
+            "effect_scale": 0.7381461368965635,
+            "mechanism_blast_impulse_kpa_ms": 716.1549031888371,
+            "mechanism_blast_overpressure_kpa": 406.6171842184477,
+            "mechanism_fragment_areal_density_per_m2": 11.976960228219037,
+            "mechanism_fragment_energy_j": 10746.618695329864,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.6964350396905193,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 2.076161481872865,
+            "effect_scale": 0.5473313293068607,
+            "mechanism_blast_impulse_kpa_ms": 211.57043778123415,
+            "mechanism_blast_overpressure_kpa": 126.9359376214461,
+            "mechanism_fragment_areal_density_per_m2": 3.2999058789129303,
+            "mechanism_fragment_energy_j": 9634.25392164153,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.35371926866255676,
+            "component_name": "wing_spar_center_carrythrough_segment",
+            "component_redundancy_group_id": "wing_spar_center_carrythrough_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.7184705978673047,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1000.6666616317036,
+            "mechanism_blast_overpressure_kpa": 583.5228363853278,
+            "mechanism_fragment_areal_density_per_m2": 16.697897312148744,
+            "mechanism_fragment_energy_j": 11361.687711829689,
+            "mechanism_penetration_margin": 0.3678326583908944
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.1083033438604768,
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.702773127704856,
+            "effect_scale": 0.671952114305261,
+            "mechanism_blast_impulse_kpa_ms": 1021.6765771029607,
+            "mechanism_blast_overpressure_kpa": 583.9433684859051,
+            "mechanism_fragment_areal_density_per_m2": 17.05317996634534,
+            "mechanism_fragment_energy_j": 11382.77869708689,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "wing_spar_center_carrythrough_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_primary_name": "wing_spar_center_carrythrough_segment",
+        "component_primary_system": "wings",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "wing_spar_center"
+    },
+    {
+      "case_id": "right_root_spar_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [],
+        "component_damage_events": [],
+        "component_failure_count": 1,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "center_fuselage_fuel_cell",
+          "flight_control_computer",
+          "right_leading_edge_flap_actuator",
+          "engine_fuel_control_unit"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.7505195612697851,
+            "effect_scale": 0.7243574839245548,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "flight_control_computer",
+            "component_redundancy_group_id": "flight_control_computers",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.4864139560742027,
+            "effect_scale": 0.721239711277317,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "right_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 0.657385464406339,
+            "effect_scale": 0.7202677315749331,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.553152867357715,
+            "effect_scale": 0.29439195028042947,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.8345855289270319,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.7505195612697851,
+            "effect_scale": 0.7243574839245548,
+            "mechanism_blast_impulse_kpa_ms": 1026.2179673847725,
+            "mechanism_blast_overpressure_kpa": 582.6642510361286,
+            "mechanism_fragment_areal_density_per_m2": 16.826951023767204,
+            "mechanism_fragment_energy_j": 12853.310339374262,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35168000000000005,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.9133933574071532,
+            "component_name": "flight_control_computer",
+            "component_redundancy_group_id": "flight_control_computers",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.4864139560742027,
+            "effect_scale": 0.721239711277317,
+            "mechanism_blast_impulse_kpa_ms": 424.3897085034594,
+            "mechanism_blast_overpressure_kpa": 248.25262493820586,
+            "mechanism_fragment_areal_density_per_m2": 7.20680312327137,
+            "mechanism_fragment_energy_j": 11766.15908530328,
+            "mechanism_penetration_margin": 0.10226256507878269
+          },
+          {
+            "component_failure_probability": 0.35168000000000005,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5696233932608255,
+            "component_name": "right_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 0.657385464406339,
+            "effect_scale": 0.7202677315749331,
+            "mechanism_blast_impulse_kpa_ms": 899.565715967339,
+            "mechanism_blast_overpressure_kpa": 530.595003565597,
+            "mechanism_fragment_areal_density_per_m2": 15.47261971692681,
+            "mechanism_fragment_energy_j": 12995.485023524378,
+            "mechanism_penetration_margin": 0.3963880978975203
+          },
+          {
+            "component_failure_probability": 0.11328908405079244,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.7430898415629864,
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.553152867357715,
+            "effect_scale": 0.29439195028042947,
+            "mechanism_blast_impulse_kpa_ms": 55.16431766184577,
+            "mechanism_blast_overpressure_kpa": 34.58838943634965,
+            "mechanism_fragment_areal_density_per_m2": 0.8284147502260081,
+            "mechanism_fragment_energy_j": 9043.783636615188,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "center_fuselage_fuel_cell",
+          "flight_control_computer",
+          "right_leading_edge_flap_actuator",
+          "engine_fuel_control_unit"
+        ],
+        "component_primary_name": "flight_control_computer",
+        "component_primary_system": "flight_control",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "wing_spar_center_right_root_segment",
+      "local_point_m": [
+        -1.092842,
+        0.9,
+        -1.235043
+      ],
+      "missile_velocity_body_mps": [
+        900.0,
+        -250.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35056,
+            "failure_sample": 0.011456695317988874,
+            "failure_severity": 0.5038577071909469,
+            "integrity_after": 0.9015304393509739,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 1,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "center_fuselage_fuel_cell",
+          "flight_control_computer",
+          "wing_spar_center_right_root_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.7505195612697851,
+            "effect_scale": 0.7243574839245548,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "flight_control_computer",
+            "component_redundancy_group_id": "flight_control_computers",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.4864139560742027,
+            "effect_scale": 0.721239711277317,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center_right_root_segment",
+            "component_redundancy_group_id": "wing_spar_center_right_root_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.15999999999967773,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.5865648911451942,
+            "effect_scale": 0.6162506699434183,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.8345855289270319,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 0.7505195612697851,
+            "effect_scale": 0.7243574839245548,
+            "mechanism_blast_impulse_kpa_ms": 1026.2179673847725,
+            "mechanism_blast_overpressure_kpa": 582.6642510361286,
+            "mechanism_fragment_areal_density_per_m2": 16.826951023767204,
+            "mechanism_fragment_energy_j": 12853.310339374262,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35168000000000005,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.9133933574071532,
+            "component_name": "flight_control_computer",
+            "component_redundancy_group_id": "flight_control_computers",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.4864139560742027,
+            "effect_scale": 0.721239711277317,
+            "mechanism_blast_impulse_kpa_ms": 424.3897085034594,
+            "mechanism_blast_overpressure_kpa": 248.25262493820586,
+            "mechanism_fragment_areal_density_per_m2": 7.20680312327137,
+            "mechanism_fragment_energy_j": 11766.15908530328,
+            "mechanism_penetration_margin": 0.10226256507878269
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5696233932608255,
+            "component_name": "wing_spar_center_right_root_segment",
+            "component_redundancy_group_id": "wing_spar_center_right_root_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.15999999999967773,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1004.6359299556118,
+            "mechanism_blast_overpressure_kpa": 598.4841525210818,
+            "mechanism_fragment_areal_density_per_m2": 16.098064677941796,
+            "mechanism_fragment_energy_j": 13772.524045578568,
+            "mechanism_penetration_margin": 0.4449751210116841
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.011456695317988874,
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.5865648911451942,
+            "effect_scale": 0.6162506699434183,
+            "mechanism_blast_impulse_kpa_ms": 1027.123473355179,
+            "mechanism_blast_overpressure_kpa": 587.0565640084378,
+            "mechanism_fragment_areal_density_per_m2": 15.707304350095006,
+            "mechanism_fragment_energy_j": 13104.294647552239,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "center_fuselage_fuel_cell",
+          "flight_control_computer",
+          "wing_spar_center_right_root_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_primary_name": "wing_spar_center_right_root_segment",
+        "component_primary_system": "wings",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "wing_spar_center"
+    },
+    {
+      "case_id": "right_inner_wing_spar_trace",
+      "checks": {
+        "case_pass": true,
+        "default_split_receiver_absent": true,
+        "proxy_retired_parent_absent": true,
+        "proxy_split_receiver_observed": true,
+        "proxy_trace_uses_synthetic_non_authoritative_warhead": true
+      },
+      "default_event": {
+        "component_damage_event_names": [
+          "engine_fuel_control_unit"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "failure_mode": "puncture",
+            "failure_probability": 0.13121202958487022,
+            "failure_sample": 0.12864696952519405,
+            "failure_severity": 0.22955337835097134,
+            "integrity_after": 0.9608555436020514,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 1,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "right_leading_edge_flap_actuator",
+          "engine_fuel_control_unit"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.3171757330928424,
+            "effect_scale": 0.7046216869739883,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.977958922427999,
+            "effect_scale": 0.5954128191786623,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "right_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.2043005226324257,
+            "effect_scale": 0.7674121035668574,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.568781920881769,
+            "effect_scale": 0.34382368569242644,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.8578208859871577,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.3171757330928424,
+            "effect_scale": 0.7046216869739883,
+            "mechanism_blast_impulse_kpa_ms": 576.0857714372504,
+            "mechanism_blast_overpressure_kpa": 327.0889764310676,
+            "mechanism_fragment_areal_density_per_m2": 9.525087287180853,
+            "mechanism_fragment_energy_j": 11885.248900611616,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5935032460430243,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.977958922427999,
+            "effect_scale": 0.5954128191786623,
+            "mechanism_blast_impulse_kpa_ms": 234.97892658025094,
+            "mechanism_blast_overpressure_kpa": 140.52561761039857,
+            "mechanism_fragment_areal_density_per_m2": 3.7323670957589243,
+            "mechanism_fragment_energy_j": 10959.672880189328,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35168000000000005,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.7498543190529747,
+            "component_name": "right_leading_edge_flap_actuator",
+            "component_redundancy_group_id": "leading_edge_flap_actuators",
+            "component_system": "flight_control",
+            "direct_hit": false,
+            "distance_m": 1.2043005226324257,
+            "effect_scale": 0.7674121035668574,
+            "mechanism_blast_impulse_kpa_ms": 652.7327463370603,
+            "mechanism_blast_overpressure_kpa": 381.9774432377458,
+            "mechanism_fragment_areal_density_per_m2": 10.955536259013643,
+            "mechanism_fragment_energy_j": 12048.379787385515,
+            "mechanism_penetration_margin": 0.38139691990213187
+          },
+          {
+            "component_failure_probability": 0.13121202958487022,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.12864696952519405,
+            "component_name": "engine_fuel_control_unit",
+            "component_redundancy_group_id": "engine_fuel_control",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 3.568781920881769,
+            "effect_scale": 0.34382368569242644,
+            "mechanism_blast_impulse_kpa_ms": 60.84606982445049,
+            "mechanism_blast_overpressure_kpa": 37.65107113436482,
+            "mechanism_fragment_areal_density_per_m2": 0.8843030593887798,
+            "mechanism_fragment_energy_j": 8930.843108450588,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "right_leading_edge_flap_actuator",
+          "engine_fuel_control_unit"
+        ],
+        "component_primary_name": "right_leading_edge_flap_actuator",
+        "component_primary_system": "flight_control",
+        "damage_scalar_synthetic": true,
+        "database_path": "examples/config/database",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "expected_split_receiver": "wing_spar_center_right_inner_wing_segment",
+      "local_point_m": [
+        -1.292842,
+        1.075,
+        -1.785043
+      ],
+      "missile_velocity_body_mps": [
+        900.0,
+        -250.0,
+        0.0
+      ],
+      "proxy_event": {
+        "component_damage_event_names": [
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_damage_events": [
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "failure_mode": "blast_deformation",
+            "failure_probability": 0.35056,
+            "failure_sample": 0.12864696952519405,
+            "failure_severity": 0.5076920006704159,
+            "integrity_after": 0.8977012224760719,
+            "integrity_before": 1.0
+          }
+        ],
+        "component_failure_count": 1,
+        "component_failure_probability_source": "synthetic_sigmoid",
+        "component_hit_count": 4,
+        "component_load_event_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "wing_spar_center_right_inner_wing_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_load_events": [
+          {
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.3171757330928424,
+            "effect_scale": 0.7046216869739883,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.977958922427999,
+            "effect_scale": 0.5954128191786623,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "wing_spar_center_right_inner_wing_segment",
+            "component_redundancy_group_id": "wing_spar_center_right_inner_wing_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.7184705978673047,
+            "effect_scale": 0.78,
+            "load_source": "spatial_component_projection"
+          },
+          {
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.8535700741732138,
+            "effect_scale": 0.6402150041900988,
+            "load_source": "spatial_component_projection"
+          }
+        ],
+        "component_mechanism_load_rows": [
+          {
+            "component_failure_probability": 0.35028000000000004,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.8578208859871577,
+            "component_name": "center_fuselage_fuel_cell",
+            "component_redundancy_group_id": "fuselage_fuel_cells",
+            "component_system": "fuel",
+            "direct_hit": false,
+            "distance_m": 1.3171757330928424,
+            "effect_scale": 0.7046216869739883,
+            "mechanism_blast_impulse_kpa_ms": 576.0857714372504,
+            "mechanism_blast_overpressure_kpa": 327.0889764310676,
+            "mechanism_fragment_areal_density_per_m2": 9.525087287180853,
+            "mechanism_fragment_energy_j": 11885.248900611616,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.35223999999999994,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.5935032460430243,
+            "component_name": "electrical_power_bus",
+            "component_redundancy_group_id": "fighter_primary_power_bus",
+            "component_system": "avionics",
+            "direct_hit": false,
+            "distance_m": 1.977958922427999,
+            "effect_scale": 0.5954128191786623,
+            "mechanism_blast_impulse_kpa_ms": 234.97892658025094,
+            "mechanism_blast_overpressure_kpa": 140.52561761039857,
+            "mechanism_fragment_areal_density_per_m2": 3.7323670957589243,
+            "mechanism_fragment_energy_j": 10959.672880189328,
+            "mechanism_penetration_margin": 0.0
+          },
+          {
+            "component_failure_probability": 0.34832,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.7498543190529747,
+            "component_name": "wing_spar_center_right_inner_wing_segment",
+            "component_redundancy_group_id": "wing_spar_center_right_inner_wing_segment",
+            "component_system": "wings",
+            "direct_hit": false,
+            "distance_m": 0.7184705978673047,
+            "effect_scale": 0.78,
+            "mechanism_blast_impulse_kpa_ms": 1000.6666616317036,
+            "mechanism_blast_overpressure_kpa": 583.5228363853278,
+            "mechanism_fragment_areal_density_per_m2": 16.697897312148744,
+            "mechanism_fragment_energy_j": 12767.534353214185,
+            "mechanism_penetration_margin": 0.4157200790279625
+          },
+          {
+            "component_failure_probability": 0.35056,
+            "component_failure_probability_source": "synthetic_sigmoid",
+            "component_failure_sample": 0.12864696952519405,
+            "component_name": "engine_core_forward_compressor_segment",
+            "component_redundancy_group_id": "engine_core_forward_compressor_segment",
+            "component_system": "engine",
+            "direct_hit": false,
+            "distance_m": 0.8535700741732138,
+            "effect_scale": 0.6402150041900988,
+            "mechanism_blast_impulse_kpa_ms": 1014.6084436652532,
+            "mechanism_blast_overpressure_kpa": 579.9035483108881,
+            "mechanism_fragment_areal_density_per_m2": 16.782838202323678,
+            "mechanism_fragment_energy_j": 12564.762734760578,
+            "mechanism_penetration_margin": 0.0
+          }
+        ],
+        "component_mechanism_row_names": [
+          "center_fuselage_fuel_cell",
+          "electrical_power_bus",
+          "wing_spar_center_right_inner_wing_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "component_primary_name": "wing_spar_center_right_inner_wing_segment",
+        "component_primary_system": "wings",
+        "damage_scalar_synthetic": true,
+        "database_path": "docs/systems/effects/reviews/f16c_target_geometry_20260614/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+        "direct_hitbox_intersection": false,
+        "effect_family": "blast_fragmentation",
+        "outcome_state": "hit",
+        "projected_hitbox_count": 3,
+        "trigger_type": "debug_profiled_local_proximity_hit",
+        "vulnerability_calibrated_evidence": false,
+        "vulnerability_deterministic_fuze_authority": false,
+        "vulnerability_pk_authority": false,
+        "warhead_profile_synthetic": true
+      },
+      "retired_parent_component": "wing_spar_center"
+    }
+  ]
+}

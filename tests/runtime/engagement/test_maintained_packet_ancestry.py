@@ -1,7 +1,7 @@
 """Real-run end-to-end proof for the T10 slice-6A maintained packet ancestry.
 
 Slice 6A of the T10 evidence-spine census order (see
-``docs/plan/unified_architecture_program/t10_evidence_spine_census_20260721.md``
+``docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.md``
 section 3 step 6) adds ``RuntimeFacade::build_maintained_packet_ancestry``: a
 read-only producer that populates packet ancestry for the engagement-event
 packet family -- ``parent_trace_id`` linkage minted from the run's own VA-8

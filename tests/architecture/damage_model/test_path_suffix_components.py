@@ -33,7 +33,7 @@ EXPECTED = ("retained_pack", "manifest.json")
     # POSIX absolute (the same tmp_path fallback on a POSIX host).
     "/tmp/pytest-1/t0/retained_pack/manifest.json",
     # Repo-relative POSIX (the in-repo _display_path branch).
-    "docs/task/air_combat/archive/retained_pack/manifest.json",
+    "docs/systems/effects/reviews/retained_pack/manifest.json",
     # Mixed separators (defensive: joined text crossing conventions).
     "C:\\Temp\\pytest-1\\t0/retained_pack/manifest.json",
     # Bare two-component relative path.

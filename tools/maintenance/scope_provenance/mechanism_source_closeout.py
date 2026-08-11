@@ -26,6 +26,11 @@ from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
 ensure_repo_imports()
 REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  candidate_package_dir,
+  packet_root,
+)
 from tools.maintenance.candidate_artifacts import package_bundle as candidate_bundle # noqa: E402
 
 
@@ -38,27 +43,11 @@ RESIDUAL_IDS = ("RES-003", "RES-004", "RES-005", "RES-006")
 
 
 def _package_dir(repo_root: Path) -> Path:
-  return (
-    repo_root
-    / "docs"
-    / "task"
-    / "air_combat"
-    / "archive"
-    / "a2_high_fidelity_damage_model"
-    / "calibration"
-    / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
-  )
+  return candidate_package_dir(repo_root)
 
 
 def _a2_root(repo_root: Path) -> Path:
-  return (
-    repo_root
-    / "docs"
-    / "task"
-    / "air_combat"
-    / "archive"
-    / "a2_high_fidelity_damage_model"
-  )
+  return packet_root(repo_root)
 
 
 def _doc_refs(repo_root: Path) -> dict[str, Path]:

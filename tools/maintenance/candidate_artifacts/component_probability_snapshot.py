@@ -352,11 +352,11 @@ def generate_stage_c_component_probability_snapshot(
         "component-probability-surface-probe"
       ),
       "scope_definition_ref": (
-        "docs/task/air_combat/archive/a2_high_fidelity_damage_model/"
+        "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/"
         "narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md"
       ),
       "component_effects_acceptance_ref": (
-        "docs/task/air_combat/archive/a2_high_fidelity_damage_model/component_effects/"
+        "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/component_effects/"
         "acceptance_tests_and_non_authoritative_boundaries_20260528.zh.md"
       ),
     },

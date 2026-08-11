@@ -44,7 +44,7 @@ PLATFORM_SPAWN_INCLUDE_PATHS = tuple(
 )
 
 # Governs the local-environment red recorded in the T6 residual ledger
-# (docs/plan/unified_architecture_program/t6_residual_ledger.md, section 5
+# (docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md, section 5
 # "platform_spawn spdlog collection error"): CPU build snapshots that ship
 # only `_deps/<dep>-build` without `_deps/<dep>-src` cannot supply these
 # headers. Conditional on actual dependency presence, mirroring the

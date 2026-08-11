@@ -75,7 +75,7 @@ Run narrower targeted tests when your change only touches a maintained slice.
 
 For the maintained documentation policy, see:
 
-- [docs/standards/governance/bilingual_documentation_policy.md](docs/standards/governance/bilingual_documentation_policy.md)
+- [docs/engineering/documentation/standards/bilingual_documentation_policy.md](docs/engineering/documentation/standards/bilingual_documentation_policy.md)
 
 ## Licensing Status
 

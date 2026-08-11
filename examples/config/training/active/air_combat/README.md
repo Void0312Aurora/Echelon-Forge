@@ -4,6 +4,10 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
 
 ## Scope
 
+- Policy/model terminology follows the
+  [Policy Execution Architecture Baseline](../../../../../docs/learning/standards/policy_execution_architecture.md).
+  A-stage and M3 labels below identify historical task/evidence lanes; current
+  config keys and reusable model APIs remain role-based.
 - Scenario pairings for this line are:
   - [air_combat_1v1_headon_sensor_smoke_v1.json](../../../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
     - Used by the scripted-red `F-16C` smoke and 8k probe entries.
@@ -16,7 +20,7 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json)
     - Used by the additive Stage-1 A3 C2/ROE hybrid shaped and temporal shaped probes; legacy M1 baseline entries remain on `mission_obs_mode=basic`.
   - [air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json)
-    - Used by the A1 Stage-2 C2/ROE M3-S2 continuation entry; the goal is to transfer accepted Stage-1 release discipline to the maneuvering-red, red-unarmed scenario.
+    - Used by the A1 Stage-2 C2/ROE event-window continuation entry, historically tracked as M3-S2; the goal is to transfer accepted Stage-1 release discipline to the maneuvering-red, red-unarmed scenario.
     - As of DCR-D, explicitly opts in low-weight damage consequence reward terms for synthetic training shaping only.
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
@@ -116,24 +120,24 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Early accepted releases become negative labels; deadline/curriculum positives are gated by the launch window.
   - It is an implementation/evidence entry for the next short probe, not M2 release, doctrine, missile-authority, or Pk evidence.
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json)
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_shaped_world_batch_probe_v1.json)
   - Stage-1 A7 event-credit probe using the same C2/ROE temporal shaped and launch-window gate.
   - Keeps A6 hazard loss disabled and trains the zero-initialized `hybrid_event_credit_head` with value credit plus event-logit delta alignment.
-  - Includes `a7_event_credit_shadow_quality_weight=1.0` for the A7-EVC-J shadow-quality target repair path.
+  - Includes `event_credit_shadow_quality_weight=1.0` for the A7-EVC-J shadow-quality target repair path.
   - As of A7-EVC-M, enables projected legal-open credit with
-    `a7_event_credit_legal_projection_enabled=true`,
-    `a7_event_credit_projection_value_coef>0`, and
-    `a7_event_credit_projection_delta_align_coef>0`.
+    `event_credit_legal_projection_enabled=true`,
+    `event_credit_projection_value_coef>0`, and
+    `event_credit_projection_delta_align_coef>0`.
   - As of A7-EVC-V, enables the protected online credit update contract with
-    `a7_event_credit_separate_update_enabled=true`,
-    `a7_event_credit_separate_update_max_grad_norm=0.5`, and
-    `a7_event_credit_delta_align_positive_only=true`.
+    `event_credit_separate_update_enabled=true`,
+    `event_credit_separate_update_max_grad_norm=0.5`, and
+    `event_credit_delta_align_positive_only=true`.
   - Keeps A3/A5 legality masks and one-shot state-machine authority unchanged.
   - It was used by A7-G r3 and A7-EVC-J repair evidence; both are valid but held because deterministic releases remain `0` and quality-window advantage stays negative.
   - It is now the maintained entry for A7-EVC-N short projection learned evidence after M focused gates.
   - It is not M2 release, doctrine, missile-authority, or Pk evidence, and focused projection tests still do not count as behavior acceptance.
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json)
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json)
   - Stage-1 A7 explicit state-completion probe using `mission_obs_mode=air_combat_c2_roe_v2`.
   - Keeps the A7/R event-credit hyperparameters unchanged while exposing current legal-open age, launch-window readiness, quality-window readiness, target range, and target track age in the mission observation.
   - Includes the A7-EVC-V protected credit update contract:
@@ -142,23 +146,23 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - The 32k S probe completed as held evidence: focused tests passed, open-window fire probability rose, deterministic probing still recorded `0` releases, and quality-window advantage remained negative.
   - It is a pre-M2 structural observability experiment; it does not release sequence-native M2, doctrine, missile-authority, or Pk evidence.
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json)
-  - Stage-1 M3-S1 grouped stopping short probe using the A7 explicit state-completion observation surface.
-  - Opens the independent `m3_stopping_head` and `m3s1_grouped_stopping_*` auxiliary objective while keeping A7 coefficients and A3/A5 legality masks unchanged.
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json)
+  - Stage-1 grouped-stopping short probe, historically tracked as M3-S1, using the A7 explicit state-completion observation surface.
+  - Opens the independent `stopping_head` and `grouped_stopping_*` auxiliary objective while keeping A7 coefficients and A3/A5 legality masks unchanged.
   - Uses an 8k budget for validation evidence, not a promoted formal training run.
-  - This entry can prove M3 stop-boundary movement only; executable fire timing remains held until the stopping head is connected to or compared against the hybrid event action path.
+  - This entry can prove stopping-boundary movement only; executable fire timing remains held until the stopping head is connected to or compared against the hybrid event action path.
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
-  - Stage-1 M3-S2 direct fire-boundary short probe using the A7 explicit state-completion observation surface.
-  - Keeps HMoE and `air_combat_hybrid_v1`, but makes `hybrid_event_head` the only executable hold/fire owner for this config; both M3 stopping and window-classifier event adapters are explicitly disabled.
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json)
+  - Stage-1 direct fire-boundary short probe, historically tracked as M3-S2, using the A7 explicit state-completion observation surface.
+  - Keeps HMoE and `air_combat_hybrid_v1`, but makes `hybrid_event_head` the only executable hold/fire owner for this config; both stopping and window-classifier event adapters are explicitly disabled.
   - Uses the grouped sidecar legal/quality rows as boundary labels, computes loss on the final executable fire-minus-hold logit, and restricts the dedicated auxiliary update to `hybrid_event_head` parameters.
   - Applies explicit calibration: non-quality legal rows are capped at a negative ceiling while quality-window rows are pushed toward a positive floor.
   - Uses support-preserving collection, including quality-window hold preservation, so the sidecar can see the complete legal-to-quality transition before behavior acceptance is claimed.
   - Uses an 8k budget for validation evidence; behavior acceptance still requires learned-policy release probes.
 
-- [air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
-  - A1 Stage-2 C2/ROE M3-S2 continuation entry using the maneuvering-red, red-unarmed training-shaped Stage-2 scenario.
-  - Reuses the Stage-1 M3-S2 direct fire-boundary owner and `air_combat_c2_roe_v2` observation surface without weakening A3/A5 legality or the one-shot state machine.
+- [air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json)
+  - A1 Stage-2 C2/ROE event-window continuation entry, historically tracked as M3-S2, using the maneuvering-red, red-unarmed training-shaped Stage-2 scenario.
+  - Reuses the Stage-1 direct fire-boundary owner and `air_combat_c2_roe_v2` observation surface without weakening A3/A5 legality or the one-shot state machine.
   - The `2026-06-08` 8k init-from-Stage-1 short train preserved one accepted authorized release in deterministic and stochastic single-episode probes, but had no effects/damage/kill; it is a Stage-2 training entry, not stage acceptance.
   - The paired Stage-2 training-shaped scenario now explicitly enables low-weight damage consequence shaping:
     `air_combat_damage_consequence_shaping_enabled=true`,

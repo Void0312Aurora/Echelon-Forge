@@ -29,7 +29,8 @@
 // tests/architecture/governance/test_cpp_include_direction.py and the
 // allowlist entry in
 // tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json;
-// adjudication record: docs/plan/unified_architecture_program/
+// adjudication record:
+// docs/plan/archive/unified_architecture_program_completed_20260727/
 // t6_residual_ledger.md section 7.5.
 #include "core/mission/episode/execution_episode_batch_prepare.h"
 #include "runtime/contracts/platform_capability_contracts.h"

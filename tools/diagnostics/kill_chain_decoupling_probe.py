@@ -57,7 +57,7 @@ MLF10_CALIBRATION_ADMISSION_REPORT_SCHEMA_VERSION = "mlf10.calibration_admission
 DEFAULT_DATABASE_PATH = Path(resolve_repo_path("examples", "config", "database"))
 DEFAULT_EXTERNAL_EVIDENCE_REPORT_PATH = (
   REPO_ROOT
-  / "docs/task/air_combat/a2_high_fidelity_damage_model/archive/"
+  / "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/"
   "missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json"
 )
 DEFAULT_GUIDANCE_CASES = (

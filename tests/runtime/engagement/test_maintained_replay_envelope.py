@@ -1,7 +1,7 @@
 """Real-run end-to-end proof for the T10 slice-5 maintained replay envelope (I69).
 
 Slice 5 of the T10 evidence-spine census order (see
-``docs/plan/unified_architecture_program/t10_evidence_spine_census_20260721.md``
+``docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.md``
 section 3) adds ``RuntimeFacade::build_maintained_replay_envelope``: a read-only
 producer that assembles a WP15 ``ReplayEnvelope`` from the **real products of a
 maintained run** instead of from the request/snapshot fields the two pre-existing

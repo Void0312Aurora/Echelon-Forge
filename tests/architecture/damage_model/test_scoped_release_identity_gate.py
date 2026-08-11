@@ -61,6 +61,12 @@ def test_scoped_release_identity_gate_passes_scoped_surface() -> None:
   assert len(artifact["retained_artifact_hash_inventory"]) >= 20
   assert len(artifact["relevant_file_hash_inventory"]) == len(scoped_identity_gate.DOC_REFS)
   assert all(row["sha256"] for row in artifact["relevant_file_hash_inventory"])
+  relevant_files = {
+    row["role"]: row for row in artifact["relevant_file_hash_inventory"]
+  }
+  assert relevant_files["subagent_usage_policy"]["relative_path"] == (
+    "docs/engineering/automation/standards/subagent_usage_policy.md"
+  )
   assert artifact["dirty_worktree_note"]["global_worktree_dirty"] is True
   assert artifact["dirty_worktree_note"]["unrelated_dirty_path_count"] > 0
   assert artifact["policy_evaluation"]["standards_global_clean_policy"][

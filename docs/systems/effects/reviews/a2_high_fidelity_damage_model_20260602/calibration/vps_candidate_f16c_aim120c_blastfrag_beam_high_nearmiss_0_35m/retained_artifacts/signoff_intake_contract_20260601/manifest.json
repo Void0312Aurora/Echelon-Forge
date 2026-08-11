@@ -1,0 +1,65 @@
+{
+  "admission_granted": false,
+  "approval_granted": false,
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601",
+  "artifacts": [
+    {
+      "artifact_key": "signoff_intake_contract",
+      "filename": "signoff_intake_contract.json",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
+      "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
+      "sha256": "17c5c1d5180d5605f628478227aa3474c83e1655f6769c6f53800ebe55ac31a7"
+    }
+  ],
+  "authority_guards": {
+    "allowed_output_release_authority_granted": false,
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "source_truth_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "benchmark_consumed_for_release": false,
+  "candidate_packet_supplied": false,
+  "fail_closed": true,
+  "finding_count": 1,
+  "input_refs": [
+    {
+      "artifact_key": "source_rights_signoff_request_packet",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "required_for_contract": true,
+      "role": "current_fail_closed_signoff_request_input",
+      "schema_version": "a2.source_rights_signoff_request_packet.v1",
+      "sha256": "456b16c9f2da3836ebc7a485b5dbe7a1e1c8e884a064b84fab7e4b0790bd2d46",
+      "status": "retained_fail_closed_source_rights_signoff_request_packet"
+    }
+  ],
+  "intake_shape_valid": false,
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "raw_outputs_retained": false,
+  "raw_source_text_tables_values_formulas_retained": false,
+  "release_grade_satisfied": false,
+  "required_signoff_ids": [
+    "source_rights_independent_review",
+    "allowed_output_policy_release_grade_review",
+    "tp21_selected_case_hash_only_allowed_output_review",
+    "beco_hash_only_allowed_output_review",
+    "beco_lineage_tolerance_and_replacement_review",
+    "benchmark_consumption_release_decision",
+    "authority_boundary_confirmation"
+  ],
+  "schema_version": "a2.blastfrag_signoff_intake_contract_retained_manifest.v1",
+  "signoff_decisions_consumed": false,
+  "status": "retained_fail_closed_signoff_intake_contract_no_external_packet"
+}

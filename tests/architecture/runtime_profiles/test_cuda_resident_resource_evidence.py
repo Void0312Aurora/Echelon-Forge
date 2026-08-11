@@ -18,7 +18,7 @@ PROBE = ROOT / "src/tools/experimental/cuda_resident/cuda_resident_resource_prob
 COLLECTOR = ROOT / "tools/diagnostics/cuda_resident_cr2_resource_evidence.py"
 STATIC_PARSER = ROOT / "tools/diagnostics/cuda_resident_cr2_resource_static.py"
 SCHEMA_VALIDATOR = ROOT / "tools/diagnostics/cuda_resident_cr2_resource_schema.py"
-EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_resource_evidence_20260804.json"
+EVIDENCE = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_resource_evidence_20260804.json"
 CMAKE = ROOT / "CMakeLists.txt"
 EVIDENCE_COMMIT = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
 

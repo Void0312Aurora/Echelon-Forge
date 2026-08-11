@@ -62,7 +62,8 @@ _SURVEY_PATH = (
     REPO_ROOT
     / "docs"
     / "plan"
-    / "unified_architecture_program"
+    / "archive"
+    / "unified_architecture_program_completed_20260727"
     / "t11_content_schema_survey_20260721.md"
 )
 

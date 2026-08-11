@@ -15,9 +15,11 @@
 // not move reference resolution earlier than the factory materialize step.
 //
 // Vocabulary and scope follow:
-//   - docs/plan/unified_architecture_program/t11_content_pipeline_census_20260721.md
+//   - docs/plan/archive/unified_architecture_program_completed_20260727/
+//     t11_content_pipeline_census_20260721.md
 //     (section 3 slice order, step 3; red lines)
-//   - docs/plan/unified_architecture_program/t11_content_schema_survey_20260721.md
+//   - docs/plan/archive/unified_architecture_program_completed_20260727/
+//     t11_content_schema_survey_20260721.md
 //     (the 106 recognized top-level keys + 7 present-but-unread keys)
 
 #include <cstddef>

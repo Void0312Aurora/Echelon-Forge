@@ -1,0 +1,120 @@
+{
+  "approval_granted": false,
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601",
+  "artifacts": [
+    {
+      "artifact_key": "source_rights_signoff_request_packet",
+      "filename": "source_rights_signoff_request_packet.json",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "schema_version": "a2.source_rights_signoff_request_packet.v1",
+      "sha256": "456b16c9f2da3836ebc7a485b5dbe7a1e1c8e884a064b84fab7e4b0790bd2d46"
+    }
+  ],
+  "authority_guards": {
+    "allowed_output_release_authority_granted": false,
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "source_truth_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "benchmark_consumed_for_release": false,
+  "current_missing_items": [
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "independent_rights_reviewer_or_release_owner",
+      "signoff_id": "source_rights_independent_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "allowed_output_policy_reviewer",
+      "signoff_id": "allowed_output_policy_release_grade_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "source_rights_reviewer",
+      "signoff_id": "tp21_selected_case_hash_only_allowed_output_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "source_rights_reviewer",
+      "signoff_id": "beco_hash_only_allowed_output_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "independent_lineage_reviewer_numeric_tolerance_owner_and_replacement_anchor_owner",
+      "signoff_id": "beco_lineage_tolerance_and_replacement_review"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "release_owner",
+      "signoff_id": "benchmark_consumption_release_decision"
+    },
+    {
+      "missing_reason": "signoff_or_review_decision_not_present",
+      "requested_from": "integration_owner",
+      "signoff_id": "authority_boundary_confirmation"
+    }
+  ],
+  "fail_closed": true,
+  "input_refs": [
+    {
+      "artifact_key": "source_rights_output_policy_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "required_for_request_packet": true,
+      "role": "current_fail_closed_allowed_output_policy_input",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    },
+    {
+      "artifact_key": "source_payload_pack_manifest",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "required_for_request_packet": true,
+      "role": "retained_source_payload_manifest_input",
+      "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
+      "sha256": "98eedda50aa37395337ed5d5aeb969371014a944dcec3bbadf11b6cac4c728a9",
+      "status": "partial_payloads_retained_release_review_blocked"
+    },
+    {
+      "artifact_key": "res005_tp21_selected_case_admission_review_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+      "required_for_request_packet": false,
+      "role": "optional_current_res005_tp21_hash_only_packet_input",
+      "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
+      "sha256": "2ff80d2a936da961835a1d4ff9ec2c9f3a80c5bb62013e21b53ba83bb0e584bb",
+      "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
+    },
+    {
+      "artifact_key": "res006_beco_replacement_tolerance_admission_gate",
+      "present": true,
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "required_for_request_packet": false,
+      "role": "optional_current_res006_beco_hash_only_packet_input",
+      "schema_version": "a2.res006_beco_replacement_tolerance_admission_gate.v1",
+      "sha256": "67a955685b43ed3acaf9bb3c811cb779cd3feb1ff554e8200a7a79ba51301a2d",
+      "status": "blocked_fail_closed_res006_beco_replacement_tolerance_admission_review"
+    }
+  ],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "raw_outputs_retained": false,
+  "raw_source_text_tables_values_formulas_retained": false,
+  "release_grade_satisfied": false,
+  "requested_hash_only_review_item_count": 4,
+  "requested_signoff_item_count": 7,
+  "schema_version": "a2.source_rights_signoff_request_retained_manifest.v1",
+  "status": "retained_fail_closed_source_rights_signoff_request_packet"
+}

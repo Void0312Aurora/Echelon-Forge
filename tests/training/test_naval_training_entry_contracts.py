@@ -313,7 +313,14 @@ class NavalTrainingEntryContractTests(unittest.TestCase):
     self.assertIn("不暴露武器", readme_zh)
 
 
-N4_DOC_DIR = REPO_ROOT / "docs" / "task" / "naval" / "archive" / "n4_threat_roe_bridge"
+N4_DOC_DIR = (
+    REPO_ROOT
+    / "docs"
+    / "domains"
+    / "naval"
+    / "reviews"
+    / "n4_threat_roe_bridge_20260525"
+)
 ACTIVE_NAVAL_DIR = REPO_ROOT / "examples" / "config" / "training" / "active" / "naval"
 N4_SCENARIO = REPO_ROOT / "scenarios" / "naval" / "ddg51_take1_screen_threat_roe_v1.json"
 N4_RECOVERY_SCENARIO = REPO_ROOT / "scenarios" / "naval" / "ddg51_take1_screen_threat_roe_offstation_recovery_v1.json"

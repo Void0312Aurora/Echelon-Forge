@@ -11,10 +11,9 @@ or experiment lockfile.
 ## Files
 
 - `constraints-smoke.txt`: lightweight constraints for CI/smoke/lint
-  resolution. It covers the direct smoke installs, `pytest` and `numpy`, the
-  Python lint gate dependency `ruff`, plus Python package build tools that are
-  reasonable to constrain when explicitly testing package build/install
-  behavior.
+  and coverage resolution. The file and the CI workflows that consume it are
+  the authoritative package inventory; this README describes their scope
+  rather than maintaining a second exhaustive list.
 
 ## How To Use
 
@@ -23,12 +22,14 @@ constraints file:
 
 ```bash
 python -m pip install --upgrade pip -c requirements/constraints-smoke.txt
-python -m pip install -c requirements/constraints-smoke.txt pytest numpy ruff
+python -m pip install -c requirements/constraints-smoke.txt pytest numpy ruff gymnasium
 ```
 
-This mirrors the repository smoke boundary: build the local C++/Python
-extension with CMake, expose it with `tools/maintenance/cmo_env.sh` or
-`tools/maintenance/cmo_env.ps1`, and run the smoke suites from the repository
+This mirrors the fast smoke lane as of `2026-08-07`; the coverage lane also
+installs `coverage` and `gcovr`. Always read the consuming workflow before
+changing the constraints. Build the local C++/Python extension with CMake,
+expose it with `tools/maintenance/cmo_env.sh` or
+`tools/maintenance/cmo_env.ps1`, and run the selected suite from the repository
 virtual environment.
 
 ## Scope Rules
@@ -39,9 +40,11 @@ training, world-model utilities, or local development convenience. They are not
 reproducible environment locks.
 
 `constraints-smoke.txt` is the reproducible entry point for CI/smoke/lint
-dependency resolution only. It should stay small and should not hard-pin the
-training or experiment stack, including `torch`, `stable-baselines3`,
-`gymnasium`, or `tensorboard`.
+and coverage dependency resolution only. It should stay small and should not
+hard-pin the full training or experiment stack, including `torch`,
+`stable-baselines3`, or `tensorboard`. The current `gymnasium` constraint serves
+the smoke and coverage interface boundary; it is not a training-environment
+lock.
 
 Training and experiment runs still need their own environment evidence. Until a
 dedicated lockfile policy exists, record the resolved environment with the run
@@ -57,14 +60,15 @@ constraints.
 
 ## Update Rules
 
-- Update `constraints-smoke.txt` when CI Python support, direct smoke/lint
-  installs, or `pyproject.toml` build-system requirements change.
+- Update `constraints-smoke.txt` when CI Python support, direct
+  smoke/lint/coverage installs, or `pyproject.toml` build-system requirements
+  change.
 - Keep constraints broad enough for patch-level updates, but narrow enough to
   prevent surprising major-version changes in the smoke lane.
 - Do not add optional training, RL, or world-model packages merely because they
   appear in `pyproject.toml` optional dependency groups.
-- Validate changes with the smoke workflow before treating them as release
-  evidence.
+- Validate changes with every consuming smoke or coverage workflow before
+  treating them as release evidence.
 
-See `docs/standards/governance/release_and_dependency_policy.md` for the
+See `docs/engineering/release/standards/release_and_dependency_policy.md` for the
 release gate policy.

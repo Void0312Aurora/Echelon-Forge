@@ -1,7 +1,7 @@
 """Focused gates for the T10 slice-4 maintained-run evidence wiring (I59).
 
 Slice 4 of the T10 evidence-spine census order (see
-``docs/plan/unified_architecture_program/t10_evidence_spine_census_20260721.md``
+``docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.md``
 section 3 step 4) wires the *real* run-global evidence producers built in slice 3
 (I54) into the maintained window path
 (``RuntimeFacadeAdapter.run_maintained_window``), replacing the placeholder

@@ -1,0 +1,55 @@
+{
+  "admission_summary": {
+    "beco_recalculation_hashes_admitted": false,
+    "benchmark_consumption_admitted": false,
+    "exact_blockers": [
+      "headless spreadsheet execution completed but selected output hashes differed from cached anchors for: BEC-O-METRIC-DEFAULT-001, BEC-O-METRIC-DEFAULT-002, BEC-O-METRIC-DEFAULT-003, BEC-O-METRIC-DEFAULT-004, BEC-O-METRIC-DEFAULT-005, BEC-O-METRIC-DEFAULT-006, BEC-O-METRIC-DEFAULT-007, BEC-O-METRIC-DEFAULT-008, BEC-O-METRIC-DEFAULT-009",
+      "required reviewer-selected TP-21 debris comparison case artifacts are missing: page/section provenance outside this package plus hash-only selected debris outputs",
+      "release-grade tolerance and allowed-output signoff is not present",
+      "benchmark-consumption decision remains fail-closed; retained evidence is not consumed for release"
+    ],
+    "fail_closed": true,
+    "tolerance_policy_admitted": false,
+    "tp21_selected_debris_outputs_admitted": false
+  },
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005006_benchmark_execution_admission_20260531",
+  "authority_guards_all_false": true,
+  "benchmark_consumption_decision": {
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_gate": [],
+    "decision": "not_consumed_fail_closed",
+    "decision_reasons": [
+      "headless spreadsheet execution completed but selected output hashes differed from cached anchors for: BEC-O-METRIC-DEFAULT-001, BEC-O-METRIC-DEFAULT-002, BEC-O-METRIC-DEFAULT-003, BEC-O-METRIC-DEFAULT-004, BEC-O-METRIC-DEFAULT-005, BEC-O-METRIC-DEFAULT-006, BEC-O-METRIC-DEFAULT-007, BEC-O-METRIC-DEFAULT-008, BEC-O-METRIC-DEFAULT-009",
+      "required reviewer-selected TP-21 debris comparison case artifacts are missing: page/section provenance outside this package plus hash-only selected debris outputs",
+      "release-grade tolerance and allowed-output signoff is not present",
+      "benchmark-consumption decision remains fail-closed; retained evidence is not consumed for release"
+    ],
+    "release_grade_validated": false,
+    "res005_closed": false,
+    "res006_closed": false
+  },
+  "benchmark_execution_admission_gate_artifact": {
+    "filename": "benchmark_execution_admission_gate.json",
+    "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005006_benchmark_execution_admission_20260531/benchmark_execution_admission_gate.json",
+    "schema_version": "a2.res005006_benchmark_execution_admission_gate.v1",
+    "sha256": "f8cb8b0004bbce2d91b4eb982e6e1234e4a641fe170bbf4d982cdf9b121ed3dd"
+  },
+  "current_gate_results": {
+    "RES-005": "blocked_fail_closed_tp21_selected_debris_outputs_missing",
+    "RES-006": "blocked_fail_closed_beco_recalculation_not_admitted"
+  },
+  "non_authoritative_guards": {
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "schema_version": "a2.res005006_benchmark_execution_admission_retained_manifest.v1",
+  "status": "partial_fail_closed_benchmark_execution_admission_gate"
+}

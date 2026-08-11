@@ -39,10 +39,10 @@ SUPPORT_PROJECTION_TOLERANCE_M = 1.0e-6
 MATRIX_PROBE_PATH = Path(
   resolve_repo_path(
     "docs",
-    "task",
-    "air_combat",
-    "a2_high_fidelity_damage_model",
-    "missile_lethality_target_geometry",
+    "systems",
+    "effects",
+    "reviews",
+    "f16c_target_geometry_20260614",
     "review_packets",
     "f16c_20260611",
     "target_geometry_lethality_matrix_probe_20260614.json",
@@ -51,10 +51,10 @@ MATRIX_PROBE_PATH = Path(
 CONTOUR_PATH = Path(
   resolve_repo_path(
     "docs",
-    "task",
-    "air_combat",
-    "a2_high_fidelity_damage_model",
-    "missile_lethality_target_geometry",
+    "systems",
+    "effects",
+    "reviews",
+    "f16c_target_geometry_20260614",
     "review_packets",
     "f16c_20260611",
     "whole_airframe_contour_containment_20260614.json",
@@ -66,10 +66,10 @@ PROXY_UNIT_PATH = (
 DEFAULT_OUTPUT_DIR = Path(
   resolve_repo_path(
     "docs",
-    "task",
-    "air_combat",
-    "a2_high_fidelity_damage_model",
-    "missile_lethality_target_geometry",
+    "systems",
+    "effects",
+    "reviews",
+    "f16c_target_geometry_20260614",
     "review_packets",
     "f16c_20260611",
   )

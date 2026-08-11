@@ -52,11 +52,11 @@ the table below as an entry-map, not as a release promise.
 | --- | --- | --- |
 | Air / execution | Most mature runtime and training line; current best baseline for correctness hardening. | `scenarios/takeoff/`, `scenarios/cruise/`, `scenarios/landing/`, `examples/config/training/frozen/` |
 | Cooperative / combined | Active integration line for multi-agent, leader/execution, and world-batch behavior. | `scenarios/combined/`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, `gym_envs/leader_env.py` |
-| Naval | Active domain with maintained N4-style pre-fire tasking, contact/reporting, screen/station, and evaluation gates. Weapon/damage outcome authority is still future work. | `scenarios/naval/`, `docs/task/naval/`, `docs/standards/naval/` |
-| Ground | Early tasking/runtime bootstrap. Current fixtures validate shared command/status semantics and native platform-schema evidence, not full ground movement, sensing, fires, or damage. | `scenarios/ground/`, `docs/task/ground/`, `docs/standards/ground/` |
-| Air combat / A2 | Focused combat and high-fidelity damage-model workline with retained evidence gates. It is one domain line, not the whole project identity. | `scenarios/air_combat/`, `docs/task/air_combat/` |
-| Visualization / game | Exploratory operator and frontend surfaces backed by simulation runtime truth where maintained. | `examples/viz/`, `docs/task/viz/`, `docs/task/game/` |
-| Model / world model | Planning and experimental policy/model work, including temporal HMoE and world-model utilities. | `docs/task/model/`, `docs/forward/models/`, `world_model_train.py` |
+| Naval | Active domain with maintained N4-style pre-fire tasking, contact/reporting, screen/station, and evaluation gates. Weapon/damage outcome authority is still future work. | `scenarios/naval/`, `docs/domains/naval/` |
+| Ground | Early tasking/runtime bootstrap. Current fixtures validate shared command/status semantics and native platform-schema evidence, not full ground movement, sensing, fires, or damage. | `scenarios/ground/`, `docs/domains/ground/`, `docs/systems/environment/` |
+| Air combat / A2 | Focused combat and high-fidelity damage-model workline with retained evidence gates. It is one domain line, not the whole project identity. | `scenarios/air_combat/`, `docs/domains/air/`, `docs/learning/work/active/`, `docs/systems/effects/reviews/` |
+| Visualization / game | Exploratory operator and frontend surfaces backed by simulation runtime truth where maintained. | `examples/viz/`, `docs/operations/visualization/` |
+| Model / world model | Planning and experimental policy/model work, including temporal HMoE and world-model utilities. | `docs/learning/`, `world_model_train.py` |
 
 ## Naming And Package Identity
 
@@ -227,8 +227,8 @@ See also:
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/manual/reference/src_layer_map.md](docs/manual/reference/src_layer_map.md)
-- [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
+- [docs/operations/reference/src_layer_map.md](docs/operations/reference/src_layer_map.md)
+- docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
 
 ## Scenarios and Training Configs
 
@@ -341,18 +341,17 @@ Diagnostic and benchmark scripts are centered under
 
 ## Current Reference Documents
 
-- [docs/manual/reference/engine_capabilities.md](docs/manual/reference/engine_capabilities.md)
-- [docs/manual/reference/physics_engine_inventory.md](docs/manual/reference/physics_engine_inventory.md)
-- [docs/manual/reference/src_layer_map.md](docs/manual/reference/src_layer_map.md)
+- [docs/operations/reference/engine_capabilities.md](docs/operations/reference/engine_capabilities.md)
+- [docs/operations/reference/physics_engine_inventory.md](docs/operations/reference/physics_engine_inventory.md)
+- [docs/operations/reference/src_layer_map.md](docs/operations/reference/src_layer_map.md)
 - [docs/reference_artifacts.md](docs/reference_artifacts.md)
 
-## Forward Work
+## Planning And Open Issues
 
-Forward-looking notes live under [docs/forward](docs/forward/README.md).
-
-That includes the newly added HMoE design note for the execution policy:
-
-- [docs/forward/models/hierarchical_moe_execution_policy.md](docs/forward/models/hierarchical_moe_execution_policy.md)
+Unpromoted plans and unresolved gaps now live under their content owners. The
+HMoE design direction is at
+[docs/learning/work/issues/hierarchical_moe_execution_policy.md](docs/learning/work/issues/hierarchical_moe_execution_policy.md);
+other routes start from the [documentation index](docs/README.md).
 
 ## License
 

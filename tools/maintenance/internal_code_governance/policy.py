@@ -66,8 +66,8 @@ STRING_LITERAL_RE = re.compile(
 )
 COMPATIBILITY_MARKER = "internal-code: compatibility"
 POLICY_DOCUMENTS = {
-  "docs/standards/governance/internal_code_policy.md",
-  "docs/standards/governance/internal_code_policy.zh.md",
+  "docs/engineering/documentation/standards/internal_code_policy.md",
+  "docs/engineering/documentation/standards/internal_code_policy.zh.md",
 }
 
 

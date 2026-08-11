@@ -1,0 +1,72 @@
+# A2 High-Fidelity Air-Combat Damage Model
+
+Language:
+
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
+
+Document kind: `review`
+Lifecycle: `retained`
+Canonical: `docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/README.md`
+Owner: `systems/effects`
+Last verified: `2026-08-11`
+
+Status: `2026-06-02 / archived_sealed_index / research_profile_closed / non-authoritative`.
+
+The sealed retained project entry is the Chinese index:
+
+- [README.zh.md](README.zh.md)
+- [Task cluster dispatch packet](task_cluster_dispatch_20260601.zh.md)
+- [Task cluster execution status](task_cluster_execution_status_20260601.zh.md)
+- [Default effects modularization task list](default_effects_modularization/README.md)
+- [Research closeout archive](archive/20260602_research_closeout/README.zh.md)
+
+The previous long English runtime narrative was archived at:
+
+- [archive/20260601_doc_governance/README_legacy_runtime_narrative_20260601.md](archive/20260601_doc_governance/README_legacy_runtime_narrative_20260601.md)
+
+Current shorthand: A2 is archived as a sealed research/candidate record. Its
+structured-aircraft damage/effects runtime surface is maintained, the
+blast-fragmentation candidate package is accepted as non-authoritative, and
+G4/G5 research packets are accepted. It does not grant stock runtime authority,
+Pk authority, or deterministic fuze authority.
+
+Future work should start only from an explicit follow-on request: authority
+promotion uses `authority_promotion_backlog.zh.md`; new research expansion must
+first create a separate follow-on record instead of reopening this sealed packet.
+
+## Evidence-integrity note (2026-08-11)
+
+Several `.zh.md` files in the sealed retained-artifacts tree contain
+markdown links whose relative depth reflected the pre-migration location
+under `docs/task/air_combat/archive/`. During the ownership-first
+documentation migration (`77610218`) these links were mechanically updated
+to the new owner root, which invalidated their SHA-256 pins in the
+retained-artifact manifests.
+
+After review, the six files that remain hash-mismatched pre-date the
+migration (`ae5cdb03`) and are an inherited condition of the sealed packet.
+The two files whose pins my commit broke were restored to their original
+bytes:
+
+- `validation_res001_release_signoff_gate_20260531.zh.md` — changed
+  field was a backtick-quoted path string (not a live link); restored and
+  gate-clean.
+- `data_collection/f16c_block50_target_geometry/source_ledger.zh.md` —
+  the broken link (`../../../../../../examples/…`) references a live repo
+  file but sits outside the strict link-audit scope (full-tree only).
+  Original bytes preserved; the relative path is correct at the
+  pre-migration depth and the audit does not block on it.
+
+Decision rationale: hash pins on immutable evidence artifacts take
+precedence over cosmetic link-depth corrections in sealed, out-of-scope
+archive files. Regenerating pins would cascade across 4 manifests and
+their transitive chain with no gate benefit, since `manifest_integrity.py`
+now runs against the correct owner root and no CI test enforces the
+full-tree hash check on live content.
+
+The manifest-pinned governance dependency is preserved byte-for-byte in the
+[retained governance dependency snapshot](retained_dependencies/governance_20260531/README.md).
+Readers translate its retired logical path through
+`tools/maintenance/a2_packet_paths.py`; the maintained policy is not substituted
+because its newer bytes do not satisfy the historical hash contract.

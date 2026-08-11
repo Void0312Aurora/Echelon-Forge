@@ -44,7 +44,7 @@ Rechecked for acceptance:
 
 ```powershell
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py
-git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
+git diff --check -- docs/systems/effects/reviews/f16c_target_geometry_20260614 tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
 ```
 
 Result: geometry review tests `5 passed`; diff whitespace check produced no output.

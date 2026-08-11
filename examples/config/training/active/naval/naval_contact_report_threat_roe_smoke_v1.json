@@ -19,7 +19,7 @@
     "task_id": "naval_contact_report_threat_roe_v1",
     "scenario_path": "scenarios/naval/ddg51_take1_screen_threat_roe_v1.json",
     "contract_path": "tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json",
-    "source_preflight": "docs/task/naval/archive/n5_rl_action_surface_split/naval_n5_rl_action_surface_split_cluster_20260526.md",
+    "source_preflight": "docs/domains/naval/reviews/n5_rl_action_surface_split_20260527/naval_n5_rl_action_surface_split_cluster_20260526.md",
     "realism_grade": "N4_pre_fire_bridge",
     "entry_status": "active_smoke_probe",
     "claim_level": "entry_and_gate_only",

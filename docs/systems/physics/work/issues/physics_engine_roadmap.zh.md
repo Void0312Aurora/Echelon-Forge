@@ -1,0 +1,183 @@
+# 物理引擎升级路线图
+
+Language:
+- English canonical: [physics_engine_roadmap.md](physics_engine_roadmap.md)
+- Chinese companion: `physics_engine_roadmap.zh.md`
+
+Document kind: `plan`
+Lifecycle: `draft`
+Canonical: `docs/systems/physics/work/issues/physics_engine_roadmap.md`
+Owner: `systems/physics`
+Last verified: `not established`
+Content status: not reverified during the 2026-08-07 ownership migration.
+
+> **状态**: 规划中  
+> **作者**: 开发团队  
+> **最后更新**: 2026-01-20
+
+## 执行摘要
+
+本文档概述了将 Echelon Forge 物理引擎从当前的临时过程模型升级为严格的基于力系统与辛积分的路线图，从而为武器分离和弹射动力学等未来扩展功能奠定基础。
+
+---
+
+## 当前架构问题
+
+| 组件 | 问题 |
+|-----------|-------|
+| `src/models/air/default_control_model.cpp` | 地面路径仍为运动学（直接写入 `Velocity`），碰撞逻辑硬停止状态（非基于力） |
+| `src/systems/physics/leapfrog_system.h` | 每帧仅进行一次力评估（非完整 Velocity-Verlet）；精度依赖于 dt |
+| `src/systems/physics/aerodynamics_system.h` | 升力/阻力为占位模型（无气动力矩/阻尼；失速曲线过于简化） |
+| `src/core/engine/simulation_kernel.cpp` | 管线顺序必须保证 Control/Rotation → AeroState/Forces → Integration（当前实现已修复） |
+
+---
+
+## 理论框架
+
+### 混合架构 (Hybrid Approach)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     物理引擎 v2.0                       │
+├─────────────────────────────────────────────────────────┤
+│  第1层：辛积分器 (Symplectic Integrator)                │
+│  ├─ Leapfrog/Störmer-Verlet 用于 (q, p)                │
+│  └─ 保证能量误差有界                                     │
+├─────────────────────────────────────────────────────────┤
+│  第2层：力模型（牛顿力学）                               │
+│  ├─ 重力、推力、阻力、升力                               │
+│  └─ 直观、可扩展、可调                                   │
+├─────────────────────────────────────────────────────────┤
+│  第3层：约束动力学（按需）                               │
+│  ├─ 用于等式约束的拉格朗日乘数法                         │
+│  └─ 用于不等式约束（地面/碰撞）的 LCP                    │
+├─────────────────────────────────────────────────────────┤
+│  第4层：多体扩展（未来）                                 │
+│  ├─ 武器分离：约束释放                                   │
+│  └─ 弹射座椅：冲量 + 新刚体                             │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 为什么选择辛积分器
+
+| 积分方法 | 能量误差 | 长期稳定性 |
+|----------|----------|------------|
+| Euler | O(dt) 累积 | ❌ 发散 |
+| RK4 | O(dt⁴) 累积 | ⚠️ 缓慢发散 |
+| **Leapfrog** | O(dt²) **有界振荡** | ✅ 稳定 |
+
+```cpp
+// Leapfrog 算法（辛积分，2阶精度）
+p_half = p + F(q) * dt/2;        // 动量半步
+q_new  = q + (p_half/m) * dt;    // 位置全步
+p_new  = p_half + F(q_new) * dt/2; // 动量半步
+```
+
+---
+
+## 实施阶段
+
+### 第一阶段：基于力的重构与辛积分
+**预估时间**: 2-3 小时
+
+1. 创建 `ForceAccumulator` 组件
+2. 重构 `DefaultControlModel` 以填充力
+3. 实现重力：`F_z = -m * g`
+4. 实现阻力：`F_drag = -0.5 * ρ * v² * Cd * S * v̂`
+5. 实现推力：`F_thrust = throttle * T_max * n̂`
+6. 将欧拉位置更新替换为 kick-drift-kick 积分（`LeapfrogIntegrationSystem`）
+7. **验证**：静止状态下飞机会因重力下落
+
+#### 需修改的文件
+| 文件 | 操作 |
+|------|--------|
+| `components/physics/forces.h` | [新建] ForceAccumulator |
+| `models/air/default_control_model.cpp` | 重构为基于力 |
+| `systems/physics/leapfrog_system.h` | Kick-drift-kick 积分 |
+| `core/engine/simulation_kernel.cpp` | 确保系统顺序 |
+
+---
+
+### 第二阶段：升力模型与失速动力学
+**预估时间**: 1-2 小时
+
+1. 实现攻角 (AoA) 计算
+2. 实现升力系数曲线：`Cl = f(α)`
+3. 实现失速：临界攻角时 `Cl_max` 随后下降
+4. **验证**：飞机在巡航速度下保持高度
+
+---
+
+### 第三阶段：约束动力学（未来）
+**预估时间**: 3-4 小时
+
+1. 地面接触作为单侧约束 (LCP)
+2. 武器挂架的拉格朗日乘数
+3. **验证**：武器分离轨迹正确
+
+---
+
+### 第四阶段：多体动力学（未来）
+**预估时间**: 5 小时以上
+
+1. 弹射座椅动力学（冲量 + 新物体）
+2. 柔性结构模态（可选）
+3. 几何力学扩展（SE(3) 李群）
+
+---
+
+## 验证计划
+
+| 测试 | 预期结果 |
+|------|-----------------|
+| 自由落体 | 下落100m，油门=0 → a ≈ 9.8 m/s² |
+| 水平飞行 | 巡航速度下高度稳定 |
+| 失速 | 速度 < V_stall → 高度下降 |
+| 地面接触 | 无穿透，摩擦力正确 |
+
+---
+
+## 未来考虑：几何力学
+
+对于高级多体应用，考虑：
+
+1. **李群积分器**：用于刚体运动的 SE(3)  
+2. **变分积分器**：离散力学，保持结构  
+3. **端口-哈密顿系统**：复杂系统的能量建模  
+
+这些为以下扩展提供了数学严谨的基础：
+- 混沌动力学分析（李雅普诺夫指数）
+- RL 奖励设计中的能量预算
+- 通过纤维束处理多体约束
+
+---
+
+## 替代方案：JSBSim 集成分析
+> **状态**：已拒绝（数据饥饿）
+
+曾考虑嵌入 [JSBSim](https://github.com/JSBSim-Team/jsbsim)（一个开源、数据驱动的飞行动力学模型）。
+
+### 优点
+1.  **行业标准**：用于 FlightGear、学术研究和真实世界模拟。
+2.  **经过验证的物理**：6自由度运动方程已对照NASA数据进行验证。
+3.  **可配置**：通过XML文件定义飞机（质量、空气动力学、推进系统）。
+
+### 缺点（为什么我们选择自定义的ECS物理）
+1.  **数据饥饿**：JSBSim 需要完整填充的气动数据表（$C_L(\alpha, \delta_e, M)$ 等）。我们目前缺少这些数据。没有它们，JSBSim 只是一个空壳。
+2.  **集成复杂**：JSBSim 是一个已编译的 C++ 库对象。与 `flecs` ECS 的接口需要复杂的桥接（每帧来回复制状态）。
+3.  **过度设计**：对于“数字飞行员”强化学习训练，我们需要一个**一致**的环境，而不一定是**有效**的环境。只要物理表现合理（第二阶段），AI 就可以学习。
+
+### 未来兼容性
+当前的架构（Action -> Instrument）是**FDM无关的**。
+*   **现在**：`Action` -> `ForceSystem` (内部) -> `Instrument`
+*   **未来**：`Action` -> `JSBSimBridgeSystem` -> `Instrument`
+
+如果将来我们获得了高保真的 F-16/F-35 XML 模型，可以在不改变智能体代码的情况下切换后端。
+
+---
+
+## 参考文献
+
+1. Hairer, Lubich, Wanner - *Geometric Numerical Integration* (2006)
+2. Marsden, Ratiu - *Introduction to Mechanics and Symmetry* (1999)
+3. Stevens, Lewis - *Aircraft Control and Simulation* (2015)
