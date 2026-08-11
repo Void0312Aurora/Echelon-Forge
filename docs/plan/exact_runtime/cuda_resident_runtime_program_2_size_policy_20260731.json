@@ -228,7 +228,7 @@
     {
       "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
       "role": "CR2-5b Nsight Compute attempt and external-blocker evidence collector",
-      "observed_lines": 680
+      "observed_lines": 689
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_counter_parser.py",

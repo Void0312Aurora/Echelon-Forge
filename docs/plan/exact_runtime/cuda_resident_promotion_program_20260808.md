@@ -130,7 +130,7 @@ commit). Critical phases get one independent review before landing.
 | Iteration | Scope | Exit gate |
 | --- | --- | --- |
 | CP-0 | This freeze; verify CUDA-on build still compiles on the baseline; record host/toolchain identity; re-verify the RB10 gate verdicts against current code | Program frozen; CUDA-on build result recorded honestly; stale gate verdicts corrected |
-| CP-1 | CUDA-on compile lane so the 6,229-line surface stops rotting: a CI job (or, if no GPU runner is available, a documented local checkpoint plus an architecture test asserting the CUDA source set stays wired). Must also assert each CUDA probe still *executes*, not merely links -- the retired resource probe compiles cleanly as a stub | Compile regression cannot land silently; a retired-to-stub probe is detected |
+| CP-1 | CUDA-on compile lane so the 6,229-line surface stops rotting: a CI job (or, if no GPU runner is available, a documented local checkpoint plus an architecture test asserting the CUDA source set stays wired). Must also assert each CUDA probe still *executes*, not merely links -- the retired resource probe compiles cleanly as a stub | **LANDED 2026-08-11.** Both clauses met: `ci-cuda-compile` builds and links the CUDA-on surface, and 14 toolkit-free gates catch a retired-to-stub probe. See "CP-1 landed" below |
 | CP-2 | Split `EF_ENABLE_CUDA_EXPERIMENTS` into a helper-surface flag and a resident-backend flag, so the two semantically different surfaces are independently selectable | Enabling one no longer forces the other |
 | CP-3 | Retire the private-sequence residue that made RB10's G-A/G-B verdicts possible: demote or remove the public `publish_stage`/`partial_sync_commit` from `CudaResidentBackend` now that only tests and the superseded RB9 probe call them, and add a gate asserting the resident backend exposes no non-SPI window-advance entry point | No caller can advance a window off the SPI; the equivalence claim becomes structurally enforced rather than incidental |
 | CP-4 | **G-D: achieved counters under elevation** — occupancy, divergence, global/local/shared traffic for all 10 kernels. This is the one hard blocker and the highest-value iteration | G-D closed with real counters, or a recorded second external blocker |
@@ -454,6 +454,90 @@ divergence counters are exact and did not move.
 All four authority flags remain false in the tracked artifact. Closing a
 measurement gate grants no promotion, maintained-support, or tuning authority —
 those require the separate recorded decision at CP-9.
+
+## CP-1 landed: the CUDA surface can no longer rot silently (2026-08-11)
+
+CP-1 closes the zero-coverage exposure with two complementary halves, because
+neither one alone is sufficient.
+
+### The compile lane
+
+[ci-cuda-compile.yml](../../../.github/workflows/ci-cuda-compile.yml) configures
+with `EF_ENABLE_CUDA_EXPERIMENTS=ON` and `CMAKE_CUDA_ARCHITECTURES=86`, then
+builds the two device surfaces and links all three CUDA test targets plus all
+four CUDA-only probes. It is path-scoped to CUDA sources, the CUDA CMake wiring,
+and the workflow itself, so it runs when it has something to say.
+
+The toolkit comes from the Ubuntu archive (`nvidia-cuda-toolkit`) rather than a
+third-party action, so the lane adds no new supply-chain dependency. Its nvcc
+predates the runner image's default gcc, so `g++-12` is installed and pinned as
+`CMAKE_CUDA_HOST_COMPILER`; without that pin nvcc rejects the host toolchain.
+
+Three limits are stated in the workflow itself so a green check is not
+over-read:
+
+- **It runs nothing.** Hosted runners have no NVIDIA device, so the
+  `cuda_resident_*` suites would fail at `cudaGetDeviceCount`. Runtime
+  validation stays a local GPU-host step recorded per iteration.
+- **It is not the evidence toolchain.** The tracked evidence was captured with
+  CUDA 13.0 on an RTX 3090; the lane uses whatever nvcc the image ships. It is a
+  rot detector, not an evidence host.
+- **It cannot detect a probe that compiles but does nothing.** That is the second
+  half.
+
+### The toolkit-free gates
+
+[test_cuda_surface_wiring.py](../../../tests/architecture/build_system/test_cuda_surface_wiring.py)
+adds 14 gates that need no CUDA toolkit and no GPU, registered in
+`ci_smoke_suite.json` so they run on every PR rather than only when CUDA paths
+change. They cover two things a CUDA-off build cannot:
+
+1. **Source wiring** (7 gates): the `.cu` files on disk and the `.cu` files
+   CMake compiles are the same set; the resident backend's 8-file device surface
+   is pinned because the tracked counter evidence measures kernels from exactly
+   those files; the device sources stay behind the CUDA guard; and the helper and
+   resident surfaces stay separate. Two negative cases pin the orphan and
+   missing-file checks.
+2. **Probe executability** (7 gates): each of the four CUDA-only probe targets
+   exists, names only sources that exist, names the backend it links, and has
+   exactly one entry point with a success path.
+
+The second group exists because of a specific regression this program already
+paid for. CP-4a retired the v1 capture probe by replacing its 335-line body with
+a stub that printed the retirement reason and returned `EXIT_FAILURE`
+(`44e2b64e`), while leaving the CMake target intact — still compiling the replay
+harness, still linking `ef_cuda_resident_backend` and `nlohmann_json`, which the
+stub referenced not at all. That state compiles and links cleanly. A compile lane
+would have reported green on a probe that could no longer produce evidence, and
+CP-4c then had to pay for the missing tool. The gate encodes the two structural
+signatures of that state: a vestigial backend link, and an entry point with no
+success return.
+
+Both halves were verified load-bearing by mutation, not by assertion that they
+should work:
+
+| Mutation | Result |
+| --- | --- |
+| Drop `cuda_world_store_cuda_window.cu` from its CMake list | 3 wiring gates red |
+| Restore the real `44e2b64e` stub into the working tree | probe gate red on both counts, naming the vestigial link and the missing success path |
+| Remove only the success return, keeping the backend construction | entry-point check red, vestigial-link check correctly stays green |
+| Split entry point from a sibling session TU (the real probe shape) | stays green — the check accepts the backend being named by a sibling source |
+
+Every mutation was reverted and the tree re-verified clean before landing.
+
+### CP-1 local CUDA-on result
+
+Recorded per the program's own requirement that each iteration state a real
+CUDA-on build result rather than deferring to CI:
+
+- Nine targets configured and built CUDA-on: both device libraries, three test
+  targets, four probes. Exit 0.
+- `ctest -R "cuda_resident_lifecycle|cuda_resident_replay|cuda_resident_full_window"`:
+  3/3 passed (1.49s, 0.85s, 0.81s) on the RTX 3090 host recorded above.
+
+CP-1's exit gate is met on both clauses: a compile regression cannot land
+silently, and a retired-to-stub probe is detected — the latter by the gate that
+the retirement itself proved was missing.
 
 ## Constraints
 
