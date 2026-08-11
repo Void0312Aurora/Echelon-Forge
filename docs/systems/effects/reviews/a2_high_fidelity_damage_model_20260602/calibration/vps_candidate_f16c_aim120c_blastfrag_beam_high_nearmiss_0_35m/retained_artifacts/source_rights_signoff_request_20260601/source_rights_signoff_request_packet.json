@@ -1,7 +1,7 @@
 {
   "admission_granted": false,
   "approval_granted": false,
-  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601",
   "authority_guards": {
     "allowed_output_release_authority_granted": false,
     "benchmark_consumption_authority_granted": false,
@@ -122,7 +122,7 @@
     "policy_frozen_by_existing_gate": true,
     "policy_status": "release_candidate_fail_closed_policy_frozen",
     "present": true,
-    "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+    "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
     "release_grade_satisfied": false,
     "schema_version": "a2.source_rights_output_policy_gate.v1",
     "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
@@ -336,7 +336,7 @@
     {
       "artifact_key": "source_rights_output_policy_gate",
       "present": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
       "required_for_request_packet": true,
       "role": "current_fail_closed_allowed_output_policy_input",
       "schema_version": "a2.source_rights_output_policy_gate.v1",
@@ -346,7 +346,7 @@
     {
       "artifact_key": "source_payload_pack_manifest",
       "present": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
       "required_for_request_packet": true,
       "role": "retained_source_payload_manifest_input",
       "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
@@ -356,7 +356,7 @@
     {
       "artifact_key": "res005_tp21_selected_case_admission_review_gate",
       "present": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
       "required_for_request_packet": false,
       "role": "optional_current_res005_tp21_hash_only_packet_input",
       "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
@@ -366,7 +366,7 @@
     {
       "artifact_key": "res006_beco_replacement_tolerance_admission_gate",
       "present": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
       "required_for_request_packet": false,
       "role": "optional_current_res006_beco_hash_only_packet_input",
       "schema_version": "a2.res006_beco_replacement_tolerance_admission_gate.v1",
@@ -643,7 +643,7 @@
       "benchmark_consumed_for_release": false,
       "hash_matches_expected": true,
       "payload_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
       "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
       "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
       "source_artifact_label": "BEC-O-V1.xlsx",
@@ -653,7 +653,7 @@
       "benchmark_consumed_for_release": false,
       "hash_matches_expected": true,
       "payload_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
       "requirement_id": "PIN-BFM-002:tp-21-pdf",
       "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
       "source_artifact_label": "TP-21 PDF",

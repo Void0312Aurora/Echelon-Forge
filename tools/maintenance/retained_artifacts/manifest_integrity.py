@@ -13,17 +13,13 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CANDIDATE_PACKAGE_DIR = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "air_combat"
-  / "archive"
-  / "a2_high_fidelity_damage_model"
-  / "calibration"
-  / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
+if str(REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(REPO_ROOT))
+
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  CANDIDATE_PACKAGE_DIR,
+  MANIFEST_GLOB as DEFAULT_MANIFEST_GLOB,
 )
-DEFAULT_MANIFEST_GLOB = "retained_artifacts/**/manifest.json"
 
 PATH_FIELDS = ("path", "relative_path", "filename")
 HASH_FIELDS = ("sha256", "content_sha256", "content_hash")
@@ -374,6 +370,12 @@ def check_retained_manifest_integrity(
 
 
 def _summary_failed(summary: dict[str, Any]) -> bool:
+  # An empty inventory is a failure, not a pass. When the production package
+  # directory is renamed or pruned without updating a2_packet_paths.py, the
+  # manifest glob matches nothing and every counter below reads zero -- a
+  # "clean" result that verified no artifact at all.
+  if summary["manifest_count"] == 0:
+    return True
   return any(
     summary[field] != 0
     for field in ("missing_total", "sha_mismatch_total", "guard_true_total")
@@ -385,6 +387,15 @@ def main(argv: list[str] | None = None) -> int:
     description="Check retained damage-model candidate manifest artifact integrity."
   )
   parser.add_argument(
+    "--package-dir",
+    type=Path,
+    default=CANDIDATE_PACKAGE_DIR,
+    help=(
+      "Candidate package directory to scan. Defaults to the retained A2 "
+      "packet under its owner root."
+    ),
+  )
+  parser.add_argument(
     "--fix",
     action="store_true",
     help=(
@@ -394,8 +405,18 @@ def main(argv: list[str] | None = None) -> int:
   )
   args = parser.parse_args(argv)
 
-  summary = check_retained_manifest_integrity(fix=args.fix)
+  summary = check_retained_manifest_integrity(
+    package_dir=args.package_dir,
+    fix=args.fix,
+  )
   print(json.dumps(summary, indent=2, ensure_ascii=False))
+  if summary["manifest_count"] == 0:
+    print(
+      f"error: no manifests matched {DEFAULT_MANIFEST_GLOB!r} under "
+      f"{args.package_dir}; refusing to report a clean scan of an empty "
+      "inventory.",
+      file=sys.stderr,
+    )
   return 1 if _summary_failed(summary) else 0
 
 

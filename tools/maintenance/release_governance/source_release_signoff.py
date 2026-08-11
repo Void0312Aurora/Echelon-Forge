@@ -26,6 +26,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+)
+
 from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
 PACKAGE_ID = (
   "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -35,14 +39,7 @@ SCHEMA_VERSION = "a2.res001_release_signoff_gate.v1"
 MANIFEST_SCHEMA_VERSION = "a2.res001_release_signoff_manifest.v1"
 
 PACKAGE_DIR = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "air_combat"
-  / "archive"
-  / "a2_high_fidelity_damage_model"
-  / "calibration"
-  / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
+  A2_CANDIDATE_PACKAGE_DIR
 )
 SOURCE_PAYLOAD_DIR = PACKAGE_DIR / "retained_artifacts" / "source_payload_pack_20260531"
 SOURCE_RIGHTS_DIR = (

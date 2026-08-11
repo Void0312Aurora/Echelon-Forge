@@ -16,7 +16,7 @@
     {
       "content_sha256": "e11b21f41d632645466f94c942b59921fb2fc1d53218ed03c6b4645c059b05ce",
       "evidence_id": "UNC-STAGE-B-RESULT-PACK",
-      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
       "present": true,
       "required_for": "Stage B RES-011 seed-window CV review",
       "schema_version": "a2.stage_b_validation_result_pack.v1",
@@ -25,7 +25,7 @@
     {
       "content_sha256": "ee8e6a1b900faf048ac60c6688dd0fab76eb82bac5ac8d0e45bf3ca792eaadeb",
       "evidence_id": "UNC-STAGE-B-CLOSEOUT-DOC",
-      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_uncertainty_closeout_stage_b_effect_scale_20260531.zh.md",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_uncertainty_closeout_stage_b_effect_scale_20260531.zh.md",
       "present": true,
       "required_for": "Stage B RES-011 closeout interpretation",
       "status": "text_present"
@@ -33,7 +33,7 @@
     {
       "content_sha256": "a7edc25da18a54969d6c1ea1e66fd254ba09ad85f7e17bdea2252cbb9cf18993",
       "evidence_id": "UNC-STAGE-C-RESULT-PACK",
-      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_result_pack.json",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_result_pack.json",
       "present": true,
       "required_for": "Stage C probability repeatability summary",
       "schema_version": "a2.stage_c_component_probability_result_pack.v1",
@@ -42,7 +42,7 @@
     {
       "content_sha256": "a916d001ec0b228ed051c048a8028f65046a0ea4f58ea0e5df62770365fe42e3",
       "evidence_id": "UNC-STAGE-C-FRAGILITY-REVIEW",
-      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/stage_c_fragility_review_gate.json",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/stage_c_fragility_review_gate.json",
       "present": true,
       "required_for": "Stage C RES-011 blocking condition trace",
       "schema_version": "a2.stage_c_fragility_review_gate.v1",
@@ -51,7 +51,7 @@
     {
       "content_sha256": "8905156b1e8ede7207fc8f6be58065e0647f3dd4ead649c67a2f4f34f82f418a",
       "evidence_id": "UNC-STAGE-C-FRAGILITY-BENCHMARK",
-      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
       "present": true,
       "required_for": "Stage C candidate-vs-synthetic uncertainty limits",
       "schema_version": "a2.stage_c_fragility_benchmark.v1",
@@ -60,7 +60,7 @@
     {
       "content_sha256": "c20a2768c148ed2a34abc7727686af92518e307b718e8e604c7c2f629b88d14e",
       "evidence_id": "UNC-STAGE-C-CLOSEOUT-DOC",
-      "path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_uncertainty_closeout_stage_c_component_probability_20260531.zh.md",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_uncertainty_closeout_stage_c_component_probability_20260531.zh.md",
       "present": true,
       "required_for": "Stage C RES-011 closeout plan interpretation",
       "status": "text_present"

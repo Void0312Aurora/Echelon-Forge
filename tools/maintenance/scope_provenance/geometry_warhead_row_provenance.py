@@ -29,6 +29,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  candidate_package_dir,
+  packet_root,
+)
+
 from tools.maintenance.retained_artifacts.manifest_integrity import (
   _sha256_file,
   write_and_hash_json,
@@ -42,26 +47,10 @@ ARTIFACT_DATE = "20260531"
 RESIDUAL_IDS = ("RES-003", "RES-004")
 
 def _package_dir(repo_root: Path) -> Path:
-  return (
-    repo_root
-    / "docs"
-    / "task"
-    / "air_combat"
-    / "archive"
-    / "a2_high_fidelity_damage_model"
-    / "calibration"
-    / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
-  )
+  return candidate_package_dir(repo_root)
 
 def _a2_root(repo_root: Path) -> Path:
-  return (
-    repo_root
-    / "docs"
-    / "task"
-    / "air_combat"
-    / "archive"
-    / "a2_high_fidelity_damage_model"
-  )
+  return packet_root(repo_root)
 
 def _default_retained_dir(repo_root: Path) -> Path:
   return (

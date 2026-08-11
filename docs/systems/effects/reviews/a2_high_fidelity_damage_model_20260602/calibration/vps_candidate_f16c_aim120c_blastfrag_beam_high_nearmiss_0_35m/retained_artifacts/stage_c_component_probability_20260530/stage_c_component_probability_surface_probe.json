@@ -1,7 +1,7 @@
 {
   "artifact_provenance": {
     "descriptor_origin": "runtime-aligned component-probability descriptor candidate expanded into a three-point author-side surface probe",
-    "narrow_scope_ref": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md",
+    "narrow_scope_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md",
     "runtime_aligned_authority_pack_ref": "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py",
     "source_kind": "candidate_stage_c_component_probability_surface_probe"
   },

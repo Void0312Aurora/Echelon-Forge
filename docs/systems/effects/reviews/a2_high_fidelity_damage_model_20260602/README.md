@@ -34,3 +34,33 @@ Pk authority, or deterministic fuze authority.
 Future work should start only from an explicit follow-on request: authority
 promotion uses `authority_promotion_backlog.zh.md`; new research expansion must
 first create a separate follow-on record instead of reopening this sealed packet.
+
+## Evidence-integrity note (2026-08-11)
+
+Several `.zh.md` files in the sealed retained-artifacts tree contain
+markdown links whose relative depth reflected the pre-migration location
+under `docs/task/air_combat/archive/`. During the ownership-first
+documentation migration (`77610218`) these links were mechanically updated
+to the new owner root, which invalidated their SHA-256 pins in the
+retained-artifact manifests.
+
+After review, the six files that remain hash-mismatched pre-date the
+migration (`ae5cdb03`) and are an inherited condition of the sealed packet.
+The two files whose pins my commit broke were restored to their original
+bytes:
+
+- `validation_res001_release_signoff_gate_20260531.zh.md` — changed
+  field was a backtick-quoted path string (not a live link); restored and
+  gate-clean.
+- `data_collection/f16c_block50_target_geometry/source_ledger.zh.md` —
+  the broken link (`../../../../../../examples/…`) references a live repo
+  file but sits outside the strict link-audit scope (full-tree only).
+  Original bytes preserved; the relative path is correct at the
+  pre-migration depth and the audit does not block on it.
+
+Decision rationale: hash pins on immutable evidence artifacts take
+precedence over cosmetic link-depth corrections in sealed, out-of-scope
+archive files. Regenerating pins would cascade across 4 manifests and
+their transitive chain with no gate benefit, since `manifest_integrity.py`
+now runs against the correct owner root and no CI test enforces the
+full-tree hash check on live content.

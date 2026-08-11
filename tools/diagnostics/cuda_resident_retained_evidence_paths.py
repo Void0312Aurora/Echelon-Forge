@@ -47,15 +47,6 @@ def logical_relative(physical: str) -> str:
     return physical
 
 
-def physical_path(root: Path, recorded: str) -> Path:
-    """Resolve a recorded path under `root`, applying the logical mapping."""
-    return root / Path(physical_relative(recorded))
-
-
-def logical_path_of(root: Path, path: Path) -> str:
-    """Return the logical repository-relative spelling of an on-disk path."""
-    return logical_relative(PurePosixPath(path.relative_to(root).as_posix()).as_posix())
-
 
 def canonical_source_bytes(path: Path, root: Path, commit: str | None = None) -> bytes:
     """Read current or historical source bytes with the evidence line ending rule."""

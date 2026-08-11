@@ -16,7 +16,7 @@
 | `release_grade_legal_rights_asserted` | `false` |
 | `legal_advice_provided` | `false` |
 | `gate_sha256` | `822c496d9a49d8e0af46ce8af608ff3ae2afff9c960992e67c81107f86bfa452` |
-| `retained_manifest` | `docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json` |
+| `retained_manifest` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json` |
 
 ## 2. Evidence Boundaries
 

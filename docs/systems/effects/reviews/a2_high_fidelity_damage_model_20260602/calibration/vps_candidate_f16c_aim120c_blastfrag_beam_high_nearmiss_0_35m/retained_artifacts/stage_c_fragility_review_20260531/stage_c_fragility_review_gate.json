@@ -55,7 +55,7 @@
     "replacement_allowed_now": false,
     "replacement_result": "blocked",
     "retained_benchmark_artifact_status": "present_retained_candidate_vs_synthetic_delta_evidence",
-    "retained_benchmark_comparison_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/candidate_vs_synthetic_sigmoid_comparison.json",
+    "retained_benchmark_comparison_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/candidate_vs_synthetic_sigmoid_comparison.json",
     "retained_benchmark_delta_evidence_present": true,
     "review_result": "review_passed"
   },
@@ -393,7 +393,7 @@
   "retained_benchmark_artifact_review": {
     "artifact_read_status": "present_retained_candidate_vs_synthetic_delta_evidence",
     "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
-    "benchmark_artifact_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
+    "benchmark_artifact_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
     "benchmark_schema_version": "a2.stage_c_fragility_benchmark.v1",
     "benchmark_sha256_verified": true,
     "blocking_conditions_remaining": [
@@ -416,7 +416,7 @@
       "mean_absolute_difference_vs_synthetic_sigmoid": 0.36470769166349637,
       "min_candidate_to_synthetic_sigmoid_ratio": 126.31107038255736
     },
-    "comparison_artifact_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/candidate_vs_synthetic_sigmoid_comparison.json",
+    "comparison_artifact_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/candidate_vs_synthetic_sigmoid_comparison.json",
     "comparison_point_count": 3,
     "comparison_probe_labels": [
       "inner",
@@ -428,12 +428,12 @@
     "comparison_status": "author_side_delta_available_but_not_truth_benchmark",
     "delta_evidence_status": "present_author_side_candidate_vs_synthetic_only",
     "independent_truth_present": false,
-    "manifest_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/manifest.json",
+    "manifest_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/manifest.json",
     "manifest_schema_version": "a2.stage_c_fragility_benchmark_retained_manifest.v1",
     "replacement_allowed": false,
     "replacement_decision": "blocked_no_independent_fragility_truth",
     "retained_artifact_claims_replacement_allowed": false,
-    "retained_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531",
+    "retained_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531",
     "review_result": "blocked",
     "stage_b_dependency_preserved_as_blocked": true,
     "synthetic_sigmoid_probability_source": "synthetic_sigmoid",

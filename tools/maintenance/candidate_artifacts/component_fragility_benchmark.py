@@ -27,6 +27,10 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+)
+
 from tools.maintenance.retained_artifacts.manifest_integrity import (
   _sha256_text,
   write_and_hash_json,
@@ -46,14 +50,7 @@ COMPARISON_SCHEMA_VERSION = "a2.stage_c_fragility_benchmark_comparison.v1"
 RETAINED_MANIFEST_SCHEMA_VERSION = "a2.stage_c_fragility_benchmark_retained_manifest.v1"
 FOCUSED_RESIDUAL_IDS = ("RES-009", "RES-010", "RES-011", "RES-012")
 DEFAULT_RETAINED_DIR = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "air_combat"
-  / "archive"
-  / "a2_high_fidelity_damage_model"
-  / "calibration"
-  / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
+  A2_CANDIDATE_PACKAGE_DIR
   / "retained_artifacts"
   / "stage_c_fragility_benchmark_20260531"
 )

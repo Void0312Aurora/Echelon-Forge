@@ -1,5 +1,5 @@
 {
-  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531",
   "authority_boundary_signoff": {
     "authority_guards_all_false": true,
     "non_authoritative_guards": {
@@ -59,35 +59,35 @@
   "input_artifacts": {
     "mechanism_comparison_hashes": {
       "exists": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
       "schema_version": "a2.mechanism_comparison_hashes.v1",
       "sha256": "2e4edadbc5e34a95c764be645442dd4e26de9b2c3f67c2431fc083bbd3e044d3",
       "status": "partial_fail_closed_mechanism_comparison_hash_manifest"
     },
     "provenance_identity_review_gate": {
       "exists": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
       "schema_version": "a2.provenance_identity_review_gate.v1",
       "sha256": "c59c6184c602a3dc78242dba08252f7dbafa0b2cf9b82b21940b6342bd00096d",
       "status": "blocked_non_authoritative_provenance_identity_review_gate"
     },
     "source_artifact_pack_manifest": {
       "exists": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
       "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
       "sha256": "98eedda50aa37395337ed5d5aeb969371014a944dcec3bbadf11b6cac4c728a9",
       "status": "partial_payloads_retained_release_review_blocked"
     },
     "source_payload_pack": {
       "exists": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
       "schema_version": "a2.source_payload_pack.v1",
       "sha256": "d280771f895221fecc4ce105c8775508d6d9ec9b99c7d01d09fd965558e81d73",
       "status": "partial_payloads_retained_release_review_blocked"
     },
     "source_rights_output_policy_gate": {
       "exists": true,
-      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
       "schema_version": "a2.source_rights_output_policy_gate.v1",
       "sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2",
       "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
@@ -197,7 +197,7 @@
         "expected_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
         "hash_matches_expected": true,
         "payload_exists": true,
-        "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+        "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
         "requirement_id": "PIN-BFM-001:tp-20-pdf",
         "retention_status": "candidate_retained_not_release_reviewed",
         "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
@@ -210,7 +210,7 @@
         "expected_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
         "hash_matches_expected": true,
         "payload_exists": true,
-        "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+        "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
         "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
         "retention_status": "candidate_retained_not_release_reviewed",
         "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
@@ -223,7 +223,7 @@
         "expected_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
         "hash_matches_expected": true,
         "payload_exists": true,
-        "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+        "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
         "requirement_id": "PIN-BFM-002:tp-21-pdf",
         "retention_status": "candidate_retained_not_release_reviewed",
         "rights_status": "official_public_candidate_only_rights_not_release_reviewed",

@@ -27,6 +27,9 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  CANDIDATE_PACKAGE_RELATIVE_DIR,
+)
 from tools.maintenance.retained_artifacts.manifest_integrity import (
   _sha256_text,
   write_and_hash_json,
@@ -50,15 +53,7 @@ BENCHMARK_RETAINED_MANIFEST_SCHEMA_VERSION = (
   "a2.stage_c_fragility_benchmark_retained_manifest.v1"
 )
 FOCUSED_RESIDUAL_IDS = ("RES-009", "RES-010", "RES-011", "RES-012")
-PACKAGE_RELATIVE_DIR = (
-  Path("docs")
-  / "task"
-  / "air_combat"
-  / "archive"
-  / "a2_high_fidelity_damage_model"
-  / "calibration"
-  / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
-)
+PACKAGE_RELATIVE_DIR = CANDIDATE_PACKAGE_RELATIVE_DIR
 BENCHMARK_RETAINED_RELATIVE_DIR = (
   PACKAGE_RELATIVE_DIR
   / "retained_artifacts"

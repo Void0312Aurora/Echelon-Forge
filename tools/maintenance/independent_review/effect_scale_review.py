@@ -25,6 +25,10 @@ from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
 ensure_repo_imports()
 REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+)
 from tools.maintenance.release_governance import effect_scale_release_closeout as closeout
 from tools.maintenance.release_governance import effect_scale_release_readiness as readiness
 
@@ -44,14 +48,7 @@ UPSTREAM_RELEASE_BLOCKER_IDS = (
   "RES-006",
 )
 PACKAGE_DIR = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "air_combat"
-  / "archive"
-  / "a2_high_fidelity_damage_model"
-  / "calibration"
-  / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
+  A2_CANDIDATE_PACKAGE_DIR
 )
 
 
