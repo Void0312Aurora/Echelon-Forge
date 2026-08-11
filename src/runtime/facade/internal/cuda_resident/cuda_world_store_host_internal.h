@@ -2,7 +2,7 @@
 
 #include "runtime/facade/internal/cuda_resident/cuda_world_store.h"
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_device_api.h"
 #endif
 
@@ -17,7 +17,7 @@ struct CudaWorldStore::Impl {
 
     CudaWorldStoreDiagnostics diagnostics{};
     WindowState window_state = WindowState::awaiting_input;
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     detail::CudaWorldStoreDeviceAllocation *allocation = nullptr;
     detail::CudaWorldStoreDeviceAllocation *pending_cleanup = nullptr;
     detail::CudaWorldStoreDeviceFaultInjection faults{};

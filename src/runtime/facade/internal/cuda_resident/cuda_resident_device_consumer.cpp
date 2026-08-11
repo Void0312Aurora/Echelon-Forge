@@ -8,7 +8,7 @@
 
 #include "runtime/facade/internal/cuda_resident/cuda_world_store.h"
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 #include <cuda_runtime_api.h>
 
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_device_api.h"
@@ -57,7 +57,7 @@ bool layout_is_supported(const device_consumer::ObservationLease &lease) noexcep
            observations.element_count == worlds * values_per_world && ids.element_count == worlds;
 }
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 bool current_device_matches(int expected, std::string *detail) {
     int current = -1;
     const cudaError_t status = cudaGetDevice(&current);
@@ -111,7 +111,7 @@ CudaResidentDeviceConsumer::submit(const device_consumer::ObservationLease &leas
         return submit_failure(device_consumer::FailureCode::incompatible_layout,
                               "CUDA device consumer observation layout is incompatible");
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaWorldStoreDeviceObservationLeaseRaw raw_lease{
         .values = const_cast<float *>(lease.values),
         .ids = const_cast<std::uint64_t *>(lease.ids),
@@ -154,7 +154,7 @@ CudaResidentDeviceConsumer::submit(const device_consumer::ObservationLease &leas
 #else
     (void)lease;
     return submit_failure(device_consumer::FailureCode::cuda_unavailable,
-                          "CUDA device consumer requires EF_ENABLE_CUDA_EXPERIMENTS");
+                          "CUDA device consumer requires EF_ENABLE_CUDA_RESIDENT_BACKEND");
 #endif
 }
 
@@ -164,7 +164,7 @@ CudaResidentDeviceConsumer::await(const device_consumer::ConsumerReceipt &receip
         return status_failure(device_consumer::FailureCode::invalid_receipt,
                               "CUDA device consumer wait requires a valid receipt");
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     std::string error;
     if (!current_device_matches(receipt.device_ordinal, &error)) {
         return status_failure(device_consumer::FailureCode::device_mismatch, std::move(error));
@@ -179,7 +179,7 @@ CudaResidentDeviceConsumer::await(const device_consumer::ConsumerReceipt &receip
     return {};
 #else
     return status_failure(device_consumer::FailureCode::cuda_unavailable,
-                          "CUDA device consumer wait requires EF_ENABLE_CUDA_EXPERIMENTS");
+                          "CUDA device consumer wait requires EF_ENABLE_CUDA_RESIDENT_BACKEND");
 #endif
 }
 
@@ -194,7 +194,7 @@ device_consumer::DiagnosticResult CudaResidentDeviceConsumer::materialize_for_di
         return diagnostic_failure(device_consumer::FailureCode::wait_required,
                                   "CUDA device consumer diagnostic requires explicit await");
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     std::string error;
     if (!current_device_matches(receipt.device_ordinal, &error)) {
         return diagnostic_failure(device_consumer::FailureCode::device_mismatch, std::move(error));
@@ -211,7 +211,7 @@ device_consumer::DiagnosticResult CudaResidentDeviceConsumer::materialize_for_di
 #else
     return diagnostic_failure(
         device_consumer::FailureCode::cuda_unavailable,
-        "CUDA device consumer diagnostic requires EF_ENABLE_CUDA_EXPERIMENTS");
+        "CUDA device consumer diagnostic requires EF_ENABLE_CUDA_RESIDENT_BACKEND");
 #endif
 }
 

@@ -11,7 +11,7 @@
 
 #include "runtime/contracts/parity_budget_contracts.h"
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_device_api.h"
 #endif
 
@@ -567,7 +567,7 @@ CudaResidentBackend::export_device_observation_view(const std::string &request_i
     // constructor failure; subsequent descriptor exceptions unwind through the
     // shared_ptr and invoke the deleter exactly once.
     view.lifetime = std::shared_ptr<void>(raw.values, [ids = raw.ids](void *values) {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
         detail::release_cuda_world_store_device_observation(values, ids);
 #else
             (void)values;
@@ -605,7 +605,7 @@ CudaResidentBackend::acquire_device_observation_lease(const std::string &request
     auto &lease = result.lease;
     lease.lifetime = std::shared_ptr<void>(raw.values, [ids = raw.ids, event = raw.ready_event,
                                                         device = raw.device_ordinal](void *values) {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
         detail::release_cuda_world_store_device_observation_lease(values, ids, event, device);
 #else
             (void)values;

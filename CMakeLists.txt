@@ -4,7 +4,13 @@ project(EchelonForge VERSION 0.2.0 LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-option(EF_ENABLE_CUDA_EXPERIMENTS "Enable experimental CUDA GPU runtime scaffolding" OFF)
+option(EF_ENABLE_CUDA_EXPERIMENTS "Enable experimental CUDA GPU helper surface (src/gpu/*.cu)" OFF)
+# EF_ENABLE_CUDA_RESIDENT_BACKEND gates the cuda_resident world-step backend
+# device sources independently of the GPU helper surface. The two surfaces have
+# different semantic standing (optional accelerator helpers vs. a second
+# world-step owner) and can be evaluated and enabled independently. Either flag
+# being ON triggers enable_language(CUDA) and find_package(CUDAToolkit).
+option(EF_ENABLE_CUDA_RESIDENT_BACKEND "Enable experimental CUDA-resident world-step backend" OFF)
 option(EF_ENABLE_PROJECT_WARNINGS "Enable warning flags for maintained project targets" ON)
 
 function(ef_enable_project_warnings target_name)
@@ -338,9 +344,11 @@ set(EF_GPU_EXPERIMENT_SOURCES
     ${EF_GPU_MAINTAINED_HELPER_SOURCES}
 )
 
-if (EF_ENABLE_CUDA_EXPERIMENTS)
+if (EF_ENABLE_CUDA_EXPERIMENTS OR EF_ENABLE_CUDA_RESIDENT_BACKEND)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
+endif()
+if (EF_ENABLE_CUDA_EXPERIMENTS)
     list(APPEND EF_GPU_EXPERIMENT_SOURCES
         src/gpu/gpu_visual_runtime_cuda.cu
         src/gpu/gpu_execution_observation_runtime_cuda.cu
@@ -352,14 +360,14 @@ endif()
 # The resident backend is a separate experimental runtime target, not another
 # Flecs/GPU-helper implementation. Its C++ lifecycle shell and CUDA-off stub
 # are always compiled; only the instance-owned device metadata allocator is
-# added when CUDA experiments are explicitly enabled.
+# added when EF_ENABLE_CUDA_RESIDENT_BACKEND is explicitly enabled.
 set(EF_CUDA_RESIDENT_BACKEND_SOURCES
     src/runtime/facade/internal/cuda_resident/cuda_resident_backend.cpp
     src/runtime/facade/internal/cuda_resident/cuda_resident_device_consumer.cpp
     src/runtime/facade/internal/cuda_resident/cuda_world_store.cpp
     src/runtime/facade/internal/cuda_resident/cuda_world_store_device_lease.cpp
 )
-if (EF_ENABLE_CUDA_EXPERIMENTS)
+if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
     list(APPEND EF_CUDA_RESIDENT_BACKEND_SOURCES
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu
@@ -380,9 +388,9 @@ target_link_libraries(ef_cuda_resident_backend PUBLIC
     flecs::flecs
 )
 target_compile_definitions(ef_cuda_resident_backend PRIVATE
-    $<$<BOOL:${EF_ENABLE_CUDA_EXPERIMENTS}>:EF_ENABLE_CUDA_EXPERIMENTS=1>
+    $<$<BOOL:${EF_ENABLE_CUDA_RESIDENT_BACKEND}>:EF_ENABLE_CUDA_RESIDENT_BACKEND=1>
 )
-if (EF_ENABLE_CUDA_EXPERIMENTS)
+if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
     target_link_libraries(ef_cuda_resident_backend PUBLIC CUDA::cudart)
     # `-maxrregcount=0` is an explicit no-cap declaration, not a tuning knob: it
     # is the value ptxas already uses by default. It is stated here because the
@@ -595,7 +603,7 @@ target_include_directories(ef_cuda_resident_full_window_test PRIVATE
 # CR2-2b compiles one probe source twice so the real Flecs CPU adapter and the
 # CUDA-resident backend consume the same owned trace through the same Runner.
 # CPU database loading remains outside the runner's semantic window surface.
-if (EF_ENABLE_CUDA_EXPERIMENTS)
+if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
     add_executable(ef_cuda_resident_full_window_cuda_probe
         src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
     )
@@ -672,7 +680,7 @@ endif()
 # probes. The CUDA-on probe keeps the existing ef_core/MSVC debt out of its
 # graph; the CUDA-off probe uses the real FlecsCpuBackend instead of the RB8
 # fixture oracle. Neither target is a maintained backend or admission surface.
-if (EF_ENABLE_CUDA_EXPERIMENTS)
+if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
     add_executable(ef_cuda_resident_rb9_cuda_probe
         src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
         src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp

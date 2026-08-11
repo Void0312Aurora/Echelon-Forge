@@ -81,11 +81,11 @@ jobs:
       # is not the evidence host's. 86 is pinned to match the RTX 3090 the
       # tracked resource/counter evidence was captured on, so this lane compiles
       # the same device code path that evidence describes.
-      - name: Configure with CUDA experiments enabled
+      - name: Configure with CUDA resident backend enabled
         run: |
           cmake -S . -B build-cuda -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DEF_ENABLE_CUDA_EXPERIMENTS=ON \
+            -DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON \
             -DCMAKE_CUDA_ARCHITECTURES=86 \
             -DCMAKE_CUDA_HOST_COMPILER=g++-12
 

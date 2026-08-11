@@ -64,6 +64,7 @@ def test_runtime_facade_capabilities_stay_independent_from_cuda_experiment_signa
 
   forbidden_markers = (
     "EF_ENABLE_CUDA_EXPERIMENTS",
+    "EF_ENABLE_CUDA_RESIDENT_BACKEND",
     "cuda_runtime_built",
     "cuda_runtime_available",
     "device_count",

@@ -342,7 +342,7 @@ def test_python_kernel_catalog_has_no_second_owner() -> None:
     """
     cmake = CMAKE.read_text(encoding="utf-8")
     target_index = cmake.index("add_executable(ef_cuda_resident_resource_probe")
-    assert cmake.rfind("if (EF_ENABLE_CUDA_EXPERIMENTS)", 0, target_index) >= 0
+    assert cmake.rfind("if (EF_ENABLE_CUDA_RESIDENT_BACKEND)", 0, target_index) >= 0
     assert cmake.find("else()", target_index) > target_index
     target = cmake[target_index : cmake.index("else()", target_index)]
     assert "kKernelSpecsV2" in cmake

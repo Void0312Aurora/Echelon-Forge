@@ -109,17 +109,21 @@ def test_resident_backend_device_source_count_is_pinned() -> None:
 
 
 def test_resident_backend_device_sources_are_cuda_gated() -> None:
-  """The device sources must stay behind ``EF_ENABLE_CUDA_EXPERIMENTS`` so a
-  default build never requires a CUDA toolkit."""
+  """The device sources must stay behind ``EF_ENABLE_CUDA_RESIDENT_BACKEND`` so
+  a default build never requires a CUDA toolkit.
+
+  After CP-2 the resident-backend device sources are gated on the new dedicated
+  flag rather than the old umbrella ``EF_ENABLE_CUDA_EXPERIMENTS``.  The
+  helpers in ``src/gpu/`` remain under ``EF_ENABLE_CUDA_EXPERIMENTS``."""
   source = _cmake_source()
-  guard = "if (EF_ENABLE_CUDA_EXPERIMENTS)"
+  guard = "if (EF_ENABLE_CUDA_RESIDENT_BACKEND)"
   assert guard in source
   for name in (path.name for path in CUDA_RESIDENT_DIR.glob("*.cu")):
     index = source.find(name)
     assert index != -1, f"{name} is not referenced by CMakeLists.txt"
     preceding = source.rfind(guard, 0, index)
     assert preceding != -1, (
-      f"{name} is added outside any EF_ENABLE_CUDA_EXPERIMENTS guard, so a "
+      f"{name} is added outside any EF_ENABLE_CUDA_RESIDENT_BACKEND guard, so a "
       "default build would need a CUDA toolkit"
     )
 
@@ -301,7 +305,7 @@ def test_cuda_probes_are_not_retired_stubs() -> None:
 # add_executable that compiles a probe entry point plus the shared replay
 # harness and links the resident backend) so mutations exercise the same parser.
 _GOLDEN_PROBE_CMAKE = """\
-if (EF_ENABLE_CUDA_EXPERIMENTS)
+if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
     add_executable(ef_probe
         src/tools/experimental/cuda_resident/probe.cpp
         src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp

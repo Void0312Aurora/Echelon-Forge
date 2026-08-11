@@ -114,7 +114,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | --- | --- | --- |
 | CP-0 | 本冻结文档；核实基线上 CUDA-on 仍可编译；记录主机/工具链身份；对照现行代码复核 RB10 的门禁裁定 | 程序冻结；CUDA-on 编译结果被如实记录；过期裁定被更正 |
 | CP-1 | CUDA-on 编译通道，让这 6,229 行停止腐烂：一个 CI 任务；若无 GPU runner，则为文档化的本地检查点加一条断言 CUDA 源集仍在接线上的架构测试。还须断言每个 CUDA 探针仍能**执行**而非仅能链接——已退役的资源探针作为存根可以正常编译 | **已落地 2026-08-11。** 两项条款均已满足：`ci-cuda-compile` 编译并链接 CUDA-on 面，14 条免工具链闸门可检出被退役成存根的探针。见下文「CP-1 已落地」 |
-| CP-2 | 把 `EF_ENABLE_CUDA_EXPERIMENTS` 拆成助手面开关与常驻后端开关，使两个语义地位不同的面可独立选择 | 打开其一不再强制打开另一个 |
+| CP-2 | 把 `EF_ENABLE_CUDA_EXPERIMENTS` 拆成助手面开关与常驻后端开关，使两个语义地位不同的面可独立选择 | **已落地 2026-08-11。** `EF_ENABLE_CUDA_RESIDENT_BACKEND` 管辖常驻设备源与探针；`EF_ENABLE_CUDA_EXPERIMENTS` 管辖 `src/gpu/*.cu`；任意一个 ON 均触发 `enable_language(CUDA)` |
 | CP-3 | 清退使 RB10 的 G-A/G-B 裁定得以成立的私有序列残留：既然只有测试与已被取代的 RB9 探针还在调用，就降级或移除 `CudaResidentBackend` 上的公共 `publish_stage`/`partial_sync_commit`，并加一条断言常驻后端不暴露任何非 SPI 整窗推进入口的门禁 | 没有调用方能绕过 SPI 推进窗口；等价性主张从偶然变为结构强制 |
 | CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
 | CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | 相对 CR2-6b 基线有实测改善 |
