@@ -37,6 +37,11 @@ candidate package 明细或工业级准入待办。
 [research candidate data policy](research_candidate_data_policy_20260601.zh.md)。
 文档或工具中保留的 `authority_*` 字段只作为防误用 guard，不是当前工作进度或完成条件。
 
+被 provenance manifest 固定哈希的历史治理依赖，现以原始字节保存在
+[retained governance dependency snapshot](retained_dependencies/governance_20260531/README.md)。
+读取器通过 `tools/maintenance/a2_packet_paths.py` 把旧逻辑路径解析到该快照；不得以内容已变化的
+现行政策文件替换它，否则会破坏历史哈希契约。
+
 禁止把任何局部“闭合/收口”写成整个高保真 kill-chain 完成。除非明确标注 `G4` 或
 `G5`，闭合只表示对应子层级完成。
 

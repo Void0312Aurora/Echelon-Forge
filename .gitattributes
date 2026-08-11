@@ -13,3 +13,6 @@ tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_runtime_pr
 tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_matrix_evidence_20260804/** -text
 tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_matrix_evidence_20260804.json -text
 tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_closure_20260805.json -text
+
+# Historical A2 governance dependencies are manifest-pinned exact bytes.
+docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/retained_dependencies/** -text

@@ -78,18 +78,41 @@ LEGACY_PACKET_LOGICAL_PREFIX = (
 )
 PACKET_PHYSICAL_PREFIX = PACKET_RELATIVE_DIR.as_posix()
 
+LEGACY_SUBAGENT_USAGE_POLICY_LOGICAL_PATH = (
+  "docs/standards/governance/subagent_usage_policy.md"
+)
+RETAINED_GOVERNANCE_DEPENDENCY_RELATIVE_DIR = (
+  PACKET_RELATIVE_DIR / "retained_dependencies" / "governance_20260531"
+)
+RETAINED_SUBAGENT_USAGE_POLICY_RELATIVE_PATH = (
+  RETAINED_GOVERNANCE_DEPENDENCY_RELATIVE_DIR / "subagent_usage_policy.md"
+)
+
+# Sealed manifests may pin dependencies outside the retired A2 tree.  Exact
+# logical paths map to immutable byte-for-byte snapshots before prefix-based
+# A2 translation is considered.  Do not point these entries at maintained
+# policy documents: their content may legitimately evolve and invalidate the
+# historical manifest hash.
+PERSISTED_LOGICAL_PATH_OVERRIDES = {
+  LEGACY_SUBAGENT_USAGE_POLICY_LOGICAL_PATH:
+    RETAINED_SUBAGENT_USAGE_POLICY_RELATIVE_PATH.as_posix(),
+}
+
 
 def translate_logical_a2_path(recorded: str) -> str:
-  """Translate a pre-migration logical path to its current physical location.
+  """Translate a persisted logical path to its current physical location.
 
   Sealed evidence manifests record ``relative_path`` values under the retired
   ``docs/task/air_combat/archive/a2_high_fidelity_damage_model`` prefix.
-  The sealed bytes are SHA-256 pinned and must not be modified; readers call
-  this function to map the recorded string to the live filesystem location
-  before opening the file.
+  Some also hash-pin dependencies outside that tree. The sealed bytes are
+  immutable; readers call this function to map recorded strings to the live
+  packet or to a byte-preserved dependency snapshot before opening a file.
 
-  Paths that do not start with the legacy prefix are returned unchanged.
+  Unregistered paths outside the legacy packet prefix are returned unchanged.
   """
+  override = PERSISTED_LOGICAL_PATH_OVERRIDES.get(recorded)
+  if override is not None:
+    return override
   if recorded.startswith(LEGACY_PACKET_LOGICAL_PREFIX):
     return PACKET_PHYSICAL_PREFIX + recorded[len(LEGACY_PACKET_LOGICAL_PREFIX) :]
   return recorded

@@ -14,6 +14,7 @@ fails closed, and that no tool writes into a retired documentation root.
 
 from __future__ import annotations
 
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -67,6 +68,29 @@ def test_production_scan_sees_a_non_empty_manifest_inventory() -> None:
   assert manifests, (
     "no retained manifests matched the production glob; the packet moved or "
     "a2_packet_paths.py is stale"
+  )
+
+
+def test_production_manifest_inventory_has_no_missing_hashed_targets() -> None:
+  """Every persisted path must resolve, including non-A2 dependencies."""
+  summary = integrity.check_retained_manifest_integrity()
+
+  assert summary["manifest_count"] > 0
+  assert summary["missing_total"] == 0, summary["missing"]
+
+
+def test_historical_governance_dependency_resolves_to_exact_retained_bytes() -> None:
+  translated = paths.translate_logical_a2_path(
+    paths.LEGACY_SUBAGENT_USAGE_POLICY_LOGICAL_PATH
+  )
+  target = paths.REPO_ROOT / translated
+
+  assert target == (
+    paths.REPO_ROOT / paths.RETAINED_SUBAGENT_USAGE_POLICY_RELATIVE_PATH
+  )
+  assert target.is_file()
+  assert hashlib.sha256(target.read_bytes()).hexdigest() == (
+    "edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51"
   )
 
 

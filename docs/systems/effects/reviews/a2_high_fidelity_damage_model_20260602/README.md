@@ -64,3 +64,9 @@ archive files. Regenerating pins would cascade across 4 manifests and
 their transitive chain with no gate benefit, since `manifest_integrity.py`
 now runs against the correct owner root and no CI test enforces the
 full-tree hash check on live content.
+
+The manifest-pinned governance dependency is preserved byte-for-byte in the
+[retained governance dependency snapshot](retained_dependencies/governance_20260531/README.md).
+Readers translate its retired logical path through
+`tools/maintenance/a2_packet_paths.py`; the maintained policy is not substituted
+because its newer bytes do not satisfy the historical hash contract.
