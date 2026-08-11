@@ -393,6 +393,61 @@ def test_probe_gate_flags_the_historical_retirement_stub() -> None:
   assert any("no success return" in v for v in violations), violations
 
 
+# --- CP-3: no non-SPI window-advance entry points on CudaResidentBackend ------
+#
+# CP-3 removes ``publish_stage`` and ``partial_sync_commit`` from the public
+# interface of ``CudaResidentBackend``.  Before CP-3 those methods were
+# reachable directly on the backend object; any caller could advance a window
+# in a sequence that bypassed the SPI ``advance()`` entry point.  Removing them
+# makes the equivalence claim ("advance() and the old manual sequence produce
+# the same result") structurally enforced rather than incidental.
+#
+# The gate is intentionally header-level: it asserts the *declaration* is gone,
+# not merely that callers were updated.  A declaration left in the header while
+# callers are cleaned up would still allow future code to invoke the method.
+
+_BACKEND_HEADER = (
+  CUDA_RESIDENT_DIR / "cuda_resident_backend.h"
+)
+
+_NON_SPI_ADVANCE_METHODS = ("publish_stage", "partial_sync_commit")
+
+
+def test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points() -> None:
+  """``CudaResidentBackend`` must not declare ``publish_stage`` or
+  ``partial_sync_commit`` as public methods (CP-3).
+
+  These were the non-SPI window-advance residue: callers could sequence inject
+  → publish_stage → advance and bypass the equivalence contract.  After CP-3
+  the only window-advance path is through the SPI ``advance()`` method, which
+  internally calls ``CudaWorldStore::publish_stage`` when the window state
+  requires it.
+
+  The gate reads the header directly so a declaration snuck back in without a
+  matching caller would still be caught."""
+  assert _BACKEND_HEADER.is_file(), (
+    f"cuda_resident_backend.h not found at {_BACKEND_HEADER}; "
+    "update _BACKEND_HEADER if the file was moved"
+  )
+  source = _BACKEND_HEADER.read_text(encoding="utf-8")
+  # Strip the testing namespace block so we only inspect the public class body.
+  # The testing helpers legitimately operate on CudaWorldStore directly and are
+  # not constrained by this gate.
+  public_class_end = source.find("namespace testing {")
+  assert public_class_end != -1, (
+    "namespace testing { not found in cuda_resident_backend.h; "
+    "the header structure changed — update this gate"
+  )
+  public_section = source[:public_class_end]
+  for method in _NON_SPI_ADVANCE_METHODS:
+    assert method not in public_section, (
+      f"CudaResidentBackend still declares ``{method}`` in its public "
+      f"interface (found in the pre-testing-namespace section of "
+      f"cuda_resident_backend.h).  CP-3 retired these non-SPI window-advance "
+      f"entry points; callers must go through the SPI ``advance()`` method."
+    )
+
+
 def test_probe_gate_flags_a_success_path_removed_on_its_own() -> None:
   """A narrower mutation: the probe still constructs the backend but its only
   exit becomes a failure return. The vestigial-link check stays green here, so

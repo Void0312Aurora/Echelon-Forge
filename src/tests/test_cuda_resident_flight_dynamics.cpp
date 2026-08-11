@@ -84,7 +84,6 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
         actions.push_back(action);
     }
     backend.inject({.pilot_actions = actions});
-    backend.publish_stage();
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
     auto &store = testing::CudaResidentBackendTestAccess::world_store(backend);
     const auto state = testing::CudaWorldStoreTestAccess::read_state(store);
@@ -132,7 +131,7 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
     }
 
     backend.inject({.pilot_actions = actions});
-    backend.publish_stage();
+    CHECK(store.publish_stage());
     const auto before_failed_window = testing::CudaWorldStoreTestAccess::read_state(store);
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),

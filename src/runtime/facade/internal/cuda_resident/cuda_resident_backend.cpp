@@ -411,17 +411,6 @@ CudaWorldStoreDiagnostics CudaResidentBackend::store_diagnostics() const {
     return store_.diagnostics();
 }
 
-void CudaResidentBackend::publish_stage() {
-    if (!store_.publish_stage()) {
-        throw std::runtime_error("CUDA resident backend stage publish failed: " +
-                                 store_.diagnostics().last_error);
-    }
-}
-
-bool CudaResidentBackend::partial_sync_commit() {
-    return store_.partial_sync_commit();
-}
-
 CudaResidentExportSnapshot
 CudaResidentBackend::export_snapshot(const std::string &request_id) const {
     if (request_id.empty()) {

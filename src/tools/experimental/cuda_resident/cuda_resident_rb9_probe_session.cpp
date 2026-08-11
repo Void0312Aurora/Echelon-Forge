@@ -184,7 +184,6 @@ WindowTiming ProbeSession::run_window(const Mode &mode) {
     }
 #else
     impl_->backend.inject({.pilot_actions = impl_->assignments});
-    impl_->backend.publish_stage();
     impl_->backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
     const auto advanced = Clock::now();
     if (mode.host_snapshot) {

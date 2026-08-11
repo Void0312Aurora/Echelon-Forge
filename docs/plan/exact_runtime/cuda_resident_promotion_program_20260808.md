@@ -132,7 +132,7 @@ commit). Critical phases get one independent review before landing.
 | CP-0 | This freeze; verify CUDA-on build still compiles on the baseline; record host/toolchain identity; re-verify the RB10 gate verdicts against current code | Program frozen; CUDA-on build result recorded honestly; stale gate verdicts corrected |
 | CP-1 | CUDA-on compile lane so the 6,229-line surface stops rotting: a CI job (or, if no GPU runner is available, a documented local checkpoint plus an architecture test asserting the CUDA source set stays wired). Must also assert each CUDA probe still *executes*, not merely links -- the retired resource probe compiles cleanly as a stub | **LANDED 2026-08-11.** Both clauses met: `ci-cuda-compile` builds and links the CUDA-on surface, and 14 toolkit-free gates catch a retired-to-stub probe. See "CP-1 landed" below |
 | CP-2 | Split `EF_ENABLE_CUDA_EXPERIMENTS` into a helper-surface flag and a resident-backend flag, so the two semantically different surfaces are independently selectable | **LANDED 2026-08-11.** `EF_ENABLE_CUDA_RESIDENT_BACKEND` gates the resident device sources and probes; `EF_ENABLE_CUDA_EXPERIMENTS` gates `src/gpu/*.cu`; either triggers `enable_language(CUDA)` |
-| CP-3 | Retire the private-sequence residue that made RB10's G-A/G-B verdicts possible: demote or remove the public `publish_stage`/`partial_sync_commit` from `CudaResidentBackend` now that only tests and the superseded RB9 probe call them, and add a gate asserting the resident backend exposes no non-SPI window-advance entry point | No caller can advance a window off the SPI; the equivalence claim becomes structurally enforced rather than incidental |
+| CP-3 | Retire the private-sequence residue that made RB10's G-A/G-B verdicts possible: demote or remove the public `publish_stage`/`partial_sync_commit` from `CudaResidentBackend` now that only tests and the superseded RB9 probe call them, and add a gate asserting the resident backend exposes no non-SPI window-advance entry point | **LANDED 2026-08-11.** `publish_stage` and `partial_sync_commit` removed from `CudaResidentBackend` public interface; all 9 callers migrated to `store.publish_stage()` / `store.partial_sync_commit()` via `CudaResidentBackendTestAccess`; architecture gate `test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` added to `test_cuda_surface_wiring.py` |
 | CP-4 | **G-D: achieved counters under elevation** — occupancy, divergence, global/local/shared traffic for all 10 kernels. This is the one hard blocker and the highest-value iteration | G-D closed with real counters, or a recorded second external blocker |
 | CP-5 | Kernel-level optimization driven by CP-4 findings. Known candidates below | Measured improvement against the CR2-6b baseline |
 | CP-6 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | A real consumer, not diagnostics smoke |
@@ -336,6 +336,72 @@ rather than defaulting to v1, and 25 tests pass.
 This is a real cost increase over the CP-0 estimate, and it is worth stating
 why it happened: the semantic migration correctly refused to relabel frozen
 evidence, but it retired the only capture tool without a replacement, so the
+next counter attempt inherits a recapture obligation. CP-1's compile lane would
+not have caught this — the stub compiles fine. A probe-executability check
+belongs in CP-1's scope.
+
+## CP-3 landed
+
+**Date:** 2026-08-11. **CUDA-on build:** 16/16 targets, BUILD_EXIT=0, zero
+warnings. **ctest:** 3/3 (lifecycle 14 cases / 599 assertions, replay 4 cases /
+77 assertions, full-window). **Architecture gates:** 44/44 (new gate included).
+
+### What was removed
+
+`CudaResidentBackend::publish_stage()` and
+`CudaResidentBackend::partial_sync_commit()` are no longer declared in
+`cuda_resident_backend.h` and no longer implemented in
+`cuda_resident_backend.cpp`.
+
+Before CP-3, the public interface exposed two non-SPI window-advance entry
+points. Any C++ caller could call `inject → publish_stage → advance` and
+sequence a window transition outside the SPI's `advance()` method. The SPI
+contract ("`advance()` atomically runs a full world step") was held by
+convention among callers, not by structure.
+
+After CP-3, `advance()` is the only public path that advances a window.
+Internally, `CudaWorldStore::advance_window()` calls `publish_stage()` when the
+window state is `input_injected`, so the sequencing guarantee is now inside the
+implementation, not delegated to callers.
+
+### Caller migration
+
+Nine callers updated:
+
+| File | Line (approx) | Change |
+| --- | --- | --- |
+| `test_cuda_resident_backend_state.cpp` | 198 | `CHECK(store.publish_stage())` via `CudaResidentBackendTestAccess` |
+| `test_cuda_resident_backend_state.cpp` | 211 | `CHECK_FALSE(store.partial_sync_commit())` via test access |
+| `test_cuda_resident_backend_state.cpp` | 278 | `CHECK_FALSE(store.publish_stage())` — store declaration moved before this line; `CHECK_THROWS_AS` semantics replaced by `CHECK_FALSE` because `CudaWorldStore::publish_stage()` returns `bool`, not throw |
+| `test_cuda_resident_control_preparation.cpp` | 121, 131, 132 | store declaration moved up; `CHECK(store.publish_stage())` / `CHECK_FALSE(...)` / `CHECK(...)` |
+| `test_cuda_resident_flight_dynamics.cpp` | 87 | removed (advance handles it internally) |
+| `test_cuda_resident_flight_dynamics.cpp` | 135 | `CHECK(store.publish_stage())` |
+| `test_cuda_resident_full_window.cpp` | 376 | store declaration moved up; `CHECK(store.publish_stage())` |
+| `test_cuda_resident_observation_projection.cpp` | 84 | removed (advance handles it internally) |
+| `test_cuda_resident_replay_support.cpp` | 102 | removed (advance handles it internally) |
+| `cuda_resident_rb9_probe_session.cpp` | 187 | removed — the RB9 probe called `publish_stage()` then `advance()`; since `advance_window()` calls `publish_stage()` internally when state is `input_injected`, the explicit call was redundant |
+
+Three callers (flight_dynamics:87, observation_projection:84, replay_support:102)
+were pure redundancy: `advance()` already called `publish_stage()` internally,
+so removing the explicit call is a no-op behaviorally. Three callers
+(control_preparation:121, full_window:376, flight_dynamics:135) needed the stage
+published before inspecting intermediate state or before a forced failure
+injection — these were rerouted through `CudaResidentBackendTestAccess::world_store()`
+so they now call `CudaWorldStore::publish_stage()` directly. The state test
+(backend_state:278) needed the store declaration hoisted; the `CHECK_THROWS_AS`
+became `CHECK_FALSE` because the store method returns a bool rather than throwing.
+
+### New architecture gate
+
+`test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` added to
+`tests/architecture/build_system/test_cuda_surface_wiring.py`. The gate reads
+`cuda_resident_backend.h` up to the `namespace testing {` boundary and asserts
+neither `publish_stage` nor `partial_sync_commit` appears in the public class
+body. The `namespace testing` section is explicitly excluded — `CudaWorldStore`
+still exposes those methods and the test-access helper legitimately uses them.
+
+The gate is toolkit-free and runs on every machine. It catches a declaration
+snuck back into the header even if no caller was added simultaneously.
 next counter attempt inherits a recapture obligation. CP-1's compile lane would
 not have caught this — the stub compiles fine. A probe-executability check
 belongs in CP-1's scope.

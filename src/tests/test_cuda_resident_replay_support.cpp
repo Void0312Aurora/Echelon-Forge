@@ -99,7 +99,6 @@ ReplayLaneResult run_cuda_resident(const ReplayTrace &trace) {
         const auto assignments = make_assignments(trace, window, setup.entity_ids);
         backend.inject({.pilot_actions = assignments});
         result.frames.push_back(make_input_frame(trace, window, setup.entity_ids));
-        backend.publish_stage();
         backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
 
         const auto &store = testing::CudaResidentBackendTestAccess::world_store(backend);

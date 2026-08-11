@@ -115,7 +115,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | CP-0 | 本冻结文档；核实基线上 CUDA-on 仍可编译；记录主机/工具链身份；对照现行代码复核 RB10 的门禁裁定 | 程序冻结；CUDA-on 编译结果被如实记录；过期裁定被更正 |
 | CP-1 | CUDA-on 编译通道，让这 6,229 行停止腐烂：一个 CI 任务；若无 GPU runner，则为文档化的本地检查点加一条断言 CUDA 源集仍在接线上的架构测试。还须断言每个 CUDA 探针仍能**执行**而非仅能链接——已退役的资源探针作为存根可以正常编译 | **已落地 2026-08-11。** 两项条款均已满足：`ci-cuda-compile` 编译并链接 CUDA-on 面，14 条免工具链闸门可检出被退役成存根的探针。见下文「CP-1 已落地」 |
 | CP-2 | 把 `EF_ENABLE_CUDA_EXPERIMENTS` 拆成助手面开关与常驻后端开关，使两个语义地位不同的面可独立选择 | **已落地 2026-08-11。** `EF_ENABLE_CUDA_RESIDENT_BACKEND` 管辖常驻设备源与探针；`EF_ENABLE_CUDA_EXPERIMENTS` 管辖 `src/gpu/*.cu`；任意一个 ON 均触发 `enable_language(CUDA)` |
-| CP-3 | 清退使 RB10 的 G-A/G-B 裁定得以成立的私有序列残留：既然只有测试与已被取代的 RB9 探针还在调用，就降级或移除 `CudaResidentBackend` 上的公共 `publish_stage`/`partial_sync_commit`，并加一条断言常驻后端不暴露任何非 SPI 整窗推进入口的门禁 | 没有调用方能绕过 SPI 推进窗口；等价性主张从偶然变为结构强制 |
+| CP-3 | 清退使 RB10 的 G-A/G-B 裁定得以成立的私有序列残留：既然只有测试与已被取代的 RB9 探针还在调用，就降级或移除 `CudaResidentBackend` 上的公共 `publish_stage`/`partial_sync_commit`，并加一条断言常驻后端不暴露任何非 SPI 整窗推进入口的门禁 | **已落地 2026-08-11。** `publish_stage` 与 `partial_sync_commit` 已从 `CudaResidentBackend` 公共接口移除；全部 9 处调用方迁移至经 `CudaResidentBackendTestAccess` 访问的 `store.publish_stage()` / `store.partial_sync_commit()`；架构门禁 `test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` 已添加至 `test_cuda_surface_wiring.py` |
 | CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
 | CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | 相对 CR2-6b 基线有实测改善 |
 | CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | 真实消费者，而非诊断 smoke |
@@ -351,6 +351,41 @@ worlds 时就如此空闲，可以解释 world 1 为何以 7-36 倍落后于 CPU
 
 以上两点都是测量结果，尚不是已验证的优化。CP-5 在任何改动后必须重新测量；本节记录的是
 计数器所显示的事实，不是「更大的 grid 一定更快」的承诺。
+
+## CP-3 已落地
+
+**日期：** 2026-08-11。**CUDA-on 编译：** 16/16 目标，BUILD_EXIT=0，零警告。**ctest：** 3/3（lifecycle 14 用例 / 599 断言，replay 4 用例 / 77 断言，full-window）。**架构门禁：** 44/44（含新门禁）。
+
+### 移除了什么
+
+`CudaResidentBackend::publish_stage()` 与 `CudaResidentBackend::partial_sync_commit()` 已从 `cuda_resident_backend.h` 声明和 `cuda_resident_backend.cpp` 实现中同步删除。
+
+CP-3 之前，公共接口暴露了两个非 SPI 整窗推进入口。任何 C++ 调用方都可以执行 `inject → publish_stage → advance` 序列，在 SPI 的 `advance()` 方法之外推进窗口状态。SPI 契约（"`advance()` 原子地执行一整个 world 步"）依靠调用方约定维持，而非结构强制。
+
+CP-3 之后，`advance()` 是推进窗口的唯一公共路径。在实现内部，当窗口状态为 `input_injected` 时，`CudaWorldStore::advance_window()` 会调用 `publish_stage()`，因此序列保证现在在实现内部，不再委托给调用方。
+
+### 调用方迁移
+
+共更新 9 处调用方：
+
+| 文件 | 大致行号 | 变更 |
+| --- | --- | --- |
+| `test_cuda_resident_backend_state.cpp` | 198 | 经 `CudaResidentBackendTestAccess` 调用 `CHECK(store.publish_stage())` |
+| `test_cuda_resident_backend_state.cpp` | 211 | `CHECK_FALSE(store.partial_sync_commit())` via test access |
+| `test_cuda_resident_backend_state.cpp` | 278 | `CHECK_FALSE(store.publish_stage())`，store 声明上移；`CHECK_THROWS_AS` 替换为 `CHECK_FALSE`（`CudaWorldStore::publish_stage()` 返回 bool 而非抛异常） |
+| `test_cuda_resident_control_preparation.cpp` | 121、131、132 | store 声明上移；`CHECK(store.publish_stage())` / `CHECK_FALSE(...)` / `CHECK(...)` |
+| `test_cuda_resident_flight_dynamics.cpp` | 87 | 删除（advance 内部已处理） |
+| `test_cuda_resident_flight_dynamics.cpp` | 135 | `CHECK(store.publish_stage())` |
+| `test_cuda_resident_full_window.cpp` | 376 | store 声明上移；`CHECK(store.publish_stage())` |
+| `test_cuda_resident_observation_projection.cpp` | 84 | 删除（advance 内部已处理） |
+| `test_cuda_resident_replay_support.cpp` | 102 | 删除（advance 内部已处理） |
+| `cuda_resident_rb9_probe_session.cpp` | 187 | 删除——RB9 探针在 `advance()` 前调用 `publish_stage()` 是冗余的，因为 `advance_window()` 在状态为 `input_injected` 时会自行调用 |
+
+### 新架构门禁
+
+`test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` 已添加至 `tests/architecture/build_system/test_cuda_surface_wiring.py`。该门禁读取 `cuda_resident_backend.h` 中 `namespace testing {` 之前的部分，断言公共类体内不含 `publish_stage` 或 `partial_sync_commit`。`namespace testing` 段落被明确排除——`CudaWorldStore` 仍然暴露这些方法，测试访问器合法使用它们。
+
+该门禁不依赖工具链，在所有机器上均可运行，即使只向头文件加回声明而未添加调用方，也能被捕获。
 
 ### 已入库产物与独立复现
 

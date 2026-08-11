@@ -118,8 +118,8 @@ TEST_CASE("CUDA control preparation prepares direct pilot controls in a resident
     const auto first_actions =
         make_actions(setup.entity_ids, kCudaResidentControlPreparationFirstInputs);
     backend.inject({.pilot_actions = first_actions});
-    backend.publish_stage();
     CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
+    CHECK(store.publish_stage());
     check_prepared(testing::CudaWorldStoreTestAccess::read_state(store),
                    kCudaResidentControlPreparationFirstExpected);
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
@@ -128,8 +128,8 @@ TEST_CASE("CUDA control preparation prepares direct pilot controls in a resident
         make_actions(setup.entity_ids, kCudaResidentControlPreparationEdgeInputs);
     backend.inject({.pilot_actions = edge_actions});
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
-    CHECK_THROWS_AS(backend.publish_stage(), std::runtime_error);
-    backend.publish_stage();
+    CHECK_FALSE(store.publish_stage());
+    CHECK(store.publish_stage());
     const CudaWorldStoreStateSnapshot edge_state =
         testing::CudaWorldStoreTestAccess::read_state(store);
     check_prepared(edge_state, kCudaResidentControlPreparationEdgeExpected);

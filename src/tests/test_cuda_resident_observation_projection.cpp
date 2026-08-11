@@ -81,7 +81,6 @@ TEST_CASE("CUDA observation projection produces host export and a lease-scoped d
     });
     const auto actions = make_actions(setup.entity_ids);
     backend.inject({.pilot_actions = actions});
-    backend.publish_stage();
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
 
     CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
