@@ -33,6 +33,7 @@ REPO_ROOT = Path(repo_root())
 
 from tools.maintenance.a2_packet_paths import (  # noqa: E402
   CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+  translate_logical_a2_path,
 )
 
 from tools.maintenance.retained_artifacts.manifest_integrity import (
@@ -89,7 +90,9 @@ def _display_path(path: Path, repo_root: Path) -> str:
     return str(path)
 
 def _resolve_repo_path(path_value: str, repo_root: Path) -> Path:
-  path = Path(path_value)
+  # Sealed evidence artifacts record the pre-migration logical prefix; apply
+  # the logical→physical translation before resolving against repo_root.
+  path = Path(translate_logical_a2_path(path_value))
   return path if path.is_absolute() else repo_root / path
 
 def _content_type_for_path(path: Path) -> str:

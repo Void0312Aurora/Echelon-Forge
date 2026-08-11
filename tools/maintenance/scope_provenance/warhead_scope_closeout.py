@@ -31,6 +31,7 @@ REPO_ROOT = Path(repo_root())
 
 from tools.maintenance.a2_packet_paths import (  # noqa: E402
   CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+  packet_root as _a2_root,
 )
 
 from tools.maintenance.retained_artifacts.manifest_integrity import (
@@ -81,9 +82,6 @@ EXPECTED_RES004_PIN_IDS = [
   "PIN-AIM120-TPC-001",
   "PIN-AIM120-TPC-REJ",
 ]
-
-def _a2_root(repo_root: Path) -> Path:
-  return repo_root / "docs" / "task" / "air_combat" / "archive" / "a2_high_fidelity_damage_model"
 
 def _evidence_refs(
   *, package_dir: Path, repo_root: Path

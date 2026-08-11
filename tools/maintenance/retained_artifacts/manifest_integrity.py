@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
 from tools.maintenance.a2_packet_paths import (  # noqa: E402
   CANDIDATE_PACKAGE_DIR,
   MANIFEST_GLOB as DEFAULT_MANIFEST_GLOB,
+  translate_logical_a2_path,
 )
 
 PATH_FIELDS = ("path", "relative_path", "filename")
@@ -156,7 +157,10 @@ def _resolve_manifest_target(
   manifest_path: Path,
   repo_root: Path,
 ) -> Path:
-  raw = Path(path_value)
+  # Sealed evidence artifacts record the pre-migration logical prefix; apply
+  # the logical→physical translation before building a Path object.
+  translated = translate_logical_a2_path(path_value)
+  raw = Path(translated)
   if raw.is_absolute():
     return raw
 

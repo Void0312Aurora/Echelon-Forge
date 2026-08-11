@@ -29,6 +29,7 @@ REPO_ROOT = Path(repo_root())
 
 from tools.maintenance.a2_packet_paths import (  # noqa: E402
   CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+  PACKET_ROOT as _A2_PACKET_ROOT,
 )
 from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
 from tools.maintenance.release_governance import (
@@ -64,9 +65,7 @@ SCHEMA_VERSION = "a2.vps_candidate_bundle.v1"
 PACKAGE_DIR = (
   A2_CANDIDATE_PACKAGE_DIR
 )
-A2_ROOT = (
-  REPO_ROOT / "docs" / "task" / "air_combat" / "archive" / "a2_high_fidelity_damage_model"
-)
+A2_ROOT = _A2_PACKET_ROOT
 
 DOC_REFS = {
   "package_readme": PACKAGE_DIR / "README.zh.md",

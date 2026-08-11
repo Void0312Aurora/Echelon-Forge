@@ -64,6 +64,37 @@ def retained_artifact_dir(name: str) -> Path:
   return RETAINED_ARTIFACTS_DIR / name
 
 
+# ---------------------------------------------------------------------------
+# Logical → physical path translation for sealed evidence artifacts
+# ---------------------------------------------------------------------------
+# Sealed JSON artifacts (hash-pinned retained evidence) record relative paths
+# under the *retired* logical prefix below.  Those bytes must not be rewritten
+# because the manifests are SHA-256 pinned.  Readers apply
+# ``translate_logical_a2_path`` when resolving a recorded string to a live
+# filesystem path.
+
+LEGACY_PACKET_LOGICAL_PREFIX = (
+  "docs/task/air_combat/archive/a2_high_fidelity_damage_model"
+)
+PACKET_PHYSICAL_PREFIX = PACKET_RELATIVE_DIR.as_posix()
+
+
+def translate_logical_a2_path(recorded: str) -> str:
+  """Translate a pre-migration logical path to its current physical location.
+
+  Sealed evidence manifests record ``relative_path`` values under the retired
+  ``docs/task/air_combat/archive/a2_high_fidelity_damage_model`` prefix.
+  The sealed bytes are SHA-256 pinned and must not be modified; readers call
+  this function to map the recorded string to the live filesystem location
+  before opening the file.
+
+  Paths that do not start with the legacy prefix are returned unchanged.
+  """
+  if recorded.startswith(LEGACY_PACKET_LOGICAL_PREFIX):
+    return PACKET_PHYSICAL_PREFIX + recorded[len(LEGACY_PACKET_LOGICAL_PREFIX) :]
+  return recorded
+
+
 def require_candidate_package_dir() -> Path:
   """Return the candidate package directory, failing closed when it is absent.
 

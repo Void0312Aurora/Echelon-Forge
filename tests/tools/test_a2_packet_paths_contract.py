@@ -107,18 +107,29 @@ def test_no_maintenance_tool_defaults_into_a_retired_documentation_root() -> Non
     cwd=paths.REPO_ROOT,
   ).stdout.split()
 
+  # a2_packet_paths.py is the canonical migration authority module.  It is
+  # permitted to reference the retired path in its module docstring to explain
+  # where the packet moved from.  Every other tool must resolve through it.
+  EXCLUDED = {"tools/maintenance/a2_packet_paths.py"}
+
   offenders: list[str] = []
   for rel in tracked:
     if not rel.endswith(".py"):
       continue
+    if rel in EXCLUDED:
+      continue
     text = (paths.REPO_ROOT / rel).read_text(encoding="utf-8", errors="ignore")
     if "a2_high_fidelity_damage_model" not in text:
       continue
-    # Segment-built paths: a "task" segment in the same expression as the
-    # packet segment is the stale pre-migration form.
+    # Flag segment-built Path expressions that combine a "task" segment with
+    # the packet name — the pre-migration form was
+    # Path(...) / "task" / ... / "a2_high_fidelity_damage_model".
     if '"a2_high_fidelity_damage_model"' in text and '"task"' in text:
       offenders.append(rel)
-    if "docs/task/air_combat" in text:
+    # Flag inline path literals that embed the retired docs/task prefix inside
+    # a Python string delimiter.  RST backtick notation in docstrings is
+    # intentionally excluded by requiring the surrounding quote character.
+    if '"docs/task/air_combat' in text or "'docs/task/air_combat" in text:
       offenders.append(rel)
 
   assert not offenders, (
