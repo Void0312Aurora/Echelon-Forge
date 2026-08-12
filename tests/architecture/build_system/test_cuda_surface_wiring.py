@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import posixpath
 import re
 from pathlib import Path
 from typing import Callable
@@ -550,6 +551,11 @@ def _workflow_job_commands(workflow: str) -> list[tuple[str, list[str]]]:
         job = match.group(1)
         in_run = False
         continue
+    inline = re.match(r"run:\s+(\S.*)$", stripped)
+    if inline and not inline.group(1).startswith(("|", ">")):
+      entries.append((job, re.sub(r"\s#.*$", "", inline.group(1)).strip()))
+      in_run = False
+      continue
     if re.match(r"run:\s*[|>]?-?\s*$", stripped):
       in_run = True
       run_indent = indent
@@ -577,6 +583,29 @@ def _workflow_job_commands(workflow: str) -> list[tuple[str, list[str]]]:
   return commands
 
 
+def _normalize_dir(value: str) -> str:
+  """``./build-cuda``, ``build-cuda/`` and ``build-cuda`` are one tree."""
+  return posixpath.normpath(value)
+
+
+def _join_split_options(tokens: list[str]) -> list[str]:
+  """CMake accepts ``-D NAME=VALUE`` split across two arguments; normalize to
+  the joined spelling (same for ``-U``, ``-S``, ``-B``) so one vocabulary
+  covers both documented forms."""
+  joined: list[str] = []
+  skip = False
+  for index, token in enumerate(tokens):
+    if skip:
+      skip = False
+      continue
+    if token in {"-D", "-U", "-S", "-B"} and index + 1 < len(tokens):
+      joined.append(token + tokens[index + 1])
+      skip = True
+    else:
+      joined.append(token)
+  return joined
+
+
 def _genuine_configure_dir(tokens: list[str]) -> str | None:
   """The ``-B`` directory of a genuine CMake configure invocation.
 
@@ -589,13 +618,11 @@ def _genuine_configure_dir(tokens: list[str]) -> str | None:
   utility = {"--build", "--version", "--help", "-E", "--open", "--install"}
   if any(token in utility for token in tokens):
     return None
-  if not any(token == "-S" or (token.startswith("-S") and len(token) > 2) for token in tokens):
+  if not any(token.startswith("-S") and len(token) > 2 for token in tokens):
     return None
-  for index, token in enumerate(tokens):
-    if token == "-B" and index + 1 < len(tokens):
-      return tokens[index + 1].rstrip("/")
+  for token in tokens:
     if token.startswith("-B") and len(token) > 2:
-      return token[2:].rstrip("/")
+      return _normalize_dir(token[2:])
   return None
 
 
@@ -605,7 +632,7 @@ def _build_invocation(tokens: list[str]) -> tuple[str, set[str]] | None:
   index = tokens.index("--build")
   if index + 1 >= len(tokens):
     return None
-  build_dir = tokens[index + 1].rstrip("/")
+  build_dir = _normalize_dir(tokens[index + 1])
   targets: set[str] = set()
   if "--target" in tokens:
     for token in tokens[tokens.index("--target") + 1 :]:
@@ -628,33 +655,53 @@ def _cache_assignments(tokens: list[str]) -> dict[str, str]:
 
 
 def _cuda_lane_flag_violations(workflow: str) -> list[str]:
-  """Model the effective CMake cache per ``(job, build_dir)``: genuine
-  configure invocations fold their ``-D`` assignments into the cache in
-  document order (later assignments overwrite, unmentioned entries persist,
-  exactly like CMake's cache), and each ``cmake --build`` checks the
-  *effective value at that point*. Utility commands, other jobs, post-build
-  configures, comments, and stale earlier values can never stand in for the
-  cache state the build actually sees."""
+  """Fail-closed single-configure-per-build-tree invariant.
+
+  Emulating CMake's full cache lifecycle (reconfigures, ``-U`` removals,
+  ``--fresh`` resets) in a gate invites exactly the review's false-green
+  boundary, so the gate demands auditable simplicity instead: each built tree
+  has exactly one preceding same-job genuine configure invocation, that
+  invocation carries no cache-mutating escape hatches (``-U``, ``--fresh``),
+  and its ``-D`` assignments (joined or split form, last value wins) must set
+  the surface flag to ON. Anything else -- a reconfigure of the same tree in
+  any spelling, an unrecognized mutation form, a missing configure -- is a
+  violation, never a silent pass."""
   violations = []
-  cache: dict[tuple[str, str], dict[str, str]] = {}
-  for job, tokens in _workflow_job_commands(workflow):
+  configures: dict[tuple[str, str], list[list[str]]] = {}
+  for job, raw_tokens in _workflow_job_commands(workflow):
+    tokens = _join_split_options(raw_tokens)
     build = _build_invocation(tokens)
     if build is None:
       configure_dir = _genuine_configure_dir(tokens)
       if configure_dir is not None:
-        cache.setdefault((job, configure_dir), {}).update(_cache_assignments(tokens))
+        configures.setdefault((job, configure_dir), []).append(tokens)
       continue
     build_dir, targets = build
     for target in sorted(targets & set(_SURFACE_FLAGS)):
       flag = _SURFACE_FLAGS[target]
       name, expected = flag[2:].split("=", 1)
-      state = cache.get((job, build_dir))
-      if state is None:
+      seen = configures.get((job, build_dir), [])
+      if not seen:
         violations.append(
           f"the compile lane builds {target} in {build_dir} with no preceding "
           "same-job configure invocation for that build directory"
         )
-      elif state.get(name) != expected:
+        continue
+      if len(seen) > 1:
+        violations.append(
+          f"the compile lane reconfigures {build_dir} more than once before "
+          f"building {target}; the gate requires exactly one configure "
+          "invocation per build tree so the effective cache state stays auditable"
+        )
+        continue
+      configure = seen[0]
+      if any(token.startswith("-U") or token == "--fresh" for token in configure):
+        violations.append(
+          f"the {build_dir} configure invocation carries a cache-mutating "
+          "escape hatch (-U/--fresh), which the gate rejects fail-closed"
+        )
+        continue
+      if _cache_assignments(configure).get(name) != expected:
         violations.append(
           f"the compile lane builds {target} but the effective {build_dir} "
           f"configure state does not set {name} to {expected}, so its .cu "
@@ -766,26 +813,45 @@ def test_cuda_lane_flag_gate_rejects_prose_and_non_configure_carriers() -> None:
   ]
 
 
-def test_cuda_lane_flag_gate_models_the_effective_cache_state() -> None:
-  """Sixth-round convergence gates: the flag check follows CMake's cache
-  semantics, not token unions. A later same-tree reconfigure that flips the
-  flag OFF must fail even though the earlier ON token exists; ON followed by
-  OFF inside one configure command resolves to OFF and must fail; and -- the
-  honest inverse -- a later reconfigure that does not mention the flag keeps
-  the cached ON and must still pass."""
+def test_cuda_lane_flag_gate_fails_closed_on_every_cache_mutation_shape() -> None:
+  """Sixth/seventh-round convergence gates. The gate is a fail-closed
+  single-configure-per-build-tree invariant rather than a CMake cache
+  emulator, so every cache-mutation shape the reviews probed must fail:
+  a later same-tree OFF reconfigure (joined or split ``-D`` form, canonical
+  or aliased directory spelling, block or inline ``run:``), ON followed by
+  OFF inside the one configure command, ``-U`` removals, ``--fresh`` resets,
+  and even a flagless reconfigure (auditability, not silence). The one
+  accepted spelling variation is inside the single configure itself: the
+  documented split ``-D NAME=ON`` form still counts as ON."""
   workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
   flag = _SURFACE_FLAGS["ef_gpu_experiments"]
   name = flag[2:].split("=", 1)[0]
-  later_off = workflow.replace(
-    "      - name: Compile the device surfaces",
-    "      - name: Reconfigure\n"
-    "        run: |\n"
-    f"          cmake -S . -B build-cuda -D{name}=OFF\n"
-    "      - name: Compile the device surfaces",
-    1,
+
+  def _with_step_before_build(step_lines: str) -> str:
+    return workflow.replace(
+      "      - name: Compile the device surfaces",
+      step_lines + "      - name: Compile the device surfaces",
+      1,
+    )
+
+  reconfigures = {
+    "joined -D OFF": f"          cmake -S . -B build-cuda -D{name}=OFF\n",
+    "split -D OFF": f"          cmake -S . -B build-cuda -D {name}=OFF\n",
+    "directory alias": f"          cmake -S . -B ./build-cuda -D{name}=OFF\n",
+    "flagless reconfigure": "          cmake -S . -B build-cuda -DCMAKE_RULE_MESSAGES=OFF\n",
+    "-U removal": f"          cmake -S . -B build-cuda -U {name}\n",
+    "--fresh reset": "          cmake -S . -B build-cuda --fresh\n",
+  }
+  for label, command in reconfigures.items():
+    mutated = _with_step_before_build("      - name: Reconfigure\n        run: |\n" + command)
+    assert _cuda_lane_flag_violations(mutated), f"{label} reconfigure did not trip the gate"
+
+  inline_reconfigure = _with_step_before_build(
+    "      - name: Inline reconfigure\n"
+    f"        run: cmake -S . -B build-cuda -D {name}=OFF\n"
   )
-  assert _cuda_lane_flag_violations(later_off), (
-    "a later same-tree OFF reconfigure did not trip the gate"
+  assert _cuda_lane_flag_violations(inline_reconfigure), (
+    "an inline run reconfigure did not trip the gate"
   )
 
   on_then_off = workflow.replace(flag, f"{flag} -D{name}=OFF", 1)
@@ -793,14 +859,12 @@ def test_cuda_lane_flag_gate_models_the_effective_cache_state() -> None:
     "ON followed by OFF in one configure command did not trip the gate"
   )
 
-  cache_persists = workflow.replace(
-    "      - name: Compile the device surfaces",
-    "      - name: Reconfigure without the flag\n"
-    "        run: |\n"
-    "          cmake -S . -B build-cuda -DCMAKE_RULE_MESSAGES=OFF\n"
-    "      - name: Compile the device surfaces",
-    1,
+  escape_in_single_configure = workflow.replace(flag, f"{flag} -U OTHER_ENTRY", 1)
+  assert _cuda_lane_flag_violations(escape_in_single_configure), (
+    "-U inside the single configure did not trip the gate"
   )
-  assert _cuda_lane_flag_violations(cache_persists) == [], (
-    "a flagless reconfigure wrongly cleared the cached ON"
+
+  split_on = workflow.replace(flag, f"-D {name}=ON", 1)
+  assert _cuda_lane_flag_violations(split_on) == [], (
+    "the documented split -D NAME=ON spelling was wrongly rejected"
   )
