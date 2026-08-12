@@ -17,6 +17,7 @@ import copy
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -30,9 +31,11 @@ except ModuleNotFoundError:
 
 EVIDENCE_SCHEMA = "cuda_resident.cp6.learner_consumption_evidence.v1"
 DECLARED_GENERATION = "cr2_matrix_probe.v1_schema_with_learner_mode_appended"
+FORWARD_GENERATION = "cp6_matrix_probe.v2_self_declared"
 CONTRACT_RELATIVE = "src/runtime/contracts/cuda_resident_learner_consumption_contract.h"
 LEARNER_MODE_KEYS = {"mode_id", "host_export", "device_consumer", "learner_consumer", "cpu_available"}
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+COMMIT = re.compile(r"^[0-9a-f]{40}$")
 
 
 class LearnerEvidenceError(ValueError):
@@ -58,22 +61,36 @@ def contract_identities(root: Path) -> dict[str, str]:
     return identities
 
 
+def registered_generations(root: Path) -> dict[str, str]:
+    """Each registered report generation maps to exactly one schema id, so a
+    relabeled report can never ride into a package declaring another one."""
+    identities = contract_identities(root)
+    return {
+        DECLARED_GENERATION: matrix_probe.SCHEMA,
+        FORWARD_GENERATION: identities["forward_probe_schema"],
+    }
+
+
 def validate_learner_report(
-    report: dict[str, Any], root: Path, *, require_production: bool
+    report: dict[str, Any], root: Path, *, require_production: bool, declared_generation: str
 ) -> None:
-    """Validate a five-mode learner report by its declared generation.
+    """Validate a five-mode learner report against its declared generation.
 
     The learner extension is checked here; the remainder must be exactly the
     frozen v1 shape, enforced by delegating a stripped copy to the frozen
     validator.
     """
+    generations = registered_generations(root)
+    _require(
+        declared_generation in generations,
+        f"unknown declared report generation: {declared_generation!r}",
+    )
     identities = contract_identities(root)
     mode_id = identities["mode_id"]
     _require(isinstance(report, dict), "learner report must be an object")
     _require(
-        report.get("schema_version")
-        in {matrix_probe.SCHEMA, identities["forward_probe_schema"]},
-        "learner report schema is neither the captured v1 id nor the forward id",
+        report.get("schema_version") == generations[declared_generation],
+        "learner report schema does not match its declared generation",
     )
 
     modes = report.get("modes")
@@ -171,6 +188,34 @@ def _verify_report_descriptor(root: Path, descriptor: object, label: str) -> dic
     return report
 
 
+def _committed_canonical_bytes(root: Path, commit: str, recorded: str) -> bytes:
+    completed = subprocess.run(
+        ["git", "show", f"{commit}:{recorded}"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+    )
+    _require(completed.returncode == 0, f"source input is not in the capture commit: {recorded}")
+    return completed.stdout.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def _verify_source_input(root: Path, commit: str, descriptor: object, label: str) -> None:
+    _require(
+        isinstance(descriptor, dict)
+        and set(descriptor) == {"path", "canonicalization", "canonical_bytes", "sha256"},
+        f"{label} source descriptor schema drifted",
+    )
+    _require(descriptor["canonicalization"] == "utf8_lf", f"{label} canonicalization drifted")
+    payload = _committed_canonical_bytes(root, commit, str(descriptor["path"]))
+    _require(
+        type(descriptor["canonical_bytes"]) is int
+        and descriptor["canonical_bytes"] == len(payload)
+        and type(descriptor["sha256"]) is str
+        and hashlib.sha256(payload).hexdigest() == descriptor["sha256"],
+        f"{label} does not match the capture commit's source",
+    )
+
+
 def validate_evidence(package: dict[str, Any], root: Path) -> None:
     keys = {
         "schema_version",
@@ -179,6 +224,10 @@ def validate_evidence(package: dict[str, Any], root: Path) -> None:
         "declared_report_generation",
         "learner_mode_id",
         "forward_probe_schema",
+        "source_commit",
+        "source_state",
+        "source_inputs",
+        "validator_source",
         "reports",
         "interpretation",
         "gates",
@@ -187,9 +236,10 @@ def validate_evidence(package: dict[str, Any], root: Path) -> None:
              "learner evidence top-level schema drifted")
     _require(package["schema_version"] == EVIDENCE_SCHEMA, "learner evidence schema mismatch")
     _require(package["iteration"] == "CP-6", "learner evidence iteration drifted")
+    declared = package["declared_report_generation"]
     _require(
-        package["declared_report_generation"] == DECLARED_GENERATION,
-        f"unknown declared report generation: {package['declared_report_generation']!r}",
+        declared in registered_generations(root),
+        f"unknown declared report generation: {declared!r}",
     )
     identities = contract_identities(root)
     _require(package["learner_mode_id"] == identities["mode_id"],
@@ -197,6 +247,47 @@ def validate_evidence(package: dict[str, Any], root: Path) -> None:
     _require(
         package["forward_probe_schema"] == identities["forward_probe_schema"],
         "learner evidence forward schema diverges from the contract owner",
+    )
+    commit = package["source_commit"]
+    _require(
+        type(commit) is str and COMMIT.fullmatch(commit) is not None,
+        "learner evidence source commit invalid",
+    )
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+    )
+    _require(ancestor.returncode == 0, "source commit is not an ancestor of HEAD")
+    _require(
+        package["source_state"]
+        == "captured_from_the_worktree_subsequently_committed_as_source_commit",
+        "learner evidence source state drifted",
+    )
+    source_inputs = package["source_inputs"]
+    expected_sources = {
+        "learner_contract",
+        "consumer_implementation",
+        "matrix_session",
+        "matrix_probe",
+    }
+    _require(
+        isinstance(source_inputs, dict) and set(source_inputs) == expected_sources,
+        "learner evidence source-input inventory drifted",
+    )
+    for name, descriptor in source_inputs.items():
+        _verify_source_input(root, commit, descriptor, name)
+    validator = package["validator_source"]
+    _require(
+        isinstance(validator, dict)
+        and set(validator) == {"path", "canonicalization", "canonical_bytes", "sha256"}
+        and validator["path"] == "tools/diagnostics/cuda_resident_cp6_learner_evidence.py"
+        and validator["canonicalization"] == "utf8_lf"
+        and type(validator["canonical_bytes"]) is int
+        and type(validator["sha256"]) is str
+        and SHA256.fullmatch(validator["sha256"]) is not None,
+        "learner evidence validator descriptor drifted",
     )
     reports = package["reports"]
     expected_reports = {
@@ -209,7 +300,9 @@ def validate_evidence(package: dict[str, Any], root: Path) -> None:
              "learner evidence report inventory drifted")
     for name, descriptor in reports.items():
         report = _verify_report_descriptor(root, descriptor, name)
-        validate_learner_report(report, root, require_production=True)
+        validate_learner_report(
+            report, root, require_production=True, declared_generation=declared
+        )
     interpretation = package["interpretation"]
     _require(
         isinstance(interpretation, dict)

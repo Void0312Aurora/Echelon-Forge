@@ -230,17 +230,17 @@
   {
    "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
    "role": "CR2-5b Nsight Compute attempt and external-blocker evidence collector",
-   "observed_lines": 700
+   "observed_lines": 699
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_counter_parser.py",
    "role": "CP-4c achieved-counter report parser and per-generation family units",
-   "observed_lines": 301
+   "observed_lines": 324
   },
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
    "role": "CR2-5b evidence provenance, state, negative, and size guards",
-   "observed_lines": 578
+   "observed_lines": 601
   },
   {
    "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",
@@ -270,7 +270,7 @@
   {
    "path": "tools/diagnostics/cuda_resident_cp6_learner_evidence.py",
    "role": "cp6_learner_evidence_declared_generation_validator",
-   "observed_lines": 236
+   "observed_lines": 329
   },
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py",

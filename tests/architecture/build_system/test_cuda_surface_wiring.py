@@ -518,6 +518,53 @@ void drive(runtime::cuda_resident::CudaResidentBackend &backend) { (void)backend
 
 # --- CI surface/flag contract --------------------------------------------------
 
+_SURFACE_FLAGS = {
+  "ef_cuda_resident_backend": "-DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON",
+  "ef_gpu_experiments": "-DEF_ENABLE_CUDA_EXPERIMENTS=ON",
+}
+
+
+def _workflow_command_lines(workflow: str) -> list[str]:
+  """Every non-comment line of every ``run:`` block in the workflow.
+
+  YAML comments start the line (after indentation) with ``#``; a flag or a
+  target mentioned only in a comment is prose, not configuration, so it must
+  never satisfy the surface contract."""
+  lines: list[str] = []
+  in_run = False
+  run_indent = 0
+  for raw in workflow.splitlines():
+    stripped = raw.strip()
+    indent = len(raw) - len(raw.lstrip(" "))
+    if re.match(r"run:\s*[|>]?-?\s*$", stripped):
+      in_run = True
+      run_indent = indent
+      continue
+    if in_run:
+      if stripped and indent <= run_indent:
+        in_run = False
+      elif stripped and not stripped.startswith("#"):
+        lines.append(stripped)
+  return lines
+
+
+def _cuda_lane_flag_violations(workflow: str) -> list[str]:
+  commands = _workflow_command_lines(workflow)
+  built_targets = {
+    target
+    for target in _SURFACE_FLAGS
+    if any(re.search(rf"(^|\s){re.escape(target)}(\s|\\|$)", line) for line in commands)
+  }
+  violations = []
+  for target in sorted(built_targets):
+    flag = _SURFACE_FLAGS[target]
+    if not any(flag in line for line in commands):
+      violations.append(
+        f"the compile lane builds {target} but its run commands never pass {flag}, "
+        "so its .cu sources are silently excluded from the build"
+      )
+  return violations
+
 
 def test_cuda_compile_lane_enables_the_flag_behind_every_surface_it_builds() -> None:
   """The compile lane's whole value is that the device sources actually pass
@@ -525,15 +572,43 @@ def test_cuda_compile_lane_enables_the_flag_behind_every_surface_it_builds() -> 
   flag, so a lane that builds a surface's target without enabling the matching
   flag compiles only C++ fallbacks while claiming device coverage -- exactly
   what happened when ef_gpu_experiments was built without
-  EF_ENABLE_CUDA_EXPERIMENTS."""
+  EF_ENABLE_CUDA_EXPERIMENTS. Only run-command lines count: mentions inside
+  YAML comments are prose and cannot satisfy the contract."""
   workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
-  surface_flags = {
-    "ef_cuda_resident_backend": "-DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON",
-    "ef_gpu_experiments": "-DEF_ENABLE_CUDA_EXPERIMENTS=ON",
-  }
-  for target, flag in surface_flags.items():
-    if re.search(rf"^\s*{re.escape(target)}\b", workflow, flags=re.MULTILINE):
-      assert flag in workflow, (
-        f"the compile lane builds {target} but never passes {flag}, so its .cu "
-        "sources are silently excluded from the build"
-      )
+  assert _cuda_lane_flag_violations(workflow) == []
+  # The real lane must actually build both surfaces; if a target disappears
+  # from the lane entirely, that is its own regression.
+  commands = _workflow_command_lines(workflow)
+  for target in _SURFACE_FLAGS:
+    assert any(re.search(rf"(^|\s){re.escape(target)}(\s|\\|$)", line) for line in commands), (
+      f"the compile lane no longer builds {target}"
+    )
+
+
+def test_cuda_lane_flag_gate_cannot_be_satisfied_by_comments() -> None:
+  """Mutation coverage the reviewer asked for: dropping the real configure
+  argument while keeping a comment that names it must trip the gate, and the
+  same goes for a target that survives only inside a comment."""
+  workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
+  for flag in _SURFACE_FLAGS.values():
+    commented = workflow.replace(flag, f"PLACEHOLDER_{flag[2:-3]}") + (
+      "\n# note: configure once passed " + flag + "\n"
+    )
+    assert _cuda_lane_flag_violations(commented), flag
+
+  target_only_in_comment = (
+    "jobs:\n"
+    "  demo:\n"
+    "    steps:\n"
+    "      - name: Configure\n"
+    "        run: |\n"
+    "          # cmake once enabled -DEF_ENABLE_CUDA_EXPERIMENTS=ON here\n"
+    "          cmake -S . -B build -DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON\n"
+    "      - name: Build\n"
+    "        run: |\n"
+    "          cmake --build build --target ef_gpu_experiments\n"
+  )
+  assert _cuda_lane_flag_violations(target_only_in_comment) == [
+    "the compile lane builds ef_gpu_experiments but its run commands never pass "
+    "-DEF_ENABLE_CUDA_EXPERIMENTS=ON, so its .cu sources are silently excluded from the build"
+  ]

@@ -15,9 +15,9 @@
   },
   "decision_base_commit": "b01a068a",
   "learner_consumption_evidence": {
-   "bytes": 1812,
+   "bytes": 3256,
    "path": "docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_evidence_20260813.json",
-   "sha256": "d29b1a0791e54618713ba2441ab398cc6f4c03fd11f9293fac87297a478b483b"
+   "sha256": "d37e628d10963fc18e0b0c860d684f1fc752a373df4fc67feda592f42f275bc8"
   },
   "post_optimization_matrix_package": {
    "bytes": 39521,

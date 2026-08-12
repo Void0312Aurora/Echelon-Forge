@@ -16,6 +16,7 @@ if __package__:
         COUNTER_FAMILY_UNITS,
         PERMISSION_CODE,
         command_template,
+        elevation_record,
         empty_counter_families,
         export_counter_csv,
         parse_attempt_log,
@@ -31,6 +32,7 @@ else:
         COUNTER_FAMILY_UNITS,
         PERMISSION_CODE,
         command_template,
+        elevation_record,
         empty_counter_families,
         export_counter_csv,
         parse_attempt_log,
@@ -324,8 +326,7 @@ def validate_report(report: dict[str, Any]) -> None:
         report["interpretation"], INTERPRETATION_KEYS, "counter interpretation"
     )
     _require(all(value is True for value in interpretation.values()), "interpretation weakened")
-    # Counter artifacts must record elevation. The frozen v1/v2 prose-only gap
-    # is waived by cp9.scoped_promotion...20260813; later generations embed it.
+    # v3+ artifacts embed elevation; the frozen v1/v2 prose gap has the CP-9 waiver.
     requires_elevation_record = generation >= 3
     attempt_keys = ATTEMPT_KEYS | ({"elevation"} if requires_elevation_record else set())
     attempt = _STRICT.object(report["attempt"], attempt_keys, "counter attempt")
@@ -359,15 +360,11 @@ def validate_report(report: dict[str, Any]) -> None:
         _STRICT.exact_list(error_codes, (), "available log errors")
         _require(inputs["ncu_report_sha256"] is not None, "available report hash is missing")
         if requires_elevation_record:
-            elevation = _STRICT.object(
-                attempt["elevation"],
-                {"elevated", "mechanism", "recorded_utc"},
-                "attempt elevation record",
-            )
+            fields = {"elevated", "mechanism", "recorded_utc"}
+            elevation = _STRICT.object(attempt["elevation"], fields, "attempt elevation record")
             _STRICT.boolean(elevation["elevated"], "attempt elevation flag", True)
             _require(
-                type(elevation["mechanism"]) is str
-                and bool(elevation["mechanism"])
+                type(elevation["mechanism"]) is str and bool(elevation["mechanism"])
                 and type(elevation["recorded_utc"]) is str
                 and elevation["recorded_utc"].endswith("Z"),
                 "attempt elevation provenance is invalid",
@@ -587,6 +584,8 @@ def build_report(
         "log_error_codes": parsed["error_codes"],
         "recognized_error_line_sha256": error_hash,
     }
+    if generation >= 3:
+        attempt["elevation"] = elevation_record()
     dispositions = {
         "available": "achieved_counter_evidence_complete",
         "external_blocked": "documented_external_blocker",

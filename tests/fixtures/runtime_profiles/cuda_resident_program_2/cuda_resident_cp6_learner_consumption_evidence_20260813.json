@@ -42,5 +42,39 @@
    "sha256": "4b7d771b903cc2179280fbfc3027c4343c5d7c18b14df679c2dc76e8482d0012"
   }
  },
- "schema_version": "cuda_resident.cp6.learner_consumption_evidence.v1"
+ "schema_version": "cuda_resident.cp6.learner_consumption_evidence.v1",
+ "source_commit": "8bb635fa94d8327f9d045d3b9eb967296e02eac4",
+ "source_inputs": {
+  "consumer_implementation": {
+   "canonical_bytes": 24312,
+   "canonicalization": "utf8_lf",
+   "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu",
+   "sha256": "6562a64ad782f9131662fd4e0156471d5f7bb7fab29caa1bed081550f02f809a"
+  },
+  "learner_contract": {
+   "canonical_bytes": 4270,
+   "canonicalization": "utf8_lf",
+   "path": "src/runtime/contracts/cuda_resident_learner_consumption_contract.h",
+   "sha256": "9f9c04179458f2743ed300daf9c86dde1f83552aba9306addbb781185452f90b"
+  },
+  "matrix_probe": {
+   "canonical_bytes": 21747,
+   "canonicalization": "utf8_lf",
+   "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp",
+   "sha256": "da1add4508a15e6a1a317638df3ed10f9759ada35d7694abd207c51159379916"
+  },
+  "matrix_session": {
+   "canonical_bytes": 11054,
+   "canonicalization": "utf8_lf",
+   "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp",
+   "sha256": "35ee11a440c74fac60188bb8b204452df7aaf2822f54966d7aaf4542ae796602"
+  }
+ },
+ "source_state": "captured_from_the_worktree_subsequently_committed_as_source_commit",
+ "validator_source": {
+  "canonical_bytes": 13522,
+  "canonicalization": "utf8_lf",
+  "path": "tools/diagnostics/cuda_resident_cp6_learner_evidence.py",
+  "sha256": "10037a1c9f2d63404c8a9eeb625c8e707feb8816ebdd3f2966afcfdc6c704a18"
+ }
 }

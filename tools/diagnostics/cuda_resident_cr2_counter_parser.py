@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import csv
+import ctypes
 import hashlib
 import io
 import math
+import os
 import re
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -151,6 +154,26 @@ def _csv_number(raw: object, label: str) -> float:
         raise CounterParseError(f"{label} is not numeric: {text!r}") from error
     _require(math.isfinite(value), f"{label} is not finite")
     return value
+
+
+def elevation_record() -> dict[str, Any]:
+    """Runtime elevation provenance for post-frozen (v3+) captures.
+
+    Detected, not asserted: an available capture recorded from an unelevated
+    shell fails the validator's elevated=True requirement, which is the
+    fail-closed behavior the program constraint wants.
+    """
+    if os.name == "nt":
+        elevated = bool(ctypes.windll.shell32.IsUserAnAdmin())
+        mechanism = "windows_administrator_shell" if elevated else "windows_unelevated_shell"
+    else:
+        elevated = os.geteuid() == 0
+        mechanism = "posix_root_shell" if elevated else "posix_unelevated_shell"
+    return {
+        "elevated": elevated,
+        "mechanism": mechanism,
+        "recorded_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
 
 
 def parse_attempt_log(text: str) -> dict[str, Any]:

@@ -213,12 +213,15 @@ def test_cp6_reports_validate_under_their_declared_generation() -> None:
   frozen v1 validator)."""
   package = _package()
   learner_evidence.validate_evidence(package, REPO_ROOT)
+  declared = str(package["declared_report_generation"])
   for descriptor in package["reports"].values():
     path = REPO_ROOT / retained_paths.physical_relative(str(descriptor["path"]))
     report = json.loads(path.read_text(encoding="utf-8"))
     with pytest.raises(matrix_probe.MatrixProbeError):
       matrix_probe.validate_report(report, require_production=True)
-    learner_evidence.validate_learner_report(report, REPO_ROOT, require_production=True)
+    learner_evidence.validate_learner_report(
+      report, REPO_ROOT, require_production=True, declared_generation=declared
+    )
 
 
 def test_cp6_learner_evidence_rejects_generation_and_content_drift() -> None:
@@ -247,6 +250,7 @@ def test_cp6_learner_evidence_rejects_generation_and_content_drift() -> None:
 
 def test_cp6_learner_report_validator_rejects_mode_and_row_drift() -> None:
   package = _package()
+  declared = str(package["declared_report_generation"])
   descriptor = package["reports"]["cuda_campaign1"]
   path = REPO_ROOT / retained_paths.physical_relative(str(descriptor["path"]))
   report = json.loads(path.read_text(encoding="utf-8"))
@@ -256,7 +260,9 @@ def test_cp6_learner_report_validator_rejects_mode_and_row_drift() -> None:
     if entry["mode_id"] == package["learner_mode_id"]:
       entry["learner_consumer"] = False
   with pytest.raises(learner_evidence.LearnerEvidenceError, match="mode entry drifted"):
-    learner_evidence.validate_learner_report(flag_drift, REPO_ROOT, require_production=True)
+    learner_evidence.validate_learner_report(
+      flag_drift, REPO_ROOT, require_production=True, declared_generation=declared
+    )
 
   missing_row = deepcopy(report)
   missing_row["rows"] = [
@@ -265,7 +271,9 @@ def test_cp6_learner_report_validator_rejects_mode_and_row_drift() -> None:
     if not (row["mode_id"] == package["learner_mode_id"] and row["world_count"] == 1)
   ]
   with pytest.raises(learner_evidence.LearnerEvidenceError, match="world matrix"):
-    learner_evidence.validate_learner_report(missing_row, REPO_ROOT, require_production=True)
+    learner_evidence.validate_learner_report(
+      missing_row, REPO_ROOT, require_production=True, declared_generation=declared
+    )
 
   # A frozen four-mode report is not a learner report; the declared-generation
   # path must refuse it rather than quietly accept the missing extension.
@@ -277,7 +285,41 @@ def test_cp6_learner_report_validator_rejects_mode_and_row_drift() -> None:
     ).read_text(encoding="utf-8")
   )
   with pytest.raises(learner_evidence.LearnerEvidenceError, match="appended mode"):
-    learner_evidence.validate_learner_report(frozen, REPO_ROOT, require_production=True)
+    learner_evidence.validate_learner_report(
+      frozen, REPO_ROOT, require_production=True, declared_generation=declared
+    )
+
+
+def test_cp6_report_generation_dispatch_rejects_relabeled_reports() -> None:
+  """The re-review's dispatch finding: a report relabeled to the forward v2
+  id (and re-hashed) must not ride inside a package that declares the
+  captured v1-appended generation, and an unregistered declaration fails
+  closed before any report is read."""
+  package = _package()
+  descriptor = package["reports"]["cuda_campaign1"]
+  path = REPO_ROOT / retained_paths.physical_relative(str(descriptor["path"]))
+  report = json.loads(path.read_text(encoding="utf-8"))
+
+  relabeled = deepcopy(report)
+  relabeled["schema_version"] = str(package["forward_probe_schema"])
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="declared generation"):
+    learner_evidence.validate_learner_report(
+      relabeled,
+      REPO_ROOT,
+      require_production=True,
+      declared_generation=learner_evidence.DECLARED_GENERATION,
+    )
+  # The same relabeled report is what a forward-declaring package would carry.
+  learner_evidence.validate_learner_report(
+    relabeled,
+    REPO_ROOT,
+    require_production=True,
+    declared_generation=learner_evidence.FORWARD_GENERATION,
+  )
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="unknown declared"):
+    learner_evidence.validate_learner_report(
+      report, REPO_ROOT, require_production=True, declared_generation="cr2_matrix_probe.v99"
+    )
 
 
 def test_cp6_forward_probe_runs_self_declare_the_learner_generation() -> None:

@@ -148,3 +148,16 @@ weakening a gate:
    while enabling only the resident flag, leaving the `src/gpu` helper `.cu`
    sources uncompiled. The lane now enables both flags, and an architecture
    gate maps every surface the lane builds to the CMake flag it requires.
+
+The second review round (same day) found four gaps in those mechanisms, all
+closed: the surface-to-flag gate now parses the configure step's run
+commands (comments cannot satisfy it, with mutation gates proving it); the
+learner-report validator dispatches on the package's declared generation
+(exactly one schema id per registered generation, so a relabeled report
+cannot ride into a package declaring another); the CP-6 package pins
+capture-time source provenance (`source_commit` plus canonical hashes of the
+learner contract, consumer implementation, session, and probe at that
+commit, following the CP-8 manifest pattern); and the counter collector now
+emits the runtime elevation record for v3+ captures, with a
+generator-to-validator round-trip gate, so a v4 capture can no longer
+self-reject.

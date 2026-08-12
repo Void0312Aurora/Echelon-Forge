@@ -571,6 +571,29 @@ def test_post_frozen_counter_captures_must_record_elevation_in_the_artifact() ->
     counter.validate_report(frozen)
 
 
+def test_collector_emits_the_elevation_record_its_validator_requires() -> None:
+    """Generator-to-validator round trip for the post-frozen elevation rule:
+    the collector's runtime record, with elevation granted, must satisfy the
+    exact shape validate_report demands for a v3 available capture, and
+    build_report must wire it for generation >= 3 so a v4 capture can never
+    self-reject with 'counter attempt keys drifted'."""
+    record = counter.elevation_record()
+    assert set(record) == {"elevated", "mechanism", "recorded_utc"}
+    assert type(record["elevated"]) is bool
+    assert type(record["mechanism"]) is str and record["mechanism"]
+    assert record["recorded_utc"].endswith("Z")
+
+    round_trip = _v3_report()
+    round_trip["attempt"]["elevation"] = {**record, "elevated": True}
+    if not record["elevated"]:
+        round_trip["attempt"]["elevation"]["mechanism"] = "windows_administrator_shell"
+    counter.validate_report(round_trip)
+
+    collector = COLLECTOR.read_text(encoding="utf-8")
+    assert 'attempt["elevation"] = elevation_record()' in collector
+    assert "if generation >= 3:" in collector
+
+
 def test_cr2_5b_new_modules_remain_below_soft_size_targets() -> None:
     assert len(CONTRACT.read_text(encoding="utf-8").splitlines()) <= 600
     assert len(COLLECTOR.read_text(encoding="utf-8").splitlines()) <= 700
