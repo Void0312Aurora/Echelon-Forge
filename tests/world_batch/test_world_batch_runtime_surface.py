@@ -3,15 +3,14 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
-import tempfile
 import textwrap
 import unittest
-import uuid
 from pathlib import Path
 
 import numpy as np
 
 from python.runtime_bootstrap import ensure_repo_imports, resolve_repo_path
+from tests.architecture.helpers import compile_cpp_snippet
 
 
 ensure_repo_imports()
@@ -40,39 +39,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _compile_and_run_cpp_source(source: str) -> subprocess.CompletedProcess[str]:
-  binary = Path(tempfile.gettempdir()) / f"wp24_k_world_batch_runtime_{uuid.uuid4().hex}"
-  compile_result = subprocess.run(
-    [
-      "g++",
-      "-std=c++20",
-      "-I",
-      str(REPO_ROOT / "src"),
-      "-x",
-      "c++",
-      "-",
-      "-o",
-      str(binary),
-    ],
-    input=source,
-    text=True,
-    capture_output=True,
+  # check=False keeps the historical contract of this module: a failed
+  # compilation is handed back so the test asserts on returncode/stderr.
+  return compile_cpp_snippet(
+    source,
     check=False,
-    cwd=REPO_ROOT,
+    binary_prefix="wp24_k_world_batch_runtime",
   )
-  if compile_result.returncode != 0:
-    return compile_result
-  result = subprocess.run(
-    [str(binary)],
-    text=True,
-    capture_output=True,
-    check=False,
-    cwd=REPO_ROOT,
-  )
-  try:
-    binary.unlink(missing_ok=True)
-  except OSError:
-    pass
-  return result
 
 
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:

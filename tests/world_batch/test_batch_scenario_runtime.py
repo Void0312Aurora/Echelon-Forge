@@ -2,12 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
-import subprocess
-import tempfile
-import textwrap
 import unittest
-import uuid
-from pathlib import Path
 
 import numpy as np
 
@@ -34,45 +29,6 @@ from python.scenario.runtime import ( # noqa: E402
   load_compiled_scenario_for_setup_target,
   prepare_scenario_world_layout,
 )
-
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-
-
-def _compile_and_run_cpp_source(source: str) -> subprocess.CompletedProcess[str]:
-  binary = Path(tempfile.gettempdir()) / f"wp24_k_world_batch_runtime_{uuid.uuid4().hex}"
-  compile_result = subprocess.run(
-    [
-      "g++",
-      "-std=c++20",
-      "-I",
-      str(REPO_ROOT / "src"),
-      "-x",
-      "c++",
-      "-",
-      "-o",
-      str(binary),
-    ],
-    input=source,
-    text=True,
-    capture_output=True,
-    check=False,
-    cwd=REPO_ROOT,
-  )
-  if compile_result.returncode != 0:
-    return compile_result
-  result = subprocess.run(
-    [str(binary)],
-    text=True,
-    capture_output=True,
-    check=False,
-    cwd=REPO_ROOT,
-  )
-  try:
-    binary.unlink(missing_ok=True)
-  except OSError:
-    pass
-  return result
 
 
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:

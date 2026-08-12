@@ -335,10 +335,51 @@ def dependency_link_args(dependency: str) -> list[str]:
   return []
 
 
+def dependency_runtime_path_dirs(dependency: str) -> list[Path]:
+  """Directories a snippet may need on PATH to load ``dependency`` at runtime.
+
+  Only relevant when the dependency resolves to a shared library: CMake drops
+  the import library next to the DLL in ``_deps/<dependency>-build``, and a
+  standalone snippet run inherits none of CMake's RPATH handling.
+  """
+
+  dirs: list[Path] = []
+  seen: set[Path] = set()
+  for build_dir in _candidate_build_dirs():
+    candidate = build_dir / "_deps" / f"{dependency}-build"
+    if not candidate.is_dir() or candidate in seen:
+      continue
+    seen.add(candidate)
+    dirs.append(candidate)
+  return dirs
+
+
 def _snippet_dir() -> Path:
   binary_dir = repo_path("build-local-win", "_cpp_snippets")
   binary_dir.mkdir(parents=True, exist_ok=True)
   return binary_dir
+
+
+def _snippet_runtime_environment(
+  base_environment: Mapping[str, str] | None,
+  runtime_env: Mapping[str, str] | None,
+  runtime_path_prepend: Iterable[str | os.PathLike[str]],
+) -> dict[str, str] | None:
+  """The environment the compiled snippet runs under.
+
+  ``None`` means "inherit the current environment untouched", which is what
+  the GNU backend has always done for callers that ask for no injection.
+  """
+
+  prepend = [str(path) for path in runtime_path_prepend]
+  if runtime_env is None and not prepend:
+    return dict(base_environment) if base_environment is not None else None
+
+  source = runtime_env if runtime_env is not None else base_environment
+  environment = dict(source) if source is not None else dict(os.environ)
+  if prepend:
+    environment["PATH"] = os.pathsep.join([*prepend, environment.get("PATH", "")])
+  return environment
 
 
 def _run_snippet_binary(
@@ -366,6 +407,10 @@ def _compile_cpp_snippet_gnu(
   include_paths: Iterable[Path],
   link_args: Iterable[str | os.PathLike[str]],
   syntax_only: bool,
+  *,
+  check: bool = True,
+  runtime_env: Mapping[str, str] | None = None,
+  runtime_path_prepend: Iterable[str | os.PathLike[str]] = (),
 ) -> subprocess.CompletedProcess[str]:
   command = [
     executable,
@@ -393,12 +438,17 @@ def _compile_cpp_snippet_gnu(
     check=False,
     cwd=REPO_ROOT,
   )
+  if not check and compile_result.returncode != 0:
+    return compile_result
   assert compile_result.returncode == 0, compile_result.stderr
   if syntax_only:
     return compile_result
 
   assert binary is not None
-  return _run_snippet_binary(binary)
+  return _run_snippet_binary(
+    binary,
+    env=_snippet_runtime_environment(None, runtime_env, runtime_path_prepend),
+  )
 
 
 def _compile_cpp_snippet_msvc(
@@ -407,6 +457,10 @@ def _compile_cpp_snippet_msvc(
   include_paths: Iterable[Path],
   link_args: Iterable[str | os.PathLike[str]],
   syntax_only: bool,
+  *,
+  check: bool = True,
+  runtime_env: Mapping[str, str] | None = None,
+  runtime_path_prepend: Iterable[str | os.PathLike[str]] = (),
 ) -> subprocess.CompletedProcess[str]:
   environment = _msvc_environment(executable)
   if environment is None:
@@ -450,6 +504,8 @@ def _compile_cpp_snippet_msvc(
       env=environment,
       errors="replace",
     )
+    if not check and compile_result.returncode != 0:
+      return compile_result
     # cl.exe reports diagnostics on stdout, unlike GCC.
     assert compile_result.returncode == 0, (
       compile_result.stderr or compile_result.stdout
@@ -467,7 +523,10 @@ def _compile_cpp_snippet_msvc(
     return compile_result
 
   assert binary is not None
-  return _run_snippet_binary(binary, env=environment)
+  return _run_snippet_binary(
+    binary,
+    env=_snippet_runtime_environment(environment, runtime_env, runtime_path_prepend),
+  )
 
 
 def compile_cpp_snippet(
@@ -477,15 +536,42 @@ def compile_cpp_snippet(
   link_args: Iterable[str | os.PathLike[str]] = (),
   syntax_only: bool = False,
   binary_prefix: str = "architecture_cpp_snippet",
+  check: bool = True,
+  runtime_env: Mapping[str, str] | None = None,
+  runtime_path_prepend: Iterable[str | os.PathLike[str]] = (),
 ) -> subprocess.CompletedProcess[str]:
+  """Compile (and unless ``syntax_only``, run) an inline C++ snippet.
+
+  ``check=False`` hands a failed compilation back to the caller as the
+  compiler's own ``CompletedProcess`` instead of asserting, for suites that
+  want to assert on the returncode themselves. ``runtime_env`` replaces the
+  environment of the run stage outright, while ``runtime_path_prepend``
+  prepends directories to whichever PATH that stage ends up with -- the way
+  a snippet reaches a dependency's DLLs without CMake's RPATH handling.
+  """
+
   compiler = _detect_cpp_compiler()
   if compiler is None:
     pytest.skip(_MISSING_CPP_COMPILER_REASON)
 
   if compiler.kind == "msvc":
     return _compile_cpp_snippet_msvc(
-      compiler.executable, source, include_paths, link_args, syntax_only
+      compiler.executable,
+      source,
+      include_paths,
+      link_args,
+      syntax_only,
+      check=check,
+      runtime_env=runtime_env,
+      runtime_path_prepend=runtime_path_prepend,
     )
   return _compile_cpp_snippet_gnu(
-    compiler.executable, source, include_paths, link_args, syntax_only
+    compiler.executable,
+    source,
+    include_paths,
+    link_args,
+    syntax_only,
+    check=check,
+    runtime_env=runtime_env,
+    runtime_path_prepend=runtime_path_prepend,
   )
