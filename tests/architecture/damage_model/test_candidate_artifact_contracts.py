@@ -19,16 +19,6 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance.candidate_artifacts import ( # noqa: E402
-  effect_scale_result_pack as result_pack,
-  effect_scale_retained_pack as retained_pack,
-  effect_scale_snapshot as snapshot,
-  package_bundle as bundle,
-  runtime_authority_exercise as authority_pack,
-  scope_boundary_probe as boundary_probe,
-  validation_scaffold as scaffold,
-)
-
 pytestmark = pytest.mark.governance_audit
 
 CandidateBundle = dict[str, Any]
@@ -36,10 +26,14 @@ CandidateBundle = dict[str, Any]
 
 @pytest.fixture(scope="module")
 def candidate_bundle_artifact() -> CandidateBundle:
+  from tools.maintenance.candidate_artifacts import package_bundle as bundle
+
   return bundle.generate_candidate_bundle(repo_root=REPO_ROOT)
 
 
 def test_validation_scaffold_current_repo_is_non_authoritative() -> None:
+  from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
+
   artifact = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -153,6 +147,8 @@ def test_validation_scaffold_current_repo_is_non_authoritative() -> None:
 
 
 def test_validation_scaffold_is_fixed_seed_reproducible() -> None:
+  from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
+
   lhs = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, seed=12345)
   rhs = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, seed=12345)
 
@@ -178,6 +174,8 @@ def test_validation_scaffold_is_fixed_seed_reproducible() -> None:
 
 
 def test_validation_scaffold_tracks_candidate_closure_sensitive_mechanism_fields() -> None:
+  from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
+
   low = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, closure_mps=700.0)
   anchor = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, closure_mps=900.0)
   high = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, closure_mps=1100.0)
@@ -232,6 +230,8 @@ def test_validation_scaffold_cli_writes_json(tmp_path: Path) -> None:
 
 
 def test_scope_boundary_probe_current_repo_is_non_authoritative() -> None:
+  from tools.maintenance.candidate_artifacts import scope_boundary_probe as boundary_probe
+
   artifact = boundary_probe.generate_scope_boundary_probe(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -345,6 +345,8 @@ def test_scope_boundary_probe_cli_writes_json(tmp_path: Path) -> None:
 
 
 def test_stage_b_effect_scale_snapshot_current_repo_is_non_authoritative() -> None:
+  from tools.maintenance.candidate_artifacts import effect_scale_snapshot as snapshot
+
   artifact = snapshot.generate_stage_b_effect_scale_snapshot(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -417,6 +419,8 @@ def test_stage_b_effect_scale_snapshot_cli_writes_json(tmp_path: Path) -> None:
 
 
 def test_stage_b_validation_result_pack_current_repo_is_non_authoritative() -> None:
+  from tools.maintenance.candidate_artifacts import effect_scale_result_pack as result_pack
+
   artifact = result_pack.generate_stage_b_validation_result_pack(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -548,6 +552,8 @@ def test_stage_b_validation_result_pack_cli_writes_json(
 
 # Retained candidate artifacts are package evidence, not release authority.
 def test_candidate_retained_artifact_pack_writes_retained_files(tmp_path: Path) -> None:
+  from tools.maintenance.candidate_artifacts import effect_scale_retained_pack as retained_pack
+
   artifact = retained_pack.generate_retained_artifact_pack(
     repo_root=REPO_ROOT,
     output_dir=tmp_path / "retained_pack",
@@ -648,6 +654,8 @@ def test_candidate_retained_artifact_pack_cli_writes_manifest(
 
 # Runtime-aligned authority exercise remains test-local candidate evidence.
 def test_runtime_aligned_authority_exercise_is_test_local_only() -> None:
+  from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
+
   artifact = authority_pack.generate_runtime_aligned_authority_pack(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -748,6 +756,8 @@ def test_runtime_aligned_authority_exercise_is_test_local_only() -> None:
 
 
 def test_runtime_aligned_authority_exercise_is_reproducible() -> None:
+  from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
+
   lhs = authority_pack.generate_runtime_aligned_authority_pack(repo_root=REPO_ROOT)
   rhs = authority_pack.generate_runtime_aligned_authority_pack(repo_root=REPO_ROOT)
 

@@ -266,22 +266,35 @@ test that validates evidence documents, checked-in manifests, source /
 signoff / provenance records, or documentation health belongs to the audit
 tier. Borderline files default to the guard tier.
 
-Run the tiers directly with markers:
-
-```bash
-# developer regression (guard tier only)
-pytest -m "not governance_audit" tests/architecture
-
-# governance/evidence audit layer (on demand)
-pytest -m governance_audit tests/architecture
-```
-
-Or run the checked-in tier manifests through the suite runner:
+Default regression entry point -- run the checked-in tier manifests through
+the suite runner:
 
 ```bash
 source tools/maintenance/cmo_env.sh
+
+# developer regression (guard tier only)
 cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/architecture_guard_suite.json
+
+# governance/evidence audit layer (on demand)
 cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/governance_audit_suite.json
+```
+
+Prefer the guard manifest over `-m "not governance_audit"` for the default
+loop. Marker deselection does not skip the audit tier's import cost: pytest
+has to import a module before it can read that module's `pytestmark`, so
+`-m "not governance_audit"` collects the audit modules and only skips running
+their tests. The manifest selects by file path, so audit-tier modules are
+never imported.
+
+The markers stay authoritative for tier membership and are still the right
+tool for a marker-based slice of an explicit path:
+
+```bash
+# guard tier only
+pytest -m "not governance_audit" tests/architecture
+
+# governance/evidence audit layer only
+pytest -m governance_audit tests/architecture
 ```
 
 Meta-tests in `tests/runners/test_pytest_suite_manifests.py` keep the two

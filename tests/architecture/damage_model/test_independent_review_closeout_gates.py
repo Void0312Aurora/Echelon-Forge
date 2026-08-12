@@ -11,18 +11,13 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.independent_review import ( # noqa: E402
-  effect_scale_review as stage_b_review_gate,
-  review_closeout as review_closeout_gate,
-  scope_bucket_review as scope_bucket_review_gate,
-  uncertainty_review as uncertainty_review_gate,
-)
-
 pytestmark = pytest.mark.governance_audit
 
 
 # Independent review may close bounded review surfaces, but never release authority.
 def test_independent_review_gate_passes_review_without_release_authority() -> None:
+  from tools.maintenance.independent_review import effect_scale_review as stage_b_review_gate
+
   artifact = stage_b_review_gate.generate_stage_b_independent_review_gate(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -119,6 +114,8 @@ def test_independent_review_gate_passes_review_without_release_authority() -> No
 
 
 def test_independent_review_gate_audits_effect_scale_surfaces() -> None:
+  from tools.maintenance.independent_review import effect_scale_review as stage_b_review_gate
+
   artifact = stage_b_review_gate.generate_stage_b_independent_review_gate(repo_root=REPO_ROOT)
 
   near_miss = artifact["near_miss_bucket_review"]
@@ -238,6 +235,8 @@ def test_independent_review_gate_cli_writes_json(
 
 # Bounded RES-011/012 review closeout keeps probability and release blocked.
 def test_review_closeout_gate_closes_effect_scale_only() -> None:
+  from tools.maintenance.independent_review import review_closeout as review_closeout_gate
+
   artifact = review_closeout_gate.generate_res011012_independent_review_closeout_gate(
     repo_root=REPO_ROOT
   )
@@ -304,6 +303,8 @@ def test_review_closeout_gate_closes_effect_scale_only() -> None:
 
 
 def test_review_closeout_gate_keeps_probability_and_provenance_blocked() -> None:
+  from tools.maintenance.independent_review import review_closeout as review_closeout_gate
+
   artifact = review_closeout_gate.generate_res011012_independent_review_closeout_gate(
     repo_root=REPO_ROOT
   )
@@ -363,6 +364,8 @@ def test_review_closeout_gate_keeps_probability_and_provenance_blocked() -> None
 def test_review_closeout_gate_fails_closed_without_evidence(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.independent_review import review_closeout as review_closeout_gate
+
   artifact = review_closeout_gate.generate_res011012_independent_review_closeout_gate(
     repo_root=REPO_ROOT,
     package_dir=tmp_path,
@@ -461,6 +464,8 @@ def _scope_residuals_by_id(
 
 
 def test_scope_bucket_review_gate_narrow_passes_only() -> None:
+  from tools.maintenance.independent_review import scope_bucket_review as scope_bucket_review_gate
+
   artifact, probe = scope_bucket_review_gate.generate_scope_bucket_independent_review_gate(
     repo_root=REPO_ROOT
   )
@@ -558,6 +563,8 @@ def test_scope_bucket_review_gate_narrow_passes_only() -> None:
 def test_scope_bucket_review_gate_fails_closed_without_evidence(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.independent_review import scope_bucket_review as scope_bucket_review_gate
+
   artifact, _ = scope_bucket_review_gate.generate_scope_bucket_independent_review_gate(
     repo_root=REPO_ROOT,
     package_dir=tmp_path,
@@ -649,6 +656,8 @@ def test_scope_bucket_review_gate_cli_writes_retained_json(
 
 # Uncertainty review separates effect-scale review from probability authority.
 def test_uncertainty_review_gate_splits_effect_scale_and_probability_closeout() -> None:
+  from tools.maintenance.independent_review import uncertainty_review as uncertainty_review_gate
+
   artifact = uncertainty_review_gate.generate_uncertainty_review_gate(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -700,6 +709,8 @@ def test_uncertainty_review_gate_splits_effect_scale_and_probability_closeout() 
 
 
 def test_uncertainty_review_gate_keeps_release_authority_blocked() -> None:
+  from tools.maintenance.independent_review import uncertainty_review as uncertainty_review_gate
+
   artifact = uncertainty_review_gate.generate_uncertainty_review_gate(repo_root=REPO_ROOT)
 
   residual = artifact["residual_status"]
@@ -742,6 +753,8 @@ def test_uncertainty_review_gate_keeps_release_authority_blocked() -> None:
 def test_uncertainty_review_gate_fails_closed_without_evidence(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.independent_review import uncertainty_review as uncertainty_review_gate
+
   artifact = uncertainty_review_gate.generate_uncertainty_review_gate(
     repo_root=REPO_ROOT,
     package_dir=tmp_path,

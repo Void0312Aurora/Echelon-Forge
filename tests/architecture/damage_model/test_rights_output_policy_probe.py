@@ -38,10 +38,6 @@ from tests.architecture.helpers import ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.source_governance import (  # noqa: E402
-  rights_output_policy as output_policy,
-)
-
 
 def _fake_pdftotext_run(stdout: bytes | None, returncode: int = 0):
   """Fake ``subprocess.run`` that also locks the probe to binary capture.
@@ -72,6 +68,8 @@ def _fake_pdftotext_run(stdout: bytes | None, returncode: int = 0):
 
 
 def test_normalize_statement_text_tolerates_missing_text() -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # New-behavior pin -- red pre-fix: re.sub(pattern, " ", None) raised
   # TypeError; post-fix None/empty normalize to "" (fail-closed).
   assert output_policy._normalize_statement_text(None) == ""
@@ -79,6 +77,8 @@ def test_normalize_statement_text_tolerates_missing_text() -> None:
 
 
 def test_normalize_statement_text_collapses_whitespace_and_uppercases() -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # Regression guard -- green pre-fix: str normalization is unchanged.
   assert (
     output_policy._normalize_statement_text("Approved  for\npublic\trelease")
@@ -87,6 +87,8 @@ def test_normalize_statement_text_collapses_whitespace_and_uppercases() -> None:
 
 
 def test_public_distribution_statement_none_is_fail_closed() -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # New-behavior pin -- red pre-fix (TypeError): None must report "no
   # statement detected", never crash and never hit.
   evidence = output_policy._public_distribution_statement(None)
@@ -97,6 +99,8 @@ def test_public_distribution_statement_none_is_fail_closed() -> None:
 
 
 def test_public_distribution_statement_detects_statement_a() -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # Regression guard -- green pre-fix: phrase detection over str is unchanged.
   evidence = output_policy._public_distribution_statement(
     "DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited."
@@ -106,6 +110,8 @@ def test_public_distribution_statement_detects_statement_a() -> None:
 
 
 def test_pdf_text_probe_decodes_utf8_multibyte_text(monkeypatch, tmp_path) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # New-behavior pin -- red pre-fix. Mirrors the real TP-20 output shape:
   # pdftotext emits valid UTF-8 whose en dash (e2 80 93) carries the 0x93
   # byte the GBK console codec chokes on; the binary + strict-UTF-8 path
@@ -124,6 +130,8 @@ def test_pdf_text_probe_decodes_utf8_multibyte_text(monkeypatch, tmp_path) -> No
 
 
 def test_pdf_text_probe_public_release_without_statement_a(monkeypatch, tmp_path) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # New-behavior pin -- red pre-fix: TP-21-style id (public release without
   # the Statement A label).
   payload = b"Approved for public release; distribution is unlimited.\n"
@@ -136,6 +144,8 @@ def test_pdf_text_probe_public_release_without_statement_a(monkeypatch, tmp_path
 
 
 def test_pdf_text_probe_malformed_bytes_fail_closed(monkeypatch, tmp_path) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # New-behavior pin -- I57 review scenario. A malformed byte splitting a
   # rights phrase must fail the probe closed with zero hits. The interim
   # errors="ignore" decode silently dropped the byte, spliced b"RE\xffLEASE"
@@ -155,6 +165,8 @@ def test_pdf_text_probe_malformed_bytes_fail_closed(monkeypatch, tmp_path) -> No
 
 
 def test_pdf_text_probe_none_stdout_is_fail_closed(monkeypatch, tmp_path) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # New-behavior pin -- red pre-fix: reproduces the original crash surface
   # directly (a dead reader thread leaves result.stdout as None). Post-fix
   # None decodes as empty text: no crash, zero hits.
@@ -168,6 +180,8 @@ def test_pdf_text_probe_none_stdout_is_fail_closed(monkeypatch, tmp_path) -> Non
 
 
 def test_pdf_text_probe_missing_binary_is_fail_closed(monkeypatch, tmp_path) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   # Regression guard -- green pre-fix: the FileNotFoundError branch is
   # unchanged by the I57 fix.
   def _raise_missing(*args, **kwargs):

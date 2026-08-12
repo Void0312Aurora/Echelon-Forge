@@ -10,12 +10,12 @@ from tests.architecture.damage_model.helpers import run_maintenance_cli
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.release_governance import package_provenance_identity as package_gate  # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
 def test_package_provenance_identity_gate_is_blocked() -> None:
+  from tools.maintenance.release_governance import package_provenance_identity as package_gate
+
   artifact = package_gate.generate_package_provenance_identity_gate(
     repo_root=REPO_ROOT
   )
@@ -150,6 +150,8 @@ def test_package_provenance_identity_gate_is_blocked() -> None:
 def test_package_provenance_identity_gate_fails_closed_for_optimistic_release_fields(
   monkeypatch,
 ) -> None:
+  from tools.maintenance.release_governance import package_provenance_identity as package_gate
+
   original_read_text = package_gate._read_text
 
   def optimistic_read_text(path: Path) -> str:
@@ -206,6 +208,8 @@ def test_package_provenance_identity_gate_fails_closed_for_optimistic_release_fi
 def test_package_provenance_identity_gate_fails_closed_on_placeholder_hits(
   monkeypatch,
 ) -> None:
+  from tools.maintenance.release_governance import package_provenance_identity as package_gate
+
   original_read_text = package_gate._read_text
 
   def placeholder_read_text(path: Path) -> str:

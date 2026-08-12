@@ -11,16 +11,13 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.release_governance import (  # noqa: E402
-  effect_scale_release_closeout,
-  effect_scale_release_readiness,
-)
-
 pytestmark = pytest.mark.governance_audit
 
 
 @pytest.fixture(scope="module")
 def effect_scale_readiness_artifact() -> dict[str, Any]:
+  from tools.maintenance.release_governance import effect_scale_release_readiness
+
   return effect_scale_release_readiness.generate_stage_b_release_readiness_gate(
     repo_root=REPO_ROOT
   )
@@ -28,6 +25,8 @@ def effect_scale_readiness_artifact() -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def effect_scale_closeout_artifact() -> dict[str, Any]:
+  from tools.maintenance.release_governance import effect_scale_release_closeout
+
   return effect_scale_release_closeout.generate_stage_b_release_closeout(
     repo_root=REPO_ROOT
   )

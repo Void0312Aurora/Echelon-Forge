@@ -11,13 +11,6 @@ from tests.architecture.damage_model.helpers import run_maintenance_cli
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.candidate_artifacts import component_probability_review_readiness as readiness_gate # noqa: E402
-from tools.maintenance.candidate_artifacts import ( # noqa: E402
-  component_fragility_benchmark as benchmark,
-  component_fragility_review_gate as review_gate,
-  component_fragility_validation_prep as prep,
-)
-
 pytestmark = pytest.mark.governance_audit
 
 Artifact = dict[str, Any]
@@ -25,6 +18,10 @@ Artifact = dict[str, Any]
 
 @pytest.fixture(scope="module")
 def component_probability_review_artifact() -> Artifact:
+  from tools.maintenance.candidate_artifacts import (
+    component_probability_review_readiness as readiness_gate,
+  )
+
   return readiness_gate.generate_stage_c_component_probability_review_readiness_gate(
     repo_root=REPO_ROOT
   )
@@ -32,16 +29,22 @@ def component_probability_review_artifact() -> Artifact:
 
 @pytest.fixture(scope="module")
 def fragility_validation_prep_artifact() -> Artifact:
+  from tools.maintenance.candidate_artifacts import component_fragility_validation_prep as prep
+
   return prep.generate_stage_c_fragility_validation_prep(repo_root=REPO_ROOT)
 
 
 @pytest.fixture(scope="module")
 def fragility_review_gate_artifact() -> Artifact:
+  from tools.maintenance.candidate_artifacts import component_fragility_review_gate as review_gate
+
   return review_gate.generate_stage_c_fragility_review_gate(repo_root=REPO_ROOT)
 
 
 @pytest.fixture(scope="module")
 def fragility_benchmark_artifact() -> Artifact:
+  from tools.maintenance.candidate_artifacts import component_fragility_benchmark as benchmark
+
   return benchmark.generate_stage_c_fragility_benchmark(repo_root=REPO_ROOT)
 
 

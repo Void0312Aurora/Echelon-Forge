@@ -15,18 +15,15 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, 
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.candidate_artifacts import ( # noqa: E402
-  component_probability_result_pack as result_pack,
-  component_probability_retained_pack as retained_pack,
-  component_probability_snapshot as snapshot,
-  component_probability_surface_probe as surface_probe,
-)
-
 pytestmark = pytest.mark.governance_audit
 
 
 @pytest.fixture(scope="module")
 def surface_probe_artifact() -> dict[str, Any]:
+  from tools.maintenance.candidate_artifacts import (
+    component_probability_surface_probe as surface_probe,
+  )
+
   return surface_probe.generate_stage_c_component_probability_surface_probe(
     repo_root=REPO_ROOT
   )
@@ -34,11 +31,15 @@ def surface_probe_artifact() -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def snapshot_artifact() -> dict[str, Any]:
+  from tools.maintenance.candidate_artifacts import component_probability_snapshot as snapshot
+
   return snapshot.generate_stage_c_component_probability_snapshot(repo_root=REPO_ROOT)
 
 
 @pytest.fixture(scope="module")
 def result_pack_artifact() -> dict[str, Any]:
+  from tools.maintenance.candidate_artifacts import component_probability_result_pack as result_pack
+
   return result_pack.generate_stage_c_component_probability_result_pack(
     repo_root=REPO_ROOT
   )
@@ -323,6 +324,10 @@ def test_component_probability_snapshot_records_candidate_probability_row(
 def test_component_probability_snapshot_embeds_surface_probe_summary(
   snapshot_artifact: dict[str, Any],
 ) -> None:
+  from tools.maintenance.candidate_artifacts import (
+    component_probability_surface_probe as surface_probe,
+  )
+
   artifact = snapshot_artifact
   surface_probe = artifact["surface_probe_summary"]
 
@@ -587,6 +592,10 @@ def test_component_probability_result_pack_cli_writes_json(
 def test_component_probability_retained_artifact_pack_writes_retained_files(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.candidate_artifacts import (
+    component_probability_retained_pack as retained_pack,
+  )
+
   artifact = retained_pack.generate_retained_artifact_pack(
     repo_root=REPO_ROOT,
     output_dir=tmp_path / "retained_pack",

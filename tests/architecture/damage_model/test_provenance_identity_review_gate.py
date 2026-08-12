@@ -10,8 +10,6 @@ from tests.architecture.damage_model.helpers import run_maintenance_cli
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.release_governance import provenance_identity_review as review_gate  # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -19,6 +17,8 @@ pytestmark = pytest.mark.governance_audit
 def provenance_identity_review_artifact(
   tmp_path_factory: pytest.TempPathFactory,
 ) -> dict[str, Any]:
+  from tools.maintenance.release_governance import provenance_identity_review as review_gate
+
   return review_gate.generate_provenance_identity_review_gate(
     repo_root=REPO_ROOT,
     retained_review_dir=tmp_path_factory.mktemp("provenance_identity_review"),
@@ -278,6 +278,8 @@ def test_provenance_identity_review_gate_records_residual_trace_and_guards(
 def test_provenance_identity_review_gate_prefers_canonical_source_pack(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import provenance_identity_review as review_gate
+
   fallback_path = tmp_path / review_gate.SOURCE_ARTIFACT_PACK_MANIFEST_FILENAME
   fallback_path.write_text(
     json.dumps(
@@ -320,6 +322,8 @@ def test_provenance_identity_review_gate_fails_closed_for_optimistic_fields(
   monkeypatch,
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import provenance_identity_review as review_gate
+
   original_read_text = review_gate._read_text
   comparison_hash = "a" * 64
 
@@ -389,6 +393,8 @@ def test_provenance_identity_review_gate_fails_closed_when_source_evidence_missi
   monkeypatch,
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import provenance_identity_review as review_gate
+
   original_read_text = review_gate._read_text
 
   def missing_verified_source_text(path: Path) -> str:
@@ -421,6 +427,8 @@ def test_provenance_identity_review_gate_rejects_incomplete_source_pack(
   monkeypatch,
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import provenance_identity_review as review_gate
+
   monkeypatch.setattr(
     review_gate,
     "CANONICAL_SOURCE_PAYLOAD_PACK_DIR",
@@ -481,6 +489,8 @@ def test_provenance_identity_review_gate_rejects_incomplete_source_pack(
 def test_provenance_identity_review_gate_cli_writes_retained_artifact(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import provenance_identity_review as review_gate
+
   output_path = tmp_path / "cli_output_manifest.json"
   run_maintenance_cli(
     "damage_model.py release-governance",

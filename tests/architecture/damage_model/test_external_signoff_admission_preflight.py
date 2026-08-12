@@ -17,16 +17,12 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.external_signoff_evidence import ( # noqa: E402
-  admission_preflight as preflight,
-  intake_contract as contract,
-)
-from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
 def _valid_external_packet(request_sha256: str) -> dict[str, Any]:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   required_ids = contract.generate_signoff_intake_contract()["intake_contract_shape"][
     "required_signoff_ids"
   ]
@@ -56,6 +52,8 @@ def _valid_external_packet(request_sha256: str) -> dict[str, Any]:
 
 
 def test_signoff_admission_preflight_default_fails_closed_no_external_packet() -> None:
+  from tools.maintenance.external_signoff_evidence import admission_preflight as preflight
+
   artifact = preflight.generate_signoff_admission_preflight()
 
   assert artifact["schema_version"] == "a2.blastfrag_signoff_admission_preflight.v1"
@@ -107,6 +105,11 @@ def test_signoff_admission_preflight_default_fails_closed_no_external_packet() -
 def test_signoff_admission_preflight_valid_external_shape_is_ready_only(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import (
+    admission_preflight as preflight,
+    intake_contract as contract,
+  )
+
   request_sha = contract._sha256_file(
     contract.SOURCE_RIGHTS_SIGNOFF_REQUEST_PACKET_PATH
   )
@@ -148,6 +151,11 @@ def test_signoff_admission_preflight_valid_external_shape_is_ready_only(
 def test_signoff_admission_preflight_rejects_invalid_shape_without_copying_raw(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import (
+    admission_preflight as preflight,
+    intake_contract as contract,
+  )
+
   request_sha = contract._sha256_file(
     contract.SOURCE_RIGHTS_SIGNOFF_REQUEST_PACKET_PATH
   )
@@ -209,6 +217,8 @@ def test_signoff_admission_preflight_rejects_invalid_shape_without_copying_raw(
 def test_signoff_admission_preflight_cli_writes_manifest_integrity_clean(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity as integrity
+
   retained_dir = tmp_path / "retained"
   output_path = tmp_path / "preflight_cli.json"
 

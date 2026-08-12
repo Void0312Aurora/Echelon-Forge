@@ -9,13 +9,13 @@ from tests.architecture.damage_model.helpers import run_maintenance_cli
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.release_governance import provenance_closeout as closeout_gate  # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
 @pytest.fixture(scope="module")
 def release_provenance_closeout_artifact() -> dict[str, Any]:
+  from tools.maintenance.release_governance import provenance_closeout as closeout_gate
+
   return closeout_gate.generate_release_provenance_closeout_gate(
     repo_root=REPO_ROOT
   )
@@ -218,6 +218,8 @@ def test_release_provenance_closeout_gate_records_residual_trace_and_guards(
 def test_release_provenance_closeout_gate_fails_closed_for_optimistic_release_fields(
   monkeypatch,
 ) -> None:
+  from tools.maintenance.release_governance import provenance_closeout as closeout_gate
+
   original_read_text = closeout_gate._read_text
 
   def optimistic_read_text(path: Path) -> str:
@@ -301,6 +303,8 @@ def test_release_provenance_closeout_gate_fails_closed_for_optimistic_release_fi
 def test_release_provenance_closeout_gate_fails_closed_when_author_side_source_evidence_missing(
   monkeypatch,
 ) -> None:
+  from tools.maintenance.release_governance import provenance_closeout as closeout_gate
+
   original_read_text = closeout_gate._read_text
 
   def missing_verified_source_text(path: Path) -> str:

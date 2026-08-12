@@ -12,14 +12,14 @@ from tests.architecture.damage_model.helpers import write_release_json
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate  # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
 def test_release_signoff_gate_current_repo_is_narrowly_closeable(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate
+
   artifact = release_signoff_gate.write_retained_artifacts(
     output_dir=tmp_path / "retained",
     report_path=tmp_path / "validation_res001_release_signoff_gate_20260531.zh.md",
@@ -122,6 +122,8 @@ def test_release_signoff_gate_current_repo_is_narrowly_closeable(
 def test_release_signoff_gate_fails_closed_for_incomplete_payload(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate
+
   source_manifest = json.loads(release_signoff_gate.SOURCE_ARTIFACT_PACK_MANIFEST.read_text())
   source_manifest["all_payloads_exist"] = False
   source_manifest["all_payload_hashes_match"] = False
@@ -148,6 +150,8 @@ def test_release_signoff_gate_fails_closed_for_incomplete_payload(
 def test_release_signoff_gate_fails_closed_for_raw_comparison_value(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate
+
   mechanism = json.loads(release_signoff_gate.MECHANISM_HASHES.read_text())
   mechanism["beco_workbook"]["selected_comparison_hashes"][0][
     "cached_formula_value"
@@ -171,6 +175,8 @@ def test_release_signoff_gate_fails_closed_for_raw_comparison_value(
 def test_release_signoff_gate_fails_closed_for_authority_guard(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate
+
   rights = json.loads(release_signoff_gate.SOURCE_RIGHTS_GATE.read_text())
   rights["non_authoritative_guards"]["pk_authority"] = True
   bad_rights = write_release_json(tmp_path / "source_rights_output_policy_gate.json", rights)
@@ -191,6 +197,8 @@ def test_release_signoff_gate_fails_closed_for_authority_guard(
 
 
 def test_release_signoff_gate_cli_default_paths_resolve_under_the_retained_package() -> None:
+  from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate
+
   # Regression guard for the default wiring itself: the CLI-writing test below
   # redirects to tmp_path (retained artifacts are immutable-on-disk evidence),
   # so this asserts the argparse defaults still resolve where callers expect
@@ -206,6 +214,8 @@ def test_release_signoff_gate_cli_default_paths_resolve_under_the_retained_packa
 
 
 def test_release_signoff_gate_cli_writes_default_artifacts(tmp_path: Path) -> None:
+  from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate
+
   output_dir = tmp_path / "retained"
   report_path = tmp_path / "validation_res001_release_signoff_gate_20260531.zh.md"
   result = subprocess.run(

@@ -13,17 +13,13 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance.scope_provenance import ( # noqa: E402
-  geometry_warhead_row_provenance as row_provenance_gate,
-  target_geometry_closeout as target_geometry_gate,
-  warhead_scope_closeout as warhead_scope_gate,
-)
-
 pytestmark = pytest.mark.governance_audit
 
 
 @pytest.fixture(scope="module")
 def target_geometry_closeout_artifact() -> dict[str, Any]:
+  from tools.maintenance.scope_provenance import target_geometry_closeout as target_geometry_gate
+
   return target_geometry_gate.generate_res003_target_geometry_closeout_gate(
     repo_root=REPO_ROOT
   )
@@ -31,6 +27,8 @@ def target_geometry_closeout_artifact() -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def warhead_family_closeout_artifact() -> dict[str, Any]:
+  from tools.maintenance.scope_provenance import warhead_scope_closeout as warhead_scope_gate
+
   return warhead_scope_gate.generate_res004_warhead_scope_closeout_gate(
     repo_root=REPO_ROOT
   )
@@ -38,6 +36,10 @@ def warhead_family_closeout_artifact() -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def row_provenance_artifact() -> dict[str, Any]:
+  from tools.maintenance.scope_provenance import (
+    geometry_warhead_row_provenance as row_provenance_gate,
+  )
+
   return row_provenance_gate.generate_geometry_warhead_row_provenance_gate(
     repo_root=REPO_ROOT
   )
@@ -170,6 +172,8 @@ def test_target_geometry_scope_closeout_blocks_global_release_authority(
 
 
 def test_target_geometry_scope_closeout_keeps_authority_guards_false() -> None:
+  from tools.maintenance.scope_provenance import target_geometry_closeout as target_geometry_gate
+
   artifact = target_geometry_gate.generate_res003_target_geometry_closeout_gate(
     repo_root=REPO_ROOT
   )
@@ -199,6 +203,8 @@ def test_target_geometry_scope_closeout_keeps_authority_guards_false() -> None:
 def test_target_geometry_scope_closeout_fails_closed_without_evidence(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.scope_provenance import target_geometry_closeout as target_geometry_gate
+
   artifact = target_geometry_gate.generate_res003_target_geometry_closeout_gate(
     repo_root=REPO_ROOT,
     package_dir=tmp_path,
@@ -433,6 +439,8 @@ def test_warhead_family_scope_closeout_blocks_release_authority(
 
 
 def test_warhead_family_scope_closeout_keeps_authority_guards_false() -> None:
+  from tools.maintenance.scope_provenance import warhead_scope_closeout as warhead_scope_gate
+
   artifact = warhead_scope_gate.generate_res004_warhead_scope_closeout_gate(
     repo_root=REPO_ROOT
   )
@@ -466,6 +474,8 @@ def test_warhead_family_scope_closeout_keeps_authority_guards_false() -> None:
 def test_warhead_family_scope_closeout_fails_closed_without_evidence(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.scope_provenance import warhead_scope_closeout as warhead_scope_gate
+
   artifact = warhead_scope_gate.generate_res004_warhead_scope_closeout_gate(
     repo_root=tmp_path,
     package_dir=tmp_path,
@@ -688,6 +698,10 @@ def test_geometry_warhead_row_provenance_records_res004_row_blockers(
 
 
 def test_geometry_warhead_row_provenance_keeps_authority_guards_false() -> None:
+  from tools.maintenance.scope_provenance import (
+    geometry_warhead_row_provenance as row_provenance_gate,
+  )
+
   artifact = row_provenance_gate.generate_geometry_warhead_row_provenance_gate(repo_root=REPO_ROOT)
 
   guards = artifact["authority_guard"]

@@ -23,15 +23,6 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.source_governance import ( # noqa: E402
-  payload_pack,
-  rights_output_policy as output_policy,
-)
-from tools.maintenance.external_signoff_evidence import ( # noqa: E402
-  signoff_request as signoff_request_packet,
-)
-from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -39,6 +30,8 @@ pytestmark = pytest.mark.governance_audit
 def source_payload_pack_bundle(
   tmp_path_factory: pytest.TempPathFactory,
 ) -> tuple[dict[str, Any], Path]:
+  from tools.maintenance.source_governance import payload_pack
+
   output_dir = tmp_path_factory.mktemp("source_payload_pack")
   artifact = payload_pack.write_source_payload_pack(output_dir=output_dir)
   return artifact, output_dir
@@ -48,6 +41,8 @@ def source_payload_pack_bundle(
 def source_rights_policy_bundle(
   tmp_path_factory: pytest.TempPathFactory,
 ) -> tuple[dict[str, Any], Path]:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   output_dir = tmp_path_factory.mktemp("source_rights_policy")
   artifact = output_policy.write_retained_source_rights_output_policy_gate(
     output_dir=output_dir
@@ -148,6 +143,8 @@ def test_source_payload_pack_records_rights_and_benchmark_boundaries(
 def test_source_payload_pack_writes_retained_payloads_and_manifest(
   source_payload_pack_bundle: tuple[dict[str, Any], Path],
 ) -> None:
+  from tools.maintenance.source_governance import payload_pack
+
   _artifact, output_dir = source_payload_pack_bundle
   retained_beco = output_dir / "payloads" / "BEC-O-V1.xlsx"
 
@@ -190,6 +187,8 @@ def test_source_payload_pack_fails_closed_when_payloads_absent(
   monkeypatch,
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.source_governance import payload_pack
+
   monkeypatch.setattr(payload_pack, "_discover_payload_candidates", lambda **_: [])
 
   artifact = payload_pack.generate_source_payload_pack(
@@ -215,6 +214,8 @@ def test_source_payload_pack_fails_closed_when_payloads_absent(
 
 
 def test_source_payload_pack_rejects_hash_mismatch(tmp_path: Path) -> None:
+  from tools.maintenance.source_governance import payload_pack
+
   wrong_beco = tmp_path / "payloads" / "BEC-O-V1.xlsx"
   wrong_beco.parent.mkdir(parents=True)
   wrong_beco.write_bytes(b"not the retained spreadsheet payload")
@@ -417,6 +418,8 @@ def test_source_rights_output_policy_lists_required_release_signoffs(
 def test_source_rights_output_policy_writes_retained_manifest(
   source_rights_policy_bundle: tuple[dict[str, Any], Path],
 ) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   _artifact, output_dir = source_rights_policy_bundle
   manifest = json.loads(
     (output_dir / output_policy.RETAINED_MANIFEST_FILENAME).read_text()
@@ -436,6 +439,8 @@ def test_source_rights_output_policy_writes_retained_manifest(
 def test_source_rights_output_policy_fails_closed_without_public_statement(
   monkeypatch,
 ) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   def no_statement(path: Path, content_type: str) -> dict[str, object]:
     return {
       "extraction_status": "test_no_statement",
@@ -474,6 +479,8 @@ def test_source_rights_output_policy_fails_closed_without_public_statement(
 def test_source_rights_output_policy_fails_closed_for_hash_mismatch(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   bad_payload = tmp_path / "bad.pdf"
   bad_payload.write_bytes(b"not the retained source payload")
   source_manifest = {
@@ -524,6 +531,8 @@ def test_source_rights_output_policy_fails_closed_for_hash_mismatch(
 def test_source_rights_output_policy_cli_writes_json(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.source_governance import rights_output_policy as output_policy
+
   output_path = tmp_path / "source_rights_output_policy_gate.json"
   retained_dir = tmp_path / "retained"
   subprocess.run(
@@ -560,6 +569,8 @@ def test_source_rights_output_policy_cli_writes_json(
 
 # Source-rights signoff request is part of source evidence governance.
 def test_source_rights_signoff_request_is_fail_closed_checklist() -> None:
+  from tools.maintenance.external_signoff_evidence import signoff_request as signoff_request_packet
+
   artifact = signoff_request_packet.generate_source_rights_signoff_request_packet()
 
   assert artifact["schema_version"] == "a2.source_rights_signoff_request_packet.v1"
@@ -600,6 +611,8 @@ def test_source_rights_signoff_request_is_fail_closed_checklist() -> None:
 
 
 def test_source_rights_signoff_request_records_input_refs_with_hashes() -> None:
+  from tools.maintenance.external_signoff_evidence import signoff_request as signoff_request_packet
+
   artifact = signoff_request_packet.generate_source_rights_signoff_request_packet()
   refs = {row["artifact_key"]: row for row in artifact["input_refs"]}
 
@@ -634,6 +647,8 @@ def test_source_rights_signoff_request_records_input_refs_with_hashes() -> None:
 
 
 def test_source_rights_signoff_request_identifies_hash_only_review_items() -> None:
+  from tools.maintenance.external_signoff_evidence import signoff_request as signoff_request_packet
+
   artifact = signoff_request_packet.generate_source_rights_signoff_request_packet()
   items = {row["item_id"]: row for row in artifact["requested_hash_only_review_items"]}
 
@@ -688,6 +703,8 @@ def test_source_rights_signoff_request_identifies_hash_only_review_items() -> No
 
 
 def test_source_rights_signoff_request_names_signoffs_and_forbidden_outputs() -> None:
+  from tools.maintenance.external_signoff_evidence import signoff_request as signoff_request_packet
+
   artifact = signoff_request_packet.generate_source_rights_signoff_request_packet()
 
   signoff_ids = [row["signoff_id"] for row in artifact["requested_signoff_items"]]
@@ -724,6 +741,8 @@ def test_source_rights_signoff_request_names_signoffs_and_forbidden_outputs() ->
 
 
 def test_source_rights_signoff_request_retains_no_raw_source_or_output_keys() -> None:
+  from tools.maintenance.external_signoff_evidence import signoff_request as signoff_request_packet
+
   artifact = signoff_request_packet.generate_source_rights_signoff_request_packet()
 
   forbidden_raw_keys = {
@@ -754,6 +773,8 @@ def test_source_rights_signoff_request_retains_no_raw_source_or_output_keys() ->
 def test_source_rights_signoff_request_tolerates_missing_optional_packets(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import signoff_request as signoff_request_packet
+
   missing = tmp_path / "missing.json"
 
   artifact = signoff_request_packet.generate_source_rights_signoff_request_packet(
@@ -781,6 +802,8 @@ def test_source_rights_signoff_request_tolerates_missing_optional_packets(
 def test_source_rights_signoff_request_cli_writes_manifest_integrity_clean(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity as integrity
+
   retained_dir = tmp_path / "retained"
   output_path = tmp_path / "packet_cli.json"
 

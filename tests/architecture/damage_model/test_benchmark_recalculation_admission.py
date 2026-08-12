@@ -16,13 +16,6 @@ from tests.architecture.helpers import ensure_repo_root_on_sys_path, read_json
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.benchmark_evidence import ( # noqa: E402
-  spreadsheet_lineage_tolerance_packet as lineage_packet,
-  spreadsheet_recalculation_admission as recalculation_gate,
-  spreadsheet_replacement_tolerance as replacement_gate,
-)
-from tools.maintenance.retained_artifacts import manifest_integrity # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -87,6 +80,10 @@ def _assert_hash_ref_label_only(payload: dict[str, Any]) -> None:
 def recalculation_gate_artifact(
   tmp_path_factory: pytest.TempPathFactory,
 ) -> dict[str, Any]:
+  from tools.maintenance.benchmark_evidence import (
+    spreadsheet_recalculation_admission as recalculation_gate,
+  )
+
   return recalculation_gate.generate_res006_beco_recalculation_admission_gate(
     retained_dir=tmp_path_factory.mktemp("recalculation_gate")
   )
@@ -96,6 +93,10 @@ def recalculation_gate_artifact(
 def lineage_tolerance_packet_artifact(
   tmp_path_factory: pytest.TempPathFactory,
 ) -> dict[str, Any]:
+  from tools.maintenance.benchmark_evidence import (
+    spreadsheet_lineage_tolerance_packet as lineage_packet,
+  )
+
   return lineage_packet.generate_res006_beco_lineage_tolerance_review_packet(
     retained_dir=tmp_path_factory.mktemp("lineage_tolerance") / "retained"
   )
@@ -105,6 +106,10 @@ def lineage_tolerance_packet_artifact(
 def replacement_tolerance_gate_artifact(
   tmp_path_factory: pytest.TempPathFactory,
 ) -> dict[str, Any]:
+  from tools.maintenance.benchmark_evidence import (
+    spreadsheet_replacement_tolerance as replacement_gate,
+  )
+
   return replacement_gate.generate_res006_beco_replacement_tolerance_admission_gate(
     retained_dir=tmp_path_factory.mktemp("replacement_tolerance")
   )
@@ -234,6 +239,10 @@ def test_benchmark_recalculation_missing_spreadsheet_executor_fails_closed(
   monkeypatch: Any,
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    spreadsheet_recalculation_admission as recalculation_gate,
+  )
+
   monkeypatch.setattr(
     recalculation_gate.res005006_gate.shutil,
     "which",
@@ -270,6 +279,10 @@ def test_benchmark_recalculation_missing_spreadsheet_executor_fails_closed(
 def test_benchmark_recalculation_skip_execution_records_explicit_fail_closed_path(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    spreadsheet_recalculation_admission as recalculation_gate,
+  )
+
   artifact = recalculation_gate.generate_res006_beco_recalculation_admission_gate(
     retained_dir=tmp_path,
     attempt_spreadsheet_execution=False,
@@ -510,6 +523,10 @@ def test_benchmark_lineage_tolerance_packet_omits_raw_outputs(
 def test_benchmark_lineage_tolerance_packet_missing_inputs_remain_fail_closed(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    spreadsheet_lineage_tolerance_packet as lineage_packet,
+  )
+
   missing = tmp_path / "missing.json"
   artifact = lineage_packet.generate_res006_beco_lineage_tolerance_review_packet(
     retained_dir=tmp_path / "retained",
@@ -553,6 +570,8 @@ def test_benchmark_lineage_tolerance_packet_missing_inputs_remain_fail_closed(
 def test_benchmark_lineage_tolerance_cli_writes_packet_and_manifest(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity
+
   output_path = tmp_path / "packet_copy.json"
   retained_dir = tmp_path / "retained"
 
@@ -739,6 +758,10 @@ def test_benchmark_replacement_tolerance_gate_uses_hash_ref_label_only_payload(
 def test_benchmark_replacement_tolerance_missing_inputs_remain_machine_readable(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    spreadsheet_replacement_tolerance as replacement_gate,
+  )
+
   missing = tmp_path / "missing.json"
   artifact = replacement_gate.generate_res006_beco_replacement_tolerance_admission_gate(
     retained_dir=tmp_path / "retained",
@@ -772,6 +795,8 @@ def test_benchmark_replacement_tolerance_missing_inputs_remain_machine_readable(
 def test_benchmark_replacement_tolerance_cli_writes_gate_and_manifest(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity
+
   output_path = tmp_path / "gate_cli.json"
   retained_dir = tmp_path / "retained"
 

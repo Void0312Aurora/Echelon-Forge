@@ -11,12 +11,12 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.release_governance import scoped_release_identity as scoped_identity_gate  # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
 def test_scoped_release_identity_gate_passes_scoped_surface() -> None:
+  from tools.maintenance.release_governance import scoped_release_identity as scoped_identity_gate
+
   artifact = scoped_identity_gate.generate_res002_scoped_release_identity_gate(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -89,6 +89,8 @@ def test_scoped_release_identity_gate_passes_scoped_surface() -> None:
 
 
 def test_scoped_release_identity_gate_fails_closed_when_global_clean_required() -> None:
+  from tools.maintenance.release_governance import scoped_release_identity as scoped_identity_gate
+
   artifact = scoped_identity_gate.generate_res002_scoped_release_identity_gate(
     repo_root=REPO_ROOT,
     force_global_clean_required=True,
@@ -109,6 +111,8 @@ def test_scoped_release_identity_gate_fails_closed_when_global_clean_required() 
 def test_scoped_release_identity_gate_writes_retained_bundle(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import scoped_release_identity as scoped_identity_gate
+
   manifest = scoped_identity_gate.write_retained_scoped_identity_artifact(
     repo_root=REPO_ROOT,
     retained_output_dir=tmp_path,
@@ -136,6 +140,8 @@ def test_scoped_release_identity_gate_writes_retained_bundle(
 def test_scoped_release_identity_gate_cli_default_writes_manifest(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.release_governance import scoped_release_identity as scoped_identity_gate
+
   result = subprocess.run(
     [
       sys.executable,

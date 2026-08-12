@@ -15,12 +15,6 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.benchmark_evidence import ( # noqa: E402
-  comparison_hashes as hashes,
-  mechanism_evidence as evidence,
-)
-from tools.maintenance.scope_provenance import mechanism_source_closeout as gate # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -38,10 +32,14 @@ def _matrix_by_lineage(artifact: dict[str, object]) -> dict[str, dict[str, objec
 
 @pytest.fixture(scope="module")
 def mechanism_source_closeout_artifact() -> dict[str, Any]:
+  from tools.maintenance.scope_provenance import mechanism_source_closeout as gate
+
   return gate.generate_mechanism_source_closeout_gate(repo_root=REPO_ROOT)
 
 
 def test_mechanism_benchmark_evidence_current_repo_fails_closed() -> None:
+  from tools.maintenance.benchmark_evidence import mechanism_evidence as evidence
+
   artifact = evidence.generate_mechanism_benchmark_evidence(repo_root=REPO_ROOT)
 
   assert artifact["package_id"] == (
@@ -109,6 +107,8 @@ def test_mechanism_benchmark_evidence_current_repo_fails_closed() -> None:
 
 
 def test_mechanism_benchmark_evidence_separates_source_consumption_and_validation() -> None:
+  from tools.maintenance.benchmark_evidence import mechanism_evidence as evidence
+
   artifact = evidence.generate_mechanism_benchmark_evidence(repo_root=REPO_ROOT)
 
   matrix = _matrix_by_lineage(artifact)
@@ -197,6 +197,8 @@ def test_mechanism_benchmark_evidence_cli_keeps_authority_guards_false(
 
 
 def test_mechanism_comparison_hashes_current_repo_is_fail_closed() -> None:
+  from tools.maintenance.benchmark_evidence import comparison_hashes as hashes
+
   artifact = hashes.generate_mechanism_comparison_hashes(repo_root=REPO_ROOT)
 
   assert artifact["schema_version"] == "a2.mechanism_comparison_hashes.v1"
@@ -238,6 +240,8 @@ def test_mechanism_comparison_hashes_current_repo_is_fail_closed() -> None:
 
 
 def test_mechanism_comparison_hashes_beco_metadata_and_hash_only_outputs() -> None:
+  from tools.maintenance.benchmark_evidence import comparison_hashes as hashes
+
   artifact = hashes.generate_mechanism_comparison_hashes(repo_root=REPO_ROOT)
   beco = artifact["beco_workbook"]
 
@@ -294,6 +298,8 @@ def test_mechanism_comparison_hashes_beco_metadata_and_hash_only_outputs() -> No
 
 
 def test_mechanism_comparison_hashes_tp21_vocabulary_not_dataset() -> None:
+  from tools.maintenance.benchmark_evidence import comparison_hashes as hashes
+
   artifact = hashes.generate_mechanism_comparison_hashes(repo_root=REPO_ROOT)
   tp21 = artifact["tp21_criteria_vocabulary"]
 

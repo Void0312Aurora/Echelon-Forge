@@ -20,14 +20,6 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, 
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.benchmark_evidence import ( # noqa: E402
-  benchmark_execution_admission as benchmark_execution_gate,
-  debris_admission as debris_gate,
-  selected_debris_case_admission as selected_case_gate,
-  selected_debris_case_packet as candidate_packet,
-)
-from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -35,6 +27,8 @@ HEX64 = re.compile(r"^[a-f0-9]{64}$")
 
 
 def test_selected_output_admission_fails_closed_without_selected_case() -> None:
+  from tools.maintenance.benchmark_evidence import debris_admission as debris_gate
+
   artifact = debris_gate.generate_tp21_debris_admission_gate()
 
   assert artifact["schema_version"] == "a2.res005_tp21_debris_admission_gate.v1"
@@ -56,6 +50,8 @@ def test_selected_output_admission_fails_closed_without_selected_case() -> None:
 
 
 def test_selected_output_anchor_set_is_hash_only_and_no_raw_source_payload() -> None:
+  from tools.maintenance.benchmark_evidence import debris_admission as debris_gate
+
   artifact = debris_gate.generate_tp21_debris_admission_gate()
   anchor_set = artifact["selected_debris_output_anchor_set"]
 
@@ -98,6 +94,8 @@ def test_selected_output_anchor_set_is_hash_only_and_no_raw_source_payload() -> 
 
 
 def test_selected_output_admission_preserves_authority_guards_false() -> None:
+  from tools.maintenance.benchmark_evidence import debris_admission as debris_gate
+
   artifact = debris_gate.generate_tp21_debris_admission_gate()
 
   assert_authority_guards_false(artifact, guards_key="non_authoritative_guards")
@@ -114,6 +112,8 @@ def test_selected_output_admission_preserves_authority_guards_false() -> None:
 
 
 def test_selected_output_admission_requirements_are_concrete() -> None:
+  from tools.maintenance.benchmark_evidence import debris_admission as debris_gate
+
   artifact = debris_gate.generate_tp21_debris_admission_gate()
 
   selected_requirements = artifact["selected_output_requirements"]
@@ -186,6 +186,10 @@ def test_selected_output_admission_cli_writes_retained_artifacts(
 
 
 def test_selected_case_admission_review_packet_fails_closed() -> None:
+  from tools.maintenance.benchmark_evidence import (
+    selected_debris_case_admission as selected_case_gate,
+  )
+
   artifact = selected_case_gate.generate_selected_case_admission_gate()
 
   assert artifact["schema_version"] == (
@@ -217,6 +221,10 @@ def test_selected_case_admission_review_packet_fails_closed() -> None:
 
 
 def test_selected_case_admission_records_input_refs_with_hashes() -> None:
+  from tools.maintenance.benchmark_evidence import (
+    selected_debris_case_admission as selected_case_gate,
+  )
+
   artifact = selected_case_gate.generate_selected_case_admission_gate()
   refs = {row["artifact_id"]: row for row in artifact["input_refs"]}
 
@@ -246,6 +254,10 @@ def test_selected_case_admission_records_input_refs_with_hashes() -> None:
 
 
 def test_selected_case_admission_required_items_are_missing_owner_inputs() -> None:
+  from tools.maintenance.benchmark_evidence import (
+    selected_debris_case_admission as selected_case_gate,
+  )
+
   artifact = selected_case_gate.generate_selected_case_admission_gate()
 
   required = artifact["required_reviewer_signoff_items"]
@@ -274,6 +286,10 @@ def test_selected_case_admission_required_items_are_missing_owner_inputs() -> No
 
 
 def test_selected_case_admission_packet_is_hash_ref_label_only() -> None:
+  from tools.maintenance.benchmark_evidence import (
+    selected_debris_case_admission as selected_case_gate,
+  )
+
   artifact = selected_case_gate.generate_selected_case_admission_gate()
 
   assert artifact["benchmark_consumed_for_release"] is False
@@ -316,6 +332,10 @@ def test_selected_case_admission_packet_is_hash_ref_label_only() -> None:
 
 
 def test_selected_case_admission_preserves_authority_guards_false() -> None:
+  from tools.maintenance.benchmark_evidence import (
+    selected_debris_case_admission as selected_case_gate,
+  )
+
   artifact = selected_case_gate.generate_selected_case_admission_gate()
 
   assert_authority_guards_false(artifact)
@@ -333,6 +353,8 @@ def test_selected_case_admission_preserves_authority_guards_false() -> None:
 def test_selected_case_admission_cli_writes_manifest_integrity_clean(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity as integrity
+
   output_path = tmp_path / "gate_cli.json"
   retained_dir = tmp_path / "retained"
 
@@ -377,6 +399,8 @@ def test_selected_case_admission_cli_writes_manifest_integrity_clean(
 
 
 def test_selected_case_candidate_packet_fails_closed() -> None:
+  from tools.maintenance.benchmark_evidence import selected_debris_case_packet as candidate_packet
+
   artifact = candidate_packet.generate_selected_case_candidate_packet()
 
   assert artifact["schema_version"] == (
@@ -407,6 +431,8 @@ def test_selected_case_candidate_packet_fails_closed() -> None:
 
 
 def test_selected_case_candidate_records_required_input_refs() -> None:
+  from tools.maintenance.benchmark_evidence import selected_debris_case_packet as candidate_packet
+
   artifact = candidate_packet.generate_selected_case_candidate_packet()
   refs = {row["artifact_id"]: row for row in artifact["input_refs"]}
 
@@ -439,6 +465,8 @@ def test_selected_case_candidate_records_required_input_refs() -> None:
 
 
 def test_selected_case_candidate_tracks_present_vs_missing() -> None:
+  from tools.maintenance.benchmark_evidence import selected_debris_case_packet as candidate_packet
+
   artifact = candidate_packet.generate_selected_case_candidate_packet()
   present = {row["item_id"]: row for row in artifact["present_vs_missing"]}
 
@@ -468,6 +496,8 @@ def test_selected_case_candidate_tracks_present_vs_missing() -> None:
 
 
 def test_selected_case_candidate_packet_is_hash_ref_label_only() -> None:
+  from tools.maintenance.benchmark_evidence import selected_debris_case_packet as candidate_packet
+
   artifact = candidate_packet.generate_selected_case_candidate_packet()
 
   guarantees = artifact["candidate_evidence_guarantees"]
@@ -518,6 +548,8 @@ def test_selected_case_candidate_packet_is_hash_ref_label_only() -> None:
 
 
 def test_selected_case_candidate_preserves_authority_guards_false() -> None:
+  from tools.maintenance.benchmark_evidence import selected_debris_case_packet as candidate_packet
+
   artifact = candidate_packet.generate_selected_case_candidate_packet()
 
   assert_authority_guards_false(artifact)
@@ -535,6 +567,8 @@ def test_selected_case_candidate_preserves_authority_guards_false() -> None:
 def test_selected_case_candidate_cli_writes_manifest_integrity_clean(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity as integrity
+
   output_path = tmp_path / "candidate_packet_cli.json"
   retained_dir = tmp_path / "retained"
 
@@ -592,6 +626,10 @@ def _walk(payload: Any) -> list[Any]:
 
 
 def test_benchmark_execution_admission_current_repo_fails_closed(tmp_path: Path) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    benchmark_execution_admission as benchmark_execution_gate,
+  )
+
   artifact = benchmark_execution_gate.generate_benchmark_execution_admission_gate(retained_dir=tmp_path)
 
   assert artifact["schema_version"] == (
@@ -624,6 +662,10 @@ def test_benchmark_execution_admission_current_repo_fails_closed(tmp_path: Path)
 
 
 def test_benchmark_execution_beco_evidence_is_hash_only(tmp_path: Path) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    benchmark_execution_admission as benchmark_execution_gate,
+  )
+
   artifact = benchmark_execution_gate.generate_benchmark_execution_admission_gate(retained_dir=tmp_path)
   beco_gate = artifact["beco_spreadsheet_execution_gate"]
 
@@ -655,6 +697,10 @@ def test_benchmark_execution_beco_evidence_is_hash_only(tmp_path: Path) -> None:
 
 
 def test_benchmark_execution_tp21_selected_debris_requirements_fail_closed(tmp_path: Path) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    benchmark_execution_admission as benchmark_execution_gate,
+  )
+
   artifact = benchmark_execution_gate.generate_benchmark_execution_admission_gate(
     retained_dir=tmp_path,
     attempt_spreadsheet_execution=False,
@@ -689,6 +735,10 @@ def test_benchmark_execution_tp21_selected_debris_requirements_fail_closed(tmp_p
 
 
 def test_benchmark_execution_missing_spreadsheet_executor_reports_exact_blocker(monkeypatch: Any, tmp_path: Path) -> None:
+  from tools.maintenance.benchmark_evidence import (
+    benchmark_execution_admission as benchmark_execution_gate,
+  )
+
   monkeypatch.setattr(benchmark_execution_gate.shutil, "which", lambda _name: None)
 
   artifact = benchmark_execution_gate.generate_benchmark_execution_admission_gate(retained_dir=tmp_path)

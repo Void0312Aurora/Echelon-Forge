@@ -17,12 +17,6 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance.external_signoff_evidence import ( # noqa: E402
-  intake_contract as contract,
-  packet_template as template_gen,
-)
-from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -40,12 +34,16 @@ INVALID_FIXTURE = "invalid_external_signoff_packet_raw_field.json"
 
 
 def _required_signoff_ids() -> list[str]:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   return contract.generate_signoff_intake_contract()["intake_contract_shape"][
     "required_signoff_ids"
   ]
 
 
 def _valid_external_packet(request_sha256: str) -> dict[str, Any]:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   return {
     "schema_version": contract.EXPECTED_EXTERNAL_SCHEMA_VERSION,
     "package_id": contract.PACKAGE_ID,
@@ -78,6 +76,8 @@ def _write_candidate_with_current_source_sha(
   fixture_name: str,
   tmp_path: Path,
 ) -> tuple[Path, dict[str, Any], str]:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   payload = _load_fixture(fixture_name)
   request_sha256 = contract._sha256_file(
     contract.SOURCE_RIGHTS_SIGNOFF_REQUEST_PACKET_PATH
@@ -110,6 +110,8 @@ def _assert_no_res005_res006_closure(artifact: dict[str, Any]) -> None:
 
 
 def test_signoff_intake_contract_default_is_fail_closed_no_external_packet() -> None:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   artifact = contract.generate_signoff_intake_contract()
 
   assert artifact["schema_version"] == "a2.blastfrag_signoff_intake_contract.v1"
@@ -158,6 +160,8 @@ def test_signoff_intake_contract_default_is_fail_closed_no_external_packet() -> 
 def test_signoff_intake_contract_valid_external_shape_is_not_approval(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   request_sha = contract._sha256_file(
     contract.SOURCE_RIGHTS_SIGNOFF_REQUEST_PACKET_PATH
   )
@@ -193,6 +197,8 @@ def test_signoff_intake_contract_valid_external_shape_is_not_approval(
 def test_signoff_intake_contract_rejects_raw_fields_and_authority_true(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   request_sha = contract._sha256_file(
     contract.SOURCE_RIGHTS_SIGNOFF_REQUEST_PACKET_PATH
   )
@@ -223,6 +229,8 @@ def test_signoff_intake_contract_rejects_raw_fields_and_authority_true(
 
 
 def test_signoff_intake_contract_retains_no_raw_payload_values() -> None:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   artifact = contract.generate_signoff_intake_contract()
 
   forbidden_raw_keys = {
@@ -254,6 +262,8 @@ def test_signoff_intake_contract_retains_no_raw_payload_values() -> None:
 def test_signoff_intake_contract_cli_writes_manifest_integrity_clean(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity as integrity
+
   retained_dir = tmp_path / "retained"
   output_path = tmp_path / "contract_cli.json"
 
@@ -304,6 +314,8 @@ def test_signoff_intake_contract_cli_writes_manifest_integrity_clean(
 def test_valid_external_fixture_shape_passes_without_granting_approval(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   candidate_path, payload, request_sha256 = _write_candidate_with_current_source_sha(
     fixture_name=VALID_FIXTURE,
     tmp_path=tmp_path,
@@ -355,6 +367,8 @@ def test_valid_external_fixture_shape_passes_without_granting_approval(
 def test_invalid_external_fixture_raw_field_and_authority_true_fail_closed(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import intake_contract as contract
+
   candidate_path, payload, _request_sha256 = _write_candidate_with_current_source_sha(
     fixture_name=INVALID_FIXTURE,
     tmp_path=tmp_path,
@@ -396,6 +410,11 @@ def test_invalid_external_fixture_raw_field_and_authority_true_fail_closed(
 
 
 def test_external_signoff_template_reuses_intake_contract_shape() -> None:
+  from tools.maintenance.external_signoff_evidence import (
+    intake_contract as contract,
+    packet_template as template_gen,
+  )
+
   template = template_gen.generate_external_signoff_packet_template()
   source_sha256 = contract._sha256_file(
     contract.SOURCE_RIGHTS_SIGNOFF_REQUEST_PACKET_PATH
@@ -461,6 +480,11 @@ def test_external_signoff_template_reuses_intake_contract_shape() -> None:
 def test_external_signoff_template_is_not_shape_valid_until_reviewer_fills_refs(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.external_signoff_evidence import (
+    intake_contract as contract,
+    packet_template as template_gen,
+  )
+
   template = template_gen.generate_external_signoff_packet_template()
   candidate_path = tmp_path / "external_signoff_packet_template.json"
   candidate_path.write_text(
@@ -488,6 +512,11 @@ def test_external_signoff_template_is_not_shape_valid_until_reviewer_fills_refs(
 
 
 def test_external_signoff_template_retains_no_forbidden_packet_keys() -> None:
+  from tools.maintenance.external_signoff_evidence import (
+    intake_contract as contract,
+    packet_template as template_gen,
+  )
+
   template = template_gen.generate_external_signoff_packet_template()
   forbidden_keys = contract.FORBIDDEN_PACKET_KEYS
 
@@ -505,6 +534,8 @@ def test_external_signoff_template_retains_no_forbidden_packet_keys() -> None:
 def test_external_signoff_template_cli_writes_clean_retained_manifest(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance.retained_artifacts import manifest_integrity as integrity
+
   retained_dir = tmp_path / "external_signoff_packet_template"
   output_path = tmp_path / "template_copy.json"
 

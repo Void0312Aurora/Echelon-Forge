@@ -194,22 +194,31 @@ Suite tier 含义：
 测试校验的是证据文档、签入清单、来源/签核/溯源记录或文档健康度 → 审计层。
 拿不准的文件默认归守卫层。
 
-用 marker 直接运行两层：
-
-```bash
-# 开发回归（仅守卫层）
-pytest -m "not governance_audit" tests/architecture
-
-# 治理/证据审计层（按需）
-pytest -m governance_audit tests/architecture
-```
-
-或通过 suite runner 运行签入的分层 manifest：
+默认回归入口 —— 通过 suite runner 运行签入的分层 manifest：
 
 ```bash
 source tools/maintenance/cmo_env.sh
+
+# 开发回归（仅守卫层）
 cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/architecture_guard_suite.json
+
+# 治理/证据审计层（按需）
 cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/governance_audit_suite.json
+```
+
+默认循环请优先用守卫层 manifest，而不是 `-m "not governance_audit"`。marker
+反选并不能省下审计层的 import 开销：pytest 必须先 import 模块才能读到该模块的
+`pytestmark`，所以 `-m "not governance_audit"` 仍会收集审计层模块，只是跳过
+运行其中的测试。manifest 按文件路径选择，审计层模块根本不会被 import。
+
+marker 仍是层级归属的权威定义，需要在显式路径上按 marker 切片时继续使用：
+
+```bash
+# 仅守卫层
+pytest -m "not governance_audit" tests/architecture
+
+# 仅治理/证据审计层
+pytest -m governance_audit tests/architecture
 ```
 
 `tests/runners/test_pytest_suite_manifests.py` 中的元测试保证两份 manifest
