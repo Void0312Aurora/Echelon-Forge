@@ -403,8 +403,20 @@ static_assert 的吸收走查（`launch_sequences_correspond_v3_to_v4()`）—�
 （较 v3 的 116 寄存器还降了）；`window_commit_body.cu` 越过 700 行软限（748）,
 按 watch item 登记而非拆分——相位体是为奇偶保真而保留的退役 kernel 逐字副本。
 世代继承门禁移入独立模块（`test_cuda_resident_resource_generations.py`）使两个
-测试文件都低于软限。v4 静态捕获（探针 + nsys + 采集器）已对在途树端到端验证；
-按 CP-5b 先例,钉定 baseline 的正式重捕获在本提交之后立即作为 CP-7c 落地。
+测试文件都低于软限。
+
+### CP-7c：v4 静态父级已就位（2026-08-12）
+
+[cuda_resident_cp7b_resource_evidence_20260812.json](cuda_resident_cp7b_resource_evidence_20260812.json)
+（11,032 字节，
+`3c1fbb40f9acdbe92f3f509161efd24d0b69b4a5cff8d95ee4fcd4351031e7e3`）是 v4
+静态/拓扑捕获，baseline 钉在 CP-7b 提交上。五个 kernel 上五次 launch，trace
+摘要不变；nsys API 清单精确实测了折叠增量：launch 7→5、同步 5→3、memcpy
+13→11、memset 5→3，其余每项计数与各方向传输字节总量均与 v3 一致（少掉的两次
+状态回读正好解释 D2H 的 8 字节差）。重捕获带出一条诚实更正：Nsight 同步
+**活动**行数在 WDDM 上具时序依赖（同一二进制观测到 6 与 7 两值），因此 v4
+校验器改钉窄带而非精确值；稳定不变量是 API 计数。下一次 achieved 计数器尝试
+（需提权，CP-8）已有 v4 父级可用。
 
 ## CP-5 已落地：窗口图成为一次 launch（2026-08-12）
 

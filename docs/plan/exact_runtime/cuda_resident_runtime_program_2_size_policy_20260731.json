@@ -208,7 +208,7 @@
     {
       "path": "tools/diagnostics/cuda_resident_cr2_resource_schema.py",
       "role": "complete CR2-5a report schema and cross-section invariant validator",
-      "observed_lines": 525
+      "observed_lines": 534
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py",

@@ -192,7 +192,7 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "tools/diagnostics/cuda_resident_cr2_resource_evidence.py": 693,
         "tools/diagnostics/cuda_resident_cr2_resource_static.py": 212,
         "tools/diagnostics/cuda_resident_cr2_json_types.py": 99,
-        "tools/diagnostics/cuda_resident_cr2_resource_schema.py": 525,
+        "tools/diagnostics/cuda_resident_cr2_resource_schema.py": 534,
         "tests/architecture/runtime_profiles/test_cuda_resident_resource_evidence.py": 612,
         "tests/architecture/runtime_profiles/test_cuda_resident_resource_generations.py": 169,
         "src/runtime/contracts/cuda_resident_counter_evidence_contract.h": 76,

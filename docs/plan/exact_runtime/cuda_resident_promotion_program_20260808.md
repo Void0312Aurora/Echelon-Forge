@@ -407,9 +407,24 @@ target (748) and is registered as a watch item rather than split, because
 the phase bodies are verbatim copies of the retired kernels kept for parity
 fidelity. The generation-supersession gates moved to their own module
 (`test_cuda_resident_resource_generations.py`) to keep both test files under
-the soft target. A v4 static capture (probe + nsys + collector) validated
-end-to-end against the in-flight tree; the baseline-pinned recapture lands
-as CP-7c immediately after this commit, following the CP-5b precedent.
+the soft target.
+
+### CP-7c: the v4 static parent exists (2026-08-12)
+
+[cuda_resident_cp7b_resource_evidence_20260812.json](cuda_resident_cp7b_resource_evidence_20260812.json)
+(11,032 bytes,
+`3c1fbb40f9acdbe92f3f509161efd24d0b69b4a5cff8d95ee4fcd4351031e7e3`) is the
+v4 static/topology capture, baseline-pinned to the CP-7b commit. Five
+launches over five kernels, trace digest unchanged, and the nsys API
+inventory measures the fold delta exactly: launches 7 -> 5, synchronizations
+5 -> 3, memcpys 13 -> 11, memsets 5 -> 3, with every other count and every
+transfer byte total matching v3 (the two removed status readbacks account
+for the eight-byte D2H difference). One honest correction surfaced by the
+recapture: the Nsight synchronization *activity* row count is
+timing-dependent on WDDM (6 and 7 both observed for the same binary), so the
+v4 validator pins a narrow band instead of an exact value; the stable
+invariants are the API counts. The next achieved-counter attempt
+(elevation-gated, CP-8) has its v4 parent.
 
 ## CP-5 landed: the window graph is one launch (2026-08-12)
 
