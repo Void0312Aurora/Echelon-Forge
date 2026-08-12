@@ -9,9 +9,6 @@ grant runtime authority or independent validation status.
 
 from __future__ import annotations
 
-import argparse
-import hashlib
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -30,7 +27,7 @@ from tools.maintenance.a2_packet_paths import (  # noqa: E402
   CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
 )
 
-from tools.maintenance.retained_artifacts.manifest_integrity import _sha256_file, _sha256_text
+from tools.maintenance.candidate_artifacts import _retained_pack_common as retained_pack_common
 from tools.maintenance.candidate_artifacts import scope_boundary_probe as scope_probe
 from tools.maintenance.candidate_artifacts import effect_scale_snapshot as stage_b_snapshot
 from tools.maintenance.candidate_artifacts import effect_scale_result_pack as result_pack
@@ -41,6 +38,9 @@ PACKAGE_ID = (
   "beam_high_near_miss_0_35m_v0"
 )
 RETAINED_PACK_SCHEMA_VERSION = "a2.stage_b_retained_artifact_pack.v1"
+MISSING_PACK_STATUS = "missing_retained_artifact_pack"
+RETAINED_PACK_STATUS = "author_retained_candidate_artifacts_only"
+RETENTION_SCOPE = "stage_b_effect_scale_author_side_candidate_only"
 DEFAULT_OUTPUT_DIR = (
   A2_CANDIDATE_PACKAGE_DIR
   / "retained_artifacts"
@@ -89,59 +89,16 @@ ARTIFACT_RELEASE_BOUNDARIES = {
   },
 }
 
-def _artifact_status(payload: dict[str, Any]) -> str:
-  return str(payload.get("status", payload.get("validation_status", "")))
+RETAINED_ORIGIN_SUMMARY = {
+  "runtime_origin": "no_stock_runtime_descriptor_author_side_artifacts_only",
+  "review_surface": "author_side_stage_b_effect_scale_candidate_only",
+  "independent_release_artifact_present": False,
+  "stock_runtime_authority_present": False,
+  "stage_c_component_probability_artifacts_present": False,
+}
 
-def _canonical_json(payload: dict[str, Any]) -> str:
-  return json.dumps(payload, indent=2, sort_keys=True)
-
-def _display_path(path: Path, repo_root: Path) -> str:
-  # Kept local: non-resolving relative_to; differs from manifest_integrity._display_path (resolve).
-  try:
-    return path.relative_to(repo_root).as_posix()
-  except ValueError:
-    return str(path)
-
-def load_retained_artifact_pack_manifest(
-  *,
-  repo_root: Path = REPO_ROOT,
-  output_dir: Path = DEFAULT_OUTPUT_DIR,
-) -> dict[str, Any]:
-  manifest_path = output_dir / "manifest.json"
-  manifest_ref = _display_path(manifest_path, repo_root)
-  if not manifest_path.exists():
-    return {
-      "package_id": PACKAGE_ID,
-      "schema_version": RETAINED_PACK_SCHEMA_VERSION,
-      "status": "missing_retained_artifact_pack",
-      "artifact_dir": _display_path(output_dir, repo_root),
-      "manifest_exists": False,
-      "manifest_relative_path": manifest_ref,
-      "retained_artifact_count": 0,
-      "all_artifacts_exist": False,
-      "artifacts": [],
-    }
-
-  manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-  manifest["manifest_exists"] = True
-  manifest["manifest_relative_path"] = manifest_ref
-  manifest["manifest_sha256"] = _sha256_file(manifest_path)
-  manifest["retained_artifact_count"] = len(manifest.get("artifacts", []))
-  manifest["all_artifacts_exist"] = all(
-    Path(row["relative_path"]).exists()
-    if Path(row["relative_path"]).is_absolute()
-    else (repo_root / row["relative_path"]).exists()
-    for row in manifest.get("artifacts", [])
-  )
-  return manifest
-
-def generate_retained_artifact_pack(
-  *,
-  repo_root: Path = REPO_ROOT,
-  output_dir: Path = DEFAULT_OUTPUT_DIR,
-) -> dict[str, Any]:
-  output_dir.mkdir(parents=True, exist_ok=True)
-  artifacts = {
+def _build_artifacts(repo_root: Path) -> dict[str, dict[str, Any]]:
+  return {
     "validation_scaffold_snapshot": scaffold.generate_validation_scaffold(
       repo_root=repo_root
     ),
@@ -156,80 +113,47 @@ def generate_retained_artifact_pack(
     ),
   }
 
-  rows: list[dict[str, Any]] = []
-  for artifact_key, payload in artifacts.items():
-    filename = ARTIFACT_FILENAMES[artifact_key]
-    path = output_dir / filename
-    text = _canonical_json(payload) + "\n"
-    path.write_text(text, encoding="utf-8")
-    rows.append(
-      {
-        "artifact_key": artifact_key,
-        "filename": filename,
-        "relative_path": _display_path(path, repo_root),
-        "sha256": _sha256_file(path),
-        "status": _artifact_status(payload),
-        "schema_version": str(payload["schema_version"]),
-        "content_sha256": _sha256_text(text.rstrip("\n")),
-        "origin_class": ARTIFACT_RELEASE_BOUNDARIES[artifact_key][
-          "origin_class"
-        ],
-        "allowed_claim": ARTIFACT_RELEASE_BOUNDARIES[artifact_key][
-          "allowed_claim"
-        ],
-        "forbidden_claim": ARTIFACT_RELEASE_BOUNDARIES[artifact_key][
-          "forbidden_claim"
-        ],
-      }
-    )
+def load_retained_artifact_pack_manifest(
+  *,
+  repo_root: Path = REPO_ROOT,
+  output_dir: Path = DEFAULT_OUTPUT_DIR,
+) -> dict[str, Any]:
+  return retained_pack_common.load_pack_manifest(
+    repo_root=repo_root,
+    output_dir=output_dir,
+    package_id=PACKAGE_ID,
+    schema_version=RETAINED_PACK_SCHEMA_VERSION,
+    missing_status=MISSING_PACK_STATUS,
+  )
 
-  manifest = {
-    "package_id": PACKAGE_ID,
-    "schema_version": RETAINED_PACK_SCHEMA_VERSION,
-    "status": "author_retained_candidate_artifacts_only",
-    "artifact_dir": _display_path(output_dir, repo_root),
-    "retention_scope": "stage_b_effect_scale_author_side_candidate_only",
-    "retained_origin_summary": {
-      "runtime_origin": "no_stock_runtime_descriptor_author_side_artifacts_only",
-      "review_surface": "author_side_stage_b_effect_scale_candidate_only",
-      "independent_release_artifact_present": False,
-      "stock_runtime_authority_present": False,
-      "stage_c_component_probability_artifacts_present": False,
-    },
-    "artifacts": rows,
-    "non_authoritative_guards": {
-      "stock_runtime_authority_granted": False,
-      "effect_scale_authority_granted": False,
-      "component_failure_probability_authority_granted": False,
-      "pk_authority_granted": False,
-      "deterministic_fuze_authority_granted": False,
-    },
-  }
-  manifest_path = output_dir / "manifest.json"
-  manifest_path.write_text(_canonical_json(manifest) + "\n", encoding="utf-8")
-  manifest["manifest_relative_path"] = _display_path(manifest_path, repo_root)
-  manifest["manifest_sha256"] = _sha256_file(manifest_path)
-  manifest["retained_artifact_count"] = len(rows)
-  return manifest
+def generate_retained_artifact_pack(
+  *,
+  repo_root: Path = REPO_ROOT,
+  output_dir: Path = DEFAULT_OUTPUT_DIR,
+) -> dict[str, Any]:
+  return retained_pack_common.write_pack(
+    repo_root=repo_root,
+    output_dir=output_dir,
+    build_artifacts=_build_artifacts,
+    artifact_filenames=ARTIFACT_FILENAMES,
+    release_boundaries=ARTIFACT_RELEASE_BOUNDARIES,
+    package_id=PACKAGE_ID,
+    schema_version=RETAINED_PACK_SCHEMA_VERSION,
+    status=RETAINED_PACK_STATUS,
+    retention_scope=RETENTION_SCOPE,
+    retained_origin_summary=dict(RETAINED_ORIGIN_SUMMARY),
+  )
 
 def main(argv: list[str] | None = None) -> int:
-  parser = argparse.ArgumentParser(
+  return retained_pack_common.run_pack_cli(
+    argv,
     description=(
       "Write retained Stage B effect-scale candidate artifacts for the "
       "current A2 blast-fragmentation package."
-    )
+    ),
+    default_output_dir=DEFAULT_OUTPUT_DIR,
+    generate=generate_retained_artifact_pack,
   )
-  parser.add_argument(
-    "--output-dir",
-    type=Path,
-    default=DEFAULT_OUTPUT_DIR,
-    help="Directory where retained JSON artifacts will be written.",
-  )
-  args = parser.parse_args(argv)
-
-  artifact = generate_retained_artifact_pack(output_dir=args.output_dir)
-  print(_canonical_json(artifact))
-  return 0
 
 if __name__ == "__main__":
   raise SystemExit(main())
