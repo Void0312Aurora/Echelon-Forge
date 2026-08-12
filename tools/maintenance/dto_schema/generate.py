@@ -4,6 +4,16 @@
 One command covers every generated product: the C++ X-macro .inc fragments,
 the Python builder modules under gym_envs/scenario_loader/_generated/, and
 that package's __init__.py.
+
+Beyond per-file byte comparison, the CLI is self-contained on two integrity
+properties so no separate test is needed to trust a green --check:
+
+- the schemas/ directory and the SCHEMA_MODULES registry must agree (a
+  schema module that exists on disk but is unregistered, or registered but
+  missing, aborts every command);
+- gym_envs/scenario_loader/_generated/ is a fully generated directory, so
+  *.py files there that no registered schema owns fail --check and are
+  removed by --write.
 """
 
 from __future__ import annotations
@@ -30,6 +40,10 @@ from tools.maintenance.dto_schema.model import DtoSchema  # noqa: E402
 from tools.maintenance.dto_schema.schemas import SCHEMA_MODULES  # noqa: E402
 
 
+SCHEMAS_PACKAGE = "tools.maintenance.dto_schema.schemas"
+SCHEMAS_DIR = Path(__file__).resolve().parent / "schemas"
+
+
 def _load_schema(module_name: str) -> DtoSchema:
   module: ModuleType = importlib.import_module(module_name)
   schema = getattr(module, "SCHEMA", None)
@@ -38,7 +52,41 @@ def _load_schema(module_name: str) -> DtoSchema:
   return schema
 
 
+def registry_inconsistencies(
+  registered_modules: tuple[str, ...],
+  schemas_dir: Path,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+  """Compare the SCHEMA_MODULES registry against the schemas/ directory.
+
+  Returns (unregistered, missing): schema modules present on disk but absent
+  from the registry, and registered module names without a backing file.
+  """
+  on_disk = {
+    f"{SCHEMAS_PACKAGE}.{path.stem}"
+    for path in schemas_dir.glob("*.py")
+    if path.name != "__init__.py"
+  }
+  registered = set(registered_modules)
+  return (
+    tuple(sorted(on_disk - registered)),
+    tuple(sorted(registered - on_disk)),
+  )
+
+
 def load_schemas() -> tuple[tuple[str, DtoSchema], ...]:
+  unregistered, missing = registry_inconsistencies(SCHEMA_MODULES, SCHEMAS_DIR)
+  if unregistered or missing:
+    problems = []
+    if unregistered:
+      problems.append(
+        "schema modules on disk but not in SCHEMA_MODULES: "
+        f"{list(unregistered)}"
+      )
+    if missing:
+      problems.append(
+        f"registered schema modules missing on disk: {list(missing)}"
+      )
+    raise ValueError("; ".join(problems))
   registrations = tuple(
     (module_name, _load_schema(module_name)) for module_name in SCHEMA_MODULES
   )
@@ -117,6 +165,30 @@ def manifest_payload(
   }
 
 
+def unexpected_generated_files(
+  registrations: tuple[tuple[str, DtoSchema], ...],
+  output_root: Path,
+) -> tuple[str, ...]:
+  """*.py files in the generated package that no registered schema owns.
+
+  The generated package directory holds only generator output, so any other
+  Python file there is a stale or hand-added artifact. Only the directory's
+  top level is scanned; __pycache__ and non-.py files are ignored.
+  """
+  package_dir = output_root / python_builder.GENERATED_PACKAGE_DIR
+  if not package_dir.is_dir():
+    return ()
+  owned = {
+    python_builder.builder_output_path(schema) for _, schema in registrations
+  }
+  owned.add(python_builder.PACKAGE_INIT_PATH)
+  found = (
+    f"{python_builder.GENERATED_PACKAGE_DIR}/{path.name}"
+    for path in package_dir.glob("*.py")
+  )
+  return tuple(sorted(path for path in found if path not in owned))
+
+
 def _uniform_line_ending(content: bytes) -> str | None:
   without_crlf = content.replace(b"\r\n", b"")
   if b"\r" in without_crlf or b"\n" in without_crlf:
@@ -167,6 +239,13 @@ def check_outputs(
     stale = True
     print(f"stale: {path}")
     print(_diff_summary(path, actual, expected))
+  for path in unexpected_generated_files(registrations, output_root):
+    stale = True
+    print(f"unexpected: {path}")
+    print(
+      "  file is not owned by any registered schema; remove it or run "
+      "generate.py --write"
+    )
   return 1 if stale else 0
 
 
@@ -185,6 +264,9 @@ def write_outputs(
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(expected)
     print(f"wrote: {path}")
+  for path in unexpected_generated_files(registrations, output_root):
+    (output_root / path).unlink()
+    print(f"removed: {path}")
   return 0
 
 
