@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from tests.architecture.damage_model.helpers import (
   assert_authority_guards_false,
   assert_hex64,
@@ -25,6 +27,8 @@ from tools.maintenance.benchmark_evidence import ( # noqa: E402
   selected_debris_case_packet as candidate_packet,
 )
 from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
+
+pytestmark = pytest.mark.governance_audit
 
 
 HEX64 = re.compile(r"^[a-f0-9]{64}$")

@@ -11,6 +11,8 @@ import pytest
 from tools.maintenance import document_link_audit as audit
 from tools.maintenance import translate_docs_batch
 
+pytestmark = pytest.mark.governance_audit
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

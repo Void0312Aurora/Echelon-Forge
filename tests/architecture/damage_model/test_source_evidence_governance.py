@@ -32,6 +32,8 @@ from tools.maintenance.external_signoff_evidence import ( # noqa: E402
 )
 from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
 
+pytestmark = pytest.mark.governance_audit
+
 
 @pytest.fixture(scope="module")
 def source_payload_pack_bundle(

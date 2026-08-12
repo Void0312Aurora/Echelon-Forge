@@ -19,6 +19,8 @@ from tools.maintenance.scope_provenance import ( # noqa: E402
   warhead_scope_closeout as warhead_scope_gate,
 )
 
+pytestmark = pytest.mark.governance_audit
+
 
 @pytest.fixture(scope="module")
 def target_geometry_closeout_artifact() -> dict[str, Any]:

@@ -23,6 +23,8 @@ from tools.maintenance.benchmark_evidence import ( # noqa: E402
 )
 from tools.maintenance.retained_artifacts import manifest_integrity # noqa: E402
 
+pytestmark = pytest.mark.governance_audit
+
 
 def _assert_recalculation_hash_only(payload: dict[str, Any]) -> None:
   forbidden_raw_keys = {

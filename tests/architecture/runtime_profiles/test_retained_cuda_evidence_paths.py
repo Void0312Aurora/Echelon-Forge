@@ -19,12 +19,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from tools.diagnostics.cuda_resident_retained_evidence_paths import (
     LOGICAL_EVIDENCE_PREFIX,
     PHYSICAL_EVIDENCE_PREFIX,
     logical_relative,
     physical_relative,
 )
+
+pytestmark = pytest.mark.governance_audit
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_ROOT = ROOT / PHYSICAL_EVIDENCE_PREFIX
