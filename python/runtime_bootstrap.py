@@ -17,6 +17,18 @@ from typing import Iterable
 
 _DLL_DIRECTORY_HANDLES: dict[str, object] = {}
 
+#: Discovery results for :func:`configure_repo_imports`, keyed by every input
+#: outside the file system that can change them. One pytest process calls the
+#: bootstrap dozens of times (``tests/conftest.py`` plus module-level
+#: ``ensure_repo_imports()`` calls), and each scan globs the build tree and
+#: walks ``PATH`` looking for the MinGW runtime. A changed ``CMO_BUILD_DIR``
+#: lands on a different key and is therefore always revalidated; a build tree
+#: rewritten in place under an unchanged key needs
+#: :func:`_reset_import_plan_cache`.
+_IMPORT_PLAN_CACHE: dict[
+    tuple[str, ...], tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]
+] = {}
+
 
 def repo_root() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -163,21 +175,27 @@ def _iter_windows_dll_dirs(build: str) -> tuple[str, ...]:
     return tuple(ordered)
 
 
-def configure_repo_imports(*, require_local: bool = False) -> str:
-    """Put the repository and any local ``ef_py`` builds first on ``sys.path``.
+def _import_plan_key(root: str) -> tuple[str, ...]:
+    """Everything outside the file system that steers a bootstrap scan.
 
-    An explicitly configured ``CMO_BUILD_DIR`` is always validated and fails
-    closed. When ``require_local`` is false, the absence of an in-tree build is
-    allowed so installed-wheel usage remains valid.
+    ``CMO_BUILD_DIR`` is normalized the way :func:`build_dirs` normalizes it, so
+    the pin written back at the end of :func:`configure_repo_imports` maps onto
+    the same entry the first call created instead of forcing a second scan.
     """
 
-    root = repo_root()
+    return (
+        root,
+        _normalize_build_path(root, os.environ.get("CMO_BUILD_DIR", "")),
+        os.environ.get("PATH", ""),
+    )
+
+
+def _discover_import_plan(
+    root: str,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    """Return ``(builds, import_dirs, dll_dirs)`` for ``root``."""
+
     builds = build_dirs(root)
-    if require_local and not builds:
-        raise RuntimeError(
-            "No local ef_py build artifact found; refusing to fall back to an installed "
-            "site-packages extension."
-        )
 
     import_dirs: list[str] = []
     seen_import_dirs: set[str] = set()
@@ -188,6 +206,44 @@ def configure_repo_imports(*, require_local: bool = False) -> str:
             seen_import_dirs.add(import_dir)
             import_dirs.append(import_dir)
 
+    dll_dirs = _iter_windows_dll_dirs(builds[0]) if builds else ()
+    return tuple(builds), tuple(import_dirs), dll_dirs
+
+
+def _reset_import_plan_cache() -> None:
+    """Drop memoized scans; for tests that mutate the build tree in-process."""
+
+    _IMPORT_PLAN_CACHE.clear()
+
+
+def configure_repo_imports(*, require_local: bool = False) -> str:
+    """Put the repository and any local ``ef_py`` builds first on ``sys.path``.
+
+    An explicitly configured ``CMO_BUILD_DIR`` is always validated and fails
+    closed. When ``require_local`` is false, the absence of an in-tree build is
+    allowed so installed-wheel usage remains valid.
+
+    The scan behind that decision is memoized per process; both fail-closed
+    checks and the resulting paths are still applied on every call, so callers
+    keep their guarantees even if something reordered ``sys.path`` in between.
+    """
+
+    root = repo_root()
+    key = _import_plan_key(root)
+    plan = _IMPORT_PLAN_CACHE.get(key)
+    if plan is None:
+        plan = _discover_import_plan(root)
+        if plan[0]:
+            # An empty result is the cheap path anyway (no artifact globbing, no
+            # PATH walk) and caching it would hide a build produced mid-process.
+            _IMPORT_PLAN_CACHE[key] = plan
+    builds, import_dirs, dll_dirs = plan
+    if require_local and not builds:
+        raise RuntimeError(
+            "No local ef_py build artifact found; refusing to fall back to an installed "
+            "site-packages extension."
+        )
+
     if root in sys.path:
         sys.path.remove(root)
     sys.path.insert(0, root)
@@ -196,14 +252,13 @@ def configure_repo_imports(*, require_local: bool = False) -> str:
             sys.path.remove(import_dir)
         sys.path.insert(0, import_dir)
 
-    if builds and os.name == "nt":
-        for dll_dir in _iter_windows_dll_dirs(builds[0]):
-            if dll_dir in _DLL_DIRECTORY_HANDLES:
-                continue
-            try:
-                _DLL_DIRECTORY_HANDLES[dll_dir] = os.add_dll_directory(dll_dir)
-            except (AttributeError, OSError):
-                pass
+    for dll_dir in dll_dirs:
+        if dll_dir in _DLL_DIRECTORY_HANDLES:
+            continue
+        try:
+            _DLL_DIRECTORY_HANDLES[dll_dir] = os.add_dll_directory(dll_dir)
+        except (AttributeError, OSError):
+            pass
     if builds:
         # Pin child processes and later imports to the same selected build.
         os.environ["CMO_BUILD_DIR"] = builds[0]
