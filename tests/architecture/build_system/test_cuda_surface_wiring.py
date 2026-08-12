@@ -560,31 +560,67 @@ def _workflow_logical_commands(workflow: str) -> list[list[str]]:
   return commands
 
 
+def _configure_dir(tokens: list[str]) -> str | None:
+  """The ``-B <dir>`` of a CMake configure invocation, or None for utility
+  commands (``cmake --version``) that configure nothing."""
+  for index, token in enumerate(tokens):
+    if token == "-B" and index + 1 < len(tokens):
+      return tokens[index + 1].rstrip("/")
+    if token.startswith("-B") and len(token) > 2:
+      return token[2:].rstrip("/")
+  return None
+
+
+def _build_invocations(tokens: list[str]) -> tuple[str, set[str]] | None:
+  if not tokens or tokens[0] != "cmake" or "--build" not in tokens:
+    return None
+  index = tokens.index("--build")
+  if index + 1 >= len(tokens):
+    return None
+  build_dir = tokens[index + 1].rstrip("/")
+  targets: set[str] = set()
+  if "--target" in tokens:
+    for token in tokens[tokens.index("--target") + 1 :]:
+      if token.startswith("-"):
+        break
+      targets.add(token)
+  return build_dir, targets
+
+
 def _cuda_lane_flag_violations(workflow: str) -> list[str]:
-  """Bind each surface target a ``cmake --build`` invocation names to the
-  ``-D`` token an actual CMake *configure* invocation must carry."""
+  """Bind each surface target a ``cmake --build <dir>`` invocation names to
+  the ``-D`` token of the configure invocation *for that same build
+  directory*. A flag on a CMake utility command or on an unrelated configure
+  cannot stand in for the tree that actually compiles the target."""
   commands = _workflow_logical_commands(workflow)
-  configure_tokens: set[str] = set()
-  built_targets: set[str] = set()
+  configures: dict[str, set[str]] = {}
+  builds: list[tuple[str, set[str]]] = []
   for tokens in commands:
     if not tokens or tokens[0] != "cmake":
       continue
-    if "--build" in tokens:
-      if "--target" in tokens:
-        for token in tokens[tokens.index("--target") + 1 :]:
-          if token.startswith("-"):
-            break
-          built_targets.add(token)
-    else:
-      configure_tokens.update(tokens)
+    build = _build_invocations(tokens)
+    if build is not None:
+      builds.append(build)
+      continue
+    build_dir = _configure_dir(tokens)
+    if build_dir is not None:
+      configures.setdefault(build_dir, set()).update(tokens)
   violations = []
-  for target in sorted(built_targets & set(_SURFACE_FLAGS)):
-    flag = _SURFACE_FLAGS[target]
-    if flag not in configure_tokens:
-      violations.append(
-        f"the compile lane builds {target} but its run commands never pass {flag}, "
-        "so its .cu sources are silently excluded from the build"
-      )
+  for build_dir, targets in builds:
+    for target in sorted(targets & set(_SURFACE_FLAGS)):
+      flag = _SURFACE_FLAGS[target]
+      configure = configures.get(build_dir)
+      if configure is None:
+        violations.append(
+          f"the compile lane builds {target} in {build_dir} but the workflow "
+          "carries no configure invocation for that build directory"
+        )
+      elif flag not in configure:
+        violations.append(
+          f"the compile lane builds {target} but the {build_dir} configure "
+          f"invocation never passes {flag}, so its .cu sources are silently "
+          "excluded from the build"
+        )
   return violations
 
 
@@ -602,38 +638,44 @@ def test_cuda_compile_lane_enables_the_flag_behind_every_surface_it_builds() -> 
   # from the lane entirely, that is its own regression.
   built: set[str] = set()
   for tokens in _workflow_logical_commands(workflow):
-    if tokens and tokens[0] == "cmake" and "--build" in tokens and "--target" in tokens:
-      for token in tokens[tokens.index("--target") + 1 :]:
-        if token.startswith("-"):
-          break
-        built.add(token)
+    build = _build_invocations(tokens)
+    if build is not None:
+      built.update(build[1])
   for target in _SURFACE_FLAGS:
     assert target in built, f"the compile lane no longer builds {target}"
 
 
 def test_cuda_lane_flag_gate_rejects_prose_and_non_configure_carriers() -> None:
-  """Mutation coverage from the review's convergence gate: with the real
-  configure argument removed (or flipped OFF), neither an ``echo`` step
-  carrying the flag, an inline shell comment, nor a YAML comment may satisfy
-  the gate."""
+  """Mutation coverage from the review's convergence gates: with the real
+  configure argument removed (or flipped OFF), none of these may satisfy the
+  gate -- an ``echo`` step carrying the flag, a CMake utility command
+  carrying it, a configure invocation for an unrelated build directory, an
+  inline shell comment, or a YAML comment."""
   workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
   flag = _SURFACE_FLAGS["ef_gpu_experiments"]
 
-  flipped_with_echo_step = workflow.replace(flag, flag.replace("=ON", "=OFF")) + (
-    "\n      - name: Prose step\n"
-    "        run: |\n"
-    f"          echo {flag}\n"
-  )
-  assert _cuda_lane_flag_violations(flipped_with_echo_step), "echo step satisfied the gate"
+  def _flag_removed() -> str:
+    mutated = workflow.replace(f"{flag} \\", "-DCMAKE_VERBOSE_MAKEFILE=ON \\")
+    assert flag not in mutated
+    return mutated
 
-  removed_with_inline_comment = workflow.replace(
-    f"{flag} \\", "-DCMAKE_VERBOSE_MAKEFILE=ON \\"
-  ).replace(
+  carriers = {
+    "echo step": "\n      - name: Prose step\n        run: |\n" + f"          echo {flag}\n",
+    "cmake utility command": (
+      "\n      - name: Utility\n        run: |\n" + f"          cmake --version {flag}\n"
+    ),
+    "unrelated configure": (
+      "\n      - name: Other tree\n        run: |\n"
+      + f"          cmake -S . -B build-other {flag}\n"
+    ),
+  }
+  for label, carrier in carriers.items():
+    mutated = _flag_removed() + carrier
+    assert _cuda_lane_flag_violations(mutated), f"{label} satisfied the gate"
+
+  removed_with_inline_comment = _flag_removed().replace(
     "cmake -S . -B build-cuda -G Ninja \\",
     f"cmake -S . -B build-cuda -G Ninja \\  # was {flag}",
-  )
-  assert flag not in "".join(
-    " ".join(tokens) for tokens in _workflow_logical_commands(removed_with_inline_comment)
   )
   assert _cuda_lane_flag_violations(removed_with_inline_comment), (
     "an inline shell comment satisfied the gate"
@@ -657,6 +699,7 @@ def test_cuda_lane_flag_gate_rejects_prose_and_non_configure_carriers() -> None:
     "          cmake --build build --target ef_gpu_experiments  # echo -DEF_ENABLE_CUDA_EXPERIMENTS=ON\n"
   )
   assert _cuda_lane_flag_violations(target_only_in_comment) == [
-    "the compile lane builds ef_gpu_experiments but its run commands never pass "
-    "-DEF_ENABLE_CUDA_EXPERIMENTS=ON, so its .cu sources are silently excluded from the build"
+    "the compile lane builds ef_gpu_experiments but the build configure "
+    "invocation never passes -DEF_ENABLE_CUDA_EXPERIMENTS=ON, so its .cu sources are silently "
+    "excluded from the build"
   ]
