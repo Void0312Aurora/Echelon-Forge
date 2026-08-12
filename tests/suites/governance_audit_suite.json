@@ -22,6 +22,7 @@
     "tests/architecture/governance/test_doc_closure_audit.py",
     "tests/architecture/governance/test_docs_information_architecture.py",
     "tests/architecture/governance/test_document_link_audit.py",
+    "tests/architecture/governance/test_document_tier_census.py",
     "tests/architecture/governance/test_runtime_infrastructure_documentation.py",
     "tests/architecture/governance/test_standards_documentation_governance.py",
     "tests/architecture/runtime_profiles/test_cuda_resident_closure.py",
