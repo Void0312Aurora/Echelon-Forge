@@ -19,6 +19,37 @@ inline constexpr std::string_view kCudaResidentPerformanceInvocationSurface =
 inline constexpr std::string_view kCudaResidentPerformanceUnavailableCountersReason =
     "ERR_NVGPUCTRPERM";
 
+// --- CP-7a: frozen small-batch selection rule (gate G-F disposition) --------
+//
+// CR2-6b measured the resident lane losing to the CPU reference at world 1 by
+// 7-36x and recorded a routing ADVISORY. The CP-5 post-fusion campaigns and
+// the world-1 timeline attribution turned the advisory's cause into
+// measurement: the fused window body is ~65.5 us of single-thread serial-chain
+// device time at world 1 while the CPU lane finishes the whole step in
+// ~18-31 us, so no host-side skeleton fix can close world 1. This rule
+// freezes that disposition so the world-1 regression is explicit policy
+// rather than a silent measurement footnote.
+//
+// The rule is documentation-grade policy, not a runtime selector: the
+// maintained default remains the Flecs CPU reference for every world count,
+// and no runtime translation unit may consume these constants (an
+// architecture gate enforces that). The exact resident-lane crossover between
+// world counts 1 and 4 is unmeasured -- the frozen matrix has no world-2/3
+// row -- so the advisory minimum is the smallest measured-winning count and
+// its value is a named CP-8 re-matrix review item.
+inline constexpr std::string_view kSmallBatchSelectionRuleId =
+    "cp7.small_batch_selection_rule.v1";
+inline constexpr std::size_t kResidentLaneAdvisoryMinimumWorldCount = 4;
+inline constexpr bool kWorldCountsBelowMinimumRouteToCpuReference = true;
+inline constexpr bool kMaintainedDefaultRemainsCpuReference = true;
+inline constexpr std::string_view kSmallBatchCrossoverReviewOwner = "cp8.rematrix";
+
+static_assert(kResidentLaneAdvisoryMinimumWorldCount > 1,
+              "the rule exists to route sub-minimum world counts to the CPU reference");
+static_assert(kWorldCountsBelowMinimumRouteToCpuReference &&
+                  kMaintainedDefaultRemainsCpuReference,
+              "freezing the rule must not weaken the maintained CPU default");
+
 // These constants describe the fixed-air device layout and the operations in
 // the split cuda_world_store_cuda_* translation units. They are a diagnostic
 // ledger, not a claim that the candidate is a full RuntimeFacade backend. The

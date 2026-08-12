@@ -119,7 +119,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
 | CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | **已落地 2026-08-12。** 六个窗口提交 launch 融合为一个 `window_commit_body_kernel`（每捕获窗口 12→7 次 launch）；kernel 目录 v3 经 static_assert 折叠表取代 v2；导出状态摘要与冻结的 CR2-6b 捕获在两条 lane、两轮 campaign 上保持逐位一致；warmed end-to-end p50 在全部 20 个 CR2-6b 对比行上改善（0.63-0.99 倍）。见下文「CP-5 已落地」 |
 | CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | 真实消费者，而非诊断 smoke |
-| CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | world 1 不再是静默退化 |
+| CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | **CP-7a 已落地 2026-08-12：** `cp7.small_batch_selection_rule.v1` 把低于 4 的 world 数冻结为路由 CPU 参考的文档级策略（无运行时选择器；架构门禁强制零运行时消费者），实测依据是 world 1 上约 65.5 us 的单线程设备地板对 CPU 约 18-31 us 的整步耗时。交叉点数值列为 CP-8 复核项。CP-7b（宿主骨架缩减，候选 1）是剩余的另一半 |
 | CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | 优化后证据可与 CR2-6b 比较 |
 | CP-9 | 晋升决策：全部门禁加独立评审，或记录带确切缺失授权的 hold | 显式、有证据支撑的裁定 |
 

@@ -49,6 +49,15 @@ TEST_CASE("RB9 performance contract freezes the private-window operation ledger"
     CHECK(both.d2h_bytes == device.d2h_bytes + slot_bytes + worlds * 16);
 }
 
+TEST_CASE("CP-7a small-batch selection rule stays frozen documentation-grade policy") {
+    using namespace runtime::cuda_resident::performance;
+    CHECK(kSmallBatchSelectionRuleId == "cp7.small_batch_selection_rule.v1");
+    CHECK(kResidentLaneAdvisoryMinimumWorldCount == 4);
+    CHECK(kWorldCountsBelowMinimumRouteToCpuReference);
+    CHECK(kMaintainedDefaultRemainsCpuReference);
+    CHECK(kSmallBatchCrossoverReviewOwner == "cp8.rematrix");
+}
+
 TEST_CASE("RB9 CUDA resource inventory includes pack and consumer kernels") {
     using namespace runtime::cuda_resident;
     if (!CudaWorldStore::compiled_with_cuda()) {

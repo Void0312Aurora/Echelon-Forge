@@ -226,6 +226,54 @@ def test_rb9_static_ledger_matches_current_cuda_execution_graph() -> None:
     assert "ledger.device_consumer_release_outside_measured_path = true" in contract
 
 
+def test_cp7a_small_batch_selection_rule_is_frozen_policy_not_a_selector() -> None:
+    """CP-7a freezes the world-1 disposition of gate G-F as explicit policy.
+
+    The rule must exist with its measured content (resident-lane advisory
+    minimum at the smallest measured-winning world count, sub-minimum counts
+    routed to the CPU reference, maintained default unchanged, crossover
+    review owned by CP-8), and it must stay documentation-grade: no runtime
+    translation unit may consume the constants, so freezing the rule cannot
+    smuggle in a public backend selector.
+    """
+    contract = _text(CONTRACT)
+    assert '"cp7.small_batch_selection_rule.v1"' in contract
+    assert "kResidentLaneAdvisoryMinimumWorldCount = 4" in contract
+    assert "kWorldCountsBelowMinimumRouteToCpuReference = true" in contract
+    assert "kMaintainedDefaultRemainsCpuReference = true" in contract
+    assert '"cp8.rematrix"' in contract
+    assert "static_assert(kResidentLaneAdvisoryMinimumWorldCount > 1" in contract
+
+    # Documentation-grade means zero runtime consumers: the constants may be
+    # referenced only by the contract itself and by tests.
+    rule_symbols = (
+        "kSmallBatchSelectionRuleId",
+        "kResidentLaneAdvisoryMinimumWorldCount",
+        "kWorldCountsBelowMinimumRouteToCpuReference",
+    )
+    src_root = ROOT / "src"
+    offenders: list[str] = []
+    for path in src_root.rglob("*"):
+        if path.suffix not in {".cpp", ".cu", ".cuh", ".h"}:
+            continue
+        if path == CONTRACT:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if any(symbol in text for symbol in rule_symbols):
+            offenders.append(path.relative_to(ROOT).as_posix())
+    allowed = {"src/tests/test_cuda_resident_performance.cpp"}
+    unexpected = sorted(set(offenders) - allowed)
+    assert not unexpected, (
+        f"the small-batch rule must stay documentation-grade policy; runtime "
+        f"consumers found: {unexpected}"
+    )
+
+    # Freezing the rule must leave the maintained default untouched.
+    facade = _text(ROOT / "src/runtime/facade/runtime_facade_config.cpp")
+    assert ".compiled_experimental_backend = false" in facade
+    assert "supports_resident_state = false" in facade
+
+
 def test_rb9_comparison_remains_held_even_when_internal_speedup_exceeds_target() -> None:
     summary = build_summary(_report("flecs_cpu_reference"), _report("cuda_resident"), cpu_sha256="a", cuda_sha256="b")
     assert summary["matrix_complete"] is True

@@ -173,6 +173,15 @@ re-pinning of collectors.
    world 1 to CPU) becomes a frozen, documented threshold with a measured
    crossover point from the CP-8 matrix. This is the no-fix disposition; it
    satisfies the gate because the regression stops being silent.
+   **LANDED as CP-7a (2026-08-12):** `cp7.small_batch_selection_rule.v1` in
+   the performance contract freezes world counts below 4 to the CPU
+   reference, documentation-grade (architecture gate enforces zero runtime
+   consumers), with the crossover value named as a CP-8 review item. The
+   world-1 timeline attribution above upgraded this from a routing
+   preference to the only honest disposition for world 1: the single-thread
+   device floor (~65.5 us) exceeds the whole CPU step (~18-31 us) before any
+   host cost is counted. Owner selected rule + candidate 1 as the CP-7
+   disposition; candidate 1 remains as CP-7b.
 
 ## Sequencing
 
