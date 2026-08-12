@@ -1,30 +1,19 @@
 from __future__ import annotations
 
-import os
 import re
 import subprocess
 import textwrap
-import uuid
 from pathlib import Path
+
+from tests.architecture.helpers import (
+  compile_cpp_snippet,
+  dependency_include_path,
+  dependency_link_args,
+  dependency_runtime_path_dirs,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-FLECS_INCLUDE_CANDIDATES = (
-  REPO_ROOT / "build-local-win" / "_deps" / "flecs-src" / "include",
-  REPO_ROOT / "build-local-win" / "_deps" / "flecs-src",
-  REPO_ROOT / "build" / "_deps" / "flecs-src" / "include",
-  REPO_ROOT / "build" / "_deps" / "flecs-src",
-)
-FLECS_STATIC_LIB_CANDIDATES = (
-  REPO_ROOT / "build-local-win" / "_deps" / "flecs-build" / "libflecs_static.a",
-  REPO_ROOT / "build-local-win" / "_deps" / "flecs-build" / "libflecs.dll.a",
-  REPO_ROOT / "build" / "_deps" / "flecs-build" / "libflecs_static.a",
-  REPO_ROOT / "build" / "_deps" / "flecs-build" / "libflecs.dll.a",
-)
-FLECS_RUNTIME_PATH_CANDIDATES = (
-  REPO_ROOT / "build-local-win" / "_deps" / "flecs-build",
-  REPO_ROOT / "build" / "_deps" / "flecs-build",
-)
 RUNTIME_FACADE_SOURCE_FILES = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
@@ -59,62 +48,31 @@ def _method_body(source: str, signature: str) -> str:
   raise AssertionError(f"could not find method body for {signature}")
 
 
-def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
-  suffix = ".exe" if os.name == "nt" else ""
-  binary_dir = REPO_ROOT / "build-local-win" / "_cpp_snippets"
-  binary_dir.mkdir(parents=True, exist_ok=True)
-  binary = binary_dir / f"cpp_snippet_{uuid.uuid4().hex}{suffix}"
-  command = [
-    "g++",
-    "-std=c++20",
-    "-I",
-    str(REPO_ROOT / "src"),
-  ]
-  for include_path in FLECS_INCLUDE_CANDIDATES:
-    if include_path.is_dir():
-      command.extend(["-I", str(include_path)])
-  command.extend([
-    "-x",
-    "c++",
-    "-",
-    "-x",
-    "none",
-    "-o",
-    str(binary),
-  ])
-  for static_lib in FLECS_STATIC_LIB_CANDIDATES:
-    if static_lib.is_file():
-      command.append(str(static_lib))
-      break
-  compile_result = subprocess.run(
-    command,
-    input=source,
-    text=True,
-    capture_output=True,
-    check=False,
-    cwd=REPO_ROOT,
-  )
-  assert compile_result.returncode == 0, compile_result.stderr
+def _optional_dependency_includes(dependency: str) -> tuple[Path, ...]:
+  """The dependency's include dir, or nothing when this build has no copy.
+
+  `dependency_include_path` raises `AssertionError`, which at module scope
+  would abort collection for the whole file; these snippets only need the
+  include when the build actually ships the dependency.
+  """
+
   try:
-    env = os.environ.copy()
-    runtime_paths = [
-      str(path) for path in FLECS_RUNTIME_PATH_CANDIDATES if path.is_dir()
-    ]
-    if runtime_paths:
-      env["PATH"] = os.pathsep.join([*runtime_paths, env.get("PATH", "")])
-    return subprocess.run(
-      [str(binary)],
-      text=True,
-      capture_output=True,
-      check=False,
-      cwd=REPO_ROOT,
-      env=env,
-    )
-  finally:
-    try:
-      binary.unlink()
-    except OSError:
-      pass
+    return (dependency_include_path(dependency),)
+  except AssertionError:
+    return ()
+
+
+FLECS_INCLUDE_PATHS = _optional_dependency_includes("flecs")
+
+
+def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
+  return compile_cpp_snippet(
+    source,
+    include_paths=FLECS_INCLUDE_PATHS,
+    link_args=dependency_link_args("flecs"),
+    runtime_path_prepend=dependency_runtime_path_dirs("flecs"),
+    binary_prefix="runtime_facade_window_loop_injection",
+  )
 
 
 def test_runtime_facade_exposes_window_loop_api() -> None:
@@ -131,7 +89,9 @@ def test_runtime_facade_exposes_window_loop_api() -> None:
     source,
     "RuntimeWindowResult RuntimeFacade::run_window",
   )
-  assert "return execute_runtime_window(" in body
+  # The window result is stored before identity-ledger shaping since the
+  # registry-pruning refactor; the loop is still driven by the coordinator.
+  assert "RuntimeWindowResult result = execute_runtime_window(" in body
   assert "set_pilot_actions_batch(assignments)" in body
   assert "set_mission_commands_maintained_batch(assignments)" in body
   assert "set_mission_commands_batch(assignments)" not in body
