@@ -12,9 +12,9 @@ from pathlib import Path
 from urllib.parse import unquote
 
 try:
-  from tools.maintenance.document_scope import filter_paths
+  from tools.maintenance.document_scope import filter_paths, is_english_work_doc
 except ModuleNotFoundError:  # Direct script execution from tools/maintenance.
-  from document_scope import filter_paths
+  from document_scope import filter_paths, is_english_work_doc
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -78,14 +78,24 @@ def select_documents(repo_root: Path, *, full_tree: bool = False) -> list[Path]:
     if path.is_file()
   ]
   if docs_root.is_dir():
+    markdown = [path for path in docs_root.rglob("*.md") if path.is_file()]
     selected.extend(
       filter_paths(
-        (path for path in docs_root.rglob("*.md") if path.is_file()),
+        markdown,
         include_local_only=False,
         root=docs_root,
         strict_bilingual_only=not full_tree,
       )
     )
+    if not full_tree:
+      # The link-audit scope is wider than the bilingual scope: maintained
+      # English work-layer documents stay link-audited by default even though
+      # they carry no bilingual SLA.
+      selected.extend(
+        path
+        for path in filter_paths(markdown, include_local_only=False)
+        if is_english_work_doc(path, docs_root)
+      )
   return sorted(set(selected))
 
 

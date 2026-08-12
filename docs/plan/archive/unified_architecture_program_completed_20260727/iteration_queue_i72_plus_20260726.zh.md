@@ -110,7 +110,7 @@ I41、I44、I54、I55、I57、I58、I59、I61、I62、I63）在落地时未变�
 
 - [统一架构计划](README.zh.md)
 - [仓库整合计划](../repository_consolidation_completed_20260729/README.zh.md)
-- [Exact Runtime 重构计划](../../../architecture/work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.zh.md)
+- [Exact Runtime 重构计划](../../../architecture/work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - [T6 残差台账](t6_residual_ledger.zh.md)
 - [I89 残留裁定](t7_i89_residual_disposition_20260727.zh.md)
 - [I90 终局残余审计](t7_i90_final_residual_audit_20260727.zh.md)

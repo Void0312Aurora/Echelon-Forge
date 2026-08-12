@@ -92,8 +92,10 @@ Tier B：英文单语 work/evidence 面
   详细计划、checkpoint、evidence 记录与 analysis 文档
 - Tier B 文档只维护英文主文，不保留 `.zh.md` 镜像；`2026-08-12` 的 work 面
   双语收缩已移除既有 work 层镜像
-- 仅当 owner 把某文档明确提升进入 Tier A 严格双语面（并登记配对）时才增设
-  中文辅文
+- 仅当 owner 把某文档明确提升进入 Tier A 严格双语面时才增设中文辅文；提升的
+  流程是把两个文件路径（`.md` 与 `.zh.md`）登记进
+  `tools/maintenance/document_scope.py` 的 `PROMOTED_WORK_DOCUMENTS`
+  allowlist，然后用 `clusters --write --pair <pair_id>` 刷新新配对记录
 - 既有 work README 页可保留 `README.zh.md` 导航辅文；中文导航页直接链接英文
   work 文档是预期稳态
 - 遗留的仅中文 work 文档（缺英文主文的 `.zh.md`，或中文内容仍是超集的文档）
@@ -154,6 +156,11 @@ Language:
 - 当前 `english_hash` / `chinese_hash` 基线值
 
 注册表用于判断是否存在“只改了一侧、另一侧还没跟上”的情况。翻译批次完成后，应刷新受影响的 pair 记录，让基线保持最新。
+
+运行说明：
+
+- 簇哈希会刻意忽略文件开头的机器翻译草稿标记，并对行尾做归一化，因此仅仅是
+  工作区检出格式（如 `LF`/`CRLF`）不同，不会触发全树双语漂移噪声
 
 审计解释规则：
 

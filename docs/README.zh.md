@@ -67,7 +67,7 @@ Last verified: `2026-08-12`
 ## 语言与权利
 
 稳定入口、导航 README、standards、reference 和 how-to 采用英文规范页与中文
-companion。work/evidence 面（`docs/*/work/**`）只维护英文规范版；仅当文档被明确
+companion。work/evidence 面（`docs/**/work/**`）只维护英文规范版；仅当文档被明确
 提升进入严格双语面时才增设中文 companion，因此中文导航页可以直接链接英文
 work 文档。既有归档按冻结时的语言布局保持不动。仓库文档默认采用 Apache-2.0；
 第三方来源另有声明时从其权利边界。参见 [LICENSE](../LICENSE) 和

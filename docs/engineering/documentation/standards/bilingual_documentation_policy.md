@@ -106,7 +106,10 @@ Tier B: English-only work and evidence surface
   mirrors; the `2026-08-12` work-surface contraction removed the previous
   work-layer mirrors
 - a Chinese companion is added only when the owner explicitly promotes the
-  document into the Tier A strict bilingual surface (and registers the pair)
+  document into the Tier A strict bilingual surface; promotion registers both
+  file paths (the `.md` and the `.zh.md`) in the `PROMOTED_WORK_DOCUMENTS`
+  allowlist inside `tools/maintenance/document_scope.py` and then refreshes
+  the new pair record with `clusters --write --pair <pair_id>`
 - existing work README pages may keep a `README.zh.md` navigation companion;
   Chinese navigation pages linking English work documents are the expected
   steady state
