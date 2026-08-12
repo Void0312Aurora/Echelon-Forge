@@ -224,6 +224,7 @@ BINDINGS_CORE = (
   / "python"
   / "bindings_core.cpp"
 )
+BINDINGS_DIR = REPO_ROOT / "src" / "interfaces" / "python"
 DEFAULT_EFFECTS_MODEL = (
   REPO_ROOT
   / "src"
@@ -622,8 +623,72 @@ def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
     assert "engagement_events::apply_effects_result_fields(" not in caller_block
 
 
+def _python_binding_sources() -> list[str]:
+  """File names of EF_PYTHON_BINDING_SOURCES in CMake (= registration) order."""
+  lines = _text(CMAKE_LISTS).splitlines()
+  start = next(
+    index for index, line in enumerate(lines)
+    if line.strip().startswith("set(EF_PYTHON_BINDING_SOURCES")
+  )
+  names: list[str] = []
+  for line in lines[start + 1:]:
+    stripped = line.strip()
+    if stripped == ")":
+      break
+    match = re.fullmatch(r"src/interfaces/python/(\S+\.cpp)", stripped)
+    if match:
+      names.append(match.group(1))
+  return names
+
+
+def _binding_surface_text(prefix: str, detail_header: str) -> str:
+  """Concatenated source text of one decomposed binding surface.
+
+  The per-domain split keeps registration order locked across the
+  orchestrator, the internal header, and the CMake source list, so joining
+  the slices in CMake order reproduces the original single-file text for
+  source-shape guards. The internal header goes first because the shared
+  helpers that used to sit above bind_* in the single file now live there.
+  """
+  parts = [_text(BINDINGS_DIR / detail_header)]
+  parts.extend(
+    _text(BINDINGS_DIR / name)
+    for name in _python_binding_sources()
+    if name == f"{prefix}.cpp" or name.startswith(f"{prefix}_")
+  )
+  return "\n".join(parts)
+
+
+def bindings_core_text() -> str:
+  return _binding_surface_text("bindings_core", "bindings_core_detail.h")
+
+
+def bindings_runtime_text() -> str:
+  return _binding_surface_text("bindings_runtime", "bindings_runtime_detail.h")
+
+
+def _diagnostics_introspection_text(text: str) -> str:
+  """The diagnostics introspection surface, joined from its three sub-slices.
+
+  bind_simulation_kernel_diagnostics_introspection_surface is a thin
+  orchestrator since the bindings_core decomposition; the quarantine
+  assertions apply to the concatenation of the three sub-surface bodies,
+  which is textually equivalent to the old single function body.
+  """
+  return "".join(
+    _extract_function_block(
+      text, f"void bind_simulation_kernel_diagnostics_{part}("
+    )
+    for part in (
+      "hit_and_view_surface",
+      "platform_state_surface",
+      "missile_runtime_surface",
+    )
+  )
+
+
 def _simulation_kernel_binding_names() -> list[str]:
-  text = _text(BINDINGS_CORE)
+  text = bindings_core_text()
   start = text.index('nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");')
   block = text[start:]
   names = re.findall(r'\.def\s*\(\s*"([^"]+)"', block)
