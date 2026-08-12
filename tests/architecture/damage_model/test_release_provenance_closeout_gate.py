@@ -11,6 +11,8 @@ ensure_repo_root_on_sys_path()
 
 from tools.maintenance.release_governance import provenance_closeout as closeout_gate  # noqa: E402
 
+pytestmark = pytest.mark.governance_audit
+
 
 @pytest.fixture(scope="module")
 def release_provenance_closeout_artifact() -> dict[str, Any]:

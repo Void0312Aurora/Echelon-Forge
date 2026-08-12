@@ -22,6 +22,8 @@ from tools.maintenance.candidate_artifacts import ( # noqa: E402
   component_probability_surface_probe as surface_probe,
 )
 
+pytestmark = pytest.mark.governance_audit
+
 
 @pytest.fixture(scope="module")
 def surface_probe_artifact() -> dict[str, Any]:

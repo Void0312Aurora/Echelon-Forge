@@ -8,6 +8,8 @@ import pytest
 
 from tools.maintenance.retained_artifacts import manifest_integrity as integrity
 
+pytestmark = pytest.mark.governance_audit
+
 
 def _sha256(path: Path) -> str:
   return hashlib.sha256(path.read_bytes()).hexdigest()

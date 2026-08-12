@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
@@ -15,6 +17,8 @@ from tools.maintenance.independent_review import ( # noqa: E402
   scope_bucket_review as scope_bucket_review_gate,
   uncertainty_review as uncertainty_review_gate,
 )
+
+pytestmark = pytest.mark.governance_audit
 
 
 # Independent review may close bounded review surfaces, but never release authority.

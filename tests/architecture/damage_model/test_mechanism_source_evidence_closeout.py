@@ -21,6 +21,8 @@ from tools.maintenance.benchmark_evidence import ( # noqa: E402
 )
 from tools.maintenance.scope_provenance import mechanism_source_closeout as gate # noqa: E402
 
+pytestmark = pytest.mark.governance_audit
+
 
 def _by_residual(artifact: dict[str, object]) -> dict[str, dict[str, object]]:
   rows = artifact["residual_benchmark_evidence"]

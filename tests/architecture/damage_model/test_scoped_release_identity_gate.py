@@ -5,11 +5,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
 
 from tools.maintenance.release_governance import scoped_release_identity as scoped_identity_gate  # noqa: E402
+
+pytestmark = pytest.mark.governance_audit
 
 
 def test_scoped_release_identity_gate_passes_scoped_surface() -> None:

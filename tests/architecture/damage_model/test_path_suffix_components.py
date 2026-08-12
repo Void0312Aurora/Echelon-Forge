@@ -22,6 +22,8 @@ import pytest
 
 from tests.architecture.damage_model.helpers import path_suffix_components
 
+pytestmark = pytest.mark.governance_audit
+
 EXPECTED = ("retained_pack", "manifest.json")
 
 

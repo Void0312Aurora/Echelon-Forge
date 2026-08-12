@@ -5,12 +5,16 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 from tests.architecture.damage_model.helpers import write_release_json
 
 ensure_repo_root_on_sys_path()
 
 from tools.maintenance.release_governance import source_release_signoff as release_signoff_gate  # noqa: E402
+
+pytestmark = pytest.mark.governance_audit
 
 
 def test_release_signoff_gate_current_repo_is_narrowly_closeable(
