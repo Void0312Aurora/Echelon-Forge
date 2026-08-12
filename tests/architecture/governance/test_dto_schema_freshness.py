@@ -5,6 +5,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
+from tools.maintenance.dto_schema import generate
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GENERATOR = REPO_ROOT / "tools" / "maintenance" / "dto_schema" / "generate.py"
@@ -705,3 +709,45 @@ def test_dto_schema_generated_outputs_are_fresh_and_registered(
 
   restored_result = _run_generator("--check", "--repo-root", str(isolated_root))
   assert restored_result.returncode == 0
+
+  # The generated package directory is fully generator-owned: a *.py file no
+  # registered schema owns fails --check and is removed by --write.
+  rogue_rel = f"{_BUILDER_DIR}/rogue_orphan_builder.py"
+  rogue_path = isolated_root / rogue_rel
+  rogue_path.write_bytes(b"# rogue\n")
+
+  unexpected_result = _run_generator(
+    "--check", "--repo-root", str(isolated_root)
+  )
+  assert unexpected_result.returncode == 1
+  assert f"unexpected: {rogue_rel}" in unexpected_result.stdout
+
+  write_result = _run_generator("--write", "--repo-root", str(isolated_root))
+  assert write_result.returncode == 0
+  assert f"removed: {rogue_rel}" in write_result.stdout
+  assert not rogue_path.exists()
+
+  final_result = _run_generator("--check", "--repo-root", str(isolated_root))
+  assert final_result.returncode == 0
+
+
+def test_registry_and_schema_directory_must_agree(
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  """Every command refuses to run when schemas/ and SCHEMA_MODULES diverge."""
+  unregistered, missing = generate.registry_inconsistencies(
+    generate.SCHEMA_MODULES, generate.SCHEMAS_DIR
+  )
+  assert unregistered == ()
+  assert missing == ()
+
+  original = generate.SCHEMA_MODULES
+
+  monkeypatch.setattr(generate, "SCHEMA_MODULES", original[:-1])
+  with pytest.raises(ValueError, match="not in SCHEMA_MODULES"):
+    generate.load_schemas()
+
+  phantom = f"{generate.SCHEMAS_PACKAGE}.phantom_missing_fields"
+  monkeypatch.setattr(generate, "SCHEMA_MODULES", original + (phantom,))
+  with pytest.raises(ValueError, match="missing on disk"):
+    generate.load_schemas()
