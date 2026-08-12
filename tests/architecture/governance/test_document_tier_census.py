@@ -198,3 +198,59 @@ def test_tier_census_matches_the_recorded_baseline(census: dict[str, object]) ->
     "A rising tier_a count means new bilingual SLA; a rising tier_d count means "
     "new sealed evidence that must never be queued for translation."
   )
+
+
+# ---------------------------------------------------------------------------
+# The classifier and the maintained-selection filters must agree
+# ---------------------------------------------------------------------------
+
+
+def test_tier_c_scratch_stays_out_of_the_maintained_selection(tmp_path: Path) -> None:
+  """A doc the classifier calls Tier C must not survive the default filter.
+
+  ``docs/<owner>/temp/`` pages are retention (Tier C); letting them through
+  ``filter_paths`` would feed scratch into the strict audit and the
+  translation surface.
+  """
+  from tools.maintenance.document_scope import filter_paths
+
+  docs = tmp_path / "docs"
+  scratch = docs / "operations" / "temp" / "scratch.md"
+  live = docs / "systems" / "standards" / "page.md"
+  for page in (scratch, live):
+    page.parent.mkdir(parents=True, exist_ok=True)
+    page.write_text("# page\n", encoding="utf-8")
+
+  assert classify_document(scratch, docs) == "tier_c"
+  assert classify_document(live, docs) == "tier_a"
+
+  selected = filter_paths([scratch, live], include_local_only=False, root=docs)
+  assert live in selected
+  assert scratch not in selected
+
+
+def test_translation_collector_refuses_sealed_evidence(tmp_path: Path) -> None:
+  """Tier D has no translation lane, not even under --include-local-only."""
+  import argparse
+
+  from tools.maintenance.translate_docs_batch import collect_source_files
+
+  docs = tmp_path / "docs"
+  sealed = docs / "systems" / "effects" / "reviews" / "packet_20260101" / "evidence.zh.md"
+  work = docs / "learning" / "work" / "notes.zh.md"
+  for page in (sealed, work):
+    page.parent.mkdir(parents=True, exist_ok=True)
+    page.write_text("# page\n", encoding="utf-8")
+
+  assert classify_document(sealed, docs) == "tier_d"
+
+  args = argparse.Namespace(
+    files=None,
+    root=str(docs),
+    pattern=None,
+    source_lang="zh",
+    include_local_only=True,
+  )
+  files = collect_source_files(args)
+  assert work in files
+  assert sealed not in files

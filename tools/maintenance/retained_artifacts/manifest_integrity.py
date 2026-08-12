@@ -464,9 +464,20 @@ class PinEntry:
   canonical_size: int | None
 
   @property
-  def key(self) -> tuple[str, str, str]:
-    """Checkout-independent identity used by the CI mismatch baseline."""
-    return (self.manifest, self.field_path, self.recorded_sha256[:BASELINE_HASH_PREFIX])
+  def key(self) -> tuple[str, str, str, str]:
+    """Checkout-independent identity used by the CI mismatch baseline.
+
+    The pinned target is part of the identity: without it, repointing a
+    known-mismatched field at a different file while keeping the recorded
+    digest would slip past both the new-mismatch and the repaired-entry
+    checks.
+    """
+    return (
+      self.manifest,
+      self.field_path,
+      self.target,
+      self.recorded_sha256[:BASELINE_HASH_PREFIX],
+    )
 
 
 @dataclass(frozen=True)
@@ -737,7 +748,15 @@ def plan_pin_cascade(
   def digest_for(display: str, path: Path) -> TargetDigest | None:
     state = states.get(display)
     if state is not None:
-      return state.digest()
+      if state.dirty:
+        # A manifest this cascade already edited will be written back in
+        # canonical form, so upstream pins must record the digest of those
+        # future bytes.
+        return state.digest()
+      # An untouched manifest is pinned by its on-disk bytes. Hashing the
+      # reserialised payload instead would record a digest that exists
+      # nowhere on disk whenever the manifest does not round-trip.
+      return _digest_target(state.path) if state.path.is_file() else None
     return _digest_target(path) if path.is_file() else None
 
   while rounds < max_rounds:

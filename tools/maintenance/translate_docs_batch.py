@@ -17,12 +17,18 @@ from urllib import error, request
 
 try:
   from tools.maintenance.document_scope import (
+    classify_document,
     filter_paths,
     is_local_only_doc,
     is_strict_bilingual_doc,
   )
 except ModuleNotFoundError:  # Direct script execution from tools/maintenance.
-  from document_scope import filter_paths, is_local_only_doc, is_strict_bilingual_doc
+  from document_scope import (
+    classify_document,
+    filter_paths,
+    is_local_only_doc,
+    is_strict_bilingual_doc,
+  )
 
 
 DEFAULT_BASE_URL_ENV = "DOCS_TRANSLATE_BASE_URL"
@@ -651,7 +657,11 @@ def collect_source_files(args: argparse.Namespace) -> list[Path]:
     pattern = "*.md"
 
   files = sorted(p for p in root.rglob(pattern) if p.is_file())
-  files = filter_paths(files, include_local_only=args.include_local_only)
+  files = filter_paths(files, include_local_only=args.include_local_only, root=root)
+  # Sealed dated evidence (Tier D) has no translation lane at all: its bytes
+  # are routinely hash-pinned by retained-artifact manifests, so it stays
+  # excluded even under --include-local-only.
+  files = [p for p in files if classify_document(p, root) != "tier_d"]
   if args.source_lang == "en":
     files = [p for p in files if not has_lang_suffix(p, "zh") and not has_lang_suffix(p, "en")]
   if args.source_lang == "zh":

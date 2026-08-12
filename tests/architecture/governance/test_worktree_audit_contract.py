@@ -45,6 +45,62 @@ def _codes(result: audit.AuditResult) -> list[str]:
   return [finding.code for finding in result.findings]
 
 
+def test_inventory_listing_falls_back_when_ownership_blocks_the_entry_point(
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  """A dubious-ownership entry point must not abort the whole audit.
+
+  When plain `git worktree list` dies on ownership, the restricted
+  safe-directory override must still load the inventory so the per-worktree
+  probes get their chance to report the ownership findings.
+  """
+  porcelain = (
+    "worktree /repo\n"
+    "HEAD 1111111111111111111111111111111111111111\n"
+    "branch refs/heads/main\n"
+    "\n"
+  )
+
+  class _Proc:
+    def __init__(self, returncode: int, stdout: str = "", stderr: str = "") -> None:
+      self.returncode = returncode
+      self.stdout = stdout
+      self.stderr = stderr
+
+  calls: list[list[str]] = []
+
+  def fake_run_git(args, *, timeout):
+    calls.append(list(args))
+    if args[:2] == ["-c", "safe.directory=*"]:
+      return _Proc(0, stdout=porcelain)
+    return _Proc(
+      128,
+      stderr="fatal: detected dubious ownership in repository at '/repo'",
+    )
+
+  monkeypatch.setattr(audit, "_run_git", fake_run_git)
+
+  entries = audit.list_repository_worktrees(Path("/repo"))
+
+  assert [entry.path for entry in entries] == ["/repo"]
+  assert len(calls) == 2
+  assert calls[1][:2] == ["-c", "safe.directory=*"]
+
+
+def test_inventory_listing_raises_when_even_the_override_fails(
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  class _Proc:
+    returncode = 128
+    stdout = ""
+    stderr = "fatal: not a git repository"
+
+  monkeypatch.setattr(audit, "_run_git", lambda args, *, timeout: _Proc())
+
+  with pytest.raises(audit.WorktreeAuditError):
+    audit.list_repository_worktrees(Path("/nowhere"))
+
+
 def test_parse_worktree_list_reads_porcelain_records() -> None:
   text = (
     "worktree /repo\n"

@@ -54,16 +54,24 @@ REPAIRED_CONTROL_TARGET = (
 
 HASH_PREFIX_RE = re.compile(r"^[0-9a-f]{16}$")
 
-BaselineKey = tuple[str, str, str]
+BaselineKey = tuple[str, str, str, str]
 
 
 def _baseline_key(row: dict[str, Any]) -> BaselineKey:
-  return (row["manifest"], row["field_path"], row["recorded_prefix"])
+  # The target belongs to the identity: dropping it would let a pin be
+  # repointed at a different file (digest kept) without tripping either
+  # ratchet direction.
+  return (
+    row["manifest"],
+    row["field_path"],
+    row["target"],
+    row["recorded_prefix"],
+  )
 
 
 def _describe(key: BaselineKey) -> str:
-  manifest, field_path, recorded_prefix = key
-  return f"{manifest}  {field_path}  recorded={recorded_prefix}"
+  manifest, field_path, target, recorded_prefix = key
+  return f"{manifest}  {field_path}  target={target}  recorded={recorded_prefix}"
 
 
 @pytest.fixture(scope="module")
@@ -479,3 +487,96 @@ def test_cascade_refuses_to_rewrite_a_manifest_it_cannot_reserialise(
   assert plan["errors"]
   assert plan["written_manifests"] == []
   assert inner.read_bytes() == before
+
+
+def test_cascade_pins_an_untouched_non_round_trip_manifest_by_its_disk_bytes(
+  tmp_path: Path,
+) -> None:
+  """An untouched pinned manifest must be hashed from the bytes on disk.
+
+  When a pinned manifest does not reserialise byte-for-byte (indent=4 here)
+  but needs no edits of its own, upstream pins must record the digest of its
+  actual on-disk bytes. Hashing the canonical reserialisation instead would
+  write a digest that exists nowhere, leaving the freshly rewritten upstream
+  pin mismatched the moment it lands.
+  """
+  repo_root = tmp_path / "repo"
+  retained = repo_root / "package" / "retained_artifacts"
+  inner = retained / "inner" / "manifest.json"
+  outer = retained / "outer" / "manifest.json"
+  artifact = repo_root / "artifact.md"
+  artifact.parent.mkdir(parents=True, exist_ok=True)
+  artifact.write_bytes(b"body\n")
+
+  inner.parent.mkdir(parents=True, exist_ok=True)
+  inner.write_text(
+    json.dumps(
+      {"inputs": [{"path": "artifact.md", "sha256": _canonical_digest(artifact)}]},
+      indent=4,
+      sort_keys=True,
+    )
+    + "\n",
+    encoding="utf-8",
+    newline="\n",
+  )
+  _write_manifest(
+    outer,
+    {
+      "artifacts": [
+        {
+          "path": "package/retained_artifacts/inner/manifest.json",
+          "sha256": "0" * 64,
+        }
+      ]
+    },
+  )
+
+  plan = integrity.plan_pin_cascade(
+    "package/retained_artifacts/inner/manifest.json",
+    repo_root=repo_root,
+    manifest_paths=[inner, outer],
+    write=True,
+  )
+
+  assert not plan["errors"]
+  assert plan["written_manifests"] == ["package/retained_artifacts/outer/manifest.json"]
+  rewritten = json.loads(outer.read_text(encoding="utf-8"))
+  assert rewritten["artifacts"][0]["sha256"] == _canonical_digest(inner)
+  # The non-round-trip inner manifest itself stays untouched on disk.
+  assert "    " in inner.read_text(encoding="utf-8")
+
+  reindexed = integrity.build_pin_index(repo_root=repo_root, manifest_paths=[inner, outer])
+  assert all(entry.matched for entry in integrity.iter_pin_entries(reindexed))
+
+
+def test_baseline_identity_distinguishes_pins_by_target(tmp_path: Path) -> None:
+  """Repointing a known-mismatched pin at another file must trip the ratchet.
+
+  The manifest, field path, and recorded digest all stay identical here; only
+  the pinned target moves. Without the target in the identity key the new
+  provenance would satisfy both the new-mismatch and the repaired-entry
+  checks simultaneously.
+  """
+  repo_root = tmp_path / "repo"
+  manifest_path = repo_root / "package" / "retained_artifacts" / "s" / "manifest.json"
+  for name in ("original.md", "moved.md"):
+    target = repo_root / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(b"content of %s\n" % name.encode())
+  stale_digest = "f" * 64
+
+  _write_manifest(
+    manifest_path,
+    {"inputs": [{"path": "original.md", "sha256": stale_digest}]},
+  )
+  index = integrity.build_pin_index(repo_root=repo_root, manifest_paths=[manifest_path])
+  key_original = index["original.md"][0].key
+
+  _write_manifest(
+    manifest_path,
+    {"inputs": [{"path": "moved.md", "sha256": stale_digest}]},
+  )
+  index = integrity.build_pin_index(repo_root=repo_root, manifest_paths=[manifest_path])
+  key_moved = index["moved.md"][0].key
+
+  assert key_original != key_moved

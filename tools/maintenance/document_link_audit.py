@@ -93,7 +93,7 @@ def select_documents(repo_root: Path, *, full_tree: bool = False) -> list[Path]:
       # they carry no bilingual SLA.
       selected.extend(
         path
-        for path in filter_paths(markdown, include_local_only=False)
+        for path in filter_paths(markdown, include_local_only=False, root=docs_root)
         if is_english_work_doc(path, docs_root)
       )
   return sorted(set(selected))

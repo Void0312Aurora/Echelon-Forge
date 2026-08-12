@@ -175,9 +175,20 @@ def probe_worktree_status(path: str, *, timeout: int = GIT_TIMEOUT_SECONDS) -> S
 
 def list_repository_worktrees(repo_root: Path, *, timeout: int = GIT_TIMEOUT_SECONDS) -> list[WorktreeEntry]:
   process = _run_git(["-C", str(repo_root), "worktree", "list", "--porcelain"], timeout=timeout)
-  if process is None or process.returncode != 0:
-    raise WorktreeAuditError(f"cannot list worktrees from {repo_root}: {_first_error_line(process)}")
-  return parse_worktree_list(process.stdout)
+  if process is not None and process.returncode == 0:
+    return parse_worktree_list(process.stdout)
+
+  # An ownership-blocked entry point must not abort the whole audit: retry
+  # with the restricted override so the inventory itself still loads, and
+  # leave the per-worktree status probes to report the ownership findings.
+  error = _first_error_line(process)
+  override = _run_git(
+    ["-c", "safe.directory=*", "-C", str(repo_root), "worktree", "list", "--porcelain"],
+    timeout=timeout,
+  )
+  if override is not None and override.returncode == 0:
+    return parse_worktree_list(override.stdout)
+  raise WorktreeAuditError(f"cannot list worktrees from {repo_root}: {error}")
 
 
 def is_inside_policy_root(path: str, main_root: str, allowed_paths: Sequence[str] = ()) -> bool:

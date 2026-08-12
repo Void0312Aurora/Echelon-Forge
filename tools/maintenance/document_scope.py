@@ -194,8 +194,18 @@ def filter_paths(
   root: Path | None = None,
   strict_bilingual_only: bool = False,
 ) -> list[Path]:
+  """Select the maintained slice of ``paths``.
+
+  With ``root`` the default exclusion is the whole Tier C retention set
+  (archive, ``temp`` components relative to the docs root, and local-only
+  names), so the filter agrees with ``classify_document``. Without ``root``
+  only the root-independent ``is_local_only_doc`` heuristics apply; callers
+  that know the docs root should always pass it.
+  """
   if include_local_only:
     filtered = sorted(paths)
+  elif root is not None:
+    filtered = sorted(p for p in paths if not is_retained_doc(p, root))
   else:
     filtered = sorted(p for p in paths if not is_local_only_doc(p))
   if strict_bilingual_only:
