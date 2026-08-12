@@ -10,11 +10,11 @@ def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
   routing_text = _text(DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL)
 
   assert (
-    '#include "models/weapons/detail/default_effects_legacy_detail.inc"'
+    '#include "models/weapons/detail/default_effects_legacy_detail.h"'
     in text
   )
   assert (
-    '#include "models/weapons/detail/default_effects_domain_routing_detail.inc"'
+    '#include "models/weapons/detail/default_effects_domain_routing_detail.h"'
     in text
   )
   assert re.search(
@@ -181,7 +181,7 @@ def test_domain_separation_split_generic_files_route_domain_owned_runtime() -> N
   assert "ShipPlatform" in maritime_adapter_text
 
   assert "is_structured_damage_air_target" not in effects_text
-  assert "default_effects_air_platform_resolution_detail.inc" not in effects_text
+  assert "default_effects_air_platform_resolution_detail" not in effects_text
   assert "route_default_effects_target_domain(" in routing_text
   assert '#include "models/domains/air/default_effects_air_domain.h"' in routing_text
   assert '#include "models/domains/naval/default_effects_naval_domain.h"' in routing_text

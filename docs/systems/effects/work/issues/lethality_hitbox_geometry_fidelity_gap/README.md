@@ -38,9 +38,9 @@ Direct hit currently uses axis-aligned boxes:
 
 Related code:
 
-- [default_effects_geometry_detail.inc](../../../../../../src/models/weapons/detail/default_effects_geometry_detail.inc)
-- [default_effects_direct_hit_detail.inc](../../../../../../src/models/weapons/detail/default_effects_direct_hit_detail.inc)
-- [default_effects_spatial_projection_detail.inc](../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc)
+- [default_effects_geometry_detail.h](../../../../../../src/models/weapons/detail/default_effects_geometry_detail.h)
+- [default_effects_direct_hit_detail.h](../../../../../../src/models/weapons/detail/default_effects_direct_hit_detail.h)
+- [default_effects_spatial_projection_detail.h](../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.h)
 
 ### Current F-16 Boxes
 

@@ -83,7 +83,7 @@ hand-written on purpose:
 
 ## `.inc` files outside this generator
 
-16 of the 132 `src/**/*.inc` files are deliberately not schema-generated:
+6 of the 122 `src/**/*.inc` files are deliberately not schema-generated:
 
 - `src/content/detail/*.inc` (6 files) are hand-maintained content
   escape-hatch field lists whose anchor points the other way, pinned three
@@ -100,7 +100,12 @@ hand-written on purpose:
 
   The un-wired I52 draft (`drafts/content_unit_schema_draft.json`) is the
   future single-source candidate for this family.
-- `src/models/weapons/detail/default_effects_*.inc` (10 files) are private
-  code fragments of `default_effects_model.cpp` — helper functions included
-  inside its anonymous namespace — not X-macro field lists, and are out of
-  scope for schema generation.
+
+`src/**/*.inc` therefore means "X-macro field table" with no code-fragment
+exceptions. The former largest exception, the 10 private code fragments of
+`default_effects_model.cpp`, was renamed to
+`src/models/weapons/detail/default_effects_*_detail.h` so that ~4.9k lines of
+helper function bodies are counted as C++ source rather than hiding behind a
+field-table suffix. Those fragments are still expanded inside one anonymous
+namespace and are not self-contained headers; see
+`src/models/weapons/README.md`.

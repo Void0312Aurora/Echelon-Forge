@@ -38,9 +38,9 @@ Last verified: `2026-08-08`
 
 相关代码：
 
-- [default_effects_geometry_detail.inc](../../../../../../src/models/weapons/detail/default_effects_geometry_detail.inc)
-- [default_effects_direct_hit_detail.inc](../../../../../../src/models/weapons/detail/default_effects_direct_hit_detail.inc)
-- [default_effects_spatial_projection_detail.inc](../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc)
+- [default_effects_geometry_detail.h](../../../../../../src/models/weapons/detail/default_effects_geometry_detail.h)
+- [default_effects_direct_hit_detail.h](../../../../../../src/models/weapons/detail/default_effects_direct_hit_detail.h)
+- [default_effects_spatial_projection_detail.h](../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.h)
 
 ### F-16 当前盒子
 

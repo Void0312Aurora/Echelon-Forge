@@ -268,7 +268,7 @@ DEFAULT_EFFECTS_LEGACY_DETAIL = (
   / "models"
   / "weapons"
   / "detail"
-  / "default_effects_legacy_detail.inc"
+  / "default_effects_legacy_detail.h"
 )
 DEFAULT_EFFECTS_AIR_DOMAIN = (
   REPO_ROOT
@@ -284,7 +284,7 @@ DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL = (
   / "models"
   / "weapons"
   / "detail"
-  / "default_effects_domain_routing_detail.inc"
+  / "default_effects_domain_routing_detail.h"
 )
 COMPONENT_DOMAINS_ROOT = REPO_ROOT / "src" / "components" / "domains"
 SYSTEM_DOMAINS_ROOT = REPO_ROOT / "src" / "systems" / "domains"
@@ -368,6 +368,14 @@ DOMAIN_SEPARATION_RETIRED_PUBLIC_FILES = (
   / "weapons"
   / "detail"
   / "default_effects_air_platform_resolution_detail.inc",
+  # The default_effects fragment family moved from .inc to _detail.h; both
+  # spellings of the retired air-platform fragment stay banned.
+  REPO_ROOT
+  / "src"
+  / "models"
+  / "weapons"
+  / "detail"
+  / "default_effects_air_platform_resolution_detail.h",
 )
 DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS = (
   '#include "components/combat/damage.h"',
@@ -379,6 +387,7 @@ DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS = (
   '#include "systems/physics/control_system.h"',
   '#include "systems/physics/propulsion_system.h"',
   '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"',
+  '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.h"',
 )
 STRUCTURAL_DOC_EN = (
   REPO_ROOT
