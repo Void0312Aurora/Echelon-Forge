@@ -32,14 +32,26 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _canonical_source_descriptor(path: Path) -> dict[str, object]:
-    payload = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
-    encoded = payload.encode("utf-8")
+def _committed_source_descriptor(commit: str, relative: str) -> dict[str, object]:
+    """Canonical descriptor of a source file as of the evidence's own commit.
+
+    Frozen packages pin the tool sources that produced them; the live tree
+    moves on (the collector went generation-aware, the probe gained the CP-6
+    learner mode), so the immutability check must read the blob at the
+    package's source_commit, mirroring the counter chain's precedent.
+    """
+    completed = subprocess.run(
+        ["git", "show", f"{commit}:{relative}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
+    payload = completed.stdout.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
     return {
-        "path": path.relative_to(ROOT).as_posix(),
+        "path": relative,
         "canonicalization": "utf8_lf",
-        "canonical_bytes": len(encoded),
-        "sha256": hashlib.sha256(encoded).hexdigest(),
+        "canonical_bytes": len(payload),
+        "sha256": hashlib.sha256(payload).hexdigest(),
     }
 
 
@@ -65,14 +77,20 @@ def test_tracked_manifest_reports_and_evidence_hashes_are_exact() -> None:
         "bytes": MANIFEST.stat().st_size,
         "sha256": _sha256(MANIFEST),
     }
-    assert evidence["inputs"]["collector_source"] == _canonical_source_descriptor(COLLECTOR)
-    assert evidence["inputs"]["schema_source"] == _canonical_source_descriptor(SCHEMA)
+    # The package's tool descriptors were captured when the evidence landed
+    # (the collector did not exist yet at the campaigns' source_commit), so
+    # immutability is checked against the landing commit's blobs.
+    landing = "356bcd56a61e40f1327d16b6a2dda335d7fdd553"
+    assert evidence["inputs"]["collector_source"] == _committed_source_descriptor(
+        landing, COLLECTOR.relative_to(ROOT).as_posix()
+    )
+    assert evidence["inputs"]["schema_source"] == _committed_source_descriptor(
+        landing, SCHEMA.relative_to(ROOT).as_posix()
+    )
     for descriptor in manifest["source_inputs"].values():
-        path = ROOT / descriptor["path"]
-        assert descriptor == _canonical_source_descriptor(path)
+        assert descriptor == _committed_source_descriptor(landing, descriptor["path"])
     for descriptor in manifest["prior_evidence_inputs"].values():
-        path = ROOT / descriptor["path"]
-        assert descriptor == _canonical_source_descriptor(path)
+        assert descriptor == _committed_source_descriptor(landing, descriptor["path"])
         assert descriptor["canonicalization"] == "utf8_lf"
     for campaign in manifest["campaigns"]:
         for descriptor in campaign["reports"].values():
@@ -181,6 +199,66 @@ def test_manifest_loader_rejects_duplicate_keys(tmp_path: Path) -> None:
     path.write_text('{"schema_version":"a","schema_version":"b"}', encoding="utf-8")
     with pytest.raises(schema.MatrixEvidenceError, match="duplicate JSON key"):
         collector._load(path)
+
+
+def test_unknown_generations_fail_closed() -> None:
+    evidence = deepcopy(_load(EVIDENCE))
+    evidence["schema_version"] = "cuda_resident.cr2.production_matrix_evidence.v99"
+    with pytest.raises(schema.MatrixEvidenceError, match="unknown matrix evidence generation"):
+        schema.validate_evidence(evidence)
+    with pytest.raises(schema.MatrixEvidenceError, match="unknown matrix manifest generation"):
+        schema.generation_for_manifest("cuda_resident.cr2.production_matrix_campaign_manifest.v99")
+
+
+def test_generation_registry_keeps_v1_frozen_and_registers_cp8_once() -> None:
+    """The CP-8 kickoff's pin inventory: v2 re-owns every identity instead of
+    inheriting CR2-6b content. The v1 entry must stay the frozen package's
+    exact era; the v2 entry drops the selection-policy result block (routing
+    authority lives with CP-7a), references the CR2-6b package as a prior
+    input, and carries capture-time counter truth (G-D closed with achieved
+    counters that predate the CP-5 fusion)."""
+    v1 = schema.GENERATIONS[schema.EVIDENCE_SCHEMA]
+    assert v1["iteration"] == "CR2-6b"
+    assert v1["evidence_date"] == "2026-08-04"
+    assert v1["has_selection_policy"] is True
+    assert v1["prior_evidence_inputs"] == ("counter_evidence", "resource_evidence")
+    assert v1["counter_status"]["achieved_counter_gate_complete"] is False
+    assert v1["counter_status"]["counter_blocker_code"] == "ERR_NVGPUCTRPERM"
+    assert v1["gates"]["cr2_6_matrix_evidence_complete"] is True
+
+    v2 = schema.GENERATIONS[schema.EVIDENCE_SCHEMA_V2]
+    assert schema.EVIDENCE_SCHEMA_V2 == "cuda_resident.cp8.production_matrix_evidence.v2"
+    assert v2["manifest_schema"] == "cuda_resident.cp8.production_matrix_campaign_manifest.v2"
+    assert v2["iteration"] == "CP-8"
+    assert v2["evidence_date"] == "2026-08-12"
+    assert v2["has_selection_policy"] is False
+    assert "matrix_evidence_cr2_6b" in v2["prior_evidence_inputs"]
+    assert v2["counter_status"]["achieved_counter_gate_complete"] is True
+    assert v2["counter_status"]["achieved_counters_predate_cp5_fusion"] is True
+    assert "counter_blocker_code" not in v2["counter_status"]
+    assert v2["gates"]["cp8_matrix_evidence_complete"] is True
+    assert v2["interpretation_scope"] == "host_specific_post_optimization_comparison_only"
+    for spec in schema.GENERATIONS.values():
+        for gate in (
+            "maintained_claim_allowed",
+            "promotion_allowed",
+            "public_support_enabled",
+            "tuning_authorized",
+        ):
+            assert spec["gates"][gate] is False
+        assert spec["counter_status"]["tuning_authorized"] is False
+
+    assert schema.generation_for_manifest(v2["manifest_schema"]) is v2
+    assert schema.generation_for_evidence(schema.EVIDENCE_SCHEMA) is v1
+
+
+def test_v2_evidence_shape_rejects_a_selection_policy_block() -> None:
+    """Relabeling the frozen v1 package as v2 must fail on the first v2-owned
+    pin (the selection-policy block v2 deliberately does not carry)."""
+    evidence = deepcopy(_load(EVIDENCE))
+    evidence["schema_version"] = schema.EVIDENCE_SCHEMA_V2
+    with pytest.raises(schema.MatrixEvidenceError, match="top-level schema drifted"):
+        schema.validate_evidence(evidence)
 
 
 def test_cr2_6b_is_evidence_only_and_modules_remain_below_soft_limits() -> None:

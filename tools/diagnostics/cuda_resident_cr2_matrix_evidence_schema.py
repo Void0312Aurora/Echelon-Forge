@@ -8,6 +8,9 @@ from typing import Any
 MANIFEST_SCHEMA = "cuda_resident.cr2.production_matrix_campaign_manifest.v1"
 EVIDENCE_SCHEMA = "cuda_resident.cr2.production_matrix_evidence.v1"
 ITERATION = "CR2-6b"
+MANIFEST_SCHEMA_V2 = "cuda_resident.cp8.production_matrix_campaign_manifest.v2"
+EVIDENCE_SCHEMA_V2 = "cuda_resident.cp8.production_matrix_evidence.v2"
+ITERATION_V2 = "CP-8"
 WORLD_COUNTS = (1, 4, 16, 64, 256)
 COMMON_MODES = ("no_export_no_device", "host_export_no_device")
 DEVICE_MODES = ("no_export_device_consumer", "host_export_device_consumer")
@@ -28,6 +31,90 @@ class MatrixEvidenceError(ValueError):
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise MatrixEvidenceError(message)
+
+
+# One registration per evidence generation, mirroring the counter chain: the
+# frozen CR2-6b package keeps validating byte-for-byte under its v1 pins, the
+# CP-8 generation re-owns every pin the kickoff inventory found instead of
+# inheriting stale CR2-6b content, and unknown generations fail closed.
+GENERATIONS: dict[str, dict[str, Any]] = {
+    EVIDENCE_SCHEMA: {
+        "evidence_schema": EVIDENCE_SCHEMA,
+        "manifest_schema": MANIFEST_SCHEMA,
+        "iteration": ITERATION,
+        "evidence_date": "2026-08-04",
+        "interpretation_scope": "host_specific_experimental_selection_advisory_only",
+        "prior_evidence_inputs": ("counter_evidence", "resource_evidence"),
+        "has_selection_policy": True,
+        "counter_status": {
+            "resource_static_and_topology_complete": True,
+            "achieved_counter_gate_complete": False,
+            "counter_disposition": "documented_external_blocker",
+            "counter_blocker_code": "ERR_NVGPUCTRPERM",
+            "tuning_authorized": False,
+        },
+        "gates": {
+            "cr2_5_achieved_counter_gate_complete": False,
+            "cr2_6_matrix_evidence_complete": True,
+            "cr2_6_selection_advisory_complete": True,
+            "maintained_claim_allowed": False,
+            "promotion_allowed": False,
+            "public_support_enabled": False,
+            "tuning_authorized": False,
+        },
+    },
+    EVIDENCE_SCHEMA_V2: {
+        "evidence_schema": EVIDENCE_SCHEMA_V2,
+        "manifest_schema": MANIFEST_SCHEMA_V2,
+        "iteration": ITERATION_V2,
+        "evidence_date": "2026-08-12",
+        "interpretation_scope": "host_specific_post_optimization_comparison_only",
+        "prior_evidence_inputs": (
+            "counter_evidence",
+            "matrix_evidence_cr2_6b",
+            "resource_evidence",
+        ),
+        # Routing authority lives with the CP-7a frozen rule; the CP-8 package
+        # deliberately carries no selection-policy result block.
+        "has_selection_policy": False,
+        # Capture-time truth: G-D closed with real achieved counters on
+        # 2026-08-10, and those counters describe the pre-fusion v2 parent;
+        # the v4 static parent exists but has no achieved-counter capture yet.
+        "counter_status": {
+            "resource_static_and_topology_complete": True,
+            "achieved_counter_gate_complete": True,
+            "counter_disposition": "achieved_counter_evidence_complete",
+            "achieved_counter_parent_profile": (
+                "cp.resource.steady_full_window_body.sm86.v2"
+            ),
+            "achieved_counters_predate_cp5_fusion": True,
+            "tuning_authorized": False,
+        },
+        "gates": {
+            "cp8_matrix_evidence_complete": True,
+            "cp8_comparable_to_cr2_6b": True,
+            "maintained_claim_allowed": False,
+            "promotion_allowed": False,
+            "public_support_enabled": False,
+            "tuning_authorized": False,
+        },
+    },
+}
+
+
+def generation_for_evidence(schema_version: object) -> dict[str, Any]:
+    require(
+        isinstance(schema_version, str) and schema_version in GENERATIONS,
+        f"unknown matrix evidence generation: {schema_version!r}",
+    )
+    return GENERATIONS[str(schema_version)]
+
+
+def generation_for_manifest(schema_version: object) -> dict[str, Any]:
+    for spec in GENERATIONS.values():
+        if schema_version == spec["manifest_schema"]:
+            return spec
+    raise MatrixEvidenceError(f"unknown matrix manifest generation: {schema_version!r}")
 
 
 def selection_policy_contract() -> dict[str, Any]:
@@ -261,6 +348,8 @@ def _validate_comparisons(comparisons: object) -> None:
 
 
 def validate_evidence(evidence: dict[str, Any]) -> None:
+    require(isinstance(evidence, dict), "matrix evidence must be an object")
+    spec = generation_for_evidence(evidence.get("schema_version"))
     keys = {
         "schema_version",
         "iteration",
@@ -272,16 +361,16 @@ def validate_evidence(evidence: dict[str, Any]) -> None:
         "campaigns",
         "comparison_definition",
         "comparisons",
-        "selection_policy",
         "parity_confirmation",
         "counter_status",
         "limitations",
         "gates",
     }
+    if spec["has_selection_policy"]:
+        keys.add("selection_policy")
     require(set(evidence) == keys, "matrix evidence top-level schema drifted")
-    require(evidence["schema_version"] == EVIDENCE_SCHEMA, "matrix evidence schema mismatch")
-    require(evidence["iteration"] == ITERATION, "matrix evidence iteration drifted")
-    require(evidence["evidence_date"] == "2026-08-04", "matrix evidence date drifted")
+    require(evidence["iteration"] == spec["iteration"], "matrix evidence iteration drifted")
+    require(evidence["evidence_date"] == spec["evidence_date"], "matrix evidence date drifted")
     require(
         type(evidence["source_commit"]) is str
         and COMMIT.fullmatch(evidence["source_commit"]) is not None,
@@ -312,7 +401,7 @@ def validate_evidence(evidence: dict[str, Any]) -> None:
             "matrix_validator",
             "parity_comparator",
         },
-        "prior_evidence_inputs": {"counter_evidence", "resource_evidence"},
+        "prior_evidence_inputs": set(spec["prior_evidence_inputs"]),
     }
     for group, names in input_groups.items():
         values = inputs[group]
@@ -359,8 +448,7 @@ def validate_evidence(evidence: dict[str, Any]) -> None:
         and design.get("order_balanced") is True
         and design.get("lanes_run_concurrently") is False
         and design.get("source_worktree_clean_at_capture") is True
-        and design.get("interpretation_scope")
-        == "host_specific_experimental_selection_advisory_only"
+        and design.get("interpretation_scope") == spec["interpretation_scope"]
         and design.get("unmeasured_world_counts_may_be_extrapolated") is False,
         "capture design drifted",
     )
@@ -379,14 +467,15 @@ def validate_evidence(evidence: dict[str, Any]) -> None:
         "comparison definition drifted",
     )
     _validate_comparisons(evidence["comparisons"])
-    expected_policy = selection_policy_contract()
-    policy = evidence["selection_policy"]
-    require(
-        policy == expected_policy
-        and policy["applies_only_to_measured_world_counts"] is True
-        and policy["rules"][-1]["comparative_performance_claimed"] is False,
-        "selection policy contract drifted",
-    )
+    if spec["has_selection_policy"]:
+        expected_policy = selection_policy_contract()
+        policy = evidence["selection_policy"]
+        require(
+            policy == expected_policy
+            and policy["applies_only_to_measured_world_counts"] is True
+            and policy["rules"][-1]["comparative_performance_claimed"] is False,
+            "selection policy contract drifted",
+        )
     _strict_descriptor(evidence["parity_confirmation"], parity=True)
     require(
         evidence["parity_confirmation"]["schema_version"]
@@ -396,24 +485,7 @@ def validate_evidence(evidence: dict[str, Any]) -> None:
         and evidence["parity_confirmation"]["released_numeric_field_count"] == 12,
         "parity confirmation drifted",
     )
-    counter = evidence["counter_status"]
-    expected_counter = {
-        "resource_static_and_topology_complete": True,
-        "achieved_counter_gate_complete": False,
-        "counter_disposition": "documented_external_blocker",
-        "counter_blocker_code": "ERR_NVGPUCTRPERM",
-        "tuning_authorized": False,
-    }
-    require(
-        isinstance(counter, dict)
-        and set(counter) == set(expected_counter)
-        and counter["resource_static_and_topology_complete"] is True
-        and counter["achieved_counter_gate_complete"] is False
-        and counter["counter_disposition"] == expected_counter["counter_disposition"]
-        and counter["counter_blocker_code"] == expected_counter["counter_blocker_code"]
-        and counter["tuning_authorized"] is False,
-        "counter status drifted",
-    )
+    _require_exact_flags(evidence["counter_status"], spec["counter_status"], "counter status")
     expected_limitations = {
         "host_specific": True,
         "balanced_power_scheme": True,
@@ -425,26 +497,20 @@ def validate_evidence(evidence: dict[str, Any]) -> None:
         "performance_tuning_claimed": False,
         "promotion_claimed": False,
     }
-    limitations = evidence["limitations"]
+    _require_exact_flags(evidence["limitations"], expected_limitations, "matrix evidence limitations")
+    _require_exact_flags(evidence["gates"], spec["gates"], "matrix evidence gates")
+
+
+def _require_exact_flags(value: object, expected: dict[str, Any], label: str) -> None:
     require(
-        isinstance(limitations, dict)
-        and set(limitations) == set(expected_limitations)
-        and all(limitations[key] is value for key, value in expected_limitations.items()),
-        "matrix evidence limitations drifted",
+        isinstance(value, dict) and set(value) == set(expected), f"{label} drifted"
     )
-    expected_gates = {
-        "cr2_5_achieved_counter_gate_complete": False,
-        "cr2_6_matrix_evidence_complete": True,
-        "cr2_6_selection_advisory_complete": True,
-        "maintained_claim_allowed": False,
-        "promotion_allowed": False,
-        "public_support_enabled": False,
-        "tuning_authorized": False,
-    }
-    gates = evidence["gates"]
-    require(
-        isinstance(gates, dict)
-        and set(gates) == set(expected_gates)
-        and all(gates[key] is value for key, value in expected_gates.items()),
-        "matrix evidence gates drifted",
-    )
+    for key, expectation in expected.items():
+        observed = value[key]
+        if isinstance(expectation, bool):
+            require(observed is expectation, f"{label} drifted")
+        else:
+            require(
+                type(observed) is type(expectation) and observed == expectation,
+                f"{label} drifted",
+            )

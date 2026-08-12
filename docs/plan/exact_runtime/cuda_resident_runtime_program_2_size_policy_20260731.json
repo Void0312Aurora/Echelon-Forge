@@ -273,17 +273,17 @@
   {
    "path": "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py",
    "role": "CR2-6b campaign provenance, parity replay, comparison, and evidence collector",
-   "observed_lines": 620
+   "observed_lines": 666
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_matrix_evidence_schema.py",
    "role": "CR2-6b fail-closed evidence and selection-policy schema validator",
-   "observed_lines": 450
+   "observed_lines": 516
   },
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_evidence.py",
    "role": "CR2-6b provenance, derivation, negative, and size guards",
-   "observed_lines": 208
+   "observed_lines": 286
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_closure.py",
