@@ -16,6 +16,24 @@ CI runs three test surfaces, all gated through `tools/runners/`:
 
 These live under `tests/smoke/`, not `tests/suites/`.
 
+## Architecture Tier Manifests
+
+This directory hosts the two checked-in tier manifests for
+`tests/architecture/`:
+
+- `architecture_guard_suite.json` — the default developer regression:
+  structural guards an ordinary code change can break.
+- `governance_audit_suite.json` — the on-demand governance/evidence audit
+  layer: every `tests/architecture` file carrying the module-level
+  `governance_audit` marker.
+
+Both run through `tools/runners/run_pytest_suite.py --suite <manifest>`.
+Meta-tests in `tests/runners/test_pytest_suite_manifests.py` keep the two
+manifests disjoint, exhaustive over `tests/architecture` test files, and in
+lockstep with the marker. See "Architecture Test Tiers" in
+[tests/README.md](../README.md) for the classification rule and run
+commands.
+
 ## Tiers
 
 - `smoke`
