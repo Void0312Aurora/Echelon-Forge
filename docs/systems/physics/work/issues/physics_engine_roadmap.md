@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `physics_engine_roadmap.md`
-- Chinese companion: [physics_engine_roadmap.zh.md](physics_engine_roadmap.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

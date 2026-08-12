@@ -405,8 +405,8 @@ SimulationKernel / WorldBatchRuntime
 
 如果你要看“为什么这样分层”，而不是只看目录 README，优先读：
 
-1. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
-2. [docs/architecture/work/issues/architecture_and_performance_research_followup.zh.md](../../architecture/work/issues/architecture_and_performance_research_followup.zh.md)
+1. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
+2. [docs/architecture/work/issues/architecture_and_performance_research_followup.md](../../architecture/work/issues/architecture_and_performance_research_followup.md)
 3. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
 4. docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
 
@@ -434,7 +434,7 @@ SimulationKernel / WorldBatchRuntime
 - “binding surface 为什么不一致”
   - 从 `src/interfaces/python/` 和 `tests/runtime/` 开始。
 - “facade contract 为什么这样设计”
-  - 从 `src/runtime/` 和 [runtime facade issue](../../architecture/work/issues/runtime_facade_contract_plan.zh.md) 开始。
+  - 从 `src/runtime/` 和 [runtime facade issue](../../architecture/work/issues/runtime_facade_contract_plan.md) 开始。
 - “批量 rollout / world-batch 为什么慢”
   - 从 `src/core/engine/`、`python/rl/runtime/`、`tools/diagnostics/` 开始。
 
@@ -456,7 +456,7 @@ SimulationKernel / WorldBatchRuntime
 如果主要做架构 / 边界工作，再继续读：
 
 1. [Architecture owner](../../architecture/README.zh.md)
-2. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
+2. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
 3. [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
 4. [src/core/mission/README.md](../../../src/core/mission/README.md)
 5. [tests/architecture/runtime_facade](../../../tests/architecture/runtime_facade)

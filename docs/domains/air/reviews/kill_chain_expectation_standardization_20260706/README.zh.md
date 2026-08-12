@@ -106,7 +106,7 @@ AIM-120C 性能声明。
 - 组件响应量化阈值附录：
   [kill_chain_component_response_quantization_20260705.zh.md](kill_chain_component_response_quantization_20260705.zh.md)
 - 标准化期望包络：
-  [空空杀伤链期望包络](../../work/issues/kill_chain_expectation_envelope.zh.md)
+  [空空杀伤链期望包络](../../work/issues/kill_chain_expectation_envelope.md)
 - 校准 harness 计划：
   [kill_chain_calibration_harness_plan_20260623.zh.md](kill_chain_calibration_harness_plan_20260623.zh.md)
 - 标准提升决策：
@@ -183,7 +183,7 @@ AIM-120C 性能声明。
   用 `p_max`、`delta_abs` 和独立 `sampled_failure_observed` 标记定义
   `trace_response` 到 `severe_response` 的 task-local 诊断分区；该附录仍是
   docs-only 标准完善，不授予 runtime calibration authority。`2026-07-06`
-  的 [标准化期望包络](../../work/issues/kill_chain_expectation_envelope.zh.md)
+  的 [标准化期望包络](../../work/issues/kill_chain_expectation_envelope.md)
   把 P1/P2/P3/addendum 注册为空中特化 planning supplement，覆盖人为定义输入、派生报告字段、
   response floor/ceiling、分布容忍度、连续性规则、cell status 和 owner-stage
   归因。只读

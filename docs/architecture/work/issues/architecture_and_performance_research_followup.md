@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `architecture_and_performance_research_followup.md`
-- Chinese companion: [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
@@ -15,8 +15,8 @@ inventory require fresh evidence before promotion or execution.
 Document Navigation:
 
 - [Architecture Documentation](../../README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
-- [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+- [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+- [runtime_facade_contract_plan.md](runtime_facade_contract_plan.md)
 - runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 
 Status: draft issue based on the `2026-05-10` investigation snapshot. It is
@@ -27,7 +27,7 @@ Document positioning:
 - This document provides arguments and trade-off recommendations, but is not a frozen execution plan.
 - Recommendations produced by this document should be distilled into contract plans, special initiatives, or new frozen task tickets.
 
-This document is a further in-depth version of [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md), focusing on the following questions:
+This document is a further in-depth version of [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md), focusing on the following questions:
 
 1. Whether the current architecture's actual boundaries are consistent with the documentation description.
 2. How the layered design should balance future extensibility, performance, and backend replacement.
@@ -324,7 +324,7 @@ Therefore, layering should not just be "directory reorganization", but should be
 ### 2. Most Critical New Layering Requirement
 
 On top of the existing
-[system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md),
+[system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md),
 it is recommended to add three performance-oriented requirements:
 
 #### A. Facade layer must natively support batch and zero-copy

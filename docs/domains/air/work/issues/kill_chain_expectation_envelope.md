@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `kill_chain_expectation_envelope.md`
-- Chinese companion: [kill_chain_expectation_envelope.zh.md](kill_chain_expectation_envelope.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

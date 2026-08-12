@@ -22,7 +22,7 @@ Review basis：`2026-06-14` geometry-only 验收与保留的 opt-in proxy 证据
 
 - Systems owner：[../../../README.zh.md](../../../README.zh.md)
 - 几何缺口 issue：[../../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md](../../work/issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)
-- 几何审阅工具设计：[../../../issues/lethality_hitbox_geometry_fidelity_gap/geometry_visual_review_design_20260611.zh.md](../../work/issues/lethality_hitbox_geometry_fidelity_gap/geometry_visual_review_design_20260611.zh.md)
+- 几何审阅工具设计：[../../../issues/lethality_hitbox_geometry_fidelity_gap/geometry_visual_review_design_20260611.md](../../work/issues/lethality_hitbox_geometry_fidelity_gap/geometry_visual_review_design_20260611.md)
 - F-16 可视化 GLB：[../../../../../examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb](../../../../../examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb)
 - F-16 审计 glTF：[../../../../../examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf](../../../../../examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf)
 - F-16 当前损伤几何：[../../../../../examples/config/database/aircraft/units/f16c_block50.json](../../../../../examples/config/database/aircraft/units/f16c_block50.json)

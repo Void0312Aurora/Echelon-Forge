@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `c2_communication.md`
-- Chinese companion: [c2_communication.zh.md](c2_communication.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

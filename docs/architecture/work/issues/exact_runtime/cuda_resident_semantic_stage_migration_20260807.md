@@ -3,7 +3,7 @@
 Language:
 
 - English canonical: `cuda_resident_semantic_stage_migration_20260807.md`
-- Chinese companion: [cuda_resident_semantic_stage_migration_20260807.zh.md](cuda_resident_semantic_stage_migration_20260807.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

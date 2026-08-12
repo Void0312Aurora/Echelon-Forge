@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `gpu_execution_mainline_integration_checklist.md`
-- Chinese companion: [gpu_execution_mainline_integration_checklist.zh.md](gpu_execution_mainline_integration_checklist.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

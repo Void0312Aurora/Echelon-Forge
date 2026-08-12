@@ -1,6 +1,6 @@
 # Visualization Stack Evolution (Operational/Strategic-Scale North Star)
 
-Language: English canonical; [Chinese companion](viz_stack_evolution.zh.md).
+Language: English canonical; Chinese companion not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `maintained`

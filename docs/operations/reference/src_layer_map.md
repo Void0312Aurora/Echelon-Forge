@@ -407,8 +407,8 @@ Current mainline split:
 
 If you want to understand why the layers look this way, not just read directory README files, start with:
 
-1. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
-2. [docs/architecture/work/issues/architecture_and_performance_research_followup.zh.md](../../architecture/work/issues/architecture_and_performance_research_followup.zh.md)
+1. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
+2. [docs/architecture/work/issues/architecture_and_performance_research_followup.md](../../architecture/work/issues/architecture_and_performance_research_followup.md)
 3. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
 4. docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
 
@@ -458,7 +458,7 @@ When entering the repository for the first time, read in this order:
 If you are mainly working on architecture or boundary questions, continue with:
 
 1. [Architecture owner](../../architecture/README.md)
-2. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
+2. [docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md](../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
 3. [src/runtime/facade/README.md](../../../src/runtime/facade/README.md)
 4. [src/core/mission/README.md](../../../src/core/mission/README.md)
 5. [tests/architecture/runtime_facade](../../../tests/architecture/runtime_facade)
