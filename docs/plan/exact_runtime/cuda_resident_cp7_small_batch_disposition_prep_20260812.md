@@ -72,6 +72,69 @@ cause. Confirming or refuting it, and ranking the candidates below by
 measured contribution, requires a host-side timeline capture (Nsight Systems
 over world-1 windows) as CP-7's first action.
 
+## World-1 timeline attribution (2026-08-12, measured)
+
+The host-side timeline this note demanded as CP-7's first action has been
+captured and read. Capture: the review session's `rerun_quiet.ps1` ran the
+CUDA matrix probe post-CP-5 (`--worlds 1`, the full frozen production
+protocol, all four modes, 3,131 windows) under Nsight Systems 2025.3.2 on the
+recorded host, machine verified quiet. The raw artifacts exceed the tracked
+1 MiB cap and stay host-retained scratch; their identity is pinned here:
+`review_w1_timeline.nsys-rep` 179,503,343 bytes sha256
+`c9e461315e5136b645c7549f75b7eb4d9fee0ddc6a52e4c86688c011fb71a79f`, probe
+report `review_w1_probe.json` 41,116 bytes sha256
+`4814773d5b92b2b2d81fdf08ade8bdeb609a1497a62c732934d782ca75d35288`.
+
+Per-window host API attribution, median call duration times calls per window
+(all-mode average). Nsight tracing inflates every call, so the *ranking and
+counts* are the claim, not the absolute microseconds:
+
+| Family | Calls/window | Median/call | Median cost/window |
+|---|---:|---:|---:|
+| `cudaMemcpy` (all directions) | 12.1 | 20.4 us | ~247 us |
+| `cudaLaunchKernel` | 6.0 | 26.5 us | ~159 us |
+| `cudaMemset` (status words) | 5.05 | 11.3 us | ~57 us |
+| `cudaDeviceSynchronize` | 5.0 | 9.3 us | ~47 us |
+| `cudaMalloc` + `cudaFree` | 2.0 + 2.0 | 8.2 / 4.7 us | ~26 us |
+| event family (record/wait/sync) | 3.0 | - | ~9 us |
+
+Three findings with decision weight:
+
+1. **The inventory missed a per-window allocation.** The device-consumer
+   lane performs four `cudaMalloc` and four `cudaFree` per window (lease
+   values+ids plus consumer output values+ids; 6,269 allocations across
+   3,131 windows, half of them device-consumer mode). The ledger's
+   `device_consumer_allocation_may_synchronize = true` already documented
+   the risk; the timeline shows it is a real per-window cost. Buffer
+   pooling/reuse joins the candidate list below as a low-blast-radius fix.
+2. **The device itself puts a floor under world 1 that no host fix can
+   remove.** `window_commit_body_kernel` at world 1 runs a single thread
+   through the whole serial dependency chain: device time is
+   median 65.5 us with p10-p90 inside 0.2 us (n=3,128); barriers and
+   control preparation add ~7 us more. The CPU lane completes the entire
+   world-1 step in ~18-31 us end to end. Even a zero-overhead host skeleton
+   leaves the resident lane ~3-4x slower than CPU at world 1. This is
+   measured support for candidate 5 (an explicit frozen selection rule) as
+   the world-1 disposition, independent of how far candidates 1-4 go.
+3. **The skeleton's shape confirms the hypothesis for small-but-not-one
+   batches.** Copies and launches dominate the traced skeleton (~75% of
+   ~544 us/window median-based host cost); the fused kernel's device time is
+   near-flat in world count (65.5 us at world 1, 104.7 us at 256 in the
+   CP-5b capture), so every host microsecond removed converts directly into
+   small-batch headroom. Candidate 1 (one sync + merged status array,
+   removing ~4 syncs, ~4 status reads, and 4 of 5 memsets) is worth roughly
+   119-165 us/window of the traced skeleton; candidate 3 (merge the three
+   control copies) roughly two calls' worth; candidate 2's three D2D slot
+   copies cost call overhead rather than bandwidth at world 1.
+
+The reviewer rerun campaigns accompanying the capture (four reports, hashes
+`e6b9c8b3...7ebe657d`, `d6d06fc4...fde16d1f`, `3ad03853...ffd2a61b`,
+`92d334d2...a02a1793`) independently reproduce the CP-5 released-state
+digests against the frozen CR2-6b capture (zero mismatches, both lanes).
+Their world-64 rows carry contention spikes from the CP-5b clean rebuild
+that overlapped them; the tracked CP-5 evidence remains the timing
+comparator, and those rerun rows must not enter evidence.
+
 ## Fix candidates, ranked by expected win against blast radius
 
 None of these is measured yet; CP-7 must measure any candidate it adopts and
