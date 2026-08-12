@@ -12,13 +12,15 @@ import pytest
 # module-level ``pytestmark`` would invalidate the sealed inventory, so the
 # marker is applied here instead. Audit-tier modules in this directory that
 # are not line-count pinned carry the module-level ``pytestmark`` directly.
+# The counter/resource evidence modules are also line-count pinned but stay in
+# the guard tier: their substance is C++ contract/CMake topology and
+# parser/schema rejection paths, with only a minority of retained-evidence
+# checks.
 GOVERNANCE_AUDIT_TIER_MODULES = frozenset(
   {
     "test_cuda_resident_closure.py",
-    "test_cuda_resident_counter_evidence.py",
     "test_cuda_resident_cr2_closure.py",
     "test_cuda_resident_cr2_matrix_evidence.py",
-    "test_cuda_resident_resource_evidence.py",
   }
 )
 
