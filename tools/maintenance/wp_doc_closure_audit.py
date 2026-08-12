@@ -17,6 +17,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from urllib.parse import unquote
 
+try:
+  from tools.maintenance.docs_link import iter_markdown_links
+except ModuleNotFoundError:  # Direct script execution from tools/maintenance.
+  from docs_link import iter_markdown_links
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SIM_ARCH_DIR = Path("docs/task/simulation_architecture")
@@ -27,7 +32,6 @@ WP_DECIMAL_LABELS = {
   "wp25": "WP2.5",
   "wp75": "WP7.5",
 }
-MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 STATUS_LINE_RE = re.compile(r"^Status:\s*(.*)$")
 
 
@@ -185,14 +189,15 @@ def markdown_link_issues(repo_root: Path, paths: list[Path], *, current_wp_token
     if not source.exists():
       continue
     text = source.read_text(encoding="utf-8")
-    for raw_target in MARKDOWN_LINK_RE.findall(text):
+    for link in iter_markdown_links(text):
+      raw_target = link.raw_target
       if is_external_or_anchor(raw_target):
         continue
       if current_wp_tokens is not None:
         lowered_target = raw_target.lower()
         if not any(token in lowered_target for token in current_wp_tokens):
           continue
-      target = _strip_fragment_and_query(raw_target)
+      target = _strip_fragment_and_query(link.target)
       if not target:
         continue
       resolved = (source.parent / target).resolve()

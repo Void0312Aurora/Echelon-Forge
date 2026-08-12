@@ -12,16 +12,31 @@ from pathlib import Path
 from urllib.parse import unquote
 
 try:
+  from tools.maintenance.docs_link import (
+    extract_link_target,
+    iter_markdown_links,
+    mask_non_prose,
+  )
   from tools.maintenance.document_scope import filter_paths, is_english_work_doc
 except ModuleNotFoundError:  # Direct script execution from tools/maintenance.
+  from docs_link import extract_link_target, iter_markdown_links, mask_non_prose
   from document_scope import filter_paths, is_english_work_doc
 
 
+__all__ = [
+  "AuditResult",
+  "LinkIssue",
+  "audit_document",
+  "audit_repository",
+  "extract_link_target",
+  "is_external_or_anchor",
+  "main",
+  "mask_non_prose",
+  "parse_args",
+  "select_documents",
+]
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]\n]*\]\(([^)\n]+)\)")
-FENCED_CODE_RE = re.compile(r"(?ms)^(`{3,}|~{3,})[^\n]*\n.*?^\1[ \t]*$")
-HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
-INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
 URI_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 WINDOWS_ABSOLUTE_RE = re.compile(r"^(?:[A-Za-z]:[\\/]|\\\\)")
 
@@ -40,24 +55,6 @@ class AuditResult:
   documents_checked: int
   links_checked: int
   issues: list[LinkIssue]
-
-
-def _blank_preserving_lines(match: re.Match[str]) -> str:
-  return re.sub(r"[^\n]", " ", match.group(0))
-
-
-def mask_non_prose(text: str) -> str:
-  masked = FENCED_CODE_RE.sub(_blank_preserving_lines, text)
-  masked = HTML_COMMENT_RE.sub(_blank_preserving_lines, masked)
-  return INLINE_CODE_RE.sub(_blank_preserving_lines, masked)
-
-
-def extract_link_target(raw_target: str) -> str:
-  value = raw_target.strip()
-  if value.startswith("<"):
-    end = value.find(">", 1)
-    return value[1:end] if end >= 0 else value[1:]
-  return value.split(maxsplit=1)[0] if value else ""
 
 
 def is_external_or_anchor(target: str) -> bool:
@@ -103,17 +100,16 @@ def audit_document(repo_root: Path, source: Path) -> tuple[int, list[LinkIssue]]
   repo_root = repo_root.resolve()
   source = source.resolve()
   text = source.read_text(encoding="utf-8", errors="ignore")
-  masked = mask_non_prose(text)
   issues: list[LinkIssue] = []
   links_checked = 0
 
-  for match in MARKDOWN_LINK_RE.finditer(masked):
-    raw_target = match.group(1).strip()
-    target = extract_link_target(raw_target)
+  for link in iter_markdown_links(text):
+    raw_target = link.raw_target.strip()
+    target = link.target
     if is_external_or_anchor(target):
       continue
     links_checked += 1
-    line = masked.count("\n", 0, match.start()) + 1
+    line = link.line
     source_name = source.relative_to(repo_root).as_posix()
 
     if target.startswith("/") or WINDOWS_ABSOLUTE_RE.match(target):
