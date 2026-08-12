@@ -101,6 +101,29 @@ def test_a_changed_build_dir_is_never_served_from_the_memo(
     assert len(scans) == 2, f"expected a rescan per build dir, got {len(scans)}"
 
 
+def test_a_deleted_artifact_under_the_same_key_is_not_served_from_the_memo(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Same CMO_BUILD_DIR, artifact removed between calls: must fail closed.
+
+    The memo keys only on environment inputs, so without an on-disk validity
+    check a cached hit would keep vouching for an artifact that no longer
+    exists (review finding, 2026-08-13).
+    """
+    build = _fake_build(tmp_path, "build-vanishing")
+    monkeypatch.setenv("CMO_BUILD_DIR", str(build))
+    scans = _count_scans(monkeypatch)
+
+    runtime_bootstrap.configure_repo_imports()
+    assert len(scans) == 1
+
+    (build / "ef_py.so").unlink()
+
+    with pytest.raises(RuntimeError, match="does not contain an ef_py artifact"):
+        runtime_bootstrap.configure_repo_imports()
+    assert len(scans) == 2, "a stale cached plan must trigger a rescan"
+
+
 def test_explicit_build_dir_without_an_artifact_fails_closed_on_every_call(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

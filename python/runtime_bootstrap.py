@@ -216,6 +216,22 @@ def _reset_import_plan_cache() -> None:
     _IMPORT_PLAN_CACHE.clear()
 
 
+def _cached_plan_still_valid(
+    plan: tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]],
+) -> bool:
+    """Whether a memoized plan's selected artifact still exists on disk.
+
+    The memo keys on everything *outside* the file system, so a build whose
+    ef_py artifact was deleted after the first scan would otherwise keep
+    riding the cache and silently bypass the fail-closed checks below. One
+    glob over the selected build keeps the hit cheap while restoring the
+    guarantee.
+    """
+
+    builds, _, _ = plan
+    return bool(builds) and bool(_ef_py_import_dirs(builds[0]))
+
+
 def configure_repo_imports(*, require_local: bool = False) -> str:
     """Put the repository and any local ``ef_py`` builds first on ``sys.path``.
 
@@ -231,6 +247,11 @@ def configure_repo_imports(*, require_local: bool = False) -> str:
     root = repo_root()
     key = _import_plan_key(root)
     plan = _IMPORT_PLAN_CACHE.get(key)
+    if plan is not None and not _cached_plan_still_valid(plan):
+        # The artifact this plan was built around is gone; serving the stale
+        # hit would bypass the fail-closed contract, so rescan instead.
+        del _IMPORT_PLAN_CACHE[key]
+        plan = None
     if plan is None:
         plan = _discover_import_plan(root)
         if plan[0]:
