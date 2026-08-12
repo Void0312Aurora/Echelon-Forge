@@ -1,0 +1,687 @@
+{
+  "schema_version": 1,
+  "generated_on": "2026-08-13",
+  "generated_by": "python tools/maintenance/retained_artifacts/manifest_integrity.py --pin-baseline",
+  "packet": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m",
+  "policy": "Shrink-only. tests/tools/test_manifest_pin_baseline.py fails when a measured mismatch is absent from this file (a newly broken pin) and when a listed mismatch is no longer measured (a repaired pin whose line must be deleted here in the same change).",
+  "tiers": {
+    "content_mismatches": "The recorded digest matches the target under no newline representation. Checkout-independent: identical on CRLF and LF working trees.",
+    "newline_representation_mismatches": "The recorded digest is the committed LF digest, which the raw-byte checker in check_retained_manifest_integrity() cannot reproduce from a CRLF working tree. Present on Windows checkouts (core.autocrlf=true), absent on Linux CI."
+  },
+  "manifest_globs": [
+    "retained_artifacts/**/manifest.json"
+  ],
+  "manifest_count": 29,
+  "pin_total": 117,
+  "target_total": 57,
+  "content_mismatch_total": 9,
+  "newline_representation_total": 100,
+  "legacy_raw_mismatch_total": 109,
+  "content_mismatches": [
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.res001_release_signoff_gate.content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/res001_release_signoff_gate.json",
+      "recorded_prefix": "8cc56c581b21c2de",
+      "observed_prefix": "822c496d9a49d8e0"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[2].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+      "recorded_prefix": "5c651f7482abf7b0",
+      "observed_prefix": "ff5f25ba6718aeb5"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+      "recorded_prefix": "5c651f7482abf7b0",
+      "observed_prefix": "ff5f25ba6718aeb5"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[7].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
+      "recorded_prefix": "e9ef0c1a00fbc55f",
+      "observed_prefix": "a69496f86fd12d79"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[7].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
+      "recorded_prefix": "e9ef0c1a00fbc55f",
+      "observed_prefix": "a69496f86fd12d79"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[7].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_res005_tp21_debris_admission_gate_20260531.zh.md",
+      "recorded_prefix": "888c2fb234b48dbe",
+      "observed_prefix": "ebaadf50ded6bd92"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[5].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/candidate_acceptance_status.zh.md",
+      "recorded_prefix": "75ce09dad5079a02",
+      "observed_prefix": "142f36f8900d97e8"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[4].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/mechanism_admission_failclosed_backlog_20260601.zh.md",
+      "recorded_prefix": "4fd020b348542e14",
+      "observed_prefix": "260735a064c54751"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[6].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/task_cluster_execution_status_20260601.zh.md",
+      "recorded_prefix": "a6d2fac212054dec",
+      "observed_prefix": "44c82b6dca6bdd74"
+    }
+  ],
+  "newline_representation_mismatches": [
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[4].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
+      "recorded_prefix": "a010f3e3c6f01a00"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[4].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
+      "recorded_prefix": "a010f3e3c6f01a00"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[1].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "recorded_prefix": "9b8cf91373e7e386"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "recorded_prefix": "9b8cf91373e7e386"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "recorded_prefix": "9b8cf91373e7e386"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601/external_signoff_packet_template.json",
+      "recorded_prefix": "3760c529dbbbba87"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
+      "recorded_prefix": "303f066e2cf8e054"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
+      "recorded_prefix": "303f066e2cf8e054"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/manifest.json",
+      "field_path": "$.mechanism_comparison_hashes_artifact.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "recorded_prefix": "2e4edadbc5e34a95"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.input_artifacts.mechanism_comparison_hashes.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "recorded_prefix": "2e4edadbc5e34a95"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/manifest.json",
+      "field_path": "$.input_refs[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "recorded_prefix": "2e4edadbc5e34a95"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "recorded_prefix": "2e4edadbc5e34a95"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[8].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "recorded_prefix": "1b11684efb783af9"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[8].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "recorded_prefix": "1b11684efb783af9"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[9].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "recorded_prefix": "1b11684efb783af9"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[9].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "recorded_prefix": "1b11684efb783af9"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
+      "recorded_prefix": "c59c6184c602a3dc"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
+      "recorded_prefix": "c59c6184c602a3dc"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.input_artifacts.provenance_identity_review_gate.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
+      "recorded_prefix": "c59c6184c602a3dc"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.res001_release_signoff_gate.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/res001_release_signoff_gate.json",
+      "recorded_prefix": "822c496d9a49d8e0"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res002_scoped_release_identity_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res002_scoped_release_identity_20260531/res002_scoped_release_identity_gate.json",
+      "recorded_prefix": "6fe2318490b8ddec"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res002_scoped_release_identity_20260531/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res002_scoped_release_identity_20260531/res002_scoped_release_identity_gate.json",
+      "recorded_prefix": "6fe2318490b8ddec"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res003_target_geometry_closeout_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json",
+      "recorded_prefix": "879dd63b8ae8f1a2"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res004_warhead_scope_closeout_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json",
+      "recorded_prefix": "af3ee97fdf4cad8e"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005006_benchmark_execution_admission_20260531/manifest.json",
+      "field_path": "$.benchmark_execution_admission_gate_artifact.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005006_benchmark_execution_admission_20260531/benchmark_execution_admission_gate.json",
+      "recorded_prefix": "f8cb8b0004bbce2d"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/manifest.json",
+      "field_path": "$.res005_tp21_debris_admission_gate_artifact.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
+      "recorded_prefix": "8f86cdebb8892628"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
+      "recorded_prefix": "8f86cdebb8892628"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/manifest.json",
+      "field_path": "$.input_refs[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
+      "recorded_prefix": "8f86cdebb8892628"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/manifest.json",
+      "field_path": "$.selected_debris_output_anchor_set_artifact.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
+      "recorded_prefix": "dc6d36a6ef9967a8"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
+      "recorded_prefix": "dc6d36a6ef9967a8"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/manifest.json",
+      "field_path": "$.input_refs[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
+      "recorded_prefix": "dc6d36a6ef9967a8"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.res005_tp21_selected_case_admission_review_gate_artifact.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+      "recorded_prefix": "2ff80d2a936da961"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/manifest.json",
+      "field_path": "$.input_refs[4].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+      "recorded_prefix": "2ff80d2a936da961"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/manifest.json",
+      "field_path": "$.input_refs[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+      "recorded_prefix": "2ff80d2a936da961"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/manifest.json",
+      "field_path": "$.res005_tp21_selected_case_candidate_packet_artifact.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/res005_tp21_selected_case_candidate_packet.json",
+      "recorded_prefix": "61e6b9c2ed7cdf89"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/res006_beco_lineage_tolerance_review_candidate_packet.json",
+      "recorded_prefix": "041c5890c85ba786"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/manifest.json",
+      "field_path": "$.input_refs[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/beco_recalculated_hash_anchor_set.json",
+      "recorded_prefix": "2d26a10918223bfb"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/manifest.json",
+      "field_path": "$.artifacts[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/beco_recalculated_hash_anchor_set.json",
+      "recorded_prefix": "2d26a10918223bfb"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/beco_recalculated_hash_anchor_set.json",
+      "recorded_prefix": "2d26a10918223bfb"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/res006_beco_recalculation_admission_gate.json",
+      "recorded_prefix": "64e5ac9ced1fc4f9"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/res006_beco_recalculation_admission_gate.json",
+      "recorded_prefix": "64e5ac9ced1fc4f9"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/res006_beco_recalculation_admission_gate.json",
+      "recorded_prefix": "64e5ac9ced1fc4f9"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/manifest.json",
+      "field_path": "$.input_refs[4].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "recorded_prefix": "67a955685b43ed3a"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "recorded_prefix": "67a955685b43ed3a"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/manifest.json",
+      "field_path": "$.input_refs[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "recorded_prefix": "67a955685b43ed3a"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res011012_independent_review_closeout_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res011012_independent_review_closeout_20260531/res011012_independent_review_closeout_gate.json",
+      "recorded_prefix": "077c211be1872c78"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/scope_bucket_independent_review_20260531/manifest.json",
+      "field_path": "$.artifacts[1].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/scope_bucket_independent_review_20260531/scope_boundary_probe_rerun.json",
+      "recorded_prefix": "74dea1dd924843bd"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/scope_bucket_independent_review_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/scope_bucket_independent_review_20260531/scope_bucket_independent_review_gate.json",
+      "recorded_prefix": "e087478a849c0299"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601/signoff_admission_preflight_packet.json",
+      "recorded_prefix": "8b2fb7fed0321708"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
+      "recorded_prefix": "17c5c1d5180d5605"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
+      "recorded_prefix": "17c5c1d5180d5605"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.input_artifacts.source_artifact_pack_manifest.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "recorded_prefix": "98eedda50aa37395"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "recorded_prefix": "98eedda50aa37395"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/manifest.json",
+      "field_path": "$.source_artifact_pack_manifest.content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "recorded_prefix": "98eedda50aa37395"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/manifest.json",
+      "field_path": "$.source_artifact_pack_manifest.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "recorded_prefix": "98eedda50aa37395"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/manifest.json",
+      "field_path": "$.source_payload_pack_manifest.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "recorded_prefix": "98eedda50aa37395"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/manifest.json",
+      "field_path": "$.input_refs[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "recorded_prefix": "98eedda50aa37395"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.input_artifacts.source_payload_pack.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
+      "recorded_prefix": "d280771f895221fe"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/manifest.json",
+      "field_path": "$.source_payload_pack_artifact.content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
+      "recorded_prefix": "d280771f895221fe"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/manifest.json",
+      "field_path": "$.source_payload_pack_artifact.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
+      "recorded_prefix": "d280771f895221fe"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.input_artifacts.source_rights_output_policy_gate.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/manifest.json",
+      "field_path": "$.input_refs[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_lineage_tolerance_review_20260601/manifest.json",
+      "field_path": "$.input_refs[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/manifest.json",
+      "field_path": "$.input_refs[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/manifest.json",
+      "field_path": "$.source_rights_output_policy_gate.content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/manifest.json",
+      "field_path": "$.source_rights_output_policy_gate.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "recorded_prefix": "b640383afaa05c28"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "recorded_prefix": "456b16c9f2da3836"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/manifest.json",
+      "field_path": "$.input_refs[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "recorded_prefix": "456b16c9f2da3836"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "recorded_prefix": "456b16c9f2da3836"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[1].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/scope_boundary_probe_snapshot.json",
+      "recorded_prefix": "74dea1dd924843bd"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/scope_boundary_probe_snapshot.json",
+      "recorded_prefix": "74dea1dd924843bd"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[2].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_effect_scale_snapshot.json",
+      "recorded_prefix": "46ccabddabf29547"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_effect_scale_snapshot.json",
+      "recorded_prefix": "46ccabddabf29547"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[3].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
+      "recorded_prefix": "e11b21f41d632645"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
+      "recorded_prefix": "e11b21f41d632645"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/validation_scaffold_snapshot.json",
+      "recorded_prefix": "b3220e79813b08d4"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/validation_scaffold_snapshot.json",
+      "recorded_prefix": "b3220e79813b08d4"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
+      "recorded_prefix": "7a32b7b5c2ea48d7"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/runtime_aligned_authority_pack.json",
+      "recorded_prefix": "69c37297edcc1de8"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/runtime_aligned_authority_pack.json",
+      "recorded_prefix": "69c37297edcc1de8"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[3].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_result_pack.json",
+      "recorded_prefix": "a7edc25da18a5496"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_result_pack.json",
+      "recorded_prefix": "a7edc25da18a5496"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[1].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_snapshot.json",
+      "recorded_prefix": "68fdff8ab326d9f7"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_snapshot.json",
+      "recorded_prefix": "68fdff8ab326d9f7"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[2].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_surface_probe.json",
+      "recorded_prefix": "1e46ce99781ed82f"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/manifest.json",
+      "field_path": "$.artifacts[2].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_surface_probe.json",
+      "recorded_prefix": "1e46ce99781ed82f"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/manifest.json",
+      "field_path": "$.artifacts[1].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/candidate_vs_synthetic_sigmoid_comparison.json",
+      "recorded_prefix": "28e0f71b80817935"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
+      "recorded_prefix": "8905156b1e8ede72"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/stage_c_fragility_review_gate.json",
+      "recorded_prefix": "253ff1f4ec93ca2a"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_validation_prep_20260531/manifest.json",
+      "field_path": "$.artifacts[0].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_validation_prep_20260531/stage_c_fragility_validation_prep.json",
+      "recorded_prefix": "ab944fcab8a05d08"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531/manifest.json",
+      "field_path": "$.artifacts[0].content_sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531/uncertainty_review_gate.json",
+      "recorded_prefix": "0d6ae9053b2f6c47"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+      "field_path": "$.validation_report.sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_res001_release_signoff_gate_20260531.zh.md",
+      "recorded_prefix": "a442ef49bfd3e534"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[3].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+      "recorded_prefix": "254e6367c738e9c5"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[3].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+      "recorded_prefix": "254e6367c738e9c5"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[6].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+      "recorded_prefix": "26623bb9df68924a"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[6].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+      "recorded_prefix": "26623bb9df68924a"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[5].content_hash",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+      "recorded_prefix": "f471f5ed3a5767ed"
+    },
+    {
+      "manifest": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json",
+      "field_path": "$.consumed_inputs[5].sha256",
+      "target": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+      "recorded_prefix": "f471f5ed3a5767ed"
+    }
+  ]
+}

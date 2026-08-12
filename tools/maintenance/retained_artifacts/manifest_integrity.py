@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -373,6 +374,596 @@ def check_retained_manifest_integrity(
   }
 
 
+# ---------------------------------------------------------------------------
+# Reverse pin index, cascade recomputation, and the CI mismatch baseline
+# ---------------------------------------------------------------------------
+# ``check_retained_manifest_integrity`` answers "is every pin still valid".
+# Repairing a pinned file needs the inverse question -- "who pins this file" --
+# because one edit invalidates every manifest field that recorded the old
+# digest, and manifests pin each other, so a repair is a chain rather than a
+# single field.
+#
+# Newline policy. The repository is checked out with ``core.autocrlf=true`` on
+# Windows, so a text artifact carries CRLF on disk while the same commit
+# carries LF. The sealed manifests record the LF digest and the LF byte count
+# (``size_bytes``) -- the only representation two platforms agree on.
+# ``_canonical_bytes`` reproduces it, and every helper added in this section
+# uses it. ``_sha256_file``, ``_collect_manifest_findings`` and ``--fix`` keep
+# their raw-byte semantics untouched, which is why the legacy
+# ``sha_mismatch_total`` counts 109 rows on a CRLF checkout but only 9 on an LF
+# one; see tests/tools/manifest_pin_baseline.json for the split.
+
+SIZE_FIELDS = ("size_bytes",)
+BINARY_SNIFF_BYTES = 8192
+DEFAULT_CASCADE_ROUNDS = 16
+BASELINE_HASH_PREFIX = 16
+
+# Every retained manifest round-trips through exactly this serialisation, which
+# is what lets the cascade predict a rewritten manifest's digest before
+# touching the disk. A manifest that does not round-trip is refused rather than
+# reformatted, because reformatting would invalidate every pin it carries.
+_MANIFEST_JSON_STYLE = {"indent": 2, "ensure_ascii": True, "sort_keys": True}
+
+
+def _canonical_bytes(data: bytes) -> bytes:
+  """Return *data* in the platform-independent representation manifests pin.
+
+  Text artifacts are normalised to LF. Binary artifacts are returned verbatim:
+  a ``\\r\\n`` pair inside a PDF or XLSX is payload, not a line ending, and
+  rewriting it would produce a digest no checkout ever reproduces.
+  """
+  if b"\x00" in data[:BINARY_SNIFF_BYTES]:
+    return data
+  return data.replace(b"\r\n", b"\n")
+
+
+@dataclass(frozen=True)
+class TargetDigest:
+  """Both digests of one pinned file plus its canonical byte count."""
+
+  raw_sha256: str
+  canonical_sha256: str
+  canonical_size: int
+
+
+def _digest_bytes(data: bytes) -> TargetDigest:
+  canonical = _canonical_bytes(data)
+  return TargetDigest(
+    raw_sha256=hashlib.sha256(data).hexdigest(),
+    canonical_sha256=hashlib.sha256(canonical).hexdigest(),
+    canonical_size=len(canonical),
+  )
+
+
+def _digest_target(path: Path) -> TargetDigest:
+  return _digest_bytes(path.read_bytes())
+
+
+@dataclass(frozen=True)
+class PinEntry:
+  """One hash-pinned manifest field and the file it points at.
+
+  The leading five attributes are the reverse-index tuple callers ask for:
+  manifest path, JSON field path, recorded digest, on-disk digest, verdict.
+  """
+
+  manifest: str
+  field_path: str
+  recorded_sha256: str
+  actual_sha256: str
+  matched: bool
+  target: str
+  target_exists: bool
+  row_path: str
+  field: str
+  recorded_value: str
+  canonical_sha256: str
+  newline_only: bool
+  size_field: str | None
+  recorded_size: int | None
+  canonical_size: int | None
+
+  @property
+  def key(self) -> tuple[str, str, str]:
+    """Checkout-independent identity used by the CI mismatch baseline."""
+    return (self.manifest, self.field_path, self.recorded_sha256[:BASELINE_HASH_PREFIX])
+
+
+@dataclass(frozen=True)
+class _PinRow:
+  """A manifest row that carries both a path field and hash fields."""
+
+  row: dict[str, Any]
+  row_path: str
+  path_field: str
+  hash_fields: tuple[str, ...]
+  size_fields: tuple[str, ...]
+  target: Path
+  target_display: str
+
+
+def _iter_pin_rows(
+  *,
+  manifest_path: Path,
+  repo_root: Path,
+  payload: dict[str, Any],
+) -> Iterator[_PinRow]:
+  for row_path, row in _iter_dict_rows(payload):
+    path_field = _path_field_for_row(row)
+    hash_fields = tuple(_hash_fields_for_row(row))
+    if path_field is None or not hash_fields:
+      continue
+    target = _resolve_manifest_target(
+      path_value=str(row[path_field]),
+      path_field=path_field,
+      manifest_path=manifest_path,
+      repo_root=repo_root,
+    )
+    yield _PinRow(
+      row=row,
+      row_path=row_path,
+      path_field=path_field,
+      hash_fields=hash_fields,
+      size_fields=tuple(
+        field for field in SIZE_FIELDS if isinstance(row.get(field), int)
+      ),
+      target=target,
+      target_display=_display_path(target, repo_root),
+    )
+
+
+def _pin_manifest_paths(package_dir: Path, manifest_globs: Sequence[str]) -> list[Path]:
+  found: set[Path] = set()
+  for pattern in manifest_globs:
+    found.update(package_dir.glob(pattern))
+  return sorted(found)
+
+
+def normalize_repo_relative(value: str, repo_root: Path = REPO_ROOT) -> str:
+  """Return *value* as the repo-relative POSIX path the pin index is keyed by.
+
+  Accepts Windows separators, absolute paths, and the retired logical prefixes
+  that sealed manifests still record.
+  """
+  candidate = Path(translate_logical_a2_path(value.strip().replace("\\", "/")))
+  if not candidate.is_absolute():
+    candidate = repo_root / candidate
+  return _display_path(candidate, repo_root)
+
+
+def build_pin_index(
+  *,
+  repo_root: Path = REPO_ROOT,
+  package_dir: Path = CANDIDATE_PACKAGE_DIR,
+  manifest_paths: list[Path] | None = None,
+  manifest_globs: Sequence[str] = (DEFAULT_MANIFEST_GLOB,),
+) -> dict[str, list[PinEntry]]:
+  """Return a reverse index mapping each pinned file to the pins that hold it.
+
+  Keys are repo-relative POSIX paths after ``translate_logical_a2_path``, so a
+  manifest that records a retired logical prefix indexes under the file's live
+  location. Values are sorted ``PinEntry`` lists.
+  """
+  manifests = (
+    manifest_paths
+    if manifest_paths is not None
+    else _pin_manifest_paths(package_dir, manifest_globs)
+  )
+
+  digests: dict[str, TargetDigest | None] = {}
+  index: dict[str, list[PinEntry]] = {}
+  for manifest_path in manifests:
+    manifest_display = _display_path(manifest_path, repo_root)
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for pin_row in _iter_pin_rows(
+      manifest_path=manifest_path,
+      repo_root=repo_root,
+      payload=payload,
+    ):
+      if pin_row.target_display not in digests:
+        digests[pin_row.target_display] = (
+          _digest_target(pin_row.target) if pin_row.target.is_file() else None
+        )
+      digest = digests[pin_row.target_display]
+      size_field = pin_row.size_fields[0] if pin_row.size_fields else None
+      for hash_field in pin_row.hash_fields:
+        recorded_value = str(pin_row.row[hash_field])
+        recorded = _normalize_hash(recorded_value)
+        raw = digest.raw_sha256 if digest else ""
+        canonical = digest.canonical_sha256 if digest else ""
+        matched = digest is not None and recorded in {raw, canonical}
+        index.setdefault(pin_row.target_display, []).append(
+          PinEntry(
+            manifest=manifest_display,
+            field_path=f"{pin_row.row_path}.{hash_field}",
+            recorded_sha256=recorded,
+            actual_sha256=raw,
+            matched=matched,
+            target=pin_row.target_display,
+            target_exists=digest is not None,
+            row_path=pin_row.row_path,
+            field=hash_field,
+            recorded_value=recorded_value,
+            canonical_sha256=canonical,
+            newline_only=matched and recorded != raw,
+            size_field=size_field,
+            recorded_size=pin_row.row.get(size_field) if size_field else None,
+            canonical_size=digest.canonical_size if digest else None,
+          )
+        )
+
+  return {
+    target: sorted(entries, key=lambda entry: (entry.manifest, entry.field_path))
+    for target, entries in sorted(index.items())
+  }
+
+
+def iter_pin_entries(index: dict[str, list[PinEntry]]) -> Iterator[PinEntry]:
+  """Yield every pin in *index* in stable (target, manifest, field) order."""
+  for target in sorted(index):
+    yield from index[target]
+
+
+def who_pins(target: str, index: dict[str, list[PinEntry]]) -> list[PinEntry]:
+  """Return every pin holding *target*, which may be any accepted path spelling."""
+  return list(index.get(normalize_repo_relative(target), ()))
+
+
+def _format_pin_entry(entry: PinEntry) -> str:
+  if not entry.target_exists:
+    verdict, detail = "MISSING", "target file does not exist"
+  elif not entry.matched:
+    verdict = "MISMATCH"
+    detail = f"on disk raw={entry.actual_sha256[:16]} canonical={entry.canonical_sha256[:16]}"
+  elif entry.newline_only:
+    verdict = "match"
+    detail = (
+      f"canonical={entry.canonical_sha256[:16]}; on-disk CRLF digest "
+      f"{entry.actual_sha256[:16]} differs by newline representation only"
+    )
+  else:
+    verdict, detail = "match", f"on disk {entry.actual_sha256[:16]}"
+
+  lines = [
+    f"[{verdict}] {entry.manifest}",
+    f"          field    {entry.field_path}",
+    f"          recorded {entry.recorded_sha256[:16]}  ({detail})",
+  ]
+  if entry.size_field is not None and entry.canonical_size is not None:
+    size_verdict = "ok" if entry.recorded_size == entry.canonical_size else "STALE"
+    lines.append(
+      f"          {entry.size_field}  {entry.recorded_size} "
+      f"(canonical {entry.canonical_size}) [{size_verdict}]"
+    )
+  return "\n".join(lines)
+
+
+def format_who_pins(
+  target: str,
+  index: dict[str, list[PinEntry]],
+  *,
+  manifest_count: int,
+) -> str:
+  """Render the ``--who-pins`` report for *target*."""
+  resolved = normalize_repo_relative(target)
+  entries = who_pins(target, index)
+  matched = sum(1 for entry in entries if entry.matched)
+  lines = [
+    f"pin index: {manifest_count} manifests, "
+    f"{sum(len(rows) for rows in index.values())} pinned hash fields, "
+    f"{len(index)} distinct targets",
+    f"target: {resolved}",
+    f"pins: {len(entries)} (match {matched} / mismatch {len(entries) - matched})",
+  ]
+  if not entries:
+    lines.append("no manifest in the scanned inventory pins this path")
+  lines.extend(_format_pin_entry(entry) for entry in entries)
+  return "\n".join(lines)
+
+
+def _serialize_manifest(payload: dict[str, Any]) -> str:
+  return json.dumps(payload, **_MANIFEST_JSON_STYLE) + "\n"
+
+
+@dataclass
+class _ManifestState:
+  """In-memory view of one manifest during a cascade."""
+
+  path: Path
+  display: str
+  payload: dict[str, Any]
+  round_trips: bool
+  dirty: bool = False
+
+  def canonical_text(self) -> str:
+    return _serialize_manifest(self.payload)
+
+  def digest(self) -> TargetDigest:
+    return _digest_bytes(self.canonical_text().encode("utf-8"))
+
+
+def _load_manifest_state(manifest_path: Path, repo_root: Path) -> _ManifestState:
+  text = _canonical_bytes(manifest_path.read_bytes()).decode("utf-8")
+  payload = json.loads(text)
+  return _ManifestState(
+    path=manifest_path,
+    display=_display_path(manifest_path, repo_root),
+    payload=payload,
+    round_trips=_serialize_manifest(payload) == text,
+  )
+
+
+def plan_pin_cascade(
+  target: str,
+  *,
+  repo_root: Path = REPO_ROOT,
+  package_dir: Path = CANDIDATE_PACKAGE_DIR,
+  manifest_paths: list[Path] | None = None,
+  manifest_globs: Sequence[str] = (DEFAULT_MANIFEST_GLOB,),
+  write: bool = False,
+  max_rounds: int = DEFAULT_CASCADE_ROUNDS,
+) -> dict[str, Any]:
+  """Recompute every pin reachable from *target* and report the plan.
+
+  Walks the transitive closure: pins of *target* are re-derived from the file's
+  canonical bytes, a manifest that had to change joins the closure because it
+  is itself a pinned artifact, and the walk repeats until nothing changes.
+  Nothing touches the disk unless *write* is true, and a write is refused
+  outright when any manifest in the closure cannot be reserialised byte-for-byte.
+  """
+  manifests = (
+    manifest_paths
+    if manifest_paths is not None
+    else _pin_manifest_paths(package_dir, manifest_globs)
+  )
+  states = {
+    state.display: state
+    for state in (_load_manifest_state(path, repo_root) for path in manifests)
+  }
+
+  root = normalize_repo_relative(target, repo_root)
+  affected = {root}
+  edits: list[dict[str, Any]] = []
+  already_current: list[dict[str, Any]] = []
+  reported_current: set[tuple[str, str]] = set()
+  errors: list[str] = []
+  rounds = 0
+  closed = False
+
+  root_path = repo_root / root
+  if not root_path.is_file() and root not in states:
+    errors.append(f"cascade target does not exist: {root}")
+
+  def digest_for(display: str, path: Path) -> TargetDigest | None:
+    state = states.get(display)
+    if state is not None:
+      return state.digest()
+    return _digest_target(path) if path.is_file() else None
+
+  while rounds < max_rounds:
+    rounds += 1
+    changed = False
+    for display in sorted(states):
+      state = states[display]
+      for pin_row in _iter_pin_rows(
+        manifest_path=state.path,
+        repo_root=repo_root,
+        payload=state.payload,
+      ):
+        if pin_row.target_display not in affected:
+          continue
+        digest = digest_for(pin_row.target_display, pin_row.target)
+        if digest is None:
+          message = f"{display}: pinned target is missing: {pin_row.target_display}"
+          if message not in errors:
+            errors.append(message)
+          continue
+
+        updates: list[tuple[str, Any, Any]] = []
+        for hash_field in pin_row.hash_fields:
+          previous = str(pin_row.row[hash_field])
+          if _normalize_hash(previous) == digest.canonical_sha256:
+            continue
+          updates.append(
+            (
+              hash_field,
+              previous,
+              _hash_value_for_field(hash_field, digest.canonical_sha256, previous),
+            )
+          )
+        for size_field in pin_row.size_fields:
+          if pin_row.row[size_field] != digest.canonical_size:
+            updates.append((size_field, pin_row.row[size_field], digest.canonical_size))
+
+        if not updates:
+          # A row can be revisited on later rounds once it is already correct;
+          # report it once so the plan stays readable.
+          if (display, pin_row.row_path) not in reported_current:
+            reported_current.add((display, pin_row.row_path))
+            already_current.append(
+              {
+                "manifest": display,
+                "row": pin_row.row_path,
+                "target": pin_row.target_display,
+                "fields": list(pin_row.hash_fields) + list(pin_row.size_fields),
+              }
+            )
+          continue
+
+        if not state.round_trips:
+          message = (
+            f"{display}: cannot be reserialised byte-for-byte; refusing to "
+            "rewrite pins in it"
+          )
+          if message not in errors:
+            errors.append(message)
+          continue
+
+        for field, old, new in updates:
+          pin_row.row[field] = new
+          edits.append(
+            {
+              "round": rounds,
+              "manifest": display,
+              "field_path": f"{pin_row.row_path}.{field}",
+              "target": pin_row.target_display,
+              "old": old,
+              "new": new,
+            }
+          )
+        state.dirty = True
+        changed = True
+        affected.add(display)
+
+    if not changed:
+      closed = True
+      break
+
+  written: list[str] = []
+  if write and not errors:
+    for display in sorted(states):
+      state = states[display]
+      if not state.dirty:
+        continue
+      state.path.write_text(state.canonical_text(), encoding="utf-8", newline="\n")
+      written.append(display)
+
+  return {
+    "target": root,
+    "mode": "write" if write else "dry-run",
+    "manifest_count": len(states),
+    "rounds": rounds,
+    "closed": closed,
+    "edits": edits,
+    "already_current": already_current,
+    "written_manifests": written,
+    "errors": errors,
+  }
+
+
+def format_cascade_plan(plan: dict[str, Any]) -> str:
+  """Render ``plan_pin_cascade`` output as a step-by-step operator report."""
+  lines = [
+    f"cascade target: {plan['target']}",
+    f"mode: {plan['mode']} | manifests scanned: {plan['manifest_count']} | "
+    f"rounds: {plan['rounds']}",
+  ]
+  for row in plan["already_current"]:
+    lines.append(f"[current] {row['manifest']}  {row['row']}  -> {row['target']}")
+  for edit in plan["edits"]:
+    old = str(edit["old"])
+    new = str(edit["new"])
+    if len(old) > 24:
+      old, new = old[:24] + "...", new[:24] + "..."
+    lines.append(
+      f"[round {edit['round']}] {edit['manifest']}  {edit['field_path']}  "
+      f"{old} -> {new}"
+    )
+  if not plan["edits"]:
+    lines.append("no field required an update; the pin chain for this target is closed")
+  elif plan["mode"] == "dry-run":
+    lines.append(
+      f"{len(plan['edits'])} field(s) would change; re-run with --write to apply"
+    )
+  for manifest in plan["written_manifests"]:
+    lines.append(f"[written] {manifest}")
+  if not plan["closed"]:
+    lines.append("WARNING: the cascade did not converge within the round limit")
+  for error in plan["errors"]:
+    lines.append(f"ERROR: {error}")
+  return "\n".join(lines)
+
+
+def classify_pin_mismatches(
+  index: dict[str, list[PinEntry]],
+) -> dict[str, list[PinEntry]]:
+  """Split the index into the two mismatch tiers the CI baseline tracks.
+
+  ``content`` pins disagree with the file under every newline representation
+  and are checkout-independent. ``newline`` pins hold the committed LF digest
+  while the working tree carries CRLF; they are what the legacy raw-byte
+  counter reports on Windows and not on Linux.
+  """
+  content: list[PinEntry] = []
+  newline: list[PinEntry] = []
+  for entry in iter_pin_entries(index):
+    if not entry.matched:
+      content.append(entry)
+    elif entry.newline_only:
+      newline.append(entry)
+  return {"content": content, "newline": newline}
+
+
+def _baseline_row(entry: PinEntry, *, include_observed: bool) -> dict[str, Any]:
+  row = {
+    "manifest": entry.manifest,
+    "field_path": entry.field_path,
+    "target": entry.target,
+    "recorded_prefix": entry.recorded_sha256[:BASELINE_HASH_PREFIX],
+  }
+  if include_observed:
+    row["observed_prefix"] = entry.canonical_sha256[:BASELINE_HASH_PREFIX]
+  return row
+
+
+def build_pin_baseline(
+  *,
+  repo_root: Path = REPO_ROOT,
+  package_dir: Path = CANDIDATE_PACKAGE_DIR,
+  manifest_globs: Sequence[str] = (DEFAULT_MANIFEST_GLOB,),
+  generated_on: str,
+) -> dict[str, Any]:
+  """Build the shrink-only mismatch baseline consumed by the CI guard test."""
+  manifests = _pin_manifest_paths(package_dir, manifest_globs)
+  index = build_pin_index(
+    repo_root=repo_root,
+    package_dir=package_dir,
+    manifest_globs=manifest_globs,
+  )
+  tiers = classify_pin_mismatches(index)
+  return {
+    "schema_version": 1,
+    "generated_on": generated_on,
+    "generated_by": (
+      "python tools/maintenance/retained_artifacts/manifest_integrity.py "
+      "--pin-baseline"
+    ),
+    "packet": _display_path(package_dir, repo_root),
+    "policy": (
+      "Shrink-only. tests/tools/test_manifest_pin_baseline.py fails when a "
+      "measured mismatch is absent from this file (a newly broken pin) and "
+      "when a listed mismatch is no longer measured (a repaired pin whose "
+      "line must be deleted here in the same change)."
+    ),
+    "tiers": {
+      "content_mismatches": (
+        "The recorded digest matches the target under no newline "
+        "representation. Checkout-independent: identical on CRLF and LF "
+        "working trees."
+      ),
+      "newline_representation_mismatches": (
+        "The recorded digest is the committed LF digest, which the raw-byte "
+        "checker in check_retained_manifest_integrity() cannot reproduce from "
+        "a CRLF working tree. Present on Windows checkouts "
+        "(core.autocrlf=true), absent on Linux CI."
+      ),
+    },
+    "manifest_globs": list(manifest_globs),
+    "manifest_count": len(manifests),
+    "pin_total": sum(len(rows) for rows in index.values()),
+    "target_total": len(index),
+    "content_mismatch_total": len(tiers["content"]),
+    "newline_representation_total": len(tiers["newline"]),
+    "legacy_raw_mismatch_total": len(tiers["content"]) + len(tiers["newline"]),
+    "content_mismatches": [
+      _baseline_row(entry, include_observed=True) for entry in tiers["content"]
+    ],
+    "newline_representation_mismatches": [
+      _baseline_row(entry, include_observed=False) for entry in tiers["newline"]
+    ],
+  }
+
+
 def _summary_failed(summary: dict[str, Any]) -> bool:
   # An empty inventory is a failure, not a pass. When the production package
   # directory is renamed or pruned without updating a2_packet_paths.py, the
@@ -407,7 +998,86 @@ def main(argv: list[str] | None = None) -> int:
       "inside the manifest directory."
     ),
   )
+  parser.add_argument(
+    "--pin-glob",
+    action="append",
+    dest="pin_globs",
+    metavar="GLOB",
+    help=(
+      "Extra glob (relative to --package-dir) whose JSON files also carry "
+      "pins, for --who-pins/--cascade/--pin-baseline. Repeatable. Defaults to "
+      f"{DEFAULT_MANIFEST_GLOB!r}; widen it to reach companion gate files that "
+      "sit beside a manifest."
+    ),
+  )
+  parser.add_argument(
+    "--who-pins",
+    metavar="PATH",
+    help=(
+      "Report every manifest field that hash-pins the repo-relative PATH, "
+      "with its match status, then exit without running the full scan."
+    ),
+  )
+  parser.add_argument(
+    "--cascade",
+    metavar="PATH",
+    help=(
+      "Recompute every pin reachable from the repo-relative PATH, recursing "
+      "through manifests that are themselves pinned until the chain closes. "
+      "Prints a plan and changes nothing unless --write is given."
+    ),
+  )
+  parser.add_argument(
+    "--write",
+    action="store_true",
+    help="Apply the --cascade plan instead of printing it as a dry run.",
+  )
+  parser.add_argument(
+    "--pin-baseline",
+    action="store_true",
+    help=(
+      "Print the shrink-only pin mismatch baseline JSON tracked by "
+      "tests/tools/manifest_pin_baseline.json, then exit."
+    ),
+  )
+  parser.add_argument(
+    "--generated-on",
+    metavar="YYYY-MM-DD",
+    help="Value recorded in the --pin-baseline 'generated_on' field.",
+  )
   args = parser.parse_args(argv)
+  pin_globs = tuple(args.pin_globs or (DEFAULT_MANIFEST_GLOB,))
+
+  if args.who_pins is not None:
+    index = build_pin_index(package_dir=args.package_dir, manifest_globs=pin_globs)
+    entries = who_pins(args.who_pins, index)
+    print(
+      format_who_pins(
+        args.who_pins,
+        index,
+        manifest_count=len(_pin_manifest_paths(args.package_dir, pin_globs)),
+      )
+    )
+    return 0 if entries and all(entry.matched for entry in entries) else 1
+
+  if args.cascade is not None:
+    plan = plan_pin_cascade(
+      args.cascade,
+      package_dir=args.package_dir,
+      manifest_globs=pin_globs,
+      write=args.write,
+    )
+    print(format_cascade_plan(plan))
+    return 1 if plan["errors"] or not plan["closed"] else 0
+
+  if args.pin_baseline:
+    baseline = build_pin_baseline(
+      package_dir=args.package_dir,
+      manifest_globs=pin_globs,
+      generated_on=args.generated_on or "unspecified",
+    )
+    print(json.dumps(baseline, indent=2, ensure_ascii=True, sort_keys=False))
+    return 0
 
   summary = check_retained_manifest_integrity(
     package_dir=args.package_dir,

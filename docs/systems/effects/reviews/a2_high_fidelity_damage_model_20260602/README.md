@@ -85,3 +85,23 @@ The manifest-pinned governance dependency is preserved byte-for-byte in the
 Readers translate its retired logical path through
 `tools/maintenance/a2_packet_paths.py`; the maintained policy is not substituted
 because its newer bytes do not satisfy the historical hash contract.
+
+Tooling counts (2026-08-13). The "six files" above counts distinct
+hash-mismatched `.zh.md` files. `manifest_integrity.py` counts manifest
+*fields* and reports 109 mismatch rows across 29 manifests; the two figures
+measure different things and both are correct. The 109 rows decompose into 9
+content mismatches and 100 newline-representation rows. The 9 cover those six
+`.zh.md` files (two of them pinned twice, through a paired
+`sha256`/`content_hash` field) plus one pin of
+`res001_release_signoff_gate.json`. The 100 record the committed LF digest,
+which the tool's raw-byte comparison cannot reproduce from a CRLF working
+tree; they are a Windows checkout artifact rather than evidence damage, and
+are absent on Linux CI, where the same scan reports 9.
+
+Both groups are enumerated row by row in
+`tests/tools/manifest_pin_baseline.json` and enforced as shrink-only by
+`tests/tools/test_manifest_pin_baseline.py`: a newly broken pin fails the
+default test tier immediately, and repairing an inherited one requires
+deleting its baseline entry in the same change. To find which manifests pin a
+file, or to re-derive a whole pin chain after an authorised edit, use
+`manifest_integrity.py --who-pins <path>` and `--cascade <path> [--write]`.
