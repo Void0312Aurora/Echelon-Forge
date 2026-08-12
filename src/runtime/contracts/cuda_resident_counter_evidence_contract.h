@@ -4,12 +4,29 @@
 #include <cstddef>
 #include <string_view>
 
+#include "runtime/contracts/cuda_resident_resource_evidence_contract.h"
+
 namespace runtime::cuda_resident::counter_evidence {
 
 inline constexpr std::string_view kSchemaVersion = "cuda_resident.cr2.achieved_counter_evidence.v1";
 inline constexpr std::string_view kProfileId = "cr2.resource.steady_full_window_body.sm86.v1";
 inline constexpr std::string_view kPermissionBlockerCode = "ERR_NVGPUCTRPERM";
-inline constexpr std::size_t kRequiredLaunchCount = 12;
+
+// A counter capture must profile every launch of the window graph of the
+// resource-evidence generation it binds to. The counts are therefore derived
+// from the launch sequences the resource contract owns, never declared as an
+// independent constant: a new execution-graph generation extends the counter
+// chain by extending the resource contract, not by editing this header.
+inline constexpr std::size_t kRequiredLaunchCountV1 = resource_evidence::kLaunchSequence.size();
+inline constexpr std::size_t kRequiredLaunchCountV2 = resource_evidence::kLaunchSequenceV2.size();
+inline constexpr std::size_t kRequiredLaunchCountV3 = resource_evidence::kLaunchSequenceV3.size();
+
+// Frozen artifact pins: the retained v1 blocked attempt and the v2 achieved
+// capture both recorded 12; the CP-5 fused window graph launches 7. These
+// assert the derivation still matches the evidence already on disk.
+static_assert(kRequiredLaunchCountV1 == 12);
+static_assert(kRequiredLaunchCountV2 == 12);
+static_assert(kRequiredLaunchCountV3 == 7);
 
 struct CounterFamilySpec {
     std::string_view id;

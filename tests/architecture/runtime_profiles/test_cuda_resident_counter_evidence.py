@@ -19,6 +19,10 @@ RESOURCE_EVIDENCE = (
     ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_resource_evidence_20260804.json"
 )
 EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_counter_evidence_20260804.json"
+CP_EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cp_counter_evidence_20260810.json"
+CP_RESOURCE_EVIDENCE = (
+    ROOT / "docs/plan/exact_runtime/cuda_resident_cp_resource_evidence_20260810.json"
+)
 BASELINE = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
 EVIDENCE_COMMIT = "05b05c5a1f7968c603a4a933531bb52bdc30b9c4"
 RESOURCE_EVIDENCE_COMMIT = "6d7ec7ddbf4163436de6a2db3d2e13829227d1f8"
@@ -98,7 +102,7 @@ def _available_report() -> dict[str, object]:
             "report_created": True,
             "blocker_code": None,
             "blocker_kind": None,
-            "collected_launch_count": counter.REQUIRED_LAUNCH_COUNT,
+            "collected_launch_count": counter.required_launch_count(1),
             "log_error_codes": [],
             "recognized_error_line_sha256": None,
         }
@@ -125,7 +129,14 @@ def test_cr2_5b_contract_freezes_fail_closed_counter_scope() -> None:
     assert counter.SCHEMA in contract
     assert counter.PROFILE in contract
     assert f'kPermissionBlockerCode = "{counter.PERMISSION_CODE}"' in contract
-    assert "kRequiredLaunchCount = 12" in contract
+    # Launch counts are derived from the resource contract's launch sequences,
+    # one per generation, and pinned against the retained artifacts.
+    assert "kRequiredLaunchCountV1 = resource_evidence::kLaunchSequence.size()" in contract
+    assert "kRequiredLaunchCountV2 = resource_evidence::kLaunchSequenceV2.size()" in contract
+    assert "kRequiredLaunchCountV3 = resource_evidence::kLaunchSequenceV3.size()" in contract
+    assert "static_assert(kRequiredLaunchCountV1 == 12);" in contract
+    assert "static_assert(kRequiredLaunchCountV2 == 12);" in contract
+    assert "static_assert(kRequiredLaunchCountV3 == 7);" in contract
     assert '"available"' in contract
     assert '"external_blocked"' in contract
     assert '"collection_failed"' in contract
@@ -275,6 +286,169 @@ def test_available_state_requires_every_launch_and_hardware_provenance() -> None
     nonzero_exit["attempt"]["exit_code"] = 1
     with pytest.raises(counter.CounterEvidenceError, match="exit code zero"):
         counter.validate_report(nonzero_exit)
+
+
+def test_cp_achieved_counter_evidence_validates_against_its_declared_generation() -> None:
+    """The tracked v2 achieved capture must keep passing the generation-aware
+    validator byte-for-byte: it is the regression guard for deriving launch
+    counts from the parent generation instead of a module constant."""
+    evidence = json.loads(CP_EVIDENCE.read_text(encoding="utf-8"))
+    counter.validate_report(evidence)
+    assert evidence["profile_id"] == resource.PROFILE_V2
+    assert evidence["attempt"]["status"] == "available"
+    assert evidence["attempt"]["collected_launch_count"] == counter.required_launch_count(2) == 12
+
+
+def _v3_report() -> dict[str, object]:
+    """The shape a fused-graph recapture will produce: v3 parent profile,
+    seven launches, the same measured units and counter schema as v2."""
+    report = json.loads(CP_EVIDENCE.read_text(encoding="utf-8"))
+    report["profile_id"] = resource.PROFILE_V3
+    toolchain = report["toolchain"]
+    toolchain["launch_count_limit"] = 7
+    toolchain["command_template"] = [
+        str(entry).replace("--launch-count=12", "--launch-count=7")
+        for entry in toolchain["command_template"]
+    ]
+    report["attempt"]["required_launch_count"] = 7
+    report["attempt"]["collected_launch_count"] = 7
+    for family in report["achieved_counters"].values():
+        family["values_by_launch"] = family["values_by_launch"][:7]
+    return report
+
+
+def test_v3_counter_report_shape_follows_the_fused_launch_sequence() -> None:
+    assert counter.required_launch_count(3) == 7
+    counter.validate_report(_v3_report())
+
+
+def _historical_v1_parent_bytes() -> bytes:
+    """The v1 counter artifact predates the ``-text`` attribute and hashed the
+    CRLF checkout of its parent; reproduce those bytes from the recorded
+    commit, exactly as the frozen evidence saw them."""
+    return _git_blob(RESOURCE_EVIDENCE_COMMIT, RESOURCE_EVIDENCE).replace(b"\n", b"\r\n")
+
+
+def test_report_pair_binds_generation_and_parent_bytes() -> None:
+    """The pair validator is the non-optional binding: both tracked pairs must
+    pass it, a relabeled generation over the same parent must die on the
+    profile check, and a swapped parent must die on the bytes hash."""
+    counter.validate_report_pair(_evidence(), _historical_v1_parent_bytes())
+    cp_parent_bytes = CP_RESOURCE_EVIDENCE.read_bytes()
+    counter.validate_report_pair(
+        json.loads(CP_EVIDENCE.read_text(encoding="utf-8")), cp_parent_bytes
+    )
+    with pytest.raises(counter.CounterEvidenceError, match="generation differs"):
+        counter.validate_report_pair(_v3_report(), cp_parent_bytes)
+    with pytest.raises(counter.CounterEvidenceError, match="bytes differ"):
+        counter.validate_report_pair(
+            json.loads(CP_EVIDENCE.read_text(encoding="utf-8")),
+            _historical_v1_parent_bytes(),
+        )
+
+
+def test_parent_link_still_accepts_the_optional_report_binding() -> None:
+    parent = json.loads(RESOURCE_EVIDENCE.read_text(encoding="utf-8"))
+    binary_sha256 = parent["inputs"]["binary_sha256"]
+    probe_sha256 = parent["inputs"]["probe_sha256"]
+    matching = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+    counter.validate_parent_link(parent, binary_sha256, probe_sha256, counter_report=matching)
+    with pytest.raises(counter.CounterEvidenceError, match="generation differs"):
+        counter.validate_parent_link(
+            parent, binary_sha256, probe_sha256, counter_report=_v3_report()
+        )
+
+
+def test_empty_counter_families_declare_generation_units() -> None:
+    """Pin the generator against independent expectations so a regression to
+    v1 units in blocked v2/v3 evidence cannot hide behind its own map."""
+    v1_units = {family: row["unit"] for family, row in counter.empty_counter_families(1).items()}
+    assert v1_units == {
+        "achieved_occupancy": "ratio",
+        "branch_divergence": "ratio",
+        "global_memory_traffic": "bytes",
+        "local_memory_traffic": "bytes",
+        "shared_memory_traffic": "bytes",
+    }
+    for generation in (2, 3):
+        rows = counter.empty_counter_families(generation)
+        assert {family: row["unit"] for family, row in rows.items()} == {
+            "achieved_occupancy": "ratio",
+            "branch_divergence": "ratio",
+            "global_memory_traffic": "sector",
+            "local_memory_traffic": "sector",
+            "shared_memory_traffic": "wavefront",
+        }
+        assert all(
+            row["provenance"] is None
+            and row["metric_names"] is None
+            and row["values_by_launch"] is None
+            for row in rows.values()
+        )
+
+
+def _unavailable_report_for(generation: int, profile_id: str, status: str) -> dict[str, object]:
+    """The shape a blocked or failed v2/v3 attempt must leave behind: the
+    generation's measured units with null values, its launch budget, and
+    attempt fields matching the declared status."""
+    report = deepcopy(_evidence())
+    launch_count = counter.required_launch_count(generation)
+    report["profile_id"] = profile_id
+    toolchain = report["toolchain"]
+    toolchain["launch_count_limit"] = launch_count
+    toolchain["command_template"] = [
+        str(entry).replace("--launch-count=12", f"--launch-count={launch_count}")
+        for entry in toolchain["command_template"]
+    ]
+    report["attempt"]["required_launch_count"] = launch_count
+    report["achieved_counters"] = counter.empty_counter_families(generation)
+    if status == "collection_failed":
+        report["attempt"].update(
+            {
+                "status": "collection_failed",
+                "blocker_code": None,
+                "blocker_kind": None,
+                "recognized_error_line_sha256": None,
+            }
+        )
+        report["gates"].update(
+            {
+                "cr2_5b_counter_attempt_complete": False,
+                "cr2_5_disposition": "collection_failed",
+            }
+        )
+    return report
+
+
+@pytest.mark.parametrize("status", ("external_blocked", "collection_failed"))
+@pytest.mark.parametrize(
+    ("generation", "profile_attr"), ((2, "PROFILE_V2"), (3, "PROFILE_V3")), ids=("v2", "v3")
+)
+def test_unavailable_attempts_stay_self_validating_for_later_generations(
+    generation: int, profile_attr: str, status: str
+) -> None:
+    counter.validate_report(
+        _unavailable_report_for(generation, getattr(resource, profile_attr), status)
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda value: value.update({"profile_id": "cp.resource.steady_full_window_body.sm86.v4"}),
+        lambda value: value["toolchain"].update({"launch_count_limit": 12}),
+        lambda value: value["attempt"].update({"required_launch_count": 12}),
+        lambda value: value["achieved_counters"]["achieved_occupancy"].update(
+            {"values_by_launch": [0.5] * 12}
+        ),
+    ],
+    ids=("unknown-generation", "pre-fusion-limit", "pre-fusion-required", "pre-fusion-values"),
+)
+def test_v3_counter_reports_reject_pre_fusion_shape_or_unknown_generations(mutation) -> None:
+    report = _v3_report()
+    mutation(report)
+    with pytest.raises(counter.CounterEvidenceError):
+        counter.validate_report(report)
 
 
 def test_cr2_5b_parent_link_rejects_binary_or_probe_hash_drift() -> None:

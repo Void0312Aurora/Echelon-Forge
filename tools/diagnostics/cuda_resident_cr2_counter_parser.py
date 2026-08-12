@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import math
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -19,7 +21,6 @@ else:
     )
 
 
-REQUIRED_LAUNCH_COUNT = 12
 COUNTER_FAMILIES = {
     "achieved_occupancy": "ratio",
     "branch_divergence": "ratio",
@@ -46,7 +47,51 @@ COUNTER_FAMILY_UNITS = {
         "local_memory_traffic": "sector",
         "shared_memory_traffic": "wavefront",
     },
+    # The CP-5 fused window graph collects the same metric set as v2; only the
+    # launch topology changed, and that is derived from the contract below.
+    3: {
+        "achieved_occupancy": "ratio",
+        "branch_divergence": "ratio",
+        "global_memory_traffic": "sector",
+        "local_memory_traffic": "sector",
+        "shared_memory_traffic": "wavefront",
+    },
 }
+
+
+def required_launch_count(schema_version: int) -> int:
+    """Every launch of the generation's captured window graph.
+
+    Derived from the contract launch sequence rather than pinned, so a new
+    execution-graph generation never re-pins launch counts anywhere in the
+    counter chain -- the drift class CP-4c paid for. A new generation still
+    registers its identity in the schema module and its measured-unit map in
+    COUNTER_FAMILY_UNITS above, once each.
+    """
+    return len(_launch_sequence(schema_version))
+
+
+def command_template(launch_count: int) -> tuple[str, ...]:
+    """The frozen capture invocation, parameterized only by launch count.
+
+    A counter capture profiles every launch of its parent generation's window
+    graph, so the count follows that generation rather than being pinned here.
+    """
+    return (
+        "ncu",
+        "--target-processes=application-only",
+        "--profile-from-start=off",
+        "--replay-mode=kernel",
+        "--kernel-name-base=demangled",
+        "--set=full",
+        f"--launch-count={launch_count}",
+        "--force-overwrite",
+        "--export=<raw>/full-window-256",
+        "--log-file=<raw>/attempt.log",
+        "<resource-probe>",
+        "--output=<raw>/probe-output.json",
+    )
+
 
 COUNTER_METRICS: dict[str, tuple[tuple[str, ...], str]] = {
     "achieved_occupancy": (("sm__warps_active.avg.pct_of_peak_sustained_active",), "%"),
@@ -76,6 +121,7 @@ COUNTER_METRICS: dict[str, tuple[tuple[str, ...], str]] = {
 # threads per executed instruction means full convergence, i.e. 1.0.
 WARP_LANES = 32
 CSV_IDENTITY_COLUMNS = ("ID", "Kernel Name", "Block Size", "Grid Size")
+PERMISSION_CODE = "ERR_NVGPUCTRPERM"
 
 
 class CounterParseError(ValueError):
@@ -96,6 +142,52 @@ def _csv_number(raw: object, label: str) -> float:
         raise CounterParseError(f"{label} is not numeric: {text!r}") from error
     _require(math.isfinite(value), f"{label} is not finite")
     return value
+
+
+def parse_attempt_log(text: str) -> dict[str, Any]:
+    """Extract process lifecycle and stable error codes from an NCU log."""
+    connected = re.findall(r"^==PROF== Connected to process (\d+) ", text, flags=re.MULTILINE)
+    disconnected = re.findall(
+        r"^==PROF== Disconnected from process (\d+)\s*$", text, flags=re.MULTILINE
+    )
+    error_lines = re.findall(r"^==ERROR== ([^\r\n]+)$", text, flags=re.MULTILINE)
+    error_codes: list[str] = []
+    for line in error_lines:
+        match = re.match(r"([A-Z][A-Z0-9_]+)\b", line)
+        _require(match is not None, "Nsight Compute error line has no stable code")
+        error_codes.append(match.group(1))
+    permission_lines = [line for line in error_lines if line.startswith(f"{PERMISSION_CODE} ")]
+    permission_message = "does not have permission to access NVIDIA GPU Performance Counters"
+    permission_denied = (
+        len(permission_lines) == 1
+        and permission_message in permission_lines[0]
+        and error_codes == [PERMISSION_CODE]
+    )
+    return {
+        "connected_pids": [int(value) for value in connected],
+        "disconnected_pids": [int(value) for value in disconnected],
+        "error_codes": error_codes,
+        "permission_denied": permission_denied,
+        "permission_line_sha256": (
+            hashlib.sha256(permission_lines[0].encode("utf-8")).hexdigest()
+            if permission_denied
+            else None
+        ),
+    }
+
+
+def empty_counter_families(generation: int) -> dict[str, dict[str, Any]]:
+    """A valueless capture still declares its generation's measured units, so
+    blocked and failed attempts leave self-validating evidence beyond v1."""
+    return {
+        family: {
+            "unit": unit,
+            "provenance": None,
+            "metric_names": None,
+            "values_by_launch": None,
+        }
+        for family, unit in COUNTER_FAMILY_UNITS[generation].items()
+    }
 
 
 def export_counter_csv(ncu: Path, ncu_report: Path) -> str:
@@ -126,12 +218,13 @@ def parse_counter_csv(text: str, schema_version: int) -> dict[str, Any]:
         schema_version in COUNTER_FAMILY_UNITS,
         f"unknown resource-evidence generation: {schema_version}",
     )
+    launch_count = required_launch_count(schema_version)
     rows = list(csv.DictReader(io.StringIO(text)))
     _require(len(rows) >= 2, "Nsight Compute CSV has no measured launches")
     units, launches = rows[0], rows[1:]
     _require(
-        len(launches) == REQUIRED_LAUNCH_COUNT,
-        f"expected {REQUIRED_LAUNCH_COUNT} measured launches, found {len(launches)}",
+        len(launches) == launch_count,
+        f"expected {launch_count} measured launches, found {len(launches)}",
     )
     for column in CSV_IDENTITY_COLUMNS:
         _require(column in units, f"Nsight Compute CSV is missing the {column} column")
@@ -141,12 +234,7 @@ def parse_counter_csv(text: str, schema_version: int) -> dict[str, Any]:
     )
 
     catalog = _kernel_catalog(schema_version)
-    sequence = _launch_sequence(schema_version)
-    _require(
-        len(sequence) == REQUIRED_LAUNCH_COUNT,
-        "declared launch sequence does not match the required launch count",
-    )
-    expected = [kernel_id for kernel_id, _stage in sequence]
+    expected = [kernel_id for kernel_id, _stage in _launch_sequence(schema_version)]
 
     observed: list[str] = []
     for index, row in enumerate(launches):
@@ -202,5 +290,3 @@ def parse_counter_csv(text: str, schema_version: int) -> dict[str, Any]:
             "values_by_launch": values,
         }
     return {"families": families, "kernel_order": observed}
-
-

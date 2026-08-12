@@ -218,22 +218,22 @@
     {
       "path": "src/runtime/contracts/cuda_resident_counter_evidence_contract.h",
       "role": "CR2-5b achieved-counter families, states, and fail-closed policy",
-      "observed_lines": 56
+      "observed_lines": 73
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
       "role": "CR2-5b Nsight Compute attempt and external-blocker evidence collector",
-      "observed_lines": 689
+      "observed_lines": 682
     },
     {
       "path": "tools/diagnostics/cuda_resident_cr2_counter_parser.py",
       "role": "CP-4c achieved-counter report parser and per-generation family units",
-      "observed_lines": 206
+      "observed_lines": 292
     },
     {
       "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
       "role": "CR2-5b evidence provenance, state, negative, and size guards",
-      "observed_lines": 356
+      "observed_lines": 530
     },
     {
       "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",
