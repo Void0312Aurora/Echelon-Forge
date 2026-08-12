@@ -164,7 +164,7 @@ exist at the stated paths:
 | Observation | `tests/runtime/air_combat/test_warhead_spatial_component_projection.py` is newly added (untracked). The warhead effects spatial projection contract is not captured in any weapons/damage specialization standard under `docs/standards/`. |
 | Impact | If the spatial projection contract stabilizes, it needs a standards-level ownership slot. Currently the foundation-level `realism_authority_boundary.zh.md` provides authority gating but not field-level contract documentation. |
 | Recommendation | When the MLF-3 warhead effects work reaches acceptance, add a weapon-effects specialization entry under `docs/standards/air/` or a new `docs/standards/weapons/` directory. Do not let the contract live only in task documents and test files. |
-| Reference | `tests/runtime/air_combat/test_warhead_spatial_component_projection.py`, `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_warhead_effects/` |
+| Reference | `tests/runtime/air_combat/test_warhead_spatial_component_projection.py`, `docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/` |
 
 ## 5. Non-Gaps (Verified Aligned)
 

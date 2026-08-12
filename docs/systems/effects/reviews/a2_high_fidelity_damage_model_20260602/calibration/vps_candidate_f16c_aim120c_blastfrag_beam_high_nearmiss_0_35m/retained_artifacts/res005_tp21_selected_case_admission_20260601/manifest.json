@@ -1,0 +1,135 @@
+{
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601",
+  "authority_guards": {
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "benchmark_consumed_for_release": false,
+  "current_missing_items": [
+    {
+      "item_id": "TP21-SELECTED-CASE-LOCATOR",
+      "missing_reason": "reviewer-selected case locator label is absent",
+      "next_owner_input": "stable reviewer-selected TP-21 case locator label without retaining source prose, tables, figures, or raw values",
+      "owner": "mechanism_admission_owner"
+    },
+    {
+      "item_id": "TP21-SELECTED-OUTPUT-PREIMAGE-SHA256",
+      "missing_reason": "selected output preimage sha256 is absent",
+      "next_owner_input": "sha256 of a redacted selected-case output preimage; the preimage itself must not be retained in this packet",
+      "owner": "mechanism_admission_owner"
+    },
+    {
+      "item_id": "TP21-SELECTED-DEBRIS-OUTPUT-ANCHOR-SET",
+      "missing_reason": "selected debris output hash anchor set is empty",
+      "next_owner_input": "hash-only selected debris output anchor set for the selected case",
+      "owner": "mechanism_admission_owner"
+    },
+    {
+      "item_id": "TP21-INDEPENDENT-REVIEWER-SIGNOFF",
+      "missing_reason": "independent reviewer signoff is absent",
+      "next_owner_input": "independent reviewer signoff id for the selected case, locator label, and preimage hash",
+      "owner": "independent_mechanism_reviewer"
+    },
+    {
+      "item_id": "TP21-ALLOWED-OUTPUT-SIGNOFF",
+      "missing_reason": "source-rights policy remains fail-closed for current selected comparison outputs",
+      "next_owner_input": "allowed-output signoff that admits only hash outputs for the reviewer-selected case",
+      "owner": "source_rights_reviewer"
+    },
+    {
+      "item_id": "TP21-AUTHORITY-BOUNDARY-SIGNOFF",
+      "missing_reason": "authority-boundary signoff is absent",
+      "next_owner_input": "reviewer confirmation that fragment/component/effect/stock/runtime/Pk/fuze authority remains false",
+      "owner": "integration_owner"
+    }
+  ],
+  "decision": {
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_gate": [],
+    "closed_residual_subscopes_by_this_gate": [],
+    "decision": "not_admitted_fail_closed",
+    "fail_closed": true,
+    "narrowly_closes_res005": false,
+    "release_grade_validated": false,
+    "residual_status_after_gate": "open_fail_closed_tp21_selected_debris_outputs_missing",
+    "selected_tp21_case_admitted": false,
+    "status": "blocked"
+  },
+  "hash_only_ref_only_label_only": true,
+  "input_refs": [
+    {
+      "artifact_id": "res005_prior_debris_admission_gate",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
+      "role": "prior_fail_closed_res005_gate_input",
+      "schema_version": "a2.res005_tp21_debris_admission_gate.v1",
+      "sha256": "8f86cdebb8892628c9b2c67be97ea70f0abdbfcf7c0a4c148947ba12104ec26e",
+      "status": "blocked_fail_closed_tp21_debris_admission_gate"
+    },
+    {
+      "artifact_id": "res005_selected_debris_output_anchor_set",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
+      "role": "prior_hash_only_empty_anchor_set_input",
+      "schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",
+      "sha256": "dc6d36a6ef9967a8c8850fbe7a24f571fc11ab4deefa505bcc3b756836a852f9",
+      "status": ""
+    },
+    {
+      "artifact_id": "source_rights_output_policy_gate",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "role": "source_rights_allowed_output_policy_input",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    },
+    {
+      "artifact_id": "residual_register",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "role": "res005_residual_status_ref",
+      "sha256": "9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d"
+    },
+    {
+      "artifact_id": "mechanism_admission_failclosed_backlog",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/mechanism_admission_failclosed_backlog_20260601.zh.md",
+      "role": "tc_a2_bf_003_res005_backlog_ref",
+      "sha256": "4fd020b348542e14308506734b90a223eb84d82c3c9495918bcda84edd070d4b"
+    },
+    {
+      "artifact_id": "candidate_acceptance_status",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/candidate_acceptance_status.zh.md",
+      "role": "g2_candidate_acceptance_boundary_ref",
+      "sha256": "75ce09dad5079a0204855734e9047fe21c2f0c52403570e2a7aee109cf08fac1"
+    },
+    {
+      "artifact_id": "task_cluster_execution_status",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/task_cluster_execution_status_20260601.zh.md",
+      "role": "task_cluster_boundary_ref",
+      "sha256": "a6d2fac212054dec58605b06931d703522f8246d8aa55b56250775985bd9bbea"
+    },
+    {
+      "artifact_id": "validation_res005_tp21_debris_admission_note",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_res005_tp21_debris_admission_gate_20260531.zh.md",
+      "role": "prior_validation_note_ref",
+      "sha256": "888c2fb234b48dbe460475dbf000804107440d9272ba95996d11175beb645e31"
+    }
+  ],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "raw_selected_outputs_retained": false,
+  "raw_tp21_source_content_retained": false,
+  "res005_tp21_selected_case_admission_review_gate_artifact": {
+    "filename": "res005_tp21_selected_case_admission_review_gate.json",
+    "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
+    "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
+    "sha256": "2ff80d2a936da961835a1d4ff9ec2c9f3a80c5bb62013e21b53ba83bb0e584bb"
+  },
+  "schema_version": "a2.res005_tp21_selected_case_admission_review_retained_manifest.v1",
+  "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
+}

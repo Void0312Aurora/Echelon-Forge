@@ -10,7 +10,14 @@ LEADER_INTENT = REPO_ROOT / "src" / "components" / "tasking" / "leader_intent.h"
 PILOT_REPORT = REPO_ROOT / "src" / "components" / "tasking" / "pilot_report.h"
 COMPONENTS_README = REPO_ROOT / "src" / "components" / "README.md"
 TASKING_README = REPO_ROOT / "src" / "components" / "tasking" / "README.md"
-GROUND_PROGRESS = REPO_ROOT / "docs" / "task" / "ground" / "ground_current_progress_20260524.md"
+GROUND_STANDARD = (
+  REPO_ROOT
+  / "docs"
+  / "domains"
+  / "ground"
+  / "standards"
+  / "specialization_baseline.md"
+)
 NATIVE_STATIC_SCENARIO = REPO_ROOT / "scenarios" / "ground" / "ground_platoon_native_static_occupy_v1.json"
 
 
@@ -149,7 +156,7 @@ def test_tasking_compatibility_shells_project_ground_owner_slice() -> None:
 def test_ground_tasking_boundary_docs_keep_packet_and_runtime_surfaces_held() -> None:
   readme = _text(GROUND_TASKING_DIR / "README.md")
   tasking_readme = _text(TASKING_README)
-  progress = _text(GROUND_PROGRESS)
+  progress = _text(GROUND_STANDARD)
   scenario = _text(NATIVE_STATIC_SCENARIO)
   boundary_docs = "\n".join((readme, tasking_readme, progress, scenario))
 
@@ -174,4 +181,4 @@ def test_ground_tasking_boundary_docs_keep_packet_and_runtime_surfaces_held() ->
     assert held_surface in boundary_docs
 
   assert "src/components/domains/ground/tasking/" in progress
-  assert "task/status owner slices" in progress
+  assert "static task/status chain" in progress

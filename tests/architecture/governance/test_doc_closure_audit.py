@@ -29,11 +29,11 @@ def test_wp_doc_closure_audit_accepts_current_wp9_package() -> None:
 
 def test_wp_doc_closure_audit_reports_required_peer_and_index_gaps(tmp_path: Path) -> None:
   _write(
-    tmp_path / "docs/task/simulation_architecture/README.md",
+    tmp_path / "docs/task/simulation_architecture/archive/phase3c_closeout_20260808/README.md",
     "# Simulation Architecture\n\nWP10\n",
   )
   _write(
-    tmp_path / "docs/task/simulation_architecture/README.zh.md",
+    tmp_path / "docs/task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md",
     "# 仿真架构\n\nWP10\n",
   )
   _write(
@@ -42,11 +42,11 @@ def test_wp_doc_closure_audit_reports_required_peer_and_index_gaps(tmp_path: Pat
     "# WP10 Example\n\n[missing](missing.md)\n",
   )
   _write(
-    tmp_path / "docs/task/review/README.md",
+    tmp_path / "docs/task/review/archive/phase3c_closeout_20260808/README.md",
     "# Review\n",
   )
   _write(
-    tmp_path / "docs/task/review/README.zh.md",
+    tmp_path / "docs/task/review/archive/phase3c_closeout_20260808/README.zh.md",
     "# 审查\n",
   )
   _write(

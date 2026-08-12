@@ -15,7 +15,7 @@
 #include "components/tasking/task_order.h"
 // HELD include-direction edge (ratcheted at I38, censused at I41,
 // re-adjudicated this iteration, 2026-07-27): WorldExecutionEpisodeStepRequest's
-// config/env_state fields (detail/world_execution_episode_step_request.inc)
+// config/env_state fields (detail/tasking/world_execution_episode_step_request.inc)
 // are typed StepEvaluationBatchConfig/StepEvaluationBatchEnvState, owned by
 // this mission header. T1 dto_schema single-sourcing cannot close the edge
 // byte-equivalently: StepEvaluationBatchEnvState embeds ten mission-owned
@@ -29,24 +29,25 @@
 // tests/architecture/governance/test_cpp_include_direction.py and the
 // allowlist entry in
 // tests/architecture/fixtures/cpp_include_direction_allowlist_20260720.json;
-// adjudication record: docs/plan/unified_architecture_program/
+// adjudication record:
+// docs/plan/archive/unified_architecture_program_completed_20260727/
 // t6_residual_ledger.md section 7.5.
 #include "core/mission/episode/execution_episode_batch_prepare.h"
 #include "runtime/contracts/platform_capability_contracts.h"
 
 struct WorldEntityRef {
 #define EF_WORLD_ENTITY_REF_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/world_entity_ref.inc"
+#include "runtime/contracts/detail/platform/world_entity_ref.inc"
 };
 
 struct WorldTerrainAssignment {
 #define EF_WORLD_TERRAIN_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/world_terrain_assignment.inc"
+#include "runtime/contracts/detail/platform/world_terrain_assignment.inc"
 };
 
 struct WorldWindAssignment {
 #define EF_WORLD_WIND_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/world_wind_assignment.inc"
+#include "runtime/contracts/detail/platform/world_wind_assignment.inc"
 };
 
 // Sun direction driving optical glare. Defaults preserve the historical
@@ -59,12 +60,12 @@ struct WorldSunAssignment {
 
 struct WorldZoneDefinition {
 #define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/world_zone_definition.inc"
+#include "runtime/contracts/detail/platform/world_zone_definition.inc"
 };
 
 struct WorldSpawnRequest {
 #define EF_WORLD_SPAWN_REQUEST_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/world_spawn_request.inc"
+#include "runtime/contracts/detail/platform/world_spawn_request.inc"
 };
 
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMissingRequestId =
@@ -105,13 +106,13 @@ inline constexpr std::string_view kTypedPlatformSetupSurfaceInvalid = "invalid_t
 
 struct TypedPlatformSpawnRequest {
 #define EF_TYPED_PLATFORM_SPAWN_REQUEST_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/typed_platform_spawn_request.inc"
+#include "runtime/contracts/detail/platform/typed_platform_spawn_request.inc"
 };
 
 struct TypedPlatformSpawnValidationResult {
 #define EF_TYPED_PLATFORM_SPAWN_VALIDATION_RESULT_FIELD(type, name, default_value)                 \
     type name = default_value;
-#include "runtime/contracts/detail/typed_platform_spawn_validation_result.inc"
+#include "runtime/contracts/detail/platform/typed_platform_spawn_validation_result.inc"
 
     void reject(std::string reason) {
         valid = false;
@@ -392,7 +393,7 @@ struct TypedPlatformSpawnAdmission {
 
 struct TypedPlatformSpawnResult {
 #define EF_TYPED_PLATFORM_SPAWN_RESULT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/typed_platform_spawn_result.inc"
+#include "runtime/contracts/detail/platform/typed_platform_spawn_result.inc"
 
     void reject(std::string reason) {
         admitted = false;
@@ -440,7 +441,7 @@ make_typed_platform_spawn_result(const TypedPlatformSpawnAdmission &admission) {
 
 struct WorldPilotActionAssignment {
 #define EF_WORLD_PILOT_ACTION_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/world_pilot_action_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_pilot_action_assignment.inc"
 };
 
 struct WorldMissionCommandAssignment {
@@ -452,7 +453,7 @@ struct WorldMissionCommandAssignment {
 
 #define EF_WORLD_MISSION_COMMAND_ASSIGNMENT_FIELD(type, name, default_value)                       \
     type name = default_value;
-#include "runtime/contracts/detail/world_mission_command_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_mission_command_assignment.inc"
 };
 
 struct MissionCommandMaintainedBatchContract {
@@ -471,7 +472,7 @@ struct MissionCommandMaintainedBatchContract {
 
 #define EF_MISSION_COMMAND_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)              \
     type name = default_value;
-#include "runtime/contracts/detail/mission_command_maintained_batch_contract.inc"
+#include "runtime/contracts/detail/tasking/mission_command_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "MissionCommandMaintainedBatchContract is the controlled "
                                          "MissionCommand maintained batch read/write shape.");
@@ -544,13 +545,13 @@ struct WorldMissionCommandMaintainedAssignment {
 
 #define EF_WORLD_MISSION_COMMAND_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)            \
     type name = default_value;
-#include "runtime/contracts/detail/world_mission_command_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_mission_command_maintained_assignment.inc"
 };
 
 struct TaskOrderAirTaskingIdentityDirective {
 #define EF_TASK_ORDER_AIR_TASKING_IDENTITY_DIRECTIVE_FIELD(type, name, default_value)              \
     type name = default_value;
-#include "runtime/contracts/detail/task_order_air_tasking_identity_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_air_tasking_identity_directive.inc"
 
     bool operator==(const TaskOrderAirTaskingIdentityDirective &) const = default;
 };
@@ -558,7 +559,7 @@ struct TaskOrderAirTaskingIdentityDirective {
 struct TaskOrderAirStationingDirective {
 #define EF_TASK_ORDER_AIR_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                    \
     type name = default_value;
-#include "runtime/contracts/detail/task_order_air_stationing_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_air_stationing_directive.inc"
 
     bool operator==(const TaskOrderAirStationingDirective &) const = default;
 };
@@ -566,7 +567,7 @@ struct TaskOrderAirStationingDirective {
 struct TaskOrderAirFormationDirective {
 #define EF_TASK_ORDER_AIR_FORMATION_DIRECTIVE_FIELD(type, name, default_value)                     \
     type name = default_value;
-#include "runtime/contracts/detail/task_order_air_formation_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_air_formation_directive.inc"
 
     bool operator==(const TaskOrderAirFormationDirective &) const = default;
 };
@@ -574,7 +575,7 @@ struct TaskOrderAirFormationDirective {
 struct TaskOrderNavalStationingDirective {
 #define EF_TASK_ORDER_NAVAL_STATIONING_DIRECTIVE_FIELD(type, name, default_value)                  \
     type name = default_value;
-#include "runtime/contracts/detail/task_order_naval_stationing_directive.inc"
+#include "runtime/contracts/detail/tasking/task_order_naval_stationing_directive.inc"
 
     bool operator==(const TaskOrderNavalStationingDirective &) const = default;
 };
@@ -752,7 +753,7 @@ struct TaskOrderMaintainedBatchContract {
 
 #define EF_TASK_ORDER_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)                   \
     type name = default_value;
-#include "runtime/contracts/detail/task_order_maintained_batch_contract.inc"
+#include "runtime/contracts/detail/tasking/task_order_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "TaskOrderMaintainedBatchContract is the controlled "
                                          "TaskOrder maintained batch read/write shape.");
@@ -807,7 +808,7 @@ struct WorldTaskOrderMaintainedAssignment {
 
 #define EF_WORLD_TASK_ORDER_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)                 \
     type name = default_value;
-#include "runtime/contracts/detail/world_task_order_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_task_order_maintained_assignment.inc"
 };
 
 struct WorldLeaderIntentAssignment {
@@ -819,7 +820,7 @@ struct WorldLeaderIntentAssignment {
 
 #define EF_WORLD_LEADER_INTENT_ASSIGNMENT_FIELD(type, name, default_value)                         \
     type name = default_value;
-#include "runtime/contracts/detail/world_leader_intent_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_leader_intent_assignment.inc"
 };
 
 struct LeaderIntentMaintainedBatchContract {
@@ -837,7 +838,7 @@ struct LeaderIntentMaintainedBatchContract {
 
 #define EF_LEADER_INTENT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)                \
     type name = default_value;
-#include "runtime/contracts/detail/leader_intent_maintained_batch_contract.inc"
+#include "runtime/contracts/detail/tasking/leader_intent_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "LeaderIntentMaintainedBatchContract is the controlled "
                                          "LeaderIntent maintained batch read/write shape.");
@@ -913,7 +914,7 @@ struct WorldLeaderIntentMaintainedAssignment {
 
 #define EF_WORLD_LEADER_INTENT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)              \
     type name = default_value;
-#include "runtime/contracts/detail/world_leader_intent_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_leader_intent_maintained_assignment.inc"
 };
 
 struct WorldPilotReportAssignment {
@@ -924,7 +925,7 @@ struct WorldPilotReportAssignment {
         "WorldPilotReportAssignment transports only the PilotReport compatibility shell.");
 
 #define EF_WORLD_PILOT_REPORT_ASSIGNMENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/world_pilot_report_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_pilot_report_assignment.inc"
 };
 
 struct PilotReportMaintainedBatchContract {
@@ -940,7 +941,7 @@ struct PilotReportMaintainedBatchContract {
 
 #define EF_PILOT_REPORT_MAINTAINED_BATCH_CONTRACT_FIELD(type, name, default_value)                 \
     type name = default_value;
-#include "runtime/contracts/detail/pilot_report_maintained_batch_contract.inc"
+#include "runtime/contracts/detail/tasking/pilot_report_maintained_batch_contract.inc"
 
     static_assert(kMaintainedBatchTruth, "PilotReportMaintainedBatchContract is the controlled "
                                          "PilotReport maintained batch read/write shape.");
@@ -992,7 +993,7 @@ struct WorldPilotReportMaintainedAssignment {
 
 #define EF_WORLD_PILOT_REPORT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)               \
     type name = default_value;
-#include "runtime/contracts/detail/world_pilot_report_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_pilot_report_maintained_assignment.inc"
 };
 
 [[nodiscard]] inline const MissionCommandCompatibilityTransportShell &
@@ -1087,5 +1088,5 @@ world_pilot_report_maintained_batch_contract(
 struct WorldExecutionEpisodeStepRequest {
 #define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value)                   \
     type name = default_value;
-#include "runtime/contracts/detail/world_execution_episode_step_request.inc"
+#include "runtime/contracts/detail/tasking/world_execution_episode_step_request.inc"
 };

@@ -26,7 +26,7 @@ This engineering proxy keeps an explicit evidence grade. It is suitable as an en
 | Whole-airframe projected mesh diagnostic records follow-up protrusions without changing geometry acceptance | [whole_airframe_contour_containment_20260614.json](../../review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.json), [whole_airframe_contour_containment_results_20260614.md](../../whole_airframe_contour_containment_results_20260614.md): `contour_method=projected_mesh_triangle_union`, `exceeds_tolerance_item_count=10`, `runtime_active_component_count=0`; these are retained review-only follow-up items, not a default runtime change or acceptance rollback | pass with retained follow-up |
 | Final review evidence is concentrated | Whole-airframe projected mesh contour plus semantic volume, internal prior, parent-child, and follow-up placement views remain; the old `75`-page component-review intermediate packet is retired from the current result surface | pass |
 | Focused tests pass | `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py` | pass, `5 passed` |
-| Diff whitespace check passes | `git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py` | pass, no output |
+| Diff whitespace check passes | `git diff --check -- docs/systems/effects/reviews/f16c_target_geometry_20260614 tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py` | pass, no output |
 
 ## Not Closure Gates
 

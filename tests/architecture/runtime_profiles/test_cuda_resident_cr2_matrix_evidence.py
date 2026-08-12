@@ -8,21 +8,29 @@ from pathlib import Path
 
 import pytest
 
+from tools.diagnostics import cuda_resident_retained_evidence_paths as retained_paths
 from tools.diagnostics import cuda_resident_cr2_matrix_evidence as collector
 from tools.diagnostics import cuda_resident_cr2_matrix_evidence_schema as schema
 from tools.diagnostics import cuda_resident_cr2_matrix_probe as matrix_probe
 
 
 ROOT = Path(__file__).resolve().parents[3]
-EVIDENCE_DIR = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804"
+EVIDENCE_DIR = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_matrix_evidence_20260804"
 MANIFEST = EVIDENCE_DIR / "manifest.json"
-EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804.json"
+EVIDENCE = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cr2_matrix_evidence_20260804.json"
 PARITY = EVIDENCE_DIR / "parity-comparison.json"
-CP8_EVIDENCE_DIR = ROOT / "docs/plan/exact_runtime/cuda_resident_cp8_matrix_evidence_20260812"
+CP8_EVIDENCE_DIR = (
+    ROOT
+    / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp8_matrix_evidence_20260812"
+)
 CP8_MANIFEST = CP8_EVIDENCE_DIR / "manifest.json"
-CP8_EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cp8_matrix_evidence_20260812.json"
+CP8_EVIDENCE = (
+    ROOT
+    / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp8_matrix_evidence_20260812.json"
+)
 COLLECTOR = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py"
 SCHEMA = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence_schema.py"
+BASELINE_SOURCE_COMMIT = "356bcd56a61e40f1327d16b6a2dda335d7fdd553"
 
 
 def _load(path: Path) -> dict[str, object]:
@@ -40,8 +48,11 @@ def _committed_source_descriptor(commit: str, relative: str) -> dict[str, object
 
     Frozen packages pin the tool sources that produced them; the live tree
     moves on (the collector went generation-aware, the probe gained the CP-6
-    learner mode), so the immutability check must read the blob at the
-    package's source_commit, mirroring the counter chain's precedent.
+    learner mode, the retained packet migrated to the fixture tree), so the
+    immutability check must read the blob at the package's source_commit,
+    mirroring the counter chain's precedent. `relative` is the recorded
+    (logical) repository path, which is where the file lived at every
+    pre-migration evidence commit.
     """
     completed = subprocess.run(
         ["git", "show", f"{commit}:{relative}"],
@@ -63,7 +74,7 @@ def _tracked_reports() -> tuple[dict[str, object], dict[tuple[str, str], dict[st
     reports: dict[tuple[str, str], dict[str, object]] = {}
     for campaign in manifest["campaigns"]:
         for lane, descriptor in campaign["reports"].items():
-            path = ROOT / descriptor["path"]
+            path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
             report = matrix_probe.load_report(path)
             matrix_probe.validate_report(report, require_production=True)
             reports[(campaign["campaign_id"], lane)] = report
@@ -76,28 +87,32 @@ def test_tracked_manifest_reports_and_evidence_hashes_are_exact() -> None:
     schema.validate_evidence(evidence)
     assert evidence["source_commit"] == "0c24a07549e238222741da6b20100537e7a9be22"
     assert evidence["inputs"]["manifest"] == {
-        "path": MANIFEST.relative_to(ROOT).as_posix(),
+        "path": retained_paths.logical_relative(MANIFEST.relative_to(ROOT).as_posix()),
         "bytes": MANIFEST.stat().st_size,
         "sha256": _sha256(MANIFEST),
     }
     # The package's tool descriptors were captured when the evidence landed
     # (the collector did not exist yet at the campaigns' source_commit), so
-    # immutability is checked against the landing commit's blobs.
-    landing = "356bcd56a61e40f1327d16b6a2dda335d7fdd553"
+    # immutability is checked against the landing commit's blobs rather than
+    # the live tree, which has since evolved.
     assert evidence["inputs"]["collector_source"] == _committed_source_descriptor(
-        landing, COLLECTOR.relative_to(ROOT).as_posix()
+        BASELINE_SOURCE_COMMIT, COLLECTOR.relative_to(ROOT).as_posix()
     )
     assert evidence["inputs"]["schema_source"] == _committed_source_descriptor(
-        landing, SCHEMA.relative_to(ROOT).as_posix()
+        BASELINE_SOURCE_COMMIT, SCHEMA.relative_to(ROOT).as_posix()
     )
     for descriptor in manifest["source_inputs"].values():
-        assert descriptor == _committed_source_descriptor(landing, descriptor["path"])
+        assert descriptor == _committed_source_descriptor(
+            BASELINE_SOURCE_COMMIT, descriptor["path"]
+        )
     for descriptor in manifest["prior_evidence_inputs"].values():
-        assert descriptor == _committed_source_descriptor(landing, descriptor["path"])
+        assert descriptor == _committed_source_descriptor(
+            BASELINE_SOURCE_COMMIT, descriptor["path"]
+        )
         assert descriptor["canonicalization"] == "utf8_lf"
     for campaign in manifest["campaigns"]:
         for descriptor in campaign["reports"].values():
-            path = ROOT / descriptor["path"]
+            path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
             assert path.stat().st_size == descriptor["bytes"] < 1_048_576
             assert _sha256(path) == descriptor["sha256"]
     assert PARITY.stat().st_size == evidence["parity_confirmation"]["bytes"]
@@ -136,7 +151,7 @@ def test_fresh_parity_and_counter_blocker_inputs_remain_fail_closed() -> None:
         assert all(row["matched_count"] == row["comparison_count"] > 0 for row in family)
     manifest = _load(MANIFEST)
     paths = {
-        name: ROOT / descriptor["path"]
+        name: ROOT / retained_paths.physical_relative(str(descriptor["path"]))
         for name, descriptor in manifest["prior_evidence_inputs"].items()
     }
     status = collector._validate_prior_evidence(paths)
@@ -185,7 +200,6 @@ def test_policy_derivation_rejects_direction_or_ambiguity_drift() -> None:
     comparisons[0]["all_metric_direction"] = "cuda_resident"
     with pytest.raises(schema.MatrixEvidenceError, match="world 1"):
         collector._selection_policy(comparisons)
-
     comparisons = deepcopy(evidence["comparisons"])
     world4_export = next(
         row
@@ -269,7 +283,8 @@ def _tracked_cp8_reports() -> tuple[dict[str, object], dict[tuple[str, str], dic
     reports: dict[tuple[str, str], dict[str, object]] = {}
     for campaign in manifest["campaigns"]:
         for lane, descriptor in campaign["reports"].items():
-            report = matrix_probe.load_report(ROOT / descriptor["path"])
+            path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
+            report = matrix_probe.load_report(path)
             matrix_probe.validate_report(report, require_production=True)
             reports[(campaign["campaign_id"], lane)] = report
     return manifest, reports
@@ -290,7 +305,7 @@ def test_cp8_package_validates_and_hashes_are_exact() -> None:
     commit = str(evidence["source_commit"])
     assert manifest["source_commit"] == commit
     assert evidence["inputs"]["manifest"] == {
-        "path": CP8_MANIFEST.relative_to(ROOT).as_posix(),
+        "path": retained_paths.logical_relative(CP8_MANIFEST.relative_to(ROOT).as_posix()),
         "bytes": CP8_MANIFEST.stat().st_size,
         "sha256": _sha256(CP8_MANIFEST),
     }
@@ -306,10 +321,12 @@ def test_cp8_package_validates_and_hashes_are_exact() -> None:
     assert set(priors) == {"counter_evidence", "matrix_evidence_cr2_6b", "resource_evidence"}
     for descriptor in priors.values():
         assert descriptor == _committed_source_descriptor(commit, descriptor["path"])
-    assert priors["matrix_evidence_cr2_6b"]["path"] == EVIDENCE.relative_to(ROOT).as_posix()
+    assert priors["matrix_evidence_cr2_6b"]["path"] == retained_paths.logical_relative(
+        EVIDENCE.relative_to(ROOT).as_posix()
+    )
     for campaign in manifest["campaigns"]:
         for descriptor in campaign["reports"].values():
-            path = ROOT / descriptor["path"]
+            path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
             assert path.stat().st_size == descriptor["bytes"] < 1_048_576
             assert _sha256(path) == descriptor["sha256"]
     parity_path = CP8_EVIDENCE_DIR / "parity-comparison.json"

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+import shlex
 from pathlib import Path
 
 
@@ -22,24 +24,54 @@ def _governance_text(filename: str) -> str:
   return _text(*GOVERNANCE_ARCHIVE_PARTS, filename)
 
 
-def test_standards_maintenance_policy_is_registered() -> None:
-  standards_readme = _text("docs", "standards", "README.md")
-  standards_readme_zh = _text("docs", "standards", "README.zh.md")
-  review_readme = _text("docs", "task", "review", "README.md")
-  review_readme_zh = _text("docs", "task", "review", "README.zh.md")
-  review_archive = _text("docs", "task", "review", "archive", "README.md")
-  review_archive_zh = _text("docs", "task", "review", "archive", "README.zh.md")
-  review_archive_registry = _text("docs", "task", "review", "archive_registry.md")
-  review_archive_registry_zh = _text("docs", "task", "review", "archive_registry.zh.md")
+def _constrained_workflow_packages(workflow: str) -> set[str]:
+  commands: list[str] = []
+  current = ""
+  for raw_line in workflow.splitlines():
+    line = raw_line.strip()
+    command_part = line[:-1].rstrip() if line.endswith("\\") else line
+    if current:
+      current = f"{current} {command_part}"
+      if not line.endswith("\\"):
+        commands.append(current)
+        current = ""
+    elif "-m pip install" in line:
+      current = command_part
+      if not line.endswith("\\"):
+        commands.append(current)
+        current = ""
 
-  assert "governance/standards_maintenance_policy.md" in standards_readme
-  assert "governance/standards_maintenance_policy.zh.md" in standards_readme_zh
-  assert "archive/standards_documentation_governance/README.md" in review_readme
-  assert "archive/standards_documentation_governance/README.zh.md" in review_readme_zh
-  assert "standards_documentation_governance/README.md" in review_archive
-  assert "standards_documentation_governance/README.zh.md" in review_archive_zh
-  assert "standards_documentation_governance/" in review_archive_registry
-  assert "standards_documentation_governance/" in review_archive_registry_zh
+  packages: set[str] = set()
+  for command in commands:
+    if "-c requirements/constraints-smoke.txt" not in command:
+      continue
+    tokens = shlex.split(command)
+    install_index = tokens.index("install")
+    skip_constraint_path = False
+    for token in tokens[install_index + 1:]:
+      if skip_constraint_path:
+        skip_constraint_path = False
+      elif token in {"-c", "--constraint"}:
+        skip_constraint_path = True
+      elif not token.startswith("-"):
+        packages.add(token.lower().replace("_", "-"))
+  return packages
+
+
+def test_standards_maintenance_policy_is_registered() -> None:
+  documentation_readme = _text("docs", "engineering", "documentation", "README.md")
+  documentation_readme_zh = _text("docs", "engineering", "documentation", "README.zh.md")
+  policy = _text(
+    "docs", "engineering", "documentation", "standards", "standards_maintenance_policy.md"
+  )
+  policy_zh = _text(
+    "docs", "engineering", "documentation", "standards", "standards_maintenance_policy.zh.md"
+  )
+
+  assert "standards/standards_maintenance_policy.md" in documentation_readme
+  assert "standards/standards_maintenance_policy.zh.md" in documentation_readme_zh
+  assert "retired `docs/plan/` and `docs/task/` roots contain archives only" in policy
+  assert "已退役的 `docs/plan/` 与 `docs/task/` 根只包含归档" in policy_zh
 
 
 def test_standards_governance_tracks_all_alignment_gaps() -> None:
@@ -97,8 +129,9 @@ def test_standards_governance_batch_a_closure_is_backed_by_code_and_standard() -
   bindings = _text("src", "interfaces", "python", "bindings_command.cpp")
   command_standard = _text(
     "docs",
-    "standards",
+    "domains",
     "joint",
+    "standards",
     "command_link_and_reporting_baseline.md",
   )
 
@@ -124,10 +157,24 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
   status = _governance_text("standards_documentation_governance_current_status_20260610.md")
   dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
-  air_obs = _text("docs", "standards", "air", "obs.md")
-  naval_obs = _text("docs", "standards", "naval", "obs.md")
-  naval_readme = _text("docs", "standards", "naval", "README.md")
-  alignment_map = _text("docs", "standards", "overview", "document_alignment_map.md")
+  air_obs = _text(
+    "docs",
+    "domains",
+    "air",
+    "standards",
+    "pilot_observation_contract.md",
+  )
+  naval_obs = _text(
+    "docs",
+    "domains",
+    "naval",
+    "standards",
+    "observation_contract.md",
+  )
+  naval_readme = _text("docs", "domains", "naval", "README.md")
+  alignment_map = _text(
+    "docs", "engineering", "documentation", "reference", "document_alignment_map.md"
+  )
 
   assert "GAP-002" in status
   assert "Closed by registering `air_combat_c2_roe_v1/v2`" in status
@@ -154,18 +201,38 @@ def test_standards_governance_batch_b_observation_modes_are_registered() -> None
   ):
     assert required in naval_obs
 
-  assert "Naval Observation Contract](obs.md)" in naval_readme
-  assert "Naval Observation Contract](../naval/obs.md)" in alignment_map
+  assert "Naval Observation Contract](standards/observation_contract.md)" in naval_readme
+  assert "Naval Observation Contract](../../../domains/naval/standards/observation_contract.md)" in alignment_map
 
 
 def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
   status = _governance_text("standards_documentation_governance_current_status_20260610.md")
   dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
-  air_act = _text("docs", "standards", "air", "act.md")
-  bridge = _text("docs", "standards", "bridge", "runtime_workflow_and_contract_baseline.md")
-  joint = _text("docs", "standards", "joint", "command_and_modeling_baseline.md")
-  naval = _text("docs", "standards", "naval", "minimal_task_structure.md")
+  air_act = _text(
+    "docs",
+    "domains",
+    "air",
+    "standards",
+    "pilot_action_contract.md",
+  )
+  bridge = _text(
+    "docs", "architecture", "standards", "runtime_workflow_and_contract_baseline.md"
+  )
+  joint = _text(
+    "docs",
+    "domains",
+    "joint",
+    "standards",
+    "command_and_modeling_baseline.md",
+  )
+  naval = _text(
+    "docs",
+    "domains",
+    "naval",
+    "standards",
+    "minimal_task_structure.md",
+  )
 
   assert "GAP-004" in status
   assert "Closed by refreshing stale or missing status lines" in status
@@ -174,22 +241,24 @@ def test_standards_governance_gap_004_status_headers_are_refreshed() -> None:
   assert sdg_b2_row.endswith("| pass |")
   assert sg_g4_row.endswith("| pass |")
 
-  assert "Status: `2026-06-10` specialization baseline for maintained air action input" in air_act
+  assert "Status: specialization baseline for maintained air action input" in air_act
   assert "learned-policy behavior" in air_act
-  assert "Status: `2026-06-10` authoritative for maintained runtime workflow ownership" in bridge
+  assert "Status: maintained runtime workflow and contract baseline" in bridge
   assert "air_combat_c2_roe_v2" in bridge
   assert "naval_screen_station_v1" in bridge
   assert "Status: `2026-06-10` authoritative for maintained joint command and modeling" in joint
-  assert "Status: `2026-06-10` specialization baseline for the maintained minimal naval" in naval
+  assert "Status: maintained specialization baseline for the minimal naval" in naval
 
 
-def test_standards_governance_batch_c_modularization_plan_tracks_domain_roots() -> None:
+def test_modularization_issue_tracks_landed_interfaces_and_residuals() -> None:
   status = _governance_text("standards_documentation_governance_current_status_20260610.md")
   dispatch = _governance_text("standards_documentation_governance_dispatch_queue_20260610.md")
   clusters = _governance_text("standards_documentation_governance_task_clusters_20260610.md")
-  plan = _text("docs", "standards", "planning", "modularization_plan.md")
-  standards_readme = _text("docs", "standards", "README.md")
-  alignment_map = _text("docs", "standards", "overview", "document_alignment_map.md")
+  plan = _text("docs", "architecture", "work", "issues", "modularization_plan.md")
+  architecture_readme = _text("docs", "architecture", "README.md")
+  alignment_map = _text(
+    "docs", "engineering", "documentation", "reference", "document_alignment_map.md"
+  )
 
   assert "GAP-005" in status
   assert "Closed by retaining the plan as an active planning supplement" in status
@@ -206,23 +275,41 @@ def test_standards_governance_batch_c_modularization_plan_tracks_domain_roots() 
     assert REPO_ROOT.joinpath(*root).is_dir()
     assert "/".join(root) in plan
 
+  for interface in (
+    "unit_factory.h",
+    "effects_model.h",
+    "sensor_model.h",
+  ):
+    assert REPO_ROOT.joinpath("src", "core", "interfaces", interface).is_file()
+    assert interface in plan
+
+  assert not REPO_ROOT.joinpath("src", "systems", "domains", "ground").exists()
+
   for required in (
-    "Current Implemented Domain Roots",
+    "Verified Current Domain Roots",
+    "Existing Replaceable Interfaces",
     "`src/components/domains/`",
     "`src/systems/domains/`",
     "`src/models/domains/`",
-    "Do not add empty production owner roots",
-    "there is no released `ground/` runtime system owner",
+    "does not authorize code moves",
+    "There is no `src/systems/domains/ground/` owner",
+    "consumer -> provider",
   ):
     assert required in plan
 
-  assert "with current" in standards_readme
-  assert "`src/*/domains` layout notes" in standards_readme
-  assert "realized owner roots from still-planned interfaces" in alignment_map
+  assert "work/issues/modularization_plan.md" in architecture_readme
+  assert "draft" in architecture_readme
+  assert "does not authorize implementation" in alignment_map
 
 
 def test_standards_policy_defines_drift_and_empty_owner_rules() -> None:
-  policy = _text("docs", "standards", "governance", "standards_maintenance_policy.md")
+  policy = _text(
+    "docs",
+    "engineering",
+    "documentation",
+    "standards",
+    "standards_maintenance_policy.md",
+  )
 
   for required in (
     "Semantic mismatch",
@@ -238,12 +325,35 @@ def test_standards_policy_defines_drift_and_empty_owner_rules() -> None:
 
 def test_standards_maintenance_policy_has_bilingual_registry_entry() -> None:
   registry = json.loads(
-    _text("docs", "standards", "bilingual_document_clusters.json")
+    _text(
+      "docs",
+      "engineering",
+      "documentation",
+      "reference",
+      "bilingual_document_clusters.json",
+    )
   )
 
   pairs = {record["pair_id"]: record for record in registry["pairs"]}
-  record = pairs["standards/governance/standards_maintenance_policy"]
+  record = pairs["engineering/documentation/standards/standards_maintenance_policy"]
 
-  assert record["english"] == "docs/standards/governance/standards_maintenance_policy.md"
-  assert record["chinese"] == "docs/standards/governance/standards_maintenance_policy.zh.md"
+  assert record["english"] == "docs/engineering/documentation/standards/standards_maintenance_policy.md"
+  assert record["chinese"] == "docs/engineering/documentation/standards/standards_maintenance_policy.zh.md"
   assert record["source_of_truth"] == "english"
+
+
+def test_smoke_constraints_cover_packages_installed_by_consuming_ci_lanes() -> None:
+  constraints = _text("requirements", "constraints-smoke.txt")
+  constrained = {
+    match.group(1).lower().replace("_", "-")
+    for line in constraints.splitlines()
+    if (match := re.match(r"^([A-Za-z0-9_.-]+)", line))
+  }
+  installed: set[str] = set()
+  for workflow in ("ci-smoke.yml", "coverage-baseline.yml"):
+    installed |= _constrained_workflow_packages(
+      _text(".github", "workflows", workflow)
+    )
+
+  assert {"pip", "pytest", "numpy", "ruff", "gymnasium", "coverage", "gcovr"} <= installed
+  assert installed <= constrained

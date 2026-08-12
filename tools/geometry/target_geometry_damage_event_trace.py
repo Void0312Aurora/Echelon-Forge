@@ -31,10 +31,10 @@ DEFAULT_DATABASE_PATH = Path(resolve_repo_path("examples", "config", "database")
 PROXY_DATABASE_PATH = Path(
   resolve_repo_path(
     "docs",
-    "task",
-    "air_combat",
-    "a2_high_fidelity_damage_model",
-    "missile_lethality_target_geometry",
+    "systems",
+    "effects",
+    "reviews",
+    "f16c_target_geometry_20260614",
     "review_packets",
     "f16c_20260611",
     "target_geometry_training_proxy_database_20260613",
@@ -43,10 +43,10 @@ PROXY_DATABASE_PATH = Path(
 DEFAULT_OUTPUT_PATH = Path(
   resolve_repo_path(
     "docs",
-    "task",
-    "air_combat",
-    "a2_high_fidelity_damage_model",
-    "missile_lethality_target_geometry",
+    "systems",
+    "effects",
+    "reviews",
+    "f16c_target_geometry_20260614",
     "review_packets",
     "f16c_20260611",
     "target_geometry_damage_event_trace_20260614.json",

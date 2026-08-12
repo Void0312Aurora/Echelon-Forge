@@ -17,7 +17,7 @@ class CudaImportOrderTests(unittest.TestCase):
   # a shared CPU snapshot) never materialize build-gpu/, so this is an
   # environmental precondition, not a product defect: skip conditionally on its
   # presence rather than failing closed with ModuleNotFoundError: ef_py. See
-  # docs/plan/unified_architecture_program/t6_residual_ledger.md section 5/8
+  # docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md section 5/8
   # (build-gpu-absent environmental red).
   @unittest.skipUnless(
     os.path.isdir(_BUILD_GPU),

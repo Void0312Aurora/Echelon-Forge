@@ -1,7 +1,7 @@
 """Cross-language parity gate for the scenario-generation lineage vocabulary.
 
 The shared schema owner (T10 census VA-6) lives in
-tools/maintenance/dto_schema/schemas/scenario_generation_request_metadata_fields.py
+tools/maintenance/dto_schema/schemas/scenario/scenario_generation_request_metadata_fields.py
 and .../scenario_generation_evidence_ref_fields.py. This gate holds both
 language faces to that owner:
 
@@ -51,11 +51,11 @@ from python.scenario.compiler.generation_request import (  # noqa: E402
   ScenarioGenerationEvidenceRef,
   ScenarioGenerationRequest,
 )
-from tools.maintenance.dto_schema.schemas.scenario_generation_evidence_ref_fields import (  # noqa: E402
+from tools.maintenance.dto_schema.schemas.scenario.scenario_generation_evidence_ref_fields import (  # noqa: E402
   SCHEMA as EVIDENCE_REF_SCHEMA,
 )
 from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text  # noqa: E402
-from tools.maintenance.dto_schema.schemas.scenario_generation_request_metadata_fields import (  # noqa: E402
+from tools.maintenance.dto_schema.schemas.scenario.scenario_generation_request_metadata_fields import (  # noqa: E402
   SCHEMA as REQUEST_METADATA_SCHEMA,
 )
 

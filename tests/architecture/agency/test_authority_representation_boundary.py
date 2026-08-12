@@ -2,7 +2,7 @@
 
 Pins the **no-mapping verdicts** of the T9 authority representation
 adjudication
-(``docs/plan/unified_architecture_program/t9_authority_representation_adjudication_20260726.md``):
+(``docs/systems/command-tasking/reference/t9_authority_representation_adjudication_20260726.md``):
 the maintained surface carries two disjoint authority representations --
 
 - the **echelon representation**: the compiled ``CommandRelationship`` /

@@ -29,6 +29,11 @@ ensure_repo_imports()
 
 REPO_ROOT = Path(repo_root())
 
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+  packet_root as _a2_root,
+)
+
 from tools.maintenance.retained_artifacts.manifest_integrity import (
   _sha256_file,
   write_and_hash_json,
@@ -43,14 +48,7 @@ GENERATED_ON = "2026-05-31"
 WORKER_ID = "A2-RES004-WARHEAD-SCOPE-CLOSEOUT"
 
 PACKAGE_DIR = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "air_combat"
-  / "archive"
-  / "a2_high_fidelity_damage_model"
-  / "calibration"
-  / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
+  A2_CANDIDATE_PACKAGE_DIR
 )
 DEFAULT_OUTPUT_DIR = (
   PACKAGE_DIR / "retained_artifacts" / "res004_warhead_scope_closeout_20260531"
@@ -84,9 +82,6 @@ EXPECTED_RES004_PIN_IDS = [
   "PIN-AIM120-TPC-001",
   "PIN-AIM120-TPC-REJ",
 ]
-
-def _a2_root(repo_root: Path) -> Path:
-  return repo_root / "docs" / "task" / "air_combat" / "archive" / "a2_high_fidelity_damage_model"
 
 def _evidence_refs(
   *, package_dir: Path, repo_root: Path

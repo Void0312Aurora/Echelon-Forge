@@ -12,20 +12,41 @@ from typing import Iterable
 
 
 DEFAULT_EXCLUDE_SUBSTRINGS = (
-  "docs/forward/temp/",
   "docs/temp/",
   "docs/plan/results/",
   "docs/plan/architecture/review/",
 )
 DEFAULT_EXCLUDE_DIR_NAMES = {"Archive", "archive"}
-STRICT_PLAN_SUBTREES = {
-  "architecture",
-  "cooperative",
-  "repository_consolidation",
-  "runtime_facade",
-  "unified_architecture_program",
+STRICT_OWNER_DOCUMENTS = {
+  "architecture/README.md",
+  "architecture/README.zh.md",
+  "domains/README.md",
+  "domains/README.zh.md",
+  "domains/air/README.md",
+  "domains/air/README.zh.md",
+  "domains/ground/README.md",
+  "domains/ground/README.zh.md",
+  "domains/naval/README.md",
+  "domains/naval/README.zh.md",
+  "engineering/README.md",
+  "engineering/README.zh.md",
+  "engineering/automation/README.md",
+  "engineering/automation/README.zh.md",
+  "engineering/testing/README.md",
+  "engineering/testing/README.zh.md",
+  "learning/README.md",
+  "learning/README.zh.md",
+  "project/README.md",
+  "project/README.zh.md",
+  "project/documentation_architecture.md",
+  "project/documentation_architecture.zh.md",
+  "research/README.md",
+  "research/README.zh.md",
+  "systems/README.md",
+  "systems/README.zh.md",
+  "systems/environment/README.md",
+  "systems/environment/README.zh.md",
 }
-STRICT_TASK_SECOND_LEVEL_READMES = {"flight_dynamics"}
 
 
 def is_local_only_doc(path: Path) -> bool:
@@ -43,36 +64,34 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
   if relative in {"README.md", "README.zh.md"}:
     return True
   if (
-    relative.startswith("agent/")
-    or relative.startswith("standards/")
-    or relative.startswith("manual/")
+    relative.startswith("engineering/automation/rules/")
+    or relative.startswith("engineering/automation/prompts/")
+    or relative.startswith("engineering/automation/standards/")
+    or relative.startswith("architecture/standards/")
+    or relative.startswith("architecture/reference/")
+    or relative.startswith("engineering/documentation/")
+    or relative.startswith("engineering/release/")
+    or relative.startswith("domains/air/standards/")
+    or relative.startswith("domains/air/reference/")
+    or relative.startswith("domains/ground/standards/")
+    or relative.startswith("domains/joint/")
+    or relative.startswith("domains/naval/reference/")
+    or relative.startswith("domains/naval/standards/")
+    or relative.startswith("learning/standards/")
+    or relative.startswith("operations/")
+    or relative.startswith("research/standards/")
+    or relative.startswith("research/sources/")
+    or relative.startswith("engineering/testing/reference/")
+    or relative.startswith("systems/command-tasking/reference/")
+    or relative.startswith("systems/standards/")
   ):
+    return True
+  if relative in STRICT_OWNER_DOCUMENTS:
     return True
   if relative in {
-    "forward/README.md",
-    "forward/README.zh.md",
-    "plan/README.md",
-    "plan/README.zh.md",
     "reference_artifacts.md",
     "reference_artifacts.zh.md",
-    "task/README.md",
-    "task/README.zh.md",
-    "task/task_archive_convergence_plan_20260518.md",
-    "task/task_archive_convergence_plan_20260518.zh.md",
   }:
-    return True
-
-  parts = relative.split("/")
-  if len(parts) >= 2 and parts[0] == "plan" and parts[1] in STRICT_PLAN_SUBTREES:
-    return True
-  if len(parts) == 3 and parts[0] == "task" and parts[2] in {"README.md", "README.zh.md"}:
-    return True
-  if (
-    len(parts) == 4
-    and parts[0] == "task"
-    and parts[1] in STRICT_TASK_SECOND_LEVEL_READMES
-    and parts[3] in {"README.md", "README.zh.md"}
-  ):
     return True
   return False
 

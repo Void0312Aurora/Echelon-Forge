@@ -1,7 +1,7 @@
 """Real-run end-to-end proof for the T10 slice-7 maintained worldline comparison.
 
 Slice 7 of the T10 evidence-spine census order (see
-``docs/plan/unified_architecture_program/t10_evidence_spine_census_20260721.md``
+``docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.md``
 section 3 step 7) adds ``RuntimeFacade::build_maintained_worldline_comparison``
 (this iteration): a read-only producer that joins TWO maintained windows of one
 facade run -- a baseline worldline and a candidate (counterfactual) worldline --

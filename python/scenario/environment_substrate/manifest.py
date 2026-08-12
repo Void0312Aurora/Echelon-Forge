@@ -521,7 +521,7 @@ def build_deterministic_environment_fixture() -> EnvironmentManifest:
             generator_id="manual_static_fixture",
             generator_version="g0-j.20260605",
             deterministic_seed=20260605,
-            source_inputs=("docs/task/ground/environment_substrate_g0_architecture",),
+            source_inputs=("docs/systems/environment/reviews/environment_substrate_g0_closure_20260606",),
         ),
         catalogs=("catalog:port_hardstand", "catalog:village_house_light"),
         objects=(hardstand, village),

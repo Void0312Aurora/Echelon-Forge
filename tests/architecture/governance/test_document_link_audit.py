@@ -23,21 +23,21 @@ def _write(path: Path, text: str = "# Document\n") -> None:
 def test_translate_docs_batch_reexports_shared_scope_helpers(tmp_path: Path) -> None:
   docs_root = tmp_path / "docs"
   readme = docs_root / "README.md"
-  consolidation_plan = docs_root / "plan/repository_consolidation/README.md"
-  authority_map = docs_root / "agent/rules/document_authority_map.md"
-  forward_readme = docs_root / "forward/README.md"
+  architecture_reference = docs_root / "architecture/reference/t8_g4_truth_leak_inventory.md"
+  authority_map = docs_root / "engineering/automation/rules/document_authority_map.md"
+  examples_readme = docs_root / "engineering/documentation/structure_examples.md"
   reference_artifacts = docs_root / "reference_artifacts.md"
   retired_migration_path = docs_root / "plan/documentation_bilingual_migration_plan_20260518.md"
   _write(readme)
-  _write(consolidation_plan)
+  _write(architecture_reference)
   _write(authority_map)
-  _write(forward_readme)
+  _write(examples_readme)
   _write(reference_artifacts)
 
   assert translate_docs_batch.is_strict_bilingual_doc(readme, docs_root)
-  assert translate_docs_batch.is_strict_bilingual_doc(consolidation_plan, docs_root)
+  assert translate_docs_batch.is_strict_bilingual_doc(architecture_reference, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(authority_map, docs_root)
-  assert translate_docs_batch.is_strict_bilingual_doc(forward_readme, docs_root)
+  assert translate_docs_batch.is_strict_bilingual_doc(examples_readme, docs_root)
   assert translate_docs_batch.is_strict_bilingual_doc(reference_artifacts, docs_root)
   assert not translate_docs_batch.is_strict_bilingual_doc(retired_migration_path, docs_root)
   assert not translate_docs_batch.is_local_only_doc(readme)
@@ -49,8 +49,8 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
   docs_root = tmp_path / "docs"
   _write(docs_root / "README.md", "# Current English\n")
   _write(docs_root / "README.zh.md", "# 当前中文\n")
-  _write(docs_root / "manual/README.md", "# Changed English\n")
-  _write(docs_root / "manual/README.zh.md", "# 已更新中文\n")
+  _write(docs_root / "operations/README.md", "# Changed English\n")
+  _write(docs_root / "operations/README.zh.md", "# 已更新中文\n")
   current = translate_docs_batch.build_cluster_records(
     docs_root,
     include_local_only=False,
@@ -71,9 +71,9 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
         "chinese_hash": "unreviewed-zh",
       },
       {
-        "pair_id": "manual/README",
-        "english": "docs/manual/README.md",
-        "chinese": "docs/manual/README.zh.md",
+        "pair_id": "operations/README",
+        "english": "docs/operations/README.md",
+        "chinese": "docs/operations/README.zh.md",
         "source_of_truth": "english",
         "last_verified": "2026-01-01",
         "english_hash": "stale-en",
@@ -85,7 +85,7 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
   merged = translate_docs_batch.merge_selected_cluster_records(
     existing,
     current,
-    ["manual/README"],
+    ["operations/README"],
   )
   by_id = {entry["pair_id"]: entry for entry in merged["pairs"]}
 
@@ -93,8 +93,8 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
   assert merged["review_note"] == "preserve top-level metadata"
   assert by_id["README"]["english_hash"] == "unreviewed-en"
   assert by_id["README"]["chinese_hash"] == "unreviewed-zh"
-  assert by_id["manual/README"]["english_hash"] != "stale-en"
-  assert by_id["manual/README"]["chinese_hash"] != "stale-zh"
+  assert by_id["operations/README"]["english_hash"] != "stale-en"
+  assert by_id["operations/README"]["chinese_hash"] != "stale-zh"
 
 
 def test_selective_cluster_refresh_rejects_unknown_pair(tmp_path: Path) -> None:
@@ -117,7 +117,7 @@ def test_selective_cluster_refresh_rejects_unknown_pair(tmp_path: Path) -> None:
 
 def test_repository_bilingual_registry_matches_the_maintained_surface() -> None:
   docs_root = REPO_ROOT / "docs"
-  registry_path = docs_root / "standards/bilingual_document_clusters.json"
+  registry_path = docs_root / "engineering/documentation/reference/bilingual_document_clusters.json"
   entries = json.loads(registry_path.read_text(encoding="utf-8"))["pairs"]
   registered = {
     entry["pair_id"]: entry
@@ -158,7 +158,7 @@ def test_audit_accepts_relative_files_directories_fragments_and_external_links(t
     "\n".join(
       (
         "[file](guide.md#section)",
-        "[dir](manual/README.md)",
+        "[dir](operations/README.md)",
         "[encoded](space%20name.md?view=1)",
         "[web](https://example.com/missing)",
         "[anchor](#local-heading)",
@@ -169,7 +169,7 @@ def test_audit_accepts_relative_files_directories_fragments_and_external_links(t
     ),
   )
   _write(tmp_path / "docs/guide.md")
-  _write(tmp_path / "docs/manual/README.md")
+  _write(tmp_path / "docs/operations/README.md")
   _write(tmp_path / "docs/space name.md")
 
   result = audit.audit_repository(tmp_path)
@@ -233,13 +233,13 @@ def test_archive_sources_are_excluded_but_maintained_archive_targets_are_validat
 def test_full_tree_adds_non_strict_docs_without_adding_archive_sources(tmp_path: Path) -> None:
   _write(tmp_path / "README.md")
   _write(tmp_path / "docs/README.md")
-  _write(tmp_path / "docs/forward/note.md", "[missing](missing.md)\n")
+  _write(tmp_path / "docs/project/work/issues/note.md", "[missing](missing.md)\n")
   _write(tmp_path / "docs/archive/old.md", "[missing](missing.md)\n")
 
   assert audit.audit_repository(tmp_path).issues == []
   full = audit.audit_repository(tmp_path, full_tree=True)
   assert [(issue.source, issue.code) for issue in full.issues] == [
-    ("docs/forward/note.md", "missing-target")
+    ("docs/project/work/issues/note.md", "missing-target")
   ]
 
 
@@ -261,16 +261,11 @@ def test_repository_maintained_document_links_are_clean() -> None:
   assert result.issues == []
 
 
-def test_archived_document_routes_are_not_described_as_current_authority() -> None:
-  task_readme = (REPO_ROOT / "docs/task/README.md").read_text(encoding="utf-8")
-  flight_readme = (REPO_ROOT / "docs/task/flight_dynamics/README.md").read_text(
-    encoding="utf-8"
-  )
-  performance_archive = (
-    REPO_ROOT / "docs/task/archive/performance_runtime/README.md"
-  ).read_text(encoding="utf-8")
+def test_retired_plan_and_task_roots_are_outside_maintained_link_scope() -> None:
+  selected = {
+    path.relative_to(REPO_ROOT).as_posix()
+    for path in audit.select_documents(REPO_ROOT)
+  }
 
-  assert "The rollout plan lives in" not in task_readme
-  assert "current runtime-performance planning entry" not in flight_readme
-  assert "archived planning context only" in flight_readme
-  assert "no current execution authority" in performance_archive
+  assert not any(path.startswith("docs/plan/") for path in selected)
+  assert not any(path.startswith("docs/task/") for path in selected)

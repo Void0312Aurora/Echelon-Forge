@@ -5,7 +5,7 @@ for the maintained tasking surface: the roles, authority scopes, delegation
 relationships, arbitration policies, and command-chain activation gates that
 today live as scattered ``if`` checks, field plumbing, and prose conventions
 across ``python.rl.tasking``, ``python.rl.profile``, and ``gym_envs`` (see the
-[Agency Authority Census](../../docs/plan/unified_architecture_program/agency_authority_census_20260721.md)).
+[Agency Authority Census](../../docs/systems/command-tasking/reference/agency_authority_census_20260721.md)).
 
 Design constraints (Unified Architecture Program, track T9 slice 1):
 
@@ -14,7 +14,7 @@ Design constraints (Unified Architecture Program, track T9 slice 1):
   these constants rather than re-deriving them inline. This is the pure-
   declaration precursor to the eventual single Agency-graph entry.
 - **Vocabulary is aligned, not invented.** Every term mirrors the architecture
-  authority (``docs/plan/architecture/simulation_system_architecture_design.md``
+  authority (``docs/architecture/standards/simulation_system_architecture_design.md``
   Agency face -- the five-part ``AgentRole`` schema, the ``merge_policy`` and
   source-priority ordering, and the ``DoctrineFamily`` extension family) and the
   compiled contracts: the tasking enums
@@ -414,7 +414,7 @@ MERGE_POLICIES: tuple[str, ...] = (
 )
 
 # SCAL source-priority ordering used by ``priority_override``. Source:
-# ``docs/plan/architecture/simulation_system_architecture_design.md`` (Agency
+# ``docs/architecture/standards/simulation_system_architecture_design.md`` (Agency
 # face cross-layer merge/arbitration rule: human > policy > scripted > diagnostic).
 SOURCE_PRIORITY_ORDER: tuple[str, ...] = (
     "human",

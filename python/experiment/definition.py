@@ -1,7 +1,7 @@
 """Typed Experiment definitions: the Experiment-face vocabulary owner.
 
 This module freezes the typed Experiment definition from
-``docs/plan/architecture/simulation_system_architecture_design.md`` §1.5:
+``docs/architecture/standards/simulation_system_architecture_design.md`` §1.5:
 
     Experiment = ScenarioRef x ConfigComposition x Seeds x EvaluationProtocol
 

@@ -11,7 +11,7 @@ inline void apply_effects_result_fields(EffectsEvent &effects, const EffectsResu
     // EffectsResult does not have expand to nothing here.
 #define EF_EFFECTS_EVENT_FIELD(type, name, default_value)
 #define EF_EFFECTS_EVENT_RESULT_FIELD(type, name, default_value) effects.name = result.name;
-#include "runtime/contracts/detail/effects_event_fields.inc"
+#include "runtime/contracts/detail/damage/effects_event_fields.inc"
 #undef EF_EFFECTS_EVENT_RESULT_FIELD
 #undef EF_EFFECTS_EVENT_FIELD
 }

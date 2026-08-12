@@ -4,6 +4,10 @@
 
 ## 范围
 
+- Policy/model 术语遵循
+  [策略执行架构基线](../../../../../docs/learning/standards/policy_execution_architecture.zh.md)。
+  下文 A-stage 与 M3 标签标识历史 task/evidence 路线；当前 config key 与可复用
+  model API 仍按角色命名。
 - 该路线的场景配对为：
   - [air_combat_1v1_headon_sensor_smoke_v1.json](../../../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
     - 由 scripted-red `F-16C` smoke 和 8k probe 条目使用。
@@ -16,7 +20,7 @@
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json)
     - 由 additive Stage-1 A3 C2/ROE hybrid shaped 与 temporal shaped 探针使用；既有 M1 baseline 条目仍保持 `mission_obs_mode=basic`。
   - [air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json)
-    - 由 A1 Stage-2 C2/ROE M3-S2 续训入口使用；目标是把已验收的 Stage-1 发射纪律迁移到机动红方、红方无武器场景。
+    - 由历史上按 M3-S2 追踪的 A1 Stage-2 C2/ROE event-window 续训入口使用；目标是把已验收的 Stage-1 发射纪律迁移到机动红方、红方无武器场景。
     - 从 DCR-D 起，它显式 opt-in 低权重 damage consequence reward terms；这些项只作为 synthetic training shaping。
 - 当前基线为：
   - 蓝方学习者：`F-16C_Block50`
@@ -116,24 +120,24 @@
   - early accepted releases 会变成 negative labels；deadline/curriculum positives 由 launch window gate 约束。
   - 这是下一轮短探针的 implementation/evidence entry，不是 M2 release、doctrine、missile-authority 或 Pk evidence。
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json)
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_shaped_world_batch_probe_v1.json)
   - Stage-1 A7 event-credit 探针，使用相同的 C2/ROE temporal shaped surface 与 launch-window gate。
   - 关闭 A6 hazard loss，用 value credit 与 event-logit delta alignment 训练 zero-initialized `hybrid_event_credit_head`。
-  - 包含 `a7_event_credit_shadow_quality_weight=1.0`，用于 A7-EVC-J shadow-quality target repair 路径。
+  - 包含 `event_credit_shadow_quality_weight=1.0`，用于 A7-EVC-J shadow-quality target repair 路径。
   - 从 A7-EVC-M 起，启用 projected legal-open credit：
-    `a7_event_credit_legal_projection_enabled=true`、
-    `a7_event_credit_projection_value_coef>0` 与
-    `a7_event_credit_projection_delta_align_coef>0`。
+    `event_credit_legal_projection_enabled=true`、
+    `event_credit_projection_value_coef>0` 与
+    `event_credit_projection_delta_align_coef>0`。
   - 从 A7-EVC-V 起，启用 protected online credit update contract：
-    `a7_event_credit_separate_update_enabled=true`、
-    `a7_event_credit_separate_update_max_grad_norm=0.5` 与
-    `a7_event_credit_delta_align_positive_only=true`。
+    `event_credit_separate_update_enabled=true`、
+    `event_credit_separate_update_max_grad_norm=0.5` 与
+    `event_credit_delta_align_positive_only=true`。
   - A3/A5 legality masks 与 one-shot state-machine authority 保持不变。
   - 它已用于 A7-G r3 与 A7-EVC-J repair evidence；两者均有效但 held，因为 deterministic releases 仍为 `0`，quality-window advantage 仍为负。
   - 它现在是 A7-EVC-N short projection learned evidence 的维护入口。
   - 它不是 M2 release、doctrine、missile-authority 或 Pk evidence；focused projection tests 仍不等于 behavior acceptance。
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json)
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_credit_launch_window_state_completed_world_batch_probe_v1.json)
   - Stage-1 A7 显式状态补全探针，使用 `mission_obs_mode=air_combat_c2_roe_v2`。
   - 保持 A7/R event-credit 超参数不变，但在 mission observation 中显式暴露当前 legal-open age、launch-window readiness、quality-window readiness、目标距离和目标 track age。
   - 包含 A7-EVC-V protected credit update contract：独立 credit-head value
@@ -141,23 +145,23 @@
   - 32k S probe 已完成为 held evidence：focused tests 通过，open-window fire probability 上升，但 deterministic probing 仍记录 `0` releases，quality-window advantage 仍为负。
   - 它是 pre-M2 结构可观测性实验；不释放 sequence-native M2、doctrine、missile-authority 或 Pk evidence。
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json)
-  - Stage-1 M3-S1 grouped stopping 短探针，复用 A7 显式状态补全 observation surface。
-  - 打开 independent `m3_stopping_head` 与 `m3s1_grouped_stopping_*` auxiliary objective，同时保持 A7 系数和 A3/A5 legality masks 不变。
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_grouped_stopping_state_completed_world_batch_probe_v1.json)
+  - Stage-1 grouped-stopping 短探针，历史上按 M3-S1 追踪，复用 A7 显式状态补全 observation surface。
+  - 打开 independent `stopping_head` 与 `grouped_stopping_*` auxiliary objective，同时保持 A7 系数和 A3/A5 legality masks 不变。
   - 使用 8k budget 形成 validation evidence，不是 promoted formal training run。
-  - 该条目只能证明 M3 stop-boundary movement；在 stopping head 与 hybrid event action path 连接或对照前，executable fire timing 仍 held。
+  - 该条目只能证明 stopping-boundary movement；在 stopping head 与 hybrid event action path 连接或对照前，executable fire timing 仍 held。
 
-- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
-  - Stage-1 M3-S2 direct fire-boundary 短探针，复用 A7 显式状态补全 observation surface。
-  - 保留 HMoE 与 `air_combat_hybrid_v1`，但在该配置中让 `hybrid_event_head` 成为唯一 executable hold/fire owner；M3 stopping 与 window-classifier event adapter 均显式关闭。
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json)
+  - Stage-1 direct fire-boundary 短探针，历史上按 M3-S2 追踪，复用 A7 显式状态补全 observation surface。
+  - 保留 HMoE 与 `air_combat_hybrid_v1`，但在该配置中让 `hybrid_event_head` 成为唯一 executable hold/fire owner；stopping 与 window-classifier event adapter 均显式关闭。
   - 复用 grouped sidecar 的 legal/quality rows 作为 boundary labels，在最终 executable fire-minus-hold logit 上计算 loss，并将 dedicated auxiliary update 限定为只写 `hybrid_event_head` 参数。
   - 使用显式 logit calibration：非质量 legal rows 被压到负 ceiling 以下，quality-window rows 被推向正 floor。
   - 使用 support-preserving collection，并保留 quality-window hold，使 sidecar 可以看到完整 legal-to-quality transition 后再谈行为验收。
   - 使用 8k budget 形成 validation evidence；行为验收仍需要 learned-policy release probes。
 
-- [air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
-  - A1 Stage-2 C2/ROE M3-S2 续训入口，使用机动红方、红方无武器的 training-shaped Stage-2 场景。
-  - 复用 Stage-1 M3-S2 direct fire-boundary owner 与 `air_combat_c2_roe_v2` observation surface，
+- [air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_event_window_state_completed_world_batch_probe_v1.json)
+  - A1 Stage-2 C2/ROE event-window 续训入口，历史上按 M3-S2 追踪，使用机动红方、红方无武器的 training-shaped Stage-2 场景。
+  - 复用 Stage-1 direct fire-boundary owner 与 `air_combat_c2_roe_v2` observation surface，
     不削弱 A3/A5 发射合法性和 one-shot 状态机。
   - `2026-06-08` 8k init-from-Stage-1 短训后的 deterministic/stochastic 单集 probe 都保住一次授权发射，
     但没有 effects/damage/kill；因此它是 Stage-2 训练入口，不是阶段验收。

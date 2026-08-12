@@ -1,0 +1,70 @@
+{
+  "artifact_dir": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530",
+  "artifacts": [
+    {
+      "allowed_claim": "test-local runtime-aligned component probability exercise exists",
+      "artifact_key": "runtime_aligned_authority_pack",
+      "content_sha256": "69c37297edcc1de843010e3b3d85b7a0478fc2183f39730c80345ecebff3943a",
+      "filename": "runtime_aligned_authority_pack.json",
+      "forbidden_claim": "validated fragility truth, stock runtime authority, Pk authority, or deterministic-fuze authority",
+      "origin_class": "test_local_runtime_exercise_only",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/runtime_aligned_authority_pack.json",
+      "schema_version": "a2.vulnerability_authority_exercise.v1",
+      "sha256": "69c37297edcc1de843010e3b3d85b7a0478fc2183f39730c80345ecebff3943a",
+      "status": "test_local_authority_exercise_only"
+    },
+    {
+      "allowed_claim": "author-side candidate Stage C snapshot and provenance surface exist",
+      "artifact_key": "stage_c_component_probability_snapshot",
+      "content_sha256": "68fdff8ab326d9f75679f739ace2f25acc55dbe8929d6f0f3fe5750fad35a5e9",
+      "filename": "stage_c_component_probability_snapshot.json",
+      "forbidden_claim": "validated component fragility truth, stock runtime authority, Pk authority, or deterministic-fuze authority",
+      "origin_class": "author_side_candidate_snapshot_only",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_snapshot.json",
+      "schema_version": "a2.stage_c_component_probability_snapshot.v1",
+      "sha256": "68fdff8ab326d9f75679f739ace2f25acc55dbe8929d6f0f3fe5750fad35a5e9",
+      "status": "candidate_non_authoritative_stage_c_component_probability_snapshot"
+    },
+    {
+      "allowed_claim": "author-side candidate Stage C fragility-surface and repeatability snapshot exist",
+      "artifact_key": "stage_c_component_probability_surface_probe",
+      "content_sha256": "1e46ce99781ed82f53528633459fcd92007e801bbb54dc591206d1d1da05a60a",
+      "filename": "stage_c_component_probability_surface_probe.json",
+      "forbidden_claim": "validated fragility curve, stock runtime authority, Pk authority, or deterministic-fuze authority",
+      "origin_class": "author_side_candidate_surface_probe_only",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_surface_probe.json",
+      "schema_version": "a2.stage_c_component_probability_surface_probe.v1",
+      "sha256": "1e46ce99781ed82f53528633459fcd92007e801bbb54dc591206d1d1da05a60a",
+      "status": "candidate_non_authoritative_stage_c_component_probability_surface_probe"
+    },
+    {
+      "allowed_claim": "author-side candidate Stage C result pack and stable hashes exist",
+      "artifact_key": "stage_c_component_probability_result_pack",
+      "content_sha256": "a7edc25da18a54969d6c1ea1e66fd254ba09ad85f7e17bdea2252cbb9cf18993",
+      "filename": "stage_c_component_probability_result_pack.json",
+      "forbidden_claim": "validated release result, stock runtime authority, Pk authority, or deterministic-fuze authority",
+      "origin_class": "author_side_candidate_result_pack_only",
+      "relative_path": "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_result_pack.json",
+      "schema_version": "a2.stage_c_component_probability_result_pack.v1",
+      "sha256": "a7edc25da18a54969d6c1ea1e66fd254ba09ad85f7e17bdea2252cbb9cf18993",
+      "status": "candidate_non_authoritative_stage_c_component_probability_result_pack"
+    }
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "retained_origin_summary": {
+    "independent_release_artifact_present": false,
+    "review_surface": "author_side_candidate_snapshot_and_result_pack_only",
+    "runtime_origin": "test_local_runtime_authority_exercise_only",
+    "stock_runtime_authority_present": false
+  },
+  "retention_scope": "stage_c_component_probability_author_side_candidate_only",
+  "schema_version": "a2.stage_c_component_probability_retained_artifact_pack.v1",
+  "status": "author_retained_stage_c_component_probability_candidate_artifacts_only"
+}

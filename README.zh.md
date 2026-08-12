@@ -49,11 +49,11 @@ Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞
 | --- | --- | --- |
 | Air / execution | 最成熟的 runtime 和训练线，也是当前最适合作为 correctness hardening 的基线。 | `scenarios/takeoff/`、`scenarios/cruise/`、`scenarios/landing/`、`examples/config/training/frozen/` |
 | Cooperative / combined | 活跃集成主线，用于验证 multi-agent、leader/execution 和 world-batch 行为。 | `scenarios/combined/`、`python/rl/runtime/cooperative_world_batch_vec_env.py`、`gym_envs/leader_env.py` |
-| Naval | 活跃领域，已有 N4 风格的 pre-fire tasking、contact/reporting、screen/station 与评估 gate；武器/毁伤结果 authority 仍是后续工作。 | `scenarios/naval/`、`docs/task/naval/`、`docs/standards/naval/` |
-| Ground | 早期 tasking/runtime bootstrap。当前 fixture 验证共享 command/status 语义和 native platform-schema 证据，不声明完整地面 movement、sensing、fires 或 damage。 | `scenarios/ground/`、`docs/task/ground/`、`docs/standards/ground/` |
-| Air combat / A2 | 聚焦的战斗与高保真毁伤模型工作线，已有 retained evidence gate。它是一个领域线，不是整个项目身份。 | `scenarios/air_combat/`、`docs/task/air_combat/` |
-| Visualization / game | 探索性的操作员与前端表面；维护路径应以后端仿真 runtime 真值为准。 | `examples/viz/`、`docs/task/viz/`、`docs/task/game/` |
-| Model / world model | 策略/模型侧规划与实验线，包括 temporal HMoE 和世界模型工具。 | `docs/task/model/`、`docs/forward/models/`、`world_model_train.py` |
+| Naval | 活跃领域，已有 N4 风格的 pre-fire tasking、contact/reporting、screen/station 与评估 gate；武器/毁伤结果 authority 仍是后续工作。 | `scenarios/naval/`、`docs/domains/naval/` |
+| Ground | 早期 tasking/runtime bootstrap。当前 fixture 验证共享 command/status 语义和 native platform-schema 证据，不声明完整地面 movement、sensing、fires 或 damage。 | `scenarios/ground/`、`docs/domains/ground/`、`docs/systems/environment/` |
+| Air combat / A2 | 聚焦的战斗与高保真毁伤模型工作线，已有 retained evidence gate。它是一个领域线，不是整个项目身份。 | `scenarios/air_combat/`、`docs/domains/air/`、`docs/learning/work/active/`、`docs/systems/effects/reviews/` |
+| Visualization / game | 探索性的操作员与前端表面；维护路径应以后端仿真 runtime 真值为准。 | `examples/viz/`、`docs/operations/visualization/` |
+| Model / world model | 策略/模型侧规划与实验线，包括 temporal HMoE 和世界模型工具。 | `docs/learning/`、`world_model_train.py` |
 
 ## 命名与包标识
 
@@ -202,8 +202,8 @@ interfaces/python
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/manual/reference/src_layer_map.zh.md](docs/manual/reference/src_layer_map.zh.md)
-- [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
+- [docs/operations/reference/src_layer_map.zh.md](docs/operations/reference/src_layer_map.zh.md)
+- docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md (`git show 3dc34673:docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md`)
 
 ## 场景与训练配置
 
@@ -312,18 +312,16 @@ cmo_python -m pytest -q \
 
 ## 当前参考文档
 
-- [docs/manual/reference/engine_capabilities.zh.md](docs/manual/reference/engine_capabilities.zh.md)
-- [docs/manual/reference/physics_engine_inventory.zh.md](docs/manual/reference/physics_engine_inventory.zh.md)
-- [docs/manual/reference/src_layer_map.zh.md](docs/manual/reference/src_layer_map.zh.md)
+- [docs/operations/reference/engine_capabilities.zh.md](docs/operations/reference/engine_capabilities.zh.md)
+- [docs/operations/reference/physics_engine_inventory.zh.md](docs/operations/reference/physics_engine_inventory.zh.md)
+- [docs/operations/reference/src_layer_map.zh.md](docs/operations/reference/src_layer_map.zh.md)
 - [docs/reference_artifacts.zh.md](docs/reference_artifacts.zh.md)
 
-## 前瞻工作
+## 规划与开放问题
 
-前瞻性说明位于 [docs/forward](docs/forward/README.md) 下。
-
-其中包括新添加的关于执行策略的 HMoE 设计说明：
-
-- [docs/forward/models/hierarchical_moe_execution_policy.md](docs/forward/models/hierarchical_moe_execution_policy.md)
+尚未提升的计划和未解决缺口现在归入各自内容 owner。HMoE 设计方向位于
+[docs/learning/work/issues/hierarchical_moe_execution_policy.zh.md](docs/learning/work/issues/hierarchical_moe_execution_policy.zh.md)，
+其余路由从[文档索引](docs/README.zh.md)进入。
 
 ## 许可
 

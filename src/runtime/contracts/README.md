@@ -26,6 +26,15 @@ runtime contract is maintained yet.
 - Pulling in `core/engine/*` just for include convenience.
 - Expanding ground-specific runtime semantics before a maintained ground owner and schema exist.
 
+## Generated detail layout
+
+Generated X-macro lists under `detail/` are grouped by contract domain:
+`damage`, `engagement`, `kill_chain`, `learning`, `platform`, `scenario`, and
+`tasking`. Keep new generated lists in the matching contract directory and
+update the corresponding declarative source in
+`tools/maintenance/dto_schema/schemas/<domain>/`; the schema and output domains
+need not have the same name. Do not add flat `.inc` files directly to `detail/`.
+
 ## Migration Notes
 
 This directory is the likely starting point for a future `ef_contracts` target. New facade-facing types should be placed here first and then consumed by the facade or engine implementation. When adding domain-specific fields, prefer `common` plus explicit domain slices over widening shared contracts with air-, naval-, or ground-only semantics.

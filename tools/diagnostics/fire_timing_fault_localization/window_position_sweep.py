@@ -49,9 +49,10 @@ DEFAULT_TRAIN_CONFIG = resolve_repo_path(
 )
 DEFAULT_OUTPUT_DIR = resolve_repo_path(
     "docs",
-    "task",
-    "model",
-    "fire_timing_window_position_effect",
+    "systems",
+    "effects",
+    "reviews",
+    "fire_timing_window_position_effect_20260615",
 )
 
 def _parse_delays(value: str) -> list[int]:

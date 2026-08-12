@@ -1,0 +1,119 @@
+# 内部代号残余审计 — 2026-08-07
+
+语言版本：
+
+- 英文主文：[internal_code_residual_audit_20260807.md](internal_code_residual_audit_20260807.md)
+- 中文辅文：`internal_code_residual_audit_20260807.zh.md`
+
+Document kind: `review`
+Lifecycle: `maintained`
+Canonical: `docs/engineering/documentation/reviews/internal_code_residual_audit_20260807.md`
+Owner: `engineering/documentation-governance`
+Last verified: `2026-08-08`
+
+状态：第一轮内部代号治理完成后的残余实测清单。本记录是后续治理基线，不表示仓库已经
+实现 finding 清零。
+
+## 范围与方法
+
+清单覆盖 `src/`、`python/`、`gym_envs/` 下由维护中扫描器识别的已追踪生产源码后缀。
+文档、归档、构建产物和第三方源码不计入本次测量。命令检查完整文件，而不只检查变更行：
+
+```powershell
+$paths = git ls-files gym_envs python src |
+  Where-Object { $_ -match '\.(c|cc|cpp|cu|cuh|h|hpp|inc|py)$' }
+python -m tools.maintenance.internal_code_governance `
+  --paths $paths --format text --fail-on never
+```
+
+## 实测结果
+
+| 快照 | 文件数 | 行数 | 错误 | 告警 | finding 总数 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 活跃源码清理前 | 692 | 162,383 | 488 | 133 | 621 |
+| 活跃源码清理后 | 692 | 162,384 | 368 | 106 | 474 |
+| 检测强化并退役旧 probe 后 | 692 | 162,064 | 375 | 106 | 481 |
+| 编译片段与多行字面量检测强化后 | 824 | 169,975 | 315 | 146 | 461 |
+
+增加的一行是候选准入测试作为独立 MSVC 对象编译时所需的直接标准库 include。本轮在没有
+屏蔽或重分类扫描结果的情况下消除了 147 个 finding。
+最终快照不能直接作为相对 474 的回归差值：强化后的检测器新增了 CamelCase/PascalCase
+标识符和全部生产路径组成部分检查。旧资源采集实现退役则使源码总行数下降。
+最新快照纳入全部 132 个已追踪 `.inc` 片段（7,911 行），新增 40 个注释告警。严格的阶段
+字母边界消除了 53 个语义词误报；高置信缩写边界消除了 7 个技术缩写误报；多行字面量状态
+把此前按源码 token 统计的 37 个 finding 重分类为运行时字符串。
+
+当前 461 个 finding 的构成为：
+
+| finding 类别 | 数量 | 含义 |
+| --- | ---: | --- |
+| 运行时追踪标签 | 209 | 运行时字符串仍暴露任务追踪标签。 |
+| 源码追踪标签 | 65 | 标识符或非注释源码 token 仍使用任务追踪标签。 |
+| 字母实现阶段标识符 | 34 | 实现标识符仍按字母阶段而不是能力命名。 |
+| 生产路径追踪标签 | 7 | 既有生产路径仍包含任务追踪标签；新增和重命名路径已被阻断。 |
+| 源码注释追踪标签 | 146 | 注释仍依赖计划局部简写。 |
+
+## 本轮已整改
+
+- CUDA 常驻候选准入和设备状态测试中的宏、测试用例、请求标识、实体名和错误信息已改用
+  能力名称。
+- Runtime facade 与 Python binding 注释现在直接说明 allocator、证据 producer、显式 opt-in
+  行为和 schema 归属。
+- 9 份维护入口文档已经形成完整文件零 finding 的阻断基线。
+- 变更行执行规则会阻止新增生产标识符、运行时文本和字母实现阶段别名继续扩大积压。
+
+## 保留的残余类别
+
+### 冻结资源证据
+
+CUDA 资源证据合同和实验 probe session 保留了带版本的 schema 值、已捕获符号和已记录源码
+哈希。若不重新采集就改名，会让历史证据看似仍然对应当前实现。清理这些内容必须重新采集
+带版本的证据、更新读取方，并为旧记录定义明确的退役条件。
+旧资源采集可执行文件现在会在采集前返回失败；历史读取方继续用于冻结产物，任何新采集都
+必须采用新的 schema 和 kernel catalog。
+
+### 历史 provenance
+
+后端 profile 注册表保留了定位归档审阅证据的路径和变更原因。这些值是 provenance，而不是
+活跃运行时术语。只有在仍能定位旧归档记录的迁移中才能修改。
+
+其中一个值目前已过期。`src/runtime/contracts/backend_profile_contracts.h` 在五个 profile 中把
+`source_doc_provenance.path` 记为
+`docs/task/simulation_architecture/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md`，
+但所有权迁移已将该 packet 移入带 `archive/` 组件的路径。该字段只做非空校验，从不对文件系统
+解析，因此这是文档性漂移而非功能性问题，没有任何读取方因此失效。
+
+本轮刻意不修。更新这五个字面量会使其超过 100 列限制，而变更文件 clang-format 门禁随即要求
+连同该文件其余 283 个既有违规一起处理——这些违规 `main` 从不需要满足，因为该文件不在其变更
+集内。为消除它们而整体重排会重写几乎每一行，进而使内部代号扫描器将该文件视为新增文件，并对
+17 个既有 `WP6` provenance 字符串报错。关闭方式：将路径更新与该文件的有范围重排放在同一个
+变更中，让格式化与标注成本落在真正拥有它的改动里。
+
+### 活跃长尾源码
+
+其余非冻结 finding 主要集中在决策命令 adapter、运行时 profile adapter、架构分类注册表和
+旧的宽面测试中。它们是需要治理的真实债务，但不属于本轮 CUDA 定向迁移。各归属方应按
+领域或能力名称逐项替换，并在涉及序列化兼容时保留明确迁移接缝。
+
+本轮触及的 `src/interfaces/python/bindings_runtime.cpp` 仍是既有大模块：分支基线和当前快照
+均为 1,542 个物理行，本轮只修改注释，没有增加行数。该文件的拆分应单独作为 binding 归属
+迁移处理，因为注册顺序和字段覆盖会影响兼容性。安全拆分应按合同族归组注册逻辑，并在每组
+迁移前后阻断检查 Python 导出 surface parity。
+
+## 治理边界
+
+本轮接受状态是“阻止增长并记录残余”，不是仓库全量清零：
+
+1. 生产源码变更行出现高置信运行时或标识符 finding 时失败。
+2. 维护入口文档的完整文件出现任何 finding 时失败。
+3. 历史文档和源码注释中的残余继续以告警形式可见。
+4. 冻结证据只能通过带版本的重新采集迁移。
+5. 新文档只有在完整文件扫描为零后，才进入严格入口基线。
+
+下一轮价值最高的工作是重新采集带版本的 CUDA 资源证据；普通长尾清理随后可按语义归属
+推进，避免把历史证据变更混入无关工作。
+
+## 相关文档
+
+- [内部代号命名规范](../standards/internal_code_policy.zh.md)
+- [CUDA 常驻后端语义阶段迁移](../../../architecture/work/issues/exact_runtime/cuda_resident_semantic_stage_migration_20260807.zh.md)

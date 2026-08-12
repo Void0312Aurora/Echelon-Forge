@@ -200,7 +200,7 @@ _WORLD_BATCH_RUNTIME = {
 }
 
 _TG_P7_PROXY_DATABASE = (
-    "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/"
+    "docs/systems/effects/reviews/f16c_target_geometry_20260614/"
     "review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613"
 )
 

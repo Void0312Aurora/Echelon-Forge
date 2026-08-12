@@ -4,12 +4,14 @@ import json
 import subprocess
 from pathlib import Path
 
+from tools.diagnostics.cuda_resident_retained_evidence_paths import physical_relative
+
 
 ROOT = Path(__file__).resolve().parents[3]
 HEADER_EXTENSIONS = {".cuh", ".h", ".hh", ".hpp"}
 TEST_PATH_MARKERS = ("src/tests/", "tests/", "_probe.cpp")
 POLICY_PATH = (
-    ROOT / "docs/plan/exact_runtime/cuda_resident_runtime_program_2_size_policy_20260731.json"
+    ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_runtime_program_2_size_policy_20260731.json"
 )
 
 
@@ -85,9 +87,9 @@ def _artifact_paths(policy: dict[str, object]) -> list[str]:
     assert isinstance(scope, dict)
     prefixes = scope["artifact_path_prefixes"]
     assert isinstance(prefixes, list)
-    normalized_prefixes = [str(prefix) for prefix in prefixes]
+    normalized_prefixes = [physical_relative(f"{prefix}/").rstrip("/") for prefix in prefixes]
     tracked = subprocess.run(
-        ["git", "ls-files", "--", "docs/plan/exact_runtime"],
+        ["git", "ls-files", "--", "tests/fixtures/runtime_profiles/cuda_resident_program_2"],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -96,7 +98,7 @@ def _artifact_paths(policy: dict[str, object]) -> list[str]:
     paths = {
         path for path in tracked if any(path.startswith(prefix) for prefix in normalized_prefixes)
     }
-    artifact_root = ROOT / "docs/plan/exact_runtime"
+    artifact_root = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2"
     for candidate in artifact_root.rglob("*"):
         if not candidate.is_file():
             continue
@@ -198,7 +200,7 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "src/runtime/contracts/cuda_resident_counter_evidence_contract.h": 76,
         "tools/diagnostics/cuda_resident_cr2_counter_evidence.py": 682,
         "tools/diagnostics/cuda_resident_cr2_counter_parser.py": 301,
-        "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py": 530,
+        "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py": 534,
         "src/runtime/contracts/cuda_resident_matrix_contract.h": 107,
         "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.h": 56,
         "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp": 291,
@@ -207,11 +209,11 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py": 451,
         "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py": 666,
         "tools/diagnostics/cuda_resident_cr2_matrix_evidence_schema.py": 516,
-        "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_evidence.py": 372,
+        "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_evidence.py": 389,
         "tools/diagnostics/cuda_resident_cr2_closure.py": 547,
         "tests/architecture/runtime_profiles/test_cuda_resident_closure.py": 151,
         "tests/architecture/runtime_profiles/test_cuda_resident_cr2_closure.py": 234,
-        "tests/architecture/runtime_profiles/test_cuda_resident_cp9_promotion_decision.py": 121,
+        "tests/architecture/runtime_profiles/test_cuda_resident_cp9_promotion_decision.py": 126,
     }
     assert set(inventory_map) == set(expected_inventory)
     for path, expected_lines in expected_inventory.items():

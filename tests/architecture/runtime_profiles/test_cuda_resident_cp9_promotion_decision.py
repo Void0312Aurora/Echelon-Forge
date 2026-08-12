@@ -4,14 +4,17 @@ import hashlib
 import json
 from pathlib import Path
 
+from tools.diagnostics import cuda_resident_retained_evidence_paths as retained_paths
+
 
 ROOT = Path(__file__).resolve().parents[3]
-RECORD = ROOT / "docs/plan/exact_runtime/cuda_resident_cp9_promotion_decision_20260813.json"
-DOC = ROOT / "docs/plan/exact_runtime/cuda_resident_cp9_promotion_decision_20260813.md"
-DOC_ZH = ROOT / "docs/plan/exact_runtime/cuda_resident_cp9_promotion_decision_20260813.zh.md"
+FIXTURE = ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2"
+RECORD = FIXTURE / "cuda_resident_cp9_promotion_decision_20260813.json"
+DOC = FIXTURE / "cuda_resident_cp9_promotion_decision_20260813.md"
+DOC_ZH = FIXTURE / "cuda_resident_cp9_promotion_decision_20260813.zh.md"
 FACADE_CONFIG = ROOT / "src/runtime/facade/runtime_facade_config.cpp"
-README = ROOT / "docs/plan/exact_runtime/README.md"
-README_ZH = ROOT / "docs/plan/exact_runtime/README.zh.md"
+README = FIXTURE / "README.md"
+README_ZH = FIXTURE / "README.zh.md"
 
 
 def _record() -> dict:
@@ -80,7 +83,9 @@ def test_cp9_evidence_pointers_hash_exactly_against_tracked_artifacts() -> None:
         if name == "decision_base_commit":
             assert isinstance(descriptor, str) and len(descriptor) >= 8
             continue
-        path = ROOT / descriptor["path"]
+        # The record froze logical (pre-migration) paths; resolve to the
+        # fixture tree for the on-disk hash check.
+        path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
         assert path.is_file(), name
         assert path.stat().st_size == descriptor["bytes"], name
         assert hashlib.sha256(path.read_bytes()).hexdigest() == descriptor["sha256"], name

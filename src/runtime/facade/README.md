@@ -28,6 +28,14 @@ full ground runtime are available.
 - Directly including `core/engine/*` in `*_types.h` or facade public headers.
 - Advertising held ground-domain runtime behavior through facade naming or capability flags.
 
+## Generated detail layout
+
+Generated facade X-macro lists under `detail/` are grouped into `batch`,
+`runtime`, and `window`. Keep new lists in the matching facade directory and
+update the corresponding declarative source in
+`tools/maintenance/dto_schema/schemas/<domain>/`; the schema and output domains
+need not have the same name. Do not add flat `.inc` files directly to `detail/`.
+
 ## Escape Hatch Retirement
 
 `RuntimeFacade` no longer exposes a raw `WorldBatchRuntime` escape hatch. Maintained frontends must use facade-level request/result APIs, and low-level diagnostics or capability verification should instantiate `WorldBatchRuntime` directly in a diagnostics/test scope instead of drilling through the facade.

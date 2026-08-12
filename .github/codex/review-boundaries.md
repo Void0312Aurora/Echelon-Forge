@@ -28,7 +28,7 @@ it belongs to and takes its severity from the ladder below.
    evidence/release flags on derived data. Violations are P1.
 7. **Documentation sync** — user-visible behavior changes update the
    affected docs; bilingual document clusters stay paired when both
-   languages exist (`docs/standards/bilingual_document_clusters.json`).
+   languages exist (`docs/engineering/documentation/reference/bilingual_document_clusters.json`).
 
 Style and formatting are machine-gate territory (clang-format, ruff), not
 review findings, unless the gates cannot express the rule.

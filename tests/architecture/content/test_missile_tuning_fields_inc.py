@@ -10,8 +10,9 @@ precedent and reuses the same ``parse_xmacro`` reader that
 
 Anchor structure (review hardening, I58 repair round):
 
-- The **I52 survey section 1.2 table** (``docs/plan/unified_architecture_program/
-  t11_content_schema_survey_20260721.md``) is parsed at test time and is the
+- The **I52 survey section 1.2 table**
+  (``docs/plan/archive/unified_architecture_program_completed_20260727/``
+  ``t11_content_schema_survey_20260721.md``) is parsed at test time and is the
   authoritative anchor: ``.inc`` key set/order/type families must match it. A
   synchronized tamper of the ``.inc`` and this file's pinned table can no
   longer stay green, because neither of them is the anchor.
@@ -47,7 +48,8 @@ _SURVEY_PATH = (
     REPO_ROOT
     / "docs"
     / "plan"
-    / "unified_architecture_program"
+    / "archive"
+    / "unified_architecture_program_completed_20260727"
     / "t11_content_schema_survey_20260721.md"
 )
 

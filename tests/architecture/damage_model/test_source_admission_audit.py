@@ -152,7 +152,7 @@ def test_source_admission_audit_requires_reasonableness_for_community_updates(
 def test_source_admission_audit_rejects_legacy_live_root_only(tmp_path: Path) -> None:
   _write(
     tmp_path
-    / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
+    / "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/example/source_ledger.zh.md",
     _minimal_ledger(),
   )
 

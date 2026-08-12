@@ -32,7 +32,7 @@ _CORE_PATH = (
 )
 
 # Authoritative P0-P10 vocabulary from
-# docs/plan/architecture/simulation_system_architecture_design.md §6.
+# docs/architecture/standards/simulation_system_architecture_design.md §6.
 _AUTHORITATIVE_SEMANTIC_STAGES = {
     "P0 ContentCompile",
     "P1 WorldSetup",

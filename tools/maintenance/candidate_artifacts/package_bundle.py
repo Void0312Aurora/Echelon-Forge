@@ -26,6 +26,11 @@ from python.runtime_bootstrap import ensure_repo_imports, repo_root
 
 ensure_repo_imports()
 REPO_ROOT = Path(repo_root())
+
+from tools.maintenance.a2_packet_paths import (  # noqa: E402
+  CANDIDATE_PACKAGE_DIR as A2_CANDIDATE_PACKAGE_DIR,
+  PACKET_ROOT as _A2_PACKET_ROOT,
+)
 from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
 from tools.maintenance.release_governance import (
   effect_scale_release_readiness as readiness_gate,
@@ -58,18 +63,9 @@ BUNDLE_ID = f"{PACKAGE_ID}_candidate_bundle_v0"
 SCHEMA_VERSION = "a2.vps_candidate_bundle.v1"
 
 PACKAGE_DIR = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "air_combat"
-  / "archive"
-  / "a2_high_fidelity_damage_model"
-  / "calibration"
-  / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
+  A2_CANDIDATE_PACKAGE_DIR
 )
-A2_ROOT = (
-  REPO_ROOT / "docs" / "task" / "air_combat" / "archive" / "a2_high_fidelity_damage_model"
-)
+A2_ROOT = _A2_PACKET_ROOT
 
 DOC_REFS = {
   "package_readme": PACKAGE_DIR / "README.zh.md",

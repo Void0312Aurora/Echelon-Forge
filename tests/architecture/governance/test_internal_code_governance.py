@@ -14,12 +14,10 @@ MAINTAINED_ENTRY_POINT_DOCUMENTS = (
   "README.zh.md",
   "docs/README.md",
   "docs/README.zh.md",
-  "docs/plan/README.md",
-  "docs/plan/README.zh.md",
-  "docs/task/README.md",
-  "docs/task/README.zh.md",
-  "docs/standards/README.md",
-  "docs/standards/README.zh.md",
+  "docs/engineering/README.md",
+  "docs/engineering/README.zh.md",
+  "docs/engineering/documentation/README.md",
+  "docs/engineering/documentation/README.zh.md",
   "tools/README.md",
 )
 
@@ -333,7 +331,7 @@ def test_maintained_entry_points_have_no_bare_internal_codes() -> None:
 
 def test_policy_documents_can_define_the_examples_they_govern() -> None:
   result = scan_text(
-    "docs/standards/governance/internal_code_policy.md",
+    "docs/engineering/documentation/standards/internal_code_policy.md",
     "Do not expose RB7 or phase_b.\n",
   )
 
@@ -458,12 +456,12 @@ def test_internal_code_governance_modules_stay_below_1000_lines() -> None:
 
 
 def test_internal_code_policy_is_registered_and_indexed() -> None:
-  standards = (REPO_ROOT / "docs/standards/README.md").read_text(encoding="utf-8")
-  standards_zh = (REPO_ROOT / "docs/standards/README.zh.md").read_text(encoding="utf-8")
-  policy = REPO_ROOT / "docs/standards/governance/internal_code_policy.md"
-  policy_zh = REPO_ROOT / "docs/standards/governance/internal_code_policy.zh.md"
+  standards = (REPO_ROOT / "docs/engineering/documentation/README.md").read_text(encoding="utf-8")
+  standards_zh = (REPO_ROOT / "docs/engineering/documentation/README.zh.md").read_text(encoding="utf-8")
+  policy = REPO_ROOT / "docs/engineering/documentation/standards/internal_code_policy.md"
+  policy_zh = REPO_ROOT / "docs/engineering/documentation/standards/internal_code_policy.zh.md"
 
   assert policy.is_file()
   assert policy_zh.is_file()
-  assert "governance/internal_code_policy.md" in standards
-  assert "governance/internal_code_policy.zh.md" in standards_zh
+  assert "standards/internal_code_policy.md" in standards
+  assert "standards/internal_code_policy.zh.md" in standards_zh

@@ -26,7 +26,7 @@
 | 整机投影网格诊断记录 follow-up protrusions，但不改变几何验收 | [whole_airframe_contour_containment_20260614.json](../../review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.json)、[whole_airframe_contour_containment_results_20260614.zh.md](../../whole_airframe_contour_containment_results_20260614.zh.md)：`contour_method=projected_mesh_triangle_union`、`exceeds_tolerance_item_count=10`、`runtime_active_component_count=0`；这些是 retained review-only follow-up items，不是默认 runtime 改动，也不是验收回退 | pass with retained follow-up |
 | 最终复核证据已收缩 | 当前保留整机投影网格轮廓、语义体积、内部 prior、父子布局和后续 placement 视图；旧的 `75` 页 component-review 中间包已从当前结果面退役 | pass |
 | 聚焦测试通过 | `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py` | pass, `5 passed` |
-| 文档/路径空白检查通过 | `git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py` | pass, no output |
+| 文档/路径空白检查通过 | `git diff --check -- docs/systems/effects/reviews/f16c_target_geometry_20260614 tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py` | pass, no output |
 
 ## 不作为闭合门的材料
 

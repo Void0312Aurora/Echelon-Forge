@@ -27,6 +27,13 @@ ground movement、sensing、fires、damage 或 full ground runtime 已可用。
 - 在 `*_types.h` 或 facade public header 中直接 include `core/engine/*`。
 - 通过 facade 命名或 capability flag 宣称仍 held 的 ground-domain runtime 行为。
 
+## 生成 detail 布局
+
+`detail/` 下生成的 facade X-macro 列表分为 `batch`、`runtime` 与 `window`。
+新增列表必须进入对应 facade 目录，并同步维护
+`tools/maintenance/dto_schema/schemas/<domain>/` 下的声明源；schema 领域名与
+输出领域名不要求完全相同。不得再向 `detail/` 根层直接添加 `.inc` 文件。
+
 ## 逃逸口退休
 
 `RuntimeFacade` 不再公开 raw `WorldBatchRuntime` 逃逸口。维护前端必须使用 facade-level request/result API；低层 diagnostics 或能力验证如果确实需要 raw runtime，应在 diagnostics/test scope 直接实例化 `WorldBatchRuntime`，而不是从 facade 向下钻。

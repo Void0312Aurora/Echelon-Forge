@@ -10,8 +10,8 @@ from tools.diagnostics import calibration_admission_audit as audit
 
 
 CURRENT_MANIFEST = repo_path(
-    "docs/task/air_combat/a2_high_fidelity_damage_model",
-    "archive",
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602",
+    "missile_lethality_evidence_20260619",
     "missile_lethality_calibration_gates",
     "mlf10_calibration_evidence_manifest_20260619.json",
 )
