@@ -34,8 +34,6 @@ from __future__ import annotations
 
 import subprocess
 
-import pytest
-
 from tests.architecture.helpers import ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
@@ -43,8 +41,6 @@ ensure_repo_root_on_sys_path()
 from tools.maintenance.source_governance import (  # noqa: E402
   rights_output_policy as output_policy,
 )
-
-pytestmark = pytest.mark.governance_audit
 
 
 def _fake_pdftotext_run(stdout: bytes | None, returncode: int = 0):

@@ -253,10 +253,12 @@ longer pays for evidence auditing:
   (links, bilingual parity, information architecture, content pins), and
   repository automation workflow pins. Each file carries a module-level
   `pytestmark = pytest.mark.governance_audit`; the marker is registered in
-  `pyproject.toml`. Exception: five retained CUDA evidence modules are
+  `pyproject.toml`. Exception: three retained CUDA evidence modules are
   line-count pinned by the frozen CR2 size policy, so
   `tests/architecture/runtime_profiles/conftest.py` applies their marker at
-  collection time instead of editing the pinned files.
+  collection time instead of editing the pinned files. (The counter/resource
+  evidence modules are also pinned but belong to the guard tier: their
+  substance is C++ contract/CMake topology and parser rejection paths.)
 
 Classification rule: a test whose subject is a structural property of the
 code (an ordinary code change can turn it red) belongs to the guard tier; a
@@ -283,9 +285,9 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/governance_aud
 ```
 
 Meta-tests in `tests/runners/test_pytest_suite_manifests.py` keep the two
-manifests disjoint, exhaustive over `tests/architecture` test files, and in
-lockstep with the module marker, so tier membership changes are deliberate
-manifest edits. The CI smoke suite lists explicit files and node IDs and is
+manifests duplicate-free, disjoint, exhaustive over `tests/architecture` test
+files, and in lockstep with a real `pytest --collect-only -m governance_audit`
+collection, so tier membership changes are deliberate manifest edits. The CI smoke suite lists explicit files and node IDs and is
 not affected by the marker split: promoted smoke entries keep gating CI even
 when their file belongs to the audit tier.
 

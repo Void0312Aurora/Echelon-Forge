@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-import importlib.util
 import json
+import os
+import subprocess
+import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +22,6 @@ CONTRACT_SUITE_MANIFESTS = (
 )
 ARCHITECTURE_GUARD_SUITE = PYTEST_SUITE_MANIFESTS[1]
 GOVERNANCE_AUDIT_SUITE = PYTEST_SUITE_MANIFESTS[2]
-GOVERNANCE_AUDIT_MARK = "pytestmark = pytest.mark.governance_audit"
 CR2_STRICT_NUMERIC_NODE = (
   "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py::"
   "test_cr2_5b_counter_reports_reject_equal_valued_non_json_types"
@@ -109,41 +111,62 @@ def _architecture_test_files() -> set[str]:
   }
 
 
-def _conftest_marked_files() -> set[str]:
-  """Modules tagged by the runtime_profiles conftest instead of an in-file mark.
+def _tier_suite_paths(manifest_path: Path) -> list[str]:
+  """Load a tier manifest's paths and reject duplicate entries up front."""
+  paths = _load_json(manifest_path)["paths"]
+  duplicates = sorted(
+    entry for entry, count in Counter(paths).items() if count > 1
+  )
+  assert not duplicates, (
+    f"{manifest_path} lists duplicate entries: {duplicates}"
+  )
+  return paths
 
-  The CR2 size policy pins exact line counts for these modules, so their
-  governance_audit marker is applied by
-  tests/architecture/runtime_profiles/conftest.py rather than by editing the
-  pinned files.
+
+def _collected_governance_audit_files() -> set[str]:
+  """Files that pytest actually selects for ``-m governance_audit``.
+
+  Runs a real collection in a subprocess so the check observes the marker the
+  same way developers do (module-level ``pytestmark`` and the
+  runtime_profiles conftest tagging alike). A source-text scan would keep
+  passing if a marker line were commented out or the conftest hook stopped
+  running.
   """
-  conftest_path = (
-    REPO_ROOT / "tests" / "architecture" / "runtime_profiles" / "conftest.py"
+  result = subprocess.run(
+    [
+      sys.executable,
+      "-m",
+      "pytest",
+      "--collect-only",
+      "-q",
+      "-m",
+      "governance_audit",
+      "-p",
+      "no:cacheprovider",
+      "tests/architecture",
+    ],
+    cwd=REPO_ROOT,
+    env=os.environ.copy(),
+    capture_output=True,
+    text=True,
+    check=False,
   )
-  spec = importlib.util.spec_from_file_location(
-    "_runtime_profiles_conftest_for_manifest_lockstep", conftest_path
+  assert result.returncode == 0, (
+    "collecting governance_audit-marked tests failed "
+    f"(exit {result.returncode}):\n{result.stdout}\n{result.stderr}"
   )
-  assert spec is not None and spec.loader is not None
-  module = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(module)
-  return {
-    f"tests/architecture/runtime_profiles/{name}"
-    for name in module.GOVERNANCE_AUDIT_TIER_MODULES
+  collected = {
+    line.split("::", 1)[0].replace("\\", "/")
+    for line in result.stdout.splitlines()
+    if "::" in line and line.startswith("tests/architecture/")
   }
-
-
-def _governance_audit_marked_files() -> set[str]:
-  in_file_marked = {
-    entry
-    for entry in _architecture_test_files()
-    if GOVERNANCE_AUDIT_MARK in (REPO_ROOT / entry).read_text(encoding="utf-8")
-  }
-  return in_file_marked | _conftest_marked_files()
+  assert collected, "collection returned no governance_audit-marked tests"
+  return collected
 
 
 def test_architecture_tier_suites_partition_the_architecture_test_files() -> None:
-  guard = set(_load_json(ARCHITECTURE_GUARD_SUITE)["paths"])
-  audit = set(_load_json(GOVERNANCE_AUDIT_SUITE)["paths"])
+  guard = set(_tier_suite_paths(ARCHITECTURE_GUARD_SUITE))
+  audit = set(_tier_suite_paths(GOVERNANCE_AUDIT_SUITE))
 
   overlap = guard & audit
   assert not overlap, f"tier suites must stay disjoint: {sorted(overlap)}"
@@ -158,19 +181,19 @@ def test_architecture_tier_suites_partition_the_architecture_test_files() -> Non
   assert not stale, f"tier suites contain non-architecture entries: {sorted(stale)}"
 
 
-def test_governance_audit_suite_stays_in_lockstep_with_the_module_marker() -> None:
-  audit = set(_load_json(GOVERNANCE_AUDIT_SUITE)["paths"])
-  marked = _governance_audit_marked_files()
+def test_governance_audit_suite_stays_in_lockstep_with_the_collected_marker() -> None:
+  audit = set(_tier_suite_paths(GOVERNANCE_AUDIT_SUITE))
+  collected = _collected_governance_audit_files()
 
-  unmarked_entries = audit - marked
+  unmarked_entries = audit - collected
   assert not unmarked_entries, (
-    "governance audit suite entries must carry the governance_audit marker "
-    "(module-level pytestmark or runtime_profiles conftest tagging): "
-    f"{sorted(unmarked_entries)}"
+    "governance audit suite entries must be collected under -m "
+    "governance_audit (module-level pytestmark or runtime_profiles conftest "
+    f"tagging): {sorted(unmarked_entries)}"
   )
 
-  unlisted_marked = marked - audit
+  unlisted_marked = collected - audit
   assert not unlisted_marked, (
-    "governance_audit-marked files must be listed in the governance audit "
-    f"suite manifest: {sorted(unlisted_marked)}"
+    "files collected under -m governance_audit must be listed in the "
+    f"governance audit suite manifest: {sorted(unlisted_marked)}"
   )
