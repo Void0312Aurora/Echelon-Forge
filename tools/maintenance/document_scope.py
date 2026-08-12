@@ -63,6 +63,11 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
   relative = path.relative_to(root).as_posix()
   if relative in {"README.md", "README.zh.md"}:
     return True
+  # Work surfaces are Tier B (English canonical, no bilingual SLA) and stay
+  # outside the strict maintained bilingual surface even when they sit under
+  # an owner prefix that is otherwise strict, such as operations/.
+  if "work" in relative.split("/")[:-1]:
+    return False
   if (
     relative.startswith("engineering/automation/rules/")
     or relative.startswith("engineering/automation/prompts/")
