@@ -65,6 +65,21 @@ their transitive chain with no gate benefit, since `manifest_integrity.py`
 now runs against the correct owner root and no CI test enforces the
 full-tree hash check on live content.
 
+Update (2026-08-13): by owner instruction the second file was taken out of
+the "original bytes preserved" state after all. The
+`data_collection/f16c_block50_target_geometry/source_ledger.zh.md` link to
+`examples/config/database/aircraft/units/f16c_block50.json` now carries the
+correct depth for the owner-root location (seven `../` components instead
+of the pre-migration six), and the affected pin chain was re-derived in
+lockstep: the `target_geometry_source_ledger` entries (sha256,
+content_hash, size_bytes) in
+`retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json`
+and `geometry_warhead_row_provenance_gate.json`, plus the manifest's pin of
+the gate artifact itself. The chain terminates there (nothing pins the
+manifest). The actual cascade proved narrower than the 4-manifest estimate
+above: the other closeout gates reference this ledger by path only. The
+six pre-migration hash mismatches remain untouched inherited conditions.
+
 The manifest-pinned governance dependency is preserved byte-for-byte in the
 [retained governance dependency snapshot](retained_dependencies/governance_20260531/README.md).
 Readers translate its retired logical path through
