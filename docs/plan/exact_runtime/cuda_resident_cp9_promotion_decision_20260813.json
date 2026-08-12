@@ -1,0 +1,167 @@
+{
+ "schema_version": "cuda_resident.cp9_promotion_decision.v1",
+ "decision_id": "cp9.scoped_promotion.cuda_resident.20260813",
+ "date": "2026-08-13",
+ "authority": "cuda_resident_promotion_program_20260808",
+ "status": "scoped_promotion_recorded",
+ "owner_decision": {
+  "decided_by": "repository_owner",
+  "decision_date": "2026-08-13",
+  "option_chosen": "scoped_promote",
+  "alternatives_declined": ["unrestricted_promote", "hold"],
+  "basis": "all_six_frozen_gates_verified_green_plus_independent_review_with_zero_blocking_findings"
+ },
+ "independent_review": {
+  "performed": true,
+  "date": "2026-08-13",
+  "reviewer": "independent_review_session_separate_context",
+  "edited_implementation_under_review": false,
+  "blocking_findings": 0,
+  "non_blocking_observations": 7,
+  "recommendation": "scoped_promote",
+  "verification": {
+   "architecture_gates": "238 passed; 15 failures all FileNotFoundError for g++ in test_runtime_profile_contracts.py, none in cuda_resident scope",
+   "cuda_on_lifecycle": "16 cases / 643 assertions passed",
+   "cuda_on_replay": "4 cases / 77 assertions passed",
+   "cuda_on_full_window": "6 cases / 154 assertions passed",
+   "cp8_campaign_ratio_entries_recomputed_exact": 80,
+   "cp8_warmed_p50_cells_improved_vs_cr2_6b": 40,
+   "cp8_warmed_p50_delta_range_percent": [-62.2, -1.8],
+   "direction_flips_between_packages": [
+    "world_4_host_export_no_device_mixed_to_cuda_resident"
+   ],
+   "authorization_flags_verified_false_everywhere": true,
+   "facade_maintained_boundary_verified_intact": true
+  }
+ },
+ "gate_evaluation": {
+  "G_A_full_window_spi_measured": {
+   "verdict": "green",
+   "evidence": "CP-3 removed non-SPI entry points; CP-8 reports declare full_window_surface_ref cuda_resident.full_window_spi.v1 with the SPI-only operation sequence"
+  },
+  "G_B_cpu_cuda_invocation_equivalent": {
+   "verdict": "green",
+   "evidence": "both lanes in the CP-8 package share invocation_surface, operation_sequence, production protocol, and master_trace_signature 4b03b578675065d4"
+  },
+  "G_C_learner_equivalent_consumption_measured": {
+   "verdict": "green",
+   "scope_note": "closed on the resident fixture contract (fixed-air fifteen-field observation); production dictionary-observation stack outside coverage",
+   "evidence": "CP-6 learner_equivalent_consumer_kernel with contract-owned normalization, full-tensor CPU parity oracle, measured mode no_export_learner_consumer at production protocol"
+  },
+  "G_D_achieved_counters_complete": {
+   "verdict": "green",
+   "evidence": "cuda_resident_cp_counter_evidence_20260810.json: 12/12 launches, 5/5 counter families with values, occupancy 8.32-11.38 percent, zero local traffic",
+   "recorded_gap": "artifact lacks an explicit elevation-record field; elevation fact recorded in the program plan only"
+  },
+  "G_E_selected_slice_parity": {
+   "verdict": "green",
+   "evidence": "fresh parity comparison in the CP-8 package: status pass, 12/12 released numeric fields matched in cross-lane and both same-backend reset families"
+  },
+  "G_F_small_batch_disposition": {
+   "verdict": "green",
+   "evidence": "CP-7a frozen rule cp7.small_batch_selection_rule.v1 (worlds below 4 route to the CPU reference, documentation-grade, zero runtime consumers enforced); CP-8 measurement confirms world 1 prefers the CPU reference on every metric while every world count at or above 4 prefers the resident lane"
+  }
+ },
+ "promotion_scope": {
+  "backend": "cuda_resident",
+  "promoted_to": "selectable_maintained_backend_explicit_opt_in",
+  "surface": "resident_fixture_contract_fixed_air_fifteen_field_observation",
+  "advisory_minimum_world_count": 4,
+  "worlds_below_minimum": "route_to_cpu_reference_per_cp7a_frozen_rule",
+  "maintained_default_backend": "flecs_cpu_reference",
+  "maintained_default_unchanged_at_all_world_counts": true,
+  "correctness_claims_grade": "maintained",
+  "correctness_claims_basis": "released_state_digests_bit_identical_across_lanes_and_campaigns_plus_12_field_selected_slice_parity",
+  "performance_claims_grade": "host_specific_experimental_advisory_only",
+  "performance_claims_condition": "no maintained performance contract without a documented second host or an explicit single-host acceptance recorded by the repository owner",
+  "excluded_from_this_promotion": [
+   "production_dictionary_observation_stack",
+   "learner_update_or_training_loop_integration",
+   "maintained_performance_contract",
+   "any_public_abi_change_without_compatibility_shell_and_migration_note",
+   "kernel_or_launch_tuning_authority"
+  ]
+ },
+ "implementation_boundary": {
+  "behavior_changed_by_this_commit": false,
+  "facade_flags_still_false": [
+   "compiled_experimental_backend",
+   "supports_resident_state",
+   "supports_device_observation_view",
+   "supports_exact_gpu_backend"
+  ],
+  "frozen_artifact_authorization_flags": "unchanged and false; artifact-level flags describe what each artifact authorizes and are not retroactively edited",
+  "exposure_implementation": "follow-up implementation scope authorized by this decision: public opt-in selection surface with compatibility shells, its own architecture gates, and registration of the promoted profile; until that scope lands, runtime behavior is identical to the pre-decision state"
+ },
+ "recorded_gaps": [
+  {
+   "id": "gd_artifact_elevation_record_missing",
+   "detail": "the G-D counter artifact does not carry an elevation-record field although the program constraints require counter artifacts to record elevation; the elevation fact is recorded in the program plan prose",
+   "obligation": "the next achieved-counter capture (v4 parent) must write elevation fields into the artifact itself"
+  },
+  {
+   "id": "achieved_counters_predate_cp5_fusion",
+   "detail": "G-D counters describe the pre-fusion v2 parent; the v4 execution graph has no achieved-counter capture and post-fusion occupancy figures are theoretical",
+   "obligation": "any tuning conclusion based on fused-graph occupancy requires a v4 elevated capture first"
+  },
+  {
+   "id": "no_world_2_3_crossover_measurement",
+   "detail": "the frozen matrix has no world counts between 1 and 4, so the CPU/CUDA crossover inside that interval is unmeasured; the advisory minimum of 4 is the smallest measured winning count, not a measured crossover point"
+  },
+  {
+   "id": "v4_sync_activity_band_includes_prefold_value",
+   "detail": "the v4 resource validator accepts synchronization activity rows in [5,8] due to WDDM timing variance; 8 was the pre-fold stable value, so the band alone could admit one regression; the exact pinned API counts (launches 5, syncs 3) are the stable invariant that would catch it"
+  }
+ ],
+ "evidence": {
+  "post_optimization_matrix_package": {
+   "path": "docs/plan/exact_runtime/cuda_resident_cp8_matrix_evidence_20260812.json",
+   "bytes": 39521,
+   "sha256": "f4cd59f5c7050ea066920bd2d921dd21a5e910a0386981ef12d691686292cd8c"
+  },
+  "comparison_target_cr2_6b_package": {
+   "path": "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804.json",
+   "bytes": 41059,
+   "sha256": "6f9f3af1c59c629cb1e0b7a6f30da5c6287df303762a0320e36a7a73a03b494e"
+  },
+  "achieved_counter_evidence": {
+   "path": "docs/plan/exact_runtime/cuda_resident_cp_counter_evidence_20260810.json",
+   "bytes": 6106,
+   "sha256": "47745dfcc27f00d4123a321ef40a8351f32e422f4cef8f9789ae02abdfab9d45"
+  },
+  "static_resource_parent_v4": {
+   "path": "docs/plan/exact_runtime/cuda_resident_cp7b_resource_evidence_20260812.json",
+   "bytes": 11032,
+   "sha256": "3c1fbb40f9acdbe92f3f509161efd24d0b69b4a5cff8d95ee4fcd4351031e7e3"
+  },
+  "static_resource_parent_v3": {
+   "path": "docs/plan/exact_runtime/cuda_resident_cp_resource_evidence_20260812.json",
+   "bytes": 11912,
+   "sha256": "1bb3729aa159fe5ab7aa33dc496a06094dd11d552c81a3f21a50823cc4afec8b"
+  },
+  "decision_base_commit": "b01a068a"
+ },
+ "limitations": {
+  "host_specific_timing": true,
+  "single_host_rtx_3090": true,
+  "balanced_power_scheme": true,
+  "background_load_uncontrolled": true,
+  "no_process_affinity": true,
+  "no_gpu_exclusive_mode": true,
+  "fixture_surface_only": true,
+  "performance_tuning_claimed": false,
+  "unrestricted_promotion_claimed": false
+ },
+ "forbidden_without_new_explicit_authority": [
+  "changing_the_maintained_default_backend",
+  "maintained_performance_contract_claims",
+  "production_dictionary_observation_stack_claims",
+  "kernel_or_launch_tuning",
+  "public_abi_python_cli_or_config_changes_without_compatibility_shell",
+  "registry_or_driver_policy_modification"
+ ],
+ "validation": {
+  "how_to_revalidate": "run tests/architecture/runtime_profiles/test_cuda_resident_cp9_promotion_decision.py; it re-validates this record's schema, the gate verdicts, the evidence hashes against the tracked artifacts, and that the facade maintained boundary stayed false until the authorized exposure scope lands",
+  "record_is_frozen_evidence": true
+ }
+}

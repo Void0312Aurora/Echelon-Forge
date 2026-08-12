@@ -40,3 +40,6 @@ docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_20260812/** -text
 # and the architecture gates, so they must stay byte-stable.
 docs/plan/exact_runtime/cuda_resident_cp8_matrix_evidence_20260812/** -text
 docs/plan/exact_runtime/cuda_resident_cp8_matrix_evidence_20260812.json -text
+
+# CP-9 promotion decision record is frozen evidence.
+docs/plan/exact_runtime/cuda_resident_cp9_promotion_decision_20260813.json -text

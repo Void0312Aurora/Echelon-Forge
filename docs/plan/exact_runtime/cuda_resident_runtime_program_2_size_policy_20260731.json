@@ -300,6 +300,11 @@
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_closure.py",
    "role": "CR2-7 decision, provenance, negative, bilingual, and size guards",
    "observed_lines": 234
+  },
+  {
+   "path": "tests/architecture/runtime_profiles/test_cuda_resident_cp9_promotion_decision.py",
+   "role": "cp9_promotion_decision_record_gate",
+   "observed_lines": 121
   }
  ],
  "watch_items": [

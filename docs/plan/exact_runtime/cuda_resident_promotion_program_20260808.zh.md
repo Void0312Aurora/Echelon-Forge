@@ -121,7 +121,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | **已落地 2026-08-12。** `learner_equivalent_consumer_kernel` 读取 lease 张量每一个元素、施加契约拥有的逐字段仿射归一化、写出常驻设备的 world 主序 `[world, 15]` float 策略输入缓冲；以矩阵模式 `no_export_learner_consumer` 经显式探针旗标按生产协议测量；全归一化张量的 CPU 参照 parity 为 C++ oracle；导出摘要与 CP-7b 基线在两条 lane 上逐字节一致。见下文「CP-6 已落地」 |
 | CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | **已落地 2026-08-12，两半齐备。** CP-7a：`cp7.small_batch_selection_rule.v1` 把低于 4 的 world 数冻结为路由 CPU 参考的文档级策略（无运行时选择器；架构门禁强制零运行时消费者），实测依据是 world 1 上约 65.5 us 的单线程设备地板对 CPU 约 18-31 us 的整步耗时；交叉点数值列为 CP-8 复核项。CP-7b：stage_publish 与 window_commit 屏障成为各自阶段 kernel 的逐 world 尾声（每窗 launch、同步、状态回读、memset 各 5→3）；导出状态摘要与冻结 CR2-6b 在全部 30 行上保持逐位一致，warmed e2e p50 在 world 1 降 20-30%，其余行 campaign 1 降 8-21%、campaign 2 降 3-52%。见下文「CP-7b 已落地」 |
 | CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | **已落地 2026-08-12。** 矩阵证据链先行世代化（v1 钉点冻结、未知世代关死），随后门控捕获在落地 SHA 上跑完两轮顺序对调的生产 campaign，产出经校验的 v2 证据包 `cuda_resident_cp8_matrix_evidence_20260812.json`。对 CR2-6b：CUDA lane 全部 40 个 warmed-p50 单元改善（-1.8% 至 -62%），方向恰好翻转一个公共单元（(4, host_export_no_device) mixed → cuda_resident），world 1 仍归 CPU 参考——CP-7a 边界获得实测确认。见下文「CP-8 已落地」 |
-| CP-9 | 晋升决策：全部门禁加独立评审，或记录带确切缺失授权的 hold | 显式、有证据支撑的裁定 |
+| CP-9 | 晋升决策：全部门禁加独立评审，或记录带确切缺失授权的 hold | **已裁定 2026-08-13：范围化晋升。** 六门全部核验 green；独立评审（独立上下文、零实现编辑、零阻塞发现）推荐 `scoped_promote`，仓库所有者选定之。常驻后端晋升为 fixture 面上可选择、显式 opt-in 的维护后端，建议下限 4 worlds；CPU 在所有 world 数下保持维护默认；正确性主张为维护级，性能主张保持主机特定实验性。授权的暴露范围落地前运行时行为不变。记录：[cuda_resident_cp9_promotion_decision_20260813.zh.md](cuda_resident_cp9_promotion_decision_20260813.zh.md) |
 
 CP-1、CP-2、CP-3 与其余项独立，可任意顺序落地。CP-4 是 CP-5 的前置。CP-8 跟随 CP-5
 与 CP-7。CP-9 需要 CP-3 至 CP-8 全部完成。

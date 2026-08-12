@@ -211,6 +211,7 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "tools/diagnostics/cuda_resident_cr2_closure.py": 547,
         "tests/architecture/runtime_profiles/test_cuda_resident_closure.py": 151,
         "tests/architecture/runtime_profiles/test_cuda_resident_cr2_closure.py": 234,
+        "tests/architecture/runtime_profiles/test_cuda_resident_cp9_promotion_decision.py": 121,
     }
     assert set(inventory_map) == set(expected_inventory)
     for path, expected_lines in expected_inventory.items():
