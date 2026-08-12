@@ -615,35 +615,50 @@ def _build_invocation(tokens: list[str]) -> tuple[str, set[str]] | None:
   return build_dir, targets
 
 
+def _cache_assignments(tokens: list[str]) -> dict[str, str]:
+  """The ``-DNAME=VALUE`` assignments of one configure command, in order,
+  with repeated assignments resolved by last-value precedence exactly as
+  CMake resolves them."""
+  assignments: dict[str, str] = {}
+  for token in tokens:
+    match = re.fullmatch(r"-D([A-Za-z0-9_]+)(?::[A-Za-z]+)?=(.*)", token)
+    if match:
+      assignments[match.group(1)] = match.group(2)
+  return assignments
+
+
 def _cuda_lane_flag_violations(workflow: str) -> list[str]:
-  """Bind each ``cmake --build <dir>`` to a genuine configure invocation for
-  the same build directory that *precedes it in the same job*, and check the
-  surface flag only in that invocation's exact tokens. Utility commands,
-  other jobs' configures, and configures sequenced after the build can never
-  stand in for the tree that actually compiles the target."""
+  """Model the effective CMake cache per ``(job, build_dir)``: genuine
+  configure invocations fold their ``-D`` assignments into the cache in
+  document order (later assignments overwrite, unmentioned entries persist,
+  exactly like CMake's cache), and each ``cmake --build`` checks the
+  *effective value at that point*. Utility commands, other jobs, post-build
+  configures, comments, and stale earlier values can never stand in for the
+  cache state the build actually sees."""
   violations = []
-  configures_by_job: dict[str, dict[str, set[str]]] = {}
+  cache: dict[tuple[str, str], dict[str, str]] = {}
   for job, tokens in _workflow_job_commands(workflow):
     build = _build_invocation(tokens)
     if build is None:
       configure_dir = _genuine_configure_dir(tokens)
       if configure_dir is not None:
-        configures_by_job.setdefault(job, {}).setdefault(configure_dir, set()).update(tokens)
+        cache.setdefault((job, configure_dir), {}).update(_cache_assignments(tokens))
       continue
     build_dir, targets = build
     for target in sorted(targets & set(_SURFACE_FLAGS)):
       flag = _SURFACE_FLAGS[target]
-      configure = configures_by_job.get(job, {}).get(build_dir)
-      if configure is None:
+      name, expected = flag[2:].split("=", 1)
+      state = cache.get((job, build_dir))
+      if state is None:
         violations.append(
           f"the compile lane builds {target} in {build_dir} with no preceding "
           "same-job configure invocation for that build directory"
         )
-      elif flag not in configure:
+      elif state.get(name) != expected:
         violations.append(
-          f"the compile lane builds {target} but the {build_dir} configure "
-          f"invocation never passes {flag}, so its .cu sources are silently "
-          "excluded from the build"
+          f"the compile lane builds {target} but the effective {build_dir} "
+          f"configure state does not set {name} to {expected}, so its .cu "
+          "sources are silently excluded from the build"
         )
   return violations
 
@@ -745,7 +760,47 @@ def test_cuda_lane_flag_gate_rejects_prose_and_non_configure_carriers() -> None:
     "          cmake --build build --target ef_gpu_experiments  # echo -DEF_ENABLE_CUDA_EXPERIMENTS=ON\n"
   )
   assert _cuda_lane_flag_violations(target_only_in_comment) == [
-    "the compile lane builds ef_gpu_experiments but the build configure "
-    "invocation never passes -DEF_ENABLE_CUDA_EXPERIMENTS=ON, so its .cu sources are silently "
-    "excluded from the build"
+    "the compile lane builds ef_gpu_experiments but the effective build "
+    "configure state does not set EF_ENABLE_CUDA_EXPERIMENTS to ON, so its .cu "
+    "sources are silently excluded from the build"
   ]
+
+
+def test_cuda_lane_flag_gate_models_the_effective_cache_state() -> None:
+  """Sixth-round convergence gates: the flag check follows CMake's cache
+  semantics, not token unions. A later same-tree reconfigure that flips the
+  flag OFF must fail even though the earlier ON token exists; ON followed by
+  OFF inside one configure command resolves to OFF and must fail; and -- the
+  honest inverse -- a later reconfigure that does not mention the flag keeps
+  the cached ON and must still pass."""
+  workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
+  flag = _SURFACE_FLAGS["ef_gpu_experiments"]
+  name = flag[2:].split("=", 1)[0]
+  later_off = workflow.replace(
+    "      - name: Compile the device surfaces",
+    "      - name: Reconfigure\n"
+    "        run: |\n"
+    f"          cmake -S . -B build-cuda -D{name}=OFF\n"
+    "      - name: Compile the device surfaces",
+    1,
+  )
+  assert _cuda_lane_flag_violations(later_off), (
+    "a later same-tree OFF reconfigure did not trip the gate"
+  )
+
+  on_then_off = workflow.replace(flag, f"{flag} -D{name}=OFF", 1)
+  assert _cuda_lane_flag_violations(on_then_off), (
+    "ON followed by OFF in one configure command did not trip the gate"
+  )
+
+  cache_persists = workflow.replace(
+    "      - name: Compile the device surfaces",
+    "      - name: Reconfigure without the flag\n"
+    "        run: |\n"
+    "          cmake -S . -B build-cuda -DCMAKE_RULE_MESSAGES=OFF\n"
+    "      - name: Compile the device surfaces",
+    1,
+  )
+  assert _cuda_lane_flag_violations(cache_persists) == [], (
+    "a flagless reconfigure wrongly cleared the cached ON"
+  )
