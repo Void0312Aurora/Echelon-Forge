@@ -182,10 +182,11 @@ WindowTiming ProbeSession::run_window(const Mode &mode) {
             throw std::runtime_error("CR2 matrix device lease acquisition failed");
         }
         const auto submitted = impl_->device_consumer.submit(
-            acquired.lease, {.request_id = mode.learner_consumer ? "cr2.matrix.learner_consumer"
-                                                                 : "cr2.matrix.device_consumer",
-                             .expected_epoch = acquired.lease.epoch,
-                             .learner_equivalent = mode.learner_consumer});
+            acquired.lease,
+            {.request_id = mode.learner_consumer ? "production_matrix.learner_consumer"
+                                                 : "production_matrix.device_consumer",
+             .expected_epoch = acquired.lease.epoch,
+             .learner_equivalent = mode.learner_consumer});
         if (!submitted.success()) {
             throw std::runtime_error("CR2 matrix device consumer submission failed");
         }
