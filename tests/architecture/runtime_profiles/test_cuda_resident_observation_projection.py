@@ -5,7 +5,7 @@ from tests.architecture.helpers import REPO_ROOT
 
 CUDA_RESIDENT_DIR = REPO_ROOT / "src/runtime/facade/internal/cuda_resident"
 CONTRACT = REPO_ROOT / "src/runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
-DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_observation_projection.cu"
+DEVICE_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window_body.cu"
 OBSERVATION_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_observation.cu"
 WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
 STORE_HEADER = CUDA_RESIDENT_DIR / "cuda_world_store.h"
@@ -16,7 +16,12 @@ CPU_TEST = REPO_ROOT / "src/tests/test_cuda_resident_observation_projection_cpu_
 FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
 
 
-def test_rb7_observation_projection_contract_and_split_kernels_are_present() -> None:
+def test_rb7_observation_projection_contract_and_ordered_phases_are_present() -> None:
+  """RB7 split the projection kernels; CP-5 fused them into the window-commit
+  body after the achieved counters showed the launch chain, not register
+  pressure, was the cost. The projection phases survive as ordered structure
+  inside the fused kernel, and the device-observation pack stays a separate
+  launch outside the window body."""
   contract = CONTRACT.read_text(encoding="utf-8")
   device = "\n".join(
     (
@@ -33,24 +38,14 @@ def test_rb7_observation_projection_contract_and_split_kernels_are_present() -> 
   assert "struct CudaWorldObservationState" in store
   assert "struct CudaWorldRewardState" in store
   assert "CudaWorldTerminationState" in store
-  for kernel in (
-    "instrument_projection_kernel",
-    "configuration_projection_kernel",
-    "episode_projection_kernel",
-    "pack_device_observation_kernel",
-  ):
-    assert kernel in device
+  instruments_phase = device.index("window_phase_instrument_projection")
+  configuration_phase = device.index("window_phase_configuration_projection")
+  episode_phase = device.index("window_phase_episode_projection")
+  assert instruments_phase < configuration_phase < episode_phase
+  assert "pack_device_observation_kernel" in device
 
   window = WINDOW_SOURCE.read_text(encoding="utf-8")
-  for launch in (
-    "launch_flight_dynamics_forces",
-    "launch_flight_dynamics_aerodynamics",
-    "launch_flight_dynamics_integrate",
-    "launch_instrument_projection",
-    "launch_configuration_projection",
-    "launch_episode_projection",
-  ):
-    assert launch in window
+  assert "launch_window_commit_body" in window
   sync = window.index("cudaDeviceSynchronize()")
   assert window[:sync].count("cudaDeviceSynchronize()") == 0
   assert window[:sync].count("cudaMemcpyDeviceToHost") == 0
@@ -63,9 +58,7 @@ def test_rb7_cpu_and_cuda_projection_oracles_are_separate() -> None:
   assert "WorldBatchRuntime" not in cpu
   assert "flecs" not in cpu.lower()
   assert "CudaResidentBackend" in cuda
-  assert "observation_projection_kernel_resources" in cuda
-  assert "instrument_projection_kernel_resources" in cuda
-  assert "configuration_projection_kernel_resources" in cuda
+  assert "window_commit_body_kernel_resources" in cuda
   assert "consume_device_observation_view" in cuda
   assert "kObservationProjectionSurvivalReward" in cuda
 

@@ -20,7 +20,7 @@ TEST_CASE("RB9 performance contract freezes the private-window operation ledger"
     CHECK(resident.d2h_bytes == 20);
     CHECK(resident.d2d_copy_count == 3);
     CHECK(resident.d2d_bytes == 3 * slot_bytes);
-    CHECK(resident.kernel_launch_count == 10);
+    CHECK(resident.kernel_launch_count == 5);
     CHECK(resident.synchronization_count == 5);
 
     const WindowTransferLedger host = modeled_window_ledger(worlds, slot_bytes, true, false);
@@ -29,7 +29,7 @@ TEST_CASE("RB9 performance contract freezes the private-window operation ledger"
     CHECK(host.host_snapshot_includes_full_state_d2h);
 
     const WindowTransferLedger device = modeled_window_ledger(worlds, slot_bytes, false, true);
-    CHECK(device.kernel_launch_count == 12);
+    CHECK(device.kernel_launch_count == 7);
     CHECK(device.synchronization_count == 6);
     CHECK(device.d2h_copy_count == 5);
     CHECK(device.d2h_bytes == 20);

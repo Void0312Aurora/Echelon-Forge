@@ -2,18 +2,29 @@
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_cuda_math.cuh"
 
 #include "runtime/contracts/cuda_resident_flight_dynamics_fixture_contract.h"
+#include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 
 #include <cmath>
+
+// CP-5 fused window-commit body. The CP-4 achieved counters measured the split
+// six-launch window graph at 8.33-10.89% achieved occupancy with zero local
+// traffic and zero divergence: the device was near idle and the wall clock was
+// the sequential launch chain, not the kernels. The six per-world phases below
+// are therefore one launch. Each phase function keeps its original kernel body
+// verbatim -- including its global loads and stores and its internal early
+// returns -- so the per-world arithmetic order, and with it CPU parity, is
+// unchanged by construction. Cross-phase device-wide barriers are not needed:
+// every phase reads and writes only its own world's slots.
 namespace runtime::cuda_resident::detail {
 namespace {
-__global__ void flight_dynamics_forces_kernel(
-    std::size_t world_capacity, const double *time_steps, const double *control_doubles,
-    const float *control_floats, const std::uint8_t *control_flags, const double *prepared_doubles,
-    const std::uint8_t *prepared_flags, double *kinematics, double *dynamics,
-    double *flight_dynamics_forces, std::uint32_t *status) {
-    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    if (world >= world_capacity) return;
 
+// Phase body of the retired flight_dynamics_forces_kernel, minus the grid
+// index computation and capacity guard that now live in the fused kernel.
+__device__ void window_phase_flight_dynamics_forces(
+    std::size_t world_capacity, std::size_t world, const double *time_steps,
+    const double *control_doubles, const float *control_floats, const std::uint8_t *control_flags,
+    const double *prepared_doubles, const std::uint8_t *prepared_flags, double *kinematics,
+    double *dynamics, double *flight_dynamics_forces, std::uint32_t *status) {
     const double dt = static_cast<double>(static_cast<float>(time_steps[world]));
     const std::size_t kin = world_capacity;
     const std::size_t dyn = world_capacity;
@@ -201,9 +212,10 @@ __global__ void flight_dynamics_forces_kernel(
         force_y += flight_dynamics_canonical(current_thrust * nose_y, 0x1p-32);
         force_z += flight_dynamics_canonical(current_thrust * nose_z, 0x1p-32);
 
-        // Aerodynamic force/moment accumulation is intentionally a separate
-        // kernel below. Keeping this launch responsible for control, aero
-        // state, propulsion, gravity, and thrust bounds the live range.
+        // Aerodynamic force/moment accumulation is intentionally the next
+        // phase. Keeping this phase responsible for control, aero state,
+        // propulsion, gravity, and thrust preserves the retired kernel split
+        // as readable structure inside the fused launch.
         (void)dynamic_pressure;
         (void)alpha;
         (void)beta;
@@ -242,14 +254,12 @@ __global__ void flight_dynamics_forces_kernel(
     flight_dynamics_forces[kTorqueYaw * world_capacity + world] = torque_yaw;
 }
 
-__global__ void flight_dynamics_aerodynamics_kernel(std::size_t world_capacity,
-                                                    const float *control_floats,
-                                                    const std::uint8_t *control_flags,
-                                                    const double *kinematics, double *dynamics,
-                                                    double *flight_dynamics_forces,
-                                                    std::uint32_t *status) {
-    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    if (world >= world_capacity || control_flags[2 * world_capacity + world] == 0) return;
+// Phase body of the retired flight_dynamics_aerodynamics_kernel.
+__device__ void window_phase_flight_dynamics_aerodynamics(
+    std::size_t world_capacity, std::size_t world, const float *control_floats,
+    const std::uint8_t *control_flags, const double *kinematics, double *dynamics,
+    double *flight_dynamics_forces, std::uint32_t *status) {
+    if (control_flags[2 * world_capacity + world] == 0) return;
     const std::size_t kin = world_capacity;
     const std::size_t dyn = world_capacity;
     const double vx = kinematics[3 * kin + world];
@@ -349,13 +359,10 @@ __global__ void flight_dynamics_aerodynamics_kernel(std::size_t world_capacity,
     flight_dynamics_forces[kTorqueYaw * world_capacity + world] = torque_yaw;
 }
 
-__global__ void flight_dynamics_integrate_kernel(std::size_t world_capacity,
-                                                 const double *time_steps, double *kinematics,
-                                                 double *dynamics,
-                                                 const double *flight_dynamics_forces,
-                                                 std::uint32_t *status) {
-    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    if (world >= world_capacity) return;
+// Phase body of the retired flight_dynamics_integrate_kernel.
+__device__ void window_phase_flight_dynamics_integrate(
+    std::size_t world_capacity, std::size_t world, const double *time_steps, double *kinematics,
+    double *dynamics, const double *flight_dynamics_forces, std::uint32_t *status) {
     const double dt = static_cast<double>(static_cast<float>(time_steps[world]));
     if (!isfinite(dt) || dt < kFlightDynamicsMinTimeStepS || dt > kFlightDynamicsMaxTimeStepS) {
         atomicExch(status, 1U);
@@ -440,79 +447,230 @@ __global__ void flight_dynamics_integrate_kernel(std::size_t world_capacity,
     dynamics[kDynR * dyn + world] = r;
 }
 
+// Phase body of the retired instrument_projection_kernel.
+__device__ void window_phase_instrument_projection(std::size_t world_capacity, std::size_t world,
+                                                   const double *kinematics,
+                                                   const double *dynamics,
+                                                   const double *flight_dynamics_forces,
+                                                   double *instruments, std::uint32_t *status) {
+    const double z = kinematics[2 * world_capacity + world];
+    const double vx = kinematics[3 * world_capacity + world];
+    const double vy = kinematics[4 * world_capacity + world];
+    const double vz = kinematics[5 * world_capacity + world];
+    const double heading = kinematics[6 * world_capacity + world];
+    const double pitch = kinematics[7 * world_capacity + world];
+    const double roll = kinematics[8 * world_capacity + world];
+    const double qbar = dynamics[kDynDynamicPressure * world_capacity + world];
+    const double mach = dynamics[kDynMach * world_capacity + world];
+    const double alpha = dynamics[kDynAlpha * world_capacity + world];
+    const double beta = dynamics[kDynBeta * world_capacity + world];
+    const double p = dynamics[kDynP * world_capacity + world];
+    const double q_rate = dynamics[kDynQ * world_capacity + world];
+    const double r = dynamics[kDynR * world_capacity + world];
+    const double mass =
+        kFlightDynamicsEmptyMassKg + kFlightDynamicsFuelMassKg + kFlightDynamicsStoresMassKg;
+    const FlightDynamicsRotation rotation = flight_dynamics_rotation(heading, pitch, roll);
+    double body_x = 0.0;
+    double body_y = 0.0;
+    double body_z = 0.0;
+    flight_dynamics_world_to_body(flight_dynamics_forces[kForceX * world_capacity + world],
+                                  flight_dynamics_forces[kForceY * world_capacity + world],
+                                  flight_dynamics_forces[kForceZ * world_capacity + world] +
+                                      mass * kFlightDynamicsGravityMps2,
+                                  rotation, &body_x, &body_y, &body_z);
+    const double g_normal = body_z / (mass * kFlightDynamicsGravityMps2);
+    const double g_axial = body_x / (mass * kFlightDynamicsGravityMps2);
+    const double ias = sqrt(fmax(0.0, 2.0 * qbar / kFlightDynamicsSeaLevelDensityKgM3));
+    const double p_deg = flight_dynamics_rad_to_deg(p);
+    const double q_deg = flight_dynamics_rad_to_deg(q_rate);
+    const double r_deg = flight_dynamics_rad_to_deg(r);
+    instruments[kInstAltBaro * world_capacity + world] = z;
+    instruments[kInstAltRadar * world_capacity + world] = z;
+    instruments[kInstIas * world_capacity + world] = ias;
+    instruments[kInstMach * world_capacity + world] = mach;
+    instruments[kInstVvi * world_capacity + world] = vz;
+    instruments[kInstPitch * world_capacity + world] = pitch;
+    instruments[kInstRoll * world_capacity + world] = roll;
+    instruments[kInstHeading * world_capacity + world] = heading;
+    instruments[kInstAoa * world_capacity + world] = alpha;
+    instruments[kInstBeta * world_capacity + world] = beta;
+    instruments[kInstGNormal * world_capacity + world] = g_normal;
+    instruments[kInstGAxial * world_capacity + world] = g_axial;
+    instruments[kInstP * world_capacity + world] = p_deg;
+    instruments[kInstQ * world_capacity + world] = q_deg;
+    instruments[kInstR * world_capacity + world] = r_deg;
+    bool invalid = !isfinite(vx) || !isfinite(vy) || !isfinite(ias) || !isfinite(p_deg) ||
+                   !isfinite(q_deg) || !isfinite(r_deg) || !isfinite(g_normal) ||
+                   !isfinite(g_axial);
+    if (invalid) atomicExch(status, 1U);
+}
+
+// Phase body of the retired configuration_projection_kernel.
+__device__ void window_phase_configuration_projection(std::size_t world_capacity,
+                                                      std::size_t world, const double *dynamics,
+                                                      const double *control_doubles,
+                                                      const float *control_floats,
+                                                      double *instruments, std::uint32_t *status) {
+    const double engine_rpm = dynamics[kDynThrottleState * world_capacity + world] * 100.0 +
+                              dynamics[kDynAbState * world_capacity + world] * 10.0;
+    const double fuel_flow = dynamics[kDynCurrentThrust * world_capacity + world] *
+                             kObservationProjectionFuelFlowTsfcNhPerN;
+    const double throttle = control_doubles[3 * world_capacity + world];
+    const double gear = dynamics[kDynGearExtension * world_capacity + world];
+    const double flaps = static_cast<double>(control_floats[world_capacity + world]);
+    const double speedbrake = static_cast<double>(control_floats[2 * world_capacity + world]);
+    instruments[kInstEngineRpm * world_capacity + world] = engine_rpm;
+    instruments[kInstFuelFlow * world_capacity + world] = fuel_flow;
+    instruments[kInstThrottle * world_capacity + world] = throttle;
+    instruments[kInstFuelInternal * world_capacity + world] = kFlightDynamicsFuelMassKg;
+    instruments[kInstFuelExternal * world_capacity + world] = 0.0;
+    instruments[kInstGear * world_capacity + world] = gear;
+    instruments[kInstFlaps * world_capacity + world] = flaps;
+    instruments[kInstSpeedbrake * world_capacity + world] = speedbrake;
+    if (!isfinite(engine_rpm) || !isfinite(fuel_flow) || !isfinite(throttle) || !isfinite(gear) ||
+        !isfinite(flaps) || !isfinite(speedbrake)) {
+        atomicExch(status, 1U);
+    }
+}
+
+// Phase body of the retired episode_projection_kernel.
+__device__ void window_phase_episode_projection(
+    std::size_t world_capacity, std::size_t world, const double *time_steps,
+    const double *simulation_times, const double *kinematics, const double *dynamics,
+    const double *instruments, const std::uint64_t *entity_ids,
+    const std::uint64_t *global_versions, double *observations, std::uint64_t *observation_ids,
+    double *rewards, std::uint64_t *reward_versions, std::uint8_t *termination_flags,
+    std::uint8_t *termination_codes, std::uint8_t *event_empty, std::uint32_t *status) {
+    const double dt = static_cast<double>(static_cast<float>(time_steps[world]));
+    const double x = kinematics[0 * world_capacity + world];
+    const double y = kinematics[1 * world_capacity + world];
+    const double z = kinematics[2 * world_capacity + world];
+    const double vx = kinematics[3 * world_capacity + world];
+    const double vy = kinematics[4 * world_capacity + world];
+    const double vz = kinematics[5 * world_capacity + world];
+    const double heading = kinematics[6 * world_capacity + world];
+    const double pitch = kinematics[7 * world_capacity + world];
+    const double roll = kinematics[8 * world_capacity + world];
+    const double speed = sqrt(fmax(0.0, vx * vx + vy * vy + vz * vz));
+    const double survival = kObservationProjectionSurvivalReward;
+    const double speed_term = speed * kObservationProjectionSpeedRewardWeight;
+    const double total = survival + speed_term;
+    const bool finite = isfinite(dt) && isfinite(x) && isfinite(y) && isfinite(z) && isfinite(vx) &&
+                        isfinite(vy) && isfinite(vz) && isfinite(heading) && isfinite(pitch) &&
+                        isfinite(roll) && isfinite(speed) && isfinite(total);
+    const bool envelope = z < 100.0 || z > 10000.0 || speed < 50.0 || speed > 350.0 ||
+                          fabs(vy) > 50.0 || fabs(vz) > 50.0 || fabs(pitch) > 10.0 ||
+                          fabs(roll) > 10.0 ||
+                          fabs(dynamics[kDynAlpha * world_capacity + world]) > 14.0;
+    const std::uint8_t reason =
+        !finite    ? static_cast<std::uint8_t>(CudaResidentTerminationCode::nan_guard)
+        : envelope ? static_cast<std::uint8_t>(CudaResidentTerminationCode::envelope_violation)
+                   : static_cast<std::uint8_t>(CudaResidentTerminationCode::running);
+    const std::uint8_t terminated = static_cast<std::uint8_t>(reason != 0);
+    const double obs[kObservationProjectionObservationFieldCount] = {
+        simulation_times[world] + time_steps[world],
+        x,
+        y,
+        z,
+        vx,
+        vy,
+        vz,
+        heading,
+        pitch,
+        roll,
+        speed,
+        kObservationProjectionHealth,
+        instruments[kInstGear * world_capacity + world],
+        instruments[kInstThrottle * world_capacity + world],
+        total,
+    };
+    for (std::size_t field = 0; field < kObservationProjectionObservationFieldCount; ++field) {
+        observations[field * world_capacity + world] = obs[field];
+    }
+    observation_ids[world] = entity_ids[world];
+    rewards[kRewardSurvival * world_capacity + world] = survival;
+    rewards[kRewardSpeed * world_capacity + world] = speed_term;
+    rewards[kRewardTotal * world_capacity + world] = total;
+    reward_versions[world] = global_versions[world] + 1U;
+    termination_flags[world] = terminated;
+    termination_codes[world] = reason;
+    event_empty[world] = 1;
+    if (!finite || !isfinite(obs[kObsTotalReward])) atomicExch(status, 1U);
+}
+
+// One launch for the whole per-world window-commit body. Phase order is the
+// retired launch order. Every phase ran for every world in the split graph --
+// no kernel read the status flag, so a failed world only marked status and the
+// host discarded the staged slot. Running all phases unconditionally here
+// preserves exactly that observable contract.
+__global__ void window_commit_body_kernel(
+    std::size_t world_capacity, const double *time_steps, const double *simulation_times,
+    const double *control_doubles, const float *control_floats, const std::uint8_t *control_flags,
+    const double *prepared_doubles, const std::uint8_t *prepared_flags,
+    const std::uint64_t *entity_ids, const std::uint64_t *global_versions, double *kinematics,
+    double *dynamics, double *flight_dynamics_forces, double *instruments, double *observations,
+    std::uint64_t *observation_ids, double *rewards, std::uint64_t *reward_versions,
+    std::uint8_t *termination_flags, std::uint8_t *termination_codes, std::uint8_t *event_empty,
+    std::uint32_t *status) {
+    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (world >= world_capacity) return;
+    window_phase_flight_dynamics_forces(world_capacity, world, time_steps, control_doubles,
+                                        control_floats, control_flags, prepared_doubles,
+                                        prepared_flags, kinematics, dynamics,
+                                        flight_dynamics_forces, status);
+    window_phase_flight_dynamics_aerodynamics(world_capacity, world, control_floats, control_flags,
+                                              kinematics, dynamics, flight_dynamics_forces,
+                                              status);
+    window_phase_flight_dynamics_integrate(world_capacity, world, time_steps, kinematics, dynamics,
+                                           flight_dynamics_forces, status);
+    window_phase_instrument_projection(world_capacity, world, kinematics, dynamics,
+                                       flight_dynamics_forces, instruments, status);
+    window_phase_configuration_projection(world_capacity, world, dynamics, control_doubles,
+                                          control_floats, instruments, status);
+    window_phase_episode_projection(world_capacity, world, time_steps, simulation_times,
+                                    kinematics, dynamics, instruments, entity_ids, global_versions,
+                                    observations, observation_ids, rewards, reward_versions,
+                                    termination_flags, termination_codes, event_empty, status);
+}
+
 } // namespace
 
-cudaError_t launch_flight_dynamics_forces(CudaWorldStoreDeviceAllocation *allocation,
-                                          std::uint8_t slot_index) noexcept {
+cudaError_t launch_window_commit_body(CudaWorldStoreDeviceAllocation *allocation,
+                                      std::uint8_t slot_index) noexcept {
     if (allocation == nullptr) return cudaErrorInvalidValue;
     constexpr unsigned int threads = 128;
     const unsigned int blocks =
         static_cast<unsigned int>((allocation->world_capacity + threads - 1) / threads);
     std::uint8_t *slot = allocation->state_slots[slot_index];
-    flight_dynamics_forces_kernel<<<blocks, threads>>>(
+    window_commit_body_kernel<<<blocks, threads>>>(
         allocation->world_capacity, device_field<double>(slot, allocation->state_layout.time_steps),
+        device_field<double>(slot, allocation->state_layout.simulation_times),
         device_field<double>(slot, allocation->state_layout.control_doubles),
         device_field<float>(slot, allocation->state_layout.control_floats),
         device_field<std::uint8_t>(slot, allocation->state_layout.control_flags),
         device_field<double>(slot, allocation->state_layout.prepared_doubles),
         device_field<std::uint8_t>(slot, allocation->state_layout.prepared_flags),
+        device_field<std::uint64_t>(slot, allocation->state_layout.entity_ids),
+        device_field<std::uint64_t>(slot, allocation->state_layout.global_versions),
         device_field<double>(slot, allocation->state_layout.kinematics),
         device_field<double>(slot, allocation->state_layout.dynamics),
         device_field<double>(slot, allocation->state_layout.flight_dynamics_forces),
+        device_field<double>(slot, allocation->state_layout.projected_instruments),
+        device_field<double>(slot, allocation->state_layout.projected_observations),
+        device_field<std::uint64_t>(slot, allocation->state_layout.projected_observation_ids),
+        device_field<double>(slot, allocation->state_layout.projected_rewards),
+        device_field<std::uint64_t>(slot, allocation->state_layout.projected_reward_versions),
+        device_field<std::uint8_t>(slot, allocation->state_layout.projected_termination_flags),
+        device_field<std::uint8_t>(slot, allocation->state_layout.projected_termination_codes),
+        device_field<std::uint8_t>(slot, allocation->state_layout.projected_event_empty),
         allocation->barrier_status);
     return cudaGetLastError();
 }
 
-cudaError_t launch_flight_dynamics_aerodynamics(CudaWorldStoreDeviceAllocation *allocation,
-                                                std::uint8_t slot_index) noexcept {
-    if (allocation == nullptr) return cudaErrorInvalidValue;
-    constexpr unsigned int threads = 128;
-    const unsigned int blocks =
-        static_cast<unsigned int>((allocation->world_capacity + threads - 1) / threads);
-    std::uint8_t *slot = allocation->state_slots[slot_index];
-    flight_dynamics_aerodynamics_kernel<<<blocks, threads>>>(
-        allocation->world_capacity,
-        device_field<float>(slot, allocation->state_layout.control_floats),
-        device_field<std::uint8_t>(slot, allocation->state_layout.control_flags),
-        device_field<double>(slot, allocation->state_layout.kinematics),
-        device_field<double>(slot, allocation->state_layout.dynamics),
-        device_field<double>(slot, allocation->state_layout.flight_dynamics_forces),
-        allocation->barrier_status);
-    return cudaGetLastError();
-}
-
-cudaError_t launch_flight_dynamics_integrate(CudaWorldStoreDeviceAllocation *allocation,
-                                             std::uint8_t slot_index) noexcept {
-    if (allocation == nullptr) return cudaErrorInvalidValue;
-    constexpr unsigned int threads = 128;
-    const unsigned int blocks =
-        static_cast<unsigned int>((allocation->world_capacity + threads - 1) / threads);
-    std::uint8_t *slot = allocation->state_slots[slot_index];
-    flight_dynamics_integrate_kernel<<<blocks, threads>>>(
-        allocation->world_capacity, device_field<double>(slot, allocation->state_layout.time_steps),
-        device_field<double>(slot, allocation->state_layout.kinematics),
-        device_field<double>(slot, allocation->state_layout.dynamics),
-        device_field<double>(slot, allocation->state_layout.flight_dynamics_forces),
-        allocation->barrier_status);
-    return cudaGetLastError();
-}
-
-bool query_cuda_world_store_flight_dynamics_forces_kernel_resources(
+bool query_cuda_world_store_window_commit_body_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error) {
-    return query_cuda_kernel_resources(flight_dynamics_forces_kernel,
-                                       "flight_dynamics_forces_kernel", resources, error);
-}
-
-bool query_cuda_world_store_flight_dynamics_aerodynamics_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error) {
-    return query_cuda_kernel_resources(flight_dynamics_aerodynamics_kernel,
-                                       "flight_dynamics_aerodynamics_kernel", resources, error);
-}
-
-bool query_cuda_world_store_flight_dynamics_integrate_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error) {
-    return query_cuda_kernel_resources(flight_dynamics_integrate_kernel,
-                                       "flight_dynamics_integrate_kernel", resources, error);
+    return query_cuda_kernel_resources(window_commit_body_kernel, "window_commit_body_kernel",
+                                       resources, error);
 }
 
 } // namespace runtime::cuda_resident::detail

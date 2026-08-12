@@ -30,10 +30,9 @@ DEVICE_SOURCES = tuple(
     for name in (
         "cuda_world_store_cuda_barrier.cu",
         "cuda_world_store_cuda_control_preparation.cu",
-        "cuda_world_store_cuda_flight_dynamics.cu",
-        "cuda_world_store_cuda_observation_projection.cu",
         "cuda_world_store_cuda_observation.cu",
         "cuda_world_store_cuda_window.cu",
+        "cuda_world_store_cuda_window_body.cu",
     )
 )
 WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
@@ -181,12 +180,13 @@ def test_rb9_freezes_private_invocation_and_complete_world_mode_matrix() -> None
         assert f'"{mode}"' in probe
     run_window = session.split("WindowTiming ProbeSession::run_window", 1)[1]
     private_sequence = run_window.split("#else", 1)[1].split("const auto advanced", 1)[0]
+    # CP-3 removed the session's explicit publish_stage call: advance() owns
+    # the publish when the window is input_injected. The measured sequence is
+    # inject -> advance, and no explicit publish call may reappear here.
     assert private_sequence.index("impl_->backend.inject") < private_sequence.index(
-        "impl_->backend.publish_stage"
-    )
-    assert private_sequence.index("impl_->backend.publish_stage") < private_sequence.index(
         "impl_->backend.advance"
     )
+    assert "publish_stage" not in private_sequence
     assert '{"full_facade_available", false}' in probe
     assert '{"promotion_allowed", false}' in probe
     assert '{"break_even_eligible", false}' in probe
@@ -205,18 +205,15 @@ def test_rb9_static_ledger_matches_current_cuda_execution_graph() -> None:
     contract = _text(CONTRACT)
     device = _device_text()
     execution_window = _text(WINDOW_SOURCE)
-    # Ten resident-window launches remain the base path; the legacy diagnostic
-    # and CR2-3 measured wrappers each contain pack/consumer call sites.
-    assert device.count("<<<blocks, threads>>>") == 12
-    assert execution_window.index("launch_flight_dynamics_forces") < execution_window.index(
-        "launch_episode_projection"
-    )
-    assert execution_window.count("launch_flight_dynamics_") == 3
-    assert execution_window.count("launch_instrument_projection") == 1
-    assert execution_window.count("launch_configuration_projection") == 1
-    assert execution_window.count("launch_episode_projection") == 1
+    # Five resident-window launches are the base path after the CP-5 fusion;
+    # the legacy diagnostic and CR2-3 measured wrappers each contain
+    # pack/consumer call sites.
+    assert device.count("<<<blocks, threads>>>") == 7
+    assert execution_window.count("launch_window_commit_body") == 1
+    assert "launch_flight_dynamics_" not in execution_window
+    assert "launch_instrument_projection" not in execution_window
     assert "kFlightControlH2dBytesPerWorld = 55" in contract
-    assert ".kernel_launch_count = 10" in contract
+    assert ".kernel_launch_count = 5" in contract
     assert "ledger.kernel_launch_count += 2" in contract
     assert ".synchronization_count = 5" in contract
     assert "pack_device_observation_kernel" in device

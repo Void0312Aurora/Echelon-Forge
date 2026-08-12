@@ -86,13 +86,17 @@ def _parse_launch_sequence(array_name: str) -> tuple[tuple[str, str], ...]:
 def kernel_catalog(schema_version: int) -> tuple[KernelSpec, ...]:
     """Kernel catalog for a capture schema version.
 
-    v1 describes the pre-rename binary and stays available so the retained
-    static-capture evidence remains verifiable. v2 is the current catalog.
+    v1 describes the pre-rename binary and v2 the pre-fusion binary; both stay
+    available so the retained capture evidence remains verifiable. v3 is the
+    current catalog: the CP-5 fusion folded the six window-commit kernels into
+    one, so it holds five kernels over seven launches.
     """
     if schema_version == 1:
         return _parse_catalog("kKernelSpecs")
     if schema_version == 2:
         return _parse_catalog("kKernelSpecsV2")
+    if schema_version == 3:
+        return _parse_catalog("kKernelSpecsV3")
     raise EvidenceError(f"unknown kernel catalog schema version: {schema_version}")
 
 
@@ -103,6 +107,8 @@ def launch_sequence(schema_version: int) -> tuple[tuple[str, str], ...]:
         return _parse_launch_sequence("kLaunchSequence")
     if schema_version == 2:
         return _parse_launch_sequence("kLaunchSequenceV2")
+    if schema_version == 3:
+        return _parse_launch_sequence("kLaunchSequenceV3")
     raise EvidenceError(f"unknown launch sequence schema version: {schema_version}")
 
 

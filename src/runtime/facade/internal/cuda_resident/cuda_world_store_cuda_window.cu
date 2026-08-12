@@ -32,15 +32,9 @@ bool commit_flight_dynamics_window(CudaWorldStoreDeviceAllocation *allocation,
         return false;
     }
 
-    status = launch_flight_dynamics_forces(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_flight_dynamics_aerodynamics(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_flight_dynamics_integrate(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_instrument_projection(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_configuration_projection(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_episode_projection(allocation, next_slot);
-
-    // The six flight-dynamics/D launches form one device graph. This is the only
-    // host synchronization before the declared window barrier.
+    // CP-5: the former six-launch window graph is one fused launch. This is the
+    // only host synchronization before the declared window barrier.
+    status = launch_window_commit_body(allocation, next_slot);
     if (status == cudaSuccess) status = cudaDeviceSynchronize();
     if (status != cudaSuccess) {
         if (error != nullptr) {

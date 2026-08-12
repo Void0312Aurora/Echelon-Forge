@@ -11,11 +11,10 @@ DEVICE_SOURCES = tuple(
         "cuda_world_store_cuda_storage.cu",
         "cuda_world_store_cuda_barrier.cu",
         "cuda_world_store_cuda_control_preparation.cu",
-        "cuda_world_store_cuda_flight_dynamics.cu",
-        "cuda_world_store_cuda_observation_projection.cu",
         "cuda_world_store_cuda_observation.cu",
         "cuda_world_store_cuda_state_readback.cu",
         "cuda_world_store_cuda_window.cu",
+        "cuda_world_store_cuda_window_body.cu",
     )
 )
 CMAKE = REPO_ROOT / "CMakeLists.txt"
@@ -44,15 +43,12 @@ def test_cr2_split_manifest_keeps_private_cuda_translation_units_non_rdc() -> No
     for path in DEVICE_SOURCES[1:]:
         assert path.name in source_manifest
     assert "#include \"cuda_world_store_cuda_" not in device_source
-    assert device_source.count("__global__") == 10
+    # CP-5 fused the six window-commit kernels into window_commit_body_kernel,
+    # so the device surface emits five __global__ entry points.
+    assert device_source.count("__global__") == 5
     for kernel in (
         "control_preparation_kernel",
-        "flight_dynamics_forces_kernel",
-        "flight_dynamics_aerodynamics_kernel",
-        "flight_dynamics_integrate_kernel",
-        "instrument_projection_kernel",
-        "configuration_projection_kernel",
-        "episode_projection_kernel",
+        "window_commit_body_kernel",
         "pack_device_observation_kernel",
         "device_observation_consumer_smoke_kernel",
         "apply_barrier_kernel",

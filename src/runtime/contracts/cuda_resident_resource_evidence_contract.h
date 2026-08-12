@@ -23,6 +23,18 @@ inline constexpr std::string_view kProbeSchemaV2 = "cuda_resident.cp.resource_ca
 inline constexpr std::string_view kProfileIdV2 = "cp.resource.steady_full_window_body.sm86.v2";
 inline constexpr std::string_view kProbeSchemaV2Predecessor = kProbeSchemaV1;
 
+// v3 describes the CP-5 fused window graph. Unlike v2, this generation is a
+// deliberate execution-graph change: the six per-world window-commit launches
+// measured by v1/v2 (forces, aerodynamics, integrate, and the three
+// projections) are one fused launch, because the CP-4 achieved counters showed
+// the split graph is latency-bound on a near-idle device and its launch chain
+// is the dominant cost. The captured workload (trace signature) is unchanged;
+// the fold table below pins which v2 kernels each v3 kernel absorbed.
+inline constexpr std::string_view kSchemaV3 = "cuda_resident.cp.kernel_resource_evidence.v3";
+inline constexpr std::string_view kProbeSchemaV3 = "cuda_resident.cp.resource_capture_probe.v3";
+inline constexpr std::string_view kProfileIdV3 = "cp.resource.steady_full_window_body.sm86.v3";
+inline constexpr std::string_view kProbeSchemaV3Predecessor = kProbeSchemaV2;
+
 inline constexpr std::string_view kCaptureRange = "cudaProfilerApi";
 inline constexpr std::string_view kBuildConfig = "Release";
 inline constexpr std::string_view kCudaArchitecture = "sm_86";
@@ -86,10 +98,11 @@ inline constexpr auto kKernelSpecs = std::to_array<KernelSpec>({
     {"phase_d_consumer", "phase_d_consumer_smoke_kernel", 1},
 });
 
-// v2 catalog: the semantic symbols actually emitted by the current .cu sources.
-// kernel_id values also move to semantic names so a v2 report never carries a
-// phase-lettered identifier. kKernelSpecsV2Migration below pins the 1:1
-// correspondence to v1 so the two evidence generations stay comparable.
+// v2 catalog: the semantic symbols of the pre-fusion binary. Frozen historical
+// record since CP-5: the retained v2 static and counter evidence hashes against
+// these symbols, so they must not be edited to match the fused sources.
+// kKernelSpecsV2Migration below pins the 1:1 correspondence to v1 so the two
+// evidence generations stay comparable. kKernelSpecsV3 is the live catalog.
 inline constexpr auto kKernelSpecsV2 = std::to_array<KernelSpec>({
     {"apply_barrier", "apply_barrier_kernel", 3},
     {"control_preparation", "control_preparation_kernel", 1},
@@ -164,6 +177,51 @@ inline constexpr auto kLaunchSequenceV2 = std::to_array<LaunchSpec>({
     {9, "apply_barrier", "window_commit"},
     {10, "device_observation_pack", "device_observation_pack"},
     {11, "device_observation_consumer", "device_consumer"},
+});
+
+// v3 catalog: the symbols actually emitted by the fused .cu sources. The six
+// window-commit kernels of v2 are one kernel; barriers, control preparation,
+// and the device-observation pair are unchanged.
+inline constexpr auto kKernelSpecsV3 = std::to_array<KernelSpec>({
+    {"apply_barrier", "apply_barrier_kernel", 3},
+    {"control_preparation", "control_preparation_kernel", 1},
+    {"window_commit_body", "window_commit_body_kernel", 1},
+    {"device_observation_pack", "pack_device_observation_kernel", 1},
+    {"device_observation_consumer", "device_observation_consumer_smoke_kernel", 1},
+});
+
+struct KernelFoldSpec {
+    std::string_view v2_kernel_id;
+    std::string_view v3_kernel_id;
+};
+
+// Total fold map, not a bijection: every v2 kernel maps to exactly one v3
+// kernel, and the six window-commit kernels share one target. This is the
+// checked statement of what the fusion absorbed, so a v3 report stays
+// comparable to the frozen v2 static and counter evidence kernel-by-kernel.
+inline constexpr auto kKernelSpecsV3Fold = std::to_array<KernelFoldSpec>({
+    {"apply_barrier", "apply_barrier"},
+    {"control_preparation", "control_preparation"},
+    {"flight_dynamics_forces", "window_commit_body"},
+    {"flight_dynamics_aerodynamics", "window_commit_body"},
+    {"flight_dynamics_integrate", "window_commit_body"},
+    {"instrument_projection", "window_commit_body"},
+    {"configuration_projection", "window_commit_body"},
+    {"episode_projection", "window_commit_body"},
+    {"device_observation_pack", "device_observation_pack"},
+    {"device_observation_consumer", "device_observation_consumer"},
+});
+
+// Seven launches: the six-launch window graph of v2 collapses at position 3,
+// every launch outside the fold keeps its relative position and stage.
+inline constexpr auto kLaunchSequenceV3 = std::to_array<LaunchSpec>({
+    {0, "apply_barrier", "input_injection"},
+    {1, "control_preparation", "control_preparation"},
+    {2, "apply_barrier", "stage_publish"},
+    {3, "window_commit_body", "window_commit_body"},
+    {4, "apply_barrier", "window_commit"},
+    {5, "device_observation_pack", "device_observation_pack"},
+    {6, "device_observation_consumer", "device_consumer"},
 });
 
 template <std::size_t KernelCount, std::size_t LaunchCount>
@@ -253,6 +311,86 @@ inline constexpr bool launch_sequences_correspond() {
     return true;
 }
 
+inline constexpr bool kernel_catalog_v3_is_complete() {
+    return catalog_is_complete(kKernelSpecsV3, kLaunchSequenceV3);
+}
+
+// The fold must be total on v2 and surjective onto v3: every v2 kernel maps to
+// exactly one v3 kernel, and every v3 kernel absorbs at least one v2 kernel.
+// Without surjectivity a v3 kernel could appear from nowhere and still pass.
+inline constexpr bool kernel_fold_is_total_and_surjective() {
+    if (kKernelSpecsV3Fold.size() != kKernelSpecsV2.size()) {
+        return false;
+    }
+    for (const auto &kernel : kKernelSpecsV2) {
+        std::size_t hits = 0;
+        for (const auto &entry : kKernelSpecsV3Fold) {
+            if (entry.v2_kernel_id == kernel.kernel_id) {
+                ++hits;
+            }
+        }
+        if (hits != 1) {
+            return false;
+        }
+    }
+    for (const auto &kernel : kKernelSpecsV3) {
+        std::size_t hits = 0;
+        for (const auto &entry : kKernelSpecsV3Fold) {
+            if (entry.v3_kernel_id == kernel.kernel_id) {
+                ++hits;
+            }
+        }
+        if (hits == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Launch correspondence across the fold: mapping every v2 launch through the
+// fold table and collapsing consecutive runs that land on the same fused v3
+// kernel must reproduce the v3 sequence exactly. This is what makes "the six
+// window launches became one" a checked claim rather than prose.
+inline constexpr bool launch_sequences_correspond_v2_to_v3() {
+    constexpr auto fold = [](std::string_view v2_kernel_id) -> std::string_view {
+        for (const auto &entry : kKernelSpecsV3Fold) {
+            if (entry.v2_kernel_id == v2_kernel_id) {
+                return entry.v3_kernel_id;
+            }
+        }
+        return {};
+    };
+    constexpr auto fold_absorbs_several = [](std::string_view v3_kernel_id) {
+        std::size_t hits = 0;
+        for (const auto &entry : kKernelSpecsV3Fold) {
+            if (entry.v3_kernel_id == v3_kernel_id) {
+                ++hits;
+            }
+        }
+        return hits > 1;
+    };
+    std::size_t v3_index = 0;
+    for (std::size_t index = 0; index < kLaunchSequenceV2.size(); ++index) {
+        const std::string_view mapped = fold(kLaunchSequenceV2[index].kernel_id);
+        if (mapped.empty()) {
+            return false;
+        }
+        const bool continues_fused_run =
+            index > 0 && fold_absorbs_several(mapped) &&
+            fold(kLaunchSequenceV2[index - 1].kernel_id) == mapped;
+        if (continues_fused_run) {
+            continue;
+        }
+        if (v3_index >= kLaunchSequenceV3.size() ||
+            kLaunchSequenceV3[v3_index].kernel_id != mapped ||
+            kLaunchSequenceV3[v3_index].launch_index != v3_index) {
+            return false;
+        }
+        ++v3_index;
+    }
+    return v3_index == kLaunchSequenceV3.size();
+}
+
 static_assert(kKernelSpecs.size() == 10);
 static_assert(kLaunchSequence.size() == 12);
 static_assert(kernel_catalog_is_complete());
@@ -262,6 +400,12 @@ static_assert(kLaunchSequenceV2.size() == 12);
 static_assert(kernel_catalog_v2_is_complete());
 static_assert(kernel_migration_is_total());
 static_assert(launch_sequences_correspond());
+
+static_assert(kKernelSpecsV3.size() == 5);
+static_assert(kLaunchSequenceV3.size() == 7);
+static_assert(kernel_catalog_v3_is_complete());
+static_assert(kernel_fold_is_total_and_surjective());
+static_assert(launch_sequences_correspond_v2_to_v3());
 
 inline constexpr bool kSetupOutsideCapture = true;
 inline constexpr bool kPublicExportInsideCapture = true;

@@ -16,9 +16,12 @@ if __package__:
         LAUNCH_SEQUENCE,
         PROFILE,
         PROFILE_V2,
+        PROFILE_V3,
         REPORT_KEYS,
         SCHEMA,
         SCHEMA_V2,
+        SCHEMA_V3,
+        expected_api_counts as _expected_api_counts,
         validate_report as _validate_report,
     )
     from .cuda_resident_cr2_resource_static import (
@@ -38,9 +41,12 @@ else:
         LAUNCH_SEQUENCE,
         PROFILE,
         PROFILE_V2,
+        PROFILE_V3,
         REPORT_KEYS,
         SCHEMA,
         SCHEMA_V2,
+        SCHEMA_V3,
+        expected_api_counts as _expected_api_counts,
         validate_report as _validate_report,
     )
     from cuda_resident_cr2_resource_static import (  # type: ignore[no-redef]
@@ -58,7 +64,8 @@ else:
 
 PROBE_SCHEMA = "cuda_resident.cr2.resource_capture_probe.v1"
 PROBE_SCHEMA_V2 = "cuda_resident.cp.resource_capture_probe.v2"
-_PROBE_SCHEMA_BY_VERSION = {1: PROBE_SCHEMA, 2: PROBE_SCHEMA_V2}
+PROBE_SCHEMA_V3 = "cuda_resident.cp.resource_capture_probe.v3"
+_PROBE_SCHEMA_BY_VERSION = {1: PROBE_SCHEMA, 2: PROBE_SCHEMA_V2, 3: PROBE_SCHEMA_V3}
 
 # Keys a v2 probe adds on top of the v1 set. They record the cross-generation
 # link (which schema it supersedes, whether the workload digest still matches
@@ -71,6 +78,9 @@ PROBE_KEYS_V2_ADDITIONS = {
     "supersedes_schema_version",
     "trace_signature_matches_v1",
 }
+# A v3 probe records the CP-5 fold instead of the 1:1 rename map: a fusion is
+# not a relabel and must not be reported through the migration key.
+PROBE_KEYS_V3_ADDITIONS = (PROBE_KEYS_V2_ADDITIONS - {"kernel_id_migration"}) | {"kernel_id_fold"}
 PROBE_KEYS = {
     "backend_id",
     "blocks",
@@ -92,6 +102,11 @@ PROBE_KEYS = {
     "tuning_authorized",
     "window_count",
     "world_count",
+}
+_PROBE_KEYS_BY_VERSION = {
+    1: PROBE_KEYS,
+    2: PROBE_KEYS | PROBE_KEYS_V2_ADDITIONS,
+    3: PROBE_KEYS | PROBE_KEYS_V3_ADDITIONS,
 }
 
 
@@ -130,16 +145,15 @@ def load_probe(path: Path) -> dict[str, Any]:
         None,
     )
     _require(version is not None, f"probe schema is not a known generation: {declared!r}")
-    expected_keys = PROBE_KEYS if version == 1 else PROBE_KEYS | PROBE_KEYS_V2_ADDITIONS
+    expected_keys = _PROBE_KEYS_BY_VERSION[version]
     _require(set(value) == expected_keys, "probe top-level keys do not match the frozen schema")
     _require(value["schema_version"] == _PROBE_SCHEMA_BY_VERSION[version], "probe schema mismatch")
-    if version == 1:
-        _require(value["profile_id"] == PROFILE, "probe profile mismatch")
-    else:
-        _require(value["profile_id"] == PROFILE_V2, "probe profile mismatch")
+    profiles = {1: PROFILE, 2: PROFILE_V2, 3: PROFILE_V3}
+    _require(value["profile_id"] == profiles[version], "probe profile mismatch")
+    if version > 1:
         _require(
-            value["supersedes_schema_version"] == PROBE_SCHEMA,
-            "v2 probe must declare the schema it supersedes",
+            value["supersedes_schema_version"] == _PROBE_SCHEMA_BY_VERSION[version - 1],
+            "probe must declare the schema it supersedes",
         )
         # A recapture is only comparable to the frozen evidence if it measured
         # the same workload, and it must never masquerade as a counter capture.
@@ -281,7 +295,10 @@ def parse_nsys(path: Path, schema_version: int = 1) -> dict[str, Any]:
                 """
             )
         )
-        _require(len(rows) == len(expected_launches), "Nsight launch count is not exactly 12")
+        _require(
+            len(rows) == len(expected_launches),
+            f"Nsight launch count is not exactly {len(expected_launches)}",
+        )
         launches: list[dict[str, Any]] = []
         symbols_by_kernel: dict[str, set[str]] = {}
         for index, (row, expected) in enumerate(zip(rows, expected_launches, strict=True)):
@@ -311,7 +328,10 @@ def parse_nsys(path: Path, schema_version: int = 1) -> dict[str, Any]:
                 f"Nsight exact symbol drift for {spec.kernel_id}",
             )
         raw_symbols = {symbol for values in symbols_by_kernel.values() for symbol in values}
-        _require(len(raw_symbols) == len(catalog), "Nsight raw unique kernel count is not 10")
+        _require(
+            len(raw_symbols) == len(catalog),
+            f"Nsight raw unique kernel count is not {len(catalog)}",
+        )
         symbol_inventory = [
             {
                 "kernel_id": spec.kernel_id,
@@ -332,19 +352,7 @@ def parse_nsys(path: Path, schema_version: int = 1) -> dict[str, Any]:
         ):
             base_name = str(name).split("_v", 1)[0]
             api_counts[base_name] = api_counts.get(base_name, 0) + int(count)
-        expected_api = {
-            "cudaDeviceSynchronize": 5,
-            "cudaEventCreateWithFlags": 2,
-            "cudaEventRecord": 2,
-            "cudaEventSynchronize": 1,
-            "cudaFree": 0,
-            "cudaLaunchKernel": 12,
-            "cudaMalloc": 4,
-            "cudaMemcpy": 13,
-            "cudaMemset": 5,
-            "cudaProfilerStart": 1,
-            "cudaStreamWaitEvent": 1,
-        }
+        expected_api = _expected_api_counts(schema_version)
         for name, count in expected_api.items():
             _require(api_counts.get(name, 0) == count, f"Nsight API count mismatch for {name}")
         copies = list(
@@ -580,8 +588,8 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     # date/commit pins, v2 accepts its own capture date but must still declare an
     # unpromoted candidate state.
     report = {
-        "schema_version": SCHEMA if generation == 1 else SCHEMA_V2,
-        "profile_id": PROFILE if generation == 1 else PROFILE_V2,
+        "schema_version": {1: SCHEMA, 2: SCHEMA_V2, 3: SCHEMA_V3}[generation],
+        "profile_id": {1: PROFILE, 2: PROFILE_V2, 3: PROFILE_V3}[generation],
         "evidence_date": args.evidence_date,
         "source": {
             "baseline_commit": args.baseline_commit,

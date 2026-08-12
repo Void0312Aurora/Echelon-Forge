@@ -117,7 +117,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | CP-2 | 把 `EF_ENABLE_CUDA_EXPERIMENTS` 拆成助手面开关与常驻后端开关，使两个语义地位不同的面可独立选择 | **已落地 2026-08-11。** `EF_ENABLE_CUDA_RESIDENT_BACKEND` 管辖常驻设备源与探针；`EF_ENABLE_CUDA_EXPERIMENTS` 管辖 `src/gpu/*.cu`；任意一个 ON 均触发 `enable_language(CUDA)` |
 | CP-3 | 清退使 RB10 的 G-A/G-B 裁定得以成立的私有序列残留：既然只有测试与已被取代的 RB9 探针还在调用，就降级或移除 `CudaResidentBackend` 上的公共 `publish_stage`/`partial_sync_commit`，并加一条断言常驻后端不暴露任何非 SPI 整窗推进入口的门禁 | **已落地 2026-08-11。** `publish_stage` 与 `partial_sync_commit` 已从 `CudaResidentBackend` 公共接口移除；全部 9 处调用方迁移至经 `CudaResidentBackendTestAccess` 访问的 `store.publish_stage()` / `store.partial_sync_commit()`；架构门禁 `test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` 已添加至 `test_cuda_surface_wiring.py` |
 | CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
-| CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | 相对 CR2-6b 基线有实测改善 |
+| CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | **已落地 2026-08-12。** 六个窗口提交 launch 融合为一个 `window_commit_body_kernel`（每捕获窗口 12→7 次 launch）；kernel 目录 v3 经 static_assert 折叠表取代 v2；导出状态摘要与冻结的 CR2-6b 捕获在两条 lane、两轮 campaign 上保持逐位一致；warmed end-to-end p50 在全部 20 个 CR2-6b 对比行上改善（0.63-0.99 倍）。见下文「CP-5 已落地」 |
 | CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | 真实消费者，而非诊断 smoke |
 | CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | world 1 不再是静默退化 |
 | CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | 优化后证据可与 CR2-6b 比较 |
@@ -351,6 +351,105 @@ worlds 时就如此空闲，可以解释 world 1 为何以 7-36 倍落后于 CPU
 
 以上两点都是测量结果，尚不是已验证的优化。CP-5 在任何改动后必须重新测量；本节记录的是
 计数器所显示的事实，不是「更大的 grid 一定更快」的承诺。
+
+## CP-5 已落地：窗口图成为一次 launch（2026-08-12）
+
+CP-4 的 achieved 计数器把 CP-5 从寄存器压力与栈消除重定向到分解方式本身：拆分的窗口图
+在一台 99.8% 空闲的设备上以 8.33-10.89% 的 achieved occupancy 运行，local 流量为零、
+divergence 为零，墙钟时间由顺序 launch 链而非 kernel 本身构成。RB6/RB7 当年拆分这些
+kernel 是为了约束寄存器活跃区间；计数器表明 occupancy 受 warp 数而非寄存器限制，因此
+拆分的收益被实测为不存在，而其成本——每窗口多出的五次 launch 及其 kernel 间空隙——正是
+主导项。
+
+CP-5 据此把六个窗口提交 launch（forces、aerodynamics、integrate 与三个投影）融合为
+`cuda_world_store_cuda_window_body.cu` 中的一个 `window_commit_body_kernel`。每捕获
+窗口的 launch 数从 12 降到 7（基础路径 10 降到 5）；同步、拷贝与分配计数不变，且版本化
+的采集器期望值把这一点钉成受检主张：v2 与 v3 世代之间唯一不同的 CUDA API 计数是
+`cudaLaunchKernel`。
+
+### 等价性是受检的，不是假设的
+
+每个相位以 `__device__` 相位函数的形式逐字保留原 kernel 体——包括其全局读写、内部提前
+返回与逐 world 守卫语义；融合 kernel 对每个 world 无条件顺序执行六个相位，这正是拆分图
+原本的行为（没有任何 kernel 读取 status 标志；失败的 world 只标记 status，宿主随后丢弃
+暂存槽位）。暂存拷贝、宿主状态检查与屏障翻转原样保留，因此 fail-closed 窗口契约不变。
+
+在 RTX 3090 主机上核实：
+
+| 检查项 | 结果 |
+| --- | --- |
+| `ef_cuda_resident_lifecycle_test` | 14 用例 / 579 断言通过（含逐相位 CPU 参照 parity；融合前 599，差额是六个逐 kernel 资源查询检查合并为一个） |
+| `ef_cuda_resident_replay_test` | 4 用例 / 77 断言通过 |
+| `ef_cuda_resident_full_window_test` | 通过 |
+| 导出状态摘要（CUDA lane） | 与冻结的 CR2-6b 捕获在全部 20 行上**逐位一致**，覆盖两轮变更后 campaign 与变更前对照运行 |
+| 导出状态摘要（CPU lane） | 与冻结的 CR2-6b CPU 捕获逐位一致（对照：CPU 代码未动） |
+| 工作负载身份 | trace signature `cb31675ee34e5015` / 80,469 字节不变 |
+
+摘要表意味着融合后的二进制逐 world 数、逐 mode 精确复现了 CR2-6b 所测量二进制的导出
+字节。跨 lane 摘要不相等是 reset-determinism 指标的既有属性（冻结的 CPU 与 CUDA 捕获
+在该字段本就不同）；跨 lane 数值 parity 仍由 CR2-4b 的十二字段比较持有，矩阵会话每次
+运行都会重新验证它。
+
+### 目录 v3：折叠，而非重贴标签
+
+v2 目录如今成为冻结历史，正如 CP-4 时 v1 那样：留存的 v2 静态与计数器证据以融合前符号
+为哈希对象，因此 `kKernelSpecsV2` 与其迁移表原样保留。新世代刻意是一张不同的执行图，
+契约把这一点作为受检结构承载：
+
+- `kKernelSpecsV3`（五个 kernel）与 `kLaunchSequenceV3`（七次 launch）；
+- `kKernelSpecsV3Fold`：对 v2 全射、对 v3 满射——六个 v2 kernel 映射到
+  `window_commit_body`，其余四个 1:1；
+- `launch_sequences_correspond_v2_to_v3()`：把每个 v2 launch 经折叠表映射并压缩落在
+  同一融合 kernel 上的连续段后，必须精确复现 v3 序列，以 `static_assert` 强制。
+
+捕获探针改出 v3 schema（`kernel_id_fold` 取代 1:1 的 `kernel_id_migration`），行清单
+对 v3 目录 fail-closed 对齐，在 3090 上端到端执行，其报告被采集器按第 3 代接受。Python
+静态解析器、schema 校验器与证据采集器按报告声明的世代分派；冻结的 v1 与 v2 证据 JSON
+仍逐字节通过校验，未知世代 fail closed。`WindowTransferLedger` 诊断契约、接线门禁的
+源文件钉定（八个文件改为七个）以及 RB6/RB7 架构测试改为钉住融合后的相位顺序。
+
+融合 kernel 的静态资源（ptxas，Release/SM86）：每线程 116 寄存器、40 字节栈帧、零
+spill store、零 spill load、每 SM 4 个 block、理论 occupancy 33.3%。理论 occupancy
+*低于*任何拆分 kernel（58.3-100%）；按 CP-4 计数器的结论，该指标在 2-block grid 下
+从来不是约束，CP-8 将对 v3 拓扑重测 achieved 值，在此之前不得据此得出进一步结论。
+
+### 相对 CR2-6b 的实测改善（出口门禁）
+
+协议：冻结的 CR2-6b 生产协议，两轮 order-balanced campaign（CPU→CUDA，再
+CUDA→CPU），lane 从不并发，与 CR2-6b 相同的主机身份，安静机器，另加同一会话内从 CP-3
+二进制采集的一轮变更前 CUDA 对照。原始报告内容寻址存放于
+[cuda_resident_cp5_window_fusion_20260812/](cuda_resident_cp5_window_fusion_20260812/)：
+
+| 报告 | Bytes | SHA-256 |
+|---|---:|---|
+| 变更前 CUDA 对照 | 194,684 | `925543aca7759852937dd02aa08aceaf4bd2c5d67ee0a267e6b4f063920f7917` |
+| 变更后 CPU campaign 1 | 103,404 | `9d8f207bee871ec420a4088761cbb264ff7c6d9de85def94cd439795a5f4d01d` |
+| 变更后 CUDA campaign 1 | 194,455 | `012deaa2c5215eeef3a11c326ebdcb2d62dce2427363bc864d4402984c81794b` |
+| 变更后 CUDA campaign 2 | 194,585 | `3f4a85e67e9ef44cc1a6c5bc149d4b2cd19a09fec1b9a956da990a98abf95f52` |
+| 变更后 CPU campaign 2 | 103,303 | `ddf5ea2d6b71fe12172231b000c339779b87f412f58610160c4b3982b7e5d897` |
+
+对照冻结的 CR2-6b CUDA campaign（本程序声明的比较基线），warmed end-to-end p50 在
+**全部 20 行**上改善；按 world 数跨四个 mode 的比值（变更后/基线，越低越好）：
+
+| Worlds | e2e p50 比值范围 | rollout p50/窗口 比值范围 |
+|---:|---|---|
+| 1 | 0.773-0.857 | 0.744-0.972 |
+| 4 | 0.633-0.787 | 0.522-0.749 |
+| 16 | 0.718-0.816 | 0.678-0.778 |
+| 64 | 0.684-0.765 | 0.602-0.693 |
+| 256 | 0.848-0.989 | 0.924-0.976 |
+
+同会话内的变更前/后 A/B 把融合本身与四天来的主机漂移隔离开：warmed e2e p50 在 world
+1-4 降 8-25%，world 16 降 0-12%，world 64 降 0-26%（device-consumer mode 降幅最大），
+world 256 从持平到 -11%——在该规模下窗口由两次全槽位设备拷贝与五个同步点主导，而非
+launch。100 样本上的 nearest-rank p95 双向噪声明显，不作主张。两点诚实归因：对冻结
+基线的全行改善中有一部分来自主机漂移而非融合本身；world 256 的稳态窗口如今受制于
+CP-7 所辖的固定同步/拷贝成本。world 1 端到端仍比 CPU lane 慢 13-28 倍——G-F 性质未变，
+留给 CP-7。
+
+CP-8 在 CP-7 之后重跑完整 order-balanced 矩阵作为正式证据；上述报告是 CP-5 的门禁
+测量，不替代那次 campaign。v3 静态资源捕获（探针 + nsys + 采集器）作为 CP-5b 后续，
+使下一次计数器尝试有 v3 父级可用；v2 父级此后仅对冻结的 v2 计数器证据有效。
 
 ## CP-3 已落地
 

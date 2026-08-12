@@ -372,11 +372,10 @@ if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_storage.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_barrier.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_control_preparation.cu
-        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_flight_dynamics.cu
-        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation_projection.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu
         src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window.cu
+        src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window_body.cu
     )
 endif()
 
@@ -698,13 +697,13 @@ if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
-    # CP-4 restores the capture entry point as a v2 probe. The precondition
-    # stated at retirement is met: the evidence contract now carries a versioned
-    # kernel catalog (kKernelSpecsV2 / kLaunchSequenceV2) plus a static-asserted
-    # 1:1 migration from the frozen v1 catalog, so backend and profiler
-    # dependencies are restored here. v1's identifiers stay frozen and
-    # kCaptureProbeV1Retired stays true; the probe supersedes v1 rather than
-    # reviving it.
+    # CP-4 restored the capture entry point against a versioned kernel catalog
+    # (kKernelSpecsV2 with a static-asserted 1:1 migration from frozen v1);
+    # CP-5 moved it to v3 (kKernelSpecsV3 with a static-asserted fold from
+    # frozen v2) after fusing the window graph. Backend and profiler
+    # dependencies stay restored here. v1/v2 identifiers stay frozen and
+    # kCaptureProbeV1Retired stays true; each generation supersedes the
+    # previous rather than reviving it.
     add_executable(ef_cuda_resident_resource_probe
         src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp
         src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp

@@ -87,23 +87,24 @@ def test_every_device_source_cmake_names_exists_on_disk() -> None:
 
 
 def test_resident_backend_device_source_count_is_pinned() -> None:
-  """The resident backend's device surface is load-bearing evidence: the CP
-  achieved-counter capture measures exactly ten kernels across these files. A
-  change in the file set invalidates that evidence, so it must be deliberate."""
+  """The resident backend's device surface is load-bearing evidence. CP-5 fused
+  the six window-commit kernels into ``cuda_world_store_cuda_window_body.cu``,
+  which makes the tracked v2 counter evidence a historical baseline for the
+  pre-fusion topology; the v3 catalog owns the current one. A change in this
+  file set still has to be deliberate, one reviewed iteration at a time."""
   present = sorted(path.name for path in CUDA_RESIDENT_DIR.glob("*.cu"))
   expected = [
     "cuda_world_store_cuda_barrier.cu",
     "cuda_world_store_cuda_control_preparation.cu",
-    "cuda_world_store_cuda_flight_dynamics.cu",
     "cuda_world_store_cuda_observation.cu",
-    "cuda_world_store_cuda_observation_projection.cu",
     "cuda_world_store_cuda_state_readback.cu",
     "cuda_world_store_cuda_storage.cu",
     "cuda_world_store_cuda_window.cu",
+    "cuda_world_store_cuda_window_body.cu",
   ]
   assert present == expected, (
-    "the resident backend device source set changed. The tracked "
-    "achieved-counter evidence measures kernels compiled from these files; "
+    "the resident backend device source set changed. The versioned kernel "
+    "catalog and its capture evidence pin kernels compiled from these files; "
     "update the evidence and this pin together, in one reviewed iteration."
   )
 

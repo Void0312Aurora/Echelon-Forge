@@ -27,9 +27,15 @@ EVIDENCE_DATE = "2026-08-04"
 SCHEMA_V2 = "cuda_resident.cp.kernel_resource_evidence.v2"
 PROFILE_V2 = "cp.resource.steady_full_window_body.sm86.v2"
 
+# v3 identity for the CP-5 fused window graph: five kernels, seven launches.
+# v2 becomes frozen history exactly as v1 did before it.
+SCHEMA_V3 = "cuda_resident.cp.kernel_resource_evidence.v3"
+PROFILE_V3 = "cp.resource.steady_full_window_body.sm86.v3"
+
 _IDENTITY_BY_VERSION = {
     1: (SCHEMA, PROFILE),
     2: (SCHEMA_V2, PROFILE_V2),
+    3: (SCHEMA_V3, PROFILE_V3),
 }
 
 
@@ -45,6 +51,22 @@ def schema_version_of(report: dict[str, Any]) -> int:
         if declared == schema:
             return version
     raise_message = f"resource evidence schema is not a known generation: {declared!r}"
+    require(False, raise_message)
+    raise AssertionError(raise_message)  # pragma: no cover - require() always raises
+
+
+def profile_version_of(profile_id: str) -> int:
+    """Which capture generation a profile id belongs to.
+
+    Counter captures bind to a parent resource generation through its profile
+    id. Deriving the lookup from the identity table keeps that chain
+    extension-free: a new generation registers here once and every downstream
+    collector inherits it.
+    """
+    for version, (_, profile) in _IDENTITY_BY_VERSION.items():
+        if profile_id == profile:
+            return version
+    raise_message = f"resource profile is not a known generation: {profile_id!r}"
     require(False, raise_message)
     raise AssertionError(raise_message)  # pragma: no cover - require() always raises
 
@@ -148,19 +170,29 @@ STATIC_RESOURCE_KEYS = {
     "symbol_fragment",
     "theoretical_occupancy",
 }
-EXPECTED_API_COUNTS = {
+_COMMON_API_COUNTS = {
     "cudaDeviceSynchronize": 5,
     "cudaEventCreateWithFlags": 2,
     "cudaEventRecord": 2,
     "cudaEventSynchronize": 1,
     "cudaFree": 0,
-    "cudaLaunchKernel": 12,
     "cudaMalloc": 4,
     "cudaMemcpy": 13,
     "cudaMemset": 5,
     "cudaProfilerStart": 1,
     "cudaStreamWaitEvent": 1,
 }
+# The CP-5 fusion removed five launches per captured window and nothing else:
+# synchronization, copy, and allocation counts are identical across
+# generations, which is itself a checked claim about what the fusion touched.
+EXPECTED_API_COUNTS = {**_COMMON_API_COUNTS, "cudaLaunchKernel": 12}
+EXPECTED_API_COUNTS_V3 = {**_COMMON_API_COUNTS, "cudaLaunchKernel": 7}
+
+
+def expected_api_counts(version: int) -> dict[str, int]:
+    return EXPECTED_API_COUNTS_V3 if version >= 3 else EXPECTED_API_COUNTS
+
+
 EXPECTED_TRANSFERS = {
     "device_to_device": {"bytes": 677376, "copy_count": 3},
     "device_to_host": {"bytes": 229908, "copy_count": 7},
@@ -310,7 +342,9 @@ def _validate_launch_topology(
         )
     require(symbol_ids == expected_ids, "kernel symbol order or identity drifted")
     require(len(set(symbol_hashes)) == len(kernels), "kernel symbol hashes are not unique")
-    _exact_integer_map(topology["cuda_api_counts"], EXPECTED_API_COUNTS, "CUDA API inventory")
+    _exact_integer_map(
+        topology["cuda_api_counts"], expected_api_counts(version), "CUDA API inventory"
+    )
     _validate_transfer_map(topology["cuda_memcpy_transfers"])
     _exact_integer(topology["synchronization_activity_rows"], 8, "synchronization activity rows")
     return topology, launches

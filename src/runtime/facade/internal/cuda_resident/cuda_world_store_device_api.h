@@ -103,18 +103,7 @@ query_cuda_world_store_barrier_kernel_resources(CudaBarrierKernelResources *reso
 [[nodiscard]] bool
 query_cuda_world_store_control_preparation_kernel_resources(CudaBarrierKernelResources *resources,
                                                             std::string *error);
-[[nodiscard]] bool query_cuda_world_store_flight_dynamics_forces_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error);
-[[nodiscard]] bool query_cuda_world_store_flight_dynamics_aerodynamics_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error);
-[[nodiscard]] bool query_cuda_world_store_flight_dynamics_integrate_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error);
-[[nodiscard]] bool query_cuda_world_store_observation_projection_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error);
-[[nodiscard]] bool
-query_cuda_world_store_instrument_projection_kernel_resources(CudaBarrierKernelResources *resources,
-                                                              std::string *error);
-[[nodiscard]] bool query_cuda_world_store_configuration_projection_kernel_resources(
+[[nodiscard]] bool query_cuda_world_store_window_commit_body_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error);
 [[nodiscard]] bool query_cuda_world_store_device_observation_pack_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error);

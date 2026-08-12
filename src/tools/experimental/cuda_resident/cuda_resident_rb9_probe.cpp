@@ -416,26 +416,16 @@ Json kernel_resource_json(std::string_view kernel_id,
     };
 }
 
+// CP-5 fused the six window-commit kernels; this superseded probe now reports
+// the fused inventory so it keeps executing against the live surface.
 Json cuda_kernel_resources() {
     using runtime::cuda_resident::testing::CudaWorldStoreTestAccess;
     return Json::array({
         kernel_resource_json("apply_barrier", CudaWorldStoreTestAccess::barrier_kernel_resources()),
         kernel_resource_json("control_preparation_controls",
                              CudaWorldStoreTestAccess::control_preparation_kernel_resources()),
-        kernel_resource_json("flight_dynamics_forces",
-                             CudaWorldStoreTestAccess::flight_dynamics_forces_kernel_resources()),
-        kernel_resource_json(
-            "flight_dynamics_aerodynamics",
-            CudaWorldStoreTestAccess::flight_dynamics_aerodynamics_kernel_resources()),
-        kernel_resource_json(
-            "flight_dynamics_integrate",
-            CudaWorldStoreTestAccess::flight_dynamics_integrate_kernel_resources()),
-        kernel_resource_json("projected_instruments",
-                             CudaWorldStoreTestAccess::instrument_projection_kernel_resources()),
-        kernel_resource_json("observation_projection_configuration",
-                             CudaWorldStoreTestAccess::configuration_projection_kernel_resources()),
-        kernel_resource_json("observation_projection",
-                             CudaWorldStoreTestAccess::observation_projection_kernel_resources()),
+        kernel_resource_json("window_commit_body",
+                             CudaWorldStoreTestAccess::window_commit_body_kernel_resources()),
         kernel_resource_json("observation_projection_pack",
                              CudaWorldStoreTestAccess::device_observation_pack_kernel_resources()),
         kernel_resource_json(

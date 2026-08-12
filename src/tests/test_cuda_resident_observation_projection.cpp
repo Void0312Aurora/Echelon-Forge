@@ -66,9 +66,7 @@ TEST_CASE("CUDA observation projection produces host export and a lease-scoped d
 
     CudaResidentBackend backend;
     backend.configure({.world_count = 2});
-    check_resource(testing::CudaWorldStoreTestAccess::instrument_projection_kernel_resources());
-    check_resource(testing::CudaWorldStoreTestAccess::configuration_projection_kernel_resources());
-    check_resource(testing::CudaWorldStoreTestAccess::observation_projection_kernel_resources());
+    check_resource(testing::CudaWorldStoreTestAccess::window_commit_body_kernel_resources());
 
     const std::vector<std::uint32_t> seeds = {101, 202};
     const std::vector<WorldSpawnRequest> spawns = make_spawns();

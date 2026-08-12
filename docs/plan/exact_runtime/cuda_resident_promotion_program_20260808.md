@@ -134,7 +134,7 @@ commit). Critical phases get one independent review before landing.
 | CP-2 | Split `EF_ENABLE_CUDA_EXPERIMENTS` into a helper-surface flag and a resident-backend flag, so the two semantically different surfaces are independently selectable | **LANDED 2026-08-11.** `EF_ENABLE_CUDA_RESIDENT_BACKEND` gates the resident device sources and probes; `EF_ENABLE_CUDA_EXPERIMENTS` gates `src/gpu/*.cu`; either triggers `enable_language(CUDA)` |
 | CP-3 | Retire the private-sequence residue that made RB10's G-A/G-B verdicts possible: demote or remove the public `publish_stage`/`partial_sync_commit` from `CudaResidentBackend` now that only tests and the superseded RB9 probe call them, and add a gate asserting the resident backend exposes no non-SPI window-advance entry point | **LANDED 2026-08-11.** `publish_stage` and `partial_sync_commit` removed from `CudaResidentBackend` public interface; all 9 callers migrated to `store.publish_stage()` / `store.partial_sync_commit()` via `CudaResidentBackendTestAccess`; architecture gate `test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` added to `test_cuda_surface_wiring.py` |
 | CP-4 | **G-D: achieved counters under elevation** — occupancy, divergence, global/local/shared traffic for all 10 kernels. This is the one hard blocker and the highest-value iteration | G-D closed with real counters, or a recorded second external blocker |
-| CP-5 | Kernel-level optimization driven by CP-4 findings. Known candidates below | Measured improvement against the CR2-6b baseline |
+| CP-5 | Kernel-level optimization driven by CP-4 findings. Known candidates below | **LANDED 2026-08-12.** The six window-commit launches are one fused `window_commit_body_kernel` (12 -> 7 launches per captured window); kernel catalog v3 supersedes v2 through a static-asserted fold; released-state digests stay bit-identical to the frozen CR2-6b capture across both lanes and both campaigns; warmed end-to-end p50 improved in all 20 CR2-6b comparison rows (0.63-0.99x). See "CP-5 landed" below |
 | CP-6 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | A real consumer, not diagnostics smoke |
 | CP-7 | G-F disposition: either fix small-batch overhead or freeze an explicit selection rule with world-count thresholds | World 1 no longer a silent regression |
 | CP-8 | Re-measure the 1/4/16/64/256 matrix after CP-5/CP-7 land, order-balanced, two campaigns | Post-optimization evidence comparable to CR2-6b |
@@ -339,6 +339,132 @@ evidence, but it retired the only capture tool without a replacement, so the
 next counter attempt inherits a recapture obligation. CP-1's compile lane would
 not have caught this — the stub compiles fine. A probe-executability check
 belongs in CP-1's scope.
+
+## CP-5 landed: the window graph is one launch (2026-08-12)
+
+The CP-4 achieved counters redirected CP-5 away from register pressure and
+stack elimination toward the decomposition itself: the split window graph ran
+at 8.33-10.89% achieved occupancy with zero local traffic and zero divergence
+on a device that was 99.8% idle, so the wall clock was the sequential launch
+chain, not the kernels. RB6/RB7 split these kernels to bound register live
+ranges; the counters showed occupancy was limited by warps, not registers, so
+the split's benefit was measured to be absent while its cost -- five extra
+launches and their inter-kernel gaps per window -- was the dominant term.
+
+CP-5 therefore fuses the six window-commit launches (forces, aerodynamics,
+integrate, and the three projections) into one `window_commit_body_kernel` in
+`cuda_world_store_cuda_window_body.cu`. Per captured window the launch count
+falls from 12 to 7 (base path 10 to 5); synchronization, copy, and allocation
+counts are unchanged, and the versioned collector expectations pin exactly
+that: the only CUDA API count that differs between the v2 and v3 generations
+is `cudaLaunchKernel`.
+
+### Equivalence is checked, not assumed
+
+Every phase keeps its original kernel body verbatim -- including its global
+loads and stores, its internal early returns, and its per-world guard
+semantics -- as a `__device__` phase function; the fused kernel runs all six
+phases unconditionally per world, which is exactly what the split graph did
+(no kernel ever read the status flag; a failed world only marked status and
+the host discarded the staged slot). The staging copy, host status check, and
+barrier flip are untouched, so the fail-closed window contract is unchanged.
+
+Verified on the RTX 3090 host:
+
+| Check | Result |
+| --- | --- |
+| `ef_cuda_resident_lifecycle_test` | 14 cases / 579 assertions pass (includes per-phase CPU-reference parity; 599 pre-fusion, the delta is the six per-kernel resource-query checks folding into one) |
+| `ef_cuda_resident_replay_test` | 4 cases / 77 assertions pass |
+| `ef_cuda_resident_full_window_test` | pass |
+| Released-state digests, CUDA lane | **bit-identical to the frozen CR2-6b capture** in all 20 rows, in both post-change campaigns and in the pre-change control run |
+| Released-state digests, CPU lane | bit-identical to the frozen CR2-6b CPU capture (control: CPU code untouched) |
+| Workload identity | trace signature `cb31675ee34e5015` / 80,469 bytes unchanged |
+
+The digest table means the fused binary reproduces the exact released bytes of
+the binary that CR2-6b measured, per world count and per mode. Cross-lane
+digest inequality is a pre-existing property of the reset-determinism metric
+(the frozen CPU and CUDA captures already differ there); cross-lane value
+parity remains owned by the CR2-4b twelve-field comparison, which the matrix
+session revalidates on every run.
+
+### Catalog v3: a fold, not a relabel
+
+The v2 catalog is now frozen history exactly as v1 became at CP-4: the
+retained v2 static and counter evidence hashes against the pre-fusion
+symbols, so `kKernelSpecsV2` and its migration table stay untouched. The new
+generation is deliberately a different execution graph, and the contract
+carries that as checked structure:
+
+- `kKernelSpecsV3` (five kernels) and `kLaunchSequenceV3` (seven launches);
+- `kKernelSpecsV3Fold`, total on v2 and surjective onto v3 -- six v2 kernels
+  map to `window_commit_body`, the other four map 1:1;
+- `launch_sequences_correspond_v2_to_v3()`: mapping every v2 launch through
+  the fold and collapsing consecutive runs that land on the same fused kernel
+  must reproduce the v3 sequence exactly, as a `static_assert`.
+
+The capture probe emits schema v3 (`kernel_id_fold` replaces the 1:1
+`kernel_id_migration`), aligns its rows against the v3 catalog fail-closed,
+executes end-to-end on the 3090, and its report is accepted by the collector
+as generation 3. The Python static parser, schema validator, and evidence
+collector dispatch on the declared generation; the frozen v1 and v2 evidence
+JSONs still validate byte-for-byte, and unknown generations fail closed. The
+`WindowTransferLedger` diagnostic contract, the surface-wiring source pins
+(eight files to seven), and the RB6/RB7 architecture tests now pin the fused
+phase order instead of the split launch order.
+
+Static resources of the fused kernel (ptxas, Release/SM86): 116 registers per
+thread, 40-byte stack frame, zero spill stores, zero spill loads, 4 blocks
+per SM, theoretical occupancy 33.3%. Theoretical occupancy is *lower* than
+any split kernel's (58.3-100%); per the CP-4 counters that metric was never
+the constraint at two-block grids, and CP-8 re-measures achieved values
+against the v3 topology before any further conclusion is drawn from it.
+
+### Measured improvement against CR2-6b (exit gate)
+
+Protocol: the frozen CR2-6b production protocol, order-balanced across two
+campaigns (CPU -> CUDA, then CUDA -> CPU), lanes never concurrent, same host
+identity as CR2-6b, quiet machine, plus one pre-change CUDA control campaign
+collected the same session from the CP-3 binary. Raw reports are
+content-addressed under
+[cuda_resident_cp5_window_fusion_20260812/](cuda_resident_cp5_window_fusion_20260812/):
+
+| Report | Bytes | SHA-256 |
+|---|---:|---|
+| Pre-change CUDA control | 194,684 | `925543aca7759852937dd02aa08aceaf4bd2c5d67ee0a267e6b4f063920f7917` |
+| Post CPU campaign 1 | 103,404 | `9d8f207bee871ec420a4088761cbb264ff7c6d9de85def94cd439795a5f4d01d` |
+| Post CUDA campaign 1 | 194,455 | `012deaa2c5215eeef3a11c326ebdcb2d62dce2427363bc864d4402984c81794b` |
+| Post CUDA campaign 2 | 194,585 | `3f4a85e67e9ef44cc1a6c5bc149d4b2cd19a09fec1b9a956da990a98abf95f52` |
+| Post CPU campaign 2 | 103,303 | `ddf5ea2d6b71fe12172231b000c339779b87f412f58610160c4b3982b7e5d897` |
+
+Against the frozen CR2-6b CUDA campaign (the program's stated comparator),
+warmed end-to-end p50 improved in **all 20 rows**; ratios (post/baseline,
+lower is better) by world count across the four modes:
+
+| Worlds | e2e p50 ratio range | rollout p50/window ratio range |
+|---:|---|---|
+| 1 | 0.773-0.857 | 0.744-0.972 |
+| 4 | 0.633-0.787 | 0.522-0.749 |
+| 16 | 0.718-0.816 | 0.678-0.778 |
+| 64 | 0.684-0.765 | 0.602-0.693 |
+| 256 | 0.848-0.989 | 0.924-0.976 |
+
+The same-session pre/post A/B isolates the fusion itself from four days of
+host drift: warmed e2e p50 falls 8-25% at worlds 1-4, 0-12% at world 16,
+0-26% at world 64 (largest in the device-consumer modes), and is flat to -11%
+at world 256, where the two full-slot device copies and the five
+synchronization points -- not launches -- dominate the window. Nearest-rank
+p95 on 100 samples is noisy in both directions and is not claimed. Two
+honest attributions follow: part of the all-rows improvement against the
+frozen baseline is host drift rather than the fusion, and the world-256
+steady-state window is now bounded by the fixed synchronization/copy cost
+that CP-7 owns. World 1 remains 13-28x slower than the CPU lane end to end
+-- G-F stands, unchanged in kind, for CP-7.
+
+CP-8 re-runs the full order-balanced matrix as formal evidence after CP-7;
+the reports above are the CP-5 gate measurement, not a replacement for that
+campaign. A v3 static resource capture (probe + nsys + collector) is the
+CP-5b follow-up so the next counter attempt has a v3 parent; the v2 parent
+stays valid for the frozen v2 counter evidence only.
 
 ## CP-3 landed
 

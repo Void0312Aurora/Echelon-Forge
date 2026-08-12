@@ -35,19 +35,21 @@ using runtime::cuda_resident::CudaResidentDeviceConsumer;
 using runtime::cuda_resident::replay::CudaResidentReplayHarness;
 using runtime::cuda_resident::testing::CudaWorldStoreTestAccess;
 
-// CP-4 v2 recapture. The v1 probe was retired because the semantic stage
-// migration renamed every phase-lettered kernel, and relabeling the frozen
-// static-capture evidence to match renamed sources would have been a
-// provenance violation.
-// This probe emits a new schema version against the semantic catalog instead.
+// CP-5 v3 capture against the fused window graph. v2 recaptured the same
+// execution graph as v1 under semantic names; v3 is different in kind: the six
+// window-commit launches measured by v1/v2 are now one fused launch, so the
+// static resource table has five kernels and the launch inventory has seven
+// rows. The captured workload (trace signature) is unchanged, and the fold
+// table in the contract pins which v2 kernels the fused kernel absorbed.
 //
-// The retirement is not reverted: kCaptureProbeV1Retired stays true and v1's
-// frozen identifiers are untouched. Only the captured workload is shared, which
-// the trace-signature check below turns into an explicit equivalence assertion
-// rather than an assumption.
+// Neither retirement nor supersession is reverted: kCaptureProbeV1Retired
+// stays true, v1 and v2 identifiers are untouched, and this probe declares
+// itself the successor of v2.
 static_assert(evidence::kCaptureProbeV1Retired);
 static_assert(evidence::kProbeSchemaV2 != evidence::kProbeSchemaV1);
 static_assert(evidence::kProbeSchemaV2Predecessor == evidence::kProbeSchemaV1);
+static_assert(evidence::kProbeSchemaV3 != evidence::kProbeSchemaV2);
+static_assert(evidence::kProbeSchemaV3Predecessor == evidence::kProbeSchemaV2);
 
 struct Args {
     std::string output_path;
@@ -89,11 +91,11 @@ Args parse_args(int argc, char **argv) {
         if (flag == "--output" && index + 1 < argc) {
             args.output_path = argv[++index];
         } else if (flag == "--help" || flag == "-h") {
-            std::cout << "Usage: CUDA resident resource probe v2 [--output PATH]\n";
+            std::cout << "Usage: CUDA resident resource probe v3 [--output PATH]\n";
             std::exit(0);
         } else {
             throw std::invalid_argument(
-                "usage: CUDA resident resource probe v2 [--output PATH]");
+                "usage: CUDA resident resource probe v3 [--output PATH]");
         }
     }
     return args;
@@ -181,7 +183,7 @@ Json resource_json(std::string_view kernel_id, std::string_view symbol_fragment,
     };
 }
 
-// Ordered to match kKernelSpecsV2 exactly; require_catalog_alignment verifies
+// Ordered to match kKernelSpecsV3 exactly; require_catalog_alignment verifies
 // that pairing so a future catalog edit cannot silently desynchronize this list.
 Json query_kernel_resources() {
     return Json::array({
@@ -189,18 +191,8 @@ Json query_kernel_resources() {
                       CudaWorldStoreTestAccess::barrier_kernel_resources()),
         resource_json("control_preparation", "control_preparation_kernel",
                       CudaWorldStoreTestAccess::control_preparation_kernel_resources()),
-        resource_json("flight_dynamics_forces", "flight_dynamics_forces_kernel",
-                      CudaWorldStoreTestAccess::flight_dynamics_forces_kernel_resources()),
-        resource_json("flight_dynamics_aerodynamics", "flight_dynamics_aerodynamics_kernel",
-                      CudaWorldStoreTestAccess::flight_dynamics_aerodynamics_kernel_resources()),
-        resource_json("flight_dynamics_integrate", "flight_dynamics_integrate_kernel",
-                      CudaWorldStoreTestAccess::flight_dynamics_integrate_kernel_resources()),
-        resource_json("instrument_projection", "instrument_projection_kernel",
-                      CudaWorldStoreTestAccess::instrument_projection_kernel_resources()),
-        resource_json("configuration_projection", "configuration_projection_kernel",
-                      CudaWorldStoreTestAccess::configuration_projection_kernel_resources()),
-        resource_json("episode_projection", "episode_projection_kernel",
-                      CudaWorldStoreTestAccess::observation_projection_kernel_resources()),
+        resource_json("window_commit_body", "window_commit_body_kernel",
+                      CudaWorldStoreTestAccess::window_commit_body_kernel_resources()),
         resource_json("device_observation_pack", "pack_device_observation_kernel",
                       CudaWorldStoreTestAccess::device_observation_pack_kernel_resources()),
         resource_json("device_observation_consumer", "device_observation_consumer_smoke_kernel",
@@ -208,31 +200,33 @@ Json query_kernel_resources() {
     });
 }
 
-// Fail closed if the emitted rows and the v2 catalog ever disagree. The v1 probe
+// Fail closed if the emitted rows and the v3 catalog ever disagree. The v1 probe
 // had no such check, which is how a rename could leave the contract stale while
 // the probe still produced a plausible-looking report.
 void require_catalog_alignment(const Json &rows) {
-    if (rows.size() != evidence::kKernelSpecsV2.size()) {
-        throw std::runtime_error("v2 resource rows do not match the v2 kernel catalog size");
+    if (rows.size() != evidence::kKernelSpecsV3.size()) {
+        throw std::runtime_error("v3 resource rows do not match the v3 kernel catalog size");
     }
-    for (std::size_t index = 0; index < evidence::kKernelSpecsV2.size(); ++index) {
-        const auto &spec = evidence::kKernelSpecsV2[index];
+    for (std::size_t index = 0; index < evidence::kKernelSpecsV3.size(); ++index) {
+        const auto &spec = evidence::kKernelSpecsV3[index];
         const auto &row = rows.at(index);
         if (row.at("kernel_id").get<std::string>() != spec.kernel_id) {
-            throw std::runtime_error("v2 kernel_id drift at row " + std::to_string(index));
+            throw std::runtime_error("v3 kernel_id drift at row " + std::to_string(index));
         }
         if (row.at("symbol_fragment").get<std::string>() != spec.symbol_fragment) {
-            throw std::runtime_error("v2 symbol_fragment drift at row " + std::to_string(index));
+            throw std::runtime_error("v3 symbol_fragment drift at row " + std::to_string(index));
         }
     }
 }
 
-Json migration_json() {
+// The v2->v3 fold is deliberately not a bijection: it records which retired
+// kernels the fused window body absorbed.
+Json fold_json() {
     Json rows = Json::array();
-    for (const auto &entry : evidence::kKernelSpecsV2Migration) {
+    for (const auto &entry : evidence::kKernelSpecsV3Fold) {
         rows.push_back({
-            {"v1_kernel_id", entry.v1_kernel_id},
             {"v2_kernel_id", entry.v2_kernel_id},
+            {"v3_kernel_id", entry.v3_kernel_id},
         });
     }
     return rows;
@@ -240,7 +234,7 @@ Json migration_json() {
 
 Json launch_sequence_json() {
     Json rows = Json::array();
-    for (const auto &launch : evidence::kLaunchSequenceV2) {
+    for (const auto &launch : evidence::kLaunchSequenceV3) {
         rows.push_back({
             {"launch_index", launch.launch_index},
             {"kernel_id", launch.kernel_id},
@@ -355,9 +349,9 @@ Json run_probe() {
     }
     const auto diagnostics = backend.diagnostics();
     return {
-        {"schema_version", evidence::kProbeSchemaV2},
-        {"supersedes_schema_version", evidence::kProbeSchemaV2Predecessor},
-        {"profile_id", evidence::kProfileIdV2},
+        {"schema_version", evidence::kProbeSchemaV3},
+        {"supersedes_schema_version", evidence::kProbeSchemaV3Predecessor},
+        {"profile_id", evidence::kProfileIdV3},
         {"build_config", EF_RESOURCE_CAPTURE_BUILD_CONFIG},
         {"cuda_architecture", evidence::kCudaArchitecture},
         {"trace_signature_algorithm", evidence::kTraceSignatureAlgorithm},
@@ -371,7 +365,7 @@ Json run_probe() {
         {"backend_id", diagnostics.backend_id},
         {"cuda_environment", environment},
         {"runtime_kernel_resources", resources},
-        {"kernel_id_migration", migration_json()},
+        {"kernel_id_fold", fold_json()},
         {"expected_launch_sequence", launch_sequence_json()},
         {"capture",
          {
@@ -425,7 +419,7 @@ int main(int argc, char **argv) {
         write_report(run_probe(), args.output_path);
         return 0;
     } catch (const std::exception &error) {
-        std::cerr << "CUDA resident resource probe v2 failed: " << error.what() << '\n';
+        std::cerr << "CUDA resident resource probe v3 failed: " << error.what() << '\n';
         return 1;
     }
 }

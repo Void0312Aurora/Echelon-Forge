@@ -529,100 +529,17 @@ testing::CudaWorldStoreTestAccess::control_preparation_kernel_resources() {
 }
 
 CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::flight_dynamics_forces_kernel_resources() {
+testing::CudaWorldStoreTestAccess::window_commit_body_kernel_resources() {
 #if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaBarrierKernelResources resources;
     std::string error;
-    if (!detail::query_cuda_world_store_flight_dynamics_forces_kernel_resources(&resources,
-                                                                                &error)) {
-        throw std::runtime_error("CUDA flight-dynamics forces kernel resource query failed: " +
-                                 error);
+    if (!detail::query_cuda_world_store_window_commit_body_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA window-commit body kernel resource query failed: " + error);
     }
     return resources;
 #else
     throw std::logic_error(
-        "CUDA flight-dynamics forces kernel resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::flight_dynamics_aerodynamics_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_flight_dynamics_aerodynamics_kernel_resources(&resources,
-                                                                                      &error)) {
-        throw std::runtime_error(
-            "CUDA flight-dynamics aerodynamics kernel resource query failed: " + error);
-    }
-    return resources;
-#else
-    throw std::logic_error(
-        "CUDA flight-dynamics aerodynamics kernel resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::flight_dynamics_integrate_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_flight_dynamics_integrate_kernel_resources(&resources,
-                                                                                   &error)) {
-        throw std::runtime_error("CUDA flight-dynamics integration kernel resource query failed: " +
-                                 error);
-    }
-    return resources;
-#else
-    throw std::logic_error(
-        "CUDA flight-dynamics integration kernel resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::observation_projection_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_observation_projection_kernel_resources(&resources,
-                                                                                &error)) {
-        throw std::runtime_error("CUDA observation-projection kernel resource query failed: " +
-                                 error);
-    }
-    return resources;
-#else
-    throw std::logic_error("CUDA observation-projection resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::instrument_projection_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_instrument_projection_kernel_resources(&resources,
-                                                                               &error)) {
-        throw std::runtime_error("CUDA instrument-projection resource query failed: " + error);
-    }
-    return resources;
-#else
-    throw std::logic_error("CUDA instrument-projection resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::configuration_projection_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_configuration_projection_kernel_resources(&resources,
-                                                                                  &error)) {
-        throw std::runtime_error("CUDA observation-configuration resource query failed: " + error);
-    }
-    return resources;
-#else
-    throw std::logic_error(
-        "CUDA observation-configuration resource query requires CUDA experiments");
+        "CUDA window-commit body kernel resource query requires CUDA experiments");
 #endif
 }
 

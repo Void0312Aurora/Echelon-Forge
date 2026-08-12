@@ -222,20 +222,7 @@ __device__ inline bool increment_would_overflow(std::uint64_t value) {
                                                  CudaWorldStoreDeviceFaultInjection *faults,
                                                  std::string *error);
 
-[[nodiscard]] cudaError_t launch_flight_dynamics_forces(CudaWorldStoreDeviceAllocation *allocation,
-                                                        std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t
-launch_flight_dynamics_aerodynamics(CudaWorldStoreDeviceAllocation *allocation,
-                                    std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t
-launch_flight_dynamics_integrate(CudaWorldStoreDeviceAllocation *allocation,
-                                 std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t launch_instrument_projection(CudaWorldStoreDeviceAllocation *allocation,
-                                                       std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t
-launch_configuration_projection(CudaWorldStoreDeviceAllocation *allocation,
-                                std::uint8_t slot) noexcept;
-[[nodiscard]] cudaError_t launch_episode_projection(CudaWorldStoreDeviceAllocation *allocation,
+[[nodiscard]] cudaError_t launch_window_commit_body(CudaWorldStoreDeviceAllocation *allocation,
                                                     std::uint8_t slot) noexcept;
 
 template <typename Kernel>
