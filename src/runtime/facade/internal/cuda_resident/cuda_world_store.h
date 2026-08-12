@@ -343,6 +343,7 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaBarrierKernelResources window_commit_body_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources device_observation_pack_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources device_observation_consumer_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources learner_consumer_kernel_resources();
     [[nodiscard]] static bool
     consume_device_observation_view(const CudaResidentDeviceObservationView &view,
                                     std::vector<float> *first_values,

@@ -31,3 +31,6 @@ docs/plan/exact_runtime/cuda_resident_cp_resource_evidence_20260812.json -text
 # same content-addressed byte-stability rule.
 docs/plan/exact_runtime/cuda_resident_cp7b_barrier_fold_20260812/** -text
 docs/plan/exact_runtime/cuda_resident_cp7b_resource_evidence_20260812.json -text
+
+# CP-6 learner-consumption measurement reports are content-addressed evidence.
+docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_20260812/** -text

@@ -5,7 +5,7 @@ Language:
 - Chinese companion: [cuda_resident_cp6_learner_consumption_design_20260812.zh.md](cuda_resident_cp6_learner_consumption_design_20260812.zh.md)
 
 Document kind: `plan`
-Lifecycle: `draft`
+Lifecycle: `frozen -- scope frozen and landed 2026-08-12`
 Canonical: `docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_design_20260812.md`
 Owner: `exact-runtime / CUDA-resident promotion workline`
 Last verified: `2026-08-12`
@@ -16,6 +16,29 @@ Last verified: `2026-08-12`
   (reviewer edited no implementation files, per program protocol)
 - Authority boundary: this draft proposes; it does not authorize. CP-6 work
   starts only when the program owner freezes this scope after CP-5 closes.
+
+## Freeze record (2026-08-12)
+
+The program owner froze this scope on 2026-08-12 with the draft's deliverables
+unchanged and the following open slots decided:
+
+- Matrix mode id: `no_export_learner_consumer`, owned by
+  `cuda_resident_learner_consumption_contract.h`.
+- Normalization: per-field affine `(value - offset) * scale`; fifteen
+  representative constants in the contract table, field identities statically
+  asserted against the projection contract's packed order.
+- Policy input feature count: 15 (the packed observation layout; no feature
+  expansion).
+- Smoke kernel retained for lifecycle coverage.
+
+Deviations from the draft's letter, with reasons, are recorded in the landing
+section of the program plan document: the learner mode is delivered behind an
+explicit `--learner-consumer` probe flag instead of extending the frozen
+CR2-6a `kModes` table (the matrix evidence validators are still
+single-generation pinned; extending the frozen scope is the CP-8 re-matrix
+lane), and the frozen `*_device_consumer` modes keep the smoke consumer so
+their rows stay comparable with CR2-6b and the CP-5/CP-7b baselines. Gate G-C
+closes on the learner mode's measured rows.
 
 ## Why this design is written against the long horizon
 

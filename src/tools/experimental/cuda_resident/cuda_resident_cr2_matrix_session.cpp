@@ -182,8 +182,10 @@ WindowTiming ProbeSession::run_window(const Mode &mode) {
             throw std::runtime_error("CR2 matrix device lease acquisition failed");
         }
         const auto submitted = impl_->device_consumer.submit(
-            acquired.lease,
-            {.request_id = "cr2.matrix.device_consumer", .expected_epoch = acquired.lease.epoch});
+            acquired.lease, {.request_id = mode.learner_consumer ? "cr2.matrix.learner_consumer"
+                                                                 : "cr2.matrix.device_consumer",
+                             .expected_epoch = acquired.lease.epoch,
+                             .learner_equivalent = mode.learner_consumer});
         if (!submitted.success()) {
             throw std::runtime_error("CR2 matrix device consumer submission failed");
         }
@@ -210,7 +212,8 @@ DrainResult ProbeSession::drain_device_consumers(bool materialize_first) {
     if (materialize_first && !pending.empty()) {
         const auto diagnostic = impl_->device_consumer.materialize_for_diagnostics(pending.front());
         if (!diagnostic.success() ||
-            diagnostic.materialized.first_values.size() != impl_->trace.seeds.size() ||
+            diagnostic.materialized.values.size() !=
+                impl_->trace.seeds.size() * diagnostic.materialized.values_per_world ||
             diagnostic.materialized.ids.size() != impl_->trace.seeds.size()) {
             throw std::runtime_error("CR2 matrix device consumer diagnostic failed");
         }

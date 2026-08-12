@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <ostream>
@@ -8,6 +9,7 @@
 #include <vector>
 
 #include "runtime/contracts/cuda_resident_device_consumer_contract.h"
+#include "runtime/contracts/cuda_resident_learner_consumption_contract.h"
 #include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_device_consumer.h"
@@ -105,10 +107,12 @@ TEST_CASE("CR2-3 device-consumer contract is private, explicit, and fail-closed"
     ConsumerReceipt missing_ids{
         .lifetime = std::make_shared<int>(1),
         .completion_state = std::make_shared<int>(1),
-        .first_values = &value,
+        .values = &value,
         .ready_event = &fake_event,
         .device_ordinal = 0,
         .world_count = 1,
+        .values_per_world = 1,
+        .outputs = {.shape = {1, 1}, .strides = {1, 1}, .dtype = "float32", .element_count = 1},
         .source_epoch = {.allocation_generation = 1,
                          .reset_generation = 1,
                          .committed_window = 1,
@@ -157,15 +161,18 @@ TEST_CASE("CR2-3 lease survives backend reset and supports repeat submit and awa
     auto submitted =
         consumer.submit(lease, {.request_id = "consume-1", .expected_epoch = lease.epoch});
     REQUIRE(submitted.success());
+    CHECK(submitted.receipt.values_per_world == 1);
+    CHECK(submitted.receipt.outputs.shape == std::vector<std::uint64_t>{2, 1});
     CHECK(consumer.materialize_for_diagnostics(submitted.receipt).failure ==
           FailureCode::wait_required);
     CHECK(consumer.await(submitted.receipt).success());
     CHECK(consumer.await(submitted.receipt).success());
     const auto diagnostic = consumer.materialize_for_diagnostics(submitted.receipt);
     REQUIRE(diagnostic.success());
-    REQUIRE(diagnostic.materialized.first_values.size() == 2);
-    CHECK(diagnostic.materialized.first_values[0] == doctest::Approx(0.05F));
-    CHECK(diagnostic.materialized.first_values[1] == doctest::Approx(0.125F));
+    REQUIRE(diagnostic.materialized.values.size() == 2);
+    CHECK(diagnostic.materialized.values_per_world == 1);
+    CHECK(diagnostic.materialized.values[0] == doctest::Approx(0.05F));
+    CHECK(diagnostic.materialized.values[1] == doctest::Approx(0.125F));
     CHECK(diagnostic.materialized.ids == fixture.entity_ids);
     CHECK(consumer.materialize_for_diagnostics(submitted.receipt).success());
 
@@ -284,4 +291,116 @@ TEST_CASE("CR2-3 lease and consumer failures are stable and retryable") {
     CHECK(consumer.materialize_for_diagnostics(submitted.receipt).failure ==
           FailureCode::diagnostic_failed);
     CHECK(consumer.materialize_for_diagnostics(submitted.receipt).success());
+}
+
+TEST_CASE("CP-6 learner-equivalent consumer normalizes the full tensor with CPU parity") {
+    using namespace runtime::cuda_resident;
+    namespace learner = runtime::cuda_resident::learner_consumption;
+
+    CHECK(learner::kLearnerConsumerSurfaceV1 ==
+          "cuda_resident.device_consumer_learner_equivalent.v1");
+    CHECK(learner::kLearnerConsumerModeIdNoExport == "no_export_learner_consumer");
+    CHECK(learner::kLearnerConsumptionFeatureCount ==
+          kObservationProjectionObservationValueCount);
+    CHECK_FALSE(learner::kMaintainedClaimAllowed);
+    CHECK_FALSE(learner::kPublicSupportEnabled);
+    CHECK_FALSE(learner::kPromotionAllowed);
+    CHECK_FALSE(learner::kTuningAuthorized);
+
+    if (!CudaWorldStore::compiled_with_cuda()) {
+        CHECK(true);
+        return;
+    }
+
+    CudaResidentBackend backend;
+    backend.configure({.world_count = 2});
+    const Fixture fixture = setup_backend(backend);
+    advance_one_window(backend, fixture);
+
+    const auto acquired = backend.acquire_device_observation_lease("learner-window");
+    REQUIRE(acquired.success());
+    const auto &lease = acquired.lease;
+
+    // The learner-equivalent submission demands the fifteen-field layout.
+    auto narrow_lease = lease;
+    narrow_lease.observations.shape[1] = 1;
+    narrow_lease.observations.strides[0] = 1;
+    narrow_lease.observations.element_count = 2;
+    CudaResidentDeviceConsumer consumer;
+    CHECK(consumer
+              .submit(narrow_lease, {.request_id = "learner-narrow",
+                                     .expected_epoch = narrow_lease.epoch,
+                                     .learner_equivalent = true})
+              .failure == FailureCode::incompatible_layout);
+
+    const auto submitted = consumer.submit(lease, {.request_id = "learner-1",
+                                                   .expected_epoch = lease.epoch,
+                                                   .learner_equivalent = true});
+    REQUIRE(submitted.success());
+    CHECK(submitted.receipt.values_per_world == learner::kLearnerConsumptionFeatureCount);
+    CHECK(submitted.receipt.outputs.shape ==
+          std::vector<std::uint64_t>{2, learner::kLearnerConsumptionFeatureCount});
+    CHECK(submitted.receipt.outputs.strides ==
+          std::vector<std::uint64_t>{learner::kLearnerConsumptionFeatureCount, 1});
+    CHECK(submitted.receipt.outputs.dtype == "float32");
+    REQUIRE(consumer.await(submitted.receipt).success());
+    const auto diagnostic = consumer.materialize_for_diagnostics(submitted.receipt);
+    REQUIRE(diagnostic.success());
+    REQUIRE(diagnostic.materialized.values.size() ==
+            2 * learner::kLearnerConsumptionFeatureCount);
+    CHECK(diagnostic.materialized.values_per_world == learner::kLearnerConsumptionFeatureCount);
+    CHECK(diagnostic.materialized.ids == fixture.entity_ids);
+
+    // CPU-reference parity: rebuild every policy input from the public export
+    // with the same clip-to-float conversion and contract-owned normalization.
+    std::vector<WorldEntityRef> refs;
+    refs.reserve(fixture.entity_ids.size());
+    for (std::size_t world = 0; world < fixture.entity_ids.size(); ++world) {
+        refs.push_back({.world_index = world, .entity_id = fixture.entity_ids[world]});
+    }
+    const auto exported = backend.export_state({
+        .refs = refs,
+        .include_agent_observations = true,
+    });
+    REQUIRE(exported.agent_observations.size() == 2);
+    const auto to_packed_float = [](double value) {
+        const double clipped = std::min(std::max(value, -kObservationProjectionObservationFloatClip),
+                                        kObservationProjectionObservationFloatClip);
+        return static_cast<float>(clipped);
+    };
+    for (std::size_t world = 0; world < 2; ++world) {
+        const auto &observation = exported.agent_observations[world];
+        const double packed_order[learner::kLearnerConsumptionFeatureCount] = {
+            observation.sim_time, observation.x,          observation.y,
+            observation.z,        observation.vx,         observation.vy,
+            observation.vz,       observation.heading,    observation.pitch,
+            observation.roll,     observation.speed,      observation.health,
+            observation.gear_state, observation.throttle, observation.total_reward,
+        };
+        for (std::size_t field = 0; field < learner::kLearnerConsumptionFeatureCount; ++field) {
+            const auto &normalization = learner::kLearnerNormalization[field];
+            const float expected =
+                (to_packed_float(packed_order[field]) - normalization.offset) *
+                normalization.scale;
+            const float actual =
+                diagnostic.materialized
+                    .values[world * learner::kLearnerConsumptionFeatureCount + field];
+            CAPTURE(world);
+            CAPTURE(field);
+            CHECK(actual == doctest::Approx(expected).epsilon(1e-6));
+        }
+    }
+
+    // The smoke consumer remains available for lifecycle coverage and still
+    // reports the single-value shape on the same lease.
+    const auto smoke = consumer.submit(
+        lease, {.request_id = "smoke-after-learner", .expected_epoch = lease.epoch});
+    REQUIRE(smoke.success());
+    CHECK(smoke.receipt.values_per_world == 1);
+    REQUIRE(consumer.await(smoke.receipt).success());
+    const auto smoke_diagnostic = consumer.materialize_for_diagnostics(smoke.receipt);
+    REQUIRE(smoke_diagnostic.success());
+    REQUIRE(smoke_diagnostic.materialized.values.size() == 2);
+    CHECK(smoke_diagnostic.materialized.values[0] ==
+          doctest::Approx(to_packed_float(exported.agent_observations[0].sim_time)));
 }

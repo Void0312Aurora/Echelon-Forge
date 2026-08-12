@@ -5,7 +5,7 @@
 - 中文伴随本：`cuda_resident_cp6_learner_consumption_design_20260812.zh.md`
 
 文档类型：`plan`
-生命周期：`draft`
+生命周期：`frozen——2026-08-12 冻结范围并落地`
 正本路径：`docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_design_20260812.md`
 责任方：`exact-runtime / CUDA 常驻后端晋升工作线`
 最后核实：`2026-08-12`
@@ -16,6 +16,24 @@
   （按程序协议，评审者未编辑任何实现文件）
 - 权限边界：本草案只提出建议，不构成授权。CP-6 须待 CP-5 关闭后由程序
   所有者冻结本范围方可开工。
+
+## 冻结记录（2026-08-12）
+
+程序所有者于 2026-08-12 冻结本范围：交付物按草案原样，草案留白的空位
+决定如下：
+
+- 矩阵模式 id：`no_export_learner_consumer`，由
+  `cuda_resident_learner_consumption_contract.h` 拥有。
+- 归一化：逐字段仿射 `(value - offset) * scale`；十五组代表性常量入契约表，
+  字段身份对投影契约的打包顺序做静态断言。
+- 策略输入 feature 数：15（即打包观测布局；不做特征扩展）。
+- smoke kernel 保留用于生命周期覆盖。
+
+对草案字面的偏离及理由记录于程序计划文档的落地小节：learner 模式经显式
+`--learner-consumer` 探针旗标交付，而非扩展冻结的 CR2-6a `kModes` 表
+（矩阵证据校验器仍钉在单世代；扩展冻结范围属 CP-8 重跑矩阵车道）；冻结的
+`*_device_consumer` 模式保留 smoke 消费者，使其数据行与 CR2-6b 及
+CP-5/CP-7b 基线保持可比。门禁 G-C 以 learner 模式的实测数据行关闭。
 
 ## 为什么按远期视角来写这份设计
 

@@ -207,8 +207,9 @@ def test_rb9_static_ledger_matches_current_cuda_execution_graph() -> None:
     execution_window = _text(WINDOW_SOURCE)
     # Three resident-window launches are the base path after the CP-5 fusion
     # and the CP-7b barrier fold; the legacy diagnostic and CR2-3 measured
-    # wrappers each contain pack/consumer call sites.
-    assert device.count("<<<blocks, threads>>>") == 7
+    # wrappers each contain pack/consumer call sites, and CP-6 added the
+    # learner-equivalent branch beside the smoke branch in the submit path.
+    assert device.count("<<<blocks, threads>>>") == 8
     assert execution_window.count("launch_window_commit_body") == 1
     assert "launch_flight_dynamics_" not in execution_window
     assert "launch_instrument_projection" not in execution_window

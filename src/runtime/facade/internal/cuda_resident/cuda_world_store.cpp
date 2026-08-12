@@ -575,6 +575,20 @@ testing::CudaWorldStoreTestAccess::device_observation_consumer_kernel_resources(
 #endif
 }
 
+CudaBarrierKernelResources
+testing::CudaWorldStoreTestAccess::learner_consumer_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_learner_consumer_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA learner-consumer resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA learner-consumer resource query requires CUDA experiments");
+#endif
+}
+
 bool testing::CudaWorldStoreTestAccess::consume_device_observation_view(
     const CudaResidentDeviceObservationView &view, std::vector<float> *first_values,
     std::vector<std::uint64_t> *ids) {

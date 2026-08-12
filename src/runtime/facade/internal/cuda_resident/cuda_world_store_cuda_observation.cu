@@ -1,4 +1,5 @@
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_cuda_internal.cuh"
+#include "runtime/contracts/cuda_resident_learner_consumption_contract.h"
 #include "runtime/contracts/cuda_resident_observation_projection_fixture_contract.h"
 
 #include <algorithm>
@@ -32,10 +33,50 @@ __global__ void pack_device_observation_kernel(std::size_t world_capacity,
 __global__ void
 device_observation_consumer_smoke_kernel(const float *values, const std::uint64_t *ids,
                                          std::size_t world_capacity, std::size_t values_per_world,
-                                         float *first_values, std::uint64_t *out_ids) {
+                                         float *out_values, std::uint64_t *out_ids) {
     const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world >= world_capacity) return;
-    first_values[world] = values[world * values_per_world];
+    out_values[world] = values[world * values_per_world];
+    out_ids[world] = ids[world];
+}
+
+static_assert(learner_consumption::kLearnerConsumptionFeatureCount ==
+                  kObservationProjectionObservationFieldCount,
+              "learner-equivalent consumption covers exactly the packed observation layout");
+
+// Kernel-parameter copy of the contract-owned normalization table. Passing the
+// constants by value keeps the contract the single owner without a device
+// symbol to keep synchronized.
+struct LearnerNormalizationValues {
+    float offsets[learner_consumption::kLearnerConsumptionFeatureCount];
+    float scales[learner_consumption::kLearnerConsumptionFeatureCount];
+};
+
+[[nodiscard]] LearnerNormalizationValues learner_normalization_values() noexcept {
+    LearnerNormalizationValues values{};
+    for (std::size_t field = 0; field < learner_consumption::kLearnerConsumptionFeatureCount;
+         ++field) {
+        values.offsets[field] = learner_consumption::kLearnerNormalization[field].offset;
+        values.scales[field] = learner_consumption::kLearnerNormalization[field].scale;
+    }
+    return values;
+}
+
+// CP-6 learner-equivalent consumer: reads every element of the lease tensor,
+// applies the contract-owned per-field affine normalization, and writes the
+// device-resident policy input buffer in the lease payload's world-major
+// [world_count, feature_count] float layout. Ids pass through unchanged.
+__global__ void learner_equivalent_consumer_kernel(
+    const float *values, const std::uint64_t *ids, std::size_t world_capacity,
+    std::size_t values_per_world, LearnerNormalizationValues normalization, float *policy_inputs,
+    std::uint64_t *out_ids) {
+    const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (world >= world_capacity) return;
+    const std::size_t base = world * values_per_world;
+    for (std::size_t field = 0; field < values_per_world; ++field) {
+        policy_inputs[base + field] =
+            (values[base + field] - normalization.offsets[field]) * normalization.scales[field];
+    }
     out_ids[world] = ids[world];
 }
 
@@ -234,7 +275,7 @@ void release_cuda_world_store_device_observation_lease(void *values, void *ids, 
 
 bool submit_cuda_world_store_device_observation_consumer(
     const CudaWorldStoreDeviceObservationLeaseRaw &lease, CudaWorldStoreDeviceConsumerRaw *raw,
-    bool fail_allocation, bool fail_launch, bool fail_event_record,
+    bool learner_equivalent, bool fail_allocation, bool fail_launch, bool fail_event_record,
     device_consumer::FailureCode *failure, std::string *error) {
     if (raw == nullptr || lease.values == nullptr || lease.ids == nullptr ||
         lease.ready_event == nullptr || lease.world_count == 0 || lease.values_per_world == 0 ||
@@ -243,8 +284,19 @@ bool submit_cuda_world_store_device_observation_consumer(
         if (error != nullptr) *error = "CUDA observation consumer requires a valid lease";
         return false;
     }
+    if (learner_equivalent &&
+        lease.values_per_world != learner_consumption::kLearnerConsumptionFeatureCount) {
+        set_lease_failure(failure, device_consumer::FailureCode::incompatible_layout);
+        if (error != nullptr) {
+            *error = "learner-equivalent consumption requires the fifteen-field lease layout";
+        }
+        return false;
+    }
     *raw = {};
     set_lease_failure(failure, device_consumer::FailureCode::none);
+    // The smoke consumer proves the boundary with one value per world; the
+    // learner-equivalent consumer writes the full policy-input tensor.
+    const std::size_t values_per_world = learner_equivalent ? lease.values_per_world : 1;
     int current_device = -1;
     cudaError_t status = cudaGetDevice(&current_device);
     if (status == cudaSuccess && current_device != lease.device_ordinal) {
@@ -255,15 +307,15 @@ bool submit_cuda_world_store_device_observation_consumer(
     if (status == cudaSuccess) {
         status = cudaStreamWaitEvent(nullptr, reinterpret_cast<cudaEvent_t>(lease.ready_event), 0);
     }
-    float *first_values = nullptr;
+    float *values = nullptr;
     std::uint64_t *ids = nullptr;
     cudaEvent_t ready_event = nullptr;
     if (status == cudaSuccess && fail_allocation) {
         status = cudaErrorMemoryAllocation;
     }
     if (status == cudaSuccess) {
-        status =
-            cudaMalloc(reinterpret_cast<void **>(&first_values), lease.world_count * sizeof(float));
+        status = cudaMalloc(reinterpret_cast<void **>(&values),
+                            lease.world_count * values_per_world * sizeof(float));
     }
     if (status == cudaSuccess) {
         status =
@@ -272,7 +324,7 @@ bool submit_cuda_world_store_device_observation_consumer(
     if (status == cudaSuccess)
         status = cudaEventCreateWithFlags(&ready_event, cudaEventDisableTiming);
     if (status != cudaSuccess) {
-        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        release_async_device_buffers(values, ids, ready_event, lease.device_ordinal, true);
         set_lease_failure(failure, device_consumer::FailureCode::consumer_allocation_failed);
         if (error != nullptr)
             *error = cuda_error_message("allocate device consumer output", status);
@@ -282,39 +334,48 @@ bool submit_cuda_world_store_device_observation_consumer(
     const unsigned int blocks =
         static_cast<unsigned int>((lease.world_count + threads - 1) / threads);
     if (fail_launch) {
-        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        release_async_device_buffers(values, ids, ready_event, lease.device_ordinal, true);
         set_lease_failure(failure, device_consumer::FailureCode::consumer_launch_failed);
         if (error != nullptr) *error = "injected CUDA device consumer launch failure";
         return false;
     }
-    device_observation_consumer_smoke_kernel<<<blocks, threads>>>(
-        static_cast<const float *>(lease.values), static_cast<const std::uint64_t *>(lease.ids),
-        lease.world_count, lease.values_per_world, first_values, ids);
+    if (learner_equivalent) {
+        learner_equivalent_consumer_kernel<<<blocks, threads>>>(
+            static_cast<const float *>(lease.values),
+            static_cast<const std::uint64_t *>(lease.ids), lease.world_count,
+            lease.values_per_world, learner_normalization_values(), values, ids);
+    } else {
+        device_observation_consumer_smoke_kernel<<<blocks, threads>>>(
+            static_cast<const float *>(lease.values),
+            static_cast<const std::uint64_t *>(lease.ids), lease.world_count,
+            lease.values_per_world, values, ids);
+    }
     status = cudaGetLastError();
     if (status != cudaSuccess) {
-        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        release_async_device_buffers(values, ids, ready_event, lease.device_ordinal, true);
         set_lease_failure(failure, device_consumer::FailureCode::consumer_launch_failed);
         if (error != nullptr) *error = cuda_error_message("launch device consumer", status);
         return false;
     }
     if (fail_event_record) {
-        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        release_async_device_buffers(values, ids, ready_event, lease.device_ordinal, true);
         set_lease_failure(failure, device_consumer::FailureCode::consumer_event_record_failed);
         if (error != nullptr) *error = "injected CUDA device consumer event-record failure";
         return false;
     }
     status = cudaEventRecord(ready_event, nullptr);
     if (status != cudaSuccess) {
-        release_async_device_buffers(first_values, ids, ready_event, lease.device_ordinal, true);
+        release_async_device_buffers(values, ids, ready_event, lease.device_ordinal, true);
         set_lease_failure(failure, device_consumer::FailureCode::consumer_event_record_failed);
         if (error != nullptr) *error = cuda_error_message("record device consumer event", status);
         return false;
     }
-    raw->first_values = first_values;
+    raw->values = values;
     raw->ids = ids;
     raw->ready_event = reinterpret_cast<void *>(ready_event);
     raw->device_ordinal = lease.device_ordinal;
     raw->world_count = lease.world_count;
+    raw->values_per_world = values_per_world;
     if (error != nullptr) error->clear();
     return true;
 }
@@ -339,10 +400,10 @@ bool await_cuda_world_store_device_observation_consumer(const CudaWorldStoreDevi
 }
 
 bool materialize_cuda_world_store_device_observation_consumer(
-    const CudaWorldStoreDeviceConsumerRaw &raw, std::vector<float> *first_values,
+    const CudaWorldStoreDeviceConsumerRaw &raw, std::vector<float> *values,
     std::vector<std::uint64_t> *ids, bool fail_materialize, std::string *error) {
-    if (raw.first_values == nullptr || raw.ids == nullptr || raw.world_count == 0 ||
-        first_values == nullptr || ids == nullptr) {
+    if (raw.values == nullptr || raw.ids == nullptr || raw.world_count == 0 ||
+        raw.values_per_world == 0 || values == nullptr || ids == nullptr) {
         if (error != nullptr) *error = "CUDA device consumer diagnostic requires a valid receipt";
         return false;
     }
@@ -350,16 +411,17 @@ bool materialize_cuda_world_store_device_observation_consumer(
         if (error != nullptr) *error = "injected CUDA device consumer diagnostic failure";
         return false;
     }
-    first_values->assign(raw.world_count, 0.0F);
+    values->assign(raw.world_count * raw.values_per_world, 0.0F);
     ids->assign(raw.world_count, 0);
-    cudaError_t status = cudaMemcpy(first_values->data(), raw.first_values,
-                                    raw.world_count * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaError_t status =
+        cudaMemcpy(values->data(), raw.values,
+                   raw.world_count * raw.values_per_world * sizeof(float), cudaMemcpyDeviceToHost);
     if (status == cudaSuccess) {
         status = cudaMemcpy(ids->data(), raw.ids, raw.world_count * sizeof(std::uint64_t),
                             cudaMemcpyDeviceToHost);
     }
     if (status != cudaSuccess) {
-        first_values->clear();
+        values->clear();
         ids->clear();
         if (error != nullptr) *error = cuda_error_message("materialize device consumer", status);
         return false;
@@ -368,9 +430,9 @@ bool materialize_cuda_world_store_device_observation_consumer(
     return true;
 }
 
-void release_cuda_world_store_device_consumer(void *first_values, void *ids, void *ready_event,
+void release_cuda_world_store_device_consumer(void *values, void *ids, void *ready_event,
                                               int device_ordinal) noexcept {
-    release_async_device_buffers(first_values, ids, reinterpret_cast<cudaEvent_t>(ready_event),
+    release_async_device_buffers(values, ids, reinterpret_cast<cudaEvent_t>(ready_event),
                                  device_ordinal, false);
 }
 
@@ -434,6 +496,12 @@ bool query_cuda_world_store_device_observation_consumer_kernel_resources(
     return query_cuda_kernel_resources(device_observation_consumer_smoke_kernel,
                                        "device_observation_consumer_smoke_kernel", resources,
                                        error);
+}
+
+bool query_cuda_world_store_learner_consumer_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error) {
+    return query_cuda_kernel_resources(learner_equivalent_consumer_kernel,
+                                       "learner_equivalent_consumer_kernel", resources, error);
 }
 
 } // namespace runtime::cuda_resident::detail

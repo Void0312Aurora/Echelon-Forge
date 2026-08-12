@@ -135,7 +135,7 @@ commit). Critical phases get one independent review before landing.
 | CP-3 | Retire the private-sequence residue that made RB10's G-A/G-B verdicts possible: demote or remove the public `publish_stage`/`partial_sync_commit` from `CudaResidentBackend` now that only tests and the superseded RB9 probe call them, and add a gate asserting the resident backend exposes no non-SPI window-advance entry point | **LANDED 2026-08-11.** `publish_stage` and `partial_sync_commit` removed from `CudaResidentBackend` public interface; all 9 callers migrated to `store.publish_stage()` / `store.partial_sync_commit()` via `CudaResidentBackendTestAccess`; architecture gate `test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` added to `test_cuda_surface_wiring.py` |
 | CP-4 | **G-D: achieved counters under elevation** — occupancy, divergence, global/local/shared traffic for all 10 kernels. This is the one hard blocker and the highest-value iteration | G-D closed with real counters, or a recorded second external blocker |
 | CP-5 | Kernel-level optimization driven by CP-4 findings. Known candidates below | **LANDED 2026-08-12.** The six window-commit launches are one fused `window_commit_body_kernel` (12 -> 7 launches per captured window); kernel catalog v3 supersedes v2 through a static-asserted fold; released-state digests stay bit-identical to the frozen CR2-6b capture across both lanes and both campaigns; warmed end-to-end p50 improved in all 20 CR2-6b comparison rows (0.63-0.99x). See "CP-5 landed" below |
-| CP-6 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | A real consumer, not diagnostics smoke |
+| CP-6 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | **LANDED 2026-08-12.** `learner_equivalent_consumer_kernel` reads every element of the lease tensor, applies the contract-owned per-field affine normalization, and writes a device-resident world-major `[world, 15]` float policy-input buffer; measured at production protocol as matrix mode `no_export_learner_consumer` behind an explicit probe flag; CPU-reference parity over the full normalized tensor is a C++ oracle; released digests stay byte-identical to the CP-7b baseline in both lanes. See "CP-6 landed" below |
 | CP-7 | G-F disposition: either fix small-batch overhead or freeze an explicit selection rule with world-count thresholds | **LANDED 2026-08-12, both halves.** CP-7a: `cp7.small_batch_selection_rule.v1` freezes world counts below 4 to the CPU reference as documentation-grade policy (no runtime selector; an architecture gate enforces zero runtime consumers), on the measured basis that world 1 carries a ~65.5 us single-thread device floor against a ~18-31 us CPU step; crossover value is a named CP-8 review item. CP-7b: the stage_publish and window_commit barriers are per-world epilogues of their stage kernels (5 -> 3 launches, syncs, status readbacks, and memsets per window); released-state digests stay bit-identical to frozen CR2-6b in all 30 rows, warmed e2e p50 falls 20-30% at world 1 and 8-21% (campaign 1) / 3-52% (campaign 2) elsewhere. See "CP-7b landed" below |
 | CP-8 | Re-measure the 1/4/16/64/256 matrix after CP-5/CP-7 land, order-balanced, two campaigns | Post-optimization evidence comparable to CR2-6b |
 | CP-9 | Promotion decision: all gates + independent review, or a recorded hold with the exact missing authority | Explicit, evidence-backed verdict |
@@ -339,6 +339,82 @@ evidence, but it retired the only capture tool without a replacement, so the
 next counter attempt inherits a recapture obligation. CP-1's compile lane would
 not have caught this — the stub compiles fine. A probe-executability check
 belongs in CP-1's scope.
+
+## CP-6 landed: consumption is learner-equivalent, not a smoke probe (2026-08-12)
+
+The owner froze the reviewer's design draft on 2026-08-12 (mode id
+`no_export_learner_consumer`; per-field affine normalization with fifteen
+representative constants; feature count 15; smoke kernel retained for
+lifecycle coverage) and the iteration landed the same day. Scope statement
+carried from the draft: this closes G-C on the resident **fixture** contract
+(the fixed-air fifteen-field observation); the production dictionary
+observation stack stays outside the gate's coverage and in the residual list.
+
+What changed:
+
+- `learner_equivalent_consumer_kernel`
+  (`cuda_world_store_cuda_observation.cu`) reads every element of the lease
+  value tensor, applies `(value - offset) * scale` per field, and writes a
+  device-resident world-major `[world_count, 15]` float32 policy-input buffer;
+  ids pass through with epoch semantics unchanged. The constants live in
+  `cuda_resident_learner_consumption_contract.h` as the single owner — field
+  identities are statically asserted against the projection contract's packed
+  order, and the kernel receives the table by value, so no device symbol can
+  drift.
+- The consumer seam carries the output honestly: `ConsumerRequest` gains
+  `learner_equivalent`, the receipt's `first_values` became `values` with
+  `values_per_world` and a `TensorDescriptor outputs` (`[world, 1]` for the
+  smoke consumer, `[world, 15]` for the learner), and the learner submission
+  fail-closes with `incompatible_layout` unless the lease carries the
+  fifteen-field layout. CR2-3 discipline re-pinned for the new kernel: no
+  device-to-host copies in submit or await; the two-copy diagnostic
+  materialization stays outside every sample timer.
+- Measurement went through the existing matrix machinery: the session `Mode`
+  gained a `learner_consumer` kind, and the CUDA probe appends the mode behind
+  an explicit `--learner-consumer` flag.
+
+Deviations from the draft's letter, with reasons. The draft said "replace the
+smoke kernel as the measured consumer" and "add a mode to the matrix": the
+frozen CR2-6a `kModes` table was **not** extended, because the matrix evidence
+validators are still single-generation pinned (the CP-8 kickoff's finding) and
+unflagged reports must keep the frozen shape for CR2-6b comparability. The
+learner mode is therefore the measured-consumer lane for G-C, while the frozen
+`*_device_consumer` modes keep the smoke consumer so their rows remain
+comparable with CR2-6b and the CP-5/CP-7b baselines. Registering the mode in
+the frozen table and making the evidence builder generation-aware stays in
+CP-8's lane. Likewise the RB9 ledger still models the frozen RB9 mode set; the
+learner mode's transfer profile is documented here, not retrofitted into the
+frozen ledger. The captured-window kernel catalog stays at v4: the learner
+kernel is not part of the captured window's operation sequence, and its static
+capture rides with CP-8's re-matrix generation refresh.
+
+Validation and evidence:
+
+- CUDA-on, RTX 3090: lifecycle 16/16 (643 assertions, including the new CP-6
+  parity case), replay 4/4, full-window 6/6. The parity oracle rebuilds every
+  policy input on the host from the public export with the same clip-to-float
+  conversion and contract constants.
+- Architecture gates (new `test_cuda_resident_learner_consumption.py`): the
+  measured learner path reads the full tensor (a single-element probe can
+  never satisfy G-C again), submit/await carry no hidden D2H, the policy
+  layout/dtype/feature count are pinned to the contract, the normalization
+  table has exactly one owner, and the mode id stays out of the frozen table
+  with the probe taking it from the contract constant.
+- Production-protocol campaigns, order-balanced (cpu, cuda, cuda, cpu), five
+  modes, in `cuda_resident_cp6_learner_consumption_20260812/`
+  (sha256/16: cpu1 `4eda3f663bb35d23`, cpu2 `118a6dc168b44bd5`, cuda1
+  `d0c7e0c058c2a3e9`, cuda2 `4b7d771b903cc217`). Released digests are
+  byte-identical to the CP-7b baseline in both lanes at every world count
+  (CUDA `2df3698050d55a9a`, CPU `881cff2cea79e49a` at world 1), so the
+  consumer change provably touched no simulation output.
+- Cost of learner-equivalent versus smoke consumption is inside this host's
+  run-to-run noise: warmed end-to-end p50 deltas are sign-mixed across the two
+  campaigns (-12% to +45%, with the frozen smoke mode itself drifting -47% to
+  +43% against CP-7b session-to-session), and rollout per-window deltas at
+  world 256 are -1.1%. No world count shows a consistent penalty in both
+  campaigns. G-C closes on consumption *existing and being measured*, not on a
+  performance claim; the consumer's 15x read-and-write amplification is below
+  the measurement floor at these world counts.
 
 ## CP-7b landed: the in-window barriers are epilogues (2026-08-12)
 

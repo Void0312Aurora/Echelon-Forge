@@ -11,6 +11,9 @@ namespace runtime::cuda_resident::matrix::probe {
 struct Mode {
     bool host_export = false;
     bool device_consumer = false;
+    // CP-6: submit the learner-equivalent consumer instead of the smoke
+    // consumer on the device lane. Only meaningful with device_consumer.
+    bool learner_consumer = false;
     std::string id;
 };
 

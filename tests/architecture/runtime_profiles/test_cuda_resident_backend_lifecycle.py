@@ -43,14 +43,16 @@ def test_cr2_split_manifest_keeps_private_cuda_translation_units_non_rdc() -> No
     for path in DEVICE_SOURCES[1:]:
         assert path.name in source_manifest
     assert "#include \"cuda_world_store_cuda_" not in device_source
-    # CP-5 fused the six window-commit kernels into window_commit_body_kernel,
-    # so the device surface emits five __global__ entry points.
-    assert device_source.count("__global__") == 5
+    # CP-5 fused the six window-commit kernels into window_commit_body_kernel;
+    # CP-6 added the learner-equivalent consumer beside the smoke consumer, so
+    # the device surface emits six __global__ entry points.
+    assert device_source.count("__global__") == 6
     for kernel in (
         "control_preparation_kernel",
         "window_commit_body_kernel",
         "pack_device_observation_kernel",
         "device_observation_consumer_smoke_kernel",
+        "learner_equivalent_consumer_kernel",
         "apply_barrier_kernel",
     ):
         assert kernel in device_source

@@ -34,11 +34,14 @@ struct CudaWorldStoreDeviceAllocationResult {
 };
 
 struct CudaWorldStoreDeviceConsumerRaw {
-    void *first_values = nullptr;
+    void *values = nullptr;
     void *ids = nullptr;
     void *ready_event = nullptr;
     int device_ordinal = -1;
     std::size_t world_count = 0;
+    // One for the smoke consumer, the packed observation field count for the
+    // learner-equivalent consumer.
+    std::size_t values_per_world = 0;
 };
 
 [[nodiscard]] bool cuda_world_store_runtime_available(std::string *error);
@@ -81,15 +84,15 @@ void release_cuda_world_store_device_observation_lease(void *values, void *ids, 
                                                        int device_ordinal) noexcept;
 [[nodiscard]] bool submit_cuda_world_store_device_observation_consumer(
     const CudaWorldStoreDeviceObservationLeaseRaw &lease, CudaWorldStoreDeviceConsumerRaw *raw,
-    bool fail_allocation, bool fail_launch, bool fail_event_record,
+    bool learner_equivalent, bool fail_allocation, bool fail_launch, bool fail_event_record,
     device_consumer::FailureCode *failure, std::string *error);
 [[nodiscard]] bool
 await_cuda_world_store_device_observation_consumer(const CudaWorldStoreDeviceConsumerRaw &raw,
                                                    bool fail_wait, std::string *error);
 [[nodiscard]] bool materialize_cuda_world_store_device_observation_consumer(
-    const CudaWorldStoreDeviceConsumerRaw &raw, std::vector<float> *first_values,
+    const CudaWorldStoreDeviceConsumerRaw &raw, std::vector<float> *values,
     std::vector<std::uint64_t> *ids, bool fail_materialize, std::string *error);
-void release_cuda_world_store_device_consumer(void *first_values, void *ids, void *ready_event,
+void release_cuda_world_store_device_consumer(void *values, void *ids, void *ready_event,
                                               int device_ordinal) noexcept;
 [[nodiscard]] bool consume_cuda_world_store_device_observation(
     const void *values, const void *ids, std::size_t world_count, std::size_t values_per_world,
@@ -108,6 +111,8 @@ query_cuda_world_store_control_preparation_kernel_resources(CudaBarrierKernelRes
 [[nodiscard]] bool query_cuda_world_store_device_observation_pack_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error);
 [[nodiscard]] bool query_cuda_world_store_device_observation_consumer_kernel_resources(
+    CudaBarrierKernelResources *resources, std::string *error);
+[[nodiscard]] bool query_cuda_world_store_learner_consumer_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error);
 [[nodiscard]] bool
 release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,

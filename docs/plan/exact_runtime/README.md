@@ -31,10 +31,12 @@ Recommended reading order:
 16. [cuda_resident_promotion_program_20260808.md](cuda_resident_promotion_program_20260808.md)
 17. [cuda_resident_cp_resource_evidence_20260810.json](cuda_resident_cp_resource_evidence_20260810.json)
 18. [cuda_resident_cp_counter_evidence_20260810.json](cuda_resident_cp_counter_evidence_20260810.json)
-19. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
-20. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
-21. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
-22. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
+19. [cuda_resident_cp6_learner_consumption_design_20260812.md](cuda_resident_cp6_learner_consumption_design_20260812.md)
+20. [cuda_resident_cp7_small_batch_disposition_prep_20260812.md](cuda_resident_cp7_small_batch_disposition_prep_20260812.md)
+21. [cpp_exact_runtime_refactor_plan.md](cpp_exact_runtime_refactor_plan.md)
+22. [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
+23. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
+24. [../archive/exact_runtime/README.md](../archive/exact_runtime/README.md)
 
 Usage rules:
 

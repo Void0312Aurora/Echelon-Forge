@@ -118,7 +118,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | CP-3 | 清退使 RB10 的 G-A/G-B 裁定得以成立的私有序列残留：既然只有测试与已被取代的 RB9 探针还在调用，就降级或移除 `CudaResidentBackend` 上的公共 `publish_stage`/`partial_sync_commit`，并加一条断言常驻后端不暴露任何非 SPI 整窗推进入口的门禁 | **已落地 2026-08-11。** `publish_stage` 与 `partial_sync_commit` 已从 `CudaResidentBackend` 公共接口移除；全部 9 处调用方迁移至经 `CudaResidentBackendTestAccess` 访问的 `store.publish_stage()` / `store.partial_sync_commit()`；架构门禁 `test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points` 已添加至 `test_cuda_surface_wiring.py` |
 | CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
 | CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | **已落地 2026-08-12。** 六个窗口提交 launch 融合为一个 `window_commit_body_kernel`（每捕获窗口 12→7 次 launch）；kernel 目录 v3 经 static_assert 折叠表取代 v2；导出状态摘要与冻结的 CR2-6b 捕获在两条 lane、两轮 campaign 上保持逐位一致；warmed end-to-end p50 在全部 20 个 CR2-6b 对比行上改善（0.63-0.99 倍）。见下文「CP-5 已落地」 |
-| CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | 真实消费者，而非诊断 smoke |
+| CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | **已落地 2026-08-12。** `learner_equivalent_consumer_kernel` 读取 lease 张量每一个元素、施加契约拥有的逐字段仿射归一化、写出常驻设备的 world 主序 `[world, 15]` float 策略输入缓冲；以矩阵模式 `no_export_learner_consumer` 经显式探针旗标按生产协议测量；全归一化张量的 CPU 参照 parity 为 C++ oracle；导出摘要与 CP-7b 基线在两条 lane 上逐字节一致。见下文「CP-6 已落地」 |
 | CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | **已落地 2026-08-12，两半齐备。** CP-7a：`cp7.small_batch_selection_rule.v1` 把低于 4 的 world 数冻结为路由 CPU 参考的文档级策略（无运行时选择器；架构门禁强制零运行时消费者），实测依据是 world 1 上约 65.5 us 的单线程设备地板对 CPU 约 18-31 us 的整步耗时；交叉点数值列为 CP-8 复核项。CP-7b：stage_publish 与 window_commit 屏障成为各自阶段 kernel 的逐 world 尾声（每窗 launch、同步、状态回读、memset 各 5→3）；导出状态摘要与冻结 CR2-6b 在全部 30 行上保持逐位一致，warmed e2e p50 在 world 1 降 20-30%，其余行 campaign 1 降 8-21%、campaign 2 降 3-52%。见下文「CP-7b 已落地」 |
 | CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | 优化后证据可与 CR2-6b 比较 |
 | CP-9 | 晋升决策：全部门禁加独立评审，或记录带确切缺失授权的 hold | 显式、有证据支撑的裁定 |
@@ -351,6 +351,61 @@ worlds 时就如此空闲，可以解释 world 1 为何以 7-36 倍落后于 CPU
 
 以上两点都是测量结果，尚不是已验证的优化。CP-5 在任何改动后必须重新测量；本节记录的是
 计数器所显示的事实，不是「更大的 grid 一定更快」的承诺。
+
+## CP-6 已落地：消费是 learner 等价的，不再是 smoke 探测（2026-08-12）
+
+所有者于 2026-08-12 冻结评审者的设计草案（模式 id `no_export_learner_consumer`；
+逐字段仿射归一化、十五组代表性常量；feature 数 15；smoke kernel 保留给生命周期
+覆盖），迭代当日落地。沿用草案的范围定性：本次关闭的是常驻 **fixture** 契约
+（固定空域十五字段观测）上的 G-C；生产字典观测栈仍在门禁覆盖之外、留在残差清单。
+
+改了什么：
+
+- `learner_equivalent_consumer_kernel`（`cuda_world_store_cuda_observation.cu`）
+  读取 lease 值张量每一个元素，逐字段施加 `(value - offset) * scale`，写出常驻
+  设备的 world 主序 `[world_count, 15]` float32 策略输入缓冲；ids 透传、epoch
+  语义不变。常量在 `cuda_resident_learner_consumption_contract.h` 单一所有——
+  字段身份对投影契约的打包顺序做静态断言，kernel 按值接收常量表，设备侧不存在
+  可漂移的第二份符号。
+- 消费者 seam 诚实携带输出：`ConsumerRequest` 增加 `learner_equivalent`，收据的
+  `first_values` 更名 `values` 并新增 `values_per_world` 与 `TensorDescriptor
+  outputs`（smoke 为 `[world, 1]`，learner 为 `[world, 15]`）；lease 不带十五字段
+  布局时 learner 提交以 `incompatible_layout` 关死。CR2-3 纪律对新 kernel 重新
+  钉定：submit 与 await 无任何 D2H；两次拷贝的诊断物化保持在所有 sample timer
+  之外。
+- 测量走既有矩阵机械：会话 `Mode` 增加 `learner_consumer` 种类，CUDA 探针在显式
+  `--learner-consumer` 旗标后追加该模式。
+
+对草案字面的偏离及理由。草案写「取代 smoke kernel 成为受测消费者」「矩阵新增
+模式」：冻结的 CR2-6a `kModes` 表**没有**扩展，因为矩阵证据校验器仍钉在单世代
+（CP-8 开工文档的发现），且未旗标的报告必须保持冻结形状以维持 CR2-6b 可比性。
+因此 learner 模式是 G-C 的受测消费通道，而冻结的 `*_device_consumer` 模式保留
+smoke 消费者，使其数据行与 CR2-6b 及 CP-5/CP-7b 基线可比。把模式注册进冻结表、
+让证据构建器世代感知，属 CP-8 车道。同理 RB9 账本仍只建模冻结的 RB9 模式集；
+learner 模式的传输画像记录于此，不回填冻结账本。捕获窗口的 kernel 目录停在 v4：
+learner kernel 不在捕获窗口的操作序列内，其静态捕获随 CP-8 重跑矩阵的世代刷新
+一并进行。
+
+验证与证据：
+
+- CUDA-on，RTX 3090：lifecycle 16/16（643 断言，含新增 CP-6 parity 用例）、
+  replay 4/4、full-window 6/6。parity oracle 在主机上用同样的截断转 float 与
+  契约常量，从公共导出重建每一个策略输入。
+- 架构门禁（新增 `test_cuda_resident_learner_consumption.py`）：受测 learner
+  路径读取完整张量（单元素探测从此永远无法再满足 G-C）、submit/await 零隐藏
+  D2H、策略布局/dtype/feature 数对契约钉定、归一化表恰一个所有者、模式 id 不入
+  冻结表且探针取自契约常量。
+- 生产协议 campaign，顺序对调（cpu、cuda、cuda、cpu）、五模式，存于
+  `cuda_resident_cp6_learner_consumption_20260812/`（sha256/16：cpu1
+  `4eda3f663bb35d23`、cpu2 `118a6dc168b44bd5`、cuda1 `d0c7e0c058c2a3e9`、cuda2
+  `4b7d771b903cc217`）。导出摘要在两条 lane 的每个 world 数上与 CP-7b 基线逐字节
+  一致（world 1：CUDA `2df3698050d55a9a`、CPU `881cff2cea79e49a`），证明消费者
+  变更未触碰任何仿真输出。
+- learner 等价消费相对 smoke 的成本在本机运行噪声之内：warmed e2e p50 差值在两
+  轮 campaign 间符号相反（-12% 到 +45%，而冻结 smoke 模式自身对 CP-7b 的会话间
+  漂移即达 -47% 到 +43%），world 256 的 rollout 每窗差值为 -1.1%。没有任何
+  world 数在两轮 campaign 中出现一致惩罚。G-C 的关闭标准是**消费存在且被测量**，
+  不是性能主张；此消费者 15 倍的读写放大在这些 world 数下低于测量地板。
 
 ## CP-7b 已落地：窗内屏障成为尾声（2026-08-12）
 

@@ -243,8 +243,8 @@ void ProbeSession::validate_pending_device_consumers() {
     impl_->pending_device_consumer_receipts.clear();
     for (const auto &receipt : pending) {
         const auto diagnostic = impl_->device_consumer.materialize_for_diagnostics(receipt);
-        if (!diagnostic.success() ||
-            diagnostic.materialized.first_values.size() != impl_->trace.seeds.size() ||
+        if (!diagnostic.success() || diagnostic.materialized.values_per_world != 1 ||
+            diagnostic.materialized.values.size() != impl_->trace.seeds.size() ||
             diagnostic.materialized.ids.size() != impl_->trace.seeds.size()) {
             throw std::runtime_error("RB9 CUDA device consumer diagnostic failed");
         }
