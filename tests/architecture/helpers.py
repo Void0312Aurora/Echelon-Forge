@@ -193,9 +193,18 @@ def _vcvars_script(cl_path: Path) -> Path | None:
   return None
 
 
+# cmd.exe interpolates the whole command string, so a script path containing
+# any of these would break out of the quoted `call` (or expand %VARS%) before
+# quoting can help. Such paths fall back to the derived environment instead.
+_CMD_UNSAFE_CHARS = '&|<>^%"'
+
+
 def _captured_vcvars_environment(script: Path) -> dict[str, str] | None:
+  script_text = str(script)
+  if any(char in script_text for char in _CMD_UNSAFE_CHARS):
+    return None
   result = subprocess.run(
-    ["cmd", "/d", "/c", f'call "{script}" >nul && set'],
+    ["cmd", "/d", "/c", f'call "{script_text}" >nul && set'],
     text=True,
     capture_output=True,
     check=False,

@@ -124,6 +124,33 @@ def test_a_deleted_artifact_under_the_same_key_is_not_served_from_the_memo(
     assert len(scans) == 2, "a stale cached plan must trigger a rescan"
 
 
+def test_an_artifact_that_moved_between_configurations_is_not_served_stale(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Same key, artifact relocated to a configuration subdirectory: rescan.
+
+    A bare existence probe would still see *an* artifact and keep the cached
+    import directories pointing at the old location (review finding,
+    2026-08-13); the validity check must compare the derived directories.
+    """
+    build = _fake_build(tmp_path, "build-moving")
+    monkeypatch.setenv("CMO_BUILD_DIR", str(build))
+    scans = _count_scans(monkeypatch)
+
+    runtime_bootstrap.configure_repo_imports()
+    assert len(scans) == 1
+    assert sys.path[0] == str(build)
+
+    (build / "ef_py.so").unlink()
+    release = build / "Release"
+    release.mkdir()
+    (release / "ef_py.so").write_bytes(b"")
+
+    runtime_bootstrap.configure_repo_imports()
+    assert len(scans) == 2, "a relocated artifact must invalidate the cached plan"
+    assert sys.path[0] == str(release)
+
+
 def test_explicit_build_dir_without_an_artifact_fails_closed_on_every_call(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

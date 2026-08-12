@@ -219,17 +219,28 @@ def _reset_import_plan_cache() -> None:
 def _cached_plan_still_valid(
     plan: tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]],
 ) -> bool:
-    """Whether a memoized plan's selected artifact still exists on disk.
+    """Whether a memoized plan still matches the artifacts on disk.
 
     The memo keys on everything *outside* the file system, so a build whose
-    ef_py artifact was deleted after the first scan would otherwise keep
-    riding the cache and silently bypass the fail-closed checks below. One
-    glob over the selected build keeps the hit cheap while restoring the
-    guarantee.
+    ef_py artifact was deleted -- or moved between the build root and a
+    configuration subdirectory, which changes the import directories -- would
+    otherwise keep riding the cache and steer sys.path at a stale location.
+    Re-deriving the import directories per build is a few globs and much
+    cheaper than the candidate probing and PATH walk the memo exists to skip.
     """
 
-    builds, _, _ = plan
-    return bool(builds) and bool(_ef_py_import_dirs(builds[0]))
+    builds, cached_import_dirs, _ = plan
+    if not builds:
+        return False
+    current_import_dirs: list[str] = []
+    seen: set[str] = set()
+    for build in builds:
+        for import_dir in _ef_py_import_dirs(build):
+            if import_dir in seen:
+                continue
+            seen.add(import_dir)
+            current_import_dirs.append(import_dir)
+    return bool(current_import_dirs) and tuple(current_import_dirs) == cached_import_dirs
 
 
 def configure_repo_imports(*, require_local: bool = False) -> str:

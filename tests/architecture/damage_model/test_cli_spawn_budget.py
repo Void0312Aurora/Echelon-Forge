@@ -111,13 +111,16 @@ def test_audit_cli_spawn_sites_stay_within_budget() -> None:
   )
 
 
-def test_every_cli_family_keeps_an_end_to_end_subprocess_smoke() -> None:
+def test_every_cli_family_keeps_exactly_one_end_to_end_subprocess_smoke() -> None:
   per_family = Counter(family for family, _ in _spawn_sites())
-  missing = sorted(REQUIRED_SMOKE_FAMILIES - set(per_family))
-  assert not missing, (
-    "each damage_model.py CLI family must keep at least one real subprocess "
-    "run so the entrypoint wiring stays covered; families with none left: "
-    f"{missing}"
+  expected = {family: 1 for family in sorted(REQUIRED_SMOKE_FAMILIES)}
+  actual = {family: per_family.get(family, 0) for family in sorted(REQUIRED_SMOKE_FAMILIES)}
+  assert actual == expected, (
+    "each damage_model.py CLI family keeps exactly one real subprocess smoke: "
+    "zero leaves the entrypoint wiring uncovered, and a second one is a "
+    "~13s spawn that belongs in-process "
+    "(tests.support.cli.run_maintenance_cli_in_process); "
+    f"drifted families: { {k: v for k, v in actual.items() if v != expected[k]} }"
   )
 
 
