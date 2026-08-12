@@ -41,7 +41,7 @@ lease 暴露的是常驻后端的 **fixture** 观测契约：固定空域的十�
 
 若 CP-5 落地形态与受评审版本不同，须重新核实。
 
-1. lease 载荷已经是此 fixture 面上策略前向想要的张量。
+1. lease 载荷已经具备此 fixture 面上设备侧消费者所取输入的布局。
    `pack_device_observation_kernel`
    （`src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu`）
    把仿真侧 field 主序 SoA 转置为 world 主序、C 连续的
@@ -67,7 +67,9 @@ lease 暴露的是常驻后端的 **fixture** 观测契约：固定空域的十�
 1. **Learner 等价消费 kernel。** 取代 smoke kernel 成为受测消费者（smoke
    kernel 可保留用于生命周期测试）。它必须：
    - 读取 lease 值张量的每一个元素，而非探测单个元素；
-   - 施加钉定的逐字段观测归一化（即策略前向对原始观测所做的前处理）；
+   - 施加钉定的逐字段观测归一化（对原始观测的一种代表性前推理变换；今天
+     没有维护中的策略消费此面，所以主张的是「代表性」，不是与某个生产前向
+     的等价）；
    - 写出常驻设备的策略输入缓冲，world 主序
      `[world_count, feature_count]` `float`，与 lease 载荷同一布局族；
    - 透传 ids，epoch 校验保持不变。
@@ -91,7 +93,7 @@ lease 暴露的是常驻后端的 **fixture** 观测契约：固定空域的十�
 
 | 决策 | CP-6 选择 | 为未来买到什么 |
 | --- | --- | --- |
-| 策略输入布局 | world 主序 `[world, feature]` `float`，C 连续 | 日后 DLPack/`__cuda_array_interface__` 导出零变换包装该缓冲；`torch.from_dlpack` 直接得到策略输入。 |
+| 策略输入布局 | world 主序 `[world, feature]` `float`，C 连续 | 日后 DLPack/`__cuda_array_interface__` 导出零变换包装该缓冲；`torch.from_dlpack` 零拷贝得到该张量。 |
 | stride 语义 | 沿用 element 单位的 `TensorDescriptor` | DLPack stride 即 element 单位；descriptor 无迁移。 |
 | 同步 | 保持基于事件的排序：lease 钉定 `producer_stream = 0`（契约中的 `legacy_default_stream`），消费者用 `cudaStreamWaitEvent` 对 ready event 排序，绝不做设备级同步 | ready event 就是未来 torch 导出所等待的对象。legacy 默认流身份是当前钉定而非终态：导出设计必须显式决定流互操作的映射。 |
 | 生命期/安全 | epoch 与共享所有权的 lease/receipt 语义不变 | 未来的 Python 句柄直接继承过期检测，无需另行发明。 |

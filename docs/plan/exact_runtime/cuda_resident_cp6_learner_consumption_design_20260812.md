@@ -49,8 +49,8 @@ iteration neither delivers nor claims it.
 
 Re-verify these if CP-5 lands in a different shape than reviewed.
 
-1. The lease payload is already the tensor a policy forward over this fixture
-   surface wants. `pack_device_observation_kernel`
+1. The lease payload already has the layout a device-side consumer of this
+   fixture surface takes as input. `pack_device_observation_kernel`
    (`src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu`)
    transposes the simulation's field-major SoA into a world-major,
    C-contiguous `[world_count, 15]` buffer and narrows `double` to finite-clipped
@@ -79,8 +79,10 @@ One iteration, one coherent commit, per program protocol.
    measured consumer (the smoke kernel may remain for lifecycle tests). It
    must:
    - read every element of the lease values tensor, not a probe element;
-   - apply the pinned per-field observation normalization (the preprocessing a
-     policy forward performs on raw observations);
+   - apply the pinned per-field observation normalization (a representative
+     pre-inference transformation of raw observations; no maintained policy
+     consumes this surface today, so "representative" is the claim, not
+     equivalence to a specific production forward);
    - write a device-resident policy-input buffer, world-major
      `[world_count, feature_count]` `float`, same layout family as the lease
      payload;
@@ -108,7 +110,7 @@ One iteration, one coherent commit, per program protocol.
 
 | Decision | CP-6 choice | What it buys the future |
 | --- | --- | --- |
-| Policy-input layout | world-major `[world, feature]` `float`, C-contiguous | A later DLPack/`__cuda_array_interface__` export wraps the buffer zero-transform; `torch.from_dlpack` yields the policy input directly. |
+| Policy-input layout | world-major `[world, feature]` `float`, C-contiguous | A later DLPack/`__cuda_array_interface__` export wraps the buffer zero-transform; `torch.from_dlpack` yields the tensor without a copy. |
 | Stride semantics | keep element-based `TensorDescriptor` | DLPack strides are element-based; no descriptor migration. |
 | Synchronization | keep the event-based ordering: the lease pins `producer_stream = 0` (`legacy_default_stream` per the contract) and the consumer orders itself with `cudaStreamWaitEvent` on the ready event, never a device-wide sync | The ready event is what a torch export waits on. The legacy-default-stream identity is a current pin, not the end state: the export design must decide the stream-interop mapping explicitly. |
 | Lifetime/safety | epochs + shared-owner lease/receipt semantics unchanged | A future Python handle inherits staleness detection instead of inventing it. |

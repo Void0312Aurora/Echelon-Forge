@@ -22,9 +22,9 @@ Last verified: `2026-08-12`
 CR2-6b measured world 1 on the resident lane at 7-36x slower than CPU and
 routed it to CPU as a retained advisory, not a maintained selector. CP-7 must
 either repair the small-batch overhead or freeze the routing rule explicitly.
-The CP-4 counters already located the overhead: the device is near idle even
-at 256 worlds, and each window pays a fixed host-side cost that world count
-does not amortize at the bottom of the matrix. CP-5 removed the largest
+The CP-4 counters showed the device near idle even at 256 worlds, which makes
+a fixed per-window host-side cost the leading hypothesis for what world count
+fails to amortize at the bottom of the matrix. CP-5 removed the largest
 per-window launch chain (six window-commit launches are one); what remains is
 the synchronization and copy skeleton inventoried below.
 
@@ -61,14 +61,16 @@ The copy skeleton per window:
   lease event machinery on top (the contract models it as +2 launches and +1
   synchronization); consumer-validation D2H stays deferred per CR2-3.
 
-What this inventory does not establish: how much wall clock each item costs.
-The CP-4 counters measured device-side utilization, not host API latency, so
-this note assigns no microsecond figures and does not claim the skeleton
-explains the observed 7-36x. The skeleton is the leading candidate because
-the counters ruled out device-side work as the bottleneck (near-idle device,
-zero local traffic, zero divergence), but confirming it -- and ranking the
-candidates below by measured contribution -- requires a host-side timeline
-capture (Nsight Systems over world-1 windows) as CP-7's first action.
+What this inventory does not establish: how much wall clock each item costs,
+or that the skeleton is the bottleneck at all. The CP-4 counters measured
+device-side utilization, not host API latency or kernel durations, so this
+note assigns no cost figures and does not claim the skeleton explains the
+observed 7-36x. The counters showed the device doing very little work per
+launch (near-idle occupancy, zero local traffic, zero divergence), which
+makes the host-side skeleton the leading *hypothesis* -- not an established
+cause. Confirming or refuting it, and ranking the candidates below by
+measured contribution, requires a host-side timeline capture (Nsight Systems
+over world-1 windows) as CP-7's first action.
 
 ## Fix candidates, ranked by expected win against blast radius
 
