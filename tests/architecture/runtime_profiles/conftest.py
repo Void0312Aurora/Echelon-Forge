@@ -28,7 +28,17 @@ _THIS_DIR = Path(__file__).resolve().parent
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+  # ``Path.resolve()`` is a filesystem round trip on Windows and this hook sees
+  # every collected item, so resolving per item charged the whole session
+  # roughly one syscall per test. The ~200 items in this directory come from
+  # ~20 modules; caching by the raw path keeps the resolution semantics
+  # identical while paying for it once per module.
+  resolved_paths: dict[str, Path] = {}
   for item in items:
-    path = Path(str(item.path)).resolve()
+    raw = str(item.path)
+    path = resolved_paths.get(raw)
+    if path is None:
+      path = Path(raw).resolve()
+      resolved_paths[raw] = path
     if path.parent == _THIS_DIR and path.name in GOVERNANCE_AUDIT_TIER_MODULES:
       item.add_marker(pytest.mark.governance_audit)

@@ -1,8 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest
-
-from tools.diagnostics.cuda_resident_cr2_full_window_compare import compare
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -72,6 +72,8 @@ def _payload(lane: str, backend_id: str) -> dict[str, object]:
 
 
 def test_full_window_comparator_accepts_lane_local_identifiers() -> None:
+    from tools.diagnostics.cuda_resident_cr2_full_window_compare import compare
+
     summary = compare(
         _payload("cpu_reference", "flecs_cpu_reference"),
         _payload("cuda_resident", "cuda_resident.rb7_phase_d"),
@@ -82,6 +84,8 @@ def test_full_window_comparator_accepts_lane_local_identifiers() -> None:
 
 
 def test_full_window_comparator_rejects_operation_divergence() -> None:
+    from tools.diagnostics.cuda_resident_cr2_full_window_compare import compare
+
     cpu = _payload("cpu_reference", "flecs_cpu_reference")
     cuda = _payload("cuda_resident", "cuda_resident.rb7_phase_d")
     cuda["operations"] = []

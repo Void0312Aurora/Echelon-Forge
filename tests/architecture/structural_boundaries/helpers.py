@@ -667,6 +667,10 @@ def bindings_runtime_text() -> str:
   return _binding_surface_text("bindings_runtime", "bindings_runtime_detail.h")
 
 
+def bindings_command_text() -> str:
+  return _binding_surface_text("bindings_command", "bindings_command_detail.h")
+
+
 def _diagnostics_introspection_text(text: str) -> str:
   """The diagnostics introspection surface, joined from its three sub-slices.
 

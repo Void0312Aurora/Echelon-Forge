@@ -130,7 +130,11 @@ def test_standards_governance_batch_a_closure_is_backed_by_code_and_standard() -
     "tasking",
     "ground_tasking_enums.h",
   )
-  bindings = _text("src", "interfaces", "python", "bindings_command.cpp")
+  # The command binding surface is decomposed into per-domain translation
+  # units; read the slices joined in registration order.
+  from tests.architecture.structural_boundaries.helpers import bindings_command_text
+
+  bindings = bindings_command_text()
   command_standard = _text(
     "docs",
     "domains",

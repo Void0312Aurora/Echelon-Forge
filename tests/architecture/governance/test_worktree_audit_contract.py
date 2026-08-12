@@ -9,7 +9,9 @@ against it would make this guard fail for the reason it was written.
 from __future__ import annotations
 
 import sys
+from functools import cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -18,25 +20,47 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import audit_worktrees as audit
+if TYPE_CHECKING:
+  from tools.maintenance import audit_worktrees as audit
 
 
-CLEAN = audit.StatusProbe(reachable=True, untracked=0)
-DUBIOUS_OWNERSHIP = audit.StatusProbe(
-  reachable=False,
-  untracked=0,
-  error="fatal: detected dubious ownership in repository at 'X'",
-  needed_ownership_override=True,
-)
+@cache
+def _audit():
+  """The producer module, imported on first use rather than at collection.
+
+  Every local binding resolves to the same ``sys.modules`` entry, so the
+  ``monkeypatch.setattr(audit, ...)`` cases below still patch the module the
+  tool itself reads from.
+  """
+  from tools.maintenance import audit_worktrees
+
+  return audit_worktrees
+
+
+# Shared probe fixtures. ``cache`` keeps these single instances so every case
+# still compares against one value, exactly as the module-level constants did.
+@cache
+def _clean():
+  return _audit().StatusProbe(reachable=True, untracked=0)
+
+
+@cache
+def _dubious_ownership():
+  return _audit().StatusProbe(
+    reachable=False,
+    untracked=0,
+    error="fatal: detected dubious ownership in repository at 'X'",
+    needed_ownership_override=True,
+  )
 
 
 def _entry(path: Path, branch: str = "refs/heads/topic") -> audit.WorktreeEntry:
-  return audit.WorktreeEntry(path=path.as_posix(), head="0" * 40, branch=branch)
+  return _audit().WorktreeEntry(path=path.as_posix(), head="0" * 40, branch=branch)
 
 
 def _probe(mapping: dict[str, audit.StatusProbe]):
   def probe(path: str) -> audit.StatusProbe:
-    return mapping.get(path, CLEAN)
+    return mapping.get(path, _clean())
 
   return probe
 
@@ -54,6 +78,7 @@ def test_inventory_listing_falls_back_when_ownership_blocks_the_entry_point(
   safe-directory override must still load the inventory so the per-worktree
   probes get their chance to report the ownership findings.
   """
+  audit = _audit()
   porcelain = (
     "worktree /repo\n"
     "HEAD 1111111111111111111111111111111111111111\n"
@@ -90,6 +115,8 @@ def test_inventory_listing_falls_back_when_ownership_blocks_the_entry_point(
 def test_inventory_listing_raises_when_even_the_override_fails(
   monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+  audit = _audit()
+
   class _Proc:
     returncode = 128
     stdout = ""
@@ -102,6 +129,7 @@ def test_inventory_listing_raises_when_even_the_override_fails(
 
 
 def test_parse_worktree_list_reads_porcelain_records() -> None:
+  audit = _audit()
   text = (
     "worktree /repo\n"
     "HEAD 1111111111111111111111111111111111111111\n"
@@ -125,6 +153,7 @@ def test_parse_worktree_list_reads_porcelain_records() -> None:
 
 
 def test_compliant_layout_produces_no_findings(tmp_path: Path) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   entries = [
     _entry(main_root, "refs/heads/main"),
@@ -139,6 +168,7 @@ def test_compliant_layout_produces_no_findings(tmp_path: Path) -> None:
 
 
 def test_worktree_outside_the_policy_root_is_reported(tmp_path: Path) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   stray = tmp_path / "elsewhere" / "stray"
   nested_but_wrong = main_root / ".codex" / "worktrees" / "promotion"
@@ -158,6 +188,7 @@ def test_worktree_outside_the_policy_root_is_reported(tmp_path: Path) -> None:
 
 
 def test_allowlisted_path_suppresses_the_placement_finding(tmp_path: Path) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   stray = tmp_path / "elsewhere" / "stray"
   entries = [_entry(main_root, "refs/heads/main"), _entry(stray)]
@@ -173,6 +204,7 @@ def test_allowlisted_path_suppresses_the_placement_finding(tmp_path: Path) -> No
 
 
 def test_unreadable_worktree_status_is_a_finding_rather_than_a_crash(tmp_path: Path) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   broken = main_root / ".worktrees" / "elevated"
   entries = [_entry(main_root, "refs/heads/main"), _entry(broken)]
@@ -180,7 +212,7 @@ def test_unreadable_worktree_status_is_a_finding_rather_than_a_crash(tmp_path: P
   result = audit.build_audit(
     entries,
     main_root=main_root.as_posix(),
-    probe=_probe({broken.as_posix(): DUBIOUS_OWNERSHIP}),
+    probe=_probe({broken.as_posix(): _dubious_ownership()}),
   )
 
   assert _codes(result) == ["worktree-status-unavailable"]
@@ -191,6 +223,7 @@ def test_unreadable_worktree_status_is_a_finding_rather_than_a_crash(tmp_path: P
 
 
 def test_untracked_residue_is_reported_against_the_budget(tmp_path: Path) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   dirty = main_root / ".worktrees" / "dirty"
   entries = [_entry(main_root, "refs/heads/main"), _entry(dirty)]
@@ -212,6 +245,7 @@ def test_untracked_residue_is_reported_against_the_budget(tmp_path: Path) -> Non
 
 
 def test_ownership_override_still_counts_untracked_residue(tmp_path: Path) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   broken = main_root / ".worktrees" / "elevated"
   entries = [_entry(main_root, "refs/heads/main"), _entry(broken)]
@@ -232,7 +266,7 @@ def test_ownership_override_still_counts_untracked_residue(tmp_path: Path) -> No
 
 
 def test_missing_worktree_directory_is_probed_without_invoking_git(tmp_path: Path) -> None:
-  probe = audit.probe_worktree_status((tmp_path / "gone").as_posix())
+  probe = _audit().probe_worktree_status((tmp_path / "gone").as_posix())
 
   assert probe.reachable is False
   assert probe.untracked == 0
@@ -242,10 +276,11 @@ def test_missing_worktree_directory_is_probed_without_invoking_git(tmp_path: Pat
 def test_count_untracked_counts_only_untracked_entries() -> None:
   status = "?? scratch.py\n M tracked.py\n?? build/\nA  added.py\n"
 
-  assert audit.count_untracked(status) == 2
+  assert _audit().count_untracked(status) == 2
 
 
 def test_audit_repository_treats_the_first_entry_as_the_main_worktree(tmp_path: Path) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   entries = [_entry(main_root, "refs/heads/main"), _entry(main_root / ".worktrees" / "topic")]
 
@@ -261,6 +296,7 @@ def test_audit_repository_treats_the_first_entry_as_the_main_worktree(tmp_path: 
 
 
 def test_audit_repository_rejects_an_empty_inventory(tmp_path: Path) -> None:
+  audit = _audit()
   with pytest.raises(audit.WorktreeAuditError):
     audit.audit_repository(tmp_path, probe=_probe({}), list_worktrees=lambda _repo_root: [])
 
@@ -276,6 +312,7 @@ def test_main_exits_zero_for_a_clean_inventory(
   output_format: str,
   expected_marker: str,
 ) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   entries = [_entry(main_root, "refs/heads/main"), _entry(main_root / ".worktrees" / "topic")]
   monkeypatch.setattr(audit, "list_repository_worktrees", lambda _repo_root, **_kwargs: entries)
@@ -292,11 +329,14 @@ def test_main_exits_non_zero_when_a_finding_is_raised(
   monkeypatch: pytest.MonkeyPatch,
   capsys: pytest.CaptureFixture[str],
 ) -> None:
+  audit = _audit()
   main_root = tmp_path / "repo"
   broken = main_root / ".worktrees" / "elevated"
   entries = [_entry(main_root, "refs/heads/main"), _entry(broken)]
   monkeypatch.setattr(audit, "list_repository_worktrees", lambda _repo_root, **_kwargs: entries)
-  monkeypatch.setattr(audit, "probe_worktree_status", _probe({broken.as_posix(): DUBIOUS_OWNERSHIP}))
+  monkeypatch.setattr(
+    audit, "probe_worktree_status", _probe({broken.as_posix(): _dubious_ownership()})
+  )
 
   exit_code = audit.main(["--repo-root", str(main_root)])
   output = capsys.readouterr().out
@@ -311,6 +351,8 @@ def test_main_reports_an_unreadable_inventory_without_traceback(
   monkeypatch: pytest.MonkeyPatch,
   capsys: pytest.CaptureFixture[str],
 ) -> None:
+  audit = _audit()
+
   def explode(_repo_root: Path, **_kwargs: object) -> list[audit.WorktreeEntry]:
     raise audit.WorktreeAuditError("cannot list worktrees")
 

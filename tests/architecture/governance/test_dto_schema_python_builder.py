@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import importlib
 import types
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tools.maintenance.dto_schema.generate import load_schemas
-from tools.maintenance.dto_schema.model import DtoSchema, Field
-from tools.maintenance.dto_schema.python_builder import render_builder_text
+if TYPE_CHECKING:
+  from tools.maintenance.dto_schema.model import DtoSchema
 
 
 def _load_builder_module(schema: DtoSchema, name: str) -> types.ModuleType:
+  from tools.maintenance.dto_schema.python_builder import render_builder_text
+
   source = render_builder_text(schema)
   module = types.ModuleType(name)
   exec(compile(source, f"<generated {name}>", "exec"), module.__dict__)
@@ -48,6 +50,8 @@ class _Source:
 
 
 def test_all_readonly_schema_generates_no_assigner() -> None:
+  from tools.maintenance.dto_schema.model import DtoSchema, Field
+
   schema = DtoSchema(
     name="readonly_probe",
     output_path="src/fake/readonly_probe.inc",
@@ -73,6 +77,8 @@ def test_all_readonly_schema_generates_no_assigner() -> None:
 
 
 def test_mixed_schema_assigner_skips_readonly_fields() -> None:
+  from tools.maintenance.dto_schema.model import DtoSchema, Field
+
   schema = DtoSchema(
     name="mixed_probe",
     output_path="src/fake/mixed_probe.inc",
@@ -107,6 +113,8 @@ def test_mixed_schema_assigner_skips_readonly_fields() -> None:
 
 
 def test_generated_builders_match_schema_writability() -> None:
+  from tools.maintenance.dto_schema.generate import load_schemas
+
   registrations = load_schemas()
   assert registrations
 

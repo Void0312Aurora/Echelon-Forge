@@ -13,8 +13,6 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import wp_doc_closure_audit as audit
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -24,6 +22,8 @@ def _write(path: Path, text: str) -> None:
 
 
 def test_wp_doc_closure_audit_accepts_current_wp9_package() -> None:
+  from tools.maintenance import wp_doc_closure_audit as audit
+
   result = audit.audit_wp(audit.REPO_ROOT, "WP9")
 
   assert result.folder == "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure"
@@ -32,6 +32,8 @@ def test_wp_doc_closure_audit_accepts_current_wp9_package() -> None:
 
 
 def test_wp_doc_closure_audit_reports_required_peer_and_index_gaps(tmp_path: Path) -> None:
+  from tools.maintenance import wp_doc_closure_audit as audit
+
   _write(
     tmp_path / "docs/task/simulation_architecture/archive/phase3c_closeout_20260808/README.md",
     "# Simulation Architecture\n\nWP10\n",
@@ -68,6 +70,8 @@ def test_wp_doc_closure_audit_reports_required_peer_and_index_gaps(tmp_path: Pat
 
 
 def test_wp_doc_closure_audit_normalizes_decimal_wp_labels() -> None:
+  from tools.maintenance import wp_doc_closure_audit as audit
+
   assert audit.normalize_wp_key("WP2.5") == "wp25"
   assert audit.normalize_wp_key("wp7_5") == "wp75"
   assert audit.display_wp("wp25") == "WP2.5"
@@ -75,6 +79,8 @@ def test_wp_doc_closure_audit_normalizes_decimal_wp_labels() -> None:
 
 
 def test_wp_doc_closure_audit_builds_stable_wp16_summary() -> None:
+  from tools.maintenance import wp_doc_closure_audit as audit
+
   result = audit.audit_wp(audit.REPO_ROOT, "WP16")
   summary = audit.build_wp_closure_summary(audit.REPO_ROOT, result)
 
@@ -99,6 +105,8 @@ def test_wp_doc_closure_audit_builds_stable_wp16_summary() -> None:
 
 
 def test_wp_doc_closure_audit_summary_command_is_read_only_and_stable() -> None:
+  from tools.maintenance import wp_doc_closure_audit as audit
+
   text_buffer = io.StringIO()
   json_buffer = io.StringIO()
 

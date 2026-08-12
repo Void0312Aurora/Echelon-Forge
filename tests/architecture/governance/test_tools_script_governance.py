@@ -4,8 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from tools.diagnostics.benchmark_registry import BENCHMARK_FAMILIES
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -130,6 +128,8 @@ def test_diagnostics_top_level_entrypoints_are_governed_by_function() -> None:
 
 
 def test_benchmark_families_are_registered_modules() -> None:
+  from tools.diagnostics.benchmark_registry import BENCHMARK_FAMILIES
+
   benchmarks_dir = REPO_ROOT / "tools" / "diagnostics" / "benchmarks"
   benchmark_modules = {
     path.stem

@@ -37,27 +37,50 @@ not create a new runtime import direction — parity is enforced here instead.
 from __future__ import annotations
 
 from dataclasses import MISSING, fields as dataclass_fields
+from functools import cache
 from pathlib import Path
+from types import ModuleType
 import re
 
 import pytest
 
-from python.runtime_bootstrap import ensure_repo_imports
 
-ensure_repo_imports()
+@cache
+def _generation_request_face() -> ModuleType:
+  """Import the Python face on first use rather than at collection time.
 
-from python.scenario.compiler.generation_request import (  # noqa: E402
-  SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION,
-  ScenarioGenerationEvidenceRef,
-  ScenarioGenerationRequest,
-)
-from tools.maintenance.dto_schema.schemas.scenario.scenario_generation_evidence_ref_fields import (  # noqa: E402
-  SCHEMA as EVIDENCE_REF_SCHEMA,
-)
-from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text  # noqa: E402
-from tools.maintenance.dto_schema.schemas.scenario.scenario_generation_request_metadata_fields import (  # noqa: E402
-  SCHEMA as REQUEST_METADATA_SCHEMA,
-)
+  ``python.scenario.compiler`` imports ``ef_py``, so the local build has to be
+  on the path first. ``tests/conftest.py`` already does that at
+  ``pytest_configure``; ``ensure_repo_imports`` is re-entrant but rescans the
+  build directories and PATH on every call, so repeating it at module import
+  time charged every collect of this directory for a bootstrap that had
+  already happened.
+  """
+  from python.runtime_bootstrap import ensure_repo_imports
+
+  ensure_repo_imports()
+
+  from python.scenario.compiler import generation_request
+
+  return generation_request
+
+
+@cache
+def _evidence_ref_schema():
+  from tools.maintenance.dto_schema.schemas.scenario.scenario_generation_evidence_ref_fields import (
+    SCHEMA,
+  )
+
+  return SCHEMA
+
+
+@cache
+def _request_metadata_schema():
+  from tools.maintenance.dto_schema.schemas.scenario.scenario_generation_request_metadata_fields import (
+    SCHEMA,
+  )
+
+  return SCHEMA
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -132,6 +155,8 @@ def _assert_cpp_seam_adopts_generated_include(struct_name: str, schema) -> None:
 
 
 def _parsed_inc_members(schema) -> list[tuple[str, str, str]]:
+  from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
+
   inc_path = REPO_ROOT / schema.output_path
   inc_text = inc_path.read_text(encoding="utf-8")
   parsed = parse_xmacro_text(inc_text, frozenset({_schema_field_macro(schema)}))
@@ -140,10 +165,10 @@ def _parsed_inc_members(schema) -> list[tuple[str, str, str]]:
 
 def test_cpp_seams_adopt_generated_includes() -> None:
   _assert_cpp_seam_adopts_generated_include(
-    "ScenarioGenerationEvidenceMetadataRef", EVIDENCE_REF_SCHEMA
+    "ScenarioGenerationEvidenceMetadataRef", _evidence_ref_schema()
   )
   _assert_cpp_seam_adopts_generated_include(
-    "ScenarioGenerationRequestMetadata", REQUEST_METADATA_SCHEMA
+    "ScenarioGenerationRequestMetadata", _request_metadata_schema()
   )
 
 
@@ -173,26 +198,27 @@ def test_checked_in_incs_match_schema_names_types_defaults_and_order() -> None:
   # Field-level re-verification so this gate stands alone; byte-exact
   # freshness (including the generated Python builder) is owned by
   # test_dto_schema_freshness.py via generate.py --check.
-  assert _parsed_inc_members(EVIDENCE_REF_SCHEMA) == _schema_members(
-    EVIDENCE_REF_SCHEMA
-  )
-  assert _parsed_inc_members(REQUEST_METADATA_SCHEMA) == _schema_members(
-    REQUEST_METADATA_SCHEMA
+  evidence_ref_schema = _evidence_ref_schema()
+  request_metadata_schema = _request_metadata_schema()
+  assert _parsed_inc_members(evidence_ref_schema) == _schema_members(evidence_ref_schema)
+  assert _parsed_inc_members(request_metadata_schema) == _schema_members(
+    request_metadata_schema
   )
 
 
 def test_contract_version_constant_value_parity() -> None:
+  face = _generation_request_face()
   constants_text = CONTRACT_CONSTANTS_HEADER.read_text(encoding="utf-8")
   match = re.search(
     r'kScenarioGenerationContractVersionRequestV1\s*=\s*"([^"]+)"',
     constants_text,
   )
   assert match is not None
-  assert match.group(1) == SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION
+  assert match.group(1) == face.SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION
   # The schema's C++ default expression names exactly that constant.
   contract_field = next(
     field
-    for field in REQUEST_METADATA_SCHEMA.fields
+    for field in _request_metadata_schema().fields
     if field.name == "contract_version"
   )
   assert contract_field.default == (
@@ -202,7 +228,7 @@ def test_contract_version_constant_value_parity() -> None:
 
 def _python_default_for_schema_field(field) -> object:
   if field.name == "contract_version":
-    return SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION
+    return _generation_request_face().SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION
   if field.cpp_type == "std::string":
     assert field.default.startswith('"') and field.default.endswith('"')
     return field.default[1:-1]
@@ -241,23 +267,25 @@ def _assert_python_face_matches_schema(schema, dataclass_type) -> None:
 
 
 def test_python_faces_match_schema_names_and_defaults() -> None:
+  face = _generation_request_face()
   _assert_python_face_matches_schema(
-    EVIDENCE_REF_SCHEMA, ScenarioGenerationEvidenceRef
+    _evidence_ref_schema(), face.ScenarioGenerationEvidenceRef
   )
   _assert_python_face_matches_schema(
-    REQUEST_METADATA_SCHEMA, ScenarioGenerationRequest
+    _request_metadata_schema(), face.ScenarioGenerationRequest
   )
 
 
 def test_python_serialization_order_and_values_follow_schema() -> None:
-  evidence = ScenarioGenerationEvidenceRef(
+  face = _generation_request_face()
+  evidence = face.ScenarioGenerationEvidenceRef(
     ref_id="replay-envelope-1",
     evidence_kind="replay_envelope",
     provenance_label="maintained-run",
   )
   evidence_metadata = evidence.to_metadata()
   assert list(evidence_metadata) == [
-    field.name for field in EVIDENCE_REF_SCHEMA.fields
+    field.name for field in _evidence_ref_schema().fields
   ]
   assert evidence_metadata == {
     "ref_id": "replay-envelope-1",
@@ -265,7 +293,7 @@ def test_python_serialization_order_and_values_follow_schema() -> None:
     "provenance_label": "maintained-run",
   }
 
-  request = ScenarioGenerationRequest(
+  request = face.ScenarioGenerationRequest(
     request_id="req-1",
     generation_kind="scenario_variation",
     source="counterfactual_branch",
@@ -280,13 +308,13 @@ def test_python_serialization_order_and_values_follow_schema() -> None:
   metadata = request.to_metadata()
   assert list(metadata) == [
     field.name
-    for field in REQUEST_METADATA_SCHEMA.fields
+    for field in _request_metadata_schema().fields
     if field.name != CPP_ONLY_PRESENCE_FLAG
   ]
   assert metadata == {
     "request_id": "req-1",
     "request_version": "1",
-    "contract_version": SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION,
+    "contract_version": face.SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION,
     "generation_kind": "scenario_variation",
     "source": "counterfactual_branch",
     "generator_version": "gen-1.0",

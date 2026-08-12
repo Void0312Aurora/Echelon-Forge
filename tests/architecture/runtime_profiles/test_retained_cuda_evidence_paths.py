@@ -17,20 +17,10 @@ its first manifest read and its parity output would have recreated the retired
 from __future__ import annotations
 
 import json
+from functools import cache
 from pathlib import Path
 
-from tools.diagnostics.cuda_resident_retained_evidence_paths import (
-    LOGICAL_EVIDENCE_PREFIX,
-    PHYSICAL_EVIDENCE_PREFIX,
-    logical_relative,
-    physical_relative,
-)
-
 ROOT = Path(__file__).resolve().parents[3]
-FIXTURE_ROOT = ROOT / PHYSICAL_EVIDENCE_PREFIX
-MATRIX_MANIFEST = (
-    FIXTURE_ROOT / "cuda_resident_cr2_matrix_evidence_20260804" / "manifest.json"
-)
 
 # Descriptor groups whose recorded paths must resolve to a file on disk. Binary
 # probe executables are deliberately excluded: they are build outputs that only
@@ -39,8 +29,25 @@ MATRIX_MANIFEST = (
 RESOLVABLE_GROUPS = ("source_inputs", "prior_evidence_inputs")
 
 
+# The fixture root is derived from the owner module's prefix constant, so it
+# cannot be a plain module-level constant without importing the owner at
+# collection time. ``cache`` keeps every case looking at one value.
+@cache
+def _fixture_root() -> Path:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        PHYSICAL_EVIDENCE_PREFIX,
+    )
+
+    return ROOT / PHYSICAL_EVIDENCE_PREFIX
+
+
+@cache
+def _matrix_manifest_path() -> Path:
+    return _fixture_root() / "cuda_resident_cr2_matrix_evidence_20260804" / "manifest.json"
+
+
 def _manifest() -> dict[str, object]:
-    value = json.loads(MATRIX_MANIFEST.read_text(encoding="utf-8"))
+    value = json.loads(_matrix_manifest_path().read_text(encoding="utf-8"))
     assert isinstance(value, dict)
     return value
 
@@ -63,6 +70,13 @@ def _recorded_paths(value: object) -> list[str]:
 
 
 def test_translation_is_an_exact_round_trip() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        LOGICAL_EVIDENCE_PREFIX,
+        PHYSICAL_EVIDENCE_PREFIX,
+        logical_relative,
+        physical_relative,
+    )
+
     logical = LOGICAL_EVIDENCE_PREFIX + "cuda_resident_cr2_closure_20260805.json"
     physical = PHYSICAL_EVIDENCE_PREFIX + "cuda_resident_cr2_closure_20260805.json"
 
@@ -72,6 +86,11 @@ def test_translation_is_an_exact_round_trip() -> None:
 
 
 def test_translation_leaves_unrelated_paths_untouched() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        logical_relative,
+        physical_relative,
+    )
+
     for path in (
         "src/runtime/contracts/cuda_resident_matrix_contract.h",
         "tools/diagnostics/cuda_resident_cr2_matrix_probe.py",
@@ -82,6 +101,12 @@ def test_translation_leaves_unrelated_paths_untouched() -> None:
 
 
 def test_only_the_leading_prefix_occurrence_is_translated() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        LOGICAL_EVIDENCE_PREFIX,
+        PHYSICAL_EVIDENCE_PREFIX,
+        physical_relative,
+    )
+
     # A recorded path that mentions the prefix twice must translate only the
     # leading one, matching the single-replacement behavior the manifests were
     # captured against.
@@ -93,6 +118,10 @@ def test_only_the_leading_prefix_occurrence_is_translated() -> None:
 
 
 def test_matrix_manifest_retains_the_logical_prefix() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        LOGICAL_EVIDENCE_PREFIX,
+    )
+
     # If a future change rewrites the manifests instead of translating, this gate
     # should fail loudly rather than let the recorded hashes drift silently.
     recorded = _recorded_paths(_manifest())
@@ -102,8 +131,13 @@ def test_matrix_manifest_retains_the_logical_prefix() -> None:
 
 
 def test_every_resolvable_manifest_input_resolves_inside_the_fixture_tree() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        LOGICAL_EVIDENCE_PREFIX,
+        physical_relative,
+    )
+
     manifest = _manifest()
-    fixture_root = FIXTURE_ROOT.resolve()
+    fixture_root = _fixture_root().resolve()
     repo_root = ROOT.resolve()
 
     checked = 0
@@ -130,8 +164,10 @@ def test_every_resolvable_manifest_input_resolves_inside_the_fixture_tree() -> N
 
 
 def test_every_campaign_report_resolves_inside_the_fixture_tree() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import physical_relative
+
     manifest = _manifest()
-    fixture_root = FIXTURE_ROOT.resolve()
+    fixture_root = _fixture_root().resolve()
 
     checked = 0
     campaigns = manifest["campaigns"]
@@ -152,6 +188,11 @@ def test_every_campaign_report_resolves_inside_the_fixture_tree() -> None:
 
 
 def test_parity_output_never_recreates_the_retired_tree() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        LOGICAL_EVIDENCE_PREFIX,
+        physical_relative,
+    )
+
     manifest = _manifest()
     recorded = manifest["parity_output_path"]
     assert isinstance(recorded, str)
@@ -161,17 +202,25 @@ def test_parity_output_never_recreates_the_retired_tree() -> None:
 
     resolved = (ROOT / physical_relative(recorded)).resolve()
 
-    assert resolved.is_relative_to(FIXTURE_ROOT.resolve())
+    assert resolved.is_relative_to(_fixture_root().resolve())
     assert not resolved.is_relative_to((ROOT / "docs").resolve())
 
 
 def test_no_retired_evidence_directory_is_tracked() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        LOGICAL_EVIDENCE_PREFIX,
+    )
+
     # The migration retired this tree; nothing in the repository should recreate
     # it, whether by a collector write or a new manifest.
     assert not (ROOT / LOGICAL_EVIDENCE_PREFIX).exists()
 
 
 def test_collector_and_closure_validator_share_the_single_resolver() -> None:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import (
+        LOGICAL_EVIDENCE_PREFIX,
+    )
+
     # Guard against the duplication that caused the original defect: each module
     # must call the shared helper rather than inline its own prefix replacement.
     for relative in (

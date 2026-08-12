@@ -7,8 +7,6 @@ import sys
 
 import pytest
 
-from tools.maintenance.dto_schema import generate
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GENERATOR = REPO_ROOT / "tools" / "maintenance" / "dto_schema" / "generate.py"
@@ -741,6 +739,8 @@ def test_classify_generated_files_case_handling() -> None:
   never reach the --write deletion loop on any platform. The strict
   identity regime remains available to callers that inject it explicitly.
   """
+  from tools.maintenance.dto_schema import generate
+
   owned = {
     f"{_BUILDER_DIR}/alpha_builder.py",
     f"{_BUILDER_DIR}/__init__.py",
@@ -787,6 +787,8 @@ def test_scan_generated_package_matches_py_suffix_case_insensitively(
   tmp_path: Path,
 ) -> None:
   """A stale builder cannot dodge the scan through an upper-case extension."""
+  from tools.maintenance.dto_schema import generate
+
   package_dir = tmp_path / _BUILDER_DIR
   package_dir.mkdir(parents=True)
   (package_dir / "ROGUE.PY").write_bytes(b"# rogue\n")
@@ -802,6 +804,8 @@ def test_check_and_write_fail_closed_on_case_mismatch(
   capsys: pytest.CaptureFixture[str],
 ) -> None:
   """An injected case mismatch makes --check fail and --write refuse deletion."""
+  from tools.maintenance.dto_schema import generate
+
   actual = f"{_BUILDER_DIR}/Alpha_Builder.py"
   registered = f"{_BUILDER_DIR}/alpha_builder.py"
   monkeypatch.setattr(
@@ -833,6 +837,8 @@ def test_registry_and_schema_directory_must_agree(
   monkeypatch: pytest.MonkeyPatch,
 ) -> None:
   """Every command refuses to run when schemas/ and SCHEMA_MODULES diverge."""
+  from tools.maintenance.dto_schema import generate
+
   unregistered, missing = generate.registry_inconsistencies(
     generate.SCHEMA_MODULES, generate.SCHEMAS_DIR
   )

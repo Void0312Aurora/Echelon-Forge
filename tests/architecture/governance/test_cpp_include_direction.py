@@ -17,17 +17,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tools.architecture.cpp_include_graph import (
-  FINE_GROUP_ALLOWED_TARGETS,
-  NO_INCOMING_MAINTAINED_EDGES,
-  IncludeEdge,
-  build_edges,
-  classify_fine_group,
-  is_violation,
-)
+if TYPE_CHECKING:
+  from tools.architecture.cpp_include_graph import IncludeEdge
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ALLOWLIST_FIXTURE = (
@@ -67,6 +62,11 @@ def _allowlist_by_fingerprint() -> dict[str, dict]:
 
 
 def test_allowlist_fixture_entries_are_well_formed_and_match_current_classification() -> None:
+  from tools.architecture.cpp_include_graph import (
+    FINE_GROUP_ALLOWED_TARGETS,
+    classify_fine_group,
+  )
+
   allowlist = _allowlist_by_fingerprint()
   assert allowlist, "expected at least one ratcheted entry to exercise the allowlist path"
 
@@ -103,6 +103,8 @@ def test_allowlist_fixture_entries_are_well_formed_and_match_current_classificat
 
 
 def test_include_direction_gate_has_no_new_violations_beyond_the_ratchet_allowlist() -> None:
+  from tools.architecture.cpp_include_graph import build_edges, is_violation
+
   allowlist = _allowlist_by_fingerprint()
   edges = build_edges()
   found_violations = [edge for edge in edges if is_violation(edge)]
@@ -139,6 +141,8 @@ def test_facade_application_layer_has_no_incoming_edges_outside_its_permitted_ca
   content, components, models, systems, or contracts code may #include
   runtime/facade; only the Python binding boundary and the exempt
   dev/test/GPU-experiment consumer groups may."""
+  from tools.architecture.cpp_include_graph import build_edges
+
   edges = build_edges()
   offenders = [
     edge
@@ -154,6 +158,8 @@ def test_facade_application_layer_has_no_incoming_edges_outside_its_permitted_ca
 def test_content_layer_never_depends_on_engine_facade_mission_or_python_bindings() -> None:
   """content/README.md: 'content/ does not depend on core/engine,
   runtime/facade, or interfaces/python.'"""
+  from tools.architecture.cpp_include_graph import build_edges
+
   edges = build_edges()
   offenders = [
     edge
@@ -170,6 +176,11 @@ def test_nothing_outside_the_tool_or_test_groups_depends_on_tools_or_tests() -> 
   """tools/README.md: '...Reverse dependency from runtime/facade, core/, or
   interfaces/python' is prohibited -- i.e. tools/ and the C++ test suite are
   consumers only and must never be a maintained #include target."""
+  from tools.architecture.cpp_include_graph import (
+    NO_INCOMING_MAINTAINED_EDGES,
+    build_edges,
+  )
+
   edges = build_edges()
   offenders = [
     edge
@@ -186,6 +197,8 @@ def test_gate_rejects_an_injected_violation_not_covered_by_the_allowlist(tmp_pat
   """Negative self-test (no real source files touched): build a throwaway
   `src/` tree with one new components -> core_engine violation and confirm
   the same allowlist cross-check the real gate runs would fail on it."""
+  from tools.architecture.cpp_include_graph import build_edges, is_violation
+
   fake_repo = tmp_path / "fake_repo"
   fake_src = fake_repo / "src"
   (fake_src / "components").mkdir(parents=True)
@@ -283,7 +296,7 @@ def test_the_contracts_to_mission_step_request_edge_stays_held_with_its_adjudica
 def test_direction_policy_groups_stay_in_sync_with_the_maintained_src_tree() -> None:
   """Every file under src/** must resolve to a known fine-grained group so
   the census/gate cannot silently ignore a newly-added top-level directory."""
-  from tools.architecture.cpp_include_graph import iter_source_files
+  from tools.architecture.cpp_include_graph import classify_fine_group, iter_source_files
 
   unclassified = [
     path

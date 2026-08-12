@@ -66,7 +66,6 @@ import re
 import pytest
 
 from tests.support.paths import REPO_ROOT
-from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
 
 
 _SHIP_INC_PATH = REPO_ROOT / "src" / "content" / "detail" / "ship_platform_fields.inc"
@@ -199,6 +198,8 @@ _MEMBER_RE = re.compile(
 
 
 def _parse_inc_fields(inc_text: str, macro: str):
+    from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
+
     return parse_xmacro_text(inc_text, frozenset({macro})).fields
 
 

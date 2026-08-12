@@ -53,7 +53,6 @@ import re
 import pytest
 
 from tests.support.paths import REPO_ROOT
-from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
 
 
 _INC_PATH = REPO_ROOT / "src" / "content" / "detail" / "unit_definition_direct_fields.inc"
@@ -173,6 +172,8 @@ _EXCLUDED_KEYS_SPOT: tuple[str, ...] = (
 
 
 def _parse_inc_fields(inc_text: str):
+    from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
+
     return parse_xmacro_text(inc_text, _MACROS).fields
 
 

@@ -8,10 +8,6 @@ from pathlib import Path
 
 import pytest
 
-from tools.maintenance import document_link_audit as audit
-from tools.maintenance import document_scope
-from tools.maintenance import translate_docs_batch
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -24,6 +20,8 @@ def _write(path: Path, text: str = "# Document\n") -> None:
 
 
 def test_translate_docs_batch_reexports_shared_scope_helpers(tmp_path: Path) -> None:
+  from tools.maintenance import translate_docs_batch
+
   docs_root = tmp_path / "docs"
   readme = docs_root / "README.md"
   architecture_reference = docs_root / "architecture/reference/t8_g4_truth_leak_inventory.md"
@@ -49,6 +47,8 @@ def test_translate_docs_batch_reexports_shared_scope_helpers(tmp_path: Path) -> 
 def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
   tmp_path: Path,
 ) -> None:
+  from tools.maintenance import translate_docs_batch
+
   docs_root = tmp_path / "docs"
   _write(docs_root / "README.md", "# Current English\n")
   _write(docs_root / "README.zh.md", "# 当前中文\n")
@@ -101,6 +101,8 @@ def test_selective_cluster_refresh_preserves_unreviewed_registry_entries(
 
 
 def test_selective_cluster_refresh_rejects_unknown_pair(tmp_path: Path) -> None:
+  from tools.maintenance import translate_docs_batch
+
   docs_root = tmp_path / "docs"
   _write(docs_root / "README.md")
   _write(docs_root / "README.zh.md")
@@ -119,6 +121,8 @@ def test_selective_cluster_refresh_rejects_unknown_pair(tmp_path: Path) -> None:
 
 
 def test_repository_bilingual_registry_matches_the_maintained_surface() -> None:
+  from tools.maintenance import translate_docs_batch
+
   docs_root = REPO_ROOT / "docs"
   registry_path = docs_root / "engineering/documentation/reference/bilingual_document_clusters.json"
   entries = json.loads(registry_path.read_text(encoding="utf-8"))["pairs"]
@@ -155,6 +159,8 @@ def test_repository_bilingual_registry_matches_the_maintained_surface() -> None:
 
 
 def test_audit_accepts_relative_files_directories_fragments_and_external_links(tmp_path: Path) -> None:
+  from tools.maintenance import document_link_audit as audit
+
   _write(tmp_path / "README.md", "[docs](docs/README.md)\n")
   _write(
     tmp_path / "docs/README.md",
@@ -183,6 +189,8 @@ def test_audit_accepts_relative_files_directories_fragments_and_external_links(t
 
 
 def test_audit_reports_missing_escape_and_machine_absolute_targets(tmp_path: Path) -> None:
+  from tools.maintenance import document_link_audit as audit
+
   _write(
     tmp_path / "README.md",
     "\n".join(
@@ -209,6 +217,8 @@ def test_audit_reports_missing_escape_and_machine_absolute_targets(tmp_path: Pat
 
 
 def test_archive_sources_are_excluded_but_maintained_archive_targets_are_validated(tmp_path: Path) -> None:
+  from tools.maintenance import document_link_audit as audit
+
   _write(tmp_path / "README.md")
   _write(
     tmp_path / "docs/README.md",
@@ -234,6 +244,8 @@ def test_archive_sources_are_excluded_but_maintained_archive_targets_are_validat
 
 
 def test_full_tree_adds_non_strict_docs_without_adding_archive_sources(tmp_path: Path) -> None:
+  from tools.maintenance import document_link_audit as audit
+
   _write(tmp_path / "README.md")
   _write(tmp_path / "docs/README.md")
   _write(tmp_path / "docs/project/notes/draft.md", "[missing](missing.md)\n")
@@ -247,6 +259,8 @@ def test_full_tree_adds_non_strict_docs_without_adding_archive_sources(tmp_path:
 
 
 def test_default_scope_link_audits_maintained_english_work_documents(tmp_path: Path) -> None:
+  from tools.maintenance import document_link_audit as audit
+
   _write(tmp_path / "README.md")
   _write(tmp_path / "docs/README.md")
   _write(
@@ -276,6 +290,10 @@ def test_default_scope_link_audits_maintained_english_work_documents(tmp_path: P
 def test_promoted_work_pair_reenters_the_strict_bilingual_surface(
   tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+  # Both names resolve to the already-imported sys.modules entries, so the
+  # monkeypatch below still reaches the module translate_docs_batch reads.
+  from tools.maintenance import document_scope, translate_docs_batch
+
   docs_root = tmp_path / "docs"
   promoted_en = docs_root / "learning/work/issues/temporal_policy_roadmap.md"
   promoted_zh = docs_root / "learning/work/issues/temporal_policy_roadmap.zh.md"
@@ -320,6 +338,8 @@ def test_promoted_work_pair_reenters_the_strict_bilingual_surface(
 
 
 def test_json_cli_is_strict_and_machine_readable(tmp_path: Path) -> None:
+  from tools.maintenance import document_link_audit as audit
+
   _write(tmp_path / "README.md", "[missing](missing.md)\n")
   output = io.StringIO()
   with redirect_stdout(output):
@@ -332,12 +352,16 @@ def test_json_cli_is_strict_and_machine_readable(tmp_path: Path) -> None:
 
 
 def test_repository_maintained_document_links_are_clean() -> None:
+  from tools.maintenance import document_link_audit as audit
+
   result = audit.audit_repository(REPO_ROOT)
 
   assert result.issues == []
 
 
 def test_retired_plan_and_task_roots_are_outside_maintained_link_scope() -> None:
+  from tools.maintenance import document_link_audit as audit
+
   selected = {
     path.relative_to(REPO_ROOT).as_posix()
     for path in audit.select_documents(REPO_ROOT)

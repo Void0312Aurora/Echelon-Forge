@@ -4,8 +4,6 @@ import json
 import subprocess
 from pathlib import Path
 
-from tools.diagnostics.cuda_resident_retained_evidence_paths import physical_relative
-
 
 ROOT = Path(__file__).resolve().parents[3]
 HEADER_EXTENSIONS = {".cuh", ".h", ".hh", ".hpp"}
@@ -84,6 +82,8 @@ def _line_limits(path: str, thresholds: dict[str, object]) -> tuple[int, int, in
 
 
 def _artifact_paths(policy: dict[str, object]) -> list[str]:
+    from tools.diagnostics.cuda_resident_retained_evidence_paths import physical_relative
+
     scope = policy["scope"]
     assert isinstance(scope, dict)
     prefixes = scope["artifact_path_prefixes"]

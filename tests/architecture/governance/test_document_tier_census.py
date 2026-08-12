@@ -16,15 +16,6 @@ from pathlib import Path
 
 import pytest
 
-from tools.maintenance.document_scope import (
-  DOCUMENT_TIERS,
-  classify_document,
-  is_retained_doc,
-  is_sealed_evidence_doc,
-  is_strict_bilingual_doc,
-  requires_english_companion,
-)
-
 pytestmark = pytest.mark.governance_audit
 
 
@@ -48,6 +39,8 @@ def _tracked_markdown() -> list[str]:
 
 
 def _measure() -> dict[str, object]:
+  from tools.maintenance.document_scope import DOCUMENT_TIERS, classify_document
+
   tracked = _tracked_markdown()
   tiers = {relative: classify_document(REPO_ROOT / relative, DOCS_ROOT) for relative in tracked}
   chinese_only = [
@@ -82,6 +75,8 @@ def _paths_in(census: dict[str, object], tier: str) -> list[str]:
 
 
 def test_every_tracked_document_resolves_to_exactly_one_tier(census: dict[str, object]) -> None:
+  from tools.maintenance.document_scope import DOCUMENT_TIERS
+
   tiers: dict[str, str] = census["tiers"]  # type: ignore[assignment]
   snapshot: dict = census["snapshot"]  # type: ignore[assignment]
 
@@ -94,6 +89,12 @@ def test_every_tracked_document_resolves_to_exactly_one_tier(census: dict[str, o
 
 
 def test_tier_predicates_agree_with_the_classifier(census: dict[str, object]) -> None:
+  from tools.maintenance.document_scope import (
+    is_retained_doc,
+    is_sealed_evidence_doc,
+    is_strict_bilingual_doc,
+  )
+
   tiers: dict[str, str] = census["tiers"]  # type: ignore[assignment]
   violations: list[str] = []
 
@@ -115,6 +116,8 @@ def test_tier_predicates_agree_with_the_classifier(census: dict[str, object]) ->
 
 
 def test_unmapped_path_shapes_still_land_in_a_tier(tmp_path: Path) -> None:
+  from tools.maintenance.document_scope import classify_document
+
   docs_root = tmp_path / "docs"
   shapes = {
     "newowner/an_unregistered_page.md": "tier_b",
@@ -148,6 +151,8 @@ def test_tier_d_is_sealed_dated_evidence_under_a_reviews_subtree(
 
 
 def test_tier_d_chinese_pages_are_not_a_translation_backlog(census: dict[str, object]) -> None:
+  from tools.maintenance.document_scope import requires_english_companion
+
   chinese_only: list[str] = census["chinese_only"]  # type: ignore[assignment]
   tiers: dict[str, str] = census["tiers"]  # type: ignore[assignment]
   sealed_chinese = [relative for relative in chinese_only if tiers[relative] == "tier_d"]
@@ -212,7 +217,7 @@ def test_tier_c_scratch_stays_out_of_the_maintained_selection(tmp_path: Path) ->
   ``filter_paths`` would feed scratch into the strict audit and the
   translation surface.
   """
-  from tools.maintenance.document_scope import filter_paths
+  from tools.maintenance.document_scope import classify_document, filter_paths
 
   docs = tmp_path / "docs"
   scratch = docs / "operations" / "temp" / "scratch.md"
@@ -233,6 +238,7 @@ def test_translation_collector_refuses_sealed_evidence(tmp_path: Path) -> None:
   """Tier D has no translation lane, not even under --include-local-only."""
   import argparse
 
+  from tools.maintenance.document_scope import classify_document
   from tools.maintenance.translate_docs_batch import collect_source_files
 
   docs = tmp_path / "docs"
