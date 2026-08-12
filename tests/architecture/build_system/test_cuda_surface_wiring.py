@@ -524,13 +524,13 @@ _SURFACE_FLAGS = {
 }
 
 
-def _workflow_command_lines(workflow: str) -> list[str]:
-  """Every non-comment line of every ``run:`` block in the workflow.
+def _workflow_logical_commands(workflow: str) -> list[list[str]]:
+  """Every ``run:`` block command as a token list.
 
-  YAML comments start the line (after indentation) with ``#``; a flag or a
-  target mentioned only in a comment is prose, not configuration, so it must
-  never satisfy the surface contract."""
-  lines: list[str] = []
+  YAML full-line comments and inline shell comments are stripped, and
+  backslash continuations are joined, so a flag can only count where it is an
+  actual argument of an actual invocation -- never prose."""
+  physical: list[str] = []
   in_run = False
   run_indent = 0
   for raw in workflow.splitlines():
@@ -544,21 +544,43 @@ def _workflow_command_lines(workflow: str) -> list[str]:
       if stripped and indent <= run_indent:
         in_run = False
       elif stripped and not stripped.startswith("#"):
-        lines.append(stripped)
-  return lines
+        physical.append(re.sub(r"\s#.*$", "", stripped).strip())
+  commands: list[list[str]] = []
+  current = ""
+  for line in physical:
+    if line.endswith("\\"):
+      current += line[:-1] + " "
+      continue
+    current += line
+    if current.strip():
+      commands.append(current.split())
+    current = ""
+  if current.strip():
+    commands.append(current.split())
+  return commands
 
 
 def _cuda_lane_flag_violations(workflow: str) -> list[str]:
-  commands = _workflow_command_lines(workflow)
-  built_targets = {
-    target
-    for target in _SURFACE_FLAGS
-    if any(re.search(rf"(^|\s){re.escape(target)}(\s|\\|$)", line) for line in commands)
-  }
+  """Bind each surface target a ``cmake --build`` invocation names to the
+  ``-D`` token an actual CMake *configure* invocation must carry."""
+  commands = _workflow_logical_commands(workflow)
+  configure_tokens: set[str] = set()
+  built_targets: set[str] = set()
+  for tokens in commands:
+    if not tokens or tokens[0] != "cmake":
+      continue
+    if "--build" in tokens:
+      if "--target" in tokens:
+        for token in tokens[tokens.index("--target") + 1 :]:
+          if token.startswith("-"):
+            break
+          built_targets.add(token)
+    else:
+      configure_tokens.update(tokens)
   violations = []
-  for target in sorted(built_targets):
+  for target in sorted(built_targets & set(_SURFACE_FLAGS)):
     flag = _SURFACE_FLAGS[target]
-    if not any(flag in line for line in commands):
+    if flag not in configure_tokens:
       violations.append(
         f"the compile lane builds {target} but its run commands never pass {flag}, "
         "so its .cu sources are silently excluded from the build"
@@ -572,29 +594,55 @@ def test_cuda_compile_lane_enables_the_flag_behind_every_surface_it_builds() -> 
   flag, so a lane that builds a surface's target without enabling the matching
   flag compiles only C++ fallbacks while claiming device coverage -- exactly
   what happened when ef_gpu_experiments was built without
-  EF_ENABLE_CUDA_EXPERIMENTS. Only run-command lines count: mentions inside
-  YAML comments are prose and cannot satisfy the contract."""
+  EF_ENABLE_CUDA_EXPERIMENTS. Only an actual CMake configure invocation can
+  satisfy the flag requirement; comments and unrelated commands cannot."""
   workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
   assert _cuda_lane_flag_violations(workflow) == []
   # The real lane must actually build both surfaces; if a target disappears
   # from the lane entirely, that is its own regression.
-  commands = _workflow_command_lines(workflow)
+  built: set[str] = set()
+  for tokens in _workflow_logical_commands(workflow):
+    if tokens and tokens[0] == "cmake" and "--build" in tokens and "--target" in tokens:
+      for token in tokens[tokens.index("--target") + 1 :]:
+        if token.startswith("-"):
+          break
+        built.add(token)
   for target in _SURFACE_FLAGS:
-    assert any(re.search(rf"(^|\s){re.escape(target)}(\s|\\|$)", line) for line in commands), (
-      f"the compile lane no longer builds {target}"
-    )
+    assert target in built, f"the compile lane no longer builds {target}"
 
 
-def test_cuda_lane_flag_gate_cannot_be_satisfied_by_comments() -> None:
-  """Mutation coverage the reviewer asked for: dropping the real configure
-  argument while keeping a comment that names it must trip the gate, and the
-  same goes for a target that survives only inside a comment."""
+def test_cuda_lane_flag_gate_rejects_prose_and_non_configure_carriers() -> None:
+  """Mutation coverage from the review's convergence gate: with the real
+  configure argument removed (or flipped OFF), neither an ``echo`` step
+  carrying the flag, an inline shell comment, nor a YAML comment may satisfy
+  the gate."""
   workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
-  for flag in _SURFACE_FLAGS.values():
-    commented = workflow.replace(flag, f"PLACEHOLDER_{flag[2:-3]}") + (
-      "\n# note: configure once passed " + flag + "\n"
-    )
-    assert _cuda_lane_flag_violations(commented), flag
+  flag = _SURFACE_FLAGS["ef_gpu_experiments"]
+
+  flipped_with_echo_step = workflow.replace(flag, flag.replace("=ON", "=OFF")) + (
+    "\n      - name: Prose step\n"
+    "        run: |\n"
+    f"          echo {flag}\n"
+  )
+  assert _cuda_lane_flag_violations(flipped_with_echo_step), "echo step satisfied the gate"
+
+  removed_with_inline_comment = workflow.replace(
+    f"{flag} \\", "-DCMAKE_VERBOSE_MAKEFILE=ON \\"
+  ).replace(
+    "cmake -S . -B build-cuda -G Ninja \\",
+    f"cmake -S . -B build-cuda -G Ninja \\  # was {flag}",
+  )
+  assert flag not in "".join(
+    " ".join(tokens) for tokens in _workflow_logical_commands(removed_with_inline_comment)
+  )
+  assert _cuda_lane_flag_violations(removed_with_inline_comment), (
+    "an inline shell comment satisfied the gate"
+  )
+
+  yaml_commented = workflow.replace(flag, f"PLACEHOLDER_{flag[2:-3]}") + (
+    "\n# note: configure once passed " + flag + "\n"
+  )
+  assert _cuda_lane_flag_violations(yaml_commented), "a YAML comment satisfied the gate"
 
   target_only_in_comment = (
     "jobs:\n"
@@ -606,7 +654,7 @@ def test_cuda_lane_flag_gate_cannot_be_satisfied_by_comments() -> None:
     "          cmake -S . -B build -DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON\n"
     "      - name: Build\n"
     "        run: |\n"
-    "          cmake --build build --target ef_gpu_experiments\n"
+    "          cmake --build build --target ef_gpu_experiments  # echo -DEF_ENABLE_CUDA_EXPERIMENTS=ON\n"
   )
   assert _cuda_lane_flag_violations(target_only_in_comment) == [
     "the compile lane builds ef_gpu_experiments but its run commands never pass "

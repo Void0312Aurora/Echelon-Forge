@@ -17,7 +17,7 @@
   "learner_consumption_evidence": {
    "bytes": 3256,
    "path": "docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_evidence_20260813.json",
-   "sha256": "d37e628d10963fc18e0b0c860d684f1fc752a373df4fc67feda592f42f275bc8"
+   "sha256": "611351f7e05f29437d9d168d875f3677ca8bbae0a1966cf384c92e688488d93f"
   },
   "post_optimization_matrix_package": {
    "bytes": 39521,

@@ -207,7 +207,7 @@ def test_cr2_split_inventory_and_watch_items_match_worktree_lines() -> None:
         "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp": 292,
         "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp": 501,
         "tools/diagnostics/cuda_resident_cr2_matrix_probe.py": 603,
-        "tools/diagnostics/cuda_resident_cp6_learner_evidence.py": 329,
+        "tools/diagnostics/cuda_resident_cp6_learner_evidence.py": 348,
         "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py": 451,
         "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py": 666,
         "tools/diagnostics/cuda_resident_cr2_matrix_evidence_schema.py": 516,

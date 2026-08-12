@@ -72,9 +72,9 @@
  },
  "source_state": "captured_from_the_worktree_subsequently_committed_as_source_commit",
  "validator_source": {
-  "canonical_bytes": 13522,
+  "canonical_bytes": 14517,
   "canonicalization": "utf8_lf",
   "path": "tools/diagnostics/cuda_resident_cp6_learner_evidence.py",
-  "sha256": "10037a1c9f2d63404c8a9eeb625c8e707feb8816ebdd3f2966afcfdc6c704a18"
+  "sha256": "bc4a5945bf3a72d8d1d9e8d7a2edff57edace37879c07ecf45853651c03dfe19"
  }
 }

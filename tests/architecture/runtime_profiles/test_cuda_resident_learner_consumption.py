@@ -248,6 +248,50 @@ def test_cp6_learner_evidence_rejects_generation_and_content_drift() -> None:
     learner_evidence.validate_evidence(granted, REPO_ROOT)
 
 
+def test_cp6_provenance_is_bound_to_named_roles_and_the_live_validator() -> None:
+  """Third-round review gates: a correctly hashed blob of some *other* file
+  cannot stand in for a named source role, and the validator descriptor must
+  match the live validator bytes exactly -- arbitrary sizes or digests are
+  rejected."""
+  package = _package()
+
+  # Substitute consumer_implementation with a correctly hashed README blob at
+  # the same capture commit: the role/path pin must reject it before hashing.
+  import hashlib as _hashlib
+  import subprocess as _subprocess
+
+  substituted = deepcopy(package)
+  readme_blob = _subprocess.run(
+    ["git", "show", f"{package['source_commit']}:README.md"],
+    cwd=REPO_ROOT,
+    check=True,
+    capture_output=True,
+  ).stdout.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+  substituted["source_inputs"]["consumer_implementation"] = {
+    "path": "README.md",
+    "canonicalization": "utf8_lf",
+    "canonical_bytes": len(readme_blob),
+    "sha256": _hashlib.sha256(readme_blob).hexdigest(),
+  }
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="pinned source role"):
+    learner_evidence.validate_evidence(substituted, REPO_ROOT)
+
+  wrong_source_hash = deepcopy(package)
+  wrong_source_hash["source_inputs"]["matrix_probe"]["sha256"] = "0" * 64
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="capture commit"):
+    learner_evidence.validate_evidence(wrong_source_hash, REPO_ROOT)
+
+  zero_digest = deepcopy(package)
+  zero_digest["validator_source"]["sha256"] = "0" * 64
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="live validator"):
+    learner_evidence.validate_evidence(zero_digest, REPO_ROOT)
+
+  wrong_size = deepcopy(package)
+  wrong_size["validator_source"]["canonical_bytes"] = 1
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="live validator"):
+    learner_evidence.validate_evidence(wrong_size, REPO_ROOT)
+
+
 def test_cp6_learner_report_validator_rejects_mode_and_row_drift() -> None:
   package = _package()
   declared = str(package["declared_report_generation"])

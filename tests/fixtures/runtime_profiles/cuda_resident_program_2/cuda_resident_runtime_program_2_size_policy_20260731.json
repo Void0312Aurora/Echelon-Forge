@@ -270,7 +270,7 @@
   {
    "path": "tools/diagnostics/cuda_resident_cp6_learner_evidence.py",
    "role": "cp6_learner_evidence_declared_generation_validator",
-   "observed_lines": 329
+   "observed_lines": 348
   },
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py",

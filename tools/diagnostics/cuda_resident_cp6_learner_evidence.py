@@ -33,6 +33,17 @@ EVIDENCE_SCHEMA = "cuda_resident.cp6.learner_consumption_evidence.v1"
 DECLARED_GENERATION = "cr2_matrix_probe.v1_schema_with_learner_mode_appended"
 FORWARD_GENERATION = "cp6_matrix_probe.v2_self_declared"
 CONTRACT_RELATIVE = "src/runtime/contracts/cuda_resident_learner_consumption_contract.h"
+VALIDATOR_RELATIVE = "tools/diagnostics/cuda_resident_cp6_learner_evidence.py"
+# Each provenance role is pinned to one repository path: a correctly hashed
+# blob of some other file cannot stand in for the named source.
+SOURCE_INPUT_PATHS = {
+    "learner_contract": CONTRACT_RELATIVE,
+    "consumer_implementation": (
+        "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu"
+    ),
+    "matrix_session": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp",
+    "matrix_probe": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp",
+}
 LEARNER_MODE_KEYS = {"mode_id", "host_export", "device_consumer", "learner_consumer", "cpu_available"}
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
@@ -205,6 +216,10 @@ def _verify_source_input(root: Path, commit: str, descriptor: object, label: str
         and set(descriptor) == {"path", "canonicalization", "canonical_bytes", "sha256"},
         f"{label} source descriptor schema drifted",
     )
+    _require(
+        descriptor["path"] == SOURCE_INPUT_PATHS[label],
+        f"{label} names a different path than its pinned source role",
+    )
     _require(descriptor["canonicalization"] == "utf8_lf", f"{label} canonicalization drifted")
     payload = _committed_canonical_bytes(root, commit, str(descriptor["path"]))
     _require(
@@ -266,28 +281,32 @@ def validate_evidence(package: dict[str, Any], root: Path) -> None:
         "learner evidence source state drifted",
     )
     source_inputs = package["source_inputs"]
-    expected_sources = {
-        "learner_contract",
-        "consumer_implementation",
-        "matrix_session",
-        "matrix_probe",
-    }
     _require(
-        isinstance(source_inputs, dict) and set(source_inputs) == expected_sources,
+        isinstance(source_inputs, dict) and set(source_inputs) == set(SOURCE_INPUT_PATHS),
         "learner evidence source-input inventory drifted",
     )
     for name, descriptor in source_inputs.items():
         _verify_source_input(root, commit, descriptor, name)
+    # The validator descriptor is verified against the live module bytes:
+    # evolving this validator therefore forces a visible package regeneration,
+    # exactly like the CP-8 collector-source pin. Arbitrary sizes or digests
+    # cannot pass.
     validator = package["validator_source"]
+    live = (
+        (root / VALIDATOR_RELATIVE)
+        .read_text(encoding="utf-8")
+        .replace("\r\n", "\n")
+        .replace("\r", "\n")
+        .encode("utf-8")
+    )
     _require(
         isinstance(validator, dict)
         and set(validator) == {"path", "canonicalization", "canonical_bytes", "sha256"}
-        and validator["path"] == "tools/diagnostics/cuda_resident_cp6_learner_evidence.py"
+        and validator["path"] == VALIDATOR_RELATIVE
         and validator["canonicalization"] == "utf8_lf"
-        and type(validator["canonical_bytes"]) is int
-        and type(validator["sha256"]) is str
-        and SHA256.fullmatch(validator["sha256"]) is not None,
-        "learner evidence validator descriptor drifted",
+        and validator["canonical_bytes"] == len(live)
+        and validator["sha256"] == hashlib.sha256(live).hexdigest(),
+        "learner evidence validator provenance does not match the live validator",
     )
     reports = package["reports"]
     expected_reports = {
