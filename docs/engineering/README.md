@@ -18,6 +18,8 @@ automation, dependency, and release guidance. Current owner routes are:
 - [release](release/README.md): dependency and release governance;
 - [testing](testing/README.md): repository-wide test organization,
   infrastructure residuals, and retained governance reviews;
+- [workspace](workspace/README.md): linked-worktree placement and ownership,
+  and the repository-relative path-length budget;
 - [reviews](reviews/engineering_discipline_review_20260603.zh.md): retained
   engineering assessments, which remain evidence rather than standards.
 
