@@ -15,7 +15,7 @@
 #include "components/tasking/task_order.h"
 // HELD include-direction edge (ratcheted at I38, censused at I41,
 // re-adjudicated this iteration, 2026-07-27): WorldExecutionEpisodeStepRequest's
-// config/env_state fields (detail/world_execution_episode_step_request.inc)
+// config/env_state fields (detail/tasking/world_execution_episode_step_request.inc)
 // are typed StepEvaluationBatchConfig/StepEvaluationBatchEnvState, owned by
 // this mission header. T1 dto_schema single-sourcing cannot close the edge
 // byte-equivalently: StepEvaluationBatchEnvState embeds ten mission-owned
