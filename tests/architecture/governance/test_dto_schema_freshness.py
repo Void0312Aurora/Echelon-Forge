@@ -734,9 +734,12 @@ def test_dto_schema_generated_outputs_are_fresh_and_registered(
 def test_classify_generated_files_case_handling() -> None:
   """Case-variant spellings of managed artifacts are never deletable orphans.
 
-  The classification is exercised with injected normalizers so the expected
-  behavior of both filesystem regimes is pinned on every platform, instead
-  of depending on the case sensitivity of the checkout's own filesystem.
+  The default classification folds case unconditionally (str.casefold):
+  Python cannot tell from a path string whether the underlying filesystem
+  folds case (os.path.normcase stays the identity on a POSIX Python even
+  over case-insensitive APFS), so a case variant of a managed artifact must
+  never reach the --write deletion loop on any platform. The strict
+  identity regime remains available to callers that inject it explicitly.
   """
   owned = {
     f"{_BUILDER_DIR}/alpha_builder.py",
@@ -754,21 +757,42 @@ def test_classify_generated_files_case_handling() -> None:
     assert unexpected == ()
     assert mismatched == ()
 
-  # Case-insensitive regime (str.lower stands in for os.path.normcase on
-  # Windows): the variant folds onto the managed artifact, so it is a case
-  # mismatch and must not appear among deletable orphans.
+  # Default regime (str.casefold on every platform): the variant folds onto
+  # the managed artifact, so it is a protected case mismatch and never a
+  # deletable orphan -- on a case-insensitive filesystem unlinking it would
+  # destroy the managed file itself.
+  unexpected, mismatched = generate.classify_generated_files(
+    owned, [variant, rogue]
+  )
+  assert unexpected == (rogue,)
+  assert mismatched == ((variant, exact),)
+
+  # An injected case-insensitive normalizer classifies the same way.
   unexpected, mismatched = generate.classify_generated_files(
     owned, [variant, rogue], normalize=str.lower
   )
   assert unexpected == (rogue,)
   assert mismatched == ((variant, exact),)
 
-  # Case-sensitive regime (identity normalizer): the variant is a genuinely
-  # distinct file, hence a plain orphan.
+  # Strict regime only by explicit injection (identity normalizer): the
+  # variant is then treated as a genuinely distinct file, hence an orphan.
   unexpected, mismatched = generate.classify_generated_files(
     owned, [variant, rogue], normalize=str
   )
   assert unexpected == tuple(sorted([variant, rogue]))
+  assert mismatched == ()
+
+
+def test_scan_generated_package_matches_py_suffix_case_insensitively(
+  tmp_path: Path,
+) -> None:
+  """A stale builder cannot dodge the scan through an upper-case extension."""
+  package_dir = tmp_path / _BUILDER_DIR
+  package_dir.mkdir(parents=True)
+  (package_dir / "ROGUE.PY").write_bytes(b"# rogue\n")
+
+  unexpected, mismatched = generate.scan_generated_package((), tmp_path)
+  assert unexpected == (f"{_BUILDER_DIR}/ROGUE.PY",)
   assert mismatched == ()
 
 

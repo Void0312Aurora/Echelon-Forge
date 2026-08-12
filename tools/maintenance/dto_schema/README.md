@@ -78,8 +78,8 @@ hand-written on purpose:
   X-macro preprocessor, so the struct body remains hand-written. See
   `docs/architecture/work/issues/cpp_dependency_and_dto_residuals.md`.
 - `RecentEngagementEvents`, listed in that issue as a future candidate, has
-  since been migrated: `schemas/recent_engagement_events_fields.py` owns
-  `src/runtime/contracts/detail/recent_engagement_events.inc`.
+  since been migrated: `schemas/engagement/recent_engagement_events_fields.py`
+  owns `src/runtime/contracts/detail/engagement/recent_engagement_events.inc`.
 
 ## `.inc` files outside this generator
 

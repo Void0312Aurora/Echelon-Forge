@@ -13,11 +13,13 @@ properties so no separate test is needed to trust a green --check:
   missing, aborts every command);
 - gym_envs/scenario_loader/_generated/ is a fully generated directory, so
   *.py files there that no registered schema owns fail --check and are
-  removed by --write. Ownership is compared case-insensitively where the
-  platform folds case (os.path.normcase): a directory entry that matches a
-  registered artifact except for spelling case is reported as a case
-  mismatch and is never deleted, because on a case-insensitive filesystem
-  it is the same file the write loop manages.
+  removed by --write. Ownership is compared case-insensitively on every
+  platform (str.casefold): a directory entry that matches a registered
+  artifact except for spelling case is reported as a case mismatch and is
+  never deleted, because the generator cannot tell from a path string
+  whether the underlying filesystem folds case (e.g. APFS under a POSIX
+  Python), and deleting the wrong directory entry would destroy the very
+  file the write loop manages.
 """
 
 from __future__ import annotations
@@ -30,7 +32,6 @@ import functools
 import hashlib
 import importlib
 import json
-import os
 from pathlib import Path
 import sys
 from types import ModuleType
@@ -65,10 +66,14 @@ def registry_inconsistencies(
 
   Returns (unregistered, missing): schema modules present on disk but absent
   from the registry, and registered module names without a backing file.
+  Schema modules live in grouped subpackages, so the scan is recursive and
+  module names are derived from the path relative to schemas/.
   """
   on_disk = {
-    f"{SCHEMAS_PACKAGE}.{path.stem}"
-    for path in schemas_dir.glob("*.py")
+    ".".join(
+      (SCHEMAS_PACKAGE, *path.relative_to(schemas_dir).with_suffix("").parts)
+    )
+    for path in schemas_dir.rglob("*.py")
     if path.name != "__init__.py"
   }
   registered = set(registered_modules)
@@ -173,17 +178,20 @@ def manifest_payload(
 def classify_generated_files(
   owned: Collection[str],
   found: Iterable[str],
-  normalize: Callable[[str], str] = os.path.normcase,
+  normalize: Callable[[str], str] = str.casefold,
 ) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
   """Split scanned generated-package paths into orphans and case mismatches.
 
-  Ownership is decided on normalize-folded paths (os.path.normcase by
-  default, so case is folded exactly where the platform folds it). A found
-  path that folds onto a registered artifact but differs in exact spelling
-  is a (actual, registered) case mismatch: on a case-insensitive filesystem
-  it is the very directory entry the write loop manages, so it must never
-  be classified as a deletable orphan. Only paths that fold onto nothing
-  registered are orphans.
+  Ownership is decided on normalize-folded paths (str.casefold by default,
+  so case is folded unconditionally on every platform). A found path that
+  folds onto a registered artifact but differs in exact spelling is a
+  (actual, registered) case mismatch: on a case-insensitive filesystem it
+  is the very directory entry the write loop manages, so it must never be
+  classified as a deletable orphan. Python cannot tell from a path string
+  whether the filesystem folds case (os.path.normcase is the identity on a
+  POSIX Python even over case-insensitive APFS), so the classification
+  refuses to delete on every platform and defers case-variant cleanup to a
+  human. Only paths that fold onto nothing registered are orphans.
   """
   owned_by_norm = {normalize(path): path for path in owned}
   unexpected: list[str] = []
@@ -206,7 +214,9 @@ def scan_generated_package(
   The generated package directory holds only generator output, so any other
   Python file there is a stale or hand-added artifact. Only regular files at
   the directory's top level are scanned; directories (even ones named like
-  x.py), __pycache__, and non-.py entries are ignored.
+  x.py), __pycache__, and non-.py entries are ignored. The .py suffix is
+  matched case-insensitively so the scan behaves the same on case-folding
+  and case-sensitive filesystems.
   """
   package_dir = output_root / python_builder.GENERATED_PACKAGE_DIR
   if not package_dir.is_dir():
@@ -217,8 +227,8 @@ def scan_generated_package(
   owned.add(python_builder.PACKAGE_INIT_PATH)
   found = tuple(
     f"{python_builder.GENERATED_PACKAGE_DIR}/{path.name}"
-    for path in package_dir.glob("*.py")
-    if path.is_file()
+    for path in package_dir.iterdir()
+    if path.is_file() and path.suffix.casefold() == ".py"
   )
   return classify_generated_files(owned, found)
 

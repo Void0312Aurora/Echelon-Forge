@@ -29,6 +29,7 @@
     "tests/architecture/governance/test_dto_schema_python_builder.py",
     "tests/architecture/governance/test_experiment_matrix_freshness.py",
     "tests/architecture/governance/test_experiment_matrix_hardening.py",
+    "tests/architecture/governance/test_flat_directory_boundaries.py",
     "tests/architecture/governance/test_internal_code_governance.py",
     "tests/architecture/governance/test_runtime_bootstrap_owner.py",
     "tests/architecture/governance/test_scenario_generation_lineage_parity.py",
