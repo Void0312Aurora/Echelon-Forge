@@ -29,7 +29,9 @@ Last verified: `2026-08-12`
 
 - `docs/Archive/` 以及 `docs/**/archive/` 下的本地归档子树，默认不纳入维护中的双语簇审计。
 - work 面（路径含 `work` 目录组件）属于 Tier B 英文单语面，不进入严格注册表
-  范围，即使外层 owner 前缀（如 `docs/operations/`）本身属于严格面。
+  范围，即使外层 owner 前缀（如 `docs/operations/`）本身属于严格面；例外是
+  通过 `tools/maintenance/document_scope.py` 的 `PROMOTED_WORK_DOCUMENTS`
+  allowlist 明确提升的配对。
 - `docs/plan/architecture/review/` 下的本地架构审查草稿，也默认不纳入维护中的双语簇审计。
 - 归档镜像即使保留双语文件，也只用于追溯，不参与活跃漂移判定。
 - 默认注册表范围是“严格维护的双语表面”，而不是整棵共享文档树；只有在明确要盘点更宽范围时，才应使用工具的 full-tree 覆盖。
@@ -51,6 +53,12 @@ canonical 路径稳定时，该标识符保持稳定；移动文档对会改变 
 - `chinese_hash`
 
 当前同步状态由注册表基线与当前文件 hash 共同计算。
+
+哈希归一化规则：
+
+- 仅有 `LF` 与 `CRLF` 之类的行尾差异，本身不计为双语漂移
+- 哈希比较前会先剥离文件开头的机器翻译草稿标记，因此重新生成的草稿说明不会
+  单独使整个注册表失效
 
 ## 同步状态
 

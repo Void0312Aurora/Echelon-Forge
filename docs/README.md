@@ -74,7 +74,7 @@ separately authorized historical migration.
 
 Stable entry points, navigation READMEs, standards, references, and how-to
 material use English canonical pages with Chinese companions. Work and
-evidence surfaces (`docs/*/work/**`) are maintained in English only; a Chinese
+evidence surfaces (`docs/**/work/**`) are maintained in English only; a Chinese
 companion is added only when a document is explicitly promoted into the strict
 bilingual surface. Chinese navigation pages may therefore link directly to
 English work documents. Existing archives keep the language layout they were
