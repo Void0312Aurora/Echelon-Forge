@@ -8,9 +8,10 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-08`
+Last verified: `2026-08-12`
 
-Status: `2026-08-08` authoritative for maintained documentation language layout.
+Status: `2026-08-12` authoritative for maintained documentation language
+layout, including the English-only work/evidence surface.
 
 This policy defines how the repository separates English and Chinese
 documentation so the mainline stays readable, batch-translation friendly, and
@@ -39,8 +40,12 @@ Examples:
 
 - `docs/engineering/documentation/README.md`
 - `docs/engineering/documentation/README.zh.md`
-- `docs/systems/physics/work/issues/physics_engine_roadmap.md`
-- `docs/systems/physics/work/issues/physics_engine_roadmap.zh.md`
+- `docs/domains/air/standards/pilot_action_contract.md`
+- `docs/domains/air/standards/pilot_action_contract.zh.md`
+
+A Tier B work document such as
+`docs/systems/physics/work/issues/physics_engine_roadmap.md` is maintained as
+the English canonical file only and does not carry a `.zh.md` mirror.
 
 ## Authority Rules
 
@@ -86,11 +91,29 @@ Tier A: strict bilingual maintained surface
   by the completed plan/task migration, including architecture, domain,
   systems, learning, operations, and engineering-testing routes
 
-Tier B: English canonical, Chinese companion optional or delayed
+Tier A membership never follows an owner prefix into its `work/` subtrees:
+any path with a `work` directory component (for example
+`docs/operations/visualization/work/` or `docs/domains/joint/work/`) is
+Tier B even when the surrounding owner surface is Tier A.
+
+Tier B: English-only work and evidence surface
 
 - owner-local draft plans and open issues under `docs/*/work/issues/`
-- owner-local active work, detailed plans, checkpoints, and analysis documents
-  that remain current but change quickly
+- owner-local active work, detailed plans, checkpoints, evidence notes, and
+  analysis documents under `docs/*/work/active/` that remain current but
+  change quickly
+- Tier B documents are maintained as English canonical files without `.zh.md`
+  mirrors; the `2026-08-12` work-surface contraction removed the previous
+  work-layer mirrors
+- a Chinese companion is added only when the owner explicitly promotes the
+  document into the Tier A strict bilingual surface (and registers the pair)
+- existing work README pages may keep a `README.zh.md` navigation companion;
+  Chinese navigation pages linking English work documents are the expected
+  steady state
+- a legacy Chinese-only work document (a `.zh.md` without an English peer, or
+  one whose Chinese text is still the content superset) keeps its Chinese file
+  until the English canonical page is completed; it must not be deleted merely
+  to satisfy this tier
 
 Tier C: history, archive, scratch, and local-only retention
 
@@ -100,8 +123,9 @@ Tier C: history, archive, scratch, and local-only retention
   which must contain an `archive` path component
 - temporary or scratch analysis under `docs/**/temp/` and `docs/temp/`
 
-Chinese companions are expected for Tier A. They are optional for Tier B and
-outside the default maintenance verdict for Tier C.
+Chinese companions are expected for Tier A. They are not maintained for
+Tier B unless a document is explicitly promoted, and they are outside the
+default maintenance verdict for Tier C.
 
 ## Writing Rules
 
@@ -180,13 +204,16 @@ Audit interpretation rule:
 
 ## Translation Workflow
 
-For new maintained docs:
+For new maintained Tier A docs:
 
 1. Write the English canonical `.md` first.
 2. Generate or author `name.zh.md` as the companion.
 3. Review terminology, links, and code references.
 4. Add the pair to the nearest README index when the document becomes a real
    entrypoint.
+
+For new Tier B work docs, write only the English canonical `.md`; do not
+create a `.zh.md` mirror unless the document is promoted to Tier A.
 
 For existing Chinese-only docs:
 
@@ -230,7 +257,8 @@ A directory or maintained slice can be treated as bilingual-ready when:
 
 - Tier A entrypoint docs link to English canonical files first
 - Chinese companions exist for the Tier A authority docs in that slice
-- Tier B docs follow English-canonical ownership even if Chinese companions lag
+- Tier B docs are English-only canonical files, except explicitly promoted
+  pairs and retained legacy Chinese sources awaiting an English canonical page
 - no maintained canonical doc contains large mixed-language paragraphs
 - generated drafts are either reviewed or clearly marked as drafts
 - bilingual cluster registry entries are updated when Tier A paired docs change

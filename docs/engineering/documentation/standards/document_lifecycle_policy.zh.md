@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-08`
+Last verified: `2026-08-12`
 
-状态：`2026-08-08`，仓库文档分类、维护、审阅、生成和归档的权威规范。
+状态：`2026-08-12`，仓库文档分类、维护、审阅、生成和归档的权威规范。
 
 ## 目的
 
@@ -147,13 +147,14 @@ authority。具体任务状态仍由当前任务 owner 的维护文档所有。
 
 - 根与主要目录导航 README；
 - standards 和 governance 权威；
-- 稳定 plan 权威；
 - 维护中的 reference 和操作 how-to；
 - 被提升为当前入口的 task/domain README。
 
-高频变化的带日期 task、review、evidence 说明和 generated 输出可以只保留英文，
-除非局部 README 将其提升到严格双语面。强制配对必须在同一迭代更新。配对发生
-分歧时仍以英文为 canonical，但在中文 companion 对齐前不得声明双语收口。
+work/evidence 面（`work/active/`、`work/issues/` 及其 evidence 包）只维护
+英文规范版，其中承载的 plan 也一样；仅当文档被明确提升进入严格双语面时才
+存在中文 companion。高频变化的带日期 task、review、evidence 说明和 generated
+输出遵循同样的英文单语规则。强制配对必须在同一迭代更新。配对发生分歧时仍以
+英文为 canonical，但在中文 companion 对齐前不得声明双语收口。
 
 登记哈希只能刷新本轮审阅范围内已经完成对齐的文档对。全量重写登记表本身不能
 证明无关的历史分歧已经得到审阅。当前登记表以 `docs/` 为根；在仓库根 README
