@@ -17,7 +17,7 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
     (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
   )
   facade_cpp = runtime_facade_source_text()
-  bindings_runtime = expand_binding_field_incs(RUNTIME_BINDINGS.read_text(encoding="utf-8"))
+  bindings_runtime = expand_binding_field_incs(runtime_bindings_source_text())
   runtime_header = WORLD_BATCH_RUNTIME_H.read_text(encoding="utf-8")
   runtime_header_single_line = " ".join(runtime_header.split())
   facade_header_single_line = " ".join(facade_header.split())

@@ -56,7 +56,9 @@ _ALLOWED_EXPORT_SITES = frozenset(
     {
         "src/runtime/facade/runtime_facade.h",
         "src/runtime/facade/runtime_facade_query.cpp",
-        "src/interfaces/python/bindings_runtime.cpp",
+        # The RuntimeFacade binding slice; bindings_runtime.cpp is an
+        # orchestrator shell since the per-domain decomposition.
+        "src/interfaces/python/bindings_runtime_facade.cpp",
     }
 )
 

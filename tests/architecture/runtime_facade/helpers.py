@@ -52,6 +52,17 @@ RUNTIME_FACADE_SOURCE_FILES = (
   RUNTIME_FACADE / "runtime_facade_internal.h",
 )
 RUNTIME_BINDINGS = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp"
+
+
+def runtime_bindings_source_text() -> str:
+  """The decomposed bindings_runtime surface joined in registration order.
+
+  bindings_runtime.cpp is an orchestrator shell since the per-domain split;
+  source-shape guards must read the concatenated slices instead.
+  """
+  from tests.architecture.structural_boundaries.helpers import bindings_runtime_text
+
+  return bindings_runtime_text()
 GPU_BINDINGS = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_gpu.cpp"
 WORLD_BATCH_RUNTIME_H = REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.h"
 WORLD_BATCH_RUNTIME_CPP = REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.cpp"
