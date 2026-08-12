@@ -12,6 +12,7 @@ from tests.architecture.helpers import (
   dependency_include_path,
   dependency_link_args,
 )
+from tools.maintenance.document_scope import is_sealed_evidence_doc
 
 
 def _optional_dependency_include(dependency: str):
@@ -158,12 +159,41 @@ WP22_COMMAND_RETIREMENT_DOC_ZH = (
 )
 
 
+DOCS_ROOT = REPO_ROOT / "docs"
+
+
+def _is_sealed_evidence_script(path: Path) -> bool:
+  """Whether ``path`` sits inside a Tier D sealed dated evidence packet.
+
+  A Tier D packet under ``docs/**/reviews/<packet>_<YYYYMMDD>/`` records what
+  was inspected on a stated date, is read only, and is frequently SHA-256
+  pinned by a retained-artifact manifest, so its bytes are never rewritten to
+  follow a later runtime seam (see "Tier D: sealed dated evidence" in
+  docs/engineering/documentation/standards/bilingual_documentation_policy.md).
+  A validation script retained inside such a packet is therefore a historical
+  record rather than part of the live code surface this guard governs, and the
+  scan stops at the packet boundary instead of naming individual files -- a
+  per-file allowlist would have to grow with every new evidence packet.
+  ``is_sealed_evidence_doc`` is the repository's single source of truth for
+  where that boundary falls.
+
+  Only the docs tree is narrowed. A ``reviews`` directory anywhere on the live
+  code surface (``python/``, ``tools/``, ``gym_envs/`` and peers) stays in
+  scope.
+  """
+
+  if not path.is_relative_to(DOCS_ROOT):
+    return False
+  return is_sealed_evidence_doc(path, DOCS_ROOT)
+
+
 def _iter_python_files() -> list[Path]:
   excluded_prefixes = (".git", ".venv", "__pycache__", "build", "dist", "node_modules", "archive", "temp")
   return [
     path
     for path in sorted(REPO_ROOT.rglob("*.py"))
     if not any(part.startswith(excluded_prefixes) for part in path.parts)
+    and not _is_sealed_evidence_script(path)
   ]
 
 

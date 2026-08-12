@@ -67,6 +67,27 @@ EMBARKED_AIR_OPS_SYSTEM_HEADER = (
 BINDINGS_COMMAND_CPP = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_command.cpp"
 
 
+# A closing quote, a line break, and the next literal's opening quote. C++
+# concatenates such adjacent literals at translation time, so folding them
+# back recovers the single logical string the compiler sees.
+_ADJACENT_STRING_LITERALS_RE = re.compile(r'"[ \t]*\r?\n[ \t]*"')
+
+
+def _join_adjacent_string_literals(text: str) -> str:
+  """Undo clang-format's line-wrapping of long string literals.
+
+  Commit d9c3c895 ("fix(pr17): address CI format gate and all six review
+  findings") ran the repository clang-format profile over
+  WORLD_BATCH_CONTRACTS_HEADER, which split every ``static_assert`` message
+  longer than the column limit into adjacent literals broken at whatever word
+  boundary happened to fit. The messages themselves were not edited, so the
+  guards below still pin the exact compiled text -- they just have to read it
+  the way the compiler does rather than through one formatting decision.
+  """
+
+  return _ADJACENT_STRING_LITERALS_RE.sub("", text)
+
+
 def _text(path: Path) -> str:
   text = path.read_text(encoding="utf-8")
   # The command/tasking maintained-batch-contract and standalone directive
@@ -75,8 +96,8 @@ def _text(path: Path) -> str:
   # checks keep matching the compiled struct shape instead of the #include
   # line.
   if path == WORLD_BATCH_CONTRACTS_HEADER:
-    return expand_header_field_incs(text)
-  return text
+    text = expand_header_field_incs(text)
+  return _join_adjacent_string_literals(text)
 
 
 def _compile_and_run(source: str):
@@ -523,8 +544,14 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
   ):
     assert forbidden not in codec_body.group("body")
 
+  # Commit 199f2c03 ("style: clang-format the consolidation-era C++ surface
+  # for the CI gate") moved this file to `Type &name` reference alignment and
+  # let the formatter choose where to break the parameter list; the helper and
+  # its signature are otherwise untouched. Tolerate either alignment so the
+  # body scan below keeps pinning the same single equality helper.
   equality_body = re.search(
-    r"bool mission_commands_equal\(const MissionCommand& lhs, const MissionCommand& rhs\) \{(?P<body>.*?)\n\}",
+    r"bool mission_commands_equal\(const MissionCommand\s*&\s*lhs,"
+    r"\s*const MissionCommand\s*&\s*rhs\) \{(?P<body>.*?)\n\}",
     state_text,
     re.S,
   )
