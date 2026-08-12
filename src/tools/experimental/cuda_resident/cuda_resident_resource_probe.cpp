@@ -96,8 +96,7 @@ Args parse_args(int argc, char **argv) {
             std::cout << "Usage: CUDA resident resource probe v4 [--output PATH]\n";
             std::exit(0);
         } else {
-            throw std::invalid_argument(
-                "usage: CUDA resident resource probe v4 [--output PATH]");
+            throw std::invalid_argument("usage: CUDA resident resource probe v4 [--output PATH]");
         }
     }
     return args;
@@ -147,8 +146,7 @@ replay::ReplayTrace make_trace() {
 }
 
 std::vector<WorldPilotActionAssignment>
-make_assignments(const replay::ReplayTrace &trace,
-                 const std::vector<std::uint64_t> &entity_ids) {
+make_assignments(const replay::ReplayTrace &trace, const std::vector<std::uint64_t> &entity_ids) {
     std::vector<WorldPilotActionAssignment> assignments;
     assignments.reserve(entity_ids.size());
     for (std::size_t world = 0; world < entity_ids.size(); ++world) {
@@ -229,10 +227,9 @@ Json absorption_json() {
     std::size_t v4_index = 0;
     for (std::size_t index = 0; index < evidence::kLaunchSequenceV3.size(); ++index) {
         const auto &launch = evidence::kLaunchSequenceV3[index];
-        const bool absorbed_barrier =
-            launch.kernel_id == std::string_view("apply_barrier") &&
-            (launch.semantic_stage == std::string_view("stage_publish") ||
-             launch.semantic_stage == std::string_view("window_commit"));
+        const bool absorbed_barrier = launch.kernel_id == std::string_view("apply_barrier") &&
+                                      (launch.semantic_stage == std::string_view("stage_publish") ||
+                                       launch.semantic_stage == std::string_view("window_commit"));
         if (absorbed_barrier) {
             rows.back()["v3_launch_indices"].push_back(index);
             continue;
@@ -339,16 +336,12 @@ Json run_probe() {
         });
         acquired = backend.acquire_device_observation_lease("resource_capture.lease");
         if (!acquired.success()) {
-            throw std::runtime_error("resource probe lease acquisition failed: " +
-                                     acquired.detail);
+            throw std::runtime_error("resource probe lease acquisition failed: " + acquired.detail);
         }
-        submitted = consumer.submit(
-            acquired.lease,
-            {.request_id = "resource_capture.consumer",
-             .expected_epoch = acquired.lease.epoch});
+        submitted = consumer.submit(acquired.lease, {.request_id = "resource_capture.consumer",
+                                                     .expected_epoch = acquired.lease.epoch});
         if (!submitted.success()) {
-            throw std::runtime_error("resource probe consumer submit failed: " +
-                                     submitted.detail);
+            throw std::runtime_error("resource probe consumer submit failed: " + submitted.detail);
         }
         const auto waited = consumer.await(submitted.receipt);
         if (!waited.success()) {
@@ -392,9 +385,8 @@ Json run_probe() {
              {"diagnostic_materialization_inside",
               evidence::kDiagnosticMaterializationInsideCapture},
              {"operation_sequence",
-              Json::array({"inject", "evaluate_empty", "advance_world_batch",
-                           "public_export", "acquire_device_lease", "consumer_submit",
-                           "consumer_event_await"})},
+              Json::array({"inject", "evaluate_empty", "advance_world_batch", "public_export",
+                           "acquire_device_lease", "consumer_submit", "consumer_event_await"})},
          }},
         {"result",
          {

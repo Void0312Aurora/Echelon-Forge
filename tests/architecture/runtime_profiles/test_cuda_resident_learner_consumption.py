@@ -160,7 +160,7 @@ def test_cp6_mode_id_is_owned_by_the_contract_and_stays_out_of_the_frozen_table(
   probe = _text(MATRIX_PROBE)
   session = _text(MATRIX_SESSION)
 
-  assert 'kLearnerConsumerModeIdNoExport =\n    "no_export_learner_consumer"' in contract
+  assert 'kLearnerConsumerModeIdNoExport = "no_export_learner_consumer"' in contract
   assert "no_export_learner_consumer" not in matrix_contract
   assert matrix_contract.count("mode_ids_are_unique") >= 1
 

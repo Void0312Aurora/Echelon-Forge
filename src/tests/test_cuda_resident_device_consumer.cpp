@@ -300,8 +300,7 @@ TEST_CASE("CP-6 learner-equivalent consumer normalizes the full tensor with CPU 
     CHECK(learner::kLearnerConsumerSurfaceV1 ==
           "cuda_resident.device_consumer_learner_equivalent.v1");
     CHECK(learner::kLearnerConsumerModeIdNoExport == "no_export_learner_consumer");
-    CHECK(learner::kLearnerConsumptionFeatureCount ==
-          kObservationProjectionObservationValueCount);
+    CHECK(learner::kLearnerConsumptionFeatureCount == kObservationProjectionObservationValueCount);
     CHECK_FALSE(learner::kMaintainedClaimAllowed);
     CHECK_FALSE(learner::kPublicSupportEnabled);
     CHECK_FALSE(learner::kPromotionAllowed);
@@ -333,9 +332,9 @@ TEST_CASE("CP-6 learner-equivalent consumer normalizes the full tensor with CPU 
                                      .learner_equivalent = true})
               .failure == FailureCode::incompatible_layout);
 
-    const auto submitted = consumer.submit(lease, {.request_id = "learner-1",
-                                                   .expected_epoch = lease.epoch,
-                                                   .learner_equivalent = true});
+    const auto submitted = consumer.submit(
+        lease,
+        {.request_id = "learner-1", .expected_epoch = lease.epoch, .learner_equivalent = true});
     REQUIRE(submitted.success());
     CHECK(submitted.receipt.values_per_world == learner::kLearnerConsumptionFeatureCount);
     CHECK(submitted.receipt.outputs.shape ==
@@ -346,8 +345,7 @@ TEST_CASE("CP-6 learner-equivalent consumer normalizes the full tensor with CPU 
     REQUIRE(consumer.await(submitted.receipt).success());
     const auto diagnostic = consumer.materialize_for_diagnostics(submitted.receipt);
     REQUIRE(diagnostic.success());
-    REQUIRE(diagnostic.materialized.values.size() ==
-            2 * learner::kLearnerConsumptionFeatureCount);
+    REQUIRE(diagnostic.materialized.values.size() == 2 * learner::kLearnerConsumptionFeatureCount);
     CHECK(diagnostic.materialized.values_per_world == learner::kLearnerConsumptionFeatureCount);
     CHECK(diagnostic.materialized.ids == fixture.entity_ids);
 
@@ -364,24 +362,24 @@ TEST_CASE("CP-6 learner-equivalent consumer normalizes the full tensor with CPU 
     });
     REQUIRE(exported.agent_observations.size() == 2);
     const auto to_packed_float = [](double value) {
-        const double clipped = std::min(std::max(value, -kObservationProjectionObservationFloatClip),
-                                        kObservationProjectionObservationFloatClip);
+        const double clipped =
+            std::min(std::max(value, -kObservationProjectionObservationFloatClip),
+                     kObservationProjectionObservationFloatClip);
         return static_cast<float>(clipped);
     };
     for (std::size_t world = 0; world < 2; ++world) {
         const auto &observation = exported.agent_observations[world];
         const double packed_order[learner::kLearnerConsumptionFeatureCount] = {
-            observation.sim_time, observation.x,          observation.y,
-            observation.z,        observation.vx,         observation.vy,
-            observation.vz,       observation.heading,    observation.pitch,
-            observation.roll,     observation.speed,      observation.health,
+            observation.sim_time,   observation.x,        observation.y,
+            observation.z,          observation.vx,       observation.vy,
+            observation.vz,         observation.heading,  observation.pitch,
+            observation.roll,       observation.speed,    observation.health,
             observation.gear_state, observation.throttle, observation.total_reward,
         };
         for (std::size_t field = 0; field < learner::kLearnerConsumptionFeatureCount; ++field) {
             const auto &normalization = learner::kLearnerNormalization[field];
             const float expected =
-                (to_packed_float(packed_order[field]) - normalization.offset) *
-                normalization.scale;
+                (to_packed_float(packed_order[field]) - normalization.offset) * normalization.scale;
             const float actual =
                 diagnostic.materialized
                     .values[world * learner::kLearnerConsumptionFeatureCount + field];

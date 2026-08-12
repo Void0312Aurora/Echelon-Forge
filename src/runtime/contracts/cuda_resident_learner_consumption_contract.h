@@ -23,8 +23,7 @@ inline constexpr std::string_view kLearnerConsumerSurfaceV1 =
 // validators are still single-generation pinned, and extending the frozen
 // scope is the CP-8 re-matrix kickoff's lane. The probe exposes the mode
 // behind an explicit flag instead, so default reports keep the frozen shape.
-inline constexpr std::string_view kLearnerConsumerModeIdNoExport =
-    "no_export_learner_consumer";
+inline constexpr std::string_view kLearnerConsumerModeIdNoExport = "no_export_learner_consumer";
 
 // One feature per packed observation field. The packing kernel already
 // produces the world-major [world_count, feature_count] float layout, so the
@@ -43,13 +42,13 @@ struct LearnerFieldNormalization {
     float scale;
 };
 
-inline constexpr LearnerFieldNormalization
-    kLearnerNormalization[kLearnerConsumptionFeatureCount] = {
-        {"sim_time", 0.0F, 0.01F},      // episode seconds, ~100 s scale
-        {"x", 0.0F, 0.0001F},           // fixture airspace ~10 km
+inline constexpr LearnerFieldNormalization kLearnerNormalization[kLearnerConsumptionFeatureCount] =
+    {
+        {"sim_time", 0.0F, 0.01F}, // episode seconds, ~100 s scale
+        {"x", 0.0F, 0.0001F},      // fixture airspace ~10 km
         {"y", 0.0F, 0.0001F},
-        {"z", 1500.0F, 0.0001F},        // centered on the fixture target altitude
-        {"vx", 0.0F, 1.0F / 350.0F},    // envelope speed scale
+        {"z", 1500.0F, 0.0001F},     // centered on the fixture target altitude
+        {"vx", 0.0F, 1.0F / 350.0F}, // envelope speed scale
         {"vy", 0.0F, 1.0F / 350.0F},
         {"vz", 0.0F, 1.0F / 350.0F},
         {"heading", 180.0F, 1.0F / 360.0F},

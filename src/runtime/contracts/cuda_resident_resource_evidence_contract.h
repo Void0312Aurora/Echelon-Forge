@@ -256,9 +256,8 @@ inline constexpr auto kLaunchSequenceV4 = std::to_array<LaunchSpec>({
 });
 
 template <std::size_t KernelCount, std::size_t LaunchCount>
-inline constexpr bool
-catalog_is_complete(const std::array<KernelSpec, KernelCount> &kernels,
-                    const std::array<LaunchSpec, LaunchCount> &launches) {
+inline constexpr bool catalog_is_complete(const std::array<KernelSpec, KernelCount> &kernels,
+                                          const std::array<LaunchSpec, LaunchCount> &launches) {
     std::size_t matched_launches = 0;
     for (const auto &kernel : kernels) {
         std::size_t count = 0;
@@ -406,9 +405,8 @@ inline constexpr bool launch_sequences_correspond_v2_to_v3() {
         if (mapped.empty()) {
             return false;
         }
-        const bool continues_fused_run =
-            index > 0 && fold_absorbs_several(mapped) &&
-            fold(kLaunchSequenceV2[index - 1].kernel_id) == mapped;
+        const bool continues_fused_run = index > 0 && fold_absorbs_several(mapped) &&
+                                         fold(kLaunchSequenceV2[index - 1].kernel_id) == mapped;
         if (continues_fused_run) {
             continue;
         }
@@ -466,10 +464,9 @@ inline constexpr bool launch_sequences_correspond_v3_to_v4() {
     std::size_t v4_index = 0;
     for (std::size_t index = 0; index < kLaunchSequenceV3.size(); ++index) {
         const auto &launch = kLaunchSequenceV3[index];
-        const bool absorbed_barrier =
-            launch.kernel_id == std::string_view("apply_barrier") &&
-            (launch.semantic_stage == std::string_view("stage_publish") ||
-             launch.semantic_stage == std::string_view("window_commit"));
+        const bool absorbed_barrier = launch.kernel_id == std::string_view("apply_barrier") &&
+                                      (launch.semantic_stage == std::string_view("stage_publish") ||
+                                       launch.semantic_stage == std::string_view("window_commit"));
         if (absorbed_barrier) {
             // The barrier folds into the previous v4 row, whose compound stage
             // must end with this barrier's stage name.

@@ -420,7 +420,8 @@ Json run_probe(const Args &args) {
     }
     if (args.learner_consumer_mode) {
         mode_rows.push_back({
-            {"mode_id", runtime::cuda_resident::learner_consumption::kLearnerConsumerModeIdNoExport},
+            {"mode_id",
+             runtime::cuda_resident::learner_consumption::kLearnerConsumerModeIdNoExport},
             {"host_export", false},
             {"device_consumer", true},
             {"learner_consumer", true},

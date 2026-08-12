@@ -37,8 +37,7 @@ inline constexpr std::string_view kCudaResidentPerformanceUnavailableCountersRea
 // world counts 1 and 4 is unmeasured -- the frozen matrix has no world-2/3
 // row -- so the advisory minimum is the smallest measured-winning count and
 // its value is a named CP-8 re-matrix review item.
-inline constexpr std::string_view kSmallBatchSelectionRuleId =
-    "cp7.small_batch_selection_rule.v1";
+inline constexpr std::string_view kSmallBatchSelectionRuleId = "cp7.small_batch_selection_rule.v1";
 inline constexpr std::size_t kResidentLaneAdvisoryMinimumWorldCount = 4;
 inline constexpr bool kWorldCountsBelowMinimumRouteToCpuReference = true;
 inline constexpr bool kMaintainedDefaultRemainsCpuReference = true;
@@ -46,8 +45,7 @@ inline constexpr std::string_view kSmallBatchCrossoverReviewOwner = "cp8.rematri
 
 static_assert(kResidentLaneAdvisoryMinimumWorldCount > 1,
               "the rule exists to route sub-minimum world counts to the CPU reference");
-static_assert(kWorldCountsBelowMinimumRouteToCpuReference &&
-                  kMaintainedDefaultRemainsCpuReference,
+static_assert(kWorldCountsBelowMinimumRouteToCpuReference && kMaintainedDefaultRemainsCpuReference,
               "freezing the rule must not weaken the maintained CPU default");
 
 // These constants describe the fixed-air device layout and the operations in

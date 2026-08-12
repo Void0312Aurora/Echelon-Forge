@@ -575,8 +575,7 @@ testing::CudaWorldStoreTestAccess::device_observation_consumer_kernel_resources(
 #endif
 }
 
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::learner_consumer_kernel_resources() {
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::learner_consumer_kernel_resources() {
 #if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaBarrierKernelResources resources;
     std::string error;

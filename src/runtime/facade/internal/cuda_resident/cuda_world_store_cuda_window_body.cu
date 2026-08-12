@@ -360,9 +360,11 @@ __device__ void window_phase_flight_dynamics_aerodynamics(
 }
 
 // Phase body of the retired flight_dynamics_integrate_kernel.
-__device__ void window_phase_flight_dynamics_integrate(
-    std::size_t world_capacity, std::size_t world, const double *time_steps, double *kinematics,
-    double *dynamics, const double *flight_dynamics_forces, std::uint32_t *status) {
+__device__ void window_phase_flight_dynamics_integrate(std::size_t world_capacity,
+                                                       std::size_t world, const double *time_steps,
+                                                       double *kinematics, double *dynamics,
+                                                       const double *flight_dynamics_forces,
+                                                       std::uint32_t *status) {
     const double dt = static_cast<double>(static_cast<float>(time_steps[world]));
     if (!isfinite(dt) || dt < kFlightDynamicsMinTimeStepS || dt > kFlightDynamicsMaxTimeStepS) {
         atomicExch(status, 1U);
@@ -449,8 +451,7 @@ __device__ void window_phase_flight_dynamics_integrate(
 
 // Phase body of the retired instrument_projection_kernel.
 __device__ void window_phase_instrument_projection(std::size_t world_capacity, std::size_t world,
-                                                   const double *kinematics,
-                                                   const double *dynamics,
+                                                   const double *kinematics, const double *dynamics,
                                                    const double *flight_dynamics_forces,
                                                    double *instruments, std::uint32_t *status) {
     const double z = kinematics[2 * world_capacity + world];
@@ -506,8 +507,8 @@ __device__ void window_phase_instrument_projection(std::size_t world_capacity, s
 }
 
 // Phase body of the retired configuration_projection_kernel.
-__device__ void window_phase_configuration_projection(std::size_t world_capacity,
-                                                      std::size_t world, const double *dynamics,
+__device__ void window_phase_configuration_projection(std::size_t world_capacity, std::size_t world,
+                                                      const double *dynamics,
                                                       const double *control_doubles,
                                                       const float *control_floats,
                                                       double *instruments, std::uint32_t *status) {
@@ -622,21 +623,19 @@ __global__ void window_commit_body_kernel(
     std::uint64_t *shard_versions, std::uint32_t *status) {
     const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world >= world_capacity) return;
-    window_phase_flight_dynamics_forces(world_capacity, world, time_steps, control_doubles,
-                                        control_floats, control_flags, prepared_doubles,
-                                        prepared_flags, kinematics, dynamics,
-                                        flight_dynamics_forces, status);
+    window_phase_flight_dynamics_forces(
+        world_capacity, world, time_steps, control_doubles, control_floats, control_flags,
+        prepared_doubles, prepared_flags, kinematics, dynamics, flight_dynamics_forces, status);
     window_phase_flight_dynamics_aerodynamics(world_capacity, world, control_floats, control_flags,
-                                              kinematics, dynamics, flight_dynamics_forces,
-                                              status);
+                                              kinematics, dynamics, flight_dynamics_forces, status);
     window_phase_flight_dynamics_integrate(world_capacity, world, time_steps, kinematics, dynamics,
                                            flight_dynamics_forces, status);
     window_phase_instrument_projection(world_capacity, world, kinematics, dynamics,
                                        flight_dynamics_forces, instruments, status);
     window_phase_configuration_projection(world_capacity, world, dynamics, control_doubles,
                                           control_floats, instruments, status);
-    window_phase_episode_projection(world_capacity, world, time_steps, simulation_times,
-                                    kinematics, dynamics, instruments, entity_ids, global_versions,
+    window_phase_episode_projection(world_capacity, world, time_steps, simulation_times, kinematics,
+                                    dynamics, instruments, entity_ids, global_versions,
                                     observations, observation_ids, rewards, reward_versions,
                                     termination_flags, termination_codes, event_empty, status);
 

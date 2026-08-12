@@ -66,10 +66,11 @@ struct LearnerNormalizationValues {
 // applies the contract-owned per-field affine normalization, and writes the
 // device-resident policy input buffer in the lease payload's world-major
 // [world_count, feature_count] float layout. Ids pass through unchanged.
-__global__ void learner_equivalent_consumer_kernel(
-    const float *values, const std::uint64_t *ids, std::size_t world_capacity,
-    std::size_t values_per_world, LearnerNormalizationValues normalization, float *policy_inputs,
-    std::uint64_t *out_ids) {
+__global__ void learner_equivalent_consumer_kernel(const float *values, const std::uint64_t *ids,
+                                                   std::size_t world_capacity,
+                                                   std::size_t values_per_world,
+                                                   LearnerNormalizationValues normalization,
+                                                   float *policy_inputs, std::uint64_t *out_ids) {
     const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world >= world_capacity) return;
     const std::size_t base = world * values_per_world;
@@ -341,14 +342,12 @@ bool submit_cuda_world_store_device_observation_consumer(
     }
     if (learner_equivalent) {
         learner_equivalent_consumer_kernel<<<blocks, threads>>>(
-            static_cast<const float *>(lease.values),
-            static_cast<const std::uint64_t *>(lease.ids), lease.world_count,
-            lease.values_per_world, learner_normalization_values(), values, ids);
+            static_cast<const float *>(lease.values), static_cast<const std::uint64_t *>(lease.ids),
+            lease.world_count, lease.values_per_world, learner_normalization_values(), values, ids);
     } else {
         device_observation_consumer_smoke_kernel<<<blocks, threads>>>(
-            static_cast<const float *>(lease.values),
-            static_cast<const std::uint64_t *>(lease.ids), lease.world_count,
-            lease.values_per_world, values, ids);
+            static_cast<const float *>(lease.values), static_cast<const std::uint64_t *>(lease.ids),
+            lease.world_count, lease.values_per_world, values, ids);
     }
     status = cudaGetLastError();
     if (status != cudaSuccess) {
@@ -498,8 +497,8 @@ bool query_cuda_world_store_device_observation_consumer_kernel_resources(
                                        error);
 }
 
-bool query_cuda_world_store_learner_consumer_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error) {
+bool query_cuda_world_store_learner_consumer_kernel_resources(CudaBarrierKernelResources *resources,
+                                                              std::string *error) {
     return query_cuda_kernel_resources(learner_equivalent_consumer_kernel,
                                        "learner_equivalent_consumer_kernel", resources, error);
 }

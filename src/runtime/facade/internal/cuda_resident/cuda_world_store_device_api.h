@@ -106,14 +106,16 @@ query_cuda_world_store_barrier_kernel_resources(CudaBarrierKernelResources *reso
 [[nodiscard]] bool
 query_cuda_world_store_control_preparation_kernel_resources(CudaBarrierKernelResources *resources,
                                                             std::string *error);
-[[nodiscard]] bool query_cuda_world_store_window_commit_body_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_window_commit_body_kernel_resources(CudaBarrierKernelResources *resources,
+                                                           std::string *error);
 [[nodiscard]] bool query_cuda_world_store_device_observation_pack_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error);
 [[nodiscard]] bool query_cuda_world_store_device_observation_consumer_kernel_resources(
     CudaBarrierKernelResources *resources, std::string *error);
-[[nodiscard]] bool query_cuda_world_store_learner_consumer_kernel_resources(
-    CudaBarrierKernelResources *resources, std::string *error);
+[[nodiscard]] bool
+query_cuda_world_store_learner_consumer_kernel_resources(CudaBarrierKernelResources *resources,
+                                                         std::string *error);
 [[nodiscard]] bool
 release_cuda_world_store_metadata(CudaWorldStoreDeviceAllocation *&allocation,
                                   CudaWorldStoreDeviceFaultInjection *faults) noexcept;

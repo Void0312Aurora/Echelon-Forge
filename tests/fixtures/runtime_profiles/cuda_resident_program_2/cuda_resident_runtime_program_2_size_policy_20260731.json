@@ -84,12 +84,12 @@
   {
    "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window_body.cu",
    "role": "fused_window_commit_body_kernel_and_launch_wrapper",
-   "observed_lines": 748
+   "observed_lines": 747
   },
   {
    "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu",
    "role": "phase_d_observation_pack_and_consumer",
-   "observed_lines": 507
+   "observed_lines": 506
   },
   {
    "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_state_readback.cu",
@@ -184,12 +184,12 @@
   {
    "path": "src/runtime/contracts/cuda_resident_resource_evidence_contract.h",
    "role": "frozen kernel catalog, launch topology, and capture retirement contract",
-   "observed_lines": 525
+   "observed_lines": 522
   },
   {
    "path": "src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp",
    "role": "fail-closed retirement stub for the legacy resource capture schema",
-   "observed_lines": 440
+   "observed_lines": 432
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_resource_evidence.py",
@@ -259,7 +259,7 @@
   {
    "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp",
    "role": "CR2-6a production protocol timing and compact probe report",
-   "observed_lines": 498
+   "observed_lines": 499
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_matrix_probe.py",
@@ -310,7 +310,7 @@
  "watch_items": [
   {
    "path": "src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_window_body.cu",
-   "observed_lines": 748,
+   "observed_lines": 747,
    "required_action": "no_growth_before_split_or_reclassification",
    "note": "CP-7b barrier-fold epilogue pushed the fused window body over the soft target; the phase bodies are verbatim copies of the retired kernels and stay unsplit for parity fidelity until a reviewed split."
   }
