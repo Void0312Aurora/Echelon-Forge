@@ -53,11 +53,21 @@ Exit gate per the program plan: optimized evidence comparable to CR2-6b.
      v1 identities;
    - a v2 manifest/evidence generation registers once (identities, its own
      capture date and source commit, same campaign design shape);
-   - freeze decision to record at implementation: the v1 package's
-     small-batch advisory block carries CR2-6b result content; the v2 shape
-     replaces it with an explicit comparison-to-CR2-6b section (per world
-     count and mode, p50-based, plus the lane crossover reading) rather
-     than restating an advisory that CP-7 owns;
+   - full pin inventory found on reading the validator, all of which the v2
+     shape must re-own rather than inherit: the literal evidence date and
+     the `CR2-6b` iteration id; `selection_policy` validated against the
+     CR2-6b advisory *result* (per-world routing rules baked into
+     `selection_policy_contract()`); `counter_status` pinned to the CR2-6b
+     era (`achieved_counter_gate_complete: False` with the historical
+     permission blocker, both false today); `parity_confirmation` pinned to
+     the 12-field v1 slice; `cr2_6`-prefixed gate keys;
+   - freeze decisions to record at implementation: v2 keeps the cross-lane
+     comparison shape (same metrics, per world count and mode) so the two
+     packages read side by side, references the CR2-6b package as a
+     hash-pinned prior-evidence input, drops the selection-policy result
+     block (routing authority lives with CP-7's disposition), and carries a
+     counter_status whose values reflect capture-time truth instead of the
+     frozen 2026-08-04 era;
    - unknown generations fail closed.
 2. **Measurement runbook** (gated; do not run before every precondition
    holds):
