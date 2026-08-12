@@ -22,3 +22,7 @@ docs/plan/exact_runtime/cuda_resident_cp_counter_evidence_20260810.json -text
 # CP-5 window-fusion measurement reports are content-addressed raw probe
 # outputs; the plan document records their SHA-256 over committed bytes.
 docs/plan/exact_runtime/cuda_resident_cp5_window_fusion_20260812/** -text
+
+# CP-5b v3 static resource evidence is the parent a future v3 counter capture
+# hashes against, so it must be byte-stable like its v1/v2 predecessors.
+docs/plan/exact_runtime/cuda_resident_cp_resource_evidence_20260812.json -text

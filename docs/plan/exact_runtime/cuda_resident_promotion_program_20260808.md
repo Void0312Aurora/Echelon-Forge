@@ -462,9 +462,23 @@ that CP-7 owns. World 1 remains 13-28x slower than the CPU lane end to end
 
 CP-8 re-runs the full order-balanced matrix as formal evidence after CP-7;
 the reports above are the CP-5 gate measurement, not a replacement for that
-campaign. A v3 static resource capture (probe + nsys + collector) is the
-CP-5b follow-up so the next counter attempt has a v3 parent; the v2 parent
-stays valid for the frozen v2 counter evidence only.
+campaign.
+
+### CP-5b: the v3 static parent exists (2026-08-12)
+
+[cuda_resident_cp_resource_evidence_20260812.json](cuda_resident_cp_resource_evidence_20260812.json)
+(11,912 bytes,
+`1bb3729aa159fe5ab7aa33dc496a06094dd11d552c81a3f21a50823cc4afec8b`) is the
+v3 static/topology capture -- probe under Nsight Systems 2025.3.2 plus the
+generation-aware collector, baseline-pinned to the CP-5 commit. It records
+seven launches over five kernels with the trace digest unchanged, and its
+nsys API inventory measures the fusion claim rather than asserting it: only
+`cudaLaunchKernel` (12 -> 7) differs from the frozen v2 capture; every
+synchronization, copy, memset, and allocation count and every transfer byte
+total is identical. The fused kernel is 116 registers, 40-byte stack, zero
+spills, theoretical occupancy 33.3%. The next achieved-counter attempt
+(elevation-gated, CP-8) has its v3 parent; the v2 parent stays valid for the
+frozen v2 counter evidence only.
 
 ## CP-3 landed
 

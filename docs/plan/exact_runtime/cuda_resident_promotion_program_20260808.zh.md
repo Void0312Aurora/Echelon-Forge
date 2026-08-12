@@ -448,8 +448,20 @@ CP-7 所辖的固定同步/拷贝成本。world 1 端到端仍比 CPU lane 慢 1
 留给 CP-7。
 
 CP-8 在 CP-7 之后重跑完整 order-balanced 矩阵作为正式证据；上述报告是 CP-5 的门禁
-测量，不替代那次 campaign。v3 静态资源捕获（探针 + nsys + 采集器）作为 CP-5b 后续，
-使下一次计数器尝试有 v3 父级可用；v2 父级此后仅对冻结的 v2 计数器证据有效。
+测量，不替代那次 campaign。
+
+### CP-5b：v3 静态父级已就位（2026-08-12）
+
+[cuda_resident_cp_resource_evidence_20260812.json](cuda_resident_cp_resource_evidence_20260812.json)
+（11,912 字节，
+`1bb3729aa159fe5ab7aa33dc496a06094dd11d552c81a3f21a50823cc4afec8b`）是 v3
+静态/拓扑捕获——探针在 Nsight Systems 2025.3.2 下运行，经世代感知采集器组装，
+baseline 钉在 CP-5 提交上。它记录五个 kernel 上的七次 launch，trace 摘要不变；其
+nsys API 清单把融合主张从断言变成实测：与冻结的 v2 捕获相比只有
+`cudaLaunchKernel`（12→7）不同，所有同步、拷贝、memset、分配计数与各方向传输字节
+总量逐项一致。融合 kernel 为 116 寄存器、40 字节栈、零 spill、理论 occupancy
+33.3%。下一次 achieved 计数器尝试（需提权，CP-8）已有 v3 父级可用；v2 父级此后仅
+对冻结的 v2 计数器证据有效。
 
 ## CP-3 已落地
 
