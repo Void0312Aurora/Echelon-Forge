@@ -90,6 +90,23 @@ def test_ci_smoke_keeps_cr2_counter_strict_numeric_gate_registered() -> None:
   assert CR2_STRICT_NUMERIC_NODE in entries
 
 
+def test_ci_smoke_takes_no_governance_audit_files_wholesale() -> None:
+  """Audit-tier files may contribute hand-picked node ids to the smoke
+  suite, but never whole files: the suite runner applies no marker filter,
+  so a wholesale entry would silently pull the on-demand audit tier back
+  into every PR run.
+  """
+  smoke_entries = _load_json(PYTEST_SUITE_MANIFESTS[0])["paths"]
+  audit_files = set(_load_json(GOVERNANCE_AUDIT_SUITE)["paths"])
+  wholesale = [
+    entry for entry in smoke_entries if "::" not in entry and entry in audit_files
+  ]
+  assert not wholesale, (
+    "ci smoke must reference governance-audit files by node id only: "
+    f"{wholesale}"
+  )
+
+
 def test_ci_smoke_uses_explicit_files_or_nodeids_not_directories() -> None:
   entries = _load_json(PYTEST_SUITE_MANIFESTS[0])["paths"]
   directory_entries = []
