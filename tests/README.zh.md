@@ -184,10 +184,11 @@ Suite tier 含义：
   工作流、文档健康度（链接、双语一致、信息架构、内容 pin），以及仓库自动化
   workflow pin。每个文件带有模块级
   `pytestmark = pytest.mark.governance_audit`；marker 注册在
-  `pyproject.toml`。例外：五个 retained CUDA 证据模块的精确行数被冻结的
+  `pyproject.toml`。例外：三个 retained CUDA 证据模块的精确行数被冻结的
   CR2 尺寸策略钉住，因此由
   `tests/architecture/runtime_profiles/conftest.py` 在收集期为其打标，
-  而非编辑被钉住的文件。
+  而非编辑被钉住的文件。（counter/resource 证据模块同样被钉行数，但归属
+  守卫层：其主体是 C++ contract/CMake 拓扑与 parser 拒绝路径。）
 
 判定规则：测试对象是代码的结构性质（普通代码变更可使其变红）→ 守卫层；
 测试校验的是证据文档、签入清单、来源/签核/溯源记录或文档健康度 → 审计层。
@@ -212,7 +213,8 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/governance_aud
 ```
 
 `tests/runners/test_pytest_suite_manifests.py` 中的元测试保证两份 manifest
-互斥、完整覆盖 `tests/architecture` 全部测试文件，并与模块 marker 保持锁步，
+无重复条目、互斥、完整覆盖 `tests/architecture` 全部测试文件，并与真实的
+`pytest --collect-only -m governance_audit` 收集结果保持锁步，
 使层级归属变更必须通过显式的 manifest 编辑完成。CI smoke 套件列出显式文件
 与 node ID，不受 marker 拆分影响：已提升进 smoke 的条目即使所属文件位于审计
 层，也继续作为 CI gate 运行。
