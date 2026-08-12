@@ -323,6 +323,23 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_command_task_order_api.cpp
     src/interfaces/python/bindings_command_leader_intent.cpp
     src/interfaces/python/bindings_core.cpp
+    # bind_core() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_core_enums.cpp
+    src/interfaces/python/bindings_core_instruments.cpp
+    src/interfaces/python/bindings_core_weapon_profiles.cpp
+    src/interfaces/python/bindings_core_unit_data.cpp
+    src/interfaces/python/bindings_core_debug_views.cpp
+    src/interfaces/python/bindings_core_observation.cpp
+    src/interfaces/python/bindings_core_simulation_kernel.cpp
+    # SimulationKernel method-surface slices, in the same registration order;
+    # the diagnostics sub-slices follow their own orchestration shell.
+    src/interfaces/python/bindings_core_kernel_maintained.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_views.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_platform_state.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_missile.cpp
+    src/interfaces/python/bindings_core_kernel_legacy.cpp
+    src/interfaces/python/bindings_core_kernel_override.cpp
     src/interfaces/python/bindings_episode.cpp
     src/interfaces/python/bindings_runtime.cpp
     # bind_runtime() domain slices, listed in nanobind registration order.
