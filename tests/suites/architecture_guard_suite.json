@@ -24,6 +24,7 @@
     "tests/architecture/damage_model/test_retained_manifest_integrity.py",
     "tests/architecture/damage_model/test_rights_output_policy_probe.py",
     "tests/architecture/governance/test_codex_action_comment_trigger.py",
+    "tests/architecture/governance/test_conftest_hook_budget.py",
     "tests/architecture/governance/test_cooperative_flight_matrix_freshness.py",
     "tests/architecture/governance/test_cpp_include_direction.py",
     "tests/architecture/governance/test_dto_schema_freshness.py",

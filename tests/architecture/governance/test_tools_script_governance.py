@@ -127,6 +127,60 @@ def test_diagnostics_top_level_entrypoints_are_governed_by_function() -> None:
   assert unexpected == []
 
 
+# The strict-xfail guard above records that the top-level sprawl is genuinely
+# unresolved. Strict xfail alarms on recovery, not on decay: the residual set
+# grew from the 11 scripts its reason records to the 23 below before anything
+# noticed (census, 2026-08-13). This ratchet freezes the tolerated set so
+# growth fails immediately while shrinkage forces the entry's removal.
+TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS = frozenset(
+  {
+    "calibration_admission_audit.py",
+    "cuda_resident_cr2_closure.py",
+    "cuda_resident_cr2_counter_evidence.py",
+    "cuda_resident_cr2_full_window_compare.py",
+    "cuda_resident_cr2_json_types.py",
+    "cuda_resident_cr2_matrix_evidence.py",
+    "cuda_resident_cr2_matrix_evidence_schema.py",
+    "cuda_resident_cr2_matrix_probe.py",
+    "cuda_resident_cr2_parity_compare.py",
+    "cuda_resident_cr2_resource_evidence.py",
+    "cuda_resident_cr2_resource_schema.py",
+    "cuda_resident_cr2_resource_static.py",
+    "cuda_resident_retained_evidence_paths.py",
+    "kill_chain_decoupling_probe.py",
+    "kill_chain_expectation_harness.py",
+    "kill_chain_expectation_response_diagnosis.py",
+    "kill_chain_expectation_stage_attribution.py",
+    "kill_chain_expectation_visualize.py",
+    "kill_chain_guidance_exact_mechanism_ablation.py",
+    "kill_chain_guidance_mechanism_ablation.py",
+    "lethality_chain_contract.py",
+    "mlf9_statistical_trends.py",
+    "structural_breakup_export.py",
+  }
+)
+
+
+def test_diagnostics_top_level_sprawl_never_grows() -> None:
+  diagnostics_dir = REPO_ROOT / "tools" / "diagnostics"
+  actual = {path.name for path in diagnostics_dir.glob("*.py")}
+
+  new_sprawl = sorted(
+    actual - APPROVED_DIAGNOSTICS_TOP_LEVEL - TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS
+  )
+  assert not new_sprawl, (
+    "new top-level scripts under tools/diagnostics/ need a family package or "
+    "an explicit governance decision, not another sibling: "
+    f"{new_sprawl}"
+  )
+
+  healed = sorted(TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS - actual)
+  assert not healed, (
+    "tolerated residuals were removed or relocated; delete them from "
+    f"TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS to lock in the win: {healed}"
+  )
+
+
 def test_benchmark_families_are_registered_modules() -> None:
   from tools.diagnostics.benchmark_registry import BENCHMARK_FAMILIES
 
