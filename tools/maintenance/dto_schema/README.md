@@ -82,15 +82,21 @@ hand-written on purpose:
 
 16 of the 132 `src/**/*.inc` files are deliberately not schema-generated:
 
-- `src/content/detail/*.inc` (6 files: `aero_tuning_fields`,
-  `engine_tuning_fields`, `missile_tuning_fields`, `ship_platform_fields`,
-  `submarine_platform_fields`, `unit_definition_direct_fields`) are
-  hand-maintained content escape-hatch field lists whose anchor points the
-  other way: the C++ struct declaration is authoritative, and
-  `tests/architecture/content/test_*_fields_inc.py` pins declaration, `.inc`,
-  and a pinned expectation table three ways. The un-wired I52 draft
-  (`drafts/content_unit_schema_draft.json`) is the future single-source
-  candidate for this family.
+- `src/content/detail/*.inc` (6 files) are hand-maintained content
+  escape-hatch field lists whose anchor points the other way, pinned three
+  ways (anchor == `.inc` == pinned table) by
+  `tests/architecture/content/test_*_fields_inc.py`. The authoritative
+  anchor differs per family:
+  - `aero_tuning_fields`, `engine_tuning_fields`, `ship_platform_fields`,
+    and `submarine_platform_fields` anchor on the C++ struct declarations
+    (the I52 survey has no per-key table for them);
+  - `missile_tuning_fields` and `unit_definition_direct_fields` anchor on
+    the I52 survey's section 1.2 and 1.1 tables respectively (see
+    `test_missile_tuning_fields_inc.py` and
+    `test_unit_definition_direct_fields_inc.py`).
+
+  The un-wired I52 draft (`drafts/content_unit_schema_draft.json`) is the
+  future single-source candidate for this family.
 - `src/models/weapons/detail/default_effects_*.inc` (10 files) are private
   code fragments of `default_effects_model.cpp` — helper functions included
   inside its anonymous namespace — not X-macro field lists, and are out of

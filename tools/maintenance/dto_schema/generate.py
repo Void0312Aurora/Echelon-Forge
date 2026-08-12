@@ -13,19 +13,24 @@ properties so no separate test is needed to trust a green --check:
   missing, aborts every command);
 - gym_envs/scenario_loader/_generated/ is a fully generated directory, so
   *.py files there that no registered schema owns fail --check and are
-  removed by --write.
+  removed by --write. Ownership is compared case-insensitively where the
+  platform folds case (os.path.normcase): a directory entry that matches a
+  registered artifact except for spelling case is reported as a case
+  mismatch and is never deleted, because on a case-insensitive filesystem
+  it is the same file the write loop manages.
 """
 
 from __future__ import annotations
 
 import argparse
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Collection, Iterable
 import difflib
 import functools
 import hashlib
 import importlib
 import json
+import os
 from pathlib import Path
 import sys
 from types import ModuleType
@@ -165,28 +170,57 @@ def manifest_payload(
   }
 
 
-def unexpected_generated_files(
+def classify_generated_files(
+  owned: Collection[str],
+  found: Iterable[str],
+  normalize: Callable[[str], str] = os.path.normcase,
+) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+  """Split scanned generated-package paths into orphans and case mismatches.
+
+  Ownership is decided on normalize-folded paths (os.path.normcase by
+  default, so case is folded exactly where the platform folds it). A found
+  path that folds onto a registered artifact but differs in exact spelling
+  is a (actual, registered) case mismatch: on a case-insensitive filesystem
+  it is the very directory entry the write loop manages, so it must never
+  be classified as a deletable orphan. Only paths that fold onto nothing
+  registered are orphans.
+  """
+  owned_by_norm = {normalize(path): path for path in owned}
+  unexpected: list[str] = []
+  mismatched: list[tuple[str, str]] = []
+  for path in found:
+    canonical = owned_by_norm.get(normalize(path))
+    if canonical is None:
+      unexpected.append(path)
+    elif canonical != path:
+      mismatched.append((path, canonical))
+  return tuple(sorted(unexpected)), tuple(sorted(mismatched))
+
+
+def scan_generated_package(
   registrations: tuple[tuple[str, DtoSchema], ...],
   output_root: Path,
-) -> tuple[str, ...]:
-  """*.py files in the generated package that no registered schema owns.
+) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+  """Classify the generated package's top-level *.py files.
 
   The generated package directory holds only generator output, so any other
-  Python file there is a stale or hand-added artifact. Only the directory's
-  top level is scanned; __pycache__ and non-.py files are ignored.
+  Python file there is a stale or hand-added artifact. Only regular files at
+  the directory's top level are scanned; directories (even ones named like
+  x.py), __pycache__, and non-.py entries are ignored.
   """
   package_dir = output_root / python_builder.GENERATED_PACKAGE_DIR
   if not package_dir.is_dir():
-    return ()
+    return ((), ())
   owned = {
     python_builder.builder_output_path(schema) for _, schema in registrations
   }
   owned.add(python_builder.PACKAGE_INIT_PATH)
-  found = (
+  found = tuple(
     f"{python_builder.GENERATED_PACKAGE_DIR}/{path.name}"
     for path in package_dir.glob("*.py")
+    if path.is_file()
   )
-  return tuple(sorted(path for path in found if path not in owned))
+  return classify_generated_files(owned, found)
 
 
 def _uniform_line_ending(content: bytes) -> str | None:
@@ -239,12 +273,22 @@ def check_outputs(
     stale = True
     print(f"stale: {path}")
     print(_diff_summary(path, actual, expected))
-  for path in unexpected_generated_files(registrations, output_root):
+  unexpected, case_mismatched = scan_generated_package(
+    registrations, output_root
+  )
+  for path in unexpected:
     stale = True
     print(f"unexpected: {path}")
     print(
       "  file is not owned by any registered schema; remove it or run "
       "generate.py --write"
+    )
+  for actual, registered in case_mismatched:
+    stale = True
+    print(f"case-mismatch: {actual}")
+    print(
+      f"  directory entry differs from registered artifact {registered} "
+      "only by case; rename it by hand (generate.py never deletes it)"
     )
   return 1 if stale else 0
 
@@ -264,10 +308,19 @@ def write_outputs(
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(expected)
     print(f"wrote: {path}")
-  for path in unexpected_generated_files(registrations, output_root):
+  unexpected, case_mismatched = scan_generated_package(
+    registrations, output_root
+  )
+  for path in unexpected:
     (output_root / path).unlink()
     print(f"removed: {path}")
-  return 0
+  for actual, registered in case_mismatched:
+    print(f"case mismatch (not removed): {actual}")
+    print(
+      f"  directory entry differs from registered artifact {registered} "
+      "only by case; refusing to delete, rename it by hand"
+    )
+  return 1 if case_mismatched else 0
 
 
 def _build_parser() -> argparse.ArgumentParser:
