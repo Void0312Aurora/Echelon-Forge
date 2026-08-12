@@ -120,8 +120,8 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Implementation contains the maintained export chain, but still mixes it with broad compatibility helpers and diagnostics shaping.",
       "evidence_markers": [
-        "RuntimeWindowResult RuntimeFacade::run_window",
-        "return execute_runtime_window(",
+  "RuntimeWindowResult RuntimeFacade::run_window",
+  "RuntimeWindowResult result = execute_runtime_window(",
         "kObservationExportNodeId",
         "diagnostics_trace_surface_not_maintained_decision_path"
       ]
