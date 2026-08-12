@@ -14,6 +14,11 @@ from tools.maintenance.source_governance import admission_audit as audit
 
 pytestmark = pytest.mark.governance_audit
 
+# The retired live A2 task root, kept here as a negative control. It must stay
+# different from ``audit.A2_SOURCE_ROOT``: a bulk path rewrite that tracks the
+# audited root would turn the fixture below into a positive case.
+LEGACY_LIVE_A2_ROOT = Path("docs/task/air_combat/a2_high_fidelity_damage_model")
+
 
 def _write(path: Path, text: str) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
@@ -154,9 +159,20 @@ def test_source_admission_audit_requires_reasonableness_for_community_updates(
 
 
 def test_source_admission_audit_rejects_legacy_live_root_only(tmp_path: Path) -> None:
+  """Source docs parked under the retired live A2 task root are not audited.
+
+  The audit is scoped to ``A2_SOURCE_ROOT`` alone; the pre-migration live task
+  root is not a compatibility fallback. The tree here holds a ledger under that
+  retired root and nothing under the audited root, so every counter must stay at
+  zero and the audit must report the audited root as missing rather than
+  silently grading the legacy copy.
+  """
+  assert LEGACY_LIVE_A2_ROOT != audit.A2_SOURCE_ROOT, (
+    "fixture root must remain distinct from the audited root"
+  )
+
   _write(
-    tmp_path
-    / "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/data_collection/example/source_ledger.zh.md",
+    tmp_path / LEGACY_LIVE_A2_ROOT / "data_collection/example/source_ledger.zh.md",
     _minimal_ledger(),
   )
 
