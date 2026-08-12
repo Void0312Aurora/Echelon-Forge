@@ -168,15 +168,44 @@ def test_fix_updates_only_hashes_for_artifacts_under_manifest_directory(
 @pytest.mark.parametrize(
   "summary",
   [
-    {"missing_total": 0, "sha_mismatch_total": 0, "guard_true_total": 0},
-    {"missing_total": 1, "sha_mismatch_total": 0, "guard_true_total": 0},
-    {"missing_total": 0, "sha_mismatch_total": 1, "guard_true_total": 0},
-    {"missing_total": 0, "sha_mismatch_total": 0, "guard_true_total": 1},
+    {
+      "manifest_count": 1,
+      "missing_total": 0,
+      "sha_mismatch_total": 0,
+      "guard_true_total": 0,
+    },
+    {
+      "manifest_count": 1,
+      "missing_total": 1,
+      "sha_mismatch_total": 0,
+      "guard_true_total": 0,
+    },
+    {
+      "manifest_count": 1,
+      "missing_total": 0,
+      "sha_mismatch_total": 1,
+      "guard_true_total": 0,
+    },
+    {
+      "manifest_count": 1,
+      "missing_total": 0,
+      "sha_mismatch_total": 0,
+      "guard_true_total": 1,
+    },
+    # An empty inventory must fail even with clean counters: a glob that
+    # matched no manifest verified nothing.
+    {
+      "manifest_count": 0,
+      "missing_total": 0,
+      "sha_mismatch_total": 0,
+      "guard_true_total": 0,
+    },
   ],
 )
 def test_summary_failure_status(summary: dict[str, int]) -> None:
   assert integrity._summary_failed(summary) is (
-    summary["missing_total"] != 0
+    summary["manifest_count"] == 0
+    or summary["missing_total"] != 0
     or summary["sha_mismatch_total"] != 0
     or summary["guard_true_total"] != 0
   )
