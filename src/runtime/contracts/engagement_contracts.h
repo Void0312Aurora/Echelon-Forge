@@ -81,92 +81,92 @@ inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsOnly = 
 
 struct EngagementEntityRef {
 #define EF_ENGAGEMENT_ENTITY_REF_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/engagement_entity_ref.inc"
+#include "runtime/contracts/detail/engagement/engagement_entity_ref.inc"
 };
 
 struct LethalityChainHeader {
 #define EF_LETHALITY_CHAIN_HEADER_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/lethality_chain_header.inc"
+#include "runtime/contracts/detail/engagement/lethality_chain_header.inc"
 };
 
 struct NearestApproachEvent {
 #define EF_NEAREST_APPROACH_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/nearest_approach_event.inc"
+#include "runtime/contracts/detail/engagement/nearest_approach_event.inc"
 };
 
 struct FuzeEvaluationEvent {
 #define EF_FUZE_EVALUATION_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/fuze_evaluation_event.inc"
+#include "runtime/contracts/detail/engagement/fuze_evaluation_event.inc"
 };
 
 struct WarheadMechanismEvent {
 #define EF_WARHEAD_MECHANISM_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/warhead_mechanism_event.inc"
+#include "runtime/contracts/detail/engagement/warhead_mechanism_event.inc"
 };
 
 struct SpatialCoverageEvent {
 #define EF_SPATIAL_COVERAGE_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/spatial_coverage_event.inc"
+#include "runtime/contracts/detail/engagement/spatial_coverage_event.inc"
 };
 
 struct ComponentLoadEvent {
 #define EF_COMPONENT_LOAD_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/component_load_event.inc"
+#include "runtime/contracts/detail/damage/component_load_event.inc"
 };
 
 struct ComponentDamageEvent {
 #define EF_COMPONENT_DAMAGE_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/component_damage_event.inc"
+#include "runtime/contracts/detail/damage/component_damage_event.inc"
 };
 
 struct PlatformConsequenceEvent {
 #define EF_PLATFORM_CONSEQUENCE_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/platform_consequence_event.inc"
+#include "runtime/contracts/detail/damage/platform_consequence_event.inc"
 };
 
 struct StructuralBreakupEvent {
 #define EF_STRUCTURAL_BREAKUP_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/structural_breakup_event.inc"
+#include "runtime/contracts/detail/damage/structural_breakup_event.inc"
 };
 
 struct LifecycleTransitionEvent {
 #define EF_LIFECYCLE_TRANSITION_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/lifecycle_transition_event.inc"
+#include "runtime/contracts/detail/damage/lifecycle_transition_event.inc"
 };
 
 struct TrainingProjectionEvent {
 #define EF_TRAINING_PROJECTION_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/training_projection_event.inc"
+#include "runtime/contracts/detail/damage/training_projection_event.inc"
 };
 
 struct ComponentMechanismLoadRow {
 #define EF_COMPONENT_MECHANISM_LOAD_ROW_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/component_mechanism_load_row.inc"
+#include "runtime/contracts/detail/damage/component_mechanism_load_row.inc"
 };
 
 struct ComponentResponseRow {
 #define EF_COMPONENT_RESPONSE_ROW_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/component_response_row.inc"
+#include "runtime/contracts/detail/damage/component_response_row.inc"
 };
 
 struct TrackPacket {
 #define EF_TRACK_PACKET_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/track_packet.inc"
+#include "runtime/contracts/detail/engagement/track_packet.inc"
 };
 
 struct LaunchRequest {
 #define EF_LAUNCH_REQUEST_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/launch_request.inc"
+#include "runtime/contracts/detail/engagement/launch_request.inc"
 };
 
 struct LaunchEvent {
 #define EF_LAUNCH_EVENT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/launch_event.inc"
+#include "runtime/contracts/detail/engagement/launch_event.inc"
 };
 
 struct MunitionLifecyclePacket {
 #define EF_MUNITION_LIFECYCLE_PACKET_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/munition_lifecycle_packet.inc"
+#include "runtime/contracts/detail/engagement/munition_lifecycle_packet.inc"
 };
 
 struct EffectsEvent {
@@ -174,53 +174,53 @@ struct EffectsEvent {
     // EffectsResult-overlap semantics.
 #define EF_EFFECTS_EVENT_FIELD(type, name, default_value) type name = default_value;
 #define EF_EFFECTS_EVENT_RESULT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/effects_event_fields.inc"
+#include "runtime/contracts/detail/damage/effects_event_fields.inc"
 #undef EF_EFFECTS_EVENT_RESULT_FIELD
 #undef EF_EFFECTS_EVENT_FIELD
 };
 
 struct KillChainApproachFact {
 #define EF_KILL_CHAIN_APPROACH_FACT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/kill_chain_approach_fact.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_approach_fact.inc"
 };
 
 struct KillChainFuzeDecision {
 #define EF_KILL_CHAIN_FUZE_DECISION_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/kill_chain_fuze_decision.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_fuze_decision.inc"
 };
 
 struct KillChainComponentLoadFact {
 #define EF_KILL_CHAIN_COMPONENT_LOAD_FACT_FIELD(type, name, default_value)                         \
     type name = default_value;
-#include "runtime/contracts/detail/kill_chain_component_load_fact.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_component_load_fact.inc"
 };
 
 struct KillChainWarheadLoadField {
 #define EF_KILL_CHAIN_WARHEAD_LOAD_FIELD_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/kill_chain_warhead_load_field.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_warhead_load_field.inc"
 };
 
 struct KillChainTargetSusceptibility {
 #define EF_KILL_CHAIN_TARGET_SUSCEPTIBILITY_FIELD(type, name, default_value)                       \
     type name = default_value;
-#include "runtime/contracts/detail/kill_chain_target_susceptibility.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_target_susceptibility.inc"
 };
 
 struct KillChainComponentResponseFact {
 #define EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(type, name, default_value)                     \
     type name = default_value;
-#include "runtime/contracts/detail/kill_chain_component_response_fact.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_component_response_fact.inc"
 };
 
 struct KillChainConsequenceProjection {
 #define EF_KILL_CHAIN_CONSEQUENCE_PROJECTION_FIELD(type, name, default_value)                      \
     type name = default_value;
-#include "runtime/contracts/detail/kill_chain_consequence_projection.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_consequence_projection.inc"
 };
 
 struct KillChainRuntimeFacade {
 #define EF_KILL_CHAIN_RUNTIME_FACADE_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/kill_chain_runtime_facade.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_runtime_facade.inc"
 };
 
 inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent &effects) {
@@ -379,12 +379,12 @@ inline KillChainRuntimeFacade make_kill_chain_runtime_facade(const EffectsEvent 
 
 struct DamageReport {
 #define EF_DAMAGE_REPORT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/damage_report.inc"
+#include "runtime/contracts/detail/damage/damage_report.inc"
 };
 
 struct DiagnosticsTrace {
 #define EF_DIAGNOSTICS_TRACE_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/diagnostics_trace.inc"
+#include "runtime/contracts/detail/engagement/diagnostics_trace.inc"
 };
 
 // Backend-neutral event batch shared by the simulation engine and facade SPI.
@@ -392,5 +392,5 @@ struct DiagnosticsTrace {
 // dropping newly added event families.
 struct RecentEngagementEvents {
 #define EF_RECENT_ENGAGEMENT_EVENTS_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/recent_engagement_events.inc"
+#include "runtime/contracts/detail/engagement/recent_engagement_events.inc"
 };

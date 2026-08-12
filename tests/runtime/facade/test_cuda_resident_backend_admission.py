@@ -32,7 +32,7 @@ def test_runtime_batch_config_keeps_the_two_field_cpu_default() -> None:
     assert not hasattr(config, "capability_manifest_id")
 
     config_fields = Path(
-        resolve_repo_path("src", "runtime", "facade", "detail", "runtime_batch_config.inc")
+        resolve_repo_path("src", "runtime", "facade", "detail", "runtime", "runtime_batch_config.inc")
     ).read_text(encoding="utf-8")
     assert (
         sum(

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-11",
+  "generated_at": "2026-08-12",
   "root": "docs",
   "pairs": [
     {
@@ -25,9 +25,9 @@
       "english": "docs/architecture/reference/t8_g4_truth_leak_inventory.md",
       "chinese": "docs/architecture/reference/t8_g4_truth_leak_inventory.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-09",
-      "english_hash": "78bd6b9f5bc03e1aac862f30eac5806a2e1fb80f4abfaff9827e6915ca3f0e72",
-      "chinese_hash": "1b7a97bd6d0aadea6256512c72dc8646dbaf28e56da6b1eaafc338c6d7f8eb83"
+      "last_verified": "2026-08-12",
+      "english_hash": "deacb0d52a14dc41b6738d13e2cbccc17feb86cac02caddf58b6c9c4c1761b63",
+      "chinese_hash": "403f5d66c97a4b168a8eeeaba44a8ba99fd41dd95b10c76f632b26e7c08fcd72"
     },
     {
       "pair_id": "architecture/standards/runtime_workflow_and_contract_baseline",

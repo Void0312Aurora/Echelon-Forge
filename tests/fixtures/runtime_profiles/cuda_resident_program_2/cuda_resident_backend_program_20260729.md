@@ -86,7 +86,7 @@ Primary evidence inputs:
 - [RuntimeFacade ownership](../../../src/runtime/facade/runtime_facade.h)
 - [RuntimeFacade construction](../../../src/runtime/facade/runtime_facade.cpp)
 - [WorldBatchRuntime stepping](../../../src/core/engine/world_batch_runtime.cpp)
-- [runtime batch config fields](../../../src/runtime/facade/detail/runtime_batch_config.inc)
+- [runtime batch config fields](../../../src/runtime/facade/detail/runtime/runtime_batch_config.inc)
 - [backend profile contracts](../../../src/runtime/contracts/backend_profile_contracts.h)
 - [resident-state parity budget](../../../src/runtime/contracts/parity_budget_contracts.h)
 - [exact-stage semantic inventory](../../../src/core/engine/exact_stage_inventory.cpp)

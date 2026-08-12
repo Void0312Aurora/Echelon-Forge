@@ -26,6 +26,14 @@ contract 尚未维护。
 - 为了方便 include 而引入 `core/engine/*`。
 - 在维护中的 ground owner 与 schema 存在前扩张 ground-specific runtime 语义。
 
+## 生成 detail 布局
+
+`detail/` 下生成的 X-macro 列表按 contract 领域放入 `damage`、
+`engagement`、`kill_chain`、`learning`、`platform`、`scenario` 与 `tasking`。
+新增列表必须进入对应 contract 目录，并同步维护
+`tools/maintenance/dto_schema/schemas/<domain>/` 下的声明源；schema 领域名与
+输出领域名不要求完全相同。不得再向 `detail/` 根层直接添加 `.inc` 文件。
+
 ## 迁移备注
 
 本目录是后续 `ef_contracts` target 的候选起点。新增 facade-facing 类型应优先放在这里，再由 facade 或 engine implementation 消费。新增领域字段时，优先采用 `common` 加显式 domain slice，而不是把 air/naval/ground-only 语义扩进共享 contract。

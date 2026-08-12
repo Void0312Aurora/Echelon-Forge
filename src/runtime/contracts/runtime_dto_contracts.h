@@ -7,28 +7,28 @@
 
 struct RewardTerm {
 #define EF_REWARD_TERM_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/reward_term.inc"
+#include "runtime/contracts/detail/learning/reward_term.inc"
 };
 
 struct RewardReport {
 #define EF_REWARD_REPORT_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/reward_report.inc"
+#include "runtime/contracts/detail/learning/reward_report.inc"
 };
 
 struct TerminationSpec {
 #define EF_TERMINATION_SPEC_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/termination_spec.inc"
+#include "runtime/contracts/detail/learning/termination_spec.inc"
 };
 
 struct ObservationViewSpec {
 #define EF_OBSERVATION_VIEW_SPEC_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/observation_view_spec.inc"
+#include "runtime/contracts/detail/learning/observation_view_spec.inc"
 };
 
 struct ObservationViewCompatibilityReport {
 #define EF_OBSERVATION_VIEW_COMPATIBILITY_REPORT_FIELD(type, name, default_value)                  \
     type name = default_value;
-#include "runtime/contracts/detail/observation_view_compatibility_report.inc"
+#include "runtime/contracts/detail/learning/observation_view_compatibility_report.inc"
 };
 
 struct ObservationSchemaVersionParts {

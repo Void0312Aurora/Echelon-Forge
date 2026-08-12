@@ -74,7 +74,7 @@ CUDA 后端在该窗口内拥有其已声明的 operational shards。不得在�
 - [RuntimeFacade 所有权](../../../src/runtime/facade/runtime_facade.h)
 - [RuntimeFacade 构造](../../../src/runtime/facade/runtime_facade.cpp)
 - [WorldBatchRuntime 步进](../../../src/core/engine/world_batch_runtime.cpp)
-- [runtime batch config 字段](../../../src/runtime/facade/detail/runtime_batch_config.inc)
+- [runtime batch config 字段](../../../src/runtime/facade/detail/runtime/runtime_batch_config.inc)
 - [backend profile 契约](../../../src/runtime/contracts/backend_profile_contracts.h)
 - [resident-state parity budget](../../../src/runtime/contracts/parity_budget_contracts.h)
 - [exact-stage 语义 inventory](../../../src/core/engine/exact_stage_inventory.cpp)

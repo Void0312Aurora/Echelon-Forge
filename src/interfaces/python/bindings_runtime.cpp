@@ -20,13 +20,13 @@ void bind_runtime(nb::module_ &m) {
     runtime_capabilities_class.def(nb::init<>());
 #define EF_RUNTIME_CAPABILITIES_FIELD(type, name, default_value)                                   \
     runtime_capabilities_class.def_rw(#name, &RuntimeCapabilities::name);
-#include "runtime/facade/detail/runtime_capabilities.inc"
+#include "runtime/facade/detail/runtime/runtime_capabilities.inc"
 
     nb::class_<RuntimeBatchConfig> runtime_batch_config_class(m, "RuntimeBatchConfig");
     runtime_batch_config_class.def(nb::init<>());
 #define EF_RUNTIME_BATCH_CONFIG_FIELD(type, name, default_value)                                   \
     runtime_batch_config_class.def_rw(#name, &RuntimeBatchConfig::name);
-#include "runtime/facade/detail/runtime_batch_config.inc"
+#include "runtime/facade/detail/runtime/runtime_batch_config.inc"
 
     nb::class_<RuntimeBackendRequest>(m, "RuntimeBackendRequest")
         .def(nb::init<>())
@@ -53,35 +53,35 @@ void bind_runtime(nb::module_ &m) {
     runtime_fidelity_request_class.def(nb::init<>());
 #define EF_RUNTIME_FIDELITY_REQUEST_FIELD(type, name, default_value)                               \
     runtime_fidelity_request_class.def_rw(#name, &RuntimeFidelityRequest::name);
-#include "runtime/facade/detail/runtime_fidelity_request.inc"
+#include "runtime/facade/detail/runtime/runtime_fidelity_request.inc"
 
     nb::class_<RuntimeFidelityAdmission> runtime_fidelity_admission_class(
         m, "RuntimeFidelityAdmission");
     runtime_fidelity_admission_class.def(nb::init<>());
 #define EF_RUNTIME_FIDELITY_ADMISSION_FIELD(type, name, default_value)                             \
     runtime_fidelity_admission_class.def_rw(#name, &RuntimeFidelityAdmission::name);
-#include "runtime/facade/detail/runtime_fidelity_admission.inc"
+#include "runtime/facade/detail/runtime/runtime_fidelity_admission.inc"
 
     nb::class_<RuntimeCounterfactualSnapshot> runtime_counterfactual_snapshot_class(
         m, "RuntimeCounterfactualSnapshot");
     runtime_counterfactual_snapshot_class.def(nb::init<>());
 #define EF_RUNTIME_COUNTERFACTUAL_SNAPSHOT_FIELD(type, name, default_value)                        \
     runtime_counterfactual_snapshot_class.def_rw(#name, &RuntimeCounterfactualSnapshot::name);
-#include "runtime/facade/detail/runtime_counterfactual_snapshot.inc"
+#include "runtime/facade/detail/runtime/runtime_counterfactual_snapshot.inc"
 
     nb::class_<RuntimeWorldlineComparison> runtime_worldline_comparison_class(
         m, "RuntimeWorldlineComparison");
     runtime_worldline_comparison_class.def(nb::init<>());
 #define EF_RUNTIME_WORLDLINE_COMPARISON_FIELD(type, name, default_value)                           \
     runtime_worldline_comparison_class.def_rw(#name, &RuntimeWorldlineComparison::name);
-#include "runtime/facade/detail/runtime_worldline_comparison.inc"
+#include "runtime/facade/detail/runtime/runtime_worldline_comparison.inc"
 
     nb::class_<DeviceResidentOutputDescriptor> device_resident_output_descriptor_class(
         m, "DeviceResidentOutputDescriptor");
     device_resident_output_descriptor_class.def(nb::init<>());
 #define EF_RESIDENT_DEVICE_OUTPUT_DESCRIPTOR_FIELD(type, name, default_value)                      \
     device_resident_output_descriptor_class.def_rw(#name, &DeviceResidentOutputDescriptor::name);
-#include "runtime/facade/detail/resident_device_output_descriptor.inc"
+#include "runtime/facade/detail/runtime/resident_device_output_descriptor.inc"
 
     nb::class_<runtime::fidelity::FidelityProfileRequest>(m, "FidelityProfileRequest")
         .def(nb::init<>())
@@ -128,14 +128,14 @@ void bind_runtime(nb::module_ &m) {
     platform_capability_class.def(nb::init<>());
 #define EF_PLATFORM_CAPABILITY_FIELD(type, name, default_value)                                    \
     platform_capability_class.def_rw(#name, &runtime::platform_capabilities::Capability::name);
-#include "runtime/contracts/detail/platform_capability.inc"
+#include "runtime/contracts/detail/platform/platform_capability.inc"
 
     nb::class_<runtime::platform_capabilities::CapabilityBundle> capability_bundle_class(
         m, "CapabilityBundle");
     capability_bundle_class.def(nb::init<>());
 #define EF_CAPABILITY_BUNDLE_FIELD(type, name, default_value)                                      \
     capability_bundle_class.def_rw(#name, &runtime::platform_capabilities::CapabilityBundle::name);
-#include "runtime/contracts/detail/capability_bundle.inc"
+#include "runtime/contracts/detail/platform/capability_bundle.inc"
 
     nb::class_<runtime::platform_capabilities::ResolvedPlatformSpawnPlan>
         resolved_platform_spawn_plan_class(m, "ResolvedPlatformSpawnPlan");
@@ -143,14 +143,14 @@ void bind_runtime(nb::module_ &m) {
 #define EF_RESOLVED_PLATFORM_SPAWN_PLAN_FIELD(type, name, default_value)                           \
     resolved_platform_spawn_plan_class.def_rw(                                                     \
         #name, &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::name);
-#include "runtime/contracts/detail/resolved_platform_spawn_plan.inc"
+#include "runtime/contracts/detail/platform/resolved_platform_spawn_plan.inc"
 
     nb::class_<TypedPlatformSpawnRequest> typed_platform_spawn_request_class(
         m, "TypedPlatformSpawnRequest");
     typed_platform_spawn_request_class.def(nb::init<>());
 #define EF_TYPED_PLATFORM_SPAWN_REQUEST_FIELD(type, name, default_value)                           \
     typed_platform_spawn_request_class.def_rw(#name, &TypedPlatformSpawnRequest::name);
-#include "runtime/contracts/detail/typed_platform_spawn_request.inc"
+#include "runtime/contracts/detail/platform/typed_platform_spawn_request.inc"
 
     nb::class_<TypedPlatformSpawnValidationResult> typed_platform_spawn_validation_result_class(
         m, "TypedPlatformSpawnValidationResult");
@@ -158,133 +158,133 @@ void bind_runtime(nb::module_ &m) {
 #define EF_TYPED_PLATFORM_SPAWN_VALIDATION_RESULT_FIELD(type, name, default_value)                 \
     typed_platform_spawn_validation_result_class.def_rw(                                           \
         #name, &TypedPlatformSpawnValidationResult::name);
-#include "runtime/contracts/detail/typed_platform_spawn_validation_result.inc"
+#include "runtime/contracts/detail/platform/typed_platform_spawn_validation_result.inc"
 
     nb::class_<BatchResetRequest> batch_reset_request_class(m, "BatchResetRequest");
     batch_reset_request_class.def(nb::init<>());
 #define EF_BATCH_RESET_REQUEST_FIELD(type, name, default_value)                                    \
     batch_reset_request_class.def_rw(#name, &BatchResetRequest::name);
-#include "runtime/facade/detail/batch_reset_request.inc"
+#include "runtime/facade/detail/batch/batch_reset_request.inc"
 
     nb::class_<EngagementEntityRef> engagement_entity_ref_class(m, "EngagementEntityRef");
     engagement_entity_ref_class.def(nb::init<>());
 #define EF_ENGAGEMENT_ENTITY_REF_FIELD(type, name, default_value)                                  \
     engagement_entity_ref_class.def_rw(#name, &EngagementEntityRef::name);
-#include "runtime/contracts/detail/engagement_entity_ref.inc"
+#include "runtime/contracts/detail/engagement/engagement_entity_ref.inc"
 
     nb::class_<LethalityChainHeader> lethality_chain_header_class(m, "LethalityChainHeader");
     lethality_chain_header_class.def(nb::init<>());
 #define EF_LETHALITY_CHAIN_HEADER_FIELD(type, name, default_value)                                 \
     lethality_chain_header_class.def_rw(#name, &LethalityChainHeader::name);
-#include "runtime/contracts/detail/lethality_chain_header.inc"
+#include "runtime/contracts/detail/engagement/lethality_chain_header.inc"
 
     nb::class_<NearestApproachEvent> nearest_approach_event_class(m, "NearestApproachEvent");
     nearest_approach_event_class.def(nb::init<>());
 #define EF_NEAREST_APPROACH_EVENT_FIELD(type, name, default_value)                                 \
     nearest_approach_event_class.def_rw(#name, &NearestApproachEvent::name);
-#include "runtime/contracts/detail/nearest_approach_event.inc"
+#include "runtime/contracts/detail/engagement/nearest_approach_event.inc"
 
     nb::class_<FuzeEvaluationEvent> fuze_evaluation_event_class(m, "FuzeEvaluationEvent");
     fuze_evaluation_event_class.def(nb::init<>());
 #define EF_FUZE_EVALUATION_EVENT_FIELD(type, name, default_value)                                  \
     fuze_evaluation_event_class.def_rw(#name, &FuzeEvaluationEvent::name);
-#include "runtime/contracts/detail/fuze_evaluation_event.inc"
+#include "runtime/contracts/detail/engagement/fuze_evaluation_event.inc"
 
     nb::class_<WarheadMechanismEvent> warhead_mechanism_event_class(m, "WarheadMechanismEvent");
     warhead_mechanism_event_class.def(nb::init<>());
 #define EF_WARHEAD_MECHANISM_EVENT_FIELD(type, name, default_value)                                \
     warhead_mechanism_event_class.def_rw(#name, &WarheadMechanismEvent::name);
-#include "runtime/contracts/detail/warhead_mechanism_event.inc"
+#include "runtime/contracts/detail/engagement/warhead_mechanism_event.inc"
 
     nb::class_<SpatialCoverageEvent> spatial_coverage_event_class(m, "SpatialCoverageEvent");
     spatial_coverage_event_class.def(nb::init<>());
 #define EF_SPATIAL_COVERAGE_EVENT_FIELD(type, name, default_value)                                 \
     spatial_coverage_event_class.def_rw(#name, &SpatialCoverageEvent::name);
-#include "runtime/contracts/detail/spatial_coverage_event.inc"
+#include "runtime/contracts/detail/engagement/spatial_coverage_event.inc"
 
     nb::class_<ComponentLoadEvent> component_load_event_class(m, "ComponentLoadEvent");
     component_load_event_class.def(nb::init<>());
 #define EF_COMPONENT_LOAD_EVENT_FIELD(type, name, default_value)                                   \
     component_load_event_class.def_rw(#name, &ComponentLoadEvent::name);
-#include "runtime/contracts/detail/component_load_event.inc"
+#include "runtime/contracts/detail/damage/component_load_event.inc"
 
     nb::class_<ComponentDamageEvent> component_damage_event_class(m, "ComponentDamageEvent");
     component_damage_event_class.def(nb::init<>());
 #define EF_COMPONENT_DAMAGE_EVENT_FIELD(type, name, default_value)                                 \
     component_damage_event_class.def_rw(#name, &ComponentDamageEvent::name);
-#include "runtime/contracts/detail/component_damage_event.inc"
+#include "runtime/contracts/detail/damage/component_damage_event.inc"
 
     nb::class_<PlatformConsequenceEvent> platform_consequence_event_class(
         m, "PlatformConsequenceEvent");
     platform_consequence_event_class.def(nb::init<>());
 #define EF_PLATFORM_CONSEQUENCE_EVENT_FIELD(type, name, default_value)                             \
     platform_consequence_event_class.def_rw(#name, &PlatformConsequenceEvent::name);
-#include "runtime/contracts/detail/platform_consequence_event.inc"
+#include "runtime/contracts/detail/damage/platform_consequence_event.inc"
 
     nb::class_<StructuralBreakupEvent> structural_breakup_event_class(m, "StructuralBreakupEvent");
     structural_breakup_event_class.def(nb::init<>());
 #define EF_STRUCTURAL_BREAKUP_EVENT_FIELD(type, name, default_value)                               \
     structural_breakup_event_class.def_rw(#name, &StructuralBreakupEvent::name);
-#include "runtime/contracts/detail/structural_breakup_event.inc"
+#include "runtime/contracts/detail/damage/structural_breakup_event.inc"
 
     nb::class_<LifecycleTransitionEvent> lifecycle_transition_event_class(
         m, "LifecycleTransitionEvent");
     lifecycle_transition_event_class.def(nb::init<>());
 #define EF_LIFECYCLE_TRANSITION_EVENT_FIELD(type, name, default_value)                             \
     lifecycle_transition_event_class.def_rw(#name, &LifecycleTransitionEvent::name);
-#include "runtime/contracts/detail/lifecycle_transition_event.inc"
+#include "runtime/contracts/detail/damage/lifecycle_transition_event.inc"
 
     nb::class_<TrainingProjectionEvent> training_projection_event_class(m,
                                                                         "TrainingProjectionEvent");
     training_projection_event_class.def(nb::init<>());
 #define EF_TRAINING_PROJECTION_EVENT_FIELD(type, name, default_value)                              \
     training_projection_event_class.def_rw(#name, &TrainingProjectionEvent::name);
-#include "runtime/contracts/detail/training_projection_event.inc"
+#include "runtime/contracts/detail/damage/training_projection_event.inc"
 
     nb::class_<TrackPacket> track_packet_class(m, "TrackPacket");
     track_packet_class.def(nb::init<>());
 #define EF_TRACK_PACKET_FIELD(type, name, default_value)                                           \
     track_packet_class.def_rw(#name, &TrackPacket::name);
-#include "runtime/contracts/detail/track_packet.inc"
+#include "runtime/contracts/detail/engagement/track_packet.inc"
 
     nb::class_<LaunchRequest> launch_request_class(m, "LaunchRequest");
     launch_request_class.def(nb::init<>());
 #define EF_LAUNCH_REQUEST_FIELD(type, name, default_value)                                         \
     launch_request_class.def_rw(#name, &LaunchRequest::name);
-#include "runtime/contracts/detail/launch_request.inc"
+#include "runtime/contracts/detail/engagement/launch_request.inc"
 
     nb::class_<LaunchEvent> launch_event_class(m, "LaunchEvent");
     launch_event_class.def(nb::init<>());
 #define EF_LAUNCH_EVENT_FIELD(type, name, default_value)                                           \
     launch_event_class.def_rw(#name, &LaunchEvent::name);
-#include "runtime/contracts/detail/launch_event.inc"
+#include "runtime/contracts/detail/engagement/launch_event.inc"
 
     nb::class_<MunitionLifecyclePacket> munition_lifecycle_packet_class(m,
                                                                         "MunitionLifecyclePacket");
     munition_lifecycle_packet_class.def(nb::init<>());
 #define EF_MUNITION_LIFECYCLE_PACKET_FIELD(type, name, default_value)                              \
     munition_lifecycle_packet_class.def_rw(#name, &MunitionLifecyclePacket::name);
-#include "runtime/contracts/detail/munition_lifecycle_packet.inc"
+#include "runtime/contracts/detail/engagement/munition_lifecycle_packet.inc"
 
     nb::class_<ComponentMechanismLoadRow> component_mechanism_load_row_class(
         m, "ComponentMechanismLoadRow");
     component_mechanism_load_row_class.def(nb::init<>());
 #define EF_COMPONENT_MECHANISM_LOAD_ROW_FIELD(type, name, default_value)                           \
     component_mechanism_load_row_class.def_rw(#name, &ComponentMechanismLoadRow::name);
-#include "runtime/contracts/detail/component_mechanism_load_row.inc"
+#include "runtime/contracts/detail/damage/component_mechanism_load_row.inc"
 
     nb::class_<ComponentResponseRow> component_response_row_class(m, "ComponentResponseRow");
     component_response_row_class.def(nb::init<>());
 #define EF_COMPONENT_RESPONSE_ROW_FIELD(type, name, default_value)                                 \
     component_response_row_class.def_rw(#name, &ComponentResponseRow::name);
-#include "runtime/contracts/detail/component_response_row.inc"
+#include "runtime/contracts/detail/damage/component_response_row.inc"
 
     // The def_rw list is owned by the X-macro field list; exposed property
     // names and their order stay identical to the EffectsEvent declaration.
     nb::class_<EffectsEvent>(m, "EffectsEvent").def(nb::init<>())
 #define EF_EFFECTS_EVENT_FIELD(type, name, default_value) .def_rw(#name, &EffectsEvent::name)
 #define EF_EFFECTS_EVENT_RESULT_FIELD(type, name, default_value) .def_rw(#name, &EffectsEvent::name)
-#include "runtime/contracts/detail/effects_event_fields.inc"
+#include "runtime/contracts/detail/damage/effects_event_fields.inc"
 #undef EF_EFFECTS_EVENT_RESULT_FIELD
 #undef EF_EFFECTS_EVENT_FIELD
         ;
@@ -293,54 +293,54 @@ void bind_runtime(nb::module_ &m) {
     kill_chain_approach_fact_class.def(nb::init<>());
 #define EF_KILL_CHAIN_APPROACH_FACT_FIELD(type, name, default_value)                               \
     kill_chain_approach_fact_class.def_rw(#name, &KillChainApproachFact::name);
-#include "runtime/contracts/detail/kill_chain_approach_fact.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_approach_fact.inc"
 
     nb::class_<KillChainFuzeDecision> kill_chain_fuze_decision_class(m, "KillChainFuzeDecision");
     kill_chain_fuze_decision_class.def(nb::init<>());
 #define EF_KILL_CHAIN_FUZE_DECISION_FIELD(type, name, default_value)                               \
     kill_chain_fuze_decision_class.def_rw(#name, &KillChainFuzeDecision::name);
-#include "runtime/contracts/detail/kill_chain_fuze_decision.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_fuze_decision.inc"
 
     nb::class_<KillChainComponentLoadFact> kill_chain_component_load_fact_class(
         m, "KillChainComponentLoadFact");
     kill_chain_component_load_fact_class.def(nb::init<>());
 #define EF_KILL_CHAIN_COMPONENT_LOAD_FACT_FIELD(type, name, default_value)                         \
     kill_chain_component_load_fact_class.def_rw(#name, &KillChainComponentLoadFact::name);
-#include "runtime/contracts/detail/kill_chain_component_load_fact.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_component_load_fact.inc"
 
     nb::class_<KillChainWarheadLoadField> kill_chain_warhead_load_field_class(
         m, "KillChainWarheadLoadField");
     kill_chain_warhead_load_field_class.def(nb::init<>());
 #define EF_KILL_CHAIN_WARHEAD_LOAD_FIELD_FIELD(type, name, default_value)                          \
     kill_chain_warhead_load_field_class.def_rw(#name, &KillChainWarheadLoadField::name);
-#include "runtime/contracts/detail/kill_chain_warhead_load_field.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_warhead_load_field.inc"
 
     nb::class_<KillChainTargetSusceptibility> kill_chain_target_susceptibility_class(
         m, "KillChainTargetSusceptibility");
     kill_chain_target_susceptibility_class.def(nb::init<>());
 #define EF_KILL_CHAIN_TARGET_SUSCEPTIBILITY_FIELD(type, name, default_value)                       \
     kill_chain_target_susceptibility_class.def_rw(#name, &KillChainTargetSusceptibility::name);
-#include "runtime/contracts/detail/kill_chain_target_susceptibility.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_target_susceptibility.inc"
 
     nb::class_<KillChainComponentResponseFact> kill_chain_component_response_fact_class(
         m, "KillChainComponentResponseFact");
     kill_chain_component_response_fact_class.def(nb::init<>());
 #define EF_KILL_CHAIN_COMPONENT_RESPONSE_FACT_FIELD(type, name, default_value)                     \
     kill_chain_component_response_fact_class.def_rw(#name, &KillChainComponentResponseFact::name);
-#include "runtime/contracts/detail/kill_chain_component_response_fact.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_component_response_fact.inc"
 
     nb::class_<KillChainConsequenceProjection> kill_chain_consequence_projection_class(
         m, "KillChainConsequenceProjection");
     kill_chain_consequence_projection_class.def(nb::init<>());
 #define EF_KILL_CHAIN_CONSEQUENCE_PROJECTION_FIELD(type, name, default_value)                      \
     kill_chain_consequence_projection_class.def_rw(#name, &KillChainConsequenceProjection::name);
-#include "runtime/contracts/detail/kill_chain_consequence_projection.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_consequence_projection.inc"
 
     nb::class_<KillChainRuntimeFacade> kill_chain_runtime_facade_class(m, "KillChainRuntimeFacade");
     kill_chain_runtime_facade_class.def(nb::init<>());
 #define EF_KILL_CHAIN_RUNTIME_FACADE_FIELD(type, name, default_value)                              \
     kill_chain_runtime_facade_class.def_rw(#name, &KillChainRuntimeFacade::name);
-#include "runtime/contracts/detail/kill_chain_runtime_facade.inc"
+#include "runtime/contracts/detail/kill_chain/kill_chain_runtime_facade.inc"
 
     m.def("make_kill_chain_runtime_facade", &make_kill_chain_runtime_facade, nb::arg("effects"));
 
@@ -348,13 +348,13 @@ void bind_runtime(nb::module_ &m) {
     damage_report_class.def(nb::init<>());
 #define EF_DAMAGE_REPORT_FIELD(type, name, default_value)                                          \
     damage_report_class.def_rw(#name, &DamageReport::name);
-#include "runtime/contracts/detail/damage_report.inc"
+#include "runtime/contracts/detail/damage/damage_report.inc"
 
     nb::class_<DiagnosticsTrace> diagnostics_trace_class(m, "DiagnosticsTrace");
     diagnostics_trace_class.def(nb::init<>());
 #define EF_DIAGNOSTICS_TRACE_FIELD(type, name, default_value)                                      \
     diagnostics_trace_class.def_rw(#name, &DiagnosticsTrace::name);
-#include "runtime/contracts/detail/diagnostics_trace.inc"
+#include "runtime/contracts/detail/engagement/diagnostics_trace.inc"
 
     nb::class_<IntentTargetRef>(m, "IntentTargetRef")
         .def(nb::init<>())
@@ -485,13 +485,13 @@ void bind_runtime(nb::module_ &m) {
     world_entity_ref_class.def(nb::init<>());
 #define EF_WORLD_ENTITY_REF_FIELD(type, name, default_value)                                       \
     world_entity_ref_class.def_rw(#name, &WorldEntityRef::name);
-#include "runtime/contracts/detail/world_entity_ref.inc"
+#include "runtime/contracts/detail/platform/world_entity_ref.inc"
 
     nb::class_<BatchWorldSetupRequest> batch_world_setup_request_class(m, "BatchWorldSetupRequest");
     batch_world_setup_request_class.def(nb::init<>());
 #define EF_BATCH_WORLD_SETUP_REQUEST_FIELD(type, name, default_value)                              \
     batch_world_setup_request_class.def_rw(#name, &BatchWorldSetupRequest::name);
-#include "runtime/facade/detail/batch_world_setup_request.inc"
+#include "runtime/facade/detail/batch/batch_world_setup_request.inc"
 
     // Field-order note: the header field order (schema-owned, ABI/aggregate-init
     // order) declares setup_surface before rejection_reason, but this
@@ -519,21 +519,21 @@ void bind_runtime(nb::module_ &m) {
     batch_world_setup_result_class.def(nb::init<>());
 #define EF_BATCH_WORLD_SETUP_RESULT_FIELD(type, name, default_value)                               \
     batch_world_setup_result_class.def_rw(#name, &BatchWorldSetupResult::name);
-#include "runtime/facade/detail/batch_world_setup_result.inc"
+#include "runtime/facade/detail/batch/batch_world_setup_result.inc"
 
     nb::class_<RuntimeWorldLayoutRequest> runtime_world_layout_request_class(
         m, "RuntimeWorldLayoutRequest");
     runtime_world_layout_request_class.def(nb::init<>());
 #define EF_RUNTIME_WORLD_LAYOUT_REQUEST_FIELD(type, name, default_value)                           \
     runtime_world_layout_request_class.def_rw(#name, &RuntimeWorldLayoutRequest::name);
-#include "runtime/facade/detail/runtime_world_layout_request.inc"
+#include "runtime/facade/detail/runtime/runtime_world_layout_request.inc"
 
     nb::class_<RuntimeWorldLayoutResult> runtime_world_layout_result_class(
         m, "RuntimeWorldLayoutResult");
     runtime_world_layout_result_class.def(nb::init<>());
 #define EF_RUNTIME_WORLD_LAYOUT_RESULT_FIELD(type, name, default_value)                            \
     runtime_world_layout_result_class.def_rw(#name, &RuntimeWorldLayoutResult::name);
-#include "runtime/facade/detail/runtime_world_layout_result.inc"
+#include "runtime/facade/detail/runtime/runtime_world_layout_result.inc"
 
     nb::class_<RuntimeCounterfactualBranchRequest> runtime_counterfactual_branch_request_class(
         m, "RuntimeCounterfactualBranchRequest");
@@ -541,7 +541,7 @@ void bind_runtime(nb::module_ &m) {
 #define EF_RUNTIME_COUNTERFACTUAL_BRANCH_REQUEST_FIELD(type, name, default_value)                  \
     runtime_counterfactual_branch_request_class.def_rw(#name,                                      \
                                                        &RuntimeCounterfactualBranchRequest::name);
-#include "runtime/facade/detail/runtime_counterfactual_branch_request.inc"
+#include "runtime/facade/detail/runtime/runtime_counterfactual_branch_request.inc"
 
     nb::class_<RuntimeCounterfactualRestoreRequest> runtime_counterfactual_restore_request_class(
         m, "RuntimeCounterfactualRestoreRequest");
@@ -549,7 +549,7 @@ void bind_runtime(nb::module_ &m) {
 #define EF_RUNTIME_COUNTERFACTUAL_RESTORE_REQUEST_FIELD(type, name, default_value)                 \
     runtime_counterfactual_restore_request_class.def_rw(                                           \
         #name, &RuntimeCounterfactualRestoreRequest::name);
-#include "runtime/facade/detail/runtime_counterfactual_restore_request.inc"
+#include "runtime/facade/detail/runtime/runtime_counterfactual_restore_request.inc"
 
     nb::class_<RuntimeCounterfactualRestoreResult> runtime_counterfactual_restore_result_class(
         m, "RuntimeCounterfactualRestoreResult");
@@ -557,7 +557,7 @@ void bind_runtime(nb::module_ &m) {
 #define EF_RUNTIME_COUNTERFACTUAL_RESTORE_RESULT_FIELD(type, name, default_value)                  \
     runtime_counterfactual_restore_result_class.def_rw(#name,                                      \
                                                        &RuntimeCounterfactualRestoreResult::name);
-#include "runtime/facade/detail/runtime_counterfactual_restore_result.inc"
+#include "runtime/facade/detail/runtime/runtime_counterfactual_restore_result.inc"
 
     nb::class_<RuntimeCounterfactualBranchResult> runtime_counterfactual_branch_result_class(
         m, "RuntimeCounterfactualBranchResult");
@@ -565,71 +565,71 @@ void bind_runtime(nb::module_ &m) {
 #define EF_RUNTIME_COUNTERFACTUAL_BRANCH_RESULT_FIELD(type, name, default_value)                   \
     runtime_counterfactual_branch_result_class.def_rw(#name,                                       \
                                                       &RuntimeCounterfactualBranchResult::name);
-#include "runtime/facade/detail/runtime_counterfactual_branch_result.inc"
+#include "runtime/facade/detail/runtime/runtime_counterfactual_branch_result.inc"
 
     nb::class_<RuntimeExperimentStepRequest> runtime_experiment_step_request_class(
         m, "RuntimeExperimentStepRequest");
     runtime_experiment_step_request_class.def(nb::init<>());
 #define EF_RUNTIME_EXPERIMENT_STEP_REQUEST_FIELD(type, name, default_value)                        \
     runtime_experiment_step_request_class.def_rw(#name, &RuntimeExperimentStepRequest::name);
-#include "runtime/facade/detail/runtime_experiment_step_request.inc"
+#include "runtime/facade/detail/runtime/runtime_experiment_step_request.inc"
 
     nb::class_<RuntimeExperimentRequest> runtime_experiment_request_class(
         m, "RuntimeExperimentRequest");
     runtime_experiment_request_class.def(nb::init<>());
 #define EF_RUNTIME_EXPERIMENT_REQUEST_FIELD(type, name, default_value)                             \
     runtime_experiment_request_class.def_rw(#name, &RuntimeExperimentRequest::name);
-#include "runtime/facade/detail/runtime_experiment_request.inc"
+#include "runtime/facade/detail/runtime/runtime_experiment_request.inc"
 
     nb::class_<ObservationBatchRequest> observation_batch_request_class(m,
                                                                         "ObservationBatchRequest");
     observation_batch_request_class.def(nb::init<>());
 #define EF_OBSERVATION_BATCH_REQUEST_FIELD(type, name, default_value)                              \
     observation_batch_request_class.def_rw(#name, &ObservationBatchRequest::name);
-#include "runtime/facade/detail/observation_batch_request.inc"
+#include "runtime/facade/detail/batch/observation_batch_request.inc"
 
     nb::class_<TaskingBatchRequest> tasking_batch_request_class(m, "TaskingBatchRequest");
     tasking_batch_request_class.def(nb::init<>());
 #define EF_TASKING_BATCH_REQUEST_FIELD(type, name, default_value)                                  \
     tasking_batch_request_class.def_rw(#name, &TaskingBatchRequest::name);
-#include "runtime/facade/detail/tasking_batch_request.inc"
+#include "runtime/facade/detail/batch/tasking_batch_request.inc"
 
     nb::class_<EngagementBatchRequest> engagement_batch_request_class(m, "EngagementBatchRequest");
     engagement_batch_request_class.def(nb::init<>());
 #define EF_ENGAGEMENT_BATCH_REQUEST_FIELD(type, name, default_value)                               \
     engagement_batch_request_class.def_rw(#name, &EngagementBatchRequest::name);
-#include "runtime/facade/detail/engagement_batch_request.inc"
+#include "runtime/facade/detail/batch/engagement_batch_request.inc"
 
     nb::class_<ExecutionBatchStepRequest> execution_batch_step_request_class(
         m, "ExecutionBatchStepRequest");
     execution_batch_step_request_class.def(nb::init<>());
 #define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value)                           \
     execution_batch_step_request_class.def_rw(#name, &ExecutionBatchStepRequest::name);
-#include "runtime/facade/detail/execution_batch_step_request.inc"
+#include "runtime/facade/detail/batch/execution_batch_step_request.inc"
 
     nb::class_<RewardTerm> reward_term_class(m, "RewardTerm");
     reward_term_class.def(nb::init<>());
 #define EF_REWARD_TERM_FIELD(type, name, default_value)                                            \
     reward_term_class.def_rw(#name, &RewardTerm::name);
-#include "runtime/contracts/detail/reward_term.inc"
+#include "runtime/contracts/detail/learning/reward_term.inc"
 
     nb::class_<RewardReport> reward_report_class(m, "RewardReport");
     reward_report_class.def(nb::init<>());
 #define EF_REWARD_REPORT_FIELD(type, name, default_value)                                          \
     reward_report_class.def_rw(#name, &RewardReport::name);
-#include "runtime/contracts/detail/reward_report.inc"
+#include "runtime/contracts/detail/learning/reward_report.inc"
 
     nb::class_<TerminationSpec> termination_spec_class(m, "TerminationSpec");
     termination_spec_class.def(nb::init<>());
 #define EF_TERMINATION_SPEC_FIELD(type, name, default_value)                                       \
     termination_spec_class.def_rw(#name, &TerminationSpec::name);
-#include "runtime/contracts/detail/termination_spec.inc"
+#include "runtime/contracts/detail/learning/termination_spec.inc"
 
     nb::class_<ObservationViewSpec> observation_view_spec_class(m, "ObservationViewSpec");
     observation_view_spec_class.def(nb::init<>());
 #define EF_OBSERVATION_VIEW_SPEC_FIELD(type, name, default_value)                                  \
     observation_view_spec_class.def_rw(#name, &ObservationViewSpec::name);
-#include "runtime/contracts/detail/observation_view_spec.inc"
+#include "runtime/contracts/detail/learning/observation_view_spec.inc"
 
     nb::class_<ObservationViewCompatibilityReport> observation_view_compatibility_report_class(
         m, "ObservationViewCompatibilityReport");
@@ -637,7 +637,7 @@ void bind_runtime(nb::module_ &m) {
 #define EF_OBSERVATION_VIEW_COMPATIBILITY_REPORT_FIELD(type, name, default_value)                  \
     observation_view_compatibility_report_class.def_rw(#name,                                      \
                                                        &ObservationViewCompatibilityReport::name);
-#include "runtime/contracts/detail/observation_view_compatibility_report.inc"
+#include "runtime/contracts/detail/learning/observation_view_compatibility_report.inc"
 
     m.def("evaluate_observation_view_checkpoint_compatibility",
           &evaluate_observation_view_checkpoint_compatibility, nb::arg("checkpoint"),
@@ -667,19 +667,19 @@ void bind_runtime(nb::module_ &m) {
     observation_batch_packet_class.def(nb::init<>());
 #define EF_OBSERVATION_BATCH_PACKET_FIELD(type, name, default_value)                               \
     observation_batch_packet_class.def_rw(#name, &ObservationBatchPacket::name);
-#include "runtime/facade/detail/observation_batch_packet.inc"
+#include "runtime/facade/detail/batch/observation_batch_packet.inc"
 
     nb::class_<TaskingBatchPacket> tasking_batch_packet_class(m, "TaskingBatchPacket");
     tasking_batch_packet_class.def(nb::init<>());
 #define EF_TASKING_BATCH_PACKET_FIELD(type, name, default_value)                                   \
     tasking_batch_packet_class.def_rw(#name, &TaskingBatchPacket::name);
-#include "runtime/facade/detail/tasking_batch_packet.inc"
+#include "runtime/facade/detail/batch/tasking_batch_packet.inc"
 
     nb::class_<EngagementEventPacket> engagement_event_packet_class(m, "EngagementEventPacket");
     engagement_event_packet_class.def(nb::init<>());
 #define EF_ENGAGEMENT_EVENT_PACKET_FIELD(type, name, default_value)                                \
     engagement_event_packet_class.def_rw(#name, &EngagementEventPacket::name);
-#include "runtime/facade/detail/engagement_event_packet.inc"
+#include "runtime/facade/detail/batch/engagement_event_packet.inc"
 
     nb::class_<ExecutionBatchStepResult>(m, "ExecutionBatchStepResult")
         .def(nb::init<>())
@@ -872,14 +872,14 @@ void bind_runtime(nb::module_ &m) {
     runtime_experiment_ancestry_class.def(nb::init<>());
 #define EF_RUNTIME_EXPERIMENT_ANCESTRY_FIELD(type, name, default_value)                            \
     runtime_experiment_ancestry_class.def_rw(#name, &RuntimeExperimentAncestry::name);
-#include "runtime/facade/detail/runtime_experiment_ancestry.inc"
+#include "runtime/facade/detail/runtime/runtime_experiment_ancestry.inc"
 
     nb::class_<RuntimeExperimentResult> runtime_experiment_result_class(m,
                                                                         "RuntimeExperimentResult");
     runtime_experiment_result_class.def(nb::init<>());
 #define EF_RUNTIME_EXPERIMENT_RESULT_FIELD(type, name, default_value)                              \
     runtime_experiment_result_class.def_rw(#name, &RuntimeExperimentResult::name);
-#include "runtime/facade/detail/runtime_experiment_result.inc"
+#include "runtime/facade/detail/runtime/runtime_experiment_result.inc"
 
     // Schema-ownership note: RuntimeWindowActionRequest is not schema-generated. Its
     // header field list (runtime_facade_types.h) is ABI-ordered as
@@ -904,28 +904,28 @@ void bind_runtime(nb::module_ &m) {
     runtime_window_input_record_class.def(nb::init<>());
 #define EF_RUNTIME_WINDOW_INPUT_RECORD_FIELD(type, name, default_value)                            \
     runtime_window_input_record_class.def_rw(#name, &RuntimeWindowInputRecord::name);
-#include "runtime/facade/detail/runtime_window_input_record.inc"
+#include "runtime/facade/detail/window/runtime_window_input_record.inc"
 
     nb::class_<RuntimeWindowSchedulingContext> runtime_window_scheduling_context_class(
         m, "RuntimeWindowSchedulingContext");
     runtime_window_scheduling_context_class.def(nb::init<>());
 #define EF_RUNTIME_WINDOW_SCHEDULING_CONTEXT_FIELD(type, name, default_value)                      \
     runtime_window_scheduling_context_class.def_rw(#name, &RuntimeWindowSchedulingContext::name);
-#include "runtime/facade/detail/runtime_window_scheduling_context.inc"
+#include "runtime/facade/detail/window/runtime_window_scheduling_context.inc"
 
     nb::class_<RuntimeWindowBarrierRecord> runtime_window_barrier_record_class(
         m, "RuntimeWindowBarrierRecord");
     runtime_window_barrier_record_class.def(nb::init<>());
 #define EF_RUNTIME_WINDOW_BARRIER_RECORD_FIELD(type, name, default_value)                          \
     runtime_window_barrier_record_class.def_rw(#name, &RuntimeWindowBarrierRecord::name);
-#include "runtime/facade/detail/runtime_window_barrier_record.inc"
+#include "runtime/facade/detail/window/runtime_window_barrier_record.inc"
 
     nb::class_<RuntimeWindowVisibilityRecord> runtime_window_visibility_record_class(
         m, "RuntimeWindowVisibilityRecord");
     runtime_window_visibility_record_class.def(nb::init<>());
 #define EF_RUNTIME_WINDOW_VISIBILITY_RECORD_FIELD(type, name, default_value)                       \
     runtime_window_visibility_record_class.def_rw(#name, &RuntimeWindowVisibilityRecord::name);
-#include "runtime/facade/detail/runtime_window_visibility_record.inc"
+#include "runtime/facade/detail/window/runtime_window_visibility_record.inc"
 
     // Binding-order note: the RuntimeWindowNodeExecutionRecord/CadenceControl/
     // Cadence/CadenceConfig/CadenceTraceRecord/Request/Result bindings
@@ -1185,13 +1185,13 @@ void bind_runtime(nb::module_ &m) {
     world_terrain_assignment_class.def(nb::init<>());
 #define EF_WORLD_TERRAIN_ASSIGNMENT_FIELD(type, name, default_value)                               \
     world_terrain_assignment_class.def_rw(#name, &WorldTerrainAssignment::name);
-#include "runtime/contracts/detail/world_terrain_assignment.inc"
+#include "runtime/contracts/detail/platform/world_terrain_assignment.inc"
 
     nb::class_<WorldWindAssignment> world_wind_assignment_class(m, "WorldWindAssignment");
     world_wind_assignment_class.def(nb::init<>());
 #define EF_WORLD_WIND_ASSIGNMENT_FIELD(type, name, default_value)                                  \
     world_wind_assignment_class.def_rw(#name, &WorldWindAssignment::name);
-#include "runtime/contracts/detail/world_wind_assignment.inc"
+#include "runtime/contracts/detail/platform/world_wind_assignment.inc"
 
     nb::class_<WorldSunAssignment>(m, "WorldSunAssignment")
         .def(nb::init<>())
@@ -1203,27 +1203,27 @@ void bind_runtime(nb::module_ &m) {
     world_zone_definition_class.def(nb::init<>());
 #define EF_WORLD_ZONE_DEFINITION_FIELD(type, name, default_value)                                  \
     world_zone_definition_class.def_rw(#name, &WorldZoneDefinition::name);
-#include "runtime/contracts/detail/world_zone_definition.inc"
+#include "runtime/contracts/detail/platform/world_zone_definition.inc"
 
     nb::class_<WorldSpawnRequest> world_spawn_request_class(m, "WorldSpawnRequest");
     world_spawn_request_class.def(nb::init<>());
 #define EF_WORLD_SPAWN_REQUEST_FIELD(type, name, default_value)                                    \
     world_spawn_request_class.def_rw(#name, &WorldSpawnRequest::name);
-#include "runtime/contracts/detail/world_spawn_request.inc"
+#include "runtime/contracts/detail/platform/world_spawn_request.inc"
 
     nb::class_<WorldPilotActionAssignment> world_pilot_action_assignment_class(
         m, "WorldPilotActionAssignment");
     world_pilot_action_assignment_class.def(nb::init<>());
 #define EF_WORLD_PILOT_ACTION_ASSIGNMENT_FIELD(type, name, default_value)                          \
     world_pilot_action_assignment_class.def_rw(#name, &WorldPilotActionAssignment::name);
-#include "runtime/contracts/detail/world_pilot_action_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_pilot_action_assignment.inc"
 
     nb::class_<WorldMissionCommandAssignment> world_mission_command_assignment_class(
         m, "WorldMissionCommandAssignment");
     world_mission_command_assignment_class.def(nb::init<>());
 #define EF_WORLD_MISSION_COMMAND_ASSIGNMENT_FIELD(type, name, default_value)                       \
     world_mission_command_assignment_class.def_rw(#name, &WorldMissionCommandAssignment::name);
-#include "runtime/contracts/detail/world_mission_command_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_mission_command_assignment.inc"
 
     nb::class_<WorldMissionCommandMaintainedAssignment>
         world_mission_command_maintained_assignment_class(
@@ -1232,7 +1232,7 @@ void bind_runtime(nb::module_ &m) {
 #define EF_WORLD_MISSION_COMMAND_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)            \
     world_mission_command_maintained_assignment_class.def_rw(                                      \
         #name, &WorldMissionCommandMaintainedAssignment::name);
-#include "runtime/contracts/detail/world_mission_command_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_mission_command_maintained_assignment.inc"
 
     nb::class_<WorldTaskOrderMaintainedAssignment> world_task_order_maintained_assignment_class(
         m, "WorldTaskOrderMaintainedAssignment");
@@ -1240,14 +1240,14 @@ void bind_runtime(nb::module_ &m) {
 #define EF_WORLD_TASK_ORDER_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)                 \
     world_task_order_maintained_assignment_class.def_rw(                                           \
         #name, &WorldTaskOrderMaintainedAssignment::name);
-#include "runtime/contracts/detail/world_task_order_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_task_order_maintained_assignment.inc"
 
     nb::class_<WorldLeaderIntentAssignment> world_leader_intent_assignment_class(
         m, "WorldLeaderIntentAssignment");
     world_leader_intent_assignment_class.def(nb::init<>());
 #define EF_WORLD_LEADER_INTENT_ASSIGNMENT_FIELD(type, name, default_value)                         \
     world_leader_intent_assignment_class.def_rw(#name, &WorldLeaderIntentAssignment::name);
-#include "runtime/contracts/detail/world_leader_intent_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_leader_intent_assignment.inc"
 
     nb::class_<WorldLeaderIntentMaintainedAssignment>
         world_leader_intent_maintained_assignment_class(m, "WorldLeaderIntentMaintainedAssignment");
@@ -1255,14 +1255,14 @@ void bind_runtime(nb::module_ &m) {
 #define EF_WORLD_LEADER_INTENT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)              \
     world_leader_intent_maintained_assignment_class.def_rw(                                        \
         #name, &WorldLeaderIntentMaintainedAssignment::name);
-#include "runtime/contracts/detail/world_leader_intent_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_leader_intent_maintained_assignment.inc"
 
     nb::class_<WorldPilotReportAssignment> world_pilot_report_assignment_class(
         m, "WorldPilotReportAssignment");
     world_pilot_report_assignment_class.def(nb::init<>());
 #define EF_WORLD_PILOT_REPORT_ASSIGNMENT_FIELD(type, name, default_value)                          \
     world_pilot_report_assignment_class.def_rw(#name, &WorldPilotReportAssignment::name);
-#include "runtime/contracts/detail/world_pilot_report_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_pilot_report_assignment.inc"
 
     nb::class_<WorldPilotReportMaintainedAssignment> world_pilot_report_maintained_assignment_class(
         m, "WorldPilotReportMaintainedAssignment");
@@ -1270,7 +1270,7 @@ void bind_runtime(nb::module_ &m) {
 #define EF_WORLD_PILOT_REPORT_MAINTAINED_ASSIGNMENT_FIELD(type, name, default_value)               \
     world_pilot_report_maintained_assignment_class.def_rw(                                         \
         #name, &WorldPilotReportMaintainedAssignment::name);
-#include "runtime/contracts/detail/world_pilot_report_maintained_assignment.inc"
+#include "runtime/contracts/detail/tasking/world_pilot_report_maintained_assignment.inc"
 
     nb::class_<WorldExecutionEpisodeStepRequest> world_execution_episode_step_request_class(
         m, "WorldExecutionEpisodeStepRequest");
@@ -1278,7 +1278,7 @@ void bind_runtime(nb::module_ &m) {
 #define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value)                   \
     world_execution_episode_step_request_class.def_rw(#name,                                       \
                                                       &WorldExecutionEpisodeStepRequest::name);
-#include "runtime/contracts/detail/world_execution_episode_step_request.inc"
+#include "runtime/contracts/detail/tasking/world_execution_episode_step_request.inc"
 
     nb::class_<WorldBatchRuntime>(m, "WorldBatchRuntime")
         .def(nb::init<size_t>(), nb::arg("world_count") = 0)

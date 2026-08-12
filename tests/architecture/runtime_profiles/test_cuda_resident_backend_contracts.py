@@ -15,7 +15,9 @@ PARITY_HEADERS = tuple(
     )
 )
 SELECTED_SLICE_HEADER = REPO_ROOT / "src/runtime/contracts/cuda_resident_selected_slice_contract.h"
-RUNTIME_CONFIG_FIELDS = REPO_ROOT / "src/runtime/facade/detail/runtime_batch_config.inc"
+RUNTIME_CONFIG_FIELDS = (
+  REPO_ROOT / "src/runtime/facade/detail/runtime/runtime_batch_config.inc"
+)
 FACADE_CONFIG = REPO_ROOT / "src/runtime/facade/runtime_facade_config.cpp"
 
 

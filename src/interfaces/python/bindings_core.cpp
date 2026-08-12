@@ -572,7 +572,7 @@ void bind_core(nb::module_ &m) {
     recent_engagement_events_class.def(nb::init<>());
 #define EF_RECENT_ENGAGEMENT_EVENTS_FIELD(type, name, default_value)                               \
     recent_engagement_events_class.def_rw(#name, &RecentEngagementEvents::name);
-#include "runtime/contracts/detail/recent_engagement_events.inc"
+#include "runtime/contracts/detail/engagement/recent_engagement_events.inc"
 
     nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");
     simulation_kernel.def(nb::init<>());

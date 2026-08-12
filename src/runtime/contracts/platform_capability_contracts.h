@@ -98,17 +98,17 @@ inline constexpr std::string_view kResolvedPlatformSpawnPlanRejectionMissingReje
 
 struct Capability {
 #define EF_PLATFORM_CAPABILITY_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/platform_capability.inc"
+#include "runtime/contracts/detail/platform/platform_capability.inc"
 };
 
 struct CapabilityBundle {
 #define EF_CAPABILITY_BUNDLE_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/capability_bundle.inc"
+#include "runtime/contracts/detail/platform/capability_bundle.inc"
 };
 
 struct ResolvedPlatformSpawnPlan {
 #define EF_RESOLVED_PLATFORM_SPAWN_PLAN_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/contracts/detail/resolved_platform_spawn_plan.inc"
+#include "runtime/contracts/detail/platform/resolved_platform_spawn_plan.inc"
 };
 
 struct PlatformCapabilityValidationResult {
