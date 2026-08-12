@@ -524,18 +524,32 @@ _SURFACE_FLAGS = {
 }
 
 
-def _workflow_logical_commands(workflow: str) -> list[list[str]]:
-  """Every ``run:`` block command as a token list.
+def _workflow_job_commands(workflow: str) -> list[tuple[str, list[str]]]:
+  """Every ``run:`` block command as ``(job_id, tokens)``, in document order.
 
-  YAML full-line comments and inline shell comments are stripped, and
-  backslash continuations are joined, so a flag can only count where it is an
-  actual argument of an actual invocation -- never prose."""
-  physical: list[str] = []
+  Job identity and step order are preserved so a configure in another job or
+  after a build step can never satisfy the binding. YAML full-line comments
+  and inline shell comments are stripped, and backslash continuations are
+  joined, so a flag only counts where it is an actual argument of an actual
+  invocation -- never prose."""
+  entries: list[tuple[str, str]] = []
+  in_jobs = False
+  job = ""
   in_run = False
   run_indent = 0
   for raw in workflow.splitlines():
     stripped = raw.strip()
     indent = len(raw) - len(raw.lstrip(" "))
+    if not raw.startswith(" ") and stripped and not stripped.startswith("#"):
+      in_jobs = stripped == "jobs:"
+      in_run = False
+      continue
+    if in_jobs and indent == 2:
+      match = re.match(r"([A-Za-z0-9_-]+):\s*(#.*)?$", stripped)
+      if match:
+        job = match.group(1)
+        in_run = False
+        continue
     if re.match(r"run:\s*[|>]?-?\s*$", stripped):
       in_run = True
       run_indent = indent
@@ -544,25 +558,39 @@ def _workflow_logical_commands(workflow: str) -> list[list[str]]:
       if stripped and indent <= run_indent:
         in_run = False
       elif stripped and not stripped.startswith("#"):
-        physical.append(re.sub(r"\s#.*$", "", stripped).strip())
-  commands: list[list[str]] = []
+        entries.append((job, re.sub(r"\s#.*$", "", stripped).strip()))
+  commands: list[tuple[str, list[str]]] = []
   current = ""
-  for line in physical:
+  current_job = ""
+  for line_job, line in entries:
+    if not current:
+      current_job = line_job
     if line.endswith("\\"):
       current += line[:-1] + " "
       continue
     current += line
     if current.strip():
-      commands.append(current.split())
+      commands.append((current_job, current.split()))
     current = ""
   if current.strip():
-    commands.append(current.split())
+    commands.append((current_job, current.split()))
   return commands
 
 
-def _configure_dir(tokens: list[str]) -> str | None:
-  """The ``-B <dir>`` of a CMake configure invocation, or None for utility
-  commands (``cmake --version``) that configure nothing."""
+def _genuine_configure_dir(tokens: list[str]) -> str | None:
+  """The ``-B`` directory of a genuine CMake configure invocation.
+
+  Genuine means: a ``cmake`` command that names a source tree (``-S``) and a
+  build tree (``-B``) and is not a build or utility invocation. A
+  ``cmake --version -B dir`` exits successfully but configures nothing, so it
+  must never satisfy the binding."""
+  if not tokens or tokens[0] != "cmake":
+    return None
+  utility = {"--build", "--version", "--help", "-E", "--open", "--install"}
+  if any(token in utility for token in tokens):
+    return None
+  if not any(token == "-S" or (token.startswith("-S") and len(token) > 2) for token in tokens):
+    return None
   for index, token in enumerate(tokens):
     if token == "-B" and index + 1 < len(tokens):
       return tokens[index + 1].rstrip("/")
@@ -571,7 +599,7 @@ def _configure_dir(tokens: list[str]) -> str | None:
   return None
 
 
-def _build_invocations(tokens: list[str]) -> tuple[str, set[str]] | None:
+def _build_invocation(tokens: list[str]) -> tuple[str, set[str]] | None:
   if not tokens or tokens[0] != "cmake" or "--build" not in tokens:
     return None
   index = tokens.index("--build")
@@ -588,32 +616,28 @@ def _build_invocations(tokens: list[str]) -> tuple[str, set[str]] | None:
 
 
 def _cuda_lane_flag_violations(workflow: str) -> list[str]:
-  """Bind each surface target a ``cmake --build <dir>`` invocation names to
-  the ``-D`` token of the configure invocation *for that same build
-  directory*. A flag on a CMake utility command or on an unrelated configure
-  cannot stand in for the tree that actually compiles the target."""
-  commands = _workflow_logical_commands(workflow)
-  configures: dict[str, set[str]] = {}
-  builds: list[tuple[str, set[str]]] = []
-  for tokens in commands:
-    if not tokens or tokens[0] != "cmake":
-      continue
-    build = _build_invocations(tokens)
-    if build is not None:
-      builds.append(build)
-      continue
-    build_dir = _configure_dir(tokens)
-    if build_dir is not None:
-      configures.setdefault(build_dir, set()).update(tokens)
+  """Bind each ``cmake --build <dir>`` to a genuine configure invocation for
+  the same build directory that *precedes it in the same job*, and check the
+  surface flag only in that invocation's exact tokens. Utility commands,
+  other jobs' configures, and configures sequenced after the build can never
+  stand in for the tree that actually compiles the target."""
   violations = []
-  for build_dir, targets in builds:
+  configures_by_job: dict[str, dict[str, set[str]]] = {}
+  for job, tokens in _workflow_job_commands(workflow):
+    build = _build_invocation(tokens)
+    if build is None:
+      configure_dir = _genuine_configure_dir(tokens)
+      if configure_dir is not None:
+        configures_by_job.setdefault(job, {}).setdefault(configure_dir, set()).update(tokens)
+      continue
+    build_dir, targets = build
     for target in sorted(targets & set(_SURFACE_FLAGS)):
       flag = _SURFACE_FLAGS[target]
-      configure = configures.get(build_dir)
+      configure = configures_by_job.get(job, {}).get(build_dir)
       if configure is None:
         violations.append(
-          f"the compile lane builds {target} in {build_dir} but the workflow "
-          "carries no configure invocation for that build directory"
+          f"the compile lane builds {target} in {build_dir} with no preceding "
+          "same-job configure invocation for that build directory"
         )
       elif flag not in configure:
         violations.append(
@@ -637,8 +661,8 @@ def test_cuda_compile_lane_enables_the_flag_behind_every_surface_it_builds() -> 
   # The real lane must actually build both surfaces; if a target disappears
   # from the lane entirely, that is its own regression.
   built: set[str] = set()
-  for tokens in _workflow_logical_commands(workflow):
-    build = _build_invocations(tokens)
+  for _job, tokens in _workflow_job_commands(workflow):
+    build = _build_invocation(tokens)
     if build is not None:
       built.update(build[1])
   for target in _SURFACE_FLAGS:
@@ -647,10 +671,11 @@ def test_cuda_compile_lane_enables_the_flag_behind_every_surface_it_builds() -> 
 
 def test_cuda_lane_flag_gate_rejects_prose_and_non_configure_carriers() -> None:
   """Mutation coverage from the review's convergence gates: with the real
-  configure argument removed (or flipped OFF), none of these may satisfy the
-  gate -- an ``echo`` step carrying the flag, a CMake utility command
-  carrying it, a configure invocation for an unrelated build directory, an
-  inline shell comment, or a YAML comment."""
+  configure argument removed, none of these may satisfy the gate -- an
+  ``echo`` step carrying the flag, a CMake utility command (with or without a
+  ``-B`` token), a configure for an unrelated build directory, a same-
+  directory configure in another job, a same-directory configure sequenced
+  after the build, an inline shell comment, or a YAML comment."""
   workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
   flag = _SURFACE_FLAGS["ef_gpu_experiments"]
 
@@ -659,19 +684,40 @@ def test_cuda_lane_flag_gate_rejects_prose_and_non_configure_carriers() -> None:
     assert flag not in mutated
     return mutated
 
-  carriers = {
+  same_job_carriers = {
     "echo step": "\n      - name: Prose step\n        run: |\n" + f"          echo {flag}\n",
     "cmake utility command": (
       "\n      - name: Utility\n        run: |\n" + f"          cmake --version {flag}\n"
+    ),
+    "cmake utility command with -B": (
+      "\n      - name: Utility probe\n        run: |\n"
+      + f"          cmake --version -B build-cuda {flag}\n"
     ),
     "unrelated configure": (
       "\n      - name: Other tree\n        run: |\n"
       + f"          cmake -S . -B build-other {flag}\n"
     ),
+    "same-directory configure after the build": (
+      "\n      - name: Late configure\n        run: |\n"
+      + f"          cmake -S . -B build-cuda {flag}\n"
+    ),
   }
-  for label, carrier in carriers.items():
+  for label, carrier in same_job_carriers.items():
     mutated = _flag_removed() + carrier
     assert _cuda_lane_flag_violations(mutated), f"{label} satisfied the gate"
+
+  other_job_configure = _flag_removed() + (
+    "\n"
+    "  other-job:\n"
+    "    runs-on: ubuntu-latest\n"
+    "    steps:\n"
+    "      - name: Foreign configure\n"
+    "        run: |\n"
+    f"          cmake -S . -B build-cuda {flag}\n"
+  )
+  assert _cuda_lane_flag_violations(other_job_configure), (
+    "a same-directory configure in another job satisfied the gate"
+  )
 
   removed_with_inline_comment = _flag_removed().replace(
     "cmake -S . -B build-cuda -G Ninja \\",
