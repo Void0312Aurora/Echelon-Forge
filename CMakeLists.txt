@@ -313,9 +313,37 @@ target_link_libraries(ef_app PRIVATE ef_core)
 set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/python_module.cpp
     src/interfaces/python/bindings_command.cpp
+    # bind_command() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_command_enums.cpp
+    src/interfaces/python/bindings_command_comm.cpp
+    src/interfaces/python/bindings_command_pilot_report.cpp
+    src/interfaces/python/bindings_command_pilot_action.cpp
+    src/interfaces/python/bindings_command_mission_command.cpp
+    src/interfaces/python/bindings_command_task_order.cpp
+    src/interfaces/python/bindings_command_task_order_api.cpp
+    src/interfaces/python/bindings_command_leader_intent.cpp
     src/interfaces/python/bindings_core.cpp
     src/interfaces/python/bindings_episode.cpp
     src/interfaces/python/bindings_runtime.cpp
+    # bind_runtime() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_runtime_runtime.cpp
+    src/interfaces/python/bindings_runtime_fidelity.cpp
+    src/interfaces/python/bindings_runtime_platform.cpp
+    src/interfaces/python/bindings_runtime_engagement.cpp
+    src/interfaces/python/bindings_runtime_kill_chain.cpp
+    src/interfaces/python/bindings_runtime_policy.cpp
+    src/interfaces/python/bindings_runtime_batch_setup.cpp
+    src/interfaces/python/bindings_runtime_experiment.cpp
+    src/interfaces/python/bindings_runtime_batch_request.cpp
+    src/interfaces/python/bindings_runtime_learning.cpp
+    src/interfaces/python/bindings_runtime_batch_packet.cpp
+    src/interfaces/python/bindings_runtime_tasking.cpp
+    src/interfaces/python/bindings_runtime_window.cpp
+    src/interfaces/python/bindings_runtime_counterfactual.cpp
+    src/interfaces/python/bindings_runtime_platform_world.cpp
+    src/interfaces/python/bindings_runtime_tasking_world.cpp
+    src/interfaces/python/bindings_runtime_engine.cpp
+    src/interfaces/python/bindings_runtime_facade.cpp
     src/interfaces/python/bindings_gpu.cpp
 )
 
