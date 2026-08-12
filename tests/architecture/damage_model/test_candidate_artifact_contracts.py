@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,6 +10,7 @@ import pytest
 from tests.architecture.damage_model.helpers import (
   assert_authority_guards_false,
   run_maintenance_cli,
+  run_maintenance_cli_in_process,
 )
 from tests.architecture.helpers import read_json
 
@@ -204,21 +204,18 @@ def test_validation_scaffold_tracks_candidate_closure_sensitive_mechanism_fields
 
 def test_validation_scaffold_cli_writes_json(tmp_path: Path) -> None:
   output_path = tmp_path / "blastfrag_scaffold.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "candidate-artifacts",
-      "validation-scaffold",
-      "--output",
-      str(output_path),
-      "--seed",
-      "24680",
-      "--sample-count",
-      "1024",
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  # Retained end-to-end smoke for the `candidate-artifacts` family: the one
+  # spawn that still proves the real interpreter entrypoint wiring. See
+  # test_cli_spawn_budget.py; the rest of the family runs in-process.
+  run_maintenance_cli(
+    "damage_model.py candidate-artifacts",
+    "validation-scaffold",
+    "--output",
+    output_path,
+    "--seed",
+    "24680",
+    "--sample-count",
+    "1024",
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -325,17 +322,11 @@ def test_scope_boundary_probe_current_repo_is_non_authoritative() -> None:
 
 def test_scope_boundary_probe_cli_writes_json(tmp_path: Path) -> None:
   output_path = tmp_path / "a2_scope_boundary_probe.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "candidate-artifacts",
-      "scope-boundary-probe",
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py candidate-artifacts",
+    "scope-boundary-probe",
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -405,7 +396,7 @@ def test_stage_b_effect_scale_snapshot_current_repo_is_non_authoritative() -> No
 
 def test_stage_b_effect_scale_snapshot_cli_writes_json(tmp_path: Path) -> None:
   output_path = tmp_path / "a2_stage_b_effect_scale_snapshot.json"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "effect-scale-snapshot",
     "--output",
@@ -527,17 +518,11 @@ def test_stage_b_validation_result_pack_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_b_validation_result_pack.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "candidate-artifacts",
-      "effect-scale-result-pack",
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py candidate-artifacts",
+    "effect-scale-result-pack",
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -630,19 +615,11 @@ def test_candidate_retained_artifact_pack_cli_writes_manifest(
   tmp_path: Path,
 ) -> None:
   output_dir = tmp_path / "retained_pack_cli"
-  completed = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "candidate-artifacts",
-      "effect-scale-retained-pack",
-      "--output-dir",
-      str(output_dir),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    capture_output=True,
-    text=True,
+  completed = run_maintenance_cli_in_process(
+    "damage_model.py candidate-artifacts",
+    "effect-scale-retained-pack",
+    "--output-dir",
+    output_dir,
   )
   artifact = json.loads(completed.stdout)
   assert artifact["status"] == "author_retained_candidate_artifacts_only"
@@ -772,21 +749,15 @@ def test_runtime_aligned_authority_exercise_is_reproducible() -> None:
 
 def test_runtime_aligned_authority_exercise_cli_writes_json(tmp_path: Path) -> None:
   output_path = tmp_path / "blastfrag_runtime_aligned_authority_pack.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "candidate-artifacts",
-      "runtime-authority-exercise",
-      "--output",
-      str(output_path),
-      "--effect-scale",
-      "1.07",
-      "--component-failure-probability",
-      "0.61",
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py candidate-artifacts",
+    "runtime-authority-exercise",
+    "--output",
+    output_path,
+    "--effect-scale",
+    "1.07",
+    "--component-failure-probability",
+    "0.61",
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -1458,17 +1429,11 @@ def test_candidate_bundle_geometry_warhead_and_runtime_exercise_summaries(
 
 def test_candidate_bundle_cli_writes_json(tmp_path: Path) -> None:
   output_path = tmp_path / "a2_candidate_vps_bundle.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "candidate-artifacts",
-      "package-bundle",
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py candidate-artifacts",
+    "package-bundle",
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, read_json
-from tests.architecture.damage_model.helpers import run_maintenance_cli
+from tests.architecture.damage_model.helpers import run_maintenance_cli_in_process
 
 ensure_repo_root_on_sys_path()
 
@@ -248,7 +248,7 @@ def test_package_provenance_identity_gate_cli_writes_json(
 ) -> None:
   output_path = tmp_path / "a2_package_provenance_identity_gate.json"
 
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py release-governance",
     "package-provenance-identity",
     "--output",

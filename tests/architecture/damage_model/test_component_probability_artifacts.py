@@ -8,8 +8,8 @@ import pytest
 from tests.architecture.damage_model.helpers import (
   assert_authority_guards_false,
   assert_hex64,
-  run_maintenance_cli,
-  run_maintenance_json_cli,
+  run_maintenance_cli_in_process,
+  run_maintenance_json_cli_in_process,
 )
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, read_json
 
@@ -220,7 +220,7 @@ def test_component_probability_surface_probe_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_c_component_probability_surface_probe.json"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-probability-surface-probe",
     "--output",
@@ -379,7 +379,7 @@ def test_component_probability_snapshot_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_c_component_probability_snapshot.json"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-probability-snapshot",
     "--output",
@@ -562,7 +562,7 @@ def test_component_probability_result_pack_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_c_component_probability_result_pack.json"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-probability-result-pack",
     "--output",
@@ -673,7 +673,7 @@ def test_component_probability_retained_artifact_pack_cli_writes_manifest(
   tmp_path: Path,
 ) -> None:
   output_dir = tmp_path / "retained_pack_cli"
-  artifact = run_maintenance_json_cli(
+  artifact = run_maintenance_json_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-probability-retained-pack",
     "--output-dir",

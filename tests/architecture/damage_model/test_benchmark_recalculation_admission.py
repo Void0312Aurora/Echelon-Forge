@@ -11,6 +11,7 @@ from tests.architecture.damage_model.helpers import (
   assert_no_keys_anywhere,
   assert_retained_manifest_clean,
   run_maintenance_cli,
+  run_maintenance_cli_in_process,
 )
 from tests.architecture.helpers import ensure_repo_root_on_sys_path, read_json
 
@@ -308,6 +309,9 @@ def test_benchmark_recalculation_cli_writes_gate_anchor_set_and_manifest(
   output_path = tmp_path / "gate_cli.json"
   retained_dir = tmp_path / "retained"
 
+  # Retained end-to-end smoke for the `benchmark-evidence` family: the one
+  # spawn that still proves the real interpreter entrypoint wiring. See
+  # test_cli_spawn_budget.py; the rest of the family runs in-process.
   result = run_maintenance_cli(
     "damage_model.py benchmark-evidence",
     "spreadsheet-recalculation-admission",
@@ -575,7 +579,7 @@ def test_benchmark_lineage_tolerance_cli_writes_packet_and_manifest(
   output_path = tmp_path / "packet_copy.json"
   retained_dir = tmp_path / "retained"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py benchmark-evidence",
     "spreadsheet-lineage-tolerance-packet",
     "--retained-dir",
@@ -800,7 +804,7 @@ def test_benchmark_replacement_tolerance_cli_writes_gate_and_manifest(
   output_path = tmp_path / "gate_cli.json"
   retained_dir = tmp_path / "retained"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py benchmark-evidence",
     "spreadsheet-replacement-tolerance",
     "--retained-dir",

@@ -9,7 +9,7 @@ import pytest
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 from tests.architecture.damage_model.helpers import (
   HEX64,
-  run_maintenance_cli,
+  run_maintenance_cli_in_process,
   walk_payload,
 )
 
@@ -171,7 +171,7 @@ def test_mechanism_benchmark_evidence_cli_keeps_authority_guards_false(
 ) -> None:
   output_path = tmp_path / "mechanism_benchmark_evidence.json"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py benchmark-evidence",
     "mechanism-evidence",
     "--output",
@@ -344,7 +344,7 @@ def test_mechanism_comparison_hashes_cli_writes_retained_manifest(
   output_path = tmp_path / "mechanism_comparison_hashes_cli.json"
   retained_dir = tmp_path / "retained"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py benchmark-evidence",
     "comparison-hashes",
     "--write-retained-artifacts",
@@ -580,7 +580,7 @@ def test_mechanism_source_closeout_gate_cli_writes_json(
 ) -> None:
   output_path = tmp_path / "mechanism_source_closeout_gate.json"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py scope-provenance",
     "mechanism-source-closeout",
     "--output",

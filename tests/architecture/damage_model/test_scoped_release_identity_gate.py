@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
+from tests.architecture.damage_model.helpers import run_maintenance_cli_in_process
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
@@ -142,20 +141,11 @@ def test_scoped_release_identity_gate_cli_default_writes_manifest(
 ) -> None:
   from tools.maintenance.release_governance import scoped_release_identity as scoped_identity_gate
 
-  result = subprocess.run(
-    [
-      sys.executable,
-   str(REPO_ROOT / "tools/maintenance/damage_model.py"),
-      "release-governance",
-      "scoped-release-identity",
-      "--retained-output-dir",
-      str(tmp_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    text=True,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py release-governance",
+    "scoped-release-identity",
+    "--retained-output-dir",
+    tmp_path,
   )
 
   payload = json.loads(result.stdout)

@@ -492,6 +492,9 @@ def test_provenance_identity_review_gate_cli_writes_retained_artifact(
   from tools.maintenance.release_governance import provenance_identity_review as review_gate
 
   output_path = tmp_path / "cli_output_manifest.json"
+  # Retained end-to-end smoke for the `release-governance` family: the one
+  # spawn that still proves the real interpreter entrypoint wiring. See
+  # test_cli_spawn_budget.py; the rest of the family runs in-process.
   run_maintenance_cli(
     "damage_model.py release-governance",
     "provenance-identity-review",

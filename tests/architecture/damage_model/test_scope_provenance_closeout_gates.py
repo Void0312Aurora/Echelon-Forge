@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
+
+from tests.architecture.damage_model.helpers import (
+  run_maintenance_cli,
+  run_maintenance_cli_in_process,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -235,21 +239,13 @@ def test_target_geometry_scope_closeout_cli_writes_retained_json_and_doc(
 ) -> None:
   output_dir = tmp_path / "res003_target_geometry_closeout_20260531"
   doc_output = tmp_path / "validation_res003_target_geometry_closeout_gate.md"
-  result = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "scope-provenance",
-      "target-geometry-closeout",
-      "--output-dir",
-      str(output_dir),
-      "--doc-output",
-      str(doc_output),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    capture_output=True,
-    text=True,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py scope-provenance",
+    "target-geometry-closeout",
+    "--output-dir",
+    output_dir,
+    "--doc-output",
+    doc_output,
   )
 
   command_summary = json.loads(result.stdout)
@@ -507,21 +503,13 @@ def test_warhead_family_scope_closeout_cli_writes_retained_json_and_doc(
 ) -> None:
   output_dir = tmp_path / "res004_warhead_scope_closeout_20260531"
   doc_output = tmp_path / "validation_res004_warhead_scope_closeout_gate.md"
-  result = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "scope-provenance",
-      "warhead-scope-closeout",
-      "--output-dir",
-      str(output_dir),
-      "--doc-output",
-      str(doc_output),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    capture_output=True,
-    text=True,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py scope-provenance",
+    "warhead-scope-closeout",
+    "--output-dir",
+    output_dir,
+    "--doc-output",
+    doc_output,
   )
 
   command_summary = json.loads(result.stdout)
@@ -731,21 +719,16 @@ def test_geometry_warhead_row_provenance_cli_writes_retained_artifacts(
   retained_dir = tmp_path / "retained"
   doc_output = tmp_path / "validation_geometry_warhead_row_provenance_gate.md"
 
-  result = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "scope-provenance",
-      "row-provenance",
-      "--retained-dir",
-      str(retained_dir),
-      "--doc-output",
-      str(doc_output),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    text=True,
-    capture_output=True,
+  # Retained end-to-end smoke for the `scope-provenance` family: the one spawn
+  # that still proves the real interpreter entrypoint wiring. See
+  # test_cli_spawn_budget.py; the rest of the family runs in-process.
+  result = run_maintenance_cli(
+    "damage_model.py scope-provenance",
+    "row-provenance",
+    "--retained-dir",
+    retained_dir,
+    "--doc-output",
+    doc_output,
   )
 
   summary = json.loads(result.stdout)

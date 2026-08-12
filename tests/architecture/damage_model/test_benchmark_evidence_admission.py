@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -14,9 +12,9 @@ from tests.architecture.damage_model.helpers import (
   assert_hex64,
   assert_no_keys_anywhere,
   assert_retained_manifest_clean,
-  run_maintenance_cli,
+  run_maintenance_cli_in_process,
 )
-from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, read_json
+from tests.architecture.helpers import ensure_repo_root_on_sys_path, read_json
 
 ensure_repo_root_on_sys_path()
 
@@ -148,7 +146,7 @@ def test_selected_output_admission_cli_writes_retained_artifacts(
   output_path = tmp_path / "gate_cli.json"
   retained_dir = tmp_path / "retained"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py benchmark-evidence",
     "debris-admission",
     "--retained-dir",
@@ -358,7 +356,7 @@ def test_selected_case_admission_cli_writes_manifest_integrity_clean(
   output_path = tmp_path / "gate_cli.json"
   retained_dir = tmp_path / "retained"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py benchmark-evidence",
     "selected-debris-case-admission",
     "--retained-dir",
@@ -572,7 +570,7 @@ def test_selected_case_candidate_cli_writes_manifest_integrity_clean(
   output_path = tmp_path / "candidate_packet_cli.json"
   retained_dir = tmp_path / "retained"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py benchmark-evidence",
     "selected-debris-case-packet",
     "--retained-dir",
@@ -764,22 +762,14 @@ def test_benchmark_execution_cli_writes_retained_gate_and_manifest(tmp_path: Pat
   output_path = tmp_path / "gate_cli.json"
   retained_dir = tmp_path / "retained"
 
-  result = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "benchmark-evidence",
-      "benchmark-execution-admission",
-      "--skip-spreadsheet-execution",
-      "--retained-dir",
-      str(retained_dir),
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    text=True,
-    capture_output=True,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py benchmark-evidence",
+    "benchmark-execution-admission",
+    "--skip-spreadsheet-execution",
+    "--retained-dir",
+    retained_dir,
+    "--output",
+    output_path,
   )
 
   assert result.stdout == ""

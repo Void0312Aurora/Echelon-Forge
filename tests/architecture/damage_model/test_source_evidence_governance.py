@@ -1,23 +1,20 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from tests.architecture.helpers import (
-  PYTHON_EXECUTABLE,
-  REPO_ROOT,
-  ensure_repo_root_on_sys_path,
-)
+from tests.architecture.helpers import ensure_repo_root_on_sys_path
 from tests.architecture.damage_model.helpers import (
   EXPECTED_BECO_SHA256,
   EXPECTED_TP20_SHA256,
   EXPECTED_TP21_SHA256,
   HEX64,
   assert_authority_guards_false,
+  run_maintenance_cli,
+  run_maintenance_cli_in_process,
   walk_payload,
 )
 
@@ -254,20 +251,17 @@ def test_source_payload_pack_cli_writes_retained_json(
 ) -> None:
   output_path = tmp_path / "cli_source_payload_pack.json"
   retained_dir = tmp_path / "retained"
-  subprocess.run(
-    [
-      PYTHON_EXECUTABLE,
-   "tools/maintenance/damage_model.py",
-      "source-governance",
-      "payload-pack",
-      "--write-retained-artifacts",
-      "--output-dir",
-      str(retained_dir),
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  # Retained end-to-end smoke for the `source-governance` family: the one spawn
+  # that still proves the real interpreter entrypoint wiring. See
+  # test_cli_spawn_budget.py; the rest of the family runs in-process.
+  run_maintenance_cli(
+    "damage_model.py source-governance",
+    "payload-pack",
+    "--write-retained-artifacts",
+    "--output-dir",
+    retained_dir,
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -535,20 +529,14 @@ def test_source_rights_output_policy_cli_writes_json(
 
   output_path = tmp_path / "source_rights_output_policy_gate.json"
   retained_dir = tmp_path / "retained"
-  subprocess.run(
-    [
-      PYTHON_EXECUTABLE,
-   "tools/maintenance/damage_model.py",
-      "source-governance",
-      "rights-output-policy",
-      "--write-retained-artifacts",
-      "--output-dir",
-      str(retained_dir),
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py source-governance",
+    "rights-output-policy",
+    "--write-retained-artifacts",
+    "--output-dir",
+    retained_dir,
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -807,21 +795,13 @@ def test_source_rights_signoff_request_cli_writes_manifest_integrity_clean(
   retained_dir = tmp_path / "retained"
   output_path = tmp_path / "packet_cli.json"
 
-  result = subprocess.run(
-    [
-      PYTHON_EXECUTABLE,
-   "tools/maintenance/damage_model.py",
-      "external-evidence",
-      "signoff-request",
-      "--retained-dir",
-      str(retained_dir),
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    text=True,
-    capture_output=True,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py external-evidence",
+    "signoff-request",
+    "--retained-dir",
+    retained_dir,
+    "--output",
+    output_path,
   )
 
   assert result.stdout == ""

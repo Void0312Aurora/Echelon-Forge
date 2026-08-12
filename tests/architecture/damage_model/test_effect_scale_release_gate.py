@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.architecture.damage_model.helpers import run_maintenance_cli_in_process
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
@@ -181,17 +180,11 @@ def test_effect_scale_release_readiness_gate_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_b_release_readiness_gate.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "release-governance",
-      "effect-scale-readiness",
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py release-governance",
+    "effect-scale-readiness",
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -365,17 +358,11 @@ def test_effect_scale_release_closeout_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_b_release_closeout.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "release-governance",
-      "effect-scale-closeout",
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py release-governance",
+    "effect-scale-closeout",
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))

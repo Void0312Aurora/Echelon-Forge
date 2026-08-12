@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
-from tests.architecture.damage_model.helpers import write_release_json
+from tests.architecture.helpers import ensure_repo_root_on_sys_path
+from tests.architecture.damage_model.helpers import (
+  run_maintenance_cli_in_process,
+  write_release_json,
+)
 
 ensure_repo_root_on_sys_path()
 
@@ -218,21 +219,13 @@ def test_release_signoff_gate_cli_writes_default_artifacts(tmp_path: Path) -> No
 
   output_dir = tmp_path / "retained"
   report_path = tmp_path / "validation_res001_release_signoff_gate_20260531.zh.md"
-  result = subprocess.run(
-    [
-      sys.executable,
-      "tools/maintenance/damage_model.py",
-      "release-governance",
-      "source-release-signoff",
-      "--output-dir",
-      str(output_dir),
-      "--report",
-      str(report_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    text=True,
-    capture_output=True,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py release-governance",
+    "source-release-signoff",
+    "--output-dir",
+    output_dir,
+    "--report",
+    report_path,
   )
 
   assert result.stdout == ""

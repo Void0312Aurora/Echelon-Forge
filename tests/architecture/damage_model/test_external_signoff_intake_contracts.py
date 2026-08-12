@@ -12,6 +12,7 @@ from tests.architecture.damage_model.helpers import (
   assert_authority_guards_false,
   assert_retained_manifest_clean,
   run_maintenance_cli,
+  run_maintenance_cli_in_process,
   walk_payload,
 )
 
@@ -267,6 +268,9 @@ def test_signoff_intake_contract_cli_writes_manifest_integrity_clean(
   retained_dir = tmp_path / "retained"
   output_path = tmp_path / "contract_cli.json"
 
+  # Retained end-to-end smoke for the `external-evidence` family: the one spawn
+  # that still proves the real interpreter entrypoint wiring. See
+  # test_cli_spawn_budget.py; the rest of the family runs in-process.
   result = run_maintenance_cli(
     "damage_model.py external-evidence",
     "intake-contract",
@@ -539,7 +543,7 @@ def test_external_signoff_template_cli_writes_clean_retained_manifest(
   retained_dir = tmp_path / "external_signoff_packet_template"
   output_path = tmp_path / "template_copy.json"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py external-evidence",
     "packet-template",
     "--retained-dir",

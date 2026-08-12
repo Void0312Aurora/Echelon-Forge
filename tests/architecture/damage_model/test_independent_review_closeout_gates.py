@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
+from tests.architecture.damage_model.helpers import (
+  run_maintenance_cli,
+  run_maintenance_cli_in_process,
+)
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
@@ -213,17 +215,11 @@ def test_independent_review_gate_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_b_independent_review_gate.json"
-  subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "independent-review",
-      "effect-scale-review",
-      "--output",
-      str(output_path),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
+  run_maintenance_cli_in_process(
+    "damage_model.py independent-review",
+    "effect-scale-review",
+    "--output",
+    output_path,
   )
 
   artifact = json.loads(output_path.read_text(encoding="utf-8"))
@@ -406,19 +402,14 @@ def test_review_closeout_gate_cli_writes_retained_json(
   tmp_path: Path,
 ) -> None:
   output_dir = tmp_path / "res011012_independent_review_closeout_20260531"
-  result = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "independent-review",
-      "review-closeout",
-      "--output-dir",
-      str(output_dir),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    capture_output=True,
-    text=True,
+  # Retained end-to-end smoke for the `independent-review` family: the one
+  # spawn that still proves the real interpreter entrypoint wiring. See
+  # test_cli_spawn_budget.py; the rest of the family runs in-process.
+  result = run_maintenance_cli(
+    "damage_model.py independent-review",
+    "review-closeout",
+    "--output-dir",
+    output_dir,
   )
 
   command_summary = json.loads(result.stdout)
@@ -612,19 +603,11 @@ def test_scope_bucket_review_gate_cli_writes_retained_json(
   tmp_path: Path,
 ) -> None:
   output_dir = tmp_path / "scope_bucket_independent_review_20260531"
-  result = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "independent-review",
-      "scope-bucket-review",
-      "--output-dir",
-      str(output_dir),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    capture_output=True,
-    text=True,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py independent-review",
+    "scope-bucket-review",
+    "--output-dir",
+    output_dir,
   )
 
   command_summary = json.loads(result.stdout)
@@ -783,19 +766,11 @@ def test_uncertainty_review_gate_cli_writes_retained_json(
   tmp_path: Path,
 ) -> None:
   output_dir = tmp_path / "uncertainty_review_20260531"
-  result = subprocess.run(
-    [
-      sys.executable,
-   "tools/maintenance/damage_model.py",
-      "independent-review",
-      "uncertainty-review",
-      "--output-dir",
-      str(output_dir),
-    ],
-    cwd=REPO_ROOT,
-    check=True,
-    capture_output=True,
-    text=True,
+  result = run_maintenance_cli_in_process(
+    "damage_model.py independent-review",
+    "uncertainty-review",
+    "--output-dir",
+    output_dir,
   )
 
   command_summary = json.loads(result.stdout)

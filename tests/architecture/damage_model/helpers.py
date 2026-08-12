@@ -5,7 +5,12 @@ import re
 from pathlib import Path
 from typing import Any
 
-from tests.support.cli import run_maintenance_cli, run_maintenance_json_cli
+from tests.support.cli import (
+  run_maintenance_cli,
+  run_maintenance_cli_in_process,
+  run_maintenance_json_cli,
+  run_maintenance_json_cli_in_process,
+)
 from tests.support.manifests import (
   assert_authority_guards_false,
   assert_no_keys_anywhere,

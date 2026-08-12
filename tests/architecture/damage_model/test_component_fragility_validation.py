@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, read_json
-from tests.architecture.damage_model.helpers import run_maintenance_cli
+from tests.architecture.damage_model.helpers import run_maintenance_cli_in_process
 
 ensure_repo_root_on_sys_path()
 
@@ -203,7 +203,7 @@ def test_component_probability_review_readiness_gate_cli_writes_json(
   tmp_path: Path,
 ) -> None:
   output_path = tmp_path / "a2_stage_c_component_probability_review_gate.json"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-probability-review-readiness",
     "--output",
@@ -405,7 +405,7 @@ def test_fragility_validation_prep_interlocks_authority(
 
 def test_fragility_validation_prep_cli_writes_json(tmp_path: Path) -> None:
   output_path = tmp_path / "a2_stage_c_fragility_validation_prep.json"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-fragility-validation-prep",
     "--output",
@@ -669,7 +669,7 @@ def test_fragility_review_gate_cli_writes_json_and_retained(
 ) -> None:
   output_path = tmp_path / "a2_stage_c_fragility_review_gate.json"
   retained_dir = tmp_path / "retained"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-fragility-review-gate",
     "--output",
@@ -988,7 +988,7 @@ def test_fragility_benchmark_cli_writes_retained_artifacts(
 ) -> None:
   output_path = tmp_path / "a2_stage_c_fragility_benchmark.json"
   retained_dir = tmp_path / "retained"
-  run_maintenance_cli(
+  run_maintenance_cli_in_process(
     "damage_model.py candidate-artifacts",
     "component-fragility-benchmark",
     "--output",

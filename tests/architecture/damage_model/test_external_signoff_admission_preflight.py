@@ -11,7 +11,7 @@ from tests.architecture.damage_model.helpers import (
   HEX64,
   assert_authority_guards_false,
   assert_retained_manifest_clean,
-  run_maintenance_cli,
+  run_maintenance_cli_in_process,
   walk_payload,
 )
 
@@ -222,7 +222,7 @@ def test_signoff_admission_preflight_cli_writes_manifest_integrity_clean(
   retained_dir = tmp_path / "retained"
   output_path = tmp_path / "preflight_cli.json"
 
-  result = run_maintenance_cli(
+  result = run_maintenance_cli_in_process(
     "damage_model.py external-evidence",
     "admission-preflight",
     "--retained-dir",

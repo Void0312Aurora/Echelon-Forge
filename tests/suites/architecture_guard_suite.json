@@ -19,6 +19,7 @@
     "tests/architecture/content/test_missile_tuning_fields_inc.py",
     "tests/architecture/content/test_ship_submarine_platform_fields_inc.py",
     "tests/architecture/content/test_unit_definition_direct_fields_inc.py",
+    "tests/architecture/damage_model/test_cli_spawn_budget.py",
     "tests/architecture/damage_model/test_path_suffix_components.py",
     "tests/architecture/damage_model/test_retained_manifest_integrity.py",
     "tests/architecture/damage_model/test_rights_output_policy_probe.py",
