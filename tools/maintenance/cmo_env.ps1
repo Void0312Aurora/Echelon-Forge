@@ -378,42 +378,8 @@ function Test-CmoEnv {
 
 function Test-CmoRlEnv {
     Initialize-CmoEnv
-    $script = @'
-import importlib
-import sys
-
-required = ("ef_py", "gymnasium", "stable_baselines3", "torch")
-failed = False
-
-for name in required:
-    try:
-        module = importlib.import_module(name)
-    except Exception as exc:
-        failed = True
-        print(f"[cmo_env] import failed: {name}: {exc}", file=sys.stderr)
-        continue
-    version = getattr(module, "__version__", None)
-    location = getattr(module, "__file__", None)
-    detail = []
-    if version:
-        detail.append(f"version={version}")
-    if location:
-        detail.append(f"file={location}")
-    suffix = f" ({', '.join(detail)})" if detail else ""
-    print(f"[cmo_env] import ok: {name}{suffix}")
-
-if failed:
-    print(
-        "[cmo_env] RL validation failed; install the `.[rl]` extra or the "
-        "equivalent direct dependencies, and rebuild ef_py if that import failed.",
-        file=sys.stderr,
-    )
-    sys.exit(6)
-
-print("[cmo_env] RL validation ok")
-'@
-
-    & $env:CMO_PYTHON -c $script
+    $validator = Join-Path $env:CMO_REPO_ROOT "tools\maintenance\cmo_env_validate_rl.py"
+    & $env:CMO_PYTHON $validator
     exit $LASTEXITCODE
 }
 

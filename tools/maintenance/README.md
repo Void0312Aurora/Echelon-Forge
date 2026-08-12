@@ -11,6 +11,15 @@ General maintained helpers:
 - [cmo_env.ps1](cmo_env.ps1)
   - Windows/PowerShell repository-local environment bootstrap and validation
     for `.venv`, `CMO_BUILD_DIR`, `PYTHONPATH`, and `ef_py*.pyd` artifacts.
+- [cmo_env_validate_rl.py](cmo_env_validate_rl.py)
+  - Single RL import probe shared by `cmo_env.sh validate-rl` and
+    `cmo_env.ps1 validate-rl`, so both shells report the same modules and the
+    same exit code.
+- [docs_link.py](docs_link.py)
+  - Single Markdown inline-link scanner shared by the documentation link
+    audit, the WP closure audit, and the doc translation batch. It masks
+    fenced code, HTML comments, and inline code before scanning, so the three
+    tools agree on the link set of a given document.
 - [redundancy_audit.py](redundancy_audit.py)
   - Audits duplicate/temp-like workspace content.
 - [cleanup_redundancy.py](cleanup_redundancy.py)

@@ -5,32 +5,6 @@ _cmo_env_root() {
   cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd
 }
 
-_cmo_detect_build_dir() {
-  local root_dir="$1"
-  local candidate
-  for candidate in \
-    "${CMO_BUILD_DIR:-}" \
-    "build-workshop" \
-    "build-gpu" \
-    "build" \
-    "build-facade-local"
-  do
-    [[ -n "${candidate}" ]] || continue
-    if [[ "${candidate}" != /* ]]; then
-      candidate="${root_dir}/${candidate}"
-    fi
-    if [[ -d "${candidate}" ]] && compgen -G "${candidate}/ef_py*.so" >/dev/null; then
-      printf '%s\n' "${candidate}"
-      return 0
-    fi
-    if [[ -d "${candidate}" && -e "${candidate}/ef_py" ]]; then
-      printf '%s\n' "${candidate}"
-      return 0
-    fi
-  done
-  return 1
-}
-
 _cmo_has_ef_py_artifact() {
   local build_dir="$1"
   [[ -n "${build_dir}" ]] || return 1
@@ -40,8 +14,11 @@ _cmo_has_ef_py_artifact() {
   [[ -e "${build_dir}/ef_py" ]]
 }
 
-_cmo_resolve_build_candidate() {
+# Walks the ordered build-directory candidates once. Pass require_artifact=yes
+# to keep only a candidate that already carries a built ef_py module.
+_cmo_first_build_dir() {
   local root_dir="$1"
+  local require_artifact="$2"
   local candidate
   for candidate in \
     "${CMO_BUILD_DIR:-}" \
@@ -54,12 +31,22 @@ _cmo_resolve_build_candidate() {
     if [[ "${candidate}" != /* ]]; then
       candidate="${root_dir}/${candidate}"
     fi
-    if [[ -d "${candidate}" ]]; then
-      printf '%s\n' "${candidate}"
-      return 0
+    [[ -d "${candidate}" ]] || continue
+    if [[ "${require_artifact}" == "yes" ]] && ! _cmo_has_ef_py_artifact "${candidate}"; then
+      continue
     fi
+    printf '%s\n' "${candidate}"
+    return 0
   done
   return 1
+}
+
+_cmo_detect_build_dir() {
+  _cmo_first_build_dir "$1" "yes"
+}
+
+_cmo_resolve_build_candidate() {
+  _cmo_first_build_dir "$1" "no"
 }
 
 cmo_activate_env() {
@@ -150,40 +137,7 @@ EOF
 
 cmo_env_validate_rl() {
   cmo_activate_env
-  "${CMO_PYTHON}" - <<'PY'
-import importlib
-import sys
-
-required = ("ef_py", "gymnasium", "stable_baselines3", "torch")
-failed = False
-
-for name in required:
-    try:
-        module = importlib.import_module(name)
-    except Exception as exc:
-        failed = True
-        print(f"[cmo_env] import failed: {name}: {exc}", file=sys.stderr)
-        continue
-    version = getattr(module, "__version__", None)
-    location = getattr(module, "__file__", None)
-    detail = []
-    if version:
-        detail.append(f"version={version}")
-    if location:
-        detail.append(f"file={location}")
-    suffix = f" ({', '.join(detail)})" if detail else ""
-    print(f"[cmo_env] import ok: {name}{suffix}")
-
-if failed:
-    print(
-        "[cmo_env] RL validation failed; install the `.[rl]` extra or the "
-        "equivalent direct dependencies, and rebuild ef_py if that import failed.",
-        file=sys.stderr,
-    )
-    sys.exit(6)
-
-print("[cmo_env] RL validation ok")
-PY
+  "${CMO_PYTHON}" "${CMO_REPO_ROOT}/tools/maintenance/cmo_env_validate_rl.py"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

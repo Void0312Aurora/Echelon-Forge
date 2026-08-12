@@ -8,6 +8,13 @@
   - Linux/macOS 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR` 和 `PYTHONPATH`。
 - [cmo_env.ps1](cmo_env.ps1)
   - Windows/PowerShell 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR`、`PYTHONPATH` 以及 `ef_py*.pyd` 工件。
+- [cmo_env_validate_rl.py](cmo_env_validate_rl.py)
+  - `cmo_env.sh validate-rl` 与 `cmo_env.ps1 validate-rl` 共用的 RL import 探针，
+    两个 shell 因此报告相同的模块与相同的退出码。
+- [docs_link.py](docs_link.py)
+  - 文档链接审计、WP closure 审计和文档翻译批次共用的 Markdown 行内链接扫描器。
+    扫描前会屏蔽代码围栏、HTML 注释和行内代码，使三个工具对同一文档给出相同的
+    链接集合。
 - [redundancy_audit.py](redundancy_audit.py)
   - 审计重复/临时性质的仓库内容。
 - [cleanup_redundancy.py](cleanup_redundancy.py)
