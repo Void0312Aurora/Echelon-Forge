@@ -324,10 +324,6 @@ def test_component_probability_snapshot_records_candidate_probability_row(
 def test_component_probability_snapshot_embeds_surface_probe_summary(
   snapshot_artifact: dict[str, Any],
 ) -> None:
-  from tools.maintenance.candidate_artifacts import (
-    component_probability_surface_probe as surface_probe,
-  )
-
   artifact = snapshot_artifact
   surface_probe = artifact["surface_probe_summary"]
 

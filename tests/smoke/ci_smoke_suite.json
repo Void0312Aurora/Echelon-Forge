@@ -118,6 +118,7 @@
     "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_uses_nodeids_for_broad_runtime_facade_layering_guard",
     "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_keeps_cr2_counter_strict_numeric_gate_registered",
     "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_uses_explicit_files_or_nodeids_not_directories",
+    "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_takes_no_governance_audit_files_wholesale",
     "tests/runners/test_pytest_suite_manifests.py::test_architecture_tier_suites_partition_the_architecture_test_files",
     "tests/runners/test_suite_manifest.py",
     "tests/runners/test_run_pytest_suite.py",

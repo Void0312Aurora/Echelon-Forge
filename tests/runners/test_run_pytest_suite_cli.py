@@ -1,9 +1,10 @@
 """CLI-surface tests for ``tools/runners/run_pytest_suite.py``.
 
-These pin the ``--deselect-marker`` tier filter that keeps CI smoke from
-executing governance_audit-marked files even when a suite manifest still lists
-one, and pin that an invocation without the flag keeps the historical command
-shape byte for byte.
+These pin the ``--deselect-marker`` tier filter for local and explicit suite
+invocations, and pin that an invocation without the flag keeps the historical
+command shape byte for byte. CI smoke itself does not pass the flag: its
+protection against wholesale audit-tier entries is the static manifest
+meta-test ``test_ci_smoke_takes_no_governance_audit_files_wholesale``.
 """
 
 from __future__ import annotations
