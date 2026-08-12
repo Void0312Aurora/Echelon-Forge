@@ -41,6 +41,14 @@ def _text(path: Path) -> str:
   return text
 
 
+def _bindings_runtime_source_text() -> str:
+  # The runtime binding surface is decomposed into per-domain slices; join
+  # them in registration order before expanding the schema-owned X-macros.
+  from tests.architecture.structural_boundaries.helpers import bindings_runtime_text
+
+  return expand_binding_field_incs(bindings_runtime_text())
+
+
 def _wp20_doc_text() -> str:
   for candidate in WP20_B_DOC_CANDIDATES:
     if candidate.is_file():
@@ -251,7 +259,7 @@ def test_wp20_typed_platform_spawn_helpers_preserve_seeded_identity_and_evidence
 def test_wp14_additive_spawn_dto_surface_is_declared_without_replacing_legacy_spawn() -> None:
   world_batch_header = _text(WORLD_BATCH_HEADER)
   facade_types_header = _text(FACADE_TYPES_HEADER)
-  bindings_source = _text(BINDINGS_SOURCE)
+  bindings_source = _bindings_runtime_source_text()
 
   assert "struct WorldSpawnRequest" in world_batch_header
   assert "std::string type_name" in world_batch_header

@@ -1075,7 +1075,11 @@ def test_wp22_task_order_header_marks_shared_core_as_owner_slice_directive_surfa
 
 
 def test_wp22_python_bindings_expose_owner_slice_types_and_projection_helpers() -> None:
-  text = _text(BINDINGS_COMMAND_CPP)
+  # The command binding surface is decomposed into per-domain slices; read
+  # them joined in registration order.
+  from tests.architecture.structural_boundaries.helpers import bindings_command_text
+
+  text = bindings_command_text()
 
   for token in (
     'nb::class_<TaskOrderCore>(m, "TaskOrderCore")',
