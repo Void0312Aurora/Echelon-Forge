@@ -25,6 +25,14 @@ inline constexpr std::string_view kLearnerConsumerSurfaceV1 =
 // behind an explicit flag instead, so default reports keep the frozen shape.
 inline constexpr std::string_view kLearnerConsumerModeIdNoExport = "no_export_learner_consumer";
 
+// Learner-flagged probe runs self-declare this report generation so a
+// five-mode report can never masquerade as the frozen four-mode v1 shape
+// again. The four CP-6 campaign reports captured before this constant exist
+// with the v1 id and are validated under the generation their tracked
+// evidence package declares.
+inline constexpr std::string_view kLearnerProbeSchemaV2 =
+    "cuda_resident.cp6.production_matrix_probe.v2";
+
 // One feature per packed observation field. The packing kernel already
 // produces the world-major [world_count, feature_count] float layout, so the
 // policy input buffer shares the lease payload's layout family.

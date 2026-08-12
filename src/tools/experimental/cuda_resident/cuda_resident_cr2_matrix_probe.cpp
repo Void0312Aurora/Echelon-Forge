@@ -429,7 +429,9 @@ Json run_probe(const Args &args) {
         });
     }
     return {
-        {"schema_version", matrix::kProbeSchema},
+        {"schema_version", args.learner_consumer_mode
+                               ? runtime::cuda_resident::learner_consumption::kLearnerProbeSchemaV2
+                               : matrix::kProbeSchema},
         {"profile_id", matrix::kProfileId},
         {"lane", lane},
         {"backend_id",

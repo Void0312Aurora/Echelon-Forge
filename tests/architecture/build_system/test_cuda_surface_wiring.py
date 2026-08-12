@@ -514,3 +514,26 @@ void drive(runtime::cuda_resident::CudaResidentBackend &backend) { (void)backend
 """,
   }
   assert _probe_stub_violations(cmake, _dict_reader(sources), ("ef_probe",)) == []
+
+
+# --- CI surface/flag contract --------------------------------------------------
+
+
+def test_cuda_compile_lane_enables_the_flag_behind_every_surface_it_builds() -> None:
+  """The compile lane's whole value is that the device sources actually pass
+  through nvcc. Each CUDA surface hides its .cu sources behind its own CMake
+  flag, so a lane that builds a surface's target without enabling the matching
+  flag compiles only C++ fallbacks while claiming device coverage -- exactly
+  what happened when ef_gpu_experiments was built without
+  EF_ENABLE_CUDA_EXPERIMENTS."""
+  workflow = (REPO_ROOT / ".github/workflows/ci-cuda-compile.yml").read_text(encoding="utf-8")
+  surface_flags = {
+    "ef_cuda_resident_backend": "-DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON",
+    "ef_gpu_experiments": "-DEF_ENABLE_CUDA_EXPERIMENTS=ON",
+  }
+  for target, flag in surface_flags.items():
+    if re.search(rf"^\s*{re.escape(target)}\b", workflow, flags=re.MULTILINE):
+      assert flag in workflow, (
+        f"the compile lane builds {target} but never passes {flag}, so its .cu "
+        "sources are silently excluded from the build"
+      )

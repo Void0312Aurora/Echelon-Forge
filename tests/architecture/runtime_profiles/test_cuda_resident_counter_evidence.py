@@ -305,7 +305,8 @@ def test_cp_achieved_counter_evidence_validates_against_its_declared_generation(
 
 def _v3_report() -> dict[str, object]:
     """The shape a fused-graph recapture will produce: v3 parent profile,
-    seven launches, the same measured units and counter schema as v2."""
+    seven launches, the same measured units and counter schema as v2, and the
+    in-artifact elevation record that post-frozen generations must carry."""
     report = json.loads(CP_EVIDENCE.read_text(encoding="utf-8"))
     report["profile_id"] = resource.PROFILE_V3
     toolchain = report["toolchain"]
@@ -316,6 +317,11 @@ def _v3_report() -> dict[str, object]:
     ]
     report["attempt"]["required_launch_count"] = 7
     report["attempt"]["collected_launch_count"] = 7
+    report["attempt"]["elevation"] = {
+        "elevated": True,
+        "mechanism": "windows_administrator_shell",
+        "recorded_utc": "2026-08-13T00:00:00Z",
+    }
     for family in report["achieved_counters"].values():
         family["values_by_launch"] = family["values_by_launch"][:7]
     return report
@@ -405,6 +411,10 @@ def _unavailable_report_for(generation: int, profile_id: str, status: str) -> di
         for entry in toolchain["command_template"]
     ]
     report["attempt"]["required_launch_count"] = launch_count
+    if generation >= 3:
+        # Post-frozen artifacts carry the elevation slot even when blocked;
+        # only an available capture must fill it with an elevated record.
+        report["attempt"]["elevation"] = None
     report["achieved_counters"] = counter.empty_counter_families(generation)
     if status == "collection_failed":
         report["attempt"].update(
@@ -525,6 +535,40 @@ def test_cr2_5b_does_not_rewrite_cr2_5a_or_historical_rb9_evidence() -> None:
     )
     assert completed.returncode == 0
     assert not list((ROOT / "tests/fixtures/runtime_profiles/cuda_resident_program_2").glob("cuda_resident_cr2_counter_*.ncu-rep"))
+
+
+def test_post_frozen_counter_captures_must_record_elevation_in_the_artifact() -> None:
+    """The program constraint requires counter artifacts to record elevation.
+    The frozen v1/v2 captures carry that fact in the program plan prose only,
+    which the CP-9 decision record waives by owner authority; every later
+    generation (the v3+ parents of the optimized graphs) must embed the
+    record, so an available capture without one fails closed."""
+    missing_key = _v3_report()
+    del missing_key["attempt"]["elevation"]
+    with pytest.raises(counter.CounterEvidenceError, match="counter attempt"):
+        counter.validate_report(missing_key)
+
+    null_record = _v3_report()
+    null_record["attempt"]["elevation"] = None
+    with pytest.raises(counter.CounterEvidenceError, match="elevation record"):
+        counter.validate_report(null_record)
+
+    unelevated = _v3_report()
+    unelevated["attempt"]["elevation"] = {
+        "elevated": False,
+        "mechanism": "none",
+        "recorded_utc": "2026-08-13T00:00:00Z",
+    }
+    with pytest.raises(counter.CounterEvidenceError, match="elevation flag"):
+        counter.validate_report(unelevated)
+
+    # The properly recorded shape passes end to end via _v3_report, which
+    # test_v3_counter_report_shape_follows_the_fused_launch_sequence pins.
+    # The frozen generations stay exactly as captured: no elevation key, and
+    # the CP-9 waiver keeps them valid.
+    frozen = _available_report()
+    assert "elevation" not in frozen["attempt"]
+    counter.validate_report(frozen)
 
 
 def test_cr2_5b_new_modules_remain_below_soft_size_targets() -> None:

@@ -32,8 +32,10 @@ tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp_resourc
 tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp7b_barrier_fold_20260812/** -text
 tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp7b_resource_evidence_20260812.json -text
 
-# CP-6 learner-consumption measurement reports are content-addressed evidence.
+# CP-6 learner-consumption measurement reports are content-addressed evidence,
+# and the evidence package hash-pins them to their declared generation.
 tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp6_learner_consumption_20260812/** -text
+tests/fixtures/runtime_profiles/cuda_resident_program_2/cuda_resident_cp6_learner_consumption_evidence_20260813.json -text
 
 # CP-8 post-optimization matrix package: campaign reports, manifest, parity
 # artifact, and the validated evidence JSON are hash-pinned by the manifest

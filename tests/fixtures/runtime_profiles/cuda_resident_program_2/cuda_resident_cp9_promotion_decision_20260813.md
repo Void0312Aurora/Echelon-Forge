@@ -120,3 +120,31 @@ Backend Promotion Program has delivered its verdict. Follow-up work
 (the opt-in exposure scope, a v4 counter capture, any second-host evidence)
 proceeds only under the authorities this record grants or the owner
 explicitly adds.
+
+## Amendment (2026-08-13): PR review findings resolved
+
+The remote independent review bot raised three blocking findings against the
+integration PR; each is resolved in the record and the tree, none by
+weakening a gate:
+
+1. **G-D elevation provenance.** The mandatory constraint ("counter
+   artifacts must record elevation") was met only in program-plan prose for
+   the frozen v1/v2 captures. The frozen artifacts stay byte-identical; the
+   owner waiver is now explicit in `recorded_gaps` (basis: the hash-pinned
+   unelevated predecessor failing with `ERR_NVGPUCTRPERM` is itself evidence
+   that elevation enabled the capture), and the counter validator fail-closes
+   any post-frozen (v3+) available capture whose artifact lacks an
+   in-artifact elevation record.
+2. **G-C evidence generation.** The four CP-6 campaign reports carry the v1
+   schema id with the learner mode appended, so the frozen four-mode
+   validator rejected them and nothing hash-pinned them. The tracked package
+   `cuda_resident_cp6_learner_consumption_evidence_20260813.json` now
+   declares that generation, hash-pins all four reports, and its validator
+   (learner extension checked, remainder delegated verbatim to the untouched
+   v1 validator) accepts them end to end; this record's evidence index binds
+   G-C to that package. Learner-flagged probe runs self-declare
+   `cuda_resident.cp6.production_matrix_probe.v2` from now on.
+3. **CUDA CI flag coverage.** The compile lane claimed both device surfaces
+   while enabling only the resident flag, leaving the `src/gpu` helper `.cu`
+   sources uncompiled. The lane now enables both flags, and an architecture
+   gate maps every surface the lane builds to the CMake flag it requires.

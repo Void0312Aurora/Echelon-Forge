@@ -81,11 +81,17 @@ jobs:
       # is not the evidence host's. 86 is pinned to match the RTX 3090 the
       # tracked resource/counter evidence was captured on, so this lane compiles
       # the same device code path that evidence describes.
-      - name: Configure with CUDA resident backend enabled
+      # Both device surfaces are compiled here, so both flags are enabled: the
+      # resident backend sources sit behind EF_ENABLE_CUDA_RESIDENT_BACKEND and
+      # the src/gpu helper .cu sources sit behind EF_ENABLE_CUDA_EXPERIMENTS.
+      # With only the resident flag, ef_gpu_experiments silently builds its C++
+      # fallbacks and the helper device code rots uncompiled.
+      - name: Configure with both CUDA surfaces enabled
         run: |
           cmake -S . -B build-cuda -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DEF_ENABLE_CUDA_RESIDENT_BACKEND=ON \
+            -DEF_ENABLE_CUDA_EXPERIMENTS=ON \
             -DCMAKE_CUDA_ARCHITECTURES=86 \
             -DCMAKE_CUDA_HOST_COMPILER=g++-12
 

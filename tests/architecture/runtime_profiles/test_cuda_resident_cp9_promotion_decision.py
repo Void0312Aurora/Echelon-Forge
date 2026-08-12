@@ -111,6 +111,45 @@ def test_cp9_recorded_gaps_carry_the_gd_elevation_obligation() -> None:
     assert "achieved_counters_predate_cp5_fusion" in gaps
 
 
+def test_cp9_gd_prose_gap_is_owner_waived_with_forward_enforcement() -> None:
+    """The review bot's finding: a mandatory constraint met only in prose
+    cannot silently back a green gate. The frozen artifacts stay untouched;
+    the owner waiver is explicit in the record and the counter validator now
+    fail-closes any post-frozen available capture without an in-artifact
+    elevation record."""
+    record = _record()
+    gaps = {gap["id"]: gap for gap in record["recorded_gaps"]}
+    waiver = gaps["gd_artifact_elevation_record_missing"]["owner_waiver"]
+    assert waiver["waived"] is True
+    assert waiver["waived_by"] == "repository_owner"
+    assert "ERR_NVGPUCTRPERM" in waiver["basis"]
+    assert "v3+" in waiver["forward_enforcement"]
+    collector = (ROOT / "tools/diagnostics/cuda_resident_cr2_counter_evidence.py").read_text(
+        encoding="utf-8"
+    )
+    assert "requires_elevation_record = generation >= 3" in collector
+
+
+def test_cp9_gc_evidence_is_hash_bound_to_a_declared_generation_package() -> None:
+    """The second review finding: G-C rested on five-mode reports that the
+    frozen validator rejects and nothing hash-pinned. The record now binds
+    the gate to the CP-6 learner evidence package, whose validator accepts
+    all four reports under their declared generation."""
+    record = _record()
+    gc = record["gate_evaluation"]["G_C_learner_equivalent_consumption_measured"]
+    assert gc["evidence_package"] == (
+        "cuda_resident_cp6_learner_consumption_evidence_20260813.json"
+    )
+    descriptor = record["evidence"]["learner_consumption_evidence"]
+    package_path = ROOT / retained_paths.physical_relative(str(descriptor["path"]))
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    from tools.diagnostics import cuda_resident_cp6_learner_evidence as learner_evidence
+
+    learner_evidence.validate_evidence(package, ROOT)
+    gaps = {gap["id"]: gap for gap in record["recorded_gaps"]}
+    assert "gc_learner_reports_lacked_declared_generation_validation" in gaps
+
+
 def test_cp9_documents_are_bilingual_and_registered() -> None:
     doc = DOC.read_text(encoding="utf-8")
     doc_zh = DOC_ZH.read_text(encoding="utf-8")

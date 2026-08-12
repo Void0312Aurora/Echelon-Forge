@@ -18,7 +18,8 @@
    "src/tests/test_cuda_resident*",
    "tests/architecture/runtime_profiles/test_cuda_resident*",
    "tests/runtime/facade/test_cuda_resident*",
-   "tools/diagnostics/cuda_resident_cr2*"
+   "tools/diagnostics/cuda_resident_cr2*",
+   "tools/diagnostics/cuda_resident_cp*"
   ],
   "extensions": [
    ".c",
@@ -229,7 +230,7 @@
   {
    "path": "tools/diagnostics/cuda_resident_cr2_counter_evidence.py",
    "role": "CR2-5b Nsight Compute attempt and external-blocker evidence collector",
-   "observed_lines": 682
+   "observed_lines": 700
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_counter_parser.py",
@@ -239,7 +240,7 @@
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py",
    "role": "CR2-5b evidence provenance, state, negative, and size guards",
-   "observed_lines": 534
+   "observed_lines": 578
   },
   {
    "path": "src/runtime/contracts/cuda_resident_matrix_contract.h",
@@ -254,17 +255,22 @@
   {
    "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp",
    "role": "CR2-6a common-SPI CPU/CUDA session and device-consumer suffix",
-   "observed_lines": 291
+   "observed_lines": 292
   },
   {
    "path": "src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp",
    "role": "CR2-6a production protocol timing and compact probe report",
-   "observed_lines": 499
+   "observed_lines": 501
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_matrix_probe.py",
    "role": "CR2-6a fail-closed probe report validator",
    "observed_lines": 603
+  },
+  {
+   "path": "tools/diagnostics/cuda_resident_cp6_learner_evidence.py",
+   "role": "cp6_learner_evidence_declared_generation_validator",
+   "observed_lines": 236
   },
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_probe.py",
@@ -304,7 +310,7 @@
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_cp9_promotion_decision.py",
    "role": "cp9_promotion_decision_record_gate",
-   "observed_lines": 126
+   "observed_lines": 165
   }
  ],
  "watch_items": [

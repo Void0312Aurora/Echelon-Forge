@@ -1,0 +1,46 @@
+{
+ "declared_report_generation": "cr2_matrix_probe.v1_schema_with_learner_mode_appended",
+ "evidence_date": "2026-08-13",
+ "forward_probe_schema": "cuda_resident.cp6.production_matrix_probe.v2",
+ "gates": {
+  "cp6_learner_evidence_complete": true,
+  "maintained_claim_allowed": false,
+  "promotion_allowed": false,
+  "public_support_enabled": false,
+  "tuning_authorized": false
+ },
+ "interpretation": {
+  "comparability": "frozen_modes_unchanged_learner_mode_appended_behind_explicit_flag",
+  "cost_claim": "within_host_run_to_run_noise_no_consistent_penalty",
+  "gate": "G-C"
+ },
+ "iteration": "CP-6",
+ "learner_mode_id": "no_export_learner_consumer",
+ "reports": {
+  "cpu_campaign1": {
+   "bytes": 106595,
+   "lane": "flecs_cpu_reference",
+   "path": "docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_20260812/post_cpu_campaign1.json",
+   "sha256": "4eda3f663bb35d2339e6152c494d893f6c5edd316cf6c3912a3182ae36449efc"
+  },
+  "cpu_campaign2": {
+   "bytes": 107334,
+   "lane": "flecs_cpu_reference",
+   "path": "docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_20260812/post_cpu_campaign2.json",
+   "sha256": "118a6dc168b44bd5e1ccda3336eb3ffe5f8c436efe7c6cd034b9a7ad30a2d4b1"
+  },
+  "cuda_campaign1": {
+   "bytes": 242932,
+   "lane": "cuda_resident",
+   "path": "docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_20260812/post_cuda_campaign1.json",
+   "sha256": "d0c7e0c058c2a3e9002440021088fc5fa98c0a4a44a40ec33a86290df32d8ccb"
+  },
+  "cuda_campaign2": {
+   "bytes": 242979,
+   "lane": "cuda_resident",
+   "path": "docs/plan/exact_runtime/cuda_resident_cp6_learner_consumption_20260812/post_cuda_campaign2.json",
+   "sha256": "4b7d771b903cc2179280fbfc3027c4343c5d7c18b14df679c2dc76e8482d0012"
+  }
+ },
+ "schema_version": "cuda_resident.cp6.learner_consumption_evidence.v1"
+}

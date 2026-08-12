@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import json
 import re
+from copy import deepcopy
+
+import pytest
 
 from tests.architecture.helpers import REPO_ROOT
+from tools.diagnostics import cuda_resident_cp6_learner_evidence as learner_evidence
+from tools.diagnostics import cuda_resident_cr2_matrix_probe as matrix_probe
+from tools.diagnostics import cuda_resident_retained_evidence_paths as retained_paths
 
 
 CUDA_RESIDENT_DIR = REPO_ROOT / "src/runtime/facade/internal/cuda_resident"
@@ -182,3 +189,108 @@ def test_cp6_mode_id_is_owned_by_the_contract_and_stays_out_of_the_frozen_table(
   assert "learner_equivalent = true" in cuda_test
   assert "kLearnerNormalization[field]" in cuda_test
   assert "to_packed_float" in cuda_test
+
+
+EVIDENCE_PACKAGE = (
+  REPO_ROOT
+  / "tests/fixtures/runtime_profiles/cuda_resident_program_2/"
+    "cuda_resident_cp6_learner_consumption_evidence_20260813.json"
+)
+
+
+def _package() -> dict:
+  value = json.loads(EVIDENCE_PACKAGE.read_text(encoding="utf-8"))
+  assert isinstance(value, dict)
+  return value
+
+
+def test_cp6_reports_validate_under_their_declared_generation() -> None:
+  """The four tracked CP-6 campaign reports carry the v1 schema id with the
+  learner mode appended, which the frozen four-mode validator rightly
+  rejects. The evidence package declares that generation, hash-pins each
+  report, and the declared-generation validator must accept all four
+  end-to-end (learner extension checked, remainder delegated verbatim to the
+  frozen v1 validator)."""
+  package = _package()
+  learner_evidence.validate_evidence(package, REPO_ROOT)
+  for descriptor in package["reports"].values():
+    path = REPO_ROOT / retained_paths.physical_relative(str(descriptor["path"]))
+    report = json.loads(path.read_text(encoding="utf-8"))
+    with pytest.raises(matrix_probe.MatrixProbeError):
+      matrix_probe.validate_report(report, require_production=True)
+    learner_evidence.validate_learner_report(report, REPO_ROOT, require_production=True)
+
+
+def test_cp6_learner_evidence_rejects_generation_and_content_drift() -> None:
+  package = _package()
+
+  relabeled = deepcopy(package)
+  relabeled["declared_report_generation"] = "cr2_matrix_probe.v99"
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="unknown declared"):
+    learner_evidence.validate_evidence(relabeled, REPO_ROOT)
+
+  tampered = deepcopy(package)
+  tampered["reports"]["cuda_campaign1"]["sha256"] = "0" * 64
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="hash mismatch"):
+    learner_evidence.validate_evidence(tampered, REPO_ROOT)
+
+  second_owner = deepcopy(package)
+  second_owner["learner_mode_id"] = "no_export_other_consumer"
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="contract owner"):
+    learner_evidence.validate_evidence(second_owner, REPO_ROOT)
+
+  granted = deepcopy(package)
+  granted["gates"]["promotion_allowed"] = True
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="gates drifted"):
+    learner_evidence.validate_evidence(granted, REPO_ROOT)
+
+
+def test_cp6_learner_report_validator_rejects_mode_and_row_drift() -> None:
+  package = _package()
+  descriptor = package["reports"]["cuda_campaign1"]
+  path = REPO_ROOT / retained_paths.physical_relative(str(descriptor["path"]))
+  report = json.loads(path.read_text(encoding="utf-8"))
+
+  flag_drift = deepcopy(report)
+  for entry in flag_drift["modes"]:
+    if entry["mode_id"] == package["learner_mode_id"]:
+      entry["learner_consumer"] = False
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="mode entry drifted"):
+    learner_evidence.validate_learner_report(flag_drift, REPO_ROOT, require_production=True)
+
+  missing_row = deepcopy(report)
+  missing_row["rows"] = [
+    row
+    for row in missing_row["rows"]
+    if not (row["mode_id"] == package["learner_mode_id"] and row["world_count"] == 1)
+  ]
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="world matrix"):
+    learner_evidence.validate_learner_report(missing_row, REPO_ROOT, require_production=True)
+
+  # A frozen four-mode report is not a learner report; the declared-generation
+  # path must refuse it rather than quietly accept the missing extension.
+  frozen = json.loads(
+    (
+      REPO_ROOT
+      / "tests/fixtures/runtime_profiles/cuda_resident_program_2/"
+        "cuda_resident_cp8_matrix_evidence_20260812/cuda-production-01.json"
+    ).read_text(encoding="utf-8")
+  )
+  with pytest.raises(learner_evidence.LearnerEvidenceError, match="appended mode"):
+    learner_evidence.validate_learner_report(frozen, REPO_ROOT, require_production=True)
+
+
+def test_cp6_forward_probe_runs_self_declare_the_learner_generation() -> None:
+  """Future learner-flagged probe runs must never emit the frozen v1 id with
+  a fifth mode again: the probe selects the contract-owned v2 schema id when
+  the flag is set, and the contract owns both identities the Python side
+  parses."""
+  contract = _text(CONTRACT)
+  probe = _text(MATRIX_PROBE)
+  assert 'kLearnerProbeSchemaV2 =\n    "cuda_resident.cp6.production_matrix_probe.v2"' in contract
+  assert "args.learner_consumer_mode" in probe
+  assert "kLearnerProbeSchemaV2" in probe
+  assert '"cuda_resident.cp6.production_matrix_probe.v2"' not in probe
+  identities = learner_evidence.contract_identities(REPO_ROOT)
+  assert identities["mode_id"] == "no_export_learner_consumer"
+  assert identities["forward_probe_schema"] == "cuda_resident.cp6.production_matrix_probe.v2"

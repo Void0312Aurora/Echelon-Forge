@@ -324,7 +324,11 @@ def validate_report(report: dict[str, Any]) -> None:
         report["interpretation"], INTERPRETATION_KEYS, "counter interpretation"
     )
     _require(all(value is True for value in interpretation.values()), "interpretation weakened")
-    attempt = _STRICT.object(report["attempt"], ATTEMPT_KEYS, "counter attempt")
+    # Counter artifacts must record elevation. The frozen v1/v2 prose-only gap
+    # is waived by cp9.scoped_promotion...20260813; later generations embed it.
+    requires_elevation_record = generation >= 3
+    attempt_keys = ATTEMPT_KEYS | ({"elevation"} if requires_elevation_record else set())
+    attempt = _STRICT.object(report["attempt"], attempt_keys, "counter attempt")
     status = attempt["status"]
     _require(
         type(status) is str and status in {"available", "external_blocked", "collection_failed"},
@@ -354,6 +358,20 @@ def validate_report(report: dict[str, Any]) -> None:
             _require(attempt[field] is None, f"available attempt must clear {field}")
         _STRICT.exact_list(error_codes, (), "available log errors")
         _require(inputs["ncu_report_sha256"] is not None, "available report hash is missing")
+        if requires_elevation_record:
+            elevation = _STRICT.object(
+                attempt["elevation"],
+                {"elevated", "mechanism", "recorded_utc"},
+                "attempt elevation record",
+            )
+            _STRICT.boolean(elevation["elevated"], "attempt elevation flag", True)
+            _require(
+                type(elevation["mechanism"]) is str
+                and bool(elevation["mechanism"])
+                and type(elevation["recorded_utc"]) is str
+                and elevation["recorded_utc"].endswith("Z"),
+                "attempt elevation provenance is invalid",
+            )
     elif status == "external_blocked":
         _require(exit_code != 0, "blocked evidence cannot have exit code zero")
         _require(report_created is False, "blocked evidence cannot claim a report")
