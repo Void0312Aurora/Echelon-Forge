@@ -1,6 +1,6 @@
 # Improvement Backlog (Air Combat Focus)
 
-Language: English canonical; [Chinese companion](improvement_backlog.zh.md).
+Language: English canonical; Chinese companion not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

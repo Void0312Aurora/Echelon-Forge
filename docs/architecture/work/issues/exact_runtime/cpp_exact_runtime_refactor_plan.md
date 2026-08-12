@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `cpp_exact_runtime_refactor_plan.md`
-- Chinese companion: [cpp_exact_runtime_refactor_plan.zh.md](cpp_exact_runtime_refactor_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
@@ -16,7 +16,7 @@ Navigation:
 
 - [Architecture Documentation](../../../README.md)
 - [system_layering_and_engine_encapsulation_plan.md](../system_layering_and_engine_encapsulation_plan.md)
-- [architecture_and_performance_research_followup.zh.md](../architecture_and_performance_research_followup.zh.md)
+- [architecture_and_performance_research_followup.md](../architecture_and_performance_research_followup.md)
 
 Status: draft issue. The document records a 2026-04-03 proposal and a
 2026-07-21 I43 landed-fact census; neither snapshot supplies current execution
@@ -58,7 +58,7 @@ Relevant references:
 - gpu_exact_world_step_rearchitecture_plan.md (`git show 70c07a77:docs/plan/archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md`)
 - [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
 - [system_layering_and_engine_encapsulation_plan.md](../system_layering_and_engine_encapsulation_plan.md)
-- [architecture_and_performance_research_followup.zh.md](../architecture_and_performance_research_followup.zh.md)
+- [architecture_and_performance_research_followup.md](../architecture_and_performance_research_followup.md)
 - [simulation_kernel.cpp](../../../../../src/core/engine/simulation_kernel.cpp)
 - [world_batch_runtime.cpp](../../../../../src/core/engine/world_batch_runtime.cpp)
 - [gym_envs/scenario_loader/core.py](../../../../../gym_envs/scenario_loader/core.py)

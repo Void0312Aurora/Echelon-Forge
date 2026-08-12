@@ -112,9 +112,9 @@ MLF-5 热力图复核中：
 5. **修正近炸投影**：贴近外壳的非直接近炸不应出现无部件受损的硬断崖，除非有明确遮挡/方向原因和诊断字段。
 6. **更新可视化**：热力图应同时显示坐标点、表面距离、是否直接命中、候选部件数和受影响部件数。
 
-工具设计入口：[命中盒几何审阅工具设计](geometry_visual_review_design_20260611.zh.md)。该设计建议先用 GLB 生成外形审阅包和三视图叠加图，再由人工确认外形区域、部件盒和测试点是否合理。
+工具设计入口：[命中盒几何审阅工具设计](geometry_visual_review_design_20260611.md)。该设计建议先用 GLB 生成外形审阅包和三视图叠加图，再由人工确认外形区域、部件盒和测试点是否合理。
 
-Sketchfab 替代候选入口：[Sketchfab F-16 替代模型短名单](sketchfab_f16_replacement_shortlist_20260611.zh.md)。主线几何候选应从 CC BY 4.0 或更宽松许可的 Sketchfab 模型重新进入，不再从 FlightGear GPL v2 资产派生。
+Sketchfab 替代候选入口：[Sketchfab F-16 替代模型短名单](sketchfab_f16_replacement_shortlist_20260611.md)。主线几何候选应从 CC BY 4.0 或更宽松许可的 Sketchfab 模型重新进入，不再从 FlightGear GPL v2 资产派生。
 
 第一轮主线子项目：[A2 目标外形与部件几何建模](../../../reviews/f16c_target_geometry_20260614/README.zh.md)。该子项目已按 geometry-only 验收门闭合；后续 runtime 默认路径替换、训练诊断或其他机型复用必须另行验收。
 

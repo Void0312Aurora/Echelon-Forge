@@ -5,8 +5,7 @@ DCR-E-X1, DCR-E-P1, DCR-E-X2, DCR-E-P2, and DCR-E-R1 returned. DCR-E
 remains partial because the fixed-fire bridge has zero DCR totals. `DCR-E-P3`
 is the next recommended implementation packet.
 
-Chinese companion:
-[damage_consequence_reward_surface_dispatch_queue_20260609.zh.md](damage_consequence_reward_surface_dispatch_queue_20260609.zh.md)
+Chinese companion: not maintained (English-only work surface).
 
 Parent task cluster:
 [damage_consequence_reward_surface_task_clusters_20260609.md](damage_consequence_reward_surface_task_clusters_20260609.md)

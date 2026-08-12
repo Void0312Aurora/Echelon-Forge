@@ -320,7 +320,7 @@ cmo_python -m pytest -q \
 ## 规划与开放问题
 
 尚未提升的计划和未解决缺口现在归入各自内容 owner。HMoE 设计方向位于
-[docs/learning/work/issues/hierarchical_moe_execution_policy.zh.md](docs/learning/work/issues/hierarchical_moe_execution_policy.zh.md)，
+[docs/learning/work/issues/hierarchical_moe_execution_policy.md](docs/learning/work/issues/hierarchical_moe_execution_policy.md)，
 其余路由从[文档索引](docs/README.zh.md)进入。
 
 ## 许可

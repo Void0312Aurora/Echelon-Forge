@@ -33,7 +33,7 @@ Last verified: `2026-08-08`
 
 | 文档 | 说明 |
 |------|------|
-| [可视化技术栈演进](visualization/work/issues/viz_stack_evolution.zh.md) | 维护中的北极星计划；不是实施权威 |
+| [可视化技术栈演进](visualization/work/issues/viz_stack_evolution.md) | 维护中的北极星计划；不是实施权威 |
 
 ### 已验收可视化评审
 

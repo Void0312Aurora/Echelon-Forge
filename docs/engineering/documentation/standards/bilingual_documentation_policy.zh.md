@@ -9,9 +9,10 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-08`
+Last verified: `2026-08-12`
 
-状态：`2026-08-08`，当前维护中文档语言布局的权威规则。
+状态：`2026-08-12`，当前维护中文档语言布局（含英文单语 work/evidence 面）的
+权威规则。
 
 本文档定义仓库如何拆分英文与中文文档，使主线文档保持可读、可批处理翻译、可审计。
 
@@ -35,8 +36,12 @@ Last verified: `2026-08-08`
 
 - `docs/engineering/documentation/README.md`
 - `docs/engineering/documentation/README.zh.md`
-- `docs/systems/physics/work/issues/physics_engine_roadmap.md`
-- `docs/systems/physics/work/issues/physics_engine_roadmap.zh.md`
+- `docs/domains/air/standards/pilot_action_contract.md`
+- `docs/domains/air/standards/pilot_action_contract.zh.md`
+
+Tier B work 文档（如
+`docs/systems/physics/work/issues/physics_engine_roadmap.md`）只维护英文主文，
+不再保留 `.zh.md` 镜像。
 
 ## 权威规则
 
@@ -75,11 +80,24 @@ Tier A：严格双语维护面
   入口，包括 architecture、domain、systems、learning、operations 与
   engineering-testing 路由
 
-Tier B：英文主文，中文辅文可选或延后
+Tier A 的成员资格不会随 owner 前缀延伸进其 `work/` 子树：路径中含 `work`
+目录组件（例如 `docs/operations/visualization/work/` 或
+`docs/domains/joint/work/`）的文档一律属于 Tier B，即使其外层 owner 面属于
+Tier A。
+
+Tier B：英文单语 work/evidence 面
 
 - `docs/*/work/issues/` 下归属于 owner 的草拟计划和开放问题
-- 仍然当前有效但高频变更的 owner-local active work、详细计划、checkpoint 与
-  analysis 文档
+- `docs/*/work/active/` 下仍然当前有效但高频变更的 owner-local active work、
+  详细计划、checkpoint、evidence 记录与 analysis 文档
+- Tier B 文档只维护英文主文，不保留 `.zh.md` 镜像；`2026-08-12` 的 work 面
+  双语收缩已移除既有 work 层镜像
+- 仅当 owner 把某文档明确提升进入 Tier A 严格双语面（并登记配对）时才增设
+  中文辅文
+- 既有 work README 页可保留 `README.zh.md` 导航辅文；中文导航页直接链接英文
+  work 文档是预期稳态
+- 遗留的仅中文 work 文档（缺英文主文的 `.zh.md`，或中文内容仍是超集的文档）
+  在英文主文补齐前保留中文文件，不得仅为满足本层级而删除
 
 Tier C：历史、归档、临时稿与本地保留面
 
@@ -89,7 +107,8 @@ Tier C：历史、归档、临时稿与本地保留面
   `archive` 组件
 - `docs/**/temp/` 和 `docs/temp/` 下的临时稿、草稿和本地分析记录
 
-Tier A 需要双语配对。Tier B 可以先维护英文主文。Tier C 默认不纳入持续维护判定。
+Tier A 需要双语配对。Tier B 除明确提升外不维护中文辅文。Tier C 默认不纳入
+持续维护判定。
 
 ## 写作规则
 
@@ -151,12 +170,15 @@ Language:
 
 ## 翻译工作流
 
-对于新文档：
+对于新的 Tier A 维护文档：
 
 1. 先写英文主文 `.md`。
 2. 再生成或撰写 `name.zh.md` 作为中文辅文。
 3. 审校术语、链接和代码引用。
 4. 当该文档成为真实入口时，再把它加入最近的 README 导航。
+
+对于新的 Tier B work 文档，只写英文主文 `.md`；除非该文档被提升到 Tier A，
+不要创建 `.zh.md` 镜像。
 
 对于现有仅中文文档：
 
@@ -199,7 +221,8 @@ Language:
 
 - Tier A 入口 README 优先链接英文主文
 - 该切片下 Tier A 权威文档已配齐中文辅文
-- Tier B 文档即使中文延后，也已明确采用英文主文维护
+- Tier B 文档只保留英文主文；例外仅限明确提升的配对与等待补齐英文主文的
+  遗留中文来源
 - 维护中的英文主文不再有大段中英混排
 - 机器翻译草稿已审校或被明确标记
 - Tier A 配对文档变更后，双语簇注册表已同步更新

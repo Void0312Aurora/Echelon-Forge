@@ -2,7 +2,7 @@
 
 Status: `2026-06-11` replacement shortlist for replacing the FlightGear GPL v2 F-16 asset as the geometry-review candidate; same-day non-Sketchfab source research added.
 
-Chinese main text: [sketchfab_f16_replacement_shortlist_20260611.zh.md](sketchfab_f16_replacement_shortlist_20260611.zh.md).
+Chinese companion: not maintained (English-only work surface); this English page is canonical.
 
 ## Conclusion
 

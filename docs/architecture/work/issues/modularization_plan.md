@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `modularization_plan.md`
-- Chinese companion: [modularization_plan.zh.md](modularization_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

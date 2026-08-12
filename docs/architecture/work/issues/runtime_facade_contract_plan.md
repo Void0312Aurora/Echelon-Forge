@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `runtime_facade_contract_plan.md`
-- Chinese companion: [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
@@ -15,8 +15,8 @@ must be re-censused before any portion is promoted into an active task.
 Document Navigation:
 
 - [Architecture Documentation](../../README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+- [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+- [architecture_and_performance_research_followup.md](architecture_and_performance_research_followup.md)
 - runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 - runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 
@@ -33,8 +33,8 @@ This document proposes a `runtime facade` contract direction intended to isolate
 
 Related Documents:
 
-- [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+- [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+- [architecture_and_performance_research_followup.md](architecture_and_performance_research_followup.md)
 - [cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 

@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `engagement_termination.md`
-- Chinese companion: [engagement_termination.zh.md](engagement_termination.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

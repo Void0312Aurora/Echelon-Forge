@@ -162,7 +162,6 @@ def test_air_ground_and_service_profile_standards_are_owner_local() -> None:
     "docs/domains/air/standards/pilot_reporting_contract.md",
     "docs/domains/air/standards/pilot_reporting_contract.zh.md",
     "docs/domains/air/work/issues/kill_chain_expectation_envelope.md",
-    "docs/domains/air/work/issues/kill_chain_expectation_envelope.zh.md",
     "docs/domains/ground/README.md",
     "docs/domains/ground/README.zh.md",
     "docs/domains/ground/standards/minimal_task_structure.md",
@@ -195,7 +194,6 @@ def test_naval_model_and_modularization_sources_are_owner_local() -> None:
 
   for required in (
     "docs/architecture/work/issues/modularization_plan.md",
-    "docs/architecture/work/issues/modularization_plan.zh.md",
     "docs/domains/naval/README.md",
     "docs/domains/naval/README.zh.md",
     "docs/domains/naval/reference/ship_unit_references.md",
