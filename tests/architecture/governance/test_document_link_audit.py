@@ -9,7 +9,10 @@ from pathlib import Path
 import pytest
 
 from tools.maintenance import document_link_audit as audit
+from tools.maintenance import document_scope
 from tools.maintenance import translate_docs_batch
+
+pytestmark = pytest.mark.governance_audit
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -233,14 +236,87 @@ def test_archive_sources_are_excluded_but_maintained_archive_targets_are_validat
 def test_full_tree_adds_non_strict_docs_without_adding_archive_sources(tmp_path: Path) -> None:
   _write(tmp_path / "README.md")
   _write(tmp_path / "docs/README.md")
-  _write(tmp_path / "docs/project/work/issues/note.md", "[missing](missing.md)\n")
+  _write(tmp_path / "docs/project/notes/draft.md", "[missing](missing.md)\n")
   _write(tmp_path / "docs/archive/old.md", "[missing](missing.md)\n")
 
   assert audit.audit_repository(tmp_path).issues == []
   full = audit.audit_repository(tmp_path, full_tree=True)
   assert [(issue.source, issue.code) for issue in full.issues] == [
-    ("docs/project/work/issues/note.md", "missing-target")
+    ("docs/project/notes/draft.md", "missing-target")
   ]
+
+
+def test_default_scope_link_audits_maintained_english_work_documents(tmp_path: Path) -> None:
+  _write(tmp_path / "README.md")
+  _write(tmp_path / "docs/README.md")
+  _write(
+    tmp_path / "docs/systems/effects/work/issues/gap/README.md",
+    "[missing](missing.md)\n",
+  )
+  _write(
+    tmp_path / "docs/systems/effects/work/issues/gap/README.zh.md",
+    "[也缺失](missing-zh.md)\n",
+  )
+  _write(tmp_path / "docs/learning/work/archive/old.md", "[missing](missing.md)\n")
+
+  result = audit.audit_repository(tmp_path)
+
+  assert [(issue.source, issue.code) for issue in result.issues] == [
+    ("docs/systems/effects/work/issues/gap/README.md", "missing-target")
+  ]
+  selected = {
+    path.relative_to(tmp_path).as_posix()
+    for path in audit.select_documents(tmp_path)
+  }
+  assert "docs/systems/effects/work/issues/gap/README.md" in selected
+  assert "docs/systems/effects/work/issues/gap/README.zh.md" not in selected
+  assert "docs/learning/work/archive/old.md" not in selected
+
+
+def test_promoted_work_pair_reenters_the_strict_bilingual_surface(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+  docs_root = tmp_path / "docs"
+  promoted_en = docs_root / "learning/work/issues/temporal_policy_roadmap.md"
+  promoted_zh = docs_root / "learning/work/issues/temporal_policy_roadmap.zh.md"
+  sibling = docs_root / "learning/work/issues/rl_selfplay.md"
+  _write(promoted_en, "# Promoted Plan\n")
+  _write(promoted_zh, "# 已提升计划\n")
+  _write(sibling, "# English-only Plan\n")
+
+  assert not translate_docs_batch.is_strict_bilingual_doc(promoted_en, docs_root)
+
+  monkeypatch.setattr(
+    document_scope,
+    "PROMOTED_WORK_DOCUMENTS",
+    frozenset(
+      {
+        "learning/work/issues/temporal_policy_roadmap.md",
+        "learning/work/issues/temporal_policy_roadmap.zh.md",
+      }
+    ),
+  )
+
+  assert translate_docs_batch.is_strict_bilingual_doc(promoted_en, docs_root)
+  assert translate_docs_batch.is_strict_bilingual_doc(promoted_zh, docs_root)
+  assert not translate_docs_batch.is_strict_bilingual_doc(sibling, docs_root)
+
+  records = translate_docs_batch.build_cluster_records(
+    docs_root,
+    include_local_only=False,
+    strict_bilingual_only=True,
+  )
+  pair_ids = {record["pair_id"] for record in records}
+  assert "learning/work/issues/temporal_policy_roadmap" in pair_ids
+  assert "learning/work/issues/rl_selfplay" not in pair_ids
+
+  merged = translate_docs_batch.merge_selected_cluster_records(
+    {"pairs": []},
+    records,
+    ["learning/work/issues/temporal_policy_roadmap"],
+  )
+  refreshed = {entry["pair_id"] for entry in merged["pairs"]}
+  assert refreshed == {"learning/work/issues/temporal_policy_roadmap"}
 
 
 def test_json_cli_is_strict_and_machine_readable(tmp_path: Path) -> None:

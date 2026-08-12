@@ -93,7 +93,7 @@ Last verified: `2026-08-08`
 - [飞行员操作空间标准](../../../domains/air/standards/pilot_action_contract.zh.md)
 - [空中任务命令标准](../../../domains/air/standards/mission_command_and_tasking_contract.zh.md)
 - [飞行员汇报标准](../../../domains/air/standards/pilot_reporting_contract.zh.md)
-- [空空杀伤链期望包络](../../../domains/air/work/issues/kill_chain_expectation_envelope.zh.md)
+- [空空杀伤链期望包络](../../../domains/air/work/issues/kill_chain_expectation_envelope.md)
   - active planning supplement，不是当前 runtime contract
 
 它们负责：
@@ -151,7 +151,7 @@ Army profile 解释，`docs/domains/ground/` 负责维护中的 ground 特化。
 以下 draft 记录尚未解决的 architecture residual；它不是当前 runtime contract，也不
 授权实施：
 
-- [模块化规划](../../../architecture/work/issues/modularization_plan.zh.md)
+- [模块化规划](../../../architecture/work/issues/modularization_plan.md)
 
 它记录当前 domain roots、已落地 extension interfaces 和剩余依赖边界问题。它不能
 被当作每个拟议模块边界或 domain runtime owner 已实现、已验收的证据。

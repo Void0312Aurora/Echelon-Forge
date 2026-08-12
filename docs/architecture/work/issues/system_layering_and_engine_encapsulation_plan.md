@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `system_layering_and_engine_encapsulation_plan.md`
-- Chinese companion: [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
@@ -17,13 +17,13 @@ Navigation:
 - [Architecture Documentation](../../README.md)
 
 中文版：
-[system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
+[system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
 
 Further research:
-[architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+[architecture_and_performance_research_followup.md](architecture_and_performance_research_followup.md)
 
 Facade contract:
-[runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+[runtime_facade_contract_plan.md](runtime_facade_contract_plan.md)
 
 Frozen execution record:
 runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)

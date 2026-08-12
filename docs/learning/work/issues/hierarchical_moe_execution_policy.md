@@ -1,6 +1,6 @@
 # Hierarchical MoE Execution Policy
 
-Language: English canonical; [Chinese companion](hierarchical_moe_execution_policy.zh.md).
+Language: English canonical; Chinese companion not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `maintained`

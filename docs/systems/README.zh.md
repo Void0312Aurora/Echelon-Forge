@@ -17,12 +17,12 @@ weapons、effects/damage 文档，避免共享机制被重复塞入 air、naval�
 
 - Environment owner：[环境系统](environment/README.zh.md)，包括 G0 与 Arnis
   验收边界。
-- Command/tasking issues：[C2 通信](command-tasking/work/issues/c2_communication.zh.md)与[操作层](command-tasking/work/issues/operation_layer.zh.md)。
+- Command/tasking issues：[C2 通信](command-tasking/work/issues/c2_communication.md)与[操作层](command-tasking/work/issues/operation_layer.md)。
 - Command/tasking reference：[agency authority 清单](command-tasking/reference/agency_authority_census_20260721.zh.md)与[authority representation 裁决](command-tasking/reference/t9_authority_representation_adjudication_20260726.zh.md)。
-- Physics issues：[物理引擎路线图](physics/work/issues/physics_engine_roadmap.zh.md)。
-- Sensing issues：[传感器与态势计划](sensing/work/issues/sensor_situation.zh.md)。
-- Weapons issues：[交战路线图](weapons/work/issues/weapons_engagement.zh.md)、[实现笔记](weapons/work/issues/weapons_engagement_impl.zh.md)和[终止逻辑](weapons/work/issues/engagement_termination.zh.md)；保留 guidance 证据位于[制导机制评审](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.zh.md)。
-- Effects issues：[毁伤模型校准残差](effects/work/issues/damage_model_calibration_residuals.zh.md)、[毁伤/控制权威耦合](effects/work/issues/damage_control_authority_coupling_gap/README.zh.md)与[杀伤/几何保真度](effects/work/issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
+- Physics issues：[物理引擎路线图](physics/work/issues/physics_engine_roadmap.md)。
+- Sensing issues：[传感器与态势计划](sensing/work/issues/sensor_situation.md)。
+- Weapons issues：[交战路线图](weapons/work/issues/weapons_engagement.md)、[实现笔记](weapons/work/issues/weapons_engagement_impl.md)和[终止逻辑](weapons/work/issues/engagement_termination.md)；保留 guidance 证据位于[制导机制评审](weapons/reviews/kill_chain_guidance_mechanism_20260715/README.zh.md)。
+- Effects issues：[毁伤模型校准残差](effects/work/issues/damage_model_calibration_residuals.md)、[毁伤/控制权威耦合](effects/work/issues/damage_control_authority_coupling_gap/README.zh.md)与[杀伤/几何保真度](effects/work/issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
 - Effects reviews：[F-16C 目标几何](effects/reviews/f16c_target_geometry_20260614/README.zh.md)、[开火时机窗口诊断](effects/reviews/fire_timing_window_position_effect_20260615/README.zh.md)与[kill-chain 机制解耦](effects/reviews/kill_chain_mechanism_decoupling_20260621/README.zh.md)。
 
 `work/issues` 页面是规划输入，不是实施权威。带日期评审保留原证据边界，不能视为

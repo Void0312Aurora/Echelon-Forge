@@ -9,7 +9,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-08`
+Last verified: `2026-08-12`
 
 `docs/` is organized by content ownership. Document kind is expressed inside
 the owning area; archive is a lifecycle endpoint rather than a competing
@@ -72,8 +72,12 @@ separately authorized historical migration.
 
 ## Language And Rights
 
-Stable entry points, standards, references, and how-to material use English
-canonical pages with Chinese companions. High-churn work/evidence may remain
-English-only unless promoted. Repository documentation follows Apache-2.0
-unless a retained third-party source states otherwise; see
+Stable entry points, navigation READMEs, standards, references, and how-to
+material use English canonical pages with Chinese companions. Work and
+evidence surfaces (`docs/**/work/**`) are maintained in English only; a Chinese
+companion is added only when a document is explicitly promoted into the strict
+bilingual surface. Chinese navigation pages may therefore link directly to
+English work documents. Existing archives keep the language layout they were
+frozen with. Repository documentation follows Apache-2.0 unless a retained
+third-party source states otherwise; see
 [LICENSE](../LICENSE) and [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md).

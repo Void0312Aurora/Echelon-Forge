@@ -3,12 +3,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, read_json
 from tests.architecture.damage_model.helpers import run_maintenance_cli
 
 ensure_repo_root_on_sys_path()
 
 from tools.maintenance.release_governance import package_provenance_identity as package_gate  # noqa: E402
+
+pytestmark = pytest.mark.governance_audit
 
 
 def test_package_provenance_identity_gate_is_blocked() -> None:

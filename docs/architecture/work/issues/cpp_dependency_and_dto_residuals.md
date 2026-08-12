@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `cpp_dependency_and_dto_residuals.md`
-- Chinese companion: [cpp_dependency_and_dto_residuals.zh.md](cpp_dependency_and_dto_residuals.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

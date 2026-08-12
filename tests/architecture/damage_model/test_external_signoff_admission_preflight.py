@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 from tests.architecture.damage_model.helpers import (
   HEX64,
@@ -20,6 +22,8 @@ from tools.maintenance.external_signoff_evidence import ( # noqa: E402
   intake_contract as contract,
 )
 from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
+
+pytestmark = pytest.mark.governance_audit
 
 
 def _valid_external_packet(request_sha256: str) -> dict[str, Any]:

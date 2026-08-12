@@ -17,6 +17,10 @@ DEFAULT_EXCLUDE_SUBSTRINGS = (
   "docs/plan/architecture/review/",
 )
 DEFAULT_EXCLUDE_DIR_NAMES = {"Archive", "archive"}
+# Docs-root-relative posix paths of work-layer files explicitly promoted into
+# the strict bilingual surface. Promotion registers both the English canonical
+# file and its .zh.md companion here; see the bilingual documentation policy.
+PROMOTED_WORK_DOCUMENTS: frozenset[str] = frozenset()
 STRICT_OWNER_DOCUMENTS = {
   "architecture/README.md",
   "architecture/README.zh.md",
@@ -63,6 +67,12 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
   relative = path.relative_to(root).as_posix()
   if relative in {"README.md", "README.zh.md"}:
     return True
+  # Work surfaces are Tier B (English canonical, no bilingual SLA) and stay
+  # outside the strict maintained bilingual surface even when they sit under
+  # an owner prefix that is otherwise strict, such as operations/. A pair that
+  # is explicitly promoted re-enters through PROMOTED_WORK_DOCUMENTS.
+  if "work" in relative.split("/")[:-1]:
+    return relative in PROMOTED_WORK_DOCUMENTS
   if (
     relative.startswith("engineering/automation/rules/")
     or relative.startswith("engineering/automation/prompts/")
@@ -94,6 +104,15 @@ def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
   }:
     return True
   return False
+
+
+def is_english_work_doc(path: Path, root: Path) -> bool:
+  """English canonical work-layer documents keep default link auditing even
+  though they sit outside the strict bilingual surface."""
+  if path.name.endswith(".zh.md") or path.name.endswith(".en.md"):
+    return False
+  relative = path.relative_to(root).as_posix()
+  return "work" in relative.split("/")[:-1]
 
 
 def filter_paths(

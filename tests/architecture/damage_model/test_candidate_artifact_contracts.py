@@ -29,6 +29,8 @@ from tools.maintenance.candidate_artifacts import ( # noqa: E402
   validation_scaffold as scaffold,
 )
 
+pytestmark = pytest.mark.governance_audit
+
 CandidateBundle = dict[str, Any]
 
 

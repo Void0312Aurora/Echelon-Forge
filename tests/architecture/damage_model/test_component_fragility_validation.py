@@ -18,6 +18,8 @@ from tools.maintenance.candidate_artifacts import ( # noqa: E402
   component_fragility_validation_prep as prep,
 )
 
+pytestmark = pytest.mark.governance_audit
+
 Artifact = dict[str, Any]
 
 

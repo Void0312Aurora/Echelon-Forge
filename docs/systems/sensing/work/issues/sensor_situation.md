@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `sensor_situation.md`
-- Chinese companion: [sensor_situation.zh.md](sensor_situation.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

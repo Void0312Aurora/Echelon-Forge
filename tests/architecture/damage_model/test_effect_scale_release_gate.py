@@ -16,6 +16,8 @@ from tools.maintenance.release_governance import (  # noqa: E402
   effect_scale_release_readiness,
 )
 
+pytestmark = pytest.mark.governance_audit
+
 
 @pytest.fixture(scope="module")
 def effect_scale_readiness_artifact() -> dict[str, Any]:

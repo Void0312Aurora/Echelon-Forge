@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `damage_model_calibration_residuals.md`
-- Chinese companion: [damage_model_calibration_residuals.zh.md](damage_model_calibration_residuals.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

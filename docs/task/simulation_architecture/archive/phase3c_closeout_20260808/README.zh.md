@@ -12,8 +12,8 @@
 架构权威：
 
 - [仿真系统架构设计](../../../../architecture/standards/simulation_system_architecture_design.zh.md)
-- [系统分层与引擎封装方案](../../../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
-- [架构与性能路线进一步调研](../../../../architecture/work/issues/architecture_and_performance_research_followup.zh.md)
+- [系统分层与引擎封装方案](../../../../architecture/work/issues/system_layering_and_engine_encapsulation_plan.md)
+- [架构与性能路线进一步调研](../../../../architecture/work/issues/architecture_and_performance_research_followup.md)
 
 ## 当前定位
 

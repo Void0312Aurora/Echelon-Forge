@@ -16,8 +16,8 @@ Verification boundary: 已复核所有者路径、生命周期、权威关系与
 
 - 架构索引：[架构文档](../README.zh.md)
 - 英文主文：[simulation_system_architecture_design.md](simulation_system_architecture_design.md)
-- 既有分层方案：[system_layering_and_engine_encapsulation_plan.zh.md](../work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
-- 性能路线调研：[architecture_and_performance_research_followup.zh.md](../work/issues/architecture_and_performance_research_followup.zh.md)
+- 既有分层方案：[system_layering_and_engine_encapsulation_plan.md](../work/issues/system_layering_and_engine_encapsulation_plan.md)
+- 性能路线调研：[architecture_and_performance_research_followup.md](../work/issues/architecture_and_performance_research_followup.md)
 - 任务执行入口：[../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md)
 
 状态：维护中的严格架构基线。实验面、阶段契约、内核不变式、表示策略与
@@ -555,11 +555,11 @@ Platform =
 
 当前权威通过 owner-local 文档路由；历史证据仅在仍有维护门禁消费时保留：
 
-- [system_layering_and_engine_encapsulation_plan.zh.md](../work/issues/system_layering_and_engine_encapsulation_plan.zh.md)
+- [system_layering_and_engine_encapsulation_plan.md](../work/issues/system_layering_and_engine_encapsulation_plan.md)
   仍作为分层动机和引擎封装背景。
-- [architecture_and_performance_research_followup.zh.md](../work/issues/architecture_and_performance_research_followup.zh.md)
+- [architecture_and_performance_research_followup.md](../work/issues/architecture_and_performance_research_followup.md)
   仍作为性能路线排序和后端取舍依据。
-- [../runtime_facade/runtime_facade_contract_plan.zh.md](../work/issues/runtime_facade_contract_plan.zh.md)
+- [../runtime_facade/runtime_facade_contract_plan.md](../work/issues/runtime_facade_contract_plan.md)
   仍作为 facade 契约输入。
 - [领域 owner 索引](../../domains/README.zh.md) 是 Air、Naval、Ground 与 Joint
   ownership 拆分的当前路由。

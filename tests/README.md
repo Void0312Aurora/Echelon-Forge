@@ -22,6 +22,8 @@
 - `architecture/`
   - Source/documentation guardrails and governance checks that intentionally
     stay separate from runtime behavior tests.
+  - Split into a default guard tier and an on-demand `governance_audit`
+    tier; see "Architecture Test Tiers" below.
   - One-level semantic subfolders keep guard ownership visible:
     `build_system/`, `causal_runtime/`, `command_tasking/`,
     `compatibility_quarantine/`, `damage_model/`, `governance/`, `ground/`,
@@ -61,7 +63,8 @@
   - Historical test assets retained for provenance only.
   - These files are not active pytest or JSON contract coverage until moved back into a maintained test surface and added to the relevant matrix or suite.
 - `suites/`
-  - Advisory suite governance metadata, including the draft test-system matrix and focused/local suite manifests.
+  - Advisory suite governance metadata plus the checked-in architecture tier
+    manifests (`architecture_guard_suite.json`, `governance_audit_suite.json`).
   - These files do not change CI wiring on their own.
 - `diagnostics/`
   - Temporary exploratory diagnostics only.
@@ -231,6 +234,62 @@ When promoting an architecture guard, add the file or node ID to
 hard failures, so moved architecture files must keep the manifest in lockstep.
 For node ID entries, the runner checks the base file path before handing the
 full node ID to pytest.
+
+### Architecture Test Tiers
+
+`tests/architecture/` hosts two kinds of gates with different failure
+audiences, split by a pytest marker so the default developer regression no
+longer pays for evidence auditing:
+
+- **Guard tier (default, unmarked).** Structural code properties an ordinary
+  code change can break: include direction, runtime-facade seams,
+  layer/domain boundaries, information-state truth-read bans, DTO/schema and
+  generated-artifact consistency, census/inventory ratchets, and the
+  fail-closed behavior of live gate tooling. These keep running in every
+  default pytest invocation.
+- **Governance audit tier (`governance_audit` marker).** Evidence and
+  process gates: evidence documents and retained manifests, admission /
+  signoff / provenance / release-closeout workflows, documentation health
+  (links, bilingual parity, information architecture, content pins), and
+  repository automation workflow pins. Each file carries a module-level
+  `pytestmark = pytest.mark.governance_audit`; the marker is registered in
+  `pyproject.toml`. Exception: three retained CUDA evidence modules are
+  line-count pinned by the frozen CR2 size policy, so
+  `tests/architecture/runtime_profiles/conftest.py` applies their marker at
+  collection time instead of editing the pinned files. (The counter/resource
+  evidence modules are also pinned but belong to the guard tier: their
+  substance is C++ contract/CMake topology and parser rejection paths.)
+
+Classification rule: a test whose subject is a structural property of the
+code (an ordinary code change can turn it red) belongs to the guard tier; a
+test that validates evidence documents, checked-in manifests, source /
+signoff / provenance records, or documentation health belongs to the audit
+tier. Borderline files default to the guard tier.
+
+Run the tiers directly with markers:
+
+```bash
+# developer regression (guard tier only)
+pytest -m "not governance_audit" tests/architecture
+
+# governance/evidence audit layer (on demand)
+pytest -m governance_audit tests/architecture
+```
+
+Or run the checked-in tier manifests through the suite runner:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/architecture_guard_suite.json
+cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/governance_audit_suite.json
+```
+
+Meta-tests in `tests/runners/test_pytest_suite_manifests.py` keep the two
+manifests duplicate-free, disjoint, exhaustive over `tests/architecture` test
+files, and in lockstep with a real `pytest --collect-only -m governance_audit`
+collection, so tier membership changes are deliberate manifest edits. The CI smoke suite lists explicit files and node IDs and is
+not affected by the marker split: promoted smoke entries keep gating CI even
+when their file belongs to the audit tier.
 
 The removed `UniversalEnv` raw-constructor surface is tracked by
 `tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`

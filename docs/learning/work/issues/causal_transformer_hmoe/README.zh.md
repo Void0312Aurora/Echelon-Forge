@@ -18,7 +18,7 @@ M2 对应路径 C，是正式、可扩展的目标路线：让 PPO/HMoE 本身�
 输入：
 
 - [M1 观测窗口 HMoE 验证](../../active/temporal_window_hmoe/README.zh.md)
-- [时间 HMoE 策略计划](../temporal_policy_roadmap.zh.md)
+- [时间 HMoE 策略计划](../temporal_policy_roadmap.md)
 
 ## 目的
 

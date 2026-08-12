@@ -2,7 +2,7 @@
 
 Status: `2026-06-11` proposed design for [README.md](README.md). This document designs the tool and data gates only; it does not replace runtime geometry.
 
-Chinese main text: [geometry_visual_review_design_20260611.zh.md](geometry_visual_review_design_20260611.zh.md).
+Chinese companion: not maintained (English-only work surface); this English page is canonical.
 
 ## Goal
 

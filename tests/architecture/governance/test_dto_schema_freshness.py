@@ -5,6 +5,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
+from tools.maintenance.dto_schema import generate
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GENERATOR = REPO_ROOT / "tools" / "maintenance" / "dto_schema" / "generate.py"
@@ -705,3 +709,119 @@ def test_dto_schema_generated_outputs_are_fresh_and_registered(
 
   restored_result = _run_generator("--check", "--repo-root", str(isolated_root))
   assert restored_result.returncode == 0
+
+  # The generated package directory is fully generator-owned: a *.py file no
+  # registered schema owns fails --check and is removed by --write.
+  rogue_rel = f"{_BUILDER_DIR}/rogue_orphan_builder.py"
+  rogue_path = isolated_root / rogue_rel
+  rogue_path.write_bytes(b"# rogue\n")
+
+  unexpected_result = _run_generator(
+    "--check", "--repo-root", str(isolated_root)
+  )
+  assert unexpected_result.returncode == 1
+  assert f"unexpected: {rogue_rel}" in unexpected_result.stdout
+
+  write_result = _run_generator("--write", "--repo-root", str(isolated_root))
+  assert write_result.returncode == 0
+  assert f"removed: {rogue_rel}" in write_result.stdout
+  assert not rogue_path.exists()
+
+  final_result = _run_generator("--check", "--repo-root", str(isolated_root))
+  assert final_result.returncode == 0
+
+
+def test_classify_generated_files_case_handling() -> None:
+  """Case-variant spellings of managed artifacts are never deletable orphans.
+
+  The classification is exercised with injected normalizers so the expected
+  behavior of both filesystem regimes is pinned on every platform, instead
+  of depending on the case sensitivity of the checkout's own filesystem.
+  """
+  owned = {
+    f"{_BUILDER_DIR}/alpha_builder.py",
+    f"{_BUILDER_DIR}/__init__.py",
+  }
+  exact = f"{_BUILDER_DIR}/alpha_builder.py"
+  variant = f"{_BUILDER_DIR}/Alpha_Builder.py"
+  rogue = f"{_BUILDER_DIR}/rogue_builder.py"
+
+  # Exact spellings are owned regardless of normalizer.
+  for normalize in (str.lower, str):
+    unexpected, mismatched = generate.classify_generated_files(
+      owned, [exact, f"{_BUILDER_DIR}/__init__.py"], normalize=normalize
+    )
+    assert unexpected == ()
+    assert mismatched == ()
+
+  # Case-insensitive regime (str.lower stands in for os.path.normcase on
+  # Windows): the variant folds onto the managed artifact, so it is a case
+  # mismatch and must not appear among deletable orphans.
+  unexpected, mismatched = generate.classify_generated_files(
+    owned, [variant, rogue], normalize=str.lower
+  )
+  assert unexpected == (rogue,)
+  assert mismatched == ((variant, exact),)
+
+  # Case-sensitive regime (identity normalizer): the variant is a genuinely
+  # distinct file, hence a plain orphan.
+  unexpected, mismatched = generate.classify_generated_files(
+    owned, [variant, rogue], normalize=str
+  )
+  assert unexpected == tuple(sorted([variant, rogue]))
+  assert mismatched == ()
+
+
+def test_check_and_write_fail_closed_on_case_mismatch(
+  tmp_path: Path,
+  monkeypatch: pytest.MonkeyPatch,
+  capsys: pytest.CaptureFixture[str],
+) -> None:
+  """An injected case mismatch makes --check fail and --write refuse deletion."""
+  actual = f"{_BUILDER_DIR}/Alpha_Builder.py"
+  registered = f"{_BUILDER_DIR}/alpha_builder.py"
+  monkeypatch.setattr(
+    generate,
+    "scan_generated_package",
+    lambda registrations, output_root: ((), ((actual, registered),)),
+  )
+
+  # Lay out the only registration-independent artifact so the mismatch is
+  # the sole failure source for --check.
+  init_path = tmp_path / EXPECTED_PACKAGE_INIT
+  init_path.parent.mkdir(parents=True, exist_ok=True)
+  init_path.write_bytes(generate.python_builder.render_package_init_bytes())
+
+  assert generate.check_outputs((), tmp_path) == 1
+  check_out = capsys.readouterr().out
+  assert f"case-mismatch: {actual}" in check_out
+  assert registered in check_out
+
+  # write_outputs must refuse deletion (nothing to unlink here: attempting
+  # one would raise FileNotFoundError) and exit nonzero.
+  assert generate.write_outputs((), tmp_path) == 1
+  write_out = capsys.readouterr().out
+  assert f"case mismatch (not removed): {actual}" in write_out
+  assert "refusing to delete" in write_out
+
+
+def test_registry_and_schema_directory_must_agree(
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  """Every command refuses to run when schemas/ and SCHEMA_MODULES diverge."""
+  unregistered, missing = generate.registry_inconsistencies(
+    generate.SCHEMA_MODULES, generate.SCHEMAS_DIR
+  )
+  assert unregistered == ()
+  assert missing == ()
+
+  original = generate.SCHEMA_MODULES
+
+  monkeypatch.setattr(generate, "SCHEMA_MODULES", original[:-1])
+  with pytest.raises(ValueError, match="not in SCHEMA_MODULES"):
+    generate.load_schemas()
+
+  phantom = f"{generate.SCHEMAS_PACKAGE}.phantom_missing_fields"
+  monkeypatch.setattr(generate, "SCHEMA_MODULES", original + (phantom,))
+  with pytest.raises(ValueError, match="missing on disk"):
+    generate.load_schemas()

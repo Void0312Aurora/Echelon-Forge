@@ -4,6 +4,10 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.governance_audit
+
 
 ROOT = Path(__file__).resolve().parents[3]
 DECISION_PATH = (

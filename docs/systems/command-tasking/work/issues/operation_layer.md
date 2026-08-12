@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `operation_layer.md`
-- Chinese companion: [operation_layer.zh.md](operation_layer.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

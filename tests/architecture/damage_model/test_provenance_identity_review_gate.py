@@ -12,6 +12,8 @@ ensure_repo_root_on_sys_path()
 
 from tools.maintenance.release_governance import provenance_identity_review as review_gate  # noqa: E402
 
+pytestmark = pytest.mark.governance_audit
+
 
 @pytest.fixture(scope="module")
 def provenance_identity_review_artifact(

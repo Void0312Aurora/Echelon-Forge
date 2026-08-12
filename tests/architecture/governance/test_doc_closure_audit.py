@@ -6,12 +6,16 @@ import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance import wp_doc_closure_audit as audit
+
+pytestmark = pytest.mark.governance_audit
 
 
 def _write(path: Path, text: str) -> None:

@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-08`
+Last verified: `2026-08-12`
 
-Status: `2026-08-08` authoritative policy for classifying, maintaining,
+Status: `2026-08-12` authoritative policy for classifying, maintaining,
 reviewing, generating, and archiving repository documentation.
 
 ## Purpose
@@ -163,15 +163,17 @@ Chinese companions are mandatory for:
 
 - root and major directory navigation READMEs;
 - standards and governance authority;
-- stable plan authority;
 - maintained reference and operator how-to pages;
 - task/domain README pages promoted as current entry surfaces.
 
-High-churn dated tasks, reviews, evidence notes, and generated output may remain
-English-only unless the local README promotes them into the strict bilingual
-surface. A required pair must be updated in the same iteration. If the pair
-diverges, English remains canonical, but the iteration cannot claim bilingual
-closure until the companion is reconciled.
+Work and evidence surfaces (`work/active/`, `work/issues/`, and their evidence
+packages) are maintained in English only, including the plans they host; a
+Chinese companion exists there only when a document is explicitly promoted
+into the strict bilingual surface. High-churn dated tasks, reviews, evidence
+notes, and generated output follow the same English-only rule. A required pair
+must be updated in the same iteration. If the pair diverges, English remains
+canonical, but the iteration cannot claim bilingual closure until the
+companion is reconciled.
 
 Registry hashes must be refreshed only for pairs reconciled in the current
 review scope. A whole-registry rewrite is not evidence that unrelated legacy
