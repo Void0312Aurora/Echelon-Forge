@@ -5,7 +5,7 @@
 - 中文伴随本：`cuda_resident_cp8_rematrix_kickoff_20260812.zh.md`
 
 文档类型：`plan`
-生命周期：`draft`
+生命周期：`frozen——2026-08-12 冻结范围并落地`
 正本路径：`docs/plan/exact_runtime/cuda_resident_cp8_rematrix_kickoff_20260812.md`
 责任方：`exact-runtime / CUDA 常驻后端晋升工作线`
 最后核实：`2026-08-12`
@@ -89,3 +89,35 @@
 2. 测量（范围第 2 项）在「全部落地前置 + 机器安静」首次同时成立的窗口
    执行。
 3. CP-9 把通过校验的证据包与其余门禁证据一并消费。
+
+## 落地记录（2026-08-12）
+
+所有者当日再次确认开工，两个范围项同日落地。
+
+- **工具前置**以独立提交落地（`dca61047`，「矩阵证据链世代感知」）。范围
+  第 1 项留待实施时敲定的冻结决策按草案原样采纳：v2 保持跨 lane 对比形状、
+  把 CR2-6b 包作为哈希钉定的先验输入（且引用前必须先在 v1 下复验通过）、
+  丢弃 selection-policy 结果块、counter_status 反映采集时真相（G-D 已在
+  融合前的 v2 父级上以真实 achieved 计数器关闭；v4 静态父级尚无 achieved
+  捕获）。实施中另有一处诚实修正：gate 测试原本把冻结包的工具源码哈希对照
+  现行文件比对，工具一演进即破；现改为读取包落地 commit 的 blob，与计数器
+  链先例一致。
+- **测量**由门控驱动器执行：追踪文件不净或存在编译/构建进程即拒绝启动
+  （2026-08-12 的污染事故是该硬性要求的由来）。探针自落地 SHA 重建（CUDA
+  侧 `ninja: no work to do` 证实二进制已与源一致）；campaign 1 先 CPU 后
+  CUDA、campaign 2 先 CUDA 后 CPU，生产协议、全 world 矩阵，源 commit
+  `dca6104718cc5b9f2a54783bd82df698f464f091`，
+  `source_worktree_clean_at_capture: true` 为实测核验而非口头断言。
+- **证据包**：`cuda_resident_cp8_matrix_evidence_20260812.json`
+  （sha256/16 `f4cd59f5c7050ea0`），指向追踪的 campaign 目录（cpu-01
+  `e24fda7e8f4a55f3`、cuda-01 `0ab7e82b7d0ec340`、cuda-02
+  `e4d43dd1d9b84a5b`、cpu-02 `6a904dbadc9ce2df`、manifest
+  `edce90144c98efec`、现采 parity `94147762a0713259`，12/12 字段通过）。
+  经世代感知链端到端校验；架构门禁钉定包字节、复推导对比行并冻结实测结论。
+- **对 CR2-6b 的结论**（即对比目标）：CUDA lane 在全部 40 个 warmed-p50
+  单元改善（-1.8% 至 -62%，64/256 worlds 最强），rollout 每窗 p50 在 40 个
+  单元中改善 39 个（唯一逆行单元是 world-1 campaign-1 的尾部，campaign 2
+  反转）。方向恰好翻转一个公共单元：(4, host_export_no_device) 由 mixed
+  变为四项顺序对调指标全数 cuda_resident——自此所有 ≥4 的实测 world 数
+  均偏向常驻 lane，world 1 仍归 CPU 参考，与 CP-7a 冻结规则划出的边界
+  完全一致。本次重测不需要修订 CP-7a 路由规则。

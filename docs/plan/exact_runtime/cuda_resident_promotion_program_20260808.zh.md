@@ -120,7 +120,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | **已落地 2026-08-12。** 六个窗口提交 launch 融合为一个 `window_commit_body_kernel`（每捕获窗口 12→7 次 launch）；kernel 目录 v3 经 static_assert 折叠表取代 v2；导出状态摘要与冻结的 CR2-6b 捕获在两条 lane、两轮 campaign 上保持逐位一致；warmed end-to-end p50 在全部 20 个 CR2-6b 对比行上改善（0.63-0.99 倍）。见下文「CP-5 已落地」 |
 | CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | **已落地 2026-08-12。** `learner_equivalent_consumer_kernel` 读取 lease 张量每一个元素、施加契约拥有的逐字段仿射归一化、写出常驻设备的 world 主序 `[world, 15]` float 策略输入缓冲；以矩阵模式 `no_export_learner_consumer` 经显式探针旗标按生产协议测量；全归一化张量的 CPU 参照 parity 为 C++ oracle；导出摘要与 CP-7b 基线在两条 lane 上逐字节一致。见下文「CP-6 已落地」 |
 | CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | **已落地 2026-08-12，两半齐备。** CP-7a：`cp7.small_batch_selection_rule.v1` 把低于 4 的 world 数冻结为路由 CPU 参考的文档级策略（无运行时选择器；架构门禁强制零运行时消费者），实测依据是 world 1 上约 65.5 us 的单线程设备地板对 CPU 约 18-31 us 的整步耗时；交叉点数值列为 CP-8 复核项。CP-7b：stage_publish 与 window_commit 屏障成为各自阶段 kernel 的逐 world 尾声（每窗 launch、同步、状态回读、memset 各 5→3）；导出状态摘要与冻结 CR2-6b 在全部 30 行上保持逐位一致，warmed e2e p50 在 world 1 降 20-30%，其余行 campaign 1 降 8-21%、campaign 2 降 3-52%。见下文「CP-7b 已落地」 |
-| CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | 优化后证据可与 CR2-6b 比较 |
+| CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | **已落地 2026-08-12。** 矩阵证据链先行世代化（v1 钉点冻结、未知世代关死），随后门控捕获在落地 SHA 上跑完两轮顺序对调的生产 campaign，产出经校验的 v2 证据包 `cuda_resident_cp8_matrix_evidence_20260812.json`。对 CR2-6b：CUDA lane 全部 40 个 warmed-p50 单元改善（-1.8% 至 -62%），方向恰好翻转一个公共单元（(4, host_export_no_device) mixed → cuda_resident），world 1 仍归 CPU 参考——CP-7a 边界获得实测确认。见下文「CP-8 已落地」 |
 | CP-9 | 晋升决策：全部门禁加独立评审，或记录带确切缺失授权的 hold | 显式、有证据支撑的裁定 |
 
 CP-1、CP-2、CP-3 与其余项独立，可任意顺序落地。CP-4 是 CP-5 的前置。CP-8 跟随 CP-5
@@ -351,6 +351,51 @@ worlds 时就如此空闲，可以解释 world 1 为何以 7-36 倍落后于 CPU
 
 以上两点都是测量结果，尚不是已验证的优化。CP-5 在任何改动后必须重新测量；本节记录的是
 计数器所显示的事实，不是「更大的 grid 一定更快」的承诺。
+
+## CP-8 已落地：优化后矩阵已测量并成包（2026-08-12）
+
+开工文档的顺序成立：先工具，后门控测量。
+
+工具一半（`dca61047`）把矩阵证据链世代化，与计数器链同构：世代在 schema
+模块一次注册（身份、采集日期、先验输入清单、门禁与 counter_status 真相），
+校验按身份分发，未知世代关死，冻结的 CR2-6b 包在其 v1 钉点下继续逐字节
+通过。v2（CP-8）世代按开工清单重新拥有每一个钉点：自己的日期与迭代 id、
+不携带 selection-policy 结果块（路由权威在 CP-7a 冻结规则）、把 CR2-6b 包
+作为哈希钉定的先验输入且每次构建都先在 v1 下复验、counter_status 陈述采集
+时真相（G-D 已在融合前的 v2 父级上以真实 achieved 计数器关闭；
+`achieved_counters_predate_cp5_fusion: true`；v4 静态父级尚无 achieved
+捕获）。附带一处诚实修正：gate 测试改为对照包落地 commit 的 blob 校验工具
+源码哈希，不再对照现行文件，冻结包由此在工具链演进中保持不可变。
+
+测量一半由驱动器执行,门槛是**核验**而非口头断言:追踪工作树在 HEAD
+（`dca6104718cc5b9f2a54783bd82df698f464f091`）干净、无任何编译/构建进程、
+探针自落地 SHA 重建（CUDA 侧报告 `ninja: no work to do`）。campaign 1 先
+CPU 后 CUDA;campaign 2 先 CUDA 后 CPU;生产协议;全 world 矩阵;现采
+parity 对比 12/12 释出数值字段通过。证据包
+（`cuda_resident_cp8_matrix_evidence_20260812.json`,sha256/16
+`f4cd59f5c7050ea0`）经世代感知链端到端校验,架构门禁钉定包字节、从追踪
+报告复推导对比行、并冻结实测结论。
+
+重测对 CR2-6b（同一单机）说明了什么:
+
+- **CUDA lane warmed 端到端 p50:全部 40 个 world-模式单元改善**,
+  -1.8% 至 -62%,在 64 与 256 worlds 最强（普遍 -50% 以上）——CP-5 融合与
+  CP-7b 折叠在整窗上复合生效。
+- **rollout 每窗 p50:40 个单元中改善 39 个**;唯一逆行单元（world 1、
+  host_export、campaign 1、+38%）在 campaign 2 反转为 -31%——正是顺序对调
+  双 campaign 设计要暴露的 world-1 尾部。
+- **方向恰好翻转一个公共单元**:(4, host_export_no_device) 是 CR2-6b 唯一
+  的 mixed 单元,现在四项顺序对调指标全数 cuda_resident。所有 ≥4 的实测
+  world 数均偏向常驻 lane;world 1 在每项指标上仍归 CPU 参考。CP-7a 冻结
+  边界（常驻 lane 建议下限 4）获得实测确认,无需修订。
+- CPU 参考 lane 的波动在其不受控后台噪声之内,诚实标志
+  （`background_load_uncontrolled`、balanced 电源方案、无亲和性钉定、无
+  GPU 独占模式）原样保留。
+
+CP-9 面前的门禁证据至此齐备:G-A/G-B 调用面（CR2 时代,CP-0 复验）、G-D
+achieved 计数器（CP-4）、G-C learner 等价消费（CP-6）、G-F 小批量处置
+（CP-7a,今获实测确认）、优化后图的静态父级（v3/v4）,以及本包作为优化后
+对比。剩下的决策就是晋升裁定本身。
 
 ## CP-6 已落地：消费是 learner 等价的，不再是 smoke 探测（2026-08-12）
 

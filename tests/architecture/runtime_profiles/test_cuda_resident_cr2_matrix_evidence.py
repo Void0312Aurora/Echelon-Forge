@@ -18,6 +18,9 @@ EVIDENCE_DIR = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence
 MANIFEST = EVIDENCE_DIR / "manifest.json"
 EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cr2_matrix_evidence_20260804.json"
 PARITY = EVIDENCE_DIR / "parity-comparison.json"
+CP8_EVIDENCE_DIR = ROOT / "docs/plan/exact_runtime/cuda_resident_cp8_matrix_evidence_20260812"
+CP8_MANIFEST = CP8_EVIDENCE_DIR / "manifest.json"
+CP8_EVIDENCE = ROOT / "docs/plan/exact_runtime/cuda_resident_cp8_matrix_evidence_20260812.json"
 COLLECTOR = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence.py"
 SCHEMA = ROOT / "tools/diagnostics/cuda_resident_cr2_matrix_evidence_schema.py"
 
@@ -259,6 +262,89 @@ def test_v2_evidence_shape_rejects_a_selection_policy_block() -> None:
     evidence["schema_version"] = schema.EVIDENCE_SCHEMA_V2
     with pytest.raises(schema.MatrixEvidenceError, match="top-level schema drifted"):
         schema.validate_evidence(evidence)
+
+
+def _tracked_cp8_reports() -> tuple[dict[str, object], dict[tuple[str, str], dict[str, object]]]:
+    manifest = _load(CP8_MANIFEST)
+    reports: dict[tuple[str, str], dict[str, object]] = {}
+    for campaign in manifest["campaigns"]:
+        for lane, descriptor in campaign["reports"].items():
+            report = matrix_probe.load_report(ROOT / descriptor["path"])
+            matrix_probe.validate_report(report, require_production=True)
+            reports[(campaign["campaign_id"], lane)] = report
+    return manifest, reports
+
+
+def test_cp8_package_validates_and_hashes_are_exact() -> None:
+    """The CP-8 package is frozen evidence like its CR2-6b predecessor: it
+    must validate under the v2 generation, its tool sources must match the
+    blobs at its own source_commit (tools and measurement landed together in
+    CP-8, unlike v1 whose collector postdated the campaigns), and every
+    campaign report and the parity artifact must hash exactly."""
+    manifest, _ = _tracked_cp8_reports()
+    evidence = _load(CP8_EVIDENCE)
+    schema.validate_evidence(evidence)
+    assert evidence["schema_version"] == schema.EVIDENCE_SCHEMA_V2
+    assert evidence["iteration"] == "CP-8"
+    assert "selection_policy" not in evidence
+    commit = str(evidence["source_commit"])
+    assert manifest["source_commit"] == commit
+    assert evidence["inputs"]["manifest"] == {
+        "path": CP8_MANIFEST.relative_to(ROOT).as_posix(),
+        "bytes": CP8_MANIFEST.stat().st_size,
+        "sha256": _sha256(CP8_MANIFEST),
+    }
+    assert evidence["inputs"]["collector_source"] == _committed_source_descriptor(
+        commit, COLLECTOR.relative_to(ROOT).as_posix()
+    )
+    assert evidence["inputs"]["schema_source"] == _committed_source_descriptor(
+        commit, SCHEMA.relative_to(ROOT).as_posix()
+    )
+    for descriptor in manifest["source_inputs"].values():
+        assert descriptor == _committed_source_descriptor(commit, descriptor["path"])
+    priors = manifest["prior_evidence_inputs"]
+    assert set(priors) == {"counter_evidence", "matrix_evidence_cr2_6b", "resource_evidence"}
+    for descriptor in priors.values():
+        assert descriptor == _committed_source_descriptor(commit, descriptor["path"])
+    assert priors["matrix_evidence_cr2_6b"]["path"] == EVIDENCE.relative_to(ROOT).as_posix()
+    for campaign in manifest["campaigns"]:
+        for descriptor in campaign["reports"].values():
+            path = ROOT / descriptor["path"]
+            assert path.stat().st_size == descriptor["bytes"] < 1_048_576
+            assert _sha256(path) == descriptor["sha256"]
+    parity_path = CP8_EVIDENCE_DIR / "parity-comparison.json"
+    assert parity_path.stat().st_size == evidence["parity_confirmation"]["bytes"]
+    assert _sha256(parity_path) == evidence["parity_confirmation"]["sha256"]
+    assert evidence["counter_status"]["achieved_counter_gate_complete"] is True
+    assert evidence["counter_status"]["achieved_counters_predate_cp5_fusion"] is True
+    assert evidence["gates"]["cp8_matrix_evidence_complete"] is True
+
+
+def test_cp8_reports_rederive_comparisons_and_flip_only_world_four_export() -> None:
+    """The measured outcome is frozen with the package: post-optimization,
+    every common cell at four or more worlds is CUDA-faster on all four
+    order-balanced metrics -- including (4, host_export_no_device), the one
+    cell CR2-6b left mixed -- while world 1 stays with the CPU reference,
+    exactly the boundary the CP-7a frozen rule drew."""
+    _, reports = _tracked_cp8_reports()
+    collector._validate_campaign_invariants(reports)
+    comparisons = collector._comparison_rows(reports)
+    evidence = _load(CP8_EVIDENCE)
+    assert comparisons == evidence["comparisons"]
+    directions = {
+        (row["world_count"], row["mode_id"]): row["all_metric_direction"]
+        for row in comparisons
+    }
+    old_directions = {
+        (row["world_count"], row["mode_id"]): row["all_metric_direction"]
+        for row in _load(EVIDENCE)["comparisons"]
+    }
+    for mode in schema.COMMON_MODES:
+        assert directions[(1, mode)] == "flecs_cpu_reference"
+        for world in (4, 16, 64, 256):
+            assert directions[(world, mode)] == "cuda_resident"
+    flips = {key for key in directions if directions[key] != old_directions[key]}
+    assert flips == {(4, "host_export_no_device")}
 
 
 def test_cr2_6b_is_evidence_only_and_modules_remain_below_soft_limits() -> None:

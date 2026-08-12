@@ -137,7 +137,7 @@ commit). Critical phases get one independent review before landing.
 | CP-5 | Kernel-level optimization driven by CP-4 findings. Known candidates below | **LANDED 2026-08-12.** The six window-commit launches are one fused `window_commit_body_kernel` (12 -> 7 launches per captured window); kernel catalog v3 supersedes v2 through a static-asserted fold; released-state digests stay bit-identical to the frozen CR2-6b capture across both lanes and both campaigns; warmed end-to-end p50 improved in all 20 CR2-6b comparison rows (0.63-0.99x). See "CP-5 landed" below |
 | CP-6 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | **LANDED 2026-08-12.** `learner_equivalent_consumer_kernel` reads every element of the lease tensor, applies the contract-owned per-field affine normalization, and writes a device-resident world-major `[world, 15]` float policy-input buffer; measured at production protocol as matrix mode `no_export_learner_consumer` behind an explicit probe flag; CPU-reference parity over the full normalized tensor is a C++ oracle; released digests stay byte-identical to the CP-7b baseline in both lanes. See "CP-6 landed" below |
 | CP-7 | G-F disposition: either fix small-batch overhead or freeze an explicit selection rule with world-count thresholds | **LANDED 2026-08-12, both halves.** CP-7a: `cp7.small_batch_selection_rule.v1` freezes world counts below 4 to the CPU reference as documentation-grade policy (no runtime selector; an architecture gate enforces zero runtime consumers), on the measured basis that world 1 carries a ~65.5 us single-thread device floor against a ~18-31 us CPU step; crossover value is a named CP-8 review item. CP-7b: the stage_publish and window_commit barriers are per-world epilogues of their stage kernels (5 -> 3 launches, syncs, status readbacks, and memsets per window); released-state digests stay bit-identical to frozen CR2-6b in all 30 rows, warmed e2e p50 falls 20-30% at world 1 and 8-21% (campaign 1) / 3-52% (campaign 2) elsewhere. See "CP-7b landed" below |
-| CP-8 | Re-measure the 1/4/16/64/256 matrix after CP-5/CP-7 land, order-balanced, two campaigns | Post-optimization evidence comparable to CR2-6b |
+| CP-8 | Re-measure the 1/4/16/64/256 matrix after CP-5/CP-7 land, order-balanced, two campaigns | **LANDED 2026-08-12.** The matrix evidence chain went generation-aware first (v1 pins frozen, unknown generations fail closed), then the gated capture ran both order-balanced production campaigns on the landed SHA and produced the validated v2 package `cuda_resident_cp8_matrix_evidence_20260812.json`. Against CR2-6b: all 40 CUDA-lane warmed-p50 cells improved (-1.8% to -62%), exactly one common cell flipped direction ((4, host_export_no_device) mixed -> cuda_resident), world 1 stays with the CPU reference -- the CP-7a boundary confirmed. See "CP-8 landed" below |
 | CP-9 | Promotion decision: all gates + independent review, or a recorded hold with the exact missing authority | Explicit, evidence-backed verdict |
 
 CP-1, CP-2, and CP-3 are independent of the rest and can land in any order.
@@ -339,6 +339,64 @@ evidence, but it retired the only capture tool without a replacement, so the
 next counter attempt inherits a recapture obligation. CP-1's compile lane would
 not have caught this — the stub compiles fine. A probe-executability check
 belongs in CP-1's scope.
+
+## CP-8 landed: the post-optimization matrix is measured and packaged (2026-08-12)
+
+The kickoff's sequencing held: tooling first, then the gated measurement.
+
+The tooling half (`dca61047`) made the matrix evidence chain
+generation-aware, mirroring the counter chain: generations register once in
+the schema module (identities, capture date, prior-input inventory, gate and
+counter-status truth), validation dispatches on the identity, unknown
+generations fail closed, and the frozen CR2-6b package keeps validating
+byte-for-byte under its v1 pins. The v2 (CP-8) generation re-owns every pin
+from the kickoff inventory: its own date and iteration id, no
+selection-policy result block (routing authority lives with the CP-7a frozen
+rule), the CR2-6b package as a hash-pinned prior input revalidated under v1
+at every build, and a counter_status that states capture-time truth (G-D
+closed with achieved counters on the pre-fusion v2 parent;
+`achieved_counters_predate_cp5_fusion: true`; the v4 static parent has no
+achieved capture yet). A collateral honesty fix: the gate test now checks
+frozen tool-source hashes against the blobs at the package's landing commit
+instead of the live tree, so frozen packages survive toolchain evolution.
+
+The measurement half ran behind a driver that verifies -- rather than
+asserts -- the runbook gates: tracked worktree clean at HEAD
+(`dca6104718cc5b9f2a54783bd82df698f464f091`), no compiler or build processes
+alive, probes rebuilt from the landed SHA (the CUDA side reported
+`ninja: no work to do`). Campaign 1 ran CPU then CUDA; campaign 2 CUDA then
+CPU; production protocol; full world matrix; fresh parity comparison passed
+12/12 released numeric fields. The package
+(`cuda_resident_cp8_matrix_evidence_20260812.json`, sha256/16
+`f4cd59f5c7050ea0`) validated end to end through the generation-aware chain,
+and architecture gates pin the package bytes, rederive the comparisons from
+the tracked reports, and freeze the measured outcome.
+
+What the re-measurement says against CR2-6b, on the same single host:
+
+- **CUDA lane, warmed end-to-end p50: improved in all 40 world-mode cells**,
+  -1.8% to -62%, strongest at 64 and 256 worlds (typically -50% or more)
+  where the CP-5 fusion and CP-7b fold compound across the whole window.
+- **Rollout per-window p50: improved in 39 of 40 cells**; the single adverse
+  cell (world 1, host_export, campaign 1, +38%) reverses to -31% in campaign
+  2 -- a world-1 tail, which is exactly what the order-balanced two-campaign
+  design exists to expose.
+- **Direction flips in exactly one common cell**: (4, host_export_no_device)
+  was CR2-6b's one mixed cell and is now cuda_resident on all four
+  order-balanced metrics. Every measured world count at or above 4 now
+  prefers the resident lane; world 1 stays with the CPU reference on every
+  metric. The CP-7a frozen boundary (resident-lane advisory minimum at 4) is
+  confirmed by measurement and needs no revision.
+- The CPU reference lane moved within its uncontrolled-background noise, and
+  the honesty flags (`background_load_uncontrolled`, balanced power scheme,
+  no affinity pinning, no GPU exclusive mode) carry over unchanged.
+
+CP-9 now has every gate's evidence in front of it: G-A/G-B call surfaces
+(CR2 era, re-verified at CP-0), G-D achieved counters (CP-4), G-C
+learner-equivalent consumption (CP-6), G-F small-batch disposition (CP-7a,
+now measurement-confirmed), the optimized-graph static parents (v3/v4), and
+this package as the post-optimization comparison. The remaining decision is
+the promotion verdict itself.
 
 ## CP-6 landed: consumption is learner-equivalent, not a smoke probe (2026-08-12)
 

@@ -5,7 +5,7 @@ Language:
 - Chinese companion: [cuda_resident_cp8_rematrix_kickoff_20260812.zh.md](cuda_resident_cp8_rematrix_kickoff_20260812.zh.md)
 
 Document kind: `plan`
-Lifecycle: `draft`
+Lifecycle: `frozen -- scope frozen and landed 2026-08-12`
 Canonical: `docs/plan/exact_runtime/cuda_resident_cp8_rematrix_kickoff_20260812.md`
 Owner: `exact-runtime / CUDA-resident promotion workline`
 Last verified: `2026-08-12`
@@ -111,3 +111,44 @@ Exit gate per the program plan: optimized evidence comparable to CR2-6b.
    preconditions and the quiet-machine requirement hold together.
 3. CP-9 consumes the validated package alongside the rest of the gate
    evidence.
+
+## Landing record (2026-08-12)
+
+Both scope items landed the day the owner re-confirmed the start.
+
+- **Tooling** landed as its own commit (`dca61047`,
+  "make the matrix evidence chain generation-aware"). The freeze decisions
+  scope item 1 deferred to implementation were taken as drafted: v2 keeps the
+  cross-lane comparison shape, references the CR2-6b package as a hash-pinned
+  prior-evidence input that must itself still validate under v1, drops the
+  selection-policy result block, and carries capture-time counter truth
+  (G-D closed with achieved counters on the pre-fusion v2 parent; the v4
+  static parent has no achieved capture yet). One additional correction
+  surfaced: the gate test compared the frozen package's tool-source hashes
+  against the live tree, so it broke the moment the tools evolved; it now
+  reads the blobs at the package's landing commit, per the counter-chain
+  precedent.
+- **Measurement** ran gated by a driver that refuses to start unless the
+  tracked worktree is clean at HEAD and no compiler/build processes are
+  running (the 2026-08-12 contamination incident is why). Probes were rebuilt
+  from the landed SHA (`ninja: no work to do` on the CUDA side confirmed the
+  binaries already matched); campaign 1 ran CPU then CUDA, campaign 2 CUDA
+  then CPU, production protocol, full world matrix, source commit
+  `dca6104718cc5b9f2a54783bd82df698f464f091` with
+  `source_worktree_clean_at_capture: true` verified rather than asserted.
+- **Package**: `cuda_resident_cp8_matrix_evidence_20260812.json`
+  (sha256/16 `f4cd59f5c7050ea0`) over the tracked campaign directory
+  (cpu-01 `e24fda7e8f4a55f3`, cuda-01 `0ab7e82b7d0ec340`, cuda-02
+  `e4d43dd1d9b84a5b`, cpu-02 `6a904dbadc9ce2df`, manifest `edce90144c98efec`,
+  fresh parity `94147762a0713259`, 12/12 fields pass). Validated end to end
+  by the generation-aware chain; architecture gates pin the package bytes,
+  rederive the comparisons, and freeze the measured outcome.
+- **Outcome against CR2-6b** (the comparison target): the CUDA lane improved
+  in all 40 warmed-p50 cells (-1.8% to -62%, strongest at 64/256 worlds) and
+  39 of 40 rollout-per-window-p50 cells (the one adverse cell is a world-1
+  campaign-1 tail that reverses in campaign 2). Exactly one common cell
+  changed direction: (4, host_export_no_device) went from mixed to
+  cuda_resident on all four order-balanced metrics, so every measured world
+  count at or above 4 now prefers the resident lane while world 1 stays with
+  the CPU reference -- the same boundary the CP-7a frozen rule drew. The
+  CP-7a routing rule needs no revision from this re-measurement.

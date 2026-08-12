@@ -35,7 +35,8 @@
   "artifact_path_prefixes": [
    "docs/plan/exact_runtime/cuda_resident_rb9_evidence_20260730/",
    "docs/plan/exact_runtime/cuda_resident_runtime_program_2_",
-   "docs/plan/exact_runtime/cuda_resident_cr2_"
+   "docs/plan/exact_runtime/cuda_resident_cr2_",
+   "docs/plan/exact_runtime/cuda_resident_cp"
   ],
   "documentation_and_evidence_are_not_modules": true,
   "generated_or_vendor_requires_manifest": true
@@ -283,7 +284,7 @@
   {
    "path": "tests/architecture/runtime_profiles/test_cuda_resident_cr2_matrix_evidence.py",
    "role": "CR2-6b provenance, derivation, negative, and size guards",
-   "observed_lines": 286
+   "observed_lines": 372
   },
   {
    "path": "tools/diagnostics/cuda_resident_cr2_closure.py",
