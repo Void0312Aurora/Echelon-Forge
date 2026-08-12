@@ -169,9 +169,7 @@ python3 tools/maintenance/translate_docs_batch.py clusters --root docs \
 
 - `docs/Archive/`
 - `docs/**/archive/`
-- `docs/temp/`
-- `docs/plan/results/`
-- `docs/plan/architecture/review/`
+- `docs/**/temp/`
 
 要明确包含它们，请使用：
 

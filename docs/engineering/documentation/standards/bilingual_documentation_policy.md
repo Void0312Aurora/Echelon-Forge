@@ -8,10 +8,11 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-12`
+Last verified: `2026-08-13`
 
-Status: `2026-08-12` authoritative for maintained documentation language
-layout, including the English-only work/evidence surface.
+Status: `2026-08-13` authoritative for maintained documentation language
+layout, including the English-only work/evidence surface and the read-only
+Tier D sealed evidence surface.
 
 This policy defines how the repository separates English and Chinese
 documentation so the mainline stays readable, batch-translation friendly, and
@@ -53,14 +54,19 @@ the English canonical file only and does not carry a `.zh.md` mirror.
   `.md` file wins.
 - A machine-translated draft is not authoritative until a human review removes
   or replaces the draft marker.
-- A Chinese-only `.zh.md` file is a transitional legacy state, not the target
-  steady state.
+- On the Tier A strict bilingual surface, a Chinese-only `.zh.md` file is a
+  transitional legacy state, not the target steady state.
 
 Transitional rule during migration:
 
-- If a maintained document currently exists only as `.zh.md`, it may still be
-  used as a working source, but it should be queued for an English companion in
-  the next relevant batch.
+- If a Tier A document currently exists only as `.zh.md`, it may still be used
+  as a working source, but it should be queued for an English companion in the
+  next relevant batch.
+
+This transitional rule does not reach Tier D. A Chinese-only page inside a
+sealed dated evidence packet is the recorded artifact, not a translation
+backlog item, and adding an English canonical peer would not make it more
+authoritative. See "Tier D" below.
 
 ## Maintained Surface Tiers
 
@@ -126,9 +132,52 @@ Tier C: history, archive, scratch, and local-only retention
   which must contain an `archive` path component
 - temporary or scratch analysis under `docs/**/temp/` and `docs/temp/`
 
+Tier D: sealed dated evidence
+
+- owner-local review and acceptance packets under a `reviews/` subtree, for
+  example `docs/systems/effects/reviews/<packet>_<YYYYMMDD>/` or
+  `docs/learning/reviews/<packet>_<YYYYMMDD>/`, including the whole packet
+  subtree (`evidence/`, `retained_artifacts/`, `data_collection/`, and peer
+  directories)
+- a Tier D document records what was inspected on a stated date. It is read
+  only: it is not rewritten to reflect later behavior, and a later finding
+  belongs in a new dated packet or in `work/active/`
+- Tier D carries no bilingual SLA. A page is not translated, is not mirrored,
+  and is never queued for a missing English or Chinese companion
+- a Chinese-only page in a sealed packet is the retained artifact itself. It is
+  outside the transitional Chinese-only rule in "Authority Rules" above
+- Tier D content is frequently pinned by SHA-256 entries in a retained-artifact
+  manifest. Editing pinned bytes -- including a cosmetic link-depth repair --
+  invalidates the pin, so it requires explicit owner authorization and a
+  lockstep recomputation of every pin in the affected chain, recorded in the
+  packet README. The `2026-08-13` entry in the
+  [A2 damage-model packet README](../../../systems/effects/reviews/a2_high_fidelity_damage_model_20260602/README.md)
+  is the worked precedent: one ledger link was corrected by owner instruction
+  and the `sha256`, `content_hash`, and `size_bytes` pins were re-derived
+  through the manifest and gate artifacts until the chain terminated
+- when a pin cannot be recomputed, leave the file untouched and record the
+  mismatch as an inherited condition instead of "fixing" the bytes
+
+Tier precedence is explicit, because these path rules overlap:
+
+1. an archived or scratch copy is Tier C even under a `reviews/` subtree;
+2. a pair the owner promoted into the strict bilingual surface and registered
+   in the cluster registry stays Tier A even under a `reviews/` subtree, since
+   its bilingual SLA is live;
+3. any remaining `reviews/` document is Tier D;
+4. everything else is Tier B.
+
+`classify_document` in
+[tools/maintenance/document_scope.py](../../../../tools/maintenance/document_scope.py)
+is the single source of truth for this decision, and every tracked Markdown
+file under `docs/` resolves to exactly one tier. The
+`tests/architecture/governance/test_document_tier_census.py` census holds that
+partition and its per-tier counts against a checked-in baseline.
+
 Chinese companions are expected for Tier A. They are not maintained for
-Tier B unless a document is explicitly promoted, and they are outside the
-default maintenance verdict for Tier C.
+Tier B unless a document is explicitly promoted, they are outside the default
+maintenance verdict for Tier C, and they are prohibited as new work for
+Tier D.
 
 ## Writing Rules
 
@@ -218,7 +267,11 @@ For new maintained Tier A docs:
 For new Tier B work docs, write only the English canonical `.md`; do not
 create a `.zh.md` mirror unless the document is promoted to Tier A.
 
-For existing Chinese-only docs:
+For Tier D sealed evidence, there is no translation step at all. Do not batch
+these directories, and do not pass them to the translator with
+`--include-local-only`.
+
+For existing Tier A Chinese-only docs:
 
 1. Keep the current `.zh.md` file in place.
 2. Generate the English `name.md` companion in the same directory.
@@ -267,15 +320,20 @@ A directory or maintained slice can be treated as bilingual-ready when:
 - bilingual cluster registry entries are updated when Tier A paired docs change
 - local links still resolve after migration
 
-Temporary, historical, and local-only directories are excluded from this
-acceptance bar:
+Sealed, temporary, historical, and local-only directories are excluded from
+this acceptance bar:
 
+- `docs/**/reviews/` sealed evidence packets outside the registered Tier A
+  pairs
 - `docs/**/temp/`
 - `docs/temp/`
 - `docs/Archive/`
 - `docs/**/archive/`
-- `docs/plan/results/`
-- `docs/plan/architecture/review/`
+
+The retired `docs/plan/results/` and `docs/plan/architecture/review/` entries
+were removed from this list on `2026-08-13`: neither path exists in the tree,
+and the surviving `docs/plan/` material is already covered by the `archive`
+rule.
 
 ## Related Docs
 

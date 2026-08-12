@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-12`
+Last verified: `2026-08-13`
 
-Status: `2026-08-12` authoritative policy for classifying, maintaining,
+Status: `2026-08-13` authoritative policy for classifying, maintaining,
 reviewing, generating, and archiving repository documentation.
 
 ## Purpose
@@ -169,11 +169,18 @@ Chinese companions are mandatory for:
 Work and evidence surfaces (`work/active/`, `work/issues/`, and their evidence
 packages) are maintained in English only, including the plans they host; a
 Chinese companion exists there only when a document is explicitly promoted
-into the strict bilingual surface. High-churn dated tasks, reviews, evidence
-notes, and generated output follow the same English-only rule. A required pair
-must be updated in the same iteration. If the pair diverges, English remains
+into the strict bilingual surface. High-churn dated tasks, evidence notes, and
+generated output follow the same English-only rule. A required pair must be
+updated in the same iteration. If the pair diverges, English remains
 canonical, but the iteration cannot claim bilingual closure until the
 companion is reconciled.
+
+That English-only rule governs new authoring. It does not reach back into a
+sealed dated evidence packet under an owner's `reviews/` subtree, which the
+[Bilingual Documentation Policy](bilingual_documentation_policy.md) classifies
+as Tier D. A sealed packet is read only in whichever language it was recorded:
+a Chinese-only page there is the retained artifact, not a translation backlog
+item, and it is never queued for an English companion.
 
 Registry hashes must be refreshed only for pairs reconciled in the current
 review scope. A whole-registry rewrite is not evidence that unrelated legacy
@@ -268,6 +275,15 @@ A document may enter `archive/` only when:
 
 Archived files are immutable except for link repair, license/rights correction,
 or an explicit erratum. New work must not be appended to an archived packet.
+
+Link repair is not automatically safe. When a file's bytes are pinned by a
+SHA-256 entry in a retained-artifact manifest, even a relative-depth fix
+invalidates the pin, so it requires explicit owner authorization and a lockstep
+recomputation of the whole affected pin chain in the same change. If the chain
+cannot be recomputed, leave the bytes alone and record the mismatch as an
+inherited condition. The `2026-08-13` entry in the
+[A2 damage-model packet README](../../../systems/effects/reviews/a2_high_fidelity_damage_model_20260602/README.md)
+is the worked precedent for both outcomes.
 
 ## Enforcement And Migration
 

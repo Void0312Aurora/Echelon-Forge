@@ -213,9 +213,7 @@ ignored from the shared remote, including:
 
 - `docs/Archive/`
 - `docs/**/archive/`
-- `docs/temp/`
-- `docs/plan/results/`
-- `docs/plan/architecture/review/`
+- `docs/**/temp/`
 
 To include them explicitly:
 

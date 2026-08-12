@@ -3,20 +3,36 @@
 The default maintained surface intentionally excludes archival, scratch, and
 local-only source documents.  A maintained document may still link into an
 archive; link auditing decides whether that target exists separately.
+
+``classify_document`` is the single source of truth for the four maintained
+surface tiers defined by the bilingual documentation policy.  Every Markdown
+file under ``docs/`` resolves to exactly one tier; there is no fallthrough.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Literal
 
 
-DEFAULT_EXCLUDE_SUBSTRINGS = (
-  "docs/temp/",
-  "docs/plan/results/",
-  "docs/plan/architecture/review/",
-)
+DocumentTier = Literal["tier_a", "tier_b", "tier_c", "tier_d"]
+DOCUMENT_TIERS: tuple[DocumentTier, ...] = ("tier_a", "tier_b", "tier_c", "tier_d")
+
+# Extension point for path-shaped local-only exclusions. It is empty because
+# the previous entries (docs/temp/, docs/plan/results/, and
+# docs/plan/architecture/review/) named paths that no longer exist in the tree.
+DEFAULT_EXCLUDE_SUBSTRINGS: tuple[str, ...] = ()
 DEFAULT_EXCLUDE_DIR_NAMES = {"Archive", "archive"}
+# Directory components that put a document in Tier C retention. These are
+# matched against the docs-root-relative path, so a workspace that happens to
+# be checked out below a directory named "temp" is not misread as scratch.
+# ``temp`` covers both the ``docs/temp/`` root and the owner-local
+# ``docs/**/temp/`` mirrors the policy places in Tier C.
+TIER_C_DIR_NAMES = frozenset({"Archive", "archive", "temp"})
+# Owner-local sealed dated evidence packets (Tier D) live under a ``reviews``
+# directory component, for example
+# ``docs/systems/effects/reviews/<packet>_<YYYYMMDD>/``.
+SEALED_EVIDENCE_DIR_NAME = "reviews"
 # Docs-root-relative posix paths of work-layer files explicitly promoted into
 # the strict bilingual surface. Promotion registers both the English canonical
 # file and its .zh.md companion here; see the bilingual documentation policy.
@@ -113,6 +129,62 @@ def is_english_work_doc(path: Path, root: Path) -> bool:
     return False
   relative = path.relative_to(root).as_posix()
   return "work" in relative.split("/")[:-1]
+
+
+def is_retained_doc(path: Path, root: Path) -> bool:
+  """Tier C: archived, scratch, or otherwise local-only retention."""
+  parts = path.relative_to(root).as_posix().split("/")
+  if any(part in TIER_C_DIR_NAMES for part in parts[:-1]):
+    return True
+  return is_local_only_doc(path)
+
+
+def is_sealed_evidence_doc(path: Path, root: Path) -> bool:
+  """Tier D: an owner-local sealed dated evidence packet.
+
+  These packets record what was inspected at a point in time and are frequently
+  pinned by SHA-256 entries in a retained-artifact manifest, so they are read
+  only and carry no bilingual SLA.  Archived copies stay Tier C.
+  """
+  if is_retained_doc(path, root):
+    return False
+  parts = path.relative_to(root).as_posix().split("/")
+  return SEALED_EVIDENCE_DIR_NAME in parts[:-1]
+
+
+def classify_document(path: Path, root: Path) -> DocumentTier:
+  """Return the single maintained-surface tier that owns ``path``.
+
+  Precedence is deliberate and mirrors ``filter_paths``:
+
+  1. ``tier_c`` -- archive, scratch, and local-only retention wins first, so an
+     archived copy of a maintained page never inherits a live SLA.
+  2. ``tier_a`` -- the strict bilingual surface, including a work or review
+     page an owner explicitly promoted into it.  A registered bilingual pair
+     keeps its live SLA instead of decaying into sealed evidence.
+  3. ``tier_d`` -- sealed dated evidence under an owner-local ``reviews/``
+     subtree.
+  4. ``tier_b`` -- everything else: the English-only work and evidence surface.
+  """
+  if is_retained_doc(path, root):
+    return "tier_c"
+  if is_strict_bilingual_doc(path, root):
+    return "tier_a"
+  if is_sealed_evidence_doc(path, root):
+    return "tier_d"
+  return "tier_b"
+
+
+def requires_english_companion(path: Path, root: Path) -> bool:
+  """Whether a Chinese-only page should be queued for an English canonical peer.
+
+  Only the strict bilingual surface carries that obligation.  Translating a
+  sealed evidence page would break the hash pins that make it evidence, and
+  Tier B/Tier C pages have no bilingual SLA to satisfy.
+  """
+  if not path.name.endswith(".zh.md"):
+    return False
+  return classify_document(path, root) == "tier_a"
 
 
 def filter_paths(

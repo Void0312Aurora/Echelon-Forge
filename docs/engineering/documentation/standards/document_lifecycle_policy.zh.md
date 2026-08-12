@@ -8,9 +8,9 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/document_lifecycle_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-12`
+Last verified: `2026-08-13`
 
-状态：`2026-08-12`，仓库文档分类、维护、审阅、生成和归档的权威规范。
+状态：`2026-08-13`，仓库文档分类、维护、审阅、生成和归档的权威规范。
 
 ## 目的
 
@@ -152,9 +152,14 @@ authority。具体任务状态仍由当前任务 owner 的维护文档所有。
 
 work/evidence 面（`work/active/`、`work/issues/` 及其 evidence 包）只维护
 英文规范版，其中承载的 plan 也一样；仅当文档被明确提升进入严格双语面时才
-存在中文 companion。高频变化的带日期 task、review、evidence 说明和 generated
+存在中文 companion。高频变化的带日期 task、evidence 说明和 generated
 输出遵循同样的英文单语规则。强制配对必须在同一迭代更新。配对发生分歧时仍以
 英文为 canonical，但在中文 companion 对齐前不得声明双语收口。
+
+该英文单语规则只约束新增撰写，不回溯到 owner `reviews/` 子树下已密封的日期
+证据包——[双语文档规范](bilingual_documentation_policy.zh.md)把它们归入
+Tier D。密封包按其被记录时所用的语言只读保存：其中的仅中文页面就是被保留的
+制品，不是待翻译积压项，也永远不排队补齐英文 companion。
 
 登记哈希只能刷新本轮审阅范围内已经完成对齐的文档对。全量重写登记表本身不能
 证明无关的历史分歧已经得到审阅。当前登记表以 `docs/` 为根；在仓库根 README
@@ -234,6 +239,13 @@ Review 必须标识它检查的准确 revision 或 diff，在该迭代中与实�
 
 Archived 文件除链接修复、许可/权利修正或显式 erratum 外不可变。不得向 archived
 任务包追加新工作。
+
+链接修复并非天然安全。当某文件的字节被 retained-artifact manifest 中的 SHA-256
+条目钉死时，哪怕只是修正相对层级也会使 pin 失效，因此必须获得 owner 的明确授权，
+并在同一次变更中级联重算整条受影响的 pin 链。若该链无法重算，就保持字节原样，
+把不一致记录为继承状态。
+[A2 毁伤模型证据包 README](../../../systems/effects/reviews/a2_high_fidelity_damage_model_20260602/README.md)
+的 `2026-08-13` 条目对这两种处理都给出了已落地的先例。
 
 ## 执行与迁移
 

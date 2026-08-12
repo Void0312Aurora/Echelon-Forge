@@ -9,10 +9,10 @@ Document kind: `standard`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/standards/bilingual_documentation_policy.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-12`
+Last verified: `2026-08-13`
 
-状态：`2026-08-12`，当前维护中文档语言布局（含英文单语 work/evidence 面）的
-权威规则。
+状态：`2026-08-13`，当前维护中文档语言布局（含英文单语 work/evidence 面与只读的
+Tier D 密封证据面）的权威规则。
 
 本文档定义仓库如何拆分英文与中文文档，使主线文档保持可读、可批处理翻译、可审计。
 
@@ -47,11 +47,16 @@ Tier B work 文档（如
 
 - 如果英文主文与中文辅文不一致，以英文 `.md` 为准。
 - 机器翻译草稿在人工审校并移除草稿标记前，不视为权威文档。
-- 只有 `.zh.md` 而缺少英文主文，属于迁移过渡态，不是目标稳态。
+- 在 Tier A 严格双语面上，只有 `.zh.md` 而缺少英文主文属于迁移过渡态，不是目标
+  稳态。
 
 迁移期补充规则：
 
-- 如果某份维护文档当前只有 `.zh.md`，它仍可作为工作输入使用，但应在下一轮相关批次中补齐英文主文。
+- 如果某份 Tier A 文档当前只有 `.zh.md`，它仍可作为工作输入使用，但应在下一轮
+  相关批次中补齐英文主文。
+
+该过渡规则不适用于 Tier D。密封日期证据包内的仅中文页面本身就是被记录下来的
+制品，不是待翻译积压项；补一份英文主文也不会让它更权威。参见下文「Tier D」。
 
 ## 维护分层
 
@@ -109,8 +114,44 @@ Tier C：历史、归档、临时稿与本地保留面
   `archive` 组件
 - `docs/**/temp/` 和 `docs/temp/` 下的临时稿、草稿和本地分析记录
 
+Tier D：密封日期证据
+
+- `reviews/` 子树下归属于 owner 的评审与验收证据包，例如
+  `docs/systems/effects/reviews/<packet>_<YYYYMMDD>/` 或
+  `docs/learning/reviews/<packet>_<YYYYMMDD>/`，含整棵包内子树
+  （`evidence/`、`retained_artifacts/`、`data_collection/` 及同级目录）
+- Tier D 文档记录的是「在某个明确日期上审阅到的内容」。它是只读的：不因后续
+  行为变化而回写；新的结论应进入新的日期包或 `work/active/`
+- Tier D 不承担双语 SLA：不翻译、不做镜像，也永远不排队补齐缺失的英文或中文
+  对应页
+- 密封包内的仅中文页面本身就是被保留的制品，不适用上文「权威规则」中的仅中文
+  过渡条款
+- Tier D 内容常被 retained-artifact manifest 中的 SHA-256 条目钉死。修改被钉死
+  的字节（哪怕只是修正链接层级这类外观改动）都会使 pin 失效，因此必须获得
+  owner 的明确授权，并在同一轮中级联重算受影响链路上的全部 pin，且在包内
+  README 中留痕。
+  [A2 毁伤模型证据包 README](../../../systems/effects/reviews/a2_high_fidelity_damage_model_20260602/README.md)
+  的 `2026-08-13` 条目是已落地的先例：按 owner 指令修正了一条 ledger 链接，
+  随后把 `sha256`、`content_hash`、`size_bytes` 沿 manifest 与 gate 制品逐级
+  重算，直到链路终止
+- 若某条 pin 无法重算，就保持文件原样，把不一致记录为继承状态，而不是去「修」
+  字节
+
+由于这些路径规则会相互重叠，分层优先级明确规定如下：
+
+1. 即使位于 `reviews/` 子树下，归档或临时副本仍属 Tier C；
+2. 即使位于 `reviews/` 子树下，owner 已明确提升进严格双语面并登记进簇注册表
+   的配对仍属 Tier A，因为其双语 SLA 是活的；
+3. 其余 `reviews/` 文档属于 Tier D；
+4. 其他全部文档属于 Tier B。
+
+[tools/maintenance/document_scope.py](../../../../tools/maintenance/document_scope.py)
+中的 `classify_document` 是该判定的唯一真源，`docs/` 下每个受跟踪的 Markdown
+文件都恰好落入一层。`tests/architecture/governance/test_document_tier_census.py`
+普查测试会把该划分及四层计数与提交进仓库的基线快照对齐。
+
 Tier A 需要双语配对。Tier B 除明确提升外不维护中文辅文。Tier C 默认不纳入
-持续维护判定。
+持续维护判定。Tier D 禁止新增双语配对。
 
 ## 写作规则
 
@@ -187,7 +228,10 @@ Language:
 对于新的 Tier B work 文档，只写英文主文 `.md`；除非该文档被提升到 Tier A，
 不要创建 `.zh.md` 镜像。
 
-对于现有仅中文文档：
+对于 Tier D 密封证据，完全没有翻译环节：不要把这些目录纳入翻译批次，也不要用
+`--include-local-only` 把它们喂给翻译工具。
+
+对于 Tier A 现有的仅中文文档：
 
 1. 保留当前 `.zh.md` 文件。
 2. 在同目录生成英文 `name.md` 主文。
@@ -235,14 +279,17 @@ Language:
 - Tier A 配对文档变更后，双语簇注册表已同步更新
 - 迁移后本地链接仍然有效
 
-以下临时/历史/本地目录不纳入上述主验收口径：
+以下密封/临时/历史/本地目录不纳入上述主验收口径：
 
+- `docs/**/reviews/` 密封证据包（已登记的 Tier A 配对除外）
 - `docs/**/temp/`
 - `docs/temp/`
 - `docs/Archive/`
 - `docs/**/archive/`
-- `docs/plan/results/`
-- `docs/plan/architecture/review/`
+
+已退役的 `docs/plan/results/` 与 `docs/plan/architecture/review/` 两条于
+`2026-08-13` 从本清单移除：这两个路径在仓库中已不存在，而 `docs/plan/` 下留存的
+材料本就被 `archive` 规则覆盖。
 
 ## 相关文档
 

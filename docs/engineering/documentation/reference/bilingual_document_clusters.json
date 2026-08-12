@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12",
+  "generated_at": "2026-08-13",
   "root": "docs",
   "pairs": [
     {
@@ -260,8 +260,8 @@
       "chinese": "docs/engineering/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-08-08",
-      "english_hash": "0d3ed9a9d7d621b95c8a6c8155b07a881ef1f543fba76d15001bb4dc7208f7a6",
-      "chinese_hash": "97288074d64954d7538c5195295e51e7db0bd4ea8a74fa8ab78a717c8be19703"
+      "english_hash": "d8f4a3ba75ee0ac419ef7100ee77c45651f755d0d6bf624566c071730cac32f1",
+      "chinese_hash": "c2e7d74c034c70dbb37e66c299aa3e8c737d01e71dc19a85633d885084420597"
     },
     {
       "pair_id": "engineering/automation/README",
@@ -358,18 +358,18 @@
       "english": "docs/engineering/documentation/standards/bilingual_documentation_policy.md",
       "chinese": "docs/engineering/documentation/standards/bilingual_documentation_policy.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-12",
-      "english_hash": "6da6210ec84960e1449c09a23833ce6ae5b08184bbb2a16cb5bcb2b852762af8",
-      "chinese_hash": "b60137859a71735798953098e059163987eb4dd554d34fffc3ca64b0367f704b"
+      "last_verified": "2026-08-13",
+      "english_hash": "f3502a18e4b0c6e5a92ee1d6a5891c0e083cb068597304efeef17326177c2af0",
+      "chinese_hash": "9f3d96219afa508890f2513ef399a78e91602f655c6e8c8e067cf6ff2f280e80"
     },
     {
       "pair_id": "engineering/documentation/standards/document_lifecycle_policy",
       "english": "docs/engineering/documentation/standards/document_lifecycle_policy.md",
       "chinese": "docs/engineering/documentation/standards/document_lifecycle_policy.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-12",
-      "english_hash": "1e984cef434bac6b6744a545b1a5236dbf04f809d9c23abcd9240e1bc4420255",
-      "chinese_hash": "435fc630637af3859bd89be49bf07577fc141c7b2e4fe645919c5adb83cfa6b5"
+      "last_verified": "2026-08-13",
+      "english_hash": "7fbe647de6284d1752f68a3f11873e1806f6ec73171c0375424fc30f9360b48b",
+      "chinese_hash": "d633b2a0405a1426ef76961233efec8d2b854b6abf68721f83f7a71cdbfa85c4"
     },
     {
       "pair_id": "engineering/documentation/standards/internal_code_policy",
