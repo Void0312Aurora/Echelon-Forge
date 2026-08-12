@@ -61,19 +61,22 @@ The copy skeleton per window:
   lease event machinery on top (the contract models it as +2 launches and +1
   synchronization); consumer-validation D2H stays deferred per CR2-3.
 
-Order-of-magnitude reading, not a measurement: five synchronizations plus
-thirteen copy submissions cost on the order of 100-250 microseconds of fixed
-host-side latency per window. A world-1 CPU step is tens of microseconds.
-That ratio reproduces the observed 7-36x without any kernel being slow, which
-is consistent with the CP-4 counter verdict (near-idle device, zero local
-traffic, zero divergence).
+What this inventory does not establish: how much wall clock each item costs.
+The CP-4 counters measured device-side utilization, not host API latency, so
+this note assigns no microsecond figures and does not claim the skeleton
+explains the observed 7-36x. The skeleton is the leading candidate because
+the counters ruled out device-side work as the bottleneck (near-idle device,
+zero local traffic, zero divergence), but confirming it -- and ranking the
+candidates below by measured contribution -- requires a host-side timeline
+capture (Nsight Systems over world-1 windows) as CP-7's first action.
 
 ## Fix candidates, ranked by expected win against blast radius
 
 None of these is measured yet; CP-7 must measure any candidate it adopts and
 re-measure through CP-8. Any change to the execution graph is a new evidence
-generation (v4) -- which the contract-derived counter chain now makes a
-contract extension rather than a collector rewrite.
+generation (v4) -- which the contract-derived counter chain now reduces to a
+contract extension plus a one-time identity/unit registration, rather than a
+re-pinning of collectors.
 
 1. **One synchronization per window with a consolidated status array.** Give
    each stage its own status word in a small device array; keep every stage
@@ -111,7 +114,9 @@ contract extension rather than a collector rewrite.
 1. CP-5 must land and the post-fusion matrix (including world 1) must be read
    first: removing five launches per window may already have moved the
    small-batch picture, and the crossover point for candidate 5 comes from
-   that data either way.
+   that data either way. Alongside it, capture a world-1 host-side timeline
+   (Nsight Systems) to attribute the fixed cost to the inventoried items
+   before choosing a candidate.
 2. If a fix is attempted, prefer the smallest set that clears the gate
    (3 before 1 before 2; 4 only with explicit owner scope), one candidate per
    iteration, each with a fresh generation of capture evidence when the graph
@@ -125,5 +130,5 @@ contract extension rather than a collector rewrite.
 - No promotion, support-flag, or tuning authority; all four authorization
   flags stay false.
 - No public ABI, Python name, CLI flag, or config key changes.
-- No performance claims from this note: the microsecond arithmetic above is
-  sizing for the decision, not evidence.
+- No performance claims from this note: the inventory is structural; cost
+  attribution awaits the world-1 timeline capture.

@@ -31,12 +31,26 @@ integration is additive, not corrective. Where a cheaper choice would work for
 CP-6 but would have to be undone for the torch integration, this draft rejects
 it and says why.
 
+## Scope of "learner-equivalent" (correction from independent review)
+
+The lease exposes the resident backend's *fixture* observation contract: the
+fifteen fixed-air fields. The production training stack does not consume this
+surface today -- the maintained policies take dictionary observations across
+instrument/contact/warning/mission domains with per-domain preprocessing
+(`python/models/transformer.py`). CP-6 therefore closes G-C for the surface
+the resident backend actually owns: a consumer that reads every element of
+the lease tensor and performs representative pre-inference work on device is
+learner-equivalent *for the resident fixture contract*, and the gate closure
+must say so explicitly. Making the production dictionary-observation stack
+device-resident is a separate, larger surface recorded under residuals; this
+iteration neither delivers nor claims it.
+
 ## Verified current facts (2026-08-12, worktree with CP-5 in flight)
 
 Re-verify these if CP-5 lands in a different shape than reviewed.
 
-1. The lease payload is already the tensor a policy forward wants.
-   `pack_device_observation_kernel`
+1. The lease payload is already the tensor a policy forward over this fixture
+   surface wants. `pack_device_observation_kernel`
    (`src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu`)
    transposes the simulation's field-major SoA into a world-major,
    C-contiguous `[world_count, 15]` buffer and narrows `double` to finite-clipped
@@ -96,7 +110,7 @@ One iteration, one coherent commit, per program protocol.
 | --- | --- | --- |
 | Policy-input layout | world-major `[world, feature]` `float`, C-contiguous | A later DLPack/`__cuda_array_interface__` export wraps the buffer zero-transform; `torch.from_dlpack` yields the policy input directly. |
 | Stride semantics | keep element-based `TensorDescriptor` | DLPack strides are element-based; no descriptor migration. |
-| Synchronization | consumer waits on the lease ready event on its own stream (CR2-3 shape, unchanged) | Maps 1:1 to `torch.cuda.Stream.wait_event`; no sync redesign when the consumer becomes a torch op. |
+| Synchronization | keep the event-based ordering: the lease pins `producer_stream = 0` (`legacy_default_stream` per the contract) and the consumer orders itself with `cudaStreamWaitEvent` on the ready event, never a device-wide sync | The ready event is what a torch export waits on. The legacy-default-stream identity is a current pin, not the end state: the export design must decide the stream-interop mapping explicitly. |
 | Lifetime/safety | epochs + shared-owner lease/receipt semantics unchanged | A future Python handle inherits staleness detection instead of inventing it. |
 | Exposure | consumer stays a private seam; no `RuntimeFacade` or binding change | Public exposure is a promotion-scope decision (CP-9 or later), not a measurement-iteration side effect. |
 | Normalization ownership | contract header, single owner | The torch-side preprocessing later reads the same constants; CPU/GPU/learner can never drift apart silently. |
@@ -124,9 +138,11 @@ One iteration, one coherent commit, per program protocol.
    rejected by our own collector -- the same failure class CP-4c documented.
    The forward-serving fix is derivation, not another pin: take parent
    profiles, launch counts, and kernel identities from the contract via the
-   existing `kernel_catalog(version)` / `launch_sequence(version)` accessors,
-   so v4 and later generations inherit the chain without a collector edit.
-   Do not request an elevated capture session before this lands.
+   existing `kernel_catalog(version)` / `launch_sequence(version)` accessors.
+   A later generation then never re-pins launch counts or command budgets; it
+   still registers its identity in the schema module and its measured-unit
+   map in the parser, once each. Do not request an elevated capture session
+   before this lands.
 3. CP-7 (small-batch disposition) stays after CP-5 evidence: launch-chain
    reduction may already move the world-1 picture, so the fix-vs-threshold
    decision should read the post-fusion matrix first.
@@ -147,6 +163,10 @@ One iteration, one coherent commit, per program protocol.
 - The DLPack/`__cuda_array_interface__` export itself, and any torch-side
   consumer, remain post-promotion work; this draft only keeps their path
   unobstructed.
+- The production dictionary-observation stack (instrument/contact/warning/
+  mission domains with per-domain preprocessing) has no device-resident path
+  and is not covered by CP-6's gate closure; giving it one is its own program
+  scope after the fixture surface proves the pattern.
 - Whether the learner-equivalent consumer should also feed the leader/world
   batch cooperative lane is out of scope until the air-domain line proves the
   pattern.

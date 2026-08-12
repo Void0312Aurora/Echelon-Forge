@@ -27,11 +27,22 @@
 真实 learner 集成是增量式而非纠正式」为取舍标准。凡是对 CP-6 足够便宜、
 但将来接 torch 时必须推倒重来的选项，本草案一律拒绝并写明理由。
 
+## 「learner 等价」的范围界定（独立评审后的更正）
+
+lease 暴露的是常驻后端的 **fixture** 观测契约：固定空域的十五个字段。生产
+训练栈今天并不消费这个面——维护中的策略吃的是跨仪表/接触/告警/任务域的
+字典观测，并带逐域预处理（`python/models/transformer.py`）。因此 CP-6 关闭
+的是常驻后端真正拥有的面上的 G-C：一个读取 lease 张量每个元素、在设备上
+执行代表性前处理工作的消费者，是**对常驻 fixture 契约而言**的 learner 等价
+消费，门禁关闭记录必须明说这一点。让生产字典观测栈常驻设备是另一个更大的
+面，记入残差；本迭代既不交付也不声称它。
+
 ## 已核实的现状事实（2026-08-12，CP-5 进行中的工作树）
 
 若 CP-5 落地形态与受评审版本不同，须重新核实。
 
-1. lease 载荷已经是策略前向想要的张量。`pack_device_observation_kernel`
+1. lease 载荷已经是此 fixture 面上策略前向想要的张量。
+   `pack_device_observation_kernel`
    （`src/runtime/facade/internal/cuda_resident/cuda_world_store_cuda_observation.cu`）
    把仿真侧 field 主序 SoA 转置为 world 主序、C 连续的
    `[world_count, 15]` 缓冲，并把 `double` 窄化为有限值截断的 `float`。
@@ -82,7 +93,7 @@
 | --- | --- | --- |
 | 策略输入布局 | world 主序 `[world, feature]` `float`，C 连续 | 日后 DLPack/`__cuda_array_interface__` 导出零变换包装该缓冲；`torch.from_dlpack` 直接得到策略输入。 |
 | stride 语义 | 沿用 element 单位的 `TensorDescriptor` | DLPack stride 即 element 单位；descriptor 无迁移。 |
-| 同步 | 消费者在自有 stream 上等待 lease ready event（CR2-3 形态，不变） | 与 `torch.cuda.Stream.wait_event` 一一对应；消费者将来变成 torch 算子时无需重设计同步。 |
+| 同步 | 保持基于事件的排序：lease 钉定 `producer_stream = 0`（契约中的 `legacy_default_stream`），消费者用 `cudaStreamWaitEvent` 对 ready event 排序，绝不做设备级同步 | ready event 就是未来 torch 导出所等待的对象。legacy 默认流身份是当前钉定而非终态：导出设计必须显式决定流互操作的映射。 |
 | 生命期/安全 | epoch 与共享所有权的 lease/receipt 语义不变 | 未来的 Python 句柄直接继承过期检测，无需另行发明。 |
 | 暴露面 | 消费者保持私有 seam；不动 `RuntimeFacade` 与绑定 | 公开暴露是晋升范围的决策（CP-9 或之后），不是测量迭代的副作用。 |
 | 归一化所有权 | 契约头，单一所有者 | torch 侧前处理将来读同一份常量；CPU/GPU/learner 三方永远不会静默漂移。 |
@@ -107,8 +118,9 @@
    `--launch-count=12`。v3 计数器捕获（7 次 launch、5 个 kernel）会被我们
    自己的采集器拒收——与 CP-4c 记录的是同一失败类别。服务于未来的修法是
    **派生而非再钉一版**：父 profile、launch 数与 kernel 身份经由既有的
-   `kernel_catalog(version)` / `launch_sequence(version)` 访问器从契约取得，
-   使 v4 及以后世代无需改采集器即可继承证据链。该项落地前不得申请提权
+   `kernel_catalog(version)` / `launch_sequence(version)` 访问器从契约取得。
+   此后新世代不再于任何位置重钉 launch 数或命令预算；它仍需在 schema 模块
+   注册一次身份、在 parser 注册一次测量单位映射。该项落地前不得申请提权
    采集会话。
 3. CP-7（小批量处置）继续排在 CP-5 证据之后：launch 链缩减本身可能已改变
    world-1 的格局，「修复还是阈值路由」应先读融合后的矩阵数据再定。
@@ -127,6 +139,9 @@
 
 - DLPack/`__cuda_array_interface__` 导出本体及任何 torch 侧消费者仍是
   晋升后工作；本草案只保证其路径畅通。
+- 生产字典观测栈（仪表/接触/告警/任务域，带逐域预处理）没有设备常驻路径，
+  也不在 CP-6 门禁关闭的覆盖范围内；为它建路是 fixture 面验证模式之后的
+  独立程序范围。
 - learner 等价消费者是否也应服务 leader/world-batch 协同通道，在空域线
   验证该模式之前不在范围内。
 - 本草案在目录 README 阅读序中的注册推迟到 CP-6 冻结 commit 一并完成，
