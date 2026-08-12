@@ -97,6 +97,8 @@ def kernel_catalog(schema_version: int) -> tuple[KernelSpec, ...]:
         return _parse_catalog("kKernelSpecsV2")
     if schema_version == 3:
         return _parse_catalog("kKernelSpecsV3")
+    if schema_version == 4:
+        return _parse_catalog("kKernelSpecsV4")
     raise EvidenceError(f"unknown kernel catalog schema version: {schema_version}")
 
 
@@ -109,6 +111,8 @@ def launch_sequence(schema_version: int) -> tuple[tuple[str, str], ...]:
         return _parse_launch_sequence("kLaunchSequenceV2")
     if schema_version == 3:
         return _parse_launch_sequence("kLaunchSequenceV3")
+    if schema_version == 4:
+        return _parse_launch_sequence("kLaunchSequenceV4")
     raise EvidenceError(f"unknown launch sequence schema version: {schema_version}")
 
 

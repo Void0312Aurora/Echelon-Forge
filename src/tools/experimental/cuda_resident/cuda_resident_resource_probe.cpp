@@ -35,21 +35,23 @@ using runtime::cuda_resident::CudaResidentDeviceConsumer;
 using runtime::cuda_resident::replay::CudaResidentReplayHarness;
 using runtime::cuda_resident::testing::CudaWorldStoreTestAccess;
 
-// CP-5 v3 capture against the fused window graph. v2 recaptured the same
-// execution graph as v1 under semantic names; v3 is different in kind: the six
-// window-commit launches measured by v1/v2 are now one fused launch, so the
-// static resource table has five kernels and the launch inventory has seven
-// rows. The captured workload (trace signature) is unchanged, and the fold
-// table in the contract pins which v2 kernels the fused kernel absorbed.
+// CP-7b v4 capture against the folded launch graph. v3 fused the six-kernel
+// window body; v4 folds the stage_publish and window_commit barrier launches
+// into their stage kernels as per-world epilogues, so the launch inventory
+// has five rows over the same five kernels. The captured workload (trace
+// signature) is unchanged, and the launch-absorption walk in the contract
+// pins which v3 launches each v4 launch carries.
 //
-// Neither retirement nor supersession is reverted: kCaptureProbeV1Retired
-// stays true, v1 and v2 identifiers are untouched, and this probe declares
-// itself the successor of v2.
+// No retirement or supersession is reverted: kCaptureProbeV1Retired stays
+// true, v1/v2/v3 identifiers are untouched, and this probe declares itself
+// the successor of v3.
 static_assert(evidence::kCaptureProbeV1Retired);
 static_assert(evidence::kProbeSchemaV2 != evidence::kProbeSchemaV1);
 static_assert(evidence::kProbeSchemaV2Predecessor == evidence::kProbeSchemaV1);
 static_assert(evidence::kProbeSchemaV3 != evidence::kProbeSchemaV2);
 static_assert(evidence::kProbeSchemaV3Predecessor == evidence::kProbeSchemaV2);
+static_assert(evidence::kProbeSchemaV4 != evidence::kProbeSchemaV3);
+static_assert(evidence::kProbeSchemaV4Predecessor == evidence::kProbeSchemaV3);
 
 struct Args {
     std::string output_path;
@@ -91,11 +93,11 @@ Args parse_args(int argc, char **argv) {
         if (flag == "--output" && index + 1 < argc) {
             args.output_path = argv[++index];
         } else if (flag == "--help" || flag == "-h") {
-            std::cout << "Usage: CUDA resident resource probe v3 [--output PATH]\n";
+            std::cout << "Usage: CUDA resident resource probe v4 [--output PATH]\n";
             std::exit(0);
         } else {
             throw std::invalid_argument(
-                "usage: CUDA resident resource probe v3 [--output PATH]");
+                "usage: CUDA resident resource probe v4 [--output PATH]");
         }
     }
     return args;
@@ -183,7 +185,7 @@ Json resource_json(std::string_view kernel_id, std::string_view symbol_fragment,
     };
 }
 
-// Ordered to match kKernelSpecsV3 exactly; require_catalog_alignment verifies
+// Ordered to match kKernelSpecsV4 exactly; require_catalog_alignment verifies
 // that pairing so a future catalog edit cannot silently desynchronize this list.
 Json query_kernel_resources() {
     return Json::array({
@@ -200,41 +202,54 @@ Json query_kernel_resources() {
     });
 }
 
-// Fail closed if the emitted rows and the v3 catalog ever disagree. The v1 probe
+// Fail closed if the emitted rows and the v4 catalog ever disagree. The v1 probe
 // had no such check, which is how a rename could leave the contract stale while
 // the probe still produced a plausible-looking report.
 void require_catalog_alignment(const Json &rows) {
-    if (rows.size() != evidence::kKernelSpecsV3.size()) {
-        throw std::runtime_error("v3 resource rows do not match the v3 kernel catalog size");
+    if (rows.size() != evidence::kKernelSpecsV4.size()) {
+        throw std::runtime_error("v4 resource rows do not match the v4 kernel catalog size");
     }
-    for (std::size_t index = 0; index < evidence::kKernelSpecsV3.size(); ++index) {
-        const auto &spec = evidence::kKernelSpecsV3[index];
+    for (std::size_t index = 0; index < evidence::kKernelSpecsV4.size(); ++index) {
+        const auto &spec = evidence::kKernelSpecsV4[index];
         const auto &row = rows.at(index);
         if (row.at("kernel_id").get<std::string>() != spec.kernel_id) {
-            throw std::runtime_error("v3 kernel_id drift at row " + std::to_string(index));
+            throw std::runtime_error("v4 kernel_id drift at row " + std::to_string(index));
         }
         if (row.at("symbol_fragment").get<std::string>() != spec.symbol_fragment) {
-            throw std::runtime_error("v3 symbol_fragment drift at row " + std::to_string(index));
+            throw std::runtime_error("v4 symbol_fragment drift at row " + std::to_string(index));
         }
     }
 }
 
-// The v2->v3 fold is deliberately not a bijection: it records which retired
-// kernels the fused window body absorbed.
-Json fold_json() {
+// The v3->v4 launch absorption: for each v4 launch, the v3 launch indices it
+// carries. Derived by the same walk the contract static_asserts, so the report
+// can never disagree with the checked correspondence.
+Json absorption_json() {
     Json rows = Json::array();
-    for (const auto &entry : evidence::kKernelSpecsV3Fold) {
+    std::size_t v4_index = 0;
+    for (std::size_t index = 0; index < evidence::kLaunchSequenceV3.size(); ++index) {
+        const auto &launch = evidence::kLaunchSequenceV3[index];
+        const bool absorbed_barrier =
+            launch.kernel_id == std::string_view("apply_barrier") &&
+            (launch.semantic_stage == std::string_view("stage_publish") ||
+             launch.semantic_stage == std::string_view("window_commit"));
+        if (absorbed_barrier) {
+            rows.back()["v3_launch_indices"].push_back(index);
+            continue;
+        }
         rows.push_back({
-            {"v2_kernel_id", entry.v2_kernel_id},
-            {"v3_kernel_id", entry.v3_kernel_id},
+            {"v4_launch_index", v4_index},
+            {"kernel_id", evidence::kLaunchSequenceV4[v4_index].kernel_id},
+            {"v3_launch_indices", Json::array({index})},
         });
+        ++v4_index;
     }
     return rows;
 }
 
 Json launch_sequence_json() {
     Json rows = Json::array();
-    for (const auto &launch : evidence::kLaunchSequenceV3) {
+    for (const auto &launch : evidence::kLaunchSequenceV4) {
         rows.push_back({
             {"launch_index", launch.launch_index},
             {"kernel_id", launch.kernel_id},
@@ -349,9 +364,9 @@ Json run_probe() {
     }
     const auto diagnostics = backend.diagnostics();
     return {
-        {"schema_version", evidence::kProbeSchemaV3},
-        {"supersedes_schema_version", evidence::kProbeSchemaV3Predecessor},
-        {"profile_id", evidence::kProfileIdV3},
+        {"schema_version", evidence::kProbeSchemaV4},
+        {"supersedes_schema_version", evidence::kProbeSchemaV4Predecessor},
+        {"profile_id", evidence::kProfileIdV4},
         {"build_config", EF_RESOURCE_CAPTURE_BUILD_CONFIG},
         {"cuda_architecture", evidence::kCudaArchitecture},
         {"trace_signature_algorithm", evidence::kTraceSignatureAlgorithm},
@@ -365,7 +380,7 @@ Json run_probe() {
         {"backend_id", diagnostics.backend_id},
         {"cuda_environment", environment},
         {"runtime_kernel_resources", resources},
-        {"kernel_id_fold", fold_json()},
+        {"launch_absorption", absorption_json()},
         {"expected_launch_sequence", launch_sequence_json()},
         {"capture",
          {
@@ -419,7 +434,7 @@ int main(int argc, char **argv) {
         write_report(run_probe(), args.output_path);
         return 0;
     } catch (const std::exception &error) {
-        std::cerr << "CUDA resident resource probe v3 failed: " << error.what() << '\n';
+        std::cerr << "CUDA resident resource probe v4 failed: " << error.what() << '\n';
         return 1;
     }
 }

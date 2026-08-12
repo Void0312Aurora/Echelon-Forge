@@ -603,15 +603,23 @@ __device__ void window_phase_episode_projection(
 // no kernel read the status flag, so a failed world only marked status and the
 // host discarded the staged slot. Running all phases unconditionally here
 // preserves exactly that observable contract.
+//
+// CP-7b: the window_commit barrier is the kernel's final per-world epilogue
+// instead of a separate launch. The epilogue mirrors apply_barrier_kernel's
+// window_commit branch exactly, runs after the episode phase (which reads the
+// pre-increment simulation time and global version, as it did across the v3
+// launch boundary), and touches only its own world's version, clock, and
+// shard fields.
 __global__ void window_commit_body_kernel(
-    std::size_t world_capacity, const double *time_steps, const double *simulation_times,
+    std::size_t world_capacity, const double *time_steps, double *simulation_times,
     const double *control_doubles, const float *control_floats, const std::uint8_t *control_flags,
     const double *prepared_doubles, const std::uint8_t *prepared_flags,
-    const std::uint64_t *entity_ids, const std::uint64_t *global_versions, double *kinematics,
+    const std::uint64_t *entity_ids, std::uint64_t *global_versions, double *kinematics,
     double *dynamics, double *flight_dynamics_forces, double *instruments, double *observations,
     std::uint64_t *observation_ids, double *rewards, std::uint64_t *reward_versions,
     std::uint8_t *termination_flags, std::uint8_t *termination_codes, std::uint8_t *event_empty,
-    std::uint32_t *status) {
+    std::uint64_t *clock_ticks, std::uint64_t *barrier_sequences, std::uint8_t *barrier_codes,
+    std::uint64_t *shard_versions, std::uint32_t *status) {
     const std::size_t world = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world >= world_capacity) return;
     window_phase_flight_dynamics_forces(world_capacity, world, time_steps, control_doubles,
@@ -631,6 +639,66 @@ __global__ void window_commit_body_kernel(
                                     kinematics, dynamics, instruments, entity_ids, global_versions,
                                     observations, observation_ids, rewards, reward_versions,
                                     termination_flags, termination_codes, event_empty, status);
+
+    bool overflow = increment_would_overflow(barrier_sequences[world]) ||
+                    increment_would_overflow(global_versions[world]) ||
+                    increment_would_overflow(clock_ticks[world]) ||
+                    !isfinite(simulation_times[world] + time_steps[world]);
+
+    const std::size_t identity_index =
+        static_cast<std::size_t>(CudaResidentShard::identity) * world_capacity + world;
+    const std::size_t clock_index =
+        static_cast<std::size_t>(CudaResidentShard::clock) * world_capacity + world;
+    const std::size_t snapshot_index =
+        static_cast<std::size_t>(CudaResidentShard::snapshot) * world_capacity + world;
+    const std::size_t kinematics_index =
+        static_cast<std::size_t>(CudaResidentShard::kinematics) * world_capacity + world;
+    const std::size_t dynamics_index =
+        static_cast<std::size_t>(CudaResidentShard::dynamics) * world_capacity + world;
+    const std::size_t episode_index =
+        static_cast<std::size_t>(CudaResidentShard::episode) * world_capacity + world;
+    const std::size_t instrument_index =
+        static_cast<std::size_t>(CudaResidentShard::instrument) * world_capacity + world;
+    const std::size_t observation_index =
+        static_cast<std::size_t>(CudaResidentShard::observation) * world_capacity + world;
+    const std::size_t reward_index =
+        static_cast<std::size_t>(CudaResidentShard::reward) * world_capacity + world;
+    const std::size_t termination_index =
+        static_cast<std::size_t>(CudaResidentShard::termination) * world_capacity + world;
+    const std::size_t events_index =
+        static_cast<std::size_t>(CudaResidentShard::events) * world_capacity + world;
+    overflow = overflow || increment_would_overflow(shard_versions[identity_index]) ||
+               increment_would_overflow(shard_versions[clock_index]) ||
+               increment_would_overflow(shard_versions[snapshot_index]) ||
+               increment_would_overflow(shard_versions[kinematics_index]) ||
+               increment_would_overflow(shard_versions[dynamics_index]) ||
+               increment_would_overflow(shard_versions[episode_index]) ||
+               increment_would_overflow(shard_versions[instrument_index]) ||
+               increment_would_overflow(shard_versions[observation_index]) ||
+               increment_would_overflow(shard_versions[reward_index]) ||
+               increment_would_overflow(shard_versions[termination_index]) ||
+               increment_would_overflow(shard_versions[events_index]);
+    if (overflow) {
+        atomicExch(status, 1U);
+        return;
+    }
+
+    ++barrier_sequences[world];
+    barrier_codes[world] = static_cast<std::uint8_t>(CudaResidentBarrierCode::window_commit);
+    ++global_versions[world];
+    ++clock_ticks[world];
+    simulation_times[world] += time_steps[world];
+    ++shard_versions[identity_index];
+    ++shard_versions[clock_index];
+    ++shard_versions[snapshot_index];
+    ++shard_versions[kinematics_index];
+    ++shard_versions[dynamics_index];
+    ++shard_versions[episode_index];
+    ++shard_versions[instrument_index];
+    ++shard_versions[observation_index];
+    ++shard_versions[reward_index];
+    ++shard_versions[termination_index];
+    ++shard_versions[events_index];
 }
 
 } // namespace
@@ -663,6 +731,10 @@ cudaError_t launch_window_commit_body(CudaWorldStoreDeviceAllocation *allocation
         device_field<std::uint8_t>(slot, allocation->state_layout.projected_termination_flags),
         device_field<std::uint8_t>(slot, allocation->state_layout.projected_termination_codes),
         device_field<std::uint8_t>(slot, allocation->state_layout.projected_event_empty),
+        device_field<std::uint64_t>(slot, allocation->state_layout.clock_ticks),
+        device_field<std::uint64_t>(slot, allocation->state_layout.barrier_sequences),
+        device_field<std::uint8_t>(slot, allocation->state_layout.barrier_codes),
+        device_field<std::uint64_t>(slot, allocation->state_layout.shard_versions),
         allocation->barrier_status);
     return cudaGetLastError();
 }

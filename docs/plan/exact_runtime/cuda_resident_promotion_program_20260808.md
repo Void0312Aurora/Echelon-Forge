@@ -136,7 +136,7 @@ commit). Critical phases get one independent review before landing.
 | CP-4 | **G-D: achieved counters under elevation** — occupancy, divergence, global/local/shared traffic for all 10 kernels. This is the one hard blocker and the highest-value iteration | G-D closed with real counters, or a recorded second external blocker |
 | CP-5 | Kernel-level optimization driven by CP-4 findings. Known candidates below | **LANDED 2026-08-12.** The six window-commit launches are one fused `window_commit_body_kernel` (12 -> 7 launches per captured window); kernel catalog v3 supersedes v2 through a static-asserted fold; released-state digests stay bit-identical to the frozen CR2-6b capture across both lanes and both campaigns; warmed end-to-end p50 improved in all 20 CR2-6b comparison rows (0.63-0.99x). See "CP-5 landed" below |
 | CP-6 | G-C: learner-equivalent consumption through the CR2-3 lease, without hidden host validation readback | A real consumer, not diagnostics smoke |
-| CP-7 | G-F disposition: either fix small-batch overhead or freeze an explicit selection rule with world-count thresholds | **CP-7a LANDED 2026-08-12:** `cp7.small_batch_selection_rule.v1` freezes world counts below 4 to the CPU reference as documentation-grade policy (no runtime selector; an architecture gate enforces zero runtime consumers), on the measured basis that world 1 carries a ~65.5 us single-thread device floor against a ~18-31 us CPU step. Crossover value is a named CP-8 review item. CP-7b (host-skeleton reduction, candidate 1) is the remaining half |
+| CP-7 | G-F disposition: either fix small-batch overhead or freeze an explicit selection rule with world-count thresholds | **LANDED 2026-08-12, both halves.** CP-7a: `cp7.small_batch_selection_rule.v1` freezes world counts below 4 to the CPU reference as documentation-grade policy (no runtime selector; an architecture gate enforces zero runtime consumers), on the measured basis that world 1 carries a ~65.5 us single-thread device floor against a ~18-31 us CPU step; crossover value is a named CP-8 review item. CP-7b: the stage_publish and window_commit barriers are per-world epilogues of their stage kernels (5 -> 3 launches, syncs, status readbacks, and memsets per window); released-state digests stay bit-identical to frozen CR2-6b in all 30 rows, warmed e2e p50 falls 20-30% at world 1 and 8-21% (campaign 1) / 3-52% (campaign 2) elsewhere. See "CP-7b landed" below |
 | CP-8 | Re-measure the 1/4/16/64/256 matrix after CP-5/CP-7 land, order-balanced, two campaigns | Post-optimization evidence comparable to CR2-6b |
 | CP-9 | Promotion decision: all gates + independent review, or a recorded hold with the exact missing authority | Explicit, evidence-backed verdict |
 
@@ -339,6 +339,77 @@ evidence, but it retired the only capture tool without a replacement, so the
 next counter attempt inherits a recapture obligation. CP-1's compile lane would
 not have caught this — the stub compiles fine. A probe-executability check
 belongs in CP-1's scope.
+
+## CP-7b landed: the in-window barriers are epilogues (2026-08-12)
+
+The world-1 timeline attribution ranked the host skeleton: copies, then
+launches, then memsets and synchronizations, five of each per window. CP-7b
+takes the candidate-1 slice with the smallest semantic blast radius: the
+stage_publish barrier is now the final per-world epilogue of
+`control_preparation_kernel`, and the window_commit barrier the final epilogue
+of `window_commit_body_kernel`, each an exact mirror of the corresponding
+`apply_barrier_kernel` branch. `apply_barrier` keeps its input-injection
+launch (inject is a separate SPI call that must report its own result) and
+its generic body. Per window the base path falls from five launches, five
+synchronizations, five status readbacks, and five status memsets to three of
+each; the staging copies are untouched.
+
+The deferred-check shape the prep note sketched was rejected during design:
+with two state slots and three stages, deferring all checks to the window end
+destroys the rollback point for an inject-stage failure (the next stage's
+staging copy overwrites the only clean slot). The epilogue fold keeps every
+stage's host check and flip exactly where they were, so per-stage failure
+attribution, the retry contract, and the fault-injection hooks survive with
+their observable behavior unchanged -- the barrier-commit hook now fails the
+stage after a clean kernel, before the flip, which is the same external
+contract the separate barrier launch gave it.
+
+Equivalence and improvement, both measured on the recorded host:
+
+| Check | Result |
+| --- | --- |
+| ctest | lifecycle 14 cases / 579 assertions, replay 4/77, full-window: pass |
+| Released-state digests | **bit-identical to frozen CR2-6b in all 30 rows** (20 CUDA + 10 CPU), both campaigns |
+| Workload identity | trace signature `cb31675ee34e5015` unchanged |
+| Captured window (nsys) | exactly 5 launches, 3 synchronizations, 11 memcpys, 3 memsets -- the predicted v4 profile, measured |
+
+Timing against the tracked CP-5 evidence (same protocol, quiet machine,
+order-balanced): warmed e2e p50 at world 1 falls 20-30% across the four modes
+(no-export 0.396 -> 0.279/0.318 ms); world 16/64/256 rows improve 1-25% in
+campaign 1 and 3-52% in campaign 2 (campaign 1's world-4 rows carry transient
+spikes and are not claimed; campaign 2's world-4 rows improve 5-26%).
+Cumulatively from the pre-CP-5 baseline, the world-1 no-export window is down
+~36-44%. The CPU lane still wins world 1 by ~15x -- the CP-7a rule stands,
+unchanged. Raw reports are content-addressed under
+[cuda_resident_cp7b_barrier_fold_20260812/](cuda_resident_cp7b_barrier_fold_20260812/):
+
+| Report | Bytes | SHA-256 |
+|---|---:|---|
+| Post CPU campaign 1 | 104,021 | `7e97c5f2fe58ef461cb93892744f6bc21824bcaf4b474b8aacb6e17b1ac8960f` |
+| Post CUDA campaign 1 | 194,458 | `e84a7f059adf3acd743071d247060cfa4d986238ae155951f45ebf0250ddd6da` |
+| Post CUDA campaign 2 | 194,262 | `bd7d68315a93fdaca0ceb2faeb919d7802bb3e1011def2af977b29ee936cc989` |
+| Post CPU campaign 2 | 103,615 | `af8cf7f349c080503859452f64ac7541f44a4ba714e50a5095440a0e5e04bbd7` |
+
+Catalog v4 carries the governance: the same five kernels as v3 (a checked
+claim -- `kernel_sets_match_v3_to_v4()`), five launches with compound stage
+names for the folded pair, and a static-asserted absorption walk
+(`launch_sequences_correspond_v3_to_v4()`) that reproduces v4 from v3 by
+merging each in-window barrier into the launch before it. The probe emits
+schema v4 with a `launch_absorption` table derived by the same walk; the
+collectors dispatch on generation with v4-specific API and transfer
+expectations (launches 7 -> 5, syncs 5 -> 3, memcpys 13 -> 11, memsets
+5 -> 3, and nothing else -- measured, not asserted); the counter chain
+derives `kRequiredLaunchCountV4 = 5` from the contract. v1/v2/v3 stay frozen
+and their tracked evidence validates byte-for-byte. The fused window body
+with its epilogue is 112 registers / 40-byte stack / zero spills (down from
+116 registers at v3); `window_commit_body.cu` crossed the 700-line soft
+target (748) and is registered as a watch item rather than split, because
+the phase bodies are verbatim copies of the retired kernels kept for parity
+fidelity. The generation-supersession gates moved to their own module
+(`test_cuda_resident_resource_generations.py`) to keep both test files under
+the soft target. A v4 static capture (probe + nsys + collector) validated
+end-to-end against the in-flight tree; the baseline-pinned recapture lands
+as CP-7c immediately after this commit, following the CP-5b precedent.
 
 ## CP-5 landed: the window graph is one launch (2026-08-12)
 

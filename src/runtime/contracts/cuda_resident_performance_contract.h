@@ -84,18 +84,20 @@ struct WindowTransferLedger {
                                                                 std::size_t state_slot_bytes,
                                                                 bool host_snapshot,
                                                                 bool device_consumer) noexcept {
-    // CP-5 fused the six window-commit launches into one, so the base window is
-    // five launches: three barriers, control preparation, and the fused window
-    // body. Copy and synchronization counts are unchanged by the fusion.
+    // CP-5 fused the six window-commit launches into one; CP-7b folded the
+    // stage_publish and window_commit barriers into their stage kernels. The
+    // base window is three launches (input-injection barrier, control
+    // preparation, fused window body), each with one synchronization and one
+    // four-byte status readback. The staging copies are unchanged.
     WindowTransferLedger ledger{
         .h2d_copy_count = 3,
         .h2d_bytes = world_count * kFlightControlH2dBytesPerWorld,
-        .d2h_copy_count = 5,
-        .d2h_bytes = 5 * sizeof(std::uint32_t),
+        .d2h_copy_count = 3,
+        .d2h_bytes = 3 * sizeof(std::uint32_t),
         .d2d_copy_count = 3,
         .d2d_bytes = 3 * state_slot_bytes,
-        .kernel_launch_count = 5,
-        .synchronization_count = 5,
+        .kernel_launch_count = 3,
+        .synchronization_count = 3,
     };
     const auto add_state_snapshot_readback = [&]() {
         // state_snapshot() reconstructs the host-visible state and also reads

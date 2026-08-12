@@ -32,10 +32,16 @@ PROFILE_V2 = "cp.resource.steady_full_window_body.sm86.v2"
 SCHEMA_V3 = "cuda_resident.cp.kernel_resource_evidence.v3"
 PROFILE_V3 = "cp.resource.steady_full_window_body.sm86.v3"
 
+# v4 identity for the CP-7b launch fold: the same five kernels, five launches,
+# with the in-window barriers as stage-kernel epilogues. v3 freezes in turn.
+SCHEMA_V4 = "cuda_resident.cp.kernel_resource_evidence.v4"
+PROFILE_V4 = "cp.resource.steady_full_window_body.sm86.v4"
+
 _IDENTITY_BY_VERSION = {
     1: (SCHEMA, PROFILE),
     2: (SCHEMA_V2, PROFILE_V2),
     3: (SCHEMA_V3, PROFILE_V3),
+    4: (SCHEMA_V4, PROFILE_V4),
 }
 
 
@@ -183,21 +189,44 @@ _COMMON_API_COUNTS = {
     "cudaStreamWaitEvent": 1,
 }
 # The CP-5 fusion removed five launches per captured window and nothing else:
-# synchronization, copy, and allocation counts are identical across
-# generations, which is itself a checked claim about what the fusion touched.
+# synchronization, copy, and allocation counts are identical between v2 and
+# v3, which is itself a checked claim about what the fusion touched. The CP-7b
+# launch fold then removed two launches, and with them exactly two
+# synchronizations, two four-byte status readbacks, and two status memsets --
+# the v4 expectations pin that delta and nothing else.
 EXPECTED_API_COUNTS = {**_COMMON_API_COUNTS, "cudaLaunchKernel": 12}
 EXPECTED_API_COUNTS_V3 = {**_COMMON_API_COUNTS, "cudaLaunchKernel": 7}
+EXPECTED_API_COUNTS_V4 = {
+    **_COMMON_API_COUNTS,
+    "cudaLaunchKernel": 5,
+    "cudaDeviceSynchronize": 3,
+    "cudaMemcpy": 11,
+    "cudaMemset": 3,
+}
 
 
 def expected_api_counts(version: int) -> dict[str, int]:
-    return EXPECTED_API_COUNTS_V3 if version >= 3 else EXPECTED_API_COUNTS
+    if version >= 4:
+        return EXPECTED_API_COUNTS_V4
+    return EXPECTED_API_COUNTS_V3 if version == 3 else EXPECTED_API_COUNTS
 
 
+# Transfer totals at 256 worlds. v4 drops two four-byte status readbacks; the
+# staging copies and control uploads are untouched by the launch fold.
 EXPECTED_TRANSFERS = {
     "device_to_device": {"bytes": 677376, "copy_count": 3},
     "device_to_host": {"bytes": 229908, "copy_count": 7},
     "host_to_device": {"bytes": 14080, "copy_count": 3},
 }
+EXPECTED_TRANSFERS_V4 = {
+    "device_to_device": {"bytes": 677376, "copy_count": 3},
+    "device_to_host": {"bytes": 229900, "copy_count": 5},
+    "host_to_device": {"bytes": 14080, "copy_count": 3},
+}
+
+
+def expected_transfers(version: int) -> dict[str, dict[str, int]]:
+    return EXPECTED_TRANSFERS_V4 if version >= 4 else EXPECTED_TRANSFERS
 INTERPRETATION_KEYS = {
     "compiler_spills_are_not_inferred_from_stack_or_sass_local_instructions",
     "cuda_memcpy_api_bytes_are_not_kernel_global_memory_traffic",
@@ -226,9 +255,10 @@ _exact_integer_list = _STRICT.exact_integer_list
 _exact_integer_map = _STRICT.exact_integer_map
 
 
-def _validate_transfer_map(value: Any) -> None:
-    transfers = _object(value, set(EXPECTED_TRANSFERS), "CUDA copy inventory")
-    for direction, expected in EXPECTED_TRANSFERS.items():
+def _validate_transfer_map(value: Any, version: int = 1) -> None:
+    expected_map = expected_transfers(version)
+    transfers = _object(value, set(expected_map), "CUDA copy inventory")
+    for direction, expected in expected_map.items():
         _exact_integer_map(transfers[direction], expected, f"CUDA copy inventory.{direction}")
 
 
@@ -345,8 +375,14 @@ def _validate_launch_topology(
     _exact_integer_map(
         topology["cuda_api_counts"], expected_api_counts(version), "CUDA API inventory"
     )
-    _validate_transfer_map(topology["cuda_memcpy_transfers"])
-    _exact_integer(topology["synchronization_activity_rows"], 8, "synchronization activity rows")
+    _validate_transfer_map(topology["cuda_memcpy_transfers"], version)
+    # v4 folded two of the five per-window synchronizations into the stage
+    # kernels; the Nsight synchronization activity table shrinks with them.
+    _exact_integer(
+        topology["synchronization_activity_rows"],
+        6 if version >= 4 else 8,
+        "synchronization activity rows",
+    )
     return topology, launches
 
 

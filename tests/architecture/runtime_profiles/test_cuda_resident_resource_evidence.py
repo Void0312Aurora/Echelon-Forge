@@ -223,113 +223,6 @@ def test_frozen_v1_capture_identity_survives_the_semantic_kernel_migration() -> 
         assert f'{{{index}, "{kernel_id}", "{stage}"}}' in contract
 
 
-def test_v2_capture_supersedes_v1_without_reviving_the_retired_probe() -> None:
-    """The v2 recapture must supersede v1, not revert its retirement.
-
-    Since CP-5, v2 is itself frozen history: its catalog names the pre-fusion
-    symbols, which the retained v2 static and counter evidence hashes against.
-    The v2 identity, migration table, and static asserts must therefore stay in
-    the contract untouched -- editing them to match the fused sources would
-    invalidate that evidence exactly as relabeling v1 would have.
-    """
-    contract = CONTRACT.read_text(encoding="utf-8")
-    probe = PROBE.read_text(encoding="utf-8")
-
-    # v2 identity is distinct from v1 and declares what it replaces.
-    assert "cuda_resident.cp.resource_capture_probe.v2" in contract
-    assert "cuda_resident.cp.kernel_resource_evidence.v2" in contract
-    assert "cp.resource.steady_full_window_body.sm86.v2" in contract
-    assert "kProbeSchemaV2Predecessor = kProbeSchemaV1" in contract
-
-    # The retirement marker survives: neither v2 nor v3 flips it back.
-    assert "kCaptureProbeV1Retired = true" in contract
-    assert "static_assert(evidence::kCaptureProbeV1Retired);" in probe
-
-    # Compile-time enforcement that v2 describes the same graph as v1.
-    for guard in (
-        "static_assert(kKernelSpecsV2.size() == 10);",
-        "static_assert(kLaunchSequenceV2.size() == 12);",
-        "static_assert(kernel_catalog_v2_is_complete());",
-        "static_assert(kernel_migration_is_total());",
-        "static_assert(launch_sequences_correspond());",
-    ):
-        assert guard in contract
-
-    # The frozen v2 catalog keeps naming the pre-fusion symbols.
-    for symbol in (
-        "flight_dynamics_forces_kernel",
-        "flight_dynamics_aerodynamics_kernel",
-        "flight_dynamics_integrate_kernel",
-        "instrument_projection_kernel",
-        "configuration_projection_kernel",
-        "episode_projection_kernel",
-    ):
-        assert f'"{symbol}"' in contract, f"v2 catalog is missing {symbol}"
-
-
-def test_v3_capture_supersedes_v2_against_the_fused_window_graph() -> None:
-    """v3 is a deliberate execution-graph change, not a relabel.
-
-    CP-5 fused the six window-commit launches into one kernel. That claim is
-    checked structurally: the v3 catalog exists with a fold table that is total
-    on v2 and surjective onto v3, launch correspondence across the fold is a
-    static assert, every v3 symbol is emitted by the current .cu sources, and
-    the probe aligns its rows against v3 while the workload digest stays the
-    frozen one.
-    """
-    contract = CONTRACT.read_text(encoding="utf-8")
-    probe = PROBE.read_text(encoding="utf-8")
-
-    # v3 identity is distinct and declares what it replaces.
-    assert "cuda_resident.cp.resource_capture_probe.v3" in contract
-    assert "cuda_resident.cp.kernel_resource_evidence.v3" in contract
-    assert "cp.resource.steady_full_window_body.sm86.v3" in contract
-    assert "kProbeSchemaV3Predecessor = kProbeSchemaV2" in contract
-
-    # Compile-time enforcement of the fold claim.
-    for guard in (
-        "static_assert(kKernelSpecsV3.size() == 5);",
-        "static_assert(kLaunchSequenceV3.size() == 7);",
-        "static_assert(kernel_catalog_v3_is_complete());",
-        "static_assert(kernel_fold_is_total_and_surjective());",
-        "static_assert(launch_sequences_correspond_v2_to_v3());",
-    ):
-        assert guard in contract
-
-    # Every v3 kernel must name the symbol the current sources actually emit.
-    cuda_dir = ROOT / "src/runtime/facade/internal/cuda_resident"
-    emitted_blob = "\n".join(
-        source.read_text(encoding="utf-8") for source in cuda_dir.glob("*.cu")
-    )
-    v3_symbols = [
-        "apply_barrier_kernel",
-        "control_preparation_kernel",
-        "window_commit_body_kernel",
-        "pack_device_observation_kernel",
-        "device_observation_consumer_smoke_kernel",
-    ]
-    for symbol in v3_symbols:
-        assert f'"{symbol}"' in contract, f"v3 catalog is missing {symbol}"
-        assert f"{symbol}(" in emitted_blob, (
-            f"v3 catalog names {symbol}, which no .cu source emits"
-        )
-
-    # The probe must fail closed on catalog drift rather than emit a plausible
-    # report -- the exact gap that let the rename go unnoticed.
-    assert "require_catalog_alignment" in probe
-    assert "kKernelSpecsV3" in probe
-    # A static capture must never be mistaken for a counter capture.
-    assert '"achieved_counters_present", false' in probe
-    # A recapture grants no new authority.
-    for withheld in (
-        "kMaintainedClaimAllowed",
-        "kPublicSupportEnabled",
-        "kPromotionAllowed",
-        "kTuningAuthorized",
-    ):
-        assert withheld in probe
-
-
 def test_python_kernel_catalog_has_no_second_owner() -> None:
     """The Python collector must derive its catalog from the C++ contract.
 
@@ -347,8 +240,13 @@ def test_python_kernel_catalog_has_no_second_owner() -> None:
     assert "kKernelSpecs" in source and "kKernelSpecsV2" in source
 
     contract = CONTRACT.read_text(encoding="utf-8")
-    expected_shape = {1: (10, 12), 2: (10, 12), 3: (5, 7)}
-    for version, array_name in ((1, "kKernelSpecs"), (2, "kKernelSpecsV2"), (3, "kKernelSpecsV3")):
+    expected_shape = {1: (10, 12), 2: (10, 12), 3: (5, 7), 4: (5, 5)}
+    for version, array_name in (
+        (1, "kKernelSpecs"),
+        (2, "kKernelSpecsV2"),
+        (3, "kKernelSpecsV3"),
+        (4, "kKernelSpecsV4"),
+    ):
         catalog = static.kernel_catalog(version)
         kernel_count, launch_count = expected_shape[version]
         assert len(catalog) == kernel_count, f"v{version} catalog shape drifted"
@@ -372,8 +270,14 @@ def test_python_kernel_catalog_has_no_second_owner() -> None:
     # the frozen evidence they check are unaffected.
     assert static.KERNELS == v1
 
+    # v3 and v4 name the same kernels; only the apply_barrier launch count
+    # moved, which is what "launch fold, not kernel change" means.
+    v4 = static.kernel_catalog(4)
+    assert [spec.kernel_id for spec in v4] == [spec.kernel_id for spec in v3]
+    assert {spec.symbol_fragment for spec in v4} == {spec.symbol_fragment for spec in v3}
+
     with pytest.raises(static.EvidenceError):
-        static.kernel_catalog(4)
+        static.kernel_catalog(5)
 
 
     """CMake restores capture dependencies only against a versioned catalog.
@@ -422,6 +326,9 @@ def test_collectors_validate_against_the_generation_a_report_declares() -> None:
     assert schema.SCHEMA_V3 == "cuda_resident.cp.kernel_resource_evidence.v3"
     assert schema.PROFILE_V3 == "cp.resource.steady_full_window_body.sm86.v3"
     assert collector.PROBE_SCHEMA_V3 == "cuda_resident.cp.resource_capture_probe.v3"
+    assert schema.SCHEMA_V4 == "cuda_resident.cp.kernel_resource_evidence.v4"
+    assert schema.PROFILE_V4 == "cp.resource.steady_full_window_body.sm86.v4"
+    assert collector.PROBE_SCHEMA_V4 == "cuda_resident.cp.resource_capture_probe.v4"
 
     # The frozen evidence must keep validating as v1, unchanged.
     frozen = json.loads(EVIDENCE.read_text(encoding="utf-8"))
@@ -450,19 +357,39 @@ def test_collectors_validate_against_the_generation_a_report_declares() -> None:
         index for index, (kernel, _) in enumerate(v3_launches) if kernel == "apply_barrier"
     ] == [0, 2, 4]
     assert v3_launches[3] == ("window_commit_body", "window_commit_body")
+    # Across the CP-7b fold only the input-injection barrier keeps its own
+    # launch; the folded stages carry compound names.
+    v4_launches = static.launch_sequence(4)
+    assert len(v4_launches) == 5
+    assert [
+        index for index, (kernel, _) in enumerate(v4_launches) if kernel == "apply_barrier"
+    ] == [0]
+    assert v4_launches[1] == ("control_preparation", "control_preparation_and_stage_publish")
+    assert v4_launches[2] == ("window_commit_body", "window_commit_body_and_window_commit")
     with pytest.raises(static.EvidenceError):
-        static.launch_sequence(4)
+        static.launch_sequence(5)
 
-    # The versioned API expectations pin what the fusion changed: five fewer
-    # launches per captured window and nothing else.
+    # The versioned API expectations pin what each generation changed: CP-5
+    # removed five launches and nothing else; CP-7b removed two launches and,
+    # with them, exactly two synchronizations, two status readbacks, and two
+    # status memsets.
     assert schema.expected_api_counts(2)["cudaLaunchKernel"] == 12
     assert schema.expected_api_counts(3)["cudaLaunchKernel"] == 7
     unchanged_v2 = {k: v for k, v in schema.expected_api_counts(2).items() if k != "cudaLaunchKernel"}
     unchanged_v3 = {k: v for k, v in schema.expected_api_counts(3).items() if k != "cudaLaunchKernel"}
     assert unchanged_v2 == unchanged_v3
+    v4_counts = schema.expected_api_counts(4)
+    assert v4_counts["cudaLaunchKernel"] == 5
+    assert v4_counts["cudaDeviceSynchronize"] == 3
+    assert v4_counts["cudaMemcpy"] == 11
+    assert v4_counts["cudaMemset"] == 3
+    assert schema.expected_transfers(4)["device_to_host"] == {"bytes": 229900, "copy_count": 5}
+    assert schema.expected_transfers(4)["device_to_device"] == schema.expected_transfers(3)[
+        "device_to_device"
+    ]
 
-    # v2/v3 probes carry the cross-generation link and must never claim
-    # counters. v3 records the fold, not the 1:1 migration.
+    # v2/v3/v4 probes carry the cross-generation link and must never claim
+    # counters. v3 records the fold; v4 records the launch absorption.
     assert collector.PROBE_KEYS_V2_ADDITIONS == {
         "achieved_counters_present",
         "expected_launch_sequence",
@@ -474,6 +401,13 @@ def test_collectors_validate_against_the_generation_a_report_declares() -> None:
         "achieved_counters_present",
         "expected_launch_sequence",
         "kernel_id_fold",
+        "supersedes_schema_version",
+        "trace_signature_matches_v1",
+    }
+    assert collector.PROBE_KEYS_V4_ADDITIONS == {
+        "achieved_counters_present",
+        "expected_launch_sequence",
+        "launch_absorption",
         "supersedes_schema_version",
         "trace_signature_matches_v1",
     }

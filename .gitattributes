@@ -26,3 +26,8 @@ docs/plan/exact_runtime/cuda_resident_cp5_window_fusion_20260812/** -text
 # CP-5b v3 static resource evidence is the parent a future v3 counter capture
 # hashes against, so it must be byte-stable like its v1/v2 predecessors.
 docs/plan/exact_runtime/cuda_resident_cp_resource_evidence_20260812.json -text
+
+# CP-7b barrier-fold measurement reports and the v4 static parent follow the
+# same content-addressed byte-stability rule.
+docs/plan/exact_runtime/cuda_resident_cp7b_barrier_fold_20260812/** -text
+docs/plan/exact_runtime/cuda_resident_cp7b_resource_evidence_20260812.json -text

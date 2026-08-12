@@ -35,6 +35,17 @@ inline constexpr std::string_view kProbeSchemaV3 = "cuda_resident.cp.resource_ca
 inline constexpr std::string_view kProfileIdV3 = "cp.resource.steady_full_window_body.sm86.v3";
 inline constexpr std::string_view kProbeSchemaV3Predecessor = kProbeSchemaV2;
 
+// v4 describes the CP-7b launch fold. The kernel SET is unchanged from v3 --
+// the same five symbols -- but the stage_publish and window_commit barrier
+// launches are per-world epilogues inside their stage kernels, so a captured
+// window has five launches and apply_barrier keeps only its input-injection
+// launch. The captured workload (trace signature) is unchanged; the
+// absorption walk below pins which v3 launches each v4 launch carries.
+inline constexpr std::string_view kSchemaV4 = "cuda_resident.cp.kernel_resource_evidence.v4";
+inline constexpr std::string_view kProbeSchemaV4 = "cuda_resident.cp.resource_capture_probe.v4";
+inline constexpr std::string_view kProfileIdV4 = "cp.resource.steady_full_window_body.sm86.v4";
+inline constexpr std::string_view kProbeSchemaV4Predecessor = kProbeSchemaV3;
+
 inline constexpr std::string_view kCaptureRange = "cudaProfilerApi";
 inline constexpr std::string_view kBuildConfig = "Release";
 inline constexpr std::string_view kCudaArchitecture = "sm_86";
@@ -224,6 +235,26 @@ inline constexpr auto kLaunchSequenceV3 = std::to_array<LaunchSpec>({
     {6, "device_observation_consumer", "device_consumer"},
 });
 
+// v4 catalog: same five kernels as v3, but the two in-window barrier launches
+// are epilogues of their stage kernels, so apply_barrier launches once.
+inline constexpr auto kKernelSpecsV4 = std::to_array<KernelSpec>({
+    {"apply_barrier", "apply_barrier_kernel", 1},
+    {"control_preparation", "control_preparation_kernel", 1},
+    {"window_commit_body", "window_commit_body_kernel", 1},
+    {"device_observation_pack", "pack_device_observation_kernel", 1},
+    {"device_observation_consumer", "device_observation_consumer_smoke_kernel", 1},
+});
+
+// Five launches. The two folded stages carry compound semantic-stage names so
+// a v4 report can never be misread as claiming the barriers stopped happening.
+inline constexpr auto kLaunchSequenceV4 = std::to_array<LaunchSpec>({
+    {0, "apply_barrier", "input_injection"},
+    {1, "control_preparation", "control_preparation_and_stage_publish"},
+    {2, "window_commit_body", "window_commit_body_and_window_commit"},
+    {3, "device_observation_pack", "device_observation_pack"},
+    {4, "device_observation_consumer", "device_consumer"},
+});
+
 template <std::size_t KernelCount, std::size_t LaunchCount>
 inline constexpr bool
 catalog_is_complete(const std::array<KernelSpec, KernelCount> &kernels,
@@ -406,6 +437,81 @@ static_assert(kLaunchSequenceV3.size() == 7);
 static_assert(kernel_catalog_v3_is_complete());
 static_assert(kernel_fold_is_total_and_surjective());
 static_assert(launch_sequences_correspond_v2_to_v3());
+
+inline constexpr bool kernel_catalog_v4_is_complete() {
+    return catalog_is_complete(kKernelSpecsV4, kLaunchSequenceV4);
+}
+
+// The v3 and v4 catalogs must name the same kernels: CP-7b folded launches,
+// not kernels. Only the apply_barrier launch count may differ.
+inline constexpr bool kernel_sets_match_v3_to_v4() {
+    if (kKernelSpecsV4.size() != kKernelSpecsV3.size()) {
+        return false;
+    }
+    for (std::size_t index = 0; index < kKernelSpecsV3.size(); ++index) {
+        if (kKernelSpecsV4[index].kernel_id != kKernelSpecsV3[index].kernel_id ||
+            kKernelSpecsV4[index].symbol_fragment != kKernelSpecsV3[index].symbol_fragment) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Launch absorption: walking the v3 sequence and merging each barrier launch
+// whose stage is stage_publish or window_commit into the launch immediately
+// before it must reproduce the v4 sequence exactly, with the compound stage
+// name recording both halves. This is the checked statement of "the barriers
+// still happen, inside the preceding stage's launch".
+inline constexpr bool launch_sequences_correspond_v3_to_v4() {
+    std::size_t v4_index = 0;
+    for (std::size_t index = 0; index < kLaunchSequenceV3.size(); ++index) {
+        const auto &launch = kLaunchSequenceV3[index];
+        const bool absorbed_barrier =
+            launch.kernel_id == std::string_view("apply_barrier") &&
+            (launch.semantic_stage == std::string_view("stage_publish") ||
+             launch.semantic_stage == std::string_view("window_commit"));
+        if (absorbed_barrier) {
+            // The barrier folds into the previous v4 row, whose compound stage
+            // must end with this barrier's stage name.
+            if (v4_index == 0 || index == 0) {
+                return false;
+            }
+            const auto &host_row = kLaunchSequenceV4[v4_index - 1];
+            const auto stage = host_row.semantic_stage;
+            const auto barrier_stage = launch.semantic_stage;
+            if (stage.size() <= barrier_stage.size() ||
+                stage.substr(stage.size() - barrier_stage.size()) != barrier_stage) {
+                return false;
+            }
+            // And that previous row must be the launch that directly precedes
+            // this barrier in v3.
+            if (host_row.kernel_id != kLaunchSequenceV3[index - 1].kernel_id) {
+                return false;
+            }
+            continue;
+        }
+        if (v4_index >= kLaunchSequenceV4.size()) {
+            return false;
+        }
+        const auto &v4_row = kLaunchSequenceV4[v4_index];
+        if (v4_row.launch_index != v4_index || v4_row.kernel_id != launch.kernel_id) {
+            return false;
+        }
+        // Non-folded launches keep their stage name; folded hosts prefix it.
+        const auto stage = v4_row.semantic_stage;
+        if (stage.substr(0, launch.semantic_stage.size()) != launch.semantic_stage) {
+            return false;
+        }
+        ++v4_index;
+    }
+    return v4_index == kLaunchSequenceV4.size();
+}
+
+static_assert(kKernelSpecsV4.size() == 5);
+static_assert(kLaunchSequenceV4.size() == 5);
+static_assert(kernel_catalog_v4_is_complete());
+static_assert(kernel_sets_match_v3_to_v4());
+static_assert(launch_sequences_correspond_v3_to_v4());
 
 inline constexpr bool kSetupOutsideCapture = true;
 inline constexpr bool kPublicExportInsideCapture = true;

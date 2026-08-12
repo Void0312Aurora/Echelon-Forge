@@ -153,6 +153,20 @@ re-pinning of collectors.
    unaffected because failed windows already discard the staged slot, but the
    error-attribution tests that expect a stage-precise host failure will need
    their expectation restated per window.
+   **LANDED as CP-7b (2026-08-12), in a corrected shape.** Design review
+   found the deferred-check form unsound: with two state slots and three
+   stages, deferring all checks destroys the rollback point for an
+   inject-stage failure (the next stage's staging copy overwrites the only
+   clean slot). The landed form folds the stage_publish and window_commit
+   barriers into their stage kernels as per-world epilogues instead:
+   5 -> 3 launches, syncs, status readbacks, and memsets per window, with
+   every stage's host check, flip, retry contract, and fault hook keeping
+   its observable behavior. Measured: world-1 warmed e2e p50 down 20-30%,
+   all 30 released-state digests bit-identical to frozen CR2-6b; evidence
+   generation v4 records the launch absorption. The residual candidate-1
+   slice (merging the input-injection stage into the same discipline) and
+   mapped-pinned status words stay open for a future iteration if CP-8
+   still wants them.
 2. **Retire the full-slot copy-on-write chain.** The three per-window
    `slot_bytes` device-to-device copies exist so each stage writes into a
    fresh slot. Candidates: rotate slot pointers and copy only the fields the

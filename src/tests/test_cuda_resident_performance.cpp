@@ -16,23 +16,23 @@ TEST_CASE("RB9 performance contract freezes the private-window operation ledger"
     const WindowTransferLedger resident = modeled_window_ledger(worlds, slot_bytes, false, false);
     CHECK(resident.h2d_copy_count == 3);
     CHECK(resident.h2d_bytes == worlds * 55);
-    CHECK(resident.d2h_copy_count == 5);
-    CHECK(resident.d2h_bytes == 20);
+    CHECK(resident.d2h_copy_count == 3);
+    CHECK(resident.d2h_bytes == 12);
     CHECK(resident.d2d_copy_count == 3);
     CHECK(resident.d2d_bytes == 3 * slot_bytes);
-    CHECK(resident.kernel_launch_count == 5);
-    CHECK(resident.synchronization_count == 5);
+    CHECK(resident.kernel_launch_count == 3);
+    CHECK(resident.synchronization_count == 3);
 
     const WindowTransferLedger host = modeled_window_ledger(worlds, slot_bytes, true, false);
-    CHECK(host.d2h_copy_count == 7);
-    CHECK(host.d2h_bytes == 20 + slot_bytes + worlds * 16);
+    CHECK(host.d2h_copy_count == 5);
+    CHECK(host.d2h_bytes == 12 + slot_bytes + worlds * 16);
     CHECK(host.host_snapshot_includes_full_state_d2h);
 
     const WindowTransferLedger device = modeled_window_ledger(worlds, slot_bytes, false, true);
-    CHECK(device.kernel_launch_count == 7);
-    CHECK(device.synchronization_count == 6);
-    CHECK(device.d2h_copy_count == 5);
-    CHECK(device.d2h_bytes == 20);
+    CHECK(device.kernel_launch_count == 5);
+    CHECK(device.synchronization_count == 4);
+    CHECK(device.d2h_copy_count == 3);
+    CHECK(device.d2h_bytes == 12);
     CHECK(device.device_observation_pack_bytes ==
           worlds * (15 * sizeof(float) + sizeof(std::uint64_t)));
     CHECK(device.device_observation_consumer_bytes ==
@@ -45,7 +45,7 @@ TEST_CASE("RB9 performance contract freezes the private-window operation ledger"
     CHECK(device.device_consumer_release_outside_measured_path);
 
     const WindowTransferLedger both = modeled_window_ledger(worlds, slot_bytes, true, true);
-    CHECK(both.d2h_copy_count == 7);
+    CHECK(both.d2h_copy_count == 5);
     CHECK(both.d2h_bytes == device.d2h_bytes + slot_bytes + worlds * 16);
 }
 

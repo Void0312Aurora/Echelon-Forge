@@ -119,7 +119,7 @@ CPU 参考 parity 以及 replay/shadow harness。它们**不**覆盖 learner 消
 | CP-4 | **G-D：提权下采集 achieved 计数器**——全部 10 个 kernel 的 occupancy、divergence、global/local/shared 流量。这是唯一的硬阻塞，也是价值最高的一次迭代 | G-D 以真实计数器关闭，或记录第二次外部阻塞 |
 | CP-5 | 由 CP-4 结果驱动的 kernel 层优化，已知候选见下 | **已落地 2026-08-12。** 六个窗口提交 launch 融合为一个 `window_commit_body_kernel`（每捕获窗口 12→7 次 launch）；kernel 目录 v3 经 static_assert 折叠表取代 v2；导出状态摘要与冻结的 CR2-6b 捕获在两条 lane、两轮 campaign 上保持逐位一致；warmed end-to-end p50 在全部 20 个 CR2-6b 对比行上改善（0.63-0.99 倍）。见下文「CP-5 已落地」 |
 | CP-6 | G-C：经 CR2-3 lease 的 learner 等价消费，不含隐藏 host 校验回读 | 真实消费者，而非诊断 smoke |
-| CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | **CP-7a 已落地 2026-08-12：** `cp7.small_batch_selection_rule.v1` 把低于 4 的 world 数冻结为路由 CPU 参考的文档级策略（无运行时选择器；架构门禁强制零运行时消费者），实测依据是 world 1 上约 65.5 us 的单线程设备地板对 CPU 约 18-31 us 的整步耗时。交叉点数值列为 CP-8 复核项。CP-7b（宿主骨架缩减，候选 1）是剩余的另一半 |
+| CP-7 | G-F 处置：修复小批量开销，或冻结带 world 数阈值的显式选择规则 | **已落地 2026-08-12，两半齐备。** CP-7a：`cp7.small_batch_selection_rule.v1` 把低于 4 的 world 数冻结为路由 CPU 参考的文档级策略（无运行时选择器；架构门禁强制零运行时消费者），实测依据是 world 1 上约 65.5 us 的单线程设备地板对 CPU 约 18-31 us 的整步耗时；交叉点数值列为 CP-8 复核项。CP-7b：stage_publish 与 window_commit 屏障成为各自阶段 kernel 的逐 world 尾声（每窗 launch、同步、状态回读、memset 各 5→3）；导出状态摘要与冻结 CR2-6b 在全部 30 行上保持逐位一致，warmed e2e p50 在 world 1 降 20-30%，其余行 campaign 1 降 8-21%、campaign 2 降 3-52%。见下文「CP-7b 已落地」 |
 | CP-8 | CP-5/CP-7 落地后重测 1/4/16/64/256 矩阵，顺序对调，两轮 campaign | 优化后证据可与 CR2-6b 比较 |
 | CP-9 | 晋升决策：全部门禁加独立评审，或记录带确切缺失授权的 hold | 显式、有证据支撑的裁定 |
 
@@ -351,6 +351,60 @@ worlds 时就如此空闲，可以解释 world 1 为何以 7-36 倍落后于 CPU
 
 以上两点都是测量结果，尚不是已验证的优化。CP-5 在任何改动后必须重新测量；本节记录的是
 计数器所显示的事实，不是「更大的 grid 一定更快」的承诺。
+
+## CP-7b 已落地：窗内屏障成为尾声（2026-08-12）
+
+World-1 时间线归因对宿主骨架排了序：拷贝、launch、memset 与同步，每窗各五次。
+CP-7b 取候选 1 中语义爆炸半径最小的切片：stage_publish 屏障成为
+`control_preparation_kernel` 的最后一段逐 world 尾声，window_commit 屏障成为
+`window_commit_body_kernel` 的最后一段尾声，各自精确镜像 `apply_barrier_kernel`
+对应分支。`apply_barrier` 保留其输入注入 launch（inject 是必须自行报告结果的
+独立 SPI 调用）及通用体。每窗基础路径从五次 launch、五次同步、五次状态回读、
+五次状态 memset 降为各三次；暂存拷贝不动。
+
+筹备说明勾勒的「推迟检查」形态在设计期被否决：两个状态槽、三个阶段之下,把全部
+检查推迟到窗口末尾会摧毁 inject 阶段失败的回滚点（下一阶段的暂存拷贝会覆盖唯一
+干净的槽）。尾声折叠让每个阶段的宿主检查与翻转留在原位,因此逐阶段失败归因、
+重试契约与故障注入钩子的可观测行为全部保持——屏障提交钩子如今在干净 kernel 之后、
+翻转之前使该阶段失败,与独立屏障 launch 给它的外部契约相同。
+
+等价性与改善均在记录主机上实测：
+
+| 检查项 | 结果 |
+| --- | --- |
+| ctest | lifecycle 14 用例/579 断言、replay 4/77、full-window：通过 |
+| 导出状态摘要 | 与冻结 CR2-6b 在**全部 30 行逐位一致**（20 CUDA + 10 CPU），两轮 campaign |
+| 工作负载身份 | trace signature `cb31675ee34e5015` 不变 |
+| 捕获窗口（nsys） | 恰好 5 次 launch、3 次同步、11 次 memcpy、3 次 memset——预测的 v4 轮廓被实测证实 |
+
+对照已入库 CP-5 证据的计时（同协议、安静机器、order-balanced）：world 1 的
+warmed e2e p50 跨四个模式降 20-30%（no-export 0.396 → 0.279/0.318 ms）；
+world 16/64/256 行 campaign 1 改善 1-25%、campaign 2 改善 3-52%（campaign 1 的
+world-4 行带瞬时尖刺、不作主张；campaign 2 的 world-4 行改善 5-26%）。自 CP-5
+之前的基线累计,world-1 no-export 窗口已降约 36-44%。CPU lane 在 world 1 仍胜约
+15 倍——CP-7a 规则原样成立。原始报告内容寻址存放于
+[cuda_resident_cp7b_barrier_fold_20260812/](cuda_resident_cp7b_barrier_fold_20260812/)：
+
+| 报告 | Bytes | SHA-256 |
+|---|---:|---|
+| 变更后 CPU campaign 1 | 104,021 | `7e97c5f2fe58ef461cb93892744f6bc21824bcaf4b474b8aacb6e17b1ac8960f` |
+| 变更后 CUDA campaign 1 | 194,458 | `e84a7f059adf3acd743071d247060cfa4d986238ae155951f45ebf0250ddd6da` |
+| 变更后 CUDA campaign 2 | 194,262 | `bd7d68315a93fdaca0ceb2faeb919d7802bb3e1011def2af977b29ee936cc989` |
+| 变更后 CPU campaign 2 | 103,615 | `af8cf7f349c080503859452f64ac7541f44a4ba714e50a5095440a0e5e04bbd7` |
+
+目录 v4 承载治理：与 v3 相同的五个 kernel（受检主张——
+`kernel_sets_match_v3_to_v4()`）、五次 launch（折叠对携带复合阶段名）、以及
+static_assert 的吸收走查（`launch_sequences_correspond_v3_to_v4()`）——把每个
+窗内屏障并入其前一 launch 即从 v3 复现 v4。探针改出 v4 schema 并携带由同一走查
+派生的 `launch_absorption` 表；采集器按世代分派 v4 专属的 API 与传输期望
+（launch 7→5、同步 5→3、memcpy 13→11、memset 5→3,除此之外别无变化——实测而非
+断言）；计数器链从契约派生 `kRequiredLaunchCountV4 = 5`。v1/v2/v3 保持冻结,其
+入库证据逐字节可校验。带尾声的融合窗口体为 112 寄存器/40 字节栈/零 spill
+（较 v3 的 116 寄存器还降了）；`window_commit_body.cu` 越过 700 行软限（748）,
+按 watch item 登记而非拆分——相位体是为奇偶保真而保留的退役 kernel 逐字副本。
+世代继承门禁移入独立模块（`test_cuda_resident_resource_generations.py`）使两个
+测试文件都低于软限。v4 静态捕获（探针 + nsys + 采集器）已对在途树端到端验证；
+按 CP-5b 先例,钉定 baseline 的正式重捕获在本提交之后立即作为 CP-7c 落地。
 
 ## CP-5 已落地：窗口图成为一次 launch（2026-08-12）
 

@@ -56,6 +56,15 @@ COUNTER_FAMILY_UNITS = {
         "local_memory_traffic": "sector",
         "shared_memory_traffic": "wavefront",
     },
+    # The CP-7b launch fold keeps the metric set again; five launches now
+    # carry the window, and that count is derived from the contract below.
+    4: {
+        "achieved_occupancy": "ratio",
+        "branch_divergence": "ratio",
+        "global_memory_traffic": "sector",
+        "local_memory_traffic": "sector",
+        "shared_memory_traffic": "wavefront",
+    },
 }
 
 

@@ -20,13 +20,16 @@ inline constexpr std::string_view kPermissionBlockerCode = "ERR_NVGPUCTRPERM";
 inline constexpr std::size_t kRequiredLaunchCountV1 = resource_evidence::kLaunchSequence.size();
 inline constexpr std::size_t kRequiredLaunchCountV2 = resource_evidence::kLaunchSequenceV2.size();
 inline constexpr std::size_t kRequiredLaunchCountV3 = resource_evidence::kLaunchSequenceV3.size();
+inline constexpr std::size_t kRequiredLaunchCountV4 = resource_evidence::kLaunchSequenceV4.size();
 
 // Frozen artifact pins: the retained v1 blocked attempt and the v2 achieved
-// capture both recorded 12; the CP-5 fused window graph launches 7. These
-// assert the derivation still matches the evidence already on disk.
+// capture both recorded 12; the CP-5 fused window graph launches 7; the CP-7b
+// barrier fold launches 5. These assert the derivation still matches the
+// evidence already on disk.
 static_assert(kRequiredLaunchCountV1 == 12);
 static_assert(kRequiredLaunchCountV2 == 12);
 static_assert(kRequiredLaunchCountV3 == 7);
+static_assert(kRequiredLaunchCountV4 == 5);
 
 struct CounterFamilySpec {
     std::string_view id;

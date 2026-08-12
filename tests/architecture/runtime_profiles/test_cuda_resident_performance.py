@@ -205,17 +205,18 @@ def test_rb9_static_ledger_matches_current_cuda_execution_graph() -> None:
     contract = _text(CONTRACT)
     device = _device_text()
     execution_window = _text(WINDOW_SOURCE)
-    # Five resident-window launches are the base path after the CP-5 fusion;
-    # the legacy diagnostic and CR2-3 measured wrappers each contain
-    # pack/consumer call sites.
+    # Three resident-window launches are the base path after the CP-5 fusion
+    # and the CP-7b barrier fold; the legacy diagnostic and CR2-3 measured
+    # wrappers each contain pack/consumer call sites.
     assert device.count("<<<blocks, threads>>>") == 7
     assert execution_window.count("launch_window_commit_body") == 1
     assert "launch_flight_dynamics_" not in execution_window
     assert "launch_instrument_projection" not in execution_window
+    assert "finalize_staged_barrier" not in execution_window
     assert "kFlightControlH2dBytesPerWorld = 55" in contract
-    assert ".kernel_launch_count = 5" in contract
+    assert ".kernel_launch_count = 3" in contract
     assert "ledger.kernel_launch_count += 2" in contract
-    assert ".synchronization_count = 5" in contract
+    assert ".synchronization_count = 3" in contract
     assert "pack_device_observation_kernel" in device
     assert "device_observation_consumer_smoke_kernel" in device
     assert "device_consumer_includes_host_validation_d2h" in contract
