@@ -640,19 +640,17 @@ set(EF_TEST_SOURCES
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
     src/tests/test_world_batch_backend_contract.cpp
+    # Only the CUDA-resident suites without a second home stay here.  The
+    # lifecycle, state, device-consumer, performance and replay translation
+    # units are compiled and run by ef_cuda_resident_lifecycle_test /
+    # ef_cuda_resident_replay_test, which link nothing but
+    # ef_cuda_resident_backend + doctest -- proof they need no ef_core symbol.
+    # Listing them here too compiled each one a second time against the full
+    # engine graph and made ctest execute the same doctest cases twice.
     src/tests/test_cuda_resident_backend_admission.cpp
-    src/tests/test_cuda_resident_backend_lifecycle.cpp
-    src/tests/test_cuda_resident_backend_state.cpp
     src/tests/test_cuda_resident_fixed_air_cpu_reference.cpp
     src/tests/test_cuda_resident_control_preparation_cpu_reference.cpp
     src/tests/test_cuda_resident_flight_dynamics_cpu_reference.cpp
-    src/tests/test_cuda_resident_observation_projection_cpu_reference.cpp
-    src/tests/test_cuda_resident_device_consumer.cpp
-    src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    src/tests/test_cuda_resident_replay.cpp
-    src/tests/test_cuda_resident_replay_projection.cpp
-    src/tests/test_cuda_resident_replay_support.cpp
-    src/tests/test_cuda_resident_performance.cpp
     src/tests/test_world_batch_runtime.cpp
     src/tests/test_default_effects_model.cpp
 )
