@@ -7,7 +7,7 @@ the repository-level Apache-2.0 license.
 
 ## F16-C Falcon
 
-- Audit glTF package: `../audit/f16_c_falcon_carlos_maciel/4bc2ff75dc584af2afd0aa6bd8b79015_gltf.zip`
+- Audit glTF package: retired from the working tree; see `../../audit_ledger.md`
 - Runtime visual file: `f16_c_falcon_carlos_maciel.glb`
 - Audit extracted scene: `../audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf`
 - Title: F16-C Falcon
@@ -20,6 +20,7 @@ the repository-level Apache-2.0 license.
 - Sketchfab publishedAt: `2022-02-28T12:46:12.308593`
 - Original archive SHA256: `47388fb8646e704609712d55e0b53eb014571644b7344c7859276597fc63e248`
 - Original archive size: `4,282,583` bytes
+- Original archive recovery: `git show 5f95ee9d6544a7ede91be0474c76cf5ea045a708:examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/4bc2ff75dc584af2afd0aa6bd8b79015_gltf.zip`
 - Runtime GLB SHA256: `243f164005c49bce0bb25202e449911fed99cbfa94e9bef25321dcbd7476d44f`
 - Runtime GLB size: `1,997,144` bytes
 
