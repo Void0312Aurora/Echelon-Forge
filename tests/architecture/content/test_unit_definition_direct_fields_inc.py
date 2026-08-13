@@ -49,6 +49,7 @@ computed-default/clamp/fallback/validated forms rather than this exact shape.
 from __future__ import annotations
 
 import re
+import subprocess
 
 import pytest
 
@@ -57,14 +58,24 @@ from tests.support.paths import REPO_ROOT
 
 _INC_PATH = REPO_ROOT / "src" / "content" / "detail" / "unit_definition_direct_fields.inc"
 _LOADER_PATH = REPO_ROOT / "src" / "content" / "unit_definition_loader.cpp"
-_SURVEY_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "plan"
-    / "archive"
-    / "unified_architecture_program_completed_20260727"
-    / "t11_content_schema_survey_20260721.md"
+# The survey document was retired into git history (docs/archive_ledger.md);
+# the anchor now reads the immutable pinned object, which a working-tree edit
+# can no longer tamper with.
+_SURVEY_GIT_PIN = (
+    "095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/"
+    "t11_content_schema_survey_20260721.md"
 )
+
+
+def _survey_text_from_git() -> str:
+    return subprocess.run(
+        ["git", "show", _SURVEY_GIT_PIN],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout
 
 _EARLY_MACRO = "EF_UNIT_DIRECT_EARLY_FIELD"
 _DATA_LINK_MACRO = "EF_UNIT_DIRECT_DATA_LINK_FIELD"
@@ -181,7 +192,7 @@ def _survey_direct_key_rows(survey_text: str) -> tuple[tuple[int, str, str], ...
     """Parse (row_number, key, json_type) from survey section 1.1 only."""
     heading_index = survey_text.find(_SURVEY_HEADING_PREFIX)
     assert heading_index >= 0, (
-        f"survey heading {_SURVEY_HEADING_PREFIX!r} not found in {_SURVEY_PATH}"
+        f"survey heading {_SURVEY_HEADING_PREFIX!r} not found in git object {_SURVEY_GIT_PIN}"
     )
     after_heading = survey_text[heading_index + len(_SURVEY_HEADING_PREFIX) :]
     next_heading = _NEXT_HEADING_RE.search(after_heading)
@@ -390,7 +401,7 @@ def _real_loader_text() -> str:
 
 
 def _real_survey_rows() -> tuple[tuple[int, str, str], ...]:
-    return _survey_direct_key_rows(_SURVEY_PATH.read_text(encoding="utf-8"))
+    return _survey_direct_key_rows(_survey_text_from_git())
 
 
 def _converged_keys() -> set[str]:
