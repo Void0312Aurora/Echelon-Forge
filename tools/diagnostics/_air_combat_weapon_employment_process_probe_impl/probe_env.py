@@ -17,7 +17,7 @@ def _base_env(env):
 
 def _single_obs(batch_obs: dict[str, Any]) -> dict[str, Any]:
     return {
-        str(key): np.asarray(value[0], dtype=np.float32, copy=True)
+        str(key): np.array(value[0], dtype=np.float32)
         for key, value in dict(batch_obs or {}).items()
     }
 

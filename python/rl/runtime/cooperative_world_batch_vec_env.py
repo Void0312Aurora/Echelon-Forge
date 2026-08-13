@@ -603,7 +603,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 action_dim=int(self.action_space.shape[0]),
             )
             if self.include_visual:
-                obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
+                obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32)
             obs_batch.append(self._attach_temporal_history(slot_state, obs))
         return obs_batch
 
@@ -862,7 +862,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             effective_action = np.asarray(prepared.action, dtype=np.float32).reshape(-1)
         if is_naval_station_action_mode(self.action_mode):
             effective_action = naval_station_action_command(effective_action)
-        slot_state.last_action = np.asarray(effective_action, dtype=np.float32, copy=True)
+        slot_state.last_action = np.array(effective_action, dtype=np.float32)
         return slot_state.last_action.astype(np.float32, copy=True), prepared
 
     def _neutral_hold_action(self, slot_state: _CooperativeSlotState) -> np.ndarray:
@@ -934,7 +934,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     prepared = None
                     if is_naval_station_action_mode(self.action_mode):
                         effective_action = naval_station_action_command(effective_action)
-                    slot_state.last_action = np.asarray(effective_action, dtype=np.float32, copy=True)
+                    slot_state.last_action = np.array(effective_action, dtype=np.float32)
                 else:
                     effective_action, prepared = self._prepare_slot_action(slot_state, self._actions[slot_index])
                 if is_naval_station_action_mode(self.action_mode):
@@ -1088,7 +1088,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 if success and not bool(slot_state.coop_success_latched):
                     slot_state.coop_success_latched = True
                     slot_state.coop_completion_reason = str(info.get("termination_reason", "") or "success_waypoint")
-                    slot_state.coop_completion_mission_status = np.asarray(mission_status, dtype=np.float32, copy=True)
+                    slot_state.coop_completion_mission_status = np.array(mission_status, dtype=np.float32)
                     slot_state.coop_completion_info = dict(info)
                     slot_state.coop_completion_terminal_observation = _copy_obs(obs)
                 elif bool(slot_state.coop_success_latched):

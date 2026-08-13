@@ -230,7 +230,7 @@ class _WorldBatchVecEnvObservationMixin:
         handle = self._handles[env_idx]
         if handle.visual_cache is None:
             self._refresh_visual_batch([env_idx])
-        obs["visual"] = np.asarray(handle.visual_cache, dtype=np.float32, copy=False)
+        obs["visual"] = np.asarray(handle.visual_cache, dtype=np.float32)
         return obs
 
     def _attach_temporal_history(self, env_idx: int, obs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
