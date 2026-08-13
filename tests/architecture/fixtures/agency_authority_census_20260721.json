@@ -100,12 +100,12 @@
     {
       "file": "gym_envs/scenario_loader/runtime_state.py",
       "tokens": ["authorization_to_fire", "engagement_authority_grantor_id", "engagement_authority_holder_id", "ground_commander_id", "roe_state"],
-      "token_counts": {"authorization_to_fire": 9, "engagement_authority_grantor_id": 2, "engagement_authority_holder_id": 2, "ground_commander_id": 2, "roe_state": 2},
+      "token_counts": {"authorization_to_fire": 7, "engagement_authority_grantor_id": 2, "engagement_authority_holder_id": 2, "ground_commander_id": 2, "roe_state": 2},
       "categories": ["delegation", "doctrine", "role"],
       "form": "state-projection",
       "semantic": "Pure state mirror: _canonical_runtime_mission_command_json / _sync_command_chain_runtime_mirror copy mission-command authority/ROE fields (authorization_to_fire, engagement-authority holder/grantor, roe_state) and the ground_commander_id role field into the loader's runtime-state JSON mirrors / onto leader_intent. It copies/mirrors fields; it makes no authority decision, delegation resolution, or conflict resolution. The engagement_authority_holder_id here is a mirrored role/delegation identity, not the who-may-fire arbitration gate.",
       "owner": "T9 tasking-authority surface",
-      "note": "Repair round 1: dropped arbitration (state-mirror, not a decision site; conflicts with the census's own 'distinct from pure DTO plumbing' admission rule). Kept as a pinned scatter with a domain reason: it is on T9's owned surface and pinning which authority fields it mirrors keeps a new mirrored authority field from appearing silently. Repair round 2: category set pinned exactly in the gate (arbitration cannot be silently re-added)."
+      "note": "Repair round 1: dropped arbitration (state-mirror, not a decision site; conflicts with the census's own 'distinct from pure DTO plumbing' admission rule). Kept as a pinned scatter with a domain reason: it is on T9's owned surface and pinning which authority fields it mirrors keeps a new mirrored authority field from appearing silently. Repair round 2: category set pinned exactly in the gate (arbitration cannot be silently re-added). 2026-08-13: shrank authorization_to_fire from 9 to 7 after deleting the duplicate controller-only apply_execution_episode_runtime_fields projection."
     },
     {
       "file": "gym_envs/scenario_loader/behavior_runtime/command_chain.py",

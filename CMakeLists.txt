@@ -12,6 +12,8 @@ option(EF_ENABLE_CUDA_EXPERIMENTS "Enable experimental CUDA GPU helper surface (
 # being ON triggers enable_language(CUDA) and find_package(CUDAToolkit).
 option(EF_ENABLE_CUDA_RESIDENT_BACKEND "Enable experimental CUDA-resident world-step backend" OFF)
 option(EF_ENABLE_PROJECT_WARNINGS "Enable warning flags for maintained project targets" ON)
+option(EF_ENABLE_COMPILER_CACHE "Route C/C++ compiles through a compiler cache (sccache/ccache) when one is installed" ON)
+option(EF_FETCHCONTENT_REVALIDATE_PINS "Re-run the git update/patch steps of the pinned FetchContent dependencies on every configure" OFF)
 
 function(ef_enable_project_warnings target_name)
     if (NOT EF_ENABLE_PROJECT_WARNINGS)
@@ -29,6 +31,49 @@ function(ef_enable_project_warnings target_name)
     )
 endfunction()
 
+# --- Compiler Cache -------------------------------------------------------
+# A compiler cache is a pass-through wrapper: CMake prefixes every compile
+# command with it (the LAUNCHER slot the generators already emit), the wrapper
+# hashes the preprocessed translation unit together with the argument vector,
+# and on a miss it execs the identical compiler command line.  Flags, defines,
+# include paths and the emitted object are therefore unchanged; only the wall
+# time of a repeated compile changes.
+#
+# Measured on this repository's Windows toolchain (sccache 0.17.0, MSVC 14.44,
+# Ninja, Release) the full ef_py command shape
+#     /bigobj /MP /Os /showIncludes /Fo<obj> /Fd<pdb> /FS
+# reports zero "Non-cacheable compilations" and zero "Unsupported compiler
+# calls".  Two details matter for MSVC correctness and both were verified:
+#   * /MP, which nanobind_add_module forces onto ef_py, is normalised away.  It
+#     cannot change codegen for the one-translation-unit-per-invocation command
+#     lines Ninja generates, so a /MP compile hits the same entry as the /MP-less
+#     one instead of being rejected.
+#   * The localised /showIncludes output is replayed verbatim on a cache hit, so
+#     Ninja's "deps = msvc" header scanner keeps seeing the same include list.
+# Separate-PDB configurations (/Zi, i.e. Debug and RelWithDebInfo) stay correct
+# as well: when several translation units share one /Fd target PDB, sccache
+# classifies the compiles it cannot replay safely as non-cacheable and runs the
+# real compiler, so the shared PDB never loses a translation unit; it just
+# caches less.
+#
+# Default ON.  The lookup is a find_program() that stays silent when no cache is
+# installed, so a machine without sccache/ccache configures, builds and links
+# exactly as before -- the default cannot regress an unequipped environment.
+# Pass -DEF_ENABLE_COMPILER_CACHE=OFF to force the bare compiler, and an
+# externally supplied CMAKE_<LANG>_COMPILER_LAUNCHER always wins over this
+# block.
+if (EF_ENABLE_COMPILER_CACHE
+    AND NOT CMAKE_C_COMPILER_LAUNCHER
+    AND NOT CMAKE_CXX_COMPILER_LAUNCHER)
+    find_program(EF_COMPILER_CACHE_EXECUTABLE NAMES sccache ccache)
+    mark_as_advanced(EF_COMPILER_CACHE_EXECUTABLE)
+    if (EF_COMPILER_CACHE_EXECUTABLE)
+        set(CMAKE_C_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
+        message(STATUS "Compiler cache: ${EF_COMPILER_CACHE_EXECUTABLE}")
+    endif()
+endif()
+
 if (CMAKE_RANLIB)
     # Ensure static archives get a symbol index on all toolchains.
     set(CMAKE_C_ARCHIVE_FINISH "<CMAKE_RANLIB> <TARGET>")
@@ -40,12 +85,41 @@ find_package(Threads REQUIRED)
 
 include(FetchContent)
 
+# --- Pinned Dependency Re-Validation ---------------------------------------
+# Every dependency below is pinned to an exact commit hash, so the git update
+# step CMake runs on each configure can only ever re-confirm what is already
+# checked out.  That confirmation is not free.  With the default
+# UPDATE_DISCONNECTED=FALSE the update step is marked ALWAYS, which forces the
+# nested populate project to re-run its whole chain (update -> patch ->
+# configure -> build -> install -> test) on every reconfigure.  Measured on this
+# tree with CMake 3.31.6 + Ninja on Windows, each connected dependency costs
+# 6.5-6.9 s of configure time, while nanobind -- the one declaration that had
+# already opted into UPDATE_DISCONNECTED -- costs 1.6 s.
+#
+# Deferring the update step does not weaken the pin on the CMake versions that
+# generate this build.  The requested hash is written verbatim into the
+# generated <dep>-populate-gitupdate.cmake, and that script is a declared input
+# of the update step, so bumping a GIT_TAG re-runs it.  The disconnected
+# invocation then passes can_fetch=NO, which turns a hash that is not present
+# locally into the hard error "Requested git ref ... is not present locally, and
+# not allowed to contact remote due to UPDATE_DISCONNECTED setting" rather than
+# silently leaving a stale revision in place.  The pre-3.27 caveat recorded in
+# the nanobind block below is what the escape hatch is for: after bumping a
+# GIT_TAG on an older CMake, configure once with
+# -DEF_FETCHCONTENT_REVALIDATE_PINS=ON (or delete the affected _deps entries).
+if (EF_FETCHCONTENT_REVALIDATE_PINS)
+    set(EF_FETCHCONTENT_PIN_MODE "")
+else()
+    set(EF_FETCHCONTENT_PIN_MODE UPDATE_DISCONNECTED TRUE)
+endif()
+
 # 1. Flecs (ECS)
 FetchContent_Declare(
     flecs
     GIT_REPOSITORY https://github.com/SanderMertens/flecs.git
     GIT_TAG        eeb9eaa64243536c5d5c19279c9c305a52d0b9b3 # v4.0.0
     SOURCE_SUBDIR  __cmo_no_upstream_cmake_project__
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(flecs)
 
@@ -75,6 +149,7 @@ FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
     GIT_TAG        7c02e204c92545f869e2f04edaab1f19fe8b19fd # v1.13.0
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(spdlog)
 
@@ -114,6 +189,7 @@ FetchContent_Declare(
     nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
     GIT_TAG        9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03 # v3.11.3
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
@@ -151,13 +227,10 @@ set(EF_CORE_MISSION_RUNTIME_SOURCES
 set(EF_CORE_MISSION_EPISODE_SOURCES
     src/core/mission/episode/execution_episode_state.cpp
     src/core/mission/episode/execution_episode_batch_prepare.cpp
-    src/core/mission/episode/execution_episode_controller.cpp
 )
 
 set(EF_CORE_MISSION_EPISODE_DETAIL_SOURCES
-    src/core/mission/episode/detail/episode_transition_runtime.cpp
     src/core/mission/episode/detail/episode_reward_breakdown.cpp
-    src/core/mission/episode/detail/mission_command_codec.cpp
 )
 
 set(EF_CORE_MISSION_SOURCES
@@ -173,7 +246,6 @@ set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/runtime_facade_world_setup.cpp
     src/runtime/facade/runtime_facade_query.cpp
     src/runtime/facade/runtime_facade_command_api.cpp
-    src/runtime/facade/runtime_facade_execution.cpp
     src/runtime/facade/runtime_facade_packet.cpp
 )
 
@@ -265,11 +337,8 @@ target_link_libraries(ef_core PUBLIC
 # models) may #include runtime/facade (see
 # test_facade_application_layer_has_no_incoming_edges_outside_its_permitted_callers),
 # while facade TUs call down into engine/mission freely.  The remaining named
-# T3 units (engine, mission) are NOT splittable yet: they are symbol-cyclic
-# through the ratcheted world_batch_runtime.h -> execution_episode_controller.h
-# edge (engine owns mission controllers by value), so cutting either one today
-# would manufacture a static-library cycle; that stays deferred to the T4
-# batch-wrapper design per the I41 allowlist verdicts.
+# T3 units (engine, mission) stay in one archive: splitting them is deferred
+# to the T4 batch-wrapper design per the I41 allowlist verdicts.
 #
 # Because the facade sits on top, ef_core must NOT link ef_facade (that would
 # declare a cycle); instead the two consumers whose TUs reference facade
@@ -340,6 +409,15 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_core_kernel_legacy.cpp
     src/interfaces/python/bindings_core_kernel_override.cpp
     src/interfaces/python/bindings_episode.cpp
+    # bind_episode() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_episode_geometry.cpp
+    src/interfaces/python/bindings_episode_mission_nav.cpp
+    src/interfaces/python/bindings_episode_waypoint_approach.cpp
+    src/interfaces/python/bindings_episode_flight_shaping.cpp
+    src/interfaces/python/bindings_episode_objective.cpp
+    src/interfaces/python/bindings_episode_termination.cpp
+    src/interfaces/python/bindings_episode_execution_runtime.cpp
+    src/interfaces/python/bindings_episode_state_batch.cpp
     src/interfaces/python/bindings_runtime.cpp
     # bind_runtime() domain slices, listed in nanobind registration order.
     src/interfaces/python/bindings_runtime_runtime.cpp
@@ -543,6 +621,7 @@ FetchContent_Declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
     GIT_TAG        ae7a13539fb71f270b87eb2e874fbac80bc8dda2 # v2.4.11
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(doctest)
 

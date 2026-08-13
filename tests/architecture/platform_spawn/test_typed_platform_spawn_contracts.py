@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -11,20 +12,10 @@ from tests.support.xmacro_text import expand_header_field_incs
 WORLD_BATCH_HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
 FACADE_TYPES_HEADER = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
 BINDINGS_SOURCE = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp"
-WP20_B_DOC_CANDIDATES = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "wp20_public_capability_platform_composition"
-  / "wp20_public_typed_platform_spawn_contract_cluster_20260521.md",
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp20_public_capability_platform_composition"
-  / "wp20_public_typed_platform_spawn_contract_cluster_20260521.md",
+WP20_B_DOC_GIT_PIN = (
+  "c700b51f:docs/task/simulation_architecture/archive/"
+  "wp20_public_capability_platform_composition/"
+  "wp20_public_typed_platform_spawn_contract_cluster_20260521.md"
 )
 
 
@@ -50,12 +41,16 @@ def _bindings_runtime_source_text() -> str:
 
 
 def _wp20_doc_text() -> str:
-  for candidate in WP20_B_DOC_CANDIDATES:
-    if candidate.is_file():
-      return _text(candidate)
-  raise AssertionError(
-    "missing WP20 public typed platform spawn contract doc at active or archive path"
-  )
+  # The Tier C document was retired into git history; the archive ledger pins
+  # this immutable object so the guard keeps its evidence anchor off-disk.
+  return subprocess.run(
+    ["git", "show", WP20_B_DOC_GIT_PIN],
+    cwd=REPO_ROOT,
+    check=True,
+    capture_output=True,
+    text=True,
+    encoding="utf-8",
+  ).stdout
 
 
 def _struct_body(header: str, struct_name: str) -> str:

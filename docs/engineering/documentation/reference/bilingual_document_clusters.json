@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13",
+  "generated_at": "2026-08-14",
   "root": "docs",
   "pairs": [
     {
@@ -34,9 +34,9 @@
       "english": "docs/architecture/standards/runtime_workflow_and_contract_baseline.md",
       "chinese": "docs/architecture/standards/runtime_workflow_and_contract_baseline.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-08-08",
-      "english_hash": "bbf6fe118d10a8a1556b4a599e5f8e3b595300372f347c913f5dc0f328eab75b",
-      "chinese_hash": "dfca5b13860511da1e25c8d543c35e85ccb076acb7ca5e82fa67f1088ad88a05"
+      "last_verified": "2026-08-14",
+      "english_hash": "d928f5760fdc93a356405f0f29b29e5964d1a164065ab60710e34fd946d089bb",
+      "chinese_hash": "42f9408f2be7b25496ba8713e3952a014de4b9d350ae44a6fff4475cd4e002ff"
     },
     {
       "pair_id": "architecture/standards/simulation_conventions",
