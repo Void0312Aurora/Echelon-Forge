@@ -8,7 +8,7 @@
 
 #include "runtime/facade/internal/cuda_resident/cuda_world_store.h"
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 #include <cuda_runtime_api.h>
 
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_device_api.h"
@@ -57,7 +57,7 @@ bool layout_is_supported(const device_consumer::ObservationLease &lease) noexcep
            observations.element_count == worlds * values_per_world && ids.element_count == worlds;
 }
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 bool current_device_matches(int expected, std::string *detail) {
     int current = -1;
     const cudaError_t status = cudaGetDevice(&current);
@@ -77,11 +77,12 @@ bool current_device_matches(int expected, std::string *detail) {
 detail::CudaWorldStoreDeviceConsumerRaw
 raw_receipt(const device_consumer::ConsumerReceipt &receipt) noexcept {
     return {
-        .first_values = const_cast<float *>(receipt.first_values),
+        .values = const_cast<float *>(receipt.values),
         .ids = const_cast<std::uint64_t *>(receipt.ids),
         .ready_event = receipt.ready_event,
         .device_ordinal = receipt.device_ordinal,
         .world_count = receipt.world_count,
+        .values_per_world = receipt.values_per_world,
     };
 }
 #endif
@@ -111,7 +112,7 @@ CudaResidentDeviceConsumer::submit(const device_consumer::ObservationLease &leas
         return submit_failure(device_consumer::FailureCode::incompatible_layout,
                               "CUDA device consumer observation layout is incompatible");
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaWorldStoreDeviceObservationLeaseRaw raw_lease{
         .values = const_cast<float *>(lease.values),
         .ids = const_cast<std::uint64_t *>(lease.ids),
@@ -129,32 +130,40 @@ CudaResidentDeviceConsumer::submit(const device_consumer::ObservationLease &leas
     const bool fail_launch = std::exchange(faults_.fail_next_launch, false);
     const bool fail_event_record = std::exchange(faults_.fail_next_event_record, false);
     if (!detail::submit_cuda_world_store_device_observation_consumer(
-            raw_lease, &raw, fail_allocation, fail_launch, fail_event_record, &failure, &error)) {
+            raw_lease, &raw, request.learner_equivalent, fail_allocation, fail_launch,
+            fail_event_record, &failure, &error)) {
         return submit_failure(failure, std::move(error));
     }
 
     device_consumer::SubmitResult result{};
     auto &receipt = result.receipt;
     receipt.lifetime = std::shared_ptr<void>(
-        raw.first_values, [ids = raw.ids, event = raw.ready_event, device = raw.device_ordinal,
-                           input_lifetime = lease.lifetime](void *first_values) {
-            detail::release_cuda_world_store_device_consumer(first_values, ids, event, device);
+        raw.values, [ids = raw.ids, event = raw.ready_event, device = raw.device_ordinal,
+                     input_lifetime = lease.lifetime](void *values) {
+            detail::release_cuda_world_store_device_consumer(values, ids, event, device);
             (void)input_lifetime;
         });
     receipt.completion_state = std::make_shared<CompletionState>();
-    receipt.first_values = static_cast<const float *>(raw.first_values);
+    receipt.values = static_cast<const float *>(raw.values);
     receipt.ids = static_cast<const std::uint64_t *>(raw.ids);
     receipt.ready_event = raw.ready_event;
     receipt.device_ordinal = raw.device_ordinal;
     receipt.producer_stream = 0;
     receipt.world_count = raw.world_count;
+    receipt.values_per_world = raw.values_per_world;
+    receipt.outputs = device_consumer::TensorDescriptor{
+        .shape = {raw.world_count, raw.values_per_world},
+        .strides = {raw.values_per_world, 1},
+        .dtype = "float32",
+        .element_count = raw.world_count * raw.values_per_world,
+    };
     receipt.source_epoch = lease.epoch;
     receipt.request_id = request.request_id;
     return result;
 #else
     (void)lease;
     return submit_failure(device_consumer::FailureCode::cuda_unavailable,
-                          "CUDA device consumer requires EF_ENABLE_CUDA_EXPERIMENTS");
+                          "CUDA device consumer requires EF_ENABLE_CUDA_RESIDENT_BACKEND");
 #endif
 }
 
@@ -164,7 +173,7 @@ CudaResidentDeviceConsumer::await(const device_consumer::ConsumerReceipt &receip
         return status_failure(device_consumer::FailureCode::invalid_receipt,
                               "CUDA device consumer wait requires a valid receipt");
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     std::string error;
     if (!current_device_matches(receipt.device_ordinal, &error)) {
         return status_failure(device_consumer::FailureCode::device_mismatch, std::move(error));
@@ -179,7 +188,7 @@ CudaResidentDeviceConsumer::await(const device_consumer::ConsumerReceipt &receip
     return {};
 #else
     return status_failure(device_consumer::FailureCode::cuda_unavailable,
-                          "CUDA device consumer wait requires EF_ENABLE_CUDA_EXPERIMENTS");
+                          "CUDA device consumer wait requires EF_ENABLE_CUDA_RESIDENT_BACKEND");
 #endif
 }
 
@@ -194,7 +203,7 @@ device_consumer::DiagnosticResult CudaResidentDeviceConsumer::materialize_for_di
         return diagnostic_failure(device_consumer::FailureCode::wait_required,
                                   "CUDA device consumer diagnostic requires explicit await");
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     std::string error;
     if (!current_device_matches(receipt.device_ordinal, &error)) {
         return diagnostic_failure(device_consumer::FailureCode::device_mismatch, std::move(error));
@@ -202,16 +211,17 @@ device_consumer::DiagnosticResult CudaResidentDeviceConsumer::materialize_for_di
     device_consumer::DiagnosticResult result{};
     const bool fail_materialize = std::exchange(faults_.fail_next_materialize, false);
     if (!detail::materialize_cuda_world_store_device_observation_consumer(
-            raw_receipt(receipt), &result.materialized.first_values, &result.materialized.ids,
+            raw_receipt(receipt), &result.materialized.values, &result.materialized.ids,
             fail_materialize, &error)) {
         return diagnostic_failure(device_consumer::FailureCode::diagnostic_failed,
                                   std::move(error));
     }
+    result.materialized.values_per_world = receipt.values_per_world;
     return result;
 #else
     return diagnostic_failure(
         device_consumer::FailureCode::cuda_unavailable,
-        "CUDA device consumer diagnostic requires EF_ENABLE_CUDA_EXPERIMENTS");
+        "CUDA device consumer diagnostic requires EF_ENABLE_CUDA_RESIDENT_BACKEND");
 #endif
 }
 

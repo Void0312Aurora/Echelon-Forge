@@ -9,7 +9,8 @@ __global__ void control_preparation_kernel(std::size_t world_capacity, const dou
                                            const std::uint8_t *control_flags,
                                            double *prepared_doubles, std::uint8_t *prepared_flags,
                                            std::uint64_t *prepared_control_versions,
-                                           std::uint32_t *status) {
+                                           std::uint64_t *barrier_sequences,
+                                           std::uint8_t *barrier_codes, std::uint32_t *status) {
     const std::size_t world_index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (world_index >= world_capacity) {
         return;
@@ -58,6 +59,17 @@ __global__ void control_preparation_kernel(std::size_t world_capacity, const dou
     prepared_flags[world_index] = 1;
     prepared_flags[world_capacity + world_index] = static_cast<std::uint8_t>(manual_takeover);
     ++prepared_control_versions[world_index];
+
+    // CP-7b: the stage_publish barrier is a per-world epilogue instead of a
+    // separate launch. It mirrors apply_barrier_kernel's stage_publish branch
+    // exactly: the barrier sequence is the only overflow surface, and a
+    // stage-publish barrier does not mutate snapshot state.
+    if (increment_would_overflow(barrier_sequences[world_index])) {
+        atomicExch(status, 1U);
+        return;
+    }
+    ++barrier_sequences[world_index];
+    barrier_codes[world_index] = static_cast<std::uint8_t>(CudaResidentBarrierCode::stage_publish);
 }
 } // namespace
 
@@ -72,8 +84,15 @@ bool commit_control_preparation_stage(CudaWorldStoreDeviceAllocation *allocation
     }
     const std::uint8_t next_slot = allocation->active_state_slot ^ 1U;
     if (allocation->world_capacity == 0) {
-        return finalize_staged_barrier(allocation, next_slot,
-                                       CudaResidentBarrierCode::stage_publish, faults, error);
+        if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_barrier_commit)) {
+            if (error != nullptr) {
+                *error = "injected CUDA world store barrier commit failure";
+            }
+            return false;
+        }
+        allocation->active_state_slot = next_slot;
+        if (error != nullptr) error->clear();
+        return true;
     }
     if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_state_transfer)) {
         if (error != nullptr) {
@@ -109,6 +128,8 @@ bool commit_control_preparation_stage(CudaWorldStoreDeviceAllocation *allocation
         device_field<double>(slot, allocation->state_layout.prepared_doubles),
         device_field<std::uint8_t>(slot, allocation->state_layout.prepared_flags),
         device_field<std::uint64_t>(slot, allocation->state_layout.prepared_control_versions),
+        device_field<std::uint64_t>(slot, allocation->state_layout.barrier_sequences),
+        device_field<std::uint8_t>(slot, allocation->state_layout.barrier_codes),
         allocation->barrier_status);
     status = cudaGetLastError();
     if (status == cudaSuccess) {
@@ -131,8 +152,19 @@ bool commit_control_preparation_stage(CudaWorldStoreDeviceAllocation *allocation
         }
         return false;
     }
-    return finalize_staged_barrier(allocation, next_slot, CudaResidentBarrierCode::stage_publish,
-                                   faults, error);
+    // CP-7b: the stage_publish barrier ran as the kernel's per-world epilogue,
+    // so the stage commit is the host-side slot flip. The barrier-commit fault
+    // hook keeps its observable contract: the stage fails after a clean phase
+    // and the staged slot never becomes active.
+    if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_barrier_commit)) {
+        if (error != nullptr) {
+            *error = "injected CUDA world store barrier commit failure";
+        }
+        return false;
+    }
+    allocation->active_state_slot = next_slot;
+    if (error != nullptr) error->clear();
+    return true;
 }
 bool publish_cuda_world_store_stage(CudaWorldStoreDeviceAllocation *allocation,
                                     CudaWorldStoreDeviceFaultInjection *faults,

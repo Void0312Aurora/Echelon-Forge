@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <utility>
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_device_api.h"
 #endif
 
@@ -19,7 +19,7 @@ CudaWorldStore::CudaWorldStore() : impl_(std::make_unique<Impl>()) {
 
 CudaWorldStore::~CudaWorldStore() {
     (void)teardown();
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     // A one-shot teardown failure keeps ownership intact. The destructor gets
     // one final best-effort retry; CUDA context destruction remains the final
     // process-level recovery for a persistent runtime release failure.
@@ -29,7 +29,7 @@ CudaWorldStore::~CudaWorldStore() {
 }
 
 bool CudaWorldStore::compiled_with_cuda() noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     return true;
 #else
     return false;
@@ -37,7 +37,7 @@ bool CudaWorldStore::compiled_with_cuda() noexcept {
 }
 
 bool CudaWorldStore::configure(std::size_t world_capacity) {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (impl_->diagnostics.allocation_generation == std::numeric_limits<std::uint64_t>::max()) {
         impl_->diagnostics.last_error = "CUDA world store allocation generation exhausted";
         return false;
@@ -112,7 +112,7 @@ bool CudaWorldStore::configure(std::size_t world_capacity) {
     impl_->diagnostics.state = CudaWorldStoreState::unavailable;
     impl_->diagnostics.runtime_available = false;
     impl_->diagnostics.last_error =
-        "CUDA resident backend was compiled without EF_ENABLE_CUDA_EXPERIMENTS";
+        "CUDA resident backend was compiled without EF_ENABLE_CUDA_RESIDENT_BACKEND";
     return false;
 #endif
 }
@@ -128,7 +128,7 @@ bool CudaWorldStore::reset(const std::vector<std::uint32_t> &seeds) {
         return false;
     }
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (impl_->diagnostics.reset_generation == std::numeric_limits<std::uint64_t>::max()) {
         impl_->diagnostics.last_error = "CUDA world store reset generation exhausted";
         return false;
@@ -167,7 +167,7 @@ bool CudaWorldStore::reset(const std::vector<std::uint32_t> &seeds) {
 #else
     (void)seeds;
     impl_->diagnostics.last_error =
-        "CUDA resident backend was compiled without EF_ENABLE_CUDA_EXPERIMENTS";
+        "CUDA resident backend was compiled without EF_ENABLE_CUDA_RESIDENT_BACKEND";
     return false;
 #endif
 }
@@ -182,7 +182,7 @@ bool CudaWorldStore::setup_fixed_air_fixture(std::vector<CudaFixedAirWorldSetup>
         impl_->diagnostics.last_error = "CUDA fixed-air setup requires a ready allocation";
         return false;
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (std::any_of(impl_->setup_active.begin(), impl_->setup_active.end(),
                     [](std::uint8_t active) { return active != 0; })) {
         impl_->diagnostics.last_error =
@@ -221,7 +221,7 @@ bool CudaWorldStore::setup_fixed_air_fixture(std::vector<CudaFixedAirWorldSetup>
     return true;
 #else
     impl_->diagnostics.last_error =
-        "CUDA resident backend was compiled without EF_ENABLE_CUDA_EXPERIMENTS";
+        "CUDA resident backend was compiled without EF_ENABLE_CUDA_RESIDENT_BACKEND";
     return false;
 #endif
 }
@@ -242,7 +242,7 @@ bool CudaWorldStore::inject_flight_controls(
             "CUDA flight-control injection requires an awaiting-input window";
         return false;
     }
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     for (std::size_t world = 0; world < assignments.size(); ++world) {
         if (impl_->setup_active[world] == 0 || assignments[world].world_index != world ||
             assignments[world].entity_id != impl_->entity_ids[world]) {
@@ -263,13 +263,13 @@ bool CudaWorldStore::inject_flight_controls(
     return true;
 #else
     impl_->diagnostics.last_error =
-        "CUDA resident backend was compiled without EF_ENABLE_CUDA_EXPERIMENTS";
+        "CUDA resident backend was compiled without EF_ENABLE_CUDA_RESIDENT_BACKEND";
     return false;
 #endif
 }
 
 bool CudaWorldStore::publish_stage() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (impl_->window_state != Impl::WindowState::input_injected) {
         impl_->diagnostics.last_error =
             "CUDA stage publish requires successfully injected flight controls";
@@ -292,7 +292,7 @@ bool CudaWorldStore::publish_stage() {
     return true;
 #else
     impl_->diagnostics.last_error =
-        "CUDA resident backend was compiled without EF_ENABLE_CUDA_EXPERIMENTS";
+        "CUDA resident backend was compiled without EF_ENABLE_CUDA_RESIDENT_BACKEND";
     return false;
 #endif
 }
@@ -304,7 +304,7 @@ bool CudaWorldStore::partial_sync_commit() {
 }
 
 bool CudaWorldStore::commit_window() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (std::any_of(impl_->setup_active.begin(), impl_->setup_active.end(),
                     [](std::uint8_t active) { return active == 0; })) {
         impl_->diagnostics.last_error =
@@ -334,7 +334,7 @@ bool CudaWorldStore::commit_window() {
     return true;
 #else
     impl_->diagnostics.last_error =
-        "CUDA resident backend was compiled without EF_ENABLE_CUDA_EXPERIMENTS";
+        "CUDA resident backend was compiled without EF_ENABLE_CUDA_RESIDENT_BACKEND";
     return false;
 #endif
 }
@@ -353,7 +353,7 @@ bool CudaWorldStore::advance_window() {
 
 bool CudaWorldStore::export_device_observation_raw(CudaWorldStoreDeviceObservationRaw *raw,
                                                    std::string *error) const {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (impl_->diagnostics.state != CudaWorldStoreState::ready) {
         if (error != nullptr) *error = "device observation export requires a ready allocation";
         return false;
@@ -372,7 +372,7 @@ bool CudaWorldStore::export_device_observation_raw(CudaWorldStoreDeviceObservati
 }
 
 bool CudaWorldStore::teardown() noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (!detail::release_cuda_world_store_metadata(impl_->pending_cleanup, &impl_->faults) ||
         !detail::release_cuda_world_store_metadata(impl_->allocation, &impl_->faults)) {
         return false;
@@ -385,7 +385,7 @@ bool CudaWorldStore::teardown() noexcept {
     impl_->diagnostics.state_slot_bytes = 0;
     impl_->diagnostics.last_error.clear();
     impl_->window_state = Impl::WindowState::awaiting_input;
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     impl_->entity_generations.clear();
     impl_->setup_active.clear();
     impl_->entity_ids.clear();
@@ -405,7 +405,7 @@ std::size_t CudaWorldStore::world_capacity() const noexcept {
 }
 
 CudaWorldStoreStateSnapshot CudaWorldStore::state_snapshot() const {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (impl_->diagnostics.state != CudaWorldStoreState::ready) {
         throw std::logic_error("CUDA resident state readback requires a ready allocation");
     }
@@ -426,7 +426,7 @@ CudaWorldStoreStateSnapshot CudaWorldStore::state_snapshot() const {
 }
 
 void testing::CudaWorldStoreTestAccess::fail_next_allocation(CudaWorldStore &store) noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     store.impl_->faults.fail_next_allocation = true;
 #else
     (void)store;
@@ -434,7 +434,7 @@ void testing::CudaWorldStoreTestAccess::fail_next_allocation(CudaWorldStore &sto
 }
 
 void testing::CudaWorldStoreTestAccess::fail_next_reset_copy(CudaWorldStore &store) noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     store.impl_->faults.fail_next_reset_copy = true;
 #else
     (void)store;
@@ -442,7 +442,7 @@ void testing::CudaWorldStoreTestAccess::fail_next_reset_copy(CudaWorldStore &sto
 }
 
 void testing::CudaWorldStoreTestAccess::fail_next_release(CudaWorldStore &store) noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     store.impl_->faults.fail_next_release = true;
 #else
     (void)store;
@@ -450,7 +450,7 @@ void testing::CudaWorldStoreTestAccess::fail_next_release(CudaWorldStore &store)
 }
 
 void testing::CudaWorldStoreTestAccess::fail_next_state_transfer(CudaWorldStore &store) noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     store.impl_->faults.fail_next_state_transfer = true;
 #else
     (void)store;
@@ -458,7 +458,7 @@ void testing::CudaWorldStoreTestAccess::fail_next_state_transfer(CudaWorldStore 
 }
 
 void testing::CudaWorldStoreTestAccess::fail_next_barrier_commit(CudaWorldStore &store) noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     store.impl_->faults.fail_next_barrier_commit = true;
 #else
     (void)store;
@@ -477,7 +477,7 @@ void testing::CudaWorldStoreTestAccess::set_reset_generation(CudaWorldStore &sto
 
 CudaWorldStoreLifecycleSnapshot
 testing::CudaWorldStoreTestAccess::readback(const CudaWorldStore &store) {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     detail::CudaWorldStoreDeviceSnapshot device_snapshot;
     std::string error;
     if (!detail::read_cuda_world_store_metadata(store.impl_->allocation,
@@ -501,7 +501,7 @@ testing::CudaWorldStoreTestAccess::read_state(const CudaWorldStore &store) {
 }
 
 CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::barrier_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_barrier_kernel_resources(&resources, &error)) {
@@ -515,7 +515,7 @@ CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::barrier_kernel_res
 
 CudaBarrierKernelResources
 testing::CudaWorldStoreTestAccess::control_preparation_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_control_preparation_kernel_resources(&resources, &error)) {
@@ -529,106 +529,23 @@ testing::CudaWorldStoreTestAccess::control_preparation_kernel_resources() {
 }
 
 CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::flight_dynamics_forces_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+testing::CudaWorldStoreTestAccess::window_commit_body_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaBarrierKernelResources resources;
     std::string error;
-    if (!detail::query_cuda_world_store_flight_dynamics_forces_kernel_resources(&resources,
-                                                                                &error)) {
-        throw std::runtime_error("CUDA flight-dynamics forces kernel resource query failed: " +
-                                 error);
+    if (!detail::query_cuda_world_store_window_commit_body_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA window-commit body kernel resource query failed: " + error);
     }
     return resources;
 #else
     throw std::logic_error(
-        "CUDA flight-dynamics forces kernel resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::flight_dynamics_aerodynamics_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_flight_dynamics_aerodynamics_kernel_resources(&resources,
-                                                                                      &error)) {
-        throw std::runtime_error(
-            "CUDA flight-dynamics aerodynamics kernel resource query failed: " + error);
-    }
-    return resources;
-#else
-    throw std::logic_error(
-        "CUDA flight-dynamics aerodynamics kernel resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::flight_dynamics_integrate_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_flight_dynamics_integrate_kernel_resources(&resources,
-                                                                                   &error)) {
-        throw std::runtime_error("CUDA flight-dynamics integration kernel resource query failed: " +
-                                 error);
-    }
-    return resources;
-#else
-    throw std::logic_error(
-        "CUDA flight-dynamics integration kernel resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::observation_projection_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_observation_projection_kernel_resources(&resources,
-                                                                                &error)) {
-        throw std::runtime_error("CUDA observation-projection kernel resource query failed: " +
-                                 error);
-    }
-    return resources;
-#else
-    throw std::logic_error("CUDA observation-projection resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::instrument_projection_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_instrument_projection_kernel_resources(&resources,
-                                                                               &error)) {
-        throw std::runtime_error("CUDA instrument-projection resource query failed: " + error);
-    }
-    return resources;
-#else
-    throw std::logic_error("CUDA instrument-projection resource query requires CUDA experiments");
-#endif
-}
-
-CudaBarrierKernelResources
-testing::CudaWorldStoreTestAccess::configuration_projection_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
-    CudaBarrierKernelResources resources;
-    std::string error;
-    if (!detail::query_cuda_world_store_configuration_projection_kernel_resources(&resources,
-                                                                                  &error)) {
-        throw std::runtime_error("CUDA observation-configuration resource query failed: " + error);
-    }
-    return resources;
-#else
-    throw std::logic_error(
-        "CUDA observation-configuration resource query requires CUDA experiments");
+        "CUDA window-commit body kernel resource query requires CUDA experiments");
 #endif
 }
 
 CudaBarrierKernelResources
 testing::CudaWorldStoreTestAccess::device_observation_pack_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_device_observation_pack_kernel_resources(&resources,
@@ -643,7 +560,7 @@ testing::CudaWorldStoreTestAccess::device_observation_pack_kernel_resources() {
 
 CudaBarrierKernelResources
 testing::CudaWorldStoreTestAccess::device_observation_consumer_kernel_resources() {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     CudaBarrierKernelResources resources;
     std::string error;
     if (!detail::query_cuda_world_store_device_observation_consumer_kernel_resources(&resources,
@@ -658,10 +575,23 @@ testing::CudaWorldStoreTestAccess::device_observation_consumer_kernel_resources(
 #endif
 }
 
+CudaBarrierKernelResources testing::CudaWorldStoreTestAccess::learner_consumer_kernel_resources() {
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
+    CudaBarrierKernelResources resources;
+    std::string error;
+    if (!detail::query_cuda_world_store_learner_consumer_kernel_resources(&resources, &error)) {
+        throw std::runtime_error("CUDA learner-consumer resource query failed: " + error);
+    }
+    return resources;
+#else
+    throw std::logic_error("CUDA learner-consumer resource query requires CUDA experiments");
+#endif
+}
+
 bool testing::CudaWorldStoreTestAccess::consume_device_observation_view(
     const CudaResidentDeviceObservationView &view, std::vector<float> *first_values,
     std::vector<std::uint64_t> *ids) {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (!view.valid()) return false;
     std::string error;
     return detail::consume_cuda_world_store_device_observation(

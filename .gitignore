@@ -101,3 +101,6 @@ docs/book/**
 /game/runtime/
 /game/tmp_build_log.txt
 /game/mod/@EchelonProxy/echelon_bridge.dll
+
+# Session-local scratch (build logs, measurement staging, agent handoffs).
+/.memcheck/

@@ -25,7 +25,16 @@ Recommended reading order:
 13. [cuda_resident_cr2_matrix_evidence_20260804.json](cuda_resident_cr2_matrix_evidence_20260804.json)
 14. [cuda_resident_cr2_closure_20260805.md](cuda_resident_cr2_closure_20260805.md)
 15. [cuda_resident_cr2_closure_20260805.json](cuda_resident_cr2_closure_20260805.json)
-16. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
+16. [cuda_resident_promotion_program_20260808.md](cuda_resident_promotion_program_20260808.md)
+17. [cuda_resident_cp_resource_evidence_20260810.json](cuda_resident_cp_resource_evidence_20260810.json)
+18. [cuda_resident_cp_counter_evidence_20260810.json](cuda_resident_cp_counter_evidence_20260810.json)
+19. [cuda_resident_cp6_learner_consumption_design_20260812.md](cuda_resident_cp6_learner_consumption_design_20260812.md)
+20. [cuda_resident_cp7_small_batch_disposition_prep_20260812.md](cuda_resident_cp7_small_batch_disposition_prep_20260812.md)
+21. [cuda_resident_cp8_rematrix_kickoff_20260812.md](cuda_resident_cp8_rematrix_kickoff_20260812.md)
+22. [cuda_resident_cp8_matrix_evidence_20260812.json](cuda_resident_cp8_matrix_evidence_20260812.json)
+23. [cuda_resident_cp9_promotion_decision_20260813.md](cuda_resident_cp9_promotion_decision_20260813.md)
+24. [cuda_resident_cp9_promotion_decision_20260813.json](cuda_resident_cp9_promotion_decision_20260813.json)
+25. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
 
 Usage rules:
 
@@ -37,6 +46,11 @@ Usage rules:
   consumer, parity, resource, and small-batch gates and then closed without
   promotion in CR2-7. Its retained advisory is not a runtime selector; future
   CUDA-resident work requires another explicit program and user authorization.
+- The CP promotion program (CP-0..CP-9) closed on 2026-08-13 with a recorded
+  scoped-promotion decision: opt-in maintained status on the fixture surface,
+  CPU stays the maintained default, performance claims stay host-specific
+  experimental. No runtime behavior changed; the exposure implementation is a
+  separately authorized follow-up scope.
 - The fixture preserves historical paths and hashes where validators require
   byte-stable provenance. Current architecture authority remains under
   `docs/architecture/`.

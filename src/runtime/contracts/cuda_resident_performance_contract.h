@@ -19,6 +19,35 @@ inline constexpr std::string_view kCudaResidentPerformanceInvocationSurface =
 inline constexpr std::string_view kCudaResidentPerformanceUnavailableCountersReason =
     "ERR_NVGPUCTRPERM";
 
+// --- CP-7a: frozen small-batch selection rule (gate G-F disposition) --------
+//
+// CR2-6b measured the resident lane losing to the CPU reference at world 1 by
+// 7-36x and recorded a routing ADVISORY. The CP-5 post-fusion campaigns and
+// the world-1 timeline attribution turned the advisory's cause into
+// measurement: the fused window body is ~65.5 us of single-thread serial-chain
+// device time at world 1 while the CPU lane finishes the whole step in
+// ~18-31 us, so no host-side skeleton fix can close world 1. This rule
+// freezes that disposition so the world-1 regression is explicit policy
+// rather than a silent measurement footnote.
+//
+// The rule is documentation-grade policy, not a runtime selector: the
+// maintained default remains the Flecs CPU reference for every world count,
+// and no runtime translation unit may consume these constants (an
+// architecture gate enforces that). The exact resident-lane crossover between
+// world counts 1 and 4 is unmeasured -- the frozen matrix has no world-2/3
+// row -- so the advisory minimum is the smallest measured-winning count and
+// its value is a named CP-8 re-matrix review item.
+inline constexpr std::string_view kSmallBatchSelectionRuleId = "cp7.small_batch_selection_rule.v1";
+inline constexpr std::size_t kResidentLaneAdvisoryMinimumWorldCount = 4;
+inline constexpr bool kWorldCountsBelowMinimumRouteToCpuReference = true;
+inline constexpr bool kMaintainedDefaultRemainsCpuReference = true;
+inline constexpr std::string_view kSmallBatchCrossoverReviewOwner = "cp8.rematrix";
+
+static_assert(kResidentLaneAdvisoryMinimumWorldCount > 1,
+              "the rule exists to route sub-minimum world counts to the CPU reference");
+static_assert(kWorldCountsBelowMinimumRouteToCpuReference && kMaintainedDefaultRemainsCpuReference,
+              "freezing the rule must not weaken the maintained CPU default");
+
 // These constants describe the fixed-air device layout and the operations in
 // the split cuda_world_store_cuda_* translation units. They are a diagnostic
 // ledger, not a claim that the candidate is a full RuntimeFacade backend. The
@@ -53,15 +82,20 @@ struct WindowTransferLedger {
                                                                 std::size_t state_slot_bytes,
                                                                 bool host_snapshot,
                                                                 bool device_consumer) noexcept {
+    // CP-5 fused the six window-commit launches into one; CP-7b folded the
+    // stage_publish and window_commit barriers into their stage kernels. The
+    // base window is three launches (input-injection barrier, control
+    // preparation, fused window body), each with one synchronization and one
+    // four-byte status readback. The staging copies are unchanged.
     WindowTransferLedger ledger{
         .h2d_copy_count = 3,
         .h2d_bytes = world_count * kFlightControlH2dBytesPerWorld,
-        .d2h_copy_count = 5,
-        .d2h_bytes = 5 * sizeof(std::uint32_t),
+        .d2h_copy_count = 3,
+        .d2h_bytes = 3 * sizeof(std::uint32_t),
         .d2d_copy_count = 3,
         .d2d_bytes = 3 * state_slot_bytes,
-        .kernel_launch_count = 10,
-        .synchronization_count = 5,
+        .kernel_launch_count = 3,
+        .synchronization_count = 3,
     };
     const auto add_state_snapshot_readback = [&]() {
         // state_snapshot() reconstructs the host-visible state and also reads

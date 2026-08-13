@@ -7,7 +7,7 @@ namespace runtime::cuda_resident {
 bool CudaWorldStore::acquire_device_observation_lease_raw(
     CudaWorldStoreDeviceObservationLeaseRaw *raw, device_consumer::FailureCode *failure,
     std::string *error) const {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     if (raw == nullptr) {
         if (failure != nullptr) *failure = device_consumer::FailureCode::invalid_request;
         if (error != nullptr) *error = "device observation lease requires an output";
@@ -46,7 +46,7 @@ bool CudaWorldStore::acquire_device_observation_lease_raw(
 
 void testing::CudaWorldStoreTestAccess::fail_next_device_lease_allocation(
     CudaWorldStore &store) noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     store.impl_->faults.fail_next_device_lease_allocation = true;
 #else
     (void)store;
@@ -55,7 +55,7 @@ void testing::CudaWorldStoreTestAccess::fail_next_device_lease_allocation(
 
 void testing::CudaWorldStoreTestAccess::fail_next_device_lease_event_record(
     CudaWorldStore &store) noexcept {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
     store.impl_->faults.fail_next_device_lease_event_record = true;
 #else
     (void)store;

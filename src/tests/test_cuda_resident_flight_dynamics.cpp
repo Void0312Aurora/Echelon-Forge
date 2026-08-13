@@ -44,11 +44,7 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
     CudaResidentBackend backend;
     backend.configure({.world_count = 2});
     check_kernel_resources(
-        testing::CudaWorldStoreTestAccess::flight_dynamics_forces_kernel_resources());
-    check_kernel_resources(
-        testing::CudaWorldStoreTestAccess::flight_dynamics_aerodynamics_kernel_resources());
-    check_kernel_resources(
-        testing::CudaWorldStoreTestAccess::flight_dynamics_integrate_kernel_resources());
+        testing::CudaWorldStoreTestAccess::window_commit_body_kernel_resources());
     const std::vector<std::uint32_t> seeds = {101, 202};
     std::vector<WorldSpawnRequest> spawns;
     for (std::size_t world = 0; world < seeds.size(); ++world) {
@@ -84,7 +80,6 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
         actions.push_back(action);
     }
     backend.inject({.pilot_actions = actions});
-    backend.publish_stage();
     backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
     auto &store = testing::CudaResidentBackendTestAccess::world_store(backend);
     const auto state = testing::CudaWorldStoreTestAccess::read_state(store);
@@ -132,7 +127,7 @@ TEST_CASE("CUDA flight dynamics commits CPU-parity airframe dynamics from reside
     }
 
     backend.inject({.pilot_actions = actions});
-    backend.publish_stage();
+    CHECK(store.publish_stage());
     const auto before_failed_window = testing::CudaWorldStoreTestAccess::read_state(store);
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),

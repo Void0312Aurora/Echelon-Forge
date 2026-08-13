@@ -15,11 +15,9 @@ try:
         COMMIT,
         COMMON_MODES,
         DEVICE_MODES,
-        EVIDENCE_SCHEMA,
-        ITERATION,
-        MANIFEST_SCHEMA,
         METRICS,
         SHA256,
+        generation_for_manifest,
         require as _require,
         selection_policy_contract,
         validate_evidence,
@@ -30,11 +28,9 @@ except ModuleNotFoundError:
         COMMIT,
         COMMON_MODES,
         DEVICE_MODES,
-        EVIDENCE_SCHEMA,
-        ITERATION,
-        MANIFEST_SCHEMA,
         METRICS,
         SHA256,
+        generation_for_manifest,
         require as _require,
         selection_policy_contract,
         validate_evidence,
@@ -195,8 +191,8 @@ def _validate_manifest(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
         "campaigns",
     }
     _require(set(manifest) == top_keys, "campaign manifest top-level schema drifted")
-    _require(manifest["schema_version"] == MANIFEST_SCHEMA, "campaign manifest schema mismatch")
-    _require(manifest["evidence_date"] == "2026-08-04", "campaign evidence date drifted")
+    spec = generation_for_manifest(manifest["schema_version"])
+    _require(manifest["evidence_date"] == spec["evidence_date"], "campaign evidence date drifted")
     _require(
         type(manifest["source_commit"]) is str
         and COMMIT.fullmatch(manifest["source_commit"]) is not None,
@@ -228,7 +224,7 @@ def _validate_manifest(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
         and design["order_balanced"] is True
         and design["lanes_run_concurrently"] is False
         and design["source_worktree_clean_at_capture"] is True
-        and design["interpretation_scope"] == "host_specific_experimental_selection_advisory_only"
+        and design["interpretation_scope"] == spec["interpretation_scope"]
         and design["unmeasured_world_counts_may_be_extrapolated"] is False,
         "campaign capture design drifted",
     )
@@ -240,7 +236,7 @@ def _validate_manifest(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
             "matrix_validator",
             "parity_comparator",
         },
-        "prior_evidence_inputs": {"counter_evidence", "resource_evidence"},
+        "prior_evidence_inputs": set(spec["prior_evidence_inputs"]),
     }
     paths: dict[str, Path] = {}
     for group, names in expected_inputs.items():
@@ -291,7 +287,7 @@ def _validate_manifest(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
             descriptors[first_lane]["captured_utc"] < descriptors[second_lane]["captured_utc"],
             "campaign timestamps contradict execution order",
         )
-    return {"paths": paths, "reports": reports}
+    return {"paths": paths, "reports": reports, "spec": spec}
 
 
 def _report_invariant(report: dict[str, Any]) -> dict[str, Any]:
@@ -422,6 +418,58 @@ def _validate_prior_evidence(paths: dict[str, Path]) -> dict[str, Any]:
     }
 
 
+def _validate_prior_evidence_v2(paths: dict[str, Path], spec: dict[str, Any]) -> dict[str, Any]:
+    counter = _load(paths["counter_evidence"])
+    counter_gates = counter.get("gates")
+    _require(
+        isinstance(counter_gates, dict)
+        and counter_gates.get("cr2_5_achieved_counter_gate_complete") is True
+        and counter_gates.get("cr2_5_disposition") == "achieved_counter_evidence_complete"
+        and counter_gates.get("cr2_5a_launch_topology_complete") is True
+        and counter_gates.get("cr2_5a_static_resource_complete") is True
+        and counter_gates.get("tuning_authorized") is False,
+        "G-D achieved-counter gate state drifted",
+    )
+    attempt = counter.get("attempt", {})
+    _require(
+        attempt.get("status") == "available"
+        and type(attempt.get("collected_launch_count")) is int
+        and attempt.get("collected_launch_count") == 12
+        and counter.get("profile_id") == spec["counter_status"]["achieved_counter_parent_profile"],
+        "G-D achieved-counter capture identity drifted",
+    )
+    _require(
+        isinstance(counter.get("achieved_counters"), dict)
+        and bool(counter["achieved_counters"])
+        and all(
+            metric.get("values_by_launch") is not None
+            for metric in counter["achieved_counters"].values()
+        ),
+        "G-D achieved counters are missing values",
+    )
+    resource = _load(paths["resource_evidence"])
+    _require(
+        resource.get("schema_version") == "cuda_resident.cp.kernel_resource_evidence.v4",
+        "CP-8 static resource parent is not the v4 generation",
+    )
+    resource_gates = resource.get("gates")
+    _require(
+        isinstance(resource_gates, dict)
+        and resource_gates.get("cr2_5a_launch_topology_complete") is True
+        and resource_gates.get("cr2_5a_static_resource_complete") is True,
+        "CP-8 static resource parent gates drifted",
+    )
+    # The comparison target must still validate byte-for-byte under its own
+    # frozen v1 pins before CP-8 may reference it.
+    prior_matrix = _load(paths["matrix_evidence_cr2_6b"])
+    validate_evidence(prior_matrix)
+    _require(
+        prior_matrix.get("iteration") == "CR2-6b",
+        "CP-8 prior matrix package is not the CR2-6b generation",
+    )
+    return dict(spec["counter_status"])
+
+
 def _available_rows(report: dict[str, Any]) -> dict[tuple[int, str], dict[str, Any]]:
     return {(row["world_count"], row["mode_id"]): row for row in report["rows"] if row["available"]}
 
@@ -519,11 +567,14 @@ def collect(root: Path, manifest_path: Path) -> dict[str, Any]:
     validated = _validate_manifest(root, manifest)
     reports = validated["reports"]
     paths = validated["paths"]
+    spec = validated["spec"]
     _validate_campaign_invariants(reports)
     parity = _run_parity(root, manifest, paths)
-    counter_status = _validate_prior_evidence(paths)
+    if spec["has_selection_policy"]:
+        counter_status = _validate_prior_evidence(paths)
+    else:
+        counter_status = _validate_prior_evidence_v2(paths, spec)
     comparisons = _comparison_rows(reports)
-    policy = _selection_policy(comparisons)
     campaigns = []
     for campaign in manifest["campaigns"]:
         campaigns.append(
@@ -534,8 +585,8 @@ def collect(root: Path, manifest_path: Path) -> dict[str, Any]:
             }
         )
     evidence = {
-        "schema_version": EVIDENCE_SCHEMA,
-        "iteration": ITERATION,
+        "schema_version": spec["evidence_schema"],
+        "iteration": spec["iteration"],
         "evidence_date": manifest["evidence_date"],
         "source_commit": manifest["source_commit"],
         "inputs": {
@@ -565,7 +616,6 @@ def collect(root: Path, manifest_path: Path) -> dict[str, Any]:
             "rollout_p95_semantics": "nearest_rank_maximum_of_10_rollouts",
         },
         "comparisons": comparisons,
-        "selection_policy": policy,
         "parity_confirmation": parity,
         "counter_status": counter_status,
         "limitations": {
@@ -579,22 +629,18 @@ def collect(root: Path, manifest_path: Path) -> dict[str, Any]:
             "performance_tuning_claimed": False,
             "promotion_claimed": False,
         },
-        "gates": {
-            "cr2_5_achieved_counter_gate_complete": False,
-            "cr2_6_matrix_evidence_complete": True,
-            "cr2_6_selection_advisory_complete": True,
-            "maintained_claim_allowed": False,
-            "promotion_allowed": False,
-            "public_support_enabled": False,
-            "tuning_authorized": False,
-        },
+        "gates": dict(spec["gates"]),
     }
+    if spec["has_selection_policy"]:
+        evidence["selection_policy"] = _selection_policy(comparisons)
     validate_evidence(evidence)
     return evidence
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Collect and validate CR2-6b matrix evidence")
+    parser = argparse.ArgumentParser(
+        description="Collect and validate production matrix evidence (generation-aware)"
+    )
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()

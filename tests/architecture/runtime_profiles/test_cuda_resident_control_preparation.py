@@ -61,7 +61,7 @@ def test_rb5_control_preparation_stays_private_and_does_not_promote_backend_supp
     assert "reject_unimplemented_operation" in backend
     assert ".compiled_experimental_backend = false" in facade_config
     assert ".supported_manifest_ids" not in facade_config
-    assert "EF_ENABLE_CUDA_EXPERIMENTS" in cmake
+    assert "EF_ENABLE_CUDA_RESIDENT_BACKEND" in cmake
     assert "src/tests/test_cuda_resident_control_preparation.cpp" in cmake
     assert "WorldBatchRuntime" not in backend
     assert "FlecsCpuBackend" not in backend

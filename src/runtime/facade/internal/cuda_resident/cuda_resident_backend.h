@@ -81,8 +81,6 @@ class CudaResidentBackend final : public IWorldBatchBackend {
     runtime::backend::Diagnostics diagnostics() const override;
 
     [[nodiscard]] CudaWorldStoreDiagnostics store_diagnostics() const;
-    void publish_stage();
-    [[nodiscard]] bool partial_sync_commit();
     [[nodiscard]] CudaResidentExportSnapshot export_snapshot(const std::string &request_id) const;
     [[nodiscard]] CudaResidentDeviceObservationView
     export_device_observation_view(const std::string &request_id) const;

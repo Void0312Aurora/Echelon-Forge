@@ -11,7 +11,7 @@
 
 #include "runtime/contracts/parity_budget_contracts.h"
 
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
 #include "runtime/facade/internal/cuda_resident/cuda_world_store_device_api.h"
 #endif
 
@@ -411,17 +411,6 @@ CudaWorldStoreDiagnostics CudaResidentBackend::store_diagnostics() const {
     return store_.diagnostics();
 }
 
-void CudaResidentBackend::publish_stage() {
-    if (!store_.publish_stage()) {
-        throw std::runtime_error("CUDA resident backend stage publish failed: " +
-                                 store_.diagnostics().last_error);
-    }
-}
-
-bool CudaResidentBackend::partial_sync_commit() {
-    return store_.partial_sync_commit();
-}
-
 CudaResidentExportSnapshot
 CudaResidentBackend::export_snapshot(const std::string &request_id) const {
     if (request_id.empty()) {
@@ -567,7 +556,7 @@ CudaResidentBackend::export_device_observation_view(const std::string &request_i
     // constructor failure; subsequent descriptor exceptions unwind through the
     // shared_ptr and invoke the deleter exactly once.
     view.lifetime = std::shared_ptr<void>(raw.values, [ids = raw.ids](void *values) {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
         detail::release_cuda_world_store_device_observation(values, ids);
 #else
             (void)values;
@@ -605,7 +594,7 @@ CudaResidentBackend::acquire_device_observation_lease(const std::string &request
     auto &lease = result.lease;
     lease.lifetime = std::shared_ptr<void>(raw.values, [ids = raw.ids, event = raw.ready_event,
                                                         device = raw.device_ordinal](void *values) {
-#if defined(EF_ENABLE_CUDA_EXPERIMENTS)
+#if defined(EF_ENABLE_CUDA_RESIDENT_BACKEND)
         detail::release_cuda_world_store_device_observation_lease(values, ids, event, device);
 #else
             (void)values;

@@ -11,44 +11,67 @@ from pathlib import Path
 from typing import Any
 
 if __package__:
-    from .cuda_resident_cr2_resource_schema import (
-        ACHIEVED_FIELDS,
-        LAUNCH_SEQUENCE,
-        PROFILE,
-        REPORT_KEYS,
-        SCHEMA,
-        validate_report as _validate_report,
-    )
-    from .cuda_resident_cr2_resource_static import (
-        EvidenceError,
-        KERNELS,
-        kernel_id as _kernel_id,
-        parse_cuobjdump_resources,
-        parse_ptxas,
-        parse_sass,
-        require as _require,
-    )
+    from . import cuda_resident_cr2_resource_schema as _schema
+    from . import cuda_resident_cr2_resource_static as _static
 else:
-    from cuda_resident_cr2_resource_schema import (  # type: ignore[no-redef]
-        ACHIEVED_FIELDS,
-        LAUNCH_SEQUENCE,
-        PROFILE,
-        REPORT_KEYS,
-        SCHEMA,
-        validate_report as _validate_report,
-    )
-    from cuda_resident_cr2_resource_static import (  # type: ignore[no-redef]
-        EvidenceError,
-        KERNELS,
-        kernel_id as _kernel_id,
-        parse_cuobjdump_resources,
-        parse_ptxas,
-        parse_sass,
-        require as _require,
-    )
+    import cuda_resident_cr2_resource_schema as _schema  # type: ignore[no-redef]
+    import cuda_resident_cr2_resource_static as _static  # type: ignore[no-redef]
+
+# Retained public aliases: the counter chain and the architecture tests import
+# these names from this module.
+ACHIEVED_FIELDS = _schema.ACHIEVED_FIELDS
+LAUNCH_SEQUENCE = _schema.LAUNCH_SEQUENCE
+PROFILE = _schema.PROFILE
+PROFILE_V2 = _schema.PROFILE_V2
+PROFILE_V3 = _schema.PROFILE_V3
+PROFILE_V4 = _schema.PROFILE_V4
+REPORT_KEYS = _schema.REPORT_KEYS
+SCHEMA = _schema.SCHEMA
+SCHEMA_V2 = _schema.SCHEMA_V2
+SCHEMA_V3 = _schema.SCHEMA_V3
+SCHEMA_V4 = _schema.SCHEMA_V4
+_expected_api_counts = _schema.expected_api_counts
+_expected_transfers = _schema.expected_transfers
+_validate_report = _schema.validate_report
+EvidenceError = _static.EvidenceError
+KERNELS = _static.KERNELS
+_kernel_catalog = _static.kernel_catalog
+_kernel_id = _static.kernel_id
+_launch_sequence = _static.launch_sequence
+parse_cuobjdump_resources = _static.parse_cuobjdump_resources
+parse_ptxas = _static.parse_ptxas
+parse_sass = _static.parse_sass
+_require = _static.require
 
 
 PROBE_SCHEMA = "cuda_resident.cr2.resource_capture_probe.v1"
+PROBE_SCHEMA_V2 = "cuda_resident.cp.resource_capture_probe.v2"
+PROBE_SCHEMA_V3 = "cuda_resident.cp.resource_capture_probe.v3"
+PROBE_SCHEMA_V4 = "cuda_resident.cp.resource_capture_probe.v4"
+_PROBE_SCHEMA_BY_VERSION = {
+    1: PROBE_SCHEMA,
+    2: PROBE_SCHEMA_V2,
+    3: PROBE_SCHEMA_V3,
+    4: PROBE_SCHEMA_V4,
+}
+
+# Keys a v2 probe adds on top of the v1 set. They record the cross-generation
+# link (which schema it supersedes, whether the workload digest still matches
+# the frozen capture) and the semantic catalog it was captured against, plus an
+# explicit statement that this is a static capture carrying no achieved counters.
+PROBE_KEYS_V2_ADDITIONS = {
+    "achieved_counters_present",
+    "expected_launch_sequence",
+    "kernel_id_migration",
+    "supersedes_schema_version",
+    "trace_signature_matches_v1",
+}
+# A v3 probe records the CP-5 fold instead of the 1:1 rename map: a fusion is
+# not a relabel and must not be reported through the migration key. A v4 probe
+# records the CP-7b launch absorption: the kernel set is unchanged, so neither
+# a migration nor a kernel fold applies.
+PROBE_KEYS_V3_ADDITIONS = (PROBE_KEYS_V2_ADDITIONS - {"kernel_id_migration"}) | {"kernel_id_fold"}
+PROBE_KEYS_V4_ADDITIONS = (PROBE_KEYS_V3_ADDITIONS - {"kernel_id_fold"}) | {"launch_absorption"}
 PROBE_KEYS = {
     "backend_id",
     "blocks",
@@ -71,6 +94,14 @@ PROBE_KEYS = {
     "window_count",
     "world_count",
 }
+_PROBE_KEYS_BY_VERSION = {
+    1: PROBE_KEYS,
+    2: PROBE_KEYS | PROBE_KEYS_V2_ADDITIONS,
+    3: PROBE_KEYS | PROBE_KEYS_V3_ADDITIONS,
+    4: PROBE_KEYS | PROBE_KEYS_V4_ADDITIONS,
+}
+_PROFILE_BY_VERSION = {1: PROFILE, 2: PROFILE_V2, 3: PROFILE_V3, 4: PROFILE_V4}
+_SCHEMA_BY_VERSION = {1: SCHEMA, 2: SCHEMA_V2, 3: SCHEMA_V3, 4: SCHEMA_V4}
 
 
 def _sha256(path: Path) -> str:
@@ -95,9 +126,35 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 def load_probe(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_object)
     _require(isinstance(value, dict), "probe root must be an object")
-    _require(set(value) == PROBE_KEYS, "probe top-level keys do not match the frozen schema")
-    _require(value["schema_version"] == PROBE_SCHEMA, "probe schema mismatch")
-    _require(value["profile_id"] == PROFILE, "probe profile mismatch")
+    # A probe is checked against the generation it declares. v1 keeps its exact
+    # frozen key set; v2 adds the cross-generation link fields and is otherwise
+    # identical, so the workload invariants below apply unchanged to both.
+    declared = value.get("schema_version")
+    version = next(
+        (
+            candidate
+            for candidate, schema in _PROBE_SCHEMA_BY_VERSION.items()
+            if declared == schema
+        ),
+        None,
+    )
+    _require(version is not None, f"probe schema is not a known generation: {declared!r}")
+    expected_keys = _PROBE_KEYS_BY_VERSION[version]
+    _require(set(value) == expected_keys, "probe top-level keys do not match the frozen schema")
+    _require(value["schema_version"] == _PROBE_SCHEMA_BY_VERSION[version], "probe schema mismatch")
+    _require(value["profile_id"] == _PROFILE_BY_VERSION[version], "probe profile mismatch")
+    if version > 1:
+        _require(
+            value["supersedes_schema_version"] == _PROBE_SCHEMA_BY_VERSION[version - 1],
+            "probe must declare the schema it supersedes",
+        )
+        # A recapture is only comparable to the frozen evidence if it measured
+        # the same workload, and it must never masquerade as a counter capture.
+        _require(value["trace_signature_matches_v1"] is True, "v2 probe workload diverged")
+        _require(
+            value["achieved_counters_present"] is False,
+            "a static capture must not claim achieved counters",
+        )
     _require(value["build_config"] == "Release", "probe must be a Release build")
     _require(value["cuda_architecture"] == "sm_86", "probe must target sm_86")
     _require(value["world_count"] == 256, "probe must contain 256 worlds")
@@ -195,7 +252,9 @@ def _table_columns(connection: sqlite3.Connection, table: str) -> set[str]:
     return {str(row[1]) for row in connection.execute(f"PRAGMA table_info({table})")}
 
 
-def parse_nsys(path: Path) -> dict[str, Any]:
+def parse_nsys(path: Path, schema_version: int = 1) -> dict[str, Any]:
+    catalog = _kernel_catalog(schema_version)
+    expected_launches = _launch_sequence(schema_version)
     connection = sqlite3.connect(path.resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
     try:
         kernel_columns = {
@@ -229,12 +288,15 @@ def parse_nsys(path: Path) -> dict[str, Any]:
                 """
             )
         )
-        _require(len(rows) == len(LAUNCH_SEQUENCE), "Nsight launch count is not exactly 12")
+        _require(
+            len(rows) == len(expected_launches),
+            f"Nsight launch count is not exactly {len(expected_launches)}",
+        )
         launches: list[dict[str, Any]] = []
         symbols_by_kernel: dict[str, set[str]] = {}
-        for index, (row, expected) in enumerate(zip(rows, LAUNCH_SEQUENCE, strict=True)):
+        for index, (row, expected) in enumerate(zip(rows, expected_launches, strict=True)):
             symbol = str(row[2])
-            kernel_id = _kernel_id(symbol)
+            kernel_id = _kernel_id(symbol, schema_version)
             _require(kernel_id == expected[0], f"Nsight launch order drift at index {index}")
             _require(tuple(row[4:7]) == (2, 1, 1), f"Nsight grid drift at index {index}")
             _require(tuple(row[7:10]) == (128, 1, 1), f"Nsight block drift at index {index}")
@@ -253,13 +315,16 @@ def parse_nsys(path: Path) -> dict[str, Any]:
                     "local_bytes_per_thread_metadata": int(row[12]),
                 }
             )
-        for spec in KERNELS:
+        for spec in catalog:
             _require(
                 len(symbols_by_kernel.get(spec.kernel_id, set())) == 1,
                 f"Nsight exact symbol drift for {spec.kernel_id}",
             )
         raw_symbols = {symbol for values in symbols_by_kernel.values() for symbol in values}
-        _require(len(raw_symbols) == len(KERNELS), "Nsight raw unique kernel count is not 10")
+        _require(
+            len(raw_symbols) == len(catalog),
+            f"Nsight raw unique kernel count is not {len(catalog)}",
+        )
         symbol_inventory = [
             {
                 "kernel_id": spec.kernel_id,
@@ -267,7 +332,7 @@ def parse_nsys(path: Path) -> dict[str, Any]:
                     next(iter(symbols_by_kernel[spec.kernel_id])).encode("utf-8")
                 ).hexdigest(),
             }
-            for spec in KERNELS
+            for spec in catalog
         ]
         api_counts: dict[str, int] = {}
         for name, count in connection.execute(
@@ -280,31 +345,20 @@ def parse_nsys(path: Path) -> dict[str, Any]:
         ):
             base_name = str(name).split("_v", 1)[0]
             api_counts[base_name] = api_counts.get(base_name, 0) + int(count)
-        expected_api = {
-            "cudaDeviceSynchronize": 5,
-            "cudaEventCreateWithFlags": 2,
-            "cudaEventRecord": 2,
-            "cudaEventSynchronize": 1,
-            "cudaFree": 0,
-            "cudaLaunchKernel": 12,
-            "cudaMalloc": 4,
-            "cudaMemcpy": 13,
-            "cudaMemset": 5,
-            "cudaProfilerStart": 1,
-            "cudaStreamWaitEvent": 1,
-        }
+        expected_api = _expected_api_counts(schema_version)
         for name, count in expected_api.items():
             _require(api_counts.get(name, 0) == count, f"Nsight API count mismatch for {name}")
         copies = list(
             connection.execute("SELECT srcKind, dstKind, bytes FROM CUPTI_ACTIVITY_KIND_MEMCPY")
         )
-        transfer_groups = {
-            "host_to_device": [(0, 2), 3],
-            "device_to_host": [(2, 0), 7],
-            "device_to_device": [(2, 2), 3],
+        kinds_by_name = {
+            "host_to_device": (0, 2),
+            "device_to_host": (2, 0),
+            "device_to_device": (2, 2),
         }
         transfers: dict[str, dict[str, int]] = {}
-        for name, (kinds, expected_count) in transfer_groups.items():
+        for name, kinds in kinds_by_name.items():
+            expected_count = _expected_transfers(schema_version)[name]["copy_count"]
             selected = [int(row[2]) for row in copies if tuple(row[:2]) == kinds]
             _require(len(selected) == expected_count, f"Nsight transfer count mismatch for {name}")
             transfers[name] = {"copy_count": len(selected), "bytes": sum(selected)}
@@ -324,7 +378,7 @@ def parse_nsys(path: Path) -> dict[str, Any]:
         connection.close()
 
 
-def _runtime_resources(probe: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _runtime_resources(probe: dict[str, Any], schema_version: int = 1) -> dict[str, dict[str, Any]]:
     rows = probe["runtime_kernel_resources"]
     _require(isinstance(rows, list), "runtime resource inventory must be an array")
     parsed: dict[str, dict[str, Any]] = {}
@@ -338,6 +392,11 @@ def _runtime_resources(probe: dict[str, Any]) -> dict[str, dict[str, Any]]:
         "active_warps_per_multiprocessor",
         "theoretical_occupancy",
     }
+    if schema_version >= 2:
+        # v2 rows carry the mangled-symbol fragment the row was matched by, so a
+        # reader can tie a kernel_id back to the symbol without re-deriving it
+        # from the catalog. It is provenance, not a measurement.
+        required = required | {"symbol_fragment"}
     for row in rows:
         _require(isinstance(row, dict) and set(row) == required, "runtime resource row drift")
         kernel_id = str(row["kernel_id"])
@@ -381,7 +440,10 @@ def _runtime_resources(probe: dict[str, Any]) -> dict[str, dict[str, Any]]:
             f"runtime theoretical occupancy is invalid for {kernel_id}",
         )
         parsed[kernel_id] = row
-    _require(set(parsed) == {spec.kernel_id for spec in KERNELS}, "runtime kernel set incomplete")
+    _require(
+        set(parsed) == {spec.kernel_id for spec in _kernel_catalog(schema_version)},
+        "runtime kernel set incomplete",
+    )
     return parsed
 
 
@@ -391,10 +453,11 @@ def combine_resources(
     cubin: dict[str, dict[str, int]],
     sass: dict[str, dict[str, int]],
     launches: list[dict[str, Any]],
+    schema_version: int = 1,
 ) -> list[dict[str, Any]]:
-    runtime = _runtime_resources(probe)
+    runtime = _runtime_resources(probe, schema_version)
     result: list[dict[str, Any]] = []
-    for spec in KERNELS:
+    for spec in _kernel_catalog(schema_version):
         kernel_id = spec.kernel_id
         compiled = ptxas[kernel_id]
         runtime_row = runtime[kernel_id]
@@ -474,28 +537,59 @@ def validate_report(report: dict[str, Any]) -> None:
     _validate_report(report)
 
 
+def probe_generation(probe: dict[str, Any]) -> int:
+    """Return the catalog generation a validated probe belongs to.
+
+    The static parsers match mangled symbols against a per-generation kernel
+    catalog, so they need the same generation the probe declared. Deriving it
+    here keeps `load_probe` as the single place that maps a schema string to a
+    generation number.
+    """
+    declared = probe.get("schema_version")
+    version = next(
+        (
+            candidate
+            for candidate, schema in _PROBE_SCHEMA_BY_VERSION.items()
+            if declared == schema
+        ),
+        None,
+    )
+    _require(version is not None, f"probe schema is not a known generation: {declared!r}")
+    return version
+
+
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     _require(
         args.baseline_commit == _git_head(args.probe_source),
         "baseline commit does not match the candidate worktree HEAD",
     )
     probe = load_probe(args.probe)
+    # The symbol catalog is generation-specific: a v2 capture carries semantic
+    # kernel names, so parsing it against the v1 catalog would fail closed on an
+    # incomplete kernel set rather than silently mismatching.
+    generation = probe_generation(probe)
     ptxas_text = args.ptxas_log.read_text(encoding="utf-8", errors="replace")
     resource_text = _run_cuobjdump(args.cuobjdump, args.binary, "--dump-resource-usage")
     sass_text = _run_cuobjdump(args.cuobjdump, args.binary, "--dump-sass")
-    ptxas = parse_ptxas(ptxas_text)
-    cubin = parse_cuobjdump_resources(resource_text)
-    sass = parse_sass(sass_text)
-    nsys = parse_nsys(args.nsys_sqlite)
-    resources = combine_resources(probe, ptxas, cubin, sass, nsys["launches"])
+    ptxas = parse_ptxas(ptxas_text, generation)
+    cubin = parse_cuobjdump_resources(resource_text, generation)
+    sass = parse_sass(sass_text, generation)
+    nsys = parse_nsys(args.nsys_sqlite, generation)
+    resources = combine_resources(probe, ptxas, cubin, sass, nsys["launches"], generation)
     achieved = {field: None for field in ACHIEVED_FIELDS}
+    # The report declares the same generation as the probe it was built from, so
+    # the schema validator applies that generation's rules: v1 keeps its frozen
+    # date/commit pins, v2 accepts its own capture date but must still declare an
+    # unpromoted candidate state.
     report = {
-        "schema_version": SCHEMA,
-        "profile_id": PROFILE,
+        "schema_version": _SCHEMA_BY_VERSION[generation],
+        "profile_id": _PROFILE_BY_VERSION[generation],
         "evidence_date": args.evidence_date,
         "source": {
             "baseline_commit": args.baseline_commit,
-            "candidate_state": "cr2_5a_unpromoted_worktree",
+            "candidate_state": (
+                "cr2_5a_unpromoted_worktree" if generation == 1 else "cp_unpromoted_worktree"
+            ),
         },
         "inputs": {
             "source_hash_canonicalization": "utf8_lf",

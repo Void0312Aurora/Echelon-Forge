@@ -340,14 +340,10 @@ class CudaWorldStoreTestAccess final {
     [[nodiscard]] static CudaWorldStoreStateSnapshot read_state(const CudaWorldStore &store);
     [[nodiscard]] static CudaBarrierKernelResources barrier_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources control_preparation_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources flight_dynamics_forces_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources flight_dynamics_aerodynamics_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources flight_dynamics_integrate_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources instrument_projection_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources configuration_projection_kernel_resources();
-    [[nodiscard]] static CudaBarrierKernelResources observation_projection_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources window_commit_body_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources device_observation_pack_kernel_resources();
     [[nodiscard]] static CudaBarrierKernelResources device_observation_consumer_kernel_resources();
+    [[nodiscard]] static CudaBarrierKernelResources learner_consumer_kernel_resources();
     [[nodiscard]] static bool
     consume_device_observation_view(const CudaResidentDeviceObservationView &view,
                                     std::vector<float> *first_values,

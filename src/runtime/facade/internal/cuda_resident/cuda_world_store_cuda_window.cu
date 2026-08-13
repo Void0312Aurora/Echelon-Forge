@@ -10,8 +10,13 @@ bool commit_flight_dynamics_window(CudaWorldStoreDeviceAllocation *allocation,
     }
     const std::uint8_t next_slot = allocation->active_state_slot ^ 1U;
     if (allocation->world_capacity == 0) {
-        return finalize_staged_barrier(allocation, next_slot,
-                                       CudaResidentBarrierCode::window_commit, faults, error);
+        if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_barrier_commit)) {
+            if (error != nullptr) *error = "injected CUDA world store barrier commit failure";
+            return false;
+        }
+        allocation->active_state_slot = next_slot;
+        if (error != nullptr) error->clear();
+        return true;
     }
     if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_state_transfer)) {
         if (error != nullptr) *error = "injected CUDA flight-dynamics state transfer failure";
@@ -32,15 +37,10 @@ bool commit_flight_dynamics_window(CudaWorldStoreDeviceAllocation *allocation,
         return false;
     }
 
-    status = launch_flight_dynamics_forces(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_flight_dynamics_aerodynamics(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_flight_dynamics_integrate(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_instrument_projection(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_configuration_projection(allocation, next_slot);
-    if (status == cudaSuccess) status = launch_episode_projection(allocation, next_slot);
-
-    // The six flight-dynamics/D launches form one device graph. This is the only
-    // host synchronization before the declared window barrier.
+    // CP-5 fused the six-launch window graph into one launch; CP-7b folded the
+    // window_commit barrier into that launch as a per-world epilogue. This is
+    // the only host synchronization in the window commit.
+    status = launch_window_commit_body(allocation, next_slot);
     if (status == cudaSuccess) status = cudaDeviceSynchronize();
     if (status != cudaSuccess) {
         if (error != nullptr) {
@@ -59,8 +59,15 @@ bool commit_flight_dynamics_window(CudaWorldStoreDeviceAllocation *allocation,
         }
         return false;
     }
-    return finalize_staged_barrier(allocation, next_slot, CudaResidentBarrierCode::window_commit,
-                                   faults, error);
+    // The window commit is the host-side slot flip; the barrier-commit fault
+    // hook keeps failing the window after a clean body, before the flip.
+    if (consume_fault(faults == nullptr ? nullptr : &faults->fail_next_barrier_commit)) {
+        if (error != nullptr) *error = "injected CUDA world store barrier commit failure";
+        return false;
+    }
+    allocation->active_state_slot = next_slot;
+    if (error != nullptr) error->clear();
+    return true;
 }
 
 bool commit_cuda_world_store_window(CudaWorldStoreDeviceAllocation *allocation,

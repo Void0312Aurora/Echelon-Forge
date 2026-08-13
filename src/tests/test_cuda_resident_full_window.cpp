@@ -373,9 +373,9 @@ TEST_CASE("CR2-2 CUDA window state rejects missing input and retries commit with
     const auto assignments = make_assignments(trace.windows.front(), setup.entity_ids);
     backend.inject({.pilot_actions = assignments});
     CHECK_THROWS_AS(backend.inject({.pilot_actions = assignments}), std::runtime_error);
-    backend.publish_stage();
-
     auto &store = testing::CudaResidentBackendTestAccess::world_store(backend);
+    CHECK(store.publish_stage());
+
     const auto before_failure = testing::CudaWorldStoreTestAccess::read_state(store);
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch}),

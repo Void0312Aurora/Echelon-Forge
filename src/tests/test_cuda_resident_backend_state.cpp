@@ -195,7 +195,7 @@ TEST_CASE("fixed-air setup input barriers and export reconstruct exact device st
                 .version == 2);
     }
 
-    backend.publish_stage();
+    CHECK(store.publish_stage());
     snapshot = backend.export_snapshot("resident_state.stage");
     CHECK(snapshot.worlds[0].identity.global_version == 2);
     CHECK(snapshot.worlds[0].identity.barrier_sequence == 4);
@@ -208,7 +208,7 @@ TEST_CASE("fixed-air setup input barriers and export reconstruct exact device st
               .shard_versions[static_cast<std::size_t>(CudaResidentShard::pilot_flight_controls)]
               .version == 2);
     const auto before_partial_sync = snapshot.worlds[0].identity;
-    CHECK_FALSE(backend.partial_sync_commit());
+    CHECK_FALSE(store.partial_sync_commit());
     snapshot = backend.export_snapshot("resident_state.partial_disabled");
     CHECK(snapshot.worlds[0].identity.global_version == before_partial_sync.global_version);
     CHECK(snapshot.worlds[0].identity.barrier_sequence == before_partial_sync.barrier_sequence);
@@ -274,8 +274,9 @@ TEST_CASE("fixed-air boundary rejects undeclared setup input advance and export 
     CudaResidentBackend backend;
     backend.configure({.world_count = 2});
     FixedAirFixtureInputs fixture;
+    CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
 
-    CHECK_THROWS_AS(backend.publish_stage(), std::runtime_error);
+    CHECK_FALSE(store.publish_stage());
     CHECK_THROWS_AS(backend.export_state({.world_index = 0, .include_world_time_step = true}),
                     std::logic_error);
     CHECK_THROWS_AS((void)backend.export_snapshot("resident_state.before_reset"), std::logic_error);
@@ -285,7 +286,6 @@ TEST_CASE("fixed-air boundary rejects undeclared setup input advance and export 
                     std::logic_error);
     CHECK_THROWS_AS((void)backend.export_snapshot("resident_state.after_reset"), std::logic_error);
 
-    CudaWorldStore &store = testing::CudaResidentBackendTestAccess::world_store(backend);
     testing::CudaWorldStoreTestAccess::fail_next_state_transfer(store);
     CHECK_THROWS_AS(backend.setup(fixture.request()), std::runtime_error);
     CHECK_THROWS_AS(backend.export_state({.world_index = 0, .include_world_time_step = true}),

@@ -146,6 +146,10 @@ struct AcquireResult {
 struct ConsumerRequest {
     std::string request_id;
     LeaseEpoch expected_epoch{};
+    // False keeps the single-value smoke consumer; true submits the CP-6
+    // learner-equivalent consumer, which reads every lease element and writes
+    // the normalized policy-input tensor.
+    bool learner_equivalent = false;
 };
 
 struct ConsumerReceipt {
@@ -154,19 +158,25 @@ struct ConsumerReceipt {
     // released.
     std::shared_ptr<void> lifetime;
     std::shared_ptr<void> completion_state;
-    const float *first_values = nullptr;
+    const float *values = nullptr;
     const std::uint64_t *ids = nullptr;
     void *ready_event = nullptr;
     int device_ordinal = -1;
     std::uintptr_t producer_stream = 0;
     std::size_t world_count = 0;
+    // One for the smoke consumer, the packed field count for the
+    // learner-equivalent consumer.
+    std::size_t values_per_world = 0;
+    // World-major [world_count, values_per_world] float32 output layout.
+    TensorDescriptor outputs{};
     LeaseEpoch source_epoch{};
     std::string request_id;
 
     [[nodiscard]] bool valid() const noexcept {
-        return lifetime != nullptr && completion_state != nullptr && first_values != nullptr &&
+        return lifetime != nullptr && completion_state != nullptr && values != nullptr &&
                ids != nullptr && ready_event != nullptr && device_ordinal >= 0 &&
-               producer_stream == 0 && world_count != 0 && source_epoch.valid();
+               producer_stream == 0 && world_count != 0 && values_per_world != 0 &&
+               outputs.valid() && source_epoch.valid();
     }
 };
 
@@ -188,8 +198,9 @@ struct Status {
 };
 
 struct DiagnosticMaterialization {
-    std::vector<float> first_values;
+    std::vector<float> values;
     std::vector<std::uint64_t> ids;
+    std::size_t values_per_world = 0;
 };
 
 struct DiagnosticResult {
@@ -198,8 +209,10 @@ struct DiagnosticResult {
     std::string detail;
 
     [[nodiscard]] bool success() const noexcept {
-        return failure == FailureCode::none && !materialized.first_values.empty() &&
-               materialized.first_values.size() == materialized.ids.size();
+        return failure == FailureCode::none && !materialized.values.empty() &&
+               materialized.values_per_world != 0 &&
+               materialized.values.size() ==
+                   materialized.ids.size() * materialized.values_per_world;
     }
 };
 

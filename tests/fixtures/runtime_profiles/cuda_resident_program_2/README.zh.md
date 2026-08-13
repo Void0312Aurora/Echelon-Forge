@@ -25,7 +25,16 @@
 13. [cuda_resident_cr2_matrix_evidence_20260804.json](cuda_resident_cr2_matrix_evidence_20260804.json)
 14. [cuda_resident_cr2_closure_20260805.zh.md](cuda_resident_cr2_closure_20260805.zh.md)
 15. [cuda_resident_cr2_closure_20260805.json](cuda_resident_cr2_closure_20260805.json)
-16. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
+16. [cuda_resident_promotion_program_20260808.zh.md](cuda_resident_promotion_program_20260808.zh.md)
+17. [cuda_resident_cp_resource_evidence_20260810.json](cuda_resident_cp_resource_evidence_20260810.json)
+18. [cuda_resident_cp_counter_evidence_20260810.json](cuda_resident_cp_counter_evidence_20260810.json)
+19. [cuda_resident_cp6_learner_consumption_design_20260812.zh.md](cuda_resident_cp6_learner_consumption_design_20260812.zh.md)
+20. [cuda_resident_cp7_small_batch_disposition_prep_20260812.zh.md](cuda_resident_cp7_small_batch_disposition_prep_20260812.zh.md)
+21. [cuda_resident_cp8_rematrix_kickoff_20260812.zh.md](cuda_resident_cp8_rematrix_kickoff_20260812.zh.md)
+22. [cuda_resident_cp8_matrix_evidence_20260812.json](cuda_resident_cp8_matrix_evidence_20260812.json)
+23. [cuda_resident_cp9_promotion_decision_20260813.zh.md](cuda_resident_cp9_promotion_decision_20260813.zh.md)
+24. [cuda_resident_cp9_promotion_decision_20260813.json](cuda_resident_cp9_promotion_decision_20260813.json)
+25. [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md)
 
 使用规则：
 
@@ -35,6 +44,9 @@
 - CR2 continuation program 已完成 full-window、规模治理、consumer、parity、resource
   与 small-batch gates，并在 CR2-7 无晋级关闭。保留的 advisory 不是 runtime selector；
   未来 CUDA-resident 工作需要另一套显式计划和用户授权。
+- CP 晋升程序（CP-0..CP-9）于 2026-08-13 以范围化晋升裁定关闭：fixture 面上
+  的 opt-in 维护地位、CPU 保持维护默认、性能主张保持主机特定实验性。运行时
+  行为未变；公开暴露实现是单独授权的后续范围。
 - 验证器要求字节稳定 provenance 时，本夹具保留历史路径和哈希。当前架构权威
   仍位于 `docs/architecture/`。
 - 冻结证据内部的相对链接可能描述历史布局，不是当前仓库路由。

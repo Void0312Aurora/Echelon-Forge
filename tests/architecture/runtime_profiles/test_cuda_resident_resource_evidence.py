@@ -198,10 +198,15 @@ def _write_nsys(
         connection.close()
 
 
-def test_legacy_resource_probe_is_retired_after_semantic_kernel_migration() -> None:
+def test_frozen_v1_capture_identity_survives_the_semantic_kernel_migration() -> None:
+    """The v1 capture identity is frozen historical record.
+
+    The semantic stage migration renamed every phase-lettered kernel. The v1
+    catalog, trace digest, and profile id must NOT follow that rename: the
+    retained static-capture evidence hashes against them, so editing them to
+    look semantic would invalidate the evidence rather than improve it.
+    """
     contract = CONTRACT.read_text(encoding="utf-8")
-    probe = PROBE.read_text(encoding="utf-8")
-    cmake = CMAKE.read_text(encoding="utf-8")
     assert resource.SCHEMA in contract
     assert resource.PROBE_SCHEMA in contract
     assert resource.PROFILE in contract
@@ -209,35 +214,209 @@ def test_legacy_resource_probe_is_retired_after_semantic_kernel_migration() -> N
     assert "kWorldCount = 256" in contract
     assert "kThreadsPerBlock = 128" in contract
     assert "kBlocks = 2" in contract
+    # The v1 probe stays retired. v2 supersedes it; it is never revived.
     assert "kCaptureProbeV1Retired = true" in contract
     assert "kCaptureProbeV1RetirementReason" in contract
     for spec in resource.KERNELS:
         assert f'{{"{spec.kernel_id}", "{spec.symbol_fragment}", {spec.launch_count}}}' in contract
     for index, (kernel_id, stage) in enumerate(resource.LAUNCH_SEQUENCE):
         assert f'{{{index}, "{kernel_id}", "{stage}"}}' in contract
-    assert "static_assert(evidence::kCaptureProbeV1Retired);" in probe
-    assert "kCaptureProbeV1RetirementReason" in probe
-    assert "return EXIT_FAILURE;" in probe
-    for stale_capture_symbol in (
-        "ProfilerRange",
-        "query_kernel_resources",
-        "backend.setup",
-        "write_report",
-        "runtime_kernel_resources",
+
+
+def test_python_kernel_catalog_has_no_second_owner() -> None:
+    """The Python collector must derive its catalog from the C++ contract.
+
+    This module previously hard-coded its own copy of the kernel catalog. When
+    the semantic stage migration renamed the kernels, the C++ side moved and
+    nothing forced the Python side to follow, so the collector silently kept
+    validating against symbols that no longer existed. Parsing the contract
+    removes the second owner; this test keeps it removed.
+    """
+    from tools.diagnostics import cuda_resident_cr2_resource_static as static
+
+    source = STATIC_PARSER.read_text(encoding="utf-8")
+    # No literal kernel catalog may be reintroduced.
+    assert 'KernelSpec("apply_barrier"' not in source, "kernel catalog was re-hard-coded"
+    assert "kKernelSpecs" in source and "kKernelSpecsV2" in source
+
+    contract = CONTRACT.read_text(encoding="utf-8")
+    expected_shape = {1: (10, 12), 2: (10, 12), 3: (5, 7), 4: (5, 5)}
+    for version, array_name in (
+        (1, "kKernelSpecs"),
+        (2, "kKernelSpecsV2"),
+        (3, "kKernelSpecsV3"),
+        (4, "kKernelSpecsV4"),
     ):
-        assert stale_capture_symbol not in probe
+        catalog = static.kernel_catalog(version)
+        kernel_count, launch_count = expected_shape[version]
+        assert len(catalog) == kernel_count, f"v{version} catalog shape drifted"
+        assert sum(spec.launch_count for spec in catalog) == launch_count
+        for spec in catalog:
+            entry = f'{{"{spec.kernel_id}", "{spec.symbol_fragment}", {spec.launch_count}}}'
+            assert entry in contract, f"v{version} entry not found in contract: {entry}"
+
+    # v1 and v2 must agree on shape while differing on names -- that is what
+    # makes the two evidence generations comparable. v3 deliberately changes
+    # the shape: the fold table, not a 1:1 map, carries its comparability.
+    v1, v2, v3 = static.kernel_catalog(1), static.kernel_catalog(2), static.kernel_catalog(3)
+    assert [spec.launch_count for spec in v1] == [spec.launch_count for spec in v2]
+    assert {spec.symbol_fragment for spec in v1} != {spec.symbol_fragment for spec in v2}
+    assert len(v3) < len(v2)
+    assert {spec.symbol_fragment for spec in v3} < (
+        {spec.symbol_fragment for spec in v2} | {"window_commit_body_kernel"}
+    )
+
+    # The retained v1 alias must keep pointing at v1 so existing validators and
+    # the frozen evidence they check are unaffected.
+    assert static.KERNELS == v1
+
+    # v3 and v4 name the same kernels; only the apply_barrier launch count
+    # moved, which is what "launch fold, not kernel change" means.
+    v4 = static.kernel_catalog(4)
+    assert [spec.kernel_id for spec in v4] == [spec.kernel_id for spec in v3]
+    assert {spec.symbol_fragment for spec in v4} == {spec.symbol_fragment for spec in v3}
+
+    with pytest.raises(static.EvidenceError):
+        static.kernel_catalog(5)
+
+
+    """CMake restores capture dependencies only against a versioned catalog.
+
+    The retirement made restoring backend/profiler dependencies conditional on a
+    versioned kernel catalog existing first. That precondition is now met, so the
+    dependencies are present -- but the target must stay inside the CUDA-on block
+    and must say why it is allowed to have them.
+    """
+    cmake = CMAKE.read_text(encoding="utf-8")
     target_index = cmake.index("add_executable(ef_cuda_resident_resource_probe")
-    assert cmake.rfind("if (EF_ENABLE_CUDA_EXPERIMENTS)", 0, target_index) >= 0
+    assert cmake.rfind("if (EF_ENABLE_CUDA_RESIDENT_BACKEND)", 0, target_index) >= 0
     assert cmake.find("else()", target_index) > target_index
     target = cmake[target_index : cmake.index("else()", target_index)]
-    assert "A future capture must introduce a versioned kernel" in cmake
-    for obsolete_capture_dependency in (
+    assert "kKernelSpecsV2" in cmake and "kKernelSpecsV3" in cmake
+    for restored_capture_dependency in (
         "cuda_resident_replay_harness.cpp",
         "ef_cuda_resident_backend",
         "nlohmann_json::nlohmann_json",
-        "EF_CR2_RESOURCE_BUILD_CONFIG",
+        "EF_RESOURCE_CAPTURE_BUILD_CONFIG",
     ):
-        assert obsolete_capture_dependency not in target
+        assert restored_capture_dependency in target
+
+
+def test_collectors_validate_against_the_generation_a_report_declares() -> None:
+    """A v2 capture must not be rejected merely for being newer than v1.
+
+    The collectors previously pinned a single generation, so the v2 probe would
+    have failed on profile mismatch and no counter attempt could have been
+    validated at all. Identity is now version-aware while the frozen v1 pins stay
+    exact.
+    """
+    from tools.diagnostics import cuda_resident_cr2_resource_evidence as collector
+    from tools.diagnostics import cuda_resident_cr2_resource_schema as schema
+    from tools.diagnostics import cuda_resident_cr2_resource_static as static
+
+    # v1 identity is unchanged and still exactly pinned.
+    assert schema.SCHEMA == "cuda_resident.cr2.kernel_resource_evidence.v1"
+    assert schema.PROFILE == "cr2.resource.steady_full_window_body.sm86.v1"
+    assert collector.PROBE_SCHEMA == "cuda_resident.cr2.resource_capture_probe.v1"
+
+    # v2 and v3 identities exist and are distinct.
+    assert schema.SCHEMA_V2 == "cuda_resident.cp.kernel_resource_evidence.v2"
+    assert schema.PROFILE_V2 == "cp.resource.steady_full_window_body.sm86.v2"
+    assert collector.PROBE_SCHEMA_V2 == "cuda_resident.cp.resource_capture_probe.v2"
+    assert schema.SCHEMA_V3 == "cuda_resident.cp.kernel_resource_evidence.v3"
+    assert schema.PROFILE_V3 == "cp.resource.steady_full_window_body.sm86.v3"
+    assert collector.PROBE_SCHEMA_V3 == "cuda_resident.cp.resource_capture_probe.v3"
+    assert schema.SCHEMA_V4 == "cuda_resident.cp.kernel_resource_evidence.v4"
+    assert schema.PROFILE_V4 == "cp.resource.steady_full_window_body.sm86.v4"
+    assert collector.PROBE_SCHEMA_V4 == "cuda_resident.cp.resource_capture_probe.v4"
+
+    # The frozen evidence must keep validating as v1, unchanged.
+    frozen = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+    assert schema.schema_version_of(frozen) == 1
+    schema.validate_report(frozen)
+
+    # An unknown generation fails closed rather than defaulting to v1.
+    with pytest.raises(static.EvidenceError):
+        schema.schema_version_of({"schema_version": "cuda_resident.made_up.v9"})
+
+    # The launch sequence is derived from the contract, not duplicated here.
+    v1_launches = static.launch_sequence(1)
+    v2_launches = static.launch_sequence(2)
+    v3_launches = static.launch_sequence(3)
+    assert schema.LAUNCH_SEQUENCE == v1_launches
+    assert len(v1_launches) == len(v2_launches) == 12
+    assert len(v3_launches) == 7
+    assert [kernel for kernel, _ in v1_launches] != [kernel for kernel, _ in v2_launches]
+    # Barrier placement is what makes v1 and v2 comparable; across the CP-5
+    # fold the three barriers keep their roles while the six window launches
+    # between stage_publish and window_commit collapse into one.
+    assert [
+        index for index, (kernel, _) in enumerate(v1_launches) if kernel == "apply_barrier"
+    ] == [index for index, (kernel, _) in enumerate(v2_launches) if kernel == "apply_barrier"]
+    assert [
+        index for index, (kernel, _) in enumerate(v3_launches) if kernel == "apply_barrier"
+    ] == [0, 2, 4]
+    assert v3_launches[3] == ("window_commit_body", "window_commit_body")
+    # Across the CP-7b fold only the input-injection barrier keeps its own
+    # launch; the folded stages carry compound names.
+    v4_launches = static.launch_sequence(4)
+    assert len(v4_launches) == 5
+    assert [
+        index for index, (kernel, _) in enumerate(v4_launches) if kernel == "apply_barrier"
+    ] == [0]
+    assert v4_launches[1] == ("control_preparation", "control_preparation_and_stage_publish")
+    assert v4_launches[2] == ("window_commit_body", "window_commit_body_and_window_commit")
+    with pytest.raises(static.EvidenceError):
+        static.launch_sequence(5)
+
+    # The versioned API expectations pin what each generation changed: CP-5
+    # removed five launches and nothing else; CP-7b removed two launches and,
+    # with them, exactly two synchronizations, two status readbacks, and two
+    # status memsets.
+    assert schema.expected_api_counts(2)["cudaLaunchKernel"] == 12
+    assert schema.expected_api_counts(3)["cudaLaunchKernel"] == 7
+    unchanged_v2 = {k: v for k, v in schema.expected_api_counts(2).items() if k != "cudaLaunchKernel"}
+    unchanged_v3 = {k: v for k, v in schema.expected_api_counts(3).items() if k != "cudaLaunchKernel"}
+    assert unchanged_v2 == unchanged_v3
+    v4_counts = schema.expected_api_counts(4)
+    assert v4_counts["cudaLaunchKernel"] == 5
+    assert v4_counts["cudaDeviceSynchronize"] == 3
+    assert v4_counts["cudaMemcpy"] == 11
+    assert v4_counts["cudaMemset"] == 3
+    assert schema.expected_transfers(4)["device_to_host"] == {"bytes": 229900, "copy_count": 5}
+    assert schema.expected_transfers(4)["device_to_device"] == schema.expected_transfers(3)[
+        "device_to_device"
+    ]
+
+    # v2/v3/v4 probes carry the cross-generation link and must never claim
+    # counters. v3 records the fold; v4 records the launch absorption.
+    assert collector.PROBE_KEYS_V2_ADDITIONS == {
+        "achieved_counters_present",
+        "expected_launch_sequence",
+        "kernel_id_migration",
+        "supersedes_schema_version",
+        "trace_signature_matches_v1",
+    }
+    assert collector.PROBE_KEYS_V3_ADDITIONS == {
+        "achieved_counters_present",
+        "expected_launch_sequence",
+        "kernel_id_fold",
+        "supersedes_schema_version",
+        "trace_signature_matches_v1",
+    }
+    assert collector.PROBE_KEYS_V4_ADDITIONS == {
+        "achieved_counters_present",
+        "expected_launch_sequence",
+        "launch_absorption",
+        "supersedes_schema_version",
+        "trace_signature_matches_v1",
+    }
+    collector_source = COLLECTOR.read_text(encoding="utf-8")
+    assert "a static capture must not claim achieved counters" in collector_source
+    assert "v2 probe workload diverged" in collector_source
+    # A recapture grants no authority: the unpromoted state must survive.
+    validator_source = SCHEMA_VALIDATOR.read_text(encoding="utf-8")
+    assert "resource candidate state must remain unpromoted" in validator_source
 
 
 def test_cr2_5a_evidence_records_static_resources_without_counter_or_tuning_claims() -> None:

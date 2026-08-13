@@ -11,37 +11,46 @@ from typing import Any
 
 if __package__:
     from . import cuda_resident_cr2_resource_evidence as resource
+    from .cuda_resident_cr2_counter_parser import (
+        COUNTER_FAMILIES,
+        COUNTER_FAMILY_UNITS,
+        PERMISSION_CODE,
+        command_template,
+        elevation_record,
+        empty_counter_families,
+        export_counter_csv,
+        parse_attempt_log,
+        parse_counter_csv,
+        required_launch_count,
+    )
     from .cuda_resident_cr2_json_types import StrictJson
+    from .cuda_resident_cr2_resource_schema import profile_version_of
 else:
     import cuda_resident_cr2_resource_evidence as resource  # type: ignore[no-redef]
+    from cuda_resident_cr2_counter_parser import (  # type: ignore[no-redef]
+        COUNTER_FAMILIES,
+        COUNTER_FAMILY_UNITS,
+        PERMISSION_CODE,
+        command_template,
+        elevation_record,
+        empty_counter_families,
+        export_counter_csv,
+        parse_attempt_log,
+        parse_counter_csv,
+        required_launch_count,
+    )
     from cuda_resident_cr2_json_types import StrictJson  # type: ignore[no-redef]
+    from cuda_resident_cr2_resource_schema import profile_version_of  # type: ignore[no-redef]
 
 
 SCHEMA = "cuda_resident.cr2.achieved_counter_evidence.v1"
 PROFILE = resource.PROFILE
-PERMISSION_CODE = "ERR_NVGPUCTRPERM"
-REQUIRED_LAUNCH_COUNT = 12
-COMMAND_TEMPLATE = (
-    "ncu",
-    "--target-processes=application-only",
-    "--profile-from-start=off",
-    "--replay-mode=kernel",
-    "--kernel-name-base=demangled",
-    "--set=full",
-    "--launch-count=12",
-    "--force-overwrite",
-    "--export=<raw>/full-window-256",
-    "--log-file=<raw>/attempt.log",
-    "<resource-probe>",
-    "--output=<raw>/probe-output.json",
-)
 EXPECTED_TOOLCHAIN = {
     "target_processes": "application-only",
     "profile_from_start": False,
     "replay_mode": "kernel",
     "kernel_name_base": "demangled",
     "counter_set": "full",
-    "launch_count_limit": REQUIRED_LAUNCH_COUNT,
     "command_paths": "absolute_paths_hashed_and_redacted",
 }
 EXPECTED_CAPTURE = {
@@ -54,13 +63,6 @@ EXPECTED_CAPTURE = {
     "trace_signature_digest": "cb31675ee34e5015",
     "consumer_await_completed": True,
     "diagnostic_materialization_called": False,
-}
-COUNTER_FAMILIES = {
-    "achieved_occupancy": "ratio",
-    "branch_divergence": "ratio",
-    "global_memory_traffic": "bytes",
-    "local_memory_traffic": "bytes",
-    "shared_memory_traffic": "bytes",
 }
 TOP_LEVEL_KEYS = {
     "schema_version",
@@ -184,6 +186,17 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _generation_of(profile_id: object, label: str) -> int:
+    """Resolve a profile id to its generation via the schema identity table,
+    fail closed. Launch counts and unit maps follow the generation: a new one
+    registers once in the identity table and the parser unit map, no re-pins."""
+    _require(type(profile_id) is str, f"{label} must be a string")
+    try:
+        return profile_version_of(str(profile_id))
+    except resource.EvidenceError as error:
+        raise CounterEvidenceError(f"{label} is not a known generation") from error
+
+
 def _git_head(path: Path) -> str:
     completed = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -213,52 +226,15 @@ def ncu_version(ncu: Path) -> str:
     return version
 
 
-def parse_attempt_log(text: str) -> dict[str, Any]:
-    connected = re.findall(r"^==PROF== Connected to process (\d+) ", text, flags=re.MULTILINE)
-    disconnected = re.findall(
-        r"^==PROF== Disconnected from process (\d+)\s*$", text, flags=re.MULTILINE
-    )
-    error_lines = re.findall(r"^==ERROR== ([^\r\n]+)$", text, flags=re.MULTILINE)
-    error_codes: list[str] = []
-    for line in error_lines:
-        match = re.match(r"([A-Z][A-Z0-9_]+)\b", line)
-        _require(match is not None, "Nsight Compute error line has no stable code")
-        error_codes.append(match.group(1))
-    permission_lines = [line for line in error_lines if line.startswith(f"{PERMISSION_CODE} ")]
-    permission_message = "does not have permission to access NVIDIA GPU Performance Counters"
-    permission_denied = (
-        len(permission_lines) == 1
-        and permission_message in permission_lines[0]
-        and error_codes == [PERMISSION_CODE]
-    )
-    return {
-        "connected_pids": [int(value) for value in connected],
-        "disconnected_pids": [int(value) for value in disconnected],
-        "error_codes": error_codes,
-        "permission_denied": permission_denied,
-        "permission_line_sha256": (
-            hashlib.sha256(permission_lines[0].encode("utf-8")).hexdigest()
-            if permission_denied
-            else None
-        ),
-    }
-
-
-def _empty_counter_families() -> dict[str, dict[str, Any]]:
-    return {
-        family: {
-            "unit": unit,
-            "provenance": None,
-            "metric_names": None,
-            "values_by_launch": None,
-        }
-        for family, unit in COUNTER_FAMILIES.items()
-    }
-
-
-def _validate_families(status: str, families: object) -> None:
+def _validate_families(status: str, families: object, generation: int) -> None:
     families = _STRICT.object(families, set(COUNTER_FAMILIES), "counter families")
-    for family, unit in COUNTER_FAMILIES.items():
+    # A report carries exactly its declared generation's measured-unit map.
+    # Direct lookup replaces inference from the observed units: v2 and v3 share
+    # one measured unit map, so units alone can no longer name a generation.
+    _require(generation in COUNTER_FAMILY_UNITS, f"no unit map for generation {generation}")
+    expected_units = COUNTER_FAMILY_UNITS[generation]
+    launch_count = required_launch_count(generation)
+    for family, unit in expected_units.items():
         row = _STRICT.object(families[family], FAMILY_KEYS, family)
         _STRICT.exact_scalar(row["unit"], unit, f"{family}.unit")
         if status != "available":
@@ -279,7 +255,7 @@ def _validate_families(status: str, families: object) -> None:
         )
         values = _STRICT.list(row["values_by_launch"], f"{family}.values_by_launch")
         _require(
-            len(values) == REQUIRED_LAUNCH_COUNT,
+            len(values) == launch_count,
             f"{family} must contain all launch values",
         )
         for value in values:
@@ -294,7 +270,10 @@ def _validate_families(status: str, families: object) -> None:
 def validate_report(report: dict[str, Any]) -> None:
     report = _STRICT.object(report, TOP_LEVEL_KEYS, "counter evidence")
     _STRICT.exact_scalar(report["schema_version"], SCHEMA, "counter evidence schema")
-    _STRICT.exact_scalar(report["profile_id"], PROFILE, "counter evidence profile")
+    # Every launch-count and unit expectation below follows the generation the
+    # report declares; validate_parent_link binds a capture to its parent.
+    generation = _generation_of(report["profile_id"], "counter evidence profile")
+    launch_count = required_launch_count(generation)
     _require(
         type(report["evidence_date"]) is str
         and re.fullmatch(r"\d{4}-\d{2}-\d{2}", report["evidence_date"]) is not None,
@@ -337,14 +316,20 @@ def validate_report(report: dict[str, Any]) -> None:
         "Nsight Compute version drifted",
     )
     _STRICT.exact_members(toolchain, EXPECTED_TOOLCHAIN, "counter toolchain")
-    _STRICT.exact_list(toolchain["command_template"], COMMAND_TEMPLATE, "command template")
+    _STRICT.exact_integer(toolchain["launch_count_limit"], launch_count, "launch count limit")
+    _STRICT.exact_list(
+        toolchain["command_template"], command_template(launch_count), "command template"
+    )
     capture = _STRICT.object(report["capture"], CAPTURE_KEYS, "counter capture")
     _STRICT.exact_members(capture, EXPECTED_CAPTURE, "counter capture")
     interpretation = _STRICT.object(
         report["interpretation"], INTERPRETATION_KEYS, "counter interpretation"
     )
     _require(all(value is True for value in interpretation.values()), "interpretation weakened")
-    attempt = _STRICT.object(report["attempt"], ATTEMPT_KEYS, "counter attempt")
+    # v3+ artifacts embed elevation; the frozen v1/v2 prose gap has the CP-9 waiver.
+    requires_elevation_record = generation >= 3
+    attempt_keys = ATTEMPT_KEYS | ({"elevation"} if requires_elevation_record else set())
+    attempt = _STRICT.object(report["attempt"], attempt_keys, "counter attempt")
     status = attempt["status"]
     _require(
         type(status) is str and status in {"available", "external_blocked", "collection_failed"},
@@ -356,9 +341,7 @@ def validate_report(report: dict[str, Any]) -> None:
     disconnected_pid = _STRICT.positive_integer(attempt["disconnected_pid"], "disconnected PID")
     _require(disconnected_pid == connected_pid, "profiled process lifecycle is invalid")
     report_created = _STRICT.boolean(attempt["report_created"], "report created")
-    _STRICT.exact_integer(
-        attempt["required_launch_count"], REQUIRED_LAUNCH_COUNT, "required launch count"
-    )
+    _STRICT.exact_integer(attempt["required_launch_count"], launch_count, "required launch count")
     error_codes = _STRICT.list(attempt["log_error_codes"], "log error code inventory")
     _require(
         all(type(code) is str and code for code in error_codes),
@@ -369,13 +352,23 @@ def validate_report(report: dict[str, Any]) -> None:
         _require(report_created is True, "available evidence requires an NCU report")
         _STRICT.exact_integer(
             attempt["collected_launch_count"],
-            REQUIRED_LAUNCH_COUNT,
+            launch_count,
             "available collected launch count",
         )
         for field in ("blocker_code", "blocker_kind", "recognized_error_line_sha256"):
             _require(attempt[field] is None, f"available attempt must clear {field}")
         _STRICT.exact_list(error_codes, (), "available log errors")
         _require(inputs["ncu_report_sha256"] is not None, "available report hash is missing")
+        if requires_elevation_record:
+            fields = {"elevated", "mechanism", "recorded_utc"}
+            elevation = _STRICT.object(attempt["elevation"], fields, "attempt elevation record")
+            _STRICT.boolean(elevation["elevated"], "attempt elevation flag", True)
+            _require(
+                type(elevation["mechanism"]) is str and bool(elevation["mechanism"])
+                and type(elevation["recorded_utc"]) is str
+                and elevation["recorded_utc"].endswith("Z"),
+                "attempt elevation provenance is invalid",
+            )
     elif status == "external_blocked":
         _require(exit_code != 0, "blocked evidence cannot have exit code zero")
         _require(report_created is False, "blocked evidence cannot claim a report")
@@ -398,7 +391,7 @@ def validate_report(report: dict[str, Any]) -> None:
         _STRICT.exact_integer(attempt["collected_launch_count"], 0, "failed collected launch count")
         for field in ("blocker_code", "blocker_kind", "recognized_error_line_sha256"):
             _require(attempt[field] is None, f"generic failure must clear {field}")
-    _validate_families(status, report["achieved_counters"])
+    _validate_families(status, report["achieved_counters"], generation)
     gates = _STRICT.object(report["gates"], GATE_KEYS, "counter gates")
     expected_gate = status == "available"
     _STRICT.boolean(gates["cr2_5a_static_resource_complete"], "static resource gate", True)
@@ -426,16 +419,49 @@ def validate_report(report: dict[str, Any]) -> None:
         _STRICT.boolean(gates[flag], flag, False)
 
 
-def validate_parent_link(parent: dict[str, Any], binary_sha256: str, probe_sha256: str) -> None:
+def validate_parent_link(
+    parent: dict[str, Any],
+    binary_sha256: str,
+    probe_sha256: str,
+    counter_report: dict[str, Any] | None = None,
+) -> None:
     resource.validate_report(parent)
-    _require(parent["profile_id"] == PROFILE, "CR2-5a profile drifted")
+    _generation_of(parent["profile_id"], "parent resource profile")
     _require(
         parent["inputs"]["binary_sha256"] == binary_sha256,
-        "binary differs from CR2-5a resource evidence",
+        "binary differs from the parent resource evidence",
     )
     _require(
         parent["inputs"]["probe_sha256"] == probe_sha256,
-        "probe output differs from CR2-5a resource evidence",
+        "probe output differs from the parent resource evidence",
+    )
+    # A report claiming another generation than its hashed parent dies here.
+    if counter_report is not None:
+        _require(
+            counter_report.get("profile_id") == parent["profile_id"],
+            "counter evidence generation differs from its parent resource evidence",
+        )
+
+
+def validate_report_pair(report: dict[str, Any], parent_bytes: bytes) -> None:
+    """Complete, non-optional binding of a counter report to its parent bytes.
+
+    validate_report alone cannot see the parent, so relabeled generations or
+    swapped parents are only detectable here: the parent bytes must hash to
+    what the report recorded, and the generation and capture hashes must agree.
+    """
+    validate_report(report)
+    _require(
+        _bytes_sha256(parent_bytes) == report["inputs"]["resource_evidence_sha256"],
+        "parent resource evidence bytes differ from the hash the report records",
+    )
+    parent = json.loads(parent_bytes.decode("utf-8"), object_pairs_hook=_unique_object)
+    _require(isinstance(parent, dict), "parent resource evidence root must be an object")
+    validate_parent_link(
+        parent,
+        report["inputs"]["binary_sha256"],
+        report["inputs"]["probe_output_sha256"],
+        counter_report=report,
     )
 
 
@@ -449,7 +475,16 @@ def _validated_inputs(args: argparse.Namespace) -> tuple[dict[str, Any], dict[st
     return probe, parent
 
 
-def _command(ncu: Path, binary: Path, raw_dir: Path) -> tuple[list[str], Path, Path, Path]:
+def _parent_generation(args: argparse.Namespace) -> int:
+    # Launch budget and report shape follow the declared parent generation;
+    # the full parent validation still happens in build_report.
+    parent = load_json(args.resource_evidence)
+    return _generation_of(parent.get("profile_id"), "parent resource profile")
+
+
+def _command(
+    ncu: Path, binary: Path, raw_dir: Path, launch_count: int
+) -> tuple[list[str], Path, Path, Path]:
     report_base = raw_dir / "full-window-256"
     attempt_log = raw_dir / "attempt.log"
     probe_output = raw_dir / "probe-output.json"
@@ -466,7 +501,7 @@ def _command(ncu: Path, binary: Path, raw_dir: Path) -> tuple[list[str], Path, P
         "--set",
         "full",
         "--launch-count",
-        str(REQUIRED_LAUNCH_COUNT),
+        str(launch_count),
         "--force-overwrite",
         "--export",
         str(report_base),
@@ -484,7 +519,8 @@ def execute_attempt(
 ) -> tuple[subprocess.CompletedProcess[bytes], list[str]]:
     _require(not args.raw_dir.exists(), "raw attempt directory must be fresh")
     args.raw_dir.mkdir(parents=True)
-    argv, _, _, _ = _command(args.ncu, args.binary, args.raw_dir)
+    launch_count = required_launch_count(_parent_generation(args))
+    argv, _, _, _ = _command(args.ncu, args.binary, args.raw_dir, launch_count)
     completed = subprocess.run(argv, cwd=args.working_directory, capture_output=True)
     return completed, argv
 
@@ -495,7 +531,11 @@ def build_report(
     argv: list[str],
     version: str,
 ) -> dict[str, Any]:
-    _, ncu_report, attempt_log, probe_output = _command(args.ncu, args.binary, args.raw_dir)
+    generation = _parent_generation(args)
+    launch_count = required_launch_count(generation)
+    _, ncu_report, attempt_log, probe_output = _command(
+        args.ncu, args.binary, args.raw_dir, launch_count
+    )
     _require(attempt_log.is_file(), "Nsight Compute attempt log is missing")
     _require(probe_output.is_file(), "profile application did not write its probe output")
     args.probe_output = probe_output
@@ -507,14 +547,29 @@ def build_report(
         len(connected) == 1 and disconnected == connected, "profiler process lifecycle drifted"
     )
     if completed.returncode == 0:
-        raise CounterEvidenceError(
-            "NCU completed successfully; a reviewed hardware-counter report parser is required"
+        _require(ncu_report.exists(), "NCU reported success without writing a report")
+        _require(
+            not parsed["permission_denied"],
+            "NCU reported success but the log still contains a permission denial",
         )
-    external = parsed["permission_denied"] and not ncu_report.exists()
-    status = "external_blocked" if external else "collection_failed"
-    blocker_code = PERMISSION_CODE if external else None
-    blocker_kind = "external_permission" if external else None
-    error_hash = parsed["permission_line_sha256"] if external else None
+        counters = parse_counter_csv(
+            export_counter_csv(args.ncu, ncu_report),
+            resource.probe_generation(probe),
+        )
+        status = "available"
+        collected_launch_count = launch_count
+        achieved_counters = counters["families"]
+        blocker_code = None
+        blocker_kind = None
+        error_hash = None
+    else:
+        external = parsed["permission_denied"] and not ncu_report.exists()
+        status = "external_blocked" if external else "collection_failed"
+        collected_launch_count = 0
+        achieved_counters = empty_counter_families(generation)
+        blocker_code = PERMISSION_CODE if external else None
+        blocker_kind = "external_permission" if external else None
+        error_hash = parsed["permission_line_sha256"] if external else None
     attempt = {
         "status": status,
         "exit_code": completed.returncode,
@@ -524,18 +579,24 @@ def build_report(
         "report_created": ncu_report.exists(),
         "blocker_code": blocker_code,
         "blocker_kind": blocker_kind,
-        "required_launch_count": REQUIRED_LAUNCH_COUNT,
-        "collected_launch_count": 0,
+        "required_launch_count": launch_count,
+        "collected_launch_count": collected_launch_count,
         "log_error_codes": parsed["error_codes"],
         "recognized_error_line_sha256": error_hash,
     }
+    if generation >= 3:
+        attempt["elevation"] = elevation_record()
     dispositions = {
+        "available": "achieved_counter_evidence_complete",
         "external_blocked": "documented_external_blocker",
         "collection_failed": "collection_failed",
     }
     report = {
         "schema_version": SCHEMA,
-        "profile_id": PROFILE,
+        # Inherit the parent resource capture's identity rather than hardcoding
+        # v1: a counter capture describes the same profile as the static capture
+        # it links to, and stamping v1 onto a v2 capture misreports provenance.
+        "profile_id": parent["profile_id"],
         "evidence_date": args.evidence_date,
         "source": {
             "baseline_commit": args.baseline_commit,
@@ -562,9 +623,9 @@ def build_report(
             "replay_mode": "kernel",
             "kernel_name_base": "demangled",
             "counter_set": "full",
-            "launch_count_limit": REQUIRED_LAUNCH_COUNT,
+            "launch_count_limit": launch_count,
             "command_paths": "absolute_paths_hashed_and_redacted",
-            "command_template": list(COMMAND_TEMPLATE),
+            "command_template": list(command_template(launch_count)),
         },
         "capture": {
             "range": probe["capture"]["range"],
@@ -580,7 +641,7 @@ def build_report(
             ],
         },
         "attempt": attempt,
-        "achieved_counters": _empty_counter_families(),
+        "achieved_counters": achieved_counters,
         "interpretation": {
             "cr2_5a_resource_evidence_validated": True,
             "theoretical_occupancy_is_not_achieved_occupancy": True,
@@ -591,9 +652,12 @@ def build_report(
         "gates": {
             "cr2_5a_static_resource_complete": parent["gates"]["cr2_5a_static_resource_complete"],
             "cr2_5a_launch_topology_complete": parent["gates"]["cr2_5a_launch_topology_complete"],
-            "cr2_5b_counter_attempt_complete": status == "external_blocked",
-            "cr2_5_achieved_counter_gate_complete": False,
+            "cr2_5b_counter_attempt_complete": status in {"available", "external_blocked"},
+            "cr2_5_achieved_counter_gate_complete": status == "available",
             "cr2_5_disposition": dispositions[status],
+            # Collecting counters closes a measurement gate. It does not grant
+            # promotion, maintained support, or tuning authority: those need a
+            # separate recorded decision with an independent review.
             "maintained_claim_allowed": False,
             "public_support_enabled": False,
             "promotion_allowed": False,

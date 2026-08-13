@@ -30,10 +30,9 @@ DEVICE_SOURCES = tuple(
     for name in (
         "cuda_world_store_cuda_barrier.cu",
         "cuda_world_store_cuda_control_preparation.cu",
-        "cuda_world_store_cuda_flight_dynamics.cu",
-        "cuda_world_store_cuda_observation_projection.cu",
         "cuda_world_store_cuda_observation.cu",
         "cuda_world_store_cuda_window.cu",
+        "cuda_world_store_cuda_window_body.cu",
     )
 )
 WINDOW_SOURCE = CUDA_RESIDENT_DIR / "cuda_world_store_cuda_window.cu"
@@ -181,12 +180,13 @@ def test_rb9_freezes_private_invocation_and_complete_world_mode_matrix() -> None
         assert f'"{mode}"' in probe
     run_window = session.split("WindowTiming ProbeSession::run_window", 1)[1]
     private_sequence = run_window.split("#else", 1)[1].split("const auto advanced", 1)[0]
+    # CP-3 removed the session's explicit publish_stage call: advance() owns
+    # the publish when the window is input_injected. The measured sequence is
+    # inject -> advance, and no explicit publish call may reappear here.
     assert private_sequence.index("impl_->backend.inject") < private_sequence.index(
-        "impl_->backend.publish_stage"
-    )
-    assert private_sequence.index("impl_->backend.publish_stage") < private_sequence.index(
         "impl_->backend.advance"
     )
+    assert "publish_stage" not in private_sequence
     assert '{"full_facade_available", false}' in probe
     assert '{"promotion_allowed", false}' in probe
     assert '{"break_even_eligible", false}' in probe
@@ -205,20 +205,19 @@ def test_rb9_static_ledger_matches_current_cuda_execution_graph() -> None:
     contract = _text(CONTRACT)
     device = _device_text()
     execution_window = _text(WINDOW_SOURCE)
-    # Ten resident-window launches remain the base path; the legacy diagnostic
-    # and CR2-3 measured wrappers each contain pack/consumer call sites.
-    assert device.count("<<<blocks, threads>>>") == 12
-    assert execution_window.index("launch_flight_dynamics_forces") < execution_window.index(
-        "launch_episode_projection"
-    )
-    assert execution_window.count("launch_flight_dynamics_") == 3
-    assert execution_window.count("launch_instrument_projection") == 1
-    assert execution_window.count("launch_configuration_projection") == 1
-    assert execution_window.count("launch_episode_projection") == 1
+    # Three resident-window launches are the base path after the CP-5 fusion
+    # and the CP-7b barrier fold; the legacy diagnostic and CR2-3 measured
+    # wrappers each contain pack/consumer call sites, and CP-6 added the
+    # learner-equivalent branch beside the smoke branch in the submit path.
+    assert device.count("<<<blocks, threads>>>") == 8
+    assert execution_window.count("launch_window_commit_body") == 1
+    assert "launch_flight_dynamics_" not in execution_window
+    assert "launch_instrument_projection" not in execution_window
+    assert "finalize_staged_barrier" not in execution_window
     assert "kFlightControlH2dBytesPerWorld = 55" in contract
-    assert ".kernel_launch_count = 10" in contract
+    assert ".kernel_launch_count = 3" in contract
     assert "ledger.kernel_launch_count += 2" in contract
-    assert ".synchronization_count = 5" in contract
+    assert ".synchronization_count = 3" in contract
     assert "pack_device_observation_kernel" in device
     assert "device_observation_consumer_smoke_kernel" in device
     assert "device_consumer_includes_host_validation_d2h" in contract
@@ -227,6 +226,54 @@ def test_rb9_static_ledger_matches_current_cuda_execution_graph() -> None:
     assert "ledger.device_consumer_event_wait_count = 1" in contract
     assert "ledger.device_consumer_allocation_may_synchronize = true" in contract
     assert "ledger.device_consumer_release_outside_measured_path = true" in contract
+
+
+def test_cp7a_small_batch_selection_rule_is_frozen_policy_not_a_selector() -> None:
+    """CP-7a freezes the world-1 disposition of gate G-F as explicit policy.
+
+    The rule must exist with its measured content (resident-lane advisory
+    minimum at the smallest measured-winning world count, sub-minimum counts
+    routed to the CPU reference, maintained default unchanged, crossover
+    review owned by CP-8), and it must stay documentation-grade: no runtime
+    translation unit may consume the constants, so freezing the rule cannot
+    smuggle in a public backend selector.
+    """
+    contract = _text(CONTRACT)
+    assert '"cp7.small_batch_selection_rule.v1"' in contract
+    assert "kResidentLaneAdvisoryMinimumWorldCount = 4" in contract
+    assert "kWorldCountsBelowMinimumRouteToCpuReference = true" in contract
+    assert "kMaintainedDefaultRemainsCpuReference = true" in contract
+    assert '"cp8.rematrix"' in contract
+    assert "static_assert(kResidentLaneAdvisoryMinimumWorldCount > 1" in contract
+
+    # Documentation-grade means zero runtime consumers: the constants may be
+    # referenced only by the contract itself and by tests.
+    rule_symbols = (
+        "kSmallBatchSelectionRuleId",
+        "kResidentLaneAdvisoryMinimumWorldCount",
+        "kWorldCountsBelowMinimumRouteToCpuReference",
+    )
+    src_root = ROOT / "src"
+    offenders: list[str] = []
+    for path in src_root.rglob("*"):
+        if path.suffix not in {".cpp", ".cu", ".cuh", ".h"}:
+            continue
+        if path == CONTRACT:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if any(symbol in text for symbol in rule_symbols):
+            offenders.append(path.relative_to(ROOT).as_posix())
+    allowed = {"src/tests/test_cuda_resident_performance.cpp"}
+    unexpected = sorted(set(offenders) - allowed)
+    assert not unexpected, (
+        f"the small-batch rule must stay documentation-grade policy; runtime "
+        f"consumers found: {unexpected}"
+    )
+
+    # Freezing the rule must leave the maintained default untouched.
+    facade = _text(ROOT / "src/runtime/facade/runtime_facade_config.cpp")
+    assert ".compiled_experimental_backend = false" in facade
+    assert "supports_resident_state = false" in facade
 
 
 def test_rb9_comparison_remains_held_even_when_internal_speedup_exceeds_target() -> None:

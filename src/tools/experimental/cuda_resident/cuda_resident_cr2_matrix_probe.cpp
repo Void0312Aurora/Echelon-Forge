@@ -1,3 +1,4 @@
+#include "runtime/contracts/cuda_resident_learner_consumption_contract.h"
 #include "runtime/contracts/cuda_resident_matrix_contract.h"
 #include "runtime/contracts/cuda_resident_selected_slice_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.h"
@@ -48,6 +49,9 @@ struct Args {
     matrix::Protocol protocol = matrix::kProductionProtocol;
     std::string database_path = "examples/config/database";
     std::string output_path;
+    // CP-6 opt-in: appends the learner-equivalent consumer mode. Off by
+    // default so unflagged reports keep the frozen CR2-6a mode shape.
+    bool learner_consumer_mode = false;
 };
 
 double elapsed_ms(Clock::time_point start, Clock::time_point end) {
@@ -120,6 +124,8 @@ Args args_from_command_line(int argc, char **argv) {
             args.database_path = require_value("--database");
         } else if (flag == "--output") {
             args.output_path = require_value("--output");
+        } else if (flag == "--learner-consumer") {
+            args.learner_consumer_mode = true;
         } else if (flag == "--smoke") {
             args.world_counts = {1, 4};
             args.protocol = {
@@ -365,12 +371,20 @@ Json cuda_environment() {
 #endif
 
 Json run_probe(const Args &args) {
-    const std::vector<probe::Mode> modes = {
+    std::vector<probe::Mode> modes = {
         {.host_export = false, .device_consumer = false, .id = "no_export_no_device"},
         {.host_export = true, .device_consumer = false, .id = "host_export_no_device"},
         {.host_export = false, .device_consumer = true, .id = "no_export_device_consumer"},
         {.host_export = true, .device_consumer = true, .id = "host_export_device_consumer"},
     };
+    if (args.learner_consumer_mode) {
+        modes.push_back(
+            {.host_export = false,
+             .device_consumer = true,
+             .learner_consumer = true,
+             .id = std::string(
+                 runtime::cuda_resident::learner_consumption::kLearnerConsumerModeIdNoExport)});
+    }
 #if defined(EF_CR2_MATRIX_CPU_PROBE)
     const std::string lane = "flecs_cpu_reference";
     const Json environment = nullptr;
@@ -404,8 +418,20 @@ Json run_probe(const Args &args) {
             {"cpu_available", mode.cpu_available},
         });
     }
+    if (args.learner_consumer_mode) {
+        mode_rows.push_back({
+            {"mode_id",
+             runtime::cuda_resident::learner_consumption::kLearnerConsumerModeIdNoExport},
+            {"host_export", false},
+            {"device_consumer", true},
+            {"learner_consumer", true},
+            {"cpu_available", false},
+        });
+    }
     return {
-        {"schema_version", matrix::kProbeSchema},
+        {"schema_version", args.learner_consumer_mode
+                               ? runtime::cuda_resident::learner_consumption::kLearnerProbeSchemaV2
+                               : matrix::kProbeSchema},
         {"profile_id", matrix::kProfileId},
         {"lane", lane},
         {"backend_id",
