@@ -10,13 +10,32 @@ A green `--check` is self-contained: besides byte-exact comparison of every
 registered artifact, it fails when a module in `schemas/` is missing from the
 `SCHEMA_MODULES` registry (or registered without a backing file), and when
 `gym_envs/scenario_loader/_generated/` contains a `*.py` file that no
-registered schema owns. `--write` removes such orphaned builder files; it
+whitelisted schema owns. `--write` removes such orphaned builder files; it
 never touches `.inc` outputs it does not own.
+
+## The two halves have different coverage
+
+Every registered schema renders an `.inc` fragment, because every fragment
+has a C++ includer. The Python half is a whitelist:
+`python_builder.BUILDER_SCHEMA_NAMES` lists the schemas whose builder module
+is checked in, and a builder for any other schema is an orphan by
+construction — `--check` reports it as `unexpected:` and `--write` deletes it.
+
+The whitelist exists because rendering one builder per schema produced a
+package where all but one module had no importer other than the freshness
+gate keeping it alive, which proved that generated files matched the
+generator rather than that any contract held. To add a builder, list the
+schema name in `BUILDER_SCHEMA_NAMES` next to the module that imports it,
+then run `--write`. `--manifest` reports `python_builder: null` for every
+schema outside the whitelist.
 
 Builder modules export `FIELD_NAMES`, `WRITABLE_FIELD_NAMES`,
 `READONLY_FIELDS`, and `FIELD_DEFAULTS`. `assign_from_object()` is generated
 only for schemas with at least one writable field and always skips
-`READONLY_FIELDS`; all-read-only products schemas get no assigner.
+`READONLY_FIELDS`; all-read-only products schemas get no assigner. Both
+shapes stay covered by
+`tests/architecture/governance/test_dto_schema_python_builder.py`, which
+renders probe schemas in-process rather than relying on a checked-in module.
 
 Each module in a `schemas/<domain>/` package exports one `DtoSchema`. The
 central `schemas/__init__.py` registry preserves generation order across those
@@ -56,7 +75,9 @@ To add a DTO family:
    existing X-macro list, `parse_xmacro.py` can create the initial module
    without hand transcription).
 2. Register its module name in `schemas/__init__.py`.
-3. Run `generate.py --write`, add the generated `.inc`, and run `--check`.
+3. Run `generate.py --write`, add the generated `.inc`, and run `--check`. No
+   Python builder is rendered unless you also add the schema name to
+   `python_builder.BUILDER_SCHEMA_NAMES`.
 
 Example extraction:
 
@@ -69,21 +90,28 @@ python tools/maintenance/dto_schema/parse_xmacro.py path/to/fields.inc `
 
 ## Coverage and hand-written exceptions
 
-All 116 registered schemas map 1:1 onto a C++ `.inc` fragment and a Python
-builder module; `--manifest` prints the full mapping. DTO structs that stay
-hand-written on purpose:
+All 102 registered schemas map 1:1 onto a C++ `.inc` fragment; exactly one
+of them (`safety_runtime_inputs`) also renders a Python builder, consumed by
+`gym_envs/scenario_loader/reward_runtime/safety.py`. `--manifest` prints the
+full mapping. Notable history:
 
-- `ExecutionBatchStepResult` (`src/runtime/facade/runtime_facade_types.h`):
-  its `std::vector<std::array<double, 4>>` member is not token-safe for the
-  X-macro preprocessor, so the struct body remains hand-written. See
-  `docs/architecture/work/issues/cpp_dependency_and_dto_residuals.md`.
-- `RecentEngagementEvents`, listed in that issue as a future candidate, has
-  since been migrated: `schemas/engagement/recent_engagement_events_fields.py`
+- The scenario-generation lineage pair
+  (`scenario_generation_evidence_ref`, `scenario_generation_request_metadata`)
+  was retired: its C++ face
+  (`src/runtime/contracts/counterfactual_replay_contract_types.h`) went away
+  with the maintained-evidence/counterfactual producers, leaving both
+  fragments with zero `#include` sites. The surviving Python dataclasses are
+  pinned directly by
+  `tests/architecture/governance/test_scenario_generation_lineage_parity.py`.
+- `RecentEngagementEvents`, once listed in
+  `docs/architecture/work/issues/cpp_dependency_and_dto_residuals.md` as a
+  future candidate, has since been migrated:
+  `schemas/engagement/recent_engagement_events_fields.py`
   owns `src/runtime/contracts/detail/engagement/recent_engagement_events.inc`.
 
 ## `.inc` files outside this generator
 
-6 of the 122 `src/**/*.inc` files are deliberately not schema-generated:
+6 of the 108 `src/**/*.inc` files are deliberately not schema-generated:
 
 - `src/content/detail/*.inc` (6 files) are hand-maintained content
   escape-hatch field lists whose anchor points the other way, pinned three

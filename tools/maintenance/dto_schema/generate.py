@@ -5,6 +5,11 @@ One command covers every generated product: the C++ X-macro .inc fragments,
 the Python builder modules under gym_envs/scenario_loader/_generated/, and
 that package's __init__.py.
 
+The two halves have different coverage: every registered schema renders an
+.inc fragment, while a Python builder is rendered only for the schemas in
+python_builder.BUILDER_SCHEMA_NAMES. A builder for an unlisted schema is
+therefore an orphan by construction and is removed by --write.
+
 Beyond per-file byte comparison, the CLI is self-contained on two integrity
 properties so no separate test is needed to trust a green --check:
 
@@ -12,7 +17,7 @@ properties so no separate test is needed to trust a green --check:
   schema module that exists on disk but is unregistered, or registered but
   missing, aborts every command);
 - gym_envs/scenario_loader/_generated/ is a fully generated directory, so
-  *.py files there that no registered schema owns fail --check and are
+  *.py files there that no whitelisted schema owns fail --check and are
   removed by --write. Ownership is compared case-insensitively on every
   platform (str.casefold): a directory entry that matches a registered
   artifact except for spelling case is reported as a case mismatch and is
@@ -134,6 +139,8 @@ def artifact_renderers(
   for _, schema in registrations:
     artifacts.append((schema.output_path, functools.partial(render_schema, schema)))
   for _, schema in registrations:
+    if not python_builder.has_python_builder(schema):
+      continue
     artifacts.append(
       (
         python_builder.builder_output_path(schema),
@@ -161,16 +168,23 @@ def manifest_payload(
         "name": schema.name,
         "schema": module_name.replace(".", "/") + ".py",
         "output": schema.output_path,
-        "python_builder": python_builder.builder_output_path(schema),
+        # null for a schema outside python_builder.BUILDER_SCHEMA_NAMES: it
+        # renders an .inc fragment but no Python builder.
+        "python_builder": (
+          python_builder.builder_output_path(schema)
+          if python_builder.has_python_builder(schema)
+          else None
+        ),
         "field_count": len(schema.fields),
         "groups": dict(sorted(group_counts.items())),
       }
     )
   return {
-    "version": 2,
+    "version": 3,
     "generator": "tools/maintenance/dto_schema/generate.py",
     "canonical_line_ending": "LF",
     "schemas": schemas,
+    "python_builder_schemas": sorted(python_builder.BUILDER_SCHEMA_NAMES),
     "python_builder_package_init": python_builder.PACKAGE_INIT_PATH,
   }
 
@@ -222,7 +236,9 @@ def scan_generated_package(
   if not package_dir.is_dir():
     return ((), ())
   owned = {
-    python_builder.builder_output_path(schema) for _, schema in registrations
+    python_builder.builder_output_path(schema)
+    for _, schema in registrations
+    if python_builder.has_python_builder(schema)
   }
   owned.add(python_builder.PACKAGE_INIT_PATH)
   found = tuple(

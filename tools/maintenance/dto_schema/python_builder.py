@@ -4,6 +4,10 @@ This is a rendering library consumed by generate.py; it has no CLI. Builder
 modules live under gym_envs/scenario_loader/_generated/ and are covered by
 generate.py --check together with the C++ .inc fragments.
 
+Unlike the .inc half, which is rendered for every registered schema because
+every fragment has a C++ includer, the Python half is rendered only for the
+schemas listed in BUILDER_SCHEMA_NAMES. See that constant for why.
+
 Rendering rules:
 - Every builder exports FIELD_NAMES, WRITABLE_FIELD_NAMES, READONLY_FIELDS,
   and FIELD_DEFAULTS.
@@ -23,6 +27,24 @@ from tools.maintenance.dto_schema.model import DtoSchema
 
 GENERATED_PACKAGE_DIR = "gym_envs/scenario_loader/_generated"
 PACKAGE_INIT_PATH = f"{GENERATED_PACKAGE_DIR}/__init__.py"
+
+# Schemas whose Python builder module is a checked-in artifact.
+#
+# Rendering a builder for every registered schema produced a package where
+# all but one module had no importer other than the freshness gate that kept
+# it alive, so the gate was proving that generated files matched the
+# generator rather than that any contract held. The whitelist inverts that:
+# a builder exists because an importer needs it. The C++ .inc half is
+# unaffected and is still rendered for every registered schema.
+#
+# To add one: list the schema name here with the importing module, then run
+# generate.py --write.
+BUILDER_SCHEMA_NAMES: frozenset[str] = frozenset(
+  {
+    # gym_envs/scenario_loader/reward_runtime/safety.py
+    "safety_runtime_inputs",
+  }
+)
 
 _PACKAGE_INIT_TEXT = (
   '"""GENERATED DTO builder package \u2014 do not edit files in this directory."""\n'
@@ -81,6 +103,11 @@ _CPP_TO_PY_TYPE = {
 
 def builder_output_path(schema: DtoSchema) -> str:
   return f"{GENERATED_PACKAGE_DIR}/{schema.name}_builder.py"
+
+
+def has_python_builder(schema: DtoSchema) -> bool:
+  """Whether this schema's builder module is a checked-in artifact."""
+  return schema.name in BUILDER_SCHEMA_NAMES
 
 
 def _python_type(cpp_type: str) -> str:

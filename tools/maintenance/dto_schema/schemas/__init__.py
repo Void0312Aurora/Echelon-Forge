@@ -28,7 +28,6 @@ SCHEMA_MODULES = (
   "tools.maintenance.dto_schema.schemas.platform.world_zone_definition_fields",
   "tools.maintenance.dto_schema.schemas.platform.world_spawn_request_fields",
   "tools.maintenance.dto_schema.schemas.tasking.world_pilot_action_assignment_fields",
-  "tools.maintenance.dto_schema.schemas.batch.world_execution_episode_step_request_fields",
   "tools.maintenance.dto_schema.schemas.batch.batch_world_setup_request_fields",
   "tools.maintenance.dto_schema.schemas.batch.batch_world_setup_result_fields",
   "tools.maintenance.dto_schema.schemas.platform.typed_platform_spawn_result_fields",
@@ -55,7 +54,6 @@ SCHEMA_MODULES = (
   "tools.maintenance.dto_schema.schemas.learning.observation_view_compatibility_report_fields",
   "tools.maintenance.dto_schema.schemas.batch.observation_batch_request_fields",
   "tools.maintenance.dto_schema.schemas.batch.tasking_batch_request_fields",
-  "tools.maintenance.dto_schema.schemas.batch.execution_batch_step_request_fields",
   "tools.maintenance.dto_schema.schemas.batch.observation_batch_packet_fields",
   "tools.maintenance.dto_schema.schemas.batch.tasking_batch_packet_fields",
   "tools.maintenance.dto_schema.schemas.runtime.runtime_world_layout_request_fields",
@@ -106,6 +104,4 @@ SCHEMA_MODULES = (
   "tools.maintenance.dto_schema.schemas.tasking.pilot_report_maintained_batch_contract_fields",
   "tools.maintenance.dto_schema.schemas.tasking.world_pilot_report_maintained_assignment_fields",
   "tools.maintenance.dto_schema.schemas.engagement.recent_engagement_events_fields",
-  "tools.maintenance.dto_schema.schemas.scenario.scenario_generation_evidence_ref_fields",
-  "tools.maintenance.dto_schema.schemas.scenario.scenario_generation_request_metadata_fields",
 )
