@@ -577,12 +577,14 @@ class TestCooperativePlugin:
         assert "_mode_plugin" in source
 
     def test_cooperative_step_wait_routes_through_plugin(self):
-        """Verify step_wait uses _mode_plugin.update_post_step_behavior."""
+        """Verify the step_wait pipeline uses _mode_plugin.update_post_step_behavior."""
         from python.rl.runtime.cooperative_world_batch_vec_env import (
             CooperativeWorldBatchVecEnv,
         )
         import inspect
-        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait)
+        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait) + inspect.getsource(
+            CooperativeWorldBatchVecEnv._step_wait_refresh_state_and_behavior
+        )
         assert "_mode_plugin.update_post_step_behavior(" in source
         assert "_mode_plugin.skip_post_behavior_command_sync" in source
 
@@ -736,12 +738,12 @@ class TestCooperativePluginBehaviorEquivalence:
     """Mock self-proof: cooperative hook is called with correct arguments."""
 
     def test_update_post_step_behavior_called_per_slot(self):
-        """Prove the cooperative step_wait calls the plugin hook per slot."""
+        """Prove the cooperative step_wait pipeline calls the plugin hook per slot."""
         from python.rl.runtime.cooperative_world_batch_vec_env import (
             CooperativeWorldBatchVecEnv,
         )
         import inspect
-        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait)
+        source = inspect.getsource(CooperativeWorldBatchVecEnv._step_wait_refresh_state_and_behavior)
         assert "self._mode_plugin.update_post_step_behavior(" in source
         assert "slot_state, sim_time, slot_state.last_truth, slot_state.last_inst" in source
 
