@@ -72,10 +72,6 @@ class GpuTensorView {
 
     std::vector<std::int64_t> shape() const { return shape_; }
 
-    std::vector<std::int64_t> strides() const { return strides_; }
-
-    int device_id() const { return device_id_; }
-
     std::size_t numel() const {
         std::size_t out = 1;
         for (const auto dim : shape_) {
@@ -585,8 +581,6 @@ void bind_gpu(nb::module_ &m) {
     nb::class_<GpuTensorView>(m, "GpuTensorView")
         .def_prop_ro("valid", &GpuTensorView::valid)
         .def_prop_ro("shape", &GpuTensorView::shape)
-        .def_prop_ro("strides", &GpuTensorView::strides)
-        .def_prop_ro("device_id", &GpuTensorView::device_id)
         .def_prop_ro("numel", &GpuTensorView::numel)
         .def_prop_ro("dtype", [](const GpuTensorView &) { return std::string("float32"); })
         .def("__dlpack_device__", &GpuTensorView::dlpack_device)
@@ -648,21 +642,6 @@ void bind_gpu(nb::module_ &m) {
         .def_rw("hash_bucket_count", &gpu::InteractionBroadphaseConfig::hash_bucket_count)
         .def_rw("bucket_capacity", &gpu::InteractionBroadphaseConfig::bucket_capacity);
 
-    nb::class_<gpu::InteractionBroadphaseExperimentStats>(m, "InteractionBroadphaseExperimentStats")
-        .def(nb::init<>())
-        .def_ro("used_cuda", &gpu::InteractionBroadphaseExperimentStats::used_cuda)
-        .def_ro("host_to_device_ms", &gpu::InteractionBroadphaseExperimentStats::host_to_device_ms)
-        .def_ro("kernel_ms", &gpu::InteractionBroadphaseExperimentStats::kernel_ms)
-        .def_ro("device_to_host_ms", &gpu::InteractionBroadphaseExperimentStats::device_to_host_ms)
-        .def_ro("total_ms", &gpu::InteractionBroadphaseExperimentStats::total_ms)
-        .def_ro("overflow_bucket_count",
-                &gpu::InteractionBroadphaseExperimentStats::overflow_bucket_count)
-        .def_ro("overflow_query_count",
-                &gpu::InteractionBroadphaseExperimentStats::overflow_query_count);
-
-    m.def("interaction_broadphase_word_count", &gpu::interaction_broadphase_word_count,
-          nb::arg("entities_per_world"));
-    m.def("last_interaction_broadphase_stats", &gpu::last_interaction_broadphase_stats);
     m.def(
         "build_interaction_broadphase_batch_numpy",
         [](const std::vector<gpu::InteractionEntityPacked> &entities,

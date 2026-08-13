@@ -8,7 +8,6 @@
 #include <spdlog/spdlog.h>
 
 #include "core/engine/world_batch_runtime.h"
-#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 #include "runtime/contracts/platform_capability_contracts.h"
@@ -44,13 +43,8 @@ void bind_runtime_engine(nb::module_ &m) {
             },
             nb::arg("path"))
         .def("set_time_step", &WorldBatchRuntime::set_time_step, nb::arg("dt"))
-        .def("set_terrain_types_batch", &WorldBatchRuntime::set_terrain_types_batch,
-             nb::arg("assignments"))
-        .def("set_winds_batch", &WorldBatchRuntime::set_winds_batch, nb::arg("assignments"))
-        .def("set_suns_batch", &WorldBatchRuntime::set_suns_batch, nb::arg("assignments"))
         .def("clear_zones_batch", &WorldBatchRuntime::clear_zones_batch,
              nb::arg("world_indices") = std::vector<uint64_t>{})
-        .def("add_zones_batch", &WorldBatchRuntime::add_zones_batch, nb::arg("zones"))
         .def("spawn_units_batch", &WorldBatchRuntime::spawn_units_batch, nb::arg("requests"))
         .def("apply_world_setup_batch", &WorldBatchRuntime::apply_world_setup_batch,
              nb::arg("seeds"), nb::arg("terrain_assignments"), nb::arg("wind_assignments"),
@@ -91,8 +85,6 @@ void bind_runtime_engine(nb::module_ &m) {
              &WorldBatchRuntime::execution_episode_controller_ready, nb::arg("world_index"))
         .def("export_execution_episode_states_batch",
              &WorldBatchRuntime::export_execution_episode_states_batch, nb::arg("refs"))
-        .def("evaluate_execution_episode_batch",
-             &WorldBatchRuntime::evaluate_execution_episode_batch, nb::arg("requests"))
         .def("step_execution_episode_batch", &WorldBatchRuntime::step_execution_episode_batch,
              nb::arg("requests"))
         .def("step_execution_episode_results_batch",

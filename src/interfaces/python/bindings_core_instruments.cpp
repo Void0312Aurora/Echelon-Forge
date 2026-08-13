@@ -1,7 +1,6 @@
 #include "interfaces/python/bindings_core_detail.h"
 
 #include "components/physics/instruments.h"
-#include "components/systems/navigation.h"
 
 void bind_core_instruments(nb::module_ &m) {
     // Bind InstrumentState
@@ -23,7 +22,6 @@ void bind_core_instruments(nb::module_ &m) {
         .def_rw("q", &InstrumentState::q_deg_s)
         .def_rw("r", &InstrumentState::r_deg_s)
         .def_rw("engine_rpm", &InstrumentState::engine_rpm_pct)
-        .def_rw("engine_temp", &InstrumentState::engine_temp_c)
         .def_rw("fuel_flow", &InstrumentState::fuel_flow_kg_h)
         .def_rw("throttle_pos", &InstrumentState::throttle_pos)
         .def_rw("fuel_internal", &InstrumentState::fuel_internal_kg)
@@ -54,26 +52,4 @@ void bind_core_instruments(nb::module_ &m) {
         .def_rw("gear_stress", &InstrumentState::gear_stress)
         .def_rw("gear_collapsed", &InstrumentState::gear_collapsed)
         .def_rw("on_runway", &InstrumentState::on_runway);
-
-    // Bind EGI
-    nb::class_<EGI>(m, "EGI")
-        .def(nb::init<>())
-        .def_rw("lat", &EGI::lat_deg)
-        .def_rw("lon", &EGI::lon_deg)
-        .def_rw("alt_baro", &EGI::alt_baro_m)
-        .def_rw("alt_radar", &EGI::alt_radar_m)
-        .def_rw("vn", &EGI::vn_mps)
-        .def_rw("ve", &EGI::ve_mps)
-        .def_rw("vd", &EGI::vd_mps)
-        .def_rw("heading", &EGI::heading_deg)
-        .def_rw("pitch", &EGI::pitch_deg)
-        .def_rw("roll", &EGI::roll_deg)
-        .def_rw("wind_speed", &EGI::wind_speed_mps)
-        .def_rw("wind_dir", &EGI::wind_dir_deg)
-        .def_rw("drift_lat", &EGI::drift_lat_m)
-        .def_rw("drift_lon", &EGI::drift_lon_m)
-        .def_rw("drift_alt", &EGI::drift_alt_m)
-        .def_rw("pos_uncertainty", &EGI::position_uncertainty_m)
-        .def_rw("time_since_fix", &EGI::time_since_last_gps_fix)
-        .def_rw("gps_avail", &EGI::gps_available);
 }

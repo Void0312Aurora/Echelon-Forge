@@ -58,11 +58,7 @@ class WorldBatchRuntime {
     bool load_database(const std::string &path);
     bool load_unit_definitions(const std::string &path, std::string *error = nullptr);
     void set_time_step(double dt);
-    void set_terrain_types_batch(const std::vector<WorldTerrainAssignment> &assignments);
-    void set_winds_batch(const std::vector<WorldWindAssignment> &assignments);
-    void set_suns_batch(const std::vector<WorldSunAssignment> &assignments);
     void clear_zones_batch(const std::vector<uint64_t> &world_indices = {});
-    void add_zones_batch(const std::vector<WorldZoneDefinition> &zones);
     std::vector<uint64_t> spawn_units_batch(const std::vector<WorldSpawnRequest> &requests);
     std::vector<uint64_t>
     apply_world_setup_batch(const std::vector<uint32_t> &seeds,

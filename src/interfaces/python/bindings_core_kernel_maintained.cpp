@@ -42,8 +42,6 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
     kernel
         .def("get_instrument_state", &SimulationKernel::get_instrument_state,
              "Get the instrument state for a unit", nb::arg("entity_id"))
-        .def("get_egi_state", &SimulationKernel::get_egi_state, "Get the EGI state for a unit",
-             nb::arg("entity_id"))
         .def("reset", &SimulationKernel::reset, "Reset the simulation", nb::arg("seed") = 42)
         .def("load_database", &SimulationKernel::load_database, nb::arg("path"),
              "Load unit definitions from JSON directory")

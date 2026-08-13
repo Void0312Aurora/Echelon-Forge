@@ -14,18 +14,10 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("lethal_radius_m", &WarheadProfile::lethal_radius_m)
         .def_rw("damage_scalar", &WarheadProfile::damage_scalar)
         .def_rw("explosive_mass_kg", &WarheadProfile::explosive_mass_kg)
-        .def_rw("case_mass_kg", &WarheadProfile::case_mass_kg)
-        .def_rw("gurney_constant_mps", &WarheadProfile::gurney_constant_mps)
-        .def_rw("fragment_mass_kg", &WarheadProfile::fragment_mass_kg)
-        .def_rw("fragment_count", &WarheadProfile::fragment_count)
         .def_rw("projection_radius_fraction", &WarheadProfile::projection_radius_fraction)
         .def_rw("projection_min_radius_m", &WarheadProfile::projection_min_radius_m)
         .def_rw("projection_max_radius_m", &WarheadProfile::projection_max_radius_m)
         .def_rw("projection_min_effect_scale", &WarheadProfile::projection_min_effect_scale)
-        .def_rw("projection_max_effect_scale", &WarheadProfile::projection_max_effect_scale)
-        .def_rw("projection_falloff_exponent", &WarheadProfile::projection_falloff_exponent)
-        .def_rw("projection_max_projected_hitboxes",
-                &WarheadProfile::projection_max_projected_hitboxes)
         .def_rw("synthetic", &WarheadProfile::synthetic)
         .def_rw("damage_scalar_synthetic", &WarheadProfile::damage_scalar_synthetic)
         .def_rw("provenance", &WarheadProfile::provenance);
@@ -37,7 +29,6 @@ void bind_core_weapon_profiles(nb::module_ &m) {
         .def_rw("delay_s", &FuzeProfile::delay_s)
         .def_rw("reliability", &FuzeProfile::reliability)
         .def_rw("trigger_logic", &FuzeProfile::trigger_logic)
-        .def_rw("coverage_profile", &FuzeProfile::coverage_profile)
         .def_rw("synthetic", &FuzeProfile::synthetic)
         .def_rw("provenance", &FuzeProfile::provenance);
 

@@ -91,14 +91,6 @@ void CompiledScenarioGeometry::add_route_waypoint(const SpatialRouteWaypoint& wa
     route_waypoints_.push_back(next);
 }
 
-std::size_t CompiledScenarioGeometry::runway_count() const {
-    return runways_.size();
-}
-
-std::size_t CompiledScenarioGeometry::route_waypoint_count() const {
-    return route_waypoints_.size();
-}
-
 SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(double x_m, double y_m) const {
     SpatialRunwayFrameResult out{};
     if (runways_.empty()) {

@@ -124,15 +124,11 @@ void bind_episode(nb::module_ &m) {
     nb::class_<CompiledScenarioGeometry>(m, "CompiledScenarioGeometry")
         .def(nb::init<>())
         .def("clear", &CompiledScenarioGeometry::clear)
-        .def("clear_runways", &CompiledScenarioGeometry::clear_runways)
         .def("add_runway", &CompiledScenarioGeometry::add_runway, nb::arg("runway"))
-        .def("clear_route", &CompiledScenarioGeometry::clear_route)
         .def("set_route_leg_origin", &CompiledScenarioGeometry::set_route_leg_origin,
              nb::arg("x_m"), nb::arg("y_m"))
         .def("add_route_waypoint", &CompiledScenarioGeometry::add_route_waypoint,
              nb::arg("waypoint"))
-        .def("runway_count", &CompiledScenarioGeometry::runway_count)
-        .def("route_waypoint_count", &CompiledScenarioGeometry::route_waypoint_count)
         .def("query_runway_local_frame", &CompiledScenarioGeometry::query_runway_local_frame,
              nb::arg("x_m"), nb::arg("y_m"))
         .def("query_ils", &CompiledScenarioGeometry::query_ils, nb::arg("x_m"), nb::arg("y_m"),
@@ -615,8 +611,6 @@ void bind_episode(nb::module_ &m) {
 
     nb::class_<ExecutionEpisodeController>(m, "ExecutionEpisodeController")
         .def(nb::init<>())
-        .def("clear_state", &ExecutionEpisodeController::clear_state)
-        .def("has_state", &ExecutionEpisodeController::has_state)
         .def("import_state", &ExecutionEpisodeController::import_state, nb::arg("state"))
         .def("export_state", &ExecutionEpisodeController::export_state)
         .def("prepare_runtime_inputs", &ExecutionEpisodeController::prepare_runtime_inputs,

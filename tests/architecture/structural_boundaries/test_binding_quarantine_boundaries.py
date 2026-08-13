@@ -137,7 +137,9 @@ def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() ->
   # 85 at the WP22-E first wave; the viz unified-scene-rendering merge later
   # added set_sun_direction/get_sun_direction (non-debug maintained surface),
   # which this count guard silently missed until 2026-08-13.
-  assert len(names) == 87, (
+  # 87 -> 86 on 2026-08-13: the dead-binding sweep removed get_egi_state
+  # (zero python consumers; the EGI component itself stays alive in C++).
+  assert len(names) == 86, (
     "WP22-E expects the broad SimulationKernel binding count to stay explicit; "
     "update this guard only with a deliberate allowlist reshaping change"
   )

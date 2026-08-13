@@ -17,7 +17,7 @@ class ScriptedTakeoffController(BaseScriptedController):
     Realism-first scripted takeoff controller (stateful).
 
     Key properties:
-      - Uses only pilot-observable signals (ILS localizer, air data, inertial rates, EGI wind).
+      - Uses only pilot-observable signals (ILS localizer, air data, inertial rates, onboard wind estimate).
       - No privileged runway geometry/heading is exposed to the agent.
       - Includes a small integral term to learn a steady bias under crosswind (prevents one-sided drift).
     """
@@ -113,7 +113,8 @@ class ScriptedTakeoffController(BaseScriptedController):
             # (matches the internal dynamics sign). Keep this in mind when damping yaw.
             r_deg_s = float(inst[14]) if inst.size >= 15 else 0.0
 
-            # Wind (EGI): used only for a small feed-forward aileron bias on the ground.
+            # Wind (onboard estimate from the instrument vector): used only for a small
+            # feed-forward aileron bias on the ground.
             wind_speed = float(inst[31]) if inst.size >= 33 else 0.0
             wind_from = float(inst[32]) if inst.size >= 33 else 0.0
             hdg = float(inst[9]) if inst.size >= 10 else 0.0

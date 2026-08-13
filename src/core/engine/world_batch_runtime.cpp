@@ -544,31 +544,6 @@ void WorldBatchRuntime::set_time_step(double dt) {
                        [&](size_t i) { worlds_[i]->set_time_step(dt); });
 }
 
-void WorldBatchRuntime::set_terrain_types_batch(
-    const std::vector<WorldTerrainAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::apply_terrain_assignments(world, assignments, grouped[world_index]);
-    });
-}
-
-void WorldBatchRuntime::set_winds_batch(const std::vector<WorldWindAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::apply_wind_assignments(world, assignments, grouped[world_index]);
-    });
-}
-
-void WorldBatchRuntime::set_suns_batch(const std::vector<WorldSunAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::apply_sun_assignments(world, assignments, grouped[world_index]);
-    });
-}
-
 void WorldBatchRuntime::clear_zones_batch(const std::vector<uint64_t> &world_indices) {
     if (world_indices.empty()) {
         parallel_for_index(worlds_.size(), worker_threads_,
@@ -578,14 +553,6 @@ void WorldBatchRuntime::clear_zones_batch(const std::vector<uint64_t> &world_ind
     validate_unique_world_indices(worlds_.size(), world_indices, "clear_zones_batch");
     parallel_for_index(world_indices.size(), worker_threads_, [&](size_t i) {
         checked_world(static_cast<size_t>(world_indices[i])).clear_zones();
-    });
-}
-
-void WorldBatchRuntime::add_zones_batch(const std::vector<WorldZoneDefinition> &zones) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), zones);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::append_zones(world, zones, grouped[world_index]);
     });
 }
 

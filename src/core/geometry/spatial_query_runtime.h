@@ -117,9 +117,6 @@ public:
     void set_route_leg_origin(double x_m, double y_m);
     void add_route_waypoint(const SpatialRouteWaypoint& waypoint);
 
-    std::size_t runway_count() const;
-    std::size_t route_waypoint_count() const;
-
     SpatialRunwayFrameResult query_runway_local_frame(double x_m, double y_m) const;
     SpatialILSResult query_ils(double x_m, double y_m, double alt_m, double threshold_crossing_height_m) const;
     SpatialRouteQueryResult query_route_guidance(const SpatialRouteQueryOptions& options) const;

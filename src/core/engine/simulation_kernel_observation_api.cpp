@@ -13,7 +13,6 @@
 #include "components/systems/ew.h"
 #include "components/systems/data_link.h"
 #include "components/systems/logistics.h"
-#include "components/systems/navigation.h"
 #include "components/systems/sensor.h"
 #include "components/systems/sonar.h"
 #include "components/systems/track_management.h"
@@ -112,16 +111,6 @@ InstrumentState SimulationKernel::get_instrument_state(uint64_t entity_id) {
         }
     }
     return InstrumentState{};
-}
-
-EGI SimulationKernel::get_egi_state(uint64_t entity_id) {
-    auto e = ecs.entity(entity_id);
-    if (e.is_alive()) {
-        if (const EGI *egi = e.get<EGI>()) {
-            return *egi;
-        }
-    }
-    return EGI{};
 }
 
 int SimulationKernel::get_unit_type(uint64_t entity_id) {

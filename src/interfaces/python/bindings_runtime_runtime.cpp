@@ -8,7 +8,6 @@
 #include <spdlog/spdlog.h>
 
 #include "core/engine/world_batch_runtime.h"
-#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 #include "runtime/contracts/platform_capability_contracts.h"
@@ -45,7 +44,6 @@ void bind_runtime_runtime(nb::module_ &m) {
         .def_rw("backend_profile_id", &RuntimeBackendAdmission::backend_profile_id)
         .def_rw("capability_manifest_id", &RuntimeBackendAdmission::capability_manifest_id)
         .def_rw("parity_budget_ref", &RuntimeBackendAdmission::parity_budget_ref)
-        .def_rw("admitted_feature_ids", &RuntimeBackendAdmission::admitted_feature_ids)
         .def_rw("rejection_reason", &RuntimeBackendAdmission::rejection_reason)
         .def_rw("errors", &RuntimeBackendAdmission::errors);
 
@@ -61,20 +59,6 @@ void bind_runtime_runtime(nb::module_ &m) {
 #define EF_RUNTIME_FIDELITY_ADMISSION_FIELD(type, name, default_value)                             \
     runtime_fidelity_admission_class.def_rw(#name, &RuntimeFidelityAdmission::name);
 #include "runtime/facade/detail/runtime/runtime_fidelity_admission.inc"
-
-    nb::class_<RuntimeCounterfactualSnapshot> runtime_counterfactual_snapshot_class(
-        m, "RuntimeCounterfactualSnapshot");
-    runtime_counterfactual_snapshot_class.def(nb::init<>());
-#define EF_RUNTIME_COUNTERFACTUAL_SNAPSHOT_FIELD(type, name, default_value)                        \
-    runtime_counterfactual_snapshot_class.def_rw(#name, &RuntimeCounterfactualSnapshot::name);
-#include "runtime/facade/detail/runtime/runtime_counterfactual_snapshot.inc"
-
-    nb::class_<RuntimeWorldlineComparison> runtime_worldline_comparison_class(
-        m, "RuntimeWorldlineComparison");
-    runtime_worldline_comparison_class.def(nb::init<>());
-#define EF_RUNTIME_WORLDLINE_COMPARISON_FIELD(type, name, default_value)                           \
-    runtime_worldline_comparison_class.def_rw(#name, &RuntimeWorldlineComparison::name);
-#include "runtime/facade/detail/runtime/runtime_worldline_comparison.inc"
 
     nb::class_<DeviceResidentOutputDescriptor> device_resident_output_descriptor_class(
         m, "DeviceResidentOutputDescriptor");
