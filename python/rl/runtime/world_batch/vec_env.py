@@ -765,13 +765,14 @@ class WorldBatchVecEnv(
             action_arr = action_arr.reshape(1, -1)
         self._actions = action_arr
 
-    def step_wait(self) -> VecEnvStepReturn:
-        if self._actions is None:
-            raise RuntimeError("step_async() must be called before step_wait().")
+    def _step_wait_prepare_actions(
+        self, timing: dict[str, float]
+    ) -> tuple[list[Any], list[Any | None], list[Any | None], list[int]]:
+        """[stage:action_prepare] Normalize per-env actions into pilot assignments.
 
-        self._clear_policy_observation_device_cache()
-        total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        # [stage:action_prepare]
+        Returns (assignments, prepared_actions, air_combat_truth_before,
+        naval_action_sync_indices).
+        """
         prepare_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         _, refs = self._build_refs()
         inst_now_list = None
@@ -824,22 +825,37 @@ class WorldBatchVecEnv(
                 inst_now=None if inst_now_list is None else inst_now_list[env_idx],
             )
             assignments.append(assign)
-        action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
+        timing["action_prepare_ms"] = (
+            (time.perf_counter() - prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
+        return assignments, prepared_actions, air_combat_truth_before, naval_action_sync_indices
 
-        # [stage:physics_step]
+    def _step_wait_advance_worlds(
+        self,
+        assignments: list[Any],
+        naval_action_sync_indices: list[int],
+        timing: dict[str, float],
+    ) -> None:
+        """[stage:physics_step] Apply the pilot actions and step every world."""
         step_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         if naval_action_sync_indices:
             # command_sync event-driven re-entry (naval station action mutation)
             self._sync_command_chain_batch(naval_action_sync_indices)
         self._set_pilot_actions_batch(assignments)
         self._step_runtime_batch()
-        batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0
+        timing["batch_step_ms"] = (
+            (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
 
-        # [stage:state_read]
+    def _step_wait_refresh_state_and_behavior(
+        self, air_combat_truth_before: list[Any | None], timing: dict[str, float]
+    ) -> None:
+        """[stage:state_read/behavior_update/command_sync] Refresh handles and behavior layers."""
         read_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         _target_indices, truth_list, inst_list = self._read_truth_and_inst_batch()
-        state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if self.collect_step_timing else 0.0
-        # [stage:behavior_update]
+        timing["state_read_ms"] = (
+            (time.perf_counter() - read_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
         behavior_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         for env_idx, handle in enumerate(self._handles):
             handle.steps += 1
@@ -855,24 +871,34 @@ class WorldBatchVecEnv(
             self._mode_plugin.update_post_step_behavior(
                 handle, sim_time, handle.last_truth, handle.last_inst,
             )
-        behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if self.collect_step_timing else 0.0
-        # [stage:command_sync]
+        timing["behavior_update_ms"] = (
+            (time.perf_counter() - behavior_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         if not self._mode_plugin.skip_post_behavior_command_sync:
             self._sync_command_chain_batch()
-        command_sync_ms = (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
+        timing["command_sync_ms"] = (
+            (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
 
-        # [stage:observation_build]
+    def _step_wait_build_observations(self, timing: dict[str, float]) -> list[dict[str, np.ndarray]]:
+        """[stage:observation_build/flight_shaping] Build cached-state observations."""
         obs_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         obs_batch = self._build_observations_from_cached_state()
-        obs_build_ms = (time.perf_counter() - obs_t0) * 1000.0 if self.collect_step_timing else 0.0
-        # [stage:flight_shaping]
+        timing["obs_build_ms"] = (
+            (time.perf_counter() - obs_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
         shaping_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         self._prepare_batch_flight_shaping_overrides()
-        flight_shaping_batch_ms = (time.perf_counter() - shaping_t0) * 1000.0 if self.collect_step_timing else 0.0
-        # [stage:reward_episode]
-        reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        any_done = False
+        timing["flight_shaping_batch_ms"] = (
+            (time.perf_counter() - shaping_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
+        return obs_batch
+
+    def _step_wait_run_episode_controllers(
+        self, obs_batch: list[dict[str, np.ndarray]], timing: dict[str, float]
+    ) -> tuple[list[dict[str, Any] | None], list[dict[str, Any] | None]]:
+        """Run the shadow/mainline execution-episode controllers when enabled."""
         shadow_reports: list[dict[str, Any] | None] = [None] * self.num_envs
         mainline_results: list[dict[str, Any] | None] = [None] * self.num_envs
         if self.execution_episode_controller_shadow_compare:
@@ -881,153 +907,161 @@ class WorldBatchVecEnv(
             mainline_results = self._step_execution_episode_controller_mainline_batch(obs_batch)
             sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             self._sync_command_chain_batch()
-            command_sync_ms = (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
+            timing["command_sync_ms"] = (
+                (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
+            )
             mission_refresh_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             self._refresh_mission_observation_batch(obs_batch)
             if self.collect_step_timing:
-                obs_build_ms += (time.perf_counter() - mission_refresh_t0) * 1000.0
-        for env_idx in range(self.num_envs):
-            obs = obs_batch[env_idx]
-            handle = self._handles[env_idx]
-            mainline_result = mainline_results[env_idx]
-            if mainline_result is not None:
-                reward = float(mainline_result["reward"])
-                terminated = bool(mainline_result["terminated"])
-                truncated = bool(mainline_result["truncated"])
-                mission_status = list(mainline_result["mission_status"])
-            else:
-                cache = getattr(handle.loader, "_runtime_eval_cache", None)
-                cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
-                reward, terminated, truncated, mission_status = _compute_loader_step_outcome(
-                    handle.loader,
-                    obs=obs,
-                    steps=handle.steps,
-                    max_steps=handle.max_steps,
-                    truth=handle.last_truth,
-                    inst_state=handle.last_inst,
-                    step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
-                )
-            post_launch_assessment_info: dict[str, Any] = {}
-            if self._air_combat_post_launch_assessment_should_run(
+                timing["obs_build_ms"] += (time.perf_counter() - mission_refresh_t0) * 1000.0
+        return shadow_reports, mainline_results
+
+    def _step_wait_finalize_env(
+        self,
+        env_idx: int,
+        obs: dict[str, np.ndarray],
+        *,
+        mainline_result: dict[str, Any] | None,
+        shadow_report: dict[str, Any] | None,
+        prepared: Any | None,
+    ) -> bool:
+        """Compute one env's reward/info, latch buffers, and auto-reset on done."""
+        handle = self._handles[env_idx]
+        if mainline_result is not None:
+            reward = float(mainline_result["reward"])
+            terminated = bool(mainline_result["terminated"])
+            truncated = bool(mainline_result["truncated"])
+            mission_status = list(mainline_result["mission_status"])
+        else:
+            cache = getattr(handle.loader, "_runtime_eval_cache", None)
+            cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
+            reward, terminated, truncated, mission_status = _compute_loader_step_outcome(
+                handle.loader,
+                obs=obs,
+                steps=handle.steps,
+                max_steps=handle.max_steps,
+                truth=handle.last_truth,
+                inst_state=handle.last_inst,
+                step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
+            )
+        post_launch_assessment_info: dict[str, Any] = {}
+        if self._air_combat_post_launch_assessment_should_run(
+            env_idx,
+            terminated=bool(terminated),
+            truncated=bool(truncated),
+        ):
+            (
+                obs,
+                reward,
+                terminated,
+                truncated,
+                mission_status,
+                post_launch_assessment_info,
+            ) = self._run_air_combat_post_launch_assessment(
                 env_idx,
+                obs=obs,
+                reward=float(reward),
                 terminated=bool(terminated),
                 truncated=bool(truncated),
-            ):
-                (
-                    obs,
-                    reward,
-                    terminated,
-                    truncated,
-                    mission_status,
-                    post_launch_assessment_info,
-                ) = self._run_air_combat_post_launch_assessment(
-                    env_idx,
-                    obs=obs,
-                    reward=float(reward),
-                    terminated=bool(terminated),
-                    truncated=bool(truncated),
-                    mission_status=mission_status,
-                )
-            include_full_step_info = not (
-                self.step_info_mode == "off"
-                or (self.step_info_mode == "terminal" and not bool(terminated or truncated))
+                mission_status=mission_status,
             )
-            mainline_step_info_fields: dict[str, float] | None = None
-            if mainline_result is not None:
-                step_info_fields = mainline_result.get("step_info_fields")
-                if isinstance(step_info_fields, dict) and step_info_fields:
-                    mainline_step_info_fields = {}
-                    for key, value in step_info_fields.items():
-                        try:
-                            mainline_step_info_fields[str(key)] = float(value)
-                        except Exception:
-                            continue
-                    if not mainline_step_info_fields:
-                        mainline_step_info_fields = None
-            if include_full_step_info and mainline_step_info_fields is None:
-                info = _build_loader_step_info(
-                    handle.loader,
-                    entity_id=int(handle.agent_id),
-                    mission_status=mission_status,
-                    terminated=terminated,
-                    truncated=truncated,
-                    inst_now=handle.last_inst,
-                    truth_now=handle.last_truth,
+        include_full_step_info = not (
+            self.step_info_mode == "off"
+            or (self.step_info_mode == "terminal" and not bool(terminated or truncated))
+        )
+        mainline_step_info_fields: dict[str, float] | None = None
+        if mainline_result is not None:
+            step_info_fields = mainline_result.get("step_info_fields")
+            if isinstance(step_info_fields, dict) and step_info_fields:
+                mainline_step_info_fields = {}
+                for key, value in step_info_fields.items():
+                    try:
+                        mainline_step_info_fields[str(key)] = float(value)
+                    except Exception:
+                        continue
+                if not mainline_step_info_fields:
+                    mainline_step_info_fields = None
+        if include_full_step_info and mainline_step_info_fields is None:
+            info = _build_loader_step_info(
+                handle.loader,
+                entity_id=int(handle.agent_id),
+                mission_status=mission_status,
+                terminated=terminated,
+                truncated=truncated,
+                inst_now=handle.last_inst,
+                truth_now=handle.last_truth,
+            )
+        else:
+            info = build_step_info_minimal(
+                handle.loader,
+                mission_status=mission_status,
+                terminated=terminated,
+                truncated=truncated,
+            )
+            if include_full_step_info and mainline_step_info_fields is not None:
+                info.update(mainline_step_info_fields)
+        if mainline_result is not None:
+            termination_reason = str(mainline_result.get("termination_reason", "") or "")
+            if termination_reason:
+                info["termination_reason"] = termination_reason
+            reward_terms = mainline_result.get("reward_terms")
+            if isinstance(reward_terms, dict) and reward_terms:
+                info["reward_terms"] = {str(key): float(value) for key, value in reward_terms.items()}
+        if prepared is not None and handle.action_controller is not None:
+            obs, reward, info = handle.action_controller.finalize_step_result(obs, reward, info, prepared)
+        if is_air_combat_hybrid_action_mode(self.action_mode):
+            add_air_combat_event_action_info(info, handle.loader)
+        if post_launch_assessment_info:
+            info.update(post_launch_assessment_info)
+            reason_before = str(info.get("termination_reason", "") or "").strip().lower()
+            if reason_before in {"", "running"} and isinstance(
+                post_launch_assessment_info.get("post_launch_assessment_terminal_reason"), str
+            ):
+                info["termination_reason"] = str(
+                    post_launch_assessment_info["post_launch_assessment_terminal_reason"]
                 )
-            else:
-                info = build_step_info_minimal(
-                    handle.loader,
-                    mission_status=mission_status,
-                    terminated=terminated,
-                    truncated=truncated,
-                )
-                if include_full_step_info and mainline_step_info_fields is not None:
-                    info.update(mainline_step_info_fields)
-            if mainline_result is not None:
-                termination_reason = str(mainline_result.get("termination_reason", "") or "")
-                if termination_reason:
-                    info["termination_reason"] = termination_reason
-                reward_terms = mainline_result.get("reward_terms")
-                if isinstance(reward_terms, dict) and reward_terms:
-                    info["reward_terms"] = {str(key): float(value) for key, value in reward_terms.items()}
-            prepared = prepared_actions[env_idx]
-            if prepared is not None and handle.action_controller is not None:
-                obs, reward, info = handle.action_controller.finalize_step_result(obs, reward, info, prepared)
-            if is_air_combat_hybrid_action_mode(self.action_mode):
-                add_air_combat_event_action_info(info, handle.loader)
-            if post_launch_assessment_info:
-                info.update(post_launch_assessment_info)
-                reason_before = str(info.get("termination_reason", "") or "").strip().lower()
-                if reason_before in {"", "running"} and isinstance(
-                    post_launch_assessment_info.get("post_launch_assessment_terminal_reason"), str
-                ):
-                    info["termination_reason"] = str(
-                        post_launch_assessment_info["post_launch_assessment_terminal_reason"]
-                    )
-            if shadow_reports[env_idx] is not None:
-                info["execution_episode_controller_shadow_compare"] = shadow_reports[env_idx]
-            handle.episode_return += float(reward)
-            handle.episode_length += 1
-            done = bool(terminated or truncated)
-            any_done = any_done or done
-            self.buf_rews[env_idx] = float(reward)
-            self.buf_dones[env_idx] = done
-            info["TimeLimit.truncated"] = bool(truncated and not terminated)
+        if shadow_report is not None:
+            info["execution_episode_controller_shadow_compare"] = shadow_report
+        handle.episode_return += float(reward)
+        handle.episode_length += 1
+        done = bool(terminated or truncated)
+        self.buf_rews[env_idx] = float(reward)
+        self.buf_dones[env_idx] = done
+        info["TimeLimit.truncated"] = bool(truncated and not terminated)
 
-            if done:
-                info["episode"] = {
-                    "r": round(float(handle.episode_return), 6),
-                    "l": int(handle.episode_length),
-                    "t": round(time.time() - self._t_start, 6),
-                }
-                info["terminal_observation"] = _copy_obs(obs)
-                obs, self.reset_infos[env_idx] = self._reset_single_world(env_idx, seed=None)
-            self.buf_infos[env_idx] = info
-            self._save_obs(env_idx, obs)
-        reward_info_ms = (time.perf_counter() - reward_t0) * 1000.0 if self.collect_step_timing else 0.0
-        if any_done:
-            self._clear_policy_observation_device_cache()
-        self.last_execution_episode_controller_shadow_compare = list(shadow_reports)
+        if done:
+            info["episode"] = {
+                "r": round(float(handle.episode_return), 6),
+                "l": int(handle.episode_length),
+                "t": round(time.time() - self._t_start, 6),
+            }
+            info["terminal_observation"] = _copy_obs(obs)
+            obs, self.reset_infos[env_idx] = self._reset_single_world(env_idx, seed=None)
+        self.buf_infos[env_idx] = info
+        self._save_obs(env_idx, obs)
+        return done
 
+    def _step_wait_timing_snapshot(self, timing: dict[str, float], total_t0: float) -> None:
+        """Publish the per-stage timing snapshot into last_step_timing and the infos."""
         if self.collect_step_timing:
             autoreset_ms = 0.0
             for reset_info in self.reset_infos:
                 if isinstance(reset_info, dict):
-                    timing = reset_info.get("timing")
-                    if isinstance(timing, dict):
+                    reset_timing = reset_info.get("timing")
+                    if isinstance(reset_timing, dict):
                         try:
-                            autoreset_ms += float(timing.get("total_ms", 0.0))
+                            autoreset_ms += float(reset_timing.get("total_ms", 0.0))
                         except Exception:
                             pass
             self.last_step_timing = {
-                "action_prepare_ms": float(action_prepare_ms),
-                "batch_step_ms": float(batch_step_ms),
-                "state_read_ms": float(state_read_ms),
-                "behavior_update_ms": float(behavior_update_ms),
-                "command_sync_ms": float(command_sync_ms),
-                "obs_build_ms": float(obs_build_ms),
-                "flight_shaping_batch_ms": float(flight_shaping_batch_ms),
-                "reward_info_ms": float(reward_info_ms),
+                "action_prepare_ms": float(timing["action_prepare_ms"]),
+                "batch_step_ms": float(timing["batch_step_ms"]),
+                "state_read_ms": float(timing["state_read_ms"]),
+                "behavior_update_ms": float(timing["behavior_update_ms"]),
+                "command_sync_ms": float(timing["command_sync_ms"]),
+                "obs_build_ms": float(timing["obs_build_ms"]),
+                "flight_shaping_batch_ms": float(timing["flight_shaping_batch_ms"]),
+                "reward_info_ms": float(timing["reward_info_ms"]),
                 "autoreset_ms": float(autoreset_ms),
                 "total_ms": float((time.perf_counter() - total_t0) * 1000.0),
             }
@@ -1039,6 +1073,52 @@ class WorldBatchVecEnv(
         else:
             self.last_step_timing = {}
             self._execution_episode_controller_mainline_timing = {}
+
+    def step_wait(self) -> VecEnvStepReturn:
+        if self._actions is None:
+            raise RuntimeError("step_async() must be called before step_wait().")
+
+        self._clear_policy_observation_device_cache()
+        total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        timing: dict[str, float] = {}
+        # [stage:action_prepare]
+        (
+            assignments,
+            prepared_actions,
+            air_combat_truth_before,
+            naval_action_sync_indices,
+        ) = self._step_wait_prepare_actions(timing)
+        # [stage:physics_step]
+        self._step_wait_advance_worlds(assignments, naval_action_sync_indices, timing)
+        # [stage:state_read]
+        # [stage:behavior_update]
+        # [stage:command_sync]
+        self._step_wait_refresh_state_and_behavior(air_combat_truth_before, timing)
+        # [stage:observation_build]
+        # [stage:flight_shaping]
+        obs_batch = self._step_wait_build_observations(timing)
+
+        # [stage:reward_episode]
+        reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        shadow_reports, mainline_results = self._step_wait_run_episode_controllers(obs_batch, timing)
+        any_done = False
+        for env_idx in range(self.num_envs):
+            done = self._step_wait_finalize_env(
+                env_idx,
+                obs_batch[env_idx],
+                mainline_result=mainline_results[env_idx],
+                shadow_report=shadow_reports[env_idx],
+                prepared=prepared_actions[env_idx],
+            )
+            any_done = any_done or done
+        timing["reward_info_ms"] = (
+            (time.perf_counter() - reward_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
+        if any_done:
+            self._clear_policy_observation_device_cache()
+        self.last_execution_episode_controller_shadow_compare = list(shadow_reports)
+
+        self._step_wait_timing_snapshot(timing, total_t0)
 
         self._actions = None
         return self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones), deepcopy(self.buf_infos)
