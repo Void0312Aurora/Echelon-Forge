@@ -48,8 +48,21 @@ endfunction()
 #     cannot change codegen for the one-translation-unit-per-invocation command
 #     lines Ninja generates, so a /MP compile hits the same entry as the /MP-less
 #     one instead of being rejected.
-#   * The localised /showIncludes output is replayed verbatim on a cache hit, so
-#     Ninja's "deps = msvc" header scanner keeps seeing the same include list.
+#   * The /showIncludes stream is NOT replayed verbatim, and on a toolchain
+#     whose diagnostics are not ASCII that costs Ninja its header dependencies.
+#     Measured here (MSVC 14.44 with only 2052\clui.dll installed, so cl emits
+#     GBK and VSLANG cannot force English): cl writes the prefix as the bytes
+#     D7 A2 D2 E2 3A 20 B0 FC BA AC CE C4 BC FE, which is exactly what CMake
+#     detects and writes into rules.ninja, but sccache hands Ninja
+#     D7 A2 EF BF BD 3A 20 EF BF BD -- the non-UTF-8 bytes replaced by U+FFFD.
+#     Ninja compares bytes, so the prefix never matches: it echoes every
+#     /showIncludes line instead of consuming it and records "#deps 0" for the
+#     object. A minimal two-target Ninja experiment with an identical
+#     msvc_deps_prefix confirms the split -- the compiler alone records the
+#     header, the same compiler behind sccache records nothing.
+#     The consequence is that editing a header does not rebuild its dependents.
+#     Configure with -DEF_ENABLE_COMPILER_CACHE=OFF to trade the cache back for
+#     correct incremental builds until the cache stops transcoding the stream.
 # Separate-PDB configurations (/Zi, i.e. Debug and RelWithDebInfo) stay correct
 # as well: when several translation units share one /Fd target PDB, sccache
 # classifies the compiles it cannot replay safely as non-cacheable and runs the
