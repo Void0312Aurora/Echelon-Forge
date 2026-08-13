@@ -42,7 +42,6 @@ RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
 RUNTIME_FACADE_SOURCE_FILES = (
   RUNTIME_FACADE / "runtime_facade_world_setup.cpp",
-  RUNTIME_FACADE / "runtime_facade_counterfactual.cpp",
   RUNTIME_FACADE / "runtime_facade_config.cpp",
   RUNTIME_FACADE / "runtime_facade_query.cpp",
   RUNTIME_FACADE / "runtime_facade_command_api.cpp",

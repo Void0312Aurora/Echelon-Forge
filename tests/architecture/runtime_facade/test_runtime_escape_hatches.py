@@ -65,7 +65,6 @@ def test_runtime_facade_escape_hatch_allowlist_stays_explicit() -> None:
   for path in [
     WORLD_BATCH_ADAPTER,
     REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade_core.py",
-    REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade_counterfactual.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_export.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_live_engagement_event_capture.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_evidence_gates.py",
@@ -428,9 +427,13 @@ def test_wp22_world_batch_runtime_routes_setup_orchestration_through_named_helpe
 
   assert '#include "core/engine/world_batch_setup_helper.h"' in impl
   assert "world_batch_setup::apply_world_setup(" in impl
-  assert "world_batch_setup::apply_terrain_assignments(" in impl
-  assert "world_batch_setup::apply_wind_assignments(" in impl
-  assert "world_batch_setup::append_zones(" in impl
+  # 2026-08-13 dead-binding sweep: the standalone set_terrain_types_batch /
+  # set_winds_batch / set_suns_batch / add_zones_batch entry points were removed
+  # (zero python consumers), so the named-helper routing fact now lives in the
+  # apply_world_setup orchestration chain inside the helper header itself.
+  assert "apply_setup_wind_assignments(world, wind_assignments, wind_grouped_indices);" in helper
+  assert "apply_setup_sun_assignments(world, sun_assignments, sun_grouped_indices);" in helper
+  assert "replace_zones(world, zones, zone_grouped_indices);" in helper
   assert "inline void apply_setup_terrain_assignments(" in helper
   assert "world.set_terrain_type(WorldTerrainAssignment{}.terrain_type);" in helper
   assert "apply_setup_terrain_assignments(world, terrain_assignments, terrain_grouped_indices);" in helper

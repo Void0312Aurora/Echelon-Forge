@@ -185,40 +185,10 @@ EXPECTED_REGISTRATIONS = {
     f"{_BUILDER_DIR}/runtime_fidelity_admission_builder.py",
     11,
   ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_counterfactual_snapshot_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_counterfactual_snapshot.inc",
-    f"{_BUILDER_DIR}/runtime_counterfactual_snapshot_builder.py",
-    21,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_worldline_comparison_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_worldline_comparison.inc",
-    f"{_BUILDER_DIR}/runtime_worldline_comparison_builder.py",
-    13,
-  ),
   "tools/maintenance/dto_schema/schemas/runtime/resident_device_output_descriptor_fields.py": (
     "src/runtime/facade/detail/runtime/resident_device_output_descriptor.inc",
     f"{_BUILDER_DIR}/resident_device_output_descriptor_builder.py",
     8,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_experiment_ancestry_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_experiment_ancestry.inc",
-    f"{_BUILDER_DIR}/runtime_experiment_ancestry_builder.py",
-    16,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_experiment_result_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_experiment_result.inc",
-    f"{_BUILDER_DIR}/runtime_experiment_result_builder.py",
-    11,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_experiment_step_request_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_experiment_step_request.inc",
-    f"{_BUILDER_DIR}/runtime_experiment_step_request_builder.py",
-    6,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_experiment_request_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_experiment_request.inc",
-    f"{_BUILDER_DIR}/runtime_experiment_request_builder.py",
-    21,
   ),
   "tools/maintenance/dto_schema/schemas/window/runtime_window_input_record_fields.py": (
     "src/runtime/facade/detail/window/runtime_window_input_record.inc",
@@ -334,26 +304,6 @@ EXPECTED_REGISTRATIONS = {
     "src/runtime/facade/detail/runtime/runtime_world_layout_result.inc",
     f"{_BUILDER_DIR}/runtime_world_layout_result_builder.py",
     2,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_counterfactual_branch_request_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_counterfactual_branch_request.inc",
-    f"{_BUILDER_DIR}/runtime_counterfactual_branch_request_builder.py",
-    19,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_counterfactual_restore_request_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_counterfactual_restore_request.inc",
-    f"{_BUILDER_DIR}/runtime_counterfactual_restore_request_builder.py",
-    11,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_counterfactual_restore_result_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_counterfactual_restore_result.inc",
-    f"{_BUILDER_DIR}/runtime_counterfactual_restore_result_builder.py",
-    4,
-  ),
-  "tools/maintenance/dto_schema/schemas/runtime/runtime_counterfactual_branch_result_fields.py": (
-    "src/runtime/facade/detail/runtime/runtime_counterfactual_branch_result.inc",
-    f"{_BUILDER_DIR}/runtime_counterfactual_branch_result_builder.py",
-    8,
   ),
   "tools/maintenance/dto_schema/schemas/engagement/engagement_entity_ref_fields.py": (
     "src/runtime/contracts/detail/engagement/engagement_entity_ref.inc",

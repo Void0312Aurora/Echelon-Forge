@@ -72,7 +72,6 @@ _RUNTIME_FIDELITY_PROVIDER_FAMILY_EXPECTATIONS = {
 
 _RUNTIME_FACADE_SOURCE_PARTS = (
   ("src", "runtime", "facade", "runtime_facade_world_setup.cpp"),
-  ("src", "runtime", "facade", "runtime_facade_counterfactual.cpp"),
   ("src", "runtime", "facade", "runtime_facade_config.cpp"),
   ("src", "runtime", "facade", "runtime_facade_query.cpp"),
   ("src", "runtime", "facade", "runtime_facade_command_api.cpp"),
@@ -196,49 +195,10 @@ def _build_route_request(entity_id: int) -> ef_py.WorldExecutionEpisodeStepReque
   return request
 
 
-def _build_single_aircraft_setup(seed: int = 123) -> ef_py.BatchWorldSetupRequest:
-  setup_request = ef_py.BatchWorldSetupRequest()
-  setup_request.seeds = [int(seed)]
-  terrain = _default_world_terrain_assignment()
-  wind = ef_py.WorldWindAssignment()
-  wind.world_index = 0
-  spawn = ef_py.WorldSpawnRequest()
-  spawn.world_index = 0
-  spawn.side = ef_py.Side.Blue
-  spawn.type_name = "Aircraft"
-  spawn.entity_name = "CounterfactualLead"
-  spawn.is_agent = True
-  spawn.x = -1400.0
-  spawn.y = 0.0
-  spawn.z = 1200.0
-  spawn.heading = 90.0
-  spawn.vy = 180.0
-  setup_request.terrain_assignments = [terrain]
-  setup_request.wind_assignments = [wind]
-  setup_request.spawn_requests = [spawn]
-  setup_request.time_steps = [0.05]
-  return setup_request
-
-
 def _default_world_terrain_assignment() -> ef_py.WorldTerrainAssignment:
   terrain = ef_py.WorldTerrainAssignment()
   terrain.world_index = 0
   return terrain
-
-
-def _build_reference_fidelity_request() -> ef_py.RuntimeFidelityRequest:
-  request = ef_py.RuntimeFidelityRequest()
-  request.request_label = "exact_evaluation"
-  request.backend_profile_id = "cpu_exact.reference"
-  request.parity_budget_ref = "parity_budget.cpu_exact.reference.v1"
-  request.provider_family = "reference_cpu"
-  request.model_family_scope = ["P0-P10 semantic lifecycle", "counterfactual_selected_slice"]
-  request.validation_gate = "WP17-F selected counterfactual runtime slice"
-  request.facade_evidence_refs = [
-    "RuntimeFacade.admit_fidelity_request",
-    "RuntimeFacade.run_counterfactual_branch",
-  ]
-  return request
 
 
 def _make_typed_platform_spawn_request(
@@ -325,35 +285,26 @@ def _make_maintained_typed_platform_spawn_request(
   return request
 
 
-def _build_counterfactual_branch_request() -> ef_py.RuntimeCounterfactualBranchRequest:
-  request = ef_py.RuntimeCounterfactualBranchRequest()
-  request.baseline_setup = _build_single_aircraft_setup()
-  request.entity_ref = _entity_ref(0, 0)
-  request.fidelity_request = _build_reference_fidelity_request()
-  request.deterministic_seed = 123
-  request.replay_envelope_id = "replay:wp17f:0001"
-  request.branch_point_id = "branch_point:wp17f:0001"
-  request.parent_worldline_id = "worldline:wp17f:baseline"
-  request.branch_worldline_id = "worldline:wp17f:branch"
-  request.restore_barrier_id = "counterfactual_selected_slice"
-  request.mutation_dx = 25.0
-  request.mutation_dvy = 5.0
-  request.mutation_dheading = 15.0
-  request.evidence_refs = ["cadence:wp17c:selected_slice"]
-  return request
-
-
 def _repo_text(*parts: str) -> str:
   if parts == ("src", "runtime", "facade", "runtime_facade.cpp"):
     return "\n".join(
       Path(resolve_repo_path(*source_parts)).read_text(encoding="utf-8")
       for source_parts in _RUNTIME_FACADE_SOURCE_PARTS
     )
+  if parts == ("src", "interfaces", "python", "bindings_runtime.cpp"):
+    # The runtime binding surface is split across per-domain translation
+    # units orchestrated by bindings_runtime.cpp; guards that assert on the
+    # binding surface read the aggregate, mirroring the facade-source
+    # aggregation above.
+    binding_dir = Path(resolve_repo_path("src", "interfaces", "python"))
+    aggregated = "\n".join(
+      source.read_text(encoding="utf-8")
+      for source in sorted(binding_dir.glob("bindings_runtime*.cpp"))
+    )
+    return expand_binding_field_incs(aggregated)
   text = Path(resolve_repo_path(*parts)).read_text(encoding="utf-8")
   if parts == ("src", "runtime", "facade", "runtime_facade_types.h"):
     return expand_header_field_incs(text)
-  if parts == ("src", "interfaces", "python", "bindings_runtime.cpp"):
-    return expand_binding_field_incs(text)
   return text
 
 
@@ -780,76 +731,6 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
 
     for value in _RUNTIME_CAPABILITY_METADATA_EXPECTATIONS.values():
       self.assertIn(value, facade_source)
-
-  def test_runtime_facade_counterfactual_branch_reports_selected_slice_delta(self) -> None:
-    facade = ef_py.RuntimeFacade(1)
-    request = _build_counterfactual_branch_request()
-
-    result = facade.run_counterfactual_branch(request)
-
-    self.assertTrue(bool(result.admitted))
-    self.assertEqual(result.rejection_reason, "")
-    self.assertTrue(bool(result.fidelity_admission.admitted))
-    self.assertEqual(result.fidelity_admission.selected_provider_family, "reference_cpu")
-    self.assertEqual(result.fidelity_admission.selected_stage_node_id, "observation_export.v1")
-    self.assertEqual(result.parent_snapshot.worldline_id, request.parent_worldline_id)
-    self.assertEqual(result.parent_snapshot.parent_worldline_id, request.parent_worldline_id)
-    self.assertEqual(result.parent_snapshot.deterministic_seed, request.deterministic_seed)
-    self.assertEqual(result.branch_snapshot.worldline_id, request.branch_worldline_id)
-    self.assertEqual(result.branch_snapshot.parent_worldline_id, request.parent_worldline_id)
-    self.assertEqual(result.parent_snapshot.barrier_id, "counterfactual_selected_slice")
-    self.assertEqual(result.branch_snapshot.barrier_id, "counterfactual_selected_slice")
-    self.assertEqual(result.parent_snapshot.cadence_reason, request.cadence_reason)
-    self.assertEqual(result.branch_snapshot.provider_family, "reference_cpu")
-    self.assertTrue(bool(result.comparison.comparable))
-    self.assertEqual(result.comparison.parent_worldline_id, request.parent_worldline_id)
-    self.assertEqual(result.comparison.branch_worldline_id, request.branch_worldline_id)
-    self.assertAlmostEqual(float(result.comparison.dx), 25.0, places=6)
-    self.assertAlmostEqual(float(result.comparison.dvy), 5.0, places=6)
-    self.assertAlmostEqual(float(result.comparison.dheading), 15.0, places=6)
-    self.assertTrue(bool(result.restore_result.restored))
-    self.assertEqual(result.restore_result.rejection_reason, "")
-    self.assertEqual(
-      result.restore_result.restored_snapshot.worldline_id,
-      request.branch_worldline_id,
-    )
-    self.assertEqual(
-      result.restore_result.restored_snapshot.parent_worldline_id,
-      request.parent_worldline_id,
-    )
-    self.assertEqual(
-      int(result.restore_result.restored_snapshot.entity_id),
-      int(result.branch_snapshot.entity_id),
-    )
-    self.assertIn("RuntimeFacade.run_counterfactual_branch", list(result.evidence_refs))
-    self.assertIn("branch_point_id=branch_point:wp17f:0001", list(result.comparison.evidence_refs))
-
-  def test_runtime_facade_counterfactual_branch_rejects_raw_authoritative_mutation(self) -> None:
-    facade = ef_py.RuntimeFacade(1)
-    request = _build_counterfactual_branch_request()
-    request.allow_raw_authoritative_state_mutation = True
-
-    result = facade.run_counterfactual_branch(request)
-
-    self.assertFalse(bool(result.admitted))
-    self.assertEqual(
-      result.rejection_reason,
-      "counterfactual_raw_authoritative_state_mutation_forbidden",
-    )
-
-  def test_runtime_facade_counterfactual_snapshot_rejects_missing_entity(self) -> None:
-    facade = ef_py.RuntimeFacade(1)
-    admission = facade.admit_fidelity_request(_build_reference_fidelity_request())
-
-    with self.assertRaisesRegex(RuntimeError, "counterfactual_entity_missing_transform_or_velocity"):
-      facade.snapshot_counterfactual_entity(
-        _entity_ref(0, 999999),
-        admission,
-        "test:missing-entity",
-        ["test:counterfactual-snapshot"],
-      )
-
-
 
 if __name__ == "__main__":
   unittest.main()

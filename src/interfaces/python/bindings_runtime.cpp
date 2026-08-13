@@ -17,7 +17,6 @@ void bind_runtime(nb::module_ &m) {
     bind_runtime_batch_packet(m);
     bind_runtime_tasking(m);
     bind_runtime_window(m);
-    bind_runtime_counterfactual(m);
     bind_runtime_platform_world(m);
     bind_runtime_tasking_world(m);
     bind_runtime_engine(m);

@@ -131,7 +131,6 @@ ECHELON_FAMILY_HEADERS: tuple[str, ...] = (
 ACTION_INTERFACE_FAMILY_HEADERS: tuple[str, ...] = (
     "src/runtime/contracts/policy_contracts.h",
     "src/runtime/contracts/information_transform_contracts.h",
-    "src/runtime/contracts/counterfactual_replay_contract_types.h",
 )
 COMPILED_ECHELON_TYPE_TOKENS: tuple[str, ...] = (
     "CommandRelationship",
@@ -250,8 +249,7 @@ def test_action_interface_family_header_names_no_echelon_type(rel_path: str) -> 
 
 def test_word_boundary_does_not_flag_agent_authority_scope_as_echelon() -> None:
     # Regression pin for the discriminator itself: the echelon token
-    # ``AuthorityScope`` must not fire inside ``AgentAuthorityScope`` (this is
-    # what lets counterfactual_replay_contract_types.h line 96 stay green).
+    # ``AuthorityScope`` must not fire inside ``AgentAuthorityScope``.
     assert _count_token_occurrences("AgentAuthorityScope authority_scope{};", "AuthorityScope") == 0
     assert _count_token_occurrences("AuthorityScope scope;", "AuthorityScope") == 1
 

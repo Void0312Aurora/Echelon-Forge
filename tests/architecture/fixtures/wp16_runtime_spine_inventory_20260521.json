@@ -120,8 +120,8 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Implementation contains the maintained export chain, but still mixes it with broad compatibility helpers and diagnostics shaping.",
       "evidence_markers": [
-  "RuntimeWindowResult RuntimeFacade::run_window",
-  "RuntimeWindowResult result = execute_runtime_window(",
+        "RuntimeWindowResult RuntimeFacade::run_window",
+        "RuntimeWindowResult result = execute_runtime_window(",
         "kObservationExportNodeId",
         "diagnostics_trace_surface_not_maintained_decision_path"
       ]
@@ -326,19 +326,6 @@
         "replay_envelope_ref",
         "branch_point_ref",
         "authoritative_state_mutation_allowed: bool = False"
-      ]
-    },
-    {
-      "path": "src/runtime/contracts/counterfactual_replay_contracts.h",
-      "classification": "blocked",
-      "owner": "WP16-C",
-      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Counterfactual admission is still metadata-only and explicitly restore-unsupported, so it cannot yet claim maintained runtime-spine execution.",
-      "evidence_markers": [
-        "snapshot_restore_supported = false",
-        "validate_replay_envelope_for_snapshot_restore(",
-        "validate_worldline_branch_metadata_for_snapshot_restore(",
-        "ScenarioGenerationArtifactMetadata"
       ]
     },
     {

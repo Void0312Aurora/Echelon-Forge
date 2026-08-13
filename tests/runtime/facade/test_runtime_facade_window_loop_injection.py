@@ -16,7 +16,6 @@ from tests.architecture.helpers import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 RUNTIME_FACADE_SOURCE_FILES = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
@@ -89,9 +88,9 @@ def test_runtime_facade_exposes_window_loop_api() -> None:
     source,
     "RuntimeWindowResult RuntimeFacade::run_window",
   )
-  # The window result is stored before identity-ledger shaping since the
-  # registry-pruning refactor; the loop is still driven by the coordinator.
-  assert "RuntimeWindowResult result = execute_runtime_window(" in body
+  # Since the maintained-evidence seam retirement run_window returns the
+  # coordinator result directly; the loop is still driven by the coordinator.
+  assert "return execute_runtime_window(" in body
   assert "set_pilot_actions_batch(assignments)" in body
   assert "set_mission_commands_maintained_batch(assignments)" in body
   assert "set_mission_commands_batch(assignments)" not in body

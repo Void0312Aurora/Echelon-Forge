@@ -8,7 +8,6 @@
 #include <spdlog/spdlog.h>
 
 #include "core/engine/world_batch_runtime.h"
-#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 #include "runtime/contracts/platform_capability_contracts.h"

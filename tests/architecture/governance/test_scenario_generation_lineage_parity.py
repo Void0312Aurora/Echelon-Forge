@@ -1,24 +1,16 @@
-"""Cross-language parity gate for the scenario-generation lineage vocabulary.
+"""Parity gate for the scenario-generation lineage vocabulary.
 
 The shared schema owner (T10 census VA-6) lives in
 tools/maintenance/dto_schema/schemas/scenario/scenario_generation_request_metadata_fields.py
-and .../scenario_generation_evidence_ref_fields.py. This gate holds both
-language faces to that owner:
+and .../scenario_generation_evidence_ref_fields.py. The former C++ face
+(src/runtime/contracts/counterfactual_replay_contract_types.h) was retired
+with the maintained-evidence/counterfactual producers, so this gate now holds
+the remaining consumers to that owner:
 
-- C++ face: the header
-  src/runtime/contracts/counterfactual_replay_contract_types.h now includes
-  the generated .inc fragments at the structs' original seams (the
-  mechanical include swap deferred from the initial slice landed this
-  iteration), so the compiled member list IS the generated rendering. The
-  gate therefore no longer parses hand-written member declarations
-  (ADJUDICATED: a hand-written-member parser would only re-verify text the
-  generator owns). Instead it verifies (a) SEAM ADOPTION — each struct body
-  is exactly the field macro definition plus the ``#include`` of the
-  schema's registered output, so no hand-written member can bypass the
-  schema owner — and (b) SCHEMA==INC — the checked-in .inc field list
-  equals the schema (name, type, default, and field ORDER — order is ABI),
-  so this gate stays meaningful in isolation. Byte-exact freshness of the
-  .inc AND the generated Python builder against the schema
+- Checked-in .inc renderings: the SCHEMA==INC gate verifies the checked-in
+  .inc field list equals the schema (name, type, default, and field ORDER —
+  order is ABI), so this gate stays meaningful in isolation. Byte-exact
+  freshness of the .inc AND the generated Python builder against the schema
   (generated-source-of-truth == .inc == Python builder) is owned by
   tests/architecture/governance/test_dto_schema_freshness.py via
   ``generate.py --check``.
@@ -84,16 +76,6 @@ def _request_metadata_schema():
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CONTRACT_TYPES_HEADER = (
-  REPO_ROOT / "src" / "runtime" / "contracts" / "counterfactual_replay_contract_types.h"
-)
-CONTRACT_CONSTANTS_HEADER = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_constants.h"
-)
 
 # Held verdict (see the schema module docstring): the C++ presence flag has
 # no Python counterpart; the Python face requires deterministic_seed
@@ -105,7 +87,7 @@ def _cpp_struct_body_lines(header_text: str, struct_name: str) -> list[str]:
   match = re.search(
     rf"struct {struct_name} \{{\n(.*?)\n\}};", header_text, re.DOTALL
   )
-  assert match is not None, f"struct {struct_name} not found in {CONTRACT_TYPES_HEADER}"
+  assert match is not None, f"struct {struct_name} not found in header text"
   physical_lines = [line.strip() for line in match.group(1).splitlines()]
   logical_lines: list[str] = []
   continuation = ""
@@ -134,26 +116,6 @@ def _schema_field_macro(schema) -> str:
   return next(iter(groups))
 
 
-def _assert_cpp_seam_adopts_generated_include(struct_name: str, schema) -> None:
-  """The struct body must be exactly the field-macro define + .inc include.
-
-  With the generated include at the original seam, the compiled member list
-  is the schema's rendering by construction; any hand-written member added
-  next to the include would break this exact-logical-body check. Preprocessor
-  continuation and whitespace are normalized so clang-format does not turn
-  a physical-line change into a false governance failure. A blank line after
-  a continuation fails closed because it terminates a C++ macro definition.
-  """
-  header_text = CONTRACT_TYPES_HEADER.read_text(encoding="utf-8")
-  macro = _schema_field_macro(schema)
-  assert schema.output_path.startswith("src/")
-  include_path = schema.output_path[len("src/"):]
-  assert _cpp_struct_body_lines(header_text, struct_name) == [
-    f"#define {macro}(type, name, default_value) type name = default_value;",
-    f'#include "{include_path}"',
-  ]
-
-
 def _parsed_inc_members(schema) -> list[tuple[str, str, str]]:
   from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
 
@@ -161,15 +123,6 @@ def _parsed_inc_members(schema) -> list[tuple[str, str, str]]:
   inc_text = inc_path.read_text(encoding="utf-8")
   parsed = parse_xmacro_text(inc_text, frozenset({_schema_field_macro(schema)}))
   return [(field.cpp_type, field.name, field.default) for field in parsed.fields]
-
-
-def test_cpp_seams_adopt_generated_includes() -> None:
-  _assert_cpp_seam_adopts_generated_include(
-    "ScenarioGenerationEvidenceMetadataRef", _evidence_ref_schema()
-  )
-  _assert_cpp_seam_adopts_generated_include(
-    "ScenarioGenerationRequestMetadata", _request_metadata_schema()
-  )
 
 
 def test_cpp_seam_parser_rejects_blank_macro_continuation() -> None:
@@ -203,26 +156,6 @@ def test_checked_in_incs_match_schema_names_types_defaults_and_order() -> None:
   assert _parsed_inc_members(evidence_ref_schema) == _schema_members(evidence_ref_schema)
   assert _parsed_inc_members(request_metadata_schema) == _schema_members(
     request_metadata_schema
-  )
-
-
-def test_contract_version_constant_value_parity() -> None:
-  face = _generation_request_face()
-  constants_text = CONTRACT_CONSTANTS_HEADER.read_text(encoding="utf-8")
-  match = re.search(
-    r'kScenarioGenerationContractVersionRequestV1\s*=\s*"([^"]+)"',
-    constants_text,
-  )
-  assert match is not None
-  assert match.group(1) == face.SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION
-  # The schema's C++ default expression names exactly that constant.
-  contract_field = next(
-    field
-    for field in _request_metadata_schema().fields
-    if field.name == "contract_version"
-  )
-  assert contract_field.default == (
-    "std::string(kScenarioGenerationContractVersionRequestV1)"
   )
 
 

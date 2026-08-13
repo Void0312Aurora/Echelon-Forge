@@ -21,7 +21,6 @@ RUNTIME_FACADE_HEADER = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_faca
 RUNTIME_FACADE_SOURCE = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp"
 RUNTIME_FACADE_SOURCE_FILES = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
@@ -335,7 +334,7 @@ def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_with
     facade_source.index(
       "materialize_type_name_projection_typed_platform_spawn_request("
     ):
-    facade_source.index("single_world_counterfactual_setup(")
+    facade_source.index("fidelity_contract_request_from_facade(")
   ]
 
   assert "validate_maintained_typed_platform_spawn_request" in apply_world_setup_block

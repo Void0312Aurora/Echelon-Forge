@@ -15,7 +15,6 @@ import ef_py # noqa: E402
 
 _RUNTIME_FACADE_SOURCE_PARTS = (
   ("src", "runtime", "facade", "runtime_facade_world_setup.cpp"),
-  ("src", "runtime", "facade", "runtime_facade_counterfactual.cpp"),
   ("src", "runtime", "facade", "runtime_facade_config.cpp"),
   ("src", "runtime", "facade", "runtime_facade_query.cpp"),
   ("src", "runtime", "facade", "runtime_facade_command_api.cpp"),

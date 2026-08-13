@@ -8,7 +8,6 @@
 #include <spdlog/spdlog.h>
 
 #include "core/engine/world_batch_runtime.h"
-#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 #include "runtime/contracts/platform_capability_contracts.h"
@@ -16,20 +15,6 @@
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime_window(nb::module_ &m) {
-    nb::class_<RuntimeExperimentAncestry> runtime_experiment_ancestry_class(
-        m, "RuntimeExperimentAncestry");
-    runtime_experiment_ancestry_class.def(nb::init<>());
-#define EF_RUNTIME_EXPERIMENT_ANCESTRY_FIELD(type, name, default_value)                            \
-    runtime_experiment_ancestry_class.def_rw(#name, &RuntimeExperimentAncestry::name);
-#include "runtime/facade/detail/runtime/runtime_experiment_ancestry.inc"
-
-    nb::class_<RuntimeExperimentResult> runtime_experiment_result_class(m,
-                                                                        "RuntimeExperimentResult");
-    runtime_experiment_result_class.def(nb::init<>());
-#define EF_RUNTIME_EXPERIMENT_RESULT_FIELD(type, name, default_value)                              \
-    runtime_experiment_result_class.def_rw(#name, &RuntimeExperimentResult::name);
-#include "runtime/facade/detail/runtime/runtime_experiment_result.inc"
-
     // Schema-ownership note: RuntimeWindowActionRequest is not schema-generated. Its
     // header field list (runtime_facade_types.h) is ABI-ordered as
     // action_intent, source_layer, input_snapshot_version,

@@ -21,7 +21,6 @@ void bind_runtime_learning(nb::module_ &m);
 void bind_runtime_batch_packet(nb::module_ &m);
 void bind_runtime_tasking(nb::module_ &m);
 void bind_runtime_window(nb::module_ &m);
-void bind_runtime_counterfactual(nb::module_ &m);
 void bind_runtime_platform_world(nb::module_ &m);
 void bind_runtime_tasking_world(nb::module_ &m);
 void bind_runtime_engine(nb::module_ &m);

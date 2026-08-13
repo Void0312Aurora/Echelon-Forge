@@ -25,7 +25,6 @@ RUNTIME_FACADE_SOURCE = (
 )
 RUNTIME_FACADE_SOURCE_FILES = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",

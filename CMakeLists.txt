@@ -170,7 +170,6 @@ set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/internal/flecs_cpu_backend.cpp
     src/runtime/facade/runtime_facade.cpp
     src/runtime/facade/runtime_facade_config.cpp
-    src/runtime/facade/runtime_facade_counterfactual.cpp
     src/runtime/facade/runtime_facade_world_setup.cpp
     src/runtime/facade/runtime_facade_query.cpp
     src/runtime/facade/runtime_facade_command_api.cpp
@@ -356,7 +355,6 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_runtime_batch_packet.cpp
     src/interfaces/python/bindings_runtime_tasking.cpp
     src/interfaces/python/bindings_runtime_window.cpp
-    src/interfaces/python/bindings_runtime_counterfactual.cpp
     src/interfaces/python/bindings_runtime_platform_world.cpp
     src/interfaces/python/bindings_runtime_tasking_world.cpp
     src/interfaces/python/bindings_runtime_engine.cpp
@@ -572,8 +570,6 @@ set(EF_TEST_SOURCES
     src/tests/test_cuda_resident_replay_support.cpp
     src/tests/test_cuda_resident_performance.cpp
     src/tests/test_world_batch_runtime.cpp
-    src/tests/test_runtime_facade_evidence_allocators.cpp
-    src/tests/test_runtime_facade_maintained_replay_envelope.cpp
     src/tests/test_default_effects_model.cpp
 )
 

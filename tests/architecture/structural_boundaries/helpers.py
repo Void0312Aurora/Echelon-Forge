@@ -6,62 +6,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CMAKE_LISTS = REPO_ROOT / "CMakeLists.txt"
-COUNTERFACTUAL_HEADER = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contracts.h"
-)
-COUNTERFACTUAL_CONSTANTS = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_constants.h"
-)
-COUNTERFACTUAL_TYPES = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_types.h"
-)
-COUNTERFACTUAL_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_contract_validation.h"
-)
-COUNTERFACTUAL_VALIDATION_HELPERS = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_validation_helpers.h"
-)
-COUNTERFACTUAL_REPLAY_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_replay_validation.h"
-)
-COUNTERFACTUAL_COUNTERFACTUAL_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_counterfactual_validation.h"
-)
-COUNTERFACTUAL_EXPERIMENT_VALIDATION = (
-  REPO_ROOT
-  / "src"
-  / "runtime"
-  / "contracts"
-  / "counterfactual_replay_experiment_validation.h"
-)
 WINDOW_COORDINATOR = (
   REPO_ROOT
   / "src"
@@ -389,15 +333,6 @@ DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS = (
   '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"',
   '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.h"',
 )
-COUNTERFACTUAL_CONSTANT_ALLOWLIST = {
-  "kReplayRestoreSupportBoundaryUnsupported",
-  "kWorldlineBranchSupportStateMetadataOnly",
-  "kCounterfactualRequestRejectionRestoreUnsupportedBoundary",
-  "kScenarioGenerationArtifactKindRequestMetadata",
-  "kCounterfactualAdmissionStateAdmitted",
-  "kExperimentProfileClaimScopeDescriptive",
-}
-
 WINDOW_COORDINATOR_MAIN_MARKERS = {
   "classify_runtime_window_inputs(",
   "execute_runtime_window(",
@@ -492,7 +427,6 @@ AIR_CONTROL_RESOLUTION = (
   / "control_input_resolution.h"
 )
 
-COUNTERFACTUAL_CLOSURE_BLOCKING_MAX_LINES = 1500
 WINDOW_COORDINATOR_CLOSURE_BLOCKING_MAX_LINES = 1000
 INLINE_REGISTERED_SYSTEM_PATTERN = re.compile(
   r'ecs\.system<[^>]+>\("([^"]+)"\)\s*\n\s*\.kind\(flecs::(OnUpdate|PreUpdate)\)'

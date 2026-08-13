@@ -148,15 +148,6 @@ RuntimeFacade::export_execution_episode_states(const std::vector<WorldEntityRef>
         .execution_episode_states;
 }
 
-std::vector<ExecutionEpisodeRuntimeProducts> RuntimeFacade::evaluate_execution_batch(
-    const std::vector<WorldExecutionEpisodeStepRequest> &requests) const {
-    return runtime_
-        ->evaluate(runtime::backend::EvaluationRequest{
-            .execution_episode_requests = requests,
-        })
-        .execution_episode_products;
-}
-
 std::vector<ExecutionEpisodeRuntimeProducts> RuntimeFacade::step_execution_products_batch(
     const std::vector<WorldExecutionEpisodeStepRequest> &requests) {
     return runtime_
