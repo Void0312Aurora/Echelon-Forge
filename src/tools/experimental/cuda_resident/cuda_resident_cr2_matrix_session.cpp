@@ -152,10 +152,7 @@ WindowTiming ProbeSession::run_window(const Mode &mode) {
 #endif
     const auto begin = Clock::now();
     impl_->backend.inject({.pilot_actions = impl_->assignments});
-    const auto evaluation = impl_->backend.evaluate({});
-    if (!evaluation.execution_episode_products.empty()) {
-        throw std::runtime_error("CR2 matrix empty evaluation produced output");
-    }
+    (void)impl_->backend.evaluate({});
     impl_->backend.advance({.kind = runtime::backend::AdvanceKind::WorldBatch});
     const auto advanced = Clock::now();
     if (mode.host_export) {

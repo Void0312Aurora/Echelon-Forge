@@ -1,22 +1,23 @@
 # `src/core/mission/episode` 边界
 
-`mission/episode` 负责 execution episode 的状态、批量输入准备和 controller 编排。它把 scenario/env state 转换为 `mission/runtime` 输入，并把运行时产物应用回 episode state。
+`mission/episode` 负责 execution episode 状态 DTO、批量输入准备和 reward breakdown 序列化。有状态 step 编排保留在维护中的 Python 主路径；本目录不再拥有第二套 episode controller。
 
 ## 允许
 
 - `ExecutionEpisodeState` 的导入/导出和状态字段演进。
 - `StepEvaluationBatchConfig`、`StepEvaluationBatchEnvState` 与 batch prepare contract。
-- `ExecutionEpisodeController` 的 prepare、evaluate、step 协调逻辑。
+- 面向 `ExecutionEpisodeRuntimeProducts` 的稳定 reward breakdown 序列化。
 
 ## 禁止
 
 - 直接实现 reward/objective/termination 数值公式；这些应位于 `mission/runtime`。
 - Python/nanobind 绑定和 facade 适配。
-- 将 controller 内部 JSON codec、transition 和 breakdown 辅助逻辑暴露为跨层公共 API。
+- 引入并行的有状态 episode stepping owner 或 mission-command transition codec。
+- 将 breakdown 实现辅助逻辑暴露为跨层公共 API。
 
 ## 子目录
 
-- `detail/`：controller 私有辅助逻辑。外部代码一般不应 include 这里的头。
+- `detail/`：reward breakdown 私有实现。外部代码应 include episode 公共头。
 
 ## 依赖方向
 

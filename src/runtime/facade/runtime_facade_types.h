@@ -8,7 +8,6 @@
 
 #include "components/physics/instruments.h"
 #include "core/interfaces/observation.h"
-#include "core/mission/episode/execution_episode_controller.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/policy_contracts.h"
 #include "runtime/contracts/runtime_dto_contracts.h"
@@ -97,11 +96,6 @@ struct EngagementBatchRequest {
 #include "runtime/facade/detail/batch/engagement_batch_request.inc"
 };
 
-struct ExecutionBatchStepRequest {
-#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value) type name = default_value;
-#include "runtime/facade/detail/batch/execution_batch_step_request.inc"
-};
-
 struct DeviceResidentOutputDescriptor {
 #define EF_RESIDENT_DEVICE_OUTPUT_DESCRIPTOR_FIELD(type, name, default_value)                      \
     type name = default_value;
@@ -121,24 +115,6 @@ struct EngagementEventPacket {
 struct TaskingBatchPacket {
 #define EF_TASKING_BATCH_PACKET_FIELD(type, name, default_value) type name = default_value;
 #include "runtime/facade/detail/batch/tasking_batch_packet.inc"
-};
-
-struct ExecutionBatchStepResult {
-    std::vector<ExecutionEpisodeControllerStepResult> step_results;
-    std::vector<ExecutionEpisodeState> execution_episode_states;
-    std::vector<double> rewards;
-    std::vector<bool> terminated;
-    std::vector<bool> truncated;
-    std::vector<std::array<double, 4>> status_vectors;
-    std::vector<std::string> termination_reasons;
-    std::vector<TerminationSpec> termination_specs;
-    std::vector<std::string> reward_breakdown_jsons;
-    std::vector<RewardReport> reward_reports;
-    std::vector<StepInfoProducts> step_infos;
-    std::vector<bool> step_info_valid_flags;
-    std::vector<bool> controller_state_changed_flags;
-    ObservationBatchPacket observation_packet;
-    TaskingBatchPacket tasking_packet;
 };
 
 struct RuntimeWindowActionRequest {

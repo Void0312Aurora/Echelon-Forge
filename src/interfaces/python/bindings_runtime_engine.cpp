@@ -76,19 +76,6 @@ void bind_runtime_engine(nb::module_ &m) {
              nb::arg("assignments"))
         .def("set_pilot_reports_maintained_batch",
              &WorldBatchRuntime::set_pilot_reports_maintained_batch, nb::arg("assignments"))
-        .def("clear_execution_episode_controller_batch",
-             &WorldBatchRuntime::clear_execution_episode_controller_batch)
-        .def("prime_execution_episode_controller_batch",
-             &WorldBatchRuntime::prime_execution_episode_controller_batch, nb::arg("refs"),
-             nb::arg("states"))
-        .def("execution_episode_controller_ready",
-             &WorldBatchRuntime::execution_episode_controller_ready, nb::arg("world_index"))
-        .def("export_execution_episode_states_batch",
-             &WorldBatchRuntime::export_execution_episode_states_batch, nb::arg("refs"))
-        .def("step_execution_episode_batch", &WorldBatchRuntime::step_execution_episode_batch,
-             nb::arg("requests"))
-        .def("step_execution_episode_results_batch",
-             &WorldBatchRuntime::step_execution_episode_results_batch, nb::arg("requests"))
         .def("get_agent_observations_batch", &WorldBatchRuntime::get_agent_observations_batch,
              nb::arg("refs"))
         .def("get_instrument_states_batch", &WorldBatchRuntime::get_instrument_states_batch,

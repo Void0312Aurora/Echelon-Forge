@@ -121,7 +121,7 @@
       "reason": "Implementation contains the maintained export chain, but still mixes it with broad compatibility helpers and diagnostics shaping.",
       "evidence_markers": [
         "RuntimeWindowResult RuntimeFacade::run_window",
-        "RuntimeWindowResult result = execute_runtime_window(",
+        "return execute_runtime_window(",
         "kObservationExportNodeId",
         "diagnostics_trace_surface_not_maintained_decision_path"
       ]
@@ -161,7 +161,7 @@
       "evidence_markers": [
         "class WorldBatchVecEnvAccess:",
         "self._world_vec._step_runtime_worlds(world_indices)",
-        "self._world_vec._set_pilot_actions_batch(assignments)"
+        "self._world_vec._runtime_adapter.set_pilot_actions_batch(assignments)"
       ]
     },
     {
@@ -260,7 +260,7 @@
       "evidence_markers": [
         "batch = ef_py.WorldBatchRuntime(3)",
         "test_world_batch_runtime_worker_thread_controls",
-        "step_execution_episode_results_batch"
+        "test_world_batch_runtime_steps_and_reads_observations"
       ]
     },
     {

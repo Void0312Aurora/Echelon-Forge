@@ -850,27 +850,6 @@ class RuntimeFacadeAdapter:
         self._last_window_evidence = None
         self._batch_target().step_batch()
 
-    def prime_execution_episode_batch(self, refs: Sequence[Any], states: Sequence[Any]) -> None:
-        self.facade.prime_execution_episode_batch(list(refs), list(states))
-
-    def execution_episode_ready(self, world_index: int) -> bool:
-        return bool(self.facade.execution_episode_ready(int(world_index)))
-
-    def execution_episode_controller_ready(self, world_index: int) -> bool:
-        return self.execution_episode_ready(int(world_index))
-
-    def step_execution_batch(self, request: Any) -> Any:
-        return self.facade.step_execution_batch(request)
-
-    def step_execution_products_batch(self, requests: Sequence[Any]) -> list[Any]:
-        return list(self.facade.step_execution_products_batch(list(requests)))
-
-    def export_execution_episode_states(self, refs: Sequence[Any]) -> list[Any]:
-        return list(self.facade.export_execution_episode_states(list(refs)))
-
-    def export_execution_episode_states_batch(self, refs: Sequence[Any]) -> list[Any]:
-        return self.export_execution_episode_states(refs)
-
     def step_worlds(self, world_indices: Sequence[int]) -> None:
         self._last_window_evidence = None
         indices = [int(index) for index in world_indices]

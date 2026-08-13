@@ -287,8 +287,6 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
     add_double(frame, world, "agent_observation_numeric", "observation.total_reward",
                observation.total_reward);
 
-    add_double(frame, world, "reward_numeric", "execution_episode_step.reward_total",
-               projected.total_reward);
     add_double(frame, world, "reward_numeric", "reward_report.fact_terms[].value",
                projected.survival_reward);
     add_double(frame, world, "reward_numeric", "reward_report.shaping_terms[].value",
@@ -304,10 +302,6 @@ void append_projection_fields(ReplayLaneFrame &frame, const ProjectedWorld &proj
                kObservationProjectionRewardTermOwners[1]);
     add_uint(frame, world, "reward_termination_identity", "reward_report.fact_snapshot_version",
              projected.reward_snapshot_version);
-    add_bool(frame, world, "reward_termination_identity", "execution_episode_step.terminated",
-             projected.terminated);
-    add_bool(frame, world, "reward_termination_identity", "execution_episode_step.truncated",
-             projected.truncated);
     add_string(frame, world, "reward_termination_identity", "termination_spec.reason",
                projected.termination_reason);
     add_string(frame, world, "reward_termination_identity", "termination_spec.reason_source",

@@ -312,8 +312,6 @@ TEST_CASE("fixed-air boundary rejects undeclared setup input advance and export 
     unsupported_actions[0].action.fire_weapon = false;
     unsupported_actions[0].action.radar_active = true;
     CHECK_THROWS_AS(backend.inject({.pilot_actions = unsupported_actions}), std::invalid_argument);
-    CHECK_THROWS_AS(backend.advance({.kind = runtime::backend::AdvanceKind::StepExecutionResults}),
-                    std::logic_error);
     CHECK_THROWS_AS(backend.export_state(
                         {.include_agent_observations = true, .include_instrument_states = true}),
                     std::logic_error);

@@ -28,7 +28,6 @@ WORLD_BATCH_VEC_ENV_SOURCE_FILES = (
   WORLD_BATCH_VEC_ENV_IMPL / "_vec_env_support.py",
   WORLD_BATCH_VEC_ENV_IMPL / "_visual_backend_mixin.py",
   WORLD_BATCH_VEC_ENV_IMPL / "_observation_mixin.py",
-  WORLD_BATCH_VEC_ENV_IMPL / "_execution_episode_mixin.py",
   WORLD_BATCH_VEC_ENV_IMPL / "_air_combat_post_launch_mixin.py",
   WORLD_BATCH_VEC_ENV_IMPL / "vec_env.py",
   WORLD_BATCH_VEC_ENV,
@@ -45,7 +44,6 @@ RUNTIME_FACADE_SOURCE_FILES = (
   RUNTIME_FACADE / "runtime_facade_config.cpp",
   RUNTIME_FACADE / "runtime_facade_query.cpp",
   RUNTIME_FACADE / "runtime_facade_command_api.cpp",
-  RUNTIME_FACADE / "runtime_facade_execution.cpp",
   RUNTIME_FACADE / "runtime_facade_packet.cpp",
   RUNTIME_FACADE / "runtime_facade.cpp",
   RUNTIME_FACADE / "runtime_facade_internal.h",
@@ -100,15 +98,6 @@ def world_batch_vec_env_source_text() -> str:
   return "\n".join(
     path.read_text(encoding="utf-8") for path in WORLD_BATCH_VEC_ENV_SOURCE_FILES
   )
-
-
-def _maintained_execution_episode_compat_read_allowlist() -> set[str]:
-  return {
-    "python/rl/runtime/world_batch/adapter.py",
-    "python/rl/runtime/world_batch/runtime_support.py",
-    "tests/world_batch/test_world_batch_vec_env_command_chain.py",
-    "tests/world_batch/test_world_batch_vec_env_execution_and_observation.py",
-  }
 
 
 def _iter_maintained_python_paths() -> list[Path]:
@@ -207,9 +196,6 @@ def _wp22_loader_sim_guard_scope() -> dict[str, tuple[str, ...]]:
       "loader.sim.get_time_step(",
     ),
     "gym_envs/scenario_loader/step_evaluation.py": (
-      "loader.sim.get_time_step(",
-    ),
-    "gym_envs/scenario_loader/execution_runtime/shadow.py": (
       "loader.sim.get_time_step(",
     ),
     "gym_envs/scenario_loader/behavior_runtime/post_waypoint_transition.py": (

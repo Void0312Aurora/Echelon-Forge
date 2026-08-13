@@ -33,11 +33,4 @@ void bind_runtime_batch_request(nb::module_ &m) {
 #define EF_ENGAGEMENT_BATCH_REQUEST_FIELD(type, name, default_value)                               \
     engagement_batch_request_class.def_rw(#name, &EngagementBatchRequest::name);
 #include "runtime/facade/detail/batch/engagement_batch_request.inc"
-
-    nb::class_<ExecutionBatchStepRequest> execution_batch_step_request_class(
-        m, "ExecutionBatchStepRequest");
-    execution_batch_step_request_class.def(nb::init<>());
-#define EF_EXECUTION_BATCH_STEP_REQUEST_FIELD(type, name, default_value)                           \
-    execution_batch_step_request_class.def_rw(#name, &ExecutionBatchStepRequest::name);
-#include "runtime/facade/detail/batch/execution_batch_step_request.inc"
 }

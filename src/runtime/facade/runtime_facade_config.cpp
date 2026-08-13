@@ -94,7 +94,7 @@ RuntimeBatchConfig RuntimeFacade::batch_config() const noexcept {
 RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {
     return RuntimeCapabilities{
         .supports_batch_runtime = runtime_ != nullptr,
-        .supports_compiled_episode_controller = true,
+        .supports_compiled_episode_controller = false,
         .supports_compiled_execution_step = true,
         .supports_gpu_visual = false,
         .supports_gpu_observation = false,

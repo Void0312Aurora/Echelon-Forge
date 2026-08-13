@@ -68,16 +68,6 @@ void bind_runtime_facade(nb::module_ &m) {
              &RuntimeFacade::set_leader_intents_maintained_batch, nb::arg("assignments"))
         .def("set_pilot_reports_maintained_batch",
              &RuntimeFacade::set_pilot_reports_maintained_batch, nb::arg("assignments"))
-        .def("clear_execution_episode_batch", &RuntimeFacade::clear_execution_episode_batch)
-        .def("prime_execution_episode_batch", &RuntimeFacade::prime_execution_episode_batch,
-             nb::arg("refs"), nb::arg("states"))
-        .def("execution_episode_ready", &RuntimeFacade::execution_episode_ready,
-             nb::arg("world_index"))
-        .def("export_execution_episode_states", &RuntimeFacade::export_execution_episode_states,
-             nb::arg("refs"))
-        .def("step_execution_products_batch", &RuntimeFacade::step_execution_products_batch,
-             nb::arg("requests"))
-        .def("step_execution_batch", &RuntimeFacade::step_execution_batch, nb::arg("request"))
         .def("get_agent_observations_batch", &RuntimeFacade::get_agent_observations_batch,
              nb::arg("refs"))
         .def("get_instrument_states_batch", &RuntimeFacade::get_instrument_states_batch,

@@ -132,7 +132,6 @@ make_exact_evaluation_cpu_reference_request() {
         .facade_evidence_refs = {
             "RuntimeFacade.capabilities",
             "ObservationBatchPacket",
-            "ExecutionBatchStepResult",
         },
     };
 }

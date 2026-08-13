@@ -275,9 +275,6 @@ resident_candidate_selected_slice_field_contract() {
             .field_family = "reward_numeric",
             .selected_fields =
                 {
-                    current_selected_field("execution_episode_step.reward_total",
-                                           "ExecutionEpisodeControllerStepResult", float64,
-                                           "reward"),
                     current_selected_field("reward_report.fact_terms[].value", "RewardTerm",
                                            float64, "reward"),
                     current_selected_field("reward_report.shaping_terms[].value", "RewardTerm",
@@ -302,12 +299,6 @@ resident_candidate_selected_slice_field_contract() {
                                            string, "reward"),
                     current_selected_field("reward_report.fact_snapshot_version", "RewardReport",
                                            unsigned_integer, "reward"),
-                    current_selected_field("execution_episode_step.terminated",
-                                           "ExecutionEpisodeControllerStepResult", boolean,
-                                           "termination"),
-                    current_selected_field("execution_episode_step.truncated",
-                                           "ExecutionEpisodeControllerStepResult", boolean,
-                                           "termination"),
                     current_selected_field("termination_spec.reason", "TerminationSpec", string,
                                            "termination"),
                     current_selected_field("termination_spec.reason_source", "TerminationSpec",

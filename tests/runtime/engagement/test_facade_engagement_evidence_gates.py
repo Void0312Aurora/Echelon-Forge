@@ -18,7 +18,6 @@ _RUNTIME_FACADE_SOURCE_PARTS = (
   ("src", "runtime", "facade", "runtime_facade_config.cpp"),
   ("src", "runtime", "facade", "runtime_facade_query.cpp"),
   ("src", "runtime", "facade", "runtime_facade_command_api.cpp"),
-  ("src", "runtime", "facade", "runtime_facade_execution.cpp"),
   ("src", "runtime", "facade", "runtime_facade_packet.cpp"),
   ("src", "runtime", "facade", "runtime_facade.cpp"),
   ("src", "runtime", "facade", "runtime_facade_internal.h"),

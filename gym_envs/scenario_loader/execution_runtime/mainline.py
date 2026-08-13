@@ -327,40 +327,6 @@ def consume_compiled_episode_runtime(
     return reward, terminated, status
 
 
-def consume_execution_episode_controller_mainline_step(
-    loader,
-    *,
-    truth,
-    step_eval: dict,
-    frame_products,
-    controller_state,
-):
-    cfg = (
-        loader._compiled_rewards_cfg
-        if isinstance(loader._compiled_rewards_cfg, dict) and loader._compiled_rewards_cfg
-        else loader.scenario_data.get("rewards", {})
-    )
-    reward, terminated, status, structural_state_changed = consume_compiled_episode_runtime(
-        loader,
-        cfg=cfg,
-        safety_cfg=loader._safety_reward_cfg,
-        truth=truth,
-        step_eval=step_eval,
-        frame_products=frame_products,
-        track_structural_state_change=True,
-    )
-    truncated = bool(step_eval.get("truncated", False))
-    mirrored_state = None
-    if hasattr(ef_py, "ExecutionEpisodeState") and isinstance(controller_state, ef_py.ExecutionEpisodeState):
-        loader.apply_execution_episode_runtime_fields(
-            controller_state,
-            include_navigation_state=not structural_state_changed,
-        )
-    if structural_state_changed and hasattr(ef_py, "ExecutionEpisodeState"):
-        mirrored_state = loader.build_execution_episode_state()
-    return reward, terminated, truncated, status, mirrored_state
-
-
 class _StepRewardAccumulator:
     """Mutable per-step outcome shared by the compute_full_step stages."""
 

@@ -136,26 +136,25 @@ def test_world_batch_vec_env_batch_runtime_surface_is_removed_at_source() -> Non
   assert "RuntimeCompatibilityView" not in source
   assert "RuntimeCompatibilityView" not in cooperative_source
 
-def test_maintained_paths_do_not_add_new_execution_episode_batch_runtime_reads() -> None:
+def test_maintained_paths_do_not_reference_retired_execution_episode_runtime_apis() -> None:
   forbidden_markers = (
-    ".batch_runtime.export_execution_episode_states_batch(",
-    ".batch_runtime.execution_episode_controller_ready(",
+    ".export_execution_episode_states_batch(",
+    ".execution_episode_controller_ready(",
+    ".prime_execution_episode_controller_batch(",
+    ".step_execution_episode_batch(",
   )
   violations: list[tuple[str, int, str]] = []
-  allowlist = _maintained_execution_episode_compat_read_allowlist()
 
   for path in _iter_maintained_python_paths():
     rel = path.relative_to(REPO_ROOT).as_posix()
-    if rel in allowlist:
-      continue
     for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
       stripped = line.strip()
       if any(marker in stripped for marker in forbidden_markers):
         violations.append((rel, lineno, stripped))
 
   assert not violations, (
-    "maintained paths must use vec-env/runtime facade execution-episode helpers instead of "
-    f"compat batch_runtime reads: {violations}"
+    "retired execution-episode runtime APIs must not return to maintained paths: "
+    f"{violations}"
   )
 
 def test_maintained_paths_do_not_add_new_batch_runtime_consumers_outside_compatibility_tests() -> None:

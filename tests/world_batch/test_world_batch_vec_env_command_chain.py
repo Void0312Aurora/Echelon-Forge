@@ -37,12 +37,10 @@ from python.mission_obs_taxonomy import ( # noqa: E402
 )
 from tests.support._leader_env_runtime_test_support import CounterDictEnv # noqa: E402
 from tests.support._world_batch_vec_env_test_support import ( # noqa: E402
-  _controller_runtime_state_matches_loader_state,
   _inline_air_combat_scripted_opponent_scenario,
   _inline_vec_env_maritime_scenario,
   _inline_vec_env_route_transition_scenario,
   _inline_vec_env_scenario,
-  _legacy_step_result_state_with_poisoned_report_fields,
 )
 
 
@@ -560,8 +558,8 @@ class WorldBatchVecEnvCommandChainTests(unittest.TestCase):
       try:
         self.assertIs(vec_env.runtime_facade, vec_env._runtime_adapter.facade)
         self.assertEqual(int(vec_env.runtime_facade.world_count()), 1)
-        self.assertTrue(hasattr(vec_env.runtime_facade, "export_execution_episode_states"))
-        self.assertTrue(hasattr(vec_env.runtime_facade, "execution_episode_ready"))
+        self.assertFalse(hasattr(vec_env.runtime_facade, "export_execution_episode_states"))
+        self.assertFalse(hasattr(vec_env.runtime_facade, "execution_episode_ready"))
       finally:
         vec_env.close()
 

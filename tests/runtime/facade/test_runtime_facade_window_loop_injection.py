@@ -19,7 +19,6 @@ RUNTIME_FACADE_SOURCE_FILES = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
-  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_execution.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_packet.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp",
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_internal.h",

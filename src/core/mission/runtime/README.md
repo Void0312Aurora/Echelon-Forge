@@ -1,6 +1,6 @@
 # `src/core/mission/runtime` Boundary
 
-`mission/runtime` hosts the pure computation entry points for mission, objective, reward, termination, and execution runtime. It produces runtime products that are reused by the episode controller, GPU helpers, Python bindings, and the underlying facade implementation.
+`mission/runtime` hosts the pure computation entry points for mission, objective, reward, termination, and execution runtime. It produces runtime products reused by the maintained Python orchestration, GPU helpers, Python bindings, and the underlying facade implementation.
 
 The mature execution runtime remains air-oriented, but the boundary should be
 described as domain-aware rather than flight-only: it consumes component DTOs
@@ -17,7 +17,7 @@ directory must not claim ownership of full naval or ground runtime semantics.
 
 ## Forbidden
 
-- `ExecutionEpisodeController` state import/export.
+- Stateful episode orchestration or ownership of `ExecutionEpisodeState`.
 - Mission-command JSON round-tripping, route transitions, and reward breakdown JSON.
 - Python/nanobind bindings and facade request/result adaptation.
 - Ground movement, sensing, terrain, fires, damage, or complete land-domain runtime.

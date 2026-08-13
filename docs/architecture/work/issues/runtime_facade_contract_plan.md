@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/runtime_facade_contract_plan.md`
 Owner: `architecture/runtime-facade`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: migrated interface proposal; current public surfaces and code
 must be re-censused before any portion is promoted into an active task.
 
@@ -22,6 +22,13 @@ Document Navigation:
 
 Status: draft issue derived from the `2026-05-10` interface proposal; it is
 not an active execution contract.
+
+Current-state note (2026-08-13): the compiled episode-controller experiment,
+its `ExecutionBatchStepRequest`/`ExecutionBatchStepResult` facade surface, and
+the controller state prime/step/export APIs were retired. The capability field
+is retained as a negative capability (`false`). Controller-specific interfaces
+below describe the historical proposal, not the current facade contract.
+
 Document Positioning:
 
 - This document answers "What facade boundary should the frontend under maintenance depend on, and how should the core request/response/handle be defined."

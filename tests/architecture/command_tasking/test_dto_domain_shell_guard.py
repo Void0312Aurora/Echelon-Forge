@@ -54,9 +54,6 @@ PILOT_REPORT_GROUND_HEADER = (
 WORLD_BATCH_CONTRACTS_HEADER = (
   REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
 )
-MISSION_COMMAND_CODEC_CPP = (
-  REPO_ROOT / "src" / "core" / "mission" / "episode" / "detail" / "mission_command_codec.cpp"
-)
 EXECUTION_EPISODE_STATE_CPP = (
   REPO_ROOT / "src" / "core" / "mission" / "episode" / "execution_episode_state.cpp"
 )
@@ -456,20 +453,8 @@ def test_wp22_task_order_maintained_batch_contract_stays_controlled_and_slice_ba
     assert forbidden not in text
 
 
-def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -> None:
-  codec_text = _text(MISSION_COMMAND_CODEC_CPP)
+def test_wp22_maintained_episode_state_equivalence_uses_owner_slice_directive_helpers() -> None:
   state_text = _text(EXECUTION_EPISODE_STATE_CPP)
-
-  for token in (
-    "mission_command_shared_core_directive(command)",
-    "mission_command_air_recovery_directive(command)",
-    "mission_command_air_takeoff_directive(command)",
-    "mission_command_air_formation_directive(command)",
-    "mission_command_naval_stationing_directive(command)",
-    "mission_command_naval_embarked_helo_directive(command)",
-    "mission_command_ground_static_task_directive(command)",
-  ):
-    assert token in codec_text
 
   for token in (
     "mission_command_shared_core_directive(lhs)",
@@ -499,50 +484,6 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
     "assigned_target_snapshot_time_s",
   ):
     assert f"lhs_core.{duplicated_field}" not in state_text
-
-  codec_body = re.search(
-    r"void write_mission_command_fields_to_json\(const MissionCommand& command, nlohmann::json\* mission_json\) \{(?P<body>.*?)\n\}",
-    codec_text,
-    re.S,
-  )
-  assert codec_body is not None
-  for forbidden in (
-    "command.cmd_heading_deg",
-    "command.cmd_altitude_m",
-    "command.cmd_speed_mps",
-    "command.command_code",
-    "command.route_ref_id",
-    "command.reference_entity_id",
-    "command.station_radius_m",
-    "command.station_bearing_deg",
-    "command.embarked_helo_entity_id",
-    "command.launch_helo",
-    "command.recover_helo",
-    "command.relay_oth_targeting",
-    "command.ground_task_mode",
-    "command.objective_area_id",
-    "command.objective_node_id",
-    "command.ground_commander_id",
-    "command.tactical_cadence_hz",
-    "command.recovery_base_id",
-    "command.recovery_runway_id",
-    "command.recovery_approach_type",
-    "command.takeoff_procedure_id",
-    "command.takeoff_clearance_id",
-    "command.takeoff_interval_s",
-    "command.runway_slot_id",
-    "command.formation_id",
-    "command.form_offset_x",
-    "command.form_offset_y",
-    "command.form_offset_z",
-    "command.roe_state",
-    "command.engagement_authority_holder_id",
-    "command.engagement_authority_grantor_id",
-    "command.assigned_target_id",
-    "command.authorization_to_fire",
-    "command.active",
-  ):
-    assert forbidden not in codec_body.group("body")
 
   # Commit 199f2c03 ("style: clang-format the consolidation-era C++ surface
   # for the CI gate") moved this file to `Type &name` reference alignment and

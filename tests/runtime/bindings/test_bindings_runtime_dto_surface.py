@@ -15,6 +15,38 @@ def public_fields(instance: object) -> tuple[str, ...]:
 
 
 class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
+  def test_retired_execution_episode_controller_surface_is_absent(self) -> None:
+    for type_name in (
+      "ExecutionEpisodeController",
+      "ExecutionEpisodeControllerStepResult",
+      "ExecutionEpisodeStepResult",
+      "WorldExecutionEpisodeStepRequest",
+      "ExecutionBatchStepRequest",
+      "ExecutionBatchStepResult",
+    ):
+      with self.subTest(type_name=type_name):
+        self.assertFalse(hasattr(ef_py, type_name))
+
+    retired_methods = (
+      "clear_execution_episode_batch",
+      "clear_execution_episode_controller_batch",
+      "execution_episode_ready",
+      "prime_execution_episode_controller_batch",
+      "execution_episode_controller_ready",
+      "export_execution_episode_states",
+      "export_execution_episode_states_batch",
+      "evaluate_execution_episode_batch",
+      "step_execution_products_batch",
+      "step_execution_episode_batch",
+      "step_execution_episode_results_batch",
+      "prime_execution_episode_batch",
+      "step_execution_batch",
+    )
+    for owner in (ef_py.WorldBatchRuntime(1), ef_py.RuntimeFacade(1)):
+      for method_name in retired_methods:
+        with self.subTest(owner=type(owner).__name__, method_name=method_name):
+          self.assertFalse(hasattr(owner, method_name))
+
   def test_agent_role_authority_result_binding_exposes_fail_closed_contract(self) -> None:
     self.assertTupleEqual(
       public_fields(ef_py.AgentRoleAuthorizationResult()),
@@ -135,7 +167,6 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
   def test_tasking_request_task_order_export_uses_maintained_contract_gate_only(self) -> None:
     request = ef_py.ObservationBatchRequest()
     tasking_request = ef_py.TaskingBatchRequest()
-    step_request = ef_py.ExecutionBatchStepRequest()
 
     self.assertFalse(hasattr(request, "include_task_orders"))
     self.assertFalse(hasattr(request, "include_task_order_contracts"))
@@ -147,11 +178,6 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
     self.assertFalse(bool(tasking_request.include_task_order_contracts))
     self.assertFalse(bool(tasking_request.include_leader_intent_contracts))
     self.assertFalse(bool(tasking_request.include_pilot_report_contracts))
-    self.assertFalse(hasattr(step_request, "include_task_orders"))
-    self.assertFalse(hasattr(step_request, "include_task_order_contracts"))
-    self.assertFalse(hasattr(step_request, "include_mission_commands"))
-    self.assertFalse(hasattr(step_request, "include_leader_intents"))
-    self.assertFalse(hasattr(step_request, "include_pilot_reports"))
 
     tasking_request.include_mission_command_contracts = True
     tasking_request.include_task_order_contracts = True
@@ -475,28 +501,6 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         "track_packets",
         "training_projection_events",
         "warhead_mechanism_events",
-      ),
-    )
-
-  def test_execution_batch_step_result_public_fields_include_typed_reward_and_termination_reports(self) -> None:
-    self.assertTupleEqual(
-      public_fields(ef_py.ExecutionBatchStepResult()),
-      (
-        "controller_state_changed_flags",
-        "execution_episode_states",
-        "observation_packet",
-        "reward_breakdown_jsons",
-        "reward_reports",
-        "rewards",
-        "status_vectors",
-        "step_info_valid_flags",
-        "step_infos",
-        "step_results",
-        "tasking_packet",
-        "terminated",
-        "termination_reasons",
-        "termination_specs",
-        "truncated",
       ),
     )
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 import unittest
 from pathlib import Path
@@ -25,7 +24,7 @@ from python.scenario.runtime import resolve_active_controllable_roster # noqa: E
 
 _RUNTIME_CAPABILITY_EXPECTATIONS = {
   "supports_batch_runtime": True,
-  "supports_compiled_episode_controller": True,
+  "supports_compiled_episode_controller": False,
   "supports_compiled_execution_step": True,
   "supports_gpu_visual": False,
   "supports_gpu_observation": False,
@@ -75,7 +74,6 @@ _RUNTIME_FACADE_SOURCE_PARTS = (
   ("src", "runtime", "facade", "runtime_facade_config.cpp"),
   ("src", "runtime", "facade", "runtime_facade_query.cpp"),
   ("src", "runtime", "facade", "runtime_facade_command_api.cpp"),
-  ("src", "runtime", "facade", "runtime_facade_execution.cpp"),
   ("src", "runtime", "facade", "runtime_facade_packet.cpp"),
   ("src", "runtime", "facade", "runtime_facade.cpp"),
   ("src", "runtime", "facade", "runtime_facade_internal.h"),
@@ -115,84 +113,6 @@ def _has_public_observation_at(
     and abs(float(observation.z) - z) < 1e-6
     for observation in observations
   )
-
-
-def _build_route_state(entity_id: int) -> ef_py.ExecutionEpisodeState:
-  state = ef_py.ExecutionEpisodeState()
-  state.agent_id = int(entity_id)
-  state.has_mission_command = True
-  state.mission_command.command_code = 3
-  state.mission_command.cmd_heading_deg = 90.0
-  state.mission_command.cmd_altitude_m = 1200.0
-  state.mission_command.cmd_speed_mps = 180.0
-  state.mission_command.active = True
-  state.has_mission_command_json = True
-  state.mission_command_json = json.dumps(
-    {
-      "command_code": 3,
-      "route_ref_id": int(entity_id),
-      "target_altitude": 1200.0,
-      "target_heading": 90.0,
-      "target_speed": 180.0,
-      "waypoint_mode": "flyby",
-      "waypoints": [
-        {"x": -1350.0, "y": 0.0, "z": 1200.0, "radius_m": 1200.0},
-      ],
-    },
-    ensure_ascii=True,
-    sort_keys=True,
-  )
-  route_waypoint = ef_py.SpatialRouteWaypoint()
-  route_waypoint.x_m = -1350.0
-  route_waypoint.y_m = 0.0
-  route_waypoint.z_m = 1200.0
-  route_waypoint.radius_m = 1200.0
-  route_waypoint.altitude_m = 1200.0
-  route_waypoint.speed_mps = 180.0
-  route_waypoint.waypoint_mode = "flyby"
-  state.route_waypoints = [route_waypoint]
-  state.has_post_waypoint_transition_json = True
-  state.post_waypoint_transition_json = json.dumps(
-    {
-      "command_code": 2,
-      "phase_name": "post_route",
-      "target_altitude": 900.0,
-      "target_heading": 45.0,
-      "target_speed": 160.0,
-      "transition_reward": 123.0,
-    },
-    ensure_ascii=True,
-    sort_keys=True,
-  )
-  return state
-
-
-def _build_route_request(entity_id: int) -> ef_py.WorldExecutionEpisodeStepRequest:
-  request = ef_py.WorldExecutionEpisodeStepRequest()
-  request.world_index = 0
-  request.entity_id = int(entity_id)
-  request.config = ef_py.StepEvaluationBatchConfig()
-  request.env_state.steps = 1
-  request.env_state.truth_x = -1400.0
-  request.env_state.truth_y = 0.0
-  request.env_state.truth_z = 1200.0
-  request.env_state.truth_speed = 180.0
-  request.env_state.has_safety = True
-  request.env_state.safety.finite_state_valid = True
-  request.env_state.safety.health = 100.0
-  request.env_state.safety.survival_reward = 0.02
-  request.env_state.has_waypoint = True
-  request.env_state.waypoint.valid = True
-  request.env_state.waypoint.waypoint_index = 0
-  request.env_state.waypoint.waypoint_count = 1
-  request.env_state.waypoint.dist_m = 50.0
-  request.env_state.waypoint.waypoint_radius_m = 1200.0
-  request.env_state.waypoint.has_prev_dist = True
-  request.env_state.waypoint.prev_dist_m = 120.0
-  request.env_state.waypoint.progress_weight = 0.1
-  request.env_state.waypoint.distance_weight = -0.001
-  request.env_state.waypoint.reached_bonus = 20.0
-  return request
 
 
 def _default_world_terrain_assignment() -> ef_py.WorldTerrainAssignment:

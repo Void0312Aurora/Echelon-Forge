@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/architecture_and_performance_research_followup.md`
 Owner: `architecture/performance`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: migrated research snapshot; recommendations and implementation
 inventory require fresh evidence before promotion or execution.
 
@@ -21,6 +21,13 @@ Document Navigation:
 
 Status: draft issue based on the `2026-05-10` investigation snapshot. It is
 not an active implementation plan.
+
+Current-state note (2026-08-13): the compiled `ExecutionEpisodeController`
+experiment and its facade/batch cutover surface were retired after the held
+performance gate did not justify a second stateful stepping owner. References
+to that experiment below are historical inventory; the maintained path is the
+Python orchestration over retained C++ runtime kernels and batch preparation.
+
 Document positioning:
 
 - This document answers "why such layering, where are the performance bottlenecks, and how should subsequent roadmaps be prioritized".
@@ -61,7 +68,8 @@ Representative file and package sizes are as follows:
 - [src/interfaces/python/](../../../../src/interfaces/python): about `6682` lines across the split binding files; `python_module.cpp` is now only the small module registration wrapper.
 - [src/core/engine/simulation_kernel.cpp](../../../../src/core/engine/simulation_kernel.cpp): about `229` lines after the engine split.
 - [src/core/engine/world_batch_runtime.cpp](../../../../src/core/engine/world_batch_runtime.cpp): about `1255` lines.
-- [src/core/mission/episode/execution_episode_controller.cpp](../../../../src/core/mission/episode/execution_episode_controller.cpp): about `347` lines.
+- `src/core/mission/episode/execution_episode_controller.cpp`: about `347`
+  lines in the 2026-05-10 snapshot; retired on 2026-08-13.
 
 This indicates:
 

@@ -75,12 +75,4 @@ void bind_runtime_tasking_world(nb::module_ &m) {
     world_pilot_report_maintained_assignment_class.def_rw(                                         \
         #name, &WorldPilotReportMaintainedAssignment::name);
 #include "runtime/contracts/detail/tasking/world_pilot_report_maintained_assignment.inc"
-
-    nb::class_<WorldExecutionEpisodeStepRequest> world_execution_episode_step_request_class(
-        m, "WorldExecutionEpisodeStepRequest");
-    world_execution_episode_step_request_class.def(nb::init<>());
-#define EF_WORLD_EXECUTION_EPISODE_STEP_REQUEST_FIELD(type, name, default_value)                   \
-    world_execution_episode_step_request_class.def_rw(#name,                                       \
-                                                      &WorldExecutionEpisodeStepRequest::name);
-#include "runtime/contracts/detail/tasking/world_execution_episode_step_request.inc"
 }

@@ -22,19 +22,6 @@ namespace runtime_facade_internal {
 using runtime::scheduler::find_stage_node_manifest;
 
 inline std::vector<WorldEntityRef>
-refs_from_step_requests(const std::vector<WorldExecutionEpisodeStepRequest> &requests) {
-    std::vector<WorldEntityRef> refs;
-    refs.reserve(requests.size());
-    for (const auto &request : requests) {
-        refs.push_back(WorldEntityRef{
-            .world_index = request.world_index,
-            .entity_id = request.entity_id,
-        });
-    }
-    return refs;
-}
-
-inline std::vector<WorldEntityRef>
 world_refs_from_engagement_refs(const std::vector<EngagementEntityRef> &refs) {
     std::vector<WorldEntityRef> out;
     out.reserve(refs.size());

@@ -8,7 +8,7 @@ Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/exact_runtime/cpp_exact_runtime_refactor_plan.md`
 Owner: `architecture/exact-runtime`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: migrated candidate plan; historical landed-state claims remain
 bounded to the cited I43 snapshot and require current revalidation.
 
@@ -22,6 +22,16 @@ Status: draft issue. The document records a 2026-04-03 proposal and a
 2026-07-21 I43 landed-fact census; neither snapshot supplies current execution
 authorization. See "T4 Census (I43)" after Work Packages for its evidence
 boundary.
+
+Current-state disposition (2026-08-13): the plan's stop-loss rule was invoked.
+The opt-in compiled `ExecutionEpisodeController`, shadow comparator, and
+world-batch/facade cutover surface were retired after the held performance gate
+showed a slower path and the second stateful owner remained feature-incomplete.
+The maintained Python orchestration, `ExecutionEpisodeState` compatibility DTO,
+batch preparation, and stateless compiled runtime products remain. All
+controller-specific proposals and landed-state descriptions below are retained
+as historical evidence, not current implementation direction.
+
 Document role:
 
 - This document describes a candidate next mainline acceleration/refactor path.

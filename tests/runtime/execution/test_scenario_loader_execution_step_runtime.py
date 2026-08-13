@@ -318,48 +318,6 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
       else:
         self.assertAlmostEqual(float(left[key]), float(right[key]), places=6, msg=f"state mismatch for {key}")
 
-  def _run_controller_shadow_once(
-    self,
-    scenario_data: dict,
-    *,
-    seed: int,
-    steps: int = 1,
-    advance_state: bool = False,
-  ) -> dict:
-    sim = ef_py.SimulationKernel()
-    self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
-    loader = ScenarioLoader(sim)
-    loader.use_compiled_execution_step_runtime = True
-    agent_id = loader.load_scenario_data(copy.deepcopy(scenario_data), seed=seed)
-    self.assertIsNotNone(agent_id)
-
-    truth = sim.get_agent_observation(int(agent_id))
-    inst = sim.get_instrument_state(int(agent_id))
-    obs = build_universal_observation(
-      loader,
-      inst,
-      truth,
-      mission_obs_mode="nav_v2",
-      max_contacts=10,
-      max_rwr=4,
-      include_proprio=False,
-      last_action=None,
-      action_space=None,
-      steps=int(steps),
-      max_steps=loader.get_max_steps(),
-    )
-    ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
-    return loader.compare_execution_episode_controller_shadow(
-      truth=truth,
-      inst_obj=inst,
-      inst_vec=np.asarray(obs["instruments"], dtype=np.float32),
-      ils_vec=np.asarray(ils_vec[:4], dtype=np.float32),
-      steps=int(steps),
-      max_steps=loader.get_max_steps(),
-      mission_obs_mode="nav_v2",
-      advance_state=bool(advance_state),
-    )
-
   def test_update_behaviors_nonhierarchical_route_updates_guidance_targets(self) -> None:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
@@ -823,37 +781,6 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
         )
       ),
     )
-
-  def test_execution_episode_controller_shadow_matches_compiled_step_evaluation(self) -> None:
-    cases = (
-      ("objective", _objective_scenario(), 51),
-      ("route", _route_scenario(), 52),
-      ("approach", _approach_scenario(), 53),
-      ("takeoff_shaping", _takeoff_shaping_scenario(), 54),
-    )
-    for case_name, scenario_data, seed in cases:
-      with self.subTest(case=case_name):
-        report = self._run_controller_shadow_once(scenario_data, seed=seed)
-        comparison = dict(report["comparison"])
-        self.assertTrue(bool(comparison["overall_match"]), msg=f"{case_name}: {comparison}")
-
-  def test_execution_episode_controller_shadow_step_exports_advanced_state(self) -> None:
-    report = self._run_controller_shadow_once(_route_scenario(), seed=55, steps=1, advance_state=True)
-    comparison = dict(report["comparison"])
-    self.assertTrue(bool(comparison["overall_match"]), msg=str(comparison))
-    shadow_state = report["shadow_state"]
-    shadow_products = report["shadow_frame_products"]
-    self.assertEqual(int(shadow_state.step_count), 1)
-    self.assertAlmostEqual(
-      float(shadow_state.last_reward_total),
-      float(shadow_products.compiled_reward_total),
-      places=6,
-    )
-    self.assertEqual(
-      str(shadow_state.last_termination_reason),
-      str(ef_py.termination_reason_name(shadow_products.final_reason_code)),
-    )
-
 
 if __name__ == "__main__":
   unittest.main()

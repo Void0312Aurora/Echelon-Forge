@@ -70,7 +70,6 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
 
   observation_request_section = facade_types.split("struct ObservationBatchRequest", 1)[1].split("struct TaskingBatchRequest", 1)[0]
   tasking_request_section = facade_types.split("struct TaskingBatchRequest", 1)[1].split("struct EngagementBatchRequest", 1)[0]
-  execution_request_section = facade_types.split("struct ExecutionBatchStepRequest", 1)[1].split("struct DeviceResidentOutputDescriptor", 1)[0]
   assert "bool include_task_orders = false;" not in observation_request_section
   assert "bool include_task_order_contracts = false;" not in observation_request_section
   assert "bool include_mission_commands = false;" not in observation_request_section
@@ -86,17 +85,9 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert "bool include_mission_commands = false;" not in tasking_request_section
   assert "bool include_leader_intents = false;" not in tasking_request_section
   assert "bool include_pilot_reports = false;" not in tasking_request_section
-  assert "bool include_task_orders = false;" not in execution_request_section
-  assert "bool include_task_order_contracts = false;" not in execution_request_section
-  assert "bool include_mission_commands = false;" not in execution_request_section
-  assert "bool include_leader_intents = false;" not in execution_request_section
-  assert "bool include_pilot_reports = false;" not in execution_request_section
-  assert "bool include_mission_command_contracts = false;" not in execution_request_section
-  assert "bool include_leader_intent_contracts = false;" not in execution_request_section
-  assert "bool include_pilot_report_contracts = false;" not in execution_request_section
 
   observation_packet_section = facade_types.split("struct ObservationBatchPacket", 1)[1].split("struct EngagementEventPacket", 1)[0]
-  tasking_packet_section = facade_types.split("struct TaskingBatchPacket", 1)[1].split("struct ExecutionBatchStepResult", 1)[0]
+  tasking_packet_section = facade_types.split("struct TaskingBatchPacket", 1)[1].split("struct RuntimeWindowActionRequest", 1)[0]
   assert "std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;" not in observation_packet_section
   assert "std::vector<MissionCommand> mission_commands;" not in observation_packet_section
   assert "std::vector<LeaderIntent> leader_intents;" not in observation_packet_section
@@ -111,18 +102,6 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert "std::vector<PilotReport> pilot_reports;" not in tasking_packet_section
   assert '"facade_tasking_packet"' in tasking_packet_section
   assert "kPolicySourceLabelFacadeObservationPacket" not in tasking_packet_section
-
-  observation_request_helper_section = facade_cpp.split("observation_request_from_step_request", 1)[1].split("tasking_request_from_step_request", 1)[0]
-  assert ".include_task_order_contracts = request.include_task_order_contracts," not in observation_request_helper_section
-  assert "tasking_request_from_step_request" in facade_cpp
-  tasking_request_helper_section = facade_cpp.split("tasking_request_from_step_request", 1)[1].split("next_snapshot_version", 1)[0]
-  assert ".include_task_order_contracts = request.include_task_order_contracts," not in tasking_request_helper_section
-  assert ".include_mission_commands = request.include_mission_commands," not in tasking_request_helper_section
-  assert ".include_leader_intents = request.include_leader_intents," not in tasking_request_helper_section
-  assert ".include_pilot_reports = request.include_pilot_reports," not in tasking_request_helper_section
-  assert ".include_mission_command_contracts = request.include_mission_command_contracts," not in tasking_request_helper_section
-  assert ".include_leader_intent_contracts = request.include_leader_intent_contracts," not in tasking_request_helper_section
-  assert ".include_pilot_report_contracts = request.include_pilot_report_contracts," not in tasking_request_helper_section
 
   export_vector_overload_section = facade_cpp.split("RuntimeFacade::export_observation_packet(const std::vector<WorldEntityRef> &refs) const", 1)[1].split("RuntimeFacade::export_observation_packet(const ObservationBatchRequest &request) const", 1)[0]
   assert ".include_task_orders = true," not in export_vector_overload_section

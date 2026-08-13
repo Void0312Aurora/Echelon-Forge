@@ -78,16 +78,6 @@ class RuntimeFacade {
     void set_pilot_reports_maintained_batch(
         const std::vector<WorldPilotReportMaintainedAssignment> &assignments);
     void step_batch();
-    void clear_execution_episode_batch() noexcept;
-    void prime_execution_episode_batch(const std::vector<WorldEntityRef> &refs,
-                                       const std::vector<ExecutionEpisodeState> &states);
-    bool execution_episode_ready(std::size_t world_index) const noexcept;
-    std::vector<ExecutionEpisodeState>
-    export_execution_episode_states(const std::vector<WorldEntityRef> &refs) const;
-
-    std::vector<ExecutionEpisodeRuntimeProducts>
-    step_execution_products_batch(const std::vector<WorldExecutionEpisodeStepRequest> &requests);
-    ExecutionBatchStepResult step_execution_batch(const ExecutionBatchStepRequest &request);
     std::vector<AgentObservation>
     get_agent_observations_batch(const std::vector<WorldEntityRef> &refs) const;
     std::vector<InstrumentState>

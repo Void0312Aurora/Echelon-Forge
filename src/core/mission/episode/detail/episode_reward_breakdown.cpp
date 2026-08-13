@@ -1,4 +1,4 @@
-#include "core/mission/episode/detail/episode_reward_breakdown.h"
+#include "core/mission/episode/episode_reward_breakdown.h"
 
 #include <cmath>
 #include <string>
@@ -6,9 +6,39 @@
 
 #include <nlohmann/json.hpp>
 
-#include "core/mission/episode/detail/mission_command_codec.h"
-
 namespace {
+
+std::string stable_json_dump(const nlohmann::json& value) {
+    if (value.is_object()) {
+        std::string out = "{";
+        bool first = true;
+        for (auto it = value.begin(); it != value.end(); ++it) {
+            if (!first) {
+                out += ", ";
+            }
+            first = false;
+            out += nlohmann::json(it.key()).dump(-1, ' ', true);
+            out += ": ";
+            out += stable_json_dump(it.value());
+        }
+        out += "}";
+        return out;
+    }
+    if (value.is_array()) {
+        std::string out = "[";
+        bool first = true;
+        for (const auto& item : value) {
+            if (!first) {
+                out += ", ";
+            }
+            first = false;
+            out += stable_json_dump(item);
+        }
+        out += "]";
+        return out;
+    }
+    return value.dump(-1, ' ', true);
+}
 
 void add_breakdown_term(nlohmann::json* breakdown, const std::string& name, double value) {
     if (breakdown == nullptr) {
@@ -79,7 +109,7 @@ std::string build_episode_reward_breakdown_json(
         breakdown["tracked_total"] = 0.0;
         breakdown["untracked"] = reward_total;
         breakdown["total"] = reward_total;
-        return episode_controller_detail::stable_json_dump(breakdown);
+        return stable_json_dump(breakdown);
     }
 
     const auto& execution_step = products.execution_step;
@@ -261,5 +291,5 @@ std::string build_episode_reward_breakdown_json(
     breakdown["tracked_total"] = tracked_total;
     breakdown["untracked"] = reward_total - tracked_total;
     breakdown["total"] = reward_total;
-    return episode_controller_detail::stable_json_dump(breakdown);
+    return stable_json_dump(breakdown);
 }

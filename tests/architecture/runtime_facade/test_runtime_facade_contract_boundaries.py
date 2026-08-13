@@ -192,7 +192,7 @@ def test_resident_state_candidate_stays_fail_closed_and_exports_remain_host_visi
   assert "kPolicySourceLabelFacadeObservationPacket" in observation_packet_section
   assert "kPolicyMaintainedStatusMaintained" in observation_packet_section
 
-  engagement_packet_section = facade_types.split("struct EngagementEventPacket", 1)[1].split("struct ExecutionBatchStepResult", 1)[0]
+  engagement_packet_section = facade_types.split("struct EngagementEventPacket", 1)[1].split("struct TaskingBatchPacket", 1)[0]
   assert 'std::string barrier_id = "export";' in engagement_packet_section
   assert 'std::string barrier_detail = "maintained_facade_export";' in engagement_packet_section
   assert "kPolicySourceLabelTrackStatePacket" in engagement_packet_section

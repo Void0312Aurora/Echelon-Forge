@@ -39,12 +39,10 @@ from python.mission_obs_taxonomy import ( # noqa: E402
 )
 from tests.support._leader_env_runtime_test_support import CounterDictEnv # noqa: E402
 from tests.support._world_batch_vec_env_test_support import ( # noqa: E402
-  _controller_runtime_state_matches_loader_state,
   _inline_air_combat_scripted_opponent_scenario,
   _inline_vec_env_maritime_scenario,
   _inline_vec_env_route_transition_scenario,
   _inline_vec_env_scenario,
-  _legacy_step_result_state_with_poisoned_report_fields,
 )
 
 
@@ -755,32 +753,6 @@ class WorldBatchVecEnvAdapterSurfaceTests(unittest.TestCase):
           include_proprio=False,
           flight_shaping_backend="legacy",
         )
-
-  def test_world_batch_vec_env_execution_episode_controller_shadow_compare_flag_off_is_noop(self) -> None:
-    with tempfile.TemporaryDirectory() as tmpdir:
-      scenario_data = _inline_vec_env_scenario()
-      scenario_data["meta"]["max_steps"] = 2
-      scenario_path = f"{tmpdir}/inline_scenario.json"
-      with open(scenario_path, "w", encoding="utf-8") as f:
-        json.dump(scenario_data, f, ensure_ascii=True)
-
-      vec_env = WorldBatchVecEnv(
-        scenario_path=scenario_path,
-        n_envs=1,
-        include_visual=False,
-        include_proprio=False,
-      )
-      try:
-        vec_env.seed(123)
-        _ = vec_env.reset()
-        _obs, _rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
-        self.assertFalse(bool(dones[0]))
-        self.assertNotIn("execution_episode_controller_shadow_compare", infos[0])
-        self.assertEqual(vec_env.last_execution_episode_controller_shadow_compare, [None])
-      finally:
-        vec_env.close()
-
-
 
 if __name__ == "__main__":
   unittest.main()

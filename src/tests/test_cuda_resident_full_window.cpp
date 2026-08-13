@@ -114,11 +114,7 @@ class FakeBackend final : public IWorldBatchBackend {
     runtime::backend::EvaluationResult
     evaluate(const runtime::backend::EvaluationRequest &) const override {
         record(Operation::evaluation);
-        runtime::backend::EvaluationResult result{};
-        if (unexpected_evaluation_) {
-            result.execution_episode_products.emplace_back();
-        }
-        return result;
+        return {};
     }
 
     runtime::backend::AdvanceResult advance(const runtime::backend::AdvanceRequest &) override {
@@ -148,8 +144,6 @@ class FakeBackend final : public IWorldBatchBackend {
         return {.backend_id = "fake_backend", .world_count = world_count_};
     }
 
-    void set_unexpected_evaluation(bool value) noexcept { unexpected_evaluation_ = value; }
-
     void set_bad_export_cardinality(bool value) noexcept { bad_export_cardinality_ = value; }
 
     void set_bad_export_identity(bool value) noexcept { bad_export_identity_ = value; }
@@ -167,7 +161,6 @@ class FakeBackend final : public IWorldBatchBackend {
 
     Operation failure_;
     bool fail_ = false;
-    bool unexpected_evaluation_ = false;
     bool bad_export_cardinality_ = false;
     bool bad_export_identity_ = false;
     std::size_t world_count_ = 0;
@@ -291,17 +284,6 @@ TEST_CASE("CR2-2 full-window runner fails closed at each operation and poisons")
 TEST_CASE("CR2-2 full-window runner rejects output shape drift before advance or completion") {
     const auto trace = make_trace();
 
-    FakeBackend evaluation_backend;
-    evaluation_backend.set_unexpected_evaluation(true);
-    full_window::Runner evaluation_runner(
-        evaluation_backend,
-        {.lane = replay::ReplayLaneKind::cpu_reference, .backend_id = "fake_cpu_reference"});
-    const auto unexpected = evaluation_runner.run(trace);
-    REQUIRE(unexpected.failure.has_value());
-    CHECK(unexpected.failure->code == FailureCode::unexpected_evaluation_output);
-    CHECK(unexpected.failure->last_completed_barrier == full_window::kInputBarrier);
-    CHECK(evaluation_backend.calls().size() == 3);
-
     FakeBackend export_backend;
     export_backend.set_bad_export_cardinality(true);
     full_window::Runner export_runner(
@@ -336,10 +318,7 @@ TEST_CASE("CR2-2 CUDA backend accepts empty evaluation and auto-advances the com
     backend.configure({.world_count = 2});
     const auto trace = make_trace();
 
-    CHECK(backend.evaluate({}).execution_episode_products.empty());
-    const std::vector<WorldExecutionEpisodeStepRequest> nonempty_evaluation(1);
-    CHECK_THROWS_AS((void)backend.evaluate({.execution_episode_requests = nonempty_evaluation}),
-                    std::logic_error);
+    CHECK_NOTHROW((void)backend.evaluate({}));
 
     full_window::Runner runner(
         backend, {.lane = replay::ReplayLaneKind::cuda_resident,
