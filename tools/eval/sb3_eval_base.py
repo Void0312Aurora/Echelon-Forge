@@ -23,15 +23,16 @@ from python.env_config import (
 )
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.rl.policy_checkpoint import load_sb3_policy
-from tools.diagnostics.common import add_json_out_arg, add_model_load_args, add_probe_run_args
-
-
-def load_json_config(path: str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, dict):
-        raise TypeError(f"expected dict JSON at {path!r}")
-    return data
+# load_json_config / write_json_output are re-exported for the eval entry
+# points that import them from here; the implementations live in
+# tools.diagnostics.common (identical behavior, previously duplicated).
+from tools.diagnostics.common import (
+    add_json_out_arg,
+    add_model_load_args,
+    add_probe_run_args,
+    load_json_config as load_json_config,
+    write_json_output as write_json_output,
+)
 
 
 def make_env_settings(train_config: dict[str, Any], args: argparse.Namespace, *, include_runtime_overrides: bool) -> dict[str, Any]:
@@ -128,13 +129,3 @@ def add_common_sb3_eval_args(
             choices=list(FLIGHT_SHAPING_BACKENDS),
         )
     add_json_out_arg(parser, help="Optional JSON output path.")
-
-
-def write_json_output(json_out: str, payload: dict[str, Any]) -> None:
-    if not json_out:
-        return
-    out_path = os.path.abspath(json_out)
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=True)
-        f.write("\n")
