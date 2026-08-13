@@ -424,6 +424,11 @@ set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/bindings_runtime_fidelity.cpp
     src/interfaces/python/bindings_runtime_platform.cpp
     src/interfaces/python/bindings_runtime_engagement.cpp
+    # bind_runtime_engagement() sub-slices, in the same registration order.
+    src/interfaces/python/bindings_runtime_engagement_events.cpp
+    src/interfaces/python/bindings_runtime_engagement_damage.cpp
+    src/interfaces/python/bindings_runtime_engagement_track_launch.cpp
+    src/interfaces/python/bindings_runtime_engagement_munition.cpp
     src/interfaces/python/bindings_runtime_kill_chain.cpp
     src/interfaces/python/bindings_runtime_policy.cpp
     src/interfaces/python/bindings_runtime_batch_setup.cpp

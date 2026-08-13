@@ -25,3 +25,13 @@ void bind_runtime_platform_world(nb::module_ &m);
 void bind_runtime_tasking_world(nb::module_ &m);
 void bind_runtime_engine(nb::module_ &m);
 void bind_runtime_facade(nb::module_ &m);
+
+// bind_runtime_engagement() sub-slices.
+//
+// bindings_runtime_engagement.cpp calls these in the order declared below,
+// which is the order the single pre-split bind_runtime_engagement() used.
+// Same registration-order contract as above: it must not be reordered.
+void bind_runtime_engagement_events(nb::module_ &m);
+void bind_runtime_engagement_damage(nb::module_ &m);
+void bind_runtime_engagement_track_launch(nb::module_ &m);
+void bind_runtime_engagement_munition(nb::module_ &m);
