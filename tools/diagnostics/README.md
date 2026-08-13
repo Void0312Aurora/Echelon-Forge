@@ -108,7 +108,9 @@ Frozen experimental GPU helper phase-0 probes:
 
 ## GPU Phase 0 Build
 
-The retained GPU helper scaffolding is still opt-in. To build it:
+The retained GPU helper scaffolding is still opt-in, and every probe below
+carries `EXCLUDE_FROM_ALL`, so a plain `cmake --build` never builds one.
+Name the target explicitly:
 
 ```bash
 cmake -S . -B build-gpu -DEF_ENABLE_CUDA_EXPERIMENTS=ON

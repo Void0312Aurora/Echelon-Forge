@@ -569,49 +569,56 @@ else()
     target_link_libraries(ef_py PRIVATE ef_gpu_experiments)
 endif()
 
-add_executable(ef_gpu_visual_phase0_probe
+# The phase-0 probes are diagnostics entry points with no test, CI or tooling
+# caller: the only references outside their own sources are the two
+# tools/diagnostics READMEs, which already build them by name.  Each one
+# still relinks the whole engine, and gpu_visual_candidate_phase0_probe.cpp
+# does not even compile under MSVC (it calls __builtin_popcount), so leaving
+# them in the default target made `cmake --build` fail on Windows for output
+# nobody consumes.  EXCLUDE_FROM_ALL keeps every probe buildable by name.
+add_executable(ef_gpu_visual_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_visual_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_execution_observation_phase0_probe
+add_executable(ef_gpu_execution_observation_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_execution_observation_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_flight_shaping_phase0_probe
+add_executable(ef_gpu_flight_shaping_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_flight_shaping_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_interaction_broadphase_phase0_probe
+add_executable(ef_gpu_interaction_broadphase_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_interaction_broadphase_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_sensor_candidate_phase0_probe
+add_executable(ef_gpu_sensor_candidate_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_sensor_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_comm_candidate_phase0_probe
+add_executable(ef_gpu_comm_candidate_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_comm_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
-add_executable(ef_gpu_visual_candidate_phase0_probe
+add_executable(ef_gpu_visual_candidate_phase0_probe EXCLUDE_FROM_ALL
     src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE

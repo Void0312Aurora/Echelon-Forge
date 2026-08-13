@@ -96,7 +96,7 @@
 
 ## GPU 阶段 0 构建
 
-保留的 GPU 辅助框架仍然是可选的。要构建它：
+保留的 GPU 辅助脚手架仍然是可选的：下面每个探针都带 `EXCLUDE_FROM_ALL`，普通的 `cmake --build` 不会构建它们，必须显式指定目标名：
 
 ```bash
 cmake -S . -B build-gpu -DEF_ENABLE_CUDA_EXPERIMENTS=ON
