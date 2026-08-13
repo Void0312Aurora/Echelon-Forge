@@ -4,7 +4,7 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/archive_ledger.md`
 Owner: `project documentation`
-Last verified: `2026-08-13`
+Last verified: `2026-08-14`
 
 The retired `docs/Archive/`, `docs/evaluation/`, `docs/manual/`,
 `docs/plan/`, and `docs/task/` containers held historical storage only. Git
@@ -355,3 +355,62 @@ content to its owner instead.
 | `docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.zh.md` | WP9-C Infrastructure Closure | `git show 876a8bb2:docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.zh.md` | 2026-08-13 |
 | `docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md` | WP9-E Integration And Index Sync | `git show 876a8bb2:docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md` | 2026-08-13 |
 | `docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.zh.md` | WP9-E Integration And Index Sync | `git show 876a8bb2:docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.zh.md` | 2026-08-13 |
+
+## Retired Damage-Model Governance Tooling
+
+`tools/maintenance/damage_model.py` routed eight governance domains. Four of
+them -- `benchmark_evidence`, `external_signoff_evidence`, `independent_review`
+and `scope_provenance` -- had no consumer outside that router and the
+damage-model audit tier, so the packages, the audit modules that only drove
+them, and their fixtures were deleted on 2026-08-14. The evidence those
+producers wrote is already retained under
+`docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/`, so only
+the producers are gone. `candidate_artifacts`, `retained_artifacts`,
+`release_governance` and `source_governance` stay: the retained
+`candidate_artifacts` package imports the last two at module scope.
+
+Retrieval works the same way as the table above -- `git show <commit>:<path>`
+prints the file's final content. These rows are code rather than documents, so
+they are deliberately absent from
+`docs/engineering/documentation/reference/retired_documents.json`, which is a
+document-retention surface.
+
+| Path | Description | Last existing commit | Retired |
+| --- | --- | --- | --- |
+| `tools/maintenance/benchmark_evidence/__init__.py` | Package marker for `benchmark_evidence` | `git show ba066a08:tools/maintenance/benchmark_evidence/__init__.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/benchmark_execution_admission.py` | Generate a fail-closed RES-005/006 benchmark execution/admission gate | `git show 33501818:tools/maintenance/benchmark_evidence/benchmark_execution_admission.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/comparison_hashes.py` | Generate A2 mechanism comparison-output hash evidence for RES-005/006 | `git show 76d96bf5:tools/maintenance/benchmark_evidence/comparison_hashes.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/debris_admission.py` | Generate the fail-closed RES-005 TP-21 debris admission gate | `git show 33501818:tools/maintenance/benchmark_evidence/debris_admission.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/mechanism_evidence.py` | Generate fail-closed A2 mechanism benchmark evidence for RES-003..006 | `git show 76d96bf5:tools/maintenance/benchmark_evidence/mechanism_evidence.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/selected_debris_case_admission.py` | Generate the RES-005 TP-21 selected-case admission review packet | `git show 33501818:tools/maintenance/benchmark_evidence/selected_debris_case_admission.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/selected_debris_case_packet.py` | Generate a fail-closed TP-21 selected-case candidate packet for RES-005 | `git show 33501818:tools/maintenance/benchmark_evidence/selected_debris_case_packet.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/spreadsheet_lineage_tolerance_packet.py` | Generate the RES-006 BEC-O lineage/tolerance review candidate packet | `git show 33501818:tools/maintenance/benchmark_evidence/spreadsheet_lineage_tolerance_packet.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/spreadsheet_recalculation_admission.py` | Generate the RES-006 BEC-O recalculation admission gate | `git show 33501818:tools/maintenance/benchmark_evidence/spreadsheet_recalculation_admission.py` | 2026-08-14 |
+| `tools/maintenance/benchmark_evidence/spreadsheet_replacement_tolerance.py` | Generate the RES-006 BEC-O replacement/tolerance admission review packet | `git show 33501818:tools/maintenance/benchmark_evidence/spreadsheet_replacement_tolerance.py` | 2026-08-14 |
+| `tools/maintenance/external_signoff_evidence/__init__.py` | Package marker for `external_signoff_evidence` | `git show 12f3319e:tools/maintenance/external_signoff_evidence/__init__.py` | 2026-08-14 |
+| `tools/maintenance/external_signoff_evidence/admission_preflight.py` | Generate the damage-model signoff admission preflight packet | `git show 33501818:tools/maintenance/external_signoff_evidence/admission_preflight.py` | 2026-08-14 |
+| `tools/maintenance/external_signoff_evidence/intake_contract.py` | Generate the damage-model external signoff intake contract | `git show 33501818:tools/maintenance/external_signoff_evidence/intake_contract.py` | 2026-08-14 |
+| `tools/maintenance/external_signoff_evidence/packet_template.py` | Generate a template-only damage-model external signoff packet | `git show 33501818:tools/maintenance/external_signoff_evidence/packet_template.py` | 2026-08-14 |
+| `tools/maintenance/external_signoff_evidence/signoff_request.py` | Generate the damage-model source-rights signoff request packet | `git show 76d96bf5:tools/maintenance/external_signoff_evidence/signoff_request.py` | 2026-08-14 |
+| `tools/maintenance/independent_review/__init__.py` | Package marker for `independent_review` | `git show 786c6144:tools/maintenance/independent_review/__init__.py` | 2026-08-14 |
+| `tools/maintenance/independent_review/effect_scale_review.py` | Generate the Stage B effect-scale independent-review gate for A2 | `git show 76d96bf5:tools/maintenance/independent_review/effect_scale_review.py` | 2026-08-14 |
+| `tools/maintenance/independent_review/review_closeout.py` | Close out RES-011/012 independent review evidence for bounded Stage B only | `git show 76d96bf5:tools/maintenance/independent_review/review_closeout.py` | 2026-08-14 |
+| `tools/maintenance/independent_review/scope_bucket_review.py` | Gate Stage B scope/bucket independent review for RES-007 and RES-008 | `git show 76d96bf5:tools/maintenance/independent_review/scope_bucket_review.py` | 2026-08-14 |
+| `tools/maintenance/independent_review/uncertainty_review.py` | Gate RES-011 uncertainty review for the A2 blast-fragmentation package | `git show 76d96bf5:tools/maintenance/independent_review/uncertainty_review.py` | 2026-08-14 |
+| `tools/maintenance/scope_provenance/__init__.py` | Package marker for `scope_provenance` | `git show 3aa57706:tools/maintenance/scope_provenance/__init__.py` | 2026-08-14 |
+| `tools/maintenance/scope_provenance/geometry_warhead_row_provenance.py` | Generate the A2 geometry/warhead row provenance gate | `git show 76d96bf5:tools/maintenance/scope_provenance/geometry_warhead_row_provenance.py` | 2026-08-14 |
+| `tools/maintenance/scope_provenance/mechanism_source_closeout.py` | Evaluate the A2 blast-fragmentation mechanism/source closeout gate | `git show 76d96bf5:tools/maintenance/scope_provenance/mechanism_source_closeout.py` | 2026-08-14 |
+| `tools/maintenance/scope_provenance/target_geometry_closeout.py` | Close out RES-003 only for Stage B witness-geometry bookkeeping | `git show 76d96bf5:tools/maintenance/scope_provenance/target_geometry_closeout.py` | 2026-08-14 |
+| `tools/maintenance/scope_provenance/warhead_scope_closeout.py` | Close out RES-004 only for Stage B warhead-family scope | `git show 0cc2ba36:tools/maintenance/scope_provenance/warhead_scope_closeout.py` | 2026-08-14 |
+| `tests/architecture/damage_model/test_benchmark_evidence_admission.py` | test_benchmark_evidence_admission.py | `git show c48e2d46:tests/architecture/damage_model/test_benchmark_evidence_admission.py` | 2026-08-14 |
+| `tests/architecture/damage_model/test_benchmark_recalculation_admission.py` | test_benchmark_recalculation_admission.py | `git show c48e2d46:tests/architecture/damage_model/test_benchmark_recalculation_admission.py` | 2026-08-14 |
+| `tests/architecture/damage_model/test_external_signoff_admission_preflight.py` | test_external_signoff_admission_preflight.py | `git show c48e2d46:tests/architecture/damage_model/test_external_signoff_admission_preflight.py` | 2026-08-14 |
+| `tests/architecture/damage_model/test_external_signoff_intake_contracts.py` | test_external_signoff_intake_contracts.py | `git show c48e2d46:tests/architecture/damage_model/test_external_signoff_intake_contracts.py` | 2026-08-14 |
+| `tests/architecture/damage_model/test_independent_review_closeout_gates.py` | test_independent_review_closeout_gates.py | `git show c48e2d46:tests/architecture/damage_model/test_independent_review_closeout_gates.py` | 2026-08-14 |
+| `tests/architecture/damage_model/test_mechanism_source_evidence_closeout.py` | test_mechanism_source_evidence_closeout.py | `git show c48e2d46:tests/architecture/damage_model/test_mechanism_source_evidence_closeout.py` | 2026-08-14 |
+| `tests/architecture/damage_model/test_scope_provenance_closeout_gates.py` | test_scope_provenance_closeout_gates.py | `git show c48e2d46:tests/architecture/damage_model/test_scope_provenance_closeout_gates.py` | 2026-08-14 |
+| `tests/architecture/damage_model/fixtures/external_signoff_intake/invalid_external_signoff_packet_raw_field.json` | External signoff intake fixture: packet carrying a forbidden raw source field | `git show 2b4b04b4:tests/architecture/damage_model/fixtures/external_signoff_intake/invalid_external_signoff_packet_raw_field.json` | 2026-08-14 |
+| `tests/architecture/damage_model/fixtures/external_signoff_intake/valid_external_signoff_packet_shape.json` | External signoff intake fixture: accepted packet shape | `git show 2b4b04b4:tests/architecture/damage_model/fixtures/external_signoff_intake/valid_external_signoff_packet_shape.json` | 2026-08-14 |
+| `tests/tools/fixtures/argparse_migration_help/review_closeout.txt` | Pinned `--help` capture for `independent-review review-closeout` | `git show 8bd21d86:tests/tools/fixtures/argparse_migration_help/review_closeout.txt` | 2026-08-14 |
+| `tests/tools/fixtures/argparse_migration_help/scope_bucket_review.txt` | Pinned `--help` capture for `independent-review scope-bucket-review` | `git show 8bd21d86:tests/tools/fixtures/argparse_migration_help/scope_bucket_review.txt` | 2026-08-14 |
+| `tests/tools/fixtures/argparse_migration_help/uncertainty_review.txt` | Pinned `--help` capture for `independent-review uncertainty-review` | `git show 8bd21d86:tests/tools/fixtures/argparse_migration_help/uncertainty_review.txt` | 2026-08-14 |
