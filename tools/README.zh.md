@@ -5,7 +5,7 @@
 ## 域状态口径
 
 - 这里的大多数通用 eval 示例仍面向 air/execution 任务；cooperative/common 由 maintained learned-policy 与 leader diagnostics 路径覆盖。
-- active training、eval 和 diagnostics 工具使用 runtime-facade / world-batch 路径。直接构造 `UniversalEnv` 的工具应进入 archive/quarantine，不属于维护中的 tools catalog。
+- active training、eval 和 diagnostics 工具使用 runtime-facade / world-batch 路径。直接构造 `UniversalEnv` 的工具直接退役，不再在树内归档，也不属于维护中的 tools catalog。
 - naval station pre-fire 入口有一个受限 maintained gate：`tools/eval/naval_station_policy_eval.py`。
 - ground tasking/schema bootstrap 目前还没有 `tools/` 下的 maintained eval 或 diagnostics runner；不要从本目录清单推断完整 ground runtime 已支持。
 
@@ -21,8 +21,6 @@
   - 固定版本的环境/场景数据生成器适配、导出与校验入口。
 - `tools/maintenance/`
   - 工作区审计和清理辅助函数。
-- `tools/archive/`
-  - 已归档的临时探测脚本，从仓库根目录迁移而来。
 
 ## 评估
 
@@ -114,16 +112,52 @@
 - [damage_model.py](maintenance/damage_model.py)
   - 统一的 retained-artifact CLI，覆盖 manifest hash 与 authority-guard 完整性检查。
 
-## 归档
+## 退役登记
 
-- [README.md](archive/README.md)
-  - 归档的根级探测的范围说明。
-- [batch_api_probe.py](archive/batch_api_probe.py)
-  - 用于 C++ 批处理准备 API 的快速手动探测。
-- [world_batch_vec_env_benchmark.py](archive/world_batch_vec_env_benchmark.py)
-  - 已归档的 vec-env 吞吐量基准测试，早于当前的诊断布局。
-- [diagnose_training_matrix.py](archive/diagnose_training_matrix.py)
-  - 已归档的辅助函数，用于解析旧版 `evaluate.py` 的文本输出，适用于小型模型/场景矩阵。
+`tools/archive/` 已不存在。把退役的一次性探测留在工作树里，只会在每次普查时
+消耗审阅注意力，而它提供的东西 git 历史本来就有；因此退役现在等于「删除 +
+本登记表」。用 `git show <commit>:<path>` 取回任意条目。
+
+下列条目均在提交 `3ac600a6`（它们最后存在的提交）退役。退役前经过四列引用
+审计：`tests/`、CI、维护中的（Tier A/B）文档与其他 `tools/` 入口均无引用。
+
+### 2026-08-13 退役 —— `tools/archive/`（整目录）
+
+| 路径 | 用途 | 取回 |
+| --- | --- | --- |
+| `tools/archive/README.md` | 归档根级探测集合的范围说明。 | `git show 3ac600a6:tools/archive/README.md` |
+| `tools/archive/README.zh.md` | 上述范围说明的中文对照页。 | `git show 3ac600a6:tools/archive/README.zh.md` |
+| `tools/archive/analyze_cooperative_observation_scales.py` | 直接构造 `UniversalEnv` 的单环境观测量纲采样器。 | `git show 3ac600a6:tools/archive/analyze_cooperative_observation_scales.py` |
+| `tools/archive/arma_proxy_backend_echelon_env.py` | 基于 raw `UniversalEnv` 的 Arma proxy backend，已被维护中的本地 stub 取代。 | `git show 3ac600a6:tools/archive/arma_proxy_backend_echelon_env.py` |
+| `tools/archive/batch_api_probe.py` | C++ 批处理准备 API 的手动探测。 | `git show 3ac600a6:tools/archive/batch_api_probe.py` |
+| `tools/archive/check_binding.py` | 供人工查看的 `ef_py` binding 成员转储。 | `git show 3ac600a6:tools/archive/check_binding.py` |
+| `tools/archive/coarse_route_segments.py` | 基于 raw `UniversalEnv` 与直接加载策略的粗航段 rollout 基准。 | `git show 3ac600a6:tools/archive/coarse_route_segments.py` |
+| `tools/archive/diagnose_training_matrix.py` | 解析旧版 `evaluate.py` 文本汇总的小型模型/场景矩阵辅助脚本。 | `git show 3ac600a6:tools/archive/diagnose_training_matrix.py` |
+| `tools/archive/legacy_scripts/run_p2_diagnostic_matrix.sh` | 运行旧 P2 stage-A/stage-B 诊断矩阵的 shell 包装。 | `git show 3ac600a6:tools/archive/legacy_scripts/run_p2_diagnostic_matrix.sh` |
+| `tools/archive/legacy_scripts/train_p2_aggressive.sh` | 一次性 P2 aggressive 训练配置的 shell 包装。 | `git show 3ac600a6:tools/archive/legacy_scripts/train_p2_aggressive.sh` |
+| `tools/archive/legacy_test_diagnostics/diagnose_cruise_ood.py` | 一次性巡航 out-of-distribution 回合分类。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_cruise_ood.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_drop_physics.py` | 一次性自由落体物理量转储（直接读 C++ 内核）。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_drop_physics.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_gear_damage.py` | 一次性起落架损伤系统检查。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_gear_damage.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_physics.py` | 一次性推力/阻力/摩擦量转储（直接读 C++）。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_physics.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_reward_v2.py` | 一次性排查异常 `ep_rew_mean`。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_reward_v2.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_takeoff_physics.py` | 一次性起飞滑跑物理量转储。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_takeoff_physics.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_termination.py` | 一次性训练回合早停原因拆解。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_termination.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_terrain.py` | 一次性出生点地形分类检查。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_terrain.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_training.py` | 一次性训练环境健康检查。 | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_training.py` |
+| `tools/archive/visual_resolution.py` | 基于 raw `UniversalEnv` 的视觉降采样基准。 | `git show 3ac600a6:tools/archive/visual_resolution.py` |
+| `tools/archive/world_batch_runtime.py` | 早于维护中 runtime 家族的 raw `WorldBatchRuntime` 基准。 | `git show 3ac600a6:tools/archive/world_batch_runtime.py` |
+| `tools/archive/world_batch_vec_env_benchmark.py` | 早于当前诊断布局的 vec-env 吞吐基准。 | `git show 3ac600a6:tools/archive/world_batch_vec_env_benchmark.py` |
+
+### 2026-08-13 退役 —— 一次性几何渲染脚本
+
+两个脚本都把 `docs/systems/effects/reviews/f16c_target_geometry_20260614/`
+下的单个密封 review packet 写死在代码里，并固定 `GENERATED_ON = "2026-06-15"`
+渲染日期。它们产出的 packet 已密封，重跑不属于维护中的工作流。
+
+| 路径 | 用途 | 取回 |
+| --- | --- | --- |
+| `tools/geometry/target_geometry_lethality_probability_matrix_plot.py` | 为 20260614 review packet 渲染 F-16C 杀伤概率矩阵。 | `git show 3ac600a6:tools/geometry/target_geometry_lethality_probability_matrix_plot.py` |
+| `tools/geometry/target_geometry_proxy_independent_variable_heatmap.py` | 为同一 packet 渲染 proxy-only 自变量热力图。 | `git show 3ac600a6:tools/geometry/target_geometry_proxy_independent_variable_heatmap.py` |
 
 ## 常见用法
 
@@ -241,4 +275,4 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 - 协同轨迹诊断应扩展 `tools/diagnostics/diagnose_cooperative_trajectory.py` 和 `tools/diagnostics/cooperative_trajectory_base.py`，而不是添加任务特定的包装 CLI。
 - 临时探测和矩阵扫描应归入 `tools/diagnostics/`。
 - 清理/审计辅助函数应归入 `tools/maintenance/`。
-- 已归档的临时脚本应移至 `tools/archive/`，而不是留在仓库根目录。
+- 临时脚本的退役方式是删除并在「退役登记」补一行，而不是搬进树内归档目录。

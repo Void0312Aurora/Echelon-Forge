@@ -168,8 +168,9 @@ Then launch the local Arma side against the forwarded endpoint, for example
 with the existing PowerShell helper in `ArmaOnly` mode plus
 `-ReuseExistingBackend`.
 
-The former repo-side `UniversalEnv`-backed Arma proxy backend is archived under
-`tools/archive/`; it is no longer a maintained diagnostics entrypoint.
+The former repo-side `UniversalEnv`-backed Arma proxy backend is retired; see
+the Retirement Register in `tools/README.md` for its recovery address. It is no
+longer a maintained diagnostics entrypoint.
 
 Show family-specific help:
 

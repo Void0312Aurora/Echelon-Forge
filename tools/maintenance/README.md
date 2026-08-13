@@ -88,7 +88,8 @@ Maintenance guidance:
   instead of duplicating `.venv` and build-dir detection logic.
 - Maintained Windows workflows should prefer `cmo_env.ps1` instead of assuming
   WSL, `.venv/bin/python`, or Linux `.so` extension artifacts.
-- Historical maintenance helpers should move to `tools/archive/legacy_scripts/`
+- Historical maintenance helpers should be deleted with a line in the
+  retirement register in `tools/README.md` (git history is the archive)
   instead of accumulating here.
 - Doc translation batches should prefer `translate_docs_batch.py` over ad hoc
   one-off scripts so file pairing and draft-note behavior stay consistent.

@@ -81,8 +81,9 @@ Standalone Python tests should now be the exception, not the default.
 
 Manual one-off probes should not live at the top level of `tests/`.
 If a file is primarily for human inspection rather than automated regression,
-prefer `tools/diagnostics/` for maintained diagnostics or `tools/archive/` for
-legacy/manual probes kept only for reference.
+prefer `tools/diagnostics/` for maintained diagnostics; legacy or manual probes
+kept only for reference should be deleted with a retirement-register line in
+`tools/README.md` (git history is the archive).
 
 When a standalone test is needed, prefer:
 

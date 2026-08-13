@@ -76,7 +76,7 @@
 - 这里的脚本可以是 Shell 或 Python，但默认应面向工作空间且非破坏性。
 - 维护的 Linux/macOS Shell 工作流应优先使用 `cmo_env.sh`，而非重复 `.venv` 和构建目录检测逻辑。
 - 维护的 Windows 工作流应优先使用 `cmo_env.ps1`，而非假设 WSL、`.venv/bin/python` 或 Linux 扩展名 `.so` 的工件。
-- 历史维护辅助工具应移至 `tools/archive/legacy_scripts/`，而非在此堆积。
+- 历史维护辅助工具应直接删除并在 `tools/README.md` 的退役登记中留一行（git 历史即归档），而非在此堆积。
 - 文档翻译批次应优先使用 `translate_docs_batch.py`，而非临时一次性脚本，以保持文件配对和草稿注释行为的一致性。
 
 推荐的 Linux/macOS 用法：
