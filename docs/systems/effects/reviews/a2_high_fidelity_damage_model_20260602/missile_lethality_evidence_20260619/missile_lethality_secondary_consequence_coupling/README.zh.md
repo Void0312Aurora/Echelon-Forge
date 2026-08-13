@@ -13,7 +13,7 @@ C++ 验证、P6 更广 runtime smoke 和 P7 验收均已完成。
 
 - A2 follow-on 父索引：[../../README.zh.md](../../README.zh.md)
 - MLF-1 杀伤链契约和阶段边界：
-  [../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md](../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md)
+  `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md`
 - MLF-6 结构失效事实写入器（accepted / archived 上游证据）：
   [../missile_lethality_structural_failure/README.zh.md](../missile_lethality_structural_failure/README.zh.md)
 - MLF-6 验收门和后置权限：
@@ -160,5 +160,4 @@ MLF-10 校准门。
 ## 归档
 
 MLF-7 已物理移动到父级 A2 本地归档，并登记在
-[../../archive_registry.zh.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md)。本地
-[archive/](archive/README.zh.md) 目录仅保留给这个已归档证据包未来内部被取代的记录。
+`git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md`。

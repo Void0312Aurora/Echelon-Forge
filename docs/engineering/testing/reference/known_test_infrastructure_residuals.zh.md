@@ -37,5 +37,5 @@ Content status: 从已完成 T6 账本抽取的当前所有者本地索引；条
 ## 来源与保留
 
 日期化复现和已修复项仍保留在
-[已完成的 T6 账本](../../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.zh.md)。
+已完成的 T6 账本 (`git show 77610218:docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.zh.md`)。
 本文是测试维护者的当前入口，不复制账本中的历史迭代叙事。

@@ -13,7 +13,7 @@ Inputs:
 
 - Parent A2 follow-on index: [../../README.md](../../README.md)
 - MLF-1 chain contract and phase boundaries:
-  [../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md](../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md)
+  `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md`
 - MLF-6 structural failure fact writer (accepted / archived upstream evidence):
   [../missile_lethality_structural_failure/README.md](../missile_lethality_structural_failure/README.md)
 - MLF-6 acceptance gate and deferred authorities:
@@ -179,6 +179,4 @@ Deferred:
 ## Archive
 
 MLF-7 has been physically archived under the parent A2 local archive and
-registered in [../../archive_registry.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.md). The local
-[archive/](archive/README.md) directory remains only for future superseded
-records within this archived evidence packet.
+registered in `git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.md`.

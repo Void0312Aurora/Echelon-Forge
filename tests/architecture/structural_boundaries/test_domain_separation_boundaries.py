@@ -186,31 +186,3 @@ def test_domain_separation_split_generic_files_route_domain_owned_runtime() -> N
   assert '#include "models/domains/air/default_effects_air_domain.h"' in routing_text
   assert '#include "models/domains/naval/default_effects_naval_domain.h"' in routing_text
   assert '#include "models/domains/ground/default_effects_ground_domain.h"' in routing_text
-
-def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_blockers_explicit() -> None:
-  text_en = _text(STRUCTURAL_DOC_EN)
-  text_zh = _text(STRUCTURAL_DOC_ZH)
-
-  for required in (
-    "Noether pass",
-    "`PilotWeaponRelease` and naval mission weapon release now route through named",
-    "`default_unit_factory.h` no longer direct-includes `legacy_command.h`",
-    "`default_factory_spawn_command_projection.h` seed seam remains evaluation/guard",
-  ):
-    assert required in text_en
-
-  for required in (
-    "Noether pass",
-    "`PilotWeaponRelease` 与 naval mission weapon release 现在都通过命名 helper system 注册",
-    "`default_unit_factory.h` 已不再 direct include `legacy_command.h`",
-    "`default_factory_spawn_command_projection.h` seed seam 在 typed control-state",
-  ):
-    assert required in text_zh
-
-  for forbidden in (
-    "naval post-step fire loop remains the explicit ordering blocker",
-    "naval post-step ordering blocker remains live",
-    "naval post-step fire loop 仍开放",
-  ):
-    assert forbidden not in text_en
-    assert forbidden not in text_zh

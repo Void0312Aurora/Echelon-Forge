@@ -38,7 +38,7 @@ thin-prism/frustum corrections it records `0` receiver-prior protrusions and
 does not change the F-16C fine-geometry acceptance state.
 
 Geometry acceptance closeout:
-[archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md).
+`git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md`.
 
 Chinese canonical:
 [missile_lethality_target_geometry_current_status_20260611.zh.md](missile_lethality_target_geometry_current_status_20260611.zh.md).

@@ -93,9 +93,9 @@ MLF-5 热力图复核中：
 - A2 MLF-5 归档入口：
   [docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/README.zh.md](../../../reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/README.zh.md)
 - MLF-5 扩大方位/距离矩阵：
-  [missile_lethality_component_failure_expanded_matrix_20260611.zh.md](../../../reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.zh.md)
+  missile_lethality_component_failure_expanded_matrix_20260611.zh.md (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.zh.md`)
 - MLF-5 可视化摘要：
-  [missile_lethality_component_failure_visual_summary_20260611.zh.md](../../../reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.zh.md)
+  missile_lethality_component_failure_visual_summary_20260611.zh.md (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.zh.md`)
 - F-16 当前几何数据：
   [examples/config/database/aircraft/units/f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json)
 - MQ-9 当前几何数据：

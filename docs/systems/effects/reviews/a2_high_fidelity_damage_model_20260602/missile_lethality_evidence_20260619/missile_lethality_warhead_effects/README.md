@@ -2,7 +2,7 @@
 
 Status: `2026-06-10` archived pointer. The accepted MLF-3 evidence package was
 moved to
-[archive/mlf_3_warhead_effects_accepted_20260610](archive/mlf_3_warhead_effects_accepted_20260610/README.md).
+archive/mlf_3_warhead_effects_accepted_20260610 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/README.md`).
 
 Language:
 
@@ -31,5 +31,3 @@ crashes, or is killed.
 MLF-4 is now complete and archived for continuous-rod/cutting exposure facts;
 follow-on component failure probability, structural breakup, debris/wreck, or
 Pk still need separate subprojects.
-
-Archive index: [archive/README.md](archive/README.md)

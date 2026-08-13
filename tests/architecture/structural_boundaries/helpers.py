@@ -389,25 +389,6 @@ DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS = (
   '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"',
   '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.h"',
 )
-STRUCTURAL_DOC_EN = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp22_legacy_compatibility_retirement"
-  / "wp22_structural_god_file_decomposition_cluster_20260522.md"
-)
-STRUCTURAL_DOC_ZH = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp22_legacy_compatibility_retirement"
-  / "wp22_structural_god_file_decomposition_cluster_20260522.zh.md"
-)
-
 COUNTERFACTUAL_CONSTANT_ALLOWLIST = {
   "kReplayRestoreSupportBoundaryUnsupported",
   "kWorldlineBranchSupportStateMetadataOnly",

@@ -166,7 +166,5 @@ Held in MLF-8 until evidence exists:
 ## Archive
 
 MLF-8 has been physically archived under the parent A2 local archive and
-registered in [../../archive_registry.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.md). The
-original active path now contains only a lightweight pointer. The local
-[archive/](archive/README.md) directory remains only for future superseded
-records within this archived evidence packet.
+registered in `git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.md`. The
+original active path now contains only a lightweight pointer.

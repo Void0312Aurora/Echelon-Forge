@@ -34,7 +34,7 @@ harness defects, source-rights admission, or C++ include-direction decisions.
 ## Evidence Boundary
 
 The source ledger and its dated verification records are retained in the
-[completed T6 ledger](../../../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md).
+completed T6 ledger (`git show 77610218:docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md`).
 The ledger records the two-binary inherence evidence for the I65/I97
 calibration group and the exact test node IDs. This page is a current route,
 not a replacement for those historical measurements.

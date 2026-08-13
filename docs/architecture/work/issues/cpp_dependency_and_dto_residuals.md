@@ -44,7 +44,7 @@ outside the completed ledger's write set. Neither is an implementation task.
 ## Evidence Boundary And Promotion Gate
 
 The source matrix is retained in the
-[completed T6 ledger](../../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md).
+completed T6 ledger (`git show 77610218:docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md`).
 Close an edge only after a consumer census, dependency-direction gate, ABI/
 binding parity evidence where applicable, and an independently reviewed
 architecture or DTO-family decision. A type move that merely inverts the edge

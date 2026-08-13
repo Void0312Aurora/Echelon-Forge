@@ -325,4 +325,3 @@ python <local markdown-link check>
 
 - Parent review README and Chinese companion must link this subproject before
   the subproject is treated as the current test-system governance surface.
-- Archive is empty except for [archive/README.md](../../../../task/review/test_system_governance/archive/README.md).

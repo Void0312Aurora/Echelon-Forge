@@ -27,15 +27,25 @@ UPDATE_ENV = "EF_UPDATE_DOCUMENT_TIER_CENSUS"
 A2_SEALED_PACKET = "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/"
 
 
-def _tracked_markdown() -> list[str]:
+def _git_markdown(*flags: str) -> set[str]:
   result = subprocess.run(
-    ["git", "ls-files", "--", "docs"],
+    ["git", "ls-files", *flags, "--", "docs"],
     cwd=REPO_ROOT,
     check=True,
     capture_output=True,
     text=True,
   )
-  return sorted(line for line in result.stdout.splitlines() if line.endswith(".md"))
+  return {line for line in result.stdout.splitlines() if line.endswith(".md")}
+
+
+def _tracked_markdown() -> list[str]:
+  """Markdown that is tracked *and* present in the working tree.
+
+  A deleted-but-not-yet-committed path is still in the index and would be
+  counted into a tier it no longer occupies; on a clean checkout the
+  subtraction is empty and this is plain `git ls-files`.
+  """
+  return sorted(_git_markdown() - _git_markdown("--deleted"))
 
 
 def _measure() -> dict[str, object]:

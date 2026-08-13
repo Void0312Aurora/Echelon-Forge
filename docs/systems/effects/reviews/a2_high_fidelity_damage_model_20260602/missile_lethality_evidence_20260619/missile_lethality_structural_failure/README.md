@@ -19,9 +19,9 @@ Inputs:
 
 - Parent A2 task index: [../../README.md](../../README.md)
 - MLF-1 chain contract (authoritative MLF phase definitions and boundaries):
-  [../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md](../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md)
+  `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md`
 - MLF-5 component failure archive (upstream output, the only MLF-6 consumption surface):
-  [../missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.md](../missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.md)
+  `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.md`
 - A2 target geometry retained follow-on (F-16C 32-component receiver map):
   [../../missile_lethality_target_geometry/README.md](../../../../../../../README.md)
 - A8 damage effect chain (existing fire/fuel/sensor/engine propagation MLF-7 will extend):
@@ -355,5 +355,4 @@ Deferred:
 ## Archive
 
 This subproject is now itself an archived local A2 record. The parent archive
-registry is [../README.md](../README.md), and the subproject's own nested
-archive placeholder remains [archive/README.md](archive/README.md).
+registry is [../README.md](../README.md).

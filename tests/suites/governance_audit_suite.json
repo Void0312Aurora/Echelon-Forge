@@ -19,6 +19,7 @@
     "tests/architecture/damage_model/test_scoped_release_identity_gate.py",
     "tests/architecture/damage_model/test_source_admission_audit.py",
     "tests/architecture/damage_model/test_source_evidence_governance.py",
+    "tests/architecture/governance/test_archive_retirement.py",
     "tests/architecture/governance/test_doc_closure_audit.py",
     "tests/architecture/governance/test_docs_information_architecture.py",
     "tests/architecture/governance/test_document_link_audit.py",

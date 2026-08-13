@@ -21,7 +21,10 @@ TARGET_ROOTS = {
   "systems",
 }
 ACTIVE_LEGACY_ROOTS: set[str] = set()
-ARCHIVE_ONLY_ROOTS = {
+# Retired on 2026-08-13; recorded in docs/archive_ledger.md. Kept named here so
+# the assertion below is about specific containers rather than a bare "roots
+# match TARGET_ROOTS", which would not say why these five are called out.
+RETIRED_LEGACY_ROOTS = {
   "Archive",
   "evaluation",
   "manual",
@@ -30,15 +33,25 @@ ARCHIVE_ONLY_ROOTS = {
 }
 
 
-def _tracked_docs_paths() -> list[str]:
+def _git_docs_paths(*flags: str) -> set[str]:
   result = subprocess.run(
-    ["git", "ls-files", "--", "docs"],
+    ["git", "ls-files", *flags, "--", "docs"],
     cwd=REPO_ROOT,
     check=True,
     capture_output=True,
     text=True,
   )
-  return [line for line in result.stdout.splitlines() if line]
+  return {line for line in result.stdout.splitlines() if line}
+
+
+def _tracked_docs_paths() -> list[str]:
+  """Paths that are tracked *and* present, so every caller may read them.
+
+  The index still carries a path whose deletion is staged but not committed.
+  Subtracting `--deleted` keeps these checks describing the working tree; on a
+  clean checkout the subtraction is empty.
+  """
+  return sorted(_git_docs_paths() - _git_docs_paths("--deleted"))
 
 
 def _is_owner_local_work_or_review_entry(path: str) -> bool:
@@ -64,22 +77,25 @@ def test_tracked_docs_use_registered_top_level_roots() -> None:
   }
 
   assert TARGET_ROOTS <= roots
-  assert roots <= TARGET_ROOTS | ACTIVE_LEGACY_ROOTS | ARCHIVE_ONLY_ROOTS
+  assert roots <= TARGET_ROOTS | ACTIVE_LEGACY_ROOTS
   assert {"agent", "archive", "book", "forward", "log"}.isdisjoint(roots)
 
 
-def test_archive_only_legacy_roots_contain_archives_only() -> None:
+def test_retired_legacy_roots_stay_retired() -> None:
   tracked = _tracked_docs_paths()
 
-  for root in ("evaluation", "manual", "plan", "task"):
-    legacy_paths = [
-      path for path in tracked if path.startswith(f"docs/{root}/")
-    ]
-    assert legacy_paths
-    assert all(
-      any(part.lower() == "archive" for part in Path(path).parts[2:])
-      for path in legacy_paths
-    )
+  surviving = sorted(
+    root
+    for root in RETIRED_LEGACY_ROOTS
+    if any(path.startswith(f"docs/{root}/") for path in tracked)
+  )
+
+  assert surviving == [], (
+    "these containers were deleted on 2026-08-13 and their contents recorded "
+    "in docs/archive_ledger.md; route new content to a target root instead of "
+    f"rebuilding them: {surviving}"
+  )
+  assert (REPO_ROOT / "docs/archive_ledger.md").is_file()
 
 
 def test_plan_and_task_authority_is_routed_to_content_owners() -> None:

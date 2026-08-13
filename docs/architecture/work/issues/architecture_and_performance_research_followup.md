@@ -72,8 +72,8 @@ This indicates:
 
 Although the old architecture documents are marked as archived, their judgment of real code hotspots is still basically accurate:
 
-- [docs/Archive/architecture/layers/execution_layer.md](../../../Archive/architecture/layers/execution_layer.md)
-- [docs/Archive/architecture/layers/operation_physics_layer.md](../../../Archive/architecture/layers/operation_physics_layer.md)
+- `git show 3e677c20:docs/Archive/architecture/layers/execution_layer.md`
+- `git show 3e677c20:docs/Archive/architecture/layers/operation_physics_layer.md`
 
 The structural risks they point out still hold today:
 

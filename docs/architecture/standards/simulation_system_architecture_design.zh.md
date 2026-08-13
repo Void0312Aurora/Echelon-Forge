@@ -18,7 +18,6 @@ Verification boundary: 已复核所有者路径、生命周期、权威关系与
 - 英文主文：[simulation_system_architecture_design.md](simulation_system_architecture_design.md)
 - 既有分层方案：[system_layering_and_engine_encapsulation_plan.md](../work/issues/system_layering_and_engine_encapsulation_plan.md)
 - 性能路线调研：[architecture_and_performance_research_followup.md](../work/issues/architecture_and_performance_research_followup.md)
-- 任务执行入口：[../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md)
 
 状态：维护中的严格架构基线。实验面、阶段契约、内核不变式、表示策略与
 Learning face 已于 2026-07-20 纳入本基线；所有者路径和当前权威边界于
@@ -243,7 +242,7 @@ Event 按 `(timestamp, priority, event_id)` 确定性排序。`timestamp` 决定
 Clock domain 默认使用嵌套触发。base tick 拥有外层确定性 schedule，低频 node 按声明的倍数或 schedule slot 运行。独立 clock domain 只有在冻结计划明确 deterministic merge policy 和 barrier 处 event ordering 时才允许进入维护路径。
 
 这些调度语义的当前冻结计划是
-[WP2.5 调度语义冻结](../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md)。
+WP2.5 调度语义冻结 (`git show 876a8bb2:docs/task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md`)。
 它在 facade hardening 或 validation harness 依赖这些规则前，冻结 event
 family priority、state-shard versioning、barrier visibility、clock-domain
 merge policy、deterministic replay 输入与 `StageNodeManifest` schema。
@@ -489,13 +488,13 @@ Platform =
 - CUDA helper 应通过 facade/backend packet 接入，尤其是 visual、observation、broadphase、flight shaping 和未来 resident-state 路径。
 - Backend profile taxonomy、parity budget、resident-state 边界与 capability
   projection 规则由
-  [WP6 后端配置文件策略](../../task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)
+  WP6 后端配置文件策略 (`git show 876a8bb2:docs/task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md`)
   及其 registry 约束。
 - WP6 之后的实现准备线是
-  [WP7 后端能力物化](../../task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)，
+  WP7 后端能力物化 (`git show a32e67bd:docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md`)，
   它物化 registry、projection、promotion-evidence 与 multi-fidelity entry
   任务，但不晋级候选后端能力；其
-  [验收审查](../../task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
+  验收审查 (`git show e7e97d23:docs/task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md`)
   只验收文档与实现准备计划。
 - device-resident state 只能放在能够描述 host-owned state、backend-owned state、partial sync 与 observation-only sync 的契约之后。
 - device-resident node 必须声明 host-visible state 何时同步，以及 observation 是 snapshot、partial view 还是 explicit export。
@@ -563,30 +562,30 @@ Platform =
   仍作为 facade 契约输入。
 - [领域 owner 索引](../../domains/README.zh.md) 是 Air、Naval、Ground 与 Joint
   ownership 拆分的当前路由。
-- [../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md)
+- `git show 3c15fb6d:docs/task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md`
   是把本文档转化为分阶段工作的执行子项目。
-- [../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md](../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md)
+- `git show 876a8bb2:docs/task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md`
   是插入在 contract freeze 与 facade alignment 之间的 `WP2.5` 调度语义冻结。
-- [../../task/simulation_architecture/archive/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md](../../task/simulation_architecture/archive/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md)
+- `git show a32e67bd:docs/task/simulation_architecture/archive/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md`
   是把信息状态和 agent 边界补充应用到维护中前端 surface 的 `WP4` facade 对齐任务族。
-- [../../task/simulation_architecture/archive/wp5_validation_harness/validation_harness_wp5_20260519.zh.md](../../task/simulation_architecture/archive/wp5_validation_harness/validation_harness_wp5_20260519.zh.md)
+- `git show 876a8bb2:docs/task/simulation_architecture/archive/wp5_validation_harness/validation_harness_wp5_20260519.zh.md`
   是覆盖 design、trace、boundary、information/belief leakage 与 replay/evidence conformance 的 `WP5` 验证套件任务族。
-- [../../task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md](../../task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)
+- `git show 876a8bb2:docs/task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md`
   是 `WP6` 后端配置文件策略，覆盖 backend taxonomy、parity budget、
   resident-state 边界与 capability projection。
-- [../../task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md](../../task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)
+- `git show e7e97d23:docs/task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md`
   记录已验收的 WP6 发布线。
-- [../../task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md](../../task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)
+- `git show a32e67bd:docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md`
   是 WP6 之后计划中的 `WP7` materialization 线，覆盖可机器检查 registry、
   runtime capability projection、promotion evidence gates 与 multi-fidelity
   entry conditions。
-- [../../task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md](../../task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
+- `git show e7e97d23:docs/task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md`
   将 WP7 作为文档与实现准备线验收，不代表 exact GPU、resident-state、
   shadow、device observation 或 multi-fidelity support 晋级。
-- [../../task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.zh.md](../../task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.zh.md)
+- `git show 876a8bb2:docs/task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.zh.md`
   是独立的 `learning-face` 任务族，承接学习侧闭环、证据消费与能力演化
   的架构对齐，不重开仿真框架闭合。
-- [../../task/review/archive/wp-superseded/architecture_plan_review_20260519.zh.md](../../task/review/archive/wp-superseded/architecture_plan_review_20260519.zh.md)
+- `git show 5a091603:docs/task/review/archive/wp-superseded/architecture_plan_review_20260519.zh.md`
   是将本基线从 lifecycle + DAG 提升到 SCAL、图之图、信息状态架构和仿真编译器定位的来源评审。
 
 后续架构任务单应优先引用本文档，再引用旧文档作为论据或证据来源。

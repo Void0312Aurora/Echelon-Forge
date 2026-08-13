@@ -47,8 +47,9 @@ Use this order when standards and implementation appear to disagree:
 3. The applicable owner's `work/active/` entries decide scoped work status,
    residuals, and acceptance evidence.
 
-The retired `docs/plan/` and `docs/task/` roots contain archives only. Current
-scoped work and residuals must be routed through the applicable owner's
+The retired `docs/plan/` and `docs/task/` roots no longer exist; they are
+recorded in the [Retired Documentation Ledger](../../../archive_ledger.md).
+Current scoped work and residuals must be routed through the applicable owner's
 `work/active/` or `work/issues/` surface.
 
 If executable evidence and a standards page disagree, do not silently pick one.
@@ -136,11 +137,11 @@ Standards drift found by audit or implementation work should be tracked under
 the content owner's bounded `reviews/`, `work/issues/`, or `work/active/`
 surface until it is closed, held, or archived. Legacy review/task routes remain
 valid until migrated. The 2026-06-10 precedent is the archived accepted
-[Standards Documentation Governance](../../../task/review/archive/standards_documentation_governance/README.md)
+Standards Documentation Governance (`git show 691f098b:docs/task/review/archive/standards_documentation_governance/README.md`)
 subproject.
 
-Reference path:
-`docs/task/review/archive/standards_documentation_governance/README.md`.
+Retrieval address:
+`git show 691f098b:docs/task/review/archive/standards_documentation_governance/README.md`.
 
 A gap can close only when:
 
@@ -171,4 +172,4 @@ runtime, architecture, build, or contract tests.
 - [Bilingual Documentation Policy](bilingual_documentation_policy.md)
 - [Bilingual Document Clusters](../reference/bilingual_document_clusters.md)
 - [Subagent Usage Policy](../../automation/standards/subagent_usage_policy.md)
-- [Standards Documentation Governance](../../../task/review/archive/standards_documentation_governance/README.md)
+- Standards Documentation Governance (`git show 691f098b:docs/task/review/archive/standards_documentation_governance/README.md`)

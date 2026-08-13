@@ -173,8 +173,3 @@ This subproject can be marked accepted only when:
   miss distance in a narrow band and makes initial-offset symmetry a residual.
 - Real fuze thresholds, Pk, deterministic fuze authority, and weapon-specific
   lethality remain rejected.
-
-## Archive
-
-Archive index: [archive/README.md](archive/README.md). No historical records have
-been archived yet.

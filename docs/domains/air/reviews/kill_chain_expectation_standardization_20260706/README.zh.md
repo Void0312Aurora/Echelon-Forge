@@ -215,8 +215,3 @@ AIM-120C 性能声明。
   runtime 支持仍未完成。
 - P6 engineering-proxy guarded single-layer dry-run plans 已准入；runtime 参数重调、
   descriptor 修改、after report 和完整批量执行仍保持 held。
-
-## Archive
-
-只有当本子项目已有 replacement current-status 或 closeout surface 后，历史记录才移动到
-[archive/README.zh.md](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/archive/README.zh.md)。

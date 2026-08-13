@@ -42,7 +42,8 @@ research owner 所属的 standards 子树，共同定义仓库的命名、分层
    准入和治理规则。
 3. 适用 owner 的 `work/active/` 入口决定范围化工作状态、残余和验收证据。
 
-已退役的 `docs/plan/` 与 `docs/task/` 根只包含归档。当前范围化工作与残余必须
+已退役的 `docs/plan/` 与 `docs/task/` 根已不再存在，登记在
+[退役文档台账](../../../archive_ledger.md)。当前范围化工作与残余必须
 通过适用 owner 的 `work/active/` 或 `work/issues/` 表面路由。
 
 如果可执行证据和标准页面不一致，不要静默选择其一。应打开或使用 review/task
@@ -119,10 +120,10 @@ Status: `<YYYY-MM-DD>` <authority state> <short scope>.
 审计或实现工作发现的 standards drift，应在内容 owner 有边界的 `reviews/`、
 `work/issues/` 或 `work/active/` 表面追踪，直到它被关闭、held 或归档。遗留
 review/task 路由在迁移前继续有效。2026-06-10 的先例是已归档 accepted
-[标准化文档治理](../../../task/review/archive/standards_documentation_governance/README.zh.md)
+标准化文档治理 (`git show 691f098b:docs/task/review/archive/standards_documentation_governance/README.zh.md`)
 子项目。
 
-参考路径：`docs/task/review/archive/standards_documentation_governance/README.md`。
+取回地址：`git show 691f098b:docs/task/review/archive/standards_documentation_governance/README.md`。
 
 一个 gap 只有在满足以下条件时才能关闭：
 
@@ -153,4 +154,4 @@ build 或 contract 测试。
 - [双语文档政策](bilingual_documentation_policy.zh.md)
 - [双语文档簇](../reference/bilingual_document_clusters.zh.md)
 - [Subagent 使用规范](../../automation/standards/subagent_usage_policy.zh.md)
-- [标准化文档治理](../../../task/review/archive/standards_documentation_governance/README.zh.md)
+- 标准化文档治理 (`git show 691f098b:docs/task/review/archive/standards_documentation_governance/README.zh.md`)

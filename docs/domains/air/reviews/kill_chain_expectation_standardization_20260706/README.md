@@ -249,8 +249,3 @@ This subproject can be marked accepted only when:
 - P6 engineering-proxy guarded single-layer dry-run plans are admitted, while
   runtime parameter retuning, descriptor edits, after reports, and full batch
   execution remain held.
-
-## Archive
-
-Historical records move to [archive/README.md](../../../../task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/archive/README.md) only after this
-subproject has a replacement current-status or closeout surface.

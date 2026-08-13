@@ -1,0 +1,2132 @@
+{
+  "schema_version": 1,
+  "retired_on": "2026-08-13",
+  "policy": "Tier C retention was deleted from the working tree; git history is the archive. Each entry names the last commit that modified the file, so `git show <last_commit>:<path>` still prints it.",
+  "ledgers": [
+    "docs/archive_ledger.md",
+    "docs/systems/archive_ledger.md"
+  ],
+  "total": 424,
+  "documents": {
+    "docs/Archive/air_first_standards/README_ARCHIVE.md": {
+      "last_commit": "3bb3f623",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/Ref.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/cap_task_bootstrap_plan.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/task_order_leader_standard.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/two_ship/README.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/two_ship/data_model_delta.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/two_ship/implementation_cut_standard.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/two_ship/mvp_scope_and_acceptance_standard.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/two_ship/rl_scope_and_curriculum.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/air_first_standards/com/two_ship/tactical_hierarchy_standard.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/README.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/README_ARCHIVE.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/interface_hotspots.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/layers/c2_layer.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/layers/execution_layer.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/layers/kernel_binding_test_layer.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/layers/leader_layer.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/architecture/layers/operation_physics_layer.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/CONSOLIDATED_ISSUES.md": {
+      "last_commit": "9ae4d842",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/README.md": {
+      "last_commit": "9ae4d842",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/forward_vs_code.md": {
+      "last_commit": "3bb3f623",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/manual_vs_code.md": {
+      "last_commit": "3bb3f623",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/plan_vs_code.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/python_layer_vs_code.md": {
+      "last_commit": "3bb3f623",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/src_readme_vs_code.md": {
+      "last_commit": "3bb3f623",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/doc_audit_20260518/standards_vs_code.md": {
+      "last_commit": "3bb3f623",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/gpu_exact_world_step_mainline_retirement_20260416.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/rearchitecture/README.md": {
+      "last_commit": "3bb3f623",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/rearchitecture/phase1_spatial_query.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/rearchitecture/phase2_scenario_compiler.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/rearchitecture/phase3_mission_runtime.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/rearchitecture/phase4_world_batch_runtime.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/rearchitecture/phase5_multirate_runtime.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/rearchitecture/phase6_thin_adapter.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/speed_rearchitecture/README.md": {
+      "last_commit": "3e677c20",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/speed_rearchitecture/current_state_and_bottlenecks.md": {
+      "last_commit": "a3d70e32",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/speed_rearchitecture/migration_plan.md": {
+      "last_commit": "a3d70e32",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/Archive/speed_rearchitecture/target_architecture.md": {
+      "last_commit": "a3d70e32",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/evaluation/archive/architecture_review_claim_verification_20260603.zh.md": {
+      "last_commit": "583be113",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/evaluation/archive/architecture_structure_assessment_20260603.zh.md": {
+      "last_commit": "583be113",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/evaluation/archive/echelon_forge_comprehensive_assessment_20260601.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/evaluation/archive/engineering_discipline_claim_verification_20260603.zh.md": {
+      "last_commit": "da889252",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/manual/archive/takeoff_to_cruise_mixedmode_notes.md": {
+      "last_commit": "780837fe",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/manual/archive/takeoff_to_cruise_mixedmode_notes.zh.md": {
+      "last_commit": "780837fe",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/iteration_queue_i72_plus_20260726.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/iteration_queue_i72_plus_20260726.zh.md": {
+      "last_commit": "3c15fb6d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_glossary_20260721.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_glossary_20260721.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t11_content_pipeline_census_20260721.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t11_content_pipeline_census_20260721.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t11_content_schema_survey_20260721.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t11_content_schema_survey_20260721.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/README_legacy_runtime_narrative_20260601.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/README_legacy_runtime_narrative_20260601.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/current_authority_status_and_minimal_closeout_20260530.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/high_fidelity_damage_model_cluster_20260526.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/phase0_preflight_20260526.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/review_high_fidelity_requirements_20260526.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/surface_incidence_evidence_gate_20260528.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260602_research_closeout/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_calibration_gates/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_acceptance_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_acceptance_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_blast_fragmentation_heatmap_20260611.svg": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_continuous_rod_heatmap_20260611.svg": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_current_status_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_current_status_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_dispatch_queue_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_dispatch_queue_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_inventory_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_inventory_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_task_clusters_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_task_clusters_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_acceptance_20260611.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_acceptance_20260611.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_current_status_20260610.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_current_status_20260610.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_dispatch_queue_20260610.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_dispatch_queue_20260610.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_inventory_20260610.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_inventory_20260610.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_task_clusters_20260610.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/missile_lethality_continuous_rod_task_clusters_20260610.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_debris_wreck_lifecycle/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_debris_wreck_lifecycle/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/missile_lethality_geometry_fuze_current_status_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/missile_lethality_geometry_fuze_current_status_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/missile_lethality_geometry_fuze_dispatch_queue_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/missile_lethality_geometry_fuze_dispatch_queue_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/missile_lethality_geometry_fuze_task_clusters_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/missile_lethality_geometry_fuze_task_clusters_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/missile_lethality_chain_contract_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/missile_lethality_chain_contract_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/missile_lethality_field_inventory_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/missile_lethality_field_inventory_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/missile_lethality_model_foundation_task_clusters_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/missile_lethality_model_foundation_task_clusters_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_pk_statistical_trends/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_pk_statistical_trends/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_proximity_fuze_realism/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_proximity_fuze_realism/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_secondary_consequence_coupling/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_secondary_consequence_coupling/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_structural_failure/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_acceptance_20260610.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_acceptance_20260610.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_current_status_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_current_status_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_dispatch_queue_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_dispatch_queue_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_inventory_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_inventory_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_task_clusters_20260609.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/missile_lethality_warhead_effects_task_clusters_20260609.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/systems/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/archive/README.md": {
+      "last_commit": "c831f765",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/kill_chain_expectation_standardization/archive/README.zh.md": {
+      "last_commit": "c831f765",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/README.md": {
+      "last_commit": "f6da8a46",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/README.zh.md": {
+      "last_commit": "f6da8a46",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/README.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/README.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/archive_registry.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/documentation_system_readiness_review_20260601.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/documentation_system_readiness_review_20260601.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/engineering_governance_p0/README.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/engineering_governance_p0/README.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/engineering_governance_p0/engineering_governance_p0_task_clusters_20260603.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/ground_domain_bootstrap_plan_review_20260521.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/ground_domain_bootstrap_plan_review_20260521.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/post_wp9_gap_analysis_20260520.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/post_wp9_gap_analysis_20260520.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/project_implementation_review_20260601.zh.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/phase3c_closeout_20260808/stage3_platform_expansion_mainline_plan_20260521.md": {
+      "last_commit": "095fdd5c",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_documentation_governance/README.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_documentation_governance/README.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_documentation_governance/standards_documentation_governance_current_status_20260610.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_documentation_governance/standards_documentation_governance_current_status_20260610.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_documentation_governance/standards_documentation_governance_dispatch_queue_20260610.md": {
+      "last_commit": "1d6dbbe0",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_documentation_governance/standards_documentation_governance_dispatch_queue_20260610.zh.md": {
+      "last_commit": "1d6dbbe0",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_documentation_governance/standards_documentation_governance_task_clusters_20260610.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_implementation_alignment_review_20260610.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/standards_implementation_alignment_review_20260610.zh.md": {
+      "last_commit": "77610218",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/README.md": {
+      "last_commit": "dbbfd3d3",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/README.zh.md": {
+      "last_commit": "dbbfd3d3",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp10_causal_runtime_foundation_acceptance_review_20260520.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp10_causal_runtime_foundation_acceptance_review_20260520.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp12_information_agency_enforcement_acceptance_review_20260520.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp12_information_agency_enforcement_acceptance_review_20260520.zh.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp13_backend_fidelity_expansion_acceptance_review_20260520.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp14_capability_composition_acceptance_review_20260521.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp14_capability_composition_acceptance_review_20260521.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp15_counterfactual_experiment_generation_acceptance_review_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp16_runtime_spine_consolidation_acceptance_review_20260521.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md": {
+      "last_commit": "3213dfe7",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md": {
+      "last_commit": "3213dfe7",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp25_scheduler_semantics_acceptance_review_20260519.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp25_scheduler_semantics_acceptance_review_20260519.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp3_engagement_pilot_acceptance_review_20260519.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp3_engagement_pilot_acceptance_review_20260519.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp9_contract_infrastructure_closure_acceptance_review_20260520.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-acceptance/wp9_contract_infrastructure_closure_acceptance_review_20260520.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/README.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/README.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/architecture_plan_review_20260519.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/architecture_plan_review_20260519.zh.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/consolidated_remaining_work_and_roadmap_20260520.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/consolidated_remaining_work_and_roadmap_20260520.zh.md": {
+      "last_commit": "5a091603",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp4_facade_alignment_plan_review_20260519.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp4_facade_alignment_plan_review_20260519.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp4_first_wave_acceptance_review_20260519.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp4_first_wave_acceptance_review_20260519.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp4_second_wave_acceptance_review_20260519.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp4_second_wave_acceptance_review_20260519.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp5_first_wave_acceptance_review_20260519.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp5_first_wave_acceptance_review_20260519.zh.md": {
+      "last_commit": "e7e97d23",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp5_information_belief_acceptance_review_20260519.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/archive/wp-superseded/wp5_information_belief_acceptance_review_20260519.zh.md": {
+      "last_commit": "14ef948d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/review/test_system_governance/archive/README.md": {
+      "last_commit": "a94e5ef2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/phase3c_closeout_20260808/README.md": {
+      "last_commit": "76d96bf5",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/phase3c_closeout_20260808/README.zh.md": {
+      "last_commit": "3c15fb6d",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md": {
+      "last_commit": "d19f9893",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md": {
+      "last_commit": "d19f9893",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_legacy_path_gate_evidence_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_legacy_path_gate_evidence_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md": {
+      "last_commit": "d19f9893",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md": {
+      "last_commit": "d19f9893",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_evidence_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_evidence_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md": {
+      "last_commit": "691f098b",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md": {
+      "last_commit": "c700b51f",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md": {
+      "last_commit": "c700b51f",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md": {
+      "last_commit": "c700b51f",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md": {
+      "last_commit": "c700b51f",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md": {
+      "last_commit": "c700b51f",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md": {
+      "last_commit": "c700b51f",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.zh.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.md": {
+      "last_commit": "3213dfe7",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.zh.md": {
+      "last_commit": "3213dfe7",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.zh.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.zh.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md": {
+      "last_commit": "6d1aa276",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/wp25_clock_replay_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/wp25_clock_replay_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/wp25_manifest_event_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/wp25_manifest_event_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/wp25_state_barrier_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp25_scheduler_semantics/wp25_state_barrier_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/facade_alignment_wp4_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_agent_shim_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_agent_shim_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_agent_shim_implementation_notes_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_compat_guard_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_compat_guard_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_compat_guard_notes_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_compat_guard_notes_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_engagement_step_alignment_notes_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_engagement_step_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_engagement_step_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_facade_evidence_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_facade_evidence_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_facade_evidence_notes_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_integration_handoff_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_integration_handoff_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_policy_binding_alignment_notes_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_policy_binding_alignment_notes_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_policy_binding_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_policy_binding_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_surface_inventory_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_surface_inventory_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_surface_inventory_wp4a_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp4_facade_alignment/wp4_surface_inventory_wp4a_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/validation_harness_wp5_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/validation_harness_wp5_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_design_boundary_cluster_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_design_boundary_cluster_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_design_boundary_notes_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_design_boundary_notes_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_harness_inventory_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_harness_inventory_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_harness_inventory_notes_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_harness_inventory_notes_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_information_belief_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_information_belief_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_information_belief_notes_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_information_belief_notes_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_smoke_promotion_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_smoke_promotion_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_smoke_promotion_notes_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_smoke_promotion_notes_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_trace_replay_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_trace_replay_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_trace_replay_gates_notes_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp5_validation_harness/wp5_trace_replay_gates_notes_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_integration_and_index_sync_cluster_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_integration_and_index_sync_cluster_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_notes_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_notes_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_notes_20260519.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_notes_20260519.zh.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.zh.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_registry_materialization_notes_20260519.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_registry_materialization_notes_20260519.zh.md": {
+      "last_commit": "8ca68249",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_notes_20260519.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_notes_20260519.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_guard_allowlist_evidence_20260520.md": {
+      "last_commit": "74408a39",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.zh.md": {
+      "last_commit": "a32e67bd",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    },
+    "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.zh.md": {
+      "last_commit": "876a8bb2",
+      "retired": "2026-08-13",
+      "ledger": "docs/archive_ledger.md"
+    }
+  }
+}

@@ -518,7 +518,7 @@ token->count 指纹在改动前后均为 `{'AuthorityScope': 1, 'CommandRelation
 - 历史来源：已完成统一架构计划的 T9 轨道；当前权威见下方仿真系统架构标准。
 - [仿真系统架构设计](../../../architecture/standards/simulation_system_architecture_design.zh.md)
   （Agency 面；AgentRole schema；DoctrineFamily；合并/来源优先级规则）
-- [SCAL 一致性普查（2026-07-20）](../../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md)
+- SCAL 一致性普查（2026-07-20） (`git show 095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md`)
   （同类 `reference` 登记；结构先例）
 - `python/tasking_contracts/agency_registry.py`（注册式词汇所有者）
 - `tests/architecture/agency/test_authority_registry_gate.py` 与

@@ -9,7 +9,7 @@ Review basis：`2026-06-14` geometry-only 验收与保留的 opt-in proxy 证据
 
 状态：`2026-06-14` accepted / retained。F-16C 精细几何工程代理已按 geometry-only
 验收门闭合，收口记录位于
-[archive/tg_f16c_fine_geometry_accepted_20260614](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md)；默认 unit database、默认 runtime path、policy/reward 诊断和训练收益不属于本子项目验收门。该子项目从
+archive/tg_f16c_fine_geometry_accepted_20260614 (`git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md`)；默认 unit database、默认 runtime path、policy/reward 诊断和训练收益不属于本子项目验收门。该子项目从
 [杀伤链命中盒几何保真度缺口](../../work/issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)
 提升而来，用于把 F-16 从少量大长方体推进到可审阅的外壳、表面部件、旧内部部件关联和距离诊断。
 
@@ -45,7 +45,7 @@ Review basis：`2026-06-14` geometry-only 验收与保留的 opt-in proxy 证据
 | F-16 审计资产 | active candidate | glTF 原始包、解包文件、hash 和 attribution 已保留 | 只提供外形审阅基础，不证明真实内部部件边界 |
 | 旧 FlightGear F-16 | rejected for mainline derivation | 已归档到 `assets/archive`，来源强候选为 GPL v2 FlightGear | 不进入主线派生几何 |
 | 当前命中盒 | known gap | issue 已记录 4 m 鼻向近炸无部件损伤等症状 | 不能继续当作真实外形或真实部件布局 |
-| 几何验收 | accepted / retained | [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md) | 只验收 F-16C 精细几何工程代理，不验收默认 runtime replacement、训练收益、结构解体、残骸、Pk 或具体弹种结论 |
+| 几何验收 | accepted / retained | `git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md` | 只验收 F-16C 精细几何工程代理，不验收默认 runtime replacement、训练收益、结构解体、残骸、Pk 或具体弹种结论 |
 | 下游 opt-in 代理 | retained handoff evidence | TG-P7-R1 至 R6 生成 opt-in proxy database、trace 和训练对照材料 | 不是本子项目闭合门；默认 database 和主投影路径仍是对照路径 |
 
 ## 范围
@@ -94,7 +94,7 @@ Review basis：`2026-06-14` geometry-only 验收与保留的 opt-in proxy 证据
 - 当前状态：
   [missile_lethality_target_geometry_current_status_20260611.zh.md](missile_lethality_target_geometry_current_status_20260611.zh.md)
 - 几何验收收口：
-  [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md)
+  `git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md`
 - 第一轮派发队列：
   [missile_lethality_target_geometry_dispatch_queue_20260611.zh.md](missile_lethality_target_geometry_dispatch_queue_20260611.zh.md)
 - 精细几何代理设计草案：
@@ -373,6 +373,6 @@ Review basis：`2026-06-14` geometry-only 验收与保留的 opt-in proxy 证据
 ## Archive
 
 当前几何验收收口包：
-[archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md)。
+`git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md`。
 
-归档索引：[archive/README.zh.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/README.zh.md)。`review_packets/f16c_20260611/` 保留为稳定 retained evidence surface，供维护中的工具、测试和 opt-in 配置继续引用。
+`review_packets/f16c_20260611/` 保留为稳定 retained evidence surface，供维护中的工具、测试和 opt-in 配置继续引用。

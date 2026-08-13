@@ -12,7 +12,7 @@ runtime receiver 组件、翼面部件位置、radar/IFF 和 nozzle 源盒，并
 语义外壳体积部件候选、constrained internal receiver priors、promoted review-only
 subcomponent shape rules、local centerline placement candidates、latest subcomponent placement candidates、promoted R21 latest placement rules、R22 parse-ready split receiver candidates、TG-P7-R1 带 feature flag 的 `damage_model.hitboxes[].components` patch candidate、TG-P7-R2 in-memory behavior regression、TG-P7-R3 opt-in proxy runtime database、TG-P7-R4 active 8k training comparison、TG-P7-R5 targeted trace，以及 TG-P7-R6 active 32k proxy/baseline training comparison；proxy component event names 已观测到全部 `8` 个 split receivers，32k proxy/baseline 均完成，但默认 active runtime projection 仍未改变。后续整机投影网格轮廓诊断只是工具方法升级；R22 shape-aware thin-prism/frustum 修正后，当前记录 `0` 个 receiver-prior protrusions，不改变 F-16C 精细几何验收状态。
 
-几何验收收口：[archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md](../../../../task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md)。
+几何验收收口：`git show 77610218:docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md`。
 
 英文辅文：[missile_lethality_target_geometry_current_status_20260611.md](missile_lethality_target_geometry_current_status_20260611.md)。
 

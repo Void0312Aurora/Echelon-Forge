@@ -128,9 +128,3 @@ The remaining blockers are retained in
 - `tests/runtime/air_combat/weapon_guidance_realism/` behavior reconciliation
   before any smoke promotion;
 - separate Python/C++ coverage records with measured roots and no overclaim.
-
-## Archive
-
-Superseded status snapshots, obsolete risk reports, and closed cluster packets
-move under [archive/README.md](../../../../task/review/test_system_governance/archive/README.md). Archive files are provenance
-only and are not default authority for current test-system health.

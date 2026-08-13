@@ -19,11 +19,11 @@ The sealed retained project entry is the Chinese index:
 - [Task cluster dispatch packet](task_cluster_dispatch_20260601.zh.md)
 - [Task cluster execution status](task_cluster_execution_status_20260601.zh.md)
 - [Default effects modularization task list](default_effects_modularization/README.md)
-- [Research closeout archive](archive/20260602_research_closeout/README.zh.md)
+- Research closeout archive (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260602_research_closeout/README.zh.md`)
 
 The previous long English runtime narrative was archived at:
 
-- [archive/20260601_doc_governance/README_legacy_runtime_narrative_20260601.md](archive/20260601_doc_governance/README_legacy_runtime_narrative_20260601.md)
+- `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/README_legacy_runtime_narrative_20260601.md`
 
 Current shorthand: A2 is archived as a sealed research/candidate record. Its
 structured-aircraft damage/effects runtime surface is maintained, the

@@ -108,14 +108,10 @@ deterministic fuze authority。
 
 最终 research closeout 记录：
 
-- [archive/20260602_research_closeout/README.zh.md](archive/20260602_research_closeout/README.zh.md)
-
-归档索引：
-
-- [archive/README.zh.md](archive/README.zh.md)
+- `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260602_research_closeout/README.zh.md`
 
 历史 Phase 叙事、旧 README、Phase 0 审计、旧状态审计和中间 review note 已移入
-[archive/20260601_doc_governance/README.zh.md](archive/20260601_doc_governance/README.zh.md)。
+`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/README.zh.md`。
 这些文件只作为历史证据，不再作为任务分发入口。
 
 本轮暂不移动 `data_collection/**/source_pin_update*.zh.md`、
