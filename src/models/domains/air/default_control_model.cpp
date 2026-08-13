@@ -18,13 +18,10 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <numbers>
 #include <string>
 
 namespace {
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 double normalize_angle(double angle) {
     while (angle > 180.0)
@@ -35,10 +32,10 @@ double normalize_angle(double angle) {
 }
 
 double to_degrees(double rad) {
-    return rad * 180.0 / M_PI;
+    return rad * 180.0 / std::numbers::pi_v<double>;
 }
 double to_radians(double deg) {
-    return deg * M_PI / 180.0;
+    return deg * std::numbers::pi_v<double> / 180.0;
 }
 
 bool pilot_action_requests_manual_takeover(const PilotAction &pilot) {

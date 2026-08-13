@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cmath>
 #include <limits>
+#include <numbers>
 
 namespace {
 
@@ -20,7 +21,7 @@ double wrap_angle_deg(double angle_deg) {
 }
 
 double bearing_to_deg(double dx, double dy) {
-    double angle = std::atan2(dx, dy) * 180.0 / M_PI;
+    double angle = std::atan2(dx, dy) * 180.0 / std::numbers::pi_v<double>;
     angle = std::fmod(angle, 360.0);
     if (angle < 0.0) {
         angle += 360.0;
@@ -49,13 +50,14 @@ double turn_lead_distance_m(double turn_angle_deg, double speed_mps, double bank
         return 0.0;
     }
     double bank_lim = clamp_value(bank_limit_deg, 5.0, 70.0);
-    double tanb = std::tan(bank_lim * M_PI / 180.0);
+    double tanb = std::tan(bank_lim * std::numbers::pi_v<double> / 180.0);
     if (std::abs(tanb) <= 1.0e-6) {
         return 0.0;
     }
     double v = std::max(30.0, speed_mps);
     double turn_radius = (v * v) / (9.80665 * std::abs(tanb));
-    double half_turn_rad = 0.5 * std::min(M_PI - 1.0e-3, turn_abs_deg * M_PI / 180.0);
+    double half_turn_rad = 0.5 * std::min(std::numbers::pi_v<double> - 1.0e-3,
+                                          turn_abs_deg * std::numbers::pi_v<double> / 180.0);
     return std::max(0.0, turn_radius * std::tan(half_turn_rad));
 }
 
@@ -112,7 +114,7 @@ SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(doub
         return out;
     }
 
-    double h_rad = best->heading_deg * M_PI / 180.0;
+    double h_rad = best->heading_deg * std::numbers::pi_v<double> / 180.0;
     double fwd_x = std::sin(h_rad);
     double fwd_y = std::cos(h_rad);
     double right_x = std::cos(h_rad);
@@ -157,7 +159,7 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(
         return out;
     }
 
-    double h_rad = best->heading_deg * M_PI / 180.0;
+    double h_rad = best->heading_deg * std::numbers::pi_v<double> / 180.0;
     double fwd_x = std::sin(h_rad);
     double fwd_y = std::cos(h_rad);
     double right_x = std::cos(h_rad);
@@ -171,7 +173,7 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(
     double along = -(dx * fwd_x + dy * fwd_y);
     double cross = dx * right_x + dy * right_y;
     double along_abs = std::max(std::abs(along), 1.0);
-    double loc_angle_deg = std::atan2(cross, along_abs) * 180.0 / M_PI;
+    double loc_angle_deg = std::atan2(cross, along_abs) * 180.0 / std::numbers::pi_v<double>;
 
     double thr_dx = x_m - best->threshold_x_m;
     double thr_dy = y_m - best->threshold_y_m;
@@ -181,7 +183,8 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(
     double gs_ref_alt_m = best->elevation_m + std::max(0.0, threshold_crossing_height_m);
     double gs_dev = 0.0;
     if (approach_dist_m > 1.0) {
-        double gs_angle_deg = std::atan2(alt_m - gs_ref_alt_m, approach_dist_m) * 180.0 / M_PI;
+        double gs_angle_deg =
+            std::atan2(alt_m - gs_ref_alt_m, approach_dist_m) * 180.0 / std::numbers::pi_v<double>;
         gs_dev = clamp_value(
             (gs_angle_deg - best->glide_slope_deg) / std::max(0.1, best->glideslope_max_deg),
             -1.0,
@@ -302,7 +305,7 @@ SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const Spa
         }
     } else {
         double intercept_rad = std::atan2(-xtk_m, lookahead_m);
-        double intercept_deg = intercept_rad * 180.0 / M_PI;
+        double intercept_deg = intercept_rad * 180.0 / std::numbers::pi_v<double>;
         if (max_int > 0.0) {
             intercept_deg = clamp_value(intercept_deg, -max_int, max_int);
         }

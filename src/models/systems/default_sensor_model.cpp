@@ -9,12 +9,9 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <numbers>
 
 namespace {
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 double wrap_angle_360(double angle) {
     while (angle < 0.0)
@@ -51,7 +48,7 @@ double rand_uniform01(uint64_t seed) {
 double rand_normal(uint64_t seed_a, uint64_t seed_b) {
     double u1 = std::max(1e-12, rand_uniform01(seed_a));
     double u2 = rand_uniform01(seed_b);
-    return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * M_PI * u2);
+    return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi_v<double> * u2);
 }
 
 double clamp_sensor_probability(double value) {
@@ -66,7 +63,8 @@ double rcs_for_detection(const flecs::entity &target_e, const Transform &owner_t
         return rcs;
     }
 
-    double los_math_deg = std::atan2(owner_t.y - target_t.y, owner_t.x - target_t.x) * 180.0 / M_PI;
+    double los_math_deg = std::atan2(owner_t.y - target_t.y, owner_t.x - target_t.x) * 180.0 /
+                          std::numbers::pi_v<double>;
     double los_nav_deg = math_deg_to_nav_deg(los_math_deg);
     double aspect_deg = normalize_angle_deg(los_nav_deg - target_t.heading);
     const double aspect_abs = std::abs(aspect_deg);
@@ -311,7 +309,7 @@ class DefaultSensorModel : public ISensorModel {
             }
 
             double bearing_rad = std::atan2(dy, dx);
-            double bearing_math_deg = bearing_rad * 180.0 / M_PI;
+            double bearing_math_deg = bearing_rad * 180.0 / std::numbers::pi_v<double>;
             double bearing_nav_deg = math_deg_to_nav_deg(bearing_math_deg);
             double rel_bearing = normalize_angle_deg(bearing_nav_deg - owner_transform.heading);
 
@@ -327,10 +325,10 @@ class DefaultSensorModel : public ISensorModel {
                 if (aspect_weight > 0.0) {
                     double los_math_deg =
                         std::atan2(owner_transform.y - target_t.y, owner_transform.x - target_t.x) *
-                        180.0 / M_PI;
+                        180.0 / std::numbers::pi_v<double>;
                     double los_nav_deg = math_deg_to_nav_deg(los_math_deg);
                     double aspect_deg = normalize_angle_deg(los_nav_deg - target_t.heading);
-                    double aspect_cos = std::cos(aspect_deg * M_PI / 180.0);
+                    double aspect_cos = std::cos(aspect_deg * std::numbers::pi_v<double> / 180.0);
                     double aspect_scale = 0.5 + 0.5 * aspect_cos;
                     aspect_factor = (1.0 - aspect_weight) + aspect_weight * aspect_scale;
                 }
@@ -391,7 +389,8 @@ class DefaultSensorModel : public ISensorModel {
                 double horizontal_dist = std::sqrt(std::max(0.0, dx * dx + dy * dy));
                 double elevation_deg = 0.0;
                 if (horizontal_dist > 1e-6) {
-                    elevation_deg = std::atan2(dz, horizontal_dist) * 180.0 / M_PI;
+                    elevation_deg =
+                        std::atan2(dz, horizontal_dist) * 180.0 / std::numbers::pi_v<double>;
                 }
 
                 double noisy_bearing = rel_bearing;

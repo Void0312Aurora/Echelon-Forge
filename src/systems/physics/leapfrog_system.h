@@ -2,13 +2,10 @@
 
 #include <flecs.h>
 #include <cmath>
+#include <numbers>
 #include "components/basic/common.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 /**
  * LeapfrogIntegrationSystem
@@ -93,7 +90,8 @@ inline void register_leapfrog_integration_system(flecs::world& ecs) {
                     double h_speed_sq = velocity[i].vx * velocity[i].vx + 
                                         velocity[i].vy * velocity[i].vy;
                     if (h_speed_sq > 1e-6) {
-                        double math_deg = std::atan2(velocity[i].vy, velocity[i].vx) * 180.0 / M_PI;
+                        double math_deg = std::atan2(velocity[i].vy, velocity[i].vx) * 180.0 /
+                                          std::numbers::pi_v<double>;
                         transform[i].heading = integration_math_deg_to_nav_deg(math_deg);
                     }
                     
@@ -101,7 +99,8 @@ inline void register_leapfrog_integration_system(flecs::world& ecs) {
                     double speed = std::sqrt(h_speed_sq + velocity[i].vz * velocity[i].vz);
                     if (speed > 1.0) {
                         double h_speed = std::sqrt(h_speed_sq);
-                        transform[i].pitch = std::atan2(velocity[i].vz, h_speed) * 180.0 / M_PI;
+                        transform[i].pitch = std::atan2(velocity[i].vz, h_speed) * 180.0 /
+                                             std::numbers::pi_v<double>;
                     }
                     */
                 }

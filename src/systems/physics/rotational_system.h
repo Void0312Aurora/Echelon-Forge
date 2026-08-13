@@ -4,13 +4,14 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <numbers>
 #include "components/basic/common.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 
 namespace {
-    inline double deg_to_rad(double deg) { return deg * M_PI / 180.0; }
-    inline double rad_to_deg(double rad) { return rad * 180.0 / M_PI; }
+    inline double deg_to_rad(double deg) { return deg * std::numbers::pi_v<double> / 180.0; }
+    inline double rad_to_deg(double rad) { return rad * 180.0 / std::numbers::pi_v<double>; }
 
     inline double clamp_finite(double v, double lo, double hi) {
         if (!std::isfinite(v)) return 0.0;

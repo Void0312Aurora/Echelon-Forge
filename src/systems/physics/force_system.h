@@ -10,10 +10,6 @@
 #include "components/physics/dynamics.h"
 #include "components/physics/performance.h"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 namespace {
 constexpr double kGravity = 9.80665;
 constexpr double kDirectionScalarCanonicalQuantum = 1.0e-14;

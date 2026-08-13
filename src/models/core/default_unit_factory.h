@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <numbers>
 #include <unordered_map>
 #include <string_view>
 
@@ -39,10 +40,6 @@
 #include "core/interfaces/unit_factory.h"
 #include "runtime/contracts/platform_capability_contracts.h"
 #include "models/weapons/missile_guidance_types.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 inline double default_factory_wrap_angle_360(double angle) {
     while (angle < 0.0)
@@ -709,14 +706,15 @@ class DefaultUnitFactory : public IUnitFactory {
             std::abs(roll_init) < 1e-6) {
             double h_speed_sq = params.vx * params.vx + params.vy * params.vy;
             if (h_speed_sq > 1e-12) {
-                double math_deg = std::atan2(params.vy, params.vx) * 180.0 / M_PI;
+                double math_deg =
+                    std::atan2(params.vy, params.vx) * 180.0 / std::numbers::pi_v<double>;
                 heading_init = default_factory_math_deg_to_nav_deg(math_deg);
                 // Pitch from vertical velocity?
                 double speed = std::sqrt(h_speed_sq + params.vz * params.vz);
                 if (speed > 1e-3) {
                     double pitch_arg = params.vz / speed;
                     pitch_arg = std::clamp(pitch_arg, -1.0, 1.0);
-                    pitch_init = std::asin(pitch_arg) * 180.0 / M_PI;
+                    pitch_init = std::asin(pitch_arg) * 180.0 / std::numbers::pi_v<double>;
                 }
             }
         }

@@ -2,11 +2,8 @@
 
 #include <flecs.h>
 #include <cmath>
+#include <numbers>
 #include "components/basic/common.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 inline double movement_wrap_angle_360(double angle) {
     while (angle < 0.0) angle += 360.0;
@@ -38,7 +35,8 @@ inline void register_movement_system(flecs::world& ecs) {
 
                     double h_speed_sq = v[i].vx * v[i].vx + v[i].vy * v[i].vy;
                     if (h_speed_sq > 1e-12) {
-                        double math_deg = std::atan2(v[i].vy, v[i].vx) * 180.0 / M_PI;
+                        double math_deg =
+                            std::atan2(v[i].vy, v[i].vx) * 180.0 / std::numbers::pi_v<double>;
                         p[i].heading = movement_math_deg_to_nav_deg(math_deg);
                     }
                 }

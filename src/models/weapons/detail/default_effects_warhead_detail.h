@@ -443,9 +443,10 @@ estimate_warhead_mechanism_load(const Missile &missile, const Hitbox &target_sha
             // Cd≈1.0 for supersonic fragment, ρ≈1.225 kg/m³ at sea level,
             // A derived from fragment mass assuming steel sphere (ρ_steel≈7800 kg/m³).
             {
-                const double frag_radius_m =
-                    std::cbrt((3.0 * fragment_mass_kg) / (4.0 * M_PI * 7800.0));
-                const double frag_area_m2 = M_PI * frag_radius_m * frag_radius_m;
+                const double frag_radius_m = std::cbrt((3.0 * fragment_mass_kg) /
+                                                       (4.0 * std::numbers::pi_v<double> * 7800.0));
+                const double frag_area_m2 =
+                    std::numbers::pi_v<double> * frag_radius_m * frag_radius_m;
                 const double decay_dist_m = std::max(0.0, distance_m - 2.0);
                 const double decay_factor = std::exp(-(1.0 * 1.225 * frag_area_m2 * decay_dist_m) /
                                                      (2.0 * std::max(1.0e-6, fragment_mass_kg)));
@@ -559,7 +560,8 @@ WarheadSpatialSample sample_warhead_spatial_effect(const Missile &missile,
                                    target_shape.dim_l * target_shape.dim_h,
                                    target_shape.dim_w * target_shape.dim_h}) *
                              std::clamp(exposure_scale, 0.05, 1.25));
-    const double sphere_area_m2 = 4.0 * M_PI * std::max(distance_m * distance_m, 1.0);
+    const double sphere_area_m2 =
+        4.0 * std::numbers::pi_v<double> * std::max(distance_m * distance_m, 1.0);
 
     if (family == "fragmentation" || family == "blast_fragmentation") {
         const double fragment_count =
@@ -583,7 +585,8 @@ WarheadSpatialSample sample_warhead_spatial_effect(const Missile &missile,
         const double side_sweep = std::clamp(
             (axis_weight / 1.25) * std::clamp(orientation_weight, 0.42, 1.30), 0.15, 1.25);
         const double span_m = std::max(target_shape.dim_w, target_shape.dim_l);
-        const double ring_circumference_m = 2.0 * M_PI * std::max(distance_m, 1.0);
+        const double ring_circumference_m =
+            2.0 * std::numbers::pi_v<double> * std::max(distance_m, 1.0);
         sample.hit_estimate = rod_count * std::clamp(span_m / ring_circumference_m, 0.0, 0.60) *
                               side_sweep * (0.45 + 0.55 * radius_quality);
         sample.energy_scale = std::clamp(0.45 + 0.55 * radius_quality, 0.08, 1.15);

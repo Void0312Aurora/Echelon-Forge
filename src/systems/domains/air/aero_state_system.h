@@ -10,10 +10,6 @@
 #include "core/interfaces/environment_model.h"
 #include "models/physics/aerodynamics_common.h"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 namespace {
 constexpr double kAeroScalarCanonicalQuantum = 1.0e-10;
 constexpr double kAeroAngleCanonicalQuantumDeg = 0x1p-40;

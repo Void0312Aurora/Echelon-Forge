@@ -2,14 +2,11 @@
 
 #include <cstdint>
 #include <cmath>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <numbers>
 
 namespace Math {
-    inline double to_radians(double deg) { return deg * M_PI / 180.0; }
-    inline double to_degrees(double rad) { return rad * 180.0 / M_PI; }
+    inline double to_radians(double deg) { return deg * std::numbers::pi_v<double> / 180.0; }
+    inline double to_degrees(double rad) { return rad * 180.0 / std::numbers::pi_v<double>; }
 
     inline double normalize_heading_deg(double heading_deg) {
         if (!std::isfinite(heading_deg)) return 0.0;

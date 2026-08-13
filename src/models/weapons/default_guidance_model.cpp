@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <numbers>
 #include <utility>
 #include <vector>
 
@@ -20,10 +21,6 @@
 #include "models/weapons/missile_guidance_types.h"
 
 namespace {
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 using missile_guidance::Vec3;
 using missile_guidance::operator+;
@@ -484,17 +481,19 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
     // EKF path
     if (missile.use_kalman_seeker) {
         const double missile_world[3] = {transform.x, transform.y, transform.z};
-        const double heading_rad = transform.heading * M_PI / 180.0;
+        const double heading_rad = transform.heading * std::numbers::pi_v<double> / 180.0;
         if (!missile.ekf_state.initialized) {
             missile_seeker::ekf_init(missile.ekf_state, missile.ekf_params,
-                                     det.bearing * M_PI / 180.0, det.elevation * M_PI / 180.0,
+                                     det.bearing * std::numbers::pi_v<double> / 180.0,
+                                     det.elevation * std::numbers::pi_v<double> / 180.0,
                                      std::max(1.0, det.range), missile_world, heading_rad,
                                      current_time);
         } else {
             missile_seeker::ekf_predict(missile.ekf_state, missile.ekf_params,
                                         current_time - missile.ekf_state.last_predict_time_s);
             missile_seeker::ekf_update(missile.ekf_state, missile.ekf_params,
-                                       det.bearing * M_PI / 180.0, det.elevation * M_PI / 180.0,
+                                       det.bearing * std::numbers::pi_v<double> / 180.0,
+                                       det.elevation * std::numbers::pi_v<double> / 180.0,
                                        std::max(1.0, det.range), missile_world, heading_rad);
         }
         // Save previous angles for rate computation
@@ -569,7 +568,7 @@ void propagate_track_memory(Missile &missile, double dt, const Transform &transf
 
         missile_seeker::ekf_predict(missile.ekf_state, missile.ekf_params, dt);
         const double missile_world[3] = {transform.x, transform.y, transform.z};
-        const double heading_rad = transform.heading * M_PI / 180.0;
+        const double heading_rad = transform.heading * std::numbers::pi_v<double> / 180.0;
         const double mvel[3] = {velocity.vx, velocity.vy, velocity.vz};
         missile.filtered_bearing_deg =
             missile_seeker::ekf_filtered_bearing_deg(missile.ekf_state, missile_world, heading_rad);
@@ -932,10 +931,11 @@ Vec3 profiled_guidance_acceleration(flecs::world world, const Transform &transfo
                         (apn_gain * lead_terminal_fraction);
         } else if (apn_gain > 0.0 && missile.apn_rate_history_valid && dt > 1.0e-6) {
             const double raw_bearing_accel_rad_s2 =
-                (missile.bearing_rate_deg_s - missile.prev_bearing_rate_deg_s) / dt * M_PI / 180.0;
+                (missile.bearing_rate_deg_s - missile.prev_bearing_rate_deg_s) / dt *
+                std::numbers::pi_v<double> / 180.0;
             const double raw_elevation_accel_rad_s2 =
-                (missile.elevation_rate_deg_s - missile.prev_elevation_rate_deg_s) / dt * M_PI /
-                180.0;
+                (missile.elevation_rate_deg_s - missile.prev_elevation_rate_deg_s) / dt *
+                std::numbers::pi_v<double> / 180.0;
             const double tau_s = MissileGuidanceDefaults::kApnAccelFilterTauS;
             missile.filtered_bearing_accel_rad_s2 = missile_guidance::exp_smooth(
                 missile.filtered_bearing_accel_rad_s2, raw_bearing_accel_rad_s2, tau_s, dt);
@@ -1301,10 +1301,10 @@ class DefaultGuidanceModel : public IGuidanceModel {
                            guidance_dt > 1.0e-6) {
                     const double raw_bearing_accel_rad_s2 =
                         (missile.bearing_rate_deg_s - missile.prev_bearing_rate_deg_s) /
-                        guidance_dt * M_PI / 180.0;
+                        guidance_dt * std::numbers::pi_v<double> / 180.0;
                     const double raw_elevation_accel_rad_s2 =
                         (missile.elevation_rate_deg_s - missile.prev_elevation_rate_deg_s) /
-                        guidance_dt * M_PI / 180.0;
+                        guidance_dt * std::numbers::pi_v<double> / 180.0;
                     const double tau_s = MissileGuidanceDefaults::kApnAccelFilterTauS;
                     missile.filtered_bearing_accel_rad_s2 =
                         missile_guidance::exp_smooth(missile.filtered_bearing_accel_rad_s2,
