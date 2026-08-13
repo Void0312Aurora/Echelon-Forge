@@ -409,21 +409,22 @@ def _resolve_step_evaluation(loader, inst, inst_obj, truth, steps, max_steps, st
     return step_eval
 
 
-def _finite_guard_outcome(loader, safety_cfg, compiled_runtime_enabled, frame_products, truncated):
+def _finite_guard_outcome(loader, safety_cfg, frame_products, truncated):
     """The fail-closed non-finite-state early exit of compute_full_step."""
     if frame_products is not None and bool(getattr(frame_products, "execution_step_evaluated", False)):
         guard_products = frame_products.execution_step.safety
     else:
+        # Defensive recompute, not a parallel implementation generation: the
+        # guard must stay fail-closed (crash penalty + terminate) even for a
+        # caller-provided step evaluation that lacks the episode products, and
+        # it goes through the same compiled step runtime as the episode path.
         guard_inputs = ef_py.SafetyRuntimeInputs()
         guard_inputs.finite_state_valid = False
         guard_inputs.crash_penalty = float(safety_cfg.crash_penalty)
-        if compiled_runtime_enabled:
-            guard_products = loader._compute_execution_step_runtime_products(
-                truncated=bool(truncated),
-                safety_inputs=guard_inputs,
-            ).safety
-        else:
-            guard_products = ef_py.compute_safety_runtime(guard_inputs)
+        guard_products = loader._compute_execution_step_runtime_products(
+            truncated=bool(truncated),
+            safety_inputs=guard_inputs,
+        ).safety
     status = [0.0] * 4
     status[3] = float(guard_products.status_flag)
     crash_pen = float(guard_products.crash_penalty)
@@ -467,13 +468,12 @@ def _apply_post_shaping_safety_penalties(acc: _StepRewardAccumulator, safety_ter
 
 
 def _apply_flight_shaping(loader, acc, step_eval, truth, flight_shaping_backend,
-                          compiled_runtime_enabled, frame_products) -> None:
+                          frame_products) -> None:
     shaping_inputs = step_eval.get("shaping_inputs")
     compiled_flight_shaping = step_eval.get("flight_shaping_products_override")
     if (
         compiled_flight_shaping is None
         and flight_shaping_backend == "compiled"
-        and compiled_runtime_enabled
         and frame_products is not None
         and bool(getattr(frame_products, "flight_shaping_evaluated", False))
     ):
@@ -499,13 +499,16 @@ def _apply_flight_shaping(loader, acc, step_eval, truth, flight_shaping_backend,
 
 
 def _apply_approach_rewards(loader, acc, approach_inputs, ils_dme,
-                            compiled_runtime_enabled, safety_approach_runtime) -> None:
-    if compiled_runtime_enabled and safety_approach_runtime is not None and bool(
+                            safety_approach_runtime) -> None:
+    if safety_approach_runtime is None or not bool(
         getattr(safety_approach_runtime, "approach_evaluated", False)
     ):
-        approach_terms = safety_approach_runtime.approach
-    else:
-        approach_terms = ef_py.compute_approach_reward_terms(approach_inputs)
+        raise RuntimeError(
+            "compiled approach reward products are required; execution runtime "
+            "products must be provided by prepare_step_evaluation (the legacy "
+            "per-step approach fallback has been removed)"
+        )
+    approach_terms = safety_approach_runtime.approach
     if float(approach_terms.approach_localizer) != 0.0:
         acc.add("approach_localizer", float(approach_terms.approach_localizer))
     if approach_inputs.localizer_improve_weight != 0.0 and approach_inputs.has_prev_loc:
@@ -533,17 +536,9 @@ def _apply_approach_rewards(loader, acc, approach_inputs, ils_dme,
         loader._approach_prev_gs_abs = float(approach_terms.next_prev_gs_abs)
 
 
-def _apply_waypoint_rewards(loader, acc, cfg, safety_cfg, step_eval, truth, inst_obj,
-                            truncated, compiled_runtime_enabled, frame_products) -> None:
-    waypoint_turn_relief_activation = float(step_eval.get("waypoint_turn_relief_activation", 0.0))
+def _apply_waypoint_rewards(loader, acc, cfg, safety_cfg, step_eval, truth,
+                            frame_products) -> None:
     waypoint_state = step_eval.get("waypoint_state")
-    if waypoint_state is None and loader.waypoints:
-        waypoint_state = loader._build_waypoint_step_state(
-            cfg,
-            truth=truth,
-            inst=inst_obj,
-            turn_relief_activation=float(waypoint_turn_relief_activation),
-        )
     if not isinstance(waypoint_state, dict):
         return
     idx = int(waypoint_state["idx"])
@@ -553,25 +548,18 @@ def _apply_waypoint_rewards(loader, acc, cfg, safety_cfg, step_eval, truth, inst
     acc.status[2] = float(n)
 
     waypoint_inputs = waypoint_state["inputs"]
-    waypoint_runtime = None
     if (
-        compiled_runtime_enabled
-        and frame_products is not None
-        and bool(getattr(frame_products, "execution_step_evaluated", False))
-        and bool(getattr(frame_products.execution_step, "waypoint_evaluated", False))
+        frame_products is None
+        or not bool(getattr(frame_products, "execution_step_evaluated", False))
+        or not bool(getattr(frame_products.execution_step, "waypoint_evaluated", False))
     ):
-        waypoint_runtime = frame_products.execution_step
-        waypoint_terms = waypoint_runtime.waypoint
-    elif compiled_runtime_enabled:
-        waypoint_runtime = loader._compute_execution_step_runtime_products(
-            truncated=bool(truncated),
-            waypoint_inputs=waypoint_inputs,
-            waypoint_episode_success=bool(waypoint_state["episode_success"]),
-            waypoint_episode_success_bonus=float(safety_cfg.waypoint_mission_success_bonus),
+        raise RuntimeError(
+            "compiled waypoint reward products are required; execution runtime "
+            "products must be provided by prepare_step_evaluation (the legacy "
+            "per-step waypoint fallback has been removed)"
         )
-        waypoint_terms = waypoint_runtime.waypoint
-    else:
-        waypoint_terms = ef_py.compute_waypoint_reward_terms(waypoint_inputs)
+    waypoint_runtime = frame_products.execution_step
+    waypoint_terms = waypoint_runtime.waypoint
 
     if waypoint_inputs.progress_weight != 0.0 and waypoint_inputs.has_prev_dist:
         acc.add("waypoint_progress", float(waypoint_terms.waypoint_progress))
@@ -621,9 +609,7 @@ def _apply_waypoint_rewards(loader, acc, cfg, safety_cfg, step_eval, truth, inst
         acc.status[0] = 0.0
         acc.status[1] = float(loader.waypoint_idx)
     else:
-        if waypoint_runtime is not None and bool(
-            getattr(waypoint_runtime, "waypoint_episode_success", False)
-        ):
+        if bool(getattr(waypoint_runtime, "waypoint_episode_success", False)):
             acc.add(
                 "waypoint_success_bonus",
                 float(waypoint_runtime.waypoint_episode_success_bonus),
@@ -641,7 +627,7 @@ def _apply_waypoint_rewards(loader, acc, cfg, safety_cfg, step_eval, truth, inst
 
 def _consume_objective_outcome(acc, status_count, status0, status1, status2,
                                matched, cross_penalty, track_penalty, bonus, reason_code) -> bool:
-    """Shared consumption of one objective evaluation across the three backends."""
+    """Consume the objective evaluation carried by the execution step products."""
     if int(status_count) >= 1:
         acc.status[0] = float(status0)
     if int(status_count) >= 2:
@@ -661,81 +647,32 @@ def _consume_objective_outcome(acc, status_count, status0, status1, status2,
     return True
 
 
-def _apply_objective_rewards(loader, acc, step_eval, truth, inst, inst_obj, truncated,
-                             compiled_runtime_enabled, frame_products, *, curr_ias,
-                             curr_ground_speed, curr_alt_agl, heading_error_deg,
-                             ground_track_error_deg, runway_cross_m, runway_from_threshold_m,
-                             on_runway_geom, on_runway_task, on_ground) -> None:
-    objective_inputs = step_eval.get("objective_inputs")
-    if objective_inputs is None:
-        objective_inputs = loader._build_conditional_objective_inputs(
-            truth,
-            inst,
-            curr_ias=float(curr_ias),
-            curr_ground_speed=float(curr_ground_speed),
-            curr_gear=float(step_eval.get("curr_gear", inst[18])),
-            curr_alt_agl=float(curr_alt_agl),
-            heading_error_deg=float(heading_error_deg),
-            ground_track_error_deg=float(ground_track_error_deg),
-            runway_cross_m=runway_cross_m,
-            runway_from_threshold_m=runway_from_threshold_m,
-            on_runway_geom=on_runway_geom,
-            on_runway_task=bool(on_runway_task),
-            on_ground=bool(on_ground),
-        )
+def _apply_objective_rewards(loader, acc, frame_products) -> None:
+    if not loader._compiled_conditional_objectives:
+        return
     if (
-        compiled_runtime_enabled
-        and frame_products is not None
-        and bool(getattr(frame_products, "execution_step_evaluated", False))
-        and bool(getattr(frame_products.execution_step, "objective_evaluated", False))
+        frame_products is None
+        or not bool(getattr(frame_products, "execution_step_evaluated", False))
+        or not bool(getattr(frame_products.execution_step, "objective_evaluated", False))
     ):
-        runtime = frame_products.execution_step
-        _consume_objective_outcome(
-            acc,
-            runtime.objective_status_count,
-            runtime.status0,
-            runtime.status1,
-            runtime.status2,
-            int(runtime.matched_objective_index) >= 0,
-            runtime.objective.success_runway_cross_penalty,
-            runtime.objective.success_ground_track_error_penalty,
-            runtime.objective.objective_bonus,
-            runtime.reason_code,
+        raise RuntimeError(
+            "compiled conditional objective products are required; execution "
+            "runtime products must be provided by prepare_step_evaluation (the "
+            "legacy per-step objective fallback has been removed)"
         )
-    elif compiled_runtime_enabled:
-        runtime = loader._compute_execution_step_runtime_products(
-            truncated=bool(truncated),
-            objective_specs=loader._compiled_conditional_objectives,
-            objective_inputs=objective_inputs,
-        )
-        _consume_objective_outcome(
-            acc,
-            runtime.objective_status_count,
-            runtime.status0,
-            runtime.status1,
-            runtime.status2,
-            int(runtime.matched_objective_index) >= 0,
-            runtime.objective.success_runway_cross_penalty,
-            runtime.objective.success_ground_track_error_penalty,
-            runtime.objective.objective_bonus,
-            runtime.reason_code,
-        )
-    else:
-        for obj in loader._compiled_conditional_objectives:
-            products = ef_py.evaluate_conditional_objective(obj, objective_inputs, loader._objective_shaping_cfg)
-            if _consume_objective_outcome(
-                acc,
-                products.status_count,
-                products.status0,
-                products.status1,
-                products.status2,
-                bool(products.matched),
-                products.success_runway_cross_penalty,
-                products.success_ground_track_error_penalty,
-                products.objective_bonus,
-                ef_py.TerminationReasonCode.SuccessObjective,
-            ):
-                break
+    runtime = frame_products.execution_step
+    _consume_objective_outcome(
+        acc,
+        runtime.objective_status_count,
+        runtime.status0,
+        runtime.status1,
+        runtime.status2,
+        int(runtime.matched_objective_index) >= 0,
+        runtime.objective.success_runway_cross_penalty,
+        runtime.objective.success_ground_track_error_penalty,
+        runtime.objective.objective_bonus,
+        runtime.reason_code,
+    )
 
 
 def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_state=None, step_evaluation=None):
@@ -745,7 +682,6 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
         else loader.scenario_data.get("rewards", {})
     )
     safety_cfg = loader._safety_reward_cfg
-    compiled_runtime_enabled = loader._compiled_execution_step_enabled()
     flight_shaping_backend = loader._flight_shaping_backend_mode()
 
     if truth is None:
@@ -763,27 +699,13 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
     frame_products = step_eval.get("frame_products") if isinstance(step_eval, dict) else None
     truncated = bool(step_eval.get("truncated", steps >= max_steps))
     curr_ias = float(step_eval.get("curr_ias", inst[0]))
-    curr_ground_speed = float(
-        step_eval.get(
-            "curr_ground_speed",
-            math.hypot(float(getattr(truth, "vx", 0.0)), float(getattr(truth, "vy", 0.0))),
-        )
-    )
-    curr_alt_agl = float(
-        step_eval.get("curr_alt_agl", inst[3] if len(inst) > 3 else float(getattr(truth, "z", 0.0)))
-    )
-    heading_error_deg = float(step_eval.get("heading_error_deg", 0.0))
-    ground_track_error_deg = float(step_eval.get("ground_track_error_deg", 0.0))
 
     if not bool(step_eval.get("finite_state_valid", True)):
-        return _finite_guard_outcome(
-            loader, safety_cfg, compiled_runtime_enabled, frame_products, truncated
-        )
+        return _finite_guard_outcome(loader, safety_cfg, frame_products, truncated)
 
     loader.off_runway_steps = int(step_eval.get("next_off_runway_steps", 0))
     if (
-        compiled_runtime_enabled
-        and frame_products is not None
+        frame_products is not None
         and bool(getattr(frame_products, "outcome_evaluated", False))
         and flight_shaping_backend == "compiled"
     ):
@@ -828,32 +750,17 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
         loader.prev_speed = curr_ias
         return reward, terminated, truncated, status
 
-    on_ground = bool(step_eval.get("on_ground", False))
-    on_runway_geom = step_eval.get("on_runway_geom")
-    runway_cross_m = step_eval.get("runway_cross_m")
-    runway_from_threshold_m = step_eval.get("runway_from_threshold_m")
-    on_runway_task = bool(step_eval.get("on_runway_task", False))
-    safety_inputs = step_eval.get("safety_inputs")
     approach_inputs = step_eval.get("approach_inputs")
     ils_dme = float(step_eval.get("ils_dme", 0.0))
 
-    safety_approach_runtime = None
-    if (
-        compiled_runtime_enabled
-        and frame_products is not None
-        and bool(getattr(frame_products, "execution_step_evaluated", False))
-    ):
-        safety_approach_runtime = frame_products.execution_step
-        safety_terms = safety_approach_runtime.safety
-    elif compiled_runtime_enabled:
-        safety_approach_runtime = loader._compute_execution_step_runtime_products(
-            truncated=bool(truncated),
-            safety_inputs=safety_inputs,
-            approach_inputs=approach_inputs,
+    if frame_products is None or not bool(getattr(frame_products, "execution_step_evaluated", False)):
+        raise RuntimeError(
+            "compiled execution step runtime products are required; they must be "
+            "provided by prepare_step_evaluation (the legacy per-step safety "
+            "fallback has been removed)"
         )
-        safety_terms = safety_approach_runtime.safety
-    else:
-        safety_terms = ef_py.compute_safety_runtime(safety_inputs)
+    safety_approach_runtime = frame_products.execution_step
+    safety_terms = safety_approach_runtime.safety
 
     acc = _StepRewardAccumulator()
     _apply_safety_rewards(acc, safety_terms)
@@ -861,14 +768,12 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
     if not acc.terminated:
         if bool(step_eval.get("domain_flight_shaping_enabled", True)):
             _apply_flight_shaping(
-                loader, acc, step_eval, truth, flight_shaping_backend,
-                compiled_runtime_enabled, frame_products,
+                loader, acc, step_eval, truth, flight_shaping_backend, frame_products,
             )
         _apply_post_shaping_safety_penalties(acc, safety_terms)
         if approach_inputs is not None:
             _apply_approach_rewards(
-                loader, acc, approach_inputs, ils_dme,
-                compiled_runtime_enabled, safety_approach_runtime,
+                loader, acc, approach_inputs, ils_dme, safety_approach_runtime,
             )
 
     loader.prev_alt = truth.z
@@ -876,25 +781,11 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
 
     if not acc.terminated:
         _apply_waypoint_rewards(
-            loader, acc, cfg, safety_cfg, step_eval, truth, inst_obj,
-            truncated, compiled_runtime_enabled, frame_products,
+            loader, acc, cfg, safety_cfg, step_eval, truth, frame_products,
         )
 
     if not acc.terminated:
-        _apply_objective_rewards(
-            loader, acc, step_eval, truth, inst, inst_obj, truncated,
-            compiled_runtime_enabled, frame_products,
-            curr_ias=curr_ias,
-            curr_ground_speed=curr_ground_speed,
-            curr_alt_agl=curr_alt_agl,
-            heading_error_deg=heading_error_deg,
-            ground_track_error_deg=ground_track_error_deg,
-            runway_cross_m=runway_cross_m,
-            runway_from_threshold_m=runway_from_threshold_m,
-            on_runway_geom=on_runway_geom,
-            on_runway_task=on_runway_task,
-            on_ground=on_ground,
-        )
+        _apply_objective_rewards(loader, acc, frame_products)
 
     reward, terminated, truncated, status, rb, reason_override = _apply_combat_terminal_override(
         loader,

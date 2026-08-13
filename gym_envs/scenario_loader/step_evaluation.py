@@ -490,7 +490,6 @@ def prepare_step_evaluation(
     steps: int,
     max_steps: int,
     mission_obs_mode: str | None = None,
-    defer_compiled_runtime: bool = False,
     compact_output: bool = False,
 ):
     cached = get_cached_step_evaluation(
@@ -513,8 +512,6 @@ def prepare_step_evaluation(
         max_steps=int(max_steps),
         mission_obs_mode=mission_obs_mode,
     )
-    frame_products = None
-    episode_runtime_inputs = None
     truncated = bool(entry["truncated"])
     mission_inputs = entry.get("mission_observation_inputs")
     step_info_inputs = entry.get("step_info_inputs")
@@ -526,81 +523,45 @@ def prepare_step_evaluation(
     if bool(compact_output) and mission_obs_mode is None:
         step_info_inputs = None
 
-    deferred_kind = None
-    deferred_inputs = None
-
-    if loader._compiled_execution_episode_enabled():
-        runtime_inputs = ef_py.ExecutionEpisodeRuntimeInputs()
-        if mission_inputs is not None and mission_obs_mode is not None:
-            runtime_inputs.has_mission_observation = True
-            runtime_inputs.mission_observation = mission_inputs
-        if step_info_inputs is not None:
-            runtime_inputs.has_step_info = True
-            runtime_inputs.step_info = step_info_inputs
-        runtime_inputs.has_execution_step = True
-        exec_inputs = ef_py.ExecutionStepRuntimeInputs()
-        exec_inputs.truncated = bool(truncated)
-        if safety_inputs is not None:
-            exec_inputs.safety = safety_inputs
-        if approach_inputs is not None:
-            exec_inputs.has_approach = True
-            exec_inputs.approach = approach_inputs
-        if isinstance(waypoint_state, dict):
-            exec_inputs.has_waypoint = True
-            exec_inputs.waypoint = waypoint_state["inputs"]
-            exec_inputs.waypoint_episode_success = bool(waypoint_state["episode_success"])
-            exec_inputs.waypoint_episode_success_bonus = float(loader._safety_reward_cfg.waypoint_mission_success_bonus)
-        if loader._compiled_conditional_objectives and objective_inputs is not None:
-            exec_inputs.has_objectives = True
-            exec_inputs.objectives = list(loader._compiled_conditional_objectives)
-            exec_inputs.objective_inputs = objective_inputs
-            exec_inputs.objective_shaping = loader._objective_shaping_cfg
-        runtime_inputs.execution_step = exec_inputs
-        if shaping_inputs is not None:
-            runtime_inputs.has_flight_shaping = True
-            runtime_inputs.flight_shaping = shaping_inputs
-        runtime_inputs.include_roll_stability = bool(float(getattr(truth, "z", 0.0)) < 100.0)
-        episode_runtime_inputs = runtime_inputs
-        if bool(defer_compiled_runtime):
-            deferred_kind = "episode"
-            deferred_inputs = runtime_inputs
-        else:
-            frame_products = ef_py.compute_execution_episode_runtime(runtime_inputs)
-    elif loader._compiled_execution_frame_enabled():
-        frame_inputs = ef_py.ExecutionFrameRuntimeInputs()
-        if mission_inputs is not None and mission_obs_mode is not None:
-            frame_inputs.has_mission_observation = True
-            frame_inputs.mission_observation = mission_inputs
-        if step_info_inputs is not None:
-            frame_inputs.has_step_info = True
-            frame_inputs.step_info = step_info_inputs
-        frame_inputs.has_execution_step = True
-        exec_inputs = ef_py.ExecutionStepRuntimeInputs()
-        exec_inputs.truncated = bool(truncated)
-        if safety_inputs is not None:
-            exec_inputs.safety = safety_inputs
-        if approach_inputs is not None:
-            exec_inputs.has_approach = True
-            exec_inputs.approach = approach_inputs
-        if isinstance(waypoint_state, dict):
-            exec_inputs.has_waypoint = True
-            exec_inputs.waypoint = waypoint_state["inputs"]
-            exec_inputs.waypoint_episode_success = bool(waypoint_state["episode_success"])
-            exec_inputs.waypoint_episode_success_bonus = float(loader._safety_reward_cfg.waypoint_mission_success_bonus)
-        if loader._compiled_conditional_objectives and objective_inputs is not None:
-            exec_inputs.has_objectives = True
-            exec_inputs.objectives = list(loader._compiled_conditional_objectives)
-            exec_inputs.objective_inputs = objective_inputs
-            exec_inputs.objective_shaping = loader._objective_shaping_cfg
-        frame_inputs.execution_step = exec_inputs
-        if shaping_inputs is not None:
-            frame_inputs.has_flight_shaping = True
-            frame_inputs.flight_shaping = shaping_inputs
-        if bool(defer_compiled_runtime):
-            deferred_kind = "frame"
-            deferred_inputs = frame_inputs
-        else:
-            frame_products = ef_py.compute_execution_frame_runtime(frame_inputs)
+    if not loader._compiled_execution_episode_enabled():
+        raise RuntimeError(
+            "compiled execution episode runtime is unavailable "
+            "(ef_py.ExecutionEpisodeRuntimeInputs/compute_execution_episode_runtime "
+            "missing or use_compiled_execution_step_runtime disabled); "
+            "prepare_step_evaluation has no legacy frame/step fallback"
+        )
+    runtime_inputs = ef_py.ExecutionEpisodeRuntimeInputs()
+    if mission_inputs is not None and mission_obs_mode is not None:
+        runtime_inputs.has_mission_observation = True
+        runtime_inputs.mission_observation = mission_inputs
+    if step_info_inputs is not None:
+        runtime_inputs.has_step_info = True
+        runtime_inputs.step_info = step_info_inputs
+    runtime_inputs.has_execution_step = True
+    exec_inputs = ef_py.ExecutionStepRuntimeInputs()
+    exec_inputs.truncated = bool(truncated)
+    if safety_inputs is not None:
+        exec_inputs.safety = safety_inputs
+    if approach_inputs is not None:
+        exec_inputs.has_approach = True
+        exec_inputs.approach = approach_inputs
+    if isinstance(waypoint_state, dict):
+        exec_inputs.has_waypoint = True
+        exec_inputs.waypoint = waypoint_state["inputs"]
+        exec_inputs.waypoint_episode_success = bool(waypoint_state["episode_success"])
+        exec_inputs.waypoint_episode_success_bonus = float(loader._safety_reward_cfg.waypoint_mission_success_bonus)
+    if loader._compiled_conditional_objectives and objective_inputs is not None:
+        exec_inputs.has_objectives = True
+        exec_inputs.objectives = list(loader._compiled_conditional_objectives)
+        exec_inputs.objective_inputs = objective_inputs
+        exec_inputs.objective_shaping = loader._objective_shaping_cfg
+    runtime_inputs.execution_step = exec_inputs
+    if shaping_inputs is not None:
+        runtime_inputs.has_flight_shaping = True
+        runtime_inputs.flight_shaping = shaping_inputs
+    runtime_inputs.include_roll_stability = bool(float(getattr(truth, "z", 0.0)) < 100.0)
+    episode_runtime_inputs = runtime_inputs
+    frame_products = ef_py.compute_execution_episode_runtime(runtime_inputs)
 
     entry = {
         "truth_obj": truth,
@@ -612,9 +573,6 @@ def prepare_step_evaluation(
         "episode_runtime_inputs": episode_runtime_inputs,
         **entry,
     }
-    if bool(defer_compiled_runtime):
-        entry["_runtime_deferred_kind"] = deferred_kind
-        entry["_runtime_deferred_inputs"] = deferred_inputs
     if bool(compact_output):
         entry["_compact_output"] = True
     if isinstance(loader._runtime_eval_cache, dict):

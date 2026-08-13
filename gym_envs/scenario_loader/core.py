@@ -143,8 +143,6 @@ from .reward_runtime import (
     build_safety_runtime_inputs as _build_safety_runtime_inputs_impl,
     compile_conditional_objectives as _compile_conditional_objectives_impl,
     compiled_execution_episode_enabled as _compiled_execution_episode_enabled_impl,
-    compiled_execution_frame_enabled as _compiled_execution_frame_enabled_impl,
-    compiled_execution_step_enabled as _compiled_execution_step_enabled_impl,
     compute_execution_step_runtime_products as _compute_execution_step_runtime_products_impl,
     compute_flight_shaping_products as _compute_flight_shaping_products_impl,
 )
@@ -771,9 +769,6 @@ class ScenarioLoader:
             time_step_s=time_step_s,
         )
 
-    def _compiled_execution_step_enabled(self) -> bool:
-        return _compiled_execution_step_enabled_impl(self)
-
     @staticmethod
     def _build_neutral_execution_safety_inputs():
         return _build_neutral_execution_safety_inputs_impl()
@@ -801,9 +796,6 @@ class ScenarioLoader:
             objective_specs=objective_specs,
             objective_inputs=objective_inputs,
         )
-
-    def _compiled_execution_frame_enabled(self) -> bool:
-        return _compiled_execution_frame_enabled_impl(self)
 
     def _compiled_execution_episode_enabled(self) -> bool:
         return _compiled_execution_episode_enabled_impl(self)
@@ -890,7 +882,6 @@ class ScenarioLoader:
         steps: int,
         max_steps: int,
         mission_obs_mode: str | None = None,
-        defer_compiled_runtime: bool = False,
         compact_output: bool = False,
     ):
         return _prepare_step_evaluation_impl(
@@ -902,7 +893,6 @@ class ScenarioLoader:
             steps=steps,
             max_steps=max_steps,
             mission_obs_mode=mission_obs_mode,
-            defer_compiled_runtime=defer_compiled_runtime,
             compact_output=compact_output,
         )
 
