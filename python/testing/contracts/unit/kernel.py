@@ -667,137 +667,151 @@ def _run_kernel_flight_contract(kernel_spec: dict[str, Any]) -> tuple[bool, str,
     raise ValueError(f"Unknown kernel_flight controller_kind: {controller_kind}")
 
 
-def run_kernel_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str] | None:
-    if check_kind == "kernel_flight_regression":
-        ok, message, _summary = _run_kernel_flight_contract(spec)
-        return ok, message
+def _check_kernel_flight_regression(spec: dict[str, Any]) -> tuple[bool, str]:
+    ok, message, _summary = _run_kernel_flight_contract(spec)
+    return ok, message
 
-    if check_kind == "kernel_flight_repeatability":
-        repeat_runs = max(2, int(spec.get("repeat_runs", 2)))
-        abs_tol = float(spec.get("float_abs_tol", 1.0e-6))
-        rel_tol = float(spec.get("float_rel_tol", 1.0e-6))
-        compare_keys = [str(x) for x in list(spec.get("compare_keys", []) or [])]
-        baseline_summary: dict[str, Any] | None = None
-        for run_idx in range(repeat_runs):
-            ok, message, summary = _run_kernel_flight_contract(spec)
-            if not ok:
-                return False, f"repeat run {run_idx + 1} failed: {message}"
-            if baseline_summary is None:
-                baseline_summary = dict(summary)
-                if not compare_keys:
-                    compare_keys = sorted(baseline_summary.keys())
-                continue
-            for key in compare_keys:
-                mismatch = _compare_kernel_summary_values(
-                    baseline_summary.get(key),
-                    summary.get(key),
-                    key=key,
-                    abs_tol=abs_tol,
-                    rel_tol=rel_tol,
-                )
-                if mismatch is not None:
-                    return False, f"repeatability mismatch on run {run_idx + 1}: {mismatch}"
-        return True, f"kernel flight repeatability contract passed for {repeat_runs} run(s)"
 
-    if check_kind == "kernel_flight_parameter_scan":
-        cases = list(spec.get("cases", []) or [])
-        if not cases:
-            raise ValueError("kernel_flight_parameter_scan requires non-empty 'cases'")
+def _check_kernel_flight_repeatability(spec: dict[str, Any]) -> tuple[bool, str]:
+    repeat_runs = max(2, int(spec.get("repeat_runs", 2)))
+    abs_tol = float(spec.get("float_abs_tol", 1.0e-6))
+    rel_tol = float(spec.get("float_rel_tol", 1.0e-6))
+    compare_keys = [str(x) for x in list(spec.get("compare_keys", []) or [])]
+    baseline_summary: dict[str, Any] | None = None
+    for run_idx in range(repeat_runs):
+        ok, message, summary = _run_kernel_flight_contract(spec)
+        if not ok:
+            return False, f"repeat run {run_idx + 1} failed: {message}"
+        if baseline_summary is None:
+            baseline_summary = dict(summary)
+            if not compare_keys:
+                compare_keys = sorted(baseline_summary.keys())
+            continue
+        for key in compare_keys:
+            mismatch = _compare_kernel_summary_values(
+                baseline_summary.get(key),
+                summary.get(key),
+                key=key,
+                abs_tol=abs_tol,
+                rel_tol=rel_tol,
+            )
+            if mismatch is not None:
+                return False, f"repeatability mismatch on run {run_idx + 1}: {mismatch}"
+    return True, f"kernel flight repeatability contract passed for {repeat_runs} run(s)"
 
-        def _resolve_case_spec(case_spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-            resolved = copy.deepcopy(case_spec)
-            cleanup_paths: list[str] = []
-            if (
-                "scenario" not in resolved
-                and ("scenario_base" in resolved or "scenario_inline" in resolved)
-            ):
-                scenario_path, should_cleanup = _materialize_scenario_path(resolved)
-                resolved["scenario"] = scenario_path
-                resolved.pop("scenario_base", None)
-                resolved.pop("scenario_patch", None)
-                resolved.pop("scenario_inline", None)
-                if should_cleanup:
-                    cleanup_paths.append(scenario_path)
-            return resolved, cleanup_paths
 
-        base_case_spec = copy.deepcopy(spec)
-        for key in ("cases", "ordered_field_checks", "case_field_checks"):
-            base_case_spec.pop(key, None)
-        base_case_spec["check_kind"] = "kernel_flight_regression"
+def _check_kernel_flight_parameter_scan(spec: dict[str, Any]) -> tuple[bool, str]:
+    cases = list(spec.get("cases", []) or [])
+    if not cases:
+        raise ValueError("kernel_flight_parameter_scan requires non-empty 'cases'")
 
-        case_summaries: dict[str, dict[str, Any]] = {}
-        for idx, raw_case in enumerate(cases):
-            if not isinstance(raw_case, dict):
-                raise ValueError("kernel_flight_parameter_scan cases must be JSON objects")
-            case_name = str(raw_case.get("name", f"case_{idx + 1}"))
-            case_overrides = raw_case.get("spec", raw_case.get("overrides", None))
-            if case_overrides is None:
-                case_overrides = {k: copy.deepcopy(v) for k, v in raw_case.items() if k != "name"}
-            if not isinstance(case_overrides, dict):
-                raise ValueError(f"kernel_flight_parameter_scan case {case_name!r} overrides must be a JSON object")
-            merged_case_spec = _deep_merge(base_case_spec, case_overrides)
-            merged_case_spec.pop("name", None)
-            run_case_spec, cleanup_paths = _resolve_case_spec(merged_case_spec)
-            try:
-                ok, message, summary = _run_kernel_flight_contract(run_case_spec)
-            finally:
-                for cleanup_path in cleanup_paths:
-                    try:
-                        os.unlink(cleanup_path)
-                    except OSError:
-                        pass
-            if not ok:
-                return False, f"scan case {case_name} failed: {message}"
-            case_summaries[case_name] = dict(summary)
+    def _resolve_case_spec(case_spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+        resolved = copy.deepcopy(case_spec)
+        cleanup_paths: list[str] = []
+        if (
+            "scenario" not in resolved
+            and ("scenario_base" in resolved or "scenario_inline" in resolved)
+        ):
+            scenario_path, should_cleanup = _materialize_scenario_path(resolved)
+            resolved["scenario"] = scenario_path
+            resolved.pop("scenario_base", None)
+            resolved.pop("scenario_patch", None)
+            resolved.pop("scenario_inline", None)
+            if should_cleanup:
+                cleanup_paths.append(scenario_path)
+        return resolved, cleanup_paths
 
-        for raw_check in list(spec.get("case_field_checks", []) or []):
-            if not isinstance(raw_check, dict):
-                raise ValueError("kernel_flight_parameter_scan case_field_checks entries must be JSON objects")
-            case_name = str(raw_check["case"])
-            field_name = str(raw_check["field"])
+    base_case_spec = copy.deepcopy(spec)
+    for key in ("cases", "ordered_field_checks", "case_field_checks"):
+        base_case_spec.pop(key, None)
+    base_case_spec["check_kind"] = "kernel_flight_regression"
+
+    case_summaries: dict[str, dict[str, Any]] = {}
+    for idx, raw_case in enumerate(cases):
+        if not isinstance(raw_case, dict):
+            raise ValueError("kernel_flight_parameter_scan cases must be JSON objects")
+        case_name = str(raw_case.get("name", f"case_{idx + 1}"))
+        case_overrides = raw_case.get("spec", raw_case.get("overrides", None))
+        if case_overrides is None:
+            case_overrides = {k: copy.deepcopy(v) for k, v in raw_case.items() if k != "name"}
+        if not isinstance(case_overrides, dict):
+            raise ValueError(f"kernel_flight_parameter_scan case {case_name!r} overrides must be a JSON object")
+        merged_case_spec = _deep_merge(base_case_spec, case_overrides)
+        merged_case_spec.pop("name", None)
+        run_case_spec, cleanup_paths = _resolve_case_spec(merged_case_spec)
+        try:
+            ok, message, summary = _run_kernel_flight_contract(run_case_spec)
+        finally:
+            for cleanup_path in cleanup_paths:
+                try:
+                    os.unlink(cleanup_path)
+                except OSError:
+                    pass
+        if not ok:
+            return False, f"scan case {case_name} failed: {message}"
+        case_summaries[case_name] = dict(summary)
+
+    for raw_check in list(spec.get("case_field_checks", []) or []):
+        if not isinstance(raw_check, dict):
+            raise ValueError("kernel_flight_parameter_scan case_field_checks entries must be JSON objects")
+        case_name = str(raw_check["case"])
+        field_name = str(raw_check["field"])
+        if case_name not in case_summaries:
+            return False, f"unknown scan case in case_field_checks: {case_name!r}"
+        if field_name not in case_summaries[case_name]:
+            return False, f"scan case {case_name!r} missing summary field {field_name!r}"
+        err = _check_optional_range(
+            float(case_summaries[case_name][field_name]),
+            raw_check,
+            label=f"{case_name}.{field_name}",
+        )
+        if err is not None:
+            return False, err
+
+    for raw_check in list(spec.get("ordered_field_checks", []) or []):
+        if not isinstance(raw_check, dict):
+            raise ValueError("kernel_flight_parameter_scan ordered_field_checks entries must be JSON objects")
+        field_name = str(raw_check["field"])
+        case_order = [str(x) for x in list(raw_check.get("case_order", raw_check.get("order", [])) or [])]
+        if len(case_order) < 2:
+            raise ValueError("ordered_field_checks requires at least two case names")
+        direction = str(raw_check.get("direction", "increasing")).strip().lower()
+        min_delta = float(raw_check.get("min_delta", 0.0))
+        for case_name in case_order:
             if case_name not in case_summaries:
-                return False, f"unknown scan case in case_field_checks: {case_name!r}"
+                return False, f"unknown scan case in ordered_field_checks: {case_name!r}"
             if field_name not in case_summaries[case_name]:
                 return False, f"scan case {case_name!r} missing summary field {field_name!r}"
-            err = _check_optional_range(
-                float(case_summaries[case_name][field_name]),
-                raw_check,
-                label=f"{case_name}.{field_name}",
-            )
-            if err is not None:
-                return False, err
+        for prev_name, curr_name in zip(case_order[:-1], case_order[1:]):
+            prev_value = float(case_summaries[prev_name][field_name])
+            curr_value = float(case_summaries[curr_name][field_name])
+            if direction == "increasing":
+                if (curr_value - prev_value) < min_delta:
+                    return False, (
+                        f"{field_name} was not increasing enough from {prev_name} to {curr_name}: "
+                        f"{curr_value:.3f} - {prev_value:.3f} < {min_delta:.3f}"
+                    )
+            elif direction == "decreasing":
+                if (prev_value - curr_value) < min_delta:
+                    return False, (
+                        f"{field_name} was not decreasing enough from {prev_name} to {curr_name}: "
+                        f"{prev_value:.3f} - {curr_value:.3f} < {min_delta:.3f}"
+                    )
+            else:
+                raise ValueError(f"unsupported ordered_field_checks direction: {direction!r}")
 
-        for raw_check in list(spec.get("ordered_field_checks", []) or []):
-            if not isinstance(raw_check, dict):
-                raise ValueError("kernel_flight_parameter_scan ordered_field_checks entries must be JSON objects")
-            field_name = str(raw_check["field"])
-            case_order = [str(x) for x in list(raw_check.get("case_order", raw_check.get("order", [])) or [])]
-            if len(case_order) < 2:
-                raise ValueError("ordered_field_checks requires at least two case names")
-            direction = str(raw_check.get("direction", "increasing")).strip().lower()
-            min_delta = float(raw_check.get("min_delta", 0.0))
-            for case_name in case_order:
-                if case_name not in case_summaries:
-                    return False, f"unknown scan case in ordered_field_checks: {case_name!r}"
-                if field_name not in case_summaries[case_name]:
-                    return False, f"scan case {case_name!r} missing summary field {field_name!r}"
-            for prev_name, curr_name in zip(case_order[:-1], case_order[1:]):
-                prev_value = float(case_summaries[prev_name][field_name])
-                curr_value = float(case_summaries[curr_name][field_name])
-                if direction == "increasing":
-                    if (curr_value - prev_value) < min_delta:
-                        return False, (
-                            f"{field_name} was not increasing enough from {prev_name} to {curr_name}: "
-                            f"{curr_value:.3f} - {prev_value:.3f} < {min_delta:.3f}"
-                        )
-                elif direction == "decreasing":
-                    if (prev_value - curr_value) < min_delta:
-                        return False, (
-                            f"{field_name} was not decreasing enough from {prev_name} to {curr_name}: "
-                            f"{prev_value:.3f} - {curr_value:.3f} < {min_delta:.3f}"
-                        )
-                else:
-                    raise ValueError(f"unsupported ordered_field_checks direction: {direction!r}")
+    return True, f"kernel flight parameter scan passed for {len(case_summaries)} case(s)"
 
-        return True, f"kernel flight parameter scan passed for {len(case_summaries)} case(s)"
-    return None
+
+_KERNEL_CONTRACT_CHECKS = {
+    "kernel_flight_regression": _check_kernel_flight_regression,
+    "kernel_flight_repeatability": _check_kernel_flight_repeatability,
+    "kernel_flight_parameter_scan": _check_kernel_flight_parameter_scan,
+}
+
+
+def run_kernel_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str] | None:
+    handler = _KERNEL_CONTRACT_CHECKS.get(check_kind)
+    if handler is None:
+        return None
+    return handler(spec)
