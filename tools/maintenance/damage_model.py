@@ -5,13 +5,9 @@ Consolidated entrypoint replacing the eight previously separate
 ``damage_model_*.py`` dispatch routers. Every sub-command is namespaced
 under a domain prefix so the surface stays discoverable::
 
-  damage_model.py benchmark-evidence mechanism-evidence
   damage_model.py candidate-artifacts validation-scaffold
-  damage_model.py external-evidence intake-contract
-  damage_model.py independent-review effect-scale-review
   damage_model.py release-governance package-provenance-identity
   damage_model.py retained-artifacts manifest-integrity
-  damage_model.py scope-provenance row-provenance
   damage_model.py source-governance admission-audit
 
 Producer modules are bound lazily (see :func:`_producer`): a single
@@ -51,43 +47,6 @@ def _producer(module_path: str):
 # Keys use a "domain command" convention so related operations sort together.
 
 COMMANDS = {
-  # -- benchmark-evidence ---------------------------------------------------
-  "benchmark-evidence mechanism-evidence": (
-    "Generate the mechanism benchmark evidence manifest.",
-    _producer("tools.maintenance.benchmark_evidence.mechanism_evidence"),
-  ),
-  "benchmark-evidence comparison-hashes": (
-    "Generate hash-only mechanism comparison evidence.",
-    _producer("tools.maintenance.benchmark_evidence.comparison_hashes"),
-  ),
-  "benchmark-evidence benchmark-execution-admission": (
-    "Evaluate benchmark execution admission evidence.",
-    _producer("tools.maintenance.benchmark_evidence.benchmark_execution_admission"),
-  ),
-  "benchmark-evidence debris-admission": (
-    "Evaluate debris criteria admission evidence.",
-    _producer("tools.maintenance.benchmark_evidence.debris_admission"),
-  ),
-  "benchmark-evidence selected-debris-case-admission": (
-    "Evaluate selected debris case admission evidence.",
-    _producer("tools.maintenance.benchmark_evidence.selected_debris_case_admission"),
-  ),
-  "benchmark-evidence selected-debris-case-packet": (
-    "Build the selected debris case candidate packet.",
-    _producer("tools.maintenance.benchmark_evidence.selected_debris_case_packet"),
-  ),
-  "benchmark-evidence spreadsheet-recalculation-admission": (
-    "Evaluate spreadsheet recalculation admission evidence.",
-    _producer("tools.maintenance.benchmark_evidence.spreadsheet_recalculation_admission"),
-  ),
-  "benchmark-evidence spreadsheet-replacement-tolerance": (
-    "Evaluate spreadsheet replacement/tolerance admission evidence.",
-    _producer("tools.maintenance.benchmark_evidence.spreadsheet_replacement_tolerance"),
-  ),
-  "benchmark-evidence spreadsheet-lineage-tolerance-packet": (
-    "Build the spreadsheet lineage/tolerance review packet.",
-    _producer("tools.maintenance.benchmark_evidence.spreadsheet_lineage_tolerance_packet"),
-  ),
   # -- candidate-artifacts --------------------------------------------------
   "candidate-artifacts validation-scaffold": (
     "Generate the non-authoritative validation scaffold artifact.",
@@ -149,40 +108,6 @@ COMMANDS = {
     "Generate blocked Stage C component-fragility benchmark evidence.",
     _producer("tools.maintenance.candidate_artifacts.component_fragility_benchmark"),
   ),
-  # -- external-evidence ----------------------------------------------------
-  "external-evidence intake-contract": (
-    "Generate the fail-closed external signoff intake contract.",
-    _producer("tools.maintenance.external_signoff_evidence.intake_contract"),
-  ),
-  "external-evidence packet-template": (
-    "Generate a reviewer-fillable external signoff packet template.",
-    _producer("tools.maintenance.external_signoff_evidence.packet_template"),
-  ),
-  "external-evidence admission-preflight": (
-    "Generate the signoff admission preflight packet.",
-    _producer("tools.maintenance.external_signoff_evidence.admission_preflight"),
-  ),
-  "external-evidence signoff-request": (
-    "Generate the source-rights allowed-output signoff request packet.",
-    _producer("tools.maintenance.external_signoff_evidence.signoff_request"),
-  ),
-  # -- independent-review ---------------------------------------------------
-  "independent-review effect-scale-review": (
-    "Evaluate bounded Stage B effect-scale independent review evidence.",
-    _producer("tools.maintenance.independent_review.effect_scale_review"),
-  ),
-  "independent-review review-closeout": (
-    "Evaluate RES-011/012 independent review closeout evidence.",
-    _producer("tools.maintenance.independent_review.review_closeout"),
-  ),
-  "independent-review scope-bucket-review": (
-    "Evaluate scope-bucket independent review evidence.",
-    _producer("tools.maintenance.independent_review.scope_bucket_review"),
-  ),
-  "independent-review uncertainty-review": (
-    "Evaluate uncertainty review evidence.",
-    _producer("tools.maintenance.independent_review.uncertainty_review"),
-  ),
   # -- release-governance ---------------------------------------------------
   "release-governance package-provenance-identity": (
     "Evaluate package provenance and surrogate identity boundaries.",
@@ -216,23 +141,6 @@ COMMANDS = {
   "retained-artifacts manifest-integrity": (
     "Check retained artifact manifest hashes and authority guards.",
     _producer("tools.maintenance.retained_artifacts.manifest_integrity"),
-  ),
-  # -- scope-provenance -----------------------------------------------------
-  "scope-provenance row-provenance": (
-    "Evaluate geometry and warhead row provenance boundaries.",
-    _producer("tools.maintenance.scope_provenance.geometry_warhead_row_provenance"),
-  ),
-  "scope-provenance target-geometry-closeout": (
-    "Evaluate target-geometry scope closeout evidence.",
-    _producer("tools.maintenance.scope_provenance.target_geometry_closeout"),
-  ),
-  "scope-provenance warhead-scope-closeout": (
-    "Evaluate warhead-family scope closeout evidence.",
-    _producer("tools.maintenance.scope_provenance.warhead_scope_closeout"),
-  ),
-  "scope-provenance mechanism-source-closeout": (
-    "Evaluate mechanism source closeout evidence.",
-    _producer("tools.maintenance.scope_provenance.mechanism_source_closeout"),
   ),
   # -- source-governance ----------------------------------------------------
   "source-governance admission-audit": (

@@ -42,12 +42,8 @@ SPAWNING_CALLS = frozenset(
 #: real subprocess smoke; its remaining sub-commands run in-process.
 REQUIRED_SMOKE_FAMILIES = frozenset(
   {
-    "benchmark-evidence",
     "candidate-artifacts",
-    "external-evidence",
-    "independent-review",
     "release-governance",
-    "scope-provenance",
     "source-governance",
   }
 )
