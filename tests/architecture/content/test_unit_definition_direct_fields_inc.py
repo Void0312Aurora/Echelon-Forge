@@ -7,7 +7,11 @@ gate pins that list to the I52 survey's authoritative section 1.1 "54 direct
 keys" inventory and pins the loader body to being table-driven for the converged
 subset while the *excluded* keys stay hand-written. It mirrors the I58
 ``test_missile_tuning_fields_inc.py`` precedent and reuses the same
-``parse_xmacro`` reader.
+``parse_xmacro`` reader. The mechanical substrate (``.inc`` reader,
+git-object anchor, survey-section parser, body extractor, residue belts) is
+shared with the other content gates via ``tests/support/xmacro_gate.py``;
+every judgment below -- the adjudicated converged set, the exclusion
+register, the phase seams -- is bundle-specific and deliberately stays here.
 
 Anchor structure (three-way closure, survey == .inc == pinned):
 
@@ -49,11 +53,18 @@ computed-default/clamp/fallback/validated forms rather than this exact shape.
 from __future__ import annotations
 
 import re
-import subprocess
 
 import pytest
 
 from tests.support.paths import REPO_ROOT
+from tests.support.xmacro_gate import (
+    GitObjectAnchor,
+    function_body,
+    parse_inc_fields,
+    quoted_key_literals,
+    read_residues,
+    survey_section_rows,
+)
 
 
 _INC_PATH = REPO_ROOT / "src" / "content" / "detail" / "unit_definition_direct_fields.inc"
@@ -65,17 +76,7 @@ _SURVEY_GIT_PIN = (
     "095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/"
     "t11_content_schema_survey_20260721.md"
 )
-
-
-def _survey_text_from_git() -> str:
-    return subprocess.run(
-        ["git", "show", _SURVEY_GIT_PIN],
-        cwd=REPO_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    ).stdout
+_SURVEY_ANCHOR = GitObjectAnchor(_SURVEY_GIT_PIN)
 
 _EARLY_MACRO = "EF_UNIT_DIRECT_EARLY_FIELD"
 _DATA_LINK_MACRO = "EF_UNIT_DIRECT_DATA_LINK_FIELD"
@@ -99,12 +100,11 @@ _DATA_LINK_EXPANSION_BLOCK = (
     f"{_INC_INCLUDE_DIRECTIVE}"
 )
 
-# Survey section 1.1 anchoring. The heading prefix is matched literally (the
-# full heading carries an em dash and backticks); the section ends at the next
-# markdown heading. Row cells: | # | `key` | json_type | ... |.
+# Survey section 1.1 anchoring (shared parser, see tests/support/xmacro_gate).
+# The heading prefix is matched literally (the full heading carries an em dash
+# and backticks); the section ends at the next markdown heading.
 _SURVEY_HEADING_PREFIX = "### 1.1 Direct Top-Level Keys (54)"
-_SURVEY_ROW_RE = re.compile(r"^\|\s*(\d+)\s*\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|")
-_NEXT_HEADING_RE = re.compile(r"^#{1,6}\s", re.MULTILINE)
+_SURVEY_SECTION_LABEL = "survey section 1.1"
 
 _SURVEY_ROW_COUNT = 54
 _SURVEY_JSON_TYPES = frozenset({"string", "number", "object", "array", "bool", "int"})
@@ -183,27 +183,17 @@ _EXCLUDED_KEYS_SPOT: tuple[str, ...] = (
 
 
 def _parse_inc_fields(inc_text: str):
-    from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
-
-    return parse_xmacro_text(inc_text, _MACROS).fields
+    return parse_inc_fields(inc_text, _MACROS)
 
 
 def _survey_direct_key_rows(survey_text: str) -> tuple[tuple[int, str, str], ...]:
     """Parse (row_number, key, json_type) from survey section 1.1 only."""
-    heading_index = survey_text.find(_SURVEY_HEADING_PREFIX)
-    assert heading_index >= 0, (
-        f"survey heading {_SURVEY_HEADING_PREFIX!r} not found in git object {_SURVEY_GIT_PIN}"
+    return survey_section_rows(
+        survey_text,
+        heading_prefix=_SURVEY_HEADING_PREFIX,
+        section_label=_SURVEY_SECTION_LABEL,
+        source_label=_SURVEY_ANCHOR.label,
     )
-    after_heading = survey_text[heading_index + len(_SURVEY_HEADING_PREFIX) :]
-    next_heading = _NEXT_HEADING_RE.search(after_heading)
-    section = after_heading if next_heading is None else after_heading[: next_heading.start()]
-    rows: list[tuple[int, str, str]] = []
-    for line in section.splitlines():
-        match = _SURVEY_ROW_RE.match(line.strip())
-        if match:
-            rows.append((int(match.group(1)), match.group(2), match.group(3).strip()))
-    assert rows, "survey section 1.1 contains no parsable key rows"
-    return tuple(rows)
 
 
 def _check_survey_is_the_54_row_inventory(survey_rows) -> None:
@@ -282,68 +272,28 @@ def _loader_function_body(loader_text: str, signature: str) -> str:
     literals, char literals, and // and /* */ comments (parse_unit_json is large
     and carries braced struct-init literals, so naive counting is still safe,
     but string/comment skipping hardens against future edits)."""
-    for match in re.finditer(re.escape(signature), loader_text):
-        index = match.end()
-        while index < len(loader_text) and loader_text[index] not in "{;":
-            index += 1
-        if index >= len(loader_text) or loader_text[index] != "{":
-            continue  # forward declaration; keep scanning
-        depth = 0
-        pos = index
-        n = len(loader_text)
-        while pos < n:
-            ch = loader_text[pos]
-            two = loader_text[pos : pos + 2]
-            if two == "//":
-                nl = loader_text.find("\n", pos)
-                pos = n if nl < 0 else nl
-                continue
-            if two == "/*":
-                end = loader_text.find("*/", pos + 2)
-                pos = n if end < 0 else end + 2
-                continue
-            if ch in ('"', "'"):
-                quote = ch
-                pos += 1
-                while pos < n:
-                    if loader_text[pos] == "\\":
-                        pos += 2
-                        continue
-                    if loader_text[pos] == quote:
-                        pos += 1
-                        break
-                    pos += 1
-                continue
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-                if depth == 0:
-                    return loader_text[index : pos + 1]
-            pos += 1
-        raise AssertionError("unbalanced braces in parse_unit_json definition")
-    raise AssertionError("parse_unit_json definition not found")
+    return function_body(
+        loader_text, signature, label="parse_unit_json", skip_literals=True
+    )
+
+
+# Scoped to `entry`: the converged keys are top-level reads, so a `sp.value`
+# or `af.value` of the same name in a nested block is a different member.
+_READ_ACCESS_PREFIX = r'entry\s*(?:\.\s*(?:value|contains)\s*\(\s*|\[\s*)'
 
 
 def _hand_written_read_residues(loader_text: str, keys) -> list[str]:
     """Keys with a hand-written read (entry.value("key" / entry.contains("key"
     / entry["key"] forms) inside the parse_unit_json body."""
     body = _loader_function_body(loader_text, _LOADER_SIGNATURE)
-    residues = []
-    for key in keys:
-        pattern = re.compile(
-            r'entry\s*(?:\.\s*(?:value|contains)\s*\(\s*|\[\s*)"' + re.escape(key) + r'"'
-        )
-        if pattern.search(body):
-            residues.append(key)
-    return residues
+    return read_residues(body, keys, _READ_ACCESS_PREFIX)
 
 
 def _quoted_key_literals_in_body(loader_text: str, keys) -> list[str]:
     """Stricter belt: the table-driven body contains no quoted converged-key
     literal at all (keys only enter via #name stringification inside the .inc)."""
     body = _loader_function_body(loader_text, _LOADER_SIGNATURE)
-    return [key for key in keys if f'"{key}"' in body]
+    return quoted_key_literals(body, keys)
 
 
 _LITERAL_DIRECT_READ_RE = re.compile(
@@ -401,7 +351,7 @@ def _real_loader_text() -> str:
 
 
 def _real_survey_rows() -> tuple[tuple[int, str, str], ...]:
-    return _survey_direct_key_rows(_survey_text_from_git())
+    return _survey_direct_key_rows(_SURVEY_ANCHOR.read_text())
 
 
 def _converged_keys() -> set[str]:

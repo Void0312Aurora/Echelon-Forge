@@ -30,7 +30,7 @@
 // Folding it into the scalar row shape below would silently change its default
 // from `true` to the seeded value, so it stays hand-written directly above the
 // include. Absence is pinned by
-// tests/architecture/content/test_engine_tuning_fields_inc.py.
+// tests/architecture/content/test_tuning_fields_inc.py.
 //
 // SINGLE MACRO. EngineTuning declares only bool/double members -- no
 // std::vector<double> tables -- so this list defines only the scalar macro and
@@ -70,7 +70,7 @@
 // _generated Python builder per schema and its freshness gate hardcodes a
 // registration list, while this is a C++-only content-loader parse map with no
 // scenario_loader face. It stays a hand-authored .inc pinned by
-// tests/architecture/content/test_engine_tuning_fields_inc.py, whose anchor is
+// tests/architecture/content/test_tuning_fields_inc.py, whose anchor is
 // the EngineTuning declaration itself.
 
 #if !defined(EF_ENGINE_TUNING_FIELD)

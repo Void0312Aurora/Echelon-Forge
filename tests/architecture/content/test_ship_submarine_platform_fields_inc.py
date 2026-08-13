@@ -20,7 +20,11 @@ divergence that forces this shape).
 
 This gate mirrors the I58/I61 precedents
 (``test_missile_tuning_fields_inc.py`` / ``test_unit_definition_direct_fields_inc.py``)
-and reuses the same ``parse_xmacro`` reader.
+and reuses the same ``parse_xmacro`` reader. The mechanical substrate (``.inc``
+reader, struct-declaration parser, body extractor, residue belts) is shared
+with the other content gates via ``tests/support/xmacro_gate.py``; every
+judgment below -- the two-list decision, the ``length_m`` exemption, the
+expansion-site seams -- is bundle-specific and deliberately stays here.
 
 Anchor structure (three-way closure, struct header == .inc == pinned):
 
@@ -66,6 +70,14 @@ import re
 import pytest
 
 from tests.support.paths import REPO_ROOT
+from tests.support.xmacro_gate import (
+    WorktreeAnchor,
+    function_body,
+    parse_inc_fields,
+    quoted_key_literals,
+    read_residues,
+    struct_members_regex_scan,
+)
 
 
 _SHIP_INC_PATH = REPO_ROOT / "src" / "content" / "detail" / "ship_platform_fields.inc"
@@ -198,9 +210,7 @@ _MEMBER_RE = re.compile(
 
 
 def _parse_inc_fields(inc_text: str, macro: str):
-    from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
-
-    return parse_xmacro_text(inc_text, frozenset({macro})).fields
+    return parse_inc_fields(inc_text, frozenset({macro}))
 
 
 def _struct_member_rows(header_text: str, struct_name: str) -> tuple[tuple[str, str, str], ...]:
@@ -208,18 +218,9 @@ def _struct_member_rows(header_text: str, struct_name: str) -> tuple[tuple[str, 
     declaration order. The platform structs are flat all-default-initialized
     aggregates, so a member without the ``type name = default;`` shape is a
     reshape this gate must go red on (count check downstream)."""
-    marker = f"struct {struct_name} {{"
-    start = header_text.find(marker)
-    assert start >= 0, f"struct {struct_name} not found"
-    end = header_text.find("};", start)
-    assert end > start, f"struct {struct_name} body not terminated"
-    section = header_text[start + len(marker) : end]
-    rows = tuple(
-        (match.group(2), match.group(1), match.group(3))
-        for match in _MEMBER_RE.finditer(section)
+    return struct_members_regex_scan(
+        header_text, struct_name=struct_name, member_re=_MEMBER_RE
     )
-    assert rows, f"struct {struct_name} contains no parsable members"
-    return rows
 
 
 def _check_inc_matches_header(inc_fields, header_rows, macro: str, label: str) -> None:
@@ -253,47 +254,9 @@ def _loader_function_body(loader_text: str, signature: str) -> str:
     """Extract a function definition body by text boundary: the signature
     occurrence followed by '{' (not ';'), then brace matching that skips string
     literals, char literals, and // and /* */ comments (I61 extractor)."""
-    for match in re.finditer(re.escape(signature), loader_text):
-        index = match.end()
-        while index < len(loader_text) and loader_text[index] not in "{;":
-            index += 1
-        if index >= len(loader_text) or loader_text[index] != "{":
-            continue  # forward declaration; keep scanning
-        depth = 0
-        pos = index
-        n = len(loader_text)
-        while pos < n:
-            ch = loader_text[pos]
-            two = loader_text[pos : pos + 2]
-            if two == "//":
-                nl = loader_text.find("\n", pos)
-                pos = n if nl < 0 else nl
-                continue
-            if two == "/*":
-                end = loader_text.find("*/", pos + 2)
-                pos = n if end < 0 else end + 2
-                continue
-            if ch in ('"', "'"):
-                quote = ch
-                pos += 1
-                while pos < n:
-                    if loader_text[pos] == "\\":
-                        pos += 2
-                        continue
-                    if loader_text[pos] == quote:
-                        pos += 1
-                        break
-                    pos += 1
-                continue
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-                if depth == 0:
-                    return loader_text[index : pos + 1]
-            pos += 1
-        raise AssertionError("unbalanced braces in parse_unit_json definition")
-    raise AssertionError("parse_unit_json definition not found")
+    return function_body(
+        loader_text, signature, label="parse_unit_json", skip_literals=True
+    )
 
 
 def _platform_if_block(body: str, block_open: str) -> str:
@@ -314,23 +277,15 @@ def _platform_if_block(body: str, block_open: str) -> str:
     raise AssertionError("unbalanced platform if-block")
 
 
+# Deliberately object-agnostic (no `entry`/`sp` prefix): the platform reads
+# bind a local `sp` alias, so a residue could reappear under either spelling.
+_READ_ACCESS_PREFIX = r'(?:\.\s*(?:value|contains)\s*\(\s*|\[\s*)'
+
+
 def _hand_written_read_residues(body_text: str, keys) -> list[str]:
     """Keys with a hand-written read (.value("key" / .contains("key" /
     ["key"] forms, any object expression) inside the given text."""
-    residues = []
-    for key in keys:
-        pattern = re.compile(
-            r'(?:\.\s*(?:value|contains)\s*\(\s*|\[\s*)"' + re.escape(key) + r'"'
-        )
-        if pattern.search(body_text):
-            residues.append(key)
-    return residues
-
-
-def _quoted_key_literals(text: str, keys) -> list[str]:
-    """Stricter belt: the table-driven region contains no quoted key literal at
-    all (keys only enter via #name stringification inside the .inc)."""
-    return [key for key in keys if f'"{key}"' in text]
+    return read_residues(body_text, keys, _READ_ACCESS_PREFIX)
 
 
 def _check_loader_expansion_sites(loader_text: str) -> None:
@@ -384,7 +339,11 @@ def _check_member_write_belt(loader_text: str) -> None:
 
 
 def _real_text(path) -> str:
-    return path.read_text(encoding="utf-8")
+    # Both platform anchors are working-tree struct headers (the survey has no
+    # per-key table for these inner keys); the git-object anchor form is the
+    # other half of the shared anchor interface and is used by the two
+    # survey-anchored bundles.
+    return WorktreeAnchor(path).read_text()
 
 
 def _real_loader_text() -> str:
@@ -485,7 +444,7 @@ def test_body_has_no_hand_written_read_or_member_write_residue() -> None:
 
     # Body-wide sweep (all keys except the documented airframe length_m read).
     assert _hand_written_read_residues(body, body_wide_keys) == []
-    assert _quoted_key_literals(body, body_wide_keys) == []
+    assert quoted_key_literals(body, body_wide_keys) == []
 
     # The length_m exemption stays exactly the airframe read: one quoted
     # occurrence, and it is that statement.
@@ -498,7 +457,7 @@ def test_body_has_no_hand_written_read_or_member_write_residue() -> None:
     for label, family in _FAMILIES.items():
         block = _platform_if_block(body, family["block_open"])
         family_keys = [name for name, _cpp, _default in family["pinned"]]
-        assert _quoted_key_literals(block, family_keys) == [], (
+        assert quoted_key_literals(block, family_keys) == [], (
             f"hand-written key literal reintroduced in the {label} block"
         )
         assert family["expansion"] in block
@@ -618,7 +577,7 @@ def test_residue_scan_catches_hand_written_injection() -> None:
     assert injected != loader
     body = _loader_function_body(injected, _LOADER_SIGNATURE)
     assert _hand_written_read_residues(body, ["beam_m"]) == ["beam_m"]
-    assert _quoted_key_literals(body, ["beam_m"]) == ["beam_m"]
+    assert quoted_key_literals(body, ["beam_m"]) == ["beam_m"]
     with pytest.raises(AssertionError):
         _check_member_write_belt(injected)
 
@@ -638,6 +597,6 @@ def test_belt_catches_non_value_form_injection() -> None:
     assert injected != loader
     body = _loader_function_body(injected, _LOADER_SIGNATURE)
     assert _hand_written_read_residues(body, ["draft_m"]) == []
-    assert _quoted_key_literals(body, ["draft_m"]) == ["draft_m"]
+    assert quoted_key_literals(body, ["draft_m"]) == ["draft_m"]
     with pytest.raises(AssertionError):
         _check_member_write_belt(injected)
