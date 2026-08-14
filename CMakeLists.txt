@@ -12,8 +12,8 @@ option(EF_ENABLE_CUDA_EXPERIMENTS "Enable experimental CUDA GPU helper surface (
 # being ON triggers enable_language(CUDA) and find_package(CUDAToolkit).
 option(EF_ENABLE_CUDA_RESIDENT_BACKEND "Enable experimental CUDA-resident world-step backend" OFF)
 option(EF_ENABLE_PROJECT_WARNINGS "Enable warning flags for maintained project targets" ON)
-option(EF_ENABLE_COMPILER_CACHE "Route C/C++ compiles through a compiler cache (sccache/ccache) when one is installed" ON)
-option(EF_FETCHCONTENT_REVALIDATE_PINS "Re-run the git update/patch steps of the pinned FetchContent dependencies on every configure" OFF)
+option(EF_ENABLE_COMPILER_CACHE "Route C/C++ compiles through a compiler cache (sccache/ccache) when one is installed" OFF)
+option(EF_FETCHCONTENT_REVALIDATE_PINS "Re-run the git update/patch steps of the pinned FetchContent dependencies on every configure" ON)
 
 function(ef_enable_project_warnings target_name)
     if (NOT EF_ENABLE_PROJECT_WARNINGS)
@@ -69,21 +69,29 @@ endfunction()
 # real compiler, so the shared PDB never loses a translation unit; it just
 # caches less.
 #
-# Default ON.  The lookup is a find_program() that stays silent when no cache is
-# installed, so a machine without sccache/ccache configures, builds and links
-# exactly as before -- the default cannot regress an unequipped environment.
-# Pass -DEF_ENABLE_COMPILER_CACHE=OFF to force the bare compiler, and an
-# externally supplied CMAKE_<LANG>_COMPILER_LAUNCHER always wins over this
-# block.
+# Default OFF: ordinary incremental builds must keep compiler-produced header
+# dependency data intact.  Pass -DEF_ENABLE_COMPILER_CACHE=ON only on a
+# toolchain whose launcher is known to preserve that data.  An externally
+# supplied CMAKE_<LANG>_COMPILER_LAUNCHER always wins over this block.
 if (EF_ENABLE_COMPILER_CACHE
     AND NOT CMAKE_C_COMPILER_LAUNCHER
     AND NOT CMAKE_CXX_COMPILER_LAUNCHER)
     find_program(EF_COMPILER_CACHE_EXECUTABLE NAMES sccache ccache)
     mark_as_advanced(EF_COMPILER_CACHE_EXECUTABLE)
     if (EF_COMPILER_CACHE_EXECUTABLE)
-        set(CMAKE_C_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
-        set(CMAKE_CXX_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
-        message(STATUS "Compiler cache: ${EF_COMPILER_CACHE_EXECUTABLE}")
+        get_filename_component(EF_COMPILER_CACHE_NAME "${EF_COMPILER_CACHE_EXECUTABLE}" NAME_WE)
+        if (MSVC
+            AND CMAKE_GENERATOR MATCHES "Ninja"
+            AND EF_COMPILER_CACHE_NAME STREQUAL "sccache")
+            message(WARNING
+                "Compiler cache disabled: sccache does not preserve localized "
+                "MSVC /showIncludes dependencies for Ninja"
+            )
+        else()
+            set(CMAKE_C_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${EF_COMPILER_CACHE_EXECUTABLE}")
+            message(STATUS "Compiler cache: ${EF_COMPILER_CACHE_EXECUTABLE}")
+        endif()
     endif()
 endif()
 
@@ -99,27 +107,27 @@ find_package(Threads REQUIRED)
 include(FetchContent)
 
 # --- Pinned Dependency Re-Validation ---------------------------------------
-# Every dependency below is pinned to an exact commit hash, so the git update
-# step CMake runs on each configure can only ever re-confirm what is already
-# checked out.  That confirmation is not free.  With the default
-# UPDATE_DISCONNECTED=FALSE the update step is marked ALWAYS, which forces the
-# nested populate project to re-run its whole chain (update -> patch ->
+# Every dependency below is pinned to an exact commit hash.  By default the git
+# update step runs on each configure so a reused build tree cannot silently
+# retain a checkout that differs from the declared pin.  That confirmation is
+# not free.  With UPDATE_DISCONNECTED=FALSE the update step is marked ALWAYS,
+# which forces the nested populate project to re-run its whole chain (update -> patch ->
 # configure -> build -> install -> test) on every reconfigure.  Measured on this
 # tree with CMake 3.31.6 + Ninja on Windows, each connected dependency costs
 # 6.5-6.9 s of configure time, while nanobind -- the one declaration that had
 # already opted into UPDATE_DISCONNECTED -- costs 1.6 s.
 #
-# Deferring the update step does not weaken the pin on the CMake versions that
-# generate this build.  The requested hash is written verbatim into the
-# generated <dep>-populate-gitupdate.cmake, and that script is a declared input
-# of the update step, so bumping a GIT_TAG re-runs it.  The disconnected
-# invocation then passes can_fetch=NO, which turns a hash that is not present
-# locally into the hard error "Requested git ref ... is not present locally, and
-# not allowed to contact remote due to UPDATE_DISCONNECTED setting" rather than
-# silently leaving a stale revision in place.  The pre-3.27 caveat recorded in
-# the nanobind block below is what the escape hatch is for: after bumping a
-# GIT_TAG on an older CMake, configure once with
-# -DEF_FETCHCONTENT_REVALIDATE_PINS=ON (or delete the affected _deps entries).
+# CMake 3.27 fixed UPDATE_DISCONNECTED so a changed declaration re-runs the
+# update step.  Older supported CMake versions can retain stale populated
+# sources, so the performance opt-out is rejected there instead of weakening
+# the pin contract.
+if (NOT EF_FETCHCONTENT_REVALIDATE_PINS AND CMAKE_VERSION VERSION_LESS 3.27)
+    message(FATAL_ERROR
+        "EF_FETCHCONTENT_REVALIDATE_PINS=OFF requires CMake 3.27 or newer; "
+        "older CMake versions can retain stale FetchContent revisions"
+    )
+endif()
+
 if (EF_FETCHCONTENT_REVALIDATE_PINS)
     set(EF_FETCHCONTENT_PIN_MODE "")
 else()
@@ -181,11 +189,6 @@ FetchContent_MakeAvailable(spdlog)
 # bindings are migrated, backport just the visibility guard.  The patch is a
 # no-op on MSVC and Linux GCC, which already take the intended code path.
 #
-# UPDATE_DISCONNECTED caveat: on CMake < 3.27 a future GIT_TAG bump may leave
-# an already-populated _deps/nanobind-src on the old revision, and the patch
-# script would still apply cleanly against the stale source instead of failing
-# closed.  Tag bumps therefore want a clean _deps (delete the nanobind-src /
-# nanobind-subbuild dirs before reconfiguring).
 FetchContent_Declare(
     nanobind
     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
@@ -193,7 +196,7 @@ FetchContent_Declare(
     PATCH_COMMAND  "${CMAKE_COMMAND}"
                    "-DNANOBIND_DEFS_HEADER=<SOURCE_DIR>/include/nanobind/nb_defs.h"
                    -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/nanobind_mingw_visibility.cmake"
-    UPDATE_DISCONNECTED TRUE
+    ${EF_FETCHCONTENT_PIN_MODE}
 )
 FetchContent_MakeAvailable(nanobind)
 
