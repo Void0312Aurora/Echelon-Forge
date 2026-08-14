@@ -6,10 +6,8 @@
 #include "runtime/contracts/cuda_resident_performance_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
 
-TEST_CASE("RB9 performance contract freezes the private-window operation ledger") {
+TEST_CASE("CUDA-resident performance contract models the window operation ledger") {
     using namespace runtime::cuda_resident::performance;
-    CHECK(kCudaResidentPerformanceProfileId == "resident_state.unmaintained_candidate");
-    CHECK(kCudaResidentPerformanceInvocationSurface == "backend_private_phase_sequence");
 
     constexpr std::size_t worlds = 4;
     constexpr std::size_t slot_bytes = 1000;
@@ -49,16 +47,7 @@ TEST_CASE("RB9 performance contract freezes the private-window operation ledger"
     CHECK(both.d2h_bytes == device.d2h_bytes + slot_bytes + worlds * 16);
 }
 
-TEST_CASE("CP-7a small-batch selection rule stays frozen documentation-grade policy") {
-    using namespace runtime::cuda_resident::performance;
-    CHECK(kSmallBatchSelectionRuleId == "cp7.small_batch_selection_rule.v1");
-    CHECK(kResidentLaneAdvisoryMinimumWorldCount == 4);
-    CHECK(kWorldCountsBelowMinimumRouteToCpuReference);
-    CHECK(kMaintainedDefaultRemainsCpuReference);
-    CHECK(kSmallBatchCrossoverReviewOwner == "cp8.rematrix");
-}
-
-TEST_CASE("RB9 CUDA resource inventory includes pack and consumer kernels") {
+TEST_CASE("CUDA resource inventory includes pack and consumer kernels") {
     using namespace runtime::cuda_resident;
     if (!CudaWorldStore::compiled_with_cuda()) {
         CHECK(true);
@@ -75,7 +64,7 @@ TEST_CASE("RB9 CUDA resource inventory includes pack and consumer kernels") {
     CHECK(consumer.theoretical_occupancy > 0.0);
 }
 
-TEST_CASE("RB9 diagnostics expose exact resident state-slot bytes") {
+TEST_CASE("CUDA diagnostics expose exact resident state-slot bytes") {
     using namespace runtime::cuda_resident;
     if (!CudaWorldStore::compiled_with_cuda()) {
         CHECK(true);

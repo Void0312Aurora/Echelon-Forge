@@ -139,6 +139,21 @@ preserve the closed workflow. The last complete tree is `c0e4f31f`.
 | `tools/maintenance/source_governance/` | Source admission, payload, and rights-policy producers. | `git ls-tree -r c0e4f31f -- tools/maintenance/source_governance` |
 | `tools/maintenance/retained_artifacts/` | Manifest/hash integrity checker for the retained A2 packet. | `git ls-tree -r c0e4f31f -- tools/maintenance/retained_artifacts` |
 
+### Retired 2026-08-14 — CUDA-resident measurement toolchain
+
+The CUDA-resident backend was promoted as an explicit opt-in maintained
+backend, but its finite CP measurement campaign did not become a permanent
+runtime dependency. The report generators, parsers, and native capture probes
+were therefore deleted after the live backend contracts and parity tests were
+separated from the frozen evidence package. The final integrated measurement
+tree is recoverable from `2b4d3788`.
+
+| Path | Purpose | Recover |
+| --- | --- | --- |
+| `tools/diagnostics/cuda_resident_*.py` | One-shot report generation, parsing, evidence validation, and campaign comparison. | `git ls-tree -r 2b4d3788 -- tools/diagnostics/cuda_resident_*.py` |
+| `src/tools/experimental/cuda_resident/` | Native CUDA measurement and capture probes. | `git ls-tree -r 2b4d3788 -- src/tools/experimental/cuda_resident` |
+| `tests/fixtures/runtime_profiles/cuda_resident_program_2/` | Pre- and post-promotion frozen measurement reports and decisions. | `git ls-tree -r 2b4d3788 -- tests/fixtures/runtime_profiles/cuda_resident_program_2` |
+
 All entries below were retired at commit `3ac600a6` (the last commit in which
 they exist), after a four-column reference audit found no reference from
 `tests/`, CI, a maintained (Tier A/B) document, or another `tools/` entrypoint.

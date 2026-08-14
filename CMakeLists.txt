@@ -409,7 +409,70 @@ set(EF_PYTHON_BINDING_SOURCES
     # the diagnostics sub-slices follow their own orchestration shell.
     src/interfaces/python/bindings_core_kernel_maintained.cpp
     src/interfaces/python/bindings_core_kernel_diagnostics.cpp
-    src/interfaces/python/bindings_core…861 tokens truncated…MENT_SOURCES
+    src/interfaces/python/bindings_core_kernel_diagnostics_views.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_platform_state.cpp
+    src/interfaces/python/bindings_core_kernel_diagnostics_missile.cpp
+    src/interfaces/python/bindings_core_kernel_legacy.cpp
+    src/interfaces/python/bindings_core_kernel_override.cpp
+    src/interfaces/python/bindings_episode.cpp
+    # bind_episode() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_episode_geometry.cpp
+    src/interfaces/python/bindings_episode_mission_nav.cpp
+    src/interfaces/python/bindings_episode_waypoint_approach.cpp
+    src/interfaces/python/bindings_episode_flight_shaping.cpp
+    src/interfaces/python/bindings_episode_objective.cpp
+    src/interfaces/python/bindings_episode_termination.cpp
+    src/interfaces/python/bindings_episode_execution_runtime.cpp
+    src/interfaces/python/bindings_episode_state_batch.cpp
+    src/interfaces/python/bindings_runtime.cpp
+    # bind_runtime() domain slices, listed in nanobind registration order.
+    src/interfaces/python/bindings_runtime_runtime.cpp
+    src/interfaces/python/bindings_runtime_fidelity.cpp
+    src/interfaces/python/bindings_runtime_platform.cpp
+    src/interfaces/python/bindings_runtime_engagement.cpp
+    # bind_runtime_engagement() sub-slices, in the same registration order.
+    src/interfaces/python/bindings_runtime_engagement_events.cpp
+    src/interfaces/python/bindings_runtime_engagement_damage.cpp
+    src/interfaces/python/bindings_runtime_engagement_track_launch.cpp
+    src/interfaces/python/bindings_runtime_engagement_munition.cpp
+    src/interfaces/python/bindings_runtime_kill_chain.cpp
+    src/interfaces/python/bindings_runtime_policy.cpp
+    src/interfaces/python/bindings_runtime_batch_setup.cpp
+    src/interfaces/python/bindings_runtime_experiment.cpp
+    src/interfaces/python/bindings_runtime_batch_request.cpp
+    src/interfaces/python/bindings_runtime_learning.cpp
+    src/interfaces/python/bindings_runtime_batch_packet.cpp
+    src/interfaces/python/bindings_runtime_tasking.cpp
+    src/interfaces/python/bindings_runtime_window.cpp
+    src/interfaces/python/bindings_runtime_platform_world.cpp
+    src/interfaces/python/bindings_runtime_tasking_world.cpp
+    src/interfaces/python/bindings_runtime_engine.cpp
+    src/interfaces/python/bindings_runtime_facade.cpp
+    src/interfaces/python/bindings_gpu.cpp
+)
+
+# --- Python Module ---
+nanobind_add_module(ef_py
+    ${EF_PYTHON_BINDING_SOURCES}
+)
+# bindings_runtime.cpp/bindings_gpu.cpp reference RuntimeFacade symbols, so the
+# bindings link the facade unit ahead of ef_core.  ef_core stays a *direct*
+# link item on purpose: the engine's compatibility path calls gpu:: helpers
+# (the ratcheted world_batch_runtime -> gpu edges) without a declared
+# ef_core -> ef_gpu_experiments dependency, and it is ef_core's direct-item
+# status that makes CMake repeat it after ef_gpu_experiments on the
+# single-pass MinGW link line.  Dropping it in favour of the transitive edge
+# through ef_facade could reorder that repetition away.
+target_link_libraries(ef_py PRIVATE ef_facade ef_core)
+
+# --- Experimental GPU Scaffolding ---
+set(EF_GPU_MAINTAINED_HELPER_SOURCES
+    src/gpu/gpu_visual_runtime.cpp
+    src/gpu/gpu_execution_observation_runtime.cpp
+    src/gpu/gpu_flight_shaping_runtime.cpp
+    src/gpu/gpu_interaction_broadphase_runtime.cpp
+)
+set(EF_GPU_EXPERIMENT_SOURCES
     ${EF_GPU_MAINTAINED_HELPER_SOURCES}
 )
 
@@ -460,15 +523,8 @@ target_compile_definitions(ef_cuda_resident_backend PRIVATE
 )
 if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
     target_link_libraries(ef_cuda_resident_backend PUBLIC CUDA::cudart)
-    # `-maxrregcount=0` is an explicit no-cap declaration, not a tuning knob: it
-    # is the value ptxas already uses by default. It is stated here because the
-    # resource-evidence contract records `maxrregcount_argument` as provenance
-    # and its collector requires the argument to be present and zero, so that a
-    # future register-pressure experiment cannot be mistaken for the baseline.
-    # Register counts are byte-identical with and without it.
     target_compile_options(ef_cuda_resident_backend PRIVATE
         $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>
-        $<$<COMPILE_LANGUAGE:CUDA>:-maxrregcount=0>
     )
 endif()
 
@@ -730,4 +786,3 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/agents" DESTINATION exam
     PATTERN "*.pyc" EXCLUDE
 )
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/scenarios" DESTINATION .)
-

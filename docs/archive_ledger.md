@@ -420,11 +420,19 @@ The remaining A2 maintenance closure (`damage_model.py`, `a2_packet_paths.py`,
 
 ## Retired CUDA-Resident Evidence Program
 
-The CUDA-resident evidence program ended with promotion disabled. On
-2026-08-14 its 44-file retained fixture tree, 12 Python evidence diagnostics,
-12 evidence-only architecture tests, and eight native measurement-probe sources
-were removed together with their CMake targets and suite registrations. Nine
-architecture tests that directly constrain the maintained backend, CMake, CPU
-portability, lifecycle, device-consumer, flight-dynamics, observation, replay,
-and runtime-profile contracts remain. The final complete evidence tree is
-recoverable from `c0e4f31f`.
+The pre-promotion evidence program was first closed with promotion disabled;
+its complete tree is recoverable from `c0e4f31f`. Mainline later completed the
+CP-0 through CP-9 program and selected a scoped promotion: the CUDA-resident
+backend became an explicitly selectable maintained backend while CPU remained
+the default. That decision and its final 36-file measurement package are
+recoverable from `2b4d3788`.
+
+On 2026-08-14 the pre-promotion 44-file fixture tree and the post-promotion
+36-file measurement package were retired together with their evidence
+generators, parsers, evidence-only contracts and tests, and native measurement
+probes. Their CMake targets, smoke pins, and one-way governance ratchets were
+removed at the same time. The promoted backend was not retired: its source,
+explicit opt-in configuration, CUDA compile lane, native parity tests, and nine
+architecture tests covering backend contracts, lifecycle, control preparation,
+CPU portability, device and learner consumption, flight dynamics, observation,
+and replay remain active.

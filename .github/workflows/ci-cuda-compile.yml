@@ -1,23 +1,14 @@
 name: ci-cuda-compile
 
-# CUDA-on compile lane (CP-1). The default lanes configure with
-# EF_ENABLE_CUDA_EXPERIMENTS off, so the ~6.2k-line CUDA-resident backend and
-# the src/gpu device helpers are compiled by no CI job at all. This lane turns
-# nvcc on so a device-side compile regression cannot land silently.
+# CUDA-on compile lane. Default jobs leave both optional CUDA surfaces off, so
+# this lane turns nvcc on and prevents device-side compile regressions from
+# landing silently.
 #
 # What this lane does NOT do, stated explicitly so a green check is not
 # over-read:
 #   * It does not run the CUDA suites. Hosted runners have no NVIDIA device, so
 #     cuda_resident_lifecycle / _replay / _full_window would fail at
-#     cudaGetDeviceCount. Runtime validation stays a local, GPU-host step that
-#     the promotion program records per iteration.
-#   * It does not reproduce the evidence toolchain. The tracked resource and
-#     achieved-counter evidence was captured with CUDA 13.0 on an RTX 3090; this
-#     lane uses whatever nvcc the runner image ships. It is a rot detector, not
-#     an evidence host.
-#   * It cannot detect a probe that compiles but no longer does anything -- the
-#     retired-to-stub case. That is covered without a toolkit by
-#     tests/architecture/build_system/test_cuda_surface_wiring.py.
+#     cudaGetDeviceCount. Runtime validation remains a GPU-host responsibility.
 #
 # Triggers are path-scoped rather than every-PR: the lane only has something to
 # say when CUDA sources, the CUDA CMake wiring, or this workflow change.
@@ -31,7 +22,6 @@ on:
       - "src/gpu/**"
       - "src/runtime/facade/internal/cuda_resident/**"
       - "src/runtime/contracts/cuda_resident_*"
-      - "src/tools/experimental/cuda_resident/**"
       - "src/tests/test_cuda_resident_*"
       - "CMakeLists.txt"
       - ".github/workflows/ci-cuda-compile.yml"
@@ -40,7 +30,6 @@ on:
       - "src/gpu/**"
       - "src/runtime/facade/internal/cuda_resident/**"
       - "src/runtime/contracts/cuda_resident_*"
-      - "src/tools/experimental/cuda_resident/**"
       - "src/tests/test_cuda_resident_*"
       - "CMakeLists.txt"
       - ".github/workflows/ci-cuda-compile.yml"
@@ -77,10 +66,8 @@ jobs:
           g++-12 --version | head -1
           cmake --version | head -1
 
-      # CMAKE_CUDA_ARCHITECTURES has no project default, and nvcc's own default
-      # is not the evidence host's. 86 is pinned to match the RTX 3090 the
-      # tracked resource/counter evidence was captured on, so this lane compiles
-      # the same device code path that evidence describes.
+      # CMAKE_CUDA_ARCHITECTURES has no project default. Architecture 86 keeps
+      # an Ampere device-code target in compile coverage.
       # Both device surfaces are compiled here, so both flags are enabled: the
       # resident backend sources sit behind EF_ENABLE_CUDA_RESIDENT_BACKEND and
       # the src/gpu helper .cu sources sit behind EF_ENABLE_CUDA_EXPERIMENTS.
@@ -105,24 +92,17 @@ jobs:
             ef_gpu_experiments \
             -j2
 
-      # Building the CUDA-only executables link-checks them, which is what
-      # catches a probe target naming a source that no longer exists. They are
-      # built, never run.
-      - name: Link the CUDA-only test and probe targets
+      # The native CUDA tests are linked but not run on the hosted CPU runner.
+      - name: Link the CUDA-only test targets
         run: |
           cmake --build build-cuda --target \
             ef_cuda_resident_lifecycle_test \
             ef_cuda_resident_replay_test \
             ef_cuda_resident_full_window_test \
-            ef_cuda_resident_full_window_cuda_probe \
-            ef_cuda_resident_cr2_matrix_cuda_probe \
-            ef_cuda_resident_rb9_cuda_probe \
-            ef_cuda_resident_resource_probe \
             -j2
 
       - name: State the runtime boundary
         run: |
           echo "Compile and link only. No NVIDIA device is present on hosted"
           echo "runners, so the cuda_resident_* ctest suites are not run here;"
-          echo "their results come from the GPU host recorded per iteration in"
-          echo "docs/plan/exact_runtime/cuda_resident_promotion_program_20260808.md."
+          echo "runtime execution requires separate GPU-host validation."

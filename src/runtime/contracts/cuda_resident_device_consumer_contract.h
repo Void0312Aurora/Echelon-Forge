@@ -146,7 +146,7 @@ struct AcquireResult {
 struct ConsumerRequest {
     std::string request_id;
     LeaseEpoch expected_epoch{};
-    // False keeps the single-value smoke consumer; true submits the CP-6
+    // False keeps the single-value smoke consumer; true submits the maintained
     // learner-equivalent consumer, which reads every lease element and writes
     // the normalized policy-input tensor.
     bool learner_equivalent = false;

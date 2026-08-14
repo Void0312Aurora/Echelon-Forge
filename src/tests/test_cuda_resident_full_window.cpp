@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include "runtime/contracts/cuda_resident_parity_release_contract.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
 #include "runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.h"
 
@@ -227,23 +226,6 @@ TEST_CASE("CR2-2 full-window runner records one common multi-window SPI") {
             CHECK(result.operations[offset + step].request_id == trace.windows[window].request_id);
         }
     }
-}
-
-TEST_CASE("CR2-4b release contract partitions raw DTO fields and stays fail-closed") {
-    namespace parity_release = runtime::cuda_resident::parity_release;
-    CHECK(parity_release::partition_is_complete());
-    CHECK(parity_release::kReleasedNumericFields.size() == 12);
-    CHECK(parity_release::kIdentityDiagnosticFields.size() == 1);
-    CHECK(parity_release::kExcludedFields.size() == 53);
-    CHECK(parity_release::kRawObservationFields.size() +
-              parity_release::kRawInstrumentFields.size() ==
-          parity_release::kReleasedNumericFields.size() +
-              parity_release::kIdentityDiagnosticFields.size() +
-              parity_release::kExcludedFields.size());
-    CHECK(parity_release::kCandidatePromotionBlocked);
-    CHECK_FALSE(parity_release::kMaintainedClaimAllowed);
-    CHECK_FALSE(parity_release::kPublicSupportEnabled);
-    CHECK(parity_release::kMeasuredConsumerPathUnchanged);
 }
 
 TEST_CASE("CR2-2 full-window runner fails closed at each operation and poisons") {
