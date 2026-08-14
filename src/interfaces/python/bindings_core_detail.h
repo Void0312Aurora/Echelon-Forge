@@ -93,7 +93,7 @@ struct FlightDynamicsDebugView {
 
 inline flecs::entity diagnostics_legacy_binding_entity_quarantine_lookup(SimulationKernel &self,
                                                                          uint64_t entity_id) {
-    // WP22-R3 quarantine marker: raw entity binding access must stay localized
+    // Diagnostics quarantine: raw entity binding access must stay localized
     // to diagnostics/legacy helpers instead of widening the maintained surface.
     return self.get_world().entity(entity_id);
 }
@@ -104,7 +104,7 @@ inline void diagnostics_mark_read_only_snapshot(nb::dict &out, const char *diagn
     out["quarantined_surface"] = true;
     out["read_only_snapshot"] = true;
     out["maintained_truth"] = false;
-    out["diagnostics_quarantine_marker"] = "WP22-R1-2";
+    out["diagnostics_quarantine_marker"] = "read_only_diagnostics_quarantine";
     out["diagnostics_surface_kind"] = diagnostics_surface_kind;
     out["runtime_owner_kind"] = runtime_owner_kind;
 }
@@ -127,7 +127,7 @@ void bind_core_simulation_kernel(nb::module_ &m);
 //
 // bindings_core_simulation_kernel.cpp calls these in the order declared below,
 // which is the order the single pre-split bind_core() used.  The maintained /
-// diagnostics / legacy / override boundary is the WP22-E quarantine split and
+// diagnostics / legacy / override boundary is the explicit quarantine split and
 // the call order is the method-registration order, so neither may be reordered.
 void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &kernel);
 void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<SimulationKernel> &kernel);

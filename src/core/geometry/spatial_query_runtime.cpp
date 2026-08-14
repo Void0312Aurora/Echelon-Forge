@@ -29,7 +29,7 @@ double bearing_to_deg(double dx, double dy) {
     return angle;
 }
 
-std::string normalize_waypoint_mode(const std::string& raw_mode) {
+std::string normalize_waypoint_mode(const std::string &raw_mode) {
     std::string mode;
     mode.reserve(raw_mode.size());
     for (char ch : raw_mode) {
@@ -61,7 +61,7 @@ double turn_lead_distance_m(double turn_angle_deg, double speed_mps, double bank
     return std::max(0.0, turn_radius * std::tan(half_turn_rad));
 }
 
-}  // namespace
+} // namespace
 
 void CompiledScenarioGeometry::clear() {
     clear_runways();
@@ -72,7 +72,7 @@ void CompiledScenarioGeometry::clear_runways() {
     runways_.clear();
 }
 
-void CompiledScenarioGeometry::add_runway(const SpatialRunwayDefinition& runway) {
+void CompiledScenarioGeometry::add_runway(const SpatialRunwayDefinition &runway) {
     runways_.push_back(runway);
 }
 
@@ -87,21 +87,22 @@ void CompiledScenarioGeometry::set_route_leg_origin(double x_m, double y_m) {
     route_leg_origin_y_m_ = y_m;
 }
 
-void CompiledScenarioGeometry::add_route_waypoint(const SpatialRouteWaypoint& waypoint) {
+void CompiledScenarioGeometry::add_route_waypoint(const SpatialRouteWaypoint &waypoint) {
     SpatialRouteWaypoint next = waypoint;
     next.waypoint_mode = normalize_waypoint_mode(next.waypoint_mode);
     route_waypoints_.push_back(next);
 }
 
-SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(double x_m, double y_m) const {
+SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(double x_m,
+                                                                            double y_m) const {
     SpatialRunwayFrameResult out{};
     if (runways_.empty()) {
         return out;
     }
 
-    const SpatialRunwayDefinition* best = nullptr;
+    const SpatialRunwayDefinition *best = nullptr;
     double best_d2 = std::numeric_limits<double>::infinity();
-    for (const auto& runway : runways_) {
+    for (const auto &runway : runways_) {
         double dx = x_m - runway.center_x_m;
         double dy = y_m - runway.center_y_m;
         double d2 = dx * dx + dy * dy;
@@ -133,20 +134,16 @@ SpatialRunwayFrameResult CompiledScenarioGeometry::query_runway_local_frame(doub
     return out;
 }
 
-SpatialILSResult CompiledScenarioGeometry::query_ils(
-    double x_m,
-    double y_m,
-    double alt_m,
-    double threshold_crossing_height_m
-) const {
+SpatialILSResult CompiledScenarioGeometry::query_ils(double x_m, double y_m, double alt_m,
+                                                     double threshold_crossing_height_m) const {
     SpatialILSResult out{};
     if (runways_.empty()) {
         return out;
     }
 
-    const SpatialRunwayDefinition* best = nullptr;
+    const SpatialRunwayDefinition *best = nullptr;
     double best_d2 = std::numeric_limits<double>::infinity();
-    for (const auto& runway : runways_) {
+    for (const auto &runway : runways_) {
         double dx = x_m - runway.center_x_m;
         double dy = y_m - runway.center_y_m;
         double d2 = dx * dx + dy * dy;
@@ -178,18 +175,17 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(
     double thr_dx = x_m - best->threshold_x_m;
     double thr_dy = y_m - best->threshold_y_m;
     double approach_dist_m = -(thr_dx * fwd_x + thr_dy * fwd_y);
-    double dme_m = std::sqrt(thr_dx * thr_dx + thr_dy * thr_dy + (alt_m - best->elevation_m) * (alt_m - best->elevation_m));
+    double dme_m = std::sqrt(thr_dx * thr_dx + thr_dy * thr_dy +
+                             (alt_m - best->elevation_m) * (alt_m - best->elevation_m));
 
     double gs_ref_alt_m = best->elevation_m + std::max(0.0, threshold_crossing_height_m);
     double gs_dev = 0.0;
     if (approach_dist_m > 1.0) {
         double gs_angle_deg =
             std::atan2(alt_m - gs_ref_alt_m, approach_dist_m) * 180.0 / std::numbers::pi_v<double>;
-        gs_dev = clamp_value(
-            (gs_angle_deg - best->glide_slope_deg) / std::max(0.1, best->glideslope_max_deg),
-            -1.0,
-            1.0
-        );
+        gs_dev = clamp_value((gs_angle_deg - best->glide_slope_deg) /
+                                 std::max(0.1, best->glideslope_max_deg),
+                             -1.0, 1.0);
     }
 
     out.runway_id = best->runway_id;
@@ -202,19 +198,20 @@ SpatialILSResult CompiledScenarioGeometry::query_ils(
     return out;
 }
 
-SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const SpatialRouteQueryOptions& options) const {
+SpatialRouteQueryResult
+CompiledScenarioGeometry::query_route_guidance(const SpatialRouteQueryOptions &options) const {
     SpatialRouteQueryResult out{};
     if (route_waypoints_.empty()) {
         return out;
     }
 
     int idx = std::clamp(options.waypoint_index, 0, static_cast<int>(route_waypoints_.size()) - 1);
-    const auto& wp = route_waypoints_[static_cast<std::size_t>(idx)];
+    const auto &wp = route_waypoints_[static_cast<std::size_t>(idx)];
 
     double sx = route_leg_origin_x_m_;
     double sy = route_leg_origin_y_m_;
     if (idx > 0) {
-        const auto& prev = route_waypoints_[static_cast<std::size_t>(idx - 1)];
+        const auto &prev = route_waypoints_[static_cast<std::size_t>(idx - 1)];
         sx = prev.x_m;
         sy = prev.y_m;
     }
@@ -259,7 +256,8 @@ SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const Spa
     double waypoint_radius_m = std::max(1.0, wp.radius_m);
     double capture_xtrack_m = options.lnav_capture_xtrack_m;
     if (capture_xtrack_m <= 0.0) {
-        capture_xtrack_m = std::max(2.0 * waypoint_radius_m, std::min(8000.0, 0.35 * std::max(1.0, leg_len)));
+        capture_xtrack_m =
+            std::max(2.0 * waypoint_radius_m, std::min(8000.0, 0.35 * std::max(1.0, leg_len)));
     }
     capture_xtrack_m = std::max(waypoint_radius_m, capture_xtrack_m);
 
@@ -269,30 +267,25 @@ SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const Spa
 
     double flyover_capture_window_m = options.lnav_flyover_capture_window_m;
     if (flyover_capture_window_m <= 0.0) {
-        flyover_capture_window_m = std::max(2.0 * waypoint_radius_m, std::min(5000.0, 0.30 * std::max(1.0, leg_len)));
+        flyover_capture_window_m =
+            std::max(2.0 * waypoint_radius_m, std::min(5000.0, 0.30 * std::max(1.0, leg_len)));
     }
     flyover_capture_window_m = std::max(waypoint_radius_m, flyover_capture_window_m);
 
     bool before_leg = along_m < -0.25 * lookahead_m;
     bool far_off_course = std::abs(xtk_m) > capture_xtrack_m;
-    bool large_to_from_angle = std::abs(wrap_angle_deg(direct_to_track_deg - desired_track_deg)) > capture_course_err_deg;
-    bool near_flyover_terminal = (
-        wp.waypoint_mode == "flyover" &&
-        (dist_m <= flyover_capture_window_m || along_m >= std::max(0.0, leg_len - flyover_capture_window_m))
-    );
+    bool large_to_from_angle =
+        std::abs(wrap_angle_deg(direct_to_track_deg - desired_track_deg)) > capture_course_err_deg;
+    bool near_flyover_terminal = (wp.waypoint_mode == "flyover" &&
+                                  (dist_m <= flyover_capture_window_m ||
+                                   along_m >= std::max(0.0, leg_len - flyover_capture_window_m)));
     bool missed_flyby_recovery = (wp.waypoint_mode == "flyby" && passed_fix);
-    bool use_direct_to = (
-        (final_leg && options.lnav_direct_to_final_fix) ||
-        before_leg ||
-        (far_off_course && large_to_from_angle) ||
-        near_flyover_terminal ||
-        (wp.waypoint_mode == "flyover" && passed_fix) ||
-        missed_flyby_recovery
-    );
-    bool direct_to_fix_guidance = (
-        use_direct_to &&
-        ((final_leg && options.lnav_direct_to_final_fix) || wp.waypoint_mode == "flyover" || missed_flyby_recovery)
-    );
+    bool use_direct_to = ((final_leg && options.lnav_direct_to_final_fix) || before_leg ||
+                          (far_off_course && large_to_from_angle) || near_flyover_terminal ||
+                          (wp.waypoint_mode == "flyover" && passed_fix) || missed_flyby_recovery);
+    bool direct_to_fix_guidance =
+        (use_direct_to && ((final_leg && options.lnav_direct_to_final_fix) ||
+                           wp.waypoint_mode == "flyover" || missed_flyby_recovery));
 
     double cmd_track_deg = desired_track_deg;
     if (use_direct_to) {
@@ -312,7 +305,8 @@ SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const Spa
         cmd_track_deg = std::fmod(desired_track_deg + intercept_deg + 360.0, 360.0);
     }
 
-    double reward_desired_track_deg = direct_to_fix_guidance ? direct_to_track_deg : desired_track_deg;
+    double reward_desired_track_deg =
+        direct_to_fix_guidance ? direct_to_track_deg : desired_track_deg;
     double reward_xtk_m = direct_to_fix_guidance ? 0.0 : xtk_m;
     double reward_dtg_m = direct_to_fix_guidance ? dist_m : dtg_m;
 
@@ -324,13 +318,17 @@ SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const Spa
     double dist_to_next_turn_start_m = distance_to_turn_m;
     double distance_from_prev_turn_m = std::max(0.0, along_m);
     double sequence_gate_scale = options.lnav_sequence_gate_scale;
-    double sequence_gate_min_m = options.lnav_sequence_gate_min_m > 0.0 ? options.lnav_sequence_gate_min_m : waypoint_radius_m;
+    double sequence_gate_min_m = options.lnav_sequence_gate_min_m > 0.0
+                                     ? options.lnav_sequence_gate_min_m
+                                     : waypoint_radius_m;
     double default_seq_gate_max = std::max(2.5 * waypoint_radius_m, waypoint_radius_m + 1500.0);
-    double sequence_gate_max_m = options.lnav_sequence_gate_max_m > 0.0 ? options.lnav_sequence_gate_max_m : default_seq_gate_max;
+    double sequence_gate_max_m = options.lnav_sequence_gate_max_m > 0.0
+                                     ? options.lnav_sequence_gate_max_m
+                                     : default_seq_gate_max;
     double sequence_gate_m = waypoint_radius_m;
 
     if (idx < static_cast<int>(route_waypoints_.size()) - 1) {
-        const auto& next_wp = route_waypoints_[static_cast<std::size_t>(idx + 1)];
+        const auto &next_wp = route_waypoints_[static_cast<std::size_t>(idx + 1)];
         double next_dx = next_wp.x_m - ex;
         double next_dy = next_wp.y_m - ey;
         if ((next_dx * next_dx + next_dy * next_dy) > 1.0e-9) {
@@ -338,11 +336,12 @@ SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const Spa
             double next_track_deg = bearing_to_deg(next_dx, next_dy);
             next_turn_deg = wrap_angle_deg(next_track_deg - desired_track_deg);
             next_turn_abs_deg = std::abs(wrap_angle_deg(next_track_deg - cur_track_deg));
-            lead_turn_m = turn_lead_distance_m(next_turn_abs_deg, std::max(30.0, speed_mps), options.lnav_bank_limit_deg);
+            lead_turn_m = turn_lead_distance_m(next_turn_abs_deg, std::max(30.0, speed_mps),
+                                               options.lnav_bank_limit_deg);
             sequence_gate_m = std::max(
                 sequence_gate_min_m,
-                std::min(sequence_gate_max_m, waypoint_radius_m + sequence_gate_scale * std::max(0.0, lead_turn_m))
-            );
+                std::min(sequence_gate_max_m,
+                         waypoint_radius_m + sequence_gate_scale * std::max(0.0, lead_turn_m)));
             dist_to_next_turn_start_m = std::max(0.0, dtg_m - lead_turn_m);
             if (!direct_to_fix_guidance) {
                 distance_to_turn_m = dist_to_next_turn_start_m;
@@ -354,7 +353,7 @@ SpatialRouteQueryResult CompiledScenarioGeometry::query_route_guidance(const Spa
         double psx = route_leg_origin_x_m_;
         double psy = route_leg_origin_y_m_;
         if (idx > 1) {
-            const auto& prev_prev = route_waypoints_[static_cast<std::size_t>(idx - 2)];
+            const auto &prev_prev = route_waypoints_[static_cast<std::size_t>(idx - 2)];
             psx = prev_prev.x_m;
             psy = prev_prev.y_m;
         }

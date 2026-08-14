@@ -1079,25 +1079,23 @@ class DefaultUnitFactory : public IUnitFactory {
             def.has_missile_tuning
                 ? default_factory_positive_or(def.missile_tuning.fuse_distance, 300.0)
                 : 300.0,
-            def.has_missile_tuning
-                ? default_factory_positive_or(def.missile_tuning.damage, 120.0)
-                : 120.0,
+            def.has_missile_tuning ? default_factory_positive_or(def.missile_tuning.damage, 120.0)
+                                   : 120.0,
             seeker_fov_deg,
             seeker_lock_range,
             def.has_missile_tuning
                 ? default_factory_nonnegative_or(def.missile_tuning.guidance_delay_s, 0.0)
                 : 0.0,
-            def.has_missile_tuning ? default_factory_nonnegative_or(
-                                         def.missile_tuning.guidance_update_period_s, 0.0)
-                                   : 0.0,
+            def.has_missile_tuning
+                ? default_factory_nonnegative_or(def.missile_tuning.guidance_update_period_s, 0.0)
+                : 0.0,
             -1.0,
             current_time,
             def.has_missile_tuning
                 ? default_factory_positive_or(def.missile_tuning.max_flight_time_s, 15.0)
                 : 15.0,
-            def.has_missile_tuning
-                ? default_factory_positive_or(def.missile_tuning.nav_gain, 3.0)
-                : 3.0,
+            def.has_missile_tuning ? default_factory_positive_or(def.missile_tuning.nav_gain, 3.0)
+                                   : 3.0,
             true};
         missile_runtime.apn_target_accel_gain =
             def.has_missile_tuning ? default_factory_nonnegative_or(
@@ -1139,8 +1137,7 @@ class DefaultUnitFactory : public IUnitFactory {
 
     static void apply_spawn_missile_guidance_tuning(Missile &missile_runtime,
                                                     const UnitDefinition &def,
-                                                    double missile_turn_rate,
-                                                    double current_time) {
+                                                    double missile_turn_rate, double current_time) {
         missile_runtime.boost_duration_s =
             def.has_missile_tuning
                 ? default_factory_nonnegative_or(def.missile_tuning.boost_time_s,
@@ -1151,8 +1148,8 @@ class DefaultUnitFactory : public IUnitFactory {
                 ? default_factory_nonnegative_or(def.missile_tuning.sustain_time_s,
                                                  MissileGuidanceDefaults::kSustainTimeS)
                 : MissileGuidanceDefaults::kSustainTimeS;
-        missile_runtime.burnout_time_s = current_time + missile_runtime.boost_duration_s +
-                                         missile_runtime.sustain_duration_s;
+        missile_runtime.burnout_time_s =
+            current_time + missile_runtime.boost_duration_s + missile_runtime.sustain_duration_s;
         missile_runtime.guidance_bearing_filter_tau_s =
             def.has_missile_tuning
                 ? default_factory_nonnegative_or(def.missile_tuning.bearing_filter_tau_s,
@@ -1168,12 +1165,12 @@ class DefaultUnitFactory : public IUnitFactory {
                 ? default_factory_nonnegative_or(def.missile_tuning.range_filter_tau_s,
                                                  MissileGuidanceDefaults::kTrackFilterTauS)
                 : MissileGuidanceDefaults::kTrackFilterTauS;
-        missile_runtime.guidance_boost_thrust_n =
-            def.has_missile_tuning ? def.missile_tuning.boost_thrust_n
-                                   : std::numeric_limits<double>::quiet_NaN();
-        missile_runtime.guidance_sustain_thrust_n =
-            def.has_missile_tuning ? def.missile_tuning.sustain_thrust_n
-                                   : std::numeric_limits<double>::quiet_NaN();
+        missile_runtime.guidance_boost_thrust_n = def.has_missile_tuning
+                                                      ? def.missile_tuning.boost_thrust_n
+                                                      : std::numeric_limits<double>::quiet_NaN();
+        missile_runtime.guidance_sustain_thrust_n = def.has_missile_tuning
+                                                        ? def.missile_tuning.sustain_thrust_n
+                                                        : std::numeric_limits<double>::quiet_NaN();
         missile_runtime.guidance_cd0_subsonic = def.has_missile_tuning
                                                     ? def.missile_tuning.cd0_subsonic
                                                     : MissileGuidanceDefaults::kCd0Subsonic;
@@ -1186,8 +1183,7 @@ class DefaultUnitFactory : public IUnitFactory {
                                                  MissileGuidanceDefaults::kInducedDragScale)
                 : MissileGuidanceDefaults::kInducedDragScale;
         if (def.has_missile_tuning) {
-            missile_runtime.guidance_cd0_mach_breakpoints =
-                def.missile_tuning.cd0_mach_breakpoints;
+            missile_runtime.guidance_cd0_mach_breakpoints = def.missile_tuning.cd0_mach_breakpoints;
             missile_runtime.guidance_cd0_mach_values = def.missile_tuning.cd0_mach_values;
             missile_runtime.guidance_induced_drag_k_mach_breakpoints =
                 def.missile_tuning.induced_drag_k_mach_breakpoints;
@@ -1226,12 +1222,11 @@ class DefaultUnitFactory : public IUnitFactory {
                                                                  def.flight_model.max_turn_rate)
                                    : def.flight_model.max_turn_rate;
         const double seeker_fov_deg =
-            def.has_missile_tuning
-                ? default_factory_positive_or(
-                      def.missile_tuning.seeker_fov_deg,
-                      default_factory_positive_or(def.missile_tuning.sensor_fov_deg,
-                                                  def.sensor.fov_deg))
-                : def.sensor.fov_deg;
+            def.has_missile_tuning ? default_factory_positive_or(
+                                         def.missile_tuning.seeker_fov_deg,
+                                         default_factory_positive_or(
+                                             def.missile_tuning.sensor_fov_deg, def.sensor.fov_deg))
+                                   : def.sensor.fov_deg;
         const double seeker_lock_range =
             def.has_missile_tuning
                 ? default_factory_positive_or(
@@ -1239,8 +1234,7 @@ class DefaultUnitFactory : public IUnitFactory {
                       default_factory_positive_or(def.missile_tuning.sensor_max_range,
                                                   def.sensor.max_range))
                 : def.sensor.max_range;
-        const double missile_total_mass_kg =
-            std::max(1.0, def.mass_kg > 0.0 ? def.mass_kg : 80.0);
+        const double missile_total_mass_kg = std::max(1.0, def.mass_kg > 0.0 ? def.mass_kg : 80.0);
         double propellant_mass_kg =
             def.has_missile_tuning
                 ? default_factory_nonnegative_or(

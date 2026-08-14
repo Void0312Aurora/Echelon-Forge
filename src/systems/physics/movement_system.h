@@ -6,8 +6,10 @@
 #include "components/basic/common.h"
 
 inline double movement_wrap_angle_360(double angle) {
-    while (angle < 0.0) angle += 360.0;
-    while (angle >= 360.0) angle -= 360.0;
+    while (angle < 0.0)
+        angle += 360.0;
+    while (angle >= 360.0)
+        angle -= 360.0;
     return angle;
 }
 
@@ -16,18 +18,18 @@ inline double movement_math_deg_to_nav_deg(double math_deg) {
 }
 
 // System implementation
-// In Flecs C++, systems can be just a lambda or a function, 
+// In Flecs C++, systems can be just a lambda or a function,
 // ensuring we keep it header-only or well-structured is good.
 
-inline void register_movement_system(flecs::world& ecs) {
+inline void register_movement_system(flecs::world &ecs) {
     ecs.system<Transform, const Velocity>("UpdatePosition")
         .kind(flecs::OnUpdate)
-        .run([](flecs::iter& it) {
+        .run([](flecs::iter &it) {
             while (it.next()) {
                 auto p = it.field<Transform>(0);
                 auto v = it.field<const Velocity>(1);
                 double dt = it.delta_time();
-                
+
                 for (auto i : it) {
                     p[i].x += v[i].vx * dt;
                     p[i].y += v[i].vy * dt;

@@ -118,7 +118,10 @@ class MissionCommandLinkQosTests(unittest.TestCase):
     self.assertTrue(bool(movement_before["diagnostics_legacy_mirror"]))
     self.assertTrue(bool(movement_before["read_only_snapshot"]))
     self.assertFalse(bool(movement_before["maintained_truth"]))
-    self.assertEqual(str(movement_before["diagnostics_quarantine_marker"]), "WP22-R1-2")
+    self.assertEqual(
+      str(movement_before["diagnostics_quarantine_marker"]),
+      "read_only_diagnostics_quarantine",
+    )
     self.assertEqual(str(movement_before["state_access_mode"]), "read_only_legacy_mirror")
     self.assertAlmostEqual(float(movement_before["target_heading"]), 90.0, places=6)
     self.assertAlmostEqual(float(movement_before["target_speed"]), 180.0, places=6)
@@ -154,7 +157,10 @@ class MissionCommandLinkQosTests(unittest.TestCase):
     self.assertTrue(bool(pending["diagnostics_transport_shell"]))
     self.assertTrue(bool(pending["read_only_snapshot"]))
     self.assertFalse(bool(pending["maintained_truth"]))
-    self.assertEqual(str(pending["diagnostics_quarantine_marker"]), "WP22-R1-2")
+    self.assertEqual(
+      str(pending["diagnostics_quarantine_marker"]),
+      "read_only_diagnostics_quarantine",
+    )
     self.assertEqual(str(pending["diagnostics_surface_kind"]), "diagnostics_pending_transport_shell")
     self.assertEqual(str(pending["runtime_owner_kind"]), "mission_command_control_state")
     self.assertEqual(str(pending["transport_shell_kind"]), "pending_legacy_movement_command")
@@ -578,7 +584,10 @@ class MissionCommandLinkQosTests(unittest.TestCase):
     self.assertTrue(bool(pending["diagnostics_transport_shell"]))
     self.assertTrue(bool(pending["read_only_snapshot"]))
     self.assertFalse(bool(pending["maintained_truth"]))
-    self.assertEqual(str(pending["diagnostics_quarantine_marker"]), "WP22-R1-2")
+    self.assertEqual(
+      str(pending["diagnostics_quarantine_marker"]),
+      "read_only_diagnostics_quarantine",
+    )
     self.assertEqual(str(pending["diagnostics_surface_kind"]), "diagnostics_pending_transport_shell")
     self.assertEqual(str(pending["runtime_owner_kind"]), "typed_action_delivery")
     self.assertEqual(str(pending["transport_shell_kind"]), "pending_legacy_action_command")

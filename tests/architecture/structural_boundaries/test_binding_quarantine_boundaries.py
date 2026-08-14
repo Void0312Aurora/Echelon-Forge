@@ -53,7 +53,7 @@ def test_wp22_bindings_core_direct_world_entity_drilling_stays_quarantined() -> 
   assert "self.get_world().entity(" not in maintained_block
   assert "lookup_entity(" not in maintained_block
   assert "self.get_world().entity(" not in override_block
-  assert "WP22-R3 quarantine marker" in quarantine_helper
+  assert "Diagnostics quarantine" in quarantine_helper
   assert "self.get_world().entity(" in quarantine_helper
   assert "diagnostics_legacy_binding_entity_quarantine_lookup(" in diagnostics_block
   assert "diagnostics_legacy_binding_entity_quarantine_lookup(" in legacy_block
@@ -82,7 +82,7 @@ def test_wp22_legacy_debug_setter_routes_through_bridge_helpers_not_direct_compo
     text,
     "void diagnostics_quarantined_legacy_movement_bridge_write("
   )
-  assert "WP22-R1-2 quarantine marker" in bridge_helper_block
+  assert "Diagnostics quarantine" in bridge_helper_block
   assert "set_compatibility_autopilot_movement_command(" in bridge_helper_block
   assert "deactivate_compatibility_movement_command(e)" in bridge_helper_block
 
@@ -130,7 +130,10 @@ def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot
   assert 'out["quarantined_surface"] = true;' in marker_helper
   assert 'out["read_only_snapshot"] = true;' in marker_helper
   assert 'out["maintained_truth"] = false;' in marker_helper
-  assert 'out["diagnostics_quarantine_marker"] = "WP22-R1-2";' in marker_helper
+  assert (
+    'out["diagnostics_quarantine_marker"] = "read_only_diagnostics_quarantine";'
+    in marker_helper
+  )
 
 def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() -> None:
   names = _simulation_kernel_binding_names()

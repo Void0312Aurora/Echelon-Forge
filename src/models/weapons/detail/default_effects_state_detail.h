@@ -100,13 +100,8 @@ struct DefaultEffectsScratch {
 };
 
 ComponentMechanismLoadRow make_default_effects_component_mechanism_load_row(
-    const DamageComponent& component,
-    double effect_scale,
-    double component_scale,
-    bool direct_hit,
-    double distance_m,
-    const WarheadMechanismLoadEvidence& mechanism_load
-) {
+    const DamageComponent &component, double effect_scale, double component_scale, bool direct_hit,
+    double distance_m, const WarheadMechanismLoadEvidence &mechanism_load) {
     (void)component_scale;
     ComponentMechanismLoadRow row{};
     row.component_name = component.name.empty() ? component.system : component.name;
@@ -116,37 +111,26 @@ ComponentMechanismLoadRow make_default_effects_component_mechanism_load_row(
     row.distance_m = std::max(0.0, distance_m);
     row.effect_scale = effect_scale;
     row.mechanism_fragment_energy_j = mechanism_load.fragment_energy_j;
-    row.mechanism_fragment_areal_density_per_m2 =
-        mechanism_load.fragment_areal_density_per_m2;
+    row.mechanism_fragment_areal_density_per_m2 = mechanism_load.fragment_areal_density_per_m2;
     row.mechanism_penetration_margin = mechanism_load.penetration_margin;
     row.mechanism_blast_overpressure_kpa = mechanism_load.blast_overpressure_kpa;
     row.mechanism_blast_impulse_kpa_ms = mechanism_load.blast_impulse_kpa_ms;
-    row.mechanism_blast_scaled_distance_m_kg13 =
-        mechanism_load.blast_scaled_distance_m_kg13;
+    row.mechanism_blast_scaled_distance_m_kg13 = mechanism_load.blast_scaled_distance_m_kg13;
     row.mechanism_rod_cut_margin = mechanism_load.rod_cut_margin;
     row.mechanism_surface_incidence_cos = mechanism_load.surface_incidence_cos;
     return row;
 }
 
-ComponentMechanismLoadRow* record_default_effects_component_hit(
-    DefaultEffectsScratch& scratch,
-    const DamageComponent& component,
-    double effect_scale,
-    double component_scale,
-    bool direct_hit,
-    double distance_m,
-    const WarheadMechanismLoadEvidence& mechanism_load
-) {
+ComponentMechanismLoadRow *
+record_default_effects_component_hit(DefaultEffectsScratch &scratch,
+                                     const DamageComponent &component, double effect_scale,
+                                     double component_scale, bool direct_hit, double distance_m,
+                                     const WarheadMechanismLoadEvidence &mechanism_load) {
     ++scratch.component_hit_count;
     scratch.component_mechanism_load_rows.push_back(
-        make_default_effects_component_mechanism_load_row(
-            component,
-            effect_scale,
-            component_scale,
-            direct_hit,
-            distance_m,
-            mechanism_load));
-    ComponentMechanismLoadRow& row = scratch.component_mechanism_load_rows.back();
+        make_default_effects_component_mechanism_load_row(component, effect_scale, component_scale,
+                                                          direct_hit, distance_m, mechanism_load));
+    ComponentMechanismLoadRow &row = scratch.component_mechanism_load_rows.back();
     if (effect_scale > scratch.component_primary_effect_scale) {
         scratch.component_primary_effect_scale = effect_scale;
         scratch.component_primary_name = component.name.empty() ? component.system : component.name;
@@ -160,55 +144,44 @@ ComponentMechanismLoadRow* record_default_effects_component_hit(
     return &row;
 }
 
-std::uint32_t default_effects_component_load_row_index(
-    const DefaultEffectsScratch& scratch,
-    const ComponentMechanismLoadRow* row
-) {
+std::uint32_t default_effects_component_load_row_index(const DefaultEffectsScratch &scratch,
+                                                       const ComponentMechanismLoadRow *row) {
     if (!row || scratch.component_mechanism_load_rows.empty()) {
         return 0;
     }
-    const ComponentMechanismLoadRow* begin = scratch.component_mechanism_load_rows.data();
-    const ComponentMechanismLoadRow* end = begin + scratch.component_mechanism_load_rows.size();
+    const ComponentMechanismLoadRow *begin = scratch.component_mechanism_load_rows.data();
+    const ComponentMechanismLoadRow *end = begin + scratch.component_mechanism_load_rows.size();
     if (row < begin || row >= end) {
         return 0;
     }
     return static_cast<std::uint32_t>(row - begin);
 }
 
-void record_default_effects_warhead_spatial_sample(
-    DefaultEffectsScratch& scratch,
-    const WarheadSpatialSample& sample
-) {
+void record_default_effects_warhead_spatial_sample(DefaultEffectsScratch &scratch,
+                                                   const WarheadSpatialSample &sample) {
     scratch.sampled_warhead_spatial_sample_count += sample.sample_count;
     scratch.sampled_warhead_spatial_hit_estimate += sample.hit_estimate;
     scratch.sampled_warhead_spatial_energy_scale =
         std::min(scratch.sampled_warhead_spatial_energy_scale, sample.energy_scale);
     scratch.sampled_warhead_spatial_pattern_scale =
         std::max(scratch.sampled_warhead_spatial_pattern_scale, sample.pattern_scale);
-    scratch.sampled_warhead_orientation_pattern_scale =
-        std::max(
-            scratch.sampled_warhead_orientation_pattern_scale,
-            sample.orientation_pattern_scale);
+    scratch.sampled_warhead_orientation_pattern_scale = std::max(
+        scratch.sampled_warhead_orientation_pattern_scale, sample.orientation_pattern_scale);
     scratch.sampled_warhead_spatial_hit_fraction =
         scratch.sampled_warhead_spatial_sample_count > 0
-            ? std::clamp(
-                  scratch.sampled_warhead_spatial_hit_estimate /
-                      static_cast<double>(scratch.sampled_warhead_spatial_sample_count),
-                  0.0,
-                  1.0)
+            ? std::clamp(scratch.sampled_warhead_spatial_hit_estimate /
+                             static_cast<double>(scratch.sampled_warhead_spatial_sample_count),
+                         0.0, 1.0)
             : 0.0;
 }
 
-void record_default_effects_mechanism_load(
-    DefaultEffectsScratch& scratch,
-    const WarheadMechanismLoadEvidence& load
-) {
+void record_default_effects_mechanism_load(DefaultEffectsScratch &scratch,
+                                           const WarheadMechanismLoadEvidence &load) {
     scratch.sampled_mechanism_fragment_energy_j =
         std::max(scratch.sampled_mechanism_fragment_energy_j, load.fragment_energy_j);
     scratch.sampled_mechanism_fragment_areal_density_per_m2 =
-        std::max(
-            scratch.sampled_mechanism_fragment_areal_density_per_m2,
-            load.fragment_areal_density_per_m2);
+        std::max(scratch.sampled_mechanism_fragment_areal_density_per_m2,
+                 load.fragment_areal_density_per_m2);
     scratch.sampled_mechanism_penetration_margin =
         std::max(scratch.sampled_mechanism_penetration_margin, load.penetration_margin);
     scratch.sampled_mechanism_blast_overpressure_kpa =
@@ -219,8 +192,7 @@ void record_default_effects_mechanism_load(
         (scratch.sampled_mechanism_blast_scaled_distance_m_kg13 <= 0.0 ||
          load.blast_scaled_distance_m_kg13 <
              scratch.sampled_mechanism_blast_scaled_distance_m_kg13)) {
-        scratch.sampled_mechanism_blast_scaled_distance_m_kg13 =
-            load.blast_scaled_distance_m_kg13;
+        scratch.sampled_mechanism_blast_scaled_distance_m_kg13 = load.blast_scaled_distance_m_kg13;
     }
     scratch.sampled_mechanism_rod_cut_margin =
         std::max(scratch.sampled_mechanism_rod_cut_margin, load.rod_cut_margin);
@@ -233,58 +205,45 @@ void record_default_effects_mechanism_load(
 }
 
 void record_default_effects_warhead_effect_sample(
-    DefaultEffectsScratch& scratch,
-    double spatial_effect_scale,
-    double mechanism_scale,
-    double armor_scale,
-    double exposure_scale,
-    const WarheadSpatialSample& spatial_sample,
-    const WarheadMechanismLoadEvidence& mechanism_load
-) {
-    scratch.spatial_effect_scale =
-        std::max(scratch.spatial_effect_scale, spatial_effect_scale);
-    scratch.sampled_mechanism_scale =
-        std::max(scratch.sampled_mechanism_scale, mechanism_scale);
-    scratch.sampled_armor_scale =
-        std::min(scratch.sampled_armor_scale, armor_scale);
-    scratch.sampled_exposure_scale =
-        std::min(scratch.sampled_exposure_scale, exposure_scale);
+    DefaultEffectsScratch &scratch, double spatial_effect_scale, double mechanism_scale,
+    double armor_scale, double exposure_scale, const WarheadSpatialSample &spatial_sample,
+    const WarheadMechanismLoadEvidence &mechanism_load) {
+    scratch.spatial_effect_scale = std::max(scratch.spatial_effect_scale, spatial_effect_scale);
+    scratch.sampled_mechanism_scale = std::max(scratch.sampled_mechanism_scale, mechanism_scale);
+    scratch.sampled_armor_scale = std::min(scratch.sampled_armor_scale, armor_scale);
+    scratch.sampled_exposure_scale = std::min(scratch.sampled_exposure_scale, exposure_scale);
     record_default_effects_warhead_spatial_sample(scratch, spatial_sample);
     record_default_effects_mechanism_load(scratch, mechanism_load);
 }
 
-void note_default_effects_air_system_hit(
-    DefaultEffectsScratch& scratch,
-    const std::string& system,
-    double system_spatial_scale,
-    const DamageComponent* component = nullptr
-) {
+void note_default_effects_air_system_hit(DefaultEffectsScratch &scratch, const std::string &system,
+                                         double system_spatial_scale,
+                                         const DamageComponent *component = nullptr) {
     const double resolved_spatial_scale = std::clamp(system_spatial_scale, 0.0, 1.0);
-    const bool fire_suppression_path =
-        component && component_is_fire_suppression_path(*component);
+    const bool fire_suppression_path = component && component_is_fire_suppression_path(*component);
     switch (classify_aircraft_fire_zone(system, component)) {
-        case AircraftFireZone::EngineBay:
-            scratch.air_engine_fire_zone_hit = true;
-            scratch.air_engine_fire_zone_spatial_scale =
-                std::max(scratch.air_engine_fire_zone_spatial_scale, resolved_spatial_scale);
-            break;
-        case AircraftFireZone::Wing:
-            scratch.air_wing_fire_zone_hit = true;
-            scratch.air_wing_fire_zone_spatial_scale =
-                std::max(scratch.air_wing_fire_zone_spatial_scale, resolved_spatial_scale);
-            break;
-        case AircraftFireZone::Fuselage:
-            scratch.air_fuselage_fire_zone_hit = true;
-            scratch.air_fuselage_fire_zone_spatial_scale =
-                std::max(scratch.air_fuselage_fire_zone_spatial_scale, resolved_spatial_scale);
-            break;
-        case AircraftFireZone::MissionBay:
-            scratch.air_mission_fire_zone_hit = true;
-            scratch.air_mission_fire_zone_spatial_scale =
-                std::max(scratch.air_mission_fire_zone_spatial_scale, resolved_spatial_scale);
-            break;
-        case AircraftFireZone::None:
-            break;
+    case AircraftFireZone::EngineBay:
+        scratch.air_engine_fire_zone_hit = true;
+        scratch.air_engine_fire_zone_spatial_scale =
+            std::max(scratch.air_engine_fire_zone_spatial_scale, resolved_spatial_scale);
+        break;
+    case AircraftFireZone::Wing:
+        scratch.air_wing_fire_zone_hit = true;
+        scratch.air_wing_fire_zone_spatial_scale =
+            std::max(scratch.air_wing_fire_zone_spatial_scale, resolved_spatial_scale);
+        break;
+    case AircraftFireZone::Fuselage:
+        scratch.air_fuselage_fire_zone_hit = true;
+        scratch.air_fuselage_fire_zone_spatial_scale =
+            std::max(scratch.air_fuselage_fire_zone_spatial_scale, resolved_spatial_scale);
+        break;
+    case AircraftFireZone::MissionBay:
+        scratch.air_mission_fire_zone_hit = true;
+        scratch.air_mission_fire_zone_spatial_scale =
+            std::max(scratch.air_mission_fire_zone_spatial_scale, resolved_spatial_scale);
+        break;
+    case AircraftFireZone::None:
+        break;
     }
     if (system_is_air_sensor(system)) {
         scratch.air_sensor_hit = true;
@@ -294,17 +253,14 @@ void note_default_effects_air_system_hit(
     if (system_is_air_propulsion_or_fuel(system) && !fire_suppression_path) {
         scratch.air_propulsion_or_fuel_hit = true;
         scratch.air_propulsion_or_fuel_spatial_scale =
-            std::max(
-                scratch.air_propulsion_or_fuel_spatial_scale,
-                resolved_spatial_scale);
+            std::max(scratch.air_propulsion_or_fuel_spatial_scale, resolved_spatial_scale);
     }
     if (system_is_air_propulsion(system)) {
         scratch.air_propulsion_hit = true;
         scratch.air_propulsion_spatial_scale =
             std::max(scratch.air_propulsion_spatial_scale, resolved_spatial_scale);
     }
-    if (component && component_is_engine_fuel_feed_path(*component) &&
-        system_is_air_fuel(system)) {
+    if (component && component_is_engine_fuel_feed_path(*component) && system_is_air_fuel(system)) {
         scratch.air_propulsion_hit = true;
         scratch.air_propulsion_spatial_scale =
             std::max(scratch.air_propulsion_spatial_scale, resolved_spatial_scale);
@@ -317,9 +273,7 @@ void note_default_effects_air_system_hit(
     if (component && component_is_lateral_fuel_storage_path(*component)) {
         scratch.air_lateral_fuel_storage_hit = true;
         scratch.air_lateral_fuel_storage_spatial_scale =
-            std::max(
-                scratch.air_lateral_fuel_storage_spatial_scale,
-                resolved_spatial_scale);
+            std::max(scratch.air_lateral_fuel_storage_spatial_scale, resolved_spatial_scale);
     }
     if ((component && component_is_hydraulic_supply_path(*component)) ||
         system_name_matches(system, "hydraulic")) {
@@ -342,9 +296,8 @@ void note_default_effects_air_system_hit(
         scratch.air_crew_spatial_scale =
             std::max(scratch.air_crew_spatial_scale, resolved_spatial_scale);
     }
-    const CrewConsequenceKind crew_kind = classify_crew_consequence(
-        system,
-        component ? damage_component_key(*component) : "");
+    const CrewConsequenceKind crew_kind =
+        classify_crew_consequence(system, component ? damage_component_key(*component) : "");
     if (crew_kind == CrewConsequenceKind::Pilot) {
         scratch.air_pilot_hit = true;
         scratch.air_pilot_spatial_scale =

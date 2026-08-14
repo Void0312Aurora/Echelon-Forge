@@ -81,7 +81,7 @@ void bind_simulation_kernel_diagnostics_platform_state_surface(
                 out["target_speed"] = pending->command.target_speed;
                 out["target_altitude"] = pending->command.target_altitude;
                 out["use_stick_control"] = pending->command.use_stick_control;
-                // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
+                // read-only transport shell snapshot, not maintained truth.
                 out["state_access_mode"] = "read_only_transport_shell";
                 out["transport_shell_truth_owner"] = "typed_control_state_pending_delivery";
                 if (const MissionCommandControlState *state = e.get<MissionCommandControlState>()) {
@@ -124,7 +124,7 @@ void bind_simulation_kernel_diagnostics_platform_state_surface(
                 out["release_chaff"] = pending->command.release_chaff;
                 out["release_flare"] = pending->command.release_flare;
                 out["jettison_tanks"] = pending->command.jettison_tanks;
-                // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
+                // read-only transport shell snapshot, not maintained truth.
                 out["state_access_mode"] = "read_only_transport_shell";
                 out["transport_shell_truth_owner"] = "typed_action_pending_delivery";
                 return out;

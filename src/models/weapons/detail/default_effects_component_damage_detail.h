@@ -12,10 +12,8 @@ struct WarheadMechanismLoadEvidence {
     double surface_incidence_cos = 0.0;
 };
 
-WarheadMechanismLoadEvidence with_surface_incidence(
-    WarheadMechanismLoadEvidence evidence,
-    double surface_incidence_cos
-) {
+WarheadMechanismLoadEvidence with_surface_incidence(WarheadMechanismLoadEvidence evidence,
+                                                    double surface_incidence_cos) {
     evidence.surface_incidence_cos = std::clamp(surface_incidence_cos, 0.0, 1.0);
     return evidence;
 }
@@ -32,10 +30,9 @@ struct ComponentFragilityRuntimeState {
     std::uint32_t group_failed_count = 0;
 };
 
-ComponentFragilityRuntimeState resolve_component_fragility_runtime_state(
-    const DamageComponent* component,
-    const ComponentDamageState* component_damage
-) {
+ComponentFragilityRuntimeState
+resolve_component_fragility_runtime_state(const DamageComponent *component,
+                                          const ComponentDamageState *component_damage) {
     ComponentFragilityRuntimeState state{};
     if (!component || !component_damage) {
         return state;
@@ -52,27 +49,25 @@ ComponentFragilityRuntimeState resolve_component_fragility_runtime_state(
         availability_it != component_damage->redundancy_group_availability.end()) {
         state.group_availability = std::clamp(availability_it->second, 0.0, 1.0);
     }
-    if (const auto member_it =
-            component_damage->redundancy_group_member_count.find(group_key);
+    if (const auto member_it = component_damage->redundancy_group_member_count.find(group_key);
         member_it != component_damage->redundancy_group_member_count.end()) {
         state.group_member_count = member_it->second;
     }
-    if (const auto failed_it =
-            component_damage->redundancy_group_failed_count.find(group_key);
+    if (const auto failed_it = component_damage->redundancy_group_failed_count.find(group_key);
         failed_it != component_damage->redundancy_group_failed_count.end()) {
         state.group_failed_count = failed_it->second;
     }
     return state;
 }
 
-double component_dependency_complexity_scale(const DamageComponent* component) {
+double component_dependency_complexity_scale(const DamageComponent *component) {
     if (!component) {
         return 1.0;
     }
 
     double scale = 1.0;
     bool typed_dependency_present = false;
-    for (const auto& dependency : component->dependencies) {
+    for (const auto &dependency : component->dependencies) {
         if (!dependency.edge_type.empty() && dependency.edge_type != "generic") {
             typed_dependency_present = true;
         }
@@ -84,10 +79,8 @@ double component_dependency_complexity_scale(const DamageComponent* component) {
     return std::clamp(scale, 1.0, 1.16);
 }
 
-double component_system_fragility_scale(
-    const std::string& system,
-    const DamageComponent* component
-) {
+double component_system_fragility_scale(const std::string &system,
+                                        const DamageComponent *component) {
     double scale = 1.0;
     if (system_is_crew_or_cockpit(system)) {
         scale = 1.16;
@@ -122,57 +115,43 @@ struct PartFailureModeAssessment {
     bool explicit_weights = false;
 };
 
-void populate_component_failure_mode_row(
-    ComponentResponseRow& row,
-    const PartFailureModeAssessment& assessment
-) {
-    row.failure_mode =
-        assessment.primary_mode.empty() ? "none" : assessment.primary_mode;
-    row.failure_severity =
-        std::clamp(assessment.primary_severity, 0.0, 1.0);
+void populate_component_failure_mode_row(ComponentResponseRow &row,
+                                         const PartFailureModeAssessment &assessment) {
+    row.failure_mode = assessment.primary_mode.empty() ? "none" : assessment.primary_mode;
+    row.failure_severity = std::clamp(assessment.primary_severity, 0.0, 1.0);
     row.failure_mode_names.clear();
     row.failure_mode_severities.clear();
     row.failure_mode_names.reserve(assessment.entries.size());
     row.failure_mode_severities.reserve(assessment.entries.size());
-    for (const auto& entry : assessment.entries) {
+    for (const auto &entry : assessment.entries) {
         row.failure_mode_names.push_back(entry.mode);
-        row.failure_mode_severities.push_back(
-            std::clamp(entry.severity, 0.0, 1.0));
+        row.failure_mode_severities.push_back(std::clamp(entry.severity, 0.0, 1.0));
     }
-    row.failure_mode_source = assessment.entries.empty()
-        ? "none"
-        : (assessment.explicit_weights
-            ? "component_failure_mode_weights"
-            : "synthetic_inferred_part_failure_modes");
+    row.failure_mode_source =
+        assessment.entries.empty()
+            ? "none"
+            : (assessment.explicit_weights ? "component_failure_mode_weights"
+                                           : "synthetic_inferred_part_failure_modes");
     row.failure_mode_authority = false;
 }
 
-double inferred_part_failure_mode_weight(
-    const std::string& mode,
-    const std::string& system,
-    const DamageComponent* component
-) {
-    const std::string component_name =
-        component ? damage_component_key(*component) : std::string{};
+double inferred_part_failure_mode_weight(const std::string &mode, const std::string &system,
+                                         const DamageComponent *component) {
+    const std::string component_name = component ? damage_component_key(*component) : std::string{};
     const std::string group_key =
         component ? damage_component_redundancy_group_key(*component) : std::string{};
 
     if (mode == "puncture") {
-        if (system_is_air_fuel(system) ||
-            system_is_air_propulsion(system) ||
-            system_is_air_sensor(system) ||
-            system_name_matches(system, "avionics") ||
-            system_name_matches(system, "data_link") ||
-            system_name_matches(system, "hydraulic")) {
+        if (system_is_air_fuel(system) || system_is_air_propulsion(system) ||
+            system_is_air_sensor(system) || system_name_matches(system, "avionics") ||
+            system_name_matches(system, "data_link") || system_name_matches(system, "hydraulic")) {
             return 1.0;
         }
         return system_is_air_structure(system) ? 0.70 : 0.45;
     }
     if (mode == "cut") {
-        if (system_is_air_control_surface(system) ||
-            system_is_air_structure(system) ||
-            system_is_air_propulsion(system) ||
-            system_is_air_fuel(system) ||
+        if (system_is_air_control_surface(system) || system_is_air_structure(system) ||
+            system_is_air_propulsion(system) || system_is_air_fuel(system) ||
             system_name_matches(component_name, "spar") ||
             system_name_matches(component_name, "propeller")) {
             return 1.0;
@@ -180,10 +159,8 @@ double inferred_part_failure_mode_weight(
         return 0.35;
     }
     if (mode == "blast_deformation") {
-        if (system_is_air_structure(system) ||
-            system_is_air_control_surface(system) ||
-            system_is_air_propulsion(system) ||
-            system_is_air_sensor(system) ||
+        if (system_is_air_structure(system) || system_is_air_control_surface(system) ||
+            system_is_air_propulsion(system) || system_is_air_sensor(system) ||
             system_name_matches(system, "avionics")) {
             return 1.0;
         }
@@ -193,23 +170,20 @@ double inferred_part_failure_mode_weight(
         return system_is_air_fuel(system) ? 1.0 : 0.0;
     }
     if (mode == "hydraulic_pressure_loss") {
-        const bool named_control_actuator =
-            system_is_air_control_surface(system) &&
-            (system_name_matches(component_name, "actuator") ||
-             system_name_matches(component_name, "servo") ||
-             system_name_matches(component_name, "cyclic") ||
-             system_name_matches(component_name, "collective"));
-        if (component && (component_is_hydraulic_supply_path(*component) ||
-                          named_control_actuator)) {
+        const bool named_control_actuator = system_is_air_control_surface(system) &&
+                                            (system_name_matches(component_name, "actuator") ||
+                                             system_name_matches(component_name, "servo") ||
+                                             system_name_matches(component_name, "cyclic") ||
+                                             system_name_matches(component_name, "collective"));
+        if (component &&
+            (component_is_hydraulic_supply_path(*component) || named_control_actuator)) {
             return 1.0;
         }
         return system_name_matches(system, "hydraulic") ? 1.0 : 0.0;
     }
     if (mode == "electrical_loss") {
-        if (system_name_matches(system, "avionics") ||
-            system_name_matches(system, "electrical") ||
-            system_name_matches(system, "power") ||
-            system_name_matches(component_name, "power") ||
+        if (system_name_matches(system, "avionics") || system_name_matches(system, "electrical") ||
+            system_name_matches(system, "power") || system_name_matches(component_name, "power") ||
             system_name_matches(component_name, "generator") ||
             system_name_matches(group_key, "power")) {
             return 1.0;
@@ -217,30 +191,24 @@ double inferred_part_failure_mode_weight(
         return 0.0;
     }
     if (mode == "data_loss") {
-        if (system_is_air_sensor(system) ||
-            system_name_matches(system, "data_link") ||
-            system_name_matches(system, "avionics") ||
-            system_name_matches(system, "command") ||
+        if (system_is_air_sensor(system) || system_name_matches(system, "data_link") ||
+            system_name_matches(system, "avionics") || system_name_matches(system, "command") ||
             system_name_matches(system, "navigation")) {
             return 1.0;
         }
         return 0.0;
     }
     if (mode == "fire_source") {
-        if (system_is_air_fuel(system) ||
-            system_is_air_propulsion(system) ||
-            system_name_matches(system, "avionics") ||
-            system_name_matches(system, "electrical") ||
-            system_name_matches(system, "power") ||
-            system_name_matches(component_name, "power") ||
+        if (system_is_air_fuel(system) || system_is_air_propulsion(system) ||
+            system_name_matches(system, "avionics") || system_name_matches(system, "electrical") ||
+            system_name_matches(system, "power") || system_name_matches(component_name, "power") ||
             system_name_matches(component_name, "generator")) {
             return 1.0;
         }
         return 0.0;
     }
     if (mode == "structural_weakening") {
-        if (system_is_air_structure(system) ||
-            system_is_air_propulsion(system) ||
+        if (system_is_air_structure(system) || system_is_air_propulsion(system) ||
             system_name_matches(component_name, "spar") ||
             system_name_matches(component_name, "hub") ||
             system_name_matches(component_name, "mount")) {
@@ -251,27 +219,18 @@ double inferred_part_failure_mode_weight(
     return 0.0;
 }
 
-double part_failure_mode_weight(
-    const std::string& mode,
-    const std::string& system,
-    const DamageComponent* component
-) {
+double part_failure_mode_weight(const std::string &mode, const std::string &system,
+                                const DamageComponent *component) {
     if (component && !component->failure_mode_weights.empty()) {
         const auto it = component->failure_mode_weights.find(mode);
-        return it == component->failure_mode_weights.end()
-            ? 0.0
-            : std::clamp(it->second, 0.0, 2.0);
+        return it == component->failure_mode_weights.end() ? 0.0 : std::clamp(it->second, 0.0, 2.0);
     }
     return inferred_part_failure_mode_weight(mode, system, component);
 }
 
-void add_part_failure_mode(
-    PartFailureModeAssessment& assessment,
-    const std::string& raw_mode,
-    double raw_severity,
-    const std::string& system,
-    const DamageComponent* component
-) {
+void add_part_failure_mode(PartFailureModeAssessment &assessment, const std::string &raw_mode,
+                           double raw_severity, const std::string &system,
+                           const DamageComponent *component) {
     const std::string mode = canonical_part_failure_mode(raw_mode);
     if (!is_known_part_failure_mode(mode)) {
         return;
@@ -281,7 +240,7 @@ void add_part_failure_mode(
     if (severity <= 0.015) {
         return;
     }
-    for (auto& entry : assessment.entries) {
+    for (auto &entry : assessment.entries) {
         if (entry.mode == mode) {
             entry.severity = std::max(entry.severity, severity);
             if (entry.severity > assessment.primary_severity) {
@@ -298,135 +257,69 @@ void add_part_failure_mode(
     }
 }
 
-PartFailureModeAssessment assess_part_failure_modes(
-    double failure_probability,
-    double mechanism_scale,
-    double component_scale,
-    bool direct_hit,
-    const WarheadMechanismLoadEvidence& mechanism_load,
-    const std::string& system,
-    const DamageComponent* component
-) {
+PartFailureModeAssessment
+assess_part_failure_modes(double failure_probability, double mechanism_scale,
+                          double component_scale, bool direct_hit,
+                          const WarheadMechanismLoadEvidence &mechanism_load,
+                          const std::string &system, const DamageComponent *component) {
     PartFailureModeAssessment assessment{};
-    assessment.explicit_weights =
-        component && !component->failure_mode_weights.empty();
+    assessment.explicit_weights = component && !component->failure_mode_weights.empty();
     const double fragment_load = std::clamp(
-        std::log1p(std::max(0.0, mechanism_load.fragment_energy_j)) / std::log(2501.0),
-        0.0,
-        1.35);
-    const double density_load = std::clamp(
-        mechanism_load.fragment_areal_density_per_m2 / 140.0,
-        0.0,
-        1.35);
-    const double penetration_load =
-        std::clamp(mechanism_load.penetration_margin / 2.0, 0.0, 1.35);
-    const double blast_load = std::clamp(
-        (mechanism_load.blast_overpressure_kpa / 240.0) +
-            (mechanism_load.blast_impulse_kpa_ms / 850.0),
-        0.0,
-        1.35);
-    const double rod_load =
-        std::clamp(mechanism_load.rod_cut_margin / 1.6, 0.0, 1.35);
-    const double incidence_load = std::clamp(
-        0.45 + 0.55 * std::max(0.0, mechanism_load.surface_incidence_cos),
-        0.45,
-        1.0);
-    const double part_coupling = std::clamp(
-        (direct_hit ? 0.30 : 0.16) +
-            0.46 * std::clamp(failure_probability, 0.0, 1.0) +
-            0.16 * std::clamp(mechanism_scale, 0.0, 1.25) +
-            0.08 * std::clamp(component_scale, 0.40, 1.80),
-        0.0,
-        1.0);
-    const double puncture_channel = std::clamp(
-        0.42 * fragment_load +
-            0.24 * density_load +
-            0.24 * penetration_load +
-            0.10 * incidence_load,
-        0.0,
-        1.45);
-    const double cut_channel = std::clamp(
-        0.66 * rod_load +
-            0.24 * penetration_load +
-            0.10 * incidence_load,
-        0.0,
-        1.45);
-    const double blast_channel = std::clamp(
-        0.82 * blast_load +
-            0.10 * fragment_load +
-            0.08 * incidence_load,
-        0.0,
-        1.45);
+        std::log1p(std::max(0.0, mechanism_load.fragment_energy_j)) / std::log(2501.0), 0.0, 1.35);
+    const double density_load =
+        std::clamp(mechanism_load.fragment_areal_density_per_m2 / 140.0, 0.0, 1.35);
+    const double penetration_load = std::clamp(mechanism_load.penetration_margin / 2.0, 0.0, 1.35);
+    const double blast_load = std::clamp((mechanism_load.blast_overpressure_kpa / 240.0) +
+                                             (mechanism_load.blast_impulse_kpa_ms / 850.0),
+                                         0.0, 1.35);
+    const double rod_load = std::clamp(mechanism_load.rod_cut_margin / 1.6, 0.0, 1.35);
+    const double incidence_load =
+        std::clamp(0.45 + 0.55 * std::max(0.0, mechanism_load.surface_incidence_cos), 0.45, 1.0);
+    const double part_coupling =
+        std::clamp((direct_hit ? 0.30 : 0.16) + 0.46 * std::clamp(failure_probability, 0.0, 1.0) +
+                       0.16 * std::clamp(mechanism_scale, 0.0, 1.25) +
+                       0.08 * std::clamp(component_scale, 0.40, 1.80),
+                   0.0, 1.0);
+    const double puncture_channel = std::clamp(0.42 * fragment_load + 0.24 * density_load +
+                                                   0.24 * penetration_load + 0.10 * incidence_load,
+                                               0.0, 1.45);
+    const double cut_channel =
+        std::clamp(0.66 * rod_load + 0.24 * penetration_load + 0.10 * incidence_load, 0.0, 1.45);
+    const double blast_channel =
+        std::clamp(0.82 * blast_load + 0.10 * fragment_load + 0.08 * incidence_load, 0.0, 1.45);
     const double puncture = smoothstep01(puncture_channel / 0.95) * part_coupling;
     const double cut = smoothstep01(cut_channel / 0.92) * part_coupling;
-    const double blast_deformation =
-        smoothstep01(blast_channel / 0.90) * part_coupling;
+    const double blast_deformation = smoothstep01(blast_channel / 0.90) * part_coupling;
     const double breach = std::max({puncture, cut, 0.45 * blast_deformation});
     const double power_data_damage =
         std::max({0.65 * puncture, 0.55 * cut, 0.85 * blast_deformation});
-    const double thermal_source =
-        std::max({0.65 * puncture, 0.50 * cut, 0.75 * blast_deformation});
+    const double thermal_source = std::max({0.65 * puncture, 0.50 * cut, 0.75 * blast_deformation});
     const double structural_damage =
         std::max({0.45 * puncture, 0.85 * cut, 0.80 * blast_deformation});
 
     add_part_failure_mode(assessment, "puncture", puncture, system, component);
     add_part_failure_mode(assessment, "cut", cut, system, component);
-    add_part_failure_mode(
-        assessment,
-        "blast_deformation",
-        blast_deformation,
-        system,
-        component);
-    add_part_failure_mode(
-        assessment,
-        "fuel_leak",
-        breach,
-        system,
-        component);
-    add_part_failure_mode(
-        assessment,
-        "hydraulic_pressure_loss",
-        std::max(0.72 * breach, 0.55 * cut),
-        system,
-        component);
-    add_part_failure_mode(
-        assessment,
-        "electrical_loss",
-        power_data_damage,
-        system,
-        component);
-    add_part_failure_mode(
-        assessment,
-        "data_loss",
-        power_data_damage,
-        system,
-        component);
-    add_part_failure_mode(
-        assessment,
-        "fire_source",
-        thermal_source,
-        system,
-        component);
-    add_part_failure_mode(
-        assessment,
-        "structural_weakening",
-        structural_damage,
-        system,
-        component);
+    add_part_failure_mode(assessment, "blast_deformation", blast_deformation, system, component);
+    add_part_failure_mode(assessment, "fuel_leak", breach, system, component);
+    add_part_failure_mode(assessment, "hydraulic_pressure_loss",
+                          std::max(0.72 * breach, 0.55 * cut), system, component);
+    add_part_failure_mode(assessment, "electrical_loss", power_data_damage, system, component);
+    add_part_failure_mode(assessment, "data_loss", power_data_damage, system, component);
+    add_part_failure_mode(assessment, "fire_source", thermal_source, system, component);
+    add_part_failure_mode(assessment, "structural_weakening", structural_damage, system, component);
     return assessment;
 }
 
-bool is_structural_part_failure_mode(const std::string& mode) {
+bool is_structural_part_failure_mode(const std::string &mode) {
     return mode == "puncture" || mode == "cut" || mode == "blast_deformation" ||
            mode == "structural_weakening";
 }
 
-PartFailureModeAssessment structural_part_failure_modes(
-    const PartFailureModeAssessment& assessment
-) {
+PartFailureModeAssessment
+structural_part_failure_modes(const PartFailureModeAssessment &assessment) {
     PartFailureModeAssessment structural_assessment{};
     structural_assessment.explicit_weights = assessment.explicit_weights;
-    for (const auto& entry : assessment.entries) {
+    for (const auto &entry : assessment.entries) {
         if (!is_structural_part_failure_mode(entry.mode)) {
             continue;
         }
@@ -439,194 +332,115 @@ PartFailureModeAssessment structural_part_failure_modes(
     return structural_assessment;
 }
 
-double component_failure_probability(
-    double severity,
-    double mechanism_scale,
-    double component_scale,
-    bool direct_hit,
-    const WarheadMechanismLoadEvidence& mechanism_load,
-    const std::string& system,
-    const DamageComponent* component,
-    const ComponentFragilityRuntimeState& runtime_state
-) {
+double component_failure_probability(double severity, double mechanism_scale,
+                                     double component_scale, bool direct_hit,
+                                     const WarheadMechanismLoadEvidence &mechanism_load,
+                                     const std::string &system, const DamageComponent *component,
+                                     const ComponentFragilityRuntimeState &runtime_state) {
     const double fragment_load = std::clamp(
-        std::log1p(std::max(0.0, mechanism_load.fragment_energy_j)) / std::log(2501.0),
-        0.0,
-        1.35);
-    const double density_load = std::clamp(
-        mechanism_load.fragment_areal_density_per_m2 / 140.0,
-        0.0,
-        1.35);
-    const double penetration_load =
-        std::clamp(mechanism_load.penetration_margin / 2.0, 0.0, 1.35);
-    const double blast_load = std::clamp(
-        (mechanism_load.blast_overpressure_kpa / 240.0) +
-            (mechanism_load.blast_impulse_kpa_ms / 850.0),
-        0.0,
-        1.35);
-    const double rod_load =
-        std::clamp(mechanism_load.rod_cut_margin / 1.6, 0.0, 1.35);
-    const double incidence_load = std::clamp(
-        0.45 + 0.55 * std::max(0.0, mechanism_load.surface_incidence_cos),
-        0.45,
-        1.0);
-    const double fragment_channel = std::clamp(
-        0.34 * fragment_load +
-            0.22 * density_load +
-            0.30 * penetration_load +
-            0.14 * incidence_load,
-        0.0,
-        1.45);
-    const double blast_channel = std::clamp(
-        0.76 * blast_load +
-            0.14 * fragment_load +
-            0.10 * incidence_load,
-        0.0,
-        1.45);
-    const double rod_channel = std::clamp(
-        0.68 * rod_load +
-            0.22 * penetration_load +
-            0.10 * incidence_load,
-        0.0,
-        1.45);
+        std::log1p(std::max(0.0, mechanism_load.fragment_energy_j)) / std::log(2501.0), 0.0, 1.35);
+    const double density_load =
+        std::clamp(mechanism_load.fragment_areal_density_per_m2 / 140.0, 0.0, 1.35);
+    const double penetration_load = std::clamp(mechanism_load.penetration_margin / 2.0, 0.0, 1.35);
+    const double blast_load = std::clamp((mechanism_load.blast_overpressure_kpa / 240.0) +
+                                             (mechanism_load.blast_impulse_kpa_ms / 850.0),
+                                         0.0, 1.35);
+    const double rod_load = std::clamp(mechanism_load.rod_cut_margin / 1.6, 0.0, 1.35);
+    const double incidence_load =
+        std::clamp(0.45 + 0.55 * std::max(0.0, mechanism_load.surface_incidence_cos), 0.45, 1.0);
+    const double fragment_channel = std::clamp(0.34 * fragment_load + 0.22 * density_load +
+                                                   0.30 * penetration_load + 0.14 * incidence_load,
+                                               0.0, 1.45);
+    const double blast_channel =
+        std::clamp(0.76 * blast_load + 0.14 * fragment_load + 0.10 * incidence_load, 0.0, 1.45);
+    const double rod_channel =
+        std::clamp(0.68 * rod_load + 0.22 * penetration_load + 0.10 * incidence_load, 0.0, 1.45);
     const double dominant_channel = std::max({fragment_channel, blast_channel, rod_channel});
-    const double support_channel =
-        fragment_channel + blast_channel + rod_channel - dominant_channel -
-        std::min({fragment_channel, blast_channel, rod_channel});
-    const double mechanism_load_scale = std::clamp(
-        0.62 +
-            0.24 * dominant_channel +
-            0.10 * support_channel +
-            0.04 * incidence_load,
-        0.55,
-        1.45);
+    const double support_channel = fragment_channel + blast_channel + rod_channel -
+                                   dominant_channel -
+                                   std::min({fragment_channel, blast_channel, rod_channel});
+    const double mechanism_load_scale =
+        std::clamp(0.62 + 0.24 * dominant_channel + 0.10 * support_channel + 0.04 * incidence_load,
+                   0.55, 1.45);
     const double failed_fraction = runtime_state.group_member_count == 0
-        ? 0.0
-        : static_cast<double>(runtime_state.group_failed_count) /
-            static_cast<double>(runtime_state.group_member_count);
-    const double pre_damage_scale = std::clamp(
-        1.0 +
-            0.32 * (1.0 - std::clamp(runtime_state.integrity, 0.0, 1.0)) +
-            0.18 * (1.0 - std::clamp(runtime_state.group_availability, 0.0, 1.0)) +
-            0.06 * std::clamp(failed_fraction, 0.0, 1.0),
-        1.0,
-        1.55);
-    const double impulse =
-        std::clamp(severity, 0.0, 1.0) *
-        std::clamp(mechanism_scale, 0.0, 1.25) *
-        std::clamp(component_scale, 0.40, 1.60) *
-        mechanism_load_scale *
-        component_system_fragility_scale(system, component) *
-        component_dependency_complexity_scale(component) *
-        pre_damage_scale;
+                                       ? 0.0
+                                       : static_cast<double>(runtime_state.group_failed_count) /
+                                             static_cast<double>(runtime_state.group_member_count);
+    const double pre_damage_scale =
+        std::clamp(1.0 + 0.32 * (1.0 - std::clamp(runtime_state.integrity, 0.0, 1.0)) +
+                       0.18 * (1.0 - std::clamp(runtime_state.group_availability, 0.0, 1.0)) +
+                       0.06 * std::clamp(failed_fraction, 0.0, 1.0),
+                   1.0, 1.55);
+    const double impulse = std::clamp(severity, 0.0, 1.0) * std::clamp(mechanism_scale, 0.0, 1.25) *
+                           std::clamp(component_scale, 0.40, 1.60) * mechanism_load_scale *
+                           component_system_fragility_scale(system, component) *
+                           component_dependency_complexity_scale(component) * pre_damage_scale;
     const double threshold = direct_hit ? 0.40 : 0.56;
     const double spread = direct_hit ? 0.58 : 0.68;
-    const double band =
-        smoothstep01((impulse - (threshold - 0.12)) / spread);
+    const double band = smoothstep01((impulse - (threshold - 0.12)) / spread);
     const double probability_floor = direct_hit ? 0.02 : 0.0;
     const double probability_ceiling = direct_hit ? 0.92 : 0.68;
-    double probability =
-        probability_floor + (probability_ceiling - probability_floor) * band;
+    double probability = probability_floor + (probability_ceiling - probability_floor) * band;
     if (direct_hit) {
         const double direct_load_response = smoothstep01(dominant_channel / 0.62);
         const double direct_component_response = std::clamp(
-            0.90 + 0.10 * component_system_fragility_scale(system, component),
-            0.82,
-            1.08);
+            0.90 + 0.10 * component_system_fragility_scale(system, component), 0.82, 1.08);
         const double direct_load_floor =
             (0.22 + 0.46 * direct_load_response) * direct_component_response;
         probability = std::max(probability, direct_load_floor);
     }
     if (!direct_hit) {
-        const double normalized_impulse =
-            std::clamp(impulse / std::max(0.15, threshold), 0.0, 1.0);
+        const double normalized_impulse = std::clamp(impulse / std::max(0.15, threshold), 0.0, 1.0);
         const double subthreshold_tail =
-            0.05 *
-            smoothstep01(normalized_impulse) *
-            smoothstep01(dominant_channel / 0.55) *
-            std::clamp(
-                0.90 + 0.10 * component_system_fragility_scale(system, component),
-                0.80,
-                1.08);
+            0.05 * smoothstep01(normalized_impulse) * smoothstep01(dominant_channel / 0.55) *
+            std::clamp(0.90 + 0.10 * component_system_fragility_scale(system, component), 0.80,
+                       1.08);
         probability = std::max(probability, subthreshold_tail);
         const double fragment_breach_response =
             smoothstep01(density_load / 0.04) *
             smoothstep01((fragment_load + penetration_load) / 0.85);
         const double blast_response = smoothstep01(blast_load / 0.55);
-        const double rod_cut_response =
-            smoothstep01(rod_load / 0.45) *
-            smoothstep01((penetration_load + incidence_load) / 0.90);
+        const double rod_cut_response = smoothstep01(rod_load / 0.45) *
+                                        smoothstep01((penetration_load + incidence_load) / 0.90);
         const double proximity_load_response =
             std::max({fragment_breach_response, blast_response, rod_cut_response});
         const double projection_scale = std::clamp(mechanism_scale, 0.0, 1.25);
-        const double proximity_projection_response =
-            smoothstep01((projection_scale - 0.12) / 0.58);
-        const double close_projection_response =
-            smoothstep01((projection_scale - 0.24) / 0.36);
-        const double mechanism_intensity_response =
-            smoothstep01((dominant_channel - 0.18) / 0.62);
+        const double proximity_projection_response = smoothstep01((projection_scale - 0.12) / 0.58);
+        const double close_projection_response = smoothstep01((projection_scale - 0.24) / 0.36);
+        const double mechanism_intensity_response = smoothstep01((dominant_channel - 0.18) / 0.62);
         const double proximity_response = std::clamp(
-            (0.65 * proximity_load_response) +
-                (0.35 * mechanism_intensity_response),
-            0.0,
-            1.0);
+            (0.65 * proximity_load_response) + (0.35 * mechanism_intensity_response), 0.0, 1.0);
         const double proximity_component_response = std::clamp(
-            0.92 + 0.08 * component_system_fragility_scale(system, component),
-            0.86,
-            1.06);
-        const double proximity_pre_damage_response = std::clamp(
-            0.86 + 0.14 * pre_damage_scale,
-            1.0,
-            1.08);
-        const double proximity_tail_ceiling =
-            0.12 + 0.52 * close_projection_response;
-        const double proximity_tail =
-            proximity_tail_ceiling *
-            proximity_response *
-            (0.45 + 0.55 * proximity_projection_response) *
-            proximity_component_response *
-            proximity_pre_damage_response;
+            0.92 + 0.08 * component_system_fragility_scale(system, component), 0.86, 1.06);
+        const double proximity_pre_damage_response =
+            std::clamp(0.86 + 0.14 * pre_damage_scale, 1.0, 1.08);
+        const double proximity_tail_ceiling = 0.12 + 0.52 * close_projection_response;
+        const double proximity_tail = proximity_tail_ceiling * proximity_response *
+                                      (0.45 + 0.55 * proximity_projection_response) *
+                                      proximity_component_response * proximity_pre_damage_response;
         probability = std::max(probability, proximity_tail);
     }
     if (impulse > threshold) {
-        probability +=
-            (direct_hit ? 0.04 : 0.03) *
-            (1.0 - std::exp(-2.8 * (impulse - threshold)));
+        probability += (direct_hit ? 0.04 : 0.03) * (1.0 - std::exp(-2.8 * (impulse - threshold)));
     }
-    return std::clamp(
-        probability,
-        probability_floor,
-        direct_hit ? 0.95 : 0.72);
+    return std::clamp(probability, probability_floor, direct_hit ? 0.95 : 0.72);
 }
 
-double component_primary_priority_score(
-    double failure_probability,
-    double mechanism_scale,
-    double component_scale,
-    bool direct_hit
-) {
-    const double consequence_scale =
-        std::clamp(mechanism_scale, 0.05, 1.25) *
-        std::sqrt(std::clamp(component_scale, 0.40, 1.80));
-    return
-        std::clamp(failure_probability, 0.0, 1.0) *
-        consequence_scale *
-        (direct_hit ? 1.05 : 1.0);
+double component_primary_priority_score(double failure_probability, double mechanism_scale,
+                                        double component_scale, bool direct_hit) {
+    const double consequence_scale = std::clamp(mechanism_scale, 0.05, 1.25) *
+                                     std::sqrt(std::clamp(component_scale, 0.40, 1.80));
+    return std::clamp(failure_probability, 0.0, 1.0) * consequence_scale *
+           (direct_hit ? 1.05 : 1.0);
 }
 
-void apply_component_failure_impulse(
-    const std::string& system,
-    double probability,
-    double component_scale,
-    double mechanism_scale,
-    bool engine_fuel_feed_path,
-    bool fire_suppression_path,
-    bool lateral_fuel_storage_path,
-    bool hydraulic_supply_path,
-    bool hydraulic_consumer_path,
-    AircraftDamageState* aircraft_damage,
-    PlatformDamageState* platform_damage
-) {
+void apply_component_failure_impulse(const std::string &system, double probability,
+                                     double component_scale, double mechanism_scale,
+                                     bool engine_fuel_feed_path, bool fire_suppression_path,
+                                     bool lateral_fuel_storage_path, bool hydraulic_supply_path,
+                                     bool hydraulic_consumer_path,
+                                     AircraftDamageState *aircraft_damage,
+                                     PlatformDamageState *platform_damage) {
     if (!aircraft_damage && !platform_damage) {
         return;
     }
@@ -673,22 +487,16 @@ void apply_component_failure_impulse(
             aircraft_damage->flammable_fluid_exposure += 0.01 + 0.04 * impulse;
         }
         if (system_is_crew_or_cockpit(system)) {
-            apply_aircraft_crew_consequence(
-                *aircraft_damage,
-                classify_crew_consequence(system, ""),
-                0.12 + 0.16 * impulse);
+            apply_aircraft_crew_consequence(*aircraft_damage, classify_crew_consequence(system, ""),
+                                            0.12 + 0.16 * impulse);
         }
         if (system_is_command_navigation(system)) {
             apply_aircraft_crew_consequence(
-                *aircraft_damage,
-                CrewConsequenceKind::CommandNavigation,
-                0.08 + 0.12 * impulse);
+                *aircraft_damage, CrewConsequenceKind::CommandNavigation, 0.08 + 0.12 * impulse);
         }
         if (system_is_mission_crew_station(system)) {
-            apply_aircraft_crew_consequence(
-                *aircraft_damage,
-                CrewConsequenceKind::MissionCrew,
-                0.07 + 0.11 * impulse);
+            apply_aircraft_crew_consequence(*aircraft_damage, CrewConsequenceKind::MissionCrew,
+                                            0.07 + 0.11 * impulse);
         }
         if (system_is_air_structure(system)) {
             aircraft_damage->structural_integrity -= 0.06 + 0.10 * impulse;
@@ -714,46 +522,38 @@ void apply_component_failure_impulse(
     }
 }
 
-void persist_part_failure_mode_state(
-    const DamageComponent* component,
-    const PartFailureModeAssessment& assessment,
-    ComponentDamageState* component_damage
-) {
+void persist_part_failure_mode_state(const DamageComponent *component,
+                                     const PartFailureModeAssessment &assessment,
+                                     ComponentDamageState *component_damage) {
     if (!component || !component_damage || assessment.entries.empty()) {
         return;
     }
 
     const std::string component_key = damage_component_key(*component);
-    auto& mode_severity =
-        component_damage->component_failure_mode_severity[component_key];
-    for (const auto& entry : assessment.entries) {
-        double& accumulated = mode_severity[entry.mode];
+    auto &mode_severity = component_damage->component_failure_mode_severity[component_key];
+    for (const auto &entry : assessment.entries) {
+        double &accumulated = mode_severity[entry.mode];
         accumulated = std::max(accumulated, std::clamp(entry.severity, 0.0, 1.0));
     }
     if (!assessment.primary_mode.empty()) {
-        component_damage->component_primary_failure_mode[component_key] =
-            assessment.primary_mode;
+        component_damage->component_primary_failure_mode[component_key] = assessment.primary_mode;
     }
 }
 
-void apply_part_failure_mode_state(
-    const std::string& system,
-    const DamageComponent* component,
-    const PartFailureModeAssessment& assessment,
-    ComponentDamageState* component_damage,
-    AircraftDamageState* aircraft_damage,
-    PlatformDamageState* platform_damage
-) {
+void apply_part_failure_mode_state(const std::string &system, const DamageComponent *component,
+                                   const PartFailureModeAssessment &assessment,
+                                   ComponentDamageState *component_damage,
+                                   AircraftDamageState *aircraft_damage,
+                                   PlatformDamageState *platform_damage) {
     if (assessment.entries.empty()) {
         return;
     }
 
     if (component && component_damage) {
         const std::string component_key = damage_component_key(*component);
-        auto& mode_severity =
-            component_damage->component_failure_mode_severity[component_key];
-        for (const auto& entry : assessment.entries) {
-            double& accumulated = mode_severity[entry.mode];
+        auto &mode_severity = component_damage->component_failure_mode_severity[component_key];
+        for (const auto &entry : assessment.entries) {
+            double &accumulated = mode_severity[entry.mode];
             accumulated = std::max(accumulated, std::clamp(entry.severity, 0.0, 1.0));
         }
         if (!assessment.primary_mode.empty()) {
@@ -764,7 +564,7 @@ void apply_part_failure_mode_state(
 
     if (!assessment.explicit_weights) {
         if (aircraft_damage && component && system_is_air_structure(system)) {
-            for (const auto& entry : assessment.entries) {
+            for (const auto &entry : assessment.entries) {
                 if (entry.mode != "structural_weakening") {
                     continue;
                 }
@@ -777,7 +577,7 @@ void apply_part_failure_mode_state(
         return;
     }
 
-    for (const auto& entry : assessment.entries) {
+    for (const auto &entry : assessment.entries) {
         const double impulse = std::clamp(entry.severity, 0.0, 1.0);
         if (impulse <= 1.0e-9) {
             continue;
@@ -855,8 +655,7 @@ void apply_part_failure_mode_state(
 
         if (platform_damage) {
             if (entry.mode == "fuel_leak" || entry.mode == "fire_source" ||
-                entry.mode == "structural_weakening" ||
-                entry.mode == "blast_deformation") {
+                entry.mode == "structural_weakening" || entry.mode == "blast_deformation") {
                 platform_damage->survivability_margin -= 0.015 + 0.05 * impulse;
             }
             if (entry.mode == "hydraulic_pressure_loss" ||
@@ -874,37 +673,27 @@ void apply_part_failure_mode_state(
     }
 }
 
-void apply_control_axis_component_damage(
-    const DamageComponent& component,
-    double base_severity,
-    double mechanism_scale,
-    double component_scale,
-    bool direct_hit,
-    AircraftDamageState* aircraft_damage
-) {
+void apply_control_axis_component_damage(const DamageComponent &component, double base_severity,
+                                         double mechanism_scale, double component_scale,
+                                         bool direct_hit, AircraftDamageState *aircraft_damage) {
     if (!aircraft_damage || !system_is_air_control_surface(component.system)) {
         return;
     }
 
-    const std::string& component_name =
-        component.name.empty() ? component.system : component.name;
+    const std::string &component_name = component.name.empty() ? component.system : component.name;
     const bool side_specific =
-        system_name_matches(component_name, "left") ||
-        system_name_matches(component_name, "right");
-    const bool aileron_like =
-        system_name_matches(component_name, "aileron") ||
-        system_name_matches(component_name, "elevon") ||
-        system_name_matches(component_name, "flaperon");
-    const bool elevator_like =
-        system_name_matches(component_name, "elevator") ||
-        system_name_matches(component_name, "horizontal_tail") ||
-        system_name_matches(component_name, "stabilator") ||
-        system_name_matches(component_name, "elevon");
+        system_name_matches(component_name, "left") || system_name_matches(component_name, "right");
+    const bool aileron_like = system_name_matches(component_name, "aileron") ||
+                              system_name_matches(component_name, "elevon") ||
+                              system_name_matches(component_name, "flaperon");
+    const bool elevator_like = system_name_matches(component_name, "elevator") ||
+                               system_name_matches(component_name, "horizontal_tail") ||
+                               system_name_matches(component_name, "stabilator") ||
+                               system_name_matches(component_name, "elevon");
     const bool flap_like = system_name_matches(component_name, "flap");
     const bool spoiler_like = system_name_matches(component_name, "spoiler");
-    const bool thrust_vector_like =
-        system_name_matches(component_name, "thrust_vector") ||
-        system_name_matches(component_name, "vector_actuator");
+    const bool thrust_vector_like = system_name_matches(component_name, "thrust_vector") ||
+                                    system_name_matches(component_name, "vector_actuator");
     const bool cyclic_like = system_name_matches(component_name, "cyclic");
     const bool collective_like = system_name_matches(component_name, "collective");
     const bool rudder_like = system_name_matches(component_name, "rudder");
@@ -947,20 +736,15 @@ void apply_control_axis_component_damage(
         return;
     }
 
-    const double impulse = std::clamp(
-        base_severity *
-            std::clamp(mechanism_scale, 0.0, 1.25) *
-            std::clamp(component_scale, 0.40, 1.80),
-        0.0,
-        1.0);
-    const double axis_loss = (direct_hit ? 0.08 : 0.03) +
-        ((direct_hit ? 0.18 : 0.10) * impulse);
+    const double impulse = std::clamp(base_severity * std::clamp(mechanism_scale, 0.0, 1.25) *
+                                          std::clamp(component_scale, 0.40, 1.80),
+                                      0.0, 1.0);
+    const double axis_loss = (direct_hit ? 0.08 : 0.03) + ((direct_hit ? 0.18 : 0.10) * impulse);
 
     if (roll_weight > 0.0) {
         const double roll_loss = axis_loss * roll_weight;
         aircraft_damage->roll_control_integrity -= roll_loss;
-        aircraft_damage->control_asymmetry +=
-            (side_specific ? 1.05 : 0.45) * roll_loss;
+        aircraft_damage->control_asymmetry += (side_specific ? 1.05 : 0.45) * roll_loss;
     }
     if (pitch_weight > 0.0) {
         aircraft_damage->pitch_control_integrity -= pitch_weight * axis_loss;
@@ -997,13 +781,10 @@ struct ComponentDependencyPropagationSummary {
     bool propagated = false;
 };
 
-ComponentDamageSample apply_component_damage_state(
-    const DamageComponent& component,
-    double failure_probability,
-    double effect_scale,
-    ComponentDamageState* component_damage,
-    SystemHealth* sys_health
-) {
+ComponentDamageSample apply_component_damage_state(const DamageComponent &component,
+                                                   double failure_probability, double effect_scale,
+                                                   ComponentDamageState *component_damage,
+                                                   SystemHealth *sys_health) {
     ComponentDamageSample sample{};
     if (!component_damage) {
         return sample;
@@ -1019,23 +800,20 @@ ComponentDamageSample apply_component_damage_state(
             std::clamp(component.redundancy_weight, 0.15, 2.50);
     }
     component_damage->component_system[component_key] = component.system;
-    double& integrity = component_damage->component_integrity[component_key];
+    double &integrity = component_damage->component_integrity[component_key];
     sample.integrity_before = std::clamp(integrity, 0.0, 1.0);
     if (const auto availability_it =
             component_damage->redundancy_group_availability.find(group_key);
         availability_it != component_damage->redundancy_group_availability.end()) {
-        sample.group_availability_before =
-            std::clamp(availability_it->second, 0.0, 1.0);
+        sample.group_availability_before = std::clamp(availability_it->second, 0.0, 1.0);
     }
 
     const double weight = std::clamp(component.redundancy_weight, 0.15, 2.50);
     const double directness = component.critical ? 1.0 : 0.68;
-    const double integrity_loss = std::clamp(
-        (0.04 + 0.32 * std::clamp(failure_probability, 0.0, 1.0)) *
-            std::clamp(effect_scale, 0.05, 1.20) *
-            directness / weight,
-        0.0,
-        0.65);
+    const double integrity_loss =
+        std::clamp((0.04 + 0.32 * std::clamp(failure_probability, 0.0, 1.0)) *
+                       std::clamp(effect_scale, 0.05, 1.20) * directness / weight,
+                   0.0, 0.65);
     integrity = std::clamp(integrity - integrity_loss, 0.0, 1.0);
 
     if (component_damage->redundancy_group_member_count[group_key] == 0) {
@@ -1046,8 +824,7 @@ ComponentDamageSample apply_component_damage_state(
     double live_weight = 0.0;
     std::uint32_t failed_count = 0;
     std::uint32_t observed_count = 0;
-    for (const auto& [candidate_key, candidate_integrity] :
-         component_damage->component_integrity) {
+    for (const auto &[candidate_key, candidate_integrity] : component_damage->component_integrity) {
         const auto group_it = component_damage->component_redundancy_group.find(candidate_key);
         if (group_it == component_damage->component_redundancy_group.end() ||
             group_it->second != group_key) {
@@ -1055,9 +832,10 @@ ComponentDamageSample apply_component_damage_state(
         }
         ++observed_count;
         const auto weight_it = component_damage->component_redundancy_weight.find(candidate_key);
-        const double candidate_weight = weight_it == component_damage->component_redundancy_weight.end()
-            ? 1.0
-            : std::clamp(weight_it->second, 0.15, 2.50);
+        const double candidate_weight =
+            weight_it == component_damage->component_redundancy_weight.end()
+                ? 1.0
+                : std::clamp(weight_it->second, 0.15, 2.50);
         total_weight += candidate_weight;
         live_weight += std::max(0.0, candidate_integrity) * candidate_weight;
         if (candidate_integrity <= 0.35) {
@@ -1089,80 +867,74 @@ ComponentDamageSample apply_component_damage_state(
     return sample;
 }
 
-std::string component_dependency_target_system(const DamageComponentDependency& dependency) {
+std::string component_dependency_target_system(const DamageComponentDependency &dependency) {
     if (!dependency.target_system.empty()) {
         return dependency.target_system;
     }
     return dependency.system;
 }
 
-double component_dependency_source_availability(const ComponentDamageSample& sample) {
-    return std::min(
-        std::clamp(sample.integrity, 0.0, 1.0),
-        std::clamp(sample.group_availability, 0.0, 1.0));
+double component_dependency_source_availability(const ComponentDamageSample &sample) {
+    return std::min(std::clamp(sample.integrity, 0.0, 1.0),
+                    std::clamp(sample.group_availability, 0.0, 1.0));
 }
 
-double component_dependency_edge_scale(
-    const DamageComponentDependency& dependency,
-    const std::string& target_system
-) {
-    const std::string& edge_type = dependency.edge_type;
+double component_dependency_edge_scale(const DamageComponentDependency &dependency,
+                                       const std::string &target_system) {
+    const std::string &edge_type = dependency.edge_type;
     if (edge_type.empty() || edge_type == "generic") {
         return 1.0;
     }
     if (edge_type == "hydraulic_power" || edge_type == "hydraulic-power") {
         return system_name_matches(target_system, "hydraulic") ||
-                system_is_air_control_surface(target_system)
-            ? 1.05
-            : 0.60;
+                       system_is_air_control_surface(target_system)
+                   ? 1.05
+                   : 0.60;
     }
     if (edge_type == "electrical_power" || edge_type == "electrical-power" ||
         edge_type == "supply") {
         return system_name_matches(target_system, "avionics") ||
-                system_is_mission_or_combat(target_system) ||
-                system_is_air_control_surface(target_system)
-            ? 1.00
-            : 0.70;
+                       system_is_mission_or_combat(target_system) ||
+                       system_is_air_control_surface(target_system)
+                   ? 1.00
+                   : 0.70;
     }
     if (edge_type == "control_signal" || edge_type == "control-signal") {
         return system_is_air_control_surface(target_system) ||
-                system_name_matches(target_system, "avionics")
-            ? 0.95
-            : 0.55;
+                       system_name_matches(target_system, "avionics")
+                   ? 0.95
+                   : 0.55;
     }
     if (edge_type == "data_path" || edge_type == "data") {
         return system_name_matches(target_system, "data_link") ||
-                system_name_matches(target_system, "avionics") ||
-                system_is_mission_or_combat(target_system) ||
-                system_is_air_sensor(target_system)
-            ? 0.95
-            : 0.45;
+                       system_name_matches(target_system, "avionics") ||
+                       system_is_mission_or_combat(target_system) ||
+                       system_is_air_sensor(target_system)
+                   ? 0.95
+                   : 0.45;
     }
     if (edge_type == "fuel_feed" || edge_type == "fuel-feed") {
-        return system_is_air_fuel(target_system) || system_is_air_propulsion(target_system)
-            ? 1.05
-            : 0.55;
+        return system_is_air_fuel(target_system) || system_is_air_propulsion(target_system) ? 1.05
+                                                                                            : 0.55;
     }
     if (edge_type == "structural_support" || edge_type == "structural-support") {
         return system_is_air_structure(target_system) ||
-                system_is_air_control_surface(target_system)
-            ? 1.00
-            : 0.60;
+                       system_is_air_control_surface(target_system)
+                   ? 1.00
+                   : 0.60;
     }
     if (edge_type == "crew_operated" || edge_type == "crew-operated") {
         return system_is_crew_or_cockpit(target_system) ||
-                system_is_mission_or_combat(target_system) ||
-                system_name_matches(target_system, "flight_control")
-            ? 0.90
-            : 0.55;
+                       system_is_mission_or_combat(target_system) ||
+                       system_name_matches(target_system, "flight_control")
+                   ? 0.90
+                   : 0.55;
     }
     return 1.0;
 }
 
-bool component_dependency_threshold_allows(
-    const DamageComponentDependency& dependency,
-    const ComponentDamageSample& sample
-) {
+bool component_dependency_threshold_allows(const DamageComponentDependency &dependency,
+                                           const ComponentDamageSample &sample) {
     const double threshold = std::clamp(dependency.threshold, 0.0, 1.0);
     if (threshold >= 1.0) {
         return true;
@@ -1170,32 +942,26 @@ bool component_dependency_threshold_allows(
     return component_dependency_source_availability(sample) <= threshold;
 }
 
-ComponentDependencyPropagationSummary apply_component_dependency_damage(
-    const DamageComponent& component,
-    const ComponentDamageSample& sample,
-    double failure_probability,
-    double effect_scale,
-    ComponentDamageState* component_damage,
-    SystemHealth* sys_health,
-    AircraftDamageState* aircraft_damage,
-    PlatformDamageState* platform_damage
-) {
+ComponentDependencyPropagationSummary
+apply_component_dependency_damage(const DamageComponent &component,
+                                  const ComponentDamageSample &sample, double failure_probability,
+                                  double effect_scale, ComponentDamageState *component_damage,
+                                  SystemHealth *sys_health, AircraftDamageState *aircraft_damage,
+                                  PlatformDamageState *platform_damage) {
     ComponentDependencyPropagationSummary summary{};
     if (component.dependencies.empty()) {
         return summary;
     }
 
     const double dependency_loss = std::clamp(
-        (1.0 - sample.group_availability) +
-            (0.20 * std::clamp(failure_probability, 0.0, 1.0)) +
+        (1.0 - sample.group_availability) + (0.20 * std::clamp(failure_probability, 0.0, 1.0)) +
             (0.10 * std::clamp(effect_scale, 0.0, 1.25)),
-        0.0,
-        0.85);
+        0.0, 0.85);
     if (dependency_loss <= 1.0e-6) {
         return summary;
     }
 
-    for (const auto& dependency : component.dependencies) {
+    for (const auto &dependency : component.dependencies) {
         const std::string target_system = component_dependency_target_system(dependency);
         if (target_system.empty()) {
             continue;
@@ -1203,17 +969,11 @@ ComponentDependencyPropagationSummary apply_component_dependency_damage(
         if (!component_dependency_threshold_allows(dependency, sample)) {
             continue;
         }
-        const double dependency_scale =
-            std::clamp(
-                dependency.scale * component_dependency_edge_scale(dependency, target_system),
-                0.05,
-                2.0);
-        const double availability = std::clamp(
-            1.0 - dependency_loss * dependency_scale,
-            0.0,
-            1.0);
-        const double impulse =
-            std::clamp(dependency_loss * dependency_scale, 0.0, 1.0);
+        const double dependency_scale = std::clamp(
+            dependency.scale * component_dependency_edge_scale(dependency, target_system), 0.05,
+            2.0);
+        const double availability = std::clamp(1.0 - dependency_loss * dependency_scale, 0.0, 1.0);
+        const double impulse = std::clamp(dependency_loss * dependency_scale, 0.0, 1.0);
         ++summary.propagation_count;
         if (!summary.propagated || dependency_scale > summary.effective_scale) {
             summary.target_system = target_system;
@@ -1241,13 +1001,8 @@ ComponentDependencyPropagationSummary apply_component_dependency_damage(
             component_damage->pending_dependency_effects.push_back(pending);
         } else {
             apply_damage_component_dependency_impulse(
-                target_system,
-                dependency.edge_type.empty() ? "generic" : dependency.edge_type,
-                availability,
-                impulse,
-                sys_health,
-                aircraft_damage,
-                platform_damage);
+                target_system, dependency.edge_type.empty() ? "generic" : dependency.edge_type,
+                availability, impulse, sys_health, aircraft_damage, platform_damage);
         }
     }
     return summary;

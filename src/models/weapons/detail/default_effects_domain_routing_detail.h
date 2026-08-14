@@ -1,7 +1,7 @@
 // Private fragment for default_effects_model.cpp.
 // Included inside that file's anonymous namespace; not a standalone API.
 
-void clamp_platform_damage_state(PlatformDamageState* state) {
+void clamp_platform_damage_state(PlatformDamageState *state) {
     if (!state) return;
     state->mission_capability = std::clamp(state->mission_capability, 0.0, 1.0);
     state->mobility_capability = std::clamp(state->mobility_capability, 0.0, 1.0);
@@ -25,11 +25,8 @@ void clamp_platform_damage_state(PlatformDamageState* state) {
     }
 }
 
-bool finalize_default_effects_platform_damage(
-    flecs::entity target_entity,
-    PlatformDamageState* platform_damage,
-    Health* hp
-) {
+bool finalize_default_effects_platform_damage(flecs::entity target_entity,
+                                              PlatformDamageState *platform_damage, Health *hp) {
     if (!platform_damage) {
         return false;
     }
@@ -64,13 +61,12 @@ enum class DefaultEffectsTargetDomain {
 struct DefaultEffectsDomainTargetSelection {
     DefaultEffectsTargetDomain domain = DefaultEffectsTargetDomain::CommonLegacy;
     bool structured_damage_target = false;
-    AircraftDamageState* aircraft_damage = nullptr;
-    const AircraftVulnerabilityProfile* aircraft_vulnerability = nullptr;
+    AircraftDamageState *aircraft_damage = nullptr;
+    const AircraftVulnerabilityProfile *aircraft_vulnerability = nullptr;
 };
 
-DefaultEffectsDomainTargetSelection route_default_effects_target_domain(
-    flecs::entity target_entity
-) {
+DefaultEffectsDomainTargetSelection
+route_default_effects_target_domain(flecs::entity target_entity) {
     const DefaultEffectsAirDomainTargetSelection air_target =
         select_default_effects_air_domain_target(target_entity);
     if (air_target.structured_damage_target) {
@@ -95,49 +91,24 @@ DefaultEffectsDomainTargetSelection route_default_effects_target_domain(
 }
 
 bool resolve_default_effects_domain_platform_consequences(
-    const DefaultEffectsDomainTargetSelection& domain_target,
-    DefaultEffectsScratch& scratch,
-    flecs::entity target_entity,
-    const Missile& missile,
-    const Vec3& local_imp,
-    double closure_mps,
-    double severity,
-    const WarheadEffectProfile& warhead_effects,
-    PlatformDamageState* platform_damage,
-    ComponentDamageState* component_damage,
-    Health* hp
-) {
+    const DefaultEffectsDomainTargetSelection &domain_target, DefaultEffectsScratch &scratch,
+    flecs::entity target_entity, const Missile &missile, const Vec3 &local_imp, double closure_mps,
+    double severity, const WarheadEffectProfile &warhead_effects,
+    PlatformDamageState *platform_damage, ComponentDamageState *component_damage, Health *hp) {
     switch (domain_target.domain) {
-        case DefaultEffectsTargetDomain::Air:
-            return resolve_default_effects_air_domain_consequences(
-                scratch,
-                target_entity,
-                missile,
-                domain_target.structured_damage_target,
-                domain_target.aircraft_vulnerability,
-                local_imp,
-                closure_mps,
-                severity,
-                warhead_effects,
-                platform_damage,
-                domain_target.aircraft_damage,
-                component_damage,
-                hp);
-        case DefaultEffectsTargetDomain::NavalPlaceholder:
-            return naval::effects::resolve_default_effects_naval_placeholder_consequences(
-                target_entity,
-                platform_damage,
-                hp);
-        case DefaultEffectsTargetDomain::GroundPlaceholder:
-            return ground::effects::resolve_default_effects_ground_placeholder_consequences(
-                target_entity,
-                platform_damage,
-                hp);
-        case DefaultEffectsTargetDomain::CommonLegacy:
-        default:
-            return finalize_default_effects_platform_damage(
-                target_entity,
-                platform_damage,
-                hp);
+    case DefaultEffectsTargetDomain::Air:
+        return resolve_default_effects_air_domain_consequences(
+            scratch, target_entity, missile, domain_target.structured_damage_target,
+            domain_target.aircraft_vulnerability, local_imp, closure_mps, severity, warhead_effects,
+            platform_damage, domain_target.aircraft_damage, component_damage, hp);
+    case DefaultEffectsTargetDomain::NavalPlaceholder:
+        return naval::effects::resolve_default_effects_naval_placeholder_consequences(
+            target_entity, platform_damage, hp);
+    case DefaultEffectsTargetDomain::GroundPlaceholder:
+        return ground::effects::resolve_default_effects_ground_placeholder_consequences(
+            target_entity, platform_damage, hp);
+    case DefaultEffectsTargetDomain::CommonLegacy:
+    default:
+        return finalize_default_effects_platform_damage(target_entity, platform_damage, hp);
     }
 }

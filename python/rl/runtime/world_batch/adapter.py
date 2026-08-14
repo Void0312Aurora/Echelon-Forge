@@ -328,12 +328,12 @@ class RuntimeFacadeAdapter:
 
     @property
     def typed_observation_view_spec(self) -> Any | None:
-        """Return the admitted I87 spec, or ``None`` on the default path."""
+        """Return the admitted typed observation view, or ``None`` on the default path."""
 
         return self._typed_observation_view_spec
 
     def _admit_typed_observation_view(self) -> Any:
-        """Admit the I87 view declaration exactly once during construction.
+        """Admit the typed observation view exactly once during construction.
 
         The default path never builds the spec.  There is intentionally no
         public post-construction enable method: the structural admission and

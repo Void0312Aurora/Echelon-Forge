@@ -9,7 +9,7 @@ void diagnostics_quarantined_legacy_movement_bridge_write(flecs::entity e,
                                                           double target_heading_deg,
                                                           double target_speed_mps,
                                                           double target_altitude_m, bool active) {
-    // WP22-R1-2 quarantine marker: legacy debug writes must stay bridge-only
+    // Diagnostics quarantine: legacy debug writes must stay bridge-only
     // and must never become maintained command truth or direct component writes.
     if (active) {
         set_compatibility_autopilot_movement_command(e, target_heading_deg, target_speed_mps,
@@ -60,7 +60,7 @@ void bind_simulation_kernel_legacy_compatibility_debug_surface(
                 out["target_speed"] = movement->target_speed;
                 out["target_altitude"] = movement->target_altitude;
                 out["use_stick_control"] = movement->use_stick_control;
-                // WP22-R1-2: read-only legacy movement shell mirror, not maintained truth.
+                // read-only legacy movement shell mirror, not maintained truth.
                 out["state_access_mode"] = "read_only_legacy_mirror";
                 out["mirror_truth_owner"] = "typed_control_state_bridge_projection";
                 if (const MissionCommandControlState *state = e.get<MissionCommandControlState>()) {

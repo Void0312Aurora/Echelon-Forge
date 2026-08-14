@@ -107,21 +107,22 @@ struct SpatialRouteQueryResult {
 };
 
 class CompiledScenarioGeometry {
-public:
+  public:
     void clear();
 
     void clear_runways();
-    void add_runway(const SpatialRunwayDefinition& runway);
+    void add_runway(const SpatialRunwayDefinition &runway);
 
     void clear_route();
     void set_route_leg_origin(double x_m, double y_m);
-    void add_route_waypoint(const SpatialRouteWaypoint& waypoint);
+    void add_route_waypoint(const SpatialRouteWaypoint &waypoint);
 
     SpatialRunwayFrameResult query_runway_local_frame(double x_m, double y_m) const;
-    SpatialILSResult query_ils(double x_m, double y_m, double alt_m, double threshold_crossing_height_m) const;
-    SpatialRouteQueryResult query_route_guidance(const SpatialRouteQueryOptions& options) const;
+    SpatialILSResult query_ils(double x_m, double y_m, double alt_m,
+                               double threshold_crossing_height_m) const;
+    SpatialRouteQueryResult query_route_guidance(const SpatialRouteQueryOptions &options) const;
 
-private:
+  private:
     std::vector<SpatialRunwayDefinition> runways_;
     std::vector<SpatialRouteWaypoint> route_waypoints_;
     double route_leg_origin_x_m_ = 0.0;
