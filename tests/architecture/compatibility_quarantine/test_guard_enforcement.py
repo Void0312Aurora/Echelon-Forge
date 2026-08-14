@@ -95,8 +95,6 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
       "tools/geometry/",
     },
     "files": {
-      "tools/maintenance/damage_model.py",
-      "tools/maintenance/candidate_artifacts/runtime_authority_exercise.py",
       "world_model_train.py",
     },
   },

@@ -254,12 +254,8 @@ longer pays for evidence auditing:
   (links, bilingual parity, information architecture, content pins), and
   repository automation workflow pins. Each file carries a module-level
   `pytestmark = pytest.mark.governance_audit`; the marker is registered in
-  `pyproject.toml`. Exception: three retained CUDA evidence modules are
-  line-count pinned by the frozen CR2 size policy, so
-  `tests/architecture/runtime_profiles/conftest.py` applies their marker at
-  collection time instead of editing the pinned files. (The counter/resource
-  evidence modules are also pinned but belong to the guard tier: their
-  substance is C++ contract/CMake topology and parser rejection paths.)
+  `pyproject.toml`. The retired CUDA evidence modules no longer require a
+  collection-time marker exception.
 
 Classification rule: a test whose subject is a structural property of the
 code (an ordinary code change can turn it red) belongs to the guard tier; a

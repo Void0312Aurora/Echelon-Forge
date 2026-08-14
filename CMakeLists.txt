@@ -409,70 +409,7 @@ set(EF_PYTHON_BINDING_SOURCES
     # the diagnostics sub-slices follow their own orchestration shell.
     src/interfaces/python/bindings_core_kernel_maintained.cpp
     src/interfaces/python/bindings_core_kernel_diagnostics.cpp
-    src/interfaces/python/bindings_core_kernel_diagnostics_views.cpp
-    src/interfaces/python/bindings_core_kernel_diagnostics_platform_state.cpp
-    src/interfaces/python/bindings_core_kernel_diagnostics_missile.cpp
-    src/interfaces/python/bindings_core_kernel_legacy.cpp
-    src/interfaces/python/bindings_core_kernel_override.cpp
-    src/interfaces/python/bindings_episode.cpp
-    # bind_episode() domain slices, listed in nanobind registration order.
-    src/interfaces/python/bindings_episode_geometry.cpp
-    src/interfaces/python/bindings_episode_mission_nav.cpp
-    src/interfaces/python/bindings_episode_waypoint_approach.cpp
-    src/interfaces/python/bindings_episode_flight_shaping.cpp
-    src/interfaces/python/bindings_episode_objective.cpp
-    src/interfaces/python/bindings_episode_termination.cpp
-    src/interfaces/python/bindings_episode_execution_runtime.cpp
-    src/interfaces/python/bindings_episode_state_batch.cpp
-    src/interfaces/python/bindings_runtime.cpp
-    # bind_runtime() domain slices, listed in nanobind registration order.
-    src/interfaces/python/bindings_runtime_runtime.cpp
-    src/interfaces/python/bindings_runtime_fidelity.cpp
-    src/interfaces/python/bindings_runtime_platform.cpp
-    src/interfaces/python/bindings_runtime_engagement.cpp
-    # bind_runtime_engagement() sub-slices, in the same registration order.
-    src/interfaces/python/bindings_runtime_engagement_events.cpp
-    src/interfaces/python/bindings_runtime_engagement_damage.cpp
-    src/interfaces/python/bindings_runtime_engagement_track_launch.cpp
-    src/interfaces/python/bindings_runtime_engagement_munition.cpp
-    src/interfaces/python/bindings_runtime_kill_chain.cpp
-    src/interfaces/python/bindings_runtime_policy.cpp
-    src/interfaces/python/bindings_runtime_batch_setup.cpp
-    src/interfaces/python/bindings_runtime_experiment.cpp
-    src/interfaces/python/bindings_runtime_batch_request.cpp
-    src/interfaces/python/bindings_runtime_learning.cpp
-    src/interfaces/python/bindings_runtime_batch_packet.cpp
-    src/interfaces/python/bindings_runtime_tasking.cpp
-    src/interfaces/python/bindings_runtime_window.cpp
-    src/interfaces/python/bindings_runtime_platform_world.cpp
-    src/interfaces/python/bindings_runtime_tasking_world.cpp
-    src/interfaces/python/bindings_runtime_engine.cpp
-    src/interfaces/python/bindings_runtime_facade.cpp
-    src/interfaces/python/bindings_gpu.cpp
-)
-
-# --- Python Module ---
-nanobind_add_module(ef_py
-    ${EF_PYTHON_BINDING_SOURCES}
-)
-# bindings_runtime.cpp/bindings_gpu.cpp reference RuntimeFacade symbols, so the
-# bindings link the facade unit ahead of ef_core.  ef_core stays a *direct*
-# link item on purpose: the engine's compatibility path calls gpu:: helpers
-# (the ratcheted world_batch_runtime -> gpu edges) without a declared
-# ef_core -> ef_gpu_experiments dependency, and it is ef_core's direct-item
-# status that makes CMake repeat it after ef_gpu_experiments on the
-# single-pass MinGW link line.  Dropping it in favour of the transitive edge
-# through ef_facade could reorder that repetition away.
-target_link_libraries(ef_py PRIVATE ef_facade ef_core)
-
-# --- Experimental GPU Scaffolding ---
-set(EF_GPU_MAINTAINED_HELPER_SOURCES
-    src/gpu/gpu_visual_runtime.cpp
-    src/gpu/gpu_execution_observation_runtime.cpp
-    src/gpu/gpu_flight_shaping_runtime.cpp
-    src/gpu/gpu_interaction_broadphase_runtime.cpp
-)
-set(EF_GPU_EXPERIMENT_SOURCES
+    src/interfaces/python/bindings_core…861 tokens truncated…MENT_SOURCES
     ${EF_GPU_MAINTAINED_HELPER_SOURCES}
 )
 
@@ -735,147 +672,6 @@ target_include_directories(ef_cuda_resident_full_window_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# CR2-2b compiles one probe source twice so the real Flecs CPU adapter and the
-# CUDA-resident backend consume the same owned trace through the same Runner.
-# CPU database loading remains outside the runner's semantic window surface.
-if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    add_executable(ef_cuda_resident_full_window_cuda_probe
-        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
-    )
-    target_link_libraries(ef_cuda_resident_full_window_cuda_probe PRIVATE
-        ef_cuda_resident_backend
-        ef_cuda_resident_full_window_runner
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_full_window_cuda_probe PRIVATE
-        EF_CR2_FULL_WINDOW_CUDA_PROBE=1
-    )
-    target_include_directories(ef_cuda_resident_full_window_cuda_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-
-    # CR2-6 compiles the production matrix probe separately for the current
-    # CUDA-resident lane. Both lanes use the same backend SPI window sequence;
-    # the device-consumer suffix remains an explicit CUDA-only mode.
-    add_executable(ef_cuda_resident_cr2_matrix_cuda_probe
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
-        EF_CR2_MATRIX_CUDA_PROBE=1
-        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_cr2_matrix_cuda_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-else()
-    add_executable(ef_cuda_resident_full_window_cpu_probe
-        src/tools/experimental/cuda_resident/cuda_resident_full_window_probe.cpp
-    )
-    target_link_libraries(ef_cuda_resident_full_window_cpu_probe PRIVATE
-        ef_facade
-        ef_core
-        ef_gpu_experiments
-        ef_cuda_resident_full_window_runner
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_full_window_cpu_probe PRIVATE
-        EF_CR2_FULL_WINDOW_CPU_PROBE=1
-    )
-    target_include_directories(ef_cuda_resident_full_window_cpu_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-
-    add_executable(ef_cuda_resident_cr2_matrix_cpu_probe
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_cr2_matrix_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
-        ef_facade
-        ef_core
-        ef_gpu_experiments
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
-        EF_CR2_MATRIX_CPU_PROBE=1
-        EF_CR2_MATRIX_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_cr2_matrix_cpu_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-endif()
-
-# RB9 measures the same frozen trace through two separately built Release
-# probes. The CUDA-on probe keeps the existing ef_core/MSVC debt out of its
-# graph; the CUDA-off probe uses the real FlecsCpuBackend instead of the RB8
-# fixture oracle. Neither target is a maintained backend or admission surface.
-if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    add_executable(ef_cuda_resident_rb9_cuda_probe
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_rb9_cuda_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_rb9_cuda_probe PRIVATE
-        EF_RB9_CUDA_PROBE=1
-        EF_RB9_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_rb9_cuda_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-
-    # CP-4 restored the capture entry point against a versioned kernel catalog
-    # (kKernelSpecsV2 with a static-asserted 1:1 migration from frozen v1);
-    # CP-5 moved it to v3 (kKernelSpecsV3 with a static-asserted fold from
-    # frozen v2) after fusing the window graph. Backend and profiler
-    # dependencies stay restored here. v1/v2 identifiers stay frozen and
-    # kCaptureProbeV1Retired stays true; each generation supersedes the
-    # previous rather than reviving it.
-    add_executable(ef_cuda_resident_resource_probe
-        src/tools/experimental/cuda_resident/cuda_resident_resource_probe.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_resource_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-        CUDA::cudart
-    )
-    target_compile_definitions(ef_cuda_resident_resource_probe PRIVATE
-        EF_RESOURCE_CAPTURE_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_resource_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-else()
-    add_executable(ef_cuda_resident_rb9_cpu_probe
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe.cpp
-        src/tools/experimental/cuda_resident/cuda_resident_rb9_probe_session.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_cuda_resident_rb9_cpu_probe PRIVATE
-        ef_facade
-        ef_core
-        ef_gpu_experiments
-        nlohmann_json::nlohmann_json
-    )
-    target_compile_definitions(ef_cuda_resident_rb9_cpu_probe PRIVATE
-        EF_RB9_CPU_PROBE=1
-        EF_RB9_BUILD_CONFIG="$<CONFIG>"
-    )
-    target_include_directories(ef_cuda_resident_rb9_cpu_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-endif()
-
 # CTest entries for all doctest suites plus focused structural-failure lanes.
 add_test(NAME ef_test_all COMMAND ef_test)
 set_tests_properties(ef_test_all PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
@@ -912,13 +708,6 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_cuda_resident_lifecycle_test
     ef_cuda_resident_replay_test
     ef_cuda_resident_full_window_test
-    ef_cuda_resident_full_window_cpu_probe
-    ef_cuda_resident_full_window_cuda_probe
-    ef_cuda_resident_cr2_matrix_cpu_probe
-    ef_cuda_resident_cr2_matrix_cuda_probe
-    ef_cuda_resident_rb9_cpu_probe
-    ef_cuda_resident_rb9_cuda_probe
-    ef_cuda_resident_resource_probe
 )
 
 foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)
@@ -941,3 +730,4 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/agents" DESTINATION exam
     PATTERN "*.pyc" EXCLUDE
 )
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/scenarios" DESTINATION .)
+

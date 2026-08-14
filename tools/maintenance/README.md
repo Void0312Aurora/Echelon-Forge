@@ -37,49 +37,6 @@ General maintained helpers:
   - Emits a read-only checklist or a generated closure summary for a closure
     subagent instead of rewriting README or review indexes on the main
     implementation path.
-- [damage_model.py](damage_model.py)
-  is the unified damage-model source governance command family.
-  - `admission-audit` audits source ledgers, source pin / gap updates, and
-    candidate validation manifests for public-source admission hygiene.
-  - `payload-pack` builds or inspects retained source payload packs without
-    granting authority.
-  - `rights-output-policy` evaluates the source-rights and allowed-output
-    policy gate while staying fail-closed.
-
-Task-specific A2 helpers:
-
-- [damage_model.py](damage_model.py)
-  is the unified external signoff evidence command family. It dispatches
-  `signoff-request`, `intake-contract`, `packet-template`, and
-  `admission-preflight` without retaining the old per-step entrypoint files.
-- [damage_model.py](damage_model.py)
-  is the unified benchmark evidence and admission command family. It dispatches
-  comparison hash, mechanism evidence, benchmark execution, debris-case, and
-  spreadsheet recalculation/replacement/lineage review commands.
-- [damage_model.py](damage_model.py)
-  is the unified scope/provenance closeout command family. It dispatches row
-  provenance, target-geometry closeout, warhead-scope closeout, and
-  mechanism-source closeout commands.
-- [damage_model.py](damage_model.py)
-  is the unified independent review command family. It dispatches effect-scale
-  review, RES-011/012 review closeout, scope-bucket review, and uncertainty
-  review commands.
-- [damage_model.py](damage_model.py)
-  is the unified release governance command family. It dispatches package
-  provenance/identity, provenance review/closeout, source release signoff,
-  scoped release identity, and Stage B release readiness/closeout commands.
-- [damage_model.py](damage_model.py)
-  is the unified candidate artifact command family. It dispatches validation
-  scaffold, scope boundary probe, Stage B effect-scale artifact packs, Stage C
-  component-probability and component-fragility artifact/review gates, runtime
-  authority exercise, and candidate package bundle commands.
-- [damage_model.py](damage_model.py)
-  is the unified retained artifact command family. It dispatches retained
-  manifest integrity checks over artifact hashes and authority guards.
-- These tools are maintenance/governance utilities only. They do not grant
-  runtime authority, do not make A2 retained artifacts product surface, and
-  should stay scoped to the A2 damage-model workflow.
-
 Maintenance guidance:
 
 - Scripts here may be shell or Python, but they should be workspace-oriented and
@@ -258,17 +215,6 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
 
 Use `--strict` when error-level closure gaps should fail the command. Warnings
 are intended to be closure-subagent work items rather than main-lane blockers.
-
-Audit A2 damage-model public-source admission docs:
-
-```bash
-python3 tools/maintenance/damage_model.py source-governance admission-audit
-python3 tools/maintenance/damage_model.py source-governance admission-audit --strict
-```
-
-Default mode fails only error-level authority, candidate source update, or
-manifest violations. `--strict` also fails source-pin warnings, which is useful
-before promoting a candidate source package into a validation run.
 
 Required API environment variables for translation:
 

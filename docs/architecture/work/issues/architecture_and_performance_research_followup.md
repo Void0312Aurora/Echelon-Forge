@@ -140,8 +140,9 @@ This shows:
 
 ### 3. Rollout Hot Path Bottleneck Has Been Further Identified
 
-[gpu_execution_phase4_rollout_hot_path_freeze.md](../../../../tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md)
-further confirms:
+The retired `gpu_execution_phase4_rollout_hot_path_freeze.md` evidence record
+(recoverable with `git show c0e4f31f:tests/fixtures/runtime_profiles/cuda_resident_program_2/gpu_execution_phase4_rollout_hot_path_freeze.md`)
+further confirmed:
 
 - Learner-side device-resident minibatch already has benefits
 - `collect_rollouts()` is still not ideal

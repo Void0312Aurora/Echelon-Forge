@@ -108,10 +108,7 @@ def run_maintenance_cli_in_process(
 
   Same call shape and same ``CompletedProcess`` result as
   ``run_maintenance_cli``, without restarting the interpreter and re-importing
-  the whole producer stack per assertion. Audit modules keep exactly one real
-  subprocess smoke per CLI family (see
-  ``tests/architecture/damage_model/test_cli_spawn_budget.py``) and route every
-  other call site here.
+  the whole producer stack per assertion.
   """
   script_path, cli_args = _resolve_invocation(script, args)
   command = [PYTHON_EXECUTABLE, str(script_path), *cli_args]

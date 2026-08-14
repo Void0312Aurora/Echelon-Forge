@@ -22,12 +22,6 @@ CONTRACT_SUITE_MANIFESTS = (
 )
 ARCHITECTURE_GUARD_SUITE = PYTEST_SUITE_MANIFESTS[1]
 GOVERNANCE_AUDIT_SUITE = PYTEST_SUITE_MANIFESTS[2]
-CR2_STRICT_NUMERIC_NODE = (
-  "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py::"
-  "test_cr2_5b_counter_reports_reject_equal_valued_non_json_types"
-)
-
-
 def _load_json(path: Path) -> dict[str, Any]:
   data = json.loads(path.read_text(encoding="utf-8"))
   assert isinstance(data, dict), f"{path} must contain a JSON object"
@@ -83,11 +77,6 @@ def test_ci_smoke_uses_nodeids_for_broad_runtime_facade_layering_guard() -> None
   ]
   assert selected_nodes, "ci smoke should keep representative runtime facade nodeids"
   assert all("::" in entry for entry in selected_nodes)
-
-
-def test_ci_smoke_keeps_cr2_counter_strict_numeric_gate_registered() -> None:
-  entries = _load_json(PYTEST_SUITE_MANIFESTS[0])["paths"]
-  assert CR2_STRICT_NUMERIC_NODE in entries
 
 
 def test_ci_smoke_takes_no_governance_audit_files_wholesale() -> None:

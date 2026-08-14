@@ -31,46 +31,6 @@
     acceptance review 链接和 WP 作用域内 Markdown 链接健康度。
   - 输出只读清单或生成 closure 摘要供 closure subagent 使用，而不是让主
     实现路径手工重写 README 或 review index。
-- [damage_model.py](damage_model.py)
-  是统一的 damage-model source governance 命令族。
-  - `admission-audit` 审计 source ledger、source pin / gap update 和候选 validation manifest 的公开来源准入卫生。
-  - `payload-pack` 构建或检查 retained source payload pack，不授予 authority。
-  - `rights-output-policy` 评估 source-rights 与 allowed-output policy gate，并保持失败关闭。
-
-任务专用 A2 辅助工具：
-
-- [damage_model.py](damage_model.py)
-  是统一的 external signoff evidence 命令族，通过 `signoff-request`、
-  `intake-contract`、`packet-template` 和 `admission-preflight` 分发，
-  不再保留旧的逐步骤入口文件。
-- [damage_model.py](damage_model.py)
-  是统一的 benchmark evidence 与 admission 命令族，分发 comparison hash、
-  mechanism evidence、benchmark execution、debris-case 和 spreadsheet
-  recalculation/replacement/lineage review 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 scope/provenance closeout 命令族，分发 row provenance、
-  target-geometry closeout、warhead-scope closeout 和 mechanism-source
-  closeout 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 independent review 命令族，分发 effect-scale review、
-  RES-011/012 review closeout、scope-bucket review 和 uncertainty review
-  命令。
-- [damage_model.py](damage_model.py)
-  是统一的 release governance 命令族，分发 package provenance/identity、
-  provenance review/closeout、source release signoff、scoped release
-  identity 和 Stage B release readiness/closeout 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 candidate artifact 命令族，分发 validation scaffold、scope
-  boundary probe、Stage B effect-scale artifact pack、Stage C
-  component-probability 与 component-fragility artifact/review gate、runtime
-  authority exercise 和 candidate package bundle 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 retained artifact 命令族，分发 retained manifest hash 与 authority
-  guard 完整性检查。
-- 这些工具只属于 maintenance/governance utility。它们不授予 runtime
-  authority，不把 A2 retained artifacts 变成 product surface，并应继续限定在
-  A2 damage-model workflow 内。
-
 维护指南：
 
 - 这里的脚本可以是 Shell 或 Python，但默认应面向工作空间且非破坏性。
@@ -214,16 +174,6 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
 
 当 error-level closure gap 应导致命令失败时使用 `--strict`。warning 应被视为
 closure subagent 的工作项，而不是主实现流 blocker。
-
-审计 A2 毁伤模型公开来源准入文档：
-
-```bash
-python3 tools/maintenance/damage_model.py source-governance admission-audit
-python3 tools/maintenance/damage_model.py source-governance admission-audit --strict
-```
-
-默认模式只因 error-level authority、候选来源更新或 manifest 违规失败。`--strict` 还会因 source pin
-warning 失败，适合在候选来源包升级为 validation run 前使用。
 
 翻译所需的 API 环境变量：
 

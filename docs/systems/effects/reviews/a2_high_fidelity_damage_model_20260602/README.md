@@ -9,7 +9,7 @@ Document kind: `review`
 Lifecycle: `retained`
 Canonical: `docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/README.md`
 Owner: `systems/effects`
-Last verified: `2026-08-11`
+Last verified: `2026-08-14`
 
 Status: `2026-06-02 / archived_sealed_index / research_profile_closed / non-authoritative`.
 
@@ -34,6 +34,13 @@ Pk authority, or deterministic fuze authority.
 Future work should start only from an explicit follow-on request: authority
 promotion uses `authority_promotion_backlog.zh.md`; new research expansion must
 first create a separate follow-on record instead of reopening this sealed packet.
+
+Tooling retirement (2026-08-14): the closed A2 maintenance/governance toolchain,
+candidate-artifact generators, path resolver, and self-referential manifest guards
+were removed. The last complete implementation is recoverable from `c0e4f31f`.
+Historical retained material remains readable but is no longer an active CI or
+release input. The one invariant that still constrains live runtime behavior is
+now constructed inside its runtime regression test.
 
 ## Evidence-integrity note (2026-08-11)
 
@@ -60,10 +67,10 @@ bytes:
 
 Decision rationale: hash pins on immutable evidence artifacts take
 precedence over cosmetic link-depth corrections in sealed, out-of-scope
-archive files. Regenerating pins would cascade across 4 manifests and
-their transitive chain with no gate benefit, since `manifest_integrity.py`
-now runs against the correct owner root and no CI test enforces the
-full-tree hash check on live content.
+archive files. Regenerating pins would have cascaded across 4 manifests and
+their transitive chain with no gate benefit. This paragraph records the
+pre-retirement analysis; the manifest-integrity tool and its CI contracts were
+retired on 2026-08-14.
 
 Update (2026-08-13): by owner instruction the second file was taken out of
 the "original bytes preserved" state after all. The
@@ -80,14 +87,13 @@ manifest). The actual cascade proved narrower than the 4-manifest estimate
 above: the other closeout gates reference this ledger by path only. The
 six pre-migration hash mismatches remain untouched inherited conditions.
 
-The manifest-pinned governance dependency is preserved byte-for-byte in the
+The historical manifest-pinned governance dependency is preserved byte-for-byte in the
 [retained governance dependency snapshot](retained_dependencies/governance_20260531/README.md).
-Readers translate its retired logical path through
-`tools/maintenance/a2_packet_paths.py`; the maintained policy is not substituted
-because its newer bytes do not satisfy the historical hash contract.
+The retired path resolver is available from `c0e4f31f` for forensic replay; no
+current reader translates this logical path or treats it as active policy.
 
-Tooling counts (2026-08-13). The "six files" above counts distinct
-hash-mismatched `.zh.md` files. `manifest_integrity.py` counts manifest
+Historical tooling counts (2026-08-13). The "six files" above counts distinct
+hash-mismatched `.zh.md` files. The retired `manifest_integrity.py` counted manifest
 *fields* and reports 109 mismatch rows across 29 manifests; the two figures
 measure different things and both are correct. The 109 rows decompose into 9
 content mismatches and 100 newline-representation rows. The 9 cover those six

@@ -358,16 +358,14 @@ content to its owner instead.
 
 ## Retired Damage-Model Governance Tooling
 
-`tools/maintenance/damage_model.py` routed eight governance domains. Four of
-them -- `benchmark_evidence`, `external_signoff_evidence`, `independent_review`
-and `scope_provenance` -- had no consumer outside that router and the
-damage-model audit tier, so the packages, the audit modules that only drove
-them, and their fixtures were deleted on 2026-08-14. The evidence those
-producers wrote is already retained under
-`docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/`, so only
-the producers are gone. `candidate_artifacts`, `retained_artifacts`,
-`release_governance` and `source_governance` stay: the retained
-`candidate_artifacts` package imports the last two at module scope.
+`tools/maintenance/damage_model.py` routed eight governance domains. All eight
+were retired on 2026-08-14 after the project closed: their remaining consumers
+were historical documents, hash manifests, and tests that maintained the same
+closed evidence chain. The one candidate-artifact invariant that still
+constrains live runtime behavior was extracted into its runtime regression test
+before deletion. The evidence those producers wrote remains as read-only
+history under
+`docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/`.
 
 Retrieval works the same way as the table above -- `git show <commit>:<path>`
 prints the file's final content. These rows are code rather than documents, so
@@ -414,3 +412,19 @@ document-retention surface.
 | `tests/tools/fixtures/argparse_migration_help/review_closeout.txt` | Pinned `--help` capture for `independent-review review-closeout` | `git show 8bd21d86:tests/tools/fixtures/argparse_migration_help/review_closeout.txt` | 2026-08-14 |
 | `tests/tools/fixtures/argparse_migration_help/scope_bucket_review.txt` | Pinned `--help` capture for `independent-review scope-bucket-review` | `git show 8bd21d86:tests/tools/fixtures/argparse_migration_help/scope_bucket_review.txt` | 2026-08-14 |
 | `tests/tools/fixtures/argparse_migration_help/uncertainty_review.txt` | Pinned `--help` capture for `independent-review uncertainty-review` | `git show 8bd21d86:tests/tools/fixtures/argparse_migration_help/uncertainty_review.txt` | 2026-08-14 |
+
+The remaining A2 maintenance closure (`damage_model.py`, `a2_packet_paths.py`,
+`candidate_artifacts`, `release_governance`, `source_governance`,
+`retained_artifacts`, and their dedicated tests) has a single recovery baseline:
+`c0e4f31f`. Grouped retrieval commands are documented in `tools/README.md`.
+
+## Retired CUDA-Resident Evidence Program
+
+The CUDA-resident evidence program ended with promotion disabled. On
+2026-08-14 its 44-file retained fixture tree, 12 Python evidence diagnostics,
+12 evidence-only architecture tests, and eight native measurement-probe sources
+were removed together with their CMake targets and suite registrations. Nine
+architecture tests that directly constrain the maintained backend, CMake, CPU
+portability, lifecycle, device-consumer, flight-dynamics, observation, replay,
+and runtime-profile contracts remain. The final complete evidence tree is
+recoverable from `c0e4f31f`.

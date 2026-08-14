@@ -95,28 +95,26 @@
   - 将选定的实验/数据集目录移开，以创建一个更小的复现工作区。
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - 审计双语覆盖率，并使用与 OpenAI 兼容的 API 批量翻译 Markdown 文档对等文件。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 external signoff evidence CLI，覆盖 source-rights signoff request、intake contract、packet template 和 admission preflight。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 source-governance CLI，覆盖 admission audit、retained payload pack 和 source-rights allowed-output policy 检查。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 benchmark-evidence CLI，覆盖 comparison hashes、mechanism evidence、benchmark execution admission、debris-case admission 和 spreadsheet recalculation/replacement review gate。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 scope/provenance CLI，覆盖 row provenance、target-geometry closeout、warhead-scope closeout 和 mechanism-source closeout。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 independent-review CLI，覆盖 effect-scale review、review closeout、scope-bucket review 和 uncertainty review gate。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 release-governance CLI，覆盖 package provenance/identity、provenance review/closeout、source release signoff、scoped release identity 和 Stage B release readiness/closeout gate。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 candidate-artifact CLI，覆盖 validation scaffold、scope probe、Stage B effect-scale artifact pack、Stage C component-probability 与 component-fragility artifact/review gate、runtime authority exercise 和 candidate package bundle。
-- [damage_model.py](maintenance/damage_model.py)
-  - 统一的 retained-artifact CLI，覆盖 manifest hash 与 authority-guard 完整性检查。
-
 ## 退役登记
 
 `tools/archive/` 已不存在。把退役的一次性探测留在工作树里，只会在每次普查时
 消耗审阅注意力，而它提供的东西 git 历史本来就有；因此退役现在等于「删除 +
 本登记表」。用 `git show <commit>:<path>` 取回任意条目。
+
+### 2026-08-14 退役 —— 已关闭的 A2 maintenance/governance 链
+
+A2 candidate、source、release 与 retained-artifact producer 在 damage-model
+评审关闭后形成了自引用维护图。唯一仍有价值的 runtime invariant 已改由小型
+test-local fixture 守护，因此 generator、router、hash-pin checker 及其专属测试
+不再保留。完整退役前版本位于 `c0e4f31f`。
+
+| 路径 | 用途 | 取回 |
+| --- | --- | --- |
+| `tools/maintenance/damage_model.py` | 已关闭 A2 治理工作流的统一 router。 | `git show c0e4f31f:tools/maintenance/damage_model.py` |
+| `tools/maintenance/candidate_artifacts/` | Candidate scaffold 与 Stage B/C artifact producer。 | `git ls-tree -r c0e4f31f -- tools/maintenance/candidate_artifacts` |
+| `tools/maintenance/release_governance/` | Candidate 链的 release-readiness 与 provenance gate。 | `git ls-tree -r c0e4f31f -- tools/maintenance/release_governance` |
+| `tools/maintenance/source_governance/` | Source admission、payload 与 rights-policy producer。 | `git ls-tree -r c0e4f31f -- tools/maintenance/source_governance` |
+| `tools/maintenance/retained_artifacts/` | Retained A2 packet 的 manifest/hash integrity checker。 | `git ls-tree -r c0e4f31f -- tools/maintenance/retained_artifacts` |
 
 下列条目均在提交 `3ac600a6`（它们最后存在的提交）退役。退役前经过四列引用
 审计：`tests/`、CI、维护中的（Tier A/B）文档与其他 `tools/` 入口均无引用。

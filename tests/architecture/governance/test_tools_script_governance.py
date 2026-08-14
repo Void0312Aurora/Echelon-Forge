@@ -129,24 +129,12 @@ def test_diagnostics_top_level_entrypoints_are_governed_by_function() -> None:
 
 # The strict-xfail guard above records that the top-level sprawl is genuinely
 # unresolved. Strict xfail alarms on recovery, not on decay: the residual set
-# grew from the 11 scripts its reason records to the 23 below before anything
-# noticed (census, 2026-08-13). This ratchet freezes the tolerated set so
-# growth fails immediately while shrinkage forces the entry's removal.
+# once grew from the 11 scripts its reason records to 23 before anything
+# noticed (census, 2026-08-13). The closed CUDA evidence family was retired on
+# 2026-08-14, returning the residual set to 11. This ratchet freezes that set.
 TOLERATED_DIAGNOSTICS_TOP_LEVEL_RESIDUALS = frozenset(
   {
     "calibration_admission_audit.py",
-    "cuda_resident_cr2_closure.py",
-    "cuda_resident_cr2_counter_evidence.py",
-    "cuda_resident_cr2_full_window_compare.py",
-    "cuda_resident_cr2_json_types.py",
-    "cuda_resident_cr2_matrix_evidence.py",
-    "cuda_resident_cr2_matrix_evidence_schema.py",
-    "cuda_resident_cr2_matrix_probe.py",
-    "cuda_resident_cr2_parity_compare.py",
-    "cuda_resident_cr2_resource_evidence.py",
-    "cuda_resident_cr2_resource_schema.py",
-    "cuda_resident_cr2_resource_static.py",
-    "cuda_resident_retained_evidence_paths.py",
     "kill_chain_decoupling_probe.py",
     "kill_chain_expectation_harness.py",
     "kill_chain_expectation_response_diagnosis.py",

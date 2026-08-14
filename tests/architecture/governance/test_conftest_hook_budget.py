@@ -3,8 +3,8 @@
 A ``pytest_collection_modifyitems`` defined in *any* conftest -- however deep
 -- receives the whole session's item list, not its own directory's. A leaf
 conftest doing per-item filesystem work therefore taxes every collect in the
-repository: the runtime_profiles conftest resolved 3,515 paths per session
-(~7s on Windows) before 74891c57 cached it per module. Static call-pattern
+repository: the retired runtime_profiles conftest once resolved 3,515 paths per
+session (~7s on Windows) before 74891c57 cached it per module. Static call-pattern
 scanning cannot separate that cached form from the uncached one without false
 positives, so this guard pins the inventory instead: adding a conftest or a
 hook fails here first, forcing the author through this file's warning.
@@ -22,9 +22,6 @@ TESTS_ROOT = REPO_ROOT / "tests"
 # repo-relative conftest path -> exact set of pytest_* hooks it may define.
 REGISTERED_CONFTEST_HOOKS: dict[str, frozenset[str]] = {
   "tests/conftest.py": frozenset({"pytest_configure"}),
-  "tests/architecture/runtime_profiles/conftest.py": frozenset(
-    {"pytest_collection_modifyitems"}
-  ),
 }
 
 

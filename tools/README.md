@@ -116,29 +116,28 @@
   - Audits added production and documentation lines for work-tracking codes or
     opaque lettered-phase identifiers; CI blocks high-confidence source/runtime
     violations while documentation findings remain warnings during remediation.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified external signoff evidence CLI for source-rights signoff requests, intake contracts, packet templates, and admission preflight checks.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified source-governance CLI for admission audit, retained payload pack, and source-rights allowed-output policy checks.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified benchmark-evidence CLI for comparison hashes, mechanism evidence, benchmark execution admission, debris-case admission, and spreadsheet recalculation/replacement review gates.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified scope/provenance CLI for row provenance, target-geometry closeout, warhead-scope closeout, and mechanism-source closeout.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified independent-review CLI for effect-scale review, review closeout, scope-bucket review, and uncertainty review gates.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified release-governance CLI for package provenance/identity, provenance review/closeout, source release signoff, scoped release identity, and Stage B release readiness/closeout gates.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified candidate-artifact CLI for validation scaffolds, scope probes, Stage B effect-scale artifact packs, Stage C component-probability and component-fragility artifact/review gates, runtime authority exercises, and candidate package bundles.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified retained-artifact CLI for manifest hash and authority-guard integrity checks.
-
 ## Retirement Register
 
 `tools/archive/` no longer exists. Keeping retired one-shot probes in the
 working tree costs review attention on every census and gives nothing that git
 history does not already provide, so retirement now means deletion plus this
 register. Recover any entry with `git show <commit>:<path>`.
+
+### Retired 2026-08-14 — closed A2 maintenance-governance chain
+
+The A2 candidate, source, release, and retained-artifact producers formed a
+self-referential maintenance graph after the damage-model review had closed.
+The one runtime invariant they protected now uses a small test-local fixture,
+so keeping the generators, router, hash-pin checker, and their tests would only
+preserve the closed workflow. The last complete tree is `c0e4f31f`.
+
+| Path | Purpose | Recover |
+| --- | --- | --- |
+| `tools/maintenance/damage_model.py` | Unified router for the closed A2 governance workflow. | `git show c0e4f31f:tools/maintenance/damage_model.py` |
+| `tools/maintenance/candidate_artifacts/` | Candidate scaffold and Stage B/C artifact producers. | `git ls-tree -r c0e4f31f -- tools/maintenance/candidate_artifacts` |
+| `tools/maintenance/release_governance/` | Release-readiness and provenance gates for the candidate chain. | `git ls-tree -r c0e4f31f -- tools/maintenance/release_governance` |
+| `tools/maintenance/source_governance/` | Source admission, payload, and rights-policy producers. | `git ls-tree -r c0e4f31f -- tools/maintenance/source_governance` |
+| `tools/maintenance/retained_artifacts/` | Manifest/hash integrity checker for the retained A2 packet. | `git ls-tree -r c0e4f31f -- tools/maintenance/retained_artifacts` |
 
 All entries below were retired at commit `3ac600a6` (the last commit in which
 they exist), after a four-column reference audit found no reference from

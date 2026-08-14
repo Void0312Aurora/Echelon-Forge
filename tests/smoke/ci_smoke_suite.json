@@ -104,13 +104,11 @@
     "tests/runtime/air_combat/test_weapon_roe_runtime.py",
     "tests/scenario/test_scenario_compiler.py",
     "tests/scenario/test_scenario_generation_contracts.py",
-    "tests/architecture/runtime_profiles/test_cuda_resident_counter_evidence.py::test_cr2_5b_counter_reports_reject_equal_valued_non_json_types",
     "tests/architecture/runtime_profiles/test_cuda_resident_learner_consumption.py",
     "tests/runners/test_pytest_suite_manifests.py::test_pytest_suite_manifest_entries_resolve_to_existing_base_paths",
     "tests/runners/test_pytest_suite_manifests.py::test_contract_suite_manifest_entries_resolve_to_existing_specs",
     "tests/runners/test_pytest_suite_manifests.py::test_no_capitalized_archive_dir_under_contracts",
     "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_uses_nodeids_for_broad_runtime_facade_layering_guard",
-    "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_keeps_cr2_counter_strict_numeric_gate_registered",
     "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_uses_explicit_files_or_nodeids_not_directories",
     "tests/runners/test_pytest_suite_manifests.py::test_ci_smoke_takes_no_governance_audit_files_wholesale",
     "tests/runners/test_pytest_suite_manifests.py::test_architecture_tier_suites_partition_the_architecture_test_files",
@@ -127,3 +125,4 @@
     "tests/world_batch/test_batch_scenario_runtime.py"
   ]
 }
+
