@@ -57,7 +57,7 @@ full ground runtime maturity.
   - `default_sensor_model.cpp`, `default_acoustic_model.cpp`
 - `weapons/`
   - `default_effects_model.cpp`, `default_guidance_model.cpp`,
-    `naval_weapon_mounts.h`, `detail/default_effects_domain_routing_detail.inc`
+    `naval_weapon_mounts.h`, `detail/default_effects_domain_routing_detail.h`
 
 ## Migration Notes
 

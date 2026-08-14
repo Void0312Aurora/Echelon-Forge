@@ -166,12 +166,7 @@ RunResult Runner::run(const ReplayTrace &trace) {
         }
 
         try {
-            const auto evaluation = backend_->evaluate({});
-            if (!evaluation.execution_episode_products.empty()) {
-                return fail(Operation::evaluation, window_index,
-                            FailureCode::unexpected_evaluation_output, last_barrier,
-                            "full-window evaluation must return an empty result", request_id);
-            }
+            (void)backend_->evaluate({});
             result.operations.push_back({
                 .window_index = window_index,
                 .request_id = request_id,

@@ -8,9 +8,9 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/engineering/documentation/reference/bilingual_document_clusters.md`
 Owner: `engineering/documentation-governance`
-Last verified: `2026-08-07`
+Last verified: `2026-08-12`
 
-Status: `2026-08-07` reference for the machine-readable bilingual sync registry.
+Status: `2026-08-12` reference for the machine-readable bilingual sync registry.
 
 This document defines the lightweight cluster record used to tell whether a
 matched `name.md` / `name.zh.md` pair is still in sync.
@@ -22,7 +22,7 @@ matched `name.md` / `name.zh.md` pair is still in sync.
 - Producer and auditor:
   [tools/maintenance/translate_docs_batch.py](../../../../tools/maintenance/translate_docs_batch.py)
 - Verified scope: the strict maintained bilingual surface selected by the
-  shared documentation-scope rules as of `2026-08-07`.
+  shared documentation-scope rules as of `2026-08-12`.
 - The registry verifies path membership and baseline-relative file hashes. It
   does not prove that two languages are semantically equivalent.
 
@@ -30,6 +30,11 @@ Archive rule:
 
 - `docs/Archive/` and any local `archive/` subtree under `docs/**/archive/`
   are excluded from the maintained bilingual cluster audit by default.
+- work surfaces (any path with a `work` directory component) are Tier B
+  English-only and stay outside the strict registry scope, even under owner
+  prefixes such as `docs/operations/` that are otherwise strict, unless the
+  pair is explicitly promoted through the `PROMOTED_WORK_DOCUMENTS` allowlist
+  in `tools/maintenance/document_scope.py`.
 - local architecture review scratch under `docs/plan/architecture/review/`
   is also excluded from the maintained cluster audit by default.
 - Archived mirrors may still keep bilingual files for traceability, but they

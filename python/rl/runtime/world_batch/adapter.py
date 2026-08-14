@@ -25,6 +25,7 @@ from .command_chain_cache import project_world_mission_command_maintained_assign
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
 from .command_chain_cache import project_world_task_order_maintained_assignment
 from .typed_observation_view import admit_typed_observation_view_spec
+from .typed_observation_view import maintained_observation_view_spec
 
 
 def _maintained_task_order_write_required_message(surface: str) -> str:
@@ -80,7 +81,6 @@ class RuntimeFacadeAdapterCapabilities:
     has_set_task_orders_maintained_batch: bool
     has_set_leader_intents_maintained_batch: bool
     has_set_pilot_reports_maintained_batch: bool
-    has_run_global_evidence_producers: bool
 
 
 def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAdapterCapabilities:
@@ -111,12 +111,6 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
         ),
         has_set_pilot_reports_maintained_batch=bool(
             hasattr(facade, "set_pilot_reports_maintained_batch")
-        ),
-        has_run_global_evidence_producers=bool(
-            hasattr(facade, "allocate_trace_id")
-            and hasattr(facade, "peek_next_trace_id")
-            and hasattr(facade, "allocate_run_snapshot_version")
-            and hasattr(facade, "peek_next_run_snapshot_version")
         ),
     )
 
@@ -289,38 +283,12 @@ class _ScenarioLoaderRuntimeProxy:
 
 
 class RuntimeFacadeAdapter:
-    """Centralized compatibility adapter for facade-shaped runtime access.
-
-    Evidence-producer opt-in (T10 evidence-spine census slice 4; see
-    ``docs/plan/archive/unified_architecture_program_completed_20260727/t10_evidence_spine_census_20260721.md``
-    section 3 step 4 and the ``trace_ids`` / ``input_snapshot_version`` rows of
-    ``t10_evidence_glossary_20260721.md``):
-
-    ``use_facade_evidence_producers`` selects which evidence values the
-    maintained window path (:meth:`run_maintained_window`) stamps onto the
-    window request. It defaults to ``False`` to keep the maintained run's
-    serialized evidence byte-for-byte identical to the pre-slice-4 baseline:
-    the window engagement request keeps the placeholder ``trace_ids = [1]`` and
-    the synthetic ``input_snapshot_version`` (caller value, else
-    ``"obs:{world}:{entity}"``), and the I54 run-global producers are never
-    invoked. Setting it ``True`` opts the whole run (one facade == one
-    ``RuntimeFacadeAdapter`` == one "run", matching the I54 run-global boundary)
-    into the real produced values minted behind the facade: ``trace_ids`` is one
-    id from :meth:`~RuntimeFacade.allocate_trace_id` (VA-8 dedicated allocator,
-    monotone, disjoint from the resettable kernel engagement-event id space) and
-    ``input_snapshot_version`` becomes ``"snapshot:{n}"`` where ``n`` is minted
-    from :meth:`~RuntimeFacade.allocate_run_snapshot_version` (VA-2 run-global
-    monotone snapshot-version counter). The opt-in path overrides the synthetic
-    caller/default strings by design -- that is the whole point of wiring the
-    real producers in -- so it changes the serialized evidence and is gated
-    behind this explicit switch.
-    """
+    """Centralized compatibility adapter for facade-shaped runtime access."""
 
     def __init__(
         self,
         world_count: int,
         *,
-        use_facade_evidence_producers: bool = False,
         use_typed_observation_view: bool = False,
     ):
         self._world_count = int(world_count)
@@ -333,10 +301,9 @@ class RuntimeFacadeAdapter:
         self._world_layouts: dict[int, AppliedScenarioWorld] = {}
         self._world_time_steps: dict[int, float] = {}
         self._next_launch_request_id = 1
-        self._use_facade_evidence_producers = bool(use_facade_evidence_producers)
         self._typed_observation_view_spec: Any | None = None
         if use_typed_observation_view:
-            self._typed_observation_view_spec = self._describe_and_admit_typed_observation_view()
+            self._typed_observation_view_spec = self._admit_typed_observation_view()
 
     @property
     def capabilities(self) -> RuntimeFacadeAdapterCapabilities:
@@ -361,74 +328,35 @@ class RuntimeFacadeAdapter:
 
     @property
     def typed_observation_view_spec(self) -> Any | None:
-        """Return the admitted I87 spec, or ``None`` on the default path."""
+        """Return the admitted typed observation view, or ``None`` on the default path."""
 
         return self._typed_observation_view_spec
 
-    def _describe_and_admit_typed_observation_view(self) -> Any:
-        """Read and admit the I87 view exactly once during construction.
+    def _admit_typed_observation_view(self) -> Any:
+        """Admit the typed observation view exactly once during construction.
 
-        The default path never calls the export.  There is intentionally no
-        public post-construction enable method: the facade, structural
-        admission, and cached spec belong to one adapter construction boundary.
-        The admitted spec is later consumed by the C3/C20 helpers before they
-        read the existing ``ObservationBatchPacket`` payload.
+        The default path never builds the spec.  There is intentionally no
+        public post-construction enable method: the structural admission and
+        cached spec belong to one adapter construction boundary.  The admitted
+        spec is later consumed by the C3/C20 helpers before they read the
+        existing ``ObservationBatchPacket`` payload.  The declaration is the
+        pure Python static registry in ``typed_observation_view.py`` (the
+        retired C++ ``describe_maintained_observation_view`` export only
+        mirrored those constants).
         """
 
         if self._typed_observation_view_spec is not None:
             return self._typed_observation_view_spec
-        describe = getattr(self.facade, "describe_maintained_observation_view", None)
-        if not callable(describe) or not hasattr(ef_py, "ObservationViewSpec"):
-            raise RuntimeError(
-                "typed observation view requires the maintained ObservationViewSpec "
-                "facade export"
-            )
-        spec = describe()
-        if not isinstance(spec, ef_py.ObservationViewSpec):
-            raise RuntimeError(
-                "describe_maintained_observation_view returned a non-ObservationViewSpec value"
-            )
-        self._typed_observation_view_spec = admit_typed_observation_view_spec(spec)
+        self._typed_observation_view_spec = admit_typed_observation_view_spec(
+            maintained_observation_view_spec()
+        )
         return self._typed_observation_view_spec
 
     def supports_runtime_window_api(self) -> bool:
         return self.capabilities.has_runtime_window_api
 
-    @property
-    def use_facade_evidence_producers(self) -> bool:
-        """Whether the maintained window path stamps real facade-minted evidence.
-
-        ``False`` (default) keeps the placeholder ``trace_ids``/synthetic
-        ``input_snapshot_version`` and never touches the I54 producers, so the
-        serialized evidence matches the pre-slice-4 baseline byte-for-byte.
-        """
-        return self._use_facade_evidence_producers
-
-    def _require_run_global_evidence_producers(self) -> None:
-        if not self.capabilities.has_run_global_evidence_producers:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter(use_facade_evidence_producers=True) requires the I54 "
-                "run-global evidence producers (allocate_trace_id / "
-                "allocate_run_snapshot_version) on the RuntimeFacade bindings"
-            )
-
-    def _maintained_window_trace_ids(self) -> list[int]:
-        """Trace-id list stamped onto the window engagement request.
-
-        Default (opt-in off): the maintained placeholder ``[1]`` -- see the
-        glossary ``trace_ids`` row (``EngagementEventPacket``) -- reproduced
-        without invoking any producer, so the default export stays byte-for-byte
-        identical to the pre-slice-4 baseline. Opt-in: one real id minted from
-        the facade's VA-8 ``allocate_trace_id`` allocator (monotone across
-        windows, disjoint from the resettable kernel engagement-event id space).
-        """
-        if not self._use_facade_evidence_producers:
-            return [1]
-        self._require_run_global_evidence_producers()
-        return [int(self.facade.allocate_trace_id())]
-
+    @staticmethod
     def _maintained_window_input_snapshot_version(
-        self,
         *,
         world_index: int,
         entity_id: int,
@@ -436,18 +364,9 @@ class RuntimeFacadeAdapter:
     ) -> str:
         """Input snapshot-version string stamped onto the window action request.
 
-        Default (opt-in off): the caller value when non-blank, else the
-        synthetic ``"obs:{world}:{entity}"`` placeholder -- see the glossary
-        ``input_snapshot_version`` row -- reproduced without invoking any
-        producer. Opt-in: ``"snapshot:{n}"`` where ``n`` is minted from the
-        facade's VA-2 run-global monotone ``allocate_run_snapshot_version``
-        producer; the ``snapshot:`` prefix mirrors the existing restore-boundary
-        ``snapshot_version_ref`` embedding (``"snapshot:" + version``). The
-        opt-in value overrides any synthetic caller string by design.
+        The caller value when non-blank, else the synthetic
+        ``"obs:{world}:{entity}"`` placeholder.
         """
-        if self._use_facade_evidence_producers:
-            self._require_run_global_evidence_producers()
-            return f"snapshot:{int(self.facade.allocate_run_snapshot_version())}"
         if caller_value is not None and str(caller_value).strip():
             return str(caller_value)
         return f"obs:{int(world_index)}:{int(entity_id)}"
@@ -547,14 +466,10 @@ class RuntimeFacadeAdapter:
     ) -> RuntimeWindowEvidence | None:
         """Run one maintained facade window and capture its evidence slice.
 
-        Evidence values (``trace_ids`` on the engagement request and
-        ``input_snapshot_version`` on the action request) follow
-        :attr:`use_facade_evidence_producers`: off (default) keeps the
-        byte-identical placeholder ``[1]`` / synthetic ``"obs:{world}:{entity}"``
-        (or the caller's ``input_snapshot_version``); on stamps the real
-        facade-minted VA-8 trace id and VA-2 ``"snapshot:{n}"`` version,
-        overriding any synthetic caller string. See the class docstring and the
-        T10 evidence-spine census slice 4 for the additive rationale.
+        The engagement request keeps the maintained placeholder
+        ``trace_ids = [1]`` and the action request keeps the caller's
+        ``input_snapshot_version`` (else the synthetic
+        ``"obs:{world}:{entity}"`` placeholder).
         """
         if not self.supports_runtime_window_api():
             self._last_window_evidence = None
@@ -583,7 +498,7 @@ class RuntimeFacadeAdapter:
         engagement_ref.world_index = int(world_index)
         engagement_ref.entity_id = int(entity_id)
         engagement_request.refs = [engagement_ref]
-        engagement_request.trace_ids = self._maintained_window_trace_ids()
+        engagement_request.trace_ids = [1]
         request.engagement_request = engagement_request
         request.export_observation = True
         request.export_engagement = bool(include_engagement)
@@ -653,258 +568,6 @@ class RuntimeFacadeAdapter:
             result,
             cadence_reason="selected_slice_cadence_trace_runtime_window",
             uses_compat_fallback=False,
-        )
-
-    _RUN_SNAPSHOT_VERSION_PREFIX = "snapshot:"
-
-    @staticmethod
-    def _recover_run_snapshot_version(evidence: RuntimeWindowEvidence) -> int:
-        """Recover the window's own VA-2 run-global snapshot version, or 0.
-
-        The I59 opt-in path stamps ``input_snapshot_version = "snapshot:{n}"``
-        with ``n`` minted from the facade's VA-2 run-global monotone
-        ``allocate_run_snapshot_version``, and the window echoes it back on the
-        real executed-node records' ``source_snapshot_version``. Reading it back
-        out of the window's own products keeps the envelope's snapshot identity
-        run-produced evidence rather than a caller-invented number -- and the
-        C++ producer independently re-checks the value against the allocator
-        cursor, so a wrong recovery fails closed instead of being trusted.
-
-        Returns 0 (the producer's "leave the packet's per-export string alone"
-        default) when no node carries a ``"snapshot:{int}"`` version, which is
-        exactly the non-opt-in synthetic ``"obs:{world}:{entity}"`` shape.
-        """
-        recovered = 0
-        for node in getattr(evidence, "executed_nodes", None) or []:
-            version = str(getattr(node, "source_snapshot_version", "") or "")
-            if not version.startswith(RuntimeFacadeAdapter._RUN_SNAPSHOT_VERSION_PREFIX):
-                continue
-            suffix = version[len(RuntimeFacadeAdapter._RUN_SNAPSHOT_VERSION_PREFIX) :]
-            if not suffix.isdigit():
-                continue
-            recovered = max(recovered, int(suffix))
-        return recovered
-
-    def build_maintained_replay_envelope(
-        self,
-        *,
-        run_id: str,
-        episode_id: str,
-        deterministic_seed: int,
-        window_evidence: RuntimeWindowEvidence | None = None,
-        qualify_run_global_snapshot_version: bool = False,
-    ) -> Any:
-        """Build a ReplayEnvelope from a maintained window's real products.
-
-        New additive API (T10 evidence-spine census slice 5); nothing on the
-        default adapter path calls it. It forwards the window's
-        ``RuntimeWindowResult`` (``window_evidence`` when given, else the
-        adapter's :attr:`last_window_evidence`) to the facade producer
-        ``build_maintained_replay_envelope`` together with the caller-owned run
-        identity (``run_id`` / ``episode_id`` / the run's real setup
-        ``deterministic_seed``), and returns the fail-closed
-        ``MaintainedReplayEnvelopeResult`` (``admitted`` / ``envelope`` /
-        ``rejection_reason``).
-
-        The envelope is only meaningful over real minted evidence, so this
-        adapter seam requires ``use_facade_evidence_producers=True`` (I59): the
-        C++ producer independently fail-closes when the window's ``trace_ids``
-        were not minted by this run's VA-8 allocator, which is exactly the
-        default path's placeholder ``[1]``. The producer is read-only (it only
-        peeks the allocator cursors), so calling it never perturbs the run's
-        evidence sequences.
-
-        ``qualify_run_global_snapshot_version`` (default ``False``) opts into the
-        census VA-2 fix for the envelope's snapshot identity. Off, the envelope's
-        ``snapshot_ref.snapshot_version_ref`` is the observation packet's own
-        per-export provenance string (``"global:{n}"``), which is real but resets
-        every export and so is NOT run-globally unique. On, the window's own
-        run-global monotone version -- recovered from its real executed-node
-        records by :meth:`_recover_run_snapshot_version` and re-validated against
-        the allocator inside the producer -- qualifies the ref additively as
-        ``"global:{export_n}:run_snapshot:{run_global_n}"``. Because this changes
-        a serialized string it stays default-off behind this explicit flag, per
-        the census's additive-only red line.
-        """
-        if not self._use_facade_evidence_producers:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_replay_envelope requires "
-                "use_facade_evidence_producers=True: the maintained replay envelope "
-                "is only meaningful over real facade-minted evidence (I59 opt-in), "
-                "not the default placeholder trace_ids/input_snapshot_version"
-            )
-        if not hasattr(self.facade, "build_maintained_replay_envelope"):
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_replay_envelope requires the "
-                "T10 slice-5 RuntimeFacade.build_maintained_replay_envelope binding"
-            )
-        evidence = self._last_window_evidence if window_evidence is None else window_evidence
-        if evidence is None or getattr(evidence, "window_result", None) is None:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_replay_envelope requires a "
-                "completed maintained window (run_maintained_window) or an explicit "
-                "window_evidence argument"
-            )
-        return self.facade.build_maintained_replay_envelope(
-            evidence.window_result,
-            str(run_id),
-            str(episode_id),
-            int(deterministic_seed),
-            self._recover_run_snapshot_version(evidence)
-            if qualify_run_global_snapshot_version
-            else 0,
-        )
-
-    def build_maintained_packet_ancestry(
-        self,
-        *,
-        run_id: str,
-        episode_id: str,
-        deterministic_seed: int,
-        window_evidence: RuntimeWindowEvidence | None = None,
-        parent_trace_id: int = 0,
-    ) -> Any:
-        """Build engagement-packet ancestry from a maintained window's real products.
-
-        New additive API (T10 evidence-spine census slice 6A, this iteration);
-        nothing on the default adapter path calls it. It forwards the window's
-        ``RuntimeWindowResult`` (``window_evidence`` when given, else the
-        adapter's :attr:`last_window_evidence`) to the facade producer
-        ``build_maintained_packet_ancestry`` together with the caller-owned run
-        identity and the ancestry parent, and returns the fail-closed
-        ``MaintainedPacketAncestryResult`` (``admitted`` / ``ancestry`` /
-        ``rejection_reason``).
-
-        ``parent_trace_id`` (default ``0`` = root window, no parent) is the
-        PREVIOUS window's run-minted VA-8 anchor -- typically the
-        ``ancestry.anchor_trace_id`` of the previous call, which keeps the
-        chain caller-explicit and stateless. The C++ producer fail-closes when
-        the parent was not minted by this run's allocator (foreign-facade
-        linkage) or does not strictly precede the window's own trace tags.
-
-        Like the slice-5 envelope seam this requires
-        ``use_facade_evidence_producers=True`` (I59): ancestry is only
-        meaningful over real facade-minted evidence, and the producer
-        independently rejects the default placeholder ``trace_ids = [1]``. The
-        producer is read-only and returns parent-linked COPIES of the window's
-        exported diagnostics traces, so the stored window evidence and every
-        default serialized value stay byte-for-byte unchanged.
-        """
-        if not self._use_facade_evidence_producers:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_packet_ancestry requires "
-                "use_facade_evidence_producers=True: maintained packet ancestry "
-                "is only meaningful over real facade-minted evidence (I59 opt-in), "
-                "not the default placeholder trace_ids/input_snapshot_version"
-            )
-        if not hasattr(self.facade, "build_maintained_packet_ancestry"):
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_packet_ancestry requires the "
-                "T10 slice-6A RuntimeFacade.build_maintained_packet_ancestry binding"
-            )
-        evidence = self._last_window_evidence if window_evidence is None else window_evidence
-        if evidence is None or getattr(evidence, "window_result", None) is None:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_packet_ancestry requires a "
-                "completed maintained window (run_maintained_window) or an explicit "
-                "window_evidence argument"
-            )
-        return self.facade.build_maintained_packet_ancestry(
-            evidence.window_result,
-            str(run_id),
-            str(episode_id),
-            int(deterministic_seed),
-            int(parent_trace_id),
-        )
-
-    def build_maintained_worldline_comparison(
-        self,
-        *,
-        run_id: str,
-        episode_id: str,
-        baseline_deterministic_seed: int,
-        candidate_deterministic_seed: int,
-        baseline_window_evidence: RuntimeWindowEvidence,
-        candidate_window_evidence: RuntimeWindowEvidence | None = None,
-        baseline_parent_trace_id: int = 0,
-        candidate_parent_trace_id: int = 0,
-    ) -> Any:
-        """Build a worldline/counterfactual comparison from two maintained windows.
-
-        New additive API (T10 evidence-spine census slice 7, this iteration);
-        nothing on the default adapter path calls it. It forwards the two
-        windows' ``RuntimeWindowResult`` products -- the explicit
-        ``baseline_window_evidence`` plus ``candidate_window_evidence`` (or the
-        adapter's :attr:`last_window_evidence` when omitted: the most recent
-        real window is the natural candidate against an earlier baseline) -- to
-        the facade producer ``build_maintained_worldline_comparison`` together
-        with the shared caller-owned run identity and each worldline's own
-        setup seed, and returns the fail-closed
-        ``MaintainedWorldlineComparisonResult`` (``admitted`` / ``comparison`` /
-        ``rejection_reason``).
-
-        The comparison consumes the slice-5 (I69) replay-envelope and slice-6A
-        (I79) packet-ancestry producers per side, so all of their gates guard
-        it: both windows must carry evidence minted by THIS facade's VA-8
-        allocator, both envelopes must pass ``validate_replay_envelope``
-        (deterministic replay refs guaranteed), both ancestries must admit
-        their ``*_parent_trace_id`` linkage, and the two anchors must be
-        distinct. The admitted comparison references evidence ids only --
-        envelope/ancestry/worldline ids, anchor trace ids, event-order and
-        snapshot-version refs -- never copies of truth state (the slice's
-        no-truth-promotion red line; ``truth_claim`` / ``promoted_to_support``
-        are structurally always ``False`` and ``claim_scope`` is always
-        ``"comparative"``).
-
-        Like the slice-5/6A seams this requires
-        ``use_facade_evidence_producers=True`` (I59): a worldline comparison is
-        only meaningful over real facade-minted evidence, and the producer
-        independently rejects the default placeholder ``trace_ids = [1]``. The
-        producer is read-only (peeks the allocator cursors, mints nothing), so
-        calling it never perturbs the run's evidence sequences or the stored
-        window products.
-        """
-        if not self._use_facade_evidence_producers:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires "
-                "use_facade_evidence_producers=True: the maintained worldline comparison "
-                "is only meaningful over real facade-minted evidence (I59 opt-in), "
-                "not the default placeholder trace_ids/input_snapshot_version"
-            )
-        if not hasattr(self.facade, "build_maintained_worldline_comparison"):
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires the "
-                "T10 slice-7 RuntimeFacade.build_maintained_worldline_comparison binding"
-            )
-        if (
-            baseline_window_evidence is None
-            or getattr(baseline_window_evidence, "window_result", None) is None
-        ):
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires a "
-                "completed maintained baseline window (run_maintained_window) passed as "
-                "baseline_window_evidence"
-            )
-        candidate = (
-            self._last_window_evidence
-            if candidate_window_evidence is None
-            else candidate_window_evidence
-        )
-        if candidate is None or getattr(candidate, "window_result", None) is None:
-            raise RuntimeError(
-                "RuntimeFacadeAdapter.build_maintained_worldline_comparison requires a "
-                "completed maintained candidate window (run_maintained_window) or an "
-                "explicit candidate_window_evidence argument"
-            )
-        return self.facade.build_maintained_worldline_comparison(
-            baseline_window_evidence.window_result,
-            candidate.window_result,
-            str(run_id),
-            str(episode_id),
-            int(baseline_deterministic_seed),
-            int(candidate_deterministic_seed),
-            int(baseline_parent_trace_id),
-            int(candidate_parent_trace_id),
         )
 
     def world_count(self) -> int:
@@ -1186,27 +849,6 @@ class RuntimeFacadeAdapter:
     def step_batch(self) -> None:
         self._last_window_evidence = None
         self._batch_target().step_batch()
-
-    def prime_execution_episode_batch(self, refs: Sequence[Any], states: Sequence[Any]) -> None:
-        self.facade.prime_execution_episode_batch(list(refs), list(states))
-
-    def execution_episode_ready(self, world_index: int) -> bool:
-        return bool(self.facade.execution_episode_ready(int(world_index)))
-
-    def execution_episode_controller_ready(self, world_index: int) -> bool:
-        return self.execution_episode_ready(int(world_index))
-
-    def step_execution_batch(self, request: Any) -> Any:
-        return self.facade.step_execution_batch(request)
-
-    def step_execution_products_batch(self, requests: Sequence[Any]) -> list[Any]:
-        return list(self.facade.step_execution_products_batch(list(requests)))
-
-    def export_execution_episode_states(self, refs: Sequence[Any]) -> list[Any]:
-        return list(self.facade.export_execution_episode_states(list(refs)))
-
-    def export_execution_episode_states_batch(self, refs: Sequence[Any]) -> list[Any]:
-        return self.export_execution_episode_states(refs)
 
     def step_worlds(self, world_indices: Sequence[int]) -> None:
         self._last_window_evidence = None

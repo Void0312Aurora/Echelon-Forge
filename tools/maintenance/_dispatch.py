@@ -79,7 +79,7 @@ def dispatch(
   """Route a sub-command to the matching ``main`` callable.
 
   Args:
-    prog: Display name for the CLI (e.g. ``damage_model.py``).
+    prog: Display name for the CLI (e.g. ``generate.py``).
     description: One-line summary printed by ``--help``.
     commands: Mapping of ``{command_name: (description, main_callable)}``.
          Keys may be single words or compound (``domain subcmd``).

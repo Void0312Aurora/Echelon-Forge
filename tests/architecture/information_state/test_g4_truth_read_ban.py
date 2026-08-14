@@ -346,7 +346,6 @@ def test_i87_injected_reader_wiring_resolves_to_declared_owner() -> None:
 
     forwarding_modules = (
         "python.rl.runtime.world_batch._observation_mixin",
-        "python.rl.runtime.world_batch._execution_episode_mixin",
         "python.rl.runtime.world_batch._air_combat_post_launch_mixin",
         "python.rl.runtime.cooperative_world_batch_vec_env",
     )

@@ -161,7 +161,7 @@
       "evidence_markers": [
         "class WorldBatchVecEnvAccess:",
         "self._world_vec._step_runtime_worlds(world_indices)",
-        "self._world_vec._set_pilot_actions_batch(assignments)"
+        "self._world_vec._runtime_adapter.set_pilot_actions_batch(assignments)"
       ]
     },
     {
@@ -260,7 +260,7 @@
       "evidence_markers": [
         "batch = ef_py.WorldBatchRuntime(3)",
         "test_world_batch_runtime_worker_thread_controls",
-        "step_execution_episode_results_batch"
+        "test_world_batch_runtime_steps_and_reads_observations"
       ]
     },
     {
@@ -326,19 +326,6 @@
         "replay_envelope_ref",
         "branch_point_ref",
         "authoritative_state_mutation_allowed: bool = False"
-      ]
-    },
-    {
-      "path": "src/runtime/contracts/counterfactual_replay_contracts.h",
-      "classification": "blocked",
-      "owner": "WP16-C",
-      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Counterfactual admission is still metadata-only and explicitly restore-unsupported, so it cannot yet claim maintained runtime-spine execution.",
-      "evidence_markers": [
-        "snapshot_restore_supported = false",
-        "validate_replay_envelope_for_snapshot_restore(",
-        "validate_worldline_branch_metadata_for_snapshot_restore(",
-        "ScenarioGenerationArtifactMetadata"
       ]
     },
     {

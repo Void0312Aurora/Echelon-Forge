@@ -83,9 +83,6 @@ EF_PARITY_ASSERT_TYPE(AgentObservation, health, double);
 EF_PARITY_ASSERT_TYPE(AgentObservation, gear_state, double);
 EF_PARITY_ASSERT_TYPE(AgentObservation, throttle, double);
 EF_PARITY_ASSERT_TYPE(AgentObservation, total_reward, double);
-EF_PARITY_ASSERT_TYPE(ExecutionEpisodeControllerStepResult, reward_total, double);
-EF_PARITY_ASSERT_TYPE(ExecutionEpisodeControllerStepResult, terminated, bool);
-EF_PARITY_ASSERT_TYPE(ExecutionEpisodeControllerStepResult, truncated, bool);
 EF_PARITY_ASSERT_TYPE(RewardTerm, name, std::string);
 EF_PARITY_ASSERT_TYPE(RewardTerm, value, double);
 EF_PARITY_ASSERT_TYPE(RewardTerm, term_owner, std::string);
@@ -391,8 +388,6 @@ TEST_CASE("parity budget freezes exact selected-slice inventory and typed compar
         expected_current_field("observation.throttle", "AgentObservation", float64, "observation"),
         expected_current_field("observation.total_reward", "AgentObservation", float64,
                                "observation"),
-        expected_current_field("execution_episode_step.reward_total",
-                               "ExecutionEpisodeControllerStepResult", float64, "reward"),
         expected_current_field("reward_report.fact_terms[].value", "RewardTerm", float64, "reward"),
         expected_current_field("reward_report.shaping_terms[].value", "RewardTerm", float64,
                                "reward"),
@@ -405,10 +400,6 @@ TEST_CASE("parity budget freezes exact selected-slice inventory and typed compar
                                "reward"),
         expected_current_field("reward_report.fact_snapshot_version", "RewardReport",
                                unsigned_integer, "reward"),
-        expected_current_field("execution_episode_step.terminated",
-                               "ExecutionEpisodeControllerStepResult", boolean, "termination"),
-        expected_current_field("execution_episode_step.truncated",
-                               "ExecutionEpisodeControllerStepResult", boolean, "termination"),
         expected_current_field("termination_spec.reason", "TerminationSpec", string, "termination"),
         expected_current_field("termination_spec.reason_source", "TerminationSpec", string,
                                "termination"),
@@ -432,7 +423,7 @@ TEST_CASE("parity budget freezes exact selected-slice inventory and typed compar
                               unsigned_integer, "export_envelope"),
     };
     CHECK(actual_family_names == expected_family_names);
-    CHECK(actual_fields.size() == 93);
+    CHECK(actual_fields.size() == 90);
     CHECK(actual_fields == expected_fields);
     CHECK(budget.snapshot_versions.identity_fields ==
           std::vector<std::string>{"world_id", "global_version", "barrier_id", "barrier_sequence",

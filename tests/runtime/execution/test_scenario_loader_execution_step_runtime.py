@@ -214,21 +214,17 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
       loader = ScenarioLoader(ef_py.SimulationKernel())
       self.assertEqual(loader.flight_shaping_backend, "auto")
       self.assertEqual(loader._flight_shaping_backend_mode(), "compiled")
-      loader.use_compiled_execution_step_runtime = False
-      self.assertEqual(loader._flight_shaping_backend_mode(), "compiled")
 
   def _run_loader_once(
     self,
     scenario_data: dict,
     *,
     seed: int,
-    compiled: bool,
     flight_shaping_backend: str | None = None,
   ) -> dict:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
     loader = ScenarioLoader(sim)
-    loader.use_compiled_execution_step_runtime = bool(compiled)
     if flight_shaping_backend is not None:
       loader.set_flight_shaping_backend(flight_shaping_backend)
     agent_id = loader.load_scenario_data(copy.deepcopy(scenario_data), seed=seed)
@@ -322,48 +318,6 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
       else:
         self.assertAlmostEqual(float(left[key]), float(right[key]), places=6, msg=f"state mismatch for {key}")
 
-  def _run_controller_shadow_once(
-    self,
-    scenario_data: dict,
-    *,
-    seed: int,
-    steps: int = 1,
-    advance_state: bool = False,
-  ) -> dict:
-    sim = ef_py.SimulationKernel()
-    self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
-    loader = ScenarioLoader(sim)
-    loader.use_compiled_execution_step_runtime = True
-    agent_id = loader.load_scenario_data(copy.deepcopy(scenario_data), seed=seed)
-    self.assertIsNotNone(agent_id)
-
-    truth = sim.get_agent_observation(int(agent_id))
-    inst = sim.get_instrument_state(int(agent_id))
-    obs = build_universal_observation(
-      loader,
-      inst,
-      truth,
-      mission_obs_mode="nav_v2",
-      max_contacts=10,
-      max_rwr=4,
-      include_proprio=False,
-      last_action=None,
-      action_space=None,
-      steps=int(steps),
-      max_steps=loader.get_max_steps(),
-    )
-    ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
-    return loader.compare_execution_episode_controller_shadow(
-      truth=truth,
-      inst_obj=inst,
-      inst_vec=np.asarray(obs["instruments"], dtype=np.float32),
-      ils_vec=np.asarray(ils_vec[:4], dtype=np.float32),
-      steps=int(steps),
-      max_steps=loader.get_max_steps(),
-      mission_obs_mode="nav_v2",
-      advance_state=bool(advance_state),
-    )
-
   def test_update_behaviors_nonhierarchical_route_updates_guidance_targets(self) -> None:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
@@ -415,13 +369,10 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     loader.update_nonhierarchical_behaviors(truth=truth, inst=inst, sync_to_kernel=False)
     self.assertAlmostEqual(float(loader.mission_cmd["target_altitude"]), expected_altitude, places=6)
 
-  def test_prepare_step_evaluation_compact_cruise_preserves_frame_fallback(self) -> None:
+  def test_prepare_step_evaluation_requires_compiled_episode_runtime(self) -> None:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
     loader = ScenarioLoader(sim)
-    loader.use_compiled_execution_step_runtime = True
-    loader._compiled_execution_episode_enabled = lambda: False
-    loader._compiled_execution_frame_enabled = lambda: True
     agent_id = loader.load_scenario_data(copy.deepcopy(_route_scenario()), seed=17)
     self.assertIsNotNone(agent_id)
 
@@ -444,23 +395,22 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     ils_vec = np.asarray(inst_vec[-4:], dtype=np.float32) if inst_vec.size >= 4 else np.zeros((4,), dtype=np.float32)
 
     loader.reset_runtime_eval_cache()
-    step_eval = loader._prepare_step_evaluation(
-      truth=truth,
-      inst_obj=inst,
-      inst_vec=inst_vec,
-      ils_vec=ils_vec,
-      steps=1,
-      max_steps=loader.get_max_steps(),
-      mission_obs_mode=None,
-      defer_compiled_runtime=True,
-      compact_output=True,
-    )
-
-    self.assertTrue(bool(step_eval.get("_compact_output", False)))
-    self.assertEqual(step_eval.get("_runtime_deferred_kind"), "frame")
-    runtime_inputs = step_eval.get("_runtime_deferred_inputs")
-    self.assertIs(type(runtime_inputs), ef_py.ExecutionFrameRuntimeInputs)
-    self.assertFalse(bool(getattr(runtime_inputs, "has_step_info", True)))
+    original_runtime = ef_py.compute_execution_episode_runtime
+    delattr(ef_py, "compute_execution_episode_runtime")
+    try:
+      self.assertFalse(hasattr(ef_py, "compute_execution_episode_runtime"))
+      with self.assertRaisesRegex(RuntimeError, "compiled execution episode runtime is unavailable"):
+        loader._prepare_step_evaluation(
+          truth=truth,
+          inst_obj=inst,
+          inst_vec=inst_vec,
+          ils_vec=ils_vec,
+          steps=1,
+          max_steps=loader.get_max_steps(),
+          mission_obs_mode=None,
+        )
+    finally:
+      ef_py.compute_execution_episode_runtime = original_runtime
 
   def test_compute_full_step_reuses_cached_step_evaluation(self) -> None:
     sim_cached = ef_py.SimulationKernel()
@@ -643,7 +593,10 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     self.assertIsNone(transitioned)
     self.assertAlmostEqual(float(loader.mission_cmd["target_heading"]), float(expected_heading), places=6)
 
-  def test_selected_paths_match_compiled_runtime_modes(self) -> None:
+  def test_selected_paths_execute_episode_main_path(self) -> None:
+    # The compiled=True/False comparison retired with the legacy per-step
+    # branches: the episode aggregate is now the only execution path, so each
+    # scenario family is asserted self-consistent on that single path instead.
     cases = (
       {
         "name": "objective",
@@ -651,38 +604,51 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
         "seed": 11,
         "terminated": True,
         "termination_reason": "success_objective",
+        "expected_terms": ("objective_bonus",),
       },
       {
         "name": "waypoint",
         "scenario": _route_scenario(),
         "seed": 17,
+        "expected_terms": ("survival", "waypoint_distance"),
       },
       {
         "name": "approach",
         "scenario": _approach_scenario(),
         "seed": 23,
+        "expected_terms": ("survival",),
       },
       {
         "name": "takeoff_shaping",
         "scenario": _takeoff_shaping_scenario(),
         "seed": 29,
+        "expected_terms": ("survival",),
       },
     )
     for case in cases:
       with self.subTest(case=case["name"]):
-        python_step = self._run_loader_once(case["scenario"], seed=case["seed"], compiled=False)
-        compiled = self._run_loader_once(case["scenario"], seed=case["seed"], compiled=True)
-        self._assert_loader_results_match(python_step, compiled)
+        result = self._run_loader_once(case["scenario"], seed=case["seed"])
+        self.assertTrue(math.isfinite(float(result["reward"])))
+        self.assertEqual(result["status"].shape, (4,))
+        breakdown = dict(result["reward_breakdown"])
+        self.assertAlmostEqual(float(breakdown["total"]), float(result["reward"]), places=6)
+        self.assertAlmostEqual(
+          float(breakdown.get("tracked_total", 0.0)) + float(breakdown.get("untracked", 0.0)),
+          float(result["reward"]),
+          places=6,
+        )
+        for term in case.get("expected_terms", ()):
+          self.assertIn(term, breakdown, msg=f"{case['name']}: missing reward term {term}")
+        self.assertTrue(str(result["termination_reason"]))
         if "terminated" in case:
-          self.assertEqual(bool(compiled["terminated"]), bool(case["terminated"]))
+          self.assertEqual(bool(result["terminated"]), bool(case["terminated"]))
         if "termination_reason" in case:
-          self.assertEqual(str(compiled["termination_reason"]), str(case["termination_reason"]))
+          self.assertEqual(str(result["termination_reason"]), str(case["termination_reason"]))
 
   def test_compute_full_step_rejects_missing_compiled_flight_shaping_products(self) -> None:
     sim = ef_py.SimulationKernel()
     self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
     loader = ScenarioLoader(sim)
-    loader.use_compiled_execution_step_runtime = False
     agent_id = loader.load_scenario_data(copy.deepcopy(_takeoff_shaping_scenario()), seed=37)
     self.assertIsNotNone(agent_id)
 
@@ -701,41 +667,64 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
       steps=1,
       max_steps=loader.get_max_steps(),
     )
+    inst_vec = np.asarray(obs["instruments"], dtype=np.float32)
+    ils_vec = np.asarray(inst_vec[-4:], dtype=np.float32) if inst_vec.size >= 4 else np.zeros((4,), dtype=np.float32)
+
+    loader.reset_runtime_eval_cache()
+    step_eval = dict(
+      loader._prepare_step_evaluation(
+        truth=truth,
+        inst_obj=inst,
+        inst_vec=inst_vec,
+        ils_vec=ils_vec,
+        steps=1,
+        max_steps=loader.get_max_steps(),
+        mission_obs_mode=None,
+      )
+    )
+
+    class _FrameProductsWithoutShaping:
+      """Real episode products, but reporting flight shaping as unevaluated."""
+
+      outcome_evaluated = False
+      flight_shaping_evaluated = False
+
+      def __init__(self, inner):
+        self._inner = inner
+
+      def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+    step_eval["frame_products"] = _FrameProductsWithoutShaping(step_eval["frame_products"])
 
     with mock.patch.object(loader, "_compute_flight_shaping_products", return_value=None):
       with self.assertRaisesRegex(RuntimeError, "legacy flight shaping fallback has been removed"):
-        loader.compute_full_step(obs, sim, 1, loader.get_max_steps())
+        loader.compute_full_step(
+          obs,
+          sim,
+          1,
+          loader.get_max_steps(),
+          truth=truth,
+          inst_state=inst,
+          step_evaluation=step_eval,
+        )
 
   def test_flight_shaping_backends_match_compiled_reference(self) -> None:
+    # Reference is the compiled episode main path; the gpu_host backend takes
+    # the staged compute_full_step route and must reproduce it exactly.
     scenario = _takeoff_shaping_scenario()
-    compiled_backend = self._run_loader_once(
+    compiled_reference = self._run_loader_once(
       scenario,
       seed=41,
-      compiled=False,
       flight_shaping_backend="compiled",
     )
     gpu_backend = self._run_loader_once(
       scenario,
       seed=41,
-      compiled=False,
-      flight_shaping_backend="gpu_host",
-    )
-    compiled_runtime = self._run_loader_once(
-      scenario,
-      seed=41,
-      compiled=True,
-      flight_shaping_backend="compiled",
-    )
-    gpu_backend_with_compiled_runtime = self._run_loader_once(
-      scenario,
-      seed=41,
-      compiled=True,
       flight_shaping_backend="gpu_host",
     )
 
-    self._assert_loader_results_match(compiled_backend, gpu_backend)
-    self._assert_loader_results_match(compiled_backend, compiled_runtime)
-    self._assert_loader_results_match(compiled_backend, gpu_backend_with_compiled_runtime)
+    self._assert_loader_results_match(compiled_reference, gpu_backend)
 
   def test_compiled_episode_runtime_prefers_cxx_reward_metadata(self) -> None:
     sim = ef_py.SimulationKernel()
@@ -792,37 +781,6 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
         )
       ),
     )
-
-  def test_execution_episode_controller_shadow_matches_compiled_step_evaluation(self) -> None:
-    cases = (
-      ("objective", _objective_scenario(), 51),
-      ("route", _route_scenario(), 52),
-      ("approach", _approach_scenario(), 53),
-      ("takeoff_shaping", _takeoff_shaping_scenario(), 54),
-    )
-    for case_name, scenario_data, seed in cases:
-      with self.subTest(case=case_name):
-        report = self._run_controller_shadow_once(scenario_data, seed=seed)
-        comparison = dict(report["comparison"])
-        self.assertTrue(bool(comparison["overall_match"]), msg=f"{case_name}: {comparison}")
-
-  def test_execution_episode_controller_shadow_step_exports_advanced_state(self) -> None:
-    report = self._run_controller_shadow_once(_route_scenario(), seed=55, steps=1, advance_state=True)
-    comparison = dict(report["comparison"])
-    self.assertTrue(bool(comparison["overall_match"]), msg=str(comparison))
-    shadow_state = report["shadow_state"]
-    shadow_products = report["shadow_frame_products"]
-    self.assertEqual(int(shadow_state.step_count), 1)
-    self.assertAlmostEqual(
-      float(shadow_state.last_reward_total),
-      float(shadow_products.compiled_reward_total),
-      places=6,
-    )
-    self.assertEqual(
-      str(shadow_state.last_termination_reason),
-      str(ef_py.termination_reason_name(shadow_products.final_reason_code)),
-    )
-
 
 if __name__ == "__main__":
   unittest.main()

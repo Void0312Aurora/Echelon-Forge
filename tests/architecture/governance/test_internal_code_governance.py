@@ -3,10 +3,6 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from tools.maintenance.internal_code_governance import audit as audit_module
-from tools.maintenance.internal_code_governance import scan_text
-from tools.maintenance.internal_code_governance.__main__ import exit_code
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MAINTAINED_ENTRY_POINT_DOCUMENTS = (
@@ -40,6 +36,8 @@ def _initialize_git_repository(path: Path) -> None:
 
 
 def test_runtime_strings_reject_work_tracking_codes() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     'throw std::logic_error("CUDA RB7 supports only fixed-air setup");\n',
@@ -51,6 +49,8 @@ def test_runtime_strings_reject_work_tracking_codes() -> None:
 
 
 def test_production_identifiers_reject_work_tracking_codes() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "python/rl/runtime/backend.py",
     "rb8_replay_budget = load_budget()\n",
@@ -62,6 +62,8 @@ def test_production_identifiers_reject_work_tracking_codes() -> None:
 
 
 def test_camel_case_identifiers_reject_tracking_and_phase_codes() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     "class CudaResidentRB7Backend {};\nstruct CudaResidentPhaseBState {};\n",
@@ -74,6 +76,8 @@ def test_camel_case_identifiers_reject_tracking_and_phase_codes() -> None:
 
 
 def test_acronym_identifiers_reject_embedded_tracking_and_phase_codes() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     "class CUDARB7Backend {};\nstruct CUDAPHASEBState {};\n",
@@ -86,6 +90,8 @@ def test_acronym_identifiers_reject_embedded_tracking_and_phase_codes() -> None:
 
 
 def test_technical_abbreviations_do_not_match_embedded_internal_codes() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     "I18nFormatter formatter;\nVectorI32 lanes;\nBROADPHASEBatch batch;\n",
@@ -95,6 +101,8 @@ def test_technical_abbreviations_do_not_match_embedded_internal_codes() -> None:
 
 
 def test_camel_and_pascal_identifiers_reject_issue_tracking_codes() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     "auto cudaResidentI94Backend = make_backend();\n"
@@ -108,6 +116,8 @@ def test_camel_and_pascal_identifiers_reject_issue_tracking_codes() -> None:
 
 
 def test_production_paths_reject_issue_tracking_codes() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   findings = audit_module.scan_path_name(
     "src/runtime/CudaResidentI94Backend.cpp"
   )
@@ -118,6 +128,8 @@ def test_production_paths_reject_issue_tracking_codes() -> None:
 
 
 def test_production_paths_reject_tracking_and_camel_phase_codes() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   tracking = audit_module.scan_path_name(
     "src/CudaResidentRB7Backend/runtime.cpp"
   )
@@ -134,6 +146,9 @@ def test_production_paths_reject_tracking_and_camel_phase_codes() -> None:
 
 
 def test_broadphase_batch_is_not_a_lettered_phase_identifier() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+  from tools.maintenance.internal_code_governance import scan_text
+
   source = scan_text(
     "src/runtime/broadphase_batch.cpp",
     "auto broadphase_batch = build_interaction_broadphase_batch();\n",
@@ -147,6 +162,8 @@ def test_broadphase_batch_is_not_a_lettered_phase_identifier() -> None:
 
 
 def test_source_comments_warn_without_blocking() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     "// RB7 originally introduced this fixed-air projection.\n",
@@ -159,6 +176,8 @@ def test_source_comments_warn_without_blocking() -> None:
 
 
 def test_cpp_block_comments_warn_without_becoming_source_errors() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     "/* RB7 originally introduced this path.\n"
@@ -174,6 +193,8 @@ def test_cpp_block_comments_warn_without_becoming_source_errors() -> None:
 
 
 def test_selected_line_scan_preserves_multiline_block_comment_state() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     "/* historical note\n * RB7 introduced the old path.\n */\n",
@@ -187,6 +208,8 @@ def test_selected_line_scan_preserves_multiline_block_comment_state() -> None:
 
 
 def test_block_comment_markers_inside_strings_remain_runtime_text() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     'const char* message = "/* RB7 */";\n',
@@ -198,6 +221,8 @@ def test_block_comment_markers_inside_strings_remain_runtime_text() -> None:
 
 
 def test_python_triple_quoted_comment_markers_remain_runtime_text() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "python/rl/runtime/backend.py",
     'message = """\n# RB7 remains runtime text\n"""\n',
@@ -211,6 +236,8 @@ def test_python_triple_quoted_comment_markers_remain_runtime_text() -> None:
 
 
 def test_cpp_raw_string_comment_markers_remain_runtime_text() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     'const char* message = R"tag(\n/* RB7 remains runtime text */\n)tag";\n',
@@ -224,6 +251,8 @@ def test_cpp_raw_string_comment_markers_remain_runtime_text() -> None:
 
 
 def test_comment_markers_inside_strings_do_not_hide_runtime_codes() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "python/rl/runtime/backend.py",
     'raise RuntimeError("replay # RB8 is unavailable")\n',
@@ -235,6 +264,8 @@ def test_comment_markers_inside_strings_do_not_hide_runtime_codes() -> None:
 
 
 def test_actual_comments_after_string_markers_remain_comments() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "python/rl/runtime/backend.py",
     'marker = "#"  # RB8 introduced the old replay path\n',
@@ -247,6 +278,8 @@ def test_actual_comments_after_string_markers_remain_comments() -> None:
 
 
 def test_phase_identifiers_require_an_explicit_compatibility_marker() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   blocked = scan_text(
     "src/runtime/contracts/schema.h",
     "const char* phase_b_schema = value;\n",
@@ -263,6 +296,8 @@ def test_phase_identifiers_require_an_explicit_compatibility_marker() -> None:
 
 
 def test_phase_runtime_text_and_uppercase_identifiers_are_blocked() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/contracts/schema.h",
     'const char* message = "supports only Phase A/B/D";\nint PHASE_B_STATE = 0;\n',
@@ -275,6 +310,9 @@ def test_phase_runtime_text_and_uppercase_identifiers_are_blocked() -> None:
 
 
 def test_semantic_phase_words_do_not_match_lettered_phase_codes() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/contracts/schema.h",
     "int phaseBoundary = 0;\n"
@@ -292,6 +330,8 @@ def test_semantic_phase_words_do_not_match_lettered_phase_codes() -> None:
 
 
 def test_hyphenated_phase_runtime_text_is_blocked() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/contracts/schema.h",
     'const char* message = "requires a committed Phase-D window";\n',
@@ -303,6 +343,8 @@ def test_hyphenated_phase_runtime_text_is_blocked() -> None:
 
 
 def test_new_phase_named_production_paths_are_blocked() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   findings = audit_module.scan_path_name(
     "src/runtime/cuda/cuda_world_store_phase_b.cu"
   )
@@ -313,6 +355,8 @@ def test_new_phase_named_production_paths_are_blocked() -> None:
 
 
 def test_document_definitions_are_distinct_from_bare_references() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "docs/task/runtime/README.md",
     "RB7: fixed-air observation projection.\nRB7 is now complete.\n",
@@ -324,12 +368,16 @@ def test_document_definitions_are_distinct_from_bare_references() -> None:
 
 
 def test_maintained_entry_points_have_no_bare_internal_codes() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   result = audit_module.audit_paths(REPO_ROOT, MAINTAINED_ENTRY_POINT_DOCUMENTS)
 
   assert result.findings == ()
 
 
 def test_policy_documents_can_define_the_examples_they_govern() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "docs/engineering/documentation/standards/internal_code_policy.md",
     "Do not expose RB7 or phase_b.\n",
@@ -339,6 +387,8 @@ def test_policy_documents_can_define_the_examples_they_govern() -> None:
 
 
 def test_added_line_parser_tracks_only_new_line_numbers() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   diff = """diff --git a/src/a.cpp b/src/a.cpp
 --- a/src/a.cpp
 +++ b/src/a.cpp
@@ -356,6 +406,8 @@ def test_added_line_parser_tracks_only_new_line_numbers() -> None:
 
 
 def test_name_status_parser_selects_added_and_rename_destinations() -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   status = "A\0src/new.cpp\0R100\0src/phase_b.cu\0src/flight_dynamics.cu\0"
 
   assert audit_module.parse_added_or_renamed_paths(status) == {
@@ -365,6 +417,8 @@ def test_name_status_parser_selects_added_and_rename_destinations() -> None:
 
 
 def test_incremental_audit_includes_untracked_production_files(tmp_path: Path) -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   _initialize_git_repository(tmp_path)
   source = tmp_path / "src/runtime/new_backend.cpp"
   source.parent.mkdir(parents=True)
@@ -378,6 +432,8 @@ def test_incremental_audit_includes_untracked_production_files(tmp_path: Path) -
 
 
 def test_incremental_audit_scans_changed_inc_source(tmp_path: Path) -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   _initialize_git_repository(tmp_path)
   source = tmp_path / "src/runtime/detail/schema.inc"
   source.parent.mkdir(parents=True)
@@ -395,6 +451,8 @@ def test_incremental_audit_scans_changed_inc_source(tmp_path: Path) -> None:
 
 
 def test_incremental_audit_scans_complete_renamed_inc_source(tmp_path: Path) -> None:
+  from tools.maintenance.internal_code_governance import audit as audit_module
+
   _initialize_git_repository(tmp_path)
   source = tmp_path / "src/runtime/detail/schema.inc"
   source.parent.mkdir(parents=True)
@@ -418,6 +476,8 @@ def test_incremental_audit_scans_complete_renamed_inc_source(tmp_path: Path) -> 
 
 
 def test_selected_line_scan_does_not_block_legacy_context() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text(
     "src/runtime/backend.cpp",
     'throw_error("RB7 legacy");\nrun_semantic_stage();\n',
@@ -429,6 +489,8 @@ def test_selected_line_scan_does_not_block_legacy_context() -> None:
 
 
 def test_irrelevant_files_do_not_inflate_audit_counts() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+
   result = scan_text("tests/runtime/test_backend.py", "RB7\n")
 
   assert result.files_checked == 0
@@ -437,6 +499,9 @@ def test_irrelevant_files_do_not_inflate_audit_counts() -> None:
 
 
 def test_exit_threshold_keeps_document_warnings_non_blocking() -> None:
+  from tools.maintenance.internal_code_governance import scan_text
+  from tools.maintenance.internal_code_governance.__main__ import exit_code
+
   result = scan_text("docs/task/README.md", "Continue RB7.\n")
 
   assert exit_code(result, "error") == 0

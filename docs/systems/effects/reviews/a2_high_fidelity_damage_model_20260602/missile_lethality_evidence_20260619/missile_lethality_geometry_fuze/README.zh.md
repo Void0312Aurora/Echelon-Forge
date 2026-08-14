@@ -1,7 +1,7 @@
 # A2 MLF-2 导弹接近几何与引信评估
 
 状态：`2026-06-09` 归档指针。已验收的 MLF-2 证据包已移入
-[archive/mlf_2_geometry_fuze_accepted_20260609](archive/mlf_2_geometry_fuze_accepted_20260609/README.zh.md)。
+archive/mlf_2_geometry_fuze_accepted_20260609 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/README.zh.md`)。
 
 语言：
 
@@ -15,5 +15,3 @@
 当前 MLF-3 子项目：[../missile_lethality_warhead_effects/README.zh.md](../missile_lethality_warhead_effects/README.zh.md)。
 
 当前可复用结论：导弹到达目标附近后，系统已经能解释最近点在哪里、引信是否解保、是否触发、为什么未触发或失败，以及起爆状态是否交给后续效果模型。它仍不直接说明目标会不会碎裂、坠毁或被判定击毁。
-
-归档索引：[archive/README.zh.md](archive/README.zh.md)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -11,20 +12,10 @@ from tests.support.xmacro_text import expand_header_field_incs
 WORLD_BATCH_HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
 FACADE_TYPES_HEADER = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
 BINDINGS_SOURCE = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp"
-WP20_B_DOC_CANDIDATES = (
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "wp20_public_capability_platform_composition"
-  / "wp20_public_typed_platform_spawn_contract_cluster_20260521.md",
-  REPO_ROOT
-  / "docs"
-  / "task"
-  / "simulation_architecture"
-  / "archive"
-  / "wp20_public_capability_platform_composition"
-  / "wp20_public_typed_platform_spawn_contract_cluster_20260521.md",
+WP20_B_DOC_GIT_PIN = (
+  "c700b51f:docs/task/simulation_architecture/archive/"
+  "wp20_public_capability_platform_composition/"
+  "wp20_public_typed_platform_spawn_contract_cluster_20260521.md"
 )
 
 
@@ -41,13 +32,25 @@ def _text(path: Path) -> str:
   return text
 
 
+def _bindings_runtime_source_text() -> str:
+  # The runtime binding surface is decomposed into per-domain slices; join
+  # them in registration order before expanding the schema-owned X-macros.
+  from tests.architecture.structural_boundaries.helpers import bindings_runtime_text
+
+  return expand_binding_field_incs(bindings_runtime_text())
+
+
 def _wp20_doc_text() -> str:
-  for candidate in WP20_B_DOC_CANDIDATES:
-    if candidate.is_file():
-      return _text(candidate)
-  raise AssertionError(
-    "missing WP20 public typed platform spawn contract doc at active or archive path"
-  )
+  # The Tier C document was retired into git history; the archive ledger pins
+  # this immutable object so the guard keeps its evidence anchor off-disk.
+  return subprocess.run(
+    ["git", "show", WP20_B_DOC_GIT_PIN],
+    cwd=REPO_ROOT,
+    check=True,
+    capture_output=True,
+    text=True,
+    encoding="utf-8",
+  ).stdout
 
 
 def _struct_body(header: str, struct_name: str) -> str:
@@ -251,7 +254,7 @@ def test_wp20_typed_platform_spawn_helpers_preserve_seeded_identity_and_evidence
 def test_wp14_additive_spawn_dto_surface_is_declared_without_replacing_legacy_spawn() -> None:
   world_batch_header = _text(WORLD_BATCH_HEADER)
   facade_types_header = _text(FACADE_TYPES_HEADER)
-  bindings_source = _text(BINDINGS_SOURCE)
+  bindings_source = _bindings_runtime_source_text()
 
   assert "struct WorldSpawnRequest" in world_batch_header
   assert "std::string type_name" in world_batch_header

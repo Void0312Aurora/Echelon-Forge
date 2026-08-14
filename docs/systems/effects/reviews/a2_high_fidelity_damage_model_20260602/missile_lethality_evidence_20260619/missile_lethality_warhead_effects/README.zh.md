@@ -1,7 +1,7 @@
 # A2 MLF-3 战斗部作用与通用破片/爆风载荷
 
 状态：`2026-06-10` 归档指针。已验收的 MLF-3 证据包已移入
-[archive/mlf_3_warhead_effects_accepted_20260610](archive/mlf_3_warhead_effects_accepted_20260610/README.zh.md)。
+archive/mlf_3_warhead_effects_accepted_20260610 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_warhead_effects/archive/mlf_3_warhead_effects_accepted_20260610/README.zh.md`)。
 
 语言：
 
@@ -22,5 +22,3 @@
 目标碎裂、坠毁或被击毁。
 
 MLF-4 已完成并归档连续杆/切割曝光事实链；后续部件失效概率、结构解体、残骸或 Pk 仍需独立子项目。
-
-归档索引：[archive/README.zh.md](archive/README.zh.md)

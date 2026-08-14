@@ -15,7 +15,7 @@ Verification boundary: 已复核所有者路径、生命周期、当前裁定摘
 
 状态：维护中的所有者本地信息状态登记册。本文源自已完成统一架构计划的
 T8（信息状态架构）切片，记录：(a) 维护面观测/奖励消费者普查；(b) G4 层声明机制的落地范围；(c) 策略路径上的 World Truth 直读，逐条裁定。参照
-[SCAL 一致性普查](../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md)先例，本文为描述性登记册（`reference`）：不改变任何运行期行为。第一切片落地了 G4 声明机制（纯元数据加一个架构测试）并清点了真值泄漏，未关闭任何一条。**第二切片（§6，2026-07-21）** 在 TL13 读取 seam 上物化一个声明式观察视图，并将八个已声明消费者迁移到经其读取，从结构上收敛 11 条已声明泄漏；该迁移是把裸读纯机械地搬入一个带层标注的 owner，数值结果 bit-for-bit 不变。收敛一条泄漏意味着消费者不再读原始 World Truth：其读取经声明式视图 owner，并在此翻转其裁定。**第三切片（§7，2026-07-21）** 裁定并声明剩余五个推迟消费者（C11–C14、C19；TL14–TL16、TL20）：每个现携带 G4 声明（其信息状态层与语义阶段）。独立评审修复轮（§7.5）中，leader 观测产出者（C13）另被迁移到声明式视图——其本机读取与 `own_ship_field` 逐 token 同构，且与 fae17eb8 基线函数的逐元素数值 parity 由新聚焦测试钉住——将 TL15 翻转为*收敛*；C11/C12/C14/C19 按各自裁定保留读取（*已声明但未收敛*，宁缺毋滥）。声明为纯元数据（零行为变更）；C13 迁移为机械读取搬迁，parity 已钉住。**第四切片（§8，I60）** 把维护视图的声明变为运行期可查询的事实：C++ 运行期 facade 经 `RuntimeFacade::describe_maintained_observation_view` 导出该视图的*结构性声明*（view id + 产出/消费层 + 语义阶段），并由一致性门钉住到 Python 单一真源。这导出的是声明、不是数据——TL13 seam 的返回 bit 级不变；I60 落地时尚无消费者读取类型化 spec，I87 已接受切片是首个受限消费者。**第五切片（§9，I63）** 仅文档 + 测试：将本登记册对 I60 收账，并加固三个 G4 门之间的缝隙（一个"确经视图读取"正向门、一个清单↔代码漂移门、一个奖励面逃逸口扫描），同样零行为变更。**第六切片（§10，I76 + 本迭代记录的后续）** 关闭 §9.2 曾登记为开放的观测面逃逸口——I76 落地了逐文件维护真值读取者分类器及其门，后续则把该分类器钉为"声明待办"的两个 world-batch 消费者收账（声明为纯元数据；零行为变更）。
+SCAL 一致性普查 (`git show 095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md`)先例，本文为描述性登记册（`reference`）：不改变任何运行期行为。第一切片落地了 G4 声明机制（纯元数据加一个架构测试）并清点了真值泄漏，未关闭任何一条。**第二切片（§6，2026-07-21）** 在 TL13 读取 seam 上物化一个声明式观察视图，并将八个已声明消费者迁移到经其读取，从结构上收敛 11 条已声明泄漏；该迁移是把裸读纯机械地搬入一个带层标注的 owner，数值结果 bit-for-bit 不变。收敛一条泄漏意味着消费者不再读原始 World Truth：其读取经声明式视图 owner，并在此翻转其裁定。**第三切片（§7，2026-07-21）** 裁定并声明剩余五个推迟消费者（C11–C14、C19；TL14–TL16、TL20）：每个现携带 G4 声明（其信息状态层与语义阶段）。独立评审修复轮（§7.5）中，leader 观测产出者（C13）另被迁移到声明式视图——其本机读取与 `own_ship_field` 逐 token 同构，且与 fae17eb8 基线函数的逐元素数值 parity 由新聚焦测试钉住——将 TL15 翻转为*收敛*；C11/C12/C14/C19 按各自裁定保留读取（*已声明但未收敛*，宁缺毋滥）。声明为纯元数据（零行为变更）；C13 迁移为机械读取搬迁，parity 已钉住。**第四切片（§8，I60）** 把维护视图的声明变为运行期可查询的事实：C++ 运行期 facade 经 `RuntimeFacade::describe_maintained_observation_view` 导出该视图的*结构性声明*（view id + 产出/消费层 + 语义阶段），并由一致性门钉住到 Python 单一真源。这导出的是声明、不是数据——TL13 seam 的返回 bit 级不变；I60 落地时尚无消费者读取类型化 spec，I87 已接受切片是首个受限消费者。**第五切片（§9，I63）** 仅文档 + 测试：将本登记册对 I60 收账，并加固三个 G4 门之间的缝隙（一个"确经视图读取"正向门、一个清单↔代码漂移门、一个奖励面逃逸口扫描），同样零行为变更。**第六切片（§10，I76 + 本迭代记录的后续）** 关闭 §9.2 曾登记为开放的观测面逃逸口——I76 落地了逐文件维护真值读取者分类器及其门，后续则把该分类器钉为"声明待办"的两个 world-batch 消费者收账（声明为纯元数据；零行为变更）。
 
 **第七切片（I87 已接受/落地，2026-07-27）** 刻意小于此前开放的完整类型化迁移：仅 C3/C20 消费既有 facade `ObservationViewSpec`。显式构造期 opt-in 从同一 facade 只读并结构准入一次；默认关闭时 describe 次数为零。空 required/optional 清单仅表示*结构性声明*，既不是 wildcard，也不是零字段。两个 Python `truth.x/y` 叶读改由高层注入的 `gym_envs.observation_view.own_ship_attr` reader 承担，而 opaque truth 对象仍原样传入编译内核。TL13 seam 与 `_ScenarioLoaderRuntimeProxy` 均不扩面。本段记录已接受/落地的受限切片。
 
@@ -313,8 +313,8 @@ I76 后续先以声明方式收账；下方的 I87 已接受切片才是这两�
 ## 相关
 
 - 历史来源：已完成统一架构计划的 T8 切片；当前权威见下方仿真系统架构标准。
-- [SCAL 一致性普查（2026-07-20）](../../plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md)（V3–V7 登记；首批消费者优先级；结构先例）
-- [T6 残留台账（2026-07-20）](../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.zh.md)（同类 `reference` 登记）
+- SCAL 一致性普查（2026-07-20） (`git show 095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/scal_conformance_census_20260720.zh.md`)（V3–V7 登记；首批消费者优先级；结构先例）
+- T6 残留台账（2026-07-20） (`git show 77610218:docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.zh.md`)（同类 `reference` 登记）
 - [仿真系统架构设计](../standards/simulation_system_architecture_design.md)（§3 信息状态层；§6 P0–P10 阶段；§15 G4；§16 表示策略）
 - 设施：`python/architecture/information_layer.py`
 - 视图 owner：`gym_envs/observation_view.py`

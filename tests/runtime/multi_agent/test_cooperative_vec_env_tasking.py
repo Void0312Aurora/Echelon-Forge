@@ -4,6 +4,7 @@ import json
 import math
 import tempfile
 import unittest
+import unittest.mock
 
 import numpy as np
 

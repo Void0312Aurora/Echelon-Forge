@@ -69,14 +69,14 @@
       "size_bytes": 7676
     },
     {
-      "content_hash": "sha256:e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
+      "content_hash": "sha256:f471f5ed3a5767ed7bdca14cbc1fdaaef2474c72e6bcf090a8316791d6f215be",
       "exists": true,
       "input_id": "target_geometry_source_ledger",
       "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
       "required": true,
       "role": "res_003_source_ledger",
-      "sha256": "e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
-      "size_bytes": 15440
+      "sha256": "f471f5ed3a5767ed7bdca14cbc1fdaaef2474c72e6bcf090a8316791d6f215be",
+      "size_bytes": 15443
     },
     {
       "content_hash": "sha256:26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",

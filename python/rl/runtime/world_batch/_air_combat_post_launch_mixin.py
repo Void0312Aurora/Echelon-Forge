@@ -48,8 +48,6 @@ class _WorldBatchVecEnvAirCombatPostLaunchMixin:
     ) -> bool:
         if not self.air_combat_post_launch_assessment_enabled:
             return False
-        if self.execution_episode_controller_mainline:
-            return False
         if not is_air_combat_hybrid_action_mode(self.action_mode):
             return False
         if bool(terminated or truncated):
@@ -136,7 +134,7 @@ class _WorldBatchVecEnvAirCombatPostLaunchMixin:
             handle.loader._last_action_mode = str(self.action_mode)
             handle.loader._last_effective_action = handle.last_action.astype(np.float32, copy=True)
 
-            self._set_pilot_actions_batch([assignment])
+            self._runtime_adapter.set_pilot_actions_batch([assignment])
             self._step_runtime_worlds([int(env_idx)])
 
             _target_indices, truth_list, inst_list = self._read_truth_and_inst_batch([int(env_idx)])
@@ -218,7 +216,4 @@ class _WorldBatchVecEnvAirCombatPostLaunchMixin:
             final_status,
             info,
         )
-
-
-
 __all__ = ["_WorldBatchVecEnvAirCombatPostLaunchMixin"]

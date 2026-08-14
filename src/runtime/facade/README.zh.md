@@ -11,11 +11,11 @@ ground movement、sensing、fires、damage 或 full ground runtime 已可用。
 
 - `RuntimeFacade`。
 - facade request/result/capability 类型。
-- 批量 reset、setup、step、command、tasking、episode 和 observation 操作。
+- 批量 reset、setup、step、command、tasking 和 observation 操作。
 - 承载 common、air、naval evidence contract 的 tasking packet 与 engagement-event export。
 - 面向早期 ground-aware admission 的 typed platform setup/capability evidence。
 - 专用 diagnostics-trace query/export 操作。
-- 对 `WorldBatchRuntime` 与 `ExecutionEpisodeController` 的受控包装。
+- 对 `WorldBatchRuntime` 的受控包装。
 - public header 只暴露 facade / contracts 类型；底层 `WorldBatchRuntime` owner 应留在 implementation 中。
 
 ## 禁止

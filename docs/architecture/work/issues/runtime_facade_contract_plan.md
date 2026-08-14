@@ -2,26 +2,33 @@
 
 Language:
 - English canonical: `runtime_facade_contract_plan.md`
-- Chinese companion: [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/runtime_facade_contract_plan.md`
 Owner: `architecture/runtime-facade`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: migrated interface proposal; current public surfaces and code
 must be re-censused before any portion is promoted into an active task.
 
 Document Navigation:
 
 - [Architecture Documentation](../../README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+- [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+- [architecture_and_performance_research_followup.md](architecture_and_performance_research_followup.md)
 - runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 - runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 
 Status: draft issue derived from the `2026-05-10` interface proposal; it is
 not an active execution contract.
+
+Current-state note (2026-08-13): the compiled episode-controller experiment,
+its `ExecutionBatchStepRequest`/`ExecutionBatchStepResult` facade surface, and
+the controller state prime/step/export APIs were retired. The capability field
+is retained as a negative capability (`false`). Controller-specific interfaces
+below describe the historical proposal, not the current facade contract.
+
 Document Positioning:
 
 - This document answers "What facade boundary should the frontend under maintenance depend on, and how should the core request/response/handle be defined."
@@ -33,8 +40,8 @@ This document proposes a `runtime facade` contract direction intended to isolate
 
 Related Documents:
 
-- [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+- [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+- [architecture_and_performance_research_followup.md](architecture_and_performance_research_followup.md)
 - [cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md)
 - runtime_facade_layering_cleanup_freeze.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md`)
 

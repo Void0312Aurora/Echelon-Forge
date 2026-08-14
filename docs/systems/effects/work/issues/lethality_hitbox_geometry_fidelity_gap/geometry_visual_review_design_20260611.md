@@ -2,7 +2,7 @@
 
 Status: `2026-06-11` proposed design for [README.md](README.md). This document designs the tool and data gates only; it does not replace runtime geometry.
 
-Chinese main text: [geometry_visual_review_design_20260611.zh.md](geometry_visual_review_design_20260611.zh.md).
+Chinese companion: not maintained (English-only work surface); this English page is canonical.
 
 ## Goal
 
@@ -21,8 +21,9 @@ Local F-16 asset:
 
 - Current runtime GLB: [examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb](../../../../../../examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb)
 - Current audit glTF scene: [examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf](../../../../../../examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf)
-- Current audit glTF source archive: [examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/4bc2ff75dc584af2afd0aa6bd8b79015_gltf.zip](../../../../../../examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/4bc2ff75dc584af2afd0aa6bd8b79015_gltf.zip)
-- Archived old FlightGear candidate: [examples/viz/web_viz/static/assets/archive/f16_flightgear_gplv2_candidate_20260611/f16.glb](../../../../../../examples/viz/web_viz/static/assets/archive/f16_flightgear_gplv2_candidate_20260611/f16.glb)
+- Current audit glTF source archive: retired from the working tree on 2026-08-13 because it only re-packages the extracted `gltf/` scene above; recover it with `git show 5f95ee9d6544a7ede91be0474c76cf5ea045a708:examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/4bc2ff75dc584af2afd0aa6bd8b79015_gltf.zip`
+- Archived old FlightGear candidate: retired from the working tree on 2026-08-13; recover it with `git show 5f95ee9d6544a7ede91be0474c76cf5ea045a708:examples/viz/web_viz/static/assets/archive/f16_flightgear_gplv2_candidate_20260611/f16.glb`
+- Retirement record for both, with sizes and SHA-256 digests: [examples/viz/web_viz/static/assets/audit_ledger.md](../../../../../../examples/viz/web_viz/static/assets/audit_ledger.md)
 - Same file in the Godot archive: `archive/20260530_game_godot_local_archive/game/client/godot_project/assets/models/f16.glb` (local-only, untracked)
 - Current replacement source: Sketchfab `F16-C Falcon`, UID `4bc2ff75dc584af2afd0aa6bd8b79015`, author `Carlos.Maciel`, license `CC-BY-4.0`.
 - Current replacement source archive SHA256: `47388fb8646e704609712d55e0b53eb014571644b7344c7859276597fc63e248`.

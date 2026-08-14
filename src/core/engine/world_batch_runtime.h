@@ -10,7 +10,6 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/world_batch_visual_binding_compatibility_types.h"
 #include "core/interfaces/observation.h"
-#include "core/mission/episode/execution_episode_controller.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
 struct WorldEntityKinematics {
@@ -58,11 +57,7 @@ class WorldBatchRuntime {
     bool load_database(const std::string &path);
     bool load_unit_definitions(const std::string &path, std::string *error = nullptr);
     void set_time_step(double dt);
-    void set_terrain_types_batch(const std::vector<WorldTerrainAssignment> &assignments);
-    void set_winds_batch(const std::vector<WorldWindAssignment> &assignments);
-    void set_suns_batch(const std::vector<WorldSunAssignment> &assignments);
     void clear_zones_batch(const std::vector<uint64_t> &world_indices = {});
-    void add_zones_batch(const std::vector<WorldZoneDefinition> &zones);
     std::vector<uint64_t> spawn_units_batch(const std::vector<WorldSpawnRequest> &requests);
     std::vector<uint64_t>
     apply_world_setup_batch(const std::vector<uint32_t> &seeds,
@@ -104,19 +99,6 @@ class WorldBatchRuntime {
     std::vector<PilotReportMaintainedBatchContract>
     get_pilot_reports_maintained_batch(const std::vector<WorldEntityRef> &refs) const;
 
-    void clear_execution_episode_controller_batch() noexcept;
-    void prime_execution_episode_controller_batch(const std::vector<WorldEntityRef> &refs,
-                                                  const std::vector<ExecutionEpisodeState> &states);
-    bool execution_episode_controller_ready(size_t world_index) const noexcept;
-    std::vector<ExecutionEpisodeState>
-    export_execution_episode_states_batch(const std::vector<WorldEntityRef> &refs) const;
-    std::vector<ExecutionEpisodeRuntimeProducts> evaluate_execution_episode_batch(
-        const std::vector<WorldExecutionEpisodeStepRequest> &requests) const;
-    std::vector<ExecutionEpisodeRuntimeProducts>
-    step_execution_episode_batch(const std::vector<WorldExecutionEpisodeStepRequest> &requests);
-    std::vector<ExecutionEpisodeControllerStepResult> step_execution_episode_results_batch(
-        const std::vector<WorldExecutionEpisodeStepRequest> &requests);
-
     std::vector<AgentObservation>
     get_agent_observations_batch(const std::vector<WorldEntityRef> &refs) const;
     std::vector<InstrumentState>
@@ -153,17 +135,7 @@ class WorldBatchRuntime {
                                                      uint64_t entity_id);
     SimulationKernel &checked_world(size_t index);
     const SimulationKernel &checked_world(size_t index) const;
-    void clear_execution_episode_controller(size_t world_index) noexcept;
-    ExecutionEpisodeController &checked_execution_episode_controller(size_t world_index,
-                                                                     uint64_t entity_id);
-    const ExecutionEpisodeController &
-    checked_execution_episode_controller(size_t world_index, uint64_t entity_id) const;
-    void validate_execution_episode_step_requests(
-        const std::vector<WorldExecutionEpisodeStepRequest> &requests) const;
 
     std::vector<std::unique_ptr<SimulationKernel>> worlds_;
-    std::vector<ExecutionEpisodeController> execution_episode_controllers_;
-    std::vector<uint64_t> execution_episode_controller_entity_ids_;
-    std::vector<bool> execution_episode_controller_active_;
     size_t worker_threads_ = 1;
 };

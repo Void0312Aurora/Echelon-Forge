@@ -2,11 +2,16 @@
 
 The missile models in this directory are used by `examples/viz` for runtime visualization only.
 
+The `audit/` source packages for both models were retired from the working
+tree; their per-file sizes, SHA-256 digests, and Git recovery commands are
+recorded in [../audit_ledger.md](../audit_ledger.md). The runtime GLB files
+below are unaffected, and the attribution obligations still apply.
+
 ## AIM-120 AMRAAM
 
 - File: `aim120_amraam_rickslash.glb`
 - Runtime visual file: `aim120_amraam_rickslash.glb`
-- Audit glTF package: `audit/aim120_amraam_rickslash/e52d37a110004e1480465bc6b0943ebc_gltf.zip`
+- Audit glTF package: retired, see `../audit_ledger.md`
 - Title: AIM-120 AMRAAM missile
 - Author: RickSlash
 - Source: https://sketchfab.com/3d-models/aim-120-amraam-missile-e52d37a110004e1480465bc6b0943ebc
@@ -18,7 +23,7 @@ The missile models in this directory are used by `examples/viz` for runtime visu
 
 - File: `r77_mustafa_garip.glb`
 - Runtime visual file: `r77_mustafa_garip.glb`
-- Audit glTF package: `audit/r77_mustafa_garip/0da27c5b53f24542843a4a423c59b96a_gltf.zip`
+- Audit glTF package: retired, see `../audit_ledger.md`
 - Title: Game Ready Low Poly R-77
 - Author: Mustafa.Garip
 - Source: https://sketchfab.com/3d-models/game-ready-low-poly-r-77-0da27c5b53f24542843a4a423c59b96a

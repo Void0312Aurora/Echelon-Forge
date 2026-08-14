@@ -2,13 +2,13 @@
 
 Language:
 - English canonical: `system_layering_and_engine_encapsulation_plan.md`
-- Chinese companion: [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/system_layering_and_engine_encapsulation_plan.md`
 Owner: `architecture/system-layering`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: migrated legacy draft; the strict architecture standard and
 current code/tests take precedence over this dated proposal.
 
@@ -17,19 +17,25 @@ Navigation:
 - [Architecture Documentation](../../README.md)
 
 中文版：
-[system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
+[system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
 
 Further research:
-[architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+[architecture_and_performance_research_followup.md](architecture_and_performance_research_followup.md)
 
 Facade contract:
-[runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+[runtime_facade_contract_plan.md](runtime_facade_contract_plan.md)
 
 Frozen execution record:
 runtime_facade_task_bootstrap_plan.zh.md (`git show 3dc34673:docs/plan/archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md`)
 
 Status: draft architecture issue based on the 2026-05-10 proposal; no active
 implementation authorization.
+
+Current-state note (2026-08-13): the experimental compiled
+`ExecutionEpisodeController` named throughout this proposal has been retired.
+The maintained Python orchestration and retained C++ stateless runtime products
+supersede that proposed second stateful stepping owner.
+
 Document role:
 
 - This document defines the target layers, engine boundaries, and dependency direction.
@@ -107,7 +113,8 @@ Primary files:
 
 - [src/core/engine/simulation_kernel.cpp](../../../../src/core/engine/simulation_kernel.cpp)
 - [src/core/engine/world_batch_runtime.cpp](../../../../src/core/engine/world_batch_runtime.cpp)
-- [src/core/mission/execution_episode_controller.cpp](../../../../src/core/mission/episode/execution_episode_controller.cpp)
+- `src/core/mission/episode/execution_episode_controller.cpp` (retired
+  2026-08-13)
 - [src/models/air/default_control_model.cpp](../../../../src/models/domains/air/default_control_model.cpp)
 
 ### 3. Public API is too low-level
@@ -518,7 +525,8 @@ The important point is not the exact names. The important point is that:
 
 - [src/core/engine/simulation_kernel.cpp](../../../../src/core/engine/simulation_kernel.cpp)
 - [src/core/engine/world_batch_runtime.cpp](../../../../src/core/engine/world_batch_runtime.cpp)
-- [src/core/mission/execution_episode_controller.cpp](../../../../src/core/mission/episode/execution_episode_controller.cpp)
+- `src/core/mission/episode/execution_episode_controller.cpp` (retired
+  2026-08-13)
 - [src/core/mission/execution_episode_state.cpp](../../../../src/core/mission/episode/execution_episode_state.cpp)
 
 ### Current code that should become physics engine ownership

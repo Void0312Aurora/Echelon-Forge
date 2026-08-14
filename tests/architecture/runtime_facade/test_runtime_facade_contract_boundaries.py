@@ -95,7 +95,7 @@ def test_runtime_facade_capabilities_stay_independent_from_cuda_experiment_signa
   )
 
 def test_runtime_binding_capability_surface_keeps_gpu_helper_signals_separate() -> None:
-  source = RUNTIME_BINDINGS.read_text(encoding="utf-8")
+  source = runtime_bindings_source_text()
   runtime_capabilities_block = source.split('nb::class_<RuntimeCapabilities>', 1)[1]
   runtime_capabilities_block = runtime_capabilities_block.split(
     'nb::class_<RuntimeBatchConfig>',
@@ -192,7 +192,7 @@ def test_resident_state_candidate_stays_fail_closed_and_exports_remain_host_visi
   assert "kPolicySourceLabelFacadeObservationPacket" in observation_packet_section
   assert "kPolicyMaintainedStatusMaintained" in observation_packet_section
 
-  engagement_packet_section = facade_types.split("struct EngagementEventPacket", 1)[1].split("struct ExecutionBatchStepResult", 1)[0]
+  engagement_packet_section = facade_types.split("struct EngagementEventPacket", 1)[1].split("struct TaskingBatchPacket", 1)[0]
   assert 'std::string barrier_id = "export";' in engagement_packet_section
   assert 'std::string barrier_detail = "maintained_facade_export";' in engagement_packet_section
   assert "kPolicySourceLabelTrackStatePacket" in engagement_packet_section

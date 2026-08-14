@@ -2,13 +2,13 @@
 
 Language:
 - English canonical: `cpp_dependency_and_dto_residuals.md`
-- Chinese companion: [cpp_dependency_and_dto_residuals.zh.md](cpp_dependency_and_dto_residuals.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
 Canonical: `docs/architecture/work/issues/cpp_dependency_and_dto_residuals.md`
 Owner: `architecture/cpp-boundaries`
-Last verified: `2026-08-08`
+Last verified: `2026-08-13`
 Content status: owner-local extraction from the completed T6 ledger; held
 edges are design questions, not permission to edit include direction.
 
@@ -20,31 +20,28 @@ calibration behavior and test-environment defects.
 
 ## Held Dependency Edges
 
-The T6 matrix converged the missile-seeker edge and retained these five edges:
+The execution-controller retirement closed the engine-to-mission controller
+edge and the runtime-contracts-to-mission step-request edge. Three GPU/engine
+edges remain:
 
 1. `core/engine/world_batch_runtime.cpp` → GPU interaction-broadphase types;
-2. `core/engine/world_batch_runtime.h` → execution-episode controller;
-3. `core/engine/world_batch_runtime.h` → GPU visual runtime;
-4. the world-batch visual compatibility helper → GPU visual runtime;
-5. `runtime/contracts/world_batch_contracts.h` → mission episode-batch
-   preparation types.
+2. `core/engine/world_batch_visual_binding_compatibility_types.h` → GPU visual
+   runtime;
+3. the world-batch visual compatibility helper → GPU visual runtime.
 
-The first four require a GPU/engine or facade/mission seam. The fifth embeds a
-large mission-owned nested DTO graph and is a T1-scale schema-ownership
-question; relocating one header would either invert the dependency or duplicate
-the graph.
+These require a GPU/engine integration seam; editing only the include spelling
+would not resolve ownership.
 
 ## Related Held DTOs
 
-`ExecutionBatchStepResult` remains hand-written because its
-`std::vector<std::array<double, 4>>` field is not token-safe for the current
-X-macro preprocessor. `RecentEngagementEvents` remains a future candidate
-outside the completed ledger's write set. Neither is an implementation task.
+`RecentEngagementEvents` remains a future candidate outside the completed
+ledger's write set. The retired `ExecutionBatchStepResult` is no longer a DTO
+residual.
 
 ## Evidence Boundary And Promotion Gate
 
 The source matrix is retained in the
-[completed T6 ledger](../../../plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md).
+completed T6 ledger (`git show 77610218:docs/plan/archive/unified_architecture_program_completed_20260727/t6_residual_ledger.md`).
 Close an edge only after a consumer census, dependency-direction gate, ABI/
 binding parity evidence where applicable, and an independently reviewed
 architecture or DTO-family decision. A type move that merely inverts the edge

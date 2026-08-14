@@ -11,6 +11,15 @@ General maintained helpers:
 - [cmo_env.ps1](cmo_env.ps1)
   - Windows/PowerShell repository-local environment bootstrap and validation
     for `.venv`, `CMO_BUILD_DIR`, `PYTHONPATH`, and `ef_py*.pyd` artifacts.
+- [cmo_env_validate_rl.py](cmo_env_validate_rl.py)
+  - Single RL import probe shared by `cmo_env.sh validate-rl` and
+    `cmo_env.ps1 validate-rl`, so both shells report the same modules and the
+    same exit code.
+- [docs_link.py](docs_link.py)
+  - Single Markdown inline-link scanner shared by the documentation link
+    audit, the WP closure audit, and the doc translation batch. It masks
+    fenced code, HTML comments, and inline code before scanning, so the three
+    tools agree on the link set of a given document.
 - [redundancy_audit.py](redundancy_audit.py)
   - Audits duplicate/temp-like workspace content.
 - [cleanup_redundancy.py](cleanup_redundancy.py)
@@ -28,49 +37,6 @@ General maintained helpers:
   - Emits a read-only checklist or a generated closure summary for a closure
     subagent instead of rewriting README or review indexes on the main
     implementation path.
-- [damage_model.py](damage_model.py)
-  is the unified damage-model source governance command family.
-  - `admission-audit` audits source ledgers, source pin / gap updates, and
-    candidate validation manifests for public-source admission hygiene.
-  - `payload-pack` builds or inspects retained source payload packs without
-    granting authority.
-  - `rights-output-policy` evaluates the source-rights and allowed-output
-    policy gate while staying fail-closed.
-
-Task-specific A2 helpers:
-
-- [damage_model.py](damage_model.py)
-  is the unified external signoff evidence command family. It dispatches
-  `signoff-request`, `intake-contract`, `packet-template`, and
-  `admission-preflight` without retaining the old per-step entrypoint files.
-- [damage_model.py](damage_model.py)
-  is the unified benchmark evidence and admission command family. It dispatches
-  comparison hash, mechanism evidence, benchmark execution, debris-case, and
-  spreadsheet recalculation/replacement/lineage review commands.
-- [damage_model.py](damage_model.py)
-  is the unified scope/provenance closeout command family. It dispatches row
-  provenance, target-geometry closeout, warhead-scope closeout, and
-  mechanism-source closeout commands.
-- [damage_model.py](damage_model.py)
-  is the unified independent review command family. It dispatches effect-scale
-  review, RES-011/012 review closeout, scope-bucket review, and uncertainty
-  review commands.
-- [damage_model.py](damage_model.py)
-  is the unified release governance command family. It dispatches package
-  provenance/identity, provenance review/closeout, source release signoff,
-  scoped release identity, and Stage B release readiness/closeout commands.
-- [damage_model.py](damage_model.py)
-  is the unified candidate artifact command family. It dispatches validation
-  scaffold, scope boundary probe, Stage B effect-scale artifact packs, Stage C
-  component-probability and component-fragility artifact/review gates, runtime
-  authority exercise, and candidate package bundle commands.
-- [damage_model.py](damage_model.py)
-  is the unified retained artifact command family. It dispatches retained
-  manifest integrity checks over artifact hashes and authority guards.
-- These tools are maintenance/governance utilities only. They do not grant
-  runtime authority, do not make A2 retained artifacts product surface, and
-  should stay scoped to the A2 damage-model workflow.
-
 Maintenance guidance:
 
 - Scripts here may be shell or Python, but they should be workspace-oriented and
@@ -79,7 +45,8 @@ Maintenance guidance:
   instead of duplicating `.venv` and build-dir detection logic.
 - Maintained Windows workflows should prefer `cmo_env.ps1` instead of assuming
   WSL, `.venv/bin/python`, or Linux `.so` extension artifacts.
-- Historical maintenance helpers should move to `tools/archive/legacy_scripts/`
+- Historical maintenance helpers should be deleted with a line in the
+  retirement register in `tools/README.md` (git history is the archive)
   instead of accumulating here.
 - Doc translation batches should prefer `translate_docs_batch.py` over ad hoc
   one-off scripts so file pairing and draft-note behavior stay consistent.
@@ -213,9 +180,7 @@ ignored from the shared remote, including:
 
 - `docs/Archive/`
 - `docs/**/archive/`
-- `docs/temp/`
-- `docs/plan/results/`
-- `docs/plan/architecture/review/`
+- `docs/**/temp/`
 
 To include them explicitly:
 
@@ -250,17 +215,6 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
 
 Use `--strict` when error-level closure gaps should fail the command. Warnings
 are intended to be closure-subagent work items rather than main-lane blockers.
-
-Audit A2 damage-model public-source admission docs:
-
-```bash
-python3 tools/maintenance/damage_model.py source-governance admission-audit
-python3 tools/maintenance/damage_model.py source-governance admission-audit --strict
-```
-
-Default mode fails only error-level authority, candidate source update, or
-manifest violations. `--strict` also fails source-pin warnings, which is useful
-before promoting a candidate source package into a validation run.
 
 Required API environment variables for translation:
 

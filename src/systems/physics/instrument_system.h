@@ -3,6 +3,7 @@
 #include <flecs.h>
 #include <cmath>
 #include <algorithm>
+#include <numbers>
 #include "components/basic/common.h"
 #include "components/domains/air/command/control_input_resolution.h"
 #include "components/physics/instruments.h"
@@ -19,7 +20,7 @@
 
 namespace {
 inline double inst_rad_to_deg(double rad) {
-    return rad * 180.0 / M_PI;
+    return rad * 180.0 / std::numbers::pi_v<double>;
 }
 
 inline double inst_canonicalize_ground_track_deg(double value) {
@@ -196,7 +197,8 @@ inline void register_instrument_system(flecs::world &ecs) {
                         double wy = atm.wind_velocity.y;
                         inst[i].wind_speed_mps = std::sqrt(wx * wx + wy * wy);
                         // Wind direction is conventionally "from" (deg NAV, CW from North).
-                        double wind_to_deg = std::atan2(wx, wy) * 180.0 / M_PI;
+                        double wind_to_deg =
+                            std::atan2(wx, wy) * 180.0 / std::numbers::pi_v<double>;
                         double wind_from_deg = wind_to_deg + 180.0;
                         while (wind_from_deg < 0.0)
                             wind_from_deg += 360.0;

@@ -6,7 +6,7 @@ Subproject:
 
 - [README.md](README.md)
 - [Task clusters](default_effects_modularization_task_clusters_20260601.md)
-- [Archive closeout](archive/default_effects_modularization_closeout_20260602.md)
+- Archive closeout (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md`)
 
 ## Changes Since Baseline
 
@@ -92,7 +92,7 @@ Subproject:
 | DFM-P5 diagnostics | pass | Lovelace packet reviewed and applied to assertion style. | None for round 1. |
 | DFM-P3F structure-spatial split | pass | Source review found the helper already present; `ef_core`, `ef_py`, `dfm_p4`, and full runtime guard passed after the debug guard fix. | Further air-platform restructuring must be re-scoped as a new finite task. |
 | Debug early-return snapshot guard | pass | Structured platform-loss/destruct fixture now passes on Linux. | Debug API change is limited to event-record snapshots; default effects formulas are unchanged. |
-| DFM-P6 closure sync | pass / archived | [closure sync](default_effects_modularization_closure_sync_20260602.md); [closeout](archive/default_effects_modularization_closeout_20260602.md) | Historical DFM-P6 sync is archived with DFM-P3F evidence; no authority claim added. |
+| DFM-P6 closure sync | pass / archived | [closure sync](default_effects_modularization_closure_sync_20260602.md); closeout (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md`) | Historical DFM-P6 sync is archived with DFM-P3F evidence; no authority claim added. |
 | C++ test harness | deferred | No project-level C++ unit suite exists. | Separate project-wide initiative needed. |
 
 ## Evidence

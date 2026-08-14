@@ -9,11 +9,11 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-08`
+Last verified: `2026-08-12`
 
 `docs/` is organized by content ownership. Document kind is expressed inside
-the owning area; archive is a lifecycle endpoint rather than a competing
-current authority.
+the owning area; retirement is a lifecycle endpoint recorded in a ledger rather
+than a competing current authority stored in the tree.
 
 ## Target Ownership Roots
 
@@ -31,17 +31,25 @@ current authority.
 The [documentation information architecture](project/documentation_architecture.md)
 defines target boundaries, migration phases, and cutover gates.
 
-## Archive-only Legacy Containers
+## Retired Legacy Containers
 
-All maintained `standards`, `plan`, and `task` sources now route through their
+All maintained `standards`, `plan`, and `task` sources route through their
 content owners. Use the [Document Alignment Map](engineering/documentation/reference/document_alignment_map.md)
-for the distributed authority map. The remaining `plan/` and `task/` paths all
-contain an `archive` component and are historical storage, not current routes.
+for the distributed authority map.
 
-Do not add new maintained content under `docs/plan/`, `docs/task/`, legacy
-`Archive/`, `evaluation/archive/`, or `manual/archive/`. Existing archives are
-excluded from the maintained tracking surface and are changed only by a
-separately authorized historical migration.
+The `Archive/`, `evaluation/`, `manual/`, `plan/`, and `task/` containers held
+historical storage only and were retired on 2026-08-13. Git history is the
+archive: every retired file is listed in the
+[Retired Documentation Ledger](archive_ledger.md) with the
+`git show <commit>:<path>` address that still retrieves it, and the
+machine-readable form is `engineering/documentation/reference/retired_documents.json`.
+Owner-local archives retired at the same time are listed in the
+[Retired Systems Archive Ledger](systems/archive_ledger.md).
+
+Do not reintroduce an `archive/`, `Archive/`, or `temp/` path component under
+`docs/`; `tests/architecture/governance/test_archive_retirement.py` fails the
+build if one reappears. Retire a document by deleting it and adding a ledger
+row, and route content that is still current to its owner instead.
 
 ## Direct Operational Routes
 
@@ -54,6 +62,7 @@ separately authorized historical migration.
 - [Release and dependency governance](engineering/release/README.md)
 - [Testing engineering](engineering/testing/README.md)
 - [Retained artifact provenance](reference_artifacts.md)
+- [Retired documentation ledger](archive_ledger.md)
 - [Test-system orientation](../tests/README.md)
 
 ## Authority Rules
@@ -65,15 +74,19 @@ separately authorized historical migration.
 3. Directory presence is not a capability claim.
 4. A plan, task, review, reference, or standard retains its document kind after
    migration; the directory owner does not change its evidentiary boundary.
-5. Existing archives remain frozen and excluded from maintained-source audits.
-   The future logical `docs/archive/` endpoint is not materialized in this
-   phase because it collides case-insensitively with legacy `docs/Archive/` on
-   Windows; resolving that historical layout is a separate migration.
+5. Retention is retirement: a superseded document is deleted and recorded in an
+   archive ledger rather than kept under an `archive/` path. There is no
+   maintained archive directory to audit, and the legacy `docs/Archive/`
+   case-collision that once blocked a `docs/archive/` endpoint is gone with it.
 
 ## Language And Rights
 
-Stable entry points, standards, references, and how-to material use English
-canonical pages with Chinese companions. High-churn work/evidence may remain
-English-only unless promoted. Repository documentation follows Apache-2.0
-unless a retained third-party source states otherwise; see
+Stable entry points, navigation READMEs, standards, references, and how-to
+material use English canonical pages with Chinese companions. Work and
+evidence surfaces (`docs/**/work/**`) are maintained in English only; a Chinese
+companion is added only when a document is explicitly promoted into the strict
+bilingual surface. Chinese navigation pages may therefore link directly to
+English work documents. Existing archives keep the language layout they were
+frozen with. Repository documentation follows Apache-2.0 unless a retained
+third-party source states otherwise; see
 [LICENSE](../LICENSE) and [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md).

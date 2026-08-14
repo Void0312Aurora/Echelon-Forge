@@ -6,7 +6,11 @@ T11 slice 4 bundle 1 moved the 52 JSON keys read by
 the I52 survey's authoritative inventory and pins the loader helper body to
 being fully table-driven. It mirrors the I10/I26 xmacro architecture-test
 precedent and reuses the same ``parse_xmacro`` reader that
-``tests/support/xmacro_text.py`` uses.
+``tests/support/xmacro_text.py`` uses. The mechanical substrate (``.inc``
+reader, git-object anchor, survey-section parser, helper-body extractor,
+residue belts) is shared with the other content gates via
+``tests/support/xmacro_gate.py``; the judgment below is bundle-specific and
+deliberately stays here.
 
 Anchor structure (review hardening, I58 repair round):
 
@@ -34,24 +38,29 @@ absent from both the ``.inc`` and the survey 1.2 table.
 
 from __future__ import annotations
 
-import re
-
 import pytest
 
 from tests.support.paths import REPO_ROOT
-from tools.maintenance.dto_schema.parse_xmacro import parse_xmacro_text
+from tests.support.xmacro_gate import (
+    GitObjectAnchor,
+    function_body,
+    parse_inc_fields,
+    quoted_key_literals,
+    read_residues,
+    survey_section_rows,
+)
 
 
 _INC_PATH = REPO_ROOT / "src" / "content" / "detail" / "missile_tuning_fields.inc"
 _LOADER_PATH = REPO_ROOT / "src" / "content" / "unit_definition_loader.cpp"
-_SURVEY_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "plan"
-    / "archive"
-    / "unified_architecture_program_completed_20260727"
-    / "t11_content_schema_survey_20260721.md"
+# The survey document was retired into git history (docs/archive_ledger.md);
+# the anchor now reads the immutable pinned object, which a working-tree edit
+# can no longer tamper with.
+_SURVEY_GIT_PIN = (
+    "095fdd5c:docs/plan/archive/unified_architecture_program_completed_20260727/"
+    "t11_content_schema_survey_20260721.md"
 )
+_SURVEY_ANCHOR = GitObjectAnchor(_SURVEY_GIT_PIN)
 
 _SCALAR_MACRO = "EF_MISSILE_TUNING_FIELD"
 _VECTOR_MACRO = "EF_MISSILE_TUNING_VECTOR_FIELD"
@@ -59,15 +68,18 @@ _MACROS = frozenset({_SCALAR_MACRO, _VECTOR_MACRO})
 
 _INC_INCLUDE_DIRECTIVE = '#include "content/detail/missile_tuning_fields.inc"'
 _HELPER_SIGNATURE = "void parse_missile_tuning_json_fields("
+_HELPER_NAME = "parse_missile_tuning_json_fields"
 
-# Survey section 1.2 anchoring. The heading prefix is matched literally (the
-# full heading carries an em dash and backticks); the section ends at the next
-# markdown heading. Row cells: | # | `key` | json_type | ... |. The parser is
+# The helper's own read vocabulary: src.value("key" and parse_vector("key".
+_READ_ACCESS_PREFIX = r'(?:src\s*\.\s*value|parse_vector)\s*\(\s*'
+
+# Survey section 1.2 anchoring (shared parser, see tests/support/xmacro_gate).
+# The heading prefix is matched literally (the full heading carries an em dash
+# and backticks); the section ends at the next markdown heading. The parser is
 # deliberately strict: if the survey table moves or is reshaped, this gate must
 # go red rather than silently anchor to nothing.
 _SURVEY_HEADING_PREFIX = "### 1.2 Missile-Tuning Helper Keys (52)"
-_SURVEY_ROW_RE = re.compile(r"^\|\s*(\d+)\s*\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|")
-_NEXT_HEADING_RE = re.compile(r"^#{1,6}\s", re.MULTILINE)
+_SURVEY_SECTION_LABEL = "survey section 1.2"
 
 _SURVEY_JSON_TYPE_TO_CPP = {
     "number": "double",
@@ -157,25 +169,17 @@ _NON_HELPER_MEMBERS = (
 
 
 def _parse_inc_fields(inc_text: str):
-    return parse_xmacro_text(inc_text, _MACROS).fields
+    return parse_inc_fields(inc_text, _MACROS)
 
 
 def _survey_helper_key_rows(survey_text: str) -> tuple[tuple[int, str, str], ...]:
     """Parse (row_number, key, json_type) from survey section 1.2 only."""
-    heading_index = survey_text.find(_SURVEY_HEADING_PREFIX)
-    assert heading_index >= 0, (
-        f"survey heading {_SURVEY_HEADING_PREFIX!r} not found in {_SURVEY_PATH}"
+    return survey_section_rows(
+        survey_text,
+        heading_prefix=_SURVEY_HEADING_PREFIX,
+        section_label=_SURVEY_SECTION_LABEL,
+        source_label=_SURVEY_ANCHOR.label,
     )
-    after_heading = survey_text[heading_index + len(_SURVEY_HEADING_PREFIX) :]
-    next_heading = _NEXT_HEADING_RE.search(after_heading)
-    section = after_heading if next_heading is None else after_heading[: next_heading.start()]
-    rows: list[tuple[int, str, str]] = []
-    for line in section.splitlines():
-        match = _SURVEY_ROW_RE.match(line.strip())
-        if match:
-            rows.append((int(match.group(1)), match.group(2), match.group(3).strip()))
-    assert rows, "survey section 1.2 contains no parsable key rows"
-    return tuple(rows)
 
 
 def _check_inc_matches_survey(inc_fields, survey_rows) -> None:
@@ -206,39 +210,13 @@ def _helper_body(loader_text: str) -> str:
     """Extract the parse_missile_tuning_json_fields definition body by text
     boundary: the signature occurrence that is followed by '{' (not ';'), then
     brace matching to the function's closing brace."""
-    for match in re.finditer(re.escape(_HELPER_SIGNATURE), loader_text):
-        index = match.end()
-        while index < len(loader_text) and loader_text[index] not in "{;":
-            index += 1
-        if index >= len(loader_text) or loader_text[index] != "{":
-            continue  # forward declaration; keep scanning
-        depth = 0
-        for position in range(index, len(loader_text)):
-            char = loader_text[position]
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-                if depth == 0:
-                    return loader_text[index : position + 1]
-        raise AssertionError(
-            "unbalanced braces in parse_missile_tuning_json_fields definition"
-        )
-    raise AssertionError("parse_missile_tuning_json_fields definition not found")
+    return function_body(loader_text, _HELPER_SIGNATURE, label=_HELPER_NAME)
 
 
 def _hand_written_read_residues(loader_text: str, keys) -> list[str]:
     """Keys with a hand-written read (src.value("key" / parse_vector("key"
     forms) inside the helper body."""
-    body = _helper_body(loader_text)
-    residues = []
-    for key in keys:
-        pattern = re.compile(
-            r'(?:src\s*\.\s*value|parse_vector)\s*\(\s*"' + re.escape(key) + r'"'
-        )
-        if pattern.search(body):
-            residues.append(key)
-    return residues
+    return read_residues(_helper_body(loader_text), keys, _READ_ACCESS_PREFIX)
 
 
 def _quoted_key_literals_in_helper_body(loader_text: str, keys) -> list[str]:
@@ -246,8 +224,7 @@ def _quoted_key_literals_in_helper_body(loader_text: str, keys) -> list[str]:
     all (keys only enter via #name stringification inside the .inc), so any
     quoted 52-key literal in the body is a hand-written access of some form
     (src.value, src[...], src.contains, ...)."""
-    body = _helper_body(loader_text)
-    return [key for key in keys if f'"{key}"' in body]
+    return quoted_key_literals(_helper_body(loader_text), keys)
 
 
 def _real_inc_text() -> str:
@@ -259,7 +236,7 @@ def _real_loader_text() -> str:
 
 
 def _real_survey_rows() -> tuple[tuple[int, str, str], ...]:
-    return _survey_helper_key_rows(_SURVEY_PATH.read_text(encoding="utf-8"))
+    return _survey_helper_key_rows(_SURVEY_ANCHOR.read_text())
 
 
 # ---------------------------------------------------------------------------

@@ -54,9 +54,6 @@ PILOT_REPORT_GROUND_HEADER = (
 WORLD_BATCH_CONTRACTS_HEADER = (
   REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
 )
-MISSION_COMMAND_CODEC_CPP = (
-  REPO_ROOT / "src" / "core" / "mission" / "episode" / "detail" / "mission_command_codec.cpp"
-)
 EXECUTION_EPISODE_STATE_CPP = (
   REPO_ROOT / "src" / "core" / "mission" / "episode" / "execution_episode_state.cpp"
 )
@@ -67,6 +64,27 @@ EMBARKED_AIR_OPS_SYSTEM_HEADER = (
 BINDINGS_COMMAND_CPP = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_command.cpp"
 
 
+# A closing quote, a line break, and the next literal's opening quote. C++
+# concatenates such adjacent literals at translation time, so folding them
+# back recovers the single logical string the compiler sees.
+_ADJACENT_STRING_LITERALS_RE = re.compile(r'"[ \t]*\r?\n[ \t]*"')
+
+
+def _join_adjacent_string_literals(text: str) -> str:
+  """Undo clang-format's line-wrapping of long string literals.
+
+  Commit d9c3c895 ("fix(pr17): address CI format gate and all six review
+  findings") ran the repository clang-format profile over
+  WORLD_BATCH_CONTRACTS_HEADER, which split every ``static_assert`` message
+  longer than the column limit into adjacent literals broken at whatever word
+  boundary happened to fit. The messages themselves were not edited, so the
+  guards below still pin the exact compiled text -- they just have to read it
+  the way the compiler does rather than through one formatting decision.
+  """
+
+  return _ADJACENT_STRING_LITERALS_RE.sub("", text)
+
+
 def _text(path: Path) -> str:
   text = path.read_text(encoding="utf-8")
   # The command/tasking maintained-batch-contract and standalone directive
@@ -75,8 +93,8 @@ def _text(path: Path) -> str:
   # checks keep matching the compiled struct shape instead of the #include
   # line.
   if path == WORLD_BATCH_CONTRACTS_HEADER:
-    return expand_header_field_incs(text)
-  return text
+    text = expand_header_field_incs(text)
+  return _join_adjacent_string_literals(text)
 
 
 def _compile_and_run(source: str):
@@ -435,20 +453,8 @@ def test_wp22_task_order_maintained_batch_contract_stays_controlled_and_slice_ba
     assert forbidden not in text
 
 
-def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -> None:
-  codec_text = _text(MISSION_COMMAND_CODEC_CPP)
+def test_wp22_maintained_episode_state_equivalence_uses_owner_slice_directive_helpers() -> None:
   state_text = _text(EXECUTION_EPISODE_STATE_CPP)
-
-  for token in (
-    "mission_command_shared_core_directive(command)",
-    "mission_command_air_recovery_directive(command)",
-    "mission_command_air_takeoff_directive(command)",
-    "mission_command_air_formation_directive(command)",
-    "mission_command_naval_stationing_directive(command)",
-    "mission_command_naval_embarked_helo_directive(command)",
-    "mission_command_ground_static_task_directive(command)",
-  ):
-    assert token in codec_text
 
   for token in (
     "mission_command_shared_core_directive(lhs)",
@@ -479,52 +485,14 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
   ):
     assert f"lhs_core.{duplicated_field}" not in state_text
 
-  codec_body = re.search(
-    r"void write_mission_command_fields_to_json\(const MissionCommand& command, nlohmann::json\* mission_json\) \{(?P<body>.*?)\n\}",
-    codec_text,
-    re.S,
-  )
-  assert codec_body is not None
-  for forbidden in (
-    "command.cmd_heading_deg",
-    "command.cmd_altitude_m",
-    "command.cmd_speed_mps",
-    "command.command_code",
-    "command.route_ref_id",
-    "command.reference_entity_id",
-    "command.station_radius_m",
-    "command.station_bearing_deg",
-    "command.embarked_helo_entity_id",
-    "command.launch_helo",
-    "command.recover_helo",
-    "command.relay_oth_targeting",
-    "command.ground_task_mode",
-    "command.objective_area_id",
-    "command.objective_node_id",
-    "command.ground_commander_id",
-    "command.tactical_cadence_hz",
-    "command.recovery_base_id",
-    "command.recovery_runway_id",
-    "command.recovery_approach_type",
-    "command.takeoff_procedure_id",
-    "command.takeoff_clearance_id",
-    "command.takeoff_interval_s",
-    "command.runway_slot_id",
-    "command.formation_id",
-    "command.form_offset_x",
-    "command.form_offset_y",
-    "command.form_offset_z",
-    "command.roe_state",
-    "command.engagement_authority_holder_id",
-    "command.engagement_authority_grantor_id",
-    "command.assigned_target_id",
-    "command.authorization_to_fire",
-    "command.active",
-  ):
-    assert forbidden not in codec_body.group("body")
-
+  # Commit 199f2c03 ("style: clang-format the consolidation-era C++ surface
+  # for the CI gate") moved this file to `Type &name` reference alignment and
+  # let the formatter choose where to break the parameter list; the helper and
+  # its signature are otherwise untouched. Tolerate either alignment so the
+  # body scan below keeps pinning the same single equality helper.
   equality_body = re.search(
-    r"bool mission_commands_equal\(const MissionCommand& lhs, const MissionCommand& rhs\) \{(?P<body>.*?)\n\}",
+    r"bool mission_commands_equal\(const MissionCommand\s*&\s*lhs,"
+    r"\s*const MissionCommand\s*&\s*rhs\) \{(?P<body>.*?)\n\}",
     state_text,
     re.S,
   )
@@ -1075,7 +1043,11 @@ def test_wp22_task_order_header_marks_shared_core_as_owner_slice_directive_surfa
 
 
 def test_wp22_python_bindings_expose_owner_slice_types_and_projection_helpers() -> None:
-  text = _text(BINDINGS_COMMAND_CPP)
+  # The command binding surface is decomposed into per-domain slices; read
+  # them joined in registration order.
+  from tests.architecture.structural_boundaries.helpers import bindings_command_text
+
+  text = bindings_command_text()
 
   for token in (
     'nb::class_<TaskOrderCore>(m, "TaskOrderCore")',

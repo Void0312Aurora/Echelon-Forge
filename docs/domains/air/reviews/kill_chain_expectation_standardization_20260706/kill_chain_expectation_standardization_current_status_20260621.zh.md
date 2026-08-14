@@ -62,7 +62,7 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
   和 `severe_response`。当前 `4/6/8 km +/-30 deg` 的 trace-response cells 属于
   `outside_effect`，在修正后的 runtime projection 下满足 negative-control 上限。
 - 已新增标准化 v0 期望包络：
-  [空空杀伤链期望包络](../../work/issues/kill_chain_expectation_envelope.zh.md)，
+  [空空杀伤链期望包络](../../work/issues/kill_chain_expectation_envelope.md)，
   把人为定义的 profile/grid/radius/band/tolerance 输入与派生报告字段、
   launch/guidance 包络规则、effect-to-response floor/ceiling、分布容忍度、
   连续性规则、cell status labels 和 owner-stage attribution 注册为空中特化
@@ -111,7 +111,7 @@ guarded single-layer dry-run plans；runtime 参数重调与真实世界 authori
 | 标准提升决策 | pass | [kill_chain_standard_promotion_decision_20260623.zh.md](kill_chain_standard_promotion_decision_20260623.zh.md) | 原 P1-P4 决策保留 task-local workstream；后续 v0 envelope 是 planning supplement，不是 runtime contract。 |
 | Harness 初始实现 | partial | [kill_chain_harness_implementation_20260623.zh.md](kill_chain_harness_implementation_20260623.zh.md) | 完整匀速 `78` case anchor before report、逐部件 `component_detail`、可视化 heatmap、首阶段复核归因和 response 局部诊断已生成；完整 `93` anchor/main grid、并行 worker、机动 runtime 支持仍未完成。 |
 | 组件响应量化阈值 | pass | [kill_chain_component_response_quantization_20260705.zh.md](kill_chain_component_response_quantization_20260705.zh.md) | task-local docs-only 诊断分区；不授予 component-failure、Pk 或确定性引信权威。 |
-| 标准化期望包络 v0 | pass | [docs/domains/air/work/issues/kill_chain_expectation_envelope.zh.md](../../work/issues/kill_chain_expectation_envelope.zh.md) | 空中特化 planning supplement；不是当前 runtime contract，不修改 runtime 参数，也不授予 calibration authority。 |
+| 标准化期望包络 v0 | pass | [docs/domains/air/work/issues/kill_chain_expectation_envelope.md](../../work/issues/kill_chain_expectation_envelope.md) | 空中特化 planning supplement；不是当前 runtime contract，不修改 runtime 参数，也不授予 calibration authority。 |
 | Expectation-envelope audit 后处理器 | pass | [kces_anchor_cv_expectation_envelope_summary_20260706.md](review_packets/kill_chain_expectation_standardization_harness_20260623/kces_anchor_cv_expectation_envelope_summary_20260706.md) | 只读取既有 before report；envelope 字段尚未由 harness 内联输出。 |
 | 制导机制严格消融 | pass | [kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md](../../../../systems/weapons/reviews/kill_chain_guidance_mechanism_20260715/review_packets/kill_chain_guidance_exact_mechanism_ablation_20260715/kill_chain_guidance_exact_mechanism_ablation_conclusions_20260715.zh.md) | 精确开关、向量闭合、世界系 PN、track/truth-CV 和正负控制已完成；这是诊断闭合，不是生产机制准入。 |
 

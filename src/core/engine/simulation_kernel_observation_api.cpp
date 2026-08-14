@@ -13,7 +13,6 @@
 #include "components/systems/ew.h"
 #include "components/systems/data_link.h"
 #include "components/systems/logistics.h"
-#include "components/systems/navigation.h"
 #include "components/systems/sensor.h"
 #include "components/systems/sonar.h"
 #include "components/systems/track_management.h"
@@ -24,6 +23,7 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <numbers>
 #include <vector>
 
 namespace {
@@ -84,7 +84,7 @@ double SimulationKernel::get_unit_heading(uint64_t entity_id) {
     }
 
     double math_rad = std::atan2(v->vy, v->vx);
-    double math_deg = math_rad * 180.0 / M_PI;
+    double math_deg = math_rad * 180.0 / std::numbers::pi_v<double>;
     double nav_deg = 90.0 - math_deg;
     while (nav_deg < 0.0)
         nav_deg += 360.0;
@@ -112,16 +112,6 @@ InstrumentState SimulationKernel::get_instrument_state(uint64_t entity_id) {
         }
     }
     return InstrumentState{};
-}
-
-EGI SimulationKernel::get_egi_state(uint64_t entity_id) {
-    auto e = ecs.entity(entity_id);
-    if (e.is_alive()) {
-        if (const EGI *egi = e.get<EGI>()) {
-            return *egi;
-        }
-    }
-    return EGI{};
 }
 
 int SimulationKernel::get_unit_type(uint64_t entity_id) {
@@ -647,7 +637,7 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             double dx = source_t->x - p->x;
             double dy = source_t->y - p->y;
             double bearing_rad = std::atan2(dy, dx);
-            double bearing_math_deg = bearing_rad * 180.0 / M_PI;
+            double bearing_math_deg = bearing_rad * 180.0 / std::numbers::pi_v<double>;
             double bearing_nav_deg = 90.0 - bearing_math_deg; // Norm handled by simple math?
             // 90 - (-170) = 260. Need wrap.
             if (bearing_nav_deg < 0) bearing_nav_deg += 360.0;

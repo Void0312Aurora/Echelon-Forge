@@ -35,7 +35,6 @@ class BatchWorldHandle:
     visual_cache: np.ndarray | None = None
     visual_cache_step: int = -1
     action_controller: MultiTimescaleActionController | None = None
-    execution_episode_controller_config: Any = None
     last_mission_command_snapshot: Any = None
     last_task_order_snapshot: Any = None
     last_leader_intent_snapshot: Any = None

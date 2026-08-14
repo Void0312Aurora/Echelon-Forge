@@ -9,10 +9,10 @@ Document kind: `reference`
 Lifecycle: `maintained`
 Canonical: `docs/README.md`
 Owner: `project documentation`
-Last verified: `2026-08-08`
+Last verified: `2026-08-12`
 
-`docs/` 按内容所有权组织。文档类型在所属区域内表达；archive 是生命周期终点，
-不是与当前权威竞争的内容域。
+`docs/` 按内容所有权组织。文档类型在所属区域内表达；退役是生命周期终点，记录在
+台账里，而不是以 archive 目录形式留在树内与当前权威竞争。
 
 ## 目标所有权根
 
@@ -30,15 +30,21 @@ Last verified: `2026-08-08`
 [文档信息架构](project/documentation_architecture.zh.md)定义目标边界、迁移阶段和
 切换门禁。
 
-## 仅归档遗留容器
+## 已退役的遗留容器
 
-所有维护中的 `standards`、`plan` 与 `task` 源现已路由到内容 owner。当前分布式
+所有维护中的 `standards`、`plan` 与 `task` 源均已路由到内容 owner。当前分布式
 权威映射见[文档对齐映射](engineering/documentation/reference/document_alignment_map.zh.md)。
-剩余 `plan/` 与 `task/` 路径均含 `archive` 组件，只是历史存储，不是当前入口。
 
-不得在 `docs/plan/`、`docs/task/`、旧 `Archive/`、`evaluation/archive/` 或
-`manual/archive/` 下新增维护内容。既有归档排除在维护追踪面之外，只有另行授权的
-历史迁移才能修改。
+`Archive/`、`evaluation/`、`manual/`、`plan/` 与 `task/` 容器只承担历史存储，已于
+2026-08-13 退役。Git 历史即归档：每个被退役文件都列在
+[退役文档台账](archive_ledger.md) 中，并附可继续取回内容的
+`git show <commit>:<path>` 地址；机器可读形式为
+`engineering/documentation/reference/retired_documents.json`。同批退役的 owner
+本地归档列在[退役 systems 归档台账](systems/archive_ledger.md)。
+
+不得在 `docs/` 下重新引入 `archive/`、`Archive/` 或 `temp/` 路径组件；一旦出现，
+`tests/architecture/governance/test_archive_retirement.py` 会让构建失败。退役文档的
+方式是删除文件并补一行台账；仍然有效的内容应改为路由到其 owner。
 
 ## 直接操作入口
 
@@ -51,6 +57,7 @@ Last verified: `2026-08-08`
 - [发布与依赖治理](engineering/release/README.zh.md)
 - [测试工程](engineering/testing/README.zh.md)
 - [保留制品来源](reference_artifacts.zh.md)
+- [退役文档台账](archive_ledger.md)
 - [测试系统入口](../tests/README.zh.md)
 
 ## 权威规则
@@ -60,13 +67,15 @@ Last verified: `2026-08-08`
 3. 目录存在不等于能力已经成立。
 4. plan、task、review、reference、standard 迁移后仍保留原文档类型；目录 owner
    不会扩大其证据边界。
-5. 既有归档继续冻结并排除在维护源审计之外。未来逻辑终点
-   `docs/archive/` 本阶段不落盘，因为它在 Windows 上与旧 `docs/Archive/`
-   发生大小写冲突；解决该历史布局属于单独迁移。
+5. 保留即退役：被取代的文档直接删除并登记到归档台账，不再以 `archive/` 路径
+   留存。树内已没有需要审计的归档目录，旧 `docs/Archive/` 曾经阻挡
+   `docs/archive/` 终点的大小写冲突也随之消失。
 
 ## 语言与权利
 
-稳定入口、standards、reference 和 how-to 采用英文规范页与中文 companion。
-高频 work/evidence 除非被提升，可以只维护英文。仓库文档默认采用 Apache-2.0；
+稳定入口、导航 README、standards、reference 和 how-to 采用英文规范页与中文
+companion。work/evidence 面（`docs/**/work/**`）只维护英文规范版；仅当文档被明确
+提升进入严格双语面时才增设中文 companion，因此中文导航页可以直接链接英文
+work 文档。既有归档按冻结时的语言布局保持不动。仓库文档默认采用 Apache-2.0；
 第三方来源另有声明时从其权利边界。参见 [LICENSE](../LICENSE) 和
 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md)。

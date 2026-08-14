@@ -12,7 +12,7 @@ release-grade authority、stock runtime authority、Pk 或 deterministic fuze �
 
 当前 G4/G5 research 已由
 [g4_g5_research_continuation_20260601.zh.md](g4_g5_research_continuation_20260601.zh.md)
-和 [archive closeout](archive/20260602_research_closeout/README.zh.md) 收口。若用户明确要求新的
+和 archive closeout (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260602_research_closeout/README.zh.md`) 收口。若用户明确要求新的
 研究级扩展，应先创建独立 follow-on 任务记录；不得直接重开本 sealed packet。
 
 ## 未来任务簇
@@ -49,7 +49,7 @@ release-grade authority、stock runtime authority、Pk 或 deterministic fuze �
 
 旧状态审计快照已归档：
 
-- [current_authority_status_and_minimal_closeout_20260530.zh.md](archive/20260601_doc_governance/current_authority_status_and_minimal_closeout_20260530.zh.md)
+- current_authority_status_and_minimal_closeout_20260530.zh.md (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/current_authority_status_and_minimal_closeout_20260530.zh.md`)
 
 未来如需恢复其中的细节，应先迁移到 retained gate / residual register；本 backlog
 只登记未来 promotion blocker 和入口，不重新承载历史快照叙事。

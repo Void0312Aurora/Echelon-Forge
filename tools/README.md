@@ -5,7 +5,7 @@
 ## Domain Posture
 
 - Most general eval examples here still target air/execution tasks; cooperative/common is covered by the maintained learned-policy and leader diagnostics paths.
-- Active training, eval, and diagnostics tools use the runtime-facade/world-batch path. Direct `UniversalEnv` tools belong in archive/quarantine, not the maintained tools catalog.
+- Active training, eval, and diagnostics tools use the runtime-facade/world-batch path. Direct `UniversalEnv` tools are retired outright, not parked in an in-tree archive.
 - Naval station pre-fire entries have a maintained scoped gate in `tools/eval/naval_station_policy_eval.py`.
 - Ground tasking/schema bootstrap does not yet have a maintained eval or diagnostic runner in `tools/`; do not infer full ground runtime support from this catalog.
 
@@ -24,8 +24,6 @@
   - Pinned environment/scenario data-generator adapters, export, and verification.
 - `tools/maintenance/`
   - Workspace audit and cleanup helpers.
-- `tools/archive/`
-  - Archived ad hoc probes migrated out of repo root.
 
 ## Eval
 
@@ -118,33 +116,86 @@
   - Audits added production and documentation lines for work-tracking codes or
     opaque lettered-phase identifiers; CI blocks high-confidence source/runtime
     violations while documentation findings remain warnings during remediation.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified external signoff evidence CLI for source-rights signoff requests, intake contracts, packet templates, and admission preflight checks.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified source-governance CLI for admission audit, retained payload pack, and source-rights allowed-output policy checks.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified benchmark-evidence CLI for comparison hashes, mechanism evidence, benchmark execution admission, debris-case admission, and spreadsheet recalculation/replacement review gates.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified scope/provenance CLI for row provenance, target-geometry closeout, warhead-scope closeout, and mechanism-source closeout.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified independent-review CLI for effect-scale review, review closeout, scope-bucket review, and uncertainty review gates.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified release-governance CLI for package provenance/identity, provenance review/closeout, source release signoff, scoped release identity, and Stage B release readiness/closeout gates.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified candidate-artifact CLI for validation scaffolds, scope probes, Stage B effect-scale artifact packs, Stage C component-probability and component-fragility artifact/review gates, runtime authority exercises, and candidate package bundles.
-- [damage_model.py](maintenance/damage_model.py)
-  - Unified retained-artifact CLI for manifest hash and authority-guard integrity checks.
+## Retirement Register
 
-## Archive
+`tools/archive/` no longer exists. Keeping retired one-shot probes in the
+working tree costs review attention on every census and gives nothing that git
+history does not already provide, so retirement now means deletion plus this
+register. Recover any entry with `git show <commit>:<path>`.
 
-- [README.md](archive/README.md)
-  - Scope note for archived root-level probes.
-- [batch_api_probe.py](archive/batch_api_probe.py)
-  - Quick manual probe for the C++ batch preparation API.
-- [world_batch_vec_env_benchmark.py](archive/world_batch_vec_env_benchmark.py)
-  - Archived vec-env throughput benchmark that predates the current diagnostics layout.
-- [diagnose_training_matrix.py](archive/diagnose_training_matrix.py)
-  - Archived helper that parses legacy `evaluate.py` text output for small model/scenario matrices.
+### Retired 2026-08-14 — closed A2 maintenance-governance chain
+
+The A2 candidate, source, release, and retained-artifact producers formed a
+self-referential maintenance graph after the damage-model review had closed.
+The one runtime invariant they protected now uses a small test-local fixture,
+so keeping the generators, router, hash-pin checker, and their tests would only
+preserve the closed workflow. The last complete tree is `c0e4f31f`.
+
+| Path | Purpose | Recover |
+| --- | --- | --- |
+| `tools/maintenance/damage_model.py` | Unified router for the closed A2 governance workflow. | `git show c0e4f31f:tools/maintenance/damage_model.py` |
+| `tools/maintenance/candidate_artifacts/` | Candidate scaffold and Stage B/C artifact producers. | `git ls-tree -r c0e4f31f -- tools/maintenance/candidate_artifacts` |
+| `tools/maintenance/release_governance/` | Release-readiness and provenance gates for the candidate chain. | `git ls-tree -r c0e4f31f -- tools/maintenance/release_governance` |
+| `tools/maintenance/source_governance/` | Source admission, payload, and rights-policy producers. | `git ls-tree -r c0e4f31f -- tools/maintenance/source_governance` |
+| `tools/maintenance/retained_artifacts/` | Manifest/hash integrity checker for the retained A2 packet. | `git ls-tree -r c0e4f31f -- tools/maintenance/retained_artifacts` |
+
+### Retired 2026-08-14 — CUDA-resident measurement toolchain
+
+The CUDA-resident backend was promoted as an explicit opt-in maintained
+backend, but its finite CP measurement campaign did not become a permanent
+runtime dependency. The report generators, parsers, and native capture probes
+were therefore deleted after the live backend contracts and parity tests were
+separated from the frozen evidence package. The final integrated measurement
+tree is recoverable from `2b4d3788`.
+
+| Path | Purpose | Recover |
+| --- | --- | --- |
+| `tools/diagnostics/cuda_resident_*.py` | One-shot report generation, parsing, evidence validation, and campaign comparison. | `git ls-tree -r 2b4d3788 -- tools/diagnostics/cuda_resident_*.py` |
+| `src/tools/experimental/cuda_resident/` | Native CUDA measurement and capture probes. | `git ls-tree -r 2b4d3788 -- src/tools/experimental/cuda_resident` |
+| `tests/fixtures/runtime_profiles/cuda_resident_program_2/` | Pre- and post-promotion frozen measurement reports and decisions. | `git ls-tree -r 2b4d3788 -- tests/fixtures/runtime_profiles/cuda_resident_program_2` |
+
+All entries below were retired at commit `3ac600a6` (the last commit in which
+they exist), after a four-column reference audit found no reference from
+`tests/`, CI, a maintained (Tier A/B) document, or another `tools/` entrypoint.
+
+### Retired 2026-08-13 — `tools/archive/` (whole directory)
+
+| Path | Purpose | Recover |
+| --- | --- | --- |
+| `tools/archive/README.md` | Scope note for the archived root-level probe collection. | `git show 3ac600a6:tools/archive/README.md` |
+| `tools/archive/README.zh.md` | Chinese companion of the archive scope note. | `git show 3ac600a6:tools/archive/README.zh.md` |
+| `tools/archive/analyze_cooperative_observation_scales.py` | Raw single-env observation-scale sampler built directly on `UniversalEnv`. | `git show 3ac600a6:tools/archive/analyze_cooperative_observation_scales.py` |
+| `tools/archive/arma_proxy_backend_echelon_env.py` | Raw `UniversalEnv` Arma proxy backend, superseded by the maintained local stub. | `git show 3ac600a6:tools/archive/arma_proxy_backend_echelon_env.py` |
+| `tools/archive/batch_api_probe.py` | Manual probe for the C++ batch preparation API. | `git show 3ac600a6:tools/archive/batch_api_probe.py` |
+| `tools/archive/check_binding.py` | Manual `ef_py` binding member dump for human inspection. | `git show 3ac600a6:tools/archive/check_binding.py` |
+| `tools/archive/coarse_route_segments.py` | Coarse route-segment rollout benchmark on raw `UniversalEnv` and direct policy loading. | `git show 3ac600a6:tools/archive/coarse_route_segments.py` |
+| `tools/archive/diagnose_training_matrix.py` | Parser for the legacy `evaluate.py` text summary over small model/scenario matrices. | `git show 3ac600a6:tools/archive/diagnose_training_matrix.py` |
+| `tools/archive/legacy_scripts/run_p2_diagnostic_matrix.sh` | Shell wrapper running the legacy P2 stage-A/stage-B diagnostic matrix. | `git show 3ac600a6:tools/archive/legacy_scripts/run_p2_diagnostic_matrix.sh` |
+| `tools/archive/legacy_scripts/train_p2_aggressive.sh` | Shell wrapper for a one-off aggressive P2 training configuration. | `git show 3ac600a6:tools/archive/legacy_scripts/train_p2_aggressive.sh` |
+| `tools/archive/legacy_test_diagnostics/diagnose_cruise_ood.py` | One-off cruise out-of-distribution episode classifier. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_cruise_ood.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_drop_physics.py` | One-off free-drop physics sanity dump against the C++ kernel. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_drop_physics.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_gear_damage.py` | One-off landing-gear damage-system check. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_gear_damage.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_physics.py` | One-off thrust/drag/friction dump read straight from C++. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_physics.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_reward_v2.py` | One-off investigation of an anomalous `ep_rew_mean`. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_reward_v2.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_takeoff_physics.py` | One-off takeoff-roll physics sanity dump. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_takeoff_physics.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_termination.py` | One-off early-termination cause breakdown for training episodes. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_termination.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_terrain.py` | One-off terrain-classification check at the spawn point. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_terrain.py` |
+| `tools/archive/legacy_test_diagnostics/diagnose_training.py` | One-off training-environment health check. | `git show 3ac600a6:tools/archive/legacy_test_diagnostics/diagnose_training.py` |
+| `tools/archive/visual_resolution.py` | Visual downsample benchmark backed by raw `UniversalEnv`. | `git show 3ac600a6:tools/archive/visual_resolution.py` |
+| `tools/archive/world_batch_runtime.py` | Raw `WorldBatchRuntime` benchmark predating the maintained runtime families. | `git show 3ac600a6:tools/archive/world_batch_runtime.py` |
+| `tools/archive/world_batch_vec_env_benchmark.py` | Vec-env throughput benchmark predating the current diagnostics layout. | `git show 3ac600a6:tools/archive/world_batch_vec_env_benchmark.py` |
+
+### Retired 2026-08-13 — one-shot geometry renderers
+
+Both scripts hardcode a single sealed review packet under
+`docs/systems/effects/reviews/f16c_target_geometry_20260614/` and pin a
+`GENERATED_ON = "2026-06-15"` render date. The packet they produced is sealed,
+so re-running them is not a maintained workflow.
+
+| Path | Purpose | Recover |
+| --- | --- | --- |
+| `tools/geometry/target_geometry_lethality_probability_matrix_plot.py` | Rendered the F-16C lethality probability matrices for the 20260614 review packet. | `git show 3ac600a6:tools/geometry/target_geometry_lethality_probability_matrix_plot.py` |
+| `tools/geometry/target_geometry_proxy_independent_variable_heatmap.py` | Rendered proxy-only independent-variable heatmaps for the same packet. | `git show 3ac600a6:tools/geometry/target_geometry_proxy_independent_variable_heatmap.py` |
 
 ## Common Usage
 
@@ -262,4 +313,4 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 - Cooperative trajectory diagnostics should extend `tools/diagnostics/diagnose_cooperative_trajectory.py` and `tools/diagnostics/cooperative_trajectory_base.py`, not add task-specific wrapper CLIs.
 - Ad hoc probes and matrix sweeps belong under `tools/diagnostics/`.
 - Cleanup/audit helpers belong under `tools/maintenance/`.
-- Archived scratch scripts should move to `tools/archive/`, not stay at repo root.
+- Retire a scratch script by deleting it and adding a Retirement Register row, not by moving it into an in-tree archive directory.

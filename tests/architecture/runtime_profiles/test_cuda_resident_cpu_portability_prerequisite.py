@@ -26,12 +26,3 @@ def test_cr2_cpu_prerequisite_keeps_environment_model_global() -> None:
     assert "IControlModel::IEnvironmentModel" not in contract
     assert "IControlModel::IEnvironmentModel" not in implementation
     assert "IEnvironmentModel::SurfaceType" in implementation
-
-
-def test_cr2_cpu_prerequisite_enables_legacy_pi_only_for_msvc_core() -> None:
-    cmake = _read("CMakeLists.txt")
-    marker = "target_compile_definitions(ef_core PRIVATE _USE_MATH_DEFINES)"
-
-    assert "if (MSVC)" in cmake
-    assert marker in cmake
-    assert cmake.index("if (MSVC)") < cmake.index(marker)

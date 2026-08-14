@@ -37,8 +37,7 @@ class WorldBatchCore:
     projection is shared by the single/leader runtime wrappers, and the
     per-loader truth/instrument fields are recorded as a mirror of that
     packet.  Mode-specific episode ownership stays with the existing callers
-    and their already-registered ``ExecutionModePlugin`` hooks (in
-    particular, the I82 controller/mainline boundary is not changed here).
+    and their already-registered ``ExecutionModePlugin`` hooks.
 
     ``ScenarioLoaderRuntime`` is the I73 structural seam at the loader's
     ``sim`` handle.  ``loader_runtime`` names that boundary without adding a
@@ -294,8 +293,7 @@ BATCH_STEP_STAGES: tuple[StageContract, ...] = (
         }),
         clock_domain=(
             "outer_step (post behavior_update); event-driven re-entries on "
-            "naval station action mutation, mainline episode-controller "
-            "reward stage, and episode autoreset"
+            "naval station action mutation and episode autoreset"
         ),
         information_layer_consumed=("Agent Observation",),
         information_layer_produced=(),
@@ -467,9 +465,7 @@ class ExecutionModePlugin:
         """behavior_update stage: update loader behaviors after the physics
         step.
 
-        The default calls ``handle.loader.update_behaviors``; the execution
-        plugin overrides this when the mainline episode controller owns the
-        behavior-update path.
+        The default calls ``handle.loader.update_behaviors``.
         """
         handle.loader.update_behaviors(
             sim_time, truth=truth, inst=inst, sync_to_kernel=False,
@@ -482,7 +478,7 @@ class ExecutionModePlugin:
 
         When ``True``, the generic step loop skips its own
         ``_sync_command_chain_batch`` call because the mode's reward stage
-        handles it (the mainline episode controller path).
+        handles it.
         """
         return False
 
@@ -614,11 +610,9 @@ class StandardExecutionPlugin(ExecutionModePlugin):
     def __init__(
         self,
         *,
-        execution_episode_controller_mainline: bool = False,
         is_air_combat_hybrid: bool = False,
         air_combat_event_finalizer: Callable[..., Any] | None = None,
     ) -> None:
-        self._mainline: bool = bool(execution_episode_controller_mainline)
         self._is_air_combat_hybrid: bool = bool(is_air_combat_hybrid)
         if self._is_air_combat_hybrid and not callable(air_combat_event_finalizer):
             raise ValueError(
@@ -627,26 +621,6 @@ class StandardExecutionPlugin(ExecutionModePlugin):
                 "construction; core must not import domain modules)"
             )
         self._air_combat_event_finalizer = air_combat_event_finalizer
-
-    def update_post_step_behavior(
-        self,
-        handle: Any,
-        sim_time: float,
-        truth: Any,
-        inst: Any,
-    ) -> None:
-        if self._mainline:
-            handle.loader.update_command_chain_only(
-                sim_time, truth=truth, inst=inst, sync_to_kernel=False,
-            )
-        else:
-            handle.loader.update_behaviors(
-                sim_time, truth=truth, inst=inst, sync_to_kernel=False,
-            )
-
-    @property
-    def skip_post_behavior_command_sync(self) -> bool:
-        return self._mainline
 
     def finalize_post_step_truth(
         self,
@@ -716,8 +690,8 @@ class LeaderPlugin(ExecutionModePlugin):
     points are structurally identical to the base behavior (plain
     ``update_behaviors``, always sync, no finalizer).  The inner
     ``WorldBatchVecEnv`` that owns the physics step has its own
-    ``StandardExecutionPlugin`` for execution-mode-specific routing (mainline
-    episode controller, air-combat hybrid finalization).
+    ``StandardExecutionPlugin`` for execution-mode-specific routing
+    (air-combat hybrid finalization).
     """
 
     mode_name = "leader"

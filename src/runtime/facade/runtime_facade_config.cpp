@@ -3,7 +3,6 @@
 #include "runtime/contracts/cuda_resident_backend_admission.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
 
-#include <stdexcept>
 #include <string>
 
 namespace {
@@ -95,7 +94,7 @@ RuntimeBatchConfig RuntimeFacade::batch_config() const noexcept {
 RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {
     return RuntimeCapabilities{
         .supports_batch_runtime = runtime_ != nullptr,
-        .supports_compiled_episode_controller = true,
+        .supports_compiled_episode_controller = false,
         .supports_compiled_execution_step = true,
         .supports_gpu_visual = false,
         .supports_gpu_observation = false,
@@ -232,56 +231,4 @@ bool RuntimeFacade::load_unit_definitions(const std::string &path, std::string *
         *error = result.error;
     }
     return result.loaded;
-}
-
-namespace {
-
-// I54-R/I54-R2 fail-fast for invalidated evidence cursors, matching the
-// facade/runtime family's existing throwing guards (std::out_of_range /
-// std::invalid_argument in world_batch_runtime.cpp); std::logic_error is
-// their shared base. The sentinel has two entry paths, so the message names
-// both: a move transferred the run identity away, or the cursor exhausted its
-// uint64 space (post-increment of UINT64_MAX wraps onto the sentinel).
-[[noreturn]] void throw_evidence_allocator_invalidated() {
-    throw std::logic_error(
-        "RuntimeFacade evidence allocator invalidated: this facade was moved-from (the run "
-        "identity transferred to the move destination) or the counter exhausted its uint64 "
-        "id space");
-}
-
-} // namespace
-
-// T10 evidence spine, slice 3 / I54 (VA-2, VA-8). Run-global monotone
-// producers owned by the facade instance; see runtime_facade.h for the
-// run-global boundary adjudication, the move/fail-fast semantics, and the
-// uint64 exhaustion boundary (minting UINT64_MAX wraps the cursor onto the
-// invalidated sentinel, after which the producers fail fast permanently).
-// These are intentionally not invoked by any existing export path in this
-// slice, so they perturb no serialized output.
-std::uint64_t RuntimeFacade::allocate_run_snapshot_version() {
-    if (next_run_snapshot_version_ == kInvalidatedEvidenceCursor) {
-        throw_evidence_allocator_invalidated();
-    }
-    return next_run_snapshot_version_++;
-}
-
-std::uint64_t RuntimeFacade::peek_next_run_snapshot_version() const {
-    if (next_run_snapshot_version_ == kInvalidatedEvidenceCursor) {
-        throw_evidence_allocator_invalidated();
-    }
-    return next_run_snapshot_version_;
-}
-
-std::uint64_t RuntimeFacade::allocate_trace_id() {
-    if (next_trace_id_ == kInvalidatedEvidenceCursor) {
-        throw_evidence_allocator_invalidated();
-    }
-    return next_trace_id_++;
-}
-
-std::uint64_t RuntimeFacade::peek_next_trace_id() const {
-    if (next_trace_id_ == kInvalidatedEvidenceCursor) {
-        throw_evidence_allocator_invalidated();
-    }
-    return next_trace_id_;
 }

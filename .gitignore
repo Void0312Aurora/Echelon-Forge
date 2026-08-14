@@ -50,6 +50,9 @@ install_manifest.txt
 CTestTestfile.cmake
 _deps/
 
+# --- Git worktrees (local isolation workspaces) ---
+.worktrees/
+
 # --- OS Specific ---
 .DS_Store
 Thumbs.db

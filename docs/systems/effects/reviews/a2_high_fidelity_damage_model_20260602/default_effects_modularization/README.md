@@ -12,7 +12,7 @@ Inputs:
 - Parent task index: [A2 high-fidelity air-combat damage model](../README.zh.md)
 - Agent subproject standard: [subproject_creation_standard.zh.md](../../../../../engineering/automation/rules/subproject_creation_standard.zh.md)
 - Subagent policy: [subagent_usage_policy.zh.md](../../../../../engineering/automation/standards/subagent_usage_policy.zh.md)
-- Triggering assessment: [Echelon Forge comprehensive assessment](../../../../../evaluation/archive/echelon_forge_comprehensive_assessment_20260601.zh.md)
+- Triggering assessment: Echelon Forge comprehensive assessment (`git show a32e67bd:docs/evaluation/archive/echelon_forge_comprehensive_assessment_20260601.zh.md`)
 - Code surface: [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp)
 
 ## Purpose
@@ -77,7 +77,7 @@ Out of scope:
 - Current status: [default_effects_modularization_current_status_20260601.md](default_effects_modularization_current_status_20260601.md)
 - Round-1 acceptance: [default_effects_modularization_acceptance_20260601.md](default_effects_modularization_acceptance_20260601.md)
 - Closure sync: [default_effects_modularization_closure_sync_20260602.md](default_effects_modularization_closure_sync_20260602.md)
-- Archive closeout: [archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)
+- Archive closeout: `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md`
 
 ## Outputs And Evidence
 
@@ -111,5 +111,4 @@ This subproject can be marked accepted only when:
 
 ## Archive
 
-- Archive index: [archive/README.md](archive/README.md)
-- Final closeout: [archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)
+- Final closeout: `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/default_effects_modularization/archive/default_effects_modularization_closeout_20260602.md`

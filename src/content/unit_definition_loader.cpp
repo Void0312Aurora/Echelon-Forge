@@ -722,38 +722,13 @@ void copy_authoritative_vulnerability_rows(const VulnerabilityEvidenceDescriptor
         descriptor->component_failure_probability_authority && !profile->evidence_rows.empty();
 }
 
-} // namespace
+// ---------------------------------------------------------------------------
+// parse_unit_json field-domain helpers. Each body is the corresponding field
+// block of the historical monolithic parser moved verbatim: JSON key set,
+// defaults, warning/error text, and key read order are unchanged.
+// ---------------------------------------------------------------------------
 
-// Helper to parse a single JSON object (unit definition)
-bool parse_unit_json(
-    const nlohmann::json &entry, UnitDefinition &def, std::string *error,
-    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors = nullptr) {
-    if (!entry.contains("type") || !entry["type"].is_string()) {
-        if (error) *error = "Unit entry missing string 'type'.";
-        return false;
-    }
-
-    std::string type_str = entry["type"].get<std::string>();
-    if (!parse_unit_type(type_str, &def.type) || def.type == UnitType::Unknown) {
-        if (error) *error = "Unknown unit type: " + type_str;
-        return false;
-    }
-
-    def.name = entry.value("name", type_str);
-    // Table-driven purely-mechanical direct top-level scalar reads
-    // (content/detail/unit_definition_direct_fields.inc, I61 / T11 slice 4
-    // bundle 2). The list is expanded at each field's original parse phase so
-    // malformed multi-key input keeps the same fail-first order. Each active
-    // expansion is token-identical to the previous hand-written statement.
-#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)                                  \
-    def.name = entry.value(#name, default_value);
-#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)
-#include "content/detail/unit_definition_direct_fields.inc"
-    def.has_stall_state = false;
-    def.stall_state = {};
-    def.has_missile_tuning = false;
-    def.missile_tuning = {};
-
+void parse_engine_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     if (entry.contains("engine_ref")) {
         def.engine_ref = entry["engine_ref"].get<std::string>();
     }
@@ -783,7 +758,9 @@ bool parse_unit_json(
         }
         parse_engine_tuning_json_fields(entry["engine_tuning"], &def.engine_data.tuning);
     }
+}
 
+void parse_hardpoints_and_loadout_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     if (entry.contains("hardpoints") && entry["hardpoints"].is_array()) {
         for (const auto &hp_json : entry["hardpoints"]) {
             Hardpoint hp;
@@ -803,14 +780,18 @@ bool parse_unit_json(
             def.default_loadout[std::stoi(key)] = val.get<std::string>();
         }
     }
+}
 
+void parse_health_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.health = {100.0, 100.0};
     if (entry.contains("health")) {
         const auto &h = entry["health"];
         def.health.current_hp = h.value("current_hp", def.health.current_hp);
         def.health.max_hp = h.value("max_hp", def.health.max_hp);
     }
+}
 
+void parse_sensor_and_sonar_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.has_sensor = false;
     def.sensor = make_unit_definition_default_sensor();
     def.mounted_sensors.mounts.clear();
@@ -867,8 +848,9 @@ bool parse_unit_json(
             def.mounted_sonars.mounts.push_back(mount);
         }
     }
+}
 
-    def.has_flight_model = entry.value("has_flight_model", false);
+void parse_flight_model_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.flight_model = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     if (entry.contains("flight_model")) {
         def.has_flight_model = true;
@@ -886,8 +868,9 @@ bool parse_unit_json(
         def.flight_model.landing_speed = fm.value("landing_speed", 70.0);
         def.flight_model.taxi_turn_rate = fm.value("taxi_turn_rate", 15.0);
     }
+}
 
-    def.has_landing_gear = entry.value("has_landing_gear", false);
+void parse_landing_gear_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.landing_gear = {false, 0.02, 3.0, 2.0, 1.0, false, 5.0}; // Default Paved Only
     if (entry.contains("landing_gear")) {
         def.has_landing_gear = true;
@@ -901,8 +884,9 @@ bool parse_unit_json(
         def.landing_gear.contact_height_m =
             lg.value("contact_height_m", def.landing_gear.contact_height_m);
     }
+}
 
-    def.has_score = entry.value("has_score", true);
+void parse_score_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.score = {0.0, 0, 0, 0};
     if (entry.contains("score")) {
         const auto &sc = entry["score"];
@@ -911,24 +895,18 @@ bool parse_unit_json(
         def.score.hits_landed = sc.value("hits_landed", def.score.hits_landed);
         def.score.kills_confirmed = sc.value("kills_confirmed", def.score.kills_confirmed);
     }
+}
 
-    if (entry.contains("airframe")) {
-        const auto &af = entry["airframe"];
-        def.airframe.empty_mass_kg = af.value("empty_mass_kg", 0.0);
-        def.airframe.max_fuel_kg = af.value("max_fuel_kg", 0.0);
-        def.airframe.drag_coefficient = af.value("drag_coefficient", 0.02);
-        def.airframe.reference_area = af.value("reference_area", 27.0);
-
-        def.airframe.length_m = af.value("length_m", 15.0);
-        def.airframe.wingspan_m = af.value("wingspan_m", 10.0);
-        def.airframe.height_m = af.value("height_m", 5.0);
-        def.airframe.configuration = af.value("configuration", "Conventional");
-        if (af.contains("tuning") && af["tuning"].is_object()) {
-            def.airframe.has_tuning = true;
-            def.airframe.tuning = flight_dynamics::default_aero_tuning();
-            parse_aero_tuning_json_fields(af["tuning"], &def.airframe.tuning);
-        }
+void parse_airframe_nested_tuning_json_fields(const nlohmann::json &af, UnitDefinition &def) {
+    if (af.contains("tuning") && af["tuning"].is_object()) {
+        def.airframe.has_tuning = true;
+        def.airframe.tuning = flight_dynamics::default_aero_tuning();
+        parse_aero_tuning_json_fields(af["tuning"], &def.airframe.tuning);
     }
+}
+
+void parse_aero_tuning_and_stall_state_json_fields(const nlohmann::json &entry,
+                                                   UnitDefinition &def) {
     if (entry.contains("aero_tuning") && entry["aero_tuning"].is_object()) {
         def.airframe.has_tuning = true;
         if (!def.airframe.tuning.enabled) {
@@ -940,43 +918,9 @@ bool parse_unit_json(
         def.has_stall_state = true;
         parse_stall_state_json_fields(entry["stall_state"], &def.stall_state);
     }
+}
 
-    def.has_ship_platform = false;
-    def.ship_platform = {};
-    if (entry.contains("ship_platform") && entry["ship_platform"].is_object()) {
-        def.has_ship_platform = true;
-        const auto &sp = entry["ship_platform"];
-        // Table-driven ShipPlatform inner scalar reads
-        // (content/detail/ship_platform_fields.inc, T11 loader table-drive
-        // bundle, this iteration). Expanded at the original seam in the
-        // original read order so malformed multi-key input keeps the same
-        // fail-first order; each expansion is token-identical to the previous
-        // hand-written statement. The presence flag and sp binding above stay
-        // hand-written.
-#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value)                                      \
-    def.ship_platform.name = sp.value(#name, def.ship_platform.name);
-#include "content/detail/ship_platform_fields.inc"
-    }
-
-    def.has_submarine_platform = false;
-    def.submarine_platform = {};
-    if (entry.contains("submarine_platform") && entry["submarine_platform"].is_object()) {
-        def.has_submarine_platform = true;
-        const auto &sp = entry["submarine_platform"];
-        // Table-driven SubmarinePlatform inner scalar reads
-        // (content/detail/submarine_platform_fields.inc, T11 loader
-        // table-drive bundle, this iteration). Expanded at the original seam
-        // in the original read order so malformed multi-key input keeps the
-        // same fail-first order; each expansion is token-identical to the
-        // previous hand-written statement. The presence flag and sp binding
-        // above stay hand-written.
-#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value)                                 \
-    def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);
-#include "content/detail/submarine_platform_fields.inc"
-    }
-
-    def.has_naval_stores = false;
-    def.naval_stores = {};
+void parse_naval_stores_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     if (entry.contains("naval_stores") && entry["naval_stores"].is_object()) {
         def.has_naval_stores = true;
         const auto &stores = entry["naval_stores"];
@@ -997,7 +941,9 @@ bool parse_unit_json(
         def.naval_stores.can_provide_underway =
             stores.value("can_provide_underway", def.naval_stores.can_provide_underway);
     }
+}
 
+void parse_naval_logistics_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.has_naval_logistics = false;
     def.naval_logistics = {};
     if (entry.contains("naval_logistics") && entry["naval_logistics"].is_object()) {
@@ -1020,7 +966,9 @@ bool parse_unit_json(
             logistics.value("transfer_rate_dry_cargo_units_per_s",
                             def.naval_logistics.transfer_rate_dry_cargo_units_per_s);
     }
+}
 
+void parse_naval_weapon_system_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.has_naval_weapon_system = false;
     def.naval_weapon_system.mounts.clear();
     if (entry.contains("naval_weapon_system") && entry["naval_weapon_system"].is_object()) {
@@ -1050,7 +998,9 @@ bool parse_unit_json(
             }
         }
     }
+}
 
+void parse_embarked_air_ops_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.has_embarked_air_ops = false;
     def.embarked_air_ops = {};
     if (entry.contains("embarked_air_ops") && entry["embarked_air_ops"].is_object()) {
@@ -1072,7 +1022,252 @@ bool parse_unit_json(
         def.embarked_air_ops.relay_oth_targeting =
             ops.value("relay_oth_targeting", def.embarked_air_ops.relay_oth_targeting);
     }
+}
 
+void parse_damage_component_dependencies_json_fields(const nlohmann::json &component_json,
+                                                     DamageComponent &component) {
+    if (component_json.contains("dependencies") && component_json["dependencies"].is_array()) {
+        for (const auto &dependency_json : component_json["dependencies"]) {
+            DamageComponentDependency dependency{};
+            if (dependency_json.is_string()) {
+                dependency.system = dependency_json.get<std::string>();
+                dependency.target_system = dependency.system;
+            } else if (dependency_json.is_object()) {
+                dependency.target_system =
+                    dependency_json.value("target_system", dependency_json.value("system", ""));
+                dependency.system = dependency_json.value("system", dependency.target_system);
+                if (dependency.target_system.empty()) {
+                    dependency.target_system = dependency.system;
+                }
+                dependency.scale = dependency_json.value("scale", dependency.scale);
+                dependency.edge_type = dependency_json.value("edge_type", dependency.edge_type);
+                dependency.threshold = dependency_json.value("threshold", dependency.threshold);
+                dependency.delay_s = dependency_json.value("delay_s", dependency.delay_s);
+                dependency.direction = dependency_json.value("direction", dependency.direction);
+                dependency.provenance = dependency_json.value("provenance", dependency.provenance);
+            }
+            if (dependency.system.empty()) {
+                dependency.system = dependency.target_system;
+            }
+            if (dependency.target_system.empty()) {
+                dependency.target_system = dependency.system;
+            }
+            if (dependency.system.empty() && dependency.target_system.empty()) {
+                continue;
+            }
+            component.dependencies.push_back(dependency);
+        }
+    }
+}
+
+void parse_damage_component_thresholds_and_failure_modes_json_fields(
+    const nlohmann::json &component_json, DamageComponent &component) {
+    if (component_json.contains("mechanism_thresholds") &&
+        component_json["mechanism_thresholds"].is_object()) {
+        for (const auto &[family, value] : component_json["mechanism_thresholds"].items()) {
+            if (value.is_number()) {
+                component.mechanism_threshold_scales[family] = value.get<double>();
+            }
+        }
+    }
+    if (component_json.contains("failure_modes")) {
+        const auto &failure_modes_json = component_json["failure_modes"];
+        if (failure_modes_json.is_array()) {
+            for (const auto &mode_json : failure_modes_json) {
+                if (!mode_json.is_string()) {
+                    continue;
+                }
+                const std::string mode = canonical_part_failure_mode(mode_json.get<std::string>());
+                if (is_known_part_failure_mode(mode)) {
+                    component.failure_mode_weights[mode] =
+                        std::max(component.failure_mode_weights[mode], 1.0);
+                }
+            }
+        } else if (failure_modes_json.is_object()) {
+            for (const auto &[mode_key, value] : failure_modes_json.items()) {
+                if (!value.is_number()) {
+                    continue;
+                }
+                const std::string mode = canonical_part_failure_mode(mode_key);
+                if (is_known_part_failure_mode(mode)) {
+                    component.failure_mode_weights[mode] =
+                        std::clamp(value.get<double>(), 0.0, 2.0);
+                }
+            }
+        }
+    }
+    if (component_json.contains("failure_mode_weights") &&
+        component_json["failure_mode_weights"].is_object()) {
+        for (const auto &[mode_key, value] : component_json["failure_mode_weights"].items()) {
+            if (!value.is_number()) {
+                continue;
+            }
+            const std::string mode = canonical_part_failure_mode(mode_key);
+            if (is_known_part_failure_mode(mode)) {
+                component.failure_mode_weights[mode] = std::clamp(value.get<double>(), 0.0, 2.0);
+            }
+        }
+    }
+}
+
+bool parse_damage_component_json_fields(const nlohmann::json &component_json, const Hitbox &hb,
+                                        DamageComponent &component) {
+    component.name = component_json.value("name", "");
+    component.system = component_json.value("system", component.name);
+    component.redundancy_group_id = component_json.value("redundancy_group_id", "");
+    parse_damage_component_dependencies_json_fields(component_json, component);
+    if (component.system.empty()) {
+        return false;
+    }
+    if (component_json.contains("offset") && component_json["offset"].is_array() &&
+        component_json["offset"].size() >= 3) {
+        component.offset_x = component_json["offset"][0];
+        component.offset_y = component_json["offset"][1];
+        component.offset_z = component_json["offset"][2];
+    } else {
+        component.offset_x = hb.offset_x;
+        component.offset_y = hb.offset_y;
+        component.offset_z = hb.offset_z;
+    }
+    if (component_json.contains("size") && component_json["size"].is_array() &&
+        component_json["size"].size() >= 3) {
+        component.dim_l = component_json["size"][0];
+        component.dim_w = component_json["size"][1];
+        component.dim_h = component_json["size"][2];
+    } else {
+        component.dim_l = hb.dim_l;
+        component.dim_w = hb.dim_w;
+        component.dim_h = hb.dim_h;
+    }
+    component.armor_mm = component_json.value("armor", hb.armor_mm);
+    component.threshold_scale = component_json.value("threshold_scale", component.threshold_scale);
+    parse_damage_component_thresholds_and_failure_modes_json_fields(component_json, component);
+    component.redundancy_group =
+        component_json.value("redundancy_group", component.redundancy_group);
+    component.redundancy_weight =
+        component_json.value("redundancy_weight", component.redundancy_weight);
+    component.critical = component_json.value("critical", component.critical);
+    parse_damage_component_geometry_json_fields(component_json, &component);
+    if (component.geometry_half_extents_m[0] <= 0.0 &&
+        component.geometry_half_extents_m[1] <= 0.0 &&
+        component.geometry_half_extents_m[2] <= 0.0) {
+        component.geometry_half_extents_m = {{
+            component.dim_l * 0.5,
+            component.dim_w * 0.5,
+            component.dim_h * 0.5,
+        }};
+    }
+    return true;
+}
+
+void parse_damage_hitbox_json_fields(const nlohmann::json &hb_json, Hitbox &hb) {
+    if (hb_json.contains("offset") && hb_json["offset"].is_array() &&
+        hb_json["offset"].size() >= 3) {
+        hb.offset_x = hb_json["offset"][0];
+        hb.offset_y = hb_json["offset"][1];
+        hb.offset_z = hb_json["offset"][2];
+    }
+
+    if (hb_json.contains("size") && hb_json["size"].is_array() && hb_json["size"].size() >= 3) {
+        hb.dim_l = hb_json["size"][0];
+        hb.dim_w = hb_json["size"][1];
+        hb.dim_h = hb_json["size"][2];
+    }
+
+    hb.armor_mm = hb_json.value("armor", 0.0);
+
+    if (hb_json.contains("systems") && hb_json["systems"].is_array()) {
+        for (const auto &sys : hb_json["systems"]) {
+            hb.protected_systems.push_back(sys.get<std::string>());
+        }
+    }
+    if (hb_json.contains("components") && hb_json["components"].is_array()) {
+        for (const auto &component_json : hb_json["components"]) {
+            if (!component_json.is_object()) {
+                continue;
+            }
+            DamageComponent component{};
+            if (!parse_damage_component_json_fields(component_json, hb, component)) {
+                continue;
+            }
+            hb.components.push_back(component);
+        }
+    }
+}
+
+void parse_aircraft_vulnerability_json_fields(
+    const nlohmann::json &dm, UnitDefinition &def,
+    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors) {
+    def.has_aircraft_vulnerability = false;
+    def.aircraft_vulnerability = {};
+    if (dm.contains("vulnerability") && dm["vulnerability"].is_object()) {
+        const auto &vuln = dm["vulnerability"];
+        def.has_aircraft_vulnerability = true;
+        def.aircraft_vulnerability.synthetic =
+            vuln.value("synthetic", def.aircraft_vulnerability.synthetic);
+        def.aircraft_vulnerability.calibrated =
+            vuln.value("calibrated", def.aircraft_vulnerability.calibrated);
+        def.aircraft_vulnerability.pk_authority =
+            vuln.value("pk_authority", def.aircraft_vulnerability.pk_authority);
+        def.aircraft_vulnerability.deterministic_fuze_authority =
+            vuln.value("deterministic_fuze_authority",
+                       def.aircraft_vulnerability.deterministic_fuze_authority);
+        def.aircraft_vulnerability.provenance =
+            vuln.value("provenance", def.aircraft_vulnerability.provenance);
+        def.aircraft_vulnerability.evidence_dataset_ref =
+            vuln.value("evidence_dataset_ref", def.aircraft_vulnerability.evidence_dataset_ref);
+        def.aircraft_vulnerability.calibration_status =
+            vuln.value("calibration_status", def.aircraft_vulnerability.calibration_status);
+        const bool requested_pk_authority = def.aircraft_vulnerability.pk_authority;
+        const bool requested_deterministic_fuze_authority =
+            def.aircraft_vulnerability.deterministic_fuze_authority;
+        const VulnerabilityEvidenceDescriptor *descriptor = find_vulnerability_evidence_descriptor(
+            vulnerability_descriptors, def.aircraft_vulnerability);
+        def.aircraft_vulnerability.evidence_dataset_valid =
+            vulnerability_evidence_descriptor_is_calibrated_match(
+                vulnerability_descriptors, def.aircraft_vulnerability, def.name);
+        copy_vulnerability_descriptor_metadata(descriptor, &def.aircraft_vulnerability);
+        if (!aircraft_vulnerability_has_calibrated_evidence(def.aircraft_vulnerability)) {
+            def.aircraft_vulnerability.effect_scale_authority = false;
+            def.aircraft_vulnerability.component_failure_probability_authority = false;
+            def.aircraft_vulnerability.pk_authority = false;
+            def.aircraft_vulnerability.deterministic_fuze_authority = false;
+        } else {
+            def.aircraft_vulnerability.pk_authority =
+                requested_pk_authority && descriptor && descriptor->pk_authority;
+            def.aircraft_vulnerability.deterministic_fuze_authority =
+                requested_deterministic_fuze_authority && descriptor &&
+                descriptor->deterministic_fuze_authority;
+            copy_authoritative_vulnerability_rows(descriptor, &def.aircraft_vulnerability);
+        }
+        def.aircraft_vulnerability.blast_scale =
+            vuln.value("blast_scale", def.aircraft_vulnerability.blast_scale);
+        def.aircraft_vulnerability.fragmentation_scale =
+            vuln.value("fragmentation_scale", def.aircraft_vulnerability.fragmentation_scale);
+        def.aircraft_vulnerability.continuous_rod_scale =
+            vuln.value("continuous_rod_scale", def.aircraft_vulnerability.continuous_rod_scale);
+        def.aircraft_vulnerability.hit_to_kill_scale =
+            vuln.value("hit_to_kill_scale", def.aircraft_vulnerability.hit_to_kill_scale);
+        def.aircraft_vulnerability.nose_aspect_scale =
+            vuln.value("nose_aspect_scale", def.aircraft_vulnerability.nose_aspect_scale);
+        def.aircraft_vulnerability.beam_aspect_scale =
+            vuln.value("beam_aspect_scale", def.aircraft_vulnerability.beam_aspect_scale);
+        def.aircraft_vulnerability.tail_aspect_scale =
+            vuln.value("tail_aspect_scale", def.aircraft_vulnerability.tail_aspect_scale);
+        def.aircraft_vulnerability.high_closure_scale =
+            vuln.value("high_closure_scale", def.aircraft_vulnerability.high_closure_scale);
+        def.aircraft_vulnerability.low_closure_scale =
+            vuln.value("low_closure_scale", def.aircraft_vulnerability.low_closure_scale);
+        def.aircraft_vulnerability.near_miss_scale =
+            vuln.value("near_miss_scale", def.aircraft_vulnerability.near_miss_scale);
+        def.aircraft_vulnerability.direct_hit_scale =
+            vuln.value("direct_hit_scale", def.aircraft_vulnerability.direct_hit_scale);
+    }
+}
+
+void parse_damage_model_json_fields(
+    const nlohmann::json &entry, UnitDefinition &def,
+    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors) {
     if (entry.contains("damage_model") && entry["damage_model"].is_object()) {
         const auto &dm = entry["damage_model"];
         if (dm.contains("hitboxes") && dm["hitboxes"].is_array()) {
@@ -1080,246 +1275,15 @@ bool parse_unit_json(
             for (const auto &hb_json : dm["hitboxes"]) {
                 Hitbox hb;
                 hb.id = hb_idx++;
-
-                if (hb_json.contains("offset") && hb_json["offset"].is_array() &&
-                    hb_json["offset"].size() >= 3) {
-                    hb.offset_x = hb_json["offset"][0];
-                    hb.offset_y = hb_json["offset"][1];
-                    hb.offset_z = hb_json["offset"][2];
-                }
-
-                if (hb_json.contains("size") && hb_json["size"].is_array() &&
-                    hb_json["size"].size() >= 3) {
-                    hb.dim_l = hb_json["size"][0];
-                    hb.dim_w = hb_json["size"][1];
-                    hb.dim_h = hb_json["size"][2];
-                }
-
-                hb.armor_mm = hb_json.value("armor", 0.0);
-
-                if (hb_json.contains("systems") && hb_json["systems"].is_array()) {
-                    for (const auto &sys : hb_json["systems"]) {
-                        hb.protected_systems.push_back(sys.get<std::string>());
-                    }
-                }
-                if (hb_json.contains("components") && hb_json["components"].is_array()) {
-                    for (const auto &component_json : hb_json["components"]) {
-                        if (!component_json.is_object()) {
-                            continue;
-                        }
-                        DamageComponent component{};
-                        component.name = component_json.value("name", "");
-                        component.system = component_json.value("system", component.name);
-                        component.redundancy_group_id =
-                            component_json.value("redundancy_group_id", "");
-                        if (component_json.contains("dependencies") &&
-                            component_json["dependencies"].is_array()) {
-                            for (const auto &dependency_json : component_json["dependencies"]) {
-                                DamageComponentDependency dependency{};
-                                if (dependency_json.is_string()) {
-                                    dependency.system = dependency_json.get<std::string>();
-                                    dependency.target_system = dependency.system;
-                                } else if (dependency_json.is_object()) {
-                                    dependency.target_system = dependency_json.value(
-                                        "target_system", dependency_json.value("system", ""));
-                                    dependency.system =
-                                        dependency_json.value("system", dependency.target_system);
-                                    if (dependency.target_system.empty()) {
-                                        dependency.target_system = dependency.system;
-                                    }
-                                    dependency.scale =
-                                        dependency_json.value("scale", dependency.scale);
-                                    dependency.edge_type =
-                                        dependency_json.value("edge_type", dependency.edge_type);
-                                    dependency.threshold =
-                                        dependency_json.value("threshold", dependency.threshold);
-                                    dependency.delay_s =
-                                        dependency_json.value("delay_s", dependency.delay_s);
-                                    dependency.direction =
-                                        dependency_json.value("direction", dependency.direction);
-                                    dependency.provenance =
-                                        dependency_json.value("provenance", dependency.provenance);
-                                }
-                                if (dependency.system.empty()) {
-                                    dependency.system = dependency.target_system;
-                                }
-                                if (dependency.target_system.empty()) {
-                                    dependency.target_system = dependency.system;
-                                }
-                                if (dependency.system.empty() && dependency.target_system.empty()) {
-                                    continue;
-                                }
-                                component.dependencies.push_back(dependency);
-                            }
-                        }
-                        if (component.system.empty()) {
-                            continue;
-                        }
-                        if (component_json.contains("offset") &&
-                            component_json["offset"].is_array() &&
-                            component_json["offset"].size() >= 3) {
-                            component.offset_x = component_json["offset"][0];
-                            component.offset_y = component_json["offset"][1];
-                            component.offset_z = component_json["offset"][2];
-                        } else {
-                            component.offset_x = hb.offset_x;
-                            component.offset_y = hb.offset_y;
-                            component.offset_z = hb.offset_z;
-                        }
-                        if (component_json.contains("size") && component_json["size"].is_array() &&
-                            component_json["size"].size() >= 3) {
-                            component.dim_l = component_json["size"][0];
-                            component.dim_w = component_json["size"][1];
-                            component.dim_h = component_json["size"][2];
-                        } else {
-                            component.dim_l = hb.dim_l;
-                            component.dim_w = hb.dim_w;
-                            component.dim_h = hb.dim_h;
-                        }
-                        component.armor_mm = component_json.value("armor", hb.armor_mm);
-                        component.threshold_scale =
-                            component_json.value("threshold_scale", component.threshold_scale);
-                        if (component_json.contains("mechanism_thresholds") &&
-                            component_json["mechanism_thresholds"].is_object()) {
-                            for (const auto &[family, value] :
-                                 component_json["mechanism_thresholds"].items()) {
-                                if (value.is_number()) {
-                                    component.mechanism_threshold_scales[family] =
-                                        value.get<double>();
-                                }
-                            }
-                        }
-                        if (component_json.contains("failure_modes")) {
-                            const auto &failure_modes_json = component_json["failure_modes"];
-                            if (failure_modes_json.is_array()) {
-                                for (const auto &mode_json : failure_modes_json) {
-                                    if (!mode_json.is_string()) {
-                                        continue;
-                                    }
-                                    const std::string mode =
-                                        canonical_part_failure_mode(mode_json.get<std::string>());
-                                    if (is_known_part_failure_mode(mode)) {
-                                        component.failure_mode_weights[mode] =
-                                            std::max(component.failure_mode_weights[mode], 1.0);
-                                    }
-                                }
-                            } else if (failure_modes_json.is_object()) {
-                                for (const auto &[mode_key, value] : failure_modes_json.items()) {
-                                    if (!value.is_number()) {
-                                        continue;
-                                    }
-                                    const std::string mode = canonical_part_failure_mode(mode_key);
-                                    if (is_known_part_failure_mode(mode)) {
-                                        component.failure_mode_weights[mode] =
-                                            std::clamp(value.get<double>(), 0.0, 2.0);
-                                    }
-                                }
-                            }
-                        }
-                        if (component_json.contains("failure_mode_weights") &&
-                            component_json["failure_mode_weights"].is_object()) {
-                            for (const auto &[mode_key, value] :
-                                 component_json["failure_mode_weights"].items()) {
-                                if (!value.is_number()) {
-                                    continue;
-                                }
-                                const std::string mode = canonical_part_failure_mode(mode_key);
-                                if (is_known_part_failure_mode(mode)) {
-                                    component.failure_mode_weights[mode] =
-                                        std::clamp(value.get<double>(), 0.0, 2.0);
-                                }
-                            }
-                        }
-                        component.redundancy_group =
-                            component_json.value("redundancy_group", component.redundancy_group);
-                        component.redundancy_weight =
-                            component_json.value("redundancy_weight", component.redundancy_weight);
-                        component.critical = component_json.value("critical", component.critical);
-                        parse_damage_component_geometry_json_fields(component_json, &component);
-                        if (component.geometry_half_extents_m[0] <= 0.0 &&
-                            component.geometry_half_extents_m[1] <= 0.0 &&
-                            component.geometry_half_extents_m[2] <= 0.0) {
-                            component.geometry_half_extents_m = {{
-                                component.dim_l * 0.5,
-                                component.dim_w * 0.5,
-                                component.dim_h * 0.5,
-                            }};
-                        }
-                        hb.components.push_back(component);
-                    }
-                }
+                parse_damage_hitbox_json_fields(hb_json, hb);
                 def.damage_model.hitboxes.push_back(hb);
             }
         }
-        def.has_aircraft_vulnerability = false;
-        def.aircraft_vulnerability = {};
-        if (dm.contains("vulnerability") && dm["vulnerability"].is_object()) {
-            const auto &vuln = dm["vulnerability"];
-            def.has_aircraft_vulnerability = true;
-            def.aircraft_vulnerability.synthetic =
-                vuln.value("synthetic", def.aircraft_vulnerability.synthetic);
-            def.aircraft_vulnerability.calibrated =
-                vuln.value("calibrated", def.aircraft_vulnerability.calibrated);
-            def.aircraft_vulnerability.pk_authority =
-                vuln.value("pk_authority", def.aircraft_vulnerability.pk_authority);
-            def.aircraft_vulnerability.deterministic_fuze_authority =
-                vuln.value("deterministic_fuze_authority",
-                           def.aircraft_vulnerability.deterministic_fuze_authority);
-            def.aircraft_vulnerability.provenance =
-                vuln.value("provenance", def.aircraft_vulnerability.provenance);
-            def.aircraft_vulnerability.evidence_dataset_ref =
-                vuln.value("evidence_dataset_ref", def.aircraft_vulnerability.evidence_dataset_ref);
-            def.aircraft_vulnerability.calibration_status =
-                vuln.value("calibration_status", def.aircraft_vulnerability.calibration_status);
-            const bool requested_pk_authority = def.aircraft_vulnerability.pk_authority;
-            const bool requested_deterministic_fuze_authority =
-                def.aircraft_vulnerability.deterministic_fuze_authority;
-            const VulnerabilityEvidenceDescriptor *descriptor =
-                find_vulnerability_evidence_descriptor(vulnerability_descriptors,
-                                                       def.aircraft_vulnerability);
-            def.aircraft_vulnerability.evidence_dataset_valid =
-                vulnerability_evidence_descriptor_is_calibrated_match(
-                    vulnerability_descriptors, def.aircraft_vulnerability, def.name);
-            copy_vulnerability_descriptor_metadata(descriptor, &def.aircraft_vulnerability);
-            if (!aircraft_vulnerability_has_calibrated_evidence(def.aircraft_vulnerability)) {
-                def.aircraft_vulnerability.effect_scale_authority = false;
-                def.aircraft_vulnerability.component_failure_probability_authority = false;
-                def.aircraft_vulnerability.pk_authority = false;
-                def.aircraft_vulnerability.deterministic_fuze_authority = false;
-            } else {
-                def.aircraft_vulnerability.pk_authority =
-                    requested_pk_authority && descriptor && descriptor->pk_authority;
-                def.aircraft_vulnerability.deterministic_fuze_authority =
-                    requested_deterministic_fuze_authority && descriptor &&
-                    descriptor->deterministic_fuze_authority;
-                copy_authoritative_vulnerability_rows(descriptor, &def.aircraft_vulnerability);
-            }
-            def.aircraft_vulnerability.blast_scale =
-                vuln.value("blast_scale", def.aircraft_vulnerability.blast_scale);
-            def.aircraft_vulnerability.fragmentation_scale =
-                vuln.value("fragmentation_scale", def.aircraft_vulnerability.fragmentation_scale);
-            def.aircraft_vulnerability.continuous_rod_scale =
-                vuln.value("continuous_rod_scale", def.aircraft_vulnerability.continuous_rod_scale);
-            def.aircraft_vulnerability.hit_to_kill_scale =
-                vuln.value("hit_to_kill_scale", def.aircraft_vulnerability.hit_to_kill_scale);
-            def.aircraft_vulnerability.nose_aspect_scale =
-                vuln.value("nose_aspect_scale", def.aircraft_vulnerability.nose_aspect_scale);
-            def.aircraft_vulnerability.beam_aspect_scale =
-                vuln.value("beam_aspect_scale", def.aircraft_vulnerability.beam_aspect_scale);
-            def.aircraft_vulnerability.tail_aspect_scale =
-                vuln.value("tail_aspect_scale", def.aircraft_vulnerability.tail_aspect_scale);
-            def.aircraft_vulnerability.high_closure_scale =
-                vuln.value("high_closure_scale", def.aircraft_vulnerability.high_closure_scale);
-            def.aircraft_vulnerability.low_closure_scale =
-                vuln.value("low_closure_scale", def.aircraft_vulnerability.low_closure_scale);
-            def.aircraft_vulnerability.near_miss_scale =
-                vuln.value("near_miss_scale", def.aircraft_vulnerability.near_miss_scale);
-            def.aircraft_vulnerability.direct_hit_scale =
-                vuln.value("direct_hit_scale", def.aircraft_vulnerability.direct_hit_scale);
-        }
+        parse_aircraft_vulnerability_json_fields(dm, def, vulnerability_descriptors);
     }
+}
 
-    def.has_ammo = entry.value("has_ammo", false);
+void parse_ammo_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.ammo = {0, 0};
     if (entry.contains("ammo")) {
         def.has_ammo = true;
@@ -1327,7 +1291,9 @@ bool parse_unit_json(
         def.ammo.missiles_remaining = ammo.value("missiles_remaining", def.ammo.missiles_remaining);
         def.ammo.max_missiles = ammo.value("max_missiles", def.ammo.max_missiles);
     }
+}
 
+void parse_missile_definition_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     if (def.type == UnitType::Missile) {
         def.has_missile_tuning = true;
         auto &missile_tuning = def.missile_tuning;
@@ -1404,8 +1370,9 @@ bool parse_unit_json(
             def.has_sensor = true;
         }
     }
+}
 
-    def.has_command_link = entry.value("has_command_link", false);
+void parse_command_link_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     def.command_link = {0.0, 0.0};
     if (entry.contains("command_link")) {
         def.has_command_link = true;
@@ -1413,20 +1380,9 @@ bool parse_unit_json(
         def.command_link.latency_s = link.value("latency_s", def.command_link.latency_s);
         def.command_link.drop_prob = link.value("drop_prob", def.command_link.drop_prob);
     }
+}
 
-    def.has_data_link = entry.value("has_data_link", false);
-#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)
-#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)                              \
-    def.name = entry.value(#name, default_value);
-#include "content/detail/unit_definition_direct_fields.inc"
-    def.data_link_max_reports_per_update =
-        std::max(0, entry.value("data_link_max_reports_per_update", 16));
-    def.data_link_max_messages_per_update =
-        entry.contains("data_link_max_messages_per_update")
-            ? std::max(0, entry.value("data_link_max_messages_per_update",
-                                      def.data_link_max_reports_per_update))
-            : def.data_link_max_reports_per_update;
-
+void parse_electronic_warfare_json_fields(const nlohmann::json &entry, UnitDefinition &def) {
     if (entry.contains("rwr") && entry["rwr"].is_object()) {
         const auto &rwr = entry["rwr"];
         def.rwr_data.sensitivity_dbm = rwr.value("sensitivity_dbm", def.rwr_data.sensitivity_dbm);
@@ -1470,6 +1426,131 @@ bool parse_unit_json(
         def.esm_data.classify_emitters =
             esm.value("classify_emitters", def.esm_data.classify_emitters);
     }
+}
+} // namespace
+
+// Helper to parse a single JSON object (unit definition)
+bool parse_unit_json(
+    const nlohmann::json &entry, UnitDefinition &def, std::string *error,
+    const VulnerabilityEvidenceDescriptorMap *vulnerability_descriptors = nullptr) {
+    if (!entry.contains("type") || !entry["type"].is_string()) {
+        if (error) *error = "Unit entry missing string 'type'.";
+        return false;
+    }
+
+    std::string type_str = entry["type"].get<std::string>();
+    if (!parse_unit_type(type_str, &def.type) || def.type == UnitType::Unknown) {
+        if (error) *error = "Unknown unit type: " + type_str;
+        return false;
+    }
+
+    def.name = entry.value("name", type_str);
+    // Table-driven purely-mechanical direct top-level scalar reads
+    // (content/detail/unit_definition_direct_fields.inc, I61 / T11 slice 4
+    // bundle 2). The list is expanded at each field's original parse phase so
+    // malformed multi-key input keeps the same fail-first order. Each active
+    // expansion is token-identical to the previous hand-written statement.
+#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)                                  \
+    def.name = entry.value(#name, default_value);
+#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)
+#include "content/detail/unit_definition_direct_fields.inc"
+    def.has_stall_state = false;
+    def.stall_state = {};
+    def.has_missile_tuning = false;
+    def.missile_tuning = {};
+
+    parse_engine_json_fields(entry, def);
+    parse_hardpoints_and_loadout_json_fields(entry, def);
+    parse_health_json_fields(entry, def);
+    parse_sensor_and_sonar_json_fields(entry, def);
+
+    def.has_flight_model = entry.value("has_flight_model", false);
+    parse_flight_model_json_fields(entry, def);
+
+    def.has_landing_gear = entry.value("has_landing_gear", false);
+    parse_landing_gear_json_fields(entry, def);
+
+    def.has_score = entry.value("has_score", true);
+    parse_score_json_fields(entry, def);
+
+    if (entry.contains("airframe")) {
+        const auto &af = entry["airframe"];
+        def.airframe.empty_mass_kg = af.value("empty_mass_kg", 0.0);
+        def.airframe.max_fuel_kg = af.value("max_fuel_kg", 0.0);
+        def.airframe.drag_coefficient = af.value("drag_coefficient", 0.02);
+        def.airframe.reference_area = af.value("reference_area", 27.0);
+
+        def.airframe.length_m = af.value("length_m", 15.0);
+        def.airframe.wingspan_m = af.value("wingspan_m", 10.0);
+        def.airframe.height_m = af.value("height_m", 5.0);
+        def.airframe.configuration = af.value("configuration", "Conventional");
+        parse_airframe_nested_tuning_json_fields(af, def);
+    }
+    parse_aero_tuning_and_stall_state_json_fields(entry, def);
+
+    def.has_ship_platform = false;
+    def.ship_platform = {};
+    if (entry.contains("ship_platform") && entry["ship_platform"].is_object()) {
+        def.has_ship_platform = true;
+        const auto &sp = entry["ship_platform"];
+        // Table-driven ShipPlatform inner scalar reads
+        // (content/detail/ship_platform_fields.inc, T11 loader table-drive
+        // bundle, this iteration). Expanded at the original seam in the
+        // original read order so malformed multi-key input keeps the same
+        // fail-first order; each expansion is token-identical to the previous
+        // hand-written statement. The presence flag and sp binding above stay
+        // hand-written.
+#define EF_SHIP_PLATFORM_FIELD(cpp_type, name, default_value)                                      \
+    def.ship_platform.name = sp.value(#name, def.ship_platform.name);
+#include "content/detail/ship_platform_fields.inc"
+    }
+
+    def.has_submarine_platform = false;
+    def.submarine_platform = {};
+    if (entry.contains("submarine_platform") && entry["submarine_platform"].is_object()) {
+        def.has_submarine_platform = true;
+        const auto &sp = entry["submarine_platform"];
+        // Table-driven SubmarinePlatform inner scalar reads
+        // (content/detail/submarine_platform_fields.inc, T11 loader
+        // table-drive bundle, this iteration). Expanded at the original seam
+        // in the original read order so malformed multi-key input keeps the
+        // same fail-first order; each expansion is token-identical to the
+        // previous hand-written statement. The presence flag and sp binding
+        // above stay hand-written.
+#define EF_SUBMARINE_PLATFORM_FIELD(cpp_type, name, default_value)                                 \
+    def.submarine_platform.name = sp.value(#name, def.submarine_platform.name);
+#include "content/detail/submarine_platform_fields.inc"
+    }
+
+    def.has_naval_stores = false;
+    def.naval_stores = {};
+    parse_naval_stores_json_fields(entry, def);
+    parse_naval_logistics_json_fields(entry, def);
+    parse_naval_weapon_system_json_fields(entry, def);
+    parse_embarked_air_ops_json_fields(entry, def);
+    parse_damage_model_json_fields(entry, def, vulnerability_descriptors);
+
+    def.has_ammo = entry.value("has_ammo", false);
+    parse_ammo_json_fields(entry, def);
+    parse_missile_definition_json_fields(entry, def);
+
+    def.has_command_link = entry.value("has_command_link", false);
+    parse_command_link_json_fields(entry, def);
+
+    def.has_data_link = entry.value("has_data_link", false);
+#define EF_UNIT_DIRECT_EARLY_FIELD(cpp_type, name, default_value)
+#define EF_UNIT_DIRECT_DATA_LINK_FIELD(cpp_type, name, default_value)                              \
+    def.name = entry.value(#name, default_value);
+#include "content/detail/unit_definition_direct_fields.inc"
+    def.data_link_max_reports_per_update =
+        std::max(0, entry.value("data_link_max_reports_per_update", 16));
+    def.data_link_max_messages_per_update =
+        entry.contains("data_link_max_messages_per_update")
+            ? std::max(0, entry.value("data_link_max_messages_per_update",
+                                      def.data_link_max_reports_per_update))
+            : def.data_link_max_reports_per_update;
+
+    parse_electronic_warfare_json_fields(entry, def);
 
     return true;
 }

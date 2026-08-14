@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include <numbers>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -25,16 +26,18 @@ namespace {
 
 // Private implementation fragments included inside this translation unit to
 // keep helper linkage local while making the default effects model navigable.
-#include "models/weapons/detail/default_effects_geometry_detail.inc"
-#include "models/weapons/detail/default_effects_component_damage_detail.inc"
-#include "models/weapons/detail/default_effects_warhead_detail.inc"
-#include "models/weapons/detail/default_effects_state_detail.inc"
-#include "models/weapons/detail/default_effects_system_effect_detail.inc"
-#include "models/weapons/detail/default_effects_direct_hit_detail.inc"
-#include "models/weapons/detail/default_effects_spatial_projection_detail.inc"
-#include "models/weapons/detail/default_effects_result_detail.inc"
-#include "models/weapons/detail/default_effects_legacy_detail.inc"
-#include "models/weapons/detail/default_effects_domain_routing_detail.inc"
+// They carry no include guard and are only valid expanded here, inside this
+// anonymous namespace; no other translation unit may include them.
+#include "models/weapons/detail/default_effects_geometry_detail.h"
+#include "models/weapons/detail/default_effects_component_damage_detail.h"
+#include "models/weapons/detail/default_effects_warhead_detail.h"
+#include "models/weapons/detail/default_effects_state_detail.h"
+#include "models/weapons/detail/default_effects_system_effect_detail.h"
+#include "models/weapons/detail/default_effects_direct_hit_detail.h"
+#include "models/weapons/detail/default_effects_spatial_projection_detail.h"
+#include "models/weapons/detail/default_effects_result_detail.h"
+#include "models/weapons/detail/default_effects_legacy_detail.h"
+#include "models/weapons/detail/default_effects_domain_routing_detail.h"
 
 class DefaultEffectsModel : public IEffectsModel {
   public:

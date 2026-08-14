@@ -11,106 +11,15 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
-#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 
-// Opaque provenance objects for maintained runtime-window products. They are
-// defined only in the facade implementation boundary and are deliberately not
-// exposed through the nanobind RuntimeWindowResult surface. Pointer identity
-// binds a result to the RuntimeFacade run that returned it, while the immutable
-// snapshot below binds the token to the exact evidence consumed by the
-// maintained replay/ancestry/worldline producers. Copying a genuine token onto
-// substituted public DTO fields therefore cannot authenticate the substitute.
-struct RuntimeWindowIdentity;
-
-struct RuntimeFacadeIdentity {
-    // Only ids observed on a genuine run_window result while they were already
-    // below their facade allocator cursor enter these registries. The weak
-    // token reference is the immutable window anchor that recorded the id;
-    // retaining a RuntimeWindowResult keeps the corresponding evidence live.
-    // Discarded results are retained only in the bounded recent-window ring
-    // below, so a caller can still hand the immediately preceding anchor to a
-    // subsequent window without making the ledger an unbounded history.
-    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>> recorded_window_sequences;
-    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>>
-        recorded_trace_window_sequences;
-    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>>
-        recorded_anchor_window_sequences;
-    std::map<std::uint64_t, std::weak_ptr<const RuntimeWindowIdentity>>
-        recorded_snapshot_window_sequences;
-
-    static constexpr std::size_t kRecentWindowIdentityRetention = 64;
-    std::deque<std::shared_ptr<const RuntimeWindowIdentity>> recent_window_identities;
-
-    void prune_expired_window_identity_registries() {
-        const auto prune = [](auto &registry) {
-            for (auto it = registry.begin(); it != registry.end();) {
-                if (it->second.expired()) {
-                    it = registry.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-        };
-
-        prune(recorded_window_sequences);
-        prune(recorded_trace_window_sequences);
-        prune(recorded_anchor_window_sequences);
-        prune(recorded_snapshot_window_sequences);
-    }
-
-    void retain_recent_window_identity(std::shared_ptr<const RuntimeWindowIdentity> identity) {
-        if (identity == nullptr) {
-            return;
-        }
-        recent_window_identities.push_back(std::move(identity));
-        while (recent_window_identities.size() > kRecentWindowIdentityRetention) {
-            recent_window_identities.pop_front();
-        }
-        prune_expired_window_identity_registries();
-    }
-};
-
-struct RuntimeWindowEvidenceSnapshot {
-    double source_time_s = 0.0;
-    InformationStateSource observation_provenance{};
-    std::vector<std::uint64_t> engagement_trace_ids;
-    std::string engagement_producer_node_id;
-    std::string engagement_barrier_detail;
-    std::vector<RuntimeWindowBarrierRecord> barrier_trace;
-    std::vector<DiagnosticsTrace> diagnostics_traces;
-    std::vector<std::string> execution_source_snapshot_versions;
-};
-
-struct RuntimeWindowIdentity {
-    // The token may be kept by a result after the facade is destroyed. A weak
-    // back-reference avoids a cycle with RuntimeFacadeIdentity's bounded ring.
-    std::weak_ptr<const RuntimeFacadeIdentity> facade_identity;
-    std::uint64_t window_sequence = 0;
-    RuntimeWindowEvidenceSnapshot evidence{};
-};
-
 namespace runtime_facade_internal {
 
 using runtime::scheduler::find_stage_node_manifest;
-
-inline std::vector<WorldEntityRef>
-refs_from_step_requests(const std::vector<WorldExecutionEpisodeStepRequest> &requests) {
-    std::vector<WorldEntityRef> refs;
-    refs.reserve(requests.size());
-    for (const auto &request : requests) {
-        refs.push_back(WorldEntityRef{
-            .world_index = request.world_index,
-            .entity_id = request.entity_id,
-        });
-    }
-    return refs;
-}
 
 inline std::vector<WorldEntityRef>
 world_refs_from_engagement_refs(const std::vector<EngagementEntityRef> &refs) {
@@ -176,142 +85,6 @@ inline constexpr std::string_view kMultiFidelityRejectionReason =
     "multi_fidelity_profiles_require_a_maintained_registry_revision_and_acceptance_gate";
 inline constexpr std::string_view kRuntimeFidelityProviderFamilyNone = "none";
 inline constexpr std::string_view kRuntimeFidelityProviderFamilyReferenceCpu = "reference_cpu";
-inline constexpr std::string_view kRuntimeCounterfactualSelectedSliceBarrierId =
-    "counterfactual_selected_slice";
-inline constexpr std::uint64_t kRuntimeCounterfactualSelectedSliceSnapshotVersion = 1;
-inline constexpr std::string_view kRuntimeCounterfactualRawMutationRejection =
-    "counterfactual_raw_authoritative_state_mutation_forbidden";
-inline constexpr std::string_view kRuntimeCounterfactualRestoreRawMutationRejection =
-    "counterfactual_restore_raw_authoritative_state_mutation_forbidden";
-inline constexpr std::string_view kRuntimeCounterfactualMissingReplayEnvelope =
-    "counterfactual_replay_envelope_id_required";
-inline constexpr std::string_view kRuntimeCounterfactualMissingBranchPoint =
-    "counterfactual_branch_point_id_required";
-inline constexpr std::string_view kRuntimeCounterfactualUnsupportedFidelity =
-    "counterfactual_fidelity_request_not_admitted";
-inline constexpr std::string_view kRuntimeCounterfactualInvalidWorld =
-    "counterfactual_world_index_out_of_range";
-inline constexpr std::string_view kRuntimeCounterfactualInvalidEntity =
-    "counterfactual_entity_missing_transform_or_velocity";
-inline constexpr std::string_view kRuntimeCounterfactualSetupMissingEntity =
-    "counterfactual_baseline_setup_entity_missing";
-inline constexpr std::string_view kRuntimeCounterfactualMissingWorldlineId =
-    "counterfactual_worldline_id_required";
-inline constexpr std::string_view kRuntimeCounterfactualInvalidWorldlineId =
-    "counterfactual_worldline_id_not_registered";
-inline constexpr std::string_view kRuntimeCounterfactualWorldlineMismatch =
-    "counterfactual_worldline_id_mismatch";
-inline constexpr std::string_view kRuntimeCounterfactualRestoreBarrierMismatch =
-    "counterfactual_restore_barrier_id_mismatch";
-inline constexpr std::string_view kRuntimeCounterfactualRestoreResidentStateRejection =
-    "counterfactual_restore_resident_state_not_supported";
-inline constexpr std::string_view kRuntimeCounterfactualRestoreExactGpuRejection =
-    "counterfactual_restore_exact_gpu_not_supported";
-inline constexpr std::string_view kRuntimeCounterfactualRestoreFullCloneRejection =
-    "counterfactual_restore_full_clone_not_supported";
-inline constexpr std::string_view kRuntimeCounterfactualRestoreBoundaryRejection =
-    "counterfactual_restore_boundary_not_supported";
-inline constexpr std::string_view kRuntimeCounterfactualRestoreEvidenceLabel =
-    "RuntimeFacade.restore_counterfactual_snapshot";
-inline constexpr std::string_view kRuntimeCounterfactualRegisterEvidenceLabel =
-    "RuntimeFacade.register_counterfactual_worldline_snapshot";
-inline constexpr std::string_view kRuntimeExperimentEvidenceLabel =
-    "RuntimeFacade.run_counterfactual_experiment";
-inline constexpr std::string_view kRuntimeExperimentTruthClaimRejection =
-    "counterfactual_experiment_truth_claim_forbidden";
-inline constexpr std::string_view kRuntimeExperimentSupportPromotionRejection =
-    "counterfactual_experiment_support_promotion_forbidden";
-inline constexpr std::string_view kRuntimeExperimentBranchRejected =
-    "counterfactual_experiment_branch_rejected";
-// T10 slice 5: fail-closed rejection reasons of the maintained-run
-// replay-envelope producer (RuntimeFacade::build_maintained_replay_envelope).
-inline constexpr std::string_view kMaintainedReplayEnvelopeRunIdRequired =
-    "maintained_replay_envelope_run_id_required";
-inline constexpr std::string_view kMaintainedReplayEnvelopeWindowIdentityMissing =
-    "maintained_replay_envelope_window_identity_missing";
-inline constexpr std::string_view kMaintainedReplayEnvelopeWindowIdentityForeign =
-    "maintained_replay_envelope_window_identity_not_minted_by_this_facade";
-inline constexpr std::string_view kMaintainedReplayEnvelopeWindowEvidenceMismatch =
-    "maintained_replay_envelope_window_evidence_does_not_match_minted_window";
-inline constexpr std::string_view kMaintainedReplayEnvelopeEpisodeIdRequired =
-    "maintained_replay_envelope_episode_id_required";
-inline constexpr std::string_view kMaintainedReplayEnvelopeMissingObservationProvenance =
-    "maintained_replay_envelope_observation_packet_provenance_missing";
-inline constexpr std::string_view kMaintainedReplayEnvelopeMissingTraceIds =
-    "maintained_replay_envelope_engagement_trace_ids_missing";
-inline constexpr std::string_view kMaintainedReplayEnvelopeTraceIdsNotRunMinted =
-    "maintained_replay_envelope_trace_ids_not_minted_by_this_run";
-inline constexpr std::string_view kMaintainedReplayEnvelopeMissingWindowCommitBarrier =
-    "maintained_replay_envelope_window_commit_barrier_missing";
-inline constexpr std::string_view kMaintainedReplayEnvelopeMissingProducerNode =
-    "maintained_replay_envelope_engagement_producer_node_missing";
-inline constexpr std::string_view kMaintainedReplayEnvelopeSourceTimeNotFinite =
-    "maintained_replay_envelope_source_time_not_finite";
-inline constexpr std::string_view kMaintainedReplayEnvelopeRunSnapshotNotRunMinted =
-    "maintained_replay_envelope_run_snapshot_version_not_minted_by_this_run";
-inline constexpr std::string_view kMaintainedReplayEnvelopeProducerEvidenceLabel =
-    "RuntimeFacade.build_maintained_replay_envelope";
-// T10 slice 5 / VA-2: infix joining the observation packet's per-export
-// provenance string to the run-global monotone snapshot version, used only on
-// the opt-in run-global qualification path (default off keeps the packet string
-// byte-identical).
-inline constexpr std::string_view kMaintainedReplayEnvelopeRunSnapshotInfix = ":run_snapshot:";
-// T10 slice 6A (this iteration): fail-closed rejection reasons and evidence
-// vocabulary of the maintained engagement-packet ancestry producer
-// (RuntimeFacade::build_maintained_packet_ancestry). The producer reuses the
-// slice-5 envelope gates verbatim (their kMaintainedReplayEnvelope* reasons
-// propagate unchanged), so only the ancestry-specific gates are named here.
-inline constexpr std::string_view kMaintainedPacketAncestryParentNotRunMinted =
-    "maintained_packet_ancestry_parent_trace_id_not_minted_by_this_run";
-inline constexpr std::string_view kMaintainedPacketAncestryParentNotBeforeWindow =
-    "maintained_packet_ancestry_parent_trace_id_not_before_window_traces";
-inline constexpr std::string_view kMaintainedPacketAncestryMissingDiagnosticsTraces =
-    "maintained_packet_ancestry_window_diagnostics_traces_missing";
-inline constexpr std::string_view kMaintainedPacketAncestryNoRunMintedTraces =
-    "maintained_packet_ancestry_no_window_trace_carries_a_run_minted_tag";
-inline constexpr std::string_view kMaintainedPacketAncestryProducerEvidenceLabel =
-    "RuntimeFacade.build_maintained_packet_ancestry";
-// Typed-ref lineage vocabulary (VA-5): evidence kinds carried on the ancestry
-// result's ScenarioGenerationEvidenceMetadataRef entries. The replay-envelope
-// entry reuses the contract-owned kScenarioGenerationEvidenceKindReplayEnvelope;
-// these two name the trace-id edges the ancestry adds.
-inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindAnchorTrace = "anchor_trace";
-inline constexpr std::string_view kMaintainedPacketAncestryEvidenceKindParentTrace = "parent_trace";
-// "ancestry:maintained:*" id namespace; disjoint from "replay:maintained:*"
-// (slice 5), "replay:facade:*" (restore boundary), and caller-authored spaces.
-inline constexpr std::string_view kMaintainedPacketAncestryIdPrefix = "ancestry:maintained:";
-// T10 slice 7 (this iteration): fail-closed rejection reasons and evidence
-// vocabulary of the maintained worldline/counterfactual comparison producer
-// (RuntimeFacade::build_maintained_worldline_comparison). The producer reuses
-// the slice-5 envelope gates and slice-6A ancestry gates per side; their
-// underlying reasons are carried in the result's `errors` behind these
-// side-naming wrappers (two windows make verbatim propagation ambiguous).
-inline constexpr std::string_view kMaintainedWorldlineComparisonBaselineEnvelopeRejected =
-    "maintained_worldline_comparison_baseline_envelope_rejected";
-inline constexpr std::string_view kMaintainedWorldlineComparisonCandidateEnvelopeRejected =
-    "maintained_worldline_comparison_candidate_envelope_rejected";
-inline constexpr std::string_view kMaintainedWorldlineComparisonBaselineAncestryRejected =
-    "maintained_worldline_comparison_baseline_ancestry_rejected";
-inline constexpr std::string_view kMaintainedWorldlineComparisonCandidateAncestryRejected =
-    "maintained_worldline_comparison_candidate_ancestry_rejected";
-inline constexpr std::string_view kMaintainedWorldlineComparisonAnchorsNotDistinct =
-    "maintained_worldline_comparison_windows_share_the_anchor_trace";
-inline constexpr std::string_view kMaintainedWorldlineComparisonProducerEvidenceLabel =
-    "RuntimeFacade.build_maintained_worldline_comparison";
-// Typed-ref lineage vocabulary (VA-5): the envelope entries reuse the
-// contract-owned kScenarioGenerationEvidenceKindReplayEnvelope and the anchor
-// entries reuse kMaintainedPacketAncestryEvidenceKindAnchorTrace; this one
-// names the slice-6A ancestry ids the comparison consumes.
-inline constexpr std::string_view kMaintainedWorldlineComparisonEvidenceKindPacketAncestry =
-    "packet_ancestry";
-// "comparison:maintained:*" and "worldline:maintained:*" id namespaces;
-// disjoint from the raw-facade "counterfactual:selected_slice*" comparison
-// ids, the registered "worldline:runtime:*"/"worldline:baseline"/
-// "worldline:branch" spaces, "replay:maintained:*", "ancestry:maintained:*",
-// and caller-authored spaces. Verified unused at this baseline.
-inline constexpr std::string_view kMaintainedWorldlineComparisonIdPrefix = "comparison:maintained:";
-inline constexpr std::string_view kMaintainedWorldlineComparisonWorldlineIdPrefix =
-    "worldline:maintained:";
 
 inline bool runtime_string_blank(const std::string &value) {
     return value.empty() || std::all_of(value.begin(), value.end(),
@@ -330,7 +103,3 @@ inline void append_runtime_evidence_ref(std::vector<std::string> &evidence_refs,
 }
 
 } // namespace runtime_facade_internal
-
-struct RuntimeFacade::CounterfactualWorldlineRegistry {
-    std::map<std::string, RuntimeCounterfactualSnapshot> snapshots;
-};

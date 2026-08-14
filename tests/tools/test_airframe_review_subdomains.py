@@ -17,10 +17,15 @@ def test_airframe_review_constants_are_subdomain_authority() -> None:
   assert constants.REPO_ROOT == Path(__file__).resolve().parents[2]
   assert constants.DEFAULT_AIRCRAFT.is_file()
   assert constants.DEFAULT_AUDIT_SCENE.is_file()
+  # The review packet moved to the effects owner root in the 2026-08-08
+  # owner-routing migration (095fdd5c); the tool constant is the authority.
   assert constants.DEFAULT_OUTPUT_DIR.parts[-3:] == (
-    "missile_lethality_target_geometry",
+    "f16c_target_geometry_20260614",
     "review_packets",
     "f16c_20260611",
+  )
+  assert constants.DEFAULT_OUTPUT_DIR.parent.parent.is_dir(), (
+    "DEFAULT_OUTPUT_DIR should sit inside an existing retained review packet"
   )
   assert constants.SURFACE_COMPONENT_RULES
   assert constants.INTERNAL_COMPONENT_PRIOR_RULES

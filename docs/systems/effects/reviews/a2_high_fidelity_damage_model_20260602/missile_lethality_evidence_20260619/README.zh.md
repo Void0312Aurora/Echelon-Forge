@@ -2,7 +2,7 @@
 
 已完成或失效的本地 A2 missile-lethality follow-on 物理保存在这里。父级根目录只保留
 仍有效、仍需保留在根面的项目，并使用
-[../archive_registry.zh.md](../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md) 作为简洁注册表。
+`git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md` 作为简洁注册表。
 
 当前入口：
 

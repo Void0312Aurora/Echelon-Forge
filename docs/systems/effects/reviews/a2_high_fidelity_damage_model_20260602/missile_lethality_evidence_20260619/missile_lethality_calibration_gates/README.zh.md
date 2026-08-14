@@ -12,7 +12,7 @@ calibration authority held。MLF-10 的起点是：项目里已经有不少“�
 输入：
 
 - 父级 A2 follow-on 索引：[../../README.zh.md](../../README.zh.md)
-- MLF archive registry：[../../archive_registry.zh.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md)
+- MLF archive registry：`git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md`
 - MLF-9 统计趋势：
   [../missile_lethality_pk_statistical_trends/README.zh.md](../missile_lethality_pk_statistical_trends/README.zh.md)
 - MLF-6 结构失效：
@@ -44,7 +44,7 @@ MLF-10 判断已有导弹杀伤证据应如何被读取为 calibration evidence�
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| MLF-1..MLF-9 链路证据 | accepted / archived | [archive registry](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md) | 提供可回放仿真事实，不释放校准权威 |
+| MLF-1..MLF-9 链路证据 | accepted / archived | archive registry (`git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md`) | 提供可回放仿真事实，不释放校准权威 |
 | MLF-9 统计趋势 | accepted / archived | [MLF-9 README](../missile_lethality_pk_statistical_trends/README.zh.md) | 趋势仍是 synthetic；没有真实 Pk 或具体武器/目标杀伤率 |
 | A2 calibration residual register | retained / non-authoritative | [residual register](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) | 一些 research blocker 已关闭，但 authority blocker 和 fail-closed source gate 仍存在 |
 | Source admission and rights packets | retained / mixed pass/fail-closed | A2 calibration package 下 retained artifacts | gate 证据存在；不自动授权 selected outputs |
@@ -135,6 +135,6 @@ MLF-10 判断已有导弹杀伤证据应如何被读取为 calibration evidence�
 ## 归档
 
 MLF-10 已物理归档到 A2 父级本地 archive 下，并登记在
-[../../archive_registry.zh.md](../../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md)。原 active 路径现在只保留
+`git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.zh.md`。原 active 路径现在只保留
 轻量兼容指针。未来 authority-promotion 工作应引用这个已验收 gate package，或开启
 明确限定范围的 follow-on，而不是继续扩展指针路径。

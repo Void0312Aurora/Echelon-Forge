@@ -25,7 +25,7 @@
 // it into the scalar row shape below would silently change that default from
 // `true` to the seeded value, so it stays hand-written directly above the
 // include. Absence is pinned by
-// tests/architecture/content/test_aero_tuning_fields_inc.py.
+// tests/architecture/content/test_tuning_fields_inc.py.
 //
 // ANGLE-BRACKET-COMMA ADJUDICATION (census red line "X-macro comma blockers",
 // I31 precedent). Every AeroTuning member was checked: the only templated
@@ -73,7 +73,7 @@
 // _generated Python builder per schema and its freshness gate hardcodes a
 // registration list, while this is a C++-only content-loader parse map with no
 // scenario_loader face. It stays a hand-authored .inc pinned by
-// tests/architecture/content/test_aero_tuning_fields_inc.py, whose anchor is the
+// tests/architecture/content/test_tuning_fields_inc.py, whose anchor is the
 // AeroTuning declaration itself.
 
 #if !defined(EF_AERO_TUNING_FIELD) || !defined(EF_AERO_TUNING_VECTOR_FIELD)

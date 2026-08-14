@@ -1,6 +1,6 @@
 # Reinforcement Learning and Self-Play Roadmap
 
-Language: English canonical; [Chinese companion](rl_selfplay.zh.md).
+Language: English canonical; Chinese companion not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

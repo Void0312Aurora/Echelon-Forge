@@ -51,7 +51,7 @@ class WorldBatchVecEnvAccess:
         return self._world_vec._get_agent_observations_batch(refs)
 
     def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
-        self._world_vec._set_pilot_actions_batch(assignments)
+        self._world_vec._runtime_adapter.set_pilot_actions_batch(assignments)
 
     def step_worlds(self, world_indices: Sequence[int]) -> None:
         self._world_vec._step_runtime_worlds(world_indices)

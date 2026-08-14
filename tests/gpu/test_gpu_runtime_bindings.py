@@ -80,7 +80,7 @@ _RUNTIME_CAPABILITY_METADATA_DEFAULTS = {
 
 _RUNTIME_FACADE_CAPABILITY_EXPECTATIONS = {
   "supports_batch_runtime": True,
-  "supports_compiled_episode_controller": True,
+  "supports_compiled_episode_controller": False,
   "supports_compiled_execution_step": True,
   "supports_gpu_visual": False,
   "supports_gpu_observation": False,

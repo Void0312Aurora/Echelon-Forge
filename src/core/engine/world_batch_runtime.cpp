@@ -230,9 +230,6 @@ void WorldBatchRuntime::resize(size_t world_count) {
             worlds_.push_back(std::make_unique<SimulationKernel>());
         }
     }
-    execution_episode_controllers_.resize(world_count);
-    execution_episode_controller_entity_ids_.resize(world_count, 0);
-    execution_episode_controller_active_.resize(world_count, false);
 }
 
 SimulationKernel &WorldBatchRuntime::checked_world(size_t index) {
@@ -354,7 +351,6 @@ WorldBatchRuntime::export_recent_engagement_events(size_t world_index) const {
 }
 
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
-    clear_execution_episode_controller_batch();
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
         uint32_t seed = static_cast<uint32_t>(42 + i);
         if (seeds.size() == worlds_.size()) {
@@ -364,132 +360,6 @@ void WorldBatchRuntime::reset_batch(const std::vector<uint32_t> &seeds) {
         }
         worlds_[i]->reset(seed);
     });
-}
-
-void WorldBatchRuntime::clear_execution_episode_controller_batch() noexcept {
-    for (std::size_t world_index = 0; world_index < worlds_.size(); ++world_index) {
-        clear_execution_episode_controller(world_index);
-    }
-}
-
-void WorldBatchRuntime::clear_execution_episode_controller(std::size_t world_index) noexcept {
-    execution_episode_controllers_[world_index].clear_state();
-    execution_episode_controller_entity_ids_[world_index] = 0;
-    execution_episode_controller_active_[world_index] = false;
-}
-
-void WorldBatchRuntime::prime_execution_episode_controller_batch(
-    const std::vector<WorldEntityRef> &refs, const std::vector<ExecutionEpisodeState> &states) {
-    if (refs.size() != states.size()) {
-        throw std::invalid_argument(
-            "prime_execution_episode_controller_batch refs/states size mismatch");
-    }
-    for (std::size_t i = 0; i < refs.size(); ++i) {
-        const auto world_index = static_cast<std::size_t>(refs[i].world_index);
-        if (world_index >= worlds_.size()) {
-            throw std::out_of_range("world index out of range");
-        }
-        execution_episode_controllers_[world_index].import_state(states[i]);
-        execution_episode_controller_entity_ids_[world_index] = refs[i].entity_id;
-        execution_episode_controller_active_[world_index] = true;
-    }
-}
-
-bool WorldBatchRuntime::execution_episode_controller_ready(size_t world_index) const noexcept {
-    return world_index < execution_episode_controller_active_.size() &&
-           execution_episode_controller_active_[world_index] &&
-           execution_episode_controllers_[world_index].has_state();
-}
-
-ExecutionEpisodeController &
-WorldBatchRuntime::checked_execution_episode_controller(size_t world_index, uint64_t entity_id) {
-    if (!execution_episode_controller_ready(world_index)) {
-        throw std::runtime_error("execution episode controller is not primed for world");
-    }
-    if (execution_episode_controller_entity_ids_[world_index] != entity_id) {
-        throw std::runtime_error("execution episode controller entity_id mismatch");
-    }
-    return execution_episode_controllers_[world_index];
-}
-
-const ExecutionEpisodeController &
-WorldBatchRuntime::checked_execution_episode_controller(size_t world_index,
-                                                        uint64_t entity_id) const {
-    if (!execution_episode_controller_ready(world_index)) {
-        throw std::runtime_error("execution episode controller is not primed for world");
-    }
-    if (execution_episode_controller_entity_ids_[world_index] != entity_id) {
-        throw std::runtime_error("execution episode controller entity_id mismatch");
-    }
-    return execution_episode_controllers_[world_index];
-}
-
-void WorldBatchRuntime::validate_execution_episode_step_requests(
-    const std::vector<WorldExecutionEpisodeStepRequest> &requests) const {
-    std::vector<bool> seen(worlds_.size(), false);
-    for (const auto &request : requests) {
-        const auto world_index = static_cast<std::size_t>(request.world_index);
-        if (world_index >= worlds_.size()) {
-            throw std::out_of_range("world index out of range");
-        }
-        if (seen[world_index]) {
-            throw std::invalid_argument("duplicate world_index in execution episode step batch");
-        }
-        seen[world_index] = true;
-        static_cast<void>(checked_execution_episode_controller(world_index, request.entity_id));
-    }
-}
-
-std::vector<ExecutionEpisodeState> WorldBatchRuntime::export_execution_episode_states_batch(
-    const std::vector<WorldEntityRef> &refs) const {
-    std::vector<ExecutionEpisodeState> out(refs.size());
-    parallel_for_index(refs.size(), worker_threads_, [&](std::size_t i) {
-        const auto &ref = refs[i];
-        out[i] = checked_execution_episode_controller(static_cast<std::size_t>(ref.world_index),
-                                                      ref.entity_id)
-                     .export_state();
-    });
-    return out;
-}
-
-std::vector<ExecutionEpisodeRuntimeProducts> WorldBatchRuntime::evaluate_execution_episode_batch(
-    const std::vector<WorldExecutionEpisodeStepRequest> &requests) const {
-    validate_execution_episode_step_requests(requests);
-    std::vector<ExecutionEpisodeRuntimeProducts> out(requests.size());
-    parallel_for_index(requests.size(), worker_threads_, [&](std::size_t i) {
-        const auto &request = requests[i];
-        out[i] = checked_execution_episode_controller(static_cast<std::size_t>(request.world_index),
-                                                      request.entity_id)
-                     .evaluate(request.config, request.env_state);
-    });
-    return out;
-}
-
-std::vector<ExecutionEpisodeRuntimeProducts> WorldBatchRuntime::step_execution_episode_batch(
-    const std::vector<WorldExecutionEpisodeStepRequest> &requests) {
-    validate_execution_episode_step_requests(requests);
-    std::vector<ExecutionEpisodeRuntimeProducts> out(requests.size());
-    parallel_for_index(requests.size(), worker_threads_, [&](std::size_t i) {
-        const auto &request = requests[i];
-        out[i] = checked_execution_episode_controller(static_cast<std::size_t>(request.world_index),
-                                                      request.entity_id)
-                     .step(request.config, request.env_state);
-    });
-    return out;
-}
-
-std::vector<ExecutionEpisodeControllerStepResult>
-WorldBatchRuntime::step_execution_episode_results_batch(
-    const std::vector<WorldExecutionEpisodeStepRequest> &requests) {
-    validate_execution_episode_step_requests(requests);
-    std::vector<ExecutionEpisodeControllerStepResult> out(requests.size());
-    parallel_for_index(requests.size(), worker_threads_, [&](std::size_t i) {
-        const auto &request = requests[i];
-        out[i] = checked_execution_episode_controller(static_cast<std::size_t>(request.world_index),
-                                                      request.entity_id)
-                     .step_result(request.config, request.env_state);
-    });
-    return out;
 }
 
 void WorldBatchRuntime::step_batch() {
@@ -544,31 +414,6 @@ void WorldBatchRuntime::set_time_step(double dt) {
                        [&](size_t i) { worlds_[i]->set_time_step(dt); });
 }
 
-void WorldBatchRuntime::set_terrain_types_batch(
-    const std::vector<WorldTerrainAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::apply_terrain_assignments(world, assignments, grouped[world_index]);
-    });
-}
-
-void WorldBatchRuntime::set_winds_batch(const std::vector<WorldWindAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::apply_wind_assignments(world, assignments, grouped[world_index]);
-    });
-}
-
-void WorldBatchRuntime::set_suns_batch(const std::vector<WorldSunAssignment> &assignments) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::apply_sun_assignments(world, assignments, grouped[world_index]);
-    });
-}
-
 void WorldBatchRuntime::clear_zones_batch(const std::vector<uint64_t> &world_indices) {
     if (world_indices.empty()) {
         parallel_for_index(worlds_.size(), worker_threads_,
@@ -578,14 +423,6 @@ void WorldBatchRuntime::clear_zones_batch(const std::vector<uint64_t> &world_ind
     validate_unique_world_indices(worlds_.size(), world_indices, "clear_zones_batch");
     parallel_for_index(world_indices.size(), worker_threads_, [&](size_t i) {
         checked_world(static_cast<size_t>(world_indices[i])).clear_zones();
-    });
-}
-
-void WorldBatchRuntime::add_zones_batch(const std::vector<WorldZoneDefinition> &zones) {
-    const auto grouped = group_item_indices_by_world(worlds_.size(), zones);
-    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
-        auto &world = checked_world(world_index);
-        world_batch_setup::append_zones(world, zones, grouped[world_index]);
     });
 }
 
@@ -618,7 +455,6 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
     const auto sun_grouped = group_item_indices_by_world(worlds_.size(), sun_assignments);
     const auto zone_grouped = group_item_indices_by_world(worlds_.size(), zones);
     const auto spawn_grouped = group_item_indices_by_world(worlds_.size(), requests);
-    clear_execution_episode_controller_batch();
 
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto &world = checked_world(world_index);
@@ -641,7 +477,6 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
         throw std::invalid_argument("time_steps must have size 0, 1, or world_count");
     }
     auto &world = checked_world(world_index);
-    clear_execution_episode_controller(world_index);
     world_batch_setup::maybe_apply_time_step(world, world_index, time_steps);
     world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type
                                                 : terrain_type);

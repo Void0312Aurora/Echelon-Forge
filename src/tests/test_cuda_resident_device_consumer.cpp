@@ -293,18 +293,13 @@ TEST_CASE("CR2-3 lease and consumer failures are stable and retryable") {
     CHECK(consumer.materialize_for_diagnostics(submitted.receipt).success());
 }
 
-TEST_CASE("CP-6 learner-equivalent consumer normalizes the full tensor with CPU parity") {
+TEST_CASE("learner-equivalent consumer normalizes the full tensor with CPU parity") {
     using namespace runtime::cuda_resident;
     namespace learner = runtime::cuda_resident::learner_consumption;
 
     CHECK(learner::kLearnerConsumerSurfaceV1 ==
           "cuda_resident.device_consumer_learner_equivalent.v1");
-    CHECK(learner::kLearnerConsumerModeIdNoExport == "no_export_learner_consumer");
     CHECK(learner::kLearnerConsumptionFeatureCount == kObservationProjectionObservationValueCount);
-    CHECK_FALSE(learner::kMaintainedClaimAllowed);
-    CHECK_FALSE(learner::kPublicSupportEnabled);
-    CHECK_FALSE(learner::kPromotionAllowed);
-    CHECK_FALSE(learner::kTuningAuthorized);
 
     if (!CudaWorldStore::compiled_with_cuda()) {
         CHECK(true);

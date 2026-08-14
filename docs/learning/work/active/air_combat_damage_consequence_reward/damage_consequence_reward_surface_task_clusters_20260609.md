@@ -6,8 +6,7 @@ diagnostics-only bridge, and read-only re-scope are validated, but fixed-fire
 DCR totals remain zero. Controlled nonzero consequence-chain evidence is still
 the next non-training gate; DCR-F remains planned.
 
-Chinese companion:
-[damage_consequence_reward_surface_task_clusters_20260609.zh.md](damage_consequence_reward_surface_task_clusters_20260609.zh.md)
+Chinese companion: not maintained (English-only work surface).
 
 ## Boundary Decision
 

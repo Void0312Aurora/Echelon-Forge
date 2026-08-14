@@ -2,7 +2,7 @@
 
 Status: `2026-06-09` archived pointer. The accepted MLF-2 evidence package was
 moved to
-[archive/mlf_2_geometry_fuze_accepted_20260609](archive/mlf_2_geometry_fuze_accepted_20260609/README.md).
+archive/mlf_2_geometry_fuze_accepted_20260609 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_geometry_fuze/archive/mlf_2_geometry_fuze_accepted_20260609/README.md`).
 
 Language:
 
@@ -26,5 +26,3 @@ now explain the nearest point, whether the fuze armed, whether it triggered,
 why it did not trigger or failed, and whether detonation state was handed to
 the later effects model. It still does not directly say the target fragments,
 crashes, or is killed.
-
-Archive index: [archive/README.md](archive/README.md)

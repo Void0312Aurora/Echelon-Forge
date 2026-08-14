@@ -46,7 +46,7 @@ class KernelLifecycleGuardTests(unittest.TestCase):
     with self.assertRaises(RuntimeError):
       kernel.fire_naval_weapon(1, 2, 0)
 
-  def test_world_batch_rejects_duplicate_indices_and_setup_clears_controller(self) -> None:
+  def test_world_batch_rejects_duplicate_indices(self) -> None:
     runtime = ef_py.WorldBatchRuntime(1)
     runtime.set_worker_threads(2)
 
@@ -54,34 +54,6 @@ class KernelLifecycleGuardTests(unittest.TestCase):
       runtime.step_worlds([0, 0])
     with self.assertRaises(ValueError):
       runtime.clear_zones_batch([0, 0])
-
-    ref = ef_py.WorldEntityRef()
-    ref.world_index = 0
-    ref.entity_id = 77
-    state = ef_py.ExecutionEpisodeState()
-    state.agent_id = 77
-    runtime.prime_execution_episode_controller_batch([ref], [state])
-    self.assertTrue(runtime.execution_episode_controller_ready(0))
-
-    runtime.apply_world_setup_batch([123], [], [], [], [])
-    self.assertFalse(runtime.execution_episode_controller_ready(0))
-
-    runtime.prime_execution_episode_controller_batch([ref], [state])
-    runtime.apply_world_layout(
-      0,
-      456,
-      "flat",
-      0.0,
-      0.0,
-      0.0,
-      False,
-      0.0,
-      0.0,
-      8.0,
-      [],
-      [],
-    )
-    self.assertFalse(runtime.execution_episode_controller_ready(0))
 
   def test_failed_directory_database_load_does_not_commit_valid_siblings(self) -> None:
     with tempfile.TemporaryDirectory() as tmp:

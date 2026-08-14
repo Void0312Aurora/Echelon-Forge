@@ -9,7 +9,7 @@ Document kind: `review`
 Lifecycle: `retained`
 Canonical: `docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/README.md`
 Owner: `systems/effects`
-Last verified: `2026-08-11`
+Last verified: `2026-08-14`
 
 状态：`2026-06-02 / archived_sealed_index / research_profile_closed / G1-G5 research accepted / non-authoritative`。
 
@@ -39,8 +39,9 @@ candidate package 明细或工业级准入待办。
 
 被 provenance manifest 固定哈希的历史治理依赖，现以原始字节保存在
 [retained governance dependency snapshot](retained_dependencies/governance_20260531/README.md)。
-读取器通过 `tools/maintenance/a2_packet_paths.py` 把旧逻辑路径解析到该快照；不得以内容已变化的
-现行政策文件替换它，否则会破坏历史哈希契约。
+原 path resolver、candidate artifact 生成器和自引用 manifest 守卫已于 2026-08-14 随封存项目退役；
+最后完整实现可从 `c0e4f31f` 恢复。该快照现在只用于历史查阅，不再是 CI 或发布输入。仍直接约束
+现役 runtime 的 authority invariant 已改由对应 runtime 回归测试在本地构造。
 
 禁止把任何局部“闭合/收口”写成整个高保真 kill-chain 完成。除非明确标注 `G4` 或
 `G5`，闭合只表示对应子层级完成。
@@ -108,19 +109,15 @@ deterministic fuze authority。
 
 最终 research closeout 记录：
 
-- [archive/20260602_research_closeout/README.zh.md](archive/20260602_research_closeout/README.zh.md)
-
-归档索引：
-
-- [archive/README.zh.md](archive/README.zh.md)
+- `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260602_research_closeout/README.zh.md`
 
 历史 Phase 叙事、旧 README、Phase 0 审计、旧状态审计和中间 review note 已移入
-[archive/20260601_doc_governance/README.zh.md](archive/20260601_doc_governance/README.zh.md)。
+`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/archive/20260601_doc_governance/README.zh.md`。
 这些文件只作为历史证据，不再作为任务分发入口。
 
-本轮暂不移动 `data_collection/**/source_pin_update*.zh.md`、
+历史材料仍保留在 `data_collection/**/source_pin_update*.zh.md`、
 `guidance_miss_distance/*source_pin_integration*.zh.md`、`calibration/**/*.zh.md` 或
-`retained_artifacts/**`，因为现有审计脚本和候选包工具会读取这些路径和命名。
+`retained_artifacts/**`；这些路径不再由现役审计脚本或候选包工具消费。
 
 归档后若要恢复工作，只允许两种路径：
 

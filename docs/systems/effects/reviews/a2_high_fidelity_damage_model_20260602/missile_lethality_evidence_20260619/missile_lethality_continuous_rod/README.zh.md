@@ -1,7 +1,7 @@
 # A2 MLF-4 连续杆切割机制
 
 状态：`2026-06-11` 归档指针。已验收的 MLF-4 证据包已移入
-[archive/mlf_4_continuous_rod_accepted_20260611](archive/mlf_4_continuous_rod_accepted_20260611/README.zh.md)。
+archive/mlf_4_continuous_rod_accepted_20260611 (`git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_continuous_rod/archive/mlf_4_continuous_rod_accepted_20260611/README.zh.md`)。
 
 语言：
 
@@ -21,5 +21,3 @@ AIM-120C/MQ-9 校准。下一阶段必须按 `docs/agent` 标准另建子项目�
 可复用结论：引信起爆且战斗部机制属于连续杆/切割类时，系统现在可以解释产生了什么切割曝光、
 切割事实如何随距离/方位/方向变化、哪些部件行收到了切割曝光；这些事实仍然不直接说明目标碎裂、
 坠毁或被击毁。
-
-归档索引：[archive/README.zh.md](archive/README.zh.md)

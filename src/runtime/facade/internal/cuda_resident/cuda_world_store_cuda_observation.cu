@@ -62,7 +62,7 @@ struct LearnerNormalizationValues {
     return values;
 }
 
-// CP-6 learner-equivalent consumer: reads every element of the lease tensor,
+// Learner-equivalent consumer: reads every element of the lease tensor,
 // applies the contract-owned per-field affine normalization, and writes the
 // device-resident policy input buffer in the lease payload's world-major
 // [world_count, feature_count] float layout. Ids pass through unchanged.

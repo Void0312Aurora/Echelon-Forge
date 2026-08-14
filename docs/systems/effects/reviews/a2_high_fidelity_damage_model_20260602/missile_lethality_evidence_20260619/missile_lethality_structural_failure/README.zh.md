@@ -17,9 +17,9 @@ standoff 报告现在显示 beam 侧 `0.5/1/2/4 m` 会产生 wing_loss，`8/14 m
 
 - 父级 A2 任务索引：[../../README.zh.md](../../README.zh.md)
 - MLF-1 杀伤链合同（MLF 阶段权威定义和边界）：
-  [../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md](../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md)
+  `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md`
 - MLF-5 部件脆弱性归档（上游输出，MLF-6 唯一消费面）：
-  [../missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.zh.md](../missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.zh.md)
+  `git show 77610218:docs/systems/effects/reviews/a2_high_fidelity_damage_model_20260602/missile_lethality_evidence_20260619/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/README.zh.md`
 - A2 目标几何 retained follow-on（F-16C 32 部件 receiver 地图）：
   [../../missile_lethality_target_geometry/README.zh.md](../../../../../../../README.zh.md)
 - A8 损伤效果链（已有 fire/fuel/sensor/engine 传播，MLF-7 将扩展）：
@@ -302,5 +302,4 @@ Deferred：
 ## Archive
 
 本子项目自身现在就是一个本地 A2 归档记录。父级 archive 注册入口为
-[../README.zh.md](../README.zh.md)，本子项目自己的嵌套 archive 占位仍为
-[archive/README.md](archive/README.md)。
+[../README.zh.md](../README.zh.md)。

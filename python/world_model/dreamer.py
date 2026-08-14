@@ -128,6 +128,41 @@ class DreamerConfig:
     bc_hdg_norm_deg: float = 30.0
 
 
+# Feed-forward BC modes dispatched through the shared feature/forward/loss helpers in
+# DreamerTrainer.train_actor_bc (every mode except the RSSM roll-in branch), listed in
+# the original dispatch order.
+_BC_FEEDFORWARD_ACTOR_INPUTS: tuple[str, ...] = (
+    "obs",
+    "obs_gru",
+    "obs_sincos",
+    "obs_sincos_gru",
+    "obs_sincos_track",
+    "obs_sincos_track_gru",
+    "obs_sincos_track_vis",
+    "obs_sincos_track_vis_gru",
+    "embed_sincos",
+    "embed_sincos_track",
+    "embed_sincos_gru",
+    "embed_sincos_track_gru",
+    "embed",
+    "embed_gru",
+)
+
+
+@dataclass(frozen=True)
+class _BcAxisWeights:
+    """Per-action-axis BC loss reweighting factors (read from the DreamerConfig bc_* fields)."""
+
+    pitch_mag: float
+    pitch_base: float
+    roll_mag: float
+    roll_base: float
+    throttle_mag: float
+    throttle_base: float
+    rudder_mag: float
+    rudder_base: float
+
+
 class DreamerTrainer:
     def __init__(self, *, dataset: EpisodeDataset, world_model: WorldModel, device: torch.device, cfg: DreamerConfig):
         self.dataset = dataset
@@ -694,6 +729,10 @@ class DreamerTrainer:
         This is used as a stable baseline to avoid offline world-model exploitation:
         the learned policy stays close to the demonstration data while the world model
         can still be trained for later RL fine-tuning.
+
+        The step is orchestrated through the `_bc_*` helpers below: sample a batch,
+        build per-step loss weights, encode observations, compute the mode-specific
+        BC loss, then apply the actor optimizer update.
         """
         actor_input = str(getattr(self.cfg, "actor_input", "rssm"))
         is_recurrent = actor_input in (
@@ -705,6 +744,60 @@ class DreamerTrainer:
             "obs_sincos_track_gru",
             "obs_sincos_track_vis_gru",
         )
+        batch, burn_in = self._bc_sample_batch(is_recurrent=is_recurrent)
+        obs_vec, visual, actions, targets, dones = self._bc_unpack_batch(batch)
+
+        B, L, A = actions.shape
+        teacher_prob = float(getattr(self.cfg, "bc_teacher_prob", 1.0))
+        teacher_prob = float(np.clip(teacher_prob, 0.0, 1.0))
+
+        weights, valid = self._bc_step_weights(
+            obs_vec=obs_vec, dones=dones, is_recurrent=is_recurrent, burn_in=burn_in, L=L
+        )
+        weights_a = weights.unsqueeze(-1)  # (B, L, 1)
+        axis = self._bc_axis_weights()
+
+        obs_norm, embeds, vis_embeds = self._bc_encode_observations(
+            actor_input=actor_input, obs_vec=obs_vec, visual=visual, B=B, L=L
+        )
+
+        if actor_input == "rssm":
+            assert embeds is not None
+            bc_loss = self._bc_loss_rssm(
+                embeds=embeds,
+                actions=actions,
+                targets=targets,
+                weights=weights,
+                valid=valid,
+                teacher_prob=teacher_prob,
+                axis=axis,
+            )
+        elif actor_input in _BC_FEEDFORWARD_ACTOR_INPUTS:
+            feats = self._bc_actor_features(
+                actor_input=actor_input,
+                obs_vec=obs_vec,
+                obs_norm=obs_norm,
+                embeds=embeds,
+                vis_embeds=vis_embeds,
+                L=L,
+            )
+            pred = self._bc_actor_forward(feats, is_recurrent=is_recurrent, B=B, L=L, A=A)
+            bc_loss = self._bc_weighted_mse(
+                pred,
+                targets,
+                weights=weights,
+                weights_a=weights_a,
+                axis=axis,
+                # "embed_gru" historically skipped roll reweighting; keep that unchanged.
+                include_roll=actor_input != "embed_gru",
+            )
+        else:
+            raise ValueError(f"unknown actor_input: {actor_input!r}")
+
+        return self._bc_apply_actor_update(bc_loss)
+
+    def _bc_sample_batch(self, *, is_recurrent: bool) -> tuple[dict[str, torch.Tensor], int]:
+        """Sample a BC batch honoring burn-in / start-at-zero policies; returns (batch, burn_in)."""
         burn_in = int(getattr(self.cfg, "bc_gru_burn_in", 0) or 0)
         burn_in = max(0, burn_in)
         # Default behavior (burn_in=0): align sequences to episode starts so the hidden state
@@ -730,7 +823,12 @@ class DreamerTrainer:
             start_at_zero=start_at_zero,
             start_at_zero_prob=start_at_zero_prob,
         )
-        batch = self._to_torch(batch_np)
+        return self._to_torch(batch_np), burn_in
+
+    def _bc_unpack_batch(
+        self, batch: dict[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Unpack (obs_vec, visual, actions, targets, dones) from a torch batch."""
         obs_vec = batch["obs_vec"].float()
         visual = batch.get("visual", None)
         actions = batch["actions"].float()
@@ -740,11 +838,12 @@ class DreamerTrainer:
             # Back-compat: treat all steps as valid.
             dones = torch.zeros((actions.shape[0], actions.shape[1]), device=self.device, dtype=torch.float32)
         dones = dones.float()
+        return obs_vec, visual, actions, targets, dones
 
-        B, L, A = actions.shape
-        teacher_prob = float(getattr(self.cfg, "bc_teacher_prob", 1.0))
-        teacher_prob = float(np.clip(teacher_prob, 0.0, 1.0))
-
+    def _bc_step_weights(
+        self, *, obs_vec: torch.Tensor, dones: torch.Tensor, is_recurrent: bool, burn_in: int, L: int
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Per-timestep BC loss weights; returns (weights, valid), each of shape (B, L)."""
         # Mask out padded timesteps after episode termination. This is critical when seq_len is large
         # and the dataset pads short episodes: otherwise the loss is dominated by post-terminal zeros,
         # and the policy can ignore the early takeoff dynamics that matter for runway tracking.
@@ -804,14 +903,25 @@ class DreamerTrainer:
             step_w = 1.0 + hdg_w * (diff / norm)
             weights = weights * step_w
 
-        weights_a = weights.unsqueeze(-1)  # (B, L, 1)
+        return weights, valid
 
-        pitch_w = float(getattr(self.cfg, "bc_pitch_mag_weight", 0.0))
-        pitch_base = float(getattr(self.cfg, "bc_pitch_weight", 1.0))
-        roll_w = float(getattr(self.cfg, "bc_roll_mag_weight", 0.0))
-        roll_base = float(getattr(self.cfg, "bc_roll_weight", 1.0))
-        thr_w = float(getattr(self.cfg, "bc_throttle_mag_weight", 0.0))
-        thr_base = float(getattr(self.cfg, "bc_throttle_weight", 1.0))
+    def _bc_axis_weights(self) -> _BcAxisWeights:
+        """Read the per-action-axis reweighting config once (pure attribute reads)."""
+        return _BcAxisWeights(
+            pitch_mag=float(getattr(self.cfg, "bc_pitch_mag_weight", 0.0)),
+            pitch_base=float(getattr(self.cfg, "bc_pitch_weight", 1.0)),
+            roll_mag=float(getattr(self.cfg, "bc_roll_mag_weight", 0.0)),
+            roll_base=float(getattr(self.cfg, "bc_roll_weight", 1.0)),
+            throttle_mag=float(getattr(self.cfg, "bc_throttle_mag_weight", 0.0)),
+            throttle_base=float(getattr(self.cfg, "bc_throttle_weight", 1.0)),
+            rudder_mag=float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0)),
+            rudder_base=float(getattr(self.cfg, "bc_rudder_weight", 1.0)),
+        )
+
+    def _bc_encode_observations(
+        self, *, actor_input: str, obs_vec: torch.Tensor, visual: torch.Tensor | None, B: int, L: int
+    ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
+        """Normalize observations and compute the encoder embeddings needed by `actor_input`."""
         # Normalize observations once. For embed/rssm we will also compute embeddings
         # (no gradients through the world model for BC).
         obs_norm = self._norm_obs(obs_vec)
@@ -845,430 +955,175 @@ class DreamerTrainer:
                 visual_norm = self._norm_visual(visual_norm)
                 vis_flat = visual_norm.reshape(B * (L + 1), -1)
                 vis_embeds = self.wm.encoder.visual(vis_flat).reshape(B, L + 1, -1)
+        return obs_norm, embeds, vis_embeds
 
-        if actor_input == "obs":
-            feats = obs_norm[:, :L]  # (B, L, D)
-            mean, _std = self.actor(feats.reshape(B * L, -1))
-            pred = torch.tanh(mean).reshape(B, L, A)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "obs_gru":
-            feats = obs_norm[:, :L]  # (B, L, D)
-            mean, _std, _hN = self.actor(feats, h0=None)  # type: ignore[misc]
-            pred = torch.tanh(mean)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "obs_sincos":
-            feats = append_angle_sincos_features(
+    def _bc_actor_features(
+        self,
+        *,
+        actor_input: str,
+        obs_vec: torch.Tensor,
+        obs_norm: torch.Tensor,
+        embeds: torch.Tensor | None,
+        vis_embeds: torch.Tensor | None,
+        L: int,
+    ) -> torch.Tensor:
+        """Build the (B, L, F) actor input features for a feed-forward BC mode."""
+        if actor_input in ("obs", "obs_gru"):
+            return obs_norm[:, :L]  # (B, L, D)
+        if actor_input in ("obs_sincos", "obs_sincos_gru"):
+            return append_angle_sincos_features(
                 obs_raw_deg=obs_vec[:, :L],
                 obs_norm=obs_norm[:, :L],
                 angle_deg_indices=self.angle_deg_indices,
             )
-            mean, _std = self.actor(feats.reshape(B * L, -1))
-            pred = torch.tanh(mean).reshape(B, L, A)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "obs_sincos_gru":
-            feats = append_angle_sincos_features(
-                obs_raw_deg=obs_vec[:, :L],
-                obs_norm=obs_norm[:, :L],
-                angle_deg_indices=self.angle_deg_indices,
-            )
-            mean, _std, _hN = self.actor(feats, h0=None)  # type: ignore[misc]
-            pred = torch.tanh(mean)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "obs_sincos_track":
+        if actor_input in ("obs_sincos_track", "obs_sincos_track_gru"):
             feats = append_angle_sincos_features(
                 obs_raw_deg=obs_vec[:, :L],
                 obs_norm=obs_norm[:, :L],
                 angle_deg_indices=self.angle_deg_indices,
             )
             track = nav_tracking_features(obs_vec[:, :L])
-            feats = torch.cat([feats, track], dim=-1)
-            mean, _std = self.actor(feats.reshape(B * L, -1))
-            pred = torch.tanh(mean).reshape(B, L, A)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "obs_sincos_track_gru":
-            feats = append_angle_sincos_features(
-                obs_raw_deg=obs_vec[:, :L],
-                obs_norm=obs_norm[:, :L],
-                angle_deg_indices=self.angle_deg_indices,
-            )
-            track = nav_tracking_features(obs_vec[:, :L])
-            feats = torch.cat([feats, track], dim=-1)
-            mean, _std, _hN = self.actor(feats, h0=None)  # type: ignore[misc]
-            pred = torch.tanh(mean)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "obs_sincos_track_vis":
+            return torch.cat([feats, track], dim=-1)
+        if actor_input in ("obs_sincos_track_vis", "obs_sincos_track_vis_gru"):
             if vis_embeds is None:
-                raise RuntimeError("vis_embeds not initialized for obs_sincos_track_vis")
+                raise RuntimeError(f"vis_embeds not initialized for {actor_input}")
             feats = append_angle_sincos_features(
                 obs_raw_deg=obs_vec[:, :L],
                 obs_norm=obs_norm[:, :L],
                 angle_deg_indices=self.angle_deg_indices,
             )
             track = nav_tracking_features(obs_vec[:, :L])
-            feats = torch.cat([feats, track, vis_embeds[:, :L]], dim=-1)
-            mean, _std = self.actor(feats.reshape(B * L, -1))
-            pred = torch.tanh(mean).reshape(B, L, A)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "obs_sincos_track_vis_gru":
-            if vis_embeds is None:
-                raise RuntimeError("vis_embeds not initialized for obs_sincos_track_vis_gru")
-            feats = append_angle_sincos_features(
-                obs_raw_deg=obs_vec[:, :L],
-                obs_norm=obs_norm[:, :L],
-                angle_deg_indices=self.angle_deg_indices,
-            )
-            track = nav_tracking_features(obs_vec[:, :L])
-            feats = torch.cat([feats, track, vis_embeds[:, :L]], dim=-1)
-            mean, _std, _hN = self.actor(feats, h0=None)  # type: ignore[misc]
-            pred = torch.tanh(mean)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "embed_sincos":
+            return torch.cat([feats, track, vis_embeds[:, :L]], dim=-1)
+        if actor_input in ("embed_sincos", "embed_sincos_gru"):
             assert embeds is not None
             ang = angle_sincos_features(obs_vec[:, :L], angle_deg_indices=self.angle_deg_indices)
-            feats = torch.cat([embeds[:, :L], ang], dim=-1)
-            mean, _std = self.actor(feats.reshape(B * L, -1))
-            pred = torch.tanh(mean).reshape(B, L, A)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "embed_sincos_track":
+            return torch.cat([embeds[:, :L], ang], dim=-1)
+        if actor_input in ("embed_sincos_track", "embed_sincos_track_gru"):
             assert embeds is not None
             ang = angle_sincos_features(obs_vec[:, :L], angle_deg_indices=self.angle_deg_indices)
             track = nav_tracking_features(obs_vec[:, :L])
-            feats = torch.cat([embeds[:, :L], ang, track], dim=-1)
-            mean, _std = self.actor(feats.reshape(B * L, -1))
-            pred = torch.tanh(mean).reshape(B, L, A)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "embed_sincos_gru":
-            assert embeds is not None
-            ang = angle_sincos_features(obs_vec[:, :L], angle_deg_indices=self.angle_deg_indices)
-            feats = torch.cat([embeds[:, :L], ang], dim=-1)
-            mean, _std, _hN = self.actor(feats, h0=None)  # type: ignore[misc]
-            pred = torch.tanh(mean)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "embed_sincos_track_gru":
-            assert embeds is not None
-            ang = angle_sincos_features(obs_vec[:, :L], angle_deg_indices=self.angle_deg_indices)
-            track = nav_tracking_features(obs_vec[:, :L])
-            feats = torch.cat([embeds[:, :L], ang, track], dim=-1)
-            mean, _std, _hN = self.actor(feats, h0=None)  # type: ignore[misc]
-            pred = torch.tanh(mean)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "embed":
+            return torch.cat([embeds[:, :L], ang, track], dim=-1)
+        if actor_input in ("embed", "embed_gru"):
             # Reactive BC baseline: predict actions directly from the current observation embedding.
-            # This avoids recurrent covariate shift on takeoff tasks (rudder sign flips were caused by RSSM roll-in).
-            assert embeds is not None
-            feats = embeds[:, :L]  # (B, L, E) aligned with actions[:, t]
-            mean, _std = self.actor(feats.reshape(B * L, -1))
-            pred = torch.tanh(mean).reshape(B, L, A)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                scale = roll_base * (1.0 + roll_w * torch.abs(targets[:, :, 1]))
-                err[:, :, 1] = err[:, :, 1] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                # Weight the rudder dimension:
-                # - a constant factor (rudder_base) to reduce compounding drift
-                # - an extra factor based on expert magnitude for large crosswind corrections
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "embed_gru":
-            # History-capable BC over embeddings: the GRU hidden state can represent
+            # This avoids recurrent covariate shift on takeoff tasks (rudder sign flips were caused
+            # by RSSM roll-in). The GRU variant is history-capable: its hidden state can represent
             # integral-like behavior needed for runway tracking under wind.
             assert embeds is not None
-            feats = embeds[:, :L]  # (B, L, E)
+            return embeds[:, :L]  # (B, L, E) aligned with actions[:, t]
+        raise ValueError(f"unknown actor_input: {actor_input!r}")
+
+    def _bc_actor_forward(
+        self, feats: torch.Tensor, *, is_recurrent: bool, B: int, L: int, A: int
+    ) -> torch.Tensor:
+        """Run the actor on the features and return tanh-squashed predictions (B, L, A)."""
+        if is_recurrent:
             mean, _std, _hN = self.actor(feats, h0=None)  # type: ignore[misc]
-            pred = torch.tanh(mean)
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            err = (pred - targets) ** 2
-            if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                scale = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, :, 0]))
-                err[:, :, 0] = err[:, :, 0] * scale
-            if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                scale = thr_base * (1.0 + thr_w * torch.abs(targets[:, :, 3]))
-                err[:, :, 3] = err[:, :, 3] * scale
-            if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, :, 2]))
-                err[:, :, 2] = err[:, :, 2] * scale
-            err = err * weights_a
-            denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
-            bc_loss = err.sum() / denom
-        elif actor_input == "rssm":
-            # RSSM-conditioned BC: roll the RSSM forward with a mixture of teacher actions and actor actions.
-            assert embeds is not None
-            deterministic_state = bool(getattr(self.cfg, "bc_deterministic_state", False))
-            state, _ = self.wm.rssm.observe_init(embeds[:, 0], deterministic=deterministic_state)
-            bc_losses = []
-            rudder_w = float(getattr(self.cfg, "bc_rudder_mag_weight", 0.0))
-            rudder_base = float(getattr(self.cfg, "bc_rudder_weight", 1.0))
-            for t in range(L):
-                feat_t = self.wm.feat(state)
-                mean, _std = self.actor(feat_t)
-                pred_t = torch.tanh(mean)
-                if float(valid[:, t].max().item()) > 0.5:
-                    if (rudder_w > 0.0 or rudder_base != 1.0) and A > 2:
-                        err = (pred_t - targets[:, t]) ** 2  # (B, A)
-                        if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                            scale_p = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, t, 0]))
-                            err[:, 0] = err[:, 0] * scale_p
-                        if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                            scale_r = roll_base * (1.0 + roll_w * torch.abs(targets[:, t, 1]))
-                            err[:, 1] = err[:, 1] * scale_r
-                        if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                            scale_thr = thr_base * (1.0 + thr_w * torch.abs(targets[:, t, 3]))
-                            err[:, 3] = err[:, 3] * scale_thr
-                        scale = rudder_base * (1.0 + rudder_w * torch.abs(targets[:, t, 2]))  # (B,)
-                        err[:, 2] = err[:, 2] * scale
-                        # Mask invalid rows (post-terminal) for this timestep.
-                        m = weights[:, t].view(B, 1)
-                        err = err * m
-                        denom = float(m.sum().clamp_min(1.0).item()) * float(A)
-                        bc_losses.append(err.sum() / denom)
-                    else:
-                        m = weights[:, t].view(B, 1)
-                        err = ((pred_t - targets[:, t]) ** 2) * m
-                        if (pitch_w > 0.0 or pitch_base != 1.0) and A > 0:
-                            scale_p = pitch_base * (1.0 + pitch_w * torch.abs(targets[:, t, 0]))
-                            err[:, 0] = err[:, 0] * scale_p
-                        if (roll_w > 0.0 or roll_base != 1.0) and A > 1:
-                            scale_r = roll_base * (1.0 + roll_w * torch.abs(targets[:, t, 1]))
-                            err[:, 1] = err[:, 1] * scale_r
-                        if (thr_w > 0.0 or thr_base != 1.0) and A > 3:
-                            scale_thr = thr_base * (1.0 + thr_w * torch.abs(targets[:, t, 3]))
-                            err[:, 3] = err[:, 3] * scale_thr
-                        denom = float(m.sum().clamp_min(1.0).item()) * float(A)
-                        bc_losses.append(err.sum() / denom)
+            return torch.tanh(mean)
+        mean, _std = self.actor(feats.reshape(B * L, -1))
+        return torch.tanh(mean).reshape(B, L, A)
 
-                if teacher_prob >= 1.0:
-                    act_in = actions[:, t]
-                elif teacher_prob <= 0.0:
-                    act_in = pred_t.detach()
+    def _bc_weighted_mse(
+        self,
+        pred: torch.Tensor,
+        targets: torch.Tensor,
+        *,
+        weights: torch.Tensor,
+        weights_a: torch.Tensor,
+        axis: _BcAxisWeights,
+        include_roll: bool = True,
+    ) -> torch.Tensor:
+        """Step- and axis-weighted BC MSE shared by all feed-forward modes."""
+        A = pred.shape[-1]
+        err = (pred - targets) ** 2
+        if (axis.pitch_mag > 0.0 or axis.pitch_base != 1.0) and A > 0:
+            scale = axis.pitch_base * (1.0 + axis.pitch_mag * torch.abs(targets[:, :, 0]))
+            err[:, :, 0] = err[:, :, 0] * scale
+        if include_roll and (axis.roll_mag > 0.0 or axis.roll_base != 1.0) and A > 1:
+            scale = axis.roll_base * (1.0 + axis.roll_mag * torch.abs(targets[:, :, 1]))
+            err[:, :, 1] = err[:, :, 1] * scale
+        if (axis.throttle_mag > 0.0 or axis.throttle_base != 1.0) and A > 3:
+            scale = axis.throttle_base * (1.0 + axis.throttle_mag * torch.abs(targets[:, :, 3]))
+            err[:, :, 3] = err[:, :, 3] * scale
+        if (axis.rudder_mag > 0.0 or axis.rudder_base != 1.0) and A > 2:
+            # Weight the rudder dimension:
+            # - a constant factor (rudder_base) to reduce compounding drift
+            # - an extra factor based on expert magnitude for large crosswind corrections
+            scale = axis.rudder_base * (1.0 + axis.rudder_mag * torch.abs(targets[:, :, 2]))
+            err[:, :, 2] = err[:, :, 2] * scale
+        err = err * weights_a
+        denom = float(weights.sum().clamp_min(1.0).item()) * float(A)
+        return err.sum() / denom
+
+    def _bc_loss_rssm(
+        self,
+        *,
+        embeds: torch.Tensor,
+        actions: torch.Tensor,
+        targets: torch.Tensor,
+        weights: torch.Tensor,
+        valid: torch.Tensor,
+        teacher_prob: float,
+        axis: _BcAxisWeights,
+    ) -> torch.Tensor:
+        """RSSM-conditioned BC: roll the RSSM forward with a mixture of teacher actions and actor actions."""
+        B, L, A = actions.shape
+        deterministic_state = bool(getattr(self.cfg, "bc_deterministic_state", False))
+        state, _ = self.wm.rssm.observe_init(embeds[:, 0], deterministic=deterministic_state)
+        bc_losses = []
+        for t in range(L):
+            feat_t = self.wm.feat(state)
+            mean, _std = self.actor(feat_t)
+            pred_t = torch.tanh(mean)
+            if float(valid[:, t].max().item()) > 0.5:
+                if (axis.rudder_mag > 0.0 or axis.rudder_base != 1.0) and A > 2:
+                    err = (pred_t - targets[:, t]) ** 2  # (B, A)
+                    if (axis.pitch_mag > 0.0 or axis.pitch_base != 1.0) and A > 0:
+                        scale_p = axis.pitch_base * (1.0 + axis.pitch_mag * torch.abs(targets[:, t, 0]))
+                        err[:, 0] = err[:, 0] * scale_p
+                    if (axis.roll_mag > 0.0 or axis.roll_base != 1.0) and A > 1:
+                        scale_r = axis.roll_base * (1.0 + axis.roll_mag * torch.abs(targets[:, t, 1]))
+                        err[:, 1] = err[:, 1] * scale_r
+                    if (axis.throttle_mag > 0.0 or axis.throttle_base != 1.0) and A > 3:
+                        scale_thr = axis.throttle_base * (1.0 + axis.throttle_mag * torch.abs(targets[:, t, 3]))
+                        err[:, 3] = err[:, 3] * scale_thr
+                    scale = axis.rudder_base * (1.0 + axis.rudder_mag * torch.abs(targets[:, t, 2]))  # (B,)
+                    err[:, 2] = err[:, 2] * scale
+                    # Mask invalid rows (post-terminal) for this timestep.
+                    m = weights[:, t].view(B, 1)
+                    err = err * m
+                    denom = float(m.sum().clamp_min(1.0).item()) * float(A)
+                    bc_losses.append(err.sum() / denom)
                 else:
-                    mask = (torch.rand((B, 1), device=self.device) < teacher_prob).float()
-                    act_in = mask * actions[:, t] + (1.0 - mask) * pred_t.detach()
-                with torch.no_grad():
-                    state, _, _ = self.wm.rssm.obs_step(state, act_in, embeds[:, t + 1], deterministic=deterministic_state)
+                    m = weights[:, t].view(B, 1)
+                    err = ((pred_t - targets[:, t]) ** 2) * m
+                    if (axis.pitch_mag > 0.0 or axis.pitch_base != 1.0) and A > 0:
+                        scale_p = axis.pitch_base * (1.0 + axis.pitch_mag * torch.abs(targets[:, t, 0]))
+                        err[:, 0] = err[:, 0] * scale_p
+                    if (axis.roll_mag > 0.0 or axis.roll_base != 1.0) and A > 1:
+                        scale_r = axis.roll_base * (1.0 + axis.roll_mag * torch.abs(targets[:, t, 1]))
+                        err[:, 1] = err[:, 1] * scale_r
+                    if (axis.throttle_mag > 0.0 or axis.throttle_base != 1.0) and A > 3:
+                        scale_thr = axis.throttle_base * (1.0 + axis.throttle_mag * torch.abs(targets[:, t, 3]))
+                        err[:, 3] = err[:, 3] * scale_thr
+                    denom = float(m.sum().clamp_min(1.0).item()) * float(A)
+                    bc_losses.append(err.sum() / denom)
 
-            if bc_losses:
-                bc_loss = torch.stack(bc_losses).mean()
+            if teacher_prob >= 1.0:
+                act_in = actions[:, t]
+            elif teacher_prob <= 0.0:
+                act_in = pred_t.detach()
             else:
-                bc_loss = torch.tensor(0.0, device=self.device)
-        else:
-            raise ValueError(f"unknown actor_input: {actor_input!r}")
+                mask = (torch.rand((B, 1), device=self.device) < teacher_prob).float()
+                act_in = mask * actions[:, t] + (1.0 - mask) * pred_t.detach()
+            with torch.no_grad():
+                state, _, _ = self.wm.rssm.obs_step(state, act_in, embeds[:, t + 1], deterministic=deterministic_state)
 
+        if bc_losses:
+            return torch.stack(bc_losses).mean()
+        return torch.tensor(0.0, device=self.device)
+
+    def _bc_apply_actor_update(self, bc_loss: torch.Tensor) -> dict[str, float]:
+        """Scale the BC loss, run the actor optimizer step, and build the metrics dict."""
         scale = float(self.cfg.bc_scale) if float(self.cfg.bc_scale) > 0.0 else 1.0
         actor_loss = bc_loss * scale
         self.opt_actor.zero_grad(set_to_none=True)

@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `weapons_engagement_impl.md`
-- Chinese companion: [weapons_engagement_impl.zh.md](weapons_engagement_impl.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`

@@ -21,25 +21,12 @@ import importlib.util
 import json
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from python.experiment.air_combat_matrix import (
-  CONFIG_BASE_ID,
-  MATRIX_DIR,
-  MATRIX_ENTRIES,
-  MatrixEntry,
-  RenderStyle,
-  composed_config,
-)
-from python.experiment.definition import (
-  ConfigComposition,
-  Experiment,
-  ScenarioRef,
-  SeedSpec,
-)
-from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+if TYPE_CHECKING:
+  from python.experiment.air_combat_matrix import MatrixEntry, RenderStyle
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -87,6 +74,14 @@ def _synthetic_matrix_entry(
   delta: dict[str, object],
   render: RenderStyle,
 ) -> MatrixEntry:
+  from python.experiment.air_combat_matrix import CONFIG_BASE_ID, MATRIX_DIR, MatrixEntry
+  from python.experiment.definition import (
+    ConfigComposition,
+    Experiment,
+    ScenarioRef,
+    SeedSpec,
+  )
+
   experiment = Experiment(
     experiment_id,
     ScenarioRef(_EXISTING_SCENARIO),
@@ -119,6 +114,9 @@ _HOSTILE_KEYS: tuple[tuple[str, bool], ...] = (
 def test_hostile_object_keys_survive_a_strict_render_round_trip() -> None:
   """Inject quote/backslash/control-character keys; the render must stay
   strict JSON that round-trips to the composed config, key order included."""
+  from python.experiment.air_combat_matrix import RenderStyle, composed_config
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   delta: dict[str, object] = {
     key: index for index, (key, _) in enumerate(_HOSTILE_KEYS)
   }
@@ -145,6 +143,9 @@ def test_hostile_object_keys_survive_a_strict_render_round_trip() -> None:
 def test_every_registered_entry_round_trips_as_strict_json() -> None:
   """Corpus-wide backstop: all registered entries must render to JSON that
   strictly equals their composed config (types and key order pinned)."""
+  from python.experiment.air_combat_matrix import MATRIX_ENTRIES, composed_config
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   for entry in MATRIX_ENTRIES:
     parsed = json.loads(experiment_matrix_generate.render_entry_bytes(entry))
     assert _strictly_equal(parsed, composed_config(entry)), entry.output_path
@@ -172,6 +173,9 @@ _TYPE_DRIFT_PAIRS: tuple[tuple[object, str], ...] = (
 def test_literal_override_type_drift_is_rejected_where_plain_equality_passes(
   composed_value: object, literal: str
 ) -> None:
+  from python.experiment.air_combat_matrix import RenderStyle
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   # Defect injection: prove the pair is genuinely hazardous -- the pre-fix
   # plain-equality gate would accept it silently.
   assert json.loads(literal) == composed_value
@@ -186,6 +190,9 @@ def test_literal_override_type_drift_is_rejected_where_plain_equality_passes(
 
 
 def test_literal_override_type_drift_is_rejected_at_nested_paths() -> None:
+  from python.experiment.air_combat_matrix import RenderStyle
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   entry = _synthetic_matrix_entry(
     "synthetic_nested_type_drift_probe_v1",
     {"synthetic_block": {"flag": 1}},
@@ -198,6 +205,9 @@ def test_literal_override_type_drift_is_rejected_at_nested_paths() -> None:
 def test_literal_override_with_matching_type_still_renders_verbatim() -> None:
   """Positive control pinning the real corpus dialect: a float-for-float
   literal (the ten-entry plain-decimal learning rate) must keep working."""
+  from python.experiment.air_combat_matrix import RenderStyle
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   entry = _synthetic_matrix_entry(
     "synthetic_decimal_literal_probe_v1",
     {"synthetic_field": 3e-05},
@@ -222,6 +232,9 @@ def test_scenario_pairing_gate_detects_swap_drop_and_unregistered_addition(
   ``manifest_payload()`` -- the same projection the freshness gate asserts
   against -- and is judged by the same reviewed table.
   """
+  from python.experiment.air_combat_matrix import MATRIX_ENTRIES, RenderStyle
+  from tools.maintenance.experiment_matrix import generate as experiment_matrix_generate
+
   gate = _load_freshness_gate_module()
   expected: dict[str, str] = gate.EXPECTED_EXPERIMENT_SCENARIOS
 

@@ -8,6 +8,13 @@
   - Linux/macOS 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR` 和 `PYTHONPATH`。
 - [cmo_env.ps1](cmo_env.ps1)
   - Windows/PowerShell 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR`、`PYTHONPATH` 以及 `ef_py*.pyd` 工件。
+- [cmo_env_validate_rl.py](cmo_env_validate_rl.py)
+  - `cmo_env.sh validate-rl` 与 `cmo_env.ps1 validate-rl` 共用的 RL import 探针，
+    两个 shell 因此报告相同的模块与相同的退出码。
+- [docs_link.py](docs_link.py)
+  - 文档链接审计、WP closure 审计和文档翻译批次共用的 Markdown 行内链接扫描器。
+    扫描前会屏蔽代码围栏、HTML 注释和行内代码，使三个工具对同一文档给出相同的
+    链接集合。
 - [redundancy_audit.py](redundancy_audit.py)
   - 审计重复/临时性质的仓库内容。
 - [cleanup_redundancy.py](cleanup_redundancy.py)
@@ -24,52 +31,12 @@
     acceptance review 链接和 WP 作用域内 Markdown 链接健康度。
   - 输出只读清单或生成 closure 摘要供 closure subagent 使用，而不是让主
     实现路径手工重写 README 或 review index。
-- [damage_model.py](damage_model.py)
-  是统一的 damage-model source governance 命令族。
-  - `admission-audit` 审计 source ledger、source pin / gap update 和候选 validation manifest 的公开来源准入卫生。
-  - `payload-pack` 构建或检查 retained source payload pack，不授予 authority。
-  - `rights-output-policy` 评估 source-rights 与 allowed-output policy gate，并保持失败关闭。
-
-任务专用 A2 辅助工具：
-
-- [damage_model.py](damage_model.py)
-  是统一的 external signoff evidence 命令族，通过 `signoff-request`、
-  `intake-contract`、`packet-template` 和 `admission-preflight` 分发，
-  不再保留旧的逐步骤入口文件。
-- [damage_model.py](damage_model.py)
-  是统一的 benchmark evidence 与 admission 命令族，分发 comparison hash、
-  mechanism evidence、benchmark execution、debris-case 和 spreadsheet
-  recalculation/replacement/lineage review 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 scope/provenance closeout 命令族，分发 row provenance、
-  target-geometry closeout、warhead-scope closeout 和 mechanism-source
-  closeout 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 independent review 命令族，分发 effect-scale review、
-  RES-011/012 review closeout、scope-bucket review 和 uncertainty review
-  命令。
-- [damage_model.py](damage_model.py)
-  是统一的 release governance 命令族，分发 package provenance/identity、
-  provenance review/closeout、source release signoff、scoped release
-  identity 和 Stage B release readiness/closeout 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 candidate artifact 命令族，分发 validation scaffold、scope
-  boundary probe、Stage B effect-scale artifact pack、Stage C
-  component-probability 与 component-fragility artifact/review gate、runtime
-  authority exercise 和 candidate package bundle 命令。
-- [damage_model.py](damage_model.py)
-  是统一的 retained artifact 命令族，分发 retained manifest hash 与 authority
-  guard 完整性检查。
-- 这些工具只属于 maintenance/governance utility。它们不授予 runtime
-  authority，不把 A2 retained artifacts 变成 product surface，并应继续限定在
-  A2 damage-model workflow 内。
-
 维护指南：
 
 - 这里的脚本可以是 Shell 或 Python，但默认应面向工作空间且非破坏性。
 - 维护的 Linux/macOS Shell 工作流应优先使用 `cmo_env.sh`，而非重复 `.venv` 和构建目录检测逻辑。
 - 维护的 Windows 工作流应优先使用 `cmo_env.ps1`，而非假设 WSL、`.venv/bin/python` 或 Linux 扩展名 `.so` 的工件。
-- 历史维护辅助工具应移至 `tools/archive/legacy_scripts/`，而非在此堆积。
+- 历史维护辅助工具应直接删除并在 `tools/README.md` 的退役登记中留一行（git 历史即归档），而非在此堆积。
 - 文档翻译批次应优先使用 `translate_docs_batch.py`，而非临时一次性脚本，以保持文件配对和草稿注释行为的一致性。
 
 推荐的 Linux/macOS 用法：
@@ -169,9 +136,7 @@ python3 tools/maintenance/translate_docs_batch.py clusters --root docs \
 
 - `docs/Archive/`
 - `docs/**/archive/`
-- `docs/temp/`
-- `docs/plan/results/`
-- `docs/plan/architecture/review/`
+- `docs/**/temp/`
 
 要明确包含它们，请使用：
 
@@ -209,16 +174,6 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
 
 当 error-level closure gap 应导致命令失败时使用 `--strict`。warning 应被视为
 closure subagent 的工作项，而不是主实现流 blocker。
-
-审计 A2 毁伤模型公开来源准入文档：
-
-```bash
-python3 tools/maintenance/damage_model.py source-governance admission-audit
-python3 tools/maintenance/damage_model.py source-governance admission-audit --strict
-```
-
-默认模式只因 error-level authority、候选来源更新或 manifest 违规失败。`--strict` 还会因 source pin
-warning 失败，适合在候选来源包升级为 validation run 前使用。
 
 翻译所需的 API 环境变量：
 

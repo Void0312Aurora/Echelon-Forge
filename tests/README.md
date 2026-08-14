@@ -22,6 +22,8 @@
 - `architecture/`
   - Source/documentation guardrails and governance checks that intentionally
     stay separate from runtime behavior tests.
+  - Split into a default guard tier and an on-demand `governance_audit`
+    tier; see "Architecture Test Tiers" below.
   - One-level semantic subfolders keep guard ownership visible:
     `build_system/`, `causal_runtime/`, `command_tasking/`,
     `compatibility_quarantine/`, `damage_model/`, `governance/`, `ground/`,
@@ -61,7 +63,8 @@
   - Historical test assets retained for provenance only.
   - These files are not active pytest or JSON contract coverage until moved back into a maintained test surface and added to the relevant matrix or suite.
 - `suites/`
-  - Advisory suite governance metadata, including the draft test-system matrix and focused/local suite manifests.
+  - Advisory suite governance metadata plus the checked-in architecture tier
+    manifests (`architecture_guard_suite.json`, `governance_audit_suite.json`).
   - These files do not change CI wiring on their own.
 - `diagnostics/`
   - Temporary exploratory diagnostics only.
@@ -78,8 +81,9 @@ Standalone Python tests should now be the exception, not the default.
 
 Manual one-off probes should not live at the top level of `tests/`.
 If a file is primarily for human inspection rather than automated regression,
-prefer `tools/diagnostics/` for maintained diagnostics or `tools/archive/` for
-legacy/manual probes kept only for reference.
+prefer `tools/diagnostics/` for maintained diagnostics; legacy or manual probes
+kept only for reference should be deleted with a retirement-register line in
+`tools/README.md` (git history is the archive).
 
 When a standalone test is needed, prefer:
 
@@ -231,6 +235,71 @@ When promoting an architecture guard, add the file or node ID to
 hard failures, so moved architecture files must keep the manifest in lockstep.
 For node ID entries, the runner checks the base file path before handing the
 full node ID to pytest.
+
+### Architecture Test Tiers
+
+`tests/architecture/` hosts two kinds of gates with different failure
+audiences, split by a pytest marker so the default developer regression no
+longer pays for evidence auditing:
+
+- **Guard tier (default, unmarked).** Structural code properties an ordinary
+  code change can break: include direction, runtime-facade seams,
+  layer/domain boundaries, information-state truth-read bans, DTO/schema and
+  generated-artifact consistency, census/inventory ratchets, and the
+  fail-closed behavior of live gate tooling. These keep running in every
+  default pytest invocation.
+- **Governance audit tier (`governance_audit` marker).** Evidence and
+  process gates: evidence documents and retained manifests, admission /
+  signoff / provenance / release-closeout workflows, documentation health
+  (links, bilingual parity, information architecture, content pins), and
+  repository automation workflow pins. Each file carries a module-level
+  `pytestmark = pytest.mark.governance_audit`; the marker is registered in
+  `pyproject.toml`. The retired CUDA evidence modules no longer require a
+  collection-time marker exception.
+
+Classification rule: a test whose subject is a structural property of the
+code (an ordinary code change can turn it red) belongs to the guard tier; a
+test that validates evidence documents, checked-in manifests, source /
+signoff / provenance records, or documentation health belongs to the audit
+tier. Borderline files default to the guard tier.
+
+Default regression entry point -- run the checked-in tier manifests through
+the suite runner:
+
+```bash
+source tools/maintenance/cmo_env.sh
+
+# developer regression (guard tier only)
+cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/architecture_guard_suite.json
+
+# governance/evidence audit layer (on demand)
+cmo_python tools/runners/run_pytest_suite.py --suite tests/suites/governance_audit_suite.json
+```
+
+Prefer the guard manifest over `-m "not governance_audit"` for the default
+loop. Marker deselection does not skip the audit tier's import cost: pytest
+has to import a module before it can read that module's `pytestmark`, so
+`-m "not governance_audit"` collects the audit modules and only skips running
+their tests. The manifest selects by file path, so audit-tier modules are
+never imported.
+
+The markers stay authoritative for tier membership and are still the right
+tool for a marker-based slice of an explicit path:
+
+```bash
+# guard tier only
+pytest -m "not governance_audit" tests/architecture
+
+# governance/evidence audit layer only
+pytest -m governance_audit tests/architecture
+```
+
+Meta-tests in `tests/runners/test_pytest_suite_manifests.py` keep the two
+manifests duplicate-free, disjoint, exhaustive over `tests/architecture` test
+files, and in lockstep with a real `pytest --collect-only -m governance_audit`
+collection, so tier membership changes are deliberate manifest edits. The CI smoke suite lists explicit files and node IDs and is
+not affected by the marker split: promoted smoke entries keep gating CI even
+when their file belongs to the audit tier.
 
 The removed `UniversalEnv` raw-constructor surface is tracked by
 `tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`

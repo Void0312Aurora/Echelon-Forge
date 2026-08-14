@@ -10,15 +10,11 @@ produces. Regenerate via
 
 from __future__ import annotations
 
+from functools import cache
 import json
 from pathlib import Path
 import subprocess
 import sys
-
-from python.experiment.cooperative_flight_matrix import (
-  COOPERATIVE_CONFIG_BASE_ID,
-  P4B_CONFIG_BASE_ID,
-)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GENERATOR = REPO_ROOT / "tools" / "maintenance" / "experiment_matrix" / "generate.py"
@@ -44,8 +40,23 @@ EXPECTED_OUTPUTS = tuple(
   )
 )
 
-EXPECTED_CONFIG_BASES = (COOPERATIVE_CONFIG_BASE_ID, P4B_CONFIG_BASE_ID)
 EXPECTED_PROTOCOLS = {"training_line"}
+
+
+@cache
+def _config_base_ids() -> tuple[str, str]:
+  """The two lane identifiers, read from the registry on first use.
+
+  Importing ``python.experiment.cooperative_flight_matrix`` at module level
+  charged every collect of this directory for the registry import even though
+  only the two ids are needed, and only inside the tests.
+  """
+  from python.experiment.cooperative_flight_matrix import (
+    COOPERATIVE_CONFIG_BASE_ID,
+    P4B_CONFIG_BASE_ID,
+  )
+
+  return (COOPERATIVE_CONFIG_BASE_ID, P4B_CONFIG_BASE_ID)
 
 # Full experiment -> scenario pairing, reviewed against the directory README
 # (examples/config/training/active/README.md) when this matrix was brought
@@ -73,14 +84,13 @@ EXPECTED_EXPERIMENT_SCENARIOS: dict[str, str] = {
 # The per-experiment config-base assignment is part of the reviewed surface:
 # a lane swap (a p4b entry silently composed from the cooperative base, or
 # vice versa) could still render valid JSON.
-EXPECTED_EXPERIMENT_BASES: dict[str, str] = {
-  experiment_id: (
-    P4B_CONFIG_BASE_ID
-    if experiment_id.startswith("p4b_")
-    else COOPERATIVE_CONFIG_BASE_ID
-  )
-  for experiment_id in EXPECTED_EXPERIMENT_SCENARIOS
-}
+@cache
+def _expected_experiment_bases() -> dict[str, str]:
+  cooperative_base, p4b_base = _config_base_ids()
+  return {
+    experiment_id: (p4b_base if experiment_id.startswith("p4b_") else cooperative_base)
+    for experiment_id in EXPECTED_EXPERIMENT_SCENARIOS
+  }
 
 
 def _run_generator(*args: str) -> subprocess.CompletedProcess[str]:
@@ -94,6 +104,7 @@ def _run_generator(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def test_cooperative_flight_matrix_outputs_are_fresh_and_registered(tmp_path: Path) -> None:
+  expected_config_bases = _config_base_ids()
   check_result = _run_generator("--check")
   assert check_result.returncode == 0, (
     "the cooperative flight-shaping matrix drifted from its Experiment "
@@ -108,7 +119,7 @@ def test_cooperative_flight_matrix_outputs_are_fresh_and_registered(tmp_path: Pa
   )
   manifest = json.loads(manifest_result.stdout)
   assert manifest["matrix"] == _MATRIX
-  assert manifest["config_bases"] == list(EXPECTED_CONFIG_BASES)
+  assert manifest["config_bases"] == list(expected_config_bases)
   assert manifest["matrix_dir"] == _MATRIX_DIR
 
   entries = manifest["entries"]
@@ -120,7 +131,7 @@ def test_cooperative_flight_matrix_outputs_are_fresh_and_registered(tmp_path: Pa
   assert len(set(experiment_ids)) == len(experiment_ids)
   for entry in entries:
     assert entry["output"] == f"{_MATRIX_DIR}/{entry['experiment_id']}.json"
-    assert entry["config_base"] in EXPECTED_CONFIG_BASES
+    assert entry["config_base"] in expected_config_bases
     assert entry["evaluation_protocol"] in EXPECTED_PROTOCOLS
     assert entry["seeds"] == []
     assert (REPO_ROOT / entry["scenario"]).is_file(), entry["scenario"]
@@ -133,7 +144,7 @@ def test_cooperative_flight_matrix_outputs_are_fresh_and_registered(tmp_path: Pa
   )
 
   experiment_bases = {entry["experiment_id"]: entry["config_base"] for entry in entries}
-  assert experiment_bases == EXPECTED_EXPERIMENT_BASES, (
+  assert experiment_bases == _expected_experiment_bases(), (
     "an Experiment -> config-base assignment drifted from the reviewed "
     "two-lane mapping (cooperative flight-shaping vs p4b cruise-to-landing)"
   )

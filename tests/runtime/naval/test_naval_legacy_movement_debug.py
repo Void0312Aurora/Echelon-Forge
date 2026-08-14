@@ -82,7 +82,10 @@ class NavalLegacyMovementDebugTests(unittest.TestCase):
         self.assertTrue(bool(movement["diagnostics_legacy_mirror"]))
         self.assertTrue(bool(movement["read_only_snapshot"]))
         self.assertFalse(bool(movement["maintained_truth"]))
-        self.assertEqual(str(movement["diagnostics_quarantine_marker"]), "WP22-R1-2")
+        self.assertEqual(
+          str(movement["diagnostics_quarantine_marker"]),
+          "read_only_diagnostics_quarantine",
+        )
         self.assertEqual(str(movement["diagnostics_surface_kind"]), "diagnostics_legacy_mirror")
         self.assertEqual(
           str(movement["runtime_owner_kind"]),

@@ -2,7 +2,7 @@
 
 Completed or superseded local A2 missile-lethality follow-ons are physically
 stored here. The parent root keeps only live, retained, or planning entries and
-uses [../archive_registry.md](../../../../../task/review/archive/phase3c_closeout_20260808/archive_registry.md) as the compact registry.
+uses `git show 095fdd5c:docs/task/review/archive/phase3c_closeout_20260808/archive_registry.md` as the compact registry.
 
 Current entry:
 

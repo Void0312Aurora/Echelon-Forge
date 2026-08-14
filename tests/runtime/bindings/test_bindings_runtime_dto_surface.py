@@ -15,171 +15,37 @@ def public_fields(instance: object) -> tuple[str, ...]:
 
 
 class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
-  def test_runtime_counterfactual_snapshot_public_fields_include_worldline_metadata(self) -> None:
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeCounterfactualSnapshot()),
-      (
-        "barrier_id",
-        "cadence_reason",
-        "deterministic_seed",
-        "entity_id",
-        "evidence_refs",
-        "fidelity_profile_id",
-        "heading",
-        "parent_worldline_id",
-        "pitch",
-        "provider_family",
-        "roll",
-        "selected_stage_node_id",
-        "snapshot_version",
-        "vx",
-        "vy",
-        "vz",
-        "world_index",
-        "worldline_id",
-        "x",
-        "y",
-        "z",
-      ),
-    )
+  def test_retired_execution_episode_controller_surface_is_absent(self) -> None:
+    for type_name in (
+      "ExecutionEpisodeController",
+      "ExecutionEpisodeControllerStepResult",
+      "ExecutionEpisodeStepResult",
+      "WorldExecutionEpisodeStepRequest",
+      "ExecutionBatchStepRequest",
+      "ExecutionBatchStepResult",
+    ):
+      with self.subTest(type_name=type_name):
+        self.assertFalse(hasattr(ef_py, type_name))
 
-  def test_runtime_worldline_comparison_public_fields_include_worldline_ids(self) -> None:
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeWorldlineComparison()),
-      (
-        "barrier_id",
-        "branch_worldline_id",
-        "comparable",
-        "comparison_id",
-        "dheading",
-        "dvx",
-        "dvy",
-        "dvz",
-        "dx",
-        "dy",
-        "dz",
-        "evidence_refs",
-        "parent_worldline_id",
-      ),
+    retired_methods = (
+      "clear_execution_episode_batch",
+      "clear_execution_episode_controller_batch",
+      "execution_episode_ready",
+      "prime_execution_episode_controller_batch",
+      "execution_episode_controller_ready",
+      "export_execution_episode_states",
+      "export_execution_episode_states_batch",
+      "evaluate_execution_episode_batch",
+      "step_execution_products_batch",
+      "step_execution_episode_batch",
+      "step_execution_episode_results_batch",
+      "prime_execution_episode_batch",
+      "step_execution_batch",
     )
-
-  def test_runtime_counterfactual_restore_request_and_result_public_fields_match_expected_surface(self) -> None:
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeCounterfactualRestoreRequest()),
-      (
-        "allow_raw_authoritative_state_mutation",
-        "evidence_refs",
-        "expected_worldline_id",
-        "request_exact_gpu_restore",
-        "request_full_clone",
-        "request_resident_state_restore",
-        "restore_barrier_id",
-        "snapshot",
-        "target_deterministic_seed",
-        "target_entity_ref",
-        "target_worldline_id",
-      ),
-    )
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeCounterfactualRestoreResult()),
-      (
-        "evidence_refs",
-        "rejection_reason",
-        "restored",
-        "restored_snapshot",
-      ),
-    )
-
-  def test_runtime_counterfactual_branch_result_public_fields_include_restore_result(self) -> None:
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeCounterfactualBranchResult()),
-      (
-        "admitted",
-        "branch_snapshot",
-        "comparison",
-        "evidence_refs",
-        "fidelity_admission",
-        "parent_snapshot",
-        "rejection_reason",
-        "restore_result",
-      ),
-    )
-
-  def test_runtime_experiment_request_and_result_public_fields_cover_wp21_evidence_surface(self) -> None:
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeExperimentStepRequest()),
-      (
-        "claim_scope",
-        "evidence_refs",
-        "observation_ref",
-        "profile_ref",
-        "request",
-        "state",
-      ),
-    )
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeExperimentRequest()),
-      (
-        "branch_request",
-        "branch_step_requests",
-        "capability_refs",
-        "comparison_id",
-        "evidence_refs",
-        "experiment_run_id",
-        "generated_input_baseline_scenario_ref",
-        "generated_input_evidence_refs",
-        "generated_input_generator_version",
-        "generated_input_kind",
-        "generated_input_ref",
-        "generated_input_source",
-        "generation_ref",
-        "include_diagnostics_traces",
-        "include_generated_input_ref",
-        "include_observations",
-        "parent_step_requests",
-        "promoted_to_support",
-        "setup_ref",
-        "trace_ids",
-        "truth_claim",
-      ),
-    )
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeExperimentAncestry()),
-      (
-        "backend_profile_ref",
-        "branch_point_ref",
-        "capability_refs",
-        "counterfactual_admission_ref",
-        "counterfactual_request_ref",
-        "evidence_bridge_errors",
-        "evidence_bridge_fail_closed",
-        "evidence_bridge_rejection_reason",
-        "evidence_bridge_valid",
-        "evidence_refs",
-        "fidelity_profile_ref",
-        "generated_input_ref",
-        "generation_ref",
-        "profile_observation_refs",
-        "replay_envelope_ref",
-        "setup_ref",
-      ),
-    )
-    self.assertTupleEqual(
-      public_fields(ef_py.RuntimeExperimentResult()),
-      (
-        "admitted",
-        "ancestry",
-        "branch_diagnostics_traces",
-        "branch_observation_packet",
-        "branch_result",
-        "branch_step_result",
-        "evidence_refs",
-        "parent_diagnostics_traces",
-        "parent_observation_packet",
-        "parent_step_result",
-        "rejection_reason",
-      ),
-    )
+    for owner in (ef_py.WorldBatchRuntime(1), ef_py.RuntimeFacade(1)):
+      for method_name in retired_methods:
+        with self.subTest(owner=type(owner).__name__, method_name=method_name):
+          self.assertFalse(hasattr(owner, method_name))
 
   def test_agent_role_authority_result_binding_exposes_fail_closed_contract(self) -> None:
     self.assertTupleEqual(
@@ -301,7 +167,6 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
   def test_tasking_request_task_order_export_uses_maintained_contract_gate_only(self) -> None:
     request = ef_py.ObservationBatchRequest()
     tasking_request = ef_py.TaskingBatchRequest()
-    step_request = ef_py.ExecutionBatchStepRequest()
 
     self.assertFalse(hasattr(request, "include_task_orders"))
     self.assertFalse(hasattr(request, "include_task_order_contracts"))
@@ -313,11 +178,6 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
     self.assertFalse(bool(tasking_request.include_task_order_contracts))
     self.assertFalse(bool(tasking_request.include_leader_intent_contracts))
     self.assertFalse(bool(tasking_request.include_pilot_report_contracts))
-    self.assertFalse(hasattr(step_request, "include_task_orders"))
-    self.assertFalse(hasattr(step_request, "include_task_order_contracts"))
-    self.assertFalse(hasattr(step_request, "include_mission_commands"))
-    self.assertFalse(hasattr(step_request, "include_leader_intents"))
-    self.assertFalse(hasattr(step_request, "include_pilot_reports"))
 
     tasking_request.include_mission_command_contracts = True
     tasking_request.include_task_order_contracts = True
@@ -641,28 +501,6 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         "track_packets",
         "training_projection_events",
         "warhead_mechanism_events",
-      ),
-    )
-
-  def test_execution_batch_step_result_public_fields_include_typed_reward_and_termination_reports(self) -> None:
-    self.assertTupleEqual(
-      public_fields(ef_py.ExecutionBatchStepResult()),
-      (
-        "controller_state_changed_flags",
-        "execution_episode_states",
-        "observation_packet",
-        "reward_breakdown_jsons",
-        "reward_reports",
-        "rewards",
-        "status_vectors",
-        "step_info_valid_flags",
-        "step_infos",
-        "step_results",
-        "tasking_packet",
-        "terminated",
-        "termination_reasons",
-        "termination_specs",
-        "truncated",
       ),
     )
 

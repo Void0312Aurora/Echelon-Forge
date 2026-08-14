@@ -603,7 +603,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 action_dim=int(self.action_space.shape[0]),
             )
             if self.include_visual:
-                obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
+                obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32)
             obs_batch.append(self._attach_temporal_history(slot_state, obs))
         return obs_batch
 
@@ -862,7 +862,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             effective_action = np.asarray(prepared.action, dtype=np.float32).reshape(-1)
         if is_naval_station_action_mode(self.action_mode):
             effective_action = naval_station_action_command(effective_action)
-        slot_state.last_action = np.asarray(effective_action, dtype=np.float32, copy=True)
+        slot_state.last_action = np.array(effective_action, dtype=np.float32)
         return slot_state.last_action.astype(np.float32, copy=True), prepared
 
     def _neutral_hold_action(self, slot_state: _CooperativeSlotState) -> np.ndarray:
@@ -902,11 +902,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             action_arr = action_arr.reshape(1, -1)
         self._actions = action_arr
 
-    def step_wait(self) -> VecEnvStepReturn:
-        if self._actions is None:
-            raise RuntimeError("step_async() must be called before step_wait().")
-
-        total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+    def _step_wait_prepare_actions(self, timing: dict[str, float]) -> tuple[dict[int, Any], set[int]]:
+        """Sync dirty command chains, prepare per-slot actions, and apply them per world."""
         dirty_world_indices = [
             int(world.world_index)
             for world in self._worlds
@@ -915,7 +912,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         if dirty_world_indices:
             self._sync_command_chain_batch(dirty_world_indices)
-        command_sync_ms = (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
+        timing["command_sync_ms"] = (
+            (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
 
         prepared_by_slot: dict[int, Any] = {}
         naval_action_sync_world_indices: set[int] = set()
@@ -934,7 +933,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     prepared = None
                     if is_naval_station_action_mode(self.action_mode):
                         effective_action = naval_station_action_command(effective_action)
-                    slot_state.last_action = np.asarray(effective_action, dtype=np.float32, copy=True)
+                    slot_state.last_action = np.array(effective_action, dtype=np.float32)
                 else:
                     effective_action, prepared = self._prepare_slot_action(slot_state, self._actions[slot_index])
                 if is_naval_station_action_mode(self.action_mode):
@@ -944,21 +943,30 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 inst_by_entity_id[int(slot_state.entity_id)] = slot_state.last_inst
                 prepared_by_slot[int(slot_index)] = prepared
             world.view.apply_actions(actions_by_entity_id, inst_by_entity_id=inst_by_entity_id)
-        action_prepare_ms = (time.perf_counter() - action_prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
+        timing["action_prepare_ms"] = (
+            (time.perf_counter() - action_prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
+        return prepared_by_slot, naval_action_sync_world_indices
 
+    def _step_wait_advance_worlds(
+        self, naval_action_sync_world_indices: set[int], timing: dict[str, float]
+    ) -> None:
+        """Late naval command sync plus the batched kernel step for every world."""
         step_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         if naval_action_sync_world_indices:
             sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             self._sync_command_chain_batch(sorted(naval_action_sync_world_indices))
             if self.collect_step_timing:
-                command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
+                timing["command_sync_ms"] += (time.perf_counter() - sync_t0) * 1000.0
         self._runtime_adapter.step_worlds(list(range(self.world_count)))
-        batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0
+        timing["batch_step_ms"] = (
+            (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0
+        )
 
-        # Refresh per-slot state first, then update the per-slot behavior layers, then sync the
-        # command chain back to the kernel for the next world step.
-        state_read_ms = 0.0
-        behavior_update_ms = 0.0
+    def _step_wait_refresh_state_and_behavior(self, timing: dict[str, float]) -> None:
+        """Refresh per-slot state, update behavior layers, then re-sync the command chain."""
+        timing["state_read_ms"] = 0.0
+        timing["behavior_update_ms"] = 0.0
         active_slot_indices = [
             int(slot_index)
             for world in self._worlds
@@ -977,7 +985,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 inst=(inst_list[local_slot_index] if local_slot_index < len(inst_list) else None),
             )
         if self.collect_step_timing:
-            state_read_ms = (time.perf_counter() - read_t0) * 1000.0
+            timing["state_read_ms"] = (time.perf_counter() - read_t0) * 1000.0
         for world in self._worlds:
             if world.view is None:
                 continue
@@ -998,218 +1006,263 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 world.director.update(world, self._world_slot_states(world), force=True)
             world.command_chain_dirty = True
             if self.collect_step_timing:
-                behavior_update_ms += (time.perf_counter() - behavior_t0) * 1000.0
+                timing["behavior_update_ms"] += (time.perf_counter() - behavior_t0) * 1000.0
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         if not self._mode_plugin.skip_post_behavior_command_sync:
             self._sync_command_chain_batch()
         if self.collect_step_timing:
-            command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
+            timing["command_sync_ms"] += (time.perf_counter() - sync_t0) * 1000.0
+
+    def _step_wait_evaluate_world_slots(
+        self,
+        world,
+        prepared_by_slot: dict[int, Any],
+        timing: dict[str, float],
+    ) -> tuple[list[tuple[int, dict[str, np.ndarray], float, bool, bool, dict[str, Any], float, int]], bool, bool, bool]:
+        """Build observations and per-slot outcomes for one world.
+
+        Returns (slot_results, world_success, world_failure, world_timeout) with the
+        cooperative success latch applied to each slot.
+        """
+        world_success = True
+        world_failure = False
+        world_timeout = False
+        slot_results: list[tuple[int, dict[str, np.ndarray], float, bool, bool, dict[str, Any], float, int]] = []
+        obs_by_slot_index: dict[int, dict[str, np.ndarray]] = {}
+        obs_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        world_obs_batch = self._build_observations_from_cached_state(list(world.slot_indices))
+        if self.collect_step_timing:
+            timing["obs_build_ms"] += (time.perf_counter() - obs_t0) * 1000.0
+        for local_slot_index, slot_index in enumerate(world.slot_indices):
+            if local_slot_index < len(world_obs_batch):
+                obs_by_slot_index[int(slot_index)] = world_obs_batch[local_slot_index]
+        for slot_index in world.slot_indices:
+            slot_state = self._slots[slot_index]
+            if slot_state is None:
+                continue
+            obs = obs_by_slot_index[int(slot_index)]
+            reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+            if bool(slot_state.coop_success_latched) and slot_state.coop_completion_mission_status is not None:
+                reward = 0.0
+                terminated = False
+                truncated = False
+                mission_status = np.asarray(slot_state.coop_completion_mission_status, dtype=np.float32)
+                info = dict(slot_state.coop_completion_info or {})
+            else:
+                cache = getattr(slot_state.loader, "_runtime_eval_cache", None)
+                cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
+                reward, terminated, truncated, mission_status = _compute_loader_step_outcome(
+                    slot_state.loader,
+                    obs=obs,
+                    steps=slot_state.steps,
+                    max_steps=slot_state.max_steps,
+                    truth=slot_state.last_truth,
+                    inst_state=slot_state.last_inst,
+                    step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
+                )
+                if self.step_info_mode == "off" or (
+                    self.step_info_mode == "terminal" and not bool(terminated or truncated)
+                ):
+                    info = build_step_info_minimal(
+                        slot_state.loader,
+                        mission_status=mission_status,
+                        terminated=bool(terminated),
+                        truncated=bool(truncated),
+                    )
+                else:
+                    info = _build_loader_step_info(
+                        slot_state.loader,
+                        entity_id=int(slot_state.entity_id),
+                        mission_status=mission_status,
+                        terminated=bool(terminated),
+                        truncated=bool(truncated),
+                        inst_now=slot_state.last_inst,
+                        truth_now=slot_state.last_truth,
+                    )
+            if self.collect_step_timing:
+                timing["reward_info_ms"] += (time.perf_counter() - reward_t0) * 1000.0
+
+            prepared = prepared_by_slot.get(int(slot_index))
+            if slot_state.action_controller is not None and prepared is not None:
+                obs, reward, info = slot_state.action_controller.finalize_step_result(obs, reward, info, prepared)
+            slot_state.last_obs = obs
+            slot_state.episode_return += float(reward)
+            slot_state.episode_length += 1
+
+            success = _mission_status_success_flag(mission_status)
+            truncated = bool(truncated)
+            terminated = bool(terminated)
+            reason = str(info.get("termination_reason", "") or "").strip().lower()
+            failure = bool(terminated and not success)
+            timeout = bool(truncated and not terminated)
+
+            if success and not bool(slot_state.coop_success_latched):
+                slot_state.coop_success_latched = True
+                slot_state.coop_completion_reason = str(info.get("termination_reason", "") or "success_waypoint")
+                slot_state.coop_completion_mission_status = np.array(mission_status, dtype=np.float32)
+                slot_state.coop_completion_info = dict(info)
+                slot_state.coop_completion_terminal_observation = _copy_obs(obs)
+            elif bool(slot_state.coop_success_latched):
+                success = True
+                terminated = False
+                truncated = False
+                failure = False
+                timeout = False
+
+            if bool(slot_state.coop_success_latched):
+                info["coop_slot_success_latched"] = 1.0
+                info["coop_slot_complete"] = 1.0
+            else:
+                info["coop_slot_success_latched"] = 0.0
+                info["coop_slot_complete"] = 0.0
+            info["coop_slot_terminal_success"] = float(success)
+            info["coop_slot_terminal_failure"] = float(failure)
+            info["coop_slot_terminal_timeout"] = float(timeout)
+            if success and slot_state.coop_completion_reason:
+                info["termination_reason"] = slot_state.coop_completion_reason
+
+            world_success = bool(world_success and success)
+            world_failure = bool(world_failure or failure)
+            world_timeout = bool(world_timeout or timeout)
+            slot_results.append(
+                (
+                    slot_index,
+                    obs,
+                    float(reward),
+                    bool(terminated),
+                    bool(truncated),
+                    info,
+                    float(slot_state.episode_return),
+                    int(slot_state.episode_length),
+                )
+            )
+        return slot_results, world_success, world_failure, world_timeout
+
+    def _step_wait_expand_world_results(
+        self,
+        world,
+        slot_results: list[tuple[int, dict[str, np.ndarray], float, bool, bool, dict[str, Any], float, int]],
+        *,
+        world_success: bool,
+        world_failure: bool,
+        world_timeout: bool,
+        rewards: np.ndarray,
+        dones: np.ndarray,
+        infos: list[dict[str, Any]],
+    ) -> None:
+        """Expand one world's slot results into the flat reward/done/info buffers."""
+        world_done = bool(world_failure or world_timeout or world_success)
+        if world_done:
+            terminal_obs = {}
+            for slot_index, obs, *_rest in slot_results:
+                slot_state = self._slots[slot_index]
+                if slot_state is not None and slot_state.coop_completion_terminal_observation is not None:
+                    terminal_obs[int(slot_index)] = _copy_obs(slot_state.coop_completion_terminal_observation)
+                else:
+                    terminal_obs[int(slot_index)] = _copy_obs(obs)
+            reset_obs_batch = self._reset_world(world.world_index, seed=None)
+            reset_by_local_slot = {
+                int(local_slot_index): obs
+                for local_slot_index, obs in enumerate(reset_obs_batch)
+            }
+
+        for slot_index, obs, reward, terminated, truncated, info, episode_return, episode_length in slot_results:
+            slot_state = self._slots[slot_index]
+            if slot_state is None:
+                continue
+            rewards[slot_index] = float(reward)
+            infos[slot_index] = dict(info)
+            infos[slot_index]["world_index"] = int(slot_state.world_index)
+            infos[slot_index]["slot_index"] = int(slot_state.slot_index)
+            infos[slot_index]["local_slot_index"] = int(slot_state.local_slot_index)
+            infos[slot_index]["slots_per_world"] = int(self.slots_per_world)
+            infos[slot_index]["entity_id"] = int(slot_state.entity_id)
+            infos[slot_index]["entity_name"] = str(slot_state.entity_name)
+            infos[slot_index]["formation_role_id"] = (
+                None
+                if slot_state.control_slot.formation_role_id is None
+                else str(slot_state.control_slot.formation_role_id)
+            )
+            infos[slot_index]["role_code"] = (
+                None if slot_state.control_slot.role_code is None else int(slot_state.control_slot.role_code)
+            )
+            infos[slot_index]["relative_slot_code"] = (
+                None
+                if slot_state.control_slot.relative_slot_code is None
+                else int(slot_state.control_slot.relative_slot_code)
+            )
+            infos[slot_index]["world_done"] = float(bool(world_done))
+            infos[slot_index]["world_success"] = float(bool(world_success))
+            infos[slot_index]["world_failure"] = float(bool(world_failure))
+            infos[slot_index]["world_timeout"] = float(bool(world_timeout))
+            slot_completed = bool(float(infos[slot_index].get("coop_slot_complete", 0.0)) > 0.5)
+            infos[slot_index]["shared_world_reset"] = float(
+                bool(world_done and not slot_completed and not (world_failure or world_timeout or (terminated or truncated)))
+            )
+            infos[slot_index]["policy_route"] = (
+                None if slot_state.control_slot.policy_route is None else str(slot_state.control_slot.policy_route)
+            )
+            if world_done:
+                infos[slot_index]["terminal_observation"] = terminal_obs[int(slot_index)]
+                # A shared-world failure takes precedence over a simultaneous
+                # timeout.  Marking every slot as time-limit truncated in the
+                # mixed case causes value bootstrapping across a true terminal
+                # failure in SB3-compatible consumers.
+                infos[slot_index]["TimeLimit.truncated"] = bool(
+                    world_timeout and not world_failure
+                )
+                infos[slot_index]["episode"] = {
+                    "r": round(float(episode_return), 6),
+                    "l": int(episode_length),
+                }
+                dones[slot_index] = True
+                reset_obs = reset_by_local_slot[int(slot_state.local_slot_index)]
+                self._save_obs(slot_index, reset_obs)
+            else:
+                infos[slot_index]["TimeLimit.truncated"] = False
+                dones[slot_index] = False
+                self._save_obs(slot_index, obs)
+
+    def step_wait(self) -> VecEnvStepReturn:
+        if self._actions is None:
+            raise RuntimeError("step_async() must be called before step_wait().")
+
+        total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        timing: dict[str, float] = {"obs_build_ms": 0.0, "reward_info_ms": 0.0}
+        prepared_by_slot, naval_sync_world_indices = self._step_wait_prepare_actions(timing)
+        self._step_wait_advance_worlds(naval_sync_world_indices, timing)
+        self._step_wait_refresh_state_and_behavior(timing)
 
         rewards = np.zeros((self.num_envs,), dtype=np.float32)
         dones = np.zeros((self.num_envs,), dtype=bool)
         infos: list[dict[str, Any]] = [{} for _ in range(self.num_envs)]
 
-        obs_build_ms = 0.0
-        reward_info_ms = 0.0
         for world in self._worlds:
-            world_done = False
-            world_success = True
-            world_failure = False
-            world_timeout = False
-            slot_results: list[tuple[int, dict[str, np.ndarray], float, bool, bool, dict[str, Any], float, int]] = []
-            obs_by_slot_index: dict[int, dict[str, np.ndarray]] = {}
-            obs_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-            world_obs_batch = self._build_observations_from_cached_state(list(world.slot_indices))
-            if self.collect_step_timing:
-                obs_build_ms += (time.perf_counter() - obs_t0) * 1000.0
-            for local_slot_index, slot_index in enumerate(world.slot_indices):
-                if local_slot_index < len(world_obs_batch):
-                    obs_by_slot_index[int(slot_index)] = world_obs_batch[local_slot_index]
-            for slot_index in world.slot_indices:
-                slot_state = self._slots[slot_index]
-                if slot_state is None:
-                    continue
-                obs = obs_by_slot_index[int(slot_index)]
-                reward_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-                if bool(slot_state.coop_success_latched) and slot_state.coop_completion_mission_status is not None:
-                    reward = 0.0
-                    terminated = False
-                    truncated = False
-                    mission_status = np.asarray(slot_state.coop_completion_mission_status, dtype=np.float32)
-                    info = dict(slot_state.coop_completion_info or {})
-                else:
-                    cache = getattr(slot_state.loader, "_runtime_eval_cache", None)
-                    cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
-                    reward, terminated, truncated, mission_status = _compute_loader_step_outcome(
-                        slot_state.loader,
-                        obs=obs,
-                        steps=slot_state.steps,
-                        max_steps=slot_state.max_steps,
-                        truth=slot_state.last_truth,
-                        inst_state=slot_state.last_inst,
-                        step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
-                    )
-                    if self.step_info_mode == "off" or (
-                        self.step_info_mode == "terminal" and not bool(terminated or truncated)
-                    ):
-                        info = build_step_info_minimal(
-                            slot_state.loader,
-                            mission_status=mission_status,
-                            terminated=bool(terminated),
-                            truncated=bool(truncated),
-                        )
-                    else:
-                        info = _build_loader_step_info(
-                            slot_state.loader,
-                            entity_id=int(slot_state.entity_id),
-                            mission_status=mission_status,
-                            terminated=bool(terminated),
-                            truncated=bool(truncated),
-                            inst_now=slot_state.last_inst,
-                            truth_now=slot_state.last_truth,
-                        )
-                if self.collect_step_timing:
-                    reward_info_ms += (time.perf_counter() - reward_t0) * 1000.0
-
-                prepared = prepared_by_slot.get(int(slot_index))
-                if slot_state.action_controller is not None and prepared is not None:
-                    obs, reward, info = slot_state.action_controller.finalize_step_result(obs, reward, info, prepared)
-                slot_state.last_obs = obs
-                slot_state.episode_return += float(reward)
-                slot_state.episode_length += 1
-
-                success = _mission_status_success_flag(mission_status)
-                truncated = bool(truncated)
-                terminated = bool(terminated)
-                reason = str(info.get("termination_reason", "") or "").strip().lower()
-                failure = bool(terminated and not success)
-                timeout = bool(truncated and not terminated)
-
-                if success and not bool(slot_state.coop_success_latched):
-                    slot_state.coop_success_latched = True
-                    slot_state.coop_completion_reason = str(info.get("termination_reason", "") or "success_waypoint")
-                    slot_state.coop_completion_mission_status = np.asarray(mission_status, dtype=np.float32, copy=True)
-                    slot_state.coop_completion_info = dict(info)
-                    slot_state.coop_completion_terminal_observation = _copy_obs(obs)
-                elif bool(slot_state.coop_success_latched):
-                    success = True
-                    terminated = False
-                    truncated = False
-                    failure = False
-                    timeout = False
-
-                if bool(slot_state.coop_success_latched):
-                    info["coop_slot_success_latched"] = 1.0
-                    info["coop_slot_complete"] = 1.0
-                else:
-                    info["coop_slot_success_latched"] = 0.0
-                    info["coop_slot_complete"] = 0.0
-                info["coop_slot_terminal_success"] = float(success)
-                info["coop_slot_terminal_failure"] = float(failure)
-                info["coop_slot_terminal_timeout"] = float(timeout)
-                if success and slot_state.coop_completion_reason:
-                    info["termination_reason"] = slot_state.coop_completion_reason
-
-                world_success = bool(world_success and success)
-                world_failure = bool(world_failure or failure)
-                world_timeout = bool(world_timeout or timeout)
-                slot_results.append(
-                    (
-                        slot_index,
-                        obs,
-                        float(reward),
-                        bool(terminated),
-                        bool(truncated),
-                        info,
-                        float(slot_state.episode_return),
-                        int(slot_state.episode_length),
-                    )
-                )
-
+            slot_results, world_success, world_failure, world_timeout = self._step_wait_evaluate_world_slots(
+                world, prepared_by_slot, timing
+            )
             if not slot_results:
                 continue
-
-            world_done = bool(world_failure or world_timeout or world_success)
-            if world_done:
-                terminal_obs = {}
-                for slot_index, obs, *_rest in slot_results:
-                    slot_state = self._slots[slot_index]
-                    if slot_state is not None and slot_state.coop_completion_terminal_observation is not None:
-                        terminal_obs[int(slot_index)] = _copy_obs(slot_state.coop_completion_terminal_observation)
-                    else:
-                        terminal_obs[int(slot_index)] = _copy_obs(obs)
-                reset_obs_batch = self._reset_world(world.world_index, seed=None)
-                reset_by_local_slot = {
-                    int(local_slot_index): obs
-                    for local_slot_index, obs in enumerate(reset_obs_batch)
-                }
-
-            for slot_index, obs, reward, terminated, truncated, info, episode_return, episode_length in slot_results:
-                slot_state = self._slots[slot_index]
-                if slot_state is None:
-                    continue
-                rewards[slot_index] = float(reward)
-                infos[slot_index] = dict(info)
-                infos[slot_index]["world_index"] = int(slot_state.world_index)
-                infos[slot_index]["slot_index"] = int(slot_state.slot_index)
-                infos[slot_index]["local_slot_index"] = int(slot_state.local_slot_index)
-                infos[slot_index]["slots_per_world"] = int(self.slots_per_world)
-                infos[slot_index]["entity_id"] = int(slot_state.entity_id)
-                infos[slot_index]["entity_name"] = str(slot_state.entity_name)
-                infos[slot_index]["formation_role_id"] = (
-                    None
-                    if slot_state.control_slot.formation_role_id is None
-                    else str(slot_state.control_slot.formation_role_id)
-                )
-                infos[slot_index]["role_code"] = (
-                    None if slot_state.control_slot.role_code is None else int(slot_state.control_slot.role_code)
-                )
-                infos[slot_index]["relative_slot_code"] = (
-                    None
-                    if slot_state.control_slot.relative_slot_code is None
-                    else int(slot_state.control_slot.relative_slot_code)
-                )
-                infos[slot_index]["world_done"] = float(bool(world_done))
-                infos[slot_index]["world_success"] = float(bool(world_success))
-                infos[slot_index]["world_failure"] = float(bool(world_failure))
-                infos[slot_index]["world_timeout"] = float(bool(world_timeout))
-                slot_completed = bool(float(infos[slot_index].get("coop_slot_complete", 0.0)) > 0.5)
-                infos[slot_index]["shared_world_reset"] = float(
-                    bool(world_done and not slot_completed and not (world_failure or world_timeout or (terminated or truncated)))
-                )
-                infos[slot_index]["policy_route"] = (
-                    None if slot_state.control_slot.policy_route is None else str(slot_state.control_slot.policy_route)
-                )
-                if world_done:
-                    infos[slot_index]["terminal_observation"] = terminal_obs[int(slot_index)]
-                    # A shared-world failure takes precedence over a simultaneous
-                    # timeout.  Marking every slot as time-limit truncated in the
-                    # mixed case causes value bootstrapping across a true terminal
-                    # failure in SB3-compatible consumers.
-                    infos[slot_index]["TimeLimit.truncated"] = bool(
-                        world_timeout and not world_failure
-                    )
-                    infos[slot_index]["episode"] = {
-                        "r": round(float(episode_return), 6),
-                        "l": int(episode_length),
-                    }
-                    dones[slot_index] = True
-                    reset_obs = reset_by_local_slot[int(slot_state.local_slot_index)]
-                    self._save_obs(slot_index, reset_obs)
-                else:
-                    infos[slot_index]["TimeLimit.truncated"] = False
-                    dones[slot_index] = False
-                    self._save_obs(slot_index, obs)
+            self._step_wait_expand_world_results(
+                world,
+                slot_results,
+                world_success=world_success,
+                world_failure=world_failure,
+                world_timeout=world_timeout,
+                rewards=rewards,
+                dones=dones,
+                infos=infos,
+            )
 
         if self.collect_step_timing:
             self.last_step_timing = {
-                "action_prepare_ms": float(action_prepare_ms),
-                "batch_step_ms": float(batch_step_ms),
-                "state_read_ms": float(state_read_ms),
-                "behavior_update_ms": float(behavior_update_ms),
-                "command_sync_ms": float(command_sync_ms),
-                "obs_build_ms": float(obs_build_ms),
-                "reward_info_ms": float(reward_info_ms),
+                "action_prepare_ms": float(timing["action_prepare_ms"]),
+                "batch_step_ms": float(timing["batch_step_ms"]),
+                "state_read_ms": float(timing["state_read_ms"]),
+                "behavior_update_ms": float(timing["behavior_update_ms"]),
+                "command_sync_ms": float(timing["command_sync_ms"]),
+                "obs_build_ms": float(timing["obs_build_ms"]),
+                "reward_info_ms": float(timing["reward_info_ms"]),
                 "total_ms": float((time.perf_counter() - total_t0) * 1000.0),
             }
             self.last_step_timing.update(self._observation_timing_snapshot())

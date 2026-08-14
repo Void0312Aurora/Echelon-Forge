@@ -428,11 +428,6 @@ class _FakeLoader:
     def update_behaviors(self, sim_time, *, truth, inst, sync_to_kernel):
         self._calls.append(("update_behaviors", sim_time, truth, inst, sync_to_kernel))
 
-    def update_command_chain_only(self, sim_time, *, truth, inst, sync_to_kernel):
-        self._calls.append(
-            ("update_command_chain_only", sim_time, truth, inst, sync_to_kernel)
-        )
-
 
 class _FakeHandle:
     def __init__(self, calls, last_truth="truth_after"):
@@ -444,28 +439,14 @@ class TestStandardExecutionPlugin:
     """StandardExecutionPlugin behavior parity with the pre-extraction code."""
 
     def test_default_skip_post_behavior_sync_is_false(self):
-        plugin = StandardExecutionPlugin(
-            execution_episode_controller_mainline=False,
-        )
+        plugin = StandardExecutionPlugin()
         assert plugin.skip_post_behavior_command_sync is False
-
-    def test_mainline_skip_post_behavior_sync_is_true(self):
-        plugin = StandardExecutionPlugin(
-            execution_episode_controller_mainline=True,
-        )
-        assert plugin.skip_post_behavior_command_sync is True
 
     def test_update_post_step_standard_calls_update_behaviors(self):
         calls = []
-        plugin = StandardExecutionPlugin(execution_episode_controller_mainline=False)
+        plugin = StandardExecutionPlugin()
         plugin.update_post_step_behavior(_FakeHandle(calls), 1.0, "truth", "inst")
         assert [call[0] for call in calls] == ["update_behaviors"]
-
-    def test_update_post_step_mainline_calls_command_chain_only(self):
-        calls = []
-        plugin = StandardExecutionPlugin(execution_episode_controller_mainline=True)
-        plugin.update_post_step_behavior(_FakeHandle(calls), 1.0, "truth", "inst")
-        assert [call[0] for call in calls] == ["update_command_chain_only"]
 
     def test_hybrid_requires_injected_finalizer(self):
         with pytest.raises(ValueError, match="air_combat_event_finalizer"):
@@ -512,12 +493,11 @@ class TestStandardExecutionPlugin:
         finalizer = mock.Mock()
         plugin = resolve_execution_mode(
             "execution",
-            execution_episode_controller_mainline=True,
             is_air_combat_hybrid=True,
             air_combat_event_finalizer=finalizer,
         )
         assert isinstance(plugin, StandardExecutionPlugin)
-        assert plugin.skip_post_behavior_command_sync is True
+        assert plugin.skip_post_behavior_command_sync is False
         assert plugin._air_combat_event_finalizer is finalizer
 
 
@@ -577,12 +557,14 @@ class TestCooperativePlugin:
         assert "_mode_plugin" in source
 
     def test_cooperative_step_wait_routes_through_plugin(self):
-        """Verify step_wait uses _mode_plugin.update_post_step_behavior."""
+        """Verify the step_wait pipeline uses _mode_plugin.update_post_step_behavior."""
         from python.rl.runtime.cooperative_world_batch_vec_env import (
             CooperativeWorldBatchVecEnv,
         )
         import inspect
-        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait)
+        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait) + inspect.getsource(
+            CooperativeWorldBatchVecEnv._step_wait_refresh_state_and_behavior
+        )
         assert "_mode_plugin.update_post_step_behavior(" in source
         assert "_mode_plugin.skip_post_behavior_command_sync" in source
 
@@ -736,12 +718,12 @@ class TestCooperativePluginBehaviorEquivalence:
     """Mock self-proof: cooperative hook is called with correct arguments."""
 
     def test_update_post_step_behavior_called_per_slot(self):
-        """Prove the cooperative step_wait calls the plugin hook per slot."""
+        """Prove the cooperative step_wait pipeline calls the plugin hook per slot."""
         from python.rl.runtime.cooperative_world_batch_vec_env import (
             CooperativeWorldBatchVecEnv,
         )
         import inspect
-        source = inspect.getsource(CooperativeWorldBatchVecEnv.step_wait)
+        source = inspect.getsource(CooperativeWorldBatchVecEnv._step_wait_refresh_state_and_behavior)
         assert "self._mode_plugin.update_post_step_behavior(" in source
         assert "slot_state, sim_time, slot_state.last_truth, slot_state.last_inst" in source
 

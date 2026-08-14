@@ -7,31 +7,14 @@
 
 namespace runtime::cuda_resident::learner_consumption {
 
-// CP-6 closes gate G-C with a learner-EQUIVALENT consumer measured at the
-// CR2-3 lease: it reads every element of the lease value tensor, applies the
-// pinned per-field normalization below, and writes a device-resident policy
-// input buffer. "Learner equivalent" is scoped to the resident fixture
-// surface (the fixed-air fifteen-field observation contract); it is a
-// representative pre-inference transform, not equivalence with any production
-// forward pass, and the production dictionary-observation stack stays outside
-// this gate's coverage.
+// The explicitly selected CUDA-resident backend exposes a learner-equivalent
+// consumer at the device-observation lease boundary. It reads every element of
+// the fixed-air fifteen-field observation tensor, applies the per-field
+// normalization below, and writes a device-resident policy-input buffer.
+// "Learner equivalent" is deliberately limited to this pre-inference
+// transform; it does not claim equivalence with a production forward pass.
 inline constexpr std::string_view kLearnerConsumerSurfaceV1 =
     "cuda_resident.device_consumer_learner_equivalent.v1";
-
-// Matrix mode identity for the measured learner-consumer lane. Deliberately
-// NOT added to the frozen CR2-6a mode table (kModes): the matrix evidence
-// validators are still single-generation pinned, and extending the frozen
-// scope is the CP-8 re-matrix kickoff's lane. The probe exposes the mode
-// behind an explicit flag instead, so default reports keep the frozen shape.
-inline constexpr std::string_view kLearnerConsumerModeIdNoExport = "no_export_learner_consumer";
-
-// Learner-flagged probe runs self-declare this report generation so a
-// five-mode report can never masquerade as the frozen four-mode v1 shape
-// again. The four CP-6 campaign reports captured before this constant exist
-// with the v1 id and are validated under the generation their tracked
-// evidence package declares.
-inline constexpr std::string_view kLearnerProbeSchemaV2 =
-    "cuda_resident.cp6.production_matrix_probe.v2";
 
 // One feature per packed observation field. The packing kernel already
 // produces the world-major [world_count, feature_count] float layout, so the
@@ -39,11 +22,8 @@ inline constexpr std::string_view kLearnerProbeSchemaV2 =
 inline constexpr std::size_t kLearnerConsumptionFeatureCount = 15;
 
 // Per-field affine normalization: policy_input = (value - offset) * scale.
-// The constants are representative magnitudes for the fixed-air fixture's
-// observation fields, owned by this contract alone; any Python or diagnostic
-// reader derives them from here (the kernel receives them by value from this
-// table). Field identities and order are the projection contract's packed
-// observation order, asserted below.
+// The kernel receives the constants by value from this table. Field identities
+// and order match the projection contract's packed observation order.
 struct LearnerFieldNormalization {
     std::string_view field_id;
     float offset;
@@ -87,11 +67,5 @@ static_assert(kLearnerConsumptionFeatureCount == kObservationProjectionObservati
               "the learner-equivalent consumer covers the packed fifteen-field observation");
 static_assert(learner_normalization_is_well_formed(),
               "field identities follow the projection contract order with non-zero finite scales");
-
-// Closing a measurement gate grants nothing else.
-inline constexpr bool kMaintainedClaimAllowed = false;
-inline constexpr bool kPublicSupportEnabled = false;
-inline constexpr bool kPromotionAllowed = false;
-inline constexpr bool kTuningAuthorized = false;
 
 } // namespace runtime::cuda_resident::learner_consumption

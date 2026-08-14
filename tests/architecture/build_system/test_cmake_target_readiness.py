@@ -13,6 +13,15 @@ def _cmake_source() -> str:
   return CMAKE.read_text(encoding="utf-8")
 
 
+def _option_default(source: str, option_name: str) -> str:
+  match = re.search(
+    rf"option\(\s*{re.escape(option_name)}\s+\"[^\"]*\"\s+(ON|OFF)\s*\)",
+    source,
+  )
+  assert match is not None, f"missing CMake option: {option_name}"
+  return match.group(1)
+
+
 def _command_body(source: str, command: str, first_args: str) -> str:
   match = re.search(
     rf"{re.escape(command)}\s*\(\s*{re.escape(first_args)}(.*?)\n\)",
@@ -21,6 +30,31 @@ def _command_body(source: str, command: str, first_args: str) -> str:
   )
   assert match is not None, f"missing CMake command: {command}({first_args}"
   return match.group(1)
+
+
+def test_compiler_cache_is_explicit_opt_in_and_unsafe_sccache_is_blocked() -> None:
+  source = _cmake_source()
+  assert _option_default(source, "EF_ENABLE_COMPILER_CACHE") == "OFF"
+  assert 'MSVC\n            AND CMAKE_GENERATOR MATCHES "Ninja"' in source
+  assert 'EF_COMPILER_CACHE_NAME STREQUAL "sccache"' in source
+
+
+def test_fetchcontent_pins_revalidate_by_default_and_old_cmake_fails_closed() -> None:
+  source = _cmake_source()
+  assert _option_default(source, "EF_FETCHCONTENT_REVALIDATE_PINS") == "ON"
+  assert (
+    "if (NOT EF_FETCHCONTENT_REVALIDATE_PINS AND CMAKE_VERSION VERSION_LESS 3.27)"
+    in source
+  )
+
+  for dependency in ("flecs", "spdlog", "nanobind", "nlohmann_json", "doctest"):
+    body = _command_body(source, "FetchContent_Declare", dependency)
+    assert "${EF_FETCHCONTENT_PIN_MODE}" in body, (
+      f"{dependency} bypasses the repository-wide pin revalidation mode"
+    )
+    assert "UPDATE_DISCONNECTED TRUE" not in body, (
+      f"{dependency} hard-codes disconnected updates"
+    )
 
 
 # --- Robust CMake parsing for the content leaf-split gate (I46 slice 1) -------

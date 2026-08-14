@@ -126,10 +126,6 @@ struct InputBatch {
     VectorBatchView<WorldTaskOrderMaintainedAssignment> task_orders;
     VectorBatchView<WorldLeaderIntentMaintainedAssignment> leader_intents;
     VectorBatchView<WorldPilotReportMaintainedAssignment> pilot_reports;
-    bool clear_execution_episode_controller = false;
-    bool prime_execution_episode_controller = false;
-    VectorBatchView<WorldEntityRef> execution_episode_refs;
-    VectorBatchView<ExecutionEpisodeState> execution_episode_states;
 };
 
 struct InputResult {
@@ -139,27 +135,17 @@ struct InputResult {
 
 enum class AdvanceKind : std::uint8_t {
     WorldBatch,
-    StepExecutionProducts,
-    StepExecutionResults,
 };
 
 struct AdvanceRequest {
     AdvanceKind kind = AdvanceKind::WorldBatch;
-    VectorBatchView<WorldExecutionEpisodeStepRequest> execution_episode_requests;
 };
 
-struct AdvanceResult {
-    std::vector<ExecutionEpisodeRuntimeProducts> execution_episode_products;
-    std::vector<ExecutionEpisodeControllerStepResult> execution_episode_step_results;
-};
+struct AdvanceResult {};
 
-struct EvaluationRequest {
-    VectorBatchView<WorldExecutionEpisodeStepRequest> execution_episode_requests;
-};
+struct EvaluationRequest {};
 
-struct EvaluationResult {
-    std::vector<ExecutionEpisodeRuntimeProducts> execution_episode_products;
-};
+struct EvaluationResult {};
 
 struct EntityKinematicsRead {
     WorldEntityRef ref{};
@@ -174,8 +160,6 @@ struct ExportRequest {
     bool include_kinematics = false;
     bool include_recent_engagement_events = false;
     bool include_world_time_step = false;
-    bool include_execution_episode_ready = false;
-    bool include_execution_episode_states = false;
     bool include_agent_observations = false;
     bool include_instrument_states = false;
     bool include_mission_commands = false;
@@ -188,8 +172,6 @@ struct ExportResult {
     std::vector<EntityKinematicsRead> kinematics;
     ::RecentEngagementEvents recent_engagement_events;
     double world_time_step = 0.0;
-    bool execution_episode_ready = false;
-    std::vector<ExecutionEpisodeState> execution_episode_states;
     std::vector<AgentObservation> agent_observations;
     std::vector<InstrumentState> instrument_states;
     std::vector<MissionCommandMaintainedBatchContract> mission_commands;

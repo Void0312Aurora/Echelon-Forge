@@ -64,39 +64,5 @@ class MissionCommandGroundFieldRoundtripTests(unittest.TestCase):
     rhs.mission_command.objective_node_id = 8202
     self.assertFalse(bool(ef_py.execution_episode_states_equivalent(lhs, rhs)))
 
-  def test_existing_state_json_is_backfilled_from_ground_static_task_fields(self) -> None:
-    state = ef_py.ExecutionEpisodeState()
-    state.has_mission_command = True
-    state.mission_command.command_code = 2
-    state.mission_command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
-    state.mission_command.objective_area_id = 9101
-    state.mission_command.objective_node_id = 9201
-    state.mission_command.ground_commander_id = 9301
-    state.mission_command.tactical_cadence_hz = 1.0
-    state.mission_command.active = True
-    state.has_mission_command_json = True
-    state.mission_command_json = json.dumps(
-      {
-        "command_code": 2,
-        "active": True,
-      },
-      ensure_ascii=True,
-      sort_keys=True,
-    )
-
-    controller = ef_py.ExecutionEpisodeController()
-    controller.import_state(state)
-
-    exported = controller.export_state()
-
-    self.assertTrue(bool(exported.has_mission_command_json))
-    mission_json = json.loads(str(exported.mission_command_json))
-    self.assertEqual(int(mission_json["ground_task_mode"]), int(ef_py.GroundTaskMode.MoveStatic))
-    self.assertEqual(int(mission_json["objective_area_id"]), 9101)
-    self.assertEqual(int(mission_json["objective_node_id"]), 9201)
-    self.assertEqual(int(mission_json["ground_commander_id"]), 9301)
-    self.assertAlmostEqual(float(mission_json["tactical_cadence_hz"]), 1.0, places=6)
-
-
 if __name__ == "__main__":
   unittest.main()

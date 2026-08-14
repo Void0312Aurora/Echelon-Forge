@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <numbers>
 
 #include "components/combat/common/missile_seeker_state.h"
 
@@ -275,10 +276,10 @@ inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p, double beari
 
     // Innovation
     double dz_bearing = bearing_rad - bearing_pred;
-    while (dz_bearing > M_PI)
-        dz_bearing -= 2.0 * M_PI;
-    while (dz_bearing < -M_PI)
-        dz_bearing += 2.0 * M_PI;
+    while (dz_bearing > std::numbers::pi_v<double>)
+        dz_bearing -= 2.0 * std::numbers::pi_v<double>;
+    while (dz_bearing < -std::numbers::pi_v<double>)
+        dz_bearing += 2.0 * std::numbers::pi_v<double>;
     double dz_elev = elevation_rad - elev_pred;
     double dz_range = range_m - r_pred;
     double innov[3] = {dz_bearing, dz_elev, dz_range};
@@ -427,14 +428,14 @@ inline double ekf_filtered_bearing_deg(const SeekerEkfState &s, const double mis
                                        double heading_rad) {
     double bearing_rad, elev_rad, range_m;
     world_to_body_rel(s.x, missile_world, heading_rad, bearing_rad, elev_rad, range_m);
-    return bearing_rad * 180.0 / M_PI;
+    return bearing_rad * 180.0 / std::numbers::pi_v<double>;
 }
 
 inline double ekf_filtered_elevation_deg(const SeekerEkfState &s, const double missile_world[3],
                                          double heading_rad) {
     double bearing_rad, elev_rad, range_m;
     world_to_body_rel(s.x, missile_world, heading_rad, bearing_rad, elev_rad, range_m);
-    return elev_rad * 180.0 / M_PI;
+    return elev_rad * 180.0 / std::numbers::pi_v<double>;
 }
 
 inline double ekf_filtered_range_m(const SeekerEkfState &s, const double missile_world[3],

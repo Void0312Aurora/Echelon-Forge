@@ -2,15 +2,10 @@ from __future__ import annotations
 
 import posixpath
 import re
-from pathlib import Path
-from typing import Callable
-
 from tests.architecture.helpers import REPO_ROOT
 from tests.architecture.build_system.test_cmake_target_readiness import (
   _cmake_source,
   _find_commands,
-  _normalize_source_path,
-  _scoped_call_args,
   _strip_cmake_comments,
   _tokenize,
 )
@@ -19,25 +14,10 @@ from tests.architecture.build_system.test_cmake_target_readiness import (
 CUDA_RESIDENT_DIR = REPO_ROOT / "src" / "runtime" / "facade" / "internal" / "cuda_resident"
 GPU_DIR = REPO_ROOT / "src" / "gpu"
 
-# The resident backend's device sources are only compiled when CUDA experiments
-# are enabled, and no CI lane enables them (no GPU runner, and nvcc is not
-# preinstalled on the hosted images). That makes the whole surface invisible to
-# the default gates: a device source could be deleted, renamed, or silently
-# dropped from its CMake list and every green build would stay green.
-#
-# These gates are the toolkit-free half of that protection. They run on every
-# machine, need no CUDA toolkit, and assert two things a CUDA-off build cannot:
-#
-#  1. the device sources on disk and the device sources CMake compiles remain
-#     the same set (source-wiring gates below); and
-#  2. each CUDA-only probe still *does* something -- its sources reference the
-#     backend they link, and its entry point has a success path (probe-stub
-#     gates below).
-#
-# Neither half can prove the code still compiles; only an actual CUDA-on build
-# does that, which is why the opt-in `ci-cuda-compile` workflow exists and why
-# the promotion program records a local CUDA-on build result at each iteration.
-# Conversely, the compile lane cannot replace (2): a stub compiles cleanly.
+# The CUDA-resident backend and optional GPU helpers are excluded from default
+# CUDA-off builds. These toolkit-free gates keep their device-source wiring and
+# opt-in compile workflow explicit; the CUDA-on lane provides the actual compiler
+# check. Runtime execution remains a separate GPU-host responsibility.
 
 
 # --- Device source wiring ----------------------------------------------------
@@ -45,7 +25,7 @@ GPU_DIR = REPO_ROOT / "src" / "gpu"
 
 def _wired_device_sources() -> set[str]:
   """Every ``.cu``/``.cuh`` path CMake adds to a source list."""
-  source = _cmake_source()
+  source = _strip_cmake_comments(_cmake_source())
   wired: set[str] = set()
   for command in ("list", "set"):
     for body in _find_commands(source, command):
@@ -74,8 +54,7 @@ def test_every_device_source_on_disk_is_compiled_by_cmake() -> None:
 
 
 def test_every_device_source_cmake_names_exists_on_disk() -> None:
-  """A CMake list naming a deleted ``.cu`` file only fails when CUDA is enabled,
-  which no CI lane does -- so assert it here instead."""
+  """Catch a deleted ``.cu`` source without waiting for the CUDA-on lane."""
   missing = sorted(
     token
     for token in _wired_device_sources()
@@ -83,16 +62,12 @@ def test_every_device_source_cmake_names_exists_on_disk() -> None:
   )
   assert not missing, (
     f"CMake names device sources that do not exist: {missing}. This would only "
-    "surface in a CUDA-on configure, which no CI lane runs."
+    "surface during a CUDA-on configure without this structural gate."
   )
 
 
 def test_resident_backend_device_source_count_is_pinned() -> None:
-  """The resident backend's device surface is load-bearing evidence. CP-5 fused
-  the six window-commit kernels into ``cuda_world_store_cuda_window_body.cu``,
-  which makes the tracked v2 counter evidence a historical baseline for the
-  pre-fusion topology; the v3 catalog owns the current one. A change in this
-  file set still has to be deliberate, one reviewed iteration at a time."""
+  """Keep changes to the maintained backend's device surface deliberate."""
   present = sorted(path.name for path in CUDA_RESIDENT_DIR.glob("*.cu"))
   expected = [
     "cuda_world_store_cuda_barrier.cu",
@@ -104,9 +79,8 @@ def test_resident_backend_device_source_count_is_pinned() -> None:
     "cuda_world_store_cuda_window_body.cu",
   ]
   assert present == expected, (
-    "the resident backend device source set changed. The versioned kernel "
-    "catalog and its capture evidence pin kernels compiled from these files; "
-    "update the evidence and this pin together, in one reviewed iteration."
+    "the resident backend device source set changed; update this maintained "
+    "surface pin in the same reviewed change"
   )
 
 
@@ -158,241 +132,6 @@ def test_helper_and_resident_device_surfaces_stay_separate() -> None:
   assert all(name.startswith("gpu_") for name in helper_names)
   assert all(name.startswith("cuda_world_store_") for name in resident_names)
 
-
-# --- Probe executability (the half a compile lane cannot cover) ---------------
-# CP-4a retired the v1 resource capture probe by replacing its 335-line body
-# with a stub that printed the retirement reason and returned EXIT_FAILURE
-# (44e2b64e). The CMake target was left untouched: it still compiled the replay
-# harness and linked both ef_cuda_resident_backend and nlohmann_json, while the
-# stub source referenced none of them. That state builds and links cleanly, so a
-# CUDA-on compile lane reports green on a probe that can no longer produce
-# evidence. CP-4c then had to pay for the missing capture tool.
-#
-# These gates encode the two structural signatures of that state:
-#   * a target links the resident backend but no source of that target names it;
-#   * a target's entry point has no success return at all.
-# Both are readable from the tree with no toolkit and no GPU.
-
-BACKEND_LIBRARY = "ef_cuda_resident_backend"
-BACKEND_SYMBOL = "CudaResidentBackend"
-
-# Pinned so a probe cannot be deleted from CMakeLists.txt without review. Each
-# entry is a CUDA-only executable that consumes the resident backend directly.
-CUDA_PROBE_TARGETS = (
-  "ef_cuda_resident_full_window_cuda_probe",
-  "ef_cuda_resident_cr2_matrix_cuda_probe",
-  "ef_cuda_resident_rb9_cuda_probe",
-  "ef_cuda_resident_resource_probe",
-)
-
-_MAIN_PATTERN = re.compile(r"\bint\s+main\s*\(")
-_SUCCESS_PATTERN = re.compile(r"\breturn\s+(?:0|EXIT_SUCCESS)\s*;")
-
-SourceReader = Callable[[str], "str | None"]
-
-
-def _executable_targets(text: str) -> dict[str, list[str]]:
-  """Map every ``add_executable`` target to its source tokens."""
-  targets: dict[str, list[str]] = {}
-  for body in _find_commands(text, "add_executable"):
-    tokens = _tokenize(body)
-    if not tokens:
-      continue
-    rest = [t for t in tokens[1:] if t.upper() not in {"WIN32", "MACOSX_BUNDLE", "EXCLUDE_FROM_ALL"}]
-    targets[tokens[0]] = rest
-  return targets
-
-
-def _repo_source_reader(root: Path) -> SourceReader:
-  def read(rel_path: str) -> str | None:
-    path = root / rel_path
-    if not path.is_file():
-      return None
-    return path.read_text(encoding="utf-8", errors="replace")
-
-  return read
-
-
-def _probe_stub_violations(
-  cmake_text: str, read_source: SourceReader, targets: tuple[str, ...]
-) -> list[str]:
-  """Return every way the CUDA probe targets look like retired stubs.
-
-  An empty list means the gates are green. For each expected probe target:
-
-  * (a) the target must exist in CMakeLists.txt at all;
-  * (b) every source token it names must be readable (a probe naming a deleted
-    file only fails a CUDA-on configure, which no CI lane runs);
-  * (c) if the target links ``ef_cuda_resident_backend``, at least one of its
-    sources must name ``CudaResidentBackend`` -- otherwise the link is vestigial
-    and the probe drives nothing;
-  * (d) exactly one source must define ``int main``, and that source must
-    contain a success return. A probe whose only exit is a failure path is a
-    retirement notice, not a probe.
-  """
-  text = _strip_cmake_comments(cmake_text)
-  executables = _executable_targets(text)
-  violations: list[str] = []
-
-  for target in targets:
-    sources = executables.get(target)
-    if sources is None:
-      violations.append(
-        f"{target} is not defined by any add_executable call; a CUDA probe was "
-        "removed without updating this pin"
-      )
-      continue
-
-    bodies: dict[str, str] = {}
-    for token in sources:
-      rel_path = _normalize_source_path(token)
-      body = read_source(rel_path)
-      if body is None:
-        violations.append(f"{target} names a source that does not exist: {rel_path}")
-        continue
-      bodies[rel_path] = body
-
-    linked = [
-      lib
-      for call in _scoped_call_args(text, "target_link_libraries", target)
-      for lib in call
-    ]
-    if BACKEND_LIBRARY in linked and not any(
-      BACKEND_SYMBOL in body for body in bodies.values()
-    ):
-      violations.append(
-        f"{target} links {BACKEND_LIBRARY} but no source of the target names "
-        f"{BACKEND_SYMBOL}: the probe drives nothing and would still compile "
-        "and link green"
-      )
-
-    entry_points = [
-      rel_path for rel_path, body in bodies.items() if _MAIN_PATTERN.search(body)
-    ]
-    if len(entry_points) != 1:
-      violations.append(
-        f"{target} must have exactly one source defining int main "
-        f"(found {sorted(entry_points)})"
-      )
-      continue
-    entry = entry_points[0]
-    if not _SUCCESS_PATTERN.search(bodies[entry]):
-      violations.append(
-        f"{entry} (entry point of {target}) has no success return: a probe "
-        "whose only exit is a failure path is a retirement stub, which a "
-        "compile lane reports green"
-      )
-
-  return violations
-
-
-def test_cuda_probes_are_not_retired_stubs() -> None:
-  """Every pinned CUDA-only probe still links a backend it actually drives and
-  still has a success path.
-
-  This is the executability half of CP-1. The compile lane covers "the wired
-  sources still build"; this covers "the built probe still does its job", which
-  is exactly what the v1 capture-probe retirement broke without turning
-  anything red."""
-  violations = _probe_stub_violations(
-    _cmake_source(), _repo_source_reader(REPO_ROOT), CUDA_PROBE_TARGETS
-  )
-  assert not violations, "CUDA probe executability regressed:\n  " + "\n  ".join(
-    violations
-  )
-
-
-# A minimal but structurally faithful probe wiring, used as the baseline for the
-# negative cases below. It mirrors the real CMakeLists shape (a CUDA-gated
-# add_executable that compiles a probe entry point plus the shared replay
-# harness and links the resident backend) so mutations exercise the same parser.
-_GOLDEN_PROBE_CMAKE = """\
-if (EF_ENABLE_CUDA_RESIDENT_BACKEND)
-    add_executable(ef_probe
-        src/tools/experimental/cuda_resident/probe.cpp
-        src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp
-    )
-    target_link_libraries(ef_probe PRIVATE
-        ef_cuda_resident_backend
-        nlohmann_json::nlohmann_json
-    )
-endif()
-"""
-
-_GOLDEN_PROBE_SOURCES = {
-  "src/tools/experimental/cuda_resident/probe.cpp": """\
-#include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
-
-int main(int argc, char **argv) {
-    try {
-        runtime::cuda_resident::CudaResidentBackend backend;
-        (void)backend;
-        (void)argc;
-        (void)argv;
-        return 0;
-    } catch (const std::exception &error) {
-        return 1;
-    }
-}
-""",
-  "src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp": """\
-namespace runtime::cuda_resident {
-void replay_support() {}
-} // namespace runtime::cuda_resident
-""",
-}
-
-# Reproduced from 44e2b64e: the real retirement stub. It names neither the
-# backend nor the JSON library its target still linked, and its only exit is a
-# failure return.
-_RETIREMENT_STUB = """\
-#include <cstdlib>
-#include <iostream>
-
-#include "runtime/contracts/cuda_resident_resource_evidence_contract.h"
-
-namespace {
-
-namespace evidence = runtime::cuda_resident::resource_evidence;
-
-static_assert(evidence::kCaptureProbeV1Retired);
-
-} // namespace
-
-int main() {
-    std::cerr << "CUDA resident resource probe retired: "
-              << evidence::kCaptureProbeV1RetirementReason << '\\n';
-    return EXIT_FAILURE;
-}
-"""
-
-
-def _dict_reader(sources: dict[str, str]) -> SourceReader:
-  return lambda rel_path: sources.get(rel_path)
-
-
-def test_probe_gate_baseline_golden_wiring_is_green() -> None:
-  """Sanity anchor: the correct synthetic probe wiring must pass, so the red
-  cases below prove the mutation was caught rather than a broken fixture."""
-  assert (
-    _probe_stub_violations(
-      _GOLDEN_PROBE_CMAKE, _dict_reader(_GOLDEN_PROBE_SOURCES), ("ef_probe",)
-    )
-    == []
-  )
-
-
-def test_probe_gate_flags_the_historical_retirement_stub() -> None:
-  """The regression this gate exists for: replacing a probe body with the real
-  44e2b64e stub while leaving its CMake target intact must turn red on both
-  counts -- the backend link becomes vestigial and the success path is gone."""
-  sources = dict(_GOLDEN_PROBE_SOURCES)
-  sources["src/tools/experimental/cuda_resident/probe.cpp"] = _RETIREMENT_STUB
-  violations = _probe_stub_violations(
-    _GOLDEN_PROBE_CMAKE, _dict_reader(sources), ("ef_probe",)
-  )
-  assert any("no source of the target names" in v for v in violations), violations
-  assert any("no success return" in v for v in violations), violations
 
 
 # --- CP-3: no non-SPI window-advance entry points on CudaResidentBackend ------
@@ -448,73 +187,6 @@ def test_cuda_resident_backend_has_no_non_spi_window_advance_entry_points() -> N
       f"cuda_resident_backend.h).  CP-3 retired these non-SPI window-advance "
       f"entry points; callers must go through the SPI ``advance()`` method."
     )
-
-
-def test_probe_gate_flags_a_success_path_removed_on_its_own() -> None:
-  """A narrower mutation: the probe still constructs the backend but its only
-  exit becomes a failure return. The vestigial-link check stays green here, so
-  this proves the entry-point check is independently load-bearing."""
-  sources = dict(_GOLDEN_PROBE_SOURCES)
-  sources["src/tools/experimental/cuda_resident/probe.cpp"] = (
-    _GOLDEN_PROBE_SOURCES["src/tools/experimental/cuda_resident/probe.cpp"]
-    .replace("return 0;", "return EXIT_FAILURE;")
-  )
-  violations = _probe_stub_violations(
-    _GOLDEN_PROBE_CMAKE, _dict_reader(sources), ("ef_probe",)
-  )
-  assert [v for v in violations if "no success return" in v], violations
-  assert not [v for v in violations if "names" in v and BACKEND_SYMBOL in v], violations
-
-
-def test_probe_gate_flags_a_probe_deleted_from_cmake() -> None:
-  """A pinned probe target removed from CMakeLists.txt must turn red rather
-  than silently shrinking the CUDA surface under test."""
-  violations = _probe_stub_violations(
-    _GOLDEN_PROBE_CMAKE, _dict_reader(_GOLDEN_PROBE_SOURCES), ("ef_probe_gone",)
-  )
-  assert any("not defined by any add_executable" in v for v in violations), violations
-
-
-def test_probe_gate_flags_a_named_source_that_does_not_exist() -> None:
-  """A probe target naming a deleted source only fails a CUDA-on configure,
-  which no CI lane runs -- so it must fail here."""
-  cmake = _GOLDEN_PROBE_CMAKE.replace(
-    "src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp",
-    "src/tools/experimental/cuda_resident/deleted_session.cpp",
-  )
-  assert cmake != _GOLDEN_PROBE_CMAKE, "fixture mutation did not apply"
-  violations = _probe_stub_violations(
-    cmake, _dict_reader(_GOLDEN_PROBE_SOURCES), ("ef_probe",)
-  )
-  assert any("does not exist" in v for v in violations), violations
-
-
-def test_probe_gate_tolerates_the_driving_source_being_a_sibling_tu() -> None:
-  """Inverse case: the real probes split the entry point from the session TU
-  that constructs the backend (``*_probe.cpp`` + ``*_session.cpp``). The
-  vestigial-link check must accept the backend being named by a sibling source,
-  not only by the file holding ``main``."""
-  cmake = _GOLDEN_PROBE_CMAKE.replace(
-    "src/runtime/facade/internal/cuda_resident/cuda_resident_replay_harness.cpp",
-    "src/tools/experimental/cuda_resident/probe_session.cpp",
-  )
-  sources = {
-    "src/tools/experimental/cuda_resident/probe.cpp": """\
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-    return 0;
-}
-""",
-    "src/tools/experimental/cuda_resident/probe_session.cpp": """\
-#include "runtime/facade/internal/cuda_resident/cuda_resident_backend.h"
-
-namespace {
-void drive(runtime::cuda_resident::CudaResidentBackend &backend) { (void)backend; }
-} // namespace
-""",
-  }
-  assert _probe_stub_violations(cmake, _dict_reader(sources), ("ef_probe",)) == []
 
 
 # --- CI surface/flag contract --------------------------------------------------

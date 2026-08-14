@@ -90,7 +90,7 @@ TEST_CASE("RB8 CUDA export projection detects every envelope-field mutation") {
     }
 }
 
-TEST_CASE("RB8 independent CPU/GPU replay consumes the frozen 93-field budget") {
+TEST_CASE("independent CPU/GPU replay consumes the maintained 90-field parity slice") {
     using namespace runtime::cuda_resident;
     using namespace runtime::cuda_resident::replay;
     if (!CudaWorldStore::compiled_with_cuda()) {
@@ -120,8 +120,8 @@ TEST_CASE("RB8 independent CPU/GPU replay consumes the frozen 93-field budget") 
           std::string(runtime::parity::kParityBudgetResidentStateUnmaintainedCandidateV1));
     CHECK(report.shadow_parity_budget_ref ==
           std::string(runtime::parity::kParityBudgetShadowCompareUnmaintainedCandidateV1));
-    CHECK(report.coverage.expected_selected_field_count == 93);
-    CHECK(report.coverage.consumed_selected_field_count == 93);
+    CHECK(report.coverage.expected_selected_field_count == 90);
+    CHECK(report.coverage.consumed_selected_field_count == 90);
     CHECK(report.coverage.expected_field_family_count == 11);
     CHECK(report.coverage.consumed_field_families.size() == 11);
     CHECK(report.coverage.expected_barrier_count == 3);

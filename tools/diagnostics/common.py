@@ -6,9 +6,10 @@ import json
 import math
 import os
 import sys
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 # Canonical dest names for shared probe CLI groups (always underscore).
@@ -238,6 +239,87 @@ def add_kces_before_report_args(
         default=None,
         help=f"Filename date stamp, for example {date_stamp_example}. Defaults to today.",
     )
+
+
+# Several diagnostics entrypoints are thin ``--mode`` routers over a package of
+# single-purpose probe modules. The mode is read out of the raw argv instead of
+# being parsed, because every other argument -- ``--help`` included -- has to
+# reach the selected module untouched; the router's own parser exists only to
+# keep the accepted modes introspectable.
+
+
+def extract_mode(argv: Sequence[str], *, valid_modes: Collection[str], default: str) -> str:
+    """Return the ``--mode`` value in *argv*, falling back to *default*.
+
+    An unrecognised mode also yields *default*, matching the routers' habit of
+    letting the fallback module report argument errors against its own parser.
+    """
+
+    for index, arg in enumerate(argv):
+        if arg == "--mode" and index + 1 < len(argv):
+            value = str(argv[index + 1]).strip()
+            return value if value in valid_modes else default
+        if arg.startswith("--mode="):
+            value = str(arg.split("=", 1)[1]).strip()
+            return value if value in valid_modes else default
+    return default
+
+
+def strip_mode_args(argv: Sequence[str]) -> list[str]:
+    """Return *argv* without its ``--mode VALUE`` / ``--mode=VALUE`` tokens."""
+
+    out: list[str] = []
+    skip_next = False
+    for arg in argv:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg == "--mode":
+            skip_next = True
+            continue
+        if arg.startswith("--mode="):
+            continue
+        out.append(arg)
+    return out
+
+
+def run_mode_module(module: ModuleType, argv: Sequence[str]) -> int:
+    """Call *module*'s ``main`` under a temporarily swapped ``sys.argv``."""
+
+    old_argv = sys.argv
+    try:
+        sys.argv = [old_argv[0], *argv]
+        return int(module.main())
+    finally:
+        sys.argv = old_argv
+
+
+def build_mode_dispatch_parser(
+    *,
+    description: str,
+    valid_modes: Collection[str],
+    default: str,
+    epilog: str,
+) -> argparse.ArgumentParser:
+    """Build the ``--mode`` parser that advertises a router's accepted modes."""
+
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--mode", choices=sorted(valid_modes), default=default)
+    parser.epilog = epilog
+    return parser
+
+
+def dispatch_mode_module(
+    argv: Sequence[str] | None,
+    *,
+    modules: Mapping[str, ModuleType],
+    default: str,
+) -> int:
+    """Route ``--mode`` to its module in *modules* and run that module's ``main``."""
+
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    mode = extract_mode(raw_argv, valid_modes=modules, default=default)
+    return run_mode_module(modules[mode], strip_mode_args(raw_argv))
 
 
 def load_json_config(path: str) -> dict[str, Any]:

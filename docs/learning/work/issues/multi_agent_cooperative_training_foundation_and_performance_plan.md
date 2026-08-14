@@ -2,7 +2,7 @@
 
 Language:
 - English canonical: `multi_agent_cooperative_training_foundation_and_performance_plan.md`
-- Chinese companion: [multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+- Chinese companion: not maintained (English-only work surface).
 
 Document kind: `plan`
 Lifecycle: `draft`
