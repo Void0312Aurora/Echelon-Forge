@@ -15,6 +15,7 @@ Review answered:
 [Cordis simulation composition program architecture review](cordis_simulation_composition_program_review_20260817.md)
 Review basis: `b9f289c81fd4`
 Response plan revision: `153d5f4e`
+First re-review repair: `89eca276`
 Decision state: `partially accepted and incorporated; Cordis strategic target retained; re-review requested`
 Authority: owner response to an advisory review. The review remains an immutable
 independent judgment snapshot; this response changes the active program only

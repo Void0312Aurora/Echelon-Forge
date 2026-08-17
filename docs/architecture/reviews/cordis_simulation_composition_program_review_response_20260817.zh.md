@@ -14,6 +14,7 @@ Review answered:
 [Cordis 仿真组合计划架构审阅](cordis_simulation_composition_program_review_20260817.zh.md)
 Review basis: `b9f289c81fd4`
 Response plan revision: `153d5f4e`
+First re-review repair: `89eca276`
 Decision state: `partially accepted and incorporated; Cordis strategic target retained; re-review requested`
 Authority: 对咨询性审阅的 owner 回复。原 review 继续作为不可变的独立判断快照；本回复
 仅通过引用的 active-work 文档与 commit 修改当前计划。
