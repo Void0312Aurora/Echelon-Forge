@@ -52,14 +52,104 @@ using BindingKey = std::tuple<std::string, std::string, std::string>;
     return {std::string(code), std::move(subject), "unknown exception"};
 }
 
+void sort_strings(std::vector<std::string> &values) {
+    std::sort(values.begin(), values.end(), Utf8Less{});
+}
+
+[[nodiscard]] contracts::CompositionPluginDescriptor
+canonical_plugin(contracts::CompositionPluginDescriptor value) {
+    sort_strings(value.host_support);
+    sort_strings(value.required_capabilities);
+    sort_strings(value.conflicts);
+    return value;
+}
+
 [[nodiscard]] bool
 factory_metadata_matches(const ProviderFactoryMetadata &metadata,
-                         const contracts::CompositionProviderDescriptor &descriptor) noexcept {
+                         const contracts::CompositionProviderDescriptor &descriptor,
+                         const contracts::CompositionPluginDescriptor &plugin) {
     return metadata.provider_id == descriptor.provider_id &&
            metadata.plugin_id == descriptor.plugin_id &&
            metadata.implementation_version == descriptor.implementation_version &&
            metadata.scope == descriptor.scope &&
-           metadata.canonical_configuration_json == descriptor.canonical_configuration_json;
+           metadata.canonical_configuration_json == descriptor.canonical_configuration_json &&
+           canonical_plugin(metadata.plugin) == canonical_plugin(plugin);
+}
+
+[[nodiscard]] contracts::CompositionProviderDescriptor
+canonical_provider(contracts::CompositionProviderDescriptor value) {
+    sort_strings(value.offered_services);
+    sort_strings(value.required_services);
+    sort_strings(value.required_capabilities);
+    sort_strings(value.conflicts);
+    sort_strings(value.after_provider_ids);
+    return value;
+}
+
+[[nodiscard]] std::vector<contracts::CompositionComponentContribution>
+canonical_components(std::vector<contracts::CompositionComponentContribution> values) {
+    std::sort(values.begin(), values.end(), [](const auto &left, const auto &right) {
+        return Utf8Less{}(left.component_id, right.component_id);
+    });
+    return values;
+}
+
+[[nodiscard]] contracts::CompositionSystemContribution
+canonical_system(contracts::CompositionSystemContribution value) {
+    sort_strings(value.required_services);
+    sort_strings(value.required_components);
+    sort_strings(value.provided_components);
+    sort_strings(value.semantic_stage_ids);
+    sort_strings(value.executable_node_ids);
+    sort_strings(value.read_state_shards);
+    sort_strings(value.write_state_shards);
+    sort_strings(value.required_barriers);
+    sort_strings(value.required_capabilities);
+    sort_strings(value.conflicts);
+    sort_strings(value.after);
+    sort_strings(value.before);
+    return value;
+}
+
+[[nodiscard]] std::vector<contracts::CompositionSystemContribution>
+canonical_systems(std::vector<contracts::CompositionSystemContribution> values) {
+    for (auto &value : values) {
+        value = canonical_system(std::move(value));
+    }
+    std::sort(values.begin(), values.end(), [](const auto &left, const auto &right) {
+        return Utf8Less{}(left.contribution_id, right.contribution_id);
+    });
+    return values;
+}
+
+[[nodiscard]] std::vector<contracts::CompositionServiceBinding>
+canonical_bindings(std::vector<contracts::CompositionServiceBinding> values) {
+    std::sort(values.begin(), values.end(), [](const auto &left, const auto &right) {
+        return std::tie(left.consumer_kind, left.consumer_id, left.service_key, left.provider_id) <
+               std::tie(right.consumer_kind, right.consumer_id, right.service_key,
+                        right.provider_id);
+    });
+    return values;
+}
+
+[[nodiscard]] std::vector<contracts::CompositionScopePolicy>
+canonical_scope_policies(std::vector<contracts::CompositionScopePolicy> values) {
+    std::sort(values.begin(), values.end(), [](const auto &left, const auto &right) {
+        return scope_index(left.scope) < scope_index(right.scope);
+    });
+    return values;
+}
+
+[[nodiscard]] contracts::CompositionReconfigurationPolicy
+canonical_reconfiguration(contracts::CompositionReconfigurationPolicy value) {
+    sort_strings(value.allowed_barriers);
+    return value;
+}
+
+[[nodiscard]] contracts::CompositionBackendRequest
+canonical_backend(contracts::CompositionBackendRequest value) {
+    sort_strings(value.required_capabilities);
+    return value;
 }
 
 } // namespace
@@ -158,6 +248,7 @@ struct CompositionRuntime::Impl {
     };
 
     using DescriptorIndexMap = std::map<std::string, std::size_t, Utf8Less>;
+    using PluginMap = std::map<std::string, contracts::CompositionPluginDescriptor, Utf8Less>;
     using FactoryMap = std::map<std::string, std::shared_ptr<IProviderFactory>, Utf8Less>;
     using BindingMap = std::map<BindingKey, std::string>;
     using ServiceTypeKey = std::pair<std::string, std::string>;
@@ -167,6 +258,7 @@ struct CompositionRuntime::Impl {
     struct PreparedPlan {
         contracts::ResolvedSimulationComposition resolved;
         DescriptorIndexMap descriptors;
+        PluginMap plugins;
         FactoryMap factories;
         BindingMap bindings;
         ServiceTypeMap service_types;
@@ -193,6 +285,9 @@ struct CompositionRuntime::Impl {
                  const ProviderCatalog &catalog) {
         PreparedPlan prepared;
         prepared.resolved = std::move(resolved);
+        for (const auto &plugin : prepared.resolved.manifest.plugins) {
+            prepared.plugins.emplace(plugin.plugin_id, plugin);
+        }
         for (std::size_t index = 0; index < prepared.resolved.manifest.providers.size(); ++index) {
             const auto &provider = prepared.resolved.manifest.providers[index];
             prepared.descriptors.emplace(provider.provider_id, index);
@@ -219,6 +314,12 @@ struct CompositionRuntime::Impl {
             return nullptr;
         }
         return &prepared.resolved.manifest.providers[iterator->second];
+    }
+
+    [[nodiscard]] static const contracts::CompositionPluginDescriptor *
+    plugin_for(const PreparedPlan &prepared, std::string_view plugin_id) noexcept {
+        const auto iterator = prepared.plugins.find(plugin_id);
+        return iterator == prepared.plugins.end() ? nullptr : &iterator->second;
     }
 
     static void rollback_effects(std::vector<std::unique_ptr<ILifecycleEffect>> &effects) noexcept {
@@ -362,7 +463,9 @@ struct CompositionRuntime::Impl {
 
             auto factory = factory_iterator->second;
             try {
-                if (!factory_metadata_matches(factory->metadata(), *descriptor)) {
+                const auto *plugin = plugin_for(prepared, descriptor->plugin_id);
+                if (plugin == nullptr ||
+                    !factory_metadata_matches(factory->metadata(), *descriptor, *plugin)) {
                     release_records(candidates, provider_ids, true);
                     return CompositionStatus::failure({
                         std::string(kErrorFactoryMetadataMismatch),
@@ -440,6 +543,33 @@ struct CompositionRuntime::Impl {
                 });
             }
 
+            try {
+                const auto *plugin = plugin_for(prepared, descriptor->plugin_id);
+                if (plugin == nullptr ||
+                    !factory_metadata_matches(factory->metadata(), *descriptor, *plugin)) {
+                    rollback_effects(context_impl.effects);
+                    instance.reset();
+                    release_records(candidates, provider_ids, true);
+                    return CompositionStatus::failure({
+                        std::string(kErrorFactoryMetadataMismatch),
+                        provider_id,
+                        "factory identity changed during construction",
+                    });
+                }
+            } catch (const std::exception &exception) {
+                rollback_effects(context_impl.effects);
+                instance.reset();
+                release_records(candidates, provider_ids, true);
+                return CompositionStatus::failure(
+                    exception_error(kErrorFactoryMetadataMismatch, provider_id, exception));
+            } catch (...) {
+                rollback_effects(context_impl.effects);
+                instance.reset();
+                release_records(candidates, provider_ids, true);
+                return CompositionStatus::failure(
+                    unknown_exception_error(kErrorFactoryMetadataMismatch, provider_id));
+            }
+
             for (const auto &service_key : descriptor->offered_services) {
                 const auto frozen_type = prepared.service_types.find({provider_id, service_key});
                 const std::type_info *live_type = factory->service_type(service_key);
@@ -488,20 +618,18 @@ struct CompositionRuntime::Impl {
             } catch (const std::exception &exception) {
                 if (record) {
                     record->release(true);
-                } else {
-                    rollback_effects(context_impl.effects);
-                    instance.reset();
                 }
+                rollback_effects(context_impl.effects);
+                instance.reset();
                 release_records(candidates, provider_ids, true);
                 return CompositionStatus::failure(
                     exception_error(kErrorProviderConstructionFailed, provider_id, exception));
             } catch (...) {
                 if (record) {
                     record->release(true);
-                } else {
-                    rollback_effects(context_impl.effects);
-                    instance.reset();
                 }
+                rollback_effects(context_impl.effects);
+                instance.reset();
                 release_records(candidates, provider_ids, true);
                 return CompositionStatus::failure(
                     unknown_exception_error(kErrorProviderConstructionFailed, provider_id));
@@ -560,8 +688,10 @@ struct CompositionRuntime::Impl {
                                   const PreparedPlan &replacement) const {
         const auto &current_manifest = plan->resolved.manifest;
         const auto &next_manifest = replacement.resolved.manifest;
-        if (current_manifest.component_contributions != next_manifest.component_contributions ||
-            current_manifest.system_contributions != next_manifest.system_contributions ||
+        if (canonical_components(current_manifest.component_contributions) !=
+                canonical_components(next_manifest.component_contributions) ||
+            canonical_systems(current_manifest.system_contributions) !=
+                canonical_systems(next_manifest.system_contributions) ||
             plan->resolved.system_registration_order !=
                 replacement.resolved.system_registration_order) {
             return CompositionStatus::failure({
@@ -570,10 +700,13 @@ struct CompositionRuntime::Impl {
                 "provider replacement cannot mutate component or system contributions",
             });
         }
-        if (current_manifest.scope_policies != next_manifest.scope_policies ||
-            current_manifest.reconfiguration_policy != next_manifest.reconfiguration_policy ||
+        if (canonical_scope_policies(current_manifest.scope_policies) !=
+                canonical_scope_policies(next_manifest.scope_policies) ||
+            canonical_reconfiguration(current_manifest.reconfiguration_policy) !=
+                canonical_reconfiguration(next_manifest.reconfiguration_policy) ||
             current_manifest.evidence_policy != next_manifest.evidence_policy ||
-            current_manifest.service_bindings != next_manifest.service_bindings) {
+            canonical_bindings(current_manifest.service_bindings) !=
+                canonical_bindings(next_manifest.service_bindings)) {
             return CompositionStatus::failure({
                 std::string(kErrorReplacementBoundaryViolation),
                 std::string(contracts::to_string(scope)),
@@ -581,7 +714,8 @@ struct CompositionRuntime::Impl {
             });
         }
         if (scope_index(scope) > scope_index(contracts::CompositionScope::backend) &&
-            current_manifest.backend_request != next_manifest.backend_request) {
+            canonical_backend(current_manifest.backend_request) !=
+                canonical_backend(next_manifest.backend_request)) {
             return CompositionStatus::failure({
                 std::string(kErrorReplacementBoundaryViolation),
                 std::string(contracts::to_string(scope)),
@@ -593,16 +727,25 @@ struct CompositionRuntime::Impl {
             [](const PreparedPlan &prepared,
                const contracts::CompositionProviderDescriptor &descriptor) {
                 const auto factory = prepared.factories.find(descriptor.provider_id);
-                if (factory == prepared.factories.end() || !factory->second) {
+                const auto *plugin = plugin_for(prepared, descriptor.plugin_id);
+                if (factory == prepared.factories.end() || !factory->second || plugin == nullptr) {
                     return false;
                 }
                 try {
-                    return factory_metadata_matches(factory->second->metadata(), descriptor);
+                    return factory_metadata_matches(factory->second->metadata(), descriptor,
+                                                    *plugin);
                 } catch (...) {
                     return false;
                 }
             };
         std::set<std::string, Utf8Less> affected_plugin_ids;
+        std::set<std::string, Utf8Less> immutable_contribution_plugin_ids;
+        for (const auto &component : current_manifest.component_contributions) {
+            immutable_contribution_plugin_ids.emplace(component.plugin_id);
+        }
+        for (const auto &system : current_manifest.system_contributions) {
+            immutable_contribution_plugin_ids.emplace(system.plugin_id);
+        }
         for (const auto &[provider_id, index] : plan->descriptors) {
             const auto &descriptor = current_manifest.providers[index];
             if (!factory_identity_matches(*plan, descriptor)) {
@@ -622,7 +765,7 @@ struct CompositionRuntime::Impl {
                 [&](const auto &plugin) { return plugin.plugin_id == descriptor.plugin_id; });
             if (current_plugin == current_manifest.plugins.end() ||
                 replacement_plugin == next_manifest.plugins.end() ||
-                *current_plugin != *replacement_plugin) {
+                canonical_plugin(*current_plugin) != canonical_plugin(*replacement_plugin)) {
                 return CompositionStatus::failure({
                     std::string(kErrorReplacementBoundaryViolation),
                     provider_id,
@@ -637,7 +780,8 @@ struct CompositionRuntime::Impl {
                 continue;
             }
             const auto *replacement_descriptor = descriptor_for(replacement, provider_id);
-            if (replacement_descriptor == nullptr || *replacement_descriptor != descriptor) {
+            if (replacement_descriptor == nullptr ||
+                canonical_provider(*replacement_descriptor) != canonical_provider(descriptor)) {
                 return CompositionStatus::failure({
                     std::string(kErrorReplacementBoundaryViolation),
                     provider_id,
@@ -657,7 +801,8 @@ struct CompositionRuntime::Impl {
                 continue;
             }
             const auto *current_descriptor = descriptor_for(*plan, provider_id);
-            if (current_descriptor == nullptr || *current_descriptor != descriptor) {
+            if (current_descriptor == nullptr ||
+                canonical_provider(*current_descriptor) != canonical_provider(descriptor)) {
                 return CompositionStatus::failure({
                     std::string(kErrorReplacementBoundaryViolation),
                     provider_id,
@@ -667,21 +812,23 @@ struct CompositionRuntime::Impl {
         }
 
         for (const auto &plugin : current_manifest.plugins) {
-            if (affected_plugin_ids.contains(plugin.plugin_id)) {
+            if (affected_plugin_ids.contains(plugin.plugin_id) &&
+                !immutable_contribution_plugin_ids.contains(plugin.plugin_id)) {
                 continue;
             }
             const auto replacement_plugin = std::find_if(
                 next_manifest.plugins.begin(), next_manifest.plugins.end(),
                 [&](const auto &candidate) { return candidate.plugin_id == plugin.plugin_id; });
             if (replacement_plugin == next_manifest.plugins.end() ||
-                *replacement_plugin != plugin) {
+                canonical_plugin(*replacement_plugin) != canonical_plugin(plugin)) {
                 return CompositionStatus::failure(
                     {std::string(kErrorReplacementBoundaryViolation), plugin.plugin_id,
                      "plugin identity outside the rebuilt scope changed"});
             }
         }
         for (const auto &plugin : next_manifest.plugins) {
-            if (affected_plugin_ids.contains(plugin.plugin_id)) {
+            if (affected_plugin_ids.contains(plugin.plugin_id) &&
+                !immutable_contribution_plugin_ids.contains(plugin.plugin_id)) {
                 continue;
             }
             const auto current_plugin = std::find_if(
@@ -695,18 +842,23 @@ struct CompositionRuntime::Impl {
         }
 
         for (const auto &[service_key, current_type] : plan->service_types) {
-            const auto *current_descriptor = descriptor_for(*plan, service_key.first);
-            if (current_descriptor == nullptr ||
-                scope_is_affected(current_descriptor->scope, scope)) {
-                continue;
-            }
             const auto replacement_type = replacement.service_types.find(service_key);
             if (replacement_type == replacement.service_types.end() ||
-                replacement_type->second != current_type) {
+                replacement_type->second == nullptr || current_type == nullptr ||
+                *replacement_type->second != *current_type) {
+                return CompositionStatus::failure({std::string(kErrorReplacementBoundaryViolation),
+                                                   service_key.first + ":" + service_key.second,
+                                                   "service type changed across replacement"});
+            }
+        }
+        for (const auto &[service_key, replacement_type] : replacement.service_types) {
+            const auto current_type = plan->service_types.find(service_key);
+            if (current_type == plan->service_types.end() || current_type->second == nullptr ||
+                replacement_type == nullptr || *current_type->second != *replacement_type) {
                 return CompositionStatus::failure(
                     {std::string(kErrorReplacementBoundaryViolation),
                      service_key.first + ":" + service_key.second,
-                     "service type outside the rebuilt scope changed"});
+                     "replacement introduced or changed a service type"});
             }
         }
 
@@ -920,85 +1072,97 @@ struct CompositionRuntime::Impl {
 
 CompositionRuntime::~CompositionRuntime() = default;
 
-CompositionRuntime::CompositionRuntime(std::unique_ptr<Impl> impl) noexcept
+CompositionRuntime::CompositionRuntime(std::shared_ptr<Impl> impl) noexcept
     : impl_(std::move(impl)) {}
 
 CompositionRuntime::CompositionRuntime(CompositionRuntime &&) noexcept = default;
 
 bool CompositionRuntime::frozen() const noexcept {
-    if (impl_ == nullptr) {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return false;
     }
-    std::lock_guard lock(impl_->lifecycle_mutex);
-    return impl_->state == Impl::LifecycleState::frozen;
+    std::lock_guard lock(impl->lifecycle_mutex);
+    return impl->state == Impl::LifecycleState::frozen;
 }
 
 bool CompositionRuntime::shutdown() const noexcept {
-    if (impl_ == nullptr) {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return true;
     }
-    std::lock_guard lock(impl_->lifecycle_mutex);
-    return impl_->state == Impl::LifecycleState::stopped;
+    std::lock_guard lock(impl->lifecycle_mutex);
+    return impl->state == Impl::LifecycleState::stopped;
 }
 
 std::size_t CompositionRuntime::provider_count() const noexcept {
-    if (impl_ == nullptr) {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return 0;
     }
-    std::lock_guard lock(impl_->lifecycle_mutex);
-    return impl_->records.size();
+    std::lock_guard lock(impl->lifecycle_mutex);
+    return impl->records.size();
 }
 
 std::uint64_t
 CompositionRuntime::scope_generation(composition_contracts::CompositionScope scope) const noexcept {
-    if (impl_ == nullptr || !contracts::is_valid_scope(scope)) {
+    const auto impl = impl_;
+    if (impl == nullptr || !contracts::is_valid_scope(scope)) {
         return 0;
     }
-    std::lock_guard lock(impl_->lifecycle_mutex);
-    return impl_->generations[scope_index(scope)];
+    std::lock_guard lock(impl->lifecycle_mutex);
+    return impl->generations[scope_index(scope)];
 }
 
-std::string_view CompositionRuntime::requested_manifest_sha256() const noexcept {
-    if (impl_ == nullptr) {
+std::string CompositionRuntime::requested_manifest_sha256() const {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return {};
     }
-    std::lock_guard lock(impl_->lifecycle_mutex);
-    return impl_->plan == nullptr
-               ? std::string_view{}
-               : std::string_view(impl_->plan->resolved.requested_manifest_sha256);
+    std::lock_guard lock(impl->lifecycle_mutex);
+    return impl->plan == nullptr ? std::string{} : impl->plan->resolved.requested_manifest_sha256;
 }
 
-std::string_view CompositionRuntime::resolved_manifest_sha256() const noexcept {
-    if (impl_ == nullptr) {
+std::string CompositionRuntime::resolved_manifest_sha256() const {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return {};
     }
-    std::lock_guard lock(impl_->lifecycle_mutex);
-    return impl_->plan == nullptr
-               ? std::string_view{}
-               : std::string_view(impl_->plan->resolved.resolved_manifest_sha256);
+    std::lock_guard lock(impl->lifecycle_mutex);
+    return impl->plan == nullptr ? std::string{} : impl->plan->resolved.resolved_manifest_sha256;
 }
 
 detail::UntypedServiceHandle
 CompositionRuntime::lookup_service_for(std::string_view consumer_kind, std::string_view consumer_id,
                                        std::string_view service_key,
                                        const std::type_info &requested_type) const {
-    if (!frozen()) {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return {};
     }
-    std::lock_guard lock(impl_->lifecycle_mutex);
+    std::lock_guard lock(impl->lifecycle_mutex);
+    if (impl->state != Impl::LifecycleState::frozen || impl->plan == nullptr) {
+        return {};
+    }
     const Impl::RecordMap no_candidates;
-    return impl_->lookup_bound_service(*impl_->plan, no_candidates, consumer_kind, consumer_id,
-                                       service_key, requested_type, nullptr);
+    return impl->lookup_bound_service(*impl->plan, no_candidates, consumer_kind, consumer_id,
+                                      service_key, requested_type, nullptr);
 }
 
 CompositionStatus CompositionRuntime::rebuild_scope(composition_contracts::CompositionScope scope,
                                                     std::string_view barrier) {
-    if (impl_ == nullptr) {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return CompositionStatus::failure(
             {std::string(kErrorRuntimeShutdown), {}, "composition runtime is stopped"});
     }
     try {
-        return impl_->rebuild(scope, barrier, std::make_unique<Impl::PreparedPlan>(*impl_->plan));
+        std::lock_guard lock(impl->lifecycle_mutex);
+        if (impl->plan == nullptr) {
+            return CompositionStatus::failure(
+                {std::string(kErrorRuntimeShutdown), {}, "composition runtime is stopped"});
+        }
+        return impl->rebuild(scope, barrier, std::make_unique<Impl::PreparedPlan>(*impl->plan));
     } catch (const std::exception &exception) {
         return CompositionStatus::failure(exception_error(
             kErrorProviderConstructionFailed, std::string(contracts::to_string(scope)), exception));
@@ -1013,7 +1177,8 @@ CompositionRuntime::rebuild_scope(composition_contracts::CompositionScope scope,
                                   std::string_view barrier,
                                   composition_contracts::ResolvedSimulationComposition replacement,
                                   const ProviderCatalog &catalog) {
-    if (impl_ == nullptr) {
+    const auto impl = impl_;
+    if (impl == nullptr) {
         return CompositionStatus::failure(
             {std::string(kErrorRuntimeShutdown), {}, "composition runtime is stopped"});
     }
@@ -1023,9 +1188,9 @@ CompositionRuntime::rebuild_scope(composition_contracts::CompositionScope scope,
         return CompositionStatus::failure({issue.code, issue.path, issue.detail});
     }
     try {
-        return impl_->rebuild(scope, barrier,
-                              std::make_unique<Impl::PreparedPlan>(
-                                  Impl::prepare_plan(std::move(replacement), catalog)));
+        return impl->rebuild(scope, barrier,
+                             std::make_unique<Impl::PreparedPlan>(
+                                 Impl::prepare_plan(std::move(replacement), catalog)));
     } catch (const std::exception &exception) {
         return CompositionStatus::failure(exception_error(
             kErrorProviderConstructionFailed, std::string(contracts::to_string(scope)), exception));
@@ -1036,8 +1201,9 @@ CompositionRuntime::rebuild_scope(composition_contracts::CompositionScope scope,
 }
 
 void CompositionRuntime::stop() noexcept {
-    if (impl_ != nullptr) {
-        impl_->stop();
+    const auto impl = impl_;
+    if (impl != nullptr) {
+        impl->stop();
     }
 }
 
@@ -1050,7 +1216,7 @@ CompositionKernel::realize(composition_contracts::ResolvedSimulationComposition 
         return CompositionRuntimeResult::failure({issue.code, issue.path, issue.detail});
     }
 
-    auto impl = std::make_unique<CompositionRuntime::Impl>();
+    auto impl = std::make_shared<CompositionRuntime::Impl>();
     try {
         impl->plan = std::make_unique<CompositionRuntime::Impl::PreparedPlan>(
             CompositionRuntime::Impl::prepare_plan(std::move(resolved), catalog));

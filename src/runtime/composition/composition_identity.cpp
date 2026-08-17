@@ -34,6 +34,29 @@ template <typename Range> [[nodiscard]] Json sorted_strings(const Range &values)
     return sorted;
 }
 
+[[nodiscard]] bool is_ascii(std::string_view value) noexcept {
+    return std::all_of(value.begin(), value.end(), [](char character) {
+        return static_cast<unsigned char>(character) < 0x80U;
+    });
+}
+
+[[nodiscard]] bool json_uses_ascii_text(const Json &value) {
+    if (value.is_string()) {
+        return is_ascii(value.get_ref<const std::string &>());
+    }
+    if (value.is_array()) {
+        return std::all_of(value.begin(), value.end(), json_uses_ascii_text);
+    }
+    if (value.is_object()) {
+        for (auto iterator = value.begin(); iterator != value.end(); ++iterator) {
+            if (!is_ascii(iterator.key()) || !json_uses_ascii_text(iterator.value())) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 [[nodiscard]] CompositionResult<Json> parse_configuration(std::string_view encoded,
                                                           std::string subject) {
     try {
@@ -263,6 +286,13 @@ manifest_json(const contracts::SimulationCompositionManifest &manifest) {
         {"service_bindings", std::move(bindings)},
         {"system_contributions", std::move(systems)},
     };
+    if (!json_uses_ascii_text(result)) {
+        return CompositionResult<Json>::failure({
+            std::string(contracts::kErrorInvalidJsonType),
+            "$.manifest",
+            "v1 native admission accepts ASCII text only until a shared NFC normalizer is linked",
+        });
+    }
     return CompositionResult<Json>::success(std::move(result));
 }
 

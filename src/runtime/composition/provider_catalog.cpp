@@ -70,7 +70,13 @@ CompositionStatus ProviderCatalog::register_factory(std::shared_ptr<IProviderFac
     if (metadata.provider_id.empty() || metadata.plugin_id.empty() ||
         metadata.implementation_version.empty() ||
         !composition_contracts::is_valid_scope(metadata.scope) ||
-        metadata.canonical_configuration_json.empty()) {
+        metadata.canonical_configuration_json.empty() ||
+        metadata.plugin.plugin_id != metadata.plugin_id ||
+        metadata.plugin.implementation_id.empty() || metadata.plugin.plugin_version.empty() ||
+        metadata.plugin.composition_contract_range.empty() ||
+        metadata.plugin.host_support.empty() || metadata.plugin.artifact.kind.empty() ||
+        metadata.plugin.artifact.identity.empty() ||
+        metadata.plugin.canonical_configuration_json.empty()) {
         return CompositionStatus::failure({
             std::string(kErrorInvalidFactory),
             metadata.provider_id,

@@ -30,8 +30,8 @@ class CompositionRuntime {
     [[nodiscard]] std::size_t provider_count() const noexcept;
     [[nodiscard]] std::uint64_t
     scope_generation(composition_contracts::CompositionScope scope) const noexcept;
-    [[nodiscard]] std::string_view requested_manifest_sha256() const noexcept;
-    [[nodiscard]] std::string_view resolved_manifest_sha256() const noexcept;
+    [[nodiscard]] std::string requested_manifest_sha256() const;
+    [[nodiscard]] std::string resolved_manifest_sha256() const;
 
     template <typename T>
     [[nodiscard]] ServiceHandle<T> service_for(std::string_view consumer_kind,
@@ -53,13 +53,16 @@ class CompositionRuntime {
     struct Impl;
     friend class CompositionKernel;
 
-    explicit CompositionRuntime(std::unique_ptr<Impl> impl) noexcept;
+    explicit CompositionRuntime(std::shared_ptr<Impl> impl) noexcept;
 
     [[nodiscard]] detail::UntypedServiceHandle
     lookup_service_for(std::string_view consumer_kind, std::string_view consumer_id,
                        std::string_view service_key, const std::type_info &requested_type) const;
 
-    std::unique_ptr<Impl> impl_;
+    // Public operations retain a local shared reference before entering Impl.
+    // This keeps an in-flight lifecycle transaction alive if a callback moves
+    // and destroys the public wrapper reentrantly.
+    std::shared_ptr<Impl> impl_;
 };
 
 using CompositionRuntimeResult = CompositionResult<CompositionRuntime>;

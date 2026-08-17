@@ -104,10 +104,11 @@ class IProviderInstance {
 
 class ProviderConstructionContext {
   public:
-    // The reference and every handle returned from this context are valid only
-    // synchronously during IProviderFactory::construct(). A factory must not
-    // retain this object, descriptor reference, or lookup result for later or
-    // asynchronous use; such work belongs in a committed lifecycle effect.
+    // The context object, descriptor reference, and raw pointer obtained from
+    // ServiceHandle<T>::try_get() are valid only synchronously during
+    // IProviderFactory::construct(). A provider instance may retain the
+    // ServiceHandle value itself; its generation control makes try_get()
+    // fail closed after the supplying provider is retired.
     ProviderConstructionContext(const ProviderConstructionContext &) = delete;
     ProviderConstructionContext &operator=(const ProviderConstructionContext &) = delete;
 
@@ -142,6 +143,10 @@ struct ProviderFactoryMetadata {
     std::string implementation_version;
     composition_contracts::CompositionScope scope = composition_contracts::CompositionScope::world;
     std::string canonical_configuration_json;
+    // Exact plugin identity implemented by this factory. Provider-only metadata
+    // is insufficient because replacement evidence also claims plugin version,
+    // artifact, host, determinism, capability, and plugin configuration fields.
+    composition_contracts::CompositionPluginDescriptor plugin;
 };
 
 class IProviderFactory {

@@ -108,6 +108,9 @@ def test_lifecycle_api_freezes_transaction_scope_handle_and_effect_semantics() -
     "rebuild_scope",
     "class CompositionKernel",
     "operator=(CompositionRuntime &&) noexcept = delete",
+    "std::shared_ptr<Impl> impl_",
+    "std::string requested_manifest_sha256() const",
+    "std::string resolved_manifest_sha256() const",
   ):
     assert declaration in runtime
   for behavior in (
@@ -155,7 +158,9 @@ def test_focused_cpp_suite_covers_failure_atomicity_and_stale_handles() -> None:
     "typed validation rejects stale identity invalid scopes and explicit self cycles",
     "failed provider cleanup destroys effects before instances",
     "lifecycle callbacks cannot reenter stop or rebuild",
+    "moving the public wrapper in a lifecycle callback preserves the active transaction",
     "replacement rebuild updates identity atomically and enforces handover",
+    "concurrent rebuilds serialize before taking a plan snapshot",
   ):
     assert case in source
   assert "fail_next_construction" in source

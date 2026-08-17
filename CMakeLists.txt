@@ -578,6 +578,7 @@ add_executable(ef_composition_lifecycle_test
 target_link_libraries(ef_composition_lifecycle_test PRIVATE
     ef_composition
     doctest::doctest
+    Threads::Threads
 )
 target_include_directories(ef_composition_lifecycle_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src

@@ -191,6 +191,17 @@ void validate_nonempty_array(contracts::CompositionValidationResult &result, con
     }
 }
 
+[[nodiscard]] contracts::CompositionPluginDescriptor
+canonical_plugin(contracts::CompositionPluginDescriptor value) {
+    const auto sort_values = [](auto &values) {
+        std::sort(values.begin(), values.end(), Utf8Less{});
+    };
+    sort_values(value.host_support);
+    sort_values(value.required_capabilities);
+    sort_values(value.conflicts);
+    return value;
+}
+
 [[nodiscard]] TopologicalOrder
 stable_topological_order(const std::set<std::string, Utf8Less> &nodes,
                          const std::set<std::pair<std::string, std::string>> &edges) {
@@ -359,6 +370,7 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
     validate_nonempty_array(result, manifest.providers, "$.manifest.providers");
 
     std::set<std::string, Utf8Less> plugin_ids;
+    std::map<std::string, const contracts::CompositionPluginDescriptor *, Utf8Less> plugins;
     for (const auto &plugin : manifest.plugins) {
         if (!is_identifier(plugin.plugin_id) || !is_identifier(plugin.implementation_id)) {
             result.add_issue(std::string(contracts::kErrorInvalidIdentifier), "$.manifest.plugins",
@@ -371,6 +383,8 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
         if (!plugin_ids.emplace(plugin.plugin_id).second) {
             result.add_issue(std::string(contracts::kErrorDuplicateId), "$.manifest.plugins",
                              plugin.plugin_id);
+        } else {
+            plugins.emplace(plugin.plugin_id, &plugin);
         }
         validate_unique_strings(result, plugin.host_support, "$.manifest.plugins.host_support");
         validate_nonempty_array(result, plugin.host_support, "$.manifest.plugins.host_support");
@@ -484,7 +498,10 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
                    factory_metadata->implementation_version != provider.implementation_version ||
                    factory_metadata->scope != provider.scope ||
                    factory_metadata->canonical_configuration_json !=
-                       provider.canonical_configuration_json) {
+                       provider.canonical_configuration_json ||
+                   !plugins.contains(provider.plugin_id) ||
+                   canonical_plugin(factory_metadata->plugin) !=
+                       canonical_plugin(*plugins.at(provider.plugin_id))) {
             result.add_issue(std::string(kErrorFactoryMetadataMismatch), "$.catalog",
                              provider.provider_id);
         } else {

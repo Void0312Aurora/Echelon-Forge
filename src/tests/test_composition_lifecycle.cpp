@@ -7,15 +7,20 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <chrono>
+#include <condition_variable>
 #include <fstream>
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <typeinfo>
 #include <utility>
 #include <vector>
@@ -44,14 +49,19 @@ struct Trace {
 class TraceEffect final : public composition::ILifecycleEffect {
   public:
     TraceEffect(Trace &trace, std::string provider_id, bool fail_commit, bool handover_safe = true,
-                std::function<void()> dispose_callback = {})
+                std::function<void()> dispose_callback = {},
+                std::function<void()> commit_callback = {})
         : trace_(trace), provider_id_(std::move(provider_id)), fail_commit_(fail_commit),
-          handover_safe_(handover_safe), dispose_callback_(std::move(dispose_callback)) {}
+          handover_safe_(handover_safe), dispose_callback_(std::move(dispose_callback)),
+          commit_callback_(std::move(commit_callback)) {}
 
     ~TraceEffect() override { trace_.push("effect.destroy:" + provider_id_); }
 
     composition::CompositionStatus commit() override {
         trace_.push("effect.commit:" + provider_id_);
+        if (commit_callback_) {
+            commit_callback_();
+        }
         if (fail_commit_) {
             return composition::CompositionStatus::failure({
                 std::string(composition::kErrorLifecycleEffectCommitFailed),
@@ -92,6 +102,7 @@ class TraceEffect final : public composition::ILifecycleEffect {
     bool committed_ = false;
     bool terminal_ = false;
     std::function<void()> dispose_callback_;
+    std::function<void()> commit_callback_;
 };
 
 class IntProviderInstance final : public composition::IProviderInstance {
@@ -114,6 +125,21 @@ class IntProviderInstance final : public composition::IProviderInstance {
     int value_ = 0;
 };
 
+contracts::CompositionPluginDescriptor builtin_plugin_descriptor() {
+    return {
+        "builtin.core",
+        "builtin.core",
+        "1.0.0",
+        ">=1.0.0 <2.0.0",
+        {"native"},
+        "truth_affecting_deterministic",
+        {"repository_builtin", "test", std::nullopt},
+        {},
+        {},
+        "{}",
+    };
+}
+
 class IntProviderFactory final : public composition::IProviderFactory {
   public:
     IntProviderFactory(Trace &trace, std::string provider_id, std::string offered_service,
@@ -128,8 +154,12 @@ class IntProviderFactory final : public composition::IProviderFactory {
           required_services_(std::move(required_services)), handover_safe_(handover_safe) {}
 
     composition::ProviderFactoryMetadata metadata() const override {
-        return {provider_id_, "builtin.core", implementation_version_, scope_,
-                canonical_configuration_json_};
+        return {provider_id_,
+                "builtin.core",
+                implementation_version_,
+                scope_,
+                canonical_configuration_json_,
+                plugin_descriptor_};
     }
 
     const std::type_info *service_type(std::string_view service_key) const noexcept override {
@@ -146,8 +176,10 @@ class IntProviderFactory final : public composition::IProviderFactory {
         const bool fail_effect_commit = fail_effect_commit_next_;
         fail_effect_commit_next_ = false;
         auto dispose_callback = std::move(dispose_callback_next_);
-        context.adopt_effect(std::make_unique<TraceEffect>(
-            trace_, provider_id_, fail_effect_commit, handover_safe_, std::move(dispose_callback)));
+        auto commit_callback = std::move(commit_callback_next_);
+        context.adopt_effect(
+            std::make_unique<TraceEffect>(trace_, provider_id_, fail_effect_commit, handover_safe_,
+                                          std::move(dispose_callback), std::move(commit_callback)));
         if (fail_next_) {
             fail_next_ = false;
             return composition::ProviderInstanceResult::failure({
@@ -175,6 +207,10 @@ class IntProviderFactory final : public composition::IProviderFactory {
                 });
             }
         }
+        if (mutate_identity_during_construct_next_) {
+            mutate_identity_during_construct_next_ = false;
+            implementation_version_ = "9.9.9";
+        }
         return composition::ProviderInstanceResult::success(
             std::make_unique<IntProviderInstance>(trace_, provider_id_, offered_service_, value));
     }
@@ -189,8 +225,20 @@ class IntProviderFactory final : public composition::IProviderFactory {
         dispose_callback_next_ = std::move(callback);
     }
 
+    void set_commit_callback(std::function<void()> callback) {
+        commit_callback_next_ = std::move(callback);
+    }
+
     void mutate_identity_version(std::string version) {
         implementation_version_ = std::move(version);
+    }
+
+    void mutate_identity_during_next_construction() noexcept {
+        mutate_identity_during_construct_next_ = true;
+    }
+
+    void set_plugin_version(std::string version) {
+        plugin_descriptor_.plugin_version = std::move(version);
     }
 
     void mutate_service_type() noexcept { report_double_service_ = true; }
@@ -202,6 +250,7 @@ class IntProviderFactory final : public composition::IProviderFactory {
     contracts::CompositionScope scope_ = contracts::CompositionScope::world;
     std::string implementation_version_ = "1.0.0";
     std::string canonical_configuration_json_ = "{}";
+    contracts::CompositionPluginDescriptor plugin_descriptor_ = builtin_plugin_descriptor();
     int base_value_ = 0;
     std::vector<std::string> required_services_;
     int construction_count_ = 0;
@@ -210,14 +259,21 @@ class IntProviderFactory final : public composition::IProviderFactory {
     bool ignore_lookup_error_next_ = false;
     bool handover_safe_ = true;
     bool report_double_service_ = false;
+    bool mutate_identity_during_construct_next_ = false;
     std::function<void()> dispose_callback_next_;
+    std::function<void()> commit_callback_next_;
 };
 
 class MetadataOnlyFactory final : public composition::IProviderFactory {
   public:
-    explicit MetadataOnlyFactory(contracts::CompositionProviderDescriptor descriptor)
-        : metadata_{descriptor.provider_id, descriptor.plugin_id, descriptor.implementation_version,
-                    descriptor.scope, descriptor.canonical_configuration_json},
+    MetadataOnlyFactory(contracts::CompositionProviderDescriptor descriptor,
+                        contracts::CompositionPluginDescriptor plugin)
+        : metadata_{descriptor.provider_id,
+                    descriptor.plugin_id,
+                    descriptor.implementation_version,
+                    descriptor.scope,
+                    descriptor.canonical_configuration_json,
+                    std::move(plugin)},
           offered_services_(descriptor.offered_services.begin(),
                             descriptor.offered_services.end()) {}
 
@@ -293,18 +349,7 @@ contracts::ResolvedSimulationComposition make_resolved() {
     manifest.composition_id = "test.lifecycle";
     manifest.contract_versions = {"1.0.0", "1.0.0", "1.0.0", "1.0.0"};
     manifest.requested_profile = {"test.profile", "1.0.0"};
-    manifest.plugins.push_back({
-        "builtin.core",
-        "builtin.core",
-        "1.0.0",
-        ">=1.0.0 <2.0.0",
-        {"native"},
-        "truth_affecting_deterministic",
-        {"repository_builtin", "test", std::nullopt},
-        {},
-        {},
-        "{}",
-    });
+    manifest.plugins.push_back(builtin_plugin_descriptor());
     manifest.providers = {
         provider("provider.application", contracts::CompositionScope::application,
                  std::string(contracts::kServiceEnvironmentModel)),
@@ -403,7 +448,8 @@ contracts::ResolvedSimulationComposition make_resolved() {
 struct CatalogBundle {
     explicit CatalogBundle(Trace &trace, std::string world_version = "1.0.0",
                            std::string world_configuration = "{}", int world_base = 20,
-                           bool world_handover_safe = true) {
+                           bool world_handover_safe = true, bool world_reports_double = false,
+                           std::string plugin_version = "1.0.0") {
         factories.emplace(
             "provider.application",
             std::make_shared<IntProviderFactory>(trace, "provider.application",
@@ -429,7 +475,11 @@ struct CatalogBundle {
                                                   std::vector<std::string>{
                                                       std::string(contracts::kServiceEffectsModel),
                                                   }));
+        if (world_reports_double) {
+            factories.at("provider.world")->mutate_service_type();
+        }
         for (const auto &[_, factory] : factories) {
+            factory->set_plugin_version(plugin_version);
             REQUIRE(catalog.register_factory(factory).ok());
         }
         REQUIRE(catalog.freeze().ok());
@@ -492,9 +542,16 @@ TEST_SUITE("composition_lifecycle") {
 
         composition::ProviderCatalog catalog;
         for (const auto &provider_descriptor : resolved.manifest.providers) {
-            REQUIRE(
-                catalog.register_factory(std::make_shared<MetadataOnlyFactory>(provider_descriptor))
-                    .ok());
+            const auto plugin =
+                std::find_if(resolved.manifest.plugins.begin(), resolved.manifest.plugins.end(),
+                             [&](const auto &candidate) {
+                                 return candidate.plugin_id == provider_descriptor.plugin_id;
+                             });
+            REQUIRE(plugin != resolved.manifest.plugins.end());
+            REQUIRE(catalog
+                        .register_factory(
+                            std::make_shared<MetadataOnlyFactory>(provider_descriptor, *plugin))
+                        .ok());
         }
         REQUIRE(catalog.freeze().ok());
         const auto validation = composition::validate_resolved_composition(resolved, catalog);
@@ -829,6 +886,19 @@ TEST_SUITE("composition_lifecycle") {
                                   return issue.code == contracts::kErrorSystemDependencyCycle;
                               }));
         }
+
+        SUBCASE("native v1 admission rejects text outside the ASCII NFC subset") {
+            auto resolved = make_resolved();
+            resolved.manifest.compatibility_claims = {"simulation.é"};
+            const auto validation =
+                composition::validate_resolved_composition(resolved, bundle.catalog);
+            CHECK_FALSE(validation.valid);
+            CHECK(std::any_of(validation.issues.begin(), validation.issues.end(),
+                              [](const auto &issue) {
+                                  return issue.code == contracts::kErrorInvalidJsonType &&
+                                         issue.path == "$.manifest";
+                              }));
+        }
     }
 
     TEST_CASE("failed provider cleanup destroys effects before instances") {
@@ -878,6 +948,26 @@ TEST_SUITE("composition_lifecycle") {
         CHECK(trace.matching("effect.dispose:provider.episode").size() == 1);
     }
 
+    TEST_CASE(
+        "moving the public wrapper in a lifecycle callback preserves the active transaction") {
+        Trace trace;
+        CatalogBundle bundle(trace);
+        composition::CompositionRuntime *runtime_pointer = nullptr;
+        bool callback_called = false;
+        bundle.factory("provider.episode")->set_dispose_callback([&] {
+            callback_called = true;
+            composition::CompositionRuntime moved(std::move(*runtime_pointer));
+        });
+
+        auto runtime = realize(make_resolved(), bundle.catalog);
+        runtime_pointer = &runtime;
+        runtime.stop();
+        CHECK(callback_called);
+        CHECK(runtime.shutdown());
+        CHECK(trace.matching("effect.dispose:").size() == 4);
+        CHECK(trace.matching("instance.destroy:").size() == 4);
+    }
+
     TEST_CASE("catalog snapshots identity and detects metadata mutation") {
         Trace trace;
         CatalogBundle bundle(trace);
@@ -897,6 +987,15 @@ TEST_SUITE("composition_lifecycle") {
             composition::CompositionKernel::realize(std::move(resolved), bundle.catalog);
         CHECK_FALSE(result.ok());
         CHECK(result.error().code == composition::kErrorFactoryMetadataMismatch);
+
+        Trace construction_trace;
+        CatalogBundle construction_bundle(construction_trace);
+        construction_bundle.factory("provider.world")->mutate_identity_during_next_construction();
+        const auto construction_result =
+            composition::CompositionKernel::realize(make_resolved(), construction_bundle.catalog);
+        CHECK_FALSE(construction_result.ok());
+        CHECK(construction_result.error().code == composition::kErrorFactoryMetadataMismatch);
+        CHECK(construction_trace.matching("effect.rollback:provider.world").size() == 1);
 
         Trace rebuild_trace;
         CatalogBundle rebuild_bundle(rebuild_trace);
@@ -923,6 +1022,8 @@ TEST_SUITE("composition_lifecycle") {
             CatalogBundle current_bundle(trace);
             auto current = make_resolved();
             auto runtime = realize(current, current_bundle.catalog);
+            const auto old_requested_snapshot = runtime.requested_manifest_sha256();
+            const auto old_resolved_snapshot = runtime.resolved_manifest_sha256();
             const auto old_world = runtime.service_for<int>("provider", "provider.episode",
                                                             contracts::kServiceEffectsModel);
             REQUIRE(old_world.valid());
@@ -945,6 +1046,8 @@ TEST_SUITE("composition_lifecycle") {
                                       std::move(replacement), replacement_bundle.catalog);
             REQUIRE(status.ok());
             CHECK_FALSE(old_world.valid());
+            CHECK(old_requested_snapshot == current.requested_manifest_sha256);
+            CHECK(old_resolved_snapshot == current.resolved_manifest_sha256);
             CHECK(runtime.requested_manifest_sha256() == expected_requested);
             CHECK(runtime.resolved_manifest_sha256() == expected_resolved);
             CHECK(runtime.scope_generation(contracts::CompositionScope::world) == 2);
@@ -991,6 +1094,150 @@ TEST_SUITE("composition_lifecycle") {
             CHECK(rejected.error().code == composition::kErrorLifecycleHandoverUnsupported);
             CHECK(old_world.valid());
             CHECK(runtime.scope_generation(contracts::CompositionScope::world) == 1);
+        }
+
+        SUBCASE("replacement cannot change a stable service key native type") {
+            Trace trace;
+            CatalogBundle current_bundle(trace);
+            auto runtime = realize(make_resolved(), current_bundle.catalog);
+            const auto old_world = runtime.service_for<int>("provider", "provider.episode",
+                                                            contracts::kServiceEffectsModel);
+            REQUIRE(old_world.valid());
+
+            CatalogBundle incompatible_bundle(trace, "1.0.0", "{}", 20, true, true);
+            const auto rejected =
+                runtime.rebuild_scope(contracts::CompositionScope::world, "world_rebuild",
+                                      make_resolved(), incompatible_bundle.catalog);
+            CHECK_FALSE(rejected.ok());
+            CHECK(rejected.error().code == composition::kErrorReplacementBoundaryViolation);
+            CHECK(old_world.valid());
+            CHECK(runtime.scope_generation(contracts::CompositionScope::world) == 1);
+        }
+
+        SUBCASE("replacement boundary compares canonical set semantics") {
+            Trace trace;
+            CatalogBundle bundle(trace);
+            auto runtime = realize(make_resolved(), bundle.catalog);
+            auto replacement = make_resolved();
+            std::reverse(replacement.manifest.providers.begin(),
+                         replacement.manifest.providers.end());
+            std::reverse(replacement.manifest.service_bindings.begin(),
+                         replacement.manifest.service_bindings.end());
+            std::reverse(replacement.manifest.scope_policies.begin(),
+                         replacement.manifest.scope_policies.end());
+            std::reverse(replacement.manifest.reconfiguration_policy.allowed_barriers.begin(),
+                         replacement.manifest.reconfiguration_policy.allowed_barriers.end());
+            refresh_identity(replacement);
+
+            const auto replaced =
+                runtime.rebuild_scope(contracts::CompositionScope::world, "world_rebuild",
+                                      std::move(replacement), bundle.catalog);
+            CHECK(replaced.ok());
+            CHECK(runtime.scope_generation(contracts::CompositionScope::world) == 2);
+        }
+
+        SUBCASE("plugin identity cannot change while its contributions remain registered") {
+            Trace trace;
+            CatalogBundle current_bundle(trace);
+            auto runtime = realize(make_resolved(), current_bundle.catalog);
+            auto replacement = make_resolved();
+            replacement.manifest.plugins.front().plugin_version = "2.0.0";
+            refresh_identity(replacement);
+            CatalogBundle replacement_bundle(trace, "1.0.0", "{}", 20, true, false, "2.0.0");
+
+            const auto rejected =
+                runtime.rebuild_scope(contracts::CompositionScope::world, "world_rebuild",
+                                      std::move(replacement), replacement_bundle.catalog);
+            CHECK_FALSE(rejected.ok());
+            CHECK(rejected.error().code == composition::kErrorReplacementBoundaryViolation);
+            CHECK(runtime.scope_generation(contracts::CompositionScope::world) == 1);
+        }
+
+        SUBCASE("concurrent rebuilds serialize before taking a plan snapshot") {
+            Trace trace;
+            CatalogBundle current_bundle(trace);
+            auto runtime = realize(make_resolved(), current_bundle.catalog);
+
+            auto replacement = make_resolved();
+            auto world = std::find_if(
+                replacement.manifest.providers.begin(), replacement.manifest.providers.end(),
+                [](const auto &descriptor) { return descriptor.provider_id == "provider.world"; });
+            REQUIRE(world != replacement.manifest.providers.end());
+            world->implementation_version = "2.0.0";
+            world->canonical_configuration_json = "{\"gain\":2}";
+            replacement.manifest.composition_id = "test.lifecycle.concurrent";
+            refresh_identity(replacement);
+            const auto expected_hash = replacement.resolved_manifest_sha256;
+            CatalogBundle replacement_bundle(trace, "2.0.0", "{\"gain\":2}", 200);
+
+            std::mutex gate;
+            std::condition_variable condition;
+            bool commit_entered = false;
+            bool release_commit = false;
+            bool second_started = false;
+            bool second_finished = false;
+            replacement_bundle.factory("provider.world")->set_commit_callback([&] {
+                std::unique_lock lock(gate);
+                commit_entered = true;
+                condition.notify_all();
+                condition.wait(lock, [&] { return release_commit; });
+            });
+
+            std::optional<composition::CompositionStatus> first_status;
+            std::optional<composition::CompositionStatus> second_status;
+            std::thread first([&] {
+                first_status =
+                    runtime.rebuild_scope(contracts::CompositionScope::world, "world_rebuild",
+                                          std::move(replacement), replacement_bundle.catalog);
+            });
+            bool observed_commit = false;
+            {
+                std::unique_lock lock(gate);
+                observed_commit = condition.wait_for(lock, std::chrono::seconds(2),
+                                                     [&] { return commit_entered; });
+                if (!observed_commit) {
+                    release_commit = true;
+                    condition.notify_all();
+                }
+            }
+            if (!observed_commit) {
+                first.join();
+                REQUIRE(observed_commit);
+            }
+
+            std::thread second([&] {
+                {
+                    std::lock_guard lock(gate);
+                    second_started = true;
+                    condition.notify_all();
+                }
+                second_status =
+                    runtime.rebuild_scope(contracts::CompositionScope::world, "world_rebuild");
+                {
+                    std::lock_guard lock(gate);
+                    second_finished = true;
+                    condition.notify_all();
+                }
+            });
+            bool observed_second = false;
+            {
+                std::unique_lock lock(gate);
+                observed_second = condition.wait_for(lock, std::chrono::seconds(2),
+                                                     [&] { return second_started; });
+                condition.wait_for(lock, std::chrono::milliseconds(50),
+                                   [&] { return second_finished; });
+                CHECK_FALSE(second_finished);
+                release_commit = true;
+                condition.notify_all();
+            }
+            first.join();
+            second.join();
+            REQUIRE(observed_second);
+            REQUIRE(first_status.has_value());
+            REQUIRE(second_status.has_value());
+            CHECK(first_status->ok());
+            CHECK(second_status->ok());
+            CHECK(runtime.resolved_manifest_sha256() == expected_hash);
         }
     }
 
