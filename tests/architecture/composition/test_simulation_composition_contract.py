@@ -117,7 +117,9 @@ def test_manifest_schema_is_closed_host_neutral_and_integer_canonical() -> None:
   assert "number" not in canonical_types
   assert "integer" in canonical_types
   assert "lexical-number validator" in schema["$comment"]
+  assert "ASCII text only" in schema["$comment"]
   assert schema["properties"]["composition_id"]["maxLength"] == 128
+  assert schema["$defs"]["canonical_value"]["oneOf"][3]["pattern"] == contract.ASCII_PATTERN
   serialized = SCHEMA.read_text(encoding="utf-8").lower()
   for forbidden in ("flecs", "napi", "nanobind", "javascript_object", "c++ pointer"):
     assert forbidden not in serialized
@@ -320,6 +322,29 @@ def test_executable_validator_matches_schema_only_constraints_and_never_raises()
   issues = contract.validate_manifest(malformed)
   assert any(row.code == "composition.invalid_json_type" for row in issues)
 
+  malformed_nested_values = (
+    ("/plugins/0", 7),
+    ("/plugins/0/artifact/kind", []),
+    ("/providers/0/provider_id", []),
+    ("/providers/0/required_services", 7),
+    ("/service_bindings/0/consumer_kind", []),
+    ("/component_contributions/0/component_id", []),
+    ("/system_contributions/0/after", 7),
+    ("/backend_request/provider_id", []),
+    ("/scope_policies/0", 7),
+  )
+  for pointer, value in malformed_nested_values:
+    candidate = deepcopy(base)
+    parent, key = _pointer_parent(candidate, pointer)
+    if isinstance(parent, list):
+      parent[int(key)] = value
+    else:
+      parent[key] = value
+    issues = contract.validate_manifest(candidate)
+    assert any(row.code == "composition.invalid_json_type" for row in issues), pointer
+    with pytest.raises(contract.ContractError):
+      contract.resolve_manifest(candidate)
+
 
 def test_nfc_collisions_and_explicit_self_dependencies_fail_closed() -> None:
   base = _read_json(REQUESTED)
@@ -327,6 +352,24 @@ def test_nfc_collisions_and_explicit_self_dependencies_fail_closed() -> None:
   collision["compatibility_claims"] = ["é", "e\u0301"]
   issues = contract.validate_manifest(collision)
   assert any(row.code == "composition.duplicate_value" for row in issues)
+
+  component_collision = deepcopy(base)
+  component_collision["component_contributions"][0]["component_id"] = "é"
+  component_collision["component_contributions"][1]["component_id"] = "e\u0301"
+  issues = contract.validate_manifest(component_collision)
+  assert any(row.code == "composition.duplicate_id" for row in issues)
+  assert any(row.code == "composition.invalid_json_type" for row in issues)
+  with pytest.raises(contract.ContractError):
+    contract.resolve_manifest(component_collision)
+
+  non_ascii = deepcopy(base)
+  non_ascii["compatibility_claims"] = ["simulation.é"]
+  assert any(
+    row.code == "composition.invalid_json_type"
+    for row in contract.validate_manifest(non_ascii)
+  )
+  with pytest.raises(contract.ContractError):
+    contract.resolve_manifest(non_ascii)
 
   provider_self = deepcopy(base)
   provider_id = provider_self["providers"][0]["provider_id"]

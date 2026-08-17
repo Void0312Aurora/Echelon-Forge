@@ -1,5 +1,5 @@
 {
-  "$comment": "JSON Schema treats 1.0 as an integer by mathematical value. Consumers MUST also run the executable lexical-number validator, which rejects fraction/exponent tokens.",
+  "$comment": "JSON Schema treats 1.0 as an integer by mathematical value. Consumers MUST also run the executable lexical-number validator, which rejects fraction/exponent tokens. The v1 native admission subset accepts ASCII text only; ASCII is already NFC, while full Unicode NFC admission remains closed until every producer links one normalizer.",
   "$defs": {
     "canonical_value": {
       "oneOf": [
@@ -15,6 +15,7 @@
           "type": "integer"
         },
         {
+          "pattern": "^[\\u0000-\\u007F]*$",
           "type": "string"
         },
         {
@@ -26,6 +27,9 @@
         {
           "additionalProperties": {
             "$ref": "#/$defs/canonical_value"
+          },
+          "propertyNames": {
+            "pattern": "^[\\u0000-\\u007F]*$"
           },
           "type": "object"
         }
@@ -54,6 +58,7 @@
         "required_capabilities": {
           "items": {
             "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
             "type": "string"
           },
           "minItems": 0,
@@ -71,6 +76,7 @@
     "compatibility_claims": {
       "items": {
         "minLength": 1,
+        "pattern": "^[\\u0000-\\u007F]*$",
         "type": "string"
       },
       "minItems": 0,
@@ -83,6 +89,7 @@
         "properties": {
           "component_id": {
             "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
             "type": "string"
           },
           "plugin_id": {
@@ -180,6 +187,7 @@
             "properties": {
               "identity": {
                 "minLength": 1,
+                "pattern": "^[\\u0000-\\u007F]*$",
                 "type": "string"
               },
               "kind": {
@@ -206,6 +214,7 @@
           },
           "composition_contract_range": {
             "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
             "type": "string"
           },
           "configuration": {
@@ -214,6 +223,7 @@
           "conflicts": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -257,6 +267,7 @@
           "required_capabilities": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -288,6 +299,7 @@
           "after_provider_ids": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -305,6 +317,7 @@
           "conflicts": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -319,6 +332,7 @@
           "offered_services": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 1,
@@ -340,6 +354,7 @@
           "required_capabilities": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -349,6 +364,7 @@
           "required_services": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -406,6 +422,7 @@
         "allowed_barriers": {
           "items": {
             "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
             "type": "string"
           },
           "minItems": 1,
@@ -473,6 +490,7 @@
           },
           "rebuild_trigger": {
             "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
             "type": "string"
           },
           "scope": {
@@ -521,6 +539,7 @@
           },
           "service_key": {
             "minLength": 1,
+            "pattern": "^[\\u0000-\\u007F]*$",
             "type": "string"
           }
         },
@@ -541,6 +560,7 @@
           "after": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -550,6 +570,7 @@
           "before": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -559,6 +580,7 @@
           "conflicts": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -584,6 +606,7 @@
           "executable_node_ids": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -599,6 +622,7 @@
           "provided_components": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -608,6 +632,7 @@
           "read_state_shards": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -623,6 +648,7 @@
           "required_barriers": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -632,6 +658,7 @@
           "required_capabilities": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -641,6 +668,7 @@
           "required_components": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -650,6 +678,7 @@
           "required_services": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -659,6 +688,7 @@
           "semantic_stage_ids": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,
@@ -668,6 +698,7 @@
           "write_state_shards": {
             "items": {
               "minLength": 1,
+              "pattern": "^[\\u0000-\\u007F]*$",
               "type": "string"
             },
             "minItems": 0,

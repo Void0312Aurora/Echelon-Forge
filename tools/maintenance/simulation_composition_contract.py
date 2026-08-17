@@ -50,6 +50,7 @@ RESOLVED_SCHEMA_PATH = (
 ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
 VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
 HEX64_RE = re.compile(r"^[0-9a-f]{64}$")
+ASCII_PATTERN = r"^[\u0000-\u007F]*$"
 INT64_MIN = -(2**63)
 INT64_MAX = 2**63 - 1
 
@@ -148,6 +149,8 @@ def _string_schema(
   schema: dict[str, Any] = {"type": "string", "minLength": 1}
   if pattern is not None:
     schema["pattern"] = pattern
+  else:
+    schema["pattern"] = ASCII_PATTERN
   if enum is not None:
     schema["enum"] = list(enum)
   if max_length is not None:
@@ -172,10 +175,11 @@ def manifest_schema() -> dict[str, Any]:
       {"type": "null"},
       {"type": "boolean"},
       {"type": "integer", "minimum": INT64_MIN, "maximum": INT64_MAX},
-      {"type": "string"},
+      {"type": "string", "pattern": ASCII_PATTERN},
       {"type": "array", "items": {"$ref": "#/$defs/canonical_value"}},
       {
         "type": "object",
+        "propertyNames": {"pattern": ASCII_PATTERN},
         "additionalProperties": {"$ref": "#/$defs/canonical_value"},
       },
     ]
@@ -340,7 +344,9 @@ def manifest_schema() -> dict[str, Any]:
       "title": "Echelon Forge Simulation Composition Manifest v1",
       "$comment": (
         "JSON Schema treats 1.0 as an integer by mathematical value. Consumers MUST also run "
-        "the executable lexical-number validator, which rejects fraction/exponent tokens."
+        "the executable lexical-number validator, which rejects fraction/exponent tokens. "
+        "The v1 native admission subset accepts ASCII text only; ASCII is already NFC, while "
+        "full Unicode NFC admission remains closed until every producer links one normalizer."
       ),
       "$defs": {"canonical_value": canonical_value},
     }
@@ -524,6 +530,32 @@ def _issue(issues: list[ValidationIssue], code: str, path: str, detail: Any) -> 
   issues.append(ValidationIssue(str(code), str(path), str(detail)))
 
 
+def _validate_ascii_text(issues: list[ValidationIssue], value: Any, path: str) -> None:
+  if isinstance(value, str):
+    if not value.isascii():
+      _issue(
+        issues,
+        "composition.invalid_json_type",
+        path,
+        "v1 native admission accepts ASCII text only",
+      )
+    return
+  if isinstance(value, list):
+    for index, item in enumerate(value):
+      _validate_ascii_text(issues, item, f"{path}[{index}]")
+    return
+  if isinstance(value, dict):
+    for key, item in value.items():
+      if isinstance(key, str) and not key.isascii():
+        _issue(
+          issues,
+          "composition.invalid_json_type",
+          path,
+          "v1 native admission accepts ASCII object keys only",
+        )
+      _validate_ascii_text(issues, item, f"{path}.{key}")
+
+
 def _validate_identifier(
   issues: list[ValidationIssue], value: Any, path: str, *, version: bool = False
 ) -> None:
@@ -546,9 +578,15 @@ def _validate_unique(
     return
   seen: set[Any] = set()
   for index, value in enumerate(values):
-    marker = json.dumps(value, sort_keys=True, ensure_ascii=False)
+    marker_value = _nfc(value) if isinstance(value, str) else value
+    marker = json.dumps(marker_value, sort_keys=True, ensure_ascii=False)
     if marker in seen:
-      _issue(issues, code, f"{path}[{index}]", f"duplicate value {value!r}")
+      detail = (
+        f"duplicate value {value!r} after Unicode NFC normalization"
+        if isinstance(value, str)
+        else f"duplicate value {value!r}"
+      )
+      _issue(issues, code, f"{path}[{index}]", detail)
     seen.add(marker)
 
 
@@ -635,7 +673,7 @@ def _stable_topological_order(
   return order, cycle
 
 
-def validate_manifest(manifest: Any) -> list[ValidationIssue]:
+def _validate_manifest_impl(manifest: Any) -> list[ValidationIssue]:
   issues: list[ValidationIssue] = []
   top_fields = {
     "schema_version",
@@ -655,6 +693,7 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
   }
   if not _required_fields(issues, manifest, "$", top_fields):
     return sorted(issues)
+  _validate_ascii_text(issues, manifest, "$")
 
   if manifest["schema_version"] != SCHEMA_VERSION:
     _issue(
@@ -1215,6 +1254,20 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
   except (TypeError, ValueError) as exc:
     _issue(issues, "composition.invalid_json_type", "$", str(exc))
   return sorted(set(issues))
+
+
+def validate_manifest(manifest: Any) -> list[ValidationIssue]:
+  """Validate arbitrary input without allowing malformed shapes to escape as exceptions."""
+  try:
+    return _validate_manifest_impl(manifest)
+  except (AttributeError, IndexError, KeyError, TypeError, ValueError):
+    return [
+      ValidationIssue(
+        "composition.invalid_json_type",
+        "$",
+        "malformed manifest shape or value",
+      )
+    ]
 
 
 def resolve_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
