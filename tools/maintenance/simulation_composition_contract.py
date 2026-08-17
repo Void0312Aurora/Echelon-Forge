@@ -1260,7 +1260,7 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
   """Validate arbitrary input without allowing malformed shapes to escape as exceptions."""
   try:
     return _validate_manifest_impl(manifest)
-  except (AttributeError, IndexError, KeyError, TypeError, ValueError):
+  except (AttributeError, IndexError, KeyError, RecursionError, TypeError, ValueError):
     return [
       ValidationIssue(
         "composition.invalid_json_type",

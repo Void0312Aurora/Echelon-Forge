@@ -317,6 +317,19 @@ def test_executable_validator_matches_schema_only_constraints_and_never_raises()
     with pytest.raises(contract.ContractError):
       contract.resolve_manifest(candidate)
 
+  deeply_nested = deepcopy(base)
+  nested_configuration: dict = {}
+  cursor = nested_configuration
+  for _ in range(1200):
+    child: dict = {}
+    cursor["x"] = child
+    cursor = child
+  deeply_nested["plugins"][0]["configuration"] = nested_configuration
+  issues = contract.validate_manifest(deeply_nested)
+  assert any(row.code == "composition.invalid_json_type" for row in issues)
+  with pytest.raises(contract.ContractError):
+    contract.resolve_manifest(deeply_nested)
+
   malformed = deepcopy(base)
   malformed["providers"][0]["offered_services"] = 7
   issues = contract.validate_manifest(malformed)
