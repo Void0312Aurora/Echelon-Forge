@@ -1,0 +1,101 @@
+{
+  "base_fixture": "default_compatibility_manifest.requested.json",
+  "cases": [
+    {
+      "case_id": "unsupported_schema_version",
+      "expected_code": "composition.unsupported_schema_version",
+      "operation": "replace",
+      "path": "/schema_version",
+      "value": "echelon_forge.simulation_composition_manifest.v2"
+    },
+    {
+      "case_id": "duplicate_provider_id",
+      "expected_code": "composition.duplicate_id",
+      "operation": "append_copy",
+      "path": "/providers/0"
+    },
+    {
+      "case_id": "missing_provider_service_binding",
+      "expected_code": "composition.missing_service_binding",
+      "match": {
+        "consumer_id": "builtin.sensor.default",
+        "consumer_kind": "provider",
+        "service_key": "simulation.environment.model"
+      },
+      "operation": "remove_matching",
+      "path": "/service_bindings"
+    },
+    {
+      "case_id": "ambiguous_provider_service_binding",
+      "expected_code": "composition.ambiguous_service_binding",
+      "match": {
+        "consumer_id": "builtin.sensor.default",
+        "consumer_kind": "provider",
+        "service_key": "simulation.environment.model"
+      },
+      "operation": "append_matching_copy",
+      "path": "/service_bindings"
+    },
+    {
+      "case_id": "child_scope_captured_by_parent",
+      "expected_code": "composition.scope_capture_violation",
+      "match": {
+        "provider_id": "builtin.environment.default"
+      },
+      "operation": "replace_matching_field",
+      "path": "/providers",
+      "target_field": "scope",
+      "value": "episode"
+    },
+    {
+      "case_id": "selected_provider_conflict",
+      "expected_code": "composition.provider_conflict",
+      "match": {
+        "provider_id": "builtin.environment.default"
+      },
+      "operation": "append_matching_field",
+      "path": "/providers",
+      "target_field": "conflicts",
+      "value": "builtin.sensor.default"
+    },
+    {
+      "case_id": "provider_dependency_cycle",
+      "expected_code": "composition.provider_dependency_cycle",
+      "match": {
+        "provider_id": "builtin.environment.default"
+      },
+      "operation": "append_matching_field",
+      "path": "/providers",
+      "target_field": "after_provider_ids",
+      "value": "builtin.sensor.default"
+    },
+    {
+      "case_id": "system_dependency_cycle",
+      "expected_code": "composition.system_dependency_cycle",
+      "match": {
+        "contribution_id": "builtin.system.command_link"
+      },
+      "operation": "append_matching_field",
+      "path": "/system_contributions",
+      "target_field": "after",
+      "value": "builtin.system.naval_logistics"
+    },
+    {
+      "case_id": "backend_provider_does_not_offer_spi",
+      "expected_code": "composition.backend_provider_mismatch",
+      "operation": "replace",
+      "path": "/backend_request/provider_id",
+      "value": "builtin.environment.default"
+    },
+    {
+      "case_id": "floating_configuration_is_not_canonical",
+      "expected_code": "composition.noncanonical_number",
+      "operation": "replace",
+      "path": "/plugins/0/configuration",
+      "value": {
+        "time_step_seconds": 0.1
+      }
+    }
+  ],
+  "schema_version": "echelon_forge.simulation_composition_invalid_matrix.v1"
+}

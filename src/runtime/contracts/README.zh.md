@@ -11,12 +11,21 @@ effects、damage 和 diagnostics trace DTO。ground 在这里仅是
 setup/evidence-aware；full ground movement、sensing、fires、damage 或 runtime
 contract 尚未维护。
 
+`simulation_composition_contract.h` 与生成的
+`composition/simulation_composition_manifest.v1.schema.json` 定义 host-neutral composition
+value contract。它们命名 version、scope、service、provider/system contribution、backend
+request、evidence policy 与 stable validation error；不构造 provider、不持有 scope resource、
+不解析 Cordis object，也不注册 Flecs system。Executable schema source 与 canonical fixture
+位于 `tools/maintenance/simulation_composition_contract.py` 和
+`tests/architecture/composition/fixtures/`。
+
 ## 允许
 
 - `WorldEntityRef` 这类轻量引用。
 - batch setup / command / tasking / episode step request DTO。
 - 只由 value types、component DTO 和 mission runtime DTO 组成的 request/result 类型。
 - 保持纯 contract、不执行业务逻辑的 engagement/tasking evidence DTO。
+- Host-neutral composition manifest、stable service key 与纯 validation/result value。
 
 ## 禁止
 
@@ -25,6 +34,7 @@ contract 尚未维护。
 - Python/nanobind 绑定逻辑。
 - 为了方便 include 而引入 `core/engine/*`。
 - 在维护中的 ground owner 与 schema 存在前扩张 ground-specific runtime 语义。
+- Provider construction、lifecycle effect、service locator state 或 composition-time Flecs registration。
 
 ## 生成 detail 布局
 
