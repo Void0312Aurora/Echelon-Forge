@@ -1,8 +1,8 @@
 # `src/runtime/composition` Boundary
 
-Status: `2026-08-17` P2-A native lifecycle baseline implemented and focused-test
-validated; no engine, provider-family, system, backend-facade, binding, or Cordis
-migration is claimed.
+Status: `2026-08-17` P2-A native lifecycle baseline and independent-review repair
+pass implemented and focused-test validated; no engine, provider-family, system,
+backend-facade, binding, or Cordis migration is claimed.
 
 Language:
 
@@ -13,8 +13,8 @@ Language:
 
 This directory realizes the host-neutral composition values from
 [`runtime/contracts`](../contracts/README.md) as an isolated native lifecycle
-library. It parses closed JSON envelopes, verifies the requested/resolved graph
-and stable order, freezes a provider catalog, constructs scoped provider
+library. It parses closed JSON envelopes, recomputes requested/resolved identity,
+verifies the graph and stable order, freezes a provider catalog, constructs scoped provider
 instances transactionally, publishes staged lifecycle effects only at commit,
 and tears down in reverse realized dependency order.
 
@@ -28,17 +28,19 @@ dependency is `nlohmann_json` for the native JSON ingestion boundary.
    invalid types, floating-point configuration values, and unknown scopes fail
    before factory lookup.
 2. Freeze `ProviderCatalog`; registration after freeze is rejected.
-3. Recompute and verify the stable provider/system orders, service bindings,
-   scope capture, conflict/cycle, backend, policy, and factory metadata rules.
+3. Recompute and verify requested/resolved SHA-256, stable provider/system
+   orders, service bindings, scope capture, conflict/cycle, backend, policy, and
+   immutable factory metadata rules.
 4. Construct providers in the verified dependency order. A factory must register
    every external side effect immediately through `ILifecycleEffect`.
 5. Commit all staged effects only after every provider exists. Any construction
    or effect-commit failure destroys candidate instances and rolls effects back
    in reverse order without publishing a runnable runtime.
 6. Freeze the runtime and expose generation-checked `ServiceHandle<T>` values.
-7. Rebuild a scope and all descendants as a candidate generation. Failure keeps
-   the old generation live; success swaps the generation, invalidates old
-   handles, and disposes retired providers in reverse order.
+7. Rebuild a scope and all descendants as a candidate generation, optionally
+   from a newly validated resolved manifest and catalog. Failure keeps the old
+   generation and identity live; success performs a no-allocation record/plan
+   swap, invalidates old handles, and disposes retired providers in reverse order.
 8. Stop is idempotent and invalidates handles, reverses external effects, then
    destroys instances in reverse provider order.
 
@@ -63,6 +65,8 @@ the provider instance cannot reverse by itself.
 - `commit()` publishes a staged effect and may fail;
 - `rollback()` reverses either staged or committed state and is idempotent;
 - `dispose()` performs normal committed teardown and is idempotent;
+- `supports_replacement_handover()` is required when old and new generations
+  both publish external state; opting in promises token/generation-owned cleanup;
 - both terminal methods are `noexcept` so unwinding always completes.
 
 Factories must stage rather than irreversibly publish external state during
@@ -72,24 +76,29 @@ lifecycle kernel without a separately accepted handover design.
 ## Public Surface
 
 - `composition_json.h`: closed native JSON ingestion into P1-B value types;
+- `composition_identity.h`: shared manifest/resolved canonical-byte SHA-256;
 - `provider_catalog.h`: factory catalog, provider/effect interfaces, typed
   generation-checked handles, and construction context;
 - `composition_runtime.h`: native validation, realization, service lookup,
-  scoped rebuild, generation queries, and deterministic stop;
+  replacement-aware scoped rebuild, immutable identity queries, generation
+  queries, and deterministic stop;
 - `composition_error.h`: stable native lifecycle error codes and result values.
 
 ## Current Evidence And Residuals
 
 The focused C++ suite parses and validates the frozen 11-provider/82-component/
-34-system fixture and tests catalog freeze, order mismatch rejection, typed
-service lookup, construction failure, effect-commit failure, full rollback,
-scope-isolated rebuild, stale-handle rejection, and reverse teardown.
-The focused executable passes 8 test cases and 149 assertions in both the
-normal MSVC build and a RelWithDebInfo MSVC AddressSanitizer build.
+34-system fixture and tests catalog freeze, hash tamper rejection, invalid typed
+scope rejection, self-cycle rejection, immutable factory identity, typed service
+lookup, failure cleanup order, lifecycle reentrancy, effect-commit failure, full
+rollback, replacement-aware scope rebuild, handover admission, stale-handle
+rejection, and reverse teardown. The focused executable passes 13 test cases and
+277 assertions in both the normal MSVC build and a RelWithDebInfo MSVC
+AddressSanitizer build. The architecture contract suite passes 20 tests with one
+toolchain-dependent skip.
 
-This baseline preserves and exports the P1-B requested/resolved hashes; it does
-not create a second canonical identity. Cryptographic recomputation against a
-shared cross-language canonical byte implementation remains a required
-conformance/provenance join before external Cordis packages or native artifacts
-can be trusted. Default model construction and all simulation behavior remain on
-the existing path until later migration clusters supply parity evidence.
+This baseline recomputes and exposes the P1-B requested/resolved identity using
+the same frozen fixtures and canonical field rules; it does not create a private
+runtime identity. Artifact provenance/signature verification and byte-for-byte
+Cordis producer conformance remain later admission gates. Default model
+construction and all simulation behavior remain on the existing path until
+later migration clusters supply parity evidence.

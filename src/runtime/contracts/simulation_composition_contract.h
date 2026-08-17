@@ -16,8 +16,7 @@ inline constexpr std::string_view kResolvedManifestSchemaVersion =
 inline constexpr std::string_view kCompositionContractVersion = "1.0.0";
 inline constexpr std::string_view kResolverContractVersion =
     "echelon_forge.simulation_composition_resolver.v1";
-inline constexpr std::string_view kCanonicalizationId =
-    "echelon_forge.sorted_utf8_json.v1";
+inline constexpr std::string_view kCanonicalizationId = "echelon_forge.sorted_utf8_json.v1";
 inline constexpr std::string_view kCanonicalHashAlgorithm = "sha256";
 
 inline constexpr std::string_view kScopeApplication = "application";
@@ -26,8 +25,7 @@ inline constexpr std::string_view kScopeBatch = "batch";
 inline constexpr std::string_view kScopeWorld = "world";
 inline constexpr std::string_view kScopeEpisode = "episode";
 
-inline constexpr std::string_view kServiceEnvironmentModel =
-    "simulation.environment.model";
+inline constexpr std::string_view kServiceEnvironmentModel = "simulation.environment.model";
 inline constexpr std::string_view kServiceUnitFactory = "simulation.unit_factory";
 inline constexpr std::string_view kServiceEffectsModel = "simulation.effects.model";
 inline constexpr std::string_view kServiceSensorModel = "simulation.sensor.model";
@@ -38,21 +36,17 @@ inline constexpr std::string_view kServiceEngagementEventRecorder =
     "runtime.engagement_event_recorder";
 inline constexpr std::string_view kServiceWeaponReleaseDamageBridge =
     "runtime.weapon_release.damage_bridge";
-inline constexpr std::string_view kServiceWeaponRelease =
-    "runtime.weapon_release.service";
-inline constexpr std::string_view kServiceWorldBatchBackend =
-    "runtime.world_batch_backend";
+inline constexpr std::string_view kServiceWeaponRelease = "runtime.weapon_release.service";
+inline constexpr std::string_view kServiceWorldBatchBackend = "runtime.world_batch_backend";
 inline constexpr std::string_view kServiceCompositionEvidenceSink =
     "runtime.composition_evidence_sink";
 
-inline constexpr std::string_view kErrorInvalidJsonType =
-    "composition.invalid_json_type";
+inline constexpr std::string_view kErrorInvalidJsonType = "composition.invalid_json_type";
 inline constexpr std::string_view kErrorUnsupportedSchemaVersion =
     "composition.unsupported_schema_version";
 inline constexpr std::string_view kErrorMissingField = "composition.missing_field";
 inline constexpr std::string_view kErrorUnexpectedField = "composition.unexpected_field";
-inline constexpr std::string_view kErrorInvalidIdentifier =
-    "composition.invalid_identifier";
+inline constexpr std::string_view kErrorInvalidIdentifier = "composition.invalid_identifier";
 inline constexpr std::string_view kErrorInvalidVersion = "composition.invalid_version";
 inline constexpr std::string_view kErrorDuplicateId = "composition.duplicate_id";
 inline constexpr std::string_view kErrorDuplicateValue = "composition.duplicate_value";
@@ -60,20 +54,17 @@ inline constexpr std::string_view kErrorUnknownPlugin = "composition.unknown_plu
 inline constexpr std::string_view kErrorUnknownProvider = "composition.unknown_provider";
 inline constexpr std::string_view kErrorUnknownConsumer = "composition.unknown_consumer";
 inline constexpr std::string_view kErrorUnknownService = "composition.unknown_service";
-inline constexpr std::string_view kErrorServiceNotOffered =
-    "composition.service_not_offered";
+inline constexpr std::string_view kErrorServiceNotOffered = "composition.service_not_offered";
 inline constexpr std::string_view kErrorMissingServiceBinding =
     "composition.missing_service_binding";
 inline constexpr std::string_view kErrorAmbiguousServiceBinding =
     "composition.ambiguous_service_binding";
 inline constexpr std::string_view kErrorScopeCaptureViolation =
     "composition.scope_capture_violation";
-inline constexpr std::string_view kErrorProviderConflict =
-    "composition.provider_conflict";
+inline constexpr std::string_view kErrorProviderConflict = "composition.provider_conflict";
 inline constexpr std::string_view kErrorProviderDependencyCycle =
     "composition.provider_dependency_cycle";
-inline constexpr std::string_view kErrorUnknownComponent =
-    "composition.unknown_component";
+inline constexpr std::string_view kErrorUnknownComponent = "composition.unknown_component";
 inline constexpr std::string_view kErrorUnknownSystemDependency =
     "composition.unknown_system_dependency";
 inline constexpr std::string_view kErrorSystemConflict = "composition.system_conflict";
@@ -81,14 +72,12 @@ inline constexpr std::string_view kErrorSystemDependencyCycle =
     "composition.system_dependency_cycle";
 inline constexpr std::string_view kErrorBackendProviderMismatch =
     "composition.backend_provider_mismatch";
-inline constexpr std::string_view kErrorInvalidScopePolicy =
-    "composition.invalid_scope_policy";
+inline constexpr std::string_view kErrorInvalidScopePolicy = "composition.invalid_scope_policy";
 inline constexpr std::string_view kErrorInvalidReconfigurationPolicy =
     "composition.invalid_reconfiguration_policy";
 inline constexpr std::string_view kErrorInvalidEvidencePolicy =
     "composition.invalid_evidence_policy";
-inline constexpr std::string_view kErrorNoncanonicalNumber =
-    "composition.noncanonical_number";
+inline constexpr std::string_view kErrorNoncanonicalNumber = "composition.noncanonical_number";
 
 enum class CompositionScope : std::uint8_t {
     application = 0,
@@ -98,28 +87,30 @@ enum class CompositionScope : std::uint8_t {
     episode = 4,
 };
 
+[[nodiscard]] constexpr bool is_valid_scope(CompositionScope scope) noexcept {
+    return static_cast<std::uint8_t>(scope) <= static_cast<std::uint8_t>(CompositionScope::episode);
+}
+
 [[nodiscard]] constexpr std::string_view to_string(CompositionScope scope) noexcept {
     switch (scope) {
-        case CompositionScope::application:
-            return kScopeApplication;
-        case CompositionScope::backend:
-            return kScopeBackend;
-        case CompositionScope::batch:
-            return kScopeBatch;
-        case CompositionScope::world:
-            return kScopeWorld;
-        case CompositionScope::episode:
-            return kScopeEpisode;
+    case CompositionScope::application:
+        return kScopeApplication;
+    case CompositionScope::backend:
+        return kScopeBackend;
+    case CompositionScope::batch:
+        return kScopeBatch;
+    case CompositionScope::world:
+        return kScopeWorld;
+    case CompositionScope::episode:
+        return kScopeEpisode;
     }
     return {};
 }
 
-[[nodiscard]] constexpr bool can_supply_scope(
-    CompositionScope provider_scope,
-    CompositionScope consumer_scope
-) noexcept {
-    return static_cast<std::uint8_t>(provider_scope) <=
-        static_cast<std::uint8_t>(consumer_scope);
+[[nodiscard]] constexpr bool can_supply_scope(CompositionScope provider_scope,
+                                              CompositionScope consumer_scope) noexcept {
+    return is_valid_scope(provider_scope) && is_valid_scope(consumer_scope) &&
+           static_cast<std::uint8_t>(provider_scope) <= static_cast<std::uint8_t>(consumer_scope);
 }
 
 struct CompositionContractVersions {
@@ -127,17 +118,20 @@ struct CompositionContractVersions {
     std::string runtime;
     std::string content;
     std::string stage;
+    bool operator==(const CompositionContractVersions &) const = default;
 };
 
 struct RequestedCompositionProfile {
     std::string profile_id;
     std::string profile_version;
+    bool operator==(const RequestedCompositionProfile &) const = default;
 };
 
 struct CompositionArtifactRef {
     std::string kind;
     std::string identity;
     std::optional<std::string> sha256;
+    bool operator==(const CompositionArtifactRef &) const = default;
 };
 
 struct CompositionPluginDescriptor {
@@ -153,6 +147,7 @@ struct CompositionPluginDescriptor {
     // Canonical JSON object encoded with kCanonicalizationId. This keeps the
     // stable contract independent of a particular JSON library.
     std::string canonical_configuration_json;
+    bool operator==(const CompositionPluginDescriptor &) const = default;
 };
 
 struct CompositionProviderDescriptor {
@@ -169,6 +164,7 @@ struct CompositionProviderDescriptor {
     std::string restart_policy;
     std::string teardown_policy;
     std::string canonical_configuration_json;
+    bool operator==(const CompositionProviderDescriptor &) const = default;
 };
 
 struct CompositionServiceBinding {
@@ -176,12 +172,14 @@ struct CompositionServiceBinding {
     std::string consumer_id;
     std::string service_key;
     std::string provider_id;
+    bool operator==(const CompositionServiceBinding &) const = default;
 };
 
 struct CompositionComponentContribution {
     std::string component_id;
     std::string plugin_id;
     std::string registration_id;
+    bool operator==(const CompositionComponentContribution &) const = default;
 };
 
 struct CompositionSystemContribution {
@@ -201,12 +199,14 @@ struct CompositionSystemContribution {
     std::vector<std::string> conflicts;
     std::vector<std::string> after;
     std::vector<std::string> before;
+    bool operator==(const CompositionSystemContribution &) const = default;
 };
 
 struct CompositionBackendRequest {
     std::string backend_profile_id;
     std::string provider_id;
     std::vector<std::string> required_capabilities;
+    bool operator==(const CompositionBackendRequest &) const = default;
 };
 
 struct CompositionScopePolicy {
@@ -214,12 +214,14 @@ struct CompositionScopePolicy {
     std::optional<CompositionScope> parent_scope;
     std::string cardinality;
     std::string rebuild_trigger;
+    bool operator==(const CompositionScopePolicy &) const = default;
 };
 
 struct CompositionReconfigurationPolicy {
     std::string truth_affecting_change;
     std::string active_episode_change;
     std::vector<std::string> allowed_barriers;
+    bool operator==(const CompositionReconfigurationPolicy &) const = default;
 };
 
 struct CompositionEvidencePolicy {
@@ -228,6 +230,7 @@ struct CompositionEvidencePolicy {
     bool include_provider_versions = true;
     bool include_graph_hash = true;
     bool include_scope_generations = true;
+    bool operator==(const CompositionEvidencePolicy &) const = default;
 };
 
 struct SimulationCompositionManifest {
@@ -245,6 +248,7 @@ struct SimulationCompositionManifest {
     CompositionReconfigurationPolicy reconfiguration_policy;
     CompositionEvidencePolicy evidence_policy;
     std::vector<std::string> compatibility_claims;
+    bool operator==(const SimulationCompositionManifest &) const = default;
 };
 
 struct CompositionValidationIssue {
@@ -259,9 +263,7 @@ struct CompositionValidationResult {
 
     void add_issue(std::string code, std::string path, std::string detail) {
         valid = false;
-        issues.push_back(
-            {std::move(code), std::move(path), std::move(detail)}
-        );
+        issues.push_back({std::move(code), std::move(path), std::move(detail)});
     }
 };
 
@@ -273,6 +275,7 @@ struct ResolvedSimulationComposition {
     std::vector<std::string> provider_construction_order;
     std::vector<std::string> system_registration_order;
     SimulationCompositionManifest manifest;
+    bool operator==(const ResolvedSimulationComposition &) const = default;
 };
 
 } // namespace runtime::composition_contracts

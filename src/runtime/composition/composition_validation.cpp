@@ -1,5 +1,7 @@
 #include "runtime/composition/composition_runtime.h"
 
+#include "runtime/composition/composition_identity.h"
+
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -199,7 +201,7 @@ stable_topological_order(const std::set<std::string, Utf8Less> &nodes,
         indegree.emplace(node, 0);
     }
     for (const auto &[source, target] : edges) {
-        if (source == target || !nodes.contains(source) || !nodes.contains(target)) {
+        if (!nodes.contains(source) || !nodes.contains(target)) {
             continue;
         }
         if (successors[source].emplace(target).second) {
@@ -408,6 +410,7 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
     }
 
     std::map<std::string, const contracts::CompositionProviderDescriptor *, Utf8Less> providers;
+    std::map<std::string, const std::type_info *, Utf8Less> service_types;
     std::set<std::string, Utf8Less> provider_ids;
     std::set<std::pair<std::string, std::string>> provider_edges;
     for (const auto &provider : manifest.providers) {
@@ -429,6 +432,10 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
         if (!plugin_ids.contains(provider.plugin_id)) {
             result.add_issue(std::string(contracts::kErrorUnknownPlugin),
                              "$.manifest.providers.plugin_id", provider.plugin_id);
+        }
+        if (!contracts::is_valid_scope(provider.scope)) {
+            result.add_issue(std::string(contracts::kErrorInvalidScopePolicy),
+                             "$.manifest.providers.scope", provider.provider_id);
         }
         if (provider.cardinality != "one_per_scope") {
             result.add_issue(std::string(contracts::kErrorInvalidScopePolicy),
@@ -468,13 +475,30 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
             }
         }
         const auto factory = catalog.find(provider.provider_id);
+        const auto *factory_metadata = catalog.metadata(provider.provider_id);
         if (!factory) {
             result.add_issue(std::string(kErrorFactoryNotFound), "$.catalog", provider.provider_id);
+        } else if (factory_metadata == nullptr ||
+                   factory_metadata->provider_id != provider.provider_id ||
+                   factory_metadata->plugin_id != provider.plugin_id ||
+                   factory_metadata->implementation_version != provider.implementation_version ||
+                   factory_metadata->scope != provider.scope ||
+                   factory_metadata->canonical_configuration_json !=
+                       provider.canonical_configuration_json) {
+            result.add_issue(std::string(kErrorFactoryMetadataMismatch), "$.catalog",
+                             provider.provider_id);
         } else {
             for (const auto &service_key : provider.offered_services) {
-                if (factory->service_type(service_key) == nullptr) {
+                const auto *service_type = catalog.service_type(provider.provider_id, service_key);
+                if (service_type == nullptr) {
                     result.add_issue(std::string(kErrorFactoryServiceTypeMissing), "$.catalog",
                                      provider.provider_id + ":" + service_key);
+                    continue;
+                }
+                const auto [iterator, inserted] = service_types.emplace(service_key, service_type);
+                if (!inserted && *iterator->second != *service_type) {
+                    result.add_issue(std::string(kErrorServiceTypeMismatch), "$.catalog",
+                                     service_key);
                 }
             }
         }
@@ -594,9 +618,7 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
                                      "$.manifest.service_bindings",
                                      binding.provider_id + "->" + binding.consumer_id);
                 }
-                if (binding.provider_id != binding.consumer_id) {
-                    provider_edges.emplace(binding.provider_id, binding.consumer_id);
-                }
+                provider_edges.emplace(binding.provider_id, binding.consumer_id);
             }
         } else if (binding.consumer_kind == "system") {
             const auto consumer_iterator = systems.find(binding.consumer_id);
@@ -732,7 +754,10 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
 
     std::set<contracts::CompositionScope> scope_rows;
     for (const auto &policy : manifest.scope_policies) {
-        if (!scope_rows.emplace(policy.scope).second ||
+        const bool valid_scope = contracts::is_valid_scope(policy.scope);
+        const bool valid_parent =
+            !policy.parent_scope.has_value() || contracts::is_valid_scope(*policy.parent_scope);
+        if (!valid_scope || !valid_parent || !scope_rows.emplace(policy.scope).second ||
             policy.parent_scope != expected_parent(policy.scope) ||
             policy.cardinality != expected_cardinality(policy.scope) ||
             policy.rebuild_trigger != expected_rebuild_trigger(policy.scope)) {
@@ -768,6 +793,26 @@ validate_resolved_composition(const composition_contracts::ResolvedSimulationCom
     }
     validate_unique_strings(result, manifest.compatibility_claims,
                             "$.manifest.compatibility_claims");
+
+    if (is_sha256(resolved.requested_manifest_sha256) &&
+        is_sha256(resolved.resolved_manifest_sha256)) {
+        const auto identity = compute_composition_identity(resolved);
+        if (!identity) {
+            result.add_issue(identity.error().code, identity.error().subject,
+                             identity.error().detail);
+        } else {
+            if (identity.value().requested_manifest_sha256 != resolved.requested_manifest_sha256) {
+                result.add_issue(std::string(kErrorManifestHashMismatch),
+                                 "$.requested_manifest_sha256",
+                                 identity.value().requested_manifest_sha256);
+            }
+            if (identity.value().resolved_manifest_sha256 != resolved.resolved_manifest_sha256) {
+                result.add_issue(std::string(kErrorManifestHashMismatch),
+                                 "$.resolved_manifest_sha256",
+                                 identity.value().resolved_manifest_sha256);
+            }
+        }
+    }
 
     sort_and_deduplicate(result);
     return result;

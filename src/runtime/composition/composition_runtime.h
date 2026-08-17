@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <typeinfo>
 
@@ -29,6 +30,8 @@ class CompositionRuntime {
     [[nodiscard]] std::size_t provider_count() const noexcept;
     [[nodiscard]] std::uint64_t
     scope_generation(composition_contracts::CompositionScope scope) const noexcept;
+    [[nodiscard]] std::string_view requested_manifest_sha256() const noexcept;
+    [[nodiscard]] std::string_view resolved_manifest_sha256() const noexcept;
 
     template <typename T>
     [[nodiscard]] ServiceHandle<T> service_for(std::string_view consumer_kind,
@@ -40,6 +43,10 @@ class CompositionRuntime {
 
     [[nodiscard]] CompositionStatus rebuild_scope(composition_contracts::CompositionScope scope,
                                                   std::string_view barrier);
+    [[nodiscard]] CompositionStatus
+    rebuild_scope(composition_contracts::CompositionScope scope, std::string_view barrier,
+                  composition_contracts::ResolvedSimulationComposition replacement,
+                  const ProviderCatalog &catalog);
     void stop() noexcept;
 
   private:

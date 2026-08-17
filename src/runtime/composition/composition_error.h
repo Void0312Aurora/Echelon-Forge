@@ -20,6 +20,10 @@ inline constexpr std::string_view kErrorProviderConstructionFailed =
     "runtime.composition.provider_construction_failed";
 inline constexpr std::string_view kErrorLifecycleEffectCommitFailed =
     "runtime.composition.lifecycle_effect_commit_failed";
+inline constexpr std::string_view kErrorLifecycleHandoverUnsupported =
+    "runtime.composition.lifecycle_handover_unsupported";
+inline constexpr std::string_view kErrorLifecycleOperationInProgress =
+    "runtime.composition.lifecycle_operation_in_progress";
 inline constexpr std::string_view kErrorServiceUnavailable =
     "runtime.composition.service_unavailable";
 inline constexpr std::string_view kErrorServiceTypeMismatch =
@@ -28,6 +32,12 @@ inline constexpr std::string_view kErrorRuntimeNotFrozen = "runtime.composition.
 inline constexpr std::string_view kErrorRuntimeShutdown = "runtime.composition.runtime_shutdown";
 inline constexpr std::string_view kErrorRebuildBarrierRejected =
     "runtime.composition.rebuild_barrier_rejected";
+inline constexpr std::string_view kErrorReplacementBoundaryViolation =
+    "runtime.composition.replacement_boundary_violation";
+inline constexpr std::string_view kErrorFactoryMetadataMismatch =
+    "runtime.composition.factory_metadata_mismatch";
+inline constexpr std::string_view kErrorManifestHashMismatch =
+    "runtime.composition.manifest_hash_mismatch";
 
 struct CompositionRuntimeError {
     std::string code;

@@ -86,6 +86,12 @@ class ILifecycleEffect {
     [[nodiscard]] virtual CompositionStatus commit() = 0;
     virtual void rollback() noexcept = 0;
     virtual void dispose() noexcept = 0;
+
+    // Replacement rebuild commits the new generation before retiring the old
+    // generation. Returning true is a contract that commit/rollback/dispose
+    // operate on an effect-owned token or generation, so disposing the retired
+    // effect cannot erase the replacement publication.
+    [[nodiscard]] virtual bool supports_replacement_handover() const noexcept { return false; }
 };
 
 class IProviderInstance {
@@ -126,11 +132,19 @@ class ProviderConstructionContext {
 
 using ProviderInstanceResult = CompositionResult<std::unique_ptr<IProviderInstance>>;
 
+struct ProviderFactoryMetadata {
+    std::string provider_id;
+    std::string plugin_id;
+    std::string implementation_version;
+    composition_contracts::CompositionScope scope = composition_contracts::CompositionScope::world;
+    std::string canonical_configuration_json;
+};
+
 class IProviderFactory {
   public:
     virtual ~IProviderFactory() = default;
 
-    [[nodiscard]] virtual std::string_view provider_id() const noexcept = 0;
+    [[nodiscard]] virtual ProviderFactoryMetadata metadata() const = 0;
     [[nodiscard]] virtual const std::type_info *
     service_type(std::string_view service_key) const noexcept = 0;
     [[nodiscard]] virtual ProviderInstanceResult
@@ -153,6 +167,10 @@ class ProviderCatalog {
     [[nodiscard]] bool frozen() const noexcept;
     [[nodiscard]] std::shared_ptr<IProviderFactory>
     find(std::string_view provider_id) const noexcept;
+    [[nodiscard]] const ProviderFactoryMetadata *
+    metadata(std::string_view provider_id) const noexcept;
+    [[nodiscard]] const std::type_info *service_type(std::string_view provider_id,
+                                                     std::string_view service_key) const noexcept;
     [[nodiscard]] std::vector<std::string> provider_ids() const;
 
   private:

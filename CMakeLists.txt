@@ -193,6 +193,7 @@ set(EF_CONTENT_SOURCES
 )
 
 set(EF_COMPOSITION_SOURCES
+    src/runtime/composition/composition_identity.cpp
     src/runtime/composition/composition_json.cpp
     src/runtime/composition/provider_catalog.cpp
     src/runtime/composition/composition_validation.cpp
