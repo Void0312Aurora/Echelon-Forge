@@ -192,11 +192,33 @@ set(EF_CONTENT_SOURCES
     src/content/content_compile_passes.cpp
 )
 
+set(EF_COMPOSITION_SOURCES
+    src/runtime/composition/composition_json.cpp
+    src/runtime/composition/provider_catalog.cpp
+    src/runtime/composition/composition_validation.cpp
+    src/runtime/composition/composition_runtime.cpp
+)
+
 set(EF_CORE_SOURCES
     ${EF_CORE_ENGINE_SOURCES}
     ${EF_CORE_GEOMETRY_SOURCES}
     ${EF_CORE_MISSION_SOURCES}
     ${EF_MODEL_DEFAULT_SOURCES}
+)
+
+# --- Native Composition Lifecycle Library ---
+# This target realizes the host-neutral composition contract without depending
+# on ef_core, Flecs, a binding runtime, or Cordis. Keeping it as an independent
+# link unit prevents lifecycle ownership from becoming another engine/facade
+# compatibility path before the later provider-migration clusters are accepted.
+add_library(ef_composition STATIC
+    ${EF_COMPOSITION_SOURCES}
+)
+target_include_directories(ef_composition PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(ef_composition PRIVATE
+    nlohmann_json::nlohmann_json
 )
 
 # --- Content Library (T3 first physical link-unit split, I46) ---
@@ -545,6 +567,24 @@ target_link_libraries(ef_test PRIVATE
 )
 target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+# P2-A is intentionally a focused native target. It links only the isolated
+# lifecycle library and doctest, so passing this target cannot be mistaken for
+# constructor, system, backend, binding, or Cordis integration.
+add_executable(ef_composition_lifecycle_test
+    src/tests/test_main.cpp
+    src/tests/test_composition_lifecycle.cpp
+)
+target_link_libraries(ef_composition_lifecycle_test PRIVATE
+    ef_composition
+    doctest::doctest
+)
+target_include_directories(ef_composition_lifecycle_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_compile_definitions(ef_composition_lifecycle_test PRIVATE
+    EF_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 # Focused target for CUDA-on resident-backend validation. It deliberately avoids
 # the full ef_core graph, whose current MSVC portability debt is unrelated to the
 # RB3-RB7 lifecycle, state-barrier, Phase A/B, Phase-D, and device-view contracts.
@@ -754,9 +794,11 @@ add_test(NAME cuda_resident_replay COMMAND ef_cuda_resident_replay_test)
 add_test(NAME cuda_resident_full_window COMMAND ef_cuda_resident_full_window_test)
 add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
 set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+add_test(NAME composition_lifecycle COMMAND ef_composition_lifecycle_test)
 endif()
 
 set(EF_PROJECT_WARNING_TARGETS
+    ef_composition
     ef_core
     ef_content
     ef_facade
@@ -773,6 +815,7 @@ set(EF_PROJECT_WARNING_TARGETS
     ef_gpu_comm_candidate_phase0_probe
     ef_gpu_visual_candidate_phase0_probe
     ef_test
+    ef_composition_lifecycle_test
     ef_cuda_resident_lifecycle_test
     ef_cuda_resident_replay_test
     ef_cuda_resident_full_window_test
