@@ -45,6 +45,9 @@ packet 只作为归档 provenance。
 
 ## 评审
 
+- [Cordis 仿真组合计划架构审阅 — 2026-08-17](reviews/cordis_simulation_composition_program_review_20260817.zh.md)：
+  总体咨询性审阅；保留原生 composition 方向，但要求在后续 system/plugin/host
+  阶段前修订权威与计划边界。
 - [架构评审 — 2026-06-03](reviews/architecture_review_20260603.zh.md)
 - [架构规范性与正确性评审 — 2026-06-03](reviews/architecture_norms_correctness_review_20260603.zh.md)
 - [架构重构审计 — 2026-05-22](reviews/architecture_refactoring_audit_20260522.zh.md)
