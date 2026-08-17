@@ -42,6 +42,10 @@ RESOLVED_FIXTURE_PATH = (
   REPO_ROOT
   / "tests/architecture/composition/fixtures/default_compatibility_manifest.resolved.json"
 )
+RESOLVED_SCHEMA_PATH = (
+  REPO_ROOT
+  / "src/runtime/contracts/composition/resolved_simulation_composition.v1.schema.json"
+)
 
 ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
 VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
@@ -135,12 +139,19 @@ def _object_schema(
   }
 
 
-def _string_schema(*, pattern: str | None = None, enum: Iterable[str] | None = None) -> dict[str, Any]:
+def _string_schema(
+  *,
+  pattern: str | None = None,
+  enum: Iterable[str] | None = None,
+  max_length: int | None = None,
+) -> dict[str, Any]:
   schema: dict[str, Any] = {"type": "string", "minLength": 1}
   if pattern is not None:
     schema["pattern"] = pattern
   if enum is not None:
     schema["enum"] = list(enum)
+  if max_length is not None:
+    schema["maxLength"] = max_length
   return schema
 
 
@@ -154,7 +165,7 @@ def _string_array(*, min_items: int = 0) -> dict[str, Any]:
 
 
 def manifest_schema() -> dict[str, Any]:
-  identifier = _string_schema(pattern=ID_RE.pattern)
+  identifier = _string_schema(pattern=ID_RE.pattern, max_length=128)
   version = _string_schema(pattern=VERSION_RE.pattern)
   canonical_value: dict[str, Any] = {
     "oneOf": [
@@ -327,10 +338,52 @@ def manifest_schema() -> dict[str, Any]:
         "simulation_composition_manifest.v1.schema.json"
       ),
       "title": "Echelon Forge Simulation Composition Manifest v1",
+      "$comment": (
+        "JSON Schema treats 1.0 as an integer by mathematical value. Consumers MUST also run "
+        "the executable lexical-number validator, which rejects fraction/exponent tokens."
+      ),
       "$defs": {"canonical_value": canonical_value},
     }
   )
   return schema
+
+
+def resolved_schema() -> dict[str, Any]:
+  manifest = manifest_schema()
+  manifest.pop("$schema", None)
+  manifest.pop("$id", None)
+  manifest.pop("title", None)
+  manifest.pop("$comment", None)
+  definitions = manifest.pop("$defs")
+  return {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": (
+      "https://echelon-forge.local/contracts/"
+      "resolved_simulation_composition.v1.schema.json"
+    ),
+    "title": "Echelon Forge Resolved Simulation Composition v1",
+    "$defs": definitions,
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+      "schema_version": {"const": RESOLVED_SCHEMA_VERSION},
+      "resolver_contract_version": {"const": RESOLVER_CONTRACT_VERSION},
+      "requested_manifest_sha256": {"type": "string", "pattern": HEX64_RE.pattern},
+      "resolved_manifest_sha256": {"type": "string", "pattern": HEX64_RE.pattern},
+      "provider_construction_order": _string_array(),
+      "system_registration_order": _string_array(),
+      "manifest": manifest,
+    },
+    "required": [
+      "schema_version",
+      "resolver_contract_version",
+      "requested_manifest_sha256",
+      "resolved_manifest_sha256",
+      "provider_construction_order",
+      "system_registration_order",
+      "manifest",
+    ],
+  }
 
 
 def _nfc(value: str) -> str:
@@ -355,7 +408,10 @@ def _normalize_value(value: Any, path: str = "$.") -> Any:
     for key, item in value.items():
       if not isinstance(key, str):
         raise ValueError(f"non-string object key at {path}")
-      normalized[_nfc(key)] = _normalize_value(item, f"{path}.{key}")
+      normalized_key = _nfc(key)
+      if normalized_key in normalized:
+        raise ValueError(f"Unicode NFC object-key collision at {path}.{key}")
+      normalized[normalized_key] = _normalize_value(item, f"{path}.{key}")
     return normalized
   raise ValueError(f"unsupported JSON type {type(value).__name__} at {path}")
 
@@ -363,7 +419,10 @@ def _normalize_value(value: Any, path: str = "$.") -> Any:
 def _sorted_unique_strings(values: Any) -> list[str]:
   if not isinstance(values, list):
     return values
-  return sorted((_nfc(value) for value in values), key=lambda value: value.encode("utf-8"))
+  normalized = [_nfc(value) for value in values]
+  if len(set(normalized)) != len(normalized):
+    raise ValueError("duplicate string after Unicode NFC normalization")
+  return sorted(normalized, key=lambda value: value.encode("utf-8"))
 
 
 def normalize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
@@ -461,8 +520,8 @@ def canonical_sha256(value: Any) -> str:
   return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
 
 
-def _issue(issues: list[ValidationIssue], code: str, path: str, detail: str) -> None:
-  issues.append(ValidationIssue(code, path, detail))
+def _issue(issues: list[ValidationIssue], code: str, path: str, detail: Any) -> None:
+  issues.append(ValidationIssue(str(code), str(path), str(detail)))
 
 
 def _validate_identifier(
@@ -475,6 +534,8 @@ def _validate_identifier(
   if pattern.fullmatch(value) is None:
     code = "composition.invalid_version" if version else "composition.invalid_identifier"
     _issue(issues, code, path, f"value {value!r} does not match {pattern.pattern}")
+  elif not version and len(value) > 128:
+    _issue(issues, "composition.invalid_identifier", path, "identifier exceeds 128 characters")
 
 
 def _validate_unique(
@@ -489,6 +550,39 @@ def _validate_unique(
     if marker in seen:
       _issue(issues, code, f"{path}[{index}]", f"duplicate value {value!r}")
     seen.add(marker)
+
+
+def _validate_string_array(
+  issues: list[ValidationIssue],
+  values: Any,
+  path: str,
+  *,
+  min_items: int = 0,
+  allowed: set[str] | None = None,
+) -> bool:
+  if not isinstance(values, list):
+    _issue(issues, "composition.invalid_json_type", path, "expected array")
+    return False
+  if len(values) < min_items:
+    _issue(issues, "composition.invalid_json_type", path, f"expected at least {min_items} entries")
+  valid = True
+  normalized_seen: set[str] = set()
+  for index, value in enumerate(values):
+    item_path = f"{path}[{index}]"
+    if not isinstance(value, str) or not value:
+      _issue(issues, "composition.invalid_json_type", item_path, "expected non-empty string")
+      valid = False
+      continue
+    normalized = _nfc(value)
+    if normalized in normalized_seen:
+      _issue(issues, "composition.duplicate_value", item_path, "duplicate after Unicode NFC")
+      valid = False
+    normalized_seen.add(normalized)
+    if allowed is not None and value not in allowed:
+      _issue(issues, "composition.invalid_json_type", item_path, f"unsupported value {value!r}")
+      valid = False
+  _validate_unique(issues, values, path)
+  return valid
 
 
 def _required_fields(
@@ -517,7 +611,7 @@ def _stable_topological_order(
   successors = {node: set() for node in nodes}
   indegree = {node: 0 for node in nodes}
   for source, target in sorted(set(edges)):
-    if source == target or source not in indegree or target not in indegree:
+    if source not in indegree or target not in indegree:
       continue
     if target not in successors[source]:
       successors[source].add(target)
@@ -666,6 +760,14 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
     _issue(issues, "composition.invalid_json_type", "$.plugins", "expected array")
   if not isinstance(manifest["providers"], list):
     _issue(issues, "composition.invalid_json_type", "$.providers", "expected array")
+  for field in (
+    "service_bindings",
+    "component_contributions",
+    "system_contributions",
+    "scope_policies",
+  ):
+    if not isinstance(manifest[field], list):
+      _issue(issues, "composition.invalid_json_type", f"$.{field}", "expected array")
 
   plugin_ids: list[str] = []
   for index, plugin in enumerate(plugins):
@@ -675,9 +777,26 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
     _validate_identifier(issues, plugin["plugin_id"], f"{path}.plugin_id")
     _validate_identifier(issues, plugin["implementation_id"], f"{path}.implementation_id")
     _validate_identifier(issues, plugin["plugin_version"], f"{path}.plugin_version", version=True)
-    plugin_ids.append(plugin["plugin_id"])
-    for field in ("host_support", "required_capabilities", "conflicts"):
-      _validate_unique(issues, plugin[field], f"{path}.{field}")
+    if isinstance(plugin["plugin_id"], str):
+      plugin_ids.append(plugin["plugin_id"])
+    if not isinstance(plugin["composition_contract_range"], str) or not plugin[
+      "composition_contract_range"
+    ]:
+      _issue(
+        issues,
+        "composition.invalid_json_type",
+        f"{path}.composition_contract_range",
+        "expected non-empty string",
+      )
+    _validate_string_array(
+      issues,
+      plugin["host_support"],
+      f"{path}.host_support",
+      min_items=1,
+      allowed={"native", "cordis"},
+    )
+    for field in ("required_capabilities", "conflicts"):
+      _validate_string_array(issues, plugin[field], f"{path}.{field}")
     if plugin["determinism_class"] not in {
       "truth_affecting_deterministic",
       "diagnostics_only",
@@ -688,6 +807,22 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
         f"{path}.determinism_class",
         "unknown determinism class",
       )
+    artifact_fields = {"kind", "identity", "sha256"}
+    if _required_fields(issues, plugin["artifact"], f"{path}.artifact", artifact_fields):
+      artifact = plugin["artifact"]
+      if artifact["kind"] not in {"repository_builtin", "native_package", "cordis_package"}:
+        _issue(issues, "composition.invalid_json_type", f"{path}.artifact.kind", artifact["kind"])
+      if not isinstance(artifact["identity"], str) or not artifact["identity"]:
+        _issue(
+          issues,
+          "composition.invalid_json_type",
+          f"{path}.artifact.identity",
+          "expected non-empty string",
+        )
+      if artifact["sha256"] is not None and (
+        not isinstance(artifact["sha256"], str) or HEX64_RE.fullmatch(artifact["sha256"]) is None
+      ):
+        _issue(issues, "composition.invalid_identifier", f"{path}.artifact.sha256", "expected SHA-256")
     try:
       _normalize_value(plugin["configuration"], f"{path}.configuration")
     except ValueError as exc:
@@ -709,22 +844,43 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
     _validate_identifier(
       issues, provider["implementation_version"], f"{path}.implementation_version", version=True
     )
-    provider_ids.append(provider_id)
-    provider_by_id.setdefault(provider_id, provider)
+    if isinstance(provider_id, str):
+      provider_ids.append(provider_id)
+      provider_by_id.setdefault(provider_id, provider)
     if provider["plugin_id"] not in plugin_set:
       _issue(issues, "composition.unknown_plugin", f"{path}.plugin_id", provider["plugin_id"])
     if provider["scope"] not in SCOPE_ORDER:
       _issue(issues, "composition.invalid_scope_policy", f"{path}.scope", provider["scope"])
-    for field in (
+    if provider["cardinality"] != "one_per_scope":
+      _issue(issues, "composition.invalid_scope_policy", f"{path}.cardinality", provider_id)
+    if provider["restart_policy"] not in {
+      "rebuild_scope_generation",
+      "process_restart",
+      "diagnostics_restart",
+    }:
+      _issue(issues, "composition.invalid_json_type", f"{path}.restart_policy", provider_id)
+    if provider["teardown_policy"] != "reverse_dependency_order":
+      _issue(issues, "composition.invalid_json_type", f"{path}.teardown_policy", provider_id)
+    array_fields = (
       "offered_services",
       "required_services",
       "required_capabilities",
       "conflicts",
       "after_provider_ids",
-    ):
-      _validate_unique(issues, provider[field], f"{path}.{field}")
-    offered_by_provider[provider_id] = set(provider["offered_services"])
-    for service in provider["offered_services"] + provider["required_services"]:
+    )
+    for field in array_fields:
+      _validate_string_array(
+        issues, provider[field], f"{path}.{field}", min_items=1 if field == "offered_services" else 0
+      )
+    offered_services = provider["offered_services"] if isinstance(provider["offered_services"], list) else []
+    required_services = provider["required_services"] if isinstance(provider["required_services"], list) else []
+    if isinstance(provider_id, str):
+      offered_by_provider[provider_id] = {
+        value for value in offered_services if isinstance(value, str)
+      }
+    for service in [*offered_services, *required_services]:
+      if not isinstance(service, str):
+        continue
       if service not in SERVICE_KEYS:
         _issue(issues, "composition.unknown_service", f"{path}.services", service)
     try:
@@ -739,7 +895,10 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
     path = f"$.component_contributions[{index}]"
     if not _required_fields(issues, component, path, component_fields):
       continue
-    component_ids.append(component["component_id"])
+    if not isinstance(component["component_id"], str) or not component["component_id"]:
+      _issue(issues, "composition.invalid_json_type", f"{path}.component_id", "expected string")
+    else:
+      component_ids.append(component["component_id"])
     if component["plugin_id"] not in plugin_set:
       _issue(issues, "composition.unknown_plugin", f"{path}.plugin_id", component["plugin_id"])
     _validate_identifier(issues, component["registration_id"], f"{path}.registration_id")
@@ -757,16 +916,25 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
     system_id = system["contribution_id"]
     _validate_identifier(issues, system_id, f"{path}.contribution_id")
     _validate_identifier(issues, system["registration_factory_id"], f"{path}.registration_factory_id")
-    system_ids.append(system_id)
-    system_by_id.setdefault(system_id, system)
+    if isinstance(system_id, str):
+      system_ids.append(system_id)
+      system_by_id.setdefault(system_id, system)
     if system["plugin_id"] not in plugin_set:
       _issue(issues, "composition.unknown_plugin", f"{path}.plugin_id", system["plugin_id"])
+    if system["domain"] not in {"common", "air", "naval", "ground", "cross_domain", "diagnostics"}:
+      _issue(issues, "composition.invalid_json_type", f"{path}.domain", system["domain"])
     for field in system_fields - {"contribution_id", "plugin_id", "registration_factory_id", "domain"}:
-      _validate_unique(issues, system[field], f"{path}.{field}")
-    for service in system["required_services"]:
+      _validate_string_array(issues, system[field], f"{path}.{field}")
+    required_services = system["required_services"] if isinstance(system["required_services"], list) else []
+    required_components = system["required_components"] if isinstance(system["required_components"], list) else []
+    for service in required_services:
+      if not isinstance(service, str):
+        continue
       if service not in SERVICE_KEYS:
         _issue(issues, "composition.unknown_service", f"{path}.required_services", service)
-    for component_id in system["required_components"]:
+    for component_id in required_components:
+      if not isinstance(component_id, str):
+        continue
       if component_id not in component_set:
         _issue(issues, "composition.unknown_component", f"{path}.required_components", component_id)
   _validate_unique(issues, system_ids, "$.system_contributions", code="composition.duplicate_id")
@@ -781,6 +949,11 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
     consumer_id = binding["consumer_id"]
     provider_id = binding["provider_id"]
     service_key = binding["service_key"]
+    for field in ("consumer_id", "provider_id"):
+      _validate_identifier(issues, binding[field], f"{path}.{field}")
+    if not isinstance(service_key, str) or not service_key:
+      _issue(issues, "composition.invalid_json_type", f"{path}.service_key", "expected string")
+      continue
     if provider_id not in provider_set:
       _issue(issues, "composition.unknown_provider", f"{path}.provider_id", provider_id)
     if consumer_kind == "provider":
@@ -815,8 +988,7 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
           path,
           f"{provider_scope} provider cannot be retained by {consumer_scope} consumer",
         )
-      if provider_id != consumer_id:
-        provider_edges.append((provider_id, consumer_id))
+      provider_edges.append((provider_id, consumer_id))
 
   for provider_id, provider in provider_by_id.items():
     for service in provider["required_services"]:
@@ -843,6 +1015,14 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
           f"$.providers[{provider_id}].after_provider_ids",
           dependency,
         )
+      elif dependency == provider_id:
+        _issue(
+          issues,
+          "composition.provider_dependency_cycle",
+          f"$.providers[{provider_id}].after_provider_ids",
+          provider_id,
+        )
+        provider_edges.append((dependency, provider_id))
       else:
         provider_edges.append((dependency, provider_id))
     for conflict in provider["conflicts"]:
@@ -891,6 +1071,14 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
           f"$.system_contributions[{system_id}].after",
           dependency,
         )
+      elif dependency == system_id:
+        _issue(
+          issues,
+          "composition.system_dependency_cycle",
+          f"$.system_contributions[{system_id}].after",
+          system_id,
+        )
+        system_edges.append((dependency, system_id))
       else:
         system_edges.append((dependency, system_id))
     for successor in system["before"]:
@@ -901,6 +1089,14 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
           f"$.system_contributions[{system_id}].before",
           successor,
         )
+      elif successor == system_id:
+        _issue(
+          issues,
+          "composition.system_dependency_cycle",
+          f"$.system_contributions[{system_id}].before",
+          system_id,
+        )
+        system_edges.append((system_id, successor))
       else:
         system_edges.append((system_id, successor))
     for conflict in system["conflicts"]:
@@ -933,7 +1129,9 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
         "$.backend_request.provider_id",
         f"provider must offer {BACKEND_SERVICE_KEY}",
       )
-    _validate_unique(issues, backend["required_capabilities"], "$.backend_request.required_capabilities")
+    _validate_string_array(
+      issues, backend["required_capabilities"], "$.backend_request.required_capabilities"
+    )
 
   scope_fields = {"scope", "parent_scope", "cardinality", "rebuild_trigger"}
   scope_rows = manifest["scope_policies"] if isinstance(manifest["scope_policies"], list) else []
@@ -943,8 +1141,22 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
     if not _required_fields(issues, row, path, scope_fields):
       continue
     scope = row["scope"]
-    scope_names.append(scope)
-    if scope not in SCOPE_ORDER or row["parent_scope"] != SCOPE_PARENT.get(scope):
+    if isinstance(scope, str):
+      scope_names.append(scope)
+    expected_cardinality = "singleton" if scope in {"application", "backend"} else "one_per_parent"
+    expected_trigger = {
+      "application": "host_reconfiguration_or_shutdown",
+      "backend": "backend_switch_or_failure",
+      "batch": "batch_resize_or_reconfiguration",
+      "world": "world_replacement_or_composition_change",
+      "episode": "reset_or_episode_completion",
+    }.get(scope)
+    if (
+      scope not in SCOPE_ORDER
+      or row["parent_scope"] != SCOPE_PARENT.get(scope)
+      or row["cardinality"] != expected_cardinality
+      or row["rebuild_trigger"] != expected_trigger
+    ):
       _issue(issues, "composition.invalid_scope_policy", path, f"invalid parent for {scope}")
   if set(scope_names) != set(SCOPE_ORDER) or len(scope_names) != len(SCOPE_ORDER):
     _issue(issues, "composition.invalid_scope_policy", "$.scope_policies", "exact scope hierarchy required")
@@ -970,7 +1182,9 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
         "$.reconfiguration_policy",
         "truth-affecting active mutation is forbidden",
       )
-    _validate_unique(issues, policy["allowed_barriers"], "$.reconfiguration_policy.allowed_barriers")
+    _validate_string_array(
+      issues, policy["allowed_barriers"], "$.reconfiguration_policy.allowed_barriers", min_items=1
+    )
 
   evidence_fields = {
     "canonicalization",
@@ -995,7 +1209,11 @@ def validate_manifest(manifest: Any) -> list[ValidationIssue]:
         "v1 evidence identity fields are mandatory",
       )
 
-  _validate_unique(issues, manifest["compatibility_claims"], "$.compatibility_claims")
+  _validate_string_array(issues, manifest["compatibility_claims"], "$.compatibility_claims")
+  try:
+    normalize_manifest(manifest)
+  except (TypeError, ValueError) as exc:
+    _issue(issues, "composition.invalid_json_type", "$", str(exc))
   return sorted(set(issues))
 
 
@@ -1441,7 +1659,9 @@ def main(argv: list[str] | None = None) -> int:
   args = parse_args(argv)
   if args.command == "schema":
     _write_or_check(SCHEMA_PATH, manifest_schema(), check=False)
+    _write_or_check(RESOLVED_SCHEMA_PATH, resolved_schema(), check=False)
     print(SCHEMA_PATH.relative_to(REPO_ROOT).as_posix())
+    print(RESOLVED_SCHEMA_PATH.relative_to(REPO_ROOT).as_posix())
     return 0
   if args.command == "fixtures":
     requested = normalize_manifest(default_compatibility_manifest())
@@ -1456,6 +1676,7 @@ def main(argv: list[str] | None = None) -> int:
     checks = (
       (SCHEMA_PATH, manifest_schema()),
       (REQUESTED_FIXTURE_PATH, requested),
+      (RESOLVED_SCHEMA_PATH, resolved_schema()),
       (RESOLVED_FIXTURE_PATH, resolve_manifest(requested)),
     )
     stale = [path for path, value in checks if not _write_or_check(path, value, check=True)]
@@ -1464,7 +1685,21 @@ def main(argv: list[str] | None = None) -> int:
     return 1 if stale else 0
   if args.manifest is None:
     raise SystemExit("--manifest is required for validate/resolve")
-  manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+  try:
+    manifest = json.loads(args.manifest.read_text(encoding="utf-8"), parse_float=lambda value: (_ for _ in ()).throw(ValueError(f"noncanonical number {value}")))
+  except (OSError, json.JSONDecodeError, ValueError) as exc:
+    print(
+      _pretty_json(
+        {
+          "valid": False,
+          "issues": [
+            ValidationIssue("composition.invalid_json_type", "$", str(exc)).to_dict()
+          ],
+        }
+      ),
+      end="",
+    )
+    return 1
   if args.command == "validate":
     issues = validate_manifest(manifest)
     print(_pretty_json({"valid": not issues, "issues": [row.to_dict() for row in issues]}), end="")

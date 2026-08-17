@@ -1,4 +1,5 @@
 {
+  "$comment": "JSON Schema treats 1.0 as an integer by mathematical value. Consumers MUST also run the executable lexical-number validator, which rejects fraction/exponent tokens.",
   "$defs": {
     "canonical_value": {
       "oneOf": [
@@ -39,11 +40,13 @@
       "additionalProperties": false,
       "properties": {
         "backend_profile_id": {
+          "maxLength": 128,
           "minLength": 1,
           "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
           "type": "string"
         },
         "provider_id": {
+          "maxLength": 128,
           "minLength": 1,
           "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
           "type": "string"
@@ -83,11 +86,13 @@
             "type": "string"
           },
           "plugin_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
           },
           "registration_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
@@ -103,6 +108,7 @@
       "type": "array"
     },
     "composition_id": {
+      "maxLength": 128,
       "minLength": 1,
       "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
       "type": "string"
@@ -232,11 +238,13 @@
             "uniqueItems": true
           },
           "implementation_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
           },
           "plugin_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
@@ -318,11 +326,13 @@
             "uniqueItems": true
           },
           "plugin_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
           },
           "provider_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
@@ -417,6 +427,7 @@
       "additionalProperties": false,
       "properties": {
         "profile_id": {
+          "maxLength": 128,
           "minLength": 1,
           "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
           "type": "string"
@@ -491,6 +502,7 @@
         "additionalProperties": false,
         "properties": {
           "consumer_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
@@ -502,6 +514,7 @@
             ]
           },
           "provider_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
@@ -553,6 +566,7 @@
             "uniqueItems": true
           },
           "contribution_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
@@ -577,6 +591,7 @@
             "uniqueItems": true
           },
           "plugin_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"
@@ -600,6 +615,7 @@
             "uniqueItems": true
           },
           "registration_factory_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
             "type": "string"

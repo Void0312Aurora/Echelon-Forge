@@ -18,6 +18,8 @@ def _text(path: Path) -> str:
 def test_native_composition_public_surface_is_owner_local_and_host_neutral() -> None:
   expected = {
     "composition_error.h",
+    "composition_identity.h",
+    "composition_identity.cpp",
     "composition_json.h",
     "composition_json.cpp",
     "provider_catalog.h",
@@ -47,6 +49,14 @@ def test_native_composition_public_surface_is_owner_local_and_host_neutral() -> 
   ):
     assert forbidden not in public
 
+  implementation = "\n".join(
+    _text(path).lower()
+    for path in COMPOSITION.iterdir()
+    if path.suffix in {".h", ".cpp"}
+  )
+  for forbidden in ("flecs", "nanobind", "node_api", "core/engine", "models/"):
+    assert forbidden not in implementation
+
 
 def test_native_composition_target_is_an_independent_link_unit() -> None:
   cmake = _text(CMAKE)
@@ -57,6 +67,11 @@ def test_native_composition_target_is_an_independent_link_unit() -> None:
   assert "nlohmann_json::nlohmann_json" in library
   for forbidden in ("ef_core", "ef_facade", "flecs::flecs", "nanobind"):
     assert forbidden not in library
+
+  source_block = cmake.split("set(EF_COMPOSITION_SOURCES", 1)[1].split(")", 1)[0]
+  sources = re.findall(r"src/[^\s]+\.(?:cpp|cc|cxx)", source_block)
+  assert sources
+  assert all(source.startswith("src/runtime/composition/") for source in sources)
 
   focused = cmake.split("add_executable(ef_composition_lifecycle_test", 1)[1].split(
     "# Focused target for CUDA-on", 1
@@ -77,6 +92,7 @@ def test_lifecycle_api_freezes_transaction_scope_handle_and_effect_semantics() -
     "virtual CompositionStatus commit()",
     "virtual void rollback() noexcept",
     "virtual void dispose() noexcept",
+    "supports_replacement_handover",
     "class ServiceHandle",
     "std::weak_ptr<detail::ServiceHandleControl>",
     "class ProviderCatalog",
@@ -86,6 +102,8 @@ def test_lifecycle_api_freezes_transaction_scope_handle_and_effect_semantics() -
   for declaration in (
     "validate_resolved_composition",
     "scope_generation",
+    "requested_manifest_sha256",
+    "resolved_manifest_sha256",
     "service_for",
     "rebuild_scope",
     "class CompositionKernel",
@@ -133,6 +151,10 @@ def test_focused_cpp_suite_covers_failure_atomicity_and_stale_handles() -> None:
     "realization freezes typed services and disposes in reverse dependency order",
     "construction and effect failures roll back all staged providers",
     "scope rebuild is failure atomic and invalidates only replaced generations",
+    "typed validation rejects stale identity invalid scopes and explicit self cycles",
+    "failed provider cleanup destroys effects before instances",
+    "lifecycle callbacks cannot reenter stop or rebuild",
+    "replacement rebuild updates identity atomically and enforces handover",
   ):
     assert case in source
   assert "fail_next_construction" in source

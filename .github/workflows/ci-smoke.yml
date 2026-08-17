@@ -70,11 +70,11 @@ jobs:
 
       - name: Build ef_core, ef_py, and C++ tests
         run: |
-          cmake --build build-workshop --target ef_core ef_py ef_test -j2
+          cmake --build build-workshop --target ef_core ef_py ef_test ef_composition_lifecycle_test -j2
 
       - name: Run C++ smoke tests
         run: |
-          ctest --test-dir build-workshop -R ef_test_all --output-on-failure
+          ctest --test-dir build-workshop -R '^(ef_test_all|composition_lifecycle)$' --output-on-failure
 
       - name: Validate repo environment
         run: |

@@ -49,6 +49,7 @@ _FINE_GROUP_PREFIXES: tuple[tuple[str, str], ...] = (
   ("core/geometry", "core_geometry"),
   ("core/interfaces", "core_interfaces"),
   ("runtime/facade", "runtime_facade"),
+  ("runtime/composition", "runtime_composition"),
   ("runtime/contracts", "runtime_contracts"),
   ("content", "content"),
   ("components", "components"),
@@ -67,6 +68,7 @@ COARSE_LAYER_OF_FINE: dict[str, str] = {
   "core_mission_episode": "mission",
   "core_mission_episode_detail": "mission",
   "runtime_facade": "facade",
+  "runtime_composition": "other",
   "runtime_contracts": "facade",
   "content": "content",
   "core_geometry": "other",
@@ -88,6 +90,7 @@ FINE_GROUP_DESCRIPTION: dict[str, str] = {
   "core_mission_episode": "src/core/mission/episode (T3 mission layer: episode controller/state)",
   "core_mission_episode_detail": "src/core/mission/episode/detail (T3 mission layer: private episode helpers)",
   "runtime_facade": "src/runtime/facade (T3 facade layer: RuntimeFacade application API)",
+  "runtime_composition": "src/runtime/composition (isolated host-neutral composition realization/lifecycle owner)",
   "runtime_contracts": "src/runtime/contracts (T3 facade layer per task mapping; shared leaf DTOs in the repo's own boundary docs)",
   "content": "src/content (T3 content layer: unit/scenario content schemas and loaders)",
   "core_geometry": "src/core/geometry (independent leaf: spatial query runtime)",
@@ -306,6 +309,9 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
   # core/engine/* just for include convenience." Pure leaf; may reference
   # components for shared value types.
   "runtime_contracts": frozenset({"components"}),
+  # Host-neutral composition realization owns catalog/validation/lifecycle but
+  # remains independent of engine, facade, Flecs, models, and bindings.
+  "runtime_composition": frozenset({"runtime_contracts"}),
   # "Combined calls to core/engine and core/mission" (Allowed); contracts is
   # the facade's own DTO vocabulary. "Directly including core/engine/* in
   # *_types.h or facade public headers" is prohibited -- that header-scoped
@@ -323,6 +329,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
     {
       "runtime_facade",
       "runtime_contracts",
+      "runtime_composition",
       "core_engine",
       "core_mission_runtime",
       "core_mission_episode",
@@ -349,6 +356,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "core_mission_episode",
       "runtime_facade",
       "runtime_contracts",
+      "runtime_composition",
       "components",
       "core_interfaces",
       "content",
@@ -389,6 +397,7 @@ FINE_GROUP_ALLOWED_TARGETS: dict[str, frozenset[str]] = {
       "core_mission_episode_detail",
       "runtime_facade",
       "runtime_contracts",
+      "runtime_composition",
       "components",
       "core_interfaces",
       "core_geometry",

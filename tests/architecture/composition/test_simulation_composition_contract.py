@@ -18,6 +18,10 @@ SCHEMA = REPO_ROOT / (
   "src/runtime/contracts/composition/"
   "simulation_composition_manifest.v1.schema.json"
 )
+RESOLVED_SCHEMA = REPO_ROOT / (
+  "src/runtime/contracts/composition/"
+  "resolved_simulation_composition.v1.schema.json"
+)
 FIXTURES = REPO_ROOT / "tests/architecture/composition/fixtures"
 REQUESTED = FIXTURES / "default_compatibility_manifest.requested.json"
 RESOLVED = FIXTURES / "default_compatibility_manifest.resolved.json"
@@ -80,6 +84,7 @@ def _apply_invalid_case(base: dict, case: dict) -> dict:
 def test_generated_schema_and_default_fixtures_are_fresh() -> None:
   requested = contract.normalize_manifest(contract.default_compatibility_manifest())
   assert SCHEMA.read_text(encoding="utf-8") == _pretty(contract.manifest_schema())
+  assert RESOLVED_SCHEMA.read_text(encoding="utf-8") == _pretty(contract.resolved_schema())
   assert REQUESTED.read_text(encoding="utf-8") == _pretty(requested)
   assert RESOLVED.read_text(encoding="utf-8") == _pretty(contract.resolve_manifest(requested))
 
@@ -111,6 +116,8 @@ def test_manifest_schema_is_closed_host_neutral_and_integer_canonical() -> None:
   }
   assert "number" not in canonical_types
   assert "integer" in canonical_types
+  assert "lexical-number validator" in schema["$comment"]
+  assert schema["properties"]["composition_id"]["maxLength"] == 128
   serialized = SCHEMA.read_text(encoding="utf-8").lower()
   for forbidden in ("flecs", "napi", "nanobind", "javascript_object", "c++ pointer"):
     assert forbidden not in serialized
@@ -290,6 +297,69 @@ def test_invalid_manifest_matrix_fails_closed_with_stable_codes() -> None:
     assert case["expected_code"] in codes, (case["case_id"], sorted(codes))
     with pytest.raises(contract.ContractError):
       contract.resolve_manifest(candidate)
+
+
+def test_executable_validator_matches_schema_only_constraints_and_never_raises() -> None:
+  base = _read_json(REQUESTED)
+  cases = (
+    ("providers", 0, "cardinality", "many_per_scope"),
+    ("providers", 0, "teardown_policy", "unordered"),
+    ("plugins", 0, "artifact", []),
+    ("plugins", 0, "host_support", ["browser"]),
+  )
+  for collection, index, field, value in cases:
+    candidate = deepcopy(base)
+    candidate[collection][index][field] = value
+    issues = contract.validate_manifest(candidate)
+    assert issues, (collection, field)
+    with pytest.raises(contract.ContractError):
+      contract.resolve_manifest(candidate)
+
+  malformed = deepcopy(base)
+  malformed["providers"][0]["offered_services"] = 7
+  issues = contract.validate_manifest(malformed)
+  assert any(row.code == "composition.invalid_json_type" for row in issues)
+
+
+def test_nfc_collisions_and_explicit_self_dependencies_fail_closed() -> None:
+  base = _read_json(REQUESTED)
+  collision = deepcopy(base)
+  collision["compatibility_claims"] = ["é", "e\u0301"]
+  issues = contract.validate_manifest(collision)
+  assert any(row.code == "composition.duplicate_value" for row in issues)
+
+  provider_self = deepcopy(base)
+  provider_id = provider_self["providers"][0]["provider_id"]
+  provider_self["providers"][0]["after_provider_ids"] = [provider_id]
+  issues = contract.validate_manifest(provider_self)
+  assert any(row.code == "composition.provider_dependency_cycle" for row in issues)
+
+  system_self = deepcopy(base)
+  system_id = system_self["system_contributions"][0]["contribution_id"]
+  system_self["system_contributions"][0]["after"] = [system_id]
+  issues = contract.validate_manifest(system_self)
+  assert any(row.code == "composition.system_dependency_cycle" for row in issues)
+
+  with pytest.raises(ValueError, match="NFC object-key collision"):
+    contract.canonical_json_bytes({"é": 1, "e\u0301": 2})
+
+
+def test_scope_policy_semantics_and_identifier_length_match_native_contract() -> None:
+  base = _read_json(REQUESTED)
+  wrong_scope = deepcopy(base)
+  wrong_scope["scope_policies"][3]["cardinality"] = "singleton"
+  wrong_scope["scope_policies"][3]["rebuild_trigger"] = "anything"
+  assert any(
+    row.code == "composition.invalid_scope_policy"
+    for row in contract.validate_manifest(wrong_scope)
+  )
+
+  long_id = deepcopy(base)
+  long_id["composition_id"] = "a" * 129
+  assert any(
+    row.code == "composition.invalid_identifier"
+    for row in contract.validate_manifest(long_id)
+  )
 
 
 def test_scope_hierarchy_and_reconfiguration_policy_are_explicit() -> None:
