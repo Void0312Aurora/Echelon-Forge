@@ -46,7 +46,7 @@ Contract baseline：
   factory identity、lifecycle 状态转换、scoped transactional construction、typed generation
   handle、failure rollback、replacement-aware barrier rebuild、handover admission、确定性逆序
   disposal、identity accessor 与幂等 shutdown；
-- 普通 MSVC build 与 MSVC AddressSanitizer 下均通过 13 个聚焦 C++ test case、277 个
+- 普通 MSVC build 与 MSVC AddressSanitizer 下均通过 13 个聚焦 C++ test case、286 个
   assertion；composition architecture/contract 为 20 passed、1 个 toolchain-dependent
   `g++` skip；
 - 未迁移默认 provider、kernel/facade constructor、system registration、backend selection、

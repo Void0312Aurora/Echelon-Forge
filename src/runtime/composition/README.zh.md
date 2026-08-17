@@ -47,6 +47,8 @@ active simulation-stage access 并发。这与父架构一致：影响 truth 的
 handle control block 携带 provider ID、scope、generation 与 atomic active bit，并在成功
 rebuild/stop 后拒绝访问。它无法让 caller 私自保留的 raw pointer 变安全；这种保留仍是
 禁止的 consumer 行为，必须在 provider migration 时消除。
+Native runtime 会串行化 lifecycle control operation。runtime 只允许 move construction，
+明确禁止 move assignment，避免 callback 通过隐式 move assignment 销毁当前实现。
 
 ## Effect 合同
 
@@ -79,7 +81,7 @@ freeze、hash tamper、非法 typed scope、自依赖 cycle、不可变 factory 
 lookup、失败清理顺序、lifecycle 重入、effect-commit failure、完整 rollback、replacement-aware
 scope rebuild、handover admission、stale-handle rejection 与 reverse teardown。聚焦 executable
 在普通 MSVC build 与 RelWithDebInfo MSVC AddressSanitizer build 中均通过 13 个 test case、
-277 个 assertion；architecture contract suite 为 20 passed、1 个 toolchain-dependent skip。
+286 个 assertion；architecture contract suite 为 20 passed、1 个 toolchain-dependent skip。
 
 本 baseline 使用同一冻结 fixture/canonical field rule 重算并公开 P1-B requested/resolved
 identity，不创建私有 runtime identity。Artifact provenance/signature 与 Cordis producer 的逐字节

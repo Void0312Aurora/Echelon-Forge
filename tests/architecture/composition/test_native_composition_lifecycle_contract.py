@@ -107,6 +107,7 @@ def test_lifecycle_api_freezes_transaction_scope_handle_and_effect_semantics() -
     "service_for",
     "rebuild_scope",
     "class CompositionKernel",
+    "operator=(CompositionRuntime &&) noexcept = delete",
   ):
     assert declaration in runtime
   for behavior in (

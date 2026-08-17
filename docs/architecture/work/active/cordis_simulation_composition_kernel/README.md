@@ -167,7 +167,7 @@ full evidence and limitations are in the composition census.
 
 P1-B then froze the host-neutral requested/resolved contract and default
 compatibility fixtures. P2-A now provides an independent native realization
-library and focused lifecycle evidence: 13 C++ test cases and 277 assertions
+library and focused lifecycle evidence: 13 C++ test cases and 286 assertions
 pass in the normal MSVC build and again under MSVC AddressSanitizer. The
 architecture composition suite records 17 passed tests and 1 environment skip.
 This proves the isolated lifecycle boundary, not integration with the current

@@ -23,7 +23,7 @@ Last verified: `2026-08-17`
 | 1 | `P0-A Authority Scaffold` | pass | 已完成文档回合 | 本子项目、architecture owner README、选定双语 registry 条目 | 文档/link/audit 结果与精确修改文件 |
 | 2 | `P1-A Composition Census` | pass | P0-A 已通过 | 只读源码 inventory 与 current-status evidence 更新 | 完整 ownership/scope/replacement inventory |
 | 3 | `P1-B Manifest And Resolution Contract` | pass | P1-A 已通过且 contract write set 保持有界 | runtime contract/schema input 与聚焦测试 | schema decision、fixture、invalid-manifest matrix、versioning/canonicalization evidence |
-| 4 | `P2-A Native Lifecycle Kernel` | pass / independently repaired | P1-A/P1-B gate 已通过 | 隔离原生 composition library、聚焦 C++ test、architecture guard 与 CMake/CI wiring | 普通 MSVC 与 ASan build 均为 13 tests/277 assertions；hash、typed-scope、lifecycle-state、rollback、replacement rebuild、handover、invalidation 与 deterministic validation 证据 |
+| 4 | `P2-A Native Lifecycle Kernel` | pass / independently repaired | P1-A/P1-B gate 已通过 | 隔离原生 composition library、聚焦 C++ test、architecture guard 与 CMake/CI wiring | 普通 MSVC 与 ASan build 均为 13 tests/286 assertions；hash、typed-scope、lifecycle-state、rollback、replacement rebuild、handover、invalidation 与 deterministic validation 证据 |
 | 5 | `P2-B Default Provider Migration` | ready / not dispatched | P2-A 已通过且 engine/provider write set 保持有界 | 默认 provider 入口、kernel builder、engine construction seam、聚焦 parity/lifetime test | 默认 behavior/replay parity 与移除具体 model 构造/raw capture |
 | 6 | 后续全部任务簇 | held | 各自依赖通过 | task-cluster write set | 任务簇专属 evidence packet |
 

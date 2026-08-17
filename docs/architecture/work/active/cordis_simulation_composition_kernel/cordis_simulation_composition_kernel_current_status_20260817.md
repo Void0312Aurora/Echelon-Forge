@@ -53,7 +53,7 @@ Contract baseline:
   transitions, scoped transactional construction, typed generation handles,
   failure rollback, replacement-aware barrier rebuild, handover admission,
   deterministic reverse disposal, identity accessors, and idempotent shutdown;
-- passed 13 focused C++ test cases with 277 assertions in the normal MSVC build
+- passed 13 focused C++ test cases with 286 assertions in the normal MSVC build
   and under MSVC AddressSanitizer; composition architecture/contract tests are
   20 passed with one toolchain-dependent `g++` skip;
 - did not migrate default providers, kernel/facade constructors, system

@@ -898,6 +898,16 @@ TEST_SUITE("composition_lifecycle") {
         CHECK_FALSE(result.ok());
         CHECK(result.error().code == composition::kErrorFactoryMetadataMismatch);
 
+        Trace rebuild_trace;
+        CatalogBundle rebuild_bundle(rebuild_trace);
+        auto rebuild_runtime = realize(make_resolved(), rebuild_bundle.catalog);
+        rebuild_bundle.factory("provider.application")->mutate_identity_version("2.0.0");
+        const auto rebuild_result =
+            rebuild_runtime.rebuild_scope(contracts::CompositionScope::world, "world_rebuild");
+        CHECK_FALSE(rebuild_result.ok());
+        CHECK(rebuild_result.error().code == composition::kErrorFactoryMetadataMismatch);
+        CHECK(rebuild_runtime.scope_generation(contracts::CompositionScope::world) == 1);
+
         Trace type_trace;
         CatalogBundle type_bundle(type_trace);
         type_bundle.factory("provider.world")->mutate_service_type();

@@ -115,7 +115,7 @@ closed JSON ingestion, native hash revalidation, typed-scope guards, immutable
 factory identity, lifecycle state machine, transactional scoped construction,
 generation invalidation, replacement-aware rebuild, handover admission, and
 reverse-disposal behavior. Normal MSVC and MSVC AddressSanitizer runs each passed
-13 tests and 277 assertions; the composition architecture suite passed 20 tests
+13 tests and 286 assertions; the composition architecture suite passed 20 tests
 with one toolchain-dependent skip. Default-provider integration, real Flecs
 handover evidence, reset/replay parity, system capture repair, artifact
 provenance, and all Cordis/host claims remain open.

@@ -104,6 +104,10 @@ class IProviderInstance {
 
 class ProviderConstructionContext {
   public:
+    // The reference and every handle returned from this context are valid only
+    // synchronously during IProviderFactory::construct(). A factory must not
+    // retain this object, descriptor reference, or lookup result for later or
+    // asynchronous use; such work belongs in a committed lifecycle effect.
     ProviderConstructionContext(const ProviderConstructionContext &) = delete;
     ProviderConstructionContext &operator=(const ProviderConstructionContext &) = delete;
 

@@ -102,7 +102,7 @@ Cordis manifest conformance 不代表外部 plugin trust；Node host 验收不�
 hash revalidation、typed-scope guard、不可变 factory identity、lifecycle 状态机、
 transactional scoped construction、generation invalidation、replacement-aware rebuild、
 handover admission 与逆序 disposal。普通 MSVC 与 MSVC AddressSanitizer 各自通过 13 个
-test、277 个 assertion；composition architecture suite 为 20 passed、1 个
+test、286 个 assertion；composition architecture suite 为 20 passed、1 个
 toolchain-dependent skip。默认 provider 集成、真实 Flecs handover 证据、reset/replay parity、
 system capture 修复、artifact provenance 与全部 Cordis/host 声明仍未完成。
 

@@ -56,6 +56,9 @@ The handle control block carries provider ID, scope, generation, and an atomic
 active bit. It rejects access after successful rebuild or stop. It does not make
 an ungoverned raw pointer retained by a caller safe; such retention remains a
 forbidden consumer behavior and must be removed during provider migration.
+Lifecycle control operations are serialized by the native runtime. The runtime
+is move-constructible but deliberately not move-assignable, so a callback cannot
+destroy the active implementation through an implicit move assignment.
 
 ## Effect Contract
 
@@ -92,7 +95,7 @@ scope rejection, self-cycle rejection, immutable factory identity, typed service
 lookup, failure cleanup order, lifecycle reentrancy, effect-commit failure, full
 rollback, replacement-aware scope rebuild, handover admission, stale-handle
 rejection, and reverse teardown. The focused executable passes 13 test cases and
-277 assertions in both the normal MSVC build and a RelWithDebInfo MSVC
+286 assertions in both the normal MSVC build and a RelWithDebInfo MSVC
 AddressSanitizer build. The architecture contract suite passes 20 tests with one
 toolchain-dependent skip.
 

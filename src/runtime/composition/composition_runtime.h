@@ -23,7 +23,7 @@ class CompositionRuntime {
     CompositionRuntime(const CompositionRuntime &) = delete;
     CompositionRuntime &operator=(const CompositionRuntime &) = delete;
     CompositionRuntime(CompositionRuntime &&) noexcept;
-    CompositionRuntime &operator=(CompositionRuntime &&) noexcept;
+    CompositionRuntime &operator=(CompositionRuntime &&) noexcept = delete;
 
     [[nodiscard]] bool frozen() const noexcept;
     [[nodiscard]] bool shutdown() const noexcept;
