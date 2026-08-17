@@ -91,11 +91,12 @@ lifecycle kernel without a separately accepted handover design.
 
 The focused C++ suite parses and validates the frozen 11-provider/82-component/
 34-system fixture and tests catalog freeze, hash tamper rejection, invalid typed
-scope rejection, self-cycle rejection, immutable plugin/factory identity, stable
-service ABI, typed service lookup, failure cleanup order, lifecycle reentrancy,
+scope rejection, self-cycle rejection, immutable plugin/factory identity,
+in-process semantic service-type identity, typed service lookup, failure cleanup
+order, lifecycle reentrancy,
 concurrent rebuild serialization, effect-commit failure, full rollback,
 replacement-aware scope rebuild, handover admission, stale-handle rejection,
-and reverse teardown. The focused executable passes 14 test cases and 381
+and reverse teardown. The focused executable passes 14 test cases and 430
 assertions in both the normal MSVC build and a RelWithDebInfo MSVC
 AddressSanitizer build. The architecture contract suite passes 20 tests with one
 toolchain-dependent skip.
@@ -103,8 +104,10 @@ toolchain-dependent skip.
 This baseline recomputes and exposes the P1-B requested/resolved identity using
 the same frozen fixtures and canonical field rules; it does not create a private
 runtime identity. Artifact provenance/signature verification and byte-for-byte
-Cordis producer conformance remain later admission gates. Default model
-construction and all simulation behavior remain on the existing path until
+Cordis producer conformance remain later admission gates. The service-type check
+is an in-process semantic identity check, not an external DLL/DSO ABI guarantee;
+module pinning and an explicit host ABI remain later admission gates. Default
+model construction and all simulation behavior remain on the existing path until
 later migration clusters supply parity evidence.
 
 The canonical contract remains Unicode NFC. The current native v1 admission

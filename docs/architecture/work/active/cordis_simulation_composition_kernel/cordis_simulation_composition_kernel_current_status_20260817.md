@@ -54,8 +54,9 @@ Contract baseline:
   failure rollback, replacement-aware barrier rebuild, handover admission,
   deterministic reverse disposal, value-snapshot identity accessors, serialized
   lifecycle control, reentrant wrapper lifetime retention, full plugin/factory
-  identity checks, stable service ABI checks, and idempotent shutdown;
-- passed 14 focused C++ test cases with 381 assertions in the normal MSVC build
+  identity checks, in-process semantic service-type identity checks, and
+  idempotent shutdown;
+- passed 14 focused C++ test cases with 430 assertions in the normal MSVC build
   and under MSVC AddressSanitizer; composition architecture/contract tests are
   20 passed with one toolchain-dependent `g++` skip;
 - did not migrate default providers, kernel/facade constructors, system

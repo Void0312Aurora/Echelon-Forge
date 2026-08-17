@@ -77,16 +77,18 @@ provider 不得进入本 lifecycle kernel，除非另行验收 handover 设计�
 ## 当前证据与残余
 
 聚焦 C++ suite 解析并验证冻结的 11-provider/82-component/34-system fixture，并测试 catalog
-freeze、hash tamper、非法 typed scope、自依赖 cycle、不可变 plugin/factory identity、稳定
-service ABI、typed service lookup、失败清理顺序、lifecycle 重入、并发 rebuild 串行化、
+freeze、hash tamper、非法 typed scope、自依赖 cycle、不可变 plugin/factory identity、进程内语义
+service-type identity、typed service lookup、失败清理顺序、lifecycle 重入、并发 rebuild 串行化、
 effect-commit failure、完整 rollback、replacement-aware scope rebuild、handover admission、
 stale-handle rejection 与 reverse teardown。聚焦 executable 在普通 MSVC build 与
-RelWithDebInfo MSVC AddressSanitizer build 中均通过 14 个 test case、381 个 assertion；
+RelWithDebInfo MSVC AddressSanitizer build 中均通过 14 个 test case、430 个 assertion；
 architecture contract suite 为 20 passed、1 个 toolchain-dependent skip。
 
 本 baseline 使用同一冻结 fixture/canonical field rule 重算并公开 P1-B requested/resolved
 identity，不创建私有 runtime identity。Artifact provenance/signature 与 Cordis producer 的逐字节
-conformance 仍是后续 admission gate。默认 model 构造与全部 simulation behavior 继续走既有
+conformance 仍是后续 admission gate。当前 service-type 检查只保证进程内语义 identity，
+不构成外部 DLL/DSO ABI 保证；module pinning 与明确 host ABI 仍是后续 admission gate。默认
+model 构造与全部 simulation behavior 继续走既有
 路径，直到后续 migration cluster 提供 parity evidence。
 
 canonical contract 的长期语义仍是 Unicode NFC。当前原生 v1 admission profile 只接受

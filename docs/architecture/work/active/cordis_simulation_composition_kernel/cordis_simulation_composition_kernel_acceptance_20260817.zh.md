@@ -99,13 +99,14 @@ Cordis manifest conformance 不代表外部 plugin trust；Node host 验收不�
 性能/backend parity。
 
 已接受的 P2-A 边界仅包括独立 `ef_composition` library，以及 closed JSON ingestion、原生
-hash revalidation、typed-scope guard、不可变 plugin/factory identity、稳定 service ABI、
-lifecycle 状态机、transactional scoped construction、generation invalidation、串行化的
+hash revalidation、typed-scope guard、不可变 plugin/factory identity、进程内语义
+service-type identity、lifecycle 状态机、transactional scoped construction、generation invalidation、串行化的
 replacement-aware rebuild、重入 wrapper 生命周期保持、handover admission 与逆序 disposal。
-普通 MSVC 与 MSVC AddressSanitizer 各自通过 14 个 test、381 个 assertion；composition
+普通 MSVC 与 MSVC AddressSanitizer 各自通过 14 个 test、430 个 assertion；composition
 architecture suite 为 20 passed、1 个
 toolchain-dependent skip。默认 provider 集成、真实 Flecs handover 证据、reset/replay parity、
-system capture 修复、artifact provenance 与全部 Cordis/host 声明仍未完成。
+system capture 修复、artifact provenance、外部 DSO ABI pinning 与全部 Cordis/host 声明
+仍未完成。
 
 ## 收口规则
 

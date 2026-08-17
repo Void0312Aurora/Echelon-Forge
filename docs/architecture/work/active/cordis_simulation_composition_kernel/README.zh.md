@@ -148,7 +148,7 @@ ownership tier。完整证据与限制见 composition census。
 
 P1-B 随后冻结 host-neutral requested/resolved contract 与默认兼容 fixture。P2-A 现已
 提供独立的原生 realization library 与聚焦生命周期证据：普通 MSVC build 中 14 个 C++
-test case、381 个 assertion 全部通过，并在 MSVC AddressSanitizer 下再次通过；composition
+test case、430 个 assertion 全部通过，并在 MSVC AddressSanitizer 下再次通过；composition
 architecture suite 为 20 passed、1 个环境 skip。这些证据只证明隔离的 lifecycle 边界，
 不证明已经接入当前仿真 constructor 或完成行为 parity。
 

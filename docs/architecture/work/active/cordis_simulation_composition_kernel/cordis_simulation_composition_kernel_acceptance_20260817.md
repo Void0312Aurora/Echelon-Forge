@@ -112,14 +112,14 @@ tested matrix.
 
 The accepted P2-A boundary is the independent `ef_composition` library and its
 closed JSON ingestion, native hash revalidation, typed-scope guards, immutable
-plugin/factory identity, stable service ABI, lifecycle state machine,
-transactional scoped construction, generation invalidation, serialized
+plugin/factory identity, in-process semantic service-type identity, lifecycle
+state machine, transactional scoped construction, generation invalidation, serialized
 replacement-aware rebuild, reentrant wrapper lifetime retention, handover
 admission, and reverse-disposal behavior. Normal MSVC and MSVC AddressSanitizer
-runs each passed 14 tests and 381 assertions; the composition architecture suite passed 20 tests
-with one toolchain-dependent skip. Default-provider integration, real Flecs
+runs each passed 14 tests and 430 assertions; the composition architecture suite
+passed 20 tests with one toolchain-dependent skip. Default-provider integration, real Flecs
 handover evidence, reset/replay parity, system capture repair, artifact
-provenance, and all Cordis/host claims remain open.
+provenance, external DSO ABI pinning, and all Cordis/host claims remain open.
 
 ## Closure Rule
 
