@@ -14,6 +14,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -154,6 +155,9 @@ class IntProviderFactory final : public composition::IProviderFactory {
           required_services_(std::move(required_services)), handover_safe_(handover_safe) {}
 
     composition::ProviderFactoryMetadata metadata() const override {
+        if (throw_metadata_on_access_) {
+            throw std::bad_alloc{};
+        }
         return {provider_id_,
                 "builtin.core",
                 implementation_version_,
@@ -243,6 +247,8 @@ class IntProviderFactory final : public composition::IProviderFactory {
 
     void mutate_service_type() noexcept { report_double_service_ = true; }
 
+    void throw_metadata_on_access() noexcept { throw_metadata_on_access_ = true; }
+
   private:
     Trace &trace_;
     std::string provider_id_;
@@ -259,6 +265,7 @@ class IntProviderFactory final : public composition::IProviderFactory {
     bool ignore_lookup_error_next_ = false;
     bool handover_safe_ = true;
     bool report_double_service_ = false;
+    bool throw_metadata_on_access_ = false;
     bool mutate_identity_during_construct_next_ = false;
     std::function<void()> dispose_callback_next_;
     std::function<void()> commit_callback_next_;
@@ -950,22 +957,46 @@ TEST_SUITE("composition_lifecycle") {
 
     TEST_CASE(
         "moving the public wrapper in a lifecycle callback preserves the active transaction") {
-        Trace trace;
-        CatalogBundle bundle(trace);
-        composition::CompositionRuntime *runtime_pointer = nullptr;
-        bool callback_called = false;
-        bundle.factory("provider.episode")->set_dispose_callback([&] {
-            callback_called = true;
-            composition::CompositionRuntime moved(std::move(*runtime_pointer));
-        });
+        SUBCASE("explicit stop retains the active implementation") {
+            Trace trace;
+            CatalogBundle bundle(trace);
+            composition::CompositionRuntime *runtime_pointer = nullptr;
+            bool callback_called = false;
+            bundle.factory("provider.episode")->set_dispose_callback([&] {
+                callback_called = true;
+                composition::CompositionRuntime moved(std::move(*runtime_pointer));
+            });
 
-        auto runtime = realize(make_resolved(), bundle.catalog);
-        runtime_pointer = &runtime;
-        runtime.stop();
-        CHECK(callback_called);
-        CHECK(runtime.shutdown());
-        CHECK(trace.matching("effect.dispose:").size() == 4);
-        CHECK(trace.matching("instance.destroy:").size() == 4);
+            auto runtime = realize(make_resolved(), bundle.catalog);
+            runtime_pointer = &runtime;
+            runtime.stop();
+            CHECK(callback_called);
+            CHECK(runtime.shutdown());
+            CHECK(trace.matching("effect.dispose:").size() == 4);
+            CHECK(trace.matching("instance.destroy:").size() == 4);
+        }
+
+        SUBCASE("destruction clears wrapper ownership before lifecycle callbacks") {
+            Trace trace;
+            CatalogBundle bundle(trace);
+            composition::CompositionRuntime *runtime_pointer = nullptr;
+            bool callback_called = false;
+            bool moved_wrapper_was_inert = false;
+            bundle.factory("provider.episode")->set_dispose_callback([&] {
+                callback_called = true;
+                composition::CompositionRuntime moved(std::move(*runtime_pointer));
+                moved_wrapper_was_inert = moved.shutdown() && moved.provider_count() == 0;
+            });
+
+            {
+                auto runtime = realize(make_resolved(), bundle.catalog);
+                runtime_pointer = &runtime;
+            }
+            CHECK(callback_called);
+            CHECK(moved_wrapper_was_inert);
+            CHECK(trace.matching("effect.dispose:").size() == 4);
+            CHECK(trace.matching("instance.destroy:").size() == 4);
+        }
     }
 
     TEST_CASE("catalog snapshots identity and detects metadata mutation") {
@@ -1014,6 +1045,56 @@ TEST_SUITE("composition_lifecycle") {
             composition::CompositionKernel::realize(make_resolved(), type_bundle.catalog);
         CHECK_FALSE(type_result.ok());
         CHECK(type_result.error().code == composition::kErrorServiceTypeMismatch);
+
+        Trace commit_trace;
+        CatalogBundle commit_bundle(commit_trace);
+        auto commit_factory = commit_bundle.factory("provider.world");
+        commit_factory->set_commit_callback(
+            [factory = commit_factory.get()] { factory->mutate_identity_version("9.9.9"); });
+        const auto commit_result =
+            composition::CompositionKernel::realize(make_resolved(), commit_bundle.catalog);
+        CHECK_FALSE(commit_result.ok());
+        CHECK(commit_result.error().code == composition::kErrorFactoryMetadataMismatch);
+        CHECK(commit_trace.matching("effect.rollback:").size() == 4);
+
+        Trace commit_type_trace;
+        CatalogBundle commit_type_bundle(commit_type_trace);
+        auto commit_type_factory = commit_type_bundle.factory("provider.world");
+        commit_type_factory->set_commit_callback(
+            [factory = commit_type_factory.get()] { factory->mutate_service_type(); });
+        const auto commit_type_result =
+            composition::CompositionKernel::realize(make_resolved(), commit_type_bundle.catalog);
+        CHECK_FALSE(commit_type_result.ok());
+        CHECK(commit_type_result.error().code == composition::kErrorServiceTypeMismatch);
+        CHECK(commit_type_trace.matching("effect.rollback:").size() == 4);
+
+        Trace commit_exception_trace;
+        CatalogBundle commit_exception_bundle(commit_exception_trace);
+        auto commit_exception_factory = commit_exception_bundle.factory("provider.world");
+        commit_exception_factory->set_commit_callback(
+            [factory = commit_exception_factory.get()] { factory->throw_metadata_on_access(); });
+        const auto commit_exception_result = composition::CompositionKernel::realize(
+            make_resolved(), commit_exception_bundle.catalog);
+        CHECK_FALSE(commit_exception_result.ok());
+        CHECK(commit_exception_result.error().code == composition::kErrorFactoryMetadataMismatch);
+        CHECK(commit_exception_trace.matching("effect.rollback:").size() == 4);
+
+        Trace cross_factory_trace;
+        CatalogBundle current_bundle(cross_factory_trace);
+        auto current_runtime = realize(make_resolved(), current_bundle.catalog);
+        CatalogBundle replacement_bundle(cross_factory_trace);
+        auto current_application = current_bundle.factory("provider.application");
+        replacement_bundle.factory("provider.world")
+            ->set_commit_callback([factory = current_application.get()] {
+                factory->mutate_identity_version("9.9.9");
+            });
+        const auto cross_factory_result =
+            current_runtime.rebuild_scope(contracts::CompositionScope::world, "world_rebuild",
+                                          make_resolved(), replacement_bundle.catalog);
+        CHECK_FALSE(cross_factory_result.ok());
+        CHECK(cross_factory_result.error().code == composition::kErrorFactoryMetadataMismatch);
+        CHECK(current_runtime.scope_generation(contracts::CompositionScope::world) == 1);
+        CHECK(cross_factory_trace.matching("effect.rollback:provider.world").size() == 1);
     }
 
     TEST_CASE("replacement rebuild updates identity atomically and enforces handover") {

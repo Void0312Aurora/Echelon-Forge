@@ -115,6 +115,8 @@ def test_lifecycle_api_freezes_transaction_scope_handle_and_effect_semantics() -
     assert declaration in runtime
   for behavior in (
     "release_records(candidates, provider_ids, true)",
+    "CandidateRollbackGuard",
+    "PendingProviderRollbackGuard",
     "active.store(false",
     "candidate_generations",
     "provider_order.rbegin()",
@@ -159,6 +161,7 @@ def test_focused_cpp_suite_covers_failure_atomicity_and_stale_handles() -> None:
     "failed provider cleanup destroys effects before instances",
     "lifecycle callbacks cannot reenter stop or rebuild",
     "moving the public wrapper in a lifecycle callback preserves the active transaction",
+    "destruction clears wrapper ownership before lifecycle callbacks",
     "replacement rebuild updates identity atomically and enforces handover",
     "concurrent rebuilds serialize before taking a plan snapshot",
   ):
@@ -167,3 +170,6 @@ def test_focused_cpp_suite_covers_failure_atomicity_and_stale_handles() -> None:
   assert "fail_next_effect_commit" in source
   assert "CHECK_FALSE(world.valid())" in source
   assert "CHECK_FALSE(episode.valid())" in source
+  assert "factory identity changed while lifecycle effects" in _text(
+    COMPOSITION / "composition_runtime.cpp"
+  )

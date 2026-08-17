@@ -322,6 +322,16 @@ struct CompositionRuntime::Impl {
         return iterator == prepared.plugins.end() ? nullptr : &iterator->second;
     }
 
+    [[nodiscard]] static const std::type_info *
+    service_type_for(const PreparedPlan &prepared, std::string_view provider_id,
+                     std::string_view service_key) noexcept {
+        const auto iterator = std::find_if(
+            prepared.service_types.begin(), prepared.service_types.end(), [&](const auto &entry) {
+                return entry.first.first == provider_id && entry.first.second == service_key;
+            });
+        return iterator == prepared.service_types.end() ? nullptr : iterator->second;
+    }
+
     static void rollback_effects(std::vector<std::unique_ptr<ILifecycleEffect>> &effects) noexcept {
         for (auto iterator = effects.rbegin(); iterator != effects.rend(); ++iterator) {
             (*iterator)->rollback();
@@ -339,6 +349,35 @@ struct CompositionRuntime::Impl {
             }
         }
     }
+
+    struct CandidateRollbackGuard {
+        RecordMap &records;
+        const std::vector<std::string> &provider_order;
+        bool active = true;
+
+        ~CandidateRollbackGuard() {
+            if (active) {
+                release_records(records, provider_order, true);
+            }
+        }
+
+        void dismiss() noexcept { active = false; }
+    };
+
+    struct PendingProviderRollbackGuard {
+        std::vector<std::unique_ptr<ILifecycleEffect>> &effects;
+        std::unique_ptr<IProviderInstance> &instance;
+        bool active = true;
+
+        ~PendingProviderRollbackGuard() {
+            if (active) {
+                rollback_effects(effects);
+                instance.reset();
+            }
+        }
+
+        void dismiss() noexcept { active = false; }
+    };
 
     void stop() noexcept {
         std::lock_guard lock(lifecycle_mutex);
@@ -421,6 +460,7 @@ struct CompositionRuntime::Impl {
     build_candidates(const PreparedPlan &prepared, const std::vector<std::string> &provider_ids,
                      const std::array<std::uint64_t, 5> &candidate_generations,
                      RecordMap &candidates) {
+        CandidateRollbackGuard candidate_guard{candidates, provider_ids};
         for (const auto &provider_id : provider_ids) {
             const auto *descriptor = descriptor_for(prepared, provider_id);
             const auto factory_iterator = prepared.factories.find(provider_id);
@@ -491,6 +531,8 @@ struct CompositionRuntime::Impl {
                                             &context_impl.error);
             };
             ProviderConstructionContext context(&context_impl);
+            std::unique_ptr<IProviderInstance> instance;
+            PendingProviderRollbackGuard pending_guard{context_impl.effects, instance};
 
             ProviderInstanceResult construction = ProviderInstanceResult::failure({
                 std::string(kErrorProviderConstructionFailed),
@@ -512,12 +554,11 @@ struct CompositionRuntime::Impl {
             }
 
             if (!construction || context_impl.error.has_value()) {
-                std::unique_ptr<IProviderInstance> failed_instance;
                 if (construction) {
-                    failed_instance = std::move(construction).value();
+                    instance = std::move(construction).value();
                 }
                 rollback_effects(context_impl.effects);
-                failed_instance.reset();
+                instance.reset();
                 release_records(candidates, provider_ids, true);
                 if (context_impl.error.has_value()) {
                     return CompositionStatus::failure(std::move(*context_impl.error));
@@ -532,7 +573,7 @@ struct CompositionRuntime::Impl {
                 return CompositionStatus::failure(std::move(error));
             }
 
-            auto instance = std::move(construction).value();
+            instance = std::move(construction).value();
             if (!instance) {
                 rollback_effects(context_impl.effects);
                 release_records(candidates, provider_ids, true);
@@ -571,10 +612,9 @@ struct CompositionRuntime::Impl {
             }
 
             for (const auto &service_key : descriptor->offered_services) {
-                const auto frozen_type = prepared.service_types.find({provider_id, service_key});
+                const auto *frozen_type = service_type_for(prepared, provider_id, service_key);
                 const std::type_info *live_type = factory->service_type(service_key);
-                if (frozen_type == prepared.service_types.end() || frozen_type->second == nullptr ||
-                    live_type == nullptr || *live_type != *frozen_type->second) {
+                if (frozen_type == nullptr || live_type == nullptr || *live_type != *frozen_type) {
                     rollback_effects(context_impl.effects);
                     instance.reset();
                     release_records(candidates, provider_ids, true);
@@ -584,7 +624,7 @@ struct CompositionRuntime::Impl {
                         service_key,
                     });
                 }
-                if (instance->query_service(service_key, *frozen_type->second) == nullptr) {
+                if (instance->query_service(service_key, *frozen_type) == nullptr) {
                     rollback_effects(context_impl.effects);
                     instance.reset();
                     release_records(candidates, provider_ids, true);
@@ -608,13 +648,13 @@ struct CompositionRuntime::Impl {
                 record->factory = std::move(factory);
                 for (const auto &service_key : descriptor->offered_services) {
                     record->service_types.emplace(
-                        service_key,
-                        prepared.service_types.find({provider_id, service_key})->second);
+                        service_key, service_type_for(prepared, provider_id, service_key));
                 }
                 record->instance = std::move(instance);
                 record->effects = std::move(context_impl.effects);
                 record->handle_control = std::move(control);
                 slot->second = std::move(record);
+                pending_guard.dismiss();
             } catch (const std::exception &exception) {
                 if (record) {
                     record->release(true);
@@ -635,11 +675,72 @@ struct CompositionRuntime::Impl {
                     unknown_exception_error(kErrorProviderConstructionFailed, provider_id));
             }
         }
+        candidate_guard.dismiss();
         return CompositionStatus::success();
     }
 
     [[nodiscard]] CompositionStatus
-    commit_candidates(RecordMap &candidates, const std::vector<std::string> &provider_ids) {
+    validate_factory_identity_after_commit(const PreparedPlan &prepared,
+                                           const RecordMap &candidates) const {
+        for (const auto &provider_id : prepared.resolved.provider_construction_order) {
+            const auto *descriptor = descriptor_for(prepared, provider_id);
+            const auto *plugin =
+                descriptor == nullptr ? nullptr : plugin_for(prepared, descriptor->plugin_id);
+            const auto prepared_factory = prepared.factories.find(provider_id);
+            const auto *live_record = find_record(candidates, provider_id);
+            if (descriptor == nullptr || plugin == nullptr ||
+                prepared_factory == prepared.factories.end() || !prepared_factory->second ||
+                live_record == nullptr || !live_record->factory) {
+                return CompositionStatus::failure({
+                    std::string(kErrorProviderConstructionFailed),
+                    provider_id,
+                    "active or prepared provider identity record is absent",
+                });
+            }
+
+            try {
+                if (!factory_metadata_matches(prepared_factory->second->metadata(), *descriptor,
+                                              *plugin) ||
+                    !factory_metadata_matches(live_record->factory->metadata(), *descriptor,
+                                              *plugin)) {
+                    return CompositionStatus::failure({
+                        std::string(kErrorFactoryMetadataMismatch),
+                        provider_id,
+                        "active or prepared factory identity changed while lifecycle effects "
+                        "committed",
+                    });
+                }
+            } catch (const std::exception &exception) {
+                return CompositionStatus::failure(
+                    exception_error(kErrorFactoryMetadataMismatch, provider_id, exception));
+            } catch (...) {
+                return CompositionStatus::failure(
+                    unknown_exception_error(kErrorFactoryMetadataMismatch, provider_id));
+            }
+
+            for (const auto &service_key : descriptor->offered_services) {
+                const auto *frozen_type = service_type_for(prepared, provider_id, service_key);
+                const auto *prepared_type = prepared_factory->second->service_type(service_key);
+                const auto *live_type = live_record->factory->service_type(service_key);
+                if (frozen_type == nullptr || prepared_type == nullptr || live_type == nullptr ||
+                    *prepared_type != *frozen_type || *live_type != *frozen_type) {
+                    return CompositionStatus::failure({
+                        std::string(kErrorServiceTypeMismatch),
+                        provider_id,
+                        "active or prepared service type changed while lifecycle effects "
+                        "committed: " +
+                            service_key,
+                    });
+                }
+            }
+        }
+        return CompositionStatus::success();
+    }
+
+    [[nodiscard]] CompositionStatus
+    commit_candidates(const PreparedPlan &prepared, RecordMap &candidates,
+                      const std::vector<std::string> &provider_ids) {
+        CandidateRollbackGuard candidate_guard{candidates, provider_ids};
         for (const auto &provider_id : provider_ids) {
             const auto record = candidates.find(provider_id);
             if (record == candidates.end() || !record->second) {
@@ -680,6 +781,12 @@ struct CompositionRuntime::Impl {
                 }
             }
         }
+        auto identity_status = validate_factory_identity_after_commit(prepared, candidates);
+        if (!identity_status) {
+            release_records(candidates, provider_ids, true);
+            return identity_status;
+        }
+        candidate_guard.dismiss();
         return CompositionStatus::success();
     }
 
@@ -1044,7 +1151,7 @@ struct CompositionRuntime::Impl {
             }
         }
 
-        auto commit_status = commit_candidates(candidates, affected);
+        auto commit_status = commit_candidates(*replacement, candidates, affected);
         if (!commit_status) {
             return commit_status;
         }
@@ -1070,7 +1177,15 @@ struct CompositionRuntime::Impl {
     }
 };
 
-CompositionRuntime::~CompositionRuntime() = default;
+CompositionRuntime::~CompositionRuntime() {
+    // Clear wrapper ownership before invoking callbacks. A dispose callback may
+    // inspect or move the public wrapper; it must observe an inert wrapper
+    // rather than reenter the shared_ptr member currently being destroyed.
+    auto impl = std::move(impl_);
+    if (impl != nullptr) {
+        impl->stop();
+    }
+}
 
 CompositionRuntime::CompositionRuntime(std::shared_ptr<Impl> impl) noexcept
     : impl_(std::move(impl)) {}
@@ -1229,16 +1344,28 @@ CompositionKernel::realize(composition_contracts::ResolvedSimulationComposition 
     }
 
     CompositionRuntime::Impl::RecordMap candidates;
-    auto build_status =
-        impl->build_candidates(*impl->plan, impl->plan->resolved.provider_construction_order,
-                               impl->generations, candidates);
-    if (!build_status) {
-        return CompositionRuntimeResult::failure(build_status.error());
-    }
-    auto commit_status =
-        impl->commit_candidates(candidates, impl->plan->resolved.provider_construction_order);
-    if (!commit_status) {
-        return CompositionRuntimeResult::failure(commit_status.error());
+    try {
+        auto build_status =
+            impl->build_candidates(*impl->plan, impl->plan->resolved.provider_construction_order,
+                                   impl->generations, candidates);
+        if (!build_status) {
+            return CompositionRuntimeResult::failure(build_status.error());
+        }
+        auto commit_status = impl->commit_candidates(
+            *impl->plan, candidates, impl->plan->resolved.provider_construction_order);
+        if (!commit_status) {
+            return CompositionRuntimeResult::failure(commit_status.error());
+        }
+    } catch (const std::exception &exception) {
+        CompositionRuntime::Impl::release_records(
+            candidates, impl->plan->resolved.provider_construction_order, true);
+        return CompositionRuntimeResult::failure(
+            exception_error(kErrorProviderConstructionFailed, "realize", exception));
+    } catch (...) {
+        CompositionRuntime::Impl::release_records(
+            candidates, impl->plan->resolved.provider_construction_order, true);
+        return CompositionRuntimeResult::failure(
+            unknown_exception_error(kErrorProviderConstructionFailed, "realize"));
     }
 
     impl->records = std::move(candidates);
